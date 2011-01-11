@@ -1,8 +1,17 @@
 /*
- * Copyright © 2010 CNRS, INRIA, Université Bordeaux 1
+ * Copyright © 2010 INRIA
+ * Copyright © 2010 Université Bordeaux 1
  * Copyright © 2010 Cisco Systems, Inc.  All rights reserved.
- *
  * See COPYING in top-level directory.
+ *
+ *
+ * This backend is only used when the operating system does not export
+ * the necessary hardware topology information to user-space applications.
+ * Currently, only the FreeBSD backend relies on this x86 backend.
+ *
+ * Other backends such as Linux have their own way to retrieve various
+ * pieces of hardware topology information from the operating system
+ * on various architectures, without having to use this x86-specific code.
  */
 
 #include <private/config.h>
@@ -74,7 +83,7 @@ static void fill_amd_cache(struct procinfo *infos, unsigned level, unsigned cpui
   if (level == 1)
     cache->ways = (cpuid >> 16) & 0xff;
   else {
-    static const unsigned ways_tab[] = { 0, 1, 2, 0, 4, 0, 8, 0, 16, 0, 32, 48, 64, 96, 128, -1 };
+    static const unsigned ways_tab[] = { 0, 1, 2, 0, 4, 0, 8, 0, 16, 0, 32, 48, 64, 96, 128, 0 };
     unsigned ways = (cpuid >> 12) & 0xf;
     cache->ways = ways_tab[ways];
   }
@@ -211,74 +220,74 @@ static void look_proc(struct procinfo *infos, unsigned highest_cpuid, unsigned h
 /* Analyse information stored in infos, and build topology levels accordingly */
 static void summarize(hwloc_topology_t topology, struct procinfo *infos, unsigned nbprocs)
 {
-  hwloc_cpuset_t complete_cpuset = hwloc_cpuset_alloc();
+  hwloc_bitmap_t complete_cpuset = hwloc_bitmap_alloc();
   unsigned i, j;
 
   for (i = 0; i < nbprocs; i++)
     if (infos[i].present)
-      hwloc_cpuset_set(complete_cpuset, i);
+      hwloc_bitmap_set(complete_cpuset, i);
 
   /* Look for sockets */
   {
-    hwloc_cpuset_t sockets_cpuset = hwloc_cpuset_dup(complete_cpuset);
-    hwloc_cpuset_t socket_cpuset;
-    hwloc_obj_t socket;
+    hwloc_bitmap_t sockets_cpuset = hwloc_bitmap_dup(complete_cpuset);
+    hwloc_bitmap_t socket_cpuset;
+    hwloc_obj_t sock;
 
-    while ((i = hwloc_cpuset_first(sockets_cpuset)) != (unsigned) -1) {
+    while ((i = hwloc_bitmap_first(sockets_cpuset)) != (unsigned) -1) {
       unsigned socketid = infos[i].socketid;
 
-      socket_cpuset = hwloc_cpuset_alloc();
-      hwloc_cpuset_zero(socket_cpuset);
+      socket_cpuset = hwloc_bitmap_alloc();
+      hwloc_bitmap_zero(socket_cpuset);
       for (j = i; j < nbprocs; j++) {
         if (infos[j].socketid == socketid) {
-          hwloc_cpuset_set(socket_cpuset, j);
-          hwloc_cpuset_clr(sockets_cpuset, j);
+          hwloc_bitmap_set(socket_cpuset, j);
+          hwloc_bitmap_clr(sockets_cpuset, j);
         }
       }
-      socket = hwloc_alloc_setup_object(HWLOC_OBJ_SOCKET, socketid);
-      socket->cpuset = socket_cpuset;
-      hwloc_debug_1arg_cpuset("os socket %u has cpuset %s\n",
+      sock = hwloc_alloc_setup_object(HWLOC_OBJ_SOCKET, socketid);
+      sock->cpuset = socket_cpuset;
+      hwloc_debug_1arg_bitmap("os socket %u has cpuset %s\n",
           socketid, socket_cpuset);
-      hwloc_insert_object_by_cpuset(topology, socket);
+      hwloc_insert_object_by_cpuset(topology, sock);
     }
-    hwloc_cpuset_free(sockets_cpuset);
+    hwloc_bitmap_free(sockets_cpuset);
   }
 
   /* Look for cores */
   {
-    hwloc_cpuset_t cores_cpuset = hwloc_cpuset_dup(complete_cpuset);
-    hwloc_cpuset_t core_cpuset;
+    hwloc_bitmap_t cores_cpuset = hwloc_bitmap_dup(complete_cpuset);
+    hwloc_bitmap_t core_cpuset;
     hwloc_obj_t core;
 
-    while ((i = hwloc_cpuset_first(cores_cpuset)) != (unsigned) -1) {
+    while ((i = hwloc_bitmap_first(cores_cpuset)) != (unsigned) -1) {
       unsigned socketid = infos[i].socketid;
       unsigned coreid = infos[i].coreid;
 
       if (coreid == (unsigned) -1) {
-        hwloc_cpuset_clr(cores_cpuset, i);
+        hwloc_bitmap_clr(cores_cpuset, i);
 	continue;
       }
 
-      core_cpuset = hwloc_cpuset_alloc();
-      hwloc_cpuset_zero(core_cpuset);
+      core_cpuset = hwloc_bitmap_alloc();
+      hwloc_bitmap_zero(core_cpuset);
       for (j = i; j < nbprocs; j++) {
 	if (infos[j].coreid == (unsigned) -1) {
-	  hwloc_cpuset_clr(cores_cpuset, j);
+	  hwloc_bitmap_clr(cores_cpuset, j);
 	  continue;
 	}
 
         if (infos[j].socketid == socketid && infos[j].coreid == coreid) {
-          hwloc_cpuset_set(core_cpuset, j);
-          hwloc_cpuset_clr(cores_cpuset, j);
+          hwloc_bitmap_set(core_cpuset, j);
+          hwloc_bitmap_clr(cores_cpuset, j);
         }
       }
       core = hwloc_alloc_setup_object(HWLOC_OBJ_CORE, coreid);
       core->cpuset = core_cpuset;
-      hwloc_debug_1arg_cpuset("os core %u has cpuset %s\n",
+      hwloc_debug_1arg_bitmap("os core %u has cpuset %s\n",
           coreid, core_cpuset);
       hwloc_insert_object_by_cpuset(topology, core);
     }
-    hwloc_cpuset_free(cores_cpuset);
+    hwloc_bitmap_free(cores_cpuset);
   }
 
   /* Look for caches */
@@ -292,11 +301,11 @@ static void summarize(hwloc_topology_t topology, struct procinfo *infos, unsigne
   while (level > 0) {
     /* Look for caches at level level */
     {
-      hwloc_cpuset_t caches_cpuset = hwloc_cpuset_dup(complete_cpuset);
-      hwloc_cpuset_t cache_cpuset;
+      hwloc_bitmap_t caches_cpuset = hwloc_bitmap_dup(complete_cpuset);
+      hwloc_bitmap_t cache_cpuset;
       hwloc_obj_t cache;
 
-      while ((i = hwloc_cpuset_first(caches_cpuset)) != (unsigned) -1) {
+      while ((i = hwloc_bitmap_first(caches_cpuset)) != (unsigned) -1) {
         unsigned socketid = infos[i].socketid;
 
         for (l = 0; l < infos[i].numcaches; l++) {
@@ -305,15 +314,15 @@ static void summarize(hwloc_topology_t topology, struct procinfo *infos, unsigne
         }
         if (l == infos[i].numcaches) {
           /* no cache Llevel in i, odd */
-          hwloc_cpuset_clr(caches_cpuset, i);
+          hwloc_bitmap_clr(caches_cpuset, i);
           continue;
         }
 
         {
           unsigned cacheid = infos[i].apicid / infos[i].cache[l].nbthreads_sharing;
 
-          cache_cpuset = hwloc_cpuset_alloc();
-          hwloc_cpuset_zero(cache_cpuset);
+          cache_cpuset = hwloc_bitmap_alloc();
+          hwloc_bitmap_zero(cache_cpuset);
           for (j = i; j < nbprocs; j++) {
             unsigned l2;
             for (l2 = 0; l2 < infos[j].numcaches; l2++) {
@@ -322,24 +331,25 @@ static void summarize(hwloc_topology_t topology, struct procinfo *infos, unsigne
             }
             if (l2 == infos[j].numcaches) {
               /* no cache Llevel in j, odd */
-              hwloc_cpuset_clr(caches_cpuset, j);
+              hwloc_bitmap_clr(caches_cpuset, j);
               continue;
             }
             if (infos[j].socketid == socketid && infos[j].apicid / infos[j].cache[l2].nbthreads_sharing == cacheid) {
-              hwloc_cpuset_set(cache_cpuset, j);
-              hwloc_cpuset_clr(caches_cpuset, j);
+              hwloc_bitmap_set(cache_cpuset, j);
+              hwloc_bitmap_clr(caches_cpuset, j);
             }
           }
           cache = hwloc_alloc_setup_object(HWLOC_OBJ_CACHE, cacheid);
           cache->attr->cache.depth = level;
           cache->attr->cache.size = infos[i].cache[l].size;
+          cache->attr->cache.linesize = infos[i].cache[l].linesize;
           cache->cpuset = cache_cpuset;
-          hwloc_debug_2args_cpuset("os L%u cache %u has cpuset %s\n",
+          hwloc_debug_2args_bitmap("os L%u cache %u has cpuset %s\n",
               level, cacheid, cache_cpuset);
           hwloc_insert_object_by_cpuset(topology, cache);
         }
       }
-      hwloc_cpuset_free(caches_cpuset);
+      hwloc_bitmap_free(caches_cpuset);
     }
     level--;
   }
@@ -361,7 +371,7 @@ void hwloc_look_x86(struct hwloc_topology *topology, unsigned nbprocs)
     /* This function must always be here, but it's ok if it's empty. */
 #if defined(HWLOC_HAVE_CPUID)
   unsigned eax, ebx, ecx = 0, edx;
-  hwloc_cpuset_t orig_cpuset;
+  hwloc_bitmap_t orig_cpuset;
   unsigned i;
   unsigned highest_cpuid;
   unsigned highest_ext_cpuid;
@@ -389,39 +399,41 @@ void hwloc_look_x86(struct hwloc_topology *topology, unsigned nbprocs)
 
   hwloc_debug("highest extended cpuid %x\n", highest_ext_cpuid);
 
-  orig_cpuset = hwloc_cpuset_alloc();
+  orig_cpuset = hwloc_bitmap_alloc();
 
   if (topology->get_thisthread_cpubind && topology->set_thisthread_cpubind) {
     if (!topology->get_thisthread_cpubind(topology, orig_cpuset, HWLOC_CPUBIND_STRICT)) {
-      hwloc_cpuset_t cpuset = hwloc_cpuset_alloc();
+      hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
       for (i = 0; i < nbprocs; i++) {
-        hwloc_cpuset_cpu(cpuset, i);
+        hwloc_bitmap_only(cpuset, i);
         if (topology->set_thisthread_cpubind(topology, cpuset, HWLOC_CPUBIND_STRICT))
           continue;
         look_proc(&infos[i], highest_cpuid, highest_ext_cpuid, cpuid_type);
       }
-      hwloc_cpuset_free(cpuset);
+      hwloc_bitmap_free(cpuset);
       topology->set_thisthread_cpubind(topology, orig_cpuset, 0);
-      hwloc_cpuset_free(orig_cpuset);
+      hwloc_bitmap_free(orig_cpuset);
       summarize(topology, infos, nbprocs);
       return;
     }
   }
   if (topology->get_thisproc_cpubind && topology->set_thisproc_cpubind) {
     if (!topology->get_thisproc_cpubind(topology, orig_cpuset, HWLOC_CPUBIND_STRICT)) {
-      hwloc_cpuset_t cpuset = hwloc_cpuset_alloc();
+      hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
       for (i = 0; i < nbprocs; i++) {
-        hwloc_cpuset_cpu(cpuset, i);
+        hwloc_bitmap_only(cpuset, i);
         if (topology->set_thisproc_cpubind(topology, cpuset, HWLOC_CPUBIND_STRICT))
           continue;
         look_proc(&infos[i], highest_cpuid, highest_ext_cpuid, cpuid_type);
       }
-      hwloc_cpuset_free(cpuset);
+      hwloc_bitmap_free(cpuset);
       topology->set_thisproc_cpubind(topology, orig_cpuset, 0);
-      hwloc_cpuset_free(orig_cpuset);
+      hwloc_bitmap_free(orig_cpuset);
       summarize(topology, infos, nbprocs);
       return;
     }
   }
 #endif
+
+  hwloc_add_object_info(topology->levels[0][0], "Backend", "x86");
 }

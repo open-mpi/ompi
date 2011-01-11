@@ -1,5 +1,7 @@
 /*
- * Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+ * Copyright © 2009 CNRS
+ * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2010 Université Bordeaux 1
  * See COPYING in top-level directory.
  */
 
@@ -49,7 +51,13 @@ typedef enum _LOGICAL_PROCESSOR_RELATIONSHIP {
   RelationGroup,
   RelationAll = 0xffff
 } LOGICAL_PROCESSOR_RELATIONSHIP;
-#endif
+#else /* HAVE_LOGICAL_PROCESSOR_RELATIONSHIP */
+#  ifndef HAVE_RELATIONPROCESSORPACKAGE
+#    define RelationProcessorPackage 3
+#    define RelationGroup 4
+#    define RelationAll 0xffff
+#  endif /* HAVE_RELATIONPROCESSORPACKAGE */
+#endif /* HAVE_LOGICAL_PROCESSOR_RELATIONSHIP */
 
 #ifndef HAVE_SYSTEM_LOGICAL_PROCESSOR_INFORMATION
 typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION {
@@ -141,57 +149,302 @@ typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
 } SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX, *PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX;
 #endif
 
+#ifndef HAVE_PSAPI_WORKING_SET_EX_BLOCK
+typedef union _PSAPI_WORKING_SET_EX_BLOCK {
+  ULONG_PTR Flags;
+  struct {
+    ULONG_PTR Valid  :1;
+    ULONG_PTR ShareCount  :3;
+    ULONG_PTR Win32Protection  :11;
+    ULONG_PTR Shared  :1;
+    ULONG_PTR Node  :6;
+    ULONG_PTR Locked  :1;
+    ULONG_PTR LargePage  :1;
+  };
+} PSAPI_WORKING_SET_EX_BLOCK;
+#endif
+
+#ifndef HAVE_PSAPI_WORKING_SET_EX_INFORMATION
+typedef struct _PSAPI_WORKING_SET_EX_INFORMATION {
+  PVOID VirtualAddress;
+  PSAPI_WORKING_SET_EX_BLOCK VirtualAttributes;
+} PSAPI_WORKING_SET_EX_INFORMATION;
+#endif
+
 /* TODO: SetThreadIdealProcessor */
 
 static int
-hwloc_win_set_thread_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_thread_t thread, hwloc_const_cpuset_t hwloc_set, int policy __hwloc_attribute_unused)
+hwloc_win_set_thread_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_thread_t thread, hwloc_const_bitmap_t hwloc_set, int flags)
 {
+  if (flags & HWLOC_CPUBIND_NOMEMBIND) {
+    errno = ENOSYS;
+    return -1;
+  }
   /* TODO: groups SetThreadGroupAffinity */
   /* The resulting binding is always strict */
-  DWORD mask = hwloc_cpuset_to_ulong(hwloc_set);
+  DWORD mask = hwloc_bitmap_to_ulong(hwloc_set);
   if (!SetThreadAffinityMask(thread, mask))
     return -1;
   return 0;
 }
 
+/* TODO: SetThreadGroupAffinity to get affinity */
+
 static int
-hwloc_win_set_thisthread_cpubind(hwloc_topology_t topology, hwloc_const_cpuset_t hwloc_set, int policy)
+hwloc_win_set_thisthread_cpubind(hwloc_topology_t topology, hwloc_const_bitmap_t hwloc_set, int flags)
 {
-  return hwloc_win_set_thread_cpubind(topology, GetCurrentThread(), hwloc_set, policy);
+  return hwloc_win_set_thread_cpubind(topology, GetCurrentThread(), hwloc_set, flags);
 }
 
 static int
-hwloc_win_set_proc_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_pid_t proc, hwloc_const_cpuset_t hwloc_set, int policy __hwloc_attribute_unused)
+hwloc_win_set_thisthread_membind(hwloc_topology_t topology, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
 {
-  /* TODO: groups */
+  int ret;
+  hwloc_cpuset_t cpuset;
+
+  if ((policy != HWLOC_MEMBIND_DEFAULT && policy != HWLOC_MEMBIND_BIND)
+      || flags & HWLOC_MEMBIND_NOCPUBIND) {
+    errno = ENOSYS;
+    return -1;
+  }
+
+  cpuset = hwloc_bitmap_alloc();
+  hwloc_cpuset_from_nodeset(topology, cpuset, nodeset);
+  ret = hwloc_win_set_thisthread_cpubind(topology, cpuset, flags & HWLOC_MEMBIND_STRICT?HWLOC_CPUBIND_STRICT:0);
+  hwloc_bitmap_free(cpuset);
+  return ret;
+}
+
+static int
+hwloc_win_set_proc_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_pid_t proc, hwloc_const_bitmap_t hwloc_set, int flags)
+{
+  if (flags & HWLOC_CPUBIND_NOMEMBIND) {
+    errno = ENOSYS;
+    return -1;
+  }
+  /* TODO: groups, hard: has to manually bind all threads into the other group,
+   * and the bind the process inside the group */
   /* The resulting binding is always strict */
-  DWORD mask = hwloc_cpuset_to_ulong(hwloc_set);
+  DWORD mask = hwloc_bitmap_to_ulong(hwloc_set);
   if (!SetProcessAffinityMask(proc, mask))
     return -1;
   return 0;
 }
 
 static int
-hwloc_win_get_proc_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_pid_t proc, hwloc_cpuset_t hwloc_set, int policy __hwloc_attribute_unused)
+hwloc_win_set_proc_membind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
 {
-  DWORD proc_mask, sys_mask;
-  /* TODO: groups */
+  int ret;
+  hwloc_cpuset_t cpuset;
+
+  if ((policy != HWLOC_MEMBIND_DEFAULT && policy != HWLOC_MEMBIND_BIND)
+      || flags & HWLOC_MEMBIND_NOCPUBIND) {
+    errno = ENOSYS;
+    return -1;
+  }
+
+  cpuset = hwloc_bitmap_alloc();
+  hwloc_cpuset_from_nodeset(topology, cpuset, nodeset);
+  ret = hwloc_win_set_proc_cpubind(topology, pid, cpuset, flags & HWLOC_MEMBIND_STRICT?HWLOC_CPUBIND_STRICT:0);
+  hwloc_bitmap_free(cpuset);
+  return ret;
+}
+
+static int
+hwloc_win_get_proc_cpubind(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_pid_t proc, hwloc_bitmap_t hwloc_set, int flags)
+{
+  DWORD_PTR proc_mask, sys_mask;
+  if (flags & HWLOC_CPUBIND_NOMEMBIND) {
+    errno = ENOSYS;
+    return -1;
+  }
+  /* TODO: groups, GetProcessGroupAffinity, or merge SetThreadGroupAffinity for all threads */
   if (!GetProcessAffinityMask(proc, &proc_mask, &sys_mask))
     return -1;
-  hwloc_cpuset_from_ulong(hwloc_set, proc_mask);
+  hwloc_bitmap_from_ulong(hwloc_set, proc_mask);
   return 0;
 }
 
 static int
-hwloc_win_set_thisproc_cpubind(hwloc_topology_t topology, hwloc_const_cpuset_t hwloc_set, int policy)
+hwloc_win_get_proc_membind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_nodeset_t nodeset, hwloc_membind_policy_t * policy, int flags)
 {
-  return hwloc_win_set_proc_cpubind(topology, GetCurrentProcess(), hwloc_set, policy);
+  int ret;
+  hwloc_cpuset_t cpuset = hwloc_bitmap_alloc();
+  ret = hwloc_win_get_proc_cpubind(topology, pid, cpuset, flags & HWLOC_MEMBIND_STRICT?HWLOC_CPUBIND_STRICT:0);
+  if (!ret) {
+    *policy = HWLOC_MEMBIND_BIND;
+    hwloc_cpuset_to_nodeset(topology, cpuset, nodeset);
+  }
+  hwloc_bitmap_free(cpuset);
+  return ret;
 }
 
 static int
-hwloc_win_get_thisproc_cpubind(hwloc_topology_t topology, hwloc_cpuset_t hwloc_cpuset, int policy)
+hwloc_win_set_thisproc_cpubind(hwloc_topology_t topology, hwloc_const_bitmap_t hwloc_set, int flags)
 {
-  return hwloc_win_get_proc_cpubind(topology, GetCurrentProcess(), hwloc_cpuset, policy);
+  return hwloc_win_set_proc_cpubind(topology, GetCurrentProcess(), hwloc_set, flags);
+}
+
+static int
+hwloc_win_set_thisproc_membind(hwloc_topology_t topology, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
+{
+  return hwloc_win_set_proc_membind(topology, GetCurrentProcess(), nodeset, policy, flags);
+}
+
+static int
+hwloc_win_get_thisproc_cpubind(hwloc_topology_t topology, hwloc_bitmap_t hwloc_cpuset, int flags)
+{
+  return hwloc_win_get_proc_cpubind(topology, GetCurrentProcess(), hwloc_cpuset, flags);
+}
+
+static int
+hwloc_win_get_thisproc_membind(hwloc_topology_t topology, hwloc_nodeset_t nodeset, hwloc_membind_policy_t * policy, int flags)
+{
+  return hwloc_win_get_proc_membind(topology, GetCurrentProcess(), nodeset, policy, flags);
+}
+
+static LPVOID WINAPI (*VirtualAllocExNumaProc)(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect, DWORD nndPreferred);
+static BOOL WINAPI (*VirtualFreeExProc)(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType);
+static BOOL WINAPI (*QueryWorkingSetExProc)(HANDLE hProcess, PVOID pv, DWORD cb);
+
+static int hwloc_win_get_VirtualAllocExNumaProc(void) {
+  if (VirtualAllocExNumaProc == NULL) {
+    FARPROC alloc_fun, free_fun;
+    HMODULE kernel32;
+
+    kernel32 = LoadLibrary("kernel32.dll");
+    if (kernel32) {
+      alloc_fun = GetProcAddress(kernel32, "VirtualAllocExNuma");
+      free_fun = GetProcAddress(kernel32, "VirtualFreeEx");
+    }
+
+    if (!kernel32 || !alloc_fun || !free_fun) {
+      VirtualAllocExNumaProc = (FARPROC) -1;
+      errno = ENOSYS;
+      return -1;
+    }
+
+    VirtualAllocExNumaProc = alloc_fun;
+    VirtualFreeExProc = free_fun;
+  } else if ((FARPROC) VirtualAllocExNumaProc == (FARPROC)-1) {
+    errno = ENOSYS;
+    return -1;
+  }
+
+  return 0;
+}
+
+static void *
+hwloc_win_alloc(hwloc_topology_t topology __hwloc_attribute_unused, size_t len) {
+  return VirtualAlloc(NULL, len, MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+}
+
+static void *
+hwloc_win_alloc_membind(hwloc_topology_t topology __hwloc_attribute_unused, size_t len, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags) {
+  int node;
+
+  switch (policy) {
+    case HWLOC_MEMBIND_DEFAULT:
+    case HWLOC_MEMBIND_BIND:
+      break;
+    default:
+      errno = ENOSYS;
+      return hwloc_alloc_or_fail(topology, len, flags);
+  }
+
+  if (flags & HWLOC_MEMBIND_STRICT) {
+    errno = ENOSYS;
+    return NULL;
+  }
+
+  if (hwloc_bitmap_weight(nodeset) != 1) {
+    /* Not a single node, can't do this */
+    errno = EXDEV;
+    return hwloc_alloc_or_fail(topology, len, flags);
+  }
+
+  node = hwloc_bitmap_first(nodeset);
+  return VirtualAllocExNumaProc(GetCurrentProcess(), NULL, len, MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE, node);
+}
+
+static int
+hwloc_win_free_membind(hwloc_topology_t topology __hwloc_attribute_unused, void *addr, size_t len __hwloc_attribute_unused) {
+  if (!addr)
+    return 0;
+  if (!VirtualFreeExProc(GetCurrentProcess(), addr, 0, MEM_RELEASE))
+    return -1;
+  return 0;
+}
+
+static int hwloc_win_get_QueryWorkingSetExProc(void) {
+  if (QueryWorkingSetExProc == NULL) {
+    FARPROC fun;
+    HMODULE kernel32, psapi;
+
+    kernel32 = LoadLibrary("kernel32.dll");
+    if (kernel32)
+      fun = GetProcAddress(kernel32, "K32QueryWorkingSetEx");
+    if (!fun) {
+      psapi = LoadLibrary("psapi.dll");
+      if (psapi)
+        fun = GetProcAddress(psapi, "QueryWorkingSetEx");
+    }
+
+    if (!fun) {
+      QueryWorkingSetExProc = (FARPROC) -1;
+      errno = ENOSYS;
+      return -1;
+    }
+
+    QueryWorkingSetExProc = fun;
+  } else if ((FARPROC) QueryWorkingSetExProc == (FARPROC)-1) {
+    errno = ENOSYS;
+    return -1;
+  }
+
+  return 0;
+}
+
+static int
+hwloc_win_get_area_membind(hwloc_topology_t topology __hwloc_attribute_unused, const void *addr, size_t len, hwloc_nodeset_t nodeset, hwloc_membind_policy_t * policy, int flags)
+{
+  SYSTEM_INFO SystemInfo;
+  DWORD page_size;
+
+  GetSystemInfo(&SystemInfo);
+  page_size = SystemInfo.dwPageSize;
+
+  uintptr_t start = (((uintptr_t) addr) / page_size) * page_size;
+  unsigned nb = (((uintptr_t) addr + len - start) + page_size - 1) / page_size;
+
+  if (!nb)
+    nb = 1;
+
+  {
+    PSAPI_WORKING_SET_EX_INFORMATION pv[nb];
+    unsigned i;
+
+    for (i = 0; i < nb; i++)
+      pv[i].VirtualAddress = (void*) (start + i * page_size);
+    if (!QueryWorkingSetExProc(GetCurrentProcess(), &pv, sizeof(pv)))
+      return -1;
+    *policy = HWLOC_MEMBIND_BIND;
+    if (flags & HWLOC_MEMBIND_STRICT) {
+      unsigned node = pv[0].VirtualAttributes.Node;
+      for (i = 1; i < nb; i++) {
+	if (pv[i].VirtualAttributes.Node != node) {
+	  errno = EXDEV;
+	  return -1;
+	}
+      }
+      hwloc_bitmap_only(nodeset, node);
+      return 0;
+    }
+    hwloc_bitmap_zero(nodeset);
+    for (i = 0; i < nb; i++)
+      hwloc_bitmap_set(nodeset, pv[i].VirtualAttributes.Node);
+    return 0;
+  }
 }
 
 void
@@ -201,10 +454,13 @@ hwloc_look_windows(struct hwloc_topology *topology)
   BOOL WINAPI (*GetLogicalProcessorInformationExProc)(LOGICAL_PROCESSOR_RELATIONSHIP relationship, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX Buffer, PDWORD ReturnLength);
   BOOL WINAPI (*GetNumaAvailableMemoryNodeProc)(UCHAR Node, PULONGLONG AvailableBytes);
   BOOL WINAPI (*GetNumaAvailableMemoryNodeExProc)(USHORT Node, PULONGLONG AvailableBytes);
+  SYSTEM_INFO SystemInfo;
 
   DWORD length;
 
   HMODULE kernel32;
+
+  GetSystemInfo(&SystemInfo);
 
   kernel32 = LoadLibrary("kernel32.dll");
   if (kernel32) {
@@ -261,29 +517,33 @@ hwloc_look_windows(struct hwloc_topology *topology)
 	}
 
 	obj = hwloc_alloc_setup_object(type, id);
-        obj->cpuset = hwloc_cpuset_alloc();
+        obj->cpuset = hwloc_bitmap_alloc();
 	hwloc_debug("%s#%u mask %lx\n", hwloc_obj_type_string(type), id, procInfo[i].ProcessorMask);
-	hwloc_cpuset_from_ulong(obj->cpuset, procInfo[i].ProcessorMask);
+	hwloc_bitmap_from_ulong(obj->cpuset, procInfo[i].ProcessorMask);
 
 	switch (type) {
 	  case HWLOC_OBJ_NODE:
 	    {
 	      ULONGLONG avail;
-	      obj->nodeset = hwloc_cpuset_alloc();
-	      hwloc_cpuset_set(obj->nodeset, id);
+	      obj->nodeset = hwloc_bitmap_alloc();
+	      hwloc_bitmap_set(obj->nodeset, id);
 	      if ((GetNumaAvailableMemoryNodeExProc && GetNumaAvailableMemoryNodeExProc(id, &avail))
 	       || (GetNumaAvailableMemoryNodeProc && GetNumaAvailableMemoryNodeProc(id, &avail)))
 		obj->memory.local_memory = avail;
+	      obj->memory.page_types_len = 2;
+	      obj->memory.page_types = malloc(2 * sizeof(*obj->memory.page_types));
+	      memset(obj->memory.page_types, 0, 2 * sizeof(*obj->memory.page_types));
 	      obj->memory.page_types_len = 1;
-	      obj->memory.page_types = malloc(sizeof(*obj->memory.page_types));
-	      memset(obj->memory.page_types, 0, sizeof(*obj->memory.page_types));
+	      obj->memory.page_types[0].size = SystemInfo.dwPageSize;
 #ifdef HAVE__SC_LARGE_PAGESIZE
-	      obj->memory.page_types[0].size = sysconf(_SC_LARGE_PAGESIZE);
+	      obj->memory.page_types_len++;
+	      obj->memory.page_types[1].size = sysconf(_SC_LARGE_PAGESIZE);
 #endif
 	      break;
 	    }
 	  case HWLOC_OBJ_CACHE:
 	    obj->attr->cache.size = procInfo[i].Cache.Size;
+	    obj->attr->cache.linesize = procInfo[i].Cache.LineSize;
 	    obj->attr->cache.depth = procInfo[i].Cache.Level;
 	    break;
 	  case HWLOC_OBJ_GROUP:
@@ -356,11 +616,11 @@ hwloc_look_windows(struct hwloc_topology *topology)
 	    for (id = 0; id < procInfo->Group.ActiveGroupCount; id++) {
               KAFFINITY mask;
 	      obj = hwloc_alloc_setup_object(HWLOC_OBJ_GROUP, id);
-	      obj->cpuset = hwloc_cpuset_alloc();
+	      obj->cpuset = hwloc_bitmap_alloc();
 	      mask = procInfo->Group.GroupInfo[id].ActiveProcessorMask;
 	      hwloc_debug("group %u %d cpus mask %lx\n", id,
                   procInfo->Group.GroupInfo[id].ActiveProcessorCount, mask);
-	      hwloc_cpuset_from_ith_ulong(obj->cpuset, id, mask);
+	      hwloc_bitmap_from_ith_ulong(obj->cpuset, id, mask);
 	      hwloc_insert_object_by_cpuset(topology, obj);
 	    }
 	    continue;
@@ -371,31 +631,34 @@ hwloc_look_windows(struct hwloc_topology *topology)
 	}
 
 	obj = hwloc_alloc_setup_object(type, id);
-        obj->cpuset = hwloc_cpuset_alloc();
+        obj->cpuset = hwloc_bitmap_alloc();
         for (i = 0; i < num; i++) {
           hwloc_debug("%s#%u %d: mask %d:%lx\n", hwloc_obj_type_string(type), id, i, GroupMask[i].Group, GroupMask[i].Mask);
-          hwloc_cpuset_from_ith_ulong(obj->cpuset, GroupMask[i].Group, GroupMask[i].Mask);
+          hwloc_bitmap_from_ith_ulong(obj->cpuset, GroupMask[i].Group, GroupMask[i].Mask);
         }
 
 	switch (type) {
 	  case HWLOC_OBJ_NODE:
 	    {
 	      ULONGLONG avail;
-	      obj->nodeset = hwloc_cpuset_alloc();
-	      hwloc_cpuset_set(obj->nodeset, id);
+	      obj->nodeset = hwloc_bitmap_alloc();
+	      hwloc_bitmap_set(obj->nodeset, id);
 	      if ((GetNumaAvailableMemoryNodeExProc && GetNumaAvailableMemoryNodeExProc(id, &avail))
 	       || (GetNumaAvailableMemoryNodeProc && GetNumaAvailableMemoryNodeProc(id, &avail)))
 	        obj->memory.local_memory = avail;
+	      obj->memory.page_types = malloc(2 * sizeof(*obj->memory.page_types));
+	      memset(obj->memory.page_types, 0, 2 * sizeof(*obj->memory.page_types));
 	      obj->memory.page_types_len = 1;
-	      obj->memory.page_types = malloc(sizeof(*obj->memory.page_types));
-	      memset(obj->memory.page_types, 0, sizeof(*obj->memory.page_types));
+	      obj->memory.page_types[0].size = SystemInfo.dwPageSize;
 #ifdef HAVE__SC_LARGE_PAGESIZE
-	      obj->memory.page_types[0].size = sysconf(_SC_LARGE_PAGESIZE);
+	      obj->memory.page_types_len++;
+	      obj->memory.page_types[1].size = sysconf(_SC_LARGE_PAGESIZE);
 #endif
 	      break;
 	    }
 	  case HWLOC_OBJ_CACHE:
 	    obj->attr->cache.size = procInfo->Cache.CacheSize;
+	    obj->attr->cache.linesize = procInfo->Cache.LineSize;
 	    obj->attr->cache.depth = procInfo->Cache.Level;
 	    break;
 	  default:
@@ -409,6 +672,8 @@ hwloc_look_windows(struct hwloc_topology *topology)
 
   /* add PU objects */
   hwloc_setup_pu_level(topology, hwloc_fallback_nbprocessors(topology));
+
+  hwloc_add_object_info(topology->levels[0][0], "Backend", "Windows");
 }
 
 void
@@ -420,6 +685,20 @@ hwloc_set_windows_hooks(struct hwloc_topology *topology)
   topology->set_thisproc_cpubind = hwloc_win_set_thisproc_cpubind;
   topology->get_thisproc_cpubind = hwloc_win_get_thisproc_cpubind;
   topology->set_thisthread_cpubind = hwloc_win_set_thisthread_cpubind;
-}
 
-/* TODO memory binding: VirtualAllocExNuma */
+  topology->set_proc_membind = hwloc_win_set_proc_membind;
+  topology->get_proc_membind = hwloc_win_get_proc_membind;
+  topology->set_thisproc_membind = hwloc_win_set_thisproc_membind;
+  topology->get_thisproc_membind = hwloc_win_get_thisproc_membind;
+  topology->set_thisthread_membind = hwloc_win_set_thisthread_membind;
+
+  if (!hwloc_win_get_VirtualAllocExNumaProc()) {
+    topology->alloc_membind = hwloc_win_alloc_membind;
+    topology->alloc = hwloc_win_alloc;
+    topology->free_membind = hwloc_win_free_membind;
+    topology->support.membind->bind_membind = 1;
+  }
+
+  if (!hwloc_win_get_QueryWorkingSetExProc())
+    topology->get_area_membind = hwloc_win_get_area_membind;
+}

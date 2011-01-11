@@ -1,5 +1,7 @@
 /*
- * Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+ * Copyright © 2009 CNRS
+ * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2010 Université Bordeaux 1
  * See COPYING in top-level directory.
  */
 
@@ -50,16 +52,16 @@ hwloc_cpuset_to_glibc_sched_affinity(hwloc_topology_t topology __hwloc_attribute
 #ifdef CPU_ZERO_S
   unsigned cpu;
   CPU_ZERO_S(schedsetsize, schedset);
-  hwloc_cpuset_foreach_begin(cpu, hwlocset)
+  hwloc_bitmap_foreach_begin(cpu, hwlocset)
     CPU_SET_S(cpu, schedsetsize, schedset);
-  hwloc_cpuset_foreach_end();
+  hwloc_bitmap_foreach_end();
 #else /* !CPU_ZERO_S */
   unsigned cpu;
   CPU_ZERO(schedset);
   assert(schedsetsize == sizeof(cpu_set_t));
-  hwloc_cpuset_foreach_begin(cpu, hwlocset)
+  hwloc_bitmap_foreach_begin(cpu, hwlocset)
     CPU_SET(cpu, schedset);
-  hwloc_cpuset_foreach_end();
+  hwloc_bitmap_foreach_end();
 #endif /* !CPU_ZERO_S */
   return 0;
 }
@@ -75,19 +77,17 @@ static __hwloc_inline int
 hwloc_cpuset_from_glibc_sched_affinity(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_cpuset_t hwlocset,
                                        const cpu_set_t *schedset, size_t schedsetsize)
 {
-  hwloc_cpuset_zero(hwlocset);
+  hwloc_bitmap_zero(hwlocset);
 #ifdef CPU_ZERO_S
   int cpu, count;
   count = CPU_COUNT_S(schedsetsize, schedset);
   cpu = 0;
   while (count) {
     if (CPU_ISSET_S(cpu, schedsetsize, schedset)) {
-      hwloc_cpuset_set(hwlocset, cpu);
+      hwloc_bitmap_set(hwlocset, cpu);
       count--;
     }
     cpu++;
-    if (cpu > HWLOC_NBMAXCPUS)
-      break;
   }
 #else /* !CPU_ZERO_S */
   /* sched.h does not support dynamic cpu_set_t (introduced in glibc 2.7),
@@ -95,9 +95,9 @@ hwloc_cpuset_from_glibc_sched_affinity(hwloc_topology_t topology __hwloc_attribu
    */
   int cpu;
   assert(schedsetsize == sizeof(cpu_set_t));
-  for(cpu=0; cpu<CPU_SETSIZE && cpu<HWLOC_NBMAXCPUS; cpu++)
+  for(cpu=0; cpu<CPU_SETSIZE; cpu++)
     if (CPU_ISSET(cpu, schedset))
-      hwloc_cpuset_set(hwlocset, cpu);
+      hwloc_bitmap_set(hwlocset, cpu);
 #endif /* !CPU_ZERO_S */
   return 0;
 }

@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
-# Copyright © 2009      CNRS, INRIA, Université Bordeaux 1
+# Copyright © 2009      CNRS
+# Copyright © 2009-2010 INRIA
+# Copyright © 2009      Université Bordeaux 1
 # Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #
 # See COPYING in top-level directory.
@@ -34,9 +36,12 @@ AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([1.10 dist-bzip2 subdir-objects foreign tar-ustar -Wall -Werror])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-# Libtool2 is needed
+# We want new Libtool.  None of that old stuff.  Pfft.    
 m4_ifdef([LT_PREREQ], [],
 	 [m4_fatal([libtool version 2.2.6 or higher is required], [63])])
+LT_PREREQ([2.2.6])
+
+AC_LANG([C])
 
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
@@ -120,11 +125,11 @@ AS_IF([test "$enable_embedded_mode" != "yes"],
              [AC_MSG_WARN([The hwloc source tree looks incomplete for a standalobe])
               AC_MSG_WARN([build.  Perhaps this hwloc tree is intended for an embedded])
               AC_MSG_WARN([build?  Try using the --enable-embedded-mode switch.])
-              AC_MSG_ERROR([Cannot continue])],
+              AC_MSG_ERROR([Cannot build standalone hwloc])],
              [HWLOC_BUILD_STANDALONE])])
 
 # Setup the hwloc core
-HWLOC_SETUP_CORE([], [], [AC_MSG_ERROR([Cannot continue])], [1])
+HWLOC_SETUP_CORE([], [], [AC_MSG_ERROR([Cannot build hwloc core])], [1])
 
 # Setup hwloc's docs, utils, and tests
 AS_IF([test "$hwloc_mode" = "standalone"],

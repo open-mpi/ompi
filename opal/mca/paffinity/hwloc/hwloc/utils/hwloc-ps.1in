@@ -1,0 +1,63 @@
+.\" -*- nroff -*-
+.\" Copyright © 2010 INRIA
+.\" Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+.TH HWLOC-PS "1" "#HWLOC_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+hwloc-ps \- List currently-running processes that are bound.
+.
+.\" **************************
+.\"    Synopsis Section
+.\" **************************
+.SH SYNOPSIS
+.
+.B hwloc-ps
+[\fIoptions\fR]
+.
+.\" **************************
+.\"    Options Section
+.\" **************************
+.SH OPTIONS
+.
+.TP 10
+\fB\-a\fR
+list all processes, even those that are not bound to any
+specific part of the machine.
+.TP
+\fB\-p\fR \fB\-\-physical\fR
+report OS/physical indexes instead of logical indexes
+.TP
+\fB\-l\fR \fB\-\-logical\fR
+report logical indexes instead of physical/OS indexes (default)
+.TP
+\fB\-c\fR \fB\-\-cpuset\fR
+show process bindings as cpusets instead of objects.
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.SH DESCRIPTION
+.
+By default, hwloc-ps lists only those currently-running processes that
+are bound; it displays their their identifier, command-line and
+binding.  The binding may be reported as objects or cpusets.
+.
+The output is a plain list. If you wish to annotate the hierarchical
+topology with processes so as to see how they are actual distributed
+on the machine, you might want to use lstopo --ps instead (which also
+only shows processes that are bound).
+.
+.PP
+The
+.I -a
+switch can be used to show
+.I all
+processes, if desired.
+.
+.\" **************************
+.\"    See also section
+.\" **************************
+.SH SEE ALSO
+.
+.ft R
+hwloc(7), lstopo(1), hwloc-calc(1), hwloc-distrib(1)
+.sp

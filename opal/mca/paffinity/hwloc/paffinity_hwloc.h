@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -37,7 +37,6 @@ typedef struct {
     /* This component's data */
     hwloc_topology_t topology;
     bool topology_need_destroy;
-    int cpuset_max_size;
 } opal_paffinity_hwloc_component_t;
 
 /**

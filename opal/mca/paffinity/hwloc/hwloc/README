@@ -87,41 +87,41 @@ XML support requires the libxml2 development package.
 CLI Examples
 
 On a 4-socket 2-core machine with hyperthreading, the lstopo tool may show the
-following graphic output:
+following graphical output:
 
                                dudley.png
 
 Here's the equivalent output in textual form:
 
 Machine (16GB)
-  Socket #0 + L3 #0 (4096KB)
- L2 #0 (1024KB) + L1 #0 (16KB) + Core #0
-   PU #0 (phys=0)
-   PU #1 (phys=8)
- L2 #1 (1024KB) + L1 #1 (16KB) + Core #1
-   PU #2 (phys=4)
-   PU #3 (phys=12)
-  Socket #1 + L3 #1 (4096KB)
- L2 #2 (1024KB) + L1 #2 (16KB) + Core #2
-   PU #4 (phys=1)
-   PU #5 (phys=9)
- L2 #3 (1024KB) + L1 #3 (16KB) + Core #3
-   PU #6 (phys=5)
-   PU #7 (phys=13)
-  Socket #2 + L3 #2 (4096KB)
- L2 #4 (1024KB) + L1 #4 (16KB) + Core #4
-   PU #8 (phys=2)
-   PU #9 (phys=10)
- L2 #5 (1024KB) + L1 #5 (16KB) + Core #5
-   PU #10 (phys=6)
-   PU #11 (phys=14)
-  Socket #3 + L3 #3 (4096KB)
- L2 #6 (1024KB) + L1 #6 (16KB) + Core #6
-   PU #12 (phys=3)
-   PU #13 (phys=11)
- L2 #7 (1024KB) + L1 #7 (16KB) + Core #7
-   PU #14 (phys=7)
-   PU #15 (phys=15)
+  Socket L#0 + L3 L#0 (4096KB)
+ L2 L#0 (1024KB) + L1 L#0 (16KB) + Core L#0
+   PU L#0 (P#0)
+   PU L#1 (P#8)
+ L2 L#1 (1024KB) + L1 L#1 (16KB) + Core L#1
+   PU L#2 (P#4)
+   PU L#3 (P#12)
+  Socket L#1 + L3 L#1 (4096KB)
+ L2 L#2 (1024KB) + L1 L#2 (16KB) + Core L#2
+   PU L#4 (P#1)
+   PU L#5 (P#9)
+ L2 L#3 (1024KB) + L1 L#3 (16KB) + Core L#3
+   PU L#6 (P#5)
+   PU L#7 (P#13)
+  Socket L#2 + L3 L#2 (4096KB)
+ L2 L#4 (1024KB) + L1 L#4 (16KB) + Core L#4
+   PU L#8 (P#2)
+   PU L#9 (P#10)
+ L2 L#5 (1024KB) + L1 L#5 (16KB) + Core L#5
+   PU L#10 (P#6)
+   PU L#11 (P#14)
+  Socket L#3 + L3 L#3 (4096KB)
+ L2 L#6 (1024KB) + L1 L#6 (16KB) + Core L#6
+   PU L#12 (P#3)
+   PU L#13 (P#11)
+ L2 L#7 (1024KB) + L1 L#7 (16KB) + Core L#7
+   PU L#14 (P#7)
+   PU L#15 (P#15)
 
 Finally, here's the equivalent output in XML. Long lines were artificially
 broken for document clarity (in the real output, each XML tag is on a single
@@ -191,40 +191,28 @@ line), and only socket #0 is shown for brevity:
 </topology>
 
 On a 4-socket 2-core Opteron NUMA machine, the lstopo tool may show the
-following graphic output:
+following graphical output:
 
                                hagrid.png
 
 Here's the equivalent output in textual form:
 
-Machine (64GB)
-  NUMANode #0 (phys=0 8190MB) + Socket #0
- L2 #0 (1024KB) + L1 #0 (64KB) + Core #0 + PU #0 (phys=0)
- L2 #1 (1024KB) + L1 #1 (64KB) + Core #1 + PU #1 (phys=1)
-  NUMANode #1 (phys=1 8192MB) + Socket #1
- L2 #2 (1024KB) + L1 #2 (64KB) + Core #2 + PU #2 (phys=2)
- L2 #3 (1024KB) + L1 #3 (64KB) + Core #3 + PU #3 (phys=3)
-  NUMANode #2 (phys=2 8192MB) + Socket #2
- L2 #4 (1024KB) + L1 #4 (64KB) + Core #4 + PU #4 (phys=4)
- L2 #5 (1024KB) + L1 #5 (64KB) + Core #5 + PU #5 (phys=5)
-  NUMANode #3 (phys=3 8192MB) + Socket #3
- L2 #6 (1024KB) + L1 #6 (64KB) + Core #6 + PU #6 (phys=6)
- L2 #7 (1024KB) + L1 #7 (64KB) + Core #7 + PU #7 (phys=7)
-  NUMANode #4 (phys=4 8192MB) + Socket #4
- L2 #8 (1024KB) + L1 #8 (64KB) + Core #8 + PU #8 (phys=8)
- L2 #9 (1024KB) + L1 #9 (64KB) + Core #9 + PU #9 (phys=9)
-  NUMANode #5 (phys=5 8192MB) + Socket #5
- L2 #10 (1024KB) + L1 #10 (64KB) + Core #10 + PU #10 (phys=10)
- L2 #11 (1024KB) + L1 #11 (64KB) + Core #11 + PU #11 (phys=11)
-  NUMANode #6 (phys=6 8192MB) + Socket #6
- L2 #12 (1024KB) + L1 #12 (64KB) + Core #12 + PU #12 (phys=12)
- L2 #13 (1024KB) + L1 #13 (64KB) + Core #13 + PU #13 (phys=13)
-  NUMANode #7 (phys=7 8192MB) + Socket #7
- L2 #14 (1024KB) + L1 #14 (64KB) + Core #14 + PU #14 (phys=14)
- L2 #15 (1024KB) + L1 #15 (64KB) + Core #15 + PU #15 (phys=15)
+Machine (32GB)
+  NUMANode L#0 (P#0 8190MB) + Socket L#0
+ L2 L#0 (1024KB) + L1 L#0 (64KB) + Core L#0 + PU L#0 (P#0)
+ L2 L#1 (1024KB) + L1 L#1 (64KB) + Core L#1 + PU L#1 (P#1)
+  NUMANode L#1 (P#1 8192MB) + Socket L#1
+ L2 L#2 (1024KB) + L1 L#2 (64KB) + Core L#2 + PU L#2 (P#2)
+ L2 L#3 (1024KB) + L1 L#3 (64KB) + Core L#3 + PU L#3 (P#3)
+  NUMANode L#2 (P#2 8192MB) + Socket L#2
+ L2 L#4 (1024KB) + L1 L#4 (64KB) + Core L#4 + PU L#4 (P#4)
+ L2 L#5 (1024KB) + L1 L#5 (64KB) + Core L#5 + PU L#5 (P#5)
+  NUMANode L#3 (P#3 8192MB) + Socket L#3
+ L2 L#6 (1024KB) + L1 L#6 (64KB) + Core L#6 + PU L#6 (P#6)
+ L2 L#7 (1024KB) + L1 L#7 (64KB) + Core L#7 + PU L#7 (P#7)
 
 And here's the equivalent output in XML. Similar to above, line breaks were
-added and only PU#0 is shown for brevity:
+added and only PU #0 is shown for brevity:
 
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topology SYSTEM "hwloc.dtd">
@@ -277,25 +265,25 @@ socket):
 
                                emmett.png
 
-Here's the same output in text form:
+Here's the same output in textual form:
 
 Machine (16GB)
-  Socket #0
- L2 #0 (4096KB)
-   L1 #0 (32KB) + Core #0 + PU #0 (phys=0)
-   L1 #1 (32KB) + Core #1 + PU #1 (phys=4)
- L2 #1 (4096KB)
-   L1 #2 (32KB) + Core #2 + PU #2 (phys=2)
-   L1 #3 (32KB) + Core #3 + PU #3 (phys=6)
-  Socket #1
- L2 #2 (4096KB)
-   L1 #4 (32KB) + Core #4 + PU #4 (phys=1)
-   L1 #5 (32KB) + Core #5 + PU #5 (phys=5)
- L2 #3 (4096KB)
-   L1 #6 (32KB) + Core #6 + PU #6 (phys=3)
-   L1 #7 (32KB) + Core #7 + PU #7 (phys=7)
+  Socket L#0
+ L2 L#0 (4096KB)
+   L1 L#0 (32KB) + Core L#0 + PU L#0 (P#0)
+   L1 L#1 (32KB) + Core L#1 + PU L#1 (P#4)
+ L2 L#1 (4096KB)
+   L1 L#2 (32KB) + Core L#2 + PU L#2 (P#2)
+   L1 L#3 (32KB) + Core L#3 + PU L#3 (P#6)
+  Socket L#1
+ L2 L#2 (4096KB)
+   L1 L#4 (32KB) + Core L#4 + PU L#4 (P#1)
+   L1 L#5 (32KB) + Core L#5 + PU L#5 (P#5)
+ L2 L#3 (4096KB)
+   L1 L#6 (32KB) + Core L#6 + PU L#6 (P#3)
+   L1 L#7 (32KB) + Core L#7 + PU L#7 (P#7)
 
-And the same output in XML (line breaks added, only PU#0 shown):
+And the same output in XML (line breaks added, only PU #0 shown):
 
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE topology SYSTEM "hwloc.dtd">
@@ -353,8 +341,8 @@ To precisely define the vocabulary used by hwloc, a Terms and Definitions
 section is available and should probably be read first.
 
 Each hwloc object contains a cpuset describing the list of processing units
-that it contains. These cpusets may be used for Binding. hwloc offers an
-extensive cpuset manipulation interface in hwloc/cpuset.h.
+that it contains. These bitmaps may be used for CPU binding and Memory binding.
+hwloc offers an extensive bitmap manipulation interface in hwloc/bitmap.h.
 
 Moreover, hwloc also comes with additional helpers for interoperability with
 several commonly used environments. See the Interoperability with other
@@ -370,7 +358,7 @@ built during the normal "make" process. The documentation is installed during
 "make install" to $prefix/share/doc/hwloc/ and your systems default man page
 tree (under $prefix, of course).
 
-Portability (especially when using the API or XML)
+Portability
 
 As shown in CLI Examples, hwloc can obtain information on a wide variety of
 hardware topologies. However, some platforms and/or operating system versions
@@ -380,20 +368,30 @@ system with 32 cores (each with 2 hardware threads) running a default
 about NUMA nodes and processor units (PUs). No information about caches,
 sockets, or cores is available.
 
-Here's the graphic output from lstopo on this platform when Simultaneous
+Similarly, Operating System have varying support for CPU and memory binding,
+e.g. while some Operating Systems provide interfaces for all kinds of CPU and
+memory bindings, some others provide only interfaces for a limited number of
+kinds of CPU and memory binding, and some do not provide any binding interface
+at all. Hwloc's binding functions would then simply return the ENOSYS error
+(Function not implemented), meaning that the underlying Operating System does
+not provide any interface for them. CPU binding and Memory binding provide more
+information on which hwloc binding functions should be preferred because
+interfaces for them are usually available on the supported Operating Systems.
+
+Here's the graphical output from lstopo on this platform when Simultaneous
 Multi-Threading (SMT) is enabled:
 
                            ppc64-with-smt.png
 
-And here's the graphic output from lstopo on this platform when SMT is
+And here's the graphical output from lstopo on this platform when SMT is
 disabled:
 
                           ppc64-without-smt.png
 
-Notice that hwloc only sees half the PUs when SMT is disabled. PU#15, for
+Notice that hwloc only sees half the PUs when SMT is disabled. PU #15, for
 example, seems to change location from NUMA node #0 to #1. In reality, no PUs
 "moved" -- they were simply re-numbered when hwloc only saw half as many.
-Hence, PU#15 in the SMT-disabled picture probably corresponds to PU#30 in the
+Hence, PU #15 in the SMT-disabled picture probably corresponds to PU #30 in the
 SMT-enabled picture.
 
 This same "PUs have disappeared" effect can be seen on other platforms -- even
@@ -426,13 +424,17 @@ core of the machine.
 
 /* Example hwloc API program.
  *
- * Copyright ? 2009 INRIA, Universit? Bordeaux 1
+ * Copyright ? 2009-2010 INRIA
+ * Copyright ? 2009-2010 Universit? Bordeaux 1
  * Copyright ? 2009-2010 Cisco Systems, Inc.  All rights reserved.
  *
  * hwloc-hello.c
  */
 
 #include <hwloc.h>
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 
 static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
                         int depth)
@@ -450,7 +452,7 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
 int main(void)
 {
  int depth;
- unsigned i;
+ unsigned i, n;
  unsigned long size;
  int levels;
  char string[128];
@@ -542,22 +544,45 @@ int main(void)
                 hwloc_get_nbobjs_by_depth(topology, depth) - 1);
  if (obj) {
      /* Get a copy of its cpuset that we may modify. */
-     cpuset = hwloc_cpuset_dup(obj->cpuset);
+     cpuset = hwloc_bitmap_dup(obj->cpuset);
 
      /* Get only one logical processor (in case the core is
         SMT/hyperthreaded). */
-     hwloc_cpuset_singlify(cpuset);
+     hwloc_bitmap_singlify(cpuset);
 
      /* And try to bind ourself there. */
      if (hwloc_set_cpubind(topology, cpuset, 0)) {
          char *str;
-         hwloc_cpuset_asprintf(&str, obj->cpuset);
-         printf("Couldn't bind to cpuset %s\n", str);
+         int error = errno;
+         hwloc_bitmap_asprintf(&str, obj->cpuset);
+         printf("Couldn't bind to cpuset %s: %s\n", str, strerror(error));
          free(str);
      }
 
      /* Free our cpuset copy */
-     hwloc_cpuset_free(cpuset);
+     hwloc_bitmap_free(cpuset);
+ }
+
+ /*****************************************************************
+  * Sixth example:
+  * Allocate some memory on the last NUMA node, bind some existing
+  * memory to the last NUMA node.
+  *****************************************************************/
+ /* Get last node. */
+ n = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE);
+ if (n) {
+     void *m;
+     size_t size = 1024*1024;
+
+     obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NODE, n - 1);
+     m = hwloc_alloc_membind_nodeset(topology, size, obj->nodeset,
+             HWLOC_MEMBIND_DEFAULT, 0);
+     hwloc_free(topology, m, size);
+
+     m = malloc(size);
+     hwloc_set_area_membind_nodeset(topology, m, size, obj->nodeset,
+             HWLOC_MEMBIND_DEFAULT, 0);
+     free(m);
  }
 
  /* Destroy topology object. */
@@ -641,6 +666,23 @@ dept-info.labri.fr/~namyst/). PLPA was initially developed by the Open MPI
 development team as a sub-project. Both are now deprecated in favor of hwloc,
 which is distributed as an Open MPI sub-project.
 
+Further Reading
+
+The documentation chapters include
+
+  * Terms and Definitions
+  * Command-line tools
+  * Environment variables
+  * CPU Binding and Memory Binding
+  * Interoperability with other software
+  * Thread safety
+  * Embedding hwloc in other software
+  * Switching from PLPA to hwloc
+  * Frequently Asked Questions
+
+Make sure to have had a look at those too!
+
 -------------------------------------------------------------------------------
 
-Generated by  doxygen 1.6.2
+Generated on Thu Dec 16 2010 16:48:29 for Hardware Locality (hwloc) by  doxygen
+1.7.1

@@ -1,5 +1,7 @@
 /*
- * Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+ * Copyright © 2009 CNRS
+ * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2010 Université Bordeaux 1
  * See COPYING in top-level directory.
  */
 
@@ -15,28 +17,89 @@
 #include <sys/types.h>
 #include <sys/processor.h>
 #include <sys/procset.h>
+#include <sys/types.h>
+#include <sys/mman.h>
 
-/* Note: get_cpubind not available on Solaris */
-/* TODO: try to use pset (restricted to super-user) to support cpusets with weigth > 1? */
+#ifdef HAVE_LIBLGRP
+#  include <sys/lgrp_user.h>
+#endif
+
+/* TODO: use psets? (only for root)
+ */
+
 static int
-hwloc_solaris_set_sth_cpubind(hwloc_topology_t topology, idtype_t idtype, id_t id, hwloc_const_cpuset_t hwloc_set, int policy __hwloc_attribute_unused)
+hwloc_solaris_set_sth_cpubind(hwloc_topology_t topology, idtype_t idtype, id_t id, hwloc_const_bitmap_t hwloc_set, int flags)
 {
   unsigned target;
 
   /* The resulting binding is always strict */
 
-  if (hwloc_cpuset_isequal(hwloc_set, hwloc_topology_get_complete_cpuset(topology))) {
+  if (hwloc_bitmap_isequal(hwloc_set, hwloc_topology_get_complete_cpuset(topology))) {
     if (processor_bind(idtype, id, PBIND_NONE, NULL) != 0)
       return -1;
+#ifdef HAVE_LIBLGRP
+    if (!(flags & HWLOC_CPUBIND_NOMEMBIND)) {
+      int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_NODE);
+      if (depth >= 0) {
+	int n = hwloc_get_nbobjs_by_depth(topology, depth);
+	int i;
+
+	for (i = 0; i < n; i++) {
+	  hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, depth, i);
+	  lgrp_affinity_set(idtype, id, obj->os_index, LGRP_AFF_NONE);
+	}
+      }
+    }
+#endif /* HAVE_LIBLGRP */
     return 0;
   }
 
-  if (hwloc_cpuset_weight(hwloc_set) != 1) {
+#ifdef HAVE_LIBLGRP
+  if (!(flags & HWLOC_CPUBIND_NOMEMBIND)) {
+    int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_NODE);
+    if (depth >= 0) {
+      int n = hwloc_get_nbobjs_by_depth(topology, depth);
+      int i;
+      int ok;
+      hwloc_bitmap_t target = hwloc_bitmap_alloc();
+
+      for (i = 0; i < n; i++) {
+	hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, depth, i);
+        if (hwloc_bitmap_isincluded(obj->cpuset, hwloc_set))
+          hwloc_bitmap_or(target, target, obj->cpuset);
+      }
+
+      ok = hwloc_bitmap_isequal(target, hwloc_set);
+      hwloc_bitmap_free(target);
+
+      if (ok) {
+        /* Ok, managed to achieve hwloc_set by just combining NUMA nodes */
+
+        for (i = 0; i < n; i++) {
+          hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, depth, i);
+
+          if (hwloc_bitmap_isincluded(obj->cpuset, hwloc_set)) {
+            lgrp_affinity_set(idtype, id, obj->os_index, LGRP_AFF_STRONG);
+          } else {
+            if (flags & HWLOC_CPUBIND_STRICT)
+              lgrp_affinity_set(idtype, id, obj->os_index, LGRP_AFF_NONE);
+            else
+              lgrp_affinity_set(idtype, id, obj->os_index, LGRP_AFF_WEAK);
+          }
+        }
+
+        return 0;
+      }
+    }
+  }
+#endif /* HAVE_LIBLGRP */
+
+  if (hwloc_bitmap_weight(hwloc_set) != 1) {
     errno = EXDEV;
     return -1;
   }
 
-  target = hwloc_cpuset_first(hwloc_set);
+  target = hwloc_bitmap_first(hwloc_set);
 
   if (processor_bind(idtype, id,
 		     (processorid_t) (target), NULL) != 0)
@@ -46,27 +109,222 @@ hwloc_solaris_set_sth_cpubind(hwloc_topology_t topology, idtype_t idtype, id_t i
 }
 
 static int
-hwloc_solaris_set_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_const_cpuset_t hwloc_set, int policy)
+hwloc_solaris_set_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_const_bitmap_t hwloc_set, int flags)
 {
-  return hwloc_solaris_set_sth_cpubind(topology, P_PID, pid, hwloc_set, policy);
+  return hwloc_solaris_set_sth_cpubind(topology, P_PID, pid, hwloc_set, flags);
 }
 
 static int
-hwloc_solaris_set_thisproc_cpubind(hwloc_topology_t topology, hwloc_const_cpuset_t hwloc_set, int policy)
+hwloc_solaris_set_thisproc_cpubind(hwloc_topology_t topology, hwloc_const_bitmap_t hwloc_set, int flags)
 {
-  return hwloc_solaris_set_sth_cpubind(topology, P_PID, P_MYID, hwloc_set, policy);
+  return hwloc_solaris_set_sth_cpubind(topology, P_PID, P_MYID, hwloc_set, flags);
 }
 
 static int
-hwloc_solaris_set_thisthread_cpubind(hwloc_topology_t topology, hwloc_const_cpuset_t hwloc_set, int policy)
+hwloc_solaris_set_thisthread_cpubind(hwloc_topology_t topology, hwloc_const_bitmap_t hwloc_set, int flags)
 {
-  return hwloc_solaris_set_sth_cpubind(topology, P_LWPID, P_MYID, hwloc_set, policy);
+  return hwloc_solaris_set_sth_cpubind(topology, P_LWPID, P_MYID, hwloc_set, flags);
 }
-
-/* TODO: thread, maybe not easy because of the historical n:m implementation */
 
 #ifdef HAVE_LIBLGRP
-#      include <sys/lgrp_user.h>
+static int
+hwloc_solaris_get_sth_cpubind(hwloc_topology_t topology, idtype_t idtype, id_t id, hwloc_bitmap_t hwloc_set, int flags __hwloc_attribute_unused)
+{
+  int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_NODE);
+  int n;
+  int i;
+
+  if (depth < 0) {
+    errno = ENOSYS;
+    return -1;
+  }
+
+  hwloc_bitmap_zero(hwloc_set);
+  n = hwloc_get_nbobjs_by_depth(topology, depth);
+
+  for (i = 0; i < n; i++) {
+    hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, depth, i);
+    lgrp_affinity_t aff = lgrp_affinity_get(idtype, id, obj->os_index);
+
+    if (aff == LGRP_AFF_STRONG)
+      hwloc_bitmap_or(hwloc_set, hwloc_set, obj->cpuset);      
+  }
+
+  if (hwloc_bitmap_iszero(hwloc_set))
+    hwloc_bitmap_copy(hwloc_set, hwloc_topology_get_complete_cpuset(topology));
+
+  return 0;
+}
+
+static int
+hwloc_solaris_get_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_bitmap_t hwloc_set, int flags)
+{
+  return hwloc_solaris_get_sth_cpubind(topology, P_PID, pid, hwloc_set, flags);
+}
+
+static int
+hwloc_solaris_get_thisproc_cpubind(hwloc_topology_t topology, hwloc_bitmap_t hwloc_set, int flags)
+{
+  return hwloc_solaris_get_sth_cpubind(topology, P_PID, P_MYID, hwloc_set, flags);
+}
+
+static int
+hwloc_solaris_get_thisthread_cpubind(hwloc_topology_t topology, hwloc_bitmap_t hwloc_set, int flags)
+{
+  return hwloc_solaris_get_sth_cpubind(topology, P_LWPID, P_MYID, hwloc_set, flags);
+}
+#endif /* HAVE_LIBLGRP */
+
+/* TODO: given thread, probably not easy because of the historical n:m implementation */
+#ifdef HAVE_LIBLGRP
+static int
+hwloc_solaris_set_sth_membind(hwloc_topology_t topology, idtype_t idtype, id_t id, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
+{
+  int depth;
+  int n, i;
+
+  switch (policy) {
+    case HWLOC_MEMBIND_DEFAULT:
+    case HWLOC_MEMBIND_BIND:
+      break;
+    default:
+      errno = ENOSYS;
+      return -1;
+  }
+
+  if (flags & HWLOC_MEMBIND_NOCPUBIND) {
+    errno = ENOSYS;
+    return -1;
+  }
+
+  depth = hwloc_get_type_depth(topology, HWLOC_OBJ_NODE);
+  if (depth < 0) {
+    errno = EXDEV;
+    return -1;
+  }
+  n = hwloc_get_nbobjs_by_depth(topology, depth);
+
+  for (i = 0; i < n; i++) {
+    hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, depth, i);
+    if (hwloc_bitmap_isset(nodeset, obj->os_index)) {
+      lgrp_affinity_set(idtype, id, obj->os_index, LGRP_AFF_STRONG);
+    } else {
+      if (flags & HWLOC_CPUBIND_STRICT)
+	lgrp_affinity_set(idtype, id, obj->os_index, LGRP_AFF_NONE);
+      else
+	lgrp_affinity_set(idtype, id, obj->os_index, LGRP_AFF_WEAK);
+    }
+  }
+
+  return 0;
+}
+
+static int
+hwloc_solaris_set_proc_membind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
+{
+  return hwloc_solaris_set_sth_membind(topology, P_PID, pid, nodeset, policy, flags);
+}
+
+static int
+hwloc_solaris_set_thisproc_membind(hwloc_topology_t topology, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
+{
+  return hwloc_solaris_set_sth_membind(topology, P_PID, P_MYID, nodeset, policy, flags);
+}
+
+static int
+hwloc_solaris_set_thisthread_membind(hwloc_topology_t topology, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
+{
+  return hwloc_solaris_set_sth_membind(topology, P_LWPID, P_MYID, nodeset, policy, flags);
+}
+
+static int
+hwloc_solaris_get_sth_membind(hwloc_topology_t topology, idtype_t idtype, id_t id, hwloc_nodeset_t nodeset, hwloc_membind_policy_t *policy, int flags __hwloc_attribute_unused)
+{
+  int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_NODE);
+  int n;
+  int i;
+
+  if (depth < 0) {
+    errno = ENOSYS;
+    return -1;
+  }
+
+  hwloc_bitmap_zero(nodeset);
+  n = hwloc_get_nbobjs_by_depth(topology, depth);
+
+  for (i = 0; i < n; i++) {
+    hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, depth, i);
+    lgrp_affinity_t aff = lgrp_affinity_get(idtype, id, obj->os_index);
+
+    if (aff == LGRP_AFF_STRONG)
+      hwloc_bitmap_set(nodeset, obj->os_index);
+  }
+
+  if (hwloc_bitmap_iszero(nodeset))
+    hwloc_bitmap_copy(nodeset, hwloc_topology_get_complete_nodeset(topology));
+
+  *policy = HWLOC_MEMBIND_DEFAULT;
+  return 0;
+}
+
+static int
+hwloc_solaris_get_proc_membind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_nodeset_t nodeset, hwloc_membind_policy_t *policy, int flags)
+{
+  return hwloc_solaris_get_sth_membind(topology, P_PID, pid, nodeset, policy, flags);
+}
+
+static int
+hwloc_solaris_get_thisproc_membind(hwloc_topology_t topology, hwloc_nodeset_t nodeset, hwloc_membind_policy_t *policy, int flags)
+{
+  return hwloc_solaris_get_sth_membind(topology, P_PID, P_MYID, nodeset, policy, flags);
+}
+
+static int
+hwloc_solaris_get_thisthread_membind(hwloc_topology_t topology, hwloc_nodeset_t nodeset, hwloc_membind_policy_t *policy, int flags)
+{
+  return hwloc_solaris_get_sth_membind(topology, P_LWPID, P_MYID, nodeset, policy, flags);
+}
+#endif /* HAVE_LIBLGRP */
+
+
+#ifdef MADV_ACCESS_LWP 
+static int
+hwloc_solaris_set_area_membind(hwloc_topology_t topology, const void *addr, size_t len, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags __hwloc_attribute_unused)
+{
+  int advice;
+  size_t remainder;
+
+  /* Can not give a set of nodes just for an area.  */
+  if (!hwloc_bitmap_isequal(nodeset, hwloc_topology_get_complete_nodeset(topology))) {
+    errno = EXDEV;
+    return -1;
+  }
+
+  switch (policy) {
+    case HWLOC_MEMBIND_DEFAULT:
+    case HWLOC_MEMBIND_BIND:
+      advice = MADV_ACCESS_DEFAULT;
+      break;
+    case HWLOC_MEMBIND_FIRSTTOUCH:
+    case HWLOC_MEMBIND_NEXTTOUCH:
+      advice = MADV_ACCESS_LWP;
+      break;
+    case HWLOC_MEMBIND_INTERLEAVE:
+      advice = MADV_ACCESS_MANY;
+      break;
+    default:
+      errno = ENOSYS;
+      return -1;
+  }
+
+  remainder = (uintptr_t) addr & (sysconf(_SC_PAGESIZE)-1);
+  addr = (char*) addr - remainder;
+  len += remainder;
+  return madvise((void*) addr, len, advice);
+}
+#endif
+
+#ifdef HAVE_LIBLGRP
 static void
 browse(struct hwloc_topology *topology, lgrp_cookie_t cookie, lgrp_id_t lgrp, hwloc_obj_t *glob_lgrps, unsigned *curlgrp)
 {
@@ -78,23 +336,24 @@ browse(struct hwloc_topology *topology, lgrp_cookie_t cookie, lgrp_id_t lgrp, hw
   if (n == -1)
     return;
 
+  /* Is this lgrp a NUMA node? */
   if ((mem_size = lgrp_mem_size(cookie, lgrp, LGRP_MEM_SZ_INSTALLED, LGRP_CONTENT_DIRECT)) > 0)
   {
     int i;
     processorid_t cpuids[n];
 
     obj = hwloc_alloc_setup_object(HWLOC_OBJ_NODE, lgrp);
-    obj->nodeset = hwloc_cpuset_alloc();
-    hwloc_cpuset_set(obj->nodeset, lgrp);
-    obj->cpuset = hwloc_cpuset_alloc();
+    obj->nodeset = hwloc_bitmap_alloc();
+    hwloc_bitmap_set(obj->nodeset, lgrp);
+    obj->cpuset = hwloc_bitmap_alloc();
     glob_lgrps[(*curlgrp)++] = obj;
 
     lgrp_cpus(cookie, lgrp, cpuids, n, LGRP_CONTENT_HIERARCHY);
     for (i = 0; i < n ; i++) {
       hwloc_debug("node %ld's cpu %d is %d\n", lgrp, i, cpuids[i]);
-      hwloc_cpuset_set(obj->cpuset, cpuids[i]);
+      hwloc_bitmap_set(obj->cpuset, cpuids[i]);
     }
-    hwloc_debug_1arg_cpuset("node %ld has cpuset %s\n",
+    hwloc_debug_1arg_bitmap("node %ld has cpuset %s\n",
 	lgrp, obj->cpuset);
 
     /* or LGRP_MEM_SZ_FREE */
@@ -150,11 +409,14 @@ hwloc_look_lgrp(struct hwloc_topology *topology)
 #ifdef HAVE_LGRP_LATENCY_COOKIE
     {
       unsigned distances[curlgrp][curlgrp];
+      unsigned indexes[curlgrp];
       unsigned i, j;
-      for (i = 0; i < curlgrp; i++)
+      for (i = 0; i < curlgrp; i++) {
+        indexes[i] = glob_lgrps[i]->os_index;
 	for (j = 0; j < curlgrp; j++)
 	  distances[i][j] = lgrp_latency_cookie(cookie, glob_lgrps[i]->os_index, glob_lgrps[j]->os_index, LGRP_LAT_CPU_TO_MEM);
-      hwloc_setup_misc_level_from_distances(topology, curlgrp, glob_lgrps, (unsigned*) distances);
+      }
+      hwloc_setup_misc_level_from_distances(topology, curlgrp, glob_lgrps, (unsigned*) distances, (unsigned*) indexes);
     }
 #endif /* HAVE_LGRP_LATENCY_COOKIE */
   }
@@ -164,6 +426,7 @@ hwloc_look_lgrp(struct hwloc_topology *topology)
 
 #ifdef HAVE_LIBKSTAT
 #include <kstat.h>
+#define HWLOC_NBMAXCPUS 1024 /* FIXME: drop */
 static int
 hwloc_look_kstat(struct hwloc_topology *topology)
 {
@@ -241,7 +504,7 @@ hwloc_look_kstat(struct hwloc_topology *topology)
           hwloc_debug("cpu%u's state is %s\n", cpuid, stat->value.c);
           if (strcmp(stat->value.c, "on-line"))
             /* not online */
-            hwloc_cpuset_clr(topology->levels[0][0]->online_cpuset, cpuid);
+            hwloc_bitmap_clr(topology->levels[0][0]->online_cpuset, cpuid);
         }
 
       if (look_chips) do {
@@ -363,6 +626,8 @@ hwloc_look_solaris(struct hwloc_topology *topology)
     return;
 #endif /* HAVE_LIBKSTAT */
   hwloc_setup_pu_level(topology, nbprocs);
+
+  hwloc_add_object_info(topology->levels[0][0], "Backend", "Solaris");
 }
 
 void
@@ -371,9 +636,22 @@ hwloc_set_solaris_hooks(struct hwloc_topology *topology)
   topology->set_proc_cpubind = hwloc_solaris_set_proc_cpubind;
   topology->set_thisproc_cpubind = hwloc_solaris_set_thisproc_cpubind;
   topology->set_thisthread_cpubind = hwloc_solaris_set_thisthread_cpubind;
+#ifdef HAVE_LIBLGRP
+  topology->get_proc_cpubind = hwloc_solaris_get_proc_cpubind;
+  topology->get_thisproc_cpubind = hwloc_solaris_get_thisproc_cpubind;
+  topology->get_thisthread_cpubind = hwloc_solaris_get_thisthread_cpubind;
+#endif /* HAVE_LIBLGRP */
+#ifdef MADV_ACCESS_LWP 
+  topology->set_area_membind = hwloc_solaris_set_area_membind;
+  topology->set_proc_membind = hwloc_solaris_set_proc_membind;
+  topology->set_thisproc_membind = hwloc_solaris_set_thisproc_membind;
+  topology->set_thisthread_membind = hwloc_solaris_set_thisthread_membind;
+  topology->get_proc_membind = hwloc_solaris_get_proc_membind;
+  topology->get_thisproc_membind = hwloc_solaris_get_thisproc_membind;
+  topology->get_thisthread_membind = hwloc_solaris_get_thisthread_membind;
+  topology->support.membind->firsttouch_membind = 1;
+  topology->support.membind->bind_membind = 1;
+  topology->support.membind->interleave_membind = 1;
+  topology->support.membind->nexttouch_membind = 1;
+#endif
 }
-
-/* TODO:
- * memory binding: lgrp_affinity_set
- * madvise(MADV_ACCESS_LWP / ACCESS_MANY)
- */

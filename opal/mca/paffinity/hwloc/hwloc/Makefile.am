@@ -1,4 +1,5 @@
-# Copyright © 2009      INRIA, Université Bordeaux 1
+# Copyright © 2009      INRIA
+# Copyright © 2009      Université Bordeaux 1
 # Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
 
 # Note that the -I directory must *exactly* match what was specified

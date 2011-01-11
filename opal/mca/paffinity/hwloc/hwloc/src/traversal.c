@@ -1,5 +1,7 @@
 /*
- * Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+ * Copyright © 2009 CNRS
+ * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2010 Université Bordeaux 1
  * Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
@@ -57,15 +59,15 @@ unsigned hwloc_get_closest_objs (struct hwloc_topology *topology, struct hwloc_o
       nextparent = parent->parent;
       if (!nextparent)
 	goto out;
-      if (!hwloc_cpuset_isequal(parent->cpuset, nextparent->cpuset))
+      if (!hwloc_bitmap_isequal(parent->cpuset, nextparent->cpuset))
 	break;
       parent = nextparent;
     }
 
     /* traverse src's objects and find those that are in nextparent and were not in parent */
     for(i=0; i<src_nbobjects; i++) {
-      if (hwloc_cpuset_isincluded(src_objs[i]->cpuset, nextparent->cpuset)
-	  && !hwloc_cpuset_isincluded(src_objs[i]->cpuset, parent->cpuset)) {
+      if (hwloc_bitmap_isincluded(src_objs[i]->cpuset, nextparent->cpuset)
+	  && !hwloc_bitmap_isincluded(src_objs[i]->cpuset, parent->cpuset)) {
 	objs[stored++] = src_objs[i];
 	if (stored == max)
 	  goto out;
@@ -79,7 +81,7 @@ unsigned hwloc_get_closest_objs (struct hwloc_topology *topology, struct hwloc_o
 }
 
 static int
-hwloc__get_largest_objs_inside_cpuset (struct hwloc_obj *current, hwloc_const_cpuset_t set,
+hwloc__get_largest_objs_inside_cpuset (struct hwloc_obj *current, hwloc_const_bitmap_t set,
 				       struct hwloc_obj ***res, int *max)
 {
   int gotten = 0;
@@ -89,7 +91,7 @@ hwloc__get_largest_objs_inside_cpuset (struct hwloc_obj *current, hwloc_const_cp
   if (*max <= 0)
     return 0;
 
-  if (hwloc_cpuset_isequal(current->cpuset, set)) {
+  if (hwloc_bitmap_isequal(current->cpuset, set)) {
     **res = current;
     (*res)++;
     (*max)--;
@@ -97,19 +99,19 @@ hwloc__get_largest_objs_inside_cpuset (struct hwloc_obj *current, hwloc_const_cp
   }
 
   for (i=0; i<current->arity; i++) {
-    hwloc_cpuset_t subset = hwloc_cpuset_dup(set);
+    hwloc_bitmap_t subset = hwloc_bitmap_dup(set);
     int ret;
 
     /* split out the cpuset part corresponding to this child and see if there's anything to do */
-    hwloc_cpuset_and(subset, subset, current->children[i]->cpuset);
-    if (hwloc_cpuset_iszero(subset)) {
-      hwloc_cpuset_free(subset);
+    hwloc_bitmap_and(subset, subset, current->children[i]->cpuset);
+    if (hwloc_bitmap_iszero(subset)) {
+      hwloc_bitmap_free(subset);
       continue;
     }
 
     ret = hwloc__get_largest_objs_inside_cpuset (current->children[i], subset, res, max);
     gotten += ret;
-    hwloc_cpuset_free(subset);
+    hwloc_bitmap_free(subset);
 
     /* if no more room to store remaining objects, return what we got so far */
     if (!*max)
@@ -120,12 +122,12 @@ hwloc__get_largest_objs_inside_cpuset (struct hwloc_obj *current, hwloc_const_cp
 }
 
 int
-hwloc_get_largest_objs_inside_cpuset (struct hwloc_topology *topology, hwloc_const_cpuset_t set,
+hwloc_get_largest_objs_inside_cpuset (struct hwloc_topology *topology, hwloc_const_bitmap_t set,
 				      struct hwloc_obj **objs, int max)
 {
   struct hwloc_obj *current = topology->levels[0][0];
 
-  if (!hwloc_cpuset_isincluded(set, current->cpuset))
+  if (!hwloc_bitmap_isincluded(set, current->cpuset))
     return -1;
 
   if (max <= 0)
@@ -201,50 +203,78 @@ hwloc_obj_attr_snprintf(char * __hwloc_restrict string, size_t size, hwloc_obj_t
 {
   char memory[64] = "";
   char specific[64] = "";
-  const char *specificseparator;
+  char infos[256] = "";
+  const char *prefix = "";
 
   if (verbose) {
     if (obj->memory.local_memory)
-      hwloc_snprintf(memory, sizeof(memory), "local=%lu%s%stotal=%lu%s",
+      hwloc_snprintf(memory, sizeof(memory), "%slocal=%lu%s%stotal=%lu%s",
+		     prefix,
 		     (unsigned long) hwloc_memory_size_printf_value(obj->memory.total_memory, verbose),
 		     hwloc_memory_size_printf_unit(obj->memory.total_memory, verbose),
 		     separator,
 		     (unsigned long) hwloc_memory_size_printf_value(obj->memory.local_memory, verbose),
 		     hwloc_memory_size_printf_unit(obj->memory.local_memory, verbose));
     else if (obj->memory.total_memory)
-      hwloc_snprintf(memory, sizeof(memory), "total=%lu%s",
+      hwloc_snprintf(memory, sizeof(memory), "%stotal=%lu%s",
+		     prefix,
 		     (unsigned long) hwloc_memory_size_printf_value(obj->memory.total_memory, verbose),
 		     hwloc_memory_size_printf_unit(obj->memory.total_memory, verbose));
   } else {
     if (obj->memory.total_memory)
-      hwloc_snprintf(memory, sizeof(memory), "%lu%s",
+      hwloc_snprintf(memory, sizeof(memory), "%s%lu%s",
+		     prefix,
 		     (unsigned long) hwloc_memory_size_printf_value(obj->memory.total_memory, verbose),
 		     hwloc_memory_size_printf_unit(obj->memory.total_memory, verbose));
   }
+  if (*memory)
+    prefix = separator;
 
   switch (obj->type) {
-  case HWLOC_OBJ_MACHINE:
-    if (verbose)
-      hwloc_snprintf(specific, sizeof(specific), "%s%s%s",
-		     obj->attr->machine.dmi_board_vendor ? obj->attr->machine.dmi_board_vendor : "",
-		     obj->attr->machine.dmi_board_vendor && obj->attr->machine.dmi_board_name ? separator : "",
-		     obj->attr->machine.dmi_board_name ? obj->attr->machine.dmi_board_name : "");
-    break;
   case HWLOC_OBJ_CACHE:
-    hwloc_snprintf(specific, sizeof(specific), "%lu%s",
-		   (unsigned long) hwloc_memory_size_printf_value(obj->attr->cache.size, verbose),
-		   hwloc_memory_size_printf_unit(obj->attr->cache.size, verbose));
+    if (verbose)
+      hwloc_snprintf(specific, sizeof(specific), "%s%lu%s%sline=%u",
+		     prefix,
+		     (unsigned long) hwloc_memory_size_printf_value(obj->attr->cache.size, verbose),
+		     hwloc_memory_size_printf_unit(obj->attr->cache.size, verbose),
+		     separator, obj->attr->cache.linesize);
+    else
+      hwloc_snprintf(specific, sizeof(specific), "%s%lu%s",
+		     prefix,
+		     (unsigned long) hwloc_memory_size_printf_value(obj->attr->cache.size, verbose),
+		     hwloc_memory_size_printf_unit(obj->attr->cache.size, verbose));
     break;
   default:
     break;
   }
+  if (*specific)
+    prefix = separator;
 
-  /* does the type-specific attribute string need separator prefix ? */
-  specificseparator = *memory && *specific ? separator : "";
+  if (verbose) {
+    char *tmpinfos = infos;
+    int tmplen = sizeof(infos);
+    int res;
+    unsigned i;
+    for(i=0; i<obj->infos_count; i++) {
+      if (strchr(obj->infos[i].value, ' '))
+	res = hwloc_snprintf(tmpinfos, tmplen, "%s%s=\"%s\"",
+			     prefix,
+			     obj->infos[i].name, obj->infos[i].value);
+      else
+	res = hwloc_snprintf(tmpinfos, tmplen, "%s%s=%s",
+			     prefix,
+			     obj->infos[i].name, obj->infos[i].value);
+      if (res >= tmplen)
+        res = tmplen;
+      tmplen -= res;
+      tmpinfos += res;
+    }
+  }
+  if (*infos)
+    prefix = separator;
 
   return hwloc_snprintf(string, size, "%s%s%s",
-			memory,
-			specificseparator, specific);
+			memory, specific, infos);
 }
 
 
@@ -273,15 +303,15 @@ hwloc_obj_snprintf(char *string, size_t size,
 
 int hwloc_obj_cpuset_snprintf(char *str, size_t size, size_t nobj, struct hwloc_obj * const *objs)
 {
-  hwloc_cpuset_t set = hwloc_cpuset_alloc();
+  hwloc_bitmap_t set = hwloc_bitmap_alloc();
   int res;
   unsigned i;
 
-  hwloc_cpuset_zero(set);
+  hwloc_bitmap_zero(set);
   for(i=0; i<nobj; i++)
-    hwloc_cpuset_or(set, set, objs[i]->cpuset);
+    hwloc_bitmap_or(set, set, objs[i]->cpuset);
 
-  res = hwloc_cpuset_snprintf(str, size, set);
-  hwloc_cpuset_free(set);
+  res = hwloc_bitmap_snprintf(str, size, set);
+  hwloc_bitmap_free(set);
   return res;
 }

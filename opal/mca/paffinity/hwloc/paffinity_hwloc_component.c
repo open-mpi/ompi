@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -88,20 +88,12 @@ static int hwloc_register(void)
 
 static int hwloc_open(void)
 {
-    hwloc_cpuset_t set;
-
     /* Initialize hwloc */
     if (0 != hwloc_topology_init(&(mca_paffinity_hwloc_component.topology)) ||
         0 != hwloc_topology_load(mca_paffinity_hwloc_component.topology)) {
         return OPAL_ERR_NOT_AVAILABLE;
     }
     mca_paffinity_hwloc_component.topology_need_destroy = true;
-
-    /* Find out how many cpu's an hwloc_cpuset_t can hold */
-    set = hwloc_cpuset_alloc();
-    hwloc_cpuset_fill(set);
-    mca_paffinity_hwloc_component.cpuset_max_size = hwloc_cpuset_weight(set);
-    hwloc_cpuset_free(set);    
 
     return OPAL_SUCCESS;
 }

@@ -10,7 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # and renamed for hwloc:
-# Copyright (c) 2009 INRIA, Université Bordeaux 1
+# Copyright (c) 2009 INRIA
+# Copyright (c) 2009 Université Bordeaux 1
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -56,7 +57,11 @@
 #   Sun C++: skip
 #
 AC_DEFUN([_HWLOC_ATTRIBUTE_FAIL_SEARCH],[
-    AC_REQUIRE([AC_PROG_GREP])
+    # Be safe for systems that have ancient Autoconf's (e.g., RHEL5)
+    m4_ifdef([AC_PROG_GREP], 
+             [AC_REQUIRE([AC_PROG_GREP])],
+             [GREP=grep])
+
     if test -s conftest.err ; then
         for i in ignore skip ; do
             $GREP -iq $i conftest.err
