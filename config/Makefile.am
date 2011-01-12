@@ -10,6 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      Oracle and/or its affilitates.  All rights 
+#                         reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,6 +26,7 @@ EXTRA_DIST = \
         lt-sun-fortran.diff \
 	lt1522-pathCC.diff \
 	lt21a-pathCC.diff \
+	ltmain_pgi_tp.diff \
 	ltmain_otool.diff \
 	libtool-ibm-xlf.diff
 
