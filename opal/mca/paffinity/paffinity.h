@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -244,7 +244,7 @@ typedef int (*opal_paffinity_base_module_get_fn_t)(opal_paffinity_base_cpu_set_t
 /**
  * Returns mapping of PHYSICAL socket:core -> PHYSICAL processor id.
  * 
- * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * Return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  * supported
  */
 typedef int (*opal_paffinity_base_module_get_map_to_processor_id_fn_t)(int physical_socket,
@@ -254,7 +254,7 @@ typedef int (*opal_paffinity_base_module_get_map_to_processor_id_fn_t)(int physi
 /**
  * Provides mapping of PHYSICAL processor id -> PHYSICAL socket:core.
  * 
- * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * Return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  * supported
  */
 typedef int (*opal_paffinity_base_module_get_map_to_socket_core_fn_t)(int physical_processor_id,
@@ -264,7 +264,7 @@ typedef int (*opal_paffinity_base_module_get_map_to_socket_core_fn_t)(int physic
 /**
  * Provides number of LOGICAL processors in a host.
  * 
- * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * Return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  * supported
  */
 typedef int (*opal_paffinity_base_module_get_processor_info_fn_t)(int *num_processors);
@@ -272,7 +272,7 @@ typedef int (*opal_paffinity_base_module_get_processor_info_fn_t)(int *num_proce
 /**
  * Provides the number of LOGICAL sockets in a host.
  * 
- * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * Return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
  * supported
  */
 typedef int (*opal_paffinity_base_module_get_socket_info_fn_t)(int *num_sockets);
@@ -281,35 +281,32 @@ typedef int (*opal_paffinity_base_module_get_socket_info_fn_t)(int *num_sockets)
  * Provides the number of LOGICAL cores in a PHYSICAL socket. currently supported
  * only in Linux hosts
  * 
- * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
- * supporeted (solaris, windows, etc...)
+ * Returns OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
+ * supported.
  */
 typedef int (*opal_paffinity_base_module_get_core_info_fn_t)(int physical_socket, int *num_cores);
 
 /**
- * Return the PHYSICAL processor id that corresponds to the
- * given LOGICAL processor id
+ * Return the PHYSICAL processor ID that corresponds to the
+ * given LOGICAL processor ID.
  *
- * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
- * supporeted (solaris, windows, etc...)
+ * Return OPAL_ERR_NOT_SUPPORTED if not supported.
  */
 typedef int (*opal_paffinity_base_module_get_physical_processor_id_fn_t)(int logical_processor_id);
 
 /**
- * Return the PHYSICAL socket id that corresponds to the given
- * LOGICAL socket id
+ * Return the PHYSICAL socket ID that corresponds to the given
+ * LOGICAL socket ID.
  * 
- * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
- * supporeted (solaris, windows, etc...)
+ * Return OPAL_ERR_NOT_SUPPORTED if not supported.
  */
 typedef int (*opal_paffinity_base_module_get_physical_socket_id_fn_t)(int logical_socket_id);
 
 /**
- * Return the PHYSICAL core id that corresponds to the given LOGICAL
- * core id on the given PHYSICAL socket id
+ * Return the PHYSICAL core ID that corresponds to the given LOGICAL
+ * core ID on the given PHYSICAL socket ID.
  * 
- * return OPAL_SUCCESS or OPAL_ERR_NOT_SUPPORTED if not
- * supporeted (solaris, windows, etc...)
+ * Return OPAL_ERR_NOT_SUPPORTED if not supported.
  */
 typedef int (*opal_paffinity_base_module_get_physical_core_id_fn_t)(int physical_socket_id, int logical_core_id);
 
