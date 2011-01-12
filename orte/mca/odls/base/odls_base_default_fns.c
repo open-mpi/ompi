@@ -77,6 +77,8 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 
+static bool override_oversubscribed = false;
+
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
 */
@@ -327,6 +329,12 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
+    /* pack the oversubscribe override flag */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->oversubscribe_override, 1, OPAL_BOOL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* pack the map & binding policy for this job */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->policy, 1, ORTE_MAPPING_POLICY))) {
         ORTE_ERROR_LOG(rc);
@@ -584,7 +592,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     char **slot_str=NULL;
     orte_jobid_t debugger;
     bool add_child;
-    
+
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -768,6 +776,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack the total slots allocated to us */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->total_slots_alloc, &cnt, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the override oversubscribed flag */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &override_oversubscribed, &cnt, OPAL_BOOL))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -1286,7 +1300,9 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     int inm;
     opal_event_t *delay;
     int num_procs_alive;
-    
+    orte_nid_t *nid;
+    orte_node_t *node;
+
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
 
@@ -1296,17 +1312,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
      */
     getcwd(basedir, sizeof(basedir));
 
-    /* compute the number of local procs alive */
-    num_procs_alive = 0;
-    for (item = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
-        if (child->alive) {
-            num_procs_alive++;
-        }
-    }
-    
     /* find the jobdat for this job */
     jobdat = NULL;
     for (item = opal_list_get_first(&orte_local_jobdata);
@@ -1322,7 +1327,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     if (NULL == jobdat) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         rc = ORTE_ERR_NOT_FOUND;
-        goto CLEANUP;
+        goto GETOUT;
     }
     
     /* do we have any local procs to launch? */
@@ -1335,6 +1340,29 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     apps = jobdat->apps;
     num_apps = jobdat->num_apps;
     
+    /* see if the mapper thinks we are oversubscribed */
+    oversubscribed = false;
+    if (ORTE_PROC_IS_HNP) {
+        /* just fake it - we don't keep a local nidmap */
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            rc = ORTE_ERR_NOT_FOUND;
+            goto CLEANUP;
+        }
+        if (node->oversubscribed) {
+            oversubscribed = true;
+        }
+    } else {
+        if (NULL == (nid = orte_util_lookup_nid(ORTE_PROC_MY_NAME))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            rc = ORTE_ERR_NOT_FOUND;
+            goto CLEANUP;
+        }
+        if (nid->oversubscribed) {
+            oversubscribed = true;
+        }
+    }
+
 #if OPAL_ENABLE_FT_CR == 1
     /*
      * Notify the local SnapC component regarding new job
@@ -1358,29 +1386,56 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         }
     }
     
-    if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors))) {
-        /* if we cannot find the number of local processors, we have no choice
-         * but to default to conservative settings
-         */
-        oversubscribed = true;
+    /* if the mapper says we are oversubscribed, then we trust it - unless
+     * it told us -not- to!
+     */
+    if (oversubscribed && !override_oversubscribed) {
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:launch mapper declares this node oversubscribed",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     } else {
-        if (num_procs_alive > num_processors) {
-            /* if the #procs > #processors, declare us oversubscribed. This
-             * covers the case where the user didn't tell us anything about the
-             * number of available slots, so we defaulted to a value of 1
+        /* if the mapper thinks we are not oversubscribed, then we
+         * do a final smoke test by checking against the #processors. This
+         * is done solely in case the mapper had incorrect knowledge of
+         * the #local processors
+         */
+        /* compute the number of local procs alive or about to be launched
+         * as part of this job
+         */
+        num_procs_alive = 0;
+        for (item = opal_list_get_first(&orte_local_children);
+             item != opal_list_get_end(&orte_local_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_odls_child_t*)item;
+            if (child->alive ||
+                OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
+                num_procs_alive++;
+            }
+        }
+        /* get the number of local processors */
+        if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors))) {
+            /* if we cannot find the number of local processors, we have no choice
+             * but to default to conservative settings
              */
             oversubscribed = true;
         } else {
-            /* otherwise, declare us to not be oversubscribed so we can be aggressive */
-            oversubscribed = false;
+            if (num_procs_alive > num_processors) {
+                /* if the #procs > #processors, declare us oversubscribed. This
+                 * covers the case where the user didn't tell us anything about the
+                 * number of available slots, so we defaulted to a value of 1
+                 */
+                oversubscribed = true;
+            } else {
+                /* otherwise, declare us to not be oversubscribed so we can be aggressive */
+                oversubscribed = false;
+            }
         }
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:launch found %d processors for %d children and locally set oversubscribed to %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (ORTE_SUCCESS == rc) ? num_processors : -1, (int)opal_list_get_size(&orte_local_children),
+                             oversubscribed ? "true" : "false"));
     }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:launch found %d processors for %d children and set oversubscribed to %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (ORTE_SUCCESS == rc) ? num_processors: -1, (int)opal_list_get_size(&orte_local_children),
-                         oversubscribed ? "true" : "false"));
     
     /* setup to report the proc state to the HNP */
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
@@ -1995,6 +2050,7 @@ CLEANUP:
         
     }
 
+ GETOUT:
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
     return rc;

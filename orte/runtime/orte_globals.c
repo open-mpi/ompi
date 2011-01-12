@@ -862,6 +862,7 @@ static void orte_nid_construct(orte_nid_t *ptr)
 {
     ptr->name = NULL;
     ptr->daemon = ORTE_VPID_INVALID;
+    ptr->oversubscribed = false;
     OBJ_CONSTRUCT(&ptr->attrs, opal_list_t);
 }
 
