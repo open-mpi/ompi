@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -664,8 +664,8 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     string.h strings.h stropts.h sys/fcntl.h sys/ipc.h \
     sys/ioctl.h sys/mman.h  sys/param.h sys/queue.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
-    stdarg.h sys/stat.h sys/statvfs.h sys/time.h sys/tree.h \
-    sys/types.h sys/uio.h net/uio.h sys/utsname.h sys/wait.h syslog.h \
+    stdarg.h sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/tree.h \
+    sys/types.h sys/uio.h net/uio.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h \
     time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
     ifaddrs.h sys/sysctl.h crt_externs.h regex.h \
     ioLib.h sockLib.h hostLib.h shlwapi.h sys/synch.h])
@@ -1427,5 +1427,6 @@ AC_CONFIG_FILES([
     test/threads/Makefile
     test/peruse/Makefile
     test/datatype/Makefile
+    test/util/Makefile
 ])
 AC_OUTPUT
