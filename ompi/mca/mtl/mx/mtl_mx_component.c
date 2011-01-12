@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -90,8 +91,15 @@ ompi_mtl_mx_component_open(void)
     if(ompi_mtl_mx.mx_unexp_queue_max >  MCA_MTL_MX_QUEUE_LENGTH_MAX) { 
         ompi_mtl_mx.mx_unexp_queue_max =  MCA_MTL_MX_QUEUE_LENGTH_MAX; 
     }
-    return OMPI_SUCCESS;
+
+    mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "board",
+                           "Which MX board number to use (<0 = any)",
+                           false, false, -1, &ompi_mtl_mx.mx_board_num);
+    mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "endpoint",
+                           "Which MX endpoint number to use (<0 = any)",
+                           false, false, -1, &ompi_mtl_mx.mx_endpoint_num);
     
+    return OMPI_SUCCESS;
 }
 
 

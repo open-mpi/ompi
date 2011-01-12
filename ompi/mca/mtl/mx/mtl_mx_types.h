@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +42,8 @@ struct mca_mtl_mx_module_t {
     int32_t  mx_timeout;
     int32_t  mx_retries;
     int32_t  mx_support_sharedmem;
+    int mx_board_num;
+    int mx_endpoint_num;
     mx_endpoint_t mx_endpoint; /**< mx data structure for local endpoint */
     mx_endpoint_addr_t mx_endpoint_addr; /**< mx data structure for local endpoint address */
     mca_mtl_mx_addr_t mx_addr;
