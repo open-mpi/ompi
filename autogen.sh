@@ -300,9 +300,11 @@ find_and_delete() {
 
     if test -f $fad_file; then
 	rm -f $fad_file
-    elif test -d config/$fad_file; then
+    elif test -f config/$fad_file; then
 	rm -f config/$fad_file
-    elif test -d dist/$fad_file; then
+    elif test -f config/m4/$fad_file; then
+	rm -f config/m4/$fad_file
+    elif test -f dist/$fad_file; then
 	rm -f dist/$fad_file
     else
 
@@ -400,9 +402,16 @@ EOF
     find_and_delete install-sh
     find_and_delete ltconfig
     find_and_delete ltmain.sh
+    find_and_delete libtool.m4
+    find_and_delete ltdl.m4
+    find_and_delete ltoptions.m4
+    find_and_delete ltsugar.m4
+    find_and_delete ltversion.m4
+    find_and_delete lt~obsolete.m4
     find_and_delete missing
     find_and_delete mkinstalldirs
     find_and_delete libtool
+    find_and_delete aclocal.m4
 
     # Run the GNU tools
 
