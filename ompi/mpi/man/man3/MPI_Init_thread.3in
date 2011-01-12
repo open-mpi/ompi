@@ -81,8 +81,15 @@ with no restrictions.
 .PP
 The level of thread support available to the program is set in
 \fIprovided\fP, except in C++, where it is the return value of the
-function. In Open MPI, the value is dependent on how the library was configured and built. Note that there is no guarantee that \fIprovided\fP will be greater than or equal to
-\fIrequired\fP.
+function. In Open MPI, the value is dependent on how the library was
+configured and built. Note that there is no guarantee that
+\fIprovided\fP will be greater than or equal to \fIrequired\fP.
+.sp
+Also note that calling MPI_Init_thread with a 
+.I required 
+value of
+.I MPI_THREAD_SINGLE 
+is equivalent to calling MPI_Init.
 .sp
 All MPI programs must contain a call to MPI_Init or
 MPI_Init_thread. Open MPI accepts the C/C++ \fIargc\fP and \fIargv\fP

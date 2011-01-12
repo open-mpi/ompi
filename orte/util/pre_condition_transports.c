@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,8 +58,8 @@
 
 static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) { 
     srand((unsigned int)time(NULL));
+    unique_key[0] = rand();
     unique_key[1] = rand();
-    unique_key[2] = rand();
 }
 
 int orte_pre_condition_transports(orte_job_t *jdata)
