@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,7 +38,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/mpool/mpool.h" 
+#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/class/opal_hash_table.h"
 
@@ -92,6 +92,10 @@ struct mca_btl_tcp_component_t {
 
     /* Do we want to use TCP_NODELAY? */
     int    tcp_use_nodelay;
+
+    /* If btl_tcp_if_seq was specified, this is the one interface
+       (name) that we're supposed to use. */
+    char *tcp_if_seq;
 }; 
 typedef struct mca_btl_tcp_component_t mca_btl_tcp_component_t;
 
