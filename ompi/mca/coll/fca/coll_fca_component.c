@@ -6,6 +6,8 @@
 
   $HEADER$
  */
+#define _GNU_SOURCE
+#include <stdio.h>
 
 #include <dlfcn.h>
 #include <libgen.h>
@@ -63,19 +65,21 @@ mca_coll_fca_component_t mca_coll_fca_component = {
     }
 };
 
-#define FCA_MINOR_BIT   (16UL)
-#define FCA_MAJOR_BIT   (24UL)
-
 #define FCA_API_CLEAR_MICRO(__x) ((__x>>FCA_MINOR_BIT)<<FCA_MINOR_BIT)
 #define FCA_API_VER(__major,__minor) (__major<<FCA_MAJOR_BIT | __minor<<FCA_MINOR_BIT)
 
 #define GET_FCA_SYM(__name) \
 { \
-	mca_coll_fca_component.fca_ops.__name = dlsym(mca_coll_fca_component.fca_lib_handle, "fca_" #__name);\
+	dlsym_quiet((void **)&mca_coll_fca_component.fca_ops.__name, "fca_" #__name);\
 	if (!mca_coll_fca_component.fca_ops.__name) { \
 	    FCA_ERROR("Symbol %s not found", "fca_" #__name); \
 	    return OMPI_ERROR; \
     } \
+}
+
+static void dlsym_quiet(void **p, char *name)
+{
+    *p = dlsym(mca_coll_fca_component.fca_lib_handle, name);
 }
 
 /**
@@ -91,10 +95,13 @@ static void mca_coll_fca_progress_cb(void *arg)
  */
 static int mca_coll_fca_mpi_progress_cb(void)
 {
+#ifdef OMPI_FCA_PROGRESS
     if (!mca_coll_fca_component.fca_context)
         return 0;
 
-    mca_coll_fca_component.fca_ops.progress(mca_coll_fca_component.fca_context);
+    if (mca_coll_fca_component.fca_ops.progress)
+        mca_coll_fca_component.fca_ops.progress(mca_coll_fca_component.fca_context);
+#endif
     return 0;
 }
 
@@ -103,7 +110,7 @@ static int mca_coll_fca_mpi_progress_cb(void)
  */
 static void mca_coll_fca_init_fca_translations(void)
 {
-    int i, ret;
+    int i;
 
     for (i = 0; i < FCA_DT_MAX_PREDEFINED; ++i) {
         mca_coll_fca_component.fca_dtypes[i].mpi_dtype = MPI_DATATYPE_NULL;
@@ -128,7 +135,7 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 
     mca_coll_fca_component.fca_lib_handle = dlopen(mca_coll_fca_component.fca_lib_path, RTLD_LAZY);
     if (!mca_coll_fca_component.fca_lib_handle) {
-        FCA_ERROR("Failed to load FCA from %s: %m", mca_coll_fca_component.fca_lib_path);
+        FCA_ERROR("Failed to load FCA from %s: %s", mca_coll_fca_component.fca_lib_path, strerror(errno));
         return OMPI_ERROR;
     }
 
@@ -136,10 +143,22 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 
     FCA_VERBOSE(1, "FCA Loaded from: %s", mca_coll_fca_component.fca_lib_path);
     GET_FCA_SYM(get_version);
+    GET_FCA_SYM(get_version_string);
+
     fca_ver = FCA_API_CLEAR_MICRO(mca_coll_fca_component.fca_ops.get_version());
+    if (fca_ver != FCA_API_VER(FCA_API_ABI_MAJOR,FCA_API_ABI_MINOR)) {
+        FCA_ERROR("Unsupported FCA version: %s, please update FCA to v%d.%d",
+                  mca_coll_fca_component.fca_ops.get_version_string(),
+                  FCA_API_ABI_MAJOR,
+                  FCA_API_ABI_MINOR);
+        return OMPI_ERROR;
+    }
 
     GET_FCA_SYM(init);
     GET_FCA_SYM(cleanup);
+#ifdef OMPI_FCA_PROGRESS
+    GET_FCA_SYM(progress);
+#endif
     GET_FCA_SYM(comm_new);
     GET_FCA_SYM(comm_end);
     GET_FCA_SYM(get_rank_info);
@@ -151,8 +170,10 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     GET_FCA_SYM(do_all_reduce);
     GET_FCA_SYM(do_bcast);
     GET_FCA_SYM(do_barrier);
-    GET_FCA_SYM(maddr_ib_pton);
-    GET_FCA_SYM(maddr_inet_pton);
+#if OMPI_FCA_ALLGATHER == 1
+    GET_FCA_SYM(do_allgather);
+    GET_FCA_SYM(do_allgatherv);
+#endif
     GET_FCA_SYM(parse_spec_file);
     GET_FCA_SYM(free_init_spec);
     GET_FCA_SYM(translate_mpi_op);
@@ -179,18 +200,13 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     mca_coll_fca_component.fca_ops.free_init_spec(spec);
     mca_coll_fca_init_fca_translations();
 
-    if (fca_ver > FCA_API_VER(1,2)) {
-        GET_FCA_SYM(progress);
-        opal_progress_register(mca_coll_fca_mpi_progress_cb);
-    }
+    opal_progress_register(mca_coll_fca_mpi_progress_cb);
     return OMPI_SUCCESS;
 }
 
 static void mca_coll_fca_close_fca_lib(void)
 {
-    if (NULL != mca_coll_fca_component.fca_ops.progress) {
-        opal_progress_unregister(mca_coll_fca_mpi_progress_cb);
-    }
+    opal_progress_unregister(mca_coll_fca_mpi_progress_cb);
     mca_coll_fca_component.fca_ops.cleanup(mca_coll_fca_component.fca_context);
     mca_coll_fca_component.fca_context = NULL;
     dlclose(mca_coll_fca_component.fca_lib_handle);
@@ -199,9 +215,11 @@ static void mca_coll_fca_close_fca_lib(void)
 
 static int fca_register(void)
 {
+    mca_base_component_t *c;
+
     FCA_VERBOSE(2, "==>");
 
-    const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;
+    c = &mca_coll_fca_component.super.collm_version;
 
     mca_base_param_reg_int(c, "priority",
                            "Priority of the fca coll component",
@@ -239,6 +257,80 @@ static int fca_register(void)
                            64,
                            &mca_coll_fca_component.fca_np);
 
+    mca_base_param_reg_int(c, "enable_barrier",
+                           "[1|0|] Enable/Disable FCA Barrier support",
+                           false, false,
+                           OMPI_FCA_BCAST,
+                           &mca_coll_fca_component.fca_enable_barrier);
+
+    mca_base_param_reg_int(c, "enable_bcast",
+                           "[1|0|] Enable/Disable FCA Bcast support",
+                           false, false,
+                           OMPI_FCA_BCAST,
+                           &mca_coll_fca_component.fca_enable_bcast);
+
+    mca_base_param_reg_int(c, "enable_reduce",
+                           "[1|0|] Enable/Disable FCA Reduce support",
+                           false, false,
+                           OMPI_FCA_REDUCE,
+                           &mca_coll_fca_component.fca_enable_reduce);
+
+    mca_base_param_reg_int(c, "enable_reduce_scatter",
+                           "[1|0|] Enable/Disable FCA Reduce support",
+                           false, false,
+                           OMPI_FCA_REDUCE_SCATTER,
+                           &mca_coll_fca_component.fca_enable_reduce_scatter);
+
+    mca_base_param_reg_int(c, "enable_allreduce",
+                           "[1|0|] Enable/Disable FCA Allreduce support",
+                           false, false,
+                           OMPI_FCA_ALLREDUCE,
+                           &mca_coll_fca_component.fca_enable_allreduce);
+
+    mca_base_param_reg_int(c, "enable_allgather",
+                           "[1|0|] Enable/Disable FCA Allgather support",
+                           false, false,
+                           OMPI_FCA_ALLGATHER,
+                           &mca_coll_fca_component.fca_enable_allgather);
+
+    mca_base_param_reg_int(c, "enable_allgatherv",
+                           "[1|0|] Enable/Disable FCA Allgatherv support",
+                           false, false,
+                           OMPI_FCA_ALLGATHER,
+                           &mca_coll_fca_component.fca_enable_allgatherv);
+
+    mca_base_param_reg_int(c, "enable_gather",
+                           "[1|0|] Enable/Disable FCA Gather support",
+                           false, false,
+                           OMPI_FCA_GATHER,
+                           &mca_coll_fca_component.fca_enable_gather);
+
+    mca_base_param_reg_int(c, "enable_gatherv",
+                           "[1|0|] Enable/Disable FCA Gatherv support",
+                           false, false,
+                           OMPI_FCA_GATHER,
+                           &mca_coll_fca_component.fca_enable_gatherv);
+
+
+    mca_base_param_reg_int(c, "enable_alltoall",
+                           "[1|0|] Enable/Disable FCA AlltoAll support",
+                           false, false,
+                           OMPI_FCA_ALLTOALL,
+                           &mca_coll_fca_component.fca_enable_alltoall);
+
+    mca_base_param_reg_int(c, "enable_alltoallv",
+                           "[1|0|] Enable/Disable FCA AlltoAllv support",
+                           false, false,
+                           OMPI_FCA_ALLTOALLV,
+                           &mca_coll_fca_component.fca_enable_alltoallv);
+
+    mca_base_param_reg_int(c, "enable_alltoallw",
+                           "[1|0|] Enable/Disable FCA AlltoAllw support",
+                           false, false,
+                           OMPI_FCA_ALLTOALLW,
+                           &mca_coll_fca_component.fca_enable_alltoallw);
+
+
     return OMPI_SUCCESS;
 }
 
@@ -246,7 +338,7 @@ static int fca_open(void)
 {
     FCA_VERBOSE(2, "==>");
 
-    const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;
+    /*const mca_base_component_t *c = &mca_coll_fca_component.super.collm_version;*/
 
     mca_coll_fca_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_coll_fca_output, mca_coll_fca_component.fca_verbose);
