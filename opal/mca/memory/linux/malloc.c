@@ -1,7 +1,9 @@
 /********************** BEGIN OMPI CHANGES *****************************/
-/* Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+/*
+ * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ *
+ * Additional copyrights may follow.
  */
-
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "opal_config.h"
 
@@ -10,8 +12,9 @@
 
 #include "opal/sys/atomic.h"
 #include "opal/memoryhooks/memory_internal.h"
+#include "opal/mca/memory/linux/memory_linux.h"
 /* Name-shift all the internal symbols */
-#include "opal/mca/memory/ptmalloc2/rename.h"
+#include "opal/mca/memory/linux/rename.h"
 
 /*
  * Not all systems have sbrk() declared, since it's technically not a
@@ -22,25 +25,22 @@ void *sbrk();
 #endif
 
 
-static void*
-opal_mem_free_ptmalloc2_sbrk(int inc)
+static void *opal_memory_linux_free_ptmalloc2_sbrk(int inc)
 {
-  if (inc < 0) {
-    long oldp = (long) sbrk(0);
-    opal_mem_hooks_release_hook((void*) (oldp + inc), -inc, 1);
-  }
+    if (inc < 0) {
+        long oldp = (long) sbrk(0);
+        opal_mem_hooks_release_hook((void*) (oldp + inc), -inc, 1);
+    }
 
-  return sbrk(inc);
+    return sbrk(inc);
 }
-
-extern int opal_mem_free_ptmalloc2_munmap(void *start, size_t length, int from_alloc, int run_hooks);
 
 /* if we are trying to catch only allocations from and releases to the
    operating system, intercept sbrk, mmap, and munmap.  If we want to
    intercept every call to malloc/realloc/free/etc., don't do this, as
    we need to add something into each of those calls anyway. */
-#define MORECORE opal_mem_free_ptmalloc2_sbrk
-#define munmap(a,b) opal_mem_free_ptmalloc2_munmap(a,b,1,1)
+#define MORECORE opal_memory_linux_free_ptmalloc2_sbrk
+#define munmap(a,b) opal_memory_linux_free_ptmalloc2_munmap(a,b,1)
 
 /* make some non-GCC compilers happy */
 #ifndef __GNUC__
@@ -3419,15 +3419,12 @@ public_mALLOc(size_t bytes)
 #endif
 
   /* OMPI change: put in a flag so that we can know that this function
-     was invoked.  This flag is checked in the memory/ptmalloc2
-     component init to ensure that this ptmalloc is actually being
-     used.  Used a simple "extern" here to get the flag symbol rather
-     than putting it in a new .h file that would only contain a small
-     number of symbols. */
-  {
-    extern bool opal_memory_ptmalloc2_malloc_invoked;
-    opal_memory_ptmalloc2_malloc_invoked = true;
-  }
+     was invoked.  This flag is checked in the memory/linux component
+     init to ensure that this ptmalloc is actually being used.  Used a
+     simple "extern" here to get the flag symbol rather than putting
+     it in a new .h file that would only contain a small number of
+     symbols. */
+  mca_memory_linux_component.malloc_invoked = true;
 
   arena_get(ar_ptr, bytes);
   if(!ar_ptr)
@@ -3479,15 +3476,12 @@ public_fREe(Void_t* mem)
 #endif
 
   /* OMPI change: put in a flag so that we can know that this function
-     was invoked.  This flag is checked in the memory/ptmalloc2
-     component init to ensure that this ptmalloc is actually being
-     used.  Used a simple "extern" here to get the flag symbol rather
-     than putting it in a new .h file that would only contain a small
-     number of symbols. */
-  {
-    extern bool opal_memory_ptmalloc2_free_invoked;
-    opal_memory_ptmalloc2_free_invoked = true;
-  }
+     was invoked.  This flag is checked in the memory/linux component
+     init to ensure that this ptmalloc is actually being used.  Used a
+     simple "extern" here to get the flag symbol rather than putting
+     it in a new .h file that would only contain a small number of
+     symbols. */
+  mca_memory_linux_component.free_invoked = true;
 
   if (mem == 0)                              /* free(0) has no effect */
     return;
@@ -3541,15 +3535,12 @@ public_rEALLOc(Void_t* oldmem, size_t bytes)
 #endif
 
   /* OMPI change: put in a flag so that we can know that this function
-     was invoked.  This flag is checked in the memory/ptmalloc2
-     component init to ensure that this ptmalloc is actually being
-     used.  Used a simple "extern" here to get the flag symbol rather
-     than putting it in a new .h file that would only contain a small
-     number of symbols. */
-  {
-    extern bool opal_memory_ptmalloc2_realloc_invoked;
-    opal_memory_ptmalloc2_realloc_invoked = true;
-  }
+     was invoked.  This flag is checked in the memory/linux component
+     init to ensure that this ptmalloc is actually being used.  Used a
+     simple "extern" here to get the flag symbol rather than putting
+     it in a new .h file that would only contain a small number of
+     symbols. */
+  mca_memory_linux_component.realloc_invoked = true;
 
 #if REALLOC_ZERO_BYTES_FREES
   if (bytes == 0 && oldmem != NULL) { public_fREe(oldmem); return 0; }
@@ -3631,15 +3622,12 @@ public_mEMALIGn(size_t alignment, size_t bytes)
 #endif
 
   /* OMPI change: put in a flag so that we can know that this function
-     was invoked.  This flag is checked in the memory/ptmalloc2
-     component init to ensure that this ptmalloc is actually being
-     used.  Used a simple "extern" here to get the flag symbol rather
-     than putting it in a new .h file that would only contain a small
-     number of symbols. */
-  {
-    extern bool opal_memory_ptmalloc2_memalign_invoked;
-    opal_memory_ptmalloc2_memalign_invoked = true;
-  }
+     was invoked.  This flag is checked in the memory/linux component
+     init to ensure that this ptmalloc is actually being used.  Used a
+     simple "extern" here to get the flag symbol rather than putting
+     it in a new .h file that would only contain a small number of
+     symbols. */
+  mca_memory_linux_component.memalign_invoked = true;
 
   /* If need less alignment than we give anyway, just relay to malloc */
   if (alignment <= MALLOC_ALIGNMENT) return public_mALLOc(bytes);

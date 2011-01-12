@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -119,9 +120,9 @@ opal_atomic_cmpset_xx(volatile void* addr, int64_t oldval,
                                     (int64_t)oldval, (int64_t)newval );
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
-      /* This should never happen, so deliberately cause a seg fault
-         for corefile analysis */
-      *(int*)(0) = 0;
+       /* This should never happen, so deliberately abort (hopefully
+          leaving a coreful for analysis) */
+       abort();
    }
    return 0;  /* always fail */
 }
@@ -144,9 +145,9 @@ opal_atomic_cmpset_acq_xx(volatile void* addr, int64_t oldval,
                                         (int64_t)oldval, (int64_t)newval );
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
-      /* This should never happen, so deliberately cause a seg fault
-         for corefile analysis */
-      *(int*)(0) = 0;
+       /* This should never happen, so deliberately abort (hopefully
+          leaving a coreful for analysis) */
+       abort();
    }
    return 0;  /* always fail */
 }
@@ -169,9 +170,9 @@ opal_atomic_cmpset_rel_xx(volatile void* addr, int64_t oldval,
                                         (int64_t)oldval, (int64_t)newval );
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
-      /* This should never happen, so deliberately cause a seg fault
-         for corefile analysis */
-      *(int*)(0) = 0;
+       /* This should never happen, so deliberately abort (hopefully
+          leaving a coreful for analysis) */
+       abort();
    }
    return 0;  /* always fail */
 }
@@ -250,9 +251,9 @@ opal_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
       break;
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
-      /* This should never happen, so deliberately cause a seg fault
-         for corefile analysis */
-      *(int*)(0) = 0;
+       /* This should never happen, so deliberately abort (hopefully
+          leaving a coreful for analysis) */
+       abort();
    }
 }
 
@@ -273,9 +274,9 @@ opal_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
       break;
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
    default:
-      /* This should never happen, so deliberately cause a seg fault
-         for corefile analysis */
-      *(int*)(0) = 0;
+       /* This should never happen, so deliberately abort (hopefully
+          leaving a coreful for analysis) */
+       abort();
    }
 }
 

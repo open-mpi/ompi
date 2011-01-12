@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -33,4 +34,13 @@ AC_DEFUN([MCA_memory_CONFIG],[
 
         AC_DEFINE_UNQUOTED([OMPI_MEMORY_HAVE_COMPONENT], [$memory_base_found],
             [Whether any opal memory mca components were found])
+
+        # See if someone set to use their header file
+        if test "$memory_base_include" = "" ; then
+            memory_base_include="base/empty.h"
+        fi
+
+        AC_DEFINE_UNQUOTED([MCA_memory_IMPLEMENTATION_HEADER],
+                           ["opal/mca/memory/$memory_base_include"],
+                           [Header to include for parts of the memory implementation])
 ])
