@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -72,8 +73,6 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
     }
 
-    OPAL_CR_ENTER_LIBRARY();
-
     /* Call the back-end initialization function (we need to put as
        little in this function as possible so that if it's profiled, we
        don't lose anything) */
@@ -83,8 +82,6 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
     } else {
         err = ompi_mpi_init(0, NULL, required, provided);
     }
-
-    OPAL_CR_EXIT_LIBRARY();
 
     /* Since we don't have a communicator to invoke an errorhandler on
        here, don't use the fancy-schmancy ERRHANDLER macros; they're
@@ -96,5 +93,8 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
                                       err < 0 ? ompi_errcode_get_mpi_code(err) :
                                       err, FUNC_NAME);
     }
+
+    OPAL_CR_INIT_LIBRARY();
+
     return MPI_SUCCESS;
 }
