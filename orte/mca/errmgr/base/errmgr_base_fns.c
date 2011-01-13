@@ -248,12 +248,13 @@ void orte_errmgr_base_migrate_state_notify(int state)
     case ORTE_ERRMGR_MIGRATE_STATE_ERROR:
     case ORTE_ERRMGR_MIGRATE_STATE_ERR_INPROGRESS:
         orte_notifier.log(ORTE_NOTIFIER_ERROR, state,
-                          "base:migrate_state_notify: Migration failed (PID = %d)", true,
-                          orte_process_info.pid);
+                          "%d: Migration failed for process %s.",
+                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_ERRMGR_MIGRATE_STATE_FINISH:
-        orte_notifier.show_help(ORTE_NOTIFIER_INFO, state,
-                                "help-orte-errmgr-hnp.txt", "crmig_migrated_job", true);
+        orte_notifier.log(ORTE_NOTIFIER_INFO, state,
+                          "%d: Migration successful for process %s.",
+                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
 
     case ORTE_ERRMGR_MIGRATE_STATE_NONE:
@@ -264,6 +265,44 @@ void orte_errmgr_base_migrate_state_notify(int state)
     case ORTE_ERRMGR_MIGRATE_MAX:
     default:
         break;
+    }
+}
+
+void orte_errmgr_base_proc_state_notify(orte_proc_state_t state, orte_process_name_t *proc)
+{
+    if (NULL != proc) {
+        switch(state) {
+        case ORTE_PROC_STATE_ABORTED:
+        case ORTE_PROC_STATE_ABORTED_BY_SIG:
+        case ORTE_PROC_STATE_TERM_WO_SYNC:
+        case ORTE_PROC_STATE_TERMINATED:
+        case ORTE_PROC_STATE_KILLED_BY_CMD:
+        case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
+            orte_notifier.log(ORTE_NOTIFIER_ERROR, state, "%d: Process %s is dead.",
+                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+            break;
+
+        case ORTE_PROC_STATE_HEARTBEAT_FAILED:
+            orte_notifier.log(ORTE_NOTIFIER_ERROR, state,
+                              "%d: Process %s is unreachable.",
+                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+
+        case ORTE_PROC_STATE_COMM_FAILED:
+            orte_notifier.log(ORTE_NOTIFIER_WARN, state,
+                              "%d: Failed to communicate with process %s.",
+                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+            break;
+
+        case ORTE_PROC_STATE_CALLED_ABORT:
+        case ORTE_PROC_STATE_FAILED_TO_START:
+            orte_notifier.log(ORTE_NOTIFIER_ERROR, state,
+                              "%d: Process %s has called abort.",
+                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+            break;
+        case ORTE_PROC_STATE_MIGRATING:
+        default:
+            break;
+        }
     }
 }
 

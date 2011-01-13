@@ -97,6 +97,9 @@ ORTE_DECLSPEC int orte_errmgr_base_update_app_context_for_cr_recovery(orte_job_t
 ORTE_DECLSPEC int orte_errmgr_base_restart_job(orte_jobid_t jobid, char * global_handle, int seq_num);
 ORTE_DECLSPEC int orte_errmgr_base_migrate_job(orte_jobid_t jobid, orte_snapc_base_request_op_t *datum);
 
+/* Interface to report process state to the notifier */
+ORTE_DECLSPEC void orte_errmgr_base_proc_state_notify(orte_proc_state_t state, orte_process_name_t *proc);
+
 #endif /* OPAL_ENABLE_FT_CR */
 
 /*

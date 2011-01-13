@@ -80,11 +80,6 @@ static int orte_notifier_ftb_close(void)
         free(mca_notifier_ftb_component.subscription_style);
     }
 
-    /* If the FTB client handle is valid, disconnect the client */
-    if (1 == ftb_client_handle.valid) {
-        FTB_Disconnect(ftb_client_handle);
-    }
-
     return ORTE_SUCCESS;
 }
 
