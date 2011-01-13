@@ -138,6 +138,12 @@ const char *orte_err2str(int errnum)
     case ORTE_ERR_UNRECOVERABLE:
         retval = "Unrecoverable error";
         break;
+    case ORTE_ERR_NO_APP_SPECIFIED:
+        retval = "No application specified";
+        break;
+    case ORTE_ERR_NO_EXE_SPECIFIED:
+        retval = "No executable specified";
+        break;
     case ORTE_ERR_COMM_DISABLED:
         retval = "Communications have been disabled";
         break;

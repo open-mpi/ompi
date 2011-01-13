@@ -14,7 +14,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/threads/threads.h"
+#include "opal/threads/threads.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -26,24 +26,13 @@
 static int insert_hdr(opal_buffer_t *buf,
                       orte_rmcast_channel_t channel,
                       orte_rmcast_tag_t tag,
+                      bool restart,
                       orte_rmcast_seq_t seq_num);
 
-int orte_rmcast_base_queue_xmit(rmcast_base_send_t *snd,
-                                orte_rmcast_channel_t channel,
-                                opal_buffer_t **buffer,
-                                rmcast_base_channel_t **chan)
+rmcast_base_channel_t* orte_rmcast_base_get_channel(orte_rmcast_channel_t channel)
 {
     rmcast_base_channel_t *chptr, *ch;
-    int32_t sz;
-    int rc;
-    int8_t flag;
-    int32_t tmp32;
-    opal_buffer_t *buf;
     opal_list_item_t *item;
-
-    /* setup default responses */
-    *buffer = NULL;
-    *chan = NULL;
 
     /* if we were asked to send this on our group output
      * channel, substitute it
@@ -51,17 +40,15 @@ int orte_rmcast_base_queue_xmit(rmcast_base_send_t *snd,
     if (ORTE_RMCAST_GROUP_OUTPUT_CHANNEL == channel) {
         if (NULL == orte_rmcast_base.my_output_channel) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
+            return NULL;
         }
-        ch = orte_rmcast_base.my_output_channel;
-        goto process;
+        return orte_rmcast_base.my_output_channel;
     } else if (ORTE_RMCAST_GROUP_INPUT_CHANNEL == channel) {
         if (NULL == orte_rmcast_base.my_input_channel) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
+            return NULL;
         }
-        ch = orte_rmcast_base.my_input_channel;
-        goto process;
+        return orte_rmcast_base.my_input_channel;
     }
     
     /* find the channel */
@@ -80,27 +67,53 @@ int orte_rmcast_base_queue_xmit(rmcast_base_send_t *snd,
     if (NULL == ch) {
         /* didn't find it */
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return NULL;
+    }
+
+    return ch;
+}
+
+int orte_rmcast_base_queue_xmit(rmcast_base_send_t *snd,
+                                orte_rmcast_channel_t channel,
+                                opal_buffer_t **buffer,
+                                rmcast_base_channel_t **chan)
+{
+    rmcast_base_channel_t *ch;
+    int32_t sz;
+    int rc;
+    int8_t flag;
+    int32_t tmp32;
+    opal_buffer_t *buf;
+
+    /* setup default responses */
+    *buffer = NULL;
+    *chan = NULL;
+
+    /* get the channel object */
+    if (NULL == (ch = orte_rmcast_base_get_channel(channel))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    
- process:
     /* return the channel */
     *chan = ch;
 
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:base:queue_xmit of %d %s"
-                         " for multicast on channel %d tag %d",
+                         " for multicast on channel %d tag %d seq_num %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == snd->iovec_array) ? (int)snd->buf->bytes_used : (int)snd->iovec_count,
                          (NULL == snd->iovec_array) ? "bytes" : "iovecs",
-                         (int)ch->channel, snd->tag));
+                         (int)ch->channel, snd->tag, ch->seq_num));
     
     /* setup a buffer */
     buf = OBJ_NEW(opal_buffer_t);
     *buffer = buf;
 
+    /* assign a sequence number */
+    ORTE_MULTICAST_NEXT_SEQUENCE_NUM(ch->seq_num);
+
     /* insert the header */
-    if (ORTE_SUCCESS != (rc = insert_hdr(buf, ch->channel, snd->tag, ch->seq_num))) {
+    if (ORTE_SUCCESS != (rc = insert_hdr(buf, ch->channel, snd->tag, ch->restart, ch->seq_num))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -151,6 +164,10 @@ int orte_rmcast_base_queue_xmit(rmcast_base_send_t *snd,
             goto cleanup;
         }
     }
+    /* flag this channel as no longer in restart mode since
+     * it will have sent at least one message
+     */
+    ch->restart = false;
     return ORTE_SUCCESS;
     
 cleanup:
@@ -328,9 +345,11 @@ int orte_rmcast_base_query(orte_rmcast_channel_t *output, orte_rmcast_channel_t 
 static int insert_hdr(opal_buffer_t *buf,
                       orte_rmcast_channel_t channel,
                       orte_rmcast_tag_t tag,
+                      bool restart,
                       orte_rmcast_seq_t seq_num)
 {
     int rc;
+    uint8_t flag;
     
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
@@ -347,6 +366,16 @@ static int insert_hdr(opal_buffer_t *buf,
         return rc;
     }
     
+    if (restart) {
+        flag = 1;
+    } else {
+        flag = 0;
+    }
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &flag, 1, OPAL_UINT8))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &seq_num, 1, ORTE_RMCAST_SEQ_T))) {
         ORTE_ERROR_LOG(rc);
     }

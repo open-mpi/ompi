@@ -28,7 +28,6 @@
 #include "opal/util/opal_sos.h"
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -79,6 +78,7 @@ orte_rmcast_module_t orte_rmcast = {
     NULL,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 orte_rmcast_base_t orte_rmcast_base;
@@ -116,6 +116,9 @@ int orte_rmcast_base_open(void)
     OBJ_CONSTRUCT(&orte_rmcast_base.recv_process, opal_thread_t);
     OBJ_CONSTRUCT(&orte_rmcast_base.recv_process_ctl, orte_thread_ctl_t);
 
+    OBJ_CONSTRUCT(&orte_rmcast_base.msg_logs, opal_list_t);
+    orte_rmcast_base.unreliable_xport = false;
+
     orte_rmcast_base.xmit_network = 0;
     orte_rmcast_base.my_group_name = NULL;
     orte_rmcast_base.my_group_number = 0;
@@ -125,13 +128,6 @@ int orte_rmcast_base_open(void)
     }
     orte_rmcast_base.my_output_channel = NULL;
     orte_rmcast_base.my_input_channel = NULL;
-
-    /* setup the local event base */
-    if (orte_progress_threads_enabled) {
-        orte_rmcast_base.event_base = opal_event_base_create();
-    } else {
-        orte_rmcast_base.event_base = opal_event_base;
-    }
 
     /* public multicast channel for this job */
     mca_base_param_reg_string_name("rmcast", "base_multicast_network",
@@ -151,6 +147,7 @@ int orte_rmcast_base_open(void)
         /* must have been given an actual network address */
         rc = opal_iftupletoaddr(tmp, &orte_rmcast_base.xmit_network, NULL);
     }
+    free(tmp);
     
     if (ORTE_SUCCESS != rc) {
         orte_show_help("help-rmcast-base.txt", "unrecognized-network", true, tmp);
@@ -178,6 +175,7 @@ int orte_rmcast_base_open(void)
             return ORTE_ERR_SILENT;
         }
         orte_rmcast_base.my_group_number = value;
+        free(tmp);
     } else {
         /* since nothing was given, use our local jobid */
         orte_rmcast_base.my_group_name = strdup(ORTE_LOCAL_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
@@ -376,14 +374,10 @@ static void channel_construct(rmcast_base_channel_t *ptr)
     ptr->port = 0;
     ptr->interface = 0;
     ptr->xmit = -1;
-    ptr->seq_num = 0;
+    ptr->restart = true;
+    ptr->seq_num = ORTE_RMCAST_SEQ_INVALID;
     ptr->recv = -1;
     memset(&ptr->addr, 0, sizeof(ptr->addr));
-    memset(&ptr->send_ev, 0, sizeof(opal_event_t));
-    OBJ_CONSTRUCT(&ptr->send_lock, opal_mutex_t);
-    ptr->sends_in_progress = false;
-    OBJ_CONSTRUCT(&ptr->pending_sends, opal_list_t);
-    ptr->send_data = NULL;
     memset(&ptr->recv_ev, 0, sizeof(opal_event_t));
     OBJ_CONSTRUCT(&ptr->cache, opal_ring_buffer_t);
     opal_ring_buffer_init(&ptr->cache, orte_rmcast_base.cache_size);
@@ -397,19 +391,9 @@ static void channel_destruct(rmcast_base_channel_t *ptr)
         opal_event_del(&ptr->recv_ev);
         CLOSE_THE_SOCKET(ptr->recv);
     }
-    /* attempt to xmit any pending sends */
-    /* cleanup the xmit side */
-    if (0 < ptr->xmit) {
-        opal_event_del(&ptr->send_ev);
-        CLOSE_THE_SOCKET(ptr->xmit);
-    }
-    OBJ_DESTRUCT(&ptr->send_lock);
     /* release the channel name */
     if (NULL != ptr->name) {
         free(ptr->name);
-    }
-    if (NULL != ptr->send_data) {
-        free(ptr->send_data);
     }
     /* clear the cache */
     while (NULL != (rb = (rmcast_send_log_t*)opal_ring_buffer_pop(&ptr->cache))) {
@@ -422,35 +406,45 @@ OBJ_CLASS_INSTANCE(rmcast_base_channel_t,
                    channel_construct,
                    channel_destruct);
 
+static void trk_construct(rmcast_seq_tracker_t *ptr)
+{
+    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
+    ptr->seq_num = ORTE_RMCAST_SEQ_INVALID;
+}
+OBJ_CLASS_INSTANCE(rmcast_seq_tracker_t,
+                   opal_list_item_t,
+                   trk_construct, NULL);
+
 static void recvlog_construct(rmcast_recv_log_t *ptr)
 {
     ptr->name.jobid = ORTE_JOBID_INVALID;
     ptr->name.vpid = ORTE_VPID_INVALID;
-    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
-    ptr->seq_num = 0;
+    OBJ_CONSTRUCT(&ptr->last_msg, opal_list_t);
 }
 static void recvlog_destruct(rmcast_recv_log_t *ptr)
 {
+    opal_list_item_t *item;
+
     ptr->name.jobid = ORTE_JOBID_INVALID;
     ptr->name.vpid = ORTE_VPID_INVALID;
-    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
-    ptr->seq_num = 0;
+    while (NULL != (item = opal_list_remove_first(&ptr->last_msg))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&ptr->last_msg);
 }
 OBJ_CLASS_INSTANCE(rmcast_recv_log_t,
-                   opal_object_t,
+                   opal_list_item_t,
                    recvlog_construct,
                    recvlog_destruct);
 
 static void sendlog_construct(rmcast_send_log_t *ptr)
 {
     ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
-    ptr->seq_num = 0;
+    ptr->seq_num = ORTE_RMCAST_SEQ_INVALID;
     ptr->buf = OBJ_NEW(opal_buffer_t);
 }
 static void sendlog_destruct(rmcast_send_log_t *ptr)
 {
-    ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
-    ptr->seq_num = 0;
     if (NULL != ptr->buf) {
         OBJ_RELEASE(ptr->buf);
     }
@@ -459,5 +453,20 @@ OBJ_CLASS_INSTANCE(rmcast_send_log_t,
                    opal_object_t,
                    sendlog_construct,
                    sendlog_destruct);
+
+static void msg_construct(orte_rmcast_msg_t *ptr)
+{
+    ptr->buf = OBJ_NEW(opal_buffer_t);
+}
+static void msg_destruct(orte_rmcast_msg_t *ptr)
+{
+    if (NULL != ptr->buf) {
+        OBJ_RELEASE(ptr->buf);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_rmcast_msg_t,
+                   opal_object_t,
+                   msg_construct,
+                   msg_destruct);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
