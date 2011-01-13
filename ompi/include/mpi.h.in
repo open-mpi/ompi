@@ -125,8 +125,23 @@
 /* Whether we have FORTRAN REAL*8 or not */
 #undef OMPI_HAVE_FORTRAN_REAL8
 
+/* Whether we have float _Complex  or not */
+#undef HAVE_FLOAT__COMPLEX
+
+/* Whether we have double _Complex  or not */
+#undef HAVE_DOUBLE__COMPLEX
+
+/* Whether we have long double _Complex  or not */
+#undef HAVE_LONG_DOUBLE__COMPLEX
+
 /* Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's */
 #undef OMPI_MPI_OFFSET_TYPE
+
+/* MPI datatype corresponding to MPI_Offset */
+#undef OMPI_OFFSET_DATATYPE
+
+/* Size of the MPI_Offset corresponding type */
+#undef OMPI_MPI_OFFSET_SIZE
 
 /* type to use for ptrdiff_t, if it does not exist, set to ptrdiff_t if it does exist */
 #undef OPAL_PTRDIFF_TYPE
@@ -155,9 +170,6 @@
 
 /* Whether or not we have compiled with C++ exceptions support */
 #undef OMPI_HAVE_CXX_EXCEPTION_SUPPORT
-
-/* MPI datatype corresponding to MPI_Offset */
-#undef OMPI_OFFSET_DATATYPE
 
 /* Major, minor, and release version of Open MPI */
 #undef OMPI_MAJOR_VERSION
@@ -831,6 +843,22 @@ OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex8;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex16;
 OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_complex32;
 
+/* New datatypes from the MPI 2.2 standard */
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int8_t;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_uint8_t;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int16_t;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_uint16_t;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int32_t;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_uint32_t;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_int64_t;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_uint64_t;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_aint;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_offset;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_bool;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_complex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_float_complex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_double_complex;
+OMPI_DECLSPEC extern struct ompi_predefined_datatype_t ompi_mpi_c_long_double_complex;
 
 OMPI_DECLSPEC extern struct ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
 OMPI_DECLSPEC extern struct ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
@@ -955,6 +983,29 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_2REAL OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_2real)
 #define MPI_2DOUBLE_PRECISION OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_2dblprec)
 #define MPI_2INTEGER OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_2integer)
+
+/* New datatypes from the MPI 2.2 standard */
+#define MPI_INT8_T                OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_int8_t)
+#define MPI_UINT8_T               OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_uint8_t)
+#define MPI_INT16_T               OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_int16_t)
+#define MPI_UINT16_T              OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_uint16_t)
+#define MPI_INT32_T               OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_int32_t)
+#define MPI_UINT32_T              OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_uint32_t)
+#define MPI_INT64_T               OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_int64_t)
+#define MPI_UINT64_T              OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_uint64_t)
+#define MPI_AINT                  OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_aint)
+#define MPI_OFFSET                OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_offset)
+#define MPI_C_BOOL                OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_bool)
+#if HAVE_FLOAT__COMPLEX
+#define MPI_C_COMPLEX             OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_complex)
+#define MPI_C_FLOAT_COMPLEX       OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_float_complex)
+#endif
+#if HAVE_DOUBLE__COMPLEX
+#define MPI_C_DOUBLE_COMPLEX      OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_double_complex)
+#endif
+#if HAVE_LONG_DOUBLE__COMPLEX
+#define MPI_C_LONG_DOUBLE_COMPLEX OMPI_PREDEFINED_GLOBAL(MPI_Datatype, ompi_mpi_c_long_double_complex)
+#endif
 
 #define MPI_ERRORS_ARE_FATAL OMPI_PREDEFINED_GLOBAL(MPI_Errhandler, ompi_mpi_errors_are_fatal)
 #define MPI_ERRORS_RETURN OMPI_PREDEFINED_GLOBAL(MPI_Errhandler, ompi_mpi_errors_return)

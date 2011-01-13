@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -98,27 +98,22 @@ BEGIN_C_DECLS
  * MPI-2:4.15, p76-77
  */
 enum {
-    /** C integer: unsigned char */
-    OMPI_OP_BASE_TYPE_UNSIGNED_CHAR,
-    /** C integer: signed char */
-    OMPI_OP_BASE_TYPE_SIGNED_CHAR,
-    /** C integer: int */
-    OMPI_OP_BASE_TYPE_INT,
-    /** C integer: long */
-    OMPI_OP_BASE_TYPE_LONG,
-    /** C integer: short */
-    OMPI_OP_BASE_TYPE_SHORT,
-    /** C integer: unsigned short */
-    OMPI_OP_BASE_TYPE_UNSIGNED_SHORT,
-    /** C integer: unsigned */
-    OMPI_OP_BASE_TYPE_UNSIGNED,
-    /** C integer: unsigned long */
-    OMPI_OP_BASE_TYPE_UNSIGNED_LONG,
-
-    /** C integer: long long int (optional) */
-    OMPI_OP_BASE_TYPE_LONG_LONG_INT,
-    /** C integer: unsigned long long (optional) */
-    OMPI_OP_BASE_TYPE_UNSIGNED_LONG_LONG,
+    /** C integer: int8_t */
+    OMPI_OP_BASE_TYPE_INT8_T,
+    /** C integer: uint8_t */
+    OMPI_OP_BASE_TYPE_UINT8_T,
+    /** C integer: int16_t */
+    OMPI_OP_BASE_TYPE_INT16_T,
+    /** C integer: uint16_t */
+    OMPI_OP_BASE_TYPE_UINT16_T,
+    /** C integer: int32_t */
+    OMPI_OP_BASE_TYPE_INT32_T,
+    /** C integer: uint32_t */
+    OMPI_OP_BASE_TYPE_UINT32_T,
+    /** C integer: int64_t */
+    OMPI_OP_BASE_TYPE_INT64_T,
+    /** C integer: uint64_t */
+    OMPI_OP_BASE_TYPE_UINT64_T,
 
     /** Fortran integer */
     OMPI_OP_BASE_TYPE_INTEGER,
