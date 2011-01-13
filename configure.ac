@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2010 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -790,7 +790,17 @@ if test "$MPI_OFFSET_TYPE" = "not found"; then
     AC_MSG_WARN([*** Unable to find the right definition for MPI_Offset])
     AC_MSG_ERROR([Cannot continue])
 fi
+AC_MSG_CHECKING([checking for an MPI datatype for MPI_Offset])
+AC_MSG_RESULT([$MPI_OFFSET_DATATYPE])
+# this should never happens
+if test "$MPI_OFFSET_DATATYPE" = "not found"; then
+    AC_MSG_WARN([*** Unable to find an MPI datatype corresponding to MPI_Offset])
+    AC_MSG_ERROR([Cannot continue])
+fi
+
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's])
+AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_SIZE, $MPI_OFFSET_SIZE, [Size of the MPI_Offset])
+AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
 
 #
 # Check for MPI_Aint type.  Yes, there are platforms where
@@ -807,18 +817,6 @@ else
 fi
 AC_DEFINE_UNQUOTED([OPAL_PTRDIFF_TYPE], [$opal_ptrdiff_t],
     [type to use for ptrdiff_t])
-
-#
-# If we haven't already, figure out an MPI datatype that corresponds
-# to the back-end C type of MPI_Offset.
-#
-AC_MSG_CHECKING([checking for an MPI datatype for MPI_Offset])
-AC_MSG_RESULT([$MPI_OFFSET_DATATYPE])
-if test "$MPI_OFFSET_DATATYPE" = "not found"; then
-    AC_MSG_WARN([*** Unable to find an MPI datatype corresponding to MPI_Offset])
-    AC_MSG_ERROR([Cannot continue])
-fi
-AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
 
 # Do we have _SC_NPROCESSORS_ONLN? (only going to pass if we also have
 # <unistd.h> and sysconf(), which is ok) OS X 10.4 has <unistd.h> and

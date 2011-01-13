@@ -3,7 +3,7 @@
 ! Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 !                         University Research and Technology
 !                         Corporation.  All rights reserved.
-! Copyright (c) 2004-2005 The University of Tennessee and The University
+! Copyright (c) 2004-2010 The University of Tennessee and The University
 !                         of Tennessee Research Foundation.  All rights
 !                         reserved.
 ! Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
@@ -412,42 +412,95 @@
 ! other MPI implementations that have them, so it's good for us to have
 ! as well.
       integer MPI_LOGICAL1, MPI_LOGICAL2, MPI_LOGICAL4, MPI_LOGICAL8
-
+! All other MPI types including the C and C++, as well as the
+! ones defined in the MPI 2.2
+      integer MPI_WCHAR, MPI_CHAR
+      integer MPI_SIGNED_CHAR, MPI_UNSIGNED_CHAR
+      integer MPI_SHORT, MPI_UNSIGNED_SHORT
+      integer MPI_INT, MPI_UNSIGNED, MPI_LONG
+      integer MPI_UNSIGNED_LONG, MPI_LONG_LONG_INT
+      integer MPI_UNSIGNED_LONG_LONG
+      integer MPI_FLOAT, MPI_DOUBLE, MPI_LONG_DOUBLE
+      integer MPI_FLOAT_INT, MPI_DOUBLE_INT
+      integer MPI_LONGDBL_INT, MPI_LONG_INT
+      integer MPI_2INT, MPI_SHORT_INT
+      integer MPI_CXX_BOOL, MPI_CXX_CPLEX
+      integer MPI_CXX_DBLCPLEX, MPI_CXX_LDBLCPLEX
+      integer MPI_INT8_T, MPI_UINT8_T
+      integer MPI_INT16_T, MPI_UINT16_T
+      integer MPI_INT32_T, MPI_UINT32_T
+      integer MPI_INT64_T, MPI_UINT64_T
+      integer MPI_AINT, MPI_OFFSET
 !
 !     Do NOT change the order of these parameters
 !
-      parameter (MPI_BYTE=1)
-      parameter (MPI_PACKED=2)
-      parameter (MPI_UB=3)
-      parameter (MPI_LB=4)
-      parameter (MPI_CHARACTER=5)
-      parameter (MPI_LOGICAL=6)
-      parameter (MPI_INTEGER=7)
-      parameter (MPI_INTEGER1=8)
-      parameter (MPI_INTEGER2=9)
-      parameter (MPI_INTEGER4=10)
-      parameter (MPI_INTEGER8=11)
-      parameter (MPI_INTEGER16=12)
-      parameter (MPI_REAL=13)
-      parameter (MPI_REAL4=14)
-      parameter (MPI_REAL8=15)
-      parameter (MPI_REAL16=16)
-      parameter (MPI_DOUBLE_PRECISION=17)
-      parameter (MPI_COMPLEX=18)
-      parameter (MPI_COMPLEX8=19)
-      parameter (MPI_COMPLEX16=20)
-      parameter (MPI_COMPLEX32=21)
-      parameter (MPI_DOUBLE_COMPLEX=22)
-      parameter (MPI_2REAL=23)
-      parameter (MPI_2DOUBLE_PRECISION=24)
-      parameter (MPI_2INTEGER=25)
-      parameter (MPI_2COMPLEX=26)
-      parameter (MPI_2DOUBLE_COMPLEX=27)
-      parameter (MPI_REAL2=28)
-      parameter (MPI_LOGICAL1=29)
-      parameter (MPI_LOGICAL2=30)
-      parameter (MPI_LOGICAL4=31)
-      parameter (MPI_LOGICAL8=32)
+      parameter (MPI_BYTE               =  1)
+      parameter (MPI_PACKED             =  2)
+      parameter (MPI_UB                 =  3)
+      parameter (MPI_LB                 =  4)
+      parameter (MPI_CHARACTER          =  5)
+      parameter (MPI_LOGICAL            =  6)
+      parameter (MPI_INTEGER            =  7)
+      parameter (MPI_INTEGER1           =  8)
+      parameter (MPI_INTEGER2           =  9)
+      parameter (MPI_INTEGER4           = 10)
+      parameter (MPI_INTEGER8           = 11)
+      parameter (MPI_INTEGER16          = 12)
+      parameter (MPI_REAL               = 13)
+      parameter (MPI_REAL4              = 14)
+      parameter (MPI_REAL8              = 15)
+      parameter (MPI_REAL16             = 16)
+      parameter (MPI_DOUBLE_PRECISION   = 17)
+      parameter (MPI_COMPLEX            = 18)
+      parameter (MPI_COMPLEX8           = 19)
+      parameter (MPI_COMPLEX16          = 20)
+      parameter (MPI_COMPLEX32          = 21)
+      parameter (MPI_DOUBLE_COMPLEX     = 22)
+      parameter (MPI_2REAL              = 23)
+      parameter (MPI_2DOUBLE_PRECISION  = 24)
+      parameter (MPI_2INTEGER           = 25)
+      parameter (MPI_2COMPLEX           = 26)
+      parameter (MPI_2DOUBLE_COMPLEX    = 27)
+      parameter (MPI_REAL2              = 28)
+      parameter (MPI_LOGICAL1           = 29)
+      parameter (MPI_LOGICAL2           = 30)
+      parameter (MPI_LOGICAL4           = 31)
+      parameter (MPI_LOGICAL8           = 32)
+      parameter (MPI_WCHAR              = 33)
+      parameter (MPI_CHAR               = 34)
+      parameter (MPI_UNSIGNED_CHAR      = 35)
+      parameter (MPI_SIGNED_CHAR        = 36)
+      parameter (MPI_SHORT              = 37)
+      parameter (MPI_UNSIGNED_SHORT     = 38)
+      parameter (MPI_INT                = 39)
+      parameter (MPI_UNSIGNED           = 40)
+      parameter (MPI_LONG               = 41)
+      parameter (MPI_UNSIGNED_LONG      = 42)
+      parameter (MPI_LONG_LONG_INT      = 43)
+      parameter (MPI_UNSIGNED_LONG_LONG = 44)
+      parameter (MPI_FLOAT              = 45)
+      parameter (MPI_DOUBLE             = 46)
+      parameter (MPI_LONG_DOUBLE        = 47)
+      parameter (MPI_FLOAT_INT          = 48)
+      parameter (MPI_DOUBLE_INT         = 49)
+      parameter (MPI_LONGDBL_INT        = 50)
+      parameter (MPI_LONG_INT           = 51)
+      parameter (MPI_2INT               = 52)
+      parameter (MPI_SHORT_INT          = 53)
+      parameter (MPI_CXX_BOOL           = 54)
+      parameter (MPI_CXX_CPLEX          = 55)
+      parameter (MPI_CXX_DBLCPLEX       = 56)
+      parameter (MPI_CXX_LDBLCPLEX      = 57)
+      parameter (MPI_INT8_T             = 58)
+      parameter (MPI_UINT8_T            = 59)
+      parameter (MPI_INT16_T            = 60)
+      parameter (MPI_UINT16_T           = 61)
+      parameter (MPI_INT32_T            = 62)
+      parameter (MPI_UINT32_T           = 63)
+      parameter (MPI_INT64_T            = 64)
+      parameter (MPI_UINT64_T           = 65)
+      parameter (MPI_AINT               = 66)
+      parameter (MPI_OFFSET             = 67)
 
       integer MPI_MAX, MPI_MIN, MPI_SUM, MPI_PROD, MPI_LAND
       integer MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR, MPI_BXOR

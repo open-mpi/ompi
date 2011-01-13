@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -146,29 +146,29 @@ OPAL_DECLSPEC extern uint32_t opal_local_arch;
 /*
  * The OPAL-layer's Basic datatypes themselves.
  */
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_null;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_empty;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_loop;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_end_loop;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_lb;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_ub;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int1;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int2;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int4;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int8;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int16;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint1;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint2;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint4;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint8;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint16;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float2;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float4;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float8;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float12;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float16;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex8;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex16;
-OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex32;
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int1;       /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int2;       /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int4;       /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int8;       /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_int16;      /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint1;      /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint2;      /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint4;      /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint8;      /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_uint16;     /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float2;     /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float4;     /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float8;     /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float12;    /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_float16;    /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex8;   /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex16;  /* in bytes */
+OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_complex32;  /* in bytes */
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_bool;
 OPAL_DECLSPEC extern const opal_datatype_t opal_datatype_wchar;
 

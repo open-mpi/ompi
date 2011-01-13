@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -46,12 +46,12 @@ typedef struct {
     ompi_op_base_handler_fn_t fallback_float;
     ompi_op_base_module_t *fallback_float_module;
 
-    ompi_op_base_handler_fn_t fallback_short;
-    ompi_op_base_module_t *fallback_short_module;
-    ompi_op_base_handler_fn_t fallback_int;
-    ompi_op_base_module_t *fallback_int_module;
-    ompi_op_base_handler_fn_t fallback_long;
-    ompi_op_base_module_t *fallback_long_module;
+    ompi_op_base_handler_fn_t fallback_int16_t;
+    ompi_op_base_module_t *fallback_int16_t_module;
+    ompi_op_base_handler_fn_t fallback_int32_t;
+    ompi_op_base_module_t *fallback_int32_t_module;
+    ompi_op_base_handler_fn_t fallback_int64_t;
+    ompi_op_base_module_t *fallback_int64_t_module;
 } module_sum_t;
 
 /**
@@ -62,12 +62,12 @@ static void module_sum_constructor(module_sum_t *m)
     m->fallback_float = NULL;
     m->fallback_float_module = NULL;
 
-    m->fallback_short = NULL;
-    m->fallback_short_module = NULL;
-    m->fallback_int = NULL;
-    m->fallback_int_module = NULL;
-    m->fallback_long = NULL;
-    m->fallback_long_module = NULL;
+    m->fallback_int16_t = NULL;
+    m->fallback_int16_t_module = NULL;
+    m->fallback_int32_t = NULL;
+    m->fallback_int32_t_module = NULL;
+    m->fallback_int64_t = NULL;
+    m->fallback_int64_t_module = NULL;
 }
 
 /**
@@ -78,12 +78,12 @@ static void module_sum_destructor(module_sum_t *m)
     m->fallback_float = (ompi_op_base_handler_fn_t) 0xdeadbeef;
     m->fallback_float_module = (ompi_op_base_module_t*) 0xdeadbeef;
 
-    m->fallback_short = (ompi_op_base_handler_fn_t) 0xdeadbeef;
-    m->fallback_short_module = (ompi_op_base_module_t*) 0xdeadbeef;
-    m->fallback_int = (ompi_op_base_handler_fn_t) 0xdeadbeef;
-    m->fallback_int_module = (ompi_op_base_module_t*) 0xdeadbeef;
-    m->fallback_long = (ompi_op_base_handler_fn_t) 0xdeadbeef;
-    m->fallback_long_module = (ompi_op_base_module_t*) 0xdeadbeef;
+    m->fallback_int16_t = (ompi_op_base_handler_fn_t) 0xdeadbeef;
+    m->fallback_int16_t_module = (ompi_op_base_module_t*) 0xdeadbeef;
+    m->fallback_int32_t = (ompi_op_base_handler_fn_t) 0xdeadbeef;
+    m->fallback_int32_t_module = (ompi_op_base_module_t*) 0xdeadbeef;
+    m->fallback_int64_t = (ompi_op_base_handler_fn_t) 0xdeadbeef;
+    m->fallback_int64_t_module = (ompi_op_base_module_t*) 0xdeadbeef;
 }
 
 /**
@@ -112,19 +112,19 @@ static void sum_float(void *in, void *out, int *count,
 }
 
 /**
- * Sum function for C short
+ * Sum function for C int16_t
  */
-static void sum_short(void *in, void *out, int *count, 
+static void sum_int16_t(void *in, void *out, int *count, 
                       ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_sum_t *m = (module_sum_t*) module;
-    opal_output(0, "In x86 sum short function");
+    opal_output(0, "In x86 sum int16_t function");
 }
 
 /**
- * Sum function for C int
+ * Sum function for C int32_t
  */
-static void sum_int(void *in, void *out, int *count, 
+static void sum_int32_t(void *in, void *out, int *count, 
                     ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_sum_t *m = (module_sum_t*) module;
@@ -132,9 +132,9 @@ static void sum_int(void *in, void *out, int *count,
 }
 
 /**
- * Sum function for C long
+ * Sum function for C int64_t
  */
-static void sum_long(void *in, void *out, int *count, 
+static void sum_int64_t(void *in, void *out, int *count, 
                      ompi_datatype_t **type, ompi_op_base_module_t *module)
 {
     module_sum_t *m = (module_sum_t*) module;
@@ -172,35 +172,35 @@ ompi_op_base_module_t *ompi_op_x86_setup_sum(ompi_op_t *op)
        it is being used and won't be freed/destructed. */
     OBJ_RETAIN(module->fallback_float_module);
 
-    /* C short */
-    module->super.opm_fns[OMPI_OP_BASE_TYPE_SHORT] = sum_short;
-    module->fallback_short = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_SHORT];
-    module->fallback_short_module = 
-        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_SHORT];
+    /* C int16_t */
+    module->super.opm_fns[OMPI_OP_BASE_TYPE_INT16_T] = sum_int16_t;
+    module->fallback_int16_t = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_INT16_T];
+    module->fallback_int16_t_module = 
+        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INT16_T];
     /* If you cache a fallback function, you *must* RETAIN (i.e.,
        increase the refcount) its module so that the module knows that
        it is being used and won't be freed/destructed. */
-    OBJ_RETAIN(module->fallback_short_module);
+    OBJ_RETAIN(module->fallback_int16_t_module);
 
-    /* C int */
-    module->super.opm_fns[OMPI_OP_BASE_TYPE_INT] = sum_int;
-    module->fallback_int = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_INT];
-    module->fallback_int_module = 
-        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INT];
+    /* C int32_t */
+    module->super.opm_fns[OMPI_OP_BASE_TYPE_INT32_T] = sum_int32_t;
+    module->fallback_int32_t = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_INT32_T];
+    module->fallback_int32_t_module = 
+        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INT32_T];
     /* If you cache a fallback function, you *must* RETAIN (i.e.,
        increase the refcount) its module so that the module knows that
        it is being used and won't be freed/destructed. */
-    OBJ_RETAIN(module->fallback_int_module);
+    OBJ_RETAIN(module->fallback_int32_t_module);
 
-    /* C long */
-    module->super.opm_fns[OMPI_OP_BASE_TYPE_LONG] = sum_long;
-    module->fallback_long = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_LONG];
-    module->fallback_long_module = 
-        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_LONG];
+    /* C int64_t */
+    module->super.opm_fns[OMPI_OP_BASE_TYPE_INT64_T] = sum_int64_t;
+    module->fallback_int64_t = op->o_func.intrinsic.fns[OMPI_OP_BASE_TYPE_INT64_T];
+    module->fallback_int64_t_module = 
+        op->o_func.intrinsic.modules[OMPI_OP_BASE_TYPE_INT64_T];
     /* If you cache a fallback function, you *must* RETAIN (i.e.,
        increase the refcount) its module so that the module knows that
        it is being used and won't be freed/destructed. */
-    OBJ_RETAIN(module->fallback_long_module);
+    OBJ_RETAIN(module->fallback_int64_t_module);
 #endif
 
     return (ompi_op_base_module_t*) module;

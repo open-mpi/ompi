@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -272,7 +272,8 @@ struct opal_datatype_t;
 #define OPAL_DATATYPE_INIT_BTYPES_ARRAY_BOOL        { Z20, 0, 1, }          /*22*/
 #define OPAL_DATATYPE_INIT_BTYPES_ARRAY_WCHAR       { Z20, 0, 0, 1, }
 
-#define OPAL_DATATYPE_INIT_NAME(NAME) "OPAL_" # NAME
+#define OPAL_DATATYPE_INIT_NAME(NAME) "OPAL_" _OPAL_DATATYPE_INIT_NAME(NAME)
+#define _OPAL_DATATYPE_INIT_NAME(NAME)  #NAME
 
 /*
  * Macro to initialize the main description for basic types, setting the pointer
@@ -285,22 +286,6 @@ struct opal_datatype_t;
         &(opal_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_ ## NAME]) /*desc*/   \
     }
 #define OPAL_DATATYPE_INIT_DESC_NULL  {0 /*length*/, 0/*used*/, NULL /*desc*/}
-
-#define OPAL_DATATYPE_INITIALIZER_UNAVAILABLE( FLAGS )                               \
-    {                                                                                \
-        OPAL_OBJ_STATIC_INIT(opal_datatype_t),                                       \
-        OPAL_DATATYPE_FLAG_UNAVAILABLE | OPAL_DATATYPE_FLAG_PREDEFINED | (FLAGS) /*flag*/, \
-        0 /*id*/,                                                                    \
-        0 /*bdt_used*/,                                                              \
-        0 /*size*/,                                                                  \
-        0 /*true_lb*/, 0 /*true_ub*/, 0 /*lb*/, 0 /*ub*/,                            \
-        0 /*align*/,                                                                 \
-        1 /*nbElems*/,                                                               \
-        OPAL_DATATYPE_INIT_NAME(UNAVAILABLE), /*name*/                               \
-        OPAL_DATATYPE_INIT_DESC_PREDEFINED(UNAVAILABLE), /*desc*/                    \
-        OPAL_DATATYPE_INIT_DESC_PREDEFINED(UNAVAILABLE), /*opt_desc*/                \
-        OPAL_DATATYPE_INIT_BTYPES_ARRAY_UNAVAILABLE /*btypes*/                       \
-    }
 
 #define OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED( NAME, FLAGS )                   \
     {                                                                                \
@@ -318,7 +303,10 @@ struct opal_datatype_t;
         OPAL_DATATYPE_INIT_BTYPES_ARRAY_UNAVAILABLE /*btypes*/                       \
     }
 
-#define OPAL_DATATYPE_INITIALIZER_NULL( FLAGS )                                      \
+#define OPAL_DATATYPE_INITIALIZER_UNAVAILABLE( FLAGS )                               \
+    OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED( UNAVAILABLE, (FLAGS) )
+
+#define OPAL_DATATYPE_INITIALIZER_EMPTY( FLAGS )                                     \
     {                                                                                \
         OPAL_OBJ_STATIC_INIT(opal_datatype_t),                                       \
         OPAL_DATATYPE_FLAG_PREDEFINED | (FLAGS) /*flag*/,                            \
@@ -328,7 +316,7 @@ struct opal_datatype_t;
         0 /*true_lb*/, 0 /*true_ub*/, 0 /*lb*/, 0 /*ub*/,                            \
         0 /*align*/,                                                                 \
         1 /*nbElems*/,                                                               \
-        OPAL_DATATYPE_INIT_NAME(NULL), /*name*/                                      \
+        OPAL_DATATYPE_INIT_NAME(EMPTY), /*name*/                                     \
         OPAL_DATATYPE_INIT_DESC_NULL, /*desc*/                                       \
         OPAL_DATATYPE_INIT_DESC_NULL, /*opt_desc*/                                   \
         OPAL_DATATYPE_INIT_BTYPES_ARRAY_UNAVAILABLE /*btypes*/                       \

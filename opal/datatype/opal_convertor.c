@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -412,9 +412,10 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
 /**
  * Compute the remote size.
  */
+#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
 #define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
 {                                                                         \
-    if( OPAL_UNLIKELY(0 != bdt_mask) ) {                                  \
+    if( OPAL_UNLIKELY(0 != (bdt_mask)) ) {                                \
         opal_convertor_master_t* master;                                  \
         int i;                                                            \
         uint32_t mask = datatype->bdt_used;                               \
@@ -432,6 +433,10 @@ int32_t opal_convertor_set_position_nocheck( opal_convertor_t* convertor,
         convertor->use_desc = &(datatype->desc);                          \
     }                                                                     \
 }
+#else
+#define OPAL_CONVERTOR_COMPUTE_REMOTE_SIZE(convertor, datatype, bdt_mask) \
+    assert(0 == (bdt_mask))
+#endif  /* OPAL_ENABLE_HETEROGENEOUS_SUPPORT */
 
 /**
  * This macro will initialize a convertor based on a previously created
