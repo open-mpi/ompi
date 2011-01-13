@@ -118,7 +118,9 @@ enum {
     ORTE_ERR_MEM_LIMIT_EXCEEDED             = (ORTE_ERR_BASE - 36),
     ORTE_ERR_HEARTBEAT_LOST                 = (ORTE_ERR_BASE - 37),
     ORTE_ERR_PROC_STALLED                   = (ORTE_ERR_BASE - 38),
-    ORTE_ERR_COMM_DISABLED                  = (ORTE_ERR_BASE - 39)
+    ORTE_ERR_NO_APP_SPECIFIED               = (ORTE_ERR_BASE - 39),
+    ORTE_ERR_NO_EXE_SPECIFIED               = (ORTE_ERR_BASE - 40),
+    ORTE_ERR_COMM_DISABLED                  = (ORTE_ERR_BASE - 41)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

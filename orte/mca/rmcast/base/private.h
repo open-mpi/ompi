@@ -27,7 +27,6 @@
 #include "opal/mca/event/event.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_ring_buffer.h"
-#include "opal/util/fd.h"
 
 #include "orte/threads/threads.h"
 #include "orte/mca/rmcast/rmcast.h"
@@ -55,14 +54,10 @@ typedef struct {
     uint16_t port;
     uint32_t interface;
     int xmit;
+    bool restart;
     orte_rmcast_seq_t seq_num;
     int recv;
     struct sockaddr_in addr;
-    opal_event_t send_ev;
-    opal_mutex_t send_lock;
-    bool sends_in_progress;
-    opal_list_t pending_sends;
-    uint8_t *send_data;
     opal_event_t recv_ev;
     /* ring buffer to cache our messages */
     opal_ring_buffer_t cache;
@@ -111,10 +106,16 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_base_send_t);
 
 /* Data structure for tracking recvd sequence numbers */
 typedef struct {
-    opal_object_t super;
-    orte_process_name_t name;
+    opal_list_item_t super;
     orte_rmcast_channel_t channel;
     orte_rmcast_seq_t seq_num;
+} rmcast_seq_tracker_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_seq_tracker_t);
+
+typedef struct {
+    opal_list_item_t super;
+    orte_process_name_t name;
+    opal_list_t last_msg;
 } rmcast_recv_log_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_recv_log_t);
 
@@ -130,30 +131,31 @@ typedef struct {
 } rmcast_send_log_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_send_log_t);
 
-#define ORTE_MULTICAST_MESSAGE_EVENT(dt, sz)                            \
-    do {                                                                \
-        opal_buffer_t *buf;                                             \
-        OPAL_OUTPUT_VERBOSE((1, orte_rmcast_base.rmcast_output,         \
-                             "defining mcast msg event: %s %d",         \
-                             __FILE__, __LINE__));                      \
-        buf = OBJ_NEW(opal_buffer_t);                                   \
-        opal_dss.load(buf, (dt), (sz));                                 \
-        if (orte_progress_threads_enabled) {                            \
-            opal_fd_write(orte_rmcast_base.recv_pipe[1],                \
-                          sizeof(opal_buffer_t*), &buf);                \
-        } else {                                                        \
-            orte_rmcast_base_process_msg(buf);                          \
-        }                                                               \
-   } while(0);
 
 
-#define ORTE_MULTICAST_NEXT_SEQUENCE_NUM(seq)   \
-    do {                                        \
-        if ((seq) < ORTE_RMCAST_SEQ_MAX) {      \
-            (seq) += 1;                         \
-        } else {                                \
-            (seq) = 0;                          \
-        }                                       \
+#define ORTE_MULTICAST_MESSAGE_EVENT(sndr, bf)                  \
+    do {                                                        \
+        orte_rmcast_msg_t *msg;                                 \
+        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
+                            "defining mcast msg event: %s %d",  \
+                            __FILE__, __LINE__));               \
+        msg = OBJ_NEW(orte_rmcast_msg_t);                       \
+        msg->sender.jobid = (sndr)->jobid;                      \
+        msg->sender.vpid = (sndr)->vpid;                        \
+        opal_dss.copy_payload(msg->buf, (bf));                  \
+        opal_fd_write(orte_rmcast_base.recv_pipe[1],            \
+                      sizeof(orte_rmcast_msg_t*), &msg);        \
+    } while(0);
+
+
+#define ORTE_MULTICAST_NEXT_SEQUENCE_NUM(seq)        \
+    do {                                             \
+        if ((seq) == ORTE_RMCAST_SEQ_INVALID ||      \
+            (seq) == ORTE_RMCAST_SEQ_MAX) {          \
+            (seq) = 0;                               \
+        } else {                                     \
+            (seq) += 1;                              \
+        }                                            \
     } while(0);
 
 /****    FUNCTIONS    ****/
@@ -165,15 +167,16 @@ ORTE_DECLSPEC int orte_rmcast_base_queue_recv(rmcast_base_recv_t **recvptr,
                                               orte_rmcast_callback_buffer_fn_t cbfunc_buffer,
                                               void *cbdata, bool blocking);
 
+ORTE_DECLSPEC rmcast_base_channel_t* orte_rmcast_base_get_channel(orte_rmcast_channel_t channel);
+
 ORTE_DECLSPEC int orte_rmcast_base_queue_xmit(rmcast_base_send_t *snd,
                                               orte_rmcast_channel_t channel,
                                               opal_buffer_t **buffer,
                                               rmcast_base_channel_t **chan);
 
-ORTE_DECLSPEC int orte_rmcast_base_start_threads(bool rcv_thread, bool processing_thread);
+ORTE_DECLSPEC int orte_rmcast_base_start_threads(void);
 ORTE_DECLSPEC void orte_rmcast_base_stop_threads(void);
-
-ORTE_DECLSPEC int orte_rmcast_base_process_msg(opal_buffer_t *msg);
+ORTE_DECLSPEC void orte_rmcast_base_process_msg(orte_rmcast_msg_t *msg);
 
 ORTE_DECLSPEC void orte_rmcast_base_cancel_recv(orte_rmcast_channel_t channel,
                                                 orte_rmcast_tag_t tag);

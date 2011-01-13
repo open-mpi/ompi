@@ -43,8 +43,8 @@ struct opal_ring_buffer_t {
     opal_condition_t cond;
     bool in_use;
     /* head/tail indices */
-    char **head;
-    char **tail;
+    int head;
+    int tail;
     /** size of list, i.e. number of elements in addr */
     int size;
     /** pointer to ring */
@@ -79,35 +79,11 @@ OPAL_DECLSPEC int opal_ring_buffer_init(opal_ring_buffer_t* ring, int size);
  * @return OPAL_SUCCESS. Returns error if ring cannot take
  *  another entry
  */
-static inline void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr)
-{
-    char *p=NULL;
-    
-    OPAL_ACQUIRE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
-    if (NULL != *ring->head) {
-        p = *ring->head;
-        if (ring->head == ring->tail) {
-            /* push the tail ahead of us */
-            if (ring->tail == &ring->addr[ring->size-1]) {
-                ring->tail = &ring->addr[0];
-            } else {
-                ring->tail++;
-            }
-        }
-    }
-    *ring->head = (char *) ptr;
-    if (ring->head == &ring->addr[ring->size-1]) {
-        ring->head = &ring->addr[0];
-    } else {
-        ring->head++;
-    }
-    OPAL_RELEASE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
-    return (void*)p;
-}
+OPAL_DECLSPEC void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr);
 
 
 /**
- * Pop an item off of the ring. The head of the ring will be
+ * Pop an item off of the ring. The oldest entry on the ring will be
  * returned. If nothing on the ring, NULL is returned.
  *
  * @param ring          Pointer to ring (IN)
@@ -115,26 +91,13 @@ static inline void* opal_ring_buffer_push(opal_ring_buffer_t *ring, void *ptr)
  * @return Error code.  NULL indicates an error.
  */
 
-static inline void* opal_ring_buffer_pop(opal_ring_buffer_t *ring)
-{
-    char *p;
+OPAL_DECLSPEC void* opal_ring_buffer_pop(opal_ring_buffer_t *ring);
 
-    OPAL_ACQUIRE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
-    if (NULL == ring->tail || ring->head == ring->tail) {
-        p = NULL;
-    } else {
-        p = *ring->tail;
-        *ring->tail = NULL;
-        if (ring->tail == &ring->addr[ring->size-1]) {
-            ring->tail = &ring->addr[0];
-        } else {
-            ring->tail++;
-        }
-    }
-    OPAL_RELEASE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
-    return (void*)p;
-}
-
+/*
+ * Access an element of the ring, without removing it, indexed
+ * starting at the tail
+ */
+OPAL_DECLSPEC void* opal_ring_buffer_poke(opal_ring_buffer_t *ring, int i);
 
 END_C_DECLS
 
