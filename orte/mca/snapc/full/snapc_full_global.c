@@ -1358,12 +1358,14 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
         count = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(sbuffer, &seq_num, &count, OPAL_INT))) {
             ORTE_ERROR_LOG(ret);
+            orte_snapc_ckpt_state_notify(ORTE_SNAPC_CKPT_STATE_NO_RESTART);
             goto cleanup;
         }
 
         count = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(sbuffer, &global_handle, &count, OPAL_STRING))) {
             ORTE_ERROR_LOG(ret);
+            orte_snapc_ckpt_state_notify(ORTE_SNAPC_CKPT_STATE_NO_RESTART);
             goto cleanup;
         }
 
@@ -1372,6 +1374,7 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
          */
         if( ORTE_SUCCESS != (ret = orte_errmgr_base_restart_job(current_global_jobid, global_handle, seq_num) ) ) {
             ORTE_ERROR_LOG(ret);
+            orte_snapc_ckpt_state_notify(ORTE_SNAPC_CKPT_STATE_NO_RESTART);
             goto cleanup;
         }
     }
@@ -1757,6 +1760,7 @@ static int snapc_full_process_orted_update_cmd(orte_process_name_t* sender,
                                  "Global) Job has been successfully restarted"));
 
             /*current_job_ckpt_state = ORTE_SNAPC_CKPT_STATE_RECOVERED;*/
+            orte_snapc_ckpt_state_notify(ORTE_SNAPC_CKPT_STATE_RECOVERED);
 
             for(item  = opal_list_get_first(&(global_snapshot.local_snapshots));
                 item != opal_list_get_end(&(global_snapshot.local_snapshots));

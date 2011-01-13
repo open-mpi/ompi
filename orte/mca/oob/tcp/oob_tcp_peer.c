@@ -635,7 +635,8 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
                     (NULL == host) ? "NULL" : host);
         /* provide a notifier message */
         orte_notifier.log_peer(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE, &(peer->peer_name),
-                           "OOB Connection retries exceeded.  Can not communicate with peer");
+                               "OOB connection retries exceeded. Cannot communicate with peer %s.",
+                               ORTE_JOBID_PRINT(peer->peer_name.jobid));
         
         /* There are cases during the initial connection setup where
            the peer_send_msg is NULL but there are things in the queue

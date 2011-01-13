@@ -423,24 +423,32 @@ void orte_snapc_ckpt_state_notify(int state)
 {
     switch(state) {
     case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
-        orte_notifier.log(ORTE_NOTIFIER_INFO, state,
-                          "base:ckpt_state_notify: Checkpoint established for PID = %d {%s}.",
-                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+	    orte_notifier.log(ORTE_NOTIFIER_INFO, ORTE_SNAPC_CKPT_NOTIFY(state),
+                          "%d: Checkpoint established for process %s.",
+			  orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
-        orte_notifier.log(ORTE_NOTIFIER_WARN, state,
-                          "base:ckpt_state_notify: PID = %d is not checkpointable {%s}.",
+        orte_notifier.log(ORTE_NOTIFIER_WARN, ORTE_SNAPC_CKPT_NOTIFY(state),
+                          "%d: Process %s is not checkpointable.",
                           orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_SNAPC_CKPT_STATE_ERROR:
-        orte_notifier.log(ORTE_NOTIFIER_WARN, state,
-                          "base:ckpt_state_notify: Failed to checkpoint PID = %d {%s}.",
+        orte_notifier.log(ORTE_NOTIFIER_WARN, ORTE_SNAPC_CKPT_NOTIFY(state),
+                          "%d: Failed to checkpoint process %s.",
                           orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
-
+    case ORTE_SNAPC_CKPT_STATE_RECOVERED:
+        orte_notifier.log(ORTE_NOTIFIER_INFO, ORTE_SNAPC_CKPT_NOTIFY(state),
+                          "%d: Successfully restarted process %s.",
+                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        break;
+    case ORTE_SNAPC_CKPT_STATE_NO_RESTART:
+        orte_notifier.log(ORTE_NOTIFIER_WARN, ORTE_SNAPC_CKPT_NOTIFY(state),
+                          "%d: Failed to restart process %s.",
+                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        break;
     /* ADK: We currently do not notify for these states, but good to
      * have them around anyways. */
-    case ORTE_SNAPC_CKPT_STATE_RECOVERED:
     case ORTE_SNAPC_CKPT_STATE_NONE:
     case ORTE_SNAPC_CKPT_STATE_REQUEST:
     case ORTE_SNAPC_CKPT_STATE_PENDING:

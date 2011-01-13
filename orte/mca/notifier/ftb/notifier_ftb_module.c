@@ -34,10 +34,16 @@
 #include "opal/util/show_help.h"
 #include "opal/util/os_path.h"
 
+#include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/plm.h"
+#include "orte/mca/sensor/sensor.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
+
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/base/base.h"
 
 #include "orte/mca/notifier/base/base.h"
 #include "notifier_ftb.h"
@@ -95,7 +101,10 @@ static int init(void) {
 }
 
 static void finalize(void) {
-    FTB_Disconnect(ftb_client_handle);
+    /* If the FTB client handle is valid, disconnect the client from FTB. */
+    if (1 == ftb_client_handle.valid) {
+	    FTB_Disconnect(ftb_client_handle);
+    }
 }
 
 static const char* get_ftb_event_severity(orte_notifier_base_severity_t severity)
@@ -121,53 +130,106 @@ static const char* get_ftb_event_severity(orte_notifier_base_severity_t severity
 
 static const char* get_ftb_event_name(int errnum)
 {
-    switch (errnum) {
+    /* Handle checkpoint/restart and migration events */
+    if ( CHECK_ORTE_SNAPC_CKPT_STATE(errnum) ) {
+        errnum = ORTE_SNAPC_CKPT_STATE(errnum);
+        switch (errnum) {
+        case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
+            return FTB_EVENT(FTB_MPI_PROCS_CKPTED);
 
-    case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
-        return FTB_EVENT(FTB_MPI_PROCS_CKPTED);
+        case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
+        case ORTE_SNAPC_CKPT_STATE_ERROR:
+            return FTB_EVENT(FTB_MPI_PROCS_CKPT_FAIL);
 
-    case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
-    case ORTE_SNAPC_CKPT_STATE_ERROR:
-        return FTB_EVENT(FTB_MPI_PROCS_CKPT_FAIL);
+        /* Restart events */
+        case ORTE_SNAPC_CKPT_STATE_RECOVERED:
+            return FTB_EVENT(FTB_MPI_PROCS_RESTARTED);
 
-    case ORTE_ERR_CONNECTION_REFUSED:
-    case ORTE_ERR_CONNECTION_FAILED:
-    case ORTE_ERR_UNREACH:
-        return FTB_EVENT(FTB_MPI_PROCS_UNREACHABLE);
+        case ORTE_SNAPC_CKPT_STATE_NO_RESTART:
+            return FTB_EVENT(FTB_MPI_PROCS_RESTART_FAIL);
 
-    case ORTE_ERR_COMM_FAILURE:
-        return FTB_EVENT(FTB_MPI_PROCS_COMM_ERROR);
+        /* Process migration events */
+        case ORTE_ERRMGR_MIGRATE_STATE_FINISH:
+            return FTB_EVENT(FTB_MPI_PROCS_MIGRATED);
 
-    default:
-        return NULL;
+        case ORTE_ERRMGR_MIGRATE_STATE_ERROR:
+        case ORTE_ERRMGR_MIGRATE_STATE_ERR_INPROGRESS:
+            return FTB_EVENT(FTB_MPI_PROCS_MIGRATE_FAIL);
+
+        default:
+            return NULL;
+        }
+    } else {
+        /* Handle process and communication failure events */
+        switch (errnum) {
+        case ORTE_ERR_CONNECTION_REFUSED:
+        case ORTE_ERR_CONNECTION_FAILED:
+        case ORTE_ERR_UNREACH:
+        case ORTE_PROC_STATE_HEARTBEAT_FAILED:
+            return FTB_EVENT(FTB_MPI_PROCS_UNREACHABLE);
+
+        case ORTE_ERR_COMM_FAILURE:
+        case ORTE_PROC_STATE_COMM_FAILED:
+            return FTB_EVENT(FTB_MPI_PROCS_COMM_ERROR);
+
+        case ORTE_PROC_STATE_FAILED_TO_START:
+        case ORTE_PROC_STATE_CALLED_ABORT:
+            return FTB_EVENT(FTB_MPI_PROCS_ABORTED);
+
+        case ORTE_PROC_STATE_ABORTED:
+        case ORTE_PROC_STATE_ABORTED_BY_SIG:
+        case ORTE_PROC_STATE_TERM_WO_SYNC:
+        case ORTE_PROC_STATE_TERMINATED:
+        case ORTE_PROC_STATE_KILLED_BY_CMD:
+            return FTB_EVENT(FTB_MPI_PROCS_DEAD);
+
+        default:
+            return NULL;
+        }
     }
 
     return NULL;
 }
 
-static void publish_ftb_event(orte_notifier_base_severity_t severity, int errcode, char *payload)
+/* Extracts the FTB payload (inside the brackets []) from notifier
+ * message payload. 
+ * For instance: "<FTB message [payload]>" would return "payload".
+ */
+static unsigned int extract_payload(char *dest, char *src, unsigned int size)
+{
+    unsigned int ret;
+    char *lbrace, *rbrace;
+    rbrace = strrchr(src, ']');
+    lbrace = strchr(src, '[');
+
+    if (NULL == rbrace || NULL == lbrace) {
+        strncpy(dest, src, size);
+        ret = size;
+    } else {
+        ret = rbrace - lbrace + 1;
+        if (ret > size) {
+            ret = size;
+        }
+        strncpy(dest, lbrace, ret);
+    }
+    return ret;
+}
+
+static void publish_ftb_event(orte_notifier_base_severity_t severity, int errcode,
+                              FTB_event_properties_t *eprop)
 {
     int ret;
     const char *event_name;
     FTB_event_handle_t ehandle;
-    FTB_event_properties_t eprop;
-
-    /* Only normal FTB events are supported currently. */
-    eprop.event_type = (int) FTB_EVENT_NORMAL;
-
-    /* Copy the event payload, if we have one */ 
-    if (NULL != payload) {
-        strncpy(eprop.event_payload, payload, FTB_MAX_PAYLOAD_DATA);
-    }
 
     /* Publish the event to the Fault Tolerant Backplane */
     event_name = get_ftb_event_name(errcode);
     if (NULL != event_name) {
-        ret = FTB_Publish(ftb_client_handle, event_name, &eprop, &ehandle);
+        ret = FTB_Publish(ftb_client_handle, event_name, eprop, &ehandle);
         if (FTB_SUCCESS != ret) {
             orte_show_help("help-orte-notifier-ftb.txt", "publish failed", true,
                            "FTB_Publish() failed", ret, get_ftb_event_severity(severity),
-                           event_name, payload, errcode);
+                           event_name, eprop->event_payload, errcode);
         }
     }
 }
@@ -176,11 +238,17 @@ static void ftb_log(orte_notifier_base_severity_t severity, int errcode, const c
                     va_list ap)
 {
     char *payload;
+    FTB_event_properties_t ev_prop;
 
+    /* Only normal FTB events are supported currently. */
+    ev_prop.event_type = (int) FTB_EVENT_NORMAL;
+
+    /* Copy the event payload, if we have one */
     vasprintf(&payload, msg, ap);
     if (NULL != payload) {
-        publish_ftb_event(severity, errcode, payload);
+        extract_payload(ev_prop.event_payload, payload, FTB_MAX_PAYLOAD_DATA);
         free(payload);
+        publish_ftb_event(severity, errcode, &ev_prop);
     }
 }
 
@@ -188,11 +256,16 @@ static void ftb_help(orte_notifier_base_severity_t severity, int errcode,
                      const char *filename, const char *topic, va_list ap)
 {
     char *payload;
+    FTB_event_properties_t ev_prop;
+
+    /* Only normal FTB events are supported currently. */
+    ev_prop.event_type = (int) FTB_EVENT_NORMAL;
 
     payload = opal_show_help_vstring(filename, topic, false, ap);
     if (NULL != payload) {
-        publish_ftb_event(severity, errcode, payload);
+        extract_payload(ev_prop.event_payload, payload, FTB_MAX_PAYLOAD_DATA);
         free(payload);
+        publish_ftb_event(severity, errcode, &ev_prop);
     }
 }
 
@@ -200,23 +273,22 @@ static void ftb_peer(orte_notifier_base_severity_t severity, int errcode,
                      orte_process_name_t *peer_proc, const char *msg,
                      va_list ap)
 {
-    char payload[FTB_MAX_PAYLOAD_DATA + 1];
-    char *peer_host = NULL;
-    char *pos = payload;
-    int len, space = FTB_MAX_PAYLOAD_DATA;
+    char *payload, *peer_host;
+    FTB_event_properties_t ev_prop;
 
+    /* Only normal FTB events are supported currently. */
+    ev_prop.event_type = (int) FTB_EVENT_NORMAL;
+
+    peer_host = NULL;
     if (peer_proc) {
         peer_host = orte_ess.proc_get_hostname(peer_proc);
-    }
-    len = snprintf(pos, space, "%s:", peer_host ? peer_host : "UNKNOWN");
-    space -= len;
-    pos += len;
-
-    /* If there was a message, and space left, output it */
-    if (0 < space) {
-        vsnprintf(pos, space, msg, ap);
+        /* Ignore the peer_host for now. */
     }
 
-    payload[FTB_MAX_PAYLOAD_DATA] = '\0';
-    publish_ftb_event(severity, errcode, payload);
+    vasprintf(&payload, msg, ap);
+    if (NULL != payload) {
+        extract_payload(ev_prop.event_payload, payload, FTB_MAX_PAYLOAD_DATA);
+        free(payload);
+        publish_ftb_event(severity, errcode, &ev_prop);
+    }
 }

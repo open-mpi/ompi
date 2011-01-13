@@ -117,7 +117,24 @@ BEGIN_C_DECLS
 #define ORTE_SNAPC_CKPT_STATE_RECOVERED      10
 /* Unable to checkpoint this job */
 #define ORTE_SNAPC_CKPT_STATE_NO_CKPT        11
-#define ORTE_SNAPC_CKPT_MAX                  12
+/* Unable to restart this job */
+#define ORTE_SNAPC_CKPT_STATE_NO_RESTART     12
+#define ORTE_SNAPC_CKPT_MAX                  13
+
+/**
+ * Sufficiently high shift value to avoid colliding the process
+ * checkpointing states above with the ORTE process states
+ */
+#define ORTE_SNAPC_CKPT_SHIFT                131072
+
+/* Uniquely encode the SNAPC state */
+#define ORTE_SNAPC_CKPT_NOTIFY(state) (ORTE_SNAPC_CKPT_SHIFT + state)
+
+/* Decode the SNAPC state */
+#define ORTE_SNAPC_CKPT_STATE(state) (state - ORTE_SNAPC_CKPT_SHIFT)
+
+/* Check whether a state is a SNAPC state or not. */
+#define CHECK_ORTE_SNAPC_CKPT_STATE(state) (state >= ORTE_SNAPC_CKPT_SHIFT)
 
 /**
  * Definition of a orte local snapshot.
