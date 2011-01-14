@@ -348,20 +348,6 @@ Collectives
 Network Support
 ---------------
 
-- The OpenFabrics Enterprise Distribution (OFED) software package v1.0
-  will not work properly with Open MPI v1.2 (and later) due to how its
-  Mellanox InfiniBand plugin driver is created.  The problem is fixed
-  OFED v1.1 (and later).
-
-- Older mVAPI-based InfiniBand drivers (Mellanox VAPI) are no longer
-  supported.  Please use an older version of Open MPI (1.2 series or
-  earlier) if you need mVAPI support.
-
-- The use of fork() with the openib BTL is only partially supported,
-  and only on Linux kernels >= v2.6.15 with libibverbs v1.1 or later
-  (first released as part of OFED v1.2), per restrictions imposed by
-  the OFED network stack.
-
 - There are three MPI network models available: "ob1", "csum", and
   "cm".  "ob1" and "csum" use BTL ("Byte Transfer Layer") components
   for each supported network.  "cm" uses MTL ("Matching Tranport
@@ -409,6 +395,39 @@ Network Support
   - There are also the "v" and "crcpw" PML components for differing
     flavors of specialized fault tolerant support.
 
+- The OpenFabrics Enterprise Distribution (OFED) software package v1.0
+  will not work properly with Open MPI v1.2 (and later) due to how its
+  Mellanox InfiniBand plugin driver is created.  The problem is fixed
+  OFED v1.1 (and later).
+
+- Better memory management support is available for OFED-based
+  transports using the "ummunotify" Linux kernel module.  OFED memory
+  managers are necessary for better bandwidth when re-using the same
+  buffers for large messages (e.g., benchmarks and some applications).
+  
+  Unfortunately, the ummunotify module was not accepted by the Linux
+  kernel community (and is still not distributed by OFED).  But it
+  still remains the best memory management solution for MPI
+  applications that used the OFED network transports.  If Open MPI is
+  able to find the <linux/ummunotify.h> header file, it will build
+  support for ummunotify and include it by default.  If MPI processes
+  then find the ummunotify kernel module loaded and active, then ther
+  memory managers (which have been shown to be problematic in some
+  cases) will be disabled and ummunotify will be used.  Otherwise, the
+  same memory managers from prior versions of Open MPI will be used.
+  The ummunotify Linux kernel module can be downloaded from:
+
+    http://lwn.net/Articles/343351/
+
+- Older mVAPI-based InfiniBand drivers (Mellanox VAPI) are no longer
+  supported.  Please use an older version of Open MPI (1.2 series or
+  earlier) if you need mVAPI support.
+
+- The use of fork() with OpenFabrics-based networks (i.e., the openib
+  BTL) is only partially supported, and only on Linux kernels >=
+  v2.6.15 with libibverbs v1.1 or later (first released as part of
+  OFED v1.2), per restrictions imposed by the OFED network stack.
+
 - Myrinet MX (and Open-MX) support is shared between the 2 internal
   devices, the MTL and the BTL.  The design of the BTL interface in
   Open MPI assumes that only naive one-sided communication
@@ -442,6 +461,10 @@ Network Support
   using multiple interconnects at the same time (including TCP), or
   transferring non contiguous data-types.
 
+- Older Myrinet "GM" support is no longer available in the v1.5
+  series.  Older versions of Open MPI can be used if GM support is
+  still needed.
+
 - Linux "knem" support is used when the "sm" (shared memory) BTL is
   compiled with knem support (see the --with-knem configure option)
   and the knem Linux module is loaded in the running kernel.  If the
@@ -453,15 +476,16 @@ Network Support
 Open MPI Extensions
 -------------------
 
-- Extensions framework added.  See the "Open MPI API Extensions"
-  section below for more information on compiling and using
-  extensions.
+- An MPI "extensions" framework has been added (but is not enabled by
+  default).  See the "Open MPI API Extensions" section below for more
+  information on compiling and using MPI extensions.
 
 - The following extensions are included in this version of Open MPI:
 
   - affinity: Provides the OMPI_Affinity_str() routine on retrieving
     a string that contains what resources a process is bound to.  See
     its man page for more details.
+
   - example: A non-functional extension; its only purpose is to
     provide an example for how to create other extensions.
 
@@ -1141,9 +1165,9 @@ Open MPI API Extensions
 -----------------------
 
 Open MPI contains a framework for extending the MPI API that is
-available to applications.  Each extension is usually a standalone set of
-functionality that is distinct from other extensions (similar to how
-Open MPI's plugins are usually unrelated to each other).  These
+available to applications.  Each extension is usually a standalone set
+of functionality that is distinct from other extensions (similar to
+how Open MPI's plugins are usually unrelated to each other).  These
 extensions provide new functions and/or constants that are available
 to MPI applications.
 
@@ -1176,17 +1200,19 @@ prototypes, constant declarations, etc.  For example:
 #include <mpi-ext.h>
 #endif
 
-int main() {
+int main(int argc, char* argv[]) {
     MPI_Init(NULL, NULL);
+
 #if defined(OPEN_MPI) && OPEN_MPI
     {
         char ompi_bound[OMPI_AFFINITY_STRING_MAX];
         char current_binding[OMPI_AFFINITY_STRING_MAX];
         char exists[OMPI_AFFINITY_STRING_MAX];
-        OMPI_Affinity_str(OMPI_AFFINITY_LAYOUT_FMT, ompi_bound, current_bindings, 
-                          exists);
+        OMPI_Affinity_str(OMPI_AFFINITY_LAYOUT_FMT, ompi_bound,
+                          current_bindings, exists);
     }
 #endif
+
     MPI_Finalize();
     return 0;
 }
