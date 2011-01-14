@@ -62,11 +62,19 @@ Trunk (not on release branches yet)
   OPAL levels - intended for use when configuring without MPI support
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
+
+
+1.5.2
+-----
+
+- Added ummunotify support for OpenFabrics-based transports.  See the
+  README for more details.
 - Added btl_tcp_if_seq MCA parameter to select a different ethernet
   interface for each MPI process on a node.  This parameter is only
   useful when used with virtual ethernet interfaces on a single
   network card (e.g., when using virtual interfaces give dedicated
   hardware resources on the NIC to each process).
+- 
 
 
 1.5.1
