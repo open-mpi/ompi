@@ -543,9 +543,11 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
         }
     }
 
+#if OPAL_ENABLE_FT_CR
     /* Notify the process state to the notifier framework if it is
        active and selected. */
     orte_errmgr_base_proc_state_notify(state, proc);
+#endif
 
     /* update is for a specific proc */
     switch (state) {
