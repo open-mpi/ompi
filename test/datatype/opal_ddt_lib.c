@@ -32,7 +32,8 @@ static int32_t opal_datatype_create_indexed( int count, const int* pBlockLength,
                                              const opal_datatype_t* oldType, opal_datatype_t** newType );
 static int32_t opal_datatype_create_hindexed( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
                                               const opal_datatype_t* oldType, opal_datatype_t** newType );
-static int32_t opal_datatype_create_struct( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
+static int32_t opal_datatype_create_struct( int count, const int* pBlockLength,
+                                            const OPAL_PTRDIFF_TYPE* pDisp,
                                             opal_datatype_t* const * pTypes, opal_datatype_t** newType );
 static int32_t opal_datatype_create_vector( int count, int bLength, int stride,
                                             const opal_datatype_t* oldType, opal_datatype_t** newType );
@@ -134,15 +135,15 @@ opal_datatype_t* test_create_blacs_type2( opal_datatype_t* base_type )
 
 opal_datatype_t* test_struct( void )
 {
-    const opal_datatype_t* types[] = { &opal_datatype_float4,
+    const opal_datatype_t* types[] = { (opal_datatype_t*)&opal_datatype_float4,
                                  NULL,
-                                 &opal_datatype_int1 };
+                                 (opal_datatype_t*)&opal_datatype_int1 };
     int lengths[] = { 2, 1, 3 };
     OPAL_PTRDIFF_TYPE disp[] = { 0, 16, 26 };
     opal_datatype_t* pdt, *pdt1;
 
     printf( "test struct\n" );
-    opal_datatype_create_contiguous(0, &opal_datatype_null, &pdt1);
+    opal_datatype_create_contiguous(0, &opal_datatype_empty, &pdt1);
     opal_datatype_add( pdt1, &opal_datatype_float8, 1, 0, -1 );
     opal_datatype_add( pdt1, &opal_datatype_int1, 1, 8, -1 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
@@ -170,7 +171,8 @@ opal_datatype_t* test_struct_char_double( void )
     int lengths[] = {1, 1};
     OPAL_PTRDIFF_TYPE displ[] = {0, 0};
     opal_datatype_t *pdt;
-    opal_datatype_t* types[] = { &opal_datatype_int1, &opal_datatype_float8};
+    opal_datatype_t* types[] = { (opal_datatype_t*)&opal_datatype_int1,
+                                 (opal_datatype_t*)&opal_datatype_float8};
 
     displ[0] = (char*)&(data.c) - (char*)&(data);
     displ[1] = (char*)&(data.d) - (char*)&(data);
@@ -206,7 +208,7 @@ opal_datatype_t* create_strange_dt( void )
     int pBlock[3] = {1, 10, 1}, dispi[3];
     opal_datatype_t *pdt, *pdt1, *pdt2, *pdtTemp;
 
-    opal_datatype_create_contiguous(0, &opal_datatype_null, &pdt1);
+    opal_datatype_create_contiguous(0, &opal_datatype_empty, &pdt1);
     opal_datatype_add( pdt1, &opal_datatype_float8, 1, 0, -1 );
     opal_datatype_add( pdt1, &opal_datatype_int1, 1, 8, -1 );
 
@@ -266,7 +268,7 @@ static int32_t opal_datatype_create_indexed( int count, const int* pBlockLength,
 
     if( 0 == count ) {
         *newType = opal_datatype_create( 0 );
-        opal_datatype_add( *newType, &opal_datatype_null, 0, 0, 0);
+        opal_datatype_add( *newType, &opal_datatype_empty, 0, 0, 0);
         return OPAL_SUCCESS;
     }
 
@@ -308,7 +310,7 @@ static int32_t opal_datatype_create_hindexed( int count, const int* pBlockLength
 
     if( 0 == count ) {
         *newType = opal_datatype_create( 0 );
-        opal_datatype_add( *newType, &opal_datatype_null, 0, 0, 0);
+        opal_datatype_add( *newType, &opal_datatype_empty, 0, 0, 0);
         return OPAL_SUCCESS;
     }
 
@@ -352,7 +354,7 @@ static int32_t opal_datatype_create_struct( int count, const int* pBlockLength, 
 
     if( 0 == count ) {
         *newType = opal_datatype_create( 0 );
-        opal_datatype_add( *newType, &opal_datatype_null, 0, 0, 0);
+        opal_datatype_add( *newType, &opal_datatype_empty, 0, 0, 0);
         return OPAL_SUCCESS;
     }
 
@@ -420,7 +422,7 @@ static int32_t opal_datatype_create_vector( int count, int bLength, int stride,
 
     if( 0 == count ) {
         *newType = opal_datatype_create( 0 );
-        opal_datatype_add( *newType, &opal_datatype_null, 0, 0, 0);
+        opal_datatype_add( *newType, &opal_datatype_empty, 0, 0, 0);
         return OPAL_SUCCESS;
     }
 
@@ -451,7 +453,7 @@ static int32_t opal_datatype_create_hvector( int count, int bLength, OPAL_PTRDIF
 
     if( 0 == count ) {
         *newType = opal_datatype_create( 0 );
-        opal_datatype_add( *newType, &opal_datatype_null, 0, 0, 0);
+        opal_datatype_add( *newType, &opal_datatype_empty, 0, 0, 0);
         return OPAL_SUCCESS;
     }
 
@@ -592,7 +594,7 @@ opal_datatype_t* test_contiguous( void )
     opal_datatype_t *pdt, *pdt1, *pdt2;
 
     printf( "test contiguous (alignement)\n" );
-    opal_datatype_create_contiguous(0, &opal_datatype_null, &pdt1);
+    opal_datatype_create_contiguous(0, &opal_datatype_empty, &pdt1);
     opal_datatype_add( pdt1, &opal_datatype_float8, 1, 0, -1 );
     if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
         opal_datatype_dump( pdt1 );
@@ -639,7 +641,7 @@ int mpich_typeub( void )
    displ[0] = 0;
    displ[1] = sizeof(int)*4;
    types[0] = type1;
-   types[1] = (const opal_datatype_t*)&opal_datatype_ub;
+   types[1] = (opal_datatype_t*)&opal_datatype_ub;
    extent2  = displ[1];
 
    /*    using MPI_UB and Type_struct, monkey with the extent, making it 16
@@ -659,7 +661,7 @@ int mpich_typeub( void )
     */
    displ[1] = sizeof(int);
    types[0] = type2;
-   types[1] = &opal_datatype_ub;
+   types[1] = (opal_datatype_t*)&opal_datatype_ub;
    extent3  = extent2;
 
    opal_datatype_create_struct( 2, blens, displ, types, &type3 );
@@ -691,9 +693,9 @@ int mpich_typeub2( void )
    disp[0] = -3;
    disp[1] = 0;
    disp[2] = 6;
-   types[0] = &opal_datatype_lb;
-   types[1] = &opal_datatype_int4;
-   types[2] = &opal_datatype_ub;
+   types[0] = (opal_datatype_t*)&opal_datatype_lb;
+   types[1] = (opal_datatype_t*)&opal_datatype_int4;
+   types[2] = (opal_datatype_t*)&opal_datatype_ub;
 
    opal_datatype_create_struct(3, blocklen, disp, types, &dt1);
    opal_datatype_commit( dt1 );
@@ -771,9 +773,9 @@ int mpich_typeub3( void )
    disp[0] = -3;
    disp[1] = 0;
    disp[2] = 6;
-   types[0] = &opal_datatype_lb;
-   types[1] = &opal_datatype_int4;
-   types[2] = &opal_datatype_ub;
+   types[0] = (opal_datatype_t*)&opal_datatype_lb;
+   types[1] = (opal_datatype_t*)&opal_datatype_int4;
+   types[2] = (opal_datatype_t*)&opal_datatype_ub;
 
    /* Generate samples for contiguous, hindexed, hvector, indexed, and vector (struct and contiguous tested in typeub2) */
    opal_datatype_create_struct(3, blocklen, disp, types, &dt1);
