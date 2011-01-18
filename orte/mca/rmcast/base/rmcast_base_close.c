@@ -20,16 +20,44 @@
 
 int orte_rmcast_base_close(void)
 {
+    opal_list_item_t *item;
+
+    if (!orte_rmcast_base.opened) {
+        return ORTE_SUCCESS;
+    }
+    
     /* finalize the active module */
     if (NULL != orte_rmcast.finalize) {
         orte_rmcast.finalize();
     }
     
+    while (NULL != (item = opal_list_remove_first(&orte_rmcast_base.msg_logs))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_rmcast_base.msg_logs);
+
+    while (NULL != (item = opal_list_remove_first(&orte_rmcast_base.recvs))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_rmcast_base.recvs);
+    while (NULL != (item = opal_list_remove_first(&orte_rmcast_base.channels))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_rmcast_base.channels);
+
+    /* cleanup thread stuff */
+    OBJ_DESTRUCT(&orte_rmcast_base.main_ctl);
+    OBJ_DESTRUCT(&orte_rmcast_base.recv_thread);
+    OBJ_DESTRUCT(&orte_rmcast_base.recv_ctl);
+    OBJ_DESTRUCT(&orte_rmcast_base.recv_process);
+    OBJ_DESTRUCT(&orte_rmcast_base.recv_process_ctl);
+
     /* Close all remaining available components (may be one if this is a
         Open RTE program, or [possibly] multiple if this is ompi_info) */
 
-        mca_base_components_close(orte_rmcast_base.rmcast_output, 
-                                  &orte_rmcast_base.rmcast_opened, NULL);
+    mca_base_components_close(orte_rmcast_base.rmcast_output, 
+                              &orte_rmcast_base.rmcast_opened, NULL);
   
+    orte_rmcast_base.opened = false;
     return ORTE_SUCCESS;
 }

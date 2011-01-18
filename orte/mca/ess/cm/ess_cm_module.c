@@ -401,10 +401,10 @@ static int update_nidmap(opal_byte_object_t *bo)
 static bool arrived = false;
 static bool name_success = false;
 
-static void cbfunc(int status,
-                   int channel, orte_rmcast_tag_t tag,
-                   orte_process_name_t *sender,
+static void cbfunc(int status, orte_rmcast_channel_t channel,
                    orte_rmcast_seq_t seq_num,
+                   orte_rmcast_tag_t tag,
+                   orte_process_name_t *sender,
                    opal_buffer_t *buf, void *cbdata)
 {
     int32_t n;

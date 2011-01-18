@@ -124,6 +124,9 @@ orte_err2str(int errnum)
     case ORTE_ERR_SYSTEM_WILL_BOOTSTRAP:
         retval = "System will determine resources during bootstrap of daemons";
         break;
+    case ORTE_ERR_COMM_DISABLED:
+        retval = "Communications have been disabled";
+        break;
     default:
         retval = NULL;
     }

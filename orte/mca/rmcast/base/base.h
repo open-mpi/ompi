@@ -21,9 +21,13 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/class/opal_list.h"
 #include "opal/event/event.h"
 
+#include "orte/threads/threads.h"
+
 #include "orte/mca/rmcast/rmcast.h"
+#include "orte/mca/rmcast/base/private.h"
 
 BEGIN_C_DECLS
 
@@ -43,6 +47,20 @@ typedef struct {
     uint8_t my_group_number;
     uint32_t interface;
     uint16_t ports[256];
+    int cache_size;
+    bool opened;
+    orte_thread_ctl_t main_ctl;
+    opal_list_t recvs;
+    opal_list_t channels;
+    rmcast_base_channel_t *my_output_channel;
+    rmcast_base_channel_t *my_input_channel;
+    bool unreliable_xport;
+    opal_list_t msg_logs;
+    opal_thread_t recv_thread;
+    orte_thread_ctl_t recv_ctl;
+    int recv_pipe[2];
+    opal_thread_t recv_process;
+    orte_thread_ctl_t recv_process_ctl;
 } orte_rmcast_base_t;
 
 ORTE_DECLSPEC extern orte_rmcast_base_t orte_rmcast_base;

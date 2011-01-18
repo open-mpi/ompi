@@ -58,7 +58,8 @@ headers = \
         stacktrace.h \
         strncpy.h \
         sys_limits.h \
-        trace.h
+        trace.h \
+        fd.h
 
 libopalutil_la_SOURCES = \
         $(headers) \
@@ -90,7 +91,9 @@ libopalutil_la_SOURCES = \
         stacktrace.c \
         strncpy.c \
         sys_limits.c \
-        trace.c
+        trace.c \
+        fd.c
+
 libopalutil_la_LIBADD = \
 	keyval/libopalutilkeyval.la
 libopalutil_la_DEPENDENCIES = \

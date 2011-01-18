@@ -33,6 +33,7 @@ BEGIN_C_DECLS
 
 typedef void *(*opal_thread_fn_t) (opal_object_t *);
 
+#define OPAL_THREAD_CANCELLED   ((void*)1);
 
 struct opal_thread_t {
     opal_object_t super;
@@ -50,6 +51,31 @@ struct opal_thread_t {
 typedef struct opal_thread_t opal_thread_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
+
+#define OPAL_ACQUIRE_THREAD(lck, cnd, act)               \
+    do {                                                 \
+        OPAL_THREAD_LOCK((lck));                         \
+        while (*(act)) {                                 \
+            opal_condition_wait((cnd), (lck));           \
+        }                                                \
+        *(act) = true;                                   \
+    } while(0);
+
+
+#define OPAL_RELEASE_THREAD(lck, cnd, act)              \
+    do {                                                \
+        *(act) = false;                                 \
+        opal_condition_broadcast((cnd));                \
+        OPAL_THREAD_UNLOCK((lck));                      \
+    } while(0);
+
+
+#define OPAL_WAKEUP_THREAD(cnd, act)        \
+    do {                                    \
+        *(act) = false;                     \
+        opal_condition_broadcast((cnd));    \
+    } while(0);
+
 
 OPAL_DECLSPEC int  opal_thread_start(opal_thread_t *);
 OPAL_DECLSPEC int  opal_thread_join(opal_thread_t *, void **thread_return);
