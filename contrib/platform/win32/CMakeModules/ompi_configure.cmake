@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2011 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
@@ -722,8 +722,6 @@ IF(WIN32)
 
   OMPI_DEF(MCA_memcpy_IMPLEMENTATION_HEADER "opal/mca/memcpy/base/memcpy_base_default.h" "Header to include for memcpy implementation." 1 1)
 
-  OMPI_DEF(OMPI_MPI_OFFSET_TYPE "long long" "Type of MPI_Offset." 0 1)
-
   OMPI_DEF(HAVE_DECL___FUNC__ 0 "Define to 1 if you have the declaration of `__func__', and to 0 if you don't." 0 1)
 
   OMPI_DEF_CACHE(MCA_mtl_DIRECT_CALL_COMPONENT " " STRING "Name of component to use for direct calls, if MCA_mtl_DIRECT_CALL is 1." 1 1)
@@ -788,8 +786,14 @@ IF(HAVE_LONG_LONG)
 ENDIF(HAVE_LONG_LONG)
 
 IF(HAVE_PTRDIFF_T)
-  OMPI_DEF(OPAL_PTRDIFF_TYPE "ptrdiff_t" "Type to use for ptrdiff_t." 0 0)
+  SET(PTRDIFF_T "ptrdiff_t")
+ELSEIF(SIZEOF_VOID_P EQUAL SIZEOF_LONG)
+  SET(PTRDIFF_T "long")
+ELSEIF(HAVE_LONG_LONG AND SIZEOF_VOID_P EQUAL SIZEOF_LONG_LONG)
+  SET(PTRDIFF_T "long long")
 ENDIF(HAVE_PTRDIFF_T)
+
+OMPI_DEF(OPAL_PTRDIFF_TYPE ${PTRDIFF_T} "Type to use for ptrdiff_t." 0 0)
 
 #The same logic as in opal_stdint.h
 #8-bit
@@ -895,6 +899,59 @@ ELSEIF(HAVE_LONG_LONG AND SIZEOF_LONG_LONG EQUAL 8)
 ELSE(SIZEOF_INT EQUAL 8)
   MESSAGE(FATAL_ERROR "Failed to define 8-bit types.")
 ENDIF(SIZEOF_INT EQUAL 8)
+
+
+#
+# Test to determine type of MPI_Offset. This is searched in the following order
+# int64_t, long long, long, int. If none of these are 8 bytes, then we should
+# search for int32_t, long long, long, int.
+#
+SET(MPI_OFFSET_TYPE "not found")
+SET(MPI_OFFSET_DATATYPE "not found")
+
+MESSAGE(STATUS "checking for type of MPI_Offset...")
+IF(HAVE_LONG_LONG AND SIZEOF_LONG_LONG EQUAL 8)
+    SET(MPI_OFFSET_TYPE "long long")
+    SET(MPI_OFFSET_DATATYPE MPI_LONG_LONG)
+    SET(MPI_OFFSET_SIZE 8)
+ELSEIF(HAVE_LONG AND SIZEOF_LONG EQUAL 8)
+    SET(MPI_OFFSET_TYPE "long")
+    SET(MPI_OFFSET_DATATYPE MPI_LONG)
+    SET(MPI_OFFSET_SIZE 8)
+ELSEIF(SIZEOF_INT EQUAL 8)
+    SET(MPI_OFFSET_TYPE "int")
+    SET(MPI_OFFSET_DATATYPE MPI_INT)
+    SET(MPI_OFFSET_SIZE 8)
+ELSEIF(HAVE_LONG_LONG AND SIZEOF_LONG_LONG EQUAL 4)
+    SET(MPI_OFFSET_TYPE "long long")
+    SET(MPI_OFFSET_DATATYPE MPI_LONG_LONG)
+    SET(MPI_OFFSET_SIZE 4)
+ELSEIF(HAVE_TYPE_LONG AND SIZEOF_LONG EQUAL 4)
+    SET(MPI_OFFSET_TYPE "long")
+    SET(MPI_OFFSET_DATATYPE MPI_LONG)
+    SET(MPI_OFFSET_SIZE 4)
+ELSEIF(SIZEOF_INT EQUAL 4)
+    SET(MPI_OFFSET_TYPE "int")
+    SET(MPI_OFFSET_DATATYPE MPI_INT)
+    SET(MPI_OFFSET_SIZE 4)
+ENDIF(HAVE_LONG_LONG AND SIZEOF_LONG_LONG EQUAL 8)
+
+IF(${MPI_OFFSET_TYPE} STREQUAL "not found")
+  MESSAGE(FATAL_ERROR "*** Unable to find the right definition for MPI_Offset. Cannot continue.")
+ENDIF(${MPI_OFFSET_TYPE} STREQUAL "not found")
+
+MESSAGE(STATUS "checking for type of MPI_Offset...${MPI_OFFSET_TYPE}")
+
+
+MESSAGE("checking for an MPI datatype for MPI_Offset...")
+IF(${MPI_OFFSET_DATATYPE} STREQUAL "not found")
+    MESSAGE(FATAL_ERROR "*** Unable to find an MPI datatype corresponding to MPI_Offset. Cannot continue.")
+ENDIF(${MPI_OFFSET_DATATYPE} STREQUAL "not found")
+MESSAGE("checking for an MPI datatype for MPI_Offset...${MPI_OFFSET_DATATYPE}")
+
+OMPI_DEF(OMPI_MPI_OFFSET_TYPE ${MPI_OFFSET_TYPE} "Type of MPI_Offset" 0 1)
+OMPI_DEF(OMPI_MPI_OFFSET_SIZE ${MPI_OFFSET_SIZE} "Size of MPI_Offset" 0 1)
+OMPI_DEF(OMPI_OFFSET_DATATYPE ${MPI_OFFSET_DATATYPE} "MPI datatype corresponding to MPI_Offset" 0 1)
 
 
 ENDMACRO(BEGIN_CONFIGURE)
