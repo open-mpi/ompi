@@ -383,10 +383,6 @@ fi
 
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_CHECK_TYPE(u_int64_t, unsigned long long)
-AC_CHECK_TYPE(u_int32_t, unsigned int)
-AC_CHECK_TYPE(u_int16_t, unsigned short)
-AC_CHECK_TYPE(u_int8_t, unsigned char)
 
 
 # OMPI: Save the libobj sources

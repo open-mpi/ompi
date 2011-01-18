@@ -40,7 +40,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #if defined(__DragonFly__)
-#define IN_LINKLOCAL(i)        (((u_int32_t)(i) & 0xffff0000) == 0xa9fe0000)
+#define IN_LINKLOCAL(i)        (((uint32_t)(i) & 0xffff0000) == 0xa9fe0000)
 #endif
 #endif
 #ifdef HAVE_ARPA_INET_H
