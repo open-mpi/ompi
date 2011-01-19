@@ -3240,6 +3240,12 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
                 while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
                     btl_ownership = (to_base_frag(i)->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
 #if OMPI_OPENIB_FAILOVER_ENABLED
+                    /* The check for the callback flag is only needed when running
+                     * with the failover case because there is a chance that a fragment
+                     * generated from a sendi call (which does not set the flag) gets
+                     * coalesced.  In normal operation, this cannot happen as the sendi
+                     * call will never queue up a fragment which could potentially become
+                     * a coalesced fragment.  It will revert to a regular send. */
                     if (to_base_frag(i)->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
 #endif
                         to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
@@ -3393,7 +3399,7 @@ error:
 #else
     if(openib_btl)
         openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
-                             NULL, NULL);
+                             remote_proc, NULL);
 #endif
 }
 
