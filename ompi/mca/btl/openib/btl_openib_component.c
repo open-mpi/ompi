@@ -513,7 +513,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
 #if OMPI_OPENIB_FAILOVER_ENABLED
     case MCA_BTL_OPENIB_CONTROL_EP_BROKEN:
     case MCA_BTL_OPENIB_CONTROL_EP_EAGER_RDMA_ERROR:
-	btl_openib_handle_failover_control_messages(ctl_hdr);
+	btl_openib_handle_failover_control_messages(ctl_hdr, ep);
 	break;
 #endif
     default:

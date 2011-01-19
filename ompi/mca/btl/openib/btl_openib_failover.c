@@ -280,12 +280,17 @@ void mca_btl_openib_handle_btl_error(mca_btl_openib_module_t* openib_btl) {
  * we are doing.
  * @param ctl_hdr Pointer control header that was received
  */
-void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t *ctl_hdr)
+void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t *ctl_hdr,
+                                                 mca_btl_openib_endpoint_t* ep)
 {
     mca_btl_openib_broken_connection_header_t *bc_hdr =
         (mca_btl_openib_broken_connection_header_t*)ctl_hdr;
     int i;
     int found = false;
+
+    if(ep->nbo) {
+        BTL_OPENIB_BROKEN_CONNECTION_HEADER_NTOH((*bc_hdr));
+    }
 
     opal_output_verbose(30, mca_btl_openib_component.verbose_failover,
                         "IB: Control message received from %d: lid=%d,subnet=0x%" PRIx64 "",
@@ -679,12 +684,9 @@ static void mca_btl_openib_endpoint_notify(mca_btl_base_endpoint_t* endpoint, ui
     bc_hdr->vpid = ORTE_PROC_MY_NAME->vpid;
     bc_hdr->index = index;
 
-#if 0
-    /* FIX ME: Need to add byte swapping macros */
     if(newep->nbo) {
-        BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_HTON((*bc_hdr));
+        BTL_OPENIB_BROKEN_CONNECTION_HEADER_HTON((*bc_hdr));
     }
-#endif
     rc = mca_btl_openib_endpoint_send(newep, frag);
     if (OMPI_SUCCESS == rc ||OMPI_ERR_RESOURCE_BUSY == rc) {
         return;
