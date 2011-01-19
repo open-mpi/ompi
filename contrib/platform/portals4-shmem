@@ -1,8 +1,3 @@
-enable_static=no
-enable_shared=yes
-with_threads=posix
-enable_pretty_print_stacktrace=yes
-enable_dlopen=yes
 with_memory_manager=no
 enable_mca_no_build=carto,compress,crs,maffinity,paffinity,debugger,notifier,bml,btl,coll-hierarch,coll-sm,common-sm,mpool,pml-bfo,pml-csum,pml-dr,pml-ob1,osc-rdma,rcache,vprotocol
 enable_contrib_no_build=libnbc,vt
