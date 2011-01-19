@@ -364,10 +364,6 @@ void ADIOI_GRIDFTP_WriteDiscontig(ADIO_File fd, void *buf, int count,
     {
 	fd->fp_ind += extent;
 	fd->fp_sys_posn = fd->fp_ind;
-#if 0
-	FPRINTF(stdout, "[%d/%d]    new file position is %Ld\n", myrank, 
-		nprocs, (long long) fd->fp_ind);
-#endif
     }
     else {
 	fd->fp_sys_posn = offset + extent;

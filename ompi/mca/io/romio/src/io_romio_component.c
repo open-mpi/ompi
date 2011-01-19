@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,7 +26,7 @@
 #include "ompi/mca/io/io.h"
 #include "io_romio.h"
 
-#define ROMIO_VERSION_STRING "from MPICH2 v1.0.7 with additional compilation/bug patches from romio-maint@mcs.anl.gov"
+#define ROMIO_VERSION_STRING "from MPICH2 v1.3.1 with an additional patch from romio-maint@mcs.anl.gov about an attribute issue"
 
 /*
  * Private functions

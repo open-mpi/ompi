@@ -25,6 +25,7 @@ libadio_gridftp_la_SOURCES = \
         ad_gridftp_close.c \
         ad_gridftp_delete.c \
         ad_gridftp_fcntl.c \
+        ad_gridftp_features.c \
         ad_gridftp_flush.c \
         ad_gridftp_hints.c \
         ad_gridftp_open.c \

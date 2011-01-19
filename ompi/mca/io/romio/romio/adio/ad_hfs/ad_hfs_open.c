@@ -7,6 +7,10 @@
 
 #include "ad_hfs.h"
 
+#ifndef HAVE_LSEEK64
+#define lseek64 lseek
+#endif
+
 void ADIOI_HFS_Open(ADIO_File fd, int *error_code)
 {
     int perm, old_mask, amode;

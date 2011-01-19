@@ -43,8 +43,7 @@ int MPI_File_sync(MPI_File mpi_fh)
     HPMP_IO_START(fl_xmpi, BLKMPIFILESYNC, TRDTBLOCK, fh,
 		  MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     fh = MPIO_File_resolve(mpi_fh);
     /* --BEGIN ERROR HANDLING-- */
@@ -71,7 +70,6 @@ int MPI_File_sync(MPI_File mpi_fh)
 #endif /* MPI_hpux */
  
 fn_exit:
-    MPIR_Nest_decr();
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
     return error_code;
 }

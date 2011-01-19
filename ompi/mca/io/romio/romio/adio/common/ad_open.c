@@ -27,7 +27,7 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 {
     MPI_File mpi_fh;
     ADIO_File fd;
-    int orig_amode_excl, orig_amode_wronly, err, rank, procs;
+    int err, rank, procs;
     static char myname[] = "ADIO_OPEN";
     int  max_error_code;
     MPI_Info dupinfo;
@@ -59,6 +59,9 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
     fd->filetype = filetype;    /* MPI_BYTE by default */
     fd->etype_size = 1;  /* default etype is MPI_BYTE */
 
+    fd->file_realm_st_offs = NULL;
+    fd->file_realm_types = NULL;
+
     fd->perm = perm;
 
     fd->async_count = 0;
@@ -70,7 +73,7 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &procs);
 /* create and initialize info object */
-    fd->hints = (ADIOI_Hints *)ADIOI_Malloc(sizeof(struct ADIOI_Hints_struct));
+    fd->hints = (ADIOI_Hints *)ADIOI_Calloc(1, sizeof(struct ADIOI_Hints_struct));
     if (fd->hints == NULL) {
 	/* NEED TO HANDLE ENOMEM ERRORS */
     }
@@ -79,18 +82,13 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
     fd->hints->initialized = 0;
     fd->info = MPI_INFO_NULL;
 
-    if (info == MPI_INFO_NULL) 
-	*error_code = MPI_Info_create(&dupinfo);
-    else
-	*error_code = MPI_Info_dup(info, &dupinfo);
-    if (*error_code != MPI_SUCCESS)
-	goto fn_exit;
-
-    ADIOI_process_system_hints(dupinfo);
+    ADIOI_incorporate_system_hints(info, ADIOI_syshints, &dupinfo);
     ADIO_SetInfo(fd, dupinfo, &err);
-    *error_code = MPI_Info_free(&dupinfo);
-    if (*error_code != MPI_SUCCESS)
-	goto fn_exit;
+    if (dupinfo != MPI_INFO_NULL) {
+	*error_code = MPI_Info_free(&dupinfo);
+	if (*error_code != MPI_SUCCESS)
+	    goto fn_exit;
+    }
 
      /* deferred open: 
      * we can only do this optimization if 'fd->hints->deferred_open' is set
@@ -103,9 +101,9 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 			    && uses_generic_write(fd))) {
 	    fd->hints->deferred_open = 0;
     }
-    if (fd->file_system == ADIO_PVFS2)
-	    /* disable deferred open on PVFS2 so that scalable broadcast will
-	     * always use the propper communicator */
+    if (ADIO_Feature(fd, ADIO_SCALABLE_OPEN))
+	    /* disable deferred open on these fs so that scalable broadcast
+	     * will always use the propper communicator */
 	    fd->hints->deferred_open = 0;
 
 
@@ -123,134 +121,30 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
       * IO */
     fd->agg_comm = MPI_COMM_NULL;
     fd->is_open = 0;
+    fd->my_cb_nodes_index = -2;
+    fd->is_agg = is_aggregator(rank, fd);
     if (fd->hints->deferred_open) {
 	    /* MPI_Comm_split will create a communication group of aggregators.
 	     * for non-aggregators it will return MPI_COMM_NULL .  we rely on
 	     * fd->agg_comm == MPI_COMM_NULL for non-aggregators in several
 	     * tests in the code  */
-	    if (is_aggregator(rank, fd)) {
+	    if (fd->is_agg) {
 		    MPI_Comm_split(fd->comm, 1, 0, &aggregator_comm);
 		    fd->agg_comm = aggregator_comm;
 	    } else {
 		    MPI_Comm_split(fd->comm, MPI_UNDEFINED, 0, &aggregator_comm);
 		    fd->agg_comm = aggregator_comm;
 	    }
+
     }
 
-    orig_amode_excl = access_mode;
+    /* actual opens start here */
+    /* generic open: one process opens to create the file, all others open */
+    /* nfs open: everybody opens or else you'll end up with "file not found"
+     * due to stupid nfs consistency semantics */
+    /* scalable open: one process opens and broadcasts results to everyone */
 
-    /* optimization: by having just one process create a file, close it, then
-     * have all N processes open it, we can possibly avoid contention for write
-     * locks on a directory for some file systems. 
-     *
-     * we used to special-case EXCL|CREATE, since when N processes are trying
-     * to create a file exclusively, only 1 will succeed and the rest will
-     * (spuriously) fail.   Since we are now carrying out the CREATE on one
-     * process anyway, the EXCL case falls out and we don't need to explicitly
-     * worry about it, other than turning off both the EXCL and CREATE flags 
-     */
-    /* pvfs2 handles opens specially, so it is actually more efficent for that
-     * file system if we skip this optimization */
-    /* NFS handles opens especially poorly, so we cannot use this optimization
-     * on that FS */
-    if (fd->file_system == ADIO_NFS) {
-        /* no optimizations for NFS: */
-	if ((access_mode & ADIO_CREATE) && (access_mode & ADIO_EXCL)) {
-	  /* the open should fail if the file exists. Only *1* process should
-	   check this. Otherwise, if all processes try to check and the file
-	   does not exist, one process will create the file and others who
-	   reach later will return error. */
-	    if(rank == fd->hints->ranklist[0]) {
-                fd->access_mode = access_mode;
-                (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
-                MPI_Bcast(error_code, 1, MPI_INT, \
-                                fd->hints->ranklist[0], fd->comm);
-                /* if no error, close the file and reopen normally below */
-                if (*error_code == MPI_SUCCESS)
-                        (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
-	    }
-	    else MPI_Bcast(error_code, 1, MPI_INT, 
-			    fd->hints->ranklist[0], fd->comm); 
-	    if (*error_code != MPI_SUCCESS) {
-		    goto fn_exit;
-	    }
-	    else {
-	        /* turn off EXCL for real open */
-	        access_mode = access_mode ^ ADIO_EXCL;
-           }
-        }
-    } else {
-
-	    /* the actual optimized create on one, open on all */
-    if (access_mode & ADIO_CREATE && fd->file_system != ADIO_PVFS2) {
-       if(rank == fd->hints->ranklist[0]) {
-	   /* remove delete_on_close flag if set */
-	   if (access_mode & ADIO_DELETE_ON_CLOSE)
-	       fd->access_mode = access_mode ^ ADIO_DELETE_ON_CLOSE;
-	   else 
-	       fd->access_mode = access_mode;
-	       
-	   (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
-	   MPI_Bcast(error_code, 1, MPI_INT, \
-		     fd->hints->ranklist[0], fd->comm);
-	   /* if no error, close the file and reopen normally below */
-	   if (*error_code == MPI_SUCCESS) 
-	       (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
-
-	   fd->access_mode = access_mode; /* back to original */
-       }
-       else MPI_Bcast(error_code, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
-
-       if (*error_code != MPI_SUCCESS) {
-           goto fn_exit;
-       } 
-       else {
-           /* turn off CREAT (and EXCL if set) for real multi-processor open */
-           access_mode ^= ADIO_CREATE; 
-	   if (access_mode & ADIO_EXCL)
-		   access_mode ^= ADIO_EXCL;
-       }
-    }
-    }
-
-    /* if we are doing deferred open, non-aggregators should return now */
-    if (fd->hints->deferred_open ) {
-        if (fd->agg_comm == MPI_COMM_NULL) {
-            /* we might have turned off EXCL for the aggregators.
-             * restore access_mode that non-aggregators get the right
-             * value from get_amode */
-            fd->access_mode = orig_amode_excl;
-            *error_code = MPI_SUCCESS;
-            goto fn_exit;
-        }
-    }
-
-/* For writing with data sieving, a read-modify-write is needed. If 
-   the file is opened for write_only, the read will fail. Therefore,
-   if write_only, open the file as read_write, but record it as write_only
-   in fd, so that get_amode returns the right answer. */
-
-    orig_amode_wronly = access_mode;
-    if (access_mode & ADIO_WRONLY) {
-	access_mode = access_mode ^ ADIO_WRONLY;
-	access_mode = access_mode | ADIO_RDWR;
-    }
-    fd->access_mode = access_mode;
-
-    (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
-
-    /* if error, may be it was due to the change in amode above. 
-       therefore, reopen with access mode provided by the user.*/ 
-    fd->access_mode = orig_amode_wronly;  
-    if (*error_code != MPI_SUCCESS) 
-        (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
-
-    /* if we turned off EXCL earlier, then we should turn it back on */
-    if (fd->access_mode != orig_amode_excl) fd->access_mode = orig_amode_excl;
-
-    /* for deferred open: this process has opened the file (because if we are
-     * not an aggregaor and we are doing deferred open, we returned earlier)*/
-    fd->is_open = 1;
+    ADIOI_OpenColl(fd, rank, access_mode, error_code);
 
  fn_exit:
     MPI_Allreduce(error_code, &max_error_code, 1, MPI_INT, MPI_MAX, comm);
@@ -300,10 +194,18 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 int is_aggregator(int rank, ADIO_File fd ) {
         int i;
         
-        for (i=0; i< fd->hints->cb_nodes; i++ ) {
-                if ( rank == fd->hints->ranklist[i] )
-                        return 1;
+	if (fd->my_cb_nodes_index == -2) {
+	    for (i=0; i< fd->hints->cb_nodes; i++ ) {
+		if ( rank == fd->hints->ranklist[i] ) {
+		    fd->my_cb_nodes_index = i;
+		    return 1;
+		}
+	    }
+	    fd->my_cb_nodes_index = -1;
         }
+	else if (fd->my_cb_nodes_index != -1)
+	    return 1;
+
         return 0;
 }
 
@@ -369,7 +271,7 @@ static int build_cb_config_list(ADIO_File fd,
 	/* TEMPORARY -- REMOVE WHEN NO LONGER UPDATING INFO FOR FS-INDEP. */
 	value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
 	ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", rank_ct);
-	MPI_Info_set(fd->info, "cb_nodes", value);
+	ADIOI_Info_set(fd->info, "cb_nodes", value);
 	ADIOI_Free(value);
     }
 

@@ -47,8 +47,6 @@ int MPI_File_get_size(MPI_File mpi_fh, MPI_Offset *size)
 		  MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
 
-    MPIR_Nest_incr();
-
     fh = MPIO_File_resolve(mpi_fh);
 
     /* --BEGIN ERROR HANDLING-- */
@@ -71,7 +69,5 @@ int MPI_File_get_size(MPI_File mpi_fh, MPI_Offset *size)
 #endif /* MPI_hpux */
 
 fn_exit:
-    MPIR_Nest_decr();
-
     return error_code;
 }

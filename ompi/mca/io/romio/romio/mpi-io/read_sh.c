@@ -48,8 +48,7 @@ int MPI_File_read_shared(MPI_File mpi_fh, void *buf, int count,
     ADIO_Offset off, shared_fp;
     ADIO_File fh;
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     fh = MPIO_File_resolve(mpi_fh);
 
@@ -60,6 +59,11 @@ int MPI_File_read_shared(MPI_File mpi_fh, void *buf, int count,
     /* --END ERROR HANDLING-- */
 
     MPI_Type_size(datatype, &datatype_size);
+
+    /* --BEGIN ERROR HANDLING-- */
+    MPIO_CHECK_COUNT_SIZE(fh, count, datatype_size, myname, error_code);
+    /* --END ERROR HANDLING-- */
+
     if (count*datatype_size == 0)
     {
 #ifdef HAVE_STATUS_SET_BYTES
@@ -124,8 +128,7 @@ int MPI_File_read_shared(MPI_File mpi_fh, void *buf, int count,
     /* --END ERROR HANDLING-- */
 
 fn_exit:
-    MPIR_Nest_decr();
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
 
     return error_code;
 }

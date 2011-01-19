@@ -1,5 +1,6 @@
 /* ---------------------------------------------------------------- */
 /* (C)Copyright IBM Corp.  2007, 2008                               */
+/* ---------------------------------------------------------------- */
 /**
  * \file ad_bgl_aggrs.h
  * \brief ???
@@ -22,13 +23,22 @@
 #include "adio.h"
 #include <sys/stat.h>
 
-    extern int *aggrsInPset;	/* defined in ad_bgl_aggrs.c */
+#if !defined(GPFS_SUPER_MAGIC)
+  #define GPFS_SUPER_MAGIC (0x47504653)
+#endif
 
+#if !defined(PVFS2_SUPER_MAGIC)
+  #define PVFS2_SUPER_MAGIC (0x20030528)
+#endif
 
     /* File system (BGL) specific information - 
          hung off of ADIOI_FileD file descriptor (fd->fs_ptr) at open */
     typedef struct ADIOI_BGL_fs_s {
       __blksize_t blksize;
+      int         fsync_aggr; /* "fsync aggregation" flags (below) */
+#define ADIOI_BGL_FSYNC_AGGREGATION_DISABLED  0x00
+#define ADIOI_BGL_FSYNC_AGGREGATION_ENABLED   0x01
+#define ADIOI_BGL_FSYNC_AGGREGATOR            0x10 /* This rank is an aggregator */
     }  ADIOI_BGL_fs;
 
     /* generate a list of I/O aggregators that utilizes BGL-PSET orginization. */
@@ -60,7 +70,7 @@
 
     /* overriding ADIOI_Calc_my_req for the default implementation is specific for 
        static file domain partitioning */
-    void ADIOI_BGL_Calc_my_req ( ADIO_File fd, ADIO_Offset *offset_list, int *len_list,
+    void ADIOI_BGL_Calc_my_req ( ADIO_File fd, ADIO_Offset *offset_list, ADIO_Offset *len_list,
 				 int contig_access_count, ADIO_Offset
 				 min_st_offset, ADIO_Offset *fd_start,
 				 ADIO_Offset *fd_end, ADIO_Offset fd_size,

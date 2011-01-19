@@ -18,20 +18,22 @@ void ADIOI_FAKE_IwriteContig(ADIO_File fd, void *buf, int count,
 			    int *error_code)  
 {
     ADIO_Status status;
-    int len, typesize;
+    MPI_Offset len;
+    int typesize;
     MPI_Offset nbytes=0;
 
     MPI_Type_size(datatype, &typesize);
-    len = count * typesize;
+    len = (MPI_Offset)count * (MPI_Offset)typesize;
 
     /* Call the blocking function.  It will create an error code
      * if necessary.
      */
-    ADIO_WriteContig(fd, buf, len, MPI_BYTE, file_ptr_type, offset,
+    ADIOI_Assert(len == (int) len); /* the count is an int parm */
+    ADIO_WriteContig(fd, buf, (int)len, MPI_BYTE, file_ptr_type, offset,
 		     &status, error_code);  
     if (*error_code == MPI_SUCCESS) {
 	MPI_Type_size(datatype, &typesize);
-	nbytes = count*typesize;
+	nbytes = (MPI_Offset)count*(MPI_Offset)typesize;
     }
     MPIO_Completed_request_create(&fd, nbytes, error_code, request);
 
@@ -57,7 +59,7 @@ void ADIOI_FAKE_IwriteStrided(ADIO_File fd, void *buf, int count,
 		      offset, &status, error_code);  
     if (*error_code == MPI_SUCCESS) {
 	MPI_Type_size(datatype, &typesize);
-	nbytes = count * typesize;
+	nbytes = (MPI_Offset)count * (MPI_Offset)typesize;
     }
     MPIO_Completed_request_create(&fd, nbytes, error_code, request);
 }

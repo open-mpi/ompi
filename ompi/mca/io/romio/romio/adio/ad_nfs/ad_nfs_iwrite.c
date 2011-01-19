@@ -59,6 +59,7 @@ int ADIOI_NFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
 
     struct aiocb *aiocbp;
     ADIOI_AIO_Request *aio_req;
+    MPI_Status status;
 
     fd_sys = fd->fd_sys;
 
@@ -108,7 +109,7 @@ int ADIOI_NFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
         /* exceeded the max. no. of outstanding requests.
            complete all previous async. requests and try again. */
 	    ADIO_WriteContig(fd, buf, len, MPI_BYTE, ADIO_EXPLICIT_OFFSET,
-			    offset, NULL, &error_code);
+			    offset, &status, &error_code);
 	    MPIO_Completed_request_create(&fd, len, &error_code, request);
 	    return 0;
 	} else {

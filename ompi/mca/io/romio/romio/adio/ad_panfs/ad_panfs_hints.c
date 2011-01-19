@@ -36,7 +36,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
         if (users_info != MPI_INFO_NULL) {
 	        value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
 
-            MPI_Info_get(users_info, "panfs_concurrent_write", MPI_MAX_INFO_VAL, 
+            ADIOI_Info_get(users_info, "panfs_concurrent_write", MPI_MAX_INFO_VAL, 
                  value, &flag);
             if (flag) {
                 concurrent_write = strtoul(value,NULL,10);
@@ -46,10 +46,10 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_concurrent_write\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
-	            MPI_Info_set(fd->info, "panfs_concurrent_write", value); 
+	            ADIOI_Info_set(fd->info, "panfs_concurrent_write", value); 
             }
 
-            MPI_Info_get(users_info, "panfs_layout_type", MPI_MAX_INFO_VAL, 
+            ADIOI_Info_get(users_info, "panfs_layout_type", MPI_MAX_INFO_VAL, 
                  value, &flag);
             if (flag) {
                 layout_type = strtoul(value,NULL,10);
@@ -59,10 +59,10 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_type\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
-	            MPI_Info_set(fd->info, "panfs_layout_type", value); 
+	            ADIOI_Info_set(fd->info, "panfs_layout_type", value); 
             }
 
-            MPI_Info_get(users_info, "panfs_layout_stripe_unit", MPI_MAX_INFO_VAL, 
+            ADIOI_Info_get(users_info, "panfs_layout_stripe_unit", MPI_MAX_INFO_VAL, 
                  value, &flag);
             if (flag) {
                 layout_stripe_unit = strtoul(value,NULL,10);
@@ -72,10 +72,10 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_stripe_unit\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
-	            MPI_Info_set(fd->info, "panfs_layout_stripe_unit", value); 
+	            ADIOI_Info_set(fd->info, "panfs_layout_stripe_unit", value); 
             }
 
-            MPI_Info_get(users_info, "panfs_layout_parity_stripe_width", MPI_MAX_INFO_VAL, 
+            ADIOI_Info_get(users_info, "panfs_layout_parity_stripe_width", MPI_MAX_INFO_VAL, 
                  value, &flag);
             if (flag && (layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID1_5_PARITY_STRIPE)) {
                 layout_parity_stripe_width = strtoul(value,NULL,10);
@@ -85,10 +85,10 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_parity_stripe_width\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
-	            MPI_Info_set(fd->info, "panfs_layout_parity_stripe_width", value); 
+	            ADIOI_Info_set(fd->info, "panfs_layout_parity_stripe_width", value); 
             }
 
-            MPI_Info_get(users_info, "panfs_layout_parity_stripe_depth", MPI_MAX_INFO_VAL, 
+            ADIOI_Info_get(users_info, "panfs_layout_parity_stripe_depth", MPI_MAX_INFO_VAL, 
                  value, &flag);
             if (flag && (layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID1_5_PARITY_STRIPE)) {
                 layout_parity_stripe_depth = strtoul(value,NULL,10);
@@ -98,10 +98,10 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_parity_stripe_depth\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
-	            MPI_Info_set(fd->info, "panfs_layout_parity_stripe_depth", value); 
+	            ADIOI_Info_set(fd->info, "panfs_layout_parity_stripe_depth", value); 
             }
 
-            MPI_Info_get(users_info, "panfs_layout_total_num_comps", MPI_MAX_INFO_VAL, 
+            ADIOI_Info_get(users_info, "panfs_layout_total_num_comps", MPI_MAX_INFO_VAL, 
                  value, &flag);
             if (flag) {
                 layout_total_num_comps = strtoul(value,NULL,10);
@@ -111,10 +111,10 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_total_num_comps\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
-	            MPI_Info_set(fd->info, "panfs_layout_total_num_comps", value); 
+	            ADIOI_Info_set(fd->info, "panfs_layout_total_num_comps", value); 
             }
 
-            MPI_Info_get(users_info, "panfs_layout_visit_policy", MPI_MAX_INFO_VAL, 
+            ADIOI_Info_get(users_info, "panfs_layout_visit_policy", MPI_MAX_INFO_VAL, 
                  value, &flag);
             if (flag && (layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID1_5_PARITY_STRIPE || layout_type == PAN_FS_CLIENT_LAYOUT_TYPE__RAID10)) {
                 layout_visit_policy = strtoul(value,NULL,10);
@@ -124,7 +124,7 @@ void ADIOI_PANFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
                     FPRINTF(stderr, "ADIOI_PANFS_SetInfo: the value for key \"panfs_layout_visit_policy\" must be the same on all processes\n");
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
-	            MPI_Info_set(fd->info, "panfs_layout_visit_policy", value); 
+	            ADIOI_Info_set(fd->info, "panfs_layout_visit_policy", value); 
             }
 
 	        ADIOI_Free(value);

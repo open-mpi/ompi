@@ -25,7 +25,7 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	if (users_info != MPI_INFO_NULL) {
 	    value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
 
-	    MPI_Info_get(users_info, "striping_factor", MPI_MAX_INFO_VAL, 
+	    ADIOI_Info_get(users_info, "striping_factor", MPI_MAX_INFO_VAL, 
 			 value, &flag);
 	    if (flag) {
 		str_factor=atoi(value);
@@ -37,7 +37,7 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		}
 	    }
 
-	    MPI_Info_get(users_info, "striping_unit", MPI_MAX_INFO_VAL, 
+	    ADIOI_Info_get(users_info, "striping_unit", MPI_MAX_INFO_VAL, 
 			 value, &flag);
 	    if (flag) {
 		str_unit=atoi(value);
@@ -49,7 +49,7 @@ void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		}
 	    }
 
-	    MPI_Info_get(users_info, "start_iodevice", MPI_MAX_INFO_VAL, 
+	    ADIOI_Info_get(users_info, "start_iodevice", MPI_MAX_INFO_VAL, 
 			 value, &flag);
 	    if (flag) {
 		start_iodev=atoi(value);

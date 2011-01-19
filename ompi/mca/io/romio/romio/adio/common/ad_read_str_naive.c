@@ -16,11 +16,13 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
     /* offset is in units of etype relative to the filetype. */
 
     ADIOI_Flatlist_node *flat_buf, *flat_file;
-    int brd_size, frd_size=0, b_index;
-    int bufsize, size, sum, n_etypes_in_filetype, size_in_filetype;
-    int n_filetypes, etype_in_filetype;
+    ADIO_Offset size, brd_size, frd_size=0, req_len, sum;
+    int b_index;
+    int n_etypes_in_filetype;
+    ADIO_Offset n_filetypes, etype_in_filetype;
     ADIO_Offset abs_off_in_filetype=0;
-    int filetype_size, etype_size, buftype_size, req_len;
+    unsigned bufsize, filetype_size, buftype_size, size_in_filetype;
+    int etype_size;
     MPI_Aint filetype_extent, buftype_extent; 
     int buf_count, buftype_is_contig, filetype_is_contig;
     ADIO_Offset userbuf_off;
@@ -32,17 +34,18 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
     ADIOI_Datatype_iscontig(buftype, &buftype_is_contig);
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
 
-    MPI_Type_size(fd->filetype, &filetype_size);
+    MPI_Type_size(fd->filetype, (int*)&filetype_size);
     if ( ! filetype_size ) {
 	*error_code = MPI_SUCCESS; 
 	return;
     }
 
     MPI_Type_extent(fd->filetype, &filetype_extent);
-    MPI_Type_size(buftype, &buftype_size);
+    MPI_Type_size(buftype,(int*) &buftype_size);
     MPI_Type_extent(buftype, &buftype_extent);
     etype_size = fd->etype_size;
 
+    ADIOI_Assert((buftype_size * count) == ((ADIO_Offset)buftype_size * (ADIO_Offset)count));
     bufsize = buftype_size * count;
 
     /* contiguous in buftype and filetype is handled elsewhere */
@@ -62,8 +65,7 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 	end_offset = off + bufsize - 1;
 
 	/* if atomicity is true, lock (exclusive) the region to be accessed */
-        if ((fd->atomicity) && (fd->file_system != ADIO_PIOFS) && 
-	   (fd->file_system != ADIO_PVFS) && (fd->file_system != ADIO_PVFS2))
+        if ((fd->atomicity) && ADIO_Feature(fd, ADIO_LOCKS))
 	{
             ADIOI_WRITE_LOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 	}
@@ -73,11 +75,13 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 	 */
         for (b_count=0; b_count < count; b_count++) {
             for (b_index=0; b_index < flat_buf->count; b_index++) {
-                userbuf_off = b_count*buftype_extent + 
+                userbuf_off = (ADIO_Offset)b_count*(ADIO_Offset)buftype_extent + 
 		              flat_buf->indices[b_index];
 		req_off = off;
 		req_len = flat_buf->blocklens[b_index];
 
+    ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)buf) + userbuf_off) == (ADIO_Offset)(MPIR_Upint)((MPIR_Upint)buf + userbuf_off));
+    ADIOI_Assert(req_len == (int) req_len);
 		ADIO_ReadContig(fd, 
 				(char *) buf + userbuf_off,
 				req_len, 
@@ -93,8 +97,7 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
             }
 	}
 
-        if ((fd->atomicity) && (fd->file_system != ADIO_PIOFS) && 
-	   (fd->file_system != ADIO_PVFS) && (fd->file_system != ADIO_PVFS2))
+        if ((fd->atomicity) && ADIO_Feature(fd, ADIO_LOCKS))
 	{
             ADIOI_UNLOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 	}
@@ -104,7 +107,9 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
     }
 
     else {  /* noncontiguous in file */
-    	int f_index, st_frd_size, st_index = 0, st_n_filetypes;
+    	int f_index, st_index = 0; 
+      ADIO_Offset st_n_filetypes;
+      ADIO_Offset st_frd_size;
 	int flag;
 
         /* First we're going to calculate a set of values for use in all
@@ -134,15 +139,15 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
                 n_filetypes++;
 		for (f_index=0; f_index < flat_file->count; f_index++) {
 		    if (disp + flat_file->indices[f_index] + 
-                       (ADIO_Offset) n_filetypes*filetype_extent + 
+                       n_filetypes*(ADIO_Offset)filetype_extent + 
 		       flat_file->blocklens[f_index] >= start_off) 
 		    {
 		    	/* this block contains our starting position */
 
 			st_index = f_index;
-			frd_size = (int) (disp + flat_file->indices[f_index] + 
-		 	           (ADIO_Offset) n_filetypes*filetype_extent + 
-				   flat_file->blocklens[f_index] - start_off);
+			frd_size = disp + flat_file->indices[f_index] + 
+		 	           n_filetypes*(ADIO_Offset)filetype_extent + 
+				   flat_file->blocklens[f_index] - start_off;
 			flag = 1;
 			break;
 		    }
@@ -151,9 +156,9 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 	}
 	else {
 	    n_etypes_in_filetype = filetype_size/etype_size;
-	    n_filetypes = (int) (offset / n_etypes_in_filetype);
+	    n_filetypes = offset / n_etypes_in_filetype;
 	    etype_in_filetype = (int) (offset % n_etypes_in_filetype);
-	    size_in_filetype = etype_in_filetype * etype_size;
+	    size_in_filetype = (unsigned)etype_in_filetype * (unsigned)etype_size;
  
 	    sum = 0;
 	    for (f_index=0; f_index < flat_file->count; f_index++) {
@@ -169,7 +174,7 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 	    }
 
 	    /* abs. offset in bytes in the file */
-	    start_off = disp + (ADIO_Offset) n_filetypes*filetype_extent + 
+	    start_off = disp + n_filetypes*(ADIO_Offset)filetype_extent + 
 	    	        abs_off_in_filetype;
 	}
 
@@ -198,9 +203,9 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 	    }
 
 	    off = disp + flat_file->indices[f_index] + 
-	          (ADIO_Offset) n_filetypes*filetype_extent;
+	          n_filetypes*(ADIO_Offset)filetype_extent;
 	    frd_size = ADIOI_MIN(flat_file->blocklens[f_index], 
-	                         bufsize-(int)userbuf_off);
+	                         bufsize-(unsigned)userbuf_off);
 	}
 
 	/* End of calculations.  At this point the following values have
@@ -213,8 +218,7 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 	 */
 
 	/* if atomicity is true, lock (exclusive) the region to be accessed */
-        if ((fd->atomicity) && (fd->file_system != ADIO_PIOFS) && 
-	   (fd->file_system != ADIO_PVFS) && (fd->file_system != ADIO_PVFS2))
+        if ((fd->atomicity) && ADIO_Feature(fd, ADIO_LOCKS))
 	{
             ADIOI_WRITE_LOCK(fd, start_off, SEEK_SET, end_offset-start_off+1);
 	}
@@ -238,6 +242,8 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 		    req_off = off;
 		    req_len = frd_size;
 
+        ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)buf) + userbuf_off) == (ADIO_Offset)(MPIR_Upint)((MPIR_Upint)buf + userbuf_off));
+        ADIOI_Assert(req_len == (int) req_len);
 		    ADIO_ReadContig(fd, 
 				    (char *) buf + userbuf_off,
 				    req_len, 
@@ -252,7 +258,7 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 
                 if (off + frd_size < disp + flat_file->indices[f_index] +
                    flat_file->blocklens[f_index] + 
-		   (ADIO_Offset) n_filetypes*filetype_extent)
+		   n_filetypes*(ADIO_Offset)filetype_extent)
 		{
 		    /* important that this value be correct, as it is
 		     * used to set the offset in the fd near the end of
@@ -270,14 +276,14 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 			n_filetypes++;
 		    }
 		    off = disp + flat_file->indices[f_index] + 
-                          (ADIO_Offset) n_filetypes*filetype_extent;
+                          n_filetypes*(ADIO_Offset)filetype_extent;
 		    frd_size = ADIOI_MIN(flat_file->blocklens[f_index], 
-		                         bufsize-(int)userbuf_off);
+		                         bufsize-(unsigned)userbuf_off);
 		}
 	    }
 	}
 	else {
-	    int i, tmp_bufsize = 0;
+	    ADIO_Offset i_offset, tmp_bufsize = 0;
 	    /* noncontiguous in memory as well as in file */
 
 	    ADIOI_Flatten_datatype(buftype);
@@ -285,7 +291,7 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 	    while (flat_buf->type != buftype) flat_buf = flat_buf->next;
 
 	    b_index = buf_count = 0;
-	    i = (int) (flat_buf->indices[0]);
+	    i_offset = flat_buf->indices[0];
 	    f_index = st_index;
 	    off = start_off;
 	    n_filetypes = st_n_filetypes;
@@ -294,14 +300,16 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 
 	    /* while we haven't read size * count bytes, keep going */
 	    while (tmp_bufsize < bufsize) {
-    		int new_brd_size = brd_size, new_frd_size = frd_size;
+    		ADIO_Offset new_brd_size = brd_size, new_frd_size = frd_size;
 
 		size = ADIOI_MIN(frd_size, brd_size);
 		if (size) {
 		    req_off = off;
 		    req_len = size;
-		    userbuf_off = i;
+		    userbuf_off = i_offset;
 
+        ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)buf) + userbuf_off) == (ADIO_Offset)(MPIR_Upint)((MPIR_Upint)buf + userbuf_off));
+        ADIOI_Assert(req_len == (int) req_len);
 		    ADIO_ReadContig(fd, 
 				    (char *) buf + userbuf_off,
 				    req_len, 
@@ -322,11 +330,11 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 		    }
 
 		    off = disp + flat_file->indices[f_index] + 
-                          (ADIO_Offset) n_filetypes*filetype_extent;
+                          n_filetypes*(ADIO_Offset)filetype_extent;
 
 		    new_frd_size = flat_file->blocklens[f_index];
 		    if (size != brd_size) {
-			i += size;
+			i_offset += size;
 			new_brd_size -= size;
 		    }
 		}
@@ -336,8 +344,8 @@ void ADIOI_GEN_ReadStrided_naive(ADIO_File fd, void *buf, int count,
 
 		    b_index = (b_index + 1)%flat_buf->count;
 		    buf_count++;
-		    i = (int) (buftype_extent*(buf_count/flat_buf->count) +
-			flat_buf->indices[b_index]);
+		    i_offset = buftype_extent*(buf_count/flat_buf->count) +
+			flat_buf->indices[b_index];
 		    new_brd_size = flat_buf->blocklens[b_index];
 		    if (size != frd_size) {
 			off += size;

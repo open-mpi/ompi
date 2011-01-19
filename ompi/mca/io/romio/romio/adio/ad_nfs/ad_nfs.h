@@ -78,5 +78,6 @@ void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int size, ADIO_Offset *shared_fp,
 			 int *error_code);
 void ADIOI_NFS_Set_shared_fp(ADIO_File fd, ADIO_Offset offset, int *error_code);
 void ADIOI_NFS_Resize(ADIO_File fd, ADIO_Offset size, int *error_code);
+int ADIOI_NFS_Feature(ADIO_File fd, int feature_flag);
 
 #endif

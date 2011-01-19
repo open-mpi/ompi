@@ -24,6 +24,7 @@ libadio_nfs_la_SOURCES = \
         ad_nfs.h \
         ad_nfs_done.c \
         ad_nfs_fcntl.c \
+        ad_nfs_features.c \
         ad_nfs_getsh.c \
         ad_nfs_hints.c \
         ad_nfs_iread.c \

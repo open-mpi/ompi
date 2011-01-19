@@ -74,7 +74,7 @@ int MPIO_Err_return_file(MPI_File mpi_fh, int error_code)
        kind = 1: errors return
        kind = 2: errors call function
     */
-    if (e == MPI_ERRORS_RETURN || !e) {
+    if (e == MPI_ERRORS_RETURN || e == MPIR_ERRORS_THROW_EXCEPTIONS || !e) {
 	/* FIXME: This is a hack in case no error handler was set */
 	kind = 1;
 	c_errhandler = 0;

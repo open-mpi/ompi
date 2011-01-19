@@ -27,9 +27,7 @@ int MPIU_Greq_query_fn(void *extra_state, MPI_Status *status)
     status->MPI_ERROR = foo;
 
     /* and let Test|Wait know we weren't canceled */
-    MPIR_Nest_incr();
     MPI_Status_set_cancelled(status, 0);
-    MPIR_Nest_decr();
 
     return MPI_SUCCESS;
 }

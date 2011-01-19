@@ -18,6 +18,9 @@
 #include "ad_bgl_pset.h"
 #include "ad_bgl_aggrs.h"
 
+#ifdef AGGREGATION_PROFILE
+#include "mpe.h"
+#endif
 #ifdef PROFILE
 #include "mpe.h"
 #endif
@@ -26,13 +29,13 @@
 static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
                          datatype, int nprocs, int myrank, ADIOI_Access
                          *others_req, ADIO_Offset *offset_list,
-                         int *len_list, int contig_access_count, ADIO_Offset
+                         ADIO_Offset *len_list, int contig_access_count, ADIO_Offset
                          min_st_offset, ADIO_Offset fd_size,
                          ADIO_Offset *fd_start, ADIO_Offset *fd_end,
                          int *buf_idx, int *error_code);
 static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
                          ADIOI_Flatlist_node *flat_buf, ADIO_Offset 
-                         *offset_list, int *len_list, int *send_size, 
+                         *offset_list, ADIO_Offset *len_list, int *send_size, 
                          int *recv_size, ADIO_Offset off, int size,
                          int *count, int *start_pos, int *partial_recv, 
                          int *sent_to_proc, int nprocs, 
@@ -49,7 +52,7 @@ static void ADIOI_W_Exchange_data_alltoallv(
 		char *write_buf,					/* 1 */
 		ADIOI_Flatlist_node *flat_buf, 
 		ADIO_Offset *offset_list, 
-		int *len_list, int *send_size, int *recv_size, 
+		ADIO_Offset *len_list, int *send_size, int *recv_size, 
 		ADIO_Offset off, int size,				/* 2 */
 		int *count, int *start_pos, int *partial_recv,
 		int *sent_to_proc, int nprocs, int myrank, 
@@ -65,7 +68,7 @@ static void ADIOI_W_Exchange_data_alltoallv(
 		int *error_code);
 static void ADIOI_Fill_send_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
                            *flat_buf, char **send_buf, ADIO_Offset 
-                           *offset_list, int *len_list, int *send_size, 
+                           *offset_list, ADIO_Offset *len_list, int *send_size, 
                            MPI_Request *requests, int *sent_to_proc, 
                            int nprocs, int myrank, 
                            int contig_access_count, ADIO_Offset
@@ -76,7 +79,7 @@ static void ADIOI_Fill_send_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
                            MPI_Aint buftype_extent);
 static void ADIOI_Fill_send_buffer_nosend(ADIO_File fd, void *buf, ADIOI_Flatlist_node
                            *flat_buf, char **send_buf, ADIO_Offset 
-                           *offset_list, int *len_list, int *send_size, 
+                           *offset_list, ADIO_Offset *len_list, int *send_size, 
                            MPI_Request *requests, int *sent_to_proc, 
                            int nprocs, int myrank, 
                            int contig_access_count, ADIO_Offset
@@ -118,26 +121,27 @@ void ADIOI_BGL_WriteStridedColl(ADIO_File fd, void *buf, int count,
     ADIO_Offset *bgl_offsets0 = NULL, *bgl_offsets = NULL;
     int  ii;
 
-    int *buf_idx = NULL, *len_list = NULL;
-
-    double io_time = 0, all_time, max_all_time;
-    double tstep1, max_tstep1;
-    double tstep1_1, max_tstep1_1;
-    double tstep1_2, max_tstep1_2;
-    double tstep1_3, max_tstep1_3;
-    double tstep2, max_tstep2;
-    double tstep3, max_tstep3;
-    double tstep4, max_tstep4;
-    double sum_sz;
-
+    int *buf_idx = NULL;
+    ADIO_Offset *len_list = NULL;
 #if BGL_PROFILE 
     BGLMPIO_T_CIO_RESET( 0, w )
 #endif
-
+#if 0
+    /* From common code - not implemented for bgl.*/
+    int old_error, tmp_error;
+#endif
 #ifdef PROFILE
 	MPE_Log_event(13, 0, "start computation");
 #endif
 
+#if 0
+/*   From common code - not implemented for bgl. */
+     if (fd->hints->cb_pfr != ADIOI_HINT_DISABLE) { 
+	ADIOI_IOStridedColl (fd, buf, count, ADIOI_WRITE, datatype, 
+			file_ptr_type, offset, status, error_code);
+	return;
+    }
+#endif
     MPI_Comm_size(fd->comm, &nprocs);
     MPI_Comm_rank(fd->comm, &myrank);
 
@@ -207,7 +211,8 @@ void ADIOI_BGL_WriteStridedColl(ADIO_File fd, void *buf, int count,
 	/* are the accesses of different processes interleaved? */
 	for (i=1; i<nprocs; i++)
       if ((st_offsets[i] < end_offsets[i-1]) &&
-          (st_offsets[i] <= end_offsets[i])) interleave_count++;                   
+                (st_offsets[i] <= end_offsets[i]))
+                interleave_count++;
 	/* This is a rudimentary check for interleaving, but should suffice
 	   for the moment. */
     }
@@ -231,7 +236,7 @@ void ADIOI_BGL_WriteStridedColl(ADIO_File fd, void *buf, int count,
         if (buftype_is_contig && filetype_is_contig) {
 
             if (file_ptr_type == ADIO_EXPLICIT_OFFSET) {
-                off = fd->disp + (fd->etype_size) * offset;
+                off = fd->disp + (ADIO_Offset)(fd->etype_size) * offset;
                 ADIO_WriteContig(fd, buf, count, datatype,
 				 ADIO_EXPLICIT_OFFSET,
 				 off, status, error_code);
@@ -260,7 +265,9 @@ void ADIOI_BGL_WriteStridedColl(ADIO_File fd, void *buf, int count,
     else
     ADIOI_Calc_file_domains(st_offsets, end_offsets, nprocs,
 			    nprocs_for_coll, &min_st_offset,
-			    &fd_start, &fd_end, &fd_size);   
+			    &fd_start, &fd_end,
+			    fd->hints->min_fdomain_size, &fd_size,
+			    fd->hints->striping_unit);   
 
 #if BGL_PROFILE 
     BGLMPIO_T_CIO_SET_GET( 0, w, 0, 1, 1, BGLMPIO_CIO_MYREQ, BGLMPIO_CIO_FD_PART )
@@ -329,9 +336,50 @@ void ADIOI_BGL_WriteStridedColl(ADIO_File fd, void *buf, int count,
 
     BGLMPIO_T_CIO_REPORT( 0, w, fd, myrank )
 #endif
-	
+#if 0
+    /* From common code - not implemented for bgl.
+     * 
+     * If this collective write is followed by an independent write,
+     * it's possible to have those subsequent writes on other processes
+     * race ahead and sneak in before the read-modify-write completes.
+     * We carry out a collective communication at the end here so no one
+     * can start independent i/o before collective I/O completes. 
+     *
+     * need to do some gymnastics with the error codes so that if something
+     * went wrong, all processes report error, but if a process has a more
+     * specific error code, we can still have that process report the
+     * additional information */
 
+    old_error = *error_code;
+    if (*error_code != MPI_SUCCESS) *error_code = MPI_ERR_IO;
+
+     /* optimization: if only one process performing i/o, we can perform
+     * a less-expensive Bcast  */
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_postwrite_a, 0, NULL );
+#endif
+    if (fd->hints->cb_nodes == 1) 
+	    MPI_Bcast(error_code, 1, MPI_INT, 
+			    fd->hints->ranklist[0], fd->comm);
+    else {
+	    tmp_error = *error_code;
+	    MPI_Allreduce(&tmp_error, error_code, 1, MPI_INT, 
+			    MPI_MAX, fd->comm);
+    }
+#ifdef ADIOI_MPE_LOGGING
+    MPE_Log_event( ADIOI_MPE_postwrite_b, 0, NULL );
+#endif
+#ifdef AGGREGATION_PROFILE
+	MPE_Log_event (5012, 0, NULL);
+#endif
+
+    if ( (old_error != MPI_SUCCESS) && (old_error != MPI_ERR_IO) )
+	    *error_code = old_error;
+
+
+#endif
 /* free all memory allocated for collective I/O */
+    if (!buftype_is_contig) ADIOI_Delete_flattened(datatype);
 
     for (i=0; i<nprocs; i++) {
 	if (others_req[i].count) {
@@ -363,6 +411,9 @@ void ADIOI_BGL_WriteStridedColl(ADIO_File fd, void *buf, int count,
 #endif
 
     fd->fp_sys_posn = -1;   /* set it to null. */
+#ifdef AGGREGATION_PROFILE
+	MPE_Log_event (5013, 0, NULL);
+#endif
 }
 
 
@@ -371,12 +422,12 @@ void ADIOI_BGL_WriteStridedColl(ADIO_File fd, void *buf, int count,
  * code is created and returned in error_code.
  */
 static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
-				 datatype, int nprocs, int myrank,
+				 datatype, int nprocs, 
+				 int myrank,
 				 ADIOI_Access
 				 *others_req, ADIO_Offset *offset_list,
-				 int *len_list, int contig_access_count,
-				 ADIO_Offset
-				 min_st_offset, ADIO_Offset fd_size,
+				 ADIO_Offset *len_list, int contig_access_count,
+				 ADIO_Offset min_st_offset, ADIO_Offset fd_size,
 				 ADIO_Offset *fd_start, ADIO_Offset *fd_end,
 				 int *buf_idx, int *error_code)
 {
@@ -389,7 +440,9 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
    array to a file, where each local array is 8Mbytes, requiring
    at least another 8Mbytes of temp space is unacceptable. */
 
-    int hole, i, j, m, size=0, ntimes, max_ntimes, buftype_is_contig;
+    /* Not convinced end_loc-st_loc couldn't be > int, so make these offsets*/
+    ADIO_Offset size=0;
+    int hole, i, j, m, ntimes, max_ntimes, buftype_is_contig;
     ADIO_Offset st_loc=-1, end_loc=-1, off, done, req_off;
     char *write_buf=NULL;
     int *curr_offlen_ptr, *count, *send_size, req_len, *recv_size;
@@ -410,7 +463,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
    That gives the no. of communication phases as well. */
 
     value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
-    MPI_Info_get(fd->info, "cb_buffer_size", MPI_MAX_INFO_VAL, value, 
+    ADIOI_Info_get(fd->info, "cb_buffer_size", MPI_MAX_INFO_VAL, value, 
                  &info_flag);
     coll_bufsize = atoi(value);
     ADIOI_Free(value);
@@ -526,7 +579,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
 #endif
 	for (i=0; i < nprocs; i++) count[i] = recv_size[i] = 0;
 
-	size = (int) (ADIOI_MIN(coll_bufsize, end_loc-st_loc+1-done)); 
+	size = ADIOI_MIN((unsigned)coll_bufsize, end_loc-st_loc+1-done); 
 
 	for (i=0; i < nprocs; i++) {
 	    if (others_req[i].count) {
@@ -550,12 +603,14 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
 		    }
 		    if (req_off < off + size) {
 			count[i]++;
+      ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)write_buf)+req_off-off) == (ADIO_Offset)(MPIR_Upint)(write_buf+req_off-off));
 			MPI_Address(write_buf+req_off-off, 
                                &(others_req[i].mem_ptrs[j]));
-			recv_size[i] += (int)(ADIOI_MIN(off + (ADIO_Offset)size - 
-						  req_off, req_len));
+      ADIOI_Assert((off + size - req_off) == (int)(off + size - req_off));
+			recv_size[i] += (int)(ADIOI_MIN(off + size - req_off, 
+                                      (unsigned)req_len));
 
-			if (off+size-req_off < req_len)
+			if (off+size-req_off < (unsigned)req_len)
 			{
 			    partial_recv[i] = (int) (off + size - req_off);
 
@@ -618,7 +673,8 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
 	    if (count[i]) flag = 1;
 
 	if (flag) {
-	    ADIO_WriteContig(fd, write_buf, size, MPI_BYTE, ADIO_EXPLICIT_OFFSET, 
+      ADIOI_Assert(size == (int)size);
+	    ADIO_WriteContig(fd, write_buf, (int)size, MPI_BYTE, ADIO_EXPLICIT_OFFSET, 
                         off, &status, error_code);
 	    if (*error_code != MPI_SUCCESS) return;
 	}
@@ -678,7 +734,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
  */
 static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
 				  ADIOI_Flatlist_node *flat_buf, ADIO_Offset 
-				  *offset_list, int *len_list, int *send_size, 
+				  *offset_list, ADIO_Offset *len_list, int *send_size, 
 				  int *recv_size, ADIO_Offset off, int size,
 				  int *count, int *start_pos,
 				  int *partial_recv,
@@ -758,19 +814,26 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
         }
     ADIOI_Free(tmp_len);
 
-/* check if there are any holes */
+    /* check if there are any holes. If yes, must do read-modify-write.
+     * holes can be in three places.  'middle' is what you'd expect: the
+     * processes are operating on noncontigous data.  But holes can also show
+     * up at the beginning or end of the file domain (see John Bent ROMIO REQ
+     * #835). Missing these holes would result in us writing more data than
+     * recieved by everyone else. */
     *hole = 0;
-    /* See if there are holes before the first request or after the last request*/
-    if((srt_off[0] > off) || 
-       ((srt_off[sum-1] + srt_len[sum-1]) < (off + size)))
-    {
-       *hole = 1;
-    }
-    else /* See if there are holes between the requests, if there are more than one */
-    for (i=0; i<sum-1; i++)
-	if (srt_off[i]+srt_len[i] < srt_off[i+1]) {
-	    *hole = 1;
-	    break;
+    if (off != srt_off[0]) /* hole at the front */
+        *hole = 1;
+    else { /* coalesce the sorted offset-length pairs */
+        for (i=1; i<sum; i++) {
+            if (srt_off[i] <= srt_off[0] + srt_len[0]) {
+		int new_len = srt_off[i] + srt_len[i] - srt_off[0];
+		if (new_len > srt_len[0]) srt_len[0] = new_len;
+	    }
+            else
+                break;
+        }
+        if (i < sum || size != srt_len[0]) /* hole in middle or end */
+            *hole = 1;
 	}
 
     ADIOI_Free(srt_off);
@@ -821,6 +884,9 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
 /* post sends. if buftype_is_contig, data can be directly sent from
    user buf at location given by buf_idx. else use send_buf. */
 
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event (5032, 0, NULL);
+#endif
     if (buftype_is_contig) {
 	j = 0;
 	for (i=0; i < nprocs; i++) 
@@ -895,6 +961,9 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
         MPI_Waitall(nprocs_send+nprocs_recv, requests, statuses);
 #endif
 
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event (5033, 0, NULL);
+#endif
     ADIOI_Free(statuses);
     ADIOI_Free(requests);
     if (!buftype_is_contig && nprocs_send) {
@@ -918,7 +987,7 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
                 n_buftypes++; \
             } \
             user_buf_idx = flat_buf->indices[flat_buf_idx] + \
-                              n_buftypes*buftype_extent; \
+                              (ADIO_Offset)n_buftypes*(ADIO_Offset)buftype_extent; \
             flat_buf_sz = flat_buf->blocklens[flat_buf_idx]; \
         } \
         buf_incr -= size_in_buf; \
@@ -930,6 +999,8 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
 { \
     while (size) { \
         size_in_buf = ADIOI_MIN(size, flat_buf_sz); \
+  ADIOI_Assert((((ADIO_Offset)(MPIR_Upint)buf) + user_buf_idx) == (ADIO_Offset)(MPIR_Upint)((MPIR_Upint)buf + user_buf_idx)); \
+  ADIOI_Assert(size_in_buf == (size_t)size_in_buf); \
         memcpy(&(send_buf[p][send_buf_idx[p]]), \
                ((char *) buf) + user_buf_idx, size_in_buf); \
         send_buf_idx[p] += size_in_buf; \
@@ -942,7 +1013,7 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
                 n_buftypes++; \
             } \
             user_buf_idx = flat_buf->indices[flat_buf_idx] + \
-                              n_buftypes*buftype_extent; \
+                              (ADIO_Offset)n_buftypes*(ADIO_Offset)buftype_extent; \
             flat_buf_sz = flat_buf->blocklens[flat_buf_idx]; \
         } \
         size -= size_in_buf; \
@@ -951,11 +1022,9 @@ static void ADIOI_W_Exchange_data(ADIO_File fd, void *buf, char *write_buf,
     ADIOI_BUF_INCR \
 }
 
-
-
 static void ADIOI_Fill_send_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
                            *flat_buf, char **send_buf, ADIO_Offset 
-                           *offset_list, int *len_list, int *send_size, 
+                           *offset_list, ADIO_Offset *len_list, int *send_size, 
                            MPI_Request *requests, int *sent_to_proc, 
                            int nprocs, int myrank, 
                            int contig_access_count, 
@@ -967,8 +1036,9 @@ static void ADIOI_Fill_send_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
 {
 /* this function is only called if buftype is not contig */
 
-    int i, p, flat_buf_idx, size;
-    int flat_buf_sz, buf_incr, size_in_buf, jj, n_buftypes;
+    int i, p, flat_buf_idx;
+    ADIO_Offset flat_buf_sz, size_in_buf, buf_incr, size;
+    int jj, n_buftypes;
     ADIO_Offset off, len, rem_len, user_buf_idx;
 
 /*  curr_to_proc[p] = amount of data sent to proc. p that has already
@@ -995,7 +1065,7 @@ static void ADIOI_Fill_send_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
 
     for (i=0; i<contig_access_count; i++) { 
 	off     = offset_list[i];
-	rem_len = (ADIO_Offset) len_list[i];
+	rem_len = len_list[i];
 
 	/*this request may span the file domains of more than one process*/
   while (rem_len != 0) {
@@ -1015,17 +1085,20 @@ static void ADIOI_Fill_send_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
 	    if (send_buf_idx[p] < send_size[p]) {
 		if (curr_to_proc[p]+len > done_to_proc[p]) {
 		    if (done_to_proc[p] > curr_to_proc[p]) {
-			size = (int)ADIOI_MIN(curr_to_proc[p] + len - 
+			size = ADIOI_MIN(curr_to_proc[p] + len - 
                                 done_to_proc[p], send_size[p]-send_buf_idx[p]);
 			buf_incr = done_to_proc[p] - curr_to_proc[p];
 			ADIOI_BUF_INCR
-		        buf_incr = (int)(curr_to_proc[p] + len - done_to_proc[p]);
+      ADIOI_Assert((curr_to_proc[p] + len - done_to_proc[p]) == (unsigned)(curr_to_proc[p] + len - done_to_proc[p]));
+		        buf_incr = curr_to_proc[p] + len - done_to_proc[p];
+      ADIOI_Assert((done_to_proc[p] + size) == (unsigned)(done_to_proc[p] + size));
 			curr_to_proc[p] = done_to_proc[p] + size;
 		        ADIOI_BUF_COPY
 		    }
 		    else {
-			size = (int)ADIOI_MIN(len,send_size[p]-send_buf_idx[p]);
-			buf_incr = (int)len;
+			size = ADIOI_MIN(len,send_size[p]-send_buf_idx[p]);
+			buf_incr = len;
+      ADIOI_Assert((curr_to_proc[p] + size) == (unsigned)((ADIO_Offset)curr_to_proc[p] + size));
 			curr_to_proc[p] += size;
 			ADIOI_BUF_COPY
 		    }
@@ -1036,13 +1109,14 @@ static void ADIOI_Fill_send_buffer(ADIO_File fd, void *buf, ADIOI_Flatlist_node
 		    }
 		}
 		else {
-		    curr_to_proc[p] += (int)len;
-		    buf_incr = (int)len;
+        ADIOI_Assert((curr_to_proc[p] + len) == (unsigned)((ADIO_Offset)curr_to_proc[p] + len));
+		    curr_to_proc[p] += len;
+		    buf_incr = len;
 		    ADIOI_BUF_INCR
 		}
 	    }
 	    else {
-		buf_incr = (int)len;
+		buf_incr = len;
 		ADIOI_BUF_INCR
             }
 	    off     += len;
@@ -1181,7 +1255,7 @@ static void ADIOI_W_Exchange_data_alltoallv(
 		char *write_buf,					/* 1 */
 		ADIOI_Flatlist_node *flat_buf, 
 		ADIO_Offset *offset_list, 
-		int *len_list, int *send_size, int *recv_size, 
+		ADIO_Offset *len_list, int *send_size, int *recv_size, 
 		ADIO_Offset off, int size,				/* 2 */
 		int *count, int *start_pos, int *partial_recv,
 		int *sent_to_proc, int nprocs, int myrank, 
@@ -1196,11 +1270,10 @@ static void ADIOI_W_Exchange_data_alltoallv(
 		int iter, MPI_Aint buftype_extent, int *buf_idx,
 		int *error_code)
 {   
-    int i, j, k=0, tmp=0, nprocs_recv, nprocs_send, erri, *tmp_len, err;
+    int i, j, k=0, nprocs_recv, nprocs_send, *tmp_len, err;
     char **send_buf = NULL;
-    MPI_Request *requests, *send_req;
-    MPI_Datatype recv_type;
-    MPI_Status *statuses, status;
+    MPI_Request *send_req=NULL;
+    MPI_Status status;
     int rtail, stail;
     char *sbuf_ptr, *to_ptr;
     int  len;
@@ -1324,7 +1397,8 @@ static void ADIOI_W_Exchange_data_alltoallv(
 
             sbuf_ptr = all_recv_buf + rdispls[i];
             for (j=0; j<count[i]; j++) {
-                to_ptr = (char *)( others_req[i].mem_ptrs[ start_pos[i]+j ] );
+                ADIOI_ENSURE_AINT_FITS_IN_PTR(others_req[i].mem_ptrs[ start_pos[i]+j ]);
+                to_ptr = (char *) ADIOI_AINT_CAST_TO_VOID_PTR ( others_req[i].mem_ptrs[ start_pos[i]+j ] );
                 len    =           others_req[i].lens[     start_pos[i]+j ]  ;
                 memcpy( to_ptr, sbuf_ptr, len );
                 sbuf_ptr += len;
@@ -1349,7 +1423,7 @@ static void ADIOI_W_Exchange_data_alltoallv(
 
 static void ADIOI_Fill_send_buffer_nosend(ADIO_File fd, void *buf, ADIOI_Flatlist_node
                            *flat_buf, char **send_buf, ADIO_Offset 
-                           *offset_list, int *len_list, int *send_size, 
+                           *offset_list, ADIO_Offset *len_list, int *send_size, 
                            MPI_Request *requests, int *sent_to_proc, 
                            int nprocs, int myrank, 
                            int contig_access_count, 
@@ -1361,8 +1435,9 @@ static void ADIOI_Fill_send_buffer_nosend(ADIO_File fd, void *buf, ADIOI_Flatlis
 {
 /* this function is only called if buftype is not contig */
 
-    int i, p, flat_buf_idx, size;
-    int flat_buf_sz, buf_incr, size_in_buf, jj, n_buftypes;
+    int i, p, flat_buf_idx;
+    ADIO_Offset flat_buf_sz, size_in_buf, buf_incr, size;
+    int jj, n_buftypes;
     ADIO_Offset off, len, rem_len, user_buf_idx;
 
 /*  curr_to_proc[p] = amount of data sent to proc. p that has already
@@ -1389,7 +1464,7 @@ static void ADIOI_Fill_send_buffer_nosend(ADIO_File fd, void *buf, ADIOI_Flatlis
 
     for (i=0; i<contig_access_count; i++) { 
 	off     = offset_list[i];
-	rem_len = (ADIO_Offset) len_list[i];
+	rem_len = len_list[i];
 
 	/*this request may span the file domains of more than one process*/
   while (rem_len != 0) {
@@ -1409,17 +1484,20 @@ static void ADIOI_Fill_send_buffer_nosend(ADIO_File fd, void *buf, ADIOI_Flatlis
 	    if (send_buf_idx[p] < send_size[p]) {
 		if (curr_to_proc[p]+len > done_to_proc[p]) {
 		    if (done_to_proc[p] > curr_to_proc[p]) {
-			size = (int)ADIOI_MIN(curr_to_proc[p] + len - 
+			size = ADIOI_MIN(curr_to_proc[p] + len - 
                                 done_to_proc[p], send_size[p]-send_buf_idx[p]);
 			buf_incr = done_to_proc[p] - curr_to_proc[p];
 			ADIOI_BUF_INCR
-		        buf_incr = (int)(curr_to_proc[p] + len - done_to_proc[p]);
+      ADIOI_Assert((curr_to_proc[p] + len - done_to_proc[p]) == (unsigned)(curr_to_proc[p] + len - done_to_proc[p]));
+		        buf_incr = curr_to_proc[p] + len - done_to_proc[p];
+      ADIOI_Assert((done_to_proc[p] + size) == (unsigned)(done_to_proc[p] + size));
 			curr_to_proc[p] = done_to_proc[p] + size;
 		        ADIOI_BUF_COPY
 		    }
 		    else {
-			size = (int)ADIOI_MIN(len,send_size[p]-send_buf_idx[p]);
-			buf_incr = (int)len;
+			size = ADIOI_MIN(len,send_size[p]-send_buf_idx[p]);
+			buf_incr = len;
+      ADIOI_Assert((curr_to_proc[p] + size) == (unsigned)((ADIO_Offset)curr_to_proc[p] + size));
 			curr_to_proc[p] += size;
 			ADIOI_BUF_COPY
 		    }
@@ -1433,13 +1511,14 @@ static void ADIOI_Fill_send_buffer_nosend(ADIO_File fd, void *buf, ADIOI_Flatlis
 		    */
 		}
 		else {
+        ADIOI_Assert((curr_to_proc[p] + len) == (unsigned)((ADIO_Offset)curr_to_proc[p] + len));
 		    curr_to_proc[p] += (int)len;
-		    buf_incr = (int)len;
+		    buf_incr = len;
 		    ADIOI_BUF_INCR
 		}
 	    }
 	    else {
-		buf_incr = (int)len;
+		buf_incr = len;
 		ADIOI_BUF_INCR
             }
 	    off     += len;

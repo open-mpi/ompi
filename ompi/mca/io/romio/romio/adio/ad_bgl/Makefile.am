@@ -26,6 +26,7 @@ libadio_bgl_la_SOURCES = \
         ad_bgl.c \
         ad_bgl_close.c \
         ad_bgl_fcntl.c \
+        ad_bgl_flush.c \
         ad_bgl_getsh.c \
         ad_bgl.h \
         ad_bgl_hints.c \

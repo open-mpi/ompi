@@ -51,6 +51,13 @@ mca_io_romio_file_close (ompi_file_t *fh)
     int ret;
     mca_io_romio_data_t *data;
 
+    /* Because ROMIO expects the MPI library to provide error handler management
+     * routines but it doesn't ever participate in MPI_File_close, we have to
+     * somehow inform the MPI library that we no longer hold a reference to any
+     * user defined error handler.  We do this by setting the errhandler at this
+     * point to MPI_ERRORS_RETURN. */
+    PMPI_File_set_errhandler(fh, MPI_ERRORS_RETURN);
+
     data = (mca_io_romio_data_t *) fh->f_io_selected_data;
 
     OPAL_THREAD_LOCK (&mca_io_romio_mutex);

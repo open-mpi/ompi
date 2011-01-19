@@ -47,8 +47,7 @@ int MPI_File_seek(MPI_File mpi_fh, MPI_Offset offset, int whence)
     HPMP_IO_START(fl_xmpi, BLKMPIFILESEEK, TRDTBLOCK, fh, MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     fh = MPIO_File_resolve(mpi_fh);
 
@@ -133,7 +132,6 @@ int MPI_File_seek(MPI_File mpi_fh, MPI_Offset offset, int whence)
     error_code = MPI_SUCCESS;
 
 fn_exit:
-    MPIR_Nest_decr();
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
     return error_code;
 }

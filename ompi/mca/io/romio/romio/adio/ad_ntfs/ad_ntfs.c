@@ -12,6 +12,7 @@
 
 struct ADIOI_Fns_struct ADIO_NTFS_operations = {
     ADIOI_NTFS_Open, /* Open */
+	ADIOI_GEN_OpenColl, /* OpenColl */
     ADIOI_NTFS_ReadContig, /* ReadContig */
     ADIOI_NTFS_WriteContig, /* WriteContig */
     ADIOI_GEN_ReadStridedColl, /* ReadStridedColl */
@@ -33,4 +34,5 @@ struct ADIOI_Fns_struct ADIO_NTFS_operations = {
     ADIOI_NTFS_Flush, /* Flush */
     ADIOI_NTFS_Resize, /* Resize */
     ADIOI_GEN_Delete, /* Delete */
+    ADIOI_GEN_Feature /* Features */
 };

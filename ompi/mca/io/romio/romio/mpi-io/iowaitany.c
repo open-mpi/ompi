@@ -32,13 +32,12 @@ int MPIO_Waitany(int count, MPIO_Request requests[], int *index,
 		 MPI_Status *status)
 {
     int i, flag, err; 
+    MPIU_THREADPRIV_DECL;
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     if (count == 1) {
-	MPIR_Nest_incr();
 	err = MPIO_Wait( requests, status );
-    	MPIR_Nest_decr();
 	if (!err) *index = 0;
 	goto fn_exit;
     }
@@ -79,7 +78,7 @@ int MPIO_Waitany(int count, MPIO_Request requests[], int *index,
     } while (flag == 0);
 
 fn_exit:
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
 
     return err;
 }

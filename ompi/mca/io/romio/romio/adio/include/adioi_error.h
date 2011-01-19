@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/*  $Id: adioi_error.h,v 1.12 2006/01/05 23:53:58 robl Exp $
- *
+/*
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
  */
@@ -24,6 +23,17 @@ if ((fh <= (ADIO_File) 0) ||					\
 
 #define MPIO_CHECK_COUNT(fh, count, myname, error_code)         \
 if (count < 0) {						\
+    error_code = MPIO_Err_create_code(MPI_SUCCESS,		\
+				      MPIR_ERR_RECOVERABLE,	\
+				      myname, __LINE__,		\
+				      MPI_ERR_ARG, 		\
+				      "**iobadcount", 0);	\
+    error_code = MPIO_Err_return_file(fh, error_code);		\
+    goto fn_exit;                                               \
+}
+
+#define MPIO_CHECK_COUNT_SIZE(fh, count, datatype_size, myname, error_code)         \
+if (count*datatype_size != (ADIO_Offset)(unsigned)count*(ADIO_Offset)(unsigned)datatype_size) {	\
     error_code = MPIO_Err_create_code(MPI_SUCCESS,		\
 				      MPIR_ERR_RECOVERABLE,	\
 				      myname, __LINE__,		\

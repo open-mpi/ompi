@@ -35,4 +35,6 @@ void ADIOI_PIOFS_WriteStrided(ADIO_File fd, void *buf, int count,
 		       *error_code);
 void ADIOI_PIOFS_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code);
 
+void ADIOI_PIOFS_Feature(ADIO_File fd, int flag);
+
 #endif

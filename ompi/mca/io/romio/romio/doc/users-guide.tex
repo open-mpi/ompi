@@ -21,11 +21,11 @@ ANL/MCS-TM-234 \\
 
 \rule{1.75in}{.01in} \\
 
-\vskip 1.3 in
+\vskip 1.3in 
 {\Large\bf Users Guide for ROMIO: A High-Performance, \\ [1ex]
 Portable MPI-IO Implementation} \\ [4ex]
 by \\ [2ex]
-{\large\it Rajeev Thakur, Robert Ross, Ewing Lusk, and William Gropp}
+{\large\it Rajeev Thakur, Robert Ross, Ewing Lusk, William Gropp, Robert Latham}
 \vspace{1in}
 
 Mathematics and Computer Science Division
@@ -36,7 +36,7 @@ Technical Memorandum No.\ 234
 
 
 \vspace{1.4in}
-Revised May 2004
+Revised May 2004, November 2007, April 2010
 
 \end{center}
 
@@ -215,8 +215,13 @@ Subsection~\ref{sec:hints}.
 \subsection{Hints}
 \label{sec:hints}
 
+If ROMIO doesn't understand a hint, or if the value is invalid, the hint
+will be ignored. The values of hints being used by ROMIO for a file
+can be obtained at any time via {\tt MPI\_File\_get\_info}.
+
 The following hints control the data sieving optimization and are
 applicable to all file system types:
+
 \begin{itemize}
 \item \texttt{ind\_rd\_buffer\_size} -- Controls the size (in bytes) of the
 intermediate buffer used by ROMIO when performing data sieving during
@@ -370,12 +375,15 @@ first be written to.  This is a number in the range of 0 ...
 striping\_factor - 1.
 \end{itemize}
 
-Also for PFS:
+\subsubsection{Hints for PFS}
+\label{sec:hints_pfs}
 \begin{itemize}
 \item \texttt{pfs\_svr\_buf} -- Turns on PFS server buffering.  Valid
 values are \texttt{true} and \texttt{false}.  Default is \texttt{false}.
 \end{itemize}
 
+\subsubsection{Hints for XFS}
+\label{sec:hints_xfs}
 For XFS control is provided for the direct I/O optimization:
 \begin{itemize}
 \item \texttt{direct\_read} -- Controls direct I/O for reads.  Valid
@@ -383,6 +391,9 @@ values are \texttt{true} and \texttt{false}.  Default is \texttt{false}.
 \item \texttt{direct\_write} -- Controls direct I/O for writes.  Valid
 values are \texttt{true} and \texttt{false}.  Default is \texttt{false}.
 \end{itemize}
+
+\subsubsection{Hints for PVFS (v1)}
+\label{sec:hints_oldpvfs}
 
 For PVFS control is provided for the use of the listio interface.  This
 interface to PVFS allows for a collection of noncontiguous regions to be
@@ -400,9 +411,126 @@ Valid values are \texttt{enable}, \texttt{disable}, and \texttt{automatic}.
 Default is \texttt{disable}.
 \end{itemize}
 
-If ROMIO doesn't understand a hint, or if the value is invalid, the hint
-will be ignored. The values of hints being used by ROMIO for a file
-can be obtained at any time via {\tt MPI\_File\_get\_info}.
+\subsubsection{Hints for PVFS (v2)}
+\label{sec:hints_pvfs}
+
+The PVFS v2 file system has many tuning parameters. 
+\begin{itemize}
+\item dtype i/o
+\end{itemize}
+
+\subsubsection{Hints for Lustre}
+
+\begin{itemize}
+\item romio\_lustre\_co\_ratio
+
+In stripe-contiguous IO pattern, each OST will be accessed by a group of
+IO clients. CO means *C*lient/*O*ST ratio, or the max. number of IO clients
+for each OST.
+CO=1 by default.
+
+\item \texttt{romio\_lustre\_coll\_threshold}
+
+We won't do collective I/O if this hint is set and the IO request size is
+bigger than this value. That's because when the request size is big, the
+collective communication overhead increases and the benefits from collective
+I/O becomes limited.  A value of 0 means always perform collective I/O
+
+\item \texttt{romio\_lustre\_cb\_ds\_threshold}
+
+ROMIO can optimize collective I/O with a version of data sieving.  If the I/O
+request is smaller than this hint's value, though, ROMIO will not try to apply
+the data sieving optimization.
+
+\item \texttt{romio\_lustre\_ds\_in\_coll}
+
+Collective IO will apply read-modify-write to deal with non-contiguous
+data by default. However, it will introduce some overhead(IO operation and
+locking).  The Lustre developers have run tests where data sieving showed bad
+collective write performance for some kinds of workloads.  So, to avoid this,
+we define the \texttt{romio\_lustre\_ds\_in\_coll} hint to disable the read-modify-write
+step in collective I/O.  This optimization is distinct from the one in
+independent I/O (controlled by \texttt{romio\_ds\_read} and 
+\texttt{romio\_ds\_write}).
+
+\end{itemize}
+
+\subsubsection{Hints for PANFS (Panasas)}
+
+PanFS allows users to specify the layout of a file at file-creation time.
+Layout information includes the number of StorageBlades (SB) across which the
+data is stored, the number of SBs across which a parity stripe is written, and
+the number of consecutive stripes that are placed on the same set of SBs.   The
+\texttt{panfs\_layout\_*} hints are only used if supplied at file-creation
+time.
+\begin{itemize}
+
+\item \texttt{panfs\_layout\_type} Specifies the layout of a file: 2 = RAID0
+3 = RAID5 Parity Stripes 
+
+\item \texttt{panfs\_layout\_stripe\_unit} The size of the stripe unit
+in bytes
+
+\item \texttt{panfs\_layout\_total\_num\_comps} The total number of
+StorageBlades a file is striped across.
+
+\item \texttt{ panfs\_layout\_parity\_stripe\_width}  If the layout type is
+RAID5 Parity Stripes, this hint specifies the number of StorageBlades in a
+parity stripe.
+
+\item \texttt{panfs\_layout\_parity\_stripe\_depth} If the layout type is RAID5
+Parity Stripes, this hint specifies the number of contiguous parity stripes
+written across the same set of SBs.
+
+\item \texttt{panfs\_layout\_visit\_policy} If the layout type is RAID5 Parity
+Stripes, the policy used to determine the parity stripe a given file offset is
+written to: 1 = Round Robin 
+\end{itemize}
+
+PanFS supports the ``concurrent write'' (CW) mode, where groups of
+cooperating clients can disable the PanFS consistency mechanisms and use
+their own consistency protocol.  Clients participating in concurrent
+write mode use application specific information to improve performance
+while maintaining file consistency.  All clients accessing the file(s)
+must enable concurrent write mode.  If any client does not enable
+concurrent write mode, then the PanFS consistency protocol will be
+invoked.  Once a file is opened in CW mode on a machine, attempts to
+open a file in non-CW mode will fail with EACCES.  If a file is already
+opened in non-CW mode, attempts to open the file in CW mode will fail
+with EACCES.  The following hint is used to enable concurrent write
+mode.
+
+\begin{itemize}
+\item \texttt{panfs\_concurrent\_write} If set to 1 at file open time,
+the file is opened using the PanFS concurrent write mode flag.
+Concurrent write mode is not a persistent attribute of the file.
+\end{itemize}
+
+Below is an example PanFS layout using the following parameters:
+\begin{verbatim}
+ 
+  - panfs_layout_type                = 3
+  - panfs_layout_total_num_comps     = 100
+  - panfs_layout_parity_stripe_width = 10
+  - panfs_layout_parity_stripe_depth = 8
+  - panfs_layout_visit_policy        = 1
+
+   Parity Stripe Group 1     Parity Stripe Group 2  . . . Parity Stripe Group 10
+  ----------------------    ----------------------        --------------------
+   SB1    SB2  ... SB10     SB11    SB12 ...  SB20  ...   SB91   SB92 ... SB100
+  -----------------------   -----------------------       ---------------------
+   D1     D2   ...  D10      D91    D92  ...  D100        D181   D182  ... D190
+   D11    D12       D20      D101   D102      D110        D191   D192      D193
+   D21    D22       D30      . . .                        . . .
+   D31    D32       D40
+   D41    D42       D50
+   D51    D52       D60
+   D61    D62       D70
+   D71    D72       D80
+   D81    D82       D90      D171   D172      D180        D261   D262   D270
+   D271   D272      D273     . . .                        . . .
+   ...
+\end{verbatim}
 
 \subsubsection{Systemwide Hints}
 \label{sec:system_hints}

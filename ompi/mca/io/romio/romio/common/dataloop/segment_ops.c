@@ -548,16 +548,7 @@ static int DLOOP_Segment_index_count_block(DLOOP_Offset *blocks_p,
      *       DLOOP_Count i and DLOOP_Offset size would need to be
      *       declared above.
      */
-#if 0
-    last_loc = rel_off * offsetarray[0] + blockarray[0] * el_size;
-    for (i=1; i < count; i++) {
-	if (last_loc == rel_off + offsetarray[i]) new_blk_count--;
-
-	last_loc = rel_off + offsetarray[i] + blockarray[i] * el_size;
-    }
-#else
     last_loc = rel_off + offsetarray[count-1] + blockarray[count-1] * el_size;
-#endif
 
     paramp->last_loc = last_loc;
     paramp->count += new_blk_count;
@@ -689,19 +680,6 @@ static int DLOOP_Segment_vector_mpi_flatten(DLOOP_Offset *blocks_p,
 
     DLOOP_Handle_get_size_macro(el_type, el_size);
     blocks_left = *blocks_p;
-
-#if 0
-    MPIU_DBG_MSG_FMT(DATATYPE,VERBOSE,(MPIU_DBG_FDEST,
-	     "\t[vector to vec: do=%d, dp=%x, len=%d, ind=%d, ct=%d, blksz=%d, str=%d, blks=%d]\n",
-		    (unsigned) rel_off,
-		    (unsigned) (MPI_Aint)bufp,
-		    paramp->u.pack_vector.length,
-		    paramp->u.pack_vector.index,
-		    count,
-		    blksz,
-		    stride,
-		    (int) *blocks_p));
-#endif
 
     for (i=0; i < count && blocks_left > 0; i++) {
 	int last_idx;

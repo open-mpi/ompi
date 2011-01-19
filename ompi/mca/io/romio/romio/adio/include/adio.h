@@ -123,16 +123,6 @@
 /* Open MPI: end of section of ignored stuff */
 #endif
 
-#ifndef SX4
-#   define MPI_AINT MPI_LONG    /* may need to change this later */
-#else
-#   if (defined(_SX) && !defined(_LONG64))
-#       define MPI_AINT MPI_LONG_LONG_INT
-#   else
-#       define MPI_AINT MPI_LONG
-#   endif
-#endif
-
 #define ADIO_Status MPI_Status   
 
 #ifndef MPIO_INCLUDE
@@ -216,7 +206,6 @@ typedef struct ADIOI_FileD {
     unsigned d_mem;          /* data buffer memory alignment */
     unsigned d_miniosz;      /* min xfer size, xfer size multiple,
                                 and file seek offset alignment */
-    unsigned d_maxiosz;      /* max xfer size */
     ADIO_Offset fp_ind;      /* individual file pointer in MPI-IO (in bytes)*/
     ADIO_Offset fp_sys_posn; /* current location of the system file-pointer
                                 in bytes */
@@ -224,6 +213,7 @@ typedef struct ADIOI_FileD {
     MPI_Comm comm;           /* communicator indicating who called open */
     MPI_Comm agg_comm;      /* deferred open: aggregators who called open */
     int is_open;	    /* deferred open: 0: not open yet 1: is open */
+    int is_agg;              /* bool: if I am an aggregator */
     char *filename;          
     int file_system;         /* type of file system */
     int access_mode;         /* Access mode (sequential, append, etc.) */
@@ -249,6 +239,11 @@ typedef struct ADIOI_FileD {
     int fortran_handle;     /* handle for Fortran interface if needed */
     MPI_Errhandler err_handler;
     void *fs_ptr;            /* file-system specific information */
+
+    /* Two phase collective I/O support */
+    ADIO_Offset *file_realm_st_offs; /* file realm starting offsets */
+    MPI_Datatype *file_realm_types;  /* file realm datatypes */
+    int my_cb_nodes_index; /* my index into cb_config_list. -1 if N/A */
 } ADIOI_FileD;
 
 typedef struct ADIOI_FileD *ADIO_File;
@@ -278,6 +273,8 @@ typedef struct {
 #define ADIO_APPEND             128
 #define ADIO_SEQUENTIAL         256
 
+#define ADIO_AMODE_NOMATCH  ~(ADIO_CREATE|ADIO_RDONLY|ADIO_WRONLY|ADIO_RDWR|ADIO_DELETE_ON_CLOSE|ADIO_UNIQUE_OPEN|ADIO_EXCL|ADIO_APPEND|ADIO_SEQUENTIAL)
+
 /* file-pointer types */
 #define ADIO_EXPLICIT_OFFSET     100
 #define ADIO_INDIVIDUAL          101
@@ -303,6 +300,7 @@ typedef struct {
 #define ADIO_LUSTRE              163   /* Lustre */
 #define ADIO_BGL                 164   /* IBM BGL */
 #define ADIO_BGLOCKLESS          165   /* IBM BGL (lock-free) */
+#define ADIO_ZOIDFS              167   /* ZoidFS: the I/O forwarding fs */
 
 #define ADIO_SEEK_SET            SEEK_SET
 #define ADIO_SEEK_CUR            SEEK_CUR
@@ -311,6 +309,13 @@ typedef struct {
 #define ADIO_FCNTL_SET_ATOMICITY 180
 #define ADIO_FCNTL_SET_DISKSPACE 188
 #define ADIO_FCNTL_GET_FSIZE     200
+
+/* file system feature tests */
+#define ADIO_LOCKS               300
+#define ADIO_SHARED_FP           301
+#define ADIO_ATOMIC_MODE         302
+#define ADIO_DATA_SIEVING_WRITES 303
+#define ADIO_SCALABLE_OPEN       304
 
 /* for default file permissions */
 #define ADIO_PERM_NULL           -1
@@ -330,6 +335,7 @@ MPI_File ADIO_Open(MPI_Comm orig_comm, MPI_Comm comm, char *filename,
 		   int access_mode, ADIO_Offset disp, MPI_Datatype etype, 
 		   MPI_Datatype filetype, 
 		   MPI_Info info, int perm, int *error_code);
+void ADIOI_OpenColl(ADIO_File fd, int rank, int acces_mode, int *error_code);
 void ADIO_ImmediateOpen(ADIO_File fd, int *error_code);
 void ADIO_Close(ADIO_File fd, int *error_code);
 void ADIO_ReadContig(ADIO_File fd, void *buf, int count, MPI_Datatype datatype,
@@ -398,6 +404,7 @@ void ADIO_Get_shared_fp(ADIO_File fd, int size, ADIO_Offset *shared_fp,
 void ADIO_Set_shared_fp(ADIO_File fd, ADIO_Offset offset, int *error_code);
 void ADIO_Set_view(ADIO_File fd, ADIO_Offset disp, MPI_Datatype etype, 
 		MPI_Datatype filetype, MPI_Info info,  int *error_code);
+int  ADIO_Feature(ADIO_File fd, int flag);
 
 /* functions to help deal with the array datatypes */
 int ADIO_Type_create_subarray(int ndims,

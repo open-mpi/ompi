@@ -32,13 +32,11 @@ int MPIO_Testall(int count, MPIO_Request requests[], int *flag,
 		 MPI_Status statuses[])
 {
     int done, i, err; 
+    MPIU_THREADPRIV_DECL;
 
-
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
     if (count == 1)  {
-            MPIR_Nest_decr();
 	    err = MPIO_Test( requests, flag, statuses );
-            MPIR_Nest_decr();
 	    goto fn_exit;
     }
 
@@ -50,9 +48,7 @@ int MPIO_Testall(int count, MPIO_Request requests[], int *flag,
     done = 1;
     for (i=0; i<count; i++) {
       if (requests[i] != MPIO_REQUEST_NULL) {
-        MPIR_Nest_incr();
 	err = MPIO_Test( &requests[i], flag, &statuses[i] );
-        MPIR_Nest_decr();
 	if (!*flag) done = 0;
 	if (err) goto fn_exit;
       }
@@ -75,7 +71,7 @@ int MPIO_Testall(int count, MPIO_Request requests[], int *flag,
 
     err = MPI_SUCCESS;
 fn_exit:
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
     return err;
 }
 

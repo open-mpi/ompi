@@ -39,32 +39,32 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
 
         *error_code = MPI_SUCCESS;
         value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
-        MPI_Info_get(fd->info, "panfs_layout_type", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_type", MPI_MAX_INFO_VAL, 
                  value, &flag);
         if (flag) {
             layout_type = strtoul(value,NULL,10);
         }
-        MPI_Info_get(fd->info, "panfs_layout_stripe_unit", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_stripe_unit", MPI_MAX_INFO_VAL, 
                  value, &flag);
         if (flag) {
             layout_stripe_unit = strtoul(value,NULL,10);
         }
-        MPI_Info_get(fd->info, "panfs_layout_total_num_comps", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_total_num_comps", MPI_MAX_INFO_VAL, 
                  value, &flag);
         if (flag) {
             layout_total_num_comps = strtoul(value,NULL,10);
         }
-        MPI_Info_get(fd->info, "panfs_layout_parity_stripe_width", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_parity_stripe_width", MPI_MAX_INFO_VAL, 
                  value, &flag);
         if (flag) {
             layout_parity_stripe_width = strtoul(value,NULL,10);
         }
-        MPI_Info_get(fd->info, "panfs_layout_parity_stripe_depth", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_parity_stripe_depth", MPI_MAX_INFO_VAL, 
                  value, &flag);
         if (flag) {
             layout_parity_stripe_depth = strtoul(value,NULL,10);
         }
-        MPI_Info_get(fd->info, "panfs_layout_visit_policy", MPI_MAX_INFO_VAL, 
+        ADIOI_Info_get(fd->info, "panfs_layout_visit_policy", MPI_MAX_INFO_VAL, 
                  value, &flag);
         if (flag) {
             layout_visit_policy = strtoul(value,NULL,10);
@@ -266,7 +266,7 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
 	amode = amode | O_EXCL;
 
 	value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
-	MPI_Info_get(fd->info, "panfs_concurrent_write", MPI_MAX_INFO_VAL, 
+	ADIOI_Info_get(fd->info, "panfs_concurrent_write", MPI_MAX_INFO_VAL, 
 		     value, &flag);
 	if (flag) {
         unsigned long int concurrent_write = strtoul(value,NULL,10);
@@ -291,41 +291,41 @@ void ADIOI_PANFS_Open(ADIO_File fd, int *error_code)
         if (rc < 0)
         {
             /* Error - set layout type to unknown */
-	        MPI_Info_set(fd->info, "panfs_layout_type", "PAN_FS_CLIENT_LAYOUT_TYPE__INVALID");
+	        ADIOI_Info_set(fd->info, "panfs_layout_type", "PAN_FS_CLIENT_LAYOUT_TYPE__INVALID");
         }
         else 
         {
             ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.agg_type);
-            MPI_Info_set(fd->info, "panfs_layout_type", temp_buffer);
+            ADIOI_Info_set(fd->info, "panfs_layout_type", temp_buffer);
             if (file_query_args.layout.layout_is_valid == 1)
             {
                 switch (file_query_args.layout.agg_type)
                 {
                     case PAN_FS_CLIENT_LAYOUT_TYPE__RAID0:
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid0.stripe_unit);
-                        MPI_Info_set(fd->info, "panfs_layout_stripe_unit", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_stripe_unit", temp_buffer);
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid0.total_num_comps);
-                        MPI_Info_set(fd->info, "panfs_layout_total_num_comps", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_total_num_comps", temp_buffer);
                         break;
                     case PAN_FS_CLIENT_LAYOUT_TYPE__RAID1_5_PARITY_STRIPE:
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid1_5_parity_stripe.stripe_unit);
-                        MPI_Info_set(fd->info, "panfs_layout_stripe_unit", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_stripe_unit", temp_buffer);
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid1_5_parity_stripe.parity_stripe_width);
-                        MPI_Info_set(fd->info, "panfs_layout_parity_stripe_width", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_parity_stripe_width", temp_buffer);
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid1_5_parity_stripe.parity_stripe_depth);
-                        MPI_Info_set(fd->info, "panfs_layout_parity_stripe_depth", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_parity_stripe_depth", temp_buffer);
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid1_5_parity_stripe.total_num_comps);
-                        MPI_Info_set(fd->info, "panfs_layout_total_num_comps", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_total_num_comps", temp_buffer);
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid1_5_parity_stripe.layout_visit_policy);
-                        MPI_Info_set(fd->info, "panfs_layout_visit_policy", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_visit_policy", temp_buffer);
                         break;
                     case PAN_FS_CLIENT_LAYOUT_TYPE__RAID10:
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid10.stripe_unit);
-                        MPI_Info_set(fd->info, "panfs_layout_stripe_unit", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_stripe_unit", temp_buffer);
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid10.total_num_comps);
-                        MPI_Info_set(fd->info, "panfs_layout_total_num_comps", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_total_num_comps", temp_buffer);
                         ADIOI_Snprintf(temp_buffer,TEMP_BUFFER_SIZE,"%u",file_query_args.layout.u.raid10.layout_visit_policy);
-                        MPI_Info_set(fd->info, "panfs_layout_visit_policy", temp_buffer);
+                        ADIOI_Info_set(fd->info, "panfs_layout_visit_policy", temp_buffer);
                         break;
                 }
             }

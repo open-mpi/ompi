@@ -136,7 +136,7 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
        oattr[] (eg. parallelism, striping, etc.) goes here */
     if ( fd->info!=MPI_INFO_NULL )
 	{
-	    MPI_Info_get(fd->info,"ftp_control_mode",MPI_MAX_INFO_VAL,hintval,&keyfound);
+	    ADIOI_Info_get(fd->info,"ftp_control_mode",MPI_MAX_INFO_VAL,hintval,&keyfound);
 	    if ( keyfound )
 		{
 		    if ( ( !strcmp(hintval,"extended") || !strcmp(hintval,"extended_block") ) && 
@@ -153,7 +153,7 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 			globus_err_handler("globus_ftp_client_operationattr_set_mode",myname,result);
 		}
 
-	    MPI_Info_get(fd->info,"parallelism",MPI_MAX_INFO_VAL,hintval,&keyfound);
+	    ADIOI_Info_get(fd->info,"parallelism",MPI_MAX_INFO_VAL,hintval,&keyfound);
 	    if ( keyfound )
 		{
 		    int nftpthreads;
@@ -170,14 +170,14 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 			}
 		}
 
-	    MPI_Info_get(fd->info,"striped_ftp",MPI_MAX_INFO_VAL,hintval,&keyfound);
+	    ADIOI_Info_get(fd->info,"striped_ftp",MPI_MAX_INFO_VAL,hintval,&keyfound);
 	    if ( keyfound )
 		{
 		    /* if set to "true" or "enable", set up round-robin block layout */
 		    if ( !strncmp("true",hintval,4) || !strncmp("TRUE",hintval,4) ||
 			 !strncmp("enable",hintval,4) || !strncmp("ENABLE",hintval,4) )
 			{
-			    MPI_Info_get(fd->info,"striping_factor",MPI_MAX_INFO_VAL,hintval,&keyfound);
+			    ADIOI_Info_get(fd->info,"striping_factor",MPI_MAX_INFO_VAL,hintval,&keyfound);
 			    if ( keyfound )
 				{
 				    int striping_factor;
@@ -197,7 +197,7 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 			}
 		}
 
-	    MPI_Info_get(fd->info,"tcp_buffer",MPI_MAX_INFO_VAL,hintval,&keyfound);
+	    ADIOI_Info_get(fd->info,"tcp_buffer",MPI_MAX_INFO_VAL,hintval,&keyfound);
 	    if ( keyfound )
 		{
 		    /* set tcp buffer size */
@@ -214,7 +214,7 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 			}
 		}
 
-	    MPI_Info_get(fd->info,"transfer_type",MPI_MAX_INFO_VAL,hintval,&keyfound);
+	    ADIOI_Info_get(fd->info,"transfer_type",MPI_MAX_INFO_VAL,hintval,&keyfound);
 	    if ( keyfound )
 		{
 		    globus_ftp_control_type_t filetype;
@@ -340,84 +340,4 @@ void ADIOI_GRIDFTP_Open(ADIO_File fd, int *error_code)
 		}
 	}
     num_gridftp_handles++;
-    
-#if 0
-    /* Debugging info for testing PASV mode behind firewalls */
-    if ( myrank==0 )
-	{
-	    globus_bool_t striped;
-	    globus_ftp_control_mode_t mode;
-	    globus_ftp_control_type_t filetype;
-	    globus_ftp_control_parallelism_t parallelism;
-
-	    FPRINTF(stderr,"--gridftp details for %s--\n",
-		    fd->filename);
-
-	    /* 
-	    FPRINTF(stderr,"Connection caching: ");
-	    globus_ftp_client_handleattr_get_cache_all(&hattr,&cached);
-	    if ( cached==GLOBUS_TRUE )
-		FPRINTF(stderr,"Y\n");
-	    else
-		FPRINTF(stderr,"N\n");
-	    */
-
-	    FPRINTF(stderr,"Control mode:  ");
-	    globus_ftp_client_operationattr_get_mode(&(oattr[fd->fd_sys]),&mode);
-	    if ( mode==GLOBUS_FTP_CONTROL_MODE_BLOCK )
-		FPRINTF(stderr,"block\n");
-	    else if ( mode==GLOBUS_FTP_CONTROL_MODE_COMPRESSED )
-		FPRINTF(stderr,"compressed\n");
-	    else if ( mode==GLOBUS_FTP_CONTROL_MODE_EXTENDED_BLOCK )
-		FPRINTF(stderr,"extended block\n");
-	    else if ( mode==GLOBUS_FTP_CONTROL_MODE_STREAM )
-		FPRINTF(stderr,"stream\n");
-	    else
-		FPRINTF(stderr,"unknown\n");
-
-	    FPRINTF(stderr,"File type:  ");
-	    globus_ftp_client_operationattr_get_type(&(oattr[fd->fd_sys]),&filetype);
-	    if ( filetype==GLOBUS_FTP_CONTROL_TYPE_ASCII )
-		FPRINTF(stderr,"ASCII\n");
-	    else if ( filetype==GLOBUS_FTP_CONTROL_TYPE_IMAGE )
-		FPRINTF(stderr,"binary\n");
-	    else if ( filetype==GLOBUS_FTP_CONTROL_TYPE_EBCDIC )
-		FPRINTF(stderr,"EBCDIC\n");
-	    else
-		FPRINTF(stderr,"unknown\n");
-
-	    FPRINTF(stderr,"Parallelism:  ");
-	    globus_ftp_client_operationattr_get_parallelism(&(oattr[fd->fd_sys]),&parallelism);
-	    if ( parallelism.mode==GLOBUS_FTP_CONTROL_PARALLELISM_NONE )
-		FPRINTF(stderr,"none\n");
-	    else if ( parallelism.mode==GLOBUS_FTP_CONTROL_PARALLELISM_FIXED )
-		FPRINTF(stderr,"fixed with %d streams\n",parallelism.fixed.size);
-	    else
-		FPRINTF(stderr,"unknown\n");
-
-	    FPRINTF(stderr,"Striping:  ");
-	    globus_ftp_client_operationattr_get_striped(&(oattr[fd->fd_sys]),&striped);
-	    if ( striped==GLOBUS_TRUE )
-		{
-		    globus_ftp_control_layout_t layout;
-
-		    FPRINTF(stderr,"Y\nLayout:  ");
-		    globus_ftp_client_operationattr_get_layout(&(oattr[fd->fd_sys]),
-									       &layout);
-		    if ( layout.mode==GLOBUS_FTP_CONTROL_STRIPING_NONE )
-			FPRINTF(stderr,"none\n");
-		    else if ( layout.mode==GLOBUS_FTP_CONTROL_STRIPING_PARTITIONED )
-			FPRINTF(stderr,"partitioned, size=%d\n",layout.partitioned.size);
-		    else if ( layout.mode==GLOBUS_FTP_CONTROL_STRIPING_BLOCKED_ROUND_ROBIN )
-			FPRINTF(stderr,"round-robin, block size=%d\n",layout.round_robin.block_size);
-		    else
-			FPRINTF(stderr,"unknown\n");
-		}
-	    else
-		FPRINTF(stderr,"N\n");
-
-	    fflush(stderr);
-	}
-#endif
-
 }
