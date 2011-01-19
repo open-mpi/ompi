@@ -390,7 +390,7 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
         break;
 
     default:
-        opal_output(fileno(stderr),"Unexpected msg type %dn", mode);
+        opal_output(ompi_mtl_base_output, "Unexpected msg type %dn", mode);
         ret = OMPI_ERR_NOT_SUPPORTED;
     }
 

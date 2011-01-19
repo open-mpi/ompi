@@ -58,8 +58,6 @@ typedef struct mca_mtl_portals4_module_t mca_mtl_portals4_module_t;
 
 extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 
-OMPI_DECLSPEC extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
-
 #define PTL_SEND_TABLE_ID 2
 #define PTL_READ_TABLE_ID 4
 
