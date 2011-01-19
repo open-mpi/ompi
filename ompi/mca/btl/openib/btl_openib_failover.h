@@ -23,7 +23,8 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
 					  ompi_proc_t* remote_proc,
 					  mca_btl_openib_endpoint_t* endpoint);
 void mca_btl_openib_handle_btl_error(mca_btl_openib_module_t* openib_btl);
-void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t *ctl_hdr);
+void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t *ctl_hdr,
+                                                 mca_btl_openib_endpoint_t* ep);
 
 END_C_DECLS
 

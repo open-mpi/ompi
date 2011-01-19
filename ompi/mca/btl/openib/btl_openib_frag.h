@@ -178,6 +178,22 @@ struct mca_btl_openib_broken_connection_header_t {
     uint32_t index; /* for eager RDMA only */
 };
 typedef struct mca_btl_openib_broken_connection_header_t mca_btl_openib_broken_connection_header_t;
+
+#define BTL_OPENIB_BROKEN_CONNECTION_HEADER_HTON(h)    \
+    do {                                               \
+        (h).lid = htonl((h).lid);                      \
+        (h).subnet_id = hton64((h).subnet_id);         \
+        (h).vpid = htonl((h).vpid);                    \
+        (h).index = htonl((h).index);                  \
+    } while (0)
+
+#define BTL_OPENIB_BROKEN_CONNECTION_HEADER_NTOH(h)    \
+    do {                                               \
+        (h).lid = ntohl((h).lid);                      \
+        (h).subnet_id = ntoh64((h).subnet_id);         \
+        (h).vpid = ntohl((h).vpid);                    \
+        (h).index = ntohl((h).index);                  \
+    } while (0)
 #endif
 enum mca_btl_openib_frag_type_t {
     MCA_BTL_OPENIB_FRAG_RECV,
