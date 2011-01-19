@@ -60,7 +60,7 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
                                           ompi_proc_t* remote_proc,
                                           mca_btl_openib_endpoint_t* endpoint)
 {
-    char btlname[IBV_SYSFS_NAME_MAX];
+    char *btlname = NULL;
     int btl_ownership;
     /* Since this BTL supports failover, it will call the PML error handler
      * function with the NONFATAL flag.  If the PML is running with failover
@@ -75,12 +75,6 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
      * This means that one cannot key off of the wc->opcode to see what
      * operation was done.  The important information needs to be read
      * from the fragment. */
-
-    /* Create a nice string to help with debug */
-    if (NULL != openib_btl) {
-        snprintf(btlname, IBV_SYSFS_NAME_MAX-1, "lid=%d:name=%s",
-                 openib_btl->lid, openib_btl->device->ib_dev->name);
-    }
 
     /* Cannot issue callback to SRQ errors because the shared receive
      * queue is shared and is not specific to a connection.  There is no
@@ -97,6 +91,12 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
         return;
     }
     assert(NULL != remote_proc);
+
+    /* Create a nice string to help with debug */
+    if (NULL != openib_btl) {
+        asprintf(&btlname, "lid=%d:name=%s",
+                 openib_btl->lid, openib_btl->device->ib_dev->name);
+    }
 
     /* The next set of errors are associated with an endpoint, but not
      * with a PML descriptor.  They are not associated with a PML
@@ -124,6 +124,7 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
                             "MCA_BTL_OPENIG_FRAG=%d, "
                             "dropping since connection is broken (des=%lx)",
                             openib_frag_type(des), (long unsigned int) des);
+        if (NULL != btlname) free(btlname);
         return;
     }
 
@@ -143,6 +144,7 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
      * the same remote_proc argument will not actually map anything out. */
     openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_NONFATAL,
                          remote_proc, btlname);
+    if (NULL != btlname) free(btlname);
 
     /* Since we believe we have done a send, read or write, then the
      * des_src fields should have valid data. */
@@ -203,14 +205,6 @@ void mca_btl_openib_handle_endpoint_error(mca_btl_openib_module_t *openib_btl,
         OPAL_THREAD_ADD32(&openib_btl->qps[qp].u.srq_qp.sd_credits, 1);
     }
 
-#if 0
-    /* Since a QP has an error, let us go ahead and drain off the
-     * broken fragments.  This is not strictly necessary as we keep
-     * track of outstanding requests on any rendezvous requests.  But,
-     * I think it makes sense so we will keep it here. */
-    progress_one_device(openib_btl->device);
-#endif
-
     /* There are several queues associated with an endpoint that may
      * have some unsent fragments sitting in them.  Remove them and
      * call the callback functions with an error so the PML can send
@@ -240,14 +234,15 @@ void mca_btl_openib_handle_btl_error(mca_btl_openib_module_t* openib_btl) {
     if(mca_btl_openib_component.port_error_failover) {
         /* Since we are not specifying a specific connection to bring down,
          * the PML layer will may out the entire BTL for future communication. */
-        char btlname[IBV_SYSFS_NAME_MAX];
-        snprintf(btlname, IBV_SYSFS_NAME_MAX-1, "lid=%d:name=%s",
+        char *btlname = NULL;
+        asprintf(&btlname, "lid=%d:name=%s",
                  openib_btl->lid, openib_btl->device->ib_dev->name);
         openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_NONFATAL,
                              NULL, btlname);
+        if (NULL != btlname) free(btlname);
 
         /* Now send out messages to all endpoints that we are disconnecting.  
-         * Only do ths to endpoints that are connected.  Otherwise, the
+         * Only do this to endpoints that are connected.  Otherwise, the
          * remote side does not yet have the information on this endpoint.  */
         for (i = 0; i < opal_pointer_array_get_size(openib_btl->device->endpoints); i++) {
             endpoint = (mca_btl_openib_endpoint_t*)
@@ -281,7 +276,7 @@ void mca_btl_openib_handle_btl_error(mca_btl_openib_module_t* openib_btl) {
  * one side of the connection actually sees the error.  This means we
  * can be left in a state where one side believes it has two BTLs, but
  * the other side believes it only has one.  This can cause problems.
- * In the case of the EAGER_RDMA_ERROR, we elsewhere in the code what
+ * In the case of the EAGER_RDMA_ERROR, see elsewhere in the code what
  * we are doing.
  * @param ctl_hdr Pointer control header that was received
  */
@@ -335,10 +330,10 @@ void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t
                     if (MCA_BTL_IB_FAILED == newep->endpoint_state) {
                         return;
                     } else {
-                        char btlname[IBV_SYSFS_NAME_MAX];
+                        char *btlname = NULL;
                         ompi_proc_t* remote_proc = NULL;
 
-                        snprintf(btlname, IBV_SYSFS_NAME_MAX-1, "lid=%d:name=%s",
+                        asprintf(&btlname, "lid=%d:name=%s",
                                  newbtl->lid, newbtl->device->ib_dev->name);
 
                         remote_proc = newep->endpoint_proc->proc_ompi;
@@ -353,6 +348,8 @@ void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t
                                             newep->endpoint_state);
                         newbtl->error_cb(&newbtl->super, MCA_BTL_ERROR_FLAGS_NONFATAL,
                                          remote_proc, btlname);
+                        if (NULL != btlname) free(btlname);
+
                         error_out_all_pending_frags(newep, &newbtl->super, true);
                         newep->endpoint_state = MCA_BTL_IB_FAILED;
                         return;
