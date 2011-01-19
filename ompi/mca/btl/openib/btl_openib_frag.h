@@ -117,7 +117,7 @@ typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 #define MCA_BTL_OPENIB_CONTROL_RDMA         1
 #define MCA_BTL_OPENIB_CONTROL_COALESCED    2
 #define MCA_BTL_OPENIB_CONTROL_CTS          3
-#if OMPI_OPENIB_FAILOVER_ENABLED
+#if BTL_OPENIB_FAILOVER_ENABLED
 #define MCA_BTL_OPENIB_CONTROL_EP_BROKEN    4
 #define MCA_BTL_OPENIB_CONTROL_EP_EAGER_RDMA_ERROR 5
 #endif
@@ -168,7 +168,7 @@ do {                                               \
     (h).rdma_credits = ntohs((h).rdma_credits);    \
 } while (0)
 
-#if OMPI_OPENIB_FAILOVER_ENABLED
+#if BTL_OPENIB_FAILOVER_ENABLED
 struct mca_btl_openib_broken_connection_header_t {
     mca_btl_openib_control_header_t control;
     uint8_t padding[3];

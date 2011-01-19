@@ -455,7 +455,7 @@ int btl_openib_register_mca_params(void)
                 1, &ival, 0));
     mca_btl_openib_component.use_async_event_thread = (0 != ival);
 
-#if OMPI_OPENIB_FAILOVER_ENABLED
+#if BTL_OPENIB_FAILOVER_ENABLED
     /* failover specific output */
     CHECK(reg_int("verbose_failover", NULL,
                   "Output some verbose OpenIB BTL failover information "
@@ -467,6 +467,13 @@ int btl_openib_register_mca_params(void)
                   "If nonzero, asynchronous port errors will trigger failover",
                   0, &ival, 0));
     mca_btl_openib_component.port_error_failover = (0 != ival);
+
+    /* Make non writeable parameter that indicates failover is configured in. */
+    tmp = mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
+                                 "failover_enabled",
+                                 "openib failover is configured: run with bfo PML to support failover between openib BTLs",
+                                 false, true,
+                                 1, NULL);
 #endif
 
     CHECK(reg_int("enable_srq_resize", NULL,
@@ -531,7 +538,7 @@ int btl_openib_register_mca_params(void)
     mca_btl_openib_module.super.btl_min_rdma_pipeline_size = 256 * 1024;
     mca_btl_openib_module.super.btl_flags = MCA_BTL_FLAGS_PUT |
         MCA_BTL_FLAGS_NEED_ACK | MCA_BTL_FLAGS_NEED_CSUM | MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
-#if OMPI_OPENIB_FAILOVER_ENABLED
+#if BTL_OPENIB_FAILOVER_ENABLED
     mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_FAILOVER_SUPPORT;
 #endif
     mca_btl_openib_module.super.btl_bandwidth = 800;

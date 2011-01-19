@@ -1524,7 +1524,7 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     ib_rc = post_send(ep, to_send_frag(item), do_rdma);
 
     if(!ib_rc) {
-#if OMPI_OPENIB_FAILOVER_ENABLED
+#if BTL_OPENIB_FAILOVER_ENABLED
         /* Return up in case needed for failover */
         *descriptor = (struct mca_btl_base_descriptor_t *) frag;
 #endif

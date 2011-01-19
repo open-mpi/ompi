@@ -232,7 +232,7 @@ struct mca_btl_openib_component_t {
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
     uint32_t use_async_event_thread; /**< Use the async event handler */
     mca_btl_openib_srq_manager_t srq_manager;     /**< Hash table for all BTL SRQs */
-#if OMPI_OPENIB_FAILOVER_ENABLED
+#if BTL_OPENIB_FAILOVER_ENABLED
     uint32_t port_error_failover;    /**< Report port errors to speed up failover */
 #endif
 #endif
@@ -289,7 +289,7 @@ struct mca_btl_openib_component_t {
     char* default_recv_qps;
     /** Whether we want a dynamically resizing srq, enabled by default */
     bool enable_srq_resize;
-#if OMPI_OPENIB_FAILOVER_ENABLED
+#if BTL_OPENIB_FAILOVER_ENABLED
     int verbose_failover;
 #endif
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;

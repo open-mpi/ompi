@@ -78,6 +78,21 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
           AC_MSG_CHECKING([which openib btl cpcs will be built])
           AC_MSG_RESULT([$cpcs])])
 
+    # Enable openib device failover.  It is disabled by default.
+    AC_ARG_ENABLE([btl-openib-failover],
+       [AC_HELP_STRING([--enable-btl-openib-failover],
+           [enable openib BTL failover (default: disabled)])])
+    if test "$enable_btl_openib_failover" = "yes"; then
+        AC_MSG_RESULT([yes])
+        btl_openib_failover_enabled=1
+    else
+        AC_MSG_RESULT([no])
+        btl_openib_failover_enabled=0
+    fi
+    AC_DEFINE_UNQUOTED([BTL_OPENIB_FAILOVER_ENABLED], [$btl_openib_failover_enabled],
+                       [enable openib BTL failover])
+    AM_CONDITIONAL([MCA_btl_openib_enable_failover], [test "x$btl_openib_failover_enabled" = "x1"])
+
     # substitute in the things needed to build openib
     AC_SUBST([btl_openib_CFLAGS])
     AC_SUBST([btl_openib_CPPFLAGS])

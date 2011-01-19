@@ -512,7 +512,7 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
 
         sr_desc->wr.rdma.rkey = ep->eager_rdma_remote.rkey;
         MCA_BTL_OPENIB_RDMA_MOVE_INDEX(ep->eager_rdma_remote.head, head);
-#if OMPI_OPENIB_FAILOVER_ENABLED
+#if BTL_OPENIB_FAILOVER_ENABLED
         /* frag->ftr is unused on the sending fragment, so use it
          * to indicate it is an eager fragment.  A non-zero value
          * indicates it is eager, and the value indicates the
