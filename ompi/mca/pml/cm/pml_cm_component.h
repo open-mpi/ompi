@@ -25,7 +25,7 @@ BEGIN_C_DECLS
 /*
  * PML module functions.
  */
-extern mca_pml_base_component_2_0_0_t mca_pml_cm_component;
+OMPI_MODULE_DECLSPEC extern mca_pml_base_component_2_0_0_t mca_pml_cm_component;
 
 END_C_DECLS
 
