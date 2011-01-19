@@ -25,7 +25,7 @@ void ADIOI_LUSTRE_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int 
 	if (fd->fp_sys_posn != -1) 
 	     lseek(fd->fd_sys, fd->fp_sys_posn, SEEK_SET);
 	if (fcntl_struct->fsize == -1) {
-	    *error_code = MPIR_Err_create_code(MPI_SUCCESS, 
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
 		    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 		    MPI_ERR_IO, "**io", "**io %s", strerror(errno));
 	}
@@ -56,7 +56,7 @@ void ADIOI_LUSTRE_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int 
 	    ADIO_ReadContig(fd, buf, len, MPI_BYTE, ADIO_EXPLICIT_OFFSET, done,
 			    &status, error_code);
 	    if (*error_code != MPI_SUCCESS) {
-		*error_code = MPIR_Err_create_code(MPI_SUCCESS, 
+		*error_code = MPIO_Err_create_code(MPI_SUCCESS, 
 			MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 			MPI_ERR_IO, "**io", "**io %s", strerror(errno));
                 return;  

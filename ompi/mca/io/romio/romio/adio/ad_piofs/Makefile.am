@@ -25,6 +25,7 @@ libadio_piofs_la_SOURCES = \
         ad_piofs.c \
         ad_piofs.h \
         ad_piofs_fcntl.c \
+        ad_piofs_features.c \
         ad_piofs_hints.c \
         ad_piofs_open.c \
         ad_piofs_read.c \

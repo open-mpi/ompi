@@ -42,6 +42,7 @@ int ADIOI_PVFS2_End_call(MPI_Comm comm, int keyval,
 {
     int error_code;
     ADIOI_PVFS2_End(&error_code);
+    MPI_Keyval_free(&keyval);
     return error_code;
 }
 
@@ -81,7 +82,7 @@ void ADIOI_PVFS2_Init(int *error_code )
 		      &ADIOI_PVFS2_Initialized, (void *)0); 
     /* just like romio does, we make a dummy attribute so we 
      * get cleaned up */
-    MPI_Attr_put(MPI_COMM_WORLD, ADIOI_PVFS2_Initialized, (void *)0);
+    MPI_Attr_put(MPI_COMM_SELF, ADIOI_PVFS2_Initialized, (void *)0);
 }
 
 void ADIOI_PVFS2_makeattribs(PVFS_sys_attr * attribs)
@@ -107,7 +108,41 @@ void ADIOI_PVFS2_makecredentials(PVFS_credentials * credentials)
 
 int ADIOI_PVFS2_error_convert(int pvfs_error)
 {
-    return MPI_UNDEFINED;
+    switch(pvfs_error)
+    {
+	case PVFS_EPERM:
+	case PVFS_EACCES:
+	    return MPI_ERR_ACCESS;
+	case PVFS_ENOENT:
+	case PVFS_ENXIO:
+	case PVFS_ENODEV:
+	    return MPI_ERR_NO_SUCH_FILE;
+	case PVFS_EIO:
+	    return MPI_ERR_IO;
+	case PVFS_EEXIST:
+	    return MPI_ERR_FILE_EXISTS;
+	case PVFS_ENOTDIR: /* ??? */
+	case PVFS_EISDIR: /* ??? */
+	case PVFS_ENAMETOOLONG:
+	    return MPI_ERR_BAD_FILE;
+	case PVFS_EINVAL:
+	    return MPI_ERR_FILE;
+	case PVFS_EFBIG: /* ??? */
+	case PVFS_ENOSPC:
+	    return MPI_ERR_NO_SPACE;
+	case PVFS_EROFS:
+	    return MPI_ERR_READ_ONLY;
+	case PVFS_ENOSYS:
+	    return MPI_ERR_UNSUPPORTED_OPERATION;
+	    /* PVFS does not support quotas */
+	case EDQUOT:
+	    return MPI_ERR_QUOTA;
+	case PVFS_ENOMEM:
+	    return MPI_ERR_INTERN;
+	default:
+	    return MPI_UNDEFINED;
+    }
+
 }
 
 /* 

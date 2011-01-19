@@ -273,14 +273,21 @@ echo '**** Testing noncontig_coll2.c ****'
 $mpirun -np 4 ./noncontig_coll2 -fname $FILENAME
 # CheckOutput noncontig_coll2
 CleanExe noncontig_coll2
+MakeExe aggregation1
 echo '**** Testing aggregation1 ****'
-$mpirun -np 4 ./aggregation1 -h -fname $FILENAME
+$mpirun -np 4 ./aggregation1 -h -f $FILENAME
 # CheckOutput aggregation1
 CleanExe aggregation1
+MakeExe aggregation2
 echo '**** Testing aggregation2 ****'
 $mpirun -np 4 ./aggregation2 $FILENAME
 # CheckOutput aggregation2
 CleanExe aggregation2
+MakeExe hindexed
+echo '**** Testing hindexed ****'
+$mpirun -np 4 ./hindexed $FILENAME
+# CheckOutput hindexed
+CleanExe hindexed
 #
 #echo '**** Testing write_all_test (run 1)****'
 #$mpirun -np 4 ./write_all_test -nzp 2 -zplace 2 -nzw 2 -naw 2 -size 100 \

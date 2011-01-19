@@ -23,6 +23,10 @@
 #include "mpioprof.h"
 #endif
 
+/* for user-definde reduce operator */
+#include "adio_extern.h"
+
+
 extern int ADIO_Init_keyval;
 
 /*@
@@ -42,20 +46,18 @@ Output Parameters:
 int MPI_File_open(MPI_Comm comm, char *filename, int amode, 
                   MPI_Info info, MPI_File *fh)
 {
-    int error_code, file_system, flag, /* tmp_amode, */rank;
+    int error_code, file_system, flag, tmp_amode=0, rank;
     char *tmp;
     MPI_Comm dupcomm;
     ADIOI_Fns *fsops;
     static char myname[] = "MPI_FILE_OPEN";
-
 #ifdef MPI_hpux
     int fl_xmpi;
 
     HPMP_IO_OPEN_START(fl_xmpi, comm);
 #endif /* MPI_hpux */
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     /* --BEGIN ERROR HANDLING-- */
     if (comm == MPI_COMM_NULL)
@@ -102,50 +104,23 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 					  "**fileamodeseq", 0);
 	goto fn_fail;
     }
-    /* --END ERROR HANDLING-- */
 
-/* check if amode is the same on all processes */
     MPI_Comm_dup(comm, &dupcomm);
 
-/*  
-    Removed this check because broadcast is too expensive. 
-    tmp_amode = amode;
-    MPI_Bcast(&tmp_amode, 1, MPI_INT, 0, dupcomm);
-    if (amode != tmp_amode) {
-	FPRINTF(stderr, "MPI_File_open: amode must be the same on all processes\n");
-	MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-*/
-
 /* check if ADIO has been initialized. If not, initialize it */
-    if (ADIO_Init_keyval == MPI_KEYVAL_INVALID) {
-	MPI_Initialized(&flag);
+    MPIR_MPIOInit(&error_code);
+    if (error_code != MPI_SUCCESS) goto fn_fail;
 
-	/* --BEGIN ERROR HANDLING-- */
-	if (!flag) {
-	    error_code = MPIO_Err_create_code(MPI_SUCCESS,
-					      MPIR_ERR_RECOVERABLE,
-					      myname, __LINE__, MPI_ERR_OTHER,
-					      "**initialized", 0);
-	    goto fn_fail;
-	}
-	/* --END ERROR HANDLING-- */
+/* check if amode is the same on all processes */
+    MPI_Allreduce(&amode, &tmp_amode, 1, MPI_INT, ADIO_same_amode, dupcomm);
 
-	MPI_Keyval_create(MPI_NULL_COPY_FN, ADIOI_End_call, &ADIO_Init_keyval,
-			  (void *) 0);  
-
-/* put a dummy attribute on MPI_COMM_WORLD, because we want the delete
-   function to be called when MPI_COMM_WORLD is freed. Hopefully the
-   MPI library frees MPI_COMM_WORLD when MPI_Finalize is called,
-   though the standard does not mandate this. */
-
-	MPI_Attr_put(MPI_COMM_WORLD, ADIO_Init_keyval, (void *) 0);
-
-/* initialize ADIO */
-
-	ADIO_Init( (int *)0, (char ***)0, &error_code);
+    if (tmp_amode == ADIO_AMODE_NOMATCH) {
+	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+			myname, __LINE__, MPI_ERR_AMODE,
+			"**fileamodediff", 0);
+	goto fn_fail;
     }
-
+    /* --END ERROR HANDLING-- */
 
     file_system = -1;
 
@@ -161,24 +136,6 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 	goto fn_fail;
     }
 
-    /* Test for invalid flags in amode.
-     *
-     * eventually we should allow the ADIO implementations to test for 
-     * invalid flags through some functional interface rather than having
-     *  these tests here. -- Rob, 06/06/2001
-     */
-    if (((file_system == ADIO_PIOFS) ||
-	 (file_system == ADIO_PVFS) ||
-	 (file_system == ADIO_PVFS2) ||
-	 (file_system == ADIO_GRIDFTP)) && 
-        (amode & MPI_MODE_SEQUENTIAL))
-    {
-	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					  myname, __LINE__,
-					  MPI_ERR_UNSUPPORTED_OPERATION, 
-					  "**iosequnsupported", 0);
-	goto fn_fail;
-    }
     /* --END ERROR HANDLING-- */
 
     /* strip off prefix if there is one, but only skip prefixes
@@ -202,13 +159,24 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
     }
     /* --END ERROR HANDLING-- */
 
+    /* if MPI_MODE_SEQUENTIAL requested, file systems cannot do explicit offset
+     * or independent file pointer accesses, leaving not much else aside from
+     * shared file pointer accesses. */
+    if ( !ADIO_Feature((*fh), ADIO_SHARED_FP) && (amode & MPI_MODE_SEQUENTIAL)) 
+    {
+        error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE, 
+			                  myname, __LINE__, 
+					  MPI_ERR_UNSUPPORTED_OPERATION,
+					  "**iosequnsupported", 0);
+	ADIO_Close(*fh, &error_code);
+	goto fn_fail;
+    }
+
     /* determine name of file that will hold the shared file pointer */
     /* can't support shared file pointers on a file system that doesn't
        support file locking. */
-    if ((error_code == MPI_SUCCESS) && ((*fh)->file_system != ADIO_PIOFS)
-          && ((*fh)->file_system != ADIO_PVFS) 
-	  && ((*fh)->file_system != ADIO_PVFS2)
-	  && ((*fh)->file_system != ADIO_GRIDFTP) ){
+    if ((error_code == MPI_SUCCESS) && 
+		    ADIO_Feature((*fh), ADIO_SHARED_FP)) {
 	MPI_Comm_rank(dupcomm, &rank);
 	ADIOI_Shfp_fname(*fh, rank);
 
@@ -226,14 +194,11 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
     HPMP_IO_OPEN_END(fl_xmpi, *fh, comm);
 #endif /* MPI_hpux */
 
-    MPIR_Nest_decr();
-
 fn_exit:
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
     return error_code;
 fn_fail:
     /* --BEGIN ERROR HANDLING-- */
-    MPIR_Nest_decr();
     error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
     goto fn_exit;
     /* --END ERROR HANDLING-- */

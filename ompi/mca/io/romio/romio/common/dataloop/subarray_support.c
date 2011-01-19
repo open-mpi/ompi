@@ -21,23 +21,23 @@ int PREPEND_PREFIX(Type_convert_subarray)(int ndims,
     int i, blklens[3];
     MPI_Datatype tmp1, tmp2, types[3];
 
-    PMPI_Type_extent(oldtype, &extent);
+    MPI_Type_extent(oldtype, &extent);
 
     if (order == MPI_ORDER_FORTRAN) {
 	/* dimension 0 changes fastest */
 	if (ndims == 1) {
-	    PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
+	    MPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
 	}
 	else {
-	    PMPI_Type_vector(array_of_subsizes[1],
+	    MPI_Type_vector(array_of_subsizes[1],
 			     array_of_subsizes[0],
 			     array_of_sizes[0], oldtype, &tmp1);
 	    
 	    size = array_of_sizes[0]*extent;
 	    for (i=2; i<ndims; i++) {
 		size *= array_of_sizes[i-1];
-		PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
-		PMPI_Type_free(&tmp1);
+		MPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+		MPI_Type_free(&tmp1);
 		tmp1 = tmp2;
 	    }
 	}
@@ -55,18 +55,18 @@ int PREPEND_PREFIX(Type_convert_subarray)(int ndims,
     else /* order == MPI_ORDER_C */ {
 	/* dimension ndims-1 changes fastest */
 	if (ndims == 1) {
-	    PMPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
+	    MPI_Type_contiguous(array_of_subsizes[0], oldtype, &tmp1);
 	}
 	else {
-	    PMPI_Type_vector(array_of_subsizes[ndims-2],
+	    MPI_Type_vector(array_of_subsizes[ndims-2],
 			     array_of_subsizes[ndims-1],
 			     array_of_sizes[ndims-1], oldtype, &tmp1);
 	    
 	    size = array_of_sizes[ndims-1]*extent;
 	    for (i=ndims-3; i>=0; i--) {
 		size *= array_of_sizes[i+1];
-		PMPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
-		PMPI_Type_free(&tmp1);
+		MPI_Type_hvector(array_of_subsizes[i], 1, size, tmp1, &tmp2);
+		MPI_Type_free(&tmp1);
 		tmp1 = tmp2;
 	    }
 	}
@@ -91,9 +91,9 @@ int PREPEND_PREFIX(Type_convert_subarray)(int ndims,
     types[1] = tmp1;
     types[2] = MPI_UB;
     
-    PMPI_Type_struct(3, blklens, disps, types, newtype);
+    MPI_Type_struct(3, blklens, disps, types, newtype);
 
-    PMPI_Type_free(&tmp1);
+    MPI_Type_free(&tmp1);
 
     return MPI_SUCCESS;
 }

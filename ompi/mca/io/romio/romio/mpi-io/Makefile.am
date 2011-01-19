@@ -89,6 +89,7 @@ libmpi_io_la_SOURCES = \
         write_ord.c \
         write_orde.c \
         write_sh.c \
-	register_datarep.c \
-	mpiu_greq.c \
-	mpich2_fileutil.c
+        register_datarep.c \
+        mpiu_greq.c \
+        mpich2_fileutil.c \
+        mpir-mpioinit.c

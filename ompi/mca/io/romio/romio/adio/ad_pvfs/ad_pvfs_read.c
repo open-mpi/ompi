@@ -43,7 +43,8 @@ void ADIOI_PVFS_ReadContig(ADIO_File fd, void *buf, int count,
 #ifdef ADIOI_MPE_LOGGING
         MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
 #endif
-	fd->fp_sys_posn = offset + err;
+	if (err>0)
+		fd->fp_sys_posn = offset + err;
 	/* individual file pointer not updated */        
     }
     else {  /* read from curr. location of ind. file pointer */
@@ -63,7 +64,8 @@ void ADIOI_PVFS_ReadContig(ADIO_File fd, void *buf, int count,
 #ifdef ADIOI_MPE_LOGGING
         MPE_Log_event( ADIOI_MPE_read_b, 0, NULL );
 #endif
-	fd->fp_ind += err; 
+	if (err > 0)
+		fd->fp_ind += err; 
 	fd->fp_sys_posn = fd->fp_ind;
     }         
 

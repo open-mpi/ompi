@@ -19,7 +19,7 @@
  * modification to all the files in the mpi-io directory.
  */
 #if 0
-#ifdef MPIO_BUILD_PROFILING 
+#ifdef MPIO_BUILD_PROFILING
 
 #undef MPI_File_open
 #define MPI_File_open PMPI_File_open

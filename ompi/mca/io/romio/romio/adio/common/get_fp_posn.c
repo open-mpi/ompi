@@ -7,6 +7,7 @@
 
 #include "adio.h"
 #include "adio_extern.h"
+#include "adioi.h"
 
 /* returns the current position of the individual file pointer
    in etype units relative to the current view. */
@@ -14,10 +15,11 @@
 void ADIOI_Get_position(ADIO_File fd, ADIO_Offset *offset)
 {
     ADIOI_Flatlist_node *flat_file;
-    int i, n_filetypes, flag, frd_size;
-    int filetype_size, etype_size, filetype_is_contig;
+    int i, flag;
+    unsigned filetype_size;
+    int etype_size, filetype_is_contig;
     MPI_Aint filetype_extent;
-    ADIO_Offset disp, byte_offset, sum=0, size_in_file;
+    ADIO_Offset disp, byte_offset, sum=0, size_in_file, n_filetypes, frd_size;
     
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
     etype_size = fd->etype_size;
@@ -28,7 +30,7 @@ void ADIOI_Get_position(ADIO_File fd, ADIO_Offset *offset)
         flat_file = ADIOI_Flatlist;
         while (flat_file->type != fd->filetype) flat_file = flat_file->next;
 
-	MPI_Type_size(fd->filetype, &filetype_size);
+	MPI_Type_size(fd->filetype, (int*)&filetype_size);
 	MPI_Type_extent(fd->filetype, &filetype_extent);
 
 	disp = fd->disp;
@@ -41,18 +43,18 @@ void ADIOI_Get_position(ADIO_File fd, ADIO_Offset *offset)
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
 		if (disp + flat_file->indices[i] + 
-	     	    (ADIO_Offset) n_filetypes*filetype_extent + flat_file->blocklens[i] 
+	     	    n_filetypes* ADIOI_AINT_CAST_TO_OFFSET filetype_extent + flat_file->blocklens[i] 
 		    >= byte_offset) {
-		    frd_size = (int) (disp + flat_file->indices[i] + 
-			(ADIO_Offset) n_filetypes*filetype_extent
-			+ flat_file->blocklens[i] - byte_offset);
+		    frd_size = disp + flat_file->indices[i] + 
+			n_filetypes * ADIOI_AINT_CAST_TO_OFFSET filetype_extent
+			+ flat_file->blocklens[i] - byte_offset;
 		    sum -= frd_size;
 		    flag = 1;
 		    break;
 		}
 	    }
 	}
-	size_in_file = (ADIO_Offset) n_filetypes*filetype_size + sum;
+	size_in_file = n_filetypes * (ADIO_Offset)filetype_size + sum;
 	*offset = size_in_file/etype_size;
     }
 }

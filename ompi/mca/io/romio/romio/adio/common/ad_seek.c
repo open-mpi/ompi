@@ -22,10 +22,12 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
     ADIO_Offset off;
     ADIOI_Flatlist_node *flat_file;
 
-    int i, n_etypes_in_filetype, n_filetypes, etype_in_filetype;
+    int i;
+    ADIO_Offset n_etypes_in_filetype, n_filetypes, etype_in_filetype;
     ADIO_Offset abs_off_in_filetype=0;
-    int size_in_filetype, sum;
-    int filetype_size, etype_size, filetype_is_contig;
+    ADIO_Offset size_in_filetype, sum;
+    unsigned filetype_size;
+    int etype_size, filetype_is_contig;
     MPI_Aint filetype_extent;
 
     ADIOI_UNREFERENCED_ARG(whence);
@@ -33,13 +35,13 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
     ADIOI_Datatype_iscontig(fd->filetype, &filetype_is_contig);
     etype_size = fd->etype_size;
 
-    if (filetype_is_contig) off = fd->disp + etype_size * offset;
+    if (filetype_is_contig) off = fd->disp + (ADIO_Offset)etype_size * offset;
     else {
         flat_file = ADIOI_Flatlist;
         while (flat_file->type != fd->filetype) flat_file = flat_file->next;
 
 	MPI_Type_extent(fd->filetype, &filetype_extent);
-	MPI_Type_size(fd->filetype, &filetype_size);
+	MPI_Type_size(fd->filetype, (int*)&filetype_size);
 	if ( ! filetype_size ) {
 	    /* Since offset relative to the filetype size, we can't
 	       do compute the offset when that result is zero.
@@ -49,8 +51,8 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 	}
 
 	n_etypes_in_filetype = filetype_size/etype_size;
-	n_filetypes = (int) (offset / n_etypes_in_filetype);
-	etype_in_filetype = (int) (offset % n_etypes_in_filetype);
+	n_filetypes = offset / n_etypes_in_filetype;
+	etype_in_filetype = offset % n_etypes_in_filetype;
 	size_in_filetype = etype_in_filetype * etype_size;
  
 	sum = 0;
@@ -64,7 +66,7 @@ ADIO_Offset ADIOI_GEN_SeekIndividual(ADIO_File fd, ADIO_Offset offset,
 	}
 
 	/* abs. offset in bytes in the file */
-	off = fd->disp + (ADIO_Offset) n_filetypes * filetype_extent +
+	off = fd->disp + n_filetypes * filetype_extent +
                 abs_off_in_filetype;
     }
 

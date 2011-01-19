@@ -125,20 +125,6 @@ int main(int argc, char **argv)
     }
 /* end of initialization */
 
-#if 0 
-    /* XXX: make the romio testcases handle more than one command line 
-     * argument.. like --aggregation  */
-    
-    /* for deferred open: hint stuff */
-    MPI_Info_create(&info);
-    MPI_Info_set(info, "romio_no_indep_rw", "true");
-    MPI_Info_set(info, "romio_cb_read", "enable");
-    MPI_Info_set(info, "romio_cb_write", "enable");
-    MPI_Info_set(info, "cb_nodes", "1");
-    MPI_Info_set(info, "cb_config_list", "schwinn.mcs.anl.gov:1");
-#endif
-
-
     /* write the array to the file */
     errcode = MPI_File_open(MPI_COMM_WORLD, filename, 
 		    MPI_MODE_CREATE | MPI_MODE_RDWR, info, &fh);
@@ -152,6 +138,31 @@ int main(int argc, char **argv)
     errcode = MPI_File_close(&fh);
     if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_close");
 
+    if (!mynod) {
+        /* wkl suggests potential for false " No Errors" if both read 
+	 * and write use the same file view */
+        /* solution: rank 0 reads entire file and checks write values */
+	errcode = MPI_File_open(MPI_COMM_SELF, filename, 
+			MPI_MODE_RDONLY, info, &fh);
+        if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_open");
+
+        readbuf = (int *) malloc(array_size * sizeof(int));
+        errcode = MPI_File_read(fh, readbuf, array_size, MPI_INT, &status);
+        if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_read");
+
+        errcode = MPI_File_close(&fh);
+        if (errcode != MPI_SUCCESS) handle_error(errcode, "MPI_File_close");
+
+        for (i=0; i<array_size; i++)
+            if (readbuf[i] != i) {
+                errs++;
+                fprintf(stderr, "Error: write integer %d but read %d\n", 
+				i,readbuf[i]);
+                break;
+            }
+        free(readbuf);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     /* now read it back */
     readbuf = (int *) malloc(bufcount * sizeof(int));

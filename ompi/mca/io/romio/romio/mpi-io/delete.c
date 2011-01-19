@@ -23,8 +23,6 @@
 #include "mpioprof.h"
 #endif
 
-extern int ADIO_Init_keyval;
-
 /*@
     MPI_File_delete - Deletes a file
 
@@ -36,10 +34,9 @@ Input Parameters:
 @*/
 int MPI_File_delete(char *filename, MPI_Info info)
 {
-    int flag, error_code, file_system;
+    int error_code, file_system;
     char *tmp;
     ADIOI_Fns *fsops;
-    static char myname[] = "MPI_FILE_DELETE";
 #ifdef MPI_hpux
     int fl_xmpi;
   
@@ -49,37 +46,10 @@ int MPI_File_delete(char *filename, MPI_Info info)
 
     MPIU_UNREFERENCED_ARG(info);
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
-    /* first check if ADIO has been initialized. If not, initialize it */
-    if (ADIO_Init_keyval == MPI_KEYVAL_INVALID) {
-        MPI_Initialized(&flag);
-
-	/* --BEGIN ERROR HANDLING-- */
-        if (!flag) {
-	    error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					      myname, __LINE__, MPI_ERR_OTHER, 
-					      "**initialized", 0);
-	    error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
-	    goto fn_exit;
-	}
-	/* --END ERROR HANDLING-- */
-
-        MPI_Keyval_create(MPI_NULL_COPY_FN, ADIOI_End_call, &ADIO_Init_keyval,
-                          (void *) 0);  
-
-	/* put a dummy attribute on MPI_COMM_WORLD, because we want the delete
-	   function to be called when MPI_COMM_WORLD is freed. Hopefully the
-	   MPI library frees MPI_COMM_WORLD when MPI_Finalize is called,
-	   though the standard does not mandate this. */
-
-        MPI_Attr_put(MPI_COMM_WORLD, ADIO_Init_keyval, (void *) 0);
-
-	/* initialize ADIO */
-        ADIO_Init( (int *)0, (char ***)0, &error_code);
-    }
-
+    MPIR_MPIOInit(&error_code);
+    if (error_code != MPI_SUCCESS) goto fn_exit;
 
     /* resolve file system type from file name; this is a collective call */
     ADIO_ResolveFileType(MPI_COMM_SELF, filename, &file_system, &fsops, 
@@ -118,7 +88,6 @@ int MPI_File_delete(char *filename, MPI_Info info)
 #endif /* MPI_hpux */
 
 fn_exit:
-    MPIR_Nest_decr();
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
     return error_code;
 }

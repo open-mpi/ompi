@@ -25,8 +25,6 @@
 int test_file(char *filename, int mynod, int nprocs, char * cb_hosts, 
 		char *msg, int verbose); 
 
-static int cb_config_list_keyval = MPI_KEYVAL_INVALID;
-
 #define ADIOI_Free free
 #define ADIOI_Malloc malloc
 #define FPRINTF fprintf
@@ -40,16 +38,6 @@ struct ADIO_cb_name_arrayD {
 typedef struct ADIO_cb_name_arrayD *ADIO_cb_name_array;
 
 void handle_error(int errcode, char *str);
-int cb_copy_name_array(MPI_Comm comm, 
-		       int *keyval, 
-		       void *extra, 
-		       void *attr_in,
-		       void **attr_out, 
-		       int *flag);
-int cb_delete_name_array(MPI_Comm comm, 
-			 int *keyval, 
-			 void *attr_val, 
-			 void *extra);
 int cb_gather_name_array(MPI_Comm comm, ADIO_cb_name_array *arrayp);
 void default_str(int mynod, int len, ADIO_cb_name_array array, char *dest);
 void reverse_str(int mynod, int len, ADIO_cb_name_array array, char *dest);
@@ -65,51 +53,7 @@ void handle_error(int errcode, char *str)
 	fprintf(stderr, "%s: %s\n", str, msg);
 	MPI_Abort(MPI_COMM_WORLD, 1);
 }
- /* cb_copy_name_array() - attribute copy routine
- */
-int cb_copy_name_array(MPI_Comm comm, 
-		       int *keyval, 
-		       void *extra, 
-		       void *attr_in,
-		       void **attr_out, 
-		       int *flag)
-{
-    ADIO_cb_name_array array;
-
-    array = (ADIO_cb_name_array) attr_in;
-    array->refct++;
-
-    *attr_out = attr_in;
-    *flag = 1; /* make a copy in the new communicator */
-    
-    return MPI_SUCCESS;
-}
-
-/* cb_delete_name_array() - attribute destructor
- */
-int cb_delete_name_array(MPI_Comm comm, 
-			 int *keyval, 
-			 void *attr_val, 
-			 void *extra)
-{
-    int i;
-    ADIO_cb_name_array array;
-
-    array = (ADIO_cb_name_array) attr_val;
-    array->refct--;
-
-    if (array->refct <= 0) {
-	/* time to free the structures (names, array of ptrs to names, struct) 
-	 */
-	for (i=0; i < array->namect; i++) {
-	    ADIOI_Free(array->names[i]);
-	}
-	if (array->names != NULL) ADIOI_Free(array->names);
-	ADIOI_Free(array);
-    }
-
-    return MPI_SUCCESS;
-}   
+   
 
 /* cb_gather_name_array() - gather a list of processor names from all processes
  *                          in a communicator and store them on rank 0.
@@ -125,23 +69,15 @@ int cb_delete_name_array(MPI_Comm comm,
  */
 int cb_gather_name_array(MPI_Comm comm, ADIO_cb_name_array *arrayp)
 {
+	/* this is copied from ROMIO, but since this test is for correctness,
+	 * not performance, note that we have removed the parts where ROMIO
+	 * uses a keyval to cache the name array.  We'll just rebuild it if we
+	 * need to */
+
     char my_procname[MPI_MAX_PROCESSOR_NAME], **procname = 0;
     int *procname_len = NULL, my_procname_len, *disp = NULL, i;
-    int commsize, commrank, found;
+    int commsize, commrank;
     ADIO_cb_name_array array = NULL;
-
-    if (cb_config_list_keyval == MPI_KEYVAL_INVALID) {
-	MPI_Keyval_create((MPI_Copy_function *) cb_copy_name_array, 
-			  (MPI_Delete_function *) cb_delete_name_array,
-			  &cb_config_list_keyval, NULL);
-    }
-    else {
-	MPI_Attr_get(comm, cb_config_list_keyval, (void *) &array, &found);
-	if (found) {
-	    *arrayp = array;
-	    return 0;
-	}
-    }
 
     MPI_Comm_size(comm, &commsize);
     MPI_Comm_rank(comm, &commrank);
@@ -240,11 +176,6 @@ int cb_gather_name_array(MPI_Comm comm, ADIO_cb_name_array *arrayp)
 #endif
     }
 
-    /* store the attribute; we want to store SOMETHING on all processes
-     * so that they can all tell if we have gone through this procedure 
-     * or not for the given communicator.
-     */
-    MPI_Attr_put(comm, cb_config_list_keyval, array);
     *arrayp = array;
     return 0;
 }

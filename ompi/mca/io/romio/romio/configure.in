@@ -3,6 +3,9 @@
 # autoconf --localdir=../confdb configure.in
 # (or wherever the confdb is)
 #
+# irrelevant / unnecessary in an Open MPI environment, but are
+# harmless and are left here solely for the sake of ease of future
+# patching/importing.
 
 # Open MPI: Modifications to this file were done on an "let's do the
 # minimum possible" basis, not so that we can skip on the work or
@@ -33,7 +36,6 @@ if test "$FROM_MPICH2" = "yes" ; then
 fi
 
 AC_CONFIG_HEADER(adio/include/romioconf.h)
-
 # Open MPI: added AH_TOP
 AH_TOP([#include "romioconf-undefs.h"])
 
@@ -106,7 +108,6 @@ MPI_FARRAY6=""
 MPI_FARRAY7=""
 DEFS=""
 ROMIO_LFLAGS=""
-ROMIO_LIBLIST=""
 ROMIO_TCFLAGS=""
 ROMIO_TCPPFLAGS=""
 ROMIO_TFFLAGS=""
@@ -143,7 +144,7 @@ MPIO_REQ_REAL_POBJECTS="_iotest.o _iowait.o _iowaitall.o _iowaitany.o _iotestall
 #
 have_aio=no
 #
-known_filesystems="nfs ufs pfs pvfs pvfs2 testfs xfs panfs gridftp lustre bgl bglockless"
+known_filesystems="nfs ufs pfs pvfs pvfs2 testfs xfs panfs gridftp lustre bgl bglockless zoidfs"
 # Open MPI: added "open_mpi_mpi"
 known_mpi_impls="mpich2_mpi mpich_mpi sgi_mpi hp_mpi cray_mpi lam_mpi open_mpi_mpi"
 #
@@ -202,8 +203,11 @@ dnl the moment to allow ROMIO to be separatedly distributed.
 dnl scripts.
 AC_CONFIG_AUX_DIR(confdb)
 
+# Check if Make is working
+PAC_PROG_MAKE
+
 # Open MPI: Init automake
-AM_INIT_AUTOMAKE(io-romio, 1.0.0, 'no')
+AM_INIT_AUTOMAKE(io-romio, 1.2.6, 'no')
 
 # Open MPI: If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -479,13 +483,13 @@ case $ARCH in
     ;;
 esac
 
-AC_PROG_CC
+PAC_PROG_CC
 
 if test "$NOF77" != 1 ; then
     # Grrr.   The autoconf test for F77 will abort the configure
     # if no compiler is found.  We'd prefer to simply turn off
     # support for Fortran, and/or give a more informative message.
-    AC_PROG_F77
+    PAC_PROG_F77
 fi
 if test "$CC" = "gcc" -a -z "$C_DEBUG_FLAG" ; then
      C_DEBUG_FLAG="-g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
@@ -523,7 +527,7 @@ if test -n "$arch_rs6000"; then
     fi
     AC_DEFINE(AIX,1,[Define for AIX])
 # assume long long exists.
-    longlongsize=${longlongsize:-8} 
+    ac_cv_sizeof_long_long=${ac_cv_sizeof_long_long:-8} 
     MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
     MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=8)"
     MPI_OFFSET_KIND_VAL=8
@@ -547,7 +551,7 @@ fi
 #
 if test -n "$arch_freebsd" || test -n "$arch_LINUX" || test -n "$arch_LINUX_ALPHA" || test -n "$arch_netbsd" || test -n "$arch_openbsd" ; then
     if test -n "$arch_freebsd" || test -n "$arch_netbsd" || test -n "$arch_openbsd"; then
-        longlongsize=${longlongsize:-0}
+        ac_cv_sizeof_long_long=${ac_cv_sizeof_long_long:-0}
 	# printf doesn't work properly and no integer*8 as far as I can tell
     fi
     # Find the CPP before the header check
@@ -634,7 +638,7 @@ if test -n "$arch_alpha" || test -n "$arch_ALPHA" ; then
     MPI_OFFSET_KIND1="      INTEGER MPI_OFFSET_KIND"
     MPI_OFFSET_KIND2="      PARAMETER (MPI_OFFSET_KIND=8)"
     MPI_OFFSET_KIND_VAL=8
-    ROMIO_LIBLIST="$ROMIO_LIBLIST -laio"
+    LIBS="$LIBS -laio"
 fi    
 #
 if test -n "$arch_CRAY" ; then
@@ -719,7 +723,7 @@ if test -n "$arch_IRIX"; then
                 mpi_mpich=1
             fi            
 	fi
-        #OMPI: Bad for automake: RANLIB=":"
+         #OMPI: Bad for automake: RANLIB=":"
         AC_DEFINE(AIO_SIGNOTIFY_NONE,1,[Define if no signotify])
 	if test $cputype -ge 5000 ; then
             MIPS=4
@@ -783,12 +787,29 @@ dnl AC_C_INLINE
 # Header files
 # Find the CPP before the header check
 AC_PROG_CPP
-AC_CHECK_HEADERS(unistd.h fcntl.h malloc.h stddef.h)
+AC_CHECK_HEADERS([unistd.h fcntl.h malloc.h stddef.h sys/types.h])
 #
-CROSS_SIZEOF_INT=${CROSS_SIZEOF_INT:-0}
-CROSS_SIZEOF_VOID_P=${CROSS_SIZEOF_VOID_P:-0}
-AC_CHECK_SIZEOF(int,$CROSS_SIZEOF_INT)
-AC_CHECK_SIZEOF(void *,$CROSS_SIZEOF_VOID_P)
+
+# When compiling ROMIO on Darwin with _POSIX_C_SOURCE defined (such as when
+# using --enable-strict in MPICH2), sys/types.h does not define u_short and
+# friends unless _DARWIN_C_SOURCE is also defined (see compat(5) on a Darwin
+# box).  This would normally be fine, except sys/stat.h defines struct stat to
+# use u_long, so strict compiles fail.  One option is to also compile with
+# _DARWIN_C_SOURCE, but this disables much of the strictness that is intended
+# by _POSIX_C_SOURCE.  Instead we just define our own types if they are not
+# provided by the system.  This isn't quite as safe as typedef'ing the
+# replacement types, but it will apply to later configure tests, which is
+# important.
+AC_CHECK_TYPE([u_char],[],[AC_DEFINE_UNQUOTED([u_char],[unsigned char],[Define to "unsigned char" if sys/types.h does not define.])])
+AC_CHECK_TYPE([u_short],[],[AC_DEFINE_UNQUOTED([u_short],[unsigned short],[Define to "unsigned short" if sys/types.h does not define.])])
+AC_CHECK_TYPE([u_int],[],[AC_DEFINE_UNQUOTED([u_int],[unsigned int],[Define to "unsigned int" if sys/types.h does not define.])])
+AC_CHECK_TYPE([u_long],[],[AC_DEFINE_UNQUOTED([u_long],[unsigned long],[Define to "unsigned long" if sys/types.h does not define.])])
+
+# must come _after_ the above checks for u_char/u_short/u_int/u_long
+AC_CHECK_HEADERS([sys/attr.h])
+
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(void *)
 AC_CACHE_CHECK([for int large enough for pointers],
 pac_cv_int_hold_pointer,[
 if test "$ac_cv_sizeof_int" = "0" -o \
@@ -805,14 +826,10 @@ if test "$pac_cv_int_hold_pointer" != yes ; then
     dnl Switch to a conforming name (start with HAVE or USE)
     AC_DEFINE(HAVE_INT_LT_POINTER,1,[Define if int smaller than pointer])
 fi
-#
-dnl The original ROMIO configure used a set of complex tests here; this
-dnl is a partial reworking using the autoconf2 sizeof macros, and allowing
-dnl for the standardized CROSS_xxx varaibles for cross-compilation environments
+
 # LL is the printf-style format name for output of a MPI_Offset.
 # We have to match this to the type that we use for MPI_Offset.
-CROSS_SIZEOF_LONG_LONG=${CROSS_SIZEOF_LONG_LONG:-0}
-AC_CHECK_SIZEOF(long long,$CROSS_SIZEOF_LONG_LONG)
+AC_CHECK_SIZEOF(long long)
 if test "$ac_cv_sizeof_long_long" != 0 ; then
     if test "$ac_cv_sizeof_long_long" = "8" ; then
        AC_DEFINE(HAVE_LONG_LONG_64,1,[Define if long long is 64 bits])
@@ -849,7 +866,7 @@ fi
 
 
 #
-if test -n "$longlongsize"; then
+if test -n "$ac_cv_sizeof_long_long"; then
    if test $WITHIN_KNOWN_MPI_IMPL = no ; then
        PAC_MPI_LONG_LONG_INT
    else
@@ -1132,7 +1149,6 @@ if test $PVFS2_CONFIG != "notfound" ; then
 		# --with-file-system (or both)
 		CFLAGS="$CFLAGS $( $PVFS2_CONFIG --cflags)"
 		LIBS="$LIBS $( $PVFS2_CONFIG --libs)"
-		ROMIO_LIBLIST="$ROMIO_LIBLIST $LIBS"
 		FILE_SYSTEM="pvfs2 $FILE_SYSTEM"
 		file_system_pvfs2=1
 	fi
@@ -1185,8 +1201,20 @@ fi
 if test -n "$file_system_testfs"; then
     AC_DEFINE(ROMIO_TESTFS,1,[Define for ROMIO with TESTFS])
 fi
+#
+# Verify presence of lustre/lustre_user.h
+#
 if test -n "$file_system_lustre"; then
-    AC_DEFINE(ROMIO_LUSTRE,1,[Define for ROMIO with LUSTRE])
+    AC_CHECK_HEADERS(lustre/lustre_user.h,
+        AC_DEFINE(ROMIO_LUSTRE,1,[Define for ROMIO with LUSTRE]),
+        AC_MSG_ERROR([LUSTRE support requested but cannot find lustre/lustre_user.h header file]),
+        [
+        #include <unistd.h>
+        #ifdef __linux__
+        #include <linux/types.h>
+        #endif
+        ]
+    )
 fi
 
 if test -n "$file_system_xfs"; then
@@ -1271,6 +1299,13 @@ fi
 
 
 
+if test -n "$file_system_zoidfs"; then
+	AC_CHECK_HEADERS(zoidfs.h,
+		AC_DEFINE(ROMIO_ZOIDFS,1,[Define for ROMIO with ZoidFD]),
+		AC_MSG_ERROR([ZoidFS support requested but cannot find zoidfs.h header file])
+	)
+fi
+
 #
 # Verify presence of pvfs2.h
 #
@@ -1285,8 +1320,8 @@ fi
 
 # layout change after pvfs-2.6.3:
 if test -n "$file_system_pvfs2"; then
-    AC_COMPILE_IFELSE(
-       [  
+    AC_COMPILE_IFELSE([
+        AC_LANG_SOURCE([
 #include <stdlib.h>
 #include "pvfs2.h"
           int main(int argc, char **argv) { 
@@ -1294,7 +1329,7 @@ if test -n "$file_system_pvfs2"; then
 	      PVFS_sys_attr attr;
 	      PVFS_sys_create(NULL, ref, attr, NULL, NULL, NULL, NULL); 
 	  return 0; }
-       ],
+       ])],
        , AC_DEFINE(HAVE_PVFS2_CREATE_WITHOUT_LAYOUT, 1, 
        		[Define if PVFS_sys_create does not have layout parameter])
        )
@@ -1309,15 +1344,10 @@ if test -n "$file_system_bgl"; then
     SYSDEP_INC=-I${prefix}/include
 else
     SYSDEP_INC=
-#
+
 # Check for presence and characteristics of async. I/O calls if
 # not disabled.
-#
-# Q: Do we need to list some "other libs" to get things to link?
-#
-save_libs=$LIBS
-LIBS=
-#
+
 # Some systems need pthreads to get AIO to work.  However, we don't want
 # to add pthreads just because it is there, as that can cause problems
 # with some implementations of pthreads and compilers (e.g., gcc version 3
@@ -1326,59 +1356,16 @@ LIBS=
 # *not linked* with pthreads.
 #
 if test "x$disable_aio" = "xno" ; then
-    foundPTHREAD=no
-
-    # Do we have aio_write in aio or rt?
-    saveLIBS=$LIBS
-    LIBS=
-    AC_SEARCH_LIBS(aio_write,aio rt,foundAIO=yes,foundAIO=no)
-    if test "$foundAIO" = yes ; then
-        AIOLIBS=$LIBS
-        LIBS="$saveLIBS $LIBS"
-    else
-        LIBS="$saveLIBS"
-    fi
-
-    # If not, try finding pthread_create first, and if found, try the
-    # test again.
-    if test "$foundAIO" = no ; then 
-        saveLIBS=$LIBS
-	LIBS=
-        AC_SEARCH_LIBS(pthread_create,pthread,foundPTHREAD=yes,
-	foundPTHREAD=no)
+    AC_SEARCH_LIBS(aio_write,aio rt,aio_write_found=yes,aio_write_found=no)
+    if test "$aio_write_found" = no ; then
+        # If not found, try finding pthread_create first, and if
+        # found, try the test again.
+        AC_SEARCH_LIBS(pthread_create,pthread,foundPTHREAD=yes,foundPTHREAD=no)
         if test "$foundPTHREAD" = yes ; then
-            AC_SEARCH_LIBS(aio_write,aio rt,foundAIO=yes,foundAIO=no)
-	    
-	    if test "$foundAIO" = yes ; then
-	        AIO_LIBS=$LIBS
-		LIBS="$saveLIBS $LIBS"
-	    else
-                LIBS=$saveLIBS
-            fi
-        else
-	    LIBS=$saveLIBS
+            AC_SEARCH_LIBS(aio_write,aio rt,aio_write_found=yes,aio_write_found=no)
         fi
     fi
-
-
-    if test "$foundAIO" = yes ; then
-        ROMIO_LIBLIST="$ROMIO_LIBLIST $AIOLIBS"
-        MPI_LIB="$MPI_LIB $AIOLIBS"
-	aio_write_found=yes
-    fi
- 
-dnl    AC_SEARCH_LIBS(pthread_create,pthread,
-dnl        ROMIO_LIBLIST="$ROMIO_LIBLIST $LIBS"
-dnl        MPI_LIB="$MPI_LIB $LIBS"
-dnl        )
-dnl    LIBS=
-dnl    AC_SEARCH_LIBS(aio_write,aio rt,
-dnl        ROMIO_LIBLIST="$ROMIO_LIBLIST $LIBS"
-dnl        MPI_LIB="$MPI_LIB $LIBS"
-dnl        aio_write_found=yes
-dnl    )
 fi
-LIBS=$save_libs
 
 if test "x$disable_aio" = "xno" -a -n "$aio_write_found" ; then
     AC_CHECK_HEADERS(signal.h)
@@ -1415,14 +1402,13 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
     # The test is the following: if not cross compiling, try to run a 
     # program that includes a *reference* to aio_write but does not call it
     # If the libraries are not set up correctly, then this will fail.
-    save_libs=$LIBS
-    LIBS="$LIBS $ROMIO_LIBLIST"
+
     AC_MSG_CHECKING([whether aio routines can be used])
     # Include aio.h and the aiocb struct (since we'll need these to 
     # actually use the aio_write interface).  Note that this will 
     # fail for some pre-POSIX implementations of the aio interface 
     # (an old IBM interface needs an fd argument as well)
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+    AC_TRY_RUN([
 #include <sys/types.h>
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
@@ -1433,22 +1419,24 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
 #ifdef HAVE_SYS_AIO_H
 #include <sys/aio.h>
 #endif
-],[
+	int main(int argc, char **argv)
+	{
             struct aiocb *aiocbp;
-	    aio_write(aiocbp);
+	    if (argc > 10) aio_write(aiocbp);
 	    return 0;
-])],
-	[aio_runs=yes
-	 AC_MSG_RESULT(yes)],
-	[aio_runs=no
-	 AC_MSG_RESULT(no)]
-	[aio_runs=no
-	 AC_MSG_RESULT(no: aio routines disabled when cross compiling)]
+	}
+	],
+	aio_runs=yes
+	AC_MSG_RESULT(yes),
+	aio_runs=no
+	AC_MSG_RESULT(no),
+	aio_runs=no
+	AC_MSG_RESULT(no: aio routines disabled when cross compiling)
     )
     if test "$aio_runs" != "no" ; then
 	AC_DEFINE(ROMIO_HAVE_WORKING_AIO, 1, Define if AIO calls seem to work)
     fi
-
+    
     # now about that old IBM interface...
     # modern AIO interfaces have the file descriptor in the aiocb structure,
     # and will set ROMIO_HAVE_STRUCT_AIOCB_WITH_AIO_FILDES.  Old IBM
@@ -1460,7 +1448,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
     # aio_read correctly
 
     AC_MSG_CHECKING([for obsolete two-argument aio_write])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+    AC_TRY_RUN([
 #include <sys/types.h>
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
@@ -1471,18 +1459,20 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
 #ifdef HAVE_SYS_AIO_H
 #include <sys/aio.h>
 #endif
-],[
+	int main(int argc, char **argv)
+	{
 		int fd;
 		struct aiocb *aiocbp;
-		aio_write(fd, aiocbp);
+		if (argc > 10) aio_write(fd, aiocbp);
 		return 0;
-])],
-	[aio_two_arg_write=yes
-	 AC_MSG_RESULT(yes)],
-	[aio_two_arg_write=no 
-	 AC_MSG_RESULT(no)]
-	[aio_two_arg_write=no
-	 AC_MSG_RESULT(no: cannot test when cross-compiling)]
+	}
+	],
+	aio_two_arg_write=yes
+	AC_MSG_RESULT(yes),
+	aio_two_arg_write=no 
+	AC_MSG_RESULT(no),
+	aio_two_arg_write=no
+	AC_MSG_RESULT(no: cannot test when cross-compiling)
     )
 
     if test "$aio_two_arg_write" != "no" -a "$aio_runs" != "yes" ; then
@@ -1491,7 +1481,7 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
     fi
 
     AC_MSG_CHECKING([for obsolete two-argument aio_suspend])
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+    AC_TRY_RUN([
 #include <sys/types.h>
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
@@ -1502,24 +1492,24 @@ if test "$have_aio_h" = "yes" -o "$have_sys_aio_h" = "yes" -o "x$disable_aio" = 
 #ifdef HAVE_SYS_AIO_H
 #include <sys/aio.h>
 #endif
-],[
+	int main(int argc, char **argv)
+	{
 		struct aiocb *aiocbp;
-		aio_suspend(1, &aiocbp);
+		if (argc > 10) aio_suspend(1, &aiocbp);
 		return 0;
-])],
-	[aio_two_arg_suspend=yes
-	 AC_MSG_RESULT(yes)],
-	[aio_two_arg_suspend=no 
-	 AC_MSG_RESULT(no)]
-	[aio_two_arg_suspend=no
-	 AC_MSG_RESULT(no: cannot test when cross compiling)]
+	}
+	],
+	aio_two_arg_suspend=yes
+	AC_MSG_RESULT(yes),
+	aio_two_arg_suspend=no 
+	AC_MSG_RESULT(no),
+	aio_two_arg_suspend=no
+	AC_MSG_RESULT(no: cannot test when cross compiling)
     )
 
     if test "$aio_two_arg_suspend" != "no" -a "$aio_runs" != "yes" ; then
 	AC_DEFINE(ROMIO_HAVE_AIO_SUSPEND_TWO_ARGS, 1, Define if aio_suspend needs two arguments)
     fi
-
-    LIBS=$save_libs
 
     AC_MSG_CHECKING([for aio_fildes member of aiocb structure])
     AC_TRY_COMPILE([
@@ -1646,7 +1636,6 @@ fi
 # Check for statfs (many) and specifically f_fstypename field (BSD)
 #
 AC_CHECK_HEADERS(sys/vfs.h sys/param.h sys/mount.h sys/statvfs.h)
-AC_CHECK_FUNCS([statfs])
 AC_MSG_CHECKING([whether struct statfs properly defined])
 AC_TRY_COMPILE([
 #ifdef HAVE_SYS_VFS_H
@@ -1698,7 +1687,7 @@ fi
 #
 AC_CHECK_HEADERS(sys/stat.h sys/types.h unistd.h)
 AC_CHECK_FUNCS(stat,
-    [AC_DEFINE(HAVE_STAT, 1, Define if stat function is present)
+    AC_DEFINE(HAVE_STAT, 1, Define if stat function is present)
     AC_MSG_CHECKING([for st_fstype member of stat structure])
     AC_TRY_COMPILE([
 #ifdef HAVE_SYS_TYPES_H
@@ -1719,14 +1708,14 @@ AC_CHECK_FUNCS(stat,
 	AC_DEFINE(ROMIO_HAVE_STRUCT_STAT_WITH_ST_FSTYPE, 1, Define if struct stat has a st_fstype member),
 	AC_MSG_RESULT(no)
     )
-])
+)
 
 #
 # Check for statvfs and f_basetype field (Solaris, Irix, AIX, etc.)
 #
 AC_CHECK_HEADERS(sys/types.h sys/statvfs.h sys/vfs.h)
 AC_CHECK_FUNCS(statvfs,
-    [AC_DEFINE(HAVE_STATVFS, 1, Define if statvfs function is present)
+    AC_DEFINE(HAVE_STATVFS, 1, Define if statvfs function is present)
     AC_MSG_CHECKING([for f_basetype member of statvfs structure])
     AC_TRY_COMPILE([
 #ifdef HAVE_SYS_TYPES_H
@@ -1747,7 +1736,7 @@ AC_CHECK_FUNCS(statvfs,
 	AC_DEFINE(ROMIO_HAVE_STRUCT_STATVFS_WITH_F_BASETYPE, 1, defined if struct statvfs has a f_basetype member),
 	AC_MSG_RESULT(no)
     )
-])
+)
 
 #
 # Check for large file support.  Make sure that we can use the off64_t 
@@ -2002,9 +1991,9 @@ elif test $FROM_MPICH2 = yes ; then
    # Turn off the building of the Fortran interface and the Info routines
    EXTRA_DIRS=""
    AC_DEFINE(HAVE_STATUS_SET_BYTES,1,[Define if status_set_bytes available])
-   DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST"
-   # Add the MPICH2_INCLUDE_FLAGS to CPPFLAGS
-   CPPFLAGS="$CPPFLAGS $MPICH2_INCLUDE_FLAGS"
+   DEFINE_HAVE_MPI_GREQUEST="#define HAVE_MPI_GREQUEST 1"
+#  Open MPI does not have the MPIU functions
+#  AC_DEFINE(HAVE_MPIU_FUNCS,1,[Define if MPICH2 memory tracing macros defined])
 fi
 #
 #
@@ -2014,6 +2003,7 @@ fi
 if test $WITHIN_KNOWN_MPI_IMPL = no ; then
    PAC_TEST_MPIR_STATUS_SET_BYTES
    PAC_TEST_MPI_GREQUEST
+   PAC_TEST_MPIU_FUNCS
    AC_DEFINE(PRINT_ERR_MSG,1,[Define for printing error messages])
 fi
 #
@@ -2053,6 +2043,11 @@ AC_CHECK_FUNCS(ftruncate)
 if test "$ac_cv_func_ftruncate" = "yes" ; then
     # Do we need to declare ftruncate?
     PAC_FUNC_NEEDS_DECL([#include <unistd.h>],ftruncate)
+fi
+
+AC_CHECK_FUNCS(lseek64)
+if test "$ac_cv_func_lseek64" = "yes" ; then
+    PAC_FUNC_NEEDS_DECL([#include <unistd.h>],lseek64)
 fi
 #
 # Create the directory lists for the Makefile
@@ -2149,7 +2144,7 @@ CFLAGS="$CFLAGS $OMPI_CFLAGS "'-I$(top_builddir)/include'
 # Open MPI - AM doesn't want the following:
 #   VPATH, CC, CPPFLAGS, CFLAGS, AR, RANLIB, F77, MAKE
 #VPATH='VPATH = .:${srcdir}'
-#AC_SUBST(VPATH)
+#AC_SUBST(VPATH)#
 AC_SUBST(ARCH)
 AC_SUBST(FILE_SYSTEM)
 #AC_SUBST(CC)
@@ -2208,7 +2203,6 @@ AC_SUBST(TEST_CC)
 AC_SUBST(TEST_F77)
 AC_SUBST(ROMIO_INCLUDE)
 AC_SUBST(ROMIO_LFLAGS)
-AC_SUBST(ROMIO_LIBLIST)
 AC_SUBST(ROMIO_TCFLAGS)
 AC_SUBST(ROMIO_TCPPFLAGS)
 AC_SUBST(ROMIO_TFFLAGS)
@@ -2268,6 +2262,7 @@ AC_CONFIG_FILES([
     adio/ad_testfs/Makefile
     adio/ad_ufs/Makefile
     adio/ad_xfs/Makefile
+    adio/ad_zoidfs/Makefile
     adio/common/Makefile
     adio/include/Makefile
 
@@ -2308,6 +2303,7 @@ AC_CONFIG_FILES([
 # adio/ad_ntfs/Makefile: not built with GNU Autotools
 # adio/ad_piofs/Makefile: old and no longer used
 AC_OUTPUT
+#
 #
 # Open MPI - don't need to remove this...
 # rm -f *.o

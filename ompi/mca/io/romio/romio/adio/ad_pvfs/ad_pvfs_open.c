@@ -37,15 +37,15 @@ void ADIOI_PVFS_Open(ADIO_File fd, int *error_code)
 
     value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
 
-    MPI_Info_get(fd->info, "striping_factor", MPI_MAX_INFO_VAL, 
+    ADIOI_Info_get(fd->info, "striping_factor", MPI_MAX_INFO_VAL, 
 		 value, &flag);
     if (flag && (atoi(value) > 0)) pstat.pcount = atoi(value);
 
-    MPI_Info_get(fd->info, "striping_unit", MPI_MAX_INFO_VAL, 
+    ADIOI_Info_get(fd->info, "striping_unit", MPI_MAX_INFO_VAL, 
 		 value, &flag);
     if (flag && (atoi(value) > 0)) pstat.ssize = atoi(value);
 
-    MPI_Info_get(fd->info, "start_iodevice", MPI_MAX_INFO_VAL, 
+    ADIOI_Info_get(fd->info, "start_iodevice", MPI_MAX_INFO_VAL, 
 		 value, &flag);
     if (flag && (atoi(value) >= 0)) pstat.base = atoi(value);
 
@@ -71,11 +71,11 @@ void ADIOI_PVFS_Open(ADIO_File fd, int *error_code)
     if (fd->fd_sys != -1) {
 	pvfs_ioctl(fd->fd_sys, GETMETA, &pstat);
 	ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", pstat.pcount);
-	MPI_Info_set(fd->info, "striping_factor", value);
+	ADIOI_Info_set(fd->info, "striping_factor", value);
 	ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", pstat.ssize);
-	MPI_Info_set(fd->info, "striping_unit", value);
+	ADIOI_Info_set(fd->info, "striping_unit", value);
 	ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", pstat.base);
-	MPI_Info_set(fd->info, "start_iodevice", value);
+	ADIOI_Info_set(fd->info, "start_iodevice", value);
     }
 
     ADIOI_Free(value);

@@ -7,6 +7,10 @@
 #include "adio.h"
 #include "adio_extern.h"
 
+#ifdef AGGREGATION_PROFILE
+#include "mpe.h"
+#endif
+
 #undef AGG_DEBUG
 
 /* This file contains four functions:
@@ -79,21 +83,26 @@ int ADIOI_Calc_aggregator(ADIO_File fd,
 
     ADIOI_UNREFERENCED_ARG(fd_start);
 
-#ifdef AGG_DEBUG
-#if 0
-    FPRINTF(stdout, "off = %lld, min_off = %lld, len = %lld, fd_size = %lld\n",
-	    off, min_off, *len, fd_size);
-#endif
-#endif
-    
     /* get an index into our array of aggregators */
     rank_index = (int) ((off - min_off + fd_size)/ fd_size - 1);
+
+    if (fd->hints->striping_unit > 0) {
+        /* wkliao: implementation for file domain alignment
+           fd_start[] and fd_end[] have been aligned with file lock
+	   boundaries when returned from ADIOI_Calc_file_domains() so cannot
+	   just use simple arithmatic as above */
+        rank_index = 0;
+        while (off > fd_end[rank_index]) rank_index++;
+    }
 
     /* we index into fd_end with rank_index, and fd_end was allocated to be no
      * bigger than fd->hins->cb_nodes.   If we ever violate that, we're
      * overrunning arrays.  Obviously, we should never ever hit this abort */
-    if (rank_index >= fd->hints->cb_nodes)
-	    MPI_Abort(MPI_COMM_WORLD, 1);
+    if (rank_index >= fd->hints->cb_nodes || rank_index < 0) {
+        FPRINTF(stderr, "Error in ADIOI_Calc_aggregator(): rank_index(%d) >= fd->hints->cb_nodes (%d) fd_size=%lld off=%lld\n",
+			rank_index,fd->hints->cb_nodes,fd_size,off);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
 
     /* remember here that even in Rajeev's original code it was the case that
      * different aggregators could end up with different amounts of data to
@@ -119,18 +128,20 @@ void ADIOI_Calc_file_domains(ADIO_Offset *st_offsets, ADIO_Offset
 			     *end_offsets, int nprocs, int nprocs_for_coll,
 			     ADIO_Offset *min_st_offset_ptr,
 			     ADIO_Offset **fd_start_ptr, ADIO_Offset 
-			     **fd_end_ptr, ADIO_Offset *fd_size_ptr)
+			     **fd_end_ptr, int min_fd_size, 
+			     ADIO_Offset *fd_size_ptr,
+			     int striping_unit)
 {
 /* Divide the I/O workload among "nprocs_for_coll" processes. This is
    done by (logically) dividing the file into file domains (FDs); each
    process may directly access only its own file domain. */
 
-	/* XXX: one idea: tweak the file domains so that no fd is smaller than
-	 * a threshold (one presumably well-suited to a file system).  We don't
-	 * do that, but this routine would be the place for it */
-
     ADIO_Offset min_st_offset, max_end_offset, *fd_start, *fd_end, fd_size;
     int i;
+
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event (5004, 0, NULL);
+#endif
 
 #ifdef AGG_DEBUG
     FPRINTF(stderr, "ADIOI_Calc_file_domains: %d aggregator(s)\n", 
@@ -156,6 +167,14 @@ void ADIOI_Calc_file_domains(ADIO_Offset *st_offsets, ADIO_Offset
 	       1)/nprocs_for_coll; 
     /* ceiling division as in HPF block distribution */
 
+    /* Tweak the file domains so that no fd is smaller than a threshold.  We
+     * have to strike a balance between efficency and parallelism: somewhere
+     * between 10k processes sending 32-byte requests and one process sending a
+     * 320k request is a (system-dependent) sweet spot */
+
+    if (fd_size < min_fd_size)
+	fd_size = min_fd_size;
+
     *fd_start_ptr = (ADIO_Offset *)
 	ADIOI_Malloc(nprocs_for_coll*sizeof(ADIO_Offset)); 
     *fd_end_ptr = (ADIO_Offset *)
@@ -164,12 +183,46 @@ void ADIOI_Calc_file_domains(ADIO_Offset *st_offsets, ADIO_Offset
     fd_start = *fd_start_ptr;
     fd_end = *fd_end_ptr;
 
-    fd_start[0] = min_st_offset;
-    fd_end[0] = min_st_offset + fd_size - 1;
+    /* Wei-keng Liao: implementation for fild domain alignment to nearest file
+     * lock boundary (as specified by striping_unit hint).  Could also
+     * experiment with other alignment strategies here */
+    if (striping_unit > 0) {
+        ADIO_Offset end_off;
+        int         rem_front, rem_back;
 
-    for (i=1; i<nprocs_for_coll; i++) {
-	fd_start[i] = fd_end[i-1] + 1;
-	fd_end[i] = fd_start[i] + fd_size - 1;
+        /* align fd_end[0] to the nearest file lock boundary */
+        fd_start[0] = min_st_offset;
+        end_off     = fd_start[0] + fd_size;
+        rem_front   = end_off % striping_unit;
+        rem_back    = striping_unit - rem_front;
+        if (rem_front < rem_back) 
+		end_off -= rem_front;
+        else                      
+		end_off += rem_back;
+        fd_end[0] = end_off - 1;
+    
+        /* align fd_end[i] to the nearest file lock boundary */
+        for (i=1; i<nprocs_for_coll; i++) {
+            fd_start[i] = fd_end[i-1] + 1;
+            end_off     = min_st_offset + fd_size * (i+1);
+            rem_front   = end_off % striping_unit;
+            rem_back    = striping_unit - rem_front;
+            if (rem_front < rem_back) 
+		    end_off -= rem_front;
+            else                      
+		    end_off += rem_back;
+            fd_end[i] = end_off - 1;
+        }
+        fd_end[nprocs_for_coll-1] = max_end_offset;
+    }
+    else { /* no hints set: do things the 'old' way */
+        fd_start[0] = min_st_offset;
+        fd_end[0] = min_st_offset + fd_size - 1;
+
+        for (i=1; i<nprocs_for_coll; i++) {
+            fd_start[i] = fd_end[i-1] + 1;
+            fd_end[i] = fd_start[i] + fd_size - 1;
+        }
     }
 
 /* take care of cases in which the total file access range is not
@@ -187,6 +240,10 @@ void ADIOI_Calc_file_domains(ADIO_Offset *st_offsets, ADIO_Offset
 
     *fd_size_ptr = fd_size;
     *min_st_offset_ptr = min_st_offset;
+
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event (5005, 0, NULL);
+#endif
 }
 
 
@@ -194,7 +251,7 @@ void ADIOI_Calc_file_domains(ADIO_Offset *st_offsets, ADIO_Offset
  * of this process are located in the file domains of various processes
  * (including this one)
  */
-void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, int *len_list, 
+void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, ADIO_Offset *len_list, 
 		       int contig_access_count, ADIO_Offset 
 		       min_st_offset, ADIO_Offset *fd_start,
 		       ADIO_Offset *fd_end, ADIO_Offset fd_size,
@@ -203,11 +260,17 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, int *len_list,
 		       int **count_my_req_per_proc_ptr,
 		       ADIOI_Access **my_req_ptr,
 		       int **buf_idx_ptr)
+/* Possibly reconsider if buf_idx's are ok as int's, or should they be aints/offsets? 
+   They are used as memory buffer indices so it seems like the 2G limit is in effect */
 {
     int *count_my_req_per_proc, count_my_req_procs, *buf_idx;
     int i, l, proc;
     ADIO_Offset fd_len, rem_len, curr_idx, off;
     ADIOI_Access *my_req;
+
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event (5024, 0, NULL);
+#endif
 
     *count_my_req_per_proc_ptr = (int *) ADIOI_Calloc(nprocs,sizeof(int)); 
     count_my_req_per_proc = *count_my_req_per_proc_ptr;
@@ -293,10 +356,14 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, int *len_list,
 				     fd_start, fd_end);
 
 	/* for each separate contiguous access from this process */
-	if (buf_idx[proc] == -1) buf_idx[proc] = (int) curr_idx;
+	if (buf_idx[proc] == -1) 
+  {
+    ADIOI_Assert(curr_idx == (int) curr_idx);
+    buf_idx[proc] = (int) curr_idx;
+  }
 
 	l = my_req[proc].count;
-	curr_idx += (int) fd_len; /* NOTE: Why is curr_idx an int?  Fix? */
+	curr_idx += fd_len; 
 
 	rem_len = len_list[i] - fd_len;
 
@@ -306,6 +373,7 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, int *len_list,
 	 * and the associated count. 
 	 */
 	my_req[proc].offsets[l] = off;
+  ADIOI_Assert(fd_len == (int) fd_len);
 	my_req[proc].lens[l] = (int) fd_len;
 	my_req[proc].count++;
 
@@ -315,13 +383,18 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, int *len_list,
 	    proc = ADIOI_Calc_aggregator(fd, off, min_st_offset, &fd_len, 
 					 fd_size, fd_start, fd_end);
 
-	    if (buf_idx[proc] == -1) buf_idx[proc] = (int) curr_idx;
+	    if (buf_idx[proc] == -1) 
+      {
+        ADIOI_Assert(curr_idx == (int) curr_idx);
+        buf_idx[proc] = (int) curr_idx;
+      }
 
 	    l = my_req[proc].count;
 	    curr_idx += fd_len;
 	    rem_len -= fd_len;
 
 	    my_req[proc].offsets[l] = off;
+      ADIOI_Assert(fd_len == (int) fd_len);
 	    my_req[proc].lens[l] = (int) fd_len;
 	    my_req[proc].count++;
 	}
@@ -336,17 +409,16 @@ void ADIOI_Calc_my_req(ADIO_File fd, ADIO_Offset *offset_list, int *len_list,
 		FPRINTF(stdout, "   off[%d] = %lld, len[%d] = %d\n", l,
 			my_req[i].offsets[l], l, my_req[i].lens[l]);
 	    }
+	FPRINTF(stdout, "buf_idx[%d] = 0x%x\n", i, buf_idx[i]);
 	}
     }
-#if 0
-    for (i=0; i<nprocs; i++) {
-	FPRINTF(stdout, "buf_idx[%d] = 0x%x\n", i, buf_idx[i]);
-    }
-#endif
 #endif
 
     *count_my_req_procs_ptr = count_my_req_procs;
     *buf_idx_ptr = buf_idx;
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event (5025, 0, NULL);
+#endif
 }
 
 
@@ -373,7 +445,9 @@ void ADIOI_Calc_others_req(ADIO_File fd, int count_my_req_procs,
     ADIOI_Access *others_req;
 
 /* first find out how much to send/recv and from/to whom */
-
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event (5026, 0, NULL);
+#endif
     count_others_req_per_proc = (int *) ADIOI_Malloc(nprocs*sizeof(int));
 
     MPI_Alltoall(count_my_req_per_proc, 1, MPI_INT,
@@ -437,4 +511,7 @@ void ADIOI_Calc_others_req(ADIO_File fd, int count_my_req_procs,
     ADIOI_Free(count_others_req_per_proc);
 
     *count_others_req_procs_ptr = count_others_req_procs;
+#ifdef AGGREGATION_PROFILE
+    MPE_Log_event (5027, 0, NULL);
+#endif
 }

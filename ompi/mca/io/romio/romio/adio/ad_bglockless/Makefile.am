@@ -21,4 +21,6 @@ include $(top_srcdir)/Makefile.options
 
 noinst_LTLIBRARIES = libadio_bglockless.la
 libadio_bglockless_la_SOURCES = \
-        ad_bglockless.c
+        ad_bglockless.c \
+        ad_bglockless.h \
+        ad_bglockless_features.c

@@ -52,9 +52,7 @@ int MPI_File_get_view(MPI_File mpi_fh,
     int i, j, k, combiner;
     MPI_Datatype copy_etype, copy_filetype;
 
-
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     fh = MPIO_File_resolve(mpi_fh);
 
@@ -77,15 +75,16 @@ int MPI_File_get_view(MPI_File mpi_fh,
     MPI_Type_get_envelope(fh->etype, &i, &j, &k, &combiner);
     if (combiner == MPI_COMBINER_NAMED) *etype = fh->etype;
     else {
-        MPIR_Nest_incr();
+	/* FIXME: It is wrong to use MPI_Type_contiguous; the user could choose to
+	   re-implement MPI_Type_contiguous in an unexpected way.  Either use 
+	   MPIR_Barrier_impl as in MPICH2 or PMPI_Type_contiguous */
         MPI_Type_contiguous(1, fh->etype, &copy_etype);
-        MPIR_Nest_decr();
 
-        MPIR_Nest_incr();
+	/* FIXME: Ditto for MPI_Type_commit - use NMPI or PMPI */
         MPI_Type_commit(&copy_etype);
-        MPIR_Nest_decr();
         *etype = copy_etype;
     }
+    /* FIXME: Ditto for MPI_Type_xxx - use NMPI or PMPI */
     MPI_Type_get_envelope(fh->filetype, &i, &j, &k, &combiner);
     if (combiner == MPI_COMBINER_NAMED) *filetype = fh->filetype;
     else {
@@ -96,8 +95,7 @@ int MPI_File_get_view(MPI_File mpi_fh,
     }
 
 fn_exit:
-    MPIR_Nest_decr();
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
 
     return MPI_SUCCESS;
 }

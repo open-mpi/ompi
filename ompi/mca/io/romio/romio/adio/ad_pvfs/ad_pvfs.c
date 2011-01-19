@@ -33,4 +33,5 @@ struct ADIOI_Fns_struct ADIO_PVFS_operations = {
     ADIOI_PVFS_Flush, /* Flush */
     ADIOI_PVFS_Resize, /* Resize */
     ADIOI_PVFS_Delete, /* Delete */
+    ADIOI_PVFS_Feature, /* Features */
 };

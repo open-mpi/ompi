@@ -56,8 +56,8 @@ void ADIOI_GRIDFTP_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 			    MPI_Info_get_valuelen(users_info,key,&valuelen,&flag);
 			    if (flag)
 				{
-				    MPI_Info_get(users_info,key,valuelen,value,&flag);
-				    if (flag) MPI_Info_set(fd->info,key,value);
+				    ADIOI_Info_get(users_info,key,valuelen,value,&flag);
+				    if (flag) ADIOI_Info_set(fd->info,key,value);
 				}
 			}
 		}

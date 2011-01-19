@@ -28,9 +28,15 @@ libadio_pvfs2_la_SOURCES = \
         ad_pvfs2_common.c \
         ad_pvfs2_delete.c \
         ad_pvfs2_fcntl.c \
+        ad_pvfs2_features.c \
         ad_pvfs2_flush.c \
         ad_pvfs2_hints.c \
+        ad_pvfs2_io.h \
+        ad_pvfs2_io_dtype.c \
+        ad_pvfs2_io_list.c \
         ad_pvfs2_open.c \
         ad_pvfs2_read.c \
+        ad_pvfs2_read_list_classic.c
         ad_pvfs2_resize.c \
-        ad_pvfs2_write.c
+        ad_pvfs2_write.c \
+        ad_pvfs2_write_list_classic.c

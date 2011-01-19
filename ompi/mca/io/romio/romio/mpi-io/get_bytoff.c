@@ -46,8 +46,6 @@ int MPI_File_get_byte_offset(MPI_File mpi_fh,
     ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_BYTE_OFFSET";
 
-    MPIR_Nest_incr();
-
     fh = MPIO_File_resolve(mpi_fh);
 
     /* --BEGIN ERROR HANDLING-- */
@@ -68,7 +66,6 @@ int MPI_File_get_byte_offset(MPI_File mpi_fh,
     ADIOI_Get_byte_offset(fh, offset, disp);
 
 fn_exit:
-    MPIR_Nest_decr();
 
     return MPI_SUCCESS;
 }

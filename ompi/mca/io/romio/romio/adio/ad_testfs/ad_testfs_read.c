@@ -26,10 +26,6 @@ void ADIOI_TESTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	offset = fd->fp_ind;
 	fd->fp_ind += datatype_size * count;
 	fd->fp_sys_posn = fd->fp_ind;
-#if 0
-	FPRINTF(stdout, "[%d/%d]    new file position is %lld\n", myrank, 
-		nprocs, (long long) fd->fp_ind);
-#endif
     }
     else {
 	fd->fp_sys_posn = offset + datatype_size * count;

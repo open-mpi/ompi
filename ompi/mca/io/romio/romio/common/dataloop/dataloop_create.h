@@ -80,16 +80,4 @@ int PREPEND_PREFIX(Type_convert_darray)(int size,
 					MPI_Datatype oldtype, 
 					MPI_Datatype *newtype);
 
-#if 0
-/* Helper functions for accessing datatype contents */
-void PREPEND_PREFIX(Type_access_contents)(MPI_Datatype type,
-					  int **ints_p,
-					  MPI_Aint **aints_p,
-					  MPI_Datatype **types_p);
-void PREPEND_PREFIX(Type_release_contents)(MPI_Datatype type,
-					   int **ints_p,
-					   MPI_Aint **aints_p,
-					   MPI_Datatype **types_p);
-#endif
-
 #endif

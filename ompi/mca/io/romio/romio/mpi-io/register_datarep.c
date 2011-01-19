@@ -23,8 +23,6 @@
 #include "mpioprof.h"
 #endif
 
-extern int ADIO_Init_keyval;
-
 /*@
   MPI_Register_datarep - Register functions for user-defined data 
                          representations
@@ -56,11 +54,11 @@ int MPI_Register_datarep(char *name,
 			 MPI_Datarep_extent_function *extent_fn,
 			 void *state)
 {
-    int error_code, flag;
+    int error_code;
     ADIOI_Datarep *datarep;
     static char myname[] = "MPI_REGISTER_DATAREP";
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     /* --BEGIN ERROR HANDLING-- */
     /* check datarep name (use strlen instead of strnlen because
@@ -79,33 +77,8 @@ int MPI_Register_datarep(char *name,
     }
     /* --END ERROR HANDLING-- */
 
-    /* first check if ADIO has been initialized. If not, initialize it */
-    if (ADIO_Init_keyval == MPI_KEYVAL_INVALID) {
-        MPI_Initialized(&flag);
-
-	/* --BEGIN ERROR HANDLING-- */
-        if (!flag) {
-	    error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
-					      myname, __LINE__, MPI_ERR_OTHER, 
-					      "**initialized", 0);
-	    error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
-	    goto fn_exit;
-	}
-	/* --END ERROR HANDLING-- */
-
-        MPI_Keyval_create(MPI_NULL_COPY_FN, ADIOI_End_call, &ADIO_Init_keyval,
-                          (void *) 0);  
-
-	/* put a dummy attribute on MPI_COMM_WORLD, because we want the delete
-	   function to be called when MPI_COMM_WORLD is freed. Hopefully the
-	   MPI library frees MPI_COMM_WORLD when MPI_Finalize is called,
-	   though the standard does not mandate this. */
-
-        MPI_Attr_put(MPI_COMM_WORLD, ADIO_Init_keyval, (void *) 0);
-
-	/* initialize ADIO */
-        ADIO_Init( (int *)0, (char ***)0, &error_code);
-    }
+    MPIR_MPIOInit(&error_code);
+    if (error_code != MPI_SUCCESS) goto fn_exit;
 
     /* --BEGIN ERROR HANDLING-- */
     /* check datarep isn't already registered */
@@ -156,7 +129,7 @@ int MPI_Register_datarep(char *name,
     error_code = MPI_SUCCESS;
 
 fn_exit:
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
 
     return error_code;
 }

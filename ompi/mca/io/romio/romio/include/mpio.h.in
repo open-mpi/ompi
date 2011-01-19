@@ -11,7 +11,6 @@
 #define MPIO_INCLUDE
 
 #include "mpi.h"
-
 /* Open MPI: We need to rename almost all of these functions, as well
    a the types to be names that conform to the prefix rule */
 #include "io_romio_conv.h"
@@ -266,10 +265,10 @@ MPI_File MPI_File_f2c(MPI_Fint);
 MPI_Fint MPI_File_c2f(MPI_File);
 #endif
 
-
-/* The foll. functions are required, because an MPIO_Request object
-   is currently used for nonblocking I/O. These functions will go away
-   after generalized requests are implemented. */
+#ifndef HAVE_MPI_GREQUEST
+/* The following functions are required if generalized requests are not
+   available, because in that case, an MPIO_Request object
+   is currently used for nonblocking I/O. */
 int MPIO_Test(MPIO_Request *, int *, MPI_Status *);
 int MPIO_Wait(MPIO_Request *, MPI_Status *);
 int MPIO_Testall(int, MPIO_Request *, int *, MPI_Status *);
@@ -281,7 +280,7 @@ int MPIO_Testsome(int, MPIO_Request *, int *, int *, MPI_Status *);
 
 MPI_Fint MPIO_Request_c2f(MPIO_Request);
 MPIO_Request MPIO_Request_f2c(MPI_Fint);
-
+#endif /* HAVE_MPI_GREQUEST */
 
 /* info functions if not defined in the MPI implementation */
 #ifndef HAVE_MPI_INFO
@@ -441,9 +440,10 @@ int PMPI_Type_create_darray(int, int, int, int *, int *,
 MPI_File PMPI_File_f2c(MPI_Fint);
 MPI_Fint PMPI_File_c2f(MPI_File);
 
-/* The foll. functions are required, because an MPIO_Request object
-   is currently used for nonblocking I/O. These functions will go away
-   after generalized requests are implemented. */
+#ifndef HAVE_MPI_GREQUEST
+/* The following functions are required if generalized requests are not
+   available, because in that case, an MPIO_Request object
+   is currently used for nonblocking I/O. */
 int PMPIO_Test(MPIO_Request *, int *, MPI_Status *);
 int PMPIO_Wait(MPIO_Request *, MPI_Status *);
 int PMPIO_Testall(int, MPIO_Request *, int *, MPI_Status *);
@@ -454,7 +454,7 @@ int PMPIO_Waitsome(int, MPIO_Request *, int *, int *, MPI_Status *);
 int PMPIO_Testsome(int, MPIO_Request *, int *, int *, MPI_Status *);
 MPI_Fint PMPIO_Request_c2f(MPIO_Request);
 MPIO_Request PMPIO_Request_f2c(MPI_Fint);
-
+#endif /* HAVE_MPI_GREQUEST */
 
 /* info functions if not defined in the MPI implementation */
 #ifndef HAVE_MPI_INFO

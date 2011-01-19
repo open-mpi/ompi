@@ -12,6 +12,7 @@
 
 struct ADIOI_Fns_struct ADIO_PVFS2_operations = {
     ADIOI_PVFS2_Open, /* Open */
+    ADIOI_SCALEABLE_OpenColl, /* OpenColl */
     ADIOI_PVFS2_ReadContig, /* ReadContig */
     ADIOI_PVFS2_WriteContig, /* WriteContig */
     ADIOI_GEN_ReadStridedColl, /* ReadStridedColl */
@@ -22,13 +23,8 @@ struct ADIOI_Fns_struct ADIO_PVFS2_operations = {
     ADIOI_PVFS2_ReadStrided, /* ReadStrided */
     ADIOI_PVFS2_WriteStrided, /* WriteStrided */
     ADIOI_PVFS2_Close, /* Close */
-#ifdef ROMIO_HAVE_WORKING_AIO
     ADIOI_PVFS2_IReadContig, /* IreadContig */
     ADIOI_PVFS2_IWriteContig, /* IwriteContig */
-#else
-    ADIOI_FAKE_IreadContig, /* IreadContig */
-    ADIOI_FAKE_IwriteContig, /* IwriteContig */
-#endif
     ADIOI_FAKE_IODone, /* ReadDone */
     ADIOI_FAKE_IODone, /* WriteDone */
     ADIOI_FAKE_IOComplete, /* ReadComplete */
@@ -38,6 +34,7 @@ struct ADIOI_Fns_struct ADIO_PVFS2_operations = {
     ADIOI_PVFS2_Flush, /* Flush */
     ADIOI_PVFS2_Resize, /* Resize */
     ADIOI_PVFS2_Delete, /* Delete */
+    ADIOI_PVFS2_Feature, 
 };
 
 /* 

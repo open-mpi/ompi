@@ -13,9 +13,10 @@
 
 void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
 {
-    int error_code, filetype_is_contig, etype_size, filetype_size;
-    ADIO_Offset fsize, disp, sum=0, size_in_file;
-    int n_filetypes, flag, i, rem;
+    unsigned filetype_size;
+    int error_code, filetype_is_contig, etype_size;
+    ADIO_Offset fsize, disp, sum=0, size_in_file, n_filetypes, rem;
+    int flag, i;
     ADIO_Fcntl_t *fcntl_struct;
     MPI_Aint filetype_extent;
     ADIOI_Flatlist_node *flat_file;
@@ -43,7 +44,7 @@ void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
 	while (flat_file->type != fd->filetype) 
 	    flat_file = flat_file->next;
 	
-	MPI_Type_size(fd->filetype, &filetype_size);
+	MPI_Type_size(fd->filetype, (int*)&filetype_size);
 	MPI_Type_extent(fd->filetype, &filetype_extent);
 
 	disp = fd->disp;
@@ -55,14 +56,14 @@ void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
 	    for (i=0; i<flat_file->count; i++) {
 		sum += flat_file->blocklens[i];
 		if (disp + flat_file->indices[i] + 
-		    (ADIO_Offset) n_filetypes*filetype_extent + 
+		    n_filetypes* ADIOI_AINT_CAST_TO_OFFSET filetype_extent + 
 		       flat_file->blocklens[i] >= fsize) {
 		    if (disp + flat_file->indices[i] + 
-			   (ADIO_Offset) n_filetypes*filetype_extent >= fsize)
+			   n_filetypes * ADIOI_AINT_CAST_TO_OFFSET filetype_extent >= fsize)
 			sum -= flat_file->blocklens[i];
 		    else {
-			rem = (int) (disp + flat_file->indices[i] + 
-				(ADIO_Offset) n_filetypes*filetype_extent
+			rem = (disp + flat_file->indices[i] + 
+				n_filetypes* ADIOI_AINT_CAST_TO_OFFSET filetype_extent
 				+ flat_file->blocklens[i] - fsize);
 			sum -= rem;
 		    }
@@ -71,7 +72,7 @@ void ADIOI_Get_eof_offset(ADIO_File fd, ADIO_Offset *eof_offset)
 		}
 	    }
 	}
-	size_in_file = (ADIO_Offset) n_filetypes*filetype_size + sum;
+	size_in_file = n_filetypes*(ADIO_Offset)filetype_size + sum;
 	*eof_offset = (size_in_file+etype_size-1)/etype_size; /* ceiling division */
     }
 }

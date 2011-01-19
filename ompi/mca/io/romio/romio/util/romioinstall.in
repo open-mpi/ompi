@@ -28,9 +28,10 @@ includedir=@includedir@
 #sysconfdir=@sysconfdir@
 libdir=@libdir@
 #sharedlib_dir=@sharedlib_dir@
-datarootdir=@datarootdir@
 mandir=@mandir@
 htmldir=@htmldir@
+# datarootdir required as of autoconf 2.60
+datarootdir=@datatrootdir@
 #datadir=@datadir@
 docdir=@docdir@
 ## Location of sources
