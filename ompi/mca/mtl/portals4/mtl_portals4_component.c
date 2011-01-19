@@ -32,6 +32,8 @@ static int ompi_mtl_portals4_component_close(void);
 static mca_mtl_base_module_t* ompi_mtl_portals4_component_init(
                                                                bool enable_progress_threads, bool enable_mpi_threads);
 
+OMPI_MODULE_DECLSPEC extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
+
 mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
 
     /* First, the mca_base_component_t struct containing meta
