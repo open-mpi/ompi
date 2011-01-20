@@ -894,7 +894,7 @@ void mca_pml_bfo_repost_match_fragment(struct mca_btl_base_descriptor_t* des)
                                         &offset);
         }
         rc = mca_pml_bfo_send_request_start_btl(sendreq, bml_btl);
-        if (OMPI_SUCCESS == (OPAL_SOS_GET_ERROR_CODE(rc))) {
+        if (OMPI_SUCCESS == rc) {
             return;
         } else if (OMPI_ERR_OUT_OF_RESOURCE == (OPAL_SOS_GET_ERROR_CODE(rc))) {
             opal_output_verbose(30, mca_pml_bfo_output,
