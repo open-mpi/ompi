@@ -8,12 +8,12 @@ not merged into the ob1 PML.
 1. GENERAL USAGE
 First, one has to configure the failover code into the openib BTL so
 that bfo will work correctly.  To do this:
-configure --enable-openib-failover.
+configure --enable-btl-openib-failover.
 
 Then, when running one needs to select the bfo PML explicitly.
 mpirun --mca pml bfo
 
-Note that one needs to both configure with --enable-openib-failover
+Note that one needs to both configure with --enable-btl-openib-failover
 and run with --mca pml bfo to get the failover support.  If one of
 these two steps is skipped, then the MPI job will just abort in the
 case of an error like it normally does with the ob1 PML.
