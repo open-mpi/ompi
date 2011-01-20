@@ -123,7 +123,7 @@ opal_strerror(int errnum)
 {
     const char* errmsg;
 
-    if (errnum == OPAL_ERR_IN_ERRNO) {
+    if (OPAL_SOS_GET_ERROR_CODE(errnum) == OPAL_ERR_IN_ERRNO) {
         return strerror(errno);
     }
 
