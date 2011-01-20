@@ -688,7 +688,7 @@ static void mca_btl_openib_endpoint_notify(mca_btl_base_endpoint_t* endpoint, ui
         BTL_OPENIB_BROKEN_CONNECTION_HEADER_HTON((*bc_hdr));
     }
     rc = mca_btl_openib_endpoint_send(newep, frag);
-    if (OMPI_SUCCESS == rc ||OMPI_ERR_RESOURCE_BUSY == rc) {
+    if (OMPI_SUCCESS == rc || OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc)) {
         return;
     }
 

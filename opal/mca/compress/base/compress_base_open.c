@@ -18,6 +18,7 @@
 #include "opal/mca/compress/compress.h"
 #include "opal/mca/compress/base/base.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_sos.h"
 
 #include "opal/mca/compress/base/static-components.h"
 
@@ -83,7 +84,7 @@ int opal_compress_base_open(void)
                                                         mca_compress_base_static_components,
                                                         &opal_compress_base_components_available,
                                                         true)) ) {
-        if( OPAL_ERR_NOT_FOUND == ret &&
+        if( OPAL_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret) &&
             NULL != str_value &&
             0 == strncmp(str_value, "none", strlen("none")) ) {
             exit_status = OPAL_SUCCESS;
