@@ -51,7 +51,7 @@ create_segments( ompi_datatype_t* datatype, int count,
  allocate_segments:
     *segments = (ddt_segment_t*)malloc( (*seg_count) * sizeof(ddt_segment_t) );
 
-    convertor = opal_convertor_create( 0, 0 );
+    convertor = opal_convertor_create( opal_local_arch, 0 );
     opal_convertor_prepare_for_send( convertor, &(datatype->super), count, NULL );
 
     position = 0;
@@ -225,6 +225,7 @@ int main( int argc, char* argv[] )
     }
     memcpy(recv_buffer, send_buffer, sizeof(ddt_ldi_t) * data_count );
 
+    opal_datatype_init();
     ompi_datatype_init();
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
