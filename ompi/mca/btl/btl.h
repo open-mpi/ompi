@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -190,6 +191,9 @@ typedef uint8_t mca_btl_base_tag_t;
  /* btl can do heterogeneous rdma operations on byte buffers */
 #define MCA_BTL_FLAGS_HETEROGENEOUS_RDMA 0x0100
 
+/* btl can support failover if enabled */
+#define MCA_BTL_FLAGS_FAILOVER_SUPPORT 0x0200
+
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
@@ -197,6 +201,7 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /* error callback flags */
 #define MCA_BTL_ERROR_FLAGS_FATAL 0x1
+#define MCA_BTL_ERROR_FLAGS_NONFATAL 0x2
 
 /**
  * Asynchronous callback function on completion of an operation.
@@ -503,13 +508,17 @@ typedef int (*mca_btl_base_module_register_fn_t)(
  * Callback function that is called asynchronously on receipt
  * of an error from the transport layer 
  *
- * @param[IN] btl    BTL module
- * @param[IN] flags  type of error 
+ * @param[IN] btl     BTL module
+ * @param[IN] flags   type of error 
+ * @param[IN] errproc process that had an error
+ * @param[IN] btlinfo descriptive string from the BTL
  */
 
 typedef void (*mca_btl_base_module_error_cb_fn_t)(
         struct mca_btl_base_module_t* btl,
-        int32_t flags                             
+        int32_t flags,
+        struct ompi_proc_t* errproc,
+        char* btlinfo
 );
 
 

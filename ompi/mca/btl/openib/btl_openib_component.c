@@ -15,7 +15,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,6 +84,9 @@ const char *ibv_get_sysfs_path(void);
 #include "btl_openib_mca.h"
 #include "btl_openib_xrc.h"
 #include "btl_openib_fd.h"
+#if BTL_OPENIB_FAILOVER_ENABLED
+#include "btl_openib_failover.h"
+#endif
 #if OPAL_HAVE_THREADS
 #include "btl_openib_async.h"
 #endif
@@ -503,6 +506,12 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
             mca_btl_openib_endpoint_connected(ep);
         }
         break;
+#if BTL_OPENIB_FAILOVER_ENABLED
+    case MCA_BTL_OPENIB_CONTROL_EP_BROKEN:
+    case MCA_BTL_OPENIB_CONTROL_EP_EAGER_RDMA_ERROR:
+	btl_openib_handle_failover_control_messages(ctl_hdr, ep);
+	break;
+#endif
     default:
         BTL_ERROR(("Unknown message type received by BTL"));
        break;
@@ -551,8 +560,8 @@ static inline int param_register_int(const char* param_name, int default_value)
 #if OPAL_HAVE_THREADS
 static int start_async_event_thread(void)
 {
-    /* Set the fatal counter to zero */
-    mca_btl_openib_component.fatal_counter = 0;
+    /* Set the error counter to zero */
+    mca_btl_openib_component.error_counter = 0;
 
     /* Create pipe for communication with async event thread */
     if(pipe(mca_btl_openib_component.async_pipe)) {
@@ -959,6 +968,7 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
                 return OMPI_ERROR;
         }
         device->got_fatal_event = false;
+        device->got_port_event = false;
         if (write(mca_btl_openib_component.async_pipe[1],
                     &device->ib_dev_context->async_fd, sizeof(int))<0){
             BTL_ERROR(("Failed to write to pipe [%d]",errno));
@@ -3199,8 +3209,20 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
                 opal_list_item_t *i;
                 while((i = opal_list_remove_first(&to_send_frag(des)->coalesced_frags))) {
                     btl_ownership = (to_base_frag(i)->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
-                    to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
-                            &to_base_frag(i)->base, OMPI_SUCCESS);
+#if BTL_OPENIB_FAILOVER_ENABLED
+                    /* The check for the callback flag is only needed when running
+                     * with the failover case because there is a chance that a fragment
+                     * generated from a sendi call (which does not set the flag) gets
+                     * coalesced.  In normal operation, this cannot happen as the sendi
+                     * call will never queue up a fragment which could potentially become
+                     * a coalesced fragment.  It will revert to a regular send. */
+                    if (to_base_frag(i)->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
+#endif
+                        to_base_frag(i)->base.des_cbfunc(&openib_btl->super, endpoint,
+                                &to_base_frag(i)->base, OMPI_SUCCESS);
+#if BTL_OPENIB_FAILOVER_ENABLED
+                    }
+#endif
                     if( btl_ownership ) {
                         mca_btl_openib_free(&openib_btl->super, &to_base_frag(i)->base);
                     }
@@ -3245,7 +3267,8 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
             /* Process a RECV */
             if(btl_openib_handle_incoming(openib_btl, endpoint, to_recv_frag(frag),
                         wc->byte_len) != OMPI_SUCCESS) {
-                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
+                                     NULL, NULL);
                 break;
             }
 
@@ -3262,7 +3285,8 @@ static void handle_wc(mca_btl_openib_device_t* device, const uint32_t cq,
         default:
             BTL_ERROR(("Unhandled work completion opcode is %d", wc->opcode));
             if(openib_btl)
-                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
+                                     NULL, NULL);
             break;
     }
 
@@ -3298,10 +3322,10 @@ error:
                            remote_proc ? &remote_proc->proc_name : NULL,
                            "\n\tIB polling %s with status %s "
                            "status number %d for wr_id %" PRIx64 " opcode %d vendor error %d qp_idx %d",
-                           cq_name[cq], 
+                           cq_name[cq],
                            btl_openib_component_status_to_string(wc->status),
                            wc->status, wc->wr_id, 
-                           wc->opcode, wc->vendor_err, qp);
+			     wc->opcode, wc->vendor_err, qp);
     }
 
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
@@ -3321,27 +3345,33 @@ error:
                            orte_process_info.nodename, device_name,
                            peer_hostname);
             orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
-                                   "help-mpi-btl-openib.txt",
-                                   BTL_OPENIB_QP_TYPE_PP(qp) ? 
-                                   "pp rnr retry exceeded" : 
-                                   "srq rnr retry exceeded",
-                                   orte_process_info.nodename, device_name,
-                                   peer_hostname);
+                                    "help-mpi-btl-openib.txt",
+                                    BTL_OPENIB_QP_TYPE_PP(qp) ? 
+                                    "pp rnr retry exceeded" : 
+                                    "srq rnr retry exceeded",
+                                    orte_process_info.nodename, device_name,
+                                    peer_hostname);
         } else if (IBV_WC_RETRY_EXC_ERR == wc->status) {
             orte_show_help("help-mpi-btl-openib.txt", 
                            "pp retry exceeded", true,
                            orte_process_info.nodename,
                            device_name, peer_hostname);
             orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
-                                   "help-mpi-btl-openib.txt", 
-                                   "pp retry exceeded",
-                                   orte_process_info.nodename,
-                                   device_name, peer_hostname);
+                                    "help-mpi-btl-openib.txt", 
+                                    "pp retry exceeded",
+                                    orte_process_info.nodename,
+                                    device_name, peer_hostname);
         }
     }
 
+#if BTL_OPENIB_FAILOVER_ENABLED
+    mca_btl_openib_handle_endpoint_error(openib_btl, des, qp,
+                                         remote_proc, endpoint);
+#else
     if(openib_btl)
-        openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+        openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
+                             remote_proc, NULL);
+#endif
 }
 
 static int poll_device(mca_btl_openib_device_t* device, int count)
@@ -3471,7 +3501,7 @@ static int progress_one_device(mca_btl_openib_device_t *device)
             ret = btl_openib_handle_incoming(btl, to_com_frag(frag)->endpoint,
                     frag, size - sizeof(mca_btl_openib_footer_t));
             if (ret != OMPI_SUCCESS) {
-                btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+                btl->error_cb(&btl->super, MCA_BTL_ERROR_FLAGS_FATAL, NULL, NULL);
                 return 0;
             }
 
@@ -3500,7 +3530,7 @@ static int btl_openib_component_progress(void)
 
 #if OPAL_HAVE_THREADS
     if(OPAL_UNLIKELY(mca_btl_openib_component.use_async_event_thread &&
-            mca_btl_openib_component.fatal_counter)) {
+            mca_btl_openib_component.error_counter)) {
         goto error;
     }
 #endif
@@ -3516,13 +3546,21 @@ static int btl_openib_component_progress(void)
 #if OPAL_HAVE_THREADS
 error:
     /* Set the fatal counter to zero */
-    mca_btl_openib_component.fatal_counter = 0;
-    /* Lets found all fatal events */
+    mca_btl_openib_component.error_counter = 0;
+    /* Lets find all error events */
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
         mca_btl_openib_module_t* openib_btl =
             mca_btl_openib_component.openib_btls[i];
         if(openib_btl->device->got_fatal_event) {
-            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
+            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL,
+                                 NULL, NULL);
+        }
+        if(openib_btl->device->got_port_event) {
+            /* These are non-fatal so just ignore it. */
+            openib_btl->device->got_port_event = false;
+#if BTL_OPENIB_FAILOVER_ENABLED
+            mca_btl_openib_handle_btl_error(openib_btl);
+#endif
         }
     }
     return count;

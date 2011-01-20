@@ -2,6 +2,7 @@
  * Copyright (c) 2008-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -340,19 +341,28 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                 /* Set the flag to fatal */
                 device->got_fatal_event = true;
                 /* It is not critical to protect the counter */
-                OPAL_THREAD_ADD32(&mca_btl_openib_component.fatal_counter, 1);
+                OPAL_THREAD_ADD32(&mca_btl_openib_component.error_counter, 1);
             case IBV_EVENT_CQ_ERR:
             case IBV_EVENT_QP_FATAL:
             case IBV_EVENT_QP_REQ_ERR:
             case IBV_EVENT_QP_ACCESS_ERR:
             case IBV_EVENT_PATH_MIG_ERR:
             case IBV_EVENT_SRQ_ERR:
+                orte_show_help("help-mpi-btl-openib.txt", "of error event",
+                    true,orte_process_info.nodename, orte_process_info.pid,
+                    event_type,
+                    openib_event_to_str((enum ibv_event_type)event_type),
+                    xrc_event ? "true" : "false");
+                break;
             case IBV_EVENT_PORT_ERR:
                 orte_show_help("help-mpi-btl-openib.txt", "of error event",
                     true,orte_process_info.nodename, orte_process_info.pid,
                     event_type,
                     openib_event_to_str((enum ibv_event_type)event_type),
                     xrc_event ? "true" : "false");
+                /* Set the flag to indicate port error */
+                device->got_port_event = true;
+                OPAL_THREAD_ADD32(&mca_btl_openib_component.error_counter, 1);
                 break;
             case IBV_EVENT_COMM_EST:
             case IBV_EVENT_PORT_ACTIVE:

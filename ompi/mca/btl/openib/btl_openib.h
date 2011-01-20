@@ -15,6 +15,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -223,12 +224,15 @@ struct mca_btl_openib_component_t {
     int32_t apm_ports;
     uint32_t buffer_alignment;    /**< Preferred communication buffer alignment in Bytes (must be power of two) */
 #if OPAL_HAVE_THREADS
-    int32_t fatal_counter;           /**< Counts number on fatal events that we got on all devices */
+    int32_t error_counter;           /**< Counts number on error events that we got on all devices */
     int async_pipe[2];               /**< Pipe for comunication with async event thread */
     int async_comp_pipe[2];          /**< Pipe for async thread comunication with main thread */
     pthread_t   async_thread;        /**< Async thread that will handle fatal errors */
     uint32_t use_async_event_thread; /**< Use the async event handler */
     mca_btl_openib_srq_manager_t srq_manager;     /**< Hash table for all BTL SRQs */
+#if BTL_OPENIB_FAILOVER_ENABLED
+    uint32_t port_error_failover;    /**< Report port errors to speed up failover */
+#endif
 #endif
     btl_openib_device_type_t device_type;
     char *if_include;
@@ -283,6 +287,9 @@ struct mca_btl_openib_component_t {
     char* default_recv_qps;
     /** Whether we want a dynamically resizing srq, enabled by default */
     bool enable_srq_resize;
+#if BTL_OPENIB_FAILOVER_ENABLED
+    int verbose_failover;
+#endif
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
@@ -356,6 +363,7 @@ typedef struct mca_btl_openib_device_t {
     bool pollme;
 #if OPAL_HAVE_THREADS
     volatile bool got_fatal_event;
+    volatile bool got_port_event;
 #endif
 #if HAVE_XRC
     struct ibv_xrc_domain *xrc_domain;
