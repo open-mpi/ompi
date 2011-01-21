@@ -355,7 +355,7 @@ typedef struct mca_pml_bfo_fin_hdr_t mca_pml_bfo_fin_hdr_t;
 
 #if PML_BFO
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_OB1_FIN_HDR_FILL(h) \
+#define MCA_PML_BFO_FIN_HDR_FILL(h) \
 do {                                \
     (h).hdr_padding[0] = 0;         \
     (h).hdr_padding[1] = 0;         \
@@ -375,11 +375,11 @@ do {                                \
     do { \
         MCA_PML_BFO_COMMON_HDR_HTON((h).hdr_common); \
         MCA_PML_BFO_MATCH_HDR_HTON((h).hdr_match); \
-        MCA_PML_OB1_FIN_HDR_FILL(h); \
+        MCA_PML_BFO_FIN_HDR_FILL(h); \
     } while (0) 
 #else /* PML_BFO */
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT && OPAL_ENABLE_DEBUG
-#define MCA_PML_OB1_FIN_HDR_FILL(h) \
+#define MCA_PML_BFO_FIN_HDR_FILL(h) \
 do {                                \
     (h).hdr_padding[0] = 0;         \
     (h).hdr_padding[1] = 0;         \
@@ -396,7 +396,7 @@ do {                                \
 #define MCA_PML_BFO_FIN_HDR_HTON(h) \
     do { \
         MCA_PML_BFO_COMMON_HDR_HTON((h).hdr_common); \
-        MCA_PML_OB1_FIN_HDR_FILL(h); \
+        MCA_PML_BFO_FIN_HDR_FILL(h); \
     } while (0) 
 #endif /* PML_BFO */
 
