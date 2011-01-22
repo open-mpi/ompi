@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -724,7 +724,7 @@ static int spawn(int count, char **array_of_commands,
              * "slave" process, typically to support an attached co-processor
              */
             ompi_info_get_bool(array_of_info[i], "ompi_local_slave", &local_spawn, &flag);
-            if ( local_spawn ) {
+            if ( flag && local_spawn ) {
                 jdata->controls |= ORTE_JOB_CONTROL_LOCAL_SLAVE;
             }
 
@@ -788,7 +788,7 @@ static int spawn(int count, char **array_of_commands,
              * knows what to do
              */
             ompi_info_get_bool(array_of_info[i], "ompi_non_mpi", &non_mpi, &flag);
-            if (non_mpi) {
+            if (flag && non_mpi) {
                 jdata->controls |= ORTE_JOB_CONTROL_NON_ORTE_JOB;
             }
             
