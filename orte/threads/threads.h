@@ -94,7 +94,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_thread_ctl_t);
 #else
 #define ORTE_RELEASE_THREAD(ctl)                                        \
     do {                                                                \
-        char byte='a';                                                  \
         (ctl)->active = false;                                          \
         ORTE_CONDITION_BROADCAST(&(ctl)->cond);                         \
         OPAL_UPDATE_EVBASE((ctl)->evbase, NULL, OPAL_EVENT_NOOP);       \
