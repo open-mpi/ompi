@@ -18,20 +18,18 @@
 
 include $(top_srcdir)/Makefile.options
 
-EXTRA_DIST = README
-
-noinst_LTLIBRARIES = libadio_zoidf.la
-libadio_zoidf_la_SOURCES = \
-    ad_zoidfs.o \
-    ad_zoidfs_close.o \
-    ad_zoidfs_common.o \
-    ad_zoidfs_delete.o \
-    ad_zoidfs_fcntl.o \
-    ad_zoidfs_flush.o \
-    ad_zoidfs_io.o \
-    ad_zoidfs_open.o \
-    ad_zoidfs_resize.o \
-    ad_zoidfs_features.o\
-    ad_zoidfs_read_list.o \
-    ad_zoidfs_write_list.o
+noinst_LTLIBRARIES = libadio_zoidfs.la
+libadio_zoidfs_la_SOURCES = \
+    ad_zoidfs.c \
+    ad_zoidfs_close.c \
+    ad_zoidfs_common.c \
+    ad_zoidfs_delete.c \
+    ad_zoidfs_fcntl.c \
+    ad_zoidfs_flush.c \
+    ad_zoidfs_io.c \
+    ad_zoidfs_open.c \
+    ad_zoidfs_resize.c \
+    ad_zoidfs_features.c \
+    ad_zoidfs_read_list.c \
+    ad_zoidfs_write_list.c
 

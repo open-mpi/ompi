@@ -2126,7 +2126,7 @@ AM_PROG_LIBTOOL
 
 # Open MPI: setup the AM_CONDITIONALs to build the different adio devices
  m4_foreach([my_fs], 
-  [bgl, bglockless, gridftp, lustre, nfs, panfs, pfs, pvfs, pvfs2, sfs, testfs, ufs, xfs],
+  [bgl, bglockless, gridftp, lustre, nfs, panfs, pfs, pvfs, pvfs2, sfs, testfs, ufs, xfs, zoidfs],
   [AM_CONDITIONAL(BUILD_[]AS_TR_CPP(my_fs), [test -n "$file_system_]my_fs["])])
 
 echo "setting CC to $CC"
