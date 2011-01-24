@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,10 +35,20 @@
 
 BEGIN_C_DECLS
 
+/* Component struct to wrap the base maffinity component and then include
+   some data private to this component. */
+typedef struct {
+    /* Base component */
+    opal_maffinity_base_component_2_0_0_t base;
+
+    /* What libnuma memory binding policy we're using */
+    int libnuma_policy;
+} opal_maffinity_libnuma_component_2_0_0_t;
+
     /**
      * Globally exported variable
      */
-    OPAL_DECLSPEC extern const opal_maffinity_base_component_2_0_0_t
+    OPAL_DECLSPEC extern opal_maffinity_libnuma_component_2_0_0_t
         mca_maffinity_libnuma_component;
 
 

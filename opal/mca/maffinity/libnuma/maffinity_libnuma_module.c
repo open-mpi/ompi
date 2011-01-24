@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -69,12 +69,16 @@ int opal_maffinity_libnuma_component_query(mca_base_module_t **module, int *prio
 
 static int libnuma_module_init(void)
 {
-    /* Tell libnuma that we want all memory affinity to be local (but
-       it's not an error if we can't -- prefer running in degraded
-       mode to not running at all!). */
-
-    numa_set_strict(0);
+    /* Set the libnuma policy.  This affects all memory allocation,
+       not just libnuma memory allocation. */
     numa_set_localalloc();
+
+    /* Set strict or not, depending on the value of the MCA param */
+    if (MPOL_BIND == mca_maffinity_libnuma_component.libnuma_policy) {
+        numa_set_strict(1);
+    } else {
+        numa_set_strict(0);
+    }
 
     return OPAL_SUCCESS;
 }
@@ -85,12 +89,8 @@ static int libnuma_module_set(opal_maffinity_base_segment_t *segments,
 {
     size_t i;
 
-    /* Kinda crummy that we have to allocate each portion individually
-       rather than provide a top-level function call that does it all,
-       but the libnuma() interface doesn't seem to allow that
-       flexability -- they allow "interleaving", but not fine grained
-       placement of pages. */
-
+    /* Explicitly set the memory binding policy for a set of
+       segments */
     for (i = 0; i < num_segments; ++i) {
         numa_setlocal_memory(segments[i].mbs_start_addr,
                              segments[i].mbs_len);
@@ -115,7 +115,8 @@ static int libnuma_modules_bind(opal_maffinity_base_segment_t *segs,
     unsigned long node_mask = (1 << node_id);
 
     for(i = 0; i < count; i++) {
-        rc = mbind(segs[i].mbs_start_addr, segs[i].mbs_len, MPOL_PREFERRED,
+        rc = mbind(segs[i].mbs_start_addr, segs[i].mbs_len, 
+                   mca_maffinity_libnuma_component.libnuma_policy,
                    &node_mask, sizeof(node_mask) * 8, 
 #ifdef HAVE_MPOL_MF_MOVE
                    MPOL_MF_MOVE
