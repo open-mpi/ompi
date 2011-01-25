@@ -468,8 +468,6 @@ if test "x$CC" = "xicc"; then
     OMPI_CHECK_ICC_VARARGS
 fi
 
-AC_PROG_CC_C99
-
 # If we want the profiling layer:
 # - If the C compiler has weak symbols, use those.
 # - If not, then set to compile the code again with #define's in a
