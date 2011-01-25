@@ -478,7 +478,6 @@ static int tool_finalize(void) {
         exit_status = ret;
     }
     
- cleanup:
     return exit_status;
 }
 
