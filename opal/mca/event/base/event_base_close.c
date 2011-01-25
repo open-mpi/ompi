@@ -19,6 +19,8 @@ int opal_event_base_close(void)
 {
     opal_list_item_t *item;
 
+    opal_event_base_inited--;
+
     /* release the event base */
     opal_event_base_finalize(opal_event_base);
 

@@ -20,6 +20,8 @@
 
 BEGIN_C_DECLS
 
+extern int opal_event_base_inited;
+
 /**
  * Initialize the event MCA framework
  *

@@ -34,11 +34,16 @@
 int opal_event_base_output = -1;
 opal_list_t opal_event_components;
 opal_event_base_t *opal_event_base=NULL;
+int opal_event_base_inited = 0;
 
 int opal_event_base_open(void)
 {
     int value, rc = OPAL_SUCCESS;
-        
+
+    if( opal_event_base_inited++ < 0 ) {
+        return OPAL_SUCCESS;
+    }
+
     /* Debugging / verbose output */
     mca_base_param_reg_int_name("event", "base_verbose", 
                                 "Verbosity level of the event framework",
