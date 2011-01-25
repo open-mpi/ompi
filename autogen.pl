@@ -869,6 +869,12 @@ sub patch_autotools_output {
         $c =~ s/$search_string/$replace_string/;
     }
 
+    # See http://git.savannah.gnu.org/cgit/libtool.git/commit/?id=v2.2.6-201-g519bf91 for details
+    # Note that this issue was fixed in LT 2.2.8, however most distros are still using 2.2.6b
+
+    verbose "$indent_str"."Patching configure for IBM xlf libtool bug\n";
+    $c =~ s/(\$LD -shared \$libobjs \$deplibs \$)compiler_flags( -soname \$soname)/$1linker_flags$2/g;
+
     open(OUT, ">configure.patched") || die "Can't open configure.patched";
     print OUT $c;
     close(OUT);
