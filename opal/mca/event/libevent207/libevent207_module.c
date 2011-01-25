@@ -289,3 +289,8 @@ int opal_event_init(void)
 
     return OPAL_SUCCESS;
 }
+
+int opal_event_reinit(opal_event_base_t *evbase)
+{
+    return event_reinit(evbase->base);
+}

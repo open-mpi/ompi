@@ -114,6 +114,8 @@ OPAL_DECLSPEC void opal_event_base_finalize(opal_event_base_t *base);
 
 OPAL_DECLSPEC int opal_event_init(void);
 
+OPAL_DECLSPEC int opal_event_reinit(opal_event_base_t *base);
+
 /* thread support APIs */
 #if OPAL_EVENT_HAVE_THREAD_SUPPORT
 #ifdef WIN32

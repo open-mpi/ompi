@@ -771,6 +771,13 @@ int opal_cr_coord(int state)
         /* Do Restart Phase work */
 
         /*
+         * Re-initialize the event engine
+         * Otherwise it may/will use stale file descriptors which will disrupt
+         * the intended users of the soon-to-be newly assigned file descriptors.
+         */
+        opal_event_reinit(opal_event_base);
+
+        /*
          * Flush if() functionality, since it caches system specific info.
          */
         opal_if_base_close();
