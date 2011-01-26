@@ -146,6 +146,8 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #include "opal/sys/alpha/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_AMD64
 #include "opal/sys/amd64/atomic.h"
+#elif OPAL_ASSEMBLY_ARCH == OMPI_ARM
+#include "opal/sys/arm/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_IA32
 #include "opal/sys/ia32/atomic.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_IA64
