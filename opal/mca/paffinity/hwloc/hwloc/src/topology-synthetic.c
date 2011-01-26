@@ -85,7 +85,6 @@ hwloc_backend_synthetic_init(struct hwloc_topology *topology, const char *descri
 
     topology->backend_params.synthetic.arity[count-1] = (unsigned)item;
     topology->backend_params.synthetic.type[count] = type;
-    topology->backend_params.synthetic.id[count] = 0;
     count++;
   }
 
@@ -162,7 +161,6 @@ hwloc_backend_synthetic_init(struct hwloc_topology *topology, const char *descri
     topology->backend_params.synthetic.type[0] = HWLOC_OBJ_MACHINE;
     nb_machine_levels++;
   }
-  topology->backend_params.synthetic.id[0] = 0;
 
   if (cache_depth == 1)
     /* if there is a single cache level, make it L2 */
@@ -300,6 +298,12 @@ hwloc_look_synthetic(struct hwloc_topology *topology)
   unsigned first_cpu = 0, i;
 
   topology->support.discovery->pu = 1;
+
+  /* start with id=0 for each level */
+  for (i = 0; topology->backend_params.synthetic.arity[i] > 0; i++)
+    topology->backend_params.synthetic.id[i] = 0;
+  /* ... including the last one */
+  topology->backend_params.synthetic.id[i] = 0;
 
   /* update first level type according to the synthetic type array */
   topology->levels[0][0]->type = topology->backend_params.synthetic.type[0];
