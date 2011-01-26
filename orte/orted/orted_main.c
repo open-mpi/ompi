@@ -14,6 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
+ * Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,9 +59,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
-#if ORTE_ENABLE_BOOTSTRAP
 #include "opal/mca/sysinfo/sysinfo.h"
-#endif
 
 #include "orte/constants.h"
 #include "orte/util/show_help.h"
@@ -75,6 +74,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls.h"
+#include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/routed/routed.h"
@@ -475,7 +475,7 @@ int orte_daemon(int argc, char *argv[])
 
         /* get my jobid */
         if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobidstring,
-                                        ORTE_PROC_MY_NAME->jobid))) {
+                                                                     ORTE_PROC_MY_NAME->jobid))) {
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
@@ -494,12 +494,12 @@ int orte_daemon(int argc, char *argv[])
             /* couldn't open the file for some reason, so
              * just connect everything to /dev/null
              */
-             fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
+            fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
         } else {
             dup2(fd, STDOUT_FILENO);
             dup2(fd, STDERR_FILENO);
             if(fd != STDOUT_FILENO && fd != STDERR_FILENO) {
-               close(fd);
+                close(fd);
             }
         }
     }
@@ -549,7 +549,7 @@ int orte_daemon(int argc, char *argv[])
         orte_proc_t *proc;
         orte_node_t **nodes;
         orte_app_context_t *app;
-        char *tmp, *nptr;
+        char *tmp, *nptr, *sysinfo;
         int rc;
         int32_t ljob;
 
@@ -593,10 +593,14 @@ int orte_daemon(int argc, char *argv[])
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
         
-        /* create a string that contains our uri + the singleton's name */
+        /* create a string that contains our uri + the singleton's name + sysinfo */
         orte_util_convert_process_name_to_string(&nptr, &proc->name);
-        asprintf(&tmp, "%s[%s]", orte_process_info.my_daemon_uri, nptr);
+        orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, 
+					    orte_local_cpu_model);
+        asprintf(&tmp, "%s[%s][%s]", orte_process_info.my_daemon_uri, nptr, 
+		 sysinfo);
         free(nptr);
+	free(sysinfo);
 
         /* pass that info to the singleton */
 #ifndef __WINDOWS__
@@ -730,53 +734,33 @@ int orte_daemon(int argc, char *argv[])
                 OBJ_RELEASE(buffer);
                 goto DONE;
             }
-        } else if (orte_daemon_bootstrap) {
+        } else {
+            opal_list_item_t *item;
+            opal_sysinfo_value_t *info;
+            int32_t num_values;
+
             /* include our node name */
             opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
             
-#if !ORTE_ENABLE_MULTICAST
-            /* if we have multicast, then this info was already sent */
-#if ORTE_ENABLE_BOOTSTRAP
-            {
-                /* get our local resources */
-                char *keys[] = {
-                    OPAL_SYSINFO_CPU_TYPE,
-                    OPAL_SYSINFO_CPU_MODEL,
-                    OPAL_SYSINFO_NUM_CPUS,
-                    OPAL_SYSINFO_MEM_SIZE,
-                    NULL
-                };
-                opal_list_t resources;
-                opal_list_item_t *item;
-                opal_sysinfo_value_t *info;
-                int32_t num_values;
-                
-                OBJ_CONSTRUCT(&resources, opal_list_t);
-                opal_sysinfo.query(keys, &resources);
-                /* add number of values to the buffer */
-                num_values = opal_list_get_size(&resources);
-                opal_dss.pack(buffer, &num_values, 1, OPAL_INT32);
-                /* add them to the buffer */
-                while (NULL != (item = opal_list_remove_first(&resources))) {
-                    info = (opal_sysinfo_value_t*)item;
-                    opal_dss.pack(buffer, &info, 1, OPAL_STRING);
-                    opal_dss.pack(buffer, &info->type, 1, OPAL_DATA_TYPE_T);
-                    if (OPAL_INT64 == info->type) {
-                        opal_dss.pack(buffer, &(info->data.i64), 1, OPAL_INT64);
-                    } else if (OPAL_STRING == info->type) {
-                        opal_dss.pack(buffer, &(info->data.str), 1, OPAL_STRING);
-                    }
-                    /* if this is the cpu model, save it for later use */
-                    if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
-                        orte_local_cpu_model = strdup(info->data.str);
-                    }
-                    OBJ_RELEASE(info);
+            /* add number of values to the buffer */
+            num_values = opal_list_get_size(&orte_odls_globals.sysinfo);
+            opal_dss.pack(buffer, &num_values, 1, OPAL_INT32);
+            /* add them to the buffer */
+	    for (item = opal_list_get_first(&orte_odls_globals.sysinfo);
+		 item != opal_list_get_end(&orte_odls_globals.sysinfo);
+		 item = opal_list_get_next(item)) {
+		info = (opal_sysinfo_value_t*)item;
+		opal_dss.pack(buffer, &info->key, 1, OPAL_STRING);
+		opal_dss.pack(buffer, &info->type, 1, OPAL_DATA_TYPE_T);
+                if (OPAL_INT64 == info->type) {
+                    opal_dss.pack(buffer, &(info->data.i64), 1, OPAL_INT64);
+                } else if (OPAL_STRING == info->type) {
+                    opal_dss.pack(buffer, &(info->data.str), 1, OPAL_STRING);
                 }
-                OBJ_DESTRUCT(&resources);                
             }
-#endif
-#endif
+        }
 
+        if (orte_daemon_bootstrap) {
             /* send to a different callback location as the
              * HNP didn't launch us and isn't waiting for a
              * callback
@@ -795,8 +779,6 @@ int orte_daemon(int argc, char *argv[])
                 goto DONE;
             }            
         }
- 
-
         OBJ_RELEASE(buffer);  /* done with this */
     }
 
@@ -827,7 +809,7 @@ int orte_daemon(int argc, char *argv[])
     opal_event_dispatch();
 
     /* should never get here, but if we do... */
-DONE:
+ DONE:
     if (signals_set) {
         /* Release all local signal handlers */
         opal_event_del(&term_handler);

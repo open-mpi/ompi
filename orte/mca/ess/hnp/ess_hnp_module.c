@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * $COPYRIGHT$
+ * Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved. * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
@@ -39,9 +39,7 @@
 #include "opal/util/basename.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
-#if ORTE_ENABLE_BOOTSTRAP
 #include "opal/mca/sysinfo/base/base.h"
-#endif
 
 #include "orte/util/show_help.h"
 #include "orte/mca/rml/base/base.h"
@@ -167,8 +165,7 @@ static int rte_init(void)
         error = "orte_pstat_base_select";
         goto error;
     }
-    
-#if ORTE_ENABLE_BOOTSTRAP
+
     /* open and setup the local resource discovery framework */
     if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -180,7 +177,6 @@ static int rte_init(void)
         error = "opal_sysinfo_base_select";
         goto error;
     }
-#endif
 
     /* Since we are the HNP, then responsibility for
      * defining the name falls to the PLM component for our
@@ -339,7 +335,7 @@ static int rte_init(void)
 #if !ORTE_DISABLE_FULL_SUPPORT
     /* setup the orte_show_help system to recv remote output */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
-                                 ORTE_RML_NON_PERSISTENT, orte_show_help_recv, NULL);
+                                  ORTE_RML_NON_PERSISTENT, orte_show_help_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         error = "setup receive for orte_show_help";
@@ -355,9 +351,9 @@ static int rte_init(void)
                          orte_process_info.nodename));
 
     if (ORTE_SUCCESS != (ret = orte_session_dir(true,
-                                orte_process_info.tmpdir_base,
-                                orte_process_info.nodename, NULL,
-                                ORTE_PROC_MY_NAME))) {
+                                                orte_process_info.tmpdir_base,
+                                                orte_process_info.nodename, NULL,
+                                                ORTE_PROC_MY_NAME))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_session_dir";
         goto error;
@@ -394,9 +390,9 @@ static int rte_init(void)
     /* setup the global job and node arrays */
     orte_job_data = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                                      1,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      1))) {
+                                                       1,
+                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                       1))) {
         ORTE_ERROR_LOG(ret);
         error = "setup job array";
         goto error;
@@ -404,9 +400,9 @@ static int rte_init(void)
     
     orte_node_pool = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
         ORTE_ERROR_LOG(ret);
         error = "setup node array";
         goto error;
@@ -422,33 +418,6 @@ static int rte_init(void)
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_add(orte_node_pool, node);
-#if ORTE_ENABLE_BOOTSTRAP
-    {
-        /* get and store our local resources */
-        char *keys[] = {
-            OPAL_SYSINFO_CPU_TYPE,
-            OPAL_SYSINFO_CPU_MODEL,
-            OPAL_SYSINFO_NUM_CPUS,
-            OPAL_SYSINFO_MEM_SIZE,
-            NULL
-        };
-        opal_list_item_t *item;
-        opal_sysinfo_value_t *info;
-
-        opal_sysinfo.query(keys, &node->resources);
-        /* find our cpu model and save it for later */
-        for (item = opal_list_get_first(&node->resources);
-             item != opal_list_get_end(&node->resources);
-             item = opal_list_get_next(item)) {
-            info = (opal_sysinfo_value_t*)item;
-
-            if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
-                orte_local_cpu_model = strdup(info->data.str);
-                break;
-            }
-        }
-    }
-#endif
     
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -567,28 +536,28 @@ static int rte_init(void)
     }
 
     /* We actually do *not* want an HNP to voluntarily yield() the
-     processor more than necessary.  Orterun already blocks when
-     it is doing nothing, so it doesn't use any more CPU cycles than
-     it should; but when it *is* doing something, we do not want it
-     to be unnecessarily delayed because it voluntarily yielded the
-     processor in the middle of its work.
+       processor more than necessary.  Orterun already blocks when
+       it is doing nothing, so it doesn't use any more CPU cycles than
+       it should; but when it *is* doing something, we do not want it
+       to be unnecessarily delayed because it voluntarily yielded the
+       processor in the middle of its work.
      
-     For example: when a message arrives at orterun, we want the
-     OS to wake us up in a timely fashion (which most OS's
-     seem good about doing) and then we want orterun to process
-     the message as fast as possible.  If orterun yields and lets
-     aggressive MPI applications get the processor back, it may be a
-     long time before the OS schedules orterun to run again
-     (particularly if there is no IO event to wake it up).  Hence,
-     routed OOB messages (for example) may be significantly delayed
-     before being delivered to MPI processes, which can be
-     problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
-     require OOB messages for wireup, etc.). */
+       For example: when a message arrives at orterun, we want the
+       OS to wake us up in a timely fashion (which most OS's
+       seem good about doing) and then we want orterun to process
+       the message as fast as possible.  If orterun yields and lets
+       aggressive MPI applications get the processor back, it may be a
+       long time before the OS schedules orterun to run again
+       (particularly if there is no IO event to wake it up).  Hence,
+       routed OOB messages (for example) may be significantly delayed
+       before being delivered to MPI processes, which can be
+       problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
+       require OOB messages for wireup, etc.). */
     opal_progress_set_yield_when_idle(false);
     
     return ORTE_SUCCESS;
 
-error:
+ error:
     if (ORTE_ERR_SILENT != ret) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
@@ -703,9 +672,7 @@ static int rte_finalize(void)
     }
     
     /* handle the orted-specific OPAL stuff */
-#if ORTE_ENABLE_BOOTSTRAP
     opal_sysinfo_base_close();
-#endif
     opal_pstat_base_close();
 
     return ORTE_SUCCESS;    

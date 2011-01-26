@@ -22,9 +22,7 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
-#if ORTE_ENABLE_BOOTSTRAP
 #include "opal/mca/sysinfo/sysinfo.h"
-#endif
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/dss/dss.h"
@@ -397,7 +395,6 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     free(tmp);
     tmp = tmp2;
     
-#if ORTE_ENABLE_BOOTSTRAP
     {
         opal_list_item_t *item;
         opal_sysinfo_value_t *info;
@@ -421,7 +418,6 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
             tmp = tmp2;            
         }
     }
-#endif
     
     asprintf(&tmp2, "%s\n%s\tNum procs: %ld\tNext node_rank: %ld", tmp, pfx2,
              (long)src->num_procs, (long)src->next_node_rank);

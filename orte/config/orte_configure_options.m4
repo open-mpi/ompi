@@ -11,7 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
@@ -94,24 +94,5 @@ else
 fi
 AC_DEFINE_UNQUOTED([ORTE_ENABLE_MULTICAST], [$orte_want_multicast],
                    [Enable reliable multicast messaging])
-
-#
-# Do we want bootstrap of daemons enabled?
-#
-
-AC_MSG_CHECKING([if want bootstrap])
-AC_ARG_ENABLE([bootstrap],
-    [AC_HELP_STRING([--enable-bootstrap],
-                    [Enable bootstrap of daemons at node startup (default: disabled)])])
-if test "$enable_bootstrap" = "yes"; then
-    AC_MSG_RESULT([yes])
-    orte_want_bootstrap=1
-else
-    AC_MSG_RESULT([no])
-    orte_want_bootstrap=0
-fi
-AC_DEFINE_UNQUOTED([ORTE_ENABLE_BOOTSTRAP], [$orte_want_bootstrap],
-                   [Enable bootstrap of daemons at node startup])
-
 
 ])dnl

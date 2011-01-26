@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,6 +30,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/sysinfo/sysinfo.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
@@ -192,7 +194,8 @@ int orte_odls_base_open(void)
     orte_odls_globals.dmap = NULL;
     orte_odls_globals.debugger = NULL;
     orte_odls_globals.debugger_launched = false;
-    
+    OBJ_CONSTRUCT(&orte_odls_globals.sysinfo, opal_list_t);
+
     /* get any external processor bindings */
     OPAL_PAFFINITY_CPU_ZERO(orte_odls_globals.my_cores);
     orte_odls_globals.bound = false;
@@ -276,6 +279,36 @@ int orte_odls_base_open(void)
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-e");
     }
     
+    /* collect the system info */
+    if (NULL != opal_sysinfo.query) {
+        char *keys[] = {
+            OPAL_SYSINFO_CPU_TYPE,
+            OPAL_SYSINFO_CPU_MODEL,
+            OPAL_SYSINFO_NUM_CPUS,
+            OPAL_SYSINFO_MEM_SIZE,
+            NULL
+        };
+        opal_list_item_t *item;
+        opal_sysinfo_value_t *info;
+
+        /* get and store our local resources */
+        opal_sysinfo.query(keys, &orte_odls_globals.sysinfo);
+        /* find our cpu type and model, save it for later */
+        for (item = opal_list_get_first(&orte_odls_globals.sysinfo);
+             item != opal_list_get_end(&orte_odls_globals.sysinfo) &&
+                (NULL == orte_local_cpu_type || NULL == orte_local_cpu_model);
+             item = opal_list_get_next(item)) {
+            info = (opal_sysinfo_value_t*)item;
+
+            if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_TYPE)) {
+                orte_local_cpu_type = strdup(info->data.str);
+            }
+            if (0 == strcmp(info->key, OPAL_SYSINFO_CPU_MODEL)) {
+                orte_local_cpu_model = strdup(info->data.str);
+            }
+        }
+    }
+
     /* Open up all available components */
 
     if (ORTE_SUCCESS != 
