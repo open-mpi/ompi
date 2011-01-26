@@ -103,7 +103,11 @@ while (<INPUT>) {
 }
 
 if ($GNU_STACK == 1) {
-    print OUTPUT "\n\t.section\t.note.GNU-stack,\"\",\@progbits\n";
+    if ($asmarch eq "ARM") {
+        print OUTPUT "\n\t.section\t.note.GNU-stack,\"\",\%progbits\n";
+    } else {
+        print OUTPUT "\n\t.section\t.note.GNU-stack,\"\",\@progbits\n";
+    }
 }
 
 close(INPUT);
