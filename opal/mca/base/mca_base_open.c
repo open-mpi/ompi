@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,7 +57,6 @@ static void parse_verbose(char *e, opal_output_stream_t *lds);
  */
 int mca_base_open(void)
 {
-  int param_index;
   char *value;
   opal_output_stream_t lds;
   char hostname[64];
@@ -91,10 +91,7 @@ int mca_base_open(void)
                                    "Path where to look for Open MPI and ORTE components", 
                                    false, false, value, NULL);
   free(value);
-  param_index = mca_base_param_reg_string_name("mca", "verbose", 
-                                               "Top-level verbosity parameter",
-                                               false, false, NULL, NULL);
-
+  
   mca_base_param_reg_int_name("mca", "component_show_load_errors", 
                               "Whether to show errors for components that failed to load or not", 
                               false, false, 1, NULL);
@@ -103,9 +100,11 @@ int mca_base_open(void)
                               "Whether to attempt to disable opening dynamic components or not",
                               false, false, 0, NULL);
 
-  /* What verbosity level do we want? */
+  /* What verbosity level do we want for the default 0 stream? */
 
-  mca_base_param_lookup_string(param_index, &value);
+  mca_base_param_reg_string_name("mca", "verbose", 
+                                 "Specifies where the default error output stream goes (this is separate from distinct help messages).  Accepts a comma-delimited list of: stderr, stdout, syslog, syslogpri:<notice|info|debug>, syslogid:<str> (where str is the prefix string for all syslog notices), file[:filename] (if filename is not specified, a default filename is used), fileappend (if not specified, the file is opened for truncation), level[:N] (if specified, integer verbose level; otherwise, 0 is implied)",
+                                 false, false, "stderr", &value);
   memset(&lds, 0, sizeof(lds));
   if (NULL != value) {
     parse_verbose(value, &lds);
@@ -118,6 +117,7 @@ int mca_base_open(void)
   opal_output_reopen(0, &lds);
   opal_output_verbose(5, 0, "mca: base: opening components");
   free(lds.lds_prefix);
+
   /* Open up the component repository */
 
   return mca_base_component_repository_init();
