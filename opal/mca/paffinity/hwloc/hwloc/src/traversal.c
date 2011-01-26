@@ -193,7 +193,8 @@ hwloc_obj_type_snprintf(char * __hwloc_restrict string, size_t size, hwloc_obj_t
 	  /* TODO: more pretty presentation? */
     return hwloc_snprintf(string, size, "%s%u", hwloc_obj_type_string(type), obj->attr->group.depth);
   default:
-    *string = '\0';
+    if (size > 0)
+      *string = '\0';
     return 0;
   }
 }

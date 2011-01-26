@@ -23,7 +23,7 @@ from PLPA to hwloc.
 hwloc supports the following operating systems:
 
   * Linux (including old kernels not having sysfs topology information, with
- knowledge of cpusets, offline cpus, ScaleMP vSMP, and Kerrighed support)
+ knowledge of cpusets, offline CPUs, ScaleMP vSMP, and Kerrighed support)
   * Solaris
   * AIX
   * Darwin / OS X
@@ -345,8 +345,8 @@ that it contains. These bitmaps may be used for CPU binding and Memory binding.
 hwloc offers an extensive bitmap manipulation interface in hwloc/bitmap.h.
 
 Moreover, hwloc also comes with additional helpers for interoperability with
-several commonly used environments. See the Interoperability with other
-software section for details.
+several commonly used environments. See the Interoperability With Other
+Software section for details.
 
 The complete API documentation is available in a full set of HTML pages, man
 pages, and self-contained PDF files (formatted for both both US letter and A4
@@ -671,12 +671,12 @@ Further Reading
 The documentation chapters include
 
   * Terms and Definitions
-  * Command-line tools
-  * Environment variables
-  * CPU Binding and Memory Binding
-  * Interoperability with other software
-  * Thread safety
-  * Embedding hwloc in other software
+  * Command-Line Tools
+  * Environment Variables
+  * CPU and Memory Binding Overview
+  * Interoperability With Other Software
+  * Thread Safety
+  * Embedding hwloc in Other Software
   * Switching from PLPA to hwloc
   * Frequently Asked Questions
 
@@ -684,5 +684,5 @@ Make sure to have had a look at those too!
 
 -------------------------------------------------------------------------------
 
-Generated on Thu Dec 16 2010 16:48:29 for Hardware Locality (hwloc) by  doxygen
-1.7.1
+Generated on Mon Jan 24 2011 17:12:06 for Hardware Locality (hwloc) by  doxygen
+1.7.2

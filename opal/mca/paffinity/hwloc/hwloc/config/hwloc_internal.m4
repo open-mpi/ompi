@@ -105,6 +105,22 @@ EOF
                  [hwloc_generate_doxs=yes], [hwloc_generate_doxs=no])
     AC_MSG_RESULT([$hwloc_generate_doxs])
     
+    # Linux and OS X take different sed arguments.
+    AC_PROG_SED
+    AC_MSG_CHECKING([if the sed -i option requires an argument])
+    rm -f conftest
+    cat > conftest <<EOF
+hello
+EOF
+    $SED -i -e s/hello/goodbye/ conftest 2> /dev/null
+    AS_IF([test -f conftest-e],
+          [SED_I="$SED -i ''"
+           AC_MSG_RESULT([yes])],
+          [SED_I="$SED -i"
+           AC_MSG_RESULT([no])])
+    rm -f conftest conftest-e
+    AC_SUBST([SED_I])
+
     # Making the top-level README requires w3m or lynx.
     AC_ARG_VAR([W3M], [Location of the w3m program (required to building the top-level hwloc README file)])
     AC_PATH_TOOL([W3M], [w3m])
