@@ -124,6 +124,15 @@ int orte_errmgr_hnp_global_module_init(void)
             goto cleanup;
         }
     }
+    else {
+        /* Still need the tool listener so we can tell it that we cannot do
+         * anything if they ask.
+         */
+        if( ORTE_SUCCESS != (ret = orte_errmgr_base_tool_init()) ) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+    }
 
     if( mca_errmgr_hnp_component.autor_enabled ) {
         if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_autor_global_module_init()) ) {
@@ -151,6 +160,15 @@ int orte_errmgr_hnp_global_module_finalize(void)
         if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_crmig_global_module_finalize()) ) {
             exit_status = ret;
             goto cleanup;
+        }
+    }
+    else {
+        /* Still need the tool listener so we can tell it that we cannot do
+         * anything if they ask.
+         */
+        if( ORTE_SUCCESS != (ret = orte_errmgr_base_tool_finalize()) ) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
         }
     }
 
@@ -255,8 +273,16 @@ int orte_errmgr_hnp_global_predicted_fault(opal_list_t *proc_list,
             goto cleanup;
         }
     }
+    /*
+     * If Process migration is not enabled, then return an error the tool
+     * which will print an appropriate message for the user.
+     */
     else {
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+                             "errmgr:hnp:predicted_fault() Command line asked for a migration, but it is not enabled\n"));
+        orte_errmgr_base_migrate_update(ORTE_ERRMGR_MIGRATE_STATE_ERROR);
         exit_status = ORTE_ERR_NOT_IMPLEMENTED;
+        goto cleanup;
     }
 
  cleanup:
