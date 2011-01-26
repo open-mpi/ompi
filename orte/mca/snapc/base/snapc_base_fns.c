@@ -712,14 +712,42 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
         ORTE_SNAPC_CKPT_STATE_ESTABLISHED  == ckpt_status ||
         ORTE_SNAPC_CKPT_STATE_STOPPED   == ckpt_status ||
         ORTE_SNAPC_CKPT_STATE_ERROR     == ckpt_status ) {
-        orte_sstore.get_attr(ss_handle,
-                             SSTORE_METADATA_GLOBAL_SNAP_REF,
-                             &global_snapshot_handle);
 
-        orte_sstore.get_attr(ss_handle,
-                             SSTORE_METADATA_GLOBAL_SNAP_SEQ,
-                             &tmp_str);
-        seq_num = atoi(tmp_str);
+        if( ORTE_SNAPC_CKPT_STATE_ERROR != ckpt_status ) {
+            if( ORTE_SUCCESS != (ret = orte_sstore.get_attr(ss_handle,
+                                                            SSTORE_METADATA_GLOBAL_SNAP_REF,
+                                                            &global_snapshot_handle)) ) {
+                opal_output(orte_snapc_base_output,
+                            "%s) base:ckpt_update_cmd: Error: SStore get_attr failed (ret = %d)\n",
+                            ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type), ret );
+                ORTE_ERROR_LOG(ret);
+                /* Do not exit here, continue so that we can inform the tool
+                 * that the checkpoint has failed
+                 */
+            }
+
+            if( ORTE_SUCCESS != (ret = orte_sstore.get_attr(ss_handle,
+                                                            SSTORE_METADATA_GLOBAL_SNAP_SEQ,
+                                                            &tmp_str)) ) {
+                opal_output(orte_snapc_base_output,
+                            "%s) base:ckpt_update_cmd: Error: SStore get_attr failed (ret = %d)\n",
+                            ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type), ret );
+                ORTE_ERROR_LOG(ret);
+                /* Do not exit here, continue so that we can inform the tool
+                 * that the checkpoint has failed
+                 */
+            }
+
+            if( NULL != tmp_str ) {
+                seq_num = atoi(tmp_str);
+            } else {
+                seq_num = -1;
+            }
+        } else {
+            /* Checkpoint Error Case */
+            global_snapshot_handle = NULL;
+            seq_num = -1;
+        }
 
         OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                              "%s) base:ckpt_update_cmd: Sending update command <status %d> + <ref %s> <seq %d>\n",

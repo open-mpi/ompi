@@ -1781,6 +1781,7 @@ static int snapc_full_process_orted_update_cmd(orte_process_name_t* sender,
             SNAPC_FULL_SET_TIMER(SNAPC_FULL_TIMER_RECOVERED);
             SNAPC_FULL_DISPLAY_RECOVERED_TIMER();
             orte_snapc_base_has_recovered = true;
+            is_app_checkpointable = true;
 
             exit_status = ORTE_SUCCESS;
             goto cleanup;
