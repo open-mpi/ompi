@@ -153,6 +153,7 @@ typedef unsigned int uint;
 #define umask                     _umask
 #define getch                     _getch
 #define random                    rand
+#define nanosleep(tp, rem)        Sleep(*tp.tv_sec*1000+*tp.tv_nsec/1000000)
 
 #ifndef UINT32_MAX
 #define UINT32_MAX            _UI32_MAX
