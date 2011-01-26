@@ -237,6 +237,20 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     /* No way to reach here */
 }
 
+int orte_errmgr_base_update_state(orte_jobid_t job,
+                                  orte_job_state_t jobstate,
+                                  orte_process_name_t *proc_name,
+                                  orte_proc_state_t state,
+                                  pid_t pid,
+                                  orte_exit_code_t exit_code)
+{
+    /*
+     * This is a stub function that is only meant to be called by tools,
+     * so it will always return success.
+     */
+    return ORTE_SUCCESS;
+}
+
 /********************
  * Utility functions
  ********************/

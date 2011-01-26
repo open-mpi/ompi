@@ -161,7 +161,7 @@ int app_coord_init()
 
     if( 0 == ORTE_PROC_MY_NAME->vpid ) {
         OPAL_OUTPUT_VERBOSE((3, mca_snapc_full_component.super.output_handle,
-                             "app) Shutdown Barrier: Send INIT to HNP...!"));
+                             "app) Startup Barrier: Send INIT to HNP...!"));
 
         OBJ_CONSTRUCT(&buffer, opal_buffer_t);
 

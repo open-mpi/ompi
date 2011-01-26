@@ -171,6 +171,10 @@ int orte_errmgr_hnp_autor_global_module_init(void)
     current_global_jobid   = ORTE_JOBID_INVALID;
     current_global_jobdata = NULL;
 
+    if( NULL == autor_timer_event ) {
+        autor_timer_event = opal_event_evtimer_new(opal_event_base, errmgr_autor_recover_processes, NULL);
+    }
+
     ERRMGR_AUTOR_CLEAR_TIMERS();
 
     return ORTE_SUCCESS;
@@ -187,6 +191,7 @@ int orte_errmgr_hnp_autor_global_module_finalize(void)
     }
     if( NULL != autor_timer_event ) {
         free(autor_timer_event);
+        autor_timer_event = NULL;
     }
 
     current_global_jobid   = ORTE_JOBID_INVALID;
