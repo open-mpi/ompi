@@ -41,6 +41,7 @@
 #include "opal/mca/memory/memory.h"
 #include "opal/mca/memory/base/empty.h"
 #include "opal/memoryhooks/memory.h"
+#include "opal/util/output.h"
 
 #include "opal/mca/memory/linux/memory_linux.h"
 #undef opal_memory_changed
