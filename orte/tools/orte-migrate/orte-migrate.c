@@ -601,6 +601,17 @@ static void process_ckpt_update_cmd(orte_process_name_t* sender,
     }
 
     /*
+     * If there was an error, display a message and exit
+     */
+    if( ORTE_ERRMGR_MIGRATE_STATE_ERROR == orte_migrate_ckpt_status ) {
+        opal_show_help("help-orte-migrate.txt", "err-other", 
+                       true,
+                       orte_migrate_globals.pid);
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
+
+    /*
      * If we are to display the status progression
      */
     if( orte_migrate_globals.status ) {

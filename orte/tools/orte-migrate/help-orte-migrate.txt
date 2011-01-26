@@ -49,3 +49,10 @@ If you require this feature contact the Open MPI development group.
 Error: The Job identified by PID (%d) is currently migrating other processes.
        Only one migration request can be processed at a time. Please try again
        later.
+[err-other]
+Error: The Job identified by PID (%d) was not able to migrate processes in this
+       job. This could be caused by any of the following:
+       - Invalid node or rank specified
+       - No processes on the indicated node can by migrated
+       - Process migration was not enabled for this job. Make sure to indicate
+         the proper AMCA file: "-am ft-enable-cr-recovery".
