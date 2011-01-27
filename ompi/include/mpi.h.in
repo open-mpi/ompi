@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -1317,9 +1317,9 @@ OMPI_DECLSPEC  int MPI_Is_thread_main(int *flag);
 OMPI_DECLSPEC  int MPI_Keyval_create(MPI_Copy_function *copy_fn,
                                      MPI_Delete_function *delete_fn,
                                      int *keyval, void *extra_state)
-                                     __mpi_interface_deprecated__("MPI_Keyval_create is superseded by MPI_Comm_keyval_create in MPI-2.0");
+                                     __mpi_interface_deprecated__("MPI_Keyval_create is superseded by MPI_Comm_create_keyval in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Keyval_free(int *keyval)
-                                   __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_keyval_free in MPI-2.0");
+                                   __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_free_keyval in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint MPI_Op_c2f(MPI_Op op);
 OMPI_DECLSPEC  int MPI_Op_commutative(MPI_Op op, int *commute);
@@ -1844,9 +1844,9 @@ OMPI_DECLSPEC  int PMPI_Is_thread_main(int *flag);
 OMPI_DECLSPEC  int PMPI_Keyval_create(MPI_Copy_function *copy_fn,
                                       MPI_Delete_function *delete_fn,
                                       int *keyval, void *extra_state)
-                                      __mpi_interface_deprecated__("MPI_Keyval_create is superseded by MPI_Comm_keyval_create in MPI-2.0");
+                                      __mpi_interface_deprecated__("MPI_Keyval_create is superseded by MPI_Comm_create_keyval in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Keyval_free(int *keyval)
-                                    __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_keyval_free in MPI-2.0");
+                                    __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_free_keyval in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
 OMPI_DECLSPEC  MPI_Fint PMPI_Op_c2f(MPI_Op op);
 OMPI_DECLSPEC  int PMPI_Op_commutative(MPI_Op op, int *commute);
