@@ -59,7 +59,13 @@ retry1:
 #endif
 	bne    $3, $5, done1   
 	or     $2, $6, 0      
+#ifdef __linux__
+	.set mips2
+#endif
 	sc     $2, 0($4)         
+#ifdef __linux__
+	.set mips0
+#endif
 	beqz   $2, retry1
 done1:                 
 	.set reorder          
