@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -623,6 +624,10 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
 
 void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
 {
+    if( MCA_OOB_TCP_CLOSED == peer->peer_state ) {
+        goto close_socket;
+    }
+
     /* giving up and cleanup any pending messages */
     if(peer->peer_retries++ > mca_oob_tcp_component.tcp_peer_retries) {
         mca_oob_tcp_msg_t *msg;
@@ -660,6 +665,7 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
         peer->peer_state = MCA_OOB_TCP_FAILED;
     }
 
+ close_socket:
     if (peer->peer_sd >= 0) {
         opal_event_del(&peer->peer_recv_event);
         opal_event_del(&peer->peer_send_event);

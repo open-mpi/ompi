@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2009-2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -281,8 +282,19 @@ int orte_errmgr_hnp_autor_global_update_state(orte_jobid_t job,
         return ORTE_SUCCESS;
     }
 
-    /* get the job data object for this process */
-    if (NULL == (jdata = orte_get_job_data_object(job))) {
+    /*
+     * Get the job data object for this process
+     */
+    if( NULL != proc_name ) { /* Get job from proc's jobid */
+        jdata = orte_get_job_data_object(proc_name->jobid);
+    } else { /* Get from the general job */
+        jdata = orte_get_job_data_object(job);
+    }
+    if( NULL == jdata ) {
+        opal_output(0, "%s errmgr:hnp(autor):update_state() Error: Cannot find job %s for Process %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_JOBID_PRINT(job),
+                    (NULL == proc_name) ? "NULL" : ORTE_NAME_PRINT(proc_name) );
         ret = ORTE_ERROR;
         ORTE_ERROR_LOG(ret);
         exit_status = ret;

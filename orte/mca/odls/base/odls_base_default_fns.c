@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved. 
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1427,7 +1428,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     char **argvsav=NULL;
     int inm;
     opal_event_t *delay;
-    int num_procs_alive;
+    int num_procs_alive = 0;
     orte_nid_t *nid;
     orte_node_t *node;
 
@@ -2035,7 +2036,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
 
 int orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buffer, orte_rml_tag_t tag)
 {
-    int rc;
+    int rc, exit_status = ORTE_SUCCESS;
     opal_list_item_t *item;
     orte_odls_child_t *child;
     
@@ -2066,15 +2067,23 @@ int orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buff
         if (rc < 0 && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_ADDRESSEE_UNKNOWN) {
             /* ignore if the addressee is unknown as a race condition could
              * have allowed the child to exit before we send it a barrier
-             * due to the vagaries of the event library
+             * due to the vagaries of the event library.
+             *
+             * If we do get an error it is likely that the orte_local_children
+             * has changed to reflect it, so we can no longer deliver messages.
+             * So just break out and return the error code.
              */
             ORTE_ERROR_LOG(rc);
+            exit_status = rc;
+            goto cleanup;
         }
     }
-    
+
+ cleanup:
     opal_condition_signal(&orte_odls_globals.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
-    return ORTE_SUCCESS;
+
+    return exit_status;
 }
 
 
@@ -2271,8 +2280,6 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
      * so free the info and set it to NULL
      */
     if (child->init_recvd && NULL != child->rml_uri) {
-        free(child->rml_uri);
-        child->rml_uri = NULL;
         child->fini_recvd = true;
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                              "%s odls: require sync deregistering child %s",
@@ -2357,9 +2364,19 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     }
     rc = ORTE_SUCCESS;
     OBJ_DESTRUCT(&buffer);
-    
+
+    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                         "%s odls: Finished sending sync ack to child %s (Registering %s)",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc), (registering ? "True" : "False") ));
+
     /* if we are deregistering, then we are done */
     if (!registering) {
+        orte_routed.delete_route(child->name);
+        if( NULL != child->rml_uri ) {
+            free(child->rml_uri);
+            child->rml_uri = NULL;
+        }
         goto CLEANUP;
     }
     
@@ -2560,6 +2577,7 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         goto MOVEON;
     }
+
     /* if this is a debugger daemon, then just report the state
      * and return as we aren't monitoring it
      */
@@ -2593,6 +2611,7 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
                                  "%s odls:waitpid_fired child %s died by call to abort",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
+            child->state = ORTE_PROC_STATE_ABORTED;
             goto MOVEON;
         }
         
@@ -2667,9 +2686,7 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
                              "%s odls:waitpid_fired child process %s terminated with signal",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name) ));
-        /* JJH: Should we decrement the number of local procs on this node here?
-         * jobdat->num_local_procs--;
-         */
+        /* Do not decrement the number of local procs here. That is handled in the errmgr */
     }
     
  MOVEON:

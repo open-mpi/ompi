@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2010 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -1928,6 +1929,7 @@ int mca_oob_tcp_set_addr(const orte_process_name_t* name, const char* uri)
             /* clear any pending recvs */
             peer->peer_recv_msg = NULL;
             OPAL_THREAD_UNLOCK(&peer->peer_lock);
+            mca_oob_tcp_peer_shutdown(peer);
         }
         /* delete the entry from the hash table */
         opal_hash_table_set_value_uint64(&mca_oob_tcp_component.tcp_peer_names,

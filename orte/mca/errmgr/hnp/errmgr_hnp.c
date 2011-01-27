@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2009-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- *
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -855,6 +855,7 @@ static void failed_start(orte_job_t *jdata)
                 /* remove the child from our list */
                 opal_list_remove_item(&orte_local_children, &child->super);
                 OBJ_RELEASE(child);
+                jobdat->num_local_procs--;
             }
         }
     }
@@ -907,6 +908,7 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
                 opal_list_remove_item(&orte_local_children, &child->super);
                 OBJ_RELEASE(child);
                 jdata->num_terminated++;
+                jobdat->num_local_procs--;
             } else if (ORTE_PROC_STATE_RUNNING) {
                 jdata->num_launched++;
             } else if (ORTE_PROC_STATE_REGISTERED == state) {
@@ -931,8 +933,23 @@ void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
     opal_list_item_t *item, *next;
     orte_odls_child_t *child;
     orte_proc_t *proct;
+    orte_odls_job_t *jobdat, *jdat;
     int i;
-    
+
+    jobdat = NULL;
+    for (item  = opal_list_get_first(&orte_local_jobdata);
+         item != opal_list_get_end(&orte_local_jobdata);
+         item  = opal_list_get_next(item)) {
+        jdat = (orte_odls_job_t*)item;
+        if (jdat->jobid == jdata->jobid) {
+            jobdat = jdat;
+            break;
+        }
+    }
+    if (NULL == jobdat) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    }
+
     /***   UPDATE LOCAL CHILD   ***/
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
@@ -956,6 +973,9 @@ void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
                     if (!jdata->enable_recovery) {
                         opal_list_remove_item(&orte_local_children, &child->super);
                         OBJ_RELEASE(child);
+                        if (NULL != jobdat) {
+                            jobdat->num_local_procs--;
+                        }
                     }
                     jdata->num_terminated++;
                 } else if (ORTE_PROC_STATE_RUNNING == state) {
