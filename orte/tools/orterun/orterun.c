@@ -1804,9 +1804,10 @@ static int parse_appfile(char *filename, char ***env)
 static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
                    int argc, char **argv, char ***new_argv, int num_procs) 
 {
-    int i;
-    char *line, *full_line = strdup(orig_line);
-    char *user_argv, *tmp, *tmp2, **tmp_argv, **executable;
+    int ret = ORTE_SUCCESS;
+    int i, j, count;
+    char *line = NULL, *tmp = NULL, *full_line = strdup(orig_line);
+    char **orterun_argv = NULL, **executable_argv = NULL, **line_argv = NULL;
     char cwd[OPAL_PATH_MAX];
     bool used_num_procs = false;
     bool single_app = false;
@@ -1814,7 +1815,8 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
 
     line = full_line;
     if (NULL == line) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        ret = ORTE_ERR_OUT_OF_RESOURCE;
+        goto out;
     }
 
     /* Trim off whitespace at the beginning and ending of line */
@@ -1826,113 +1828,85 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
         line[i] = '\0';
     }
     if (strlen(line) <= 0) {
-        return ORTE_ERROR;
+        ret = ORTE_ERROR;
+        goto out;
     }
 
     /* Get the tail of the command line (i.e., the user executable /
        argv) */
 
-    opal_cmd_line_get_tail(cmd_line, &i, &executable);
+    opal_cmd_line_get_tail(cmd_line, &i, &executable_argv);
 
-    /* Remove --debug, --debugger, and -tv from the user command line
-       params */
+    /* Make a new copy of the orterun command line args, without the
+       orterun token itself, and without the --debug, --debugger, and
+       -tv flags. */
 
-    if (1 == argc) {
-        user_argv = strdup("");
-    } else {
-        tmp_argv = opal_argv_copy(argv);
-        for (i = 0; NULL != tmp_argv[i]; ++i) {
-            if (0 == strcmp(tmp_argv[i], "-debug") ||
-                0 == strcmp(tmp_argv[i], "--debug")) {
-                free(tmp_argv[i]);
-                tmp_argv[i] = strdup("");
-            } else if (0 == strcmp(tmp_argv[i], "-tv") ||
-                0 == strcmp(tmp_argv[i], "--tv")) {
-                free(tmp_argv[i]);
-                tmp_argv[i] = strdup("");
-            } else if (0 == strcmp(tmp_argv[i], "--debugger") ||
-                       0 == strcmp(tmp_argv[i], "-debugger")) {
-                free(tmp_argv[i]);
-                tmp_argv[i] = strdup("");
-                if (NULL != tmp_argv[i + 1]) {
-                    ++i;
-                    free(tmp_argv[i]);
-                    tmp_argv[i] = strdup("");
-                }
-            }
+    orterun_argv = opal_argv_copy(argv);
+    count = opal_argv_count(orterun_argv);
+    opal_argv_delete(&count, &orterun_argv, 0, 1);
+    for (i = 0; NULL != orterun_argv[i]; ++i) {
+        count = opal_argv_count(orterun_argv);
+        if (0 == strcmp(orterun_argv[i], "-debug") ||
+            0 == strcmp(orterun_argv[i], "--debug")) {
+            opal_argv_delete(&count, &orterun_argv, i, 1);
+        } else if (0 == strcmp(orterun_argv[i], "-tv") ||
+                   0 == strcmp(orterun_argv[i], "--tv")) {
+            opal_argv_delete(&count, &orterun_argv, i, 1);
+        } else if (0 == strcmp(orterun_argv[i], "--debugger") ||
+                   0 == strcmp(orterun_argv[i], "-debugger")) {
+            opal_argv_delete(&count, &orterun_argv, i, 2);
         }
-        user_argv = opal_argv_join(tmp_argv + 1, ' ');
-        opal_argv_free(tmp_argv);
     }
 
     /* Replace @@ tokens - line should never realistically be bigger
        than MAX_INT, so just cast to int to remove compiler warning */
 
-    for (i = 0; i < (int) strlen(line); ++i) {
-        tmp = NULL;
-        if (0 == strncmp(line + i, "@mpirun@", 8)) {
-            line[i] = '\0';
-            asprintf(&tmp, "%s%s%s", line, argv[0], line + i + 8);
-        } else if (0 == strncmp(line + i, "@orterun@", 9)) {
-            line[i] = '\0';
-            asprintf(&tmp, "%s%s%s", line, argv[0], line + i + 9);
-        } else if (0 == strncmp(line + i, "@mpirun_args@", 13)) {
-            line[i] = '\0';
-            asprintf(&tmp, "%s%s%s", line, user_argv, line + i + 13);
-        } else if (0 == strncmp(line + i, "@orterun_args@", 14)) {
-            line[i] = '\0';
-            asprintf(&tmp, "%s%s%s", line, user_argv, line + i + 14);
-        } else if (0 == strncmp(line + i, "@np@", 4)) {
-            line[i] = '\0';
-            asprintf(&tmp, "%s%d%s", line, num_procs,
-                     line + i + 4);
-            used_num_procs = true;
-        } else if (0 == strncmp(line + i, "@single_app@", 12)) {
-            line[i] = '\0';
+    *new_argv = NULL;
+    line_argv = opal_argv_split(line, ' ');
+    if (NULL == line_argv) {
+        ret = ORTE_ERR_NOT_FOUND;
+        goto out;
+    }
+    for (i = 0; NULL != line_argv[i]; ++i) {
+        if (0 == strcmp(line_argv[i], "@mpirun@") ||
+            0 == strcmp(line_argv[i], "@orterun@")) {
+            opal_argv_append_nosize(new_argv, argv[0]);
+        } else if (0 == strcmp(line_argv[i], "@mpirun_args@") ||
+                   0 == strcmp(line_argv[i], "@orterun_args@")) {
+            for (j = 0; NULL != orterun_argv && NULL != orterun_argv[j]; ++j) {
+                opal_argv_append_nosize(new_argv, orterun_argv[j]);
+            }
+        } else if (0 == strcmp(line_argv[i], "@np@")) {
+            asprintf(&tmp, "%d", num_procs);
+            opal_argv_append_nosize(new_argv, tmp);
+            free(tmp);
+        } else if (0 == strcmp(line_argv[i], "@single_app@")) {
             /* This token is only a flag; it is not replaced with any
                alternate text */
-            asprintf(&tmp, "%s%s", line, line + i + 12);
             single_app = true;
-        } else if (0 == strncmp(line + i, "@executable@", 12)) {
-            line[i] = '\0';
+        } else if (0 == strcmp(line_argv[i], "@executable@")) {
             /* If we found the executable, paste it in.  Otherwise,
                this is a possible error. */
-            if (NULL != executable) {
-                asprintf(&tmp, "%s%s%s", line, executable[0], line + i + 12);
+            if (NULL != executable_argv) {
+                opal_argv_append_nosize(new_argv, executable_argv[0]);
             } else {
                 fail_needed_executable = true;
             }
-        } else if (0 == strncmp(line + i, "@executable_argv@", 17)) {
-            line[i] = '\0';
+        } else if (0 == strcmp(line_argv[i], "@executable_argv@")) {
             /* If we found the tail, paste in the argv.  Otherwise,
                this is a possible error. */
-            if (NULL != executable) {
-                if (NULL != executable[1]) {
-                    /* Put in the argv */
-                    tmp2 = opal_argv_join(executable + 1, ' ');
-                    asprintf(&tmp, "%s%s%s", line, tmp2, line + i + 17);
-                    free(tmp2);
-                } else {
-                    /* There is no argv; just paste the front and back
-                       together, removing the @token@ */
-                    asprintf(&tmp, "%s%s", line, line + i + 17);
+            if (NULL != executable_argv) {
+                for (j = 1; NULL != executable_argv[j]; ++j) {
+                    opal_argv_append_nosize(new_argv, executable_argv[j]);
                 }
             } else {
                 fail_needed_executable = true;
             }
-        }
-
-        if (NULL != tmp) {
-            free(full_line);
-            full_line = line = tmp;
-            --i;
+        } else {
+            /* It wasn't a special token, so just copy it over */
+            opal_argv_append_nosize(new_argv, line_argv[i]);
         }
     }
-
-    /* Split up into argv */
-
-    *new_argv = opal_argv_split(line, ' ');
-    free(full_line);
 
     /* Can we find argv[0] in the path? */
 
@@ -1949,8 +1923,10 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
            -np value if the user did not specify -np on the command
            line. */
         if (used_num_procs && 0 == num_procs) {
+            free(tmp);
+            tmp = opal_argv_join(orterun_argv, ' ');
             orte_show_help("help-orterun.txt", "debugger requires -np",
-                           true, (*new_argv)[0], argv[0], user_argv, 
+                           true, (*new_argv)[0], argv[0], tmp,
                            (*new_argv)[0]);
             /* Fall through to free / fail, below */
         } 
@@ -1976,8 +1952,7 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
 
         /* Otherwise, we succeeded.  Return happiness. */
         else {
-            free(tmp);
-            return ORTE_SUCCESS;
+            goto out;
         }
         free(tmp);
     }
@@ -1986,7 +1961,25 @@ static int process(char *orig_line, char *basename, opal_cmd_line_t *cmd_line,
 
     opal_argv_free(*new_argv);
     *new_argv = NULL;
-    return ORTE_ERR_NOT_FOUND;
+    ret = ORTE_ERR_NOT_FOUND;
+
+ out:
+    if (NULL != orterun_argv) {
+        opal_argv_free(orterun_argv);
+    }
+    if (NULL != executable_argv) {
+        opal_argv_free(executable_argv);
+    }
+    if (NULL != line_argv) {
+        opal_argv_free(line_argv);
+    }
+    if (NULL != tmp) {
+        free(tmp);
+    }
+    if (NULL != full_line) {
+        free(full_line);
+    }
+    return ret;
 }
 
 /**
