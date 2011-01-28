@@ -208,6 +208,11 @@ int orte_sstore_stage_app_register(orte_sstore_base_handle_t handle)
      * Create a handle
      */
     orte_sstore_handle_current = handle;
+    handle_info = find_handle_info(handle);
+    if( NULL != handle_info ) {
+        /* Remove the old, stale handle */
+        opal_list_remove_item(active_handles, &(handle_info->super));
+    }
     handle_info = create_new_handle_info(handle);
 
     /*
