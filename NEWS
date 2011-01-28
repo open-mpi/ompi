@@ -63,6 +63,9 @@ Trunk (not on release branches yet)
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
 - Added ARM support.
+- Fixed multi-token command-line issues when using the orterun
+  --debug switch.  Thanks to Gabriele Fatigati for identifying the
+  problem.
 
 
 1.5.2
