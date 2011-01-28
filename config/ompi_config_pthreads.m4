@@ -140,7 +140,7 @@ if test "$ompi_pthread_c_success" = "0"; then
       ;;
       *-aix* | *-freebsd*)
         if test "`echo $CPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-          PTRHEAD_CPPFLAGS="-D_THREAD_SAFE"
+          PTHREAD_CPPFLAGS="-D_THREAD_SAFE"
           CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
         fi
         run_this_test=1
@@ -188,7 +188,7 @@ if test "$ompi_pthread_cxx_success" = "0"; then
       ;;
       *-aix* | *-freebsd*)
         if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-          PTRHEAD_CXXCPPFLAGS="-D_THREAD_SAFE"
+          PTHREAD_CXXCPPFLAGS="-D_THREAD_SAFE"
           CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
         fi
         run_this_test=1
@@ -423,7 +423,7 @@ if test "$ompi_pthread_c_success" = "0"; then
     case "${host_cpu}-${host-_os}" in
       *-aix* | *-freebsd*)
         if test "`echo $CPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-          PTRHEAD_CPPFLAGS="-D_THREAD_SAFE"
+          PTHREAD_CPPFLAGS="-D_THREAD_SAFE"
           CPPFLAGS="$CPPFLAGS $PTHREAD_CPPFLAGS"
         fi
       ;;
@@ -463,7 +463,7 @@ if test "$ompi_pthread_cxx_success" = "0"; then
     case "${host_cpu}-${host-_os}" in
       *-aix* | *-freebsd*)
         if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-          PTRHEAD_CXXCPPFLAGS="-D_THREAD_SAFE"
+          PTHREAD_CXXCPPFLAGS="-D_THREAD_SAFE"
           CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
         fi
       ;;
@@ -493,7 +493,7 @@ if test "$ompi_pthread_cxx_success" = "0"; then
       case "${host_cpu}-${host-_os}" in
         *-aix* | *-freebsd*)
           if test "`echo $CXXCPPFLAGS | $GREP 'D_THREAD_SAFE'`" = ""; then
-            PTRHEAD_CXXCPPFLAGS="-D_THREAD_SAFE"
+            PTHREAD_CXXCPPFLAGS="-D_THREAD_SAFE"
             CXXCPPFLAGS="$CXXCPPFLAGS $PTHREAD_CXXCPPFLAGS"
           fi
         ;;
@@ -615,7 +615,7 @@ orig_CXXCPPFLAGS="$CXXCPPFLAGS"
 orig_LDFLAGS="$LDFLAGS"
 orig_LIBS="$LIBS"
 
-PTRHEAD_CFLAGS=
+PTHREAD_CFLAGS=
 PTHREAD_FFLAGS=
 PTHREAD_CXXFLAGS=
 PTHREAD_CPPFLAGS=
