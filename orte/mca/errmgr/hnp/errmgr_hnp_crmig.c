@@ -657,6 +657,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     cur_datum = OBJ_NEW(orte_snapc_base_quiesce_t);
     cur_datum->migrating = true;
     migrating_underway = true;
+    mca_errmgr_hnp_component.crmig_in_progress = true;
 
     current_migration_status = ORTE_ERRMGR_MIGRATE_STATE_RUNNING;
     if( ORTE_SUCCESS != (ret = orte_errmgr_base_migrate_update(current_migration_status)) ) {
@@ -1081,6 +1082,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     migrating_underway   = false;
     migrating_terminated = false;
     migrating_restarted  = false;
+    mca_errmgr_hnp_component.crmig_in_progress = false;
 
     if( NULL != err_str_procs ) {
         free(err_str_procs);
