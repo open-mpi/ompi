@@ -47,6 +47,7 @@ int MPIO_Test(MPIO_Request *request, int *flag, MPI_Status *status)
 {
     int error_code;
     static char myname[] = "MPIO_TEST";
+    MPIU_THREADPRIV_DECL;
 #ifdef MPI_hpux
     int fl_xmpi;
 
@@ -55,7 +56,7 @@ int MPIO_Test(MPIO_Request *request, int *flag, MPI_Status *status)
     }
 #endif /* MPI_hpux */
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     if (*request == MPIO_REQUEST_NULL) {
 	    error_code = MPI_SUCCESS;
@@ -88,7 +89,7 @@ int MPIO_Test(MPIO_Request *request, int *flag, MPI_Status *status)
 #endif /* MPI_hpux */
 
 fn_exit:
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
     return error_code;
 }
 #endif

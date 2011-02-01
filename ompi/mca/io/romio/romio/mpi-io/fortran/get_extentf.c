@@ -105,7 +105,7 @@ void mpi_file_get_type_extent_(MPI_Fint *fh,MPI_Fint *datatype,
     datatype_c = MPI_Type_f2c(*datatype);
 
     *ierr = MPI_File_get_type_extent(fh_c,datatype_c, &extent_c);
-    *extent = (MPI_Fint) extent_c;
+    *(MPI_Aint*)extent = extent_c; /* Have to assume it's really an MPI_Aint?*/
 }
 
 #else
@@ -121,6 +121,6 @@ FORTRAN_API void FORT_CALL mpi_file_get_type_extent_(MPI_Fint *fh,MPI_Datatype *
     
     fh_c = MPI_File_f2c(*fh);
     *ierr = MPI_File_get_type_extent(fh_c,*datatype, &extent_c);
-    *extent = (MPI_Fint) extent_c;
+    *(MPI_Aint*)extent = extent_c; /* Have to assume it's really an MPI_Aint?*/
 }
 #endif

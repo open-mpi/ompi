@@ -43,8 +43,6 @@ int MPI_File_get_position(MPI_File mpi_fh, MPI_Offset *offset)
     ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_POSITION";
 
-    MPIR_Nest_incr();
-
     fh = MPIO_File_resolve(mpi_fh);
 
     /* --BEGIN ERROR HANDLING-- */
@@ -55,7 +53,5 @@ int MPI_File_get_position(MPI_File mpi_fh, MPI_Offset *offset)
     ADIOI_Get_position(fh, offset);
 
 fn_exit:
-    MPIR_Nest_decr();
-
     return MPI_SUCCESS;
 }

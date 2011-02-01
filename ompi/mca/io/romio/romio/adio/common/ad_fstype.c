@@ -26,6 +26,10 @@
 #include "pvfs2.h"
 #endif
 
+#ifdef HAVE_ZOIDFS_H
+#include "zoidfs.h"
+#endif
+
 /* Notes on detection process:
  *
  * There are three more "general" mechanisms that we use for detecting
@@ -298,7 +302,7 @@ static void ADIO_FileSysType_fncall(char *filename, int *fstype, int *error_code
     /* --END ERROR HANDLING-- */
 #endif /* STATVFS APPROACH */
 
-#if defined(HAVE_STRUCT_STATFS) && defined(HAVE_STATFS)
+#ifdef HAVE_STRUCT_STATFS
     do {
 	err = statfs(filename, &fsbuf);
     } while (err && (errno == ESTALE));
@@ -342,14 +346,15 @@ static void ADIO_FileSysType_fncall(char *filename, int *fstype, int *error_code
     }
 # endif
 
-/*#if defined(LINUX) && defined(ROMIO_LUSTRE)*/
 #ifdef ROMIO_LUSTRE
-#define LL_SUPER_MAGIC 0x0BD00BD0
+# ifndef LL_SUPER_MAGIC
+#  define LL_SUPER_MAGIC 0x0BD00BD0
+# endif
     if (fsbuf.f_type == LL_SUPER_MAGIC) {
 	*fstype = ADIO_LUSTRE;
 	return;
     }
-# endif
+#endif
 
 # ifdef PAN_KERNEL_FS_CLIENT_SUPER_MAGIC
     if (fsbuf.f_type == PAN_KERNEL_FS_CLIENT_SUPER_MAGIC) {
@@ -383,6 +388,13 @@ static void ADIO_FileSysType_fncall(char *filename, int *fstype, int *error_code
     if (fsbuf.f_type == PVFS2_SUPER_MAGIC) {
 	*fstype = ADIO_PVFS2;
 	return;
+    }
+# endif
+
+# ifdef XFS_SUPER_MAGIC
+    if (fsbuf.f_type == XFS_SUPER_MAGIC) {
+	    *fstype = ADIO_XFS;
+	    return;
     }
 # endif
 
@@ -460,6 +472,8 @@ static void ADIO_FileSysType_fncall_scalable(MPI_Comm comm, char *filename, int 
     *error_code = buf[1];
 }
 
+
+
 /*
   ADIO_FileSysType_prefix - determines file system type for a file using 
   a prefix on the file name.  upper layer should have already determined
@@ -511,6 +525,10 @@ static void ADIO_FileSysType_prefix(char *filename, int *fstype, int *error_code
     else if (!strncmp(filename, "pvfs2:", 6)||!strncmp(filename, "PVFS2:", 6)) {
 	*fstype = ADIO_PVFS2;
     }
+    else if (!strncmp(filename, "zoidfs:", 7)||
+		    !strncmp(filename, "ZOIDFS:", 7)) {
+	    *fstype = ADIO_ZOIDFS;
+    } 
     else if (!strncmp(filename, "testfs:", 7) 
 	     || !strncmp(filename, "TESTFS:", 7))
     {
@@ -801,6 +819,16 @@ void ADIO_ResolveFileType(MPI_Comm comm, char *filename, int *fstype,
 	return;
 #else
 	*ops = &ADIO_LUSTRE_operations;
+#endif
+    }
+    if (file_system == ADIO_ZOIDFS) {
+#ifndef ROMIO_ZOIDFS
+	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
+					   myname, __LINE__, MPI_ERR_IO,
+					   "**iofstypeunsupported", 0);
+	return;
+#else
+	*ops = &ADIO_ZOIDFS_operations;
 #endif
     }
     *error_code = MPI_SUCCESS;

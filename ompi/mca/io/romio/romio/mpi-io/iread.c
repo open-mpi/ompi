@@ -52,8 +52,7 @@ int MPI_File_iread(MPI_File mpi_fh, void *buf, int count,
 		  count);
 #endif /* MPI_hpux */
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     error_code = MPIOI_File_iread(mpi_fh, (MPI_Offset) 0, ADIO_INDIVIDUAL,
 				  buf, count, datatype, myname, request);
@@ -66,7 +65,7 @@ int MPI_File_iread(MPI_File mpi_fh, void *buf, int count,
 #ifdef MPI_hpux
     HPMP_IO_END(fl_xmpi, mpi_fh, datatype, count);
 #endif /* MPI_hpux */
-
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
 
     return error_code;
 }
@@ -89,8 +88,6 @@ int MPIOI_File_iread(MPI_File mpi_fh,
     ADIO_Offset off;
     MPI_Offset nbytes=0;
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
     fh = MPIO_File_resolve(mpi_fh);
 
     /* --BEGIN ERROR HANDLING-- */
@@ -113,6 +110,7 @@ int MPIOI_File_iread(MPI_File mpi_fh,
     MPIO_CHECK_INTEGRAL_ETYPE(fh, count, datatype_size, myname, error_code);
     MPIO_CHECK_READABLE(fh, myname, error_code);
     MPIO_CHECK_NOT_SEQUENTIAL_MODE(fh, myname, error_code);
+    MPIO_CHECK_COUNT_SIZE(fh, count, datatype_size, myname, error_code);
     /* --END ERROR HANDLING-- */
 
     ADIOI_Datatype_iscontig(datatype, &buftype_is_contig);
@@ -137,9 +135,7 @@ int MPIOI_File_iread(MPI_File mpi_fh,
         else {
             /* to maintain strict atomicity semantics with other concurrent
               operations, lock (exclusive) and call blocking routine */
-            if ((fh->file_system != ADIO_PIOFS) && 
-              (fh->file_system != ADIO_NFS) && (fh->file_system != ADIO_PVFS)
-	      && (fh->file_system != ADIO_PVFS2))
+	    if (ADIO_Feature(fh, ADIO_LOCKS))
 	    {
                 ADIOI_WRITE_LOCK(fh, off, SEEK_SET, bufsize);
 	    }
@@ -147,9 +143,7 @@ int MPIOI_File_iread(MPI_File mpi_fh,
             ADIO_ReadContig(fh, buf, count, datatype, file_ptr_type, 
 			    off, &status, &error_code);
 
-            if ((fh->file_system != ADIO_PIOFS) && 
-               (fh->file_system != ADIO_NFS) && (fh->file_system != ADIO_PVFS)
-	       && (fh->file_system != ADIO_PVFS2))
+	    if (ADIO_Feature(fh, ADIO_LOCKS)) 
 	    {
                 ADIOI_UNLOCK(fh, off, SEEK_SET, bufsize);
 	    }
@@ -163,8 +157,6 @@ int MPIOI_File_iread(MPI_File mpi_fh,
 			   offset, request, &error_code); 
 
 fn_exit:
-    MPIR_Nest_decr();
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
     return error_code;
 }

@@ -7,6 +7,10 @@
 
 #include "ad_hfs.h"
 
+#ifndef HAVE_LSEEK64
+#define lseek64 lseek
+#endif
+
 void ADIOI_HFS_WriteContig(ADIO_File fd, void *buf, int count, 
                      MPI_Datatype datatype, int file_ptr_type,
 		     ADIO_Offset offset, ADIO_Status *status, int *error_code)

@@ -5,6 +5,21 @@ Further out:
   o To post the code for ParColl (Partitioned collective IO)
  
 -----------------------------------------------------
+V05: 
+-----------------------------------------------------
+Improved data redistribution
+  o Improve I/O pattern identification. Besides checking interleaving,
+    if request I/O size is small, collective I/O will be performed.
+    The hint bigsize can be used to define the req size value.
+  o Provide hint CO for load balancing to control the number of
+    IO clients for each OST
+  o Produce stripe-contiguous I/O pattern that Lustre prefers
+  o Control read-modify-write in data sieving in collective IO
+    by hint ds_in_coll.
+  o Reduce extent lock conflicts by make each OST accessed by one or
+    more constant clients.
+
+-----------------------------------------------------
 V04: 
 -----------------------------------------------------
   o Direct IO and Lockless IO support

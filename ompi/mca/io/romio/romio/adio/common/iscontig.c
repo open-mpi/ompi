@@ -60,7 +60,8 @@ void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 
 #elif defined(OMPI_BUILDING) && OMPI_BUILDING
 
-/* This function is included in Open MPI source code */
+/* void ADIOI_Datatype_iscontig(MPI_Datatype datatype, int *flag) is defined
+ * and implemented in OpenMPI itself */
 
 #else
 

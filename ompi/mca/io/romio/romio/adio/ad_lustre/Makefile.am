@@ -24,8 +24,11 @@ EXTRA_DIST = README
 noinst_LTLIBRARIES = libadio_lustre.la
 libadio_lustre_la_SOURCES = \
     ad_lustre.c \
+    ad_lustre_aggregate.c \
     ad_lustre_fcntl.c \
     ad_lustre.h \
     ad_lustre_hints.c \
     ad_lustre_open.c \
-    ad_lustre_rwcontig.c
+    ad_lustre_wrcoll.c \
+    ad_lustre_rwcontig.c \
+    ad_lustre_wrstr.c

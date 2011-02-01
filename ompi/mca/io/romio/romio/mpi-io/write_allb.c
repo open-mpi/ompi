@@ -61,8 +61,7 @@ int MPIOI_File_write_all_begin(MPI_File mpi_fh,
     int error_code, datatype_size;
     ADIO_File fh;
 
-    MPIU_THREAD_SINGLE_CS_ENTER("io");
-    MPIR_Nest_incr();
+    MPIU_THREAD_CS_ENTER(ALLFUNC,);
 
     fh = MPIO_File_resolve(mpi_fh);
 
@@ -96,6 +95,7 @@ int MPIOI_File_write_all_begin(MPI_File mpi_fh,
     MPI_Type_size(datatype, &datatype_size);
     /* --BEGIN ERROR HANDLING-- */
     MPIO_CHECK_INTEGRAL_ETYPE(fh, count, datatype_size, myname, error_code);
+    MPIO_CHECK_COUNT_SIZE(fh, count, datatype_size, myname, error_code);
     /* --END ERROR HANDLING-- */
 
     fh->split_datatype = datatype;
@@ -108,8 +108,7 @@ int MPIOI_File_write_all_begin(MPI_File mpi_fh,
     /* --END ERROR HANDLING-- */
 
 fn_exit:
-    MPIR_Nest_decr();
-    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    MPIU_THREAD_CS_EXIT(ALLFUNC,);
 
     return error_code;
 }

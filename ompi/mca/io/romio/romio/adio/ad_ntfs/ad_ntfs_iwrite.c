@@ -60,7 +60,6 @@ int ADIOI_NTFS_aio_poll_fn(void *extra_state, MPI_Status *status)
         /* TODO: unsure how to handle this */    
         }
     }else{
-        MPIR_Nest_incr();
         mpi_errno = MPI_Grequest_complete(aio_req->req);
 	    if (mpi_errno != MPI_SUCCESS) {
 		    mpi_errno = MPIO_Err_create_code(MPI_SUCCESS,
@@ -69,7 +68,6 @@ int ADIOI_NTFS_aio_poll_fn(void *extra_state, MPI_Status *status)
 				    MPI_ERR_IO, "**mpi_grequest_complete",
 				    0);
 	    }
-        MPIR_Nest_decr();
     }
     return mpi_errno;
 }
@@ -111,16 +109,14 @@ int ADIOI_NTFS_aio_wait_fn(int count, void **array_of_states,
                 aio_reqlist[retObject]->lpOvl, &(aio_reqlist[retObject]->nbytes), 
                 FALSE)){
         	/* XXX: mark completed requests as 'done'*/
-	        MPIR_Nest_incr();
-	        mpi_errno = MPI_Grequest_complete(aio_reqlist[retObject]->req);
+            mpi_errno = MPI_Grequest_complete(aio_reqlist[retObject]->req);
     	    if (mpi_errno != MPI_SUCCESS) {
 	    	    mpi_errno = MPIO_Err_create_code(MPI_SUCCESS,
 				    MPIR_ERR_RECOVERABLE,
 				    "ADIOI_NTFS_aio_wait_fn", __LINE__,
 				    MPI_ERR_IO, "**mpi_grequest_complete",
 				    0);
-	        }
-	        MPIR_Nest_decr();
+            }
         }else{
             if(GetLastError() == ERROR_IO_INCOMPLETE){
             /* IO in progress */
@@ -146,7 +142,6 @@ int ADIOI_NTFS_aio_query_fn(void *extra_state, MPI_Status *status)
 
 	MPI_Status_set_elements(status, MPI_BYTE, aio_req->nbytes); 
 
-	/* do i need to nest_incr/nest_decr  here? */
 	/* can never cancel so always true */ 
 	MPI_Status_set_cancelled(status, 0); 
 

@@ -17,7 +17,6 @@
 #define READ 0
 #define WRITE 1
 
-#ifdef ROMIO_HAVE_WORKING_AIO
 static int ADIOI_PVFS2_greq_class = 0;
 int ADIOI_PVFS2_aio_free_fn(void *extra_state);
 int ADIOI_PVFS2_aio_poll_fn(void *extra_state, MPI_Status *status);
@@ -168,12 +167,10 @@ int ADIOI_PVFS2_aio_poll_fn(void *extra_state, MPI_Status *status)
     aio_req = (ADIOI_AIO_Request *)extra_state;
 
     /* BUG: cannot PVFS_sys_testsome: does not work for a specific request */
-    ret = PVFS_sys_wait(aio_req->op_id, __FUNCTION__, &error);
+    ret = PVFS_sys_wait(aio_req->op_id, "ADIOI_PVFS2_aio_poll_fn", &error);
     if (ret == 0) {
 	aio_req->nbytes = aio_req->resp_io.total_completed;
-	MPIR_Nest_incr();
 	MPI_Grequest_complete(aio_req->req);
-	MPIR_Nest_decr();
 	return MPI_SUCCESS;
     } else
 	return MPI_UNDEFINED; /* TODO: what's this error? */
@@ -186,7 +183,7 @@ int ADIOI_PVFS2_aio_wait_fn(int count, void ** array_of_states,
 
     ADIOI_AIO_Request **aio_reqlist;
     PVFS_sys_op_id *op_id_array;
-    int i,j, greq_count;
+    int i,j, greq_count, completed_count=0;
     int *error_array;
 
     aio_reqlist = (ADIOI_AIO_Request **)array_of_states;
@@ -195,25 +192,27 @@ int ADIOI_PVFS2_aio_wait_fn(int count, void ** array_of_states,
     error_array = (int *)ADIOI_Calloc(count, sizeof(int));
     greq_count = count;
 
+
     /* PVFS-2.6: testsome actually tests all requests and fills in op_id_array
      * with the ones that have completed.  count is an in/out parameter.
      * returns with the number of completed operations.  what a mess! */
-    PVFS_sys_testsome(op_id_array, &count, NULL, error_array, INT_MAX);
-    for (i=0; i< count; i++) {
-	for (j=0; j<greq_count; j++) {
-	    if (op_id_array[i] == aio_reqlist[j]->op_id) {
-		aio_reqlist[j]->nbytes = 
-		    aio_reqlist[j]->resp_io.total_completed;
-		MPIR_Nest_incr();
-		MPI_Grequest_complete(aio_reqlist[j]->req);
-		MPIR_Nest_decr();
+    while (completed_count < greq_count ) {
+	count = greq_count;
+	PVFS_sys_testsome(op_id_array, &count, NULL, error_array, INT_MAX);
+	completed_count += count;
+	for (i=0; i< count; i++) {
+	    for (j=0; j<greq_count; j++) {
+		if (op_id_array[i] == aio_reqlist[j]->op_id) {
+		    aio_reqlist[j]->nbytes = 
+			aio_reqlist[j]->resp_io.total_completed;
+		    MPI_Grequest_complete(aio_reqlist[j]->req);
+		}
 	    }
 	}
     }
     return MPI_SUCCESS; /* TODO: no idea how to deal with errors */
 }
 
-#endif
 
 /*
  * vim: ts=8 sts=4 sw=4 noexpandtab 

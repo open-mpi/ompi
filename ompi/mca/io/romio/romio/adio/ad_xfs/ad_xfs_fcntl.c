@@ -7,6 +7,11 @@
 
 #include "ad_xfs.h"
 #include "adio_extern.h"
+#include <sys/ioctl.h>
+
+#ifndef HAVE_LSEEK64
+#define lseek64 lseek
+#endif
 
 void ADIOI_XFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *error_code)
 {
@@ -37,7 +42,7 @@ void ADIOI_XFS_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct, int *er
 	fl.l_len = fcntl_struct->diskspace;
 
 #if defined(LINUX) && defined(MPISGI)
-	err = fcntl(fd->fd_sys, XFS_IOC_RESVSP64, &fl);
+	err = ioctl(fd->fd_sys, XFS_IOC_RESVSP64, &fl);
 #else
 	err = fcntl(fd->fd_sys, F_RESVSP64, &fl);
 #endif

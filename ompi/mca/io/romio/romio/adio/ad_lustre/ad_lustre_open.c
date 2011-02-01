@@ -1,17 +1,25 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/* 
- *   Copyright (C) 1997 University of Chicago. 
+/*
+ *   Copyright (C) 1997 University of Chicago.
  *   See COPYRIGHT notice in top-level directory.
  *
  *   Copyright (C) 2007 Oak Ridge National Laboratory
+ *
+ *   Copyright (C) 2008 Sun Microsystems, Lustre group
  */
 
 #include "ad_lustre.h"
 
+/* what is the basis for this define?
+ * what happens if there are more than 1k UUIDs? */
+
+#define MAX_LOV_UUID_COUNT      1000
+
 void ADIOI_LUSTRE_Open(ADIO_File fd, int *error_code)
 {
     int perm, old_mask, amode, amode_direct;
-    struct lov_user_md lum = { 0 };
+    int lumlen;
+    struct lov_user_md *lum = NULL;
     char *value;
 
 #if defined(MPICH2) || !defined(PRINT_ERR_MSG)
@@ -44,23 +52,37 @@ void ADIOI_LUSTRE_Open(ADIO_File fd, int *error_code)
     if (fd->fd_sys != -1) {
         int err;
 
-        value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
-
         /* get file striping information and set it in info */
-        lum.lmm_magic = LOV_USER_MAGIC;
-        err = ioctl(fd->fd_sys, LL_IOC_LOV_GETSTRIPE, (void *) &lum);
-
+	/* odd malloc here because lov_user_md contains some fixed data and
+	 * then a list of 'lmm_objects' representing stripe */
+        lumlen = sizeof(struct lov_user_md) +
+                 MAX_LOV_UUID_COUNT * sizeof(struct lov_user_ost_data);
+	/* furthermore, Pascal Deveze reports that, even though we pass a
+	 * "GETSTRIPE" (read) flag to the ioctl, if some of the values of this
+	 * struct are uninitialzed, the call can give an error.  calloc in case
+	 * there are other members that must be initialized and in case
+	 * lov_user_md struct changes in future */
+	lum = (struct lov_user_md *)ADIOI_Calloc(1,lumlen);
+        lum->lmm_magic = LOV_USER_MAGIC;
+        err = ioctl(fd->fd_sys, LL_IOC_LOV_GETSTRIPE, (void *)lum);
         if (!err) {
-            sprintf(value, "%d", lum.lmm_stripe_size);
-            MPI_Info_set(fd->info, "striping_unit", value);
+            value = (char *) ADIOI_Malloc((MPI_MAX_INFO_VAL+1)*sizeof(char));
 
-            sprintf(value, "%d", lum.lmm_stripe_count);
-            MPI_Info_set(fd->info, "striping_factor", value);
+            fd->hints->striping_unit = lum->lmm_stripe_size;
+            sprintf(value, "%d", lum->lmm_stripe_size);
+            ADIOI_Info_set(fd->info, "striping_unit", value);
 
-            sprintf(value, "%d", lum.lmm_stripe_offset);
-            MPI_Info_set(fd->info, "start_iodevice", value);
+            fd->hints->striping_factor = lum->lmm_stripe_count;
+            sprintf(value, "%d", lum->lmm_stripe_count);
+            ADIOI_Info_set(fd->info, "striping_factor", value);
+
+            fd->hints->fs_hints.lustre.start_iodevice = lum->lmm_stripe_offset;
+            sprintf(value, "%d", lum->lmm_stripe_offset);
+            ADIOI_Info_set(fd->info, "romio_lustre_start_iodevice", value);
+
+            ADIOI_Free(value);
         }
-        ADIOI_Free(value);
+        ADIOI_Free(lum);
 
         if (fd->access_mode & ADIO_APPEND)
             fd->fp_ind = fd->fp_sys_posn = lseek(fd->fd_sys, 0, SEEK_END);

@@ -53,20 +53,20 @@ for LARCH in $ARCHLIST ; do
    #   LARCH4=`expr "$LARCH" : "\(....\)"`
    #   LARCH6=`expr "$LARCH" : "\(......\)"`
    case $LARCH in
-        SUPER-UX) FARCH=SX4; break ;;
-	AIX|RIOS) FARCH=rs6000; break ;;
-	HP-UX) 
+       SUPER-UX) FARCH=SX4; break ;;
+       AIX|RIOS) FARCH=rs6000; break ;;
+       HP-UX) 
  	if [ -a /dev/kmem ] ; then
  	    FARCH=hpux ;
  	else
  	    FARCH=sppux ;
  	fi
         break ;;
-	IRIX64|IRIX) FARCH=$LARCH ; break ;;
-	Linux)  FARCH=LINUX ; break ;;
-	i586|i486|i86pc)
+       IRIX64|IRIX) FARCH=$LARCH ; break ;;
+       Linux)  FARCH=LINUX ; break ;;
+       i586|i486|i86pc)
 	    GARCH=$LARCH ;;
-	sun4*)
+       sun4*)
 	Version=`$UNAME -r`
         # In "improving" SunOS, the useful feature of "substr" was withdrawn 
         # from expr.  Can't let the users have life too easy, can we?  This 
@@ -81,21 +81,27 @@ for LARCH in $ARCHLIST ; do
 	    FARCH=sun4
 	fi
 	break ;;
-	hp9000*|hp7000*)
+       hp9000*|hp7000*)
  	if [ -a /dev/kmem ] ; then
  	    FARCH=hpux ;
  	else
  	    FARCH=sppux ;
  	fi
  	break ;;
-	mips|dec-5000)   FARCH=dec5000 ; break ;;
-        IP12|iris-4d)    GARCH=IRIX ;;
-        cray|CRAY*)      GARCH=CRAY ;;
+       Darwin*)
+	   FARCH=Darwin
+	   break ;;
+
+       mips|dec-5000)   FARCH=dec5000 ; break ;;
         next)            FARCH=NeXT ; break ;;	
 	KSR1|KSR2)       FARCH=ksr ; break ;;	
         FreeBSD)         FARCH=freebsd ; break ;;
         OpenBSD)         FARCH=openbsd ; break ;;
         NetBSD)          FARCH=netbsd ; break ;;
+
+       # The following are guesses
+        IP12|iris-4d)    GARCH=IRIX ;;
+        cray|CRAY*)      GARCH=CRAY ;;
 	i386)            GARCH=ipsc2 ;;
 	ULTRIX|RISC)     GARCH=dec5000 ;;
    esac

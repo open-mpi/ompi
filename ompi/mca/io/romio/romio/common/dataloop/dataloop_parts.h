@@ -204,9 +204,6 @@ typedef struct DLOOP_Dataloop_common {
   this union, 'count', allows quick access to the shared 'count' field in the
   five dataloop structure.
 . extent - The extent of the dataloop
-#if 0
-- handle     - handle for the corresponding 'MPI_Datatype'.
-#endif
 
   Module:
   Datatype

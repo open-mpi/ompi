@@ -12,8 +12,12 @@
 #include <stdlib.h>
 
 /* romioconf.h must be included *before* mpi.h to avoid some redeclarations */
+#ifdef HAVE_MPITYPEDEFS_H
 #include "mpitypedefs.h"
+#endif
+#ifdef HAVE_MPICHCONF_H
 #include "mpichconf.h"
+#endif
 #include "romioconf.h"
 
 #include <mpi.h>

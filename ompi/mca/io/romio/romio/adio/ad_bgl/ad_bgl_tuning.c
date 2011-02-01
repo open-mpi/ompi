@@ -3,7 +3,13 @@
 /* ---------------------------------------------------------------- */
 /**
  * \file ad_bgl_tuning.c
- * \brief ???
+ * \brief defines ad_bgl performance tuning
+ */
+
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* 
+ *   Copyright (C) 2008 University of Chicago. 
+ *   See COPYRIGHT notice in top-level directory.
  */
 
 /*---------------------------------------------------------------------
@@ -26,6 +32,40 @@ double	bglmpio_prof_cw    [BGLMPIO_CIO_LAST];
 double	bglmpio_prof_cr    [BGLMPIO_CIO_LAST];
 
 /* set internal variables for tuning environment variables */
+/** \page env_vars Environment Variables
+ * - BGLMPIO_COMM - Define how data is exchanged on collective
+ *   reads and writes.  Possible values:
+ *   - 0 - Use MPI_Alltoallv.
+ *   - 1 - Use MPI_Isend/MPI_Irecv.
+ *   - Default is 0.
+ *
+ * - BGLMPIO_TIMING - collect timing breakdown for MPI I/O collective calls.
+ *   Must also compile the library with BGL_PROFILE defined. Possible values:
+ *   - 0 - Do not collect/report timing.
+ *   - 1 - Collect/report timing.
+ *   - Default is 0.
+ *
+ * - BGLMPIO_TIMING2 - collect additional averages for MPI I/O collective calls.
+ *   Must also compile the library with BGL_PROFILE defined. Possible values:
+ *   - 0 - Do not collect/report averages.
+ *   - 1 - Collect/report averages.
+ *   - Default is 0.
+ *
+ * - BGLMPIO_TUNEGATHER - Tune how starting and ending offsets are communicated
+ *   for aggregator collective i/o.  Possible values:
+ *   - 0 - Use two MPI_Allgather's to collect starting and ending offsets.
+ *   - 1 - Use MPI_Allreduce(MPI_MAX) to collect starting and ending offsets.
+ *   - Default is 1.
+ *
+ * - BGLMPIO_TUNEBLOCKING - Tune how aggregate file domains are 
+ *   calculated (block size).  Possible values:
+ *   - 0 - Evenly calculate file domains across aggregators.  Also use 
+ *   MPI_Isend/MPI_Irecv to exchange domain information.
+ *   - 1 - Align file domains with the underlying file system's block size.  Also use 
+ *   MPI_Alltoallv to exchange domain information.
+ *   - Default is 1.
+ *
+*/
 void ad_bgl_get_env_vars() {
     char *x;
 

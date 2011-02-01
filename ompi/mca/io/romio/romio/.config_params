@@ -35,4 +35,5 @@ __sgi_mpi
 __hp_mpi
 __cray_mpi
 __lam_mpi
+__Darwin
 __open_mpi

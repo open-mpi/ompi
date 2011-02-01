@@ -49,11 +49,11 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
            to ADIOI_PFS_SetInfo. Turn it on now, since we now have a 
            valid file descriptor. */
 
-	MPI_Info_get(fd->info, "pfs_svr_buf", MPI_MAX_INFO_VAL, 
+	ADIOI_Info_get(fd->info, "pfs_svr_buf", MPI_MAX_INFO_VAL, 
 		     value, &flag);
 	if (flag && (!strcmp(value, "true"))) {
 	    err = fcntl(fd->fd_sys, F_PFS_SVR_BUF, TRUE);
-	    if (err) MPI_Info_set(fd->info, "pfs_svr_buf", "false");
+	    if (err) ADIOI_Info_set(fd->info, "pfs_svr_buf", "false");
 	}
 
         /* get file striping information and set it in info */
@@ -61,13 +61,13 @@ void ADIOI_PFS_Open(ADIO_File fd, int *error_code)
 
 	if (!err) {
 	    ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", attr.s_sunitsize);
-	    MPI_Info_set(fd->info, "striping_unit", value);
+	    ADIOI_Info_set(fd->info, "striping_unit", value);
 
 	    ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", attr.s_sfactor);
-	    MPI_Info_set(fd->info, "striping_factor", value);
+	    ADIOI_Info_set(fd->info, "striping_factor", value);
 
 	    ADIOI_Snprintf(value, MPI_MAX_INFO_VAL+1, "%d", attr.s_start_sdir);
-	    MPI_Info_set(fd->info, "start_iodevice", value);
+	    ADIOI_Info_set(fd->info, "start_iodevice", value);
 	}
 	ADIOI_Free(value);
 

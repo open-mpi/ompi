@@ -23,7 +23,7 @@ void ADIOI_TESTFS_WriteContig(ADIO_File fd, void *buf, int count,
 	    nprocs, fd->filename);
     FPRINTF(stdout, "[%d/%d]    writing (buf = %p, loc = %lld, sz = %lld)\n",
 	    myrank, nprocs, buf, (long long) offset, 
-	    (long long) datatype_size * count);
+	    (long long)datatype_size * (long long)count);
 
     if (file_ptr_type != ADIO_EXPLICIT_OFFSET)
     {

@@ -26,24 +26,32 @@ include $(top_srcdir)/Makefile.options
 noinst_LTLIBRARIES = libadio_common.la
 libadio_common_la_SOURCES = \
         ad_aggregate.c \
+        ad_aggregate_new.c \
         ad_close.c \
+        ad_coll_build_req_new.c \
+        ad_coll_exch_new.c \
         ad_darray.c \
         ad_delete.c \
         ad_done.c \
         ad_done_fake.c \
         ad_end.c \
+        ad_features.c \
         ad_fcntl.c \
         ad_flush.c \
         ad_fstype.c \
         ad_get_sh_fp.c \
         ad_hints.c \
         ad_init.c \
+        ad_io_coll.c \
         ad_iopen.c \
         ad_iread.c \
         ad_iread_fake.c \
         ad_iwrite.c \
         ad_iwrite_fake.c \
         ad_open.c \
+        ad_opencoll.c \
+        ad_opencoll_failsafe.c \
+        ad_opencoll_scalable.c \
         ad_prealloc.c \
         ad_read.c \
         ad_read_coll.c \
@@ -69,6 +77,7 @@ libadio_common_la_SOURCES = \
         flatten.c \
         get_fp_posn.c \
         greq_fns.c \
+        heap-sort.c \
         iscontig.c \
         lock.c \
         malloc.c \

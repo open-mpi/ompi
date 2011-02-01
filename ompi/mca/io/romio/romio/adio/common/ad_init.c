@@ -6,7 +6,6 @@
  */
 
 #include "adio.h"
-#include "adio_extern.h"
 
 ADIOI_Flatlist_node *ADIOI_Flatlist = NULL;
 ADIOI_Datarep *ADIOI_Datarep_head = NULL;
@@ -22,6 +21,10 @@ MPI_Info *MPIR_Infotable = NULL;
 int MPIR_Infotable_ptr = 0, MPIR_Infotable_max = 0;
 #endif
 
+MPI_Info ADIOI_syshints = MPI_INFO_NULL;
+
+MPI_Op ADIO_same_amode=MPI_OP_NULL;
+
 #if defined(ROMIO_XFS) || defined(ROMIO_LUSTRE)
 int ADIOI_Direct_read = 0, ADIOI_Direct_write = 0;
 #endif
@@ -29,6 +32,20 @@ int ADIOI_Direct_read = 0, ADIOI_Direct_write = 0;
 int ADIO_Init_keyval=MPI_KEYVAL_INVALID;
 
 MPI_Errhandler ADIOI_DFLT_ERR_HANDLER = MPI_ERRORS_RETURN;
+
+
+static void my_consensus(void *invec, void *inoutvec, int *len, MPI_Datatype *datatype)
+{
+    int i, *in, *inout;
+    in = (int*)invec;
+    inout = (int*)inoutvec;
+
+    for (i=0; i< *len; i++) {
+        if (in[i] != inout[i])
+	    inout[i] = ADIO_AMODE_NOMATCH;
+    }
+    return;
+}
 
 void ADIO_Init(int *argc, char ***argv, int *error_code)
 {
@@ -57,6 +74,12 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
     else ADIOI_Direct_write = 0;
 #endif
 
+    /* Assume system-wide hints won't change between runs: move hint processing
+     * from ADIO_Open to here */
+    /* FIXME should be checking error code from MPI_Info_create here */
+    MPI_Info_create(&ADIOI_syshints);
+    ADIOI_process_system_hints(ADIOI_syshints);
+
 #ifdef ADIOI_MPE_LOGGING
     {
         MPE_Log_get_state_eventIDs( &ADIOI_MPE_open_a, &ADIOI_MPE_open_b );
@@ -71,9 +94,12 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
         MPE_Log_get_state_eventIDs( &ADIOI_MPE_unlock_a, &ADIOI_MPE_unlock_b );
         MPE_Log_get_state_eventIDs( &ADIOI_MPE_postwrite_a,
                                     &ADIOI_MPE_postwrite_b );
+	MPE_Log_get_state_eventIDs( &ADIOI_MPE_openinternal_a, 
+			&ADIOI_MPE_openinternal_b);
+	MPE_Log_get_state_eventIDs( &ADIOI_MPE_stat_a, &ADIOI_MPE_stat_b);
 
         int  comm_world_rank;
-        PMPI_Comm_rank( MPI_COMM_WORLD, &comm_world_rank );
+        MPI_Comm_rank( MPI_COMM_WORLD, &comm_world_rank );
 
         if ( comm_world_rank == 0 ) {
             MPE_Describe_state( ADIOI_MPE_open_a, ADIOI_MPE_open_b,
@@ -94,9 +120,12 @@ void ADIO_Init(int *argc, char ***argv, int *error_code)
                                 "unlock", "purple" );
             MPE_Describe_state( ADIOI_MPE_postwrite_a, ADIOI_MPE_postwrite_b,
                                 "postwrite", "ivory" );
+	    MPE_Describe_state( ADIOI_MPE_openinternal_a, ADIOI_MPE_openinternal_b, "open system", "blue");
+	    MPE_Describe_state( ADIOI_MPE_stat_a, ADIOI_MPE_stat_b, "stat", "purple");
         }
     }
 #endif
 
     *error_code = MPI_SUCCESS;
+    MPI_Op_create(my_consensus, 1, &ADIO_same_amode);
 }

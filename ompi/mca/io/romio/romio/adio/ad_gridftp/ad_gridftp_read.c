@@ -50,10 +50,6 @@ static void readcontig_data_cb(void *myargs, globus_ftp_client_handle_t *handle,
 	readcontig_data_cb: buffer 0x404c0008 length 65536 offset 32112640 eof 0
 	readcontig_data_cb: buffer 0x404d0008 length 65536 offset 32178176 eof 0
      */
-#if 0
-    FPRINTF(stderr, "%s: buffer %p length %d offset %Ld eof %d\n",
-      __func__, buffer, length, offset, eof);
-#endif
     if ( !eof )
 	    globus_ftp_client_register_read(handle,
 					    buffer+length,

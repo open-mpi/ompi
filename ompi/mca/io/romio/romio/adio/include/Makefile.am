@@ -27,6 +27,7 @@ noinst_HEADERS = \
         adioi_error.h \
         adioi_fs_proto.h \
         adioi.h \
+        heap-sort.h \
         mpio_error.h \
         mpipr.h \
         mpiu_greq.h \
