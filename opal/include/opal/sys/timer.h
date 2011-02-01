@@ -79,6 +79,8 @@ BEGIN_C_DECLS
 /* don't include system-level gorp when generating doxygen files */ 
 #elif OPAL_ASSEMBLY_ARCH == OMPI_AMD64
 #include "opal/sys/amd64/timer.h"
+#elif OPAL_ASSEMBLY_ARCH == OMPI_ARM
+#include "opal/sys/arm/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_IA32
 #include "opal/sys/ia32/timer.h"
 #elif OPAL_ASSEMBLY_ARCH == OMPI_IA64
