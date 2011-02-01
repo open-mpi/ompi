@@ -45,7 +45,7 @@ static int test_upper( unsigned int length )
 {
     ompi_datatype_t *pdt;
     opal_convertor_t * pConv;
-    int rc;
+    int rc = OMPI_SUCCESS;
     unsigned int i, iov_count, split_chunk, total_length;
     size_t max_data;
     struct iovec iov[5];
