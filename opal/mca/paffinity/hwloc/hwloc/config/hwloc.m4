@@ -1,7 +1,7 @@
 dnl -*- Autoconf -*-
 dnl
-dnl Copyright (c) 2009 INRIA
-dnl Copyright (c) 2009 Université Bordeaux 1
+dnl Copyright (c) 2009-2010 INRIA
+dnl Copyright (c) 2009-2011 Université Bordeaux 1
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
@@ -9,8 +9,6 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
 dnl                         University of Stuttgart.  All rights reserved.
-dnl Copyright © 2010  INRIA
-dnl Copyright © 2010  Université of Bordeaux
 dnl Copyright © 2006-2010  Cisco Systems, Inc.  All rights reserved.
 
 # Main hwloc m4 macro, to be invoked by the user
@@ -238,7 +236,7 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
         AC_MSG_WARN([***********************************************************])
         AC_MSG_WARN([*** hwloc does not support this system.])
         AC_MSG_WARN([*** hwloc will *attempt* to build (but it may not work).])
-        AC_MSG_WARN([*** hwloc's run-time results may be reduced to showing just one processor.])
+        AC_MSG_WARN([*** hwloc run-time results may be reduced to showing just one processor.])
         AC_MSG_WARN([*** You have been warned.])
         AC_MSG_WARN([*** Pausing to give you time to read this message...])
         AC_MSG_WARN([***********************************************************])
@@ -283,7 +281,7 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
     _HWLOC_CHECK_VISIBILITY
     HWLOC_CFLAGS="$HWLOC_FLAGS $HWLOC_VISIBILITY_CFLAGS"
     AS_IF([test "$HWLOC_VISIBILITY_CFLAGS" != ""],
-          [AC_MSG_WARN(["$HWLOC_VISIBILITY_CFLAGS" has been added to hwloc's CFLAGS])])
+          [AC_MSG_WARN(["$HWLOC_VISIBILITY_CFLAGS" has been added to the hwloc CFLAGS])])
 
     #
     # Check for inline compatibility support
@@ -584,7 +582,7 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
     AC_MSG_CHECKING([for cpuid])
     old_CPPFLAGS="$CPPFLAGS"
     CFLAGS="$CFLAGS -I$HWLOC_top_srcdir/include"
-    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
         #include <stdio.h>
         #include <private/cpuid.h>
       ]], [[

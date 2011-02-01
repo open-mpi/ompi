@@ -43,6 +43,12 @@
 #include <windows.h>
 #endif
 
+unsigned hwloc_get_api_version(void)
+{
+  return HWLOC_API_VERSION;
+}
+
+
 static void
 hwloc_topology_clear (struct hwloc_topology *topology);
 

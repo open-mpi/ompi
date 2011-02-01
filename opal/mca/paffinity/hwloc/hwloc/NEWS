@@ -1,7 +1,7 @@
 Copyright © 2009 CNRS
-Copyright © 2009-2010 INRIA
-Copyright © 2009-2010 Université Bordeaux 1
-Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+Copyright © 2009-2011 INRIA
+Copyright © 2009-2011 Université Bordeaux 1
+Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
 
 $COPYRIGHT$
 
@@ -15,6 +15,33 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of hwloc since version
 0.9 (as initially released as "libtopology", then re-branded to "hwloc"
 in v0.9.1).
+
+
+Version 1.1.1
+-------------
+* Add hwloc_get_api_version() which returns the version of hwloc used
+  at runtime. Thanks to Guy Streeter for the suggestion.
+* Fix the number of hugepages reported for NUMA nodes on Linux.
+* Fix hwloc_bitmap_to_ulong() right after allocating the bitmap.
+  Thanks to Bernd Kallies for reporting the problem.
+* Fix hwloc_bitmap_from_ith_ulong() to properly zero the first ulong.
+  Thanks to Guy Streeter for reporting the problem.
+* Fix hwloc_get_membind_nodeset() on Linux.
+  Thanks to Bernd Kallies for reporting the problem and providing a patch.
+* Fix some file descriptor leaks in the Linux discovery.
+* Fix the minimum width of NUMA nodes, caches and the legend in the graphical
+  lstopo output. Thanks to Jirka Hladky for reporting the problem.
+* Various fixes to bitmap conversion from/to taskset-strings.
+* Fix and document snprintf functions behavior when the buffer size is too
+  small or zero. Thanks to Guy Streeter for reporting the problem.
+* Fix configure to avoid spurious enabling of the cpuid backend.
+  Thanks to Tim Anderson for reporting the problem.
+* Cleanup error management in hwloc-gather-topology.sh.
+  Thanks to Jirka Hladky for reporting the problem and providing a patch.
+* Add a manpage and usage for hwloc-gather-topology.sh on Linux.
+  Thanks to Jirka Hladky for providing a patch.
+* Memory binding documentation enhancements.
+
 
 Version 1.1.0
 -------------
