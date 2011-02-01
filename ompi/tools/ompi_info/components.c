@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,6 +47,8 @@
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/installdirs/base/base.h"
+#include "opal/mca/sysinfo/sysinfo.h"
+#include "opal/mca/sysinfo/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -300,6 +303,14 @@ void ompi_info_open_components(void)
     map->components = &opal_maffinity_base_components_opened;
     opal_pointer_array_add(&component_map, map);
     
+    if (OPAL_SUCCESS != opal_sysinfo_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("sysinfo");
+    map->components = &opal_sysinfo_base_components_opened;
+    opal_pointer_array_add(&component_map, map);
+
     if (OPAL_SUCCESS != opal_timer_base_open()) {
         goto error;
     }
