@@ -1,0 +1,27 @@
+# -*- text -*-
+#
+# Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's TCP support
+# (the openib BTL).
+#
+[invalid if_inexclude]
+WARNING: An invalid value was given for btl_tcp2_if_%s.  This
+value will be ignored.
+
+  Local host: %s
+  Value:      %s
+  Message:    %s
+%
+[invalid minimum port]
+WARNING: An invalid value was given for the btl_tcp2_port_min_%s. Legal
+values are in the range [1 .. 2^16-1]. This value will be ignored
+(reset to the default value of 1024).
+
+  Local host: %s
+  Value:      %d
