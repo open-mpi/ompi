@@ -62,23 +62,51 @@ Trunk (not on release branches yet)
   OPAL levels - intended for use when configuring without MPI support
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
-- Added ARM support.
-- Fixed multi-token command-line issues when using the orterun
-  --debug switch.  Thanks to Gabriele Fatigati for identifying the
-  problem.
 
 
 1.5.2
 -----
 
-- Added ummunotify support for OpenFabrics-based transports.  See the
-  README for more details.
+- Replaced all custom topology / affinity code with initial support
+  for hwloc v1.1.1 (PLPA has been removed -- long live hwloc!).  Note
+  that hwloc is bundled with Open MPI, but an external hwloc can be
+  used, if desired.  See README for more details.
+- Fixed multi-token command-line issues when using the mpirun
+  --debug switch.  For example:
+      mpirun --debug -np 2 a.out "foo bar"
+  Thanks to Gabriele Fatigati for reporting the issue.
+- Added ARM support.
+- Updated ROMIO from MPICH v1.3.1 (plus one additional patch).
+- Fixed some deprecated MPI API function notification messages.
+- Added new "bfo" PML that provides failover on OpenFabrics networks.
+- Fixed some buffer memcheck issues in MPI_*_init.
+- Added Solaris-specific chip detection and performance improvements.
+- Fix some compile errors on Solaris.
+- Updated the "rmcast" framework with bug fixes, new functionality.
+- Updated the Voltaire FCA component with bug fixes, new functionality.
+- Fix gcc 4.4.x and 4.5.x over-aggressive warning notifications on
+  possibly freeing stack variables.  Thanks to the Gentoo packagers
+  for reporting the issue.
+- Make the openib component be verbose when it disqualifies itself due
+  to MPI_THREAD_MULTIPLE.
+- Minor man page fixes.
+- Various checkpoint / restart fixes.
+- Fix race condition in the one-sided unlock code.  Thanks to
+  Guillaume Thouvenin for finding the issue.
+- Improve help message aggregation.
+- Add OMPI_Affinity_str() optional user-level API function (i.e., the
+  "affinity" MPI extension).  See README for more details.
 - Added btl_tcp_if_seq MCA parameter to select a different ethernet
   interface for each MPI process on a node.  This parameter is only
   useful when used with virtual ethernet interfaces on a single
   network card (e.g., when using virtual interfaces give dedicated
   hardware resources on the NIC to each process).
-- 
+- Changed behavior of mpirun to terminate if it receives 10 (or more)
+  SIGPIPEs.
+- Fixed oversubscription detection.
+- Added new mtl_mx_board and mtl_mx_endpoint MCA parameters.
+- Added ummunotify support for OpenFabrics-based transports.  See the
+  README for more details.
 
 
 1.5.1
