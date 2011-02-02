@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2010 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 
@@ -78,12 +78,14 @@ chdir($start);
 print "==> Top-level Open MPI dir: $top\n";
 print "==> Current directory: $start\n";
 
-# Are we hg or svn?
-my $cmd = "svn st .";
-die "This is both an SVN and HG tree -- can't decide what to do!"
-    if (-d "$top/.svn" && -d "$top/.hg");
+# Are we hg or svn?  If we're both hg and svn, assume svn.
+my $cmd;
+$cmd = "svn st ."
+    if (-d "$top/.svn");
 $cmd = "hg st ."
-    if (-d "$top/.hg");
+    if (-d "$top/.hg" && ! -d "$top/.svn");
+die "Can't find SVN or HG meta dirs" 
+    if (!defined($cmd));
 
 # Run the command, parsing the output.  Make a list of files that are
 # added or modified.
