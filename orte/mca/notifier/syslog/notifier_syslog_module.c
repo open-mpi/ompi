@@ -82,7 +82,14 @@ static void mylog(orte_notifier_base_severity_t severity, int errcode,
                   const char *msg, va_list ap)
 {
     /* If there was a message, output it */
+#if defined(HAVE_VSYSLOG)
     vsyslog(severity, msg, ap);
+#else
+    char *output;
+    vasprintf(&output, msg, ap);
+    syslog(severity, output);
+    free(output);
+#endif
 }
 
 static void myhelplog(orte_notifier_base_severity_t severity, int errcode, 
