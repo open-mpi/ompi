@@ -86,40 +86,42 @@ First, download, build, and install Open MPI:
 -----
 $ cd $HOME
 $ wget \
-  http://www.open-mpi.org/software/ompi/v1.5/downloads/openmpi-1.5.1.tar.bz2
+  http://www.open-mpi.org/software/ompi/vX.Y/downloads/openmpi-X.Y.Z.tar.bz2
   [lots of output]
-$ tar jxf openmpi-1.5.1.tar.bz2
-$ cd openmpi-1.5.1
+$ tar jxf openmpi-X.Y.Z.tar.bz2
+$ cd openmpi-X.Y.Z
 $ ./configure --prefix=/opt/openmpi ...
   [lots of output]
 $ make -j 4 install
   [lots of output]
 $ /opt/openmpi/bin/ompi_info | grep btl
-                 MCA btl: self (MCA v2.0, API v2.0, Component v1.5.2)
-                 MCA btl: sm (MCA v2.0, API v2.0, Component v1.5.2)
-                 MCA btl: tcp (MCA v2.0, API v2.0, Component v1.5.2)
+                 MCA btl: self (MCA vA.B, API vM.N, Component vX.Y.Z)
+                 MCA btl: sm (MCA vA.B, API vM.N, Component vX.Y.Z)
+                 MCA btl: tcp (MCA vA.B, API vM.N, Component vX.Y.Z)
+  [where X.Y.Z, A.B, and M.N are appropriate for your version of Open MPI]
 $
 -----
 
 Notice the installed BTLs from ompi_info.
 
-Now cd into the v1.5 directory in this example project and build it,
-pointing it to the source directory of the Open MPI that you just
-built.  Note that we use the same --prefix as when installing Open MPI
-(so that the built component will be installed into the Right place):
+Now cd into this example project and build it, pointing it to the
+source directory of the Open MPI that you just built.  Note that we
+use the same --prefix as when installing Open MPI (so that the built
+component will be installed into the Right place):
 
 -----
-$ cd /path/to/this/sample/component/v1.5
+$ cd /path/to/this/sample
 $ ./autogen.sh
-$ ./configure --prefix=/opt/openmpi --with-openmpi-source=$HOME/openmpi-1.5.1
+$ ./configure --prefix=/opt/openmpi --with-openmpi-source=$HOME/openmpi-X.Y.Z
   [lots of output]
 $ make -j 4 install
   [lots of output]
 $ /opt/openmpi/bin/ompi_info | grep btl
-                 MCA btl: self (MCA v2.0, API v2.0, Component v1.5.2)
-                 MCA btl: sm (MCA v2.0, API v2.0, Component v1.5.2)
-                 MCA btl: tcp (MCA v2.0, API v2.0, Component v1.5.2)
-                 MCA btl: tcp2 (MCA v2.0, API v2.0, Component v1.5.2)
+                 MCA btl: self (MCA vA.B, API vM.N, Component vX.Y.Z)
+                 MCA btl: sm (MCA vA.B, API vM.N, Component vX.Y.Z)
+                 MCA btl: tcp (MCA vA.B, API vM.N, Component vX.Y.Z)
+                 MCA btl: tcp2 (MCA vA.B, API vM.N, Component vX.Y.Z)
+  [where X.Y.Z, A.B, and M.N are appropriate for your version of Open MPI]
 $
 -----
 
