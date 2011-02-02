@@ -43,9 +43,9 @@ they can likely build off the source tree that they already used.
 Example project contents
 ========================
 
-The "tcp2" component is a direct copy of the TCP BTL -- it has just
-been renamed so that it can be built separately and installed
-alongside the real TCP BTL component.
+The "tcp2" component is a direct copy of the TCP BTL as of January
+2011 -- it has just been renamed so that it can be built separately
+and installed alongside the real TCP BTL component.
 
 Most of the mojo for both methods is handled in the example
 components' configure.ac, but the same techniques are applicable
