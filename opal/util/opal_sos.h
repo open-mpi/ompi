@@ -35,7 +35,7 @@
 
 #ifdef __STDC_VERSION__
 # if __STDC_VERSION__ < 199901L
-#  if __GNUC__ >= 2
+#  if defined(__GNUC__) && __GNUC__ >= 2
 #   define OPAL_SOS_FUNCTION __FUNCTION__
 #  else
 #   define OPAL_SOS_FUNCION "<unknown>"
