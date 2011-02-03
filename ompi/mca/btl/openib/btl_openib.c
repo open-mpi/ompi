@@ -70,6 +70,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
 
 mca_btl_openib_module_t mca_btl_openib_module = {
     {
