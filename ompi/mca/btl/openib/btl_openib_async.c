@@ -432,6 +432,13 @@ void* btl_openib_async_thread(void * async)
                     /* no events */
                     break;
                 case POLLIN:
+#if defined(__SVR4) && defined(__sun)
+                /*
+                 * Need workaround for Solaris IB user verbs since
+                 * "Poll on IB async fd returns POLLRDNORM revent even though it is masked out"
+                 */
+                case POLLIN | POLLRDNORM:
+#endif
                     /* Processing our event */
                     if (0 == i) {
                         /* 0 poll we use for comunication with main thread */

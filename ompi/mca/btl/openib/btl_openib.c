@@ -66,6 +66,9 @@
 #include <sys/resource.h>
 #endif
 #include <unistd.h>
+#ifndef MIN
+#define MIN(a,b) ((a)<(b)?(a):(b))
+#endif
 
 mca_btl_openib_module_t mca_btl_openib_module = {
     {
