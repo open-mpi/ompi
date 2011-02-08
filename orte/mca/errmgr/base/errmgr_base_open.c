@@ -60,7 +60,7 @@ orte_errmgr_base_module_t orte_errmgr = {
     NULL, /* finalize */
     orte_errmgr_base_log,
     orte_errmgr_base_abort,
-    NULL, /* update_state        */
+    orte_errmgr_base_update_state,
     NULL, /* predicted_fault     */
     NULL, /* suggest_map_targets */
     NULL  /* ft_event            */
