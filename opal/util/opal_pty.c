@@ -232,7 +232,7 @@ static int ptys_open(int fdm, char *pts_name)
         close(fdm);
         return -5;
     }
-#ifdef __sun
+#if defined(__SVR4) && defined(__sun)
     if (ioctl(fds, I_PUSH, "ptem") < 0) {
         close(fdm);
         close(fds);
