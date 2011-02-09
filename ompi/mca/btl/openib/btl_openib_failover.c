@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,6 +26,8 @@
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
 #include "btl_openib_failover.h"
+
+#include "opal/util/opal_sos.h"
 
 static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
                                         struct mca_btl_base_module_t* module,
