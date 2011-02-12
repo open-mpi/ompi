@@ -53,6 +53,8 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_MPI           0x0020
 #define ORTE_PROC_APP           0x0030
 #define ORTE_PROC_CM            0x0040
+#define ORTE_PROC_IOF_ENDPT     0x1000
+#define ORTE_PROC_SCHEDULER     0x2000
 
 #define ORTE_PROC_IS_SINGLETON      (ORTE_PROC_SINGLETON & orte_process_info.proc_type)
 #define ORTE_PROC_IS_DAEMON         (ORTE_PROC_DAEMON & orte_process_info.proc_type)
@@ -62,6 +64,8 @@ typedef uint32_t orte_proc_type_t;
 #define ORTE_PROC_IS_MPI            (ORTE_PROC_MPI & orte_process_info.proc_type)
 #define ORTE_PROC_IS_APP            (ORTE_PROC_APP & orte_process_info.proc_type)
 #define ORTE_PROC_IS_CM             (ORTE_PROC_CM & orte_process_info.proc_type)
+#define ORTE_PROC_IS_IOF_ENDPT      (ORTE_PROC_IOF_ENDPT & orte_process_info.proc_type)
+#define ORTE_PROC_IS_SCHEDULER      (ORTE_PROC_SCHEDULER & orte_process_info.proc_type)
 
 
 /**

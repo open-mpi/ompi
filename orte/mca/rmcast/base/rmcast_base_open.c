@@ -25,7 +25,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
-#include "opal/util/opal_sos.h"
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/class/opal_list.h"
 

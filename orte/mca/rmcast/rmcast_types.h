@@ -77,6 +77,7 @@ typedef int32_t orte_rmcast_tag_t;
 #define ORTE_RMCAST_TAG_COMMAND       12
 #define ORTE_RMCAST_TAG_ERRMGR        13
 #define ORTE_RMCAST_TAG_UPDATE_STATE  14
+#define ORTE_RMCAST_TAG_TERMINATE     15
 
 /* starting value for dynamically assignable tags */
 #define ORTE_RMCAST_TAG_DYNAMIC     100
