@@ -12,7 +12,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/event/event.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/mca/rml/rml.h"
@@ -107,7 +106,7 @@ static int orte_rmcast_udp_close(void)
 static int orte_rmcast_udp_query(mca_base_module_t **module, int *priority)
 {
     /* selected by default */
-    *priority = 10;
+    *priority = 100;
     *module = (mca_base_module_t *) &orte_rmcast_udp_module;
     initialized = true;
     

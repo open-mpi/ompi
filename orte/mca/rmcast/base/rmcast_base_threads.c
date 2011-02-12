@@ -120,10 +120,10 @@ void orte_rmcast_base_process_msg(orte_rmcast_msg_t *msg)
         goto cleanup;
     }
     
-    /* if this is a heartbeat and I am not a daemon, then ignore it
+    /* if this is a heartbeat and I am not a daemon or a scheduler, then ignore it
      * to avoid swamping tools
      */
-    if (!ORTE_PROC_IS_DAEMON && ORTE_RMCAST_TAG_HEARTBEAT == tag) {
+    if (!(ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_SCHEDULER) && ORTE_RMCAST_TAG_HEARTBEAT == tag) {
         OPAL_OUTPUT_VERBOSE((10, orte_rmcast_base.rmcast_output,
                              "%s rmcast:base:process_recv ignoring heartbeat",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -205,7 +205,7 @@ void orte_rmcast_base_process_msg(orte_rmcast_msg_t *msg)
                     (ORTE_RMCAST_SEQ_MAX == trkr->seq_num && 0 != recvd_seq_num)) {
                     /* missing a message - request it */
                     OPAL_OUTPUT_VERBOSE((1, orte_rmcast_base.rmcast_output,
-                                         "%s Missing msg %d (%d) on channel %d from source %s",
+                                         "%s Missed msg %d (%d) on channel %d from source %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), recvd_seq_num,
                                          trkr->seq_num, channel, ORTE_NAME_PRINT(&name)));
                     OBJ_CONSTRUCT(&alert, opal_buffer_t);

@@ -47,6 +47,7 @@ static bool init_completed = false;
 static orte_job_t *daemons=NULL;
 static bool comm_enabled = false;
 static orte_thread_ctl_t ctl;
+static opal_list_t tools;
 
 /* LOCAL FUNCTIONS */
 static void recv_handler(int status, orte_process_name_t* sender,
@@ -169,6 +170,7 @@ static int init(void)
     
     /* setup local ctl */
     OBJ_CONSTRUCT(&ctl, orte_thread_ctl_t);
+    OBJ_CONSTRUCT(&tools, opal_list_t);
 
     /* setup the respective public address channel */
     if (ORTE_PROC_IS_TOOL) {
@@ -180,7 +182,7 @@ static int init(void)
         }
         orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
         orte_rmcast_base.my_input_channel = NULL;
-    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_SCHEDULER) {
         /* daemons and hnp open the sys and data server channels */
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_SYS_CHANNEL, "system",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
@@ -274,6 +276,8 @@ static int init(void)
 
 static void finalize(void)
 {
+    opal_list_item_t *item;
+
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp: finalize called",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -285,6 +289,11 @@ static void finalize(void)
 
     /* stop the processing thread */
     orte_rmcast_base_stop_threads();
+
+    while (NULL != (item = opal_list_remove_first(&tools))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&tools);
 
     OBJ_DESTRUCT(&ctl);
     return;
@@ -306,15 +315,26 @@ static void disable_comm(void)
     ORTE_RELEASE_THREAD(&ctl);
 }
 
+static void cbfunc(int status,
+                   struct orte_process_name_t* peer,
+                   struct opal_buffer_t* buffer,
+                   orte_rml_tag_t tag,
+                   void* cbdata)
+{
+    OBJ_RELEASE(buffer);
+}
+
+
 static int send_data(rmcast_base_send_t *snd,
                      orte_rmcast_channel_t channel)
 {
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
     orte_proc_t *proc;
     orte_odls_child_t *child;
     int rc, v;
     opal_buffer_t *buf;
     rmcast_base_channel_t *ch;
+    orte_namelist_t *tool;
 
     if (!comm_enabled) {
         return ORTE_ERR_COMM_DISABLED;
@@ -353,10 +373,12 @@ static int send_data(rmcast_base_send_t *snd,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
             /* ignore errors */
-            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_MULTICAST, 0))) {
-                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
+            OBJ_RETAIN(buf);
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc && ORTE_ERR_UNREACH != rc) {
                     ORTE_ERROR_LOG(rc);
                 }
+                rc = ORTE_SUCCESS;  /* don't confuse up-stream client */
             }
         } else {            
             /* if we don't already have it, get the daemon object */
@@ -381,10 +403,30 @@ static int send_data(rmcast_base_send_t *snd,
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc->name)));
                 /* ignore errors */
-                if (0 > (rc = orte_rml.send_buffer(&proc->name, buf, ORTE_RML_TAG_MULTICAST, 0))) {
-                    if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
+                OBJ_RETAIN(buf);
+                if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+                    if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc && ORTE_ERR_UNREACH != rc) {
                         ORTE_ERROR_LOG(rc);
                     }
+                    rc = ORTE_SUCCESS;  /* don't confuse up-stream client */
+                }
+
+                /* now send it to all attached tools */
+                item = opal_list_get_first(&tools);
+                while (item != opal_list_get_end(&tools)) {
+                    tool = (orte_namelist_t*)item;
+                    next = opal_list_get_next(item);
+                    OBJ_RETAIN(buf);
+                    if (0 > (rc = orte_rml.send_buffer_nb(&tool->name, buf, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+                        if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc && ORTE_ERR_UNREACH != rc) {
+                            ORTE_ERROR_LOG(rc);
+                        }
+                        opal_list_remove_item(&tools, item);
+                        OBJ_RELEASE(item);
+                        OBJ_RELEASE(buf);
+                        rc = ORTE_SUCCESS;  /* don't confuse up-stream client */
+                    }
+                    item = next;
                 }
             }
         }
@@ -401,10 +443,12 @@ static int send_data(rmcast_base_send_t *snd,
                 continue;
             }
             /* ignore errors */
-            if (0 > (rc = orte_rml.send_buffer(child->name, buf, ORTE_RML_TAG_MULTICAST, 0))) {
-                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
+            OBJ_RETAIN(buf);
+            if (0 > (rc = orte_rml.send_buffer_nb(child->name, buf, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc && ORTE_ERR_UNREACH != rc) {
                     ORTE_ERROR_LOG(rc);
                 }
+                rc = ORTE_SUCCESS;  /* don't confuse up-stream client */
             }
         }
         rc = ORTE_SUCCESS;
@@ -414,13 +458,10 @@ static int send_data(rmcast_base_send_t *snd,
                              "%s rmcast:tcp sending multicast to HNP %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
-        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_MULTICAST, 0))) {
-            if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
-                ORTE_ERROR_LOG(rc);
-                /* didn't get the message out */
-                opal_output(0, "%s failed to send message to multicast channel %d",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)ch->channel);
-            }
+        OBJ_RETAIN(buf);
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+            orte_errmgr.abort(rc, "%s Failed to send message to multicast channel %d",
+                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)ch->channel);
             goto cleanup;
         }
         rc = ORTE_SUCCESS;
@@ -831,17 +872,33 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
 static void process_msg(orte_rmcast_msg_t *msg)
 {
     int rc;
-    opal_list_item_t *item;
+    opal_list_item_t *item, *next;
     int v;
     orte_proc_t *proc;
     orte_odls_child_t *child;
+    opal_buffer_t *buf;
+    orte_namelist_t *tool;
 
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:tcp processing message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(&msg->sender)));
 
+    buf = OBJ_NEW(opal_buffer_t);
+    opal_dss.copy_payload(buf, msg->buf);
+
     if (ORTE_PROC_IS_HNP) {
+        /* if this message came from a different job family, then we have
+         * to track the sender so we can relay mcast messages to them as
+         * they won't be a member of the daemon job
+         */
+        if (ORTE_JOB_FAMILY(msg->sender.jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+            tool = OBJ_NEW(orte_namelist_t);
+            tool->name.jobid = msg->sender.jobid;
+            tool->name.vpid = msg->sender.vpid;
+            opal_list_append(&tools, &tool->item);
+        }
+
         /* if we don't already have it, get the daemon object */
         if (NULL == daemons) {
             daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
@@ -868,11 +925,34 @@ static void process_msg(orte_rmcast_msg_t *msg)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
             /* ignore errors */
-            if (0 > (rc = orte_rml.send_buffer(&proc->name, msg->buf, ORTE_RML_TAG_MULTICAST, 0))) {
-                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
+            OBJ_RETAIN(buf);
+            if (0 > (rc = orte_rml.send_buffer_nb(&proc->name, buf, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc && ORTE_ERR_UNREACH != rc) {
                     ORTE_ERROR_LOG(rc);
                 }
-                ORTE_ERROR_LOG(rc);
+                rc = ORTE_SUCCESS;  /* don't confuse up-stream client */
+            }
+            /* now send it to all attached tools except whomever sent it to me, if applicable */
+            item = opal_list_get_first(&tools);
+            while (item != opal_list_get_end(&tools)) {
+                tool = (orte_namelist_t*)item;
+                next = opal_list_get_next(item);
+                if (msg->sender.jobid == tool->name.jobid &&
+                    msg->sender.vpid == tool->name.vpid) {
+                    item = next;
+                    continue;
+                }
+                OBJ_RETAIN(buf);
+                if (0 > (rc = orte_rml.send_buffer_nb(&tool->name, buf, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+                    if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc && ORTE_ERR_UNREACH != rc) {
+                        ORTE_ERROR_LOG(rc);
+                    }
+                    opal_list_remove_item(&tools, item);
+                    OBJ_RELEASE(item);
+                    OBJ_RELEASE(buf);
+                    rc = ORTE_SUCCESS;  /* don't confuse up-stream client */
+                }
+                item = next;
             }
         }
     }
@@ -900,14 +980,17 @@ static void process_msg(orte_rmcast_msg_t *msg)
                                  ORTE_NAME_PRINT(child->name)));
 
             /* ignore errors */
-            if (0 > (rc = orte_rml.send_buffer(child->name, msg->buf, ORTE_RML_TAG_MULTICAST, 0))) {
-                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc) {
+            OBJ_RETAIN(buf);
+            if (0 > (rc = orte_rml.send_buffer_nb(child->name, buf, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+                if (ORTE_ERR_ADDRESSEE_UNKNOWN != rc && ORTE_ERR_UNREACH != rc) {
                     ORTE_ERROR_LOG(rc);
                 }
+                rc = ORTE_SUCCESS;  /* don't confuse up-stream client */
             }
         }
     }
-    
+    OBJ_RELEASE(buf);
+
     /* now process it myself - this releases the msg */
     orte_rmcast_base_process_msg(msg);
 }

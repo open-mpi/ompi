@@ -186,7 +186,7 @@ static int init(void)
         }
         orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
         orte_rmcast_base.my_input_channel = NULL;
-    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_SCHEDULER) {
         /* daemons and hnp open the sys and data server channels */
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_SYS_CHANNEL, "system",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
@@ -789,7 +789,6 @@ static void missed_msg(int status, orte_process_name_t* sender,
                        opal_buffer_t* buffer, orte_rml_tag_t tag,
                        void* cbdata)
 {
-    opal_output(0, "%s RECVD MISSING MESSAGE", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     ORTE_MULTICAST_MESSAGE_EVENT(sender, buffer);
 }
 
@@ -841,7 +840,8 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
                              "%s setup:channel activating recv event on fd %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),(int)chan->recv));
         
-        opal_event_set(opal_event_base, &chan->recv_ev, chan->recv, OPAL_EV_READ|OPAL_EV_PERSIST, recv_handler, chan);
+        opal_event_set(opal_event_base, &chan->recv_ev, chan->recv,
+                       OPAL_EV_READ|OPAL_EV_PERSIST, recv_handler, chan);
         opal_event_add(&chan->recv_ev, 0);
     }
 
