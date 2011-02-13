@@ -28,7 +28,7 @@
 #include "orte/util/error_strings.h"
 #include "orte/runtime/orte_globals.h"
 
-const char *orte_err2str(int errnum)
+int orte_err2str(int errnum, const char **errmsg)
 {
     const char *retval;
     switch (OPAL_SOS_GET_ERROR_CODE(errnum)) {
@@ -156,7 +156,8 @@ const char *orte_err2str(int errnum)
         }
     }
 
-    return retval;
+    *errmsg = retval;
+    return ORTE_SUCCESS;
 }
 
 const char *orte_job_state_to_str(orte_job_state_t state)

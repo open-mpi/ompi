@@ -32,7 +32,7 @@
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC const char *orte_err2str(int errnum);
+ORTE_DECLSPEC int orte_err2str(int errnum, const char **errmsg);
 
 
 ORTE_DECLSPEC const char *orte_job_state_to_str(orte_job_state_t state);
