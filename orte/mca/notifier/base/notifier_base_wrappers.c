@@ -150,8 +150,8 @@ char *orte_notifier_base_peer_log(int errcode, orte_process_name_t *peer_proc,
     char *buf = (char *) malloc(ORTE_NOTIFIER_MAX_BUF + 1);
     char *peer_host = NULL, *peer_name = NULL;
     char *pos = buf;
-    char *errstr = (char*)orte_err2str(errcode);
-    int len, space = ORTE_NOTIFIER_MAX_BUF;
+    char *errstr;
+    int ret, len, space = ORTE_NOTIFIER_MAX_BUF;
 
     if (NULL == buf) {
         return NULL;
@@ -173,8 +173,10 @@ char *orte_notifier_base_peer_log(int errcode, orte_process_name_t *peer_proc,
     pos += len;
     
     if (0 < space) {
-        if (errstr) {
+        ret = orte_err2str(errcode, (const char **)&errstr);
+        if (ORTE_SUCCESS == ret) {
             len = snprintf(pos, space, "'%s':", errstr);
+            free(errstr);
         } else {
             len = snprintf(pos, space, "(%d):", errcode);
         }

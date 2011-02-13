@@ -65,7 +65,7 @@ OPAL_DECLSPEC const char *opal_strerror(int errnum);
 OPAL_DECLSPEC int opal_strerror_r(int errnum, char *strerrbuf, size_t buflen);
 
 
-typedef const char * (*opal_err2str_fn_t)(int errnum);
+typedef int (*opal_err2str_fn_t)(int errnum, const char **str);
 
 /**
  * \internal

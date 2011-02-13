@@ -71,8 +71,8 @@ bool opal_profile = false;
 char *opal_profile_file = NULL;
 int opal_cache_line_size;
 
-static const char *
-opal_err2str(int errnum)
+static int
+opal_err2str(int errnum, const char **errmsg)
 {
     const char *retval;
 
@@ -205,7 +205,8 @@ opal_err2str(int errnum)
         retval = NULL;
 }
 
-return retval;
+    *errmsg = retval;
+    return OPAL_SUCCESS;
 }
 
 
