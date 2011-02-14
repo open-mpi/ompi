@@ -321,7 +321,7 @@ BEGIN_C_DECLS
      * never be NULL. It will always have a value, even if that value is
      * the empty string.
      *
-     * Strings returned in the \em current_value parameter should later
+     * NOTE: Strings returned in the \em current_value parameter should later
      * be free()'ed.
      *
      * This function is identical to mca_base_param_reg_int() except
