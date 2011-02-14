@@ -583,9 +583,9 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
         if( jdata->enable_recovery ) {
             /* is this a local proc */
             if (NULL != (child = proc_is_local(proc))) {
-                /* local proc - see if it has reached its local restart limit */
+                /* local proc - see if it has reached its restart limit */
                 app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, child->app_idx);
-                if (child->restarts < app->max_local_restarts) {
+                if (child->restarts < app->max_restarts) {
                     child->restarts++;
                     if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
                         return ORTE_SUCCESS;
@@ -594,9 +594,6 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
                      * have cleared it
                      */
                     child->state = state;
-                    ORTE_ERROR_LOG(rc);
-                    /* let it fall thru to abort */
-                } else {
                     /* see if we can relocate it somewhere else */
                     if (ORTE_SUCCESS == hnp_relocate(jdata, proc, state, exit_code)) {
                         return ORTE_SUCCESS;
@@ -1580,10 +1577,10 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc,
         return ORTE_ERR_NOT_FOUND;
     }
     app_name = app->app;
-    /* track that we are attempting to relocate */
-    pdata->relocates++;
-    /* have we exceeded the number of relocates for this proc? */
-    if (app->max_global_restarts < pdata->relocates) {
+    /* track that we are attempting to restart */
+    pdata->restarts++;
+    /* have we exceeded the number of restarts for this proc? */
+    if (app->max_restarts < pdata->restarts) {
         return ORTE_ERR_RESTART_LIMIT_EXCEEDED;
     }
     

@@ -173,8 +173,7 @@ bool orte_do_not_barrier = false;
 
 /* process recovery */
 bool orte_enable_recovery;
-int32_t orte_max_global_restarts;
-int32_t orte_max_local_restarts;
+int32_t orte_max_restarts;
 
 /* comm fn for updating state */
 orte_default_comm_fn_t orte_comm;
@@ -182,9 +181,6 @@ orte_default_comm_fn_t orte_comm;
 /* exit status reporting */
 bool orte_report_child_jobs_separately;
 struct timeval orte_child_time_to_exit;
-
-/* orte progress threads */
-bool orte_progress_threads_enabled;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
@@ -567,9 +563,8 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
 #if OPAL_ENABLE_FT_CR == 1
     app_context->sstore_load = NULL;
 #endif
-    app_context->max_local_restarts = -1;
-    app_context->max_global_restarts = -1;
-    app_context->constrain = true;
+    app_context->recovery_defined = false;
+    app_context->max_restarts = -1000;
 }
 
 static void orte_app_context_destructor(orte_app_context_t* app_context)
@@ -692,6 +687,7 @@ static void orte_job_construct(orte_job_t* job)
     OBJ_CONSTRUCT(&job->dyn_spawn_cond, opal_condition_t);
     job->dyn_spawn_active = false;
     
+    job->recovery_defined = false;
     job->enable_recovery = false;
     
     job->launch_msg_sent.tv_sec = 0;
@@ -892,7 +888,10 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->nodename = NULL;
     proc->rml_uri = NULL;
     proc->restarts = 0;
-    proc->relocates = 0;
+#if ORTE_ENABLE_HEARTBEAT
+    proc->beat = 0;
+    proc->missed = 0;
+#endif
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;
@@ -971,10 +970,6 @@ static void orte_nid_construct(orte_nid_t *ptr)
     ptr->oversubscribed = false;
     OBJ_CONSTRUCT(&ptr->attrs, opal_list_t);
     OBJ_CONSTRUCT(&ptr->sysinfo, opal_list_t);
-#if ORTE_ENABLE_HEARTBEAT
-    ptr->beat = 0;
-    ptr->missed = 0;
-#endif
 }
 
 static void orte_nid_destruct(orte_nid_t *ptr)

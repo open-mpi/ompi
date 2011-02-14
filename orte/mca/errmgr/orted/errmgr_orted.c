@@ -310,7 +310,7 @@ static int update_state(orte_jobid_t job,
                     killprocs(proc->jobid, proc->vpid);
                 }
                 app = jobdat->apps[child->app_idx];
-                if( jobdat->enable_recovery && child->restarts < app->max_local_restarts ) {
+                if( jobdat->enable_recovery && child->restarts < app->max_restarts ) {
                     child->restarts++;
                     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                          "%s errmgr:orted restarting proc %s for the %d time",
@@ -340,8 +340,8 @@ static int update_state(orte_jobid_t job,
                     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                          "%s CHECKING RESTARTS %d VS MAX %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         child->restarts, app->max_local_restarts));
-                    if (child->restarts < app->max_local_restarts ) {
+                                         child->restarts, app->max_restarts));
+                    if (child->restarts < app->max_restarts ) {
                         /*  attempt to restart it locally */
                         child->restarts++;
                         OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,

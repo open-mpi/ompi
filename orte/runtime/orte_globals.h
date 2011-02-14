@@ -227,15 +227,10 @@ typedef struct {
     /** What files SStore should load before local launch, if any */
     char *sstore_load;
 #endif
-    /* max number of times a process can be restarted locally */
-    int32_t max_local_restarts;
-    /* max number of times a process can be relocated to another node */
-    int32_t max_global_restarts;
-    /* whether or not the procs in this app are constrained to stay
-     * on the specified nodes when restarted, or can move to any
-     * known node
-     */
-    bool constrain;
+    /* recovery policy has been defined */
+    bool recovery_defined;
+    /* max number of times a process can be restarted */
+    int32_t max_restarts;
 } orte_app_context_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
@@ -423,6 +418,8 @@ typedef struct {
     bool abort;
     /* proc that caused that to happen */
     struct orte_proc_t *aborted_proc;
+    /* recovery policy has been defined */
+    bool recovery_defined;
     /* enable recovery of these processes */
     bool enable_recovery;
     /* time launch message was sent */
@@ -485,8 +482,12 @@ struct orte_proc_t {
     char *rml_uri;
     /* number of times this process has been restarted */
     int32_t restarts;
-    /* number of times this process has been relocated */
-    int32_t relocates;
+#if ORTE_ENABLE_HEARTBEAT
+    /* time when last heartbeat was detected */
+    double beat;
+    /* number of missed heartbeats */
+    int missed;
+#endif
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -522,12 +523,6 @@ typedef struct {
     opal_list_t attrs;
     /* list of system info */
     opal_list_t sysinfo;
-#if ORTE_ENABLE_HEARTBEAT
-    /* seconds when last heartbeat was detected */
-    double beat;
-    /* number of missed heartbeats */
-    int missed;
-#endif
 } orte_nid_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_nid_t);
 
@@ -704,8 +699,7 @@ ORTE_DECLSPEC extern bool orte_do_not_barrier;
 
 /* process recovery */
 ORTE_DECLSPEC extern bool orte_enable_recovery;
-ORTE_DECLSPEC extern int32_t orte_max_global_restarts;
-ORTE_DECLSPEC extern int32_t orte_max_local_restarts;
+ORTE_DECLSPEC extern int32_t orte_max_restarts;
 
 /* comm interface */
 typedef void (*orte_default_cbfunc_t)(int fd, short event, void *data);
@@ -723,9 +717,6 @@ ORTE_DECLSPEC int orte_global_comm(orte_process_name_t *recipient,
 /* exit status reporting */
 ORTE_DECLSPEC extern bool orte_report_child_jobs_separately;
 ORTE_DECLSPEC extern struct timeval orte_child_time_to_exit;
-
-/* orte progress threads */
-ORTE_DECLSPEC extern bool orte_progress_threads_enabled;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

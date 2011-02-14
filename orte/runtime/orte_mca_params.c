@@ -458,46 +458,38 @@ int orte_register_params(void)
                                 (int)false, &value);
     orte_enable_recovery = OPAL_INT_TO_BOOL(value);
 
-    mca_base_param_reg_int_name("orte", "max_global_restarts",
-                                "Max number of times to relocate a failed process to a new node",
+    mca_base_param_reg_int_name("orte", "max_restarts",
+                                "Max number of times to restart a failed process",
                                 false, false,
-                                -1, &orte_max_global_restarts);
+                                -1, &orte_max_restarts);
     
-    mca_base_param_reg_int_name("orte", "max_local_restarts",
-                                "Max number of times to locally restart a failed process before relocating it to a new node",
-                                false, false,
-                                -1, &orte_max_local_restarts);
     if (orte_enable_recovery) {
-        if (orte_max_global_restarts <= 0 &&
-            orte_max_local_restarts <= 0) {
+        if (orte_max_restarts <= 0) {
             if (ORTE_PROC_IS_HNP) {
                 opal_output(orte_clean_output,
                             "------------------------------------------------------------\n"
                             "Although the MCA param orte_enable_recovery was set to true,\n"
-                            "values for the max number of restarts was not provided:\n\n"
-                            "Max global restarts: %d\n"
-                            "Max local restarts:  %d\n\n"
-                            "At least one of these must be a positive value. We are disabling\n"
+                            "a value for the max number of restarts was not provided:\n\n"
+                            "Max restarts: %d\n"
+                            "This must be a positive value. We are disabling\n"
                             "process recovery, but continuing execution.\n"
                             "------------------------------------------------------------",
-                            orte_max_global_restarts, orte_max_local_restarts);
+                            orte_max_restarts);
             }
             orte_enable_recovery = false;
         }
-    } else if (orte_max_global_restarts > 0 ||
-               orte_max_local_restarts > 0) {
+    } else if (orte_max_restarts > 0) {
         if (ORTE_PROC_IS_HNP) {
             opal_output(orte_clean_output,
                         "------------------------------------------------------------------\n"
                         "The MCA param orte_enable_recovery was not set to true, but\n"
-                        "positive value(s) were provided for the number of restarts:\n\n"
-                        "Max global restarts: %d\n"
-                        "Max local restarts:  %d\n\n"
+                        "a positive value was provided for the number of restarts:\n\n"
+                        "Max restarts: %d\n"
                         "We are enabling process recovery and continuing execution. To avoid\n"
                         "this warning in the future, please set the orte_enable_recovery\n"
                         "param to non-zero.\n"
                         "------------------------------------------------------------------",
-                        orte_max_global_restarts, orte_max_local_restarts);            
+                        orte_max_restarts);            
         }
         orte_enable_recovery = true;
     }
@@ -514,17 +506,6 @@ int orte_register_params(void)
                                 INT_MAX, &value);
     orte_child_time_to_exit.tv_sec = value;
     orte_child_time_to_exit.tv_usec = 0;
-    
-    mca_base_param_reg_int_name("orte", "enable_progress_threads",
-                                "Enable the use of ORTE progress threads in applications",
-                                false, false,
-                                (int)false, &value);
-
-    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
-        orte_progress_threads_enabled = true;
-    } else {
-        orte_progress_threads_enabled = OPAL_INT_TO_BOOL(value);
-    }
  
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
