@@ -44,6 +44,7 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_INIT                    0x00000001  /* process entry has been created by rmaps */
 #define ORTE_PROC_STATE_RESTART                 0x00000002  /* the proc is ready for restart */
 #define ORTE_PROC_STATE_LAUNCHED                0x00000004  /* process has been launched */
+#define ORTE_PROC_STATE_TERMINATE               0x00000008  /* process is marked for termination */
 #define ORTE_PROC_STATE_RUNNING                 0x00000010  /* daemon has locally fork'd process */
 #define ORTE_PROC_STATE_REGISTERED              0x00000020  /* process has registered for sync */
 /*
@@ -64,6 +65,7 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_CALLED_ABORT            0x00008000  /* process called "errmgr.abort" */
 #define ORTE_PROC_STATE_HEARTBEAT_FAILED        0x00010000  /* heartbeat failed to arrive */
 #define ORTE_PROC_STATE_MIGRATING               0x00020000  /* process is migrating */
+#define ORTE_PROC_STATE_CANNOT_RESTART          0x00040000  /* process failed and cannot be restarted */
 
 /*
  * Job state codes
@@ -96,6 +98,7 @@ typedef uint32_t orte_job_state_t;
 #define ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED    0x00004000  /* job had a process that exceeded a sensor limit */
 #define ORTE_JOB_STATE_CALLED_ABORT             0x00008000  /* at least one process called "errmgr.abort" */
 #define ORTE_JOB_STATE_HEARTBEAT_FAILED         0x00010000  /* heartbeat failed to arrive */
+#define ORTE_JOB_STATE_PROCS_MIGRATING          0x00020000  /* procs waiting to migrate */
 
 /* the job never even attempted to launch due to an error earlier in the
  * launch procedure
@@ -128,6 +131,8 @@ orte_node_state_t) */
 #define ORTE_NODE_STATE_REBOOT         3
 /** Node is up, but not available for use for the next mapping */
 #define ORTE_NODE_STATE_DO_NOT_USE     4
+/** Node is up, but not part of the node pool for jobs */
+#define ORTE_NODE_STATE_NOT_INCLUDED   5
 
 /*
  * PLM commands

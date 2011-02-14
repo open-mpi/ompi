@@ -67,7 +67,7 @@ opal_strerror_int(int errnum, const char **str)
 
 /* caller must free string */
 static int
-opal_strerror_unknown(int errnum, const char **str)
+opal_strerror_unknown(int errnum, char **str)
 {
     int i;
     *str = NULL;
@@ -105,7 +105,7 @@ opal_perror(int errnum, const char *msg)
         if (OPAL_SOS_GET_ERROR_CODE(errnum) == OPAL_ERR_IN_ERRNO) {
             perror(msg);
         } else {
-            const char *ue_msg;
+            char *ue_msg;
             ret = opal_strerror_unknown(errnum, &ue_msg);
             fprintf(stderr, "%s\n", ue_msg);
             free(ue_msg);
@@ -134,7 +134,7 @@ opal_strerror(int errnum)
     ret = opal_strerror_int(errnum, &errmsg);
 
     if (OPAL_SUCCESS != ret) {
-        const char *ue_msg;
+        char *ue_msg;
         ret = opal_strerror_unknown(errnum, &ue_msg);
         snprintf(unknown_retbuf, UNKNOWN_RETBUF_LEN, "%s", ue_msg);
         free(ue_msg);
@@ -159,7 +159,7 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
             strncpy(strerrbuf, tmp, buflen);
             return OPAL_SUCCESS;
         } else {
-            const char *ue_msg;
+            char *ue_msg;
             ret = opal_strerror_unknown(errnum, &ue_msg);
             len =  snprintf(strerrbuf, buflen, "%s", ue_msg);
             free(ue_msg);

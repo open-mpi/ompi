@@ -1584,7 +1584,7 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc,
     pdata->relocates++;
     /* have we exceeded the number of relocates for this proc? */
     if (app->max_global_restarts < pdata->relocates) {
-        return ORTE_ERR_RELOCATE_LIMIT_EXCEEDED;
+        return ORTE_ERR_RESTART_LIMIT_EXCEEDED;
     }
     
     /* reset the job params for restart */
