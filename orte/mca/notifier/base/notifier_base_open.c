@@ -98,6 +98,7 @@ int orte_notifier_base_open(void)
         opal_output(0, "Unknown notifier level");
         return ORTE_ERROR;
     }
+    free(level);
     
     OBJ_CONSTRUCT(&orte_notifier_base_selected_modules, opal_list_t);
     OBJ_CONSTRUCT(&orte_notifier_log_selected_modules, opal_list_t);

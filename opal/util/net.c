@@ -137,6 +137,7 @@ opal_net_init()
                                     &string_value );
 
     args = opal_argv_split( string_value, ';' );
+    free(string_value);
     if( NULL != args ) {
         count = opal_argv_count(args);
         private_ipv4 = (private_ipv4_t*)malloc( (count + 1) * sizeof(private_ipv4_t));
