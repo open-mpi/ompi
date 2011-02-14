@@ -49,7 +49,7 @@ static void orte_log_peer(int severity, int errcode, orte_process_name_t *peer_p
  * Global variables
  */
 int orte_notifier_base_output = -1;
-int orte_notifier_threshold_severity = ORTE_NOTIFIER_INFRA;
+int orte_notifier_threshold_severity = ORTE_NOTIFIER_ERROR;
 orte_notifier_base_module_t orte_notifier = {
     NULL,
     NULL,
@@ -77,10 +77,23 @@ int orte_notifier_base_open(void)
     mca_base_param_reg_string_name("notifier", "threshold_severity",
                                    "Report all events at or above this severity [default: critical]",
                                    false, false, "critical", &level);
-    if (0 == strcmp(level, "warning")) {
-        orte_notifier_threshold_severity = ORTE_NOTIFIER_WARNING;
-    } else if (0 == strcmp(level, "notice")) {
+    if (0 == strncasecmp(level, "emerg", strlen("emerg"))) {
+        orte_notifier_threshold_severity = ORTE_NOTIFIER_EMERG;
+    } else if (0 == strncasecmp(level, "alert", strlen("alert"))) {
+        orte_notifier_threshold_severity = ORTE_NOTIFIER_ALERT;
+    } else if (0 == strncasecmp(level, "crit", strlen("crit"))) {
+        orte_notifier_threshold_severity = ORTE_NOTIFIER_CRIT;
+    } else if (0 == strncasecmp(level, "warn", strlen("warn"))) {
+        orte_notifier_threshold_severity = ORTE_NOTIFIER_WARN;
+    } else if (0 == strncasecmp(level, "notice", strlen("notice"))) {
         orte_notifier_threshold_severity = ORTE_NOTIFIER_NOTICE;
+    } else if (0 == strncasecmp(level, "info", strlen("info"))) {
+        orte_notifier_threshold_severity = ORTE_NOTIFIER_INFO;
+    } else if (0 == strncasecmp(level, "debug", strlen("debug"))) {
+        orte_notifier_threshold_severity = ORTE_NOTIFIER_DEBUG;
+    } else if (0 != strncasecmp(level, "error", strlen("error"))) {
+        opal_output(0, "Unknown notifier level");
+        return ORTE_ERROR;
     }
     
     /* Open up all available components */

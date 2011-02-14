@@ -113,6 +113,21 @@ BEGIN_C_DECLS
 #define ORTE_SNAPC_CKPT_MAX                  10
 
 /**
+ * Sufficiently high shift value to avoid colliding the process
+ * checkpointing states above with the ORTE process states
+ */
+#define ORTE_SNAPC_CKPT_SHIFT                131072
+
+/* Uniquely encode the SNAPC state */
+#define ORTE_SNAPC_CKPT_NOTIFY(state) (ORTE_SNAPC_CKPT_SHIFT + state)
+
+/* Decode the SNAPC state */
+#define ORTE_SNAPC_CKPT_STATE(state) (state - ORTE_SNAPC_CKPT_SHIFT)
+
+/* Check whether a state is a SNAPC state or not. */
+#define CHECK_ORTE_SNAPC_CKPT_STATE(state) (state >= ORTE_SNAPC_CKPT_SHIFT)
+
+/**
  * Definition of a orte local snapshot.
  * Similar to the opal_crs_base_snapshot_t except that it
  * contains process contact information.

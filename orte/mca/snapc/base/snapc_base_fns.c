@@ -55,6 +55,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
+#include "orte/mca/notifier/notifier.h"
 
 #include "orte/mca/snapc/snapc.h"
 #include "orte/mca/snapc/base/base.h"
@@ -387,6 +388,39 @@ static void snapc_none_global_cmdline_request(int status,
 /********************
  * Utility functions
  ********************/
+
+/* Report the checkpoint status over the notifier interface */
+void orte_snapc_ckpt_state_notify(int state)
+{
+    switch(state) {
+    case ORTE_SNAPC_CKPT_STATE_FINISHED:
+	    orte_notifier.log(ORTE_NOTIFIER_INFO, ORTE_SNAPC_CKPT_NOTIFY(state),
+                          "%d: Checkpoint established for process %s.",
+			  orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        break;
+    case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
+        orte_notifier.log(ORTE_NOTIFIER_WARN, ORTE_SNAPC_CKPT_NOTIFY(state),
+                          "%d: Process %s is not checkpointable.",
+                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        break;
+    case ORTE_SNAPC_CKPT_STATE_ERROR:
+        orte_notifier.log(ORTE_NOTIFIER_WARN, ORTE_SNAPC_CKPT_NOTIFY(state),
+                          "%d: Failed to checkpoint process %s.",
+                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        break;
+    /* ADK: We currently do not notify for these states, but good to
+     * have them around anyways. */
+    case ORTE_SNAPC_CKPT_STATE_NONE:
+    case ORTE_SNAPC_CKPT_STATE_REQUEST:
+    case ORTE_SNAPC_CKPT_STATE_PENDING:
+    case ORTE_SNAPC_CKPT_STATE_RUNNING:
+    case ORTE_SNAPC_CKPT_STATE_STOPPED:
+    case ORTE_SNAPC_CKPT_STATE_FINISHED_LOCAL:
+    default:
+        break;
+    }
+}
+
 int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
                                                opal_buffer_t* buffer,
                                                opal_crs_base_ckpt_options_t *options,
@@ -526,6 +560,11 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
                              ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));
         return ORTE_SUCCESS;
     }
+
+    /*
+     * Pass on the checkpoint state over the notifier interface.
+     */
+    orte_snapc_ckpt_state_notify(ckpt_status);
 
     OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                          "%s) base:ckpt_update_cmd: Sending update command <%s> <seq %d> <status %d>\n",

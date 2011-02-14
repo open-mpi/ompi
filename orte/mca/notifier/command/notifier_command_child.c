@@ -250,8 +250,8 @@ static void do_exec(void)
         while (NULL != (p = strstr(cmd, "$S"))) {
             *p = '\0';
             asprintf(&temp, "%s%s%s", cmd, 
-                     ((ORTE_NOTIFIER_INFRA == sel[0]) ? "INFRA" :
-                      ((ORTE_NOTIFIER_WARNING == sel[0]) ? "WARNING" : 
+                     ((ORTE_NOTIFIER_CRIT == sel[0]) ? "CRIT" :
+                      ((ORTE_NOTIFIER_WARN == sel[0]) ? "WARNING" : 
                        ((ORTE_NOTIFIER_NOTICE == sel[0]) ? "NOTICE" : 
                         "UNKNOWN"))), p + 2);
             free(cmd);

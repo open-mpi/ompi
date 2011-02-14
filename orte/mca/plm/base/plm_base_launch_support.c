@@ -38,6 +38,7 @@
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
+#include "orte/mca/notifier/notifier.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rml/rml.h"
@@ -68,6 +69,7 @@
 static bool active_job_completed_callback = false;
 
 static char *pretty_print_timing(int64_t secs, int64_t usecs);
+static void orte_plm_base_proc_state_notify(orte_proc_state_t state, orte_process_name_t *proc);
 
 int orte_plm_base_setup_job(orte_job_t *jdata)
 {
@@ -1322,6 +1324,10 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
                  */
                 continue;
             }
+
+            /* notify the process status over the notifier */
+            orte_plm_base_proc_state_notify(proc->state, proc->name);
+
             if (ORTE_PROC_STATE_FAILED_TO_START == proc->state) {
                 jdata->state = ORTE_JOB_STATE_FAILED_TO_START;
                 if (!jdata->abort) {
@@ -1579,6 +1585,30 @@ CHECK_ALIVE:
         orte_trigger_event(&orte_exit);
     }
     
+}
+
+void orte_plm_base_proc_state_notify(orte_proc_state_t state, orte_process_name_t *proc)
+{
+    if (NULL != proc) {
+        switch(state) {
+        case ORTE_PROC_STATE_TERMINATED:
+        case ORTE_PROC_STATE_ABORTED:
+        case ORTE_PROC_STATE_ABORTED_BY_SIG:
+        case ORTE_PROC_STATE_TERM_WO_SYNC:
+        case ORTE_PROC_STATE_KILLED_BY_CMD:
+            orte_notifier.log(ORTE_NOTIFIER_ERROR, state, "%d: Process %s is dead.",
+                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+            break;
+
+        case ORTE_PROC_STATE_FAILED_TO_START:
+            orte_notifier.log(ORTE_NOTIFIER_ERROR, state,
+                              "%d: Process %s has called abort.",
+                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 static char timestring[128];

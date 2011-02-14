@@ -1,6 +1,6 @@
 /* -*- C -*-
 *
-* Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+* Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
 *                         University Research and Technology
 *                         Corporation.  All rights reserved.
 * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -79,11 +79,6 @@ static int orte_notifier_ftb_close(void)
         free(mca_notifier_ftb_component.subscription_style);
     }
 
-    /* If the FTB client handle is valid, disconnect the client */
-    if (1 == ftb_client_handle.valid) {
-        FTB_Disconnect(ftb_client_handle);
-    }
-
     return ORTE_SUCCESS;
 }
 
@@ -100,8 +95,7 @@ static int orte_notifier_ftb_component_query(mca_base_module_t **module, int *pr
     /* We represent each client with a client name of the form
        openmpi/<hostname>/<PID> as a unique identifier in the
        FTB client namespace */
-    sprintf(ftb_client_info.client_name, "openmpi/%s/%u",
-            orte_process_info.nodename, orte_process_info.pid);
+    sprintf(ftb_client_info.client_name, "ompi%u", orte_process_info.pid);
 
     sprintf(ftb_client_info.client_jobid, "%u", ORTE_PROC_MY_NAME->jobid);
 

@@ -3318,7 +3318,7 @@ error:
                     cq_name[cq], btl_openib_component_status_to_string(wc->status),
                     wc->status, wc->wr_id, 
                     wc->opcode, wc->vendor_err, qp));
-        orte_notifier.peer(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
+        orte_notifier.peer(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
                            remote_proc ? &remote_proc->proc_name : NULL,
                            "\n\tIB polling %s with status %s "
                            "status number %d for wr_id %" PRIx64 " opcode %d vendor error %d qp_idx %d",
@@ -3344,7 +3344,7 @@ error:
                            "srq rnr retry exceeded", true,
                            orte_process_info.nodename, device_name,
                            peer_hostname);
-            orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
+            orte_notifier.help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
                                     "help-mpi-btl-openib.txt",
                                     BTL_OPENIB_QP_TYPE_PP(qp) ? 
                                     "pp rnr retry exceeded" : 
@@ -3356,7 +3356,7 @@ error:
                            "pp retry exceeded", true,
                            orte_process_info.nodename,
                            device_name, peer_hostname);
-            orte_notifier.help(ORTE_NOTIFIER_INFRA, ORTE_ERR_COMM_FAILURE,
+            orte_notifier.help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
                                     "help-mpi-btl-openib.txt", 
                                     "pp retry exceeded",
                                     orte_process_info.nodename,

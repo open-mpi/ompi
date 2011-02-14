@@ -1410,7 +1410,7 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
     if (true == remove) {
         mca_bml.bml_del_proc_btl(errproc, btl);
 
-        orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+        orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                           "BTL %s error: rank=%d mapping out %s "
                           "to rank=%d on node=%s",
                           btl->btl_component->btl_version.mca_component_name,

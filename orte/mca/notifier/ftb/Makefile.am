@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -17,6 +17,10 @@
 #
 
 AM_CPPFLAGS = $(notifier_ftb_CPPFLAGS)
+
+dist_pkgdata_DATA = \
+	help-orte-notifier-ftb.txt \
+	help-ftb-event-schema.txt
 
 sources = \
         notifier_ftb.h \

@@ -496,7 +496,7 @@ void mca_pml_csum_recv_request_progress_frag( mca_pml_csum_recv_request_t* recvr
         if(csum != hdr->hdr_frag.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'frag data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_frag.hdr_csum, csum);
-            orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+            orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                               "Checksum data violation: job %s file %s line %d",
                               (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                               __FILE__, __LINE__);
@@ -642,7 +642,7 @@ void mca_pml_csum_recv_request_progress_rndv( mca_pml_csum_recv_request_t* recvr
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'rndv data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
-            orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+            orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                               "Checksum data violation: job %s file %s line %d",
                               (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                               __FILE__, __LINE__);
@@ -704,7 +704,7 @@ void mca_pml_csum_recv_request_progress_match( mca_pml_csum_recv_request_t* recv
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'match data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
-            orte_notifier.log(ORTE_NOTIFIER_INFRA, 1,
+            orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
                               "Checksum data violation: job %s file %s line %d",
                               (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
                               __FILE__, __LINE__);
