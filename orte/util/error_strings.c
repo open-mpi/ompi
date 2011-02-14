@@ -23,6 +23,13 @@
 #include "orte/constants.h"
 
 #include <stdio.h>
+#ifdef HAVE_SYS_SIGNAL_H
+#include <sys/signal.h>
+#else
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#endif
 
 #include "opal/util/opal_sos.h"
 #include "orte/util/error_strings.h"
@@ -132,8 +139,8 @@ int orte_err2str(int errnum, const char **errmsg)
     case ORTE_ERR_SYSTEM_WILL_BOOTSTRAP:
         retval = "System will determine resources during bootstrap of daemons";
         break;
-    case ORTE_ERR_RELOCATE_LIMIT_EXCEEDED:
-        retval = "Limit on number of process relocations was exceeded";
+    case ORTE_ERR_RESTART_LIMIT_EXCEEDED:
+        retval = "Limit on number of process restarts was exceeded";
         break;
     case ORTE_ERR_UNRECOVERABLE:
         retval = "Unrecoverable error";
@@ -202,6 +209,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
             return "ABORT IN PROGRESS";
         case ORTE_JOB_STATE_HEARTBEAT_FAILED:
             return "HEARTBEAT FAILED";
+        case ORTE_JOB_STATE_PROCS_MIGRATING:
+            return "PROCS MIGRATING";
         default:
             return "UNKNOWN STATE!";
     }
@@ -244,8 +253,80 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
         case ORTE_PROC_STATE_HEARTBEAT_FAILED:
             return "HEARTBEAT FAILED";
             break;
+        case ORTE_PROC_STATE_MIGRATING:
+            return "MIGRATING";
+        case ORTE_PROC_STATE_CANNOT_RESTART:
+            return "CANNOT BE RESTARTED";
         default:
             return "UNKNOWN STATE!";
+    }
+}
+
+const char *orte_proc_exit_code_to_signal(int exit_code)
+{
+    int signal;
+
+    signal = exit_code - 128;
+
+    switch(signal) {
+    case SIGHUP:
+        return "SIGHUP";
+    case SIGINT:
+        return "SIGINT";
+    case SIGQUIT:
+        return "SIGQUIT";
+    case SIGILL:
+        return "SIGILL";
+    case SIGTRAP:
+        return "SIGTRAP";
+    case SIGABRT:
+        return "SIGABRT";
+    case SIGFPE:
+        return "SIGFPE";
+    case SIGKILL:
+        return "SIGKILL";
+    case SIGBUS:
+        return "SIGBUS";
+    case SIGSEGV:
+        return "SIGSEGV";
+    case SIGPIPE:
+        return "SIGPIPE";
+    case SIGALRM:
+        return "SIGALRM";
+    case SIGTERM:
+        return "SIGTERM";
+    case SIGURG:
+        return "SIGURG";
+    case SIGSTOP:
+        return "SIGSTOP";
+    case SIGTSTP:
+        return "SIGTSTP";
+    case SIGCONT:
+        return "SIGCONT";
+    case SIGCHLD:
+        return "SIGCHLD";
+    case SIGTTIN:
+        return "SIGTTIN";
+    case SIGTTOU:
+        return "SIGTTOU";
+    case SIGIO:
+        return "SIGIO";
+    case SIGXCPU:
+        return "SIGXCPU";
+    case SIGXFSZ:
+        return "SIGXFSZ";
+    case SIGVTALRM:
+        return "SIGVTALRM";
+    case SIGPROF:
+        return "SIGPROF";
+    case SIGWINCH:
+        return "SIGWINCH";
+    case SIGUSR1:
+        return "SIGUSR1";
+    case SIGUSR2:
+        return "SIGUSR2";
+    default:
+        return "UNRECOGNIZED";
     }
 }
 
