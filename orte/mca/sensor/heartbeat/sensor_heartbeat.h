@@ -23,8 +23,8 @@ BEGIN_C_DECLS
 
 struct orte_sensor_heartbeat_component_t {
     orte_sensor_base_component_t super;
-    int rate;
-    int check;
+    char *rate;
+    char *check;
     int missed;
 };
 typedef struct orte_sensor_heartbeat_component_t orte_sensor_heartbeat_component_t;

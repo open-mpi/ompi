@@ -284,6 +284,13 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
+        /* pack the recovery policy defined flag */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                         (void*)(&(jobs[i]->recovery_defined)), 1, OPAL_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* pack the recovery flag */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)(&(jobs[i]->enable_recovery)), 1, OPAL_BOOL))) {
@@ -473,13 +480,6 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
         /* pack the number of restarts */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)&(procs[i]->restarts), 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* pack the number of relocates */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)&(procs[i]->relocates), 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -749,21 +749,9 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
             }
         }
 
-        /* pack the restart limits */
+        /* pack the restart limit */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&(app_context[i]->max_local_restarts)), 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&(app_context[i]->max_global_restarts)), 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* pack the constrain flag */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&(app_context[i]->constrain)), 1, OPAL_BOOL))) {
+                                                       (void*)(&(app_context[i]->max_restarts)), 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

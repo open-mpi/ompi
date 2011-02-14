@@ -425,13 +425,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable recovery from process failure [Default = disabled]" },
 
-    { "orte", "max", "global_restarts", '\0', "max-global-restarts", "max-global-restarts", 1,
+    { "orte", "max", "restarts", '\0', "max-restarts", "max-restarts", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Max number of times to relocate a failed process to a new node" },
-
-    { "orte", "max", "local_restarts", '\0', "max-local-restarts", "max-local-restarts", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
-        "Max number of times to locally restart a failed process before relocating it to a new node" },
+      "Max number of times to restart a failed process" },
 
 #if OPAL_ENABLE_CRDEBUG == 1
     { "opal", "cr", "enable_crdebug", '\0', "crdebug", "crdebug", 0,
@@ -955,8 +951,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
     /* if recovery was disabled on the cmd line, do so */
     if (orterun_globals.disable_recovery) {
         orte_enable_recovery = false;
-        orte_max_local_restarts = 0;
-        orte_max_global_restarts = 0;
+        orte_max_restarts = 0;
     }
 
     return ORTE_SUCCESS;

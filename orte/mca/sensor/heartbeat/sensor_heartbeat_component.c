@@ -58,19 +58,17 @@ static int orte_sensor_heartbeat_open(void)
     int tmp;
 
     /* lookup parameters */
-    mca_base_param_reg_int(c, "rate",
-                           "Heartbeat rate in milliseconds (default=0)",
-                           false, false, 0,  &tmp);
-    mca_sensor_heartbeat_component.rate = tmp;
+    mca_base_param_reg_string(c, "rate",
+                           "Heartbeat rate in sec (default=0:0)",
+                           false, false, "0:0",  &mca_sensor_heartbeat_component.rate);
     
-    mca_base_param_reg_int(c, "check",
-                           "Check for failure rate in milliseconds (default=500)",
-                           false, false, 500,  &tmp);
-    mca_sensor_heartbeat_component.check = tmp;
+    mca_base_param_reg_string(c, "check",
+                           "Check for failure rate in sec:usec (default=1:0)",
+                           false, false, "1:0",  &mca_sensor_heartbeat_component.check);
     
     mca_base_param_reg_int(c, "missed",
-                           "Number of missed heartbeats before failure is declared (default=5)",
-                           false, false, 5,  &tmp);
+                           "Number of missed heartbeat checks before failure is declared (default=2)",
+                           false, false, 2,  &tmp);
     mca_sensor_heartbeat_component.missed = tmp;
     
     return ORTE_SUCCESS;
@@ -79,18 +77,9 @@ static int orte_sensor_heartbeat_open(void)
 
 static int orte_sensor_heartbeat_query(mca_base_module_t **module, int *priority)
 {
-    /* only usable by daemons and HNPs */
-    if (0 < mca_sensor_heartbeat_component.rate &&
-        (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP)) {
-        *priority = 10;  /* use if we were built */
-        *module = (mca_base_module_t *)&orte_sensor_heartbeat_module;
-        return ORTE_SUCCESS;
-    }
-    
-    /* otherwise, we are not available */
-    *priority = 0;
-    *module = NULL;
-    return ORTE_ERROR;
+    *priority = 10;  /* use if we were built */
+    *module = (mca_base_module_t *)&orte_sensor_heartbeat_module;
+    return ORTE_SUCCESS;
 }
 
 /**

@@ -297,6 +297,14 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
             return rc;
         }
 
+        /* unpack the recovery policy defined flag */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                         (&(jobs[i]->recovery_defined)), &n, OPAL_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* unpack the recovery flag */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
@@ -516,14 +524,6 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
                           (&(procs[i]->restarts)), &n, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* unpack the number of relocates */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                         (&(procs[i]->relocates)), &n, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -825,24 +825,10 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             app_context[i]->preload_files_src_dir = NULL;
         }
 
-        /* unpack the restart limits */
+        /* unpack the restart limit */
         max_n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->max_local_restarts,
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->max_restarts,
                                                          &max_n, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        max_n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->max_global_restarts,
-                                                         &max_n, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* unpack the constrain flag */
-        max_n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->constrain,
-                                                         &max_n, OPAL_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

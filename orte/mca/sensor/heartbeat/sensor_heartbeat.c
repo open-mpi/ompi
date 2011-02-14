@@ -86,7 +86,7 @@ static void rml_callback_fn(int status,
 /* local globals */
 static opal_event_t *send_ev = NULL, *check_ev = NULL;
 static struct timeval send_time, check_time;
-static double timeout;
+static orte_job_t *daemons;
 
 #include MCA_timer_IMPLEMENTATION_HEADER
 static inline double gettime(void) __opal_attribute_always_inline__;
@@ -106,12 +106,18 @@ static inline double gettime(void)
 
 static int init(void)
 {
-    int rc;
+    int rc=ORTE_SUCCESS;
     
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                          "%s initializing heartbeat recvs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    /* get the daemon job object */
+    if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        /* can't run */
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
 
 #if ORTE_ENABLE_MULTICAST
     /* setup multicast recv for heartbeats */
@@ -133,7 +139,7 @@ static int init(void)
         }
     }
 #endif
-    
+
     return rc;
 }
 
@@ -142,10 +148,12 @@ static void finalize(void)
     if (NULL != send_ev) {
         opal_event_del(send_ev);
         free(send_ev);
+        send_ev = NULL;
     }
     if (NULL != check_ev) {
         opal_event_del(check_ev);
         free(check_ev);
+        check_ev = NULL;
     }
     
 #if ORTE_ENABLE_MULTICAST
@@ -156,46 +164,67 @@ static void finalize(void)
     return;
 }
 
+static void setup_time(char *input, struct timeval *time)
+{
+    char **val;
+
+    /* set default */
+    time->tv_sec = 0;
+    time->tv_usec = 0;
+
+    /* convert the rate to time */
+    val = opal_argv_split(input, ':');
+    if (NULL == val) {
+        /* nothing to do */
+        return;
+    }
+    if (NULL != val[0]) {
+        time->tv_sec = strtol(val[0], NULL, 10);
+    }
+    if (NULL != val[1]) {
+        time->tv_usec = strtol(val[1], NULL, 10);
+    }
+}
+
+
 /*
  * Start sending and checking heartbeats
  */
 static void start(orte_jobid_t jobid)
 {
-    uint64_t time;
-    
-    if (jobid != ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
-        /* heartbeats are only for daemons and HNPs */
+    /* convert the send rate */
+    setup_time(mca_sensor_heartbeat_component.rate, &send_time);
+    if (0 == send_time.tv_sec &&
+        0 == send_time.tv_usec) {
+        /* nothing to do */
         return;
     }
-    
+
+    if (!ORTE_PROC_IS_DAEMON) {
+        /* convert the check rate */
+        setup_time(mca_sensor_heartbeat_component.check, &check_time);
+        if (0 == check_time.tv_sec &&
+            0 == check_time.tv_usec) {
+            /* no sense in running if we won't check */
+            return;
+        }
+
+        /* setup the check */
+        check_ev = (opal_event_t*)malloc(sizeof(opal_event_t));
+        opal_event_evtimer_set(opal_event_base, check_ev, check_heartbeat, check_ev);
+        opal_event_evtimer_add(check_ev, &check_time);
+    }
+
     /* setup the send */
-    time = mca_sensor_heartbeat_component.rate * 1000; /* convert to microsecs */
-    send_ev =  (opal_event_t *) malloc(sizeof(opal_event_t));
+    send_ev = (opal_event_t*)malloc(sizeof(opal_event_t));
     opal_event_evtimer_set(opal_event_base, send_ev, send_heartbeat, send_ev);
-    send_time.tv_sec = time / 1000000;
-    send_time.tv_usec = time % 1000000;
     opal_event_evtimer_add(send_ev, &send_time);
     
-    /* define the timeout */
-    timeout = 2.0 * (double)time;
-    
-    /* setup the check */
-    time = mca_sensor_heartbeat_component.check * 1000; /* convert to microsecs */
-    check_ev =  (opal_event_t *) malloc(sizeof(opal_event_t));
-    opal_event_evtimer_set(opal_event_base, check_ev, check_heartbeat, check_ev);
-    check_time.tv_sec = time / 1000000;
-    check_time.tv_usec = time % 1000000;
-    opal_event_evtimer_add(check_ev, &check_time);
 }
 
 
 static void stop(orte_jobid_t jobid)
 {
-    if (jobid != ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
-        /* heartbeats are only for daemons and HNPs */
-        return;
-    }
-    
     if (NULL != send_ev) {
         opal_event_del(send_ev);
         free(send_ev);
@@ -217,7 +246,7 @@ static void send_heartbeat(int fd, short event, void *arg)
     
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
-        return;
+        goto reset;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
@@ -233,7 +262,7 @@ static void send_heartbeat(int fd, short event, void *arg)
                                                          rmcast_callback_fn, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
-        return;
+        goto reset;
     }
 #else
     /* send heartbeat to HNP */
@@ -242,10 +271,11 @@ static void send_heartbeat(int fd, short event, void *arg)
                                           rml_callback_fn, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
-        return;
+        goto reset;
     }
 #endif
     
+ reset:
     /* reset the timer */
     opal_event_evtimer_add(tmp, &send_time);
 }
@@ -257,22 +287,26 @@ static void send_heartbeat(int fd, short event, void *arg)
 static void check_heartbeat(int fd, short dummy, void *arg)
 {
     int v;
-    orte_nid_t *nid;
-    double now;
+    orte_proc_t *proc;
+    time_t now;
     opal_event_t *tmp = (opal_event_t*)arg;
     orte_process_name_t name;
-    
+    double delta;
+
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                          "%s sensor:check_heartbeat",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
-        return;
+        goto reset;
     }
     
     name.jobid = ORTE_PROC_MY_NAME->jobid;
     
+    /* compute a send time interval */
+    delta = send_time.tv_sec + (double)send_time.tv_usec/1000000.0;
+
     /* get current time */
     now = gettime();
     
@@ -280,26 +314,50 @@ static void check_heartbeat(int fd, short dummy, void *arg)
      * in case multiple daemons are late so all of those that did
      * can be appropriately flagged
      */
-    for (v=0; v < orte_nidmap.size; v++) {
-        if (NULL == (nid = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, v))) {
+    for (v=0; v < daemons->procs->size; v++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, v))) {
             continue;
         }
-        if (0 == nid->beat) {
+        /* ignore myself */
+        if ((int)ORTE_PROC_MY_NAME->vpid == v) {
+            continue;
+        }
+        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                             "%s CHECKING HEARTBEAT FOR %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name)));
+
+        if (0 == proc->beat) {
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                                 "%s NO BEAT YET",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* haven't recvd a beat yet */
             continue;
         }
-        if ((now - nid->beat) > timeout) {
-            nid->missed++;
-            if (mca_sensor_heartbeat_component.missed < nid->missed) {
-                /* heartbeat failed */
-                name.vpid = v;
-                orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_HEARTBEAT_FAILED,
-                                         &name, ORTE_PROC_STATE_HEARTBEAT_FAILED,
-                                         0, ORTE_ERR_HEARTBEAT_LOST);
-            }
+
+        /* compute number of heartbeats missed */
+        proc->missed = (int)((double)(now - proc->beat) / delta);
+        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                             "%s MISSING %d BEATS",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), proc->missed));
+        if (mca_sensor_heartbeat_component.missed < proc->missed) {
+            /* heartbeat failed */
+            name.vpid = v;
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                                 "%s sensor:check_heartbeat FAILED for daemon %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&name)));
+            orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_HEARTBEAT_FAILED,
+                                     &name, ORTE_PROC_STATE_HEARTBEAT_FAILED,
+                                     0, ORTE_ERR_HEARTBEAT_LOST);
+            /* zero the last beat to indicate we are waiting to recv
+             * the first beat from the restarted daemon
+             */
+            proc->beat = 0;
         }
     }
 
+ reset:
     /* reset the timer */
     opal_event_evtimer_add(tmp, &check_time);
 }
@@ -312,7 +370,7 @@ static void recv_rmcast_beats(int status,
                               orte_process_name_t *sender,
                               opal_buffer_t *buf, void* cbdata)
 {
-    orte_nid_t *nid;
+    orte_proc_t *proc;
     
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
@@ -324,15 +382,13 @@ static void recv_rmcast_beats(int status,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
 
-    /* get this daemon's nid - if it isn't here, just ignore
-     * as this is caused by a race condition at startup
-     */
-    if (NULL != (nid = orte_util_lookup_nid(sender))) {
+    /* get this daemon's object */
+    if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, sender->vpid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                              "%s updating beat time for %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));
-        nid->beat = gettime();
+        proc->beat = gettime();
     }
 }
 
@@ -351,11 +407,11 @@ static void recv_rml_beats(int status, orte_process_name_t* sender,
                            opal_buffer_t* buffer, orte_rml_tag_t tag,
                            void* cbdata)
 {
-    orte_nid_t *nid;
+    orte_proc_t *proc;
     
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_intialized) {
-        return;
+        goto reset;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
@@ -363,22 +419,16 @@ static void recv_rml_beats(int status, orte_process_name_t* sender,
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(sender)));
 
-    /* get this daemon's nid - if it isn't here, just ignore
-     * as this is caused by a race condition at startup
-     */
-    if (NULL != (nid = orte_util_lookup_nid(sender))) {
+    /* get this daemon's object */
+    if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, sender->vpid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                              "%s updating beat time for %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));
-        nid->beat = gettime();
-    } else {
-        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                             "%s no nidmap entry for %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(sender)));
+        proc->beat = gettime();
     }
     
+ reset:
     /* reissue the recv */
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_HEARTBEAT,

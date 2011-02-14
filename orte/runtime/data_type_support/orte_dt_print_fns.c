@@ -498,8 +498,8 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     free(tmp);
     tmp = tmp2;
     
-    asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tRelocates: %d\tApp_context: %ld\tSlot list: %s", tmp, pfx2,
-             orte_proc_state_to_str(src->state), src->restarts, src->relocates, (long)src->app_idx,
+    asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tSlot list: %s", tmp, pfx2,
+             orte_proc_state_to_str(src->state), src->restarts, (long)src->app_idx,
              (NULL == src->slot_list) ? "NULL" : src->slot_list);
     free(tmp);
     
@@ -528,10 +528,9 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         asprintf(&pfx2, "%s", prefix);
     }
     
-    asprintf(&tmp, "\n%sData for app_context: name: %s\t index %lu\tapp: %s\n%s\tNum procs: %lu\tMax Local Restarts: %d\tMax Global Restarts %d\tConstrain: %s",
+    asprintf(&tmp, "\n%sData for app_context: name: %s\t index %lu\tapp: %s\n%s\tNum procs: %lu\tMax Restarts: %d",
              pfx2, (NULL == src->name) ? "NULL" : src->name, (unsigned long)src->idx, (NULL == src->app) ? "NULL" : src->app,
-             pfx2, (unsigned long)src->num_procs, src->max_local_restarts, src->max_global_restarts,
-             src->constrain ? "TRUE" : "FALSE");
+             pfx2, (unsigned long)src->num_procs, src->max_restarts);
     
     count = opal_argv_count(src->argv);
     for (i=0; i < count; i++) {
