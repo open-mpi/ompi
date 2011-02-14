@@ -223,7 +223,7 @@ void ompi_wait_for_debugger(void)
     mpimsgq_dll_locations = tmp1;
     mpidbg_dll_locations = tmp2;
 
-    if (ORTE_DISABLE_FULL_SUPPORT) {
+    if (ORTE_DISABLE_FULL_SUPPORT || orte_standalone_operation) {
         /* spin until debugger attaches and releases us */
         while (MPIR_debug_gate == 0) {
 #if defined(__WINDOWS__)
