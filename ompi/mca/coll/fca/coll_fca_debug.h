@@ -11,14 +11,19 @@
 #define MCA_COLL_FCA_DEBUG_H
 #pragma GCC system_header
 
+#ifdef __BASE_FILE__
+#define __FCA_FILE__ __BASE_FILE__
+#else
+#define __FCA_FILE__ __FILE__
+#endif
 
 #define FCA_VERBOSE(level, format, ...) \
     opal_output_verbose(level, mca_coll_fca_output, "%s:%d - %s() " format, \
-                        __BASE_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
+                        __FCA_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
 
 #define FCA_ERROR(format, ... ) \
     opal_output_verbose(0, mca_coll_fca_output, "Error: %s:%d - %s() " format, \
-                        __BASE_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
+                        __FCA_FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__)
 
 
 #define FCA_MODULE_VERBOSE(fca_module, level, format, ...) \
