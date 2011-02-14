@@ -115,6 +115,7 @@ static int if_bsdx_ipv6_open(void)
     if (getifaddrs(ifadd_list) < 0) {
         opal_output(0, "opal_ifinit: getifaddrs() failed with error=%d\n",
                     errno);
+        free(ifadd_list);
         return OPAL_ERROR;
     }
 
@@ -158,6 +159,7 @@ static int if_bsdx_ipv6_open(void)
         if (NULL == intf) {
             opal_output(0, "opal_ifinit: unable to allocate %lu bytes\n",
                         sizeof(opal_if_t));
+            free(ifadd_list);
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
 
@@ -215,6 +217,8 @@ static int if_bsdx_ipv6_open(void)
             (uint16_t) if_nametoindex(cur_ifaddrs->ifa_name);
         opal_list_append(&opal_if_list, &(intf->super));
     }   /*  of for loop over ifaddrs list */
+
+    free(ifadd_list);
 #endif  /* OPAL_WANT_IPV6 */
 
     return OPAL_SUCCESS;
