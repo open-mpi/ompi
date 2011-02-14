@@ -484,6 +484,38 @@ orte_job_t* orte_get_job_data_object(orte_jobid_t job)
     return (orte_job_t*)opal_pointer_array_get_item(orte_job_data, ljob);
 }
 
+orte_vpid_t orte_get_lowest_vpid_alive(orte_jobid_t job)
+{
+    int i;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
+
+    if (NULL == (jdata = orte_get_job_data_object(job))) {
+        return ORTE_VPID_INVALID;
+    }
+
+    if (ORTE_PROC_IS_DAEMON &&
+        ORTE_PROC_MY_NAME->jobid == job &&
+        NULL != orte_process_info.my_hnp_uri) {
+        /* if we were started by an HNP, then the lowest vpid
+         * is always 1
+         */
+        return 1;
+    }
+
+    for (i=0; i < jdata->procs->size; i++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
+            continue;
+        }
+        if (proc->state == ORTE_PROC_STATE_RUNNING) {
+            /* must be lowest one alive */
+            return proc->name.vpid;
+        }
+    }
+    /* only get here if no live proc found */
+    return ORTE_VPID_INVALID;
+}
+
 int orte_global_comm(orte_process_name_t *recipient,
                      opal_buffer_t *buf, orte_rml_tag_t tag,
                      orte_default_cbfunc_t cbfunc)
