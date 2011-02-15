@@ -2915,6 +2915,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                  * it already hasn't
                  */
                 child->waitpid_recvd = true;
+                child->pid = 0;
                 goto CLEANUP;
             }
 
@@ -2922,7 +2923,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
              * fire as soon as we kill it
              */
             child->state = ORTE_PROC_STATE_KILLED_BY_CMD;  /* we ordered it to die */
-            
+
             /* ensure the stdin IOF channel for this child is closed. The other
              * channels will automatically close when the proc is killed
              */
@@ -2984,6 +2985,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             child->waitpid_recvd = true;
             /* ensure the process is flagged as "not alive" */
             child->alive = false;
+            child->pid = 0;
             
         CLEANUP:
             /* ensure the child's session directory is cleaned up */
