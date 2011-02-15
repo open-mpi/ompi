@@ -1326,7 +1326,7 @@ void orte_plm_base_check_job_completed(orte_job_t *jdata)
             }
 
             /* notify the process status over the notifier */
-            orte_plm_base_proc_state_notify(proc->state, proc->name);
+            orte_plm_base_proc_state_notify(proc->state, &(proc->name));
 
             if (ORTE_PROC_STATE_FAILED_TO_START == proc->state) {
                 jdata->state = ORTE_JOB_STATE_FAILED_TO_START;
