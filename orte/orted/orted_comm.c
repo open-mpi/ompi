@@ -390,11 +390,23 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
             
         /****    KILL_LOCAL_PROCS   ****/
     case ORTE_DAEMON_KILL_LOCAL_PROCS:
-        /* unpack the number of procs */
-        n = 1;
-        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_replies, &n, OPAL_INT32))) {
+        num_replies = 0;
+
+        /* construct the pointer array */
+        OBJ_CONSTRUCT(&procarray, opal_pointer_array_t);
+        opal_pointer_array_init(&procarray, num_replies, ORTE_GLOBAL_ARRAY_MAX_SIZE, 16);
+            
+        /* unpack the proc names into the array */
+        while (ORTE_SUCCESS == (ret = opal_dss.unpack(buffer, &proc, &n, ORTE_NAME))) {
+            proct = OBJ_NEW(orte_proc_t);
+            proct->name.jobid = proc.jobid;
+            proct->name.vpid = proc.vpid;
+            opal_pointer_array_add(&procarray, proct);
+            num_replies++;
+        }
+        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != ret) {
             ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
+            goto KILL_PROC_CLEANUP;
         }
             
         if (0 == num_replies) {
@@ -403,30 +415,13 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                 ORTE_ERROR_LOG(ret);
             }
             break;
+        } else {
+            /* kill the procs */
+            if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(&procarray))) {
+                ORTE_ERROR_LOG(ret);
+            }
         }
 
-        /* construct the pointer array */
-        OBJ_CONSTRUCT(&procarray, opal_pointer_array_t);
-        opal_pointer_array_init(&procarray, num_replies, ORTE_GLOBAL_ARRAY_MAX_SIZE, 16);
-            
-        /* unpack the proc names into the array */
-        for (i=0; i < num_replies; i++) {
-            n = 1;
-            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc, &n, ORTE_NAME))) {
-                ORTE_ERROR_LOG(ret);
-                goto KILL_PROC_CLEANUP;
-            }
-            proct = OBJ_NEW(orte_proc_t);
-            proct->name.jobid = proc.jobid;
-            proct->name.vpid = proc.vpid;
-            opal_pointer_array_add(&procarray, proct);
-        }
-            
-        /* kill the procs */
-        if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(&procarray))) {
-            ORTE_ERROR_LOG(ret);
-        }
-            
         /* cleanup */
     KILL_PROC_CLEANUP:
         for (i=0; i < procarray.size; i++) {
