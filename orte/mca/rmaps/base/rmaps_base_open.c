@@ -87,8 +87,9 @@ int orte_rmaps_base_open(void)
     bool btmp;
 
     /* init the globals */
-    orte_rmaps_base.active_module = NULL;
-    
+    OBJ_CONSTRUCT(&orte_rmaps_base.selected_modules, opal_list_t);
+    orte_rmaps_base.default_mapper = ORTE_RMAPS_UNDEF;
+
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
     orte_rmaps_base.rmaps_output = opal_output_open(NULL);
@@ -118,6 +119,7 @@ int orte_rmaps_base_open(void)
                                         false, false, (int)false, &value);
     if (value) {
         orte_rmaps_base.npernode = 1;
+        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
     }
     
     /* #procs/node */
@@ -126,6 +128,7 @@ int orte_rmaps_base_open(void)
                                         false, false, -1, &value);
     if (0 < value) {
         orte_rmaps_base.npernode = value;
+        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
     }
     
     /* #procs/board */
@@ -134,6 +137,7 @@ int orte_rmaps_base_open(void)
                                         false, false, -1, &orte_rmaps_base.nperboard);
     if (0 < orte_rmaps_base.nperboard) {
         ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_NPERXXX);
+        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
     }
 
     /* #procs/socket */
@@ -144,13 +148,16 @@ int orte_rmaps_base_open(void)
         ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_NPERXXX);
         /* force bind to socket if not overridden by user */
         ORTE_XSET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
+        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
     }
     
     /* Do we want to loadbalance the job */
     param = mca_base_param_reg_int_name("rmaps", "base_loadbalance",
                                         "Balance total number of procs across all allocated nodes",
                                         false, false, (int)false, &value);
-    orte_rmaps_base.loadbalance = OPAL_INT_TO_BOOL(value);
+    if (value) {
+        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
+    }
     
     /* #cpus/rank to use */
     param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_proc",
@@ -193,6 +200,7 @@ int orte_rmaps_base_open(void)
     if (NULL != orte_rmaps_base.slot_list ||
         NULL != orte_rankfile) {
         ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_BYUSER);
+        orte_rmaps_base.default_mapper = ORTE_RMAPS_RF;
     }
     
     /* Should we schedule on the local node or not? */
@@ -242,5 +250,9 @@ int orte_rmaps_base_open(void)
 
     return ORTE_SUCCESS;
 }
+
+OBJ_CLASS_INSTANCE(orte_rmaps_base_selected_module_t,
+                   opal_list_item_t,
+                   NULL, NULL);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */

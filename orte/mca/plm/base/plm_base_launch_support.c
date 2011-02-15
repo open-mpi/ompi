@@ -93,6 +93,9 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         ljob = ORTE_LOCAL_JOBID(jdata->jobid);
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
         
+        /* set the job state */
+        jdata->state = ORTE_JOB_STATE_INIT;
+
         /* if job recovery is not defined, set it to default */
         if (!jdata->recovery_defined) {
             /* set to system default */

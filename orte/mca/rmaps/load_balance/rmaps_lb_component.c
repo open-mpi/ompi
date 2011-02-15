@@ -33,6 +33,7 @@ static int orte_rmaps_lb_open(void);
 static int orte_rmaps_lb_close(void);
 static int orte_rmaps_lb_query(mca_base_module_t **module, int *priority);
 
+static int my_priority;
 
 orte_rmaps_base_component_t mca_rmaps_load_balance_component = {
     {
@@ -58,30 +59,22 @@ orte_rmaps_base_component_t mca_rmaps_load_balance_component = {
   */
 static int orte_rmaps_lb_open(void)
 {
+    mca_base_component_t *c = &mca_rmaps_load_balance_component.base_version;
+
+    mca_base_param_reg_int(c, "priority",
+                           "Priority of the loadbalance rmaps component",
+                           false, false, 80,
+                           &my_priority);
     return ORTE_SUCCESS;
 }
 
 
 static int orte_rmaps_lb_query(mca_base_module_t **module, int *priority)
 {
-    /* the RMAPS framework is -only- opened on HNP's,
-     * so no need to check for that here
-     */
-    
-    /* if load balancing, or any nperxxx, was requested, then we must be selected */
-    if (orte_rmaps_base.loadbalance ||
-        0 < orte_rmaps_base.npernode ||
-        0 <  orte_rmaps_base.nperboard ||
-        0 < orte_rmaps_base.npersocket) {
-        *priority = 1000;  /* must be selected */
-        *module = (mca_base_module_t *)&orte_rmaps_load_balance_module;
-        return ORTE_SUCCESS;
-    }
-    
-    /* otherwise, ignore us */
-    *priority = 0;
-    *module = NULL;
-    return ORTE_ERROR;
+    /* after rr */
+    *priority = my_priority;
+    *module = (mca_base_module_t *)&orte_rmaps_load_balance_module;
+    return ORTE_SUCCESS;
 }
 
 /**

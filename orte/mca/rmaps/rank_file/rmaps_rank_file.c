@@ -294,6 +294,25 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     int rc;
     orte_proc_t *proc;
     
+    /* only handle initial launch of rf job */
+    if (ORTE_JOB_STATE_INIT != jdata->state) {
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:rf: not job %s not in initial state - rank_file cannot map",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+    if (0 < jdata->map->mapper && ORTE_RMAPS_RF != jdata->map->mapper) {
+        /* a mapper has been specified, and it isn't me */
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:rf: job %s not using rank_file mapper",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                        "mca:rmaps:rank_file: mapping job %s",
+                        ORTE_JOBID_PRINT(jdata->jobid));
+ 
+
     /* convenience def */
     map = jdata->map;
     

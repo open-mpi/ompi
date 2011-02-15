@@ -60,12 +60,12 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /* if the hnp was allocated, include it unless flagged not to */
     if (orte_hnp_is_allocated) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
-            if (ORTE_NODE_STATE_UP == node->state) {
+            if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                /* clear this for future use, but don't include it */
+                node->state = ORTE_NODE_STATE_UP;
+            } else if (ORTE_NODE_STATE_NOT_INCLUDED != node->state) {
                 OBJ_RETAIN(node);
                 opal_list_append(allocated_nodes, &node->super);
-            } else if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
-                /* clear this for future use */
-                node->state = ORTE_NODE_STATE_UP;
             }
         }
     }
@@ -73,14 +73,17 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     /* add everything in the node pool that can be used */
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-            /* ignore nodes that are "down" */
-            if (ORTE_NODE_STATE_DOWN == node->state) {
-                continue;
-            }
             /* ignore nodes that are marked as do-not-use for this mapping */
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
                 /* reset the state so it can be used another time */
                 node->state = ORTE_NODE_STATE_UP;
+                continue;
+            }
+            if (ORTE_NODE_STATE_DOWN == node->state) {
+                continue;
+            }
+            if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                /* not to be used */
                 continue;
             }
             /* retain a copy for our use in case the item gets
@@ -245,36 +248,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
         *total_num_slots = 0;
         return ORTE_SUCCESS;
-    }
-    
-    /* if we are mapping an application, check to see if we are to
-     * use a virtual machine
-     */
-    if (policy & ORTE_MAPPING_USE_VM) {
-        /* remove all nodes that do NOT have an "alive" daemon on them */
-        item  = opal_list_get_first(allocated_nodes);
-        while (item != opal_list_get_end(allocated_nodes)) {
-            
-            /** save the next pointer in case we remove this node */
-            next  = opal_list_get_next(item);
-            
-            /** already have a daemon? */
-            node = (orte_node_t*)item;
-            if (NULL == node->daemon ||
-                ORTE_PROC_STATE_RUNNING != node->daemon->state) {
-                opal_list_remove_item(allocated_nodes, item);
-                OBJ_RELEASE(item);  /* "un-retain" it */
-            }
-            
-            /** go on to next item */
-            item = next;
-        }
-        /** check that anything is left! */
-        if (0 == opal_list_get_size(allocated_nodes)) {
-            orte_show_help("help-orte-rmaps-base.txt",
-                           "orte-rmaps-base:nolocal-no-available-resources", true);
-            return ORTE_ERR_SILENT;
-        }
     }
     
     /* remove all nodes that are already at max usage, and
