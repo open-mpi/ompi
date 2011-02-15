@@ -860,6 +860,12 @@ int orte_dt_pack_map(opal_buffer_t *buffer, const void *src,
     maps = (orte_job_map_t**) src;
     
     for (i=0; i < num_vals; i++) {
+        /* pack the mapper used to generate it */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->mapper), 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
         /* pack the policy used to generate it */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->policy), 1, ORTE_MAPPING_POLICY))) {
             ORTE_ERROR_LOG(rc);

@@ -28,6 +28,14 @@
 
 int orte_rmaps_base_close(void)
 {
+    opal_list_item_t *item;
+
+    /* cleanup globals */
+    while (NULL != (item = opal_list_remove_first(&orte_rmaps_base.selected_modules))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&orte_rmaps_base.selected_modules);
+
     mca_base_components_close(orte_rmaps_base.rmaps_output, 
                               &orte_rmaps_base.available_components, NULL);
 

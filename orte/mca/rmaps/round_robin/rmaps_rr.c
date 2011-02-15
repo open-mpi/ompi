@@ -34,6 +34,7 @@
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/error_strings.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -53,6 +54,29 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     int rc;
     opal_list_item_t *cur_node_item;
     
+    /* this mapper can only handle initial launch
+     * when rr mapping is desired - allow
+     * restarting of failed apps
+     */
+    if (ORTE_JOB_STATE_INIT != jdata->state) {
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:rr: not job %s in state %s - rr cannot map",
+                            ORTE_JOBID_PRINT(jdata->jobid),
+                            orte_job_state_to_str(jdata->state));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+    if (0 < jdata->map->mapper && ORTE_RMAPS_RR != jdata->map->mapper) {
+        /* a mapper has been specified, and it isn't me */
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:rr: job %s not using rr mapper",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+
+    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                        "mca:rmaps:rr: mapping job %s",
+                        ORTE_JOBID_PRINT(jdata->jobid));
+ 
     /* start at the beginning... */
     jdata->num_procs = 0;
     
@@ -88,7 +112,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         /* if a bookmark exists from some prior mapping, set us to start there */
         cur_node_item = orte_rmaps_base_get_starting_point(&node_list, jdata);
         
-       if (0 == app->num_procs) {
+        if (0 == app->num_procs) {
             /* set the num_procs to equal the number of slots on these mapped nodes */
             app->num_procs = num_slots;
         }
@@ -138,7 +162,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
 
     return ORTE_SUCCESS;
 
-error:
+ error:
     while(NULL != (item = opal_list_remove_first(&node_list))) {
         OBJ_RELEASE(item);
     }

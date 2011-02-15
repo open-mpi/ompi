@@ -33,6 +33,16 @@
 
 BEGIN_C_DECLS
 
+/* enumerate selectable mappers */
+enum {
+    ORTE_RMAPS_UNDEF,
+    ORTE_RMAPS_RR,
+    ORTE_RMAPS_LOADBALANCE,
+    ORTE_RMAPS_SEQ,
+    ORTE_RMAPS_RF,
+    ORTE_RMAPS_RESILIENT
+};
+
 /*
  * Structure that represents the mapping of a job to an
  * allocated set of resources.
@@ -40,6 +50,7 @@ BEGIN_C_DECLS
 struct orte_job_map_t {
     opal_object_t super;
     /* user-specified mapping params */
+    int32_t mapper;
     orte_mapping_policy_t policy;
     int npernode;
     int nperboard;

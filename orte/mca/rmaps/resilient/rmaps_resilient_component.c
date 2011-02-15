@@ -37,6 +37,8 @@ static int orte_rmaps_resilient_open(void);
 static int orte_rmaps_resilient_close(void);
 static int orte_rmaps_resilient_query(mca_base_module_t **module, int *priority);
 
+static int my_priority;
+
 orte_rmaps_res_component_t mca_rmaps_resilient_component = {
     {
         {
@@ -72,21 +74,25 @@ static int orte_rmaps_resilient_open(void)
     mca_base_param_reg_string(c, "fault_grp_file",
                               "Filename that contains a description of fault groups for this system",
                               false, false, NULL,  &mca_rmaps_resilient_component.fault_group_file);
-    
+
+    mca_base_param_reg_int(c, "priority",
+                           "Priority of the resilient rmaps component",
+                           false, false, 40,
+                           &my_priority);
     return ORTE_SUCCESS;
 }
 
 
 static int orte_rmaps_resilient_query(mca_base_module_t **module, int *priority)
-{    
-    *priority = 0;  /* select only if specified */
+{
+    *priority = my_priority;
     *module = (mca_base_module_t *)&orte_rmaps_resilient_module;
     
-    /* if a fault group file was provided, we definitely want to be selected */
+    /* if a fault group file was provided, we should be first */
     if (NULL != mca_rmaps_resilient_component.fault_group_file) {
         *priority = 1000;
     }
-    
+
     return ORTE_SUCCESS;
 }
 

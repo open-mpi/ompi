@@ -56,8 +56,10 @@ typedef struct {
     int rmaps_output;
     /** List of available components */
     opal_list_t available_components;
-    /** selected module */
-    orte_rmaps_base_module_t *active_module;
+    /* list of selected modules */
+    opal_list_t selected_modules;
+    /* desired default mapper */
+    int default_mapper;
     /** whether or not we allow oversubscription of nodes */
     bool oversubscribe;
     /** number of ppn for n_per_node mode */
@@ -74,8 +76,6 @@ typedef struct {
     bool no_use_local;
     /* display the map after it is computed */
     bool display_map;
-    /* balance load across nodes */
-    bool loadbalance;
     /* slot list, if provided by user */
     char *slot_list;
 } orte_rmaps_base_t;
@@ -88,6 +88,14 @@ ORTE_DECLSPEC extern orte_rmaps_base_t orte_rmaps_base;
 /**
  * Select an rmaps component / module
  */
+typedef struct {
+    opal_list_item_t super;
+    int pri;
+    orte_rmaps_base_module_t *module;
+    mca_base_component_t *component;
+} orte_rmaps_base_selected_module_t;
+OBJ_CLASS_DECLARATION(orte_rmaps_base_selected_module_t);
+
 ORTE_DECLSPEC int orte_rmaps_base_select(void);
 
 /**

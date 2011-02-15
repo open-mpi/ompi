@@ -76,6 +76,28 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
 
+    /* this mapper can only handle initial launch
+     * when seq mapping is desired - allow
+     * restarting of failed apps
+     */
+    if (ORTE_JOB_STATE_INIT != jdata->state) {
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:seq: not job %s not in initial state - seq cannot map",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+    if (0 < jdata->map->mapper && ORTE_RMAPS_SEQ != jdata->map->mapper) {
+        /* a mapper has been specified, and it isn't me */
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:seq: job %s not using sequential mapper",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                        "mca:rmaps:seq: mapping job %s",
+                        ORTE_JOBID_PRINT(jdata->jobid));
+ 
+
     /* conveniece def */
     map = jdata->map;
       

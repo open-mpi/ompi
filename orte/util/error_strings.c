@@ -154,7 +154,16 @@ int orte_err2str(int errnum, const char **errmsg)
     case ORTE_ERR_COMM_DISABLED:
         retval = "Communications have been disabled";
         break;
-            
+    case ORTE_ERR_FAILED_TO_MAP:
+        retval = "Unable to map job";
+        break;
+    case ORTE_ERR_TAKE_NEXT_OPTION:
+        if (orte_report_silent_errors) {
+            retval = "Next option";
+        } else {
+            retval = NULL;
+        }
+        break;
     default:
         if (orte_report_silent_errors) {
             retval = "Unknown error";

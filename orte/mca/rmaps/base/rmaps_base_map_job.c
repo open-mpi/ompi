@@ -25,10 +25,11 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
 #include "opal/mca/base/base.h"
-
 #include "opal/dss/dss.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
@@ -42,7 +43,10 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
 {
     orte_job_map_t *map;
     int rc;
-    
+    bool did_map;
+    opal_list_item_t *item;
+    orte_rmaps_base_selected_module_t *mod;
+
     /* NOTE: NO PROXY COMPONENT REQUIRED - REMOTE PROCS ARE NOT
      * ALLOWED TO CALL RMAPS INDEPENDENTLY. ONLY THE PLM CAN
      * DO SO, AND ALL PLM COMMANDS ARE RELAYED TO HNP
@@ -76,11 +80,15 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         map->stride = orte_rmaps_base.stride;
         map->oversubscribe = orte_rmaps_base.oversubscribe;
         map->display_map = orte_rmaps_base.display_map;
+        map->mapper = orte_rmaps_base.default_mapper;
         /* assign the map object to this job */
         jdata->map = map;
     } else {
         if (!jdata->map->display_map) {
             jdata->map->display_map = orte_rmaps_base.display_map;
+        }
+        if (ORTE_RMAPS_UNDEF == jdata->map->mapper) {
+            jdata->map->mapper = orte_rmaps_base.default_mapper;
         }
     }
 
@@ -93,10 +101,30 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
             return rc;
         }
     } else {
-        /* go ahead and map the job */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base.active_module->map_job(jdata))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+        /* cycle thru the available mappers until one agrees to map
+         * the job
+         */
+        did_map = false;
+        for (item = opal_list_get_first(&orte_rmaps_base.selected_modules);
+             item != opal_list_get_end(&orte_rmaps_base.selected_modules);
+             item = opal_list_get_next(item)) {
+            mod = (orte_rmaps_base_selected_module_t*)item;
+            if (ORTE_SUCCESS == (rc = mod->module->map_job(jdata))) {
+                did_map = true;
+                break;
+            }
+            /* mappers return "next option" if they didn't attempt to
+             * map the job. anything else is a true error.
+             */
+            if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+        /* if we get here without doing the map, then that's an error */
+        if (!did_map) {
+            orte_show_help("help-orte-rmaps-base.txt", "failed-map", true);
+            return ORTE_ERR_FAILED_TO_MAP;
         }
     }
     

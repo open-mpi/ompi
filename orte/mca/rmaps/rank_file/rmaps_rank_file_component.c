@@ -43,12 +43,13 @@ static int orte_rmaps_rank_file_open(void);
 static int orte_rmaps_rank_file_close(void);
 static int orte_rmaps_rank_file_query(mca_base_module_t **module, int *priority);
 
-orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
-    {
-      /* First, the mca_base_component_t struct containing meta
-         information about the component itself */
+static int my_priority;
 
-      {
+orte_rmaps_base_component_t mca_rmaps_rank_file_component = {
+    /* First, the mca_base_component_t struct containing meta
+       information about the component itself */
+
+    {
         ORTE_RMAPS_BASE_VERSION_2_0_0,
 
         "rank_file", /* MCA component name */
@@ -58,11 +59,10 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
         orte_rmaps_rank_file_open,  /* component open  */
         orte_rmaps_rank_file_close, /* component close */
         orte_rmaps_rank_file_query  /* component query */
-      },
-      {
-          /* The component is checkpoint ready */
-          MCA_BASE_METADATA_PARAM_CHECKPOINT
-      }
+    },
+    {
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
     }
 };
 
@@ -72,11 +72,17 @@ orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component = {
   */
 static int orte_rmaps_rank_file_open(void)
 {
-    mca_rmaps_rank_file_component.priority = 0;
+    mca_base_component_t *c = &mca_rmaps_rank_file_component.base_version;
+
+    mca_base_param_reg_int(c, "priority",
+                           "Priority of the rank_file rmaps component",
+                           false, false, 0,
+                           &my_priority);
     
     if (NULL != orte_rankfile ||
         NULL != orte_rmaps_base.slot_list) {
-        mca_rmaps_rank_file_component.priority = 100;
+        /* make us first */
+        my_priority = 1000;
     }
     
     return ORTE_SUCCESS;
@@ -84,11 +90,7 @@ static int orte_rmaps_rank_file_open(void)
 
 static int orte_rmaps_rank_file_query(mca_base_module_t **module, int *priority)
 {
-    /* the RMAPS framework is -only- opened on HNP's,
-     * so no need to check for that here
-     */
-
-    *priority = mca_rmaps_rank_file_component.priority;
+    *priority = my_priority;
     *module = (mca_base_module_t *)&orte_rmaps_rank_file_module;
     return ORTE_SUCCESS;
 }

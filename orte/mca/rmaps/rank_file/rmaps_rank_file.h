@@ -39,14 +39,7 @@ BEGIN_C_DECLS
 /**
  * RMGR Component 
  */
-struct orte_rmaps_rank_file_component_t {
-    orte_rmaps_base_component_t super;
-    int debug;
-    int priority;
-};
-typedef struct orte_rmaps_rank_file_component_t orte_rmaps_rank_file_component_t;
-
-ORTE_MODULE_DECLSPEC extern orte_rmaps_rank_file_component_t mca_rmaps_rank_file_component;
+ORTE_MODULE_DECLSPEC extern orte_rmaps_base_component_t mca_rmaps_rank_file_component;
 extern orte_rmaps_base_module_t orte_rmaps_rank_file_module;
 
 
