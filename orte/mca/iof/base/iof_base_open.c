@@ -203,7 +203,8 @@ int orte_iof_base_open(void)
     }
     
     /* daemons do not need to do this as they do not write out stdout/err */
-    if (!ORTE_PROC_IS_DAEMON) {
+    if (!ORTE_PROC_IS_DAEMON ||
+        (ORTE_PROC_IS_DAEMON && ORTE_PROC_IS_CM)) {
         if (orte_xml_output) {
             if (NULL != orte_xml_fp) {
                 /* user wants all xml-formatted output sent to file */
