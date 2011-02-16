@@ -1,5 +1,5 @@
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -22,22 +22,30 @@ release=0
 
 greek=a1
 
-# If want_svn=1, then the SVN r number will be included in the overall
-# Open MPI version number in some form.
+# If want_repo_rev=1, then the repo revision number will be included
+# in the overall Open MPI version number in some form.
 
-want_svn=1
+want_repo_rev=1
 
-# If svn_r=-1, then the SVN r numbere will be obtained dynamically at
-# run time, either 1) via the "svnversion" command (if this is a
-# Subversion checkout) in the form "r<svn_r>", or b) with the date (if
-# this is not a Subversion checkout, and the svnversion command cannot
-# be used) in the form of "svn<date>".  Alternatively, if svn_r is not
-# -1, the value of svn_r will be directly appended to the version
-# string.  This happens during "make dist", for example: if the
-# distribution tarball is being made from an SVN checkout, the value
-# of svn_r in this file is replaced with the output of "svnversion".
+# If repo_rev=-1, then the repository version number will be obtained
+# dynamically at run time, either: 
+#
+# 1) via the "svnversion" command (if this is a Subversion checkout)
+#    in the form "r<svn_r>", or 
+# 2) via the "hg -v -R tip" command (if this is a Mercurial clone)
+#    in the form of "hg<hash>", using the hash tag at the tip
+# 3) via the "git log -1" command (if this is a Git clone) in the form
+#    of "git<hash>", using the hash tag at the HEAD
+# 4) with the date (if none of the above work) in the form of
+#    "date<date>".
+#
+# Alternatively, if repo_rev is not -1, the value of repo_rev_r will
+# be directly appended to the version string.  This happens during
+# "make dist", for example: if the distribution tarball is being made
+# from an SVN checkout, if repo_rev=-1, then its value is replaced
+# with the output of "svnversion".
 
-svn_r=-1
+repo_rev=-1
 
 # The date when this release was created
 

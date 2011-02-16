@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +40,7 @@ const char *ompi_info_ver_major = "major";
 const char *ompi_info_ver_minor = "minor";
 const char *ompi_info_ver_release = "release";
 const char *ompi_info_ver_greek = "greek";
-const char *ompi_info_ver_svn = "svn";
+const char *ompi_info_ver_repo = "repo";
 
 /*
  * Private variables
@@ -61,7 +61,7 @@ static void show_mca_version(const mca_base_component_t *component,
 static char *make_version_str(const char *scope,
                               int major, int minor, int release,
                               const char *greek, 
-                              bool want_svn, const char *svn);
+                              bool want_repo, const char *repo);
 
 /*
  * do_version
@@ -138,10 +138,10 @@ void ompi_info_show_ompi_version(const char *scope)
                                    OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, 
                                    OMPI_RELEASE_VERSION, 
                                    OMPI_GREEK_VERSION,
-                                   OMPI_WANT_SVN, OMPI_SVN_R));
+                                   OMPI_WANT_REPO_REV, OMPI_REPO_REV));
     free(tmp);
-    asprintf(&tmp, "%s:version:svn", ompi_info_type_ompi);
-    ompi_info_out("Open MPI SVN revision", tmp, OMPI_SVN_R);
+    asprintf(&tmp, "%s:version:repo", ompi_info_type_ompi);
+    ompi_info_out("Open MPI repo revision", tmp, OMPI_REPO_REV);
     free(tmp);
     asprintf(&tmp, "%s:version:release_date", ompi_info_type_ompi);
     ompi_info_out("Open MPI release date", tmp, OMPI_RELEASE_DATE);
@@ -153,10 +153,10 @@ void ompi_info_show_ompi_version(const char *scope)
                                    ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION, 
                                    ORTE_RELEASE_VERSION, 
                                    ORTE_GREEK_VERSION,
-                                   ORTE_WANT_SVN, ORTE_SVN_R));
+                                   ORTE_WANT_REPO_REV, ORTE_REPO_REV));
     free(tmp);
-    asprintf(&tmp, "%s:version:svn", ompi_info_type_orte);
-    ompi_info_out("Open RTE SVN revision", tmp, ORTE_SVN_R);
+    asprintf(&tmp, "%s:version:repo", ompi_info_type_orte);
+    ompi_info_out("Open RTE repo revision", tmp, ORTE_REPO_REV);
     free(tmp);
     asprintf(&tmp, "%s:version:release_date", ompi_info_type_orte);
     ompi_info_out("Open RTE release date", tmp, ORTE_RELEASE_DATE);
@@ -168,10 +168,10 @@ void ompi_info_show_ompi_version(const char *scope)
                                    OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
                                    OPAL_RELEASE_VERSION, 
                                    OPAL_GREEK_VERSION,
-                                   OPAL_WANT_SVN, OPAL_SVN_R));
+                                   OPAL_WANT_REPO_REV, OPAL_REPO_REV));
     free(tmp);
-    asprintf(&tmp, "%s:version:svn", ompi_info_type_opal);
-    ompi_info_out("OPAL SVN revision", tmp, OPAL_SVN_R);
+    asprintf(&tmp, "%s:version:repo", ompi_info_type_opal);
+    ompi_info_out("OPAL repo revision", tmp, OPAL_REPO_REV);
     free(tmp);
     asprintf(&tmp, "%s:version:release_date", ompi_info_type_opal);
     ompi_info_out("OPAL release date", tmp, OPAL_RELEASE_DATE);
@@ -367,7 +367,7 @@ static void show_mca_version(const mca_base_component_t* component,
 static char *make_version_str(const char *scope,
                                int major, int minor, int release,
                                const char *greek, 
-                               bool want_svn, const char *svn)
+                               bool want_repo_rev, const char *repo)
 {
     char *str = NULL, *tmp;
     char temp[BUFSIZ];
@@ -388,8 +388,8 @@ static char *make_version_str(const char *scope,
             free(str);
             str = tmp;
         }
-        if (want_svn && NULL != svn) {
-            asprintf(&tmp, "%s%s", str, svn);
+        if (want_repo_rev && NULL != repo) {
+            asprintf(&tmp, "%s%s", str, repo);
             free(str);
             str = tmp;
         }
@@ -401,8 +401,8 @@ static char *make_version_str(const char *scope,
         snprintf(temp, BUFSIZ - 1, "%d", release);
     } else if (0 == strcmp(scope, ompi_info_ver_greek)) {
         str = strdup(greek);
-    } else if (0 == strcmp(scope, ompi_info_ver_svn)) {
-        str = strdup(svn);
+    } else if (0 == strcmp(scope, ompi_info_ver_repo)) {
+        str = strdup(repo);
     }
     
     if (NULL == str) {

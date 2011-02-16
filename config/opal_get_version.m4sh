@@ -14,7 +14,7 @@ m4_divert_push([SCRIPT])dnl
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,10 +30,10 @@ option="$2"
 case "$option" in
     # svnversion can take a while to run.  If we don't need it, don't run it.
     --major|--minor|--release|--greek|--base|--help)
-        ompi_ver_need_svn=0
+        ompi_ver_need_repo_rev=0
         ;;
     *)
-        ompi_ver_need_svn=1
+        ompi_ver_need_repo_rev=1
 esac
 
 
@@ -63,8 +63,8 @@ case "$option" in
     --greek)
 	echo $OPAL_GREEK_VERSION
 	;;
-    --svn)
-	echo $OPAL_SVN_R
+    --repo-rev)
+	echo $OPAL_REPO_REV
 	;;
     --base)
         echo $OPAL_BASE_VERSION
@@ -73,7 +73,7 @@ case "$option" in
         echo $OPAL_RELEASE_DATE
         ;;
     --all)
-        echo ${OPAL_VERSION} ${OPAL_MAJOR_VERSION} ${OPAL_MINOR_VERSION} ${OPAL_RELEASE_VERSION} ${OPAL_GREEK_VERSION} ${OPAL_SVN_R}
+        echo ${OPAL_VERSION} ${OPAL_MAJOR_VERSION} ${OPAL_MINOR_VERSION} ${OPAL_RELEASE_VERSION} ${OPAL_GREEK_VERSION} ${OPAL_REPO_REV}
         ;;
     -h|--help)
 	cat <<EOF
@@ -86,9 +86,9 @@ $0 <srcfile> [<option>]
     --minor        - Minor version number
     --release      - Release version number
     --greek        - Greek (alpha, beta, etc) version number
-    --svn          - Subversion repository number
+    --repo-rev     - Repository version number
     --all          - Show all version numbers, separated by :
-    --base         - Show base version number (no svn number)
+    --base         - Show base version number (no repo number)
     --release-date - Show the release date
     --help         - This message
 EOF
