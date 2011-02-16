@@ -108,6 +108,7 @@ typedef struct {
     bool iof_complete;           /* IOF has noted proc terminating all channels */
     struct timeval starttime;    /* when the proc was started - for timing purposes only */
     bool do_not_barrier;         /* the proc should not barrier in orte_init */
+    bool notified;               /* notification of termination has been sent */
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 
@@ -122,6 +123,8 @@ typedef struct orte_odls_job_t {
     opal_condition_t        cond;
     orte_job_state_t        state;                  /* state of the job */
     orte_jobid_t            jobid;                  /* jobid for this data */
+    char                    *instance;              /* keep handy for scheduler restart */
+    char                    *name;                  /* keep handy for scheduler restart */
     bool                    launch_msg_processed;   /* launch msg has been fully processed */
     orte_app_context_t      **apps;                 /* app_contexts for this job */
     orte_app_idx_t          num_apps;               /* number of app_contexts */

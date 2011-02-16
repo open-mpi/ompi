@@ -1136,9 +1136,11 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     /* pass the hnp's contact info to the local proc in case it
      * needs it
      */
-    param = mca_base_param_environ_variable("orte","hnp","uri");
-    opal_setenv(param, orte_process_info.my_hnp_uri, true, environ_copy);
-    free(param);
+    if (NULL != orte_process_info.my_hnp_uri) {
+        param = mca_base_param_environ_variable("orte","hnp","uri");
+        opal_setenv(param, orte_process_info.my_hnp_uri, true, environ_copy);
+        free(param);
+    }
     
     /* setup yield schedule - do not override any user-supplied directive! */
     if (oversubscribed) {
@@ -1482,13 +1484,13 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             oversubscribed = true;
         }
     } else {
-        if (NULL == (nid = orte_util_lookup_nid(ORTE_PROC_MY_NAME))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            rc = ORTE_ERR_NOT_FOUND;
-            goto CLEANUP;
-        }
-        if (nid->oversubscribed) {
-            oversubscribed = true;
+        /* RHC: the nidmap will eventually disappear, so for now just
+         * make this a non-fatal error
+         */
+        if (NULL != (nid = orte_util_lookup_nid(ORTE_PROC_MY_NAME))) {
+            if (nid->oversubscribed) {
+                oversubscribed = true;
+            }
         }
     }
 
