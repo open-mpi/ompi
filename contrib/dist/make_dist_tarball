@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -343,8 +343,8 @@ version_files=VERSION
 release_date=`date '+%b %d, %Y'`
 for file in $version_files; do
     echo " - $file"
-    sed -e 's/^want_svn=.*/want_svn=0/' \
-        -e 's/^svn_r=.*/'svn_r=$svn_r/ \
+    sed -e 's/^want_repo_rev=.*/want_repo_rev=0/' \
+        -e 's/^repo_rev=.*/'repo_rev=$svn_r/ \
         -e "s/^date=.*/date=\"$release_date\"/" \
         $file > $file.new
     cp -f $file.new $file
@@ -391,6 +391,8 @@ if test -d .svn; then
     svn revert VERSION
 elif test -d .hg; then
     hg revert VERSION
+elif test -d .git; then
+    git revert VERSION
 fi
 
 echo " "

@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -33,11 +33,11 @@ dnl
 #  prefix_MINOR_VERSION
 #  prefix_RELEASE_VERSION
 #  prefix_GREEK_VERSION
-#  prefix_WANT_SVN
-#  prefix_SVN_R
+#  prefix_WANT_REPO_REV
+#  prefix_REPO_REV
 #  prefix_RELEASE_DATE
 m4_define([OPAL_GET_VERSION],[
-    : ${ompi_ver_need_svn=1}
+    : ${ompi_ver_need_repo_rev=1}
     : ${svnversion_result=-1}
 
     dnl quote eval to suppress macro expansion with non-GNU m4
@@ -50,8 +50,8 @@ m4_define([OPAL_GET_VERSION],[
 	s/^minor/$2_MINOR_VERSION/
 	s/^release/$2_RELEASE_VERSION/
 	s/^greek/$2_GREEK_VERSION/
-	s/^want_svn/$2_WANT_SVN/
-	s/^svn_r/$2_SVN_R/
+	s/^want_repo_rev/$2_WANT_REPO_REV/
+	s/^repo_rev/$2_REPO_REV/
 	s/^date/$2_RELEASE_DATE/
 	t print
 	b
@@ -68,20 +68,20 @@ m4_define([OPAL_GET_VERSION],[
         $2_VERSION="${$2_VERSION}${$2_GREEK_VERSION}"
         $2_BASE_VERSION=$$2_VERSION
 
-        if test $$2_WANT_SVN -eq 1 && test $ompi_ver_need_svn -eq 1 ; then
+        if test $$2_WANT_REPO_REV -eq 1 && test $ompi_ver_need_repo_rev -eq 1 ; then
             if test "$svnversion_result" != "-1" ; then
-                $2_SVN_R=$svnversion_result
+                $2_REPO_REV=$svnversion_result
             fi
-            if test "$$2_SVN_R" = "-1" ; then
+            if test "$$2_REPO_REV" = "-1" ; then
                 m4_ifdef([AC_MSG_CHECKING],
-                         [AC_MSG_CHECKING([for SVN version])])
+                         [AC_MSG_CHECKING([for repo version])])
                 d=`date '+%m-%d-%Y'`
                 if test -d "$srcdir/.svn" ; then
-                    $2_SVN_R=r`svnversion "$srcdir"`
+                    $2_REPO_REV=r`svnversion "$srcdir"`
                     if test $? != 0; then
                         # The following is too long for Fortran
-                        # $2_SVN_R="unknown svn version (svnversion not found); $d"
-                        $2_SVN_R="? (no svnversion); $d"
+                        # $2_REPO_REV="unknown svn version (svnversion not found); $d"
+                        $2_REPO_REV="? (no svnversion); $d"
                     fi
                 elif test -d "$srcdir/.hg" ; then
                     # Check to see if we can find the hg command
@@ -92,20 +92,31 @@ m4_define([OPAL_GET_VERSION],[
                     # found.  So test for hg specifically first.
                     hg --version > /dev/null 2>&1
                     if test $? = 0; then
-                        $2_SVN_R=hg`hg -v -R "$srcdir" tip | grep ^changeset: | head -n 1 | cut -d: -f3`
+                        $2_REPO_REV=hg`hg -v -R "$srcdir" tip | grep ^changeset: | head -n 1 | cut -d: -f3`
                     else
                         # The following is too long for Fortran
-                        # $2_SVN_R="unknown hg version (hg not found); $d"
-                        $2_SVN_R="? (no hg); $d"
+                        # $2_REPO_REV="unknown hg version (hg not found); $d"
+                        $2_REPO_REV="? (no hg); $d"
+                    fi
+                elif test -d "$srcdir/.git" ; then
+                    # By the same logic as above, check to see if we
+                    # can find the "git" command.
+                    git --version > /dev/null 2>&1
+                    if test $? = 0; then
+                        $2_REPO_REV=git`git log -1 "$srcdir" | grep ^commit | awk '{ print $2 }'`
+                    else
+                        # The following is too long for Fortran
+                        # $2_REPO_REV="unknown hg version (hg not found); $d"
+                        $2_REPO_REV="? (no git); $d"
                     fi
                 fi
-                if test "$2_SVN_R" = ""; then
-                    $2_SVN_R="svn$d"
+                if test "$2_REPO_REV" = ""; then
+                    $2_REPO_REV="date$d"
                 fi
                 m4_ifdef([AC_MSG_RESULT],
                          [AC_MSG_RESULT([done])])
             fi
-            $2_VERSION="${$2_VERSION}${$2_SVN_R}"
+            $2_VERSION="${$2_VERSION}${$2_REPO_REV}"
         fi
     fi
 ])

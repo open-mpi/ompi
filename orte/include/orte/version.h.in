@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,8 +27,8 @@
 #define ORTE_MINOR_VERSION @ORTE_MINOR_VERSION@
 #define ORTE_RELEASE_VERSION @ORTE_RELEASE_VERSION@
 #define ORTE_GREEK_VERSION "@ORTE_GREEK_VERSION@"
-#define ORTE_WANT_SVN @ORTE_WANT_SVN@
-#define ORTE_SVN_R "@ORTE_SVN_R@"
+#define ORTE_WANT_REPO_REV @ORTE_WANT_REPO_REV@
+#define ORTE_REPO_REV "@ORTE_REPO_REV@"
 #ifdef ORTE_VERSION
 /* If we included version.h, we want the real version, not the
    stripped (no-r number) verstion */

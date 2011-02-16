@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,8 +27,8 @@
 #define OPAL_MINOR_VERSION @OPAL_MINOR_VERSION@
 #define OPAL_RELEASE_VERSION @OPAL_RELEASE_VERSION@
 #define OPAL_GREEK_VERSION "@OPAL_GREEK_VERSION@"
-#define OPAL_WANT_SVN @OPAL_WANT_SVN@
-#define OPAL_SVN_R "@OPAL_SVN_R@"
+#define OPAL_WANT_REPO_REV @OPAL_WANT_REPO_REV@
+#define OPAL_REPO_REV "@OPAL_REPO_REV@"
 #ifdef OPAL_VERSION
 /* If we included version.h, we want the real version, not the
    stripped (no-r number) verstion */
