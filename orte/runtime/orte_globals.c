@@ -888,10 +888,8 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->nodename = NULL;
     proc->rml_uri = NULL;
     proc->restarts = 0;
-#if ORTE_ENABLE_HEARTBEAT
-    proc->beat = 0;
-    proc->missed = 0;
-#endif
+    proc->reported = false;
+    proc->beat = false;
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;
