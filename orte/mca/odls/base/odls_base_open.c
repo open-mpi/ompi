@@ -280,6 +280,7 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
     ptr->waitpid_recvd = false;
     ptr->iof_complete = false;
     ptr->do_not_barrier = false;
+    ptr->notified = false;
 }
 static void orte_odls_child_destructor(orte_odls_child_t *ptr)
 {
@@ -297,6 +298,8 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     OBJ_CONSTRUCT(&ptr->lock, opal_mutex_t);
     OBJ_CONSTRUCT(&ptr->cond, opal_condition_t);
     ptr->jobid = ORTE_JOBID_INVALID;
+    ptr->instance = NULL;
+    ptr->name = NULL;
     ptr->state = ORTE_JOB_STATE_UNDEF;
     ptr->launch_msg_processed = false;
     ptr->apps = NULL;
@@ -325,6 +328,12 @@ static void orte_odls_job_destructor(orte_odls_job_t *ptr)
     
     OBJ_DESTRUCT(&ptr->lock);
     OBJ_DESTRUCT(&ptr->cond);
+    if (NULL != ptr->instance) {
+        free(ptr->instance);
+    }
+    if (NULL != ptr->name) {
+        free(ptr->name);
+    }
     if (NULL != ptr->apps) {
         for (i=0; i < ptr->num_apps; i++) {
             OBJ_RELEASE(ptr->apps[i]);
