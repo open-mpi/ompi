@@ -482,12 +482,10 @@ struct orte_proc_t {
     char *rml_uri;
     /* number of times this process has been restarted */
     int32_t restarts;
-#if ORTE_ENABLE_HEARTBEAT
-    /* time when last heartbeat was detected */
-    double beat;
-    /* number of missed heartbeats */
-    int missed;
-#endif
+    /* flag to indicate proc has reported in */
+    bool reported;
+    /* if heartbeat recvd during last time period */
+    bool beat;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;

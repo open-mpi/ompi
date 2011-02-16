@@ -55,7 +55,6 @@ orte_sensor_heartbeat_component_t mca_sensor_heartbeat_component = {
 static int orte_sensor_heartbeat_open(void)
 {
     mca_base_component_t *c = &mca_sensor_heartbeat_component.super.base_version;
-    int tmp;
 
     /* lookup parameters */
     mca_base_param_reg_string(c, "rate",
@@ -65,11 +64,6 @@ static int orte_sensor_heartbeat_open(void)
     mca_base_param_reg_string(c, "check",
                            "Check for failure rate in sec:usec (default=1:0)",
                            false, false, "1:0",  &mca_sensor_heartbeat_component.check);
-    
-    mca_base_param_reg_int(c, "missed",
-                           "Number of missed heartbeat checks before failure is declared (default=2)",
-                           false, false, 2,  &tmp);
-    mca_sensor_heartbeat_component.missed = tmp;
     
     return ORTE_SUCCESS;
 }
