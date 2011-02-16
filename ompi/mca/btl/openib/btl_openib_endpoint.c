@@ -16,7 +16,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved
  *
  * $COPYRIGHT$
  *
@@ -911,6 +911,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     char *buf;
     mca_btl_openib_recv_frag_t *headers_buf;
     int i;
+    uint32_t flag = MCA_MPOOL_FLAGS_CACHE_BYPASS;
 
     /* Set local rdma pointer to 1 temporarily so other threads will not try
      * to enter the function */
@@ -925,11 +926,25 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     if(NULL == headers_buf)
        goto unlock_rdma_local;
 
+#if defined(HAVE_IBV_ACCESS_SO)
+    /* Solaris implements the Relaxed Ordering feature defined in the
+       PCI Specification. With this in mind any memory region which
+       relies on a buffer being written in a specific order, for
+       example the eager rdma connections created in this routinue,
+       must set a strong order flag when registering the memory for
+       rdma operations.
+
+       The following flag will be interpreted and the appropriate
+       steps will be taken when the memory is registered in
+       openib_reg_mr(). */
+    flag |= MCA_MPOOL_FLAGS_SO_MEM;
+#endif
+
     buf = (char *) openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
             openib_btl->eager_rdma_frag_size *
             mca_btl_openib_component.eager_rdma_num,
             mca_btl_openib_component.buffer_alignment,
-            MCA_MPOOL_FLAGS_CACHE_BYPASS,
+            flag,
             (mca_mpool_base_registration_t**)&endpoint->eager_rdma_local.reg);
 
     if(!buf)

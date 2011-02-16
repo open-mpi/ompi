@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -34,7 +35,7 @@ AC_DEFUN([MCA_ompi_btl_openib_POST_CONFIG], [
 AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
     AC_CONFIG_FILES([ompi/mca/btl/openib/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([cpcs have_threads])
+    OPAL_VAR_SCOPE_PUSH([cpcs have_threads have_ibv_access_so])
     cpcs="oob"
 
     OMPI_CHECK_OPENIB([btl_openib],
@@ -77,6 +78,19 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
           fi
           AC_MSG_CHECKING([which openib btl cpcs will be built])
           AC_MSG_RESULT([$cpcs])])
+
+    # check for Solaris specific memory access flag
+    AS_IF([test "$btl_openib_happy" = "yes"],
+          [if test "`echo $build_os | $GREP solaris`"; then
+              AC_TRY_COMPILE([#include <infiniband/verbs.h>],
+                  [int flag = IBV_ACCESS_SO;],
+                  [have_ibv_access_so="yes"
+                      AC_DEFINE_UNQUOTED([HAVE_IBV_ACCESS_SO],
+                      1,[openib define HAVE_IBV_ACCESS_SO])],
+                  [have_ibv_access_so="no"])
+              AC_MSG_CHECKING([for IBV_ACCESS_SO in Solaris])
+              AC_MSG_RESULT([$have_ibv_access_so])
+          fi])
 
     # Enable openib device failover.  It is disabled by default.
     AC_ARG_ENABLE([btl-openib-failover],
