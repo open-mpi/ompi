@@ -372,6 +372,8 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
         }
         /* set the jobid */
         proc->name.jobid = jdata->jobid;
+        /* flag the proc as ready for launch */
+        proc->state = ORTE_PROC_STATE_INIT;
         /* we do not set the vpid here - this will be done
          * during a second phase
          */
@@ -673,8 +675,9 @@ retry_lr:
 }
 
 
-int orte_rmaps_base_define_daemons(orte_job_map_t *map)
+int orte_rmaps_base_define_daemons(orte_job_t *jdata)
 {
+    orte_job_map_t *map;
     orte_node_t *node;
     orte_proc_t *proc;
     orte_job_t *daemons;
@@ -685,6 +688,13 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
                          "%s rmaps:base:define_daemons",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+    if (ORTE_MAPPING_USE_VM & jdata->map->policy) {
+        /* nothing for us to do - all daemons are
+         * defined by definition!
+         */
+        return ORTE_SUCCESS;
+    }
+
     /* get the daemon job data struct */
     if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_HNP->jobid))) {
         /* bad news */
@@ -693,6 +703,7 @@ int orte_rmaps_base_define_daemons(orte_job_map_t *map)
     }
     
     /* initialize the #new daemons */
+    map = jdata->map;
     map->num_new_daemons = 0;
     
     /* go through the nodes in the map, checking each one's daemon name
