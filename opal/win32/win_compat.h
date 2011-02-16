@@ -205,12 +205,37 @@ typedef unsigned int uint;
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt_raise.asp
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnucmg/html/UCMGch09.asp
  */
-#define SIGCHLD SIGILL
-#define SIGKILL WM_QUIT
-#define SIGPIPE 13
-#define SIGCONT 18
-#define SIGSTOP 19
-#define SIGTSTP 20
+#define SIGHUP    1
+/* 2 is used for SIGINT on windows */
+#define SIGQUIT   3
+/* 4 is used for SIGILL on windows */
+#define SIGTRAP   5
+#define SIGIOT    6
+#define SIGBUS    7
+/* 8 is used for SIGFPE on windows */
+#define SIGKILL   9
+#define SIGUSR1   10
+/* 11 is used for SIGSEGV on windows */
+#define SIGUSR2   12   
+#define SIGPIPE   13
+#define SIGALRM   14
+/* 15 is used for SIGTERM on windows */
+#define SIGSTKFLT 16
+#define SIGCHLD   17
+#define SIGCONT   18
+#define SIGSTOP   19
+#define SIGTSTP   20
+/* 21 is used for SIGBREAK on windows */
+/* 22 is used for SIGABRT on windows */
+#define SIGTTIN   23
+#define SIGTTOU   24
+#define SIGURG    25
+#define SIGXCPU   26
+#define SIGXFSZ   27
+#define SIGVTALRM 28
+#define SIGPROF   29
+#define SIGWINCH  30
+#define SIGIO     31
 
 /* Note: 
  *   The two defines below are likely to break the orte_wait
