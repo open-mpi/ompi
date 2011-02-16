@@ -23,7 +23,6 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"

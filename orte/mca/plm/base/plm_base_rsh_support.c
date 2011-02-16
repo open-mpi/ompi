@@ -46,7 +46,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/opal_sos.h"
 #include "opal/util/if.h"
 
 #include "opal/dss/dss.h"

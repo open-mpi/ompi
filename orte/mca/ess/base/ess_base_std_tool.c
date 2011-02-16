@@ -29,7 +29,6 @@
 #endif
 
 #include "opal/mca/event/event.h"
-#include "opal/util/opal_sos.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 

@@ -33,7 +33,6 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
 
