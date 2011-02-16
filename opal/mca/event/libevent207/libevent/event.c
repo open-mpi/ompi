@@ -2320,7 +2320,15 @@ timeout_next(struct event_base *base, struct timeval **tv_p)
 
 	if (ev == NULL) {
 		/* if no time-based events are active wait for I/O */
+
+        /****    OMPI CHANGE    ****/
+        /* set a timeval to avoid blocking select on Windows */
+#ifndef WIN32
 		*tv_p = NULL;
+#else
+        struct timeval now = {1, 0};
+        **tv_p = now;
+#endif
 		goto out;
 	}
 
