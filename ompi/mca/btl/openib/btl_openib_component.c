@@ -15,7 +15,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -527,9 +527,16 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
 {
     mca_btl_openib_device_t *device = (mca_btl_openib_device_t*)reg_data;
     mca_btl_openib_reg_t *openib_reg = (mca_btl_openib_reg_t*)reg;
+    enum ibv_access_flags access_flag = IBV_ACCESS_LOCAL_WRITE |
+        IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
 
-    openib_reg->mr = ibv_reg_mr(device->ib_pd, base, size, IBV_ACCESS_LOCAL_WRITE |
-            IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
+#if defined(HAVE_IBV_ACCESS_SO)
+    if (reg->flags & MCA_MPOOL_FLAGS_SO_MEM) {
+        access_flag |= IBV_ACCESS_SO;
+    }
+#endif
+
+    openib_reg->mr = ibv_reg_mr(device->ib_pd, base, size, access_flag);
 
     if (NULL == openib_reg->mr) {
         return OMPI_ERR_OUT_OF_RESOURCE;
