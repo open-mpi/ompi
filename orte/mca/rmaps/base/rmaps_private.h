@@ -88,7 +88,7 @@ ORTE_DECLSPEC void orte_rmaps_base_update_local_ranks(orte_job_t *jdata, orte_no
 
 ORTE_DECLSPEC int orte_rmaps_base_rearrange_map(orte_app_context_t *app, orte_job_map_t *map, opal_list_t *procs);
 
-ORTE_DECLSPEC int orte_rmaps_base_define_daemons(orte_job_map_t *map);
+ORTE_DECLSPEC int orte_rmaps_base_define_daemons(orte_job_t *jdata);
 
 ORTE_DECLSPEC int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata);
 

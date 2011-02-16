@@ -120,8 +120,10 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
                 return rc;
             }
         }
-        /* if we get here without doing the map, then that's an error */
-        if (!did_map) {
+        /* if we get here without doing the map, or with zero procs in
+         * the map, then that's an error
+         */
+        if (!did_map || 0 == jdata->num_procs) {
             orte_show_help("help-orte-rmaps-base.txt", "failed-map", true);
             return ORTE_ERR_FAILED_TO_MAP;
         }

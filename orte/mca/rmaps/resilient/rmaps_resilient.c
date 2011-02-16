@@ -86,6 +86,8 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                         "mca:rmaps:resilient: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
  
+    /* flag that I did the mapping */
+    jdata->map->mapper = ORTE_RMAPS_RESILIENT;
 
     /* have we already constructed the fault group list? */
     if (!have_ftgrps) {
@@ -217,12 +219,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
          */
         orte_rmaps_base_update_local_ranks(jdata, oldnode, nd, proc);
     }
-    if (!(ORTE_MAPPING_USE_VM & jdata->map->policy)) {
-        /* define the daemons that we will use for this job */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata->map))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+    /* define the daemons that we will use for this job */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
  error:
@@ -746,12 +746,10 @@ static int map_to_ftgrps(orte_job_t *jdata)
         return rc;
     }
 
-    if (!(ORTE_MAPPING_USE_VM & jdata->map->policy)) {
-        /* define the daemons that we will use for this job */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata->map))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+    /* define the daemons that we will use for this job */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     
     return ORTE_SUCCESS;

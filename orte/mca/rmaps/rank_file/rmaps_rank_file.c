@@ -308,10 +308,13 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
+
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                         "mca:rmaps:rank_file: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
  
+    /* flag that I did the mapping */
+    jdata->map->mapper = ORTE_RMAPS_RF;
 
     /* convenience def */
     map = jdata->map;
@@ -597,7 +600,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     }
 
     /* define the daemons that we will use for this job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(map))) {
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

@@ -77,6 +77,9 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                         "mca:rmaps:rr: mapping job %s",
                         ORTE_JOBID_PRINT(jdata->jobid));
  
+    /* flag that I did the mapping */
+    jdata->map->mapper = ORTE_RMAPS_RR;
+
     /* start at the beginning... */
     jdata->num_procs = 0;
     
@@ -155,7 +158,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     }
 
     /* define the daemons that we will use for this job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata->map))) {
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
