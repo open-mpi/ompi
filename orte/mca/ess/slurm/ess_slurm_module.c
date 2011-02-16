@@ -44,7 +44,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/slurm/ess_slurm.h"
 
-static char *get_slurm_nodename(int *nodeid);
+static char *get_slurm_nodename(int nodeid);
 static int slurm_set_name(void);
 
 static int rte_init(char flags);
@@ -314,8 +314,7 @@ static int slurm_set_name(void)
     orte_vpid_t vpid;
     char* jobid_string;
     char* vpid_string;
-    char* name;
-    
+    char *nodeid;
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:slurm setting name"));
@@ -344,24 +343,25 @@ static int slurm_set_name(void)
     
     ORTE_PROC_MY_NAME->jobid = jobid;
     
-    name = get_slurm_nodename(&slurm_nodeid);
-    if (NULL == name) {
-        return ORTE_ERR_FATAL;
+    /* fix up the vpid and make it the "real" vpid */
+    if (NULL == (nodeid = getenv("SLURM_NODEID"))) {
+        opal_output(0, "SLURM_NODEID not found - cannot define name");
+        return ORTE_ERR_NOT_FOUND;
     }
+    slurm_nodeid = atoi(nodeid);
+    ORTE_PROC_MY_NAME->vpid = vpid + slurm_nodeid;
 
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                         "ess:slurm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     /* fix up the system info nodename to match exactly what slurm returned */
     if (NULL != orte_process_info.nodename) {
         free(orte_process_info.nodename);
     }
-    orte_process_info.nodename = name;
-    
-    /* fix up the vpid and make it the "real" vpid */
-    ORTE_PROC_MY_NAME->vpid = vpid + slurm_nodeid;
-
+    orte_process_info.nodename = get_slurm_nodename(slurm_nodeid);
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                         "ess:slurm set vpid to %s nodename to %s",
-                         ORTE_VPID_PRINT(ORTE_PROC_MY_NAME->vpid),
+                         "ess:slurm set nodename to %s",
                          orte_process_info.nodename));
     
     /* get the non-name common environmental variables */
@@ -374,13 +374,11 @@ static int slurm_set_name(void)
 }
 
 static char *
-get_slurm_nodename(int *nodeid)
+get_slurm_nodename(int nodeid)
 {
     char **names = NULL;
     char *slurm_nodelist;
     char *ret = NULL;
-    int i;
-    char *tmp, *ptr;
 
     slurm_nodelist = getenv("OMPI_MCA_orte_slurm_nodelist");
     
@@ -394,28 +392,15 @@ get_slurm_nodename(int *nodeid)
         return NULL;
     }
 
-    /* copy the nodename for processing */
-    tmp = strdup(orte_process_info.nodename);
-    /* truncate it */
-    if (NULL != (ptr = strchr(tmp, '.'))) {
-        *ptr = '\0';
+    /* check to see if there are enough entries */
+    if (nodeid > opal_argv_count(names)) {
+        return NULL;
     }
 
-    /* search list for our node */
-    for (i=0; NULL !=  names[i]; i++) {
-        if (0 == strcmp(tmp, names[i])) {
-            *nodeid = i;
-            ret = strdup(names[i]);
-            goto complete;
-        }
-    }
+    ret = strdup(names[nodeid]);
 
-    /* get here if no match found */
-    *nodeid = -1;
-    return NULL;
-
-complete:
     opal_argv_free(names);
-    free(tmp);
+
+    /* All done */
     return ret;
 }
