@@ -21,7 +21,6 @@
 
 #include <stdio.h>
 
-#include "opal/util/opal_sos.h"
 #include "opal/hash_string.h"
 
 #include "orte/mca/errmgr/errmgr.h"

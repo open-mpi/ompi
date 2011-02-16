@@ -20,8 +20,6 @@
 
 #include "orte_config.h"
 
-#include "opal/util/opal_sos.h"
-
 #include "orte/constants.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/util/error_strings.h"

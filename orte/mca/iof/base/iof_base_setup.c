@@ -57,7 +57,6 @@
 
 #include "opal/util/opal_pty.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 

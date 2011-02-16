@@ -36,7 +36,6 @@
 
 #include "opal/dss/dss.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"

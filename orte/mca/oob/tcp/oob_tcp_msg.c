@@ -28,7 +28,6 @@
 #include "opal/types.h"
 
 #include "opal/opal_socket_errno.h"
-#include "opal/util/opal_sos.h"
 
 #include "opal/class/opal_hash_table.h"
 #include "orte/util/name_fns.h"

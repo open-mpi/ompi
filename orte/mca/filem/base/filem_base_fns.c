@@ -29,7 +29,6 @@
 
 #include "orte/constants.h"
 
-#include "opal/util/opal_sos.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
