@@ -150,6 +150,9 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
     }
     
     /* copy data into it */
+    if (NULL != src->name) {
+        (*dest)->name = strdup(src->name);
+    }
     (*dest)->idx = src->idx;
     if (NULL != src->app) {
         (*dest)->app = strdup(src->app);
@@ -192,6 +195,9 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
     if( NULL != src->preload_files_src_dir) {
         (*dest)->preload_files_src_dir  = strdup(src->preload_files_src_dir);
     }
+
+    (*dest)->recovery_defined = src->recovery_defined;
+    (*dest)->max_restarts = src->max_restarts;
 
 #if OPAL_ENABLE_FT_CR == 1
     if( NULL != src->sstore_load) {
