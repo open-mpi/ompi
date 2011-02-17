@@ -530,7 +530,7 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     enum ibv_access_flags access_flag = IBV_ACCESS_LOCAL_WRITE |
         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
 
-#if defined(HAVE_IBV_ACCESS_SO)
+#if HAVE_DECL_IBV_ACCESS_SO
     if (reg->flags & MCA_MPOOL_FLAGS_SO_MEM) {
         access_flag |= IBV_ACCESS_SO;
     }
