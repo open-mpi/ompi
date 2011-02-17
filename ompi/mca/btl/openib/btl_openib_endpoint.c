@@ -926,7 +926,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     if(NULL == headers_buf)
        goto unlock_rdma_local;
 
-#if defined(HAVE_IBV_ACCESS_SO)
+#if HAVE_DECL_IBV_ACCESS_SO
     /* Solaris implements the Relaxed Ordering feature defined in the
        PCI Specification. With this in mind any memory region which
        relies on a buffer being written in a specific order, for

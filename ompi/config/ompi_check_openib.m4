@@ -14,7 +14,7 @@
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
-# Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -163,7 +163,7 @@ dnl                        [enable_openib_ibcm="$enableval"], [enable_openib_ibc
 
     # If we have the openib stuff available, find out what we've got
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
-          [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER], [], [], 
+          [AC_CHECK_DECLS([IBV_EVENT_CLIENT_REREGISTER, IBV_ACCESS_SO], [], [],
                           [#include <infiniband/verbs.h>])
            AC_CHECK_FUNCS([ibv_get_device_list ibv_resize_cq])
 
