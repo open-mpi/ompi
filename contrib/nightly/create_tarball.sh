@@ -265,8 +265,8 @@ cd ompi
 svnversion="r`svnversion .`"
 version_files="`find . -name VERSION`"
 for file in $version_files; do
-    sed -e 's/^want_svn=.*/want_svn=1/' \
-        -e 's/^svn_r=.*/svn_r='$svnversion/ $file > $file.new
+    sed -e 's/^want_repo_rev=.*/want_repo_rev=1/' \
+        -e 's/^repo_rev=.*/repo_rev='$svnversion/ $file > $file.new
     cp -f $file.new $file
     rm -f $file.new
 done
