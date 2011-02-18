@@ -471,6 +471,7 @@ static int get_new_node(orte_proc_t *proc,
             }
             break;
         }
+        item = next;
     }
     OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                          "%s rmaps:resilient: Placing process on node %s daemon %s (no ftgrp)",
