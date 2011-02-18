@@ -943,11 +943,11 @@ ENDIF(${MPI_OFFSET_TYPE} STREQUAL "not found")
 MESSAGE(STATUS "checking for type of MPI_Offset...${MPI_OFFSET_TYPE}")
 
 
-MESSAGE("checking for an MPI datatype for MPI_Offset...")
+MESSAGE(STATUS "checking for an MPI datatype for MPI_Offset...")
 IF(${MPI_OFFSET_DATATYPE} STREQUAL "not found")
     MESSAGE(FATAL_ERROR "*** Unable to find an MPI datatype corresponding to MPI_Offset. Cannot continue.")
 ENDIF(${MPI_OFFSET_DATATYPE} STREQUAL "not found")
-MESSAGE("checking for an MPI datatype for MPI_Offset...${MPI_OFFSET_DATATYPE}")
+MESSAGE(STATUS "checking for an MPI datatype for MPI_Offset...${MPI_OFFSET_DATATYPE}")
 
 OMPI_DEF(OMPI_MPI_OFFSET_TYPE ${MPI_OFFSET_TYPE} "Type of MPI_Offset" 0 1)
 OMPI_DEF(OMPI_MPI_OFFSET_SIZE ${MPI_OFFSET_SIZE} "Size of MPI_Offset" 0 1)
