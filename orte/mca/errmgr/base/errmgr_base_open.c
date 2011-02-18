@@ -63,7 +63,8 @@ orte_errmgr_base_module_t orte_errmgr = {
     orte_errmgr_base_update_state,
     NULL, /* predicted_fault     */
     NULL, /* suggest_map_targets */
-    NULL  /* ft_event            */
+    NULL, /* ft_event            */
+    orte_errmgr_base_register_migration_warning
 };
 
 /**

@@ -231,27 +231,42 @@ typedef int (*orte_errmgr_base_module_suggest_map_targets_fn_t)(orte_proc_t *pro
  */
 typedef int  (*orte_errmgr_base_module_ft_event_fn_t)(int state);
 
+/**
+ * Register a callback to alert caller when ORTE is preparing to
+ * migrate the process to another location. This provides an
+ * opportunity for the process to checkpoint any required state,
+ * and to cleanly shutdown.
+ *
+ * @param[in] delay Time to delay before assuming process is stuck
+ *                  and cannot exit on its own - and thus, go
+ *                  ahead and migrate it
+ */
+typedef void (*orte_errmgr_base_module_register_migration_warning_fn_t)(struct timeval *tv);
+
 /*
  * Module Structure
  */
 struct orte_errmgr_base_module_2_3_0_t {
     /** Initialization Function */
-    orte_errmgr_base_module_init_fn_t                   init;
+    orte_errmgr_base_module_init_fn_t                        init;
     /** Finalization Function */
-    orte_errmgr_base_module_finalize_fn_t               finalize;
+    orte_errmgr_base_module_finalize_fn_t                    finalize;
 
-    orte_errmgr_base_module_log_fn_t                    log;
-    orte_errmgr_base_module_abort_fn_t                  abort;
+    orte_errmgr_base_module_log_fn_t                         log;
+    orte_errmgr_base_module_abort_fn_t                       abort;
 
     /** Actual process failure notification */
-    orte_errmgr_base_module_update_state_fn_t           update_state;
+    orte_errmgr_base_module_update_state_fn_t                update_state;
     /** Predicted process/node failure notification */
-    orte_errmgr_base_module_predicted_fault_fn_t        predicted_fault;
+    orte_errmgr_base_module_predicted_fault_fn_t             predicted_fault;
     /** Suggest a node to map a restarting process onto */
-    orte_errmgr_base_module_suggest_map_targets_fn_t    suggest_map_targets;
+    orte_errmgr_base_module_suggest_map_targets_fn_t         suggest_map_targets;
 
     /** Handle any FT Notifications */
-    orte_errmgr_base_module_ft_event_fn_t               ft_event;
+    orte_errmgr_base_module_ft_event_fn_t                    ft_event;
+
+    /* Register to be warned of impending migration */
+    orte_errmgr_base_module_register_migration_warning_fn_t  register_migration_warning;
 };
 typedef struct orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_2_3_0_t;
 typedef orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_t;

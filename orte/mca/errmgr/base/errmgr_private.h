@@ -28,6 +28,10 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
+
 #include "opal/dss/dss_types.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/runtime/orte_globals.h"
@@ -70,6 +74,8 @@ ORTE_DECLSPEC int orte_errmgr_base_update_state(orte_jobid_t job,
                                                 orte_proc_state_t state,
                                                 pid_t pid,
                                                 orte_exit_code_t exit_code);
+
+ORTE_DECLSPEC void orte_errmgr_base_register_migration_warning(struct timeval *tv);
 
 END_C_DECLS
 #endif

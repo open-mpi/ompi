@@ -250,6 +250,11 @@ int orte_errmgr_base_update_state(orte_jobid_t job,
      */
     return ORTE_SUCCESS;
 }
+void orte_errmgr_base_register_migration_warning(struct timeval *tv)
+{
+    /* stub function - ignore */
+    return;
+}
 
 /********************
  * Utility functions
