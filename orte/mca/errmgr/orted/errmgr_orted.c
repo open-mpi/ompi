@@ -92,7 +92,8 @@ orte_errmgr_base_module_t orte_errmgr_orted_module = {
     update_state,
     predicted_fault,
     suggest_map_targets,
-    ft_event
+    ft_event,
+    orte_errmgr_base_register_migration_warning
 };
 
 /************************

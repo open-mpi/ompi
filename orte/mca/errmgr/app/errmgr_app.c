@@ -56,7 +56,8 @@ orte_errmgr_base_module_t orte_errmgr_app_module = {
     update_state,
     NULL,
     NULL,
-    NULL
+    NULL,
+    orte_errmgr_base_register_migration_warning
 };
 
 /************************

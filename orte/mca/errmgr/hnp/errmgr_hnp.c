@@ -72,7 +72,8 @@ static orte_errmgr_base_module_t global_module = {
     /* Suggest proc to node mapping */
     orte_errmgr_hnp_global_suggest_map_targets,
     /* FT Event hook  */
-    orte_errmgr_hnp_global_ft_event
+    orte_errmgr_hnp_global_ft_event,
+    orte_errmgr_base_register_migration_warning
 };
 
 
