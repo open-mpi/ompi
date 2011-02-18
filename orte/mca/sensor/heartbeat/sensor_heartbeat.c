@@ -74,6 +74,7 @@ static opal_event_t *send_ev = NULL, *check_ev = NULL;
 static struct timeval send_time, check_time;
 static orte_job_t *daemons;
 static orte_thread_ctl_t ctl;
+static bool already_started;
 
 static int init(void)
 {
@@ -84,6 +85,7 @@ static int init(void)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     OBJ_CONSTRUCT(&ctl, orte_thread_ctl_t);
+    already_started = false;
 
     /* get the daemon job object */
     if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
@@ -154,6 +156,14 @@ static void setup_time(char *input, struct timeval *time)
 static void start(orte_jobid_t jobid)
 {
 
+    /* if this isn't my jobid, then don't start or we can
+     * confuse things
+     */
+    if (already_started || ORTE_PROC_MY_NAME->jobid != jobid) {
+        return;
+    }
+    already_started = true;
+
     /* only daemons send heartbeats */
     if (ORTE_PROC_IS_DAEMON) {
         /* convert the send rate */
@@ -197,6 +207,8 @@ static void stop(orte_jobid_t jobid)
         free(check_ev);
         check_ev = NULL;
     }
+    already_started = false;
+
     return;
 }
 
