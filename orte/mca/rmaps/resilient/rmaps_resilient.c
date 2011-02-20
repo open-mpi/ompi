@@ -28,6 +28,7 @@
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
 
+#include "orte/util/error_strings.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -116,6 +117,11 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
             continue;
         }
+        OPAL_OUTPUT_VERBOSE((7, orte_rmaps_base.rmaps_output,
+                             "%s PROC %s STATE %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name),
+                             orte_proc_state_to_str(proc->state)));
         /* is this proc to be restarted? */
         if (proc->state != ORTE_PROC_STATE_RESTART) {
             continue;
@@ -131,6 +137,20 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
         }
 
         if (NULL == oldnode) {
+            OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:resilient: proc %s is to be started",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name)));
+        } else {
+            OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:resilient: proc %s from node %s[%s] is to be restarted",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name),
+                                 (NULL == oldnode->name) ? "NULL" : oldnode->name,
+                                 (NULL == oldnode->daemon) ? "--" : ORTE_VPID_PRINT(oldnode->daemon->name.vpid)));
+        }
+
+        if (NULL == oldnode) {
             /* this proc was not previously running - likely it is being added
              * to the job. So place it on the node with the fewest procs to
              * balance the load
@@ -141,11 +161,17 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                                                        app,
                                                                        jdata->map->policy))) {
                 ORTE_ERROR_LOG(rc);
+                while (NULL != (item = opal_list_remove_first(&node_list))) {
+                    OBJ_RELEASE(item);
+                }
+                OBJ_DESTRUCT(&node_list);
                 goto error;
             }
-            if (0 == opal_list_get_size(&node_list)) {
-                ORTE_ERROR_LOG(ORTE_ERROR);
-                rc = ORTE_ERROR;
+            if (opal_list_is_empty(&node_list)) {
+                /* put the proc on "hold" until resources are available */
+                OBJ_DESTRUCT(&node_list);
+                proc->state = ORTE_PROC_STATE_MIGRATING;
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto error;
             }
             totprocs = 1000000;
@@ -163,9 +189,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
              * so we couldn't have come out of the loop with nd=NULL
              */
             OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
-                                 "%s rmaps:resilient: Placing new process on node %s daemon %s (no ftgrp)",
+                                 "%s rmaps:resilient: Placing new process on node %s[%s] (no ftgrp)",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 nd->name, ORTE_NAME_PRINT((&nd->daemon->name))));
+                                 nd->name,
+                                 (NULL == nd->daemon) ? "--" : ORTE_VPID_PRINT(nd->daemon->name.vpid)));
         } else {
 
             OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
@@ -413,20 +440,14 @@ static int get_new_node(orte_proc_t *proc,
                         orte_node_t **ndret)
 {
     orte_node_t *nd, *oldnode, *node;
-    int rc;
-    opal_list_t node_list;
+    orte_proc_t *pptr;
+    int rc, j;
+    opal_list_t node_list, candidates;
     opal_list_item_t *item, *next;
     orte_std_cntr_t num_slots;
+    bool found;
 
-    /* if no ftgrps are available, then just put it on the next node
-     * on the list - obviously, this is a rather unintelligent decision.
-     * However, we want to ensure  that we don't just keep bouncing
-     * back/forth between the same two nodes.
-     *
-     * Note: if the list only has oldnode on it, then this installs
-     * the proc back on its original node - this is better than not
-     * restarting at all
-     */
+    /* set defaults */
     *ndret = NULL;
     nd = NULL;
     oldnode = proc->node;
@@ -440,46 +461,158 @@ static int get_new_node(orte_proc_t *proc,
                                                                app,
                                                                map->policy))) {
         ORTE_ERROR_LOG(rc);
-        goto error;
+        goto release;
     }
-    if (0 == opal_list_get_size(&node_list)) {
+    if (opal_list_is_empty(&node_list)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto error;
+        goto release;
+    }
+
+    if (1 == opal_list_get_size(&node_list)) {
+        /* if we have only one node, all we can do is put the proc on that
+         * node, even if it is the same one - better than not restarting at
+         * all
+         */
+        nd = (orte_node_t*)opal_list_get_first(&node_list);
+        proc->prior_node = oldnode;
+        OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                             "%s rmaps:resilient: Placing process %s on node %s[%s] (only one avail node)",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name),
+                             nd->name,
+                             (NULL == nd->daemon) ? "--" : ORTE_VPID_PRINT(nd->daemon->name.vpid)));
+        goto release;
     }
 
     /*
-     * Cycle thru the list to find the current node
+     * Cycle thru the list, transferring
+     * all available nodes to the candidate list
+     * so we can get them in the right order
      * 
      */
-    item = opal_list_get_first(&node_list);
-    while (item != opal_list_get_end(&node_list)) {
-        next = opal_list_get_next(item);
+    OBJ_CONSTRUCT(&candidates, opal_list_t);
+    while (NULL != (item = opal_list_remove_first(&node_list))) {
         node = (orte_node_t*)item;
-        OPAL_OUTPUT_VERBOSE((7, orte_rmaps_base.rmaps_output,
-                             "%s CHECKING NODE %s[%s] AGAINST NODE %s[%s]",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             node->name,
-                             (NULL == node->daemon) ? "?" : ORTE_VPID_PRINT(node->daemon->name.vpid),
-                             oldnode->name,
-                             (NULL == oldnode->daemon) ? "?" : ORTE_VPID_PRINT(oldnode->daemon->name.vpid)));
+        /* don't put it back on current node */
         if (node == oldnode) {
-            if (next == opal_list_get_end(&node_list)) {
-                nd = (orte_node_t*)opal_list_get_first(&node_list);
-            } else {
-                nd = (orte_node_t*)next;
-            }
+            OBJ_RELEASE(item);
+            continue;
+        }
+        if (0 == node->num_procs) {
+            OPAL_OUTPUT_VERBOSE((7, orte_rmaps_base.rmaps_output,
+                                 "%s PREPENDING EMPTY NODE %s[%s] TO CANDIDATES",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 (NULL == node->name) ? "NULL" : node->name,
+                                 (NULL == node->daemon) ? "--" : ORTE_VPID_PRINT(node->daemon->name.vpid)));
+            opal_list_prepend(&candidates, item);
+        } else {
+            OPAL_OUTPUT_VERBOSE((7, orte_rmaps_base.rmaps_output,
+                                 "%s APPENDING NON-EMPTY NODE %s[%s] TO CANDIDATES",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 (NULL == node->name) ? "NULL" : node->name,
+                                 (NULL == node->daemon) ? "--" : ORTE_VPID_PRINT(node->daemon->name.vpid)));
+            opal_list_append(&candidates, item);
+        }
+    }
+    /* search the candidates
+     * try to use a semi-intelligent selection logic here that:
+     *
+     * (a) avoids putting the proc on a node where a peer is already
+     *     located as this degrades our fault tolerance
+     *
+     * (b) avoids "ricochet effect" where a process would ping-pong
+     *     between two nodes as it fails
+     */
+    nd = NULL;
+    item = opal_list_get_first(&candidates);
+    while (item != opal_list_get_end(&candidates)) {
+        node = (orte_node_t*)item;
+        next = opal_list_get_next(item);
+        /* don't return to our prior location to avoid
+         * "ricochet" effect
+         */
+        if (NULL != proc->prior_node &&
+            node == proc->prior_node) {
+            OPAL_OUTPUT_VERBOSE((7, orte_rmaps_base.rmaps_output,
+                                 "%s REMOVING PRIOR NODE %s[%s] FROM CANDIDATES",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 (NULL == node->name) ? "NULL" : node->name,
+                                 (NULL == node->daemon) ? "--" : ORTE_VPID_PRINT(node->daemon->name.vpid)));
+            opal_list_remove_item(&candidates, item);
+            OBJ_RELEASE(item);  /* maintain acctg */
+            item = next;
+            continue;
+        }
+        /* if this node is empty, then it is the winner */
+        if (0 == node->num_procs) {
+            nd = node;
+            proc->prior_node = oldnode;
             break;
         }
-        item = next;
+        /* if this node has someone from my job, then skip it
+         * to avoid (a)
+         */
+        found = false;
+        for (j=0; j < node->procs->size; j++) {
+            if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                continue;
+            }
+            if (pptr->name.jobid == proc->name.jobid) {
+                OPAL_OUTPUT_VERBOSE((7, orte_rmaps_base.rmaps_output,
+                                     "%s FOUND PEER %s ON NODE %s[%s]",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&pptr->name),
+                                     (NULL == node->name) ? "NULL" : node->name,
+                                     (NULL == node->daemon) ? "--" : ORTE_VPID_PRINT(node->daemon->name.vpid)));
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            item = next;
+            continue;
+        }
+        /* get here if all tests pass - take this node */
+        nd = node;
+        proc->prior_node = oldnode;
+        break;
     }
-    OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
-                         "%s rmaps:resilient: Placing process on node %s daemon %s (no ftgrp)",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (nd == oldnode) ? "OLDNODE" : nd->name,
-                         ORTE_NAME_PRINT((&nd->daemon->name))));
+    if (NULL == nd) {
+        /* didn't find anything */
+        if (NULL != proc->prior_node) {
+            nd = proc->prior_node;
+            OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:resilient: Placing process %s on prior node %s[%s] (no ftgrp)",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name),
+                                 (NULL == nd->name) ? "NULL" : nd->name,
+                                 (NULL == nd->daemon) ? "--" : ORTE_VPID_PRINT(nd->daemon->name.vpid)));
+        } else {
+            nd = oldnode;
+            proc->prior_node = oldnode;
+            OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                                 "%s rmaps:resilient: Placing process %s back on old node %s[%s] (no ftgrp)",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name),
+                                 (NULL == nd->name) ? "NULL" : nd->name,
+                                 (NULL == nd->daemon) ? "--" : ORTE_VPID_PRINT(nd->daemon->name.vpid)));
+        }
 
- error:
+    }
+    /* cleanup candidate list */
+    while (NULL != (item = opal_list_remove_first(&candidates))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&candidates);
+
+ release:
+    OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
+                         "%s rmaps:resilient: Placing process on node %s[%s] (no ftgrp)",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == nd->name) ? "NULL" : nd->name,
+                         (NULL == nd->daemon) ? "--" : ORTE_VPID_PRINT(nd->daemon->name.vpid)));
+
     while (NULL != (item = opal_list_remove_first(&node_list))) {
         OBJ_RELEASE(item);
     }

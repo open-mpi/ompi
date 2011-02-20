@@ -473,6 +473,8 @@ struct orte_proc_t {
     char *slot_list;
     /* pointer to the node where this proc is executing */
     orte_node_t *node;
+    /* pointer to the node where this proc last executed */
+    orte_node_t *prior_node;
     /* name of the node where this proc is executing - this
      * is used simply to pass that info to a calling
      * tool since it may not have a node array available

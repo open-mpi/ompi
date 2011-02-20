@@ -885,6 +885,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->app_idx = 0;
     proc->slot_list = NULL;
     proc->node = NULL;
+    proc->prior_node = NULL;
     proc->nodename = NULL;
     proc->rml_uri = NULL;
     proc->restarts = 0;
