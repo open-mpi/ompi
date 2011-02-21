@@ -100,6 +100,10 @@ static int output(int output_id, const char *format, va_list arglist);
 #define USE_SYSLOG 0
 #endif
 
+/* global state */
+bool opal_output_redirected_to_syslog = false;
+int opal_output_redirected_syslog_pri;
+
 /*
  * Local state
  */
@@ -110,7 +114,7 @@ static char *temp_str = 0;
 static size_t temp_str_len = 0;
 static opal_mutex_t mutex;
 static bool syslog_opened = false;
-
+static char *redirect_syslog_ident = NULL;
 
 OBJ_CLASS_INSTANCE(opal_output_stream_t, opal_object_t, construct, NULL);
 
@@ -131,6 +135,31 @@ bool opal_output_init(void)
     if (NULL != str) {
         default_stderr_fd = atoi(str);
     }
+    str = getenv("OPAL_OUTPUT_REDIRECT");
+    if (NULL != str) {
+        if (0 == strcasecmp(str, "syslog")) {
+            opal_output_redirected_to_syslog = true;
+        }
+    }
+    str = getenv("OPAL_OUTPUT_SYSLOG_PRI");
+    if (NULL != str) {
+        if (0 == strcasecmp(str, "info")) {
+            opal_output_redirected_syslog_pri = LOG_INFO;
+        } else if (0 == strcasecmp(str, "error")) {
+            opal_output_redirected_syslog_pri = LOG_ERR;
+        } else if (0 == strcasecmp(str, "warn")) {
+            opal_output_redirected_syslog_pri = LOG_WARNING;
+        } else {
+            opal_output_redirected_syslog_pri = LOG_ERR;
+        }
+    } else {
+        opal_output_redirected_syslog_pri = LOG_ERR;
+    }
+
+    str = getenv("OPAL_OUTPUT_SYSLOG_IDENT");
+    if (NULL != str) {
+        redirect_syslog_ident = strdup(str);
+    }
 
     OBJ_CONSTRUCT(&verbose, opal_output_stream_t);
 #if defined(__WINDOWS__)
@@ -139,15 +168,25 @@ bool opal_output_init(void)
         WSAStartup( MAKEWORD(2,2), &wsaData );
     }
 #endif  /* defined(__WINDOWS__) */
+    if (opal_output_redirected_to_syslog) {
+        verbose.lds_want_syslog = true;
+        verbose.lds_syslog_priority = opal_output_redirected_syslog_pri;
+        if (NULL != str) {
+            verbose.lds_syslog_ident = strdup(redirect_syslog_ident);
+        }
+        verbose.lds_want_stderr = false;
+        verbose.lds_want_stdout = false;
+    } else {
+        verbose.lds_want_stderr = true;
+    }
     gethostname(hostname, sizeof(hostname));
-    verbose.lds_want_stderr = true;
     asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
         info[i].ldi_used = false;
         info[i].ldi_enabled = false;
 
-        info[i].ldi_syslog = false;
+        info[i].ldi_syslog = opal_output_redirected_to_syslog;
         info[i].ldi_file = false;
         info[i].ldi_file_suffix = NULL;
         info[i].ldi_file_want_append = false;
@@ -552,28 +591,43 @@ static int do_open(int output_id, opal_output_stream_t * lds)
     info[i].ldi_verbose_level = lds->lds_verbose_level;
 
 #if USE_SYSLOG
-    info[i].ldi_syslog = lds->lds_want_syslog;
-    if (lds->lds_want_syslog) {
-
 #if defined(HAVE_SYSLOG)
-        if (NULL != lds->lds_syslog_ident) {
-            info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
-            openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
+    if (opal_output_redirected_to_syslog) {
+        info[i].ldi_syslog = true;
+        info[i].ldi_syslog_priority = opal_output_redirected_syslog_pri;
+        if (NULL != redirect_syslog_ident) {
+            info[i].ldi_syslog_ident = strdup(redirect_syslog_ident);
+            openlog(redirect_syslog_ident, LOG_PID, LOG_USER);
         } else {
             info[i].ldi_syslog_ident = NULL;
             openlog("opal", LOG_PID, LOG_USER);
         }
-#elif defined(__WINDOWS__)
-        if (NULL == (info[i].ldi_syslog_ident =
-                     RegisterEventSource(NULL, TEXT("opal: ")))) {
-            /* handle the error */
-            return OPAL_ERROR;
-        }
-#endif
-
         syslog_opened = true;
-        info[i].ldi_syslog_priority = lds->lds_syslog_priority;
+    } else {
+#endif
+        info[i].ldi_syslog = lds->lds_want_syslog;
+        if (lds->lds_want_syslog) {
+
+#if defined(HAVE_SYSLOG)
+            if (NULL != lds->lds_syslog_ident) {
+                info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
+                openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
+            } else {
+                info[i].ldi_syslog_ident = NULL;
+                openlog("opal", LOG_PID, LOG_USER);
+            }
+#elif defined(__WINDOWS__)
+            if (NULL == (info[i].ldi_syslog_ident =
+                         RegisterEventSource(NULL, TEXT("opal: ")))) {
+                /* handle the error */
+                return OPAL_ERROR;
+            }
+#endif
+            syslog_opened = true;
+            info[i].ldi_syslog_priority = lds->lds_syslog_priority;
+        }
     }
+
 #else
     info[i].ldi_syslog = false;
 #endif
@@ -594,15 +648,28 @@ static int do_open(int output_id, opal_output_stream_t * lds)
         info[i].ldi_suffix_len = 0;
     }
     
-    info[i].ldi_stdout = lds->lds_want_stdout;
-    info[i].ldi_stderr = lds->lds_want_stderr;
+    if (opal_output_redirected_to_syslog) {
+        /* since all is redirected to syslog, ensure
+         * we don't duplicate the output to the std places
+         */
+        info[i].ldi_stdout = false;
+        info[i].ldi_stderr = false;
+        info[i].ldi_file = false;
+        info[i].ldi_fd = -1;
+    } else {
+        /* since we aren't redirecting, use what was
+         * given to us
+         */
+        info[i].ldi_stdout = lds->lds_want_stdout;
+        info[i].ldi_stderr = lds->lds_want_stderr;
 
-    info[i].ldi_fd = -1;
-    info[i].ldi_file = lds->lds_want_file;
-    info[i].ldi_file_suffix = (NULL == lds->lds_file_suffix) ? NULL :
-        strdup(lds->lds_file_suffix);
-    info[i].ldi_file_want_append = lds->lds_want_file_append;
-    info[i].ldi_file_num_lines_lost = 0;
+        info[i].ldi_fd = -1;
+        info[i].ldi_file = lds->lds_want_file;
+        info[i].ldi_file_suffix = (NULL == lds->lds_file_suffix) ? NULL :
+            strdup(lds->lds_file_suffix);
+        info[i].ldi_file_want_append = lds->lds_want_file_append;
+        info[i].ldi_file_num_lines_lost = 0;
+    }
 
     /* Don't open a file in the session directory now -- do that lazily
      * so that if there's no output, we don't have an empty file */
