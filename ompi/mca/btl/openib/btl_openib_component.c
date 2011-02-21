@@ -2770,7 +2770,7 @@ btl_openib_component_init(int *num_btl_modules,
         }
 
         if (mca_btl_openib_component.max_hw_msg_size > 0 &&
-            mca_btl_openib_component.max_hw_msg_size > openib_btl->ib_port_attr.max_msg_sz) {
+            (uint32_t)mca_btl_openib_component.max_hw_msg_size > openib_btl->ib_port_attr.max_msg_sz) {
 			BTL_ERROR(("max_hw_msg_size (%d) is larger than hw max message size (%d)",
                         mca_btl_openib_component.max_hw_msg_size, openib_btl->ib_port_attr.max_msg_sz));
         }

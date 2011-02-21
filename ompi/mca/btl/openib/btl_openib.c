@@ -1220,14 +1220,14 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     /* check if user has explicitly limited the max message size */
     if (openib_component->max_hw_msg_size > 0 &&
-            max_msg_sz > openib_component->max_hw_msg_size) {
+            max_msg_sz > (uint32_t)openib_component->max_hw_msg_size) {
         max_msg_sz = openib_component->max_hw_msg_size;
     }
 
     /* limit the message so to max_msg_sz*/
     if (*size > max_msg_sz) {
         *size = max_msg_sz;
-        BTL_VERBOSE(("message size limited to %d", *size));
+        BTL_VERBOSE(("message size limited to %u", (uint32_t)*size));
     }
 
     opal_convertor_get_current_pointer(convertor, &buffer);
