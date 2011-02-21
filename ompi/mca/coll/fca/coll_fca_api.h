@@ -39,11 +39,11 @@
 
 #define OMPI_FCA_ALLGATHER          0
 
-#define FCA_API_ABI_MAJOR    1
-#define FCA_API_ABI_MINOR    2
-#define FCA_MAJOR_BIT        24ul
-#define FCA_MINOR_BIT        16ul
-#define EUSEMPI              287
+#define FCA_API_ABI_MAJOR           1
+#define FCA_API_ABI_MINOR           2
+#define FCA_MAJOR_BIT               24ul
+#define FCA_MINOR_BIT               16ul
+#define EUSEMPI                     287
 
 
 typedef struct mca_coll_fca_ops_t {
@@ -113,14 +113,17 @@ static inline void mca_coll_fca_get_reduce_root(int root_rank, int my_rank,
     spec->is_root = root_rank == my_rank;
 }
 
-#elif OMPI_FCA_VERSION == 20
+#elif OMPI_FCA_VERSION == 20 || OMPI_FCA_VERSION == 21
 
 #define OMPI_FCA_ALLGATHER          1
+#define OMPI_FCA_PROGRESS           1
 
-#define FCA_API_ABI_MAJOR    2
-#define FCA_API_ABI_MINOR    0
-#define OMPI_FCA_PROGRESS    1
-
+#define FCA_API_ABI_MAJOR           2
+#if OMPI_FCA_VERSION == 20
+#  define FCA_API_ABI_MINOR         0
+#else
+#  define FCA_API_ABI_MINOR         1
+#endif
 
 typedef struct mca_coll_fca_ops_t {
 
@@ -191,6 +194,6 @@ static inline void mca_coll_fca_get_reduce_root(int root_rank, int my_rank,
 
 #else
 
-#error "FCA API version is undefinded"
+#error "FCA API version is unsupported"
 
 #endif
