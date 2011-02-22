@@ -18,39 +18,41 @@
 #
 
 # To find hwloc_bottom.h.  EMBEDDED flags are for if we OMPI's
-# internal hwloc is used; paffinity_hwloc_CPPFLAGS is if we are using
+# internal hwloc is used; maffinity_hwloc_CPPFLAGS is if we are using
 # an external install.
-AM_CPPFLAGS = $(HWLOC_EMBEDDED_CPPFLAGS) $(paffinity_hwloc_CPPFLAGS)
+AM_CPPFLAGS = $(HWLOC_EMBEDDED_CPPFLAGS) $(maffinity_hwloc_CPPFLAGS)
 # To get the cflags for the stuff in hwloc.h
-AM_CFLAGS = $(HWLOC_EMBEDDED_CFLAGS) $(paffinity_hwloc_CFLAGS)
+AM_CFLAGS = $(HWLOC_EMBEDDED_CFLAGS) $(maffinity_hwloc_CFLAGS)
+
+dist_pkgdata_DATA = help-opal-maffinity-hwloc.txt
 
 sources = \
-        paffinity_hwloc.h \
-        paffinity_hwloc_component.c \
-        paffinity_hwloc_module.c
+        maffinity_hwloc.h \
+        maffinity_hwloc_component.c \
+        maffinity_hwloc_module.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_opal_paffinity_hwloc_DSO
+if MCA_BUILD_opal_maffinity_hwloc_DSO
 component_noinst =
-component_install = mca_paffinity_hwloc.la
+component_install = mca_maffinity_hwloc.la
 else
-component_noinst = libmca_paffinity_hwloc.la
+component_noinst = libmca_maffinity_hwloc.la
 component_install =
 endif
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_paffinity_hwloc_la_SOURCES = $(sources)
-mca_paffinity_hwloc_la_LDFLAGS = -module -avoid-version
-mca_paffinity_hwloc_la_LIBADD = \
+mca_maffinity_hwloc_la_SOURCES = $(sources)
+mca_maffinity_hwloc_la_LDFLAGS = -module -avoid-version
+mca_maffinity_hwloc_la_LIBADD = \
     $(top_builddir)/opal/mca/common/hwloc/libmca_opal_common_hwloc.la
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_paffinity_hwloc_la_SOURCES =$(sources)
-libmca_paffinity_hwloc_la_LDFLAGS = -module -avoid-version
-libmca_paffinity_hwloc_la_LIBADD = \
+libmca_maffinity_hwloc_la_SOURCES =$(sources)
+libmca_maffinity_hwloc_la_LDFLAGS = -module -avoid-version
+libmca_maffinity_hwloc_la_LIBADD = \
     $(top_builddir)/opal/mca/common/hwloc/libmca_opal_common_hwloc.la
 

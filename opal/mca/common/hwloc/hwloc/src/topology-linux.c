@@ -886,18 +886,18 @@ hwloc_linux_membind_mask_from_nodeset(hwloc_topology_t topology __hwloc_attribut
 static void
 hwloc_linux_membind_mask_to_nodeset(hwloc_topology_t topology __hwloc_attribute_unused,
 				    hwloc_nodeset_t nodeset,
-				    unsigned max_os_index, const unsigned long *linuxmask)
+				    unsigned _max_os_index, const unsigned long *linuxmask)
 {
+  unsigned max_os_index;
   unsigned i;
 
-#ifdef HWLOC_DEBUG
-  /* max_os_index comes from hwloc_linux_find_kernel_max_numnodes() so it's a multiple of HWLOC_BITS_PER_LONG */
-  assert(!(max_os_index%HWLOC_BITS_PER_LONG));
-#endif
+  /* round up to the nearest multiple of BITS_PER_LONG */
+  max_os_index = (_max_os_index + HWLOC_BITS_PER_LONG) & ~(HWLOC_BITS_PER_LONG - 1);
 
   hwloc_bitmap_zero(nodeset);
   for(i=0; i<max_os_index/HWLOC_BITS_PER_LONG; i++)
     hwloc_bitmap_set_ith_ulong(nodeset, i, linuxmask[i]);
+  /* if we don't trust the kernel, we could clear bits from _max_os_index+1 to max_os_index-1 */
 }
 #endif /* HWLOC_HAVE_SET_MEMPOLICY || HWLOC_HAVE_MBIND */
 
@@ -1161,7 +1161,6 @@ hwloc_parse_sysfs_unsigned(const char *mappath, unsigned *value, int fsroot_fd)
 
   if (!fgets(string, 11, fd)) {
     *value = -1;
-    fclose(fd);
     return -1;
   }
   *value = strtoul(string, NULL, 10);
@@ -1726,7 +1725,7 @@ hwloc_sysfs_node_meminfo_info(struct hwloc_topology *topology,
   hwloc_parse_meminfo_info(topology, meminfopath,
 			   hwloc_snprintf(NULL, 0, "Node %d ", node),
 			   &memory->local_memory,
-			   &meminfo_hugepages_count, NULL /* no hugepage size in node-specific meminfo */,
+			   &meminfo_hugepages_count, &meminfo_hugepages_size,
 			   memory->page_types == NULL);
 
   if (memory->page_types) {
@@ -1735,14 +1734,12 @@ hwloc_sysfs_node_meminfo_info(struct hwloc_topology *topology,
       /* read from node%d/hugepages/hugepages-%skB/nr_hugepages */
       hwloc_parse_hugepages_info(topology, path, memory, &remaining_local_memory);
     } else {
-      /* get hugepage size from machine-specific meminfo since there is no size in node-specific meminfo,
-       * hwloc_get_procfs_meminfo_info must have been called earlier */
-      meminfo_hugepages_size = topology->levels[0][0]->memory.page_types[1].size;
       /* use what we found in meminfo */
+      /* hwloc_get_procfs_meminfo_info must have been called earlier */
       if (meminfo_hugepages_size) {
         memory->page_types[1].count = meminfo_hugepages_count;
-        memory->page_types[1].size = meminfo_hugepages_size;
-        remaining_local_memory -= meminfo_hugepages_count * meminfo_hugepages_size;
+        memory->page_types[1].size = topology->levels[0][0]->memory.page_types[1].size;
+        remaining_local_memory -= meminfo_hugepages_count * memory->page_types[1].size;
       } else {
         memory->page_types_len = 1;
       }
@@ -1764,10 +1761,8 @@ hwloc_parse_node_distance(const char *distancepath, unsigned nbnodes, unsigned *
   if (!fd)
     return;
 
-  if (!fgets(string, sizeof(string), fd)) {
-    fclose(fd);
+  if (!fgets(string, sizeof(string), fd))
     return;
-  }
 
   tmp = string;
   while (tmp) {
@@ -1974,11 +1969,10 @@ static int
 look_powerpc_device_tree_discover_cache(device_tree_cpus_t *cpus,
     uint32_t ibm_phandle, unsigned int *level, hwloc_bitmap_t cpuset)
 {
-  unsigned int i;
   int ret = -1;
   if ((NULL == level) || (NULL == cpuset))
     return ret;
-  for (i = 0; i < cpus->n; ++i) {
+  for (unsigned int i = 0; i < cpus->n; ++i) {
     if (ibm_phandle != cpus->p[i].l2_cache)
       continue;
     if (NULL != cpus->p[i].cpuset) {
@@ -2034,7 +2028,6 @@ look_powerpc_device_tree(struct hwloc_topology *topology)
 {
   device_tree_cpus_t cpus = { .n = 0, .p = NULL, .allocated = 0 };
   const char ofroot[] = "/proc/device-tree/cpus";
-  unsigned int i;
 
   int root_fd = topology->backend_params.sysfs.root_fd;
   DIR *dt = hwloc_opendir(ofroot, root_fd);
@@ -2076,9 +2069,8 @@ look_powerpc_device_tree(struct hwloc_topology *topology)
       uint32_t nthreads = cb / sizeof(threads[0]);
 
       if (NULL != threads) {
-        unsigned int i;
         cpuset = hwloc_bitmap_alloc();
-        for (i = 0; i < nthreads; ++i) {
+        for (unsigned int i = 0; i < nthreads; ++i) {
           hwloc_bitmap_set(cpuset, ntohl(threads[i]));
         }
         free(threads);
@@ -2114,7 +2106,7 @@ look_powerpc_device_tree(struct hwloc_topology *topology)
   }
 
 #ifdef HWLOC_DEBUG
-  for (i = 0; i < cpus.n; ++i) {
+  for (unsigned int i = 0; i < cpus.n; ++i) {
     hwloc_debug("%i: %s  ibm,phandle=%08X l2_cache=%08X ",
       i, cpus.p[i].name, cpus.p[i].ibm_phandle, cpus.p[i].l2_cache);
     if (NULL == cpus.p[i].cpuset) {
@@ -2126,7 +2118,7 @@ look_powerpc_device_tree(struct hwloc_topology *topology)
 #endif
 
   /* Scan L2/L3/... caches */
-  for (i = 0; i < cpus.n; ++i) {
+  for (unsigned int i = 0; i < cpus.n; ++i) {
     /* Skip real CPUs */
     if (NULL != cpus.p[i].cpuset)
       continue;
@@ -2146,7 +2138,7 @@ look_powerpc_device_tree(struct hwloc_topology *topology)
   }
 
   /* Do cleanup */
-  for (i = 0; i < cpus.n; ++i) {
+  for (unsigned int i = 0; i < cpus.n; ++i) {
     hwloc_bitmap_free(cpus.p[i].cpuset);
     free(cpus.p[i].name);
   }

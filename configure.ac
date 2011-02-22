@@ -132,6 +132,7 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmca_common_portals_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
+AC_SUBST(libmca_opal_common_hwloc_so_version)
 AC_SUBST(libopen_pal_so_version)
 
 #
