@@ -151,22 +151,26 @@ FOREACH (MCA_FRAMEWORK ${MCA_FRAMEWORK_LIST})
 
         IF(BUILD_COMPONENT)
 
-          IF(NOT COMPONENT_FILES)
-            FILE(GLOB_RECURSE COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
+          #check exclude list
+          SET(EXCLUDE_LIST "")
+          FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
+
+          IF(NOT EXCLUDE_LIST STREQUAL "")
+            STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
+            FILE(GLOB_RECURSE RESULT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h"
               "${CURRENT_PATH}/*.cc" "${CURRENT_PATH}/*.cpp")
-
-            #check exclude list
-            SET(EXCLUDE_LIST "")
-            FILE(STRINGS ${CURRENT_PATH}/.windows EXCLUDE_LIST REGEX "^exclude_list=")
-
-            IF(NOT EXCLUDE_LIST STREQUAL "")
-              STRING(REPLACE "exclude_list=" "" EXCLUDE_LIST ${EXCLUDE_LIST})
-            ENDIF(NOT EXCLUDE_LIST STREQUAL "")
 
             # remove the files in the exclude list
             FOREACH(FILE ${EXCLUDE_LIST})
-              LIST(REMOVE_ITEM COMPONENT_FILES "${CURRENT_PATH}/${FILE}")
+              LIST(REMOVE_ITEM RESULT_FILES "${CURRENT_PATH}/${FILE}")
             ENDFOREACH(FILE)
+
+            # append the rest of the files to the main list
+            SET(COMPONENT_FILES ${COMPONENT_FILES} ${RESULT_FILES})
+          ENDIF(NOT EXCLUDE_LIST STREQUAL "")
+
+          IF(NOT COMPONENT_FILES)
+            FILE(GLOB_RECURSE COMPONENT_FILES "${CURRENT_PATH}/*.C" "${CURRENT_PATH}/*.h")
           ENDIF(NOT COMPONENT_FILES)
 
           # check the library build type
