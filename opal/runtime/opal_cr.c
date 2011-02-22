@@ -265,9 +265,9 @@ int opal_cr_init(void )
     opal_cr_thread_sleep_check = val;
 
     mca_base_param_reg_int_name("opal_cr", "thread_sleep_wait",
-                                "Time to sleep waiting for process to exit MPI library (Default: 0)",
+                                "Time to sleep waiting for process to exit MPI library (Default: 1000)",
                                 false, false,
-                                0, &val);
+                                1000, &val);
     opal_cr_thread_sleep_wait = val;
 
     opal_output_verbose(10, opal_cr_output,
