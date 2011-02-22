@@ -158,6 +158,8 @@ typedef unsigned int uint;
 #define srand48                   srand
 #define lrand48                   rand
 #define nanosleep(tp, rem)        Sleep(*tp.tv_sec*1000+*tp.tv_nsec/1000000)
+#define usleep(t)                 Sleep(t/1000)
+#define posix_memalign(p, a, s)   *p=_aligned_malloc(s,a)
 
 #ifndef UINT32_MAX
 #define UINT32_MAX            _UI32_MAX

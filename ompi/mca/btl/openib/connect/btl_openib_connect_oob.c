@@ -43,7 +43,10 @@
 #include "btl_openib_proc.h"
 #include "connect/connect.h"
 #include "orte/util/show_help.h"
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 typedef enum {
     ENDPOINT_CONNECT_REQUEST,
@@ -51,7 +54,11 @@ typedef enum {
     ENDPOINT_CONNECT_ACK
 } connect_message_type_t;
 
+#ifndef __WINDOWS__
 #define PACK_SUFFIX __attribute__((packed))
+#else
+#define PACK_SUFFIX
+#endif
 
 #define SL_NOT_PRESENT                0x7F
 #define MAX_GET_SL_REC_RETRIES        20
@@ -68,6 +75,12 @@ typedef enum {
 #define IB_SA_ATTR_PATH_REC           0x35
 #define IB_SA_PATH_REC_DLID           (1<<4)
 #define IB_SA_PATH_REC_SLID           (1<<5)
+
+
+#ifdef __WINDOWS__
+  #pragma pack(push)
+  #pragma pack(1)
+#endif
 
 struct ib_mad_hdr {
     uint8_t   base_version;
@@ -133,6 +146,10 @@ struct ib_mad_sa {
     struct ib_sa_hdr sa_hdr;
     union  ib_sa_data sa_data;
 } PACK_SUFFIX;
+
+#ifdef __WINDOWS__
+  #pragma pack(pop)
+#endif
 
 static struct mca_btl_openib_sa_qp_cache {
     /* There will be a MR with the one send and receive buffer together */
@@ -1349,12 +1366,12 @@ static int get_pathrecord_sl(struct ibv_context *context_arg,
     /* if the destination lid SL value is not in the cache, go get it */
     if (SL_NOT_PRESENT == cache->sl_values[rem_lid]) {
         /* sag is first buffer, where we build the SA Get request to send */
-        sag = (void *)(cache->send_recv_buffer);
+        sag = (ib_mad_sa *)(cache->send_recv_buffer);
 
         init_sa_mad(cache, sag, &swr, &ssge, lid, rem_lid);
 
         /* sar is the receive buffer (40 byte GRH) */
-        sar = (void *)(cache->send_recv_buffer + sizeof(struct ib_mad_sa) + 40);
+        sar = (ib_mad_sa *)(cache->send_recv_buffer + sizeof(struct ib_mad_sa) + 40);
 
         rc = get_pathrecord_info(cache, sag, sar, &swr, lid, rem_lid);
         if (0 != rc) {
