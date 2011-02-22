@@ -527,7 +527,7 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
 {
     mca_btl_openib_device_t *device = (mca_btl_openib_device_t*)reg_data;
     mca_btl_openib_reg_t *openib_reg = (mca_btl_openib_reg_t*)reg;
-    enum ibv_access_flags access_flag = (ibv_access_flags) (IBV_ACCESS_LOCAL_WRITE |
+    enum ibv_access_flags access_flag = (enum ibv_access_flags) (IBV_ACCESS_LOCAL_WRITE |
         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
 
 #if HAVE_DECL_IBV_ACCESS_SO

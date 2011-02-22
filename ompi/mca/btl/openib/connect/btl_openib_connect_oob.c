@@ -1366,12 +1366,12 @@ static int get_pathrecord_sl(struct ibv_context *context_arg,
     /* if the destination lid SL value is not in the cache, go get it */
     if (SL_NOT_PRESENT == cache->sl_values[rem_lid]) {
         /* sag is first buffer, where we build the SA Get request to send */
-        sag = (ib_mad_sa *)(cache->send_recv_buffer);
+        sag = (struct ib_mad_sa *)(cache->send_recv_buffer);
 
         init_sa_mad(cache, sag, &swr, &ssge, lid, rem_lid);
 
         /* sar is the receive buffer (40 byte GRH) */
-        sar = (ib_mad_sa *)(cache->send_recv_buffer + sizeof(struct ib_mad_sa) + 40);
+        sar = (struct ib_mad_sa *)(cache->send_recv_buffer + sizeof(struct ib_mad_sa) + 40);
 
         rc = get_pathrecord_info(cache, sag, sar, &swr, lid, rem_lid);
         if (0 != rc) {
