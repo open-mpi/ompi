@@ -363,6 +363,7 @@ sub mca_process_project {
             die "Can't open $dir directory";
         my @my_dirs = readdir(DIR);
         @my_dirs = sort(@my_dirs);
+
         foreach my $d (@my_dirs) {
             # Skip any non-directory, "base", or any dir that begins with "."
             next
@@ -427,6 +428,18 @@ dnl MCA information\n";
             # Print out project-level info
             my @mykeys = keys(%{$mca_found->{$pname}});
             @mykeys = sort(@mykeys);
+
+            # Ensure that the "common" framework is listed first
+            # (if it exists)
+            my @tmp;
+            push(@tmp, "common")
+                if (grep(/common/, @mykeys));
+            foreach my $f (@mykeys) {
+                push(@tmp, $f)
+                    if ($f ne "common");
+            }
+            @mykeys = @tmp;
+
             foreach my $f (@mykeys) {
                 $frameworks_comma .= ", $f";
 
