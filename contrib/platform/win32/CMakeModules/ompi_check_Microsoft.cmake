@@ -111,6 +111,10 @@ IF(NOT MICROSOFT_CHECK_DONE)
     "C compiler option for C++ exceptions.")
   SET(OMPI_C_INCLUDE_DIR "/I" CACHE INTERNAL
     "C compiler option for including directory.")
+  SET(OMPI_LIB_CMD "lib" CACHE INTERNAL
+    "command line for making static libraries.")
+  SET(OMPI_LIB_CMD_OUTPUT "-OUT:" CACHE INTERNAL
+    "Output option for making static libraries.")
 
   SET(DUMP_UTIL "${VC_BIN_PATH}/dumpbin.exe" CACHE INTERNAL "the dumpbin application.")
 
@@ -177,6 +181,11 @@ OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGE "Whether we support 32 bits atomic 
 OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGE64 "Whether we support 64 bits atomic operations on Windows" 0 0)
 OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGEACQUIRE "Whether we support 32 bits atomic operations on Windows" 0 0)
 OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGERELEASE "Whether we support 32 bits atomic operations on Windows" 0 0)
+
+# a few definitions for shared memory support
+OMPI_DEF(MCA_COMMON_SM_WINDOWS 1 "Whether we have shared memory support for Windows or not." 0 1)
+OMPI_DEF(MCA_COMMON_SM_SYSV 0 "Whether we have shared memory support for SYSV or not." 0 1)
+OMPI_DEF(MCA_COMMON_SM_POSIX 0 "Whether we have shared memory support for POSIX or not." 0 1)
 
 OMPI_CHECK_INCLUDE_FILE (windows.h HAVE_WINDOWS_H)
 

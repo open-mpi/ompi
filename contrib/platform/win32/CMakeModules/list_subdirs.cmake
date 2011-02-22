@@ -1,6 +1,6 @@
 #
-# Copyright (c) 2009         High Performance Computing Center Stuttgart, 
-#                                     University of Stuttgart.  All rights reserved.
+# Copyright (c) 2009-2010    High Performance Computing Center Stuttgart, 
+#                            University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,7 +24,7 @@ MACRO(CHECK_SUBDIRS CURRENT_DIR OUTPUT_VARIABLE)
                    ERROR_VARIABLE     ERROR)
 
   IF(NOT "${OUTPUT}" STREQUAL "")
-    STRING (REGEX MATCHALL "[a-zA-Z1-9_]+" ${OUTPUT_VARIABLE} ${OUTPUT})
+    STRING (REGEX MATCHALL "[a-zA-Z0-9_]+" ${OUTPUT_VARIABLE} ${OUTPUT})
   ENDIF(NOT "${OUTPUT}" STREQUAL "")
 
 ENDMACRO(CHECK_SUBDIRS CURRENT_DIR OUTPUT_VARIABLE)

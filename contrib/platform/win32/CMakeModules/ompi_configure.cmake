@@ -1,9 +1,10 @@
 #
-# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2011 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -11,6 +12,9 @@
 # $HEADER$
 #
 
+
+
+MACRO(BEGIN_CONFIGURE)
 
 INCLUDE (CheckIncludeFileCXX)
 INCLUDE (CheckIncludeFile)
@@ -178,7 +182,7 @@ OPAL_WITH_OPTION_MIN_MAX_VALUE(port_name 1024 255 2048)
 
 OPAL_WITH_OPTION_MIN_MAX_VALUE(datarep_string 128 64 256)
 
-OMPI_DEF_CACHE_VAR(OMPI_EXT_COMPONENTS Example STRING "Specify user defined MPI Extended Interface Components. (not implemented on Windows)" 1 1)
+OMPI_DEF_CACHE_VAR(OMPI_EXT_COMPONENTS none STRING "Specify user defined MPI Extended Interface Components." 1 1)
 
 OMPI_DEF_OPT(MCA_mtl_DIRECT_CALL "Whether mtl should use direct calls instead of components." OFF)
 
@@ -242,6 +246,7 @@ OMPI_DEF_OPT(OPAL_WANT_LIBLTDL "Whether we want to enable DSO build for Windows.
 
 OMPI_DEF_OPT(OMPI_WANT_NETWORK_DIRECT "Whether we want to enable Network Direct support." ON)
 
+OMPI_DEF_OPT(OMPI_WANT_OFED "Whether we want to enable OFED support." ON)
 
 IF (NOT MSVC)
 
@@ -597,6 +602,7 @@ ENDIF(WIN32)
 
 # We want to set the #define's for all of these, so invoke the macros
 # regardless of whether we have F77 support or not.
+OMPI_F77_CHECK("CHARACTER" "yes" "char;int32_t;int;int64_t;long long;long" "-1")
 OMPI_F77_CHECK("LOGICAL" "yes" "char;int;long long;long" "-1")
 OMPI_F77_CHECK("LOGICAL*1" "yes" "char;short;int;long long;long" "1")
 OMPI_F77_CHECK("LOGICAL*2" "yes" "short;int;long long;long" "2")
@@ -692,17 +698,17 @@ IF(WIN32)
 
   OMPI_DEF(MCA_timer_IMPLEMENTATION_HEADER "opal/mca/timer/windows/timer_windows.h" "Header to include for timer implementation." 1 1)
 
+  OMPI_DEF(MCA_memory_IMPLEMENTATION_HEADER "opal/mca/memory/base/empty.h" "Header to include for memory implementation." 1 1)
+
   OMPI_DEF(OPAL_ASSEMBLY_ARCH "OMPI_WINDOWS" "Architecture type of assembly to use for atomic operations." 0 1)
 
   OMPI_DEF(OPAL_HAVE_POSIX_THREADS 0 "Do we have POSIX threads." 0 1)
 
-  OMPI_DEF(OPAL_HAVE_WEAK_SYMBOLS 0 "Wehther we have weak symbols or not" 0 1)
+  OMPI_DEF(OPAL_HAVE_WEAK_SYMBOLS 0 "Whether we have weak symbols or not" 0 1)
 
   OMPI_DEF(OPAL_HAVE_SOLARIS_THREADS 0 "Do we have native Solaris threads." 0 1)
 
   OMPI_DEF(MCA_memcpy_IMPLEMENTATION_HEADER "opal/mca/memcpy/base/memcpy_base_default.h" "Header to include for memcpy implementation." 1 1)
-
-  OMPI_DEF(OMPI_MPI_OFFSET_TYPE "long long" "Type of MPI_Offset." 0 1)
 
   OMPI_DEF(HAVE_DECL___FUNC__ 0 "Define to 1 if you have the declaration of `__func__', and to 0 if you don't." 0 1)
 
@@ -713,6 +719,8 @@ IF(WIN32)
   OMPI_DEF_CACHE(MCA_pml_DIRECT_CALL_COMPONENT " " STRING "Name of component to use for direct calls, if MCA_pml_DIRECT_CALL is 1." 1 1)
 
   OMPI_DEF_CACHE(MCA_pml_DIRECT_CALL_HEADER " " STRING "Header pml includes to be direct called." 1 1)
+
+  OMPI_DEF_CACHE(OMPI_MPI_CONTRIBS none STRING "List of contributed package names that will be built." 1 1)
 
   CHECK_C_INLINE()
 
@@ -766,8 +774,14 @@ IF(HAVE_LONG_LONG)
 ENDIF(HAVE_LONG_LONG)
 
 IF(HAVE_PTRDIFF_T)
-  OMPI_DEF(OPAL_PTRDIFF_TYPE "ptrdiff_t" "Type to use for ptrdiff_t." 0 0)
+  SET(PTRDIFF_T "ptrdiff_t")
+ELSEIF(SIZEOF_VOID_P EQUAL SIZEOF_LONG)
+  SET(PTRDIFF_T "long")
+ELSEIF(HAVE_LONG_LONG AND SIZEOF_VOID_P EQUAL SIZEOF_LONG_LONG)
+  SET(PTRDIFF_T "long long")
 ENDIF(HAVE_PTRDIFF_T)
+
+OMPI_DEF(OPAL_PTRDIFF_TYPE ${PTRDIFF_T} "Type to use for ptrdiff_t." 0 0)
 
 #The same logic as in opal_stdint.h
 #8-bit
@@ -875,6 +889,65 @@ ELSE(SIZEOF_INT EQUAL 8)
 ENDIF(SIZEOF_INT EQUAL 8)
 
 
+#
+# Test to determine type of MPI_Offset. This is searched in the following order
+# int64_t, long long, long, int. If none of these are 8 bytes, then we should
+# search for int32_t, long long, long, int.
+#
+SET(MPI_OFFSET_TYPE "not found")
+SET(MPI_OFFSET_DATATYPE "not found")
+
+MESSAGE(STATUS "checking for type of MPI_Offset...")
+IF(HAVE_LONG_LONG AND SIZEOF_LONG_LONG EQUAL 8)
+    SET(MPI_OFFSET_TYPE "long long")
+    SET(MPI_OFFSET_DATATYPE MPI_LONG_LONG)
+    SET(MPI_OFFSET_SIZE 8)
+ELSEIF(HAVE_LONG AND SIZEOF_LONG EQUAL 8)
+    SET(MPI_OFFSET_TYPE "long")
+    SET(MPI_OFFSET_DATATYPE MPI_LONG)
+    SET(MPI_OFFSET_SIZE 8)
+ELSEIF(SIZEOF_INT EQUAL 8)
+    SET(MPI_OFFSET_TYPE "int")
+    SET(MPI_OFFSET_DATATYPE MPI_INT)
+    SET(MPI_OFFSET_SIZE 8)
+ELSEIF(HAVE_LONG_LONG AND SIZEOF_LONG_LONG EQUAL 4)
+    SET(MPI_OFFSET_TYPE "long long")
+    SET(MPI_OFFSET_DATATYPE MPI_LONG_LONG)
+    SET(MPI_OFFSET_SIZE 4)
+ELSEIF(HAVE_TYPE_LONG AND SIZEOF_LONG EQUAL 4)
+    SET(MPI_OFFSET_TYPE "long")
+    SET(MPI_OFFSET_DATATYPE MPI_LONG)
+    SET(MPI_OFFSET_SIZE 4)
+ELSEIF(SIZEOF_INT EQUAL 4)
+    SET(MPI_OFFSET_TYPE "int")
+    SET(MPI_OFFSET_DATATYPE MPI_INT)
+    SET(MPI_OFFSET_SIZE 4)
+ENDIF(HAVE_LONG_LONG AND SIZEOF_LONG_LONG EQUAL 8)
+
+IF(${MPI_OFFSET_TYPE} STREQUAL "not found")
+  MESSAGE(FATAL_ERROR "*** Unable to find the right definition for MPI_Offset. Cannot continue.")
+ENDIF(${MPI_OFFSET_TYPE} STREQUAL "not found")
+
+MESSAGE(STATUS "checking for type of MPI_Offset...${MPI_OFFSET_TYPE}")
+
+
+MESSAGE(STATUS "checking for an MPI datatype for MPI_Offset...")
+IF(${MPI_OFFSET_DATATYPE} STREQUAL "not found")
+    MESSAGE(FATAL_ERROR "*** Unable to find an MPI datatype corresponding to MPI_Offset. Cannot continue.")
+ENDIF(${MPI_OFFSET_DATATYPE} STREQUAL "not found")
+MESSAGE(STATUS "checking for an MPI datatype for MPI_Offset...${MPI_OFFSET_DATATYPE}")
+
+OMPI_DEF(OMPI_MPI_OFFSET_TYPE ${MPI_OFFSET_TYPE} "Type of MPI_Offset" 0 1)
+OMPI_DEF(OMPI_MPI_OFFSET_SIZE ${MPI_OFFSET_SIZE} "Size of MPI_Offset" 0 1)
+OMPI_DEF(OMPI_OFFSET_DATATYPE ${MPI_OFFSET_DATATYPE} "MPI datatype corresponding to MPI_Offset" 0 1)
+
+
+ENDMACRO(BEGIN_CONFIGURE)
+
+
+
+MACRO(END_CONFIGURE)
+
 IF(NOT WRITE_CONFIG_DONE)
   FILE(APPEND ${OpenMPI_BINARY_DIR}/opal/include/opal_config.h.cmake
     "#include \"opal_config_bottom.h\"\n#endif /* OPAL_CONFIG_H */\n")
@@ -882,3 +955,5 @@ IF(NOT WRITE_CONFIG_DONE)
 ENDIF(NOT WRITE_CONFIG_DONE)
 
 CONFIGURE_FILE(${OpenMPI_BINARY_DIR}/opal/include/opal_config.h.cmake ${OpenMPI_BINARY_DIR}/opal/include/opal_config.h)
+
+ENDMACRO(END_CONFIGURE)

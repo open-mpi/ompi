@@ -80,6 +80,7 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/check_mca_subdirs.cmake \
         platform/win32/CMakeModules/ompi_base_checks.cmake \
         platform/win32/CMakeModules/ompi_define.cmake \
+        platform/win32/CMakeModules/ompi_ext_config.cmake \
         platform/win32/CMakeModules/f77_check.cmake \
         platform/win32/CMakeModules/f77_check_real16_c_equiv.cmake \
         platform/win32/CMakeModules/f77_check_type.cmake \
@@ -91,6 +92,7 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/find_ccp.cmake \
         platform/win32/CMakeModules/find_flex.cmake \
         platform/win32/CMakeModules/find_libltdl.cmake \
+        platform/win32/CMakeModules/find_ofed_sdk.cmake \
         platform/win32/CMakeModules/generate_version_file.cmake \
         platform/win32/CMakeModules/get_c_alignment.cmake \
         platform/win32/CMakeModules/list_subdirs.cmake \

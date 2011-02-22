@@ -16,11 +16,13 @@ PROJECT (ORTE)
 INCLUDE(list_subdirs)
 CHECK_SUBDIRS("${PROJECT_SOURCE_DIR}" ORTE_SUBDIRS)
 
+SET(ORTE_EXCLUDE_SUBDIRS mca test tools)
 
 FOREACH(ORTE_SUBDIR ${ORTE_SUBDIRS})
 
-  IF(NOT ${ORTE_SUBDIR} STREQUAL "mca" AND NOT ${ORTE_SUBDIR} STREQUAL "tools"
-    AND NOT ${ORTE_SUBDIR} STREQUAL "test")
+  LIST(FIND ORTE_EXCLUDE_SUBDIRS ${ORTE_SUBDIR} ORTE_EXCLUDE_SUBDIR)
+
+  IF(${ORTE_EXCLUDE_SUBDIR} EQUAL -1)
       
       FILE(GLOB_RECURSE ORTE_${ORTE_SUBDIR}_FILES 
         "${ORTE_SUBDIR}/*.h" "${ORTE_SUBDIR}/*.c" "${ORTE_SUBDIR}/*.cc" "${ORTE_SUBDIR}/*.cpp")
@@ -32,10 +34,10 @@ FOREACH(ORTE_SUBDIR ${ORTE_SUBDIRS})
       
       SOURCE_GROUP("${ORTE_SUBDIR}" FILES ${ORTE_${ORTE_SUBDIR}_FILES})
       
-  ENDIF(NOT ${ORTE_SUBDIR} STREQUAL "mca" AND NOT ${ORTE_SUBDIR} STREQUAL "tools"
-    AND NOT ${ORTE_SUBDIR} STREQUAL "test")
+  ENDIF(${ORTE_EXCLUDE_SUBDIR} EQUAL -1)
 
 ENDFOREACH(ORTE_SUBDIR ${ORTE_SUBDIRS})
+
 
 #only generate if it's not a tarball
 IF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/hostfile/hostfile_lex.c)
@@ -49,14 +51,15 @@ SET (ORTE_SOURCE_FILES ${ORTE_SOURCE_FILES} ${MCA_FILES})
 
 ADD_LIBRARY (libopen-rte ${ORTE_SOURCE_FILES})
 
+ADD_DEPENDENCIES(libopen-rte libopen-pal)
 
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
   SET_TARGET_PROPERTIES(libopen-rte PROPERTIES
-    COMPILE_FLAGS "-D_USRDLL -DORTE_EXPORTS -DOPAL_IMPORTS /TP")
-  TARGET_LINK_LIBRARIES (libopen-rte libopen-pal Ws2_32.lib shlwapi.lib)
+    COMPILE_FLAGS "${OMPI_C_DEF_PRE}_USRDLL ${OMPI_C_DEF_PRE}ORTE_EXPORTS ${OMPI_C_DEF_PRE}OPAL_IMPORTS ${OMPI_CXX_LAN_FLAG}") 
+  TARGET_LINK_LIBRARIES(libopen-rte libopen-pal Ws2_32.lib shlwapi.lib) 
 ELSE (BUILD_SHARED_LIBS)
-  SET_TARGET_PROPERTIES(libopen-rte PROPERTIES COMPILE_FLAGS "-D_LIB /TP")
+  SET_TARGET_PROPERTIES(libopen-rte PROPERTIES COMPILE_FLAGS "${OMPI_C_DEF_PRE}_LIB ${OMPI_CXX_LAN_FLAG}")
 ENDIF(BUILD_SHARED_LIBS)
 
 # generate orte_config.h
@@ -74,6 +77,7 @@ INSTALL(TARGETS libopen-rte
         ARCHIVE DESTINATION lib)
 INSTALL(FILES orted/help-orted.txt runtime/help-orte-runtime.txt
   util/hostfile/help-hostfile.txt util/dash_host/help-dash-host.txt
+  # we dont build mca/odls/default, but we need the help file anyway.
   mca/odls/default/help-odls-default.txt
   DESTINATION share/openmpi)
 

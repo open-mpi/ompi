@@ -1,4 +1,4 @@
-# Copyright (c) 2008      High Performance Computing Center Stuttgart, 
+# Copyright (c) 2008-2010 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -32,10 +32,10 @@ MACRO(OMPI_F77_CHECK_TYPE TYPE HAVE_TYPE)
 
     IF(RESULT)
       SET(${HAVE_TYPE} 0 CACHE INTERNAL "have Fortran ${TYPE}")
-      MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...failed")
+      MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...no")
     ELSE(RESULT)
       SET(${HAVE_TYPE} 1 CACHE INTERNAL "have Fortran ${TYPE}")
-      MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...done")
+      MESSAGE(STATUS "Check if Fortran 77 compiler supports ${TYPE}...yes")
     ENDIF(RESULT)
 
     SET(${TYPE_NAME}_CHECK_DONE TRUE CACHE INTERNAL "${TYPE_NAME} check done")
