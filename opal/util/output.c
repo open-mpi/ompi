@@ -626,7 +626,10 @@ static int do_open(int output_id, opal_output_stream_t * lds)
             syslog_opened = true;
             info[i].ldi_syslog_priority = lds->lds_syslog_priority;
         }
+
+#if defined(HAVE_SYSLOG)
     }
+#endif
 
 #else
     info[i].ldi_syslog = false;
