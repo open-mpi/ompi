@@ -35,6 +35,7 @@
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
 #include "opal/util/opal_sos.h"
+#include "opal/include/opal_stdint.h"
 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -1201,7 +1202,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     mca_btl_openib_component_t *openib_component;
     mca_btl_openib_com_frag_t *frag;
     mca_btl_openib_reg_t *openib_reg;
-    size_t max_msg_sz;
+    uint32_t max_msg_sz;
     int rc;
     void *buffer;
 
@@ -1214,20 +1215,20 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     }
 
     /* max_msg_sz is the maximum message size of the HCA (hw limitation)
-       set the minimum between local max_msg_sz and the remote*/
-	max_msg_sz = MIN(openib_btl->ib_port_attr.max_msg_sz,
+       set the minimum between local max_msg_sz and the remote */
+    max_msg_sz = MIN(openib_btl->ib_port_attr.max_msg_sz,
                      endpoint->endpoint_btl->ib_port_attr.max_msg_sz);
 
     /* check if user has explicitly limited the max message size */
     if (openib_component->max_hw_msg_size > 0 &&
-            max_msg_sz > (uint32_t)openib_component->max_hw_msg_size) {
+            max_msg_sz > openib_component->max_hw_msg_size) {
         max_msg_sz = openib_component->max_hw_msg_size;
     }
 
-    /* limit the message so to max_msg_sz*/
-    if (*size > max_msg_sz) {
-        *size = max_msg_sz;
-        BTL_VERBOSE(("message size limited to %u", (uint32_t)*size));
+    /* limit the message so to max_msg_sz */
+    if (*size > (size_t)max_msg_sz) {
+        *size = (size_t)max_msg_sz;
+        BTL_VERBOSE(("message size limited to %" PRIsize_t "\n", *size));
     }
 
     opal_convertor_get_current_pointer(convertor, &buffer);
