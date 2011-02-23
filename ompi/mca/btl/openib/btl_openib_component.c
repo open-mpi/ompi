@@ -2494,7 +2494,7 @@ btl_openib_component_init(int *num_btl_modules,
             if (value & MCA_BTL_FLAGS_GET) {
                 /* Until GET flow is fixed - we do not support GET
                    in openib btl. */
-				BTL_ERROR(("openib btl does not support GET flag"));
+                BTL_ERROR(("openib btl does not support GET flag"));
             }
         }
     }
@@ -2770,9 +2770,9 @@ btl_openib_component_init(int *num_btl_modules,
         }
 
         if (mca_btl_openib_component.max_hw_msg_size > 0 &&
-            (uint32_t)mca_btl_openib_component.max_hw_msg_size > openib_btl->ib_port_attr.max_msg_sz) {
-			BTL_ERROR(("max_hw_msg_size (%d) is larger than hw max message size (%d)",
-                        mca_btl_openib_component.max_hw_msg_size, openib_btl->ib_port_attr.max_msg_sz));
+            mca_btl_openib_component.max_hw_msg_size > openib_btl->ib_port_attr.max_msg_sz) {
+            BTL_ERROR(("max_hw_msg_size (%" PRIu32 ") is larger than hw max message size (%" PRIu32 ")",
+                mca_btl_openib_component.max_hw_msg_size, openib_btl->ib_port_attr.max_msg_sz));
         }
 
         mca_btl_openib_component.openib_btls[i] = openib_btl;
