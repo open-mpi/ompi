@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -111,9 +112,6 @@ int orte_plm_poe_component_open(void)
     mca_base_param_reg_int(c, "debug",
                            "Whether or not to enable debugging output for the poe plm component (0 or 1)",
                            false, false, 0, &mca_plm_poe_component.debug);
-    mca_base_param_reg_int(c, "verbose",
-                           "Verbose level",
-                           true, false, 0, &mca_plm_poe_component.verbose);
     mca_base_param_reg_int(c, "priority",
                            "Priority of the poe plm component",
                            false , false, 100, &mca_plm_poe_component.priority);

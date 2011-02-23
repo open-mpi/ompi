@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -190,7 +191,12 @@ static int spawn(orte_job_t *jdata)
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
                 continue;
             }
-            fprintf(hfp,"%s\n",node->name);
+            for (j=0; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                fprintf(hfp,"%s\n",node->name);
+            }
         }
         fclose(hfp);
     }
@@ -220,14 +226,14 @@ static int spawn(orte_job_t *jdata)
                 /* vpids were assigned byslot */
                 fprintf(cfp, " OMPI_MCA_mapping=byslot");
             }
-            fprintf(cfp, " OMPI_MCA_orte_rank=%d", (int)proc->name.vpid);
-            fprintf(cfp, " OMPI_MCA_orte_num_procs=%d", (int)jdata->num_procs);
+            fprintf(cfp, " OMPI_MCA_orte_rank=%u", proc->name.vpid);
+            fprintf(cfp, " OMPI_MCA_orte_num_procs=%u", jdata->num_procs);
             fprintf(cfp, " OMPI_MCA_orte_nodes=%s", nodelist);
             fprintf(cfp, " OMPI_MCA_orte_ppn=%s", ppnlist);
-            fprintf(cfp, " OMPI_MCA_orte_app_num=%d", (int)proc->app_idx);
-            for (k=0; NULL != orte_launch_environ[k]; k++) {
+            fprintf(cfp, " OMPI_MCA_orte_app_num=%u", proc->app_idx);
+            /*for (k=0; NULL != orte_launch_environ[k]; k++) {
                 fprintf(cfp, " %s", orte_launch_environ[k]);
-            }
+            }*/
             fprintf(cfp, " %s", app->app);
             for (k=1; NULL != app->argv[k]; k++) {
                 fprintf(cfp, " %s", app->argv[k]);
@@ -263,14 +269,12 @@ static int spawn(orte_job_t *jdata)
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
     rc=poe_argv_append_int(&argv, mca_plm_poe_component.mp_retry, 0, "-retry");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-    rc=poe_argv_append_int(&argv, mca_plm_poe_component.mp_retrycount, 0, "-retrycount");
-    if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
     rc=poe_argv_append_int(&argv, mca_plm_poe_component.mp_infolevel, 0, "-infolevel");
     if(ORTE_SUCCESS!=rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
-    if(mca_plm_poe_component.verbose>10) {
-        opal_output(0, "POE cmdline %s\n", opal_argv_join(argv, ' '));
-    }
+    opal_output_verbose(10, orte_plm_globals.output,
+                        "%s plm:poe: POE cmdline: %s\n",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), opal_argv_join(argv, ' '));
 
     /* Start job with POE */
 
