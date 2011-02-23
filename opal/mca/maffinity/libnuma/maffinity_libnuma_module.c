@@ -69,7 +69,7 @@ int opal_maffinity_libnuma_component_query(mca_base_module_t **module, int *prio
 
 static int libnuma_module_init(void)
 {
-    nodemask_t mask;
+    struct bitmask * mask;
 
     /* If we have a strict policy set, then bind all memory to this
        numa node.  Note that maffinity won't be invoked unless the
@@ -78,7 +78,7 @@ static int libnuma_module_init(void)
        numa_get_run_node_mask(). */
     if (MPOL_BIND == mca_maffinity_libnuma_component.libnuma_policy) {
         mask = numa_get_run_node_mask();
-        numa_set_membind(&mask);
+        numa_set_membind(mask);
     }
 
     /* We want libnuma to fail to alloc if it can't allocate on the
