@@ -867,7 +867,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
                 ompi_cv_asm_arch="AMD64"
             fi
             OPAL_ASM_SUPPORT_64BIT=1
-            OMPI_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone)'
+            OMPI_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
             ;;
 
         ia64-*)
