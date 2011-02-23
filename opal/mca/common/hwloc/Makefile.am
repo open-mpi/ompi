@@ -38,8 +38,8 @@ sources = common_hwloc.c
 
 lib_LTLIBRARIES =
 noinst_LTLIBRARIES =
-comp_inst = libmca_opal_common_hwloc.la
-comp_noinst = libmca_opal_common_hwloc_noinst.la
+comp_inst = libmca_common_hwloc.la
+comp_noinst = libmca_common_hwloc_noinst.la
 
 if MCA_BUILD_opal_common_hwloc_DSO
 lib_LTLIBRARIES += $(comp_inst)
@@ -47,15 +47,15 @@ else
 noinst_LTLIBRARIES += $(comp_noinst)
 endif
 
-libmca_opal_common_hwloc_la_SOURCES = $(headers) $(sources)
-libmca_opal_common_hwloc_la_LDFLAGS = \
+libmca_common_hwloc_la_SOURCES = $(headers) $(sources)
+libmca_common_hwloc_la_LDFLAGS = \
     -version-info $(libmca_opal_common_hwloc_so_version) \
     $(opal_common_hwloc_LDFLAGS)
-libmca_opal_common_hwloc_la_LIBADD = $(opal_common_hwloc_LIBS)
+libmca_common_hwloc_la_LIBADD = $(opal_common_hwloc_LIBS)
 
-libmca_opal_common_hwloc_noinst_la_SOURCES = $(headers) $(sources)
-libmca_opal_common_hwloc_noinst_la_LDFLAGS = $(opal_common_hwloc_LDFLAGS)
-libmca_opal_common_hwloc_noinst_la_LIBADD = $(opal_common_hwloc_LIBS)
+libmca_common_hwloc_noinst_la_SOURCES = $(headers) $(sources)
+libmca_common_hwloc_noinst_la_LDFLAGS = $(opal_common_hwloc_LDFLAGS)
+libmca_common_hwloc_noinst_la_LIBADD = $(opal_common_hwloc_LIBS)
 
 # Conditionally install the header files
 

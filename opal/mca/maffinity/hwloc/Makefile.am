@@ -48,11 +48,8 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_maffinity_hwloc_la_SOURCES = $(sources)
 mca_maffinity_hwloc_la_LDFLAGS = -module -avoid-version
 mca_maffinity_hwloc_la_LIBADD = \
-    $(top_builddir)/opal/mca/common/hwloc/libmca_opal_common_hwloc.la
+    $(top_builddir)/opal/mca/common/hwloc/libmca_common_hwloc.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_maffinity_hwloc_la_SOURCES =$(sources)
 libmca_maffinity_hwloc_la_LDFLAGS = -module -avoid-version
-libmca_maffinity_hwloc_la_LIBADD = \
-    $(top_builddir)/opal/mca/common/hwloc/libmca_opal_common_hwloc.la
-
