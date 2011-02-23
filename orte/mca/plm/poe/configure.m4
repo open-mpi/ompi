@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010      IBM Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,18 +25,22 @@
 AC_DEFUN([MCA_orte_plm_poe_CONFIG],[
     AC_CONFIG_FILES([orte/mca/plm/poe/Makefile])
 
-    # POE is only supported on AIX.  We only need executables (no
+    # POE is only supported on AIX and Linux.  We only need executables (no
     # header files or libraries), but those can be found (or not) at
-    # run-time.  So if we're on AIX, build this component.
-    AC_MSG_CHECKING([if on AIX])
+    # run-time.  So if we're on AIX or Linux, and can find the poe executable
+    # build this component.
     case $host_os in
-    aix3* | aix4* | aix5*)
-        happy=yes
+    aix* | linux* )
+        AC_CHECK_PROG(POE,poe,poe,no)
+        if test "$POE" = no ; then
+            happy=no	
+        else
+            happy=yes
+        fi
         ;;
     *)
         happy=no
         ;;
     esac
-    AC_MSG_RESULT([$happy])
     AS_IF([test "$happy" = "yes"], [$1], [$2])
 ])

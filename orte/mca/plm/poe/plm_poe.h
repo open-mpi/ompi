@@ -41,7 +41,6 @@ struct orte_plm_poe_component_t {
     orte_plm_base_component_t super;
     orte_jobid_t jobid;
     int priority;
-    int verbose;
     char* path;
     char* env;
     char** argv;
