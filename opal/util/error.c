@@ -51,7 +51,7 @@ converter_info_t converters[MAX_CONVERTERS];
 static int
 opal_strerror_int(int errnum, const char **str)
 {
-    int i, ret;
+    int i, ret = OPAL_SUCCESS;
     *str = NULL;
 
     for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
