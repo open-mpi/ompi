@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -608,6 +608,22 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
     union ibv_gid gid;
     uint64_t subnet_id;
 
+    /* Ensure that the requested GID index (via the
+       btl_openib_gid_index MCA param) is within the GID table
+       size. */
+    if (mca_btl_openib_component.gid_index >
+        ib_port_attr->gid_tbl_len) {
+        orte_show_help("help-mpi-btl-openib.txt", "gid index too large",
+                       true, orte_process_info.nodename,
+                       ibv_get_device_name(device->ib_dev), port_num,
+                       mca_btl_openib_component.gid_index,
+                       ib_port_attr->gid_tbl_len);
+        return OMPI_ERR_NOT_FOUND;
+    }
+    BTL_VERBOSE(("looking for %s:%d GID index %d",
+                 ibv_get_device_name(device->ib_dev), port_num,
+                 mca_btl_openib_component.gid_index));
+
     /* If we have struct ibv_device.transport_type, then we're >= OFED
        v1.2, and the transport could be iWarp or IB.  If we don't have
        that member, then we're < OFED v1.2, and it can only be IB. */
@@ -617,9 +633,11 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         BTL_VERBOSE(("my iWARP subnet_id is %016" PRIx64, subnet_id));
     } else {
         memset(&gid, 0, sizeof(gid));
-        if (0 != ibv_query_gid(device->ib_dev_context, port_num, 0, &gid)) {
-            BTL_ERROR(("ibv_query_gid failed (%s:%d)\n",
-                       ibv_get_device_name(device->ib_dev), port_num));
+        if (0 != ibv_query_gid(device->ib_dev_context, port_num, 
+                               mca_btl_openib_component.gid_index, &gid)) {
+            BTL_ERROR(("ibv_query_gid failed (%s:%d, %d)\n",
+                       ibv_get_device_name(device->ib_dev), port_num,
+                       mca_btl_openib_component.gid_index));
             return OMPI_ERR_NOT_FOUND;
         }
 
@@ -638,9 +656,11 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
                      ibv_get_device_name(device->ib_dev), port_num, subnet_id));
     }
 #else
-    if (0 != ibv_query_gid(device->ib_dev_context, port_num, 0, &gid)) {
-        BTL_ERROR(("ibv_query_gid failed (%s:%d)\n",
-                   ibv_get_device_name(device->ib_dev), port_num));
+    if (0 != ibv_query_gid(device->ib_dev_context, port_num, 
+                           mca_btl_openib_component.gid_index, &gid)) {
+        BTL_ERROR(("ibv_query_gid failed (%s:%d, %d)\n",
+                   ibv_get_device_name(device->ib_dev), port_num,
+                   mca_btl_openib_component.gid_index));
         return OMPI_ERR_NOT_FOUND;
     }
     subnet_id = ntoh64(gid.global.subnet_prefix);
