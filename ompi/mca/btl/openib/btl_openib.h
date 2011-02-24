@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -287,6 +287,8 @@ struct mca_btl_openib_component_t {
     ompi_free_list_t send_free_coalesced;
     /** Default receive queues */
     char* default_recv_qps;
+    /** GID index to use */
+    int gid_index;
     /** Whether we want a dynamically resizing srq, enabled by default */
     bool enable_srq_resize;
 #if BTL_OPENIB_FAILOVER_ENABLED

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007-2009 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
@@ -660,3 +660,18 @@ Such mixed network trasport configuration is not supported by Open MPI.
   Remote host:           %s
   Remote Adapter:        (vendor 0x%x, part ID %d)
   Remote transport type: %s
+#
+[gid index too large]
+Open MPI tried to use a GID index that was too large for an
+OpenFabrics device (i.e., the GID index does not exist on this
+device).
+
+  Local host:              %s
+  Local adapter:           %s
+  Local port:              %d
+
+  Requested GID index:     %d (specified by the btl_openib_gid_index MCA param)
+  Max allowable GID index: %d
+
+Use "ibv_devinfo -v" on the local host to see the GID table of this
+device.

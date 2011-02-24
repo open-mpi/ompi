@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -602,6 +602,11 @@ int btl_openib_register_mca_params(void)
                      "Comma-delimited list of IP Addresses to be excluded (e.g. \"192.168.1.0/24\").  Mutually exclusive with btl_openib_ipaddr_include.",
                      NULL, &mca_btl_openib_component.ipaddr_exclude,
                      0));
+
+    CHECK(reg_int("gid_index", NULL,
+                  "GID index to use on verbs device ports",
+                  0, &mca_btl_openib_component.gid_index,
+                  REGINT_GE_ZERO));
 
     /* Register any MCA params for the connect pseudo-components */
     if (OMPI_SUCCESS == ret) {
