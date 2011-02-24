@@ -31,7 +31,7 @@
  * they dont provide atomic additions and/or substractions then we can
  * define these operations using the atomic compare_and_set.
  *
- * Some architectures does not provide support for the 64 bits
+ * Some architectures do not provide support for the 64 bits
  * atomic operations. Until we find a better solution let's just
  * undefine all those functions if there is no 64 bit cmpset
  *
@@ -50,7 +50,7 @@ opal_atomic_add_32(volatile int32_t *addr, int delta)
    } while (0 == opal_atomic_cmpset_32(addr, oldval, oldval + delta));
    return (oldval + delta);
 }
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* OPAL_HAVE_ATOMIC_ADD_32 */
 
 
 #if !defined(OPAL_HAVE_ATOMIC_SUB_32)
@@ -242,17 +242,17 @@ static inline void
 opal_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
 {
    switch( length ) {
-#if OPAL_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_ATOMIC_ADD_32
    case 4:
       opal_atomic_add_32( (volatile int32_t*)addr, (int32_t)value );
       break;
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
 
-#if OPAL_HAVE_ATOMIC_CMPSET_64
+#if OPAL_HAVE_ATOMIC_ADD_64
    case 8:
       opal_atomic_add_64( (volatile int64_t*)addr, (int64_t)value );
       break;
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* OPAL_HAVE_ATOMIC_ADD_64 */
    default:
        /* This should never happen, so deliberately abort (hopefully
           leaving a coreful for analysis) */
@@ -265,17 +265,17 @@ static inline void
 opal_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
 {
    switch( length ) {
-#if OPAL_HAVE_ATOMIC_CMPSET_32
+#if OPAL_HAVE_ATOMIC_SUB_32
    case 4:
       opal_atomic_sub_32( (volatile int32_t*)addr, (int32_t)value );
       break;
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_32 */
+#endif  /* OPAL_HAVE_ATOMIC_SUB_32 */
 
-#if OPAL_HAVE_ATOMIC_CMPSET_64 
+#if OPAL_HAVE_ATOMIC_SUB_64
    case 8:
       opal_atomic_sub_64( (volatile int64_t*)addr, (int64_t)value );
       break;
-#endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
+#endif  /* OPAL_HAVE_ATOMIC_SUB_64 */
    default:
        /* This should never happen, so deliberately abort (hopefully
           leaving a coreful for analysis) */
@@ -283,13 +283,13 @@ opal_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
    }
 }
 
-#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_ADD_32
 static inline int32_t opal_atomic_add_ptr( volatile void* addr, 
                                            void* delta )
 {
     return opal_atomic_add_32((int32_t*) addr, (unsigned long) delta);
 }
-#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_ADD_64
 static inline int64_t opal_atomic_add_ptr( volatile void* addr, 
                                            void* delta )
 {
@@ -304,13 +304,13 @@ static inline int32_t opal_atomic_add_ptr( volatile void* addr,
 }
 #endif
 
-#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_SUB_32
 static inline int32_t opal_atomic_sub_ptr( volatile void* addr, 
                                            void* delta )
 {
     return opal_atomic_sub_32((int32_t*) addr, (unsigned long) delta);
 }
-#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SUB_32
 static inline int64_t opal_atomic_sub_ptr( volatile void* addr, 
                                            void* delta )
 {
@@ -348,7 +348,7 @@ static inline int
 opal_atomic_trylock(opal_atomic_lock_t *lock)
 {
    return opal_atomic_cmpset_acq_32( &(lock->u.lock),
-                                  OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED);
+                                     OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED);
 }
 
 
@@ -356,7 +356,7 @@ static inline void
 opal_atomic_lock(opal_atomic_lock_t *lock)
 {
    while( !opal_atomic_cmpset_acq_32( &(lock->u.lock),
-                                  OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED) ) {
+                                      OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED) ) {
       while (lock->u.lock == OPAL_ATOMIC_LOCKED) {
          /* spin */ ;
       }
