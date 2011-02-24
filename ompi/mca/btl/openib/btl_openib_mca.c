@@ -516,7 +516,7 @@ int btl_openib_register_mca_params(void)
 
     CHECK(reg_int("max_hw_msg_size", NULL,
                   "Maximum size (in bytes) of a single fragment of a long message when using the RDMA protocols (must be > 0 and <= hw capabilities).",
-                  0, &ival, REGINT_NEG_ONE_OK|REGINT_GE_ZERO));
+                  0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.max_hw_msg_size = (uint32_t)ival;
 
     /* Info only */
