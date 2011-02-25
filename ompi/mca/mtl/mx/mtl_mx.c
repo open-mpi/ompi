@@ -113,7 +113,7 @@ int ompi_mtl_mx_module_init(){
     }
     opal_output_verbose(10, ompi_mtl_base_output, 
 			"mtl:mx: local nic %d, endpoint %d, got nic %d, ep %d\n", nic, ep, 
-			ompi_mtl_mx.mx_addr.nic_id,
+            (int)ompi_mtl_mx.mx_addr.nic_id,
 			ompi_mtl_mx.mx_addr.endpoint_id);
 
     ompi_modex_send( &mca_mtl_mx_component.super.mtl_version, 
