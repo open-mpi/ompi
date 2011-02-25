@@ -83,7 +83,7 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
                                           void* rbuf, int rcount,
                                           struct ompi_datatype_t *rdtype,
                                           struct ompi_communicator_t *comm,
-					  mca_coll_base_module_t *module)
+                                          mca_coll_base_module_t *module)
 {
    int line = -1;
    int rank, size;
@@ -158,7 +158,7 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
 
    /* Finalization step:
       On all nodes except 0, data needs to be shifted locally:
-      - create temprary shift buffer, 
+      - create temporary shift buffer, 
       see discussion in coll_basic_reduce.c about the size and begining 
       of temporary buffer.
       - copy blocks [0 .. (size - rank - 1)] in rbuf to shift buffer
