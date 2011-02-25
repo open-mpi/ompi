@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -64,9 +64,6 @@ struct mca_btl_openib_proc_t {
 
     /** pointer to corresponding ompi_proc_t */
     ompi_proc_t *proc_ompi;
-
-    /** globally unique identifier for the process */
-    orte_process_name_t proc_guid;
 
     /** modex messages from this proc; one for each port in the peer */
     mca_btl_openib_proc_modex_t *proc_ports;

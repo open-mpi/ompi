@@ -2,6 +2,9 @@
  * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -351,7 +354,7 @@ static int xoob_send_connect_data(mca_btl_base_endpoint_t* endpoint,
     }
 
     /* send to remote endpoint */
-    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid,
+    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_ompi->proc_name,
             buffer, OMPI_RML_TAG_XOPENIB, 0,
             xoob_rml_send_cb, NULL);
     if (ORTE_SUCCESS != rc) {
@@ -667,7 +670,7 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
             opal_list_get_end(&mca_btl_openib_component.ib_procs);
             ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
         if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                    &ib_proc->proc_guid, process_name) == OPAL_EQUAL) {
+                    &ib_proc->proc_ompi->proc_name, process_name) == OPAL_EQUAL) {
             found = true;
             break;
         }

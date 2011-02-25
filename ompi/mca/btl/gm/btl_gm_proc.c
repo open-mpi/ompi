@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -119,7 +119,6 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
     gm_proc = OBJ_NEW(mca_btl_gm_proc_t);
     gm_proc->proc_endpoint_count = 0;
     gm_proc->proc_ompi = ompi_proc;
-    gm_proc->proc_guid = ompi_proc->proc_name;
 
     /* query for the peer address info */
     rc = ompi_modex_recv(

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -67,7 +67,7 @@ void mca_btl_sctp_proc_destruct(mca_btl_sctp_proc_t* stcp_proc)
     /* remove from list of all proc instances */
     OPAL_THREAD_LOCK(&mca_btl_sctp_component.sctp_lock);
     opal_hash_table_remove_value_uint64(&mca_btl_sctp_component.sctp_procs, 
-                                        orte_util_hash_name(&stcp_proc->proc_name));
+                                        orte_util_hash_name(&stcp_proc->proc_ompi->proc_name));
     OPAL_THREAD_UNLOCK(&mca_btl_sctp_component.sctp_lock);
 
     /* release resources */
@@ -128,7 +128,6 @@ mca_btl_sctp_proc_t* mca_btl_sctp_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
     btl_proc->proc_ompi = ompi_proc;
-    btl_proc->proc_name = ompi_proc->proc_name;
 
     /* add to hash table of all proc instance */
     opal_hash_table_set_value_uint64(&mca_btl_sctp_component.sctp_procs,
