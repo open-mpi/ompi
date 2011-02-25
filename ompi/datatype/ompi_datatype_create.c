@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -28,7 +28,6 @@
 #include "opal/class/opal_pointer_array.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/attribute/attribute.h"
-
 
 static void __ompi_datatype_allocate( ompi_datatype_t* datatype )
 {
@@ -70,9 +69,21 @@ ompi_datatype_t * ompi_datatype_create( int32_t expectedSize )
     int ret;
     ompi_datatype_t * datatype = (ompi_datatype_t*)OBJ_NEW(ompi_datatype_t);
 
-    ret = opal_datatype_create_desc ( &(datatype->super), expectedSize);
+    ret = opal_datatype_create_desc( &(datatype->super), expectedSize);
     if (OPAL_SUCCESS != ret)
         return NULL;
 
     return datatype;
+}
+
+int32_t ompi_datatype_destroy( ompi_datatype_t** type)
+{
+    ompi_datatype_t* pData = *type;
+
+    if( ompi_datatype_is_predefined(pData) && (pData->super.super.obj_reference_count <= 1) )
+        return OMPI_ERROR;
+
+    OBJ_RELEASE(pData);
+    *type = NULL;
+    return OMPI_SUCCESS;
 }
