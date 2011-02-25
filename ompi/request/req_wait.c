@@ -211,8 +211,8 @@ finished:
 
 
 int ompi_request_default_wait_all( size_t count,
-                           ompi_request_t ** requests,
-                           ompi_status_public_t * statuses )
+                                   ompi_request_t ** requests,
+                                   ompi_status_public_t * statuses )
 {
     size_t completed = 0, i;
     ompi_request_t **rptr;
@@ -334,21 +334,21 @@ int ompi_request_default_wait_all( size_t count,
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
                 rc = ompi_status_empty.MPI_ERROR;
             } else {
-	        rc = request->req_status.MPI_ERROR;
+                rc = request->req_status.MPI_ERROR;
             }
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
             } else if (MPI_SUCCESS == rc) {
                 /* Only free the request if there is no error on it */
-	        int tmp = ompi_request_free(rptr);
+                int tmp = ompi_request_free(rptr);
                 if (OMPI_SUCCESS != tmp) {
                     mpi_error = tmp;
                 }
             }
             if( rc != OMPI_SUCCESS) {
-	        mpi_error = rc;
+                mpi_error = rc;
             }
-	}
+        }
     }
     return mpi_error;
 }
