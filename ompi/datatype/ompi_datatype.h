@@ -299,6 +299,7 @@ OMPI_DECLSPEC int32_t ompi_datatype_set_args( ompi_datatype_t* pData,
 OMPI_DECLSPEC int32_t ompi_datatype_copy_args( const ompi_datatype_t* source_data,
                                                ompi_datatype_t* dest_data );
 OMPI_DECLSPEC int32_t ompi_datatype_release_args( ompi_datatype_t* pData );
+OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_datatype_t* type );
 
 /*
  *

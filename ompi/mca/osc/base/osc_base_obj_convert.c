@@ -39,30 +39,24 @@ ompi_osc_base_get_primitive_type_info(ompi_datatype_t *datatype,
                                       ompi_datatype_t **prim_datatype, 
                                       uint32_t *prim_count)
 {
-    struct ompi_datatype_t *primitive_datatype = NULL;
-    uint32_t primitive_count;
+    ompi_datatype_t *primitive_datatype = NULL;
+    size_t datatype_size, primitive_size, primitive_count;
 
-    /* get underlying type... */
-    if (ompi_datatype_is_predefined(datatype)) {
-        primitive_datatype = datatype;
-        primitive_count = 1;
-    } else {
-        int i, found_index = -1;
-        uint32_t mask = 1;
-        for (i = 0 ; i < OMPI_DATATYPE_MAX_PREDEFINED ; ++i) {
-            if (datatype->super.bdt_used & mask) {
-                found_index = i;
-                break;
-            }
-            mask *= 2;
-        }
-        primitive_datatype = (ompi_datatype_t*)
-            ompi_datatype_basicDatatypes[found_index];
-        primitive_count = datatype->super.nbElems;
+    primitive_datatype = ompi_datatype_get_single_predefined_type_from_args(datatype);
+    if( NULL == primitive_datatype ) {
+        *prim_count = 0;
+        return OMPI_SUCCESS;
     }
+    ompi_datatype_type_size( datatype, &datatype_size );
+    ompi_datatype_type_size( primitive_datatype, &primitive_size );
+    primitive_count = datatype_size / primitive_size;
+#if OPAL_ENABLE_DEBUG
+    assert( 0 == (datatype_size % primitive_size) );
+#endif  /* OPAL_ENABLE_DEBUG */
 
+    /* We now have the count as a size_t, convert it to an uint32_t */
     *prim_datatype = primitive_datatype;
-    *prim_count = primitive_count;
+    *prim_count = (uint32_t)primitive_count;
 
     return OMPI_SUCCESS;
 }
@@ -198,16 +192,13 @@ ompi_osc_base_process_op(void *outbuf,
         ompi_op_reduce(op, inbuf, outbuf, count, datatype);
     } else {
         struct ompi_datatype_t *primitive_datatype = NULL;
-        uint32_t primitive_count;
         ompi_osc_base_convertor_t convertor;
         struct iovec iov;
         uint32_t iov_count = 1;
         size_t max_data;
         struct opal_convertor_master_t master = {NULL, 0, 0, 0, {0, }, NULL};
 
-        ompi_osc_base_get_primitive_type_info( datatype,
-                                               &primitive_datatype,
-                                               &primitive_count );
+        primitive_datatype = ompi_datatype_get_single_predefined_type_from_args(datatype);
 
         /* create convertor */
         OBJ_CONSTRUCT(&convertor, ompi_osc_base_convertor_t);
