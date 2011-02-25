@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2009      The University of Tennessee and The University
+ * Copyright (c) 2009-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -159,18 +159,7 @@ ompi_datatype_commit( ompi_datatype_t ** type )
 }
 
 
-static inline int32_t
-ompi_datatype_destroy( ompi_datatype_t** type)
-{
-    ompi_datatype_t* pData = *type;
-
-    if( ompi_datatype_is_predefined(pData) && (pData->super.super.obj_reference_count <= 1) )
-        return OMPI_ERROR;
-
-    OBJ_RELEASE( pData );
-    *type = NULL;
-    return OMPI_SUCCESS;
-}
+OMPI_DECLSPEC int32_t ompi_datatype_destroy( ompi_datatype_t** type);
 
 
 /*
@@ -193,7 +182,7 @@ ompi_datatype_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newTy
     if( NULL == new_ompi_datatype ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    opal_datatype_clone ( &oldType->super, &new_ompi_datatype->super);
+    opal_datatype_clone( &oldType->super, &new_ompi_datatype->super);
     /* Strip the predefined flag at the OMPI level. */
     new_ompi_datatype->super.flags &= ~OMPI_DATATYPE_FLAG_PREDEFINED;
 
