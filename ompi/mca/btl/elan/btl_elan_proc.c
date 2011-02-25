@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -104,7 +104,6 @@ mca_btl_elan_proc_t* mca_btl_elan_proc_create(ompi_proc_t* ompi_proc)
 
     /* build a unique identifier (of arbitrary
      * size) to represent the proc */
-    module_proc->proc_guid = ompi_proc->proc_name;
     rc = ompi_modex_recv( &mca_btl_elan_component.super.btl_version,
                           ompi_proc,
                           (void**)&module_proc->position_id_array,

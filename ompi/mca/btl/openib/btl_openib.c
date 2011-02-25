@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -1221,7 +1221,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     /* check if user has explicitly limited the max message size */
     if (openib_component->max_hw_msg_size > 0 &&
-            max_msg_sz > openib_component->max_hw_msg_size) {
+        max_msg_sz > (size_t)openib_component->max_hw_msg_size) {
         max_msg_sz = openib_component->max_hw_msg_size;
     }
 

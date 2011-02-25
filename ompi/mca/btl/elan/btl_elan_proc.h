@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -32,9 +32,6 @@ struct mca_btl_elan_proc_t {
     ompi_proc_t *proc_ompi;                  
     /**< pointer to corresponding ompi_proc_t */
 
-    orte_process_name_t proc_guid;           
-    /**< globally unique identifier for the process */
-	
     unsigned int 	*position_id_array;
 
     size_t proc_rail_count;                  

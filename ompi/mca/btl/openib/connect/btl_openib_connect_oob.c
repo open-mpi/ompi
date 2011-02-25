@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -746,7 +746,7 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
     }
 
     /* send to remote endpoint */
-    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, 
+    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_ompi->proc_name, 
                                  buffer, OMPI_RML_TAG_OPENIB, 0,
                                  rml_send_cb, NULL);
     if (ORTE_SUCCESS != rc) {
@@ -895,7 +895,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         bool found = false;
         
         if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                   &ib_proc->proc_guid, process_name) != OPAL_EQUAL) {
+                                   &ib_proc->proc_ompi->proc_name, process_name) != OPAL_EQUAL) {
             continue;
         }
         

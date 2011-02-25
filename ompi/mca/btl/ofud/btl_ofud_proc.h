@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -41,9 +41,6 @@ struct mca_btl_ud_proc_t {
 
     ompi_proc_t *proc_ompi;
     /**< pointer to corresponding ompi_proc_t */
-
-    orte_process_name_t proc_guid;
-    /**< globally unique identifier for the process */
 
     struct mca_btl_ud_addr_t* proc_addrs;
     size_t proc_addr_count;

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -543,7 +543,7 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
     }
 
     /* Send the buffer */
-    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buf,
+    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_ompi->proc_name, buf,
             OMPI_RML_TAG_UDAPL, 0, mca_btl_udapl_endpoint_send_cb, NULL);
     if(0 > rc) {
         ORTE_ERROR_LOG(rc);
@@ -587,7 +587,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
                 opal_list_get_end(&mca_btl_udapl_component.udapl_procs);
             proc  = (mca_btl_udapl_proc_t*)opal_list_get_next(proc)) {
 
-        if(OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc->proc_guid, endpoint)) {
+        if(OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc->proc_ompi->proc_name, endpoint)) {
             for(i = 0; i < proc->proc_endpoint_count; i++) {
                 ep = proc->proc_endpoints[i];
 
@@ -632,7 +632,7 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
     /* This right here is the whole point of using the ORTE/RML handshake */
     if((MCA_BTL_UDAPL_CONN_EAGER == endpoint->endpoint_state &&
             0 > orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                    &endpoint->endpoint_proc->proc_guid,
+                    &endpoint->endpoint_proc->proc_ompi->proc_name,
                     &ompi_proc_local()->proc_name)) ||
             (MCA_BTL_UDAPL_CLOSED != endpoint->endpoint_state &&
              MCA_BTL_UDAPL_CONN_EAGER != endpoint->endpoint_state)) {
@@ -783,7 +783,7 @@ static int mca_btl_udapl_endpoint_finish_eager(
 
     /* Only one side does dat_ep_connect() */
     if(0 < orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                &endpoint->endpoint_proc->proc_guid,
+                &endpoint->endpoint_proc->proc_ompi->proc_name,
                 &ompi_proc_local()->proc_name)) {
     
         rc = mca_btl_udapl_endpoint_create(btl, &endpoint->endpoint_max);
@@ -971,7 +971,7 @@ static int mca_btl_udapl_endpoint_pd_finish_eager(
      */
     if((BTL_UDAPL_NUM_CONNECTION != endpoint->endpoint_connections_completed)
         && (0 < orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                &endpoint->endpoint_proc->proc_guid,
+                &endpoint->endpoint_proc->proc_ompi->proc_name,
                 &ompi_proc_local()->proc_name))) {
     
         rc = mca_btl_udapl_endpoint_create(btl, &endpoint->endpoint_max);

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -368,7 +368,7 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
         int rc = OMPI_SUCCESS;
         
         /* What if there are multiple procs on this endpoint? Possible? */
-        orte_vpid_t vpid = btl_endpoint->endpoint_proc->proc_name.vpid;
+        orte_vpid_t vpid = btl_endpoint->endpoint_proc->proc_ompi->proc_name.vpid;
         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
 
         if((mca_btl_sctp_proc_check_vpid(vpid, sender_proc_table)) == INVALID_ENTRY) {
@@ -545,7 +545,7 @@ static int mca_btl_sctp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_e
 {
     /* send process identifier to remote endpoint */
     mca_btl_sctp_proc_t* btl_proc = mca_btl_sctp_proc_local();
-    orte_process_name_t guid = btl_proc->proc_name;
+    orte_process_name_t guid = btl_proc->proc_ompi->proc_name;
 
     ORTE_PROCESS_NAME_HTON(guid);
     if(mca_btl_sctp_endpoint_send_blocking(btl_endpoint, &guid, sizeof(guid)) != 
@@ -838,7 +838,7 @@ static int mca_btl_sctp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_e
     ORTE_PROCESS_NAME_NTOH(guid);
 
     /* compare this to the expected values */
-    if(memcmp(&btl_proc->proc_name, &guid, sizeof(orte_process_name_t)) != 0) {
+    if(memcmp(&btl_proc->proc_ompi->proc_name, &guid, sizeof(orte_process_name_t)) != 0) {
         BTL_ERROR(("received unexpected process identifier %s", 
                    ORTE_NAME_PRINT(&guid)));
         mca_btl_sctp_endpoint_close(btl_endpoint);
@@ -1200,7 +1200,7 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
         our_sctp_endpoint *current_our_endpoint = NULL;
         orte_vpid_t vpid;
     send_handler_1_to_many_different_endpoint: 
-        vpid = btl_endpoint->endpoint_proc->proc_name.vpid;
+        vpid = btl_endpoint->endpoint_proc->proc_ompi->proc_name.vpid;
         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
         if((mca_btl_sctp_proc_check_vpid(vpid, sender_proc_table)) == VALID_ENTRY) {                 int btl_ownership;
 
