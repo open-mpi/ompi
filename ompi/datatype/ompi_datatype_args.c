@@ -595,7 +595,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
         }
         array_of_datatype[i] =
             __ompi_datatype_create_from_packed_description( (void**)&next_buffer,
-                                                       remote_processor );
+                                                            remote_processor );
         if( NULL == array_of_datatype[i] ) {
             /* don't cleanup more than required. We can now modify these
              * values as we already know we have failed to rebuild the
@@ -624,7 +624,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
     }
 #endif
     datatype = __ompi_datatype_create_from_args( array_of_length, array_of_disp,
-                                            array_of_datatype, create_type );
+                                                 array_of_datatype, create_type );
     *packed_buffer = next_buffer;
  cleanup_and_exit:
     for( i = 0; i < number_of_datatype; i++ ) {
@@ -636,7 +636,6 @@ static ompi_datatype_t* __ompi_datatype_create_from_packed_description( void** p
     return datatype;
 }
 
-
 static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* a,
                                                           ompi_datatype_t** d, int32_t type )
 {
@@ -645,37 +644,64 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     switch(type){
         /******************************************************************/
     case MPI_COMBINER_DUP:
+        /* should we duplicate d[0]? */
+        /* ompi_datatype_set_args( datatype, 0, NULL, 0, NULL, 1, d[0], MPI_COMBINER_DUP ); */
         break;
         /******************************************************************/
     case MPI_COMBINER_CONTIGUOUS:
         ompi_datatype_create_contiguous( i[0], d[0], &datatype );
+        ompi_datatype_set_args( datatype, 1, &i, 0, NULL, 1, d, MPI_COMBINER_CONTIGUOUS );
         break;
         /******************************************************************/
     case MPI_COMBINER_VECTOR:
         ompi_datatype_create_vector( i[0], i[1], i[2], d[0], &datatype );
+        {
+            int* a_i[3]; a_i[0] = &i[0]; a_i[1] = &i[1]; a_i[2] = &i[2];
+            ompi_datatype_set_args( datatype, 3, a_i, 0, NULL, 1, d, MPI_COMBINER_VECTOR );
+        }
         break;
         /******************************************************************/
     case MPI_COMBINER_HVECTOR_INTEGER:
     case MPI_COMBINER_HVECTOR:
         ompi_datatype_create_hvector( i[0], i[1], a[0], d[0], &datatype );
+        {
+            int* a_i[2]; a_i[0] = &i[0]; a_i[1] = &i[1];
+            ompi_datatype_set_args( datatype, 2, a_i, 1, a, 1, d, MPI_COMBINER_HVECTOR );
+        }
         break;
         /******************************************************************/
     case MPI_COMBINER_INDEXED:  /* TO CHECK */
         ompi_datatype_create_indexed( i[0], &(i[1]), &(i[1+i[0]]), d[0], &datatype );
+        {
+            int* a_i[3]; a_i[0] = &i[0]; a_i[1] = &i[1]; a_i[2] = &(i[1+i[0]]);
+            ompi_datatype_set_args( datatype, 2 * i[0] + 1, a_i, 0, NULL, 1, d, MPI_COMBINER_INDEXED );
+        }
         break;
         /******************************************************************/
     case MPI_COMBINER_HINDEXED_INTEGER:
     case MPI_COMBINER_HINDEXED:
         ompi_datatype_create_hindexed( i[0], &(i[1]), a, d[0], &datatype );
+        {
+            int* a_i[2]; a_i[0] = &i[0]; a_i[1] = &i[1];
+            ompi_datatype_set_args( datatype, i[0] + 1, a_i, i[0], a, 1, d, MPI_COMBINER_HINDEXED );
+        }
         break;
         /******************************************************************/
     case MPI_COMBINER_INDEXED_BLOCK:
         ompi_datatype_create_indexed_block( i[0], i[1], &(i[2]), d[0], &datatype );
+        {
+            int* a_i[3]; a_i[0] = &i[0]; a_i[1] = &i[1]; a_i[2] = &i[2];
+            ompi_datatype_set_args( datatype, 2 * i[0], a_i, 0, NULL, 1, d, MPI_COMBINER_INDEXED_BLOCK );
+        }
         break;
         /******************************************************************/
     case MPI_COMBINER_STRUCT_INTEGER:
     case MPI_COMBINER_STRUCT:
         ompi_datatype_create_struct( i[0], &(i[1]), a, d, &datatype );
+        {
+            int* a_i[2]; a_i[0] = &i[0]; a_i[1] = &i[1];
+            ompi_datatype_set_args( datatype, i[0] + 1, a_i, i[0], a, i[0], d, MPI_COMBINER_STRUCT );
+        }
         break;
         /******************************************************************/
     case MPI_COMBINER_SUBARRAY:
@@ -689,6 +715,12 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
           pos += pArgs->i[0];
           pArgs->i[pos] = i[4][0];
         */
+#if 0
+        {
+            int* a_i[5]; a_i[0] = &i[0]; a_i[1] = &i[1 + 0 * i[0]]; a_i[2] = &i[1 + 1 * i[0]];  a_i[3] = &i[1 + 2 * i[0]];
+            ompi_datatype_set_args( datatype, 3 * i[0] + 2, a_i, 0, NULL, 1, d, MPI_COMBINER_SUBARRAY);
+        }
+#endif
         break;
         /******************************************************************/
     case MPI_COMBINER_DARRAY:
@@ -707,6 +739,14 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
           pos += i[2][0];
           pArgs->i[pos] = i[7][0];
         */
+#if 0
+        {
+            int* a_i[8]; a_i[0] = &i[0]; a_i[1] = &i[1]; a_i[2] = &i[2];
+            a_i[3] = &i[1 + 0 * i[0]]; a_i[4] = &i[1 + 1 * i[0]];  a_i[5] = &i[1 + 2 * i[0]];
+            a_i[6] = &i[1 + 3 * i[0]]; a_i[7] = &i[1 + 4 * i[0]];
+            ompi_datatype_set_args( datatype, 4 * i[0] + 4,a_i, 0, NULL, 1, d, MPI_COMBINER_DARRAY);
+        }
+#endif
         break;
         /******************************************************************/
     case MPI_COMBINER_F90_REAL:
@@ -721,6 +761,7 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         break;
         /******************************************************************/
     case MPI_COMBINER_RESIZED:
+        /*ompi_datatype_set_args( datatype, 0, NULL, 2, a, 1, d, MPI_COMBINER_RESIZED );*/
         break;
         /******************************************************************/
     default:
@@ -730,14 +771,13 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
     return datatype;
 }
 
-
 ompi_datatype_t* ompi_datatype_create_from_packed_description( void** packed_buffer,
                                                                struct ompi_proc_t* remote_processor )
 {
     ompi_datatype_t* datatype;
 
     datatype = __ompi_datatype_create_from_packed_description( packed_buffer,
-                                                          remote_processor );
+                                                               remote_processor );
     /* Keep the pointer aligned to MPI_Aint */
     OMPI_DATATYPE_ALIGN_PTR(*packed_buffer, void*);
     if( NULL == datatype ) {
@@ -745,4 +785,44 @@ ompi_datatype_t* ompi_datatype_create_from_packed_description( void** packed_buf
     }
     ompi_datatype_commit( &datatype );
     return datatype;
+}
+
+/**
+ * Parse the datatype description from the args and find if the
+ * datatype is created from a single predefined type. If yes,
+ * return the type, otherwise return NULL.
+ */
+ompi_datatype_t* ompi_datatype_get_single_predefined_type_from_args( ompi_datatype_t* type )
+{
+    ompi_datatype_t *predef = NULL, *current_type, *current_predef;
+    ompi_datatype_args_t* args = (ompi_datatype_args_t*)type->args;
+    int i;
+    
+    if( ompi_datatype_is_predefined(type) )
+        return type;
+
+    for( i = 0; i < args->cd; i++ ) {
+        current_type = args->d[i];
+        if( ompi_datatype_is_predefined(current_type) ) {
+            current_predef = current_type;
+        } else {
+            current_predef = ompi_datatype_get_single_predefined_type_from_args(current_type);
+            if( NULL == current_predef ) { /* No single predefined datatype */
+                return NULL;
+            }
+        }
+        if( NULL == predef ) {  /* This is the first iteration */
+            predef = current_predef;
+        } else {
+            /**
+             *  What exactly should we consider as identical types? If they are
+             * the same MPI level type, or if they map to the same OPAL datatype?
+             * In other words, MPI_FLOAT and MPI_REAL4 are they identical?
+             */
+            if( predef != current_predef ) {
+                return NULL;
+            }
+        }
+    }
+    return predef;
 }
