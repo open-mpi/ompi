@@ -1956,8 +1956,8 @@ void mca_pml_bfo_update_eager_bml_btl_recv_ctl(mca_bml_base_btl_t** bml_btl,
     if ((*bml_btl)->btl != btl) {
         mca_pml_bfo_common_hdr_t * common = des->des_src->seg_addr.pval;
         mca_pml_bfo_ack_hdr_t* ack;  /* ACK header */
-        mca_pml_bfo_recv_request_t* recvreq;
-        char *type;
+        mca_pml_bfo_recv_request_t* recvreq = NULL;
+        char *type = NULL;
 
         switch (common->hdr_type) {
         case MCA_PML_BFO_HDR_TYPE_ACK:
