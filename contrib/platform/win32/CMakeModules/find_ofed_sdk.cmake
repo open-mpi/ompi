@@ -31,7 +31,7 @@ ELSE(NOT OMPI_WANT_OFED)
   IF(NOT EXISTS ${PROJECT_SOURCE_DIR}/mca/btl/openib/btl_openib_lex.c)
     ADD_FLEX_FILE(OPAL_SOURCE_FILES ./mca/btl/openib/btl_openib_lex.l
     btl_openib_ini_yy "${PROJECT_BINARY_DIR}/mca/btl/openib/")
-    SET(RESULT_SOURCE_FILES ${PROJECT_BINARY_DIR}/mca/btl/openib/btl_openib_lex.c)
+    SET(RESULT_APPEND_FILES ${PROJECT_BINARY_DIR}/mca/btl/openib/btl_openib_lex.c)
   ENDIF(NOT EXISTS ${PROJECT_SOURCE_DIR}/mca/btl/openib/btl_openib_lex.c)
 
   IF(NOT OFED_SDK_FOUND)
