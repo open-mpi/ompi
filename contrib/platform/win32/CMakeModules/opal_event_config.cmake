@@ -43,8 +43,8 @@ ELSE(IN_USE STREQUAL "0")
       FILE(WRITE ${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/config.h
         " /* config.h.  Generated automatically by CMake. */ ")
 
-      SET(RESULT_SOURCE_FILES
-        ${RESULT_SOURCE_FILES}
+      SET(RESULT_COMPONENT_FILES
+        ${RESULT_COMPONENT_FILES}
         ${CURRENT_PATH}/libevent207_component.c
         ${CURRENT_PATH}/libevent207_module.c
         #system sources
@@ -104,8 +104,8 @@ ELSE(IN_USE STREQUAL "0")
       )
 
     ELSE(WIN32)
-      SET(RESULT_SOURCE_FILES
-        ${RESULT_SOURCE_FILES}
+      SET(RESULT_COMPONENT_FILES
+        ${RESULT_COMPONENT_FILES}
       )
     ENDIF(WIN32)
 
