@@ -88,6 +88,10 @@ ELSE(NOT OMPI_WANT_OFED)
     SET(RESULT_INCLUDE_PATH ${OFED_SDK_INCLUDE_PATH}/..;${OpenMPI_SOURCE_DIR}/ompi/mca/btl/openib)
     SET(RESULT_LINK_LIBRARIES ${OFED_SDK_LIBIBVERBS} ${OFED_SDK_LIBRDMACM})
     SET(RESULT TRUE)
+
+    INSTALL(FILES ${PROJECT_SOURCE_DIR}/mca/btl/openib/mca-btl-openib-device-params.ini
+      ${PROJECT_SOURCE_DIR}/mca/btl/openib/help-mpi-btl-openib.txt
+      DESTINATION share/openmpi)
   ENDIF(NOT OFED_SDK_FOUND)
 
 ENDIF(NOT OMPI_WANT_OFED)
