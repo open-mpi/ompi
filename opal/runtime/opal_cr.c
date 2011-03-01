@@ -426,7 +426,15 @@ int opal_cr_init(void )
         opal_output_verbose(10, opal_cr_output,
                             "opal_cr: init: starting the thread\n");
 
-        opal_set_using_threads(true);
+        /* JJH: We really do need this line below since it enables
+         *      actual locks for threads. However currently the
+         *      upper layers will deadlock if it is enabled.
+         *      So hack around the problem for now, while working
+         *      on a complete solution. See ticket #2741 for more
+         *      details.
+         * opal_set_using_threads(true);
+         */
+
         /*
          * Start the thread
          */
