@@ -59,7 +59,7 @@ typedef struct {
     /* list of selected modules */
     opal_list_t selected_modules;
     /* desired default mapper */
-    int default_mapper;
+    orte_rmaps_mapper_type_t default_mapper;
     /** whether or not we allow oversubscription of nodes */
     bool oversubscribe;
     /** number of ppn for n_per_node mode */

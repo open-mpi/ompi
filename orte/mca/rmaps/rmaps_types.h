@@ -34,7 +34,7 @@
 BEGIN_C_DECLS
 
 /* enumerate selectable mappers */
-enum {
+enum orte_rmaps_mapper_type_t {
     ORTE_RMAPS_UNDEF,
     ORTE_RMAPS_RR,
     ORTE_RMAPS_LOADBALANCE,
@@ -42,6 +42,7 @@ enum {
     ORTE_RMAPS_RF,
     ORTE_RMAPS_RESILIENT
 };
+typedef enum orte_rmaps_mapper_type_t orte_rmaps_mapper_type_t;
 
 /*
  * Structure that represents the mapping of a job to an
@@ -50,7 +51,7 @@ enum {
 struct orte_job_map_t {
     opal_object_t super;
     /* user-specified mapping params */
-    int32_t mapper;
+    orte_rmaps_mapper_type_t mapper;
     orte_mapping_policy_t policy;
     int npernode;
     int nperboard;
