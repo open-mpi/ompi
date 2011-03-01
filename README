@@ -723,11 +723,6 @@ for a full list); a summary of the more commonly used ones follows:
 
   FCA is the support library for Voltaire QDR switches.
 
---enable-opal-multi-threads
-  Enables thread lock support in the OPAL and ORTE layers. Does
-  not enable MPI_THREAD_MULTIPLE - see above option for that feature.
-  This is currently disabled by default.
-
 --disable-mpi-cxx
   Disable building the C++ MPI bindings.  Note that this does *not*
   disable the C++ checks during configure; some of Open MPI's tools
