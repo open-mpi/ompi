@@ -38,7 +38,7 @@ AC_DEFUN([MCA_paffinity_hwloc_POST_CONFIG],[
 # MCA_paffinity_hwloc_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([MCA_paffinity_hwloc_CONFIG],[
-    OMPI_VAR_SCOPE_PUSH([HWLOC_VERSION opal_check_hwloc_happy opal_check_hwloc_save_CPPFLAGS opal_check_hwloc_save_LDFLAGS opal_check_hwloc_save_LIBS])
+    OMPI_VAR_SCOPE_PUSH([HWLOC_VERSION opal_check_hwloc_happy opal_check_hwloc_save_CPPFLAGS opal_check_hwloc_save_LDFLAGS opal_check_hwloc_save_LIBS opal_common_hwloc_save_xml opal_common_hwloc_save_cairo])
 
     # Allowing building using either the internal copy of
     # hwloc, or an external version.
@@ -81,17 +81,33 @@ AC_DEFUN([MCA_paffinity_hwloc_CONFIG],[
           [# Main hwloc configuration
            AC_MSG_RESULT([internal copy])
            HWLOC_SET_SYMBOL_PREFIX([opal_paffinity_])
+
+           # We don't want no stinkin' XML or graphical support
+           opal_common_hwloc_save_xml=$enable_xml
+           opal_common_hwloc_save_cairo=$enable_cairo
+           enable_xml=no
+           enable_cairo=no
+
            HWLOC_SETUP_CORE([opal/mca/paffinity/hwloc/hwloc], 
                      [AC_MSG_CHECKING([whether hwloc configure succeeded])
                       AC_MSG_RESULT([yes])
                       HWLOC_VERSION="internal v`$srcdir/opal/mca/paffinity/hwloc/hwloc/config/hwloc_get_version.sh $srcdir/opal/mca/paffinity/hwloc/hwloc/VERSION`"
-                      # Add flags to the wrappers for static builds
-                      paffinity_hwloc_WRAPPER_EXTRA_LDFLAGS=$HWLOC_EMBEDDED_LDFLAGS
-                      paffinity_hwloc_WRAPPER_EXTRA_LIBS=$HWLOC_EMBEDDED_LIBS
+
+                      # Add flags to the wrappers for static builds.
+                      # Note that we don't add the project name to the
+                      # wrapper extra flags.  :-(
+                      common_hwloc_WRAPPER_EXTRA_LIBS=$HWLOC_EMBEDDED_LIBS
+
                       opal_check_hwloc_happy=yes], 
                      [AC_MSG_CHECKING([whether hwloc configure succeeded])
                       AC_MSG_RESULT([no])
                       opal_check_hwloc_happy=no])
+
+          # Restore some env variables, if necessary
+          AS_IF([test -n "$opal_common_hwloc_save_xml"],
+                [enable_xml=$opal_common_hwloc_save_xml])
+          AS_IF([test -n "$opal_common_hwloc_save_cairo"],
+                [enable_cairo=$opal_common_hwloc_save_cairo])
           ])
 
     # If we are not building internal, then run all the normal checks
