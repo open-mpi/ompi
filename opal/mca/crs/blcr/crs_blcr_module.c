@@ -8,6 +8,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -118,7 +119,7 @@ static bool blcr_crdebug_refreshed_env = false;
 static cr_client_id_t client_id;
 static cr_callback_id_t cr_thread_callback_id;
 static cr_callback_id_t cr_signal_callback_id;
-static int blcr_current_state = OPAL_CRS_RUNNING;
+static int blcr_current_state = OPAL_CRS_NONE;
 
 static char *blcr_restart_cmd = NULL;
 static char *blcr_checkpoint_cmd = NULL;
@@ -162,9 +163,18 @@ int opal_crs_blcr_module_init(void)
     opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: module_init()");
 
+    blcr_restart_cmd    = strdup("cr_restart");
+    blcr_checkpoint_cmd = strdup("cr_checkpoint");
+
     my_pid = getpid();
 
     if( !opal_cr_is_tool ) {
+        /* We need to make the lock and condition variable before
+         * starting the thread, since the thread uses these vars.
+         */
+        OBJ_CONSTRUCT(&blcr_lock, opal_mutex_t);
+        OBJ_CONSTRUCT(&blcr_cond, opal_condition_t);
+
         /*
          * Initialize BLCR
          */
@@ -184,12 +194,6 @@ int opal_crs_blcr_module_init(void)
     blcr_checkpoint_cmd = strdup("cr_checkpoint");
     
     if( !opal_cr_is_tool ) {
-        /* We need to make the lock and condition variable before
-         * starting the thread, since the thread uses these vars.
-         */
-        OBJ_CONSTRUCT(&blcr_lock, opal_mutex_t);
-        OBJ_CONSTRUCT(&blcr_cond, opal_condition_t);
-        
         /*
          * Register the thread handler
          */
@@ -285,10 +289,12 @@ int opal_crs_blcr_module_finalize(void)
         OBJ_DESTRUCT(&blcr_lock);
         OBJ_DESTRUCT(&blcr_cond);
 
-        /* Unload the thread callback */
-        cr_replace_callback(cr_thread_callback_id, NULL, NULL, CR_THREAD_CONTEXT);
-        /* Unload the signal callback */
-        cr_replace_callback(cr_signal_callback_id, NULL, NULL, CR_SIGNAL_CONTEXT);
+        if( OPAL_CRS_RUNNING == blcr_current_state ) {
+            /* Unload the thread callback */
+            cr_replace_callback(cr_thread_callback_id, NULL, NULL, CR_THREAD_CONTEXT);
+            /* Unload the signal callback */
+            cr_replace_callback(cr_signal_callback_id, NULL, NULL, CR_SIGNAL_CONTEXT);
+        }
 
 #if OPAL_ENABLE_CRDEBUG == 1
         /*
@@ -303,6 +309,7 @@ int opal_crs_blcr_module_finalize(void)
     }
 
     /* BLCR does not have a finalization routine */
+    blcr_current_state = OPAL_CRS_NONE;
 
     return OPAL_SUCCESS;
 }
@@ -517,10 +524,10 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     if (!spawn_child) {
         opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                             "crs:blcr: blcr_restart: SELF: exec :(%s, %s):", 
-                            strdup(blcr_restart_cmd),
+                            blcr_restart_cmd,
                             opal_argv_join(cr_argv, ' '));
 
-        status = execvp(strdup(blcr_restart_cmd), cr_argv);
+        status = execvp(blcr_restart_cmd, cr_argv);
 
         if(status < 0) {
             opal_output(mca_crs_blcr_component.super.output_handle,
@@ -542,10 +549,10 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
             /* Child Process */
             opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                                 "crs:blcr: blcr_restart: CHILD: exec :(%s, %s):", 
-                                strdup(blcr_restart_cmd),
+                                blcr_restart_cmd,
                                 opal_argv_join(cr_argv, ' '));
             
-            status = execvp(strdup(blcr_restart_cmd), cr_argv);
+            status = execvp(blcr_restart_cmd, cr_argv);
 
             if(status < 0) {
                 opal_output(mca_crs_blcr_component.super.output_handle,
