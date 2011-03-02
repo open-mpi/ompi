@@ -489,6 +489,8 @@ static int rte_init(void)
     OBJ_RETAIN(node);  /* keep accounting straight */
     proc->node = node;
     proc->nodename = node->name;
+    /* Assume we won't fail unless notified by a child */
+    proc->exit_code = 0;
     opal_pointer_array_add(jdata->procs, proc);
 
     /* record that the daemon (i.e., us) is on this node 
