@@ -109,15 +109,18 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
     }
     FCA_MODULE_VERBOSE(fca_module, 1, "Info size: %d", info_size);
 
-    /* Get all rank info sizes using MPI_Gather */
-    if (fca_module->rank == 0)
+    /* Allocate gather buffer on the root rank */
+    if (fca_module->rank == 0) {
         rcounts = calloc(ompi_comm_size(comm), sizeof *rcounts);
+    }
+
+    /* Get all rank info sizes using MPI_Gather */
     rc = comm->c_coll.coll_gather(&info_size, 1, MPI_INT, rcounts, 1, MPI_INT, 0,
                                   comm, comm->c_coll.coll_gather_module);
     if (rc != OMPI_SUCCESS)
         return rc;
 
-    /* Rank0 allocates buffers */
+    /* Allocate buffer for gathering rank information on rank0 */
     if (fca_module->rank == 0) {
         FCA_MODULE_VERBOSE(fca_module, 1, "Total rank_info size: %d", all_info_size);
         all_info_size = 0;
@@ -149,28 +152,35 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
             if (rcounts[i] > 0)
                 ++spec.rank_count;
         }
+        free(disps);
+        free(rcounts);
 
         FCA_MODULE_VERBOSE(fca_module, 1, "starting fca_comm_new(), rank_count: %d",
                            spec.rank_count);
 
-        ret = mca_coll_fca_component.fca_ops.comm_new (mca_coll_fca_component.fca_context,
-                                                       &spec,
-                                                       &fca_module->fca_comm_desc);
-        if (ret < 0) {
-            FCA_ERROR("COMM_NEW failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
-            return OMPI_ERROR;
-        }
-
-        FCA_MODULE_VERBOSE(fca_module, 1, "rank 0: Received FCA communicator, comm_id %d",
-                           fca_module->fca_comm_desc.comm_id);
-        free(disps);
-        free(rcounts);
+        ret = mca_coll_fca_component.fca_ops.comm_new(mca_coll_fca_component.fca_context,
+                                                      &spec, &fca_module->fca_comm_desc);
         free(all_info);
     }
 
+    /* Broadcast return value from rank0 to all other ranks */
+    rc = fca_module->previous_bcast(&ret, 1, MPI_INT, 0, comm,
+                                    fca_module->previous_bcast_module);
+    if (rc != OMPI_SUCCESS) {
+        FCA_ERROR("Failed to broadcast comm_new return value from rank0: %d", rc);
+        return rc;
+    }
+
+    /* Examine comm_new return value */
+    if (ret < 0) {
+        FCA_ERROR("COMM_NEW failed: %s", mca_coll_fca_component.fca_ops.strerror(ret));
+        return OMPI_ERROR;
+    }
+
     /* Release allocate rank_info on node managers */
-    if (fca_module->local_proc_idx == 0)
+    if (fca_module->local_proc_idx == 0) {
         mca_coll_fca_component.fca_ops.free_rank_info(my_info);
+    }
 
     /* Pass fca_comm_desc to all ranks using MPI_Bcast */
     rc = fca_module->previous_bcast(&fca_module->fca_comm_desc,
