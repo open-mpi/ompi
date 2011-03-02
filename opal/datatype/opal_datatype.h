@@ -116,7 +116,7 @@ struct opal_datatype_t {
     uint32_t           nbElems;  /**< total number of elements inside the datatype */
 
     /* Attribute fields */
-    char               name[OPAL_MAX_OBJECT_NAME];  /* TODO: Can this be deleted??? It's just sugar...*/
+    char               name[OPAL_MAX_OBJECT_NAME];  /**< name of the datatype */
     /* --- cacheline 2 boundary (128 bytes) was 8 bytes ago --- */
     dt_type_desc_t     desc;     /**< the data description */
     dt_type_desc_t     opt_desc; /**< short description of the data used when conversion is useless
