@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -44,11 +44,8 @@ int MPI_Type_create_subarray(int ndims,
                              int order,
                              MPI_Datatype oldtype,
                              MPI_Datatype *newtype)
-
 {
-    MPI_Datatype last_type; 
-    int32_t i, step, end_loop;
-    MPI_Aint size, displ, extent;
+    int32_t i, rc;
 
     MEMCHECKER(
         memchecker_datatype(oldtype);
@@ -76,69 +73,9 @@ int MPI_Type_create_subarray(int ndims,
 
     OPAL_CR_ENTER_LIBRARY();
 
-    ompi_datatype_type_extent( oldtype, &extent );
-
-    /* If the ndims is zero then return the NULL datatype */
-    if( ndims < 2 ) {
-        if( 0 == ndims ) {
-            *newtype = &ompi_mpi_datatype_null.dt;
-            OPAL_CR_EXIT_LIBRARY();
-            return MPI_SUCCESS;
-        }
-        ompi_datatype_create_contiguous( subsize_array[0], oldtype, &last_type );
-        size = size_array[0];
-        displ = start_array[0];
-        goto replace_subarray_type;
-    }
-
-    if( MPI_ORDER_C == order ) {
-        i = ndims - 1;
-        step = -1;
-        end_loop = -1;
-    } else {
-        i = 0;
-        step = 1;
-        end_loop = ndims;
-    }
-
-    /* As we know that the ndims is at least 1 we can start by creating the
-     * first dimension data outside the loop, such that we dont have to create
-     * a duplicate of the oldtype just to be able to free it.
-     */
-    ompi_datatype_create_vector( subsize_array[i+step], subsize_array[i], size_array[i],
-                            oldtype, newtype );
-
-    last_type = *newtype;
-    size = size_array[i] * size_array[i+step];
-    displ = start_array[i] + start_array[i+step] * size_array[i];
-    for( i += 2 * step; i != end_loop; i += step ) {
-        ompi_datatype_create_hvector( subsize_array[i], 1, size * extent,
-                                 last_type, newtype );
-        ompi_datatype_destroy( &last_type );
-        displ += size * start_array[i];
-        size *= size_array[i];
-        last_type = *newtype;
-    }
-
-  replace_subarray_type:    
-    /**
-     * We cannot use resized here. Resized will only set the soft lb and ub markers
-     * without moving the real data inside. What we need is to force the displacement
-     * of the data create upward to the right position AND set the LB and UB. A type
-     * struct is the function we need.
-     */
-    {
-        MPI_Aint displs[3];
-        MPI_Datatype types[3];
-        int blength[3] = { 1, 1, 1 };
-
-        displs[0] = 0; displs[1] = displ * extent; displs[2] = size * extent;
-        types[0] = MPI_LB; types[1] = last_type; types[2] = MPI_UB;
-        ompi_datatype_create_struct( 3, blength, displs, types, newtype );
-    }
-    ompi_datatype_destroy( &last_type );
-    
-    {
+    rc = ompi_datatype_create_subarray( ndims, size_array, subsize_array, start_array,
+                                        order, oldtype, newtype);
+    if( OMPI_SUCCESS == rc ) {
         int* a_i[5];
 
         a_i[0] = &ndims;
@@ -148,10 +85,10 @@ int MPI_Type_create_subarray(int ndims,
         a_i[4] = &order;
 
         ompi_datatype_set_args( *newtype, 3 * ndims + 2, a_i, 0, NULL, 1, &oldtype,
-                           MPI_COMBINER_SUBARRAY );
+                                MPI_COMBINER_SUBARRAY );
     }
 
     OPAL_CR_EXIT_LIBRARY();
 
-    return MPI_SUCCESS;
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

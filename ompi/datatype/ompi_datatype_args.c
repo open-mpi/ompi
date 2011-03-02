@@ -705,48 +705,26 @@ static ompi_datatype_t* __ompi_datatype_create_from_args( int32_t* i, MPI_Aint* 
         break;
         /******************************************************************/
     case MPI_COMBINER_SUBARRAY:
-        /*pos = 1;
-          pArgs->i[0] = i[0][0];
-          memcpy( pArgs->i + pos, i[1], pArgs->i[0] * sizeof(int) );
-          pos += pArgs->i[0];
-          memcpy( pArgs->i + pos, i[2], pArgs->i[0] * sizeof(int) );
-          pos += pArgs->i[0];
-          memcpy( pArgs->i + pos, i[3], pArgs->i[0] * sizeof(int) );
-          pos += pArgs->i[0];
-          pArgs->i[pos] = i[4][0];
-        */
-#if 0
+        ompi_datatype_create_subarray( i[0], &i[1 + 0 * i[0]], &i[1 + 1 * i[0]],
+                                       &i[1 + 2 * i[0]], i[1 + 3 * i[0]],
+                                       d[0], &datatype );
         {
-            int* a_i[5]; a_i[0] = &i[0]; a_i[1] = &i[1 + 0 * i[0]]; a_i[2] = &i[1 + 1 * i[0]];  a_i[3] = &i[1 + 2 * i[0]];
+            int* a_i[5]; a_i[0] = &i[0]; a_i[1] = &i[1 + 0 * i[0]]; a_i[2] = &i[1 + 1 * i[0]];  a_i[3] = &i[1 + 2 * i[0]]; a_i[4] = &i[1 + 3 * i[0]];
             ompi_datatype_set_args( datatype, 3 * i[0] + 2, a_i, 0, NULL, 1, d, MPI_COMBINER_SUBARRAY);
         }
-#endif
         break;
         /******************************************************************/
     case MPI_COMBINER_DARRAY:
-        /*pos = 3;
-          pArgs->i[0] = i[0][0];
-          pArgs->i[1] = i[1][0];
-          pArgs->i[2] = i[2][0];
-
-          memcpy( pArgs->i + pos, i[3], i[2][0] * sizeof(int) );
-          pos += i[2][0];
-          memcpy( pArgs->i + pos, i[4], i[2][0] * sizeof(int) );
-          pos += i[2][0];
-          memcpy( pArgs->i + pos, i[5], i[2][0] * sizeof(int) );
-          pos += i[2][0];
-          memcpy( pArgs->i + pos, i[6], i[2][0] * sizeof(int) );
-          pos += i[2][0];
-          pArgs->i[pos] = i[7][0];
-        */
-#if 0
+        ompi_datatype_create_darray( i[0] /* size */, i[1] /* rank */, i[2] /* ndims */,
+                                     &i[3 + 0 * i[0]], &i[3 + 1 * i[0]],
+                                     &i[3 + 2 * i[0]], &i[3 + 3 * i[0]],
+                                     i[3 + 4 * i[0]], d[0], &datatype );
         {
             int* a_i[8]; a_i[0] = &i[0]; a_i[1] = &i[1]; a_i[2] = &i[2];
-            a_i[3] = &i[1 + 0 * i[0]]; a_i[4] = &i[1 + 1 * i[0]];  a_i[5] = &i[1 + 2 * i[0]];
-            a_i[6] = &i[1 + 3 * i[0]]; a_i[7] = &i[1 + 4 * i[0]];
+            a_i[3] = &i[3 + 0 * i[0]]; a_i[4] = &i[3 + 1 * i[0]];  a_i[5] = &i[3 + 2 * i[0]];
+            a_i[6] = &i[3 + 3 * i[0]]; a_i[7] = &i[3 + 4 * i[0]];
             ompi_datatype_set_args( datatype, 4 * i[0] + 4,a_i, 0, NULL, 1, d, MPI_COMBINER_DARRAY);
         }
-#endif
         break;
         /******************************************************************/
     case MPI_COMBINER_F90_REAL:
