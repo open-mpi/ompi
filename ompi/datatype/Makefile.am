@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2009 The University of Tennessee and The University
+# Copyright (c) 2004-2011 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,6 +35,8 @@ libdatatype_la_SOURCES = \
         ompi_datatype_create_indexed.c \
         ompi_datatype_create_struct.c \
         ompi_datatype_create_vector.c \
+        ompi_datatype_create_darray.c \
+        ompi_datatype_create_subarray.c \
         ompi_datatype_external32.c \
         ompi_datatype_match_size.c \
         ompi_datatype_module.c \

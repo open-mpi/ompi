@@ -209,6 +209,13 @@ OMPI_DECLSPEC int32_t ompi_datatype_create_indexed_block( int count, int bLength
                                                           const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_datatype_create_struct( int count, const int* pBlockLength, const OPAL_PTRDIFF_TYPE* pDisp,
                                                    ompi_datatype_t* const* pTypes, ompi_datatype_t** newType );
+OMPI_DECLSPEC int32_t ompi_datatype_create_darray( int size, int rank, int ndims, int const* gsize_array,
+                                                   int const* distrib_array, int const* darg_array,
+                                                   int const* psize_array, int order, const ompi_datatype_t* oldtype,
+                                                   ompi_datatype_t** newtype);
+OMPI_DECLSPEC int32_t ompi_datatype_create_subarray(int ndims, int const* size_array, int const* subsize_array,
+                                                    int const* start_array, int order,
+                                                    const ompi_datatype_t* oldtype, ompi_datatype_t** newtype);
 static inline int32_t
 ompi_datatype_create_resized( const ompi_datatype_t* oldType, OPAL_PTRDIFF_TYPE lb, OPAL_PTRDIFF_TYPE extent, ompi_datatype_t** newType )
 {
