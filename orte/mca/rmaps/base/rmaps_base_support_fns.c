@@ -731,8 +731,6 @@ int orte_rmaps_base_define_daemons(orte_job_t *jdata)
             proc->name.vpid = daemons->num_procs;  /* take the next available vpid */
             proc->node = node;
             proc->nodename = node->name;
-            /* Assume we won't fail unless notified by a child */
-            proc->exit_code = 0;
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                                  "%s rmaps:base:define_daemons add new daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

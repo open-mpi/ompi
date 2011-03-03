@@ -887,6 +887,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->node = NULL;
     proc->prior_node = NULL;
     proc->nodename = NULL;
+    proc->exit_code = 0;      /* Assume we won't fail unless otherwise notified */
     proc->rml_uri = NULL;
     proc->restarts = 0;
     proc->reported = false;
