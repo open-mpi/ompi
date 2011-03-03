@@ -28,9 +28,8 @@ dist_pkgdata_DATA = help-mpi-btl-wv.txt \
 sources = \
     btl_wv.c \
     btl_wv.h \
-    btl_wv_async.c \
-    btl_wv_async.h \
     btl_wv_component.c \
+    btl_wv_def.h \
     btl_wv_eager_rdma.h \
     btl_wv_endpoint.c \
     btl_wv_endpoint.h \
@@ -38,16 +37,12 @@ sources = \
     btl_wv_frag.h \
     btl_wv_ini.c \
     btl_wv_ini.h \
-    btl_wv_ip.h \
-    btl_wv_ip.c \
     btl_wv_lex.h \
     btl_wv_lex.l \
     btl_wv_mca.c \
     btl_wv_mca.h \
     btl_wv_proc.c \
     btl_wv_proc.h \
-    btl_wv_xrc.c \
-    btl_wv_xrc.h \
     connect/base.h \
     connect/btl_wv_connect_base.c \
     connect/btl_wv_connect_oob.c \
