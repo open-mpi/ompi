@@ -223,6 +223,10 @@ typedef struct {
     char *preload_files_src_dir;
     /* is being used on the local node */
     bool used_on_node;
+    /* uid under which to run the app */
+    int32_t uid;
+    /* gid under which to run the app */
+    int32_t gid;
 #if OPAL_ENABLE_FT_CR == 1
     /** What files SStore should load before local launch, if any */
     char *sstore_load;
@@ -426,10 +430,6 @@ typedef struct {
     struct timeval launch_msg_sent;
     /* max time for launch msg to be received */
     struct timeval max_launch_msg_recvd;
-    /* uid under which to run the job */
-    int32_t uid;
-    /* gid under which to run the job */
-    int32_t gid;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
