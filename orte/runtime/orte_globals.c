@@ -560,6 +560,10 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->preload_files_dest_dir  = NULL;
     app_context->preload_files_src_dir  = NULL;
     app_context->used_on_node = false;
+    /* set to invalid value */
+    app_context->gid = -1;
+    app_context->uid = -1;
+
 #if OPAL_ENABLE_FT_CR == 1
     app_context->sstore_load = NULL;
 #endif

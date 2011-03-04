@@ -756,6 +756,17 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
+        /* pack the uid and gid */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                                       (void*)(&(app_context[i]->uid)), 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                                       (void*)(&(app_context[i]->gid)), 1, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
 #if OPAL_ENABLE_FT_CR == 1
         /* Pack the preload_files_src_dir if we have one */

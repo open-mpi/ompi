@@ -833,6 +833,20 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             return rc;
         }
 
+        /* unpack the uid and gid */
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->uid,
+                                                         &max_n, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->gid,
+                                                         &max_n, OPAL_INT32))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
 #if OPAL_ENABLE_FT_CR == 1
         /* Unpack the sstore_load */
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &have_preload_files_dest_dir,
