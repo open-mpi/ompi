@@ -60,7 +60,6 @@ static bool server_setup=false;
 static void setup_server(void)
 {
     opal_buffer_t buf;
-    orte_rml_cmd_flag_t cmd=ORTE_RML_UPDATE_CMD; /* irrelevant - will be ignored */
     int rc;
     
     OPAL_OUTPUT_VERBOSE((1, ompi_pubsub_base_output,
@@ -84,7 +83,6 @@ static void setup_server(void)
      * info into a buffer
      */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    opal_dss.pack(&buf, &cmd, 1, ORTE_RML_CMD);
     opal_dss.pack(&buf, &mca_pubsub_orte_component.server_uri, 1, OPAL_STRING);
     /* extract the server's name so we have its jobid */
     if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(mca_pubsub_orte_component.server_uri,
