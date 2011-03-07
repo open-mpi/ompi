@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
@@ -114,6 +114,7 @@ const char ompi_version_string[] = OMPI_IDENT_STRING;
  * Global variables and symbols for the MPI layer
  */
 
+bool ompi_mpi_init_started = false;
 bool ompi_mpi_initialized = false;
 bool ompi_mpi_finalized = false;
 
@@ -296,6 +297,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */
     uint8_t threadlevel_bf; 
+
+    /* Indicate that we have *started* MPI_INIT*.  MPI_FINALIZE has
+       something sorta similar in a static local variable in
+       ompi_mpi_finalize(). */
+    ompi_mpi_init_started = true;
 
     /* Setup enough to check get/set MCA params */
 
@@ -764,7 +770,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_world.comm));
     MCA_PML_CALL(add_comm(&ompi_mpi_comm_self.comm));
 
-
     /*
      * Dump all MCA parameters if requested
      */
@@ -927,8 +932,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpiext_init";
         goto error;
     }
-    
 
+    /* Fall through */
  error:
     if (ret != OMPI_SUCCESS) {
         /* Only print a message if one was not already printed */

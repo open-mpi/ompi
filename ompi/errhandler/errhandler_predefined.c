@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -230,7 +230,7 @@ static void backend_fatal_no_aggregate(char *type,
 
     /* Per #2152, print out in plain english if something was invoked
        before MPI_INIT* or after MPI_FINALIZE */
-    if (!ompi_mpi_initialized) {
+    if (!ompi_mpi_init_started && !ompi_mpi_initialized) {
         if (NULL != arg) {
             out("*** The %s() function was called before MPI_INIT was invoked.\n"
                 "*** This is disallowed by the MPI standard.\n", arg);
@@ -302,7 +302,7 @@ static void backend_fatal_no_aggregate(char *type,
                 out("*** Error code: %d (no associated error message)\n", intbuf);
             }
         }
-        out("*** MPI_ERRORS_ARE_FATAL (your MPI job will now abort)\n", NULL);
+        out("*** MPI_ERRORS_ARE_FATAL: your MPI job will now abort\n", NULL);
     }
     va_end(arglist);
 }
@@ -318,8 +318,7 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
        meaning that there is a better chance that the error message
        will actually get printed).  Note that we can only do
        aggregation after MPI_INIT and before MPI_FINALIZE. */
-    if (orte_help_want_aggregate && ompi_mpi_initialized && 
-        !ompi_mpi_finalized) {
+    if (orte_help_want_aggregate && orte_show_help_is_available()) {
         backend_fatal_aggregate(type, comm, name, error_code, arglist);
     } else {
         backend_fatal_no_aggregate(type, comm, name, error_code, arglist);

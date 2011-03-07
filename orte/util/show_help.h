@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -52,6 +52,14 @@ BEGIN_C_DECLS
  * and has a verbose level of 0.
  */
 ORTE_DECLSPEC int orte_show_help_init(void);
+
+/**
+ * Allow other parts of the code base to know if the ORTE show_help
+ * system is available or not (does not necessarily indicate that
+ * aggregating is available; on no-ORTE systems, ORTE show_help is
+ * available, but aggregating is not).
+ */
+ORTE_DECLSPEC bool orte_show_help_is_available(void);
 
 /**
  * Shut down the output stream system.
