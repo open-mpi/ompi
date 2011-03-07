@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +40,24 @@
 
 #include "orte/util/show_help.h"
 
-bool orte_help_want_aggregate;
+bool orte_help_want_aggregate = false;
+
+/*
+ * Local variable to know whether aggregated show_help is available or
+ * not 
+ */
+static bool ready = false;
+
+/*
+ * Same for systems with or without full ORTE support
+ */
+bool orte_show_help_is_available(void)
+{
+    /* This is a function only to give us forward flexibility in case
+       we need a more complicated check someday. */
+
+    return ready;
+}
 
 /************************************************************************/
 
@@ -50,11 +67,13 @@ bool orte_help_want_aggregate;
 
 int orte_show_help_init(void)
 {
+    ready = true;
     return ORTE_SUCCESS;
 }
 
 void orte_show_help_finalize(void)
 {
+    ready = false;
     return;
 }
 
@@ -128,7 +147,6 @@ static struct timeval show_help_interval = { 5, 0 };
 static time_t show_help_time_last_displayed = 0;
 static bool show_help_timer_set = false;
 static opal_event_t show_help_timer_event;
-static bool ready;
 
 static opal_show_help_fn_t save_help = NULL;
 
@@ -582,12 +600,12 @@ int orte_show_help_init(void)
     if (ready) {
         return ORTE_SUCCESS;
     }
-    ready = true;
 
     OBJ_CONSTRUCT(&abd_tuples, opal_list_t);
     
     save_help = opal_show_help;
     opal_show_help = orte_show_help;
+    ready = true;
 
     return ORTE_SUCCESS;
 }
