@@ -441,11 +441,14 @@ int orte_session_dir(bool create,
     /* 
      * Update some of the global structures if they are empty
      */
-    if (NULL == orte_process_info.tmpdir_base)
+    if (NULL == orte_process_info.tmpdir_base) {
         orte_process_info.tmpdir_base = strdup(local_prefix);
+    }
     
-    if (NULL == orte_process_info.top_session_dir)
+    if (NULL == orte_process_info.top_session_dir &&
+        NULL != frontend) {
         orte_process_info.top_session_dir = strdup(frontend);
+    }
 
     /*
      * Set the process session directory
@@ -495,10 +498,15 @@ int orte_session_dir(bool create,
     }
     
 cleanup:
-    if(NULL != fulldirpath)
+    if (NULL != local_prefix) {
+        free(local_prefix);
+    }
+    if(NULL != fulldirpath) {
         free(fulldirpath);
-    if(NULL != frontend)
+    }
+    if(NULL != frontend) {
         free(frontend);
+    }
     
     return rc;
 }
