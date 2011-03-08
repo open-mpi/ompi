@@ -369,6 +369,7 @@ static int fork_hnp(void)
         close(death_pipe[0]);
         close(death_pipe[1]);
         free(cmd);
+        opal_argv_free(argv);
         return ORTE_ERR_SYS_LIMITS_CHILDREN;
     }
     
@@ -412,6 +413,7 @@ static int fork_hnp(void)
          */
         close(p[1]);  /* parent closes the write - orted will write its contact info to it*/
         close(death_pipe[0]);  /* parent closes the death_pipe's read */
+        opal_argv_free(argv);
         
         /* setup the buffer to read the name + uri */
         buffer_length = ORTE_URI_MSG_LGTH;
