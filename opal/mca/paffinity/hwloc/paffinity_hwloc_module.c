@@ -272,6 +272,7 @@ static int module_map_to_processor_id(int socket, int core, int *processor_id)
  */
 static int module_map_to_socket_core(int processor_id, int *socket, int *core)
 {
+    int ret = OPAL_ERR_NOT_FOUND;
     hwloc_obj_t obj;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
     hwloc_bitmap_t good;
@@ -299,17 +300,24 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core)
                 if (NULL == obj->parent) {
                     /* If we get to the root without finding a socket,
                        er..  Hmm.  Error! */
-                    return OPAL_ERR_NOT_FOUND;
+                    ret = OPAL_ERR_NOT_FOUND;
+                    goto out;
                 }
                 obj = obj->parent;
             }
             *socket = obj->os_index;
-            return OPAL_SUCCESS;
+            ret = OPAL_SUCCESS;
+            goto out;
         }
     }
 
-    /* If we didn't even find the right core, we didn't find it. */
-    return OPAL_ERR_NOT_FOUND;
+    /* If we didn't even find the right core, we didn't find it.  Fall
+       through. */
+    ret = OPAL_ERR_NOT_FOUND;
+
+ out:
+    hwloc_bitmap_free(good);
+    return ret;
 }
 
 /*
