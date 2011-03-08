@@ -61,6 +61,7 @@
  */
 
 static bool initialized                          = false;
+static int num_times_registered                  = 0;
 static int sysv_index                            = -1;
 static int posix_index                           = -1;
 static int common_sm_index                       = -1;
@@ -318,6 +319,14 @@ query_sm_components(void)
 int
 mca_common_sm_param_register(mca_base_component_t *c)
 {
+    if (++num_times_registered > 1) {
+        return OMPI_SUCCESS;
+    }
+    if (num_times_registered < 1) {
+        /* This should never happen -- programmer error */
+        return OMPI_ERROR;
+    }
+
     /* also using sysv_index's value as an initialization flag */
     if (-1 == sysv_index)
     {
@@ -379,12 +388,14 @@ mca_common_sm_param_register(mca_base_component_t *c)
                                                      false,
                                                      /* default value */
                                                      sm_default,
-                                                     &sm_params);
+                                                     NULL);
+
     /* also register MCA param synonyms for the component */
     mca_base_param_reg_syn(sysv_index, c, "have_sysv_support", false);
     mca_base_param_reg_syn(posix_index, c, "have_posix_support", false);
     mca_base_param_reg_syn(common_sm_index, c, "store", false);
 
+    /* Once the synonyms are registered, look up the value */
     if (OPAL_SUCCESS != mca_base_param_lookup_string(common_sm_index,
                                                      &sm_params))
     {
@@ -408,6 +419,26 @@ mca_common_sm_param_register(mca_base_component_t *c)
             opal_output(0,
                         "WARNING: could not parse mpi_common_sm request.");
         }
+    }
+    free(sm_params);
+
+    return OMPI_SUCCESS;
+}
+
+/******************************************************************************/
+int mca_common_sm_param_unregister(mca_base_component_t *c)
+{
+    if (--num_times_registered > 0) {
+        return OMPI_SUCCESS;
+    }
+    if (num_times_registered < 0) {
+        /* This should never happen -- programmer error */
+        return OMPI_ERROR;
+    }
+
+    if (NULL != sm_argv) {
+        opal_argv_free(sm_argv);
+        sm_argv = NULL;
     }
 
     return OMPI_SUCCESS;
@@ -628,13 +659,7 @@ mca_common_sm_seg_alloc(struct mca_mpool_base_module_t *mpool,
 int
 mca_common_sm_fini(mca_common_sm_module_t *mca_common_sm_module)
 {
-    if (NULL != sm_argv)
-    {
-        opal_argv_free(sm_argv);
-        sm_argv = NULL;
-    }
-    if (NULL != sm_fini)
-    {
+    if (NULL != sm_fini && NULL != mca_common_sm_module) {
         return sm_fini(mca_common_sm_module);
     }
     return OMPI_ERR_NOT_FOUND;

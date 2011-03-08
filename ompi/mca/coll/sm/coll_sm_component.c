@@ -41,6 +41,7 @@ const char *mca_coll_sm_component_version_string =
 /*
  * Local functions
  */
+static int sm_close(void);
 static int sm_register(void);
 
 
@@ -68,7 +69,7 @@ mca_coll_sm_component_t mca_coll_sm_component = {
 
             /* Component functions */
             NULL, /* open */
-            NULL, /* close */
+            sm_close,
             NULL, /* query */
             sm_register
         },
@@ -114,6 +115,20 @@ mca_coll_sm_component_t mca_coll_sm_component = {
     /* default values for non-MCA parameters */
     /* Not specifying values here gives us all 0's */
 };
+
+
+/*
+ * Shut down the component
+ */
+static int sm_close(void)
+{
+    mca_base_component_t *c = &mca_coll_sm_component.super.collm_version;
+
+    /* Common SM MCA params */
+    mca_common_sm_param_unregister(c);
+
+    return OMPI_SUCCESS;
+}
 
 
 /*
@@ -209,6 +224,9 @@ static int sm_register(void)
                            "Amount of shared memory used, per communicator, in the shared memory data area for info_num_procs processes (in bytes)",
                            false, true,
                            (int)size, NULL);
+
+    /* Common SM MCA params */
+    mca_common_sm_param_register(c);
 
     return OMPI_SUCCESS;
 }
