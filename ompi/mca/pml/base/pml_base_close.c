@@ -39,6 +39,8 @@ int mca_pml_base_finalize(void) {
      
 int mca_pml_base_close(void)
 {
+    int i, j;
+
     /* turn off the progress code for the pml */
     if( NULL != mca_pml.pml_progress ) {
         opal_progress_unregister(mca_pml.pml_progress);
@@ -58,6 +60,13 @@ int mca_pml_base_close(void)
 
     mca_pml.pml_progress = mca_pml_base_progress;
     
+    /* Free all the strings in the array */
+    j = opal_pointer_array_get_size(&mca_pml_base_pml);
+    for (i = 0; i < j; ++i) {
+        char *str;
+        str = (char*) opal_pointer_array_get_item(&mca_pml_base_pml, i);
+        free(str);
+    }
     OBJ_DESTRUCT(&mca_pml_base_pml);
 
     /* Close all remaining available modules (may be one if this is a
