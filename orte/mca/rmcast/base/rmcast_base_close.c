@@ -51,6 +51,9 @@ int orte_rmcast_base_close(void)
     OBJ_DESTRUCT(&orte_rmcast_base.recv_ctl);
     OBJ_DESTRUCT(&orte_rmcast_base.recv_process);
     OBJ_DESTRUCT(&orte_rmcast_base.recv_process_ctl);
+    if (NULL != orte_rmcast_base.my_group_name) {
+        free(orte_rmcast_base.my_group_name);
+    }
 
     /* Close all remaining available components (may be one if this is a
         Open RTE program, or [possibly] multiple if this is ompi_info) */
