@@ -288,6 +288,9 @@ static int mca_btl_sm_component_close(void)
     /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_eager);*/
     /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_max);*/
 
+    /* Free resources associated with common sm MCA params */
+    mca_common_sm_param_unregister(&mca_btl_sm_component.super.btl_version);
+
     /* unmap the shared memory control structure */
     if(mca_btl_sm_component.sm_seg != NULL) {
         return_value = mca_common_sm_fini( mca_btl_sm_component.sm_seg );

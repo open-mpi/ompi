@@ -90,14 +90,17 @@ typedef struct mca_common_sm_module_t
 
 OBJ_CLASS_DECLARATION(mca_common_sm_module_t);
 
-OMPI_DECLSPEC extern int
-mca_common_sm_param_register(mca_base_component_t *c);
-
 /**
  * Register the MCA parameters for common sm.
  */
-OMPI_DECLSPEC extern int
+OMPI_DECLSPEC int
 mca_common_sm_param_register(mca_base_component_t *c);
+
+/**
+ * Free resources associated with registering MCA params for common sm.
+ */
+OMPI_DECLSPEC int
+mca_common_sm_param_unregister(mca_base_component_t *c);
 
 /**
  *  This routine is used to set up a shared memory segment (whether
