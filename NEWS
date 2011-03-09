@@ -71,11 +71,23 @@ Trunk (not on release branches yet)
   for hwloc v1.1.1 (PLPA has been removed -- long live hwloc!).  Note
   that hwloc is bundled with Open MPI, but an external hwloc can be
   used, if desired.  See README for more details.
+- Many CMake updates for Windows builds.
+- Updated opal_cr_thread_sleep_wait MCA param default value to make it
+  less aggressive.
+- Updated debugger support to allow Totalview attaching from jobs
+  launched directly via srun (not mpirun).  Thanks to Nikolay Piskun
+  for the patch.
+- Added more FTB/CIFTS support.
+- Fixed compile error with the PGI compiler.
+- Portability fixes to allow the openib BTL to run on the Solaris
+  verbs stack.
 - Fixed multi-token command-line issues when using the mpirun
   --debug switch.  For example:
       mpirun --debug -np 2 a.out "foo bar"
   Thanks to Gabriele Fatigati for reporting the issue.
 - Added ARM support.
+- Added the MPI_ROOT environment variable in the Open MPI Linux SRPM
+  for customers who use the BPS and LSF batch managers.
 - Updated ROMIO from MPICH v1.3.1 (plus one additional patch).
 - Fixed some deprecated MPI API function notification messages.
 - Added new "bfo" PML that provides failover on OpenFabrics networks.
@@ -83,7 +95,8 @@ Trunk (not on release branches yet)
 - Added Solaris-specific chip detection and performance improvements.
 - Fix some compile errors on Solaris.
 - Updated the "rmcast" framework with bug fixes, new functionality.
-- Updated the Voltaire FCA component with bug fixes, new functionality.
+- Updated the Voltaire FCA component with bug fixes, new
+  functionality.  Support for FCA version 2.1.
 - Fix gcc 4.4.x and 4.5.x over-aggressive warning notifications on
   possibly freeing stack variables.  Thanks to the Gentoo packagers
   for reporting the issue.
