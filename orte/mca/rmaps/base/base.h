@@ -107,6 +107,8 @@ ORTE_DECLSPEC int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid,
 ORTE_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, 
     orte_vpid_t start, orte_vpid_t range);
 
+ORTE_DECLSPEC char* orte_rmaps_base_print_mapper(orte_rmaps_mapper_type_t mapper);
+
 /**
  * Close down the rmaps framework
  */

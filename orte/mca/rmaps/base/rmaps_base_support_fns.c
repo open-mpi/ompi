@@ -890,3 +890,23 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
     
     return ORTE_SUCCESS;
 }
+
+char* orte_rmaps_base_print_mapper(orte_rmaps_mapper_type_t mapper)
+{
+    switch(mapper) {
+    case ORTE_RMAPS_UNDEF:
+        return "UNDEF";
+    case ORTE_RMAPS_RR:
+        return "ROUND_ROBIN";
+    case ORTE_RMAPS_LOADBALANCE:
+        return "LOADBALANCE";
+    case ORTE_RMAPS_SEQ:
+        return "SEQUENTIAL";
+    case ORTE_RMAPS_RF:
+        return "RANK_FILE";
+    case ORTE_RMAPS_RESILIENT:
+        return "RESILIENT";
+    default:
+        return "UNKNOWN";
+    }
+}

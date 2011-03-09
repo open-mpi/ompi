@@ -60,11 +60,12 @@ static int switchyard(orte_job_t *jdata)
      */
     if (ORTE_JOB_STATE_INIT != jdata->state) {
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "mca:rmaps:lb: not job %s not in initial state - loadbalance cannot map",
+                            "mca:rmaps:lb: job %s not in initial state - loadbalance cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    if (0 < jdata->map->mapper && ORTE_RMAPS_LOADBALANCE != jdata->map->mapper) {
+    if (ORTE_RMAPS_UNDEF != jdata->map->req_mapper &&
+        ORTE_RMAPS_LOADBALANCE != jdata->map->req_mapper) {
         /* a mapper has been specified, and it isn't me */
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:lb: job %s not using loadbalance mapper",
@@ -77,7 +78,7 @@ static int switchyard(orte_job_t *jdata)
                         ORTE_JOBID_PRINT(jdata->jobid));
  
     /* flag that I did the mapping */
-    jdata->map->mapper = ORTE_RMAPS_LOADBALANCE;
+    jdata->map->last_mapper = ORTE_RMAPS_LOADBALANCE;
 
     if (0 < orte_rmaps_base.npernode) {
         rc = npernode(jdata);
