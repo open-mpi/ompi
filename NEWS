@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -29,7 +29,59 @@ version 1.0.
 1.5.2
 -----
 
-- Added ARM support
+- Replaced all custom topology / affinity code with initial support
+  for hwloc v1.1.1 (PLPA has been removed -- long live hwloc!).  Note
+  that hwloc is bundled with Open MPI, but an external hwloc can be
+  used, if desired.  See README for more details.
+- Many CMake updates for Windows builds.
+- Updated opal_cr_thread_sleep_wait MCA param default value to make it
+  less aggressive.
+- Updated debugger support to allow Totalview attaching from jobs
+  launched directly via srun (not mpirun).  Thanks to Nikolay Piskun
+  for the patch.
+- Added more FTB/CIFTS support.
+- Fixed compile error with the PGI compiler.
+- Portability fixes to allow the openib BTL to run on the Solaris
+  verbs stack.
+- Fixed multi-token command-line issues when using the mpirun
+  --debug switch.  For example:
+      mpirun --debug -np 2 a.out "foo bar"
+  Thanks to Gabriele Fatigati for reporting the issue.
+- Added ARM support.
+- Added the MPI_ROOT environment variable in the Open MPI Linux SRPM
+  for customers who use the BPS and LSF batch managers.
+- Updated ROMIO from MPICH v1.3.1 (plus one additional patch).
+- Fixed some deprecated MPI API function notification messages.
+- Added new "bfo" PML that provides failover on OpenFabrics networks.
+- Fixed some buffer memcheck issues in MPI_*_init.
+- Added Solaris-specific chip detection and performance improvements.
+- Fix some compile errors on Solaris.
+- Updated the "rmcast" framework with bug fixes, new functionality.
+- Updated the Voltaire FCA component with bug fixes, new
+  functionality.  Support for FCA version 2.1.
+- Fix gcc 4.4.x and 4.5.x over-aggressive warning notifications on
+  possibly freeing stack variables.  Thanks to the Gentoo packagers
+  for reporting the issue.
+- Make the openib component be verbose when it disqualifies itself due
+  to MPI_THREAD_MULTIPLE.
+- Minor man page fixes.
+- Various checkpoint / restart fixes.
+- Fix race condition in the one-sided unlock code.  Thanks to
+  Guillaume Thouvenin for finding the issue.
+- Improve help message aggregation.
+- Add OMPI_Affinity_str() optional user-level API function (i.e., the
+  "affinity" MPI extension).  See README for more details.
+- Added btl_tcp_if_seq MCA parameter to select a different ethernet
+  interface for each MPI process on a node.  This parameter is only
+  useful when used with virtual ethernet interfaces on a single
+  network card (e.g., when using virtual interfaces give dedicated
+  hardware resources on the NIC to each process).
+- Changed behavior of mpirun to terminate if it receives 10 (or more)
+  SIGPIPEs.
+- Fixed oversubscription detection.
+- Added new mtl_mx_board and mtl_mx_endpoint MCA parameters.
+- Added ummunotify support for OpenFabrics-based transports.  See the
+  README for more details.
 
 
 1.5.1
