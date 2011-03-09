@@ -51,7 +51,8 @@ typedef enum orte_rmaps_mapper_type_t orte_rmaps_mapper_type_t;
 struct orte_job_map_t {
     opal_object_t super;
     /* user-specified mapping params */
-    orte_rmaps_mapper_type_t mapper;
+    orte_rmaps_mapper_type_t req_mapper;  /* requested mapper */
+    orte_rmaps_mapper_type_t last_mapper; /* last mapper used */
     orte_mapping_policy_t policy;
     int npernode;
     int nperboard;

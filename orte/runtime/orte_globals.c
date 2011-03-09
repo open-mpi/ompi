@@ -1044,7 +1044,8 @@ OBJ_CLASS_INSTANCE(orte_jmap_t,
 
 static void orte_job_map_construct(orte_job_map_t* map)
 {
-    map->mapper = ORTE_RMAPS_UNDEF;
+    map->req_mapper = ORTE_RMAPS_UNDEF;
+    map->last_mapper = ORTE_RMAPS_UNDEF;
     map->policy = 0;
     map->npernode = 0;
     map->nperboard = 0;

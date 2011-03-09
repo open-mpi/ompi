@@ -79,15 +79,18 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         map->stride = orte_rmaps_base.stride;
         map->oversubscribe = orte_rmaps_base.oversubscribe;
         map->display_map = orte_rmaps_base.display_map;
-        map->mapper = orte_rmaps_base.default_mapper;
+        map->req_mapper = orte_rmaps_base.default_mapper;
         /* assign the map object to this job */
         jdata->map = map;
     } else {
         if (!jdata->map->display_map) {
             jdata->map->display_map = orte_rmaps_base.display_map;
         }
-        if (ORTE_RMAPS_UNDEF == jdata->map->mapper) {
-            jdata->map->mapper = orte_rmaps_base.default_mapper;
+        if (ORTE_RMAPS_UNDEF == jdata->map->req_mapper) {
+            jdata->map->req_mapper = orte_rmaps_base.default_mapper;
+        }
+        if (0 == jdata->map->policy) {
+            jdata->map->policy = orte_default_mapping_policy;
         }
     }
 

@@ -60,12 +60,13 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
      */
     if (ORTE_JOB_STATE_INIT != jdata->state) {
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "mca:rmaps:rr: not job %s in state %s - rr cannot map",
+                            "mca:rmaps:rr: job %s in state %s - rr cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid),
                             orte_job_state_to_str(jdata->state));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    if (0 < jdata->map->mapper && ORTE_RMAPS_RR != jdata->map->mapper) {
+    if (ORTE_RMAPS_UNDEF != jdata->map->req_mapper &&
+        ORTE_RMAPS_RR != jdata->map->req_mapper) {
         /* a mapper has been specified, and it isn't me */
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:rr: job %s not using rr mapper",
@@ -78,7 +79,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                         ORTE_JOBID_PRINT(jdata->jobid));
  
     /* flag that I did the mapping */
-    jdata->map->mapper = ORTE_RMAPS_RR;
+    jdata->map->last_mapper = ORTE_RMAPS_RR;
 
     /* start at the beginning... */
     jdata->num_procs = 0;

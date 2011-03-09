@@ -41,7 +41,7 @@
  * Local variable
  */
 static char *orte_getline(FILE *fp);
-static bool have_ftgrps=false;
+static bool have_ftgrps=false, made_ftgrps=false;
 
 static int construct_ftgrps(void);
 static int get_ftgrp_target(orte_proc_t *proc,
@@ -69,16 +69,25 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     orte_std_cntr_t num_slots;
     opal_list_item_t *item;
 
-    if (0 < jdata->map->mapper && ORTE_RMAPS_RESILIENT != jdata->map->mapper) {
+    if (ORTE_JOB_STATE_INIT == jdata->state) {
+        if (ORTE_RMAPS_UNDEF != jdata->map->req_mapper &&
+            ORTE_RMAPS_RESILIENT != jdata->map->req_mapper) {
+            /* a mapper has been specified, and it isn't me */
+            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                                "mca:rmaps:resilient: job %s not using loadbalance mapper",
+                                ORTE_JOBID_PRINT(jdata->jobid));
+            return ORTE_ERR_TAKE_NEXT_OPTION;
+        }
+        if (NULL == mca_rmaps_resilient_component.fault_group_file) {
+            opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                                "mca:rmaps:resilient: cannot perform initial map of job %s - no fault groups",
+                                ORTE_JOBID_PRINT(jdata->jobid));
+            return ORTE_ERR_TAKE_NEXT_OPTION;
+        }
+    } else if (ORTE_JOB_STATE_RESTART != jdata->state &&
+               ORTE_JOB_STATE_PROCS_MIGRATING != jdata->state) {
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "mca:rmaps:resilient: cannot map job %s - other mapper specified",
-                            ORTE_JOBID_PRINT(jdata->jobid));
-        return ORTE_ERR_TAKE_NEXT_OPTION;
-    }
-    if (ORTE_JOB_STATE_INIT == jdata->state &&
-        NULL == mca_rmaps_resilient_component.fault_group_file) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "mca:rmaps:resilient: cannot perform initial map of job %s",
+                            "mca:rmaps:resilient: cannot map job %s - not in restart or migrating",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
@@ -88,10 +97,10 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                         ORTE_JOBID_PRINT(jdata->jobid));
  
     /* flag that I did the mapping */
-    jdata->map->mapper = ORTE_RMAPS_RESILIENT;
+    jdata->map->last_mapper = ORTE_RMAPS_RESILIENT;
 
     /* have we already constructed the fault group list? */
-    if (!have_ftgrps) {
+    if (!made_ftgrps) {
         construct_ftgrps();
     }
 
@@ -288,7 +297,7 @@ static int construct_ftgrps(void)
     int i, k;
 
     /* flag that we did this */
-    have_ftgrps = true;
+    made_ftgrps = true;
 
     if (NULL == mca_rmaps_resilient_component.fault_group_file) {
         /* nothing to build */
@@ -337,6 +346,8 @@ static int construct_ftgrps(void)
     }
     fclose(fp);
 
+    /* flag that we have fault grps */
+    have_ftgrps = true;
     return ORTE_SUCCESS;
 }
 
