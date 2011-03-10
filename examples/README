@@ -1,7 +1,7 @@
 Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
                         University Research and Technology
                         Corporation.  All rights reserved.
-Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
 Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 
@@ -10,9 +10,12 @@ as a trivial primer to MPI as well as simple tests to ensure that your
 Open MPI installation is working properly.
 
 If you are looking for a comprehensive MPI tutorial, these samples are
-not enough.  An excellent MPI tutorial is available here:
+not enough.  Excellent MPI tutorials are available here:
 
-        http://webct.ncsa.uiuc.edu:8900/public/MPI/
+        http://www.citutor.org/login.php
+
+Get a free account and login; you can then browse to the list of
+available courses.  Look for the ones with "MPI" in the title.
 
 There are 2 MPI examples in this directory, each in four languages:
 
