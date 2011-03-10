@@ -44,6 +44,9 @@
 #include "connect/connect.h"
 #include "orte/util/show_help.h"
 
+#include <infiniband/mad.h>
+#include <iba/ib_types.h>
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -54,12 +57,6 @@ typedef enum {
     ENDPOINT_CONNECT_ACK
 } connect_message_type_t;
 
-#ifndef __WINDOWS__
-#define PACK_SUFFIX __attribute__((packed))
-#else
-#define PACK_SUFFIX
-#endif
-
 #define SL_NOT_PRESENT                0x7F
 #define MAX_GET_SL_REC_RETRIES        20
 #define GET_SL_REC_RETRIES_TIMEOUT_MS 2000000
@@ -67,85 +64,13 @@ typedef enum {
 #define IB_SA_QPN                     1
 #define IB_GLOBAL_QKEY                0x80010000UL
 #define IB_MGMT_BASE_VERSION          1
-#define IB_MGMT_CLASS_SUBN_ADM        0x03
-#define IB_MGMT_METHOD_GET            0x01
 #define IB_SA_TID_GET_PATH_REC_0      0xCA000000UL
 #define IB_SA_TID_GET_PATH_REC_1      0xBEEF0000UL
-#define IB_PATH_REC_SL_MASK           0x000F
-#define IB_SA_ATTR_PATH_REC           0x35
-#define IB_SA_PATH_REC_DLID           (1<<4)
-#define IB_SA_PATH_REC_SLID           (1<<5)
-
 
 #ifdef __WINDOWS__
   #pragma pack(push)
   #pragma pack(1)
 #endif
-
-struct ib_mad_hdr {
-    uint8_t   base_version;
-    uint8_t   mgmt_class;
-    uint8_t   class_version;
-    uint8_t   method;
-    uint16_t  status;
-    uint16_t  class_spec;
-    uint32_t  tid[2];
-    uint16_t  attr_id;
-    uint16_t  resv;
-    uint32_t  attr_mod;
-} PACK_SUFFIX;
-
-struct ib_rmpp_hdr {
-    uint32_t  raw[3];
-} PACK_SUFFIX;
-
-struct ib_sa_hdr {
-    uint32_t sm_key[2];
-    uint16_t reserved;
-    uint16_t attrib_offset;
-    uint32_t comp_mask[2];
-} PACK_SUFFIX;
-
-typedef union _ib_gid {
-    uint8_t raw[16];
-    struct _ib_gid_unicast {
-        uint64_t prefix;
-        uint64_t interface_id;
-    } PACK_SUFFIX unicast;
-    struct _ib_gid_multicast {
-        uint8_t header[2];
-        uint8_t raw_group_id[14];
-    } PACK_SUFFIX multicast;
-} PACK_SUFFIX ib_gid_t;
-
-struct ib_path_record {
-    uint64_t service_id;
-    ib_gid_t dgit;
-    ib_gid_t sgit;
-    uint16_t dlid;
-    uint16_t slid;
-    uint32_t hop_flow_raw;
-    uint8_t  tclass;
-    uint8_t  num_path;
-    uint16_t pkey;
-    uint8_t  reserved1;
-    uint8_t  qos_class_sl;
-    uint8_t  mtu;
-    uint8_t  rate;
-    uint32_t preference__packet_lifetime__packet_lifetime_selector;
-    uint32_t reserved2[35];
-} PACK_SUFFIX;
-
-union ib_sa_data {
-    struct ib_path_record path_record;
-} PACK_SUFFIX;
-
-struct ib_mad_sa {
-    struct ib_mad_hdr mad_hdr;
-    struct ib_rmpp_hdr rmpp_hdr;
-    struct ib_sa_hdr sa_hdr;
-    union  ib_sa_data sa_data;
-} PACK_SUFFIX;
 
 #ifdef __WINDOWS__
   #pragma pack(pop)
@@ -156,7 +81,7 @@ static struct mca_btl_openib_sa_qp_cache {
     /* The send buffer is first, the receive buffer is second */
     /* The receive buffer in a UD queue pair needs room for the 40 byte GRH */
     /* The buffers are first in the structure for page alignment */
-    char     send_recv_buffer[sizeof(struct ib_mad_sa) * 2 + 40];
+    char     send_recv_buffer[sizeof(ib_sa_mad_t) * 2 + 40];
     struct   mca_btl_openib_sa_qp_cache *next;
     struct   ibv_context *context;
     char     *device_name;
@@ -168,7 +93,7 @@ static struct mca_btl_openib_sa_qp_cache {
     struct   ibv_pd *pd;
     struct   ibv_recv_wr rwr;
     struct   ibv_sge rsge;
-    char     sl_values[65536];
+    uint8_t  sl_values[65536];
 } *sa_qp_cache = 0;
 
 static int oob_priority = 50;
@@ -201,14 +126,14 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
 static int init_ud_qp(struct ibv_context *context_arg,
                       struct mca_btl_openib_sa_qp_cache *cache);
 static void init_sa_mad(struct mca_btl_openib_sa_qp_cache *cache,
-                        struct ib_mad_sa *sag,
+                        ib_sa_mad_t *sag,
                         struct ibv_send_wr *swr,
                         struct ibv_sge *ssge,
                         uint16_t lid,
                         uint16_t rem_lid);
 static int get_pathrecord_info(struct mca_btl_openib_sa_qp_cache *cache,
-                               struct ib_mad_sa *sag,
-                               struct ib_mad_sa *sar,
+                               ib_sa_mad_t *sag,
+                               ib_sa_mad_t *sar,
                                struct ibv_send_wr *swr,
                                uint16_t lid,
                                uint16_t rem_lid);
@@ -219,6 +144,7 @@ static int get_pathrecord_sl(struct ibv_context *context_arg,
                              uint32_t port_num,
                              uint16_t lid,
                              uint16_t rem_lid);
+static void free_sa_qp_cache(void);
 
 /*
  * The "component" struct -- the top-level function pointers for the
@@ -351,6 +277,31 @@ static int oob_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
     return OMPI_SUCCESS;
 }
 
+static void free_sa_qp_cache(void)
+{
+    struct mca_btl_openib_sa_qp_cache *cache, *tmp;
+
+    cache = sa_qp_cache;
+    while (NULL != cache) {
+        /* free cache data */
+        if (cache->device_name)
+            free(cache->device_name);
+        if (NULL != cache->qp)
+            ibv_destroy_qp(cache->qp);
+        if (NULL != cache->ah)
+            ibv_destroy_ah(cache->ah);
+        if (NULL != cache->cq)
+            ibv_destroy_cq(cache->cq);
+        if (NULL != cache->mr)
+            ibv_dereg_mr(cache->mr);
+        if (NULL != cache->pd)
+            ibv_dealloc_pd(cache->pd);
+        tmp = cache->next;
+        free(cache);
+        cache = tmp;
+    }
+}
+
 /*
  * Component finalize function.  Cleanup RML non-blocking receive.
  */
@@ -360,6 +311,8 @@ static int oob_component_finalize(void)
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_OPENIB);
         rml_recv_posted = false;
     }
+
+    free_sa_qp_cache();
 
     return OMPI_SUCCESS;
 }
@@ -447,14 +400,15 @@ static int qp_connect_all(mca_btl_openib_endpoint_t *endpoint)
         attr.ah_attr.src_path_bits = openib_btl->src_path_bits;
         attr.ah_attr.port_num      = openib_btl->port_num;
         attr.ah_attr.sl = mca_btl_openib_component.ib_service_level;
-        /* if user enable ib_path_rec_service_level - dynamically get the sl from PathRecord */
-        if (mca_btl_openib_component.ib_path_rec_service_level > 0) {
+        /* if user enable ib_path_record_service_level - dynamically get the sl from PathRecord */
+        if (0 != mca_btl_openib_component.ib_path_record_service_level) {
             rc = get_pathrecord_sl(qp->context,
                                    attr.ah_attr.port_num,
                                    openib_btl->lid,
                                    attr.ah_attr.dlid);
-            if (OMPI_ERROR == rc) {
-                return OMPI_ERROR;
+            if (rc < 0) {
+                free_sa_qp_cache();
+                return rc;
             }
             attr.ah_attr.sl = rc;
         }
@@ -1066,7 +1020,6 @@ static int init_ud_qp(struct ibv_context *context_arg,
     /* create cq */
     cache->cq = ibv_create_cq(cache->context, 4, NULL, NULL, 0);
     if (NULL == cache->cq) {
-        BTL_ERROR(("error creating cq, errno says %s", strerror(errno)));
         orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
                 true, orte_process_info.nodename,
                 __FILE__, __LINE__, "ibv_create_cq",
@@ -1128,27 +1081,32 @@ static int init_ud_qp(struct ibv_context *context_arg,
     return OMPI_SUCCESS;
 }
 static void init_sa_mad(struct mca_btl_openib_sa_qp_cache *cache,
-                        struct ib_mad_sa *sag,
+                        ib_sa_mad_t *sag,
                         struct ibv_send_wr *swr,
                         struct ibv_sge *ssge,
                         uint16_t lid,
                         uint16_t rem_lid)
 {
+    ib_path_rec_t *path_record;
+
+    path_record = (ib_path_rec_t*)sag->data;
+
     memset(sag, 0, sizeof(*sag));
     memset(swr, 0, sizeof(*swr));
     memset(ssge, 0, sizeof(*ssge));
 
-    sag->mad_hdr.base_version = IB_MGMT_BASE_VERSION;
-    sag->mad_hdr.mgmt_class = IB_MGMT_CLASS_SUBN_ADM;
-    sag->mad_hdr.class_version = 2;
-    sag->mad_hdr.method = IB_MGMT_METHOD_GET;
-    sag->mad_hdr.attr_id = htons (IB_SA_ATTR_PATH_REC);
-    sag->mad_hdr.tid[0] = IB_SA_TID_GET_PATH_REC_0 + cache->qp->qp_num;
-    sag->mad_hdr.tid[1] = IB_SA_TID_GET_PATH_REC_1 + rem_lid;
-    sag->sa_hdr.comp_mask[1] =
-        htonl(IB_SA_PATH_REC_DLID | IB_SA_PATH_REC_SLID);
-    sag->sa_data.path_record.dlid = htons(rem_lid);
-    sag->sa_data.path_record.slid = htons(lid);
+    sag->base_ver   = IB_MGMT_BASE_VERSION;
+    sag->mgmt_class = IB_SA_CLASS;
+    sag->class_ver  = 2;
+    sag->method     = IB_MAD_METHOD_GET;
+    sag->attr_id    = htons(IB_SA_ATTR_PATHRECORD);
+    sag->trans_id   =
+        ((IB_SA_TID_GET_PATH_REC_1 + rem_lid) |
+         ((IB_SA_TID_GET_PATH_REC_0 + cache->qp->qp_num)<<32));
+    sag->comp_mask =
+        IB_PR_COMPMASK_DLID | IB_PR_COMPMASK_SLID;
+    path_record->dlid = htons(rem_lid);
+    path_record->slid = htons(lid);
 
     swr->sg_list = ssge;
     swr->num_sge = 1;
@@ -1164,8 +1122,8 @@ static void init_sa_mad(struct mca_btl_openib_sa_qp_cache *cache,
 }
 
 static int get_pathrecord_info(struct mca_btl_openib_sa_qp_cache *cache,
-                               struct ib_mad_sa *sag,
-                               struct ib_mad_sa *sar,
+                               ib_sa_mad_t *sag,
+                               ib_sa_mad_t *sar,
                                struct ibv_send_wr *swr,
                                uint16_t lid,
                                uint16_t rem_lid)
@@ -1175,14 +1133,22 @@ static int get_pathrecord_info(struct mca_btl_openib_sa_qp_cache *cache,
     struct timeval get_sl_rec_last_sent, get_sl_rec_last_poll;
     struct ibv_recv_wr *brwr;
     int got_sl_value, get_sl_rec_retries, rc, ne, i;
+    ib_path_rec_t *path_record = (ib_path_rec_t*)sar->data;
 
     got_sl_value = 0;
     get_sl_rec_retries = 0;
 
+    rc = ibv_post_recv(cache->qp, &(cache->rwr), &brwr);
+    if (0 != rc) {
+        BTL_ERROR(("error posing receive on QP[%x] errno says: %s [%d]",
+                   cache->qp->qp_num, strerror(errno), errno));
+        return OMPI_ERROR;
+    }
+
     while (0 == got_sl_value) {
         rc = ibv_post_send(cache->qp, swr, &bswr);
         if (0 != rc) {
-            BTL_ERROR(("error posing send on QP[%x] errno says: %s [%d]",
+            BTL_ERROR(("error posting send on QP[%x] errno says: %s [%d]",
                        cache->qp->qp_num, strerror(errno), errno));
             return OMPI_ERROR;
         }
@@ -1191,24 +1157,23 @@ static int get_pathrecord_info(struct mca_btl_openib_sa_qp_cache *cache,
         while (0 == got_sl_value) {
             ne = ibv_poll_cq(cache->cq, 1, &wc);
             if (ne > 0
-                    && wc.status == IBV_WC_SUCCESS
-                    && wc.opcode == IBV_WC_RECV
+                    && IBV_WC_SUCCESS == wc.status
+                    && IBV_WC_RECV == wc.opcode
                     && wc.byte_len >= sizeof(*sar)
-                    && sar->mad_hdr.tid[0] == sag->mad_hdr.tid[0]
-                    && sar->mad_hdr.tid[1] == sag->mad_hdr.tid[1]) {
-                if (0 == sar->mad_hdr.status
-                        && sar->sa_data.path_record.slid == htons(lid)
-                        && sar->sa_data.path_record.dlid == htons(rem_lid)) {
+                    && sar->trans_id == sag->trans_id) {
+                if (0 == sar->status
+                        && path_record->slid == htons(lid)
+                        && path_record->dlid == htons(rem_lid)) {
                     /* Everything matches, so we have the desired SL */
                     cache->sl_values[rem_lid] =
-                        sar->sa_data.path_record.qos_class_sl & IB_PATH_REC_SL_MASK;
+                        ib_path_rec_sl(path_record);
                     got_sl_value = 1; /* still must repost recieve buf */
                 } else {
                     /* Probably bad status, unlikely bad lid match. We will */
                     /* ignore response and let it time out so that we do a  */
                     /* retry, but after a delay. We must make a new TID so  */
                     /* the SM doesn't see it as the same request.           */
-                    sag->mad_hdr.tid[1] += 0x10000;
+                    sag->trans_id += 0x10000;
                 }
                 rc = ibv_post_recv(cache->qp, &(cache->rwr), &brwr);
                 if (0 != rc) {
@@ -1249,7 +1214,6 @@ static int init_device(struct ibv_context *context_arg,
 {
     struct ibv_ah_attr aattr;
     struct ibv_port_attr pattr;
-    struct ibv_recv_wr *brwr;
     int rc;
 
     cache->context = ibv_open_device(context_arg->device);
@@ -1315,16 +1279,10 @@ static int init_device(struct ibv_context *context_arg,
     cache->rwr.sg_list = &(cache->rsge);
     memset(&(cache->rsge), 0, sizeof(cache->rsge));
     cache->rsge.addr = (uint64_t)(void *)
-        (cache->send_recv_buffer + sizeof(struct ib_mad_sa));
-    cache->rsge.length = sizeof(struct ib_mad_sa) + 40;
+        (cache->send_recv_buffer + sizeof(ib_sa_mad_t));
+    cache->rsge.length = sizeof(ib_sa_mad_t) + 40;
     cache->rsge.lkey = cache->mr->lkey;
 
-    rc = ibv_post_recv(cache->qp, &(cache->rwr), &brwr);
-    if (0 != rc) {
-        BTL_ERROR(("error posing receive on QP[%x] errno says: %s [%d]",
-                   cache->qp->qp_num, strerror(errno), errno));
-        return OMPI_ERROR;
-    }
     return 0;
 }
 
@@ -1334,7 +1292,7 @@ static int get_pathrecord_sl(struct ibv_context *context_arg,
                              uint16_t rem_lid)
 {
     struct ibv_send_wr swr;
-    struct ib_mad_sa *sag, *sar;
+    ib_sa_mad_t *sag, *sar;
     struct ibv_sge ssge;
     struct mca_btl_openib_sa_qp_cache *cache;
     long page_size = sysconf(_SC_PAGESIZE);
@@ -1342,8 +1300,8 @@ static int get_pathrecord_sl(struct ibv_context *context_arg,
 
     /* search for a cached item */
     for (cache = sa_qp_cache; cache; cache = cache->next) {
-        if (strcmp(cache->device_name,
-                    ibv_get_device_name(context_arg->device)) == 0
+        if (0 == strcmp(cache->device_name,
+                    ibv_get_device_name(context_arg->device))
                 && cache->port_num == port_num) {
             break;
         }
@@ -1366,12 +1324,12 @@ static int get_pathrecord_sl(struct ibv_context *context_arg,
     /* if the destination lid SL value is not in the cache, go get it */
     if (SL_NOT_PRESENT == cache->sl_values[rem_lid]) {
         /* sag is first buffer, where we build the SA Get request to send */
-        sag = (struct ib_mad_sa *)(cache->send_recv_buffer);
+        sag = (ib_sa_mad_t *)(cache->send_recv_buffer);
 
         init_sa_mad(cache, sag, &swr, &ssge, lid, rem_lid);
 
         /* sar is the receive buffer (40 byte GRH) */
-        sar = (struct ib_mad_sa *)(cache->send_recv_buffer + sizeof(struct ib_mad_sa) + 40);
+        sar = (ib_sa_mad_t *)(cache->send_recv_buffer + sizeof(ib_sa_mad_t) + 40);
 
         rc = get_pathrecord_info(cache, sag, sar, &swr, lid, rem_lid);
         if (0 != rc) {
