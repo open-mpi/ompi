@@ -64,6 +64,13 @@ Trunk (not on release branches yet)
   being "bound to all", which is equivalent to "not bound"
 
 
+1.5.3
+-----
+
+- Add missing "affinity" MPI extension (i.e., the OMPI_Affinity_str()
+  API) that was accidentally left out of the 1.5.2 release.
+
+
 1.5.2
 -----
 
