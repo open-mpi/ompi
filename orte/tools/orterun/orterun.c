@@ -622,7 +622,11 @@ int orterun(int argc, char *argv[])
     if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
         ORTE_ERROR_LOG(rc);
         return rc;
-    }    
+    }
+    /* finalize the OPAL utils. As they are opened again from orte_init->opal_init
+     * we continue to have a reference count on them. So we have to finalize them twice...
+     */
+    opal_finalize_util();
 
     /* check for request to report uri */
     if (NULL != orterun_globals.report_uri) {
@@ -792,6 +796,7 @@ int orterun(int argc, char *argv[])
 DONE:
     ORTE_UPDATE_EXIT_STATUS(orte_exit_status);
     orte_quit();
+
     return orte_exit_status;
 }
 
