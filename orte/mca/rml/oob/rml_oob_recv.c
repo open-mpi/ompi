@@ -192,7 +192,6 @@ orte_rml_oob_recv_buffer(orte_process_name_t* peer,
  cleanup:
     OBJ_RELEASE(msg);
 
-
     return ret;
 }
 
