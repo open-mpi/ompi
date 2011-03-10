@@ -164,7 +164,8 @@ int mca_oob_tcp_component_open(void)
 #ifdef __WINDOWS__
     WSADATA win_sock_data;
     if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-        opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: error %d\n", WSAGetLastError());
+        opal_output (0, "mca_oob_tcp_component_open: failed to initialise windows sockets: error %d\n",
+                     WSAGetLastError());
         return ORTE_ERROR;
     }
 #endif
@@ -431,7 +432,7 @@ int mca_oob_tcp_component_close(void)
     while (NULL != (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_available_devices))) {
         OBJ_RELEASE(item);
     }
-#if 0
+
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_connections_lock);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_connections_return);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_pending_connections);
@@ -451,7 +452,6 @@ int mca_oob_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
 
     opal_output_close(mca_oob_tcp_output_handle);
-#endif
     
     return ORTE_SUCCESS;
 }
