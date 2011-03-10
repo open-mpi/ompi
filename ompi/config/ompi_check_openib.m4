@@ -267,7 +267,10 @@ dnl           fi
         AC_MSG_RESULT([no])
     fi
 
-    CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
+    AS_IF([test -z "$ompi_check_openib_dir"],
+          [openib_include_dir="/usr/include"],[openib_include_dir="$ompi_check_openib_dir/include"])
+
+    CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS -I$openib_include_dir/infiniband"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
     LIBS="$ompi_check_openib_$1_save_LIBS"
 
