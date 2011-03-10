@@ -26,6 +26,13 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.5.3
+-----
+
+- Add missing "affinity" MPI extension (i.e., the OMPI_Affinity_str()
+  API) that was accidentally left out of the 1.5.2 release.
+
+
 1.5.2
 -----
 
