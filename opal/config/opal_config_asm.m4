@@ -896,7 +896,7 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
             OMPI_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
             ;;
 
-        powerpc-*|powerpc64-*|rs6000-*)
+        powerpc-*|powerpc64-*|rs6000-*|ppc-*)
             OMPI_CHECK_POWERPC_REG
             if test "$ac_cv_sizeof_long" = "4" ; then
                 ompi_cv_asm_arch="POWERPC32"
