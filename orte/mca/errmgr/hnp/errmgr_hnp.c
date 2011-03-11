@@ -444,6 +444,7 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
             update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_ABORTED, exit_code);
             jdata->num_terminated = jdata->num_procs;
             check_job_complete(jdata);
+            break;
 
         case ORTE_JOB_STATE_FAILED_TO_START:
             failed_start(jdata);
