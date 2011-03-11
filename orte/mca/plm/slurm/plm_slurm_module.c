@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -164,6 +164,11 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     bool failed_launch=true;
     bool using_regexp=false;
 
+    /* if we are timing, record the start time */
+    if (orte_timing) {
+        gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
+    }
+    
     if (NULL == jdata) {
         /* just launching debugger daemons */
         active_job = ORTE_JOBID_INVALID;
@@ -184,11 +189,6 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
             return ORTE_ERR_FAILED_TO_START;
         }
         return orte_plm_base_local_slave_launch(jdata);
-    }
-    
-    /* if we are timing, record the start time */
-    if (orte_timing) {
-        gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
     }
     
     /* flag the daemons as failing by default */
