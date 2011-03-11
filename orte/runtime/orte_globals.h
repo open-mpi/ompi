@@ -180,11 +180,13 @@ struct orte_job_map_t;
 typedef struct {
     /** Parent object */
     opal_object_t super;
-  /** unique name for this application - has
-   * nothing to do with argv[0], but has meaning
-   * to the user, if provided
-   */
-  char *name;
+    /** unique name for this application - has
+     * nothing to do with argv[0], but has meaning
+     * to the user, if provided
+     */
+    char *name;
+    /* a version string */
+    char *version;
     /** Unique index when multiple apps per job */
     orte_app_idx_t idx;
     /** Absolute pathname of argv[0] */
@@ -216,7 +218,7 @@ typedef struct {
     /** Preload the comma separated list of files to the remote machines cwd */
     char * preload_files;
     /** Destination directory for the preloaded files 
-        * If NULL then the absolute and relative paths are obeyed */
+     * If NULL then the absolute and relative paths are obeyed */
     char *preload_files_dest_dir;
     /** Source directory for the preloaded files 
      * If NULL then the absolute and relative paths are obeyed */
