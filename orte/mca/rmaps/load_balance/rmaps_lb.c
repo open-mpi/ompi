@@ -54,6 +54,7 @@ static int loadbalance(orte_job_t *jdata);
 static int switchyard(orte_job_t *jdata)
 {
     int rc;
+    mca_base_component_t *c = &mca_rmaps_load_balance_component.super.base_version;
     
     /* only handle initial launch of loadbalanced
      * or NPERxxx jobs - allow restarting of failed apps
@@ -64,8 +65,8 @@ static int switchyard(orte_job_t *jdata)
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    if (ORTE_RMAPS_UNDEF != jdata->map->req_mapper &&
-        ORTE_RMAPS_LOADBALANCE != jdata->map->req_mapper) {
+    if (NULL != jdata->map->req_mapper &&
+        0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
         /* a mapper has been specified, and it isn't me */
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:lb: job %s not using loadbalance mapper",
@@ -78,13 +79,16 @@ static int switchyard(orte_job_t *jdata)
                         ORTE_JOBID_PRINT(jdata->jobid));
  
     /* flag that I did the mapping */
-    jdata->map->last_mapper = ORTE_RMAPS_LOADBALANCE;
+    jdata->map->last_mapper = strdup(c->mca_component_name);
 
-    if (0 < orte_rmaps_base.npernode) {
+    if (0 < mca_rmaps_load_balance_component.npernode ||
+        0 < jdata->map->npernode) {
         rc = npernode(jdata);
-    } else if (0 < orte_rmaps_base.nperboard) {
+    } else if (0 < mca_rmaps_load_balance_component.nperboard ||
+               0 < jdata->map->nperboard) {
         rc = nperboard(jdata);
-    } else if (0 < orte_rmaps_base.npersocket) {
+    } else if (0 < mca_rmaps_load_balance_component.npersocket ||
+               0 < jdata->map->npersocket) {
         rc = npersocket(jdata);
     } else {
         rc = loadbalance(jdata);
@@ -152,7 +156,7 @@ static int npernode(orte_job_t *jdata)
     while (NULL != (item = opal_list_remove_first(&node_list))) {
         node = (orte_node_t*)item;
         /* put the specified number of procs on each node */
-        for (j=0; j < orte_rmaps_base.npernode && nprocs < np; j++) {
+        for (j=0; j < mca_rmaps_load_balance_component.npernode && nprocs < np; j++) {
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
                                                                  jdata->map->cpus_per_rank, app->idx,
                                                                  &node_list, jdata->map->oversubscribe,
@@ -161,7 +165,7 @@ static int npernode(orte_job_t *jdata)
                  * more procs to place, then that is an error
                  */
                 if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc) ||
-                    j < orte_rmaps_base.npernode-1) {
+                    j < mca_rmaps_load_balance_component.npernode-1) {
                     ORTE_ERROR_LOG(rc);
                     OBJ_RELEASE(node);
                     goto error;
@@ -180,7 +184,7 @@ static int npernode(orte_job_t *jdata)
         orte_show_help("help-orte-rmaps-base.txt", "rmaps:too-many-procs", true,
                        app->app, app->num_procs,
                        "number of nodes", num_nodes,
-                       "npernode", orte_rmaps_base.npernode);
+                       "npernode", mca_rmaps_load_balance_component.npernode);
         return ORTE_ERR_SILENT;
     }
     /* update the number of procs in the job */
@@ -244,7 +248,7 @@ static int nperboard(orte_job_t *jdata)
         /* loop through the number of boards in this node */
         for (k=0; k < node->boards && nprocs < np; k++) {
             /* put the specified number of procs on each board */
-            for (j=0; j < orte_rmaps_base.nperboard && nprocs < np; j++) {
+            for (j=0; j < mca_rmaps_load_balance_component.nperboard && nprocs < np; j++) {
                 if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
                                                                      jdata->map->cpus_per_rank, app->idx,
                                                                      &node_list, jdata->map->oversubscribe,
@@ -253,7 +257,7 @@ static int nperboard(orte_job_t *jdata)
                      * more procs to place, then that is an error
                      */
                     if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc) ||
-                        j < orte_rmaps_base.nperboard-1) {
+                        j < mca_rmaps_load_balance_component.nperboard-1) {
                         ORTE_ERROR_LOG(rc);
                         OBJ_RELEASE(node);
                         goto error;
@@ -273,7 +277,7 @@ static int nperboard(orte_job_t *jdata)
         orte_show_help("help-orte-rmaps-base.txt", "rmaps:too-many-procs", true,
                        app->app, app->num_procs,
                        "number of boards", num_boards,
-                       "nperboard", orte_rmaps_base.nperboard);
+                       "nperboard", mca_rmaps_load_balance_component.nperboard);
         return ORTE_ERR_SILENT;
     }
     /* update the number of procs in the job */
@@ -340,7 +344,7 @@ static int npersocket(orte_job_t *jdata)
             /* loop through the number of sockets/board */
             for (n=0; n < node->sockets_per_board && nprocs < np; n++) {
                 /* put the specified number of procs on each socket */
-                for (j=0; j < orte_rmaps_base.npersocket && nprocs < np; j++) {
+                for (j=0; j < mca_rmaps_load_balance_component.npersocket && nprocs < np; j++) {
                     if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
                                                                          jdata->map->cpus_per_rank, app->idx,
                                                                          &node_list, jdata->map->oversubscribe,
@@ -349,7 +353,7 @@ static int npersocket(orte_job_t *jdata)
                          * more procs to place, then that is an error
                          */
                         if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc) ||
-                            j < orte_rmaps_base.npersocket-1) {
+                            j < mca_rmaps_load_balance_component.npersocket-1) {
                             ORTE_ERROR_LOG(rc);
                             OBJ_RELEASE(node);
                             goto error;
@@ -371,7 +375,7 @@ static int npersocket(orte_job_t *jdata)
         orte_show_help("help-orte-rmaps-base.txt", "rmaps:too-many-procs", true,
                        app->app, app->num_procs,
                        "number of sockets", num_sockets,
-                       "npersocket", orte_rmaps_base.npersocket);
+                       "npersocket", mca_rmaps_load_balance_component.npersocket);
         return ORTE_ERR_SILENT;
     }
     /* update the number of procs in the job */

@@ -68,10 +68,11 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     opal_list_t node_list;
     orte_std_cntr_t num_slots;
     opal_list_item_t *item;
+    mca_base_component_t *c = &mca_rmaps_resilient_component.super.base_version;
 
     if (ORTE_JOB_STATE_INIT == jdata->state) {
-        if (ORTE_RMAPS_UNDEF != jdata->map->req_mapper &&
-            ORTE_RMAPS_RESILIENT != jdata->map->req_mapper) {
+        if (NULL != jdata->map->req_mapper &&
+            0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
             /* a mapper has been specified, and it isn't me */
             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps:resilient: job %s not using loadbalance mapper",
@@ -97,7 +98,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                         ORTE_JOBID_PRINT(jdata->jobid));
  
     /* flag that I did the mapping */
-    jdata->map->last_mapper = ORTE_RMAPS_RESILIENT;
+    jdata->map->last_mapper = strdup(c->mca_component_name);
 
     /* have we already constructed the fault group list? */
     if (!made_ftgrps) {

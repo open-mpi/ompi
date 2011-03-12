@@ -955,7 +955,7 @@ int orte_dt_unpack_map(opal_buffer_t *buffer, void *dest,
         /* unpack the requested mapper */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                                         &(maps[i]->req_mapper), &n, OPAL_INT32))) {
+                                                         &(maps[i]->req_mapper), &n, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -963,7 +963,7 @@ int orte_dt_unpack_map(opal_buffer_t *buffer, void *dest,
         /* unpack the mapper used */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                                         &(maps[i]->last_mapper), &n, OPAL_INT32))) {
+                                                         &(maps[i]->last_mapper), &n, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

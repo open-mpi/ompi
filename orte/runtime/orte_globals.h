@@ -330,6 +330,8 @@ typedef uint16_t orte_job_controls_t;
 #define ORTE_MAPPING_NO_USE_LOCAL   0x2000
 #define ORTE_MAPPING_NPERXXX        0x4000
 #define ORTE_MAPPING_BYUSER         0x8000
+/* check if policy is set */
+#define ORTE_MAPPING_POLICY_IS_SET(pol) (pol & 0xff00)
 /* nice macro for setting these */
 #define ORTE_SET_MAPPING_POLICY(pol) \
     orte_default_mapping_policy = (orte_default_mapping_policy & 0x00ff) | (pol);

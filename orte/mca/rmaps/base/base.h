@@ -58,16 +58,8 @@ typedef struct {
     opal_list_t available_components;
     /* list of selected modules */
     opal_list_t selected_modules;
-    /* desired default mapper */
-    orte_rmaps_mapper_type_t default_mapper;
     /** whether or not we allow oversubscription of nodes */
     bool oversubscribe;
-    /** number of ppn for n_per_node mode */
-    int npernode;
-    /* number of procs/board */
-    int nperboard;
-    /* number of procs/socket */
-    int npersocket;
     /* cpus per rank */
     int cpus_per_rank;
     /* stride */
@@ -106,8 +98,6 @@ ORTE_DECLSPEC int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid,
     orte_vpid_t *start, orte_vpid_t *range);
 ORTE_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, 
     orte_vpid_t start, orte_vpid_t range);
-
-ORTE_DECLSPEC char* orte_rmaps_base_print_mapper(orte_rmaps_mapper_type_t mapper);
 
 /**
  * Close down the rmaps framework
