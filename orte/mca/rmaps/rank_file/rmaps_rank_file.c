@@ -316,6 +316,9 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                         ORTE_JOBID_PRINT(jdata->jobid));
  
     /* flag that I did the mapping */
+    if (NULL != jdata->map->last_mapper) {
+        free(jdata->map->last_mapper);
+    }
     jdata->map->last_mapper = strdup(c->mca_component_name);
 
     /* convenience def */

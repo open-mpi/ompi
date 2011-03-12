@@ -75,7 +75,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
             /* a mapper has been specified, and it isn't me */
             opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                                "mca:rmaps:resilient: job %s not using loadbalance mapper",
+                                "mca:rmaps:resilient: job %s not using resilient mapper",
                                 ORTE_JOBID_PRINT(jdata->jobid));
             return ORTE_ERR_TAKE_NEXT_OPTION;
         }
@@ -98,6 +98,9 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                         ORTE_JOBID_PRINT(jdata->jobid));
  
     /* flag that I did the mapping */
+    if (NULL != jdata->map->last_mapper) {
+        free(jdata->map->last_mapper);
+    }
     jdata->map->last_mapper = strdup(c->mca_component_name);
 
     /* have we already constructed the fault group list? */
