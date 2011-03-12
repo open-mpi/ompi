@@ -53,7 +53,8 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     orte_std_cntr_t num_nodes, num_slots;
     int rc;
     opal_list_item_t *cur_node_item;
-    
+    mca_base_component_t *c = &mca_rmaps_round_robin_component.base_version;
+
     /* this mapper can only handle initial launch
      * when rr mapping is desired - allow
      * restarting of failed apps
@@ -65,9 +66,18 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                             orte_job_state_to_str(jdata->state));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    if (ORTE_RMAPS_UNDEF != jdata->map->req_mapper &&
-        ORTE_RMAPS_RR != jdata->map->req_mapper) {
+    if (NULL != jdata->map->req_mapper &&
+        0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
         /* a mapper has been specified, and it isn't me */
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:rr: job %s not using rr mapper",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+    if (0 < jdata->map->npernode ||
+        0 < jdata->map->nperboard ||
+        0 < jdata->map->npersocket) {
+        /* I don't know how to do these - defer */
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:rr: job %s not using rr mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
@@ -79,7 +89,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                         ORTE_JOBID_PRINT(jdata->jobid));
  
     /* flag that I did the mapping */
-    jdata->map->last_mapper = ORTE_RMAPS_RR;
+    jdata->map->last_mapper = strdup(c->mca_component_name);
 
     /* start at the beginning... */
     jdata->num_procs = 0;

@@ -654,8 +654,9 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
     
     if (orte_devel_level_output) {
         asprintf(&tmp, "\n%sMapper requested: %s\tLast mapper: %s\tMapping policy: %04x\n%s\tNpernode: %ld\tOversubscribe allowed: %s\tCPU Lists: %s",
-                 pfx2, orte_rmaps_base_print_mapper(src->req_mapper),
-                 orte_rmaps_base_print_mapper(src->last_mapper), src->policy, pfx2, (long)src->npernode,
+                 pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
+                 (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
+                 src->policy, pfx2, (long)src->npernode,
                  (src->oversubscribe) ? "TRUE" : "FALSE",
                  (src->cpu_lists) ? "TRUE" : "FALSE");
         

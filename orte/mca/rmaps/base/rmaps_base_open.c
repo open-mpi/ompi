@@ -88,7 +88,6 @@ int orte_rmaps_base_open(void)
 
     /* init the globals */
     OBJ_CONSTRUCT(&orte_rmaps_base.selected_modules, opal_list_t);
-    orte_rmaps_base.default_mapper = ORTE_RMAPS_UNDEF;
 
     /* Debugging / verbose output.  Always have stream open, with
         verbose set by the mca open system... */
@@ -113,52 +112,6 @@ int orte_rmaps_base_open(void)
         ORTE_XSET_MAPPING_POLICY(ORTE_MAPPING_BYNODE);
     }
 
-    /* check for procs/xxx directives */
-    param = mca_base_param_reg_int_name("rmaps", "base_pernode",
-                                        "Launch one ppn as directed",
-                                        false, false, (int)false, &value);
-    if (value) {
-        orte_rmaps_base.npernode = 1;
-        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
-    }
-    
-    /* #procs/node */
-    param = mca_base_param_reg_int_name("rmaps", "base_n_pernode",
-                                        "Launch n procs/node",
-                                        false, false, -1, &value);
-    if (0 < value) {
-        orte_rmaps_base.npernode = value;
-        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
-    }
-    
-    /* #procs/board */
-    param = mca_base_param_reg_int_name("rmaps", "base_n_perboard",
-                                        "Launch n procs/board",
-                                        false, false, -1, &orte_rmaps_base.nperboard);
-    if (0 < orte_rmaps_base.nperboard) {
-        ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_NPERXXX);
-        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
-    }
-
-    /* #procs/socket */
-    param = mca_base_param_reg_int_name("rmaps", "base_n_persocket",
-                                        "Launch n procs/socket",
-                                        false, false, -1, &orte_rmaps_base.npersocket);
-    if (0 < orte_rmaps_base.npersocket) {
-        ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_NPERXXX);
-        /* force bind to socket if not overridden by user */
-        ORTE_XSET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
-        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
-    }
-    
-    /* Do we want to loadbalance the job */
-    param = mca_base_param_reg_int_name("rmaps", "base_loadbalance",
-                                        "Balance total number of procs across all allocated nodes",
-                                        false, false, (int)false, &value);
-    if (value) {
-        orte_rmaps_base.default_mapper = ORTE_RMAPS_LOADBALANCE;
-    }
-    
     /* #cpus/rank to use */
     param = mca_base_param_reg_int_name("rmaps", "base_cpus_per_proc",
                                         "Number of cpus to use for each rank [1-2**15 (default=1)]",
@@ -191,17 +144,6 @@ int orte_rmaps_base_open(void)
                                         "When binding multiple cores to a rank, the step size to use between cores [1-2**15 (default: 1)]",
                                         false, false, 1, &value);
     orte_rmaps_base.stride = value;
-    
-    /* did the user provide a slot list? */
-    param = mca_base_param_reg_string_name("rmaps", "base_slot_list",
-                                           "List of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files) [default=NULL]",
-                                           false, false, NULL, &orte_rmaps_base.slot_list);
-    /* ensure we flag mapping by user */
-    if (NULL != orte_rmaps_base.slot_list ||
-        NULL != orte_rankfile) {
-        ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_BYUSER);
-        orte_rmaps_base.default_mapper = ORTE_RMAPS_RF;
-    }
     
     /* Should we schedule on the local node or not? */
     mca_base_param_reg_int_name("rmaps", "base_no_schedule_local",

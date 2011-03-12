@@ -45,24 +45,26 @@ static int orte_rmaps_rank_file_query(mca_base_module_t **module, int *priority)
 
 static int my_priority;
 
-orte_rmaps_base_component_t mca_rmaps_rank_file_component = {
-    /* First, the mca_base_component_t struct containing meta
-       information about the component itself */
-
+orte_rmaps_rf_component_t mca_rmaps_rank_file_component = {
     {
-        ORTE_RMAPS_BASE_VERSION_2_0_0,
+        /* First, the mca_base_component_t struct containing meta
+           information about the component itself */
 
-        "rank_file", /* MCA component name */
-        ORTE_MAJOR_VERSION,  /* MCA component major version */
-        ORTE_MINOR_VERSION,  /* MCA component minor version */
-        ORTE_RELEASE_VERSION,  /* MCA component release version */
-        orte_rmaps_rank_file_open,  /* component open  */
-        orte_rmaps_rank_file_close, /* component close */
-        orte_rmaps_rank_file_query  /* component query */
-    },
-    {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
+        {
+            ORTE_RMAPS_BASE_VERSION_2_0_0,
+
+            "rank_file", /* MCA component name */
+            ORTE_MAJOR_VERSION,  /* MCA component major version */
+            ORTE_MINOR_VERSION,  /* MCA component minor version */
+            ORTE_RELEASE_VERSION,  /* MCA component release version */
+            orte_rmaps_rank_file_open,  /* component open  */
+            orte_rmaps_rank_file_close, /* component close */
+            orte_rmaps_rank_file_query  /* component query */
+        },
+        {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        }
     }
 };
 
@@ -72,17 +74,27 @@ orte_rmaps_base_component_t mca_rmaps_rank_file_component = {
   */
 static int orte_rmaps_rank_file_open(void)
 {
-    mca_base_component_t *c = &mca_rmaps_rank_file_component.base_version;
+    mca_base_component_t *c = &mca_rmaps_rank_file_component.super.base_version;
+    int tmp;
 
     mca_base_param_reg_int(c, "priority",
                            "Priority of the rank_file rmaps component",
                            false, false, 0,
                            &my_priority);
     
-    if (NULL != orte_rankfile ||
-        NULL != orte_rmaps_base.slot_list) {
+    /* did the user provide a slot list? */
+    tmp = mca_base_param_reg_string(c, "slot_list",
+                           "List of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files) [default=NULL]",
+                           false, false, NULL, NULL);
+    mca_base_param_reg_syn_name(tmp, "rmaps", "base_slot_list", false);
+    mca_base_param_lookup_string(tmp, &mca_rmaps_rank_file_component.slot_list);
+
+    /* ensure we flag mapping by user */
+    if (NULL != mca_rmaps_rank_file_component.slot_list ||
+        NULL != orte_rankfile) {
+        ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_BYUSER);
         /* make us first */
-        my_priority = 1000;
+        my_priority = 10000;
     }
     
     return ORTE_SUCCESS;

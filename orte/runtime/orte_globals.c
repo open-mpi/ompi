@@ -1049,8 +1049,8 @@ OBJ_CLASS_INSTANCE(orte_jmap_t,
 
 static void orte_job_map_construct(orte_job_map_t* map)
 {
-    map->req_mapper = ORTE_RMAPS_UNDEF;
-    map->last_mapper = ORTE_RMAPS_UNDEF;
+    map->req_mapper = NULL;
+    map->last_mapper = NULL;
     map->policy = 0;
     map->npernode = 0;
     map->nperboard = 0;
@@ -1074,6 +1074,12 @@ static void orte_job_map_destruct(orte_job_map_t* map)
 {
     orte_std_cntr_t i;
     
+    if (NULL != map->req_mapper) {
+        free(map->req_mapper);
+    }
+    if (NULL != map->last_mapper) {
+        free(map->last_mapper);
+    }
     for (i=0; i < map->nodes->size; i++) {
         if (NULL != map->nodes->addr[i]) {
             OBJ_RELEASE(map->nodes->addr[i]);

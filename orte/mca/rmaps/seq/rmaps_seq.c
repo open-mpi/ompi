@@ -70,6 +70,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t *default_node_list=NULL;
     opal_list_t *node_list=NULL;
     orte_proc_t *proc;
+    mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
     
     OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                          "%s rmaps:seq mapping job %s",
@@ -86,11 +87,20 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    if (ORTE_RMAPS_UNDEF != jdata->map->req_mapper &&
-        ORTE_RMAPS_SEQ != jdata->map->req_mapper) {
+    if (NULL != jdata->map->req_mapper &&
+        0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
         /* a mapper has been specified, and it isn't me */
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:seq: job %s not using sequential mapper",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+    if (0 < jdata->map->npernode ||
+        0 < jdata->map->nperboard ||
+        0 < jdata->map->npersocket) {
+        /* I don't know how to do these - defer */
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:seq: job %s not using seq mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
@@ -100,7 +110,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                         ORTE_JOBID_PRINT(jdata->jobid));
 
     /* flag that I did the mapping */
-    jdata->map->last_mapper = ORTE_RMAPS_SEQ;
+    jdata->map->last_mapper = strdup(c->mca_component_name);
 
     /* conveniece def */
     map = jdata->map;
