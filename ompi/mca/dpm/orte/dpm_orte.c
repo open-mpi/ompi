@@ -564,6 +564,9 @@ static int spawn(int count, char **array_of_commands,
     char prefix[OPAL_PATH_MAX];
     char stdin_target[OPAL_PATH_MAX];
     char params[OPAL_PATH_MAX];
+    char mapper[OPAL_PATH_MAX];
+    int nperxxx;
+    char slot_list[OPAL_PATH_MAX];
 
     orte_job_t *jdata;
     orte_app_context_t *app;
@@ -574,16 +577,16 @@ static int spawn(int count, char **array_of_commands,
     /* check potentially for:
        - "host": desired host where to spawn the processes
        - "hostfile": hostfile containing hosts where procs are
-                     to be spawned
+       to be spawned
        - "add-host": add the specified hosts to the known list
-                     of available resources and spawn these
-                     procs on them
+       of available resources and spawn these
+       procs on them
        - "add-hostfile": add the hosts in the hostfile to the
-                     known list of available resources and spawn
-                     these procs on them
+       known list of available resources and spawn
+       these procs on them
        - "prefix": the path to the root of the directory tree where ompi
-                   executables and libraries can be found on all nodes
-                   used to spawn these procs
+       executables and libraries can be found on all nodes
+       used to spawn these procs
        - "arch": desired architecture
        - "wdir": directory, where executable can be found
        - "path": list of directories where to look for the executable
@@ -728,24 +731,64 @@ static int spawn(int count, char **array_of_commands,
                 jdata->controls |= ORTE_JOB_CONTROL_LOCAL_SLAVE;
             }
 
+            /* check for 'mapper' */ 
+            ompi_info_get (array_of_info[i], "mapper", sizeof(mapper) - 1, mapper, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                    /* load it with the system defaults */
+                    jdata->map->policy = orte_default_mapping_policy;
+                    jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
+                    jdata->map->stride = orte_rmaps_base.stride;
+                    jdata->map->oversubscribe = orte_rmaps_base.oversubscribe;
+                    jdata->map->display_map = orte_rmaps_base.display_map;
+                }
+                jdata->map->req_mapper = strdup(mapper);
+            }
+
+            /* check for 'npernode' */ 
+            ompi_info_get (array_of_info[i], "npernode", sizeof(slot_list) - 1, slot_list, &flag);
+            if ( flag ) {
+                if (ORTE_SUCCESS != ompi_info_value_to_int(slot_list, &nperxxx)) {
+                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                    return ORTE_ERR_BAD_PARAM;
+                }
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                    /* load it with the system defaults */
+                    jdata->map->policy = orte_default_mapping_policy;
+                    jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
+                    jdata->map->stride = orte_rmaps_base.stride;
+                    jdata->map->oversubscribe = orte_rmaps_base.oversubscribe;
+                    jdata->map->display_map = orte_rmaps_base.display_map;
+                }
+                jdata->map->npernode = nperxxx;
+            }
+
             /* check for 'map_bynode' */
             ompi_info_get_bool(array_of_info[i], "map_bynode", &local_bynode, &flag);
             if ( flag ) {
-                jdata->map = OBJ_NEW(orte_job_map_t);
                 if (NULL == jdata->map) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                    /* load it with the system defaults */
+                    jdata->map->policy = orte_default_mapping_policy;
+                    jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
+                    jdata->map->stride = orte_rmaps_base.stride;
+                    jdata->map->oversubscribe = orte_rmaps_base.oversubscribe;
+                    jdata->map->display_map = orte_rmaps_base.display_map;
                 }
-                /* load it with the system defaults */
-                jdata->map->policy = orte_default_mapping_policy;
-                jdata->map->npernode = orte_rmaps_base.npernode;
-                jdata->map->nperboard = orte_rmaps_base.nperboard;
-                jdata->map->npersocket = orte_rmaps_base.npersocket;
-                jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
-                jdata->map->stride = orte_rmaps_base.stride;
-                jdata->map->oversubscribe = orte_rmaps_base.oversubscribe;
-                jdata->map->display_map = orte_rmaps_base.display_map;
-
                 if( local_bynode ) {
                     jdata->map->policy = ORTE_MAPPING_BYNODE;
                 }
