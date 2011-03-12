@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -116,9 +116,8 @@ mca_common_sm_rml_info_bcast(mca_common_sm_rml_sm_info_t *sm_info,
             if (0 == strcmp(rml_msg->rml_file_name, file_name))
             {
                 opal_list_remove_item(pending_rml_msgs, item);
-                strncpy(sm_info->posix_fname_buff,
-                        rml_msg->posix_fname_buff,
-                        OMPI_COMMON_SM_POSIX_FILE_LEN_MAX);
+                memcpy(sm_info->posix_fname_buff, rml_msg->posix_fname_buff,
+                       OMPI_COMMON_SM_POSIX_FILE_LEN_MAX);
                 sm_info->id = rml_msg->id;
                 OBJ_RELEASE(item);
                 break;
