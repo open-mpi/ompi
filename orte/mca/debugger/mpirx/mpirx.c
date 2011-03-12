@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -144,7 +144,7 @@ void init_before_spawn(orte_job_t *jdata)
                 free(attach_fifo);
                 return;
             }
-            strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH);
+            strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH - 1);
 	    free (attach_fifo);
 	    open_fifo ();
         }
