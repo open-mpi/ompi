@@ -813,6 +813,7 @@ int orte_rmaps_base_define_daemons(orte_job_t *jdata)
 
 int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
 {
+    orte_job_t *jdat;
     orte_node_t *node;
     orte_proc_t *proc;
     orte_job_map_t *map;
@@ -820,8 +821,9 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_app_context_t *app;
     orte_std_cntr_t num_slots;
-    int rc;
-    
+    int rc, i, n;
+    bool ignored;
+
     /* get the daemon app if provided - may include -host or hostfile
      * info about available nodes
      */
@@ -839,9 +841,50 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
         OBJ_DESTRUCT(&node_list);
         return rc;
     }
+    /* check all other known jobs to see if they have something to
+     * add to the allocation - we won't have seen these and the
+     * daemon job won't have any in its app
+     */
+    for (i=0; i < orte_job_data->size; i++) {
+        if (NULL == (jdat = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, i))) {
+            continue;
+        }
+        for (n=0; n < jdat->apps->size; n++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdat->apps, n))) {
+                continue;
+            }
+            if (NULL != app->hostfile) {
+                /* hostfile was specified - parse it and add it to the list. The
+                 * function automatically ignores duplicates
+                 */
+                if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&node_list,
+                                                                       &ignored,
+                                                                       app->hostfile))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_DESTRUCT(&node_list);
+                    return rc;
+                }
+            }
+            if (NULL != app->dash_host) {
+                /* parse and add to list, ignoring duplicates */
+                if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&node_list,
+                                                                        &ignored,
+                                                                        app->dash_host))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_DESTRUCT(&node_list);
+                    return rc;
+                }
+            }
+        }
+    }
+
     /* add all these nodes to the map */
     while (NULL != (item = opal_list_remove_first(&node_list))) {
         node = (orte_node_t*)item;
+        /* if this is my node, ignore it - we are already here */
+        if (0 == strcmp(node->name, orte_process_info.nodename)) {
+            continue;
+        }
         opal_pointer_array_add(map->nodes, (void*)node);
         ++(map->num_nodes);
         /* if this node already has a daemon, release that object

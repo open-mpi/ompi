@@ -80,6 +80,7 @@
 #include "orte/mca/debugger/base/base.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
+#include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -429,6 +430,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Max number of times to restart a failed process" },
 
+    { "orte", "vm", "launch", '\0', "vm", "vm", 0,
+      &orterun_globals.launch_vm, OPAL_CMD_LINE_TYPE_BOOL,
+      "Launch daemons on all nodes at start to create a virtual machine [Default = false]" },
+
 #if OPAL_ENABLE_CRDEBUG == 1
     { "opal", "cr", "enable_crdebug", '\0', "crdebug", "crdebug", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
@@ -462,6 +467,7 @@ int orterun(int argc, char *argv[])
     opal_cmd_line_t cmd_line;
     char * tmp_env_var = NULL;
     orte_debugger_breakpoint_fn_t foo;
+    orte_job_t *daemons;
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
@@ -472,7 +478,7 @@ int orterun(int argc, char *argv[])
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
     if (ORTE_SUCCESS != (rc = opal_cmd_line_parse(&cmd_line, true,
-                                                   argc, argv)) ) {
+                                                  argc, argv)) ) {
         return rc;
     }
 
@@ -585,7 +591,7 @@ int orterun(int argc, char *argv[])
     
     if (0 == jdata->num_apps) {
         /* This should never happen -- this case should be caught in
-        create_app(), but let's just double check... */
+           create_app(), but let's just double check... */
         orte_show_help("help-orterun.txt", "orterun:nothing-to-do",
                        true, orte_basename);
         exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -655,23 +661,23 @@ int orterun(int argc, char *argv[])
     }
     
     /* Change the default behavior of libevent such that we want to
-     continually block rather than blocking for the default timeout
-     and then looping around the progress engine again.  There
-     should be nothing in the orted that cannot block in libevent
-     until "something" happens (i.e., there's no need to keep
-     cycling through progress because the only things that should
-     happen will happen in libevent).  This is a minor optimization,
-     but what the heck... :-) */
+       continually block rather than blocking for the default timeout
+       and then looping around the progress engine again.  There
+       should be nothing in the orted that cannot block in libevent
+       until "something" happens (i.e., there's no need to keep
+       cycling through progress because the only things that should
+       happen will happen in libevent).  This is a minor optimization,
+       but what the heck... :-) */
     opal_progress_set_event_flag(OPAL_EVLOOP_ONCE);
     
     /* If we have a prefix, then modify the PATH and
-        LD_LIBRARY_PATH environment variables in our copy. This
-        will ensure that any locally-spawned children will
-        have our executables and libraries in their path
+       LD_LIBRARY_PATH environment variables in our copy. This
+       will ensure that any locally-spawned children will
+       have our executables and libraries in their path
 
-        For now, default to the prefix_dir provided in the first app_context.
-        Since there always MUST be at least one app_context, we are safe in
-        doing this.
+       For now, default to the prefix_dir provided in the first app_context.
+       Since there always MUST be at least one app_context, we are safe in
+       doing this.
     */
     if (NULL != ((orte_app_context_t*)jdata->apps->addr[0])->prefix_dir) {
         char *oldenv, *newenv, *lib_base, *bin_base;
@@ -778,6 +784,58 @@ int orterun(int argc, char *argv[])
         }
     }
     
+    /* if we are launching the vm, now is the time to do so */
+    if (orterun_globals.launch_vm) {
+        int32_t ljob, i;
+        orte_app_context_t *app;
+
+        /* we may need to look at the apps for the user's job
+         * to get our full list of nodes, so prep the job for
+         * launch. This duplicates some code in orte_plm_base_setup_job
+         * that won't run if we do this here - eventually, we'll want
+         * to refactor the plm_base routine to avoid the duplication
+         */
+        /* get a jobid for it */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            goto DONE;
+        }
+        /* store it on the global job data pool - this is the key
+         * step required before we launch the daemons. It allows
+         * the orte_rmaps_base_setup_virtual_machine routine to
+         * search all apps for any hosts to be used by the vm
+         */
+        ljob = ORTE_LOCAL_JOBID(jdata->jobid);
+        opal_pointer_array_set_item(orte_job_data, ljob, jdata);
+        
+        /* set the job state */
+        jdata->state = ORTE_JOB_STATE_INIT;
+
+        /* if job recovery is not defined, set it to default */
+        if (!jdata->recovery_defined) {
+            /* set to system default */
+            jdata->enable_recovery = orte_enable_recovery;
+        }
+        /* if app recovery is not defined, set apps to defaults */
+        for (i=0; i < jdata->apps->size; i++) {
+            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                continue;
+            }
+            if (!app->recovery_defined) {
+                app->max_restarts = orte_max_restarts;
+            }
+        }
+        /* get the daemon job object */
+        daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+        /* launch the daemons */
+        if (ORTE_SUCCESS != (rc = orte_plm.spawn(daemons))) {
+            fprintf(stderr, "%s: UNABLE TO LAUNCH VIRTUAL MACHINE\n", orte_basename);
+            goto DONE;
+        }
+        /* ensure all future jobs use the VM */
+        orte_default_mapping_policy |= ORTE_MAPPING_USE_VM;
+    }
+
     /* setup for debugging */
     orte_debugger.init_before_spawn(jdata);
     
@@ -793,7 +851,7 @@ int orterun(int argc, char *argv[])
     /* we only reach this point by jumping there due
      * to an error - so just cleanup and leave
      */
-DONE:
+ DONE:
     ORTE_UPDATE_EXIT_STATUS(orte_exit_status);
     orte_quit();
 
@@ -816,6 +874,7 @@ static int init_globals(void)
         orterun_globals.report_pid        = NULL;
         orterun_globals.report_uri        = NULL;
         orterun_globals.disable_recovery = false;
+        orterun_globals.launch_vm = false;
     }
 
     /* Reset the other fields every time */
