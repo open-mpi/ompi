@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -113,7 +113,7 @@ create_map(int fd, size_t size,
 
     /* set up the map object */
     map = OBJ_NEW(mca_common_sm_module_mmap_t);
-    strncpy(map->super.module_seg_path, file_name, OPAL_PATH_MAX);
+    strncpy(map->super.module_seg_path, file_name, OPAL_PATH_MAX - 1);
     /* the first entry in the file is the control structure. The first
        entry in the control structure is an mca_common_sm_seg_header_t
        element */
