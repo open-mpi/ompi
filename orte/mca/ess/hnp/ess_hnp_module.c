@@ -138,6 +138,7 @@ static int rte_init(void)
     orte_job_t *jdata;
     orte_node_t *node;
     orte_proc_t *proc;
+    orte_app_context_t *app;
     int value;
 
     /* run the prolog */
@@ -474,6 +475,11 @@ static int rte_init(void)
     jdata->jobid = ORTE_PROC_MY_NAME->jobid;
     opal_pointer_array_set_item(orte_job_data, 0, jdata);
    
+    /* every job requires at least one app */
+    app = OBJ_NEW(orte_app_context_t);
+    opal_pointer_array_set_item(jdata->apps, 0, app);
+    jdata->num_apps++;
+
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);

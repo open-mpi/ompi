@@ -67,6 +67,7 @@ struct orterun_globals_t {
     char *sstore_load;
 #endif
     bool disable_recovery;
+    bool launch_vm;
 };
 
 /**
