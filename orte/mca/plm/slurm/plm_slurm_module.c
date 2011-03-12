@@ -139,10 +139,9 @@ static int plm_slurm_init(void)
  */
 static int plm_slurm_launch_job(orte_job_t *jdata)
 {
-    orte_app_context_t **apps;
-    orte_node_t **nodes;
+    orte_app_context_t *app;
+    orte_node_t *node;
     orte_std_cntr_t n;
-    orte_app_idx_t idx;
     orte_job_map_t *map;
     char *jobid_string = NULL;
     char *param;
@@ -225,8 +224,6 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    nodes = (orte_node_t**)map->nodes->addr;
         
     if (0 == map->num_new_daemons) {
         /* no new daemons required - just launch apps */
@@ -276,18 +273,21 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     /* create nodelist */
     nodelist_argv = NULL;
 
-    for (n=0; n < map->num_nodes; n++ ) {
+    for (n=0; n < map->nodes->size; n++ ) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, n))) {
+            continue;
+        }
         /* if the daemon already exists on this node, then
          * don't include it
          */
-        if (nodes[n]->daemon_launched) {
+        if (node->daemon_launched) {
             continue;
         }
         
         /* otherwise, add it to the list of nodes upon which
          * we need to launch a daemon
          */
-        opal_argv_append_nosize(&nodelist_argv, nodes[n]->name);
+        opal_argv_append_nosize(&nodelist_argv, node->name);
     }
     if (0 == opal_argv_count(nodelist_argv)) {
         orte_show_help("help-plm-slurm.txt", "no-hosts-in-list", true);
@@ -337,8 +337,12 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
        don't support different --prefix'es for different nodes in
        the SLURM plm) */
     cur_prefix = NULL;
-    for (idx=0; idx < jdata->num_apps; idx++) {
-        char * app_prefix_dir = apps[idx]->prefix_dir;
+    for (n=0; n < jdata->apps->size; n++) {
+        char * app_prefix_dir;
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
+            continue;
+        }
+        app_prefix_dir = app->prefix_dir;
          /* Check for already set cur_prefix_dir -- if different,
            complain */
         if (NULL != app_prefix_dir) {
