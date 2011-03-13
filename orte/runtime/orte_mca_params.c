@@ -507,6 +507,11 @@ int orte_register_params(void)
     orte_child_time_to_exit.tv_sec = value;
     orte_child_time_to_exit.tv_usec = 0;
  
+    mca_base_param_reg_int_name("orte", "vm_launch",
+                                "Launch daemons on all nodes at start to form a virtual machine for subsequent jobs",
+                                false, false, (int)false, &value);
+    orte_vm_launch = OPAL_INT_TO_BOOL(value);
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;

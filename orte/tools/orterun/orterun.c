@@ -431,7 +431,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Max number of times to restart a failed process" },
 
     { "orte", "vm", "launch", '\0', "vm", "vm", 0,
-      &orterun_globals.launch_vm, OPAL_CMD_LINE_TYPE_BOOL,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Launch daemons on all nodes at start to create a virtual machine [Default = false]" },
 
 #if OPAL_ENABLE_CRDEBUG == 1
@@ -785,7 +785,7 @@ int orterun(int argc, char *argv[])
     }
     
     /* if we are launching the vm, now is the time to do so */
-    if (orterun_globals.launch_vm) {
+    if (orte_vm_launch) {
         int32_t ljob, i;
         orte_app_context_t *app;
 
@@ -874,7 +874,6 @@ static int init_globals(void)
         orterun_globals.report_pid        = NULL;
         orterun_globals.report_uri        = NULL;
         orterun_globals.disable_recovery = false;
-        orterun_globals.launch_vm = false;
     }
 
     /* Reset the other fields every time */
