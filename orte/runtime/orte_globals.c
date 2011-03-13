@@ -182,6 +182,9 @@ orte_default_comm_fn_t orte_comm;
 bool orte_report_child_jobs_separately;
 struct timeval orte_child_time_to_exit;
 
+/* VM control */
+bool orte_vm_launch = false;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;
