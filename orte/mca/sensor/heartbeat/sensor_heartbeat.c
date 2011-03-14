@@ -268,6 +268,12 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
+        OPAL_OUTPUT_VERBOSE((3,  orte_sensor_base.output,
+                             "%s IGNORING CHECK abnorm_term %s fin %s init %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_abnormal_term_ordered ? "TRUE" : "FALSE",
+                             orte_finalizing ? "TRUE" : "FALSE",
+                             orte_initialized ? "TRUE" : "FALSE"));
         goto reset;
     }
     
