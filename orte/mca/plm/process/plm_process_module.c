@@ -97,10 +97,6 @@
 
 #define rindex(a,b) strrchr((a),(b))
 
-#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && ORTE_ENABLE_PROGRESS_THREADS
-static int orte_plm_process_launch_threaded(orte_jobid_t jobid);
-#endif
-
 /*
  * Interface
  */
@@ -112,11 +108,7 @@ static int orte_plm_process_signal_job(orte_jobid_t, int32_t);
 orte_plm_base_module_t orte_plm_process_module = {
     orte_plm_process_init,
     orte_plm_base_set_hnp_name,
-#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && ORTE_ENABLE_PROGRESS_THREADS
-    orte_plm_process_launch_threaded,
-#else
     orte_plm_process_launch,
-#endif
     NULL,
     orte_plm_base_orted_terminate_job,
     orte_plm_process_terminate_orteds,
@@ -1425,80 +1417,6 @@ int orte_plm_process_finalize(void)
     }
     return rc;
 }
-
-
-/**
- * Handle threading issues.
- */
-
-#if OPAL_HAVE_POSIX_THREADS && OPAL_THREADS_HAVE_DIFFERENT_PIDS && ORTE_ENABLE_PROGRESS_THREADS
-
-struct orte_plm_process_stack_t {
-    opal_condition_t cond;
-    opal_mutex_t mutex;
-    bool complete;
-    orte_jobid_t jobid;
-    int rc;
-};
-typedef struct orte_plm_process_stack_t orte_plm_process_stack_t;
-
-static void orte_plm_process_stack_construct(orte_plm_process_stack_t* stack)
-{
-    OBJ_CONSTRUCT(&stack->mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&stack->cond, opal_condition_t);
-    stack->rc = 0;
-    stack->complete = false;
-}
-
-static void orte_plm_process_stack_destruct(orte_plm_process_stack_t* stack)
-{
-    OBJ_DESTRUCT(&stack->mutex);
-    OBJ_DESTRUCT(&stack->cond);
-}
-
-static OBJ_CLASS_INSTANCE(
-    orte_plm_process_stack_t,
-    opal_object_t,
-    orte_plm_process_stack_construct,
-    orte_plm_process_stack_destruct);
-
-static void orte_plm_process_launch_cb(int fd, short event, void* args)
-{
-    orte_plm_process_stack_t *stack = (orte_plm_process_stack_t*)args;
-    OPAL_THREAD_LOCK(&stack->mutex);
-    stack->rc = orte_plm_process_launch(stack->jobid);
-    stack->complete = true;
-    opal_condition_signal(&stack->cond);
-    OPAL_THREAD_UNLOCK(&stack->mutex);
-}
-
-static int orte_plm_process_launch_threaded(orte_jobid_t jobid)
-{
-    struct timeval tv = { 0, 0 };
-    opal_event_t event;
-    struct orte_plm_process_stack_t stack;
-
-    OBJ_CONSTRUCT(&stack, orte_plm_process_stack_t);
-
-    stack.jobid = jobid;
-    if( opal_event_progress_thread() ) {
-        stack.rc = orte_plm_process_launch( jobid );
-    } else {
-        opal_event_evtimer_set(opal_event_base, &event, orte_plm_process_launch_cb, &stack);
-        opal_event_evtimer_add(&event, &tv);
-
-        OPAL_THREAD_LOCK(&stack.mutex);
-        while (stack.complete == false) {
-            opal_condition_wait(&stack.cond, &stack.mutex);
-        }
-        OPAL_THREAD_UNLOCK(&stack.mutex);
-    }
-    OBJ_DESTRUCT(&stack);
-    return stack.rc;
-}
-
-#endif
-
 
 static void set_handler_default(int sig)
 {

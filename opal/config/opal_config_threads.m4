@@ -117,13 +117,9 @@ AC_MSG_RESULT($THREAD_TYPE)
 #
 # Blah - this should be made better, but I don't know how...
 #
-AH_TEMPLATE([OPAL_THREADS_HAVE_DIFFERENT_PIDS],
-    [Do threads have different pids (pthreads on linux)])
-
 if test "$THREAD_TYPE" = "solaris"; then
     AC_DEFINE(OPAL_HAVE_SOLARIS_THREADS, 1)
     AC_DEFINE(OPAL_HAVE_POSIX_THREADS, 0)
-    AC_DEFINE(OPAL_THREADS_HAVE_DIFFERENT_PIDS, 0)
 
     THREAD_CFLAGS="$STHREAD_CFLAGS"
     THREAD_FFLAGS="$STHREAD_FFLAGS"
@@ -148,7 +144,6 @@ elif test "$THREAD_TYPE" = "posix"; then
 else
     AC_DEFINE(OPAL_HAVE_SOLARIS_THREADS, 0)
     AC_DEFINE(OPAL_HAVE_POSIX_THREADS, 0)
-    AC_DEFINE(OPAL_THREADS_HAVE_DIFFERENT_PIDS, 0)
 
     TRHEAD_CFLAGS=
     THREAD_FFLAGS=
