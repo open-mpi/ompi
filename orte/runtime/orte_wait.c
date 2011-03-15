@@ -241,10 +241,6 @@ static int register_callback(pid_t pid, orte_wait_fn_t callback,
                              void *data);
 static int unregister_callback(pid_t pid);
 void orte_wait_signal_callback(int fd, short event, void *arg);
-static pid_t internal_waitpid(pid_t pid, int *status, int options);
-#if  OPAL_THREADS_HAVE_DIFFERENT_PIDS
-static void internal_waitpid_callback(int fd, short event, void *arg);
-#endif
 
 /*********************************************************************
  *
@@ -418,7 +414,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
 
     } else {
         /* non-blocking - return what waitpid would */
-        ret = internal_waitpid(wpid, status, options);
+        ret = waitpid(wpid, status, options);
     }
 
  cleanup:
@@ -641,7 +637,7 @@ do_waitall(int options)
     if (!cb_enabled) return;
     while (1) {
         int status;
-        pid_t ret = internal_waitpid(-1, &status, WNOHANG);
+        pid_t ret = waitpid(-1, &status, WNOHANG);
         pending_pids_item_t *pending;
         registered_cb_item_t *cb;
 
@@ -717,64 +713,6 @@ unregister_callback(pid_t pid)
 }
 
 
-
-static pid_t
-internal_waitpid(pid_t pid, int *status, int options)
-{
-#if  OPAL_THREADS_HAVE_DIFFERENT_PIDS
-    waitpid_callback_data_t data;
-    struct timeval tv;
-    opal_event_t ev;
-
-    if (opal_event_progress_thread()) {
-        /* I already am the progress thread.  no need to event me */
-        return waitpid(pid, status, options);
-    }
-
-    data.done = false;
-    data.pid = pid;
-    data.options = options;
-    OBJ_CONSTRUCT(&(data.mutex), opal_mutex_t);
-    OBJ_CONSTRUCT(&(data.cond), opal_condition_t);
-
-    OPAL_THREAD_LOCK(&(data.mutex));
-
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
-
-    opal_event_evtimer_set(opal_event_base, &ev, internal_waitpid_callback, &data);
-    opal_evtimer_add(&ev, &tv);
-
-    while (data.done == false) {
-        opal_condition_wait(&(data.cond), &(data.mutex));
-    }
-
-    OPAL_THREAD_UNLOCK(&(data.mutex));
-
-    OBJ_DESTRUCT(&(data.cond));
-    OBJ_DESTRUCT(&(data.mutex));
-
-    *status = data.status;
-    return data.ret;
-    
-#else
-    return waitpid(pid, status, options);
-#endif
-}
-
-
-#if  OPAL_THREADS_HAVE_DIFFERENT_PIDS
-static void
-internal_waitpid_callback(int fd, short event, void *arg)
-{
-    waitpid_callback_data_t *data = (waitpid_callback_data_t*) arg;
-
-    data->ret = waitpid(data->pid, &(data->status), data->options);
-
-    data->done = true;
-    opal_condition_signal(&(data->cond));
-}
-#endif
 
 #elif defined(__WINDOWS__)
 
