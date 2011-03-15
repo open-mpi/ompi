@@ -216,6 +216,11 @@ OPAL_DECLSPEC int opal_paffinity_base_get_physical_socket_id(int logical_socket_
  */
 OPAL_DECLSPEC int opal_paffinity_base_get_physical_core_id(int physical_socket_id, int logical_core_id);
 
+/* Print a char string representation of a cpu set */
+OPAL_DECLSPEC char *opal_paffinity_base_print_binding(opal_paffinity_base_cpu_set_t cpumask);
+
+/* Parse the binding string created by above function back into a cpu set */
+OPAL_DECLSPEC int opal_paffinity_base_parse_binding(char *binding, opal_paffinity_base_cpu_set_t *cpumask);
 
 /**
  * Indication of whether a component was successfully selected or
@@ -250,6 +255,18 @@ OPAL_DECLSPEC extern opal_list_t opal_paffinity_base_components_opened;
 OPAL_DECLSPEC int opal_paffinity_base_slot_list_set(long rank, char *slot_str);
 
 /**
+ * Make a prettyprint string for a cset.
+ */
+OPAL_DECLSPEC int opal_paffinity_base_cset2str(char *str, int len, 
+                                               opal_paffinity_base_cpu_set_t *cset);
+
+/**
+ * Make a prettyprint string for a cset with a map format.
+ */
+OPAL_DECLSPEC int opal_paffinity_base_cset2mapstr(char *str, int len, 
+                                               opal_paffinity_base_cpu_set_t *cset);
+
+/**
  * Debugging output stream
  */
 OPAL_DECLSPEC extern int opal_paffinity_base_output;
@@ -260,6 +277,14 @@ OPAL_DECLSPEC extern int opal_paffinity_base_output;
 OPAL_DECLSPEC extern bool opal_paffinity_alone;
 
 OPAL_DECLSPEC extern char *opal_paffinity_base_slot_list;
+
+/* Indicator that process affinity has been set for this process - i.e.,
+ * that OPAL set it either directly or when launched
+ */
+OPAL_DECLSPEC extern bool opal_paffinity_base_bound;
+
+/* String passed down from launcher that contains applied binding */
+OPAL_DECLSPEC extern char *opal_paffinity_base_applied_binding;
 
 END_C_DECLS
 

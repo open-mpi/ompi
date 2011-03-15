@@ -72,6 +72,7 @@
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/util/opal_environ.h"
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"
@@ -119,7 +120,7 @@ orte_odls_base_module_t orte_odls_default_module = {
                 orte_show_help("help-odls-default.txt",             \
                                "odls-default:binding-not-avail",    \
                                true, orte_process_info.nodename,    \
-                               (n), context->app);		    \
+                               (n), context->app);                  \
             }                                                       \
             goto LAUNCH_PROCS;                                      \
         }                                                           \
@@ -235,6 +236,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
     int target_socket, npersocket, logical_skt;
     int logical_cpu, phys_core, phys_cpu, ncpu;
     bool bound = false;
+    char *param, *tmp;
     
     if (NULL != child) {
         /* should pull this information from MPIRUN instead of going with
@@ -527,21 +529,21 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                              * to us, so index into the node's array to get the
                              * physical cpu
                              */
-			    phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
-			    if (OPAL_ERROR == phys_cpu){
-				/* No processor to bind to so error out */
-				ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-core");
-				orte_show_help("help-odls-default.txt",
-					       "odls-default:not-enough-resources", true,
-					       "processors", orte_process_info.nodename,
-					       "bind-to-core", context->app);
-				ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
-			    } else if (0 > phys_cpu) {
-				ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-core");
-				orte_show_help("help-odls-default.txt",
-					       "odls-default:invalid-phys-cpu", true);
-				ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
-			    }
+                            phys_cpu = opal_paffinity_base_get_physical_processor_id(logical_cpu);
+                            if (OPAL_ERROR == phys_cpu){
+                                /* No processor to bind to so error out */
+                                ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-core");
+                                orte_show_help("help-odls-default.txt",
+                                               "odls-default:not-enough-resources", true,
+                                               "processors", orte_process_info.nodename,
+                                               "bind-to-core", context->app);
+                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            } else if (0 > phys_cpu) {
+                                ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-core");
+                                orte_show_help("help-odls-default.txt",
+                                               "odls-default:invalid-phys-cpu", true);
+                                ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                            }
                         }
                         OPAL_PAFFINITY_CPU_SET(phys_cpu, mask);
                         /* increment logical cpu */
@@ -801,6 +803,20 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         }
         
 LAUNCH_PROCS:
+        /* if we are bound, report it */
+        if (opal_paffinity_base_bound) {
+            param = mca_base_param_environ_variable("paffinity","base","bound");
+            opal_setenv(param, "1", true, &environ_copy);
+            free (param);
+            /* and provide a char representation of what we did */
+            tmp = opal_paffinity_base_print_binding(mask);
+            if (NULL != tmp) {
+                param = mca_base_param_environ_variable("paffinity","base","applied_binding");
+                opal_setenv(param, tmp, true, &environ_copy);
+                free(tmp);
+            }
+        }
+
         /* close all file descriptors w/ exception of
          * stdin/stdout/stderr and the pipe used for the IOF INTERNAL
          * messages
@@ -942,12 +958,12 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
     if (NULL != (jdata = orte_get_job_data_object(job))) {
         if (jdata->state & ORTE_JOB_STATE_SUSPENDED) {
             if (ORTE_PROC_IS_HNP) {
-		/* Have the plm send the signal to all the nodes.
-		   If the signal arrived before the orteds started,
-		   then they won't know to suspend their procs.
-		   The plm also arranges for any local procs to
-		   be signaled.
-		 */
+                /* Have the plm send the signal to all the nodes.
+                   If the signal arrived before the orteds started,
+                   then they won't know to suspend their procs.
+                   The plm also arranges for any local procs to
+                   be signaled.
+                 */
                 orte_plm.signal_job(jdata->jobid, SIGTSTP);
             } else {
                 orte_odls_default_signal_local_procs(NULL, SIGTSTP);
@@ -986,9 +1002,9 @@ static int send_signal(pid_t pid, int signal)
                          signal, (long)pid));
 
     if (orte_forward_job_control) {
-	/* Send the signal to the process group rather than the
-	   process.  The child is the leader of its process group. */
-	pid = -pid;
+        /* Send the signal to the process group rather than the
+           process.  The child is the leader of its process group. */
+        pid = -pid;
     }
     if (kill(pid, signal) != 0) {
         switch(errno) {

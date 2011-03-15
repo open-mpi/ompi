@@ -9,9 +9,8 @@
 # $HEADER$
 #
 
-# OMPI_MPIEXT_affinity_CONFIG([action-if-found], [action-if-not-found])
+# EXT_mpiext_affinity_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([OMPI_MPIEXT_affinity_CONFIG], [
-    AC_CONFIG_FILES([ompi/mpiext/affinity/Makefile])
+AC_DEFUN([EXT_mpiext_affinity_CONFIG], [
     $1
 ])

@@ -151,6 +151,12 @@ typedef unsigned long int opal_paffinity_base_bitmask_t;
 #define OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS (OPAL_PAFFINITY_BITMASK_CPU_MAX / OPAL_PAFFINITY_BITMASK_T_NUM_BITS)
 
 /**
+ * \internal
+ * How many bytes in a cpu set
+ */
+#define OPAL_PAFFINITY_CPU_SET_NUM_BYTES (OPAL_PAFFINITY_BITMASK_NUM_ELEMENTS * sizeof(opal_paffinity_base_bitmask_t))
+
+/**
  * Public processor bitmask type
  */
 typedef struct opal_paffinity_base_cpu_set_t { 

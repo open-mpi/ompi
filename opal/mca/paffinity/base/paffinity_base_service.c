@@ -570,3 +570,123 @@ int opal_paffinity_base_slot_list_set(long rank, char *slot_str)
     opal_argv_free(item);
     return OPAL_SUCCESS;
 }
+
+/**
+ * Make a prettyprint string for a cset.
+ */
+int opal_paffinity_base_cset2str(char *str, int len, 
+                                 opal_paffinity_base_cpu_set_t *cset)
+{
+    int ret, i, j, k, num_sockets, num_cores, flag, count, 
+        range_first=0, range_last;
+    char tmp[BUFSIZ];
+    const int stmp = sizeof(tmp) - 1;
+
+    str[0] = tmp[stmp] = '\0';
+
+    /* Loop over the number of sockets in this machine */
+    ret = opal_paffinity_base_get_socket_info(&num_sockets);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+    for (i = 0; i < num_sockets; ++i) {
+        /* Loop over the number of cores in this socket */
+        ret = opal_paffinity_base_get_core_info(i, &num_cores);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+        /* Must initially set range_last to a low number -- smaller
+           than -1, so that the comparisons below work out
+           properly. */
+        for (range_last = -5, count = j = 0; j < num_cores; ++j) {
+            ret = opal_paffinity_base_get_map_to_processor_id(i, j, &k);
+            if (OPAL_SUCCESS != ret) {
+                return ret;
+            }
+
+            /* Prettyprint the cores that we're actually bound to */
+            flag = OPAL_PAFFINITY_CPU_ISSET(k, *cset);
+            if (flag) {
+                if (0 == count) {
+                    snprintf(tmp, stmp, "socket %d[core %d", i, j);
+                    strncat(str, tmp, len - strlen(str));
+                    range_first = range_last = j;
+                } else {
+                    if (j - 1 == range_last) {
+                        range_last = j;
+                    } else {
+                        snprintf(tmp, stmp, "-%d,%d", range_last, j);
+                        strncat(str, tmp, len - strlen(str));
+                        range_first = range_last = j;
+                    }
+                }
+                ++count;
+            }
+        }
+        if (count > 0) {
+            if (range_first != range_last) {
+                snprintf(tmp, stmp, "-%d", range_last);
+                strncat(str, tmp, len - strlen(str));
+            }
+            strncat(str, "] ", len - strlen(str));
+        }
+    }
+
+    return OPAL_SUCCESS;
+}
+
+/**
+ * Make a prettyprint string for a cset in a map format.  
+ * Example: [B_/__]
+ * Key:  [] - signifies socket
+ *        / - signifies core 
+ *        _ - signifies thread a process not bound to
+ *        B - signifies thread a process is bound to
+ */
+int opal_paffinity_base_cset2mapstr(char *str, int len, 
+				    opal_paffinity_base_cpu_set_t *cset)
+{
+    int ret, i, j, k, num_sockets, num_cores, flag;
+    char tmp[BUFSIZ];
+    const int stmp = sizeof(tmp) - 1;
+
+    str[0] = tmp[stmp] = '\0';
+
+    /* Loop over the number of sockets in this machine */
+    ret = opal_paffinity_base_get_socket_info(&num_sockets);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+    for (i = 0; i < num_sockets; ++i) {
+	strncat(str, "[", len - strlen(str));
+        /* Loop over the number of cores in this socket */
+        ret = opal_paffinity_base_get_core_info(i, &num_cores);
+        if (OPAL_SUCCESS != ret) {
+            return ret;
+        }
+	for (j = 0; j < num_cores; j++) {
+	    if (0 < j) {
+		/* add space after first core is printed */
+		strncat(str, " ", len - strlen(str));
+	    }
+	    
+            ret = opal_paffinity_base_get_map_to_processor_id(i, j, &k);
+            if (OPAL_SUCCESS != ret) {
+                return ret;
+            }
+
+	    flag = OPAL_PAFFINITY_CPU_ISSET(k, *cset);
+	    if (flag) {
+		/* mark core as bound to process */
+		strncat(str, "B", len - strlen(str));
+	    } else {
+		/* mark core as no process bound to it */
+		strncat(str, ".", len - strlen(str));
+	    }
+	}
+	strncat(str, "]", len - strlen(str));
+    }
+
+    return OPAL_SUCCESS;
+}
+
