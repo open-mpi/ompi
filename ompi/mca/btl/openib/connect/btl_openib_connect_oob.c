@@ -44,8 +44,16 @@
 #include "connect/connect.h"
 #include "orte/util/show_help.h"
 
+/*
+todo: fix type redefinition :
+	Old OFED 1.3.x has same type ib_gid_t defined in mad.h and ib_types.h
+
 #include <infiniband/mad.h>
+*/
+#define IB_SA_CLASS 0x3
+#define IB_SA_ATTR_PATHRECORD 0x35
 #include <iba/ib_types.h>
+
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
