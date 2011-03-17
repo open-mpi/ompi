@@ -26,12 +26,22 @@ my $mandir;
 my $version;
 my $outdir_base = ".";
 
+sub absoluteize {
+    my ($dir) = shift;
+    my $start = cwd();
+    chdir($dir);
+    $dir = cwd();
+    chdir($start);
+
+    return $dir;
+}
+
 # Read command line arguments
 while (@ARGV) {
     my $a = $ARGV[0];
     if ($a eq "--mandir" && $#ARGV >= 1) {
         shift @ARGV;
-        $mandir = $ARGV[0];
+        $mandir = absoluteize($ARGV[0]);
         print "Found mandir: $mandir\n";
     }
 
@@ -43,7 +53,7 @@ while (@ARGV) {
 
     elsif ($a eq "--outdir" && $#ARGV >= 1) {
         shift @ARGV;
-        $outdir_base = $ARGV[0];
+        $outdir_base = absoluteize($ARGV[0]);
         print "Found outdir: $outdir_base\n";
     }
     shift @ARGV;
