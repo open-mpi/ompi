@@ -55,10 +55,6 @@ static int xcast(orte_jobid_t job,
 static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 static int hier_barrier(void);
 static int modex(opal_list_t *procs);
-static int set_proc_attr(const char *attr_name, const void *data, size_t size);
-static int get_proc_attr(const orte_process_name_t proc,
-                         const char * attribute_name, void **val, 
-                         size_t *size);
 
 /* Module def */
 orte_grpcomm_base_module_t orte_grpcomm_hier_module = {
@@ -68,8 +64,8 @@ orte_grpcomm_base_module_t orte_grpcomm_hier_module = {
     hier_allgather,
     orte_grpcomm_base_allgather_list,
     hier_barrier,
-    set_proc_attr,
-    get_proc_attr,
+    orte_grpcomm_base_set_proc_attr,
+    orte_grpcomm_base_get_proc_attr,
     modex,
     orte_grpcomm_base_purge_proc_attrs
 };
@@ -424,14 +420,7 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
 
 static int modex(opal_list_t *procs)
 {
-    int rc=ORTE_SUCCESS;
-    int fd;
-    opal_byte_object_t bo, *boptr;
-    int32_t i, n;
-    char *nodename, *attr;
-    orte_nid_t **nd, *ndptr;
-    orte_attr_t *attrdata;
-    opal_buffer_t bobuf;
+    int rc;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:hier: modex entered",
@@ -452,133 +441,15 @@ static int modex(opal_list_t *procs)
      *
      */
     if (NULL != procs) {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs, false))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs, true))) {
             ORTE_ERROR_LOG(rc);
         }
-        return rc;
-    }
+    } else {
     
-    /* Do a modex across our peers if we are doing an opal_profile so that the
-     * HNP can collect our modex info
-     */
-
-    if (opal_profile) {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
+        /* otherwise, we are doing this across our peers */
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(true))) {
             ORTE_ERROR_LOG(rc);
         }
-        return rc;
-    }
-    
-    if (OPAL_ENABLE_HETEROGENEOUS_SUPPORT) {
-        /* decide if we need to do a modex. Check
-         * first to see if hetero is enabled - if yes, then we
-         * may need to exchange arch's as they may be different
-         */
-        /* Case 1: If different apps in this job were built differently - e.g., some
-         * are built 32-bit while others are built 64-bit - then we need to modex
-         * regardless of any other consideration. The user is reqd to tell us via a
-         * cmd line option if this situation exists, which will result in an mca param
-         * being set for us, so all we need to do is check for the global boolean
-         * that corresponds to that param
-         *
-         * Case 2: the nodes are hetero, but the app binaries were built
-         * the same - i.e., either they are both 32-bit, or they are both 64-bit, but
-         * no mixing of the two. In this case, we include the info in the modex
-         */
-        if (orte_hetero_apps || !orte_homogeneous_nodes) {
-            OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                                 "%s grpcomm:hier: modex is required",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            
-            if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            return rc;
-        }
-    }
-    
-    /* see if a profile file was given to us */
-    if (NULL == opal_profile_file) {
-        /* if we don't have any other way to do this, then let's default to doing the
-         * modex so we at least can function, even if it isn't as fast as we might like
-         */
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                             "%s grpcomm:hier: modex is required",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(false))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-    
-    fd = open(opal_profile_file, O_RDONLY);
-    if (fd < 0) {
-        orte_show_help("help-orte-runtime.txt", "grpcomm-hier:file-cant-open", true, opal_profile_file);
-        return ORTE_ERR_NOT_FOUND;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:hier:modex reading %s file",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  opal_profile_file));
-
-    /* loop through file until end */
-    boptr = &bo;
-    nd = (orte_nid_t**)orte_nidmap.addr;
-    while (0 < read(fd, &bo.size, sizeof(bo.size))) {
-        /* this is the number of bytes in the byte object */
-        bo.bytes = malloc(bo.size);
-        if (0 > read(fd, bo.bytes, bo.size)) {
-            orte_show_help("help-orte-runtime.txt", "orte_nidmap:unable-read-file", true, opal_profile_file);
-            close(fd);
-            return ORTE_ERR_FILE_READ_FAILURE;
-        }
-        /* load the byte object into a buffer for unpacking */
-        OBJ_CONSTRUCT(&bobuf, opal_buffer_t);
-        opal_dss.load(&bobuf, boptr->bytes, boptr->size);
-        /* unpack the nodename */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&bobuf, &nodename, &n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* find this node in nidmap */
-        for (i=0, ndptr=NULL; i < orte_nidmap.size && NULL != nd[i]; i++) {
-            /* since we may not have kept fqdn hostnames, we can only check
-             * for equality to the length of the name in the nid
-             */
-            if (0 == strncmp(nd[i]->name, nodename, strlen(nd[i]->name))) {
-                ndptr = nd[i];
-                break;
-            }
-        }
-        free(nodename);  /* done with this */
-        if (NULL == ndptr) {
-            /* didn't find it! */
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        
-        /* loop through the rest of the object to unpack the attr's themselves */
-        n = 1;
-        while (ORTE_SUCCESS == opal_dss.unpack(&bobuf, &attr, &n, OPAL_STRING)) {
-            attrdata = OBJ_NEW(orte_attr_t);
-            attrdata->name = strdup(attr);
-            /* read the number of bytes in the blob */
-            n = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&bobuf, &attrdata->size, &n, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* unpack the bytes */
-            attrdata->bytes = malloc(attrdata->size);
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&bobuf, attrdata->bytes, &attrdata->size, OPAL_BYTE))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* add to our list for this node */
-            opal_list_append(&ndptr->attrs, &attrdata->super);
-        }
-        OBJ_DESTRUCT(&bobuf);
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
@@ -586,70 +457,4 @@ static int modex(opal_list_t *procs)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return rc;
-}
-
-/* the HNP will -never- execute the following as it is NOT an MPI process */
-static int set_proc_attr(const char *attr_name, const void *data, size_t size)
-{
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:hier:set_proc_attr for attribute %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attr_name));
-
-    /* we always have to set our own attributes in case they are needed for
-     * a connect/accept at some later time
-     */
-    return orte_grpcomm_base_set_proc_attr(attr_name, data, size);
-}
-
-static int get_proc_attr(const orte_process_name_t proc,
-                         const char * attribute_name, void **val, 
-                         size_t *size)
-{
-    orte_nid_t *nid;
-    opal_list_item_t *item;
-    orte_attr_t *attr;
-    
-    /* find this proc's node in the nidmap */
-    if (NULL == (nid = orte_util_lookup_nid((orte_process_name_t*)&proc))) {
-        /* proc wasn't found - return error */
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                             "%s grpcomm:hier:get_proc_attr: no modex entry for proc %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc)));
-        return ORTE_ERR_NOT_FOUND;
-        
-    }
-    
-    /* look for this attribute */
-    for (item = opal_list_get_first(&nid->attrs);
-         item != opal_list_get_end(&nid->attrs);
-         item = opal_list_get_next(item)) {
-        attr = (orte_attr_t*)item;
-        if (0 == strcmp(attr->name, attribute_name)) {
-            /* copy the data to the caller */
-            void *copy = malloc(attr->size);
-            
-            if (copy == NULL) {
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-            memcpy(copy, attr->bytes, attr->size);
-            *val = copy;
-            *size = attr->size;
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:hier:get_proc_attr: found %d bytes for attr %s on proc %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)attr->size,
-                                 attribute_name, ORTE_NAME_PRINT(&proc)));
-            return ORTE_SUCCESS;
-        }
-    }
-    
-    /* get here if attribute isn't found */
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:hier:get_proc_attr: no attr avail or zero byte size for proc %s attribute %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&proc), attribute_name));
-    *val = NULL;
-    *size = 0;
-    
-    return ORTE_SUCCESS;
 }
