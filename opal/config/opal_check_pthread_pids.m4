@@ -17,7 +17,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_CHECK_PTHREAD_PIDS],[
+AC_DEFUN([OPAL_CHECK_PTHREAD_PIDS],[
 #
 # Arguments: none
 #
@@ -40,10 +40,11 @@ LDFLAGS_save="$LDFLAGS"
 LDFLAGS="$LDFLAGS $THREAD_LDFLAGS"
 LIBS_save="$LIBS"
 LIBS="$LIBS $THREAD_LIBS"
-AC_TRY_RUN([#include <pthread.h>
+AC_RUN_IFELSE([AC_LANG_SOURCE([#include <pthread.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
+
 void *checkpid(void *arg);
 int main() {
   pthread_t thr;
@@ -53,6 +54,7 @@ int main() {
   pthread_join(thr, (void **) &retval);
   exit(*retval);
 }
+
 static int ret;
 void *checkpid(void *arg) {
    int ppid = *((int *) arg);
@@ -61,41 +63,15 @@ void *checkpid(void *arg) {
    else
      ret = 1;
    pthread_exit((void *) &ret);
-}], 
+}])], 
 [MSG=no OPAL_THREADS_HAVE_DIFFERENT_PIDS=0], 
 [MSG=yes OPAL_THREADS_HAVE_DIFFERENT_PIDS=1],
-[case $host in
-     *-linux*)
-
-         # We don't know exactly when (and I really don't feel like
-         # checking, because this is such a small case), but somewhere
-         # along the line, Linux stopped using different PIDs for
-         # threads.  So rule that if we're <=2.6.9 (i.e., RHEL4), then
-         # the PIDs are different.  If above that version, they're the
-         # same.
-         linux_ver=`uname -a | awk '{ print [$]3 }'`
-         linux_ver_major=`echo $linux_ver | cut -d. -f1`
-         linux_ver_minor=`echo $linux_ver | cut -d. -f2`
-         linux_ver_rel=`echo $linux_ver | cut -d. -f3 | cut -d- -f1`
-
-         OPAL_THREADS_HAVE_DIFFERENT_PIDS=1
-         MSG="cross compiling - assuming yes"
-
-         if test "$linux_ver_major" -gt 2; then
-             OPAL_THREADS_HAVE_DIFFERENT_PIDS=0
-             MSG="cross compiling and Linux version >= 2.x.x - assuming no"
-         elif test "$linux_ver_major" -eq 2 -a "$linux_ver_minor" -gt 6; then
-             MSG="cross compiling and Linux version >= 2.6.x - assuming no"
-         elif test "$linux_ver_major" -eq 2 -a "$linux_ver_minor" -eq 6 -a "$linux_ver_rel" -gt 9; then
-             MSG="cross compiling and Linux version >= 2.6.9 - assuming no"
-         fi
-         ;;
-     *)
-         MSG="cross compiling - assuming no"
-         OPAL_THREADS_HAVE_DIFFERENT_PIDS=0
-         ;;
- esac
-])
+[
+ # If we're cross compiling, we can't do another AC_* function here beause
+ # it we haven't displayed the result from the last one yet.  So defer
+ # another test until below.
+ OPAL_THREADS_HAVE_DIFFERENT_PIDS=
+ MSG="cross compiling (need another test)"])
 
 CFLAGS="$CFLAGS_save"
 CPPFLAGS="$CPPFLAGS_save"
@@ -103,13 +79,27 @@ LDFLAGS="$LDFLAGS_save"
 LIBS="$LIBS_save"
 
 AC_MSG_RESULT([$MSG])
+
+AS_IF([test "x$OPAL_THREADS_HAVE_DIFFERENT_PIDS" = "x"],
+      [ # If we are cross-compiling, look for the symbol
+       # __linuxthreads_create_event, which seems to only exist in the
+       # Linux Threads-based pthreads implementation (i.e., the one
+       # that has different PIDs for each thread).  We *could* switch
+       # on $host here and only test *linux* hosts, but this test is
+       # pretty unique, so why bother?  Note that AC_CHECK_FUNC works
+       # properly in cross-compiling environments in recent-enough
+       # versions of Autoconf (which is one of the reasons we mandate
+       # recent versions in autogen!).
+       AC_CHECK_FUNC([__linuxthreads_create_event],
+                     [OPAL_THREADS_HAVE_DIFFERENT_PIDS=1])])
+
 AS_IF([test "$OPAL_THREADS_HAVE_DIFFERENT_PIDS" = "1"],
-      [AC_MSG_WARN([This version of Open MPI only supports when threads have])
-       AC_MSG_WARN([the same PID.  Please use an older version of Open MPI])
-       AC_MSG_WARN([if you need support on systems with different PIDs for])
-       AC_MSG_WARN([threads in the same process.  Open MPI 1.4.x supports such])
-       AC_MSG_WARN([ systems, as does at least some versions the Open MPI])
-       AC_MSG_WARN([1.5.x series.])
+      [AC_MSG_WARN([This version of Open MPI only supports environments where])
+       AC_MSG_WARN([threads have the same PID.  Please use an older version of])
+       AC_MSG_WARN([Open MPI if you need support on systems with different])
+       AC_MSG_WARN([PIDs for threads in the same process.  Open MPI 1.4.x]) 
+       AC_MSG_WARN([supports such systems, as does at least some versions the])
+       AC_MSG_WARN([Open MPI 1.5.x series.])
        AC_MSG_ERROR([Cannot continue])
       ])
 
