@@ -180,7 +180,7 @@ recv_request_pml_complete(mca_pml_csum_recv_request_t *recvreq)
 static inline bool
 recv_request_pml_complete_check(mca_pml_csum_recv_request_t *recvreq)
 {
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_rmb();
 #endif
     if(recvreq->req_match_received &&
@@ -220,7 +220,7 @@ static inline void recv_req_matched(mca_pml_csum_recv_request_t *req,
     req->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
     req->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
     req->req_match_received = true;
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_wmb();
 #endif
     if(req->req_recv.req_bytes_packed > 0) {

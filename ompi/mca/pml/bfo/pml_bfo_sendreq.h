@@ -263,7 +263,7 @@ send_request_pml_complete(mca_pml_bfo_send_request_t *sendreq)
 static inline bool
 send_request_pml_complete_check(mca_pml_bfo_send_request_t *sendreq)
 {
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_rmb();
 #endif
     /* if no more events are expected for the request and the whole message is

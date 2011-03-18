@@ -45,9 +45,9 @@ int opal_progress_spin_count = 10000;
 /*
  * Local variables
  */
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
 static opal_atomic_lock_t progress_lock;
-#endif  /* OPAL_HAVE_THREAD_SUPPORT */
+#endif  /* OPAL_ENABLE_MULTI_THREADS */
 
 /* callbacks to progress */
 static opal_progress_callback_t *callbacks = NULL;
@@ -71,7 +71,7 @@ static int32_t event_progress_delta = 0;
 static int32_t num_event_users = 0;
 
 /* How deep are we in opal_progress recursion? */
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
 volatile 
 #endif
 uint32_t opal_progress_recursion_depth_counter = 0;
@@ -99,9 +99,9 @@ opal_progress_init(void)
 #endif
 
     /* reentrant issues */
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_init(&progress_lock, OPAL_ATOMIC_UNLOCKED);
-#endif  /* OPAL_HAVE_THREAD_SUPPORT */
+#endif  /* OPAL_ENABLE_MULTI_THREADS */
 
     /* set the event tick rate */
     opal_progress_set_event_poll_rate(10000);
@@ -131,7 +131,7 @@ int
 opal_progress_finalize(void)
 {
     /* free memory associated with the callbacks */
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_lock(&progress_lock);
 #endif
 
@@ -142,7 +142,7 @@ opal_progress_finalize(void)
         callbacks = NULL;
     }
 
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_unlock(&progress_lock);
 #endif
 
@@ -167,7 +167,7 @@ opal_progress(void)
     size_t i;
     int events = 0;
 
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_add(&opal_progress_recursion_depth_counter, 1);
 #else
     ++opal_progress_recursion_depth_counter;
@@ -221,7 +221,7 @@ opal_progress(void)
 #endif  /* defined(__WINDOWS__) */
     }
 #endif  /* defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD) */
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_add(&opal_progress_recursion_depth_counter, -1);
 #else
     --opal_progress_recursion_depth_counter;
@@ -336,7 +336,7 @@ opal_progress_register(opal_progress_callback_t cb)
     int ret = OPAL_SUCCESS;
     size_t index;
 
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_lock(&progress_lock);
 #endif
 
@@ -361,7 +361,7 @@ opal_progress_register(opal_progress_callback_t cb)
 
  cleanup:
 
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_unlock(&progress_lock);
 #endif
 
@@ -374,7 +374,7 @@ opal_progress_unregister(opal_progress_callback_t cb)
     size_t i;
     int ret = OPAL_ERR_NOT_FOUND;
 
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_lock(&progress_lock);
 #endif
 
@@ -402,7 +402,7 @@ opal_progress_unregister(opal_progress_callback_t cb)
         callbacks_len--;
     }
 
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     opal_atomic_unlock(&progress_lock);
 #endif
 

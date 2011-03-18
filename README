@@ -381,9 +381,10 @@ MPI Functionality and Features
 - MPI_THREAD_MULTIPLE support is included, but is only lightly tested.
   It likely does not work for thread-intensive applications.  Note
   that *only* the MPI point-to-point communication functions for the
-  BTL's listed above are considered thread safe.  Other support
-  functions (e.g., MPI attributes) have not been certified as safe
-  when simultaneously used by multiple threads.
+  BTL's listed earlier (search for "MPI_THREAD_MULTIPLE support") are
+  considered thread safe.  Other support functions (e.g., MPI attributes)
+  have not been certified as safe when simultaneously used by multiple
+  threads.
 
   Note that Open MPI's thread support is in a fairly early stage; the
   above devices are likely to *work*, but the latency is likely to be
@@ -804,17 +805,16 @@ for a full list); a summary of the more commonly used ones follows:
   --with-threads; this is currently disabled by default. Enabling
   this feature will automatically --enable-opal-multi-threads.
 
+--enable-opal-multi-threads
+  Enables thread lock support in the OPAL and ORTE layers. Does
+  not enable MPI_THREAD_MULTIPLE - see above option for that feature.
+  This is currently disabled by default.
+
 --with-fca=<directory>
   Specify the directory where the Voltaire FCA library and
   header files are located.  
 
   FCA is the support library for Voltaire QDR switches.
-
-
---enable-opal-multi-threads
-  Enables thread lock support in the OPAL and ORTE layers. Does
-  not enable MPI_THREAD_MULTIPLE - see above option for that feature.
-  This is currently disabled by default.
 
 --disable-mpi-cxx
   Disable building the C++ MPI bindings.  Note that this does *not*

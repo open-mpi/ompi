@@ -13,7 +13,7 @@
 #include "opal/sys/atomic.h"
 
 
-#if !OPAL_HAVE_THREAD_SUPPORT
+#if !OPAL_ENABLE_MULTI_THREADS
 
 /* If we don't have thread support, there's no point in running this
    test */
@@ -73,4 +73,4 @@ int main(int argc, char** argv)
     return test_finalize();
 }
 
-#endif /* OPAL_HAVE_THREAD_SUPPORT */
+#endif /* OPAL_ENABLE_MULTI_THREADS */

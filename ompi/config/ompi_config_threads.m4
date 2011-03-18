@@ -30,23 +30,23 @@ AC_DEFUN([OMPI_CONFIG_THREADS],[
 #
 
 #
-# Thread Multiple
+# MPI_THREAD_MULTIPLE
 #
 # --enable-mpi-thread-multiple
 #  #if OMPI_ENABLE_THREAD_MULTIPLE == 0 /* Not available */
 #  #if OMPI_ENABLE_THREAD_MULTIPLE == 1 /* Available  */
 # 
-AC_MSG_CHECKING([if want MPI thread support])
+AC_MSG_CHECKING([if want MPI_THREAD_MULTIPLE support])
 AC_ARG_ENABLE([mpi_thread_multiple],
     [AC_HELP_STRING([--enable-mpi-thread-multiple],
-                    [Enable thread support for MPI applications (default: disabled)])],
+                    [Enable MPI_THREAD_MULTIPLE support (default: disabled)])],
     [enable_mpi_threads="$enableval"],
     [enable_mpi_threads="undef"])
 
 # if they did not want OPAL thread support, then they cannot have this option
 if test "$enable_mpi_threads" = "yes" -a "$enable_opal_multi_threads" = "no"; then
     AC_MSG_WARN(["failed"])
-    AC_MSG_WARN(["*** You have requested MPI thread multiple support but thread"])
+    AC_MSG_WARN(["*** You have requested MPI_THREAD_MULTIPLE support but thread"])
     AC_MSG_WARN(["*** support was disabled within the OPAL code base by"])
     AC_MSG_WARN(["*** --disable-opal-multi-threads on your configure command."])
     AC_MSG_ERROR(["*** Can not continue."])
@@ -66,7 +66,7 @@ elif test "$enable_mpi_threads" = "yes" -a "$enable_opal_multi_threads" = "undef
    OPAL_ENABLE_MULTI_THREADS=1
    enable_opal_multi_threads="yes"
    AC_DEFINE_UNQUOTED([OPAL_ENABLE_MULTI_THREADS], [$OPAL_ENABLE_MULTI_THREADS],
-                      [Whether we should enable support for multiple user threads])
+                      [Whether we should enable thread support within the OPAL code base])
     ompi_want_mpi_threads=1
     OMPI_ENABLE_THREAD_MULTIPLE=1
     AC_MSG_RESULT([Enabled - OPAL thread support automatically enabled])
@@ -77,7 +77,7 @@ else
     AC_MSG_RESULT([Disabled])
 fi
 AC_DEFINE_UNQUOTED([OMPI_ENABLE_THREAD_MULTIPLE], [$ompi_want_mpi_threads],
-                   [Enable MPI Thread Multiple])
+                   [Enable MPI_THREAD_MULTIPLE])
 
 ])dnl
 

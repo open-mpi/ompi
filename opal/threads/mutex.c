@@ -35,11 +35,11 @@ bool opal_mutex_check_locks = false;
 static void opal_mutex_construct(opal_mutex_t *m)
 {
     InterlockedExchange(&m->m_lock, 0);
-#if !OPAL_HAVE_THREAD_SUPPORT && OPAL_ENABLE_DEBUG
+#if !OPAL_ENABLE_MULTI_THREADS && OPAL_ENABLE_DEBUG
     m->m_lock_debug = 0;
     m->m_lock_file = NULL;
     m->m_lock_line = 0;
-#endif  /* !OPAL_HAVE_THREAD_SUPPORT && OPAL_ENABLE_DEBUG */
+#endif  /* !OPAL_ENABLE_MULTI_THREADS && OPAL_ENABLE_DEBUG */
 }
 
 static void opal_mutex_destruct(opal_mutex_t *m)
@@ -77,7 +77,7 @@ static void opal_mutex_construct(opal_mutex_t *m)
     mutex_init(&m->m_lock_solaris, USYNC_THREAD, NULL);
 #endif
 
-#if OPAL_ENABLE_DEBUG && !OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_DEBUG && !OPAL_ENABLE_MULTI_THREADS
     m->m_lock_debug = 0;
     m->m_lock_file = NULL;
     m->m_lock_line = 0;

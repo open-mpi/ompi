@@ -24,7 +24,7 @@
 
 OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, opal_list_item_t, NULL, NULL);
 static bool mca_mpool_enable_progress_threads = true;
-static bool mca_mpool_enable_mpi_threads = true;
+static bool mca_mpool_enable_mpi_thread_multiple = true;
          
 /**
  * Function for weeding out mpool modules that don't want to run.
@@ -34,10 +34,10 @@ static bool mca_mpool_enable_mpi_threads = true;
  * will be closed and unloaded.  The selected modules will be returned
  * to the caller in a opal_list_t.
  */
-int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads)
+int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_thread_multiple)
 {
     mca_mpool_enable_progress_threads = enable_progress_threads;
-    mca_mpool_enable_mpi_threads = enable_mpi_threads;
+    mca_mpool_enable_mpi_thread_multiple = enable_mpi_thread_multiple;
     return OMPI_SUCCESS;
 }
 

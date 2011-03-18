@@ -25,7 +25,7 @@ static int mca_pml_v_component_open(void);
 static int mca_pml_v_component_close(void);
 static int mca_pml_v_component_parasite_close(void);
 
-static mca_pml_base_module_t *mca_pml_v_component_init(int* priority, bool enable_threads, bool enable_progress_threads);
+static mca_pml_base_module_t *mca_pml_v_component_init(int* priority, bool enable_progress_threads, bool enable_mpi_thread_multiple);
 static int mca_pml_v_component_finalize(void);
 static int mca_pml_v_component_parasite_finalize(void);
 
@@ -56,7 +56,7 @@ mca_pml_base_component_2_0_0_t mca_pml_v_component =
 };
 
 static bool pml_v_enable_progress_treads = OMPI_ENABLE_PROGRESS_THREADS;
-static bool pml_v_enable_mpi_threads = OMPI_ENABLE_THREAD_MULTIPLE;
+static bool pml_v_enable_mpi_thread_multiple = OMPI_ENABLE_THREAD_MULTIPLE;
 
 /*******************************************************************************
  * MCA level functions - parasite setup
@@ -161,12 +161,12 @@ static int mca_pml_v_component_parasite_close(void)
  */
 static mca_pml_base_module_t *mca_pml_v_component_init(int *priority,
                                                       bool enable_progress_threads,
-                                                      bool enable_mpi_threads)
+                                                      bool enable_mpi_thread_multiple)
 {
     V_OUTPUT_VERBOSE(1, "init: I'm not supposed to be here until BTL loading stuff gets fixed!? That's strange...");
 
     pml_v_enable_progress_treads = enable_progress_threads;
-    pml_v_enable_mpi_threads = enable_mpi_threads;
+    pml_v_enable_mpi_thread_multiple = enable_mpi_thread_multiple;
     
     /* I NEVER want to be the selected PML, so I report less than possible 
      * priority and a NULL module 
@@ -202,7 +202,7 @@ static int mca_pml_v_enable(bool enable)
         /* Check if a protocol have been selected during init */
         if(! mca_vprotocol_base_selected())
             mca_vprotocol_base_select(pml_v_enable_progress_treads, 
-                                      pml_v_enable_mpi_threads);
+                                      pml_v_enable_mpi_thread_multiple);
 
         /* Check if we succeeded selecting a protocol */
         if(mca_vprotocol_base_selected()) {

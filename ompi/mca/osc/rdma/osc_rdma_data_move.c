@@ -42,7 +42,7 @@
 static inline int32_t
 create_send_tag(ompi_osc_rdma_module_t *module)
 {
-#if OPAL_HAVE_THREAD_SUPPORT && OPAL_HAVE_ATOMIC_CMPSET_32
+#if OPAL_ENABLE_MULTI_THREADS && OPAL_HAVE_ATOMIC_CMPSET_32
     int32_t newval, oldval;
     do {
         oldval = module->m_tag_counter;

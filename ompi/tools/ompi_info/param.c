@@ -572,9 +572,9 @@ void ompi_info_do_config(bool want_all)
         f77 = strdup("no");
     }
     
-    if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {
-        asprintf(&threads, "%s (mpi: %s, progress: %s)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
-                 (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"),
+    if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
+        asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, progress: %s)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
+                 (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
                  OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
                  OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no");
     } else {
