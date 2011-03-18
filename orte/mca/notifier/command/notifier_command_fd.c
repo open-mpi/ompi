@@ -14,12 +14,12 @@
  * #if conditionals).  We also don't protect including <pthread.h>.
  * That's because this component currently only compiles on Linux and
  * Solaris, and both of these OS's have pthreads.  Using the run-time
- * conditionals gives us bettern compile-time checking, even of code
+ * conditionals gives us better compile-time checking, even of code
  * that isn't activated.
  *
  * Note, too, that the functionality in this file does *not* require
  * all the heavyweight OMPI thread infrastructure (e.g., from
- * --enable-mpi-threads or --enable-progress-threads).  All work that
+ * --enable-mpi-thread-multiple or --enable-progress-threads).  All work that
  * is done in a separate progress thread is very carefully segregated
  * from that of the main thread, and communication back to the main
  * thread

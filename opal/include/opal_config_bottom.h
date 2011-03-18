@@ -68,8 +68,6 @@
 
 /* Do we have posix or solaris thread lib */
 #define OPAL_HAVE_THREADS (OPAL_HAVE_POSIX_THREADS || OPAL_HAVE_SOLARIS_THREADS)
-/* Do we have thread support? */
-#define OPAL_HAVE_THREAD_SUPPORT OPAL_ENABLE_MULTI_THREADS
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,

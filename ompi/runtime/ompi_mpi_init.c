@@ -376,7 +376,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        this value. */
 
     ompi_mpi_thread_requested = requested;
-    if (OPAL_HAVE_THREAD_SUPPORT == 0) {
+    if (OPAL_ENABLE_MULTI_THREADS == 0) {
         ompi_mpi_thread_provided = *provided = MPI_THREAD_SINGLE;
         ompi_mpi_main_thread = NULL;
     } else if (OMPI_ENABLE_THREAD_MULTIPLE == 1) {

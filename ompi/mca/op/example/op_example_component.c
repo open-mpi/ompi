@@ -38,7 +38,7 @@
 static int example_component_open(void);
 static int example_component_close(void);
 static int example_component_init_query(bool enable_progress_threads,
-                                     bool enable_mpi_threads);
+                                     bool enable_mpi_thread_multiple);
 static struct ompi_op_base_module_1_0_0_t *
     example_component_op_query(struct ompi_op_t *op, int *priority);
 static int example_component_register(void);
@@ -168,7 +168,7 @@ static int example_component_register(void)
  * Query whether this component wants to be used in this process.
  */
 static int example_component_init_query(bool enable_progress_threads,
-                                        bool enable_mpi_threads)
+                                        bool enable_mpi_thread_multiple)
 {
     opal_output(ompi_op_base_output, "example component init query");
 
@@ -184,9 +184,9 @@ static int example_component_init_query(bool enable_progress_threads,
        the MPI_Op component selection process.
 
        The input parameters enable_progress_threads and
-       enable_mpi_threads also tell the component the following:
+       enable_mpi_thread_multiple also tell the component the following:
 
-       - If enable_process_threads==true, then the component is
+       - If enable_progress_threads==true, then the component is
          allowed to have a progress thread in the background that is
          supported by the OMPI infrastructure (i.e., all of OMPI's
          locks and whatnot are active in this build).  Note that the
@@ -199,7 +199,7 @@ static int example_component_init_query(bool enable_progress_threads,
          multi-threaded safe and whether multi-threading sync/IPC
          mechanisms in the OMPI code base are active.
 
-       - If enable_mpi_threads==true, the MPI_THREAD_MULTIPLE is
+       - If enable_mpi_thread_multiple==true, then MPI_THREAD_MULTIPLE is
          active.
 
        Note that a component can uses these values to deactivate
@@ -223,7 +223,7 @@ static int example_component_init_query(bool enable_progress_threads,
        be called in the future for each intrinsic MPI_Op).  Otherwise,
        return OMPI_ERR_NOT_SUPPORTED (indicating that this component
        will be closed and discarded). */
-    if (mca_op_example_component.hardware_available && !enable_mpi_threads) {
+    if (mca_op_example_component.hardware_available && !enable_mpi_thread_multiple) {
         return OMPI_SUCCESS;
     }
     return OMPI_ERR_NOT_SUPPORTED;

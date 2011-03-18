@@ -200,15 +200,15 @@ OMPI_DEF_OPT(OPAL_ENABLE_MEM_PROFILE "Whether we want the memory profiling or no
 
 OMPI_DEF_OPT(OMPI_ENABLE_MPI_PROFILING "Whether we want MPI profiling or not." ON)
 
-OMPI_DEF_OPT(OMPI_ENABLE_THREAD_MULTIPLE "Enable MPI Thread Multiple." OFF)
+OMPI_DEF_OPT(OMPI_ENABLE_THREAD_MULTIPLE "Enable MPI_THREAD_MULTIPLE." OFF)
 
-OMPI_DEF(OMPI_ENABLE_PROGRESS_THREADS 0 "Hardcode the OMPI progress thread to be off." 0 1)
+OMPI_DEF(OMPI_ENABLE_PROGRESS_THREADS 0 "Hardwire OMPI progress threads to be off." 0 1)
 
-OMPI_DEF(ORTE_ENABLE_PROGRESS_THREADS 0 "Hardcode the ORTE progress thread to be off." 0 1)
+OMPI_DEF(ORTE_ENABLE_PROGRESS_THREADS 0 "Hardwire ORTE progress threads to be off." 0 1)
 
-OMPI_DEF_OPT(OPAL_ENABLE_MULTI_THREADS "Whether we should enable support for multiple user threads" OFF)
+OMPI_DEF_OPT(OPAL_ENABLE_MULTI_THREADS "Whether we should enable OPAL thread support." OFF)
 
-OMPI_DEF_OPT(OPAL_ENABLE_PTY_SUPPORT "Whether we should use progress threads rather than polling." OFF)
+OMPI_DEF_OPT(OPAL_ENABLE_PTY_SUPPORT "Whether we should enable PTY support for STDIO forwarding." OFF)
 
 OMPI_DEF_OPT ( OMPI_GROUP_SPARSE "Wether we want sparse process groups." OFF)
 

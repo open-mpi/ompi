@@ -238,7 +238,7 @@ int ompi_request_default_wait_all( size_t count,
          */
         OPAL_THREAD_LOCK(&ompi_request_lock);
         ompi_request_waiting++;
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
         /*
          * confirm the status of the pending requests. We have to do it before
          * taking the condition or otherwise we can miss some requests completion (the
@@ -251,7 +251,7 @@ int ompi_request_default_wait_all( size_t count,
                 completed++;
             }
         }
-#endif  /* OPAL_HAVE_THREAD_SUPPORT */
+#endif  /* OPAL_ENABLE_MULTI_THREADS */
         while( completed != count ) {
             /* check number of pending requests */
             size_t start = ompi_request_completed;

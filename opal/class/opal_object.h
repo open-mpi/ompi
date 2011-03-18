@@ -122,9 +122,9 @@
 #include <stdlib.h>
 #endif  /* HAVE_STDLIB_H */
 
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
 #include "opal/sys/atomic.h"
-#endif  /* OPAL_HAVE_THREAD_SUPPORT */
+#endif  /* OPAL_ENABLE_MULTI_THREADS */
 
 BEGIN_C_DECLS
 
@@ -492,7 +492,7 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls)
 static inline int opal_obj_update(opal_object_t *object, int inc) __opal_attribute_always_inline__;
 static inline int opal_obj_update(opal_object_t *object, int inc)
 {
-#if OPAL_HAVE_THREAD_SUPPORT
+#if OPAL_ENABLE_MULTI_THREADS
     return opal_atomic_add_32(&(object->obj_reference_count), inc );
 #else
     object->obj_reference_count += inc;

@@ -403,7 +403,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
                from under it. Yes, it's spinning.  No, we won't spin
                for long. */
 
-            if (!OPAL_HAVE_THREAD_SUPPORT) {
+            if (!OPAL_ENABLE_MULTI_THREADS) {
                 opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
             }
         }
