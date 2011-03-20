@@ -123,9 +123,8 @@ static void send_relay(opal_buffer_t *buf)
                              ORTE_VPID_PRINT(nm->vpid)));
         
         target.vpid = nm->vpid;
-        if (ORTE_SUCCESS != (ret = orte_comm(&target,
-                                                      buf, ORTE_RML_TAG_DAEMON,
-                                                      orte_daemon_cmd_processor))) {
+        if (ORTE_SUCCESS != (ret = orte_comm(&target, buf, ORTE_RML_TAG_DAEMON,
+                                             orte_daemon_cmd_processor))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
