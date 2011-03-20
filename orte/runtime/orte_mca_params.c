@@ -461,29 +461,14 @@ int orte_register_params(void)
     mca_base_param_reg_int_name("orte", "max_restarts",
                                 "Max number of times to restart a failed process",
                                 false, false,
-                                -1, &orte_max_restarts);
+                                0, &orte_max_restarts);
     
-    if (orte_enable_recovery) {
-        if (orte_max_restarts <= 0) {
-            if (ORTE_PROC_IS_HNP) {
-                opal_output(orte_clean_output,
-                            "------------------------------------------------------------\n"
-                            "Although the MCA param orte_enable_recovery was set to true,\n"
-                            "a value for the max number of restarts was not provided:\n\n"
-                            "Max restarts: %d\n"
-                            "This must be a positive value. We are disabling\n"
-                            "process recovery, but continuing execution.\n"
-                            "------------------------------------------------------------",
-                            orte_max_restarts);
-            }
-            orte_enable_recovery = false;
-        }
-    } else if (orte_max_restarts > 0) {
+    if (!orte_enable_recovery && orte_max_restarts != 0) {
         if (ORTE_PROC_IS_HNP) {
             opal_output(orte_clean_output,
                         "------------------------------------------------------------------\n"
                         "The MCA param orte_enable_recovery was not set to true, but\n"
-                        "a positive value was provided for the number of restarts:\n\n"
+                        "a value was provided for the number of restarts:\n\n"
                         "Max restarts: %d\n"
                         "We are enabling process recovery and continuing execution. To avoid\n"
                         "this warning in the future, please set the orte_enable_recovery\n"
