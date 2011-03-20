@@ -19,6 +19,8 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/mca/rmcast/rmcast.h"
+
 #include "orte/mca/grpcomm/base/base.h"
 #include "grpcomm_mcast.h"
 
@@ -65,6 +67,14 @@ int orte_grpcomm_mcast_component_query(mca_base_module_t **module, int *priority
                                    &is_required);
     
     if( !is_required ) {
+        *priority = 0;
+        *module = NULL;
+        return ORTE_ERROR;
+    }
+
+    if (NULL == orte_rmcast.recv_buffer_nb) {
+        /* check any API to ensure mcast support was built */
+        opal_output(0, "MCAST GRPCOMM WAS SPECIFIED, BUT MULTICAST SUPPORT WAS NOT BUILT");
         *priority = 0;
         *module = NULL;
         return ORTE_ERROR;
