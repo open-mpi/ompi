@@ -560,6 +560,7 @@ int orterun(int argc, char *argv[])
     if (0 == MPIR_forward_comm) {
         rc = ORTE_SUCCESS;
     }
+    MPIR_force_to_main = 0;
     memset(MPIR_attach_fifo, 0, MPIR_MAX_PATH_LENGTH);
     foo = MPIR_Breakpoint;
 

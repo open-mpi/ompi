@@ -50,7 +50,7 @@ volatile char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH];
 volatile int MPIR_forward_output = 0;
 volatile int MPIR_forward_comm = 0;
 char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH];
-
+int MPIR_force_to_main = 0;
 
 #if ORTE_DISABLE_FULL_SUPPORT
 int orte_debugger_base_open(void)
