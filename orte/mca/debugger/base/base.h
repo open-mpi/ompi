@@ -68,6 +68,7 @@ ORTE_DECLSPEC extern volatile char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH];
 ORTE_DECLSPEC extern volatile int MPIR_forward_output;
 ORTE_DECLSPEC extern volatile int MPIR_forward_comm;
 ORTE_DECLSPEC extern char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH];
+ORTE_DECLSPEC extern int MPIR_force_to_main;
 
 typedef void* (*orte_debugger_breakpoint_fn_t)(void);
 
