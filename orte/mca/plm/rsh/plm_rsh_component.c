@@ -155,36 +155,17 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
     if (!mca_plm_rsh_component.disable_qrsh &&
         NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
-        /* setting rsh_agent_path and rsh_agent_argv[0] for qrsh */
-        asprintf(&orte_plm_globals.rsh_agent_path, "%s/bin/%s/qrsh", 
-                 getenv("SGE_ROOT"), getenv("ARC"));
-        orte_plm_globals.rsh_agent_argv = NULL;
-        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv,
-                                orte_plm_globals.rsh_agent_path);
-        /* double check that we have access and permissions for the qrsh agent */
-        if (NULL == opal_path_findv(orte_plm_globals.rsh_agent_argv[0], X_OK,
-                                    environ, NULL)) {
-            opal_output_verbose(1, orte_plm_globals.output,
-                                "%s plm:rsh: unable to be used: cannot find path "
-                                "or execution permissions not set for launching agent \"%s\"\n", 
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                orte_plm_globals.rsh_agent_argv[0]);
+        /* setup the search path for qrsh */
+        asprintf(&tmp, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
+        /* see if the agent is available */
+        if (ORTE_SUCCESS != orte_plm_base_rsh_launch_agent_lookup("qrsh", tmp)) {
+            /* can't be SGE */
+             opal_output_verbose(1, orte_plm_globals.output,
+                                "%s plm:rsh: unable to be used: SGE indicated but cannot find path "
+                                "or execution permissions not set for launching agent qrsh", 
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             *module = NULL;
             return ORTE_ERROR;
-        }
-        /* automatically add -inherit and grid engine PE related flags */
-        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-inherit");
-        /* Don't use the "-noshell" flag as qrsh would have a problem 
-         * swallowing a long command */
-        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-nostdin");
-        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-V");
-        if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
-            opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-verbose");
-            tmp = opal_argv_join(orte_plm_globals.rsh_agent_argv, ' ');
-            opal_output_verbose(1, orte_plm_globals.output,
-                                "%s plm:rsh: using \"%s\" for launching\n",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
-            free(tmp);
         }
         mca_plm_rsh_component.using_qrsh = true;
         *priority = mca_plm_rsh_component.priority;
@@ -192,9 +173,9 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
         return ORTE_SUCCESS;
     }
     
-    /* if this isn't an Grid Engine environment, see if rsh/ssh is available */
+    /* if this isn't an Grid Engine environment, see if MCA-specified agent (default: ssh:rsh) is available */
     
-    if (ORTE_SUCCESS != orte_plm_base_rsh_launch_agent_setup()) {
+    if (ORTE_SUCCESS != orte_plm_base_rsh_launch_agent_lookup(NULL, NULL)) {
         /* this isn't an error - we just cannot be selected */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: unable to be used: cannot find path "

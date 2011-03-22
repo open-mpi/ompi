@@ -63,20 +63,43 @@
 #include "orte/mca/plm/base/plm_private.h"
 
 #ifndef __WINDOWS__
-static char **search(const char* agent_list);
+static char **search(const char* agent_list, const char *path);
 
-int orte_plm_base_rsh_launch_agent_setup(void)
+int orte_plm_base_rsh_launch_agent_lookup(const char *agent_list, char *path)
+{
+    char **tmp;
+
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:rsh_lookup on agent %s path %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == agent_list) ? orte_rsh_agent : agent_list,
+                         (NULL == path) ? "NULL" : path));
+    if (NULL == (tmp = search(agent_list, path))) {
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    /* if we got here, then one of the given agents could be found */
+    opal_argv_free(tmp);
+    return ORTE_SUCCESS;
+}
+
+int orte_plm_base_rsh_launch_agent_setup(const char *agent, char *path)
 {
     char *bname;
     int i;
     
     /* if no agent was provided, then report not found */
-    if (NULL == orte_rsh_agent) {
+    if (NULL == orte_rsh_agent && NULL == agent) {
         return ORTE_ERR_NOT_FOUND;
     }
     
-    /* Take the orte_rsh_agent MCA param and search for the argv */
-    orte_plm_globals.rsh_agent_argv = search(orte_rsh_agent);
+    /* search for the argv */
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:rsh_setup on agent %s path %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == agent) ? orte_rsh_agent : agent,
+                         (NULL == path) ? "NULL" : path));
+    orte_plm_globals.rsh_agent_argv = search(agent, path);
     
     if (0 == opal_argv_count(orte_plm_globals.rsh_agent_argv)) {
         /* nothing was found */
@@ -85,8 +108,8 @@ int orte_plm_base_rsh_launch_agent_setup(void)
     
     /* see if we can find the agent in the path */
     orte_plm_globals.rsh_agent_path = 
-    opal_path_findv(orte_plm_globals.rsh_agent_argv[0], X_OK,
-                    environ, NULL);
+        opal_path_findv(orte_plm_globals.rsh_agent_argv[0], X_OK,
+                        environ, path);
 
     if (NULL == orte_plm_globals.rsh_agent_path) {
         /* not an error - just report not found */
@@ -116,6 +139,7 @@ int orte_plm_base_rsh_launch_agent_setup(void)
         }
     }
     
+    /* the caller can append any additional argv's they desire */
     return ORTE_SUCCESS;
 }
 
@@ -288,14 +312,23 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
  * we are able to find in the PATH.  Split that one into argv and
  * return it.  If nothing found, then return NULL.
  */
-static char **search(const char* agent_list)
+static char **search(const char* agent_list, const char *path)
 {
     int i, j;
-    char *line, **lines = opal_argv_split(agent_list, ':');
+    char *line, **lines;
     char **tokens, *tmp;
     char cwd[OPAL_PATH_MAX];
     
-    getcwd(cwd, OPAL_PATH_MAX);
+    if (NULL == path) {
+        getcwd(cwd, OPAL_PATH_MAX);
+    } else {
+        strncpy(cwd, path, OPAL_PATH_MAX);
+    }
+    if (NULL == agent_list) {
+        lines = opal_argv_split(orte_rsh_agent, ':');
+    } else {
+        lines = opal_argv_split(agent_list, ':');
+    }
     for (i = 0; NULL != lines[i]; ++i) {
         line = lines[i];
         
