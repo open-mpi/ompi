@@ -41,6 +41,7 @@ int mca_pml_ob1_iprobe(int src,
         if( NULL != status ) {
             OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
         }
+        rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
         *matched = 1;
     } else {
         *matched = 0;
@@ -56,6 +57,7 @@ int mca_pml_ob1_probe(int src,
                       struct ompi_communicator_t *comm,
                       ompi_status_public_t * status)
 {
+    int rc = OMPI_SUCCESS;
     mca_pml_ob1_recv_request_t recvreq;
 
     OBJ_CONSTRUCT( &recvreq, mca_pml_ob1_recv_request_t );
@@ -66,10 +68,11 @@ int mca_pml_ob1_probe(int src,
     MCA_PML_OB1_RECV_REQUEST_START(&recvreq);
 
     ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);
-
+    rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
     if (NULL != status) {
         OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
     }
+
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
-    return OMPI_SUCCESS;
+    return rc;
 }
