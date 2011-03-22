@@ -390,10 +390,6 @@ void orte_rmcast_base_process_msg(orte_rmcast_msg_t *msg)
     if (NULL != msg) {
         OBJ_RELEASE(msg);
     }
-    if (NULL != recv && !(ORTE_RMCAST_PERSISTENT & recv->flags)) {
-        OBJ_RELEASE(recv);
-    }
-
     return;
 }
 
