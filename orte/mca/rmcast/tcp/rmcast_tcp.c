@@ -658,6 +658,7 @@ static int tcp_recv(orte_process_name_t *name,
     }
     ORTE_RELEASE_THREAD(&ctl);
     
+    recvptr->ctl.active = true;
     ORTE_ACQUIRE_THREAD(&recvptr->ctl);
     
     /* xfer the data */
@@ -751,6 +752,7 @@ static int tcp_recv_buffer(orte_process_name_t *name,
     }
     ORTE_RELEASE_THREAD(&ctl);
     
+    recvptr->ctl.active = true;
     ORTE_ACQUIRE_THREAD(&recvptr->ctl);
     
     /* xfer the data */
