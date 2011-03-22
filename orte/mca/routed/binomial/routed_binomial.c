@@ -321,10 +321,18 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
 
-    /* if I am a tool, the route is direct */
+    /* if I am a tool, the route is direct if target is in
+     * my own job family, and to the target's HNP if not
+     */
     if (ORTE_PROC_IS_TOOL) {
-        ret = target;
-        goto found;
+        if (ORTE_JOB_FAMILY(target->jobid) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+            ret = target;
+            goto found;
+        } else {
+            ORTE_HNP_NAME_FROM_JOB(&daemon, target->jobid);
+            ret = &daemon;
+            goto found;
+        }
     }
     
     /******     HNP AND DAEMONS ONLY     ******/
