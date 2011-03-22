@@ -149,6 +149,7 @@ volatile char MPIR_executable_path[MPIR_MAX_PATH_LENGTH];
 volatile char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH];
 volatile int MPIR_forward_output = 0;
 volatile int MPIR_forward_comm = 0;
+int MPIR_force_to_main = 0;
 
 /* --- end MPICH/TotalView std debugger interface definitions */
 
