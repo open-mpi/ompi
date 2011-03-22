@@ -81,10 +81,10 @@ bool orte_allocation_required;
 char *orte_launch_agent = NULL;
 char **orted_cmd_line=NULL;
 
+/* debugger job */
 orte_job_t *orte_debugger_daemon=NULL;
-bool orte_enable_debug_cospawn_while_running;
-int orte_debugger_check_rate;
 
+/* exit triggers and flags */ 
 orte_trigger_event_t orte_exit, orteds_exit;
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;
@@ -174,7 +174,7 @@ bool orte_xml_output = false;
 FILE *orte_xml_fp = NULL;
 char *orte_job_ident = NULL;
 
-/* See comment in orte/tools/orterun/debuggers.c about this MCA
+/* See comment in orte/mca/debugger/mpir/mpir.c about this MCA
    param */
 bool orte_in_parallel_debugger = false;
 

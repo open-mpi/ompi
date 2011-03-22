@@ -557,9 +557,8 @@ ORTE_DECLSPEC extern bool orte_allocation_required;
 ORTE_DECLSPEC extern char *orte_launch_agent;
 ORTE_DECLSPEC extern char **orted_cmd_line;
 
+/* debugger job */
 ORTE_DECLSPEC extern orte_job_t *orte_debugger_daemon;
-ORTE_DECLSPEC extern bool orte_enable_debug_cospawn_while_running;
-ORTE_DECLSPEC extern int orte_debugger_check_rate;
 
 /* exit triggers and flags */
 ORTE_DECLSPEC extern orte_trigger_event_t orte_exit;

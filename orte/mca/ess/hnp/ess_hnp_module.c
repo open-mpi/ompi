@@ -56,6 +56,7 @@
 #if ORTE_ENABLE_MULTICAST
 #include "orte/mca/rmcast/base/base.h"
 #endif
+#include "orte/mca/debugger/base/base.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
@@ -523,6 +524,18 @@ static int rte_init(void)
         ORTE_ERROR_LOG(ret);
         error = "orte_notifer_select";
         goto error;
+    }
+
+    /* start the debuggers */ 
+    if (ORTE_SUCCESS != (ret = orte_debugger_base_open())) {
+      ORTE_ERROR_LOG(ret);
+      error = "orte_debugger_open";
+      goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_debugger_base_select())) {
+      ORTE_ERROR_LOG(ret);
+      error = "orte_debugger_select";
+      goto error;
     }
 
     /* if a tool has launched us and is requesting event reports,

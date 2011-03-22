@@ -86,9 +86,9 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
                                               orte_jobid_t job)
 {
     int rc;
-    orte_job_t *jdata;
+    orte_job_t *jdata=NULL;
     orte_proc_t *proc;
-    orte_job_map_t *map;
+    orte_job_map_t *map=NULL;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
     int32_t numbytes, *tmp32;
@@ -97,6 +97,11 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     orte_vpid_t i;
     int j;
     orte_daemon_cmd_flag_t command;
+
+    if (NULL != orte_debugger_daemon && ORTE_JOBID_INVALID == job) {
+	/* all we are doing is launching debugger daemons */
+	goto nodemap;
+    }
 
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
@@ -183,6 +188,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return ORTE_SUCCESS;
     }
     
+ nodemap:
     /* if we are not passing a regexp, then pass the nodemap */
     flag = 0;
     opal_dss.pack(data, &flag, 1, OPAL_INT8);
@@ -297,6 +303,11 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+    }
+
+    if (NULL != orte_debugger_daemon && ORTE_JOBID_INVALID == job) {
+	/* all we are doing is launching debugger daemons, so we are done */
+	return ORTE_SUCCESS;
     }
     
     /* pack the jobid so it can be extracted later */
@@ -692,6 +703,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             goto REPORT_ERROR;
         }
+	cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, orte_odls_globals.debugger->apps,
                                                   &(orte_odls_globals.debugger->num_apps), ORTE_APP_CONTEXT))) {
             ORTE_ERROR_LOG(rc);
@@ -707,7 +719,13 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack the jobid we are to launch */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, job, &cnt, ORTE_JOBID))) {
-        *job = ORTE_JOBID_INVALID;
+	/* if the buffer was empty, then we know that all we are doing is
+	 * launching debugger daemons
+	 */
+	if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
+	    goto done;
+	}
+	*job = ORTE_JOBID_INVALID;
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -986,6 +1004,7 @@ find_my_procs:
     /* flag that the launch msg has been processed so daemon collectives can proceed */
     jobdat->launch_msg_processed = true;
     
+done:
     if (NULL != app_idx) {
         free(app_idx);
         app_idx = NULL;
@@ -1670,7 +1689,14 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
             child->state = ORTE_PROC_STATE_FAILED_TO_START;
             child->exit_code = 0;
             child->waitpid_recvd = false;
-            child->iof_complete = false;
+	    /* if we are not forwarding output for this job, then
+	     * flag iof as complete
+	     */
+	    if (ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls) {
+		child->iof_complete = false;
+	    } else {
+		child->iof_complete = true;
+	    }
             child->coll_recvd = false;
             child->pid = 0;
             if (NULL != child->rml_uri) {
@@ -1999,11 +2025,18 @@ CLEANUP:
             !orte_odls_globals.debugger_launched &&
             0 < opal_list_get_size(&orte_local_children)) {
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:launch forking debugger with %s",
+                                 "%s odls:launch forking debugger %s with %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+				 orte_odls_globals.debugger->apps[0]->app,
                                  (ORTE_JOB_CONTROL_FORWARD_OUTPUT & orte_odls_globals.debugger->controls) ? "output forwarded" : "no output"));
-            
-            fork_local(orte_odls_globals.debugger->apps[0], NULL, NULL, orte_odls_globals.debugger);
+            odls_base_default_setup_fork(orte_odls_globals.debugger->apps[0],
+					 1, orte_process_info.num_procs,
+					 orte_process_info.num_procs,
+					 orte_process_info.num_procs, false,
+					 &(orte_odls_globals.debugger->apps[0]->env));
+	    fork_local(orte_odls_globals.debugger->apps[0], NULL,
+		       orte_odls_globals.debugger->apps[0]->env,
+		       orte_odls_globals.debugger);
             orte_odls_globals.debugger_launched = true;
         }
     }
@@ -2731,6 +2764,7 @@ GOTCHILD:
 void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
 {
     orte_odls_child_t *child, *chd;
+    orte_odls_job_t *jobdat, *jdat;
     opal_list_item_t *item;
     char *job, *vpid, *abort_file;
     struct stat buf;
@@ -2778,6 +2812,29 @@ GOTCHILD:
                              "%s odls:waitpid_fired child %s was already dead",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(child->name)));
+        goto MOVEON;
+    }
+    
+    /* get the jobdat for this child */
+    jobdat = NULL;
+    for (item = opal_list_get_first(&orte_local_jobdata);
+         item != opal_list_get_end(&orte_local_jobdata);
+         item = opal_list_get_next(item)) {
+        jdat = (orte_odls_job_t*)item;
+        if (jdat->jobid == child->name->jobid) {
+            jobdat = jdat;
+            break;
+        }
+    }
+    if (NULL == jobdat) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        goto MOVEON;
+    }
+    /* if this is a debugger daemon, then just report the state
+     * and return as we aren't monitoring it
+     */
+    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jobdat->controls)  {
+        child->state = ORTE_PROC_STATE_TERMINATED;
         goto MOVEON;
     }
     

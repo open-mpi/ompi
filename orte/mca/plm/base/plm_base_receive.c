@@ -39,6 +39,7 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 #include "orte/util/proc_info.h"
+#include "orte/mca/debugger/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -252,7 +253,20 @@ static void process_msg(int fd, short event, void *data)
                         goto ANSWER_LAUNCH;
                     }
                     job = jdata->jobid;
-                    
+
+		    /* output debugger proctable, if requested */
+		    if (orte_debugger_base.dump_proctable) {
+		      char *output;
+		      opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
+		      if (orte_xml_output) {
+			fprintf(orte_xml_fp, "%s\n", output);
+			fflush(orte_xml_fp);
+		      } else {
+			opal_output(orte_clean_output, "%s", output);
+		      }
+		      free(output);
+		    }
+
                     /* return the favor so that any repetitive comm_spawns track each other */
                     parent->bookmark = jdata->bookmark;
                 }
