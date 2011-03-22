@@ -164,9 +164,11 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
                                 "%s plm:rsh: unable to be used: SGE indicated but cannot find path "
                                 "or execution permissions not set for launching agent qrsh", 
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-            *module = NULL;
-            return ORTE_ERROR;
+             free(tmp);
+             *module = NULL;
+             return ORTE_ERROR;
         }
+        free(tmp);
         mca_plm_rsh_component.using_qrsh = true;
         *priority = mca_plm_rsh_component.priority;
         *module = (mca_base_module_t *) &orte_plm_rsh_module;
