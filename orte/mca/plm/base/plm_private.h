@@ -121,7 +121,8 @@ ORTE_DECLSPEC int orte_plm_base_setup_orted_cmd(int *argc, char ***argv);
  * Local slave launch
  */
 ORTE_DECLSPEC int orte_plm_base_local_slave_launch(orte_job_t *jdata);
-ORTE_DECLSPEC int orte_plm_base_rsh_launch_agent_setup(void);
+ORTE_DECLSPEC int orte_plm_base_rsh_launch_agent_setup(const char *agent_list, char *path);
+ORTE_DECLSPEC int orte_plm_base_rsh_launch_agent_lookup(const char *agent_list, char *path);
 ORTE_DECLSPEC void orte_plm_base_local_slave_finalize(void);
 ORTE_DECLSPEC int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
                                                  char *rcmd, char ***argv, char **exec_path);

@@ -123,18 +123,16 @@ int orte_plm_rshd_component_open(void)
 
 int orte_plm_rshd_component_query(mca_base_module_t **module, int *priority)
 {
-    if (ORTE_SUCCESS != orte_plm_base_rsh_launch_agent_setup()) {
+    if (ORTE_SUCCESS != orte_plm_base_rsh_launch_agent_lookup(NULL, NULL)) {
         /* this isn't an error - we just cannot be selected */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:rshd: unable to be used: cannot find path "
-                             "for launching agent \"%s\"\n", 
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             orte_rsh_agent));
+                             "%s plm:rshd: unable to be used: cannot find \"%s\" in PATH", 
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), orte_rsh_agent));
         *module = NULL;
         return ORTE_ERROR;
     }
     
-    /* we are good - make ourselves available, but only if selected */
+    /* we are good - make ourselves available, but at low priority */
     *priority = 0;
     *module = (mca_base_module_t *) &orte_plm_rshd_module;
     return ORTE_SUCCESS;

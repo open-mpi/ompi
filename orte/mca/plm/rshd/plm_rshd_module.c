@@ -117,6 +117,12 @@ int orte_plm_rshd_init(void)
 {
     int rc;
     
+    /* since I was selected, setup the rsh launch agent support */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_rsh_launch_agent_setup(NULL, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }

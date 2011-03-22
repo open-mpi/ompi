@@ -150,8 +150,41 @@ static orte_jobid_t local_slaves;
  */
 int orte_plm_rsh_init(void)
 {
+    char *tmp;
     int rc;
     
+    /* we were selected, so setup the launch agent */
+    if (mca_plm_rsh_component.using_qrsh) {
+        /* perform base setup for qrsh */
+        asprintf(&tmp, "%s/bin/%s", getenv("SGE_ROOT"), getenv("ARC"));
+        if (ORTE_SUCCESS != (rc = orte_plm_base_rsh_launch_agent_setup("qrsh", tmp))) {
+            ORTE_ERROR_LOG(rc);
+            free(tmp);
+            return rc;
+        }
+        free(tmp);
+        /* automatically add -inherit and grid engine PE related flags */
+        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-inherit");
+        /* Don't use the "-noshell" flag as qrsh would have a problem 
+         * swallowing a long command */
+        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-nostdin");
+        opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-V");
+        if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+            opal_argv_append_nosize(&orte_plm_globals.rsh_agent_argv, "-verbose");
+            tmp = opal_argv_join(orte_plm_globals.rsh_agent_argv, ' ');
+            opal_output_verbose(1, orte_plm_globals.output,
+                                "%s plm:rsh: using \"%s\" for launching\n",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
+            free(tmp);
+        }
+    } else {
+        /* not using qrsh - use MCA-specified agent */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_rsh_launch_agent_setup(NULL, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }
