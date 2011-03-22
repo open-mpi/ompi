@@ -1,6 +1,7 @@
 5.4.14
 	- fixed compile error on Red Hat 5.x which occurred if using GNU
 	  compiler with -D_FORTIFY_SOURCE=2
+	- fixed link error when using vtf90 on OpenMP parallelized programs
 
 5.4.13
 	- revived wrapper for MPI function 'MPI_Init_thread'

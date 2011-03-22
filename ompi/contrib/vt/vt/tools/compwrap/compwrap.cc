@@ -607,6 +607,7 @@ ParseCommandLine( int argc, char ** argv )
       // openmp flag
       //
       else if( arg.compare( "-openmp" ) == 0
+	       || arg.compare( "-fopenmp" ) == 0
 	       || arg.compare( "-xopenmp" ) == 0
 	       || arg.compare( "-Popenmp" ) == 0
 	       || arg.compare( "-mp" ) == 0
@@ -655,6 +656,7 @@ ParseCommandLine( int argc, char ** argv )
 	  || arg.compare("-vt:omp") == 0
 	  || arg.compare("-vt:hyb") == 0
 	  || arg.compare( "-openmp" ) == 0
+	  || arg.compare( "-fopenmp" ) == 0
 	  || arg.compare( "-xopenmp" ) == 0
 	  || arg.compare( "-Popenmp" ) == 0
 	  || arg.compare( "-mp" ) == 0

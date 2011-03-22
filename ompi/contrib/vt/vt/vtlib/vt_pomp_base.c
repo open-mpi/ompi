@@ -29,6 +29,7 @@
  * Global variables
  */
 
+int pomp_initialized = 0;
 int pomp_tracing = 0;
 
 void POMP_Finalize() {
