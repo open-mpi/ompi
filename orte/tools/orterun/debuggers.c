@@ -132,6 +132,7 @@ volatile int MPIR_being_debugged = 0;
 volatile int MPIR_debug_state = 0;
 volatile int MPIR_i_am_starter = 0;
 volatile int MPIR_partial_attach_ok = 1;
+int MPIR_force_to_main = 0;
 
 /* --- end MPICH/TotalView std debugger interface definitions */
 
