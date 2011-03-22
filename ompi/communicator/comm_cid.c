@@ -318,7 +318,7 @@ static int ompi_comm_register_cid (uint32_t cid )
             if ( regcom->cid > cid ) {
                 break;
             }
-#if OPAL_ENABLE_MPI_THREADS
+#if OMPI_ENABLE_THREAD_MULTIPLE
             if( regcom->cid == cid ) {
                 /**
                  * The MPI standard state that is the user responsability to
@@ -331,7 +331,7 @@ static int ompi_comm_register_cid (uint32_t cid )
                 OBJ_RELEASE(newentry);
                 return OMPI_ERROR;
             }
-#endif  /* OPAL_ENABLE_MPI_THREADS */
+#endif  /* OMPI_ENABLE_THREAD_MULTIPLE */
         }
         opal_list_insert_pos (&ompi_registered_comms, item, 
                               (opal_list_item_t *)newentry);

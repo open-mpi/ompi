@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -17,7 +17,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([OMPI_CONFIG_THREADS],[
+AC_DEFUN([OPAL_CONFIG_THREADS],[
 #
 # Arguments: none
 #
@@ -179,90 +179,44 @@ AM_CONDITIONAL(OPAL_HAVE_POSIX_THREADS, test "$THREAD_TYPE" = "posix")
 AM_CONDITIONAL(OPAL_HAVE_SOLARIS_THREADS, test "$THREAD_TYPE" = "solaris")
 
 #
-# Now configure the whole MPI and progress thread gorp
+# Now configure the whole OPAL and progress thread gorp
 #
-AC_MSG_CHECKING([if want MPI thread support])
-AC_ARG_ENABLE([mpi-threads],
-    AC_HELP_STRING([--enable-mpi-threads],
-        [Enable threads for MPI applications (default: disabled)]),
-    [enable_mpi_threads="$enableval"])
+AC_MSG_CHECKING([if want OPAL thread support])
+AC_ARG_ENABLE([opal-multi-threads],
+    AC_HELP_STRING([--enable-opal-multi-threads],
+        [Enable thread support inside OPAL (default: disabled)]),
+    [enable_opal_multi_threads="$enableval"],
+    [enable_opal_multi_threads="undef"])
 
-if test "$enable_mpi_threads" = "" ; then 
+if test "$enable_opal_multi_threads" = "undef" ; then 
 dnl    # no argument given either way.  Default to whether
 dnl    # we have threads or not
 dnl    if test "$THREAD_TYPE" != "none" ; then
-dnl        OPAL_ENABLE_MPI_THREADS=1
-dnl        enable_mpi_threads="yes"
+dnl        OPAL_ENABLE_MULTI_THREADS=1
+dnl        enable_opal_multi_threads="yes"
 dnl    else
-dnl        OPAL_ENABLE_MPI_THREADS=0
-dnl        enable_mpi_threads="no"
+dnl        OPAL_ENABLE_MULTI_THREADS=0
+dnl        enable_opal_multi_threads="no"
 dnl    fi
-    # no argument - default to no
-    OPAL_ENABLE_MPI_THREADS=0
-    enable_mpi_threads="no"
-elif test "$enable_mpi_threads" = "no" ; then
-    OPAL_ENABLE_MPI_THREADS=0
+    # no argument - default to no, but leave
+    # enable_opal_multi_threads="undef" so we
+    # can later detect that it wasn't specified
+    OPAL_ENABLE_MULTI_THREADS=0
+elif test "$enable_opal_multi_threads" = "no" ; then
+    OPAL_ENABLE_MULTI_THREADS=0
 else
-    # they want MPI threads.  Make sure we have threads
+    # they want OPAL thread support.  Make sure we have threads
     if test "$THREAD_TYPE" != "none" ; then
-        OPAL_ENABLE_MPI_THREADS=1
-        enable_mpi_threads="yes"
+        OPAL_ENABLE_MULTI_THREADS=1
+        enable_opal_multi_threads="yes"
     else
         AC_MSG_ERROR([User requested MPI threads, but no threading model supported])
     fi
 fi
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_MPI_THREADS], [$OPAL_ENABLE_MPI_THREADS],
-                   [Whether we should enable support for multiple user threads])
-AC_MSG_RESULT([$enable_mpi_threads])
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_MULTI_THREADS], [$OPAL_ENABLE_MULTI_THREADS],
+                   [Whether we should enable thread support within the OPAL code base])
+AC_MSG_RESULT([$enable_opal_multi_threads])
 
-
-AC_MSG_CHECKING([if want asynchronous progress thread support])
-AC_ARG_ENABLE([progress-threads],
-    AC_HELP_STRING([--enable-progress-threads],
-        [Enable threads asynchronous communication progress (default: disabled)]),
-    [enable_progress_threads="$enableval"])
-
-if test "$enable_progress_threads" = "" ; then
-    # no argument given either way.  Default to no.
-    OPAL_ENABLE_PROGRESS_THREADS=0
-    enable_progress_threads="no"
-elif test "$enable_progress_threads" = "no" ; then
-    OPAL_ENABLE_PROGRESS_THREADS=0
-    enable_progress_threads="no"
-else
-    # they want threaded progress
-    if test "$THREAD_TYPE" != "none" ; then
-        OPAL_ENABLE_PROGRESS_THREADS=1
-        enable_progress_threads="yes"
-    else
-        AC_MSG_ERROR([User requested progress threads, but no threading model supported])
-    fi
-fi
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_PROGRESS_THREADS], [$OPAL_ENABLE_PROGRESS_THREADS],
-                   [Whether we should use progress threads rather than polling])
-AC_MSG_RESULT([$enable_progress_threads])
-
-AS_IF([test "$enable_progress_threads" = "yes"],
-      [cat <<EOF
-*******************************************************************************
-WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
-*******************************************************************************
-
-Open MPI was specifically configured to enable "progress threads" (via
---enable-progress-threads). This feature is currently known not to work
--- MPI jobs may crash.
-
-Note that this feature is only active so that developers can debug it.
-Use this feature at your own risk.
-
-(sleeping for 5 seconds to give you a chance to reconsider!)
-
-*******************************************************************************
-WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
-*******************************************************************************
-
-EOF
-       sleep 5])
 
 #
 # Fault Tolerance Thread
@@ -287,15 +241,15 @@ elif test "$enable_ft_thread" = "no"; then
     ompi_want_ft_thread=0
     AC_MSG_RESULT([Disabled])
 # if default, and no progress or MPI threads
-elif test "$enable_ft_thread" = "undef" -a "$enable_progress_threads" = "no"  -a "$enable_mpi_threads" = "no" ; then
+elif test "$enable_ft_thread" = "undef" -a "$enable_opal_progress_threads" = "no"  -a "$enable_opal_multi_threads" = "no" ; then
     ompi_want_ft_thread=0
-    AC_MSG_RESULT([Disabled (Progress and MPI Threads Disabled)])
-# if default, and either progress or MPI threads enabled
+    AC_MSG_RESULT([Disabled (OPAL Thread Support Disabled)])
+# if default, and MPI threads enabled
 else
     # Default: Enable
-    # Make sure we have at least Progress Threads or MPI Threads enabled 
-    if test "$enable_progress_threads" = "no" -a "$enable_mpi_threads" = "no"; then
-        AC_MSG_RESULT([Must enable progress or MPI threads to use this option])
+    # Make sure we have OPAL Threads enabled 
+    if "$enable_opal_multi_threads" = "no"; then
+        AC_MSG_RESULT([Must enable OPALbasic thread support to use this option])
         AC_MSG_ERROR([Cannot continue])
     else
         AC_MSG_RESULT([yes])
@@ -303,8 +257,8 @@ else
         AC_MSG_WARN([**************************************************])
         AC_MSG_WARN([*** Fault Tolerance with a thread in Open MPI    *])
         AC_MSG_WARN([*** is an experimental, research quality option. *])
-        AC_MSG_WARN([*** It requires progress or MPI threads, and     *])
-        AC_MSG_WARN([*** care should be used when enabling these      *])
+        AC_MSG_WARN([*** It requires OPAL thread support or progress  *])
+        AC_MSG_WARN([*** and care should be used when enabling these  *])
         AC_MSG_WARN([*** options.                                     *])
         AC_MSG_WARN([**************************************************])
     fi

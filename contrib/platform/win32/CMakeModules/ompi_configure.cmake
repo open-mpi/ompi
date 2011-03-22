@@ -5,6 +5,7 @@
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Oracle and/or its affiliates. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -200,11 +201,13 @@ OMPI_DEF_OPT(OPAL_ENABLE_MEM_PROFILE "Whether we want the memory profiling or no
 
 OMPI_DEF_OPT(OMPI_ENABLE_MPI_PROFILING "Whether we want MPI profiling or not." ON)
 
-OMPI_DEF_OPT(OPAL_ENABLE_MPI_THREADS "Whether we should enable support for multiple user threads." OFF)
+OMPI_DEF_OPT(OPAL_ENABLE_THREAD_MULTIPLE "Whether we want MPI_THREAD_MULTIPLE support." OFF)
 
-OMPI_DEF_OPT(OPAL_ENABLE_PROGRESS_THREADS "Whether we should use progress threads rather than polling." OFF)
+OMPI_DEF(OPAL_ENABLE_PROGRESS_THREADS 0 "Hardwire OPAL progress threads to be off." 0 1)
 
-OMPI_DEF_OPT(OPAL_ENABLE_PTY_SUPPORT "Whether we should use progress threads rather than polling." OFF)
+OMPI_DEF_OPT(OPAL_ENABLE_MULTI_THREADS "Whether we should enable OPAL thread support." OFF)
+
+OMPI_DEF_OPT(OPAL_ENABLE_PTY_SUPPORT "Whether we should enable PTY support for STDIO forwarding." OFF)
 
 OMPI_DEF_OPT ( OMPI_GROUP_SPARSE "Wether we want sparse process groups." OFF)
 

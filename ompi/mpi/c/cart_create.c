@@ -98,7 +98,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
         }
         if (OMPI_SUCCESS != 
             (err = mca_topo_base_find_available(OPAL_ENABLE_PROGRESS_THREADS,
-                                                OPAL_ENABLE_MPI_THREADS))) {
+                                                OMPI_ENABLE_THREAD_MULTIPLE))) {
             return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
         }
     }

@@ -14,6 +14,7 @@ Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
+Copyright (c) 2011      Oracle and/or its affiliates. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -303,9 +304,14 @@ MPI Functionality and Features
 - MPI_THREAD_MULTIPLE support is included, but is only lightly tested.
   It likely does not work for thread-intensive applications.  Note
   that *only* the MPI point-to-point communication functions for the
-  BTL's listed above are considered thread safe.  Other support
+  BTL's listed here are considered thread safe.  Other support
   functions (e.g., MPI attributes) have not been certified as safe
   when simultaneously used by multiple threads.
+  - tcp
+  - sm
+  - mx
+  - elan
+  - self
 
   Note that Open MPI's thread support is in a fairly early stage; the
   above devices are likely to *work*, but the latency is likely to be
@@ -707,15 +713,19 @@ for a full list); a summary of the more commonly used ones follows:
     (default: yes).
 
 --with-threads=value
-  Since thread support (both support for MPI_THREAD_MULTIPLE and
-  asynchronous progress) is only partially tested, it is disabled by
+  Since thread support is only partially tested, it is disabled by
   default.  To enable threading, use "--with-threads=posix".  This is
-  most useful when combined with --enable-mpi-threads and/or
-  --enable-progress-threads.
+  most useful when combined with --enable-mpi-thread-multiple.
 
---enable-mpi-threads
+--enable-mpi-thread-multiple
   Allows the MPI thread level MPI_THREAD_MULTIPLE.  See
-  --with-threads; this is currently disabled by default.
+  --with-threads; this is currently disabled by default. Enabling
+  this feature will automatically --enable-opal-multi-threads.
+
+--enable-opal-multi-threads
+  Enables thread lock support in the OPAL and ORTE layers. Does
+  not enable MPI_THREAD_MULTIPLE - see above option for that feature.
+  This is currently disabled by default.
 
 --with-fca=<directory>
   Specify the directory where the Voltaire FCA library and

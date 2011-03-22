@@ -175,7 +175,7 @@ int mca_bml_r2_ft_event(int state)
              * network options on this machine, and post proper modex informaiton.
              */
             if( OMPI_SUCCESS != (ret = mca_btl_base_select(OPAL_ENABLE_PROGRESS_THREADS,
-                                                           OPAL_ENABLE_MPI_THREADS) ) ) {
+                                                           OMPI_ENABLE_THREAD_MULTIPLE) ) ) {
                 opal_output(0, "bml:r2: ft_event(Restart): Failed to select in BTL framework\n");
                 return ret;
             }
@@ -275,7 +275,7 @@ int mca_bml_r2_ft_event(int state)
          * network options on this machine, and post proper modex informaiton.
          */
         if( OMPI_SUCCESS != (ret = mca_btl_base_select(OPAL_ENABLE_PROGRESS_THREADS,
-                                                       OPAL_ENABLE_MPI_THREADS) ) ) {
+                                                       OMPI_ENABLE_THREAD_MULTIPLE) ) ) {
             opal_output(0, "bml:r2: ft_event(Restart): Failed to select in BTL framework\n");
             return ret;
         }

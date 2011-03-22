@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      Oracle and/or its affiliates. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -570,9 +571,9 @@ void ompi_info_do_config(bool want_all)
     }
     
     if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {
-        asprintf(&threads, "%s (mpi: %s, progress: %s)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
+        asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, progress: %s)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
                  (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"),
-                 OPAL_ENABLE_MPI_THREADS ? "yes" : "no",
+                 OMPI_ENABLE_THREAD_MULTIPLE ? "yes" : "no",
                  OPAL_ENABLE_PROGRESS_THREADS ? "yes" : "no");
     } else {
         threads = strdup("no");
