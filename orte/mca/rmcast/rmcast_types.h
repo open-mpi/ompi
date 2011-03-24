@@ -48,8 +48,9 @@ typedef uint32_t orte_rmcast_channel_t;
 #define ORTE_RMCAST_APP_PUBLIC_CHANNEL      6
 #define ORTE_RMCAST_DATA_SERVER_CHANNEL     7
 #define ORTE_RMCAST_ERROR_CHANNEL           8
+#define ORTE_RMCAST_HEARTBEAT_CHANNEL       9
 
-#define ORTE_RMCAST_DYNAMIC_CHANNELS        9
+#define ORTE_RMCAST_DYNAMIC_CHANNELS       10
 
 
 /* define channel directions */

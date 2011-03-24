@@ -206,8 +206,14 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        /* apps open the app public channel so we can hear app announcements and commands */
+        /* open the app public channel so we can hear app announcements and commands */
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_APP_PUBLIC_CHANNEL, "app-announce",
+                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* open the heartbeat channel */
+        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_HEARTBEAT_CHANNEL, "heartbeat",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
             ORTE_ERROR_LOG(rc);
             return rc;

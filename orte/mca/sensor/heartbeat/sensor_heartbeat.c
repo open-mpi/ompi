@@ -32,7 +32,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rml/rml.h"
+#include "orte/mca/rmcast/rmcast.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -57,16 +57,20 @@ orte_sensor_base_module_t orte_sensor_heartbeat_module = {
 /* declare the local functions */
 static void check_heartbeat(int fd, short event, void *arg);
 static void send_heartbeat(int fd, short event, void *arg);
-static void recv_rml_beats(int status, orte_process_name_t* sender,
-                           opal_buffer_t* buffer, orte_rml_tag_t tag,
-                           void* cbdata);
-static void rml_callback_fn(int status,
-                            struct orte_process_name_t* peer,
-                            struct opal_buffer_t* buffer,
-                            orte_rml_tag_t tag,
-                            void* cbdata)
+static void recv_beats(int status,
+                       orte_rmcast_channel_t channel,
+                       orte_rmcast_seq_t seq_num,
+                       orte_rmcast_tag_t tag,
+                       orte_process_name_t *sender,
+                       opal_buffer_t *buf, void* cbdata);
+static void cbfunc(int status,
+                   orte_rmcast_channel_t channel,
+                   orte_rmcast_seq_t seq_num,
+                   orte_rmcast_tag_t tag,
+                   orte_process_name_t *sender,
+                   opal_buffer_t *buf, void* cbdata)
 {
-    OBJ_RELEASE(buffer);
+    OBJ_RELEASE(buf);
 }
 
 /* local globals */
@@ -96,11 +100,11 @@ static int init(void)
 
     /* setup to receive heartbeats */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_SCHEDULER) {
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                          ORTE_RML_TAG_HEARTBEAT,
-                                                          ORTE_RML_PERSISTENT,
-                                                          recv_rml_beats,
-                                                          NULL))) {
+        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_HEARTBEAT_CHANNEL,
+                                                             ORTE_RMCAST_TAG_HEARTBEAT,
+                                                             ORTE_RMCAST_PERSISTENT,
+                                                             recv_beats,
+                                                             NULL))) {
             ORTE_ERROR_LOG(rc);
         }
     }
@@ -121,7 +125,7 @@ static void finalize(void)
         check_ev = NULL;
     }
     
-    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_HEARTBEAT);
+    orte_rmcast.cancel_recv(ORTE_RMCAST_HEARTBEAT_CHANNEL, ORTE_RMCAST_TAG_HEARTBEAT);
 
     OBJ_DESTRUCT(&ctl);
     return;
@@ -237,12 +241,11 @@ static void send_heartbeat(int fd, short event, void *arg)
     buf = OBJ_NEW(opal_buffer_t);
     
     /* send heartbeat */
-    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
-                                          ORTE_RML_TAG_HEARTBEAT, 0,
-                                          rml_callback_fn, NULL))) {
+    if (0 > (rc = orte_rmcast.send_buffer_nb(ORTE_RMCAST_HEARTBEAT_CHANNEL,
+                                             ORTE_RMCAST_TAG_HEARTBEAT, buf,
+                                             cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
-        goto reset;
     }
     
  reset:
@@ -318,9 +321,12 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     opal_event_evtimer_add(tmp, &check_time);
 }
 
-static void recv_rml_beats(int status, orte_process_name_t* sender,
-                           opal_buffer_t* buffer, orte_rml_tag_t tag,
-                           void* cbdata)
+static void recv_beats(int status,
+                       orte_rmcast_channel_t channel,
+                       orte_rmcast_seq_t seq_num,
+                       orte_rmcast_tag_t tag,
+                       orte_process_name_t *sender,
+                       opal_buffer_t *buf, void* cbdata)
 {
     orte_proc_t *proc;
     
