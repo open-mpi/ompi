@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -617,5 +617,24 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #undef restrict
 #define restrict
 #endif
+
+#else
+
+/* For a similar reason to what is listed in opal_config_top.h, we
+   want to protect others from the autoconf/automake-generated
+   PACKAGE_<foo> macros in opal_config.h.  We can't put these undef's
+   directly in opal_config.h because they'll be turned into #defines'
+   via autoconf.  
+
+   So put them here in case any only else includes OMPI/ORTE/OPAL's
+   config.h files. */
+
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
+#undef PACKAGE_URL
+#undef HAVE_CONFIG_H
 
 #endif /* OMPI_BUILDING */

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
@@ -208,6 +208,9 @@ AH_TOP([/* -*- c -*-
 
 #ifndef OPAL_CONFIG_H
 #define OPAL_CONFIG_H
+
+#include "opal_config_top.h"
+
 ])
 AH_BOTTOM([
 #include "opal_config_bottom.h"
