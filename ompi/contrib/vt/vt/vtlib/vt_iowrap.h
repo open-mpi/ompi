@@ -489,14 +489,19 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
         vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC_OPEN(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
         if( was_recorded ) { \
                 uint32_t ioop = VT_IOWRAP_FUNCTYPE(VT_IOWRAP_THISFUNCNAME); \
+                uint32_t fid; \
                 if( ERROR_CONDITION ) { \
-                        uint32_t fid = vt_iofile_id( path ); \
+                        if( path && strlen(path) > 0 ) { \
+                                fid = vt_iofile_id(path); \
+                        } \
+                        else { \
+                                fid = invalid_fd_fid; \
+                        } \
                         vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
                         vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, 0 ); \
                 } \
                 else { \
                         vampir_file_t* file; \
-                        uint32_t fid; \
                         vt_iofile_open( path, FD ); \
                         file = get_vampir_file( FD ); \
                         fid = file->vampir_file_id; \
@@ -541,16 +546,21 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
         vt_debug_msg( DBG_INIT, "Macro VT_IOWRAP_LEAVE_IOFUNC_PATH(), Function " stringify(VT_IOWRAP_THISFUNCNAME) ); \
         if( was_recorded ) { \
                 uint32_t ioop = VT_IOWRAP_FUNCTYPE(VT_IOWRAP_THISFUNCNAME); \
-                uint32_t fid = vt_iofile_id(PATH); \
-                if( fid ) { \
-                        if( ERROR_CONDITION ) { \
-                                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
-                                vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, 0 ); \
+                uint32_t fid; \
+                if( ERROR_CONDITION ) { \
+                        if( PATH && strlen(PATH) > 0 ) { \
+                                fid = vt_iofile_id(PATH); \
                         } \
                         else { \
-                                vt_ioend( &time, fid, handleid, ioop, 0 ); \
+                                fid = invalid_fd_fid; \
                         } \
+                        ioop |= VT_IOFLAG_IOFAILED; \
                 } \
+                else { \
+                        fid = vt_iofile_id(PATH); \
+                } \
+                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
+                vt_ioend( &time, fid, handleid, ioop, 0 ); \
         } \
         vt_exit( &time ); \
         if( enable_memhooks ) VT_MEMHOOKS_ON(); \

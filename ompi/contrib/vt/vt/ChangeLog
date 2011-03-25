@@ -1,3 +1,7 @@
+5.8.4openmpi
+	- fixed handling NULL value of pathname given to certain I/O calls
+	  (e.g. fopen, open, unlink)
+
 5.8.3openmpi
 	- fixed compile error on Red Hat 5.x which occurred if using GNU
 	  compiler with -D_FORTIFY_SOURCE=2
