@@ -122,7 +122,7 @@ static int plm_tm_init(void)
         ORTE_ERROR_LOG(rc);
     }
 
-    if (ORTE_SUCCESS == orte_plm_base_rsh_launch_agent_setup()) {
+    if (ORTE_SUCCESS == orte_plm_base_rsh_launch_agent_setup(orte_rsh_agent, NULL)) {
         local_launch_available = true;
     }
     
