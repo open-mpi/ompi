@@ -20,7 +20,7 @@ AC_DEFUN([MCA_opal_sysinfo_linux_CONFIG],[
 
     AC_MSG_CHECKING([if we are on Linux])
     # If we are on Linux, then we're happy.
-    AS_IF(["$opal_found_linux" = "yes"],
+    AS_IF([test "$opal_found_linux" = "yes"],
           [AC_MSG_RESULT([yes])
            $1],
           [AC_MSG_RESULT([no])
