@@ -7,7 +7,8 @@
 # $HEADER$
 #
 
-FILE(GLOB_RECURSE ORTERUN_SOURCE_FILES "*.h" "*.c" "*.cc" "*.cpp")
+
+SET(ORTERUN_SOURCE_FILES main.c orterun.c)
 
 ADD_EXECUTABLE (orterun ${ORTERUN_SOURCE_FILES})
 
