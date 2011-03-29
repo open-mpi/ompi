@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved. 
 #
 # $COPYRIGHT$
 # 
@@ -14,18 +14,13 @@
 # ------------------------------------------------
 AC_DEFUN([MCA_sysinfo_linux_CONFIG],[
 
-   case "${host}" in
-   i?86-*|x86_64*|ia64-*|powerpc-*|powerpc64-*|sparc*-*)
-              AS_IF([test -r "/proc/cpuinfo"],
-                     [sysinfo_linux_happy="yes"],
-                     [sysinfo_linux_happy="no"])
-        ;;
-   *)
-        sysinfo_linux_happy="no"
-        ;;
-   esac
+    AC_REQUIRE([OPAL_CHECK_OS_FLAVORS])
 
-    AS_IF([test "$sysinfo_linux_happy" = "yes"], 
-          [$1], 
-          [$2])
+    AC_MSG_CHECKING([if we are on Linux])
+    # If we are on Linux, then we're happy.
+    AS_IF([test "$opal_found_linux" = "yes"],
+          [AC_MSG_RESULT([yes])
+           $1],
+          [AC_MSG_RESULT([no])
+           $2])
 ])
