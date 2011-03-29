@@ -53,6 +53,13 @@ char *opal_paffinity_base_slot_list;
 int opal_paffinity_base_register_params(void)
 {
     int value, id;
+    static int been_here = 0;
+
+    /* We may get called twice; be harmless in that case. */
+    if (1 == been_here) {
+        return OPAL_SUCCESS;
+    }
+    been_here = 1;
 
     /* Debugging / verbose output */
 
