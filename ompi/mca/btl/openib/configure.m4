@@ -32,7 +32,7 @@ AC_DEFUN([MCA_btl_openib_POST_CONFIG], [
 #                      [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_btl_openib_CONFIG],[
-    OPAL_VAR_SCOPE_PUSH([cpcs have_threads])
+    OMPI_VAR_SCOPE_PUSH([cpcs have_threads])
     cpcs="oob"
 
     OMPI_CHECK_OPENIB([btl_openib],
