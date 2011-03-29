@@ -114,7 +114,7 @@ int orte_plm_poe_component_open(void)
                            false, false, 0, &mca_plm_poe_component.debug);
     mca_base_param_reg_int(c, "priority",
                            "Priority of the poe plm component",
-                           false , false, 100, &mca_plm_poe_component.priority);
+                           false , false, 0, &mca_plm_poe_component.priority);
     mca_base_param_reg_string(c, "class",
                            "class (interactive or batch)",
                            true, false, "interactive", &mca_plm_poe_component.class);

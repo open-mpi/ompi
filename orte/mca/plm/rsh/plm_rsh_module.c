@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -177,8 +178,18 @@ int orte_plm_rsh_init(void)
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), tmp);
             free(tmp);
         }
+    } else if(mca_plm_rsh_component.using_llspawn) {
+        /* perform base setup for llspawn */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_rsh_launch_agent_setup("llspawn", NULL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        opal_output_verbose(1, orte_plm_globals.output,
+                            "%s plm:rsh: using \"%s\" for launching\n",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            orte_plm_globals.rsh_agent_path);
     } else {
-        /* not using qrsh - use MCA-specified agent */
+        /* not using qrsh or llspawn - use MCA-specified agent */
         if (ORTE_SUCCESS != (rc = orte_plm_base_rsh_launch_agent_setup(NULL, NULL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -684,7 +695,9 @@ static int setup_launch(int *argcptr, char ***argvptr,
         /* Daemonize when not using qrsh.  Or, if using qrsh, only
          * daemonize if told to by user with daemonize_qrsh flag. */
         ((!mca_plm_rsh_component.using_qrsh) ||
-        (mca_plm_rsh_component.using_qrsh && mca_plm_rsh_component.daemonize_qrsh))) {
+        (mca_plm_rsh_component.using_qrsh && mca_plm_rsh_component.daemonize_qrsh)) &&
+        ((!mca_plm_rsh_component.using_llspawn) ||
+        (mca_plm_rsh_component.using_llspawn && mca_plm_rsh_component.daemonize_llspawn))) {
         opal_argv_append(&argc, &argv, "--daemonize");
     }
     

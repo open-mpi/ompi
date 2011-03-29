@@ -15,6 +15,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights 
  *                         reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -103,6 +104,7 @@ int orte_plm_rsh_component_open(void)
     mca_plm_rsh_component.num_children = 0;
     OBJ_CONSTRUCT(&mca_plm_rsh_component.children, opal_list_t);
     mca_plm_rsh_component.using_qrsh = false;
+    mca_plm_rsh_component.using_llspawn = false;
 
     /* lookup parameters */
     mca_base_param_reg_int(c, "num_concurrent",
@@ -128,6 +130,16 @@ int orte_plm_rsh_component_open(void)
                            "Daemonize the orted under the Grid Engine parallel environment",
                            false, false, false, &tmp);
     mca_plm_rsh_component.daemonize_qrsh = OPAL_INT_TO_BOOL(tmp);
+    
+    mca_base_param_reg_int(c, "disable_llspawn",
+                           "Disable the use of llspawn when under the LoadLeveler environment",
+                           false, false, false, &tmp);
+    mca_plm_rsh_component.disable_llspawn = OPAL_INT_TO_BOOL(tmp);
+
+    mca_base_param_reg_int(c, "daemonize_llspawn",
+                           "Daemonize the orted when under the LoadLeveler environment",
+                           false, false, false, &tmp);
+    mca_plm_rsh_component.daemonize_llspawn = OPAL_INT_TO_BOOL(tmp);
     
     mca_base_param_reg_int(c, "priority",
                            "Priority of the rsh plm component",
@@ -170,12 +182,26 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
         }
         free(tmp);
         mca_plm_rsh_component.using_qrsh = true;
-        *priority = mca_plm_rsh_component.priority;
-        *module = (mca_base_module_t *) &orte_plm_rsh_module;
-        return ORTE_SUCCESS;
+        goto success; 
+    } else if (!mca_plm_rsh_component.disable_llspawn &&
+               NULL != getenv("LOADL_STEP_ID")) { 
+	/* We are running  as a LOADLEVELER job.
+	   Search for llspawn in the users PATH */
+        if (ORTE_SUCCESS != orte_plm_base_rsh_launch_agent_lookup("llspawn", NULL)) {
+             opal_output_verbose(1, orte_plm_globals.output,
+                                "%s plm:rsh: unable to be used: LoadLeveler "
+                                "indicated but cannot find path or execution "
+                                "permissions not set for launching agent llspawn",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            *module = NULL;
+            return ORTE_ERROR;
+        }
+        mca_plm_rsh_component.using_llspawn = true;
+        goto success;
     }
     
-    /* if this isn't an Grid Engine environment, see if MCA-specified agent (default: ssh:rsh) is available */
+    /* if this isn't an Grid Engine or LoadLeveler environment, 
+       see if MCA-specified agent (default: ssh:rsh) is available */
     
     if (ORTE_SUCCESS != orte_plm_base_rsh_launch_agent_lookup(NULL, NULL)) {
         /* this isn't an error - we just cannot be selected */
@@ -187,7 +213,7 @@ int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority)
         *module = NULL;
         return ORTE_ERROR;
     }
-    
+success: 
     /* we are good - make ourselves available */
     *priority = mca_plm_rsh_component.priority;
     *module = (mca_base_module_t *) &orte_plm_rsh_module;
