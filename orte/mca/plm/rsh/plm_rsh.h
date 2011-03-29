@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,6 +67,9 @@ struct orte_plm_rsh_component_t {
     bool disable_qrsh;
     bool using_qrsh;
     bool daemonize_qrsh;
+    bool disable_llspawn;
+    bool using_llspawn;
+    bool daemonize_llspawn;
     int delay;
     int priority;
     bool tree_spawn;
