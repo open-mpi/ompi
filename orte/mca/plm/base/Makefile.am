@@ -28,7 +28,8 @@ if !ORTE_DISABLE_FULL_SUPPORT
 dist_pkgdata_DATA += base/help-plm-base.txt
 
 headers += \
-        base/plm_private.h
+        base/plm_private.h \
+        base/plm_base_rsh_support.h
 
 libmca_plm_la_SOURCES += \
         base/plm_base_close.c \

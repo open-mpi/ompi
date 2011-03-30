@@ -30,6 +30,7 @@
 
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/base/plm_base_rsh_support.h"
 
 int orte_plm_base_finalize(void)
 {
