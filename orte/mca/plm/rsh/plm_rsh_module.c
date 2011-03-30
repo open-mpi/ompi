@@ -90,6 +90,7 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/base/plm_base_rsh_support.h"
 #include "orte/mca/plm/rsh/plm_rsh.h"
 
 static void ssh_child(int argc, char **argv,
@@ -108,28 +109,6 @@ orte_plm_base_module_t orte_plm_rsh_module = {
     orte_plm_base_orted_kill_local_procs,
     orte_plm_rsh_signal_job,
     orte_plm_rsh_finalize
-};
-
-typedef enum {
-    ORTE_PLM_RSH_SHELL_BASH = 0,
-    ORTE_PLM_RSH_SHELL_ZSH,
-    ORTE_PLM_RSH_SHELL_TCSH,
-    ORTE_PLM_RSH_SHELL_CSH,
-    ORTE_PLM_RSH_SHELL_KSH,
-    ORTE_PLM_RSH_SHELL_SH,
-    ORTE_PLM_RSH_SHELL_UNKNOWN
-} orte_plm_rsh_shell_t;
-
-/* These strings *must* follow the same order as the enum
-   ORTE_PLM_RSH_SHELL_* */
-static const char * orte_plm_rsh_shell_name[] = {
-    "bash",
-    "zsh",
-    "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
-    "csh",
-    "ksh",
-    "sh",
-    "unknown"
 };
 
 /*

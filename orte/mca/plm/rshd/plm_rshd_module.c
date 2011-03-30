@@ -88,6 +88,7 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/base/plm_base_rsh_support.h"
 #include "orte/mca/plm/rshd/plm_rshd.h"
 
 static void ssh_child(char *cmd, char **argv) __opal_attribute_noreturn__;
@@ -296,9 +297,9 @@ int orte_plm_rshd_launch(orte_job_t *jdata)
         }
         node = (orte_node_t*)proc->node;
         /* setup the launch */
-        if (ORTE_SUCCESS != (rc = orte_plm_base_setup_rsh_launch(proc->nodename, app,
-                                                                 "orte-bootproxy.sh",
-                                                                 &argv, &cmd))) {
+        if (ORTE_SUCCESS != (rc = orte_plm_base_setup_slave_launch(proc->nodename, app,
+                                                                   "orte-bootproxy.sh",
+                                                                   &argv, &cmd))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }

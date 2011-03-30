@@ -50,6 +50,7 @@
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/base/plm_base_rsh_support.h"
 #include "orte/mca/plm/rsh/plm_rsh.h"
 
 

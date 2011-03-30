@@ -37,6 +37,7 @@
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
+#include <fcntl.h>
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/os_path.h"
@@ -61,6 +62,19 @@
 #include "orte/util/dash_host/dash_host.h"
 
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/base/plm_base_rsh_support.h"
+
+/* These strings *must* follow the same order as the enum ORTE_PLM_RSH_SHELL_* */
+const char *orte_plm_rsh_shell_name[7] = {
+    "bash",
+    "zsh",
+    "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
+    "csh",
+    "ksh",
+    "sh",
+    "unknown"
+};
+
 
 #ifndef __WINDOWS__
 static char **search(const char* agent_list, const char *path);
@@ -224,9 +238,9 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     jdata->jobid = orte_plm_globals.local_slaves;
 
     /* setup the launch */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_rsh_launch(nodename, app,
-                                                             "orte-bootproxy.sh",
-                                                             &argv, &exec_path))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_slave_launch(nodename, app,
+                                                               "orte-bootproxy.sh",
+                                                               &argv, &exec_path))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -465,61 +479,40 @@ void orte_plm_base_local_slave_finalize(void)
     }
 }
 
-typedef enum {
-    ORTE_PLM_SHELL_BASH = 0,
-    ORTE_PLM_SHELL_ZSH,
-    ORTE_PLM_SHELL_TCSH,
-    ORTE_PLM_SHELL_CSH,
-    ORTE_PLM_SHELL_KSH,
-    ORTE_PLM_SHELL_SH,
-    ORTE_PLM_SHELL_UNKNOWN
-} orte_plm_shell_t;
-
-/* These strings *must* follow the same order as the enum ORTE_PLM_SHELL_* */
-static const char * orte_plm_shell_name[] = {
-    "bash",
-    "zsh",
-    "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
-    "csh",
-    "ksh",
-    "sh",
-    "unknown"
-};
-
-static orte_plm_shell_t find_shell(char *shell) 
+static orte_plm_rsh_shell_t find_shell(char *shell) 
 {
     int i         = 0;
     char *sh_name = NULL;
     
     if( (NULL == shell) || (strlen(shell) == 1) ) {
         /* Malformed shell */
-        return ORTE_PLM_SHELL_UNKNOWN;
+        return ORTE_PLM_RSH_SHELL_UNKNOWN;
     }
     
     sh_name = rindex(shell, '/');
     if( NULL == sh_name ) {
         /* Malformed shell */
-        return ORTE_PLM_SHELL_UNKNOWN;
+        return ORTE_PLM_RSH_SHELL_UNKNOWN;
     }
     
     /* skip the '/' */
     ++sh_name;
-    for (i = 0; i < (int)(sizeof (orte_plm_shell_name) /
-                          sizeof(orte_plm_shell_name[0])); ++i) {
-        if (0 == strcmp(sh_name, orte_plm_shell_name[i])) {
-            return (orte_plm_shell_t)i;
+    for (i = 0; i < (int)(sizeof (orte_plm_rsh_shell_name) /
+                          sizeof(orte_plm_rsh_shell_name[0])); ++i) {
+        if (0 == strcmp(sh_name, orte_plm_rsh_shell_name[i])) {
+            return (orte_plm_rsh_shell_t)i;
         }
     }
     
     /* We didn't find it */
-    return ORTE_PLM_SHELL_UNKNOWN;
+    return ORTE_PLM_RSH_SHELL_UNKNOWN;
 }
 
 /**
  * Check the Shell variable on the specified node
  */
 
-static int shell_probe(char *nodename, orte_plm_shell_t *shell)
+int orte_plm_base_rsh_shell_probe(char *nodename, orte_plm_rsh_shell_t *shell)
 {
     char ** argv;
     int argc, rc = ORTE_SUCCESS, i;
@@ -532,7 +525,7 @@ static int shell_probe(char *nodename, orte_plm_shell_t *shell)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          nodename));
     
-    *shell = ORTE_PLM_SHELL_UNKNOWN;
+    *shell = ORTE_PLM_RSH_SHELL_UNKNOWN;
     if (pipe(fd)) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: pipe failed with errno=%d",
@@ -608,10 +601,10 @@ static int shell_probe(char *nodename, orte_plm_shell_t *shell)
                 sh_name[strlen(sh_name)-1] = '\0';
             }
             /* Search for the substring of known shell-names */
-            for (i = 0; i < (int)(sizeof (orte_plm_shell_name)/
-                                  sizeof(orte_plm_shell_name[0])); i++) {
-                if ( 0 == strcmp(sh_name, orte_plm_shell_name[i]) ) {
-                    *shell = (orte_plm_shell_t)i;
+            for (i = 0; i < (int)(sizeof (orte_plm_rsh_shell_name)/
+                                  sizeof(orte_plm_rsh_shell_name[0])); i++) {
+                if ( 0 == strcmp(sh_name, orte_plm_rsh_shell_name[i]) ) {
+                    *shell = (orte_plm_rsh_shell_t)i;
                     break;
                 }
             }
@@ -622,22 +615,22 @@ static int shell_probe(char *nodename, orte_plm_shell_t *shell)
                          "%s plm:base: node %s has SHELL: %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          nodename,
-                         (ORTE_PLM_SHELL_UNKNOWN == *shell) ? "UNHANDLED" : (char*)orte_plm_shell_name[*shell]));
+                         (ORTE_PLM_RSH_SHELL_UNKNOWN == *shell) ? "UNHANDLED" : (char*)orte_plm_rsh_shell_name[*shell]));
     
     return rc;
 }
 
-static int setup_shell(orte_plm_shell_t *rshell,
-                       orte_plm_shell_t *lshell,
-                       char *nodename, char ***argv)
+int orte_plm_base_rsh_setup_shell(orte_plm_rsh_shell_t *rshell,
+                                  orte_plm_rsh_shell_t *lshell,
+                                  char *nodename, char ***argv)
 {
-    orte_plm_shell_t remote_shell, local_shell;
+    orte_plm_rsh_shell_t remote_shell, local_shell;
     struct passwd *p;
     char *param;
     int rc;
     
     /* What is our local shell? */
-    local_shell = ORTE_PLM_SHELL_UNKNOWN;
+    local_shell = ORTE_PLM_RSH_SHELL_UNKNOWN;
     p = getpwuid(getuid());
     if( NULL == p ) {
         /* This user is unknown to the system. Therefore, there is no reason we
@@ -652,21 +645,21 @@ static int setup_shell(orte_plm_shell_t *rshell,
     /* If we didn't find it in getpwuid(), try looking at the $SHELL
      environment variable (see https://svn.open-mpi.org/trac/ompi/ticket/1060)
      */
-    if (ORTE_PLM_SHELL_UNKNOWN == local_shell && 
+    if (ORTE_PLM_RSH_SHELL_UNKNOWN == local_shell && 
         NULL != (param = getenv("SHELL"))) {
         local_shell = find_shell(param);
     }
     
-    if (ORTE_PLM_SHELL_UNKNOWN == local_shell) {
+    if (ORTE_PLM_RSH_SHELL_UNKNOWN == local_shell) {
         opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
                     (NULL != param) ? param : "unknown");
-        local_shell = ORTE_PLM_SHELL_BASH;
+        local_shell = ORTE_PLM_RSH_SHELL_BASH;
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:base: local shell: %d (%s)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         local_shell, orte_plm_shell_name[local_shell]));
+                         local_shell, orte_plm_rsh_shell_name[local_shell]));
     
     /* What is our remote shell? */
     if (orte_assume_same_shell) {
@@ -675,23 +668,23 @@ static int setup_shell(orte_plm_shell_t *rshell,
                              "%s plm:base: assuming same remote shell as local shell",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     } else {
-        rc = shell_probe(nodename, &remote_shell);
+        rc = orte_plm_base_rsh_shell_probe(nodename, &remote_shell);
         
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        if (ORTE_PLM_SHELL_UNKNOWN == remote_shell) {
+        if (ORTE_PLM_RSH_SHELL_UNKNOWN == remote_shell) {
             opal_output(0, "WARNING: shell probe returned unhandled shell; assuming bash\n");
-            remote_shell = ORTE_PLM_SHELL_BASH;
+            remote_shell = ORTE_PLM_RSH_SHELL_BASH;
         }
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:base: remote shell: %d (%s)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         remote_shell, orte_plm_shell_name[remote_shell]));
+                         remote_shell, orte_plm_rsh_shell_name[remote_shell]));
     
     /* Do we need to source .profile on the remote side?
      - sh: yes (see bash(1))
@@ -701,8 +694,8 @@ static int setup_shell(orte_plm_shell_t *rshell,
      - zsh: no (see http://zsh.sourceforge.net/FAQ/zshfaq03.html#l19)
      */
     
-    if (ORTE_PLM_SHELL_SH == remote_shell ||
-        ORTE_PLM_SHELL_KSH == remote_shell) {
+    if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
+        ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
         int i;
         char **tmp;
         tmp = opal_argv_split("( test ! -r ./.profile || . ./.profile;", ' ');
@@ -722,7 +715,7 @@ static int setup_shell(orte_plm_shell_t *rshell,
     return ORTE_SUCCESS;
 }
 
-int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
+int orte_plm_base_setup_slave_launch(char *nodename, orte_app_context_t *app,
                                    char *rcmd, char ***argv, char **exec_path)
 {
     orte_slave_files_t *slave_node, *tst_node;
@@ -734,7 +727,7 @@ int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
     char cwd[OPAL_PATH_MAX];
     int rc, i, j;
     char *lib_base, *bin_base;
-    orte_plm_shell_t rshell, lshell;
+    orte_plm_rsh_shell_t rshell, lshell;
     char **tmpargv=NULL;
     char *opal_prefix;
     
@@ -814,8 +807,8 @@ int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
                                  "%s plm:base:local:slave: node %s is remote",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
             /* setup the correct shell info */
-            if (ORTE_SUCCESS != (rc = setup_shell(&rshell, &lshell,
-                                                  nodename, &tmpargv))) {
+            if (ORTE_SUCCESS != (rc = orte_plm_base_rsh_setup_shell(&rshell, &lshell,
+                                                                    nodename, &tmpargv))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(slave_node);
                 return rc;
@@ -828,10 +821,10 @@ int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
                  * LD_LIBRARY_PATH on the remote node, and prepend the eventual cmd
                  * with the prefix directory
                  */
-                if (ORTE_PLM_SHELL_SH == rshell ||
-                    ORTE_PLM_SHELL_KSH == rshell ||
-                    ORTE_PLM_SHELL_ZSH == rshell ||
-                    ORTE_PLM_SHELL_BASH == rshell) {
+                if (ORTE_PLM_RSH_SHELL_SH == rshell ||
+                    ORTE_PLM_RSH_SHELL_KSH == rshell ||
+                    ORTE_PLM_RSH_SHELL_ZSH == rshell ||
+                    ORTE_PLM_RSH_SHELL_BASH == rshell) {
                     asprintf (&slave_node->prefix,
                               "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
                               "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
@@ -842,8 +835,8 @@ int orte_plm_base_setup_rsh_launch(char *nodename, orte_app_context_t *app,
                               app->prefix_dir, bin_base,
                               app->prefix_dir, lib_base,
                               app->prefix_dir, bin_base);
-                } else if (ORTE_PLM_SHELL_TCSH == rshell ||
-                           ORTE_PLM_SHELL_CSH == rshell) {
+                } else if (ORTE_PLM_RSH_SHELL_TCSH == rshell ||
+                           ORTE_PLM_RSH_SHELL_CSH == rshell) {
                     /* [t]csh is a bit more challenging -- we
                      have to check whether LD_LIBRARY_PATH
                      is already set before we try to set it.
@@ -1172,6 +1165,356 @@ PRELOAD_FILES:
     }
     
     return ORTE_SUCCESS;    
+}
+
+int orte_plm_base_rsh_setup_launch(int *argcptr, char ***argvptr,
+                                   char *nodename,
+                                   int *node_name_index1,
+                                   int *proc_vpid_index, char *prefix_dir)
+{
+    int argc;
+    char **argv;
+    char *param;
+    orte_plm_rsh_shell_t remote_shell, local_shell;
+    char *lib_base, *bin_base;
+    int orted_argc;
+    char **orted_argv;
+    char *orted_cmd, *orted_prefix, *final_cmd;
+    int orted_index;
+    int rc;
+
+    
+    /* Figure out the basenames for the libdir and bindir.  This
+     requires some explanation:
+     
+     - Use opal_install_dirs.libdir and opal_install_dirs.bindir.
+     
+     - After a discussion on the devel-core mailing list, the
+     developers decided that we should use the local directory
+     basenames as the basis for the prefix on the remote note.
+     This does not handle a few notable cases (e.g., if the
+     libdir/bindir is not simply a subdir under the prefix, if the
+     libdir/bindir basename is not the same on the remote node as
+     it is here on the local node, etc.), but we decided that
+     --prefix was meant to handle "the common case".  If you need
+     something more complex than this, a) edit your shell startup
+     files to set PATH/LD_LIBRARY_PATH properly on the remove
+     node, or b) use some new/to-be-defined options that
+     explicitly allow setting the bindir/libdir on the remote
+     node.  We decided to implement these options (e.g.,
+     --remote-bindir and --remote-libdir) to orterun when it
+     actually becomes a problem for someone (vs. a hypothetical
+     situation).
+     
+     Hence, for now, we simply take the basename of this install's
+     libdir and bindir and use it to append this install's prefix
+     and use that on the remote node.
+     */
+    
+    lib_base = opal_basename(opal_install_dirs.libdir);
+    bin_base = opal_basename(opal_install_dirs.bindir);
+    
+    /*
+     * Build argv array
+     */
+    argv = opal_argv_copy(orte_plm_globals.rsh_agent_argv);
+    argc = opal_argv_count(orte_plm_globals.rsh_agent_argv);
+    *node_name_index1 = argc;
+    opal_argv_append(&argc, &argv, "<template>");
+    
+    /* setup the correct shell info */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_rsh_setup_shell(&remote_shell, &local_shell,
+                                                            nodename, &argv))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* now get the orted cmd - as specified by user - into our tmp array.
+     * The function returns the location where the actual orted command is
+     * located - usually in the final spot, but someone could
+     * have added options. For example, it should be legal for them to use
+     * "orted --debug-devel" so they get debug output from the orteds, but
+     * not from mpirun. Also, they may have a customized version of orted
+     * that takes arguments in addition to the std ones we already support
+     */
+    orted_argc = 0;
+    orted_argv = NULL;
+    orted_index = orte_plm_base_setup_orted_cmd(&orted_argc, &orted_argv);
+    
+    /* look at the returned orted cmd argv to check several cases:
+     *
+     * - only "orted" was given. This is the default and thus most common
+     *   case. In this situation, there is nothing we need to do
+     *
+     * - something was given that doesn't include "orted" - i.e., someone
+     *   has substituted their own daemon. There isn't anything we can
+     *   do here, so we want to avoid adding prefixes to the cmd
+     *
+     * - something was given that precedes "orted". For example, someone
+     *   may have specified "valgrind [options] orted". In this case, we
+     *   need to separate out that "orted_prefix" section so it can be
+     *   treated separately below
+     *
+     * - something was given that follows "orted". An example was given above.
+     *   In this case, we need to construct the effective "orted_cmd" so it
+     *   can be treated properly below
+     *
+     * Obviously, the latter two cases can be combined - just to make it
+     * even more interesting! Gotta love rsh/ssh...
+     */
+    if (0 == orted_index) {
+        /* single word cmd - this is the default scenario, but there could
+         * be options specified so we need to account for that possibility.
+         * However, we don't need/want a prefix as nothing precedes the orted
+         * cmd itself
+         */
+        orted_cmd = opal_argv_join(orted_argv, ' ');
+        orted_prefix = NULL;
+    } else {
+        /* okay, so the "orted" cmd is somewhere in this array, with
+         * something preceding it and perhaps things following it.
+         */
+        orted_prefix = opal_argv_join_range(orted_argv, 0, orted_index, ' ');
+        orted_cmd = opal_argv_join_range(orted_argv, orted_index, opal_argv_count(orted_argv), ' ');
+    }
+    opal_argv_free(orted_argv);  /* done with this */
+    
+    /* we now need to assemble the actual cmd that will be executed - this depends
+     * upon whether or not a prefix directory is being used
+     */
+    if (NULL != prefix_dir) {
+        /* if we have a prefix directory, we need to set the PATH and
+         * LD_LIBRARY_PATH on the remote node, and prepend just the orted_cmd
+         * with the prefix directory
+         */
+        char *opal_prefix = getenv("OPAL_PREFIX");
+        char* full_orted_cmd = NULL;
+
+        if( NULL != orted_cmd ) {
+            asprintf( &full_orted_cmd, "%s/%s/%s", prefix_dir, bin_base, orted_cmd );
+        }
+
+        if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
+            ORTE_PLM_RSH_SHELL_KSH == remote_shell ||
+            ORTE_PLM_RSH_SHELL_ZSH == remote_shell ||
+            ORTE_PLM_RSH_SHELL_BASH == remote_shell) {
+            /* if there is nothing preceding orted, then we can just
+             * assemble the cmd with the orted_cmd at the end. Otherwise,
+             * we have to insert the orted_prefix in the right place
+             */
+            asprintf (&final_cmd,
+                      "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
+                      "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
+                      "%s %s",
+                      (opal_prefix != NULL ? "OPAL_PREFIX=" : " "),
+                      (opal_prefix != NULL ? opal_prefix : " "),
+                      (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : " "),
+                      prefix_dir, bin_base,
+                      prefix_dir, lib_base,
+                      (orted_prefix != NULL ? orted_prefix : " "),
+                      (full_orted_cmd != NULL ? full_orted_cmd : " "));
+        } else if (ORTE_PLM_RSH_SHELL_TCSH == remote_shell ||
+                   ORTE_PLM_RSH_SHELL_CSH == remote_shell) {
+            /* [t]csh is a bit more challenging -- we
+             have to check whether LD_LIBRARY_PATH
+             is already set before we try to set it.
+             Must be very careful about obeying
+             [t]csh's order of evaluation and not
+             using a variable before it is defined.
+             See this thread for more details:
+             http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
+            /* if there is nothing preceding orted, then we can just
+             * assemble the cmd with the orted_cmd at the end. Otherwise,
+             * we have to insert the orted_prefix in the right place
+             */
+            asprintf (&final_cmd,
+                      "%s%s%s set path = ( %s/%s $path ) ; "
+                      "if ( $?LD_LIBRARY_PATH == 1 ) "
+                      "set OMPI_have_llp ; "
+                      "if ( $?LD_LIBRARY_PATH == 0 ) "
+                      "setenv LD_LIBRARY_PATH %s/%s ; "
+                      "if ( $?OMPI_have_llp == 1 ) "
+                      "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
+                      "%s %s",
+                      (opal_prefix != NULL ? "setenv OPAL_PREFIX " : " "),
+                      (opal_prefix != NULL ? opal_prefix : " "),
+                      (opal_prefix != NULL ? " ;" : " "),
+                      prefix_dir, bin_base,
+                      prefix_dir, lib_base,
+                      prefix_dir, lib_base,
+                      (orted_prefix != NULL ? orted_prefix : " "),
+                      (full_orted_cmd != NULL ? full_orted_cmd : " "));
+        } else {
+            orte_show_help("help-plm-rsh.txt", "cannot-resolve-shell-with-prefix", true,
+                           (NULL == opal_prefix) ? "NULL" : opal_prefix,
+                           prefix_dir);
+            return ORTE_ERR_SILENT;
+        }
+        if( NULL != full_orted_cmd ) {
+            free(full_orted_cmd);
+        }
+    } else {
+        /* no prefix directory, so just aggregate the result */
+        asprintf(&final_cmd, "%s %s",
+                 (orted_prefix != NULL ? orted_prefix : ""),
+                 (orted_cmd != NULL ? orted_cmd : ""));
+    }
+    /* now add the final cmd to the argv array */
+    opal_argv_append(&argc, &argv, final_cmd);
+    free(final_cmd);  /* done with this */
+    if (NULL != orted_prefix) free(orted_prefix);
+    if (NULL != orted_cmd) free(orted_cmd);
+    
+    /* if we are not debugging, tell the daemon
+     * to daemonize so we can launch the next group
+     */
+    if (!orte_debug_flag &&
+        !orte_debug_daemons_flag &&
+        !orte_debug_daemons_file_flag &&
+        !orte_leave_session_attached) {
+        opal_argv_append(&argc, &argv, "--daemonize");
+    }
+    
+    /*
+     * Add the basic arguments to the orted command line, including
+     * all debug options
+     */
+    orte_plm_base_orted_append_basic_args(&argc, &argv,
+                                          "env",
+                                          proc_vpid_index,
+                                          NULL);
+    
+    /* ensure that only the ssh plm is selected on the remote daemon */
+    opal_argv_append_nosize(&argv, "-mca");
+    opal_argv_append_nosize(&argv, "plm");
+    opal_argv_append_nosize(&argv, "rsh");
+    
+    /* in the rsh environment, we can append multi-word arguments
+     * by enclosing them in quotes. Check for any multi-word
+     * mca params passed to mpirun and include them
+     */
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        int cnt, i;
+        cnt = opal_argv_count(orted_cmd_line);    
+        for (i=0; i < cnt; i+=3) {
+            /* check if the specified option is more than one word - all
+             * others have already been passed
+             */
+            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+                /* must add quotes around it */
+                asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
+                /* now pass it along */
+                opal_argv_append(&argc, &argv, orted_cmd_line[i]);
+                opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
+                opal_argv_append(&argc, &argv, param);
+                free(param);
+            }
+        }
+    }
+
+    if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
+        ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
+        opal_argv_append(&argc, &argv, ")");
+    }
+
+    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+        param = opal_argv_join(argv, ' ');
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:rsh: final template argv:\n\t%s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == param) ? "NULL" : param));
+        if (NULL != param) free(param);
+    }
+    
+    /* all done */
+    *argcptr = argc;
+    *argvptr = argv;
+    return ORTE_SUCCESS;
+}
+
+void orte_plm_base_ssh_child(int argc, char **argv,
+                             orte_vpid_t vpid, int proc_vpid_index)
+{
+    char** env;
+    char* var;
+    long fd, fdmax = sysconf(_SC_OPEN_MAX);
+    int rc;
+    char *exec_path;
+    char **exec_argv;
+    int fdin;
+    sigset_t sigs;
+
+    /* setup environment */
+    env = opal_argv_copy(orte_launch_environ);
+    
+    /* We don't need to sense an oversubscribed condition and set the sched_yield
+     * for the node as we are only launching the daemons at this time. The daemons
+     * are now smart enough to set the oversubscribed condition themselves when
+     * they launch the local procs.
+     */
+    
+    /* We cannot launch locally as this would cause multiple daemons to
+     * exist on a node (HNP counts as a daemon). This is taken care of
+     * by the earlier check for daemon_preexists, so we only have to worry
+     * about remote launches here
+     */
+    exec_argv = argv;
+    exec_path = strdup(orte_plm_globals.rsh_agent_path);
+    
+    /* pass the vpid */
+    rc = orte_util_convert_vpid_to_string(&var, vpid);
+    if (ORTE_SUCCESS != rc) {
+        opal_output(0, "orte_plm_rsh: unable to get daemon vpid as string");
+        exit(-1);
+    }
+    free(argv[proc_vpid_index]);
+    argv[proc_vpid_index] = strdup(var);
+    free(var);
+    
+    /* Don't let ssh slurp all of our stdin! */
+    fdin = open("/dev/null", O_RDWR);
+    dup2(fdin, 0);
+    close(fdin);
+    
+    /* close all file descriptors w/ exception of stdin/stdout/stderr */
+    for(fd=3; fd<fdmax; fd++)
+        close(fd);
+    
+    /* Set signal handlers back to the default.  Do this close
+     to the execve() because the event library may (and likely
+     will) reset them.  If we don't do this, the event
+     library may have left some set that, at least on some
+     OS's, don't get reset via fork() or exec().  Hence, the
+     orted could be unkillable (for example). */
+    
+    set_handler_default(SIGTERM);
+    set_handler_default(SIGINT);
+    set_handler_default(SIGHUP);
+    set_handler_default(SIGPIPE);
+    set_handler_default(SIGCHLD);
+    
+    /* Unblock all signals, for many of the same reasons that
+     we set the default handlers, above.  This is noticable
+     on Linux where the event library blocks SIGTERM, but we
+     don't want that blocked by the orted (or, more
+     specifically, we don't want it to be blocked by the
+     orted and then inherited by the ORTE processes that it
+     forks, making them unkillable by SIGTERM). */
+    sigprocmask(0, 0, &sigs);
+    sigprocmask(SIG_UNBLOCK, &sigs, 0);
+    
+    /* exec the daemon */
+    var = opal_argv_join(argv, ' ');
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:rsh: executing: (%s) [%s]",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         exec_path, (NULL == var) ? "NULL" : var));
+    if (NULL != var) free(var);
+    
+    execve(exec_path, exec_argv, env);
+    opal_output(0, "plm:rsh: execv of %s failed with errno=%s(%d)\n",
+                exec_path, strerror(errno), errno);
+    exit(-1);
 }
 
 int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,

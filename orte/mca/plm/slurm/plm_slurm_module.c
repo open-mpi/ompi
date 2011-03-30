@@ -75,6 +75,7 @@
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/plm/base/plm_base_rsh_support.h"
 #include "plm_slurm.h"
 
 
