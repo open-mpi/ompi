@@ -27,6 +27,7 @@ endif
 check_PROGRAMS = \
 	$(REQUIRES_OMPI) opal_bitmap \
 	opal_hash_table \
+	opal_tree \
 	opal_list \
 	opal_value_array \
 	opal_pointer_array
@@ -46,6 +47,12 @@ opal_list_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_list_DEPENDENCIES = $(opal_list_LDADD)
+
+opal_tree_SOURCES = opal_tree.c 
+opal_tree_LDADD = \
+        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/test/support/libsupport.a
+opal_tree_DEPENDENCIES = $(opal_tree_LDADD)
 
 opal_hash_table_SOURCES = opal_hash_table.c
 opal_hash_table_LDADD = \
