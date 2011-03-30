@@ -24,6 +24,7 @@ headers += \
         class/opal_bitmap.h \
         class/opal_free_list.h \
         class/opal_hash_table.h \
+        class/opal_tree.h \
         class/opal_list.h \
         class/opal_object.h \
         class/opal_graph.h\
@@ -36,6 +37,7 @@ libopen_pal_la_SOURCES += \
         class/opal_bitmap.c \
         class/opal_free_list.c \
         class/opal_hash_table.c \
+        class/opal_tree.c \
         class/opal_list.c \
         class/opal_object.c \
         class/opal_graph.c\
