@@ -145,8 +145,10 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
     
     /* Check how many different jobids are represented in this communicator.
        Necessary for the disconnect of dynamic communicators. */
-    ompi_dpm.mark_dyncomm (newcomm);
-    
+    if ( local_size != 0 ) {
+	ompi_dpm.mark_dyncomm (newcomm);
+    }
+
     /* Set error handler */
     newcomm->error_handler = errh;
     OBJ_RETAIN ( newcomm->error_handler );
