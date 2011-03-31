@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 University of Houston. All rights reserved.
+ * Copyright (c) 2007-2011 University of Houston. All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -145,7 +145,8 @@ int ompi_comm_set ( ompi_communicator_t **ncomm,
     
     /* Check how many different jobids are represented in this communicator.
        Necessary for the disconnect of dynamic communicators. */
-    if ( local_size != 0 ) {
+
+    if ( 0 < local_size  ) {
 	ompi_dpm.mark_dyncomm (newcomm);
     }
 
