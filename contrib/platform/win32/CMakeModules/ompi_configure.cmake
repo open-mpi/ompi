@@ -260,6 +260,8 @@ OMPI_DEF_OPT(OPAL_ENABLE_CRDEBUG "Whether we want checkpoint/restart enabled deb
 
 OMPI_DEF_OPT(OPAL_EVENT_HAVE_THREAD_SUPPORT "Whether we want to enable event library internal thread support." OFF)
 
+OMPI_DEF_OPT(OMPI_RELEASE_BUILD "Whether it is a build for binary release (this will skip the path settings in mca_installdirs_config)." OFF)
+
 IF (NOT MSVC)
 
 ###################################################################

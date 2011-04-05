@@ -154,22 +154,7 @@ SET(CPACK_BINARY_ZIP ON)
 
 # setup the register entries when install
 SET(CPACK_NSIS_EXTRA_INSTALL_COMMANDS ${CPACK_NSIS_EXTRA_INSTALL_COMMANDS} "
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PREFIX\\\" \\\"$INSTDIR\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_EXEC_PREFIX\\\" \\\"$INSTDIR\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_BINDIR\\\" \\\"$INSTDIR\\\\bin\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_SBINDIR\\\" \\\"$INSTDIR\\\\sbin\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_LIBEXECDIR\\\" \\\"$INSTDIR\\\\libexec\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_DATAROOTDIR\\\" \\\"$INSTDIR\\\\share\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_DATADIR\\\" \\\"$INSTDIR\\\\share\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_SYSCONFDIR\\\" \\\"$INSTDIR\\\\etc\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_LOCALSTATEDIR\\\" \\\"$INSTDIR\\\\etc\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_LIBDIR\\\" \\\"$INSTDIR\\\\lib\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_INCLUDEDIR\\\" \\\"$INSTDIR\\\\include\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_INFODIR\\\" \\\"$INSTDIR\\\\share\\\\info\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_MANDIR\\\" \\\"$INSTDIR\\\\share\\\\man\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PKGDATADIR\\\" \\\"$INSTDIR\\\\share\\\\openmpi\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PKGLIBDIR\\\" \\\"$INSTDIR\\\\lib\\\\openmpi\\\"
-    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPAL_PKGINCLUDEDIR\\\" \\\"$INSTDIR\\\\include\\\\openmpi\\\"
+    WriteRegStr HKLM \\\"SOFTWARE\\\\${CPACK_PACKAGE_VENDOR}\\\" \\\"OPENMPI_HOME\\\" \\\"$INSTDIR\\\"
 ")
 
 
