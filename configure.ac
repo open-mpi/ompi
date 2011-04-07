@@ -12,8 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
-#                         reserved. 
+# Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
+#                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -565,7 +565,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     dlfcn.h execinfo.h err.h fcntl.h grp.h inttypes.h libgen.h \
     libutil.h memory.h netdb.h netinet/in.h netinet/tcp.h \
     poll.h pthread.h pty.h pwd.h sched.h stdint.h stddef.h \
-    stdlib.h string.h strings.h stropts.h sys/fcntl.h sys/ipc.h \
+    stdlib.h string.h strings.h stropts.h sys/fcntl.h sys/ipc.h sys/shm.h \
     sys/ioctl.h sys/mman.h sys/mount.h sys/param.h sys/queue.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
     stdarg.h sys/stat.h sys/statfs.h sys/statvfs.h sys/time.h sys/tree.h \
