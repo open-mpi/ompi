@@ -157,6 +157,7 @@ protected:
    int         m_iInstAvail;            // bitmask for available instr.-types
    bool        m_bBeVerbose;            // FLAG: be verbose ?
    bool        m_bCompOnly;             // FLAG: compile only ?
+   bool        m_bOutfileGiven;         // FLAG: output file given ?
    bool        m_bUsesMpi;              // FLAG: uses MPI ?
    bool        m_bUsesThreads;          // FLAG: uses Threads ?
    bool        m_bUsesOpenMP;           // FLAG: uses OpenMP ? (use OPARI)
