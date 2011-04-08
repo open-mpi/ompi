@@ -752,6 +752,14 @@ Wrapper::parseCommandLine( int argc, char ** argv )
 	 m_pConfig->compiler_addArg( arg );
       }
       //
+      // -o
+      //
+      else if( arg.compare( "-o" ) == 0 )
+      {
+         m_pConfig->m_bOutfileGiven = true;
+         m_pConfig->compiler_addArg( arg );
+      }
+      //
       // -l<mpilib>
       //
       else if( arg.compare( 0, 5, "-lmpi" ) == 0
@@ -981,7 +989,7 @@ Wrapper::run()
                std::cout << "+++ rename " << m_pConfig->m_vecOpari_ModObjFiles[i]
                          << " to " << target << std::endl;
 
-            if( m_pConfig->m_bCompOnly &&
+            if( m_pConfig->m_bCompOnly && !m_pConfig->m_bOutfileGiven &&
                 rename( m_pConfig->m_vecOpari_ModObjFiles[i].c_str(),
                         target.c_str() ) == -1 )
             {
@@ -1249,7 +1257,7 @@ Wrapper::getIncFilesFromTabFile()
 Config::Config() :
    m_eLangType(LANG_CC), m_eInstType(INST_TYPE_MANUAL), m_iInstAvail(0),
 
-   m_bBeVerbose(false), m_bCompOnly(false),
+   m_bBeVerbose(false), m_bCompOnly(false), m_bOutfileGiven(false),
    m_bUsesMpi(false), m_bUsesThreads(false),
    m_bUsesOpenMP(false), m_bKeepOpariRcFile(false),
    m_bShow(false)
