@@ -2,7 +2,7 @@
  * Copyright © 2009 CNRS
  * Copyright © 2009-2010 INRIA
  * Copyright © 2009-2010 Université Bordeaux 1
- * Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -14,7 +14,7 @@
 #error Do not include cpuset.h in cpuset.c
 #endif
 
-#include <private/config.h>
+#include <private/autogen/config.h>
 #include <private/misc.h>
 #include <private/private.h>
 #include <hwloc/bitmap.h>
@@ -1036,7 +1036,7 @@ int hwloc_bitmap_weight(const struct hwloc_bitmap_s * set)
  */
 
 /* for HWLOC_DECLSPEC */
-#include <hwloc/config.h>
+#include <hwloc/autogen/config.h>
 
 /* forward declarations (public headers do not export this API anymore) */
 HWLOC_DECLSPEC struct hwloc_bitmap_s * hwloc_cpuset_alloc(void);

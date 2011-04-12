@@ -9,7 +9,8 @@ dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
 dnl                         University of Stuttgart.  All rights reserved.
-dnl Copyright © 2006-2010  Cisco Systems, Inc.  All rights reserved.
+dnl Copyright © 2006-2011  Cisco Systems, Inc.  All rights reserved.
+dnl See COPYING in top-level directory.
 
 # Main hwloc m4 macro, to be invoked by the user
 #
@@ -108,8 +109,8 @@ EOF])
     # becomes the "main" config header file.  Any AC_CONFIG_HEADERs
     # after that (hwloc/config.h) will only have selective #defines
     # replaced, not the entire file.
-    AC_CONFIG_HEADER(hwloc_config_prefix[include/private/config.h])
-    AC_CONFIG_HEADER(hwloc_config_prefix[include/hwloc/config.h])
+    AC_CONFIG_HEADERS(hwloc_config_prefix[include/private/autogen/config.h])
+    AC_CONFIG_HEADERS(hwloc_config_prefix[include/hwloc/autogen/config.h])
 
     # What prefix are we using?
     AC_MSG_CHECKING([for hwloc symbol prefix])

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010 INRIA
+ * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -15,7 +16,7 @@
 #define HWLOC_MYRIEXPRESS_H
 
 #include <hwloc.h>
-#include <hwloc/config.h>
+#include <hwloc/autogen/config.h>
 #include <hwloc/linux.h>
 
 #include <myriexpress.h>

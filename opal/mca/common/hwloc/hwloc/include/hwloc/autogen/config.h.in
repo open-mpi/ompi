@@ -1,8 +1,8 @@
 /* -*- c -*-
  * Copyright © 2009 CNRS
  * Copyright © 2009-2010 INRIA
- * Copyright © 2009-2010 Université Bordeaux 1
- * Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009-2011 Université Bordeaux 1
+ * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -97,22 +97,31 @@
 /* Defined to 1 if the CPU_SET macro works */
 #undef HWLOC_HAVE_CPU_SET
 
-/* Defined to 1 if you have the <stdint.h> header file. */
-#undef HWLOC_HAVE_STDINT_H
-
-#include <unistd.h>
-
 /* Defined to 1 if you have the `windows.h' header. */
 #undef HWLOC_HAVE_WINDOWS_H
 #undef hwloc_pid_t
 #undef hwloc_thread_t
 
 #ifdef HWLOC_HAVE_WINDOWS_H
+
 #  include <windows.h>
+typedef DWORDLONG hwloc_uint64_t;
+
 #else /* HWLOC_HAVE_WINDOWS_H */
+
 #  ifdef hwloc_thread_t
 #    include <pthread.h>
 #  endif /* hwloc_thread_t */
+
+/* Defined to 1 if you have the <stdint.h> header file. */
+#  undef HWLOC_HAVE_STDINT_H
+
+#  include <unistd.h>
+#  ifdef HWLOC_HAVE_STDINT_H
+#    include <stdint.h>
+#  endif
+typedef uint64_t hwloc_uint64_t;
+
 #endif /* HWLOC_HAVE_WINDOWS_H */
 
 /* Whether we need to re-define all the hwloc public symbols or not */

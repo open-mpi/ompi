@@ -1,8 +1,8 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2011 INRIA.  All rights reserved.
  * Copyright © 2009-2010 Université Bordeaux 1
- * Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -13,7 +13,7 @@
 #ifndef HWLOC_BITMAP_H
 #define HWLOC_BITMAP_H
 
-#include <hwloc/config.h>
+#include <hwloc/autogen/config.h>
 #include <assert.h>
 
 
@@ -53,16 +53,20 @@ typedef const struct hwloc_bitmap_s * hwloc_const_bitmap_t;
 
 /** \brief Allocate a new empty bitmap.
  *
- * \returns A valid bitmap or NULL.
+ * \returns A valid bitmap or \c NULL.
  *
  * The bitmap should be freed by a corresponding call to
- * hwloc_bitmap_free(). */
+ * hwloc_bitmap_free().
+ */
 HWLOC_DECLSPEC hwloc_bitmap_t hwloc_bitmap_alloc(void) __hwloc_attribute_malloc;
 
 /** \brief Allocate a new full bitmap. */
 HWLOC_DECLSPEC hwloc_bitmap_t hwloc_bitmap_alloc_full(void) __hwloc_attribute_malloc;
 
-/** \brief Free bitmap \p bitmap */
+/** \brief Free bitmap \p bitmap.
+ *
+ * If \p bitmap is \c NULL, no operation is performed.
+ */
 HWLOC_DECLSPEC void hwloc_bitmap_free(hwloc_bitmap_t bitmap);
 
 /** \brief Duplicate bitmap \p bitmap by allocating a new bitmap and copying \p bitmap contents */
@@ -148,7 +152,7 @@ HWLOC_DECLSPEC void hwloc_bitmap_from_ith_ulong(hwloc_bitmap_t bitmap, unsigned 
 /** \brief Add index \p id in bitmap \p bitmap */
 HWLOC_DECLSPEC void hwloc_bitmap_set(hwloc_bitmap_t bitmap, unsigned id);
 
-/** \brief Add indexess from \p begin to \p end in bitmap \p bitmap */
+/** \brief Add indexes from \p begin to \p end in bitmap \p bitmap. */
 HWLOC_DECLSPEC void hwloc_bitmap_set_range(hwloc_bitmap_t bitmap, unsigned begin, unsigned end);
 
 /** \brief Replace \p i -th subset of bitmap \p bitmap with unsigned long \p mask */
@@ -157,7 +161,7 @@ HWLOC_DECLSPEC void hwloc_bitmap_set_ith_ulong(hwloc_bitmap_t bitmap, unsigned i
 /** \brief Remove index \p id from bitmap \p bitmap */
 HWLOC_DECLSPEC void hwloc_bitmap_clr(hwloc_bitmap_t bitmap, unsigned id);
 
-/** \brief Remove index from \p begin to \p end in bitmap \p bitmap */
+/** \brief Remove indexes from \p begin to \p end in bitmap \p bitmap. */
 HWLOC_DECLSPEC void hwloc_bitmap_clr_range(hwloc_bitmap_t bitmap, unsigned begin, unsigned end);
 
 /** \brief Keep a single index among those set in bitmap \p bitmap
