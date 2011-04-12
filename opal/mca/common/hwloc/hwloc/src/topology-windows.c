@@ -309,7 +309,7 @@ static BOOL WINAPI (*QueryWorkingSetExProc)(HANDLE hProcess, PVOID pv, DWORD cb)
 
 static int hwloc_win_get_VirtualAllocExNumaProc(void) {
   if (VirtualAllocExNumaProc == NULL) {
-    FARPROC alloc_fun, free_fun;
+    FARPROC alloc_fun = NULL, free_fun = NULL;
     HMODULE kernel32;
 
     kernel32 = LoadLibrary("kernel32.dll");
@@ -318,7 +318,7 @@ static int hwloc_win_get_VirtualAllocExNumaProc(void) {
       free_fun = GetProcAddress(kernel32, "VirtualFreeEx");
     }
 
-    if (!kernel32 || !alloc_fun || !free_fun) {
+    if (!alloc_fun || !free_fun) {
       VirtualAllocExNumaProc = (FARPROC) -1;
       errno = ENOSYS;
       return -1;
@@ -378,7 +378,7 @@ hwloc_win_free_membind(hwloc_topology_t topology __hwloc_attribute_unused, void 
 
 static int hwloc_win_get_QueryWorkingSetExProc(void) {
   if (QueryWorkingSetExProc == NULL) {
-    FARPROC fun;
+    FARPROC fun = NULL;
     HMODULE kernel32, psapi;
 
     kernel32 = LoadLibrary("kernel32.dll");
