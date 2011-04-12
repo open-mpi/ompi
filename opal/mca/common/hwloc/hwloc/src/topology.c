@@ -1,12 +1,12 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2011 INRIA.  All rights reserved.
  * Copyright © 2009-2010 Université Bordeaux 1
- * Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
-#include <private/config.h>
+#include <private/autogen/config.h>
 
 #define _ATFILE_SOURCE
 #include <assert.h>
@@ -48,6 +48,23 @@ unsigned hwloc_get_api_version(void)
   return HWLOC_API_VERSION;
 }
 
+static void hwloc_report_error(const char *msg, int line)
+{
+    static int reported = 0;
+
+    if (!reported) {
+        fprintf(stderr, "****************************************************************************\n");
+        fprintf(stderr, "* Hwloc has encountered what looks like an error from the operating system.\n");
+        fprintf(stderr, "*\n");
+        fprintf(stderr, "* %s\n", msg);
+        fprintf(stderr, "* Error occurred in topology.c line %d\n", line);
+        fprintf(stderr, "*\n");
+        fprintf(stderr, "* Please report this error message to the hwloc user's mailing list,\n");
+        fprintf(stderr, "* along with the output from the hwloc-gather-topology.sh script.\n");
+        fprintf(stderr, "****************************************************************************\n");
+        reported = 1;
+    }
+}
 
 static void
 hwloc_topology_clear (struct hwloc_topology *topology);
@@ -258,7 +275,6 @@ hwloc__setup_misc_level_from_distances(struct hwloc_topology *topology,
           hwloc_obj_t misc_obj;
           misc_obj = hwloc_alloc_setup_object(HWLOC_OBJ_GROUP, -1);
           misc_obj->cpuset = hwloc_bitmap_alloc();
-          hwloc_bitmap_zero(misc_obj->cpuset);
           misc_obj->attr->group.depth = depth;
           for (j=0; j<nbobjs; j++)
               if (groupids[j] == i+1) {
@@ -274,7 +290,9 @@ hwloc__setup_misc_level_from_distances(struct hwloc_topology *topology,
       /* factorize distances */
       memset(groupdistances, 0, sizeof(groupdistances));
       for(i=0; i<nbobjs; i++)
+	if (groupids[i])
           for(j=0; j<nbobjs; j++)
+	    if (groupids[j])
               groupdistances[groupids[i]-1][groupids[j]-1] += (*distances)[i][j];
       for(i=0; i<nbgroups; i++)
           for(j=0; j<nbgroups; j++)
@@ -701,8 +719,7 @@ hwloc__insert_object_by_cpuset(struct hwloc_topology *topology, hwloc_obj_t cur,
 	return;
       case HWLOC_OBJ_INCLUDED:
 	if (container) {
-	  /* TODO: how to report?  */
-	  fprintf(stderr, "object included in several different objects!\n");
+          hwloc_report_error("object included in several different objects!", __LINE__);
 	  /* We can't handle that.  */
 	  return;
 	}
@@ -710,8 +727,7 @@ hwloc__insert_object_by_cpuset(struct hwloc_topology *topology, hwloc_obj_t cur,
 	container = child;
 	break;
       case HWLOC_OBJ_INTERSECTS:
-	/* TODO: how to report?  */
-	fprintf(stderr, "object intersection without inclusion!\n");
+          hwloc_report_error("object intersection without inclusion!", __LINE__);
 	/* We can't handle that.  */
 	return;
       case HWLOC_OBJ_CONTAINS:

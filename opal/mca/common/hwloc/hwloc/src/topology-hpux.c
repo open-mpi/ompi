@@ -2,6 +2,7 @@
  * Copyright © 2009 CNRS
  * Copyright © 2009-2010 INRIA
  * Copyright © 2009-2010 Université Bordeaux 1
+ * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -14,7 +15,7 @@
    pthread_pset_bind_np()
  */
 
-#include <private/config.h>
+#include <private/autogen/config.h>
 
 #include <sys/types.h>
 #include <unistd.h>

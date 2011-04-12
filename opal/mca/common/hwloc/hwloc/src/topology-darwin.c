@@ -2,7 +2,7 @@
  * Copyright © 2009 CNRS
  * Copyright © 2009-2010 INRIA
  * Copyright © 2009-2010 Université Bordeaux 1
- * Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -11,7 +11,7 @@
 
 /* Apparently, Darwin people do not _want_ to provide binding functions.  */
 
-#include <private/config.h>
+#include <private/autogen/config.h>
 
 #include <sys/types.h>
 #include <sys/sysctl.h>

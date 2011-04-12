@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2011 INRIA.  All rights reserved.
  * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
@@ -16,14 +16,11 @@
 #ifndef HWLOC_H
 #define HWLOC_H
 
-#include <hwloc/config.h>
+#include <hwloc/autogen/config.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-#ifdef HWLOC_HAVE_STDINT_H
-#include <stdint.h>
-#endif
 
 /*
  * Symbol transforms
@@ -222,8 +219,8 @@ union hwloc_obj_attr_u;
 
 /** \brief Object memory */
 struct hwloc_obj_memory_s {
-  uint64_t total_memory; /**< \brief Total memory (in bytes) in this object and its children */
-  uint64_t local_memory; /**< \brief Local memory (in bytes) */
+  hwloc_uint64_t total_memory; /**< \brief Total memory (in bytes) in this object and its children */
+  hwloc_uint64_t local_memory; /**< \brief Local memory (in bytes) */
 
   unsigned page_types_len; /**< \brief Size of array \p page_types */
   /** \brief Array of local memory page types, \c NULL if no local memory and \p page_types is 0.
@@ -232,8 +229,8 @@ struct hwloc_obj_memory_s {
    * It contains \p page_types_len slots.
    */
   struct hwloc_obj_memory_page_type_s {
-    uint64_t size;	/**< \brief Size of pages */
-    uint64_t count;	/**< \brief Number of pages of this size */
+    hwloc_uint64_t size;	/**< \brief Size of pages */
+    hwloc_uint64_t count;	/**< \brief Number of pages of this size */
   } * page_types;
 };
 
@@ -376,7 +373,7 @@ typedef struct hwloc_obj * hwloc_obj_t;
 union hwloc_obj_attr_u {
   /** \brief Cache-specific Object Attributes */
   struct hwloc_cache_attr_s {
-    uint64_t size;			  /**< \brief Size of cache in bytes */
+    hwloc_uint64_t size;			  /**< \brief Size of cache in bytes */
     unsigned depth;			  /**< \brief Depth of cache */
     unsigned linesize;			  /**< \brief Cache-line size in bytes */
   } cache;
@@ -520,7 +517,7 @@ enum hwloc_topology_flags_e {
 
 /** \brief Set OR'ed flags to non-yet-loaded topology.
  *
- * Set a OR'ed set of hwloc_topology_flags_e onto a topology that was not yet loaded.
+ * Set a OR'ed set of ::hwloc_topology_flags_e onto a topology that was not yet loaded.
  */
 HWLOC_DECLSPEC int hwloc_topology_set_flags (hwloc_topology_t topology, unsigned long flags);
 
@@ -557,12 +554,16 @@ HWLOC_DECLSPEC int hwloc_topology_set_pid(hwloc_topology_t __hwloc_restrict topo
 /** \brief Enable synthetic topology.
  *
  * Gather topology information from the given \p description
- * which should be a comma separated string of numbers describing
+ * which should be a space-separated string of numbers describing
  * the arity of each level.
  * Each number may be prefixed with a type and a colon to enforce the type
  * of a level.  If only some level types are enforced, hwloc will try to
  * choose the other types according to usual topologies, but it may fail
  * and you may have to specify more level types manually.
+ *
+ * If \p description was properly parsed and describes a valid topology
+ * configuration, this function returns 0.
+ * Otherwise -1 is returned and errno is set to EINVAL.
  *
  * \note For conveniency, this backend provides empty binding hooks which just
  * return success.
@@ -731,6 +732,9 @@ HWLOC_DECLSPEC unsigned hwloc_topology_get_depth(hwloc_topology_t __hwloc_restri
  *
  * If type is absent but a similar type is acceptable, see also
  * hwloc_get_type_or_below_depth() and hwloc_get_type_or_above_depth().
+ *
+ * If some objects of the given type exist in different levels, for instance
+ * L1 and L2 caches, the function returns HWLOC_TYPE_DEPTH_MULTIPLE.
  */
 HWLOC_DECLSPEC int hwloc_get_type_depth (hwloc_topology_t topology, hwloc_obj_type_t type);
 
