@@ -582,7 +582,7 @@ hwloc_get_obj_below_array_by_type (hwloc_topology_t topology, int nr, hwloc_obj_
  *
  * Array \p cpuset will be filled with \p n cpusets recursively distributed
  * linearly over the topology under \p root, down to depth \p until (which can
- * be MAX_INT to distribute down to the finest level).
+ * be INT_MAX to distribute down to the finest level).
  *
  * This is typically useful when an application wants to distribute \p n
  * threads over a machine, giving each of them as much private cache as
@@ -680,7 +680,7 @@ hwloc_alloc_membind_policy(hwloc_topology_t topology, size_t len, hwloc_const_cp
 /** \defgroup hwlocality_helper_cpuset Cpuset Helpers
  * @{
  */
-/* \brief Get complete CPU set
+/** \brief Get complete CPU set
  *
  * \return the complete CPU set of logical processors of the system. If the
  * topology is the result of a combination of several systems, NULL is
@@ -695,7 +695,7 @@ hwloc_topology_get_complete_cpuset(hwloc_topology_t topology)
   return hwloc_get_root_obj(topology)->complete_cpuset;
 }
 
-/* \brief Get topology CPU set
+/** \brief Get topology CPU set
  *
  * \return the CPU set of logical processors of the system for which hwloc
  * provides topology information. This is equivalent to the cpuset of the
@@ -748,7 +748,7 @@ hwloc_topology_get_allowed_cpuset(hwloc_topology_t topology)
 /** \defgroup hwlocality_helper_nodeset Nodeset Helpers
  * @{
  */
-/* \brief Get complete node set
+/** \brief Get complete node set
  *
  * \return the complete node set of memory of the system. If the
  * topology is the result of a combination of several systems, NULL is
@@ -763,7 +763,7 @@ hwloc_topology_get_complete_nodeset(hwloc_topology_t topology)
   return hwloc_get_root_obj(topology)->complete_nodeset;
 }
 
-/* \brief Get topology node set
+/** \brief Get topology node set
  *
  * \return the node set of memory of the system for which hwloc
  * provides topology information. This is equivalent to the nodeset of the

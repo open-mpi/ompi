@@ -36,6 +36,8 @@ extern "C" {
 
 /* Names from hwloc.h */
 
+#define hwloc_get_api_version HWLOC_NAME(get_api_version)
+
 #define hwloc_topology HWLOC_NAME(topology)
 #define hwloc_topology_t HWLOC_NAME(topology_t)
 
@@ -181,6 +183,9 @@ extern "C" {
 #define hwloc_bitmap_snprintf HWLOC_NAME(bitmap_snprintf)
 #define hwloc_bitmap_asprintf HWLOC_NAME(bitmap_asprintf)
 #define hwloc_bitmap_sscanf HWLOC_NAME(bitmap_sscanf)
+#define hwloc_bitmap_taskset_snprintf HWLOC_NAME(bitmap_taskset_snprintf)
+#define hwloc_bitmap_taskset_asprintf HWLOC_NAME(bitmap_taskset_asprintf)
+#define hwloc_bitmap_taskset_sscanf HWLOC_NAME(bitmap_taskset_sscanf)
 #define hwloc_bitmap_zero HWLOC_NAME(bitmap_zero)
 #define hwloc_bitmap_fill HWLOC_NAME(bitmap_fill)
 #define hwloc_bitmap_from_ulong HWLOC_NAME(bitmap_from_ulong)
@@ -213,6 +218,52 @@ extern "C" {
 #define hwloc_bitmap_compare_first HWLOC_NAME(bitmap_compare_first)
 #define hwloc_bitmap_compare HWLOC_NAME(bitmap_compare)
 #define hwloc_bitmap_weight HWLOC_NAME(bitmap_weight)
+
+/* hwloc/cpuset.h -- deprecated but still available */
+
+#define hwloc_cpuset HWLOC_NAME(cpuset)
+#define hwloc_cpuset_s HWLOC_NAME(cpuset_s)
+#define hwloc_cpuset_t HWLOC_NAME(cpuset_t)
+#define hwloc_const_cpuset_t HWLOC_NAME(const_cpuset_t)
+
+#define hwloc_cpuset_alloc HWLOC_NAME(cpuset_alloc)
+#define hwloc_cpuset_free HWLOC_NAME(cpuset_free)
+#define hwloc_cpuset_dup HWLOC_NAME(cpuset_dup)
+#define hwloc_cpuset_copy HWLOC_NAME(cpuset_copy)
+#define hwloc_cpuset_snprintf HWLOC_NAME(cpuset_snprintf)
+#define hwloc_cpuset_asprintf HWLOC_NAME(cpuset_asprintf)
+#define hwloc_cpuset_from_string HWLOC_NAME(cpuset_from_string)
+#define hwloc_cpuset_zero HWLOC_NAME(cpuset_zero)
+#define hwloc_cpuset_fill HWLOC_NAME(cpuset_fill)
+#define hwloc_cpuset_from_ulong HWLOC_NAME(cpuset_from_ulong)
+
+#define hwloc_cpuset_from_ith_ulong HWLOC_NAME(cpuset_from_ith_ulong)
+#define hwloc_cpuset_to_ulong HWLOC_NAME(cpuset_to_ulong)
+#define hwloc_cpuset_to_ith_ulong HWLOC_NAME(cpuset_to_ith_ulong)
+#define hwloc_cpuset_cpu HWLOC_NAME(cpuset_cpu)
+#define hwloc_cpuset_all_but_cpu HWLOC_NAME(cpuset_all_but_cpu)
+#define hwloc_cpuset_set HWLOC_NAME(cpuset_set)
+#define hwloc_cpuset_set_range HWLOC_NAME(cpuset_set_range)
+#define hwloc_cpuset_clr HWLOC_NAME(cpuset_clr)
+#define hwloc_cpuset_clr_range HWLOC_NAME(cpuset_clr_range)
+#define hwloc_cpuset_isset HWLOC_NAME(cpuset_isset)
+#define hwloc_cpuset_iszero HWLOC_NAME(cpuset_iszero)
+#define hwloc_cpuset_isfull HWLOC_NAME(cpuset_isfull)
+#define hwloc_cpuset_isequal HWLOC_NAME(cpuset_isequal)
+#define hwloc_cpuset_intersects HWLOC_NAME(cpuset_intersects)
+#define hwloc_cpuset_isincluded HWLOC_NAME(cpuset_isincluded)
+#define hwloc_cpuset_or HWLOC_NAME(cpuset_or)
+#define hwloc_cpuset_and HWLOC_NAME(cpuset_and)
+#define hwloc_cpuset_andnot HWLOC_NAME(cpuset_andnot)
+#define hwloc_cpuset_xor HWLOC_NAME(cpuset_xor)
+#define hwloc_cpuset_not HWLOC_NAME(cpuset_not)
+#define hwloc_cpuset_first HWLOC_NAME(cpuset_first)
+#define hwloc_cpuset_last HWLOC_NAME(cpuset_last)
+#define hwloc_cpuset_next HWLOC_NAME(cpuset_next)
+#define hwloc_cpuset_singlify HWLOC_NAME(cpuset_singlify)
+#define hwloc_cpuset_compare_first HWLOC_NAME(cpuset_compare_first)
+#define hwloc_cpuset_compare HWLOC_NAME(cpuset_compare)
+#define hwloc_cpuset_weight HWLOC_NAME(cpuset_weight)
 
 /* hwloc/helper.h */
 
