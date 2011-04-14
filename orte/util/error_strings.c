@@ -220,6 +220,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
             return "HEARTBEAT FAILED";
         case ORTE_JOB_STATE_PROCS_MIGRATING:
             return "PROCS MIGRATING";
+        case ORTE_JOB_STATE_NON_ZERO_TERM:
+            return "AT LEAST ONE PROCESS EXITED WITH NON-ZERO STATUS";
         default:
             return "UNKNOWN STATE!";
     }
@@ -266,6 +268,8 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
             return "MIGRATING";
         case ORTE_PROC_STATE_CANNOT_RESTART:
             return "CANNOT BE RESTARTED";
+        case ORTE_PROC_STATE_TERM_NON_ZERO:
+            return "EXITED WITH NON-ZERO STATUS";
         default:
             return "UNKNOWN STATE!";
     }

@@ -2515,9 +2515,9 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
     int rc;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                         "%s odls:waitpid_fired on child %s",
+                         "%s odls:waitpid_fired on child %s with status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc)));
+                         ORTE_NAME_PRINT(proc), WEXITSTATUS(status)));
 
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
@@ -2623,19 +2623,41 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
                 /* we required a finalizing sync and didn't get it, so this
                  * is considered an abnormal termination and treated accordingly
                  */
-                child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
-                
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                     "%s odls:waitpid_fired child process %s terminated normally "
-                                     "but did not provide a required finalize sync - it "
-                                     "will be treated as an abnormal termination",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name)));
+                if (0 != child->exit_code) {
+                    child->state = ORTE_PROC_STATE_TERM_NON_ZERO;
+                    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                         "%s odls:waitpid_fired child process %s terminated normally "
+                                         "but with a non-zero exit status - it "
+                                         "will be treated as an abnormal termination",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(child->name)));
+                } else {
+                    child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
+                    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                         "%s odls:waitpid_fired child process %s terminated normally "
+                                         "but did not provide a required finalize sync - it "
+                                         "will be treated as an abnormal termination",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(child->name)));
+                }
                 
                 goto MOVEON;
             }
-            /* if we did recv a finalize sync, then it terminated normally */
-            child->state = ORTE_PROC_STATE_TERMINATED;
+            /* if we did recv a finalize sync, then declare it normally terminated
+             * unless it returned with a non-zero status indicating the code
+             * felt it was non-normal
+             */
+            if (0 != child->exit_code) {
+                child->state = ORTE_PROC_STATE_TERM_NON_ZERO;
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s odls:waitpid_fired child process %s terminated normally "
+                                     "but with a non-zero exit status - it "
+                                     "will be treated as an abnormal termination",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name)));
+            } else {
+                child->state = ORTE_PROC_STATE_TERMINATED;
+            }
         } else {
             /* has any child in this job already registered? */
             for (item = opal_list_get_first(&orte_local_children);
@@ -2647,27 +2669,43 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
                     /* someone has registered, and we didn't before
                      * terminating - this is an abnormal termination
                      */
-                    child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
-                    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                         "%s odls:waitpid_fired child process %s terminated normally "
-                                         "but did not provide a required init sync - it "
-                                         "will be treated as an abnormal termination",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(child->name)));
+                    if (0 != child->exit_code) {
+                        child->state = ORTE_PROC_STATE_TERM_NON_ZERO;
+                        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                             "%s odls:waitpid_fired child process %s terminated normally "
+                                             "but with a non-zero exit status - it "
+                                             "will be treated as an abnormal termination",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_NAME_PRINT(child->name)));
+                    } else {
+                        child->state = ORTE_PROC_STATE_TERM_WO_SYNC;
+                        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                             "%s odls:waitpid_fired child process %s terminated normally "
+                                             "but did not provide a required init sync - it "
+                                             "will be treated as an abnormal termination",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_NAME_PRINT(child->name)));
+                    }
                     
                     goto MOVEON;
                 }
             }
             /* if no child has registered, then it is possible that
-             * none of them will. This is considered acceptable
+             * none of them will. This is considered acceptable. Still
+             * flag it as abnormal if the exit code was non-zero
              */
-            child->state = ORTE_PROC_STATE_TERMINATED;
+            if (0 != child->exit_code) {
+                child->state = ORTE_PROC_STATE_TERM_NON_ZERO;
+            } else {
+                child->state = ORTE_PROC_STATE_TERMINATED;
+            }
         }
         
         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:waitpid_fired child process %s terminated normally",
+                             "%s odls:waitpid_fired child process %s terminated %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(child->name)));
+                             ORTE_NAME_PRINT(child->name),
+                             (0 == child->exit_code) ? "normally" : "with non-zero status"));
     } else {
         /* the process was terminated with a signal! That's definitely
          * abnormal, so indicate that condition

@@ -721,7 +721,7 @@ ORTE_DECLSPEC int orte_global_comm(orte_process_name_t *recipient,
 /* exit status reporting */
 ORTE_DECLSPEC extern bool orte_report_child_jobs_separately;
 ORTE_DECLSPEC extern struct timeval orte_child_time_to_exit;
-
+ORTE_DECLSPEC extern bool orte_abort_non_zero_exit;
 
 /* VM control */
 ORTE_DECLSPEC extern bool orte_vm_launch;

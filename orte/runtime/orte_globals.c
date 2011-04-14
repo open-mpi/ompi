@@ -181,6 +181,7 @@ orte_default_comm_fn_t orte_comm;
 /* exit status reporting */
 bool orte_report_child_jobs_separately;
 struct timeval orte_child_time_to_exit;
+bool orte_abort_non_zero_exit;
 
 /* VM control */
 bool orte_vm_launch = false;
