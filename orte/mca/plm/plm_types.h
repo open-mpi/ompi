@@ -66,7 +66,7 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_HEARTBEAT_FAILED        0x00010000  /* heartbeat failed to arrive */
 #define ORTE_PROC_STATE_MIGRATING               0x00020000  /* process is migrating */
 #define ORTE_PROC_STATE_CANNOT_RESTART          0x00040000  /* process failed and cannot be restarted */
-
+#define ORTE_PROC_STATE_TERM_NON_ZERO           0x00080000  /* process exited with a non-zero status, indicating abnormal */
 /*
  * Job state codes
  */
@@ -99,6 +99,7 @@ typedef uint32_t orte_job_state_t;
 #define ORTE_JOB_STATE_CALLED_ABORT             0x00008000  /* at least one process called "errmgr.abort" */
 #define ORTE_JOB_STATE_HEARTBEAT_FAILED         0x00010000  /* heartbeat failed to arrive */
 #define ORTE_JOB_STATE_PROCS_MIGRATING          0x00020000  /* procs waiting to migrate */
+#define ORTE_JOB_STATE_NON_ZERO_TERM            0x00040000  /* at least one process exited with non-zero status */
 
 /* the job never even attempted to launch due to an error earlier in the
  * launch procedure

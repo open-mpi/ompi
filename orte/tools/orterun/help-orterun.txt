@@ -592,4 +592,11 @@ process:
 
   Process name: %s
   Node:         %s
+#
+[orterun:non-zero-exit]
+%s detected that one or more processes exited with non-zero status, thus causing
+the job to be terminated. The first process to do so was:
 
+  Process name: %s
+  Exit code:    %d
+#

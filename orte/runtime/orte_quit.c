@@ -404,6 +404,10 @@ static void dump_aborted_procs(void)
             } else if (ORTE_JOB_STATE_HEARTBEAT_FAILED == job->state) {
                 orte_show_help("help-orterun.txt", "orterun:proc-heartbeat-failed", true,
                                orte_basename, ORTE_NAME_PRINT(&proc->name), node->name);
+            } else if (orte_abort_non_zero_exit &&
+                       ORTE_JOB_STATE_NON_ZERO_TERM == job->state) {
+                orte_show_help("help-orterun.txt", "orterun:non-zero-exit", true,
+                               orte_basename, ORTE_NAME_PRINT(&proc->name), proc->exit_code);
             }
             return;
         }

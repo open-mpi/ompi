@@ -621,6 +621,20 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
         }
         break;
 
+    case ORTE_PROC_STATE_TERM_NON_ZERO:
+        orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
+        check_job_complete(jdata);  /* need to set the job state */
+        if (orte_abort_non_zero_exit) {
+            /* the job object for this job will have been NULL'd
+             * in the array if the job was solely local. If it isn't
+             * NULL, then we need to tell everyone else to die
+             */
+            if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
+                hnp_abort(jdata->jobid, exit_code);
+            }
+        }
+        break;
+
     case ORTE_PROC_STATE_FAILED_TO_START:
     case ORTE_PROC_STATE_CALLED_ABORT:
         orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
@@ -1201,6 +1215,19 @@ static void check_job_complete(orte_job_t *jdata)
                 ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
             }
             break;
+        case ORTE_PROC_STATE_TERM_NON_ZERO:
+            ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
+            if (orte_abort_non_zero_exit) {
+                if (!jdata->abort) {
+                    jdata->state = ORTE_JOB_STATE_NON_ZERO_TERM;
+                    /* point to the lowest rank to cause the problem */
+                    jdata->aborted_proc = proc;
+                    /* retain the object so it doesn't get free'd */
+                    OBJ_RETAIN(proc);
+                    jdata->abort = true;
+                }
+            }
+            break;
 
         default:
             if (ORTE_PROC_STATE_UNTERMINATED < proc->state &&
@@ -1246,12 +1273,12 @@ static void check_job_complete(orte_job_t *jdata)
             /* warn user */
             opal_output(orte_clean_output,
                         "-------------------------------------------------------\n"
-                        "While %s job %s terminated normally, %s processes returned\n"
-                        "non-zero exit codes. Further examination may be required.\n"
+                        "While %s job %s terminated normally, %s %s. Further examination may be required.\n"
                         "-------------------------------------------------------",
                         (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "the primary" : "child",
                         (1 == ORTE_LOCAL_JOBID(jdata->jobid)) ? "" : ORTE_LOCAL_JOBID_PRINT(jdata->jobid),
-                        ORTE_VPID_PRINT(non_zero));
+                        ORTE_VPID_PRINT(non_zero),
+                        (1 == non_zero) ? "process returned\na non-zero exit code." : "processes returned\nnon-zero exit codes.");
         }
         OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                              "%s errmgr:hnp:check_job_completed declared job %s normally terminated - checking all jobs",

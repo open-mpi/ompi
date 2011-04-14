@@ -479,6 +479,11 @@ int orte_register_params(void)
         orte_enable_recovery = true;
     }
     
+    mca_base_param_reg_int_name("orte", "abort_on_non_zero_status",
+                                "Abort the job if any process returns a non-zero exit status - no restart in such cases",
+                                false, false, (int)false, &value);
+    orte_abort_non_zero_exit = OPAL_INT_TO_BOOL(value);
+
     mca_base_param_reg_int_name("orte", "report_child_jobs_separately",
                                 "Return the exit status of the primary job only",
                                 false, false,
