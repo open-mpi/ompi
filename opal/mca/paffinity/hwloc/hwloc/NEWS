@@ -17,6 +17,31 @@ bug fixes (and other actions) for each version of hwloc since version
 in v0.9.1).
 
 
+Version 1.1.2
+-------------
+* Fix a segfault in the distance-based grouping code when some objects
+  are not placed in any group. Thanks to Bernd Kallies for reporting
+  the problem and providing a patch.
+* Fix the command-line parsing of hwloc-bind --mempolicy interleave.
+  Thanks to Guy Streeter for reporting the problem.
+* Stop truncating the output in hwloc_obj_attr_snprintf() and in the
+  corresponding lstopo output. Thanks to Guy Streeter for reporting the
+  problem.
+* Fix object levels ordering in synthetic topologies.
+* Fix potential incoherency between device tree and kernel information,
+  when SMT is disabled on Power machines.
+* Fix and document the behavior of hwloc_topology_set_synthetic() in case
+  of invalid argument. Thanks to Guy Streeter for reporting the problem.
+* Add some verbose error message reporting when it looks like the OS
+  gives erroneous information.
+* Do not include unistd.h and stdint.h in public headers on Windows.
+* Move config.h files into their own subdirectories to avoid name
+  conflicts when AC_CONFIG_HEADERS adds -I's for them.
+* Remove the use of declaring variables inside "for" loops.
+* Some other minor fixes.
+* Many minor documentation fixes.
+
+
 Version 1.1.1
 -------------
 * Add hwloc_get_api_version() which returns the version of hwloc used

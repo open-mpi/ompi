@@ -2,7 +2,7 @@
  * Copyright © 2009      CNRS
  * Copyright © 2009-2010 INRIA
  * Copyright © 2009-2010 Université Bordeaux 1
- * Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  *
  * See COPYING in top-level directory.
  */
@@ -12,7 +12,7 @@
 #ifndef HWLOC_PRIVATE_H
 #define HWLOC_PRIVATE_H
 
-#include <private/config.h>
+#include <private/autogen/config.h>
 #include <hwloc.h>
 #include <hwloc/bitmap.h>
 #include <private/debug.h>

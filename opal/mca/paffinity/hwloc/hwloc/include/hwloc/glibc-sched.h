@@ -1,7 +1,7 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
- * Copyright © 2009-2010 Université Bordeaux 1
+ * Copyright © 2009-2011 INRIA.  All rights reserved.
+ * Copyright © 2009-2011 Université Bordeaux 1
  * See COPYING in top-level directory.
  */
 
@@ -20,8 +20,8 @@
 #include <hwloc/helper.h>
 #include <assert.h>
 
-#if !defined _GNU_SOURCE || !defined _SCHED_H
-#error sched.h must be included with _GNU_SOURCE defined
+#if !defined _GNU_SOURCE || !defined _SCHED_H || !defined CPU_SETSIZE
+#error Please make sure to include sched.h before including glibc-sched.h, and define _GNU_SOURCE before any inclusion of sched.h
 #endif
 
 

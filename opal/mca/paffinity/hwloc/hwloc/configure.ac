@@ -2,7 +2,7 @@
 #
 # Copyright © 2009      CNRS
 # Copyright © 2009-2010 INRIA
-# Copyright © 2009      Université Bordeaux 1
+# Copyright © 2009, 2011      Université Bordeaux 1
 # Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #
 # See COPYING in top-level directory.
@@ -122,7 +122,7 @@ AS_IF([test "$hwloc_debug" = "1"],
 # standalone mode
 AS_IF([test "$enable_embedded_mode" != "yes"],
       [AS_IF([test ! -d "$srcdir/doc"],
-             [AC_MSG_WARN([The hwloc source tree looks incomplete for a standalobe])
+             [AC_MSG_WARN([The hwloc source tree looks incomplete for a standalone])
               AC_MSG_WARN([build.  Perhaps this hwloc tree is intended for an embedded])
               AC_MSG_WARN([build?  Try using the --enable-embedded-mode switch.])
               AC_MSG_ERROR([Cannot build standalone hwloc])],

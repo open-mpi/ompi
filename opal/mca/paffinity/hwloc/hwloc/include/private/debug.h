@@ -2,6 +2,7 @@
  * Copyright © 2009 CNRS
  * Copyright © 2009-2010 INRIA
  * Copyright © 2009 Université Bordeaux 1
+ * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -10,7 +11,7 @@
 #ifndef HWLOC_DEBUG_H
 #define HWLOC_DEBUG_H
 
-#include <private/config.h>
+#include <private/autogen/config.h>
 
 #ifdef HWLOC_DEBUG
 #define hwloc_debug(s, ...) fprintf(stderr, s, ##__VA_ARGS__)

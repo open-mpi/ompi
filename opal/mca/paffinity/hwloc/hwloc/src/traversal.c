@@ -1,12 +1,12 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2011 INRIA.  All rights reserved.
  * Copyright © 2009-2010 Université Bordeaux 1
- * Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
-#include <private/config.h>
+#include <private/autogen/config.h>
 #include <hwloc.h>
 #include <private/private.h>
 #include <private/misc.h>
@@ -202,80 +202,103 @@ hwloc_obj_type_snprintf(char * __hwloc_restrict string, size_t size, hwloc_obj_t
 int
 hwloc_obj_attr_snprintf(char * __hwloc_restrict string, size_t size, hwloc_obj_t obj, const char * separator, int verbose)
 {
-  char memory[64] = "";
-  char specific[64] = "";
-  char infos[256] = "";
   const char *prefix = "";
+  char *tmp = string;
+  ssize_t tmplen = size;
+  int ret = 0;
+  int res;
 
+  /* make sure we output at least an empty string */
+  if (size)
+    *string = '\0';
+
+  /* print memory attributes */
+  res = 0;
   if (verbose) {
     if (obj->memory.local_memory)
-      hwloc_snprintf(memory, sizeof(memory), "%slocal=%lu%s%stotal=%lu%s",
-		     prefix,
-		     (unsigned long) hwloc_memory_size_printf_value(obj->memory.total_memory, verbose),
-		     hwloc_memory_size_printf_unit(obj->memory.total_memory, verbose),
-		     separator,
-		     (unsigned long) hwloc_memory_size_printf_value(obj->memory.local_memory, verbose),
-		     hwloc_memory_size_printf_unit(obj->memory.local_memory, verbose));
+      res = hwloc_snprintf(tmp, tmplen, "%slocal=%lu%s%stotal=%lu%s",
+			   prefix,
+			   (unsigned long) hwloc_memory_size_printf_value(obj->memory.total_memory, verbose),
+			   hwloc_memory_size_printf_unit(obj->memory.total_memory, verbose),
+			   separator,
+			   (unsigned long) hwloc_memory_size_printf_value(obj->memory.local_memory, verbose),
+			   hwloc_memory_size_printf_unit(obj->memory.local_memory, verbose));
     else if (obj->memory.total_memory)
-      hwloc_snprintf(memory, sizeof(memory), "%stotal=%lu%s",
-		     prefix,
-		     (unsigned long) hwloc_memory_size_printf_value(obj->memory.total_memory, verbose),
-		     hwloc_memory_size_printf_unit(obj->memory.total_memory, verbose));
+      res = hwloc_snprintf(tmp, tmplen, "%stotal=%lu%s",
+			   prefix,
+			   (unsigned long) hwloc_memory_size_printf_value(obj->memory.total_memory, verbose),
+			   hwloc_memory_size_printf_unit(obj->memory.total_memory, verbose));
   } else {
     if (obj->memory.total_memory)
-      hwloc_snprintf(memory, sizeof(memory), "%s%lu%s",
-		     prefix,
-		     (unsigned long) hwloc_memory_size_printf_value(obj->memory.total_memory, verbose),
-		     hwloc_memory_size_printf_unit(obj->memory.total_memory, verbose));
+      res = hwloc_snprintf(tmp, tmplen, "%s%lu%s",
+			   prefix,
+			   (unsigned long) hwloc_memory_size_printf_value(obj->memory.total_memory, verbose),
+			   hwloc_memory_size_printf_unit(obj->memory.total_memory, verbose));
   }
-  if (*memory)
+  if (res < 0)
+    return -1;
+  ret += res;
+  if (ret > 0)
     prefix = separator;
+  if (res >= tmplen)
+    res = tmplen>0 ? tmplen - 1 : 0;
+  tmp += res;
+  tmplen -= res;
 
+  /* printf type-specific attributes */
+  res = 0;
   switch (obj->type) {
   case HWLOC_OBJ_CACHE:
     if (verbose)
-      hwloc_snprintf(specific, sizeof(specific), "%s%lu%s%sline=%u",
-		     prefix,
-		     (unsigned long) hwloc_memory_size_printf_value(obj->attr->cache.size, verbose),
-		     hwloc_memory_size_printf_unit(obj->attr->cache.size, verbose),
-		     separator, obj->attr->cache.linesize);
+      res = hwloc_snprintf(tmp, tmplen, "%s%lu%s%sline=%u",
+			   prefix,
+			   (unsigned long) hwloc_memory_size_printf_value(obj->attr->cache.size, verbose),
+			   hwloc_memory_size_printf_unit(obj->attr->cache.size, verbose),
+			   separator, obj->attr->cache.linesize);
     else
-      hwloc_snprintf(specific, sizeof(specific), "%s%lu%s",
-		     prefix,
-		     (unsigned long) hwloc_memory_size_printf_value(obj->attr->cache.size, verbose),
-		     hwloc_memory_size_printf_unit(obj->attr->cache.size, verbose));
+      res = hwloc_snprintf(tmp, tmplen, "%s%lu%s",
+			   prefix,
+			   (unsigned long) hwloc_memory_size_printf_value(obj->attr->cache.size, verbose),
+			   hwloc_memory_size_printf_unit(obj->attr->cache.size, verbose));
     break;
   default:
     break;
   }
-  if (*specific)
+  if (res < 0)
+    return -1;
+  ret += res;
+  if (ret > 0)
     prefix = separator;
+  if (res >= tmplen)
+    res = tmplen>0 ? tmplen - 1 : 0;
+  tmp += res;
+  tmplen -= res;
 
+  /* printf infos */
   if (verbose) {
-    char *tmpinfos = infos;
-    int tmplen = sizeof(infos);
-    int res;
     unsigned i;
     for(i=0; i<obj->infos_count; i++) {
       if (strchr(obj->infos[i].value, ' '))
-	res = hwloc_snprintf(tmpinfos, tmplen, "%s%s=\"%s\"",
+	res = hwloc_snprintf(tmp, tmplen, "%s%s=\"%s\"",
 			     prefix,
 			     obj->infos[i].name, obj->infos[i].value);
       else
-	res = hwloc_snprintf(tmpinfos, tmplen, "%s%s=%s",
+	res = hwloc_snprintf(tmp, tmplen, "%s%s=%s",
 			     prefix,
 			     obj->infos[i].name, obj->infos[i].value);
+      if (res < 0)
+        return -1;
+      ret += res;
       if (res >= tmplen)
-        res = tmplen;
+        res = tmplen>0 ? tmplen - 1 : 0;
+      tmp += res;
       tmplen -= res;
-      tmpinfos += res;
+      if (ret > 0)
+        prefix = separator;
     }
   }
-  if (*infos)
-    prefix = separator;
 
-  return hwloc_snprintf(string, size, "%s%s%s",
-			memory, specific, infos);
+  return ret;
 }
 
 
