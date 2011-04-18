@@ -71,24 +71,26 @@ void orte_rmcast_base_stop_threads(void)
 {
     opal_buffer_t *msg=NULL;
 
-    if (orte_abnormal_term_ordered) {
-        OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:base: killing recv processing thread",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        opal_thread_kill(&orte_rmcast_base.recv_process, SIGTERM);
-    } else {
-        OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
-                             "%s rmcast:base: stopping recv processing thread",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);
-        if (orte_rmcast_base.recv_process_ctl.running) {
-            ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
+    ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);
+    if (orte_rmcast_base.recv_process_ctl.running) {
+        ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
+        if (orte_abnormal_term_ordered) {
+            OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
+                                 "%s rmcast:base: killing recv processing thread",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            opal_thread_kill(&orte_rmcast_base.recv_process, SIGTERM);
+            orte_rmcast_base.recv_process_ctl.running = false;
+            ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);
+        } else {
+            OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
+                                 "%s rmcast:base: stopping recv processing thread",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             opal_fd_write(orte_rmcast_base.recv_pipe[1], sizeof(opal_buffer_t*), &msg);
             opal_thread_join(&orte_rmcast_base.recv_process, NULL);
             ORTE_ACQUIRE_THREAD(&orte_rmcast_base.recv_process_ctl);
         }
-        ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
     }
+    ORTE_RELEASE_THREAD(&orte_rmcast_base.recv_process_ctl);
 
     OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
                          "%s rmcast:base: all threads stopped",
