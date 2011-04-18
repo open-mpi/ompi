@@ -749,6 +749,12 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
             }
         }
 
+        /* pack the recovery defined flag */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                                    (void*)(&(app_context[i]->recovery_defined)), 1, OPAL_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         /* pack the restart limit */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                                                        (void*)(&(app_context[i]->max_restarts)), 1, OPAL_INT32))) {
