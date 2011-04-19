@@ -310,11 +310,15 @@ static void attach_debugger(int fd, short event, void *arg)
         } else {
             app->app = strdup((char*)MPIR_executable_path);
         }
-        if (orte_hnp_is_allocated) {
-            app->num_procs = orte_process_info.num_procs;
-        } else {
-            app->num_procs = orte_process_info.num_procs - 1;
+
+	app->num_procs = orte_process_info.num_procs;
+        if (!orte_hnp_is_allocated) {
+	    app->num_procs -= 1;
         }
+
+	opal_output_verbose(1, orte_debugger_base.output,
+			    "Mapping debugger daemon to %d nodes",
+			    app->num_procs);
         opal_argv_append_nosize(&app->argv, app->app);
         build_debugger_args(app);
         opal_pointer_array_add(jdata->apps, &app->super);
@@ -323,7 +327,9 @@ static void attach_debugger(int fd, short event, void *arg)
          * daemon on each node
          */
         jdata->map = OBJ_NEW(orte_job_map_t);
-        jdata->map->policy = ORTE_MAPPING_BYNODE;
+        jdata->map->policy   = ORTE_MAPPING_BYNODE;
+	jdata->map->npernode = 1;
+
         /* now go ahead and spawn this job */
         if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
             ORTE_ERROR_LOG(rc);
