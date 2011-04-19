@@ -541,8 +541,9 @@ int btl_openib_register_mca_params(void)
 #if BTL_OPENIB_FAILOVER_ENABLED
     mca_btl_openib_module.super.btl_flags |= MCA_BTL_FLAGS_FAILOVER_SUPPORT;
 #endif
-    mca_btl_openib_module.super.btl_bandwidth = 800;
-    mca_btl_openib_module.super.btl_latency = 10;
+    /* Default to bandwidth auto-detection */
+    mca_btl_openib_module.super.btl_bandwidth = 0;
+    mca_btl_openib_module.super.btl_latency = 4;
     CHECK(mca_btl_base_param_register(
             &mca_btl_openib_component.super.btl_version,
             &mca_btl_openib_module.super));
