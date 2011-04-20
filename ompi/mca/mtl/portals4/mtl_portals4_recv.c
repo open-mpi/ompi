@@ -204,8 +204,8 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                              ev->initiator,
                              PTL_READ_TABLE_ID,
                              ev->hdr_data,
-                             ptl_request,
-                             0);
+                             0,
+                             ptl_request);
                 if (PTL_OK != ret) {
                     PtlMDRelease(ptl_request->md_h);
                     if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
