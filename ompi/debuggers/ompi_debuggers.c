@@ -169,9 +169,12 @@ static void check(char *dir, char *file, char **locations)
  */
 void ompi_wait_for_debugger(void)
 {
-    int i, debugger, rc;
+    int i, debugger;
     char *a, *b, **dirs, **tmp1 = NULL, **tmp2 = NULL;
+#if !ORTE_DISABLE_FULL_SUPPORT
     opal_buffer_t buf;
+    int rc;
+#endif
 
     /* See lengthy comment in orte/tools/orterun/debuggers.c about
        orte_in_parallel_debugger */
@@ -223,7 +226,9 @@ void ompi_wait_for_debugger(void)
     mpimsgq_dll_locations = tmp1;
     mpidbg_dll_locations = tmp2;
 
-    if (ORTE_DISABLE_FULL_SUPPORT || orte_standalone_operation) {
+#if !ORTE_DISABLE_FULL_SUPPORT
+    if (orte_standalone_operation) {
+#endif
         /* spin until debugger attaches and releases us */
         while (MPIR_debug_gate == 0) {
 #if defined(__WINDOWS__)
@@ -234,6 +239,7 @@ void ompi_wait_for_debugger(void)
             sleep(1);       /* seconds */
 #endif
         }
+#if !ORTE_DISABLE_FULL_SUPPORT
     } else {
     
         /* only the rank=0 proc waits for either a message from the
@@ -258,6 +264,7 @@ void ompi_wait_for_debugger(void)
                         (long)ORTE_PROC_MY_NAME->vpid, ORTE_ERROR_NAME(rc));
         }
     }
+#endif
 }    
 
 /*
