@@ -292,7 +292,6 @@ ompi_mtl_portals4_progress(void)
                     }
                 }
                 break;
-            case PTL_EVENT_DROPPED:
             case PTL_EVENT_PT_DISABLED:
                 /* do stuff - flow control */
                 opal_output(ompi_mtl_base_output, "Unhandled flow control event.");
@@ -307,7 +306,7 @@ ompi_mtl_portals4_progress(void)
                     abort();
                 }
                 break;
-            case PTL_EVENT_PROBE:
+            case PTL_EVENT_SEARCH:
                 if (NULL != ev.user_ptr) {
                     ptl_request = ev.user_ptr;
                     ret = ptl_request->event_callback(&ev, ptl_request);
