@@ -95,7 +95,6 @@ static int thrfield = 0;
 static int vsizefield = 0;
 static int rssfield = 0;
 static int pkvfield = 0;
-static int shfield = 0;
 static int pfield = 0;
 
 /* flag what fields were actually found */
@@ -104,7 +103,6 @@ static bool thr_found = false;
 static bool vsize_found = false;
 static bool rss_found = false;
 static bool pkv_found = false;
-static bool sh_found = false;
 static bool p_found = false;
 
 #define MAX_LINES 20
@@ -651,7 +649,7 @@ static void process_stats(int fd, short event, void *data)
             
             if (0 < stats->vsize) {
                 vsize_found = true;
-                asprintf(&ctmp, "%lu", (unsigned long)stats->vsize);
+                asprintf(&ctmp, "%8.2f", stats->vsize);
                 tmp = strlen(ctmp);
                 free(ctmp);
                 if (vsizefield < tmp) {
@@ -661,7 +659,7 @@ static void process_stats(int fd, short event, void *data)
             
             if (0 < stats->rss) {
                 rss_found = true;
-                asprintf(&ctmp, "%lu", (unsigned long)stats->rss);
+                asprintf(&ctmp, "%8.2f", stats->rss);
                 tmp = strlen(ctmp);
                 free(ctmp);
                 if (rssfield < tmp) {
@@ -671,21 +669,11 @@ static void process_stats(int fd, short event, void *data)
             
             if (0 < stats->peak_vsize) {
                 pkv_found = true;
-                asprintf(&ctmp, "%lu", (unsigned long)stats->peak_vsize);
+                asprintf(&ctmp, "%8.2f", stats->peak_vsize);
                 tmp = strlen(ctmp);
                 free(ctmp);
                 if (pkvfield < tmp) {
                     pkvfield = tmp;
-                }
-            }
-            
-            if (0 < stats->shared_size) {
-                sh_found = true;
-                asprintf(&ctmp, "%lu", (unsigned long)stats->shared_size);
-                tmp = strlen(ctmp);
-                free(ctmp);
-                if (shfield < tmp) {
-                    shfield = tmp;
                 }
             }
             
@@ -777,13 +765,13 @@ static void print_ranks(opal_list_t *statlist)
             }
         }
         memset(pretty_time, 0, sizeof(pretty_time));
-        if (pstats->time >= 3600) {
+        if (pstats->time.tv_sec >= 3600) {
             snprintf(pretty_time, sizeof(pretty_time), "%5.1fH", 
-                     (double)pstats->time / (double)(3600));
+                     (double)pstats->time.tv_sec / (double)(3600));
         } else {
             snprintf(pretty_time, sizeof(pretty_time), "%3ld:%02ld",
-                     (unsigned long)pstats->time/60,
-                     (unsigned long)pstats->time & 60);
+                     (unsigned long)pstats->time.tv_sec/60,
+                     (unsigned long)pstats->time.tv_sec % 60);
         }
         
         if (bynode) {
@@ -800,7 +788,7 @@ static void print_ranks(opal_list_t *statlist)
         }
         fprintf(fp, "%*s | ", lencmd, pstats->cmd);
         fprintf(fp, "%*lu | ", lenpid, (unsigned long)pstats->pid);
-        fprintf(fp, "%*c | ", lenstate, pstats->state);
+        fprintf(fp, "%*c | ", lenstate, pstats->state[0]);
         fprintf(fp, "%*s | ", lentime, pretty_time);
         if (pri_found) {
             fprintf(fp, "%*d | ", lenpri, pstats->priority);
@@ -816,9 +804,6 @@ static void print_ranks(opal_list_t *statlist)
         }
         if (pkv_found) {
             fprintf(fp, "%*lu | ", lenpkv, (unsigned long)pstats->peak_vsize);
-        }
-        if (sh_found) {
-            fprintf(fp, "%*lu | ", lensh, (unsigned long)pstats->shared_size);
         }
         if (p_found) {
             fprintf(fp, "%*d | ", lenp, pstats->processor);
@@ -980,14 +965,6 @@ static void print_headers(void)
         num_fields++;
     }
 
-    if (sh_found) {
-        lensh = strlen("Shr Size");
-        if (shfield > lensh) {
-            lensh = shfield;
-        }
-        num_fields++;
-    }
-
     if (p_found) {
         lenp = strlen("Processor");
         if (pfield > lenp) {
@@ -1032,9 +1009,6 @@ static void print_headers(void)
     }
     if (pkv_found) {
         fprintf(fp, "%*s | ", lenpkv   , "Peak Vsize");
-    }
-    if (sh_found) {
-        fprintf(fp, "%*s | ", lensh   , "Shr Size");
     }
     if (p_found) {
         fprintf(fp, "%*s | ", lenp   , "Processor");

@@ -38,7 +38,7 @@
 
 /* unsupported functions */
 static int opal_pstat_base_unsupported_init(void);
-static int opal_pstat_base_unsupported_query(pid_t pid, opal_pstats_t *stats);
+static int opal_pstat_base_unsupported_query(pid_t pid, opal_pstats_t *stats, opal_node_stats_t *nstats);
 static int opal_pstat_base_unsupported_finalize(void);
 
 /*
@@ -83,7 +83,7 @@ static int opal_pstat_base_unsupported_init(void)
     return OPAL_ERR_NOT_SUPPORTED;
 }
 
-static int opal_pstat_base_unsupported_query(pid_t pid, opal_pstats_t *stats)
+static int opal_pstat_base_unsupported_query(pid_t pid, opal_pstats_t *stats, opal_node_stats_t *nstats)
 {
     return OPAL_ERR_NOT_SUPPORTED;
 }

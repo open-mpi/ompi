@@ -55,15 +55,21 @@ orte_sensor_heartbeat_component_t mca_sensor_heartbeat_component = {
 static int orte_sensor_heartbeat_open(void)
 {
     mca_base_component_t *c = &mca_sensor_heartbeat_component.super.base_version;
+    int tmp;
 
     /* lookup parameters */
     mca_base_param_reg_string(c, "rate",
-                           "Heartbeat rate in sec (default=0:0)",
-                           false, false, "0:0",  &mca_sensor_heartbeat_component.rate);
+                              "Heartbeat rate in sec (default=0:0)",
+                              false, false, "0:0",  &mca_sensor_heartbeat_component.rate);
     
     mca_base_param_reg_string(c, "check",
-                           "Check for failure rate in sec:usec (default=1:0)",
-                           false, false, "1:0",  &mca_sensor_heartbeat_component.check);
+                              "Check for failure rate in sec:usec (default=1:0)",
+                              false, false, "1:0",  &mca_sensor_heartbeat_component.check);
+    
+    mca_base_param_reg_int(c, "include_stats",
+                           "Include process stats in heartbeat (default=no)",
+                           false, false, (int)false,  &tmp);
+    mca_sensor_heartbeat_component.include_stats = OPAL_INT_TO_BOOL(tmp);
     
     return ORTE_SUCCESS;
 }

@@ -38,7 +38,9 @@ BEGIN_C_DECLS
  */
 typedef int (*opal_pstat_base_module_init_fn_t)(void);
 
-typedef int (*opal_pstat_base_module_query_fn_t)(pid_t pid, opal_pstats_t *stats);
+typedef int (*opal_pstat_base_module_query_fn_t)(pid_t pid,
+                                                 opal_pstats_t *stats,
+                                                 opal_node_stats_t *nstats);
 
 typedef int (*opal_pstat_base_module_fini_fn_t)(void);
 

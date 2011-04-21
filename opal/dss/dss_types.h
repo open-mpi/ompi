@@ -70,6 +70,7 @@ typedef struct {
 #define    OPAL_NULL                (opal_data_type_t)   18 /**< don't interpret data type */
 #define    OPAL_DATA_VALUE          (opal_data_type_t)   19 /**< data value */
 #define    OPAL_PSTAT               (opal_data_type_t)   20 /**< process statistics */
+#define    OPAL_NODE_STAT           (opal_data_type_t)   21 /**< node statistics */
 
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
 
@@ -92,21 +93,38 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_dss_value_t);
 #define OPAL_PSTAT_MAX_STRING_LEN   32
 typedef struct {
     opal_list_item_t super;                /* required for this to be on a list */
+    /* process ident info */
     char node[OPAL_PSTAT_MAX_STRING_LEN];
     int32_t rank;
     pid_t pid;
     char cmd[OPAL_PSTAT_MAX_STRING_LEN];
-    char state;
-    uint64_t time;
+    /* process stats */
+    char state[2];
+    struct timeval time;
+    float percent_cpu;
     int32_t priority;
     int16_t num_threads;
-    uint64_t vsize;  /* in kBytes */
-    uint64_t rss;  /* in kBytes */
-    uint64_t peak_vsize;  /* in kBytes */
-    uint64_t shared_size;  /* in kBytes */
+    float vsize;  /* in MBytes */
+    float rss;  /* in MBytes */
+    float peak_vsize;  /* in MBytes */
     int16_t processor;
+    /* time at which sample was taken */
+    struct timeval sample_time;
 } opal_pstats_t;
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_pstats_t);
+typedef struct {
+    opal_object_t super;
+    /* node-level load averages */
+    float la;
+    float la5;
+    float la15;
+    /* memory usage */
+    uint32_t total_mem;  /* in MBytes */
+    float free_mem;  /* in MBytes */
+    /* time at which sample was taken */
+    struct timeval sample_time;
+} opal_node_stats_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_node_stats_t);
 
 /* structured-unstructured data flags */
 #define OPAL_DSS_STRUCTURED     true

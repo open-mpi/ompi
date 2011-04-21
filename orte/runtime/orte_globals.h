@@ -303,6 +303,8 @@ typedef struct {
     char *username;
     /* list of known system resources for this node */
     opal_list_t resources;
+    /* stats at last sampling */
+    opal_node_stats_t stats;
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
@@ -492,6 +494,8 @@ struct orte_proc_t {
     bool reported;
     /* if heartbeat recvd during last time period */
     bool beat;
+    /* process stats at last sampling */
+    opal_pstats_t stats;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;

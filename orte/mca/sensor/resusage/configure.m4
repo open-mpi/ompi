@@ -8,10 +8,10 @@
 # $HEADER$
 #
 
-# MCA_sensor_memusage_CONFIG([action-if-found], [action-if-not-found])
+# MCA_sensor_resusage_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
-AC_DEFUN([MCA_orte_sensor_memusage_CONFIG], [
-    AC_CONFIG_FILES([orte/mca/sensor/memusage/Makefile])
+AC_DEFUN([MCA_orte_sensor_resusage_CONFIG], [
+    AC_CONFIG_FILES([orte/mca/sensor/resusage/Makefile])
 
     # if we don't want sensors, don't compile
     # this component
