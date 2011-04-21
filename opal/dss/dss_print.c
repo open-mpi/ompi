@@ -467,7 +467,8 @@ int opal_dss_print_byte_object(char **output, char *prefix, opal_byte_object_t *
 int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_data_type_t type)
 {
     char *prefx;
-    
+    float ftime, ftime1;
+
     /* deal with NULL prefix */
     if (NULL == prefix) asprintf(&prefx, " ");
     else prefx = prefix;
@@ -477,11 +478,40 @@ int opal_dss_print_pstat(char **output, char *prefix, opal_pstats_t *src, opal_d
         asprintf(output, "%sData type: OPAL_PSTATS\tValue: NULL pointer", prefx);
         return OPAL_SUCCESS;
     }
+    ftime = (float)src->time.tv_sec + ((float)src->time.tv_usec / 1000000.0);
+    ftime1 = (float)src->sample_time.tv_sec + ((float)src->sample_time.tv_usec / 1000000.0);
+    asprintf(output, "%sSAMPLED AT: %f\n%snode: %s rank: %d pid: %d cmd: %s state: %c pri: %d #threads: %d Processor: %d\n"
+             "%s\ttime: %f cpu: %5.2f VMsize: %8.2f PeakVMSize: %8.2f RSS: %8.2f\n",
+             prefx, ftime1,
+             prefx, src->node, src->rank, src->pid, src->cmd, src->state[0], src->priority, src->num_threads, src->processor,
+             prefx, ftime, src->percent_cpu, src->vsize, src->peak_vsize, src->rss);
     
-    asprintf(output, "%snode: %s rank: %d pid: %d cmd: %s state: %c pri: %d #threads: %d Processor: %d\n"
-                     "%s\ttime: %" PRIu64 " VMsize: %" PRIu64 " PeakVMSize: %" PRIu64 " RSS: %" PRIu64 " Share: %" PRIu64 "\n",
-             prefx, src->node, src->rank, src->pid, src->cmd, src->state, src->priority, src->num_threads, src->processor,
-             prefx, src->time, src->vsize, src->peak_vsize, src->rss, src->shared_size);
+    return OPAL_SUCCESS;
+}
+
+/*
+ * OPAL_NODE_STAT
+ */
+int opal_dss_print_node_stat(char **output, char *prefix, opal_node_stats_t *src, opal_data_type_t type)
+{
+    char *prefx;
+    float ftime1;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+    
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: OPAL_NODE_STATS\tValue: NULL pointer", prefx);
+        return OPAL_SUCCESS;
+    }
+    ftime1 = (float)src->sample_time.tv_sec + ((float)src->sample_time.tv_usec / 1000000.0);
+    asprintf(output, "%sSAMPLED AT: %f\n%sTotal Mem: %" PRIu64 "Free Mem: %" PRIu64 "\n"
+                     "%s\tla: %5.2f\tla5: %5.2f\tla15: %5.2f\n",
+             prefx, ftime1,
+             prefx, src->total_mem, src->free_mem,
+             prefx, src->la, src->la5, src->la15);
     
     return OPAL_SUCCESS;
 }

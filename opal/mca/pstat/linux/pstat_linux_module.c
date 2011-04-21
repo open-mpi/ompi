@@ -30,6 +30,12 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include <sys/param.h>  /* for HZ to convert jiffies to actual time */
 
@@ -40,10 +46,12 @@
 #include "pstat_linux.h"
 
 /*
- * Local functions
+ * API functions
  */
 static int linux_module_init(void);
-static int query(pid_t pid, opal_pstats_t *stats);
+static int query(pid_t pid,
+                 opal_pstats_t *stats,
+                 opal_node_stats_t *nstats);
 static int linux_module_fini(void);
 
 /*
@@ -55,6 +63,13 @@ const opal_pstat_base_module_t opal_pstat_linux_module = {
     query,
     linux_module_fini
 };
+
+/* Local functions */
+static char *local_getline(FILE *fp);
+static char *local_stripper(char *data);
+
+/* Local data */
+static char input[256];
 
 static int linux_module_init(void)
 {
@@ -88,178 +103,319 @@ static char *next_field(char *ptr, int barrier)
 }
 
 
-static int query(pid_t pid, opal_pstats_t *stats)
+static int query(pid_t pid,
+                 opal_pstats_t *stats,
+                 opal_node_stats_t *nstats)
 {
     char data[4096];
     int fd;
     size_t numchars;
     char *ptr, *eptr;
     int i;
-    int len;
-    
-    /* create the stat filename for this proc */
-    numchars = snprintf(data, sizeof(data), "/proc/%d/stat", pid);
-    if (numchars >= sizeof(data)) {
-        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
-    }
-    
-    if (0 > (fd = open(data, O_RDONLY))) {
-        /* can't access this file - most likely, this means we
-         * aren't really on a supported system, or the proc no
-         * longer exists. Just return an error
+    int len, itime;
+    double dtime;
+    FILE *fp;
+    char *dptr, *value;
+
+    if (NULL != stats) {
+        /* record the time of this sample */
+        gettimeofday(&stats->sample_time, NULL);
+        /* check the nstats - don't do gettimeofday twice
+         * as it is expensive
          */
-        return OPAL_ERR_FILE_OPEN_FAILURE;
-    }
-    
-    /* absorb all of the file's contents in one gulp - we'll process
-     * it once it is in memory for speed
-     */
-    memset(data, 0, sizeof(data));
-    len = read(fd, data, sizeof(data)-1);
-    if (len < 0) {
-        /* This shouldn't happen! */
-        return OPAL_ERR_FILE_OPEN_FAILURE;
-    }
-    close(fd);
-    
-    /* remove newline at end */
-    data[len] = '\0';
-    
-    /* the stat file consists of a single line in a carefully formatted
-     * form. Parse it field by field as per proc(3) to get the ones we want
-     */
-    
-    /* we don't need to read the pid from the file - we already know it! */
-    stats->pid = pid;
-    
-    /* the cmd is surrounded by parentheses - find the start */
-    if (NULL == (ptr = strchr(data, '('))) {
-        /* no cmd => something wrong with data, return error */
-        return OPAL_ERR_BAD_PARAM;
-    }
-    /* step over the paren */
-    ptr++;
-    
-    /* find the ending paren */
-    if (NULL == (eptr = strchr(ptr, ')'))) {
-        /* no end to cmd => something wrong with data, return error */
-        return OPAL_ERR_BAD_PARAM;
-    }
-    
-    /* save the cmd name, up to the limit of the array */
-    i = 0;
-    while (ptr < eptr && i < OPAL_PSTAT_MAX_STRING_LEN) {
-        stats->cmd[i++] = *ptr++;
-    }
-    
-    /* move to the next field in the data */
-    ptr = next_field(eptr, len);
-    
-    /* next is the process state - a single character */
-    stats->state = *ptr;
-    /* move to next field */
-    ptr = next_field(ptr, len);
-    
-    /* skip fields until we get to the times */
-    ptr = next_field(ptr, len); /* ppid */
-    ptr = next_field(ptr, len); /* pgrp */
-    ptr = next_field(ptr, len); /* session */
-    ptr = next_field(ptr, len); /* tty_nr */
-    ptr = next_field(ptr, len); /* tpgid */
-    ptr = next_field(ptr, len); /* flags */
-    ptr = next_field(ptr, len); /* minflt */
-    ptr = next_field(ptr, len); /* cminflt */
-    ptr = next_field(ptr, len); /* majflt */
-    ptr = next_field(ptr, len); /* cmajflt */
-    
-    /* grab the process time usage fields */
-    stats->time = strtoul(ptr, &ptr, 10);    /* utime */
-    stats->time += strtoul(ptr, &ptr, 10);   /* add the stime */
-    stats->time = stats->time / HZ;  /* convert to time */
-    /* move to next field */
-    ptr = next_field(ptr, len);
-    
-    /* skip fields until we get to priority */
-    ptr = next_field(ptr, len); /* cutime */
-    ptr = next_field(ptr, len); /* cstime */
-    
-    /* save the priority */
-    stats->priority = strtol(ptr, &ptr, 10);
-    
-    /* that's all we care about from this data - ignore the rest */
-    
-    /* now create the status filename for this proc */
-    memset(data, 0, sizeof(data));
-    numchars = snprintf(data, sizeof(data), "/proc/%d/status", pid);
-    if (numchars >= sizeof(data)) {
-        return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
-    }
-    
-    if (0 > (fd = open(data, O_RDONLY))) {
-        /* can't access this file - most likely, this means we
-         * aren't really on a supported system, or the proc no
-         * longer exists. Just return an error
-         */
-        return OPAL_ERR_FILE_OPEN_FAILURE;
-    }
-    
-    /* absorb all of the file's contents in one gulp - we'll process
-     * it once it is in memory for speed
-     */
-    memset(data, 0, sizeof(data));
-    len = read(fd, data, sizeof(data)-1);
-    close(fd);
-    
-    /* remove newline at end */
-    data[len] = '\0';
-    
-    /* parse it according to proc(3) */
-    eptr = data;
-    /* look for VmPeak */
-    if (NULL != (ptr = strstr(data, "VmPeak:"))) {
-        /* found it - step past colon */
-        ptr += 8;
-        eptr = strchr(ptr, 'k');
-        *eptr = '\0';
-        stats->peak_vsize = strtoul(ptr, NULL, 10);  /* already in kB */
-        eptr++;
-    }
-     /* look for VmSize */
-    if (NULL != (ptr = strstr(eptr, "VmSize:"))) {
-        /* found it - step past colon */
-        ptr += 8;
-        eptr = strchr(ptr, 'k');
-        *eptr = '\0';
-        stats->vsize = strtoul(ptr, NULL, 10);  /* already in kB */
-        eptr++;
-    }
-    
-    /* look for RSS */
-    if (NULL != (ptr = strstr(eptr, "VmRSS:"))) {
-        /* found it - step past colon */
-        ptr += 8;
-        eptr = strchr(ptr, 'k');
-        *eptr = '\0';
-        stats->rss = strtoul(ptr, NULL, 10);  /* already in kB */
-        eptr++;
+        if (NULL != nstats) {
+            nstats->sample_time.tv_sec = stats->sample_time.tv_sec;
+            nstats->sample_time.tv_usec = stats->sample_time.tv_usec;
+        }
+    } else if (NULL != nstats) {
+        /* record the time of this sample */
+        gettimeofday(&nstats->sample_time, NULL);
     }
 
-    /* look for Libraries */
-    if (NULL != (ptr = strstr(eptr, "VmLib:"))) {
-        /* found it - step past colon */
-        ptr += 8;
-        eptr = strchr(ptr, 'k');
-        *eptr = '\0';
-        stats->shared_size = strtoul(ptr, NULL, 10);  /* already in kB */
-        eptr++;
+    if (NULL != stats) {
+        /* create the stat filename for this proc */
+        numchars = snprintf(data, sizeof(data), "/proc/%d/stat", pid);
+        if (numchars >= sizeof(data)) {
+            return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        }
+    
+        if (0 > (fd = open(data, O_RDONLY))) {
+            /* can't access this file - most likely, this means we
+             * aren't really on a supported system, or the proc no
+             * longer exists. Just return an error
+             */
+            return OPAL_ERR_FILE_OPEN_FAILURE;
+        }
+    
+        /* absorb all of the file's contents in one gulp - we'll process
+         * it once it is in memory for speed
+         */
+        memset(data, 0, sizeof(data));
+        len = read(fd, data, sizeof(data)-1);
+        if (len < 0) {
+            /* This shouldn't happen! */
+            return OPAL_ERR_FILE_OPEN_FAILURE;
+        }
+        close(fd);
+    
+        /* remove newline at end */
+        data[len] = '\0';
+    
+        /* the stat file consists of a single line in a carefully formatted
+         * form. Parse it field by field as per proc(3) to get the ones we want
+         */
+    
+        /* we don't need to read the pid from the file - we already know it! */
+        stats->pid = pid;
+    
+        /* the cmd is surrounded by parentheses - find the start */
+        if (NULL == (ptr = strchr(data, '('))) {
+            /* no cmd => something wrong with data, return error */
+            return OPAL_ERR_BAD_PARAM;
+        }
+        /* step over the paren */
+        ptr++;
+    
+        /* find the ending paren */
+        if (NULL == (eptr = strchr(ptr, ')'))) {
+            /* no end to cmd => something wrong with data, return error */
+            return OPAL_ERR_BAD_PARAM;
+        }
+    
+        /* save the cmd name, up to the limit of the array */
+        i = 0;
+        while (ptr < eptr && i < OPAL_PSTAT_MAX_STRING_LEN) {
+            stats->cmd[i++] = *ptr++;
+        }
+    
+        /* move to the next field in the data */
+        ptr = next_field(eptr, len);
+    
+        /* next is the process state - a single character */
+        stats->state[0] = *ptr;
+        /* move to next field */
+        ptr = next_field(ptr, len);
+    
+        /* skip fields until we get to the times */
+        ptr = next_field(ptr, len); /* ppid */
+        ptr = next_field(ptr, len); /* pgrp */
+        ptr = next_field(ptr, len); /* session */
+        ptr = next_field(ptr, len); /* tty_nr */
+        ptr = next_field(ptr, len); /* tpgid */
+        ptr = next_field(ptr, len); /* flags */
+        ptr = next_field(ptr, len); /* minflt */
+        ptr = next_field(ptr, len); /* cminflt */
+        ptr = next_field(ptr, len); /* majflt */
+        ptr = next_field(ptr, len); /* cmajflt */
+    
+        /* grab the process time usage fields */
+        itime = strtoul(ptr, &ptr, 10);    /* utime */
+        itime += strtoul(ptr, &ptr, 10);   /* add the stime */
+        /* convert to time in seconds */
+        dtime = (double)itime / (double)HZ;
+        stats->time.tv_sec = (int)dtime;
+        stats->time.tv_usec = (int)(1000000.0 * (dtime - stats->time.tv_sec));
+        /* move to next field */
+        ptr = next_field(ptr, len);
+    
+        /* skip fields until we get to priority */
+        ptr = next_field(ptr, len); /* cutime */
+        ptr = next_field(ptr, len); /* cstime */
+    
+        /* save the priority */
+        stats->priority = strtol(ptr, &ptr, 10);
+        /* move to next field */
+        ptr = next_field(ptr, len);
+    
+        /* skip nice */
+        ptr = next_field(ptr, len);
+
+        /* get number of threads */
+        stats->num_threads = strtoul(ptr, &ptr, 10);
+        /* move to next field */
+        ptr = next_field(ptr, len);
+
+        /* skip fields until we get to processor id */
+        ptr = next_field(ptr, len);  /* itrealvalue */
+        ptr = next_field(ptr, len);  /* starttime */
+        ptr = next_field(ptr, len);  /* vsize */
+        ptr = next_field(ptr, len);  /* rss */
+        ptr = next_field(ptr, len);  /* rss limit */
+        ptr = next_field(ptr, len);  /* startcode */
+        ptr = next_field(ptr, len);  /* endcode */
+        ptr = next_field(ptr, len);  /* startstack */
+        ptr = next_field(ptr, len);  /* kstkesp */
+        ptr = next_field(ptr, len);  /* kstkeip */
+        ptr = next_field(ptr, len);  /* signal */
+        ptr = next_field(ptr, len);  /* blocked */
+        ptr = next_field(ptr, len);  /* sigignore */
+        ptr = next_field(ptr, len);  /* sigcatch */
+        ptr = next_field(ptr, len);  /* wchan */
+        ptr = next_field(ptr, len);  /* nswap */
+        ptr = next_field(ptr, len);  /* cnswap */
+        ptr = next_field(ptr, len);  /* exit_signal */
+
+        /* finally - get the processor */
+        stats->processor = strtol(ptr, NULL, 10);
+
+        /* that's all we care about from this data - ignore the rest */
+    
+        /* now create the status filename for this proc */
+        memset(data, 0, sizeof(data));
+        numchars = snprintf(data, sizeof(data), "/proc/%d/status", pid);
+        if (numchars >= sizeof(data)) {
+            return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        }
+    
+        if (0 > (fd = open(data, O_RDONLY))) {
+            /* can't access this file - most likely, this means we
+             * aren't really on a supported system, or the proc no
+             * longer exists. Just return an error
+             */
+            return OPAL_ERR_FILE_OPEN_FAILURE;
+        }
+    
+        /* absorb all of the file's contents in one gulp - we'll process
+         * it once it is in memory for speed
+         */
+        memset(data, 0, sizeof(data));
+        len = read(fd, data, sizeof(data)-1);
+        close(fd);
+    
+        /* remove newline at end */
+        data[len] = '\0';
+    
+        /* parse it according to proc(3) */
+        eptr = data;
+        /* look for VmPeak */
+        if (NULL != (ptr = strstr(data, "VmPeak:"))) {
+            /* found it - step past colon */
+            ptr += 8;
+            eptr = strchr(ptr, 'k');
+            *eptr = '\0';
+            stats->peak_vsize = (float)strtoul(ptr, NULL, 10) / 1024.0;  /* convert to MBytes */
+            eptr++;
+        }
+        /* look for VmSize */
+        if (NULL != (ptr = strstr(eptr, "VmSize:"))) {
+            /* found it - step past colon */
+            ptr += 8;
+            eptr = strchr(ptr, 'k');
+            *eptr = '\0';
+            stats->vsize = (float)strtoul(ptr, NULL, 10) / 1024.0;  /* convert to MBytes*/
+            eptr++;
+        }
+    
+        /* look for RSS */
+        if (NULL != (ptr = strstr(eptr, "VmRSS:"))) {
+            /* found it - step past colon */
+            ptr += 8;
+            eptr = strchr(ptr, 'k');
+            *eptr = '\0';
+            stats->rss = (float)strtoul(ptr, NULL, 10) / 1024.0;  /* convert to MBytes */
+            eptr++;
+        }
     }
 
-    /* look for threads */
-    if (NULL != (ptr = strstr(eptr, "Threads:"))) {
-        /* found it - step past colon */
-        ptr += 8;
-        stats->num_threads = strtoul(ptr, NULL, 10);
-    }
+    if (NULL != nstats) {
+        /* get the loadavg data */
+        if (0 > (fd = open("/proc/loadavg", O_RDONLY))) {
+            /* not an error if we don't find this one as it
+             * isn't critical
+             */
+            return OPAL_SUCCESS;
+        }
     
+        /* absorb all of the file's contents in one gulp - we'll process
+         * it once it is in memory for speed
+         */
+        memset(data, 0, sizeof(data));
+        len = read(fd, data, sizeof(data)-1);
+        close(fd);
+    
+        /* remove newline at end */
+        data[len] = '\0';
+
+        /* we only care about the first three numbers */
+        nstats->la = strtof(data, &ptr);
+        nstats->la5 = strtof(ptr, &eptr);
+        nstats->la15 = strtof(eptr, NULL);
+
+        /* see if we can open the meminfo file */
+        if (NULL == (fp = fopen("/proc/meminfo", "r"))) {
+            /* ignore this */
+            return OPAL_SUCCESS;
+        }
+    
+        /* read the file one line at a time */
+        while (NULL != (dptr = local_getline(fp))) {
+            if (NULL == (value = local_stripper(dptr))) {
+                /* cannot process */
+                continue;
+            }
+            if (0 == strcmp(dptr, "MemTotal")) {
+                /* find units */
+                ptr = &value[strlen(value)-2];
+                value[strlen(value)-3] = '\0';
+                /* compute base value */
+                nstats->total_mem = strtol(value, NULL, 10);
+                /* get the unit multiplier */
+                if (0 == strcmp(ptr, "kB")) {
+                    nstats->total_mem /= 1024;
+                }
+            } else if (0 == strcmp(dptr, "MemFree")) {
+                /* find units */
+                ptr = &value[strlen(value)-2];
+                value[strlen(value)-3] = '\0';
+                /* compute base value */
+                nstats->free_mem = strtol(value, NULL, 10);
+                /* get the unit multiplier */
+                if (0 == strcmp(ptr, "kB")) {
+                    nstats->free_mem /= 1024;
+                }
+            }
+        }
+        fclose(fp);
+    }
+
     return OPAL_SUCCESS;
+}
+
+static char *local_getline(FILE *fp)
+{
+    char *ret;
+    
+    ret = fgets(input, 256, fp);
+    if (NULL != ret) {
+        input[strlen(input)-1] = '\0';  /* remove newline */
+        return input;
+    }
+    
+    return NULL;
+}
+
+static char *local_stripper(char *data)
+{
+    char *ptr, *end, *enddata;
+    int len = strlen(data);
+    
+    /* find the colon */
+    if (NULL == (end = strchr(data, ':'))) {
+        return NULL;
+    }
+    ptr = end;
+    --end;
+    /* working backwards, look for first non-whitespace */
+    while (end != data && !isalnum(*end)) {
+        --end;
+    }
+    ++end;
+    *end = '\0';
+    /* now look for value */
+    ptr++;
+    enddata = &(data[len-1]);
+    while (ptr != enddata && !isalnum(*ptr)) {
+        ++ptr;
+    }
+    return ptr;
 }

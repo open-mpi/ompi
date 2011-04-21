@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved. 
  *
  * $COPYRIGHT$
  * 
@@ -37,7 +37,7 @@
 
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/sensor/base/sensor_private.h"
-#include "sensor_memusage.h"
+#include "sensor_resusage.h"
 
 /* declare the API functions */
 static int init(void);
@@ -46,7 +46,7 @@ static void start(orte_jobid_t job);
 static void stop(orte_jobid_t job);
 
 /* instantiate the module */
-orte_sensor_base_module_t orte_sensor_memusage_module = {
+orte_sensor_base_module_t orte_sensor_resusage_module = {
     init,
     finalize,
     start,
@@ -58,12 +58,12 @@ typedef struct {
     opal_list_item_t super;
     orte_jobid_t jobid;
     unsigned long memory_limit;
-} memusage_tracker_t;
-static void constructor(memusage_tracker_t *ptr)
+} resusage_tracker_t;
+static void constructor(resusage_tracker_t *ptr)
 {
     ptr->memory_limit = 0;
 }
-OBJ_CLASS_INSTANCE(memusage_tracker_t,
+OBJ_CLASS_INSTANCE(resusage_tracker_t,
                    opal_list_item_t,
                    constructor, NULL);
 
@@ -102,8 +102,8 @@ static void finalize(void)
  */
 static void start(orte_jobid_t jobid)
 {
-    mca_base_component_t *c = &mca_sensor_memusage_component.super.base_version;
-    memusage_tracker_t *job;
+    mca_base_component_t *c = &mca_sensor_resusage_component.super.base_version;
+    resusage_tracker_t *job;
     orte_odls_job_t *jobdat;
     orte_app_context_t *app;
     opal_list_item_t *item;
@@ -136,8 +136,8 @@ static void start(orte_jobid_t jobid)
             tmp = 0;
             if (ORTE_SUCCESS != (rc = mca_base_param_find_int(c, "memory_limit", app->env, &tmp))) {
                 /* was a default value given */
-                if (0 < mca_sensor_memusage_component.memory_limit) {
-                    tmp = mca_sensor_memusage_component.memory_limit;
+                if (0 < mca_sensor_resusage_component.memory_limit) {
+                    tmp = mca_sensor_resusage_component.memory_limit;
                 }
             }
             if (tmp <= 0) {
@@ -149,7 +149,7 @@ static void start(orte_jobid_t jobid)
                 continue;
             }
             
-            job = OBJ_NEW(memusage_tracker_t);
+            job = OBJ_NEW(resusage_tracker_t);
             job->jobid = jobid;
             job->memory_limit = tmp;
             opal_list_append(&jobs, &job->super);
@@ -162,7 +162,7 @@ static void start(orte_jobid_t jobid)
          */
         sample_ev =  (opal_event_t *) malloc(sizeof(opal_event_t));
         opal_event_evtimer_set(opal_event_base, sample_ev, sample, sample_ev);
-        sample_time.tv_sec = mca_sensor_memusage_component.sample_rate;
+        sample_time.tv_sec = mca_sensor_resusage_component.sample_rate;
         sample_time.tv_usec = 0;
         opal_event_evtimer_add(sample_ev, &sample_time);
     }
@@ -173,7 +173,7 @@ static void start(orte_jobid_t jobid)
 static void stop(orte_jobid_t jobid)
 {
     opal_list_item_t *item;
-    memusage_tracker_t *job;
+    resusage_tracker_t *job;
 
     /* cannot monitor my own job */
     if (jobid == ORTE_PROC_MY_NAME->jobid && ORTE_JOBID_WILDCARD != jobid) {
@@ -183,7 +183,7 @@ static void stop(orte_jobid_t jobid)
     for (item = opal_list_get_first(&jobs);
          item != opal_list_get_end(&jobs);
          item = opal_list_get_next(item)) {
-        job = (memusage_tracker_t*)item;
+        job = (resusage_tracker_t*)item;
         if (jobid == job->jobid || ORTE_JOBID_WILDCARD == jobid) {
             opal_list_remove_item(&jobs, item);
             OBJ_RELEASE(item);
@@ -204,7 +204,7 @@ static void sample(int fd, short event, void *arg)
     orte_odls_child_t *child;
     opal_pstats_t stats;
     int rc;
-    memusage_tracker_t *job;
+    resusage_tracker_t *job;
     bool monitored;
     
     /* if we are not sampling any more, then just return */
@@ -213,7 +213,7 @@ static void sample(int fd, short event, void *arg)
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                         "sample:memusage sampling resource usage"));
+                         "sample:resusage sampling resource usage"));
     
     /* loop through our local children */
     for (item = opal_list_get_first(&orte_local_children);
@@ -226,7 +226,7 @@ static void sample(int fd, short event, void *arg)
         for (item = opal_list_get_first(&jobs);
              item != opal_list_get_end(&jobs);
              item = opal_list_get_next(item)) {
-            job = (memusage_tracker_t*)item;
+            job = (resusage_tracker_t*)item;
             if (child->name->jobid == job->jobid) {
                 monitored = true;
                 break;
@@ -238,20 +238,20 @@ static void sample(int fd, short event, void *arg)
         
         /* get the process resource utilization stats */
         OBJ_CONSTRUCT(&stats, opal_pstats_t);
-        if (ORTE_SUCCESS != (rc = opal_pstat.query(child->pid, &stats))) {
+        if (ORTE_SUCCESS != (rc = opal_pstat.query(child->pid, &stats, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&stats);
             continue;
         }
         
         OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                             "sample:memusage got memory size of %lu Gbytes for proc %s",
+                             "sample:resusage got memory size of %lu Gbytes for proc %s",
                              (unsigned long)stats.vsize/1000000, ORTE_NAME_PRINT(child->name)));
         
         /* check the memory size for limit */
         if ((stats.vsize/1000000) > job->memory_limit) {
             /* memory limit exceeded */
-           orte_show_help("help-orte-sensor-memusage.txt", "mem-limit-exceeded",
+           orte_show_help("help-orte-sensor-resusage.txt", "mem-limit-exceeded",
                            true, orte_process_info.nodename, ORTE_VPID_PRINT(child->name->vpid),
                            (unsigned long)stats.vsize/1000000, (unsigned long)job->memory_limit);
             orte_errmgr.update_state(child->name->jobid, ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED,

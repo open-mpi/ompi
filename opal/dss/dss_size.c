@@ -162,3 +162,12 @@ int opal_dss_size_pstat(size_t *size, opal_pstats_t *src, opal_data_type_t type)
     return OPAL_SUCCESS;
 }
 
+/*
+ * OPAL_NODE_STAT
+ */
+int opal_dss_size_node_stat(size_t *size, opal_node_stats_t *src, opal_data_type_t type)
+{
+    *size = sizeof(opal_node_stats_t);
+    return OPAL_SUCCESS;
+}
+

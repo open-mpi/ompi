@@ -832,6 +832,8 @@ static void orte_node_construct(orte_node_t* node)
     node->username = NULL;
     
     OBJ_CONSTRUCT(&node->resources, opal_list_t);
+
+    OBJ_CONSTRUCT(&node->stats, opal_node_stats_t);
 }
 
 static void orte_node_destruct(orte_node_t* node)
@@ -905,6 +907,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->restarts = 0;
     proc->reported = false;
     proc->beat = false;
+    OBJ_CONSTRUCT(&proc->stats, opal_pstats_t);
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;
@@ -935,6 +938,8 @@ static void orte_proc_destruct(orte_proc_t* proc)
         proc->rml_uri = NULL;
     }
     
+    OBJ_DESTRUCT(&proc->stats);
+
 #if OPAL_ENABLE_FT_CR == 1
     if (NULL != proc->ckpt_snapshot_ref) {
         free(proc->ckpt_snapshot_ref);

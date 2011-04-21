@@ -3095,7 +3095,7 @@ int orte_odls_base_get_proc_stats(opal_buffer_t *answer,
             /* record rank */
             stats.rank = child->name->vpid;
             /* get stats */
-            rc = opal_pstat.query(child->pid, &stats);
+            rc = opal_pstat.query(child->pid, &stats, NULL);
             if (ORTE_SUCCESS != rc) {
                 OBJ_DESTRUCT(&stats);
                 return rc;
