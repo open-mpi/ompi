@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,13 +34,13 @@
  * and printf()-style varargs parameters used to substitute into the
  * message.
  * 
- * There's work pending about i18n-like support (nothing near as
- * complex as GNU gettext -- just a simple mechanism that may be
- * used).  But I won't describe it here until/if it's actually used.
- * So right now, the file lookup is quite straightforward -- the
- * caller passes in the filename to find the help message, and the SHS
- * looks for that file in $pkgdatadir (typically
- * $prefix/share/openmpi).
+ * It was originally intended that this system would support a very
+ * simple version of i18n-like support, but we got (strong) feedback
+ * that i18n support was not desired.  So it never happened.
+ *
+ * As such, the file lookup is quite straightforward -- the caller
+ * passes in the filename to find the help message, and the SHS looks
+ * for that file in $pkgdatadir (typically $prefix/share/openmpi).
  *
  * Once the file is successfully opened, the SHS looks for the
  * appropriate help message to display.  It looks for the message name
