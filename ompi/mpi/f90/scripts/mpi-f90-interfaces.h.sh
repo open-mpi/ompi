@@ -5,7 +5,7 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -6889,8 +6889,8 @@ output_192() {
 subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
         recvcount, recvtype, root, comm, ierr)
   ${type}, intent(in) :: sendbuf
-  integer, intent(in) :: sendcounts
-  integer, intent(in) :: displs
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: displs
   integer, intent(in) :: sendtype
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: recvcount
