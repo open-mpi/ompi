@@ -412,19 +412,32 @@ static int module_get_core_info(int socket, int *num_cores)
 static int module_get_physical_processor_id(int logical_processor_id,
                                             int *physical_processor_id)
 {
+    int obj_type = HWLOC_OBJ_CORE;
     hwloc_obj_t obj;
     hwloc_bitmap_t good;
     hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
 
     /* hwloc isn't able to find cores on all platforms.  Example:
        PPC64 running RHEL 5.4 (linux kernel 2.6.18) only reports NUMA
-       nodes and PU's.  Fine.  So just use PUs in that situation. */
-    obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_CORE, logical_processor_id);
+       nodes and PU's.  Fine.  
+
+       However, note that hwloc_get_obj_by_type() will return NULL in
+       2 (effectively) different cases:
+
+       - no objects of the requested type were found
+       - the Nth object of the requested type was not found
+
+       So first we have to see if we can find *any* cores by looking
+       for the 0th core.  If we find it, then try to find the Nth
+       core.  Otherwise, try to find the Nth PU. */
+    if (NULL == hwloc_get_obj_by_type(*t, HWLOC_OBJ_CORE, 0)) {
+        obj_type = HWLOC_OBJ_PU;
+    }
+
+    /* Now do the actual lookup. */
+    obj = hwloc_get_obj_by_type(*t, obj_type, logical_processor_id);
     if (NULL == obj) {
-        obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_PU, logical_processor_id);
-        if (NULL == obj) {
-            return OPAL_ERR_NOT_FOUND;
-        }
+        return OPAL_ERR_NOT_FOUND;
     }
 
     /* Found the right core (or PU).  Now find the processor ID of the
