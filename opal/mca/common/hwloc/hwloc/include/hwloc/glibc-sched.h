@@ -1,7 +1,8 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2011 INRIA.  All rights reserved.
+ * Copyright © 2009-2010 INRIA.  All rights reserved.
  * Copyright © 2009-2011 Université Bordeaux 1
+ * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -77,9 +78,11 @@ static __hwloc_inline int
 hwloc_cpuset_from_glibc_sched_affinity(hwloc_topology_t topology __hwloc_attribute_unused, hwloc_cpuset_t hwlocset,
                                        const cpu_set_t *schedset, size_t schedsetsize)
 {
-  hwloc_bitmap_zero(hwlocset);
 #ifdef CPU_ZERO_S
   int cpu, count;
+#endif
+  hwloc_bitmap_zero(hwlocset);
+#ifdef CPU_ZERO_S
   count = CPU_COUNT_S(schedsetsize, schedset);
   cpu = 0;
   while (count) {

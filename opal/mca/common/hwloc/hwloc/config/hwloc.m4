@@ -1,6 +1,6 @@
 dnl -*- Autoconf -*-
 dnl
-dnl Copyright (c) 2009-2010 INRIA
+dnl Copyright (c) 2009-2010 INRIA.  All rights reserved.
 dnl Copyright (c) 2009-2011 Université Bordeaux 1
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
@@ -106,7 +106,7 @@ EOF])
     AC_MSG_RESULT(m4_ifval([$1], hwloc_config_prefix, [(none)]))
 
     # Note that private/config.h *MUST* be listed first so that it
-    # becomes the "main" config header file.  Any AC_CONFIG_HEADERs
+    # becomes the "main" config header file.  Any AC-CONFIG-HEADERS
     # after that (hwloc/config.h) will only have selective #defines
     # replaced, not the entire file.
     AC_CONFIG_HEADERS(hwloc_config_prefix[include/private/autogen/config.h])
@@ -133,27 +133,6 @@ EOF])
     AS_IF([test "$hwloc_symbol_prefix_value" = "hwloc_"],
           [AC_DEFINE([HWLOC_SYM_TRANSFORM], [0])],
           [AC_DEFINE([HWLOC_SYM_TRANSFORM], [1])])
-
-    #
-    # Define C flags
-    #
-
-    # hwloc uses C99 style, so ensure that we can figure out which
-    # compiler flags will drive this.
-    hwloc_CC_save=$CC
-    hwloc_CFLAGS_save=$CFLAGS
-    AC_PROG_CC_C99
-    AS_IF([test x"$ac_cv_prog_cc_c99" = xno],
-          [AC_WARN([C99 support is required by hwloc])
-           $3],
-          [HWLOC_SETUP_CORE_AFTER_C99($1, $2, $3, $4)])
-])
-
-dnl Same order of parameters form HWLOC-SETUP-CORE
-AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
-    hwloc_CC_c99_flags=`echo $CC | sed -e "s;^$hwloc_CC_save;;"`
-    CC=$hwloc_CC_save
-    CFLAGS=$hwloc_CFLAGS_save
 
     # GCC specifics.
     if test "x$GCC" = "xyes"; then
@@ -559,7 +538,6 @@ AC_DEFUN([HWLOC_SETUP_CORE_AFTER_C99],[
 
     # Setup HWLOC's C, CPP, and LD flags, and LIBS
     AC_SUBST(HWLOC_REQUIRES)
-    HWLOC_CFLAGS="$hwloc_CC_c99_flags $HWLOC_CFLAGS"
     AC_SUBST(HWLOC_CFLAGS)
     HWLOC_CPPFLAGS='-I$(HWLOC_top_srcdir)/include -I$(HWLOC_top_builddir)/include'
     AC_SUBST(HWLOC_CPPFLAGS)

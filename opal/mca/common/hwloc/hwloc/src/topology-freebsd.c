@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2010 INRIA.  All rights reserved.
  * Copyright © 2009-2010 Université Bordeaux 1
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
@@ -197,4 +197,5 @@ hwloc_set_freebsd_hooks(struct hwloc_topology *topology)
 #endif
 #endif
 #endif
+  /* TODO: get_last_cpu_location: find out ki_lastcpu */
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010 INRIA
+ * Copyright © 2010 INRIA.  All rights reserved.
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */

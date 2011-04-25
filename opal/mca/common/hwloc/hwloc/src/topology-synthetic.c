@@ -237,6 +237,10 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
       break;
     case HWLOC_OBJ_PU:
       break;
+    case HWLOC_OBJ_TYPE_MAX:
+      /* Should never happen */
+      assert(0);
+      break;
   }
 
   obj = hwloc_alloc_setup_object(type, topology->backend_params.synthetic.id[level]++);
@@ -292,6 +296,10 @@ hwloc__look_synthetic(struct hwloc_topology *topology,
     case HWLOC_OBJ_CORE:
       break;
     case HWLOC_OBJ_PU:
+      break;
+    case HWLOC_OBJ_TYPE_MAX:
+      /* Should never happen */
+      assert(0);
       break;
   }
 

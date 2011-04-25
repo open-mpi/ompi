@@ -45,7 +45,7 @@ extern "C" {
  */
 
 /** \brief Indicate at build time which hwloc API version is being used. */
-#define HWLOC_API_VERSION 0x00010100
+#define HWLOC_API_VERSION 0x00010200
 
 /** \brief Indicate at runtime which hwloc API version was used at build time. */
 HWLOC_DECLSPEC unsigned hwloc_get_api_version(void);
@@ -132,6 +132,15 @@ typedef hwloc_const_bitmap_t hwloc_const_nodeset_t;
  * hwloc_compare_types() instead.
  */
 typedef enum {
+    /* ***************************************************************
+       WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+
+       If new enum values are added here, you MUST also go update the
+       obj_type_order[] and obj_order_type[] arrays in src/topology.c.
+
+       WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+       *************************************************************** */
+
   HWLOC_OBJ_SYSTEM,	/**< \brief Whole system (may be a cluster of machines).
   			  * The whole system that is accessible to hwloc.
 			  * That may comprise several machines in SSI systems
@@ -178,10 +187,21 @@ typedef enum {
 			  * any structure.
 			  */
 
-  HWLOC_OBJ_MISC 	/**< \brief Miscellaneous objects.
+  HWLOC_OBJ_MISC,	/**< \brief Miscellaneous objects.
 			  * Objects without particular meaning, that can e.g. be
 			  * added by the application for its own use.
 			  */
+
+  HWLOC_OBJ_TYPE_MAX    /**< \private Sentinel value */
+
+    /* ***************************************************************
+       WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+
+       If new enum values are added here, you MUST also go update the
+       obj_type_order[] and obj_order_type[] arrays in src/topology.c.
+
+       WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
+       *************************************************************** */
 } hwloc_obj_type_t;
 
 /** \brief Compare the depth of two object types
@@ -255,16 +275,17 @@ struct hwloc_obj {
 					 * could be a "cousin_rank" since it's the rank within the "cousin" list below */
   signed os_level;			/**< \brief OS-provided physical level, -1 if unknown or meaningless */
 
-  struct hwloc_obj *next_cousin;	/**< \brief Next object of same type */
-  struct hwloc_obj *prev_cousin;	/**< \brief Previous object of same type */
+  /* cousins are all objects of the same type (and depth) across the entire topology */
+  struct hwloc_obj *next_cousin;	/**< \brief Next object of same type and depth */
+  struct hwloc_obj *prev_cousin;	/**< \brief Previous object of same type and depth */
 
-  /* parent */
+  /* children of the same parent are siblings, even if they may have different type and depth */
   struct hwloc_obj *parent;		/**< \brief Parent, \c NULL if root (system object) */
   unsigned sibling_rank;		/**< \brief Index in parent's \c children[] array */
   struct hwloc_obj *next_sibling;	/**< \brief Next object below the same parent */
   struct hwloc_obj *prev_sibling;	/**< \brief Previous object below the same parent */
 
-  /* children */
+  /* children array below this object */
   unsigned arity;			/**< \brief Number of children */
   struct hwloc_obj **children;		/**< \brief Children, \c children[0 .. arity -1] */
   struct hwloc_obj *first_child;	/**< \brief First child */
@@ -361,6 +382,9 @@ struct hwloc_obj {
                                           * \note Its value must not be changed, hwloc_bitmap_dup must be used instead.
                                           */
 
+  struct hwloc_distances_s **distances;	/**< \brief Distances between all objects at same depth below this object */
+  unsigned distances_count;
+
   struct hwloc_obj_info_s *infos;	/**< \brief Array of stringified info type=name. */
   unsigned infos_count;			/**< \brief Size of infos array. */
 };
@@ -381,6 +405,40 @@ union hwloc_obj_attr_u {
   struct hwloc_group_attr_s {
     unsigned depth;			  /**< \brief Depth of group object */
   } group;
+};
+
+/** \brief Distances between objects
+ *
+ * One object may contain a distance structure describing distances
+ * between all its descendants at a given relative depth. If the
+ * containing object is the root object of the topology, then the
+ * distances are available for all objects in the machine.
+ *
+ * The distance may be a memory latency, as defined by the ACPI SLIT
+ * specification. If so, the \p latency pointer will not be \c NULL
+ * and the pointed array will contain non-zero values.
+ *
+ * In the future, some other types of distances may be considered.
+ * In these cases, \p latency will be \c NULL.
+ */
+struct hwloc_distances_s {
+  unsigned relative_depth;	/**< \brief Relative depth of the considered objects
+				 * below the object containing this distance information. */
+  unsigned nbobjs;		/**< \brief Number of objects considered in the matrix.
+				 * It is the number of descendant objects at \p relative_depth
+				 * below the containing object.
+				 * It corresponds to the result of hwloc_get_nbobjs_inside_cpuset_by_depth. */
+
+  float *latency;		/**< \brief Matrix of latencies between objects, stored as a one-dimension array.
+				 * May be \c NULL if the distances considered here are not latencies.
+				 * Values are normalized to get 1.0 as the minimal value in the matrix.
+				 * Latency from i-th to j-th object is stored in slot i*nbobjs+j.
+				 */
+  float latency_max;		/**< \brief The maximal value in the latency matrix. */
+  float latency_base;		/**< \brief The multiplier that should be applied to latency matrix
+				 * to retrieve the original OS-provided latencies.
+				 * Usually 10 on Linux since ACPI SLIT uses 10 for local latency.
+				 */
 };
 
 /** \brief Object info */
@@ -590,6 +648,18 @@ HWLOC_DECLSPEC int hwloc_topology_set_xml(hwloc_topology_t __hwloc_restrict topo
  */
 HWLOC_DECLSPEC int hwloc_topology_set_xmlbuffer(hwloc_topology_t __hwloc_restrict topology, const char * __hwloc_restrict buffer, int size);
 
+/** \brief Provide a distance matrix.
+ *
+ * Provide the matrix of distances between a set of objects of the given type.
+ * The set may or may not contain all the existing objects of this type.
+ * The objects are specified by their OS/physical index in the \p os_index
+ * array. The \p distances matrix follows the same order.
+ * The distance from object i to object j in the i*nbobjs+j.
+ */
+HWLOC_DECLSPEC int hwloc_topology_set_distance_matrix(hwloc_topology_t __hwloc_restrict topology,
+						      hwloc_obj_type_t type, unsigned nbobjs,
+						      unsigned *os_index, float *distances);
+
 /** \brief Flags describing actual discovery support for this topology. */
 struct hwloc_topology_discovery_support {
   /** \brief Detecting the number of PU objects is supported. */
@@ -614,6 +684,12 @@ struct hwloc_topology_cpubind_support {
   unsigned char set_thread_cpubind;
   /** Getting the binding of a given thread only is supported.  */
   unsigned char get_thread_cpubind;
+  /** Getting the last processors where the whole current process ran is supported */
+  unsigned char get_thisproc_last_cpu_location;
+  /** Getting the last processors where a whole process ran is supported */
+  unsigned char get_proc_last_cpu_location;
+  /** Getting the last processors where the current thread ran is supported */
+  unsigned char get_thisthread_last_cpu_location;
 };
 
 /** \brief Flags describing actual memory binding support for this topology. */
@@ -691,24 +767,57 @@ HWLOC_DECLSPEC void hwloc_topology_export_xmlbuffer(hwloc_topology_t topology, c
 /** \brief Add a MISC object to the topology
  *
  * A new MISC object will be created and inserted into the topology at the
- * position given by bitmap \p cpuset.
+ * position given by bitmap \p cpuset. This offers a way to add new
+ * intermediate levels to the topology hierarchy.
  *
- * cpuset and name will be copied.
+ * \p cpuset and \p name will be copied to setup the new object attributes.
  *
- * \return the newly-created object
+ * \return the newly-created object.
+ * \return \c NULL if the insertion conflicts with the existing topology tree.
  */
 HWLOC_DECLSPEC hwloc_obj_t hwloc_topology_insert_misc_object_by_cpuset(hwloc_topology_t topology, hwloc_const_cpuset_t cpuset, const char *name);
 
-/** \brief Add a MISC object to the topology
+/** \brief Add a MISC object as a leaf of the topology
  *
  * A new MISC object will be created and inserted into the topology at the
- * position given by parent.
+ * position given by parent. It is appended to the list of existing children,
+ * without ever adding any intermediate hierarchy level. This is useful for
+ * annotating the topology without actually changing the hierarchy.
  *
- * name will be copied.
+ * \p name will be copied to the setup the new object attributes.
+ * However, the new leaf object will not have any \p cpuset.
  *
  * \return the newly-created object
  */
 HWLOC_DECLSPEC hwloc_obj_t hwloc_topology_insert_misc_object_by_parent(hwloc_topology_t topology, hwloc_obj_t parent, const char *name);
+
+/** \brief Flags to be given to hwloc_topology_restrict(). */
+enum hwloc_restrict_flags_e {
+  HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES = (1<<0),
+ /**< \brief Adapt distance matrices according to objects being removed during restriction.
+   * If this flag is not set, distance matrices are removed.
+   * \hideinitializer
+   */
+  HWLOC_RESTRICT_FLAG_ADAPT_MISC = (1<<1)
+ /**< \brief Move Misc objects to ancestors if their parents are removed during restriction.
+   * If this flag is not set, Misc objects are removed when their parents are removed.
+   * \hideinitializer
+   */
+};
+
+/** \brief Restrict the topology to the given CPU set.
+ *
+ * Topology \p topology is modified so as to remove all objects that
+ * are not included (or partially included) in the CPU set \p cpuset.
+ * All objects CPU and node sets are restricted accordingly.
+ *
+ * \p flags is a OR'ed set of ::hwloc_restrict_flags_e.
+ *
+ * \note This call may not be reverted by restricting back to a larger
+ * cpuset. Once dropped during restriction, objects may not be brought
+ * back, except by reloading the entire topology with hwloc_topology_load().
+ */
+HWLOC_DECLSPEC int hwloc_topology_restrict(hwloc_topology_t __hwloc_restrict topology, hwloc_const_cpuset_t cpuset, unsigned long flags);
 
 /** @} */
 
@@ -1050,6 +1159,26 @@ HWLOC_DECLSPEC int hwloc_set_thread_cpubind(hwloc_topology_t topology, hwloc_thr
  */
 HWLOC_DECLSPEC int hwloc_get_thread_cpubind(hwloc_topology_t topology, hwloc_thread_t tid, hwloc_cpuset_t set, int flags);
 #endif
+
+/** \brief Get the last CPU where the current process or thread ran.
+ *
+ * The operating system may move some tasks from one processor
+ * to another at any time according to their binding,
+ * so this function may return something that is already
+ * outdated.
+ */
+HWLOC_DECLSPEC int hwloc_get_last_cpu_location(hwloc_topology_t topology, hwloc_cpuset_t set, int flags);
+
+/** \brief Get the last CPU where a process ran.
+ *
+ * The operating system may move some tasks from one processor
+ * to another at any time according to their binding,
+ * so this function may return something that is already
+ * outdated.
+ *
+ * \note HWLOC_CPUBIND_THREAD can not be used in \p flags.
+ */
+HWLOC_DECLSPEC int hwloc_get_proc_last_cpu_location(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_cpuset_t set, int flags);
 
 /** @} */
 

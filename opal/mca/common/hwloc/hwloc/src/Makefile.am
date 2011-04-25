@@ -1,6 +1,7 @@
-# Copyright © 2009-2010 INRIA
+# Copyright © 2009-2010 INRIA.  All rights reserved.
 # Copyright © 2009-2010 Université Bordeaux 1
 # Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# See COPYING in top-level directory.
 
 AM_CFLAGS = $(HWLOC_CFLAGS)
 AM_CPPFLAGS = $(HWLOC_CPPFLAGS)
@@ -22,6 +23,7 @@ endif
 sources = \
         topology.c \
         traversal.c \
+        distances.c \
         topology-synthetic.c \
         bind.c \
         cpuset.c \

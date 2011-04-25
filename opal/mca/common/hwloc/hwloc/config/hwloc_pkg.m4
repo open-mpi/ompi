@@ -1,4 +1,5 @@
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+# See COPYING in top-level directory.
 #
 # hwloc modification to the following PKG_* macros -- add HWLOC_
 # prefix to make it "safe" to embed these macros in other packages.

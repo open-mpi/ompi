@@ -14,11 +14,11 @@ locality on modern computing platforms.
 Note that the hwloc project represents the merger of the libtopology project
 from INRIA and the Portable Linux Processor Affinity (PLPA) sub-project from
 Open MPI. Both of these prior projects are now deprecated. The first hwloc
-release is essentially a "re-branding" of the libtopology code base, but with
-both a few genuinely new features and a few PLPA-like features added in. More
-new features and more PLPA-like features will be added to hwloc over time. See
-Switching from PLPA to hwloc for more details about converting your application
-from PLPA to hwloc.
+release was essentially a "re-branding" of the libtopology code base, but with
+both a few genuinely new features and a few PLPA-like features added in. Prior
+releases of hwloc included documentation about switching from PLPA to hwloc;
+this documentation has been dropped on the assumption that everyone who was
+using PLPA has already switched to hwloc.
 
 hwloc supports the following operating systems:
 
@@ -424,9 +424,10 @@ core of the machine.
 
 /* Example hwloc API program.
  *
- * Copyright ? 2009-2010 INRIA
+ * Copyright ? 2009-2010 INRIA.  All rights reserved.
  * Copyright ? 2009-2011 Universit? Bordeaux 1
  * Copyright ? 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * See COPYING in top-level directory.
  *
  * hwloc-hello.c
  */
@@ -677,12 +678,11 @@ The documentation chapters include
   * Interoperability With Other Software
   * Thread Safety
   * Embedding hwloc in Other Software
-  * Switching from PLPA to hwloc
   * Frequently Asked Questions
 
 Make sure to have had a look at those too!
 
 -------------------------------------------------------------------------------
 
-Generated on Wed Apr 6 2011 17:31:39 for Hardware Locality (hwloc) by  doxygen
+Generated on Thu Apr 14 2011 22:34:49 for Hardware Locality (hwloc) by  doxygen
 1.7.3
