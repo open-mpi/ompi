@@ -232,13 +232,14 @@ static __hwloc_inline hwloc_obj_t
 hwloc_get_first_largest_obj_inside_cpuset(hwloc_topology_t topology, hwloc_const_cpuset_t set)
 {
   hwloc_obj_t obj = hwloc_get_root_obj(topology);
+  /* FIXME: what if !root->cpuset? */
   if (!hwloc_bitmap_intersects(obj->cpuset, set))
     return NULL;
   while (!hwloc_bitmap_isincluded(obj->cpuset, set)) {
     /* while the object intersects without being included, look at its children */
     hwloc_obj_t child = NULL;
     while ((child = hwloc_get_next_child(topology, obj, child)) != NULL) {
-      if (hwloc_bitmap_intersects(child->cpuset, set))
+      if (child->cpuset && hwloc_bitmap_intersects(child->cpuset, set))
 	break;
     }
     if (!child)
@@ -269,6 +270,7 @@ hwloc_get_next_obj_inside_cpuset_by_depth (hwloc_topology_t topology, hwloc_cons
 					   unsigned depth, hwloc_obj_t prev)
 {
   hwloc_obj_t next = hwloc_get_next_obj_by_depth(topology, depth, prev);
+  /* no need to check next->cpuset because objects in levels always have a cpuset */
   while (next && !hwloc_bitmap_isincluded(next->cpuset, set))
     next = next->next_cousin;
   return next;
@@ -299,6 +301,7 @@ hwloc_get_obj_inside_cpuset_by_depth (hwloc_topology_t topology, hwloc_const_cpu
   unsigned count = 0;
   hwloc_obj_t obj = hwloc_get_obj_by_depth (topology, depth, 0);
   while (obj) {
+    /* no need to check obj->cpuset because objects in levels always have a cpuset */
     if (hwloc_bitmap_isincluded(obj->cpuset, set)) {
       if (count == idx)
 	return obj;
@@ -333,6 +336,7 @@ hwloc_get_nbobjs_inside_cpuset_by_depth (hwloc_topology_t topology, hwloc_const_
   hwloc_obj_t obj = hwloc_get_obj_by_depth (topology, depth, 0);
   int count = 0;
   while (obj) {
+    /* no need to check obj->cpuset because objects in levels always have a cpuset */
     if (hwloc_bitmap_isincluded(obj->cpuset, set))
       count++;
     obj = obj->next_cousin;
@@ -381,7 +385,7 @@ hwloc_get_child_covering_cpuset (hwloc_topology_t topology __hwloc_attribute_unu
 
   child = parent->first_child;
   while (child) {
-    if (hwloc_bitmap_isincluded(set, child->cpuset))
+    if (child->cpuset && hwloc_bitmap_isincluded(set, child->cpuset))
       return child;
     child = child->next_sibling;
   }
@@ -400,6 +404,7 @@ hwloc_get_obj_covering_cpuset (hwloc_topology_t topology, hwloc_const_cpuset_t s
   if (hwloc_bitmap_iszero(set))
     return NULL;
 
+  /* FIXME: what if !root->cpuset? */
   if (!hwloc_bitmap_isincluded(set, current->cpuset))
     return NULL;
 
@@ -432,6 +437,7 @@ hwloc_get_next_obj_covering_cpuset_by_depth(hwloc_topology_t topology, hwloc_con
 					    unsigned depth, hwloc_obj_t prev)
 {
   hwloc_obj_t next = hwloc_get_next_obj_by_depth(topology, depth, prev);
+  /* no need to check next->cpuset because objects in levels always have a cpuset */
   while (next && !hwloc_bitmap_intersects(set, next->cpuset))
     next = next->next_cousin;
   return next;
@@ -483,15 +489,17 @@ hwloc_get_cache_covering_cpuset (hwloc_topology_t topology, hwloc_const_cpuset_t
   return NULL;
 }
 
-/** \brief Get the first cache shared between an object and somebody else
+/** \brief Get the first cache shared between an object and somebody else.
  *
- * \return \c NULL if no cache matches
+ * \return \c NULL if no cache matches or if an invalid object is given.
  */
 static __hwloc_inline hwloc_obj_t __hwloc_attribute_pure
 hwloc_get_shared_cache_covering_obj (hwloc_topology_t topology __hwloc_attribute_unused, hwloc_obj_t obj)
 {
   hwloc_obj_t current = obj->parent;
-  while (current) {
+  if (!obj->cpuset)
+    return NULL;
+  while (current && current->cpuset) {
     if (!hwloc_bitmap_isequal(current->cpuset, obj->cpuset)
         && current->type == HWLOC_OBJ_CACHE)
       return current;
@@ -563,6 +571,7 @@ hwloc_get_obj_below_array_by_type (hwloc_topology_t topology, int nr, hwloc_obj_
   hwloc_obj_t obj = hwloc_get_root_obj(topology);
   int i;
 
+  /* FIXME: what if !root->cpuset? */
   for(i=0; i<nr; i++) {
     obj = hwloc_get_obj_inside_cpuset_by_type(topology, obj->cpuset, typev[i], idxv[i]);
     if (!obj)
@@ -600,6 +609,7 @@ hwloc_distribute(hwloc_topology_t topology, hwloc_obj_t root, hwloc_cpuset_t *cp
 {
   unsigned i;
 
+  /* FIXME: what if !root->cpuset? */
   if (!root->arity || n == 1 || root->depth >= until) {
     /* Got to the bottom, we can't split any more, put everything there.  */
     for (i=0; i<n; i++)
@@ -624,11 +634,12 @@ hwloc_distributev(hwloc_topology_t topology, hwloc_obj_t *roots, unsigned n_root
 
   tot_weight = 0;
   for (i = 0; i < n_roots; i++)
-    tot_weight += hwloc_bitmap_weight(roots[i]->cpuset);
+    if (roots[i]->cpuset)
+      tot_weight += hwloc_bitmap_weight(roots[i]->cpuset);
 
-  for (i = 0; i < n_roots; i++) {
+  for (i = 0; i < n_roots && tot_weight; i++) {
     /* Give to roots[i] a portion proportional to its weight */
-    unsigned weight = hwloc_bitmap_weight(roots[i]->cpuset);
+    unsigned weight = roots[i]->cpuset ? hwloc_bitmap_weight(roots[i]->cpuset) : 0;
     unsigned chunk = (n * weight + tot_weight-1) / tot_weight;
     hwloc_distribute(topology, roots[i], cpusetp, chunk, until);
     cpusetp += chunk;
@@ -894,6 +905,7 @@ hwloc_cpuset_from_nodeset(hwloc_topology_t topology, hwloc_cpuset_t cpuset, hwlo
 	obj = NULL;
 	while ((obj = hwloc_get_next_obj_by_depth(topology, depth, obj)) != NULL) {
 		if (hwloc_bitmap_isset(nodeset, obj->os_index))
+			/* no need to check obj->cpuset because objects in levels always have a cpuset */
 			hwloc_bitmap_or(cpuset, cpuset, obj->cpuset);
 	}
 }
@@ -916,7 +928,147 @@ hwloc_cpuset_from_nodeset_strict(struct hwloc_topology *topology, hwloc_cpuset_t
 	obj = NULL;
 	while ((obj = hwloc_get_next_obj_by_depth(topology, depth, obj)) != NULL)
 		if (hwloc_bitmap_isset(nodeset, obj->os_index))
+			/* no need to check obj->cpuset because objects in levels always have a cpuset */
 			hwloc_bitmap_or(cpuset, cpuset, obj->cpuset);
+}
+
+/** @} */
+
+
+
+/** \defgroup hwlocality_distances Distances
+ * @{
+ */
+
+/** \brief Get the distances between all objects at the given depth.
+ *
+ * \return a distances structure containing a matrix with all distances
+ * between all objects at the given depth.
+ *
+ * Slot i+nbobjs*j contains the distance from the object of logical index i
+ * the object of logical index j.
+ *
+ * \note This function only returns matrices covering the whole topology,
+ * without any unknown distance value. Those matrices are available in
+ * top-level object of the hierarchy. Matrices of lower objects are not
+ * reported here since they cover only part of the machine.
+ *
+ * The returned structure belongs to the hwloc library. The caller should
+ * not modify or free it.
+ *
+ * \return \c NULL if no such distance matrix exists.
+ */
+
+static __hwloc_inline const struct hwloc_distances_s *
+hwloc_get_whole_distance_matrix_by_depth(hwloc_topology_t topology, unsigned depth)
+{
+  hwloc_obj_t root = hwloc_get_root_obj(topology);
+  unsigned i;
+  for(i=0; i<root->distances_count; i++)
+    if (root->distances[i]->relative_depth == depth)
+      return root->distances[i];
+  return NULL;
+}
+
+/** \brief Get the distances between all objects of a given type.
+ *
+ * \return a distances structure containing a matrix with all distances
+ * between all objects of the given type.
+ *
+ * Slot i+nbobjs*j contains the distance from the object of logical index i
+ * the object of logical index j.
+ *
+ * \note This function only returns matrices covering the whole topology,
+ * without any unknown distance value. Those matrices are available in
+ * top-level object of the hierarchy. Matrices of lower objects are not
+ * reported here since they cover only part of the machine.
+ *
+ * The returned structure belongs to the hwloc library. The caller should
+ * not modify or free it.
+ *
+ * \return \c NULL if no such distance matrix exists.
+ */
+
+static __hwloc_inline const struct hwloc_distances_s *
+hwloc_get_whole_distance_matrix_by_type(hwloc_topology_t topology, hwloc_obj_type_t type)
+{
+  int depth = hwloc_get_type_depth(topology, type);
+  if (depth < 0)
+    return NULL;
+  return hwloc_get_whole_distance_matrix_by_depth(topology, depth);
+}
+
+/** \brief Get distances for the given depth and covering some objects
+ *
+ * Return a distance matrix that describes depth \p depth and covers at
+ * least object \p obj and all its ancestors.
+ *
+ * When looking for the distance between some objects, a common ancestor should
+ * be passed in \p obj.
+ *
+ * \p firstp is set to logical index of the first object described by the matrix.
+ *
+ * The returned structure belongs to the hwloc library. The caller should
+ * not modify or free it.
+ */
+static __hwloc_inline const struct hwloc_distances_s *
+hwloc_get_distance_matrix_covering_obj_by_depth(hwloc_topology_t topology,
+						hwloc_obj_t obj, unsigned depth,
+						unsigned *firstp)
+{
+  while (obj && obj->cpuset) {
+    unsigned i;
+    for(i=0; i<obj->distances_count; i++)
+      if (obj->distances[i]->relative_depth == depth - obj->depth) {
+	if (!obj->distances[i]->nbobjs)
+	  continue;
+	*firstp = hwloc_get_next_obj_inside_cpuset_by_depth(topology, obj->cpuset, depth, NULL)->logical_index;
+	return obj->distances[i];
+      }
+    obj = obj->parent;
+  }
+  return NULL;
+}
+
+/** \brief Get the latency in both directions between two objects.
+ *
+ * Look at ancestor objects from the bottom to the top until one of them
+ * contains a distance matrix that matches the objects exactly.
+ *
+ * \p latency gets the value from object \p obj1 to \p obj2, while
+ * \p reverse_latency gets the reverse-direction value, which
+ * may be different on some architectures.
+ *
+ * \return -1 if no ancestor contains a matching latency matrix.
+ */
+static __hwloc_inline int
+hwloc_get_latency(hwloc_topology_t topology,
+		   hwloc_obj_t obj1, hwloc_obj_t obj2,
+		   float *latency, float *reverse_latency)
+{
+  hwloc_obj_t ancestor;
+  const struct hwloc_distances_s * distances;
+  unsigned first_logical ;
+
+  if (obj1->depth != obj2->depth) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  ancestor = hwloc_get_common_ancestor_obj(topology, obj1, obj2);
+  distances = hwloc_get_distance_matrix_covering_obj_by_depth(topology, ancestor, obj1->depth, &first_logical);
+  if (distances && distances->latency) {
+    const float * latency_matrix = distances->latency;
+    unsigned nbobjs = distances->nbobjs;
+    unsigned l1 = obj1->logical_index - first_logical;
+    unsigned l2 = obj2->logical_index - first_logical;
+    *latency = latency_matrix[l1*nbobjs+l2];
+    *reverse_latency = latency_matrix[l2*nbobjs+l1];
+    return 0;
+  }
+
+  errno = ENOSYS;
+  return -1;
 }
 
 /** @} */

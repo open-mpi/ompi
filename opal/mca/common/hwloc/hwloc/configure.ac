@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright © 2009      CNRS
-# Copyright © 2009-2010 INRIA
+# Copyright © 2009-2010 INRIA.  All rights reserved.
 # Copyright © 2009, 2011      Université Bordeaux 1
 # Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
 #
@@ -52,7 +52,7 @@ HWLOC_VERSION="`$srcdir/config/hwloc_get_version.sh $srcdir/VERSION`"
 HWLOC_MAJOR_VERSION="`$srcdir/config/hwloc_get_version.sh $srcdir/VERSION --major`"
 HWLOC_MINOR_VERSION="`$srcdir/config/hwloc_get_version.sh $srcdir/VERSION --minor`"
 HWLOC_RELEASE_VERSION="`$srcdir/config/hwloc_get_version.sh $srcdir/VERSION --release`"
-HWLOC_SVN_R="`$srcdir/config/hwloc_get_version.sh $srcdir/VERSION --svn`"
+HWLOC_REPO_REV="`$srcdir/config/hwloc_get_version.sh $srcdir/VERSION --repo-rev`"
 HWLOC_RELEASE_DATE="`$srcdir/config/hwloc_get_version.sh $srcdir/VERSION --release-date`"
 AC_SUBST(HWLOC_VERSION)
 AC_SUBST(HWLOC_SVN_R)
@@ -85,7 +85,7 @@ AC_SUBST([libhwloc_so_version])
 # Setup the header file
 AH_TOP([/* -*- c -*-
  *
- * Copyright © 2009 CNRS, INRIA, Université Bordeaux 1
+ * Copyright © 2009 CNRS, INRIA., Université Bordeaux 1  All rights reserved.
  * Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 

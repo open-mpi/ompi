@@ -1,7 +1,7 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
- * Copyright © 2009-2010 Université Bordeaux 1
+ * Copyright © 2009-2010 INRIA.  All rights reserved.
+ * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
@@ -154,13 +154,13 @@ typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
 typedef union _PSAPI_WORKING_SET_EX_BLOCK {
   ULONG_PTR Flags;
   struct {
-    ULONG_PTR Valid  :1;
-    ULONG_PTR ShareCount  :3;
-    ULONG_PTR Win32Protection  :11;
-    ULONG_PTR Shared  :1;
-    ULONG_PTR Node  :6;
-    ULONG_PTR Locked  :1;
-    ULONG_PTR LargePage  :1;
+    unsigned Valid  :1;
+    unsigned ShareCount  :3;
+    unsigned Win32Protection  :11;
+    unsigned Shared  :1;
+    unsigned Node  :6;
+    unsigned Locked  :1;
+    unsigned LargePage  :1;
   };
 } PSAPI_WORKING_SET_EX_BLOCK;
 #endif
@@ -686,6 +686,7 @@ hwloc_set_windows_hooks(struct hwloc_topology *topology)
   topology->set_thisproc_cpubind = hwloc_win_set_thisproc_cpubind;
   topology->get_thisproc_cpubind = hwloc_win_get_thisproc_cpubind;
   topology->set_thisthread_cpubind = hwloc_win_set_thisthread_cpubind;
+  /* TODO: get_last_cpu_location: use GetCurrentProcessorNumber */
 
   topology->set_proc_membind = hwloc_win_set_proc_membind;
   topology->get_proc_membind = hwloc_win_get_proc_membind;

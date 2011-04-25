@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2011 INRIA.  All rights reserved.
  * Copyright © 2009-2010 Université Bordeaux 1
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
@@ -151,6 +151,36 @@ hwloc_get_thread_cpubind(hwloc_topology_t topology, hwloc_thread_t tid, hwloc_bi
   return -1;
 }
 #endif
+
+int
+hwloc_get_last_cpu_location(hwloc_topology_t topology, hwloc_bitmap_t set, int flags)
+{
+  if (flags & HWLOC_CPUBIND_PROCESS) {
+    if (topology->get_thisproc_last_cpu_location)
+      return topology->get_thisproc_last_cpu_location(topology, set, flags);
+  } else if (flags & HWLOC_CPUBIND_THREAD) {
+    if (topology->get_thisthread_last_cpu_location)
+      return topology->get_thisthread_last_cpu_location(topology, set, flags);
+  } else {
+    if (topology->get_thisproc_last_cpu_location)
+      return topology->get_thisproc_last_cpu_location(topology, set, flags);
+    else if (topology->get_thisthread_last_cpu_location)
+      return topology->get_thisthread_last_cpu_location(topology, set, flags);
+  }
+
+  errno = ENOSYS;
+  return -1;
+}
+
+int
+hwloc_get_proc_last_cpu_location(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_bitmap_t set, int flags)
+{
+  if (topology->get_proc_last_cpu_location)
+    return topology->get_proc_last_cpu_location(topology, pid, set, flags);
+
+  errno = ENOSYS;
+  return -1;
+}
 
 static hwloc_const_nodeset_t
 hwloc_fix_membind(hwloc_topology_t topology, hwloc_const_nodeset_t nodeset)
@@ -461,8 +491,8 @@ hwloc_alloc(hwloc_topology_t topology, size_t len)
 void *
 hwloc_alloc_membind_nodeset(hwloc_topology_t topology, size_t len, hwloc_const_nodeset_t nodeset, hwloc_membind_policy_t policy, int flags)
 {
-  nodeset = hwloc_fix_membind(topology, nodeset);
   void *p;
+  nodeset = hwloc_fix_membind(topology, nodeset);
   if (!nodeset)
     goto fallback;
   if (flags & HWLOC_MEMBIND_MIGRATE) {

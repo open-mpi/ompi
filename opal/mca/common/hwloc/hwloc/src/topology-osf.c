@@ -1,7 +1,7 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
- * Copyright © 2009-2010 Université Bordeaux 1
+ * Copyright © 2009-2011 INRIA.  All rights reserved.
+ * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
@@ -250,15 +250,15 @@ hwloc_look_osf(struct hwloc_topology *topology)
   radsetcreate(&radset);
   radsetcreate(&radset2);
   {
-    hwloc_obj_t nodes[nbnodes];
-    unsigned distances[nbnodes][nbnodes];
-    unsigned distance_indexes[nbnodes];
+    hwloc_obj_t *nodes = calloc(nbnodes, sizeof(hwloc_obj_t));
+    unsigned *indexes = calloc(nbnodes, sizeof(unsigned));
+    float *distances = calloc(nbnodes*nbnodes, sizeof(float));
     unsigned nfound;
-    numa_attr_t attr = {
-      .nattr_type = R_RAD,
-      .nattr_descr = { .rd_radset = radset },
-      .nattr_flags = 0,
-    };
+    numa_attr_t attr;
+
+    attr.nattr_type = R_RAD;
+    attr.nattr_descr.rd_radset = radset;
+    attr.nattr_flags = 0;
 
     for (radid = 0; radid < (radid_t) nbnodes; radid++) {
       rademptyset(radset);
@@ -269,6 +269,7 @@ hwloc_look_osf(struct hwloc_topology *topology)
 	continue;
       }
 
+      indexes[radid] = radid;
       nodes[radid] = obj = hwloc_alloc_setup_object(HWLOC_OBJ_NODE, radid);
       obj->cpuset = hwloc_bitmap_alloc();
       obj->memory.local_memory = rad_get_physmem(radid) * getpagesize();
@@ -289,11 +290,9 @@ hwloc_look_osf(struct hwloc_topology *topology)
 
       hwloc_insert_object_by_cpuset(topology, obj);
 
-      distance_indexes[radid] = radid;
-
       nfound = 0;
       for (radid2 = 0; radid2 < (radid_t) nbnodes; radid2++)
-	distances[radid][radid2] = RAD_DIST_REMOTE;
+	distances[radid*nbnodes+radid2] = RAD_DIST_REMOTE;
       for (distance = RAD_DIST_LOCAL; distance < RAD_DIST_REMOTE; distance++) {
 	attr.nattr_distance = distance;
 	/* get set of NUMA nodes at distance <= DISTANCE */
@@ -303,8 +302,8 @@ hwloc_look_osf(struct hwloc_topology *topology)
 	}
 	cursor = SET_CURSOR_INIT;
 	while ((radid2 = rad_foreach(radset2, 0, &cursor)) != RAD_NONE) {
-	  if (distances[radid][radid2] == RAD_DIST_REMOTE) {
-	    distances[radid][radid2] = distance;
+	  if (distances[radid*nbnodes+radid2] == RAD_DIST_REMOTE) {
+            distances[radid*nbnodes+radid2] = (float) distance;
 	    nfound++;
 	  }
 	}
@@ -313,7 +312,8 @@ hwloc_look_osf(struct hwloc_topology *topology)
 	  break;
       }
     }
-    hwloc_setup_misc_level_from_distances(topology, nbnodes, nodes, (unsigned*) distances, (unsigned*) distance_indexes);
+
+    hwloc_topology__set_distance_matrix(topology, HWLOC_OBJ_NODE, nbnodes, indexes, nodes, distances);
   }
   radsetdestroy(&radset2);
   radsetdestroy(&radset);
