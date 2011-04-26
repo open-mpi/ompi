@@ -554,13 +554,13 @@ EXTERN int(*libc_fprintf)(FILE *, const char *, ...);
                         else { \
                                 fid = invalid_fd_fid; \
                         } \
-                        ioop |= VT_IOFLAG_IOFAILED; \
+                        vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
+                        vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, 0 ); \
                 } \
                 else { \
                         fid = vt_iofile_id(PATH); \
+                        vt_ioend( &time, fid, handleid, ioop, 0 ); \
                 } \
-                vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time); \
-                vt_ioend( &time, fid, handleid, ioop, 0 ); \
         } \
         vt_exit( &time ); \
         if( enable_memhooks ) VT_MEMHOOKS_ON(); \
