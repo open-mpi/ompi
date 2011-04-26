@@ -73,8 +73,6 @@ opal_maffinity_hwloc_component_2_0_0_t mca_maffinity_hwloc_component = {
 
     /* Priority */
     40,
-    /* Default binding policy */
-    HWLOC_MEMBIND_STRICT,
 
     /* NULL fill the rest of the component data */
 };
@@ -83,7 +81,6 @@ opal_maffinity_hwloc_component_2_0_0_t mca_maffinity_hwloc_component = {
 static int hwloc_register(void)
 {
     int i;
-    char *val, *mca_policy;
 
     /* Call the registration function of common hwloc */
     opal_common_hwloc_register();
@@ -100,25 +97,6 @@ static int hwloc_register(void)
                            "Priority of the hwloc maffinity component",
                            false, false, 40, 
                            &mca_maffinity_hwloc_component.priority);
-
-    /* Default memory binding policy */
-    val = (HWLOC_MEMBIND_STRICT == mca_maffinity_hwloc_component.bind_policy ?
-           "strict" : "loose");
-    mca_base_param_reg_string(&mca_maffinity_hwloc_component.base.base_version,
-                              "policy", 
-                              "Binding policy that determines what happens if memory is unavailable on the local NUMA node.  A value of \"strict\" means that the memory allocation will fail; a value of \"loose\" means that the memory allocation will spill over to another NUMA node.",
-                              false, false, val, &mca_policy);
-
-    if (strcasecmp(mca_policy, "loose") == 0) {
-        mca_maffinity_hwloc_component.bind_policy = 0;
-    } else if (strcasecmp(mca_policy, "strict") == 0) {
-        mca_maffinity_hwloc_component.bind_policy = HWLOC_MEMBIND_STRICT;
-    } else {
-        opal_show_help("help-opal-maffinity-hwloc.txt", "invalid policy",
-                       true, mca_policy, getpid());
-        mca_maffinity_hwloc_component.bind_policy = HWLOC_MEMBIND_STRICT;
-        return OPAL_ERR_BAD_PARAM;
-    }
 
     return OPAL_SUCCESS;
 }

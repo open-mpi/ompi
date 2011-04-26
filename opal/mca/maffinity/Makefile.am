@@ -31,6 +31,8 @@ opaldir = $(includedir)/openmpi/$(subdir)
 nobase_opal_HEADERS = $(headers)
 endif
 
+dist_pkgdata_DATA =
+
 include base/Makefile.am
 
 distclean-local:

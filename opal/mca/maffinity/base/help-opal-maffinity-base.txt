@@ -1,0 +1,43 @@
+# -*- text -*-
+#
+# Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's maffinity base support
+#
+[invalid policy]
+WARNING: An invalid value was given for the
+maffinity_base_general_alloc_policy MCA parameter.  This MCA parameter
+determines the policy used for general memory allocations.  Note that
+this parameter *only* has effect when MPI processes are bound to
+specific processors.  
+
+The value provided was:
+
+  Local host: %s
+  PID:        %d
+  Value:      %s
+
+Valid values are:
+
+  none:         no memory binding policy is enforced
+  prefer_local: try allocating memory on the local NUMA node, but
+                allow spilling over to remote NUMA nodes if necessary
+  local_only:   fail an allocation if it cannot be placed entirely on
+                the local NUMA node
+
+Your job will now abort.
+#
+[mbind failure]
+Open MPI failed to bind internal memory to a specific NUMA node.  This
+message will only be reported at most once per process.
+
+  Local host: %s
+  PID:        %d
+  File:       %s:%d
+  Message:    %s
+  Severity:   %s
