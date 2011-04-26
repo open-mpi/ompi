@@ -43,7 +43,7 @@ static int hwloc_module_init(void);
 static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
                               size_t num_segments);
 static int hwloc_module_node_name_to_id(char *, int *);
-static int hwloc_modules_bind(opal_maffinity_base_segment_t *, size_t, int);
+static int hwloc_module_bind(opal_maffinity_base_segment_t *, size_t, int);
 
 /*
  * Hwloc maffinity module
@@ -55,7 +55,7 @@ static const opal_maffinity_base_module_1_0_0_t local_module = {
     /* Module function pointers */
     hwloc_module_set,
     hwloc_module_node_name_to_id,
-    hwloc_modules_bind
+    hwloc_module_bind
 };
 
 int opal_maffinity_hwloc_component_query(mca_base_module_t **module, 
@@ -74,16 +74,35 @@ int opal_maffinity_hwloc_component_query(mca_base_module_t **module,
 
 static int hwloc_module_init(void)
 {
-    int rc;
+    int rc = 0, flags;
+    hwloc_membind_policy_t policy;
     hwloc_cpuset_t cpuset;
 
-    /* Set the default memory binding policy to allocate locally */
+    /* Set the default memory allocation policy according to MCA param */
+    switch (opal_maffinity_base_map) {
+    case OPAL_MAFFINITY_BASE_MAP_LOCAL_ONLY:
+        policy = HWLOC_MEMBIND_BIND;
+        flags = HWLOC_MEMBIND_STRICT;
+        break;
+
+    case OPAL_MAFFINITY_BASE_MAP_NONE:
+    default:
+        policy = HWLOC_MEMBIND_DEFAULT;
+        flags = 0;
+        break;
+
+    }
+
     cpuset = hwloc_bitmap_alloc();
-    hwloc_get_cpubind(mca_maffinity_hwloc_component.topology, cpuset, 0);
-    rc = hwloc_set_membind(mca_maffinity_hwloc_component.topology, 
-                           cpuset, HWLOC_MEMBIND_BIND, 
-                           mca_maffinity_hwloc_component.bind_policy);
-    hwloc_bitmap_free(cpuset);
+    if (NULL == cpuset) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+    } else {
+        hwloc_get_cpubind(mca_maffinity_hwloc_component.topology, 
+                          cpuset, 0);
+        rc = hwloc_set_membind(mca_maffinity_hwloc_component.topology, 
+                               cpuset, HWLOC_MEMBIND_BIND, flags);
+        hwloc_bitmap_free(cpuset);
+    }
 
     return (0 == rc) ? OPAL_SUCCESS : OPAL_ERROR;
 }
@@ -92,13 +111,20 @@ static int hwloc_module_init(void)
 static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
                               size_t num_segments)
 {
+    int rc = OPAL_SUCCESS;
+    char *msg = NULL;
     size_t i;
-    hwloc_cpuset_t cpuset;
+    hwloc_cpuset_t cpuset = NULL;
 
     /* This module won't be used unless the process is already
        processor-bound.  So find out where we're processor bound, and
        bind our memory there, too. */
     cpuset = hwloc_bitmap_alloc();
+    if (NULL == cpuset) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        msg = "hwloc_bitmap_alloc() failure";
+        goto out;
+    }
     hwloc_get_cpubind(mca_maffinity_hwloc_component.topology, cpuset, 0);
     for (i = 0; i < num_segments; ++i) {
         if (0 != hwloc_set_area_membind(mca_maffinity_hwloc_component.topology, 
@@ -106,12 +132,20 @@ static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
                                         segments[i].mbs_len, cpuset,
                                         HWLOC_MEMBIND_BIND, 
                                         HWLOC_MEMBIND_STRICT)) {
-            hwloc_bitmap_free(cpuset);
-            return OPAL_ERROR;
+            rc = OPAL_ERROR;
+            msg = "hwloc_set_area_membind() failure";
+            goto out;
         }
     }
 
-    hwloc_bitmap_free(cpuset);
+ out:
+    if (NULL != cpuset) {
+        hwloc_bitmap_free(cpuset);
+    }
+    if (OPAL_SUCCESS != rc) {
+        return opal_maffinity_base_report_bind_failure(__FILE__, __LINE__,
+                                                       msg, rc);
+    }
     return OPAL_SUCCESS;
 }
 
@@ -123,13 +157,20 @@ static int hwloc_module_node_name_to_id(char *node_name, int *id)
     return OPAL_SUCCESS;
 }
 
-static int hwloc_modules_bind(opal_maffinity_base_segment_t *segs,
-                              size_t count, int node_id)
+static int hwloc_module_bind(opal_maffinity_base_segment_t *segs,
+                             size_t count, int node_id)
 {
     size_t i;
-    hwloc_cpuset_t cpuset;
+    int rc = OPAL_SUCCESS;
+    char *msg = NULL;
+    hwloc_cpuset_t cpuset = NULL;
 
     cpuset = hwloc_bitmap_alloc();
+    if (NULL == cpuset) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+        msg = "hwloc_bitmap_alloc() failure";
+        goto out;
+    }
     hwloc_bitmap_set(cpuset, node_id);
     for(i = 0; i < count; i++) {
         if (0 != hwloc_set_area_membind(mca_maffinity_hwloc_component.topology, 
@@ -137,11 +178,19 @@ static int hwloc_modules_bind(opal_maffinity_base_segment_t *segs,
                                         segs[i].mbs_len, cpuset,
                                         HWLOC_MEMBIND_BIND, 
                                         HWLOC_MEMBIND_STRICT)) {
-            hwloc_bitmap_free(cpuset);
-            return OPAL_ERROR;
+            rc = OPAL_ERROR;
+            msg = "hwloc_set_area_membind() failure";
+            goto out;
         }
     }
 
-    hwloc_bitmap_free(cpuset);
+ out:
+    if (NULL != cpuset) {
+        hwloc_bitmap_free(cpuset);
+    }
+    if (OPAL_SUCCESS != rc) {
+        return opal_maffinity_base_report_bind_failure(__FILE__, __LINE__,
+                                                       msg, rc);
+    }
     return OPAL_SUCCESS;
 }

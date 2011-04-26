@@ -36,7 +36,6 @@ typedef struct {
 
     /* This component's data */
     int priority;
-    int bind_policy;
     hwloc_topology_t topology;
     bool topology_need_destroy;
 } opal_maffinity_hwloc_component_2_0_0_t;

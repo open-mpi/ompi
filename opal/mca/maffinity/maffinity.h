@@ -62,6 +62,11 @@
 
 /**
  * Module initialization function.  Should return OPAL_SUCCESS.
+ *
+ * This function should act on the value of the MCA parameter
+ * maffinity_base_alloc_policy (stored in the global
+ * opal_maffinity_base_map, declared in
+ * opal/mca/maffinity/base/base.h).
  */
 typedef int (*opal_maffinity_base_module_init_1_0_0_fn_t)(void);
 

@@ -109,6 +109,16 @@ OPAL_DECLSPEC int opal_maffinity_base_node_name_to_id(char *, int *);
 OPAL_DECLSPEC int opal_maffinity_base_bind(opal_maffinity_base_segment_t *, size_t, int);
 
 /**
+ * Report a bind failure using the normal mechanisms if a component
+ * fails to bind memory -- according to the value of the
+ * maffinity_base_bind_failure_action MCA parameter.
+ */
+OPAL_DECLSPEC int opal_maffinity_base_report_bind_failure(const char *file,
+                                                          int line,
+                                                          const char *msg, 
+                                                          int rc);
+
+/**
  * Shut down the maffinity MCA framework.
  *
  * @retval OPAL_SUCCESS Always
@@ -159,6 +169,34 @@ extern int opal_maffinity_base_output;
  * Flag to indicate whether or not maffinity was setup
  */
 OPAL_DECLSPEC extern bool opal_maffinity_setup;
+
+/**
+ * Enum for what memory allocation policy we want for user allocations.
+ * MAP = memory allocation policy.
+ */
+typedef enum {
+    OPAL_MAFFINITY_BASE_MAP_NONE,
+    OPAL_MAFFINITY_BASE_MAP_LOCAL_ONLY
+} opal_maffinity_base_map_t;
+
+/**
+ * Global reflecting the MAP (set by MCA param).
+ */
+OPAL_DECLSPEC extern opal_maffinity_base_map_t opal_maffinity_base_map;
+
+/**
+ * Enum for what to do if the maffinity framework tries to bind memory
+ * and fails.  BFA = bind failure action.
+ */
+typedef enum {
+    OPAL_MAFFINITY_BASE_BFA_WARN,
+    OPAL_MAFFINITY_BASE_BFA_ERROR
+} opal_maffinity_base_bfa_t;
+
+/**
+ * Global reflecting the BFA (set by MCA param).
+ */
+OPAL_DECLSPEC extern opal_maffinity_base_bfa_t opal_maffinity_base_bfa;
 
 END_C_DECLS
     
