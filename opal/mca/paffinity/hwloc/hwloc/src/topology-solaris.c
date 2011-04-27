@@ -1,6 +1,6 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
+ * Copyright © 2009-2011 INRIA.  All rights reserved.
  * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
@@ -26,6 +26,9 @@
 #endif
 
 /* TODO: use psets? (only for root)
+ * TODO: get cache info from prtdiag? (it is setgid sys to be able to read from
+ * crw-r-----   1 root     sys       88,  0 nov   3 14:35 /devices/pseudo/devinfo@0:devinfo
+ * and run (apparently undocumented) ioctls on it.
  */
 
 static int
@@ -341,7 +344,9 @@ browse(struct hwloc_topology *topology, lgrp_cookie_t cookie, lgrp_id_t lgrp, hw
   if ((mem_size = lgrp_mem_size(cookie, lgrp, LGRP_MEM_SZ_INSTALLED, LGRP_CONTENT_DIRECT)) > 0)
   {
     int i;
-    processorid_t cpuids[n];
+    processorid_t *cpuids;
+    cpuids = malloc(sizeof(processorid_t) * n);
+    assert(cpuids != NULL);
 
     obj = hwloc_alloc_setup_object(HWLOC_OBJ_NODE, lgrp);
     obj->nodeset = hwloc_bitmap_alloc();
@@ -368,13 +373,16 @@ browse(struct hwloc_topology *topology, lgrp_cookie_t cookie, lgrp_id_t lgrp, hw
     obj->memory.page_types[1].size = sysconf(_SC_LARGE_PAGESIZE);
 #endif
     hwloc_insert_object_by_cpuset(topology, obj);
+    free(cpuids);
   }
 
   n = lgrp_children(cookie, lgrp, NULL, 0);
   {
-    lgrp_id_t lgrps[n];
+    lgrp_id_t *lgrps;
     int i;
 
+    lgrps = malloc(sizeof(lgrp_id_t) * n);
+    assert(lgrps != NULL);
     lgrp_children(cookie, lgrp, lgrps, n);
     hwloc_debug("lgrp %ld has %d children\n", lgrp, n);
     for (i = 0; i < n ; i++)
@@ -382,6 +390,7 @@ browse(struct hwloc_topology *topology, lgrp_cookie_t cookie, lgrp_id_t lgrp, hw
 	browse(topology, cookie, lgrps[i], glob_lgrps, curlgrp);
       }
     hwloc_debug("lgrp %ld's children done\n", lgrp);
+    free(lgrps);
   }
 }
 
@@ -405,19 +414,19 @@ hwloc_look_lgrp(struct hwloc_topology *topology)
   nlgrps = lgrp_nlgrps(cookie);
   root = lgrp_root(cookie);
   {
-    hwloc_obj_t glob_lgrps[nlgrps];
+    hwloc_obj_t *glob_lgrps = calloc(nlgrps, sizeof(hwloc_obj_t));
     browse(topology, cookie, root, glob_lgrps, &curlgrp);
 #ifdef HAVE_LGRP_LATENCY_COOKIE
     {
-      unsigned distances[curlgrp][curlgrp];
-      unsigned indexes[curlgrp];
+      float *distances = calloc(curlgrp*curlgrp, sizeof(float));
+      unsigned *indexes;
       unsigned i, j;
       for (i = 0; i < curlgrp; i++) {
-        indexes[i] = glob_lgrps[i]->os_index;
+	indexes[i] = glob_lgrps[i]->os_index;
 	for (j = 0; j < curlgrp; j++)
-	  distances[i][j] = lgrp_latency_cookie(cookie, glob_lgrps[i]->os_index, glob_lgrps[j]->os_index, LGRP_LAT_CPU_TO_MEM);
+          distances[i*curlgrp+j] = (float) lgrp_latency_cookie(cookie, glob_lgrps[i]->os_index, glob_lgrps[j]->os_index, LGRP_LAT_CPU_TO_MEM);
       }
-      hwloc_setup_misc_level_from_distances(topology, curlgrp, glob_lgrps, (unsigned*) distances, (unsigned*) indexes);
+      hwloc_topology__set_distance_matrix(topology, HWLOC_OBJ_NODE, curlgrp, indexes, glob_lgrps, distances);
     }
 #endif /* HAVE_LGRP_LATENCY_COOKIE */
   }

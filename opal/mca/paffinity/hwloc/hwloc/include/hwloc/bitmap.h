@@ -1,7 +1,7 @@
 /*
  * Copyright © 2009 CNRS
  * Copyright © 2009-2011 INRIA.  All rights reserved.
- * Copyright © 2009-2010 Université Bordeaux 1
+ * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
@@ -69,7 +69,10 @@ HWLOC_DECLSPEC hwloc_bitmap_t hwloc_bitmap_alloc_full(void) __hwloc_attribute_ma
  */
 HWLOC_DECLSPEC void hwloc_bitmap_free(hwloc_bitmap_t bitmap);
 
-/** \brief Duplicate bitmap \p bitmap by allocating a new bitmap and copying \p bitmap contents */
+/** \brief Duplicate bitmap \p bitmap by allocating a new bitmap and copying \p bitmap contents.
+ *
+ * If \p bitmap is \c NULL, \c NULL is returned.
+ */
 HWLOC_DECLSPEC hwloc_bitmap_t hwloc_bitmap_dup(hwloc_const_bitmap_t bitmap) __hwloc_attribute_malloc;
 
 /** \brief Copy the contents of bitmap \p src into the already allocated bitmap \p dst */
@@ -98,6 +101,29 @@ HWLOC_DECLSPEC int hwloc_bitmap_asprintf(char ** strp, hwloc_const_bitmap_t bitm
 /** \brief Parse a bitmap string and stores it in bitmap \p bitmap.
  */
 HWLOC_DECLSPEC int hwloc_bitmap_sscanf(hwloc_bitmap_t bitmap, const char * __hwloc_restrict string);
+
+/** \brief Stringify a bitmap in the list format.
+ *
+ * Lists are comma-separated indexes or ranges.
+ * Ranges are dash separated indexes.
+ * The last range may not have a ending indexes if the bitmap is infinite.
+ *
+ * Up to \p buflen characters may be written in buffer \p buf.
+ *
+ * If \p buflen is 0, \p buf may safely be \c NULL.
+ *
+ * \return the number of character that were actually written if not truncating,
+ * or that would have been written (not including the ending \\0).
+ */
+HWLOC_DECLSPEC int hwloc_bitmap_list_snprintf(char * __hwloc_restrict buf, size_t buflen, hwloc_const_bitmap_t bitmap);
+
+/** \brief Stringify a bitmap into a newly allocated list string.
+ */
+HWLOC_DECLSPEC int hwloc_bitmap_list_asprintf(char ** strp, hwloc_const_bitmap_t bitmap);
+
+/** \brief Parse a list string and stores it in bitmap \p bitmap.
+ */
+HWLOC_DECLSPEC int hwloc_bitmap_list_sscanf(hwloc_bitmap_t bitmap, const char * __hwloc_restrict string);
 
 /** \brief Stringify a bitmap in the taskset-specific format.
  *
@@ -152,8 +178,11 @@ HWLOC_DECLSPEC void hwloc_bitmap_from_ith_ulong(hwloc_bitmap_t bitmap, unsigned 
 /** \brief Add index \p id in bitmap \p bitmap */
 HWLOC_DECLSPEC void hwloc_bitmap_set(hwloc_bitmap_t bitmap, unsigned id);
 
-/** \brief Add indexes from \p begin to \p end in bitmap \p bitmap. */
-HWLOC_DECLSPEC void hwloc_bitmap_set_range(hwloc_bitmap_t bitmap, unsigned begin, unsigned end);
+/** \brief Add indexes from \p begin to \p end in bitmap \p bitmap.
+ *
+ * If \p end is \c -1, the range is infinite.
+ */
+HWLOC_DECLSPEC void hwloc_bitmap_set_range(hwloc_bitmap_t bitmap, unsigned begin, int end);
 
 /** \brief Replace \p i -th subset of bitmap \p bitmap with unsigned long \p mask */
 HWLOC_DECLSPEC void hwloc_bitmap_set_ith_ulong(hwloc_bitmap_t bitmap, unsigned i, unsigned long mask);
@@ -161,8 +190,11 @@ HWLOC_DECLSPEC void hwloc_bitmap_set_ith_ulong(hwloc_bitmap_t bitmap, unsigned i
 /** \brief Remove index \p id from bitmap \p bitmap */
 HWLOC_DECLSPEC void hwloc_bitmap_clr(hwloc_bitmap_t bitmap, unsigned id);
 
-/** \brief Remove indexes from \p begin to \p end in bitmap \p bitmap. */
-HWLOC_DECLSPEC void hwloc_bitmap_clr_range(hwloc_bitmap_t bitmap, unsigned begin, unsigned end);
+/** \brief Remove indexes from \p begin to \p end in bitmap \p bitmap.
+ *
+ * If \p end is \c -1, the range is infinite.
+ */
+HWLOC_DECLSPEC void hwloc_bitmap_clr_range(hwloc_bitmap_t bitmap, unsigned begin, int end);
 
 /** \brief Keep a single index among those set in bitmap \p bitmap
  *
@@ -200,9 +232,11 @@ HWLOC_DECLSPEC int hwloc_bitmap_first(hwloc_const_bitmap_t bitmap) __hwloc_attri
 
 /** \brief Compute the next index in bitmap \p bitmap which is after index \p prev
  *
+ * If \p prev is -1, the first index is returned.
+ *
  * \return -1 if no index with higher index is bitmap.
  */
-HWLOC_DECLSPEC int hwloc_bitmap_next(hwloc_const_bitmap_t bitmap, unsigned prev) __hwloc_attribute_pure;
+HWLOC_DECLSPEC int hwloc_bitmap_next(hwloc_const_bitmap_t bitmap, int prev) __hwloc_attribute_pure;
 
 /** \brief Compute the last index (most significant bit) in bitmap \p bitmap
  *

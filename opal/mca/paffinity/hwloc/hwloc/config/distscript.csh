@@ -10,8 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright © 2010 INRIA
-# Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright © 2010 INRIA.  All rights reserved.
+# Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,7 +28,7 @@ cd "$builddir"
 
 set distdir="$builddir/$2"
 set HWLOC_VERSION="$3"
-set HWLOC_SVN_VERSION="$4"
+set HWLOC_REPO_REV="$4"
 
 if ("$distdir" == "") then
     echo "Must supply relative distdir as argv[2] -- aborting"
@@ -52,9 +52,9 @@ endif
 # our tree's revision number, but only if we are in the source tree.
 # Otherwise, use what configure told us, at the cost of allowing one
 # or two corner cases in (but otherwise VPATH builds won't work).
-set svn_r=$HWLOC_SVN_VERSION
+set repo_rev=$HWLOC_REPO_REV
 if (-d .svn) then
-    set svn_r="r`svnversion .`"
+    set repo_rev="r`svnversion .`"
 endif
 
 set start=`date`
@@ -79,21 +79,21 @@ if (! -d "$distdir") then
 endif
 
 #
-# See if we need to update the version file with the current SVN
+# See if we need to update the version file with the current repo
 # revision number.  Do this *before* entering the distribution tree to
 # solve a whole host of problems with VPATH (since srcdir may be
 # relative or absolute)
 #
-set cur_svn_r="`grep '^svn_r' ${distdir}/VERSION | cut -d= -f2`"
-if ("$cur_svn_r" == "-1") then
-    sed -e 's/^svn_r=.*/svn_r='$svn_r'/' "${distdir}/VERSION" > "${distdir}/version.new"
+set cur_repo_rev="`grep '^repo_rev' ${distdir}/VERSION | cut -d= -f2`"
+if ("$cur_repo_rev" == "-1") then
+    sed -e 's/^repo_rev=.*/repo_rev='$repo_rev'/' "${distdir}/VERSION" > "${distdir}/version.new"
     cp "${distdir}/version.new" "${distdir}/VERSION"
     rm -f "${distdir}/version.new"
     # need to reset the timestamp to not annoy AM dependencies
     touch -r "${srcdir}/VERSION" "${distdir}/VERSION"
-    echo "*** Updated VERSION file with SVN r number"
+    echo "*** Updated VERSION file with repo rev number: $repo_rev"
 else
-    echo "*** Did NOT update VERSION file with SVN r number"
+    echo "*** Did NOT update VERSION file with repo rev number"
 endif
 
 #

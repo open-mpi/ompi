@@ -1,7 +1,7 @@
 /*
  * Copyright © 2009 CNRS
- * Copyright © 2009-2010 INRIA
- * Copyright © 2009-2010 Université Bordeaux 1
+ * Copyright © 2009-2011 INRIA.  All rights reserved.
+ * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
@@ -302,6 +302,84 @@ hwloc__xml_import_pagetype_node(struct hwloc_topology *topology __hwloc_attribut
 }
 
 static void
+hwloc__xml_import_distances_node(struct hwloc_topology *topology __hwloc_attribute_unused, struct hwloc_obj *obj, xmlNode *node)
+{
+  unsigned long reldepth = 0, nbobjs = 0;
+  float latbase = 0;
+  xmlAttr *attr = NULL;
+  xmlNode *subnode;
+
+  for (attr = node->properties; attr; attr = attr->next) {
+    if (attr->type == XML_ATTRIBUTE_NODE) {
+      const xmlChar *value = hwloc__xml_import_attr_value(attr);
+      if (value) {
+	if (!strcmp((char *) attr->name, "nbobjs"))
+	  nbobjs = strtoul((char *) value, NULL, 10);
+	else if (!strcmp((char *) attr->name, "relative_depth"))
+	  reldepth = strtoul((char *) value, NULL, 10);
+	else if (!strcmp((char *) attr->name, "latency_base"))
+          latbase = (float) atof((char *) value);
+	else
+	  fprintf(stderr, "ignoring unknown distances attribute %s\n", (char *) attr->name);
+      } else
+	fprintf(stderr, "ignoring unexpected xml distances attr name `%s' with no value\n", (const char*) attr->name);
+    } else {
+      fprintf(stderr, "ignoring unexpected xml distances attr type %u\n", attr->type);
+    }
+  }
+
+  if (nbobjs && reldepth && latbase) {
+    int idx = obj->distances_count;
+    unsigned nbcells, i;
+    float *matrix, latmax = 0;
+
+    nbcells = 0;
+    if (node->children)
+      for(subnode = node->children; subnode; subnode = subnode->next)
+ 	if (subnode->type == XML_ELEMENT_NODE)
+	  nbcells++;
+    if (nbcells != nbobjs*nbobjs) {
+      fprintf(stderr, "ignoring distances with %u cells instead of %lu\n", nbcells, nbobjs*nbobjs);
+      return;
+    }
+
+    obj->distances = realloc(obj->distances, (idx+1)*sizeof(*obj->distances));
+    obj->distances_count = idx+1;
+    obj->distances[idx] = malloc(sizeof(**obj->distances));
+    obj->distances[idx]->relative_depth = reldepth;
+    obj->distances[idx]->nbobjs = nbobjs;
+    obj->distances[idx]->latency = matrix = malloc(nbcells*sizeof(float));
+    obj->distances[idx]->latency_base = latbase;
+
+    i = 0;
+    for(subnode = node->children; subnode; subnode = subnode->next)
+      if (subnode->type == XML_ELEMENT_NODE) {
+	/* read one cell */
+	for (attr = subnode->properties; attr; attr = attr->next)
+	  if (attr->type == XML_ATTRIBUTE_NODE) {
+	    const xmlChar *value = hwloc__xml_import_attr_value(attr);
+	    if (value) {
+	      if (!strcmp((char *) attr->name, "value")) {
+                float val = (float) atof((char *) value);
+		matrix[i] = val;
+		if (val > latmax)
+		  latmax = val;
+	      } else
+		fprintf(stderr, "ignoring unknown distance attribute %s\n", (char *) attr->name);
+	    } else
+	      fprintf(stderr, "ignoring unexpected xml distance attr name `%s' with no value\n", (const char*) attr->name);
+	  } else {
+	    fprintf(stderr, "ignoring unexpected xml distance attr type %u\n", attr->type);
+	  }
+	/* next matrix cell */
+	i++;
+      }
+
+    obj->distances[idx]->latency_max = latmax;
+  }
+}
+
+static void
 hwloc__xml_import_info_node(struct hwloc_topology *topology __hwloc_attribute_unused, struct hwloc_obj *obj, xmlNode *node)
 {
   char *infoname = NULL;
@@ -350,6 +428,9 @@ hwloc__xml_import_node(struct hwloc_topology *topology, struct hwloc_obj *parent
 
       } else if (!strcmp((const char*) node->name, "info")) {
 	hwloc__xml_import_info_node(topology, parent, node);
+
+      } else if (!strcmp((const char*) node->name, "distances")) {
+	hwloc__xml_import_distances_node(topology, parent, node);
 
       } else {
 	/* unknown class */
@@ -419,6 +500,39 @@ hwloc_look_xml(struct hwloc_topology *topology)
   /* we could add "BackendSource=XML" to notify that XML was used between the actual backend and here */
 }
 
+static void
+hwloc_xml__check_distances(struct hwloc_topology *topology, hwloc_obj_t obj)
+{
+  hwloc_obj_t child;
+  unsigned i=0;
+  while (i<obj->distances_count) {
+    unsigned depth = obj->depth + obj->distances[i]->relative_depth;
+    unsigned nbobjs = hwloc_get_nbobjs_inside_cpuset_by_depth(topology, obj->cpuset, depth);
+    if (nbobjs != obj->distances[i]->nbobjs) {
+      fprintf(stderr, "ignoring invalid distance matrix with %u objs instead of %u\n",
+	      obj->distances[i]->nbobjs, nbobjs);
+      hwloc_free_logical_distances(obj->distances[i]);
+      memmove(&obj->distances[i], &obj->distances[i+1], (obj->distances_count-i-1)*sizeof(*obj->distances));
+      obj->distances_count--;
+    } else
+      i++;
+  }
+
+  child = obj->first_child;
+  while (child != NULL) {
+    hwloc_xml__check_distances(topology, child);
+    child = child->next_sibling;
+  }
+}
+
+void
+hwloc_xml_check_distances(struct hwloc_topology *topology)
+{
+  /* now that the topology tree has been properly setup,
+   * check that our distance matrice sizes make sense */
+  hwloc_xml__check_distances(topology, topology->levels[0][0]);
+}
+
 /******************************
  ********* XML export *********
  ******************************/
@@ -426,7 +540,7 @@ hwloc_look_xml(struct hwloc_topology *topology)
 static void
 hwloc__xml_export_object (hwloc_topology_t topology, hwloc_obj_t obj, xmlNodePtr root_node)
 {
-  xmlNodePtr node = NULL, ptnode = NULL;
+  xmlNodePtr node = NULL, ptnode = NULL, dnode = NULL, dcnode = NULL;
   char *cpuset = NULL;
   char tmp[255];
   unsigned i;
@@ -513,6 +627,23 @@ hwloc__xml_export_object (hwloc_topology_t topology, hwloc_obj_t obj, xmlNodePtr
     ptnode = xmlNewChild(node, NULL, BAD_CAST "info", NULL);
     xmlNewProp(ptnode, BAD_CAST "name", BAD_CAST obj->infos[i].name);
     xmlNewProp(ptnode, BAD_CAST "value", BAD_CAST obj->infos[i].value);
+  }
+
+  for(i=0; i<obj->distances_count; i++) {
+    unsigned nbobjs = obj->distances[i]->nbobjs;
+    unsigned j;
+    dnode = xmlNewChild(node, NULL, BAD_CAST "distances", NULL);
+    sprintf(tmp, "%u", nbobjs);
+    xmlNewProp(dnode, BAD_CAST "nbobjs", BAD_CAST tmp);
+    sprintf(tmp, "%u", obj->distances[i]->relative_depth);
+    xmlNewProp(dnode, BAD_CAST "relative_depth", BAD_CAST tmp);
+    sprintf(tmp, "%f", obj->distances[i]->latency_base);
+    xmlNewProp(dnode, BAD_CAST "latency_base", BAD_CAST tmp);
+    for(j=0; j<nbobjs*nbobjs; j++) {
+      dcnode = xmlNewChild(dnode, NULL, BAD_CAST "latency", NULL);
+      sprintf(tmp, "%f", obj->distances[i]->latency[j]);
+      xmlNewProp(dcnode, BAD_CAST "value", BAD_CAST tmp);
+    }
   }
 
   if (obj->arity) {
