@@ -156,20 +156,6 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
     jobs = (orte_job_t**) src;
 
     for (i=0; i < num_vals; i++) {
-        /* pack the name of this job - may be null */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(jobs[i]->name)), 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* pack the name of the instance of the job - may be null */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(jobs[i]->instance)), 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* pack the jobid */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                         (void*)(&(jobs[i]->jobid)), 1, ORTE_JOBID))) {
