@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -71,12 +72,41 @@ static size_t opal_datatype_memop_block_size = 128 * 1024;
 #define MEM_OP       MEMMOVE
 #include "opal_datatype_copy.h"
 
+#if OPAL_CUDA_SUPPORT
+#include "opal_datatype_cuda.h"
+
+#undef MEM_OP_NAME
+#define MEM_OP_NAME non_overlap_cuda
+#undef MEM_OP
+#define MEM_OP opal_cuda_memcpy
+#include "opal_datatype_copy.h"
+
+#undef MEM_OP_NAME
+#define MEM_OP_NAME overlap_cuda
+#undef MEM_OP
+#define MEM_OP opal_cuda_memmove
+#include "opal_datatype_copy.h"
+
+#define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function)     \
+    do {                                                            \
+        if (true == cuda_device_bufs) {                             \
+            fct = copy_function;                                    \
+        }                                                           \
+    } while(0)
+#else
+#define SET_CUDA_COPY_FCT(cuda_device_bufs, fct, copy_function) 
+#endif
+
 int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, int32_t count,
                                              char* destination_base, char* source_base )
 {
     OPAL_PTRDIFF_TYPE extent;
     size_t iov_len_local;
     int32_t (*fct)( const opal_datatype_t*, int32_t, char*, char*);
+
+#if OPAL_CUDA_SUPPORT
+    bool cuda_device_bufs = opal_cuda_check_bufs(destination_base, source_base);
+#endif
 
     DO_DEBUG( opal_output( 0, "opal_datatype_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
                            (void*)datatype, count, destination_base, source_base ); );
@@ -95,15 +125,18 @@ int32_t opal_datatype_copy_content_same_ddt( const opal_datatype_t* datatype, in
     extent = (datatype->true_ub - datatype->true_lb) + (count - 1) * (datatype->ub - datatype->lb);
 
     fct = non_overlap_copy_content_same_ddt;
+    SET_CUDA_COPY_FCT(cuda_device_bufs, fct, non_overlap_cuda_copy_content_same_ddt);
     if( destination_base < source_base ) {
         if( (destination_base + extent) > source_base ) {
             /* memmove */
             fct = overlap_copy_content_same_ddt;
+            SET_CUDA_COPY_FCT(cuda_device_bufs, fct, overlap_cuda_copy_content_same_ddt);
         }
     } else {
         if( (source_base + extent) > destination_base ) {
             /* memmove */
             fct = overlap_copy_content_same_ddt;
+            SET_CUDA_COPY_FCT(cuda_device_bufs, fct, overlap_cuda_copy_content_same_ddt);
         }
     }
     return fct( datatype, count, destination_base, source_base );

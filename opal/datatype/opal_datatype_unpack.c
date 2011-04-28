@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -318,8 +319,16 @@ opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pEle
     memset( temporary, unused_byte, data_length );
     MEMCPY( temporary + start_position, partial_data, (end_position - start_position) );
 
+#if OPAL_CUDA_SUPPORT
+    /* In the case where the data is being unpacked from device
+     * memory, need to use the special host to device memory copy.
+     * Note this code path was only seen on large receives of
+     * noncontiguous data via buffered sends. */
+    pConvertor->cbmemcpy(saved_data, real_data, data_length );
+#else
     /* Save the content of the user memory */
     MEMCPY( saved_data, real_data, data_length );
+#endif
 
     /* Then unpack the data into the user memory */
     UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
@@ -331,10 +340,25 @@ opal_unpack_partial_datatype( opal_convertor_t* pConvertor, dt_elem_desc_t* pEle
     /* For every occurence of the unused byte move data from the saved
      * buffer back into the user memory.
      */
+#if OPAL_CUDA_SUPPORT
+    /* Need to copy the modified real_data again so we can see which
+     * bytes need to be converted back to their original values.  Note
+     * this code path was only seen on large receives of noncontiguous
+     * data via buffered sends. */
+    {
+        char resaved_data[16];
+        pConvertor->cbmemcpy(resaved_data, real_data, data_length );
+        for( i = 0; i < data_length; i++ ) {
+            if( unused_byte == resaved_data[i] )
+                pConvertor->cbmemcpy(&real_data[i], &saved_data[i], 1);
+        }
+    }
+#else
     for( i = 0; i < data_length; i++ ) {
         if( unused_byte == real_data[i] )
             real_data[i] = saved_data[i];
     }
+#endif
     return 0;
 }
 

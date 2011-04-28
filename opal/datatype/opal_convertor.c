@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,6 +38,11 @@
 #include "opal/datatype/opal_datatype_checksum.h"
 #include "opal/datatype/opal_datatype_prototypes.h"
 #include "opal/datatype/opal_convertor_internal.h"
+#if OPAL_CUDA_SUPPORT
+#include "opal/datatype/opal_datatype_cuda.h"
+#define MEMCPY_CUDA( DST, SRC, BLENGTH, CONVERTOR ) \
+    CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH) )
+#endif
 
 extern int opal_convertor_create_stack_with_pos_general( opal_convertor_t* convertor,
                                                          int starting_point, const int* sizes );
@@ -48,6 +54,9 @@ static void opal_convertor_construct( opal_convertor_t* convertor )
     convertor->partial_length = 0;
     convertor->remoteArch     = opal_local_arch;
     convertor->flags          = OPAL_DATATYPE_FLAG_NO_GAPS | CONVERTOR_COMPLETED;
+#if OPAL_CUDA_SUPPORT
+    convertor->cbmemcpy       = &memcpy;
+#endif
 }
 
 
@@ -235,7 +244,11 @@ int32_t opal_convertor_pack( opal_convertor_t* pConv,
             if( OPAL_LIKELY(NULL == iov[i].iov_base) )
                 iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
             else
+#if OPAL_CUDA_SUPPORT
+                MEMCPY_CUDA( iov[i].iov_base, base_pointer, iov[i].iov_len, pConv );
+#else
                 MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
+#endif
             pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
         }
@@ -248,7 +261,11 @@ complete_contiguous_data_pack:
         if( OPAL_LIKELY(NULL == iov[i].iov_base) )
             iov[i].iov_base = (IOVBASE_TYPE *) base_pointer;
         else
+#if OPAL_CUDA_SUPPORT
+            MEMCPY_CUDA( iov[i].iov_base, base_pointer, iov[i].iov_len, pConv );
+#else
             MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
+#endif
         pConv->bConverted = pConv->local_size;
         *out_size = i + 1;
         pConv->flags |= CONVERTOR_COMPLETED;
@@ -282,7 +299,11 @@ int32_t opal_convertor_unpack( opal_convertor_t* pConv,
             if( iov[i].iov_len >= pending_length ) {
                 goto complete_contiguous_data_unpack;
             }
+#if OPAL_CUDA_SUPPORT
+            MEMCPY_CUDA( base_pointer, iov[i].iov_base, iov[i].iov_len, pConv );
+#else
             MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
+#endif
             pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
         }
@@ -292,7 +313,11 @@ int32_t opal_convertor_unpack( opal_convertor_t* pConv,
 
 complete_contiguous_data_unpack:
         iov[i].iov_len = pending_length;
+#if OPAL_CUDA_SUPPORT
+        MEMCPY_CUDA( base_pointer, iov[i].iov_base, iov[i].iov_len, pConv );
+#else
         MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
+#endif
         pConv->bConverted = pConv->local_size;
         *out_size = i + 1;
         pConv->flags |= CONVERTOR_COMPLETED;
@@ -519,6 +544,9 @@ int32_t opal_convertor_prepare_for_recv( opal_convertor_t* convertor,
     /* Here I should check that the data is not overlapping */
 
     convertor->flags |= CONVERTOR_RECV;
+#if OPAL_CUDA_SUPPORT
+    mca_cuda_convertor_init(convertor, pUserBuf);
+#endif
 
     OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
@@ -555,6 +583,9 @@ int32_t opal_convertor_prepare_for_send( opal_convertor_t* convertor,
                                          const void* pUserBuf )
 {
     convertor->flags |= CONVERTOR_SEND;
+#if OPAL_CUDA_SUPPORT
+    mca_cuda_convertor_init(convertor, pUserBuf);
+#endif
 
     OPAL_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
@@ -623,6 +654,9 @@ int opal_convertor_clone( const opal_convertor_t* source,
         destination->bConverted = source->bConverted;
         destination->stack_pos  = source->stack_pos;
     }
+#if OPAL_CUDA_SUPPORT
+    destination->cbmemcpy   = source->cbmemcpy;
+#endif
     return OPAL_SUCCESS;
 }
 
