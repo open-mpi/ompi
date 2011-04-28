@@ -577,14 +577,6 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
 
-        /* get the name */
-        max_n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &(app_context[i]->name),
-                    &max_n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* get the app index number */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &(app_context[i]->idx),
@@ -835,20 +827,6 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
         /* unpack the restart limit */
         max_n=1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->max_restarts,
-                                                         &max_n, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* unpack the uid and gid */
-        max_n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->uid,
-                                                         &max_n, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        max_n=1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &app_context[i]->gid,
                                                          &max_n, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;

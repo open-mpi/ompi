@@ -150,9 +150,6 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
     }
     
     /* copy data into it */
-    if (NULL != src->name) {
-        (*dest)->name = strdup(src->name);
-    }
     (*dest)->idx = src->idx;
     if (NULL != src->app) {
         (*dest)->app = strdup(src->app);
@@ -165,9 +162,6 @@ int orte_dt_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src,
     }
     (*dest)->user_specified_cwd = src->user_specified_cwd;
     
-    (*dest)->uid = src->uid;
-    (*dest)->gid = src->gid;
-
     if (NULL != src->hostfile) {
         (*dest)->hostfile = strdup(src->hostfile);
     }

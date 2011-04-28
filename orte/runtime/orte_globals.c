@@ -546,8 +546,6 @@ int orte_global_comm(orte_process_name_t *recipient,
 
 static void orte_app_context_construct(orte_app_context_t* app_context)
 {
-    app_context->name = NULL;
-    app_context->version = NULL;
     app_context->idx=0;
     app_context->app=NULL;
     app_context->num_procs=0;
@@ -565,9 +563,6 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->preload_files_dest_dir  = NULL;
     app_context->preload_files_src_dir  = NULL;
     app_context->used_on_node = false;
-    /* set to invalid value */
-    app_context->gid = -1;
-    app_context->uid = -1;
 
 #if OPAL_ENABLE_FT_CR == 1
     app_context->sstore_load = NULL;
@@ -578,14 +573,6 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
 
 static void orte_app_context_destructor(orte_app_context_t* app_context)
 {
-    if (NULL != app_context->name) {
-        free(app_context->name);
-    }
-
-    if (NULL != app_context->version) {
-        free(app_context->version);
-    }
-
     if (NULL != app_context->app) {
         free (app_context->app);
         app_context->app = NULL;

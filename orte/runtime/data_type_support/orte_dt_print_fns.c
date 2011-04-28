@@ -532,9 +532,8 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         asprintf(&pfx2, "%s", prefix);
     }
     
-    asprintf(&tmp, "\n%sData for app_context: name: %s\t index %lu\tuid: %d\tgid: %d\tapp: %s\n%s\tNum procs: %lu\tRecovery: %s\tMax Restarts: %d",
-             pfx2, (NULL == src->name) ? "NULL" : src->name,
-             (unsigned long)src->idx, src->uid, src->gid,
+    asprintf(&tmp, "\n%sData for app_context: index %lu\tapp: %s\n%s\tNum procs: %lu\tRecovery: %s\tMax Restarts: %d",
+             pfx2, (unsigned long)src->idx,
              (NULL == src->app) ? "NULL" : src->app,
              pfx2, (unsigned long)src->num_procs,
              (src->recovery_defined) ? "DEFINED" : "DEFAULT",

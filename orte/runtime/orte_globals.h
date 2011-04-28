@@ -180,13 +180,6 @@ struct orte_job_map_t;
 typedef struct {
     /** Parent object */
     opal_object_t super;
-    /** unique name for this application - has
-     * nothing to do with argv[0], but has meaning
-     * to the user, if provided
-     */
-    char *name;
-    /* a version string */
-    char *version;
     /** Unique index when multiple apps per job */
     orte_app_idx_t idx;
     /** Absolute pathname of argv[0] */
@@ -225,10 +218,6 @@ typedef struct {
     char *preload_files_src_dir;
     /* is being used on the local node */
     bool used_on_node;
-    /* uid under which to run the app */
-    int32_t uid;
-    /* gid under which to run the app */
-    int32_t gid;
 #if OPAL_ENABLE_FT_CR == 1
     /** What files SStore should load before local launch, if any */
     char *sstore_load;
