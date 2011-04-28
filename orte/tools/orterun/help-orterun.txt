@@ -150,6 +150,17 @@ It is dangerous to interrupt %s while it is killing a job (proper
 termination may not be guaranteed).  Hit control-C again within 1
 second if you really want to kill %s immediately.
 #
+[orterun:double-prefix]
+Both a prefix was supplied to %s and the absolute path to %s was
+given:
+
+  Prefix: %s
+  Path:   %s
+
+Only one should be specified to avoid potential version
+confusion. Operation will continue, but the -prefix option will be
+ignored.
+#
 [orterun:empty-prefix]
 A prefix was supplied to %s that only contained slashes.  
 
