@@ -52,7 +52,7 @@ bool opal_maffinity_base_components_opened_valid = false;
 opal_list_t opal_maffinity_base_components_opened;
 bool opal_maffinity_setup = false;
 opal_maffinity_base_map_t opal_maffinity_base_map = 
-    OPAL_MAFFINITY_BASE_MAP_LOCAL_ONLY;
+    OPAL_MAFFINITY_BASE_MAP_NONE;
 opal_maffinity_base_bfa_t opal_maffinity_base_bfa =
     OPAL_MAFFINITY_BASE_BFA_ERROR;
 
