@@ -170,6 +170,10 @@ typedef void* orte_iov_base_ptr_t;
 /* IOF types */
 #define    ORTE_IOF_TAG             (OPAL_DSS_ID_DYNAMIC + 20)
 
+
+/* provide a boundary for others to use */
+#define    ORTE_DSS_ID_DYNAMIC      (OPAL_DSS_ID_DYNAMIC + 50)
+
 #endif /* !ORTE_DISABLE_FULL_SUPPORT */
 
 #endif
