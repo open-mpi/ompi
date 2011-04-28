@@ -39,26 +39,21 @@ int32_t ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* 
     disp = pDisp[0];
     dLength = pBlockLength[0];
     endat = disp + dLength;
-    if( 1 >= count ) {
-        pdt = ompi_ddt_create( oldType->desc.used + 2 );
-        /* multiply by count to make it zero if count is zero */
-        ompi_ddt_add( pdt, oldType, count * dLength, disp * extent, extent );
-    } else {
-        pdt = ompi_ddt_create( count * (2 + oldType->desc.used) );
-        for( i = 1; i < count; i++ ) {
-            if( endat == pDisp[i] ) {
-                /* contiguous with the previsious */
-                dLength += pBlockLength[i];
-                endat += pBlockLength[i];
-            } else {
-                ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
-                disp = pDisp[i];
-                dLength = pBlockLength[i];
-                endat = disp + pBlockLength[i];
-            }
+
+    pdt = ompi_ddt_create( count * (2 + oldType->desc.used) );
+    for( i = 1; i < count; i++ ) {
+        if( endat == pDisp[i] ) {
+            /* contiguous with the previsious */
+            dLength += pBlockLength[i];
+            endat += pBlockLength[i];
+        } else {
+            ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
+            disp = pDisp[i];
+            dLength = pBlockLength[i];
+            endat = disp + pBlockLength[i];
         }
-        ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
     }
+    ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
 
     *newType = pdt;
     return OMPI_SUCCESS;
@@ -82,25 +77,21 @@ int32_t ompi_ddt_create_hindexed( int count, const int* pBlockLength, const MPI_
     disp = pDisp[0];
     dLength = pBlockLength[0];
     endat = disp + dLength * extent;
-    if( 1 >= count ) {
-        pdt = ompi_ddt_create( oldType->desc.used + 2 );
-        /* multiply by count to make it zero if count is zero */
-        ompi_ddt_add( pdt, oldType, count * dLength, disp, extent );
-    } else {
-        for( i = 1; i < count; i++ ) {
-            if( endat == pDisp[i] ) {
-                /* contiguous with the previsious */
-                dLength += pBlockLength[i];
-                endat += pBlockLength[i] * extent;
-            } else {
-                ompi_ddt_add( pdt, oldType, dLength, disp, extent );
-                disp = pDisp[i];
-                dLength = pBlockLength[i];
-                endat = disp + pBlockLength[i] * extent;
-            }
+
+    for( i = 1; i < count; i++ ) {
+        if( endat == pDisp[i] ) {
+            /* contiguous with the previsious */
+            dLength += pBlockLength[i];
+            endat += pBlockLength[i] * extent;
+        } else {
+            ompi_ddt_add( pdt, oldType, dLength, disp, extent );
+            disp = pDisp[i];
+            dLength = pBlockLength[i];
+            endat = disp + pBlockLength[i] * extent;
         }
-        ompi_ddt_add( pdt, oldType, dLength, disp, extent );
     }
+    ompi_ddt_add( pdt, oldType, dLength, disp, extent );
+
     *newType = pdt;
     return OMPI_SUCCESS;
 }
