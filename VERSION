@@ -20,7 +20,7 @@ release=4
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=a2
+greek=rc1
 
 # If want_svn=1, then the SVN r number will be included in the overall
 # Open MPI version number in some form.
@@ -81,7 +81,12 @@ date="Unreleased"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=0:2:0
+# Need also to bump f90_so and common_sm_so, but we'll bump up agains
+# the v1.5 numbers... :-(
+#libmpi_f90_so_version=1:0:0  # bumped current & reset rev because param types on some i/f's changed 
+#libmca_common_sm_so_version=1:1:0   # bumped rev because of internal changes (for mmap'd files) 
+
+libmpi_so_version=0:3:0
 libmpi_cxx_so_version=0:1:0
 libmpi_f77_so_version=0:1:0
 libmpi_f90_so_version=0:1:0
