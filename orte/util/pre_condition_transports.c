@@ -62,47 +62,11 @@ static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) 
     unique_key[1] = rand();
 }
 
-int orte_pre_condition_transports(orte_job_t *jdata)
+char* orte_pre_condition_transports_print(uint64_t *unique_key)
 {
-    size_t i, string_key_len, written_len;
-    char *cs_env, *string_key = NULL, *format = NULL;
-    uint64_t unique_key[2];
     unsigned int *int_ptr;
-    int n;
-    orte_app_context_t *app;
-
-#if !defined(__WINDOWS__)
-    int fd_rand;
-    size_t bytes_read; 
-    struct stat buf;
-
-    /* put the number here - or else create an appropriate string. this just needs to
-     * eventually be a string variable
-     */
-    if(0 != stat("/dev/urandom", &buf)) { 
-        /* file doesn't exist! */
-        orte_pre_condition_transports_use_rand(unique_key); 
-    }
-        
-    if(-1 == (fd_rand = open("/dev/urandom", O_RDONLY))) {
-        orte_pre_condition_transports_use_rand(unique_key); 
-    } else { 
-        bytes_read = read(fd_rand, (char *) unique_key, 16);
-        if(bytes_read != 16) {
-            orte_pre_condition_transports_use_rand(unique_key); 
-        } else { 
-            close(fd_rand);
-        }
-    }
-#else
-    {
-        unsigned int random_value;
-        rand_s( &random_value );
-        unique_key[0] = (uint64_t)random_value;
-        rand_s( &random_value );
-        unique_key[1] = (uint64_t)random_value;
-    }
-#endif  /* !defined(__WINDOWS__) */
+    size_t i, string_key_len, written_len;
+    char *string_key = NULL, *format = NULL;
 
     /* string is two 64 bit numbers printed in hex with a dash between
      * and zero padding.
@@ -110,7 +74,7 @@ int orte_pre_condition_transports(orte_job_t *jdata)
     string_key_len = (sizeof(uint64_t) * 2) * 2 + strlen("-") + 1;
     string_key = (char*) malloc(string_key_len);
     if (NULL == string_key) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        return NULL;
     }
 
     string_key[0] = '\0';
@@ -147,7 +111,57 @@ int orte_pre_condition_transports(orte_job_t *jdata)
                  format, int_ptr[i]);
         written_len = strlen(string_key);
     }
-    
+    free(format);
+
+    return string_key;
+}
+
+
+int orte_pre_condition_transports(orte_job_t *jdata)
+{
+    uint64_t unique_key[2];
+    int n;
+    orte_app_context_t *app;
+    char *string_key, *cs_env;
+
+#if !defined(__WINDOWS__)
+    int fd_rand;
+    size_t bytes_read; 
+    struct stat buf;
+
+    /* put the number here - or else create an appropriate string. this just needs to
+     * eventually be a string variable
+     */
+    if(0 != stat("/dev/urandom", &buf)) { 
+        /* file doesn't exist! */
+        orte_pre_condition_transports_use_rand(unique_key); 
+    }
+        
+    if(-1 == (fd_rand = open("/dev/urandom", O_RDONLY))) {
+        orte_pre_condition_transports_use_rand(unique_key); 
+    } else { 
+        bytes_read = read(fd_rand, (char *) unique_key, 16);
+        if(bytes_read != 16) {
+            orte_pre_condition_transports_use_rand(unique_key); 
+        } else { 
+            close(fd_rand);
+        }
+    }
+#else
+    {
+        unsigned int random_value;
+        rand_s( &random_value );
+        unique_key[0] = (uint64_t)random_value;
+        rand_s( &random_value );
+        unique_key[1] = (uint64_t)random_value;
+    }
+#endif  /* !defined(__WINDOWS__) */
+
+    if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
     if (NULL == (cs_env = mca_base_param_environ_variable("orte_precondition_transports",NULL,NULL))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -161,7 +175,6 @@ int orte_pre_condition_transports(orte_job_t *jdata)
     }
 
     free(cs_env);
-    free(format);
     free(string_key);
 
     return ORTE_SUCCESS;
