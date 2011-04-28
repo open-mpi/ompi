@@ -292,6 +292,9 @@ Trunk (not on release branches yet)
   used. Thanks to David Gunter for reporting the issue.
 - Fixed the types of the sendcounts and displs parameters to MPI_Scatterv. 
   Thanks to Stanislav Sazykin for identifying the issue.
+- Fixed memory leaks associated with indexed datatypes.  Thanks to
+  Pascal Deveze for finding this and providing a patch.
+- Fix for deadlock when handling recursive attribute keyval deletions.
 
 
 1.4.3
