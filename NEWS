@@ -240,6 +240,60 @@ Trunk (not on release branches yet)
   - smtp (requires libesmtp) to send an email.
 
 
+1.4.4
+----------------
+- Fix to prevent the SM BTL from creating its mmap'd file in
+  directories that are remotely mounted.
+- Fixed use of memory barriers in the SM BTL.  This fixed
+  segv's when compiling with Intel 10.0.025 or PBI 9.0-3.
+- When specifying OOB ports, fix to convert the ports into
+  network byte order before binding.
+- Removed an extraneous #include from the TCP BTL.
+- Updated SLURM support to 1.5.1.
+- Restored a missing debugger flag to support TotalView.  thanks
+  to David Turner and the TV folks.
+- Fix to detect and avoid overlapping memcpy(). Thanks to
+  Francis Pellegrini.
+- Libtool patch to get around a build problem when using the
+  IBM XL compilers.
+- Added <sys/stat.h> to ptmalloc's hooks.c (It's not always
+  included by default on some systems).
+- Fixed a misleading MPI_Bcast error message.  Thanks to 
+  Jeremiah Willcock for reporting this.
+- Fixed paffinity base MCA duplicate registrations.  Thanks to
+  Gus Correa for bringing this to our attention.
+- Fix for VT rpmbuild on RHEL5
+- Man page cleanups.  Thanks to Jeremiah Willcock and Jed Brown.
+- Fix for memchecking buffers during MPI_*_init
+- autogen.sh fixes
+- Fixed a problem in which duplicated libs were being specified
+  for linking.  Thanks to Hicham Mouline for noticing it.
+- Fixed an indexing problem in precondition_transports.
+- Clarification of MPI_Init_thread man page.
+- Fixed a race condition in osc_rdma_sync.  Thanks to Guillaume
+  Thouvenin for finding this issue.
+- Fix for libtool issue when using pgcc to compile ompi in 
+  conjunction with the -tp option.
+- Fix in MPI_Init_thread for C/R.
+- Fixed incorrect text in MPI_File_set_view man page.
+- Change in ORTE DPM to get around gcc 4.[45].x compiler wanrings
+  about possibly calling free() on a non-heap variable, even
+  though it will never happen because the refcount will never
+  go to zero.
+- Eliminated the unneeded u_int*_t datatype definitions.
+- Fix for correctly handling multi-token args when using debuggers.
+- Fix for referencing an uninitialized variable in DPM ORTE.
+  Thanks to Avinash Malik for reporting the issue.
+- Fixed undefined symbol error when using the vtf90 profiling tool.
+- Fixed return codes from MPI_Probe & MPI_Iprobe.
+- Fixed a segv in MPI_Comm_create when called with GROUP_EMPTY.  
+  Thanks to Dominik Goeddeke for finding this.
+- Exclude opal/libltdl from "make distclean" when --disable-dlopen is
+  used. Thanks to David Gunter for reporting the issue.
+- Fixed the types of the sendcounts and displs parameters to MPI_Scatterv. 
+  Thanks to Stanislav Sazykin for identifying the issue.
+
+
 1.4.3
 ----------------
 
