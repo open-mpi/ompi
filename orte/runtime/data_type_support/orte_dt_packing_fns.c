@@ -526,13 +526,6 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
     app_context = (orte_app_context_t**) src;
 
     for (i=0; i < num_vals; i++) {
-      /* pack the user's name for this app */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->name)), 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* pack the application index (for multiapp jobs) */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                         (void*)(&(app_context[i]->idx)), 1, ORTE_STD_CNTR))) {
@@ -758,18 +751,6 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
         /* pack the restart limit */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                                                        (void*)(&(app_context[i]->max_restarts)), 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* pack the uid and gid */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&(app_context[i]->uid)), 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                                                       (void*)(&(app_context[i]->gid)), 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
