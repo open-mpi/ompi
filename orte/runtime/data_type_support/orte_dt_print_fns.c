@@ -218,8 +218,10 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
+    asprintf(&tmp, "\n%sData for job: %s\tName: %s\tInstance: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
              ORTE_JOBID_PRINT(src->jobid),
+             (NULL != src->name) ? src->name : "NULL",
+             (NULL != src->instance) ? src->instance : "NULL",
              (src->enable_recovery) ? "ENABLED" : "DISABLED",
              (src->recovery_defined) ? "DEFINED" : "DEFAULT",
              pfx2,
