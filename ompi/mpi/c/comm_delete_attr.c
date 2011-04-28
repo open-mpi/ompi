@@ -53,7 +53,7 @@ int MPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval)
     OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_attr_delete(COMM_ATTR, comm, comm->c_keyhash, comm_keyval, 
-                           false, true);
+                           false);
 
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);  
 }

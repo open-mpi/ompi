@@ -275,5 +275,5 @@ static int set_f(int keyval, MPI_Fint value)
     return ompi_attr_set_fortran_mpi1(COMM_ATTR, MPI_COMM_WORLD,
                                       &MPI_COMM_WORLD->c_keyhash,
                                       keyval, value,
-                                      true, true);
+                                      true);
 }

@@ -48,6 +48,6 @@ int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val)
     OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_attr_set_c(WIN_ATTR, win, &win->w_keyhash, 
-                          win_keyval, attribute_val, false, true);
+                          win_keyval, attribute_val, false);
     OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);  
 }
