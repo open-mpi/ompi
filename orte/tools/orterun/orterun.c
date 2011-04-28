@@ -1558,14 +1558,26 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     if (opal_cmd_line_is_taken(&cmd_line, "prefix") ||
         '/' == argv[0][0] || want_prefix_by_default) {
         size_t param_len;
+        char *path_to_mpirun;
 
-        /* The --prefix option takes precedence over /path/to/orterun */
-        if (opal_cmd_line_is_taken(&cmd_line, "prefix")) {
+        /* if both are given, check to see if they match */
+        if (opal_cmd_line_is_taken(&cmd_line, "prefix") && '/' == argv[0][0]) {
+            /* if they don't match, then that merits a warning */
             param = opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0);
-        } 
-        /* /path/to/orterun */
-        else if ('/' == argv[0][0]) {
-            char* tmp_basename = NULL;
+            path_to_mpirun = opal_dirname(argv[0]);
+            if (0 != strcmp(param, path_to_mpirun)) {
+                orte_show_help("help-orterun.txt", "orterun:double-prefix",
+                               true, orte_basename, orte_basename, param, path_to_mpirun);
+                /* let the path-to-mpirun take precedence since we
+                 * know that one is being  used
+                 */
+                param = path_to_mpirun;
+            } else {
+                /* since they match, just use param */
+                free(path_to_mpirun);
+            }
+        } else if ('/' == argv[0][0]) {
+           char* tmp_basename = NULL;
             /* If they specified an absolute path, strip off the
                /bin/<exec_name>" and leave just the prefix */
             param = opal_dirname(argv[0]);
@@ -1583,10 +1595,12 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                 param = NULL;
             }
             free(tmp_basename);
-        }
-        /* --enable-orterun-prefix-default was given to orterun */
-        else {
-            param = opal_install_dirs.prefix;
+        } else if (opal_cmd_line_is_taken(&cmd_line, "prefix")){
+            /* must be --prefix alone */
+            param = strdup(opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0));
+        } else {
+            /* --enable-orterun-prefix-default was given to orterun */
+            param = strdup(opal_install_dirs.prefix);
         }
 
         if (NULL != param) {
@@ -1603,6 +1617,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             }
 
             app->prefix_dir = strdup(param);
+            free(param);
         }
     }
 
