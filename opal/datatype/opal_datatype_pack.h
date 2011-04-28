@@ -4,6 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -19,6 +20,13 @@
 #include <stddef.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
+
+#if !defined(CHECKSUM) && OPAL_CUDA_SUPPORT
+/* Make use of existing macro to do CUDA style memcpy */
+#undef MEMCPY_CSUM
+#define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
+    CONVERTOR->cbmemcpy( (DST), (SRC), (BLENGTH) )
 #endif
 
 static inline void pack_predefined_data( opal_convertor_t* CONVERTOR,

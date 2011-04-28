@@ -16,6 +16,7 @@ dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl 
@@ -563,5 +564,79 @@ fi
  
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_CRDEBUG], [$ompi_want_prd],
     [Whether we want checkpoint/restart enabled debugging functionality or not])
+
+#
+# Check to see if user wants CUDA support in datatype and convertor code.
+#
+AC_ARG_WITH([cuda],
+            [AC_HELP_STRING([--with-cuda(=DIR)],
+            [Build cuda support, optionally adding DIR/include, DIR/lib, and DIR/lib64])])
+AC_MSG_CHECKING([if --with-cuda is set])
+
+# CUDA support is off by default.  User has to request it.
+AS_IF([test "$with_cuda" = "no" -o "x$with_cuda" = "x"],
+      [opal_check_cuda_happy="no"
+       AC_MSG_RESULT([not set (--with-cuda=$with_cuda)])],
+      [AS_IF([test "$with_cuda" = "yes"],
+             [AS_IF([test "x`ls /usr/local/cuda/include/cuda.h 2> /dev/null`" = "x"],
+                    [AC_MSG_RESULT([not found in standard location])
+                     AC_MSG_WARN([Expected file /usr/local/cuda/include/cuda.h not found])
+                     AC_MSG_ERROR([Cannot continue])],
+                    [AC_MSG_RESULT([found])
+                     opal_check_cuda_happy="yes"
+                     with_cuda="/usr/local/cuda"])],
+             [AS_IF([test ! -d "$with_cuda"],
+                    [AC_MSG_RESULT([not found])
+                     AC_MSG_WARN([Directory $with_cuda not found])
+                     AC_MSG_ERROR([Cannot continue])],
+                    [AS_IF([test "x`ls $with_cuda/include/cuda.h 2> /dev/null`" = "x"],
+                           [AC_MSG_RESULT([not found])
+                            AC_MSG_WARN([Expected file $with_cuda/include/cuda.h not found])
+                            AC_MSG_ERROR([Cannot continue])],
+                           [opal_check_cuda_happy="yes"
+                            AC_MSG_RESULT([found ($with_cuda/include/cuda.h)])])])])])
+
+# Check for optional libdir setting
+AC_ARG_WITH([cuda-libdir],
+            [AC_HELP_STRING([--with-cuda-libdir=DIR],
+            [Search for cuda libraries in DIR])])
+AC_MSG_CHECKING([if --with-cuda-libdir is set])
+
+# Only check for the extra cuda libdir if we have passed the --with-cuda tests.
+AS_IF([test "$opal_check_cuda_happy" = "yes"],
+      [AS_IF([test "$with_cuda_libdir" != "yes" -a "$with_cuda_libdir" != "no" -a "x$with_cuda_libdir" != "x"],
+             [AS_IF([test ! -d "$with_cuda_libdir"],
+                    [AC_MSG_RESULT([not found])
+                     AC_MSG_WARN([Directory $with_cuda_libdir not found])
+                     AC_MSG_ERROR([Cannot continue])],
+                    [AS_IF([test "x`ls $with_cuda_libdir/libcuda.* 2> /dev/null`" = "x"],
+                           [AC_MSG_RESULT([not found])
+                            AC_MSG_WARN([Expected file $with_cuda_libdir/libcuda.* not found])
+                            AC_MSG_ERROR([Cannot continue])],
+                           [AC_MSG_RESULT([ok - found directory ($with_cuda_libdir)])])])],
+             [with_cuda_libdir=/usr/lib64
+              AS_IF([test "x`ls $with_cuda_libdir/libcuda.* 2> /dev/null`" = "x"],
+                    [AC_MSG_RESULT([not found])
+                     AC_MSG_WARN([Expected file $with_cuda_libdir/libcuda.* not found])
+                     AC_MSG_ERROR([Cannot continue])],
+                    [AC_MSG_RESULT([ok - found directory ($with_cuda_libdir)])])])],
+      [AC_MSG_RESULT([not applicable since --with-cuda is not set])])
+
+AC_MSG_CHECKING([if have cuda support])
+if test "$opal_check_cuda_happy" = "yes"; then
+    AC_MSG_RESULT([yes (-I$with_cuda/include -L$with_cuda_libdir -lcuda)])
+    CUDA_SUPPORT=1
+    opal_datatype_CPPFLAGS="-I$with_cuda/include"
+    opal_datatype_LIBS="-L$with_cuda_libdir -lcuda"
+    AC_SUBST([opal_datatype_CPPFLAGS])
+    AC_SUBST([opal_datatype_LIBS])
+else
+    AC_MSG_RESULT([no])
+    CUDA_SUPPORT=0
+fi
+
+AM_CONDITIONAL([OPAL_cuda_support], [test "x$CUDA_SUPPORT" = "x1"])
+AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT],$CUDA_SUPPORT,
+                   [Whether we want cuda device pointer support])
 
 ])dnl
