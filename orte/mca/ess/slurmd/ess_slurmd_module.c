@@ -51,6 +51,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/pre_condition_transports.h"
 #include "orte/util/regex.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -109,7 +110,9 @@ static int rte_init(void)
     char *regexp, *tasks_per_node;
     int *ppn;
     bool block=false, cyclic=false;
-    
+    uint64_t unique_key[2];
+    char *cs_env, *string_key;
+
     /* init flag */
     app_init_complete = false;
     slurm20 = false;
@@ -149,6 +152,26 @@ static int rte_init(void)
     /* now build the jobid */
     ORTE_PROC_MY_NAME->jobid = ORTE_CONSTRUCT_LOCAL_JOBID(jobfam << 16, stepid);
     
+    /* setup transport keys in case the MPI layer needs them -
+     * we can use the SLURM jobid and stepid as unique keys
+     * because they are unique values assigned by the RM
+     */
+    unique_key[0] = (uint64_t)jobfam;
+    unique_key[1] = (uint64_t)stepid;
+    if (NULL == (string_key = orte_pre_condition_transports_print(unique_key))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (NULL == (cs_env = mca_base_param_environ_variable("orte_precondition_transports",NULL,NULL))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    asprintf(&envar, "%s=%s", cs_env, string_key);
+    putenv(envar);
+    free(envar);
+    free(cs_env);
+    free(string_key);
+
     /* get the slurm procid - this will be our vpid */
     if (NULL == (envar = getenv("SLURM_PROCID"))) {
         error = "could not get SLURM_PROCID";
@@ -395,6 +418,8 @@ static int rte_finalize(void)
      */
     unsetenv("OMPI_MCA_grpcomm");
     unsetenv("OMPI_MCA_routed");
+    unsetenv("OMPI_MCA_orte_precondition_transports");
+
     /* deconstruct my nidmap and jobmap arrays - this
      * function protects itself from being called
      * before things were initialized

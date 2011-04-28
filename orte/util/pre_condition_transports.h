@@ -34,6 +34,8 @@ BEGIN_C_DECLS
 
 ORTE_DECLSPEC int orte_pre_condition_transports(orte_job_t *jdata);
 
+ORTE_DECLSPEC char* orte_pre_condition_transports_print(uint64_t *unique_key);
+
 END_C_DECLS
 
 #endif
