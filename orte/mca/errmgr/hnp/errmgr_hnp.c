@@ -1443,17 +1443,11 @@ static void check_job_complete(orte_job_t *jdata)
     ORTE_UPDATE_EXIT_STATUS(0);
     /* provide a notifier message if that framework is active - ignored otherwise */
     if (NULL != (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, 1))) {
-        if (NULL == job->name) {
-            job->name = strdup(orte_process_info.nodename);
-        }
-        if (NULL == job->instance) {
-            asprintf(&job->instance, "%d", orte_process_info.pid);
-        }
         if (0 == orte_exit_status) {
-            asprintf(&msg, "Job %s:%s complete", job->name, job->instance);
+            asprintf(&msg, "Job %s complete", ORTE_JOBID_PRINT(job->jobid));
             orte_notifier.log(ORTE_NOTIFIER_INFO, 0, msg);
         } else {
-            asprintf(&msg, "Job %s:%s terminated abnormally", job->name, job->instance);
+            asprintf(&msg, "Job %s terminated abnormally", ORTE_JOBID_PRINT(job->jobid));
             orte_notifier.log(ORTE_NOTIFIER_ALERT, orte_exit_status, msg);
         }
         free(msg);

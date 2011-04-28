@@ -652,8 +652,6 @@ OBJ_CLASS_INSTANCE(orte_app_context_t,
 
 static void orte_job_construct(orte_job_t* job)
 {
-    job->name = NULL;
-    job->instance = NULL;
     job->jobid = ORTE_JOBID_INVALID;
     job->apps = OBJ_NEW(opal_pointer_array_t);
     opal_pointer_array_init(job->apps,
@@ -719,14 +717,6 @@ static void orte_job_destruct(orte_job_t* job)
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job->jobid));
     }
     
-    if (NULL != job->name) {
-        free(job->name);
-    }
-
-    if (NULL != job->instance) {
-        free(job->instance);
-    }
-
     for (n=0; n < job->apps->size; n++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, n))) {
             continue;
