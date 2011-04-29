@@ -145,6 +145,8 @@ struct opal_output_stream_t {
      */
 #if !defined(__WINDOWS__)
     char *lds_syslog_ident;
+#elif !defined(_MSC_VER)
+    char *lds_syslog_ident;
 #else
     HANDLE lds_syslog_ident;
 #endif  /* !defined(__WINDOWS__) */

@@ -28,7 +28,7 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
       "\t a = 1 \n"
       "\t return \n"
       "\t end \n")
-    
+
     EXECUTE_PROCESS(COMMAND ${F77} ${F77_OPTION_COMPILE} conftest.f ${F77_OUTPUT_OBJ}conftest.lib
       WORKING_DIRECTORY  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
       OUTPUT_VARIABLE    OUTPUT
@@ -38,24 +38,17 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
     SET(OUTPUT_OBJ_FILE "conftest.lib")
 
     # now run dumpbin to generate an output file
-    EXECUTE_PROCESS(COMMAND ${DUMP_UTIL} ${OUTPUT_OBJ_FILE} /symbols /out:conftest_out
+    EXECUTE_PROCESS(COMMAND ${DUMP_UTIL} ${OUTPUT_OBJ_FILE}
       WORKING_DIRECTORY  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
-      OUTPUT_VARIABLE    OUTPUT
+      OUTPUT_VARIABLE    DUMP_OUTPUT
       RESULT_VARIABLE    RESULT
       ERROR_VARIABLE     ERROR)
 
-
-    # find out the external symbol convention
-    FILE(STRINGS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftest_out 
-      DOUBLE_UNDERSCORE REGEX "foo_bar__$")
-    FILE(STRINGS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftest_out 
-      SINGLE_UNDERSCORE REGEX "foo_bar_$")
-    FILE(STRINGS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftest_out 
-      MIXED_CASE REGEX "FOO_bar$")
-    FILE(STRINGS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftest_out 
-      NO_UNDERSCORE REGEX "foo_bar$")
-    FILE(STRINGS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftest_out 
-      UPPER_CASE REGEX "FOO_BAR$")
+    STRING(REGEX MATCH foo_bar__\n DOUBLE_UNDERSCORE ${DUMP_OUTPUT})
+    STRING(REGEX MATCH foo_bar_\n SINGLE_UNDERSCORE ${DUMP_OUTPUT})
+    STRING(REGEX MATCH FOO_bar\n MIXED_CASE ${DUMP_OUTPUT})
+    STRING(REGEX MATCH foo_bar\n NO_UNDERSCORE ${DUMP_OUTPUT})
+    STRING(REGEX MATCH FOO_BAR\n UPPER_CASE ${DUMP_OUTPUT})
 
     # set up the corresponding values
     IF(NOT DOUBLE_UNDERSCORE STREQUAL "")
@@ -105,6 +98,7 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
       "IF(NOT \"${F77_LIB_PATH}\" STREQUAL \"\")\n"
       "  LINK_DIRECTORIES(\"${F77_LIB_PATH}\")\n"
       "ENDIF(NOT \"${F77_LIB_PATH}\" STREQUAL \"\")\n"
+      "LINK_DIRECTORIES(${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/)\n"
       "ADD_EXECUTABLE(conftest_c conftest_c.c)\n"
       "TARGET_LINK_LIBRARIES(conftest_c ${OUTPUT_OBJ_FILE})\n")
 
@@ -117,14 +111,14 @@ MACRO(OMPI_F77_FIND_EXT_SYMBOL_CONVENTION)
 
     #MESSAGE("MY_OUTPUT:${MY_OUTPUT}")
 
-    SET(SYMBOL_CONVENTION_CHECK_DONE TRUE CACHE INTERNAL "Symbol convention check done.")
-
-    IF(NOT TEST_OK)
+    IF(TEST_OK)
+      SET(SYMBOL_CONVENTION_CHECK_DONE TRUE CACHE INTERNAL "Symbol convention check done.")
+    ELSE(TEST_OK)
       UNSET(SYMBOL_CONVENTION_CHECK_DONE CACHE)
       MESSAGE(STATUS "${MY_OUTPUT}")
       MESSAGE(STATUS "*** Probably you have to setup the library path of the Fortran compiler.")
       MESSAGE(FATAL_ERROR "C and Fortran 77 compilers are not link compatible.  Cannot continue.")
-    ENDIF(NOT TEST_OK)
+    ENDIF(TEST_OK)
 
   ENDIF(NOT SYMBOL_CONVENTION_CHECK_DONE)
 
@@ -149,7 +143,7 @@ MACRO(OMPI_F77_MAKE_C_FUNCTION OUTPUT_VARIABLE FUNCTION_NAME)
     ENDIF("${RESULT}" STREQUAL "")
   ELSEIF("${ompi_cv_f77_external_symbol}" STREQUAL "single underscore")
     STRING(TOLOWER ${FUNCTION_NAME} ${OUTPUT_VARIABLE})
-    SET(${OUTPUT_VARIABLE} "${OUTPUT_VARIABLE}_")
+    SET(${OUTPUT_VARIABLE} "${${OUTPUT_VARIABLE}}_")
   ELSEIF("${ompi_cv_f77_external_symbol}" STREQUAL "mixed case")
     SET(${OUTPUT_VARIABLE} ${FUNCTION_NAME})
   ELSEIF("${ompi_cv_f77_external_symbol}" STREQUAL "no underscore")

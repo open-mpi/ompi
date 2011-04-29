@@ -33,7 +33,7 @@ ELSEIF(NOT CCP_FOUND)
   ELSE(CCP_LIB_PATH)
     SET(CCP_FOUND FALSE CACHE INTERNAL "find result of CCP.")
     SET(RESULT FALSE)   
-    MESSAGE(STATUS "looking for ccp...failed.")
+    MESSAGE(STATUS "looking for ccp...not found.")
   ENDIF(CCP_LIB_PATH)
 
 ELSE(NOT CCP_FOUND)

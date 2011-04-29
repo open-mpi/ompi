@@ -86,8 +86,22 @@ OMPI_DEF(OMPI_BUILD_USER $ENV{USERNAME} "User who has built the package." 1 1)
 
 OMPI_DEF(OMPI_BUILD_HOST $ENV{COMPUTERNAME} "Host on which the package has been built." 1 1)
 
-OMPI_DEF(OPAL_ARCH "${CMAKE_SYSTEM_PROCESSOR} ${CMAKE_SYSTEM}" "OMPI architecture string" 1 1)
+#detect the compiler bit
+OMPI_CHECK_TYPES("void *" VOID_P none c)
+IF(${SIZEOF_VOID_P} EQUAL 4)
+  SET(OMPI_COMPILER_BIT "86 bit")
+  SET(IS_32_BIT TRUE CACHE INTERNAL "32 bit compiler")
+ELSE(${SIZEOF_VOID_P} EQUAL 4)
+  SET(OMPI_COMPILER_BIT "64 bit")
+  SET(IS_64_BIT TRUE CACHE INTERNAL "64 bit compiler")
+ENDIF(${SIZEOF_VOID_P} EQUAL 4)
+OMPI_DEF(OPAL_ARCH "${CMAKE_SYSTEM} ${OMPI_COMPILER_BIT}" "OMPI architecture string" 1 1)
 
+IF(WINDOWS_VS)
+  INCLUDE(ompi_check_Microsoft)
+ELSEIF(WINDOWS_MINGW)
+  INCLUDE(ompi_check_MinGW)
+ENDIF(WINDOWS_VS)
 
 INCLUDE(opal_get_version)
 
@@ -101,25 +115,8 @@ OMPI_DEF(PACKAGE_VERSION ${OPAL_VERSION} "Define to the version of this package.
 
 OMPI_DEF(PACKAGE_STRING "Open MPI ${PACKAGE_VERSION}" "Define to the full name and version of this package." 1 1)
 
-
-# Get current time and date.
-EXECUTE_PROCESS(COMMAND cmd /C time /t
-                OUTPUT_VARIABLE    CURRENT_TIME)
-
-EXECUTE_PROCESS(COMMAND cmd /C date /t
-                OUTPUT_VARIABLE    CURRENT_DATE)
-
-STRING (REPLACE "\n" "" CURRENT_TIME ${CURRENT_TIME})
-STRING (REPLACE "\n" "" CURRENT_DATE ${CURRENT_DATE})
-STRING (REGEX MATCH [.-/\0-9]+ CURRENT_DATE ${CURRENT_DATE})
-SET (OPAL_CONFIGURE_DATE "${CURRENT_TIME} ${CURRENT_DATE}" CACHE INTERNAL "OPAL_CONFIGURE_DATE")
-SET (OMPI_BUILD_DATE "${CURRENT_TIME} ${CURRENT_DATE}" CACHE INTERNAL "OMPI_BUILD_DATE")
-
-OMPI_DEF(OPAL_CONFIGURE_DATE "${CURRENT_TIME} ${CURRENT_DATE}" "Configuration date." 1 1)
-OMPI_DEF(OMPI_BUILD_DATE "${CURRENT_TIME} ${CURRENT_DATE}" "Build date." 1 1)
-
-OMPI_DEF(OMPI_BUILD_CFLAGS "/Od /Gm /EHsc /RTC1 /MDd" "C flags" 1 1)
-
+#OMPI_DEF(OMPI_BUILD_CFLAGS "/Od /Gm /EHsc /RTC1 /MDd" "C flags" 1 1)
+OMPI_DEF(OMPI_BUILD_CFLAGS "${CMAKE_C_FLAGS} " "C flags" 1 1)
 
 SET(OMPI_BUILD_CPPFLAGS "\"-I${OpenMPI_SOURCE_DIR}/
   -I${OpenMPI_SOURCE_DIR}/opal
@@ -138,7 +135,8 @@ SET(OMPI_BUILD_CPPFLAGS "\"-I${OpenMPI_SOURCE_DIR}/
   -I${OpenMPI_SOURCE_DIR}/contrib/platform/win32\"")
 
 
-OMPI_DEF(OMPI_BUILD_CXXFLAGS "/Od /Gm /EHsc /RTC1 /MDd" "C++ flags" 1 1)
+#OMPI_DEF(OMPI_BUILD_CXXFLAGS "/Od /Gm /EHsc /RTC1 /MDd" "C++ flags" 1 1)
+OMPI_DEF(OMPI_BUILD_CXXFLAGS "${CMAKE_CXX_FLAGS} " "C++ flags" 1 1)
 
 SET(OMPI_BUILD_CXXCPPFLAGS ${OMPI_BUILD_CPPFLAGS})
 
@@ -154,14 +152,7 @@ OMPI_DEF(OMPI_F90_BUILD_SIZE "small" "F90 build size." 1 1)
 
 OMPI_DEF(OMPI_BTL_SM_HAVE_KNEM 0 "If btl sm has knem." 0 1)
 
-IF(WIN32 AND MSVC)
-  INCLUDE(ompi_check_Microsoft)
-  OMPI_DEF(COMPILER_FAMILYNAME MICROSOFT "Compiler family name" 1 1)
-  OMPI_DEF(COMPILER_VERSION ${MSVC_VERSION} "Compiler version" 0 1)
-  OMPI_DEF(OPAL_BUILD_PLATFORM_COMPILER_FAMILYID 14 "Compiler family ID" 0 1)
-  OMPI_DEF(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME ${COMPILER_FAMILYNAME} "Compiler family name" 0 1)
-  OMPI_DEF(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR ${MSVC_VERSION} "Compiler version" 0 1)
-ENDIF(WIN32 AND MSVC)
+
 
 
 ###################################################################
@@ -267,7 +258,6 @@ IF (NOT MSVC)
 ###################################################################
 #                           Check headers                         #
 ###################################################################
-
 
 OMPI_CHECK_INCLUDE_FILE (alloca.h HAVE_ALLOCA_H)
 
@@ -383,7 +373,6 @@ OMPI_CHECK_INCLUDE_FILE (termios.h HAVE_TERMIOS_H)
 
 OMPI_CHECK_INCLUDE_FILE (sys/time.h HAVE_TIMERADD)
 
-
 OMPI_CHECK_INCLUDE_FILE (ucontext.h HAVE_UCONTEXT_H)
 
 OMPI_CHECK_INCLUDE_FILE (ulimit.h HAVE_ULIMIT_H)
@@ -396,6 +385,35 @@ OMPI_CHECK_INCLUDE_FILE (utmp.h HAVE_UTMP_H)
 
 OMPI_CHECK_INCLUDE_FILE (mx_extension.h MX_HAVE_EXTENSIONS_H)
 
+OMPI_CHECK_INCLUDE_FILE (malloc.h HAVE_MALLOC_H)
+
+OMPI_CHECK_INCLUDE_FILE (memory.h HAVE_MEMORY_H)
+
+OMPI_CHECK_INCLUDE_FILE (signal.h HAVE_SIGNAL_H)
+
+OMPI_CHECK_INCLUDE_FILE (stdarg.h HAVE_STDARG_H)
+
+OMPI_CHECK_INCLUDE_FILE (stdint.h HAVE_STDINT_H)
+
+OMPI_CHECK_INCLUDE_FILE (stdlib.h HAVE_STDLIB_H)
+
+OMPI_CHECK_INCLUDE_FILE (string.h HAVE_STRING_H)
+
+OMPI_CHECK_INCLUDE_FILE (sys/stat.h HAVE_SYS_STAT_H)
+
+OMPI_CHECK_INCLUDE_FILE (sys/types.h HAVE_SYS_TYPES_H)
+
+OMPI_CHECK_INCLUDE_FILE (time.h HAVE_TIME_H)
+
+OMPI_CHECK_INCLUDE_FILE(stddef.h OPAL_STDC_HEADERS)
+
+OMPI_CHECK_FUNCTION_EXISTS (ceil HAVE_CEIL)
+
+OMPI_CHECK_FUNCTION_EXISTS (execve HAVE_EXECVE)
+
+OMPI_CHECK_FUNCTION_EXISTS (isatty HAVE_ISATTY)
+
+OMPI_CHECK_FUNCTION_EXISTS (vsnprintf HAVE_VSNPRINTF)
 
 ###################################################################
 #                          Check functions                        #
@@ -715,8 +733,6 @@ IF(WIN32)
   OMPI_DEF(MCA_memory_IMPLEMENTATION_HEADER "opal/mca/memory/base/empty.h" "Header to include for memory implementation." 1 1)
 
   OMPI_DEF(OPAL_ASSEMBLY_ARCH "OMPI_WINDOWS" "Architecture type of assembly to use for atomic operations." 0 1)
-
-  OMPI_DEF(OPAL_HAVE_POSIX_THREADS 0 "Do we have POSIX threads." 0 1)
 
   OMPI_DEF(OPAL_HAVE_WEAK_SYMBOLS 0 "Whether we have weak symbols or not" 0 1)
 

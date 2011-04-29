@@ -59,7 +59,11 @@ MACRO(OMPI_F77_GET_VALUE_TRUE)
             "\tCALL print(value)\n"
             "\tend\n")
 
-        EXECUTE_PROCESS(COMMAND ${CMAKE_C_COMPILER} ${OMPI_C_OPTION_COMPILE} conftest_c.c ${OMPI_C_INCLUDE_DIR}${C_COMPILER_INCLUDE}
+        IF(NOT "${C_COMPILER_INCLUDE}" STREQUAL "")
+          SET(EXECUTE_OPT "${OMPI_C_INCLUDE_DIR}${C_COMPILER_INCLUDE}")
+        ENDIF(NOT "${C_COMPILER_INCLUDE}" STREQUAL "")
+
+        EXECUTE_PROCESS(COMMAND ${CMAKE_C_COMPILER} ${OMPI_C_OPTION_COMPILE} conftest_c.c ${EXECUTE_OPT} ${OMPI_C_OUTPUT_OBJ}conftest_c.obj
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
             OUTPUT_VARIABLE OUTPUT
             RESULT_VARIABLE RESULT
@@ -70,7 +74,7 @@ MACRO(OMPI_F77_GET_VALUE_TRUE)
             MESSAGE(FATAL_ERROR "Could not determine value of Fortran .TRUE..  Aborting.")
         ENDIF(RESULT)
 
-        EXECUTE_PROCESS(COMMAND ${F77} ${F77_OPTION_COMPILE} conftest_f.f
+        EXECUTE_PROCESS(COMMAND ${F77} ${F77_OPTION_COMPILE} conftest_f.f ${F77_OUTPUT_OBJ}conftest_f.obj
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
             OUTPUT_VARIABLE OUTPUT
             RESULT_VARIABLE RESULT
@@ -81,7 +85,7 @@ MACRO(OMPI_F77_GET_VALUE_TRUE)
             MESSAGE(FATAL_ERROR "Could not determine value of Fortran .TRUE..  Aborting.")
         ENDIF(RESULT)
 
-        EXECUTE_PROCESS(COMMAND ${F77} conftest_f.obj conftest_c.obj ${F77_OUTPUT_EXE}conftest
+        EXECUTE_PROCESS(COMMAND ${F77} conftest_f.obj conftest_c.obj ${F77_OUTPUT_EXE}conftest.exe
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
             OUTPUT_VARIABLE OUTPUT
             RESULT_VARIABLE RESULT

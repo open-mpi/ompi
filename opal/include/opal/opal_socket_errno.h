@@ -33,7 +33,7 @@
 #define opal_socket_errno opal_get_socket_errno()
 
 /* some of these have been defined in newer version of errno.h*/
-#if defined(_MSC_VER) && _MSC_VER < 1600
+#if (defined(__WINDOWS__) && !defined(_MSC_VER)) || _MSC_VER < 1600
 
 #define EWOULDBLOCK       WSAEWOULDBLOCK
 #define EINPROGRESS       WSAEINPROGRESS

@@ -21,6 +21,16 @@ ENDIF(WIN32)
 # create top-level target(solution file)
 PROJECT("OpenMPI" C CXX)
 
+IF(MSVC)
+  SET(WINDOWS_VS TRUE CACHE INTERNAL "Windows Visual Studio env")
+  IF(CMAKE_CL_64)
+    SET(COMPILER_TYPE "x64")
+  ELSE(CMAKE_CL_64)
+    SET(COMPILER_TYPE "win32")
+  ENDIF(CMAKE_CL_64)
+ELSEIF(NOT "$ENV{MSYSTEM}" STREQUAL "")
+  SET(WINDOWS_MINGW TRUE CACHE INTERNAL "Windows MinGW env")
+ENDIF(MSVC)
 
 SET (OpenMPI_VERSION $(OpenMPI_MAJOR_VERSION).$(OpenMPI_MINOR_VERSION).$(OpenMPI_PATCH_VERSION))
 SET (CMAKE_MODULE_PATH "${OpenMPI_SOURCE_DIR}/contrib/platform/win32/CMakeModules;${CMAKE_MODULE_PATH}") 
@@ -79,12 +89,6 @@ SET (CMAKE_SUPPRESS_REGENERATION true)
 
 # Dynamic/shared build, the default is set to static(OFF)
 OPTION(BUILD_SHARED_LIBS "Whether we want to build shared libraries." ON)
-
-IF(CMAKE_CL_64)
-  SET(COMPILER_TYPE "x64")
-ELSE(CMAKE_CL_64)
-  SET(COMPILER_TYPE "win32")
-ENDIF(CMAKE_CL_64)
 
 #store current environment variables
 SET(PATH_OLD "$ENV{PATH}")
