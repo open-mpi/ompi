@@ -534,13 +534,102 @@ opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
                  * much of the addr to use: e.g., /16
                  */
                 pval = strtol(msk, NULL, 10);
-                if (24 == pval) {
-                    *mask = 0xFFFFFF00;
-                } else if (16 == pval) {
-                    *mask = 0xFFFF0000;
-                } else if (8 == pval) {
-                    *mask = 0xFF000000;
-                } else {
+                switch(pval) {
+                case 30:
+                    *mask = parse_dots("255.255.255.252");
+                    break;
+                case 29:
+                    *mask = parse_dots("255.255.255.248");
+                    break;
+                case 28:
+                    *mask = parse_dots("255.255.255.240");
+                    break;
+                case 27:
+                    *mask = parse_dots("255.255.255.224");
+                    break;
+                case 26:
+                    *mask = parse_dots("255.255.255.192");
+                    break;
+                case 25:
+                    *mask = parse_dots("255.255.255.128");
+                    break;
+                case 24:
+                    break;
+                    *mask = parse_dots("255.255.255.0");
+                    break;
+                case 23:
+                    *mask = parse_dots("255.255.254.0");
+                    break;
+                case 22:
+                    *mask = parse_dots("255.255.252.0");
+                    break;
+                case 21:
+                    *mask = parse_dots("255.255.248.0");
+                    break;
+                case 20:
+                    *mask = parse_dots("255.255.240.0");
+                    break;
+                case 19:
+                    *mask = parse_dots("255.255.224.0");
+                    break;
+                case 18:
+                    *mask = parse_dots("255.255.192.0");
+                    break;
+                case 17:
+                    *mask = parse_dots("255.255.128.0");
+                    break;
+                case 16:
+                    *mask = parse_dots("255.255.0.0");
+                    break;
+                case 15:
+                    *mask = parse_dots("255.254.0.0");
+                    break;
+                case 14:
+                    *mask = parse_dots("255.252.0.0");
+                    break;
+                case 13:
+                    *mask = parse_dots("255.248.0.0");
+                    break;
+                case 12:
+                    *mask = parse_dots("255.240.0.0");
+                    break;
+                case 11:
+                    *mask = parse_dots("255.224.0.0");
+                    break;
+                case 10:
+                    *mask = parse_dots("255.192.0.0");
+                    break;
+                case 9:
+                    *mask = parse_dots("255.128.0.0");
+                    break;
+                case 8:
+                    *mask = parse_dots("255.0.0.0");
+                    break;
+                case 7:
+                    *mask = parse_dots("254.0.0.0");
+                    break;
+                case 6:
+                    *mask = parse_dots("252.0.0.0");
+                    break;
+                case 5:
+                    *mask = parse_dots("248.0.0.0");
+                    break;
+                case 4:
+                    *mask = parse_dots("240.0.0.0");
+                    break;
+                case 3:
+                    *mask = parse_dots("224.0.0.0");
+                    break;
+                case 2:
+                    *mask = parse_dots("192.0.0.0");
+                    break;
+                case 1:
+                    *mask = parse_dots("128.0.0.0");
+                    break;
+                case 0:
+                    *mask = parse_dots("0.0.0.0");
+                    break;
+                default:
                     opal_output(0, "opal_iftupletoaddr: unknown mask");
                     free(addr);
                     return OPAL_ERROR;
