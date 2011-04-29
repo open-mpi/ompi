@@ -15,10 +15,29 @@
 #
 # Keep all the Windows checks in one place.
 #
-# USAGE:
-#   OMPI_MICROSOFT_COMPILER()
-#
 ######################################################################
+
+# Get current time and date.
+EXECUTE_PROCESS(COMMAND cmd /C time /t
+                OUTPUT_VARIABLE    CURRENT_TIME)
+EXECUTE_PROCESS(COMMAND cmd /C date /t
+                OUTPUT_VARIABLE    CURRENT_DATE)
+
+STRING (REPLACE "\n" "" CURRENT_TIME ${CURRENT_TIME})
+STRING (REPLACE "\n" "" CURRENT_DATE ${CURRENT_DATE})
+STRING (REGEX MATCH [.-/\0-9]+ CURRENT_DATE ${CURRENT_DATE})
+SET (OPAL_CONFIGURE_DATE "${CURRENT_TIME} ${CURRENT_DATE}" CACHE INTERNAL "OPAL_CONFIGURE_DATE")
+SET (OMPI_BUILD_DATE "${CURRENT_TIME} ${CURRENT_DATE}" CACHE INTERNAL "OMPI_BUILD_DATE")
+
+OMPI_DEF(OPAL_CONFIGURE_DATE "${CURRENT_TIME} ${CURRENT_DATE}" "Configuration date." 1 1)
+OMPI_DEF(OMPI_BUILD_DATE "${CURRENT_TIME} ${CURRENT_DATE}" "Build date." 1 1)
+
+# Set up compiler information.
+OMPI_DEF(COMPILER_FAMILYNAME MICROSOFT "Compiler family name" 1 1)
+OMPI_DEF(COMPILER_VERSION ${MSVC_VERSION} "Compiler version" 0 1)
+OMPI_DEF(OPAL_BUILD_PLATFORM_COMPILER_FAMILYID 14 "Compiler family ID" 0 1)
+OMPI_DEF(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME ${COMPILER_FAMILYNAME} "Compiler family name" 0 1)
+OMPI_DEF(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR ${MSVC_VERSION} "Compiler version" 0 1)
 
 IF(NOT MICROSOFT_CHECK_DONE)
 
@@ -117,6 +136,7 @@ IF(NOT MICROSOFT_CHECK_DONE)
     "Output option for making static libraries.")
 
   SET(DUMP_UTIL "${VC_BIN_PATH}/dumpbin.exe" CACHE INTERNAL "the dumpbin application.")
+  SET(DUMP_UTIL_OPT "/symbols /out:" CACHE INTERNAL "the dumpbin application options.")
 
   FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/cl_test.c
     "int main() {return 0;}")
@@ -186,6 +206,7 @@ OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGERELEASE "Whether we support 32 bits 
 OMPI_DEF(MCA_COMMON_SM_WINDOWS 1 "Whether we have shared memory support for Windows or not." 0 1)
 OMPI_DEF(MCA_COMMON_SM_SYSV 0 "Whether we have shared memory support for SYSV or not." 0 1)
 OMPI_DEF(MCA_COMMON_SM_POSIX 0 "Whether we have shared memory support for POSIX or not." 0 1)
+OMPI_DEF(OPAL_HAVE_POSIX_THREADS 0 "Do we have POSIX threads." 0 1)
 
 OMPI_CHECK_INCLUDE_FILE (windows.h HAVE_WINDOWS_H)
 

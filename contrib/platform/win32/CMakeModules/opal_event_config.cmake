@@ -17,100 +17,118 @@ IF(IN_USE STREQUAL "0")
 
 ELSE(IN_USE STREQUAL "0")
 
-  IF(LIBEVENT_CONFIG_DONE)
-    MESSAGE(STATUS "multiple libevent selected, only one is configured.")
-    SET(RESULT FALSE)
+  SET(LIBEVENT_FOUND TRUE CACHE INTERNAL "allow only one event mca.")
 
-  ELSE(LIBEVENT_CONFIG_DONE)
-    SET(LIBEVENT_FOUND TRUE CACHE INTERNAL "allow only one event mca.")
+  MESSAGE(STATUS "configure libevent.")
 
-    MESSAGE(STATUS "configure libevent.")
+  # set up event include directories.
+  INCLUDE_DIRECTORIES ("${CURRENT_PATH}/libevent/compat"
+    "${CURRENT_PATH}/libevent/WIN32-Code/"
+    "${CURRENT_PATH}/libevent/include/"
+    "${CURRENT_PATH}/libevent"
+    "${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/")
 
-    # set up event include directories.
-    INCLUDE_DIRECTORIES ("${CURRENT_PATH}/libevent/compat"
-      "${CURRENT_PATH}/libevent/WIN32-Code/"
-      "${CURRENT_PATH}/libevent/include/"
-      "${CURRENT_PATH}/libevent"
-      "${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/")
+  SET(LIBEVENT_INCLUDE_DIRS ${CURRENT_PATH}/libevent/compat;${CURRENT_PATH}/libevent/WIN32-Code/;${CURRENT_PATH}/libevent/include/;${CURRENT_PATH}/libevent;${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/
+  CACHE INTERNAL "the libevent dirs that have to be included on the top level.")
 
-    SET(LIBEVENT_INCLUDE_DIRS ${CURRENT_PATH}/libevent/compat;${CURRENT_PATH}/libevent/WIN32-Code/;${CURRENT_PATH}/libevent/include/;${CURRENT_PATH}/libevent;${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/
-    CACHE INTERNAL "the libevent dirs that have to be included on the top level.")
-      
-    IF(WIN32)
+  IF(WIN32)
 
-      # generating config.h
-      # windows doesn't need this file, just make an empty one
-      FILE(WRITE ${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/config.h
-        " /* config.h.  Generated automatically by CMake. */ ")
+    # generating config.h
+    # windows doesn't need this file, just make an empty one
+    FILE(WRITE ${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/config.h
+      " /* config.h.  Generated automatically by CMake. */ ")
 
-      SET(RESULT_COMPONENT_FILES
-        ${RESULT_COMPONENT_FILES}
-        ${CURRENT_PATH}/libevent207_component.c
-        ${CURRENT_PATH}/libevent207_module.c
-        #system sources
-        ${CURRENT_PATH}/libevent/win32select.c
-        ${CURRENT_PATH}/libevent/evthread_win32.c
-        ${CURRENT_PATH}/libevent/buffer_iocp.c
-        ${CURRENT_PATH}/libevent/event_iocp.c
-        ${CURRENT_PATH}/libevent/bufferevent_async.c
-        #core sources
-        ${CURRENT_PATH}/libevent/event.c
-        ${CURRENT_PATH}/libevent/evthread.c
-        ${CURRENT_PATH}/libevent/buffer.c
-        ${CURRENT_PATH}/libevent/bufferevent.c
-        ${CURRENT_PATH}/libevent/bufferevent_sock.c
-        ${CURRENT_PATH}/libevent/bufferevent_filter.c
-        ${CURRENT_PATH}/libevent/bufferevent_pair.c
-        ${CURRENT_PATH}/libevent/listener.c
-        ${CURRENT_PATH}/libevent/bufferevent_ratelim.c
-	    ${CURRENT_PATH}/libevent/evmap.c
-        ${CURRENT_PATH}/libevent/log.c
-        ${CURRENT_PATH}/libevent/evutil.c
-        ${CURRENT_PATH}/libevent/evutil_rand.c
-        ${CURRENT_PATH}/libevent/strlcpy.c
-        ${CURRENT_PATH}/libevent/signal.c
-        ${CURRENT_PATH}/libevent/event_tagging.c
-      )
+    SET(RESULT_COMPONENT_FILES
+      ${RESULT_COMPONENT_FILES}
+      ${CURRENT_PATH}/libevent207_component.c
+      ${CURRENT_PATH}/libevent207_module.c
+      #system sources
+      ${CURRENT_PATH}/libevent/win32select.c
+      ${CURRENT_PATH}/libevent/evthread_win32.c
+      ${CURRENT_PATH}/libevent/buffer_iocp.c
+      ${CURRENT_PATH}/libevent/event_iocp.c
+      ${CURRENT_PATH}/libevent/bufferevent_async.c
+      #core sources
+      ${CURRENT_PATH}/libevent/event.c
+      ${CURRENT_PATH}/libevent/evthread.c
+      ${CURRENT_PATH}/libevent/buffer.c
+      ${CURRENT_PATH}/libevent/bufferevent.c
+      ${CURRENT_PATH}/libevent/bufferevent_sock.c
+      ${CURRENT_PATH}/libevent/bufferevent_filter.c
+      ${CURRENT_PATH}/libevent/bufferevent_pair.c
+      ${CURRENT_PATH}/libevent/listener.c
+      ${CURRENT_PATH}/libevent/bufferevent_ratelim.c
+      ${CURRENT_PATH}/libevent/evmap.c
+      ${CURRENT_PATH}/libevent/log.c
+      ${CURRENT_PATH}/libevent/evutil.c
+      ${CURRENT_PATH}/libevent/evutil_rand.c
+      ${CURRENT_PATH}/libevent/strlcpy.c
+      ${CURRENT_PATH}/libevent/signal.c
+      ${CURRENT_PATH}/libevent/event_tagging.c
+    )
+    IF(WINDOWS_MINGW)
+      SET_SOURCE_FILES_PROPERTIES(${CURRENT_PATH}/libevent/win32select.c
+                                  ${CURRENT_PATH}/libevent/evthread_win32.c
+                                  ${CURRENT_PATH}/libevent/buffer_iocp.c
+                                  ${CURRENT_PATH}/libevent/bufferevent_async.c
+                                  ${CURRENT_PATH}/libevent/event.c
+                                  ${CURRENT_PATH}/libevent/evthread.c
+                                  ${CURRENT_PATH}/libevent/bufferevent.c
+                                  ${CURRENT_PATH}/libevent/bufferevent_sock.c
+                                  ${CURRENT_PATH}/libevent/bufferevent_filter.c
+                                  ${CURRENT_PATH}/libevent/bufferevent_pair.c
+                                  ${CURRENT_PATH}/libevent/bufferevent_ratelim.c
+                                  ${CURRENT_PATH}/libevent/evmap.c
+                                  ${CURRENT_PATH}/libevent/log.c
+                                  ${CURRENT_PATH}/libevent/evutil_rand.c
+                                  ${CURRENT_PATH}/libevent/strlcpy.c
+                                  ${CURRENT_PATH}/libevent/signal.c
+                                  ${CURRENT_PATH}/libevent/event_tagging.c
+                                  PROPERTIES COMPILE_FLAGS "-D intptr_t=int -D _INTPTR_T_DEFINED")
+      SET(OBJ_PATH "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/libopen-pal.dir/mca/event/libevent207/libevent")
+      SET(EVENT_OBJ_FILES "${OBJ_PATH}/*.obj" CACHE INTERNAL "event obj files")
+    ELSEIF(WINDOWS_VS)
+      SET(OBJ_PATH "${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}")
+        # for generating the static library, as opal will not export event API any more.
+    SET(EVENT_OBJ_FILES
+      ${OBJ_PATH}/win32select.obj
+      ${OBJ_PATH}/evthread_win32.obj
+      ${OBJ_PATH}/buffer_iocp.obj
+      ${OBJ_PATH}/event_iocp.obj
+      ${OBJ_PATH}/bufferevent_async.obj
+      ${OBJ_PATH}/event.obj
+      ${OBJ_PATH}/evthread.obj
+      ${OBJ_PATH}/buffer.obj
+      ${OBJ_PATH}/bufferevent.obj
+      ${OBJ_PATH}/bufferevent_sock.obj
+      ${OBJ_PATH}/bufferevent_filter.obj
+      ${OBJ_PATH}/bufferevent_pair.obj
+      ${OBJ_PATH}/listener.obj
+      ${OBJ_PATH}/bufferevent_ratelim.obj
+      ${OBJ_PATH}/evmap.obj
+      ${OBJ_PATH}/log.obj
+      ${OBJ_PATH}/evutil.obj
+      ${OBJ_PATH}/evutil_rand.obj
+      ${OBJ_PATH}/strlcpy.obj
+      ${OBJ_PATH}/signal.obj
+      ${OBJ_PATH}/event_tagging.obj
+      CACHE INTERNAL "event obj files")
+    ENDIF(WINDOWS_MINGW)
 
-      OMPI_DEF(OPAL_HAVE_WORKING_EVENTOPS 1 
-        "Whether our event component has working event operations or not if not, then assumedly it only has working timers and signals)." 0 1)
+    OMPI_DEF(OPAL_HAVE_WORKING_EVENTOPS 1 
+      "Whether our event component has working event operations or not if not, then assumedly it only has working timers and signals)." 0 1)
 
-      OMPI_DEF(MCA_event_IMPLEMENTATION_HEADER "${CURRENT_PATH}/libevent207.h"
-        "Header to include for event implementation" 1 1)
+    OMPI_DEF(MCA_event_IMPLEMENTATION_HEADER "${CURRENT_PATH}/libevent207.h"
+      "Header to include for event implementation" 1 1)
 
-      # for generating the static library, as opal will not export event API any more.
-      SET(EVENT_OBJ_FILES
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/win32select.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evthread_win32.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/buffer_iocp.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/event_iocp.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_async.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/event.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evthread.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/buffer.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_sock.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_filter.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_pair.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/listener.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/bufferevent_ratelim.obj
-	    ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evmap.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/log.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evutil.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/evutil_rand.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/strlcpy.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/signal.obj
-        ${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}/event_tagging.obj
-      )
+    SET(LIBEVENT_CONFIG_DONE TRUE CACHE INTERNAL "Libevent config done.")
 
-    ELSE(WIN32)
-      SET(RESULT_COMPONENT_FILES
-        ${RESULT_COMPONENT_FILES}
-      )
-    ENDIF(WIN32)
+  ELSE(WIN32)
+    SET(RESULT_COMPONENT_FILES
+      ${RESULT_COMPONENT_FILES}
+    )
+  ENDIF(WIN32)
 
   SET(RESULT TRUE)
-
-  ENDIF(LIBEVENT_CONFIG_DONE)
 
 ENDIF(IN_USE STREQUAL "0")

@@ -155,12 +155,14 @@ struct clockinfo {
 #define TIMER_RELTIME   0x0 /* relative timer */
 #define TIMER_ABSTIME   0x1 /* absolute timer */
 
-
+#ifndef OMPI_TIMESPEC
+#define OMPI_TIMESPEC
 struct timespec
 {
   long tv_sec;
   long tv_nsec;
 };
+#endif
 
 
 /*

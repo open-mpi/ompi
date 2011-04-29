@@ -57,6 +57,7 @@
 #include <pwd.h>
 #endif
 
+#ifdef _MSC_VER
 #include <winsock2.h>
 #include <comutil.h>
 #include <Wbemidl.h>
@@ -65,6 +66,7 @@
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "comsuppw.lib")
 #pragma comment(lib, "Credui.lib")
+#endif
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -141,6 +143,13 @@ static const char * orte_plm_process_shell_name[] = {
     "unknown"
 }; 
 
+/* local global storage of timing variables */
+static struct timeval joblaunchstart, joblaunchstop;
+
+/* global storage of active jobid being launched */
+static orte_jobid_t active_job = ORTE_JOBID_INVALID;
+
+#ifdef _MSC_VER
 /*
  * local functions
  */
@@ -149,9 +158,6 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
 static int get_credential(char *node_name);
 static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char *remote_node, char *ntlm_auth);
 
-
-/* local global storage of timing variables */
-static struct timeval joblaunchstart, joblaunchstop;
 
 /* local global storage of user credential */
 static char user_name[CREDUI_MAX_USERNAME_LENGTH+1];
@@ -164,8 +170,6 @@ IWbemServices *pSvc_registry = NULL;
 /* namespace for \hostname\root\cimv2 */
 IWbemServices *pSvc_cimv2 = NULL;
 
-/* global storage of active jobid being launched */
-static orte_jobid_t active_job = ORTE_JOBID_INVALID;
 
 /**
 * Init the module
@@ -664,7 +668,7 @@ cleanup:
     return pid;
 }
 
-
+#endif
 
 /**
  * Check the Shell variable on the specified node
@@ -1287,8 +1291,12 @@ int orte_plm_process_launch(orte_job_t *jdata)
                 if (NULL != param) free(param);
             }
             
+#ifdef _MSC_VER
             /* launch remote process */
             pid = wmi_launch_child(prefix_dir, nodes[nnode]->name, argc, exec_argv);
+#else
+            pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env);
+#endif
 
             if (pid < 0) {
                 failed_launch = true;
@@ -1396,6 +1404,7 @@ int orte_plm_process_finalize(void)
 {
     int rc;
 
+#ifdef _MSC_VER
     /* release the locator and service objects*/
     if(NULL!=pLoc) {
         pLoc->Release();
@@ -1410,6 +1419,7 @@ int orte_plm_process_finalize(void)
     }
 
     CoUninitialize();
+#endif
     
     /* cleanup any pending recvs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_stop())) {
