@@ -31,7 +31,9 @@
 #endif
 
 #include "opal/util/argv.h"
+#include "opal/util/output.h"
 
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/util/parse_options.h"
 
@@ -91,6 +93,48 @@ cleanup:
     if (bang_option) {
         opal_argv_append_nosize(output, "BANG");
     }
+    free(input);
+    opal_argv_free(r1);
+    opal_argv_free(r2);
+
+}
+
+void orte_util_get_ranges(char *inp, char ***startpts, char ***endpts)
+{
+    char **r1=NULL, **r2=NULL;
+    int i;
+    char *input;
+    
+    /* protect against null input */
+    if (NULL == inp) {
+        return;
+    }
+    
+    /* protect the provided input */
+    input = strdup(inp);
+    
+    /* split on commas */
+    r1 = opal_argv_split(input, ',');
+    /* for each resulting element, check for range */
+    for (i=0; i < opal_argv_count(r1); i++) {
+        r2 = opal_argv_split(r1[i], '-');
+        if (2 == opal_argv_count(r2)) {
+            /* given range - get start and end */
+            opal_argv_append_nosize(startpts, r2[0]);
+            opal_argv_append_nosize(endpts, r2[1]);
+        } else if (1 == opal_argv_count(r2)) {
+            /* only one value provided, so it is both the start
+             * and the end
+             */
+            opal_argv_append_nosize(startpts, r2[0]);
+            opal_argv_append_nosize(endpts, r2[0]);
+        } else {
+            /* no idea how to parse this */
+            opal_output(0, "%s Unknown parse error on string: %s(%s)",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), inp, r1[i]);
+        }
+    }
+    
     free(input);
     opal_argv_free(r1);
     opal_argv_free(r2);

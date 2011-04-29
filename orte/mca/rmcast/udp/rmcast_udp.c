@@ -647,6 +647,8 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     rmcast_base_channel_t *nchan, *chan;
     uint32_t netaddr=0, netmask=0, intr=0;
     int rc;
+    unsigned int i, n, start, end, range;
+    bool port_assigned;
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s opening channel %d for %s",
@@ -687,11 +689,7 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
 
         if (nchan->channel == channel ||
             0 == strcasecmp(nchan->name, name)) {
-            /* check the network, if one was specified */
-            if (0 != netaddr && netaddr != (nchan->network & netmask)) {
-                continue;
-            }
-            chan = nchan;
+             chan = nchan;
             break;
         }
     }
@@ -718,15 +716,16 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     
     /* we didn't find an existing match, so create a new channel */
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s creating new channel %d for %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), channel, name));
+                         "%s creating new channel %s for %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         orte_rmcast_base_print_channel(channel), name));
 
     chan = OBJ_NEW(rmcast_base_channel_t);
     chan->name = strdup(name);
     chan->channel = channel;
     /* if we were not given a network, use the default */
     if (NULL == network) {
-        chan->network = orte_rmcast_base.xmit_network + chan->channel;
+        chan->network = orte_rmcast_base.xmit_network;
     } else {
         chan->network = netaddr;
     }
@@ -738,7 +737,30 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     }
     /* if we were not given a port, use a default one */
     if (port < 0) {
-        chan->port = orte_rmcast_base.ports[chan->channel];
+        /* cycle thru the port ranges until we find the
+         * port corresponding to this channel number
+         */
+        n=0;
+        port_assigned = false;
+        for (i=0; NULL != orte_rmcast_base.ports.start[i]; i++) {
+            /* how many ports are in this range? */
+            start = strtol(orte_rmcast_base.ports.start[i], NULL, 10);
+            end = strtol(orte_rmcast_base.ports.end[i], NULL, 10);
+            range = end - start + 1;
+            if (chan->channel < (n + range)) {
+                /* take the corresponding port */
+                chan->port = start + (chan->channel - n);
+                port_assigned = true;
+                break;
+            }
+            n += range;
+        }
+        if (!port_assigned) {
+            opal_output(0, "%s CANNOT ASSIGN PORT TO CHANNEL %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        orte_rmcast_base_print_channel(chan->channel));
+            return ORTE_ERROR;
+        }
     } else {
         chan->port = port;
     }
@@ -746,9 +768,9 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
     
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
-                         "%s rmcast:udp opening new channel %s:%d network %03d.%03d.%03d.%03d port %d for%s%s",
+                         "%s rmcast:udp opening new channel %s:%s network %03d.%03d.%03d.%03d port %d for%s%s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         chan->name, chan->channel,
+                         chan->name, orte_rmcast_base_print_channel(chan->channel),
                          OPAL_IF_FORMAT_ADDR(chan->network),
                          (int)chan->port,
                          (ORTE_RMCAST_RECV & direction) ? " RECV" : " ",
