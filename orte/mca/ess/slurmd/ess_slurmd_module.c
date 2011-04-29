@@ -168,7 +168,7 @@ static int rte_init(void)
     }
     asprintf(&envar, "%s=%s", cs_env, string_key);
     putenv(envar);
-    free(envar);
+    /* cannot free the envar as that messes of our environ */
     free(cs_env);
     free(string_key);
 
