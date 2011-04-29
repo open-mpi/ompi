@@ -72,6 +72,6 @@ void mpi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attrib
                                        &c_type->d_keyhash,
                                        OMPI_FINT_2_INT(*type_keyval), 
                                        *attribute_val,
-                                       false, true);
+                                       false);
     *ierr = OMPI_INT_2_FINT(c_err);
 }
