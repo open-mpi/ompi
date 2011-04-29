@@ -80,7 +80,7 @@ static void send_data(int fd, short flags, void *arg)
     sent_seq_num++;
 
     if (0 == (sent_seq_num % 100)) {
-        opal_output(0, "SENT SEQ_NUM %lu", sent_seq_num);
+        opal_output(0, "SENT SEQ_NUM %d", sent_seq_num);
     }
 
     /* reset the timer */
@@ -158,13 +158,13 @@ static void cbfunc(int status,
 
     if (0 < recvd_seq_num) {
         if ((seq_num - recvd_seq_num) != 1) {
-            opal_output(0, "%s MESSAGE LOST seq %lu recvd_seq %lu",
+            opal_output(0, "%s MESSAGE LOST seq %d recvd_seq %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), seq_num, recvd_seq_num);
         }
     }
     recvd_seq_num = seq_num;
     if (0 == (recvd_seq_num % 100)) {
-        opal_output(0, "RECVD SEQ_NUM %lu", recvd_seq_num);
+        opal_output(0, "RECVD SEQ_NUM %d", recvd_seq_num);
     }
 
 }
@@ -178,13 +178,13 @@ static void cbfunc_iovec(int status,
 {
     if (0 < recvd_seq_num) {
         if ((seq_num - recvd_seq_num) != 1) {
-            opal_output(0, "%s MESSAGE LOST seq %lu recvd_seq %lu",
+            opal_output(0, "%s MESSAGE LOST seq %d recvd_seq %d",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), seq_num, recvd_seq_num);
         }
     }
     recvd_seq_num = seq_num;
     if (0 == (recvd_seq_num % 100)) {
-        opal_output(0, "RECVD SEQ_NUM %lu", recvd_seq_num);
+        opal_output(0, "RECVD SEQ_NUM %d", recvd_seq_num);
     }
 }
 

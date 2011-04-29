@@ -90,8 +90,8 @@ static bool opened=false;
  */
 int orte_rmcast_base_open(void)
 {
-    int value, pval, i;
-    char *tmp, **nets=NULL, **ports=NULL, *ptr;
+    int value, i;
+    char *tmp, **nets=NULL, *ptr;
     int idx, lb;
     struct sockaddr_in inaddr;
     uint32_t addr, netaddr, netmask;
@@ -122,9 +122,8 @@ int orte_rmcast_base_open(void)
     orte_rmcast_base.my_group_name = NULL;
     orte_rmcast_base.my_group_number = 0;
     orte_rmcast_base.interface = 0;
-    for (i=0; i < 255; i++) {
-        orte_rmcast_base.ports[i] = 0;
-    }
+    orte_rmcast_base.ports.start = NULL;
+    orte_rmcast_base.ports.end = NULL;
     orte_rmcast_base.my_output_channel = NULL;
     orte_rmcast_base.my_input_channel = NULL;
 
@@ -134,14 +133,14 @@ int orte_rmcast_base_open(void)
                                 false, false, "link", &tmp);
     rc = ORTE_ERR_SILENT;
     if (0 == strcasecmp(tmp, "site")) {
-        rc = opal_iftupletoaddr("239.255.0.0", &orte_rmcast_base.xmit_network, NULL);
+        rc = opal_iftupletoaddr("239.255.0.150", &orte_rmcast_base.xmit_network, NULL);
     } else if (0 == strcasecmp(tmp, "org")) {
-        rc = opal_iftupletoaddr("239.192.0.0", &orte_rmcast_base.xmit_network, NULL);
+        rc = opal_iftupletoaddr("239.192.0.150", &orte_rmcast_base.xmit_network, NULL);
     } else if (0 == strcasecmp(tmp, "global")) {
-        rc = opal_iftupletoaddr("224.0.1.0", &orte_rmcast_base.xmit_network, NULL);
+        rc = opal_iftupletoaddr("224.0.1.150", &orte_rmcast_base.xmit_network, NULL);
     } else if (0 == strcasecmp(tmp, "link")) {
         /* default to link */
-        rc = opal_iftupletoaddr("224.0.0.0", &orte_rmcast_base.xmit_network, NULL);
+        rc = opal_iftupletoaddr("224.0.0.150", &orte_rmcast_base.xmit_network, NULL);
     } else if (NULL != strchr(tmp, '.')) {
         /* must have been given an actual network address */
         rc = opal_iftupletoaddr(tmp, &orte_rmcast_base.xmit_network, NULL);
@@ -262,27 +261,7 @@ int orte_rmcast_base_open(void)
     mca_base_param_reg_string_name("rmcast", "base_multicast_ports",
                                 "Ports available for multicast channels (default: 6900-7155)",
                                 false, false, "6900-7154", &tmp);
-    ports = NULL;
-    orte_util_parse_range_options(tmp, &ports);
-    if (255 < opal_argv_count(ports)) {
-        orte_show_help("help-rmcast-base.txt", "too-many-values", true,
-                       "ports", tmp, opal_argv_count(ports), "255");
-        free(tmp);
-        opal_argv_free(nets);
-        return ORTE_ERR_SILENT;
-    }
-    for (i=0; i < opal_argv_count(ports); i++) {
-        pval = strtoul(ports[i], NULL, 10);
-        if (pval >= UINT16_MAX) {
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            free(tmp);
-            opal_argv_free(ports);
-            return ORTE_ERR_BAD_PARAM;
-        }
-        orte_rmcast_base.ports[i] = pval;
-    }
-    free(tmp);
-    opal_argv_free(ports);
+    orte_util_get_ranges(tmp, &orte_rmcast_base.ports.start, &orte_rmcast_base.ports.end);
     
     /* send cache size */
     mca_base_param_reg_int_name("rmcast", "base_cache_size",

@@ -46,7 +46,10 @@ typedef struct {
     char *my_group_name;
     uint8_t my_group_number;
     uint32_t interface;
-    uint16_t ports[256];
+    struct {
+        char **start;
+        char **end;
+    } ports;
     int cache_size;
     bool opened;
     orte_thread_ctl_t main_ctl;
@@ -71,6 +74,8 @@ ORTE_DECLSPEC extern orte_rmcast_base_t orte_rmcast_base;
  */
 ORTE_DECLSPEC int orte_rmcast_base_select(void);
 ORTE_DECLSPEC int orte_rmcast_base_close(void);
+
+ORTE_DECLSPEC void orte_rmcast_print_buffer_finalize(void);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

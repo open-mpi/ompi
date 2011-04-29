@@ -15,6 +15,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/threads/threads.h"
+#include "opal/threads/tsd.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -380,4 +381,108 @@ static int insert_hdr(opal_buffer_t *buf,
         ORTE_ERROR_LOG(rc);
     }
     return rc;
+}
+
+#define ORTE_RMCAST_PRINT_MAX_SIZE   50
+#define ORTE_RMCAST_PRINT_NUM_BUFS   16
+
+static bool fns_init=false;
+static opal_tsd_key_t print_tsd_key;
+static char* orte_rmcast_print_null = "NULL";
+typedef struct {
+    char *buffers[ORTE_RMCAST_PRINT_NUM_BUFS];
+    int cntr;
+} orte_rmcast_print_buffers_t;
+
+void orte_rmcast_print_buffer_finalize(void)
+{
+    if (fns_init) {
+        opal_tsd_key_delete(print_tsd_key);
+    }
+}
+
+static void buffer_cleanup(void *value)
+{
+    int i;
+    orte_rmcast_print_buffers_t *ptr;
+    
+    if (NULL != value) {
+        ptr = (orte_rmcast_print_buffers_t*)value;
+        for (i=0; i < ORTE_RMCAST_PRINT_NUM_BUFS; i++) {
+            free(ptr->buffers[i]);
+        }
+    }
+}
+
+static orte_rmcast_print_buffers_t *get_print_buffer(void)
+{
+    orte_rmcast_print_buffers_t *ptr;
+    int ret, i;
+    
+    if (!fns_init) {
+        /* setup the print_args function */
+        if (ORTE_SUCCESS != (ret = opal_tsd_key_create(&print_tsd_key, buffer_cleanup))) {
+            ORTE_ERROR_LOG(ret);
+            return NULL;
+        }
+        fns_init = true;
+    }
+    
+    ret = opal_tsd_getspecific(print_tsd_key, (void**)&ptr);
+    if (OPAL_SUCCESS != ret) return NULL;
+    
+    if (NULL == ptr) {
+        ptr = (orte_rmcast_print_buffers_t*)malloc(sizeof(orte_rmcast_print_buffers_t));
+        for (i=0; i < ORTE_RMCAST_PRINT_NUM_BUFS; i++) {
+            ptr->buffers[i] = (char *) malloc((ORTE_RMCAST_PRINT_MAX_SIZE+1) * sizeof(char));
+        }
+        ptr->cntr = 0;
+        ret = opal_tsd_setspecific(print_tsd_key, (void*)ptr);
+    }
+    
+    return (orte_rmcast_print_buffers_t*) ptr;
+}
+
+char* orte_rmcast_base_print_channel(orte_rmcast_channel_t channel)
+{
+    char *ret;
+    orte_rmcast_print_buffers_t *ptr;
+
+    switch(channel) {
+    case ORTE_RMCAST_GROUP_INPUT_CHANNEL:
+        return "INPUT";
+    case ORTE_RMCAST_DIRECT_CHANNEL:
+        return "DIRECT";
+    case ORTE_RMCAST_GROUP_OUTPUT_CHANNEL:
+        return "OUTPUT";
+    case ORTE_RMCAST_WILDCARD_CHANNEL:
+        return "WILDCARD";
+    case ORTE_RMCAST_INVALID_CHANNEL:
+        return "INVALID";
+    case ORTE_RMCAST_SYS_CHANNEL:
+        return "SYSTEM";
+    case ORTE_RMCAST_APP_PUBLIC_CHANNEL:
+        return "PUBLIC";
+    case ORTE_RMCAST_DATA_SERVER_CHANNEL:
+        return "DATA_SERVER";
+    case ORTE_RMCAST_ERROR_CHANNEL:
+        return "ERROR";
+    case ORTE_RMCAST_HEARTBEAT_CHANNEL:
+        return "HEARTBEAT";
+    default:
+        /* not a system-defined channel - so print the value out */
+        ptr = get_print_buffer();
+        if (NULL == ptr) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return orte_rmcast_print_null;
+        }
+        /* cycle around the ring */
+        if (ORTE_RMCAST_PRINT_NUM_BUFS == ptr->cntr) {
+            ptr->cntr = 0;
+        }
+        snprintf(ptr->buffers[ptr->cntr], ORTE_RMCAST_PRINT_MAX_SIZE, "%d", channel);
+        ret = ptr->buffers[ptr->cntr];
+        ptr->cntr++;
+        return ret;
+    }
 }

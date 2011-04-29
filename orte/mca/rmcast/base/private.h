@@ -186,6 +186,8 @@ ORTE_DECLSPEC int orte_rmcast_base_close_channel(orte_rmcast_channel_t channel);
 ORTE_DECLSPEC int orte_rmcast_base_query(orte_rmcast_channel_t *output,
                                          orte_rmcast_channel_t *input);
 
+ORTE_DECLSPEC char* orte_rmcast_base_print_channel(orte_rmcast_channel_t channel);
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
