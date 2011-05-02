@@ -327,6 +327,13 @@ int orte_register_params(void)
     mca_base_param_reg_string_name("orte", "xterm",
                                    "Create a new xterm window and display output from the specified ranks there [default: none]",
                                    false, false, NULL, &orte_xterm);
+    if (NULL != orte_xterm) {
+        /* if an xterm request is given, we have to leave any ssh
+         * sessions attached so the xterm window manager can get
+         * back to the controlling terminal
+         */
+        orte_leave_session_attached = true;
+    }
 
     /* whether or not to forward SIGTSTP and SIGCONT signals */
     mca_base_param_reg_int_name("orte", "forward_job_control",
