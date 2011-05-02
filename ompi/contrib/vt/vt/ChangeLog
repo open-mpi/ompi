@@ -1,6 +1,9 @@
 5.8.4openmpi
 	- fixed handling NULL value of pathname given to certain I/O calls
 	  (e.g. fopen, open, unlink)
+	- fixed a bug in the compiler wrappers: don't try to rename the
+	  compiler output of an OPARI modified source file if it's
+	  specified by '-o'
 
 5.8.3openmpi
 	- fixed compile error on Red Hat 5.x which occurred if using GNU
