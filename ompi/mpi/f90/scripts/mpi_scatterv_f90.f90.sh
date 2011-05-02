@@ -6,7 +6,7 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,8 +25,8 @@
 
 . "$1/fortran_kinds.sh"
 
-# This entire file is only generated in medium/large modules.  So if
-# we're not at least medium, bail now.
+# This entire file is only generated in large modules.  So if
+# we're not at least large, bail now.
 
 check_size large
 if test "$output" = "0"; then
@@ -50,8 +50,8 @@ subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
         recvcount, recvtype, root, comm, ierr)
   include "mpif-config.h"
   ${type}, intent(in) :: sendbuf
-  integer, intent(in) :: sendcounts
-  integer, intent(in) :: displs
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: displs
   integer, intent(in) :: sendtype
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: recvcount
