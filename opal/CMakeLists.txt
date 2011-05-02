@@ -70,6 +70,10 @@ FOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})
 
 ENDFOREACH(OPAL_SUBDIR ${OPAL_SUBDIRS})
 
+# remove non-mca files that shouldn't be compiled under windows
+LIST(REMOVE_ITEM OPAL_SOURCE_FILES "${PROJECT_SOURCE_DIR}/datatype/opal_datatype_cuda.c"
+  "${PROJECT_SOURCE_DIR}/datatype/opal_datatype_cuda.h")
+
 #only generate if it's not a tarball
 IF(NOT EXISTS ${PROJECT_SOURCE_DIR}/util/keyval/keyval_lex.c)
   ADD_FLEX_FILE(OPAL_SOURCE_FILES ./util/keyval/keyval_lex.l
