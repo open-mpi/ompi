@@ -554,7 +554,6 @@ opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
                     *mask = parse_dots("255.255.255.128");
                     break;
                 case 24:
-                    break;
                     *mask = parse_dots("255.255.255.0");
                     break;
                 case 23:
