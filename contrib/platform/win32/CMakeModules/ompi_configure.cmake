@@ -251,6 +251,8 @@ OMPI_DEF_OPT(OMPI_WANT_NETWORK_DIRECT "Whether we want to enable Network Direct 
 
 OMPI_DEF_OPT(OMPI_WANT_OFED "Whether we want to enable OFED support." ON)
 
+OMPI_DEF_OPT(OMPI_RELEASE_BUILD "Whether it is a build for binary release (this will skip the path settings in mca_installdirs_config)." OFF)
+
 IF (NOT MSVC)
 
 ###################################################################

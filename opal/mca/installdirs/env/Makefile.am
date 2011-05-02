@@ -10,8 +10,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 noinst_LTLIBRARIES = libmca_installdirs_env.la
 
 libmca_installdirs_env_la_SOURCES = \
