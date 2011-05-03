@@ -179,7 +179,7 @@ OPAL_DECLSPEC bool opal_ifislocal(const char *hostname);
  * @return OPAL_SUCCESS if no problems encountered
  * @return OPAL_ERROR if data could not be released
  */
-OPAL_DECLSPEC int opal_iftupletoaddr(char *addr, uint32_t *net, uint32_t *mask);
+OPAL_DECLSPEC int opal_iftupletoaddr(const char *addr, uint32_t *net, uint32_t *mask);
 
 /**
  * Determine if given interface is loopback
