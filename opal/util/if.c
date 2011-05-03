@@ -488,7 +488,7 @@ opal_ifislocal(const char *hostname)
     return false;
 }
 
-static uint32_t parse_dots(char *addr)
+static uint32_t parse_dots(const char *addr)
 {
     char **tuple;
     uint32_t n[]={0,0,0,0};
@@ -506,9 +506,8 @@ static uint32_t parse_dots(char *addr)
 }
 
 int
-opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
+opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
 {
-    char *addr;
     char **tuple;
     int pval;
     char *msk, *ptr;
@@ -517,12 +516,10 @@ opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
     if (NULL != mask) {
         /* set default */
         *mask = 0xFFFFFFFF;
-        /* protect the input */
-        addr = strdup(inaddr);
         
         /* if entry includes mask, split that off */
         msk = NULL;
-        if (NULL != (ptr = strchr(addr, '/'))) {
+        if (NULL != (ptr = strchr(inaddr, '/'))) {
             *ptr = '\0';
             msk = ptr + 1;
             /* is the mask a tuple? */
@@ -530,113 +527,19 @@ opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
                 /* yes - extract mask from it */
                 *mask = parse_dots(msk);
             } else {
-                /* no - must be an int telling us how
-                 * much of the addr to use: e.g., /16
+                /* no - must be an int telling us how much of the addr to use: e.g., /16
+                 * For more information please read http://en.wikipedia.org/wiki/Subnetwork.
                  */
                 pval = strtol(msk, NULL, 10);
-                switch(pval) {
-                case 30:
-                    *mask = parse_dots("255.255.255.252");
-                    break;
-                case 29:
-                    *mask = parse_dots("255.255.255.248");
-                    break;
-                case 28:
-                    *mask = parse_dots("255.255.255.240");
-                    break;
-                case 27:
-                    *mask = parse_dots("255.255.255.224");
-                    break;
-                case 26:
-                    *mask = parse_dots("255.255.255.192");
-                    break;
-                case 25:
-                    *mask = parse_dots("255.255.255.128");
-                    break;
-                case 24:
-                    *mask = parse_dots("255.255.255.0");
-                    break;
-                case 23:
-                    *mask = parse_dots("255.255.254.0");
-                    break;
-                case 22:
-                    *mask = parse_dots("255.255.252.0");
-                    break;
-                case 21:
-                    *mask = parse_dots("255.255.248.0");
-                    break;
-                case 20:
-                    *mask = parse_dots("255.255.240.0");
-                    break;
-                case 19:
-                    *mask = parse_dots("255.255.224.0");
-                    break;
-                case 18:
-                    *mask = parse_dots("255.255.192.0");
-                    break;
-                case 17:
-                    *mask = parse_dots("255.255.128.0");
-                    break;
-                case 16:
-                    *mask = parse_dots("255.255.0.0");
-                    break;
-                case 15:
-                    *mask = parse_dots("255.254.0.0");
-                    break;
-                case 14:
-                    *mask = parse_dots("255.252.0.0");
-                    break;
-                case 13:
-                    *mask = parse_dots("255.248.0.0");
-                    break;
-                case 12:
-                    *mask = parse_dots("255.240.0.0");
-                    break;
-                case 11:
-                    *mask = parse_dots("255.224.0.0");
-                    break;
-                case 10:
-                    *mask = parse_dots("255.192.0.0");
-                    break;
-                case 9:
-                    *mask = parse_dots("255.128.0.0");
-                    break;
-                case 8:
-                    *mask = parse_dots("255.0.0.0");
-                    break;
-                case 7:
-                    *mask = parse_dots("254.0.0.0");
-                    break;
-                case 6:
-                    *mask = parse_dots("252.0.0.0");
-                    break;
-                case 5:
-                    *mask = parse_dots("248.0.0.0");
-                    break;
-                case 4:
-                    *mask = parse_dots("240.0.0.0");
-                    break;
-                case 3:
-                    *mask = parse_dots("224.0.0.0");
-                    break;
-                case 2:
-                    *mask = parse_dots("192.0.0.0");
-                    break;
-                case 1:
-                    *mask = parse_dots("128.0.0.0");
-                    break;
-                case 0:
-                    *mask = parse_dots("0.0.0.0");
-                    break;
-                default:
+                if ((pval > 31) || (pval < 1)) {
                     opal_output(0, "opal_iftupletoaddr: unknown mask");
-                    free(addr);
                     return OPAL_ERROR;
                 }
+                *mask = 0xFFFFFFFF << (32 - pval);
             }
         } else {
             /* use the number of dots to determine it */
-            tuple = opal_argv_split(addr, '.');
+            tuple = opal_argv_split(inaddr, '.');
             pval = opal_argv_count(tuple);
             /* if we have three dots, then we have four
              * fields since it is a full address, so the
@@ -651,29 +554,24 @@ opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
                     *mask = 0xFF000000;
                 } else {
                     opal_output(0, "opal_iftupletoaddr: unknown mask");
-                    free(addr);
                     return OPAL_ERROR;
                 }
             }
             opal_argv_free(tuple);
         }
-        free(addr);
     }
     
     /* if network addr is desired... */
     if (NULL != net) {
         /* set default */
         *net = 0;
-        /* protect the input */
-        addr = strdup(inaddr);
         
         /* if entry includes mask, split that off */
-        if (NULL != (ptr = strchr(addr, '/'))) {
+        if (NULL != (ptr = strchr(inaddr, '/'))) {
             *ptr = '\0';
         }
         /* now assemble the address */
-        *net = parse_dots(addr);
-        free(addr);
+        *net = parse_dots(inaddr);
     }
     
     return OPAL_SUCCESS;
