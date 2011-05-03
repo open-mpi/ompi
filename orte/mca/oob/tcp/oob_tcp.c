@@ -1923,7 +1923,7 @@ int mca_oob_tcp_set_addr(const orte_process_name_t* name, const char* uri)
             peer->peer_state = MCA_OOB_TCP_CLOSED;
             /* clear any pending sends */
             while (NULL != (item = opal_list_remove_first(&peer->peer_send_queue))) {
-                OBJ_RELEASE(item);
+                MCA_OOB_TCP_MSG_RETURN( ((mca_oob_tcp_msg_t *)item) );
             }
             peer->peer_send_msg = NULL;
             /* clear any pending recvs */
