@@ -70,7 +70,7 @@ int MPI_Add_error_class(int *errorclass)
 				      &MPI_COMM_WORLD->c_keyhash,
 				      MPI_LASTUSEDCODE, 
 				      ompi_mpi_errcode_lastused,
-				      true, true);
+				      true);
     if ( MPI_SUCCESS != rc ) {
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, rc, FUNC_NAME);
     }
