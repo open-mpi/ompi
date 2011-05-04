@@ -74,6 +74,6 @@ void mpi_win_set_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
                                        &c_win->w_keyhash,
                                        OMPI_FINT_2_INT(*win_keyval), 
                                        *attribute_val,
-                                       false, true);
+                                       false);
     *ierr = OMPI_INT_2_FINT(c_err);
 }

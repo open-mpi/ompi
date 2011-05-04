@@ -73,6 +73,6 @@ void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val,
                                        &c_comm->c_keyhash,
                                        OMPI_FINT_2_INT(*keyval), 
                                        *attribute_val,
-                                       false, true);
+                                       false);
     *ierr = OMPI_INT_2_FINT(c_err);
 }
