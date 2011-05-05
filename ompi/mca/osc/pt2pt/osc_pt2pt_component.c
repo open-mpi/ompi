@@ -391,7 +391,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     opal_atomic_mb();
 
     /* start up receive for protocol headers */
-    OPAL_FREE_LIST_WAIT(&mca_osc_pt2pt_component.p2p_c_buffers,
+    OPAL_FREE_LIST_GET(&mca_osc_pt2pt_component.p2p_c_buffers,
                         item, ret);
     if (OMPI_SUCCESS != ret) goto cleanup;
 
