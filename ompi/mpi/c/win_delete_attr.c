@@ -48,6 +48,6 @@ int MPI_Win_delete_attr(MPI_Win win, int win_keyval)
     OPAL_CR_ENTER_LIBRARY();
 
     ret = ompi_attr_delete(WIN_ATTR, win, win->w_keyhash, win_keyval, 
-                           false, true);
+                           false);
     OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);  
 }

@@ -292,17 +292,10 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
- * @param need_lock      Whether we need to need to lock the keyval_lock or not
  * @return OMPI error code
  *
  * If (*attr_hash) == NULL, a new hash will be created and
  * initialized.
- *
- * Note that need_lock should *always* be true when this function is
- * invoked from an top-level MPI function.  It is only false when this
- * function is invoked internally (i.e., when we already hold the
- * relevant locks, and we don't want to try to lock them again,
- * recursively).
  *
  * All three of these functions (ompi_attr_set_c(),
  * ompi_attr_set_fortran_mpi1(), and ompi_attr_set_fortran_mpi2())
@@ -317,7 +310,7 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
  */
 int ompi_attr_set_c(ompi_attribute_type_t type, void *object, 
                     opal_hash_table_t **attr_hash,
-                    int key, void *attribute, bool predefined, bool need_lock);
+                    int key, void *attribute, bool predefined);
 
 /**
  * Set an attribute on the comm/win/datatype in a form valid for
@@ -329,17 +322,10 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
- * @param need_lock      Whether we need to need to lock the keyval_lock or not
  * @return OMPI error code
  *
  * If (*attr_hash) == NULL, a new hash will be created and
  * initialized.
- *
- * Note that need_lock should *always* be true when this function is
- * invoked from an top-level MPI function.  It is only false when this
- * function is invoked internally (i.e., when we already hold the
- * relevant locks, and we don't want to try to lock them again,
- * recursively).
  *
  * All three of these functions (ompi_attr_set_c(),
  * ompi_attr_set_fortran_mpi1(), and ompi_attr_set_fortran_mpi2())
@@ -355,7 +341,7 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
 OMPI_DECLSPEC int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object, 
                                              opal_hash_table_t **attr_hash,
                                              int key, MPI_Fint attribute, 
-                                             bool predefined, bool need_lock);
+                                             bool predefined);
 
 /**
  * Set an attribute on the comm/win/datatype in a form valid for
@@ -367,17 +353,10 @@ OMPI_DECLSPEC int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *o
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
- * @param need_lock      Whether we need to need to lock the keyval_lock or not
  * @return OMPI error code
  *
  * If (*attr_hash) == NULL, a new hash will be created and
  * initialized.
- *
- * Note that need_lock should *always* be true when this function is
- * invoked from an top-level MPI function.  It is only false when this
- * function is invoked internally (i.e., when we already hold the
- * relevant locks, and we don't want to try to lock them again,
- * recursively).
  *
  * All three of these functions (ompi_attr_set_c(),
  * ompi_attr_set_fortran_mpi1(), and ompi_attr_set_fortran_mpi2())
@@ -393,7 +372,7 @@ OMPI_DECLSPEC int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *o
 OMPI_DECLSPEC int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object, 
                                              opal_hash_table_t **attr_hash,
                                              int key, MPI_Aint attribute, 
-                                             bool predefined, bool need_lock);
+                                             bool predefined);
 
 /**
  * Get an attribute on the comm/win/datatype in a form valid for C.
@@ -482,19 +461,13 @@ OMPI_DECLSPEC int ompi_attr_get_fortran_mpi2(opal_hash_table_t *attr_hash, int k
  * @param attr_hash      The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
- * @param need_lock      Whether we need to need to lock the keyval_lock or not
  * @return OMPI error code
  *
- * Note that need_lock should *always* be true when this function is
- * invoked from an top-level MPI function.  It is only false when this
- * function is invoked internally (i.e., when we already hold the
- * relevant locks, and we don't want to try to lock them again,
- * recursively).
  */
 
 int ompi_attr_delete(ompi_attribute_type_t type, void *object, 
                      opal_hash_table_t *attr_hash , int key,
-                     bool predefined, bool need_lock);
+                     bool predefined);
 
 
 /** 
