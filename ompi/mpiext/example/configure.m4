@@ -15,3 +15,6 @@ AC_DEFUN([OMPI_MPIEXT_example_CONFIG],[
     AC_CONFIG_FILES([ompi/mpiext/example/Makefile])
     $1
 ])
+
+# only need to set this if the component needs init/finalize hooks
+AC_DEFUN([OMPI_MPIEXT_example_NEED_INIT], [1])
