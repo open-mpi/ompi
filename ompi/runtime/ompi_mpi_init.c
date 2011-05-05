@@ -928,7 +928,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        the user's code.  Setup the connections between procs and warm
        them up with simple sends, if requested */
 
-    if (OMPI_SUCCESS != ompi_mpiext_init()) {
+    if (OMPI_SUCCESS != (ret = ompi_mpiext_init())) {
         error = "ompi_mpiext_init";
         goto error;
     }
