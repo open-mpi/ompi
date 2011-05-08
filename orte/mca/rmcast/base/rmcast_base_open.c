@@ -19,6 +19,7 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
+#include <ctype.h>
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -97,7 +98,9 @@ int orte_rmcast_base_open(void)
     uint32_t addr, netaddr, netmask;
     bool assigned;
     int rc;
-    
+    size_t j;
+    bool named_if;
+
     if (opened) {
         /* ensure we don't go through here twice */
         return ORTE_SUCCESS;
@@ -129,8 +132,8 @@ int orte_rmcast_base_open(void)
 
     /* public multicast channel for this job */
     mca_base_param_reg_string_name("rmcast", "base_multicast_network",
-                                "Network to use for multicast xmissions [link (default) | site | org | global | tuple-addr]",
-                                false, false, "link", &tmp);
+                                   "Network to use for multicast xmissions [link (default) | site | org | global | tuple-addr]",
+                                   false, false, "link", &tmp);
     rc = ORTE_ERR_SILENT;
     if (0 == strcasecmp(tmp, "site")) {
         rc = opal_iftupletoaddr("239.255.0.150", &orte_rmcast_base.xmit_network, NULL);
@@ -183,7 +186,7 @@ int orte_rmcast_base_open(void)
 
     /* multicast interfaces */
     mca_base_param_reg_string_name("rmcast", "base_if_include",
-                                   "Comma-separated list of interfaces (given in IP form) to use for multicast messages",
+                                   "Comma-separated list of interfaces to use for multicast messages",
                                    false, false, NULL, &tmp);
     /* if nothing was provided, default to first non-loopback interface */
     lb = -1;
@@ -225,33 +228,65 @@ int orte_rmcast_base_open(void)
         idx = -1;
         assigned = false;
         for (i=0; NULL != nets[i] && !assigned; i++) {
-            if (ORTE_SUCCESS != (rc = opal_iftupletoaddr(nets[i], &netaddr, &netmask))) {
-                orte_show_help("help-rmcast-base.txt", "invalid-net-mask", true, nets[i], ORTE_ERROR_NAME(rc));
-                return ORTE_ERR_SILENT;
+            OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
+                                 "%s rmcast:base checking interface %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nets[i]));
+            /* if the specified interface contains letters in it, then it
+             * was given as an interface name and not an IP tuple
+             */
+            named_if = false;
+            for (j=0; j < strlen(nets[i]); j++) {
+                if (isalpha(nets[i][j]) && '.' != nets[i][j]) {
+                    named_if = true;
+                    break;
+                }
             }
-            /* search for a matching interface - take the first one within the returned scope */
-            idx = opal_ifbegin();
-            while (0 < idx) {
-                /* ignore the loopback interface */
-                if (opal_ifisloopback(idx)) {
-                    idx = opal_ifnext(idx);
+            if (named_if) {
+                if (0 > (idx = opal_ifnametoindex(nets[i]))) {
                     continue;
                 }
                 if (ORTE_SUCCESS != (rc = opal_ifindextoaddr(idx, (struct sockaddr*)&inaddr, sizeof(inaddr)))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
-                addr = ntohl(inaddr.sin_addr.s_addr);
-                if (netaddr == (addr & netmask)) {
-                    orte_rmcast_base.interface = ntohl(inaddr.sin_addr.s_addr);
-                    assigned = true;
-                    break;
+                OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
+                                     "%s rmcast:base using named interface %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nets[i]));
+                orte_rmcast_base.interface = ntohl(inaddr.sin_addr.s_addr);
+                assigned = true;
+                break;
+            } else {
+                if (ORTE_SUCCESS != (rc = opal_iftupletoaddr(nets[i], &netaddr, &netmask))) {
+                    orte_show_help("help-rmcast-base.txt", "invalid-net-mask", true, nets[i], ORTE_ERROR_NAME(rc));
+                    return ORTE_ERR_SILENT;
                 }
-                idx = opal_ifnext(idx);
-           }
+                /* search for a matching interface - take the first one within the returned scope */
+                idx = opal_ifbegin();
+                while (0 < idx) {
+                    /* ignore the loopback interface */
+                    if (opal_ifisloopback(idx)) {
+                        idx = opal_ifnext(idx);
+                        continue;
+                    }
+                    if (ORTE_SUCCESS != (rc = opal_ifindextoaddr(idx, (struct sockaddr*)&inaddr, sizeof(inaddr)))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
+                    addr = ntohl(inaddr.sin_addr.s_addr);
+                    if (netaddr == (addr & netmask)) {
+                        OPAL_OUTPUT_VERBOSE((5, orte_rmcast_base.rmcast_output,
+                                             "%s rmcast:base using IP interface %03d.%03d.%03d.%03d",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), OPAL_IF_FORMAT_ADDR(addr)));
+                        orte_rmcast_base.interface = ntohl(inaddr.sin_addr.s_addr);
+                        assigned = true;
+                        break;
+                    }
+                    idx = opal_ifnext(idx);
+                }
+            }
         }
         opal_argv_free(nets);
-        if (idx < 0) {
+        if (!assigned) {
             orte_show_help("help-rmcast-base.txt", "no-avail-interfaces", true);
             return ORTE_ERR_SILENT;
         }
@@ -259,17 +294,17 @@ int orte_rmcast_base_open(void)
 
     /* range of available ports */
     mca_base_param_reg_string_name("rmcast", "base_multicast_ports",
-                                "Ports available for multicast channels (default: 6900-7155)",
-                                false, false, "6900-7154", &tmp);
+                                   "Ports available for multicast channels (default: 6900-7155)",
+                                   false, false, "6900-7154", &tmp);
     orte_util_get_ranges(tmp, &orte_rmcast_base.ports.start, &orte_rmcast_base.ports.end);
     
     /* send cache size */
     mca_base_param_reg_int_name("rmcast", "base_cache_size",
                                 "Number of messages to be held in send cache (default: 16)",
-                                   false, false, 16, &orte_rmcast_base.cache_size);
+                                false, false, 16, &orte_rmcast_base.cache_size);
 
     /* Debugging / verbose output.  Always have stream open, with
-        verbose set by the mca open system... */
+       verbose set by the mca open system... */
     orte_rmcast_base.rmcast_output = opal_output_open(NULL);
 
     /* Open up all available components */
