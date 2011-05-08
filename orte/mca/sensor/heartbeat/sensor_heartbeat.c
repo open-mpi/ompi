@@ -273,6 +273,12 @@ static void copy_node_stats(opal_node_stats_t *dest, opal_node_stats_t *src)
 {
     dest->total_mem = src->total_mem;
     dest->free_mem = src->free_mem;
+    dest->buffers = src->buffers;
+    dest->cached = src->cached;
+    dest->swap_cached = src->swap_cached;
+    dest->swap_total = src->swap_total;
+    dest->swap_free = src->swap_free;
+    dest->mapped = src->mapped;
     dest->la = src->la;
     dest->la5 = src->la5;
     dest->la15 = src->la15;
@@ -358,6 +364,8 @@ static void send_heartbeat(int fd, short event, void *arg)
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&stats);
             OBJ_DESTRUCT(&nstats);
+            /* turn off the stats as it won't work */
+            mca_sensor_heartbeat_component.include_stats = false;
             goto BEAT;
         }
         /* pack the node stats first */
@@ -532,6 +540,8 @@ static void recv_beats(int status,
         n=1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &nstats, &n, OPAL_NODE_STAT))) {
             ORTE_ERROR_LOG(rc);
+            /* turn off the stats */
+            mca_sensor_heartbeat_component.include_stats = false;
             goto DEPART;
         }
         /* since we already have the daemon's proc object, store this data */
@@ -545,6 +555,8 @@ static void recv_beats(int status,
         n=1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buf, &stats, &n, OPAL_PSTAT))) {
             ORTE_ERROR_LOG(rc);
+            /* turn off the stats */
+            mca_sensor_heartbeat_component.include_stats = false;
             goto DEPART;
         }
         copy_proc_stats(&proc->stats, stats);

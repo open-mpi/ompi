@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,8 +17,8 @@
  * $HEADER$
  */
 
-#ifndef MCA_PSTAT_DARWIN_EXPORT_H
-#define MCA_PSTAT_DARWIN_EXPORT_H
+#ifndef MCA_PSTAT_TEST_EXPORT_H
+#define MCA_PSTAT_TEST_EXPORT_H
 
 #include "opal_config.h"
 
@@ -31,10 +31,10 @@ BEGIN_C_DECLS
  * Globally exported variable
  */
 
-OPAL_DECLSPEC extern const opal_pstat_base_component_t mca_pstat_darwin_component;
+OPAL_DECLSPEC extern const opal_pstat_base_component_t mca_pstat_test_component;
 
-OPAL_DECLSPEC extern const opal_pstat_base_module_t opal_pstat_darwin_module;
+OPAL_DECLSPEC extern const opal_pstat_base_module_t opal_pstat_test_module;
 
 END_C_DECLS
 
-#endif /* MCA_PSTAT_DARWIN_EXPORT_H */
+#endif /* MCA_PSTAT_TEST_EXPORT_H */

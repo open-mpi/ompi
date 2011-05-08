@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -119,8 +119,14 @@ typedef struct {
     float la5;
     float la15;
     /* memory usage */
-    uint32_t total_mem;  /* in MBytes */
+    float total_mem;  /* in MBytes */
     float free_mem;  /* in MBytes */
+    float buffers;  /* in MBytes */
+    float cached;   /* in MBytes */
+    float swap_cached;  /* in MBytes */
+    float swap_total;   /* in MBytes */
+    float swap_free;    /* in MBytes */
+    float mapped;       /* in MBytes */
     /* time at which sample was taken */
     struct timeval sample_time;
 } opal_node_stats_t;

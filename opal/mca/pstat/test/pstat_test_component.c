@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,18 +27,18 @@
 
 #include "opal/constants.h"
 #include "opal/mca/pstat/pstat.h"
-#include "pstat_darwin.h"
+#include "pstat_test.h"
 
 /*
- * Public string showing the pstat ompi_darwin component version number
+ * Public string showing the pstat ompi_test component version number
  */
-const char *opal_pstat_darwin_component_version_string =
-    "OPAL darwin pstat MCA component version " OPAL_VERSION;
+const char *opal_pstat_test_component_version_string =
+    "OPAL test pstat MCA component version " OPAL_VERSION;
 
 /*
  * Local function
  */
-static int pstat_darwin_component_query(mca_base_module_t **module, int *priority);
+static int pstat_test_component_query(mca_base_module_t **module, int *priority);
 
 
 /*
@@ -46,7 +46,7 @@ static int pstat_darwin_component_query(mca_base_module_t **module, int *priorit
  * and pointers to our public functions in it
  */
 
-const opal_pstat_base_component_t mca_pstat_darwin_component = {
+const opal_pstat_base_component_t mca_pstat_test_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
@@ -59,7 +59,7 @@ const opal_pstat_base_component_t mca_pstat_darwin_component = {
 
         /* Component name and version */
 
-        "darwin",
+        "test",
         OPAL_MAJOR_VERSION,
         OPAL_MINOR_VERSION,
         OPAL_RELEASE_VERSION,
@@ -68,7 +68,7 @@ const opal_pstat_base_component_t mca_pstat_darwin_component = {
 
         NULL,
         NULL,
-        pstat_darwin_component_query,
+        pstat_test_component_query,
         NULL
     },
     /* Next the MCA v1.0.0 component meta data */
@@ -79,10 +79,10 @@ const opal_pstat_base_component_t mca_pstat_darwin_component = {
 };
 
 
-static int pstat_darwin_component_query(mca_base_module_t **module, int *priority)
+static int pstat_test_component_query(mca_base_module_t **module, int *priority)
 {
     *priority = 20;
-    *module = (mca_base_module_t *)&opal_pstat_darwin_module;
+    *module = (mca_base_module_t *)&opal_pstat_test_module;
     
     return OPAL_SUCCESS;
 }
