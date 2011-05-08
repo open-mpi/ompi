@@ -163,6 +163,12 @@ static void opal_node_stats_construct(opal_node_stats_t *obj)
     obj->la15 = 0.0;
     obj->total_mem = 0;
     obj->free_mem = 0.0;
+    obj->buffers = 0.0;
+    obj->cached = 0.0;
+    obj->swap_cached = 0.0;
+    obj->swap_total = 0.0;
+    obj->swap_free = 0.0;
+    obj->mapped = 0.0;
     obj->sample_time.tv_sec = 0;
     obj->sample_time.tv_usec = 0;
 }

@@ -102,6 +102,19 @@ static char *next_field(char *ptr, int barrier)
     return ptr;
 }
 
+static float convert_value(char *value)
+{
+    char *ptr;
+    float fval;
+
+    /* compute base value */
+    fval = (float)strtoul(value, &ptr, 10);
+    /* get the unit multiplier */
+    if (NULL != ptr && NULL != strstr(ptr, "kB")) {
+        fval /= 1024.0;
+    }
+    return fval;
+}
 
 static int query(pid_t pid,
                  opal_pstats_t *stats,
@@ -291,29 +304,20 @@ static int query(pid_t pid,
         if (NULL != (ptr = strstr(data, "VmPeak:"))) {
             /* found it - step past colon */
             ptr += 8;
-            eptr = strchr(ptr, 'k');
-            *eptr = '\0';
-            stats->peak_vsize = (float)strtoul(ptr, NULL, 10) / 1024.0;  /* convert to MBytes */
-            eptr++;
+            stats->peak_vsize = convert_value(ptr);
         }
         /* look for VmSize */
-        if (NULL != (ptr = strstr(eptr, "VmSize:"))) {
+        if (NULL != (ptr = strstr(ptr, "VmSize:"))) {
             /* found it - step past colon */
             ptr += 8;
-            eptr = strchr(ptr, 'k');
-            *eptr = '\0';
-            stats->vsize = (float)strtoul(ptr, NULL, 10) / 1024.0;  /* convert to MBytes*/
-            eptr++;
+            stats->vsize = convert_value(ptr);  /* convert to MBytes*/
         }
     
         /* look for RSS */
-        if (NULL != (ptr = strstr(eptr, "VmRSS:"))) {
+        if (NULL != (ptr = strstr(ptr, "VmRSS:"))) {
             /* found it - step past colon */
             ptr += 8;
-            eptr = strchr(ptr, 'k');
-            *eptr = '\0';
-            stats->rss = (float)strtoul(ptr, NULL, 10) / 1024.0;  /* convert to MBytes */
-            eptr++;
+            stats->rss = convert_value(ptr);  /* convert to MBytes */
         }
     }
 
@@ -354,25 +358,21 @@ static int query(pid_t pid,
                 continue;
             }
             if (0 == strcmp(dptr, "MemTotal")) {
-                /* find units */
-                ptr = &value[strlen(value)-2];
-                value[strlen(value)-3] = '\0';
-                /* compute base value */
-                nstats->total_mem = strtol(value, NULL, 10);
-                /* get the unit multiplier */
-                if (0 == strcmp(ptr, "kB")) {
-                    nstats->total_mem /= 1024;
-                }
+                nstats->total_mem = convert_value(value);
             } else if (0 == strcmp(dptr, "MemFree")) {
-                /* find units */
-                ptr = &value[strlen(value)-2];
-                value[strlen(value)-3] = '\0';
-                /* compute base value */
-                nstats->free_mem = strtol(value, NULL, 10);
-                /* get the unit multiplier */
-                if (0 == strcmp(ptr, "kB")) {
-                    nstats->free_mem /= 1024;
-                }
+                nstats->free_mem = convert_value(value);
+            } else if (0 == strcmp(dptr, "Buffers")) {
+                nstats->buffers = convert_value(value);
+            } else if (0 == strcmp(dptr, "Cached")) {
+                nstats->cached = convert_value(value);
+            } else if (0 == strcmp(dptr, "SwapCached")) {
+                nstats->swap_cached = convert_value(value);
+            } else if (0 == strcmp(dptr, "SwapTotal")) {
+                nstats->swap_total = convert_value(value);
+            } else if (0 == strcmp(dptr, "SwapFree")) {
+                nstats->swap_free = convert_value(value);
+            } else if (0 == strcmp(dptr, "Mapped")) {
+                nstats->mapped = convert_value(value);
             }
         }
         fclose(fp);

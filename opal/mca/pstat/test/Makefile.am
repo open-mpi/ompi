@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,27 +18,27 @@
 #
 
 sources = \
-        pstat_darwin.h \
-        pstat_darwin_component.c \
-        pstat_darwin_module.c
+        pstat_test.h \
+        pstat_test_component.c \
+        pstat_test.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if MCA_BUILD_opal_pstat_darwin_DSO
+if MCA_BUILD_opal_pstat_test_DSO
 component_noinst =
-component_install = mca_pstat_darwin.la
+component_install = mca_pstat_test.la
 else
-component_noinst = libmca_pstat_darwin.la
+component_noinst = libmca_pstat_test.la
 component_install =
 endif
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_pstat_darwin_la_SOURCES = $(sources)
-mca_pstat_darwin_la_LDFLAGS = -module -avoid-version
+mca_pstat_test_la_SOURCES = $(sources)
+mca_pstat_test_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_pstat_darwin_la_SOURCES =$(sources)
-libmca_pstat_darwin_la_LDFLAGS = -module -avoid-version
+libmca_pstat_test_la_SOURCES =$(sources)
+libmca_pstat_test_la_LDFLAGS = -module -avoid-version
