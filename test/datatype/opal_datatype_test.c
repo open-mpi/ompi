@@ -396,9 +396,9 @@ int main( int argc, char* argv[] )
     pdt = test_struct();
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
-    opal_datatype_create_contiguous(0, &opal_datatype_null, &pdt1);
-    opal_datatype_create_contiguous(0, &opal_datatype_null, &pdt2);
-    opal_datatype_create_contiguous(0, &opal_datatype_null, &pdt3);
+    opal_datatype_create_contiguous(0, &opal_datatype_empty, &pdt1);
+    opal_datatype_create_contiguous(0, &opal_datatype_empty, &pdt2);
+    opal_datatype_create_contiguous(0, &opal_datatype_empty, &pdt3);
 
     opal_datatype_add( pdt3, &opal_datatype_int4, 10, 0, -1 );
     opal_datatype_add( pdt3, &opal_datatype_float4, 5, 10 * sizeof(int), -1 );

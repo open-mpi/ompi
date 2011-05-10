@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -30,27 +30,17 @@
 #define OMPI_OP_PROTO (void *in, void *out, int *count, struct ompi_datatype_t **dtype, struct ompi_op_base_module_1_0_0_t *module)
 
 /* C integer */
-
 #define OMPI_OP_HANDLER_C_INTEGER_INTRINSIC(name) \
-  void ompi_op_base_##name##_unsigned_char OMPI_OP_PROTO; \
-  void ompi_op_base_##name##_signed_char OMPI_OP_PROTO; \
-  void ompi_op_base_##name##_int OMPI_OP_PROTO; \
-  void ompi_op_base_##name##_long OMPI_OP_PROTO; \
-  void ompi_op_base_##name##_short OMPI_OP_PROTO; \
-  void ompi_op_base_##name##_unsigned_short OMPI_OP_PROTO; \
-  void ompi_op_base_##name##_unsigned OMPI_OP_PROTO; \
-  void ompi_op_base_##name##_unsigned_long OMPI_OP_PROTO;
-#if HAVE_LONG_LONG
-#define OMPI_OP_HANDLER_C_INTEGER_OPTIONAL(name) \
-  void ompi_op_base_##name##_long_long_int OMPI_OP_PROTO; \
-  void ompi_op_base_##name##_long_long OMPI_OP_PROTO; \
-  void ompi_op_base_##name##_unsigned_long_long OMPI_OP_PROTO;
-#else
-#define OMPI_OP_HANDLER_C_INTEGER_OPTIONAL(name)
-#endif
+  void ompi_op_base_##name##_int8_t OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_uint8_t OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_int16_t OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_uint16_t OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_int32_t OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_uint32_t OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_int64_t OMPI_OP_PROTO; \
+  void ompi_op_base_##name##_uint64_t OMPI_OP_PROTO;
 #define OMPI_OP_HANDLER_C_INTEGER(name) \
-  OMPI_OP_HANDLER_C_INTEGER_INTRINSIC(name) \
-  OMPI_OP_HANDLER_C_INTEGER_OPTIONAL(name) \
+  OMPI_OP_HANDLER_C_INTEGER_INTRINSIC(name)
 
 /* Fortran integer */
 
@@ -287,25 +277,16 @@ BEGIN_C_DECLS
 /* C integer */
 
 #define OMPI_OP_3BUFF_HANDLER_C_INTEGER_INTRINSIC(name) \
-  void ompi_op_base_3buff_##name##_unsigned_char OMPI_OP_PROTO_3BUF; \
-  void ompi_op_base_3buff_##name##_signed_char OMPI_OP_PROTO_3BUF; \
-  void ompi_op_base_3buff_##name##_int OMPI_OP_PROTO_3BUF; \
-  void ompi_op_base_3buff_##name##_long OMPI_OP_PROTO_3BUF; \
-  void ompi_op_base_3buff_##name##_short OMPI_OP_PROTO_3BUF; \
-  void ompi_op_base_3buff_##name##_unsigned_short OMPI_OP_PROTO_3BUF; \
-  void ompi_op_base_3buff_##name##_unsigned OMPI_OP_PROTO_3BUF; \
-  void ompi_op_base_3buff_##name##_unsigned_long OMPI_OP_PROTO_3BUF;
-#if HAVE_LONG_LONG
-#define OMPI_OP_3BUFF_HANDLER_C_INTEGER_OPTIONAL(name) \
-  void ompi_op_base_3buff_##name##_long_long_int OMPI_OP_PROTO_3BUF; \
-  void ompi_op_base_3buff_##name##_long_long OMPI_OP_PROTO_3BUF; \
-  void ompi_op_base_3buff_##name##_unsigned_long_long OMPI_OP_PROTO_3BUF;
-#else
-#define OMPI_OP_3BUFF_HANDLER_C_INTEGER_OPTIONAL(name)
-#endif
+  void ompi_op_base_3buff_##name##_int8_t OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_uint8_t OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_int16_t OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_uint16_t OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_int32_t OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_uint32_t OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_int64_t OMPI_OP_PROTO_3BUF; \
+  void ompi_op_base_3buff_##name##_uint64_t OMPI_OP_PROTO_3BUF;
 #define OMPI_OP_3BUFF_HANDLER_C_INTEGER(name) \
-  OMPI_OP_3BUFF_HANDLER_C_INTEGER_INTRINSIC(name) \
-  OMPI_OP_3BUFF_HANDLER_C_INTEGER_OPTIONAL(name) \
+  OMPI_OP_3BUFF_HANDLER_C_INTEGER_INTRINSIC(name)
 
 /* Fortran integer */
 

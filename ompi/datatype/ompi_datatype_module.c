@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -27,21 +27,11 @@
 
 #include "ompi/constants.h"
 #include "opal/datatype/opal_convertor_internal.h"
-#include "opal/datatype/opal_datatype_internal.h"
 #include "opal/util/output.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/datatype/ompi_datatype_internal.h"
 
 #include "mpi.h"
-
-#if OPAL_ENABLE_DEBUG
-#include "opal/mca/base/mca_base_param.h"
-/* These are used within test/datatype/position.c -- and therefore not static */
-int ompi_unpack_debug   = 0;
-int ompi_pack_debug     = 0;
-int ompi_copy_debug     = 0;
-int ompi_position_debug = 0;
-#endif  /* OPAL_ENABLE_DEBUG */
 
 /* by default the debuging is turned off */
 int ompi_datatype_dfd = -1;
@@ -64,14 +54,12 @@ int32_t ompi_datatype_number_of_predefined_data = 0;
  * The Macros in the OMPI Layer differ in that:
  *   Additionally to OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE, we have a OMPI_DATATYPE_INIT_PREDEFINED,
  *   for all available types (getting rid of duplication of the name.
- * Of course initialization of ompi_mpi_datatype_null includes the string-name NULL,
- * which CPP converts to ((void*)0), which we do not really want...
  */
 ompi_predefined_datatype_t ompi_mpi_datatype_null =
     {
         {
-            OPAL_DATATYPE_INITIALIZER_NULL(OMPI_DATATYPE_FLAG_PREDEFINED),
-            OMPI_DATATYPE_EMPTY_DATA(NULL),
+            OPAL_DATATYPE_INITIALIZER_EMPTY(OMPI_DATATYPE_FLAG_PREDEFINED),
+            OMPI_DATATYPE_EMPTY_DATA(EMPTY),
         },
         {0, } /* padding */
     };
@@ -251,6 +239,43 @@ ompi_predefined_datatype_t ompi_mpi_complex32 =      OMPI_DATATYPE_INIT_DEFER (C
 ompi_predefined_datatype_t ompi_mpi_complex32 =      OMPI_DATATYPE_INIT_UNAVAILABLE (COMPLEX32, OMPI_DATATYPE_FLAG_DATA_FORTRAN | OMPI_DATATYPE_FLAG_DATA_COMPLEX);
 #endif
 
+/*
+ * MPI 2.2 Datatypes
+ */
+ompi_predefined_datatype_t ompi_mpi_int8_t   = OMPI_DATATYPE_INIT_PREDEFINED(  INT8_T, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+ompi_predefined_datatype_t ompi_mpi_uint8_t  = OMPI_DATATYPE_INIT_PREDEFINED( UINT8_T, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+ompi_predefined_datatype_t ompi_mpi_int16_t  = OMPI_DATATYPE_INIT_PREDEFINED( INT16_T, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+ompi_predefined_datatype_t ompi_mpi_uint16_t = OMPI_DATATYPE_INIT_PREDEFINED(UINT16_T, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+ompi_predefined_datatype_t ompi_mpi_int32_t  = OMPI_DATATYPE_INIT_PREDEFINED( INT32_T, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+ompi_predefined_datatype_t ompi_mpi_uint32_t = OMPI_DATATYPE_INIT_PREDEFINED(UINT32_T, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+ompi_predefined_datatype_t ompi_mpi_int64_t  = OMPI_DATATYPE_INIT_PREDEFINED( INT64_T, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+ompi_predefined_datatype_t ompi_mpi_uint64_t = OMPI_DATATYPE_INIT_PREDEFINED(UINT64_T, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+
+#if SIZEOF_PTRDIFF_T == 4
+ompi_predefined_datatype_t ompi_mpi_aint = OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE(INT32_T, AINT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+#elif SIZEOF_PTRDIFF_T == 8
+ompi_predefined_datatype_t ompi_mpi_aint = OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE(INT64_T, AINT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+#else
+ompi_predefined_datatype_t ompi_mpi_aint = OMPI_DATATYPE_INIT_UNAVAILABLE_BASIC_TYPE(INT64_T, AINT, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+#endif  /* SIZEOF_PTRDIFF_T == SIZEOF_LONG */
+
+#if OMPI_MPI_OFFSET_SIZE == 4
+ompi_predefined_datatype_t ompi_mpi_offset = OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE(UINT32_T, OFFSET, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+#elif OMPI_MPI_OFFSET_SIZE == 8
+ompi_predefined_datatype_t ompi_mpi_offset = OMPI_DATATYPE_INIT_PREDEFINED_BASIC_TYPE(UINT64_T, OFFSET, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+#else
+ompi_predefined_datatype_t ompi_mpi_offset = OMPI_DATATYPE_INIT_UNAVAILABLE_BASIC_TYPE(UINT64_T, OFFSET, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_INT);
+#endif  /* OMPI_MPI_OFFSET_SIZE == SIZEOF_INT */
+
+ompi_predefined_datatype_t ompi_mpi_c_bool = OMPI_DATATYPE_INIT_PREDEFINED (BOOL, OMPI_DATATYPE_FLAG_DATA_C);
+ompi_predefined_datatype_t ompi_mpi_c_complex = OMPI_DATATYPE_INIT_DEFER (COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+ompi_predefined_datatype_t ompi_mpi_c_float_complex = OMPI_DATATYPE_INIT_DEFER (COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+ompi_predefined_datatype_t ompi_mpi_c_double_complex = OMPI_DATATYPE_INIT_DEFER (DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+#if HAVE_LONG_DOUBLE
+ompi_predefined_datatype_t ompi_mpi_c_long_double_complex = OMPI_DATATYPE_INIT_DEFER (LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+#else
+ompi_predefined_datatype_t ompi_mpi_c_long_double_complex =  OMPI_DATATYPE_INIT_UNAVAILABLE (LONG_DOUBLE_COMPLEX, OMPI_DATATYPE_FLAG_DATA_C | OMPI_DATATYPE_FLAG_DATA_COMPLEX );
+#endif  /* HAVE_LONG_DOUBLE */
 
 /*
  * NOTE: The order of this array *MUST* match what is listed in
@@ -258,55 +283,62 @@ ompi_predefined_datatype_t ompi_mpi_complex32 =      OMPI_DATATYPE_INIT_UNAVAILA
  * Everything referring to types/ids should be ORDERED as in ompi_datatype_basicDatatypes array.
  */
 const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX_PREDEFINED] = {
-    &ompi_mpi_lb.dt,                   /*  0 */
-    &ompi_mpi_ub.dt,
-    &ompi_mpi_char.dt,
-    &ompi_mpi_signed_char.dt,
-    &ompi_mpi_unsigned_char.dt,
-    &ompi_mpi_byte.dt,                 /*  5 */
-    &ompi_mpi_short.dt,
-    &ompi_mpi_unsigned_short.dt,
-    &ompi_mpi_int.dt,
-    &ompi_mpi_unsigned.dt,
-    &ompi_mpi_long.dt,                 /* 10 */
-    &ompi_mpi_unsigned_long.dt,
-    &ompi_mpi_long_long_int.dt,
-    &ompi_mpi_unsigned_long_long.dt,
-    &ompi_mpi_float.dt,
-    &ompi_mpi_double.dt,               /* 15 */
-    &ompi_mpi_long_double.dt,
-    &ompi_mpi_complex8.dt,
-    &ompi_mpi_complex16.dt,
-    &ompi_mpi_complex32.dt,
-    &ompi_mpi_wchar.dt,                /* 20 */
-    &ompi_mpi_packed.dt,
+    &ompi_mpi_datatype_null.dt,             /* 0x00 */
+    &ompi_mpi_int8_t.dt,                    /* 0x01 */
+    &ompi_mpi_uint8_t.dt,                   /* 0x02 */
+    &ompi_mpi_int16_t.dt,                   /* 0x03 */
+    &ompi_mpi_uint16_t.dt,                  /* 0x04 */
+    &ompi_mpi_int32_t.dt,                   /* 0x05 */
+    &ompi_mpi_uint32_t.dt,                  /* 0x06 */
+    &ompi_mpi_int64_t.dt,                   /* 0x07 */
+    &ompi_mpi_uint64_t.dt,                  /* 0x08 */
+    &ompi_mpi_float.dt,                     /* 0x09 */
+    &ompi_mpi_double.dt,                    /* 0x0A */
+    &ompi_mpi_long_double.dt,               /* 0x0B */
+    &ompi_mpi_complex8.dt,                  /* 0x0C */
+    &ompi_mpi_complex16.dt,                 /* 0x0D */
+    &ompi_mpi_complex32.dt,                 /* 0x0E */
+    &ompi_mpi_wchar.dt,                     /* 0x0F */
+    &ompi_mpi_packed.dt,                    /* 0x10 */
 
     /* C++ / C99 datatypes */
-    &ompi_mpi_cxx_bool.dt,
+    &ompi_mpi_cxx_bool.dt,                  /* 0x11 */
 
     /* Fortran datatypes */
-    &ompi_mpi_logical.dt,
-    &ompi_mpi_character.dt,
-    &ompi_mpi_integer.dt,              /* 25 */
-    &ompi_mpi_real.dt,
-    &ompi_mpi_dblprec.dt,
-    &ompi_mpi_cplex.dt,
-    &ompi_mpi_dblcplex.dt,
-    &ompi_mpi_ldblcplex.dt,            /* 30 */
+    &ompi_mpi_logical.dt,                   /* 0x12 */
+    &ompi_mpi_character.dt,                 /* 0x13 */
+    &ompi_mpi_integer.dt,                   /* 0x14 */
+    &ompi_mpi_real.dt,                      /* 0x15 */
+    &ompi_mpi_dblprec.dt,                   /* 0x16 */
 
-    /* Structure types, based on two basic types */
-    &ompi_mpi_2int.dt,
-    &ompi_mpi_2integer.dt,
-    &ompi_mpi_2real.dt,
-    &ompi_mpi_2dblprec.dt,
-    &ompi_mpi_2cplex.dt,               /* 35 */
-    &ompi_mpi_2dblcplex.dt,
-    &ompi_mpi_float_int.dt,
-    &ompi_mpi_double_int.dt,
-    &ompi_mpi_longdbl_int.dt,
-    &ompi_mpi_long_int.dt,             /* 40 */
-    &ompi_mpi_short_int.dt,
-    &ompi_mpi_unavailable.dt
+    &ompi_mpi_cplex.dt,                     /* 0x17 */
+    &ompi_mpi_dblcplex.dt,                  /* 0x18 */
+    &ompi_mpi_ldblcplex.dt,                 /* 0x19 */
+    &ompi_mpi_2int.dt,                      /* 0x1A */
+    &ompi_mpi_2integer.dt,                  /* 0x1B */
+    &ompi_mpi_2real.dt,                     /* 0x1C */
+    &ompi_mpi_2dblprec.dt,                  /* 0x1D */
+    &ompi_mpi_2cplex.dt,                    /* 0x1E */
+    &ompi_mpi_2dblcplex.dt,                 /* 0x1F */
+
+    &ompi_mpi_float_int.dt,                 /* 0x20 */
+    &ompi_mpi_double_int.dt,                /* 0x21 */
+    &ompi_mpi_longdbl_int.dt,               /* 0x22 */
+    &ompi_mpi_long_int.dt,                  /* 0x23 */
+    &ompi_mpi_short_int.dt,                 /* 0x24 */
+
+    /* MPI 2.2 types */
+    &ompi_mpi_aint.dt,                       /* 0x25 */
+    &ompi_mpi_offset.dt,                     /* 0x26 */
+    &ompi_mpi_c_bool.dt,                     /* 0x27 */
+    &ompi_mpi_c_complex.dt,                  /* 0x28 */
+    &ompi_mpi_c_float_complex.dt,            /* 0x29 */
+    &ompi_mpi_c_double_complex.dt,           /* 0x2A */
+    &ompi_mpi_c_long_double_complex.dt,      /* 0x2B */
+
+    &ompi_mpi_lb.dt,                         /* 0x2C */
+    &ompi_mpi_ub.dt,                         /* 0x2D */
+    &ompi_mpi_unavailable.dt,                /* 0x2E */
 };
 
 opal_pointer_array_t ompi_datatype_f_to_c_table;
@@ -395,9 +427,10 @@ int32_t ompi_datatype_init( void )
 {
     int32_t i;
 
-    for( i = OMPI_DATATYPE_FIRST_TYPE; i < OMPI_DATATYPE_MPI_MAX_PREDEFINED; i++ ) {
+    for( i = 0; i < OMPI_DATATYPE_MPI_MAX_PREDEFINED; i++ ) {
         const ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_datatype_basicDatatypes[i];
 
+        if( 0 == datatype->super.size ) continue;
         datatype->super.desc.desc[0].elem.common.flags = OPAL_DATATYPE_FLAG_PREDEFINED |
                                                          OPAL_DATATYPE_FLAG_DATA |
                                                          OPAL_DATATYPE_FLAG_CONTIGUOUS;
@@ -509,86 +542,102 @@ int32_t ompi_datatype_init( void )
     /* This macro makes everything significantly easier to read below.
        All hail the moog!  :-) */
 
-#define MOOG(name)                                                                   \
+#define MOOG(name, index)                                                            \
     {                                                                                \
         ompi_mpi_##name.dt.d_f_to_c_index =                                          \
             opal_pointer_array_add(&ompi_datatype_f_to_c_table, &ompi_mpi_##name);   \
         if( ompi_datatype_number_of_predefined_data < (ompi_mpi_##name).dt.d_f_to_c_index ) \
             ompi_datatype_number_of_predefined_data = (ompi_mpi_##name).dt.d_f_to_c_index; \
+        assert( (index) == ompi_mpi_##name.dt.d_f_to_c_index );                      \
     }
 
     /*
      * This MUST match the order of ompi/include/mpif-common.h
      * Any change will break binary compatibility of Fortran programs.
      */
-    MOOG(datatype_null);
-    MOOG(byte);
-    MOOG(packed);
-    MOOG(ub);
-    MOOG(lb);
-    MOOG(character);
-    MOOG(logical);
-    MOOG(integer);
-    MOOG(integer1);
-    MOOG(integer2);
-    MOOG(integer4);
-    MOOG(integer8);
-    MOOG(integer16);
-    MOOG(real);
-    MOOG(real4);
-    MOOG(real8);
-    MOOG(real16);
-    MOOG(dblprec);
-    MOOG(cplex);
-    MOOG(complex8);
-    MOOG(complex16);
-    MOOG(complex32);
-    MOOG(dblcplex);
-    MOOG(2real);
-    MOOG(2dblprec);
-    MOOG(2integer);
-    MOOG(2cplex);
-    MOOG(2dblcplex);
-    MOOG(real2);
-    MOOG(logical1);
-    MOOG(logical2);
-    MOOG(logical4);
-    MOOG(logical8);
+    MOOG(datatype_null, 0);
+    MOOG(byte, 1);
+    MOOG(packed, 2);
+    MOOG(ub, 3);
+    MOOG(lb, 4);
+    MOOG(character, 5);
+    MOOG(logical, 6);
+    MOOG(integer, 7);
+    MOOG(integer1, 8);
+    MOOG(integer2, 9);
+    MOOG(integer4, 10);
+    MOOG(integer8, 11);
+    MOOG(integer16, 12);
+    MOOG(real, 13);
+    MOOG(real4, 14);
+    MOOG(real8, 15);
+    MOOG(real16, 16);
+    MOOG(dblprec, 17);
+    MOOG(cplex, 18);
+    MOOG(complex8, 19);
+    MOOG(complex16, 20);
+    MOOG(complex32, 21);
+    MOOG(dblcplex, 22);
+    MOOG(2real, 23);
+    MOOG(2dblprec, 24);
+    MOOG(2integer, 25);
+    MOOG(2cplex, 26);
+    MOOG(2dblcplex, 27);
+    MOOG(real2, 28);
+    MOOG(logical1, 29);
+    MOOG(logical2, 30);
+    MOOG(logical4, 31);
+    MOOG(logical8, 32);
 
     /* Now the C types */
 
-    MOOG(wchar);
-    MOOG(char);
-    MOOG(unsigned_char);
-    MOOG(signed_char);
-    MOOG(short);
-    MOOG(unsigned_short);
-    MOOG(int);
-    MOOG(unsigned);
-    MOOG(long);
-    MOOG(unsigned_long);
-    MOOG(long_long_int);
-    MOOG(unsigned_long_long);
+    MOOG(wchar, 33);
+    MOOG(char, 34);
+    MOOG(unsigned_char, 35);
+    MOOG(signed_char, 36);
+    MOOG(short, 37);
+    MOOG(unsigned_short, 38);
+    MOOG(int, 39);
+    MOOG(unsigned, 40);
+    MOOG(long, 41);
+    MOOG(unsigned_long, 42);
+    MOOG(long_long_int, 43);
+    MOOG(unsigned_long_long, 44);
 
-    MOOG(float);
-    MOOG(double);
-    MOOG(long_double);
+    MOOG(float, 45);
+    MOOG(double, 46);
+    MOOG(long_double, 47);
 
-    MOOG(float_int);
-    MOOG(double_int);
-    MOOG(longdbl_int);
-    MOOG(long_int);
-    MOOG(2int);
-    MOOG(short_int);
+    MOOG(float_int, 48);
+    MOOG(double_int, 49);
+    MOOG(longdbl_int, 50);
+    MOOG(long_int, 51);
+    MOOG(2int, 52);
+    MOOG(short_int, 53);
 
     /* C++ types */
 
-    MOOG(cxx_bool);
-    MOOG(cxx_cplex);
-    MOOG(cxx_dblcplex);
-    MOOG(cxx_ldblcplex);
+    MOOG(cxx_bool, 54);
+    MOOG(cxx_cplex, 55);
+    MOOG(cxx_dblcplex, 56);
+    MOOG(cxx_ldblcplex, 57);
 
-    for( i = 0; i < ompi_mpi_cxx_ldblcplex.dt.d_f_to_c_index; i++ ) {
+    /* MPI 2.2 types */
+    MOOG(int8_t, 58);
+    MOOG(uint8_t, 59);
+    MOOG(int16_t, 60);
+    MOOG(uint16_t, 61);
+    MOOG(int32_t, 62);
+    MOOG(uint32_t, 63);
+    MOOG(int64_t, 64);
+    MOOG(uint64_t, 65);
+    MOOG(aint, 66);
+    MOOG(offset, 67);
+
+    /**
+     * Now make sure all non-contiguous types are marked as such.
+     */
+    for( i = 0; i < ompi_mpi_offset.dt.d_f_to_c_index; i++ ) {
         opal_datatype_t* datatype = (opal_datatype_t*)opal_pointer_array_get_item(&ompi_datatype_f_to_c_table, i );
 
         if( (datatype->ub - datatype->lb) == (OPAL_PTRDIFF_TYPE)datatype->size ) {
@@ -712,9 +761,9 @@ void ompi_datatype_dump( const ompi_datatype_t* pData )
                      (long)pData->super.lb, (long)pData->super.ub, (long)(pData->super.ub - pData->super.lb),
                      (int)pData->super.nbElems, (int)pData->super.btypes[OPAL_DATATYPE_LOOP], (int)pData->super.flags );
     /* dump the flags */
-    if( ompi_datatype_is_predefined(pData) )
+    if( ompi_datatype_is_predefined(pData) ) {
         index += snprintf( buffer + index, length - index, "predefined " );
-    else {
+    } else {
         if( pData->super.flags & OPAL_DATATYPE_FLAG_COMMITED ) index += snprintf( buffer + index, length - index, "commited " );
         if( pData->super.flags & OPAL_DATATYPE_FLAG_CONTIGUOUS) index += snprintf( buffer + index, length - index, "contiguous " );
     }

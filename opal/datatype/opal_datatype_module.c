@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2010 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -45,7 +45,7 @@ uint32_t opal_local_arch = 0xFFFFFFFF;
  * into an array, which is initialized at runtime.
  * Everything is constant.
  */
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_null =       OPAL_DATATYPE_INITIALIZER_NULL(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_empty =       OPAL_DATATYPE_INITIALIZER_EMPTY(0);
 
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_loop =        OPAL_DATATYPE_INITIALIZER_LOOP(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_end_loop =    OPAL_DATATYPE_INITIALIZER_END_LOOP(0);
@@ -71,7 +71,7 @@ OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex16 =   OPAL_DATATYPE_IN
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_complex32 =   OPAL_DATATYPE_INITIALIZER_COMPLEX32(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_bool =        OPAL_DATATYPE_INITIALIZER_BOOL(0);
 OPAL_DECLSPEC const opal_datatype_t opal_datatype_wchar =       OPAL_DATATYPE_INITIALIZER_WCHAR(0);
-OPAL_DECLSPEC const opal_datatype_t opal_datatype_unavailable = OPAL_DATATYPE_INITIALIZER_UNAVAILABLE(0);
+OPAL_DECLSPEC const opal_datatype_t opal_datatype_unavailable = OPAL_DATATYPE_INITIALIZER_UNAVAILABLE_NAMED(UNAVAILABLE, 0);
 
 OPAL_DECLSPEC dt_elem_desc_t opal_datatype_predefined_elem_desc[2 * OPAL_DATATYPE_MAX_PREDEFINED];
 
@@ -82,16 +82,16 @@ OPAL_DECLSPEC const size_t opal_datatype_local_sizes[OPAL_DATATYPE_MAX_PREDEFINE
     0,
     0,
     0,
-    1,   /* sizeof (int1_t) */
-    2,   /* sizeof (int2_t) */
-    4,   /* sizeof (int4_t) */
-    8,   /* sizeof (int8_t) */
-    16,  /* sizeof (int16_t) */
-    1,   /* sizeof (uint1_t) */
-    2,   /* sizeof (uint2_t) */
-    4,   /* sizeof (uint4_t) */
-    8,   /* sizeof (uint8_t) */
-    16,  /* sizeof (uint16_t) */
+    1,   /* sizeof (int8_t) */
+    2,   /* sizeof (int16_t) */
+    4,   /* sizeof (int32_t) */
+    8,   /* sizeof (int64_t) */
+    16,  /* sizeof (int128_t) */
+    1,   /* sizeof (uint8_t) */
+    2,   /* sizeof (uint16_t) */
+    4,   /* sizeof (uint32_t) */
+    8,   /* sizeof (uint64_t) */
+    16,  /* sizeof (uint128_t) */
     2,   /* sizeof (float2) */
     4,   /* sizeof (float4) */
     8,   /* sizeof (float8) */
