@@ -41,7 +41,9 @@ struct mca_mtl_portals4_module_t {
     size_t recv_short_size;
     int recv_short_num;
     int queue_size;
-    
+
+    uint64_t *recv_count, *send_count;
+
     /* global handles */
     ptl_handle_ni_t ni_h;
     ptl_handle_eq_t eq_h;
@@ -53,6 +55,8 @@ struct mca_mtl_portals4_module_t {
     ompi_mtl_portals4_request_t long_overflow_request;
 
     opal_list_t recv_short_blocks;
+
+    enum { eager, rndv, triggered } protocol;
 };
 typedef struct mca_mtl_portals4_module_t mca_mtl_portals4_module_t;
 

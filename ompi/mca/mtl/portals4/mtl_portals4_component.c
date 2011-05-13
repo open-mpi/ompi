@@ -72,7 +72,7 @@ ompi_mtl_portals4_component_open(void)
                            "Cross-over point from eager to rendezvous sends",
                            false,
                            false,
-                           32 * 1024,
+                           2 * 1024,
                            &tmp);
     ompi_mtl_portals4.eager_limit = tmp;
 
@@ -129,6 +129,8 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                             &ompi_mtl_portals4.ni_h)) {
         return NULL;
     }
+
+    ompi_mtl_portals4.protocol = rndv;
 
     return &ompi_mtl_portals4.base;
 }
