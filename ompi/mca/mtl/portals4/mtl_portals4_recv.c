@@ -198,7 +198,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                     return OMPI_SUCCESS;
                 }
 
-                ret = PtlGet(ompi_mtl_portals4.ni_h,
+                ret = PtlGet(ptl_request->md_h,
                              0,
                              md.length,
                              ev->initiator,

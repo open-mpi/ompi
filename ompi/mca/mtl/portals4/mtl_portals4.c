@@ -129,18 +129,16 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
     me.ac_id.uid = PTL_UID_ANY;
-    me.options = PTL_ME_OP_PUT;
+    me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
     me.match_bits = PTL_LONG_MSG;
     me.ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
-    ompi_mtl_portals4.long_overflow_request.event_callback = 
-        ompi_mtl_portals4_recv_progress;
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
                       PTL_SEND_TABLE_ID,
                       &me,
                       PTL_OVERFLOW,
-                      &ompi_mtl_portals4.long_overflow_request,
+                      NULL,
                       &ompi_mtl_portals4.long_overflow_me_h);
     if (PTL_OK != ret) {
         PtlMDRelease(ompi_mtl_portals4.zero_md_h);
