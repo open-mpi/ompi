@@ -29,6 +29,7 @@ struct ompi_mtl_portals4_request_t {
     void *buffer_ptr; /* send and receive side */
     ptl_handle_md_t md_h; /* send and receive side */
     ptl_handle_me_t me_h; /* send and receive side */
+    ptl_handle_ct_t ct_h;
     int event_count; /* send side */
     struct opal_convertor_t *convertor; /* recv side */
     void *delivery_ptr; /* recv side */

@@ -208,7 +208,11 @@ ompi_mtl_portals4_long_isend( void *start, int length, int contextid, int localr
     me.ac_id.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE;
     me.match_id = dest;
-    me.match_bits = (ptl_match_bits_t)(uintptr_t)ptl_request;
+    if (ompi_mtl_portals4.protocol == rndv) {
+        me.match_bits = (ompi_mtl_portals4.send_count[dest.phys.pid] << 32) | length;
+    } else {
+        me.match_bits = ompi_mtl_portals4.send_count[dest.phys.pid];
+    }
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
@@ -225,16 +229,40 @@ ompi_mtl_portals4_long_isend( void *start, int length, int contextid, int localr
         return ompi_mtl_portals4_get_error(ret);
     }
 
-    ret = PtlPut(ptl_request->md_h,
-                 0,
-                 length,
-                 PTL_ACK_REQ,
-                 dest,
-                 PTL_SEND_TABLE_ID,
-                 match_bits,
-                 0,
-                 ptl_request,
-                 (ptl_hdr_data_t)(uintptr_t)ptl_request);
+    if (ompi_mtl_portals4.protocol == rndv) {
+        ret = PtlPut(ptl_request->md_h,
+                     0,
+                     ompi_mtl_portals4.eager_limit,
+                     PTL_NO_ACK_REQ,
+                     dest,
+                     PTL_SEND_TABLE_ID,
+                     match_bits,
+                     0,
+                     ptl_request,
+                     me.match_bits);
+    } else if (ompi_mtl_portals4.protocol == triggered) {
+        ret = PtlPut(ptl_request->md_h,
+                     0,
+                     ompi_mtl_portals4.eager_limit + 1,
+                     PTL_NO_ACK_REQ,
+                     dest,
+                     PTL_SEND_TABLE_ID,
+                     match_bits,
+                     0,
+                     ptl_request,
+                     me.match_bits);
+    } else {
+        ret = PtlPut(ptl_request->md_h,
+                     0,
+                     length,
+                     PTL_ACK_REQ,
+                     dest,
+                     PTL_SEND_TABLE_ID,
+                     match_bits,
+                     0,
+                     ptl_request,
+                     me.match_bits);
+    }
     if (PTL_OK != ret) {
         opal_output_verbose(ompi_mtl_base_output, 1,
                             "%s:%d: PtlPut failed: %d",
@@ -284,7 +312,7 @@ ompi_mtl_portals4_sync_isend( void *start, int length, int contextid, int localr
     me.ac_id.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE;
     me.match_id = dest;
-    me.match_bits = (ptl_match_bits_t)(uintptr_t)ptl_request;
+    me.match_bits = ompi_mtl_portals4.send_count[dest.phys.pid];
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
@@ -349,6 +377,8 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
     ptl_request->event_count = 0;
     ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
+
+    ompi_mtl_portals4.send_count[endpoint->ptl_proc.phys.pid]++;
 
     switch (mode) {
     case MCA_PML_BASE_SEND_STANDARD:

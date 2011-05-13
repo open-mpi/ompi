@@ -199,6 +199,11 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
         mtl_peer_data[i]->ptl_proc.phys.pid = ptlprocs[i].pid;
     }
 
+    ompi_mtl_portals4.send_count = malloc(nptlprocs * sizeof(uint64_t));
+    memset(ompi_mtl_portals4.send_count, 0, nptlprocs * sizeof(uint64_t));
+    ompi_mtl_portals4.recv_count = malloc(nptlprocs * sizeof(uint64_t));
+    memset(ompi_mtl_portals4.recv_count, 0, nptlprocs * sizeof(uint64_t));
+
     return OMPI_SUCCESS;
 }
 
