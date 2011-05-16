@@ -280,43 +280,25 @@ static int query(pid_t pid,
             return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
         }
     
-        if (0 > (fd = open(data, O_RDONLY))) {
-            /* can't access this file - most likely, this means we
-             * aren't really on a supported system, or the proc no
-             * longer exists. Just return an error
-             */
-            return OPAL_ERR_FILE_OPEN_FAILURE;
+        if (NULL == (fp = fopen(data, "r"))) {
+            /* ignore this */
+            return OPAL_SUCCESS;
         }
-    
-        /* absorb all of the file's contents in one gulp - we'll process
-         * it once it is in memory for speed
-         */
-        memset(data, 0, sizeof(data));
-        len = read(fd, data, sizeof(data)-1);
-        close(fd);
-    
-        /* remove newline at end */
-        data[len] = '\0';
     
         /* parse it according to proc(3) */
-        /* look for VmPeak */
-        if (NULL != (ptr = strstr(data, "VmPeak:"))) {
-            /* found it - step past colon */
-            ptr += 8;
-            stats->peak_vsize = convert_value(ptr);
-        }
-        /* look for VmSize */
-        if (NULL != (ptr = strstr(data, "VmSize:"))) {
-            /* found it - step past colon */
-            ptr += 8;
-            stats->vsize = convert_value(ptr);  /* convert to MBytes*/
-        }
-    
-        /* look for RSS */
-        if (NULL != (ptr = strstr(data, "VmRSS:"))) {
-            /* found it - step past colon */
-            ptr += 8;
-            stats->rss = convert_value(ptr);  /* convert to MBytes */
+        while (NULL != (dptr = local_getline(fp))) {
+            if (NULL == (value = local_stripper(dptr))) {
+                /* cannot process */
+                continue;
+            }
+            /* look for VmPeak */
+            if (0 == strncmp(dptr, "VmPeak", strlen("VmPeak"))) {
+                stats->peak_vsize = convert_value(value);
+            } else if (0 == strncmp(dptr, "VmSize", strlen("VmSize"))) {
+                stats->vsize = convert_value(value);
+            } else if (0 == strncmp(dptr, "VmRSS", strlen("VmRSS"))) {
+                stats->rss = convert_value(value);
+            }
         }
     }
 
