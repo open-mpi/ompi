@@ -299,7 +299,6 @@ static int query(pid_t pid,
         data[len] = '\0';
     
         /* parse it according to proc(3) */
-        eptr = data;
         /* look for VmPeak */
         if (NULL != (ptr = strstr(data, "VmPeak:"))) {
             /* found it - step past colon */
@@ -307,14 +306,14 @@ static int query(pid_t pid,
             stats->peak_vsize = convert_value(ptr);
         }
         /* look for VmSize */
-        if (NULL != (ptr = strstr(ptr, "VmSize:"))) {
+        if (NULL != (ptr = strstr(data, "VmSize:"))) {
             /* found it - step past colon */
             ptr += 8;
             stats->vsize = convert_value(ptr);  /* convert to MBytes*/
         }
     
         /* look for RSS */
-        if (NULL != (ptr = strstr(ptr, "VmRSS:"))) {
+        if (NULL != (ptr = strstr(data, "VmRSS:"))) {
             /* found it - step past colon */
             ptr += 8;
             stats->rss = convert_value(ptr);  /* convert to MBytes */
