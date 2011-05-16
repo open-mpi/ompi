@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 #
 #
-# Copyright (c) 2010 Voltaire, Inc. All rights reserved.
+# Copyright (c) 2011 Mellanox Technologies. All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow

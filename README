@@ -9,7 +9,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
-Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
+Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
@@ -121,7 +121,7 @@ Detailed Open MPI v1.5 Feature List:
     - Performance improvements
     - Support for hierarchical collectives (must be activated
       manually; see below)
-	- Support for Voltaire FCA (Fabric Collective Accelerator) technology
+	- Support for Mellanox FCA (Fabric Collective Accelerator) technology
 
   o Miscellaneous
     - MPI 2.1 compliant 
@@ -440,12 +440,10 @@ Collectives
   We would appreciate feedback from the user community about how well
   hierarch works for your applications.
 
-- The "fca" coll component: Voltaire Fabric Collective Accelerator (FCA) 
+- The "fca" coll component: Mellanox Fabric Collective Accelerator (FCA) 
   is a solution for offloading collective operations from the MPI process 
-  onto Voltaire QDR InfiniBand switch CPUs. 
+  onto Mellanox QDR InfiniBand switch CPUs and HCAs. 
 
-  See http://www.voltaire.com/Products/Application_Acceleration_Software/voltaire_fabric_collective_accelerator_fca
-  for details.
 
 
 Network Support
@@ -811,10 +809,10 @@ for a full list); a summary of the more commonly used ones follows:
   This is currently disabled by default.
 
 --with-fca=<directory>
-  Specify the directory where the Voltaire FCA library and
+  Specify the directory where the Mellanox FCA library and
   header files are located.  
 
-  FCA is the support library for Voltaire QDR switches.
+  FCA is the support library for Mellanox QDR switches and HCAs.
 
 --disable-mpi-cxx
   Disable building the C++ MPI bindings.  Note that this does *not*
