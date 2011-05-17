@@ -280,7 +280,6 @@ static int modex(opal_list_t *procs)
 {
     int rc;
     opal_buffer_t buf, rbuf;
-    bool modex_reqd = true;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:bad: modex entered",
@@ -307,7 +306,7 @@ static int modex(opal_list_t *procs)
         }
         
         /* pack the entries we have received */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf, &modex_reqd))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -319,7 +318,7 @@ static int modex(opal_list_t *procs)
         }
 
         /* store the results */
-        if( ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_unpack(&rbuf, true)) ) {
+        if( ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_unpack(&rbuf)) ) {
             ORTE_ERROR_LOG(rc);
         }
         
@@ -332,7 +331,7 @@ static int modex(opal_list_t *procs)
 
         return rc;
     } else {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs, true))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs))) {
             ORTE_ERROR_LOG(rc);
         }        
     }

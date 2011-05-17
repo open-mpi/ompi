@@ -498,14 +498,6 @@ typedef struct orte_proc_t orte_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
 
 typedef struct {
-    opal_list_item_t super;
-    char *name;
-    int32_t size;
-    uint8_t *bytes;
-} orte_attr_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attr_t);
-
-typedef struct {
     /* base object */
     opal_object_t super;
     /* index in the array */
@@ -516,8 +508,6 @@ typedef struct {
     orte_vpid_t daemon;
     /* whether or not this node is oversubscribed */
     bool oversubscribed;
-    /* list of interface attributes */
-    opal_list_t attrs;
     /* list of system info */
     opal_list_t sysinfo;
 } orte_nid_t;
