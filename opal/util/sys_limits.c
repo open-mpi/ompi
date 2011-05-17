@@ -57,7 +57,7 @@ OPAL_DECLSPEC opal_sys_limits_t opal_sys_limits = {
 int opal_util_init_sys_limits(void)
 {
 #ifndef __WINDOWS__    
-    struct rlimit rlim;
+    struct rlimit rlim, rlim_set;
 #endif
     int value;
     bool set_lims;
@@ -71,13 +71,12 @@ int opal_util_init_sys_limits(void)
     /* George: please insert whatever is needed here someday */
 #else
     /* get/set the system limits on number of files we can have open */
-    if (getrlimit (RLIMIT_NOFILE, &rlim) < 0) {
-        opal_output(0, "getrlimit (RLIMIT_NOFILE) failed: %s\n", strerror(errno));
-    } else {
+    if (0 <= getrlimit (RLIMIT_NOFILE, &rlim)) {
         if (set_lims) {
-            rlim.rlim_cur = rlim.rlim_max;
-            if (setrlimit (RLIMIT_NOFILE, &rlim) < 0) {
-                opal_output(0, "setrlimit (RLIMIT_NOFILE) failed: %s\n", strerror(errno));
+            rlim_set.rlim_cur = rlim.rlim_max;
+            rlim_set.rlim_max = rlim.rlim_max;
+            if (0 <= setrlimit (RLIMIT_NOFILE, &rlim_set)) {
+                rlim.rlim_cur = rlim.rlim_max;
             }
         }
         opal_sys_limits.num_files = rlim.rlim_cur;
@@ -85,13 +84,12 @@ int opal_util_init_sys_limits(void)
 
 #if HAVE_DECL_RLIMIT_NPROC
     /* get/set the system limits on number of child procs we can have open */
-    if (getrlimit (RLIMIT_NPROC, &rlim) < 0) {
-        opal_output(0, "getrlimit (RLIMIT_NPROC) failed: %s\n", strerror(errno));
-    } else {
+    if (0 <= getrlimit (RLIMIT_NPROC, &rlim)) {
         if (set_lims) {
-            rlim.rlim_cur = rlim.rlim_max;
-            if (setrlimit (RLIMIT_NPROC, &rlim) < 0) {
-                opal_output(0, "setrlimit (RLIMIT_NPROC) failed: %s\n", strerror(errno));
+            rlim_set.rlim_cur = rlim.rlim_max;
+            rlim_set.rlim_max = rlim.rlim_max;
+            if (0 <= setrlimit (RLIMIT_NPROC, &rlim_set)) {
+                rlim.rlim_cur = rlim.rlim_max;
             }
         }
         opal_sys_limits.num_procs = rlim.rlim_cur;
@@ -99,13 +97,12 @@ int opal_util_init_sys_limits(void)
 #endif
     
     /* get/set the system limits on max file size we can create */
-    if (getrlimit (RLIMIT_FSIZE, &rlim) < 0) {
-        opal_output(0, "getrlimit (RLIMIT_FSIZE) failed: %s\n", strerror(errno));
-    } else {
+    if (0 <= getrlimit (RLIMIT_FSIZE, &rlim)) {
         if (set_lims) {
-            rlim.rlim_cur = rlim.rlim_max;
-            if (setrlimit (RLIMIT_FSIZE, &rlim) < 0) {
-                opal_output(0, "setrlimit (RLIMIT_FSIZE) failed: %s\n", strerror(errno));
+            rlim_set.rlim_cur = rlim.rlim_max;
+            rlim_set.rlim_max = rlim.rlim_max;
+            if (0 <= setrlimit (RLIMIT_FSIZE, &rlim_set)) {
+                rlim.rlim_cur = rlim.rlim_max;
             }
         }
         opal_sys_limits.file_size = rlim.rlim_cur;
