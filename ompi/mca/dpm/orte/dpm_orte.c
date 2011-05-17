@@ -684,7 +684,7 @@ static int spawn(int count, char **array_of_commands,
             /* check for 'host' */
             ompi_info_get (array_of_info[i], "host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
-                opal_argv_append_nosize(&app->dash_host, host);
+                app->dash_host = opal_argv_split(host, ',');
             }
  
             /* check for 'hostfile' */
@@ -702,7 +702,7 @@ static int spawn(int count, char **array_of_commands,
             /* check for 'add-host' */
             ompi_info_get (array_of_info[i], "add-host", sizeof(host) - 1, host, &flag);
             if ( flag ) {
-                opal_argv_append_nosize(&app->add_host, host);
+                app->add_host = opal_argv_split(host, ',');
             }
             
             /* 'path', 'arch', 'file', 'soft'  -- to be implemented */ 
