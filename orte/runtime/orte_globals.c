@@ -944,36 +944,11 @@ OBJ_CLASS_INSTANCE(orte_proc_t,
                    orte_proc_construct,
                    orte_proc_destruct);
 
-static void orte_attr_construct(orte_attr_t *ptr)
-{
-    ptr->name = NULL;
-    ptr->size = 0;
-    ptr->bytes = NULL;
-}
-
-static void orte_attr_destruct(orte_attr_t *ptr)
-{
-    if (NULL != ptr->name) {
-        free(ptr->name);
-        ptr->name = NULL;
-    }
-    if (NULL != ptr->bytes) {
-        free(ptr->bytes);
-        ptr->bytes = NULL;
-    }
-}
-
-OBJ_CLASS_INSTANCE(orte_attr_t,
-                   opal_list_item_t,
-                   orte_attr_construct,
-                   orte_attr_destruct);
-
 static void orte_nid_construct(orte_nid_t *ptr)
 {
     ptr->name = NULL;
     ptr->daemon = ORTE_VPID_INVALID;
     ptr->oversubscribed = false;
-    OBJ_CONSTRUCT(&ptr->attrs, opal_list_t);
     OBJ_CONSTRUCT(&ptr->sysinfo, opal_list_t);
 }
 
@@ -985,10 +960,6 @@ static void orte_nid_destruct(orte_nid_t *ptr)
         free(ptr->name);
         ptr->name = NULL;
     }
-    while (NULL != (item = opal_list_remove_first(&ptr->attrs))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&ptr->attrs);
     while (NULL != (item = opal_list_remove_first(&ptr->sysinfo))) {
         OBJ_RELEASE(item);
     }

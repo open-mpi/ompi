@@ -25,14 +25,10 @@ SUBDIRS += \
 	tools/ompi_info \
 	tools/wrappers \
 	tools/ortetools \
-        tools/ompi-server \
-        tools/ompi-probe \
-        tools/ompi-profiler
+        tools/ompi-server
 
 DIST_SUBDIRS += \
 	tools/ompi_info \
 	tools/wrappers \
 	tools/ortetools \
-	tools/ompi-server \
-        tools/ompi-probe \
-        tools/ompi-profiler
+	tools/ompi-server

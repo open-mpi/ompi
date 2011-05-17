@@ -436,7 +436,6 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
     orte_vpid_t *vpids;
     orte_nid_t *nd, *ndptr;
     opal_buffer_t buf;
-    opal_byte_object_t *boptr;
     int rc;
     uint8_t *oversub;
 
@@ -539,76 +538,8 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
     /* update num_daemons */
     orte_process_info.num_daemons = num_daemons;
     
-    /* unpack any attributes that may have been included */
-    n = 1;
-    while (ORTE_SUCCESS == opal_dss.unpack(&buf, &boptr, &n, OPAL_BYTE_OBJECT)) {
-        char *nodename, *attr, *tptr;
-        opal_buffer_t bobuf;
-        orte_attr_t *attrdata;
-        
-        /* setup to unpack the object */
-        OBJ_CONSTRUCT(&bobuf, opal_buffer_t);
-        opal_dss.load(&bobuf, boptr->bytes, boptr->size);
-        /* unpack the nodename */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&bobuf, &nodename, &n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* find this node in nidmap */
-        for (i=0, ndptr=NULL; i < orte_nidmap.size; i++) {
-            if (NULL == (nd = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
-                continue;
-            }
-            /* since we may not have kept fqdn hostnames, we can only check
-             * for equality to the length of the name in the first field
-             * of an fqdn name
-             */
-            tptr = strchr(nodename, '.');
-            if (NULL != tptr) {
-                *tptr = '\0';
-            }
-            if (0 == strncmp(nd->name, nodename, strlen(nodename))) {
-                ndptr = nd;
-                break;
-            }
-        }
-        free(nodename);  /* done with this */
-        if (NULL == ndptr) {
-            /* didn't find it! */
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_ERR_NOT_FOUND;
-        }
-        
-        /* loop through the rest of the object to unpack the attr's themselves */
-        n = 1;
-        while (ORTE_SUCCESS == opal_dss.unpack(&bobuf, &attr, &n, OPAL_STRING)) {
-            attrdata = OBJ_NEW(orte_attr_t);
-            attrdata->name = strdup(attr);
-            /* read the number of bytes in the blob */
-            n = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&bobuf, &attrdata->size, &n, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* unpack the bytes */
-            attrdata->bytes = (uint8_t *) malloc(attrdata->size);
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&bobuf, attrdata->bytes, &attrdata->size, OPAL_BYTE))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* add to our list for this node */
-            opal_list_append(&ndptr->attrs, &attrdata->super);
-            
-        }
-        OBJ_DESTRUCT(&bobuf);
-        n = 1;
-    }
-    
     if (0 < opal_output_get_verbosity(orte_debug_output)) {
         for (i=0; i < num_nodes; i++) {
-            opal_list_item_t *item;
-            orte_attr_t *attr;
             if (NULL == (nd = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
                 continue;
             }
@@ -616,12 +547,6 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
                         (NULL == nd->name) ? "NULL" : nd->name,
                         ORTE_VPID_PRINT(nd->daemon));
-            for (item = opal_list_get_first(&nd->attrs);
-                 item != opal_list_get_end(&nd->attrs);
-                 item = opal_list_get_next(item)) {
-                attr = (orte_attr_t*)item;
-                opal_output(0, "\tAttribute: %s #bytes: %d", attr->name, attr->size);
-            }
         }
     }
 
@@ -991,8 +916,6 @@ void orte_nidmap_dump(void)
 {
     int i;
     orte_nid_t *nid;
-    opal_list_item_t *item;
-    orte_attr_t *attr;
 
     opal_output(orte_clean_output, "***   DUMP OF NIDMAP   ***");
     for (i=0; i < orte_nidmap.size; i++) {
@@ -1003,12 +926,6 @@ void orte_nidmap_dump(void)
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
                     (NULL == nid->name) ? "NULL" : nid->name,
                     ORTE_VPID_PRINT(nid->daemon));
-        for (item = opal_list_get_first(&nid->attrs);
-             item != opal_list_get_end(&nid->attrs);
-             item = opal_list_get_next(item)) {
-            attr = (orte_attr_t*)item;
-            opal_output(orte_clean_output, "\tAttribute: %s #bytes: %d", attr->name, attr->size);
-        }
     }
     opal_output(orte_clean_output, "\n\n");
 }

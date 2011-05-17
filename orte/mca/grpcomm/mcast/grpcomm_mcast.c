@@ -360,12 +360,12 @@ static int modex(opal_list_t *procs)
      *
      */
     if (NULL != procs) {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs, true))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
     } else {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex(true))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex())) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;

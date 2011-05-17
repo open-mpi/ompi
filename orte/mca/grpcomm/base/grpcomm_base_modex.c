@@ -45,14 +45,13 @@
 #include "orte/mca/grpcomm/grpcomm.h"
 
 /***************  MODEX SECTION **************/
-int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
+int orte_grpcomm_base_full_modex(opal_list_t *procs)
 {
     opal_buffer_t buf, rbuf;
     int32_t i, n, num_procs;
-    orte_std_cntr_t cnt, j, num_recvd_entries;
+    orte_std_cntr_t cnt;
     orte_process_name_t proc_name;
     int rc=ORTE_SUCCESS;
-    bool modex_reqd;
     orte_nid_t *nid;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
@@ -102,7 +101,7 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
     }
     
     /* pack the entries we have received */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf, &modex_reqd))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -248,80 +247,25 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs, bool modex_db)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc_name)));
         
-        /* UPDATE THE MODEX INFO FOR THIS PROC */
-        
-        if (modex_db) {
-            /* update the modex database */
-            if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, &rbuf))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }            
-        } else {
-            /* unpack the number of entries for this proc */
-            cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_recvd_entries, &cnt, ORTE_STD_CNTR))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:full:modex adding %d entries for proc %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_recvd_entries,
-                                 ORTE_NAME_PRINT(&proc_name)));
-            
-            /*
-             * Extract the attribute names and values
-             */
-            for (j = 0; j < num_recvd_entries; j++) {
-                size_t num_bytes;
-                orte_attr_t *attr;
-                
-                attr = OBJ_NEW(orte_attr_t);
-                cnt = 1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &(attr->name), &cnt, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                
-                cnt = 1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_bytes, &cnt, OPAL_SIZE))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                attr->size = num_bytes;
-                
-                if (num_bytes != 0) {
-                    if (NULL == (attr->bytes = (uint8_t *) malloc(num_bytes))) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        rc = ORTE_ERR_OUT_OF_RESOURCE;
-                        goto cleanup;
-                    }
-                    cnt = (orte_std_cntr_t) num_bytes;
-                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, attr->bytes, &cnt, OPAL_BYTE))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }
-                }
-                
-                /* add this to the node's attribute list */
-                opal_list_append(&nid->attrs, &attr->super);
-            }
-        }
+        /* update the modex database */
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, &rbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }            
     }
     
-cleanup:
+ cleanup:
     OBJ_DESTRUCT(&buf);
     OBJ_DESTRUCT(&rbuf);
     return rc;
 }
 
-int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf, bool modex_db)
+int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
 {
     int32_t i, num_procs;
-    orte_std_cntr_t cnt, j, num_recvd_entries;
+    orte_std_cntr_t cnt;
     orte_process_name_t proc_name;
     int rc=ORTE_SUCCESS;
-    orte_nid_t *nid;
 
     /* process the results */
     /* extract the number of procs that put data in the buffer */
@@ -357,76 +301,12 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf, bool modex_db)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc_name)));
         
-        if (modex_db) {
-            /* if we are using the modex db, pass the rest of the buffer
-             * to that system to update the modex database
-             */
-            if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, rbuf))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-        } else {  /* process it locally and store data on nidmap */
-            /* unpack the number of entries for this proc */
-            cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &num_recvd_entries, &cnt, ORTE_STD_CNTR))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex:unpack: adding %d entries for proc %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_recvd_entries,
-                                 ORTE_NAME_PRINT(&proc_name)));
-            
-            /* find this proc's node in the nidmap */
-            if (NULL == (nid = orte_util_lookup_nid(&proc_name))) {
-                /* proc wasn't found - return error */
-                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                     "%s grpcomm:base:modex:unpack: no nidmap entry for proc %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc_name)));
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                rc = ORTE_ERR_NOT_FOUND;
-                goto cleanup;
-            }
-            
-            /*
-             * Extract the attribute names and values
-             */
-            for (j = 0; j < num_recvd_entries; j++) {
-                size_t num_bytes;
-                orte_attr_t *attr;
-                
-                attr = OBJ_NEW(orte_attr_t);
-                cnt = 1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &(attr->name), &cnt, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                
-                cnt = 1;
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &num_bytes, &cnt, OPAL_SIZE))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                attr->size = num_bytes;
-                
-                if (num_bytes != 0) {
-                    if (NULL == (attr->bytes = (uint8_t *) malloc(num_bytes))) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        rc = ORTE_ERR_OUT_OF_RESOURCE;
-                        goto cleanup;
-                    }
-                    cnt = (orte_std_cntr_t) num_bytes;
-                    if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, attr->bytes, &cnt, OPAL_BYTE))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto cleanup;
-                    }
-                }
-                
-                /* add this to the node's attribute list */
-                opal_list_append(&nid->attrs, &attr->super);
-            }
+        /* pass the rest of the buffer
+         * to that system to update the modex database
+         */
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, rbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
     }
 
@@ -434,11 +314,10 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf, bool modex_db)
     return rc;
 }
 
-int orte_grpcomm_base_peer_modex(bool modex_db)
+int orte_grpcomm_base_peer_modex(void)
 {
     opal_buffer_t buf, rbuf;
     int rc = ORTE_SUCCESS;
-    bool modex_reqd;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:base:peer:modex: performing modex",
@@ -455,7 +334,7 @@ int orte_grpcomm_base_peer_modex(bool modex_db)
     }
     
     /* pack the entries we have received */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf, &modex_reqd))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -474,7 +353,7 @@ int orte_grpcomm_base_peer_modex(bool modex_db)
                          "%s grpcomm:base:peer:modex: processing modex info",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_unpack(&rbuf, modex_db)) ) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_unpack(&rbuf)) ) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -839,7 +718,7 @@ int orte_grpcomm_base_purge_proc_attrs(void)
     return ORTE_SUCCESS;
 }
 
-int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, bool *mdx_reqd)
+int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf)
 {
     int rc;
     
@@ -852,7 +731,6 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, bool *mdx_reqd)
     OPAL_THREAD_LOCK(&mutex);
     if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &num_entries, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
-        OPAL_THREAD_UNLOCK(&mutex);
         goto cleanup;
     }
     
@@ -860,10 +738,7 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf, bool *mdx_reqd)
     if (0 < num_entries) {
         if (ORTE_SUCCESS != (opal_dss.copy_payload(buf, modex_buffer))) {
             ORTE_ERROR_LOG(rc);
-            OPAL_THREAD_UNLOCK(&mutex);
-            goto cleanup;
         }
-        *mdx_reqd = true;
     }
     
 cleanup:
