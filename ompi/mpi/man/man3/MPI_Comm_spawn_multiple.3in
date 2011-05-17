@@ -83,12 +83,8 @@ MPI_Comm_spawn_multiple is identical to MPI_Comm_spawn(3) except that
 it can specify multiple executables. The first argument, \fIcount\fP,
 indicates the number of executables. The next three arguments are
 arrays of the corresponding arguments in MPI_Comm_spawn(3). The next
-argument, \fIarray_of_info\fP, is an array of \fIinfo\fP arguments;
-however, only the first argument in that array is used.  Any
-subsequent arguments in the array are ignored because an \fIinfo\fP
-argument applies to the entire job that is spawned, and cannot be
-different for each executable in the job.  See the INFO ARGUMENTS
-section for more information.
+argument, \fIarray_of_info\fP, is an array of \fIinfo\fP arguments, one
+for each executable. See the INFO ARGUMENTS section for more information.
 .sp
 For the Fortran version of \fIarray_of_argv\fP, the element \fIarray_of_argv\fP(i,j) is the jth argument to command number i. 
 .sp
@@ -125,18 +121,18 @@ The following keys for \fIinfo\fP are recognized in "#PACKAGE_NAME#". (The reser
 Key                    Type     Description
 ---                    ----     -----------
 
-host                   char *   Host on which the process should be
-                                spawned.  See the \fIorte_host\fP man
-                                page for an explanation of how this
-                                will be used.
+host                   char *   Comma-separated list of hosts on which
+                                the processes should be spawned.  See
+                                the \fIorte_host\fP man page for an
+                                explanation of how this will be used.
 hostfile               char *   Hostfile containing the hosts on which
                                 the processes are to be spawned. See
                                 the \fIorte_hostfile\fP man page for
                                 an explanation of how this will be
                                 used.
-add-host               char *   Add the specified host to the list of
+add-host               char *   Add the specified hosts to the list of
                                 hosts known to this job and use it for
-                                the associated process. This will be
+                                the associated processes. This will be
                                 used similarly to the -host option.
 add-hostfile           char *   Hostfile containing hosts to be added
                                 to the list of hosts known to this job
