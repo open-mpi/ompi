@@ -67,8 +67,6 @@ const char opal_version_string[] = OPAL_IDENT_STRING;
 
 int opal_initialized = 0;
 int opal_util_initialized = 0;
-bool opal_profile = false;
-char *opal_profile_file = NULL;
 int opal_cache_line_size;
 
 static int

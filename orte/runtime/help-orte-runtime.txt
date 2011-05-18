@@ -43,22 +43,6 @@ a different location to be used (use -h to see the cmd line option), or
 simply let the system pick a default location.
 #
 #
-[orte_nidmap:file-cant-open]
-Unable to open the file that was to contain the cluster's profile. The file
-name we were given was:
-
-FILE: %s
-
-Please check to ensure this file exists and has appropriate read permissions.
-#
-[orte_nidmap:unable-read-file]
-An error occurred while trying to read the file containing the cluster's profile.
-The file we were reading was:
-
-FILE: %s
-
-Please check that this file was correctly generated.
-#
 [orte_nidmap:too_many_nodes]
 An error occurred while trying to pack the information about the job. More nodes
 have been found than the %d expected. Please check your configuration files such

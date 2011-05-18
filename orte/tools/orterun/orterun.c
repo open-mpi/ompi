@@ -109,7 +109,6 @@ static bool have_zero_np = false;
 static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static char *ompi_server=NULL;
-static bool profile_is_set = false;
 
 /*
  * Globals
@@ -1475,10 +1474,6 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             opal_setenv(param, value, false, &app->env);
             free(param);
         }
-    }
-    /* if profile was set, add it back in */
-    if (profile_is_set) {
-        opal_setenv("OMPI_MCA_opal_profile", "1", true, &app->env);
     }
     
     /* add the ompi-server, if provided */

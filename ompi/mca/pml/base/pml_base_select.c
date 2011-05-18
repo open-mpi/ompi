@@ -255,10 +255,6 @@ int mca_pml_base_select(bool enable_progress_threads,
                          "select: component %s selected",
                          mca_pml_base_selected_component.pmlm_version.mca_component_name );
 
-    if (opal_profile) {
-        opal_output(0, "pml:%s",  mca_pml_base_selected_component.pmlm_version.mca_component_name );
-    }
-    
     /* This base function closes, unloads, and removes from the
        available list all unselected components.  The available list will
        contain only the selected component. */

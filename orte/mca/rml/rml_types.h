@@ -161,9 +161,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 /* debugger release */
 #define ORTE_RML_TAG_DEBUGGER_RELEASE       32
 
-/* profile data */
-#define ORTE_RML_TAG_GRPCOMM_PROFILE        33
-
 /* bootstrap */
 #define ORTE_RML_TAG_BOOTSTRAP              34
 

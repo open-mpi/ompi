@@ -77,19 +77,6 @@ int opal_register_params(void)
         free(string);
     }
 
-    {
-        int j;
-
-        mca_base_param_reg_int_name("opal", "profile", 
-                                    "Set to non-zero to profile component selections",
-                                    false, false, (int)false, &j);
-        opal_profile = OPAL_INT_TO_BOOL(j);
-
-        mca_base_param_reg_string_name("opal", "profile_file", 
-                                       "Name of the file containing the cluster configuration information",
-                                       false, false, NULL, &opal_profile_file);
-    }
-    
 #if OPAL_ENABLE_DEBUG
 
 

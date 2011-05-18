@@ -109,9 +109,6 @@ opal_pointer_array_t *orte_node_pool;
 /* a clean output channel without prefix */
 int orte_clean_output = -1;
 
-/* RHC: FLAG TO SELECT WHETHER OR NOT TO SEND PROFILE FILE IN NIDMAP */
-bool orte_send_profile;
-
 /* Nidmap and job maps */
 opal_pointer_array_t orte_nidmap;
 opal_pointer_array_t orte_jobmap;
