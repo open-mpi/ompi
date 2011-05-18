@@ -53,7 +53,6 @@ int orte_grpcomm_base_open(void)
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
     orte_grpcomm_base.output = opal_output_open(NULL);
-    orte_grpcomm_base.profile_fd = -1;
     
     /* define the default daemon collective fn */
 #if ORTE_DISABLE_FULL_SUPPORT

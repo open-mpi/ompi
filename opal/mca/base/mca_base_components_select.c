@@ -118,9 +118,6 @@ int mca_base_select(const char *type_name, int output_id,
     opal_output_verbose(5, output_id,
                         "mca:base:select:(%5s) Selected component [%s]",
                         type_name, (*best_component)->mca_component_name);
-    if (opal_profile) {
-        opal_output(0, "%s:%s", type_name, (*best_component)->mca_component_name);
-    }
     
     /*
      * Close the non-selected components

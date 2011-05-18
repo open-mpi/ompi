@@ -59,7 +59,6 @@ typedef struct {
     bool selected;
     opal_list_t components_available;
     orte_grpcomm_base_component_t selected_component;
-    int profile_fd;
     orte_grpcomm_daemon_collective_fn_t daemon_coll;
 } orte_grpcomm_base_t;
 

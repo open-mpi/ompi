@@ -387,40 +387,7 @@ int orte_util_encode_nodemap(opal_byte_object_t *boptr)
         return rc;
     }
     free(oversub);
-    
-   /* check if we are to send the profile file data */
-    if (orte_send_profile) {
-        int fd;
-        opal_byte_object_t bo, *bptr;
-
-        /* there must be a file specified */
-        if (NULL == opal_profile_file) {
-            /* print an error message */
-            return ORTE_ERR_BAD_PARAM;
-        }
-        fd = open(opal_profile_file, O_RDONLY);
-        if (fd < 0) {
-            orte_show_help("help-orte-runtime.txt", "orte_nidmap:file-cant-open", true, opal_profile_file);
-            return ORTE_ERR_FILE_OPEN_FAILURE;
-        }
-        /* loop through file until end */
-        bptr = &bo;
-        while (0 < read(fd, &bo.size, sizeof(bo.size))) {
-            /* this is the number of bytes in the byte object */
-            bo.bytes = (uint8_t *) malloc(bo.size);
-            if (0 > read(fd, bo.bytes, bo.size)) {
-                orte_show_help("help-orte-runtime.txt", "orte_nidmap:unable-read-file", true, opal_profile_file);
-                close(fd);
-                return ORTE_ERR_FILE_READ_FAILURE;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &bptr, 1, OPAL_BYTE_OBJECT))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            free(bo.bytes);
-        }
-    }
-    
+        
     /* transfer the payload to the byte object */
     opal_dss.unload(&buf, (void**)&boptr->bytes, &boptr->size);
     OBJ_DESTRUCT(&buf);

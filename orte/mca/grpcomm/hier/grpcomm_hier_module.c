@@ -427,18 +427,7 @@ static int modex(opal_list_t *procs)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* if we were given a list of procs to modex with, then this is happening
-     * as part of a connect/accept operation. In this case, we -must- do the
-     * modex for two reasons:
-     *
-     * (a) the modex could involve procs from different mpiruns. In this case,
-     *     there is no way for the two sets of procs to know which node the
-     *     other procs are on, so we cannot use the profile_file to determine
-     *     their contact info
-     *
-     * (b) in a comm_spawn, the parent job does not have a pidmap for the
-     *     child job. Thus, it cannot know where the child procs are located,
-     *     and cannot use the profile_file to determine their contact info
-     *
+     * as part of a connect/accept operation
      */
     if (NULL != procs) {
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs))) {

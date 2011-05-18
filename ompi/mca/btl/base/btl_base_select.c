@@ -133,10 +133,6 @@ int mca_btl_base_select(bool enable_progress_threads,
                                     "select: init of component %s returned success",
                                     component->btl_version.mca_component_name);
 
-                if (opal_profile) {
-                    opal_output(0, "btl:%s", component->btl_version.mca_component_name);
-                }
-                
                 for (i = 0; i < num_btls; ++i) {
                     sm = OBJ_NEW(mca_btl_base_selected_module_t);
                     if (NULL == sm) {

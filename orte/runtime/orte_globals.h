@@ -622,9 +622,6 @@ ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 /* a clean output channel without prefix */
 ORTE_DECLSPEC extern int orte_clean_output;
 
-/* RHC: FLAG TO SELECT WHETHER OR NOT TO SEND PROFILE FILE IN NIDMAP */
-ORTE_DECLSPEC extern bool orte_send_profile;
-
 /* Nidmap and job maps */
 ORTE_DECLSPEC extern opal_pointer_array_t orte_nidmap;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_jobmap;

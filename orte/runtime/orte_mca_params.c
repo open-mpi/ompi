@@ -100,12 +100,6 @@ int orte_register_params(void)
 
 #if !ORTE_DISABLE_FULL_SUPPORT
     
-    mca_base_param_reg_int_name("orte", "send_profile",
-                                "Send profile info in launch message",
-                                false, false,
-                                (int) false, &value);
-    orte_send_profile = OPAL_INT_TO_BOOL(value);
-
     mca_base_param_reg_int_name("orte", "debug",
                                 "Top-level ORTE debug switch (default verbosity: 1)",
                                 false, false, (int)false, &value);

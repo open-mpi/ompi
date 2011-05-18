@@ -246,13 +246,6 @@ int orte_daemon(int argc, char *argv[])
      */
     mca_base_cmd_line_process_args(cmd_line, &environ, &environ);
     
-    /* make sure that opal_profile is -not- set as we do not care
-     * what frameworks are opened by the daemons
-     */
-    if (NULL != getenv("OMPI_MCA_opal_profile")) {
-        putenv("OMPI_MCA_opal_profile=0");
-    }
-    
     /* Ensure that enough of OPAL is setup for us to be able to run */
     /*
      * NOTE: (JJH)
