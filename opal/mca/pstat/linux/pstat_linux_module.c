@@ -167,6 +167,7 @@ static int query(pid_t pid,
         len = read(fd, data, sizeof(data)-1);
         if (len < 0) {
             /* This shouldn't happen! */
+            close(fd);
             return OPAL_ERR_FILE_OPEN_FAILURE;
         }
         close(fd);
@@ -300,6 +301,7 @@ static int query(pid_t pid,
                 stats->rss = convert_value(value);
             }
         }
+        fclose(fp);
     }
 
     if (NULL != nstats) {
