@@ -488,17 +488,6 @@ int orterun(int argc, char *argv[])
      */
     mca_base_cmd_line_process_args(&cmd_line, &environ, &environ);
     
-    /* make sure that opal_profile is -not- set for us locally as
-     * we really only want to profile MPI apps. However, if it is
-     * set, remember it so we can add it to the apps environment later
-     */
-    if (NULL != getenv("OMPI_MCA_opal_profile")) {
-        putenv("OMPI_MCA_opal_profile=0");
-        profile_is_set = true;
-        /* ensure that I know to turn on my profile receive! */
-        putenv("OMPI_MCA_orte_grpcomm_recv_on=1");
-    }
-    
     /* Ensure that enough of OPAL is setup for us to be able to run */
     /*
      * NOTE: (JJH)
@@ -1276,7 +1265,19 @@ static int parse_locals(int argc, char* argv[])
     if (NULL != env) {
         size1 = opal_argv_count(env);
         for (j = 0; j < size1; ++j) {
-            putenv(env[j]);
+            /* Use-after-Free error possible here.  putenv does not copy
+             * the string passed to it, and instead stores only the pointer.
+             * env[j] may be freed later, in which case the pointer
+             * in environ will now be left dangling into a deallocated
+             * region.
+             * So we make a copy of the variable.
+             */
+            char *s = strdup(env[j]);
+            
+            if (NULL == s) {
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
+            putenv(s);
         }
     }
 
