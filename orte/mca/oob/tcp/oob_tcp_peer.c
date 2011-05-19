@@ -891,6 +891,11 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer)
 static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t *)user;
+    /* if we are abnormally terminating, ignore this */
+    if (orte_abnormal_term_ordered) {
+        return;
+    }
+
     OPAL_THREAD_LOCK(&peer->peer_lock);
     switch(peer->peer_state) {
         case MCA_OOB_TCP_CONNECT_ACK: 
