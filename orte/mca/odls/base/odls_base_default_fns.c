@@ -2967,7 +2967,9 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             /* ensure the stdin IOF channel for this child is closed. The other
              * channels will automatically close when the proc is killed
              */
-            orte_iof.close(child->name, ORTE_IOF_STDIN);
+            if (NULL != orte_iof.close) {
+                orte_iof.close(child->name, ORTE_IOF_STDIN);
+            }
             
             /* cancel the waitpid callback as this induces unmanageable race
              * conditions when we are deliberately killing the process
