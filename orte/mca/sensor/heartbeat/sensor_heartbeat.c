@@ -295,6 +295,12 @@ static void read_stats(int fd, short event, void *arg)
     orte_job_t *jdata;
     orte_proc_t *proc;
 
+    ORTE_ACQUIRE_THREAD(&ctl);
+
+    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                         "%s sensor:heartbeat READING LOCAL STATS",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     /* get data on myself and the local node */
     OBJ_CONSTRUCT(&stats, opal_pstats_t);
     OBJ_CONSTRUCT(&nstats, opal_node_stats_t);
@@ -321,6 +327,8 @@ static void read_stats(int fd, short event, void *arg)
  reset:
     OBJ_DESTRUCT(&stats);
     OBJ_DESTRUCT(&nstats);
+    ORTE_RELEASE_THREAD(&ctl);
+
     /* reset the timer */
     opal_event_evtimer_add(tmp, &send_time);
 }
@@ -337,8 +345,10 @@ static void send_heartbeat(int fd, short event, void *arg)
 
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
-        goto reset;
+        return;
     }
+
+    ORTE_ACQUIRE_THREAD(&ctl);
 
     /* if my HNP hasn't been defined yet, ignore - nobody listening yet */
     if (ORTE_JOBID_INVALID == ORTE_PROC_MY_HNP->jobid ||
@@ -433,6 +443,8 @@ static void send_heartbeat(int fd, short event, void *arg)
     }
     
  reset:
+    ORTE_RELEASE_THREAD(&ctl);
+
     /* reset the timer */
     opal_event_evtimer_add(tmp, &send_time);
 }
@@ -449,7 +461,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
 
     ORTE_ACQUIRE_THREAD(&ctl);
 
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+    OPAL_OUTPUT_VERBOSE((3, orte_sensor_base.output,
                          "%s sensor:check_heartbeat",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
@@ -479,10 +491,6 @@ static void check_heartbeat(int fd, short dummy, void *arg)
                                  ORTE_NAME_PRINT(&proc->name)));
             continue;
         }
-        OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                             "%s CHECKING HEARTBEAT FOR %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc->name)));
 
         if (!proc->beat) {
             /* no heartbeat recvd in last window */
@@ -493,6 +501,11 @@ static void check_heartbeat(int fd, short dummy, void *arg)
             orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_HEARTBEAT_FAILED,
                                      &proc->name, ORTE_PROC_STATE_HEARTBEAT_FAILED,
                                      0, ORTE_ERR_HEARTBEAT_LOST);
+        } else {
+            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
+                                 "%s HEARTBEAT DETECTED FOR %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc->name)));
         }
         /* reset for next period */
         proc->beat = false;
@@ -533,6 +546,10 @@ static void recv_beats(int status,
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));
         proc->beat = true;
+        /* if this daemon has reappeared, reset things */
+        if (ORTE_PROC_STATE_HEARTBEAT_FAILED == proc->state) {
+            proc->state = ORTE_PROC_STATE_RUNNING;
+        }
     }
 
     if (mca_sensor_heartbeat_component.include_stats) {
