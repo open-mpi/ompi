@@ -270,6 +270,8 @@ const char *orte_proc_state_to_str(orte_proc_state_t state)
             return "CANNOT BE RESTARTED";
         case ORTE_PROC_STATE_TERM_NON_ZERO:
             return "EXITED WITH NON-ZERO STATUS";
+        case ORTE_PROC_STATE_RESTARTED:
+            return "RESTART DETECTED";
         default:
             return "UNKNOWN STATE!";
     }

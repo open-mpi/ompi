@@ -67,6 +67,7 @@ typedef uint32_t orte_proc_state_t;
 #define ORTE_PROC_STATE_MIGRATING               0x00020000  /* process is migrating */
 #define ORTE_PROC_STATE_CANNOT_RESTART          0x00040000  /* process failed and cannot be restarted */
 #define ORTE_PROC_STATE_TERM_NON_ZERO           0x00080000  /* process exited with a non-zero status, indicating abnormal */
+#define ORTE_PROC_STATE_RESTARTED               0x00100000  /* process restarted */
 /*
  * Job state codes
  */
