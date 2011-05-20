@@ -492,7 +492,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
             continue;
         }
 
-        if (!proc->beat) {
+        if (0 == proc->beat) {
             /* no heartbeat recvd in last window */
             OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                                  "%s sensor:check_heartbeat FAILED for daemon %s",
@@ -503,12 +503,12 @@ static void check_heartbeat(int fd, short dummy, void *arg)
                                      0, ORTE_ERR_HEARTBEAT_LOST);
         } else {
             OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                                 "%s HEARTBEAT DETECTED FOR %s",
+                                 "%s HEARTBEAT DETECTED FOR %s: NUM BEATS %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name)));
+                                 ORTE_NAME_PRINT(&proc->name), proc->beat));
         }
         /* reset for next period */
-        proc->beat = false;
+        proc->beat = 0;
     }
 
  reset:
@@ -545,7 +545,7 @@ static void recv_beats(int status,
                              "%s marked beat from %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(sender)));
-        proc->beat = true;
+        proc->beat++;
         /* if this daemon has reappeared, reset things */
         if (ORTE_PROC_STATE_HEARTBEAT_FAILED == proc->state) {
             proc->state = ORTE_PROC_STATE_RUNNING;

@@ -482,7 +482,7 @@ struct orte_proc_t {
     /* flag to indicate proc has reported in */
     bool reported;
     /* if heartbeat recvd during last time period */
-    bool beat;
+    int beat;
     /* process stats at last sampling */
     opal_pstats_t stats;
 #if OPAL_ENABLE_FT_CR == 1
