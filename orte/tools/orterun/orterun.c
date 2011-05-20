@@ -1602,7 +1602,19 @@ static int parse_locals(int argc, char* argv[])
     if (NULL != env) {
         size1 = opal_argv_count(env);
         for (j = 0; j < size1; ++j) {
-            putenv(env[j]);
+            /* Use-after-Free error possible here.  putenv does not copy
+             * the string passed to it, and instead stores only the pointer.
+             * env[j] may be freed later, in which case the pointer
+             * in environ will now be left dangling into a deallocated
+             * region.
+             * So we make a copy of the variable.
+             */
+            char *s = strdup(env[j]);
+
+            if (NULL == s) {
+                return OPAL_ERR_OUT_OF_RESOURCE;
+            }
+            putenv(s);
         }
     }
 
