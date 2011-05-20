@@ -2980,9 +2980,9 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             orte_wait_cb_cancel(child->pid);
             
             /* First send a SIGCONT in case the process is in stopped state.
-             If it is in a stopped state and we do not first change it to
-             running, then SIGTERM will not get delivered.  Ignore return
-             value. */
+               If it is in a stopped state and we do not first change it to
+               running, then SIGTERM will not get delivered.  Ignore return
+               value. */
             kill_local(child->pid, SIGCONT);
 
             /* Send a sigterm to the process before sigkill to be nice */
@@ -3000,16 +3000,14 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                    "odls-default:could-not-kill",
                                    true, orte_process_info.nodename, child->pid);
                 }
-            }
-#if OPAL_ENABLE_FT_CR
-            /* Force the SIGKILL just to make sure things are dead
-             * This fixes an issue with process migration/autorecovery
-             * if the application is masking SIGTERM then the child_died()
-             * may return 'true' even though waipid returns with 0.
-             * It does this to avoid a race condition, per documentation
-             * in odls_default_module.c.
-             */
-            else {
+            } else {
+                /* Force the SIGKILL just to make sure things are dead
+                 * This fixes an issue that, if the application is masking
+                 * SIGTERM, then the child_died()
+                 * may return 'true' even though waipid returns with 0.
+                 * It does this to avoid a race condition, per documentation
+                 * in odls_default_module.c.
+                 */
                 kill_local(child->pid, SIGKILL);
                 /* Double check that it actually died this time */
                 if (!child_died(child)) {
@@ -3018,7 +3016,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                    true, orte_process_info.nodename, child->pid);
                 }
             }
-#endif
+
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc child %s killed",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
