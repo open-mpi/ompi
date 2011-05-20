@@ -406,6 +406,10 @@ static void send_heartbeat(int fd, short event, void *arg)
             if (!child->alive) {
                 continue;
             }
+            if (0 == child->pid) {
+                /* race condition */
+                continue;
+            }
             OBJ_CONSTRUCT(&stats, opal_pstats_t);
             if (ORTE_SUCCESS != (rc = opal_pstat.query(child->pid, &stats, NULL))) {
                 ORTE_ERROR_LOG(rc);
