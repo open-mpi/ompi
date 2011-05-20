@@ -890,7 +890,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->rml_uri = NULL;
     proc->restarts = 0;
     proc->reported = false;
-    proc->beat = false;
+    proc->beat = 0;
     OBJ_CONSTRUCT(&proc->stats, opal_pstats_t);
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
