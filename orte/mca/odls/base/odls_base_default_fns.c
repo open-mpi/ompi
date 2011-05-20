@@ -2452,8 +2452,9 @@ GOTCHILD:
          * stderr, and stddiag - were released when their associated pipes
          * were cleared and closed due to termination of the process
          */
-        orte_iof.close(proc, ORTE_IOF_STDIN);
-        
+        if (NULL != orte_iof.close) {
+            orte_iof.close(proc, ORTE_IOF_STDIN);
+        }
         /* Clean up the session directory as if we were the process
          * itself.  This covers the case where the process died abnormally
          * and didn't cleanup its own session directory.
@@ -2743,7 +2744,9 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
          * stderr, and stddiag - were released when their associated pipes
          * were cleared and closed due to termination of the process
          */
-        orte_iof.close(proc, ORTE_IOF_STDIN);
+        if (NULL != orte_iof.close) {
+            orte_iof.close(proc, ORTE_IOF_STDIN);
+        }
         
         /* Clean up the session directory as if we were the process
          * itself.  This covers the case where the process died abnormally
