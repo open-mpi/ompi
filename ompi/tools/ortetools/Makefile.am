@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-iof.1 ompi-clean.1 ompi-top.1
+man_pages = mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1 ompi-top.1
 
 if WANT_FT
 man_pages += ompi-checkpoint.1 ompi-restart.1
@@ -46,7 +46,6 @@ uninstall-local:
 		$(DESTDIR)$(bindir)/mpiexec$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-ps$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-clean$(EXEEXT) \
-		$(DESTDIR)$(bindir)/ompi-iof$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-top$(EXEEXT)
 if WANT_FT
 	rm -f $(DESTDIR)$(bindir)/ompi-checkpoint$(EXEEXT) \
