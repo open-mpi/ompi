@@ -2983,14 +2983,14 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                If it is in a stopped state and we do not first change it to
                running, then SIGTERM will not get delivered.  Ignore return
                value. */
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s SENDING SIGCONT TO %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
             kill_local(child->pid, SIGCONT);
 
             /* Send a sigterm to the process before sigkill to be nice */
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_base.output,
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s SENDING SIGTERM TO %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(child->name)));
@@ -3001,7 +3001,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
              */
             if (!child_died(child)) {
                 /* if it still isn't dead, try killing it one more time */
-                OPAL_OUTPUT_VERBOSE((5, orte_odls_base.output,
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                      "%s SENDING SIGKILL TO %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(child->name)));
