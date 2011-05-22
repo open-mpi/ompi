@@ -105,7 +105,7 @@ void ompi_info_out(const char *pretty_message, const char *plain_message, const 
         while (isspace(v[i]) && i > 0) {
             --i;
         }
-        v[i] = '\0';
+        v[i + 1] = '\0';
     }
 
     if (ompi_info_pretty && NULL != pretty_message) {
