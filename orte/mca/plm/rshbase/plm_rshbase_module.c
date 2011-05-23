@@ -218,7 +218,6 @@ static int spawn(orte_job_t *jdata)
     int proc_vpid_index;
     pid_t pid;
     bool failed_launch = true;
-    orte_job_state_t job_state;
     orte_jobid_t active_job, failed_job;
 
     /* wait for the launch to complete */
@@ -493,7 +492,7 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_errmgr.update_state(failed_job, job_state,
+        orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_FAILED_TO_START,
                                  NULL, ORTE_PROC_STATE_UNDEF,
                                  0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
