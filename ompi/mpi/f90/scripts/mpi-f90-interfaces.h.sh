@@ -6886,7 +6886,23 @@ output_192() {
     proc="$1$2D$3"
     cat <<EOF
 
+! Because we can't break ABI in the middle of the 1.4 series, also
+! provide the old/bad/incorrect MPI_Scatterv binding
 subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
+        recvcount, recvtype, root, comm, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, intent(in) :: sendcounts
+  integer, intent(in) :: displs
+  integer, intent(in) :: sendtype
+  ${type}, intent(out) :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+subroutine ${proc}_correct(sendbuf, sendcounts, displs, sendtype, recvbuf, &
         recvcount, recvtype, root, comm, ierr)
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
@@ -6898,7 +6914,7 @@ subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
   integer, intent(in) :: root
   integer, intent(in) :: comm
   integer, intent(out) :: ierr
-end subroutine ${proc}
+end subroutine ${proc}_correct
 
 EOF
 }

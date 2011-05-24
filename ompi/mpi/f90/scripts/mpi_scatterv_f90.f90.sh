@@ -46,7 +46,27 @@ output() {
 
     cat <<EOF
 
+! Because we can't break ABI in the middle of the 1.4 series, also
+! provide the old/bad/incorrect MPI_Scatterv binding
 subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
+        recvcount, recvtype, root, comm, ierr)
+  include "mpif-config.h"
+  ${type}, intent(in) :: sendbuf
+  integer, intent(in) :: sendcounts
+  integer, intent(in) :: displs
+  integer, intent(in) :: sendtype
+  ${type}, intent(out) :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierr
+  print *, "Open MPI WARNING: You are calling MPI_SCATTERV with incorrect sendcounts and displs arguments!  Your code may crash or produce incorrect results.  ***Your code will fail to compile in future versions of Open MPI*** because this old/incorrect Fortran subroutine binding will be removed.  Please update the type of your sendcounts and displs  parameters to make this warning go away (and have correct code!)."
+  call ${procedure}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
+        recvcount, recvtype, root, comm, ierr)
+end subroutine ${proc}
+
+subroutine ${proc}_correct(sendbuf, sendcounts, displs, sendtype, recvbuf, &
         recvcount, recvtype, root, comm, ierr)
   include "mpif-config.h"
   ${type}, intent(in) :: sendbuf
@@ -61,7 +81,7 @@ subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
   integer, intent(out) :: ierr
   call ${procedure}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
         recvcount, recvtype, root, comm, ierr)
-end subroutine ${proc}
+end subroutine ${proc}_correct
 
 EOF
 }
