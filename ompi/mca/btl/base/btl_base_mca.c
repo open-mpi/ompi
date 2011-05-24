@@ -109,7 +109,7 @@ int mca_btl_base_param_register(mca_base_component_t *version,
     }
 
     REG_INT("bandwidth", "Approximate maximum bandwidth of interconnect"
-            "(must be >= 1)", module->btl_bandwidth, 1, uint32_t);
+            "(0 = auto-detect value at run-time [not supported in all BTL modules], >= 1 = bandwidth in Mbps)", module->btl_bandwidth, 0, uint32_t);
 
     REG_INT("latency", "Approximate latency of interconnect (must be >= 0)",
             module->btl_latency, 0, uint32_t);
