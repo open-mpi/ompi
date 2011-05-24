@@ -1,5 +1,5 @@
 /**
-  Copyright (c) 2010 Voltaire, Inc. All rights reserved.
+  Copyright (c) 2011 Mellanox Technologies. All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -24,15 +24,39 @@
 #include "coll_fca_api.h"
 #include "coll_fca_debug.h"
 
+
 #ifdef OMPI_DATATYPE_MAX_PREDEFINED
-#define FCA_DT_MAX_PREDEFINED OMPI_DATATYPE_MAX_PREDEFINED
-#define FCA_DT_GET_TRUE_EXTENT	ompi_datatype_get_true_extent
-#define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT ompi_datatype_is_contiguous_memory_layout
+
+#include "opal/datatype/opal_convertor.h"
+#define FCA_CONVERTOR_T opal_convertor_t
+#define FCA_CONVERTOR_COPY_AND_PREPARE_FOR_SEND opal_convertor_copy_and_prepare_for_send
+#define FCA_CONVERTOR_COPY_AND_PREPARE_FOR_RECV opal_convertor_copy_and_prepare_for_recv
+#define FCA_CONVERTOR_CONVERTOR_GET_PACKED_SIZE opal_convertor_get_packed_size
+#define FCA_CONVERTOR_CONVERTOR_UNPACK opal_convertor_unpack
+#define FCA_CONVERTOR_CONVERTOR_PACK opal_convertor_pack
+
+#define FCA_DT_MAX_PREDEFINED     OMPI_DATATYPE_MAX_PREDEFINED
+#define FCA_DT_EXTENT	          ompi_datatype_type_extent
+#define FCA_DT_GET_TRUE_EXTENT    ompi_datatype_get_true_extent
+#define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(__dtype, __count) \
+                                  ompi_datatype_is_contiguous_memory_layout(__dtype, __count)
 #else
-#define FCA_DT_MAX_PREDEFINED DT_MAX_PREDEFINED
-#define FCA_DT_GET_TRUE_EXTENT	ompi_ddt_get_true_extent
-#define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT ompi_ddt_is_contiguous_memory_layout
+
+#include "ompi/datatype/convertor.h"
+#define FCA_CONVERTOR_T ompi_convertor_t
+#define FCA_CONVERTOR_COPY_AND_PREPARE_FOR_SEND ompi_convertor_copy_and_prepare_for_send
+#define FCA_CONVERTOR_COPY_AND_PREPARE_FOR_RECV ompi_convertor_copy_and_prepare_for_recv
+#define FCA_CONVERTOR_CONVERTOR_GET_PACKED_SIZE ompi_convertor_get_packed_size
+#define FCA_CONVERTOR_CONVERTOR_UNPACK ompi_convertor_unpack
+#define FCA_CONVERTOR_CONVERTOR_PACK ompi_convertor_pack
+
+#define FCA_DT_MAX_PREDEFINED     DT_MAX_PREDEFINED
+#define FCA_DT_EXTENT	          ompi_ddt_type_extent
+#define FCA_DT_GET_TRUE_EXTENT    ompi_ddt_get_true_extent
+#define FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(__dtype, __count) \
+                                  ompi_ddt_is_contiguous_memory_layout(__dtype, __count)
 #endif
+
 
 #ifdef OMPI_PROC_FLAG_LOCAL
 #define FCA_IS_LOCAL_PROCESS(n) ((n) & OMPI_PROC_FLAG_LOCAL)
