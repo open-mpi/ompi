@@ -77,6 +77,10 @@ orte_grpcomm_base_module_t orte_grpcomm_portals4_shmem_module = {
     purge_proc_attrs
 };
 
+static int nprocs;
+static struct runtime_proc_t *map;
+static int is_logical;
+
 /**
  * Init the module
  */
@@ -148,6 +152,13 @@ static int set_proc_attr(const char *attr_name,
                          const void *data,
                          size_t size)
 {
+    /* special case for Portals MTL modex */
+    if (0 == strncmp(attr_name, "mtl.portals4", strlen("mtl.portals4"))) {
+        if (size != sizeof(ptl_process_t)) {
+            return ORTE_ERR_NOT_IMPLEMENTED;
+        }
+    }
+
     return ORTE_SUCCESS;
 }
 
@@ -155,6 +166,23 @@ static int get_proc_attr(const orte_process_name_t proc,
                          const char * attribute_name, void **val, 
                          size_t *size)
 {
+    ptl_process_t *id;
+
+    /* special case for Portals MTL modex */
+    if (0 == strncmp(attribute_name, "mtl.portals4", strlen("mtl.portals4"))) {
+        id = malloc(sizeof(ptl_process_t));
+
+        /* proc name and nid / pid match somewhat in shmem code */
+        id->phys.nid = 0;
+        id->phys.pid = proc.vpid;
+
+        *val = id;
+        *size = sizeof(ptl_process_t);
+
+        return ORTE_SUCCESS;
+    }
+    
+    
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 

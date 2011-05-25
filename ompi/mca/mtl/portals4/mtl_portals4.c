@@ -20,15 +20,17 @@
 #include "ompi_config.h"
 
 #include <portals4.h>
-#include <portals4_runtime.h>
 
 #include "ompi/mca/mtl/mtl.h"
 #include "opal/class/opal_list.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_endpoint.h"
 #include "mtl_portals4_request.h"
 #include "mtl_portals4_recv_short.h"
+
+extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
 
 mca_mtl_portals4_module_t ompi_mtl_portals4 = {
     {
@@ -61,7 +63,6 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
     ptl_md_t md;
     ptl_me_t me;
     size_t i;
-    struct runtime_proc_t *ptlprocs;
     int nptlprocs;
     ptl_pt_index_t pt;
     
@@ -169,19 +170,10 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
     opal_progress_register(ompi_mtl_portals4_progress);
 
     /* Get the list of ptl_process_id_t from the runtime and copy into structure */
-    nptlprocs = runtime_get_nidpid_map(&ptlprocs);
-    if ((size_t)nptlprocs != nprocs) {
-        PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
-        PtlMDRelease(ompi_mtl_portals4.zero_md_h);
-        PtlPTFree(ompi_mtl_portals4.ni_h, PTL_READ_TABLE_ID);
-        PtlPTFree(ompi_mtl_portals4.ni_h, PTL_SEND_TABLE_ID);
-        PtlEQFree(ompi_mtl_portals4.eq_h);
-        opal_output(ompi_mtl_base_output,
-                    "%s:%d: nptlprocs != nprocs: %d\n",
-                    __FILE__, __LINE__, ret);
-        return OMPI_ERR_NOT_SUPPORTED;
-    }
     for (i = 0 ; i < nprocs ; ++i) {
+        ptl_process_t *id;
+        size_t size;
+
         mtl_peer_data[i] = malloc(sizeof(struct mca_mtl_base_endpoint_t));
         if (NULL == mtl_peer_data[i]) {
             PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
@@ -194,9 +186,22 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                         __FILE__, __LINE__, ret);
             return OMPI_ERROR;
         }
+
+        ret = ompi_modex_recv(&mca_mtl_portals4_component.mtl_version,
+                              procs[i], (void**) &id, &size);
+        if (OMPI_SUCCESS != ret) {
+            opal_output(ompi_mtl_base_output,
+                        "%s:%d: ompi_modex_recv failed: %d\n",
+                        __FILE__, __LINE__, ret);
+            return ret;
+        } else if (sizeof(ptl_process_t) != size) {
+            opal_output(ompi_mtl_base_output,
+                        "%s:%d: ompi_modex_recv failed: %d\n",
+                        __FILE__, __LINE__, ret);
+            return ret;
+        }
  
-        mtl_peer_data[i]->ptl_proc.phys.nid = ptlprocs[i].nid;
-        mtl_peer_data[i]->ptl_proc.phys.pid = ptlprocs[i].pid;
+        mtl_peer_data[i]->ptl_proc = *id;
     }
 
     ompi_mtl_portals4.send_count = malloc(nptlprocs * sizeof(uint64_t));

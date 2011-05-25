@@ -22,6 +22,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "ompi/runtime/ompi_module_exchange.h"
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_request.h"
@@ -61,7 +62,7 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
 static int
 ompi_mtl_portals4_component_open(void)
 {
-    int tmp;
+    int tmp, ret;
 
     ompi_mtl_portals4.base.mtl_request_size = 
         sizeof(ompi_mtl_portals4_request_t) -
@@ -101,9 +102,11 @@ ompi_mtl_portals4_component_open(void)
                            1024,
                            &ompi_mtl_portals4.queue_size);
 
+    ompi_mtl_portals4.protocol = eager;
     ompi_mtl_portals4.ni_h = PTL_INVALID_HANDLE;
 
-    return ompi_mtl_portals4_get_error(PtlInit());
+    ret = PtlInit();
+    return ompi_mtl_portals4_get_error(ret);
 }
 
 
@@ -118,19 +121,41 @@ static mca_mtl_base_module_t*
 ompi_mtl_portals4_component_init(bool enable_progress_threads,
                                  bool enable_mpi_threads)
 {
-    if (PTL_OK != PtlNIInit(PTL_IFACE_DEFAULT,
-                            PTL_NI_PHYSICAL | PTL_NI_MATCHING,
-                            PTL_PID_ANY,
-                            NULL,
-                            NULL,
-                            0,
-                            NULL,
-                            NULL,
-                            &ompi_mtl_portals4.ni_h)) {
+    ptl_process_t id;
+    int ret;
+
+    ret = PtlNIInit(PTL_IFACE_DEFAULT,
+                    PTL_NI_PHYSICAL | PTL_NI_MATCHING,
+                    PTL_PID_ANY,
+                    NULL,
+                    NULL,
+                    0,
+                    NULL,
+                    NULL,
+                    &ompi_mtl_portals4.ni_h);
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlNIInit failed: %d\n",
+                    __FILE__, __LINE__, ret);
         return NULL;
     }
 
-    ompi_mtl_portals4.protocol = rndv;
+    ret = PtlGetId(ompi_mtl_portals4.ni_h, &id);
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlGetId failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        return NULL;
+    }
+
+    ret = ompi_modex_send(&mca_mtl_portals4_component.mtl_version,
+                          &id, sizeof(id));
+    if (OMPI_SUCCESS != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: ompi_modex_send failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        return NULL;
+    }
 
     return &ompi_mtl_portals4.base;
 }
@@ -168,9 +193,6 @@ ompi_mtl_portals4_get_error(int ptl_error)
         break;
     case PTL_LIST_TOO_LONG:
         ret = OMPI_ERR_OUT_OF_RESOURCE;
-        break;
-    case PTL_NI_NOT_LOGICAL:
-        ret = OMPI_ERR_FATAL;
         break;
     case PTL_NO_INIT:
         ret = OMPI_ERR_FATAL;
