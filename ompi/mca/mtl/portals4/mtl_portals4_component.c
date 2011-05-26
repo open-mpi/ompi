@@ -26,6 +26,7 @@
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_request.h"
+#include "mtl_portals4_recv_short.h"
 
 
 static int ompi_mtl_portals4_component_open(void);
@@ -62,7 +63,8 @@ mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component = {
 static int
 ompi_mtl_portals4_component_open(void)
 {
-    int tmp, ret;
+    int tmp;
+    char *tmp_proto;
 
     ompi_mtl_portals4.base.mtl_request_size = 
         sizeof(ompi_mtl_portals4_request_t) -
@@ -102,11 +104,31 @@ ompi_mtl_portals4_component_open(void)
                            1024,
                            &ompi_mtl_portals4.queue_size);
 
-    ompi_mtl_portals4.protocol = eager;
-    ompi_mtl_portals4.ni_h = PTL_INVALID_HANDLE;
+    mca_base_param_reg_string(&mca_mtl_portals4_component.mtl_version,
+                              "long_proto",
+                              "Protocol to use for long messages.  Valid entries are eager, rndv, and triggered",
+                              false,
+                              false,
+                              "eager",
+                              &tmp_proto);
+    if (0 == strcmp(tmp_proto, "eager")) {
+        ompi_mtl_portals4.protocol = eager;        
+    } else if (0 == strcmp(tmp_proto, "rndv")) {
+        ompi_mtl_portals4.protocol = rndv;
+    } else if (0 == strcmp(tmp_proto, "triggered")) {
+        ompi_mtl_portals4.protocol = triggered;
+    } else {
+        opal_output(ompi_mtl_base_output,
+                    "Unknown protocol type %s", tmp_proto);
+        return OMPI_ERR_NOT_SUPPORTED;
+    }
 
-    ret = PtlInit();
-    return ompi_mtl_portals4_get_error(ret);
+    ompi_mtl_portals4.ni_h = PTL_INVALID_HANDLE;
+    ompi_mtl_portals4.eq_h = PTL_INVALID_HANDLE;
+    ompi_mtl_portals4.zero_md_h = PTL_INVALID_HANDLE;
+    ompi_mtl_portals4.long_overflow_me_h = PTL_INVALID_HANDLE;
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -121,8 +143,27 @@ static mca_mtl_base_module_t*
 ompi_mtl_portals4_component_init(bool enable_progress_threads,
                                  bool enable_mpi_threads)
 {
-    ptl_process_t id;
     int ret;
+    ptl_process_t id;
+    ptl_pt_index_t send_pt = -1, read_pt = -1;
+    ptl_md_t md;
+    ptl_me_t me;
+
+    /* BWB: FIX ME */
+    if (enable_mpi_threads || enable_progress_threads) {
+        opal_output(ompi_mtl_base_output,
+                    "Portals4 MTL is not yet thread safe.  Can not continue");
+        return NULL;
+    }
+
+    /* Initialize Portals and create a physical, matching interface */
+    ret = PtlInit();
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlInit failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        return NULL;
+    }
 
     ret = PtlNIInit(PTL_IFACE_DEFAULT,
                     PTL_NI_PHYSICAL | PTL_NI_MATCHING,
@@ -137,15 +178,16 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         opal_output(ompi_mtl_base_output,
                     "%s:%d: PtlNIInit failed: %d\n",
                     __FILE__, __LINE__, ret);
-        return NULL;
+        goto error;
     }
 
+    /* Publish our NID/PID in the modex */
     ret = PtlGetId(ompi_mtl_portals4.ni_h, &id);
     if (PTL_OK != ret) {
         opal_output(ompi_mtl_base_output,
                     "%s:%d: PtlGetId failed: %d\n",
                     __FILE__, __LINE__, ret);
-        return NULL;
+        goto error;
     }
 
     ret = ompi_modex_send(&mca_mtl_portals4_component.mtl_version,
@@ -154,10 +196,116 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         opal_output(ompi_mtl_base_output,
                     "%s:%d: ompi_modex_send failed: %d\n",
                     __FILE__, __LINE__, ret);
-        return NULL;
+        goto error;
     }
 
+    /* create event queue */
+    ret = PtlEQAlloc(ompi_mtl_portals4.ni_h,
+                     ompi_mtl_portals4.queue_size,
+                     &(ompi_mtl_portals4.eq_h));
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlEQAlloc failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* Create portal table entries */
+    ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
+                     PTL_PT_FLOWCTRL,
+                     ompi_mtl_portals4.eq_h,
+                     PTL_SEND_TABLE_ID,
+                     &send_pt);
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlPTAlloc failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        goto error;
+    }
+    ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
+                     PTL_PT_FLOWCTRL,
+                     ompi_mtl_portals4.eq_h,
+                     PTL_READ_TABLE_ID,
+                     &read_pt);
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlPTAlloc failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* bind zero-length md for sending acks */
+    md.start     = NULL;
+    md.length    = 0;
+    md.options   = 0;
+    md.eq_handle = PTL_EQ_NONE;
+    md.ct_handle = PTL_CT_NONE;
+
+    ret = PtlMDBind(ompi_mtl_portals4.ni_h,
+                    &md,
+                    &ompi_mtl_portals4.zero_md_h ); 
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlMDBind failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* Handle long overflows */
+    me.start = NULL;
+    me.length = 0;
+    me.ct_handle = PTL_CT_NONE;
+    me.min_free = 0;
+    me.ac_id.uid = PTL_UID_ANY;
+    me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE;
+    me.match_id.phys.nid = PTL_NID_ANY;
+    me.match_id.phys.pid = PTL_PID_ANY;
+    me.match_bits = PTL_LONG_MSG;
+    me.ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
+    ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
+                      PTL_SEND_TABLE_ID,
+                      &me,
+                      PTL_OVERFLOW,
+                      NULL,
+                      &ompi_mtl_portals4.long_overflow_me_h);
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlMEAppend failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* attach short unex recv blocks */
+    ret = ompi_mtl_portals4_recv_short_init(&ompi_mtl_portals4);
+    if (OMPI_SUCCESS != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: short receive block initialization failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* activate progress callback */
+    opal_progress_register(ompi_mtl_portals4_progress);
+
     return &ompi_mtl_portals4.base;
+
+ error:
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.long_overflow_me_h, PTL_INVALID_HANDLE)) {
+        PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.zero_md_h);
+    }
+    if ((int) read_pt != -1) {
+        PtlPTFree(ompi_mtl_portals4.ni_h, PTL_READ_TABLE_ID);
+    }
+    if ((int) send_pt != -1) {
+        PtlPTFree(ompi_mtl_portals4.ni_h, PTL_SEND_TABLE_ID);
+    }
+    if (!PtlHandleIsEqual(ompi_mtl_portals4.eq_h, PTL_INVALID_HANDLE)) {
+        PtlEQFree(ompi_mtl_portals4.eq_h);
+    }
+    return NULL;
 }
 
 

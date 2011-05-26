@@ -121,7 +121,7 @@ ompi_mtl_portals4_sync_callback(ptl_event_t *ev, struct ompi_mtl_portals4_reques
 
 static int
 ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode, void *start, int length,
-                              int contextid, int localrank, int tag, ptl_process_t dest,
+                              int contextid, int localrank, int tag, mca_mtl_base_endpoint_t *endpoint,
                               ompi_mtl_portals4_request_t *ptl_request )
 {
     int ret;
@@ -154,7 +154,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode, void *start, int le
                  0,
                  length,
 		 PTL_NO_ACK_REQ,
-		 dest,
+		 endpoint->ptl_proc,
 		 PTL_SEND_TABLE_ID,
 		 match_bits,
 		 0,
@@ -173,8 +173,9 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode, void *start, int le
 
 
 static int
-ompi_mtl_portals4_long_isend( void *start, int length, int contextid, int localrank, int tag,
-                              ptl_process_t dest, ompi_mtl_portals4_request_t *ptl_request )
+ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localrank, int tag,
+                             mca_mtl_base_endpoint_t *endpoint,
+                             ompi_mtl_portals4_request_t *ptl_request)
 {
     int ret;
     ptl_match_bits_t match_bits;
@@ -207,11 +208,11 @@ ompi_mtl_portals4_long_isend( void *start, int length, int contextid, int localr
     me.min_free = 0;
     me.ac_id.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE;
-    me.match_id = dest;
+    me.match_id = endpoint->ptl_proc;
     if (ompi_mtl_portals4.protocol == rndv) {
-        me.match_bits = (ompi_mtl_portals4.send_count[dest.phys.pid] << 32) | length;
+        me.match_bits = ((uint64_t) endpoint->send_count << 32) | length;
     } else {
-        me.match_bits = ompi_mtl_portals4.send_count[dest.phys.pid];
+        me.match_bits = endpoint->send_count;
     }
     me.ignore_bits = 0;
 
@@ -234,7 +235,7 @@ ompi_mtl_portals4_long_isend( void *start, int length, int contextid, int localr
                      0,
                      ompi_mtl_portals4.eager_limit,
                      PTL_NO_ACK_REQ,
-                     dest,
+                     endpoint->ptl_proc,
                      PTL_SEND_TABLE_ID,
                      match_bits,
                      0,
@@ -245,7 +246,7 @@ ompi_mtl_portals4_long_isend( void *start, int length, int contextid, int localr
                      0,
                      ompi_mtl_portals4.eager_limit + 1,
                      PTL_NO_ACK_REQ,
-                     dest,
+                     endpoint->ptl_proc,
                      PTL_SEND_TABLE_ID,
                      match_bits,
                      0,
@@ -256,7 +257,7 @@ ompi_mtl_portals4_long_isend( void *start, int length, int contextid, int localr
                      0,
                      length,
                      PTL_ACK_REQ,
-                     dest,
+                     endpoint->ptl_proc,
                      PTL_SEND_TABLE_ID,
                      match_bits,
                      0,
@@ -277,8 +278,8 @@ ompi_mtl_portals4_long_isend( void *start, int length, int contextid, int localr
 
 
 static int
-ompi_mtl_portals4_sync_isend( void *start, int length, int contextid, int localrank, int tag,
-                              ptl_process_t dest, ompi_mtl_portals4_request_t *ptl_request )
+ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localrank, int tag,
+                             mca_mtl_base_endpoint_t *endpoint, ompi_mtl_portals4_request_t *ptl_request)
 {
     int ret;
     ptl_match_bits_t match_bits;
@@ -311,8 +312,8 @@ ompi_mtl_portals4_sync_isend( void *start, int length, int contextid, int localr
     me.min_free = 0;
     me.ac_id.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE;
-    me.match_id = dest;
-    me.match_bits = ompi_mtl_portals4.send_count[dest.phys.pid];
+    me.match_id = endpoint->ptl_proc;
+    me.match_bits = endpoint->send_count;
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
@@ -333,7 +334,7 @@ ompi_mtl_portals4_sync_isend( void *start, int length, int contextid, int localr
                  0,
                  length,
                  PTL_ACK_REQ,
-                 dest,
+                 endpoint->ptl_proc,
                  PTL_SEND_TABLE_ID,
                  match_bits,
                  0,
@@ -378,7 +379,7 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
     ptl_request->event_count = 0;
     ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    ompi_mtl_portals4.send_count[endpoint->ptl_proc.phys.pid]++;
+    endpoint->send_count++;
 
     switch (mode) {
     case MCA_PML_BASE_SEND_STANDARD:
@@ -392,7 +393,7 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
                                                 comm->c_contextid,
                                                 comm->c_my_rank,
                                                 tag,
-                                                endpoint->ptl_proc,
+                                                endpoint,
                                                 ptl_request);
             break;
         }
@@ -405,7 +406,7 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
                                                comm->c_contextid,
                                                comm->c_my_rank,
                                                tag,
-                                               endpoint->ptl_proc,
+                                               endpoint,
                                                ptl_request);
         } else {
 	    /* if we got this far, we're either a standard or synchronous long send */
@@ -414,7 +415,7 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
                                                comm->c_contextid,
                                                comm->c_my_rank,
                                                tag,
-                                               endpoint->ptl_proc,
+                                               endpoint,
                                                ptl_request);
         }
         break;

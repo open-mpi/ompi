@@ -42,8 +42,6 @@ struct mca_mtl_portals4_module_t {
     int recv_short_num;
     int queue_size;
 
-    uint64_t *recv_count, *send_count;
-
     /* global handles */
     ptl_handle_ni_t ni_h;
     ptl_handle_eq_t eq_h;
