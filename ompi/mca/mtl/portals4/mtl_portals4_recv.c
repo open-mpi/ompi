@@ -344,7 +344,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
         ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
         endpoint = (mca_mtl_base_endpoint_t*) ompi_proc->proc_pml;
         remote_proc = endpoint->ptl_proc;
-        ompi_mtl_portals4.recv_count[remote_proc.phys.pid]++;
+        endpoint->recv_count++;
     }
 
     PTL_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,
@@ -398,7 +398,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
                               length - ompi_mtl_portals4.eager_limit, 
                               remote_proc,
                               PTL_READ_TABLE_ID,
-                              ompi_mtl_portals4.recv_count[remote_proc.phys.pid],
+                              endpoint->recv_count,
                               ompi_mtl_portals4.eager_limit,
                               ptl_request,
                               ptl_request->ct_h,

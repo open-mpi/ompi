@@ -22,6 +22,8 @@
 
 struct mca_mtl_base_endpoint_t {
     ptl_process_t ptl_proc;
+    int32_t send_count;
+    int32_t recv_count;
 };
 typedef struct mca_mtl_base_endpoint_t mca_mtl_base_endpoint_t;
 
