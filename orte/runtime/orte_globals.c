@@ -554,6 +554,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
     app_context->add_hostfile=NULL;
     app_context->add_host = NULL;
     app_context->dash_host = NULL;
+    OBJ_CONSTRUCT(&app_context->resource_constraints, opal_list_t);
     app_context->prefix_dir = NULL;
     app_context->preload_binary = false;
     app_context->preload_files  = NULL;
@@ -570,6 +571,8 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
 
 static void orte_app_context_destructor(orte_app_context_t* app_context)
 {
+    opal_list_item_t *item;
+
     if (NULL != app_context->app) {
         free (app_context->app);
         app_context->app = NULL;
@@ -611,6 +614,11 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
         app_context->dash_host = NULL;
     }
     
+    while (NULL != (item = opal_list_remove_first(&app_context->resource_constraints))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&app_context->resource_constraints);
+
     if (NULL != app_context->prefix_dir) {
         free(app_context->prefix_dir);
         app_context->prefix_dir = NULL;

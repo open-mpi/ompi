@@ -33,6 +33,7 @@ BEGIN_C_DECLS
 #define OPAL_SYSINFO_CPU_MODEL  "CPU_MODEL"
 #define OPAL_SYSINFO_NUM_CPUS   "NUM_CPUS"
 #define OPAL_SYSINFO_MEM_SIZE   "MEMORY"
+#define OPAL_SYSINFO_HOST_TYPE  "HOST_TYPE"
 
 typedef struct {
     opal_list_item_t super;
