@@ -30,6 +30,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/sysinfo/sysinfo_types.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
@@ -47,11 +48,13 @@
 int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr_t *total_num_slots,
                                      orte_app_context_t *app, orte_mapping_policy_t policy)
 {
-    opal_list_item_t *item, *next;
+    opal_list_item_t *item, *item2, *item3, *next;
     orte_node_t *node;
     orte_std_cntr_t num_slots;
     orte_std_cntr_t i;
     int rc;
+    bool found;
+    opal_sysinfo_value_t *req_res, *ninfo;
 
     /** set default answer */
     *total_num_slots = 0;
@@ -189,6 +192,46 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
     }
     
+    /* finally, filter thru any resource constraints */
+    for (item = opal_list_get_first(&app->resource_constraints);
+         item != opal_list_get_end(&app->resource_constraints);
+         item = opal_list_get_next(item)) {
+        req_res = (opal_sysinfo_value_t*)item;
+
+        /* check against node values */
+        item2 = opal_list_get_first(allocated_nodes);
+        while (item2 != opal_list_get_end(allocated_nodes)) {
+            next = opal_list_get_next(item2);
+            node = (orte_node_t*)item2;
+            found = false;
+            for (item3 = opal_list_get_first(&node->resources);
+                 item3 != opal_list_get_end(&node->resources);
+                 item3 = opal_list_get_next(item3)) {
+                ninfo = (opal_sysinfo_value_t*)item3;
+
+                if (0 == strcmp(req_res->key, ninfo->key)) {
+                    if (OPAL_STRING == req_res->type) {
+                        if (0 == strncasecmp(req_res->data.str,
+                                             ninfo->data.str,
+                                             strlen(req_res->data.str))) {
+                            found = true;
+                        }
+                    } else {
+                        if (req_res->data.i64 <= ninfo->data.i64) {
+                            found = true;
+                        }
+                    }
+                    break;
+                }
+            }
+            if (!found) {
+                opal_list_remove_item(allocated_nodes, item2);
+                OBJ_RELEASE(item2);
+            }
+            item2 = next;
+        }
+    }
+
     /* If the "no local" option was set, then remove the local node
      * from the list
      */

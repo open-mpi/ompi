@@ -202,6 +202,10 @@ typedef struct {
     char **add_host;
     /** argv of hosts passed in to -host */
     char ** dash_host;
+    /** list of resource constraints to be applied
+     * when selecting hosts for this app
+     */
+    opal_list_t resource_constraints;
     /** Prefix directory for this app (or NULL if no override necessary) */
     char *prefix_dir;
     /** Preload the binary on the remote machine (in PLM via FileM) */
