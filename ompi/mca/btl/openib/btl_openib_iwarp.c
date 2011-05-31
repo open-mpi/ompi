@@ -80,7 +80,8 @@ static char *stringify(uint32_t addr)
  * addresses can be used to precisely specify which addresses are used (e.g., to
  * effect specific subnet routing).
  */
-uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev)
+uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev,
+                                            uint8_t port)
 {
     opal_list_item_t *item;
 
@@ -97,7 +98,8 @@ uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev)
          item != opal_list_get_end(myaddrs);
          item = opal_list_get_next(item)) {
         struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
-        if (!strcmp(addr->dev_name, ib_dev->name)) {
+        if (!strcmp(addr->dev_name, ib_dev->name) &&
+            port == addr->dev_port) {
             return addr->subnet;
         }
     }
@@ -176,6 +178,8 @@ static int dev_specified(char *name, int port)
 
 static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
 {
+    uint32_t all = ~((uint32_t) 0);
+
     if (NULL != mca_btl_openib_component.ipaddr_include) {
         char **list;
         int i;
@@ -187,8 +191,8 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             char **temp = opal_argv_split(list[i], '/');
 
             inet_pton(ipaddr->sin_family, temp[0], &ipae);
-            list_subnet = ntohl(ipae.s_addr) & ~(~0 >> atoi(temp[1]));
-            subnet = ntohl(ipaddr->sin_addr.s_addr) & ~(~0 >> netmask);
+            list_subnet = ntohl(ipae.s_addr) & ~(all >> atoi(temp[1]));
+            subnet = ntohl(ipaddr->sin_addr.s_addr) & ~(all >> netmask);
 
             if (subnet == list_subnet) { 
                 return 0;
@@ -209,8 +213,8 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             char **temp = opal_argv_split(list[i], '/');
 
             inet_pton(ipaddr->sin_family, temp[0], &ipae);
-            list_subnet = ntohl(ipae.s_addr) & ~(~0 >> atoi(temp[1]));
-            subnet = ntohl(ipaddr->sin_addr.s_addr) & ~(~0 >> netmask);
+            list_subnet = ntohl(ipae.s_addr) & ~(all >> atoi(temp[1]));
+            subnet = ntohl(ipaddr->sin_addr.s_addr) & ~(all >> netmask);
 
             if (subnet == list_subnet) { 
                 return 1;
@@ -228,6 +232,7 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
     struct rdma_event_channel *ch;
     int rc = OMPI_SUCCESS;
     struct rdma_addr_list *myaddr;
+    uint32_t all = ~((uint32_t) 0);
 
     sinp = (struct sockaddr_in *)ipaddr;
 
@@ -280,7 +285,7 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
     }
 
     myaddr->addr = sinp->sin_addr.s_addr;
-    myaddr->subnet = ntohl(myaddr->addr) & ~(~0 >> netmask);
+    myaddr->subnet = ntohl(myaddr->addr) & ~(all >> netmask);
     inet_ntop(sinp->sin_family, &sinp->sin_addr, 
               myaddr->addr_str, sizeof(myaddr->addr_str));
     memcpy(myaddr->dev_name, cm_id->verbs->device->name, IBV_SYSFS_NAME_MAX);
@@ -347,7 +352,8 @@ void mca_btl_openib_free_rdma_addr_list(void)
 #else 
 /* !OMPI_HAVE_RDMACM case */
 
-uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev) 
+uint64_t mca_btl_openib_get_iwarp_subnet_id(struct ibv_device *ib_dev,
+                                            uint8_t port) 
 {
     return 0;
 }

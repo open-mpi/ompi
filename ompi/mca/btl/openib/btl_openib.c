@@ -518,6 +518,13 @@ int mca_btl_openib_add_procs(
         }
 #endif
 
+#ifdef OMPI_HAVE_RDMAOE
+        if(IBV_LINK_LAYER_ETHERNET == openib_btl->ib_port_attr.link_layer &&
+                OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
+            continue;
+        }
+#endif
+
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
