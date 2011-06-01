@@ -129,6 +129,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                         __FILE__, __LINE__, ret);
             ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
         }
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "recv completed"));
         ptl_request->super.completion_callback(&ptl_request->super);
         break;
 
@@ -162,6 +163,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         if (ompi_mtl_portals4.protocol == triggered) {
             PtlCTFree(ptl_request->ct_h);
         }
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "recv completed"));
         ptl_request->super.completion_callback(&ptl_request->super);
         break;
 
@@ -230,6 +232,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                             __FILE__, __LINE__, ret);
                 ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
             }
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "recv completed"));
             ptl_request->super.completion_callback(&ptl_request->super);
 
         } else {
@@ -338,7 +341,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
         remote_proc.phys.nid = PTL_NID_ANY;
         remote_proc.phys.pid = PTL_PID_ANY;
         if (ompi_mtl_portals4.protocol == triggered) {
-            printf("Brian broke any_source\n"); abort();
+            printf("Brian broke any_source with triggered rndv\n"); abort();
         }
     } else {
         ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
@@ -364,6 +367,12 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->delivery_ptr = start;
     ptl_request->delivery_len = length;
     ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                         "Recv %d from %x,%x of length %d\n",
+                         endpoint->recv_count,
+                         endpoint->ptl_proc.phys.nid, endpoint->ptl_proc.phys.pid, 
+                         (int)length));
 
     if (ompi_mtl_portals4.protocol == triggered && length > ompi_mtl_portals4.eager_limit) {
         ptl_md_t md;

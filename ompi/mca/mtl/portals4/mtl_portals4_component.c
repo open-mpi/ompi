@@ -123,6 +123,18 @@ ompi_mtl_portals4_component_open(void)
         return OMPI_ERR_NOT_SUPPORTED;
     }
 
+    opal_output_verbose(1, ompi_mtl_base_output,
+                        "Eager limit: %d", (int) ompi_mtl_portals4.eager_limit);
+    opal_output_verbose(1, ompi_mtl_base_output, 
+                        "Short receive blocks: %d", ompi_mtl_portals4.recv_short_num);
+    opal_output_verbose(1, ompi_mtl_base_output, 
+                        "Queue size: %d", ompi_mtl_portals4.queue_size);
+    opal_output_verbose(1, ompi_mtl_base_output, 
+                        "Long protocol: %s", 
+                        (ompi_mtl_portals4.protocol == eager) ? "Eager" :
+                        (ompi_mtl_portals4.protocol == rndv) ? "Rendezvous" :
+                        (ompi_mtl_portals4.protocol == triggered) ? "Triggered" : "Other");
+
     ompi_mtl_portals4.ni_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.zero_md_h = PTL_INVALID_HANDLE;

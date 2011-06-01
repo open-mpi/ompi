@@ -37,7 +37,7 @@ ompi_mtl_portals4_short_callback(ptl_event_t *ev, ompi_mtl_portals4_request_t *p
     assert(NULL != ptl_request->super.ompi_req);
 
     if (ev->ni_fail_type != PTL_NI_OK) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: short send callback ni_fail_type: %d",
                             __FILE__, __LINE__, ev->ni_fail_type);
         ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
@@ -46,6 +46,7 @@ ompi_mtl_portals4_short_callback(ptl_event_t *ev, ompi_mtl_portals4_request_t *p
         free(ptl_request->buffer_ptr);
     }
     PtlMDRelease(ptl_request->md_h);
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "send completed"));
     ptl_request->super.completion_callback(&ptl_request->super);
 
     return OMPI_SUCCESS;
@@ -60,7 +61,7 @@ ompi_mtl_portals4_long_callback(ptl_event_t *ev, struct ompi_mtl_portals4_reques
     assert(NULL != ptl_request->super.ompi_req);
 
     if (ev->ni_fail_type != PTL_NI_OK) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: long send callback ni_fail_type: %d",
                             __FILE__, __LINE__, ev->ni_fail_type);
         ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
@@ -74,6 +75,7 @@ ompi_mtl_portals4_long_callback(ptl_event_t *ev, struct ompi_mtl_portals4_reques
             free(ptl_request->buffer_ptr);
         }
         PtlMDRelease(ptl_request->md_h);
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "send completed"));
         ptl_request->super.completion_callback(&ptl_request->super);
     }
 
@@ -94,7 +96,7 @@ ompi_mtl_portals4_sync_callback(ptl_event_t *ev, struct ompi_mtl_portals4_reques
     assert(NULL != ptl_request->super.ompi_req);
 
     if (ev->ni_fail_type != PTL_NI_OK) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: sync send callback ni_fail_type: %d",
                             __FILE__, __LINE__, ev->ni_fail_type);
         ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
@@ -108,6 +110,7 @@ ompi_mtl_portals4_sync_callback(ptl_event_t *ev, struct ompi_mtl_portals4_reques
             free(ptl_request->buffer_ptr);
         }
         PtlMDRelease(ptl_request->md_h);
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "send completed"));
         ptl_request->super.completion_callback(&ptl_request->super);
     }
     
@@ -144,7 +147,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode, void *start, int le
 		    &md,
 		    &ptl_request->md_h);
     if (PTL_OK != ret) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMDBind failed: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
@@ -161,7 +164,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode, void *start, int le
                  ptl_request,
 		 0);
     if (PTL_OK != ret) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
 	PtlMDRelease(ptl_request->md_h);
@@ -196,7 +199,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
                     &md,
                     &ptl_request->md_h);
     if (PTL_OK != ret) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMDBind failed: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
@@ -223,7 +226,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
                       ptl_request,
                       &ptl_request->me_h);
     if (PTL_OK != ret) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMEAppend failed: %d",
                             __FILE__, __LINE__, ret);
         PtlMDRelease(ptl_request->md_h);
@@ -265,7 +268,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
                      me.match_bits);
     }
     if (PTL_OK != ret) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
 	PtlMEUnlink(ptl_request->me_h);
@@ -300,7 +303,7 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localra
                     &md,
                     &ptl_request->md_h);
     if (PTL_OK != ret) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMDBind failed: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
@@ -323,7 +326,7 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localra
                       ptl_request,
                       &ptl_request->me_h);
     if (PTL_OK != ret) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMEAppend failed: %d",
                             __FILE__, __LINE__, ret);
         PtlMDRelease(ptl_request->md_h);
@@ -341,7 +344,7 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localra
                  ptl_request,
                  (ptl_hdr_data_t)(uintptr_t)ptl_request);
     if (PTL_OK != ret) {
-        opal_output_verbose(ompi_mtl_base_output, 1,
+        opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
 	PtlMEUnlink(ptl_request->me_h);
@@ -380,6 +383,12 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
     ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
     endpoint->send_count++;
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                         "Send %d to %x,%x of length %d\n",
+                         endpoint->send_count,
+                         endpoint->ptl_proc.phys.nid, endpoint->ptl_proc.phys.pid, 
+                         (int)length));
 
     switch (mode) {
     case MCA_PML_BASE_SEND_STANDARD:
