@@ -21,6 +21,8 @@
 
 #include <portals4.h>
 
+#include "orte/util/name_fns.h"
+#include "ompi/proc/proc.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "opal/class/opal_list.h"
 #include "ompi/runtime/ompi_module_exchange.h"
@@ -67,6 +69,16 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
         ptl_process_t *id;
         size_t size;
 
+        if (procs[i]->proc_arch != ompi_proc_local()->proc_arch) {
+            opal_output(ompi_mtl_base_output,
+                        "Portals 4 MTL does not support heterogeneous operations.");
+            opal_output(ompi_mtl_base_output,
+                        "Proc %s architecture %x, mine %x.",
+                        ORTE_NAME_PRINT(&procs[i]->proc_name), 
+                        procs[i]->proc_arch, ompi_proc_local()->proc_arch);
+            return OMPI_ERROR;
+        }
+
         mtl_peer_data[i] = malloc(sizeof(struct mca_mtl_base_endpoint_t));
         if (NULL == mtl_peer_data[i]) {
             PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
@@ -93,10 +105,15 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                         __FILE__, __LINE__, ret);
             return ret;
         }
- 
+
         mtl_peer_data[i]->ptl_proc = *id;
         mtl_peer_data[i]->send_count = 0;
         mtl_peer_data[i]->recv_count = 0;
+
+        opal_output_verbose(25, ompi_mtl_base_output,
+                            "Peer %d: %x,%x", (int) i,
+                            (int) mtl_peer_data[i]->ptl_proc.phys.nid,
+                            (int) mtl_peer_data[i]->ptl_proc.phys.pid);                            
     }
 
     return OMPI_SUCCESS;
@@ -159,7 +176,7 @@ ompi_mtl_portals4_progress(void)
     while (true) {
 	ret = PtlEQGet(ompi_mtl_portals4.eq_h, &ev);
         if (PTL_OK == ret) {
-            OPAL_OUTPUT_VERBOSE((ompi_mtl_base_output, 50,
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
                                  "Found event of type %d\n", ev.type));
             switch (ev.type) {
             case PTL_EVENT_GET:
