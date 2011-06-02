@@ -1,4 +1,4 @@
-enable_opal_multi_threads=yes
+enable_opal_multi_threads=no
 enable_multicast=yes
 enable_dlopen=no
 enable_pty_support=no
@@ -14,7 +14,7 @@ enable_heterogeneous=no
 enable_picky=yes
 enable_debug=yes
 enable_shared=yes
-enable_static=yes
+enable_static=no
 with_slurm=yes
 enable_contrib_no_build=libnbc,vt
 enable_visibility=yes
