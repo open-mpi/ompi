@@ -81,15 +81,25 @@ date="Unreleased"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-# Need also to bump f90_so and common_sm_so, but we'll bump up agains
-# the v1.5 numbers... :-(
-#libmpi_f90_so_version=1:0:0  # bumped current & reset rev because param types on some i/f's changed 
-#libmca_common_sm_so_version=1:1:0   # bumped rev because of internal changes (for mmap'd files) 
+# NOTE: 
+
+# In 1.4.4, we bumped the libmpi_f90_so_version and
+# libmca_common_sm_so_version numbers such that they now conflict with
+# Open MPI v1.5 release numbers.  This was seen as a lesser of evils;
+# we preserved ABI for the f90 library, but at the expense of a
+# conflicting .so library version number.  This is not *quite* as evil
+# as it sounds, however, as you cannot have 2 Open MPI installs in the
+# same directory tree (due to conflicts of other files, such as
+# mpi.h).  Hence, you can't have a v1.4.x and v1.5.x in the same tree
+# *anyway* -- so the fact that v1.4.x might have the same filename for
+# the F90 MPI bindings library as v1.5.x is not entirely evil.
+# Meaning: philosophically, it's a bad idea.  But in practice, it
+# won't create any problems.
 
 libmpi_so_version=0:3:0
 libmpi_cxx_so_version=0:1:0
 libmpi_f77_so_version=0:1:0
-libmpi_f90_so_version=0:1:0
+libmpi_f90_so_version=1:0:1
 libopen_rte_so_version=0:0:0
 libopen_pal_so_version=0:0:0
 
@@ -98,6 +108,6 @@ libopen_pal_so_version=0:0:0
 # well.  Yuck; this somewhat breaks the
 # components-don't-affect-the-build-system abstraction.
 
-libmca_common_sm_so_version=1:0:0
+libmca_common_sm_so_version=1:1:0
 libmca_common_mx_so_version=0:1:0
 libmca_common_portals_so_version=0:0:0

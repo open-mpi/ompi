@@ -78,8 +78,8 @@ version 1.0.
 - Exclude opal/libltdl from "make distclean" when --disable-dlopen is
   used.  Thanks to David Gunter for reporting the issue.
 - Fixed the F90 types of the sendcounts and displs parameters to
-  MPI_SCATTERV.  Thanks to Stanislav Sazykin for identifying the
-  issue.
+  MPI_SCATTERV. ABI is preserved, but applications may well be broken.
+  See the README for more details.
 - Fixed memory leaks associated with indexed datatypes.
 - Fix for deadlock when handling recursive attribute keyval deletions
   (e.g., when using ROMIO with MPI_THREAD_MULTIPLE).
