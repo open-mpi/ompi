@@ -27,7 +27,6 @@
 #include "opal/dss/dss.h"
 #include "opal/util/opal_sos.h"
 #include "opal/runtime/opal.h"
-#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
