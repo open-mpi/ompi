@@ -790,6 +790,12 @@ static int bind_to_core(orte_app_context_t* context,
                             "bound to everything",
                             orte_process_info.nodename, context->app,
                             __FILE__, __LINE__);
+    } else if (orte_report_bindings) {
+        tmp = opal_paffinity_base_print_binding(mask);
+        opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(child->name), target_socket, tmp);
+        free(tmp);
     }
 
     return ORTE_SUCCESS;
