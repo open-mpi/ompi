@@ -1,7 +1,7 @@
-enable_multicast=yes
-enable_sensors=yes
-enable_heartbeat=yes
-enable_opal_multi_threads=yes
+enable_multicast=no
+enable_sensors=no
+enable_heartbeat=no
+enable_opal_multi_threads=no
 enable_ft_thread=no
 enable_mem_debug=no
 enable_mem_profile=no
