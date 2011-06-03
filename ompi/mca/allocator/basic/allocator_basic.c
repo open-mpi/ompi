@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -198,7 +199,7 @@ void *mca_allocator_basic_alloc(
     }
 
     /* request additional block */
-    allocated_size = (unsigned char)size;
+    allocated_size = size;
     if(NULL == (addr = (unsigned char *)module->seg_alloc(module->super.alc_mpool, &allocated_size, registration))) {
         OPAL_THREAD_UNLOCK(&module->seg_lock);
         return NULL;
@@ -315,8 +316,7 @@ void mca_allocator_basic_free(
                     OPAL_THREAD_UNLOCK(&module->seg_lock);
                     return;
                 }
-                new_seg = (
-mca_allocator_basic_segment_t*)item;
+                new_seg = (mca_allocator_basic_segment_t*)item;
                 new_seg->seg_addr = addr;
                 new_seg->seg_size = size;
                 opal_list_insert_pos(&module->seg_list, &seg->seg_item.super, &item->super);
