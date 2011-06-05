@@ -55,6 +55,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     int rc;
     bool found;
     opal_sysinfo_value_t *req_res, *ninfo;
+    char **vals;
 
     /** set default answer */
     *total_num_slots = 0;
@@ -198,6 +199,11 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
          item = opal_list_get_next(item)) {
         req_res = (opal_sysinfo_value_t*)item;
 
+        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                             "%s CHECKING CONSTRAINT %s FOR APP %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             req_res->key, app->app));
+
         /* check against node values */
         item2 = opal_list_get_first(allocated_nodes);
         while (item2 != opal_list_get_end(allocated_nodes)) {
@@ -210,13 +216,28 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 ninfo = (opal_sysinfo_value_t*)item3;
 
                 if (0 == strcmp(req_res->key, ninfo->key)) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                         "%s CHECKING RESOURCE %s:%s ON NODE %s:%s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ninfo->key, req_res->data.str,
+                                         node->name, ninfo->data.str));
                     if (OPAL_STRING == req_res->type) {
-                        if (0 == strncasecmp(req_res->data.str,
-                                             ninfo->data.str,
-                                             strlen(req_res->data.str))) {
-                            found = true;
+                        /* there could be multiple hosts or host-types here */
+                        vals = opal_argv_split(req_res->data.str, ',');
+                        for (i=0; NULL != vals[i]; i++) {
+                            if (0 == strncasecmp(vals[i], ninfo->data.str,
+                                                 strlen(vals[i]))) {
+                                found = true;
+                                break;
+                            }
                         }
+                        opal_argv_free(vals);
                     } else {
+                        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                             "%s CHECKING RESOURCE %s:%ld ON NODE %s:%ld",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ninfo->key, (long)req_res->data.i64,
+                                             node->name, (long)ninfo->data.i64));
                         if (req_res->data.i64 <= ninfo->data.i64) {
                             found = true;
                         }
@@ -224,6 +245,11 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     break;
                 }
             }
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s CONSTRAINT RESULTED IN %s NODE %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 found ? "RETAINING" : "REMOVING",
+                                 node->name));
             if (!found) {
                 opal_list_remove_item(allocated_nodes, item2);
                 OBJ_RELEASE(item2);
