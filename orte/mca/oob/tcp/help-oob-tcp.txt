@@ -25,4 +25,11 @@ Dynamic ports:  %s
 
 Only one can be specified. Please choose either static or
 dynamic ports and try again.
+#
+[include-exclude]
+Both TCP interface include and exclude lists were specified:
 
+  Include: %s
+  Exclude: %s
+
+Only one of these can be given.
