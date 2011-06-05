@@ -68,11 +68,13 @@
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
+#include <ctype.h>
 
 #include "opal/class/opal_list.h"
 #include "opal/util/if.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/util/show_help.h"
 #include "opal/constants.h"
 
 #include "opal/mca/if/base/base.h"
@@ -601,6 +603,57 @@ bool opal_ifisloopback(int if_index)
     return false;
 }
 
+/* Determine if an interface matches any entry in the given list, taking
+ * into account that the list entries could be given as named interfaces,
+ * IP addrs, or subnet+mask
+ */
+bool opal_ifmatches(int idx, char **nets)
+{
+    bool named_if;
+    int i;
+    size_t j;
+    int index;
+    struct sockaddr_in inaddr;
+    uint32_t addr, netaddr, netmask;
+
+    /* get the address info for the given network in case we need it */
+    if (OPAL_SUCCESS != opal_ifindextoaddr(idx, (struct sockaddr*)&inaddr, sizeof(inaddr))) {
+        return false;
+    }
+    addr = ntohl(inaddr.sin_addr.s_addr);
+
+    for (i=0; NULL != nets[i]; i++) {
+        /* if the specified interface contains letters in it, then it
+         * was given as an interface name and not an IP tuple
+         */
+        named_if = false;
+        for (j=0; j < strlen(nets[i]); j++) {
+            if (isalpha(nets[i][j]) && '.' != nets[i][j]) {
+                named_if = true;
+                break;
+            }
+        }
+        if (named_if) {
+            if (0 > (index = opal_ifnametoindex(nets[i]))) {
+                continue;
+            }
+            if (index == idx) {
+                return true;
+            }
+        } else {
+            if (OPAL_SUCCESS != opal_iftupletoaddr(nets[i], &netaddr, &netmask)) {
+                opal_show_help("help-opal-util.txt", "invalid-net-mask", true, nets[i]);
+                continue;
+            }
+            if (netaddr == (addr & netmask)) {
+                return true;
+            }
+        }
+    }
+    /* get here if not found */
+    return false;
+}
+
 
 #else /* HAVE_STRUCT_SOCKADDR_IN */
 
@@ -691,6 +744,11 @@ int
 opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
 {
     return 0;
+}
+
+bool opal_ifispresent(char *if)
+{
+    return false;
 }
 
 #endif /* HAVE_STRUCT_SOCKADDR_IN */

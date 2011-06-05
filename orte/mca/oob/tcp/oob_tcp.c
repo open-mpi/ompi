@@ -1299,39 +1299,65 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     int i;
     bool found_local = false;
     bool found_nonlocal = false;
+    char **interfaces = NULL;
+    mca_oob_tcp_device_t *dev;
+    bool including = true;
+    char name[32];
 
     *priority = 1;
 
     /* are there any interfaces? */
-    if(opal_ifcount() <= 0)
+    if (opal_ifcount() <= 0) {
         return NULL;
+    }
 
-    /* Which interfaces should we use?  Start by building a list of
-       all devices that meet the requirements of the if_include and
-       if_exclude list.  This might include local and non-local
-       interfaces mixed together. After that sorting is done, if there
-       is a mix of devices, we go through the devices that survived
-       the initial sort and remove all the local devices (since we
-       have non-local devices to use). */
+    /* did someone mistakenly specify both includes AND excludes? */
+    if (NULL != mca_oob_tcp_component.tcp_include &&
+        NULL != mca_oob_tcp_component.tcp_exclude) {
+        orte_show_help("help-oob-tcp.txt", "include-exclude", true,
+                       mca_oob_tcp_component.tcp_include,
+                       mca_oob_tcp_component.tcp_exclude);
+        return NULL;
+    }
+
+    /* if interface include was given, construct a list
+     * of those interfaces which match the specifications - remember,
+     * the includes could be given as named interfaces, IP addrs, or
+     * subnet+mask
+     */
+    if (NULL != mca_oob_tcp_component.tcp_include) {
+        interfaces = opal_argv_split(mca_oob_tcp_component.tcp_include, ',');
+        including = true;
+    } else if (NULL != mca_oob_tcp_component.tcp_exclude) {
+        interfaces = opal_argv_split(mca_oob_tcp_component.tcp_exclude, ',');
+        including = false;
+    }
+
+    /* look at all available interfaces */ 
     for (i = opal_ifbegin() ; i > 0 ; i = opal_ifnext(i)) {
-        char name[32];
-        mca_oob_tcp_device_t *dev;
 
+        /* get the name for diagnostic purposes */
         opal_ifindextoname(i, name, sizeof(name));
 
-        if (mca_oob_tcp_component.tcp_include != NULL &&
-            strstr(mca_oob_tcp_component.tcp_include,name) == NULL) {
-            OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
-                                 "%s oob:tcp:init rejecting interface %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
-            continue;
-        }
-        if (mca_oob_tcp_component.tcp_exclude != NULL &&
-            strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL) {
-            OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
-                                 "%s oob:tcp:init rejecting interface %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
-            continue;
+        /* handle include/exclude directives */
+        if (NULL != interfaces) {
+            /* if we are including, then ignore this if not present */
+            if (including) {
+                if (!opal_ifmatches(i, interfaces)) {
+                    OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
+                                         "%s oob:tcp:init rejecting interface %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
+                    continue;
+                }
+            } else {
+                /* we are excluding, so ignore if present */
+                if (opal_ifmatches(i, interfaces)) {
+                    OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
+                                         "%s oob:tcp:init rejecting interface %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
+                    continue;
+                }
+            }
         }
 
         dev = OBJ_NEW(mca_oob_tcp_device_t);
@@ -1353,6 +1379,13 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
         opal_list_append(&mca_oob_tcp_component.tcp_available_devices,
                          &dev->super);
     }
+
+    /* cleanup */
+    if (NULL != interfaces) {
+        opal_argv_free(interfaces);
+    }
+
+    /* remove all the local devices if we have non-local devices to use. */
     if (found_local && found_nonlocal) {
         opal_list_item_t *item, *next;
         for (item = opal_list_get_first(&mca_oob_tcp_component.tcp_available_devices) ;
@@ -1377,18 +1410,18 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     opal_hash_table_init(&mca_oob_tcp_component.tcp_peer_names, 128);
 
     opal_free_list_init(&mca_oob_tcp_component.tcp_peer_free,
-        sizeof(mca_oob_tcp_peer_t),
-        OBJ_CLASS(mca_oob_tcp_peer_t),
-        8,  /* initial number */
-        mca_oob_tcp_component.tcp_peer_limit, /* maximum number */
-        8);  /* increment to grow by */
+                        sizeof(mca_oob_tcp_peer_t),
+                        OBJ_CLASS(mca_oob_tcp_peer_t),
+                        8,  /* initial number */
+                        mca_oob_tcp_component.tcp_peer_limit, /* maximum number */
+                        8);  /* increment to grow by */
 
     opal_free_list_init(&mca_oob_tcp_component.tcp_msgs,
-        sizeof(mca_oob_tcp_msg_t),
-        OBJ_CLASS(mca_oob_tcp_msg_t),
-        8,  /* initial number */
-       -1,  /* maximum number */
-        8);  /* increment to grow by */
+                        sizeof(mca_oob_tcp_msg_t),
+                        OBJ_CLASS(mca_oob_tcp_msg_t),
+                        8,  /* initial number */
+                        -1,  /* maximum number */
+                        8);  /* increment to grow by */
 
 
     /* intialize event library */
