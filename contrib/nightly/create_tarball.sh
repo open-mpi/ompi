@@ -143,6 +143,14 @@ if test ! -d "$destdir"; then
     die "Could not cd to dest dir: $destdir"
 fi
 
+# make sure we can write to the destdir
+file="$destdir/test-write.$$"
+touch "$file"
+if test ! -f "$file"; then
+    die "Could not write to the dest dir: $destdir"
+fi
+rm -f "$file"
+
 # if there's a $destdir/latest_snapshot.txt, see if anything has
 # happened since that r number.
 desired_r=
@@ -299,6 +307,18 @@ save=
 gz="`/bin/ls openmpi*tar.gz`"
 bz2="`/bin/ls openmpi*tar.bz2`"
 mv $gz $bz2 $destdir
+if test "$?" != "0"; then
+    cat <<EOF
+ERROR -- move final tarballs to web tree failed!
+
+From:  `pwd`
+Files: $gz $bz2
+To:    $destdir
+
+The nightly snapshots are therefore not available on the web!
+EOF
+    die "Could not move final tarballs to web dir: $destdir"
+fi
 cd $destdir
 
 # make the latest_snapshot.txt file containing the last version
