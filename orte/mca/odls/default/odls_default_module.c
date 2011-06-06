@@ -856,9 +856,7 @@ LAUNCH_PROCS:
         /* Exec the new executable */
         
         execve(context->app, context->argv, environ_copy);
-        orte_show_help("help-odls-default.txt", "orte-odls-default:execv-error",
-                       true, context->app, strerror(errno));
-        exit(1);
+        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
     } else {
 
         if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
