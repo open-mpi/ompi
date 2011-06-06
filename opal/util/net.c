@@ -155,9 +155,8 @@ opal_net_init()
                  * get added to the trunk.
                  */
                 if (0 == found_bad) {
-                    opal_output(0, "FOUND BAD!\n");
                     opal_show_help("help-opal-util.txt", 
-                                   "malformed IP address or netmask",
+                                   "malformed net_private_ipv4",
                                    true, args[i]);
                     found_bad = 1;
                 }
