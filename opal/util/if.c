@@ -490,29 +490,37 @@ opal_ifislocal(const char *hostname)
     return false;
 }
 
-static uint32_t parse_dots(const char *addr)
+static uint32_t parse_ipv4_dots(const char *addr, uint32_t* net, int* dots)
 {
-    char **tuple;
+    const char *start = addr, *end;
     uint32_t n[]={0,0,0,0};
-    uint32_t net;
-    int i;
+    int i, rc = OPAL_SUCCESS;
 
-    tuple = opal_argv_split(addr, '.');
     /* now assemble the address */
-    for (i=0; NULL != tuple[i]; i++) {
-        n[i] = strtoul(tuple[i], NULL, 10);
+    for( i = 0; i < 4; i++ ) {
+        n[i] = strtoul(start, (char**)&end, 10);
+        if( end == start ) {  /* error case: use what we have so far */
+            rc = OPAL_ERROR;
+            break;
+        }
+        /* skip all the . */
+        for( start = end; '\0' != *start; start++ )
+            if( '.' != *start ) break;
+        /* did we read something sensible? */
+        if( n[i] > 255 ) {
+            return OPAL_ERROR;
+        }
     }
-    net = OPAL_IF_ASSEMBLE_NETWORK(n[0], n[1], n[2], n[3]);
-    opal_argv_free(tuple);
-    return net;
+    *dots = i;
+    *net = OPAL_IF_ASSEMBLE_NETWORK(n[0], n[1], n[2], n[3]);
+    return OPAL_SUCCESS;
 }
 
 int
 opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
 {
-    char **tuple;
-    int pval;
-    char *msk, *ptr;
+    int pval, dots, rc = OPAL_SUCCESS;
+    const char *ptr;
     
     /* if a mask was desired... */
     if (NULL != mask) {
@@ -520,19 +528,17 @@ opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
         *mask = 0xFFFFFFFF;
         
         /* if entry includes mask, split that off */
-        msk = NULL;
         if (NULL != (ptr = strchr(inaddr, '/'))) {
-            *ptr = '\0';
-            msk = ptr + 1;
+            ptr = ptr + 1;  /* skip the / */
             /* is the mask a tuple? */
-            if (NULL != strchr(msk, '.')) {
+            if (NULL != strchr(ptr, '.')) {
                 /* yes - extract mask from it */
-                *mask = parse_dots(msk);
+                rc = parse_ipv4_dots(ptr, mask, &dots);
             } else {
                 /* no - must be an int telling us how much of the addr to use: e.g., /16
                  * For more information please read http://en.wikipedia.org/wiki/Subnetwork.
                  */
-                pval = strtol(msk, NULL, 10);
+                pval = strtol(ptr, NULL, 10);
                 if ((pval > 31) || (pval < 1)) {
                     opal_output(0, "opal_iftupletoaddr: unknown mask");
                     return OPAL_ERROR;
@@ -541,8 +547,8 @@ opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
             }
         } else {
             /* use the number of dots to determine it */
-            tuple = opal_argv_split(inaddr, '.');
-            pval = opal_argv_count(tuple);
+            for( ptr = inaddr, pval = 0; '\0'!= *ptr; ptr++ )
+                if( '.' == *ptr ) pval++;
             /* if we have three dots, then we have four
              * fields since it is a full address, so the
              * default netmask is fine
@@ -559,24 +565,16 @@ opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
                     return OPAL_ERROR;
                 }
             }
-            opal_argv_free(tuple);
         }
     }
     
     /* if network addr is desired... */
     if (NULL != net) {
-        /* set default */
-        *net = 0;
-        
-        /* if entry includes mask, split that off */
-        if (NULL != (ptr = strchr(inaddr, '/'))) {
-            *ptr = '\0';
-        }
         /* now assemble the address */
-        *net = parse_dots(inaddr);
+        rc = parse_ipv4_dots(inaddr, net, &dots);
     }
     
-    return OPAL_SUCCESS;
+    return rc;
 }
 
 /* 

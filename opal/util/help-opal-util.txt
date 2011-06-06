@@ -24,7 +24,7 @@ install its own signal handler for this signal by setting the
   Signal: %d
   Current opal_signal value: %s
 *
-[malformed IP address or netmask]
+[malformed net_private_ipv4]
 Open MPI has detected at least one malformed IP address or netmask in
 the value of the opal_net_private_ipv4 MCA parameter.  The
 opal_net_private_ipv4 MCA parameter accepts a semicolon-delimited list
@@ -37,16 +37,11 @@ All malformed entries will be ignored; Open MPI will attempt to continue
 your job.  The first detected malformed entry was %s.
 #
 [invalid-net-mask]
-We were unable to parse the provided network interface:
+Open MPI has detected an malformed IPv4 address or netmask
+in %s. Accepted values follows the Classless Inter-Domain
+Routing (CIDR) notation specifications. For example:
 
-  Interface: %s
+     10.0.0.0/8;172.16/12;192.168;169.254.0.0/16
 
-The interface must be one of the following forms:
-
-  123.456.789.123
-  123.456/16
-  123.456.789
-
-The system can parse any one of these, and will find an interface
-that matches within the provided scope. Please revise your input
-and try again.
+All malformed entries will be ignored; Open MPI will attempt to continue
+your job.
