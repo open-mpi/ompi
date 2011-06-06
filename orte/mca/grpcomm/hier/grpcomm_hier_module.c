@@ -27,6 +27,7 @@
 #include "opal/dss/dss.h"
 #include "opal/util/opal_sos.h"
 #include "opal/runtime/opal.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -40,7 +41,6 @@
 #include "orte/orted/orted.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
-
 #include "orte/mca/grpcomm/base/base.h"
 #include "grpcomm_hier.h"
 
