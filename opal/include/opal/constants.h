@@ -67,7 +67,8 @@ enum {
     OPAL_ERR_NOT_ENOUGH_CORES               = (OPAL_ERR_BASE - 38),
     OPAL_ERR_INVALID_PHYS_CPU               = (OPAL_ERR_BASE - 39),
     OPAL_ERR_MULTIPLE_AFFINITIES            = (OPAL_ERR_BASE - 40),
-    OPAL_ERR_SLOT_LIST_RANGE                = (OPAL_ERR_BASE - 41)
+    OPAL_ERR_SLOT_LIST_RANGE                = (OPAL_ERR_BASE - 41),
+    OPAL_ERR_NETWORK_NOT_PARSEABLE          = (OPAL_ERR_BASE - 42)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

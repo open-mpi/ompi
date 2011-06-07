@@ -1296,12 +1296,12 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
  */
 mca_oob_t* mca_oob_tcp_component_init(int* priority)
 {
-    int i;
+    int i, rc;
     bool found_local = false;
     bool found_nonlocal = false;
     char **interfaces = NULL;
     mca_oob_tcp_device_t *dev;
-    bool including = true;
+    bool including = false, excluding = false;
     char name[32];
 
     *priority = 1;
@@ -1328,9 +1328,11 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     if (NULL != mca_oob_tcp_component.tcp_include) {
         interfaces = opal_argv_split(mca_oob_tcp_component.tcp_include, ',');
         including = true;
+        excluding = false;
     } else if (NULL != mca_oob_tcp_component.tcp_exclude) {
         interfaces = opal_argv_split(mca_oob_tcp_component.tcp_exclude, ',');
         including = false;
+        excluding = true;
     }
 
     /* look at all available interfaces */ 
@@ -1341,9 +1343,19 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
 
         /* handle include/exclude directives */
         if (NULL != interfaces) {
+            /* check for match */
+            rc = opal_ifmatches(i, interfaces);
+            /* if one of the network specifications isn't parseable, then
+             * error out as we can't do what was requested
+             */
+            if (OPAL_ERR_NETWORK_NOT_PARSEABLE == rc) {
+                        orte_show_help("help-oob-tcp.txt", "not-parseable", true);
+                        opal_argv_free(interfaces);
+                        return NULL;
+            }
             /* if we are including, then ignore this if not present */
             if (including) {
-                if (!opal_ifmatches(i, interfaces)) {
+                if (OPAL_SUCCESS != rc) {
                     OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
                                          "%s oob:tcp:init rejecting interface %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
@@ -1351,7 +1363,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
                 }
             } else {
                 /* we are excluding, so ignore if present */
-                if (opal_ifmatches(i, interfaces)) {
+                if (OPAL_SUCCESS == rc) {
                     OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
                                          "%s oob:tcp:init rejecting interface %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
@@ -1402,6 +1414,13 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     }
 
     if (opal_list_get_size(&mca_oob_tcp_component.tcp_available_devices) == 0) {
+        if (including) {
+            orte_show_help("help-oob-tcp.txt", "no-included-found", true, mca_oob_tcp_component.tcp_include);
+        } else if (excluding) {
+            orte_show_help("help-oob-tcp.txt", "excluded-all", true, mca_oob_tcp_component.tcp_exclude);
+        } else {
+            orte_show_help("help-oob-tcp.txt", "no-interfaces-avail", true);
+        }
         return NULL;
     }
 

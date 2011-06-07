@@ -191,7 +191,7 @@ OPAL_DECLSPEC bool opal_ifisloopback(int if_index);
 /*
  * Determine if a specified interface is included in a NULL-terminated argv array
  */
-OPAL_DECLSPEC bool opal_ifmatches(int idx, char **nets);
+OPAL_DECLSPEC int opal_ifmatches(int idx, char **nets);
 
 END_C_DECLS
 

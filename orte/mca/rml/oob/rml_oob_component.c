@@ -144,8 +144,11 @@ rml_oob_init(int* priority)
         return &orte_rml_oob_module.super;
     }
     
-    if (mca_oob_base_init() != ORTE_SUCCESS)
+    if (mca_oob_base_init() != ORTE_SUCCESS) {
+        *priority = -1;
         return NULL;
+    }
+
     *priority = 1;
     
     OBJ_CONSTRUCT(&orte_rml_oob_module.exceptions, opal_list_t);

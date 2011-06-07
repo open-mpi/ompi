@@ -198,7 +198,9 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_SLOT_LIST_RANGE:
         retval = "Provided slot_list range is invalid";
         break;
-
+    case OPAL_ERR_NETWORK_NOT_PARSEABLE:
+        retval = "Provided network specification is not parseable";
+        break;
     default:
         retval = NULL;
 }

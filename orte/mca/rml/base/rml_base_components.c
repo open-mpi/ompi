@@ -132,6 +132,7 @@ orte_rml_base_select(void)
     orte_rml_component_t *wrapper_component = NULL;
     orte_rml_module_t *wrapper_module = NULL;
     char *rml_wrapper = NULL;
+    bool return_silent=false;
 
     if (selected) {
         return ORTE_SUCCESS;
@@ -167,6 +168,9 @@ orte_rml_base_select(void)
             if (NULL == module) {
                 opal_output_verbose(10, orte_rml_base_output,
                                     "orte_rml_base_select: init returned failure");
+                if (priority < 0) {
+                    return_silent = true;
+                }
                 continue;
             }
 
@@ -241,7 +245,12 @@ orte_rml_base_select(void)
         free(rml_wrapper);
     }
 
-    if (NULL == selected_component) return ORTE_ERROR;
+    if (NULL == selected_component) {
+        if (return_silent) {
+            return ORTE_ERR_SILENT;
+        }
+        return ORTE_ERROR;
+    }
     
     return ORTE_SUCCESS;
 }
