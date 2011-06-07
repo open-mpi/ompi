@@ -1,5 +1,5 @@
 enable_multicast=no
-enable_sensors=no
+enable_sensors=yes
 enable_heartbeat=no
 enable_opal_multi_threads=no
 enable_ft_thread=no
