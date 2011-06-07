@@ -494,13 +494,17 @@ static uint32_t parse_ipv4_dots(const char *addr, uint32_t* net, int* dots)
 {
     const char *start = addr, *end;
     uint32_t n[]={0,0,0,0};
-    int i, rc = OPAL_SUCCESS;
+    int i;
 
     /* now assemble the address */
-    for( i = 0; i < 4 && 0 < strlen(start); i++ ) {
+    for( i = 0; i < 4; i++ ) {
         n[i] = strtoul(start, (char**)&end, 10);
-        if( end == start ) {  /* error case: use what we have so far */
-            rc = OPAL_ERR_NETWORK_NOT_PARSEABLE;
+        if( end == start ) {
+            /* this is not an error, but indicates that
+             * we were given a partial address - e.g.,
+             * 192.168 - usually indicating an IP range
+             * in CIDR notation. So just return what we have
+             */
             break;
         }
         /* did we read something sensible? */
@@ -513,7 +517,7 @@ static uint32_t parse_ipv4_dots(const char *addr, uint32_t* net, int* dots)
     }
     *dots = i;
     *net = OPAL_IF_ASSEMBLE_NETWORK(n[0], n[1], n[2], n[3]);
-    return rc;
+    return OPAL_SUCCESS;
 }
 
 int
