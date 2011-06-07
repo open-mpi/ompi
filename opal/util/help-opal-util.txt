@@ -33,8 +33,7 @@ of the form <ipaddress>/<mask>.  For example:
 
      10.0.0.0/8;172.16.0.0/12;192.168.0.0/16;169.254.0.0/16
 
-All malformed entries will be ignored; Open MPI will attempt to continue
-your job.  The first detected malformed entry was %s.
+The first detected malformed entry was %s.
 #
 [invalid-net-mask]
 Open MPI has detected an malformed IPv4 address or netmask
@@ -43,5 +42,3 @@ Routing (CIDR) notation specifications. For example:
 
      10.0.0.0/8;172.16/12;192.168;169.254.0.0/16
 
-All malformed entries will be ignored; Open MPI will attempt to continue
-your job.
