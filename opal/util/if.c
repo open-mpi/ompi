@@ -497,19 +497,19 @@ static uint32_t parse_ipv4_dots(const char *addr, uint32_t* net, int* dots)
     int i, rc = OPAL_SUCCESS;
 
     /* now assemble the address */
-    for( i = 0; i < 4; i++ ) {
+    for( i = 0; i < 4 && 0 < strlen(start); i++ ) {
         n[i] = strtoul(start, (char**)&end, 10);
         if( end == start ) {  /* error case: use what we have so far */
-            rc = OPAL_SUCCESS;
+            rc = OPAL_ERR_NETWORK_NOT_PARSEABLE;
             break;
         }
-        /* skip all the . */
-        for( start = end; '\0' != *start; start++ )
-            if( '.' != *start ) break;
         /* did we read something sensible? */
         if( n[i] > 255 ) {
             return OPAL_ERR_NETWORK_NOT_PARSEABLE;
         }
+        /* skip all the . */
+        for( start = end; '\0' != *start; start++ )
+            if( '.' != *start ) break;
     }
     *dots = i;
     *net = OPAL_IF_ASSEMBLE_NETWORK(n[0], n[1], n[2], n[3]);
