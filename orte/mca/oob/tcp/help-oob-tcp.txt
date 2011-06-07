@@ -33,3 +33,29 @@ Both TCP interface include and exclude lists were specified:
   Exclude: %s
 
 Only one of these can be given.
+#
+[not-parseable]
+The specified network is not parseable. Since we cannot determine
+your desired intent, we cannot establish a TCP socket for out-of-band
+communications and will therefore abort. Please correct the network
+specification and retry.
+#
+[no-included-found]
+None of the networks specified to be included for out-of-band communications
+could be found:
+
+  Value given: %s
+
+Please revise the specification and try again.
+#
+[excluded-all]
+The specified list of networks to be excluded for out-of-band communications
+resulted in no networks being available:
+
+  Value given: %s
+
+Please revise the specification and try again.
+#
+[no-interfaces-avail]
+No network interfaces were found for out-of-band communications. We require
+at least one available network for TCP-based messaging.

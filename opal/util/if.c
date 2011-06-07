@@ -500,7 +500,7 @@ static uint32_t parse_ipv4_dots(const char *addr, uint32_t* net, int* dots)
     for( i = 0; i < 4; i++ ) {
         n[i] = strtoul(start, (char**)&end, 10);
         if( end == start ) {  /* error case: use what we have so far */
-            rc = OPAL_ERROR;
+            rc = OPAL_SUCCESS;
             break;
         }
         /* skip all the . */
@@ -508,12 +508,12 @@ static uint32_t parse_ipv4_dots(const char *addr, uint32_t* net, int* dots)
             if( '.' != *start ) break;
         /* did we read something sensible? */
         if( n[i] > 255 ) {
-            return OPAL_ERROR;
+            return OPAL_ERR_NETWORK_NOT_PARSEABLE;
         }
     }
     *dots = i;
     *net = OPAL_IF_ASSEMBLE_NETWORK(n[0], n[1], n[2], n[3]);
-    return OPAL_SUCCESS;
+    return rc;
 }
 
 int
@@ -541,29 +541,32 @@ opal_iftupletoaddr(const char *inaddr, uint32_t *net, uint32_t *mask)
                 pval = strtol(ptr, NULL, 10);
                 if ((pval > 31) || (pval < 1)) {
                     opal_output(0, "opal_iftupletoaddr: unknown mask");
-                    return OPAL_ERROR;
+                    return OPAL_ERR_NETWORK_NOT_PARSEABLE;
                 }
                 *mask = 0xFFFFFFFF << (32 - pval);
             }
         } else {
             /* use the number of dots to determine it */
-            for( ptr = inaddr, pval = 0; '\0'!= *ptr; ptr++ )
-                if( '.' == *ptr ) pval++;
+            for (ptr = inaddr, pval = 0; '\0'!= *ptr; ptr++) {
+                if ('.' == *ptr) {
+                    pval++;
+                }
+            }
             /* if we have three dots, then we have four
              * fields since it is a full address, so the
              * default netmask is fine
              */
-            if (pval < 4) {
-                if (3 == pval) {         /* 2 dots */
-                    *mask = 0xFFFFFF00;
-                } else if (2 == pval) {  /* 1 dot */
-                    *mask = 0xFFFF0000;
-                } else if (1 == pval) {  /* no dots */
-                    *mask = 0xFF000000;
-                } else {
-                    opal_output(0, "opal_iftupletoaddr: unknown mask");
-                    return OPAL_ERROR;
-                }
+            if (3 == pval) {
+                *mask = 0xFFFFFFFF;
+            } else if (2 == pval) {         /* 2 dots */
+                *mask = 0xFFFFFF00;
+            } else if (1 == pval) {  /* 1 dot */
+                *mask = 0xFFFF0000;
+            } else if (0 == pval) {  /* no dots */
+                *mask = 0xFF000000;
+            } else {
+                opal_output(0, "opal_iftupletoaddr: unknown mask");
+                return OPAL_ERR_NETWORK_NOT_PARSEABLE;
             }
         }
     }
@@ -605,18 +608,18 @@ bool opal_ifisloopback(int if_index)
  * into account that the list entries could be given as named interfaces,
  * IP addrs, or subnet+mask
  */
-bool opal_ifmatches(int idx, char **nets)
+int opal_ifmatches(int idx, char **nets)
 {
     bool named_if;
-    int i;
+    int i, rc;
     size_t j;
     int index;
     struct sockaddr_in inaddr;
     uint32_t addr, netaddr, netmask;
 
     /* get the address info for the given network in case we need it */
-    if (OPAL_SUCCESS != opal_ifindextoaddr(idx, (struct sockaddr*)&inaddr, sizeof(inaddr))) {
-        return false;
+    if (OPAL_SUCCESS != (rc = opal_ifindextoaddr(idx, (struct sockaddr*)&inaddr, sizeof(inaddr)))) {
+        return rc;
     }
     addr = ntohl(inaddr.sin_addr.s_addr);
 
@@ -636,20 +639,20 @@ bool opal_ifmatches(int idx, char **nets)
                 continue;
             }
             if (index == idx) {
-                return true;
+                return OPAL_SUCCESS;
             }
         } else {
-            if (OPAL_SUCCESS != opal_iftupletoaddr(nets[i], &netaddr, &netmask)) {
+            if (OPAL_SUCCESS != (rc = opal_iftupletoaddr(nets[i], &netaddr, &netmask))) {
                 opal_show_help("help-opal-util.txt", "invalid-net-mask", true, nets[i]);
-                continue;
+                return rc;
             }
             if (netaddr == (addr & netmask)) {
-                return true;
+                return OPAL_SUCCESS;
             }
         }
     }
     /* get here if not found */
-    return false;
+    return OPAL_ERR_NOT_FOUND;
 }
 
 
@@ -744,9 +747,9 @@ opal_iftupletoaddr(char *inaddr, uint32_t *net, uint32_t *mask)
     return 0;
 }
 
-bool opal_ifispresent(char *if)
+int opal_ifmatches(int idx, char **nets)
 {
-    return false;
+    return OPAL_ERR_NOT_SUPPORTED;
 }
 
 #endif /* HAVE_STRUCT_SOCKADDR_IN */

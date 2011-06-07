@@ -36,9 +36,14 @@ of the form <ipaddress>/<mask>.  For example:
 The first detected malformed entry was %s.
 #
 [invalid-net-mask]
-Open MPI has detected an malformed IPv4 address or netmask
-in %s. Accepted values follows the Classless Inter-Domain
+Open MPI has detected a malformed IPv4 address or netmask:
+
+  Value provided: %s
+
+Accepted values follow the Classless Inter-Domain
 Routing (CIDR) notation specifications. For example:
 
-     10.0.0.0/8;172.16/12;192.168;169.254.0.0/16
-
+     10.0.0.0/8
+     172.16/12
+     192.168
+     169.254.0.0/16

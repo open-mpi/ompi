@@ -90,10 +90,11 @@ int mca_oob_base_init(void)
         }
     }
     /* set the global variable to point to the first initialize module */
-    if(s_module == NULL) {
+    if (s_module == NULL) {
         opal_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no OOB modules available\n");
-      return ORTE_ERROR;
-   }
+        /* the oob modules will have printed out an error msg - so be silent here */
+        return ORTE_ERR_SILENT;
+    }
 
    mca_oob = *s_module;
    return ORTE_SUCCESS;
