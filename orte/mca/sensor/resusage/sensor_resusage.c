@@ -125,6 +125,11 @@ static void start(orte_jobid_t jobid)
     opal_list_item_t *item;
     int i;
 
+    if (0 == mca_sensor_resusage_component.sample_rate) {
+        /* not monitoring */
+        return;
+    }
+
     /* is this to monitor my own job */
     if (jobid == ORTE_PROC_MY_NAME->jobid) {
         /* already on the tracker? */
