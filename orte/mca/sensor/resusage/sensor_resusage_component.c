@@ -60,7 +60,7 @@ static int orte_sensor_resusage_open(void)
     /* lookup parameters */
     mca_base_param_reg_int(c, "sample_rate",
                            "Sample rate in seconds (default=10)",
-                           false, false, 10,  &tmp);
+                           false, false, 0,  &tmp);
     if (tmp < 0) {
         opal_output(0, "Illegal value %d - must be > 0", tmp);
         return ORTE_ERR_FATAL;
