@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -57,14 +58,15 @@ BEGIN_C_DECLS
  * States of the module
  */
 enum opal_crs_state_type_t {
-    OPAL_CRS_NONE,
-    OPAL_CRS_CHECKPOINT,
-    OPAL_CRS_RESTART_PRE,
-    OPAL_CRS_RESTART, /* RESTART_POST */
-    OPAL_CRS_CONTINUE,
-    OPAL_CRS_TERM,
-    OPAL_CRS_RUNNING,
-    OPAL_CRS_ERROR
+    OPAL_CRS_NONE        = 0,
+    OPAL_CRS_CHECKPOINT  = 1,
+    OPAL_CRS_RESTART_PRE = 2,
+    OPAL_CRS_RESTART     = 3, /* RESTART_POST */
+    OPAL_CRS_CONTINUE    = 4,
+    OPAL_CRS_TERM        = 5,
+    OPAL_CRS_RUNNING     = 6,
+    OPAL_CRS_ERROR       = 7,
+    OPAL_CRS_STATE_MAX   = 8
 };
 typedef enum opal_crs_state_type_t opal_crs_state_type_t;
 
