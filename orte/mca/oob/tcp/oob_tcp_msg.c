@@ -140,14 +140,16 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
     while(1) {
         rc = writev(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
         if(rc < 0) {
-            if(opal_socket_errno == EINTR)
+            if(opal_socket_errno == EINTR) {
                 continue;
+            }
             /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
                things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
                not conflict with other error codes that are returned by these functions \
                under UNIX/Linux environments */
-            else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
+            else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK) {
                 return false;
+            }
             else {
                 opal_output(0, "%s->%s mca_oob_tcp_msg_send_handler: writev failed: %s (%d) [sd = %d]", 
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), 
@@ -248,24 +250,26 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
     while(msg->msg_rwnum) {
         rc = readv(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
         if(rc < 0) {
-            if(opal_socket_errno == EINTR)
+            if(opal_socket_errno == EINTR) {
                 continue;
+            }
             /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
                things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
                not conflict with other error codes that are returned by these functions \
                under UNIX/Linux environments */
-            else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
+            else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK) {
                 return false;
-	    opal_output(0, "%s-%s mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
-			ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-			ORTE_NAME_PRINT(&(peer->peer_name)),
-			strerror(opal_socket_errno),
-			opal_socket_errno);
-	    mca_oob_tcp_peer_close(peer);
+            }
+            opal_output(0, "%s-%s mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&(peer->peer_name)),
+                        strerror(opal_socket_errno),
+                        opal_socket_errno);
+            mca_oob_tcp_peer_close(peer);
             if (NULL != mca_oob_tcp.oob_exception_callback) {
                 mca_oob_tcp.oob_exception_callback(&peer->peer_name, ORTE_RML_PEER_DISCONNECTED);
             }
-	    return false;
+            return false;
         } else if (rc == 0)  {
             if(mca_oob_tcp_component.tcp_debug >= OOB_TCP_DEBUG_CONNECT_FAIL) {
                 opal_output(0, "%s-%s mca_oob_tcp_msg_recv: peer closed connection", 
@@ -289,7 +293,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 (msg->msg_rwnum)--;
                 (msg->msg_rwptr)++;
                 if(0 == msg->msg_rwnum) {
-		    assert( 0 == rc );
+                    assert( 0 == rc );
                     return true;
                 }
             }
