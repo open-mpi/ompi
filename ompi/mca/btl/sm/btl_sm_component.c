@@ -13,6 +13,7 @@
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -193,6 +194,22 @@ static int sm_register(void)
     mca_btl_sm_component.sm_extra_procs =
         mca_btl_sm_param_register_int("sm_extra_procs", 0);
 
+    mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
+    mca_btl_sm.super.btl_eager_limit = 4*1024;
+    mca_btl_sm.super.btl_rndv_eager_limit = 4*1024;
+    mca_btl_sm.super.btl_max_send_size = 32*1024;
+    mca_btl_sm.super.btl_rdma_pipeline_send_length = 64*1024;
+    mca_btl_sm.super.btl_rdma_pipeline_frag_size = 64*1024;
+    mca_btl_sm.super.btl_min_rdma_pipeline_size = 64*1024;
+    mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND;
+#if OMPI_BTL_SM_HAVE_KNEM
+    if (mca_btl_sm_component.use_knem) {
+        mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_GET;
+    }
+#endif
+    mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
+    mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
+
     /* Call the BTL based to register its MCA params */
     mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version,
                                 &mca_btl_sm.super);
@@ -224,23 +241,6 @@ static int mca_btl_sm_component_open(void)
         mca_btl_sm_component.fifo_lazy_free  = (mca_btl_sm_component.fifo_size >> 1);
     if (mca_btl_sm_component.fifo_lazy_free <= 0)
         mca_btl_sm_component.fifo_lazy_free  = 1;
-
-
-    mca_btl_sm.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH-1;
-    mca_btl_sm.super.btl_eager_limit = 4*1024;
-    mca_btl_sm.super.btl_rndv_eager_limit = 4*1024;
-    mca_btl_sm.super.btl_max_send_size = 32*1024;
-    mca_btl_sm.super.btl_rdma_pipeline_send_length = 64*1024;
-    mca_btl_sm.super.btl_rdma_pipeline_frag_size = 64*1024;
-    mca_btl_sm.super.btl_min_rdma_pipeline_size = 64*1024;
-    mca_btl_sm.super.btl_flags = MCA_BTL_FLAGS_SEND;
-#if OMPI_BTL_SM_HAVE_KNEM
-    if (mca_btl_sm_component.use_knem) {
-        mca_btl_sm.super.btl_flags |= MCA_BTL_FLAGS_GET;
-    }
-#endif
-    mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
-    mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
 
     mca_btl_sm_component.max_frag_size = mca_btl_sm.super.btl_max_send_size;
     mca_btl_sm_component.eager_limit = mca_btl_sm.super.btl_eager_limit;
