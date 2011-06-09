@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,7 +25,7 @@ man_pages = orte-checkpoint.1
 EXTRA_DIST = orte-checkpoint.1in CMakeLists.txt
 
 if !ORTE_DISABLE_FULL_SUPPORT
-if WANT_FT
+if WANT_FT_CR
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-checkpoint
@@ -43,7 +44,7 @@ endif # OMPI_INSTALL_BINARIES
 orte_checkpoint_SOURCES = orte-checkpoint.c
 orte_checkpoint_LDADD = $(top_builddir)/orte/libopen-rte.la
 
-endif # WANT_FT
+endif # WANT_FT_CR
 endif # !ORTE_DISABLE_FULL_SUPPORT
 
 distclean-local:

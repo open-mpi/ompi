@@ -2,6 +2,7 @@
 # Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
+# Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -16,7 +17,7 @@ man_pages = orte-migrate.1
 EXTRA_DIST = orte-migrate.1in CMakeLists.txt
 
 if !ORTE_DISABLE_FULL_SUPPORT
-if WANT_FT
+if WANT_FT_CR
 if OMPI_INSTALL_BINARIES
 
 bin_PROGRAMS = orte-migrate
@@ -35,7 +36,7 @@ endif # OMPI_INSTALL_BINARIES
 orte_migrate_SOURCES = orte-migrate.c
 orte_migrate_LDADD = $(top_builddir)/orte/libopen-rte.la
 
-endif # WANT_FT
+endif # WANT_FT_CR
 endif # !ORTE_DISABLE_FULL_SUPPORT
 
 distclean-local:

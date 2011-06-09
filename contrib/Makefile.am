@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      IBM Corporation.  All rights reserved.
+# Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,11 +22,11 @@
 amca_paramdir = $(AMCA_PARAM_SETS_DIR)
 dist_amca_param_DATA = amca-param-sets/example.conf
 
-if WANT_FT
+if WANT_FT_CR
 dist_amca_param_DATA += \
 	amca-param-sets/ft-enable-cr \
 	amca-param-sets/ft-enable-cr-recovery
-endif
+endif # WANT_FT_CR
 
 EXTRA_DIST = \
 	dist/make_dist_tarball \

@@ -10,6 +10,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -239,8 +240,8 @@ elif test "$enable_ft_thread" = "no"; then
 elif test "$enable_ft_thread" = "undef" -a "$enable_opal_multi_threads" = "no" ; then
     opal_want_ft_thread=0
     AC_MSG_RESULT([Disabled (OPAL Thread Support Disabled)])
-# if default, and MPI threads enabled
-else
+# if default, and MPI threads enabled for C/R only
+elif test "$opal_want_ft_cr" = 1; then
     # Default: Enable
     # Make sure we have OPAL Threads enabled 
     if test "$enable_opal_multi_threads" = "no"; then
@@ -256,6 +257,10 @@ else
         AC_MSG_WARN([*** should be used when enabling these options.  *])
         AC_MSG_WARN([**************************************************])
     fi
+# Otherwise disabled
+else
+    opal_want_ft_thread=0
+    AC_MSG_RESULT([Disabled (Non-C/R Fault Tolerance enabled)])
 fi
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_THREAD], [$opal_want_ft_thread],
                    [Enable fault tolerance thread in Open PAL])
