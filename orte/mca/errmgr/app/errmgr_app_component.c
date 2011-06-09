@@ -53,7 +53,13 @@ orte_errmgr_base_component_t mca_errmgr_app_component =
     {
         /* The component is checkpoint ready */
         MCA_BASE_METADATA_PARAM_CHECKPOINT
-    }
+    },
+    /* Verbosity level */
+    0,
+    /* opal_output handler */
+    -1,
+    /* Default priority */
+    10
 };
 
 static int errmgr_app_open(void) 
