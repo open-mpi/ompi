@@ -15,7 +15,7 @@ dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 dnl Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
@@ -413,6 +413,7 @@ AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT], [$opal_want_ft],
 AC_DEFINE_UNQUOTED([OPAL_ENABLE_FT_CR], [$opal_want_ft_cr],
                    [Enable fault tolerance checkpoint/restart components and logic])
 AM_CONDITIONAL(WANT_FT, test "$opal_want_ft" = "1")
+AM_CONDITIONAL(WANT_FT_CR,  test "$opal_want_ft_cr" = "1")
 
 #
 # Do we want to install binaries?
