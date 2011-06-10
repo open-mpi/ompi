@@ -215,13 +215,18 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                  item3 = opal_list_get_next(item3)) {
                 ninfo = (opal_sysinfo_value_t*)item3;
 
+                OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                     "%s COMPARING CONSTRAINT %s WITH RESOURCE %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), 
+                                     req_res->key, ninfo->key));
+
                 if (0 == strcmp(req_res->key, ninfo->key)) {
-                    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                                         "%s CHECKING RESOURCE %s:%s ON NODE %s:%s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ninfo->key, req_res->data.str,
-                                         node->name, ninfo->data.str));
                     if (OPAL_STRING == req_res->type) {
+                        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                             "%s CHECKING RESOURCE %s:%s ON NODE %s:%s",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ninfo->key, req_res->data.str,
+                                             node->name, ninfo->data.str));
                         /* there could be multiple hosts or host-types here */
                         vals = opal_argv_split(req_res->data.str, ',');
                         for (i=0; NULL != vals[i]; i++) {
