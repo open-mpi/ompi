@@ -4,6 +4,7 @@ dnl Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -101,6 +102,10 @@ AC_DEFUN([EXT_CONFIGURE],[
     # first create the output include directory
     mkdir -p $outdir
 
+    ###############
+    # C Bindings
+    ###############
+
     # remove any previously generated #include files
     mpi_ext_h=$outdir/mpi-ext.h
     rm -f $mpi_ext_h
@@ -122,8 +127,72 @@ extern "C" {
 
 EOF
 
+
+    ###############
+    # C++ Bindings
+    ###############
+
+    # remove any previously generated #include files
+    mpicxx_ext_h=$outdir/mpicxx-ext.h
+    rm -f $mpicxx_ext_h
+
+    # Create the final mpi-ext.h file.
+    cat > $mpicxx_ext_h <<EOF
+/*
+ * \$HEADER\$
+ */
+
+#ifndef OMPI_MPI_EXT_H
+#define OMPI_MPI_EXT_H 1
+
+#define OMPI_HAVE_MPI_EXT 1
+
+EOF
+
+    ###############
+    # F77 Bindings
+    ###############
+
+    # remove any previously generated #include files
+    mpif_ext_h=$outdir/mpif-ext.h
+    rm -f $mpif_ext_h
+
+    # Create the final mpif-ext.h file.
+    cat > $mpif_ext_h <<EOF
+! -*- fortran -*-
+! \$HEADER\$
+!
+      integer OMPI_HAVE_MPI_EXT
+      parameter (OMPI_HAVE_MPI_EXT=1)
+!
+EOF
+
+
+    ###############
+    # F90 Bindings
+    ###############
+
+    # remove any previously generated #include files
+    mpif90_ext_h=$outdir/mpif90-ext.f90
+    rm -f $mpif90_ext_h
+
+    # Create the final mpif90-ext.h file.
+    cat > $mpif90_ext_h <<EOF
+! -*- fortran -*-
+! \$HEADER\$
+!
+module mpi_ext
+
+!     Eventhough this is not a useful parameter (cannot be used as a
+!     preprocessor catch) define it to keep the linker from complaining
+!     during the build.
+      integer OMPI_HAVE_MPI_EXT
+      parameter (OMPI_HAVE_MPI_EXT=1)
+!
+EOF
+
     #
-    # XXX: Left todo: Add header files for other languages
+    # Process each component
     #
 
     # remove any previously generated #include files
@@ -140,6 +209,9 @@ EOF
                                                   [static_components],
                                                   [static_ltlibs])])])
 
+    ###############
+    # C Bindings
+    ###############
     # Create the final mpi-ext.h file.
     cat >> $mpi_ext_h <<EOF
 
@@ -151,9 +223,32 @@ EOF
 
 EOF
 
-    #
-    # XXX: Left todo: Close header files for other languages
-    #
+    ###############
+    # C++ Bindings
+    ###############
+    # Create the final mpicxx-ext.h file.
+    cat >> $mpicxx_ext_h <<EOF
+
+#endif /* OMPI_MPI_EXT_H */
+
+EOF
+
+    ###############
+    # F77 Bindings
+    ###############
+    # Create the final mpif-ext.h file.
+    cat >> $mpif_ext_h <<EOF
+! 
+EOF
+
+    ###############
+    # F90 Bindings
+    ###############
+    # Create the final mpif90-ext.h file.
+    cat >> $mpif90_ext_h <<EOF
+! 
+end module mpi_ext
+EOF
 
 
     # Create the final .h file that will be included in the type's
@@ -270,43 +365,183 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
     component=$1
 
     # Output pretty results
-    AC_MSG_CHECKING([if MPI extension $component can compile])
+    AC_MSG_CHECKING([if MPI Extension $component can compile])
     AC_MSG_RESULT([yes])
 
-    # Save the list of headers and convenience libraries that this component will output
-    # There *must* be C bindings
-    EXT_C_HEADERS="$EXT_C_HEADERS mpiext/$component/mpiext_${component}_c.h"
-    EXT_C_LIBS="$EXT_C_LIBS mpiext/$component/libext_mpiext_${component}.la"
-
-    component_header="mpiext_${component}_c.h"
     tmp[=]m4_translit([$1],[a-z],[A-Z])
     component_define="OMPI_HAVE_MPI_EXT_${tmp}"
 
-    cat >> $mpi_ext_h <<EOF
+    ###############
+    # C Bindings
+    ###############
+    test_header="${srcdir}/ompi/mpiext/$component/mpiext_${component}_c.h"
+
+    AC_MSG_CHECKING([if MPI Extension $component has C   bindings])
+
+    if test -e "$test_header" ; then
+        AC_MSG_RESULT([yes])
+
+        # Save the list of headers and convenience libraries that this component will output
+        EXT_C_HEADERS="$EXT_C_HEADERS mpiext/$component/mpiext_${component}_c.h"
+        EXT_C_LIBS="$EXT_C_LIBS mpiext/$component/libext_mpiext_${component}.la"
+        $3="mpiext/${component}/libext_mpiext_${component}.la $$3"
+
+        component_header="mpiext_${component}_c.h"
+
+        cat >> $mpi_ext_h <<EOF
 /* Enabled Extension: $component */
 #define $component_define 1
 #include "openmpi/ompi/mpiext/$component/$component_header"
 
 EOF
+    else 
+        # There *must* be C bindings
+        AC_MSG_RESULT([no])
+        AC_MSG_WARN([C Bindings are required])
+        AC_MSG_ERROR([Cannot continue])
+    fi
 
+    ###############
+    # C++ Bindings
+    ###############
     #
-    # XXX: Need to add conditional logic for components that do not supply
-    # XXX: some or all of the other 3 interfaces [C++, F77, F90]. If they
-    # XXX: did provide those bindings, then add the header file to the relevant
-    # XXX: language binding's header file.
+    # Test if this extension has cxx bindings
+    # If not, skip this step.
     #
-    EXT_CXX_HEADERS="$EXT_CXX_HEADERS mpiext/$component/mpiext_${component}_cxx.h"
-    EXT_CXX_LIBS="$EXT_CXX_LIBS mpiext/$component/libext_mpiext_${component}_cxx.la"
+    test_header="${srcdir}/ompi/mpiext/$component/mpiext_${component}_cxx.h"
 
-    EXT_F77_HEADERS="$EXT_F77_HEADERS mpiext/$component/mpiext_${component}_f77.h"
-    EXT_F77_LIBS="$EXT_F77_LIBS mpiext/$component/libext_mpiext_${component}_f77.la"
+    AC_MSG_CHECKING([if MPI Extension $component has CXX bindings])
 
-    EXT_F90_HEADERS="$EXT_F90_HEADERS mpiext/$component/mpiext_${component}_f90.h"
-    EXT_F90_LIBS="$EXT_F90_LIBS mpiext/$component/libext_mpiext_${component}_f90.la"
+    if test -e "$test_header" ; then
+        AC_MSG_RESULT([yes])
+
+        EXT_CXX_HEADERS="$EXT_CXX_HEADERS mpiext/$component/mpiext_${component}_cxx.h"
+        EXT_CXX_LIBS="$EXT_CXX_LIBS mpiext/$component/libext_mpiext_${component}_cxx.la"
+        $3="$$3 mpiext/${component}/libext_mpiext_${component}_cxx.la"
+
+        component_header="mpiext_${component}_cxx.h"
+
+        cat >> $mpicxx_ext_h <<EOF
+/* Enabled Extension: $component */
+#define $component_define 1
+#include "openmpi/ompi/mpiext/$component/$component_header"
+
+EOF
+    else
+        AC_MSG_RESULT([no])
+
+        cat >> $mpicxx_ext_h <<EOF
+/* Enabled Extension: $component
+ * No CXX Bindings available
+ */
+#define $component_define 0
+
+EOF
+    fi
+
+    ###############
+    # F77 Bindings
+    ###############
+    #
+    # Test if this extension has f77 bindings
+    # If not, skip this step.
+    #
+    test_header="${srcdir}/ompi/mpiext/$component/mpiext_${component}_f77.h"
+    enabled_f77=0
+
+    AC_MSG_CHECKING([if MPI Extension $component has F77 bindings])
+
+    if test -e "$test_header" ; then
+        AC_MSG_RESULT([yes])
+        enabled_f77=1
+
+        EXT_F77_HEADERS="$EXT_F77_HEADERS mpiext/$component/mpiext_${component}_f77.h"
+        EXT_F77_LIBS="$EXT_F77_LIBS mpiext/$component/libext_mpiext_${component}_f77.la"
+        $3="$$3 mpiext/${component}/libext_mpiext_${component}_f77.la"
+
+        component_header="mpiext_${component}_f77.h"
+
+        cat >> $mpif_ext_h <<EOF
+!
+!     Enabled Extension: $component
+!
+      integer $component_define
+      parameter ($component_define=1)
+
+      include 'openmpi/ompi/mpiext/$component/$component_header'
+
+EOF
+    else
+        AC_MSG_RESULT([no])
+
+        cat >> $mpif_ext_h <<EOF
+!
+!     Enabled Extension: $component
+!     No F77 Bindings available
+!
+      integer $component_define
+      parameter ($component_define=0)
+
+EOF
+
+    fi
+
+    ###############
+    # F90 Bindings
+    ###############
+    #
+    # Test if this extension has f90 bindings
+    # If not, skip this step.
+    #
+    test_header="${srcdir}/ompi/mpiext/$component/mpiext_${component}_f90.h"
+
+    AC_MSG_CHECKING([if MPI Extension $component has F90 bindings])
+
+    if test -e "$test_header" ; then
+        AC_MSG_RESULT([yes])
+
+        EXT_F90_HEADERS="$EXT_F90_HEADERS mpiext/$component/mpiext_${component}_f90.h"
+        #EXT_F90_LIBS="$EXT_F90_LIBS mpiext/$component/libext_mpiext_${component}_f90.la"
+        #$3="$$3 mpiext/${component}/libext_mpiext_${component}_f90.la"
+
+        component_header="mpiext_${component}_f90.h"
+
+        cat >> $mpif90_ext_h <<EOF
+!
+!     Enabled Extension: $component
+!
+EOF
+        #
+        # Include the f77 header if it is available
+        # Cannot do this from inside the f90.h since, for VPATH builds,
+        # the top_ompi_srcdir is needed to find the header.
+        #
+        if test "$enabled_f77" = 1; then
+            f77_component_header="mpiext_${component}_f77.h"
+            cat >> $mpif90_ext_h <<EOF
+      include '$top_ompi_srcdir/ompi/mpiext/$component/$f77_component_header'
+EOF
+        fi
+
+        cat >> $mpif90_ext_h <<EOF
+      include '$top_ompi_srcdir/ompi/mpiext/$component/$component_header'
+
+EOF
+    else
+        AC_MSG_RESULT([no])
+
+        cat >> $mpif90_ext_h <<EOF
+!
+!     Enabled Extension: $component
+!     No F90 Bindings available
+!
+
+EOF
+    fi
+
 
     # Add this subdir to the mast list of all EXT component subdirs
     $2="$$2 ${component}"
-    $3="mpiext/${component}/libext_mpiext_${component}.la $$3"
 
     m4_ifdef([OMPI_MPIEXT_]$1[_NEED_INIT],
              [echo "extern const ompi_mpiext_component_t ompi_mpiext_${component};" >> $outfile.extern

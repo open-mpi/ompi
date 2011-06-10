@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -43,13 +43,46 @@ endif
 # counterparts (which AM automatically ships).
 nodist_include_HEADERS = \
         mpi.h \
-        mpi-ext.h
+        mpi-ext.h \
+        mpicxx-ext.h \
+        mpif-ext.h
 
 if OMPI_WANT_F77_BINDINGS
 nodist_include_HEADERS += \
         mpif.h \
         mpif-config.h
 endif
+
+
+# If we have any F90 MPI extensions, compile and generate the
+# mpi_ext F90 module file.  Do this by compiling a fake library;
+# the modulefile will be created as a side-effect of compiling
+# mpif90-ext.f90.
+noinst_LTLIBRARIES = libforce_f90_module_to_be_built.la
+
+libforce_f90_module_to_be_built_la_SOURCES = mpif90-ext.f90 
+
+mpi_ext.$(OBJEXT): mpif90-ext.f90
+	$(FCCOMPILE) -c -I. -o $@ $(FCFLAGS_f90) $<
+
+MOSTLYCLEANFILES = *.mod
+
+#
+# Install the generated .mod files.  Unfortunately, each F90 compiler
+# may generate different filenames, so we have to use a glob.  :-(
+#
+install-exec-hook:
+	@ for file in `ls *.mod`; do \
+	  echo $(INSTALL) $$file $(DESTDIR)$(libdir); \
+	  $(INSTALL) $$file $(DESTDIR)$(libdir); \
+	done
+
+uninstall-local:
+	@ for file in `ls *.mod`; do \
+	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
+	  rm -f $(DESTDIR)$(libdir)/$$file; \
+	done
+#endif
 
 include ompi/Makefile.am
 
@@ -64,5 +97,5 @@ endif
 # Remove the auto-generated mpi-ext.h file
 # Since there is no mpi-ext.h.in, autogen does not know to cleanup this file.
 distclean-local:
-	rm -f mpi-ext.h
+	rm -f mpi-ext.h mpicxx-ext.h mpif-ext.h mpif90-ext.h
 
