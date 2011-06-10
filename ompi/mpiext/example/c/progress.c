@@ -2,6 +2,7 @@
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,9 +45,9 @@ ompi_mpiext_component_t ompi_mpiext_example = {
 };
 
 
-int OMPI_Progress(char * stmt) 
+int OMPI_Progress(int count) 
 {
-    printf("%s!!!\n", stmt);
+    printf("Count = %d!\n", count);
 
     return MPI_SUCCESS;
 }
