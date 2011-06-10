@@ -232,8 +232,8 @@ static int init(void)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-       /* finally, if we are an app, setup our grp xmit/recv channels, if given */
-        if (ORTE_PROC_IS_APP && NULL != orte_rmcast_base.my_group_name) {
+       /* finally, setup our grp xmit/recv channels, if given */
+        if (NULL != orte_rmcast_base.my_group_name) {
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number,
                                                    "recv", NULL, -1, NULL, ORTE_RMCAST_RECV))) {
                 ORTE_ERROR_LOG(rc);
