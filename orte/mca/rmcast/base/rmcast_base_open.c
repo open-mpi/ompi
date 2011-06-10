@@ -177,10 +177,6 @@ int orte_rmcast_base_open(void)
         }
         orte_rmcast_base.my_group_number = value;
         free(tmp);
-    } else {
-        /* since nothing was given, use our local jobid */
-        orte_rmcast_base.my_group_name = strdup(ORTE_LOCAL_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
-        orte_rmcast_base.my_group_number = ORTE_RMCAST_DYNAMIC_CHANNELS + ORTE_LOCAL_JOBID(ORTE_PROC_MY_NAME->jobid);
     }
 
 
