@@ -33,6 +33,8 @@
 static int
 ompi_mtl_portals4_short_callback(ptl_event_t *ev, ompi_mtl_portals4_request_t *ptl_request)
 {
+    int ret;
+
     assert(ev->type == PTL_EVENT_SEND);
     assert(NULL != ptl_request->super.ompi_req);
 
@@ -45,7 +47,13 @@ ompi_mtl_portals4_short_callback(ptl_event_t *ev, ompi_mtl_portals4_request_t *p
     if (NULL != ptl_request->buffer_ptr) {
         free(ptl_request->buffer_ptr);
     }
-    PtlMDRelease(ptl_request->md_h);
+    ret = PtlMDRelease(ptl_request->md_h);
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d: short send callback PtlMDRelease returned %d",
+                            __FILE__, __LINE__, ret);
+        ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
+    }
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "send completed"));
     ptl_request->super.completion_callback(&ptl_request->super);
 
@@ -57,6 +65,8 @@ ompi_mtl_portals4_short_callback(ptl_event_t *ev, ompi_mtl_portals4_request_t *p
 static int
 ompi_mtl_portals4_long_callback(ptl_event_t *ev, struct ompi_mtl_portals4_request_t* ptl_request)
 {
+    int ret;
+
     assert(ev->type == PTL_EVENT_SEND || ev->type == PTL_EVENT_ACK || ev->type == PTL_EVENT_GET);
     assert(NULL != ptl_request->super.ompi_req);
 
@@ -74,7 +84,13 @@ ompi_mtl_portals4_long_callback(ptl_event_t *ev, struct ompi_mtl_portals4_reques
         if (NULL != ptl_request->buffer_ptr) {
             free(ptl_request->buffer_ptr);
         }
-        PtlMDRelease(ptl_request->md_h);
+        ret = PtlMDRelease(ptl_request->md_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: long send callback PtlMDRelease returned %d",
+                                __FILE__, __LINE__, ret);
+            ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
+        }
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "send completed"));
         ptl_request->super.completion_callback(&ptl_request->super);
     }
@@ -92,6 +108,8 @@ ompi_mtl_portals4_long_callback(ptl_event_t *ev, struct ompi_mtl_portals4_reques
 static int
 ompi_mtl_portals4_sync_callback(ptl_event_t *ev, struct ompi_mtl_portals4_request_t* ptl_request)
 {
+    int ret;
+
     assert(ev->type == PTL_EVENT_SEND || ev->type == PTL_EVENT_ACK || ev->type == PTL_EVENT_PUT);
     assert(NULL != ptl_request->super.ompi_req);
 
@@ -109,14 +127,26 @@ ompi_mtl_portals4_sync_callback(ptl_event_t *ev, struct ompi_mtl_portals4_reques
         if (NULL != ptl_request->buffer_ptr) {
             free(ptl_request->buffer_ptr);
         }
-        PtlMDRelease(ptl_request->md_h);
+        ret = PtlMDRelease(ptl_request->md_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: sync send callback PtlMDRelease returned %d",
+                                __FILE__, __LINE__, ret);
+            ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
+        }
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "send completed"));
         ptl_request->super.completion_callback(&ptl_request->super);
     }
     
     /* received an ack - unlink the me */
     if (ev->type == PTL_EVENT_ACK) {
-        PtlMEUnlink(ptl_request->me_h);
+        ret = PtlMEUnlink(ptl_request->me_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: sync send callback PtlMEUnlink returned %d",
+                                __FILE__, __LINE__, ret);
+            ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
+        }
     }
     return OMPI_SUCCESS;
 }
@@ -158,7 +188,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode, void *start, int le
                  length,
 		 PTL_NO_ACK_REQ,
 		 endpoint->ptl_proc,
-		 PTL_SEND_TABLE_ID,
+		 ompi_mtl_portals4.send_idx,
 		 match_bits,
 		 0,
                  ptl_request,
@@ -167,7 +197,12 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode, void *start, int le
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
-	PtlMDRelease(ptl_request->md_h);
+	ret = PtlMDRelease(ptl_request->md_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: PtlMDRelease failed: %d",
+                                __FILE__, __LINE__, ret);
+        }
         return ompi_mtl_portals4_get_error(ret);
     }
     
@@ -220,7 +255,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
-                      PTL_READ_TABLE_ID,
+                      ompi_mtl_portals4.read_idx,
                       &me,
                       PTL_PRIORITY_LIST,
                       ptl_request,
@@ -229,7 +264,12 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMEAppend failed: %d",
                             __FILE__, __LINE__, ret);
-        PtlMDRelease(ptl_request->md_h);
+        ret = PtlMDRelease(ptl_request->md_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: PtlMDRelease failed: %d",
+                                __FILE__, __LINE__, ret);
+        }
         return ompi_mtl_portals4_get_error(ret);
     }
 
@@ -239,7 +279,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
                      ompi_mtl_portals4.eager_limit,
                      PTL_NO_ACK_REQ,
                      endpoint->ptl_proc,
-                     PTL_SEND_TABLE_ID,
+                     ompi_mtl_portals4.send_idx,
                      match_bits,
                      0,
                      ptl_request,
@@ -250,7 +290,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
                      ompi_mtl_portals4.eager_limit + 1,
                      PTL_NO_ACK_REQ,
                      endpoint->ptl_proc,
-                     PTL_SEND_TABLE_ID,
+                     ompi_mtl_portals4.send_idx,
                      match_bits,
                      0,
                      ptl_request,
@@ -261,7 +301,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
                      length,
                      PTL_ACK_REQ,
                      endpoint->ptl_proc,
-                     PTL_SEND_TABLE_ID,
+                     ompi_mtl_portals4.send_idx,
                      match_bits,
                      0,
                      ptl_request,
@@ -271,8 +311,18 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
-	PtlMEUnlink(ptl_request->me_h);
-        PtlMDRelease(ptl_request->md_h);
+	ret = PtlMEUnlink(ptl_request->me_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: PtlMEUnlink failed: %d",
+                                __FILE__, __LINE__, ret);
+        }
+        ret = PtlMDRelease(ptl_request->md_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: PtlMDRelease failed: %d",
+                                __FILE__, __LINE__, ret);
+        }
         return ompi_mtl_portals4_get_error(ret);
     }
 
@@ -320,7 +370,7 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localra
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
-                      PTL_READ_TABLE_ID,
+                      ompi_mtl_portals4.read_idx,
                       &me,
                       PTL_PRIORITY_LIST,
                       ptl_request,
@@ -329,7 +379,12 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localra
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMEAppend failed: %d",
                             __FILE__, __LINE__, ret);
-        PtlMDRelease(ptl_request->md_h);
+        ret = PtlMDRelease(ptl_request->md_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: PtlMDRelease failed: %d",
+                                __FILE__, __LINE__, ret);
+        }
         return ompi_mtl_portals4_get_error(ret);
     }
 
@@ -338,7 +393,7 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localra
                  length,
                  PTL_ACK_REQ,
                  endpoint->ptl_proc,
-                 PTL_SEND_TABLE_ID,
+                 ompi_mtl_portals4.send_idx,
                  match_bits,
                  0,
                  ptl_request,
@@ -347,8 +402,18 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localra
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlPut failed: %d",
                             __FILE__, __LINE__, ret);
-	PtlMEUnlink(ptl_request->me_h);
-        PtlMDRelease(ptl_request->md_h);
+	ret = PtlMEUnlink(ptl_request->me_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: PtlMEUnlink failed: %d",
+                                __FILE__, __LINE__, ret);
+        }
+        ret = PtlMDRelease(ptl_request->md_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: PtlMDRelease failed: %d",
+                                __FILE__, __LINE__, ret);
+        }
         return ompi_mtl_portals4_get_error(ret);
     }
 
