@@ -86,7 +86,7 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     me.ignore_bits = ignore_bits;
 
     ret = PtlMEAppend(block->mtl->ni_h,
-                      PTL_SEND_TABLE_ID,
+                      ompi_mtl_portals4.send_idx,
                       &me,
                       PTL_OVERFLOW,
                       block,

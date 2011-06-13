@@ -42,6 +42,9 @@ struct mca_mtl_portals4_module_t {
     int recv_short_num;
     int queue_size;
 
+    ptl_pt_index_t send_idx;
+    ptl_pt_index_t read_idx;
+
     /* global handles */
     ptl_handle_ni_t ni_h;
     ptl_handle_eq_t eq_h;
@@ -60,8 +63,8 @@ typedef struct mca_mtl_portals4_module_t mca_mtl_portals4_module_t;
 
 extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 
-#define PTL_SEND_TABLE_ID 2
-#define PTL_READ_TABLE_ID 4
+#define REQ_SEND_TABLE_ID 2
+#define REQ_READ_TABLE_ID 3
 
 
 /* match/ignore bit manipulation

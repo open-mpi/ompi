@@ -78,18 +78,23 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                              0,
                              md.length,
                              ev->initiator,
-                             PTL_READ_TABLE_ID,
+                             ompi_mtl_portals4.read_idx,
                              ev->hdr_data,
                              ompi_mtl_portals4.eager_limit,
                              ptl_request);
                 if (PTL_OK != ret) {
-                    PtlMDRelease(ptl_request->md_h);
-                    if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
                     opal_output(ompi_mtl_base_output,
                                 "%s:%d: PtlGet failed: %d",
                                 __FILE__, __LINE__, ret);
+                    ret = PtlMDRelease(ptl_request->md_h);
+                    if (PTL_OK != ret) {
+                        opal_output(ompi_mtl_base_output,
+                                    "%s:%d: PtlMDRelease failed: %d",
+                                    __FILE__, __LINE__, ret);
+                    }
+                    if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
                     ptl_request->super.ompi_req->req_status.MPI_ERROR = 
-                        ompi_mtl_portals4_get_error(ret);;
+                        ompi_mtl_portals4_get_error(ret);
                     ptl_request->super.completion_callback(&ptl_request->super);
                     return OMPI_SUCCESS;
                 }
@@ -159,9 +164,19 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                         __FILE__, __LINE__, ret);
             ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
         }
-        PtlMDRelease(ptl_request->md_h);
+        ret = PtlMDRelease(ptl_request->md_h);
+        if (PTL_OK != ret) {
+            opal_output(ompi_mtl_base_output,
+                        "%s:%d: PtlMDRelease failed: %d",
+                        __FILE__, __LINE__, ret);
+        }
         if (ompi_mtl_portals4.protocol == triggered) {
-            PtlCTFree(ptl_request->ct_h);
+            ret = PtlCTFree(ptl_request->ct_h);
+            if (PTL_OK != ret) {
+                opal_output(ompi_mtl_base_output,
+                            "%s:%d: PtlCTFree failed: %d",
+                            __FILE__, __LINE__, ret);
+            }
         }
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "recv completed"));
         ptl_request->super.completion_callback(&ptl_request->super);
@@ -211,7 +226,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                  0,
                                  PTL_NO_ACK_REQ,
                                  ev->initiator,
-                                 PTL_READ_TABLE_ID,
+                                 ompi_mtl_portals4.read_idx,
                                  ev->hdr_data,
                                  0,
                                  NULL,
@@ -282,16 +297,21 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                              0,
                              md.length,
                              ev->initiator,
-                             PTL_READ_TABLE_ID,
+                             ompi_mtl_portals4.read_idx,
                              ev->hdr_data,
                              ev->mlength,
                              ptl_request);
                 if (PTL_OK != ret) {
-                    PtlMDRelease(ptl_request->md_h);
-                    if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
                     opal_output(ompi_mtl_base_output,
                                 "%s:%d: PtlGet failed: %d",
                                 __FILE__, __LINE__, ret);
+                    if (NULL != ptl_request->buffer_ptr) free(ptl_request->buffer_ptr);
+                    ret = PtlMDRelease(ptl_request->md_h);
+                    if (PTL_OK != ret) {
+                        opal_output(ompi_mtl_base_output,
+                                    "%s:%d: PtlMDRelease failed: %d",
+                                    __FILE__, __LINE__, ret);
+                    }
                     ptl_request->super.ompi_req->req_status.MPI_ERROR = 
                         ompi_mtl_portals4_get_error(ret);;
                     ptl_request->super.completion_callback(&ptl_request->super);
@@ -368,11 +388,17 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->delivery_len = length;
     ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "Recv %d from %x,%x of length %d\n",
-                         endpoint->recv_count,
-                         endpoint->ptl_proc.phys.nid, endpoint->ptl_proc.phys.pid, 
-                         (int)length));
+    if (MPI_ANY_SOURCE == src) {
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "ANY_SOURCE Recv of length %d\n",
+                             (int)length));
+    } else {
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "Recv %d from %x,%x of length %d\n",
+                             endpoint->recv_count,
+                             endpoint->ptl_proc.phys.nid, endpoint->ptl_proc.phys.pid, 
+                             (int)length));
+    }
 
     if (ompi_mtl_portals4.protocol == triggered && length > ompi_mtl_portals4.eager_limit) {
         ptl_md_t md;
@@ -406,7 +432,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
                               ompi_mtl_portals4.eager_limit, 
                               length - ompi_mtl_portals4.eager_limit, 
                               remote_proc,
-                              PTL_READ_TABLE_ID,
+                              ompi_mtl_portals4.read_idx,
                               endpoint->recv_count,
                               ompi_mtl_portals4.eager_limit,
                               ptl_request,
@@ -438,7 +464,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     me.ignore_bits = ignore_bits;
 
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
-                      PTL_SEND_TABLE_ID,
+                      ompi_mtl_portals4.send_idx,
                       &me,
                       PTL_PRIORITY_LIST,
                       ptl_request,
