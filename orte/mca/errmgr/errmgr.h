@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -173,6 +174,15 @@ typedef void (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ..
 __opal_attribute_format_funcptr__(__printf__, 2, 3);
 
 /**
+ * Alert - abort peers
+ *  This function is called when a process wants to abort one or more peer processes.
+ *  For example, MPI_Abort(comm) will use this function to terminate peers in the
+ *  communicator group before aborting itself.
+ */
+typedef int (*orte_errmgr_base_module_abort_peers_fn_t)(orte_process_name_t *procs,
+                                                        orte_std_cntr_t num_procs);
+
+/**
  * Alert - process aborted
  * This function is called by the PLM when a remote process aborts during execution. Actions taken
  * in response to the abnormal termination of a remote application process will vary across
@@ -254,6 +264,7 @@ struct orte_errmgr_base_module_2_3_0_t {
 
     orte_errmgr_base_module_log_fn_t                         log;
     orte_errmgr_base_module_abort_fn_t                       abort;
+    orte_errmgr_base_module_abort_peers_fn_t                 abort_peers;
 
     /** Actual process failure notification */
     orte_errmgr_base_module_update_state_fn_t                update_state;

@@ -8,6 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -84,6 +85,8 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 
 /* process called "errmgr.abort" */
 #define ORTE_DAEMON_ABORT_CALLED            (orte_daemon_cmd_flag_t) 27
+/* process called "errmgr.abort_procs" */
+#define ORTE_DAEMON_ABORT_PROCS_CALLED      (orte_daemon_cmd_flag_t) 28
 
 /*
  * List object to locally store the process names and pids of

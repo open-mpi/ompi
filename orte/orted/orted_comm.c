@@ -13,6 +13,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -84,6 +85,8 @@ static char *get_orted_comm_cmd_str(int command);
 
 /* instantiate this - it is shared via orted.h */
 struct timeval orte_daemon_msg_recvd;
+
+static opal_pointer_array_t *procs_prev_ordered_to_terminate = NULL;
 
 static struct timeval mesg_recvd={0,0};
 
@@ -364,6 +367,10 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
     opal_pointer_array_t procarray;
     orte_proc_t *proct;
     char *cmd_str = NULL;
+    opal_pointer_array_t *procs_to_kill = NULL;
+    orte_std_cntr_t num_procs, num_new_procs = 0, p;
+    orte_proc_t *cur_proc = NULL, *prev_proc = NULL;
+    bool found = false;
 
     /* unpack the command */
     n = 1;
@@ -496,6 +503,89 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
         orte_odls_base_default_report_abort(sender);
+        break;
+
+    case ORTE_DAEMON_ABORT_PROCS_CALLED:
+        if (orte_debug_daemons_flag) {
+            opal_output(0, "%s orted_cmd: received abort_procs report",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        }
+
+        /* Number of processes */
+        n = 1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_procs, &n, ORTE_STD_CNTR)) ) {
+            ORTE_ERROR_LOG(ret);
+            goto CLEANUP;
+        }
+
+        /* Retrieve list of processes */
+        procs_to_kill = OBJ_NEW(opal_pointer_array_t);
+        opal_pointer_array_init(procs_to_kill, num_procs, INT32_MAX, 2);
+
+        /* Keep track of previously terminated, so we don't keep ordering the
+         * same processes to die.
+         */
+        if( NULL == procs_prev_ordered_to_terminate ) {
+            procs_prev_ordered_to_terminate = OBJ_NEW(opal_pointer_array_t);
+            opal_pointer_array_init(procs_prev_ordered_to_terminate, num_procs+1, INT32_MAX, 8);
+        }
+
+        num_new_procs = 0;
+        for( i = 0; i < num_procs; ++i) {
+            cur_proc = OBJ_NEW(orte_proc_t);
+
+            n = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(cur_proc->name), &n, ORTE_NAME)) ) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+
+            /* See if duplicate */
+            found = false;
+            for( p = 0; p < procs_prev_ordered_to_terminate->size; ++p) {
+                if( NULL == (prev_proc = (orte_proc_t*)opal_pointer_array_get_item(procs_prev_ordered_to_terminate, p))) {
+                    continue;
+                }
+                if(OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                                               &cur_proc->name,
+                                                               &prev_proc->name) ) {
+                    found = true;
+                    break;
+                }
+            }
+
+            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                                 "%s orted:comm:abort_procs Application %s requests term. of %s (%2d of %2d) %3s.",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(sender),
+                                 ORTE_NAME_PRINT(&(cur_proc->name)), i, num_procs,
+                                 (found ? "Dup" : "New") ));
+
+            /* If not a duplicate, then add to the to_kill list */
+            if( !found ) {
+                opal_pointer_array_add(procs_to_kill, (void*)cur_proc);
+                OBJ_RETAIN(cur_proc);
+                opal_pointer_array_add(procs_prev_ordered_to_terminate, (void*)cur_proc);
+                num_new_procs++;
+            }
+        }
+
+        /*
+         * Send the request to termiante
+         */
+        if( num_new_procs > 0 ) {
+            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                                 "%s orted:comm:abort_procs Terminating application requested processes (%2d / %2d).",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 num_new_procs, num_procs));
+            orte_plm.terminate_procs(procs_to_kill);
+        } else {
+            OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                                 "%s orted:comm:abort_procs No new application processes to terminating from request (%2d / %2d).",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 num_new_procs, num_procs));
+        }
+
         break;
 
         /****    TREE_SPAWN   ****/
@@ -1270,6 +1360,10 @@ static char *get_orted_comm_cmd_str(int command)
         return strdup("ORTE_DAEMON_SYNC_WANT_NIDMAP");
     case ORTE_DAEMON_TOP_CMD:
         return strdup("ORTE_DAEMON_TOP_CMD");
+    case ORTE_DAEMON_ABORT_CALLED:
+        return strdup("ORTE_DAEMON_ABORT_CALLED");
+    case ORTE_DAEMON_ABORT_PROCS_CALLED:
+        return strdup("ORTE_DAEMON_ABORT_PROCS_CALLED");
     default:
         return strdup("Unknown Command!");
     }

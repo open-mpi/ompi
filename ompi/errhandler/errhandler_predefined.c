@@ -12,6 +12,7 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +32,7 @@
 
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
@@ -197,13 +199,15 @@ static void backend_fatal_aggregate(char *type,
                        "mpi_errors_are_fatal", false,
                        prefix, (NULL == arg) ? "" : "in",
                        (NULL == arg) ? "" : arg,
-                       prefix, type, name, prefix, err_msg, prefix);
+                       prefix, ORTE_PROC_MY_NAME->jobid, ORTE_PROC_MY_NAME->vpid,
+                       prefix, type, name, prefix, err_msg, prefix, type, prefix);
     } else if (NULL == name) {
         orte_show_help("help-mpi-errors.txt", 
                        "mpi_errors_are_fatal unknown handle", false,
                        prefix, (NULL == arg) ? "" : "in",
                        (NULL == arg) ? "" : arg,
-                       prefix, type, prefix, err_msg, prefix);
+                       prefix, ORTE_PROC_MY_NAME->jobid, ORTE_PROC_MY_NAME->vpid,
+                       prefix, type, prefix, err_msg, prefix, type, prefix);
     }
 
     if (err_msg_need_free) {
@@ -302,7 +306,10 @@ static void backend_fatal_no_aggregate(char *type,
                 out("*** Error code: %d (no associated error message)\n", intbuf);
             }
         }
-        out("*** MPI_ERRORS_ARE_FATAL: your MPI job will now abort\n", NULL);
+        /* out("*** MPI_ERRORS_ARE_FATAL: your MPI job will now abort\n", NULL); */
+        out("*** MPI_ERRORS_ARE_FATAL (processes in this %s will now abort,\n", type);
+        out("***    and potentially your MPI job)\n", NULL);
+
     }
     va_end(arglist);
 }

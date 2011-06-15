@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -862,22 +863,30 @@ static orte_proc_t* find_proc(orte_process_name_t *proc)
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
 {
     orte_proc_t *pdata;
-    
+
+    if( NULL == proc ) {
+        return ORTE_VPID_INVALID;
+    }
+
     if( ORTE_JOBID_IS_DAEMON(proc->jobid) ) {
         return proc->vpid;
     }
 
     /* get the job data */
-     if (NULL == (pdata = find_proc(proc))) {
-         return ORTE_VPID_INVALID;
-     }
-     
+    if (NULL == (pdata = find_proc(proc))) {
+        return ORTE_VPID_INVALID;
+    }
+
+    if( NULL == pdata->node->daemon ) {
+        return ORTE_VPID_INVALID;
+    }
+
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:hnp: proc %s is hosted by daemon %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc),
                          ORTE_VPID_PRINT(pdata->node->daemon->name.vpid)));
-    
+
     return pdata->node->daemon->name.vpid;
 }
 

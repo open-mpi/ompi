@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2009-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- *
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -89,6 +89,7 @@ orte_errmgr_base_module_t orte_errmgr_orted_module = {
     finalize,
     orte_errmgr_base_log,
     orte_errmgr_base_abort,
+    orte_errmgr_base_abort_peers,
     update_state,
     predicted_fault,
     suggest_map_targets,

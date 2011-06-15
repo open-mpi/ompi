@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -279,7 +280,9 @@ int orte_ess_base_app_finalize(void)
     orte_filem_base_close();
     
     orte_wait_finalize();
-    
+
+    orte_errmgr_base_close();
+
     /* now can close the rml and its friendly group comm */
     orte_grpcomm_base_close();
     /* close the multicast */
