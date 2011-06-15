@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -65,6 +65,8 @@ static orte_errmgr_base_module_t global_module = {
     orte_errmgr_base_log,
     /** Forced Abort */
     orte_errmgr_base_abort,
+    /** Peer Force Abort */
+    orte_errmgr_base_abort_peers,
     /** Update State */
     orte_errmgr_hnp_global_update_state,
     /* Predicted Fault */

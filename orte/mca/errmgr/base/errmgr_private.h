@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,6 +68,8 @@ ORTE_DECLSPEC void orte_errmgr_base_log(int error_code, char *filename, int line
 ORTE_DECLSPEC void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     __opal_attribute_format__(__printf__, 2, 3)
     __opal_attribute_noreturn__;
+ORTE_DECLSPEC int orte_errmgr_base_abort_peers(orte_process_name_t *procs,
+                                               orte_std_cntr_t num_procs);
 
 ORTE_DECLSPEC int orte_errmgr_base_update_state(orte_jobid_t job,
                                                 orte_job_state_t jobstate,

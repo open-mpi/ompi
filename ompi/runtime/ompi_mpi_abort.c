@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -52,7 +53,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                int errcode,
                bool kill_remote_of_intercomm)
 {
-    int count = 0, i;
+    int count = 0, i, ret;
     char *msg, *host, hostname[MAXHOSTNAMELEN];
     pid_t pid = 0;
     orte_process_name_t *abort_procs;
@@ -200,12 +201,20 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     }
 
     if (nabort_procs > 0) {
-#if 0
-        int ret = orte_errmgr.abort_procs_request(abort_procs, nabort_procs);
-        if (OMPI_SUCCESS != ret) {
-            orte_errmgr.abort(ret, "Open MPI failed to abort procs as requested (%d). Exiting.", ret);
+        /* This must be implemented for MPI_Abort() to work according to the
+         * standard language for a 'high-quality' implementation.
+         * It would be nifty if we could differentiate between the
+         * abort scenarios:
+         *      - MPI_Abort()
+         *      - MPI_ERRORS_ARE_FATAL
+         *      - Victim of MPI_Abort()
+         */
+        /*
+         * Abort peers in this communicator group. Does not include self.
+         */
+        if( OMPI_SUCCESS != (ret = orte_errmgr.abort_peers(abort_procs, nabort_procs)) ) {
+            orte_errmgr.abort(ret, "Open MPI failed to abort all of the procs requested (%d).", ret);
         }
-#endif
     }
 
     /* now that we've aborted everyone else, gracefully die. */
