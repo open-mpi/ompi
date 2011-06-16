@@ -176,42 +176,17 @@ static int init(void)
     /* flag that we are unreliable and need help */
     orte_rmcast_base.unreliable_xport = true;
 
-    /* setup the respective public address channel */
-    if (ORTE_PROC_IS_TOOL) {
-        /* tools only open the sys channel */
-        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_SYS_CHANNEL, "system",
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_SCHEDULER) {
+        /* open the system channel - it will be our input/output channel as well */
+        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_SYS_CHANNEL,
+                                               "SYSTEM",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
-        orte_rmcast_base.my_input_channel = NULL;
-    } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_SCHEDULER) {
-        /* daemons and hnp open the sys and data server channels */
-        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_SYS_CHANNEL, "system",
-                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }        
-        orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
-        orte_rmcast_base.my_input_channel = NULL;
-        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_DATA_SERVER_CHANNEL, "data-server",
-                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* open the error reporting channel */
-         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_ERROR_CHANNEL, "error",
-                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* open the app public channel so we can hear app announcements and commands */
-        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_APP_PUBLIC_CHANNEL, "app-announce",
-                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+        orte_rmcast_base.my_input_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
+        orte_rmcast_base.my_output_channel = orte_rmcast_base.my_input_channel;
+
         /* open the heartbeat channel */
         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_HEARTBEAT_CHANNEL, "heartbeat",
                                                NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
@@ -219,24 +194,7 @@ static int init(void)
             return rc;
         }
     } else if (ORTE_PROC_IS_APP) {
-        /* apps open the app public and data server channels */
-        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_APP_PUBLIC_CHANNEL, "app-announce",
-                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_DATA_SERVER_CHANNEL, "data-server",
-                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* open the error reporting channel */
-         if (ORTE_SUCCESS != (rc = open_channel(ORTE_RMCAST_ERROR_CHANNEL, "error",
-                                               NULL, -1, NULL, ORTE_RMCAST_BIDIR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-         /* finally, setup our grp xmit/recv channels, if given */
+        /* setup our grp xmit/recv channels, if given */
         if (NULL != orte_rmcast_base.my_group_name) {
             if (ORTE_SUCCESS != (rc = open_channel(orte_rmcast_base.my_group_number,
                                                    "recv",
@@ -253,9 +211,6 @@ static int init(void)
             }
             orte_rmcast_base.my_output_channel = (rmcast_base_channel_t*)opal_list_get_last(&orte_rmcast_base.channels);
         }
-    } else {
-        opal_output(0, "rmcast:udp:init - unknown process type");
-        return ORTE_ERR_SILENT;
     }
 
     /* setup the recv for missed message replacement */
