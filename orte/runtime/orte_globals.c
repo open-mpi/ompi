@@ -887,6 +887,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->pid = 0;
     proc->local_rank = ORTE_LOCAL_RANK_INVALID;
     proc->node_rank = ORTE_NODE_RANK_INVALID;
+    proc->app_rank = -1;
     proc->last_errmgr_state = ORTE_PROC_STATE_UNDEF;
     proc->state = ORTE_PROC_STATE_UNDEF;
     proc->app_idx = 0;

@@ -614,7 +614,8 @@ int orte_rmaps_base_compute_local_ranks(orte_job_t *jdata)
     orte_vpid_t minv, minv2;
     orte_local_rank_t local_rank;
     orte_job_map_t *map;
-    
+    orte_app_context_t *app;
+
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                          "%s rmaps:base:compute_usage",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -681,6 +682,24 @@ int orte_rmaps_base_compute_local_ranks(orte_job_t *jdata)
                 psave2->node_rank = node->next_node_rank;
                 node->next_node_rank++;
             }
+        }
+    }
+
+    /* compute app_rank */
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        k=0;
+        /* loop thru all procs in job to find those from this app_context */
+        for (j=0; j < jdata->procs->size; j++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
+                continue;
+            }
+            if (proc->app_idx != app->idx) {
+                continue;
+            }
+            proc->app_rank = k++;
         }
     }
 
