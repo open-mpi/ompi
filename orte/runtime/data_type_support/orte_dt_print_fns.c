@@ -497,8 +497,8 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
 
     asprintf(&tmp, "\n%sData for proc: %s", pfx2, ORTE_NAME_PRINT(&src->name));
     
-    asprintf(&tmp2, "%s\n%s\tPid: %ld\tLocal rank: %lu\tNode rank: %lu", tmp, pfx2,
-             (long)src->pid, (unsigned long)src->local_rank, (unsigned long)src->node_rank);
+    asprintf(&tmp2, "%s\n%s\tPid: %ld\tLocal rank: %lu\tNode rank: %lu\tApp rank: %d", tmp, pfx2,
+             (long)src->pid, (unsigned long)src->local_rank, (unsigned long)src->node_rank, src->app_rank);
     free(tmp);
     tmp = tmp2;
     

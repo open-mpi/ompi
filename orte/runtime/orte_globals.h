@@ -460,6 +460,11 @@ struct orte_proc_t {
      * know which static IP port to use
      */
     orte_node_rank_t node_rank;
+    /* rank of this proc within its app context - this
+     * will just equal its vpid for single app_context
+     * applications
+     */
+    int32_t app_rank;
     /* Last state used to trigger the errmgr for this proc */
     orte_proc_state_t last_errmgr_state;
     /* process state */
