@@ -84,7 +84,7 @@ ompi_mtl_portals4_component_open(void)
                            "Number of short message receive blocks",
                            false,
                            false,
-                           8,
+                           32,
                            &ompi_mtl_portals4.recv_short_num);
 
     mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
@@ -92,7 +92,7 @@ ompi_mtl_portals4_component_open(void)
                            "Size of short message receive blocks",
                            false,
                            false,
-                           1024 * 1024,
+                           2 * 1024 * 1024,
                            &tmp);
     ompi_mtl_portals4.recv_short_size = tmp;
 
