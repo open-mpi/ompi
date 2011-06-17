@@ -108,6 +108,11 @@ struct orte_proc_info_t {
     char *sock_stdin;                   /**< Path name to temp file for stdin. */
     char *sock_stdout;                  /**< Path name to temp file for stdout. */
     char *sock_stderr;                  /**< Path name to temp file for stderr. */
+    /* name/instance info for debug support */
+    char *job_name;
+    char *job_instance;
+    char *executable;
+    int32_t app_rank;
 };
 typedef struct orte_proc_info_t orte_proc_info_t;
 

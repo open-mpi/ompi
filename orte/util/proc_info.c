@@ -59,7 +59,11 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .proc_session_dir =     */   NULL,
     /*  .sock_stdin =           */   NULL,
     /*  .sock_stdout =          */   NULL,
-    /*  .sock_stderr =          */   NULL
+    /*  .sock_stderr =          */   NULL,
+    /*  .job_name =             */   NULL,
+    /*  .job_instance =         */   NULL,
+    /*  .executable =           */   NULL,
+    /*  .app_rank =             */   -1
 };
 
 static bool init=false;
@@ -140,6 +144,23 @@ int orte_proc_info(void)
                                 true, false, 0, &tmp);
     orte_process_info.num_restarts = tmp;
     
+    mca_base_param_reg_string_name("orte", "job_name",
+                                   "Job name",
+                                   true, false, NULL,  &orte_process_info.job_name);
+
+    mca_base_param_reg_string_name("orte", "job_instance",
+                                   "Job instance",
+                                   true, false, NULL,  &orte_process_info.job_instance);
+
+    mca_base_param_reg_string_name("orte", "executable",
+                                   "Executable",
+                                   true, false, NULL,  &orte_process_info.executable);
+
+    mca_base_param_reg_int_name("orte", "app_rank",
+                                "Rank of this proc within its app_context",
+                                true, false, 0, &tmp);
+    orte_process_info.app_rank = tmp;
+
     /* setup the sync buffer */
     orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
     
