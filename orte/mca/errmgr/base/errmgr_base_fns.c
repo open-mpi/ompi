@@ -59,6 +59,7 @@
 
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
@@ -190,9 +191,17 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
         return;
     }
     
-    opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                errstring, filename, line);
+    if (NULL != orte_process_info.job_name) {
+        opal_output(0, "[[%s][%s][%s][%d]] ORTE_ERROR_LOG: %s in file %s at line %d",
+                    orte_process_info.job_name,
+                    (NULL == orte_process_info.job_instance) ? "NULL" : orte_process_info.job_instance,
+                    (NULL == orte_process_info.executable) ? "NULL" : orte_process_info.executable,
+                    orte_process_info.app_rank, errstring, filename, line);
+    } else {
+        opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    errstring, filename, line);
+    }
 }
 
 void orte_errmgr_base_abort(int error_code, char *fmt, ...)
