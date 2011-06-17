@@ -58,6 +58,10 @@ typedef uint32_t orte_rmcast_channel_t;
 #define ORTE_RMCAST_RECV    0x02
 #define ORTE_RMCAST_BIDIR   0x03
 
+/* define channel flags */
+#define ORTE_RMCAST_MY_INPUT   0x10
+#define ORTE_RMCAST_MY_OUTPUT  0x20
+
 /* Message matching tag */
 typedef int32_t orte_rmcast_tag_t;
 #define ORTE_RMCAST_TAG_T   OPAL_INT32

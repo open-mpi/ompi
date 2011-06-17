@@ -722,6 +722,16 @@ static int open_channel(orte_rmcast_channel_t channel, char *name,
     opal_list_append(&orte_rmcast_base.channels, &chan->item);
     ORTE_RELEASE_THREAD(&orte_rmcast_base.main_ctl);
     
+    /* if this is my input, set that value */
+    if (ORTE_RMCAST_MY_INPUT & direction) {
+        orte_rmcast_base.my_input_channel = chan;
+    }
+
+    /* if this is my output, set that value */
+    if (ORTE_RMCAST_MY_OUTPUT & direction) {
+        orte_rmcast_base.my_output_channel = chan;
+    }
+
     OPAL_OUTPUT_VERBOSE((2, orte_rmcast_base.rmcast_output,
                          "%s rmcast:udp opening new channel %s:%s network %03d.%03d.%03d.%03d port %d for%s%s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -809,7 +819,7 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
                          (ORTE_RMCAST_RECV & direction) ? " RECV" : " ",
                          (ORTE_RMCAST_XMIT & direction) ? " XMIT" : " "));
     
-    if (0 > chan->xmit && ORTE_RMCAST_XMIT & direction) {
+    if (0 > chan->xmit && (ORTE_RMCAST_XMIT & direction)) {
         /* create a xmit socket */
         if (ORTE_SUCCESS != (rc = setup_socket(&xmitsd, chan, false))) {
             ORTE_ERROR_LOG(rc);
@@ -818,7 +828,7 @@ static int setup_channel(rmcast_base_channel_t *chan, uint8_t direction)
         chan->xmit = xmitsd;
     }
     
-    if (0 > chan->recv && ORTE_RMCAST_RECV & direction) {
+    if (0 > chan->recv && (ORTE_RMCAST_RECV & direction)) {
         /* create a recv socket */
         if (ORTE_SUCCESS != (rc = setup_socket(&recvsd, chan, true))) {
             ORTE_ERROR_LOG(rc);
