@@ -95,18 +95,14 @@ static OBJ_CLASS_INSTANCE(avail_coll_t, opal_list_item_t, NULL, NULL);
  */
 int mca_coll_base_comm_select(ompi_communicator_t * comm)
 {
-    int ret;
-    char name[MPI_MAX_OBJECT_NAME + 32];
     opal_list_t *selectable;
     opal_list_item_t *item;
+    int ret;
 
     /* Announce */
-    snprintf(name, sizeof(name), "%s (cid %d)", comm->c_name,
-             comm->c_contextid);
-    name[sizeof(name) - 1] = '\0';
     opal_output_verbose(10, mca_coll_base_output,
-                        "coll:base:comm_select: new communicator: %s",
-                        name);
+                        "coll:base:comm_select: new communicator: %s (cid %d)",
+                        comm->c_name, comm->c_contextid);
 
     /* Initialize all the relevant pointers, since they're used as
      * sentinel values */
