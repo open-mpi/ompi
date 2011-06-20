@@ -34,7 +34,9 @@
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
-
+#if WANT_SLURM_PMI_SUPPORT
+#include <slurm/pmi.h>
+#endif
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
@@ -172,13 +174,22 @@ static int rte_init(void)
     free(cs_env);
     free(string_key);
 
+#if WANT_SLURM_PMI_SUPPORT
+    /* get our rank from PMI */
+    if (PMI_SUCCESS != PMI_Get_rank(&i)) {
+        error = "PMI_Get_rank failed";
+        goto error;
+    }
+    ORTE_PROC_MY_NAME->vpid = i;
+#else
     /* get the slurm procid - this will be our vpid */
     if (NULL == (envar = getenv("SLURM_PROCID"))) {
         error = "could not get SLURM_PROCID";
         goto error;
     }
     ORTE_PROC_MY_NAME->vpid = strtol(envar, NULL, 10);
-    
+#endif
+
     /* get our local rank */
     if (NULL == (envar = getenv("SLURM_LOCALID"))) {
         error = "could not get SLURM_LOCALID";
@@ -190,17 +201,32 @@ static int rte_init(void)
                          "%s local rank %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          local_rank));
-    
+#if WANT_SLURM_PMI_SUPPORT
+    if (PMI_SUCCESS != PMI_Get_universe_size(&i)) {
+        error = "PMI_Get_universe_size failed";
+        goto error;
+    }
+    orte_process_info.num_procs = i;
+#else
     /* get the number of procs in this job */
     if (NULL == (envar = getenv("SLURM_STEP_NUM_TASKS"))) {
         error = "could not get SLURM_STEP_NUM_TASKS";
         goto error;
     }
     orte_process_info.num_procs = strtol(envar, NULL, 10);
-    
+#endif
+
+#if WANT_SLURM_PMI_SUPPORT
+    if (PMI_SUCCESS != PMI_Get_appnum(&i)) {
+        error = "PMI_Get_appnum failed";
+        goto error;
+    }
+    orte_process_info.app_num = i;
+#else
     /* set the app_num so that MPI attributes get set correctly */
     orte_process_info.app_num = 1;
-    
+#endif
+
     /* if this is SLURM 2.0 or above, get our port
      * assignments for use in the OOB
      */
