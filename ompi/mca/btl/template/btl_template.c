@@ -97,12 +97,12 @@ int mca_btl_template_add_procs(
         /*
          * Check to make sure that the peer has at least as many interface 
          * addresses exported as we are trying to use. If not, then 
-         * don't bind this PTL instance to the proc.
+         * don't bind this BTL instance to the proc.
          */
 
         OPAL_THREAD_LOCK(&template_proc->proc_lock);
 
-        /* The btl_proc datastructure is shared by all TEMPLATE PTL
+        /* The btl_proc datastructure is shared by all TEMPLATE BTL
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the btl_proc.
          */
