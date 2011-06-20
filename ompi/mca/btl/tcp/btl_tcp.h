@@ -108,10 +108,10 @@ struct mca_btl_tcp_module_t {
     mca_btl_base_module_t  super;  /**< base BTL interface */
     uint16_t           tcp_ifkindex; /** <BTL kernel interface index */
 #if 0
-    int                tcp_ifindex; /**< PTL interface index */
+    int                tcp_ifindex; /**< BTL interface index */
 #endif
-    struct sockaddr_storage tcp_ifaddr; /**< PTL interface address */
-    uint32_t           tcp_ifmask;  /**< PTL interface netmask */
+    struct sockaddr_storage tcp_ifaddr; /**< BTL interface address */
+    uint32_t           tcp_ifmask;  /**< BTL interface netmask */
     opal_list_t        tcp_endpoints;
 #if MCA_BTL_TCP_STATISTICS
     size_t tcp_bytes_sent;
