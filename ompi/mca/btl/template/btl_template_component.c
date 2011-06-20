@@ -28,6 +28,23 @@
 #include "btl_template_frag.h"
 #include "btl_template_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
+
+/**
+ * Register any MCA parameters associated with this component
+ */
+static int mca_btl_template_component_register(void);
+
+/**
+ * Make initial determination whether this component can run or not
+ */
+static int mca_btl_template_component_open(void);
+
+/**
+ * Any final cleanup before being unloaded.
+ */
+static int mca_btl_template_component_close(void);
+
+
 mca_btl_template_component_t mca_btl_template_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -41,7 +58,9 @@ mca_btl_template_component_t mca_btl_template_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_btl_template_component_open,  /* component open */
-            mca_btl_template_component_close  /* component close */
+            mca_btl_template_component_close,  /* component close */
+            NULL, /* component query */
+            mca_btl_template_component_register, /* component register */
         },
         {
             /* The component is not checkpoint ready */
@@ -63,7 +82,7 @@ static inline char* mca_btl_template_param_register_string(
                                                      const char* default_value)
 {
     char *param_value;
-    int id = mca_base_param_register_string("btl","ib",param_name,NULL,default_value);
+    int id = mca_base_param_register_string("btl","template",param_name,NULL,default_value);
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
@@ -72,21 +91,19 @@ static inline int mca_btl_template_param_register_int(
         const char* param_name, 
         int default_value)
 {
-    int id = mca_base_param_register_int("btl","ib",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("btl","template",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
 }
 
-/*
- *  Called by MCA framework to open the component, registers
- *  component parameters.
- */
-
-int mca_btl_template_component_open(void)
+static int mca_btl_template_component_open(void)
 {
+    return OMPI_SUCCESS;
+}
 
-    
+static int mca_btl_template_component_register(void)
+{    
     /* initialize state */
     mca_btl_template_component.template_num_btls=0;
     mca_btl_template_component.template_btls=NULL;
@@ -126,7 +143,7 @@ int mca_btl_template_component_open(void)
  * component cleanup - sanity checking of queue lengths
  */
 
-int mca_btl_template_component_close(void)
+static int mca_btl_template_component_close(void)
 {
     return OMPI_SUCCESS;
 }
