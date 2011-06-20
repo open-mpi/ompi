@@ -255,9 +255,9 @@ sub ignored {
         close(UNIGNORE);
         
         $ignored = 0
-            if ($unignore =~ /^$username$/ ||
-                $unignore =~ /^$username\@$hostname$/ ||
-                $unignore =~ /^$username\@$full_hostname$/);
+            if ($unignore =~ /^$username$/m ||
+                $unignore =~ /^$username\@$hostname$/m ||
+                $unignore =~ /^$username\@$full_hostname$/m);
     }
 
     return $ignored;
