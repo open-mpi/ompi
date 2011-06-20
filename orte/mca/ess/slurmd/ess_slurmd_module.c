@@ -406,7 +406,11 @@ static int rte_init(void)
     free(ppn);
 
     /* ensure we pick the correct critical components */
+#if WANT_SLURM_PMI_SUPPORT
+    putenv("OMPI_MCA_grpcomm=pmi");
+#else
     putenv("OMPI_MCA_grpcomm=hier");
+#endif
     putenv("OMPI_MCA_routed=direct");
     
     /* now use the default procedure to finish my setup */
