@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -189,9 +189,8 @@ void orte_info_show_mca_params(opal_list_t *info,
                     mca_base_param_lookup_string(p->mbpp_index,
                                                  &value_string);
                     
-                    /* Can't let the char *be NULL because we
-                     * assign it to a std::string, below
-                     */
+                    /* Can't let value_string NULL because we use it
+                       below */
                     if (NULL == value_string) {
                         value_string = strdup(empty);
                     }
