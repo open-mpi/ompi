@@ -12,6 +12,8 @@
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,6 +42,7 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/carto/base/base.h"
+#include "opal/mca/shmem/base/base.h"
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/compress/base/base.h"
 #endif
@@ -428,6 +431,17 @@ opal_init(int* pargc, char*** pargv)
     }
     /* we want to tick the event library whenever possible */
     opal_progress_event_users_increment();
+
+    /* setup the shmem framework */
+    if (OPAL_SUCCESS != (ret = opal_shmem_base_open())) {
+        error = "opal_shmem_base_open";
+        goto return_error;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_shmem_base_select())) {
+        error = "opal_shmem_base_select";
+        goto return_error;
+    }
 
 #if OPAL_ENABLE_FT_CR    == 1
     /*

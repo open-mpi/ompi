@@ -194,6 +194,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "memory");
     opal_pointer_array_add(&mca_types, "paffinity");
     opal_pointer_array_add(&mca_types, "carto");
+    opal_pointer_array_add(&mca_types, "shmem");
     opal_pointer_array_add(&mca_types, "maffinity");
     opal_pointer_array_add(&mca_types, "timer");
     opal_pointer_array_add(&mca_types, "installdirs");

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -26,11 +26,12 @@
 #include <string.h>
 #endif
 
+#include "opal/align.h"
 #include "opal/util/argv.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
 #endif
-#include "orte/mca/rml/rml.h"
+
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
@@ -38,413 +39,112 @@
 
 #include "ompi/constants.h"
 #include "ompi/mca/dpm/dpm.h"
+#include "ompi/mca/mpool/sm/mpool_sm.h"
 
 #include "common_sm_rml.h"
-#include "common_sm_mmap.h"
-#if MCA_COMMON_SM_SYSV
-#include "common_sm_sysv.h"
-#endif /* MCA_COMMON_SM_SYSV */
-#if MCA_COMMON_SM_WINDOWS
-#include "common_sm_windows.h"
-#endif /* MCA_COMMON_SM_WINDOWS */
-#if MCA_COMMON_SM_POSIX
-#include "common_sm_posix.h"
-#endif /* MCA_COMMON_SM_POSIX */
 
-/**
- * ASSUMING local proc homogeneity with respect to all utilized shared memory
- * facilities. that is, if one local proc deems a particular shared memory
- * facility acceptable, then ALL local procs should be able to utilize that
+/* ASSUMING local process homogeneity with respect to all utilized shared memory
+ * facilities. that is, if one local process deems a particular shared memory
+ * facility acceptable, then ALL local processes should be able to utilize that
  * facility. as it stands, this is an important point because one process
- * dictates to all other local procs which common sm component will be selected
- * based on its own, local run-time test.
+ * dictates to all other local processes which common sm component will be
+ * selected based on its own, local run-time test.
  */
 
-static bool initialized                          = false;
-static int num_times_registered                  = 0;
-static int sysv_index                            = -1;
-static int posix_index                           = -1;
-static int common_sm_index                       = -1;
-static char **sm_argv                            = NULL;
-static char *sm_params                           = NULL;
-static mca_common_sm_init_fn_t sm_init           = NULL;
-static mca_common_sm_seg_alloc_fn_t sm_seg_alloc = NULL;
-static mca_common_sm_fini_fn_t sm_fini           = NULL;
-/* should be more than enough to store all common sm component names */
-static char sm_default[32];
-/* holds common sm help string */
-char sm_avail_help_str[OPAL_PATH_MAX];
+OBJ_CLASS_INSTANCE(
+    mca_common_sm_module_t,
+    opal_object_t,
+    NULL,
+    NULL
+);
 
-/**
- * lock to protect multiple instances of query_sm_components()
- * from being invoked simultaneously (because of rml usage).
- */
-static opal_mutex_t mutex;
-
-/* common shared memory component information */
-typedef struct
-{
-    /* flag indicating whether or not the component is available */
-    bool avail;
-    /* component name */
-    char *sm_name;
-} mca_common_sm_info_t;
-/**
- * NOTE:
- * o array position dictates the default order in which
- *   the common shared memory components will be queried.
- * o first component successfully queried gets selected.
- * o sm_name format: {component availability, "component name,"}
- *
- * if you change the order of sm_avail_table below,
- * don't forget to update mca_common_sm_comp_index_map_t.
- *
- * placing mmap before sysv in the list prevents sysv from ever being selected
- * (in the default case). this is because, at least for now, mmap's selection
- * query always succeeds. that is, sysv must be explicitly requested.
- * NOTE: mmap is the default for now.
- *
- * {component availability, component name}
- */
-static const mca_common_sm_info_t sm_avail_table[] =
-{
-    {true                     , "mmap," }, /* assume mmap is always available */
-    {(bool)MCA_COMMON_SM_POSIX, "posix,"},
-    {(bool)MCA_COMMON_SM_SYSV , "sysv," },
-    {false                    , NULL    }  /* MUST BE LAST ITEM */
-};
-/* component index enum */
-typedef enum
-{
-    MCA_COMMON_SM_COMP_INDEX_MMAP = 0,
-    MCA_COMMON_SM_COMP_INDEX_POSIX,
-    MCA_COMMON_SM_COMP_INDEX_SYSV,
-    MCA_COMMON_SM_COMP_INDEX_NONE /* MUST BE LAST ITEM */
-} mca_common_sm_comp_index_map_t;
-
-/**
- * list of RML messages that have arrived that have not yet been
+/* list of RML messages that have arrived that have not yet been
  * consumed by the thread who is looking to complete its component
  * initialization based on the contents of the RML message.
  */
 static opal_list_t pending_rml_msgs;
-
-/******************************************************************************/
-                         /* STATIC UTILITY FUNCTIONS */
-/******************************************************************************/
-
-/******************************************************************************/
-/**
- * this routine selects the common sm component that corresponds to
- * sm_component_index's value.
- *
- * @param sm_component_index index corresponding to the common sm component that
- *                           is to be selected. (IN)
+/* flag indicating whether or not pending_rml_msgs has been initialized */
+static bool pending_rml_msgs_init = false;
+/* lock to protect multiple instances of mca_common_sm_init() from being
+ * invoked simultaneously (because of RML usage).
  */
-static void
-select_common_sm_component(int sm_component_index)
+static opal_mutex_t mutex;
+/* shared memory information used for initialization and setup. */
+static opal_shmem_ds_t shmem_ds;
+/* number of local processes */
+static size_t num_local_procs = 0;
+/* indicates whether or not i'm the lowest named process */
+static bool lowest_local_proc = false;
+
+/* ////////////////////////////////////////////////////////////////////////// */
+/* static utility functions */
+/* ////////////////////////////////////////////////////////////////////////// */
+
+/* ////////////////////////////////////////////////////////////////////////// */
+static mca_common_sm_module_t *
+attach_and_init(const char *file_name,
+                size_t size_ctl_structure,
+                size_t data_seg_alignment)
 {
-    switch (sm_component_index)
-    {
-#if MCA_COMMON_SM_POSIX
-        case MCA_COMMON_SM_COMP_INDEX_POSIX:
-            sm_init = mca_common_sm_posix_init;
-            sm_seg_alloc = mca_common_sm_posix_seg_alloc;
-            sm_fini = mca_common_sm_posix_fini;
-            break;
-#endif
-        case MCA_COMMON_SM_COMP_INDEX_MMAP:
-#if !MCA_COMMON_SM_WINDOWS
-            sm_init = mca_common_sm_mmap_init;
-            sm_seg_alloc = mca_common_sm_mmap_seg_alloc;
-            sm_fini = mca_common_sm_mmap_fini;
-#else /* MCA_COMMON_SM_WINDOWS */
-            sm_init = mca_common_sm_windows_init;
-            sm_seg_alloc = mca_common_sm_windows_seg_alloc;
-            sm_fini = mca_common_sm_windows_fini;
-#endif
-            break;
-#if MCA_COMMON_SM_SYSV
-        case MCA_COMMON_SM_COMP_INDEX_SYSV:
-            sm_init = mca_common_sm_sysv_init;
-            sm_seg_alloc = mca_common_sm_sysv_seg_alloc;
-            sm_fini = mca_common_sm_sysv_fini;
-            break;
-#endif
-        case MCA_COMMON_SM_COMP_INDEX_NONE:
-            sm_init = NULL;
-            sm_seg_alloc = NULL;
-            sm_fini = NULL;
-            break;
-        default:
-            sm_init = NULL;
-            sm_seg_alloc = NULL;
-            sm_fini = NULL;
-            opal_output(0, "WARNING: invalid common sm component index.");
-            break;
+    mca_common_sm_module_t *map = NULL;
+    mca_common_sm_seg_header_t *seg = NULL;
+    unsigned char *addr = NULL;
+
+    /* map the file and initialize segment state */
+    if (NULL == (seg = (mca_common_sm_seg_header_t *)
+                       opal_shmem_segment_attach(&shmem_ds))) {
+        return NULL;
     }
+    opal_atomic_rmb();
+
+    /* set up the map object */
+    if (NULL == (map = OBJ_NEW(mca_common_sm_module_t))) {
+        ORTE_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        return NULL;
+    }
+
+    /* copy information: from ====> to */
+    opal_shmem_ds_copy(&shmem_ds, &map->shmem_ds);
+
+    /* the first entry in the file is the control structure. the first
+     * entry in the control structure is an mca_common_sm_seg_header_t
+     * element
+     */
+    map->module_seg = seg;
+
+    addr = ((unsigned char *)seg) + size_ctl_structure;
+    /* if we have a data segment (i.e., if 0 != data_seg_alignment),
+     * then make it the first aligned address after the control
+     * structure.  IF THIS HAPPENS, THIS IS A PROGRAMMING ERROR IN
+     * OPEN MPI!
+     */
+    if (0 != data_seg_alignment) {
+        addr = OPAL_ALIGN_PTR(addr, data_seg_alignment, unsigned char *);
+        /* is addr past end of the shared memory segment? */
+        if ((unsigned char *)seg + shmem_ds.seg_size < addr) {
+            orte_show_help("help-mpi-common-sm.txt", "mmap too small", 1,
+                           orte_process_info.nodename,
+                           (unsigned long)shmem_ds.seg_size,
+                           (unsigned long)size_ctl_structure,
+                           (unsigned long)data_seg_alignment);
+            return NULL;
+        }
+    }
+
+    map->module_data_addr = addr;
+    map->module_seg_addr = (unsigned char *)seg;
+
+    /* map object successfully initialized - we can safely increment
+     * seg_num_procs_attached_and_inited. this value is used by
+     * opal_shmem_unlink.
+     */
+    opal_atomic_add_size_t(&map->module_seg->seg_num_procs_inited, 1);
+    opal_atomic_wmb();
+
+    return map;
 }
 
-/******************************************************************************/
-/**
- * this routine performs a series of run-time tests that determines whether or
- * not a particular common sm component can be selected safely. once a component
- * is successfully selected, its component index is returned.
- *
- * @return index corresponding to the selected common sm component.  see
- * mca_common_sm_comp_index_map_t for valid values.
- */
-static int
-query_sm_components(void)
-{
-    int help_msg_displayed = 0;
-    int sm_component_index = MCA_COMMON_SM_COMP_INDEX_NONE;
-    int i;
-
-    if (NULL != sm_argv)
-    {
-        MCA_COMMON_SM_OUTPUT_VERBOSE("looking for available components");
-        for (i = 0; NULL != sm_argv[i]; ++i)
-        {
-            if (0 == strcasecmp(sm_argv[i], "posix"))
-            {
-#if !MCA_COMMON_SM_POSIX
-                if (!help_msg_displayed)
-                {
-                    orte_show_help("help-mpi-common-sm.txt",
-                                   "sm support",
-                                   1,
-                                   sm_argv[i]);
-                    help_msg_displayed = 1;
-                }
-#else /* MCA_COMMON_SM_POSIX */
-                MCA_COMMON_SM_OUTPUT_VERBOSE("querying posix");
-                /**
-                 * make sure that we can safely use posix sm on this system
-                 */
-                if (OMPI_SUCCESS ==
-                    mca_common_sm_posix_component_query())
-                {
-                    MCA_COMMON_SM_OUTPUT_VERBOSE("selecting posix");
-                    sm_component_index = MCA_COMMON_SM_COMP_INDEX_POSIX;
-                    break;
-                }
-                else /* let the user know that we tried posix and failed */
-                {
-                    MCA_COMMON_SM_OUTPUT_VERBOSE("cannot select posix");
-                    orte_show_help("help-mpi-common-sm.txt",
-                                   "sm rt test fail",
-                                   1,
-                                   "Posix");
-                }
-#endif
-            }
-            else if (0 == strcasecmp(sm_argv[i], "mmap"))
-            {
-                MCA_COMMON_SM_OUTPUT_VERBOSE("selecting mmap");
-                /* there is no run-time test for mmap, so just select it */
-                sm_component_index = MCA_COMMON_SM_COMP_INDEX_MMAP;
-                break;
-            }
-            else if (0 == strcasecmp(sm_argv[i], "sysv"))
-            {
-#if !MCA_COMMON_SM_SYSV
-                if (!help_msg_displayed)
-                {
-                    orte_show_help("help-mpi-common-sm.txt",
-                                   "sm support",
-                                   1,
-                                   sm_argv[i]);
-                    help_msg_displayed = 1;
-                }
-#else /* MCA_COMMON_SM_SYSV */
-                MCA_COMMON_SM_OUTPUT_VERBOSE("querying sysv");
-                /* SKG - disable sysv support when cr is enabled.
-                 * could presumably work properly someday.
-                 */
-#if OPAL_ENABLE_FT_CR == 1
-                if (!opal_cr_is_enabled)
-                {
-#endif /* OPAL_ENABLE_FT_CR */
-                    /* make sure that we can safely use sysv on this system */
-                    if (OMPI_SUCCESS == mca_common_sm_sysv_component_query())
-                    {
-                        MCA_COMMON_SM_OUTPUT_VERBOSE("selecting sysv");
-                        sm_component_index = MCA_COMMON_SM_COMP_INDEX_SYSV;
-                        break;
-                    }
-                    else /* let the user know that we tried sysv and failed */
-                    {
-                        MCA_COMMON_SM_OUTPUT_VERBOSE("cannot select sysv");
-                        orte_show_help("help-mpi-common-sm.txt",
-                                       "sm rt test fail",
-                                       1,
-                                       "System V");
-                    }
-#if OPAL_ENABLE_FT_CR == 1
-                }
-                else
-                {
-                    orte_show_help("help-mpi-common-sm.txt",
-                                   "sysv with cr",
-                                   1);
-                    help_msg_displayed = 1;
-                }
-#endif /* OPAL_ENABLE_FT_CR */
-#endif
-            }
-            else /* unknown value */
-            {
-                if (!help_msg_displayed)
-                {
-                    orte_show_help("help-mpi-common-sm.txt",
-                                   "sm support",
-                                   1,
-                                   sm_argv[i]);
-                    help_msg_displayed = 1;
-                }
-            }
-        }
-    }
-
-    if (MCA_COMMON_SM_COMP_INDEX_NONE == sm_component_index)
-    {
-        MCA_COMMON_SM_OUTPUT_VERBOSE("no component selected");
-    }
-
-    return sm_component_index;
-}
-
-/******************************************************************************/
-int
-mca_common_sm_param_register(mca_base_component_t *c)
-{
-    if (++num_times_registered > 1) {
-        return OMPI_SUCCESS;
-    }
-    if (num_times_registered < 1) {
-        /* This should never happen -- programmer error */
-        return OMPI_ERROR;
-    }
-
-    /* also using sysv_index's value as an initialization flag */
-    if (-1 == sysv_index)
-    {
-        int i;
-        char *last_char;
-
-        memset(sm_default, '\0', sizeof(sm_default));
-
-        /* populate sm_default with all available common sm component names */
-        for (i = 0; NULL != sm_avail_table[i].sm_name; ++i)
-        {
-            if (sm_avail_table[i].avail)
-            {
-                strncat(sm_default,
-                        sm_avail_table[i].sm_name,
-                        sizeof(sm_default) - 1);
-            }
-        }
-        /* remove the last comma from the char buff */
-        if (NULL != (last_char = strrchr(sm_default, ',')))
-        {
-            *last_char = '\0';
-        }
-        /* set up help string */
-        snprintf(
-            sm_avail_help_str,
-            sizeof(sm_avail_help_str) - 1,
-            "Which shared memory support will be used. Valid values: (%s)%s",
-            sm_default,
-            (i > 1) ? " - or a comma delimited combination of them "
-            "(order dependent).  The first component that is successfully "
-            "selected is used." : "."
-        );
-        sysv_index = mca_base_param_reg_int_name(
-                         "mpi",
-                         "common_sm_have_sysv_support",
-                         "Whether shared memory has System V support or not",
-                         false,
-                         true,
-                         MCA_COMMON_SM_SYSV,
-                         NULL
-                     );
-        posix_index = mca_base_param_reg_int_name(
-                          "mpi",
-                          "common_sm_have_posix_support",
-                          "Whether shared memory has POSIX support or not",
-                          false,
-                          true,
-                          MCA_COMMON_SM_POSIX,
-                          NULL
-                     );
-    }
-
-    /* register mpi_common_sm */
-    common_sm_index = mca_base_param_reg_string_name("mpi",
-                                                     "common_sm",
-                                                     sm_avail_help_str,
-                                                     false,
-                                                     false,
-                                                     /* default value */
-                                                     sm_default,
-                                                     NULL);
-
-    /* also register MCA param synonyms for the component */
-    mca_base_param_reg_syn(sysv_index, c, "have_sysv_support", false);
-    mca_base_param_reg_syn(posix_index, c, "have_posix_support", false);
-    mca_base_param_reg_syn(common_sm_index, c, "store", false);
-
-    /* Once the synonyms are registered, look up the value */
-    if (OPAL_SUCCESS != mca_base_param_lookup_string(common_sm_index,
-                                                     &sm_params))
-    {
-        return OMPI_ERROR;
-    }
-
-    /* empty string == try all available */
-    if (0 == strcmp(sm_params, ""))
-    {
-        if (NULL == (sm_argv = opal_argv_split(sm_default, ',')))
-        {
-            opal_output(0,
-                        "WARNING: could not parse mpi_common_sm request.");
-        }
-    }
-    /* try what the user specified */
-    else
-    {
-        if (NULL == (sm_argv = opal_argv_split(sm_params, ',')))
-        {
-            opal_output(0,
-                        "WARNING: could not parse mpi_common_sm request.");
-        }
-    }
-    free(sm_params);
-
-    return OMPI_SUCCESS;
-}
-
-/******************************************************************************/
-int mca_common_sm_param_unregister(mca_base_component_t *c)
-{
-    if (--num_times_registered > 0) {
-        return OMPI_SUCCESS;
-    }
-    if (num_times_registered < 0) {
-        /* This should never happen -- programmer error */
-        return OMPI_ERROR;
-    }
-
-    if (NULL != sm_argv) {
-        opal_argv_free(sm_argv);
-        sm_argv = NULL;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-/******************************************************************************/
+/* ////////////////////////////////////////////////////////////////////////// */
 mca_common_sm_module_t *
 mca_common_sm_init(ompi_proc_t **procs,
                    size_t num_procs,
@@ -453,53 +153,42 @@ mca_common_sm_init(ompi_proc_t **procs,
                    size_t size_ctl_structure,
                    size_t data_seg_alignment)
 {
-    size_t num_local_procs = 0;
-    bool found_lowest      = false;
-    bool lowest;
+    mca_common_sm_module_t *map = NULL;
+    bool found_lowest = false;
     size_t p;
+    size_t mem_offset;
     ompi_proc_t *temp_proc;
 
-    /**
-     * NOTE: the selected component's init routine, unlike mca_common_sm_init,
-     * must be provided with:
-     *     o a SORTED procs array
-     *     o the number of LOCAL processes within procs array
-     *
-     * so always do the following before calling sm_init:
-     *     o reorder procs array to have all the local procs at the beginning.
-     *     o look for the local proc with the lowest name.
-     *     o determine the number of local procs.
-     *     o ensure that procs[0] is the lowest named process.
+    num_local_procs = 0;
+    lowest_local_proc = false;
+
+    /* o reorder procs array to have all the local procs at the beginning.
+     * o look for the local proc with the lowest name.
+     * o determine the number of local procs.
+     * o ensure that procs[0] is the lowest named process.
      */
-    for (p = 0; p < num_procs; ++p)
-    {
-        if (OPAL_PROC_ON_LOCAL_NODE(procs[p]->proc_flags))
-        {
+    for (p = 0; p < num_procs; ++p) {
+        if (OPAL_PROC_ON_LOCAL_NODE(procs[p]->proc_flags)) {
             /* if we don't have a lowest, save the first one */
-            if (!found_lowest)
-            {
+            if (!found_lowest) {
                 procs[0] = procs[p];
                 found_lowest = true;
             }
-            else
-            {
+            else {
                 /* save this proc */
                 procs[num_local_procs] = procs[p];
-                /**
-                 * if we have a new lowest, swap it with position 0
+                /* if we have a new lowest, swap it with position 0
                  * so that procs[0] is always the lowest named proc
                  */
                 if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                                                   &(procs[p]->proc_name),
-                                                  &(procs[0]->proc_name)) < 0)
-                {
+                                                  &(procs[0]->proc_name)) < 0) {
                     temp_proc = procs[0];
                     procs[0] = procs[p];
                     procs[num_local_procs] = temp_proc;
                 }
             }
-            /**
-             * regardless of the comparisons above, we found
+            /* regardless of the comparisons above, we found
              * another proc on the local node, so increment
              */
             ++num_local_procs;
@@ -507,79 +196,93 @@ mca_common_sm_init(ompi_proc_t **procs,
     }
 
     /* if there is less than 2 local processes, there's nothing to do. */
-    if (num_local_procs < 2)
-    {
+    if (num_local_procs < 2) {
         return NULL;
     }
 
-    if (!initialized)
-    {
-        mca_common_sm_rml_sm_info_t sm_info;
-        sm_info.id = MCA_COMMON_SM_COMP_INDEX_NONE;
-        memset(sm_info.posix_fname_buff,
-               '\0',
-               OMPI_COMMON_SM_POSIX_FILE_LEN_MAX);
+    /* determine whether or not i am the lowest local process */
+    lowest_local_proc = (0 == orte_util_compare_name_fields(
+                                  ORTE_NS_CMP_ALL,
+                                  ORTE_PROC_MY_NAME,
+                                  &(procs[0]->proc_name)));
 
-        lowest = (0 == orte_util_compare_name_fields(
-                           ORTE_NS_CMP_ALL,
-                           ORTE_PROC_MY_NAME,
-                           &(procs[0]->proc_name)));
+    /* lock here to prevent multiple threads from invoking this
+     * function simultaneously.  the critical section we're protecting
+     * is usage of the RML in this block.
+     */
+    opal_mutex_lock(&mutex);
 
-        /**
-         * lock here to prevent multiple threads from invoking this function
-         * simultaneously.  the critical section we're protecting is usage of
-         * the RML in this block.
-         */
-        opal_mutex_lock(&mutex);
-
+    if (!pending_rml_msgs_init) {
         OBJ_CONSTRUCT(&(pending_rml_msgs), opal_list_t);
-
-        /**
-         * figure out if i am the lowest proc in the group.
-         * if i am, select a common sm component and send its index to the rest
-         * of the local procs so they can select the same common sm component.
-         */
-        if (lowest)
-        {
-            /* get the component index */
-            sm_info.id = query_sm_components();
+        pending_rml_msgs_init = true;
+    }
+    /* figure out if i am the lowest rank in the group.
+     * if so, i will create the shared memory backing store
+     */
+    if (lowest_local_proc) {
+        if (OPAL_SUCCESS == opal_shmem_segment_create(&shmem_ds, file_name,
+                                                      size)) {
+            map = attach_and_init(file_name, size_ctl_structure,
+                                  data_seg_alignment);
+            if (NULL != map) {
+                mem_offset = map->module_data_addr -
+                             (unsigned char *)map->module_seg;
+                map->module_seg->seg_offset = mem_offset;
+                map->module_seg->seg_size = size - mem_offset;
+                opal_atomic_init(&map->module_seg->seg_lock,
+                                 OPAL_ATOMIC_UNLOCKED);
+                map->module_seg->seg_inited = 0;
+            }
+            else {
+                /* fail!
+                 * only invalidate the shmem_ds.  doing so will let the rest
+                 * of the local processes know that the lowest local rank
+                 * failed to properly initialize the shared memory segment, so
+                 * they should try to carry on without shared memory support
+                 */
+                 OPAL_SHMEM_DS_INVALIDATE(&shmem_ds);
+            }
         }
-        /* no return code check here because the error
-         * path is the same as the expected path */
-        mca_common_sm_rml_info_bcast(&sm_info,
-                                     procs,
-                                     num_local_procs,
-                                     OMPI_RML_TAG_COMMON_SM_COMP_INDEX,
-                                     lowest,
-                                     file_name,
-                                     &(pending_rml_msgs));
-
-        opal_mutex_unlock(&mutex);
-        select_common_sm_component(sm_info.id);
-        initialized = true;
     }
 
-    if (NULL != sm_init)
-    {
-        /* notice that we are passing a SORTED procs array to the selected
-         * component along with the number of LOCAL processes found within
-         * procs.
-         */
-        return sm_init(procs,
-                       num_local_procs,
-                       size,
-                       file_name,
-                       size_ctl_structure,
-                       data_seg_alignment);
+    /* send shmem info to the rest of the local procs. */
+    if (OMPI_SUCCESS != mca_common_sm_rml_info_bcast(
+                            &shmem_ds, procs, num_local_procs,
+                            OMPI_RML_TAG_SM_BACK_FILE_CREATED,
+                            lowest_local_proc, file_name,
+                            &(pending_rml_msgs))) {
+        goto out;
     }
-    return NULL;
+
+    /* are we dealing with a valid shmem_ds?  that is, did the lowest
+     * process successfully initialize the shared memory segment?
+     */
+    if (OPAL_SHMEM_DS_IS_VALID(&shmem_ds)) {
+        if (!lowest_local_proc) {
+            map = attach_and_init(file_name, size_ctl_structure,
+                                  data_seg_alignment);
+        }
+        else {
+            /* wait until every other participating process has attached to the
+             * shared memory segment.
+             */
+            while (num_local_procs > map->module_seg->seg_num_procs_inited) {
+                opal_atomic_rmb();
+            }
+            opal_shmem_unlink(&shmem_ds);
+        }
+    }
+
+out:
+    opal_mutex_unlock(&mutex);
+    return map;
 }
 
-/******************************************************************************/
+/* ////////////////////////////////////////////////////////////////////////// */
 /**
- * This routine is the same as mca_common_sm_mmap_init() except that
+ * this routine is the same as mca_common_sm_mmap_init() except that
  * it takes an (ompi_group_t *) parameter to specify the peers rather
- * than an array of procs.  Unlike mca_common_sm_mmap_init(), the
+ * than an array of procs.  unlike mca_common_sm_mmap_init(), the
  * group must contain *only* local peers, or this function will return
  * NULL and not create any shared memory segment.
  */
@@ -591,77 +294,94 @@ mca_common_sm_init_group(ompi_group_t *group,
                          size_t data_seg_alignment)
 {
     mca_common_sm_module_t *ret = NULL;
-    ompi_proc_t **procs         = NULL;
+    ompi_proc_t **procs = NULL;
+    size_t i;
+    size_t group_size;
+    ompi_proc_t *proc;
 
-    /* make sure sm_init has been properly initialized. do this because
-     * sm_init_group only does prep work before passing along the real work to
-     * sm_init.
-     */
-    if (NULL != sm_init)
-    {
-        size_t i;
-        size_t group_size;
-        ompi_proc_t *proc;
-
-        /* if there is less than 2 procs, there's nothing to do */
-        if ((group_size = ompi_group_size(group)) < 2)
-        {
-            goto out;
-        }
-        if (NULL == (procs = (ompi_proc_t **)
-                             malloc(sizeof(ompi_proc_t *) * group_size)))
-
-        {
-            ORTE_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
-            goto out;
-        }
-        /* make sure that all the procs in the group are local */
-        for (i = 0; i < group_size; ++i)
-        {
-            proc = ompi_group_peer_lookup(group, i);
-            if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags))
-            {
-                goto out;
-            }
-            procs[i] = proc;
-        }
-        /* let sm_init take care of the rest ... */
-        ret = sm_init(procs,
-                      group_size,
-                      size,
-                      file_name,
-                      size_ctl_structure,
-                      data_seg_alignment);
+    /* if there is less than 2 procs, there's nothing to do */
+    if ((group_size = ompi_group_size(group)) < 2) {
+        goto out;
     }
-
+    else if (NULL == (procs = (ompi_proc_t **)
+                              malloc(sizeof(ompi_proc_t *) * group_size))) {
+        ORTE_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        goto out;
+    }
+    /* make sure that all the procs in the group are local */
+    for (i = 0; i < group_size; ++i) {
+        proc = ompi_group_peer_lookup(group, i);
+        if (!OPAL_PROC_ON_LOCAL_NODE(proc->proc_flags)) {
+            goto out;
+        }
+        procs[i] = proc;
+    }
+    /* let mca_common_sm_init take care of the rest ... */
+    ret = mca_common_sm_init(procs, group_size, size, file_name,
+                             size_ctl_structure, data_seg_alignment);
 out:
-    if (NULL != procs)
-    {
+    if (NULL != procs) {
         free(procs);
     }
     return ret;
 }
 
-/******************************************************************************/
+/* ////////////////////////////////////////////////////////////////////////// */
+/**
+ *  allocate memory from a previously allocated shared memory
+ *  block.
+ *
+ *  @param size size of request, in bytes (IN)
+ *
+ *  @retval addr virtual address
+ */
 void *
 mca_common_sm_seg_alloc(struct mca_mpool_base_module_t *mpool,
                         size_t *size,
                         mca_mpool_base_registration_t **registration)
 {
-    if (NULL != sm_seg_alloc)
-    {
-        return sm_seg_alloc(mpool, size, registration);
+    mca_mpool_sm_module_t *sm_module = (mca_mpool_sm_module_t *)mpool;
+    mca_common_sm_seg_header_t* seg = sm_module->sm_common_module->module_seg;
+    void *addr;
+
+    opal_atomic_lock(&seg->seg_lock);
+    if (seg->seg_offset + *size > seg->seg_size) {
+        addr = NULL;
     }
-    return NULL;
+    else {
+        size_t fixup;
+
+        /* add base address to segment offset */
+        addr = sm_module->sm_common_module->module_data_addr + seg->seg_offset;
+        seg->seg_offset += *size;
+
+        /* fix up seg_offset so next allocation is aligned on a
+         * sizeof(long) boundry.  Do it here so that we don't have to
+         * check before checking remaining size in buffer
+         */
+        if ((fixup = (seg->seg_offset & (sizeof(long) - 1))) > 0) {
+            seg->seg_offset += sizeof(long) - fixup;
+        }
+    }
+    if (NULL != registration) {
+        *registration = NULL;
+    }
+    opal_atomic_unlock(&seg->seg_lock);
+    return addr;
 }
 
-/******************************************************************************/
+/* ////////////////////////////////////////////////////////////////////////// */
 int
 mca_common_sm_fini(mca_common_sm_module_t *mca_common_sm_module)
 {
-    if (NULL != sm_fini && NULL != mca_common_sm_module) {
-        return sm_fini(mca_common_sm_module);
+    int rc = OMPI_SUCCESS;
+
+    if (NULL != mca_common_sm_module->module_seg) {
+        if (OPAL_SUCCESS !=
+            opal_shmem_segment_detach(&mca_common_sm_module->shmem_ds)) {
+            rc = OMPI_ERROR;
+        }
     }
-    return OMPI_ERR_NOT_FOUND;
+    return rc;
 }
 

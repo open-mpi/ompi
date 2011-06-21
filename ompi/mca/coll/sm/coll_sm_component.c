@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -122,14 +124,8 @@ mca_coll_sm_component_t mca_coll_sm_component = {
  */
 static int sm_close(void)
 {
-    mca_base_component_t *c = &mca_coll_sm_component.super.collm_version;
-
-    /* Common SM MCA params */
-    mca_common_sm_param_unregister(c);
-
     return OMPI_SUCCESS;
 }
-
 
 /*
  * Register MCA params
@@ -224,9 +220,6 @@ static int sm_register(void)
                            "Amount of shared memory used, per communicator, in the shared memory data area for info_num_procs processes (in bytes)",
                            false, true,
                            (int)size, NULL);
-
-    /* Common SM MCA params */
-    mca_common_sm_param_register(c);
 
     return OMPI_SUCCESS;
 }
