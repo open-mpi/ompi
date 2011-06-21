@@ -488,6 +488,10 @@ struct orte_proc_t {
     char *rml_uri;
     /* number of times this process has been restarted */
     int32_t restarts;
+    /* time of last restart */
+    struct timeval last_failure;
+    /* number of failures in "fast" window */
+    int32_t fast_failures;
     /* flag to indicate proc has reported in */
     bool reported;
     /* if heartbeat recvd during last time period */

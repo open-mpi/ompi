@@ -898,6 +898,9 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->exit_code = 0;      /* Assume we won't fail unless otherwise notified */
     proc->rml_uri = NULL;
     proc->restarts = 0;
+    proc->fast_failures = 0;
+    proc->last_failure.tv_sec = 0;
+    proc->last_failure.tv_usec = 0;
     proc->reported = false;
     proc->beat = 0;
     OBJ_CONSTRUCT(&proc->stats, opal_pstats_t);
