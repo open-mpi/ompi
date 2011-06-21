@@ -10,7 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2010      Los Alamos National Security, LLC.
+# Copyright (c) 2010-2011 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
@@ -46,40 +46,14 @@ EXTRA_DIST = .windows
 # Header files
 
 headers = \
-        common_sm.h \
         common_sm_rml.h \
-        common_sm_mmap.h
+        common_sm.h
 
 # Source files
 
 sources = \
-        common_sm.c \
         common_sm_rml.c \
-        common_sm_mmap.c
-
-# Only build the Windows support if we're building on windows, but
-# always include the files in the tarball.
-
-if COMMON_SM_BUILD_WINDOWS
-headers += common_sm_windows.h
-sources += common_sm_windows.c
-endif
-
-# Only build the SYSV support if we have the right stuff, but
-# always include the files in the tarball.
-
-if COMMON_SM_BUILD_SYSV
-headers += common_sm_sysv.h
-sources += common_sm_sysv.c
-endif
-
-# Only build the POSIX support if we have the right stuff, but
-# always include the files in the tarball.
-
-if COMMON_SM_BUILD_POSIX
-headers += common_sm_posix.h
-sources += common_sm_posix.c
-endif
+        common_sm.c
 
 # Help file
 

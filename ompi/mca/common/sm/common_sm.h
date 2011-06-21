@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -28,49 +28,36 @@
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
 #include "opal/sys/atomic.h"
+#include "opal/mca/shmem/shmem.h"
+
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/proc/proc.h"
 #include "ompi/group/group.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
-#define MCA_COMMON_SM_OUTPUT_VERBOSE(msg)                                      \
-opal_output_verbose(100,                                                       \
-                    mca_btl_base_output,                                       \
-                    "mca: common: sm: %s", msg);
-
-/* posix sm file name length max.  on some systems shm_open's file name limit
- * is pretty low (32 chars, for instance ).  16 is plenty for our needs, but
- * extra work on our end is needed to ensure things work properly. if a
- * system's limit is lower than OMPI_COMMON_SM_POSIX_FILE_LEN_MAX, then the
- * run-time test will catch that fact and posix sm will be disqualified. see
- * comments regarding this in common_sm_posix.c.
- */
-#define OMPI_COMMON_SM_POSIX_FILE_LEN_MAX 16
-
 BEGIN_C_DECLS
 
 struct mca_mpool_base_module_t;
 
-typedef struct mca_common_sm_seg_header_t
-{
+typedef struct mca_common_sm_seg_header_t {
     /* lock to control atomic access */
     opal_atomic_lock_t seg_lock;
-    /* is the segment ready for use */
+    /* indicates whether or not the segment is ready for use */
     volatile int32_t seg_inited;
-    /**
-     * number of local processes that are
-     * attached to the shared memory segment
+    /* number of local processes that are attached to the shared memory segment.
+     * this is primarily used as a way of determining whether or not it is safe
+     * to unlink the shared memory backing store. for example, once seg_att
+     * is equal to the number of local processes, then we can safely unlink.
      */
-    volatile int32_t seg_att;
+    volatile size_t seg_num_procs_inited;
     /* offset to next available memory location available for allocation */
     size_t seg_offset;
     /* total size of the segment */
     size_t seg_size;
 } mca_common_sm_seg_header_t;
 
-typedef struct mca_common_sm_module_t
-{
+typedef struct mca_common_sm_module_t {
     /* double link list element */
     opal_list_item_t module_item;
     /* pointer to header embedded in the shared memory segment */
@@ -79,9 +66,8 @@ typedef struct mca_common_sm_module_t
     unsigned char *module_seg_addr;
     /* base address of data segment */
     unsigned char *module_data_addr;
-    /* how big it is (in bytes) */
-    size_t module_size;
-    char module_seg_path[OPAL_PATH_MAX];
+    /* shared memory backing facility object that encapsulates shmem info */
+    opal_shmem_ds_t shmem_ds;
 #if defined(__WINDOWS__)
     /* handle to the object */
     HANDLE hMappedObject;
@@ -89,18 +75,6 @@ typedef struct mca_common_sm_module_t
 } mca_common_sm_module_t;
 
 OBJ_CLASS_DECLARATION(mca_common_sm_module_t);
-
-/**
- * Register the MCA parameters for common sm.
- */
-OMPI_DECLSPEC int
-mca_common_sm_param_register(mca_base_component_t *c);
-
-/**
- * Free resources associated with registering MCA params for common sm.
- */
-OMPI_DECLSPEC int
-mca_common_sm_param_unregister(mca_base_component_t *c);
 
 /**
  *  This routine is used to set up a shared memory segment (whether
@@ -141,14 +115,6 @@ mca_common_sm_init(ompi_proc_t **procs,
                    size_t size_ctl_structure,
                    size_t data_seg_alignment);
 
-typedef mca_common_sm_module_t *
-(*mca_common_sm_init_fn_t)(ompi_proc_t **procs,
-                           size_t num_procs,
-                           size_t size,
-                           char *file_name,
-                           size_t size_ctl_structure,
-                           size_t data_seg_alignment);
-
 /**
  * This routine is used to set up a shared memory segment (whether
  * it's an mmaped file or a SYSV IPC segment).  It is assumed that
@@ -168,13 +134,6 @@ mca_common_sm_init_group(ompi_group_t *group,
                          size_t size_ctl_structure,
                          size_t data_seg_alignment);
 
-typedef mca_common_sm_module_t *
-(*mca_common_sm_init_group_fn_t)(ompi_group_t *group,
-                                 size_t size,
-                                 char *file_name,
-                                 size_t size_ctl_structure,
-                                 size_t data_seg_alignment);
-
 /**
  * callback from the sm mpool
  */
@@ -182,11 +141,6 @@ OMPI_DECLSPEC extern void *
 mca_common_sm_seg_alloc(struct mca_mpool_base_module_t *mpool,
                         size_t* size,
                         mca_mpool_base_registration_t **registration);
-
-typedef void *
-(*mca_common_sm_seg_alloc_fn_t)(struct mca_mpool_base_module_t *mpool,
-                                size_t *size,
-                                mca_mpool_base_registration_t **registration);
 
 /**
  * This function will release all local resources attached to the
@@ -196,17 +150,14 @@ typedef void *
  * @param mca_common_sm_module - instance that is shared between
  *                               components that use shared memory.
  *
- * @returnvalue 0 if everything was OK, otherwise a negative value.
+ * @return OMPI_SUCCESS if everything was okay, otherwise return OMPI_ERROR.
  */
 
 OMPI_DECLSPEC extern int
 mca_common_sm_fini(mca_common_sm_module_t *mca_common_sm_module);
 
-typedef int
-(*mca_common_sm_fini_fn_t)(mca_common_sm_module_t *mca_common_sm_module);
-
-/*
- * instance that is shared between components that use shared memory
+/**
+ * instance that is shared between components that use shared memory.
  */
 OMPI_DECLSPEC extern mca_common_sm_module_t *mca_common_sm_module;
 

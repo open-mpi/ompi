@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,6 +48,7 @@
 #include "opal/util/sys_limits.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/shmem/base/base.h"
 #include "opal/mca/pstat/pstat.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -1190,6 +1193,22 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
         param = mca_base_param_environ_variable("orte","cpu","model");
         opal_setenv(param, orte_local_cpu_model, true, environ_copy);
         free(param);
+    }
+
+    /* get shmem's best component name so we can provide a hint to the shmem
+     * framework. the idea here is to have someone figure out what component to
+     * select (via the shmem framework) and then have the rest of the
+     * components in shmem obey that decision. for more details take a look at
+     * the shmem framework in opal.
+     */
+    if (NULL != (param2 = opal_shmem_base_best_runnable_component_name())) {
+        if (NULL != (param =
+                     mca_base_param_environ_variable("shmem_RUNTIME_QUERY_hint",
+                                                     NULL, NULL))) {
+            opal_setenv(param, param2, true, environ_copy);
+            free(param);
+        }
+        free(param2);
     }
     
     /* push data into environment - don't push any single proc

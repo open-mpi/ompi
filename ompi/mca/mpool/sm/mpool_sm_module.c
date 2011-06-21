@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -147,7 +147,7 @@ static void sm_module_finalize(mca_mpool_base_module_t* module)
                 unlink(sm_module->sm_common_module->module_seg_path);
             }
 #else
-            unlink(sm_module->sm_common_module->module_seg_path);
+            unlink(sm_module->sm_common_module->shmem_ds.seg_name);
 #endif
         }
         OBJ_RELEASE(sm_module->sm_common_module);

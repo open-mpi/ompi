@@ -11,8 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
- *                         All rights reserved. 
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -214,9 +214,6 @@ static int sm_register(void)
     mca_btl_base_param_register(&mca_btl_sm_component.super.btl_version,
                                 &mca_btl_sm.super);
 
-    /* Call down to sm common to register its MCA params */
-    mca_common_sm_param_register(&mca_btl_sm_component.super.btl_version);
-
     return OMPI_SUCCESS;
 }
 
@@ -288,17 +285,12 @@ static int mca_btl_sm_component_close(void)
     /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_eager);*/
     /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_max);*/
 
-    /* Free resources associated with common sm MCA params */
-    mca_common_sm_param_unregister(&mca_btl_sm_component.super.btl_version);
-
     /* unmap the shared memory control structure */
     if(mca_btl_sm_component.sm_seg != NULL) {
         return_value = mca_common_sm_fini( mca_btl_sm_component.sm_seg );
         if( OMPI_SUCCESS != return_value ) {
             return_value=OMPI_ERROR;
-            opal_output(0," munmap failed :: file - %s :: errno - %d \n",
-                    mca_btl_sm_component.sm_seg->module_seg_addr,
-                    errno);
+            opal_output(0," mca_common_sm_fini failed\n");
             goto CLEANUP;
         }
 
@@ -312,10 +304,10 @@ static int mca_btl_sm_component_close(void)
          */
         if(OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
            OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
-            unlink(mca_btl_sm_component.sm_seg->module_seg_path);
+            unlink(mca_btl_sm_component.sm_seg->shmem_ds.name);
         }
 #else
-        unlink(mca_btl_sm_component.sm_seg->module_seg_path);
+        unlink(mca_btl_sm_component.sm_seg->shmem_ds.seg_name);
 #endif
         OBJ_RELEASE(mca_btl_sm_component.sm_seg);
     }

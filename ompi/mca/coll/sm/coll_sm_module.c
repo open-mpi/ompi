@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -484,10 +484,11 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 
     /* Once we're all here, remove the mmap file; it's not needed anymore */
     if (0 == rank) {
-        unlink(data->sm_bootstrap_meta->module_seg_path);
+        unlink(data->sm_bootstrap_meta->shmem_ds.seg_name);
         opal_output_verbose(10, mca_coll_base_output,
                             "coll:sm:enable (%d/%s): removed mmap file %s", 
-                            comm->c_contextid, comm->c_name, data->sm_bootstrap_meta->module_seg_path);
+                            comm->c_contextid, comm->c_name,
+                            data->sm_bootstrap_meta->shmem_ds.seg_name);
     }
 
     /* All done */

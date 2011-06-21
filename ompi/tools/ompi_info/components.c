@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,6 +38,8 @@
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/carto/carto.h"
 #include "opal/mca/carto/base/base.h"
+#include "opal/mca/shmem/shmem.h"
+#include "opal/mca/shmem/base/base.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/memory/memory.h"
@@ -310,6 +314,14 @@ void ompi_info_open_components(void)
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("carto");
     map->components = &opal_carto_base_components_opened;
+    opal_pointer_array_add(&component_map, map);
+
+    if (OPAL_SUCCESS != opal_shmem_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("shmem");
+    map->components = &opal_shmem_base_components_opened;
     opal_pointer_array_add(&component_map, map);
     
     if (OPAL_SUCCESS != opal_maffinity_base_open()) {

@@ -13,6 +13,8 @@
  *                         reserved. 
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +36,7 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/shmem/base/base.h"
 
 int opal_register_params(void)
 {
@@ -102,6 +105,12 @@ int opal_register_params(void)
 #endif
     /* The ddt engine has a few parameters */
     ret = opal_datatype_register_params();
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    /* shmem base also has a few parameters */
+    ret = opal_shmem_base_register_params();
     if (OPAL_SUCCESS != ret) {
         return ret;
     }

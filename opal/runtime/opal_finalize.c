@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +46,7 @@
 #include "opal/mca/event/base/base.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/carto/base/base.h"
+#include "opal/mca/shmem/base/base.h"
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/compress/base/base.h"
 #endif
@@ -121,6 +124,9 @@ opal_finalize(void)
 #if OPAL_ENABLE_FT_CR    == 1
     opal_compress_base_close();
 #endif
+    
+    /* close the shmem framework */
+    opal_shmem_base_close();
 
     opal_progress_finalize();
 
