@@ -63,10 +63,10 @@ vtunify_SOURCES = \
 	vt_unify_tkfac.cc
 
 vtunify_LDADD = \
-	$(top_builddir)/util/libutil.la \
+	$(top_builddir)/util/libvt_util.la \
 	$(OTFLIBRARY) $(ETIMESYNCLIBRARY)
 
 vtunify_DEPENDENCIES = \
-	$(top_builddir)/util/libutil.la \
+	$(top_builddir)/util/libvt_util.la \
 	$(OTFDEPENDENCIES)
 

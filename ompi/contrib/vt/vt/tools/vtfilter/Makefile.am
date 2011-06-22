@@ -32,10 +32,10 @@ vtfilter_SOURCES = \
 	vt_tracefilter.cc
 
 vtfilter_LDADD = \
-	$(top_builddir)/util/libutil.la \
+	$(top_builddir)/util/libvt_util.la \
 	$(OTFLIBRARY)
 
 vtfilter_DEPENDENCIES = \
-	$(top_builddir)/util/libutil.la \
+	$(top_builddir)/util/libvt_util.la \
 	$(OTFDEPENDENCIES)
 
