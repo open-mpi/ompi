@@ -13,6 +13,7 @@
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -27,6 +28,9 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif  /* HAVE_FCNTL_H */
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif /* HAVE_STRING_H */
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif /* HAVE_SYS_MMAN_H */
