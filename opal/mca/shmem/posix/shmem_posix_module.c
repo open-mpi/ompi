@@ -39,6 +39,9 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif /* HAVE_STRING_H */
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif /* HAVE_NETDB_H */
 
 #include "opal/constants.h"
 #include "opal_stdint.h"
