@@ -40,6 +40,10 @@ VT_MPI_INT MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void* baseptr);
 VT_MPI_INT MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn* function, MPI_Errhandler* errhandler_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler* errhandler_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
+VT_MPI_INT MPI_File_call_errhandler(MPI_File fh, VT_MPI_INT errorcode);
+VT_MPI_INT MPI_File_create_errhandler(MPI_File_errhandler_fn* function_CLASS_SINGLE_IN, MPI_Errhandler* errhandler_CLASS_SINGLE_OUT);
+VT_MPI_INT MPI_File_get_errhandler(MPI_File file, MPI_Errhandler* errhandler_CLASS_SINGLE_OUT);
+VT_MPI_INT MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
 VT_MPI_INT MPI_Finalized(VT_MPI_INT* flag);
 VT_MPI_INT MPI_Free_mem(void* base);
 VT_MPI_INT MPI_Get_address(void* location, MPI_Aint* address_CLASS_SINGLE_OUT);
@@ -103,3 +107,9 @@ VT_MPI_INT MPI_Win_get_attr(MPI_Win win, VT_MPI_INT win_keyval, void* attribute_
 VT_MPI_INT MPI_Win_get_name(MPI_Win win, char* win_name_CLASS_SINGLE_OUT, VT_MPI_INT* resultlen);
 VT_MPI_INT MPI_Win_set_attr(MPI_Win win, VT_MPI_INT win_keyval, void* attribute_val);
 VT_MPI_INT MPI_Win_set_name(MPI_Win win, char* win_name_CLASS_SINGLE_IN);
+
+/* Language Bindings */
+VT_MPI_INT MPI_Type_create_f90_complex(VT_MPI_INT p, VT_MPI_INT r, MPI_Datatype* newtype_CLASS_SINGLE_OUT);
+VT_MPI_INT MPI_Type_create_f90_integer(VT_MPI_INT r, MPI_Datatype* newtype_CLASS_SINGLE_OUT);
+VT_MPI_INT MPI_Type_create_f90_real(VT_MPI_INT p, VT_MPI_INT r, MPI_Datatype* newtype_CLASS_SINGLE_OUT);
+VT_MPI_INT MPI_Type_match_size(VT_MPI_INT typeclass, VT_MPI_INT size, MPI_Datatype* type_CLASS_SINGLE_OUT);

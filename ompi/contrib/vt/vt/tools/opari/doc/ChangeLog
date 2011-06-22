@@ -1,3 +1,6 @@
+18. Fixed processing of Fortran line-continuation where
+    commas at end of line (e.g. within OpenMP clauses) was removed
+
 17. Improved C/C++ instrumentation of OpenMP nested parallel regions
     where the parent thread identifier will be passed to opening nested
     parallel regions.

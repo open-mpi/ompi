@@ -9,7 +9,7 @@ oparidocdir = $(docdir)/opari
 
 ChangeLog: $(top_srcdir)/tools/opari/ChangeLog
 	cp $(top_srcdir)/tools/opari/ChangeLog ChangeLog
-LICENSE: $(top_srcdir)/COPYING
+LICENSE: $(top_srcdir)/tools/opari/COPYING
 	cp $(top_srcdir)/tools/opari/COPYING LICENSE
 
 EXTRA_DIST = $(oparidoc_DATA)

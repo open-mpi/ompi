@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "vt_comp.h"
+#include "vt_defs.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
@@ -81,8 +82,9 @@ static HashNode *register_region(char *func, char *file, int lno) {
   HashNode* nhn;
 
   /* -- register file and region and store region identifier -- */
-  fid = vt_def_scl_file(file);
-  rid = vt_def_region(func, fid, lno, VT_NO_LNO, NULL, VT_FUNCTION);
+  fid = vt_def_scl_file(VT_CURRENT_THREAD, file);
+  rid = vt_def_region(VT_CURRENT_THREAD, func, fid, lno, VT_NO_LNO, NULL,
+                      VT_FUNCTION);
   nhn = hash_put((long) func, rid);
   nhn->func = func;
   nhn->file = file;
@@ -154,7 +156,7 @@ void __func_trace_enter(char* name, char* fname, int lno) {
   }
 
   /* -- write enter record -- */
-  vt_enter(&time, hn->vtid);
+  vt_enter(VT_CURRENT_THREAD, &time, hn->vtid);
 
   VT_MEMHOOKS_ON();
 }
@@ -183,7 +185,7 @@ void __func_trace_exit(char* name, char *fname, int lno) {
 
   /* -- write exit record -- */
   if ( hash_get((long) name) ) {
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
 
   VT_MEMHOOKS_ON();

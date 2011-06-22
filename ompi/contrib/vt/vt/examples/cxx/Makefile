@@ -1,8 +1,8 @@
 include Makefile.config
 
-TARGETS = $(HELLO_TGT1) $(HELLO_TGT2) $(HELLO_TGT3) \
-          $(PI_TGT1) $(PI_TGT2) $(PI_TGT3) \
-          $(RING_TGT1) $(RING_TGT2) $(RING_TGT3)
+TARGETS = $(HELLO_TGT1) $(HELLO_TGT2) $(HELLO_TGT3) $(HELLO_TGT4) \
+          $(PI_TGT1) $(PI_TGT2) $(PI_TGT3) $(PI_TGT4) \
+          $(RING_TGT1) $(RING_TGT2) $(RING_TGT3) $(RING_TGT4)
 
 .PHONY: all
 all: $(TARGETS)
@@ -17,6 +17,9 @@ hello-comp: hello.cc
 ### hello-dyn ###
 hello-dyn: hello.cc
 	$(MPICXX) -vt:inst dyninst $(MPICXXFLAGS) $^ -o $@ $(MPILIB)
+### hello-tau ###
+hello-tau: hello.cc
+	$(MPICXX) -vt:inst tauinst $(MPICXXFLAGS) $^ -o $@ $(MPILIB)
 
 
 ### pi-man ###
@@ -28,6 +31,9 @@ pi-comp: pi.cc
 ### pi-dyn ###
 pi-dyn: pi.cc
 	$(MPICXX) -vt:inst dyninst $(MPICXXFLAGS) $^ -o $@ -lm $(MPILIB)
+### pi-tau ###
+pi-tau: pi.cc
+	$(MPICXX) -vt:inst tauinst $(MPICXXFLAGS) $^ -o $@ -lm $(MPILIB)
 
 
 ### ring-man ###
@@ -39,8 +45,13 @@ ring-comp: ring.cc
 ### ring-dyn ###
 ring-dyn: ring.cc
 	$(MPICXX) -vt:inst dyninst $(MPICXXFLAGS) $^ -o $@ $(MPILIB)
+### ring-tau ###
+ring-tau: ring.cc
+	$(MPICXX) -vt:inst tauinst $(MPICXXFLAGS) $^ -o $@ $(MPILIB)
 
 
 .PHONY: clean
 clean:
 	-rm -f $(TARGETS) *~ *.o
+	-rm -f *.uctl *.otf *.z
+

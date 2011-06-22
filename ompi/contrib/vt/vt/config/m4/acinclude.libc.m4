@@ -31,9 +31,8 @@ AC_DEFUN([ACVT_LIBC],
 				[
 					libc_pathname=`ldd conftest 2>/dev/null | grep "libc\." | \
 					               sed -e "s/.*=>//"                          \
-					                   -e "s/[[\(].*[\)]]//"                  \
-					                   -e "s/[[	 ]]//g"                   \
-					                   -e "s%^[[^/]].*%%"                   | \
+					                   -e "s/[ [\(].*[\)]]//"                 \
+					                   -e "s/[[[:space:]]]//g"              | \
 					               head -n1`
 				],
 				[
@@ -54,7 +53,7 @@ AC_DEFUN([ACVT_LIBC],
 	],
 	[
 		AC_MSG_RESULT([unknown])
-		AC_MSG_NOTICE([error: could not determine pathname of LIBC!])
+		AC_MSG_NOTICE([error: could not determine pathname of LIBC])
 		libc_error="yes"
 	])
 ])

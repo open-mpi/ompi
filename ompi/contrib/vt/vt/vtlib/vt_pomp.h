@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -32,7 +32,7 @@ struct VTRegDescr {
   if ( IS_POMP_TRACE_ON ) { \
     struct VTRegDescr* data = (struct VTRegDescr*)(r->data); \
     uint64_t time = vt_pform_wtime(); \
-    vt_enter(&time, data->id); \
+    vt_enter(VT_CURRENT_THREAD, &time, data->id); \
   }
 
 #define GUARDED_ENTER_2(ch,id1,id2) \
@@ -42,16 +42,16 @@ struct VTRegDescr {
     data = (struct VTRegDescr*)(r->data); \
     time = vt_pform_wtime(); \
     if ( r->name[0] == ch ) \
-      vt_enter(&time, data->id1); \
+      vt_enter(VT_CURRENT_THREAD, &time, data->id1); \
     else \
-      vt_enter(&time, data->id2); \
+      vt_enter(VT_CURRENT_THREAD, &time, data->id2); \
   }
 
 #define GUARDED_EXIT() \
   if ( IS_POMP_TRACE_ON ) { \
     uint64_t time; \
     time = vt_pform_wtime(); \
-    vt_exit(&time); \
+    vt_exit(VT_CURRENT_THREAD, &time); \
   }
 
 #define GUARDED_COLL_ENTER(id) \
@@ -60,8 +60,8 @@ struct VTRegDescr {
     uint64_t time; \
     data = (struct VTRegDescr*)(r->data); \
     time = vt_pform_wtime(); \
-    /* vt_omp_collenter(&time, data->id); */ \
-    vt_enter(&time, data->id); \
+    /* vt_omp_collenter(VT_CURRENT_THREAD, &time, data->id); */ \
+    vt_enter(VT_CURRENT_THREAD, &time, data->id); \
   }
 
 #define GUARDED_COLL_ENTER_2(ch,id1,id2) \
@@ -71,11 +71,11 @@ struct VTRegDescr {
     data = (struct VTRegDescr*)(r->data); \
     time = vt_pform_wtime(); \
     if ( r->name[0] == ch ) { \
-      /* vt_omp_collenter(&time, data->id1); */ \
-      vt_enter(&time, data->id1); \
+      /* vt_omp_collenter(VT_CURRENT_THREAD, &time, data->id1); */ \
+      vt_enter(VT_CURRENT_THREAD, &time, data->id1); \
     } else { \
-      /* vt_omp_collenter(&time, data->id2); */ \
-      vt_enter(&time, data->id2); \
+      /* vt_omp_collenter(VT_CURRENT_THREAD, &time, data->id2); */ \
+      vt_enter(VT_CURRENT_THREAD, &time, data->id2); \
     } \
   }
 
@@ -83,6 +83,6 @@ struct VTRegDescr {
   if ( IS_POMP_TRACE_ON ) { \
     uint64_t time; \
     time = vt_pform_wtime(); \
-    /* vt_omp_collexit(&time); */ \
-    vt_exit(&time); \
+    /* vt_omp_collexit(VT_CURRENT_THREAD, &time); */ \
+    vt_exit(VT_CURRENT_THREAD, &time); \
   }

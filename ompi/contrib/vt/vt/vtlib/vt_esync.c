@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -11,9 +11,11 @@
  **/
 
 #include <math.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "vt_defs.h"
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_esync.h"
@@ -204,13 +206,13 @@ void vt_esync(MPI_Comm comm)
   VT_MPI_INT partnerid, numslots;
   VT_MPI_INT i;
 
-  VT_SUSPEND_IO_TRACING();
+  VT_SUSPEND_IO_TRACING(VT_CURRENT_THREAD);
 
   /* mark begin of clock synchronization */
   time = vt_pform_wtime();
-  vt_enter(&time, vt_trc_regid[VT__TRC_SYNCTIME]);
+  vt_enter(VT_CURRENT_THREAD, &time, vt_trc_regid[VT__TRC_SYNCTIME]);
   /* ... also as comment for vtunify */
-  vt_comment(&time, "__ETIMESYNC__");
+  vt_comment(VT_CURRENT_THREAD, &time, VT_UNIFY_STRID_ETIMESYNC_COMMENT);
 
   /* barrier at entry */
   PMPI_Barrier(comm);
@@ -280,7 +282,7 @@ void vt_esync(MPI_Comm comm)
 
   /* mark end of clock synchronization */
   etime = vt_pform_wtime();
-  vt_exit(&etime);
+  vt_exit(VT_CURRENT_THREAD, &etime);
 
   /* increment number of sync. phases */
   SyncRound++;
@@ -292,49 +294,92 @@ void vt_esync(MPI_Comm comm)
   /* calculate sync. duration */
   SyncMapIdLast->duration = etime - time;
 
-  VT_RESUME_IO_TRACING();
+  VT_RESUME_IO_TRACING(VT_CURRENT_THREAD);
 }
 
-void vt_esync_app_uctl_file(FILE* uctlFile)
+void vt_esync_app_uctl_data(char** data)
 {
   Sync_Map* sync_map_temp;
   Sync_TsPerRun* sync_tsperrun_temp;
   Sync_TsPerPhase* sync_tsperphase_temp;
+  size_t size;
+  uint32_t i;
 
-  vt_assert(uctlFile != NULL);
+  vt_assert(*data != NULL);
 
-  /* write map ids */
+  size = strlen(*data);
 
-  sync_map_temp = SyncMapIdFirst;
-  while(sync_map_temp)
+  /* the first iteration calculates the size needed for the additional data
+     and the second iteration writes them */
+
+  for(i = 0; i < 2; i++)
   {
-    fprintf(uctlFile, "%lli:%lli:%lli:",
-	    (long long int)(sync_map_temp->id + 1),
-	    (long long int)(sync_map_temp->time),
-	    (long long int)(sync_map_temp->duration));
-    sync_map_temp = sync_map_temp->next;
-  }
-  fprintf(uctlFile, "\n");
+    /* map ids */
 
-  /* write synchronization information for each phase */
-  
-  sync_tsperrun_temp = SyncTsPerRunFirst;
-  while(sync_tsperrun_temp)
-  {
-    sync_tsperphase_temp = sync_tsperrun_temp->sync_phase;
-    while(sync_tsperphase_temp)
+    sync_map_temp = SyncMapIdFirst;
+    while(sync_map_temp)
     {
-      fprintf(uctlFile, "%lli:%lli:%lli:%lli:%lli:%lli:",
-	      (long long int)(sync_tsperphase_temp->id1),
-	      (long long int)(sync_tsperphase_temp->id2),
-	      (long long int)(sync_tsperphase_temp->t1),
-	      (long long int)(sync_tsperphase_temp->t2),
-	      (long long int)(sync_tsperphase_temp->t3),
-	      (long long int)(sync_tsperphase_temp->t4));
-      sync_tsperphase_temp = sync_tsperphase_temp->next;
+      if (i == 0)
+      {
+        size += 3 * (16 + 1);
+      }
+      else /* i == 1 */
+      {
+        sprintf(*data + strlen(*data),
+                "%llx:%llx:%llx:",
+                (long long int)(sync_map_temp->id + 1),
+                (long long int)(sync_map_temp->time),
+                (long long int)(sync_map_temp->duration));
+      }
+      sync_map_temp = sync_map_temp->next;
     }
-    fprintf(uctlFile, "\n");
-    sync_tsperrun_temp = sync_tsperrun_temp->next;
+
+    if (i == 0)
+      size++;
+    else /* i == 1 */
+      strcat(*data, "\n");
+
+    /* synchronization information for each phase */
+
+    sync_tsperrun_temp = SyncTsPerRunFirst;
+    while(sync_tsperrun_temp)
+    {
+      sync_tsperphase_temp = sync_tsperrun_temp->sync_phase;
+      while(sync_tsperphase_temp)
+      {
+        if (i == 0)
+        {
+          size += 6 * (16 + 1);
+        }
+        else /* i == 1 */
+        {
+          sprintf(*data + strlen(*data),
+                  "%llx:%llx:%llx:%llx:%llx:%llx:",
+                  (unsigned long long int)(sync_tsperphase_temp->id1),
+                  (unsigned long long int)(sync_tsperphase_temp->id2),
+                  (unsigned long long int)(sync_tsperphase_temp->t1),
+                  (unsigned long long int)(sync_tsperphase_temp->t2),
+                  (unsigned long long int)(sync_tsperphase_temp->t3),
+                  (unsigned long long int)(sync_tsperphase_temp->t4));
+        }
+        sync_tsperphase_temp = sync_tsperphase_temp->next;
+      }
+
+      if (i == 0)
+        size++;
+      else /* i == 1 */
+        strcat(*data, "\n");
+      sync_tsperrun_temp = sync_tsperrun_temp->next;
+    }
+
+    /* enlarge buffer for uctl data at the end of the first iteration */
+
+    if (i == 0)
+    {
+      *data = (char*)realloc(*data, size * sizeof(char));
+      if (*data == NULL)
+        vt_error();
+    }
   }
 }
 

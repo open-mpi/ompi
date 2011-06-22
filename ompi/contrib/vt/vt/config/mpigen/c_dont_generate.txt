@@ -1,7 +1,6 @@
 # This file lists all calls, which should not be generated
 # automatically by mk_c_wrapper.sh 
 
-MPI_Initialized
 MPI_Pcontrol
 MPI_Wtick
 MPI_Wtime
@@ -18,6 +17,9 @@ MPI_Win_call_errhandler
 MPI_Win_create_errhandler
 MPI_Win_get_errhandler
 MPI_Win_set_errhandler
+
+# conflicting argument types with SGI-MPT (noticed on version 1.26)
+MPI_Grequest_complete
 
 # implemented MPI functions
 MPI_Allgather
@@ -51,6 +53,7 @@ MPI_Irsend
 MPI_Isend
 MPI_Issend
 MPI_Finalize
+MPI_Finalized
 MPI_Recv
 MPI_Recv_init
 MPI_Reduce

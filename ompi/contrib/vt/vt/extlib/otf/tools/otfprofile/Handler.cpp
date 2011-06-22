@@ -1,11 +1,13 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Denis Huenich, Johannes Spazier
 */
 
 #include "OTF_Platform.h"
 
+
 #include "Handler.h"
+#include "Summary.h"
 
 
 int save_temp(global_data* gd_ptr);
@@ -134,9 +136,13 @@ int handleDefProcess(void* firsthandlerarg, uint32_t streamid,
 	}
 	Process p;
 
-	/* leere recv_map für prozess anlegen */
-	for(uint32_t i=1; i<= gd_ptr->num_cpu; i++) {
-		p.clear_recv_map(i);
+	/* ignore in lite mode */
+	if ( ! lite ) {
+
+		/* make empty recv_map for all processes */
+		for(uint32_t i=1; i<= gd_ptr->num_cpu; i++) {
+			p.clear_recv_map(i);
+		}
 	}
 
 	gd_ptr->p_map.insert(pair<uint32_t,Process>(proc, p));

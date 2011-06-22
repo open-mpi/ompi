@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -60,7 +60,7 @@ static int get_new_trcid()
 
   vt_assert(trcid_filename[0] != '\0');
 
-  VT_SUSPEND_IO_TRACING();
+  VT_SUSPEND_IO_TRACING(VT_CURRENT_THREAD);
 
   /* open/create temp. id file */
   if ( (fd = open(trcid_filename,
@@ -107,7 +107,7 @@ static int get_new_trcid()
 
   vt_cntl_msg(2, "Updated trace-id in %s to %i", trcid_filename, new_trcid);
 
-  VT_RESUME_IO_TRACING();
+  VT_RESUME_IO_TRACING(VT_CURRENT_THREAD);
 
   return new_trcid;
 }
@@ -197,7 +197,7 @@ uint32_t vt_fork_get_num_childs_tot()
 
     vt_assert(trcid_filename[0] != '\0');
 
-    VT_SUSPEND_IO_TRACING();
+    VT_SUSPEND_IO_TRACING(VT_CURRENT_THREAD);
 
     /* open temp. id file for reading */
     if ( (fd = open(trcid_filename, O_RDONLY)) == -1 )
@@ -214,7 +214,7 @@ uint32_t vt_fork_get_num_childs_tot()
     /* close temp. id file */
     close(fd);
 
-    VT_RESUME_IO_TRACING();
+    VT_RESUME_IO_TRACING(VT_CURRENT_THREAD);
   }
   else
   {

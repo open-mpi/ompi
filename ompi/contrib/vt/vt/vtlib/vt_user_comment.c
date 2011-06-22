@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -11,6 +11,8 @@
  **/
 
 #include <string.h>
+
+#include "vt_defs.h"
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
 #include "vt_memhook.h"
@@ -36,7 +38,7 @@ void VT_User_comment_def__(const char* comment)
 
   VT_MEMHOOKS_OFF();
 
-  vt_def_comment(comment);
+  vt_def_comment(VT_CURRENT_THREAD, comment);
 
   VT_MEMHOOKS_ON();
 }
@@ -50,7 +52,7 @@ void VT_User_comment__(const char* comment)
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
-  vt_comment(&time, comment);
+  vt_comment(VT_CURRENT_THREAD, &time, comment);
 
   VT_MEMHOOKS_ON();
 }
@@ -59,10 +61,7 @@ void VT_User_comment__(const char* comment)
  * Fortran version
  */
 
-void VT_User_comment_def___f(const char* comment, int cl);
-void VT_User_comment___f(const char* comment, int cl);
-
-void VT_User_comment_def___f(const char* comment, int cl)
+VT_DECLDEF(void VT_User_comment_def___f(const char* comment, int cl))
 {
   int comlen;
   char fcombuf[1024];
@@ -78,7 +77,7 @@ void VT_User_comment_def___f(const char* comment, int cl)
 			   (const char* comment, int cl),
 			   (comment, cl))
 
-void VT_User_comment___f(const char* comment, int cl)
+VT_DECLDEF(void VT_User_comment___f(const char* comment, int cl))
 {
   int comlen;
   char fcombuf[1024];

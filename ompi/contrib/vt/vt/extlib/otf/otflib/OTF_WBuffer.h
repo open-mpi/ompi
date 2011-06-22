@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -25,6 +25,8 @@
 
 #include "OTF_File.h"
 #include "OTF_Filenames.h"
+
+#include "OTF_KeyValue.h"
 
 
 #ifdef __cplusplus
@@ -108,6 +110,16 @@ uint32_t OTF_WBuffer_writeString( OTF_WBuffer* wbuffer, const char* string );
 	Return the number of bytes written (=1). */
 uint32_t OTF_WBuffer_writeChar( OTF_WBuffer* wbuffer, const char character );
 
+/**	This function append an 8bit unsigned integer 'value' in hex format to
+	the write buffer. Buffer flush is done if necessary. The return value
+	is the number of written characters. */
+uint32_t OTF_WBuffer_writeUint8( OTF_WBuffer* wbuffer, uint8_t value );
+
+/**	This function append an 16bit unsigned integer 'value' in hex format to
+	the write buffer. Buffer flush is done if necessary. The return value
+	is the number of written characters. */
+uint32_t OTF_WBuffer_writeUint16( OTF_WBuffer* wbuffer, uint16_t value );
+
 /**	This function append an unsigned integer 'value' in hex format to
 	the write buffer. Buffer flush is done if necessary. The return value
 	is the number of written characters. */
@@ -121,6 +133,23 @@ uint32_t OTF_WBuffer_writeUint64( OTF_WBuffer* wbuffer, uint64_t value );
 /**	Append a newline character to the buffer. Buffer flush is done if
 	necessary. Return the number of bytes written. */
 uint32_t OTF_WBuffer_writeNewline( OTF_WBuffer* wbuffer );
+
+/**	This function append an byte array in hex format to
+	the write buffer. Buffer flush is done if necessary. The return value
+	is the number of written characters. */
+uint32_t OTF_WBuffer_writeBytes( OTF_WBuffer* wbuffer, const uint8_t *value, uint32_t len);
+
+/**     Append a KeyValuePair to the buffer (short format). Return the number of bytes written. */
+uint32_t OTF_WBuffer_writeKeyValuePair_short(OTF_WBuffer* buffer, OTF_KeyValuePair* pair);
+
+/**     Append a KeyValuePair to the buffer (long format). Return the number of bytes written. */
+uint32_t OTF_WBuffer_writeKeyValuePair_long(OTF_WBuffer* buffer, OTF_KeyValuePair* pair);
+
+/**	Append a KeyValueList to the buffer (short format). Return the number of bytes written. */
+uint32_t OTF_WBuffer_writeKeyValueList_short(OTF_WBuffer* buffer, OTF_KeyValueList *list );
+
+/**	Append a KeyValueList to the buffer (long format). Return the number of bytes written. */
+uint32_t OTF_WBuffer_writeKeyValueList_long(OTF_WBuffer* buffer, OTF_KeyValueList *list );
 
 /** internal use */
 OTF_WBuffer* OTF_WBuffer_open_zlevel( const char* filename,

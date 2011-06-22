@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -26,11 +26,20 @@
 #include "vt_trc.h"
 #include "vt_iowrap.h"
 
+
+#if defined(VT_PLUGIN_CNTR)
+# include "vt_plugin_cntr_int.h"
+#endif /* VT_PLUGIN_CNTR */
+
+
 /* vector of the thread objects */
 VTThrd** VTThrdv = NULL;
 
 /* number of thread objects */
-uint32_t VTThrdn = 0;
+uint32_t VTThrdn = 1;
+
+/* maximum number of threads */
+uint32_t VTThrdMaxNum = 0;
 
 /* mutexes for locking */
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
@@ -40,8 +49,11 @@ VTThrdMutex* VTThrdMutexIds = NULL;
 
 void VTThrd_init()
 {
+  /* get the maximum number of threads */
+  VTThrdMaxNum = (uint32_t)vt_env_max_threads();
+
   /* create vector of the thread objects */
-  VTThrdv = (VTThrd**)calloc(vt_env_max_threads(), sizeof(VTThrd*));
+  VTThrdv = (VTThrd**)calloc(VTThrdMaxNum, sizeof(VTThrd*));
   if ( VTThrdv == NULL )
     vt_error();
 
@@ -66,9 +78,9 @@ void VTThrd_init()
      (for Java this will be done in VTThrd_initJava(),
       'cause it gets the read thread name) */
 #if !defined(VT_JAVA)
-  VTThrdv[0] = VTThrd_create(0, 0, NULL);
-  VTThrd_open(VTThrdv[0], 0);
-#endif
+  VTThrd_create(0, 0, NULL, 0);
+  VTThrd_open(0);
+#endif /* VT_JAVA */
 }
 
 void VTThrd_finalize()
@@ -83,7 +95,30 @@ void VTThrd_finalize()
     free(VTThrdv);
 }
 
-VTThrd* VTThrd_create(uint32_t tid, uint32_t ptid, const char* tname)
+uint32_t VTThrd_createNewThreadId()
+{
+  uint32_t tid;
+
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+  VTTHRD_LOCK_ENV();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+  if ( VTThrdn > VTThrdMaxNum )
+  {
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+    VTTHRD_UNLOCK_ENV();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+    vt_error_msg("Cannot create more than %d threads", VTThrdMaxNum);
+  }
+  tid = VTThrdn;
+  VTThrdn++;
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+  VTTHRD_UNLOCK_ENV();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+
+  return tid;
+}
+
+void VTThrd_create(uint32_t tid, uint32_t ptid, const char* tname, uint8_t is_virtual)
 {
   VTThrd *thread;
 #if defined(VT_METR)
@@ -93,35 +128,23 @@ VTThrd* VTThrd_create(uint32_t tid, uint32_t ptid, const char* tname)
   uint32_t num_rusage = (uint32_t)vt_rusage_num();
 #endif /* VT_RUSAGE */
 
-#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
-  VTTHRD_LOCK_ENV();
-#endif /* VT_MT || VT_HYB || VT_JAVA */
-
-  if (VTThrdn > (uint32_t)vt_env_max_threads())
-  {
-#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
-    VTTHRD_UNLOCK_ENV();
-#endif /* VT_MT || VT_HYB || VT_JAVA */
-    vt_error_msg("Cannot create more than %d threads", vt_env_max_threads());
-  }
-#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
-  VTTHRD_UNLOCK_ENV();
-#endif /* VT_MT || VT_HYB || VT_JAVA */
-
   thread = (VTThrd*)calloc(1, sizeof(VTThrd));
   if ( thread == NULL )
     vt_error();
 
-  /* set external thread name, if available */
-  if (tname)
-    strncpy(thread->name_extern, tname, sizeof(thread->name_extern)-1);
+  /* set thread name, if available */
+  if ( tname == NULL )
+  {
+    if ( tid == 0 ) tname = "Process";
+    else tname = "Thread";
+  }
 
-  /* set thread's name prefix */
-  snprintf(thread->name_prefix, sizeof(thread->name_prefix)-1, "%s",
-           tid == 0 ? "Process" : "Thread");
+  /* set thread name */
+  strncpy(thread->name, tname, sizeof(thread->name));
+  thread->name[sizeof(thread->name)-1] = '\0';
 
-  /* set thread's name suffix */
-  if (tid != 0)
+  /* set thread name suffix */
+  if ( tid != 0 )
   {
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
     VTTHRD_LOCK_ENV();
@@ -138,12 +161,16 @@ VTThrd* VTThrd_create(uint32_t tid, uint32_t ptid, const char* tname)
   /* set parent ID of thread */
   thread->parent_tid = ptid;
 
+  /* set the virtual thread flag */
+  thread->is_virtual_thread = is_virtual;
+
 #if defined(VT_GETCPU)
   thread->cpuid_val = (uint32_t)-1;
 #endif /* VT_GETCPU */
 
 #if defined(VT_RUSAGE)
-  if (num_rusage > 0) {
+  if ( num_rusage > 0 )
+  {
     /* create rusage object */
     thread->ru_obj = vt_rusage_create();
 
@@ -158,7 +185,8 @@ VTThrd* VTThrd_create(uint32_t tid, uint32_t ptid, const char* tname)
 #endif /* VT_RUSAGE */
 
 #if defined(VT_METR)
-  if (num_metrics > 0) {
+  if ( num_metrics > 0 && is_virtual == 0)
+  {
     /* create event set */
     thread->metv = vt_metric_create();
 
@@ -187,53 +215,92 @@ VTThrd* VTThrd_create(uint32_t tid, uint32_t ptid, const char* tname)
   /* enable tracing */
   thread->trace_status = VT_TRACE_ON;
 
-  /* increment the thread object counter (for successful creations) */
+  VTThrdv[tid] = thread;
 
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
   VTTHRD_LOCK_ENV();
-  VTThrdn++;
   vt_cntl_msg(2, "Thread object #%u created, total number is %u",
-                 tid, VTThrdn);
+              tid, VTThrdn);
   VTTHRD_UNLOCK_ENV();
 #else /* VT_MT || VT_HYB || VT_JAVA */
-  VTThrdn++;
   vt_cntl_msg(2, "Thread object #%u created, total number is %u",
                  tid, VTThrdn);
 #endif /* VT_MT || VT_HYB || VT_JAVA */
-
-  return thread;
 }
 
-void VTThrd_open(VTThrd* thrd, uint32_t tid)
+void VTThrd_open(uint32_t tid)
 {
+  VTThrd* thrd = VTThrdv[tid];
   size_t bsize = vt_env_bsize();
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
-  if (tid == 0) { /* master thread gets most buffer space */
+  if ( tid == 0 ) { /* master thread gets most buffer space */
     bsize = (bsize / 10) * 7;
   } else {        /* worker threads get less buffer space */
     bsize = (bsize / 10);
   }
 #endif /* VT_MT || VT_HYB || VT_JAVA */
 
-  if (thrd)
+  if ( thrd )
   {
-    thrd->gen = VTGen_open(thrd->name_prefix, thrd->name_suffix,
-                           thrd->name_extern, thrd->parent_tid, tid, bsize);
+    thrd->gen = VTGen_open(thrd->name, thrd->name_suffix,
+                           thrd->parent_tid, tid, bsize);
   }
 
+#if (defined(VT_PLUGIN_CNTR) || defined(VT_CUDARTWRAP))
+  if ( tid != 0 && VTThrdv[tid]->is_virtual_thread )
+    return;
+#endif /* VT_PLUGIN_CNTR || VT_CUDARTWRAP */
+
+#if (defined (VT_MPI) || defined (VT_HYB))
+  /* initialize first matching ID for MPI collective ops. */
+  thrd->mpicoll_next_matchingid = 1;
+#endif /* VT_MPI || VT_HYB */
+
+#if (defined (VT_IOWRAP) || (defined(HAVE_MPI2_IO) && HAVE_MPI2_IO))
+  /* initialize first matching ID and handle */
+  thrd->io_next_matchingid = 1;
+  thrd->io_next_handle = 1;
+#endif /* VT_IOWRAP || HAVE_MPI2_IO */
 #if defined(VT_IOWRAP)
-  if (vt_env_iotrace())
+  if ( vt_env_iotrace() )
   {
     vt_iowrap_init();
     VT_ENABLE_IO_TRACING();
   }
 #endif /* VT_IOWRAP */
+
+#if defined(VT_PLUGIN_CNTR)
+  /* if we really use plugins */
+  if ( vt_plugin_cntr_used && tid != 0 )
+  {
+    /* if this is no dummy thread */
+    if ( !vt_plugin_cntr_is_registered_monitor_thread() )
+    {
+      vt_plugin_cntr_thread_init(thrd, tid);
+
+      /* if this thread uses plugins */
+      if ( thrd->plugin_cntr_defines )
+        vt_plugin_cntr_thread_enable_counters(thrd);
+    }
+  }
+#endif /* VT_PLUGIN_CNTR */
+
+  /* if MPI-rank is disabled, switch tracing off for this thread */
+  if( vt_my_trace_is_disabled )
+    vt_trace_off(tid, 0, 1);
 }
 
 void VTThrd_close(VTThrd* thrd)
 {
-  if (thrd)
-    VTGen_close(thrd->gen);
+  if ( !thrd ) return;
+  
+#if defined(VT_PLUGIN_CNTR)
+  if ( vt_plugin_cntr_used && thrd->plugin_cntr_defines ){
+    /* then write the post mortem counters */
+    vt_plugin_cntr_write_post_mortem(thrd);
+  }
+#endif /* VT_PLUGIN_CNTR */
+  VTGen_close(thrd->gen);
 }
 
 void VTThrd_delete(VTThrd* thrd, uint32_t tid)
@@ -241,26 +308,17 @@ void VTThrd_delete(VTThrd* thrd, uint32_t tid)
   if ( !thrd ) return;
 
 #if !defined(VT_DISABLE_RFG)
-  /* write list of regions whose call limit are reached */
   if ( thrd->rfg_regions )
-  {
-    char* filter_filename;
-
-    filter_filename = (char*)calloc(VT_PATH_MAX + 1, sizeof(char));
-    if ( filter_filename == NULL )
-      vt_error();
-
-    snprintf(filter_filename, VT_PATH_MAX, "%s/%s.%x.filt",
-             vt_env_gdir(), vt_env_fprefix(),
-             65536*tid+(vt_my_trace+1));
-
-    RFG_Regions_dumpFilteredRegions(thrd->rfg_regions, filter_filename);
-
     RFG_Regions_free(thrd->rfg_regions);
-
-    free(filter_filename);
-  }
 #endif /* VT_DISABLE_RFG */
+
+  /* must be called before VTGen_delete */
+#if defined(VT_PLUGIN_CNTR)
+  /* if we really use plugins and this thread also uses some */
+  if ( vt_plugin_cntr_used && thrd->plugin_cntr_defines ){
+    vt_plugin_cntr_thread_exit(thrd);
+  }
+#endif /* VT_PLUGIN_CNTR */
 
   if ( thrd->gen )
     VTGen_delete(thrd->gen);
@@ -282,11 +340,11 @@ void VTThrd_delete(VTThrd* thrd, uint32_t tid)
 #endif /* VT_RUSAGE */
 
 #if defined(VT_METR)
-  if ( vt_metric_num() > 0 )
+  if ( vt_metric_num() > 0 && thrd->is_virtual_thread == 0 )
   {
     if ( thrd->metv )
     {
-      vt_metric_free(thrd->metv);
+      vt_metric_free(thrd->metv, tid);
       thrd->metv = NULL;
     }
     if ( thrd->offv )
@@ -301,7 +359,6 @@ void VTThrd_delete(VTThrd* thrd, uint32_t tid)
     }
   }
 #endif /* VT_METR */
-
   free(thrd);
 
   /* decrement the thread object counter */
@@ -313,14 +370,14 @@ void VTThrd_delete(VTThrd* thrd, uint32_t tid)
 #else /* VT_MT || VT_HYB || VT_JAVA */
   VTThrdn--;
   vt_cntl_msg(2, "Thread object #%u deleted, leaving %u", tid, VTThrdn);
-#endif
+#endif /* VT_MT || VT_HYB || VT_JAVA */
 }
 
 void VTThrd_destroy(VTThrd* thrd, uint32_t tid)
 {
 #if !defined(VT_DISABLE_RFG)
   RFG_Regions_free(thrd->rfg_regions);
-#endif
+#endif /* VT_DISABLE_RFG */
 
   VTGen_destroy(thrd->gen);
 
@@ -341,11 +398,11 @@ void VTThrd_destroy(VTThrd* thrd, uint32_t tid)
 #endif /* VT_RUSAGE */
 
 #if defined(VT_METR)
-  if ( vt_metric_num() > 0 )
+  if ( vt_metric_num() > 0 && thrd->is_virtual_thread == 0 )
   {
     if ( thrd->metv )
     {
-      vt_metric_free(thrd->metv);
+      vt_metric_free(thrd->metv, tid);
       thrd->metv = NULL;
     }
     if ( thrd->offv )

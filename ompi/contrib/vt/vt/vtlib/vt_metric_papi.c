@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -19,12 +19,13 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "otf.h"
 #include "papi.h"
 
+#include "vt_defs.h"
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
+#include "vt_iowrap.h"
 #include "vt_metric.h"
 
 #if !(defined(HAVE_DECL_LONG_LONG) && HAVE_DECL_LONG_LONG)
@@ -247,7 +248,7 @@ static void metricv_add(char* name, int code)
     metricv[nmetrics] = (struct metric*)malloc(sizeof(struct metric));
     metricv[nmetrics]->name = strdup(name);
     metricv[nmetrics]->descr[0] = '\0';
-    metricv[nmetrics]->props = OTF_COUNTER_TYPE_ACC;
+    metricv[nmetrics]->props = VT_CNTR_ACC;
     metricv[nmetrics]->papi_code = code;
     nmetrics++;
   }
@@ -494,7 +495,7 @@ int vt_metric_open()
     }
 
     if (forceprop)
-      metricv[nmetrics-1]->props=OTF_COUNTER_TYPE_ABS;
+      metricv[nmetrics-1]->props = VT_CNTR_ABS | VT_CNTR_NEXT;
     token = strtok(NULL, env_sep);
   }
 
@@ -589,7 +590,7 @@ struct vt_metv* vt_metric_create()
   return metv;
 }
 
-void vt_metric_free(struct vt_metv* metv)
+void vt_metric_free(struct vt_metv* metv, uint32_t tid)
 {
   int retval, i;
   long_long papi_vals[VT_METRIC_MAXNUM];
@@ -598,6 +599,8 @@ void vt_metric_free(struct vt_metv* metv)
     return;
 
   /* treat PAPI failures at this point as non-fatal */
+
+  VT_SUSPEND_IO_TRACING(tid);
 
   /* foreach used eventset */
   for (i=0; i < VT_METRIC_MAXNUM && metv->EventSet[i]!=NULL; i++)
@@ -615,6 +618,9 @@ void vt_metric_free(struct vt_metv* metv)
     }
     free(metv->EventSet[i]);
   }
+
+  VT_RESUME_IO_TRACING(tid);
+  
   free(metv);
 }
 
@@ -649,6 +655,8 @@ void vt_metric_read(struct vt_metv* metv, uint64_t offsets[],
   if ( metv == NULL )
     return;
 
+  VT_SUSPEND_IO_TRACING(VT_CURRENT_THREAD);
+
   /* foreach used eventset */
   for (i=0; i < VT_METRIC_MAXNUM && metv->EventSet[i]!=NULL; i++)
   {
@@ -663,6 +671,8 @@ void vt_metric_read(struct vt_metv* metv, uint64_t offsets[],
   else
     for ( i = 0; i < nmetrics; i++ )
       values[i] = (uint64_t) *metv->Values[i];
+
+  VT_RESUME_IO_TRACING(VT_CURRENT_THREAD);
 }
 
 int vt_metric_num()

@@ -6,12 +6,14 @@
 
 export SRCDIR=@top_vt_srcdir@/config/mpigen
 
-have_mpi2=0 #@VT_MPIGEN_HAVE_MPI2@
 have_mpi2_thread=@VT_MPIGEN_HAVE_MPI2_THREAD@
 have_mpi2_1sided=@VT_MPIGEN_HAVE_MPI2_1SIDED@
 have_mpi2_extcoll=@VT_MPIGEN_HAVE_MPI2_EXTCOLL@
 have_mpi2_file=@VT_MPIGEN_HAVE_MPI2_IO@
 have_mpi2_proc=0 #@VT_MPIGEN_HAVE_MPI2_PROC@
+if [ $have_mpi2_thread -o $have_mpi2_1sided -o $have_mpi2_extcoll -o $have_mpi2_proc ] ; then
+  have_mpi2=1
+fi
 mpi2_src1=""; if [ $have_mpi2 = 1 ] ; then mpi2_src1="mpi2_standard.h"; fi
 mpi2_src2=""; if [ $have_mpi2_thread = 1 ] ; then mpi2_src2="mpi2_thread.h"; fi
 mpi2_src3=""; if [ $have_mpi2_1sided = 1 ] ; then mpi2_src3="mpi2_1sided.h"; fi
@@ -27,7 +29,7 @@ trap "rm -f $tmp.*; exit" 0 1 2 3 15
 rm -f $tmp.tmp $outprefix.c $outprefix.h
 for s in $src; do
   if [ ! -f $SRCDIR/$s ] ; then
-  echo "$0: error: $SRCDIR/$s not found!"
+    echo "$0: error: $SRCDIR/$s not found!"
     exit 1
   fi
 
@@ -48,7 +50,7 @@ cat <<End-of-File >$tmp.h
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -97,7 +99,7 @@ cat <<End-of-File >$tmp.c
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -139,7 +141,7 @@ cat <<End-of-File >$tmp.awk
     type="VT_MPI_FUNCTION"
 
   printf"  vt_mpi_regid[VT__%s] =\n", toupper(mpicall)
-  printf"    vt_def_region(\\"%s\\", mpi_fid, VT_NO_LNO, VT_NO_LNO, NULL, %s);\n",
+  printf"    vt_def_region(VT_CURRENT_THREAD, \\"%s\\", mpi_fid, VT_NO_LNO, VT_NO_LNO, NULL, %s);\n",
     mpicall, type
 }
 End-of-File

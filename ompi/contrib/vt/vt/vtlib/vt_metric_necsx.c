@@ -5,7 +5,7 @@
  * Copyright (c) 2007-2008, High Performance Computing Center Stuttgart,
  *                          Federal Republic of Germany
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -22,8 +22,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "otf.h"
-
+#include "vt_defs.h"
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
@@ -73,56 +72,56 @@ static struct metric vt_sx_metrics[] = {
   "sx_fpec",
   "Floating Point Data Execution Counter (Avg. MFLOPS)",
   "MFLOPS",
-  OTF_COUNTER_TYPE_ACC,
+  VT_CNTR_ACC,
   &sx_fpec
 },
 {
   "sx_vx_per_ex",
   "Percentage of vector instructions (VX) of all instructions executed (EX) (Avg. Vector Operation Ratio)",
   "%",
-  OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT,
+  VT_CNTR_ABS | VT_CNTR_NEXT,
   &sx_vx_per_ex
 },
 {
   "sx_ve_per_vx",
   "Vector elements (VE) per vector instruction (VX) (Avg. Vector Length)",
   "#",
-  OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT, 
+  VT_CNTR_ABS | VT_CNTR_NEXT, 
   &sx_ve_per_vx
 },
 {
   "sx_ex_plus_vx",
   "Vector instructions (VX) plus scalar instructions (EX) executed",
   "#",
-  OTF_COUNTER_TYPE_ACC,
+  VT_CNTR_ACC,
   &sx_ex_plus_vx
 },
 {
   "sx_vldec_per_vecc",
   "Vector load execution clocks (VLDEC) per vector execution clocks (VECC)",
   "#",
-  OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT, 
+  VT_CNTR_ABS | VT_CNTR_NEXT, 
   &sx_vldec_per_vecc
 },
 {
   "sx_bpfc_per_brec",
   "Percentage of mispredicted branches (BPFC) per branches executed (BREC)",
   "%",
-  OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT,
+  VT_CNTR_ABS | VT_CNTR_NEXT,
   &sx_bpfc_per_brec
 },
 {
   "sx_all_clocks_missed_per_usr_clocks",
   "All clocks missed for execution per overall clocks ((IPHCC+ICMCC+OCMCC+MNCCC+BCCC+SRACC)/USRCC)",
   "#",
-  OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT,
+  VT_CNTR_ABS | VT_CNTR_NEXT,
   &sx_all_clocks_missed_per_usr_clocks
 },
 {
   "sx_iphcc",
   "Instruction Pipeline Hold Clock Counter (IPHCC)",
   "#",
-  OTF_COUNTER_TYPE_ACC,
+  VT_CNTR_ACC,
   &sx_iphcc
 },
 
@@ -131,28 +130,28 @@ static struct metric vt_sx_metrics[] = {
   "sx_bccc",
   "Bank Conflict Clock Counter (BCCC)",
   "#",
-  OTF_COUNTER_TYPE_ACC,
+  VT_CNTR_ACC,
   &sx_bccc
 },
 {
   "sx_icmcc",
   "Instruction Cache Miss Clock Counter (ICMCC)",
   "#",
-  OTF_COUNTER_TYPE_ACC,
+  VT_CNTR_ACC,
   &sx_icmcc
 },
 {
   "sx_ocmcc",
   "Operand Cache Miss Clock Counter (OCMCC)",
   "#",
-  OTF_COUNTER_TYPE_ACC,
+  VT_CNTR_ACC,
   &sx_ocmcc
 },
 {
   "sx_binop",
   "Binary Flip-Flop every other event",
   "#",
-  OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT,
+  VT_CNTR_ABS | VT_CNTR_NEXT,
   &sx_binop
 }
 };
@@ -426,8 +425,9 @@ struct vt_metv* vt_metric_create(void)
   return &vt_metv_used;
 }
 
-void vt_metric_free(struct vt_metv* metv)
+void vt_metric_free(struct vt_metv* metv, uint32_t tid)
 {
+  (void)tid;
   (void)metv;
 }
 

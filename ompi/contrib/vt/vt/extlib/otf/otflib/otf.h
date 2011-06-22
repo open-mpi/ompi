@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -36,6 +36,8 @@
  *     - \ref fm "File Manager"
  *     - \ref mc "Master Control"
  *
+ *     - \ref keyvalue "KeyValueList"
+ *
  *     - \ref misc "Miscellaneous"
  *
  *   \subsection examples Examples
@@ -45,6 +47,8 @@
  *     - \ref writer_example "Writer"
  *     - \ref wstream_example "Stream Writer"
  *     - \ref mc_example "Master Control"
+ *     - \ref keyvalue_read_example "KeyValueList - Read"
+ *     - \ref keyvalue_write_example "KeyValueList - Write"
  *
  *   \subsection Contact
  *     - report bugs to andreas.knuepfer@tu-dresden.de
@@ -74,6 +78,7 @@
 
 
 #include "OTF_Definitions.h"
+#include "OTF_KeyValue.h"
 #include "OTF_FileManager.h"
 #include "OTF_Filenames.h"
 #include "OTF_HandlerArray.h"

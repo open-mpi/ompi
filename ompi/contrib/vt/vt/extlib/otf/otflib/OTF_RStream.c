@@ -1,6 +1,7 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
+ also: patches by Rainer Keller, thanks a lot!
 */
 
 #ifdef HAVE_CONFIG_H
@@ -14,6 +15,8 @@
 #include "OTF_Reader.h"
 #include "OTF_Parse.h"
 #include "OTF_Errno.h"
+
+#include "OTF_Keywords.h"
 
 
 /** constructor - internal use only */
@@ -139,7 +142,19 @@ int OTF_RStream_finish( OTF_RStream* rstream ) {
 OTF_RStream* OTF_RStream_open( const char* namestub, uint32_t id, OTF_FileManager* manager ) {
 
 
-	OTF_RStream* ret= (OTF_RStream*) malloc( sizeof(OTF_RStream) );
+	OTF_RStream* ret;
+
+	/* Check the input parameters */
+	if( NULL == manager ) {
+		
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"manager has not been specified.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+
+		return NULL;
+	}
+
+	ret= (OTF_RStream*) malloc( sizeof(OTF_RStream) );
 	if( NULL == ret ) {
 		
 		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
@@ -154,17 +169,6 @@ OTF_RStream* OTF_RStream_open( const char* namestub, uint32_t id, OTF_FileManage
 	ret->namestub= strdup( namestub );
 	ret->id= id;
 
-	if( NULL == manager ) {
-		
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-				"manager has not been specified.\n",
-				__FUNCTION__, __FILE__, __LINE__ );
-
-		free( ret );
-		ret= NULL;
-
-		return NULL;
-	}
 	ret->manager= manager;
 
 	/* leave buffers alone, they are allocated on demand */
@@ -234,6 +238,24 @@ OTF_RBuffer* OTF_RStream_getDefBuffer( OTF_RStream* rstream ) {
 }
 
 
+OTF_RBuffer* OTF_RStream_setDefBuffer( OTF_RStream* rstream, OTF_RBuffer* rbuffer ) {
+
+
+    OTF_RBuffer* old= rstream->defBuffer;
+    rstream->defBuffer= rbuffer;
+
+    /* the following is important because otherwise the buffer sizes stay 0 
+    which leads to weird problems down the road */
+
+    OTF_RBuffer_setSize( rstream->defBuffer, rstream->buffersizes );
+#ifdef HAVE_ZLIB
+    OTF_RBuffer_setZBufferSize( rstream->defBuffer, rstream->zbuffersizes );
+#endif /* HAVE_ZLIB */
+
+    return old;
+}
+
+
 int OTF_RStream_closeDefBuffer( OTF_RStream* rstream ) {
 
 
@@ -277,20 +299,19 @@ OTF_RBuffer* OTF_RStream_getEventBuffer( OTF_RStream* rstream ) {
 		}
 
 		rstream->eventBuffer= OTF_RBuffer_open( filename, rstream->manager );
-		if ( NULL == rstream->eventBuffer ) {
-
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-					"OTF_RBuffer_open() failed for filename '%s'.\n",
-					__FUNCTION__, __FILE__, __LINE__, filename );
-
-			free( filename );
-			filename = NULL;
-			return NULL;
-		}
-
 		free( filename );
 		filename = NULL;
 
+		if ( NULL == rstream->eventBuffer ) {
+
+/* *** commented because it can happen when file not exists
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					"OTF_RBuffer_open() failed for filename '%s'.\n",
+					__FUNCTION__, __FILE__, __LINE__, filename );
+*/
+
+			return NULL;
+		}
 
 		OTF_RBuffer_setSize( rstream->eventBuffer, rstream->buffersizes );
 #ifdef HAVE_ZLIB
@@ -410,10 +431,6 @@ OTF_RBuffer* OTF_RStream_getStatsBuffer( OTF_RStream* rstream ) {
 
 		if ( NULL == rstream->statsBuffer ) {
 
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-					"OTF_RBuffer_open() failed.\n",
-					__FUNCTION__, __FILE__, __LINE__ );
-
 			return NULL;
 		}
 
@@ -467,8 +484,6 @@ OTF_RBuffer* OTF_RStream_getMarkerBuffer( OTF_RStream* rstream ) {
 
 			return NULL;
 		}
-
-		OTF_fprintf( stderr, "opening file '%s'.\n", filename );
 
 		rstream->markerBuffer= OTF_RBuffer_open( filename, rstream->manager );
 		free( filename );
@@ -624,6 +639,7 @@ uint64_t OTF_RStream_readDefinitions( OTF_RStream* rstream, OTF_HandlerArray* ha
 
 	int ret;
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == rstream->defBuffer ) {
@@ -653,14 +669,24 @@ uint64_t OTF_RStream_readDefinitions( OTF_RStream* rstream, OTF_HandlerArray* ha
 			return recordcount;
 		}
 
+		/* remember next record type, if it will be a none
+		   KEYVALUE record, dont't account it in recordcount */
+		next_char = *(rstream->defBuffer->buffer + rstream->defBuffer->pos);
+
 		ret= OTF_Reader_parseDefRecord( rstream->defBuffer, handlers, rstream->id );
 		if ( 0 == ret ) {
 
 			/* maybe later an errorhandler gives the record to the user */
 			return OTF_READ_ERROR;
 		}
-
-		recordcount++;
+	
+		/* Now reset the KeyValue list, if we consumed a none
+		   KEYVALUE record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(rstream->defBuffer->list);
+			recordcount++;
+		}
+		
 	}
 
 	return recordcount;
@@ -679,6 +705,7 @@ uint64_t OTF_RStream_readEvents( OTF_RStream* rstream, OTF_HandlerArray* handler
 		uint64_t oldtime= 0;
 #	endif
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == rstream->eventBuffer ) {
@@ -728,6 +755,10 @@ uint64_t OTF_RStream_readEvents( OTF_RStream* rstream, OTF_HandlerArray* handler
 			}
 #		endif
 
+		/* remember next record type, if it will be a none
+		   KEYVALUE record, dont't account it in recordcount */
+		next_char = *(rstream->eventBuffer->buffer + rstream->eventBuffer->pos);
+
 		ret= OTF_Reader_parseEventRecord( rstream->eventBuffer, handlers );
 		if ( 0 == ret ) {
 
@@ -735,7 +766,13 @@ uint64_t OTF_RStream_readEvents( OTF_RStream* rstream, OTF_HandlerArray* handler
 			return OTF_READ_ERROR;
 		}
 
-		recordcount++;
+		/* Now reset the KeyValue list, if we consumed a none
+		   KEYVALUE record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(rstream->eventBuffer->list);
+			recordcount++;
+		}
+		
 	}
 
 	return recordcount;
@@ -754,6 +791,7 @@ uint64_t OTF_RStream_readSnapshots( OTF_RStream* rstream, OTF_HandlerArray* hand
 		uint64_t oldtime= 0;
 #	endif
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == rstream->snapsBuffer ) {
@@ -803,6 +841,9 @@ uint64_t OTF_RStream_readSnapshots( OTF_RStream* rstream, OTF_HandlerArray* hand
 			}
 #		endif
 
+		/* remember next record type, if it will be a none
+		   KEYVALUE record, dont't account it in recordcount */
+		next_char = *(rstream->snapsBuffer->buffer + rstream->snapsBuffer->pos);
 
 		ret= OTF_Reader_parseSnapshotsRecord( rstream->snapsBuffer, handlers );
 		if ( 0 == ret ) {
@@ -810,10 +851,15 @@ uint64_t OTF_RStream_readSnapshots( OTF_RStream* rstream, OTF_HandlerArray* hand
 			/* maybe later an errorhandler gives the record to the user */
 			return OTF_READ_ERROR;
 		}
+		
+		/* Now reset the KeyValue list, if we consumed a none
+		   KEYVALUE record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(rstream->snapsBuffer->list);
+			recordcount++;
+		}
 
-		recordcount++;
 	}
-
 
 	return recordcount;
 }
@@ -831,6 +877,7 @@ uint64_t OTF_RStream_readStatistics( OTF_RStream* rstream, OTF_HandlerArray* han
 		uint64_t oldtime= 0;
 #	endif
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == rstream->statsBuffer ) {
@@ -880,6 +927,9 @@ uint64_t OTF_RStream_readStatistics( OTF_RStream* rstream, OTF_HandlerArray* han
 			}
 #		endif
 
+		/* remember next record type, if it will be a none
+		   KEYVALUE record, dont't account it in recordcount */
+		next_char = *(rstream->statsBuffer->buffer + rstream->statsBuffer->pos);
 
 		ret= OTF_Reader_parseStatisticsRecord( rstream->statsBuffer, handlers );
 		if ( 0 == ret ) {
@@ -888,10 +938,16 @@ uint64_t OTF_RStream_readStatistics( OTF_RStream* rstream, OTF_HandlerArray* han
 			/* maybe later an errorhandler gives the record to the user */
 			return OTF_READ_ERROR;
 		}
+		
+		/* Now reset the KeyValue list, if we consumed a none
+		   KEYVALUE record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(rstream->statsBuffer->list);
+			recordcount++;
+		}
 
-		recordcount++;
+
 	}
-
 
 	return recordcount;
 }
@@ -904,6 +960,7 @@ uint64_t OTF_RStream_readMarker( OTF_RStream* rstream, OTF_HandlerArray* handler
 
 	int ret;
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == rstream->markerBuffer ) {
@@ -933,6 +990,10 @@ uint64_t OTF_RStream_readMarker( OTF_RStream* rstream, OTF_HandlerArray* handler
 			return recordcount;
 		}
 
+		/* remember next record type, if it will be a none
+		   KEYVALUE record, dont't account it in recordcount */
+		next_char = *(rstream->markerBuffer->buffer + rstream->markerBuffer->pos);
+
 		ret= OTF_Reader_parseMarkerRecord( rstream->markerBuffer, handlers, rstream->id );
 		if ( 0 == ret ) {
 
@@ -940,7 +1001,13 @@ uint64_t OTF_RStream_readMarker( OTF_RStream* rstream, OTF_HandlerArray* handler
 			return OTF_READ_ERROR;
 		}
 
-		recordcount++;
+		/* Now reset the KeyValue list, if we consumed a none
+		   KEYVALUE record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(rstream->markerBuffer->list);
+			recordcount++;
+		}
+
 	}
 
 	return recordcount;

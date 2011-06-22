@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -60,6 +60,7 @@
  */
 #define DO_TRACE() \
 	( vt_is_alive && \
+    VT_MY_THREAD_IS_ALIVE && \
 	  VTTHRD_MY_VTTHRD && \
 	  VTTHRD_IO_TRACING_ENABLED(VTTHRD_MY_VTTHRD) && \
 	  iofunctions[FUNC_IDX(VT_IOWRAP_THISFUNCNAME)].traceme )
@@ -72,6 +73,9 @@ static uint32_t	vt_fid = VT_NO_ID;
 
 /** \brief      VT file id to be used when user supplied fd == -1 */
 static uint32_t invalid_fd_fid = 0;
+
+/** \brief      VT file id to be used for functions like sync() */
+static uint32_t all_files_fid = 0;
 
 /*********************************************/
 /*                                           */ 
@@ -100,7 +104,12 @@ static void get_iolib_handle(void)
       iolib_pathname = DEFAULT_LIBC_PATHNAME;
     }
     (void)dlerror();
-    iolib_handle = dlopen( iolib_pathname, RTLD_LAZY | RTLD_LOCAL );
+    iolib_handle = dlopen( iolib_pathname,
+                           RTLD_LAZY | RTLD_LOCAL
+#ifdef _AIX
+                           | RTLD_MEMBER
+#endif /* _AIX */
+                         );
     if( !iolib_handle ) {
       printf("VampirTrace: FATAL: dlopen(\"%s\") error: %s\n", iolib_pathname, dlerror());
       exit(EXIT_FAILURE);
@@ -148,13 +157,17 @@ void vt_iowrap_init()
                 vt_error_msg("iowrap_init: unable to allocate memory for file descriptor mapping");
         memset( fd_to_vampirid, 0, max_open_files*sizeof(vampir_file_t));
 
-        file_group_id_stdio = vt_def_file_group("stdio");
-        file_group_id_rest  = vt_def_file_group("fileio");
+        file_group_id_stdio = vt_def_file_group(VT_CURRENT_THREAD, "stdio");
+        file_group_id_rest  = vt_def_file_group(VT_CURRENT_THREAD, "fileio");
 
         vt_iofile_open( "<STDIN>", 0 );
         vt_iofile_open( "<STDOUT>", 1 );
         vt_iofile_open( "<STDERR>", 2 );
+        all_files_fid = vt_iofile_id( "<ALL OPEN FILES>" );
         invalid_fd_fid = vt_iofile_id( "<INVALID FILE (fd==-1)>" );
+        unknown_fd_vampir_file.vampir_file_id = vt_iofile_id( "<UNKNOWN FILE DESCRIPTOR>" );
+        unknown_fd_vampir_file.handle = 0;
+        unknown_fd_vampir_file.matchingid = 0;
 
         get_iolib_handle();
 
@@ -233,12 +246,24 @@ void vt_iowrap_init()
 #if defined(HAVE_LOCKF) && HAVE_LOCKF
         VT_IOWRAP_INIT_FUNC(lockf)
 #endif /* HAVE_LOCKF */
+#if defined(HAVE_SYNC) && HAVE_SYNC
+        VT_IOWRAP_INIT_FUNC(sync)
+#endif /* HAVE_SYNC */
+#if defined(HAVE_FFLUSH) && HAVE_FFLUSH
+        VT_IOWRAP_INIT_FUNC(fflush)
+#endif /* HAVE_FFLUSH */
+#if defined(HAVE_FSYNC) && HAVE_FSYNC
+        VT_IOWRAP_INIT_FUNC(fsync)
+#endif /* HAVE_FSYNC */
+#if defined(HAVE_FDATASYNC) && HAVE_FDATASYNC
+        VT_IOWRAP_INIT_FUNC(fdatasync)
+#endif /* HAVE_FDATASYNC */
 }
 
 void vt_iowrap_reg()
 {
 	vt_debug_msg(DBG_INIT, "iowrap_reg: vt_def_scl_file()");
-	vt_fid = vt_def_scl_file( "I/O" );
+	vt_fid = vt_def_scl_file( VT_CURRENT_THREAD, "I/O" );
 
 	VT_IOWRAP_REG_FUNC(open);
 	VT_IOWRAP_REG_FUNC(creat);
@@ -315,13 +340,26 @@ void vt_iowrap_reg()
 #if defined(HAVE_LOCKF) && HAVE_LOCKF
         VT_IOWRAP_REG_FUNC(lockf)
 #endif /* HAVE_LOCKF */
+#if defined(HAVE_SYNC) && HAVE_SYNC
+        VT_IOWRAP_REG_FUNC(sync)
+#endif /* HAVE_SYNC */
+#if defined(HAVE_FFLUSH) && HAVE_FFLUSH
+        VT_IOWRAP_REG_FUNC(fflush)
+#endif /* HAVE_FFLUSH */
+#if defined(HAVE_FSYNC) && HAVE_FSYNC
+        VT_IOWRAP_REG_FUNC(fsync)
+#endif /* HAVE_FSYNC */
+#if defined(HAVE_FDATASYNC) && HAVE_FDATASYNC
+        VT_IOWRAP_REG_FUNC(fdatasync)
+#endif /* HAVE_FDATASYNC */
 }
 
 void vt_iowrap_finalize()
 {
         if( fd_to_vampirid!=NULL )
                 free(fd_to_vampirid);
-        dlclose(iolib_handle);
+        if( iolib_handle!=NULL )
+                dlclose(iolib_handle);
 }
 
 /*********************************************/
@@ -1015,12 +1053,6 @@ int fsetpos(FILE *stream, const fpos_t *pos) {
 
 	VT_IOWRAP_CHECK_TRACING2(stream, pos);
 
-/*
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, " OFF_T_STRARG,
-	 	stream != NULL ? fileno(stream) : -1,
-	 	pos->__pos);
-*/
-	/* pos->__pos does not exist on every platform */
 	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 	 	stream != NULL ? fileno(stream) : -1);
 
@@ -1048,12 +1080,6 @@ int fsetpos64(FILE *stream, const fpos64_t *pos) {
 
 	VT_IOWRAP_CHECK_TRACING2(stream, pos);
 
-/*
-	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i, %lli",
-	 	stream != NULL ? fileno(stream) : -1,
-	 	(long long)pos->__pos);
-*/
-	/* pos->__pos does not exist on every platform */
 	vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
 	 	stream != NULL ? fileno(stream) : -1);
 
@@ -1607,15 +1633,14 @@ int lockf(int fd, int function, off_t size)
                         uint32_t fid = file->vampir_file_id;
                         if( fid ) {
                                 if( ret != 0 ) {
-                                        vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", time);
-                                        vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes );
-                                }
-                                else {
-                                        vt_ioend( &time, fid, handleid, ioop, (uint64_t)num_bytes );
+                                        vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time);
+                                        vt_ioend( VT_CURRENT_THREAD, &time, fid, (uint64_t)(fd)+1, matchingid, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes );
+                                } else {
+                                        vt_ioend( VT_CURRENT_THREAD, &time, fid, (uint64_t)(fd)+1, matchingid, ioop, (uint64_t)num_bytes );
                                 }
                         }
                 }
-                vt_exit( &time );
+                vt_exit( VT_CURRENT_THREAD, &time );
                 if( enable_memhooks ) VT_MEMHOOKS_ON();
 
                 return ret;
@@ -1625,8 +1650,7 @@ int lockf(int fd, int function, off_t size)
 #endif /* HAVE_LOCKF */
 
 
-/* MaJu: Temporary disabled the following wrapper function, due to a curious
-   behaviour on some platforms */
+/* TODO: Proper implementation of fcntl wrapper */
 #if 0
 int fcntl(int fd, int cmd, ...)
 {
@@ -1653,11 +1677,30 @@ int fcntl(int fd, int cmd, ...)
 
         switch(cmd)
         {
+                /* The following are specified by POSIX */
+                case F_DUPFD:
+                        break;
+                case F_GETFD:
+                        break;
+                case F_SETFD:
+                        break;
+                case F_GETFL:
+                        break;
+                case F_SETFL:
+                        break;
+                case F_GETOWN:
+                        break;
+                case F_SETOWN:
+                        break;
+                case F_GETLK:
+                        break;
                 case F_SETLK:
+                        break;
                 case F_SETLKW:
                         break;
+                /* Linux specific operations */
                 default:
-                        /* Ooperations other than locking are not traced */
+                        /* Operations other than locking are not traced */
                         if( enable_memhooks ) VT_MEMHOOKS_ON();
                         return VT_IOWRAP_CALL_LIBFUNC3(VT_IOWRAP_THISFUNCNAME, fd, cmd, arg);
         }
@@ -1693,10 +1736,10 @@ int fcntl(int fd, int cmd, ...)
                 if( fid ) {
                         if( ret == -1 ) {
                                 vt_debug_msg(DBG_VT_CALL, "vt_ioend(" stringify(VT_IOWRAP_THISFUNCNAME) "), stamp %llu", (unsigned long long)time);
-                                vt_ioend( &time, fid, handleid, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes );
+                                vt_ioend( &time, fid, matchingid, file->handle, ioop | VT_IOFLAG_IOFAILED, (uint64_t)num_bytes );
                         }
                         else {
-                                vt_ioend( &time, fid, handleid, ioop, (uint64_t)num_bytes );
+                                vt_ioend( &time, fid, matchingid, file->handle, ioop, (uint64_t)num_bytes );
                         }
                 }
         }
@@ -1707,4 +1750,109 @@ int fcntl(int fd, int cmd, ...)
 #undef VT_IOWRAP_THISFUNCNAME
 }
 #endif
+
+
+#if defined(HAVE_SYNC) && HAVE_SYNC
+void sync(void)
+{
+#define VT_IOWRAP_THISFUNCNAME sync
+        uint64_t enter_time;
+
+        VT_IOWRAP_INIT_IOFUNC();
+
+        VT_IOWRAP_CHECK_TRACING_VOID0();
+
+        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME));
+
+        VT_IOWRAP_ENTER_IOFUNC();
+
+        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        VT_IOWRAP_CALL_LIBFUNC0(VT_IOWRAP_THISFUNCNAME);
+
+        VT_IOWRAP_LEAVE_IOFUNC_CUSTOM(0, all_files_fid, 0);
+
+        return;
+#undef VT_IOWRAP_THISFUNCNAME
+}
+#endif /* HAVE_SYNC */
+
+#if defined(HAVE_FFLUSH) && HAVE_FFLUSH
+int fflush(FILE *stream)
+{
+#define VT_IOWRAP_THISFUNCNAME fflush
+        int ret;
+        uint64_t enter_time;
+
+        VT_IOWRAP_INIT_IOFUNC();
+
+        VT_IOWRAP_CHECK_TRACING1(stream);
+
+        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i",
+                stream != NULL ? fileno(stream) : -1);
+
+        VT_IOWRAP_ENTER_IOFUNC();
+
+        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        ret = VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, stream);
+        if (stream == NULL) {
+                VT_IOWRAP_LEAVE_IOFUNC_CUSTOM(ret!=0, all_files_fid, 0);
+        }
+        else {
+                VT_IOWRAP_LEAVE_IOFUNC(ret!=0, fileno(stream));
+        }
+
+        return ret;
+#undef VT_IOWRAP_THISFUNCNAME
+}
+#endif /* HAVE_FFLUSH */
+
+#if defined(HAVE_FSYNC) && HAVE_FSYNC
+int fsync(int fd)
+{
+#define VT_IOWRAP_THISFUNCNAME fsync
+        int ret;
+        uint64_t enter_time;
+
+        VT_IOWRAP_INIT_IOFUNC();
+
+        VT_IOWRAP_CHECK_TRACING1(fd);
+
+        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", fd);
+
+        VT_IOWRAP_ENTER_IOFUNC();
+
+        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        ret = VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, fd);
+
+        VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fd);
+
+        return ret;
+#undef VT_IOWRAP_THISFUNCNAME
+}
+#endif /* HAVE_FSYNC */
+
+#if defined(HAVE_FDATASYNC) && HAVE_FDATASYNC
+int fdatasync(int fd)
+{
+#define VT_IOWRAP_THISFUNCNAME fdatasync
+        int ret;
+        uint64_t enter_time;
+
+        VT_IOWRAP_INIT_IOFUNC();
+
+        VT_IOWRAP_CHECK_TRACING1(fd);
+
+        vt_debug_msg(DBG_IO, stringify(VT_IOWRAP_THISFUNCNAME) ": %i", fd);
+
+        VT_IOWRAP_ENTER_IOFUNC();
+
+        vt_debug_msg(DBG_IO, "real_" stringify(VT_IOWRAP_THISFUNCNAME));
+        ret = VT_IOWRAP_CALL_LIBFUNC1(VT_IOWRAP_THISFUNCNAME, fd);
+
+        VT_IOWRAP_LEAVE_IOFUNC( ret==-1, fd);
+
+        return ret;
+#undef VT_IOWRAP_THISFUNCNAME
+}
+#endif /* HAVE_FDATASYNC */
 

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -25,11 +25,9 @@ struct VTThrdMutex_struct
   jrawMonitorID m;
 };
 
-static jrawMonitorID threadCountMutex = NULL;
 static jrawMonitorID mutexInitMutex = NULL;
 
 static jvmtiEnv* jvmti       = NULL;
-static uint32_t  threadCount = 1;
 
 void VTThrd_initJava()
 {
@@ -56,11 +54,6 @@ void VTThrd_initJava()
     error = (*jvmti)->SetThreadLocalStorage(jvmti, NULL, (void*)tid);
     vt_java_check_error(jvmti, error, "SetThreadLocalStorage");
 
-    /* create raw monitor for thread count */
-    error = (*jvmti)->CreateRawMonitor(jvmti, "thread count",
-                                       &threadCountMutex);
-    vt_java_check_error(jvmti, error, "CreateRawMonitor[thread count]");
-
     /* create raw monitor for mutex init */
     error = (*jvmti)->CreateRawMonitor(jvmti, "mutex init",
                                        &mutexInitMutex);
@@ -75,8 +68,8 @@ void VTThrd_initJava()
     vt_java_get_thread_name(NULL, NULL, tname, sizeof(tname));
 
     /* create thread object for master thread */
-    VTThrdv[0] = VTThrd_create(0, 0, tname);
-    VTThrd_open(VTThrdv[0], 0);
+    VTThrd_create(0, 0, tname, 0);
+    VTThrd_open(0);
   }
 }
 
@@ -94,16 +87,8 @@ void VTThrd_registerThread(jthread thread, const char* tname)
     tid = (uint32_t*)malloc(sizeof(uint32_t));
     if (tid == NULL) vt_error();
 
-    /* lock thread count */
-    error = (*jvmti)->RawMonitorEnter(jvmti, threadCountMutex);
-    vt_java_check_error(jvmti, error, "RawMonitorEnter");
-
     /* increment number of threads */
-    *tid = threadCount++;
-
-    /* unlock thread count */
-    error = (*jvmti)->RawMonitorExit(jvmti, threadCountMutex);
-    vt_java_check_error(jvmti, error, "RawMonitorEnter");
+    *tid = VTThrd_createNewThreadId();
 
     /* put new ID to thread-specific data */
     error = (*jvmti)->SetThreadLocalStorage(jvmti, thread, (void*)tid);
@@ -112,9 +97,24 @@ void VTThrd_registerThread(jthread thread, const char* tname)
     /* create new thread object */
     vt_cntl_msg(2, "Dynamic thread creation. Thread #%d (%s)",
                 *tid, tname ? tname : "unnamed");
-    VTThrdv[*tid] = VTThrd_create(*tid, 0, tname);
-    VTThrd_open(VTThrdv[*tid], *tid);
+    VTThrd_create(*tid, 0, tname, 0);
+    VTThrd_open(*tid);
   }
+}
+
+uint8_t VTThrd_is_alive()
+{
+  jvmtiError error;
+  uint32_t *tid;
+
+  /* get thread-ID from thread-specific data */
+  error = (*jvmti)->GetThreadLocalStorage(jvmti, NULL, (void**)&tid);
+  vt_java_check_error(jvmti, error, "GetThreadLocalStorage");
+
+  if (tid || vt_jvmti_agent->vm_is_dead)
+    return 1;
+  else
+    return 0;
 }
 
 uint32_t VTThrd_getThreadId()

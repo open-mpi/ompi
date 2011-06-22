@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -24,7 +24,6 @@
 #include "vt_error.h"
 #include "vt_iowrap.h"
 #include "vt_inttypes.h"
-#include "vt_metric.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
 
@@ -39,15 +38,15 @@
 #define VTGEN_CHECK(gen)                                            \
   if (gen == NULL) vt_error_msg("Abort: Uninitialized trace buffer")
 
-#define VTGEN_ALLOC_DEF(gen, bytes)                                 \
+#define VTGEN_ALLOC(gen, bytes)                                     \
   if ((uint64_t)((gen)->buf->pos - (gen)->buf->mem) >               \
       (uint64_t)((gen)->buf->size - (bytes)))                       \
     VTGen_flush((gen), 0, vt_pform_wtime(), NULL);
 
-#define VTGEN_ALLOC_EVENT(gen, bytes)                               \
+#define VTGEN_ALLOC_EVENT(gen, bytes, time)                         \
   if ((uint64_t)((gen)->buf->pos - (gen)->buf->mem) >               \
       (uint64_t)((gen)->buf->size - (bytes))) {                     \
-    VTGen_flush((gen), 0, *time, time);                             \
+    VTGen_flush((gen), 0, *(time), (time));                         \
     if((gen)->flushcntr == 0) return;                               \
   }
 
@@ -69,41 +68,6 @@
  *-----------------------------------------------------------------------------
  */
 
-/* Data types */
-
-typedef enum { BUF_ENTRY_TYPE__DefinitionComment,
-	       BUF_ENTRY_TYPE__DefSclFile,
-               BUF_ENTRY_TYPE__DefScl,
-	       BUF_ENTRY_TYPE__DefFileGroup,
-	       BUF_ENTRY_TYPE__DefFile,
-	       BUF_ENTRY_TYPE__DefFunctionGroup,
-	       BUF_ENTRY_TYPE__DefFunction,
-	       BUF_ENTRY_TYPE__DefCollectiveOperation,
-	       BUF_ENTRY_TYPE__DefCounterGroup,
-	       BUF_ENTRY_TYPE__DefCounter,
-	       BUF_ENTRY_TYPE__DefProcessGroup,
-	       BUF_ENTRY_TYPE__DefMarker,
-	       BUF_ENTRY_TYPE__Enter,
-	       BUF_ENTRY_TYPE__Leave,
-	       BUF_ENTRY_TYPE__FileOperation,
-	       BUF_ENTRY_TYPE__BeginFileOperation,
-	       BUF_ENTRY_TYPE__EndFileOperation,
-	       BUF_ENTRY_TYPE__Counter,
-	       BUF_ENTRY_TYPE__Comment,
-	       BUF_ENTRY_TYPE__Marker,
-	       BUF_ENTRY_TYPE__SendMsg,
-	       BUF_ENTRY_TYPE__RecvMsg,
-               BUF_ENTRY_TYPE__RMAPut,
-               BUF_ENTRY_TYPE__RMAPutRE,
-               BUF_ENTRY_TYPE__RMAGet,
-               BUF_ENTRY_TYPE__RMAEnd,
-	       BUF_ENTRY_TYPE__CollectiveOperation,
-	       BUF_ENTRY_TYPE__FunctionSummary,
-	       BUF_ENTRY_TYPE__MessageSummary,
-	       BUF_ENTRY_TYPE__CollectiveOperationSummary,
-	       BUF_ENTRY_TYPE__FileOperationSummary
-} VTBuf_EntryTypes;
-
 typedef struct
 {
   buffer_t  mem;
@@ -111,391 +75,40 @@ typedef struct
   size_t    size;
 } VTBuf;
 
+typedef struct
+{
+  buffer_t  pos;
+  uint64_t  time;
+} VTRewindMark;
+
+typedef struct
+{
+  uint64_t min;
+  uint64_t max;
+} VTTimeRange;
+
 struct VTGen_struct
 {
   OTF_FileManager*    filemanager;
   OTF_WStream*        filestream;
   OTF_FileCompression filecomp;
   char*               fileprefix;
-  const char*         tnameprefix;
+  const char*         tname;
   const char*         tnamesuffix;
-  const char*         tnameextern;
   uint32_t            ptid;
   uint32_t            tid;
-  int32_t             flushcntr;
+  uint32_t            flushcntr;
   uint8_t             isfirstflush;
   uint8_t             mode;
   uint8_t             sum_props;
+  VTRewindMark        rewindmark;
+  VTTimeRange         timerange;
   VTSum*              sum;
   VTBuf*              buf;
 };
 
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-} VTBuf_Entry_Base;
-
-/* BUF_ENTRY_TYPE__DefinitionComment */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  char comment[1];
-} VTBuf_Entry_DefinitionComment;
-
-/* BUF_ENTRY_TYPE__DefSclFile */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t fid;
-  char     fname[1];
-} VTBuf_Entry_DefSclFile;
-
-/* BUF_ENTRY_TYPE__DefScl */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t sid;
-  uint32_t fid;
-  uint32_t ln;
-} VTBuf_Entry_DefScl;
-
-/* BUF_ENTRY_TYPE__DefFileGroup */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t gid;
-  char     gname[1];
-} VTBuf_Entry_DefFileGroup;
-
-/* BUF_ENTRY_TYPE__DefFile */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t fid;
-  uint32_t gid;
-  char     fname[1];
-} VTBuf_Entry_DefFile;
-
-/* BUF_ENTRY_TYPE__DefFunctionGroup */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t rdid;
-  char     rdesc[1];
-} VTBuf_Entry_DefFunctionGroup;
-
-/* BUF_ENTRY_TYPE__DefFunction */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t rid;
-  uint32_t rdid;
-  uint32_t sid;
-  char     rname[1];
-} VTBuf_Entry_DefFunction;
-
-/* BUF_ENTRY_TYPE__DefCollectiveOperation */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t cid;
-  uint32_t ctype;
-  char     cname[1];
-} VTBuf_Entry_DefCollectiveOperation;
-
-/* BUF_ENTRY_TYPE__DefCounterGroup */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t gid;
-  char     gname[1];
-} VTBuf_Entry_DefCounterGroup;
-
-/* BUF_ENTRY_TYPE__DefCounter */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t cid;
-  uint32_t cprop;
-  uint32_t gid;
-  char     cunit[100];
-  char     cname[1];
-} VTBuf_Entry_DefCounter;
-
-/* BUF_ENTRY_TYPE__DefProcessGroup */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t  cid;
-  char      grpn[100];
-  uint32_t  grpc;
-  uint32_t  grpv[1];
-} VTBuf_Entry_DefProcessGroup;
-
-/* BUF_ENTRY_TYPE__DefMarker */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint32_t mid;
-  uint32_t mtype;
-  char     mname[1];
-} VTBuf_Entry_DefMarker;
-
-/* BUF_ENTRY_TYPE__Enter / BUF_ENTRY_TYPE__Leave */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t rid;
-  uint32_t sid;
-  uint8_t  metc;
-  uint64_t metv[1];
-} VTBuf_Entry_EnterLeave;
-
-/* BUF_ENTRY_TYPE__FileOperation */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint64_t etime;
-  uint32_t fid;
-  uint64_t hid;
-  uint32_t op;
-  uint32_t bytes;
-  uint32_t sid;
-} VTBuf_Entry_FileOperation;
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint64_t hid;
-  uint32_t sid;
-} VTBuf_Entry_BeginFileOperation;
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t fid;
-  uint64_t hid;
-  uint32_t op;
-  uint32_t bytes;
-  uint32_t sid;
-} VTBuf_Entry_EndFileOperation;
-
-/* BUF_ENTRY_TYPE__Counter */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t cid;
-  uint64_t cval;
-} VTBuf_Entry_Counter;
-
-/* BUF_ENTRY_TYPE__Comment */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  char     comment[1];
-} VTBuf_Entry_Comment;
-
-/* BUF_ENTRY_TYPE__Marker */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t mid;
-  char     mtext[1];
-} VTBuf_Entry_Marker;
-
-/* BUF_ENTRY_TYPE__SendMsg / BUF_ENTRY_TYPE__RecvMsg */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t pid;
-  uint32_t cid;
-  uint32_t tag;
-  uint32_t len;
-  uint32_t sid;
-} VTBuf_Entry_SendRecvMsg;
-
-/* BUF_ENTRY_TYPE__CollectiveOperation */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint64_t etime;
-  uint32_t rid;
-  uint32_t cid;
-  uint32_t rpid;
-  uint32_t sent;
-  uint32_t recvd;
-  uint32_t sid;
-} VTBuf_Entry_CollectiveOperation;
-
-/* BUF_ENTRY_TYPE__RMAPut / BUF_ENTRY_TYPE__RMAPutRE / BUF_ENTRY_TYPE__RMAGet */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time; 
-  uint32_t opid; 
-  uint32_t tpid; 
-  uint32_t cid;
-  uint32_t tag; 
-  uint64_t len; 
-  uint32_t sid;
-}VTBuf_Entry_RMAPutGet;
-
-/* BUF_ENTRY_TYPE__RMAEnd */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t rpid;
-  uint32_t cid;
-  uint32_t tag;
-  uint32_t sid;
-}VTBuf_Entry_RMAEnd;
-
-/* BUF_ENTRY_TYPE__FunctionSummary */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t rid;
-  uint64_t cnt;
-  uint64_t excl;
-  uint64_t incl;
-} VTBuf_Entry_FunctionSummary;
-
-/* BUF_ENTRY_TYPE__MessageSummary */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t peer;
-  uint32_t cid;
-  uint32_t tag;
-  uint64_t scnt;
-  uint64_t rcnt;
-  uint64_t sent;
-  uint64_t recvd;
-} VTBuf_Entry_MessageSummary;
-
-/* BUF_ENTRY_TYPE__CollectiveOperationSummary */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t cid;
-  uint32_t rid;
-  uint64_t scnt;
-  uint64_t rcnt;
-  uint64_t sent;
-  uint64_t recvd;
-} VTBuf_Entry_CollectiveOperationSummary;
-
-/* BUF_ENTRY_TYPE__FileOperationSummary */
-
-typedef struct
-{
-  VTBuf_EntryTypes type;
-  uint32_t length;
-
-  uint64_t time;
-  uint32_t fid;
-  uint64_t nopen;
-  uint64_t nclose;
-  uint64_t nread;
-  uint64_t nwrite;
-  uint64_t nseek;
-  uint64_t read;
-  uint64_t wrote;
-} VTBuf_Entry_FileOperationSummary;
-
-VTGen* VTGen_open(const char* tnameprefix, const char* tnamesuffix,
-                  const char* tnameextern, uint32_t ptid, uint32_t tid,
-                  size_t buffer_size)
+VTGen* VTGen_open(const char* tname, const char* tnamesuffix,
+                  uint32_t ptid, uint32_t tid, size_t buffer_size)
 {
   VTGen* gen;
   char* ldir = vt_env_ldir();
@@ -519,14 +132,11 @@ VTGen* VTGen_open(const char* tnameprefix, const char* tnamesuffix,
   if (gen == NULL)
     vt_error();
 
-  /* store thread's name prefix*/
-  gen->tnameprefix = tnameprefix;
+  /* store thread name */
+  gen->tname = tname;
 
-  /* store thread's name suffix */
+  /* store thread name suffix */
   gen->tnamesuffix = tnamesuffix;
-
-  /* store thread's external name */
-  gen->tnameextern = tnameextern;
 
   /* store parent thread id */
   gen->ptid = ptid;
@@ -536,7 +146,7 @@ VTGen* VTGen_open(const char* tnameprefix, const char* tnamesuffix,
 
   /* initialize flush counter */
   gen->flushcntr = vt_env_max_flushes();
-  if( gen->flushcntr == 0 ) gen->flushcntr = -1;
+  if( gen->flushcntr == 0 ) gen->flushcntr = (uint32_t)-1;
 
   /* initialize first flush flag */
   gen->isfirstflush = 1;
@@ -550,7 +160,7 @@ VTGen* VTGen_open(const char* tnameprefix, const char* tnamesuffix,
   /* allocate VTSum record */
   gen->sum = NULL;
   if (VTGEN_IS_SUM_ON(gen))
-    gen->sum = VTSum_open(gen);
+    gen->sum = VTSum_open(gen, tid);
 
   /* allocate buffer record */
 
@@ -569,29 +179,50 @@ VTGen* VTGen_open(const char* tnameprefix, const char* tnamesuffix,
   gen->buf->pos  = gen->buf->mem;
   /* subtraction leaves space for size of FLUSH record */
   gen->buf->size =
-    buffer_size - (2 * (VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave) +
-    VT_METRIC_MAXNUM * sizeof(uint64_t))));
+    buffer_size - (2 * VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave)));
+
+  /* initialize rewind mark */
+  gen->rewindmark.pos = (buffer_t)-1;
+
+  /* initialize time range */
+  gen->timerange.min = (uint64_t)-1;
+  gen->timerange.max = 0;
 
   /* return */
   return gen;
 }
 
+void VTGen_guarantee(VTGen* gen, size_t size)
+{
+  VTGEN_ALLOC(gen, VTGEN_ALIGN_LENGTH(size));
+}
+
 void VTGen_flush(VTGen* gen, uint8_t lastFlush,
-		 uint64_t flushBTime, uint64_t* flushETime )
+                 uint64_t flushBTime, uint64_t* flushETime )
 {
   uint8_t end_flush_marked = 0;
+  uint32_t pid;
   buffer_t p;
-  int i;
 
   /* intermediate flush and max. buffer flushes reached? */
   if(!lastFlush && gen->flushcntr == 0) return;
 
-  /* Disable I/O tracing */
-  VT_SUSPEND_IO_TRACING();
+  /* reset buffer, if rank is disabled */
+  if(vt_my_trace_is_disabled)
+  {
+    gen->buf->pos = gen->buf->mem;
+    return;
+  }
+
+  /* disable I/O tracing */
+  VT_SUSPEND_IO_TRACING(gen->tid);
 
   /* mark begin of flush */
   if(!lastFlush)
-    vt_enter_flush(&flushBTime);
+    vt_enter_flush(gen->tid, &flushBTime);
+
+  /* get process id */
+  pid = VT_PROCESS_ID(vt_my_trace, gen->tid);
 
   if(gen->isfirstflush)
   {
@@ -654,511 +285,554 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
 
     /* write process definition record */
     {
-      uint32_t ptid = 0;
+      uint32_t parent_pid = 0;
       char pname[1024];
 
-      /* use external name, if available */
-      if(strlen(gen->tnameextern) > 0)
-      {
-        strncpy(pname, gen->tnameextern, sizeof(pname)-1);
-      }
-      else
-      {
-        if(gen->tid != 0)
-          ptid = 65536 * gen->ptid + vt_my_trace + 1;
+      if(gen->tid != 0)
+        parent_pid = VT_PROCESS_ID(vt_my_trace, gen->ptid);
 
-        snprintf(pname, sizeof(pname) - 1, "%s %d%s",
-                 gen->tnameprefix, vt_my_trace, gen->tnamesuffix);
-      }
+      snprintf(pname, sizeof(pname) - 1, "%s %d%s",
+               gen->tname, vt_my_trace, gen->tnamesuffix);
 
-      OTF_WStream_writeDefProcess(gen->filestream,
-                                  65536 * gen->tid + vt_my_trace + 1,
-                                  pname, ptid);
+      OTF_WStream_writeDefProcess(gen->filestream, pid, pname, parent_pid);
     }
 
     /* write process group definition record (node name) */
     {
-       uint32_t pid = 65536 * gen->tid + vt_my_trace + 1;
-       char pgname[100];
+      char pgname[100];
 
-       snprintf(pgname, sizeof(pgname) - 1, "__NODE__ %s",
-		vt_pform_node_name());
+      snprintf(pgname, sizeof(pgname) - 1, VT_UNIFY_STRID_NODE_PROCGRP"%s",
+               vt_pform_node_name());
 
-       OTF_WStream_writeDefProcessGroup(gen->filestream,
-                                        0, /* id will be given by vtunify */
-					pgname, 1, &pid);
+      OTF_WStream_writeDefProcessGroup(gen->filestream,
+        1 /* id will be given by vtunify */, pgname, 1, &pid);
     }
 
     gen->isfirstflush = 0;
   }
 
+  /* walk through the buffer and write records */
+
   p = gen->buf->mem;
 
   while(p < gen->buf->pos)
   {
+     /* update minimum time, if it's a time-bound record */
+     if(gen->timerange.min == (uint64_t)-1 &&
+        ((VTBuf_Entry_Base*)p)->type >= VTBUF_ENTRY_TYPE__Enter)
+     {
+       VTBuf_Entry_EnterLeave* entry = (VTBuf_Entry_EnterLeave*)p;
+       gen->timerange.min = entry->time;
+     }
+
+     /* write record */
      switch(((VTBuf_Entry_Base*)p)->type)
      {
-       case BUF_ENTRY_TYPE__DefinitionComment:
+       case VTBUF_ENTRY_TYPE__DefinitionComment:
        {
-	 VTBuf_Entry_DefinitionComment* entry =
-	   (VTBuf_Entry_DefinitionComment*)p;
+         VTBuf_Entry_DefinitionComment* entry =
+           (VTBuf_Entry_DefinitionComment*)p;
 
-	 OTF_WStream_writeDefinitionComment(gen->filestream,
-	   entry->comment);
+         OTF_WStream_writeDefinitionComment(gen->filestream,
+           entry->comment);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__DefSclFile:
+       case VTBUF_ENTRY_TYPE__DefSclFile:
        {
-	 VTBuf_Entry_DefSclFile* entry =
-	   (VTBuf_Entry_DefSclFile*)p;
+         VTBuf_Entry_DefSclFile* entry =
+           (VTBuf_Entry_DefSclFile*)p;
 
-	 OTF_WStream_writeDefSclFile(gen->filestream,
-	   entry->fid,
-	   entry->fname);
+         OTF_WStream_writeDefSclFile(gen->filestream,
+           entry->fid, entry->fname);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__DefScl:
+       case VTBUF_ENTRY_TYPE__DefScl:
        {
-	 VTBuf_Entry_DefScl* entry =
-	   (VTBuf_Entry_DefScl*)p; 
+         VTBuf_Entry_DefScl* entry =
+           (VTBuf_Entry_DefScl*)p; 
 
-	 OTF_WStream_writeDefScl(gen->filestream,
-	   entry->sid,
-	   entry->fid,
-	   entry->ln);
+         OTF_WStream_writeDefScl(gen->filestream,
+           entry->sid, entry->fid, entry->ln);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__DefFileGroup:
+       case VTBUF_ENTRY_TYPE__DefFileGroup:
        {
-	 VTBuf_Entry_DefFileGroup* entry =
-	   (VTBuf_Entry_DefFileGroup*)p;
+         VTBuf_Entry_DefFileGroup* entry =
+           (VTBuf_Entry_DefFileGroup*)p;
 
-	 OTF_WStream_writeDefFileGroup(gen->filestream,
-	   entry->gid,
-	   entry->gname);
+         OTF_WStream_writeDefFileGroup(gen->filestream,
+           entry->gid, entry->gname);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__DefFile:
+       case VTBUF_ENTRY_TYPE__DefFile:
        {
-	 VTBuf_Entry_DefFile* entry =
-	   (VTBuf_Entry_DefFile*)p;
+         VTBuf_Entry_DefFile* entry =
+           (VTBuf_Entry_DefFile*)p;
 
-	 OTF_WStream_writeDefFile(gen->filestream,
-	   entry->fid,
-	   entry->fname,
-	   entry->gid);
+         OTF_WStream_writeDefFile(gen->filestream,
+           entry->fid, entry->fname, entry->gid);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__DefFunctionGroup:
+       case VTBUF_ENTRY_TYPE__DefFunctionGroup:
        {
-	 VTBuf_Entry_DefFunctionGroup* entry =
-	   (VTBuf_Entry_DefFunctionGroup*)p;
+         VTBuf_Entry_DefFunctionGroup* entry =
+           (VTBuf_Entry_DefFunctionGroup*)p;
 
-	 OTF_WStream_writeDefFunctionGroup(gen->filestream,
-	   entry->rdid,
-	   entry->rdesc);
+         OTF_WStream_writeDefFunctionGroup(gen->filestream,
+           entry->rdid, entry->rdesc);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__DefFunction:
+       case VTBUF_ENTRY_TYPE__DefFunction:
        {
-	 VTBuf_Entry_DefFunction* entry =
-	   (VTBuf_Entry_DefFunction*)p;
+         VTBuf_Entry_DefFunction* entry =
+           (VTBuf_Entry_DefFunction*)p;
 
-	 OTF_WStream_writeDefFunction(gen->filestream,
-	   entry->rid,
-	   entry->rname,
-	   entry->rdid,
-	   entry->sid);
+         OTF_WStream_writeDefFunction(gen->filestream,
+           entry->rid, entry->rname, entry->rdid, entry->sid);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__DefCollectiveOperation:
+       case VTBUF_ENTRY_TYPE__DefCollectiveOperation:
        {
-	 VTBuf_Entry_DefCollectiveOperation* entry =
-	   (VTBuf_Entry_DefCollectiveOperation*)p;
+         VTBuf_Entry_DefCollectiveOperation* entry =
+           (VTBuf_Entry_DefCollectiveOperation*)p;
 
-	 OTF_WStream_writeDefCollectiveOperation(gen->filestream,
-	   entry->cid,
-	   entry->cname,
-	   entry->ctype);
+         uint32_t ctype = OTF_COLLECTIVE_TYPE_UNKNOWN;
+         switch(entry->ctype)
+         {
+           case VT_MPI_COLL_ALL2ALL:
+             ctype = OTF_COLLECTIVE_TYPE_ALL2ALL;
+             break;
+           case VT_MPI_COLL_ALL2ONE:
+             ctype = OTF_COLLECTIVE_TYPE_ALL2ONE;
+             break;
+           case VT_MPI_COLL_BARRIER:
+             ctype = OTF_COLLECTIVE_TYPE_BARRIER;
+             break;
+           case VT_MPI_COLL_ONE2ALL:
+             ctype = OTF_COLLECTIVE_TYPE_ONE2ALL;
+             break;
+           default:
+             break;
+         }
 
-	 break;
+         OTF_WStream_writeDefCollectiveOperation(gen->filestream,
+           entry->cid, entry->cname, ctype);
+
+         break;
        }
-       case BUF_ENTRY_TYPE__DefCounterGroup:
+       case VTBUF_ENTRY_TYPE__DefCounterGroup:
        {
-	 VTBuf_Entry_DefCounterGroup* entry =
-	   (VTBuf_Entry_DefCounterGroup*)p;
+         VTBuf_Entry_DefCounterGroup* entry =
+           (VTBuf_Entry_DefCounterGroup*)p;
 
-	 OTF_WStream_writeDefCounterGroup(gen->filestream,
-	   entry->gid,
-	   entry->gname);
+         OTF_WStream_writeDefCounterGroup(gen->filestream,
+           entry->gid, entry->gname);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__DefCounter:
+       case VTBUF_ENTRY_TYPE__DefCounter:
        {
-	 VTBuf_Entry_DefCounter* entry =
-	   (VTBuf_Entry_DefCounter*)p;  
+         VTBuf_Entry_DefCounter* entry =
+           (VTBuf_Entry_DefCounter*)p;
 
-	 OTF_WStream_writeDefCounter(gen->filestream,
-	   entry->cid,
-	   entry->cname,
-	   entry->cprop,
-	   entry->gid,
-	   entry->cunit);
+         uint32_t cprop = 0;
+         if((entry->cprop & VT_CNTR_ACC) != 0)
+           cprop |= OTF_COUNTER_TYPE_ACC;
+         if((entry->cprop & VT_CNTR_ABS) != 0)
+           cprop |= OTF_COUNTER_TYPE_ABS;
+         if((entry->cprop & VT_CNTR_START) != 0)
+           cprop |= OTF_COUNTER_SCOPE_START;
+         if((entry->cprop & VT_CNTR_POINT) != 0)
+           cprop |= OTF_COUNTER_SCOPE_POINT;
+         if((entry->cprop & VT_CNTR_LAST) != 0)
+           cprop |= OTF_COUNTER_SCOPE_LAST;
+         if((entry->cprop & VT_CNTR_NEXT) != 0)
+           cprop |= OTF_COUNTER_SCOPE_NEXT;
+         if((entry->cprop & VT_CNTR_SIGNED) != 0)
+           cprop |= OTF_COUNTER_VARTYPE_SIGNED8;
+         if((entry->cprop & VT_CNTR_UNSIGNED) != 0)
+           cprop |= OTF_COUNTER_VARTYPE_UNSIGNED8;
+         if((entry->cprop & VT_CNTR_FLOAT) != 0)
+           cprop |= OTF_COUNTER_VARTYPE_FLOAT;
+         if((entry->cprop & VT_CNTR_DOUBLE) != 0)
+           cprop |= OTF_COUNTER_VARTYPE_DOUBLE;
 
-	 break;
+         OTF_WStream_writeDefCounter(gen->filestream,
+           entry->cid, entry->cname, cprop, entry->gid, entry->cunit);
+
+         break;
        }
-       case BUF_ENTRY_TYPE__DefProcessGroup:
+       case VTBUF_ENTRY_TYPE__DefProcessGroup:
        {
-	 VTBuf_Entry_DefProcessGroup* entry =
-	   (VTBuf_Entry_DefProcessGroup*)p;
+         VTBuf_Entry_DefProcessGroup* entry =
+           (VTBuf_Entry_DefProcessGroup*)p;
 
-	 OTF_WStream_writeDefProcessGroup(gen->filestream,
-	   entry->cid,
-	   entry->grpn,
-	   entry->grpc,
-	   entry->grpv);
+         OTF_WStream_writeDefProcessGroup(gen->filestream,
+           entry->cid, entry->grpn, entry->grpc, entry->grpv);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__DefMarker:
+       case VTBUF_ENTRY_TYPE__DefMarker:
        {
-	 VTBuf_Entry_DefMarker* entry =
-	   (VTBuf_Entry_DefMarker*)p;
+         VTBuf_Entry_DefMarker* entry =
+           (VTBuf_Entry_DefMarker*)p;
 
-	 OTF_WStream_writeDefMarker(gen->filestream,
-	   entry->mid,
-	   entry->mname,
-	   entry->mtype);
+         uint32_t mtype = OTF_MARKER_TYPE_UNKNOWN;
+         switch(entry->mtype)
+         {
+           case VT_MARKER_ERROR:
+             mtype = OTF_MARKER_TYPE_ERROR;
+             break;
+           case VT_MARKER_WARNING:
+             mtype = OTF_MARKER_TYPE_WARNING;
+             break;
+           case VT_MARKER_HINT:
+             mtype = OTF_MARKER_TYPE_HINT;
+             break;
+           default:
+             vt_assert(0);
+         }
 
-	 break;
+         OTF_WStream_writeDefMarker(gen->filestream,
+           entry->mid, entry->mname, mtype);
+
+         break;
        }
-       case BUF_ENTRY_TYPE__Enter:
+       case VTBUF_ENTRY_TYPE__DefKeyValue:
        {
-	 VTBuf_Entry_EnterLeave* entry =
-	   (VTBuf_Entry_EnterLeave*)p;  
+         VTBuf_Entry_DefKeyValue* entry =
+           (VTBuf_Entry_DefKeyValue*)p;
 
-	 OTF_WStream_writeEnter(gen->filestream,
-	   entry->time,
-	   entry->rid,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->sid);
+         OTF_Type vtype = OTF_UNKNOWN;
+         switch(entry->vtype)
+         {
+           case VT_KEYVAL_TYPE_CHAR:
+             vtype = OTF_CHAR;
+             break;
+           case VT_KEYVAL_TYPE_INT32:
+             vtype = OTF_INT32;
+             break;
+           case VT_KEYVAL_TYPE_UINT32:
+             vtype = OTF_UINT32;
+             break;
+           case VT_KEYVAL_TYPE_INT64:
+             vtype = OTF_INT64;
+             break;
+           case VT_KEYVAL_TYPE_UINT64:
+             vtype = OTF_UINT64;
+             break;
+           case VT_KEYVAL_TYPE_FLOAT:
+             vtype = OTF_FLOAT;
+             break;
+           case VT_KEYVAL_TYPE_DOUBLE:
+             vtype = OTF_DOUBLE;
+             break;
+           default:
+             vt_assert(0);
+         }
 
-	 for(i = 0; i < entry->metc; i++)
-	 {
-	   OTF_WStream_writeCounter(gen->filestream,
-	     entry->time,
-	     65536 * gen->tid + vt_my_trace + 1,
-	     i+1,
-	     (uint64_t)entry->metv[i]);
-	 }
+         OTF_WStream_writeDefKeyValue(gen->filestream,
+           entry->kid,
+           vtype,
+           entry->kname,
+           NULL);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__Leave:
+       case VTBUF_ENTRY_TYPE__Enter:
        {
-	 VTBuf_Entry_EnterLeave* entry =
-	   (VTBuf_Entry_EnterLeave*)p;  
+         VTBuf_Entry_EnterLeave* entry =
+           (VTBuf_Entry_EnterLeave*)p;
 
-	 for(i = 0; i < entry->metc; i++)
-	 {
-	   OTF_WStream_writeCounter(gen->filestream,
-	     entry->time,
-	     65536 * gen->tid + vt_my_trace + 1,
-	     i+1,
-	     (uint64_t)entry->metv[i]);
-	 }
+         OTF_WStream_writeEnter(gen->filestream,
+           entry->time, entry->rid, pid, entry->sid);
 
-	 OTF_WStream_writeLeave(gen->filestream,
-	   entry->time,
-	   entry->rid,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->sid);
-
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__FileOperation:
+       case VTBUF_ENTRY_TYPE__Leave:
        {
-	 VTBuf_Entry_FileOperation* entry =
-	   (VTBuf_Entry_FileOperation*)p;
+         VTBuf_Entry_EnterLeave* entry =
+           (VTBuf_Entry_EnterLeave*)p;
 
-	 OTF_WStream_writeFileOperation(gen->filestream,
-	   entry->time,
-	   entry->fid,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->hid,
-	   entry->op,
-	   entry->bytes,
-	   entry->etime - entry->time,
-	   entry->sid);
+         OTF_WStream_writeLeave(gen->filestream,
+           entry->time, entry->rid, pid, entry->sid);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__BeginFileOperation:
+       case VTBUF_ENTRY_TYPE__FileOperation:
        {
-	 VTBuf_Entry_BeginFileOperation* entry =
-	   (VTBuf_Entry_BeginFileOperation*)p;
+         VTBuf_Entry_FileOperation* entry =
+           (VTBuf_Entry_FileOperation*)p;
 
-	 OTF_WStream_writeBeginFileOperation(gen->filestream,
-	   entry->time,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->hid,
-	   entry->sid);
+         OTF_WStream_writeFileOperation(gen->filestream,
+           entry->time, entry->fid, pid, entry->hid, entry->op, entry->bytes,
+           entry->etime - entry->time, entry->sid);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__EndFileOperation:
+       case VTBUF_ENTRY_TYPE__BeginFileOperation:
        {
-	 VTBuf_Entry_EndFileOperation* entry =
-	   (VTBuf_Entry_EndFileOperation*)p;
+         VTBuf_Entry_BeginFileOperation* entry =
+           (VTBuf_Entry_BeginFileOperation*)p;
 
-	 OTF_WStream_writeEndFileOperation(gen->filestream,
-	   entry->time,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->fid,
-	   entry->hid,
-	   entry->op,
-	   entry->bytes,
-	   entry->sid);
+         OTF_WStream_writeBeginFileOperation(gen->filestream,
+           entry->time, pid, entry->mid, entry->sid);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__Counter:
+       case VTBUF_ENTRY_TYPE__EndFileOperation:
        {
-	 VTBuf_Entry_Counter* entry =
-	   (VTBuf_Entry_Counter*)p;  
+         VTBuf_Entry_EndFileOperation* entry =
+           (VTBuf_Entry_EndFileOperation*)p;
 
-	 OTF_WStream_writeCounter(gen->filestream,
-	   entry->time,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->cid, entry->cval);
+         OTF_WStream_writeEndFileOperation(gen->filestream,
+           entry->time, pid, entry->fid, entry->mid, entry->hid,
+           entry->op, entry->bytes, entry->sid);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__Comment:
+       case VTBUF_ENTRY_TYPE__Counter:
        {
-	 VTBuf_Entry_Comment* entry =
-	   (VTBuf_Entry_Comment*)p;
+         VTBuf_Entry_Counter* entry =
+           (VTBuf_Entry_Counter*)p;
 
-	 OTF_WStream_writeEventComment(gen->filestream,
-	   entry->time,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->comment);
+         OTF_WStream_writeCounter(gen->filestream,
+           entry->time, pid, entry->cid, entry->cval);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__Marker:
+       case VTBUF_ENTRY_TYPE__Comment:
        {
-	 VTBuf_Entry_Marker* entry =
-	   (VTBuf_Entry_Marker*)p;
+         VTBuf_Entry_Comment* entry =
+           (VTBuf_Entry_Comment*)p;
 
-	 OTF_WStream_writeMarker(gen->filestream,
-	   entry->time,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->mid, entry->mtext);
+         OTF_WStream_writeEventComment(gen->filestream,
+           entry->time, pid, entry->comment);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__SendMsg:
+       case VTBUF_ENTRY_TYPE__Marker:
        {
-	 VTBuf_Entry_SendRecvMsg* entry =
-	   (VTBuf_Entry_SendRecvMsg*)p;
+         VTBuf_Entry_Marker* entry =
+           (VTBuf_Entry_Marker*)p;
 
-	 OTF_WStream_writeSendMsg(gen->filestream,
-	   entry->time,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->pid,
-	   entry->cid,
-	   entry->tag,
-	   entry->len,
-	   entry->sid);
+         OTF_WStream_writeMarker(gen->filestream,
+           entry->time, pid, entry->mid, entry->mtext);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__RecvMsg:
+       case VTBUF_ENTRY_TYPE__KeyValue:
        {
-	 VTBuf_Entry_SendRecvMsg* entry =
-	   (VTBuf_Entry_SendRecvMsg*)p;
+         VTBuf_Entry_KeyValue* entry =
+           (VTBuf_Entry_KeyValue*)p;
 
-	 OTF_WStream_writeRecvMsg(gen->filestream,
-	   entry->time,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->pid,
-	   entry->cid,
-	   entry->tag,
-	   entry->len,
-	   entry->sid);
+         OTF_WBuffer* filestream_buffer;
+         OTF_KeyValuePair kvpair;
 
-	 break;
+         filestream_buffer = OTF_WStream_getEventBuffer( gen->filestream );
+         vt_assert(filestream_buffer != NULL);
+
+         kvpair.key = entry->kid;
+
+         switch(entry->vtype)
+         {
+           case VT_KEYVAL_TYPE_CHAR:
+             kvpair.type = OTF_CHAR;
+             kvpair.value.otf_char = entry->kvalue.c;
+             break;
+           case VT_KEYVAL_TYPE_INT32:
+             kvpair.type = OTF_INT32;
+             kvpair.value.otf_int32 = entry->kvalue.i32;
+             break;
+           case VT_KEYVAL_TYPE_UINT32:
+             kvpair.type = OTF_UINT32;
+             kvpair.value.otf_uint32 = entry->kvalue.u32;
+             break;
+           case VT_KEYVAL_TYPE_INT64:
+             kvpair.type = OTF_INT64;
+             kvpair.value.otf_int64 = entry->kvalue.i64;
+             break;
+           case VT_KEYVAL_TYPE_UINT64:
+             kvpair.type = OTF_UINT64;
+             kvpair.value.otf_uint64 = entry->kvalue.u64;
+             break;
+           case VT_KEYVAL_TYPE_FLOAT:
+             kvpair.type = OTF_FLOAT;
+             kvpair.value.otf_float = entry->kvalue.f;
+             break;
+           case VT_KEYVAL_TYPE_DOUBLE:
+             kvpair.type = OTF_DOUBLE;
+             kvpair.value.otf_double = entry->kvalue.d;
+             break;
+           default:
+             vt_assert(0);
+         }
+
+         OTF_WBuffer_writeKeyValuePair_short( filestream_buffer, &kvpair );
+
+         break;
        }
-       case BUF_ENTRY_TYPE__CollectiveOperation:
+       case VTBUF_ENTRY_TYPE__SendMsg:
        {
-	 VTBuf_Entry_CollectiveOperation* entry =
-	   (VTBuf_Entry_CollectiveOperation*)p;
+         VTBuf_Entry_SendRecvMsg* entry =
+           (VTBuf_Entry_SendRecvMsg*)p;
 
-	 OTF_WStream_writeCollectiveOperation(gen->filestream,
-	   entry->time,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->rid,
-	   entry->cid,
-	   entry->rpid,
-	   entry->sent,
-	   entry->recvd,
-	   entry->etime - entry->time,
-	   entry->sid);
+         OTF_WStream_writeSendMsg(gen->filestream,
+           entry->time, pid, entry->pid, entry->cid, entry->tag, entry->len,
+           entry->sid);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__RMAPut:
-        { 
-          VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
+       case VTBUF_ENTRY_TYPE__RecvMsg:
+       {
+         VTBuf_Entry_SendRecvMsg* entry =
+           (VTBuf_Entry_SendRecvMsg*)p;
 
-          OTF_WStream_writeRMAPut(gen->filestream,
-                                  entry->time,
-                                  65536 * gen->tid + vt_my_trace + 1,
-                                  entry->opid,
-                                  entry->tpid,
-                                  entry->cid,
-                                  entry->tag,
-                                  entry->len,
-                                  entry->sid);
+         OTF_WStream_writeRecvMsg(gen->filestream,
+           entry->time, pid, entry->pid, entry->cid, entry->tag, entry->len,
+           entry->sid);
+
+         break;
+       }
+       case VTBUF_ENTRY_TYPE__CollectiveOperation:
+       {
+         VTBuf_Entry_CollectiveOperation* entry =
+           (VTBuf_Entry_CollectiveOperation*)p;
+
+         OTF_WStream_writeCollectiveOperation(gen->filestream,
+           entry->time, pid, entry->rid, entry->cid, entry->rpid, entry->sent,
+           entry->recvd, entry->etime - entry->time, entry->sid);
+
+         break;
+       }
+       case VTBUF_ENTRY_TYPE__BeginCollectiveOperation:
+       {
+         VTBuf_Entry_BeginCollectiveOperation* entry =
+           (VTBuf_Entry_BeginCollectiveOperation*)p;
+
+         OTF_WStream_writeBeginCollectiveOperation(gen->filestream,
+           entry->time, pid, entry->rid, entry->mid, entry->cid, entry->rpid,
+           entry->sent, entry->recvd, entry->sid);
+
+         break;
+       }
+       case VTBUF_ENTRY_TYPE__EndCollectiveOperation:
+       {
+         VTBuf_Entry_EndCollectiveOperation* entry =
+           (VTBuf_Entry_EndCollectiveOperation*)p;
+
+         OTF_WStream_writeEndCollectiveOperation(gen->filestream,
+           entry->time, pid, entry->mid);
+
+         break;
+       }
+       case VTBUF_ENTRY_TYPE__RMAPut:
+       {
+         VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
+
+         OTF_WStream_writeRMAPut(gen->filestream,
+           entry->time, pid, entry->opid, entry->tpid, entry->cid, entry->tag,
+           entry->len, entry->sid);
+
+         break;
+       }
+       case VTBUF_ENTRY_TYPE__RMAPutRE:
+       {
+         VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
+
+         OTF_WStream_writeRMAPutRemoteEnd(gen->filestream,
+           entry->time, pid, entry->opid, entry->tpid, entry->cid, entry->tag,
+           entry->len, entry->sid);
+
           break;
-        }
-       case BUF_ENTRY_TYPE__RMAPutRE:
-        {
-          VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
-
-          OTF_WStream_writeRMAPutRemoteEnd(gen->filestream,
-                                            entry->time,
-                                            65536 * gen->tid + vt_my_trace + 1,
-                                            entry->opid,
-                                            entry->tpid,
-                                            entry->cid,
-                                            entry->tag,
-                                            entry->len,
-                                            entry->sid);
-          break;
-        }
-       case BUF_ENTRY_TYPE__RMAGet:
-        {
-          VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
-
-          OTF_WStream_writeRMAGet(gen->filestream,
-                                  entry->time,
-                                  65536 * gen->tid + vt_my_trace + 1,
-                                  entry->opid,
-                                  entry->tpid,
-                                  entry->cid,
-                                  entry->tag,
-                                  entry->len,
-                                  entry->sid);
-          break;
-        }
-       case BUF_ENTRY_TYPE__RMAEnd:
-        {
-          VTBuf_Entry_RMAEnd* entry = (VTBuf_Entry_RMAEnd*)p;
-
-          OTF_WStream_writeRMAEnd(gen->filestream,
-                                    entry->time,
-                                    65536 * gen->tid + vt_my_trace + 1,
-                                    entry->rpid,
-                                    entry->cid,
-                                    entry->tag,
-                                    entry->sid);
-          break;
-        }
-       case BUF_ENTRY_TYPE__FunctionSummary:
-       {
-	 VTBuf_Entry_FunctionSummary* entry =
-	   (VTBuf_Entry_FunctionSummary*)p;
-
-	 OTF_WStream_writeFunctionSummary(gen->filestream,
-	   entry->time,
-	   entry->rid,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->cnt,
-	   entry->excl,
-	   entry->incl);
-
-	 break;
        }
-       case BUF_ENTRY_TYPE__MessageSummary:
+       case VTBUF_ENTRY_TYPE__RMAGet:
        {
-	 VTBuf_Entry_MessageSummary* entry =
-	   (VTBuf_Entry_MessageSummary*)p;
+         VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
 
-	 OTF_WStream_writeMessageSummary(gen->filestream,
-	   entry->time,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->peer,
-	   entry->cid,
-	   entry->tag,
-	   entry->scnt,
-	   entry->rcnt,
-	   entry->sent,
-	   entry->recvd);
+         OTF_WStream_writeRMAGet(gen->filestream,
+           entry->time, pid, entry->opid, entry->tpid, entry->cid, entry->tag,
+           entry->len, entry->sid);
 
-	 break;
+         break;
        }
-       case BUF_ENTRY_TYPE__CollectiveOperationSummary:
+       case VTBUF_ENTRY_TYPE__RMAEnd:
        {
-	 VTBuf_Entry_CollectiveOperationSummary* entry =
-	   (VTBuf_Entry_CollectiveOperationSummary*)p;
+         VTBuf_Entry_RMAEnd* entry = (VTBuf_Entry_RMAEnd*)p;
 
-	 OTF_WStream_writeCollopSummary(gen->filestream,
-					entry->time,
-					65536 * gen->tid + vt_my_trace + 1,
-					entry->cid,
-					entry->rid,
-					entry->scnt,
-					entry->rcnt,
-					entry->sent,
-					entry->recvd);
-	 break;
+         OTF_WStream_writeRMAEnd(gen->filestream,
+           entry->time, pid, entry->rpid, entry->cid, entry->tag, entry->sid);
+
+         break;
        }
-       case BUF_ENTRY_TYPE__FileOperationSummary:
+       case VTBUF_ENTRY_TYPE__FunctionSummary:
        {
-	 VTBuf_Entry_FileOperationSummary* entry =
-	   (VTBuf_Entry_FileOperationSummary*)p;
+         VTBuf_Entry_FunctionSummary* entry =
+           (VTBuf_Entry_FunctionSummary*)p;
 
-	 OTF_WStream_writeFileOperationSummary(gen->filestream,
-	   entry->time,
-	   entry->fid,
-	   65536 * gen->tid + vt_my_trace + 1,
-	   entry->nopen,
-	   entry->nclose,
-	   entry->nread,
-	   entry->nwrite,
-	   entry->nseek,
-	   entry->read,
-	   entry->wrote);
+         OTF_WStream_writeFunctionSummary(gen->filestream,
+           entry->time, entry->rid, pid, entry->cnt, entry->excl, entry->incl);
 
-	 break;
+         break;
+       }
+       case VTBUF_ENTRY_TYPE__MessageSummary:
+       {
+         VTBuf_Entry_MessageSummary* entry =
+           (VTBuf_Entry_MessageSummary*)p;
+
+         OTF_WStream_writeMessageSummary(gen->filestream,
+           entry->time, pid, entry->peer, entry->cid, entry->tag, entry->scnt,
+           entry->rcnt, entry->sent, entry->recvd);
+
+         break;
+       }
+       case VTBUF_ENTRY_TYPE__CollectiveOperationSummary:
+       {
+         VTBuf_Entry_CollectiveOperationSummary* entry =
+           (VTBuf_Entry_CollectiveOperationSummary*)p;
+
+         OTF_WStream_writeCollopSummary(gen->filestream,
+           entry->time, pid, entry->cid, entry->rid, entry->scnt, entry->rcnt,
+           entry->sent, entry->recvd);
+
+         break;
+       }
+       case VTBUF_ENTRY_TYPE__FileOperationSummary:
+       {
+         VTBuf_Entry_FileOperationSummary* entry =
+           (VTBuf_Entry_FileOperationSummary*)p;
+
+         OTF_WStream_writeFileOperationSummary(gen->filestream,
+           entry->time, entry->fid, pid, entry->nopen, entry->nclose,
+           entry->nread, entry->nwrite, entry->nseek, entry->read,
+           entry->wrote);
+
+         break;
        }
        default:
        {
-	 vt_assert(0);
+         vt_assert(0);
        }
      }
 
      /* last buffer entry and end flush not marked ? */
      if(!end_flush_marked &&
-	p + ((VTBuf_Entry_Base*)p)->length >= gen->buf->pos)
+        p + ((VTBuf_Entry_Base*)p)->length >= gen->buf->pos)
      {
-       /* mark end of flush, if it's not the last (invisible) flush and 
+       /* mark end of flush, if it's not the last (invisible) flush and
           max flushes not reached */
        if(!lastFlush && gen->flushcntr > 1)
        {
-	 uint64_t flush_etime = vt_pform_wtime();
-	 vt_exit_flush(&flush_etime);
-	 if( flushETime != NULL ) *flushETime = flush_etime;
+         uint64_t flush_etime = vt_pform_wtime();
+         vt_exit_flush(gen->tid, &flush_etime);
+         if( flushETime != NULL ) *flushETime = flush_etime;
        }
 
        end_flush_marked = 1;
@@ -1167,31 +841,33 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
      p += ((VTBuf_Entry_Base*)p)->length;
   }
 
-  /* if it's the last flush write event/summary comment record, in order that
-     all event/summary files will exist */
   if(lastFlush)
   {
+    /* write event/summary comment record, in order that all event/summary
+       files will exist */
+
+    uint64_t time = vt_pform_wtime();
+
     if(VTGEN_IS_TRACE_ON(gen))
-    {
-      OTF_WStream_writeEventComment(gen->filestream,
-        vt_pform_wtime(),
-        65536 * gen->tid + vt_my_trace + 1,
-        "");
-    }
+      OTF_WStream_writeEventComment(gen->filestream, time, pid, "");
     else /* VTGEN_IS_SUM_ON(gen) */
-    {
-      OTF_WStream_writeSummaryComment(gen->filestream,
-        vt_pform_wtime(),
-        65536 * gen->tid + vt_my_trace + 1,
-        "");
-    }
+      OTF_WStream_writeSummaryComment(gen->filestream, time, pid, "");
+
+    /* write time range record */
+
+    if( gen->timerange.min == (uint64_t)-1 )
+      gen->timerange.min = time;
+    gen->timerange.max = time;
+
+    OTF_WStream_writeDefTimeRange(gen->filestream, gen->timerange.min,
+      gen->timerange.max, NULL);
   }
 
   /* reset buffer */
   gen->buf->pos = gen->buf->mem;
 
   vt_cntl_msg(2, "Flushed OTF writer stream [namestub %s id %x]",
-	      gen->fileprefix, gen->tid+1);
+              gen->fileprefix, gen->tid+1);
 
   /* decrement flush counter */
   if(gen->flushcntr > 0) gen->flushcntr--;
@@ -1201,16 +877,21 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
   {
     int max_flushes = vt_env_max_flushes();
     vt_cntl_msg(1, "Maximum number of buffer flushes reached "
-		"(VT_MAX_FLUSHES=%d)", max_flushes);
-    vt_trace_off(1, 1);
-    vt_def_comment("__VT_COMMENT__ WARNING: This trace is "
-		   "incomplete, because the maximum number of "
-		   "buffer flushes was reached. "
-		   "(VT_MAX_FLUSHES=%d)", max_flushes);
+                "(VT_MAX_FLUSHES=%d)", max_flushes);
+    vt_trace_off(gen->tid, 1, 1);
+    vt_def_comment(gen->tid,
+                   VT_UNIFY_STRID_VT_COMMENT"WARNING: This trace is "
+                   "incomplete, because the maximum number of "
+                   "buffer flushes was reached. "
+                   "(VT_MAX_FLUSHES=%d)", max_flushes);
   }
 
-  /* Enable I/O tracing again */
-  VT_RESUME_IO_TRACING();
+  /* reset rewind mark and time */
+  gen->rewindmark.time = 0;
+  gen->rewindmark.pos = (buffer_t)-1;
+
+  /* enable I/O tracing again */
+  VT_RESUME_IO_TRACING(gen->tid);
 }
 
 void VTGen_close(VTGen* gen)
@@ -1296,13 +977,13 @@ void VTGen_delete(VTGen* gen)
       if (vt_my_funique > 0)
       {
         snprintf(global_name, global_name_len, "%s/%s_%u.%x%s",
-                 gdir, fprefix, vt_my_funique, 65536*gen->tid+(vt_my_trace+1),
-                 suffix);
+                 gdir, fprefix, vt_my_funique,
+                 VT_PROCESS_ID(vt_my_trace, gen->tid), suffix);
       }
       else
       {
         snprintf(global_name, global_name_len, "%s/%s.%x%s",
-                 gdir, fprefix, 65536*gen->tid+(vt_my_trace+1), suffix);
+                 gdir, fprefix, VT_PROCESS_ID(vt_my_trace, gen->tid), suffix);
       }
 
       /* rename file, if possible */
@@ -1415,7 +1096,6 @@ void VTGen_destroy(VTGen* gen)
   free(gen); 
 }
 
-
 uint8_t VTGen_get_buflevel(VTGen* gen)
 {
   VTGEN_CHECK(gen);
@@ -1439,20 +1119,18 @@ void VTGen_write_DEFINITION_COMMENT(VTGen* gen, const char* comment)
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefinitionComment*)gen->buf->pos);
 
-  new_entry->type    = BUF_ENTRY_TYPE__DefinitionComment;
+  new_entry->type    = VTBUF_ENTRY_TYPE__DefinitionComment;
   new_entry->length  = length;
   strcpy(new_entry->comment, comment);
 
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_SCL_FILE(VTGen* gen,
-			       uint32_t fid,
-			       const char* fname)
+void VTGen_write_DEF_SCL_FILE(VTGen* gen, uint32_t fid, const char* fname)
 {
   VTBuf_Entry_DefSclFile* new_entry;
 
@@ -1462,11 +1140,11 @@ void VTGen_write_DEF_SCL_FILE(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefSclFile*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefSclFile;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefSclFile;
   new_entry->length = length;
   new_entry->fid    = fid;
   strcpy(new_entry->fname, fname);
@@ -1474,10 +1152,7 @@ void VTGen_write_DEF_SCL_FILE(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_SCL(VTGen* gen,
-			  uint32_t sid,
-			  uint32_t fid,
-			  uint32_t ln)
+void VTGen_write_DEF_SCL(VTGen* gen, uint32_t sid, uint32_t fid, uint32_t ln)
 {
   VTBuf_Entry_DefScl* new_entry;
 
@@ -1486,10 +1161,10 @@ void VTGen_write_DEF_SCL(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefScl*)gen->buf->pos);
-  new_entry->type   = BUF_ENTRY_TYPE__DefScl;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefScl;
   new_entry->length = length;
   new_entry->sid    = sid;
   new_entry->fid    = fid;
@@ -1498,9 +1173,7 @@ void VTGen_write_DEF_SCL(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_FILE_GROUP(VTGen* gen,
-				 uint32_t gid,
-				 const char* gname)
+void VTGen_write_DEF_FILE_GROUP(VTGen* gen, uint32_t gid, const char* gname)
 {
   VTBuf_Entry_DefFileGroup* new_entry;
 
@@ -1510,11 +1183,11 @@ void VTGen_write_DEF_FILE_GROUP(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefFileGroup*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefFileGroup;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefFileGroup;
   new_entry->length = length;
   new_entry->gid    = gid;
   strcpy(new_entry->gname, gname);
@@ -1522,10 +1195,8 @@ void VTGen_write_DEF_FILE_GROUP(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_FILE(VTGen* gen,
-			   uint32_t fid,
-			   const char* fname,
-			   uint32_t gid)
+void VTGen_write_DEF_FILE(VTGen* gen, uint32_t fid, const char* fname,
+                          uint32_t gid)
 {
   VTBuf_Entry_DefFile* new_entry;
 
@@ -1535,11 +1206,11 @@ void VTGen_write_DEF_FILE(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefFile*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefFile;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefFile;
   new_entry->length = length;
   new_entry->fid    = fid;
   new_entry->gid    = gid;
@@ -1548,9 +1219,8 @@ void VTGen_write_DEF_FILE(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_FUNCTION_GROUP(VTGen* gen,
-				     uint32_t rdid,
-				     const char* rdesc)
+void VTGen_write_DEF_FUNCTION_GROUP(VTGen* gen, uint32_t rdid,
+                                    const char* rdesc)
 {
   VTBuf_Entry_DefFunctionGroup* new_entry;
 
@@ -1560,11 +1230,11 @@ void VTGen_write_DEF_FUNCTION_GROUP(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefFunctionGroup*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefFunctionGroup;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefFunctionGroup;
   new_entry->length = length;
   new_entry->rdid   = rdid;
   strcpy(new_entry->rdesc, rdesc);
@@ -1572,11 +1242,8 @@ void VTGen_write_DEF_FUNCTION_GROUP(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_FUNCTION(VTGen* gen,
-			       uint32_t rid,
-			       const char* rname,
-			       uint32_t rdid,
-			       uint32_t sid)
+void VTGen_write_DEF_FUNCTION(VTGen* gen, uint32_t rid, const char* rname,
+                              uint32_t rdid, uint32_t sid)
 {
   VTBuf_Entry_DefFunction* new_entry;
 
@@ -1586,11 +1253,11 @@ void VTGen_write_DEF_FUNCTION(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefFunction*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefFunction;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefFunction;
   new_entry->length = length;
   new_entry->rid    = rid;
   new_entry->rdid   = rdid;
@@ -1600,10 +1267,8 @@ void VTGen_write_DEF_FUNCTION(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_COLLECTIVE_OPERATION(VTGen* gen,
-					   uint32_t cid,
-					   const char* cname,
-					   uint32_t ctype)
+void VTGen_write_DEF_COLLECTIVE_OPERATION(VTGen* gen, uint32_t cid,
+                                          const char* cname, uint32_t ctype)
 {
   VTBuf_Entry_DefCollectiveOperation* new_entry;
 
@@ -1613,11 +1278,11 @@ void VTGen_write_DEF_COLLECTIVE_OPERATION(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefCollectiveOperation*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefCollectiveOperation;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefCollectiveOperation;
   new_entry->length = length;
   new_entry->cid    = cid;
   new_entry->ctype  = ctype;
@@ -1626,9 +1291,7 @@ void VTGen_write_DEF_COLLECTIVE_OPERATION(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_COUNTER_GROUP(VTGen* gen,
-				    uint32_t gid,
-				    const char* gname)
+void VTGen_write_DEF_COUNTER_GROUP(VTGen* gen, uint32_t gid, const char* gname)
 {
   VTBuf_Entry_DefCounterGroup* new_entry;
 
@@ -1638,11 +1301,11 @@ void VTGen_write_DEF_COUNTER_GROUP(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefCounterGroup*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefCounterGroup;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefCounterGroup;
   new_entry->length = length;
   new_entry->gid    = gid;
   strcpy(new_entry->gname, gname);
@@ -1650,12 +1313,8 @@ void VTGen_write_DEF_COUNTER_GROUP(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_COUNTER(VTGen* gen,
-			      uint32_t cid,
-			      const char* cname,
-			      uint32_t cprop,
-			      uint32_t gid,
-			      const char* cunit)
+void VTGen_write_DEF_COUNTER(VTGen* gen, uint32_t cid, const char* cname,
+                             uint32_t cprop, uint32_t gid, const char* cunit)
 {
   VTBuf_Entry_DefCounter* new_entry;
 
@@ -1665,11 +1324,11 @@ void VTGen_write_DEF_COUNTER(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefCounter*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefCounter;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefCounter;
   new_entry->length = length;
   new_entry->cid    = cid;
   new_entry->cprop  = cprop;
@@ -1681,11 +1340,8 @@ void VTGen_write_DEF_COUNTER(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen,
-				    uint32_t cid,
-				    const char* grpn,
-				    uint32_t grpc,
-				    uint32_t grpv[])
+void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen, uint32_t cid, const char* grpn,
+                                    uint32_t grpc, uint32_t grpv[])
 {
   VTBuf_Entry_DefProcessGroup* new_entry;
 
@@ -1695,11 +1351,11 @@ void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefProcessGroup*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefProcessGroup;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefProcessGroup;
   new_entry->length = length;
   new_entry->cid    = cid;
   strncpy(new_entry->grpn, grpn, sizeof(new_entry->grpn)-1);
@@ -1711,12 +1367,34 @@ void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen,
   VTGEN_JUMP(gen, length);
 }
 
+void VTGen_write_DEF_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype,
+                            const char* kname)
+{
+  VTBuf_Entry_DefKeyValue* new_entry;
+
+  uint32_t length =
+    VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefKeyValue) +
+                        (strlen(kname) * sizeof(char))));
+
+  VTGEN_CHECK(gen);
+
+  VTGEN_ALLOC(gen, length);
+
+  new_entry = ((VTBuf_Entry_DefKeyValue*)gen->buf->pos);
+
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefKeyValue;
+  new_entry->length = length;
+  new_entry->kid    = kid;
+  new_entry->vtype  = vtype;
+  strcpy(new_entry->kname, kname);
+
+  VTGEN_JUMP(gen, length);
+}
+
 /* -- Marker -- */
 
-void VTGen_write_DEF_MARKER(VTGen* gen,
-			     uint32_t mid,
-			     const char* mname,
-			     uint32_t mtype )
+void VTGen_write_DEF_MARKER(VTGen* gen, uint32_t mid, const char* mname,
+                            uint32_t mtype )
 {
   VTBuf_Entry_DefMarker* new_entry;
 
@@ -1726,11 +1404,11 @@ void VTGen_write_DEF_MARKER(VTGen* gen,
 
   VTGEN_CHECK(gen);
 
-  VTGEN_ALLOC_DEF(gen, length);
+  VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefMarker*)gen->buf->pos);
 
-  new_entry->type   = BUF_ENTRY_TYPE__DefMarker;
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefMarker;
   new_entry->length = length;
   new_entry->mid    = mid;
   new_entry->mtype  = mtype;
@@ -1745,8 +1423,7 @@ void VTGen_write_DEF_MARKER(VTGen* gen,
 
 /* -- Region -- */
 
-void VTGen_write_ENTER(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid,
-       uint8_t metc, uint64_t metv[])
+void VTGen_write_ENTER(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -1755,22 +1432,18 @@ void VTGen_write_ENTER(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid,
     VTBuf_Entry_EnterLeave* new_entry;
 
     uint32_t length =
-      VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_EnterLeave) +
-                          (metc > 0 ? (metc - 1) * sizeof(uint64_t) : 0 )));
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_EnterLeave*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__Enter;
+    new_entry->type   = VTBUF_ENTRY_TYPE__Enter;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->rid    = rid;
     new_entry->sid    = sid;
-    new_entry->metc   = metc;
-    if( metc > 0 )
-      memcpy(new_entry->metv, metv, metc * sizeof(uint64_t));
-    
+
     VTGEN_JUMP(gen, length);
   }
 
@@ -1778,8 +1451,7 @@ void VTGen_write_ENTER(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid,
     VTSum_enter(gen->sum, time, rid);
 }
 
-void VTGen_write_LEAVE(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid,
-       uint8_t metc, uint64_t metv[])
+void VTGen_write_LEAVE(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -1788,21 +1460,17 @@ void VTGen_write_LEAVE(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid,
     VTBuf_Entry_EnterLeave* new_entry;
 
     uint32_t length =
-      VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_EnterLeave) +
-                          (metc > 0 ? (metc - 1) * sizeof(uint64_t) : 0)));
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_EnterLeave*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__Leave;
+    new_entry->type   = VTBUF_ENTRY_TYPE__Leave;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->rid    = rid;
     new_entry->sid    = sid;
-    new_entry->metc   = metc;
-    if( metc > 0 )
-      memcpy(new_entry->metv, metv, metc * sizeof(uint64_t));
 
     VTGEN_JUMP(gen, length);
   }
@@ -1814,8 +1482,8 @@ void VTGen_write_LEAVE(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid,
 /* -- File I/O -- */
 
 void VTGen_write_FILE_OPERATION(VTGen* gen, uint64_t* time,
-       uint64_t* etime, uint32_t fid, uint64_t hid,
-       uint32_t op, uint64_t bytes, uint32_t sid)
+                                uint64_t* etime, uint32_t fid, uint64_t hid,
+                                uint32_t op, uint64_t bytes, uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -1827,12 +1495,12 @@ void VTGen_write_FILE_OPERATION(VTGen* gen, uint64_t* time,
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_FileOperation));
 
     *etime -= *time;
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
     *etime += *time;
 
     new_entry = ((VTBuf_Entry_FileOperation*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__FileOperation;
+    new_entry->type   = VTBUF_ENTRY_TYPE__FileOperation;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->etime  = *etime;
@@ -1851,35 +1519,35 @@ void VTGen_write_FILE_OPERATION(VTGen* gen, uint64_t* time,
     {
       case OTF_FILEOP_OPEN:
       {
-	VTSum_fileop_open(gen->sum, time, fid);
-	break;
+        VTSum_fileop_open(gen->sum, time, fid);
+        break;
       }
       case OTF_FILEOP_CLOSE:
       {
-	VTSum_fileop_close(gen->sum, time, fid);
-	break;
+        VTSum_fileop_close(gen->sum, time, fid);
+        break;
       }
       case OTF_FILEOP_READ:
       {
-	VTSum_fileop_read(gen->sum, time, fid, bytes);
-	break;
+        VTSum_fileop_read(gen->sum, time, fid, bytes);
+        break;
       }
       case OTF_FILEOP_WRITE:
       {
-	VTSum_fileop_write(gen->sum, time, fid, bytes);
-	break;
+        VTSum_fileop_write(gen->sum, time, fid, bytes);
+        break;
       }
       case OTF_FILEOP_SEEK:
       {
         VTSum_fileop_seek(gen->sum, time, fid);
-	break;
+        break;
       }
     }
   }
 }
 
 void VTGen_write_BEGIN_FILE_OPERATION(VTGen* gen, uint64_t* time,
-       uint64_t hid, uint32_t sid)
+                                      uint64_t mid, uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -1890,14 +1558,14 @@ void VTGen_write_BEGIN_FILE_OPERATION(VTGen* gen, uint64_t* time,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_BeginFileOperation));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_BeginFileOperation*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__BeginFileOperation;
+    new_entry->type   = VTBUF_ENTRY_TYPE__BeginFileOperation;
     new_entry->length = length;
     new_entry->time   = *time;
-    new_entry->hid    = hid;
+    new_entry->mid    = mid;
     new_entry->sid    = sid;
 
     VTGEN_JUMP(gen, length);
@@ -1905,8 +1573,8 @@ void VTGen_write_BEGIN_FILE_OPERATION(VTGen* gen, uint64_t* time,
 }
 
 void VTGen_write_END_FILE_OPERATION(VTGen* gen, uint64_t* time,
-       uint32_t fid, uint64_t hid, uint32_t op, uint64_t bytes,
-       uint32_t sid)
+                                    uint32_t fid, uint64_t mid, uint64_t hid,
+                                    uint32_t op, uint64_t bytes, uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -1917,14 +1585,15 @@ void VTGen_write_END_FILE_OPERATION(VTGen* gen, uint64_t* time,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EndFileOperation));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_EndFileOperation*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__EndFileOperation;
+    new_entry->type   = VTBUF_ENTRY_TYPE__EndFileOperation;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->fid    = fid;
+    new_entry->mid    = mid;
     new_entry->hid    = hid;
     new_entry->op     = op;
     new_entry->bytes  = bytes;
@@ -1941,28 +1610,28 @@ void VTGen_write_END_FILE_OPERATION(VTGen* gen, uint64_t* time,
     {
       case OTF_FILEOP_OPEN:
       {
-	VTSum_fileop_open(gen->sum, time, fid);
-	break;
+        VTSum_fileop_open(gen->sum, time, fid);
+        break;
       }
       case OTF_FILEOP_CLOSE:
       {
-	VTSum_fileop_close(gen->sum, time, fid);
-	break;
+        VTSum_fileop_close(gen->sum, time, fid);
+        break;
       }
       case OTF_FILEOP_READ:
       {
-	VTSum_fileop_read(gen->sum, time, fid, bytes);
-	break;
+        VTSum_fileop_read(gen->sum, time, fid, bytes);
+        break;
       }
       case OTF_FILEOP_WRITE:
       {
-	VTSum_fileop_write(gen->sum, time, fid, bytes);
-	break;
+        VTSum_fileop_write(gen->sum, time, fid, bytes);
+        break;
       }
       case OTF_FILEOP_SEEK:
       {
         VTSum_fileop_seek(gen->sum, time, fid);
-	break;
+        break;
       }
     }
   }
@@ -1972,7 +1641,7 @@ void VTGen_write_END_FILE_OPERATION(VTGen* gen, uint64_t* time,
 /* -- Counter -- */
 
 void VTGen_write_COUNTER(VTGen* gen, uint64_t* time, uint32_t cid,
-       uint64_t cval)
+                         uint64_t cval)
 {
   VTGEN_CHECK(gen);
 
@@ -1983,11 +1652,11 @@ void VTGen_write_COUNTER(VTGen* gen, uint64_t* time, uint32_t cid,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_Counter));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_Counter*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__Counter;
+    new_entry->type   = VTBUF_ENTRY_TYPE__Counter;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->cid    = cid;
@@ -1999,8 +1668,7 @@ void VTGen_write_COUNTER(VTGen* gen, uint64_t* time, uint32_t cid,
 
 /* -- Comment -- */
 
-void VTGen_write_COMMENT(VTGen* gen, uint64_t* time,
-       const char* comment)
+void VTGen_write_COMMENT(VTGen* gen, uint64_t* time, const char* comment)
 {
   VTGEN_CHECK(gen);
 
@@ -2012,11 +1680,11 @@ void VTGen_write_COMMENT(VTGen* gen, uint64_t* time,
       VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_Comment) +
                           (strlen(comment) * sizeof(char))));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_Comment*)gen->buf->pos);
 
-    new_entry->type    = BUF_ENTRY_TYPE__Comment;
+    new_entry->type    = VTBUF_ENTRY_TYPE__Comment;
     new_entry->length  = length;
     new_entry->time    = *time;
     strcpy(new_entry->comment, comment);
@@ -2028,7 +1696,7 @@ void VTGen_write_COMMENT(VTGen* gen, uint64_t* time,
 /* -- Marker -- */
 
 void VTGen_write_MARKER(VTGen* gen, uint64_t* time, uint32_t mid,
-			const char* mtext)
+                        const char* mtext)
 {
   VTGEN_CHECK(gen);
 
@@ -2040,11 +1708,11 @@ void VTGen_write_MARKER(VTGen* gen, uint64_t* time, uint32_t mid,
       VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_Marker) +
                           (strlen(mtext) * sizeof(char))));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_Marker*)gen->buf->pos);
 
-    new_entry->type    = BUF_ENTRY_TYPE__Marker;
+    new_entry->type    = VTBUF_ENTRY_TYPE__Marker;
     new_entry->length  = length;
     new_entry->time    = *time;
     new_entry->mid     = mid;
@@ -2054,10 +1722,66 @@ void VTGen_write_MARKER(VTGen* gen, uint64_t* time, uint32_t mid,
   }
 }
 
+/* -- Key-Value -- */
+
+void VTGen_write_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype, void* kvalue)
+{
+  VTGEN_CHECK(gen);
+
+  if (VTGEN_IS_TRACE_ON(gen))
+  {
+    VTBuf_Entry_KeyValue* new_entry;
+
+    uint32_t length =
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_KeyValue));
+
+    /* No VTGEN_ALLOC_EVENT since space must be guaranteed */
+    vt_assert( (uint64_t)((gen)->buf->pos - (gen)->buf->mem) <=
+               (uint64_t)((gen)->buf->size - length) );
+
+    new_entry = ((VTBuf_Entry_KeyValue*)gen->buf->pos);
+
+    new_entry->type   = VTBUF_ENTRY_TYPE__KeyValue;
+    new_entry->length = length;
+    new_entry->kid    = kid;
+    new_entry->vtype  = vtype;
+
+    switch(vtype)
+    {
+      case VT_KEYVAL_TYPE_CHAR:
+        new_entry->kvalue.c = *((char*)kvalue);
+        break;
+      case VT_KEYVAL_TYPE_INT32:
+        new_entry->kvalue.i32 = *((int32_t*)kvalue);
+        break;
+      case VT_KEYVAL_TYPE_UINT32:
+        new_entry->kvalue.u32 = *((uint32_t*)kvalue);
+        break;
+      case VT_KEYVAL_TYPE_INT64:
+        new_entry->kvalue.i64 = *((int64_t*)kvalue);
+        break;
+      case VT_KEYVAL_TYPE_UINT64:
+        new_entry->kvalue.u64 = *((uint64_t*)kvalue);
+        break;
+      case VT_KEYVAL_TYPE_FLOAT:
+        new_entry->kvalue.f = *((float*)kvalue);
+        break;
+      case VT_KEYVAL_TYPE_DOUBLE:
+        new_entry->kvalue.d = *((double*)kvalue);
+        break;
+      default:
+        vt_assert(0);
+    }
+
+    VTGEN_JUMP(gen, length);
+  }
+}
+
 /* -- MPI-1 -- */
 
 void VTGen_write_SEND_MSG(VTGen* gen, uint64_t* time, uint32_t pid,
-       uint32_t cid, uint32_t tag, uint32_t sent, uint32_t sid)
+                          uint32_t cid, uint32_t tag, uint32_t sent,
+                          uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -2068,11 +1792,11 @@ void VTGen_write_SEND_MSG(VTGen* gen, uint64_t* time, uint32_t pid,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_SendRecvMsg));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_SendRecvMsg*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__SendMsg;
+    new_entry->type   = VTBUF_ENTRY_TYPE__SendMsg;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->pid    = pid;
@@ -2080,7 +1804,7 @@ void VTGen_write_SEND_MSG(VTGen* gen, uint64_t* time, uint32_t pid,
     new_entry->tag    = tag;
     new_entry->len    = sent;
     new_entry->sid    = sid;
-      
+
     VTGEN_JUMP(gen, length);
   }
 
@@ -2089,7 +1813,8 @@ void VTGen_write_SEND_MSG(VTGen* gen, uint64_t* time, uint32_t pid,
 }
 
 void VTGen_write_RECV_MSG(VTGen* gen, uint64_t* time, uint32_t pid,
-       uint32_t cid, uint32_t tag, uint32_t recvd, uint32_t sid)
+                          uint32_t cid, uint32_t tag, uint32_t recvd,
+                          uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -2100,11 +1825,11 @@ void VTGen_write_RECV_MSG(VTGen* gen, uint64_t* time, uint32_t pid,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_SendRecvMsg));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_SendRecvMsg*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__RecvMsg;
+    new_entry->type   = VTBUF_ENTRY_TYPE__RecvMsg;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->pid    = pid;
@@ -2121,8 +1846,10 @@ void VTGen_write_RECV_MSG(VTGen* gen, uint64_t* time, uint32_t pid,
 }
 
 void VTGen_write_COLLECTIVE_OPERATION(VTGen* gen, uint64_t* time,
-       uint64_t* etime, uint32_t rid, uint32_t cid, uint32_t rpid,
-       uint32_t sent, uint32_t recvd, uint32_t sid)
+                                      uint64_t* etime, uint32_t rid,
+                                      uint32_t cid, uint32_t rpid,
+                                      uint32_t sent, uint32_t recvd,
+                                      uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -2134,12 +1861,12 @@ void VTGen_write_COLLECTIVE_OPERATION(VTGen* gen, uint64_t* time,
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_CollectiveOperation));
 
     *etime -= *time;
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
     *etime += *time;
 
     new_entry = ((VTBuf_Entry_CollectiveOperation*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__CollectiveOperation;
+    new_entry->type   = VTBUF_ENTRY_TYPE__CollectiveOperation;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->etime  = *etime;
@@ -2157,45 +1884,73 @@ void VTGen_write_COLLECTIVE_OPERATION(VTGen* gen, uint64_t* time,
     VTSum_collop(gen->sum, time, rid, cid, (uint64_t)sent, (uint64_t)recvd);
 }
 
-/* -- RMA - 1sided --*/
-
-void VTGen_write_RMA_PUT(VTGen* gen, uint64_t* time, uint32_t opid, 
-        uint32_t tpid, uint32_t cid, uint32_t tag, uint32_t len, uint32_t sid)
+void VTGen_write_BEGIN_COLLECTIVE_OPERATION(VTGen* gen, uint64_t* time,
+                                            uint32_t rid, uint64_t mid,
+                                            uint32_t rpid, uint32_t cid,
+                                            uint64_t sent, uint64_t recvd,
+                                            uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
   if (VTGEN_IS_TRACE_ON(gen))
   {
-    VTBuf_Entry_RMAPutGet* new_entry;
+    VTBuf_Entry_BeginCollectiveOperation* new_entry;
 
     uint32_t length =
-      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_RMAPutGet));
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_BeginCollectiveOperation));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
-    new_entry = ((VTBuf_Entry_RMAPutGet*)gen->buf->pos);
+    new_entry = ((VTBuf_Entry_BeginCollectiveOperation*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__RMAPut;
+    new_entry->type   = VTBUF_ENTRY_TYPE__BeginCollectiveOperation;
     new_entry->length = length;
     new_entry->time   = *time;
-    new_entry->opid   = opid;
-    new_entry->tpid   = tpid;
+    new_entry->rid    = rid;
+    new_entry->mid    = mid;
+    new_entry->rpid   = rpid;
     new_entry->cid    = cid;
-    new_entry->tag    = tag;
-    new_entry->len    = len;
+    new_entry->sent   = sent;
+    new_entry->recvd  = recvd;
     new_entry->sid    = sid;
-      
+
     VTGEN_JUMP(gen, length);
   }
 
-/*
-  if (VTGEN_IS_SUM_PROP_ON(gen, VT_SUM_PROP_MSG))
-    VTSum_msg_send(gen->sum, time, dpid, cid, tag, (uint64_t)sent);
-*/
+  if (VTGEN_IS_SUM_PROP_ON(gen, VT_SUM_PROP_COLLOP) && (sent > 0 || recvd > 0))
+    VTSum_collop(gen->sum, time, rid, cid, sent, recvd);
 }
 
-void VTGen_write_RMA_PUTRE(VTGen* gen, uint64_t* time, uint32_t opid, 
-        uint32_t tpid, uint32_t cid, uint32_t tag, uint64_t len, uint32_t sid)
+void VTGen_write_END_COLLECTIVE_OPERATION(VTGen* gen, uint64_t* time,
+                                          uint64_t mid)
+{
+  VTGEN_CHECK(gen);
+
+  if (VTGEN_IS_TRACE_ON(gen))
+  {
+    VTBuf_Entry_EndCollectiveOperation* new_entry;
+
+    uint32_t length =
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EndCollectiveOperation));
+
+    VTGEN_ALLOC_EVENT(gen, length, time);
+
+    new_entry = ((VTBuf_Entry_EndCollectiveOperation*)gen->buf->pos);
+
+    new_entry->type   = VTBUF_ENTRY_TYPE__EndCollectiveOperation;
+    new_entry->length = length;
+    new_entry->time   = *time;
+    new_entry->mid    = mid;
+
+    VTGEN_JUMP(gen, length);
+  }
+}
+
+/* -- RMA - 1sided --*/
+
+void VTGen_write_RMA_PUT(VTGen* gen, uint64_t* time, uint32_t opid,
+                         uint32_t tpid, uint32_t cid, uint32_t tag,
+                         uint32_t len, uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -2206,11 +1961,11 @@ void VTGen_write_RMA_PUTRE(VTGen* gen, uint64_t* time, uint32_t opid,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_RMAPutGet));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_RMAPutGet*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__RMAPutRE;
+    new_entry->type   = VTBUF_ENTRY_TYPE__RMAPut;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->opid   = opid;
@@ -2221,11 +1976,12 @@ void VTGen_write_RMA_PUTRE(VTGen* gen, uint64_t* time, uint32_t opid,
     new_entry->sid    = sid;
 
     VTGEN_JUMP(gen, length);
-  } 
+  }
 }
 
-void VTGen_write_RMA_GET(VTGen* gen, uint64_t* time, uint32_t opid, 
-        uint32_t tpid, uint32_t cid, uint32_t tag, uint64_t len, uint32_t sid)
+void VTGen_write_RMA_PUTRE(VTGen* gen, uint64_t* time, uint32_t opid,
+                           uint32_t tpid, uint32_t cid, uint32_t tag,
+                           uint64_t len, uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -2236,11 +1992,11 @@ void VTGen_write_RMA_GET(VTGen* gen, uint64_t* time, uint32_t opid,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_RMAPutGet));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_RMAPutGet*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__RMAGet;
+    new_entry->type   = VTBUF_ENTRY_TYPE__RMAPutRE;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->opid   = opid;
@@ -2251,11 +2007,42 @@ void VTGen_write_RMA_GET(VTGen* gen, uint64_t* time, uint32_t opid,
     new_entry->sid    = sid;
 
     VTGEN_JUMP(gen, length);
-  } 
+  }
+}
+
+void VTGen_write_RMA_GET(VTGen* gen, uint64_t* time, uint32_t opid,
+                         uint32_t tpid, uint32_t cid, uint32_t tag,
+                         uint64_t len, uint32_t sid)
+{
+  VTGEN_CHECK(gen);
+
+  if (VTGEN_IS_TRACE_ON(gen))
+  {
+    VTBuf_Entry_RMAPutGet* new_entry;
+
+    uint32_t length =
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_RMAPutGet));
+
+    VTGEN_ALLOC_EVENT(gen, length, time);
+
+    new_entry = ((VTBuf_Entry_RMAPutGet*)gen->buf->pos);
+
+    new_entry->type   = VTBUF_ENTRY_TYPE__RMAGet;
+    new_entry->length = length;
+    new_entry->time   = *time;
+    new_entry->opid   = opid;
+    new_entry->tpid   = tpid;
+    new_entry->cid    = cid;
+    new_entry->tag    = tag;
+    new_entry->len    = len;
+    new_entry->sid    = sid;
+
+    VTGEN_JUMP(gen, length);
+  }
 }
 
 void VTGen_write_RMA_END(VTGen* gen, uint64_t* time, uint32_t rpid,
-        uint32_t cid, uint32_t tag, uint32_t sid)
+                         uint32_t cid, uint32_t tag, uint32_t sid)
 {
   VTGEN_CHECK(gen);
 
@@ -2266,11 +2053,11 @@ void VTGen_write_RMA_END(VTGen* gen, uint64_t* time, uint32_t rpid,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_RMAEnd));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_RMAEnd*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__RMAEnd;
+    new_entry->type   = VTBUF_ENTRY_TYPE__RMAEnd;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->rpid   = rpid;
@@ -2284,8 +2071,7 @@ void VTGen_write_RMA_END(VTGen* gen, uint64_t* time, uint32_t rpid,
 
 /* -- VampirTrace Internal -- */
 
-void VTGen_write_ENTER_STAT(VTGen* gen, uint64_t* time, 
-       uint8_t metc, uint64_t metv[])
+void VTGen_write_ENTER_FLUSH(VTGen* gen, uint64_t* time)
 {
   VTGEN_CHECK(gen);
 
@@ -2294,88 +2080,23 @@ void VTGen_write_ENTER_STAT(VTGen* gen, uint64_t* time,
     VTBuf_Entry_EnterLeave* new_entry;
 
     uint32_t length =
-      VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_EnterLeave) + 
-                          (metc > 0 ? (metc - 1) * sizeof(uint64_t) : 0)));
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
 
-    VTGEN_ALLOC_EVENT(gen, length);
-
-    new_entry = ((VTBuf_Entry_EnterLeave*)gen->buf->pos);
-    
-    new_entry->type   = BUF_ENTRY_TYPE__Enter;
-    new_entry->length = length;
-    new_entry->time   = *time;
-    new_entry->rid    = vt_trc_regid[VT__TRC_STAT];
-    new_entry->sid    = 0;
-    new_entry->metc   = metc;
-    if( metc > 0 )
-      memcpy(new_entry->metv, metv, metc * sizeof(uint64_t));
-
-    VTGEN_JUMP(gen, length);
-  }
-}
-
-void VTGen_write_EXIT_STAT(VTGen* gen, uint64_t* time,
-       uint8_t metc, uint64_t metv[])
-{
-  VTGEN_CHECK(gen);
-
-  if (VTGEN_IS_TRACE_ON(gen))
-  {
-    VTBuf_Entry_EnterLeave* new_entry;
-
-    uint32_t length =
-      VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_EnterLeave) + 
-                          (metc > 0 ? (metc - 1) * sizeof(uint64_t) : 0)));
-
-    VTGEN_ALLOC_EVENT(gen, length);
+    /* No VTGEN_ALLOC_EVENT since space reserved at buffer creation */
 
     new_entry = ((VTBuf_Entry_EnterLeave*)gen->buf->pos);
-    
-    new_entry->type   = BUF_ENTRY_TYPE__Leave;
-    new_entry->length = length;
-    new_entry->time   = *time;
-    new_entry->rid    = 0;
-    new_entry->sid    = 0;
-    new_entry->metc   = metc;
-    if( metc > 0 )
-      memcpy(new_entry->metv, metv, metc * sizeof(uint64_t));
 
-    VTGEN_JUMP(gen, length);
-  }
-}
-
-void VTGen_write_ENTER_FLUSH(VTGen* gen, uint64_t* time, 
-       uint8_t metc, uint64_t metv[])
-{
-  VTGEN_CHECK(gen);
-
-  if (VTGEN_IS_TRACE_ON(gen))
-  {
-    VTBuf_Entry_EnterLeave* new_entry;
-
-    uint32_t length =
-      VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_EnterLeave) + 
-                          (metc > 0 ? (metc - 1) * sizeof(uint64_t) : 0)));
-
-    /* NB: No VTGEN_ALLOC_EVENT since space reserved at buffer creation */
-
-    new_entry = ((VTBuf_Entry_EnterLeave*)gen->buf->pos);
-    
-    new_entry->type   = BUF_ENTRY_TYPE__Enter;
+    new_entry->type   = VTBUF_ENTRY_TYPE__Enter;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->rid    = vt_trc_regid[VT__TRC_FLUSH];
     new_entry->sid    = 0;
-    new_entry->metc   = metc;
-    if( metc > 0 )
-      memcpy(new_entry->metv, metv, metc * sizeof(uint64_t));
 
     VTGEN_JUMP(gen, length);
   }
 }
 
-void VTGen_write_EXIT_FLUSH(VTGen* gen, uint64_t* time,
-       uint8_t metc, uint64_t metv[])
+void VTGen_write_LEAVE_FLUSH(VTGen* gen, uint64_t* time)
 {
   VTGEN_CHECK(gen);
 
@@ -2384,21 +2105,67 @@ void VTGen_write_EXIT_FLUSH(VTGen* gen, uint64_t* time,
     VTBuf_Entry_EnterLeave* new_entry;
 
     uint32_t length =
-      VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_EnterLeave) + 
-                          (metc > 0 ? (metc - 1) * sizeof(uint64_t) : 0)));
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
 
-    /* NB: No VTGEN_ALLOC_EVENT since space reserved at buffer creation */
+    /* No VTGEN_ALLOC_EVENT since space reserved at buffer creation */
 
     new_entry = ((VTBuf_Entry_EnterLeave*)gen->buf->pos);
-    
-    new_entry->type   = BUF_ENTRY_TYPE__Leave;
+
+    new_entry->type   = VTBUF_ENTRY_TYPE__Leave;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->rid    = 0;
     new_entry->sid    = 0;
-    new_entry->metc   = metc;
-    if( metc > 0 )
-      memcpy(new_entry->metv, metv, metc * sizeof(uint64_t));
+
+    VTGEN_JUMP(gen, length);
+  }
+}
+
+void VTGen_write_ENTER_STAT(VTGen* gen, uint64_t* time)
+{
+  VTGEN_CHECK(gen);
+
+  if (VTGEN_IS_TRACE_ON(gen))
+  {
+    VTBuf_Entry_EnterLeave* new_entry;
+
+    uint32_t length =
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave)); 
+
+    VTGEN_ALLOC_EVENT(gen, length, time);
+
+    new_entry = ((VTBuf_Entry_EnterLeave*)gen->buf->pos);
+
+    new_entry->type   = VTBUF_ENTRY_TYPE__Enter;
+    new_entry->length = length;
+    new_entry->time   = *time;
+    new_entry->rid    = vt_trc_regid[VT__TRC_STAT];
+    new_entry->sid    = 0;
+
+    VTGEN_JUMP(gen, length);
+  }
+}
+
+void VTGen_write_LEAVE_STAT(VTGen* gen, uint64_t* time)
+{
+  VTGEN_CHECK(gen);
+
+  if (VTGEN_IS_TRACE_ON(gen))
+  {
+    VTBuf_Entry_EnterLeave* new_entry;
+
+    uint32_t length =
+      VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
+
+    VTGEN_ALLOC_EVENT(gen, length, time);
+
+    new_entry = ((VTBuf_Entry_EnterLeave*)gen->buf->pos);
+
+    new_entry->type   = VTBUF_ENTRY_TYPE__Leave;
+    new_entry->length = length;
+    new_entry->time   = *time;
+    new_entry->rid    = 0;
+    new_entry->sid    = 0;
 
     VTGEN_JUMP(gen, length);
   }
@@ -2409,7 +2176,8 @@ void VTGen_write_EXIT_FLUSH(VTGen* gen, uint64_t* time,
 
 
 void VTGen_write_FUNCTION_SUMMARY(VTGen* gen, uint64_t* time,
-     uint32_t rid, uint64_t cnt, uint64_t excl, uint64_t incl)
+                                  uint32_t rid, uint64_t cnt, uint64_t excl,
+                                  uint64_t incl)
 {
   VTGEN_CHECK(gen);
 
@@ -2420,11 +2188,11 @@ void VTGen_write_FUNCTION_SUMMARY(VTGen* gen, uint64_t* time,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_FunctionSummary));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_FunctionSummary*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__FunctionSummary;
+    new_entry->type   = VTBUF_ENTRY_TYPE__FunctionSummary;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->rid    = rid;
@@ -2437,8 +2205,9 @@ void VTGen_write_FUNCTION_SUMMARY(VTGen* gen, uint64_t* time,
 }
 
 void VTGen_write_MESSAGE_SUMMARY(VTGen* gen, uint64_t* time,
-       uint32_t peer, uint32_t cid, uint32_t tag,
-       uint64_t scnt, uint64_t rcnt, uint64_t sent, uint64_t recvd)
+                                 uint32_t peer, uint32_t cid, uint32_t tag,
+                                 uint64_t scnt, uint64_t rcnt, uint64_t sent,
+                                 uint64_t recvd)
 {
   VTGEN_CHECK(gen);
 
@@ -2449,11 +2218,11 @@ void VTGen_write_MESSAGE_SUMMARY(VTGen* gen, uint64_t* time,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_MessageSummary));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_MessageSummary*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__MessageSummary;
+    new_entry->type   = VTBUF_ENTRY_TYPE__MessageSummary;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->peer   = peer;
@@ -2469,8 +2238,9 @@ void VTGen_write_MESSAGE_SUMMARY(VTGen* gen, uint64_t* time,
 }
 
 void VTGen_write_COLLECTIVE_OPERATION_SUMMARY(VTGen* gen, uint64_t* time,
-       uint32_t cid, uint32_t rid, uint64_t scnt, uint64_t rcnt,
-       uint64_t sent, uint64_t recvd)
+                                              uint32_t cid, uint32_t rid,
+                                              uint64_t scnt, uint64_t rcnt,
+                                              uint64_t sent, uint64_t recvd)
 {
   VTGEN_CHECK(gen);
 
@@ -2481,11 +2251,11 @@ void VTGen_write_COLLECTIVE_OPERATION_SUMMARY(VTGen* gen, uint64_t* time,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_CollectiveOperationSummary));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_CollectiveOperationSummary*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__CollectiveOperationSummary;
+    new_entry->type   = VTBUF_ENTRY_TYPE__CollectiveOperationSummary;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->cid    = cid;
@@ -2500,8 +2270,10 @@ void VTGen_write_COLLECTIVE_OPERATION_SUMMARY(VTGen* gen, uint64_t* time,
 }
 
 void VTGen_write_FILE_OPERATION_SUMMARY(VTGen* gen, uint64_t* time,
-       uint32_t fid, uint64_t nopen, uint64_t nclose, uint64_t nread,
-       uint64_t nwrite, uint64_t nseek, uint64_t read, uint64_t wrote)
+                                        uint32_t fid, uint64_t nopen,
+                                        uint64_t nclose, uint64_t nread,
+                                        uint64_t nwrite, uint64_t nseek,
+                                        uint64_t read, uint64_t wrote)
 {
   VTGEN_CHECK(gen);
 
@@ -2512,11 +2284,11 @@ void VTGen_write_FILE_OPERATION_SUMMARY(VTGen* gen, uint64_t* time,
     uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_FileOperationSummary));
 
-    VTGEN_ALLOC_EVENT(gen, length);
+    VTGEN_ALLOC_EVENT(gen, length, time);
 
     new_entry = ((VTBuf_Entry_FileOperationSummary*)gen->buf->pos);
 
-    new_entry->type   = BUF_ENTRY_TYPE__FileOperationSummary;
+    new_entry->type   = VTBUF_ENTRY_TYPE__FileOperationSummary;
     new_entry->length = length;
     new_entry->time   = *time;
     new_entry->fid    = fid;
@@ -2531,3 +2303,67 @@ void VTGen_write_FILE_OPERATION_SUMMARY(VTGen* gen, uint64_t* time,
     VTGEN_JUMP(gen, length);
   }
 }
+
+void VTGen_set_rewind_mark(VTGen* gen, uint64_t *time)
+{
+  VTGEN_CHECK(gen);
+
+  gen->rewindmark.pos  = gen->buf->pos;
+  gen->rewindmark.time = *time;
+}
+
+void VTGen_rewind(VTGen* gen, uint64_t *time)
+{
+  buffer_t p;
+  uint32_t length;
+
+  VTGEN_CHECK(gen);
+
+  p = gen->rewindmark.pos;
+
+  /* run over trace buffer and shift definition records to
+     the rewind mark, other records will be dropped */
+  while(p < gen->buf->pos)
+  {
+    length = ((VTBuf_Entry_Base*)p)->length;
+
+    switch(((VTBuf_Entry_Base*)p)->type)
+    {
+      case VTBUF_ENTRY_TYPE__DefinitionComment:
+      case VTBUF_ENTRY_TYPE__DefSclFile:
+      case VTBUF_ENTRY_TYPE__DefScl:
+      case VTBUF_ENTRY_TYPE__DefFileGroup:
+      case VTBUF_ENTRY_TYPE__DefFile:
+      case VTBUF_ENTRY_TYPE__DefFunctionGroup:
+      case VTBUF_ENTRY_TYPE__DefFunction:
+      case VTBUF_ENTRY_TYPE__DefCollectiveOperation:
+      case VTBUF_ENTRY_TYPE__DefCounterGroup:
+      case VTBUF_ENTRY_TYPE__DefCounter:
+      case VTBUF_ENTRY_TYPE__DefProcessGroup:
+      case VTBUF_ENTRY_TYPE__DefMarker:
+      {
+        if(p != gen->rewindmark.pos)
+          memmove(gen->rewindmark.pos, p, length);
+        /* move rewind mark behind definition record */
+        gen->rewindmark.pos += length;
+        break;
+      }
+      default:
+        break;
+    }
+
+    p += length;
+  }
+
+  /* reset current buffer position */
+  gen->buf->pos = gen->rewindmark.pos;
+  *time = gen->rewindmark.time;
+}
+
+uint8_t VTGen_is_rewind_mark_present(VTGen* gen)
+{
+  VTGEN_CHECK(gen);
+
+  return (uint8_t)( gen->rewindmark.pos != (buffer_t)-1 );
+}
+

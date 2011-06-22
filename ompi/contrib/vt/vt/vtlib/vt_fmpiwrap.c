@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -19,9 +19,7 @@
 #include "vt_env.h"
 #include "vt_fmpiconst.h"
 #include "vt_fbindings.h"
-#ifdef VT_UNIMCI
-# include "vt_unimci.h"
-#endif /* VT_UNIMCI */
+#include "vt_unimci.h"
 
 #include "mpi.h"
 
@@ -29,12 +27,6 @@ static void fmpiwrap_init(void)
 {
   /* get MPI Fortran constants */
   vt_fmpiconst_init();
-
-#ifdef VT_UNIMCI
-  /* set MPI binding language for UniMCI, if necessary */
-  if ( vt_env_mpicheck() )
-    UNIMCI_set_binding_language(UNIMCI_LANGUAGE_FORTRAN);
-#endif /* VT_UNIMCI */
 }
 
 /* -- MPI_Init -- */
@@ -43,7 +35,9 @@ VT_DECLDEF(void vt_mpi_init_f(MPI_Fint* ierr))
 {
   fmpiwrap_init();
 
+  VT_UNIMCI_SET_BINDING_LANGUAGE_FORTRAN();
   *ierr = MPI_Init(0, (char***)0);
+  VT_UNIMCI_SET_BINDING_LANGUAGE_C();
 
 } VT_GENERATE_F77_BINDINGS(mpi_init, MPI_INIT, vt_mpi_init_f,
   (MPI_Fint* ierr),
@@ -58,7 +52,9 @@ VT_DECLDEF(void vt_mpi_init_thread_f(MPI_Fint* required, MPI_Fint* provided,
 {
   fmpiwrap_init();
 
+  VT_UNIMCI_SET_BINDING_LANGUAGE_FORTRAN();
   *ierr = MPI_Init_thread(0, (char***)0, *required, provided);
+  VT_UNIMCI_SET_BINDING_LANGUAGE_C();
 
 } VT_GENERATE_F77_BINDINGS(mpi_init_thread, MPI_INIT_THREAD, vt_mpi_init_thread_f,
   (MPI_Fint* required, MPI_Fint* provided, MPI_Fint* ierr),
@@ -68,3 +64,4 @@ VT_DECLDEF(void vt_mpi_init_thread_f(MPI_Fint* required, MPI_Fint* provided,
 
 /* include generated wrapper functions */
 #include "vt_fmpiwrap.gen.c"
+

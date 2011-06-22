@@ -5,6 +5,8 @@ AC_DEFUN([ACVT_JAVA],
 	force_java="no"
 	have_java="no"
 
+	VTJAVALIB=
+
 	AC_REQUIRE([ACVT_PLATFORM])
 
 	AC_ARG_ENABLE(java, 
@@ -30,9 +32,24 @@ AC_DEFUN([ACVT_JAVA],
 		AS_IF([test x"$java_error" = "xno"],
 		[
 			ACVT_JVMTI
-			AS_IF([test x"$have_jvmti" = "xyes"],
-			[have_java="yes"], [java_error="yes"])
+			AS_IF([test x"$jvmti_error" = "xyes"],
+			[java_error="yes"])
+		])
+
+		AS_IF([test x"$java_error" = "xno"],
+		[
+			AS_IF([test "$PLATFORM" = "macos"],
+			[
+				VTJAVALIB="libvt-java.jnilib"
+			],
+			[
+				VTJAVALIB="libvt-java$SHREXT"
+			])
+
+			have_java="yes"
 		])
 	])
+
+	AC_SUBST(VTJAVALIB)
 ])
 

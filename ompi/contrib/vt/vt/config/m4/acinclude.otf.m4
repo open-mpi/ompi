@@ -6,6 +6,7 @@ AC_DEFUN([ACVT_OTF],
 	OTFINCDIR=
 	OTFLIBDIR=
 
+	AC_REQUIRE([ACVT_MPI])
 	AC_REQUIRE([ACVT_ZLIB])
 
 	AC_ARG_WITH(extern-otf,
@@ -91,6 +92,9 @@ AC_DEFUN([ACVT_OTF],
 
 		otf_conf_cmd="$otf_srcdir/configure"
 		otf_conf_args="--enable-static=$enable_static --enable-shared=$enable_shared"
+
+		sav_CPPFLAGS=$CPPFLAGS
+
 		AS_IF([test x"$enable_binaries" != "xyes"],
 		[
 			otf_conf_args="$otf_conf_args --disable-binaries"
@@ -100,16 +104,40 @@ AC_DEFUN([ACVT_OTF],
 			AS_IF([test ! -z $build], [otf_conf_args="$otf_conf_args --build=$build"])
 			AS_IF([test ! -z $host], [otf_conf_args="$otf_conf_args --host=$host"])
 		])
+		AS_IF([test x"$have_mpi" = "xyes"],
+		[
+			export MPICC
+			export MPICXX
+			AS_IF([test x"$force_mpi" = "xyes"],
+			[otf_conf_args="$otf_conf_args --with-mpi"])
+			AS_IF([test $MPICC = $CC],
+			[
+				AS_IF([test x"$MPIDIR" != x],
+				[otf_conf_args="$otf_conf_args --with-mpi-dir=$MPIDIR"])
+dnl				if we are inside Open MPI package MPIINCDIR contains multiple paths
+dnl				so it cannot be used for --with-mpi-inc-dir; use CPPFLAGS instead
+				AS_IF([test x"$MPIINCDIR" != x],
+				[CPPFLAGS="$CPPFLAGS $MPIINCDIR"])
+dnl				[otf_conf_args="$otf_conf_args --with-mpi-inc-dir=`echo $MPIINCDIR | sed s/-I//`"])
+				AS_IF([test x"$MPILIBDIR" != x],
+				[otf_conf_args="$otf_conf_args --with-mpi-lib-dir=`echo $MPILIBDIR | sed s/-L//`"])
+				AS_IF([test x"$MPILIB" != x],
+				[otf_conf_args="$otf_conf_args --with-mpi-lib=$MPILIB"])
+			])
+		],
+		[
+			otf_conf_args="$otf_conf_args --without-mpi"
+		])
 		AS_IF([test x"$have_zlib" = "xyes"],
 		[
 			AS_IF([test x"$force_zlib" = "xyes"],
 			[otf_conf_args="$otf_conf_args --with-zlib"])
-			AS_IF([test x"$zlib_dir_withval" != x],
-			[otf_conf_args="$otf_conf_args --with-zlib-dir=$zlib_dir_withval"])
-			AS_IF([test x"$zlib_incdir_withval" != x],
-			[otf_conf_args="$otf_conf_args --with-zlib-inc-dir=$zlib_incdir_withval"])
-			AS_IF([test x"$zlib_libdir_withval" != x],
-			[otf_conf_args="$otf_conf_args --with-zlib-lib-dir=$zlib_libdir_withval"])
+			AS_IF([test x"$ZLIBDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-zlib-dir=$ZLIBDIR"])
+			AS_IF([test x"$ZLIBINCDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-zlib-inc-dir=`echo $ZLIBINCDIR | sed s/-I//`"])
+			AS_IF([test x"$ZLIBLIBDIR" != x],
+			[otf_conf_args="$otf_conf_args --with-zlib-lib-dir=`echo $ZLIBLIBDIR | sed s/-L//`"])
 			AS_IF([test x"$ZLIBLIB" != x],
 			[otf_conf_args="$otf_conf_args --with-zlib-lib=$ZLIBLIB"])
 		],
@@ -122,6 +150,8 @@ AC_DEFUN([ACVT_OTF],
 		AC_MSG_NOTICE([running $SHELL $otf_conf_cmd $otf_conf_args])
 		eval "$SHELL '$otf_conf_cmd' $otf_conf_args"
 		AS_IF([test $? != "0"], [AC_MSG_ERROR([$otf_conf_cmd failed for $otf_dir])])
+
+		CPPFLAGS=$sav_CPPFLAGS
 
 		cd $otf_parent_dir
 

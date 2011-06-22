@@ -1,27 +1,149 @@
-5.8.4openmpi
+5.11.1openmpi
+	- updated version of internal OTF to 1.9.1openmpi
+	  (see extlib/otf/ChangeLog)
+	- improved filtering of CUDA kernels
+	- fixed unification of local process group definitions
+
+5.11
+	- updated version of internal OTF to 1.9sawfish
+	  (see extlib/otf/ChangeLog)
+	- added support for Cray XE6
+	- added tool 'vtsetup' which provides a GUI to prepare measurement runs
+	  with VampirTrace
+	- added application execution wrapper script 'vtrun' which performs MPI
+	  and/or binary instrumentation at runtime
+	- extended Dyninst mutator tool 'vtdyn' to rewrite instrumented
+	  application executables
+	- replaced basic blacklist functionality of vtdyn by the VT runtime
+	  filter
+	- extended trace unification to match p2p message event records
+	- enhanced unification of local traces from very large runs in respect
+	  of parallelism and memory usage
+	- extended user API to perform user defined communication
+	- extended user API for regions to support dynamically generated region
+	  names
+	- added support for asynchronous plugin counters
+	- added support for CUDA 4.0
+	- removed support for CUDA 2.x
+	- added CUDA performance counter support via CUPTI event API
+	- added option '-vt:noopari' to compiler wrapper commands to disable
+	  instrumentation of OpenMP constructs by OPARI
+	- added configure option
+	  '--with-wrapper-<cc|cxx|f77|fc|nvcc>-default-partype=TYPE' to set
+	  default application parallelization type for compiler wrappers
+	- fixed thread-safety issue in Fortran bindings of user API
 	- fixed handling NULL value of pathname given to certain I/O calls
 	  (e.g. fopen, open, unlink)
-	- fixed a bug in the compiler wrappers: don't try to rename the
-	  compiler output of an OPARI modified source file if it's
-	  specified by '-o'
+	- fixed base of cycle counter timer on PPC with MacOS
+	- fixed default grouping of user functions whose name appears in
+	  predefined groups (e.g. VT-API)
+	- fixed error when using the compiler wrappers with PDT/TAU + manual
+	  instrumentation
+	- bugfix to OPARI (see tools/opari/ChangeLog:18)
 
-5.8.3openmpi
+5.10.1
+	- updated version of internal OTF to 1.8.1sturgeon
+	  (see extlib/otf/ChangeLog)
+	- added configure option '--<en|dis>able-mpiunify-lib' to control
+	  building of the MPI trace unification library (libvt-mpi-unify)
+	- added GPU memory tracing for CUDA runtime API
+	- fixed configure tests for conversion of Fortran MPI handles
+	- fixed collecting symbol information of shared libraries which are
+	  instrumented by the GNU, Intel, PathScale, or PGI 9 compiler
+	- fixed an error in memory management of CUDA devices
+	- fixed CUDA device management (CUDA runtime)
+	- fixed finalize problem in CUDA runtime wrapper, which in cases
+	  produced an unspecific driver error
+	- added an additional check to avoid a possible deadlock in vt_open(),
+	  which might occur, if something during opening invokes vt_open()
+	- fixed not-increasing timestamps error which occurred if an interval
+	  for writing statistics (env. VT_STAT_INTV) is set
+	- fixed wrong UNIMCI language bindings for Fortran applications
+	  (enforces building of the Fortran MPI wrapper library 'libvt-fmpi')
+	- fixed handling of command line options in vtjava
+
+5.10
+	- updated version of internal OTF to 1.8sturgeon
+	  (see extlib/otf/ChangeLog)
+	- added support for automatic source code instrumentation by PDT/TAU
+	- added MPI-parallel version of vtfilter (vtfilter-mpi) with support
+	  for rank specific filtering
+	- enhanced termination of MPI-parallel trace unifier in case of an error
+	- changed byte counts of collective communication records
+	  (see FAQ entry D.8 in the user manual)
+	- added changes of CUDA 3.2 runtime API
+	- extended vtjava to set the trace file prefix to the jar/class file
 	- fixed compile error on Red Hat 5.x which occurred if using GNU
 	  compiler with -D_FORTIFY_SOURCE=2
+	- fixed faulty library dependencies to MPI which caused in a
+	  segmentation fault on AIX
+	  (on AIX libvt-fmpi needs additional dependencies to the Fortran
+	   runtime libraries; for now building of shared libraries is disabled)
+	- fixed a potential segmentation fault in CUDA runtime API tracing
+	  (for disabled CUDA kernel tracing and CUDA synchronization level 3)
+	- usage of CUDA and PAPI does not result in an error any more
+	- fixed measurement of GPU idle time
+	- corrected number of used CUDA events for disabled kernel tracing
+	- fixed corrupt call stack after an intermediate buffer flush if
+	  VT_MAX_FLUSHES is set to 0(=unlimited)
+	- fixed detection of executable's pathname on UnionFS
+	- fixed detection of OpenMP flags in the compiler wrappers
+	- fixed memory source/destination overlap in a MPI_Gatherv call which
+	  caused MPICH2 to abort
+	- fixed potential segmentation fault during collecting symbol
+	  information for instrumentation with the GNU, Intel, PathScale,
+	  and PGI 9 compiler
+	- fixed segmentation fault which occurred if using PAPI 4 together with
+	  libc I/O tracing
+	- fixed pathname of the JVMTI agent library in vtjava
+	- fixed assertion in vtunify which occurred if enhanced time sync. is
+	  enabled
+	- fixed segmentation fault in vtunify-mpi which occurred if using more
+	  MPI tasks than necessary
 
-5.8.2openmpi
-	- fixed buffer overflow which occurred if marker or event comment
-	  records generated
-	- fixed bug in MPI-I/O tracing: tracking MPI file handles even if
-	  MPI_File_open isn't recorded
-	- enforced creating of event/summary files even process/thread doesn't
-	  produce trace data
+5.9
+	- updated version of internal OTF to 1.7.1catfish
+	  (see extlib/otf/ChangeLog)
+	- added support for tracing NVIDIA CUDA runtime API
+	- improved automatic trace unification for MPI applications:
+	  use application allocated MPI processes for unification
+	- extended user API: added "buffer rewind" as an alternative to "on/off"
+	- extended the MPI-rank specific filtering to disable ranks completely
+	- added environment variable VT_OMPTRACE to enable/disable tracing of
+	  OpenMP events instrumented by OPARI
+	- added writing of collective begin/end records for MPI Collective
+	  operations
+	- reduced amount of resulting files:
+		- write only one unify control file (*.uctl) for the whole trace
+		- do not write *.filt files anymore
+	- added environment variables VT_MAX_MPI_COMMS and VT_MAX_MPI_WINS for
+	  adjusting internal default limits of used MPI communicators/windows
+	- corrected finalize behavior for C++ applications with static objects
+	  (e.g. MPI_Finalize in the destructor of a singleton)
+	- fixed potential buffer overflow on determining pathname of the
+	  application executable
+	- fixed loading of dynamic libraries on AIX
+	- fixed bugs in the compiler wrappers:
+		- don't try to rename the compiler output of an OPARI modified
+		  source file if it's specified by the compiler flag '-o'
+		- changed order of linking libraries to record also MPI function
+		  calls which come from user libraries
+		- corrected parsing of separated arguments of the compiler
+		  options -I, -L, and -l (e.g. -I <dir>)
+	- fixed bug in vtunify: do only write active stream/process ids to the
+	  OTF master control file (*.otf)
 	- if configuring inside Open MPI, install header files into
 	  <includedir>/vampirtrace even the configure option '--includedir' is
 	  specified
 
-5.8.1openmpi
-	- updated version of internal OTF to 1.6.5openmpi
+5.8.2
+	- fixed buffer overflow which occurred if marker or event comment
+	  records generated
+	- fixed bug in MPI-I/O tracing: tracking MPI file handles even if
+	  MPI_File_open isn't recorded
+
+5.8.1
+	- updated version of internal OTF to 1.6.5stingray
 	  (see extlib/otf/ChangeLog)
 	- added support for tracing functions in shared libraries instrumented
 	  by the GNU, Intel, PathScale, or PGI 9 compiler
@@ -56,8 +178,8 @@
 	  on 32bit platforms
 	- patched libtool to avoid a bug in detection of the PGI 10 compilers
 
-5.8openmpi
-	- updated version of internal OTF to 1.6.4openmpi
+5.8
+	- updated version of internal OTF to 1.6.4stingray
 	  (see extlib/otf/ChangeLog)
 	- added support for tracing calls to arbitrary third party libraries
 	  The new tool 'vtlibwrapgen' can be used to generate a wrapper library.
@@ -139,7 +261,7 @@
 	- fixed a bug in vtfilter: strip the '.otf'-suffix from input/output
 	  trace file names, if necessary
 	- fixed a bug in the Fortran compiler wrappers: don't remove generated
-	- OPARI header files (*.opari.inc) before compiling the table source
+	  OPARI header files (*.opari.inc) before compiling the table source
 	- file (opari.tab.c)
 	- enhancement to OPARI (see tools/opari/ChangeLog:16,17)
 	- use handle from dlopen(<libc>) for dlsym() calls instead of RTLD_NEXT

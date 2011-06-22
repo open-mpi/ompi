@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -13,416 +13,376 @@
 #ifndef _VT_UNIFY_DEFS_H_
 #define _VT_UNIFY_DEFS_H_
 
+#include "vt_unify_defs_recs.h"
+#include "vt_unify_usrcom.h"
+
 #include "vt_inttypes.h"
 
+#include <algorithm>
 #include <list>
 #include <map>
+#include <set>
 #include <string>
-#include <vector>
 
 //
-// Definitions class
+// DefinitionsC class
 //
-class Definitions
+class DefinitionsC
 {
 public:
 
-   // definition record types
-   //
-   typedef enum { DEF_REC_TYPE__DefCreator,
-		  DEF_REC_TYPE__DefinitionComment,
-		  DEF_REC_TYPE__DefTimerResolution,
-		  DEF_REC_TYPE__DefProcess,
-		  DEF_REC_TYPE__DefProcessGroup,
-		  DEF_REC_TYPE__DefSclFile,
-		  DEF_REC_TYPE__DefScl,
-		  DEF_REC_TYPE__DefFileGroup,
-		  DEF_REC_TYPE__DefFile,
-		  DEF_REC_TYPE__DefFunctionGroup,
-		  DEF_REC_TYPE__DefFunction,
-		  DEF_REC_TYPE__DefCollectiveOperation,
-		  DEF_REC_TYPE__DefCounterGroup,
-		  DEF_REC_TYPE__DefCounter,
-                  DEF_REC_TYPE__Unknown } DefRecTypeT;
-   
-   //
-   // DefRec_Base_struct
-   //
-   struct DefRec_Base_struct
-   {
-      DefRec_Base_struct()
-	 : etype(DEF_REC_TYPE__Unknown), loccpuid(0), deftoken(0) {}
-      DefRec_Base_struct(DefRecTypeT _etype)
-	 : etype(_etype), loccpuid(0), deftoken(0) {}
-      virtual ~DefRec_Base_struct() {}
-      
-      DefRecTypeT etype;
-      uint32_t    loccpuid;
-      uint32_t    deftoken;
-   };
-
-   //
-   // DefRec_DefinitionComment_struct
-   //
-   struct DefRec_DefinitionComment_struct : DefRec_Base_struct
-   {
-      DefRec_DefinitionComment_struct() 
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefinitionComment),
-      orderidx(0) {}
-      DefRec_DefinitionComment_struct(uint32_t _orderidx,
-				      std::string _comment)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefinitionComment),
-      orderidx(_orderidx), comment(_comment) {}
-      
-      uint32_t    orderidx;
-      std::string comment;
-   };
-
-   //
-   // DefRec_DefCreator_struct
-   //
-   struct DefRec_DefCreator_struct : DefRec_Base_struct
-   {
-      DefRec_DefCreator_struct() 
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCreator) {}
-      DefRec_DefCreator_struct(std::string _creator)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCreator),
-      creator(_creator) {}
-      
-      std::string creator;
-   };
-
-   //
-   // DefRec_DefTimerResolution_struct
-   //
-   struct DefRec_DefTimerResolution_struct : DefRec_Base_struct
-   {
-      DefRec_DefTimerResolution_struct() 
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefTimerResolution),
-      ticksPerSecond(0) {}
-      DefRec_DefTimerResolution_struct(uint64_t _ticksPerSecond)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefTimerResolution),
-      ticksPerSecond(_ticksPerSecond) {}
-
-      uint64_t ticksPerSecond;
-   };
-
-   //
-   // DefRec_DefProcess_struct
-   //
-   struct DefRec_DefProcess_struct : DefRec_Base_struct
-   {
-      DefRec_DefProcess_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcess),
-      parent(0) {}
-      DefRec_DefProcess_struct(uint32_t _deftoken, std::string _name,
-			       uint32_t _parent)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcess),
-      name(_name), parent(_parent) { deftoken = _deftoken; }
-      
-      std::string name;
-      uint32_t    parent;
-   };
-
-   //
-   // DefRec_DefProcessGroup_struct
-   //
-   struct DefRec_DefProcessGroup_struct : DefRec_Base_struct
-   {
-      typedef enum { TYPE_NODE, TYPE_MPI_COMM_WORLD, TYPE_MPI_COMM_SELF,
-		     TYPE_MPI_COMM_USER, TYPE_OMP_TEAM, TYPE_OTHER }
-      ProcessGroupTypeT;
-
-      DefRec_DefProcessGroup_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcessGroup),
-      type(TYPE_OTHER) {}
-      DefRec_DefProcessGroup_struct(uint32_t _loccpuid,
-				    uint32_t _deftoken,
-				    ProcessGroupTypeT _type,
-				    std::string _name,
-				    uint32_t _nmembers,
-				    uint32_t * _members)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcessGroup),
-      name(_name), type(_type)
-	 {
-	    loccpuid = _loccpuid;
-	    deftoken = _deftoken;
-	    members.resize( _nmembers );
-	    members.assign( _members, _members + _nmembers );
-	 }
-
-      DefRec_DefProcessGroup_struct(uint32_t _loccpuid,
-				    uint32_t _deftoken,
-				    ProcessGroupTypeT _type,
-				    std::string _name,
-				    std::vector<uint32_t> _members)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefProcessGroup),
-      name(_name), type(_type), members(_members)
-	 { loccpuid = _loccpuid; deftoken = _deftoken; }
-
-      std::string           name;
-      ProcessGroupTypeT     type;
-      std::vector<uint32_t> members;
-   };
-
-   //
-   // DefRec_DefSclFile_struct
-   //
-   struct DefRec_DefSclFile_struct : DefRec_Base_struct
-   {
-      DefRec_DefSclFile_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefSclFile) {}
-      DefRec_DefSclFile_struct(uint32_t _loccpuid, uint32_t _deftoken,
-			       std::string _filename)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefSclFile),
-      filename(_filename)
-	 { loccpuid = _loccpuid; deftoken = _deftoken; }
-      
-      std::string filename;
-   };
-
-   //
-   // DefRec_DefScl_struct
-   //
-   struct DefRec_DefScl_struct : DefRec_Base_struct
-   {
-      DefRec_DefScl_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefScl),
-      sclfile(0), sclline(0) {}
-      DefRec_DefScl_struct(uint32_t _loccpuid, uint32_t _deftoken,
-				uint32_t _sclfile, uint32_t _sclline)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefScl),
-      sclfile(_sclfile), sclline(_sclline) { loccpuid = _loccpuid; deftoken = _deftoken; }
-      ~DefRec_DefScl_struct() {}
-
-      uint32_t sclfile;
-      uint32_t sclline;
-   };
-
-   //
-   // DefRec_DefFileGroup_struct
-   //
-   struct DefRec_DefFileGroup_struct : DefRec_Base_struct
-   {
-      DefRec_DefFileGroup_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFileGroup) {}
-      DefRec_DefFileGroup_struct(uint32_t _loccpuid, uint32_t _deftoken,
-				 std::string _name)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFileGroup),
-      name(_name)
-	 { loccpuid = _loccpuid; deftoken = _deftoken; }
-      
-      std::string name;
-   };
-
-   //
-   // DefRec_DefFile_struct
-   //
-   struct DefRec_DefFile_struct : DefRec_Base_struct
-   {
-      DefRec_DefFile_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFile),
-      group(0) {}
-      DefRec_DefFile_struct(uint32_t _loccpuid, uint32_t _deftoken,
-			    std::string _name, uint32_t _group )
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFile),
-      name(_name), group(_group)
-	 { loccpuid = _loccpuid; deftoken = _deftoken; }
-      
-      std::string name;
-      uint32_t    group;
-   };
-
-   //
-   // DefRec_DefFunctionGroup_struct
-   //
-   struct DefRec_DefFunctionGroup_struct : DefRec_Base_struct
-   {
-      DefRec_DefFunctionGroup_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFunctionGroup) {}
-      DefRec_DefFunctionGroup_struct(uint32_t _loccpuid,
-					  uint32_t _deftoken,
-					  std::string _name)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFunctionGroup),
-      name(_name)
-	 { loccpuid = _loccpuid; deftoken = _deftoken; }
-      
-      std::string name;
-   };
-   
-   //
-   // DefRec_DefFunction_struct
-   //
-   struct DefRec_DefFunction_struct : DefRec_Base_struct
-   {
-      DefRec_DefFunction_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFunction),
-      group(0), scltoken(0) {}
-      DefRec_DefFunction_struct(uint32_t _loccpuid, uint32_t _deftoken,
-				std::string _name, uint32_t _group,
-				uint32_t _scltoken)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefFunction),
-      name(_name), group(_group), scltoken(_scltoken)
-	 { loccpuid = _loccpuid; deftoken = _deftoken; }
-      
-      std::string name;
-      uint32_t    group;
-      uint32_t    scltoken;
-   };
-
-   //
-   // DefRec_DefCollectiveOperation_struct
-   //
-   struct DefRec_DefCollectiveOperation_struct : DefRec_Base_struct
-   {
-      DefRec_DefCollectiveOperation_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCollectiveOperation),
-      type(0) {}
-      DefRec_DefCollectiveOperation_struct(uint32_t _loccpuid,
-					   uint32_t _collOp,
-					   std::string _name,
-					   uint32_t _type)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCollectiveOperation),
-      name(_name), type(_type) { loccpuid = _loccpuid; deftoken = _collOp; }
-      
-      std::string name;
-      uint32_t    type;
-   };
-   
-   //
-   // DefRec_DefCounterGroup_struct
-   //
-   struct DefRec_DefCounterGroup_struct : DefRec_Base_struct
-   {
-      DefRec_DefCounterGroup_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCounterGroup) {}
-      DefRec_DefCounterGroup_struct(uint32_t _loccpuid, uint32_t _deftoken,
-				    std::string _name)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCounterGroup),
-      name(_name)
-	 { loccpuid = _loccpuid; deftoken = _deftoken; }
-      
-      std::string name;
-   };
-
-   //
-   // DefRec_DefCounter_struct
-   //
-   struct DefRec_DefCounter_struct : DefRec_Base_struct
-   {
-      DefRec_DefCounter_struct()
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCounter),
-      properties(0), countergroup(0) {}
-      DefRec_DefCounter_struct(uint32_t _loccpuid, uint32_t _deftoken,
-			       std::string _name, uint32_t _properties,
-			       uint32_t _countergroup, std::string _unit)
-	 : DefRec_Base_struct(DEF_REC_TYPE__DefCounter),
-      name(_name), properties(_properties), countergroup(_countergroup),
-      unit(_unit)
-	 { loccpuid = _loccpuid; deftoken = _deftoken; }
-      
-      std::string name;
-      uint32_t    properties;
-      uint32_t    countergroup;
-      std::string unit;
-   };
-
-
-   // contructor
-   Definitions();
+   // constructor
+   DefinitionsC();
 
    // destructor
-   ~Definitions();
+   ~DefinitionsC();
 
+   // unify definitions
    bool run();
+
+   // rename temporary output files
+   bool cleanUp();
 
 private:
 
-   struct NodeProc_struct
+   //
+   // CommentsC sub-class
+   // (pre-processes comments before adding these to global definitions)
+   //
+   class CommentsC
    {
-      NodeProc_struct(const uint32_t & _procid) : procid(_procid) {}
+      friend class DefinitionsC;
 
-      uint32_t procid;
+   //private:
 
-      bool operator==(const NodeProc_struct & a) const
+      // constructor
+      CommentsC( DefinitionsC & _defs );
+
+      // destructor
+      ~CommentsC();
+
+      // process local definition comment
+      bool processLocal( const DefRec_DefCommentS & locComment );
+
+      // finish global definition comments
+      // (i.e. add trace time comments to global definitions)
+      bool finish();
+
+      //
+      // trace time comments
+      //
+      struct TraceTimeS
       {
-	 return procid == a.procid;
-      }
+         TraceTimeS()
+            : minStartTimeEpoch( (uint64_t)-1 ), maxStopTimeEpoch( 0 ) {}
 
-      bool operator<(const NodeProc_struct & a) const
+         uint64_t minStartTimeEpoch; // minimum start time since epoch
+         uint64_t maxStopTimeEpoch; // maximum stop time since epoch
+
+      } m_traceTimes;
+
+      //
+      // user communication ids and peers
+      //
+      struct UserComS
       {
-	 if( procid % 65536 != a.procid % 65536 )
-	    return procid % 65536 < a.procid % 65536;
-	 else
-	    return procid < a.procid;
-      }
+         //
+         // structure for user communication ids and peers
+         //
+         struct ComIdPeerS
+         {
+            ComIdPeerS( const UserComC::ComIdS & _comid, const uint32_t _peer,
+                        const bool & _is_sender )
+               : comid( _comid ), peer( _peer ), is_sender( _is_sender ) {}
+
+            UserComC::ComIdS comid;     // user communication id (comm./tag)
+            uint32_t         peer;      // peer process id
+            bool             is_sender; // peer type indicator
+
+         };
+
+         // list of user communication ids and peers
+         std::list<ComIdPeerS> comIdsAndPeers;
+
+      } m_userCom;
+
+      // reference to parent class instance
+      DefinitionsC & m_defs;
+
+      // sequential order index
+      uint32_t m_seqOrderIdx;
+
    };
 
-   struct MPIComm_struct
+   //
+   // ProcessGroupsC sub-class
+   // (pre-processes process groups before adding these to global definitions)
+   //
+   class ProcessGroupsC
    {
-      MPIComm_struct(const uint32_t & _commid)
-	 : commid(_commid), loccpuid(0), deftoken(0), index((uint32_t)-1) {}
+      friend class DefinitionsC;
+      friend class DefinitionsC::CommentsC;
 
-      MPIComm_struct(const uint32_t & _commid, const uint32_t & _index)
-	 : commid(_commid), loccpuid(0), deftoken(0), index(_index) {}
+   //private:
 
-      MPIComm_struct(const uint32_t & _commid, const uint32_t & _loccpuid,
-		     const uint32_t & _deftoken, const uint32_t & _index)
-	 : commid(_commid), loccpuid(_loccpuid), deftoken(_deftoken), index(_index)
-      {}
+      // identifier for deflated vector of group members
+      // (will be putted at the first vector element)
+      static const uint32_t DEFLATED_MEMBERS_TAG = (uint32_t)-1;
 
-      uint32_t commid;
-      uint32_t loccpuid;
-      uint32_t deftoken;
-      uint32_t index;
+      // constructor
+      ProcessGroupsC( DefinitionsC & _defs );
 
-      bool operator==(const MPIComm_struct & a) const
+      // destructor
+      ~ProcessGroupsC();
+
+      // process local process group definition
+      bool processLocal( DefRec_DefProcessGroupS & locProcGrp );
+
+      // finish global process group definitions
+      // (i.e. add process groups for nodes and MPI-comms. to global defs.)
+      bool finish();
+
+      // deflate vector of group members
+      // (replaces vector elements by an unique id)
+      inline void deflateMembers( std::vector<uint32_t> & members );
+
+      // inflate vector of group members
+      // (replaces unique id by the actual vector elements)
+      inline void inflateMembers( std::vector<uint32_t> & members );
+
+      //
+      // compare structure for sorting process ids
+      //
+      struct ProcCmpS
       {
-	 if( a.index == (uint32_t)-1 )
-	    return commid == a.commid;
-	 else
-	    return ( commid == a.commid && index == a.index );
-      }
+         bool operator()( const uint32_t & a, const uint32_t & b ) const
+         {
+            if( ( a & VT_TRACEID_BITMASK ) == ( b & VT_TRACEID_BITMASK ) )
+               return a < b;
+            else
+               return ( a & VT_TRACEID_BITMASK ) < ( b & VT_TRACEID_BITMASK );
+         }
+
+      };
+
+      //
+      // Node process groups
+      //
+      struct NodeS
+      {
+         // map node name <-> process ids
+         std::map<std::string, std::set<uint32_t, ProcCmpS> > name2Procs;
+
+      } m_node;
+
+      //
+      // GPU process groups and communicators
+      //
+      struct GpuS
+      {
+         // names of final process groups
+         //
+         static const char * groupName() { return "GPU_GROUP";       }
+         static const char * commName()  { return "GPU_COMM_GLOBAL"; }
+
+         // set of GPU process ids
+         std::set<uint32_t> procs;
+
+         // set of related process and GPU ids
+         std::set<uint32_t, ProcCmpS> commMembers;
+
+         // map process id <-> local GPU comm. token
+         // (storage of local tokens to translate afterwards)
+         std::map<uint32_t, uint32_t> proc2LocCommTk;
+
+      } m_gpu;
+
+      //
+      // OpenMP thread team communicators
+      //
+      struct OmpS
+      {
+         // name (prefix) of final process groups
+         static const char * commName() { return "OMP Thread Team"; }
+
+      } m_omp;
+
+      //
+      // MPI communicators
+      //
+      struct MpiS
+      {
+         // names of final process groups
+         //
+         static const char * worldCommName() { return "MPI_COMM_WORLD";   }
+         static const char * selfCommName()  { return "MPI_COMM_SELF";    }
+         static const char * otherCommName() { return "MPI Communicator"; }
+
+         //
+         // structure for MPI_COMM_SELFs
+         //
+         struct SelfCommS
+         {
+            SelfCommS( const uint32_t & _loctk, const uint32_t & _member )
+               : loctk( _loctk ), member( _member ) {}
+
+            bool operator<( const SelfCommS & a ) const
+            {
+               return member < a.member;
+            }
+
+            uint32_t loctk;  // local comm. token
+            uint32_t member; // comm. member process id
+
+         };
+
+         //
+         // structure for user created (other) MPI communicators
+         //
+         struct OtherCommS
+         {
+            // constructor for searching a communicator by its members
+            OtherCommS( const uint32_t & _membersid )
+               : membersid( _membersid ) {}
+
+            // constructor for creating a new communicator entry
+            OtherCommS( const uint32_t & _deftoken, const uint32_t & _membersid,
+                        const uint32_t & _index )
+               : deftoken( _deftoken ), membersid( _membersid ),
+                 index( _index ) {}
+
+            // operator for searching
+            bool operator==( const OtherCommS & a ) const
+            {
+               return membersid == a.membersid;
+            }
+
+            uint32_t deftoken;  // local token on def. process
+            uint32_t membersid; // id of deflated members vector
+            uint32_t index;     // local index
+
+         };
+
+         // set of MPI_COMM_SELFs
+         std::set<SelfCommS> selfComms;
+
+         // map process <-> list of user created MPI comms.
+         std::map<uint32_t, std::list<OtherCommS> > proc2OtherComms;
+
+      } m_mpi;
+
+      //
+      // communicators for user communication
+      //
+      struct UserComS
+      {
+         //
+         // structure for user communicators
+         //
+         struct CommS
+         {
+            // constructor for searching a communicator by its name
+            CommS( const std::string & _name )
+               : name( _name ) {}
+
+            // operator for searching
+            bool operator==( const CommS & a ) const
+            {
+               return name.compare( a.name ) == 0;
+            }
+
+            std::string                  name;    // comm. name
+            std::set<uint32_t, ProcCmpS> members; // comm. member process ids
+
+            // map process id <-> local comm. token
+            // (storage of local tokens to translate afterwards)
+            std::map<uint32_t, uint32_t> proc2LocCommTk;
+
+         };
+
+         // add member process id to certain user communicator
+         void addCommMember( const uint32_t & proc, const uint32_t & comm,
+                 const uint32_t & member )
+         {
+            std::map<uint32_t,
+               std::map<uint32_t, std::list<CommS>::iterator> >::iterator
+                  proc_it = proc2LocCommTk2CommIt.find( proc );
+            assert( proc_it != proc2LocCommTk2CommIt.end() );
+
+            std::map<uint32_t, std::list<CommS>::iterator>::iterator comm_it =
+               proc_it->second.find( comm );
+            assert( comm_it != proc_it->second.end() );
+
+            comm_it->second->members.insert( member );
+         }
+
+         // list of user communicators
+         std::list<CommS> comms;
+
+         // map process <-> local comm. token <-> iterator in comm. list
+         std::map<uint32_t, std::map<uint32_t, std::list<CommS>::iterator> >
+            proc2LocCommTk2CommIt;
+
+      } m_userCom;
+
+      // reference to parent class instance
+      DefinitionsC & m_defs;
+
+      // map id <-> vector of group members
+      std::map<uint32_t, std::vector<uint32_t> > m_id2Members;
+
    };
 
-   bool readLocal( std::vector<DefRec_Base_struct*> * p_vecLocDefs );
-   bool createGlobal( const std::vector<DefRec_Base_struct*> * p_vecLocDefs,
-		      std::vector<DefRec_Base_struct*> * p_vecGlobDefs );
-   bool writeGlobal( const std::vector<DefRec_Base_struct*> * p_vecGlobDefs );
+   // get stream ids to read
+   void getStreamIds( std::vector<uint32_t> & streamIds );
 
-   void addDefComment( const DefRec_DefinitionComment_struct * p_comment );
-   void addDefComments2Global( std::vector<DefRec_Base_struct*> *
-			       p_vecGlobDefs );
+   // read local definitions of certain streams
+   bool readLocal( const std::vector<uint32_t> & streamIds );
 
-   void addDefProcess( const DefRec_DefProcess_struct * proc );
-   void addDefProcesses2Global( std::vector<DefRec_Base_struct*> *
-                                p_vecGlobDefs, uint32_t i = (uint32_t)-1 );
+   // read local definitions of certain single stream
+   bool readLocal( const uint32_t & streamId,
+                   std::vector<DefRec_BaseS*> & locDefs );
 
-   void addProc2NodeGroup( const std::string & nodeName,
-			   const uint32_t & nodeProc );
-   void addNodeGroups2Global( std::vector<DefRec_Base_struct*> *
-			      p_vecGlobDefs );
+   // process local definitions
+   // (i.e. create global tokens)
+   bool processLocal( const std::vector<DefRec_BaseS*> & locDefs );
 
-   void addMPIComm( const uint32_t proc, const uint32_t defToken,
-		    const std::vector<uint32_t> & vecMembers );
-   void addMPIComms2Global( std::vector<DefRec_Base_struct*> *
-			    p_vecGlobDefs );
+   // write global definitions
+   bool writeGlobal();
 
-   uint32_t getMPICommIdByMembers( const std::vector<uint32_t> & vecMembers );
+   // instance of class CommentsC
+   CommentsC * m_comments;
 
-   std::vector<const DefRec_DefinitionComment_struct*> m_vecDefComments;
+   // instance of class ProcessGroupsC
+   ProcessGroupsC * m_procGrps;
 
-   std::vector<const DefRec_DefProcess_struct*> m_vecDefProcesses;
+   //
+   // container of global definitions
+   //
+   struct
+   {
+      DefRec_DefCreatorS                 creator;
+      DefRec_DefTimerResolutionS         timeres;
+      DefRec_DefTimeRangeS               timerange;
+      std::set<DefRec_DefCommentS>       comments;
+      std::set<DefRec_DefProcessS>       procs;
+      std::set<DefRec_DefProcessGroupS>  procGrps;
+      std::set<DefRec_DefSclFileS>       sclFiles;
+      std::set<DefRec_DefSclS>           scls;
+      std::set<DefRec_DefFileGroupS>     fileGrps;
+      std::set<DefRec_DefFileS>          files;
+      std::set<DefRec_DefFunctionGroupS> funcGrps;
+      std::set<DefRec_DefFunctionS>      funcs;
+      std::set<DefRec_DefCollOpS>        collops;
+      std::set<DefRec_DefCounterGroupS>  cntrGrps;
+      std::set<DefRec_DefCounterS>       cntrs;
+      std::set<DefRec_DefKeyValueS>      keyVals;
 
-   std::map<std::string, std::vector<NodeProc_struct> > m_mapNodeProcs;
-
-   std::map<uint32_t, std::vector<uint32_t> > m_mapMPICommId2Members;
-
-   std::map<uint32_t, std::list<MPIComm_struct> > m_mapProcMPIComms;
+   } m_globDefs;
 
 };
 
-// instance of class Definitions
-extern Definitions * theDefinitions;
+// instance of class DefinitionsC
+extern DefinitionsC * theDefinitions;
 
 #endif // _VT_UNIFY_DEFS_H_

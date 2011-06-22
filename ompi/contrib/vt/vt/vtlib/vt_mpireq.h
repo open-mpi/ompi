@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -40,6 +40,7 @@ struct VTRequest {
   int bytes;
   MPI_Datatype datatype;
   MPI_Comm comm;
+  uint64_t matchingid;
   uint64_t handleid;
   uint32_t fileid;
   uint32_t fileop;
@@ -52,6 +53,7 @@ EXTERN void vt_request_create(MPI_Request request,
 			      MPI_Datatype datatype, MPI_Comm comm);
 EXTERN void vt_iorequest_create( MPI_Request request,
                                  MPI_Datatype datatype,
+				 uint64_t matchingid,
 				 uint64_t handleid,
 				 uint32_t fileid,
 				 uint32_t flags );

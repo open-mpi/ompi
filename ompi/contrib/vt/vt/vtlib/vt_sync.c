@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "vt_defs.h"
 #include "vt_inttypes.h"
 #include "vt_iowrap.h"
 #include "vt_pform.h"
@@ -100,11 +101,11 @@ void vt_sync(MPI_Comm comm, uint64_t* ltime, int64_t* offset)
   MPI_Comm host_comm;
   MPI_Comm sync_comm;
 
-  VT_SUSPEND_IO_TRACING();
+  VT_SUSPEND_IO_TRACING(VT_CURRENT_THREAD);
 
   /* mark begin of clock synchronization */
   time = vt_pform_wtime();
-  vt_enter(&time, vt_trc_regid[VT__TRC_SYNCTIME]);
+  vt_enter(VT_CURRENT_THREAD, &time, vt_trc_regid[VT__TRC_SYNCTIME]);
 
   /* barrier at entry */
   PMPI_Barrier(comm);
@@ -155,9 +156,9 @@ void vt_sync(MPI_Comm comm, uint64_t* ltime, int64_t* offset)
 
   /* mark end of clock synchronization */
   time = vt_pform_wtime();
-  vt_exit(&time);
+  vt_exit(VT_CURRENT_THREAD, &time);
 
-  VT_RESUME_IO_TRACING();
+  VT_RESUME_IO_TRACING(VT_CURRENT_THREAD);
 }
 
 

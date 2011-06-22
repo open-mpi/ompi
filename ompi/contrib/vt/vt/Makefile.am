@@ -1,10 +1,12 @@
 ACLOCAL_AMFLAGS = -I config/m4
 
 SUBDIRS = \
-	util \
 	extlib \
+	util \
+	rfg \
 	vtlib \
 	tools \
+	include \
 	doc \
 	etc
 
@@ -13,11 +15,11 @@ vtdatadir = $(datadir)
 
 EXTRA_DIST = \
 	config_bottom.h \
-	CONFIG-EXAMPLES \
 	VERSION \
 	config/defaults/bgl \
 	config/defaults/bgp \
 	config/defaults/crayxt \
+	config/defaults/crayxe \
 	config/defaults/ibm \
 	config/defaults/ibm-64 \
 	config/defaults/sicortex \

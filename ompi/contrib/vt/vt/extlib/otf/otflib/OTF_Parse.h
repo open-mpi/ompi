@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -17,7 +17,6 @@
 
 #include "OTF_RStream.h"
 #include "OTF_HandlerArray.h"
-
 
 #ifdef __cplusplus
 extern "C" {

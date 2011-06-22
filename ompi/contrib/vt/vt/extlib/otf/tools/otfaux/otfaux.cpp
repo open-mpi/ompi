@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -7,6 +7,8 @@
 #include "config.h"
 #endif
 
+#include <cstring>
+#include <cerrno>
 
 #include <set>
 #include <iostream>
@@ -267,6 +269,12 @@ int main ( int argc, const char** argv ) {
 	}
 
 
+	if ( doSnapshots && !streams.empty() ) {
+
+		printf( "ERROR: contradicting options '--snapshots' and '-s', abort\n" );
+		exit(1);
+	}
+
 	/* n has been set, not p, not t */
 	if ( 1 == npt && 2 > summary_number ) {
 	
@@ -483,6 +491,32 @@ int main ( int argc, const char** argv ) {
 		OTF_FILEOPERATION_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
 		OTF_FILEOPERATION_RECORD );
+        
+        
+        
+    OTF_HandlerArray_setHandler( handlers, 
+        (OTF_FunctionPointer*) handleBeginCollectiveOperation,
+        OTF_BEGINCOLLOP_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_BEGINCOLLOP_RECORD );
+        
+    OTF_HandlerArray_setHandler( handlers, 
+        (OTF_FunctionPointer*) handleEndCollectiveOperation,
+        OTF_ENDCOLLOP_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_ENDCOLLOP_RECORD );
+        
+    OTF_HandlerArray_setHandler( handlers, 
+        (OTF_FunctionPointer*) handleBeginFileOperation,
+        OTF_BEGINFILEOP_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_BEGINFILEOP_RECORD );
+        
+    OTF_HandlerArray_setHandler( handlers, 
+        (OTF_FunctionPointer*) handleEndFileOperation,
+        OTF_ENDFILEOP_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, (void*) control, 
+        OTF_ENDFILEOP_RECORD );
 	
 	
 	/* cout << "read " << read << " defs" << endl; */
@@ -510,9 +544,12 @@ int main ( int argc, const char** argv ) {
 	/* cout << "read " << read << " events" << endl; */
 	OTF_Reader_setRecordLimit( reader, OTF_READ_MAXRECORDS );
 
-	OTF_Reader_eventProgress( reader, &tmin, &tcur, &tmax );
-    
-    /* increase in order to place final statistics after the very last record */
+	OTF_Reader_eventTimeProgress( reader, &tmin, &tcur, &tmax );
+
+    /*
+     * Increment in order to place final statistics after the very last
+     * event.
+     */
     tmax += 1;
 
 	/*
@@ -528,6 +565,8 @@ int main ( int argc, const char** argv ) {
     /*
      * generated sample points, but don't include t_min,
      * it is defined as 0-point
+     *
+     * Tmax was incremented before to be after the very last event.
      */
     for ( double t= (double) tmin + d; t < tmax; t += d ) {
         control->addTime( (uint64_t) t );
@@ -543,8 +582,13 @@ int main ( int argc, const char** argv ) {
 		control->addTime( *it );
 	}
 
-    /* place very last statistics _after_ the last record but not right before it.
-    Needs to be triggered explictily in the end. */
+    /*
+     * Place very last statistics _after_ the last record but not right
+     * before it. Needs to be triggered explictily in the end.
+     *
+     * Tmax was incremented before to be the timestamp after the very
+     * last event timestamp.
+     */
     if ( control->getLastTime() < tmax ) {
 
         control->addTime( tmax );
@@ -618,9 +662,16 @@ int main ( int argc, const char** argv ) {
 		/* cout << "read " << read << " events" << endl; */
 	}
 
-    /* explicitly trigger writing for the very last timestamp +1 such that 
-    the very last event is included in the final statistics */
+    /*
+     * Explicitly trigger writing for the timestamp of the very last
+     * event such that this event is included in the final statistics.
+     *
+     * Tmax was incremented before to be the timestamp after the very
+     * last event timestamp.
+     */
     control->checkTime( tmax );
+    
+    delete control;
 
 	OTF_Reader_close( reader );
 
@@ -650,7 +701,7 @@ void checkExistingFile( const char* tmpfilename, bool forceoverwrite, bool delet
 
 		} else {
 		
-			printf( "ERROR: cannot overwrite/delete file '%s', abort\n", tmpfilename );
+			printf( "ERROR: will not overwrite existing file '%s', abort\n", tmpfilename );
 			exit( 1 );
 		}
 	}
