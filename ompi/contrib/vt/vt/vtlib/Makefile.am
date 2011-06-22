@@ -351,29 +351,29 @@ VT_FMPI_SOURCES = \
 CC = $(MPICC)
 AM_CFLAGS = $(OTFCFLAGS) $(DLCFLAGS) $(LIBWRAPCFLAGS) $(LIBCWRAPCFLAGS) $(IOWRAPCFLAGS) $(MEMHOOKCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS)
 
-libvt_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_la_DEPENDENCIES = $(top_builddir)/util/libutil.la $(OTFDEPENDENCIES)
+libvt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
 libvt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_SEQ_SOURCES)
 
 libvt_mpi_la_CFLAGS = -DVT_MPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
-libvt_mpi_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_mpi_la_DEPENDENCIES = $(top_builddir)/util/libutil.la $(OTFDEPENDENCIES)
+libvt_mpi_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_mpi_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
 libvt_mpi_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MPI_SOURCES)
 
 libvt_mt_la_CFLAGS = -DVT_MT $(AM_CFLAGS) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS)
-libvt_mt_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_mt_la_DEPENDENCIES = $(top_builddir)/util/libutil.la $(OTFDEPENDENCIES)
+libvt_mt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_mt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
 libvt_mt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MT_SOURCES)
 
 libvt_hyb_la_CFLAGS = -DVT_HYB $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
-libvt_hyb_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_hyb_la_DEPENDENCIES = $(top_builddir)/util/libutil.la $(OTFDEPENDENCIES)
+libvt_hyb_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_hyb_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
 libvt_hyb_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_HYB_SOURCES)
 
 libvt_java_la_CFLAGS = -DVT_JAVA $(AM_CFLAGS) $(JVMTIINCDIR)
 libvt_java_la_LDFLAGS = -shared
-libvt_java_la_LIBADD = $(top_builddir)/util/libutil.la $(OTFLIBRARY) $(METRLIBRARY)
-libvt_java_la_DEPENDENCIES = $(top_builddir)/util/libutil.la $(OTFDEPENDENCIES)
+libvt_java_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY)
+libvt_java_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
 libvt_java_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_JAVA_SOURCES)
 
 libvt_pomp_la_CFLAGS = -static -prefer-pic $(AM_CFLAGS) $(OPENMP_CFLAGS) -I$(top_srcdir)/tools/opari/lib

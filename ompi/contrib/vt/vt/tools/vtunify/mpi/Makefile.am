@@ -65,11 +65,11 @@ vtunify_mpi_SOURCES = \
 	../vt_unify_tkfac.cc
 
 vtunify_mpi_LDADD = \
-	$(top_builddir)/util/libutil.la \
+	$(top_builddir)/util/libvt_util.la \
 	$(OTFLIBRARY) $(ETIMESYNCLIBRARY) \
 	$(MPILIBDIR) $(MPILIB)
 
 vtunify_mpi_DEPENDENCIES = \
-	$(top_builddir)/util/libutil.la \
+	$(top_builddir)/util/libvt_util.la \
 	$(OTFDEPENDENCIES)
 
