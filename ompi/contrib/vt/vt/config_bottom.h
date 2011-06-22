@@ -29,6 +29,11 @@
 # define strdup vt_strdup
 #endif /* HAVE_STRDUP */
 
+#if !(defined(HAVE_MEMMOVE) && HAVE_MEMMOVE)
+# undef memmove
+# define memmove vt_memmove
+#endif /* HAVE_MEMMOVE */
+
 #if defined(HAVE_FNMATCH_H) && HAVE_FNMATCH_H
 # include <fnmatch.h>
 #else /* HAVE_FNMATCH_H */

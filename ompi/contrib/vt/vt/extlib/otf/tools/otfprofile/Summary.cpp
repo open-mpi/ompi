@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Denis Huenich, Johannes Spazier
 */
 
@@ -37,7 +37,8 @@ int Process::get_exclTime(uint32_t func, uint32_t process, uint64_t time, global
 	if ( exclt_stack.empty() == true) {
 		/* time for error output */
 		/* more leave than enter records */
-		cerr << "Error. There are more leave than enter records in the otf-file." << endl;
+		cerr << "call stack on process " << process << " invalid: stray Leave " 
+			<< func << " at time stamp " << time << " == " << hex << time << dec << endl;
 		return 1;
 	}
 
@@ -142,6 +143,11 @@ void Process::set_data_collective(uint32_t process, uint32_t collop, uint32_t ty
                                   uint32_t procGroup, uint32_t sent, uint32_t received,
 				  uint64_t duration, global_data* gd_ptr)
 {
+
+	/* completely ignore in lite mode */
+	if ( lite ) return;
+
+
 	uint32_t root_sent = 0;
 	uint32_t root_received = 0;
 
@@ -177,27 +183,39 @@ void Process::set_data_collective(uint32_t process, uint32_t collop, uint32_t ty
 		cerr << "\nError in otf-file, unknowen type in collective event." << endl;	
 }
 
+
 /* collects the necessary information to calculate Mbyte per second by a send event*/
 
-void Process::set_mbyte_per_sec(uint32_t sender, uint32_t receiver, uint64_t time, uint32_t tag, 
-                                bool valid_loc, global_data* gd_ptr)
+void Process::set_mbyte_per_sec( uint32_t sender, uint32_t receiver, uint64_t time, uint32_t tag, 
+                                 bool valid_loc, global_data* gd_ptr )
 {
-		receive_str r_str;
-		
-	   	r_str.valid = valid_loc;
-	    	r_str.receiver = receiver;
-	    	r_str.start_time = time;
-	    	r_str.comm_tag = tag;
-	    	timelist.push_back(r_str);
 
-		list<receive_str>::iterator send_iter;
+	/* completely ignore in lite mode */
+	if ( lite ) return;
+
+	/* what is this good for again ???? */
+
+	receive_str r_str;
+
+	r_str.valid = valid_loc;
+		r_str.receiver = receiver;
+		r_str.start_time = time;
+		r_str.comm_tag = tag;
+		timelist.push_back(r_str);
+
+	list<receive_str>::iterator send_iter;
 }
+
 
 /* collects the necessary information to calculate Mbyte per second by a receive event*/
 
 void Process::get_mbyte_per_sec(uint32_t sender, uint32_t receiver, uint64_t time, 
                                 uint64_t length, uint32_t tag, global_data* gd_ptr)
 {
+
+	/* completely ignore in lite mode */
+	if ( lite ) return;
+
 	send_str s_str;
 	s_str.sender = sender;
 	s_str.comm_tag = tag;
@@ -205,13 +223,18 @@ void Process::get_mbyte_per_sec(uint32_t sender, uint32_t receiver, uint64_t tim
 	s_str.length = length;
 
 	recv_map[sender].push_back(s_str);
-
 }
+
 
 void Process::calc_mbyte_per_sec(uint32_t sender, map<uint32_t, uint32_t>& proc_map, uint32_t* cpu2thread ,global_data** data_ptr) {
 	list<receive_str>::iterator send_iter;
 	list<receive_str>::iterator tmp_iter;
 	list<send_str>::iterator recv_iter;
+
+
+	/* completely ignore in lite mode */
+	if ( lite ) return;
+
 
 	uint64_t dur;
 	uint32_t bin_1, bin_2;
@@ -247,5 +270,6 @@ void Process::calc_mbyte_per_sec(uint32_t sender, map<uint32_t, uint32_t>& proc_
 		}
 		}
 	}
+
 }
 	

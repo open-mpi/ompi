@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -689,6 +689,8 @@ int OTF_MasterControl_write( OTF_MasterControl* mc, const char* namestub ) {
 				"OTF_WBuffer_open( %s ) failed.\n",
 				__FUNCTION__, __FILE__, __LINE__, filename );
 		
+		free( filename );
+
 		return  0;
 	}
 	

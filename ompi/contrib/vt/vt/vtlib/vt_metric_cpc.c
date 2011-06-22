@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -20,8 +20,8 @@
 #include <errno.h>
 
 #include "libcpc.h"
-#include "otf.h"
 
+#include "vt_defs.h"
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
@@ -149,8 +149,10 @@ struct vt_metv* vt_metric_create()
   return metv;
 }
 
-void vt_metric_free(struct vt_metv* metv)
+void vt_metric_free(struct vt_metv* metv, uint32_t tid)
 {
+  (void)tid;
+  
   if ( metv == NULL )
     return;
 
@@ -224,5 +226,5 @@ const char* vt_metric_unit(int i)
 uint32_t vt_metric_props(int i)
 {
   (void)i;
-  return OTF_COUNTER_TYPE_ACC;
+  return VT_CNTR_ACC;
 }

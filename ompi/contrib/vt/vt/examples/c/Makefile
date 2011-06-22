@@ -1,9 +1,9 @@
 include Makefile.config
 
-TARGETS = $(HELLO_TGT1) $(HELLO_TGT2) $(HELLO_TGT3) \
-          $(PI_TGT1) $(PI_TGT2) $(PI_TGT3) \
-          $(RING_TGT1) $(RING_TGT2) $(RING_TGT3) \
-          $(MDLBROT_TGT1) $(MDLBROT_TGT2) $(MDLBROT_TGT3) $(MDLBROT_TGT4) $(MDLBROT_TGT5)
+TARGETS = $(HELLO_TGT1) $(HELLO_TGT2) $(HELLO_TGT3) $(HELLO_TGT4) \
+          $(PI_TGT1) $(PI_TGT2) $(PI_TGT3) $(PI_TGT4) \
+          $(RING_TGT1) $(RING_TGT2) $(RING_TGT3) $(RING_TGT4) \
+          $(MDLBROT_TGT1) $(MDLBROT_TGT2) $(MDLBROT_TGT3) $(MDLBROT_TGT4) $(MDLBROT_TGT5) $(MDLBROT_TGT6)
 
 .PHONY: all
 all: $(TARGETS)
@@ -18,6 +18,9 @@ hello-comp: hello.c
 ### hello-dyn ###
 hello-dyn: hello.c
 	$(MPICC) -vt:inst dyninst $(MPICFLAGS) $^ -o $@ $(MPILIB)
+### hello-tau ###
+hello-tau: hello.c
+	$(MPICC) -vt:inst tauinst $(MPICFLAGS) $^ -o $@ $(MPILIB)
 
 
 ### pi-man ###
@@ -29,6 +32,9 @@ pi-comp: pi.c
 ### pi-dyn ###
 pi-dyn: pi.c
 	$(MPICC) -vt:inst dyninst $(MPICFLAGS) $^ -o $@ -lm $(MPILIB)
+### pi-tau ###
+pi-tau: pi.c
+	$(MPICC) -vt:inst tauinst $(MPICFLAGS) $^ -o $@ -lm $(MPILIB)
 
 
 ### ring-man ###
@@ -40,6 +46,8 @@ ring-comp: ring.c
 ### ring-dyn ###
 ring-dyn: ring.c
 	$(MPICC) -vt:inst dyninst $(MPICFLAGS) $^ -o $@ $(MPILIB)
+ring-tau: ring.c
+	$(MPICC) -vt:inst tauinst $(MPICFLAGS) $^ -o $@ $(MPILIB)
 
 
 ### mdlbrot-man ###
@@ -51,6 +59,9 @@ mdlbrot-comp: mdlbrot.c
 ### mdlbrot-dyn ###
 mdlbrot-dyn: mdlbrot.c
 	$(MPICC) -vt:inst dyninst $(MPICFLAGS) $(SDLINCDIR) $^ -o $@ $(MPILIB) $(SDLLIB)
+### mdlbrot-tau ###
+mdlbrot-tau: mdlbrot.c
+	$(MPICC) -vt:inst tauinst $(MPICFLAGS) $(SDLINCDIR) $^ -o $@ $(MPILIB) $(SDLLIB)
 ### libSDLwrap.<a|so> ###
 libSDLwrap.a: SDLwrap.c
 	vtlibwrapgen --build -o libSDLwrap --static $^
@@ -63,5 +74,5 @@ SDLwrap.c:
 .PHONY: clean
 clean:
 	-rm -f $(TARGETS) SDLwrap.c *~ *.o
-	-rm -f *.uctl *.filt *.otf *.z
+	-rm -f *.uctl *.otf *.z
 

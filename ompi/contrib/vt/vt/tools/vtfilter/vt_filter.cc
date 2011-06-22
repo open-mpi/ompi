@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -11,423 +11,908 @@
  **/
 
 #include "vt_filter.h"
-using namespace std;
+#include "vt_filter_gen.h"
+#include "vt_filter_trc.h"
+
+#include "otf.h"
 
 #include <iostream>
 
+#include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-Filter::Filter()
-	: maxStackDepth(0), totalInvocations(0), maxInvocations(0),
-	timerResolution(0), messageCount(0), collectiveCount(0) {
+#ifdef VT_MPI
+# include "mpi.h"
+#endif // VT_MPI
+
+#if defined(HAVE_OMP) && HAVE_OMP
+# include <omp.h>
+#endif // HAVE_OMP
+
+// local functions
+//
+
+// get program parameters
+static bool getParams( int argc, char** argv );
+
+// show usage text
+static void showUsage( void );
+
+// convert a string list to a vector
+inline static bool stringList2Vector( const std::string& str,
+                                      std::vector<std::string>& vec,
+                                      const std::string& delim = ";" );
+
+// global variables
+//
+
+#ifdef VT_MPI
+  const std::string ExeName = "vtfilter-mpi";
+#else // VT_MPI
+  const std::string ExeName = "vtfilter";
+#endif // VT_MPI
+
+ParamsS             Params;
+
+#ifdef VT_MPI
+  VT_MPI_INT        NumRanks;
+  VT_MPI_INT        MyRank;
+#endif // VT_MPI
+
+int
+main( int argc, char ** argv )
+{
+  bool error = false;
+
+#ifdef VT_MPI
+  // initialize MPI
+  //
+  MPI_Init( (VT_MPI_INT*)&argc, &argv );
+  MPI_Comm_size( MPI_COMM_WORLD, &NumRanks );
+  MPI_Comm_rank( MPI_COMM_WORLD, &MyRank );
+#endif // VT_MPI
+
+  do
+  {
+    // get program parameters
+    if( ( error = !getParams( argc, argv ) ) )
+      break;
+
+    // show usage text, if necessary/desired
+    //
+    if( Params.show_usage )
+    {
+      MASTER showUsage();
+      break;
+    }
+
+    // show VT version, if desired
+    //
+    if( Params.show_version )
+    {
+      MASTER std::cout << PACKAGE_VERSION << std::endl;
+      break;
+    }
+
+    // check whether the input trace file is readable
+    //
+    MASTER
+    {
+      OTF_FileManager* manager = OTF_FileManager_open( 1 );
+      assert( manager );
+
+      OTF_Reader* reader =
+        OTF_Reader_open( Params.input_trcfile.c_str(), manager );
+
+      if( !reader )
+      {
+        std::cerr << ExeName << ": Error: Could not open input trace file "
+                  << Params.input_trcfile << ".otf. Aborting." << std::endl;
+
+        OTF_FileManager_close( manager );
+        error = true;
+        break;
+      }
+
+      OTF_Reader_close( reader );
+      OTF_FileManager_close( manager );
+    }
+
+    // either generate a filter file ...
+    //
+    if( Params.mode == MODE_GENFILT )
+    {
+      // create instance of class FilterGenerator
+      FilterGeneratorC* gen = new FilterGeneratorC();
+
+      // generate filter file
+      error = !gen->run();
+
+      // delete instance of class FilterGenerator
+      delete gen;
+    }
+    // ... or filter a trace by an already existing filter file
+    //
+    else // Params.mode == MODE_FILTTRC
+    {
+      // create instance of class FilterTrace
+      FilterTraceC* filt = new FilterTraceC();
+
+      // filter input trace file
+      error = !filt->run();
+
+      // delete instance of class FilterTrace
+      delete filt;
+    }
+
+  } while( false );
+
+#ifdef VT_MPI
+  // either abort on error or finalize
+  //
+  if( error )
+  {
+    MPI_Abort( MPI_COMM_WORLD, 1 );
+  }
+  else
+  {
+    if( NumRanks > 1 )
+    {
+      // block until all ranks have reached this point
+      MPI_Barrier( MPI_COMM_WORLD );
+    }
+
+    MPI_Finalize();
+  }
+#endif // VT_MPI
+
+  return (error) ? 1 : 0;
 }
 
+void
+VPrint( uint8_t level, const char * fmt, ... )
+{
+  va_list ap;
 
-void Filter::setTimerResolution( uint64_t tickspersecond ) {
-
-
-	timerResolution= tickspersecond;
+  MASTER
+  {
+    if( Params.verbose_level >= level )
+    {
+      va_start( ap, fmt );
+      vprintf( fmt, ap );
+      fflush( stdout );
+      va_end( ap );
+    }
+  }
 }
 
+void
+PVPrint( uint8_t level, const char * fmt, ... )
+{
+  va_list ap;
 
-void Filter::addFunction( uint32_t func, const std::string& name ) {
-
-
-	functions.insert( pair<uint32_t, Function>(func, Function( func, name ) ) );
+  if( Params.verbose_level >= level )
+  {
+    va_start( ap, fmt );
+#   if !(defined(VT_MPI) || (defined(HAVE_OMP) && HAVE_OMP))
+      vprintf( fmt, ap );
+#   else // !(VT_MPI || HAVE_OMP)
+      char msg[1024] = "";
+#     if defined(VT_MPI) && !(defined(HAVE_OMP) && HAVE_OMP)
+        snprintf( msg, sizeof(msg)-1, "[%d] ", MyRank );
+#     elif !defined(VT_MPI) && (defined(HAVE_OMP) && HAVE_OMP)
+        if( omp_in_parallel() )
+          snprintf( msg, sizeof(msg)-1, "[%d] ", omp_get_thread_num() );
+#     else // !VT_MPI && HAVE_OMP
+        if( omp_in_parallel() )
+        {
+          snprintf( msg, sizeof(msg)-1, "[%d:%d] ", MyRank,
+                    omp_get_thread_num() );
+        }
+        else
+        {
+          snprintf( msg, sizeof(msg)-1, "[%d] ", MyRank );
+        }
+#     endif // !VT_MPI && HAVE_OMP
+      vsnprintf(msg + strlen(msg), sizeof(msg)-1, fmt, ap);
+#     if defined(HAVE_OMP) && HAVE_OMP
+#       pragma omp critical
+#     endif // HAVE_OMP
+      printf( "%s", msg );
+#   endif // !(VT_MPI || HAVE_OMP)
+    va_end( ap );
+  }
 }
 
+static bool
+getParams( int argc, char** argv )
+{
+  // show usage text, if no options are given
+  //
+  if( argc == 1 )
+  {
+    Params.show_usage = true;
+    return true;
+  }
 
-void Filter::addEnter( uint32_t func, uint32_t process, uint64_t time ) {
+  // All environment variables and command line options which have a '*' in its
+  // comment are obsolete. They are still available to keep backward-
+  // compatibility to the old vtfilter tool.
 
+  // get environment variables
+  //
 
-	/* add the new process if it does not already exist */
-	stack<StackItem>& rstack= callStack.insert(
-		pair<uint32_t, stack<StackItem> >( process, stack<StackItem>() ) ).first->second;
+  char* env;
 
+  // TRACEFILTER_EXCLUDEFILE*
+  //
+  if( ( env = getenv( "TRACEFILTER_EXCLUDEFILE" ) ) &&
+      strlen( env ) > 0 ) Params.g_excl_file = env;
+  // TRACEFILTER_INCLUDEFILE*
+  //
+  if( ( env = getenv( "TRACEFILTER_INCLUDEFILE" ) ) &&
+      strlen( env ) > 0 ) Params.g_incl_file = env;
 
-	/* add the new function if it does not already exist - should never happen */
-	map<uint32_t, Function>::iterator itfunc= functions.insert(
-		pair<uint32_t, Function>(func, Function( func, "_undefined" ) ) ).first;
+  // parse command line options
+  //
 
+  uint32_t i;
 
-	/* increase number of invocations */
-	++(itfunc->second.invocations);
+  // enum for option errors
+  //
+  enum
+  {
+    OPT_ERR_OK,
+    OPT_ERR_ARG_MISSING,
+    OPT_ERR_ARG_INVALID,
+    OPT_ERR_UNRECOGNIZED,
+    OPT_ERR_OTHER
+  } opt_error = OPT_ERR_OK;
 
-	
-	/* add the function to the parent */
-	if( false == rstack.empty() ) {
+  // error string for OPT_ERR_OTHER
+  std::string opt_error_other;
 
-		/* add the function to the subfunctionlist, if it does not already exist */
-		rstack.top().it->second.subFuncs.insert( func );
+  // pre-process options: convert to std::string and put them into a vector
+  //
+  std::vector<std::string> args;
+  for( i = 1; i < (uint32_t)argc; i++ )
+  {
+    // add option to vector
+    args.push_back( argv[i] );
 
-		rstack.top().it->second.accDurationExcl+= time;
-	}
+    // extract argument from --<opt>=<arg> option and add this to vector
+    // as a separate option
+    // this is for supporting both: --<opt>=<arg> and --<opt> <arg>
+    //
+    std::string& arg = args.back();
+    if( arg.compare( 0, 2, "--" ) == 0 )
+    {
+      std::string::size_type eq = arg.find( '=' );
+      if( eq != std::string::npos )
+      {
+        std::string tmp = arg.substr( eq + 1 );
+        arg.erase( eq );
+        args.push_back( tmp );
+      }
+    }
+  }
 
-	/* push the callstack */
-	rstack.push( StackItem( itfunc ) );
-	rstack.top().it->second.accDurationIncl-= time;
-	rstack.top().it->second.accDurationExcl-= time;
+  // general options
+  //
+  for( i = 0; i < args.size(); i++ )
+  {
+    // --gen, -gen*
+    //
+    if( args[i].compare( "--gen" ) == 0 ||
+        args[i].compare( "-gen" ) == 0 )
+    {
+      Params.mode = MODE_GENFILT;
+    }
+    // --filt, -filt*
+    //
+    else if( args[i].compare( "--filt" ) == 0 ||
+             args[i].compare( "-filt" ) == 0 )
+    {
+      Params.mode = MODE_FILTTRC;
+    }
+    // -h, --help
+    //
+    else if( args[i].compare( "-h" ) == 0 ||
+             args[i].compare( "--help" ) == 0 )
+    {
+      Params.show_usage = true;
+      return true;
+    }
+    // -V, --version
+    //
+    else if( args[i].compare( "-V" ) == 0 ||
+             args[i].compare( "--version" ) == 0 )
+    {
+      Params.show_version = true;
+      return true;
+    }
+    // -v, --verbose
+    //
+    else if( args[i].compare( "-v" ) == 0 ||
+             args[i].compare( "--verbose" ) == 0 )
+    {
+      Params.verbose_level++;
+    }
+    // -q, --quiet
+    //
+//    else if( args[i].compare( "-q" ) == 0 ||
+//             args[i].compare( "--quiet" ) == 0 )
+//    {
+//      Params.verbose_level = 0;
+//      Params.show_progress = false;
+//    }
+    // -p, --progress
+    //
+    else if( args[i].compare( "-p" ) == 0 ||
+             args[i].compare( "--progress" ) == 0 )
+    {
+      Params.show_progress = true;
+    }
+  }
+
+  // gen- or filt-options
+  //
+  for( i = 0; i < args.size(); i++ )
+  {
+    // already handled options
+    //
+    if( args[i].compare( "--gen" ) == 0 ||
+        args[i].compare( "-gen" ) == 0 ||
+        args[i].compare( "--filt" ) == 0 ||
+        args[i].compare( "-filt" ) == 0 ||
+        args[i].compare( "-v" ) == 0 ||
+        args[i].compare( "--verbose" ) == 0 ||
+//        args[i].compare( "-q" ) == 0 ||
+//        args[i].compare( "--quiet" ) == 0 ||
+        args[i].compare( "-p" ) == 0 ||
+        args[i].compare( "--progress" ) == 0 )
+    {
+      // ignore
+    }
+    else
+    {
+      // gen-options
+      //
+      if( Params.mode == MODE_GENFILT )
+      {
+        // -o, --output, -fo*
+        //
+        if( args[i].compare( "-o" ) == 0 ||
+            args[i].compare( "--output" ) == 0 ||
+            args[i].compare( "-fo" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+            opt_error = OPT_ERR_ARG_MISSING;
+          else
+            Params.g_output_filtfile = args[++i];
+        }
+        // -r, --reduce
+        //
+        else if( args[i].compare( "-r" ) == 0 ||
+                 args[i].compare( "--reduce" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+          {
+            opt_error = OPT_ERR_ARG_MISSING;
+          }
+          else
+          {
+            int percent = atoi( args[i+1].c_str() );
+            if( percent < 1 || percent > 99 )
+            {
+              opt_error = OPT_ERR_ARG_INVALID;
+            }
+            else
+            {
+              Params.g_reduce_ratio = (uint32_t)percent;
+              i++;
+            }
+          }
+        }
+        // -l, --limit
+        //
+        else if( args[i].compare( "-l" ) == 0 ||
+                 args[i].compare( "--limit" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+          {
+            opt_error = OPT_ERR_ARG_MISSING;
+          }
+          else
+          {
+            int limit = atoi( args[i+1].c_str() );
+            if( limit < 0 )
+            {
+              opt_error = OPT_ERR_ARG_INVALID;
+            }
+            else
+            {
+              Params.g_call_limit = (uint32_t)limit;
+              i++;
+            }
+          }
+        }
+        // -s, --stats, -stats*
+        //
+        else if( args[i].compare( "-s" ) == 0 ||
+                 args[i].compare( "--stats" ) == 0 ||
+                 args[i].compare( "-stats" ) == 0 )
+        {
+          Params.g_print_stats = true;
+        }
+        // -e, --exclude, -ex*
+        //
+        else if( args[i].compare( "-e" ) == 0 ||
+                 args[i].compare( "--exclude" ) == 0 ||
+                 args[i].compare( "-ex" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+          {
+            opt_error = OPT_ERR_ARG_MISSING;
+          }
+          else
+          {
+            if( !stringList2Vector( args[i+1], Params.g_excl_funcs ) )
+              opt_error = OPT_ERR_ARG_INVALID;
+            else
+              i++;
+          }
+        }
+        // --exclude-file
+        //
+        else if( args[i].compare( "--exclude-file" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+            opt_error = OPT_ERR_ARG_MISSING;
+          else
+            Params.g_excl_file = args[++i];
+        }
+        //
+        // -i, --include, -in*
+        //
+        else if( args[i].compare( "-i" ) == 0 ||
+                 args[i].compare( "--include" ) == 0 ||
+                 args[i].compare( "-in" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+          {
+            opt_error = OPT_ERR_ARG_MISSING;
+          }
+          else
+          {
+            if( !stringList2Vector( args[i+1], Params.g_incl_funcs ) )
+              opt_error = OPT_ERR_ARG_INVALID;
+            else
+              i++;
+          }
+        }
+        // --include-file
+        //
+        else if( args[i].compare( "--include-file" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+            opt_error = OPT_ERR_ARG_MISSING;
+          else
+            Params.g_incl_file = args[++i];
+        }
+        // --include-callees, -inc*
+        //
+        else if( args[i].compare( "--include-callees" ) == 0 ||
+                 args[i].compare( "-inc" ) == 0 )
+        {
+          Params.g_incl_callees = true;
+        }
+        // unrecognized gen-parameter
+        //
+        else if( args[i][0] == '-' )
+        {
+          opt_error = OPT_ERR_UNRECOGNIZED;
+        }
+        else
+        {
+          if( Params.input_trcfile.length() == 0 )
+            Params.input_trcfile = args[i];
+          else
+            opt_error = OPT_ERR_UNRECOGNIZED;
+        }
+      }
+      // filt-options
+      //
+      else
+      {
+        // -o, --output, -to*
+        //
+        if( args[i].compare( "-o" ) == 0 ||
+            args[i].compare( "--output" ) == 0 ||
+            args[i].compare( "-to" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+          {
+            opt_error = OPT_ERR_ARG_MISSING;
+          }
+          else
+          {
+            char* output_trcfile = OTF_stripFilename( args[i+1].c_str() );
+            if( !output_trcfile )
+            {
+              opt_error = OPT_ERR_ARG_INVALID;
+            }
+            else
+            {
+              Params.f_output_trcfile = output_trcfile;
+              delete [] output_trcfile;
+              i++;
+            }
+          }
+        }
+        // -f, --filter, -fi*
+        //
+        else if( args[i].compare( "-f" ) == 0 ||
+                 args[i].compare( "--filter" ) == 0 ||
+                 args[i].compare( "-fi" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+            opt_error = OPT_ERR_ARG_MISSING;
+          else
+            Params.f_input_filtfile = args[++i];
+        }
+        // -s, --max-streams
+        //
+        else if( args[i].compare( "-s" ) == 0 ||
+                 args[i].compare( "--max-streams" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+          {
+            opt_error = OPT_ERR_ARG_MISSING;
+          }
+          else
+          {
+            int max_streams = atoi( args[i+1].c_str() );
+            if( max_streams < 0 )
+            {
+              opt_error = OPT_ERR_ARG_INVALID;
+            }
+            else
+            {
+              Params.f_max_output_streams = (uint32_t)max_streams;
+              i++;
+            }
+          }
+        }
+        // --max-file-handles
+        //
+        else if( args[i].compare( "--max-file-handles" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+          {
+            opt_error = OPT_ERR_ARG_MISSING;
+          }
+          else
+          {
+            int max_file_handles = atoi( args[i+1].c_str() );
+            if( max_file_handles < 1 )
+            {
+              opt_error = OPT_ERR_ARG_INVALID;
+            }
+            else
+            {
+              Params.f_max_file_handles = (uint32_t)max_file_handles;
+              i++;
+            }
+          }
+        }
+        // --nocompress
+        //
+        else if( args[i].compare( "--nocompress" ) == 0 )
+        {
+          Params.f_compress_level = 0;
+        }
+        // -z*
+        //
+        else if( args[i].compare( "-z" ) == 0 )
+        {
+          if( i == args.size() - 1 )
+          {
+            opt_error = OPT_ERR_ARG_MISSING;
+          }
+          else
+          {
+            int level = atoi( args[i+1].c_str() );
+            if( level < 0 || level > 9 )
+            {
+              opt_error = OPT_ERR_ARG_INVALID;
+            }
+            else
+            {
+              Params.f_compress_level = (uint32_t)level;
+              i++;
+            }
+          }
+        }
+        // unrecognized gen-parameter
+        //
+        else if( args[i][0] == '-' )
+        {
+          opt_error = OPT_ERR_UNRECOGNIZED;
+        }
+        // input trace file
+        //
+        else
+        {
+          // input trace file already given?
+          if( Params.input_trcfile.length() == 0 )
+          {
+            // no, strip the file name from the ".otf" suffix if present
+            char* input_trcfile = OTF_stripFilename( args[i].c_str() );
+
+            // either store the stripped file name or show an error message
+            // if the given file name is invalid
+            //
+            if( input_trcfile )
+            {
+              Params.input_trcfile = input_trcfile;
+              delete [] input_trcfile;
+            }
+            else
+            {
+              opt_error = OPT_ERR_OTHER;
+              opt_error_other =
+                ExeName + ": invalid input trace file name -- '" +
+                args[i] + "'";
+            }
+          }
+          else
+          {
+            opt_error = OPT_ERR_UNRECOGNIZED;
+          }
+        }
+      }
+    }
+
+    // abort loop, if an option error occurred
+    if( opt_error != OPT_ERR_OK )
+      break;
+  }
+
+  // parameters are sufficient?
+  //
+  if( opt_error == OPT_ERR_OK )
+  {
+    if( Params.input_trcfile.length() == 0 )
+    {
+      opt_error = OPT_ERR_OTHER;
+      opt_error_other = ExeName + ": no input trace file specified";
+    }
+    else if( Params.mode == MODE_GENFILT &&
+             Params.g_output_filtfile.length() == 0 )
+    {
+      opt_error = OPT_ERR_OTHER;
+      opt_error_other = ExeName + ": no output filter file specified";
+    }
+    else if( Params.mode == MODE_FILTTRC &&
+             Params.f_input_filtfile.length() == 0 )
+    {
+      opt_error = OPT_ERR_OTHER;
+      opt_error_other = ExeName + ": no input filter file specified";
+    }
+    else if( Params.mode == MODE_FILTTRC &&
+             Params.f_output_trcfile.length() == 0 )
+    {
+      opt_error = OPT_ERR_OTHER;
+      opt_error_other = ExeName + ": no output trace file specified";
+    }
+  }
+
+  // show error message, if necessary
+  //
+  if( opt_error != OPT_ERR_OK )
+  {
+    MASTER
+    {
+      switch( opt_error )
+      {
+        case OPT_ERR_ARG_MISSING:
+        {
+          std::cerr << ExeName << ": option '" << args[i]
+                    << "' requires an argument" << std::endl;
+          break;
+        }
+        case OPT_ERR_ARG_INVALID:
+        {
+          std::cerr << ExeName << ": invalid argument `"
+                    << args[i+1] << "' for `" << args[i] << "'" << std::endl;
+          break;
+        }
+        case OPT_ERR_UNRECOGNIZED:
+        {
+          std::cerr << ExeName << ": unrecognized option -- '"
+                    << args[i] << "'" << std::endl;
+          break;
+        }
+        case OPT_ERR_OTHER:
+        {
+          std::cerr << opt_error_other << std::endl;
+          break;
+        }
+        default:
+        {
+          break;
+        }
+      }
+
+      std::cerr << "Try `" << ExeName << " --help' for more information."
+                << std::endl;
+    }
+
+    return false;
+  }
+
+  return true;
 }
 
-
-void Filter::addLeave( uint32_t process, uint64_t time ) {
-
-
-	/* add the new process if it does not already exist */
-	stack<StackItem>& rstack= callStack.insert(
-		pair<uint32_t, stack<StackItem> >( process, stack<StackItem>() ) ).first->second;
-	
-	if( false == rstack.empty() ) {
-		rstack.top().it->second.accDurationIncl+= time;
-		rstack.top().it->second.accDurationExcl+= time;
-
-		rstack.pop();
-	}
-
-	if( false == rstack.empty() ) {
-
-		rstack.top().it->second.accDurationExcl-= time;
-	}
+static void
+showUsage()
+{
+  std::cout << std::endl
+    << " " << ExeName << " - filter generator for VampirTrace." << std::endl
+    << std::endl
+    << " Syntax: " << std::endl
+    << "   Generate a filter file:" << std::endl
+    << "     " << ExeName << " [gen-options] <input trace file>" << std::endl
+    << std::endl
+    << "   Filter a trace using an already existing filter file:" << std::endl
+    << "     " << ExeName << " --filt [filt-options] <input trace file>" << std::endl
+    << std::endl
+    << "   options:" << std::endl
+    << "     --gen               Generate a filter file. (default)" << std::endl
+    << "                         See 'gen-options' below for valid options." << std::endl
+    << std::endl
+    << "     --filt              Filter a trace using an already existing filter file." << std::endl
+    << "                         See 'filt-options' below for valid options." << std::endl
+    << std::endl
+    << "     -h, --help          Show this help message." << std::endl
+    << std::endl
+    << "     -V, --version       Show VampirTrace version." << std::endl
+    << std::endl
+    << "     -v, --verbose       Increase output verbosity." << std::endl
+    << "                         (can be used more than once)" << std::endl
+    << std::endl
+//    << "     -q, --quiet         Enable quiet mode." << std::endl
+//    << "                         (only emergency output)" << std::endl
+//    << std::endl
+    << "     -p, --progress      Show progress." << std::endl
+    << std::endl
+    << "   gen-options:" << std::endl
+    << "     -o, --output=FILE   Pathname of output filter file." << std::endl
+    << std::endl
+    << "     -r, --reduce=N      Reduce the trace size to N percent of the original size." << std::endl
+    << "                         The program relies on the fact that the major part of" << std::endl
+    << "                         the trace are function calls. The approximation of size" << std::endl
+    << "                         will get worse with a rising percentage of" << std::endl
+    << "                         communication and other non function calling or" << std::endl
+    << "                         performance counter records." << std::endl
+    << std::endl
+    << "     -l, --limit=N       Limit the number of calls for filtered function to N." << std::endl
+    << "                         (default: " << ParamsS::g_default_call_limit << ")" << std::endl
+    << std::endl
+    << "     -s, --stats         Prints out the desired and the expected percentage" << std::endl
+    << "                         of file size." << std::endl
+    << std::endl
+    << "     -e, --exclude=FUNC[;FUNC;...]" << std::endl
+    << "                         Exclude certain functions from filtering." << std::endl
+    << "                         A function name may contain wildcards." << std::endl
+    << std::endl
+    << "     --exclude-file=FILE Pathname of file containing a list of functions to be" << std::endl
+    << "                         excluded from filtering." << std::endl
+    << std::endl
+    << "     -i, --include=FUNC[;FUNC;...]" << std::endl
+    << "                         Force to include certain functions into the filter." << std::endl
+    << "                         A function name may contain wildcards." << std::endl
+    << std::endl
+    << "     --include-file=FILE Pathname of file containing a list of functions to be" << std::endl
+    << "                         included into the filter." << std::endl
+    << std::endl
+    << "     --include-callees   Automatically include callees of included functions" << std::endl
+    << "                         as well into the filter." << std::endl
+    << std::endl
+    << "   filt-options:" << std::endl
+    << "     -o, --output=FILE   Pathname of output trace file." << std::endl
+    << std::endl
+    << "     -f, --filter=FILE   Pathname of input filter file." << std::endl
+    << std::endl
+    << "     -s, --max-streams=N Maximum number of output streams." << std::endl
+    << "                         Set this to 0 to get the same number of output streams" << std::endl
+#ifndef VT_MPI
+    << "                         as input streams." << std::endl
+#else // VT_MPI
+    << "                         as MPI processes used, but at least the number of" << std::endl
+    << "                         input streams." << std::endl
+#endif // VT_MPI
+    << "                         (default: " << ParamsS::f_default_max_output_streams << ")" << std::endl
+    << std::endl
+    << "     --max-file-handles=N" << std::endl
+    << "                         Maximum number of files that are allowed to be open" << std::endl
+    << "                         simultaneously." << std::endl
+    << "                         (default: " << ParamsS::f_default_max_file_handles << ")" << std::endl
+    << std::endl
+    << "     --nocompress        Don't compress output trace files." << std::endl
+    << std::endl
+    << "   obsolete options and environment variables:" << std::endl
+    << "   (still available for backward-compatibility)" << std::endl
+    << "     -gen                equivalent to '--gen'" << std::endl
+    << "     -filt               equivalent to '--filt'" << std::endl
+    << std::endl
+    << "   gen-options:" << std::endl
+    << "     -fo                 equivalent to '-o' or '--output'" << std::endl
+    << "     -stats              equivalent to '-s' or '--stats'" << std::endl
+    << "     -ex                 equivalent to '-e' or '--exclude'" << std::endl
+    << "     -in                 equivalent to '-i' or '--include'" << std::endl
+    << "     -inc                equivalent to '--include-callees'" << std::endl
+    << std::endl
+    << "     environment variables:" << std::endl
+    << "       TRACEFILTER_EXCLUDEFILE" << std::endl
+    << "                         equivalent to '--exclude-file'" << std::endl
+    << "       TRACEFILTER_INCLUDEFILE" << std::endl
+    << "                         equivalent to '--include-file'" << std::endl
+    << std::endl
+    << "   filt-options:" << std::endl
+    << "     -to                 equivalent to '-o' or '--output'" << std::endl
+    << "     -fi                 equivalent to '-f' or '--filter'" << std::endl
+    << "     -z LEVEL            Set the compression level. Level reaches from 0 to 9" << std::endl
+    << "                         where 0 is no compression (--nocompress) and 9 is the" << std::endl
+    << "                         highest level." << std::endl
+    << "                         (default: " << Params.f_default_compress_level << ")" << std::endl
+    << std::endl;
 }
 
-
-void Filter::postProcessing() {
-
-
-	std::map<uint32_t, Function>::iterator itf;
-	for( itf= functions.begin(); itf != functions.end(); ++itf ) {
-
-		/* calculate max subcalls */
-		if ( itf->second.subFuncs.size() > maxInvocations ) {
-
-			maxInvocations= itf->second.subFuncs.size();
-		}
-	
-		/* count total invocations */
-		totalInvocations+= itf->second.invocations;
-
-
-		/* calculate the stack depth - without recursion!!! */
-		stack<PostStackItem> stack;
-		stack.push( PostStackItem( itf->second.id, set<uint32_t>() ) );
-
-		/*cerr << "visit: " << itf->second.id << "  " << itf->second.name
-			<< " subcalls: " << itf->second.invocations << " subfunctions: " << itf->second.subFuncs.size()<< endl;*/
-
-		itf->second.depth= visitFunction( stack, NULL, NULL, NULL ) - 1;
-
-		if( itf->second.depth > maxStackDepth ) {
-			maxStackDepth= itf->second.depth;
-		}
-	}
-}
-
-
-vector<Function> Filter::getFunctions() const {
-
-
-	vector<Function> ret;
-	map<uint32_t, Function>::const_iterator it;
-
-	for( it= functions.begin(); it != functions.end(); ++it ) {
-
-		ret.push_back( it->second );
-	}
-
-	sort( ret.begin(), ret.end() );
-
-	return ret;
-}
-
-
-set<uint32_t> Filter::reduceTo( float* percent, const set<uint32_t>& excludes,
-	const set<uint32_t>& includes, bool includechildren, uint64_t limit ) {
-
-	vector<Function> funcs= getFunctions();
-	set<uint32_t> killed;
-	set<uint32_t> nokill;
-	bool killedsomething= true;
-
-
-
-	double msgf= 1.0;
-	double collf= 1.0;
-	
-	uint64_t allrecords= (uint64_t) ( (double) getTotalInvocations() +
-		msgf * (double) getMessageCount() +
-		collf * (double) getCollectiveCount() );
-
-	/*cerr << "invocations: " << getTotalInvocations()
-		<< "messages: " << getMessageCount()
-		<< "collectives: " << getCollectiveCount() << endl;
-	*/
-
-	int64_t invocationstokill= (int64_t)allrecords - 
-		((int64_t) ((((double)allrecords * (*percent)) / 100.0) + 0.5));
-
-
-	
-	vector<Function>::iterator itfuncs;
-	set<uint32_t>::const_iterator itkilled;
-
-	
-	/* add all excludes and their parents recrusively to the nokill-set
-	this is important for the includes ( otherwise it is not required, because
-	functions with children will not be filtered anyways ) */
-	for( itfuncs= funcs.begin(); itfuncs != funcs.end(); ++itfuncs ) {
-
-		stack<PostStackItem> stack;
-		stack.push( PostStackItem( itfuncs->id, set<uint32_t>() ) );
-		
-		/* recursively visit all functions */
-		visitFunctionExclude( stack, nokill );
-		
-		/* if the function should be excluded, do it */
-		if( excludes.find( itfuncs->id ) != excludes.end() ) {
-
-			nokill.insert( itfuncs->id );
-		}
-	}
-	
-
-	/* add all includes (and maybe their children recursively) to the killed-set
-	*/
-	for( itfuncs= funcs.begin(); itfuncs != funcs.end(); ++itfuncs ) {
-
-		/* if the function should not be excluded and should be included */
-		if( nokill.find( itfuncs->id ) == nokill.end() &&
-			includes.find( itfuncs->id ) != includes.end() ) {
-
-			/* is recursion enabled? */
-			if( true == includechildren ) {
-
-				stack<PostStackItem> stack;
-				stack.push( PostStackItem( itfuncs->id, set<uint32_t>() ) );
-				
-				uint64_t killedinvocations= 0;
-				visitFunction( stack, &killed, &killedinvocations, &nokill );
-				invocationstokill-= killedinvocations;
-			}
-			
-			/* kill this function if it is not already done */
-			if( killed.find( itfuncs->id ) == killed.end() ) {
-				killed.insert( itfuncs->id );
-
-				/* If the limit is smaller than the invocationcount,
-				subtract the invocationcount and add the limit to "invocationstokill" */
-				if( limit < itfuncs->invocations ) {
-					invocationstokill-= itfuncs->invocations;
-					invocationstokill+= limit;
-				}
-				/* else: do nothing, because limit >= invocationcount */
-
-			}
-			
-		}
-	}
-	
-
-	uint64_t candidateinvocations= 0;
-	uint32_t candidateid= 0;
-
-
-	/* normal kill decision loop */
-	while( invocationstokill > 0 && false != killedsomething ) {
-
-		killedsomething= false;
-
-
-		/* iterate through all functions */
-		for( itfuncs= funcs.begin(); itfuncs != funcs.end(); ++itfuncs ) {
-
-			/* delete all references to killed functions */
-			for( itkilled= killed.begin(); itkilled != killed.end(); ++itkilled ) {
-
-				itfuncs->subFuncs.erase( *itkilled );
-			}
-
-			/* are there children? yes if: set-size == 0,
-			recursion does not count */
-			bool nochildren= true;
-			set<uint32_t>::const_iterator itfid;
-			for( itfid= itfuncs->subFuncs.begin(); itfid != itfuncs->subFuncs.end(); ++itfid ) {
-				if( *itfid != itfuncs->id ) nochildren= false;
-			}
-
-
-			/* strategy 2 - if we are right over the invocationcount
-			the function stored in "candidate*" is the right one to kill */
-			if( (int64_t)itfuncs->invocations < invocationstokill  &&
-				0 != candidateid ) {
-
-				killed.insert( candidateid );
-				
-				invocationstokill-= candidateinvocations;
-				invocationstokill+= limit;
-
-				killedsomething= true;
-				candidateid= 0;
-
-				break;
-			}
-			
-			
-			/* if the function is not excluded and is not killed */
-			if( nokill.find( itfuncs->id ) == nokill.end() &&
-				killed.find( itfuncs->id ) == killed.end() ) {
-
-				/* strategy 2 - save this function as a candidate, if
-				   it has more invocations than the limit is */
-
-				if( true == nochildren && itfuncs->invocations > limit ) {
-					candidateinvocations= itfuncs->invocations;
-					candidateid= itfuncs->id;
-				}
-
-			}
-			
-		}
-
-		/* sort newly because the references might have changed, thus the order too */
-		sort( funcs.begin(), funcs.end() );
-	}
-
-
-	/* calculate the percentage of remaining events */
-	*percent= (float)
-		((double)( (((int64_t) ((((double)allrecords * (*percent)) / 100.0) + 0.5))
-			+ invocationstokill) * 100 )  / (double)allrecords);
-
-
-	return killed;
-}
-
-
-void Filter::operator+=( const Filter& filter ) {
-
-	if( maxStackDepth < filter.getMaxStackDepth() ) maxStackDepth = filter.getMaxStackDepth();
-	totalInvocations += filter.getTotalInvocations();
-	if( maxInvocations < filter.getMaxInvocations() ) maxInvocations = filter.getMaxInvocations();
-	messageCount += filter.getMessageCount();
-	collectiveCount += filter.getCollectiveCount();
-	
-
-	if( timerResolution != 0 && filter.getTimerResolution() != 0
-		&& timerResolution != filter.getTimerResolution() ) {
-
-		cerr << "Multiple timerresolutions found. aborting" << endl;
-		exit(1);
-		
-	} else if ( timerResolution == 0 && filter.getTimerResolution() != 0 ) {
-		timerResolution = filter.getTimerResolution();
-	}
-
-	/* merge the functions i.e. accumulate all stats, compare max values .... */
-	map<uint32_t, Function>::const_iterator itf;
-	map<uint32_t, Function>::iterator itf2;
-	for( itf = filter.getFunctionMap().begin(); itf !=  filter.getFunctionMap().end(); ++itf ) {
-		itf2 = functions.find( itf->first );
-		if( itf2 != functions.end() ) {
-			itf2->second += itf->second;
-		} else {
-			functions.insert(pair<uint32_t,Function>(itf->first, itf->second));
-		}
-	}
-}
-
-
-
-/* *** protected *** */
-uint32_t Filter::visitFunction( stack<PostStackItem>& stackx, set<uint32_t>* killed,
-	uint64_t* killedinvocations, const set<uint32_t>* nokill ) {
-
-
-	map<uint32_t, Function>::const_iterator itf= functions.find( stackx.top().id );
-	uint32_t ret= stackx.size();
-	
-
-	/* kill the function */
-	if( NULL != killed &&
-		NULL != nokill &&
-		nokill->find( itf->second.id ) == nokill->end() &&
-		killed->find( itf->second.id ) == killed->end() ) {
-
-		killed->insert( itf->second.id );
-
-		if( NULL != killedinvocations ) {
-
-			(*killedinvocations)+= itf->second.invocations;
-		}
-		
-	} else if ( NULL != killed &&
-		NULL != nokill &&
-		( nokill->find( itf->second.id ) != nokill->end() ||
-		killed->find( itf->second.id ) != killed->end() ) ) {
-
-		return ret;
-	}
-
-
-
-	/* recursively visit the functions with having an eye on the stack */
-	uint32_t tmpret;
-	set<uint32_t>::const_iterator its;
-	
-	for( its= itf->second.subFuncs.begin(); its != itf->second.subFuncs.end(); ++its ) {
-
-		if( stackx.size() == stackx.top().visited.size() &&
-			stackx.top().visited.end() == stackx.top().visited.find(*its) ) {
-			/* if we are still not finished & we didn´t visit this function yet */
-
-			stackx.push( PostStackItem( *its, stackx.top().visited ) );
-			
-
-			tmpret= visitFunction( stackx, killed, killedinvocations, nokill );
-			if( tmpret > ret ) ret= tmpret;
-			
-
-			stackx.pop();
-		}
-	}
-
-	return ret;
-}
-
-
-void Filter::visitFunctionExclude( stack<PostStackItem>& stackx, set<uint32_t>& nokill ) {
-
-
-
-	/* this function is an exclude - store the complete stack into the nokill-set */
-	if( nokill.find( stackx.top().id ) != nokill.end() ) {
-
-		stack<PostStackItem> stackcopy= stackx;
-
-		stackcopy.pop();
-
-		while( false == stackcopy.empty() ) {
-
-			nokill.insert( stackcopy.top().id );
-
-			stackcopy.pop();
-		}
-	}
-
-	
-	/* recursively visit the functions with having an eye on the stack */
-	map<uint32_t, Function>::const_iterator itf= functions.find( stackx.top().id );
-	set<uint32_t>::const_iterator its;
-	
-	for( its= itf->second.subFuncs.begin(); its != itf->second.subFuncs.end(); ++its ) {
-
-		if( stackx.size() == stackx.top().visited.size() &&
-			stackx.top().visited.end() == stackx.top().visited.find(*its) ) {
-			/* if we are still not finished & we didn´t visit this function yet */
-
-			stackx.push( PostStackItem( *its, stackx.top().visited ) );
-
-			visitFunctionExclude( stackx, nokill );
-
-			stackx.pop();
-		}
-	}
+static bool
+stringList2Vector( const std::string& str, std::vector<std::string>& vec,
+                   const std::string& delim )
+{
+  bool error = false;
+
+  if( str.length() > 0 )
+  {
+    // convert input string to char* for strtok
+    char* cstr = strdup( str.c_str() );
+
+    // extract list entries from string
+    //
+
+    char* token = strtok( cstr, delim.c_str() );
+    std::string entry;
+    do
+    {
+      entry = token;
+
+      // trim list entry
+      //
+      entry.erase( 0, entry.find_first_not_of( " " ) );
+      entry.erase( entry.find_last_not_of( " " ) + 1 );
+
+      // add list entry to output vector, if it's not empty
+      //
+      if( entry.length() > 0 )
+        vec.push_back( entry );
+      else
+        error = true;
+
+    } while( !error && ( token = strtok( 0, delim.c_str() ) ) );
+
+    free( cstr );
+  }
+  else
+  {
+    error = true;
+  }
+
+  return !error;
 }

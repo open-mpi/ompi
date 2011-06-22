@@ -1,10 +1,20 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
 #ifndef PYOTF_WRAPPER_H
 #define PYOTF_WRAPPER_H
+
+/* first handler arg replacement. Containing the Python-function pointer and
+the fha specified by the user */
+typedef struct {
+
+	PyObject* func;
+	PyObject* realfha;
+	
+} pyOTF_FirstHandlerArgument;
+
 
 /* *** PROTOTYPES *********************************************************** */
 /* ************************************************************************** */
@@ -26,223 +36,284 @@ int pyOTF_HandlerArray_setHandler( OTF_HandlerArray* handlers, PyObject* functio
 int pyOTF_HandlerArray_setFirstHandlerArg( OTF_HandlerArray* handlers, PyObject* fha, uint32_t recordtype );
 
 
+/* functions concerning OTF_KeyValueList */
+uint8_t pyOTF_KeyValueList_appendByteArray( OTF_KeyValueList* kvlist, uint32_t key, PyObject* values, uint32_t len);
+
+PyObject* pyOTF_KeyValueList_getByteArray( OTF_KeyValueList* kvlist, uint32_t key);
+
+
 /* *** writer declarations ***************************************************** */
+
+int pyOTF_Writer_writeDefProcessGroupKV( OTF_Writer* writer, uint32_t stream, 
+	uint32_t procGroup, const char* name, uint32_t numberOfProcs, 
+	PyObject* procs, OTF_KeyValueList* list);
 
 int pyOTF_Writer_writeDefProcessGroup( OTF_Writer* writer, uint32_t stream, 
 	uint32_t procGroup, const char* name, uint32_t numberOfProcs, 
 	PyObject* procs);
+
+int pyOTF_Writer_writeDefAttributeListKV( OTF_Writer* writer, uint32_t stream, 
+	uint32_t attr_token, uint32_t num, PyObject* array, 
+	OTF_KeyValueList* list);
+
+int pyOTF_Writer_writeDefAttributeList( OTF_Writer* writer, uint32_t stream, 
+	uint32_t attr_token, uint32_t num, PyObject* array);
 
 
 
 /* *** handler declarations **************************************************** */
 
 int pyOTF_Handler_DefinitionComment( void* userData, uint32_t stream, 
-	const char* comment );
+	const char* comment, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefTimerResolution( void* userData, uint32_t stream, 
-	uint64_t ticksPerSecond );
+	uint64_t ticksPerSecond, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefProcess( void* userData, uint32_t stream, 
-	uint32_t process, const char* name, uint32_t parent );
+	uint32_t process, const char* name, uint32_t parent, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefProcessGroup( void* userData, uint32_t stream, 
 	uint32_t procGroup, const char* name, uint32_t numberOfProcs, 
-	const uint32_t* procs );
+	const uint32_t* procs, OTF_KeyValueList *list );
+
+
+int pyOTF_Handler_DefAttributeList( void* userData, uint32_t stream, 
+	uint32_t attr_token, uint32_t num, OTF_ATTR_TYPE* array, 
+	OTF_KeyValueList *list );
+
+
+int pyOTF_Handler_DefProcessOrGroupAttributes( void* userData, uint32_t stream, 
+	uint32_t proc_token, uint32_t attr_token, OTF_KeyValueList *list  );
 
 
 int pyOTF_Handler_DefFunction( void* userData, uint32_t stream, 
 	uint32_t func, const char* name, uint32_t funcGroup, 
-	uint32_t source );
+	uint32_t source, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefFunctionGroup( void* userData, uint32_t stream, 
-	uint32_t funcGroup, const char* name );
+	uint32_t funcGroup, const char* name, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefCollectiveOperation( void* userData, uint32_t stream, 
-	uint32_t collOp, const char* name, uint32_t type );
+	uint32_t collOp, const char* name, uint32_t type, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefCounter( void* userData, uint32_t stream, 
 	uint32_t counter, const char* name, uint32_t properties, 
-	uint32_t counterGroup, const char* unit );
+	uint32_t counterGroup, const char* unit, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefCounterGroup( void* userData, uint32_t stream, 
-	uint32_t counterGroup, const char* name );
+	uint32_t counterGroup, const char* name, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefScl( void* userData, uint32_t stream, 
-	uint32_t source, uint32_t sourceFile, uint32_t line );
+	uint32_t source, uint32_t sourceFile, uint32_t line, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefSclFile( void* userData, uint32_t stream, 
-	uint32_t sourceFile, const char* name );
+	uint32_t sourceFile, const char* name, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefCreator( void* userData, uint32_t stream, 
-	const char* creator );
+	const char* creator, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefVersion( void* userData, uint32_t stream, 
 	uint8_t major, uint8_t minor, uint8_t sub, 
-	const char* string );
+	const char* string, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefFile( void* userData, uint32_t stream, 
-	uint32_t token, const char *name, uint32_t group );
+	uint32_t token, const char *name, uint32_t group, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_DefFileGroup( void* userData, uint32_t stream, 
-	uint32_t token, const char *name );
+	uint32_t token, const char *name, OTF_KeyValueList *list );
+
+
+int pyOTF_Handler_DefKeyValue( void* userData, uint32_t stream, 
+	uint32_t key, OTF_Type type, const char *name, 
+	const char *description, OTF_KeyValueList *list );
+
+
+int pyOTF_Handler_NoOp( void* userData, uint64_t time, 
+	uint32_t process, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_Enter( void* userData, uint64_t time, 
-	uint32_t function, uint32_t process, uint32_t source );
+	uint32_t function, uint32_t process, uint32_t source, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_Leave( void* userData, uint64_t time, 
-	uint32_t function, uint32_t process, uint32_t source );
+	uint32_t function, uint32_t process, uint32_t source, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_SendMsg( void* userData, uint64_t time, 
 	uint32_t sender, uint32_t receiver, uint32_t group, 
-	uint32_t type, uint32_t length, uint32_t source );
+	uint32_t type, uint32_t length, uint32_t source, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_RecvMsg( void* userData, uint64_t time, 
 	uint32_t recvProc, uint32_t sendProc, uint32_t group, 
-	uint32_t type, uint32_t length, uint32_t source );
+	uint32_t type, uint32_t length, uint32_t source, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_Counter( void* userData, uint64_t time, 
-	uint32_t process, uint32_t counter, uint64_t value );
+	uint32_t process, uint32_t counter, uint64_t value, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_CollectiveOperation( void* userData, uint64_t time, 
 	uint32_t process, uint32_t collective, uint32_t procGroup, 
 	uint32_t rootProc, uint32_t sent, uint32_t received, 
-	uint64_t duration, uint32_t source );
+	uint64_t duration, uint32_t source, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_BeginCollectiveOperation( void* userData, uint64_t time, 
 	uint32_t process, uint32_t collOp, uint64_t matchingId, 
 	uint32_t procGroup, uint32_t rootProc, uint64_t sent, 
-	uint64_t received, uint32_t scltoken );
+	uint64_t received, uint32_t scltoken, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_EndCollectiveOperation( void* userData, uint64_t time, 
-	uint32_t process, uint64_t matchingId );
+	uint32_t process, uint64_t matchingId, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_EventComment( void* userData, uint64_t time, 
-	uint32_t process, const char* comment );
+	uint32_t process, const char* comment, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_BeginProcess( void* userData, uint64_t time, 
-	uint32_t process );
+	uint32_t process, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_EndProcess( void* userData, uint64_t time, 
-	uint32_t process );
+	uint32_t process, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_FileOperation( void* userData, uint64_t time, 
 	uint32_t fileid, uint32_t process, uint64_t handleid, 
 	uint32_t operation, uint64_t bytes, uint64_t duration, 
-	uint32_t source );
+	uint32_t source, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_BeginFileOperation( void* userData, uint64_t time, 
-	uint32_t process, uint64_t handleid, uint32_t scltoken );
+	uint32_t process, uint64_t matchingId, uint32_t scltoken, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_EndFileOperation( void* userData, uint64_t time, 
-	uint32_t process, uint32_t fileid, uint64_t handleid, 
-	uint32_t operation, uint64_t bytes, uint32_t scltoken );
+	uint32_t process, uint32_t fileid, uint64_t matchingId, 
+	uint64_t handleId, uint32_t operation, uint64_t bytes, 
+	uint32_t scltoken, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_RMAPut( void* userData, uint64_t time, 
 	uint32_t process, uint32_t origin, uint32_t target, 
 	uint32_t communicator, uint32_t tag, uint64_t bytes, 
-	uint32_t source );
+	uint32_t source, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_RMAPutRemoteEnd( void* userData, uint64_t time, 
 	uint32_t process, uint32_t origin, uint32_t target, 
 	uint32_t communicator, uint32_t tag, uint64_t bytes, 
-	uint32_t source );
+	uint32_t source, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_RMAGet( void* userData, uint64_t time, 
 	uint32_t process, uint32_t origin, uint32_t target, 
 	uint32_t communicator, uint32_t tag, uint64_t bytes, 
-	uint32_t source );
+	uint32_t source, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_RMAEnd( void* userData, uint64_t time, 
 	uint32_t process, uint32_t remote, uint32_t communicator, 
-	uint32_t tag, uint32_t source );
+	uint32_t tag, uint32_t source, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_SnapshotComment( void* userData, uint64_t time, 
-	uint32_t process, const char* comment );
+	uint32_t process, const char* comment, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_EnterSnapshot( void *userData, uint64_t time, 
 	uint64_t originaltime, uint32_t function, uint32_t process, 
-	uint32_t source );
+	uint32_t source, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_SendSnapshot( void *userData, uint64_t time, 
 	uint64_t originaltime, uint32_t sender, uint32_t receiver, 
-	uint32_t procGroup, uint32_t tag, uint32_t source );
+	uint32_t procGroup, uint32_t tag, uint32_t length, 
+	uint32_t source, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_OpenFileSnapshot( void* userData, uint64_t time, 
 	uint64_t originaltime, uint32_t fileid, uint32_t process, 
-	uint64_t handleid, uint32_t source );
+	uint64_t handleid, uint32_t source, OTF_KeyValueList *list );
+
+
+int pyOTF_Handler_BeginCollopSnapshot( void* userData, uint64_t time, 
+	uint64_t originaltime, uint32_t process, uint32_t collOp, 
+	uint64_t matchingId, uint32_t procGroup, uint32_t rootProc, 
+	uint64_t sent, uint64_t received, uint32_t scltoken, 
+	OTF_KeyValueList *list );
+
+
+int pyOTF_Handler_BeginFileOpSnapshot( void* userData, uint64_t time, 
+	uint64_t originaltime, uint32_t process, uint64_t matchingId, 
+	uint32_t scltoken, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_SummaryComment( void* userData, uint64_t time, 
-	uint32_t process, const char* comment );
+	uint32_t process, const char* comment, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_FunctionSummary( void* userData, uint64_t time, 
 	uint32_t function, uint32_t process, uint64_t invocations, 
-	uint64_t exclTime, uint64_t inclTime );
+	uint64_t exclTime, uint64_t inclTime, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_FunctionGroupSummary( void* userData, uint64_t time, 
 	uint32_t funcGroup, uint32_t process, uint64_t invocations, 
-	uint64_t exclTime, uint64_t inclTime );
+	uint64_t exclTime, uint64_t inclTime, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_MessageSummary( void* userData, uint64_t time, 
 	uint32_t process, uint32_t peer, uint32_t comm, 
 	uint32_t type, uint64_t sentNumber, uint64_t receivedNumber, 
-	uint64_t sentBytes, uint64_t receivedBytes );
+	uint64_t sentBytes, uint64_t receivedBytes, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_CollopSummary( void *userData, uint64_t time, 
 	uint32_t process, uint32_t comm, uint32_t collective, 
 	uint64_t sentNumber, uint64_t receivedNumber, uint64_t sentBytes, 
-	uint64_t receivedBytes );
+	uint64_t receivedBytes, OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_FileOperationSummary( void* userData, uint64_t time, 
 	uint32_t fileid, uint32_t process, uint64_t nopen, 
 	uint64_t nclose, uint64_t nread, uint64_t nwrite, 
-	uint64_t nseek, uint64_t bytesread, uint64_t byteswrite );
+	uint64_t nseek, uint64_t bytesread, uint64_t byteswrite, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_FileGroupOperationSummary( void* userData, uint64_t time, 
 	uint32_t groupid, uint32_t process, uint64_t nopen, 
 	uint64_t nclose, uint64_t nread, uint64_t nwrite, 
-	uint64_t nseek, uint64_t bytesread, uint64_t byteswrite );
+	uint64_t nseek, uint64_t bytesread, uint64_t byteswrite, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_UnknownRecord( void *userData, uint64_t time, 
@@ -250,11 +321,13 @@ int pyOTF_Handler_UnknownRecord( void *userData, uint64_t time,
 
 
 int pyOTF_Handler_DefMarker( void *userData, uint32_t stream, 
-	uint32_t token, const char* name, uint32_t type );
+	uint32_t token, const char* name, uint32_t type, 
+	OTF_KeyValueList *list );
 
 
 int pyOTF_Handler_Marker( void *userData, uint64_t time, 
-	uint32_t process, uint32_t token, const char* text );
+	uint32_t process, uint32_t token, const char* text, 
+	OTF_KeyValueList *list );
 
 
 
@@ -293,9 +366,70 @@ int pyOTF_MasterControl_appendList( OTF_MasterControl* mc, uint32_t argument,
 
 }
 
+/* *** OTF_KEYVALUE ********************************************************* */
+/* ************************************************************************** */
+
+uint8_t pyOTF_KeyValueList_appendByteArray( OTF_KeyValueList* kvlist, uint32_t key, PyObject* values, uint32_t len) {
+	
+	uint8_t *array;
+	uint8_t ret;
+
+	/* convert a python sequence into a C array */
+	array = createInt8ArrayFromSequence( values );
+
+	ret = OTF_KeyValueList_appendByteArray( kvlist, key, array, len );
+
+	free(array);
+
+
+	return ret;
+}
+
+/* this function returns a python sequence of (int, int, list) */
+PyObject* pyOTF_KeyValueList_getByteArray( OTF_KeyValueList* kvlist, uint32_t key) {
+
+	uint32_t len;
+	uint8_t ret;
+	uint8_t array[OTF_KEYVALUE_MAX_ARRAY_LEN];
+	PyObject* pyarray;
+
+	ret = OTF_KeyValueList_getByteArray( kvlist, key, array, &len);
+
+	pyarray = PyInt_FromLong(ret);
+
+	if( ret != 0 ) {
+		len = 0;
+	}
+
+	/* make a squence by appending an object */
+	pyarray = SWIG_Python_AppendOutput(pyarray, PyInt_FromLong(len) );
+
+	/* expand the sequence by appending an list object, that is created from a C array */
+	pyarray = SWIG_Python_AppendOutput(pyarray, createSequenceFromInt8Array( array, len) );
+
+	return pyarray;
+}
 
 /* *** WRITER *************************************************************** */
 /* ************************************************************************** */
+
+int pyOTF_Writer_writeDefProcessGroupKV( OTF_Writer* writer, uint32_t stream, 
+	uint32_t procGroup, const char* name, uint32_t numberOfProcs, 
+	PyObject* procs, OTF_KeyValueList* list) {
+
+
+	int ret;
+	uint32_t* pyprocs= createInt32ArrayFromSequence( procs );
+
+
+	ret= OTF_Writer_writeDefProcessGroupKV( writer, stream, 
+		procGroup, name, numberOfProcs, 
+		pyprocs, list);
+
+	free( pyprocs );
+
+	return ret;
+}
 
 int pyOTF_Writer_writeDefProcessGroup( OTF_Writer* writer, uint32_t stream, 
 	uint32_t procGroup, const char* name, uint32_t numberOfProcs, 
@@ -304,6 +438,7 @@ int pyOTF_Writer_writeDefProcessGroup( OTF_Writer* writer, uint32_t stream,
 
 	int ret;
 	uint32_t* pyprocs= createInt32ArrayFromSequence( procs );
+
 
 	ret= OTF_Writer_writeDefProcessGroup( writer, stream, 
 		procGroup, name, numberOfProcs, 
@@ -314,22 +449,44 @@ int pyOTF_Writer_writeDefProcessGroup( OTF_Writer* writer, uint32_t stream,
 	return ret;
 }
 
+int pyOTF_Writer_writeDefAttributeListKV( OTF_Writer* writer, uint32_t stream, 
+	uint32_t attr_token, uint32_t num, PyObject* array, 
+	OTF_KeyValueList* list) {
+
+
+	int ret;
+	OTF_ATTR_TYPE* pyarray= createInt32ArrayFromSequence( array );
+
+
+	ret= OTF_Writer_writeDefAttributeListKV( writer, stream, 
+		attr_token, num, pyarray, 
+		list);
+
+	free( pyarray );
+
+	return ret;
+}
+
+int pyOTF_Writer_writeDefAttributeList( OTF_Writer* writer, uint32_t stream, 
+	uint32_t attr_token, uint32_t num, PyObject* array) {
+
+
+	int ret;
+	OTF_ATTR_TYPE* pyarray= createInt32ArrayFromSequence( array );
+
+
+	ret= OTF_Writer_writeDefAttributeList( writer, stream, 
+		attr_token, num, pyarray);
+
+	free( pyarray );
+
+	return ret;
+}
+
 
 
 /* *** HANDLER ARRAY ******************************************************** */
 /* ************************************************************************** */
-
-
-/* first handler arg replacement. Containing the Python-function pointer and
-the fha specified by the user */
-typedef struct {
-
-	PyObject* func;
-	PyObject* realfha;
-	
-} pyOTF_FirstHandlerArgument;
-
-
 
 /* *** handler **************************************************** */
 
@@ -347,18 +504,24 @@ past versions of python may differ
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
 
 int pyOTF_Handler_DefinitionComment( void* userData, uint32_t stream, 
-	const char* comment ) {
+	const char* comment, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHs", fha->realfha, stream, 
-		comment );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHsO", fha->realfha, stream, 
+		comment, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -377,18 +540,24 @@ int pyOTF_Handler_DefinitionComment( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefTimerResolution( void* userData, uint32_t stream, 
-	uint64_t ticksPerSecond ) {
+	uint64_t ticksPerSecond, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHK", fha->realfha, stream, 
-		ticksPerSecond );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHKO", fha->realfha, stream, 
+		ticksPerSecond, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -407,18 +576,26 @@ int pyOTF_Handler_DefTimerResolution( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefProcess( void* userData, uint32_t stream, 
-	uint32_t process, const char* name, uint32_t parent ) {
+	uint32_t process, const char* name, uint32_t parent, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHsH", fha->realfha, stream, 
-		process, name, parent );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsHO", fha->realfha, stream, 
+		process, name, parent, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -438,15 +615,18 @@ int pyOTF_Handler_DefProcess( void* userData, uint32_t stream,
 
 int pyOTF_Handler_DefProcessGroup( void* userData, uint32_t stream, 
 	uint32_t procGroup, const char* name, uint32_t numberOfProcs, 
-	const uint32_t* procs ) {
+	const uint32_t* procs, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+
 	PyObject* pyprocs;
 	uint32_t i;
+	PyObject* pylist;
+
 
 	pyprocs= PyList_New( numberOfProcs );
 	for( i= 0; i < numberOfProcs; ++i ) {
@@ -455,11 +635,101 @@ int pyOTF_Handler_DefProcessGroup( void* userData, uint32_t stream,
 
 	}
 
-	arglist= Py_BuildValue("OHHsHO", fha->realfha, stream, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsHOO", fha->realfha, stream, 
 		procGroup, name, numberOfProcs, 
-		pyprocs );
+		pyprocs, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_DefAttributeList( void* userData, uint32_t stream, 
+	uint32_t attr_token, uint32_t num, OTF_ATTR_TYPE* array, 
+	OTF_KeyValueList *list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+
+	PyObject* pyarray;
+	uint32_t i;
+	PyObject* pylist;
+
+
+	pyarray= PyList_New( num );
+	for( i= 0; i < num; ++i ) {
+
+		PyList_SetItem( pyarray, i, PyInt_FromLong((long) array[i]) );
+
+	}
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHHOO", fha->realfha, stream, 
+		attr_token, num, pyarray, 
+		pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_DefProcessOrGroupAttributes( void* userData, uint32_t stream, 
+	uint32_t proc_token, uint32_t attr_token, OTF_KeyValueList *list  ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+	PyObject* pylist;
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHHO", fha->realfha, stream, 
+		proc_token, attr_token, pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -479,19 +749,25 @@ int pyOTF_Handler_DefProcessGroup( void* userData, uint32_t stream,
 
 int pyOTF_Handler_DefFunction( void* userData, uint32_t stream, 
 	uint32_t func, const char* name, uint32_t funcGroup, 
-	uint32_t source ) {
+	uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHsHH", fha->realfha, stream, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsHHO", fha->realfha, stream, 
 		func, name, funcGroup, 
-		source );
+		source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -510,18 +786,24 @@ int pyOTF_Handler_DefFunction( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefFunctionGroup( void* userData, uint32_t stream, 
-	uint32_t funcGroup, const char* name ) {
+	uint32_t funcGroup, const char* name, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHs", fha->realfha, stream, 
-		funcGroup, name );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsO", fha->realfha, stream, 
+		funcGroup, name, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -540,18 +822,26 @@ int pyOTF_Handler_DefFunctionGroup( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefCollectiveOperation( void* userData, uint32_t stream, 
-	uint32_t collOp, const char* name, uint32_t type ) {
+	uint32_t collOp, const char* name, uint32_t type, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHsH", fha->realfha, stream, 
-		collOp, name, type );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsHO", fha->realfha, stream, 
+		collOp, name, type, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -571,19 +861,25 @@ int pyOTF_Handler_DefCollectiveOperation( void* userData, uint32_t stream,
 
 int pyOTF_Handler_DefCounter( void* userData, uint32_t stream, 
 	uint32_t counter, const char* name, uint32_t properties, 
-	uint32_t counterGroup, const char* unit ) {
+	uint32_t counterGroup, const char* unit, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHsHHs", fha->realfha, stream, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsHHsO", fha->realfha, stream, 
 		counter, name, properties, 
-		counterGroup, unit );
+		counterGroup, unit, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -602,18 +898,24 @@ int pyOTF_Handler_DefCounter( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefCounterGroup( void* userData, uint32_t stream, 
-	uint32_t counterGroup, const char* name ) {
+	uint32_t counterGroup, const char* name, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHs", fha->realfha, stream, 
-		counterGroup, name );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsO", fha->realfha, stream, 
+		counterGroup, name, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -632,18 +934,26 @@ int pyOTF_Handler_DefCounterGroup( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefScl( void* userData, uint32_t stream, 
-	uint32_t source, uint32_t sourceFile, uint32_t line ) {
+	uint32_t source, uint32_t sourceFile, uint32_t line, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHHH", fha->realfha, stream, 
-		source, sourceFile, line );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHHHO", fha->realfha, stream, 
+		source, sourceFile, line, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -662,18 +972,24 @@ int pyOTF_Handler_DefScl( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefSclFile( void* userData, uint32_t stream, 
-	uint32_t sourceFile, const char* name ) {
+	uint32_t sourceFile, const char* name, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHs", fha->realfha, stream, 
-		sourceFile, name );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsO", fha->realfha, stream, 
+		sourceFile, name, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -692,18 +1008,24 @@ int pyOTF_Handler_DefSclFile( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefCreator( void* userData, uint32_t stream, 
-	const char* creator ) {
+	const char* creator, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHs", fha->realfha, stream, 
-		creator );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHsO", fha->realfha, stream, 
+		creator, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -723,19 +1045,25 @@ int pyOTF_Handler_DefCreator( void* userData, uint32_t stream,
 
 int pyOTF_Handler_DefVersion( void* userData, uint32_t stream, 
 	uint8_t major, uint8_t minor, uint8_t sub, 
-	const char* string ) {
+	const char* string, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHHHs", fha->realfha, stream, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHHHsO", fha->realfha, stream, 
 		major, minor, sub, 
-		string );
+		string, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -754,18 +1082,26 @@ int pyOTF_Handler_DefVersion( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefFile( void* userData, uint32_t stream, 
-	uint32_t token, const char *name, uint32_t group ) {
+	uint32_t token, const char *name, uint32_t group, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHsH", fha->realfha, stream, 
-		token, name, group );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsHO", fha->realfha, stream, 
+		token, name, group, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -784,18 +1120,98 @@ int pyOTF_Handler_DefFile( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_DefFileGroup( void* userData, uint32_t stream, 
-	uint32_t token, const char *name ) {
+	uint32_t token, const char *name, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHs", fha->realfha, stream, 
-		token, name );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsO", fha->realfha, stream, 
+		token, name, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_DefKeyValue( void* userData, uint32_t stream, 
+	uint32_t key, OTF_Type type, const char *name, 
+	const char *description, OTF_KeyValueList *list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+	PyObject* pylist;
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHHssO", fha->realfha, stream, 
+		key, type, name, 
+		description, pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_NoOp( void* userData, uint64_t time, 
+	uint32_t process, OTF_KeyValueList *list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+	PyObject* pylist;
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHO", fha->realfha, time, 
+		process, pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -814,18 +1230,26 @@ int pyOTF_Handler_DefFileGroup( void* userData, uint32_t stream,
 }
 
 int pyOTF_Handler_Enter( void* userData, uint64_t time, 
-	uint32_t function, uint32_t process, uint32_t source ) {
+	uint32_t function, uint32_t process, uint32_t source, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHH", fha->realfha, time, 
-		function, process, source );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHO", fha->realfha, time, 
+		function, process, source, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -844,18 +1268,26 @@ int pyOTF_Handler_Enter( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_Leave( void* userData, uint64_t time, 
-	uint32_t function, uint32_t process, uint32_t source ) {
+	uint32_t function, uint32_t process, uint32_t source, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHH", fha->realfha, time, 
-		function, process, source );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHO", fha->realfha, time, 
+		function, process, source, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -875,19 +1307,27 @@ int pyOTF_Handler_Leave( void* userData, uint64_t time,
 
 int pyOTF_Handler_SendMsg( void* userData, uint64_t time, 
 	uint32_t sender, uint32_t receiver, uint32_t group, 
-	uint32_t type, uint32_t length, uint32_t source ) {
+	uint32_t type, uint32_t length, uint32_t source, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHHHHH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHHHHO", fha->realfha, time, 
 		sender, receiver, group, 
-		type, length, source );
+		type, length, source, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -907,19 +1347,27 @@ int pyOTF_Handler_SendMsg( void* userData, uint64_t time,
 
 int pyOTF_Handler_RecvMsg( void* userData, uint64_t time, 
 	uint32_t recvProc, uint32_t sendProc, uint32_t group, 
-	uint32_t type, uint32_t length, uint32_t source ) {
+	uint32_t type, uint32_t length, uint32_t source, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHHHHH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHHHHO", fha->realfha, time, 
 		recvProc, sendProc, group, 
-		type, length, source );
+		type, length, source, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -938,18 +1386,26 @@ int pyOTF_Handler_RecvMsg( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_Counter( void* userData, uint64_t time, 
-	uint32_t process, uint32_t counter, uint64_t value ) {
+	uint32_t process, uint32_t counter, uint64_t value, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHK", fha->realfha, time, 
-		process, counter, value );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHKO", fha->realfha, time, 
+		process, counter, value, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -970,20 +1426,26 @@ int pyOTF_Handler_Counter( void* userData, uint64_t time,
 int pyOTF_Handler_CollectiveOperation( void* userData, uint64_t time, 
 	uint32_t process, uint32_t collective, uint32_t procGroup, 
 	uint32_t rootProc, uint32_t sent, uint32_t received, 
-	uint64_t duration, uint32_t source ) {
+	uint64_t duration, uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHHHHHKH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHHHHKHO", fha->realfha, time, 
 		process, collective, procGroup, 
 		rootProc, sent, received, 
-		duration, source );
+		duration, source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1004,20 +1466,26 @@ int pyOTF_Handler_CollectiveOperation( void* userData, uint64_t time,
 int pyOTF_Handler_BeginCollectiveOperation( void* userData, uint64_t time, 
 	uint32_t process, uint32_t collOp, uint64_t matchingId, 
 	uint32_t procGroup, uint32_t rootProc, uint64_t sent, 
-	uint64_t received, uint32_t scltoken ) {
+	uint64_t received, uint32_t scltoken, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHKHHKKH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHKHHKKHO", fha->realfha, time, 
 		process, collOp, matchingId, 
 		procGroup, rootProc, sent, 
-		received, scltoken );
+		received, scltoken, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1036,18 +1504,24 @@ int pyOTF_Handler_BeginCollectiveOperation( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_EndCollectiveOperation( void* userData, uint64_t time, 
-	uint32_t process, uint64_t matchingId ) {
+	uint32_t process, uint64_t matchingId, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHK", fha->realfha, time, 
-		process, matchingId );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHKO", fha->realfha, time, 
+		process, matchingId, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1066,18 +1540,24 @@ int pyOTF_Handler_EndCollectiveOperation( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_EventComment( void* userData, uint64_t time, 
-	uint32_t process, const char* comment ) {
+	uint32_t process, const char* comment, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHs", fha->realfha, time, 
-		process, comment );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHsO", fha->realfha, time, 
+		process, comment, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1096,18 +1576,24 @@ int pyOTF_Handler_EventComment( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_BeginProcess( void* userData, uint64_t time, 
-	uint32_t process ) {
+	uint32_t process, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKH", fha->realfha, time, 
-		process );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHO", fha->realfha, time, 
+		process, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1126,18 +1612,24 @@ int pyOTF_Handler_BeginProcess( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_EndProcess( void* userData, uint64_t time, 
-	uint32_t process ) {
+	uint32_t process, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKH", fha->realfha, time, 
-		process );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHO", fha->realfha, time, 
+		process, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1158,20 +1650,26 @@ int pyOTF_Handler_EndProcess( void* userData, uint64_t time,
 int pyOTF_Handler_FileOperation( void* userData, uint64_t time, 
 	uint32_t fileid, uint32_t process, uint64_t handleid, 
 	uint32_t operation, uint64_t bytes, uint64_t duration, 
-	uint32_t source ) {
+	uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHKHKKH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHKHKKHO", fha->realfha, time, 
 		fileid, process, handleid, 
 		operation, bytes, duration, 
-		source );
+		source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1190,18 +1688,26 @@ int pyOTF_Handler_FileOperation( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_BeginFileOperation( void* userData, uint64_t time, 
-	uint32_t process, uint64_t handleid, uint32_t scltoken ) {
+	uint32_t process, uint64_t matchingId, uint32_t scltoken, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHKH", fha->realfha, time, 
-		process, handleid, scltoken );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHKHO", fha->realfha, time, 
+		process, matchingId, scltoken, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1220,20 +1726,28 @@ int pyOTF_Handler_BeginFileOperation( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_EndFileOperation( void* userData, uint64_t time, 
-	uint32_t process, uint32_t fileid, uint64_t handleid, 
-	uint32_t operation, uint64_t bytes, uint32_t scltoken ) {
+	uint32_t process, uint32_t fileid, uint64_t matchingId, 
+	uint64_t handleId, uint32_t operation, uint64_t bytes, 
+	uint32_t scltoken, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHKHKH", fha->realfha, time, 
-		process, fileid, handleid, 
-		operation, bytes, scltoken );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHKKHKHO", fha->realfha, time, 
+		process, fileid, matchingId, 
+		handleId, operation, bytes, 
+		scltoken, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1254,20 +1768,26 @@ int pyOTF_Handler_EndFileOperation( void* userData, uint64_t time,
 int pyOTF_Handler_RMAPut( void* userData, uint64_t time, 
 	uint32_t process, uint32_t origin, uint32_t target, 
 	uint32_t communicator, uint32_t tag, uint64_t bytes, 
-	uint32_t source ) {
+	uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHHHHKH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHHHKHO", fha->realfha, time, 
 		process, origin, target, 
 		communicator, tag, bytes, 
-		source );
+		source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1288,20 +1808,26 @@ int pyOTF_Handler_RMAPut( void* userData, uint64_t time,
 int pyOTF_Handler_RMAPutRemoteEnd( void* userData, uint64_t time, 
 	uint32_t process, uint32_t origin, uint32_t target, 
 	uint32_t communicator, uint32_t tag, uint64_t bytes, 
-	uint32_t source ) {
+	uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHHHHKH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHHHKHO", fha->realfha, time, 
 		process, origin, target, 
 		communicator, tag, bytes, 
-		source );
+		source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1322,20 +1848,26 @@ int pyOTF_Handler_RMAPutRemoteEnd( void* userData, uint64_t time,
 int pyOTF_Handler_RMAGet( void* userData, uint64_t time, 
 	uint32_t process, uint32_t origin, uint32_t target, 
 	uint32_t communicator, uint32_t tag, uint64_t bytes, 
-	uint32_t source ) {
+	uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHHHHKH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHHHKHO", fha->realfha, time, 
 		process, origin, target, 
 		communicator, tag, bytes, 
-		source );
+		source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1355,19 +1887,25 @@ int pyOTF_Handler_RMAGet( void* userData, uint64_t time,
 
 int pyOTF_Handler_RMAEnd( void* userData, uint64_t time, 
 	uint32_t process, uint32_t remote, uint32_t communicator, 
-	uint32_t tag, uint32_t source ) {
+	uint32_t tag, uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHHHH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHHHO", fha->realfha, time, 
 		process, remote, communicator, 
-		tag, source );
+		tag, source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1386,18 +1924,24 @@ int pyOTF_Handler_RMAEnd( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_SnapshotComment( void* userData, uint64_t time, 
-	uint32_t process, const char* comment ) {
+	uint32_t process, const char* comment, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHs", fha->realfha, time, 
-		process, comment );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHsO", fha->realfha, time, 
+		process, comment, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1417,19 +1961,25 @@ int pyOTF_Handler_SnapshotComment( void* userData, uint64_t time,
 
 int pyOTF_Handler_EnterSnapshot( void *userData, uint64_t time, 
 	uint64_t originaltime, uint32_t function, uint32_t process, 
-	uint32_t source ) {
+	uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKKHHH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKKHHHO", fha->realfha, time, 
 		originaltime, function, process, 
-		source );
+		source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1449,19 +1999,27 @@ int pyOTF_Handler_EnterSnapshot( void *userData, uint64_t time,
 
 int pyOTF_Handler_SendSnapshot( void *userData, uint64_t time, 
 	uint64_t originaltime, uint32_t sender, uint32_t receiver, 
-	uint32_t procGroup, uint32_t tag, uint32_t source ) {
+	uint32_t procGroup, uint32_t tag, uint32_t length, 
+	uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKKHHHHH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKKHHHHHHO", fha->realfha, time, 
 		originaltime, sender, receiver, 
-		procGroup, tag, source );
+		procGroup, tag, length, 
+		source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1481,19 +2039,105 @@ int pyOTF_Handler_SendSnapshot( void *userData, uint64_t time,
 
 int pyOTF_Handler_OpenFileSnapshot( void* userData, uint64_t time, 
 	uint64_t originaltime, uint32_t fileid, uint32_t process, 
-	uint64_t handleid, uint32_t source ) {
+	uint64_t handleid, uint32_t source, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKKHHKH", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKKHHKHO", fha->realfha, time, 
 		originaltime, fileid, process, 
-		handleid, source );
+		handleid, source, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_BeginCollopSnapshot( void* userData, uint64_t time, 
+	uint64_t originaltime, uint32_t process, uint32_t collOp, 
+	uint64_t matchingId, uint32_t procGroup, uint32_t rootProc, 
+	uint64_t sent, uint64_t received, uint32_t scltoken, 
+	OTF_KeyValueList *list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+	PyObject* pylist;
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKKHHKHHKKHO", fha->realfha, time, 
+		originaltime, process, collOp, 
+		matchingId, procGroup, rootProc, 
+		sent, received, scltoken, 
+		pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
+
+	Py_DECREF(arglist);
+
+	ret= (int) PyInt_AsLong( result );
+
+	if( NULL == PyErr_Occurred() ){
+
+		return ret;
+
+	} else {
+
+		PyErr_Print();
+		return OTF_RETURN_ABORT;
+
+	}
+}
+
+int pyOTF_Handler_BeginFileOpSnapshot( void* userData, uint64_t time, 
+	uint64_t originaltime, uint32_t process, uint64_t matchingId, 
+	uint32_t scltoken, OTF_KeyValueList *list ) {
+
+
+	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
+	PyObject *result;
+	PyObject* arglist;
+	int ret;
+	PyObject* pylist;
+
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKKHKHO", fha->realfha, time, 
+		originaltime, process, matchingId, 
+		scltoken, pylist );
+
+	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1512,18 +2156,24 @@ int pyOTF_Handler_OpenFileSnapshot( void* userData, uint64_t time,
 }
 
 int pyOTF_Handler_SummaryComment( void* userData, uint64_t time, 
-	uint32_t process, const char* comment ) {
+	uint32_t process, const char* comment, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHs", fha->realfha, time, 
-		process, comment );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHsO", fha->realfha, time, 
+		process, comment, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1543,19 +2193,25 @@ int pyOTF_Handler_SummaryComment( void* userData, uint64_t time,
 
 int pyOTF_Handler_FunctionSummary( void* userData, uint64_t time, 
 	uint32_t function, uint32_t process, uint64_t invocations, 
-	uint64_t exclTime, uint64_t inclTime ) {
+	uint64_t exclTime, uint64_t inclTime, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHKKK", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHKKKO", fha->realfha, time, 
 		function, process, invocations, 
-		exclTime, inclTime );
+		exclTime, inclTime, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1575,19 +2231,25 @@ int pyOTF_Handler_FunctionSummary( void* userData, uint64_t time,
 
 int pyOTF_Handler_FunctionGroupSummary( void* userData, uint64_t time, 
 	uint32_t funcGroup, uint32_t process, uint64_t invocations, 
-	uint64_t exclTime, uint64_t inclTime ) {
+	uint64_t exclTime, uint64_t inclTime, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHKKK", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHKKKO", fha->realfha, time, 
 		funcGroup, process, invocations, 
-		exclTime, inclTime );
+		exclTime, inclTime, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1608,20 +2270,26 @@ int pyOTF_Handler_FunctionGroupSummary( void* userData, uint64_t time,
 int pyOTF_Handler_MessageSummary( void* userData, uint64_t time, 
 	uint32_t process, uint32_t peer, uint32_t comm, 
 	uint32_t type, uint64_t sentNumber, uint64_t receivedNumber, 
-	uint64_t sentBytes, uint64_t receivedBytes ) {
+	uint64_t sentBytes, uint64_t receivedBytes, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHHHKKKK", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHHKKKKO", fha->realfha, time, 
 		process, peer, comm, 
 		type, sentNumber, receivedNumber, 
-		sentBytes, receivedBytes );
+		sentBytes, receivedBytes, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1642,20 +2310,26 @@ int pyOTF_Handler_MessageSummary( void* userData, uint64_t time,
 int pyOTF_Handler_CollopSummary( void *userData, uint64_t time, 
 	uint32_t process, uint32_t comm, uint32_t collective, 
 	uint64_t sentNumber, uint64_t receivedNumber, uint64_t sentBytes, 
-	uint64_t receivedBytes ) {
+	uint64_t receivedBytes, OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHHKKKK", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHHKKKKO", fha->realfha, time, 
 		process, comm, collective, 
 		sentNumber, receivedNumber, sentBytes, 
-		receivedBytes );
+		receivedBytes, pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1676,20 +2350,28 @@ int pyOTF_Handler_CollopSummary( void *userData, uint64_t time,
 int pyOTF_Handler_FileOperationSummary( void* userData, uint64_t time, 
 	uint32_t fileid, uint32_t process, uint64_t nopen, 
 	uint64_t nclose, uint64_t nread, uint64_t nwrite, 
-	uint64_t nseek, uint64_t bytesread, uint64_t byteswrite ) {
+	uint64_t nseek, uint64_t bytesread, uint64_t byteswrite, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHKKKKKKK", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHKKKKKKKO", fha->realfha, time, 
 		fileid, process, nopen, 
 		nclose, nread, nwrite, 
-		nseek, bytesread, byteswrite );
+		nseek, bytesread, byteswrite, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1710,20 +2392,28 @@ int pyOTF_Handler_FileOperationSummary( void* userData, uint64_t time,
 int pyOTF_Handler_FileGroupOperationSummary( void* userData, uint64_t time, 
 	uint32_t groupid, uint32_t process, uint64_t nopen, 
 	uint64_t nclose, uint64_t nread, uint64_t nwrite, 
-	uint64_t nseek, uint64_t bytesread, uint64_t byteswrite ) {
+	uint64_t nseek, uint64_t bytesread, uint64_t byteswrite, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHKKKKKKK", fha->realfha, time, 
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHKKKKKKKO", fha->realfha, time, 
 		groupid, process, nopen, 
 		nclose, nread, nwrite, 
-		nseek, bytesread, byteswrite );
+		nseek, bytesread, byteswrite, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1750,6 +2440,7 @@ int pyOTF_Handler_UnknownRecord( void *userData, uint64_t time,
 	PyObject* arglist;
 	int ret;
 
+
 	arglist= Py_BuildValue("OKHs", fha->realfha, time, 
 		process, record );
 
@@ -1772,18 +2463,26 @@ int pyOTF_Handler_UnknownRecord( void *userData, uint64_t time,
 }
 
 int pyOTF_Handler_DefMarker( void *userData, uint32_t stream, 
-	uint32_t token, const char* name, uint32_t type ) {
+	uint32_t token, const char* name, uint32_t type, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OHHsH", fha->realfha, stream, 
-		token, name, type );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OHHsHO", fha->realfha, stream, 
+		token, name, type, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1802,18 +2501,26 @@ int pyOTF_Handler_DefMarker( void *userData, uint32_t stream,
 }
 
 int pyOTF_Handler_Marker( void *userData, uint64_t time, 
-	uint32_t process, uint32_t token, const char* text ) {
+	uint32_t process, uint32_t token, const char* text, 
+	OTF_KeyValueList *list ) {
 
 
 	pyOTF_FirstHandlerArgument* fha= (pyOTF_FirstHandlerArgument*) userData;
 	PyObject *result;
 	PyObject* arglist;
 	int ret;
+	PyObject* pylist;
 
-	arglist= Py_BuildValue("OKHHs", fha->realfha, time, 
-		process, token, text );
+	/** creates a new python object of type "OTF_KeyValueList" from a C pointer */
+	pylist = SWIG_NewPointerObj(SWIG_as_voidptr(list), SWIGTYPE_p_OTF_KeyValueList_struct, 0 );
+
+	arglist= Py_BuildValue("OKHHsO", fha->realfha, time, 
+		process, token, text, 
+		pylist );
 
 	result= PyEval_CallObject(fha->func, arglist);
+
+	Py_DECREF(pylist);
 
 	Py_DECREF(arglist);
 
@@ -1940,6 +2647,20 @@ int pyOTF_HandlerArray_setHandler( OTF_HandlerArray* handlers, PyObject* functio
 
 			break;
 
+		case OTF_DEFATTRLIST_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_DefAttributeList, recordtype );
+
+			break;
+
+		case OTF_DEFPROCESSORGROUPATTR_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_DefProcessOrGroupAttributes, recordtype );
+
+			break;
+
 		case OTF_DEFFUNCTION_RECORD :
 
 			OTF_HandlerArray_setHandler( handlers,
@@ -2014,6 +2735,20 @@ int pyOTF_HandlerArray_setHandler( OTF_HandlerArray* handlers, PyObject* functio
 
 			OTF_HandlerArray_setHandler( handlers,
 				(OTF_FunctionPointer*) pyOTF_Handler_DefFileGroup, recordtype );
+
+			break;
+
+		case OTF_DEFKEYVALUE_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_DefKeyValue, recordtype );
+
+			break;
+
+		case OTF_NOOP_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_NoOp, recordtype );
 
 			break;
 
@@ -2168,6 +2903,20 @@ int pyOTF_HandlerArray_setHandler( OTF_HandlerArray* handlers, PyObject* functio
 
 			OTF_HandlerArray_setHandler( handlers,
 				(OTF_FunctionPointer*) pyOTF_Handler_OpenFileSnapshot, recordtype );
+
+			break;
+
+		case OTF_BEGINCOLLOPSNAPSHOT_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_BeginCollopSnapshot, recordtype );
+
+			break;
+
+		case OTF_BEGINFILEOPSNAPSHOT_RECORD :
+
+			OTF_HandlerArray_setHandler( handlers,
+				(OTF_FunctionPointer*) pyOTF_Handler_BeginFileOpSnapshot, recordtype );
 
 			break;
 

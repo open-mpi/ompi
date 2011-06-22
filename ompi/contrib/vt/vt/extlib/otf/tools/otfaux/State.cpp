@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -13,14 +13,280 @@
 using namespace std;
 
 
+FunctionCall::FunctionCall( uint64_t _time, uint32_t _token, OTF_KeyValueList *_kvlist ) {
+  
+    time = _time;
+    token = _token;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, _kvlist );
+  
+}
+
+FunctionCall::FunctionCall( const FunctionCall& fc ) {
+  
+    time = fc.time;
+    token = fc.token;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, fc.kvlist );
+  
+}
+
+FunctionCall::~FunctionCall() {
+ 
+    OTF_KeyValueList_close( kvlist );
+  
+}
+
+FunctionCall FunctionCall::operator=( const FunctionCall& fc ) {
+  
+    if( this == &fc )
+        return *this;
+  
+    time = fc.time;
+    token = fc.token;
+    
+    OTF_KeyValueList_reset( kvlist );
+        
+    OTF_KeyValueList_appendKeyValueList( kvlist, fc.kvlist );
+    
+    return *this;
+    
+}
+
+
+Send::Send( uint64_t _originaltime, uint32_t _receiver, uint32_t _procGroup,
+    uint32_t _tag, uint32_t _length, uint32_t _source, OTF_KeyValueList *_kvlist ) {
+  
+    originaltime = _originaltime;
+    receiver = _receiver;
+    procGroup = _procGroup;
+    tag = _tag;
+    length = _length;
+    source = _source;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, _kvlist );
+  
+}
+      
+Send::Send( const Send& s ) {
+  
+    originaltime = s.originaltime;
+    receiver = s.receiver;
+    procGroup = s.procGroup;
+    tag = s.tag;
+    length = s.length;
+    source = s.source;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, s.kvlist );
+  
+}
+
+Send::~Send() {
+  
+    OTF_KeyValueList_close( kvlist );
+  
+}
+
+Send Send::operator=( const Send& s ) {
+  
+    if( this == &s )
+        return *this;
+  
+    originaltime = s.originaltime;
+    receiver = s.receiver;
+    procGroup = s.procGroup;
+    tag = s.tag;
+    length = s.length;
+    source = s.source;
+    
+    OTF_KeyValueList_reset( kvlist );
+        
+    OTF_KeyValueList_appendKeyValueList( kvlist, s.kvlist );
+    
+    return *this;
+    
+}
+
+
+BeginCollOperation::BeginCollOperation( uint64_t _time, uint32_t _root, uint32_t _procGroup,
+    uint32_t _col, uint32_t _type, uint64_t _invoc_sent, uint64_t _invoc_recv, uint64_t _bytesSent,
+    uint64_t _bytesRecv, uint32_t _scltoken, OTF_KeyValueList *_kvlist ) {
+  
+    time = _time;
+    root = _root;
+    procGroup = _procGroup;
+    col = _col;
+    type = _type;
+    invoc_sent = _invoc_sent;
+    invoc_recv = _invoc_recv;
+    bytesSent = _bytesSent;
+    bytesRecv = _bytesRecv;
+    scltoken = _scltoken;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, _kvlist );
+    
+}
+    
+BeginCollOperation::BeginCollOperation( const BeginCollOperation& cop ) {
+  
+    time = cop.time;
+    root = cop.root;
+    procGroup = cop.procGroup;
+    col = cop.col;
+    type = cop.type;
+    invoc_sent = cop.invoc_sent;
+    invoc_recv = cop.invoc_recv;
+    bytesSent = cop.bytesSent;
+    bytesRecv = cop.bytesRecv;
+    scltoken = cop.scltoken;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, cop.kvlist );
+  
+}
+
+BeginCollOperation::~BeginCollOperation() {
+  
+    OTF_KeyValueList_close( kvlist );
+  
+}
+
+BeginCollOperation BeginCollOperation::operator=( const BeginCollOperation& cop ) {
+  
+    if( this == &cop )
+        return *this;
+  
+    time = cop.time;
+    root = cop.root;
+    procGroup = cop.procGroup;
+    col = cop.col;
+    type = cop.type;
+    invoc_sent = cop.invoc_sent;
+    invoc_recv = cop.invoc_recv;
+    bytesSent = cop.bytesSent;
+    bytesRecv = cop.bytesRecv;
+    scltoken = cop.scltoken;
+    
+    OTF_KeyValueList_reset( kvlist );
+        
+    OTF_KeyValueList_appendKeyValueList( kvlist, cop.kvlist );
+    
+    return *this;
+    
+}
+
+
+BeginFileOperation::BeginFileOperation( uint64_t _time, uint32_t _scltoken, OTF_KeyValueList *_kvlist ) {
+  
+    time = _time;
+    scltoken = _scltoken;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, _kvlist );
+  
+}
+
+BeginFileOperation::BeginFileOperation( const BeginFileOperation& fop ) {
+
+    time = fop.time;
+    scltoken = fop.scltoken;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, fop.kvlist );
+}
+
+BeginFileOperation::~BeginFileOperation() {
+  
+    OTF_KeyValueList_close( kvlist ); 
+  
+}
+
+BeginFileOperation BeginFileOperation::operator=( const BeginFileOperation& fop ) {
+  
+    if( this == &fop )
+        return *this;
+  
+    time = fop.time;
+    scltoken = fop.scltoken;
+    
+    OTF_KeyValueList_reset( kvlist );
+        
+    OTF_KeyValueList_appendKeyValueList( kvlist, fop.kvlist );
+    
+    return *this;
+    
+}
+
+
+FileOpen::FileOpen( uint64_t _time, uint32_t _fileid, uint32_t _source, OTF_KeyValueList *_kvlist ) {
+ 
+    time = _time;
+    fileid = _fileid;
+    source = _source;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, _kvlist );
+    
+}
+
+FileOpen::FileOpen( const FileOpen& fo ) {
+ 
+    time = fo.time;
+    fileid = fo.fileid;
+    source = fo.source;
+    
+    kvlist = OTF_KeyValueList_new();
+    
+    OTF_KeyValueList_appendKeyValueList( kvlist, fo.kvlist );
+  
+}
+
+FileOpen::~FileOpen() {
+  
+    OTF_KeyValueList_close( kvlist );
+  
+}
+
+FileOpen FileOpen::operator=( const FileOpen& fo ) {
+  
+    if( this == &fo )
+        return *this;
+  
+    time = fo.time;
+    fileid = fo.fileid;
+    source = fo.source;
+    
+    OTF_KeyValueList_reset( kvlist );
+        
+    OTF_KeyValueList_appendKeyValueList( kvlist, fo.kvlist );
+    
+    return *this;
+    
+}
+
+
 /* *** ProcessState *** ********************************* */
 
 
-void ProcessState::enterFunction( uint64_t time, uint32_t token ) {
+void ProcessState::enterFunction( uint64_t time, uint32_t token, OTF_KeyValueList *kvlist ) {
 
 
 
-	fstack.push_back( FunctionCall( time, token) );
+	fstack.push_back( FunctionCall( time, token, kvlist ) );
 	
 	FunctionStatistics& stat= fstatistics[ token ];
 	stat.occurrences++;
@@ -63,7 +329,7 @@ void ProcessState::leaveFunction( uint64_t time, uint32_t token ) {
 
 void ProcessState::collOperation( uint64_t time, uint32_t col, uint32_t type, uint32_t numSent,
 	uint32_t numRecv, uint32_t bytesSent, uint32_t bytesRecv ) {
-	
+	 
 	CollOps.numSent[type] += numSent;
 	CollOps.numRecv[type] += numRecv;
 	CollOps.bytesSent[type] += bytesSent;
@@ -71,9 +337,119 @@ void ProcessState::collOperation( uint64_t time, uint32_t col, uint32_t type, ui
 	CollOps.Type2Col[type] = col;
 }
 
+int ProcessState::beginCollOperation( uint64_t time, uint32_t root, uint32_t procGroup,
+        uint32_t col, uint32_t type, uint64_t matchingId, uint64_t invoc_sent,
+        uint64_t invoc_recv, uint64_t bytesSent, uint64_t bytesRecv, uint32_t scltoken,
+        OTF_KeyValueList *kvlist ) {
+  
+  
+    std::map<uint64_t, BeginCollOperation>::iterator it; 
+
+    it = beginCollOps.find( matchingId );
+
+    if( it != beginCollOps.end() ) {
+           
+#       ifdef OTF_VERBOSE
+            fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+                "MatchingId %llu has already been used. aborting\n",
+                __FUNCTION__, __FILE__, __LINE__, (long long unsigned) matchingId );
+#       endif
+
+        return OTF_RETURN_ABORT;
+      
+    }
+    
+    /* insert the record into the list of begun collective operations */
+    beginCollOps.insert( pair<uint64_t,BeginCollOperation>( matchingId,
+        BeginCollOperation( time, root, procGroup, col, type, invoc_sent,
+            invoc_recv, bytesSent, bytesRecv, scltoken, kvlist ) ) );
+      
+      
+    return OTF_RETURN_OK;
+  
+}
+
+int ProcessState::endCollOperation( uint64_t time, uint32_t matchingId ) {
+ 
+    std::map<uint64_t, BeginCollOperation>::iterator it; 
+
+    it = beginCollOps.find( matchingId );
+
+    if( it == beginCollOps.end() ) {
+      
+#       ifdef OTF_VERBOSE
+            fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+                "MatchingId %llu was not found. aborting\n",
+                __FUNCTION__, __FILE__, __LINE__, (long long unsigned) matchingId );
+#       endif
+
+        return OTF_RETURN_ABORT;
+      
+    }
+    
+    collOperation( time /*?*/, it->second.col, it->second.type, it->second.invoc_sent,
+                   it->second.invoc_recv, it->second.bytesSent, it->second.bytesRecv );
+                   
+    beginCollOps.erase( it );
+
+    return OTF_RETURN_OK;
+        
+}
+
+int ProcessState::beginFileOperation( uint64_t time, uint64_t matchingId, uint32_t scltoken, OTF_KeyValueList *kvlist ) {
+  
+    std::map<uint64_t, BeginFileOperation>::iterator it;
+    
+    it = beginFileOps.find( matchingId );
+    
+    if( it != beginFileOps.end() ) {
+      
+#       ifdef OTF_VERBOSE
+            fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+                "Handleid %llu has already been used. aborting\n",
+                __FUNCTION__, __FILE__, __LINE__, (long long unsigned) matchingId );
+#       endif
+
+        return OTF_RETURN_ABORT;
+      
+    }
+    
+    /* insert the record into the list of unfinished file operations */
+    beginFileOps.insert( pair<uint64_t, BeginFileOperation>( matchingId, BeginFileOperation( time, scltoken, kvlist ) ) );
+                                                                      
+    return OTF_RETURN_OK;
+  
+}
+
+int ProcessState::endFileOperation( uint64_t matchingId ) {
+  
+  
+    std::map<uint64_t, BeginFileOperation>::iterator it;
+    
+    it = beginFileOps.find( matchingId );
+    
+    if( it == beginFileOps.end() ) {
+
+#       ifdef OTF_VERBOSE
+            fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+                "Handleid %llu was not found. aborting\n",
+                __FUNCTION__, __FILE__, __LINE__, (long long unsigned) matchingId );
+#       endif
+
+        return OTF_RETURN_ABORT;
+      
+    }
+    
+    beginFileOps.erase( it );
+ 
+    return OTF_RETURN_OK;
+  
+}
+
 
 void ProcessState::sendMessage( uint64_t time, uint32_t receiver,
-	uint32_t procGroup, uint32_t tag, uint32_t msglength, uint32_t source ) {
+	uint32_t procGroup, uint32_t tag, uint32_t msglength, uint32_t source,
+    OTF_KeyValueList *kvlist ) {
 	
 	
 	sstatistics.bytes_sent+= msglength;
@@ -81,7 +457,7 @@ void ProcessState::sendMessage( uint64_t time, uint32_t receiver,
 
 	
 	
-	sstack.push_back( Send( time, receiver, procGroup, tag, source ) );
+	sstack.push_back( Send( time, receiver, procGroup, tag, msglength, source, kvlist ) );
 }
 
 
@@ -112,7 +488,7 @@ void ProcessState::matchMessage( uint32_t receiver, uint32_t procGroup, uint32_t
 
 
 int ProcessState::openFile( uint64_t time, uint32_t fileid, uint64_t handleid,
-	uint32_t source ) {
+	uint32_t source, OTF_KeyValueList *kvlist ) {
 
 
 	std::map<uint64_t, FileOpen>::iterator it;
@@ -123,7 +499,7 @@ int ProcessState::openFile( uint64_t time, uint32_t fileid, uint64_t handleid,
 
 		/* insert the file into the list of opened files */
 		openfiles.insert( pair<uint64_t,FileOpen>( handleid,
-			FileOpen( time, fileid, source ) ) );
+			FileOpen( time, fileid, source, kvlist ) ) );
 
 		
 		/* make the statistics */
@@ -497,27 +873,34 @@ void ProcessState::printStatistics( uint32_t processid, uint64_t time,
 
 void ProcessState::writeStack( OTF_Writer* writer, uint64_t time, uint32_t processid ) const {
 
-
+  
 	if ( fstack.empty() ) {
 	
 		OTF_Writer_writeSnapshotComment( writer, 
 			time, processid, "empty stack" );
 		return;
 	}
+    
+    OTF_KeyValueList *kvlist = OTF_KeyValueList_new();
 
 	deque<FunctionCall>::const_iterator jt= fstack.begin();
 	deque<FunctionCall>::const_iterator jtend= fstack.end();
 
 	for ( ; jt != jtend; ++jt ) {
 
-		/* cout << "     " << jt->time << ":    " << jt->token << endl; */
-			
-		OTF_Writer_writeEnterSnapshot( writer, time, 
+        /* make a copy of the key-value list to keep the data */
+        OTF_KeyValueList_appendKeyValueList( kvlist, jt->kvlist );
+      
+		/* this will reset the key-value list */
+		OTF_Writer_writeEnterSnapshotKV( writer, time, 
 			jt->time /* uint64_t originaltime */, 
 			jt->token /* uint32_t function */, 
 			processid /* uint32_t process */, 
-			0 /* uint32_t source */ );
+			0 /* uint32_t source */,
+            kvlist /* key-value list */ );
 	}
+    
+    OTF_KeyValueList_close( kvlist );
 }
 
 
@@ -714,22 +1097,31 @@ void ProcessState::writeSends( OTF_Writer* writer, uint64_t time,
 	}
 	*/
 
+    OTF_KeyValueList *kvlist = OTF_KeyValueList_new();
+    
 	deque<Send>::const_iterator jt= sstack.begin();
 	deque<Send>::const_iterator jtend= sstack.end();
 
 	for ( ; jt != jtend; ++jt ) {
 
-			
-		OTF_Writer_writeSendSnapshot( writer,
+        /* make a copy of the key-value list to keep the data */
+		OTF_KeyValueList_appendKeyValueList( kvlist, jt->kvlist );
+      
+        /* this will reset the key-value list */
+		OTF_Writer_writeSendSnapshotKV( writer,
 			time, /* current time */
 			jt->originaltime /* uint64_t originaltime */, 
 			processid /* sender */,
 			jt->receiver /* receiver */,
 			jt->procGroup /* proc group */,
 			jt->tag /* message tag */,
-			jt->source /* source code location */ );
+            jt->length /* message length */,
+			jt->source /* source code location */,
+            kvlist /* key-value list */ );
 			
 	}
+    
+    OTF_KeyValueList_close( kvlist );
 }
 
 
@@ -746,7 +1138,8 @@ void ProcessState::writeOpenFiles( OTF_Writer* writer, uint64_t time,
 		return;
 	}
 	*/
-
+    
+    OTF_KeyValueList *kvlist = OTF_KeyValueList_new();
 
 	map<uint64_t, FileOpen>::const_iterator it;
 	map<uint64_t, FileOpen>::const_iterator itend= openfiles.end();
@@ -754,17 +1147,84 @@ void ProcessState::writeOpenFiles( OTF_Writer* writer, uint64_t time,
 
 	for( it= openfiles.begin(); it != itend; ++it ) {
 
-		OTF_Writer_writeOpenFileSnapshot( writer,
+        /* make a copy of the key-value list to keep the data */
+        OTF_KeyValueList_appendKeyValueList( kvlist, it->second.kvlist );
+      
+        /* this will reset the key-value list */
+		OTF_Writer_writeOpenFileSnapshotKV( writer,
 			time,
 			it->second.time,
 			it->second.fileid,
 			processid,
 			it->first,
-			it->second.source );
+			it->second.source,
+            kvlist );
 	}
+    
+    OTF_KeyValueList_close( kvlist );
 }
 
+void ProcessState::writeCollOps( OTF_Writer* writer, uint64_t time,
+        uint32_t processid ) const {
 
+          
+    OTF_KeyValueList *kvlist = OTF_KeyValueList_new();
+    map<uint64_t, BeginCollOperation>::const_iterator it;
+          
+    
+    for ( it = beginCollOps.begin(); it != beginCollOps.end(); ++it ) {
+
+        /* make a copy of the key-value list to keep the data */
+        OTF_KeyValueList_appendKeyValueList( kvlist, it->second.kvlist );      
+      
+        /* this will reset the key-value list */
+        OTF_Writer_writeBeginCollopSnapshotKV( writer,
+            time, /* current time */
+            it->second.time, /* originaltime */
+            processid, /* process */
+            it->second.col,
+            it->first, /* matchingId */
+            it->second.procGroup,
+            it->second.root,
+            it->second.bytesSent,
+            it->second.bytesRecv,
+            it->second.scltoken,
+            kvlist );
+            
+    }
+    
+    OTF_KeyValueList_close( kvlist );
+    
+}
+
+void ProcessState::writeFileOps( OTF_Writer* writer, uint64_t time,
+        uint32_t processid ) const {
+
+    
+    OTF_KeyValueList *kvlist = OTF_KeyValueList_new();
+    map<uint64_t, BeginFileOperation>::const_iterator it;
+          
+    
+    for ( it = beginFileOps.begin(); it != beginFileOps.end(); ++it ) {      
+    
+        /* make a copy of the key-value list to keep the data */
+        OTF_KeyValueList_appendKeyValueList( kvlist, it->second.kvlist );
+      
+        /* this will reset the key-value list */
+        OTF_Writer_writeBeginFileOpSnapshotKV( writer,
+            time,
+            it->second.time,
+            processid,
+            it->first,
+            it->second.scltoken,
+            kvlist );
+      
+    }
+    
+    OTF_KeyValueList_close( kvlist );
+    
+}
+         
 void State::defProcess( uint32_t processid ) {
 
 
@@ -794,12 +1254,12 @@ void State::defCollOp( uint32_t col, uint32_t type) {
 	Col2Type[col] = type;
 }
 
-void State::enterFunction( uint64_t time, uint32_t processid, uint32_t token ) {
+void State::enterFunction( uint64_t time, uint32_t processid, uint32_t token, OTF_KeyValueList *kvlist ) {
 
 
 	/* cerr << "  " << time << " enter " << token << " on " << processid << endl; */
 	
-	processes[ processid ].enterFunction( time, token );
+	processes[ processid ].enterFunction( time, token, kvlist );
 
 }
 
@@ -815,10 +1275,11 @@ void State::leaveFunction( uint64_t time, uint32_t processid, uint32_t token ) {
 
 
 void State::sendMessage( uint64_t time, uint32_t sender, uint32_t receiver,
-	uint32_t procGroup, uint32_t tag, uint32_t length, uint32_t source ) {
+	uint32_t procGroup, uint32_t tag, uint32_t length, uint32_t source,
+    OTF_KeyValueList *kvlist ) {
 
 
-	processes[ sender ].sendMessage( time, receiver, procGroup, tag, length, source );
+	processes[ sender ].sendMessage( time, receiver, procGroup, tag, length, source, kvlist );
 }
 
 
@@ -876,12 +1337,12 @@ void State::collOperation( uint64_t time, uint32_t proc, uint32_t root,	uint32_t
 
 int State::fileOperation( uint64_t time, uint32_t fileid, uint32_t process,
 	uint64_t handleid, uint32_t operation, uint64_t bytes, uint64_t duration,
-	uint32_t source ) {
+	uint32_t source, OTF_KeyValueList *kvlist ) {
 
-	switch( operation ) {
+	switch( operation & OTF_FILEOP_BITS ) {
 
 		case OTF_FILEOP_OPEN:
-			return processes[ process ].openFile( time, fileid, handleid, source );
+			return processes[ process ].openFile( time, fileid, handleid, source, kvlist );
 		case OTF_FILEOP_CLOSE:
 			return processes[ process ].closeFile( handleid );
 		case OTF_FILEOP_READ:
@@ -893,6 +1354,97 @@ int State::fileOperation( uint64_t time, uint32_t fileid, uint32_t process,
 	}
 
 	return OTF_RETURN_OK;
+}
+
+int State::beginCollOperation( uint64_t time, uint32_t proc, uint32_t root, uint32_t procGroup,
+    uint32_t col, uint64_t matchingId, uint64_t bytesSent, uint64_t bytesRecv, uint32_t scltoken,
+    OTF_KeyValueList *kvlist ) {
+  
+  
+    uint64_t invoc_sent = 0;
+    uint64_t invoc_recv = 0;
+    
+    switch (Col2Type[col])
+    {
+        case OTF_COLLECTIVE_TYPE_ALL2ONE:
+          
+            if(proc == root) {
+                invoc_sent = 1;
+                invoc_recv = 1;
+            } else {
+                invoc_sent = 1;
+            }
+            break;
+            
+        case OTF_COLLECTIVE_TYPE_ONE2ALL:
+          
+            if(proc == root) {
+                invoc_sent = 1;
+                invoc_recv = 1;
+            } else {
+                invoc_recv = 1;
+            }
+            break;
+            
+        case OTF_COLLECTIVE_TYPE_ALL2ALL:
+          
+            invoc_sent = 1;
+            invoc_recv = 1;
+            break;
+            
+        case OTF_COLLECTIVE_TYPE_BARRIER:
+          
+            invoc_sent = 1;
+            break;
+    }
+     
+    return processes[proc].beginCollOperation( time, root, procGroup, col, Col2Type[col], matchingId, invoc_sent,
+                                               invoc_recv, bytesSent, bytesRecv, scltoken, kvlist );
+  
+}
+
+ int State::endCollOperation( uint64_t time, uint32_t proc, uint64_t matchingId ) {
+  
+    
+    return processes[proc].endCollOperation( time, matchingId );
+   
+ }
+ 
+ int State::beginFileOperation( uint64_t time, uint32_t process, uint64_t matchingId,
+        uint32_t scltoken, OTF_KeyValueList *kvlist ) {
+     
+      
+    return processes[process].beginFileOperation( time, matchingId, scltoken, kvlist );
+ }
+ 
+ 
+  int State::endFileOperation( uint64_t time, uint32_t process, uint32_t fileid,
+        uint64_t matchingId, uint64_t handleId, uint32_t operation, uint64_t bytes,
+        uint32_t scltoken, OTF_KeyValueList *kvlist ) {
+   
+    int ret;
+     
+    ret = processes[process].endFileOperation( matchingId );
+        
+    if( ret == OTF_RETURN_ABORT ) {
+        return ret; 
+    }
+    
+    switch( operation & OTF_FILEOP_BITS ) {
+
+        case OTF_FILEOP_OPEN:
+            return processes[ process ].openFile( time, fileid, handleId, scltoken, kvlist );
+        case OTF_FILEOP_CLOSE:
+            return processes[ process ].closeFile( handleId );
+        case OTF_FILEOP_READ:
+            return processes[ process ].readFile( fileid, bytes );
+        case OTF_FILEOP_WRITE:
+            return processes[ process ].writeFile( fileid, bytes );
+        case OTF_FILEOP_SEEK:
+            return processes[ process ].seekFile( fileid, bytes );
+    }
+    
+    return OTF_RETURN_OK;
 }
 
 
@@ -948,7 +1500,8 @@ void State::printStatistics( uint64_t time ) {
 }
 
 
-void State::writeSnapshot( OTF_Writer* writer, uint64_t time ) const {
+void State::writeSnapshot( OTF_Writer* writer,
+                           uint64_t time ) {
 
 
 	if ( ! doSnapshots ) return;
@@ -965,11 +1518,14 @@ void State::writeSnapshot( OTF_Writer* writer, uint64_t time ) const {
 		it->second.writeStack( writer, time, it->first /* processid */ );
 		it->second.writeSends( writer, time, it->first /* processid */ );
 		it->second.writeOpenFiles( writer, time, it->first /* processid */ );
+        it->second.writeCollOps( writer, time, it->first /* processid */ );
+        it->second.writeFileOps( writer, time, it->first /* processid */ );
 	}
 }
 
 
-void State::writeStatistics( OTF_Writer* writer, uint64_t time ) {
+void State::writeStatistics( OTF_Writer* writer,
+                             uint64_t time ) {
 
 
 	if ( ! doStatistics ) return;

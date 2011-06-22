@@ -30,7 +30,7 @@ AC_DEFUN([ACVT_UNIMCI],
 
 	AC_ARG_WITH(unimci-config,
 		AC_HELP_STRING([--with-unimci-config=UNIMCICONFIG],
-		[give the command for UniMCI config utility, default: automatically by configure]),
+		[give the command for UniMCI config utility, default: unimci-config]),
 	[
 		AS_IF([test x"$withval" = "xyes" -o x"$withval" = "xno"],
 		[AC_MSG_ERROR([value of '--with-unimci-config' not properly set!])])
@@ -69,7 +69,7 @@ dnl		check for version
 				unimci_major_version=`echo $unimci_version | cut -d '.' -f 1`
 				AS_IF([test $unimci_major_version -ne 1],
 				[
-					AC_MSG_NOTICE([error: the version of UniMCI isn't supported!])
+					AC_MSG_NOTICE([error: the version of UniMCI isn't supported])
 					unimci_error="yes"
 				])
 			],
@@ -226,6 +226,26 @@ dnl		check for linker flags
 			],
 			[
 				unimci_error="yes"
+			])
+		])
+
+dnl		check for MPI Fortran interoperability
+
+		AS_IF([test x"$unimci_error" = "xno" -a x"$have_fmpi" = "xyes" -a x"$build_fmpiwraplib" = "xno"],
+		[
+			AS_IF([test x"$F77" != x -o x"$FC" != x],
+			[
+				ACVT_CONF_SUBSUBTITLE([MPI Fortran interoperability])
+				ACVT_FMPIWRAPLIB
+				AS_IF([test x"$fmpiwraplib_error" = "xno"],
+				[
+					build_fmpiwraplib="yes"
+					FMPILIB="-lvt-fmpi"
+				],
+				[
+					AC_MSG_NOTICE([error: MPI Fortran interoperability checks failed])
+					unimci_error = "yes"
+				])
 			])
 		])
 

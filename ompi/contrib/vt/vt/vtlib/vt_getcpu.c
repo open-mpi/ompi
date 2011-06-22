@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -14,12 +14,12 @@
 
 #include <errno.h>
 #include <sched.h>
+#include <string.h>
 
+#include "vt_defs.h"
 #include "vt_error.h"
 #include "vt_getcpu.h"
 #include "vt_trc.h"
-
-#include "otf.h"
 
 /* counter id */
 uint32_t vt_getcpu_cid = 0;
@@ -29,8 +29,8 @@ void vt_getcpu_init()
   vt_assert(vt_misc_cgid != 0);
 
   /* write counter definition */
-  vt_getcpu_cid = vt_def_counter("CPU_ID",
-                                 OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT,
+  vt_getcpu_cid = vt_def_counter(VT_CURRENT_THREAD, "CPU_ID",
+                                 VT_CNTR_ABS | VT_CNTR_NEXT,
                                  vt_misc_cgid, "#");
 }
 

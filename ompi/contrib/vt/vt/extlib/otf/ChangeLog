@@ -1,15 +1,66 @@
-1.6.5openmpi
+1.9.1openmpi = 1.9sawfish
+
+1.9sawfish
+	- added MPI-parallel version of otfprofile (otfprofile-mpi)
+	- added library 'libotfaux' for matching message events
+	- added time range record
+	- added counter process assignment record
+	- minor extensions on API for handling key-value lists
+	- define PATH_MAX under Windows if it is not defined yet
+	- fixed incorrect execution mode when using otfdecompress under Windows
+
+1.8.1sturgeon
+	- added option to 'otfdump' for specifying the maximum number of files
+	  that are allowed to be open simultaneously
+	- fixed compile error in 'otfmerge-mpi' due to a missing header include
+	- extended the 'hello' example source code to show the usage of
+	  key-values
+
+1.8sturgeon
+	- extended API for reading definitions from an external memory buffer
+	  instead of a file
+	- added copy handlers for single trace streams
+	- added support for Python 3
+	- temporary disabled OpenMP support completely if the PGI compiler is
+	  used to work around some uncleared compile errors
+
+1.7.1catfish
+	- removed size limit of key-value byte arrays
+	- disable OpenMP support in otfprofile if the PGI compiler
+	  is used to work around some compiler errors
+	- fixed bug while reading an empty process group definition record
+	- fixed composition of output file name in otf[de]compress
+	- fixed a memory leak in python interface
+
+1.7catfish
+	- added second version of each record that contains a Key-Value
+  	  list to store individual data
+	- two new definition records which can be used to assign
+	  attributes to processes
+	- two new snapshot record types: BeginCollopSnapshot,
+	  BeginFileOpSnapshot
+	- API changes in EndFileOP record and SendSnapshot record because
+	  of a flawed design
+	- added MPI-parallel version of otfmerge (otfmerge-mpi)
+	- otfprofile has a lite mode usefuly for highly parallel traces
+	- added option to otf[de]compress for specifying an output directory
+	- try to open files with 'O_NOATIME' for reading for increased speed 
+	- try to handle ESTALE errors on NFS gracefully 
+	- fixed OTF long format for several records
+	- fixed error handling in OTF reader
+	- fixed bug in otfshrink: a process number can be between
+	  0 and 4294967296 now
+
+1.6.5stingray
 	- enforce building position independent code (PIC) for the static
 	  version of the OTF library
 	  (so it's possible to add these objects to 3rd-party shared libraries)
 	- fixed and enhanced calculation of trace file size in otfinfo
-	- temporary disabled OpenMP support completely if the PGI compiler is
-	  used to work around some uncleared compile errors
 	- patched libtool:
 	  - to avoid a bug in detection of the PGI 10 C++ compiler
 	  - to detect IBM cross compilers on BlueGene/P
 
-1.6.4openmpi
+1.6.4stingray
 	- enhanced reading of process group definition records
 
 1.6.3stingray	

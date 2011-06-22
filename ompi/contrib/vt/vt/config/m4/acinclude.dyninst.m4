@@ -80,20 +80,20 @@ AC_DEFUN([ACVT_DYNINST],
 
 		AS_IF([test x"$dyninst_error" = "xno"],
 		[
-			AC_MSG_CHECKING([whether Dyninst version >= 5.1])
+			AC_MSG_CHECKING([whether Dyninst version >= 6.1])
 
 			sav_CXXFLAGS=$CXXFLAGS
 			CXXFLAGS="$CXXFLAGS $DYNIINCDIR"
 			AC_TRY_COMPILE([#include <BPatch.h>],
 [
-#ifndef DYNINST_5_1
-#  error "DYNINST_5_1 not defined"
+#ifndef DYNINST_6_1
+#  error "DYNINST_6_1 not defined"
 #endif
 ],
 			[AC_MSG_RESULT([yes])],
 			[
 				AC_MSG_RESULT([no])
-				AC_MSG_NOTICE([error: Dyninst version could not be determined and/or is incompatible (< 5.1)
+				AC_MSG_NOTICE([error: Dyninst version could not be determined and/or is incompatible (< 6.1)
 See \`config.log' for more details.])
 				dyninst_error="yes"
 			])

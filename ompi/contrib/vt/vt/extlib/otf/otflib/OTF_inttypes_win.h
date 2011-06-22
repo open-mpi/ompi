@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -26,5 +26,7 @@
 	typedef signed char int8_t;
 	typedef signed short int16_t;
 	typedef unsigned short uint16_t;
+
+#	define OTF_UINT64_MAX (uint64_t)-1
 
 #endif /* OTF_INTTYPES_WIN_H */

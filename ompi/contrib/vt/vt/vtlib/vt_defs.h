@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -13,16 +13,10 @@
 #ifndef _VT_DEFS_H
 #define _VT_DEFS_H
 
-#include <limits.h>
-#include "vt_inttypes.h"
-
 /* macro for one-step declaration and definition of functions */
 #define VT_DECLDEF(function)  \
 function; /* declaration */   \
 function  /* definition */
-
-
-#define VT_MAX_GETHOSTID_RETRIES 10
 
 /*
  *-----------------------------------------------------------------------------
@@ -30,12 +24,36 @@ function  /* definition */
  *-----------------------------------------------------------------------------
  */
 
-#define VT_MIN_BUFSIZE    100*1024       /* 100KB */
-#define VT_DEF_BUFSIZE    32*(1024*1024) /* 32MB */
+#define VT_MIN_BUFSIZE               0x19000   /* 100KB */
+#define VT_DEFAULT_BUFSIZE           0x2000000 /* 32MB */
+#define VT_DEFAULT_COPY_BUFFER_SIZE  0x100000 /* 1MB */
 
 typedef unsigned char* buffer_t;
 
-#define VT_DEFAULT_COPY_BUFFER_SIZE 1048576  /* 1MB */
+/*
+ *-----------------------------------------------------------------------------
+ * Process ID partitioning
+ *-----------------------------------------------------------------------------
+ */
+
+#define VT_PROCESS_ID_BITNESS    32
+#define VT_PROCESS_ID_SPLITTING  16
+#define VT_TRACEID_BITMASK       ((1<<VT_PROCESS_ID_SPLITTING) - 1)
+#define VT_THREADID_BITMASK      (~VT_TRACEID_BITMASK)
+#define VT_PROCESS_ID(trace_id, thread_id) \
+  (((thread_id) << VT_PROCESS_ID_SPLITTING) + (trace_id) + 1)
+
+/*
+ *-----------------------------------------------------------------------------
+ * Upper bounds
+ *-----------------------------------------------------------------------------
+ */
+
+#define VT_MAX_COMMENT_LEN      4096
+#define VT_MAX_MARKER_LEN       4096
+#define VT_MAX_THREAD_NAME_LEN  100
+#define VT_MAX_THREADS \
+  1<<(VT_PROCESS_ID_BITNESS - VT_PROCESS_ID_SPLITTING)
 
 /*
  *-----------------------------------------------------------------------------
@@ -49,7 +67,7 @@ typedef unsigned char* buffer_t;
 
 /*
  *-----------------------------------------------------------------------------
- * Trace mode
+ * Trace modes
  *-----------------------------------------------------------------------------
  */
 
@@ -92,90 +110,113 @@ typedef unsigned char* buffer_t;
  *-----------------------------------------------------------------------------
  */
 
-#define VT_NO_ID                  0xFFFFFFFF
-#define VT_NO_LNO                 0xFFFFFFFF
-
-#define VT_DEF_GROUP              "Application"
-#define VT_MAX_COMMENT_LEN        4096
-#define VT_MAX_MARKER_LEN         4096
-#define VT_MAX_THREAD_NAME_LEN    100
-#define VT_MAX_THREADS            65536
+#define VT_NO_ID           0xFFFFFFFF
+#define VT_NO_LNO          0xFFFFFFFF
 
 /*
  *-----------------------------------------------------------------------------
- * Internal regions
+ * Thread locations
  *-----------------------------------------------------------------------------
  */
 
-#define VT__TRC_USER              0
-#define VT__TRC_SYNC              1
-#define VT__TRC_SYNCTIME          2
-#define VT__TRC_FLUSH             3
-#define VT__TRC_STAT              4
-#define VT__TRC_OFF               5
-#define VT__TRC_OMPPREG           6
-#define VT__TRC_REGID_NUM         7
+#define VT_MASTER_THREAD   0
+#define VT_CURRENT_THREAD  0xFFFFFFFF
 
 /*
  *-----------------------------------------------------------------------------
- * Region type
+ * Regions
  *-----------------------------------------------------------------------------
  */
 
-#define VT_UNKNOWN                0
+#define VT_DEFAULT_REGION_GROUP  "Application"
 
-#define VT_INTERNAL               1
-#define VT_FUNCTION               2
-#define VT_LOOP                   3
-#define VT_USER_REGION            4
+#define VT_UNKNOWN               0
 
-#define VT_LIBC                   5
-#define VT_LIBC_IO                6
+#define VT_INTERNAL              1
+#define VT_FUNCTION              2
+#define VT_LOOP                  3
+#define VT_USER_REGION           4
 
-#define VT_MEMORY                 7
+#define VT_LIBC                  5
+#define VT_LIBC_IO               6
 
-#define VT_MPI_FUNCTION           8
-#define VT_MPI_COLL_BARRIER       9
-#define VT_MPI_COLL_ONE2ALL      10
-#define VT_MPI_COLL_ALL2ONE      11
-#define VT_MPI_COLL_ALL2ALL      12
-#define VT_MPI_COLL_OTHER        13
+#define VT_MEMORY                7
 
-#define VT_OMP_FUNCTION          14
-#define VT_OMP_PARALLEL          15
-#define VT_OMP_PARALLEL_REGION   16
-#define VT_OMP_LOOP              17
-#define VT_OMP_SECTIONS          18
-#define VT_OMP_SECTION           19
-#define VT_OMP_WORKSHARE         20
-#define VT_OMP_SINGLE            21
-#define VT_OMP_MASTER            22
-#define VT_OMP_CRITICAL          23
-#define VT_OMP_ATOMIC            24
-#define VT_OMP_BARRIER           25
-#define VT_OMP_IBARRIER          26
-#define VT_OMP_FLUSH             27
-#define VT_OMP_CRITICAL_SBLOCK   28
-#define VT_OMP_SINGLE_SBLOCK     29
+#define VT_MPI_FUNCTION          8
+#define VT_MPI_COLL_BARRIER      9
+#define VT_MPI_COLL_ONE2ALL     10
+#define VT_MPI_COLL_ALL2ONE     11
+#define VT_MPI_COLL_ALL2ALL     12
+#define VT_MPI_COLL_OTHER       13
 
-#define VT_PTHRD_FUNCTION        30
+#define VT_OMP_FUNCTION         14
+#define VT_OMP_PARALLEL         15
+#define VT_OMP_PARALLEL_REGION  16
+#define VT_OMP_LOOP             17
+#define VT_OMP_SECTIONS         18
+#define VT_OMP_SECTION          19
+#define VT_OMP_WORKSHARE        20
+#define VT_OMP_SINGLE           21
+#define VT_OMP_MASTER           22
+#define VT_OMP_CRITICAL         23
+#define VT_OMP_ATOMIC           24
+#define VT_OMP_BARRIER          25
+#define VT_OMP_IBARRIER         26
+#define VT_OMP_FLUSH            27
+#define VT_OMP_CRITICAL_SBLOCK  28
+#define VT_OMP_SINGLE_SBLOCK    29
+
+#define VT_PTHRD_FUNCTION       30
 
 /*
  *-----------------------------------------------------------------------------
- * Performance metrics
+ * MPI Integer size
+ *-----------------------------------------------------------------------------
+ */
+#if (defined(_SX) && defined(_W8))
+    typedef long long VT_MPI_INT;
+#else /* _SX && _W8 */
+    typedef int       VT_MPI_INT;
+#endif /* _SX && _W8 */
+
+/*
+ *-----------------------------------------------------------------------------
+ * MPI communicators
  *-----------------------------------------------------------------------------
  */
 
-#define VT_INTEGER                0
-#define VT_FLOAT                  1
+#define VT_MPI_COMM_WORLD        0
+#define VT_MPI_COMM_SELF         1
+#define VT_MPI_COMM_OTHER        2
 
-#define VT_COUNTER                0
-#define VT_RATE                   1
-#define VT_SAMPLE                 2
+/*
+ *-----------------------------------------------------------------------------
+ * Counter flags
+ *-----------------------------------------------------------------------------
+ */
 
-#define VT_START                  0
-#define VT_LAST                   1
-#define VT_NEXT                   2
+#define VT_CNTR_ACC       1<<0
+#define VT_CNTR_ABS       1<<1
+#define VT_CNTR_START     1<<2
+#define VT_CNTR_POINT     1<<3
+#define VT_CNTR_LAST      1<<4
+#define VT_CNTR_NEXT      1<<5
+
+#define VT_CNTR_SIGNED    1<<6
+#define VT_CNTR_UNSIGNED  1<<7
+#define VT_CNTR_FLOAT     1<<8
+#define VT_CNTR_DOUBLE    1<<9
+
+/*
+ *-----------------------------------------------------------------------------
+ * Marker
+ *-----------------------------------------------------------------------------
+ */
+
+#define VT_MARKER_UNKNOWN  0
+#define VT_MARKER_ERROR    1
+#define VT_MARKER_WARNING  2
+#define VT_MARKER_HINT     3
 
 /*
  *-----------------------------------------------------------------------------
@@ -204,5 +245,50 @@ typedef unsigned char* buffer_t;
 #define VT_IOFLAG_SYNC                 512
 #define VT_IOFLAG_ISREADLOCK          1024
 
-#endif /* _VT_DEFS_H */
+/*
+ *-----------------------------------------------------------------------------
+ * Key-Value types
+ *-----------------------------------------------------------------------------
+ */
 
+#define VT_KEYVAL_TYPE_CHAR    0
+#define VT_KEYVAL_TYPE_INT32   1
+#define VT_KEYVAL_TYPE_UINT32  2
+#define VT_KEYVAL_TYPE_INT64   3
+#define VT_KEYVAL_TYPE_UINT64  4
+#define VT_KEYVAL_TYPE_FLOAT   5
+#define VT_KEYVAL_TYPE_DOUBLE  6
+
+/*
+ *-----------------------------------------------------------------------------
+ * common string identifiers used in VT libraries and vtunify
+ *-----------------------------------------------------------------------------
+ */
+
+#define VT_UNIFY_STRID_VT_COMMENT               "__VT_COMMENT__"
+#define VT_UNIFY_STRID_STARTTIME_COMMENT        "__STARTTIME__"
+#define VT_UNIFY_STRID_STOPTIME_COMMENT         "__STOPTIME__"
+#define VT_UNIFY_STRID_USRCOM_SEND_COMMENT      "__USRCOM_S__"
+#define VT_UNIFY_STRID_USRCOM_RECV_COMMENT      "__USRCOM_R__"
+#define VT_UNIFY_STRID_ETIMESYNC_COMMENT        "__ETIMESYNC__"
+
+#define VT_UNIFY_STRID_NODE_PROCGRP             "__NODE__"
+#define VT_UNIFY_STRID_MPI_COMM_WORLD_PROCGRP   "__MPI_COMM_WORLD__"
+#define VT_UNIFY_STRID_MPI_COMM_SELF_PROCGRP    "__MPI_COMM_SELF__"
+#define VT_UNIFY_STRID_MPI_COMM_OTHER_PROCGRP   "__MPI_COMM_OTHER__"
+#define VT_UNIFY_STRID_OMP_TEAM_PROCGRP         "__OMP_TEAM__"
+#define VT_UNIFY_STRID_GPU_COMM_PROCGRP         "__GPU_COMM__"
+#define VT_UNIFY_STRID_GPU_GROUP_PROCGRP        "__GPU_GROUP__"
+#define VT_UNIFY_STRID_USER_COMM_PROCGRP        "__USER_COMM__"
+
+#define VT_UNIFY_STRID_ASYNC_SOURCE_KEY         "__ASYNC_SOURCE__"
+
+/*
+ *-----------------------------------------------------------------------------
+ * Miscellaneous
+ *-----------------------------------------------------------------------------
+ */
+
+#define VT_MAX_GETHOSTID_RETRIES  10
+
+#endif /* _VT_DEFS_H */

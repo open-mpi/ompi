@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -94,7 +94,7 @@ static void register_region(struct profile_gen_struct* d, uint8_t rtype)
   /* -- register file, if available -- */
   if ( d->file_name != NULL )
   {
-    fid = vt_def_scl_file(d->file_name);
+    fid = vt_def_scl_file(VT_CURRENT_THREAD, d->file_name);
     begln = d->linenum;
     endln = d->endline;
   }
@@ -140,7 +140,7 @@ static void register_region(struct profile_gen_struct* d, uint8_t rtype)
   d->data = (uint32_t*)malloc(sizeof(uint32_t));
   if ( d->data == NULL ) vt_error();
   *((uint32_t*)(d->data)) =
-    vt_def_region(rname, fid, begln, endln, NULL, rtype);
+    vt_def_region(VT_CURRENT_THREAD, rname, fid, begln, endln, NULL, rtype);
 
   /* -- free generated region name -- */
   if ( rtype == VT_LOOP )
@@ -233,7 +233,7 @@ VT_DECLDEF(void __profile_invoke(struct profile_gen_struct* d))
   }
 
   /* -- write enter record -- */
-  vt_enter(&time, *((uint32_t*)(d->data)));
+  vt_enter(VT_CURRENT_THREAD, &time, *((uint32_t*)(d->data)));
 
   VT_MEMHOOKS_ON();
 }
@@ -256,7 +256,7 @@ VT_DECLDEF(void __profile_invoke_exit(struct profile_gen_struct* d))
 
   /* -- write exit record -- */
   if ( d->data != NULL ) {
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
 
   VT_MEMHOOKS_ON();
@@ -303,7 +303,7 @@ VT_DECLDEF(void __profile_loop(struct profile_gen_struct* d))
   }
 
   /* -- write enter record -- */
-  vt_enter(&time, *((uint32_t*)(d->data)));
+  vt_enter(VT_CURRENT_THREAD, &time, *((uint32_t*)(d->data)));
 
   VT_MEMHOOKS_ON();
 }
@@ -335,7 +335,7 @@ VT_DECLDEF(void  __profile_loop_exit(struct profile_gen_struct* d))
 
   /* -- write exit record -- */
   if ( d->data != NULL ) {
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
 
   VT_MEMHOOKS_ON();

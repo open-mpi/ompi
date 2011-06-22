@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -49,5 +49,11 @@
 #	endif /* OTF_SIZEOF_LONG */
 
 #endif /* OTF_HAVE_INTTYPES_H || OTF_HAVE_STDINT_H */
+
+#ifdef UINT64_MAX
+#	define OTF_UINT64_MAX UINT64_MAX
+#else /* UINT64_MAX */
+#	define OTF_UINT64_MAX (uint64_t)-1
+#endif /* UINT64_MAX */
 
 #endif /* OTF_INTTYPES_UNIX_H */

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -464,12 +464,13 @@ static MethodIDMapT* register_method(jvmtiEnv* jvmti, jmethodID method)
 
     if ( method_info.source_filename != NULL && method_info.line_number != 0 )
     {
-      fid = vt_def_scl_file(method_info.source_filename);
+      fid = vt_def_scl_file(VT_CURRENT_THREAD, method_info.source_filename);
       lno = method_info.line_number;
     }
 
     /* register method and store region identifier */
-    rid = vt_def_region(method_info.long_name,
+    rid = vt_def_region(VT_CURRENT_THREAD,
+                        method_info.long_name,
                         fid, lno, VT_NO_LNO,
                         (vt_env_java_group_classes()) ? method_info.class_name : NULL,
                         VT_FUNCTION);
@@ -692,7 +693,7 @@ static void JNICALL cbMethodEntry(jvmtiEnv* jvmti, JNIEnv* env,
 
   /* write enter record, if method isn't excluded */
   if ( methodid_map->rid != VT_NO_ID )
-    vt_enter(&time, methodid_map->rid);
+    vt_enter(VT_CURRENT_THREAD, &time, methodid_map->rid);
 }
 
 /* Callback for JVMTI_EVENT_METHOD_EXIT */
@@ -722,7 +723,7 @@ static void JNICALL cbMethodExit(jvmtiEnv* jvmti, JNIEnv* env,
 
   /* write exit record, if method was entered and isn't excluded */
   if ( methodid_map != NULL && methodid_map->rid != VT_NO_ID )
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
 }
 
 /* Load the VM Agent */

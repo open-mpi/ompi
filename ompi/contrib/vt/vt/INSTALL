@@ -197,6 +197,33 @@ How to install and configure VampirTrace
       --with-dyninst-dir=DYNIDIR
                               give the path for DYNINST, default: /usr
 
+      --with-dyninst-inc-dir=DYNIINCDIR
+                              give the path for Dyninst-include files,
+                              default: DYNIDIR/include
+
+      --with-dyninst-lib-dir=DYNILIBDIR
+                              give the path for Dyninst-libraries,
+                              default: DYNIDIR/lib
+
+      --with-dyninst-lib=DYNILIB
+                              use given Dyninst lib, default: -ldyninstAPI
+
+      --with-tau-instrumentor=TAUINSTUMENTOR
+                              give the command for the TAU instrumentor,
+                              default: tau_instrumentor
+
+      --with-pdt-cparse=PDTCPARSE
+                              give the command for PDT C source code parser,
+                              default: cparse
+
+      --with-pdt-cxxparse=PDTCXXPARSE
+                              give the command for PDT C++ source code parser,
+                              default: cxxparse
+
+      --with-pdt-fparse=PDTFPARSE
+                              give the command for PDT Fortran source code parser,
+                              default: f95parse, f90parse, or gfparse
+
       --with-papi-dir=PAPIDIR
                               give the path for PAPI, default: /usr
 
@@ -299,15 +326,14 @@ How to install and configure VampirTrace
   -----------------
 
     Building VampirTrace on cross compilation platforms needs some special attention.
-    The compiler wrappers and OPARI are built for the front-end (build system) whereas
-    the VampirTrace libraries, vtdyn, vtunify, and vtfilter are built for the back-end
-    (host system). Some configure options which are of interest for cross compilation
-    are shown below:
+    The compiler wrappers, OPARI, and the Library Wrapper Generator are built for the
+    front-end (build system) whereas  the VampirTrace libraries, vtdyn, vtunify, and
+    vtfilter are built for the back-end (host system). Some configure options which are
+    of interest for cross compilation are shown below:
 
       * Set CC, CXX, F77, and FC to the cross compilers installed on the front-end.
 
-      * Set CXX_FOR_BUILD to the native compiler of the front-end
-        (used to compile compiler wrappers and OPARI only).
+      * Set CC_FOR_BUILD and CXX_FOR_BUILD to the native compilers of the front-end.
 
       * Set --host= to the output of config.guess on the back-end.
 
@@ -321,7 +347,7 @@ How to install and configure VampirTrace
     based front-end:
 
       ./configure CC=sxcc CXX=sxc++ F77=sxf90 FC=sxf90 MPICC=sxmpicc
-          AR=sxar RANLIB="sxar st" CXX_FOR_BUILD=c++
+          AR=sxar RANLIB="sxar st" CC_FOR_BUILD=cc CXX_FOR_BUILD=c++
           --host=sx6-nec-superux14.1
            --with-cross-prefix=sx
            --with-otf-lib=-lotf

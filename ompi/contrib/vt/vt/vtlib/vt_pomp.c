@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -18,6 +18,7 @@
 #include "pomp_lib.h"
 
 #include "vt_defs.h"
+#include "vt_env.h"
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
 #include "vt_pform.h"
@@ -67,7 +68,7 @@ void POMP_Init() {
 	rdesc   = "OMP";
 
         /* -- register file --*/
-        data->fid   = vt_def_scl_file(r->file_name);
+        data->fid   = vt_def_scl_file(VT_CURRENT_THREAD, r->file_name);
         data->begln = r->begin_first_line;
         data->endln = r->end_last_line;
 	data->sbrid = VT_NO_ID;
@@ -75,7 +76,7 @@ void POMP_Init() {
         if (strcmp(r->name, "region") == 0)  {
           rtype = VT_USER_REGION;
           rname = (char*)(r->sub_name);
-	  rdesc   = VT_DEF_GROUP;
+	  rdesc   = VT_DEFAULT_REGION_GROUP;
         } else if (strcmp(r->name, "atomic") == 0) {
           rtype = VT_OMP_ATOMIC;
           rname = "!$omp atomic";
@@ -85,12 +86,12 @@ void POMP_Init() {
         } else if (strcmp(r->name, "critical") == 0) {
           rtype = VT_OMP_CRITICAL;
           rname = "!$omp critical";
-	  sprintf(anno_rname, "%s @%s:%d", "!$omp critical sblock",
+          sprintf(anno_rname, "%s @%s:%d", "!$omp critical sblock",
                 basename((char*)(r->file_name)), r->begin_first_line+1);
-          data->sbrid = vt_def_region(anno_rname,
-				                              data->fid, r->begin_last_line+1,
-                                      r->end_first_line-1, NULL,
-         			                        VT_OMP_CRITICAL_SBLOCK);
+          data->sbrid =
+            vt_def_region(VT_CURRENT_THREAD, anno_rname, data->fid,
+                          r->begin_last_line+1, r->end_first_line-1, NULL,
+                          VT_OMP_CRITICAL_SBLOCK);
         } else if (strcmp(r->name, "do") == 0) {
           rtype = VT_OMP_LOOP;
           rname = "!$omp do";
@@ -103,7 +104,7 @@ void POMP_Init() {
         } else if (strcmp(r->name, "function") == 0)  {
           rtype = VT_FUNCTION;
           rname = (char*)(r->sub_name);
-	  rdesc   = VT_DEF_GROUP;
+	  rdesc   = VT_DEFAULT_REGION_GROUP;
         } else if (strcmp(r->name, "master") == 0) {
           rtype = VT_OMP_MASTER;
           rname = "!$omp master";
@@ -115,38 +116,42 @@ void POMP_Init() {
           rname = "!$omp parallel";
           sprintf(anno_rname, "%s @%s:%d", "!$omp do",
                 basename((char*)(r->file_name)), r->begin_first_line);
-          data->sbrid = vt_def_region(anno_rname, data->fid, data->begln,
-				                              data->endln, NULL, VT_OMP_LOOP);
+          data->sbrid =
+            vt_def_region(VT_CURRENT_THREAD, anno_rname, data->fid, data->begln,
+                          data->endln, NULL, VT_OMP_LOOP);
         } else if (strcmp(r->name, "parallelfor") == 0)  {
           rtype = VT_OMP_PARALLEL;
           rname = "!$omp parallel";
           sprintf(anno_rname, "%s @%s:%d", "!$omp for",
                 basename((char*)(r->file_name)), r->begin_first_line);
-          data->sbrid = vt_def_region(anno_rname, data->fid, data->begln,
-                                      data->endln, NULL, VT_OMP_LOOP);
+          data->sbrid =
+            vt_def_region(VT_CURRENT_THREAD, anno_rname, data->fid, data->begln,
+                          data->endln, NULL, VT_OMP_LOOP);
         } else if (strcmp(r->name, "parallelsections") == 0)  {
           rtype = VT_OMP_PARALLEL;
           rname = "!$omp parallel";
           sprintf(anno_rname, "%s @%s:%d", "!$omp sections",
                 basename((char*)(r->file_name)), r->begin_first_line);
-          data->sbrid = vt_def_region(anno_rname, data->fid, data->begln,
-                                      data->endln, NULL, VT_OMP_SECTIONS);
+          data->sbrid =
+            vt_def_region(VT_CURRENT_THREAD, anno_rname, data->fid, data->begln,
+                          data->endln, NULL, VT_OMP_SECTIONS);
         } else if (strcmp(r->name, "parallelworkshare") == 0)  {
           rtype = VT_OMP_PARALLEL;
           rname = "!$omp parallel";
           sprintf(anno_rname, "%s @%s:%d", "!$omp workshare",
                 basename((char*)(r->file_name)), r->begin_first_line);
-          data->sbrid = vt_def_region(anno_rname, data->fid, data->begln,
-                                      data->endln, NULL, VT_OMP_WORKSHARE);
+          data->sbrid =
+            vt_def_region(VT_CURRENT_THREAD, anno_rname, data->fid, data->begln,
+                          data->endln, NULL, VT_OMP_WORKSHARE);
         } else if (strcmp(r->name, "sections") == 0) {
           rtype = VT_OMP_SECTIONS;
           rname = "!$omp sections";
           sprintf(anno_rname, "%s @%s:%d", "!$omp section",
                 basename((char*)(r->file_name)), r->begin_last_line);
-          data->sbrid = vt_def_region(anno_rname,
-				                              data->fid, r->begin_last_line,
-				                              r->end_first_line, NULL,
-				                              VT_OMP_SECTION);
+          data->sbrid =
+            vt_def_region(VT_CURRENT_THREAD, anno_rname, data->fid,
+                          r->begin_last_line, r->end_first_line, NULL,
+                          VT_OMP_SECTION);
         } else if (strcmp(r->name, "section") == 0) {
           /* NOT DEFINED BY POMP YET */
           /* rtype = VT_OMP_SECTION; */
@@ -156,10 +161,10 @@ void POMP_Init() {
           rname = "!$omp single";
           sprintf(anno_rname, "%s @%s:%d", "!$omp single sblock",
                 basename((char*)(r->file_name)), r->begin_last_line+1);
-          data->sbrid = vt_def_region(anno_rname,
-				                              data->fid, r->begin_last_line+1,
-				                              r->end_first_line-1, NULL,
-				                              VT_OMP_SINGLE_SBLOCK);
+          data->sbrid =
+            vt_def_region(VT_CURRENT_THREAD, anno_rname, data->fid,
+                          r->begin_last_line+1, r->end_first_line-1, NULL,
+                          VT_OMP_SINGLE_SBLOCK);
         } else if (strcmp(r->name, "workshare") == 0) {
           rtype = VT_OMP_WORKSHARE;
           rname = "!$omp workshare";
@@ -175,8 +180,8 @@ void POMP_Init() {
         }
 
         /* -- register region -- */
-        data->rid = vt_def_region(rname, data->fid, data->begln,
-                                  data->endln, NULL, rtype);
+        data->rid = vt_def_region(VT_CURRENT_THREAD, rname, data->fid,
+                                  data->begln, data->endln, NULL, rtype);
 
         if (rtype == VT_OMP_PARALLEL ||
             rtype == VT_OMP_LOOP     ||
@@ -187,15 +192,15 @@ void POMP_Init() {
           rname = "!$omp ibarrier";
           sprintf(anno_rname, "%s @%s:%d", rname,
                 basename((char*)(r->file_name)), r->end_last_line);
-          data->brid = vt_def_region(anno_rname,
-				                             data->fid, data->endln, data->endln,
-				                             NULL, VT_OMP_IBARRIER);
+          data->brid =
+            vt_def_region(VT_CURRENT_THREAD, anno_rname, data->fid, data->endln,
+                          data->endln, NULL, VT_OMP_IBARRIER);
         } else
           data->brid = VT_NO_ID;
       }
     }
     pomp_initialized = 1;
-    pomp_tracing = 1;
+    pomp_tracing = vt_env_omptrace();
   }
 }
 
@@ -217,7 +222,7 @@ void POMP_Begin(struct ompregdescr* r) {
   {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, data->rid);
+    vt_enter(VT_CURRENT_THREAD, &time, data->rid);
   }
 }
 
@@ -228,7 +233,7 @@ void POMP_End(struct ompregdescr* r) {
   {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
   if ( data->rid == main_rid ) POMP_Finalize();
 }
@@ -258,13 +263,7 @@ void POMP_Flush_exit(struct ompregdescr* r) {
 }
 
 void POMP_Critical_begin(struct ompregdescr* r) {
-  if ( IS_POMP_TRACE_ON ) {
-    struct VTRegDescr* data;
-    uint64_t time;
-    data = (struct VTRegDescr*)(r->data);
-    time = vt_pform_wtime();
-    vt_enter(&time, data->sbrid);
-  }
+  GUARDED_ENTER(sbrid);
 }
 
 void POMP_Critical_end(struct ompregdescr* r) {
@@ -296,63 +295,58 @@ void POMP_Master_end(struct ompregdescr* r) {
 }
 
 void POMP_Parallel_begin(struct ompregdescr* r) {
-  if ( IS_POMP_TRACE_ON ) {
-    struct VTRegDescr* data;
-    uint64_t time;
-    data = (struct VTRegDescr*)(r->data);
-    time = vt_pform_wtime();
-    vt_omp_parallel_begin();
-    vt_enter(&time, data->rid);
-  }
+  vt_omp_parallel_begin(VT_CURRENT_THREAD);
+
+  GUARDED_ENTER(rid);
 }
 
 void POMP_Parallel_begin2(struct ompregdescr* r, int* p) {
-  if ( IS_POMP_TRACE_ON ) {
-    struct VTRegDescr* data;
-    uint64_t time;
-    data = (struct VTRegDescr*)(r->data);
-    time = vt_pform_wtime();
-    /* actually, the parent thread ID should never be -1 */
-    if( *p == -1 )
-      vt_omp_parallel_begin();
-    else
-      vt_omp_parallel_begin2((uint32_t)*p);
-    vt_enter(&time, data->rid);
-  }
+  /* actually, the parent thread ID should never be -1 */
+  if( *p == -1 )
+    vt_omp_parallel_begin(VT_CURRENT_THREAD);
+  else
+    vt_omp_parallel_begin2(VT_CURRENT_THREAD, (uint32_t)*p);
+
+  GUARDED_ENTER(rid);
 }
 
 void POMP_Parallel_end(struct ompregdescr* r) {
-  if ( IS_POMP_TRACE_ON ) {
-    uint64_t time;
-    time = vt_pform_wtime();
-    vt_exit(&time);
-    vt_omp_parallel_end();
-  }
+  GUARDED_EXIT();
+
+  vt_omp_parallel_end(VT_CURRENT_THREAD);
 }
 
 void POMP_Parallel_fork(struct ompregdescr* r) {
   if ( !pomp_initialized ) POMP_Init();
+
+  vt_omp_fork(VT_CURRENT_THREAD);
+
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_omp_fork(&time);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_trc_regid[VT__TRC_OMPPREG]);
   }
 }
 
 void POMP_Parallel_fork2(struct ompregdescr* r, int* p) {
   if ( !pomp_initialized ) POMP_Init();
+
+  vt_omp_fork2(VT_CURRENT_THREAD, (uint32_t*)p);
+
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_omp_fork2(&time, (uint32_t*)p);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_trc_regid[VT__TRC_OMPPREG]);
   }
 }
 
 void POMP_Parallel_join(struct ompregdescr* r) {
+  vt_omp_join(VT_CURRENT_THREAD);
+
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_omp_join(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
 }
 
@@ -406,10 +400,10 @@ void POMP_Init_lock(omp_lock_t *s) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_INIT_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_INIT_LOCK]);
     omp_init_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_init_lock(s);
   }
@@ -419,10 +413,10 @@ void POMP_Destroy_lock(omp_lock_t *s) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_DESTROY_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_DESTROY_LOCK]);
     omp_destroy_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_destroy_lock(s);
   }
@@ -432,10 +426,10 @@ void POMP_Set_lock(omp_lock_t *s) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_SET_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_SET_LOCK]);
     omp_set_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_set_lock(s);
   }
@@ -445,10 +439,10 @@ void POMP_Unset_lock(omp_lock_t *s) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_UNSET_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_UNSET_LOCK]);
     omp_unset_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_unset_lock(s);
   }
@@ -459,10 +453,10 @@ int  POMP_Test_lock(omp_lock_t *s) {
     int result;
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_TEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_TEST_LOCK]);
     result = omp_test_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
     return result;     
   } else {
     return omp_test_lock(s);
@@ -473,10 +467,10 @@ void POMP_Init_nest_lock(omp_nest_lock_t *s) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_INIT_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_INIT_NEST_LOCK]);
     omp_init_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_init_nest_lock(s);
   }
@@ -486,10 +480,10 @@ void POMP_Destroy_nest_lock(omp_nest_lock_t *s) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_DESTROY_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_DESTROY_NEST_LOCK]);
     omp_destroy_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_destroy_nest_lock(s);
   }
@@ -499,10 +493,10 @@ void POMP_Set_nest_lock(omp_nest_lock_t *s) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_SET_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_SET_NEST_LOCK]);
     omp_set_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_set_nest_lock(s);
   }
@@ -512,10 +506,10 @@ void POMP_Unset_nest_lock(omp_nest_lock_t *s) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_UNSET_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_UNSET_NEST_LOCK]);
     omp_unset_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_unset_nest_lock(s);
   }
@@ -526,10 +520,10 @@ int POMP_Test_nest_lock(omp_nest_lock_t *s) {
     int result;
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_TEST_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_TEST_NEST_LOCK]);
     result = omp_test_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
     return result;
   } else {
     return omp_test_nest_lock(s);
@@ -546,10 +540,10 @@ VT_DECLDEF(void POMP_Init_lock_f(omp_lock_t *s)) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_INIT_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_INIT_LOCK]);
     omp_init_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_init_lock(s);
   }
@@ -562,10 +556,10 @@ VT_DECLDEF(void POMP_Destroy_lock_f(omp_lock_t *s)) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_DESTROY_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_DESTROY_LOCK]);
     omp_destroy_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_destroy_lock(s);
   }
@@ -578,10 +572,10 @@ VT_DECLDEF(void POMP_Set_lock_f(omp_lock_t *s)) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_SET_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_SET_LOCK]);
     omp_set_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_set_lock(s);
   }
@@ -594,10 +588,10 @@ VT_DECLDEF(void POMP_Unset_lock_f(omp_lock_t *s)) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_UNSET_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_UNSET_LOCK]);
     omp_unset_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_unset_lock(s);
   }
@@ -611,10 +605,10 @@ VT_DECLDEF(int POMP_Test_lock_f(omp_lock_t *s)) {
     int result;
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_TEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_TEST_LOCK]);
     result = omp_test_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
     return result;     
   } else {
     return omp_test_lock(s);
@@ -629,10 +623,10 @@ VT_DECLDEF(void POMP_Init_nest_lock_f(omp_nest_lock_t *s)) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_INIT_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_INIT_NEST_LOCK]);
     omp_init_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_init_nest_lock(s);
   }
@@ -645,10 +639,10 @@ VT_DECLDEF(void POMP_Destroy_nest_lock_f(omp_nest_lock_t *s)) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_DESTROY_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_DESTROY_NEST_LOCK]);
     omp_destroy_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_destroy_nest_lock(s);
   }
@@ -661,10 +655,10 @@ VT_DECLDEF(void POMP_Set_nest_lock_f(omp_nest_lock_t *s)) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_SET_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_SET_NEST_LOCK]);
     omp_set_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_set_nest_lock(s);
   }
@@ -677,10 +671,10 @@ VT_DECLDEF(void POMP_Unset_nest_lock_f(omp_nest_lock_t *s)) {
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_UNSET_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_UNSET_NEST_LOCK]);
     omp_unset_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   } else {
     omp_unset_nest_lock(s);
   }
@@ -694,10 +688,10 @@ VT_DECLDEF(int POMP_Test_nest_lock_f(omp_nest_lock_t *s)) {
     int result;
     uint64_t time;
     time = vt_pform_wtime();
-    vt_enter(&time, vt_omp_regid[VT__OMP_TEST_NEST_LOCK]);
+    vt_enter(VT_CURRENT_THREAD, &time, vt_omp_regid[VT__OMP_TEST_NEST_LOCK]);
     result = omp_test_nest_lock(s);
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
     return result;
   } else {
     return omp_test_nest_lock(s);

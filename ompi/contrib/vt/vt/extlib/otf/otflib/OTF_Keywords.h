@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -14,6 +14,8 @@
 
 #ifndef OTF_KEYWORDS_H
 #define OTF_KEYWORDS_H
+
+#include "OTF_KeyValue.h"
 
 /* 
 
@@ -67,6 +69,14 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_S_DEFPROCESSGROUP 			"PG"
 #define OTF_KEYWORD_F_DEFPROCESSGROUP 			'P'
 
+#define OTF_KEYWORD_L_DEFATTRLIST			"ATTRIBUTELIST"
+#define OTF_KEYWORD_S_DEFATTRLIST			"A"
+#define OTF_KEYWORD_F_DEFATTRLIST			'A'
+
+#define OTF_KEYWORD_L_DEFPROCESSORGROUPATTR		"PROCESSORGROUPATTR"
+#define OTF_KEYWORD_S_DEFPROCESSORGROUPATTR		"PGA"
+#define OTF_KEYWORD_F_DEFPROCESSORGROUPATTR		'P'
+
 #define OTF_KEYWORD_L_DEFFUNCTION 				"FUNCTION"
 #define OTF_KEYWORD_S_DEFFUNCTION 				"F"
 #define OTF_KEYWORD_F_DEFFUNCTION 				'F'
@@ -115,9 +125,23 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_S_DEFFILEGROUP 				"FLG"
 #define OTF_KEYWORD_F_DEFFILEGROUP 				'F'
 
+#define OTF_KEYWORD_L_DEFKEYVALUE 				"KEYVALUE"
+#define OTF_KEYWORD_S_DEFKEYVALUE 				"K"
+#define OTF_KEYWORD_F_DEFKEYVALUE 				'K'
+
+#define OTF_KEYWORD_L_DEFTIMERANGE		"TIMERANGE"
+#define OTF_KEYWORD_S_DEFTIMERANGE		"TRG"
+#define OTF_KEYWORD_F_DEFTIMERANGE		'T'
+
+#define OTF_KEYWORD_L_DEFCOUNTERASSIGNMENTS		"COUNTERASSIGNMENTS"
+#define OTF_KEYWORD_S_DEFCOUNTERASSIGNMENTS		"CA"
+#define OTF_KEYWORD_F_DEFCOUNTERASSIGNMENTS		'C'
 
 /* *** event record keywords *** */
 
+#define OTF_KEYWORD_L_NOOP 					"NOOP"
+#define OTF_KEYWORD_S_NOOP 					"N"
+#define OTF_KEYWORD_F_NOOP 					'N'
 
 #define OTF_KEYWORD_L_ENTER 					"ENTER"
 #define OTF_KEYWORD_S_ENTER 					"E"
@@ -183,14 +207,24 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_S_ENDCOLLECTIVEOPERATION 			"COPE"
 #define OTF_KEYWORD_F_ENDCOLLECTIVEOPERATION 			'C'
 
-#define OTF_KEYWORD_L_BEGINFILEOPERATION			"FILEOPBEGIN"
-#define OTF_KEYWORD_S_BEGINFILEOPERATION			"FB"
-#define OTF_KEYWORD_F_BEGINFILEOPERATION			'F'
+/* the OLD/NEW thing for begin as well to make begin and end handled the same */
 
-#define OTF_KEYWORD_L_ENDFILEOPERATION				"FILEOPEND"
-#define OTF_KEYWORD_S_ENDFILEOPERATION				"FE"
-#define OTF_KEYWORD_F_ENDFILEOPERATION				'F'
+#define OTF_KEYWORD_L_BEGINFILEOPERATION_OLD			"FILEOPBEGIN"
+#define OTF_KEYWORD_S_BEGINFILEOPERATION_OLD			"FB"
+#define OTF_KEYWORD_F_BEGINFILEOPERATION_OLD			'F'
 
+#define OTF_KEYWORD_L_BEGINFILEOPERATION_NEW			"FILEOPBEGINNEW"
+#define OTF_KEYWORD_S_BEGINFILEOPERATION_NEW			"FA"
+#define OTF_KEYWORD_F_BEGINFILEOPERATION_NEW			'F'
+
+/* the OLD/NEW thing fixes upward compatibility after changing the record contents */
+#define OTF_KEYWORD_L_ENDFILEOPERATION_OLD				"FILEOPEND"
+#define OTF_KEYWORD_S_ENDFILEOPERATION_OLD				"FE"
+#define OTF_KEYWORD_F_ENDFILEOPERATION_OLD				'F'
+
+#define OTF_KEYWORD_L_ENDFILEOPERATION_NEW				"FILEOPENDNEW"
+#define OTF_KEYWORD_S_ENDFILEOPERATION_NEW				"FF"
+#define OTF_KEYWORD_F_ENDFILEOPERATION_NEW				'F'
 
 /* *** summary record keywords *** */
 
@@ -257,6 +291,13 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_S_SNAPSHOT_OPENFILE			"OF"
 #define OTF_KEYWORD_F_SNAPSHOT_OPENFILE			'O'
 
+#define OTF_KEYWORD_L_SNAPSHOT_BEGINCOLLOP      "BEGINCOLLOP"
+#define OTF_KEYWORD_S_SNAPSHOT_BEGINCOLLOP      "BC"
+#define OTF_KEYWORD_F_SNAPSHOT_BEGINCOLLOP      'B'
+
+#define OTF_KEYWORD_L_SNAPSHOT_BEGINFILEOP      "BEGINFILEOP"
+#define OTF_KEYWORD_S_SNAPSHOT_BEGINFILEOP      "BF"
+#define OTF_KEYWORD_F_SNAPSHOT_BEGINFILEOP      'B'
 
 /* *** marker keywords */
 
@@ -274,6 +315,10 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_F_MARKER_MARKERSPOT			'S'
 
 
+/* *** keyvalue keywords *** */
+#define OTF_KEYWORD_L_KEYVALUE_PREFIX			"KEY"
+#define OTF_KEYWORD_S_KEYVALUE_PREFIX			"K"
+#define OTF_KEYWORD_F_KEYVALUE_PREFIX			'K'
 
 
 /* *** local keywords *** */
@@ -320,6 +365,9 @@ the keywords identifying record types must follow some special rules:
 
 #define OTF_KEYWORD_L_LOCAL_LINE				"LINE"
 #define OTF_KEYWORD_S_LOCAL_LINE				"LN"
+
+#define OTF_KEYWORD_L_LOCAL_MATCHID	    	    "MATCHID"
+#define OTF_KEYWORD_S_LOCAL_MATCHID             "MI"
 
 #define OTF_KEYWORD_L_LOCAL_MEMBERS				"MEMBERS"
 #define OTF_KEYWORD_S_LOCAL_MEMBERS				"M"

@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;OTF_DEBUG;OTF_VERBOSE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;OTF_DEBUG;OTF_VERBOSE;HAVE_SYS_STAT_H"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -107,7 +107,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;OTF_DEBUG;OTF_VERBOSE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;OTF_DEBUG;OTF_VERBOSE;HAVE_SYS_STAT_H"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -171,7 +171,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;HAVE_SYS_STAT_H"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -234,7 +234,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;HAVE_SYS_STAT_H"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -309,6 +309,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OTF_Handler.h"
+				>
+			</File>
+			<File
 				RelativePath=".\OTF_HandlerArray.h"
 				>
 			</File>
@@ -318,6 +322,10 @@
 			</File>
 			<File
 				RelativePath=".\OTF_inttypes_win.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OTF_KeyValue.h"
 				>
 			</File>
 			<File
@@ -385,6 +393,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OTF_CopyHandler_stream.c"
+				>
+			</File>
+			<File
 				RelativePath=".\OTF_Errno.c"
 				>
 			</File>
@@ -406,6 +418,10 @@
 			</File>
 			<File
 				RelativePath=".\OTF_inttypes.c"
+				>
+			</File>
+			<File
+				RelativePath=".\OTF_KeyValue.c"
 				>
 			</File>
 			<File

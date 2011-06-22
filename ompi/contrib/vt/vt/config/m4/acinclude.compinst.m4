@@ -3,6 +3,7 @@ AC_DEFUN([ACVT_COMPINST],
 	compinst_error="no"
 	check_compinst="yes"
 	force_compinst="no"
+	have_compinst="no"
 
 	compinst_type=
 	compinst_cflags=
@@ -35,10 +36,10 @@ AC_DEFUN([ACVT_COMPINST],
 	compinst_xl_fflags="$compinst_xl_cflags"
 	compinst_xl_fcflags="$compinst_xl_cflags"
 
-	compinst_nec_cflags="-ftrace"
-	compinst_nec_cxxflags="$compinst_nec_cflags"
-	compinst_nec_fflags="$compinst_nec_cflags"
-	compinst_nec_fcflags="$compinst_nec_cflags"
+	compinst_necsx_cflags="-ftrace"
+	compinst_necsx_cxxflags="$compinst_necsx_cflags"
+	compinst_necsx_fflags="$compinst_necsx_cflags"
+	compinst_necsx_fcflags="$compinst_necsx_cflags"
 
 	compinst_openuh_cflags="-fb_create inst -fb_type=1 -fb_phase=0 -epilog -OPT:instr_proc"
 	compinst_openuh_cxxflags="$compinst_openuh_cflags"
@@ -49,7 +50,7 @@ AC_DEFUN([ACVT_COMPINST],
 
 	AC_ARG_ENABLE(compinst,
 		AC_HELP_STRING([--enable-compinst=TYPE],
-			[enable support for compiler instrumentation (gnu,intel,pathscale,pgi,pgi9,sun,xl,nec,openuh), default: automatically by configure]),
+			[enable support for compiler instrumentation (gnu,intel,pathscale,pgi,pgi9,sun,xl,necsx,openuh), default: automatically by configure]),
 	[AS_IF([test x"$enableval" = "xno"], [check_compinst="no"], [enable_compinst="$enableval"])])
 
 	AS_IF([test x"$check_compinst" = "xyes"],
@@ -79,8 +80,8 @@ AC_DEFUN([ACVT_COMPINST],
 				xl)
 					compinst_type="xl"
 					;;
-				nec)	
-					compinst_type="nec"
+				necsx)	
+					compinst_type="necsx"
 					;;
 				openuh)
 					compinst_type="openuh"
@@ -106,7 +107,7 @@ AC_DEFUN([ACVT_COMPINST],
 					],
 					[
 						AC_MSG_RESULT([unknown])
-						AC_MSG_NOTICE([error: the version of the Intel compiler ($compver) doesn't support instrumentation!])
+						AC_MSG_NOTICE([error: the version of the Intel compiler ($compver) doesn't support instrumentation])
 						compinst_error="yes"
 					])
 					;;
@@ -121,7 +122,7 @@ AC_DEFUN([ACVT_COMPINST],
 					],
 					[
 						AC_MSG_RESULT([unknown])
-						AC_MSG_NOTICE([error: the version of the Pathscale compiler ($compver) doesn't support instrumentation!])
+						AC_MSG_NOTICE([error: the version of the PathScale compiler ($compver) doesn't support instrumentation])
 						compinst_error="yes"
 					])
 					;;
@@ -152,7 +153,7 @@ AC_DEFUN([ACVT_COMPINST],
 					AC_MSG_RESULT([sun])
 					;;
 				cc*)
-					AS_IF([test "$PLATFORM" = "crayxt"],
+					AS_IF([test "$PLATFORM" = "crayxt" -o "$PLATFORM" = "crayxe"],
 					[
 						for f in -V --version; do
 							case `$CC $f 2>&1` in
@@ -199,13 +200,13 @@ AC_DEFUN([ACVT_COMPINST],
 					],
 					[
 						AC_MSG_RESULT([unknown])
-						AC_MSG_NOTICE([error: the version of the OpenUH compiler ($compver) doesn't support instrumentation!])
+						AC_MSG_NOTICE([error: the version of the OpenUH compiler ($compver) doesn't support instrumentation])
 						compinst_error="yes"
 					])
 					;;
 				sxcc*)
-					compinst_type="nec"
-					AC_MSG_RESULT([nec])
+					compinst_type="necsx"
+					AC_MSG_RESULT([necsx])
 					;;
 				*)
 					;;
@@ -214,7 +215,7 @@ AC_DEFUN([ACVT_COMPINST],
 			AS_IF([test x"$compinst_error" = "xno" -a x"$compinst_type" = x],
 			[
 				AC_MSG_RESULT([unknown])
-				AC_MSG_NOTICE([error: the compiler '$base_CC' doesn't support instrumentation!])
+				AC_MSG_NOTICE([error: the compiler '$base_CC' doesn't support instrumentation])
 				compinst_error="yes"
 			])
 		])
@@ -223,13 +224,14 @@ AC_DEFUN([ACVT_COMPINST],
 		[
 			AS_IF([test x"$compinst_type" = "xgnu" -o x"$compinst_type" = "xpgi9"],
 			[
-				ACVT_NM
 				ACVT_DL
 			])
 		])
 
 		AS_IF([test x"$compinst_error" = "xno" -a x"$compinst_type" != x],
 		[
+			have_compinst="yes"
+
 			case $compinst_type in
 				gnu)
 					compinst_cflags=$compinst_gnu_cflags
@@ -261,11 +263,11 @@ AC_DEFUN([ACVT_COMPINST],
 					compinst_fflags=$compinst_xl_fflags
 					compinst_fcflags=$compinst_xl_fcflags
 					;;
-				nec)
-					compinst_cflags=$compinst_nec_cflags
-					compinst_cxxflags=$compinst_nec_cxxflags
-					compinst_fflags=$compinst_nec_fflags
-					compinst_fcflags=$compinst_nec_fcflags
+				necsx)
+					compinst_cflags=$compinst_necsx_cflags
+					compinst_cxxflags=$compinst_necsx_cxxflags
+					compinst_fflags=$compinst_necsx_fflags
+					compinst_fcflags=$compinst_necsx_fcflags
 					;;
 				openuh)
 					compinst_cflags=$compinst_openuh_cflags

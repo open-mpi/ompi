@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -19,9 +19,7 @@
 #   define EXTERN extern
 #endif
 
-#include <stdlib.h>
-#include <string.h>
-
+/* define all possible Fortran bindings for a function */
 #define VT_GENERATE_F77_BINDINGS(lower_case, \
                                  upper_case, \
                                  wrapper_function, \
@@ -36,7 +34,10 @@
   void upper_case signature; \
   void upper_case signature { wrapper_function params; }
 
-EXTERN void vt_string_f2c(char* fstr, int len, char** cstr);
-EXTERN void vt_string_c2f(char* cstr, char* fstr, int len);
+/* create a C string from an F77 string (allocates *cstr if NULL) */
+EXTERN void vt_string_f2c(const char* fstr, int len, char** cstr);
 
-#endif
+/* create a F77 string from a C string */
+EXTERN void vt_string_c2f(const char* cstr, char* fstr, int len);
+
+#endif /* _VT_FBINDINGS_H */

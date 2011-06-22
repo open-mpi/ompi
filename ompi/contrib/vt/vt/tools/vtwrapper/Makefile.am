@@ -4,33 +4,54 @@ if AMBUILDBINARIES
 
 bin_PROGRAMS = @CROSS_PREFIX@vtwrapper
 
-install-exec-hook-always:
-	(cd $(DESTDIR)$(bindir); \
-	rm -f @CROSS_PREFIX@vtcc$(EXEEXT); rm -f @CROSS_PREFIX@vtc++$(EXEEXT); \
-	rm -f @CROSS_PREFIX@vtcxx$(EXEEXT); rm -f @CROSS_PREFIX@vtf77$(EXEEXT); \
-	rm -f @CROSS_PREFIX@vtf90$(EXEEXT); \
-	$(LN_S) @CROSS_PREFIX@vtwrapper$(EXEEXT) @CROSS_PREFIX@vtcc$(EXEEXT); \
-	$(LN_S) @CROSS_PREFIX@vtwrapper$(EXEEXT) @CROSS_PREFIX@vtc++$(EXEEXT); \
-	$(LN_S) @CROSS_PREFIX@vtwrapper$(EXEEXT) @CROSS_PREFIX@vtcxx$(EXEEXT); \
-	$(LN_S) @CROSS_PREFIX@vtwrapper$(EXEEXT) @CROSS_PREFIX@vtf77$(EXEEXT); \
-	$(LN_S) @CROSS_PREFIX@vtwrapper$(EXEEXT) @CROSS_PREFIX@vtf90$(EXEEXT))
-
 if AMHAVECSFS
-install-exec-hook: install-exec-hook-always
+bin_LINK_vtCC = @CROSS_PREFIX@vtCC$(EXEEXT)
+else
+bin_LINK_vtCC =
+endif
+
+if AMBUILDVTNVCC
+bin_LINK_vtnvcc = @CROSS_PREFIX@vtnvcc$(EXEEXT)
+else
+bin_LINK_vtnvcc =
+endif
+
+bin_LINKS = \
+	@CROSS_PREFIX@vtcc$(EXEEXT) \
+	@CROSS_PREFIX@vtc++$(EXEEXT) \
+	@CROSS_PREFIX@vtcxx$(EXEEXT) \
+	$(bin_LINK_vtCC) \
+	@CROSS_PREFIX@vtf77$(EXEEXT) \
+	@CROSS_PREFIX@vtf90$(EXEEXT) \
+	$(bin_LINK_vtnvcc)
+
+install-exec-hook:
 	(cd $(DESTDIR)$(bindir); \
-	rm -f @CROSS_PREFIX@vtCC$(EXEEXT); \
-	$(LN_S) @CROSS_PREFIX@vtwrapper$(EXEEXT) @CROSS_PREFIX@vtCC$(EXEEXT))
-else # AMHAVECSFS
-install-exec-hook: install-exec-hook-always
-endif # AMHAVECSFS
+	for l in $(bin_LINKS); do \
+		rm -f $$l; $(LN_S) @CROSS_PREFIX@vtwrapper$(EXEEXT) $$l; \
+	done)
 
 endif # AMBUILDBINARIES
+
+if AMBUILDVTNVCC
+vtdata_DATA_vtnvcc = @CROSS_PREFIX@vtnvcc-wrapper-data.txt
+else
+vtdata_DATA_vtnvcc =
+endif
+
+if AMHAVETAUINST
+vtdata_DATA_tauinst_spec = TAUINST.SPEC
+else
+vtdata_DATA_tauinst_spec =
+endif
 
 vtdata_DATA = \
 	@CROSS_PREFIX@vtcc-wrapper-data.txt \
 	@CROSS_PREFIX@vtc++-wrapper-data.txt \
 	@CROSS_PREFIX@vtf77-wrapper-data.txt \
-	@CROSS_PREFIX@vtf90-wrapper-data.txt
+	@CROSS_PREFIX@vtf90-wrapper-data.txt \
+	$(vtdata_DATA_vtnvcc) \
+	$(vtdata_DATA_tauinst_spec)
 vtdatadir = $(datadir)
 
 install-data-hook-always:
@@ -39,69 +60,84 @@ install-data-hook-always:
 	$(LN_S) @CROSS_PREFIX@vtc++-wrapper-data.txt @CROSS_PREFIX@vtcxx-wrapper-data.txt)
 
 if AMHAVECSFS
-install-data-hook: install-data-hook-always
+install-data-hook-1:
 	(cd $(DESTDIR)$(datadir); \
 	rm -f @CROSS_PREFIX@vtCC-wrapper-data.txt; \
 	$(LN_S) @CROSS_PREFIX@vtc++-wrapper-data.txt @CROSS_PREFIX@vtCC-wrapper-data.txt)
 else # AMHAVECSFS
-install-data-hook: install-data-hook-always
+install-data-hook-1:
 endif # AMHAVECSFS
+
+if AMMACOS
+install-data-hook-2:
+	cp $(srcdir)/TAUINST_MACOS.SPEC $(DESTDIR)$(datadir)/TAUINST.SPEC
+else # AMMACOS
+install-data-hook-2:
+endif # AMMACOS
+
+install-data-hook: install-data-hook-always install-data-hook-1 install-data-hook-2
 
 if AMHAVEF77
 HAVEF77CXXFLAGS = -DHAVE_F77
-else
+else # AMHAVEF77
 HAVEF77CXXFLAGS =
-endif
+endif # AMHAVEF77
 
 if AMHAVEF90
 HAVEF90CXXFLAGS = -DHAVE_F90
-else
+else # AMHAVEF90
 HAVEF90CXXFLAGS =
-endif
+endif # AMHAVEF90
 
 if AMHAVEMPI
 HAVEMPICXXFLAGS = -DHAVE_MPI
-else
+else # AMHAVEMPI
 HAVEMPICXXFLAGS =
-endif
+endif # AMHAVEMPI
 
 if AMHAVEFMPI
 HAVEFMPICXXFLAGS = -DHAVE_FMPI
-else
+else # HAVEFMPICXXFLAGS
 HAVEFMPICXXFLAGS =
-endif
+endif # HAVEFMPICXXFLAGS
 
 if AMHAVETHREADS
 HAVETHREADSCXXFLAGS = -DHAVE_THREADS
 if AMHAVEOMP
 HAVEOMPCXXFLAGS = -DHAVE_OMP
-endif
-else
+endif # AMHAVEOMP
+else # AMHAVETHREADS
 HAVETHREADSCXXFLAGS =
 HAVEOMPCXXFLAGS =
-endif
+endif # AMHAVETHREADS
 
 if AMHAVECROSSPREFIX
 @CROSS_PREFIX@vtcc-wrapper-data.txt: vtcc-wrapper-data.txt
-	cp vtcc-wrapper-data.txt @CROSS_PREFIX@vtcc-wrapper-data.txt
+	@cp vtcc-wrapper-data.txt @CROSS_PREFIX@vtcc-wrapper-data.txt
 @CROSS_PREFIX@vtc++-wrapper-data.txt: vtc++-wrapper-data.txt
-	cp vtc++-wrapper-data.txt @CROSS_PREFIX@vtc++-wrapper-data.txt
+	@cp vtc++-wrapper-data.txt @CROSS_PREFIX@vtc++-wrapper-data.txt
 @CROSS_PREFIX@vtf77-wrapper-data.txt: vtf77-wrapper-data.txt
-	cp vtf77-wrapper-data.txt @CROSS_PREFIX@vtf77-wrapper-data.txt
+	@cp vtf77-wrapper-data.txt @CROSS_PREFIX@vtf77-wrapper-data.txt
 @CROSS_PREFIX@vtf90-wrapper-data.txt: vtf90-wrapper-data.txt
-	cp vtf90-wrapper-data.txt @CROSS_PREFIX@vtf90-wrapper-data.txt
+	@cp vtf90-wrapper-data.txt @CROSS_PREFIX@vtf90-wrapper-data.txt
+@CROSS_PREFIX@vtnvcc-wrapper-data.txt: vtnvcc-wrapper-data.txt
+	@cp vtnvcc-wrapper-data.txt @CROSS_PREFIC@vtnvcc-wrapper-data.txt
 
 CROSSPREFIXCLEANFILES = \
 	@CROSS_PREFIX@vtcc-wrapper-data.txt \
 	@CROSS_PREFIX@vtc++-wrapper-data.txt \
 	@CROSS_PREFIX@vtf77-wrapper-data.txt \
-	@CROSS_PREFIX@vtf90-wrapper-data.txt
+	@CROSS_PREFIX@vtf90-wrapper-data.txt \
+	@CROSS_PREFIX@vtnvcc-wrapper-data.txt
 else # AMHAVECROSSPREFIX
 CROSSPREFIXCLEANFILES =
 endif # AMHAVECROSSPREFIX
 
-INCLUDES = -I$(top_srcdir)/util -I$(top_builddir)/util -I$(top_srcdir)/vtlib/
+INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/util -I$(top_builddir)/util
 
+CC = $(CC_FOR_BUILD)
+CFLAGS = $(CFLAGS_FOR_BUILD)
+CPP = $(CPP_FOR_BUILD)
 CXX = $(CXX_FOR_BUILD)
 CXXFLAGS = $(CXXFLAGS_FOR_BUILD)
 CXXCPP = $(CXXCPP_FOR_BUILD)
@@ -124,4 +160,8 @@ LIBS = $(LIBS_FOR_BUILD)
 	$(HAVEOMPCXXFLAGS)
 
 CLEANFILES = $(CROSSPREFIXCLEANFILES)
+
+EXTRA_DIST = \
+	TAUINST.SPEC \
+	TAUINST_MACOS.SPEC
 

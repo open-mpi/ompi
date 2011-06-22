@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -24,6 +24,13 @@
 
 
 #include "OTF_File.h"
+
+#include "OTF_KeyValue.h"
+
+/* *** some macros *** ****************************************** */
+#define PARSE_ERROR( buffer ) \
+	OTF_fprintf( stderr, "parse error in %s() %s:%u : %s\n", \
+		__FUNCTION__, __FILE__, __LINE__, OTF_RBuffer_printRecord( buffer ) );
 
 
 #ifdef __cplusplus
@@ -57,7 +64,8 @@ struct struct_OTF_RBuffer {
 		read into buffer. */
 	uint32_t jumpsize;
 
-	/**	Array which hold the members of a DEFPROCESSGROUP record */
+	/**	Array which hold the members of a DEFPROCESSGROUP record
+		or the list of attributes of a DEFATTRLIST record. */
 	uint32_t* array;
 	
 	/**	Current size of array. */
@@ -86,6 +94,8 @@ struct struct_OTF_RBuffer {
 		Determined by internal function OTF_RBuffer_getFileProperties(). */
 	uint64_t lastTime;
 	
+	OTF_KeyValueList* list;
+	
 #ifdef HAVE_ZLIB
 	/** Default size of zbuffers managed by this buffer. */
 	uint32_t zbuffersize;
@@ -97,8 +107,13 @@ typedef struct struct_OTF_RBuffer OTF_RBuffer;
 /**	constructor - internal use only */
 OTF_RBuffer* OTF_RBuffer_open( const char* filename, OTF_FileManager* manager );
 
+/**	constructor - internal use only -- special version with a memory buffer to read from 
+instead of an input file, either compressed or uncompressed */
+OTF_RBuffer* OTF_RBuffer_open_with_external_buffer( uint32_t len, const char* buffer, uint8_t is_compressed  );
+
 /**	destructor - internal use only */
 int OTF_RBuffer_close( OTF_RBuffer* rbuffer );
+
 
 /**	Set buffer size. Cannot shrink buffer but only extend. */
 int OTF_RBuffer_setSize( OTF_RBuffer* rbuffer, size_t size );
@@ -215,6 +230,15 @@ uint64_t OTF_RBuffer_getFileSize( OTF_RBuffer* rbuffer );
 
 /** Returns the fileposition of the file attached to this buffer */
 uint64_t OTF_RBuffer_getFilePos( OTF_RBuffer* rbuffer );
+
+/**	Read a byte array in hex format from buffer and return the number of
+    bytes read (=lenght of array).
+    If the return value is greater than max_len, there is more to read
+    (this indicates an error in some cases!). */
+uint32_t OTF_RBuffer_readBytes( OTF_RBuffer* rbuffer, uint8_t *array, uint32_t max_len );
+
+/**	Read a KeyValueList from the buffer. Return 1 on success, 0 on error */
+uint32_t OTF_RBuffer_readKeyValueList(OTF_RBuffer* buffer );
 
 #ifdef __cplusplus
 }

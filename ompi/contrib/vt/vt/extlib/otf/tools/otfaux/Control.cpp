@@ -1,8 +1,9 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
+#include <cassert>
 
 #include <iostream>
 using namespace std;
@@ -25,14 +26,14 @@ Control::Control( OTF_Writer* w, bool _verbose, bool _usefunctiongroups,
 
 Control::~Control() {
 
+    delete state;
 
 }
 
 
 /** add time stamp where to generate a snapshot */
 void Control::addTime( uint64_t time ) {
-
-
+ 
 	timestamps.insert( time );
 	
 	nextTime= *( timestamps.begin() );
@@ -41,8 +42,14 @@ void Control::addTime( uint64_t time ) {
 
 uint64_t Control::getLastTime() {
 
+    if ( ! timestamps.empty() ) {
 
-	return *(timestamps.rbegin());
+        return *( timestamps.rbegin() );
+
+    } else {
+
+        return (uint64_t) -1;
+    }
 }
 
 
@@ -54,7 +61,7 @@ double Control::checkTime( uint64_t time ) {
 
 		if ( verbose ) {
 		
-			cout << "[" << time << "]" << endl;
+			cout << hex << "[" << time << "]" << endl;
 		}
 	
 		//state->printStatistics( time );

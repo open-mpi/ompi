@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -22,6 +22,10 @@
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
+
+#if defined(VT_PLUGIN_CNTR)
+# include "vt_plugin_cntr_int.h"
+#endif /* VT_PLUGIN_CNTR */
 
 /* data structure which hold the actual Pthread mutex */
 struct VTThrdMutex_struct
@@ -46,21 +50,17 @@ typedef struct IdleThreadIdListS
 
 static pthread_key_t pthreadKey;
 
-static pthread_mutex_t threadCountMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t threadReuseMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutexInitMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static IdleThreadIdListT* idleThreadIds = NULL;
-
-static uint32_t threadCount  = 1;
-static uint32_t threadMaxNum = 0;
 
 static uint8_t  reuseThreadIds = 0;
 static uint8_t  masterThreadTerminated = 0;
 
 static uint32_t idle_tid_list_size(uint32_t ptid)
 {
-  vt_assert(ptid < threadMaxNum);
+  vt_assert(ptid < VTThrdMaxNum);
   return idleThreadIds[ptid].size;
 }
 
@@ -68,7 +68,7 @@ static void idle_tid_list_push_back(uint32_t ptid, uint32_t tid)
 {
   IdleThreadIdListEntryT* idle_tid;
 
-  vt_assert(ptid < threadMaxNum);
+  vt_assert(ptid < VTThrdMaxNum);
 
   /* create new list entry */
   idle_tid = (IdleThreadIdListEntryT*)calloc(1,
@@ -98,7 +98,7 @@ static uint32_t idle_tid_list_pop_front(uint32_t ptid)
   uint32_t tid;
   IdleThreadIdListEntryT* tmp;
 
-  vt_assert(ptid < threadMaxNum);
+  vt_assert(ptid < VTThrdMaxNum);
   vt_assert(idleThreadIds[ptid].size > 0);
 
   /* get thread-ID from the first list entry */
@@ -126,7 +126,7 @@ static void pthread_key_destructor(void* data)
   if (vt_is_alive && vt_metric_num() > 0 && VTThrdv[tid]->metv)
   {
     /* shut down metrics */
-    vt_metric_free(VTThrdv[tid]->metv);
+    vt_metric_free(VTThrdv[tid]->metv, tid);
     VTThrdv[tid]->metv = NULL;
   }
 #endif /* VT_METR */
@@ -152,6 +152,13 @@ static void pthread_key_destructor(void* data)
       memcpy(VTThrdv[tid]->offv, VTThrdv[tid]->valv,
              vt_metric_num() * sizeof(uint64_t));
 #endif /* VT_METR */
+
+    /* only disable plugin counters, so they can be reused */
+#if defined(VT_PLUGIN_CNTR)
+    /* if we really use plugins and this thread also uses some */
+    if (vt_plugin_cntr_used && VTThrdv[tid]->plugin_cntr_defines)
+      vt_plugin_cntr_thread_disable_counters(VTThrdv[tid]);
+#endif /* VT_PLUGIN_CNTR */
   }
 
   /* free thread-specific data */
@@ -167,14 +174,11 @@ void VTThrd_initPthread()
     uint32_t* master_tid;
     initflag = 0;
 
-    /* get the maximum number of threads */
-    threadMaxNum = (uint32_t)vt_env_max_threads();
-
     /* reuse thread IDs of terminated threads? */
     if ((reuseThreadIds = (uint8_t)vt_env_pthread_reuse()))
     {
       /* create lists for idle thread-IDs */
-      idleThreadIds = (IdleThreadIdListT*)calloc(threadMaxNum,
+      idleThreadIds = (IdleThreadIdListT*)calloc(VTThrdMaxNum,
                         sizeof(IdleThreadIdListT));
       if (idleThreadIds == NULL)
         vt_error();
@@ -226,28 +230,17 @@ void VTThrd_registerThread(uint32_t ptid)
       pthread_mutex_unlock(&threadReuseMutex);
     }
 
-    /* create new thread-ID, if no reusable ID available */
-    if (!tid_reuse)
-    {
-      /* create new thread-ID */
-      pthread_mutex_lock(&threadCountMutex);
-      *tid = threadCount++;
-      pthread_mutex_unlock(&threadCountMutex);
+    if (!tid_reuse) *tid = VTThrd_createNewThreadId();
 
-      /* check upper bound of thread count */
-      if (*tid >= threadMaxNum)
-        vt_error_msg("Cannot create more than %d threads", threadMaxNum);
-    }
-
-    /* put (new) thread-ID to thread-specific data */
+    /* put (new) thread-ID to thread-specific data
+       no IO before this call (fflush calls this function) */
     pthread_setspecific(pthreadKey, tid);
 
     /* create new thread object, if new thread-ID was created */
-    if (!tid_reuse)
-    {
+    if (!tid_reuse){
       vt_cntl_msg(2, "Dynamic thread creation. Thread #%d", *tid);
-      VTThrdv[*tid] = VTThrd_create(*tid, ptid, NULL);
-      VTThrd_open(VTThrdv[*tid], *tid);
+      VTThrd_create(*tid, ptid, NULL, 0);
+      VTThrd_open(*tid);
     }
     /* otherwise, re-create metrics for reused thread object */
     else
@@ -256,8 +249,31 @@ void VTThrd_registerThread(uint32_t ptid)
       if (vt_metric_num() > 0 && !VTThrdv[*tid]->metv)
         VTThrdv[*tid]->metv = vt_metric_create();
 #endif /* VT_METR */
+
+#if defined(VT_PLUGIN_CNTR)
+      /* if we really use plugins and this thread also uses some */
+      if (vt_plugin_cntr_used && VTThrdv[*tid]->plugin_cntr_defines)
+        vt_plugin_cntr_thread_enable_counters(VTThrdv[*tid]);
+#endif /* VT_PLUGIN_CNTR */
     }
   }
+}
+
+uint8_t VTThrd_is_alive()
+{
+  uint32_t *tid;
+
+  /* get thread-ID from thread-specific data */
+  tid = (uint32_t*)pthread_getspecific(pthreadKey);
+
+  /* by calling pthread_exit() in main() the thread-specific data for
+     the master thread can already be destroyed at this point; if this
+     happens return 1 (current thread is alive) */
+
+  if (tid || masterThreadTerminated)
+    return 1;
+  else
+    return 0;
 }
 
 uint32_t VTThrd_getThreadId()
