@@ -451,8 +451,6 @@ char* orte_rmcast_base_print_channel(orte_rmcast_channel_t channel)
     switch(channel) {
     case ORTE_RMCAST_GROUP_INPUT_CHANNEL:
         return "INPUT";
-    case ORTE_RMCAST_DIRECT_CHANNEL:
-        return "DIRECT";
     case ORTE_RMCAST_GROUP_OUTPUT_CHANNEL:
         return "OUTPUT";
     case ORTE_RMCAST_WILDCARD_CHANNEL:
