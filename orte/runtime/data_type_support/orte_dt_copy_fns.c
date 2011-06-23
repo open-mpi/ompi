@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -61,6 +61,7 @@ int orte_dt_copy_name(orte_process_name_t **dest, orte_process_name_t *src, opal
     
     val->jobid = src->jobid;
     val->vpid = src->vpid;
+    val->epoch = src->epoch;
     
     *dest = val;
     return ORTE_SUCCESS;
@@ -93,6 +94,25 @@ int orte_dt_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, opal_data_type_t typ
     orte_vpid_t *val;
     
     val = (orte_vpid_t*)malloc(sizeof(orte_vpid_t));
+    if (NULL == val) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    *val = *src;
+    *dest = val;
+    
+    return ORTE_SUCCESS;
+}
+
+/*
+ * EPOCH
+ */
+int orte_dt_copy_epoch(orte_epoch_t **dest, orte_epoch_t *src, opal_data_type_t type)
+{
+    orte_epoch_t *val;
+    
+    val = (orte_epoch_t*)malloc(sizeof(orte_epoch_t));
     if (NULL == val) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;

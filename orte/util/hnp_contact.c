@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -55,6 +55,7 @@ static void orte_hnp_contact_construct(orte_hnp_contact_t *ptr)
 {
     ptr->name.jobid = ORTE_JOBID_INVALID;
     ptr->name.vpid = ORTE_VPID_INVALID;
+    ptr->name.epoch = ORTE_EPOCH_INVALID;
     ptr->rml_uri = NULL;
 }
 static void orte_hnp_contact_destruct(orte_hnp_contact_t *ptr)

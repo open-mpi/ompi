@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -41,6 +41,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
 #include "orte/util/parse_options.h"
+#include "orte/mca/ess/ess.h"
 
 #include "orte/mca/odls/base/odls_private.h"
 
@@ -185,6 +186,7 @@ int orte_odls_base_open(void)
             if (-1 == rank) {
                 /* wildcard */
                 nm->name.vpid = ORTE_VPID_WILDCARD;
+                nm->name.epoch = ORTE_EPOCH_WILDCARD;
             } else if (rank < 0) {
                 /* error out on bozo case */
                 orte_show_help("help-odls-base.txt",
@@ -197,6 +199,7 @@ int orte_odls_base_open(void)
                  * will be in the job - we'll check later
                  */
                 nm->name.vpid = rank;
+                nm->name.epoch = orte_ess.proc_get_epoch(&nm->name);
             }
             opal_list_append(&orte_odls_globals.xterm_ranks, &nm->item);
         }

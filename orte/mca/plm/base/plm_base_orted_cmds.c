@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -34,6 +34,7 @@
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/runtime/orte_globals.h"
@@ -162,6 +163,8 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
                 continue;
             }
             peer.vpid = v;
+            peer.epoch = orte_ess.proc_get_epoch(&peer);
+            
             /* don't worry about errors on the send here - just
              * issue it and keep going
              */
@@ -238,6 +241,7 @@ int orte_plm_base_orted_terminate_job(orte_jobid_t jobid)
     OBJ_CONSTRUCT(&proc, orte_proc_t);
     proc.name.jobid = jobid;
     proc.name.vpid = ORTE_VPID_WILDCARD;
+    proc.name.epoch  = ORTE_EPOCH_WILDCARD;
     opal_pointer_array_add(&procs, &proc);
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_kill_local_procs(&procs))) {
         ORTE_ERROR_LOG(rc);
@@ -335,6 +339,7 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
                 continue;
             }
             peer.vpid = v;
+            peer.epoch = orte_ess.proc_get_epoch(&peer);
             /* check to see if this daemon is known to be "dead" */
             if (proc->state > ORTE_PROC_STATE_UNTERMINATED) {
                 /* don't try to send this */

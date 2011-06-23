@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -83,6 +83,9 @@ ORTE_DECLSPEC void orte_base_default_waitpid_fired(orte_process_name_t *proc, in
 
 /* setup singleton job data */
 ORTE_DECLSPEC void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid);
+
+/* Lookup function to see if the child process has already finished. */
+ORTE_DECLSPEC bool orte_odls_base_default_check_finished(orte_process_name_t *proc);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

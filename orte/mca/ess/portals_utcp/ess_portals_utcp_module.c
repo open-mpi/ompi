@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -54,6 +54,7 @@ orte_ess_base_module_t orte_ess_portals_utcp_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
+    orte_ess_base_proc_get_epoch,   /* proc_get_epoch */
     NULL,   /* add_pidmap is only used in ORTE */
     NULL,   /* update_nidmap is only used in ORTE */
     query_sys_info,
@@ -91,6 +92,7 @@ static int rte_init(void)
         return(rc);
     }
     ORTE_PROC_MY_NAME->vpid = vpid;
+    ORTE_PROC_MY_NAME->epoch = ORTE_MIN_EPOCH;
     
     /*
      * Get the number of procs in the job.  We assume vpids start at 0.  We
@@ -101,6 +103,10 @@ static int rte_init(void)
     /* split the nidmap string */
     nidmap = opal_argv_split(nidmap_string, ':');
     orte_process_info.num_procs = (orte_std_cntr_t) opal_argv_count(nidmap);
+
+    if (orte_process_info.max_procs < orte_process_info.num_procs) {
+        orte_process_info.max_procs = orte_process_info.num_procs;
+    }
 
     /* MPI_Init needs the grpcomm framework, so we have to init it */
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_open())) {

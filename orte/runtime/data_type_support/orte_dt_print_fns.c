@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -124,6 +124,10 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
         case ORTE_STD_CNTR:
             orte_dt_quick_print(output, "ORTE_STD_CNTR", prefix, src, ORTE_STD_CNTR_T);
             break;
+
+        case ORTE_EPOCH:
+            orte_dt_quick_print(output, "ORTE_EPOCH", prefix, src, ORTE_EPOCH_T);
+
         case ORTE_VPID:
             orte_dt_quick_print(output, "ORTE_VPID", prefix, src, ORTE_VPID_T);
             break;
@@ -474,11 +478,11 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     if (orte_xml_output) {
         /* need to create the output in XML format */
         if (0 == src->pid) {
-            asprintf(output, "%s<process rank=\"%s\" status=\"%s\"/>\n", pfx2,
-                     ORTE_VPID_PRINT(src->name.vpid), orte_proc_state_to_str(src->state));
+            asprintf(output, "%s<process rank=\"%s\" status=\"%s\" epoch=\"%s\"/>\n", pfx2,
+                     ORTE_VPID_PRINT(src->name.vpid), orte_proc_state_to_str(src->state), ORTE_EPOCH_PRINT(src->name.epoch));
         } else {
-            asprintf(output, "%s<process rank=\"%s\" pid=\"%d\" status=\"%s\"/>\n", pfx2,
-                     ORTE_VPID_PRINT(src->name.vpid), (int)src->pid, orte_proc_state_to_str(src->state));
+            asprintf(output, "%s<process rank=\"%s\" pid=\"%d\" status=\"%s\" epoch=\"%s\"/>\n", pfx2,
+                     ORTE_VPID_PRINT(src->name.vpid), (int)src->pid, orte_proc_state_to_str(src->state), ORTE_EPOCH_PRINT(src->name.epoch));
         }
         free(pfx2);
         return ORTE_SUCCESS;
@@ -486,9 +490,10 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     
     if (!orte_devel_level_output) {
         /* just print a very simple output for users */
-        asprintf(&tmp, "\n%sProcess OMPI jobid: %s Process rank: %s", pfx2,
+        asprintf(&tmp, "\n%sProcess OMPI jobid: %s Process rank: %s Epoch: %s", pfx2,
                  ORTE_JOBID_PRINT(src->name.jobid),
-                 ORTE_VPID_PRINT(src->name.vpid));
+                 ORTE_VPID_PRINT(src->name.vpid),
+                 ORTE_EPOCH_PRINT(src->name.epoch));
         /* set the return */
         *output = tmp;
         free(pfx2);

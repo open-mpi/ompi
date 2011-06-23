@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -40,6 +40,7 @@
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/rmaps/rmaps.h"
@@ -219,7 +220,12 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
          * asked to communicate.
          */
         orte_process_info.num_procs = jdatorted->num_procs;
-        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
+
+        if (orte_process_info.max_procs < orte_process_info.num_procs) {
+            orte_process_info.max_procs = orte_process_info.num_procs;
+        }
+
+        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -371,6 +377,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     /* push stdin - the IOF will know what to do with the specified target */
     name.jobid = job;
     name.vpid = jdata->stdin_target;
+    name.epoch = orte_ess.proc_get_epoch(&name);
     
     if (ORTE_SUCCESS != (rc = orte_iof.push(&name, ORTE_IOF_STDIN, 0))) {
         ORTE_ERROR_LOG(rc);
@@ -606,7 +613,6 @@ CLEANUP:
     } else {
         orted_num_callback++;
     }
-
 }
 
 static void orted_report_launch(int status, orte_process_name_t* sender,

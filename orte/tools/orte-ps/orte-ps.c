@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -156,6 +156,7 @@ typedef struct {
     bool verbose;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
+    orte_epoch_t epoch;
     bool nodes;
     bool daemons;
     int  output;
@@ -194,6 +195,7 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       &orte_ps_globals.vpid, OPAL_CMD_LINE_TYPE_INT,
       "Specify a specific vpid. Must specify a --jobid as well" },
 #endif
+
     { NULL, NULL, NULL, 
       'n', NULL, "nodes", 
       0,
@@ -289,6 +291,7 @@ static int parse_args(int argc, char *argv[]) {
                               false,                    /* verbose */
                               ORTE_JOBID_WILDCARD,      /* jobid */
                               ORTE_VPID_WILDCARD,       /* vpid */
+                              ORTE_EPOCH_WILDCARD,      /* epoch */
                               false,                    /* nodes */
                               false,                    /* daemons */
                               -1};                      /* output */
@@ -601,7 +604,8 @@ static int pretty_print_vpids(orte_job_t *job) {
         len_node        = 0,
         len_ckpt_s      = 0,
         len_ckpt_r      = 0,
-        len_ckpt_l      = 0;
+        len_ckpt_l      = 0,
+        len_epoch       = 0; 
     int i, line_len;
     orte_vpid_t v;
     orte_proc_t *vpid;
@@ -627,6 +631,7 @@ static int pretty_print_vpids(orte_job_t *job) {
     len_ckpt_r      = -3;
     len_ckpt_l      = -3;
 #endif
+    len_epoch       = 6;
 
     for(v=0; v < job->num_procs; v++) {
         char *rankstr;
@@ -842,7 +847,7 @@ static int gather_vpid_info(orte_ps_mpirun_info_t *hnpinfo) {
 
         /* query the HNP for info on the procs in this job */
         if (ORTE_SUCCESS != (ret = orte_util_comm_query_proc_info(&(hnpinfo->hnp->name), job->jobid,
-                                                                  orte_ps_globals.vpid, &cnt, &procs))) {
+                                                                  orte_ps_globals.vpid, ORTE_EPOCH_WILDCARD, &cnt, &procs))) {
             ORTE_ERROR_LOG(ret);
         }
         job->procs->addr = (void**)procs;

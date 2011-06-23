@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -327,7 +327,7 @@ int orte_ess_base_orted_setup(char **hosts)
     /* be sure to update the routing tree so the initial "phone home"
      * to mpirun goes through the tree!
      */
-    if (ORTE_SUCCESS != (ret = orte_routed.update_routing_tree())) {
+    if (ORTE_SUCCESS != (ret = orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(ret);
         error = "failed to update routing tree";
         goto error;
@@ -514,6 +514,13 @@ int orte_ess_base_orted_setup(char **hosts)
     /* start the local sensors */
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
 
+    /* Execute the post-startup errmgr code */
+    if (ORTE_SUCCESS != (ret = orte_errmgr.post_startup())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr.post_startup";
+        goto error;
+    }
+
     return ORTE_SUCCESS;
     
  error:
@@ -526,6 +533,8 @@ int orte_ess_base_orted_setup(char **hosts)
 
 int orte_ess_base_orted_finalize(void)
 {
+    orte_errmgr.pre_shutdown();
+
     /* stop the local sensors */
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
 

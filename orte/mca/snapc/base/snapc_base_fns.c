@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -81,6 +81,7 @@ void orte_snapc_base_local_snapshot_construct(orte_snapc_base_local_snapshot_t *
 {
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
+    snapshot->process_name.epoch  = ORTE_EPOCH_MIN;
 
     snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
 
@@ -91,6 +92,7 @@ void orte_snapc_base_local_snapshot_destruct( orte_snapc_base_local_snapshot_t *
 {
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
+    snapshot->process_name.epoch  = ORTE_EPOCH_MIN;
 
     snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
 
@@ -468,12 +470,15 @@ int orte_snapc_base_global_coord_ckpt_init_cmd(orte_process_name_t* peer,
 {
     int ret, exit_status = ORTE_SUCCESS;
     orte_std_cntr_t count = 1;
+    orte_ns_cmp_bitmask_t mask;
+
+    mask = ORTE_NS_CMP_ALL;
 
     /*
      * Do not send to self, as that is silly.
      */
-    if (peer->jobid == ORTE_PROC_MY_HNP->jobid &&
-        peer->vpid  == ORTE_PROC_MY_HNP->vpid ) {
+    if (OPAL_EQUAL ==
+            orte_util_compare_name_fields(mask, peer, ORTE_PROC_MY_HNP)) {
         OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                              "%s) base:ckpt_init_cmd: Error: Do not send to self!\n",
                              ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));
@@ -650,6 +655,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
     char *global_snapshot_handle = NULL;
     char *tmp_str = NULL;
     int seq_num;
+    orte_ns_cmp_bitmask_t mask;
 
     /*
      * Noop if invalid peer, or peer not specified (JJH Double check this)
@@ -660,11 +666,12 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
         return ORTE_SUCCESS;
     }
 
+    mask = ORTE_NS_CMP_ALL;
+
     /*
      * Do not send to self, as that is silly.
      */
-    if (peer->jobid == ORTE_PROC_MY_HNP->jobid &&
-        peer->vpid  == ORTE_PROC_MY_HNP->vpid ) {
+    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, peer, ORTE_PROC_MY_HNP)) {
         OPAL_OUTPUT_VERBOSE((10, orte_snapc_base_output,
                              "%s) base:ckpt_update_cmd: Error: Do not send to self!\n",
                              ORTE_SNAPC_COORD_NAME_PRINT(orte_snapc_coord_type)));

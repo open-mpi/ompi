@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -67,6 +67,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errcode.h"
+#include "ompi/errhandler/errhandler.h"
 #include "ompi/request/request.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/op/op.h"
@@ -368,6 +369,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
     }
+
+    /* Register errhandler callback with orte errmgr */
+    orte_errmgr.set_fault_callback(ompi_errhandler_runtime_callback);
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow

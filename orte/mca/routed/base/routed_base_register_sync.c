@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -127,6 +127,7 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     orte_std_cntr_t cnt;
     char *rml_uri;
     orte_vpid_t vpid;
+    orte_epoch_t epoch;
     int rc;
 
     if (ORTE_JOB_FAMILY(job) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
@@ -144,13 +145,18 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     /* unpack the data for each entry */
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &vpid, &cnt, ORTE_VPID))) {
-        
+
         cnt = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &epoch, &cnt, ORTE_EPOCH))) {
+            ORTE_ERROR_LOG(rc);
+            continue;
+        }        
+        
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             continue;
-            
         }
+        
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routed_binomial:callback got uri %s for job %s rank %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -1208,6 +1208,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
             peer = OBJ_NEW(orte_namelist_t);
             peer->name.jobid = comm->c_local_group->grp_proc_pointers[i]->proc_name.jobid;
             peer->name.vpid =  comm->c_local_group->grp_proc_pointers[i]->proc_name.vpid;
+            peer->name.epoch = comm->c_local_group->grp_proc_pointers[i]->proc_name.epoch;
             opal_list_append(&peers, &peer->item);
         }
         /* prepare send data */

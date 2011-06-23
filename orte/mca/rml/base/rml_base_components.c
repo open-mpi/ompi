@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,12 +67,14 @@ static void msg_pkt_constructor(orte_msg_packet_t *pkt)
 {
     pkt->sender.jobid = ORTE_JOBID_INVALID;
     pkt->sender.vpid = ORTE_VPID_INVALID;
+    pkt->sender.epoch = ORTE_EPOCH_INVALID;
     pkt->buffer = NULL;
 }
 static void msg_pkt_destructor(orte_msg_packet_t *pkt)
 {
     pkt->sender.jobid = ORTE_JOBID_INVALID;
     pkt->sender.vpid = ORTE_VPID_INVALID;
+    pkt->sender.epoch = ORTE_EPOCH_INVALID;
     if (NULL != pkt->buffer) {
         OBJ_RELEASE(pkt->buffer);
     }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
     orte_process_info.my_name->cellid = 0;
     orte_process_info.my_name->jobid = 0;
     orte_process_info.my_name->vpid = 0;
+    orte_process_info.my_name->epoch = ORTE_EPOCH_MIN;
     
     test_init("orte_session_dir_t");
     test_out = fopen( "test_session_dir_out", "w+" );

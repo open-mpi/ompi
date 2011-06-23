@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -1097,8 +1097,11 @@ static int  orte_filem_rsh_start_command(orte_filem_base_process_set_t *proc_set
     if( NULL != proc_set ) {
         wp_item->proc_set.source.jobid = proc_set->source.jobid;
         wp_item->proc_set.source.vpid  = proc_set->source.vpid;
+        wp_item->proc_set.source.epoch = proc_set->source.epoch;
+
         wp_item->proc_set.sink.jobid = proc_set->sink.jobid;
         wp_item->proc_set.sink.vpid  = proc_set->sink.vpid;
+        wp_item->proc_set.sink.epoch = proc_set->sink.epoch;
     }
     /* Copy the File Set */
     if( NULL != file_set ) {
@@ -1346,6 +1349,7 @@ static void orte_filem_rsh_permission_callback(int status,
     int num_req, num_allowed = 0;
     int perm_flag, i;
     int32_t peer_status = 0;
+    orte_ns_cmp_bitmask_t mask;
 
     OPAL_OUTPUT_VERBOSE((10, mca_filem_rsh_component.super.output_handle,
                          "filem:rsh: permission_callback(? ?): Peer %s ...",
@@ -1392,6 +1396,7 @@ static void orte_filem_rsh_permission_callback(int status,
             wp_item = OBJ_NEW(orte_filem_rsh_work_pool_item_t);
             wp_item->proc_set.source.jobid = sender->jobid;
             wp_item->proc_set.source.vpid  = sender->vpid;
+            wp_item->proc_set.source.epoch = sender->epoch;
 
             opal_list_append(&work_pool_waiting, &(wp_item->super));
         }
@@ -1443,8 +1448,10 @@ static void orte_filem_rsh_permission_callback(int status,
                  item != opal_list_get_end(   &work_pool_pending);
                  item  = opal_list_get_next(   item) ) {
                 wp_item = (orte_filem_rsh_work_pool_item_t *)item;
-                if(sender->jobid == wp_item->proc_set.source.jobid &&
-                   sender->vpid  == wp_item->proc_set.source.vpid ) {
+
+                mask = ORTE_NS_CMP_ALL;
+
+                if (OPAL_EQUAL == orte_util_compare_name_fields(mask, sender, &wp_item->proc_set.source)) {
                     opal_list_remove_item( &work_pool_pending, item);
                     break;
                 }

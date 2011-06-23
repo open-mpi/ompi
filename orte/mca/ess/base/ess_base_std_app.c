@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -78,7 +78,7 @@ int orte_ess_base_app_setup(void)
         error = "orte_errmgr_base_select";
         goto error;
     }
-    
+
     /* Setup the communication infrastructure */
     
     /* Runtime Messaging Layer */
@@ -92,6 +92,7 @@ int orte_ess_base_app_setup(void)
         error = "orte_rml_base_select";
         goto error;
     }
+    
     /* Routed system */
     if (ORTE_SUCCESS != (ret = orte_routed_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -238,6 +239,13 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
     
+    /* Execute the post-startup errmgr code */
+    if (ORTE_SUCCESS != (ret = orte_errmgr.post_startup())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr.post_startup";
+        goto error;
+    }
+
     /* if we are an ORTE app - and not an MPI app - then
      * we need to barrier here. MPI_Init has its own barrier,
      * so we don't need to do two of them. However, if we
@@ -270,6 +278,8 @@ error:
 
 int orte_ess_base_app_finalize(void)
 {
+    orte_errmgr.pre_shutdown();
+
     orte_notifier_base_close();
     
     orte_cr_finalize();

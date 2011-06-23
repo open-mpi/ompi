@@ -1,6 +1,9 @@
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -207,6 +210,7 @@ void orte_sstore_central_local_app_snapshot_info_construct(orte_sstore_central_l
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
+    info->name.epoch = ORTE_EPOCH_INVALID;
 
     info->local_location = NULL;
     info->metadata_filename = NULL;
@@ -218,6 +222,7 @@ void orte_sstore_central_local_app_snapshot_info_destruct( orte_sstore_central_l
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
+    info->name.epoch = ORTE_EPOCH_INVALID;
 
     if( NULL != info->local_location ) {
         free(info->local_location);
@@ -530,6 +535,7 @@ static int append_new_app_handle_info(orte_sstore_central_local_snapshot_info_t 
 
     app_info->name.jobid = name->jobid;
     app_info->name.vpid  = name->vpid;
+    app_info->name.epoch = name->epoch;
 
     opal_list_append(handle_info->app_info_handle, &(app_info->super));
 
@@ -541,14 +547,16 @@ static orte_sstore_central_local_app_snapshot_info_t *find_app_handle_info(orte_
 {
     orte_sstore_central_local_app_snapshot_info_t *app_info = NULL;
     opal_list_item_t* item = NULL;
+    orte_bs_cmp_bitmask_t mask;
 
     for(item  = opal_list_get_first(handle_info->app_info_handle);
         item != opal_list_get_end(handle_info->app_info_handle);
         item  = opal_list_get_next(item) ) {
         app_info = (orte_sstore_central_local_app_snapshot_info_t*)item;
 
-        if( app_info->name.jobid == name->jobid &&
-            app_info->name.vpid  == name->vpid ) {
+        mask = ORTE_NS_CMP_ALL;
+
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &app_info->name, name)) {
             return app_info;
         }
     }

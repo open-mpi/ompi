@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -678,6 +681,7 @@ static int tcp_recv(orte_process_name_t *name,
         /* caller requested id of sender */
         name->jobid = recvptr->name.jobid;
         name->vpid = recvptr->name.vpid;
+        name->epoch= recvptr->name.epoch;
     }
     *seq_num = recvptr->seq_num;
     *msg = recvptr->iovec_array;
@@ -772,6 +776,7 @@ static int tcp_recv_buffer(orte_process_name_t *name,
         /* caller requested id of sender */
         name->jobid = recvptr->name.jobid;
         name->vpid = recvptr->name.vpid;
+        name->epoch= recvptr->name.epoch;
     }
     *seq_num = recvptr->seq_num;
     if (ORTE_SUCCESS != (ret = opal_dss.copy_payload(buf, recvptr->buf))) {

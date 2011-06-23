@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -40,6 +40,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/data_type_support/orte_dt_support.h"
 
 #include "orte/runtime/orte_data_server.h"
 
@@ -219,6 +220,7 @@ static void process_message(int fd, short event, void *evdat)
             data->port = port_name;
             data->owner.jobid = sender->jobid;
             data->owner.vpid = sender->vpid;
+            data->owner.epoch = sender->epoch;
             
             /* store the data */
             data->index = opal_pointer_array_add(orte_data_server_store, data);

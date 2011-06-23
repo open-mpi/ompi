@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,6 +42,7 @@
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/odls/odls_types.h"
@@ -147,6 +148,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     orte_odls_job_t *jobdat=NULL;
     int np, numdigs;
     int rc;
+    orte_ns_cmp_bitmask_t mask;
 
     /* don't do this if the dst vpid is invalid or the fd is negative! */
     if (ORTE_VPID_INVALID == dst_name->vpid || fd < 0) {
@@ -174,8 +176,8 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              item != opal_list_get_end(&mca_iof_hnp_component.procs);
              item = opal_list_get_next(item)) {
             proct = (orte_iof_proc_t*)item;
-            if (proct->name.jobid == dst_name->jobid &&
-                proct->name.vpid == dst_name->vpid) {
+            mask = ORTE_NS_CMP_ALL;
+            if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, dst_name)) {
                 /* found it */
                 goto SETUP;
             }
@@ -184,6 +186,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         proct = OBJ_NEW(orte_iof_proc_t);
         proct->name.jobid = dst_name->jobid;
         proct->name.vpid = dst_name->vpid;
+        proct->name.epoch = dst_name->epoch;
         opal_list_append(&mca_iof_hnp_component.procs, &proct->super);
         /* see if we are to output to a file */
         if (NULL != orte_output_filename) {
@@ -278,6 +281,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                                  &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
             sink->daemon.vpid = proc->node->daemon->name.vpid;
+            sink->daemon.epoch = orte_ess.proc_get_epoch(&sink->daemon);
         }
     }
     
@@ -384,6 +388,7 @@ static int hnp_pull(const orte_process_name_t* dst_name,
                          &mca_iof_hnp_component.sinks);
     sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     sink->daemon.vpid = ORTE_PROC_MY_NAME->vpid;
+    sink->daemon.epoch = ORTE_PROC_MY_NAME->epoch;
 
     return ORTE_SUCCESS;
 }
@@ -397,15 +402,17 @@ static int hnp_close(const orte_process_name_t* peer,
 {
     opal_list_item_t *item, *next_item;
     orte_iof_sink_t* sink;
+    orte_ns_cmp_bitmask_t mask;
     
     for(item = opal_list_get_first(&mca_iof_hnp_component.sinks);
         item != opal_list_get_end(&mca_iof_hnp_component.sinks);
         item = next_item ) {
         sink = (orte_iof_sink_t*)item;
         next_item = opal_list_get_next(item);
+
+        mask = ORTE_NS_CMP_ALL;
         
-        if((sink->name.jobid == peer->jobid) &&
-           (sink->name.vpid == peer->vpid) &&
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &sink->name, peer) &&
            (source_tag & sink->tag)) {
             
             /* No need to delete the event or close the file

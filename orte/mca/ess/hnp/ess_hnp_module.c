@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -75,6 +75,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/util/comm/comm.h"
+#include "orte/util/nidmap.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
@@ -108,6 +109,7 @@ orte_ess_base_module_t orte_ess_hnp_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
+    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     update_pidmap,
     update_nidmap,
     orte_ess_base_query_sys_info,
@@ -490,6 +492,8 @@ static int rte_init(void)
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
     proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
+    proc->name.epoch = ORTE_EPOCH_MIN;
+    
     proc->pid = orte_process_info.pid;
     proc->rml_uri = orte_rml.get_contact_info();
     proc->state = ORTE_PROC_STATE_RUNNING;
@@ -820,6 +824,7 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
     orte_node_t *node;
     orte_proc_t *myproc;
     int i;
+    orte_ns_cmp_bitmask_t mask;
     
     /* the HNP is always on node=0 of the node array */
     node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
@@ -829,8 +834,10 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
         if (NULL == (myproc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
             continue;
         }
-        if (myproc->name.jobid == proc->jobid &&
-            myproc->name.vpid == proc->vpid) {
+
+        mask = ORTE_NS_CMP_ALL;
+
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &myproc->name, proc)) {
             OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                                  "%s ess:hnp: proc %s is LOCAL",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -877,7 +884,7 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
         return ORTE_VPID_INVALID;
     }
 
-    if( NULL == pdata->node->daemon ) {
+    if( NULL == pdata->node || NULL == pdata->node->daemon ) {
         return ORTE_VPID_INVALID;
     }
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -52,7 +52,7 @@ ORTE_DECLSPEC int orte_util_comm_query_node_info(const orte_process_name_t *hnp,
                                                  int *num_nodes, orte_node_t ***node_info_array);
 
 ORTE_DECLSPEC int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t job, orte_vpid_t vpid,
-                                                 int *num_procs, orte_proc_t ***proc_info_array);
+                                                 orte_epoch_t epoch, int *num_procs, orte_proc_t ***proc_info_array);
 
 ORTE_DECLSPEC int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata);
 

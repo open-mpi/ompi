@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -67,6 +70,7 @@ typedef struct {
     opal_list_item_t super;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
+    orte_epoch_t epoch;
     char *file;
     int tick;
     bool check_size;

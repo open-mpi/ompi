@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -57,6 +57,7 @@ orte_ess_base_module_t orte_ess_tool_module = {
     NULL, /* don't need a proc_get_hostname fn */
     NULL, /* don't need a proc_get_local_rank fn */
     NULL, /* don't need a proc_get_node_rank fn */
+    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     NULL,   /* don't need to update_pidmap */
     NULL,   /* don't need to update_nidmap */
     query_sys_info,

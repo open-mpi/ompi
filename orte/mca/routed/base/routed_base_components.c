@@ -4,6 +4,9 @@
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,6 +65,7 @@ static void jfamconst(orte_routed_jobfam_t *ptr)
 {
     ptr->route.jobid = ORTE_JOBID_INVALID;
     ptr->route.vpid = ORTE_VPID_INVALID;
+    ptr->route.epoch = ORTE_EPOCH_INVALID;
     ptr->hnp_uri = NULL;
 }
 static void jfamdest(orte_routed_jobfam_t *ptr)
@@ -113,6 +117,7 @@ orte_routed_base_open(void)
     jfam = OBJ_NEW(orte_routed_jobfam_t);
     jfam->route.jobid = ORTE_PROC_MY_HNP->jobid;
     jfam->route.vpid = ORTE_PROC_MY_HNP->vpid;
+    jfam->route.epoch = ORTE_PROC_MY_HNP->epoch;
     jfam->job_family = ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid);
     if (NULL != orte_process_info.my_hnp_uri) {
         jfam->hnp_uri = strdup(orte_process_info.my_hnp_uri);
@@ -247,6 +252,7 @@ void orte_routed_base_update_hnps(opal_buffer_t *buf)
         jfam->job_family = jobfamily;
         jfam->route.jobid = name.jobid;
         jfam->route.vpid = name.vpid;
+        jfam->route.epoch = name.epoch;
         jfam->hnp_uri = strdup(uri);
     done:
         free(uri);

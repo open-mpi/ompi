@@ -55,6 +55,8 @@ orte_errmgr_base_t orte_errmgr_base;
 
 orte_errmgr_base_component_t orte_errmgr_base_selected_component;
 
+orte_errmgr_fault_callback_t *fault_cbfunc;
+
 /* Public module provides a wrapper around previous functions */
 orte_errmgr_base_module_t orte_errmgr = {
     NULL, /* init     */

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -67,6 +67,7 @@ orte_ess_base_module_t orte_ess_lsf_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
+    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     update_pidmap,
     update_nidmap,
     orte_ess_base_query_sys_info,
@@ -271,10 +272,12 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
+    orte_ns_cmp_bitmask_t mask;
+
+    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     
     /* is this me? */
-    if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
-        proc->vpid == ORTE_PROC_MY_NAME->vpid) {
+    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, proc, ORTE_PROC_MY_NAME)) {
         /* yes it is - reply with my rank. This is necessary
          * because the pidmap will not have arrived when I
          * am starting up, and if we use static ports, then
@@ -354,6 +357,7 @@ static int lsf_set_name(void)
     
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
+    ORTE_PROC_MY_NAME->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME);
     
     /* fix up the base name and make it the "real" name */
     lsf_nodeid = atoi(getenv("LSF_PM_TASKID"));

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -390,12 +390,14 @@ int orte_daemon(int argc, char *argv[])
     orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
     ORTE_PROC_MY_DAEMON->jobid = ORTE_PROC_MY_NAME->jobid;
     ORTE_PROC_MY_DAEMON->vpid = ORTE_PROC_MY_NAME->vpid;
+    ORTE_PROC_MY_DAEMON->epoch = ORTE_EPOCH_MIN;
     
     /* if I am also the hnp, then update that contact info field too */
     if (ORTE_PROC_IS_HNP) {
         orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
         ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
         ORTE_PROC_MY_HNP->vpid = ORTE_PROC_MY_NAME->vpid;
+        ORTE_PROC_MY_HNP->epoch = ORTE_EPOCH_MIN;
     }
     
     /* setup the primary daemon command receive function */
@@ -495,6 +497,7 @@ int orte_daemon(int argc, char *argv[])
         proc = OBJ_NEW(orte_proc_t);
         proc->name.jobid = jdata->jobid;
         proc->name.vpid = 0;
+        proc->name.epoch = ORTE_EPOCH_MIN;
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
         proc->node = nodes[0]; /* hnp node must be there */
@@ -645,7 +648,10 @@ int orte_daemon(int argc, char *argv[])
             opal_list_item_t *item;
             opal_sysinfo_value_t *info;
             int32_t num_values;
-            
+
+            /* Point my parent to be my HNP */
+            orte_process_info.my_parent = orte_process_info.my_hnp;
+
             /* include our node name */
             opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
 
@@ -679,7 +685,7 @@ int orte_daemon(int argc, char *argv[])
                 }
             } else {
                 /* send to the HNP's callback */
-                if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
+                if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_PARENT, buffer,
                                                     ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
                     ORTE_ERROR_LOG(ret);
                     OBJ_RELEASE(buffer);

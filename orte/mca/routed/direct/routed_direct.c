@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,7 +39,7 @@ static orte_process_name_t get_route(orte_process_name_t *target);
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
-static int update_routing_tree(void);
+static int update_routing_tree(orte_jobid_t jobid);
 static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
@@ -131,7 +134,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     orte_process_name_t *ret;
 
     if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID) {
+        target->vpid == ORTE_VPID_INVALID ||
+        target->epoch == ORTE_EPOCH_INVALID) {
         ret = ORTE_NAME_INVALID;
     } else {
         /* all routes are direct */
@@ -305,7 +309,7 @@ static int set_lifeline(orte_process_name_t *proc)
     return ORTE_SUCCESS;
 }
 
-static int update_routing_tree(void)
+static int update_routing_tree(orte_jobid_t jobid)
 {
     /* nothing to do here */
     return ORTE_SUCCESS;

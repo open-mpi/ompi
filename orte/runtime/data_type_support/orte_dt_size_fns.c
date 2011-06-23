@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
@@ -43,6 +43,10 @@ int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type)
     switch(type) {
         case ORTE_STD_CNTR:
             *size = sizeof(orte_std_cntr_t);
+            break;
+
+        case ORTE_EPOCH:
+            *size = sizeof(orte_epoch_t);
             break;
             
         case ORTE_VPID:

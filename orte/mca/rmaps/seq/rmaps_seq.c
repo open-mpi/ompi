@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,6 +35,7 @@
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/util/hostfile/hostfile.h"
 #include "orte/util/dash_host/dash_host.h"
 #include "orte/util/name_fns.h"
@@ -234,6 +235,8 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             }
             /* assign the vpid */
             proc->name.vpid = vpid++;
+            proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
+
             /* add to the jdata proc array */
             if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                 ORTE_ERROR_LOG(rc);

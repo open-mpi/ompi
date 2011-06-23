@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -57,10 +60,6 @@ void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
                                    orte_proc_state_t state,
                                    pid_t pid,
                                    orte_exit_code_t exit_code);
-void orte_errmgr_hnp_record_dead_daemon(orte_job_t *jdat,
-                                          orte_vpid_t vpid,
-                                          orte_proc_state_t state,
-                                          orte_exit_code_t exit_code);
 
 /***************************
  * Module functions: Global
@@ -81,6 +80,10 @@ int orte_errmgr_hnp_global_suggest_map_targets(orte_proc_t *proc,
                                                orte_node_t *oldnode,
                                                opal_list_t *node_list);
 int orte_errmgr_hnp_global_ft_event(int state);
+int orte_errmgr_hnp_global_post_startup(void);
+int orte_errmgr_hnp_global_pre_shutdown(void);
+int orte_errmgr_hnp_global_mark_processes_as_dead(opal_pointer_array_t *dead_procs);
+int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opal_buffer_t *buffer);
 
 /* HNP Versions */
 int orte_errmgr_hnp_base_global_init(void);

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -56,6 +56,7 @@ orte_ess_base_module_t orte_ess_portals4_shmem_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
+    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     NULL,   /* add_pidmap is only used in ORTE */
     NULL,   /* update_nidmap is only used in ORTE */
     query_sys_info,
@@ -85,6 +86,10 @@ static int rte_init(void)
     
     /* Get the number of procs in the job from portals4_shmem */
     orte_process_info.num_procs = (orte_std_cntr_t) runtime_get_size();
+
+    if (orte_process_info.max_procs < orte_process_info.num_procs) {
+        orte_process_info.max_procs = orte_process_info.num_procs;
+    }
     
     /* Get the nid map */
     nprocs = runtime_get_nidpid_map(&map);

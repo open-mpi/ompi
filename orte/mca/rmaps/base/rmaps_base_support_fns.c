@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -30,6 +30,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/ess/ess.h"
 #include "opal/mca/sysinfo/sysinfo_types.h"
 
 #include "orte/util/show_help.h"
@@ -451,6 +452,10 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
         /* we do not set the vpid here - this will be done
          * during a second phase
          */
+
+        /* We do set the epoch here since they all start with the same value. */
+        proc->name.epoch = ORTE_EPOCH_MIN;
+
         proc->app_idx = app_idx;
         OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
                              "%s rmaps:base:claim_slot: created new proc %s",
@@ -554,6 +559,11 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                         }
                     }
                     proc->name.vpid = vpid;
+                    proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
+                    /* If there is an invalid epoch here, it's because it doesn't exist yet. */
+                    if (ORTE_NODE_RANK_INVALID == proc->name.epoch) {
+                        proc->name.epoch = ORTE_EPOCH_MIN;
+                    }
                 }
                 if (NULL == opal_pointer_array_get_item(jdata->procs, proc->name.vpid)) {
                     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
@@ -590,6 +600,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                         }
                     }
                     proc->name.vpid = vpid;
+                    proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
                 }
                 if (NULL == opal_pointer_array_get_item(jdata->procs, proc->name.vpid)) {
                     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
@@ -822,6 +833,7 @@ int orte_rmaps_base_define_daemons(orte_job_t *jdata)
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             proc->name.vpid = daemons->num_procs;  /* take the next available vpid */
+            proc->name.epoch = ORTE_EPOCH_MIN;
             proc->node = node;
             proc->nodename = node->name;
             OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
@@ -1000,6 +1012,7 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         proc->name.vpid = jdata->num_procs;  /* take the next available vpid */
+        proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
         proc->node = node;
         proc->nodename = node->name;
         OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,

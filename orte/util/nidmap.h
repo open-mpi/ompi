@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -48,6 +48,12 @@ ORTE_DECLSPEC orte_jmap_t* orte_util_lookup_jmap(orte_jobid_t job);
 ORTE_DECLSPEC orte_pmap_t* orte_util_lookup_pmap(orte_process_name_t *proc);
 ORTE_DECLSPEC orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc);
 
+ORTE_DECLSPEC orte_epoch_t orte_util_lookup_epoch(orte_process_name_t *proc);
+ORTE_DECLSPEC orte_epoch_t orte_util_set_epoch(orte_process_name_t *proc, orte_epoch_t epoch);
+
+ORTE_DECLSPEC int orte_util_set_proc_state(orte_process_name_t *proc, orte_proc_state_t state);
+ORTE_DECLSPEC bool orte_util_proc_is_running(orte_process_name_t *proc);
+
 ORTE_DECLSPEC int orte_util_encode_nodemap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_nodemap(opal_byte_object_t *boptr);
 
@@ -64,4 +70,7 @@ ORTE_DECLSPEC void orte_jmap_dump(orte_jmap_t *jmap);
 ORTE_DECLSPEC void orte_jobmap_dump(void);
 
 END_C_DECLS
+
+/* Local functions */
+orte_epoch_t get_epoch_from_orte_job_data(orte_process_name_t *proc, orte_epoch_t epoch);
 #endif

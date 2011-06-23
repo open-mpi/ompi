@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -97,11 +97,13 @@ void orte_errmgr_predicted_proc_construct(orte_errmgr_predicted_proc_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
     item->proc_name.jobid = ORTE_JOBID_INVALID;
+    item->proc_name.epoch = ORTE_EPOCH_INVALID;
 }
 
 void orte_errmgr_predicted_proc_destruct( orte_errmgr_predicted_proc_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
+    item->proc_name.epoch = ORTE_EPOCH_INVALID;
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 }
 
@@ -137,11 +139,13 @@ OBJ_CLASS_INSTANCE(orte_errmgr_predicted_map_t,
 void orte_errmgr_predicted_map_construct(orte_errmgr_predicted_map_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
+    item->proc_name.epoch = ORTE_EPOCH_INVALID;
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 
     item->node_name = NULL;
 
     item->map_proc_name.vpid  = ORTE_VPID_INVALID;
+    item->map_proc_name.epoch = ORTE_EPOCH_INVALID;
     item->map_proc_name.jobid = ORTE_JOBID_INVALID;
 
     item->map_node_name = NULL;
@@ -152,6 +156,7 @@ void orte_errmgr_predicted_map_construct(orte_errmgr_predicted_map_t *item)
 void orte_errmgr_predicted_map_destruct( orte_errmgr_predicted_map_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
+    item->proc_name.epoch = ORTE_EPOCH_INVALID;
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 
     if( NULL != item->node_name ) {
@@ -160,6 +165,7 @@ void orte_errmgr_predicted_map_destruct( orte_errmgr_predicted_map_t *item)
     }
 
     item->map_proc_name.vpid  = ORTE_VPID_INVALID;
+    item->map_proc_name.epoch = ORTE_EPOCH_INVALID;
     item->map_proc_name.jobid = ORTE_JOBID_INVALID;
 
     if( NULL != item->map_node_name ) {
@@ -677,6 +683,18 @@ int orte_errmgr_base_migrate_job(orte_jobid_t jobid, orte_snapc_base_request_op_
 }
 
 #endif
+
+orte_errmgr_fault_callback_t *orte_errmgr_base_set_fault_callback(orte_errmgr_fault_callback_t *cbfunc) {
+    orte_errmgr_fault_callback_t *temp_cbfunc = fault_cbfunc;
+
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output, 
+                "%s errmgr:base Called set_fault_callback", 
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    fault_cbfunc = cbfunc;
+
+    return temp_cbfunc;
+}
 
 /********************
  * Local Functions
