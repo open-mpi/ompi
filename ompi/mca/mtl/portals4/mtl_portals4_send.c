@@ -97,7 +97,12 @@ ompi_mtl_portals4_long_callback(ptl_event_t *ev, struct ompi_mtl_portals4_reques
 
     /* received an ack - unlink the me */
     if (ev->type == PTL_EVENT_ACK) {
-        PtlMEUnlink(ptl_request->me_h);
+        ret = PtlMEUnlink(ptl_request->me_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: long send callback PtlMDUnlink returned %d",
+                                __FILE__, __LINE__, ret);
+        }
     }
     
     return OMPI_SUCCESS;
@@ -245,7 +250,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
     me.ac_id.uid = PTL_UID_ANY;
-    me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE;
+    me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id = endpoint->ptl_proc;
     if (ompi_mtl_portals4.protocol == rndv) {
         me.match_bits = ((uint64_t) endpoint->send_count << 32) | length;

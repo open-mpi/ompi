@@ -264,7 +264,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         me.ct_handle = PTL_CT_NONE;
         me.min_free = 0;
         me.ac_id.uid = PTL_UID_ANY;
-        me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE;
+        me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
         me.match_id.phys.nid = PTL_NID_ANY;
         me.match_id.phys.pid = PTL_PID_ANY;
         me.match_bits = PTL_LONG_MSG;
