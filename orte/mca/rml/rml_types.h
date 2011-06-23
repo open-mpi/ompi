@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -186,6 +186,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 /* For SStore Framework */
 #define ORTE_RML_TAG_SSTORE                 44
 #define ORTE_RML_TAG_SSTORE_INTERNAL        45
+
+#define ORTE_RML_TAG_SUBSCRIBE              46
 
 #define ORTE_RML_TAG_MAX                   100
 
