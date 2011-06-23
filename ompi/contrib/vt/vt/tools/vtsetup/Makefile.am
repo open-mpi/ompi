@@ -16,5 +16,5 @@ EXTRA_DIST = \
 	vtsetup-data.dtd \
 	ChangeLog \
 	README \
-	src/vtsetup-*.src.tar.gz
+	src/vtsetup-1.0.src.tar.gz
 
