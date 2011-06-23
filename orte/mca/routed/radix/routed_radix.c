@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,7 +47,7 @@ static orte_process_name_t get_route(orte_process_name_t *target);
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
-static int update_routing_tree(void);
+static int update_routing_tree(orte_jobid_t jobid);
 static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
@@ -142,7 +145,8 @@ static int delete_route(orte_process_name_t *proc)
     uint16_t jfamily;
 
     if (proc->jobid == ORTE_JOBID_INVALID ||
-        proc->vpid == ORTE_VPID_INVALID) {
+        proc->vpid == ORTE_VPID_INVALID ||
+        proc->epoch == ORTE_EPOCH_INVALID) {
         return ORTE_ERR_BAD_PARAM;
     }
     
@@ -210,7 +214,8 @@ static int update_route(orte_process_name_t *target,
     uint16_t jfamily;
     
     if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID) {
+        target->vpid == ORTE_VPID_INVALID ||
+        target->epoch == ORTE_EPOCH_INVALID) {
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -268,6 +273,7 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
+                jfam->route.epoch = route->epoch;
                 return ORTE_SUCCESS;
             }
         }
@@ -281,6 +287,7 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
+        jfam->route.epoch = route->epoch;
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
         return ORTE_SUCCESS;
     }
@@ -303,7 +310,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     uint16_t jfamily;
 
     if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID) {
+        target->vpid == ORTE_VPID_INVALID ||
+        target->epoch == ORTE_EPOCH_INVALID) {
         ret = ORTE_NAME_INVALID;
         goto found;
     }
@@ -362,14 +370,14 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
 
-    /* if we are not using static ports and this is going to the HNP, send direct */
-    if (!orte_static_ports &&
-        ORTE_PROC_MY_HNP->jobid == target->jobid &&
-        ORTE_PROC_MY_HNP->vpid == target->vpid) {
+    /* if we are not using static ports and this is going to the HNP, send directly through my parent */
+    if( !orte_static_ports &&
+        OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target) ) {
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routing not enabled - going direct",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        ret = target;
+                             "%s routing to the HNP through my parent %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_PARENT)));
+        ret = ORTE_PROC_MY_PARENT;
         goto found;
     }
     
@@ -400,6 +408,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
             if (opal_bitmap_is_set_bit(&child->relatives, daemon.vpid)) {
                 /* yep - we need to step through this child */
                 daemon.vpid = child->vpid;
+                daemon.epoch = orte_ess.proc_get_epoch(&daemon);
                 ret = &daemon;
                 goto found;
             }
@@ -410,6 +419,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      * any of our children, so we have to step up through our parent
      */
     daemon.vpid = my_parent.vpid;
+    daemon.epoch = orte_ess.proc_get_epoch(&daemon);
+    
     ret = &daemon;
     
 found:
@@ -765,6 +776,7 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
+    local_lifeline.epoch = proc->epoch;
     lifeline = &local_lifeline;
     
     return ORTE_SUCCESS;
@@ -815,7 +827,7 @@ static void radix_tree(int rank, int *num_children,
     }
 }
 
-static int update_routing_tree(void)
+static int update_routing_tree(orte_jobid_t jobid)
 {
     orte_routed_tree_t *child;
     int j;
@@ -857,6 +869,7 @@ static int update_routing_tree(void)
         my_parent.vpid = (Ii-Sum) % NInPrevLevel;
         my_parent.vpid += (Sum - NInPrevLevel);
     }
+    my_parent.epoch = orte_ess.proc_get_epoch(&my_parent);
     
     /* compute my direct children and the bitmap that shows which vpids
      * lie underneath their branch

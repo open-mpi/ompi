@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -98,6 +98,7 @@ orte_ess_base_module_t orte_ess_slave_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
+    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     update_pidmap,
     update_nidmap,
     orte_ess_base_query_sys_info,
@@ -183,9 +184,12 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
 
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
 {
+    orte_ns_cmp_bitmask_t mask;
+
+    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
+
     /* if it is me, the answer is my daemon's vpid */
-    if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
-        proc->vpid == ORTE_PROC_MY_NAME->vpid) {
+    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, proc, ORTE_PROC_MY_NAME)) {
         return ORTE_PROC_MY_DAEMON->vpid;
     }
 
@@ -195,9 +199,11 @@ static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
 
 static char* proc_get_hostname(orte_process_name_t *proc)
 {
+    orte_ns_cmp_bitmask_t mask;
+
+    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     /* if it is me, the answer is my nodename */
-    if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
-        proc->vpid == ORTE_PROC_MY_NAME->vpid) {
+    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, proc, ORTE_PROC_MY_NAME)) {
         return orte_process_info.nodename;
     }
     
@@ -207,9 +213,11 @@ static char* proc_get_hostname(orte_process_name_t *proc)
 
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
 {
+    orte_ns_cmp_bitmask_t mask;
+
+    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     /* if it is me, the local rank is zero */
-    if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
-        proc->vpid == ORTE_PROC_MY_NAME->vpid) {
+    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, proc, ORTE_PROC_MY_NAME)) {
         return 0;
     }
     
@@ -272,6 +280,7 @@ static int slave_set_name(void)
     
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
+    ORTE_PROC_MY_NAME->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME);
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:slave set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

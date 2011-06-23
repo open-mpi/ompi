@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,6 +29,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
@@ -44,7 +48,7 @@ static orte_process_name_t get_route(orte_process_name_t *target);
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
-static int update_routing_tree(void);
+static int update_routing_tree(orte_jobid_t jobid);
 static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
@@ -143,7 +147,8 @@ static int delete_route(orte_process_name_t *proc)
     uint16_t jfamily;
 
     if (proc->jobid == ORTE_JOBID_INVALID ||
-        proc->vpid == ORTE_VPID_INVALID) {
+        proc->vpid == ORTE_VPID_INVALID ||
+        proc->epoch == ORTE_EPOCH_INVALID) {
         return ORTE_ERR_BAD_PARAM;
     }
     
@@ -211,7 +216,8 @@ static int update_route(orte_process_name_t *target,
     uint16_t jfamily;
     
     if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID) {
+        target->vpid == ORTE_VPID_INVALID ||
+        target->epoch == ORTE_EPOCH_INVALID) {
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -269,6 +275,8 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
+                jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
+                
                 return ORTE_SUCCESS;
             }
         }
@@ -282,6 +290,8 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
+        jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
+        
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
         return ORTE_SUCCESS;
     }
@@ -304,11 +314,12 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     uint16_t jfamily;
 
     if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID) {
+        target->vpid == ORTE_VPID_INVALID ||
+        target->epoch == ORTE_EPOCH_INVALID) {
         ret = ORTE_NAME_INVALID;
         goto found;
     }
-    
+
     /* if it is me, then the route is just direct */
     if (OPAL_EQUAL == opal_dss.compare(ORTE_PROC_MY_NAME, target, ORTE_NAME)) {
         ret = target;
@@ -376,48 +387,55 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
      
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
-
-    /* if we are not using static ports and this is going to the HNP, send direct */
-    if (!orte_static_ports &&
-        ORTE_PROC_MY_HNP->jobid == target->jobid &&
-        ORTE_PROC_MY_HNP->vpid == target->vpid) {
+    if( !orte_static_ports &&
+        OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target) ) {
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routing not enabled - going direct",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        ret = target;
+                             "%s routing to the HNP through my PLM parent %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_PARENT)));
+        ret = ORTE_PROC_MY_PARENT;
         goto found;
     }
-    
+
     daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     /* find out what daemon hosts this proc */
     if (ORTE_VPID_INVALID == (daemon.vpid = orte_ess.proc_get_daemon(target))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        /*ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);*/
         ret = ORTE_NAME_INVALID;
         goto found;
     }
-  
+
     /* if the daemon is me, then send direct to the target! */
     if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
         ret = target;
         goto found;
-    } else {
-        /* search routing tree for next step to that daemon */
-        for (item = opal_list_get_first(&my_children);
-             item != opal_list_get_end(&my_children);
-             item = opal_list_get_next(item)) {
-            child = (orte_routed_tree_t*)item;
-            if (child->vpid == daemon.vpid) {
-                /* the child is hosting the proc - just send it there */
-                ret = &daemon;
-                goto found;
+    } 
+
+ startover:
+    /* search routing tree for next step to that daemon */
+    for (item = opal_list_get_first(&my_children);
+            item != opal_list_get_end(&my_children);
+            item = opal_list_get_next(item)) {
+        child = (orte_routed_tree_t*)item;
+        if (child->vpid == daemon.vpid) {
+            /* the child is hosting the proc - just send it there */
+            ret = &daemon;
+            goto found;
+        }
+        /* otherwise, see if the daemon we need is below the child */
+        if (opal_bitmap_is_set_bit(&child->relatives, daemon.vpid)) {
+            /* yep - we need to step through this child */
+            daemon.vpid = child->vpid;
+
+            /* If the daemon to which we should be routing is dead, then update
+             * the routing tree and start over. */
+            if (!orte_util_proc_is_running(&daemon)) {
+                update_routing_tree(daemon.jobid);
+                goto startover;
             }
-            /* otherwise, see if the daemon we need is below the child */
-            if (opal_bitmap_is_set_bit(&child->relatives, daemon.vpid)) {
-                /* yep - we need to step through this child */
-                daemon.vpid = child->vpid;
-                ret = &daemon;
-                goto found;
-            }
+
+            ret = &daemon;
+            goto found;
         }
     }
 
@@ -425,9 +443,12 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      * any of our children, so we have to step up through our parent
      */
     daemon.vpid = my_parent.vpid;
+    
     ret = &daemon;
 
  found:
+    daemon.epoch = orte_ess.proc_get_epoch(&daemon);
+
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_binomial_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -843,17 +864,22 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
+    local_lifeline.epoch = proc->epoch;
     lifeline = &local_lifeline;
     
     return ORTE_SUCCESS;
 }
 
 static int binomial_tree(int rank, int parent, int me, int num_procs,
-                         int *nchildren, opal_list_t *childrn, opal_bitmap_t *relatives)
+                         int *nchildren, opal_list_t *childrn, 
+                         opal_bitmap_t *relatives, bool mine, orte_jobid_t jobid)
 {
     int i, bitmap, peer, hibit, mask, found;
     orte_routed_tree_t *child;
     opal_bitmap_t *relations;
+    orte_process_name_t proc_name;
+
+    proc_name.jobid = jobid;
     
     /* is this me? */
     if (me == rank) {
@@ -868,15 +894,43 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
                 child = OBJ_NEW(orte_routed_tree_t);
                 child->vpid = peer;
                 OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
-                                     "%s routed:binomial found child %s",
+                                     "%s routed:binomial %d found child %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     rank,
                                      ORTE_VPID_PRINT(child->vpid)));
-                if (NULL != childrn) {
+
+                /* If the process we are looking at next is already dead, then
+                 * we inherit its children. Keep up with the process name of
+                 * that process so we can check it's state.
+                 */
+                proc_name.vpid = peer;
+                proc_name.epoch = orte_util_lookup_epoch(&proc_name);
+
+                if (!orte_util_proc_is_running(&proc_name) 
+                        && ORTE_EPOCH_MIN < proc_name.epoch
+                        && ORTE_EPOCH_INVALID != proc_name.epoch) {
+                    OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                                         "%s routed:binomial child %s is dead",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_VPID_PRINT(child->vpid)));
+                    relations = relatives;
+
+                    /* Leave mine as it is. If it was true, then we want to
+                     * inherit the dead node's children as our own. If it wasn't
+                     * then we want it's relatives as our own. */
+                    binomial_tree(0, 0, peer, num_procs, nchildren, childrn, relations, mine, jobid);
+
+                /* If we use the proc_is_running as a way of measuring of the
+                 * process is dead, then we get screwed up on startup. By also
+                 * testing the epoch, we make sure that the process really did
+                 * start up and then died. */
+                } else if (mine) {
                     /* this is a direct child - add it to my list */
                     opal_list_append(childrn, &child->super);
                     (*nchildren)++;
                     /* setup the relatives bitmap */
                     opal_bitmap_init(&child->relatives, num_procs);
+
                     /* point to the relatives */
                     relations = &child->relatives;
                 } else {
@@ -886,7 +940,7 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
                     relations = relatives;
                 }
                 /* search for this child's relatives */
-                binomial_tree(0, 0, peer, num_procs, NULL, NULL, relations);
+                binomial_tree(0, 0, peer, num_procs, nchildren, childrn, relations, false, jobid);
             }
         }
         return parent;
@@ -902,7 +956,13 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
         peer = rank | mask;
         if (peer < num_procs) {
             /* execute compute on this child */
-            if (0 <= (found = binomial_tree(peer, rank, me, num_procs, nchildren, childrn, relatives))) {
+            if (0 <= (found = binomial_tree(peer, rank, me, num_procs, nchildren, childrn, relatives, mine, jobid))) {
+                proc_name.vpid = found;
+
+                if (!orte_util_proc_is_running(&proc_name) && ORTE_EPOCH_MIN < orte_util_lookup_epoch(&proc_name)) {
+                    return parent;
+                }
+
                 return found;
             }
         }
@@ -910,7 +970,7 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
     return -1;
 }
 
-static int update_routing_tree(void)
+static int update_routing_tree(orte_jobid_t jobid)
 {
     orte_routed_tree_t *child;
     int j;
@@ -933,8 +993,9 @@ static int update_routing_tree(void)
      * lie underneath their branch
      */
     my_parent.vpid = binomial_tree(0, 0, ORTE_PROC_MY_NAME->vpid,
-                                   orte_process_info.num_procs,
-                                   &num_children, &my_children, NULL);
+                                   orte_process_info.max_procs,
+                                   &num_children, &my_children, NULL, true, jobid);
+    my_parent.epoch = orte_ess.proc_get_epoch(&my_parent);
     
     if (0 < opal_output_get_verbosity(orte_routed_base_output)) {
         opal_output(0, "%s: parent %d num_children %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), my_parent.vpid, num_children);
@@ -943,7 +1004,7 @@ static int update_routing_tree(void)
              item = opal_list_get_next(item)) {
             child = (orte_routed_tree_t*)item;
             opal_output(0, "%s: \tchild %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), child->vpid);
-            for (j=0; j < (int)orte_process_info.num_procs; j++) {
+            for (j=0; j < (int)orte_process_info.max_procs; j++) {
                 if (opal_bitmap_is_set_bit(&child->relatives, j)) {
                     opal_output(0, "%s: \t\trelation %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), j);
                 }

@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -34,6 +34,8 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode-internal.h"
+
+#include "orte/types.h"
 
 BEGIN_C_DECLS
 
@@ -358,6 +360,19 @@ struct ompi_request_t;
   OMPI_DECLSPEC ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
 					    ompi_errhandler_generic_handler_fn_t *func,
                                             ompi_errhandler_lang_t language);
+  
+/**
+ * Callback function from runtime layer to alert the MPI layer of an error at
+ * the runtime layer.
+ *
+ * @param procs The names of the processes that have failed.
+ *
+ * This function is used to alert the MPI layer to a specific fault at the
+ * runtime layer. Currently, the only faults reported using this method are
+ * process failures. The MPI layer has the option to perform whatever actions it
+ * needs to stabalize itself and continue running, abort, etc.
+ */
+OMPI_DECLSPEC void ompi_errhandler_runtime_callback(opal_pointer_array_t *procs);
 
 /**
  * Check to see if an errhandler is intrinsic.

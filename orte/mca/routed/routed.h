@@ -3,6 +3,9 @@
  *                         All rights reserved. 
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -191,10 +194,12 @@ typedef int (*orte_routed_module_get_wireup_info_fn_t)(opal_buffer_t *buf);
  * of "leaves" for this process and identifies the vpid of the parent
  * sitting above this process in the tree.
  *
+ * @param [in] jobid The jobid of the routing tree that needs to be updated.
+ *
  * @retval ORTE_SUCCESS The operation completed successfully
  * @retval ORTE_ERROR_xxx   The specifed error occurred
  */
-typedef int (*orte_routed_module_update_routing_tree_fn_t)(void);
+typedef int (*orte_routed_module_update_routing_tree_fn_t)(orte_jobid_t jobid);
 
 /*
  * Get the routing tree for this process

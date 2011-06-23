@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -61,6 +61,7 @@ orte_ess_base_module_t orte_ess_alps_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
+    orte_ess_base_proc_get_epoch,
     update_pidmap,
     update_nidmap,
     orte_ess_base_query_sys_info,
@@ -264,10 +265,12 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
+    orte_ns_cmp_bitmask_t mask;
+
+    mask = ORTE_NS_CMP_ALL;
     
     /* is this me? */
-    if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
-        proc->vpid == ORTE_PROC_MY_NAME->vpid) {
+    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, proc, ORTE_PROC_MY_NAME)) {
         /* yes it is - reply with my rank. This is necessary
          * because the pidmap will not have arrived when I
          * am starting up, and if we use static ports, then
@@ -348,6 +351,7 @@ static int alps_set_name(void)
     
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = (orte_vpid_t) cnos_get_rank() + starting_vpid;
+    ORTE_PROC_MY_NAME->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME);
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:alps set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -362,6 +366,10 @@ static int alps_set_name(void)
     }
     
     orte_process_info.num_procs = (orte_std_cntr_t) cnos_get_size();
+
+    if (orte_process_info.max_procs < orte_process_info.num_procs) {
+        orte_process_info.max_procs = orte_process_info.num_procs;
+    }
 
     return ORTE_SUCCESS;
 }

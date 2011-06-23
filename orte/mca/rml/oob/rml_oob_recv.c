@@ -1,4 +1,7 @@
 /*
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,7 +19,6 @@
 #include "orte/runtime/orte_globals.h"
 
 #include "rml_oob.h"
-
 
 static void
 orte_rml_recv_msg_callback(int status,

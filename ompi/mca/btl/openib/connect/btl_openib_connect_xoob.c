@@ -660,8 +660,8 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
     bool found = false;
 
     BTL_VERBOSE(("Searching for ep and proc with follow parameters:"
-                "jobid %d, vpid %d, sid %" PRIx64 ", lid %d",
-                process_name->jobid, process_name->vpid, subnet_id, lid));
+                "jobid %d, vpid %d, epoch %d, sid %" PRIx64 ", lid %d",
+                process_name->jobid, process_name->vpid, process_name->epoch, subnet_id, lid));
     /* find ibproc */
     OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
     for (ib_proc = (mca_btl_openib_proc_t*)

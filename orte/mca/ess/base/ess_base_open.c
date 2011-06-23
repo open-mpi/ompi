@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,9 +24,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
-
 #include "orte/mca/ess/base/base.h"
-
 
 /*
  * The following file was created by configure.  It contains extern
@@ -38,10 +36,19 @@
 
 opal_list_t orte_ess_base_components_available;
 orte_ess_base_module_t orte_ess = {
-    NULL, /* init     */
-    NULL, /* finalize */
-    NULL, /* abort    */
-    NULL  /* ft_event */
+    NULL,  /* init */
+    NULL,  /* finalize */
+    NULL,  /* abort */
+    NULL,  /* proc_get_locality */
+    NULL,  /* proc_get_daemon */
+    NULL,  /* proc_get_hostname */
+    NULL,  /* get_local_rank */
+    NULL,  /* get_node_rank */
+    NULL,  /* proc_get_epoch */
+    NULL,  /* update_pidmap */
+    NULL,  /* update_nidmap */
+    NULL,  /* query_sys_info */
+    NULL   /* ft_event */
 };
 int orte_ess_base_output;
 

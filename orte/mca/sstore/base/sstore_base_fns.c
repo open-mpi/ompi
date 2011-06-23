@@ -1,6 +1,9 @@
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,6 +62,7 @@ void orte_sstore_base_local_snapshot_info_construct(orte_sstore_base_local_snaps
 {
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
+    snapshot->process_name.epoch  = ORTE_EPOCH_MIN;
 
     snapshot->crs_comp = NULL;
     snapshot->compress_comp    = NULL;
@@ -72,6 +76,7 @@ void orte_sstore_base_local_snapshot_info_destruct( orte_sstore_base_local_snaps
 {
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
+    snapshot->process_name.epoch  = ORTE_EPOCH_MIN;
 
     if( NULL != snapshot->crs_comp ) {
         free(snapshot->crs_comp);
@@ -632,6 +637,7 @@ int orte_sstore_base_extract_global_metadata(orte_sstore_base_global_snapshot_in
 
             vpid_snapshot->process_name.jobid  = proc.jobid;
             vpid_snapshot->process_name.vpid   = proc.vpid;
+            vpid_snapshot->process_name.epoch  = proc.epoch;
         }
         else if(0 == strncmp(token, SSTORE_METADATA_LOCAL_CRS_COMP_STR, strlen(SSTORE_METADATA_LOCAL_CRS_COMP_STR))) {
             vpid_snapshot->crs_comp = strdup(value);

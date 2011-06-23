@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -40,6 +40,7 @@
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -500,6 +501,9 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 }
             }
             proc->name.vpid = rank;
+            /* Either init or update the epoch. */
+            proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
+            
             proc->slot_list = strdup(rfmap->slot_list);
             /* insert the proc into the proper place */
             if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,

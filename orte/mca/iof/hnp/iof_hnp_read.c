@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -89,6 +89,7 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     opal_list_item_t *item, *prev_item;
     orte_iof_proc_t *proct;
     int rc;
+    orte_ns_cmp_bitmask_t mask;
     
     OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
     
@@ -146,9 +147,10 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 continue;
             }
             
+            mask = ORTE_NS_CMP_ALL;
+
             /* if the daemon is me, then this is a local sink */
-            if (ORTE_PROC_MY_NAME->jobid == sink->daemon.jobid &&
-                ORTE_PROC_MY_NAME->vpid == sink->daemon.vpid) {
+            if (OPAL_EQUAL == orte_util_compare_name_fields(mask, ORTE_PROC_MY_NAME, &sink->daemon)) {
                 OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                      "%s read %d bytes from stdin - writing to %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), numbytes,
@@ -258,8 +260,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
              item != opal_list_get_end(&mca_iof_hnp_component.procs);
              item = opal_list_get_next(item)) {
             proct = (orte_iof_proc_t*)item;
-            if (proct->name.jobid == rev->name.jobid &&
-                proct->name.vpid == rev->name.vpid) {
+            mask = ORTE_NS_CMP_ALL;
+            if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, &rev->name)) {
                 /* found it - release corresponding event. This deletes
                  * the read event and closes the file descriptor
                  */
@@ -317,8 +319,9 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 continue;
             }
             /* is this the desired proc? */
-            if (sink->name.jobid == rev->name.jobid &&
-                sink->name.vpid == rev->name.vpid) {
+            mask = ORTE_NS_CMP_ALL;
+
+            if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &sink->name, &rev->name)) {
                 /* output to the corresponding file */
                 orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, sink->wev);
                 /* done */

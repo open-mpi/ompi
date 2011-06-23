@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -88,6 +88,7 @@ orte_ess_base_module_t orte_ess_singleton_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
+    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     update_pidmap,
     update_nidmap,
     orte_ess_base_query_sys_info,
@@ -187,6 +188,7 @@ static int rte_init(void)
         /* set the name */
         ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
         ORTE_PROC_MY_NAME->vpid = 0;
+        ORTE_PROC_MY_NAME->epoch = ORTE_EPOCH_MIN;
         
     } else {
         /*
@@ -231,6 +233,10 @@ static int rte_init(void)
     }
 
     orte_process_info.num_procs = 1;
+
+    if (orte_process_info.max_procs < orte_process_info.num_procs) {
+        orte_process_info.max_procs = orte_process_info.num_procs;
+    }
     
     /* NOTE: do not wireup our io - let the fork'd orted serve
      * as our io handler. This prevents issues with the event

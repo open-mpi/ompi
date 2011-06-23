@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -513,7 +513,7 @@ int orte_odls_base_default_update_daemon_info(opal_buffer_t *data)
             ORTE_ERROR_LOG(rc);
         }
         /* update the routing tree */
-        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
+        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -556,7 +556,7 @@ int orte_odls_base_default_update_daemon_info(opal_buffer_t *data)
         return rc;
     }
     /* update the routing tree */
-    if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
+    if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -620,7 +620,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     char **slot_str=NULL;
     orte_jobid_t debugger;
     bool add_child;
-
+    orte_ns_cmp_bitmask_t mask;
+    
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -945,6 +946,8 @@ find_my_procs:
     proc.jobid = jobdat->jobid;
     for (j=0; j < jobdat->num_procs; j++) {
         proc.vpid = j;
+        proc.epoch = ORTE_EPOCH_INVALID;
+        proc.epoch = orte_ess.proc_get_epoch(&proc);
         /* get the vpid of the daemon that is to host this proc */
         if (ORTE_VPID_INVALID == (host_daemon = orte_ess.proc_get_daemon(&proc))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -976,8 +979,11 @@ find_my_procs:
                      item != opal_list_get_end(&orte_local_children);
                      item = opal_list_get_next(item)) {
                     child = (orte_odls_child_t*)item;
-                    if (child->name->jobid == proc.jobid &&
-                        child->name->vpid == proc.vpid) {
+
+                    mask = ORTE_NS_CMP_ALL;
+
+                    if (OPAL_EQUAL == 
+                            orte_util_compare_name_fields(mask, child->name, &proc)) {
                         /* do not duplicate this child on the list! */
                         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                              "proc %s is on list and is %s",
@@ -1235,6 +1241,20 @@ static int setup_child(orte_odls_child_t *child, orte_odls_job_t *jobdat, char *
         return rc;
     }
     if (NULL == (param = mca_base_param_environ_variable("orte","ess","jobid"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        return rc;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+
+    /* setup the epoch */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_epoch_to_string(&value, child->name->epoch))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (NULL == (param = mca_base_param_environ_variable("orte","ess","epoch"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         return rc;
@@ -2419,6 +2439,7 @@ void orte_odls_base_notify_iof_complete(orte_process_name_t *proc)
     orte_odls_child_t *child;
     opal_list_item_t *item;
     int rc;
+    orte_ns_cmp_bitmask_t mask;
     
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:notify_iof_complete for child %s",
@@ -2437,9 +2458,10 @@ void orte_odls_base_notify_iof_complete(orte_process_name_t *proc)
          item != opal_list_get_end(&orte_local_children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
-        
-        if (child->name->jobid == proc->jobid &&
-            child->name->vpid == proc->vpid) { /* found it */
+
+        mask = ORTE_NS_CMP_ALL;
+
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, child->name, proc)) { /* found it */
             goto GOTCHILD;
         }
     }
@@ -2497,6 +2519,7 @@ void orte_odls_base_default_report_abort(orte_process_name_t *proc)
     opal_list_item_t *item;
     opal_buffer_t buffer;
     int rc;
+    orte_ns_cmp_bitmask_t mask;
 
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
@@ -2510,9 +2533,11 @@ void orte_odls_base_default_report_abort(orte_process_name_t *proc)
          item != opal_list_get_end(&orte_local_children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
+
+        mask = ORTE_NS_CMP_ALL;
         
-        if (proc->jobid == child->name->jobid &&
-            proc->vpid == child->name->vpid) { /* found it */
+        if (OPAL_EQUAL ==
+                orte_util_compare_name_fields(mask, proc, child->name)) { /* found it */
             child->state = ORTE_PROC_STATE_CALLED_ABORT;
             /* send ack */
             OBJ_CONSTRUCT(&buffer, opal_buffer_t);
@@ -2533,6 +2558,7 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
     orte_odls_job_t *jobdat, *jdat;
     opal_list_item_t *item;
     int rc;
+    orte_ns_cmp_bitmask_t mask;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:waitpid_fired on child %s with status %d",
@@ -2552,8 +2578,10 @@ void orte_base_default_waitpid_fired(orte_process_name_t *proc, int32_t status)
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
         
-        if (proc->jobid == child->name->jobid &&
-            proc->vpid == child->name->vpid) { /* found it */
+        mask = ORTE_NS_CMP_ALL;
+        
+        if (OPAL_EQUAL ==
+                orte_util_compare_name_fields(mask, proc, child->name)) { /* found it */
             goto GOTCHILD;
         }
     }
@@ -2893,6 +2921,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
         OBJ_CONSTRUCT(&proctmp, orte_proc_t);
         proctmp.name.jobid = ORTE_JOBID_WILDCARD;
         proctmp.name.vpid = ORTE_VPID_WILDCARD;
+        proctmp.name.epoch = ORTE_EPOCH_WILDCARD;
         opal_pointer_array_add(&procarray, &proctmp);
         procptr = &procarray;
         do_cleanup = true;
@@ -3257,4 +3286,27 @@ int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
     chdir(basedir);
 
     return rc;
+}
+
+bool orte_odls_base_default_check_finished(orte_process_name_t *proc) {
+    orte_odls_child_t *child;
+    opal_list_item_t *item;
+    orte_ns_cmp_bitmask_t mask;
+
+    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+    
+    /* find this child */
+    for (item = opal_list_get_first(&orte_local_children);
+         item != opal_list_get_end(&orte_local_children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        mask = ORTE_NS_CMP_ALL;
+        
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, proc, child->name)) { /* found it */
+            return child->fini_recvd;
+        }
+    }
+
+    return false;
 }

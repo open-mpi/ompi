@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2009-2010 The Trustees of Indiana University.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *                         All rights reserved.
  *
  * $COPYRIGHT$
@@ -264,6 +267,7 @@ static int errmgr_base_tool_start_cmdline_listener(void)
      */
     errmgr_cmdline_sender.jobid = ORTE_JOBID_INVALID;
     errmgr_cmdline_sender.vpid  = ORTE_VPID_INVALID;
+    errmgr_cmdline_sender.epoch = ORTE_EPOCH_INVALID;
     if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                        ORTE_RML_TAG_MIGRATE,
                                                        0,
@@ -375,12 +379,14 @@ static void errmgr_base_tool_cmdline_process_recv(int fd, short event, void *cbd
     if( OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, &errmgr_cmdline_sender) ) {
         swap_dest.jobid = errmgr_cmdline_sender.jobid;
         swap_dest.vpid  = errmgr_cmdline_sender.vpid;
+        swap_dest.epoch = errmgr_cmdline_sender.epoch;
 
         errmgr_cmdline_sender = *sender;
         orte_errmgr_base_migrate_update(ORTE_ERRMGR_MIGRATE_STATE_ERR_INPROGRESS);
 
         errmgr_cmdline_sender.jobid = swap_dest.jobid;
         errmgr_cmdline_sender.vpid  = swap_dest.vpid;
+        errmgr_cmdline_sender.epoch = swap_dest.epoch;
 
         goto cleanup;
     }

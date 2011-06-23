@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2010 High Performance Computing Center Stuttgart, 
@@ -105,6 +105,15 @@ typedef orte_local_rank_t (*orte_ess_base_module_proc_get_local_rank_fn_t)(orte_
 typedef orte_node_rank_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_process_name_t *proc);
 
 /**
+ * Update the epoch
+ *
+ * The epochs of the processes are stored in the process_name struct, but this
+ * will get the most up to date version stored within the orte_proc_t struct.
+ * Obviously the epoch of the proc that is passed in will be ignored.
+ */
+typedef orte_epoch_t (*orte_ess_base_module_proc_get_epoch_fn_t)(orte_process_name_t *proc);
+
+/**
  * Update the pidmap
  *
  * When a job is dynamically launched via comm_spawn, the pre-existing daemons need to
@@ -154,6 +163,7 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_proc_get_hostname_fn_t     proc_get_hostname;
     orte_ess_base_module_proc_get_local_rank_fn_t   get_local_rank;
     orte_ess_base_module_proc_get_node_rank_fn_t    get_node_rank;
+    orte_ess_base_module_proc_get_epoch_fn_t        proc_get_epoch;
     orte_ess_base_module_update_pidmap_fn_t         update_pidmap;
     orte_ess_base_module_update_nidmap_fn_t         update_nidmap;
     orte_ess_base_module_query_sys_info_t           query_sys_info;

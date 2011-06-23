@@ -86,6 +86,8 @@ ORTE_DECLSPEC int orte_ess_env_put(orte_std_cntr_t num_procs,
                                    orte_std_cntr_t num_local_procs,
                                    char ***env);
 
+ORTE_DECLSPEC orte_epoch_t orte_ess_base_proc_get_epoch(orte_process_name_t *proc);
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

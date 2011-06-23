@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -95,6 +95,7 @@ orte_ess_base_module_t orte_ess_generic_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
+    orte_ess_base_proc_get_epoch,
     update_pidmap,
     update_nidmap,
     orte_ess_base_query_sys_info,
@@ -154,6 +155,7 @@ static int rte_init(void)
         goto error;
     }
     ORTE_PROC_MY_NAME->vpid = strtol(envar, NULL, 10);
+    ORTE_PROC_MY_NAME->epoch = ORTE_EPOCH_MIN;
 
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "%s completed name definition",
@@ -165,6 +167,10 @@ static int rte_init(void)
         goto error;
     }
     orte_process_info.num_procs = strtol(envar, NULL, 10);
+
+    if (orte_process_info.max_procs < orte_process_info.num_procs) {
+        orte_process_info.max_procs = orte_process_info.num_procs;
+    }
     
     /* set the app_num so that MPI attributes get set correctly */
     orte_process_info.app_num = 1;
@@ -267,6 +273,7 @@ static int rte_init(void)
                 if (vpid == ORTE_PROC_MY_NAME->vpid) {
                     ORTE_PROC_MY_DAEMON->jobid = 0;
                     ORTE_PROC_MY_DAEMON->vpid = i;
+                    ORTE_PROC_MY_DAEMON->epoch = ORTE_PROC_MY_NAME->epoch;
                 }
                 OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                                      "%s node %d name %s rank %s",
@@ -297,6 +304,7 @@ static int rte_init(void)
                     if (vpid == ORTE_PROC_MY_NAME->vpid) {
                         ORTE_PROC_MY_DAEMON->jobid = 0;
                         ORTE_PROC_MY_DAEMON->vpid = i;
+                        ORTE_PROC_MY_DAEMON->epoch = ORTE_PROC_MY_NAME->epoch;
                     }
                     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                                          "%s node %d name %s rank %d",

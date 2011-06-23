@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -65,6 +65,9 @@ ORTE_DECLSPEC extern orte_process_name_t orte_name_wildcard;  /** instantiated i
 ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in orte/runtime/orte_init.c */
 
 #define ORTE_PROC_MY_NAME       (&orte_process_info.my_name)
+
+/* define a special name that point to my parent (aka the process that spawned me) */
+#define ORTE_PROC_MY_PARENT     (&orte_process_info.my_parent)
 
 /* define a special name that belongs to orterun */
 #define ORTE_PROC_MY_HNP        (&orte_process_info.my_hnp)

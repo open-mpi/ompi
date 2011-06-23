@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -108,6 +108,7 @@ int ompi_proc_init(void)
 
         proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
         proc->proc_name.vpid = i;
+        proc->proc_name.epoch = ORTE_EPOCH_MIN;
         if (i == ORTE_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
             proc->proc_flags = OPAL_PROC_ALL_LOCAL;
@@ -361,6 +362,8 @@ int ompi_proc_refresh(void) {
 
         /* Does not change: proc->proc_name.vpid */
         proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
+        
+        proc->proc_name.epoch = orte_ess.proc_get_epoch(&proc->proc_name);
 
         /* Make sure to clear the local flag before we set it below */
         proc->proc_flags = 0;

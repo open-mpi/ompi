@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -57,8 +57,10 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls.h"
@@ -120,14 +122,26 @@ static void send_relay(opal_buffer_t *buf)
     while (NULL != (item = opal_list_remove_first(&recips))) {
         nm = (orte_routed_tree_t*)item;
         
+        target.vpid = nm->vpid;
+        target.epoch = ORTE_EPOCH_INVALID;
+
+        if (!orte_util_proc_is_running(&target)) {
+            continue;
+        }
+
+        if (ORTE_NODE_RANK_INVALID == (target.epoch = orte_ess.proc_get_epoch(&target))) {
+            /* If we are trying to send to a previously failed process it's
+             * better to fail silently. */
+            continue;
+        }
+        
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                              "%s orte:daemon:send_relay sending relay msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_VPID_PRINT(nm->vpid)));
+                             ORTE_NAME_PRINT(&target)));
         
-        target.vpid = nm->vpid;
         if (ORTE_SUCCESS != (ret = orte_comm(&target, buf, ORTE_RML_TAG_DAEMON,
-                                             orte_daemon_cmd_processor))) {
+                                                      orte_daemon_cmd_processor))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }
@@ -401,12 +415,13 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
         /* construct the pointer array */
         OBJ_CONSTRUCT(&procarray, opal_pointer_array_t);
         opal_pointer_array_init(&procarray, num_replies, ORTE_GLOBAL_ARRAY_MAX_SIZE, 16);
-            
+        
         /* unpack the proc names into the array */
         while (ORTE_SUCCESS == (ret = opal_dss.unpack(buffer, &proc, &n, ORTE_NAME))) {
             proct = OBJ_NEW(orte_proc_t);
             proct->name.jobid = proc.jobid;
             proct->name.vpid = proc.vpid;
+            proct->name.epoch = proc.epoch;
             opal_pointer_array_add(&procarray, proct);
             num_replies++;
         }
@@ -1039,6 +1054,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
             orte_job_t *jdata;
             orte_proc_t *proc;
             orte_vpid_t vpid;
+            orte_epoch_t epoch;
             int32_t i, num_procs;
                 
             /* setup the answer */
@@ -1061,6 +1077,13 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
             /* unpack the vpid */
             n = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &vpid, &n, ORTE_VPID))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+
+            /* unpack the epoch */
+            n = 1;
+            if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &epoch, &n, ORTE_EPOCH))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
@@ -1173,6 +1196,8 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                     /* loop across all daemons */
                     proc2.jobid = ORTE_PROC_MY_NAME->jobid;
                     for (proc2.vpid=1; proc2.vpid < orte_process_info.num_procs; proc2.vpid++) {
+                        proc2.epoch = orte_util_lookup_epoch(&proc2);
+
                         /* setup the cmd */
                         relay_msg = OBJ_NEW(opal_buffer_t);
                         command = ORTE_DAEMON_TOP_CMD;
@@ -1309,6 +1334,15 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
         }
         OBJ_RELEASE(answer);
         break;
+        
+    case ORTE_PROCESS_FAILED_NOTIFICATION:
+        if (NULL != orte_errmgr.failure_notification) {
+            if (ORTE_SUCCESS != (ret = orte_errmgr.failure_notification(sender, buffer))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+        }
+        break;
             
     default:
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -1360,6 +1394,8 @@ static char *get_orted_comm_cmd_str(int command)
         return strdup("ORTE_DAEMON_SYNC_WANT_NIDMAP");
     case ORTE_DAEMON_TOP_CMD:
         return strdup("ORTE_DAEMON_TOP_CMD");
+    case ORTE_PROCESS_FAILED_NOTIFICATION:
+        return strdup("ORTE_PROCESS_FAILED_NOTIFICATION");
     case ORTE_DAEMON_ABORT_CALLED:
         return strdup("ORTE_DAEMON_ABORT_CALLED");
     case ORTE_DAEMON_ABORT_PROCS_CALLED:

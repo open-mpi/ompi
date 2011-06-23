@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -135,6 +135,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         ep = OBJ_NEW(orte_iof_sink_t);                              \
         ep->name.jobid = (nm)->jobid;                               \
         ep->name.vpid = (nm)->vpid;                                 \
+        ep->name.epoch = (nm)->epoch;                               \
         ep->tag = (tg);                                             \
         if (0 <= (fid)) {                                           \
             ep->wev->fd = (fid);                                    \
@@ -168,6 +169,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
+        rev->name.epoch = (nm)->epoch;                              \
         rev->tag = (tg);                                            \
         rev->fd = (fid);                                            \
         *(rv) = rev;                                                \
@@ -192,6 +194,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         ep = OBJ_NEW(orte_iof_sink_t);                              \
         ep->name.jobid = (nm)->jobid;                               \
         ep->name.vpid = (nm)->vpid;                                 \
+        ep->name.epoch = (nm)->epoch;                               \
         ep->tag = (tg);                                             \
         if (0 <= (fid)) {                                           \
             ep->wev->fd = (fid);                                    \
@@ -212,6 +215,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
+        rev->name.epoch= (nm)->epoch;                               \
         rev->tag = (tg);                                            \
         *(rv) = rev;                                                \
         opal_event_set(opal_event_base,                             \

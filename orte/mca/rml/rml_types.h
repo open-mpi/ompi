@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -62,6 +62,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
         pkt = OBJ_NEW(orte_msg_packet_t);                           \
         pkt->sender.jobid = (sndr)->jobid;                          \
         pkt->sender.vpid = (sndr)->vpid;                            \
+        pkt->sender.epoch = (sndr)->epoch;                          \
         if ((crt)) {                                                \
             pkt->buffer = OBJ_NEW(opal_buffer_t);                   \
             opal_dss.copy_payload(pkt->buffer, *(buf));             \
@@ -84,6 +85,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
         pkt = OBJ_NEW(orte_msg_packet_t);                           \
         pkt->sender.jobid = (sndr)->jobid;                          \
         pkt->sender.vpid = (sndr)->vpid;                            \
+        pkt->sender.epoch = (sndr)->epoch;                          \
         if ((crt)) {                                                \
             pkt->buffer = OBJ_NEW(opal_buffer_t);                   \
             opal_dss.copy_payload(pkt->buffer, *(buf));             \
@@ -188,6 +190,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 #define ORTE_RML_TAG_SSTORE_INTERNAL        45
 
 #define ORTE_RML_TAG_SUBSCRIBE              46
+
+/* For Epoch Updates */
+#define ORTE_RML_TAG_EPOCH_CHANGE           47
 
 #define ORTE_RML_TAG_MAX                   100
 

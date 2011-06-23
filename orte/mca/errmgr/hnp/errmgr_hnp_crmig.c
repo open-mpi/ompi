@@ -2,6 +2,9 @@
  * Copyright (c) 2009-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -747,6 +750,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
                 close_iof_stdin = true;
                 iof_name.jobid = proc->name.jobid;
                 iof_name.vpid = proc->name.vpid;
+                iof_name.epoch = proc->name.epoch;
             }
         }
     }
@@ -803,6 +807,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
                     close_iof_stdin = true;
                     iof_name.jobid = proc->name.jobid;
                     iof_name.vpid = proc->name.vpid;
+                    iof_name.epoch = proc->name.epoch;
                 }
             }
         }
@@ -850,6 +855,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
                     close_iof_stdin = true;
                     iof_name.jobid = proc->name.jobid;
                     iof_name.vpid = proc->name.vpid;
+                    iof_name.epoch = proc->name.epoch;
                 }
             }
         }

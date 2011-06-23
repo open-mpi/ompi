@@ -217,6 +217,11 @@ static void dump_aborted_procs(void)
                     ++num_killed;
                 }
             }
+
+            if (NULL == proc) {
+                continue;
+            }
+
             approc = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, proc->app_idx);
             node = proc->node;
             if (ORTE_JOB_STATE_FAILED_TO_START == job->state) {

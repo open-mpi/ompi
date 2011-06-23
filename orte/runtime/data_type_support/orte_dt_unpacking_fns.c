@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -54,6 +54,7 @@ int orte_dt_unpack_name(opal_buffer_t *buffer, void *dest,
     orte_process_name_t* proc;
     orte_jobid_t *jobid;
     orte_vpid_t *vpid;
+    orte_epoch_t *epoch;
     
     num = *num_vals;
     
@@ -91,15 +92,35 @@ int orte_dt_unpack_name(opal_buffer_t *buffer, void *dest,
         return rc;
     }
     
-    /* build the names from the jobid/vpid arrays */
+    /* collect all the epochs in a contiguous array */
+    epoch= (orte_epoch_t*)malloc(num * sizeof(orte_epoch_t));
+    if (NULL == epoch) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        *num_vals = 0;
+        free(jobid);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    /* now unpack them in one shot */
+    if (ORTE_SUCCESS != (rc =
+                         orte_dt_unpack_epoch(buffer, epoch, num_vals, ORTE_EPOCH))) {
+        ORTE_ERROR_LOG(rc);
+        *num_vals = 0;
+        free(epoch);
+        free(jobid);
+        return rc;
+    }
+    
+    /* build the names from the jobid/vpid/epoch arrays */
     proc = (orte_process_name_t*)dest;
     for (i=0; i < num; i++) {
         proc->jobid = jobid[i];
         proc->vpid = vpid[i];
+        proc->epoch = epoch[i];
         proc++;
     }
     
     /* cleanup */
+    free(epoch);
     free(vpid);
     free(jobid);
     
@@ -132,6 +153,22 @@ int orte_dt_unpack_vpid(opal_buffer_t *buffer, void *dest,
     
     /* Turn around and unpack the real type */
     if (ORTE_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, dest, num_vals, ORTE_VPID_T))) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
+    return ret;
+}
+
+/*
+ * EPOCH 
+ */
+int orte_dt_unpack_epoch(opal_buffer_t *buffer, void *dest,
+                             int32_t *num_vals, opal_data_type_t type)
+{
+    int ret;
+    
+    /* Turn around and unpack the real type */
+    if (ORTE_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, dest, num_vals, ORTE_EPOCH_T))) {
         ORTE_ERROR_LOG(ret);
     }
     

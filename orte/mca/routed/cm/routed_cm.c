@@ -4,6 +4,9 @@
  * Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,7 +50,7 @@ static orte_process_name_t get_route(orte_process_name_t *target);
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
-static int update_routing_tree(void);
+static int update_routing_tree(orte_jobid_t jobid);
 static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
@@ -135,7 +138,8 @@ static int delete_route(orte_process_name_t *proc)
     uint16_t jfamily;
     
     if (proc->jobid == ORTE_JOBID_INVALID ||
-        proc->vpid == ORTE_VPID_INVALID) {
+        proc->vpid == ORTE_VPID_INVALID ||
+        proc->epoch == ORTE_EPOCH_INVALID) {
         return ORTE_ERR_BAD_PARAM;
     }
     
@@ -195,7 +199,8 @@ static int update_route(orte_process_name_t *target,
     uint16_t jfamily;
     
     if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID) {
+        target->vpid == ORTE_VPID_INVALID ||
+        target->epoch == ORTE_EPOCH_INVALID) {
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -252,6 +257,8 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
+                jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
+                
                 return ORTE_SUCCESS;
             }
         }
@@ -265,6 +272,8 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
+        jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
+        
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
         return ORTE_SUCCESS;
     }
@@ -287,7 +296,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     uint16_t jfamily;
 
     if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID) {
+        target->vpid == ORTE_VPID_INVALID ||
+        target->epoch == ORTE_EPOCH_INVALID) {
         ret = ORTE_NAME_INVALID;
         goto found;
     }
@@ -354,6 +364,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
   
+    /* Initialize daemon's epoch, based on its current vpid/jobid */
+    daemon.epoch = orte_ess.proc_get_epoch(&daemon);
+
     /* if the daemon is me, then send direct to the target! */
     if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
         ret = target;
@@ -798,12 +811,14 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
+    local_lifeline.epoch = orte_ess.proc_get_epoch(&local_lifeline);
+    
     lifeline = &local_lifeline;
     
     return ORTE_SUCCESS;
 }
 
-static int update_routing_tree(void)
+static int update_routing_tree(orte_jobid_t jobid)
 {
     /* nothing to do here */
     return ORTE_SUCCESS;

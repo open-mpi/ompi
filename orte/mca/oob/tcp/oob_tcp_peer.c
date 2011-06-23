@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -605,14 +605,26 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
             peer->peer_state);
     }
 
+    OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
+            "%s-%s mca_oob_tcp_peer_close(%p) sd %d state %d\n",
+            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+            ORTE_NAME_PRINT(&(peer->peer_name)),
+            (void *) peer,
+            peer->peer_sd,
+            peer->peer_state));
+
     mca_oob_tcp_peer_shutdown(peer);
 
     /* inform the ERRMGR framework that we have lost a connection so
      * it can decide if this is important, what to do about it, etc.
      */
-    if (ORTE_ERR_UNRECOVERABLE == orte_errmgr.update_state(peer->peer_name.jobid, ORTE_JOB_STATE_COMM_FAILED,
-                                                           &peer->peer_name, ORTE_PROC_STATE_COMM_FAILED,
-                                                           0, ORTE_ERROR_DEFAULT_EXIT_CODE)) {
+    if (ORTE_ERR_UNRECOVERABLE == orte_errmgr.update_state(
+                                                peer->peer_name.jobid,
+                                                ORTE_JOB_STATE_COMM_FAILED,
+                                                &peer->peer_name,
+                                                ORTE_PROC_STATE_COMM_FAILED,
+                                                0,
+                                                ORTE_ERROR_DEFAULT_EXIT_CODE)) {
         /* Should free the peer lock before we abort so we don't 
          * get stuck in the orte_wait_kill when receiving messages in the 
          * tcp OOB
@@ -891,11 +903,6 @@ int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer)
 static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t *)user;
-    /* if we are abnormally terminating, ignore this */
-    if (orte_abnormal_term_ordered) {
-        return;
-    }
-
     OPAL_THREAD_LOCK(&peer->peer_lock);
     switch(peer->peer_state) {
         case MCA_OOB_TCP_CONNECT_ACK: 

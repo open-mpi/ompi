@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,9 +42,11 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_daemon_uri =        */   NULL,
     /*  .my_hnp =               */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .my_hnp_uri =           */   NULL,
+    /*  .my_parent =            */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID},
     /*  .hnp_pid =              */   0,
     /*  .app_num =              */   0,
     /*  .num_procs =            */   1,
+    /*  .max_procs =            */   1,
     /*  .num_daemons =          */   1,
     /*  .num_nodes =            */   1,
     /*  .nodename =             */   NULL,

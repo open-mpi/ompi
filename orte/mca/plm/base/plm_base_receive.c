@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -44,6 +44,7 @@
 #include "orte/util/error_strings.h"
 #include "orte/mca/debugger/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
@@ -145,6 +146,7 @@ static void process_msg(int fd, short event, void *data)
     orte_job_t *jdata, *parent;
     opal_buffer_t answer;
     orte_vpid_t vpid;
+    orte_epoch_t epoch;
     orte_proc_t *proc;
     orte_proc_state_t state;
     orte_exit_code_t exit_code;
@@ -392,6 +394,9 @@ static void process_msg(int fd, short event, void *data)
                         break;
                     }
                     name.vpid = vpid;
+                    name.epoch = ORTE_EPOCH_INVALID;
+                    name.epoch = orte_ess.proc_get_epoch(&name);
+
                     /* unpack the pid */
                     count = 1;
                     if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &pid, &count, OPAL_PID))) {
@@ -467,6 +472,9 @@ static void process_msg(int fd, short event, void *data)
             break;
                 
         case ORTE_PLM_INIT_ROUTES_CMD:
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:receive init routes command",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             count=1;
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(msgpkt->buffer, &job, &count, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
@@ -479,6 +487,15 @@ static void process_msg(int fd, short event, void *data)
                     break;
                 }
                 name.vpid = vpid;
+                
+                count=1;
+                opal_dss.unpack(msgpkt->buffer, &epoch, &count, ORTE_EPOCH);
+                name.epoch = epoch;
+
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s plm:base:receive Described rank %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name)));
                 /* update the errmgr state */
                 orte_errmgr.update_state(job, ORTE_JOB_STATE_REGISTERED,
                                          &name, ORTE_PROC_STATE_REGISTERED,
@@ -491,9 +508,17 @@ static void process_msg(int fd, short event, void *data)
             if (ORTE_SUCCESS != (rc = orte_routed.init_routes(job, msgpkt->buffer))) {
                 ORTE_ERROR_LOG(rc);
             }
+            
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:receive done with init routes command",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            
             break;
 
         default:
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:receive unknown command",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
             rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
             break;
@@ -516,7 +541,10 @@ static void process_msg(int fd, short event, void *data)
     if (ORTE_PROC_IS_HNP && ORTE_SUCCESS != rc) {
         orte_jobs_complete();
     }
-
+    
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:receive done processing commands",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 }
 
 /*

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -49,6 +49,7 @@
 #include "opal/mca/base/base.h"
 
 #include "opal/class/opal_object.h"
+#include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
 #include "opal/util/opal_sos.h"
@@ -89,6 +90,22 @@ struct orte_errmgr_predicted_node_t {
 };
 typedef struct orte_errmgr_predicted_node_t orte_errmgr_predicted_node_t;
 OBJ_CLASS_DECLARATION(orte_errmgr_predicted_node_t);
+
+/*
+ * Callback function that should be called when there is a fault.
+ *
+ * This callback function will be used anytime (other than during finalize) the
+ * runtime detects and handles a process failure. The runtime will complete all
+ * its stabilization before alerting the callback function. The parameter to the
+ * callback function will be the orte_process_name_t of the process that failed.
+ * It will not alert the application to failures that are not in the same job as
+ * the alerted process, only failures within the same jobid.
+ *
+ * @param[in] proc The names of the process that failed
+ */
+typedef void (orte_errmgr_fault_callback_t)(opal_pointer_array_t *procs);
+
+ORTE_DECLSPEC extern orte_errmgr_fault_callback_t *fault_cbfunc;
 
 /*
  * Structure to describe a suggested remapping element for a predicted fault.
@@ -242,42 +259,100 @@ typedef int (*orte_errmgr_base_module_suggest_map_targets_fn_t)(orte_proc_t *pro
 typedef int  (*orte_errmgr_base_module_ft_event_fn_t)(int state);
 
 /**
- * Register a callback to alert caller when ORTE is preparing to
- * migrate the process to another location. This provides an
- * opportunity for the process to checkpoint any required state,
- * and to cleanly shutdown.
+ * Function to perform actions that require the rest of the ORTE layer to be up
+ * and running.
  *
- * @param[in] delay Time to delay before assuming process is stuck
- *                  and cannot exit on its own - and thus, go
- *                  ahead and migrate it
+ * @retval ORTE_SUCCESS The operation completed successfully
+ * @retval ORTE_ERROR   An unspecified error occured
  */
 typedef void (*orte_errmgr_base_module_register_migration_warning_fn_t)(struct timeval *tv);
+
+/*
+ * This function gets called just after startup is finished. It gives the errmgr
+ * a chance to setup anything that requires ORTE to actually be ready to go such
+ * as registering callbacks, posting receives, etc.
+ */
+typedef int (*orte_errmgr_base_module_post_startup_t)(void);
+
+/*
+ * This function gets called just before shutdown begins. It gives the errmgr a
+ * chance to clean up anything that it did after startup, i.e. deregistering
+ * callbacks, cleaning up receives, etc.
+ */
+typedef int (*orte_errmgr_base_module_pre_shutdown_t)(void);
+
+/**
+ * Function to mark a list of processes as dead and perform any internal cleanup
+ * necessary.
+ *
+ * @param[in] dead_procs Process list that is being marked as dead.
+ *
+ * @retval ORTE_SUCCESS The operation completed successfully.
+ * @retval ORTE_ERROR   An unspecified error occurred.
+ */
+typedef int (*orte_errmgr_base_module_mark_processes_as_dead_t)(opal_pointer_array_t *dead_procs);
+
+/** 
+ * Set the callback function for faults.
+ * 
+ * @param[in] cbfunc The callback function.
+ *
+ * @retval The previous fault callback function.
+ */
+typedef orte_errmgr_fault_callback_t *(*orte_errmgr_base_module_set_fault_callback_t)(orte_errmgr_fault_callback_t *cbfunc);
+
+/**
+ * Receive updates about failure notifications.
+ *
+ * @param[in] sender The process who originally sent the failure notification.
+ * @param[in] buffer The buffer containing all the information about the failed process.
+ * 
+ * @retval ORTE_SUCCESS The operation completed successfully.
+ * @retval ORTE_ERROR   An unspecified error occurred.
+ */
+typedef int (*orte_errmgr_base_module_failure_notification_t)(orte_process_name_t *sender,
+                                                              opal_buffer_t *buffer);
 
 /*
  * Module Structure
  */
 struct orte_errmgr_base_module_2_3_0_t {
     /** Initialization Function */
-    orte_errmgr_base_module_init_fn_t                        init;
+    orte_errmgr_base_module_init_fn_t                   init;
     /** Finalization Function */
-    orte_errmgr_base_module_finalize_fn_t                    finalize;
+    orte_errmgr_base_module_finalize_fn_t               finalize;
 
-    orte_errmgr_base_module_log_fn_t                         log;
-    orte_errmgr_base_module_abort_fn_t                       abort;
-    orte_errmgr_base_module_abort_peers_fn_t                 abort_peers;
+    orte_errmgr_base_module_log_fn_t                    log;
+    orte_errmgr_base_module_abort_fn_t                  abort;
+    orte_errmgr_base_module_abort_peers_fn_t            abort_peers;
 
     /** Actual process failure notification */
-    orte_errmgr_base_module_update_state_fn_t                update_state;
+    orte_errmgr_base_module_update_state_fn_t           update_state;
     /** Predicted process/node failure notification */
-    orte_errmgr_base_module_predicted_fault_fn_t             predicted_fault;
+    orte_errmgr_base_module_predicted_fault_fn_t        predicted_fault;
     /** Suggest a node to map a restarting process onto */
-    orte_errmgr_base_module_suggest_map_targets_fn_t         suggest_map_targets;
+    orte_errmgr_base_module_suggest_map_targets_fn_t    suggest_map_targets;
 
     /** Handle any FT Notifications */
-    orte_errmgr_base_module_ft_event_fn_t                    ft_event;
+    orte_errmgr_base_module_ft_event_fn_t               ft_event;
 
-    /* Register to be warned of impending migration */
+	/* Register to be warned of impending migration */
     orte_errmgr_base_module_register_migration_warning_fn_t  register_migration_warning;
+
+    /** Perform post-statup operations */
+    orte_errmgr_base_module_post_startup_t              post_startup;
+
+    /** Perform pre-shutdown operations */
+    orte_errmgr_base_module_pre_shutdown_t              pre_shutdown;
+
+    /* Mark a process as dead. */
+    orte_errmgr_base_module_mark_processes_as_dead_t    mark_processes_as_dead;
+
+    /* Set the callback function */
+    orte_errmgr_base_module_set_fault_callback_t        set_fault_callback;
+
+    /* Receive failure notification */
+    orte_errmgr_base_module_failure_notification_t      failure_notification;
 };
 typedef struct orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_2_3_0_t;
 typedef orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_t;

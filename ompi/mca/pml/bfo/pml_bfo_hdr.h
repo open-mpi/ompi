@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -415,6 +415,7 @@ struct mca_pml_bfo_restart_hdr_t {
     int32_t  hdr_dst_rank;                    /**< needed to send NACK */
     uint32_t hdr_jobid;                       /**< needed to send NACK */
     uint32_t hdr_vpid;                        /**< needed to send NACK */
+    uint32_t hdr_epoch;                       /**< needed to send NACK */
 };
 typedef struct mca_pml_bfo_restart_hdr_t mca_pml_bfo_restart_hdr_t;
 
@@ -427,6 +428,7 @@ typedef struct mca_pml_bfo_restart_hdr_t mca_pml_bfo_restart_hdr_t;
     (h).hdr_dst_rank = ntohl((h).hdr_dst_rank); \
     (h).hdr_jobid = ntohl((h).hdr_jobid); \
     (h).hdr_vpid = ntohl((h).hdr_vpid); \
+    (h).hdr_epoch = ntohl((h).hdr_epoch); \
     } while (0)
 
 #define MCA_PML_BFO_RESTART_HDR_HTON(h) \
@@ -435,6 +437,7 @@ typedef struct mca_pml_bfo_restart_hdr_t mca_pml_bfo_restart_hdr_t;
     (h).hdr_dst_rank = htonl((h).hdr_dst_rank); \
     (h).hdr_jobid = htonl((h).hdr_jobid); \
     (h).hdr_vpid = htonl((h).hdr_vpid); \
+    (h).hdr_epoch = htonl((h).hdr_epoch); \
     } while (0) 
 
 #endif /* PML_BFO */

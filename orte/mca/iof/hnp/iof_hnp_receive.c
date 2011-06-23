@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -67,7 +67,7 @@ static void process_msg(int fd, short event, void *cbdata)
         ORTE_ERROR_LOG(rc);
         goto CLEAN_RETURN;
     }
-    
+
     if (ORTE_IOF_XON & stream) {
         /* re-start the stdin read event */
         if (NULL != mca_iof_hnp_component.stdinev &&
@@ -109,18 +109,21 @@ static void process_msg(int fd, short event, void *cbdata)
                                  NULL, &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = mev->sender.jobid;
             sink->daemon.vpid = mev->sender.vpid;
+            sink->daemon.epoch = mev->sender.epoch;
         }
         if (ORTE_IOF_STDERR & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDERR,
                                  NULL, &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = mev->sender.jobid;
             sink->daemon.vpid = mev->sender.vpid;
+            sink->daemon.epoch = mev->sender.epoch;
         }
         if (ORTE_IOF_STDDIAG & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDDIAG,
                                  NULL, &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = mev->sender.jobid;
             sink->daemon.vpid = mev->sender.vpid;
+            sink->daemon.epoch = mev->sender.epoch;
         }
         goto CLEAN_RETURN;
     }

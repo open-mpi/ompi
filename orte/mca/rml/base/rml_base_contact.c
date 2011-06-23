@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -138,10 +138,15 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
         ORTE_PROC_IS_DAEMON &&
         orte_process_info.num_procs < num_procs) {
         orte_process_info.num_procs = num_procs;
+
+        if (orte_process_info.max_procs < orte_process_info.num_procs) {
+            orte_process_info.max_procs = orte_process_info.num_procs;
+        }
+
         /* if we changed it, then we better update the routed
          * tree so daemon collectives work correctly
          */
-        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree())) {
+        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid))) {
             ORTE_ERROR_LOG(rc);
         }
     }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -128,6 +128,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     int fdout;
     orte_odls_job_t *jobdat=NULL;
     int np, numdigs;
+    orte_ns_cmp_bitmask_t mask;
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:orted pushing fd %d for process %s",
@@ -150,8 +151,10 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
          item != opal_list_get_end(&mca_iof_orted_component.procs);
          item = opal_list_get_next(item)) {
         proct = (orte_iof_proc_t*)item;
-        if (proct->name.jobid == dst_name->jobid &&
-            proct->name.vpid == dst_name->vpid) {
+        
+        mask = ORTE_NS_CMP_ALL;
+
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, dst_name)) {
             /* found it */
             goto SETUP;
         }
@@ -160,6 +163,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     proct = OBJ_NEW(orte_iof_proc_t);
     proct->name.jobid = dst_name->jobid;
     proct->name.vpid = dst_name->vpid;
+    proct->name.epoch = dst_name->epoch;
     opal_list_append(&mca_iof_orted_component.procs, &proct->super);
     /* see if we are to output to a file */
     if (NULL != orte_output_filename) {
@@ -285,6 +289,7 @@ static int orted_close(const orte_process_name_t* peer,
 {
     opal_list_item_t *item, *next_item;
     orte_iof_sink_t* sink;
+    orte_ns_cmp_bitmask_t mask;
 
     OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
     
@@ -294,8 +299,9 @@ static int orted_close(const orte_process_name_t* peer,
         sink = (orte_iof_sink_t*)item;
         next_item = opal_list_get_next(item);
         
-        if((sink->name.jobid == peer->jobid) &&
-           (sink->name.vpid == peer->vpid) &&
+        mask = ORTE_NS_CMP_ALL;
+
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &sink->name, peer) &&
            (source_tag & sink->tag)) {
 
             /* No need to delete the event or close the file

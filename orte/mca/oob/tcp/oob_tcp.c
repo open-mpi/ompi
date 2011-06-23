@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -164,8 +164,7 @@ int mca_oob_tcp_component_open(void)
 #ifdef __WINDOWS__
     WSADATA win_sock_data;
     if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-        opal_output (0, "mca_oob_tcp_component_open: failed to initialise windows sockets: error %d\n",
-                     WSAGetLastError());
+        opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: error %d\n", WSAGetLastError());
         return ORTE_ERROR;
     }
 #endif
@@ -432,7 +431,7 @@ int mca_oob_tcp_component_close(void)
     while (NULL != (item = opal_list_remove_first(&mca_oob_tcp_component.tcp_available_devices))) {
         OBJ_RELEASE(item);
     }
-
+#if 0
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_connections_lock);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_connections_return);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_pending_connections);
@@ -452,6 +451,7 @@ int mca_oob_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
 
     opal_output_close(mca_oob_tcp_output_handle);
+#endif
     
     return ORTE_SUCCESS;
 }
@@ -1975,7 +1975,7 @@ int mca_oob_tcp_set_addr(const orte_process_name_t* name, const char* uri)
             peer->peer_state = MCA_OOB_TCP_CLOSED;
             /* clear any pending sends */
             while (NULL != (item = opal_list_remove_first(&peer->peer_send_queue))) {
-                MCA_OOB_TCP_MSG_RETURN( ((mca_oob_tcp_msg_t *)item) );
+                OBJ_RELEASE(item);
             }
             peer->peer_send_msg = NULL;
             /* clear any pending recvs */

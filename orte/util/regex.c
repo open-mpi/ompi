@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -53,6 +53,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/mca/ess/ess.h"
 
 #include "orte/util/regex.h"
 
@@ -1225,6 +1226,8 @@ int orte_regex_decode_maps(char *regexp, orte_odls_job_t **jobdat)
                 /* construct the URI */
                 proc.jobid = ORTE_PROC_MY_NAME->jobid;
                 proc.vpid = nid->daemon;
+                proc.epoch = orte_ess.proc_get_epoch(&proc);
+
                 orte_util_convert_process_name_to_string(&proc_name, &proc);
                 asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
                 opal_dss.pack(&buf, &uri, 1, OPAL_STRING);

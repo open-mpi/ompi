@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,6 +19,7 @@
 #include "opal/util/opal_sos.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/util/name_fns.h"
@@ -37,7 +41,7 @@ static orte_process_name_t get_route(orte_process_name_t *target);
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
-static int update_routing_tree(void);
+static int update_routing_tree(orte_jobid_t jobid);
 static orte_vpid_t get_routing_tree(opal_list_t *children);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
@@ -129,7 +133,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     orte_process_name_t *ret;
 
     if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID) {
+        target->vpid == ORTE_VPID_INVALID ||
+        target->epoch == ORTE_EPOCH_INVALID) {
         ret = ORTE_NAME_INVALID;
     } else {
         /* a slave must always route via its parent daemon */
@@ -251,9 +256,12 @@ static int route_lost(const orte_process_name_t *route)
 
 static bool route_is_defined(const orte_process_name_t *target)
 {
+    orte_ns_cmp_bitmask_t mask;
+
+    mask = ORTE_NS_CMP_ALL;
+
     /* only the route to my daemon is defined */
-    if (target->jobid != ORTE_PROC_MY_DAEMON->jobid ||
-        target->vpid != ORTE_PROC_MY_DAEMON->vpid) {
+    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, target, ORTE_PROC_MY_DAEMON)) {
         return false;
     }
     
@@ -267,12 +275,14 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
+    local_lifeline.epoch = orte_ess.proc_get_epoch(&local_lifeline);
+    
     lifeline = &local_lifeline;
     
     return ORTE_SUCCESS;
 }
 
-static int update_routing_tree(void)
+static int update_routing_tree(orte_jobid_t jobid)
 {
     /* this is a meaningless command for a slave as I am not allowed to route */
     return ORTE_ERR_NOT_SUPPORTED;

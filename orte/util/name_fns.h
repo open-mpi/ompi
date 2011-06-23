@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -44,6 +44,7 @@ typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process nam
 #define ORTE_NS_CMP_NONE       0x00
 #define ORTE_NS_CMP_JOBID      0x02
 #define ORTE_NS_CMP_VPID       0x04
+#define ORTE_NS_CMP_EPOCH      0x08
 #define ORTE_NS_CMP_ALL        0x0f
 #define ORTE_NS_CMP_WILD       0x10
 
@@ -59,6 +60,10 @@ ORTE_DECLSPEC char* orte_util_print_jobids(const orte_jobid_t job);
 ORTE_DECLSPEC char* orte_util_print_vpids(const orte_vpid_t vpid);
 #define ORTE_VPID_PRINT(n) \
     orte_util_print_vpids(n)
+
+ORTE_DECLSPEC char* orte_util_print_epoch(const orte_epoch_t epoch);
+#define ORTE_EPOCH_PRINT(n) \
+    orte_util_print_epoch(n)
 
 ORTE_DECLSPEC char* orte_util_print_job_family(const orte_jobid_t job);
 #define ORTE_JOB_FAMILY_PRINT(n) \
@@ -112,13 +117,16 @@ ORTE_DECLSPEC int orte_util_convert_jobid_to_string(char **jobid_string, const o
 ORTE_DECLSPEC int orte_util_convert_string_to_jobid(orte_jobid_t *jobid, const char* jobidstring);
 ORTE_DECLSPEC int orte_util_convert_vpid_to_string(char **vpid_string, const orte_vpid_t vpid);
 ORTE_DECLSPEC int orte_util_convert_string_to_vpid(orte_vpid_t *vpid, const char* vpidstring);
+ORTE_DECLSPEC int orte_util_convert_epoch_to_string(char **epoch_string, const orte_epoch_t epoch);
+ORTE_DECLSPEC int orte_util_convert_string_to_epoch(orte_vpid_t *epoch, const char* epochstring);
 ORTE_DECLSPEC int orte_util_convert_string_to_process_name(orte_process_name_t *name,
                                              const char* name_string);
 ORTE_DECLSPEC int orte_util_convert_process_name_to_string(char** name_string,
                                              const orte_process_name_t *name);
 ORTE_DECLSPEC int orte_util_create_process_name(orte_process_name_t **name,
                                   orte_jobid_t job,
-                                  orte_vpid_t vpid);
+                                  orte_vpid_t vpid,
+                                  orte_epoch_t epoch);
 ORTE_DECLSPEC int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
                                   const orte_process_name_t* name1,
                                   const orte_process_name_t* name2);

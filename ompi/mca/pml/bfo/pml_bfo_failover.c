@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -395,12 +398,13 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
         (hdr->hdr_match.hdr_seq != (uint16_t)recvreq->req_msgseq)) {
         orte_proc.jobid = hdr->hdr_restart.hdr_jobid;
         orte_proc.vpid = hdr->hdr_restart.hdr_vpid;
+        orte_proc.epoch = hdr->hdr_restart.hdr_epoch;
         ompi_proc = ompi_proc_find(&orte_proc);
         opal_output_verbose(20, mca_pml_bfo_output,
                             "RNDVRESTARTNOTIFY: received: does not match request, sending NACK back "
                             "PML:req=%d,hdr=%d CTX:req=%d,hdr=%d SRC:req=%d,hdr=%d "
                             "RQS:req=%d,hdr=%d src_req=%p, dst_req=%p, peer=%d, hdr->hdr_jobid=%d, "
-                            "hdr->hdr_vpid=%d, ompi_proc->proc_hostname=%s",
+                            "hdr->hdr_vpid=%d, hdr->hdr_epoch=%d, ompi_proc->proc_hostname=%s",
                             (uint16_t)recvreq->req_msgseq, hdr->hdr_match.hdr_seq,
                             recvreq->req_recv.req_base.req_comm->c_contextid, hdr->hdr_match.hdr_ctx,
                             recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
@@ -408,8 +412,8 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
                             hdr->hdr_restart.hdr_restartseq,
                             recvreq->remote_req_send.pval, (void *)recvreq,
                             recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
-                            hdr->hdr_restart.hdr_jobid, hdr->hdr_restart.hdr_vpid,
-                            ompi_proc->proc_hostname);
+                            hdr->hdr_restart.hdr_jobid, hdr->hdr_restart.hdr_vpid, 
+                            hdr->hdr_restart.hdr_epoch, ompi_proc->proc_hostname);
         mca_pml_bfo_recv_request_rndvrestartnack(des, ompi_proc, false);
         return;
     }
@@ -711,6 +715,7 @@ void mca_pml_bfo_send_request_rndvrestartnotify(mca_pml_bfo_send_request_t* send
     restart->hdr_dst_rank = sendreq->req_send.req_base.req_peer; /* Needed for NACKs */
     restart->hdr_jobid = ORTE_PROC_MY_NAME->jobid;
     restart->hdr_vpid = ORTE_PROC_MY_NAME->vpid;
+    restart->hdr_epoch = ORTE_PROC_MY_NAME->epoch;
 
     bfo_hdr_hton(restart, MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNOTIFY, proc);
 

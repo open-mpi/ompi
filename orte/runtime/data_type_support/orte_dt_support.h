@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -52,6 +52,9 @@ int orte_dt_compare_jobid(orte_jobid_t *value1,
 int orte_dt_compare_vpid(orte_vpid_t *value1,
                          orte_vpid_t *value2,
                          opal_data_type_t type);
+int orte_dt_compare_epoch(orte_epoch_t *value1,
+                          orte_epoch_t *value2,
+                          opal_data_type_t type);
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_compare_job(orte_job_t *value1, orte_job_t *value2, opal_data_type_t type);
 int orte_dt_compare_node(orte_node_t *value1, orte_node_t *value2, opal_data_type_t type);
@@ -83,6 +86,7 @@ int orte_dt_copy_std_cntr(orte_std_cntr_t **dest, orte_std_cntr_t *src, opal_dat
 int orte_dt_copy_name(orte_process_name_t **dest, orte_process_name_t *src, opal_data_type_t type);
 int orte_dt_copy_jobid(orte_jobid_t **dest, orte_jobid_t *src, opal_data_type_t type);
 int orte_dt_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, opal_data_type_t type);
+int orte_dt_copy_epoch(orte_epoch_t **dest, orte_epoch_t *src, opal_data_type_t type);
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_copy_job(orte_job_t **dest, orte_job_t *src, opal_data_type_t type);
 int orte_dt_copy_node(orte_node_t **dest, orte_node_t *src, opal_data_type_t type);
@@ -111,6 +115,8 @@ int orte_dt_pack_name(opal_buffer_t *buffer, const void *src,
 int orte_dt_pack_jobid(opal_buffer_t *buffer, const void *src,
                        int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
+                      int32_t num_vals, opal_data_type_t type);
+int orte_dt_pack_epoch(opal_buffer_t *buffer, const void *src,
                       int32_t num_vals, opal_data_type_t type);
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
@@ -178,6 +184,8 @@ int orte_dt_unpack_name(opal_buffer_t *buffer, void *dest,
 int orte_dt_unpack_jobid(opal_buffer_t *buffer, void *dest,
                          int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_vpid(opal_buffer_t *buffer, void *dest,
+                        int32_t *num_vals, opal_data_type_t type);
+int orte_dt_unpack_epoch(opal_buffer_t *buffer, void *dest,
                         int32_t *num_vals, opal_data_type_t type);
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,

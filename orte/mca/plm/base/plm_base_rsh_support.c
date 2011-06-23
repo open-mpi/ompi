@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -54,6 +54,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
@@ -1525,6 +1526,8 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
 {
     char *param, *path, *tmp, *cmd, *basename, *dest_dir;
     int i;
+    orte_epoch_t epoch;
+    orte_process_name_t proc;
     
     /* if a prefix is set, pass it to the bootproxy in a special way */
     if (NULL != app->prefix_dir) {
@@ -1633,6 +1636,17 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     free(param);
     opal_setenv("OMPI_COMM_WORLD_RANK", cmd, true, argv);
     free(cmd);
+
+    /* set the epoch */
+    proc.jobid = jobid;
+    proc.vpid = vpid;
+    proc.epoch = ORTE_EPOCH_MIN;
+    epoch = orte_ess.proc_get_epoch(&proc);
+    orte_util_convert_epoch_to_string(&cmd, epoch);
+    param = mca_base_param_environ_variable("orte","ess","epoch");
+    opal_setenv(param, cmd, true, argv);
+    free(param);
+    free(cmd);
     
     /* set the number of procs */
     asprintf(&cmd, "%d", (int)num_procs);
@@ -1727,6 +1741,7 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
     orte_node_t *node_from_map, *node;
     orte_odls_job_t *jobdat = NULL;
     opal_list_item_t *item = NULL;
+    orte_ns_cmp_bitmask_t mask;
 
     /* set the state to restart */
     jdata->state = ORTE_JOB_STATE_RESTART;
@@ -1751,8 +1766,10 @@ void orte_plm_base_reset_job(orte_job_t *jdata)
                 if (NULL == (proc_from_node = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
                     continue;
                 }
-                if (proc_from_node->name.jobid == proc->name.jobid &&
-                    proc_from_node->name.vpid == proc->name.vpid) {
+                
+                mask = ORTE_NS_CMP_ALL;
+
+                if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proc_from_node->name, &proc->name)) {
                     /* got it! */
                     OBJ_RELEASE(proc);  /* keep accounting straight */
                     opal_pointer_array_set_item(node->procs, i, NULL);

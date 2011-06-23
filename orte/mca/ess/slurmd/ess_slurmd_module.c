@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -81,6 +81,7 @@ orte_ess_base_module_t orte_ess_slurmd_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
+    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     update_pidmap,
     update_nidmap,
     orte_ess_base_query_sys_info,
@@ -189,7 +190,7 @@ static int rte_init(void)
     }
     ORTE_PROC_MY_NAME->vpid = strtol(envar, NULL, 10);
 #endif
-
+    ORTE_PROC_MY_NAME->epoch = ORTE_EPOCH_MIN;
     /* get our local rank */
     if (NULL == (envar = getenv("SLURM_LOCALID"))) {
         error = "could not get SLURM_LOCALID";
@@ -216,11 +217,15 @@ static int rte_init(void)
     orte_process_info.num_procs = strtol(envar, NULL, 10);
 #endif
 
+    if (orte_process_info.max_procs < orte_process_info.num_procs) {
+        orte_process_info.max_procs = orte_process_info.num_procs;
+    }
 #if WANT_SLURM_PMI_SUPPORT
     if (PMI_SUCCESS != PMI_Get_appnum(&i)) {
         error = "PMI_Get_appnum failed";
         goto error;
     }
+    
     orte_process_info.app_num = i;
 #else
     /* set the app_num so that MPI attributes get set correctly */
@@ -250,6 +255,7 @@ static int rte_init(void)
     nodeid = strtol(envar, NULL, 10);
     ORTE_PROC_MY_DAEMON->jobid = 0;
     ORTE_PROC_MY_DAEMON->vpid = nodeid;
+    ORTE_PROC_MY_DAEMON->epoch = ORTE_PROC_MY_NAME->epoch;
     
     /* get the number of ppn */
     if (NULL == (tasks_per_node = getenv("SLURM_STEP_TASKS_PER_NODE"))) {
@@ -338,6 +344,7 @@ static int rte_init(void)
     opal_pointer_array_add(&orte_jobmap, jmap);
     /* update the num procs */
     jmap->num_procs = orte_process_info.num_procs;
+
     /* set the size of the pidmap storage so we minimize realloc's */
     if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&jmap->pmap, jmap->num_procs))) {
         ORTE_ERROR_LOG(ret);

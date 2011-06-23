@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -91,6 +91,7 @@ static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
 {
     ptr->daemon.jobid = ORTE_JOBID_INVALID;
     ptr->daemon.vpid = ORTE_VPID_INVALID;
+    ptr->daemon.epoch = ORTE_EPOCH_INVALID;
     ptr->wev = OBJ_NEW(orte_iof_write_event_t);
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -83,9 +83,11 @@ struct orte_proc_info_t {
     char *my_daemon_uri;                /**< Contact info to local daemon */
     orte_process_name_t my_hnp;         /**< Name of my hnp */
     char *my_hnp_uri;                   /**< Contact info for my hnp */
+    orte_process_name_t my_parent;      /**< Name of my parent (or my HNP if no parent was specified) */
     pid_t hnp_pid;                      /**< hnp pid - used if singleton */
     orte_app_idx_t app_num;             /**< our index into the app_context array */
     orte_vpid_t num_procs;              /**< number of processes in this job */
+    orte_vpid_t max_procs;              /**< Maximum number of processes ever in the job */
     orte_vpid_t num_daemons;            /**< number of daemons in system */
     int num_nodes;                      /**< number of nodes in the job */
     char *nodename;                     /**< string name for this node */

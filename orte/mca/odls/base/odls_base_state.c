@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -77,14 +77,17 @@ int orte_odls_base_preload_files_app_context(orte_app_context_t* app_context)
         /* if I am the HNP, then use me as the source */
         p_set->source.jobid = ORTE_PROC_MY_NAME->jobid;
         p_set->source.vpid  = ORTE_PROC_MY_NAME->vpid;
+        p_set->source.epoch = ORTE_PROC_MY_NAME->epoch;
     }
     else {
         /* otherwise, set the HNP as the source */
         p_set->source.jobid = ORTE_PROC_MY_HNP->jobid;
         p_set->source.vpid  = ORTE_PROC_MY_HNP->vpid;
+        p_set->source.epoch = ORTE_PROC_MY_HNP->epoch;
     }
     p_set->sink.jobid   = ORTE_PROC_MY_NAME->jobid;
     p_set->sink.vpid    = ORTE_PROC_MY_NAME->vpid;
+    p_set->sink.epoch   = ORTE_PROC_MY_NAME->epoch;
 
     opal_list_append(&(filem_request->process_sets), &(p_set->super) );
 

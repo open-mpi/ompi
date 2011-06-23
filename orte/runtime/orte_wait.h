@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -204,6 +204,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         mev = OBJ_NEW(orte_message_event_t);                    \
         mev->sender.jobid = (sndr)->jobid;                      \
         mev->sender.vpid = (sndr)->vpid;                        \
+        mev->sender.epoch = (sndr)->epoch;                      \
         opal_dss.copy_payload(mev->buffer, (buf));              \
         mev->tag = (tg);                                        \
         mev->file = strdup((buf)->parent.cls_init_file_name);   \
@@ -227,6 +228,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         mev = OBJ_NEW(orte_message_event_t);                    \
         mev->sender.jobid = (sndr)->jobid;                      \
         mev->sender.vpid = (sndr)->vpid;                        \
+        mev->sender.epoch = (sndr)->epoch;                      \
         opal_dss.copy_payload(mev->buffer, (buf));              \
         mev->tag = (tg);                                        \
         opal_event_evtimer_set(opal_event_base,                 \
@@ -256,8 +258,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
         tmp = OBJ_NEW(orte_notify_event_t);                     \
         tmp->proc.jobid = (data)->jobid;                        \
         tmp->proc.vpid = (data)->vpid;                          \
-        opal_event_evtimer_set(opal_event_base,                 \
-                               tmp->ev, (cbfunc), tmp);        \
+        tmp->proc.epoch = (data)->epoch;                        \
+        opal_event.evtimer_set(opal_event_base,                 \
+                               tmp->ev, (cbfunc), tmp);         \
         now.tv_sec = 0;                                         \
         now.tv_usec = 0;                                        \
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \

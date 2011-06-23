@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -2033,6 +2033,7 @@ static int snapc_full_local_get_vpids(void)
             vpid_snapshot->process_pid              = child->pid;
             vpid_snapshot->super.process_name.jobid = child->name->jobid;
             vpid_snapshot->super.process_name.vpid  = child->name->vpid;
+            vpid_snapshot->super.process_name.epoch = child->name->epoch;
         }
     }
 
@@ -2094,6 +2095,7 @@ static int snapc_full_local_refresh_vpids(void)
             vpid_snapshot->process_pid              = child->pid;
             vpid_snapshot->super.process_name.jobid = child->name->jobid;
             vpid_snapshot->super.process_name.vpid  = child->name->vpid;
+            vpid_snapshot->super.process_name.epoch = child->name->epoch;
             /*vpid_snapshot->migrating = true;*/
 
             opal_list_append(&(local_global_snapshot.local_snapshots), &(vpid_snapshot->super.super));
@@ -2109,6 +2111,7 @@ static int snapc_full_local_refresh_vpids(void)
             vpid_snapshot->process_pid              = child->pid;
             vpid_snapshot->super.process_name.jobid = child->name->jobid;
             vpid_snapshot->super.process_name.vpid  = child->name->vpid;
+            vpid_snapshot->super.process_name.epoch = child->name->epoch;
         }
     }
 
@@ -2119,14 +2122,17 @@ static orte_snapc_full_app_snapshot_t *find_vpid_snapshot(orte_process_name_t *n
 {
     opal_list_item_t* item = NULL;
     orte_snapc_full_app_snapshot_t *vpid_snapshot = NULL;
+    orte_ns_cmp_bitmask_t mask;
 
     for(item  = opal_list_get_first(&(local_global_snapshot.local_snapshots));
         item != opal_list_get_end(&(local_global_snapshot.local_snapshots));
         item  = opal_list_get_next(item) ) {
         vpid_snapshot = (orte_snapc_full_app_snapshot_t*)item;
 
-        if( name->jobid == vpid_snapshot->super.process_name.jobid &&
-            name->vpid  == vpid_snapshot->super.process_name.vpid ) {
+        mask = ORTE_NS_CMP_JOBID;
+
+        if (OPAL_EQUAL == 
+                orte_util_compare_name_fields(mask, name, &vpid_snapshot->super.process_name)) {
             return vpid_snapshot;
         }
     }

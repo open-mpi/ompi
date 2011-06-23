@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -272,6 +272,20 @@ int orte_dt_init(void)
         return rc;
     }
 
+    tmp = ORTE_EPOCH;
+    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_epoch,
+                                                     orte_dt_unpack_epoch,
+                                                     (opal_dss_copy_fn_t)orte_dt_copy_epoch,
+                                                     (opal_dss_compare_fn_t)orte_dt_compare_epoch,
+                                                     (opal_dss_size_fn_t)orte_dt_std_size,
+                                                     (opal_dss_print_fn_t)orte_dt_std_print,
+                                                     (opal_dss_release_fn_t)orte_dt_std_release,
+                                                     OPAL_DSS_UNSTRUCTURED,
+                                                     "ORTE_EPOCH", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
 #if !ORTE_DISABLE_FULL_SUPPORT
     tmp = ORTE_JOB;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_job,
@@ -518,9 +532,11 @@ int orte_global_comm(orte_process_name_t *recipient,
                      orte_default_cbfunc_t cbfunc)
 {
     int ret;
+    orte_ns_cmp_bitmask_t mask;
+
+    mask = ORTE_NS_CMP_ALL;
     
-    if (recipient->jobid == ORTE_PROC_MY_NAME->jobid &&
-        recipient->vpid == ORTE_PROC_MY_NAME->vpid &&
+    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, recipient, ORTE_PROC_MY_NAME) &&
         NULL != cbfunc) {
         /* if I am the recipient and a direct fn is provided, use a message event */
         ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, buf, tag, cbfunc);
@@ -904,6 +920,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->reported = false;
     proc->beat = 0;
     OBJ_CONSTRUCT(&proc->stats, opal_pstats_t);
+    proc->name.epoch = ORTE_EPOCH_INVALID;
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;

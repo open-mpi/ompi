@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -434,7 +434,7 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
 }
 
 int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t job, orte_vpid_t vpid,
-                                   int *num_procs, orte_proc_t ***proc_info_array)
+                                   orte_epoch_t epoch, int *num_procs, orte_proc_t ***proc_info_array)
 {
     int ret;
     int32_t cnt, cnt_procs, n;
@@ -459,6 +459,11 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
         return ret;
     }
     if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &vpid, 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(cmd);
+        return ret;
+    }
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &epoch, 1, ORTE_EPOCH))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
         return ret;

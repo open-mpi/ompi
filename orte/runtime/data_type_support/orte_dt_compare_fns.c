@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
@@ -75,6 +75,18 @@ int orte_dt_compare_name(orte_process_name_t *value1,
             return OPAL_VALUE1_GREATER;
         }
     }
+
+    /** check the epochs - if one of them is WILDCARD, then ignore
+    * this field since anything is okay
+    */
+    if (value1->epoch!= ORTE_EPOCH_WILDCARD &&
+        value2->epoch!= ORTE_EPOCH_WILDCARD) {
+        if (value1->epoch < value2->epoch) {
+            return OPAL_VALUE2_GREATER;
+        } else if (value1->epoch > value2->epoch) {
+            return OPAL_VALUE1_GREATER;
+        }
+    }
     
     /** only way to get here is if all fields are equal or WILDCARD */
     return OPAL_EQUAL;
@@ -102,6 +114,21 @@ int orte_dt_compare_jobid(orte_jobid_t *value1,
     /** if either value is WILDCARD, then return equal */
     if (*value1 == ORTE_JOBID_WILDCARD ||
         *value2 == ORTE_JOBID_WILDCARD) return OPAL_EQUAL;
+    
+    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
+    
+    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
+    
+    return OPAL_EQUAL;
+}
+
+int orte_dt_compare_epoch(orte_epoch_t *value1,
+                          orte_epoch_t *value2,
+                          opal_data_type_t type)
+{
+    /** if either value is WILDCARD, then return equal */
+    if (*value1 == ORTE_EPOCH_WILDCARD ||
+        *value2 == ORTE_EPOCH_WILDCARD) return OPAL_EQUAL;
     
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
     
@@ -143,11 +170,12 @@ int orte_dt_compare_node(orte_node_t *value1, orte_node_t *value2, opal_data_typ
  */
 int orte_dt_compare_proc(orte_proc_t *value1, orte_proc_t *value2, opal_data_type_t type)
 {
+    orte_ns_cmp_bitmask_t mask;
+
     /** check vpids */
-    if (value1->name.vpid > value2->name.vpid) return OPAL_VALUE1_GREATER;
-    if (value1->name.vpid < value2->name.vpid) return OPAL_VALUE2_GREATER;
-    
-    return OPAL_EQUAL;
+    mask = ORTE_NS_CMP_VPID;
+
+    return orte_util_compare_name_fields(mask, &value1->name, &value2->name);
 }
 
 /*

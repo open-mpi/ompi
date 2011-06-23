@@ -1,6 +1,9 @@
 /*
  * Copyright (c)      2010 The Trustees of Indiana University.
  *                         All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1212,6 +1215,7 @@ static int orte_sstore_central_extract_global_metadata(orte_sstore_central_globa
 
         vpid_snapshot->process_name.jobid  = handle_info->jobid;
         vpid_snapshot->process_name.vpid   = i;
+        vpid_snapshot->process_name.epoch = orte_ess.proc_get_epoch(&vpid_snapshot->process_name);
 
         vpid_snapshot->crs_comp     = NULL;
         global_snapshot->start_time = NULL;
