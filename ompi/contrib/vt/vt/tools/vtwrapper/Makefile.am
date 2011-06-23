@@ -25,12 +25,20 @@ bin_LINKS = \
 	@CROSS_PREFIX@vtf90$(EXEEXT) \
 	$(bin_LINK_vtnvcc)
 
-install-exec-hook:
+install-exec-hook-always:
 	(cd $(DESTDIR)$(bindir); \
 	for l in $(bin_LINKS); do \
 		rm -f $$l; $(LN_S) @CROSS_PREFIX@vtwrapper$(EXEEXT) $$l; \
 	done)
+uninstall-local-exec-always:
+	(cd $(DESTDIR)$(bindir); \
+	for l in $(bin_LINKS); do \
+		rm -f $$l; \
+	done)
 
+else # AMBUILDBINARIES
+install-exec-hook-always:
+uninstall-local-exec-always:
 endif # AMBUILDBINARIES
 
 if AMBUILDVTNVCC
@@ -58,14 +66,19 @@ install-data-hook-always:
 	(cd $(DESTDIR)$(datadir); \
 	rm -f @CROSS_PREFIX@vtcxx-wrapper-data.txt; \
 	$(LN_S) @CROSS_PREFIX@vtc++-wrapper-data.txt @CROSS_PREFIX@vtcxx-wrapper-data.txt)
+uninstall-local-data-always:
+	rm -f $(DESTDIR)$(datadir)/@CROSS_PREFIX@vtcxx-wrapper-data.txt
 
 if AMHAVECSFS
 install-data-hook-1:
 	(cd $(DESTDIR)$(datadir); \
 	rm -f @CROSS_PREFIX@vtCC-wrapper-data.txt; \
 	$(LN_S) @CROSS_PREFIX@vtc++-wrapper-data.txt @CROSS_PREFIX@vtCC-wrapper-data.txt)
+uninstall-local-data-1:
+	rm -f $(DESTDIR)$(datadir)/@CROSS_PREFIX@vtCC-wrapper-data.txt
 else # AMHAVECSFS
 install-data-hook-1:
+uninstall-local-data-1:
 endif # AMHAVECSFS
 
 if AMMACOS
@@ -75,7 +88,9 @@ else # AMMACOS
 install-data-hook-2:
 endif # AMMACOS
 
+install-exec-hook: install-exec-hook-always
 install-data-hook: install-data-hook-always install-data-hook-1 install-data-hook-2
+uninstall-local: uninstall-local-exec-always uninstall-local-data-always uninstall-local-data-1
 
 if AMHAVEF77
 HAVEF77CXXFLAGS = -DHAVE_F77
