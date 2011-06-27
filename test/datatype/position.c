@@ -3,6 +3,7 @@
  * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -190,10 +191,10 @@ static void dump_ldi( ddt_ldi_t* buffer, int start_pos, int end_pos )
     }
 }
 
-#if OPAL_ENABLE_DEBUG
-extern int ompi_unpack_debug;
-extern int ompi_pack_debug;
-extern int ompi_position_debug ;
+#if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
+extern int opal_unpack_debug;
+extern int opal_pack_debug;
+extern int opal_position_debug ;
 #endif  /* OPAL_ENABLE_DEBUG */
 
 static char* bytes_dump( void* src, size_t cnt )
@@ -229,9 +230,9 @@ int main( int argc, char* argv[] )
     ompi_datatype_init();
 
 #if (OPAL_ENABLE_DEBUG == 1) && (OPAL_C_HAVE_VISIBILITY == 0)
-    ompi_unpack_debug   = 0;
-    ompi_pack_debug     = 0;
-    ompi_position_debug = 0;
+    opal_unpack_debug   = 0;
+    opal_pack_debug     = 0;
+    opal_position_debug = 0;
 #endif  /* OPAL_ENABLE_DEBUG */
 
     create_segments( datatype, data_count, fragment_size,
