@@ -3,6 +3,7 @@
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -34,7 +35,7 @@ endif
 #
 # F90 bindings
 #
-if OMPI_WANT_F77_BINDINGS
+if OMPI_WANT_F90_BINDINGS
 headers += \
 	mpiext_example_f90.h
 endif
