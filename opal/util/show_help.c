@@ -146,24 +146,29 @@ static int open_file(const char *base, const char *topic)
         base = default_filename;
     }
     
-    /* Try to open the file.  If we can't find it, try it with a .txt
-     * extension.
+    /* if this is called prior to someone initializing the system,
+     * then don't try to look
      */
-    for (i=0; NULL != search_dirs[i]; i++) {
-        filename = opal_os_path( false, search_dirs[i], base, NULL );
-        opal_show_help_yyin = fopen(filename, "r");
-        if (NULL == opal_show_help_yyin) {
-            asprintf(&err_msg, "%s: %s", filename, strerror(errno));
-            base_len = strlen(base);
-            if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
-                free(filename);
-                asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
-                opal_show_help_yyin = fopen(filename, "r");
+    if (NULL != search_dirs) {
+        /* Try to open the file.  If we can't find it, try it with a .txt
+         * extension.
+         */
+        for (i=0; NULL != search_dirs[i]; i++) {
+            filename = opal_os_path( false, search_dirs[i], base, NULL );
+            opal_show_help_yyin = fopen(filename, "r");
+            if (NULL == opal_show_help_yyin) {
+                asprintf(&err_msg, "%s: %s", filename, strerror(errno));
+                base_len = strlen(base);
+                if (4 > base_len || 0 != strcmp(base + base_len - 4, ".txt")) {
+                    free(filename);
+                    asprintf(&filename, "%s%s%s.txt", search_dirs[i], OPAL_PATH_SEP, base);
+                    opal_show_help_yyin = fopen(filename, "r");
+                }
             }
-        }
-        free(filename);
-        if (NULL != opal_show_help_yyin) {
-            break;
+            free(filename);
+            if (NULL != opal_show_help_yyin) {
+                break;
+            }
         }
     }
 
