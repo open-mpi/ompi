@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -54,11 +54,13 @@ nodist_include_HEADERS += \
 endif
 
 
-# If we have any F90 MPI extensions, compile and generate the
-# mpi_ext F90 module file.  Do this by compiling a fake library;
-# the modulefile will be created as a side-effect of compiling
-# mpif90-ext.f90.
-noinst_LTLIBRARIES = libforce_f90_module_to_be_built.la
+noinst_LTLIBRARIES =
+if OMPI_WANT_F90_BINDINGS
+# If we have any F90 MPI extensions *and* we're building the Fortran
+# MPI bindings, compile and generate the mpi_ext F90 module file.  Do
+# this by compiling a fake library; the modulefile will be created as
+# a side-effect of compiling mpif90-ext.f90.
+noinst_LTLIBRARIES += libforce_f90_module_to_be_built.la
 
 libforce_f90_module_to_be_built_la_SOURCES = mpif90-ext.f90 
 
@@ -82,7 +84,7 @@ uninstall-local:
 	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
 	  rm -f $(DESTDIR)$(libdir)/$$file; \
 	done
-#endif
+endif
 
 include ompi/Makefile.am
 
