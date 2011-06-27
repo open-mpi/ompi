@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +32,7 @@
 
 #include <lsf/lsbatch.h>
 
+#include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/paffinity/paffinity.h"
 
