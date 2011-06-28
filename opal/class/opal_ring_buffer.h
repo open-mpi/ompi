@@ -95,7 +95,8 @@ OPAL_DECLSPEC void* opal_ring_buffer_pop(opal_ring_buffer_t *ring);
 
 /*
  * Access an element of the ring, without removing it, indexed
- * starting at the tail
+ * starting at the tail - a value of -1 will return the element
+ * at the head of the ring
  */
 OPAL_DECLSPEC void* opal_ring_buffer_poke(opal_ring_buffer_t *ring, int i);
 

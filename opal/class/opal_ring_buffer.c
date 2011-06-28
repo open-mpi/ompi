@@ -144,6 +144,13 @@ void* opal_ring_buffer_pop(opal_ring_buffer_t *ring)
     OPAL_ACQUIRE_THREAD(&(ring->lock), &(ring->cond), &(ring->in_use));
     if (ring->size <= i || -1 == ring->tail) {
         p = NULL;
+    } else if (i < 0) {
+        /* return the value at the head of the ring */
+        if (ring->head == 0) {
+            p = ring->addr[ring->size - 1];
+        } else {
+            p = ring->addr[ring->head - 1];
+        }
     } else {
         /* calculate the offset of the tail in the ring */
         offset = ring->tail + i;
