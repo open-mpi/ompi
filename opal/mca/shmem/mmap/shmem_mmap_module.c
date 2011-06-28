@@ -125,6 +125,7 @@ shmem_ds_reset(opal_shmem_ds_t *ds_buf)
     ds_buf->seg_id = OPAL_SHMEM_DS_ID_INVALID;
     ds_buf->seg_size = 0;
     memset(ds_buf->seg_name, '\0', OPAL_PATH_MAX);
+    ds_buf->seg_base_addr = (unsigned char *)MAP_FAILED;
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
@@ -148,21 +149,10 @@ static int
 ds_copy(const opal_shmem_ds_t *from,
         opal_shmem_ds_t *to)
 {
-    pid_t my_pid = getpid();
-
-    /* inter-process copy - exclude process-specific data */
-    if (from->opid != my_pid) {
-        /* mask out internal flags */
-        to->flags = (from->flags & OPAL_SHMEM_DS_FLAGS_INTERNAL_MASK);
-        to->seg_base_addr = NULL;
-    }
-    /* i am the owner process, so i can safely copy all the information */
-    else {
-        to->flags = from->flags;
-        to->seg_base_addr = from->seg_base_addr;
-    }
-
-    to->opid = my_pid;
+    /* SKG */
+    to->flags = from->flags;
+    to->seg_base_addr = from->seg_base_addr;
+    to->opid = from->opid;
     to->seg_id = from->seg_id;
     to->seg_size = from->seg_size;
     to->seg_cpid = from->seg_cpid;
@@ -448,9 +438,7 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
      * across unlinks. other information stored in flags will remain untouched.
      */
     ds_buf->seg_id = OPAL_SHMEM_DS_ID_INVALID;
-    /* note: this is only chaning the valid bit to 0.  this is not the same
-     * as calling invalidate(ds_buf).
-     */
+    /* note: this is only chaning the valid bit to 0. */
     OPAL_SHMEM_DS_INVALIDATE(ds_buf);
     return OPAL_SUCCESS;
 }
