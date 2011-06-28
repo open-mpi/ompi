@@ -155,11 +155,21 @@ dnl                        [enable_openib_ibcm="$enableval"], [enable_openib_ibc
                                      [$ompi_cv_func_ibv_create_cq_args],
                                      [Number of arguments to ibv_create_cq])])])
 
+    #
+    # OpenIB dynamic SL
+    #
+    AC_ARG_ENABLE([openib-dynamic-sl],
+        [AC_HELP_STRING([--enable-openib-dynamic-sl],
+                        [Enable openib BTL to query Subnet Manager for IB SL (default: enabled)])],
+        [enable_openib_dynamic_sl="$enableval"],
+        [enable_openib_dynamic_sl="yes"])
+
     # Set these up so that we can do an AC_DEFINE below
     # (unconditionally)
     $1_have_xrc=0
     $1_have_rdmacm=0
     $1_have_ibcm=0
+    $1_have_dynamic_sl=0
 
     # If we have the openib stuff available, find out what we've got
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
@@ -174,6 +184,19 @@ dnl                        [enable_openib_ibcm="$enableval"], [enable_openib_ibc
            # ibv_create_xrc_rcv_qp was added in OFED 1.3
            if test "$enable_connectx_xrc" = "yes"; then
                AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
+           fi
+
+           if test "$enable_openib_dynamic_sl" = "yes"; then
+               # We need ib_types.h file, which is installed with opensm-devel
+               # package. However, ib_types.h has a bad include directive,
+               # which will cause AC_CHECK_HEADER to fail.
+               # So instead, we will look for another file that is also
+               # installed as part of opensm-devel package and included in
+               # ib_types.h, but it doesn't include any other IB-related files.
+               AC_CHECK_HEADER([infiniband/complib/cl_types_osd.h],
+                               [$1_have_dynamic_sl=1],
+                               [AC_MSG_ERROR([opensm-devel package not found - please install it or disable dynamic SL support with \"--disable-openib-dynamic-sl\"])],
+                               [])
            fi
 
            # Do we have a recent enough RDMA CM?  Need to have the
@@ -244,6 +267,15 @@ dnl           fi
     else
         AC_MSG_RESULT([no])
     fi
+
+    AC_MSG_CHECKING([if dynamic SL is enabled])
+    AC_DEFINE_UNQUOTED([OMPI_ENABLE_DYNAMIC_SL], [$$1_have_dynamic_sl],
+        [Enable features required for dynamic SL support])
+    if test "1" = "$$1_have_dynamic_sl"; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
+    fi
     
     AC_MSG_CHECKING([if OpenFabrics RDMACM support is enabled])
     AC_DEFINE_UNQUOTED([OMPI_HAVE_RDMACM], [$$1_have_rdmacm],
@@ -267,7 +299,11 @@ dnl           fi
         AC_MSG_RESULT([no])
     fi
 
-    CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
+    AS_IF([test -z "$ompi_check_openib_dir"],
+          [openib_include_dir="/usr/include"],
+          [openib_include_dir="$ompi_check_openib_dir/include"])
+
+    CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS -I$openib_include_dir/infiniband"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
     LIBS="$ompi_check_openib_$1_save_LIBS"
 

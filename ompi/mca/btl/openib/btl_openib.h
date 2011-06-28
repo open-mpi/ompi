@@ -52,6 +52,7 @@
 BEGIN_C_DECLS
 
 #define HAVE_XRC (1 == OMPI_HAVE_CONNECTX_XRC)
+#define ENABLE_DYNAMIC_SL (1 == OMPI_ENABLE_DYNAMIC_SL)
 
 #define MCA_BTL_IB_LEAVE_PINNED 1
 #define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
@@ -215,7 +216,9 @@ struct mca_btl_openib_component_t {
     uint32_t ib_rnr_retry;
     uint32_t ib_max_rdma_dst_ops;
     uint32_t ib_service_level;
-    uint32_t ib_path_rec_service_level;
+#if (ENABLE_DYNAMIC_SL)
+    uint32_t ib_path_record_service_level;
+#endif
     int32_t use_eager_rdma;
     int32_t eager_rdma_threshold; /**< After this number of msg, use RDMA for short messages, always */
     int32_t eager_rdma_num;
