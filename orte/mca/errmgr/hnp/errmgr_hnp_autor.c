@@ -626,7 +626,7 @@ void errmgr_autor_wp_item_construct(errmgr_autor_wp_item_t *wp)
 {
     wp->name.jobid = ORTE_JOBID_INVALID;
     wp->name.vpid  = ORTE_VPID_INVALID;
-    wp->name.epoch = ORTE_EPOCH_INVALID;
+    wp->name.epoch = ORTE_EPOCH_MIN;
 
     wp->state = 0;
 }

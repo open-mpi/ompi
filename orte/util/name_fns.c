@@ -46,7 +46,7 @@ static void orte_namelist_construct(orte_namelist_t* list)
 {
     list->name.jobid = ORTE_JOBID_INVALID;
     list->name.vpid = ORTE_VPID_INVALID;
-    list->name.epoch = ORTE_EPOCH_INVALID;
+    list->name.epoch = ORTE_EPOCH_MIN;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -463,7 +463,7 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
     /* set default */
     name->jobid = ORTE_JOBID_INVALID;
     name->vpid = ORTE_VPID_INVALID;
-    name->epoch = ORTE_EPOCH_INVALID;
+    name->epoch = ORTE_EPOCH_MIN;
     
     /* check for NULL string - error */
     if (NULL == name_string) {

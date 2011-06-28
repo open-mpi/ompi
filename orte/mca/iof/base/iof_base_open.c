@@ -91,7 +91,7 @@ static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
 {
     ptr->daemon.jobid = ORTE_JOBID_INVALID;
     ptr->daemon.vpid = ORTE_VPID_INVALID;
-    ptr->daemon.epoch = ORTE_EPOCH_INVALID;
+    ptr->daemon.epoch = ORTE_EPOCH_MIN;
     ptr->wev = OBJ_NEW(orte_iof_write_event_t);
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)

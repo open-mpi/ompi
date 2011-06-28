@@ -1104,6 +1104,12 @@ int orte_util_set_proc_state(orte_process_name_t *proc, orte_proc_state_t state)
     return ORTE_ERROR;
 }
 
+/*
+ * This function performs both the get and set operations on the epoch for a
+ * sepcific process name. If the epoch passed into the function is
+ * ORTE_EPOCH_INVALID, then we are performing a get operation. If the epoch is
+ * anything else, we are performing a set operation.
+ */
 orte_epoch_t get_epoch_from_orte_job_data(orte_process_name_t *proc, orte_epoch_t epoch) {
     int ret, i;
     unsigned int j;

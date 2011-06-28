@@ -65,7 +65,7 @@ static void jfamconst(orte_routed_jobfam_t *ptr)
 {
     ptr->route.jobid = ORTE_JOBID_INVALID;
     ptr->route.vpid = ORTE_VPID_INVALID;
-    ptr->route.epoch = ORTE_EPOCH_INVALID;
+    ptr->route.epoch = ORTE_EPOCH_MIN;
     ptr->hnp_uri = NULL;
 }
 static void jfamdest(orte_routed_jobfam_t *ptr)

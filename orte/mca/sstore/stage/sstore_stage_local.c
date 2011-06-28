@@ -287,7 +287,7 @@ void orte_sstore_stage_local_app_snapshot_info_construct(orte_sstore_stage_local
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
-    info->name.epoch = ORTE_EPOCH_INVALID;
+    info->name.epoch = ORTE_EPOCH_MIN;
 
     info->local_location = NULL;
     info->compressed_local_location = NULL;
@@ -302,7 +302,7 @@ void orte_sstore_stage_local_app_snapshot_info_destruct( orte_sstore_stage_local
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
-    info->name.epoch = ORTE_EPOCH_INVALID;
+    info->name.epoch = ORTE_EPOCH_MIN;
 
     if( NULL != info->local_location ) {
         free(info->local_location);

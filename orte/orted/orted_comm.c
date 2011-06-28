@@ -123,7 +123,7 @@ static void send_relay(opal_buffer_t *buf)
         nm = (orte_routed_tree_t*)item;
         
         target.vpid = nm->vpid;
-        target.epoch = ORTE_EPOCH_INVALID;
+        target.epoch = orte_util_lookup_epoch(&target);
 
         if (!orte_util_proc_is_running(&target)) {
             continue;

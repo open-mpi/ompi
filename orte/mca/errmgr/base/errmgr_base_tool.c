@@ -267,7 +267,7 @@ static int errmgr_base_tool_start_cmdline_listener(void)
      */
     errmgr_cmdline_sender.jobid = ORTE_JOBID_INVALID;
     errmgr_cmdline_sender.vpid  = ORTE_VPID_INVALID;
-    errmgr_cmdline_sender.epoch = ORTE_EPOCH_INVALID;
+    errmgr_cmdline_sender.epoch = ORTE_EPOCH_MIN;
     if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                        ORTE_RML_TAG_MIGRATE,
                                                        0,
