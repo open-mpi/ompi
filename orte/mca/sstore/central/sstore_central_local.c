@@ -210,7 +210,7 @@ void orte_sstore_central_local_app_snapshot_info_construct(orte_sstore_central_l
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
-    info->name.epoch = ORTE_EPOCH_INVALID;
+    info->name.epoch = ORTE_EPOCH_MIN;
 
     info->local_location = NULL;
     info->metadata_filename = NULL;
@@ -222,7 +222,7 @@ void orte_sstore_central_local_app_snapshot_info_destruct( orte_sstore_central_l
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
-    info->name.epoch = ORTE_EPOCH_INVALID;
+    info->name.epoch = ORTE_EPOCH_MIN;
 
     if( NULL != info->local_location ) {
         free(info->local_location);

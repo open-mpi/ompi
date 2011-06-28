@@ -920,7 +920,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->reported = false;
     proc->beat = 0;
     OBJ_CONSTRUCT(&proc->stats, opal_pstats_t);
-    proc->name.epoch = ORTE_EPOCH_INVALID;
+    proc->name.epoch = ORTE_EPOCH_MIN;
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;

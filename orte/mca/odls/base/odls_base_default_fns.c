@@ -946,7 +946,6 @@ find_my_procs:
     proc.jobid = jobdat->jobid;
     for (j=0; j < jobdat->num_procs; j++) {
         proc.vpid = j;
-        proc.epoch = ORTE_EPOCH_INVALID;
         proc.epoch = orte_ess.proc_get_epoch(&proc);
         /* get the vpid of the daemon that is to host this proc */
         if (ORTE_VPID_INVALID == (host_daemon = orte_ess.proc_get_daemon(&proc))) {

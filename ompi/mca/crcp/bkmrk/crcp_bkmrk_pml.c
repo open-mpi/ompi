@@ -702,7 +702,7 @@ OBJ_CLASS_INSTANCE(ompi_crcp_bkmrk_pml_peer_ref_t,
 void ompi_crcp_bkmrk_pml_peer_ref_construct(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref) {
     peer_ref->proc_name.jobid  = ORTE_JOBID_INVALID;
     peer_ref->proc_name.vpid   = ORTE_VPID_INVALID;
-    peer_rev->proc_name.epoch  = ORTE_EPOCH_INVALID;
+    peer_rev->proc_name.epoch  = ORTE_EPOCH_MIN;
 
     OBJ_CONSTRUCT(&peer_ref->send_list,       opal_list_t);
     OBJ_CONSTRUCT(&peer_ref->isend_list,      opal_list_t);
@@ -730,7 +730,7 @@ void ompi_crcp_bkmrk_pml_peer_ref_destruct( ompi_crcp_bkmrk_pml_peer_ref_t *peer
 
     peer_ref->proc_name.jobid  = ORTE_JOBID_INVALID;
     peer_ref->proc_name.vpid   = ORTE_VPID_INVALID;
-    peer_ref->proc_name.epoch  = ORTE_EPOCH_INVALID;
+    peer_ref->proc_name.epoch  = ORTE_EPOCH_MIN;
     
     while( NULL != (item = opal_list_remove_first(&peer_ref->send_list)) ) {
         HOKE_TRAFFIC_MSG_REF_RETURN(item);
@@ -840,7 +840,7 @@ void ompi_crcp_bkmrk_pml_traffic_message_ref_construct(ompi_crcp_bkmrk_pml_traff
 
     msg_ref->proc_name.jobid  = ORTE_JOBID_INVALID;
     msg_ref->proc_name.vpid   = ORTE_VPID_INVALID;
-    msg_ref->proc_name.epoch  = ORTE_EPOCH_INVALID;
+    msg_ref->proc_name.epoch  = ORTE_EPOCH_MIN;
 
     msg_ref->matched        = INVALID_INT;
     msg_ref->done           = INVALID_INT;
@@ -868,7 +868,7 @@ void ompi_crcp_bkmrk_pml_traffic_message_ref_destruct( ompi_crcp_bkmrk_pml_traff
 
     msg_ref->proc_name.jobid  = ORTE_JOBID_INVALID;
     msg_ref->proc_name.vpid   = ORTE_VPID_INVALID;
-    msg_ref->proc_name.epoch  = ORTE_EPOCH_INVALID;
+    msg_ref->proc_name.epoch  = ORTE_EPOCH_MIN;
 
     msg_ref->matched        = INVALID_INT;
     msg_ref->done           = INVALID_INT;
@@ -902,7 +902,7 @@ void ompi_crcp_bkmrk_pml_drain_message_ref_construct(ompi_crcp_bkmrk_pml_drain_m
 
     msg_ref->proc_name.jobid  = ORTE_JOBID_INVALID;
     msg_ref->proc_name.vpid   = ORTE_VPID_INVALID;
-    msg_ref->proc_name.epoch  = ORTE_EPOCH_INVALID;
+    msg_ref->proc_name.epoch  = ORTE_EPOCH_MIN;
 
     msg_ref->done           = INVALID_INT;
     msg_ref->active         = INVALID_INT;
@@ -934,7 +934,7 @@ void ompi_crcp_bkmrk_pml_drain_message_ref_destruct( ompi_crcp_bkmrk_pml_drain_m
 
     msg_ref->proc_name.jobid  = ORTE_JOBID_INVALID;
     msg_ref->proc_name.vpid   = ORTE_VPID_INVALID;
-    msg_ref->proc_name.epoch  = ORTE_EPOCH_INVALID;
+    msg_ref->proc_name.epoch  = ORTE_EPOCH_MIN;
 
     msg_ref->done           = INVALID_INT;
     msg_ref->active         = INVALID_INT;
@@ -954,7 +954,7 @@ void ompi_crcp_bkmrk_pml_drain_message_ack_ref_construct(ompi_crcp_bkmrk_pml_dra
 
     msg_ack_ref->peer.jobid  = ORTE_JOBID_INVALID;
     msg_ack_ref->peer.vpid   = ORTE_VPID_INVALID;
-    msg_ack_ref->peer.epoch  = ORTE_EPOCH_INVALID;
+    msg_ack_ref->peer.epoch  = ORTE_EPOCH_MIN;
 }
 
 void ompi_crcp_bkmrk_pml_drain_message_ack_ref_destruct( ompi_crcp_bkmrk_pml_drain_message_ack_ref_t *msg_ack_ref) {
@@ -962,7 +962,7 @@ void ompi_crcp_bkmrk_pml_drain_message_ack_ref_destruct( ompi_crcp_bkmrk_pml_dra
 
     msg_ack_ref->peer.jobid  = ORTE_JOBID_INVALID;
     msg_ack_ref->peer.vpid   = ORTE_VPID_INVALID;
-    msg_ack_ref->peer.epoch  = ORTE_EPOCH_INVALID;
+    msg_ack_ref->peer.epoch  = ORTE_EPOCH_MIN;
 }
 
 

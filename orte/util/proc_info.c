@@ -37,12 +37,12 @@
 #include "orte/util/proc_info.h"
 
 ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
-    /*  .my_name =              */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_INVALID},
-    /*  .my_daemon =            */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_INVALID},
+    /*  .my_name =              */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_MIN},
+    /*  .my_daemon =            */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_MIN},
     /*  .my_daemon_uri =        */   NULL,
-    /*  .my_hnp =               */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_INVALID},
+    /*  .my_hnp =               */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_MIN},
     /*  .my_hnp_uri =           */   NULL,
-    /*  .my_parent =            */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_INVALID},
+    /*  .my_parent =            */   {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_MIN},
     /*  .hnp_pid =              */   0,
     /*  .app_num =              */   0,
     /*  .num_procs =            */   1,

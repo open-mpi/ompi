@@ -67,7 +67,7 @@ static void msg_pkt_constructor(orte_msg_packet_t *pkt)
 {
     pkt->sender.jobid = ORTE_JOBID_INVALID;
     pkt->sender.vpid = ORTE_VPID_INVALID;
-    pkt->sender.epoch = ORTE_EPOCH_INVALID;
+    pkt->sender.epoch = ORTE_EPOCH_MIN;
     pkt->buffer = NULL;
 }
 static void msg_pkt_destructor(orte_msg_packet_t *pkt)

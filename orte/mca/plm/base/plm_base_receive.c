@@ -394,7 +394,6 @@ static void process_msg(int fd, short event, void *data)
                         break;
                     }
                     name.vpid = vpid;
-                    name.epoch = ORTE_EPOCH_INVALID;
                     name.epoch = orte_ess.proc_get_epoch(&name);
 
                     /* unpack the pid */

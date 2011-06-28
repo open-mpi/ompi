@@ -95,7 +95,7 @@ static int init(void)
 
     my_local_rank_zero_proc.jobid = ORTE_PROC_MY_NAME->jobid;
     my_local_rank_zero_proc.vpid = ORTE_VPID_INVALID;
-    my_local_rank_zero_proc.epoch = ORTE_EPOCH_INVALID;
+    my_local_rank_zero_proc.epoch = ORTE_EPOCH_MIN;
 
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_init())) {
         ORTE_ERROR_LOG(rc);

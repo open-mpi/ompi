@@ -97,7 +97,7 @@ void orte_errmgr_predicted_proc_construct(orte_errmgr_predicted_proc_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
     item->proc_name.jobid = ORTE_JOBID_INVALID;
-    item->proc_name.epoch = ORTE_EPOCH_INVALID;
+    item->proc_name.epoch = ORTE_EPOCH_MIN;
 }
 
 void orte_errmgr_predicted_proc_destruct( orte_errmgr_predicted_proc_t *item)
@@ -139,13 +139,13 @@ OBJ_CLASS_INSTANCE(orte_errmgr_predicted_map_t,
 void orte_errmgr_predicted_map_construct(orte_errmgr_predicted_map_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
-    item->proc_name.epoch = ORTE_EPOCH_INVALID;
+    item->proc_name.epoch = ORTE_EPOCH_MIN;
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 
     item->node_name = NULL;
 
     item->map_proc_name.vpid  = ORTE_VPID_INVALID;
-    item->map_proc_name.epoch = ORTE_EPOCH_INVALID;
+    item->map_proc_name.epoch = ORTE_EPOCH_MIN;
     item->map_proc_name.jobid = ORTE_JOBID_INVALID;
 
     item->map_node_name = NULL;

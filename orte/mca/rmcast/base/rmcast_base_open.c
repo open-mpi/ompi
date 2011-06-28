@@ -341,7 +341,7 @@ static void recv_construct(rmcast_base_recv_t *ptr)
 {
     ptr->name.jobid = ORTE_JOBID_INVALID;
     ptr->name.vpid = ORTE_VPID_INVALID;
-    ptr->name.epoch= ORTE_EPOCH_INVALID;
+    ptr->name.epoch = ORTE_EPOCH_MIN;
     ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
     OBJ_CONSTRUCT(&ptr->ctl, orte_thread_ctl_t);
     ptr->seq_num = ORTE_RMCAST_SEQ_INVALID;
@@ -429,7 +429,7 @@ static void recvlog_construct(rmcast_recv_log_t *ptr)
 {
     ptr->name.jobid = ORTE_JOBID_INVALID;
     ptr->name.vpid = ORTE_VPID_INVALID;
-    ptr->name.epoch = ORTE_EPOCH_INVALID;
+    ptr->name.epoch = ORTE_EPOCH_MIN;
     OBJ_CONSTRUCT(&ptr->last_msg, opal_list_t);
 }
 static void recvlog_destruct(rmcast_recv_log_t *ptr)
