@@ -164,6 +164,9 @@ int orte_err2str(int errnum, const char **errmsg)
             retval = NULL;
         }
         break;
+    case ORTE_ERR_SENSOR_LIMIT_EXCEEDED:
+        retval = "Sensor limit exceeded";
+        break;
     default:
         if (orte_report_silent_errors) {
             retval = "Unknown error";
