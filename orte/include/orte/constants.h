@@ -122,7 +122,8 @@ enum {
     ORTE_ERR_NO_EXE_SPECIFIED               = (ORTE_ERR_BASE - 40),
     ORTE_ERR_COMM_DISABLED                  = (ORTE_ERR_BASE - 41),
     ORTE_ERR_FAILED_TO_MAP                  = (ORTE_ERR_BASE - 42),
-    ORTE_ERR_TAKE_NEXT_OPTION               = (ORTE_ERR_BASE - 43)
+    ORTE_ERR_TAKE_NEXT_OPTION               = (ORTE_ERR_BASE - 43),
+    ORTE_ERR_SENSOR_LIMIT_EXCEEDED          = (ORTE_ERR_BASE - 44)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
