@@ -85,6 +85,9 @@ typedef struct {
 #define OPAL_EVENT_ADD   0x01
 #define OPAL_EVENT_DEL   0x02
 
+#if OPAL_EVENT_HAVE_THREAD_SUPPORT
+#define OPAL_UPDATE_EVBASE(b, evt, ad)
+#else
 #define OPAL_UPDATE_EVBASE(b, evt, ad)                                        \
     do {                                                                      \
         opal_event_update_t up;                                               \
@@ -92,7 +95,8 @@ typedef struct {
         up.op = (ad);                                                         \
         opal_fd_write((b)->update_pipe[1], sizeof(opal_event_update_t), &up); \
     } while(0);
-    
+#endif
+
 BEGIN_C_DECLS
 
 /* Temporary global - will be replaced by layer-specific event bases */
