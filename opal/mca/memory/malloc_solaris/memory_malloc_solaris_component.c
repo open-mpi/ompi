@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -97,8 +97,15 @@ opal_memory_malloc_open(void)
  * the syscall, and if that doesn't work, try looking in the dynamic
  * libc.
  */
+#if defined(USE_SOLARIS_LEGACY_MUNMAP_PROTOTYPE)
+/* We are compiling using S10 so use its munmap prototype */
 int
 munmap(caddr_t addr, size_t len)
+#else
+/* From S11 on forward munmap's addr is void * */
+int
+munmap(void *addr, size_t len)
+#endif
 {
 #if !defined(HAVE___MUNMAP) && \
     !defined(HAVE_SYSCALL) && defined(HAVE_DLSYM)

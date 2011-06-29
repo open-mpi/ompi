@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -80,6 +80,18 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
 
         AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
               [memory_malloc_solaris_WRAPPER_EXTRA_LIBS="$memory_malloc_solaris_LIBS"])
+
+        # There is a difference in the munmap prototypes for different 
+        # Solaris versions.  So determine whether we are to use Legacy
+        # S10 or later prototypes.
+        AC_MSG_CHECKING([for Solaris Legacy MUNMAP])
+        AC_TRY_COMPILE([#include <sys/mman.h>
+                        char *addr;
+                        extern int munmap(caddr_t addr, size_t len);],
+                        [],
+                       [AC_DEFINE_UNQUOTED([USE_SOLARIS_LEGACY_MUNMAP_PROTOTYPE],
+                       1,[memory_malloc_solaris_munmap define USE_LEGACY_MUNMAP_PROTOTYPE])],
+                       [AC_MSG_RESULT([no])])
 
         AS_IF([test "$memory_malloc_solaris_happy" = "no" -a \
                 "$memory_malloc_solaris_should_use" = "1"],
