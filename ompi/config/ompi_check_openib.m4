@@ -195,7 +195,7 @@ dnl                        [enable_openib_ibcm="$enableval"], [enable_openib_ibc
                # ib_types.h, but it doesn't include any other IB-related files.
                AC_CHECK_HEADER([infiniband/complib/cl_types_osd.h],
                                [$1_have_dynamic_sl=1],
-                               [AC_MSG_ERROR([opensm-devel package not found - please install it or disable dynamic SL support with \"--disable-openib-dynamic-sl\"])],
+                               [AC_MSG_WARN([opensm-devel package not found - please install it or disable dynamic SL support with \"--disable-openib-dynamic-sl\"])],
                                [])
            fi
 
