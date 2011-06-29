@@ -136,7 +136,7 @@ IF(NOT MICROSOFT_CHECK_DONE)
     "Output option for making static libraries.")
 
   SET(DUMP_UTIL "${VC_BIN_PATH}/dumpbin.exe" CACHE INTERNAL "the dumpbin application.")
-  SET(DUMP_UTIL_OPT "/symbols /out:" CACHE INTERNAL "the dumpbin application options.")
+  SET(DUMP_UTIL_OPT "/symbols" CACHE INTERNAL "the dumpbin application options.")
 
   FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/cl_test.c
     "int main() {return 0;}")
