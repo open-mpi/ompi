@@ -36,14 +36,11 @@ extern opal_list_t orte_ess_base_components_available;
  * Generic function to retrieve the epoch of a specific process 
  * from the job data.
  */
-orte_epoch_t orte_ess_base_proc_get_epoch(orte_process_name_t *proc)
-{
-    orte_epoch_t epoch = 0;
+orte_epoch_t orte_ess_base_proc_get_epoch(orte_process_name_t *proc) {
+    orte_epoch_t epoch = ORTE_EPOCH_INVALID;
 
 #if !ORTE_DISABLE_FULL_SUPPORT
-    if (ORTE_EPOCH_INVALID == (epoch = orte_util_lookup_epoch(proc))) {
-        return ORTE_NODE_RANK_INVALID;
-    }
+    epoch = orte_util_lookup_epoch(proc);
 #endif
 
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
