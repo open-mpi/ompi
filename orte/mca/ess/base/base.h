@@ -57,6 +57,7 @@ ORTE_DECLSPEC extern int orte_ess_base_output;
 
 ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
 
+ORTE_DECLSPEC orte_epoch_t orte_ess_base_proc_get_epoch(orte_process_name_t *proc);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 
@@ -85,8 +86,6 @@ ORTE_DECLSPEC int orte_ess_base_query_sys_info(char *node, char **keys, opal_lis
 ORTE_DECLSPEC int orte_ess_env_put(orte_std_cntr_t num_procs,
                                    orte_std_cntr_t num_local_procs,
                                    char ***env);
-
-ORTE_DECLSPEC orte_epoch_t orte_ess_base_proc_get_epoch(orte_process_name_t *proc);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
