@@ -161,7 +161,8 @@ int orte_sensor_base_select(void)
     OBJ_DESTRUCT(&tmp_array);
     
     /*
-     * Initialize each of the modules
+     * Initialize each of the modules in priority order from
+     * highest to lowest
      */
     for(i = 0; i < orte_sensor_base.modules.size; ++i) {
         i_module = (orte_sensor_base_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i);
@@ -169,7 +170,10 @@ int orte_sensor_base_select(void)
             continue;
         }
         if( NULL != i_module->init ) {
-            i_module->init();
+            if (ORTE_SUCCESS != i_module->init()) {
+                /* can't run after all */
+                opal_pointer_array_set_item(&orte_sensor_base.modules, i, NULL);
+            }
         }
     }
     

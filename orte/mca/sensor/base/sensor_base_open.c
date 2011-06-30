@@ -13,6 +13,7 @@
 #include "orte/constants.h"
 
 #include "opal/mca/mca.h"
+#include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -61,7 +62,11 @@ int orte_sensor_base_open(void)
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
     orte_sensor_base.output = opal_output_open(NULL);
-    
+
+    /* initialize pointers */
+    orte_sensor_base.my_proc = NULL;
+    orte_sensor_base.my_node = NULL;
+
     /* construct the array of modules */
     OBJ_CONSTRUCT(&orte_sensor_base.modules, opal_pointer_array_t);
     opal_pointer_array_init(&orte_sensor_base.modules, 3, INT_MAX, 1);
@@ -88,6 +93,9 @@ static void start(orte_jobid_t jobid)
     orte_sensor_base_module_t *i_module;
     int i;
     
+    /* call the start function of all modules in priority order from
+     * highest to lowest
+     */
     for (i=0; i < orte_sensor_base.modules.size; i++) {
         if (NULL == (i_module = (orte_sensor_base_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i))) {
             continue;
@@ -104,6 +112,9 @@ static void stop(orte_jobid_t jobid)
     orte_sensor_base_module_t *i_module;
     int i;
     
+    /* call the stop function of all modules in priority order from
+     * highest to lowest
+     */
     for (i=0; i < orte_sensor_base.modules.size; i++) {
         if (NULL == (i_module = (orte_sensor_base_module_t*)opal_pointer_array_get_item(&orte_sensor_base.modules, i))) {
             continue;

@@ -24,7 +24,8 @@ BEGIN_C_DECLS
 struct orte_sensor_resusage_component_t {
     orte_sensor_base_component_t super;
     int sample_rate;
-    uint64_t memory_limit;
+    float node_memory_limit;
+    float proc_memory_limit;
 };
 typedef struct orte_sensor_resusage_component_t orte_sensor_resusage_component_t;
 

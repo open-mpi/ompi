@@ -78,14 +78,15 @@ static void cbfunc(int status,
 /* local globals */
 static opal_event_t *send_ev = NULL, *check_ev = NULL;
 static struct timeval send_time, check_time;
-static orte_job_t *daemons;
+static orte_job_t *daemons=NULL;
 static orte_thread_ctl_t ctl;
-static bool already_started;
+static bool already_started=false;
+static bool use_collected=false;
 
 static int init(void)
 {
     int rc=ORTE_SUCCESS;
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                          "%s initializing heartbeat recvs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -93,11 +94,32 @@ static int init(void)
     OBJ_CONSTRUCT(&ctl, orte_thread_ctl_t);
     already_started = false;
 
-    /* get the daemon job object */
-    if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-        /* can't run */
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_ERR_NOT_FOUND;
+    /* check if resource usage is being sampled elsewhere */
+    if (NULL != orte_sensor_base.my_proc) {
+        use_collected = true;
+        /* if I'm the HNP or scheduler, then I need the daemons job object */
+        if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_SCHEDULER) {
+            if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+                return ORTE_ERR_NOT_FOUND;
+            }
+        }
+    } else {
+        /* see if I have a job object */
+        if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+            /* create those structs for this framework */
+            orte_sensor_base.my_proc = OBJ_NEW(orte_proc_t);
+            orte_sensor_base.my_node = OBJ_NEW(orte_node_t);
+        } else {
+            if (NULL == (orte_sensor_base.my_proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, ORTE_PROC_MY_NAME->vpid))) {
+                return ORTE_ERR_NOT_FOUND;
+            }
+            if (NULL == (orte_sensor_base.my_node = orte_sensor_base.my_proc->node)) {
+                return ORTE_ERR_NOT_FOUND;
+            }
+            /* protect the objects */
+            OBJ_RETAIN(orte_sensor_base.my_proc);
+            OBJ_RETAIN(orte_sensor_base.my_node);
+        }
     }
 
     /* setup to receive heartbeats */
@@ -128,6 +150,9 @@ static void finalize(void)
     }
     
     orte_rmcast.cancel_recv(ORTE_RMCAST_HEARTBEAT_CHANNEL, ORTE_RMCAST_TAG_HEARTBEAT);
+
+    OBJ_RELEASE(orte_sensor_base.my_proc);
+    OBJ_RELEASE(orte_sensor_base.my_node);
 
     OBJ_DESTRUCT(&ctl);
     return;
@@ -161,7 +186,6 @@ static void setup_time(char *input, struct timeval *time)
  */
 static void start(orte_jobid_t jobid)
 {
-
     /* if this isn't my jobid, then don't start or we can
      * confuse things
      */
@@ -235,98 +259,42 @@ static void stop(orte_jobid_t jobid)
     return;
 }
 
-static void copy_proc_stats(opal_pstats_t *dest, opal_pstats_t *src)
-{
-    long secs, usecs;
-    float diff, usage;
-
-    /* copy the individual fields */
-    strncpy(dest->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
-    dest->rank = ORTE_PROC_MY_NAME->vpid;
-    dest->pid = src->pid;
-    memcpy(dest->cmd, src->cmd, sizeof(src->cmd));
-    dest->state[0] = src->state[0];
-    dest->priority = src->priority;
-    dest->num_threads = src->num_threads;
-    dest->vsize = src->vsize;
-    dest->rss = src->rss;
-    dest->peak_vsize = src->peak_vsize;
-    dest->processor = src->processor;
-    /* update the cpu utilization prior to copying the sample time */
-    if (0 < dest->sample_time.tv_sec &&
-        0 < dest->sample_time.tv_usec) {
-        ORTE_COMPUTE_TIME_DIFF(secs, usecs, dest->sample_time.tv_sec, dest->sample_time.tv_usec,
-                               src->sample_time.tv_sec, src->sample_time.tv_usec);
-        diff = (float)secs + (float)usecs/1000000.0;
-        ORTE_COMPUTE_TIME_DIFF(secs, usecs, dest->time.tv_sec, dest->time.tv_usec,
-                               src->time.tv_sec, src->time.tv_usec);
-        usage = (float)secs + (float)usecs/1000000.0;
-        dest->percent_cpu = usage / diff;
-    }
-    dest->time.tv_sec = src->time.tv_sec;
-    dest->time.tv_usec = src->time.tv_usec;
-    dest->sample_time.tv_sec = src->sample_time.tv_sec;
-    dest->sample_time.tv_usec = src->sample_time.tv_usec;
-}
-
-static void copy_node_stats(opal_node_stats_t *dest, opal_node_stats_t *src)
-{
-    dest->total_mem = src->total_mem;
-    dest->free_mem = src->free_mem;
-    dest->buffers = src->buffers;
-    dest->cached = src->cached;
-    dest->swap_cached = src->swap_cached;
-    dest->swap_total = src->swap_total;
-    dest->swap_free = src->swap_free;
-    dest->mapped = src->mapped;
-    dest->la = src->la;
-    dest->la5 = src->la5;
-    dest->la15 = src->la15;
-    dest->sample_time.tv_sec = src->sample_time.tv_sec;
-    dest->sample_time.tv_usec = src->sample_time.tv_usec;
-}
-
 static void read_stats(int fd, short event, void *arg)
 {
     opal_event_t *tmp = (opal_event_t*)arg;
     int rc;
-    opal_pstats_t stats;
-    opal_node_stats_t nstats;
-    orte_job_t *jdata;
-    orte_proc_t *proc;
+    opal_pstats_t *stats, *st;
+    opal_node_stats_t *nstats, *ndstats;
 
     ORTE_ACQUIRE_THREAD(&ctl);
+
+    if (use_collected) {
+        /* nothing for us to do - already have the data */
+        goto reset;
+    }
 
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                          "%s sensor:heartbeat READING LOCAL STATS",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* get data on myself and the local node */
-    OBJ_CONSTRUCT(&stats, opal_pstats_t);
-    OBJ_CONSTRUCT(&nstats, opal_node_stats_t);
-    if (ORTE_SUCCESS != (rc = opal_pstat.query(orte_process_info.pid, &stats, &nstats))) {
+    stats = OBJ_NEW(opal_pstats_t);
+    nstats = OBJ_NEW(opal_node_stats_t);
+    if (ORTE_SUCCESS != (rc = opal_pstat.query(orte_process_info.pid, stats, nstats))) {
         ORTE_ERROR_LOG(rc);
         goto reset;
     }
 
-    /* get my job object */
-    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-        goto reset;
+    /* store the proc stats */
+    if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&orte_sensor_base.my_proc->stats, stats))) {
+        OBJ_RELEASE(st);
     }
-    /* find my proc object */
-    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, ORTE_PROC_MY_NAME->vpid))) {
-        goto reset;
-    }
-    /* copy the proc stats */
-    copy_proc_stats(&proc->stats, &stats);
-    /* copy the node stats */
-    if (NULL != proc->node) {
-        copy_node_stats(&proc->node->stats, &nstats);
+    /* store the node stats */
+    if (NULL != (ndstats = (opal_node_stats_t*)opal_ring_buffer_push(&orte_sensor_base.my_node->stats, nstats))) {
+        OBJ_RELEASE(ndstats);
     }
 
  reset:
-    OBJ_DESTRUCT(&stats);
-    OBJ_DESTRUCT(&nstats);
     ORTE_RELEASE_THREAD(&ctl);
 
     /* reset the timer */
@@ -340,8 +308,8 @@ static void send_heartbeat(int fd, short event, void *arg)
     int rc;
     opal_list_item_t *item;
     orte_odls_child_t *child;
-    opal_pstats_t stats, *st;
-    opal_node_stats_t nstats, *nst;
+    opal_pstats_t *st;
+    opal_node_stats_t *nst;
 
     /* if we are aborting or shutting down, ignore this */
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
@@ -362,41 +330,52 @@ static void send_heartbeat(int fd, short event, void *arg)
 
     /* setup the buffer - nothing to pack as receipt alone is the "beat" */
     buf = OBJ_NEW(opal_buffer_t);
-    st = &stats;
-    nst = &nstats;
     
     /* if we want process stats included, better get them */
     if (mca_sensor_heartbeat_component.include_stats) {
         /* include data on myself and on the node */
-        OBJ_CONSTRUCT(&stats, opal_pstats_t);
-        OBJ_CONSTRUCT(&nstats, opal_node_stats_t);
-        if (ORTE_SUCCESS != (rc = opal_pstat.query(orte_process_info.pid, &stats, &nstats))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&stats);
-            OBJ_DESTRUCT(&nstats);
-            /* turn off the stats as it won't work */
-            mca_sensor_heartbeat_component.include_stats = false;
-            goto BEAT;
+        if (use_collected) {
+            if (NULL == (st = (opal_pstats_t*)opal_ring_buffer_poke(&orte_sensor_base.my_proc->stats, -1))) {
+                goto BEAT;
+            }
+            if (NULL == (nst = (opal_node_stats_t*)opal_ring_buffer_poke(&orte_sensor_base.my_node->stats, -1))) {
+                goto BEAT;
+            }
+            /* protect the objects */
+            OBJ_RETAIN(st);
+            OBJ_RETAIN(nst);
+        } else {
+            st = OBJ_NEW(opal_pstats_t);
+            nst = OBJ_NEW(opal_node_stats_t);
+            if (ORTE_SUCCESS != (rc = opal_pstat.query(orte_process_info.pid, st, nst))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(st);
+                OBJ_RELEASE(nst);
+                /* turn off the stats as it won't work */
+                mca_sensor_heartbeat_component.include_stats = false;
+                goto BEAT;
+            }
+            /* the stats framework can't know nodename or rank, so fill them
+             * in here and pack send my own data
+             */
+            strncpy(st->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
+            st->rank = ORTE_PROC_MY_NAME->vpid;
         }
         /* pack the node stats first */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &nst, 1, OPAL_NODE_STAT))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&stats);
-            OBJ_DESTRUCT(&nstats);
+            OBJ_RELEASE(st);
+            OBJ_RELEASE(nst);
             goto BEAT;
         }
-        OBJ_DESTRUCT(&nstats);
-        /* the stats framework can't know nodename or rank, so fill them
-         * in here and pack send my own data
-         */
-        strncpy(stats.node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
-        stats.rank = ORTE_PROC_MY_NAME->vpid;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &st, 1, OPAL_PSTAT))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&stats);
+            OBJ_RELEASE(st);
+            OBJ_RELEASE(nst);
             goto BEAT;
         }
-        OBJ_DESTRUCT(&stats);
+        OBJ_RELEASE(st);
+        OBJ_RELEASE(nst);
         /* add data for my children */
         OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
         for (item = opal_list_get_first(&orte_local_children);
@@ -410,28 +389,36 @@ static void send_heartbeat(int fd, short event, void *arg)
                 /* race condition */
                 continue;
             }
-            OBJ_CONSTRUCT(&stats, opal_pstats_t);
-            if (ORTE_SUCCESS != (rc = opal_pstat.query(child->pid, &stats, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&stats);
-                continue;
+            if (use_collected) {
+                if (NULL == (st = (opal_pstats_t*)opal_ring_buffer_poke(&child->stats, -1))) {
+                    continue;
+                }
+                /* protect the object */
+                OBJ_RETAIN(st);
+            } else {
+                st = OBJ_NEW(opal_pstats_t);
+                if (ORTE_SUCCESS != (rc = opal_pstat.query(child->pid, st, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(st);
+                    continue;
+                }
+                /* the stats framework can't know nodename or rank, so fill them
+                 * in here
+                 */
+                strncpy(st->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
+                st->rank = child->name->vpid;
             }
-            /* the stats framework can't know nodename or rank, so fill them
-             * in here
-             */
-            strncpy(stats.node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
-            stats.rank = child->name->vpid;
             if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, child->name, 1, ORTE_NAME))) {
                 ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&stats);
+                OBJ_RELEASE(st);
                 continue;
             }
             if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &st, 1, OPAL_PSTAT))) {
                 ORTE_ERROR_LOG(rc);
-                OBJ_DESTRUCT(&stats);
+                OBJ_RELEASE(st);
                 continue;
             }
-            OBJ_DESTRUCT(&stats);
+            OBJ_RELEASE(st);
         }
         opal_condition_signal(&orte_odls_globals.cond);
         OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
@@ -531,8 +518,8 @@ static void recv_beats(int status,
 {
     orte_job_t *jdata;
     orte_proc_t *proc;
-    opal_pstats_t *stats;
-    opal_node_stats_t *nstats=NULL;
+    opal_pstats_t *stats, *st;
+    opal_node_stats_t *nstats=NULL, *ndstats;
     orte_process_name_t name;
     int rc, n;
 
@@ -565,11 +552,12 @@ static void recv_beats(int status,
             mca_sensor_heartbeat_component.include_stats = false;
             goto DEPART;
         }
-        /* since we already have the daemon's proc object, store this data */
+        /* store the node stats */
         if (NULL != proc->node) {
-            copy_node_stats(&proc->node->stats, nstats);
+            if (NULL != (ndstats = (opal_node_stats_t*)opal_ring_buffer_push(&proc->node->stats, nstats))) {
+                OBJ_RELEASE(ndstats);
+            }
         }
-        OBJ_RELEASE(nstats);
         /* the first proc in the data will be the daemon, so get it now while
          * we still have the daemon's proc object
          */
@@ -580,9 +568,10 @@ static void recv_beats(int status,
             mca_sensor_heartbeat_component.include_stats = false;
             goto DEPART;
         }
-        copy_proc_stats(&proc->stats, stats);
-        /* cleanup memory */
-        OBJ_RELEASE(stats);
+        /* store this data */
+        if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&proc->stats, stats))) {
+            OBJ_RELEASE(st);
+        }
  
         /* now retrieve the data for each proc on that node */
         n=1;
@@ -603,9 +592,10 @@ static void recv_beats(int status,
                 OBJ_RELEASE(stats);
                 continue;
             }
-            copy_proc_stats(&proc->stats, stats);
-            /* cleanup memory */
-            OBJ_RELEASE(stats);
+            /* store this data */
+            if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&proc->stats, stats))) {
+                OBJ_RELEASE(st);
+            }
         }
         if (OPAL_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
             ORTE_ERROR_LOG(rc);

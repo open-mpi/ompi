@@ -29,6 +29,7 @@
 #endif
 
 #include "opal/class/opal_list.h"
+#include "opal/class/opal_ring_buffer.h"
 #include "opal/dss/dss_types.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
@@ -115,6 +116,7 @@ typedef struct {
     struct timeval starttime;    /* when the proc was started - for timing purposes only */
     bool do_not_barrier;         /* the proc should not barrier in orte_init */
     bool notified;               /* notification of termination has been sent */
+    opal_ring_buffer_t stats;
 } orte_odls_child_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
 

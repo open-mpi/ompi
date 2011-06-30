@@ -486,7 +486,7 @@ static int rte_init(void)
     /* create and store a node object where we are */
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
-    node->index = opal_pointer_array_add(orte_node_pool, node);
+    node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
 
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -500,7 +500,7 @@ static int rte_init(void)
     OBJ_RETAIN(node);  /* keep accounting straight */
     proc->node = node;
     proc->nodename = node->name;
-    opal_pointer_array_add(jdata->procs, proc);
+    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
 
     /* record that the daemon (i.e., us) is on this node 
      * NOTE: we do not add the proc object to the node's

@@ -18,7 +18,13 @@
  */
 #include "orte_config.h"
 
-#include "opal/dss/dss_types.h"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
+
+#include "opal/class/opal_pointer_array.h"
+
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/sensor/sensor_types.h"
 
@@ -34,6 +40,8 @@ BEGIN_C_DECLS
 typedef struct {
     int output;
     opal_pointer_array_t modules;
+    orte_proc_t *my_proc;
+    orte_node_t *my_node;
 } orte_sensor_base_t;
 
 ORTE_DECLSPEC extern orte_sensor_base_t orte_sensor_base;

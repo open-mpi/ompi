@@ -33,7 +33,9 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
+#include "orte/mca/odls/base/odls_private.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/orted/orted.h"
 
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/sensor/base/sensor_private.h"
@@ -55,63 +57,55 @@ orte_sensor_base_module_t orte_sensor_resusage_module = {
 
 #define ORTE_RESUSAGE_LENGTH  16
 
-/* define a tracking object */
-typedef struct {
-    opal_object_t super;
-    orte_process_name_t name;
-    pid_t pid;
-    opal_ring_buffer_t stats;
-} resusage_tracker_t;
-static void constructor(resusage_tracker_t *ptr)
-{
-    ptr->pid = 0;
-    OBJ_CONSTRUCT(&ptr->stats, opal_ring_buffer_t);
-    opal_ring_buffer_init(&ptr->stats, ORTE_RESUSAGE_LENGTH);
-}
-static void destructor(resusage_tracker_t *ptr)
-{
-    resusage_tracker_t *res;
-
-    while (NULL != (res = opal_ring_buffer_pop(&ptr->stats))) {
-        OBJ_RELEASE(res);
-    }
-    OBJ_DESTRUCT(&ptr->stats);
-}
-OBJ_CLASS_INSTANCE(resusage_tracker_t,
-                   opal_object_t,
-                   constructor, destructor);
 
 /* declare the local functions */
 static void sample(int fd, short event, void *arg);
 
 /* local globals */
 static opal_event_t *sample_ev = NULL;
-static opal_pointer_array_t procs;
 static struct timeval sample_time;
+static bool created = false;
 
 static int init(void)
 {
-    OBJ_CONSTRUCT(&procs, opal_pointer_array_t);
-    opal_pointer_array_init(&procs, 16, INT_MAX, 16);
+    orte_job_t *jdata;
+
+    if (0 == mca_sensor_resusage_component.sample_rate) {
+        /* not monitoring */
+        return ORTE_ERROR;
+    }
+
+    /* see if my_proc and my_node are available on the global arrays */
+    if (NULL == (jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        orte_sensor_base.my_proc = OBJ_NEW(orte_proc_t);
+        orte_sensor_base.my_node = OBJ_NEW(orte_node_t);
+        created = true;
+    } else {
+        if (NULL == (orte_sensor_base.my_proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, ORTE_PROC_MY_NAME->vpid))) {
+            return ORTE_ERR_NOT_FOUND;
+        }
+        if (NULL == (orte_sensor_base.my_node = orte_sensor_base.my_proc->node)) {
+            return ORTE_ERR_NOT_FOUND;
+        }
+        created = false;
+    }
+
     return ORTE_SUCCESS;
 }
 
 static void finalize(void)
 {
-    int i;
-    resusage_tracker_t *res;
-    
     if (NULL != sample_ev) {
         opal_event_del(sample_ev);
         free(sample_ev);
+        sample_ev = NULL;
     }
-    for (i=0; i < procs.size; i++) {
-        if (NULL != (res = (resusage_tracker_t*)opal_pointer_array_get_item(&procs, i))) {
-            OBJ_RELEASE(res);
-        }
-    }
-    OBJ_DESTRUCT(&procs);
     
+    if (created) {
+        OBJ_RELEASE(orte_sensor_base.my_proc);
+        OBJ_RELEASE(orte_sensor_base.my_node);
+    }
+
     return;
 }
 
@@ -120,83 +114,6 @@ static void finalize(void)
  */
 static void start(orte_jobid_t jobid)
 {
-    resusage_tracker_t *res, *rptr;
-    orte_odls_child_t *child;
-    opal_list_item_t *item;
-    int i;
-
-    if (0 == mca_sensor_resusage_component.sample_rate) {
-        /* not monitoring */
-        return;
-    }
-
-    /* is this to monitor my own job */
-    if (jobid == ORTE_PROC_MY_NAME->jobid) {
-        /* already on the tracker? */
-        res = NULL;
-        for (i=0; i < procs.size; i++) {
-            if (NULL == (rptr = (resusage_tracker_t*)opal_pointer_array_get_item(&procs, i))) {
-                continue;
-            }
-            if (rptr->name.jobid == jobid &&
-                rptr->name.vpid == child->name->vpid) {
-                /* got it! */
-                res = rptr;
-                break;
-            }
-        }
-        if (NULL == res) {
-            /* not on here yet, so add it */
-            res = OBJ_NEW(resusage_tracker_t);
-            res->name.jobid = jobid;
-            res->name.vpid = ORTE_PROC_MY_NAME->vpid;
-            res->pid = orte_process_info.pid;
-            opal_pointer_array_add(&procs, res);
-        }
-        goto timer;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                         "%s sensor:resusage: starting monitoring for job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jobid)));
-
-    /* search for local children from this job */
-    for (item = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_end(&orte_local_children)) {
-        child = (orte_odls_child_t*)item;
-        if (jobid == child->name->jobid || ORTE_JOBID_WILDCARD == jobid) {
-            
-            /* do we already have this proc in our tracker? */
-            res = NULL;
-            for (i=0; i < procs.size; i++) {
-                if (NULL == (rptr = (resusage_tracker_t*)opal_pointer_array_get_item(&procs, i))) {
-                    continue;
-                }
-                if (rptr->name.jobid == jobid &&
-                    rptr->name.vpid == child->name->vpid) {
-                    /* got it! */
-                    res = rptr;
-                    break;
-                }
-            }
-            if (NULL == res) {
-                /* don't have this one yet, so add it */
-                OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                                     "%s sensor:resusage: adding tracker for proc %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(child->name)));
-                res = OBJ_NEW(resusage_tracker_t);
-                res->name.jobid = jobid;
-                res->name.vpid = child->name->vpid;
-                res->pid = child->pid;
-                opal_pointer_array_add(&procs, res);
-            }
-        }
-    }
-    
- timer:
     if (NULL == sample_ev) {
         /* startup a timer to wake us up periodically
          * for a data sample
@@ -213,27 +130,23 @@ static void start(orte_jobid_t jobid)
 
 static void stop(orte_jobid_t jobid)
 {
-    int i;
-    resusage_tracker_t *res;
-
-    for (i=0; i < procs.size; i++) {
-        if (NULL == (res = (resusage_tracker_t*)opal_pointer_array_get_item(&procs, i))) {
-            continue;
-        }
-        if (jobid == res->name.jobid || ORTE_JOBID_WILDCARD == jobid) {
-            opal_pointer_array_set_item(&procs, i, NULL);
-            OBJ_RELEASE(res);
-        }
+    if (NULL != sample_ev) {
+        opal_event_del(sample_ev);
+        free(sample_ev);
+        sample_ev = NULL;
     }
     return;
 }
 
 static void sample(int fd, short event, void *arg)
 {
-    resusage_tracker_t *res;
     opal_pstats_t *stats, *st;
-    int i, rc;
-    
+    opal_node_stats_t *nstats, *nst;
+    int rc;
+    opal_list_item_t *item;
+    orte_odls_child_t *child, *hog=NULL;
+    float in_use, max_mem;
+
     /* if we are not sampling any more, then just return */
     if (NULL == sample_ev) {
         return;
@@ -242,32 +155,168 @@ static void sample(int fd, short event, void *arg)
     OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                          "sample:resusage sampling resource usage"));
     
-    /* loop through our trackers */
-    for (i=0; i < procs.size; i++) {
-        if (NULL == (res = (resusage_tracker_t*)opal_pointer_array_get_item(&procs, i))) {
+    /* update stats on ourself and the node */
+    stats = OBJ_NEW(opal_pstats_t);
+    nstats = OBJ_NEW(opal_node_stats_t);
+    if (ORTE_SUCCESS != (rc = opal_pstat.query(orte_process_info.pid, stats, nstats))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(stats);
+        OBJ_RELEASE(nstats);
+        goto RESTART;
+    }
+    /* the stats framework can't know nodename or rank */
+    strncpy(stats->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
+    stats->rank = ORTE_PROC_MY_NAME->vpid;
+    /* store it */
+    if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&orte_sensor_base.my_proc->stats, stats))) {
+        OBJ_RELEASE(st);
+    }
+    if (NULL != (nst = (opal_node_stats_t*)opal_ring_buffer_push(&orte_sensor_base.my_node->stats, nstats))) {
+        OBJ_RELEASE(nst);
+    }
+
+    /* loop through our children and update their stats */
+    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+    for (item = opal_list_get_first(&orte_local_children);
+         item != opal_list_get_end(&orte_local_children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        if (!child->alive) {
             continue;
         }
-        /* get the stats for this process */
+        if (0 == child->pid) {
+            /* race condition */
+            continue;
+        }
         stats = OBJ_NEW(opal_pstats_t);
-        if (ORTE_SUCCESS != (rc = opal_pstat.query(res->pid, stats, NULL))) {
+        if (ORTE_SUCCESS != (rc = opal_pstat.query(child->pid, stats, NULL))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(stats);
             continue;
         }
-        if (2 < opal_output_get_verbosity(orte_sensor_base.output)) {
-            opal_output(0, "%s stats for proc %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&res->name));
-            opal_dss.dump(0, stats, OPAL_PSTAT);
-        }
-        if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&res->stats, stats))) {
-            OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
-                                 "%s sensor:resusage: releasing prior sample",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* the stats framework can't know nodename or rank */
+        strncpy(stats->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
+        stats->rank = child->name->vpid;
+        /* store it */
+        if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&child->stats, stats))) {
             OBJ_RELEASE(st);
         }
     }
 
+    /* are there any issues with node-level usage? */
+    if (0.0 < mca_sensor_resusage_component.node_memory_limit) {
+        OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+                             "%s CHECKING NODE MEM",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* compute the percentage of node memory in-use */
+        if (NULL == (nst = (opal_node_stats_t*)opal_ring_buffer_poke(&orte_sensor_base.my_node->stats, -1))) {
+            goto RELEASE;
+        }
+        in_use = 1.0 - (nst->free_mem / nst->total_mem);
+        OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+                             "%s PERCENT USED: %f LIMIT: %f",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             in_use, mca_sensor_resusage_component.node_memory_limit));
+        if (mca_sensor_resusage_component.node_memory_limit <= in_use) {
+            /* loop through our children and find the biggest hog */
+            hog = NULL;
+            max_mem = 0.0;
+            for (item = opal_list_get_first(&orte_local_children);
+                 item != opal_list_get_end(&orte_local_children);
+                 item = opal_list_get_next(item)) {
+                child = (orte_odls_child_t*)item;
+                if (!child->alive) {
+                    continue;
+                }
+                if (0 == child->pid) {
+                    /* race condition */
+                    continue;
+                }
+                if (NULL == (st = (opal_pstats_t*)opal_ring_buffer_poke(&child->stats, -1))) {
+                    continue;
+                }
+                OPAL_OUTPUT_VERBOSE((5, orte_sensor_base.output,
+                                     "%s PROC %s AT VSIZE %f",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name), st->vsize));
+                if (max_mem < st->vsize) {
+                    hog = child;
+                    max_mem = st->vsize;
+                }
+            }
+            if (NULL == hog) {
+                /* if all children dead and we are still too big,
+                 * then we must be the culprit - abort
+                 */
+                OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+                                     "%s NO CHILD: COMMITTING SUICIDE",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                opal_condition_signal(&orte_odls_globals.cond);
+                OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+                orte_errmgr.abort(ORTE_ERR_MEM_LIMIT_EXCEEDED, NULL);
+            } else {
+                /* report the problem - this will normally kill the proc, so
+                 * we have to release the ODLS thread first
+                 */
+                OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+                                     "%s REPORTING %s TO ERRMGR FOR EXCEEDING LIMITS",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(hog->name)));
+                opal_condition_signal(&orte_odls_globals.cond);
+                OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+                orte_errmgr.update_state(hog->name->jobid, ORTE_JOB_STATE_UNDEF,
+                                         hog->name, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED,
+                                         hog->pid, ORTE_ERR_MEM_LIMIT_EXCEEDED);
+            }
+            goto RESTART;
+        }
+    }
+
+    /* check proc limits */
+    if (0.0 < mca_sensor_resusage_component.proc_memory_limit) {
+        OPAL_OUTPUT_VERBOSE((2, orte_sensor_base.output,
+                             "%s CHECKING PROC MEM",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* check my children first */
+        for (item = opal_list_get_first(&orte_local_children);
+             item != opal_list_get_end(&orte_local_children);
+             item = opal_list_get_next(item)) {
+            child = (orte_odls_child_t*)item;
+            if (!child->alive) {
+                continue;
+            }
+            if (0 == child->pid) {
+                /* race condition */
+                continue;
+            }
+            if (NULL == (st = (opal_pstats_t*)opal_ring_buffer_poke(&child->stats, -1))) {
+                continue;
+            }
+            OPAL_OUTPUT_VERBOSE((5, orte_sensor_base.output,
+                                 "%s PROC %s AT VSIZE %f",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name), st->vsize));
+            if (mca_sensor_resusage_component.proc_memory_limit <= st->vsize) {
+                /* report the problem - this will normally kill the proc, so
+                 * we have to release the ODLS thread first
+                 */
+                opal_condition_signal(&orte_odls_globals.cond);
+                OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+                orte_errmgr.update_state(child->name->jobid, ORTE_JOB_STATE_UNDEF,
+                                         child->name, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED,
+                                         child->pid, ORTE_ERR_MEM_LIMIT_EXCEEDED);
+                OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+             }
+        }
+    }
+
+ RELEASE:
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+
+ RESTART:
     /* restart the timer */
-    opal_event_evtimer_add(sample_ev, &sample_time);
+    if (NULL != sample_ev) {
+        opal_event_evtimer_add(sample_ev, &sample_time);
+    }
 }
