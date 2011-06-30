@@ -106,6 +106,7 @@ struct ompi_request_t {
     ompi_request_free_fn_t req_free;            /**< Called by free */
     ompi_request_cancel_fn_t req_cancel;        /**< Optional function to cancel the request */
     ompi_request_complete_fn_t req_complete_cb; /**< Called when the request is MPI completed */
+    void *req_complete_cb_data;
     ompi_mpi_object_t req_mpi_object;           /**< Pointer to MPI object that created this request */
 };
 
@@ -392,8 +393,10 @@ static inline void ompi_request_wait_completion(ompi_request_t *req)
  */
 static inline int ompi_request_complete(ompi_request_t* request, bool with_signal)
 {
-    if( NULL != request->req_complete_cb ) {
-        request->req_complete_cb( request );
+    ompi_request_complete_fn_t tmp = request->req_complete_cb;
+    if( NULL != tmp ) {
+        request->req_complete_cb = NULL;
+        tmp( request );
     }
     ompi_request_completed++;
     request->req_complete = true;

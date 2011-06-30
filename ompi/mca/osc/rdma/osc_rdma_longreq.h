@@ -26,16 +26,15 @@
 #include "ompi/request/request.h"
 #include "ompi/op/op.h"
 
-struct ompi_osc_rdma_longreq_t;
-typedef struct ompi_osc_rdma_longreq_t ompi_osc_rdma_longreq_t;
-
-typedef void (*ompi_osc_rdma_longreq_cb_fn_t)(ompi_osc_rdma_longreq_t *longreq);
-
 struct ompi_osc_rdma_longreq_t {
     opal_free_list_item_t super;
     ompi_request_t *request;
-    ompi_osc_rdma_longreq_cb_fn_t cbfunc;
-    void *cbdata;
+
+    union {
+        struct ompi_osc_rdma_sendreq_t *req_sendreq;
+        struct ompi_osc_rdma_replyreq_t *req_replyreq;
+        struct ompi_osc_rdma_send_header_t *req_sendhdr;
+    } req_basereq;
 
     /* warning - this doesn't always have a sane value */
     ompi_osc_rdma_module_t *req_module;
@@ -44,6 +43,7 @@ struct ompi_osc_rdma_longreq_t {
     struct ompi_op_t *req_op;
     struct ompi_datatype_t *req_datatype;
 };
+typedef struct ompi_osc_rdma_longreq_t ompi_osc_rdma_longreq_t;
 OBJ_CLASS_DECLARATION(ompi_osc_rdma_longreq_t);
 
 static inline int
