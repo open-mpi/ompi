@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -317,12 +318,12 @@ void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t
              * from the remote side and try to match it to an endpoint. */
             if ((bc_hdr->lid == newep->rem_info.rem_lid) &&
                 (bc_hdr->subnet_id == newep->rem_info.rem_subnet_id) &&
-                (bc_hdr->vpid == newep->endpoint_proc->proc_guid.vpid)) {
+                (bc_hdr->vpid == newep->endpoint_proc->proc_ompi->proc_name.vpid)) {
                 opal_output_verbose(30, mca_btl_openib_component.verbose_failover,
                                     "IB: Control message received from %d: "
                                     "found match: lid=%d,"
                                     "subnet=0x%" PRIx64 ",endpoint_state=%d",
-                                    newep->endpoint_proc->proc_guid.vpid,
+                                    newep->endpoint_proc->proc_ompi->proc_name.vpid,
                                     newep->rem_info.rem_lid,
                                     newep->rem_info.rem_subnet_id,
                                     newep->endpoint_state);
@@ -349,7 +350,7 @@ void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t
                                             "IB: Control message received from %d: "
                                             "bringing down connection,lid=%d,"
                                             "subnet=0x%" PRIx64 ",endpoint_state=%d",
-                                            newep->endpoint_proc->proc_guid.vpid,
+                                            newep->endpoint_proc->proc_ompi->proc_name.vpid,
                                             newep->rem_info.rem_lid,
                                             newep->rem_info.rem_subnet_id,
                                             newep->endpoint_state);
@@ -372,14 +373,14 @@ void btl_openib_handle_failover_control_messages(mca_btl_openib_control_header_t
                                             "IB: rank=%d, control message (remote=%d), "
                                             "moved local head by one (new=%d)",
                                             ORTE_PROC_MY_NAME->vpid,    
-                                            newep->endpoint_proc->proc_guid.vpid,
+                                            newep->endpoint_proc->proc_ompi->proc_name.vpid,
                                             newep->eager_rdma_local.head);
                     } else {
                         opal_output_verbose(20, mca_btl_openib_component.verbose_failover,
                                             "IB: rank=%d, control message (remote=%d), "
                                             "did not move local head by one (still=%d)",
                                             ORTE_PROC_MY_NAME->vpid,
-                                            newep->endpoint_proc->proc_guid.vpid,
+                                            newep->endpoint_proc->proc_ompi->proc_name.vpid,
                                             newep->eager_rdma_local.head);
                     }
                 }
