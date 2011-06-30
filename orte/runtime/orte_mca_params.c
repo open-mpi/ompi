@@ -311,6 +311,13 @@ int orte_register_params(void)
                                    "Command used to start processes on remote nodes (default: orted)",
                                    false, false, "orted", &orte_launch_agent);
 
+    mca_base_param_reg_string_name("orte", "fork_agent",
+                                   "Command used to fork processes on remote nodes (default: NULL)",
+                                   false, false, NULL, &strval);
+    if (NULL != strval) {
+        orte_fork_agent = opal_argv_split(strval, ' ');
+    }
+
     /* whether or not to require RM allocation */
     mca_base_param_reg_int_name("orte", "allocation_required",
                                 "Whether or not an allocation by a resource manager is required [default: no]",
@@ -440,7 +447,7 @@ int orte_register_params(void)
     
     /* tool communication controls */
     mca_base_param_reg_string_name("orte", "report_events",
-                                   "URI to which events are to be reported (default: NULL)]",
+                                   "URI to which events are to be reported (default: NULL)",
                                    false, false, NULL, &orte_report_events_uri);
     if (NULL != orte_report_events_uri) {
         orte_report_events = true;
@@ -502,6 +509,10 @@ int orte_register_params(void)
                                 "Launch daemons on all nodes at start to form a virtual machine for subsequent jobs",
                                 false, false, (int)false, &value);
     orte_vm_launch = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_int_name("orte", "stat_history_size",
+                                "Number of stat samples to keep",
+                                false, false, 1, &orte_stat_history_size);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     

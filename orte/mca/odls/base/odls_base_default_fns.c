@@ -45,6 +45,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_sos.h"
 #include "opal/util/os_path.h"
+#include "opal/util/path.h"
 #include "opal/util/sys_limits.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/paffinity/base/base.h"
@@ -1888,8 +1889,30 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                     }
                     
                 }
+            } else if (NULL != orte_fork_agent) {
+                /* we were given a fork agent - use it */
+                argvsav = opal_argv_copy(app->argv);
+                /* free the argv */
+                opal_argv_free(app->argv);
+                app->argv = NULL;
+                /* now create a new one that starts with the fork agent */
+                app->argv = opal_argv_copy(orte_fork_agent);
+                /* add back the original argv */
+                for (inm=0; NULL != argvsav[inm]; inm++) {
+                    opal_argv_append_nosize(&app->argv, argvsav[inm]);
+                }
+                /* the app exe name itself is in the argvsav array, so
+                 * we can recover it from there later
+                 */
+                free(app->app);
+                app->app = opal_path_findv(orte_fork_agent[0], X_OK, orte_launch_environ, NULL);
+                if (NULL == app->app) {
+                    opal_output(0, "%s CANNOT FIND FORK AGENT %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), orte_fork_agent[0]);
+                    rc = ORTE_ERR_NOT_FOUND;
+                    goto CLEANUP;
+                }
             }
-            
+
             /* setup the rest of the environment with the proc-specific items - these
              * will be overwritten for each child
              */

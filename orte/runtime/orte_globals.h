@@ -36,6 +36,7 @@
 
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_value_array.h"
+#include "opal/class/opal_ring_buffer.h"
 #include "opal/threads/threads.h"
 
 #include "orte/mca/plm/plm_types.h"
@@ -299,8 +300,8 @@ typedef struct {
     char *username;
     /* list of known system resources for this node */
     opal_list_t resources;
-    /* stats at last sampling */
-    opal_node_stats_t stats;
+    /* history of resource usage - sized by sensor framework */
+    opal_ring_buffer_t stats;
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 
@@ -499,8 +500,8 @@ struct orte_proc_t {
     bool reported;
     /* if heartbeat recvd during last time period */
     int beat;
-    /* process stats at last sampling */
-    opal_pstats_t stats;
+    /* history of resource usage - sized by sensor framework */
+    opal_ring_buffer_t stats;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -612,8 +613,10 @@ ORTE_DECLSPEC extern char **orte_launch_environ;
 ORTE_DECLSPEC extern bool orte_hnp_is_allocated;
 ORTE_DECLSPEC extern bool orte_allocation_required;
 
+/* launch agents */
 ORTE_DECLSPEC extern char *orte_launch_agent;
 ORTE_DECLSPEC extern char **orted_cmd_line;
+ORTE_DECLSPEC extern char **orte_fork_agent;
 
 /* debugger job */
 ORTE_DECLSPEC extern orte_job_t *orte_debugger_daemon;
@@ -721,6 +724,9 @@ ORTE_DECLSPEC extern bool orte_abort_non_zero_exit;
 
 /* VM control */
 ORTE_DECLSPEC extern bool orte_vm_launch;
+
+/* length of stat history to keep */
+ORTE_DECLSPEC extern int orte_stat_history_size;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
