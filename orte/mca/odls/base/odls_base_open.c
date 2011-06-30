@@ -26,6 +26,7 @@
 #endif
 
 #if !ORTE_DISABLE_FULL_SUPPORT
+#include "opal/class/opal_ring_buffer.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -284,12 +285,21 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
     ptr->iof_complete = false;
     ptr->do_not_barrier = false;
     ptr->notified = false;
+    OBJ_CONSTRUCT(&ptr->stats, opal_ring_buffer_t);
+    opal_ring_buffer_init(&ptr->stats, orte_stat_history_size);
 }
 static void orte_odls_child_destructor(orte_odls_child_t *ptr)
 {
+    opal_pstats_t *st;
+
     if (NULL != ptr->name) free(ptr->name);
     if (NULL != ptr->rml_uri) free(ptr->rml_uri);
     if (NULL != ptr->slot_list) free(ptr->slot_list);
+
+    while (NULL != (st = (opal_pstats_t*)opal_ring_buffer_pop(&ptr->stats))) {
+        OBJ_RELEASE(st);
+    }
+    OBJ_DESTRUCT(&ptr->stats);
 }
 OBJ_CLASS_INSTANCE(orte_odls_child_t,
                    opal_list_item_t,

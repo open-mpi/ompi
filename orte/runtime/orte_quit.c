@@ -215,6 +215,8 @@ static void dump_aborted_procs(void)
                     ++num_aborted;
                 } else if (ORTE_PROC_STATE_ABORTED_BY_SIG == pptr->state) {
                     ++num_killed;
+                } else if (ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED == pptr->state) {
+                    ++num_killed;
                 }
             }
 

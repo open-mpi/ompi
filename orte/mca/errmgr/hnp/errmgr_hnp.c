@@ -676,8 +676,37 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
             break;
 
         case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
+            if (jdata->enable_recovery) {
+                killprocs(proc->jobid, proc->vpid, proc->epoch);
+                /* is this a local proc */
+                if (NULL != (child = proc_is_local(proc))) {
+                    /* local proc - see if it has reached its restart limit */
+                    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, child->app_idx);
+                    if (child->restarts < app->max_restarts) {
+                        child->restarts++;
+                        if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
+                            return ORTE_SUCCESS;
+                        }
+                        /* reset the child's state as restart_proc would
+                         * have cleared it
+                         */
+                        child->state = state;
+                        /* see if we can relocate it somewhere else */
+                        if (ORTE_SUCCESS == hnp_relocate(jdata, proc, state, exit_code)) {
+                            return ORTE_SUCCESS;
+                        }
+                        /* let it fall thru to abort */
+                    }
+                } else {
+                    /* this is a remote process - see if we can relocate it */
+                    if (ORTE_SUCCESS == hnp_relocate(jdata, proc, state, exit_code)) {
+                        return ORTE_SUCCESS;
+                    }
+                    /* guess not - let it fall thru to abort */
+                }
+            }
+            /* kill all jobs */
             orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
-            killprocs(proc->jobid, proc->vpid, proc->epoch);
             check_job_complete(jdata);  /* need to set the job state */
             /* the job object for this job will have been NULL'd
              * in the array if the job was solely local. If it isn't

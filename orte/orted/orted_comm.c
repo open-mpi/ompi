@@ -750,7 +750,11 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
         orte_odls.kill_local_procs(NULL);
         /* if all our dependent routes are gone, exit */
         if (0 == orte_routed.num_routes()) {
-            orte_quit();
+            if (ORTE_PROC_IS_HNP) {
+                orte_jobs_complete();
+            } else {
+                orte_quit();
+            }
         }
         return ORTE_SUCCESS;
         break;

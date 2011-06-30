@@ -77,7 +77,7 @@ static int orte_sensor_heartbeat_open(void)
 
 static int orte_sensor_heartbeat_query(mca_base_module_t **module, int *priority)
 {
-    *priority = 10;  /* use if we were built */
+    *priority = 10;  /* behind resusage */
     *module = (mca_base_module_t *)&orte_sensor_heartbeat_module;
     return ORTE_SUCCESS;
 }

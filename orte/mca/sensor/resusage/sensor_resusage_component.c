@@ -67,10 +67,15 @@ static int orte_sensor_resusage_open(void)
     }
     mca_sensor_resusage_component.sample_rate = tmp;
     
-    mca_base_param_reg_int(c, "memory_limit",
-                           "Max virtual memory size in GBytes",
+    mca_base_param_reg_int(c, "node_memory_limit",
+                           "Percentage of total memory that can be in-use",
                            false, false, 0,  &tmp);
-    mca_sensor_resusage_component.memory_limit = tmp;
+    mca_sensor_resusage_component.node_memory_limit = (float)tmp/100.0;
+    
+    mca_base_param_reg_int(c, "proc_memory_limit",
+                           "Max virtual memory size in MBytes",
+                           false, false, 0,  &tmp);
+    mca_sensor_resusage_component.proc_memory_limit = (float)tmp;
     
     return ORTE_SUCCESS;
 }
@@ -78,7 +83,7 @@ static int orte_sensor_resusage_open(void)
 
 static int orte_sensor_resusage_query(mca_base_module_t **module, int *priority)
 {    
-    *priority = 0;  /* select only if specified */
+    *priority = 100;  /* ahead of heartbeat */
     *module = (mca_base_module_t *)&orte_sensor_resusage_module;
     
     return ORTE_SUCCESS;

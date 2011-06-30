@@ -239,8 +239,9 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
 #endif
 
-    /* if a critical connection failed, exit without dropping a core */
-    if (ORTE_ERR_CONNECTION_FAILED == OPAL_SOS_GET_ERROR_CODE(error_code)) {
+    /* if a critical connection failed, or a sensor limit was exceeded, exit without dropping a core */
+    if (ORTE_ERR_CONNECTION_FAILED == error_code ||
+        ORTE_ERR_SENSOR_LIMIT_EXCEEDED == error_code) {
         orte_ess.abort(error_code, false);
     } else {
         orte_ess.abort(error_code, true);
