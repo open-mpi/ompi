@@ -17,9 +17,10 @@
 
 #include "ompi_config.h"
 
-#include "osc_pt2pt_mpireq.h"
-#include "osc_pt2pt_buffer.h"
+#include "opal/class/opal_free_list.h"
 #include "opal/types.h"
+
+#include "osc_pt2pt_buffer.h"
 
 static void ompi_osc_pt2pt_buffer_construct(ompi_osc_pt2pt_buffer_t *buf)
 {
@@ -36,7 +37,7 @@ static void ompi_osc_pt2pt_buffer_destruct(ompi_osc_pt2pt_buffer_t *buf)
 }
 
 
-OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_buffer_t, ompi_osc_pt2pt_mpireq_t,
+OBJ_CLASS_INSTANCE(ompi_osc_pt2pt_buffer_t, opal_free_list_item_t,
                    ompi_osc_pt2pt_buffer_construct, 
                    ompi_osc_pt2pt_buffer_destruct);
 

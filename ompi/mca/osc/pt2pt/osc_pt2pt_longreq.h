@@ -17,15 +17,23 @@
 #ifndef OSC_PT2PT_LONGREQ_H
 #define OSC_PT2PT_LONGREQ_H
 
+#include "opal/class/opal_free_list.h"
+
 #include "osc_pt2pt.h"
-#include "osc_pt2pt_mpireq.h"
 
 struct ompi_osc_pt2pt_longreq_t {
-    ompi_osc_pt2pt_mpireq_t mpireq;
+    opal_free_list_item_t super;
 
-    /* warning - this doesn't always have a sane value */
-    ompi_osc_pt2pt_module_t *req_module;
+    struct ompi_request_t *req_pml_request; /* PML request */
 
+    union {
+        struct ompi_osc_pt2pt_sendreq_t *req_sendreq;
+        struct ompi_osc_pt2pt_replyreq_t *req_replyreq;
+        struct ompi_osc_pt2pt_send_header_t *req_sendhdr;
+    } req_basereq;
+
+    /* This may not always be filled in... */
+    struct ompi_osc_pt2pt_module_t *req_module;
     struct ompi_op_t *req_op;
     struct ompi_datatype_t *req_datatype;
 };
@@ -49,7 +57,7 @@ static inline int
 ompi_osc_pt2pt_longreq_free(ompi_osc_pt2pt_longreq_t *longreq)
 {
     OPAL_FREE_LIST_RETURN(&mca_osc_pt2pt_component.p2p_c_longreqs,
-                          &longreq->mpireq.super.super);
+                          &longreq->super);
     return OMPI_SUCCESS;
 }
 

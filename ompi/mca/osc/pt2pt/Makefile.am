@@ -29,8 +29,6 @@ pt2pt_sources = \
 	osc_pt2pt_header.h \
 	osc_pt2pt_longreq.h \
 	osc_pt2pt_longreq.c \
-	osc_pt2pt_mpireq.h \
-	osc_pt2pt_mpireq.c \
 	osc_pt2pt_replyreq.h \
 	osc_pt2pt_replyreq.c \
 	osc_pt2pt_sendreq.h \

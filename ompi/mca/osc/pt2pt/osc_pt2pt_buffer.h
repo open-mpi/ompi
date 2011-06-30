@@ -17,12 +17,16 @@
 #ifndef OMPI_OSC_PT2PT_BUFFER_H
 #define OMPI_OSC_PT2PT_BUFFER_H
 
-#include "osc_pt2pt_mpireq.h"
+#include "opal/class/opal_free_list.h"
+#include "ompi/request/request.h"
 
 BEGIN_C_DECLS
 
 struct ompi_osc_pt2pt_buffer_t {
-    ompi_osc_pt2pt_mpireq_t mpireq;
+    ompi_free_list_item_t super;
+
+    ompi_request_t *request;
+    void *data;
     void *payload;
     size_t len;
 };

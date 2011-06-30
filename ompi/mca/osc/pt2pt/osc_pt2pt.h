@@ -28,6 +28,7 @@
 
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/request/request.h"
 #include "ompi/mca/osc/osc.h"
 
 BEGIN_C_DECLS
@@ -38,23 +39,8 @@ struct ompi_osc_pt2pt_component_t {
     /** Extend the basic osc component interface */
     ompi_osc_base_component_t super;
 
-    /** store the state of progress threads for this instance of OMPI */
-    bool p2p_c_have_progress_threads;
-
-    /** lock access to datastructures in the component structure */ 
-    opal_mutex_t p2p_c_lock; 
-
-    /** List of active modules (windows) */
-    opal_hash_table_t p2p_c_modules; 
-
     /** max size of eager message */
     size_t p2p_c_eager_size;
-
-    /** Lock for request management */
-    opal_mutex_t p2p_c_request_lock;
-
-    /** Condition variable for request management */
-    opal_condition_t p2p_c_request_cond;
 
     /** free list of ompi_osc_pt2pt_sendreq_t structures */
     opal_free_list_t p2p_c_sendreqs;
@@ -64,14 +50,6 @@ struct ompi_osc_pt2pt_component_t {
     opal_free_list_t p2p_c_longreqs;
     /** free list for eager / control meessages */
     opal_free_list_t p2p_c_buffers;
-
-    /** list of outstanding requests, of type ompi_osc_pt2pt_mpireq_t */
-    opal_list_t p2p_c_pending_requests;
-
-#if OMPI_ENABLE_PROGRESS_THREADS
-    opal_thread_t p2p_c_thread;
-    bool p2p_c_thread_run;
-#endif
 };
 typedef struct ompi_osc_pt2pt_component_t ompi_osc_pt2pt_component_t;
 
@@ -179,7 +157,26 @@ int ompi_osc_pt2pt_component_select(struct ompi_win_t *win,
                                    struct ompi_info_t *info,
                                    struct ompi_communicator_t *comm);
 
-int ompi_osc_pt2pt_component_progress(void);
+/* helper function that properly sets up request handling */
+int ompi_osc_pt2pt_component_irecv(void *buf,
+                                   size_t count,
+                                   struct ompi_datatype_t *datatype,
+                                   int src,
+                                   int tag,
+                                   struct ompi_communicator_t *comm,
+                                   struct ompi_request_t **request,
+                                   ompi_request_complete_fn_t callback,
+                                   void *data);
+
+int ompi_osc_pt2pt_component_isend(void *buf,
+                                   size_t count,
+                                   struct ompi_datatype_t *datatype,
+                                   int dest,
+                                   int tag,
+                                   struct ompi_communicator_t *comm,
+                                   struct ompi_request_t **request,
+                                   ompi_request_complete_fn_t callback,
+                                   void *data);
 
 /*
  * Module interface function types 

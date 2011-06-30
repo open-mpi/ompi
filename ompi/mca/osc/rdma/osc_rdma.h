@@ -28,6 +28,7 @@
 
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/request/request.h"
 #include "ompi/mca/osc/osc.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h"
@@ -44,9 +45,6 @@ typedef struct ompi_osc_rdma_buffer_t ompi_osc_rdma_buffer_t;
 struct ompi_osc_rdma_component_t {
     /** Extend the basic osc component interface */
     ompi_osc_base_component_t super;
-
-    /** store the state of progress threads for this instance of OMPI */
-    bool c_have_progress_threads;
 
     /** lock access to datastructures in the component structure */
     opal_mutex_t c_lock;
@@ -68,14 +66,6 @@ struct ompi_osc_rdma_component_t {
     opal_free_list_t c_replyreqs;
     /** free list of ompi_osc_rdma_longreq_t structures */
     opal_free_list_t c_longreqs;
-
-    /** list of outstanding requests, of type ompi_osc_pt2pt_longreq_t */
-    opal_list_t c_pending_requests;
-
-#if OMPI_ENABLE_PROGRESS_THREADS
-    opal_thread_t c_thread;
-    bool c_thread_run;
-#endif
 
     bool c_btl_registered;
 
@@ -237,7 +227,26 @@ int ompi_osc_rdma_component_select(struct ompi_win_t *win,
                                    struct ompi_info_t *info,
                                    struct ompi_communicator_t *comm);
 
-int ompi_osc_rdma_component_progress(void);
+/* helper function that properly sets up request handling */
+int ompi_osc_rdma_component_irecv(void *buf,
+                                   size_t count,
+                                   struct ompi_datatype_t *datatype,
+                                   int src,
+                                   int tag,
+                                   struct ompi_communicator_t *comm,
+                                   struct ompi_request_t **request,
+                                   ompi_request_complete_fn_t callback,
+                                   void *data);
+
+int ompi_osc_rdma_component_isend(void *buf,
+                                   size_t count,
+                                   struct ompi_datatype_t *datatype,
+                                   int dest,
+                                   int tag,
+                                   struct ompi_communicator_t *comm,
+                                   struct ompi_request_t **request,
+                                   ompi_request_complete_fn_t callback,
+                                   void *data);
 
 int ompi_osc_rdma_peer_info_free(ompi_osc_rdma_peer_info_t *peer_info);
 

@@ -21,7 +21,6 @@
 #include "osc_rdma.h"
 #include "osc_rdma_sendreq.h"
 
-#include "opal/runtime/opal_progress.h"
 #include "opal/threads/mutex.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
@@ -34,7 +33,7 @@ int
 ompi_osc_rdma_module_free(ompi_win_t *win)
 {
     int ret = OMPI_SUCCESS;
-    int tmp, i;
+    int i;
     ompi_osc_rdma_module_t *module = GET_MODULE(win);
 
     opal_output_verbose(1, ompi_osc_base_output,
@@ -49,22 +48,8 @@ ompi_osc_rdma_module_free(ompi_win_t *win)
 
     /* remove from component information */
     OPAL_THREAD_LOCK(&mca_osc_rdma_component.c_lock);
-    tmp = opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.c_modules,
+    opal_hash_table_remove_value_uint32(&mca_osc_rdma_component.c_modules,
                                               ompi_comm_get_cid(module->m_comm));
-    /* only take the output of hast_table_remove if there wasn't already an error */
-    ret = (ret != OMPI_SUCCESS) ? ret : tmp;
-
-    if (0 == opal_hash_table_get_size(&mca_osc_rdma_component.c_modules)) {
-#if OMPI_ENABLE_PROGRESS_THREADS
-        void *foo;
-
-        mca_osc_rdma_component.c_thread_run = false;
-        opal_condition_broadcast(&ompi_request_cond);
-        opal_thread_join(&mca_osc_rdma_component.c_thread, &foo);
-#else
-        opal_progress_unregister(ompi_osc_rdma_component_progress);
-#endif
-    }
     OPAL_THREAD_UNLOCK(&mca_osc_rdma_component.c_lock);
 
     win->w_osc_module = NULL;

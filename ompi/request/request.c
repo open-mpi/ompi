@@ -52,6 +52,7 @@ static void ompi_request_construct(ompi_request_t* req)
     req->req_free         = NULL;
     req->req_cancel       = NULL;
     req->req_complete_cb  = NULL;
+    req->req_complete_cb_data = NULL;
     req->req_f_to_c_index = MPI_UNDEFINED;
     req->req_mpi_object.comm = (struct ompi_communicator_t*) NULL;
 }
