@@ -23,8 +23,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
-
+#if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/util/nidmap.h"
+#endif
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/ess/base/base.h"
 
@@ -36,11 +38,13 @@ extern opal_list_t orte_ess_base_components_available;
  */
 orte_epoch_t orte_ess_base_proc_get_epoch(orte_process_name_t *proc)
 {
-    orte_epoch_t epoch;
+    orte_epoch_t epoch = 0;
 
+#if !ORTE_DISABLE_FULL_SUPPORT
     if (ORTE_EPOCH_INVALID == (epoch = orte_util_lookup_epoch(proc))) {
         return ORTE_NODE_RANK_INVALID;
     }
+#endif
 
     OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
                          "%s ess:generic: proc %s has epoch %d",

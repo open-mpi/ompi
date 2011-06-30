@@ -24,7 +24,7 @@ headers += \
 libmca_ess_la_SOURCES += \
         base/ess_base_close.c \
         base/ess_base_open.c \
-	base/ess_base_select.c
+        base/ess_base_select.c
 
 if !ORTE_DISABLE_FULL_SUPPORT
 
