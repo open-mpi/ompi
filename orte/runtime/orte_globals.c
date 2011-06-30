@@ -82,8 +82,10 @@ char **orte_launch_environ;
 bool orte_hnp_is_allocated = false;
 bool orte_allocation_required;
 
+/* launch agents */
 char *orte_launch_agent = NULL;
 char **orted_cmd_line=NULL;
+char **orte_fork_agent=NULL;
 
 /* debugger job */
 orte_job_t *orte_debugger_daemon=NULL;
@@ -182,6 +184,9 @@ bool orte_abort_non_zero_exit;
 
 /* VM control */
 bool orte_vm_launch = false;
+
+/* length of stat history to keep */
+int orte_stat_history_size;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
@@ -841,14 +846,16 @@ static void orte_node_construct(orte_node_t* node)
     
     OBJ_CONSTRUCT(&node->resources, opal_list_t);
 
-    OBJ_CONSTRUCT(&node->stats, opal_node_stats_t);
+    OBJ_CONSTRUCT(&node->stats, opal_ring_buffer_t);
+    opal_ring_buffer_init(&node->stats, orte_stat_history_size);
 }
 
 static void orte_node_destruct(orte_node_t* node)
 {
     int i;
     opal_list_item_t *item;
-    
+    opal_node_stats_t *stats;
+
     if (NULL != node->name) {
         free(node->name);
         node->name = NULL;
@@ -887,6 +894,11 @@ static void orte_node_destruct(orte_node_t* node)
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&node->resources);
+
+    while (NULL != (stats = (opal_node_stats_t*)opal_ring_buffer_pop(&node->stats))) {
+        OBJ_RELEASE(stats);
+    }
+    OBJ_DESTRUCT(&node->stats);
 }
 
 
@@ -919,7 +931,8 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->last_failure.tv_usec = 0;
     proc->reported = false;
     proc->beat = 0;
-    OBJ_CONSTRUCT(&proc->stats, opal_pstats_t);
+    OBJ_CONSTRUCT(&proc->stats, opal_ring_buffer_t);
+    opal_ring_buffer_init(&proc->stats, orte_stat_history_size);
     proc->name.epoch = ORTE_EPOCH_MIN;
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
@@ -930,6 +943,8 @@ static void orte_proc_construct(orte_proc_t* proc)
 
 static void orte_proc_destruct(orte_proc_t* proc)
 {
+    opal_pstats_t *stats;
+
     /* do NOT free the nodename field as this is
      * simply a pointer to a field in the
      * associated node object - the node object
@@ -950,7 +965,10 @@ static void orte_proc_destruct(orte_proc_t* proc)
         free(proc->rml_uri);
         proc->rml_uri = NULL;
     }
-    
+
+    while (NULL != (stats = (opal_pstats_t*)opal_ring_buffer_pop(&proc->stats))) {
+        OBJ_RELEASE(stats);
+    }
     OBJ_DESTRUCT(&proc->stats);
 
 #if OPAL_ENABLE_FT_CR == 1
