@@ -687,11 +687,27 @@ Wrapper::parseCommandLine( int argc, char ** argv )
                || arg.compare( "-fopenmp" ) == 0
                || arg.compare( "-Popenmp" ) == 0
                || arg.compare( "-xopenmp" ) == 0
-               || arg.compare( "-mp" ) == 0
-               || arg.compare( "-qsmp=omp" ) == 0 )
+               || arg.compare( "-mp" ) == 0 )
       {
          m_pConfig->setUsesThreads( true );
          m_pConfig->setUsesOpenMP( true );
+      }
+      else if( arg.length() > 6 && arg.compare( 0, 6, "-qsmp=" ) == 0 )
+      {
+         char carg[128];
+         strncpy( carg, arg.substr(6).c_str(), sizeof( carg ) - 1 );
+         carg[sizeof(carg) - 1]  = '\0';
+
+         char * token = strtok( carg, ":" );
+         do
+         {
+            if( strcmp( token, "omp" ) == 0 )
+            {
+               m_pConfig->setUsesThreads( true );
+               m_pConfig->setUsesOpenMP( true );
+               break;
+            }
+         } while( ( token = strtok( 0, ":" ) ) );
       }
       //
       // nvcc's pthread/openmp flag

@@ -12,6 +12,7 @@
 
 /* collect the data for the assigned trace processes from the given
    trace file name */
-bool collectData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata );
+bool CollectData( AllData& alldata );
+
 
 #endif /* COLLECT_DATA_H */

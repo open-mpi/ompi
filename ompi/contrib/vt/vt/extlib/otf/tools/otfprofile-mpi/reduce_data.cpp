@@ -8,8 +8,7 @@ using namespace std;
 #include <cassert>
 #include <iostream>
 
-#include "mpi.h"
-
+#include "otfprofile-mpi.h"
 #include "reduce_data.h"
 
 
@@ -546,71 +545,103 @@ static void unpack_worker_data( AllData& alldata, uint32_t sizes[10] ) {
 }
 
 
-bool reduceData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata ) {
+bool ReduceData( AllData& alldata ) {
 
     bool ret= true;
 
-    /* implement reduction myself because MPI and C++ STL don't play with each other */
+    if ( 1 < alldata.numRanks ) {
 
-    /* how many rounds until master has all the data? */
-    uint32_t round= 1;
-    while ( round < num_ranks ) {
+        VerbosePrint( alldata, 1, true, "reducing data\n" );
 
-        uint32_t peer= my_rank ^ round;
+        /* implement reduction myself because MPI and C++ STL don't play with
+        each other */
 
-        /* if peer rank is not there, do nothing but go on */
-        if ( peer >= num_ranks ) {
+        /* how many rounds until master has all the data? */
+        uint32_t num_rounds= Logi( alldata.numRanks ) -1;
+        uint32_t round_no= 0;
+        uint32_t round= 1;
+        while ( round < alldata.numRanks ) {
+
+            round_no++;
+
+            if ( 1 == alldata.params.verbose_level ) {
+
+                VerbosePrint( alldata, 1, true, " round %u / %u\n",
+                              round_no, num_rounds );
+            }
+
+            uint32_t peer= alldata.myRank ^ round;
+
+            /* if peer rank is not there, do nothing but go on */
+            if ( peer >= alldata.numRanks ) {
+
+                round= round << 1;
+                continue;
+            }
+
+            /* send to smaller peer, receive from larger one */
+            uint32_t sizes[10];
+            char* buffer;
+
+            if ( alldata.myRank < peer ) {
+
+                MPI_Status status;
+
+                MPI_Recv( sizes, 10, MPI_UNSIGNED, peer, 4, MPI_COMM_WORLD,
+                          &status );
+
+                // DEBUG
+                //cout << "    round " << round << " recv " << peer << "--> " <<
+                //my_rank << " with " <<
+                //sizes[0] << " bytes, " <<
+                //sizes[1] << ", " <<
+                //sizes[2] << ", " <<
+                //sizes[3] << ", " <<
+                //sizes[4] << "" << endl << flush;
+
+                buffer= prepare_worker_data( alldata, sizes );
+
+                VerbosePrint( alldata, 2, false,
+                              "round %u / %u: receiving %u bytes from rank %u\n",
+                              round_no, num_rounds, sizes[0], peer );
+
+                MPI_Recv( buffer, sizes[0], MPI_PACKED, peer, 5, MPI_COMM_WORLD,
+                          &status );
+
+                unpack_worker_data( alldata, sizes );
+
+            } else {
+
+                buffer= pack_worker_data( alldata, sizes );
+
+                // DEBUG
+                //cout << "    round " << round << " send " << my_rank <<
+                //" --> " << peer << " with " <<
+                //sizes[0] << " bytes, " <<
+                //sizes[1] << ", " <<
+                //sizes[2] << ", " <<
+                //sizes[3] << ", " <<
+                //sizes[4] << "" << endl << flush;
+
+                VerbosePrint( alldata, 2, false,
+                              "round %u / %u: sending %u bytes to rank %u\n",
+                              round_no, num_rounds, sizes[0], peer );
+
+                MPI_Send( sizes, 10, MPI_UNSIGNED, peer, 4, MPI_COMM_WORLD );
+
+                MPI_Send( buffer, sizes[0], MPI_PACKED, peer, 5,
+                          MPI_COMM_WORLD );
+
+                /* every work has to send off its data at most once,
+                after that, break from the collective reduction operation */
+                break;
+            }
 
             round= round << 1;
-            continue;
+
         }
 
-        /* send to smaller peer, receive from larger one */
-        uint32_t sizes[10];
-        char* buffer;
-
-        if ( my_rank < peer ) {
-
-            MPI_Status status;
-
-            MPI_Recv( sizes, 10, MPI_UNSIGNED, peer, 4, MPI_COMM_WORLD, &status );
-
-            // DEBUG
-            //cout << "    round " << round << " recv " << peer << "--> "<< my_rank << " with " <<
-            //sizes[0] << " bytes, " <<
-            //sizes[1] << ", " <<
-            //sizes[2] << ", " <<
-            //sizes[3] << ", " <<
-            //sizes[4] << "" << endl << flush;
-
-            buffer= prepare_worker_data( alldata, sizes );
-
-            MPI_Recv( buffer, sizes[0], MPI_PACKED, peer, 5, MPI_COMM_WORLD, &status );
-
-            unpack_worker_data( alldata, sizes );
-
-        } else {
-
-            buffer= pack_worker_data( alldata, sizes );
-
-            // DEBUG
-            //cout << "    round " << round << " send " << my_rank << " --> " << peer << " with " <<
-            //sizes[0] << " bytes, " <<
-            //sizes[1] << ", " <<
-            //sizes[2] << ", " <<
-            //sizes[3] << ", " <<
-            //sizes[4] << "" << endl << flush;
-
-            MPI_Send( sizes, 10, MPI_UNSIGNED, peer, 4, MPI_COMM_WORLD );
-
-            MPI_Send( buffer, sizes[0], MPI_PACKED, peer, 5, MPI_COMM_WORLD );
-
-            /* every work has to send off its data at most once,
-            after that, break from the collective reduction operation */
-            break;
-        }
-
-        round= round << 1;
+    alldata.freePackBuffer();
 
     }
 

@@ -3,6 +3,12 @@
 	  (see extlib/otf/ChangeLog)
 	- improved filtering of CUDA kernels
 	- fixed unification of local process group definitions
+	- fixed wrapper generation for MPI implementations which don't support
+	  the MPI-2 standard
+	- fixed faulty cleanup of temporary files in vtunify which occurred if
+	  VT is configured without trace compression support
+	- fixed detection of OpenMP flag '-qsmp=*:omp:*' in the compiler
+	  wrappers
 
 5.11
 	- updated version of internal OTF to 1.9sawfish

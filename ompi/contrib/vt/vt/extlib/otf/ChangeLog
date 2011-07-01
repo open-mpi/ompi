@@ -1,4 +1,9 @@
-1.9.1openmpi = 1.9sawfish
+1.9.1openmpi
+	- added progress display to otfprofile-mpi
+	- use pdf[la]tex instead of latex/dvipdf to convert otfprofile-mpi's
+	  TeX output to PDF
+	- fixed function invocation statistics in otfprofile-mpi generated
+	  from summarized information (--stat)
 
 1.9sawfish
 	- added MPI-parallel version of otfprofile (otfprofile-mpi)

@@ -19,6 +19,8 @@
 using namespace std;
 
 #include "create_latex.h"
+#include "otfprofile-mpi.h"
+
 #include "OTF_inttypes.h"
 #include "OTF_Definitions.h"
 
@@ -251,6 +253,7 @@ static void collectiveId2String(uint64_t id, string& name)
 static void write_header(fstream& tex)
 {
 	tex << "\\documentclass[a4paper,10pt]{article}" << endl;
+	tex << "\\nonstopmode" << endl;
 	tex << "\\usepackage{amssymb}" << endl;
 	tex << "\\usepackage{longtable}" << endl;
   tex << "\\usepackage{ifthen}" << endl;
@@ -2015,9 +2018,11 @@ static void write_p2pMsgRateHist(fstream& tex, struct AllData& alldata)
  *
  * @param alldata data structure containing summarized profiling information
  */
-bool createTex( AllData& alldata ) {
+bool CreateTex( AllData& alldata ) {
 
-    bool ret= true;
+    bool error= false;
+
+    VerbosePrint( alldata, 1, true, "producing LaTeX output\n" );
 
     string tex_file_name= alldata.params.output_file_prefix + ".tex";
     fstream tex_file;
@@ -2057,59 +2062,39 @@ bool createTex( AllData& alldata ) {
     write_footer(tex_file);
     tex_file.close();
 
+    VerbosePrint( alldata, 2, true, " created file: %s\n",
+                  tex_file_name.c_str() );
+
+#if defined(PDFTEX) && defined(HAVE_PGFPLOTS_1_4) && HAVE_PGFPLOTS_1_4
     /* create PDF file, if desired */
     if ( alldata.params.create_pdf ) {
 
-        int rc;
+        VerbosePrint( alldata, 1, true, "producing PDF output\n" );
+
+        /* compose pdflatex command */
         ostringstream cmd;
+        cmd << PDFTEX << " " << tex_file_name << " >/dev/null 2>&1";
 
-        /* compose latex command */
-        cmd << alldata.params.latex_command << " " << tex_file_name
-            << " >/dev/null 2>&1";
-
-        /* execute latex command (two times) on TEX file */
+        /* execute pdflatex command (two times) on TeX file */
         for ( uint8_t i = 0; i < 2; i++ ) {
 
-            rc= system( cmd.str().c_str() );
+            VerbosePrint( alldata, 2, true, " %srunning command: %s\n",
+                          (0 == i) ? "" : "re-", cmd.str().c_str() );
+
+            int rc= system( cmd.str().c_str() );
             if ( 0 != WEXITSTATUS( rc ) ) {
 
-                cerr << "ERROR: Could not create DVI file from '"
+                cerr << "ERROR: Could not create PDF file from '"
                      << tex_file_name << "'." << endl;
-                ret= false;
+                error= true;
                 break;
 
             }
 
         }
 
-        if ( 0 == rc ) {
-
-            /* compose DVI file name */
-            string dvi_file_name= tex_file_name;
-            dvi_file_name.replace( tex_file_name.length() - 4, 4, ".dvi" );
-
-            /* compose PDF file name */
-            string pdf_file_name= tex_file_name;
-            pdf_file_name.replace( tex_file_name.length() - 4, 4, ".pdf" );
-
-            /* compose DVI to PDF convert command */
-            cmd.str(""); cmd.clear();
-            cmd << alldata.params.dvipdf_command << " " << dvi_file_name
-                << " >/dev/null 2>&1";
-
-            /* execute DVI to PDF command */
-            rc= system( cmd.str().c_str() );
-            if ( 0 != WEXITSTATUS( rc ) ) {
-
-                cerr << "ERROR: Could not convert '" << dvi_file_name
-                     << "' to '" << pdf_file_name << "'." << endl;
-                ret= false;
-
-            }
-
-        }
-
     }
+#endif /* PDFTEX && HAVE_PGFPLOTS_1_4 */
 
-    return ret;
+    return !error;
 }

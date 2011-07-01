@@ -66,7 +66,7 @@ BODY			{ font-family: sans-serif; }
 <P>
 
 <P>
-<B><BIG CLASS="XHUGE">VampirTrace 5.11&nbsp;User Manual</BIG></B>
+<B><BIG CLASS="XHUGE">VampirTrace 5.11.1&nbsp;User Manual</BIG></B>
 <BR>
 <BR>
 <BR>
@@ -252,20 +252,20 @@ OpenMP events, and performance counters.
 <P>
 After a successful tracing run, VampirTrace writes all collected data to a  
 trace file in the Open Trace Format (OTF)<A NAME="tex2html3"
-  HREF="#foot1144"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1146"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 As a result, the information is available for post-mortem analysis and 
 visualization by various tools. 
 Most notably, VampirTrace provides the input data for the Vampir analysis  
 and visualization tool<A NAME="tex2html5"
-  HREF="#foot1145"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1147"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later versions.
 If not disabled explicitly, VampirTrace is built automatically when installing
 OpenMPI<A NAME="tex2html7"
-  HREF="#foot1146"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1148"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 
 <P>
@@ -1083,7 +1083,7 @@ in a single file, that
   The names in between may contain wildcards as ``?'', ``*', and ``#'', each entry gets a new line.
   The lists end with <TT>END[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>. For further information on selective 
   profiling have a look at the TAU documentation<A NAME="tex2html11"
-  HREF="#foot1170"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1172"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
   To announce the file through the compiler wrapper use the option <TT>-vt:tau</TT>:
 <PRE>
@@ -1100,7 +1100,7 @@ Binary Instrumentation Using Dyninst
 The option <TT>-vt:inst dyninst</TT> is used with the compiler wrapper to 
 instrument the application during runtime (binary instrumentation), by using 
 Dyninst<A NAME="tex2html13"
-  HREF="#foot1171"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1173"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 Recompiling is not necessary for this kind of instrumentation,
 but relinking:
@@ -1820,7 +1820,7 @@ for the enhanced timer synchronization:
 
 <UL>
 <LI>CLAPACK<A NAME="tex2html15"
-  HREF="#foot1181"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1183"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>
 </LI>
 <LI>AMD ACML
@@ -2189,6 +2189,14 @@ Controls how VampirTrace handles synchronizing CUDA API calls, especially
       buffer and perform a timer synchronization between GPU und and host. This 
       introduces a minimal overhead but increases timer precision and prevents 
       flushes elsewhere in the trace.
+    
+</DD>
+<DT></DT>
+<DD><TT>VT_CUDATRACE_ERROR</TT> (default: <TT>no</TT>)
+<BR>
+Print out an error message and exit the program, if a CUDA wrapper call 
+      does not return 'cudaSuccess'. The default is just a warning message 
+      without program exit.
     
 </DD>
 <DT></DT>
@@ -3373,21 +3381,21 @@ by the Linux 2.6 kernel are shown in the table.
 <P>
 <BR><HR><H4>Footnotes</H4>
 <DL>
-<DT><A NAME="foot1144">... (OTF)</A><A
+<DT><A NAME="foot1146">... (OTF)</A><A
  HREF="UserManual.html#tex2html3"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT><A NAME="tex2html4"
   HREF="http://www.tu-dresden.de/zih/otf">http://www.tu-dresden.de/zih/otf</A></TT>
 
 </DD>
-<DT><A NAME="foot1145">... tool </A><A
+<DT><A NAME="foot1147">... tool </A><A
  HREF="UserManual.html#tex2html5"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT><A NAME="tex2html6"
   HREF="http://www.vampir.eu">http://www.vampir.eu</A></TT>
 
 </DD>
-<DT><A NAME="foot1146">...
+<DT><A NAME="foot1148">...
 Open MPI </A><A
  HREF="UserManual.html#tex2html7"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
@@ -3395,14 +3403,14 @@ Open MPI </A><A
   HREF="http://www.open-mpi.org/faq/?category=vampirtrace">http://www.open-mpi.org/faq/?category=vampirtrace</A></TT>
 
 </DD>
-<DT><A NAME="foot1170">... documentation </A><A
+<DT><A NAME="foot1172">... documentation </A><A
  HREF="UserManual.html#tex2html11"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT><A NAME="tex2html12"
   HREF="http://www.cs.uoregon.edu/research/tau/docs/newguide/ch03s03.html#ManualSelectiveProfiling">http://www.cs.uoregon.edu/research/tau/docs/newguide/ch03s03.html#ManualSelectiveProfiling</A></TT>
 
 </DD>
-<DT><A NAME="foot1171">...
+<DT><A NAME="foot1173">...
 Dyninst </A><A
  HREF="UserManual.html#tex2html13"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
@@ -3410,7 +3418,7 @@ Dyninst </A><A
   HREF="http://www.dyninst.org">http://www.dyninst.org</A></TT>
 
 </DD>
-<DT><A NAME="foot1181">... CLAPACK</A><A
+<DT><A NAME="foot1183">... CLAPACK</A><A
  HREF="UserManual.html#tex2html15"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT><A NAME="tex2html16"

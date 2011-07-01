@@ -6,11 +6,12 @@
 #ifndef CREATE_LATEX_H
 #define CREATE_LATEX_H
 
+
 #include "datastructs.h"
 
 
 /* generate PGF output */
-bool createTex( AllData& alldata );
+bool CreateTex( AllData& alldata );
 
 
 #endif /* CREATE_LATEX_H */

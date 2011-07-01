@@ -15,26 +15,245 @@ using namespace std;
 #include "otf.h"
 #include "otfaux.h"
 
-#include "mpi.h"
-
 #include "collect_data.h"
+#include "otfprofile-mpi.h"
 
 
-/* logarithm to base b for unsigned 64-bit integer x */
-static uint64_t logi( uint64_t x, uint64_t b= 2 ) {
+static void prepare_progress( AllData& alldata, uint64_t max_bytes ) {
 
-    assert( b > 1 );
+    Progress& progress= alldata.progress;
 
-    uint64_t c= 1;
-    uint64_t i= 0;
+    progress.cur_bytes= 0;
+    progress.max_bytes= max_bytes;
+    progress.ranks_left= alldata.numRanks -1;
 
-    while( c <= x ) {
+    if ( 1 < alldata.numRanks ) {
 
-        c*= b;
-        i++;
+        /* reduce max. bytes to rank 0 */
+        uint64_t sum_max_bytes;
+        MPI_Reduce( &max_bytes, &sum_max_bytes, 1, MPI_LONG_LONG_INT, MPI_SUM,
+                    0, MPI_COMM_WORLD );
+
+        if ( 0 == alldata.myRank ) {
+
+            progress.max_bytes= sum_max_bytes;
+
+            progress.recv_buffers= new uint64_t[alldata.numRanks-1];
+            assert( progress.recv_buffers );
+            progress.recv_requests= new MPI_Request[alldata.numRanks-1];
+            assert( progress.recv_requests );
+            progress.recv_statuses= new MPI_Status[alldata.numRanks-1];
+            assert( progress.recv_statuses );
+            progress.recv_indices= new int[alldata.numRanks-1];
+            assert( progress.recv_indices );
+
+            /* initialize array of current bytes read and start
+            persistent communication */
+
+            for ( uint32_t i= 0; i < alldata.numRanks; i++ ) {
+
+                if ( 0 < i ) {
+
+                    /* create persistent request handle */
+                    MPI_Recv_init( &(progress.recv_buffers[i-1]), 1,
+                                   MPI_LONG_LONG_INT, i, Progress::MSG_TAG,
+                                   MPI_COMM_WORLD,
+                                   &(progress.recv_requests[i-1]) );
+
+                    /* start persistent communication */
+                    MPI_Start( &(progress.recv_requests[i-1]) );
+
+                }
+            }
+
+        } else { /* 0 != my_rank */
+
+            /* initialize request handle for sending progress to rank 0 */
+            progress.send_request = MPI_REQUEST_NULL;
+
+        }
+
+        /* block until all worker ranks have reached this point to avoid that the
+        progress does a big jump at beginning */
+        MPI_Barrier( MPI_COMM_WORLD );
     }
 
-    return i;
+    if ( 0 == alldata.myRank ) {
+
+        /* show initial progress */
+        printf( "%7.2f %%\r", 0.0 );
+        fflush( stdout );
+    }
+
+}
+
+
+static void update_progress( AllData& alldata, uint64_t delta_bytes,
+                bool wait= false ) {
+
+    Progress& progress= alldata.progress;
+
+    if ( 0 == alldata.myRank ) {
+
+        progress.cur_bytes += delta_bytes;
+
+    } else {
+
+        progress.cur_bytes= delta_bytes;
+    }
+
+    if ( 1 < alldata.numRanks ) {
+
+        if ( 0 == alldata.myRank ) {
+
+            /* get current bytes read from all worker ranks */
+
+            int out_count;
+
+            /* either wait or test for one or more updates from worker ranks */
+
+            if ( wait )
+            {
+
+                MPI_Waitsome( alldata.numRanks - 1, progress.recv_requests,
+                              &out_count, progress.recv_indices,
+                              progress.recv_statuses );
+
+            } else {
+
+                MPI_Testsome( alldata.numRanks - 1, progress.recv_requests,
+                              &out_count, progress.recv_indices,
+                              progress.recv_statuses );
+
+            }
+
+            if ( MPI_UNDEFINED != out_count ) {
+
+                int index;
+                uint32_t i;
+
+                for ( i= 0; i < (uint32_t) out_count; i++ ) {
+
+                    index= progress.recv_indices[i];
+
+                    /* worker rank (index+1) is finished? */
+                    if ( (uint64_t)-1 != progress.recv_buffers[index] ) {
+
+                        /* update rank's current bytes read and restart
+                        persistent communication */
+
+                        progress.cur_bytes += progress.recv_buffers[index];
+
+                        MPI_Start( &(progress.recv_requests[progress.recv_indices[i]]) );
+
+                    } else {
+
+                        /* this rank is finished */
+                        progress.ranks_left -= 1;
+                    }
+                }
+            }
+
+        } else { /* 0 != my_rank */
+
+            int do_send = 1;
+            MPI_Status status;
+
+            /* send only if it's the first send or the request handle isn't
+            currently in use */
+
+            if ( MPI_REQUEST_NULL != progress.send_request ) {
+
+                MPI_Test( &(progress.send_request), &do_send, &status );
+
+            }
+
+            if ( do_send ) {
+
+                MPI_Issend( &(progress.cur_bytes), 1, MPI_LONG_LONG_INT, 0,
+                            Progress::MSG_TAG, MPI_COMM_WORLD,
+                            &progress.send_request );
+            }
+
+        }
+
+    }
+
+    if ( 0 == alldata.myRank ) {
+
+        /* show progress */
+
+        double percent =
+            100.0 * (double) progress.cur_bytes / (double) progress.max_bytes;
+
+        static const char signs[2]= { '.',' ' };
+        static int signi= 0;
+
+        printf( "%7.2f %% %c\r", percent, signs[signi] );
+        fflush( stdout );
+
+        signi^= 1;
+
+    }
+}
+
+
+static void finish_progress( AllData& alldata ) {
+
+    Progress& progress= alldata.progress;
+
+    if ( 1 < alldata.numRanks ) {
+
+        if ( 0 == alldata.myRank ) {
+
+            /* update progress until all worker ranks are
+            finished / all bytes are read */
+
+            while ( 0 < progress.ranks_left ) {
+
+                update_progress( alldata, 0, true );
+            }
+
+        } else { /* 0 != my_rank */
+
+            MPI_Status status;
+            MPI_Wait( &(progress.send_request), &status );
+
+            /* send last current bytes read to rank 0 */
+            MPI_Send( &(progress.cur_bytes), 1, MPI_LONG_LONG_INT, 0,
+                      Progress::MSG_TAG, MPI_COMM_WORLD );
+
+            /* send marker (-1) to rank 0 which indicates that this worker rank
+            is finished */
+
+            progress.cur_bytes = (uint64_t) -1;
+            MPI_Send( &(progress.cur_bytes), 1, MPI_LONG_LONG_INT, 0,
+                      Progress::MSG_TAG, MPI_COMM_WORLD );
+
+        }
+
+    }
+
+    if ( 0 == alldata.myRank ) {
+
+        /* show final progress */
+        printf( "%7.2f %% done\n", 100.0 );
+
+    }
+
+    if( 1 < alldata.numRanks && 0 == alldata.myRank ) {
+
+        /* ensure that all requests are inactive before freeing memory */
+        MPI_Waitall( alldata.numRanks - 1, progress.recv_requests,
+                     progress.recv_statuses );
+
+        /* free memory */
+        delete [] progress.recv_buffers;
+        delete [] progress.recv_requests;
+        delete [] progress.recv_statuses;
+        delete [] progress.recv_indices;
+
+    }
 }
 
 
@@ -80,12 +299,39 @@ static int handle_def_comment( void* fha, uint32_t stream, const char* comment,
     AllData* alldata= (AllData*) fha;
 
 
+    /* add new-line between each comment record */
     if ( 0 < alldata->comments.length() ) {
 
         alldata->comments+= "\n";
 
     }
-    alldata->comments+= comment;
+
+
+    /* wrap lines after 80 characters */
+
+    const string::size_type LINE_WRAP= 80;
+
+    string tmp= comment;
+
+    do {
+
+        if ( tmp.length() <= LINE_WRAP ) {
+
+            alldata->comments+= tmp;
+            break;
+
+        } else {
+
+            string::size_type next_wrap=
+                tmp.find_last_of( " .!?:;,", LINE_WRAP -1 );
+            next_wrap= ( string::npos == next_wrap ) ? LINE_WRAP : next_wrap +1;
+
+            alldata->comments+= tmp.substr( 0, next_wrap ) + '\n';
+            tmp= tmp.substr( next_wrap );
+
+        }
+
+    } while( 0 != tmp.length() );
 
     return OTF_RETURN_OK;
 }
@@ -315,8 +561,8 @@ static int handle_send( void* fha, uint64_t time, uint32_t sender,
     if ( 0 != alldata->recvTimeKey ) {
 
         uint64_t recv_time;
-        if ( OTF_KeyValueList_getUint64( kvlist, alldata->recvTimeKey,
-                 &recv_time ) == 0 ) {
+        if ( 0 == OTF_KeyValueList_getUint64( kvlist, alldata->recvTimeKey,
+                 &recv_time ) ) {
 
             duration= (double) ( recv_time - time );
 
@@ -331,11 +577,11 @@ static int handle_send( void* fha, uint64_t time, uint32_t sender,
     if ( length > 0 && duration > 0.0 ) {
 
         uint64_t speed_bin=
-            logi( (uint64_t)(
+            Logi( (uint64_t)(
                   ( (double)length * (double)alldata->timerResolution ) /
                   duration ), MessageSpeedData::BIN_LOG_BASE );
 
-        uint64_t length_bin= logi( length, MessageSpeedData::BIN_LOG_BASE );
+        uint64_t length_bin= Logi( length, MessageSpeedData::BIN_LOG_BASE );
 
         alldata->messageSpeedMapPerLength[ Pair( speed_bin, length_bin ) ]
             .add( 1 );
@@ -444,7 +690,18 @@ static int handle_function_summary( void* fha, uint64_t time, uint32_t func,
     /* add/overwrite function statistics */
 
     FunctionData tmp;
-    tmp.add( count, exclTime, inclTime );
+
+    tmp.count.cnt = tmp.count.sum = count;
+    tmp.count.min = tmp.count.max = 0;
+
+    tmp.excl_time.cnt = count;
+    tmp.excl_time.sum = exclTime;
+    tmp.excl_time.min = tmp.excl_time.max = 0;
+
+    tmp.incl_time.cnt = count;
+    tmp.incl_time.sum = inclTime;
+    tmp.incl_time.min = tmp.incl_time.max = 0;
+
     alldata->functionMapPerRank[ Pair( func, process ) ]= tmp;
 
     return OTF_RETURN_OK;
@@ -550,7 +807,9 @@ static int handle_collop_summary( void* fha, uint64_t time, uint32_t process,
 }
 
 
-static void read_definitions( OTF_Reader* reader, AllData& alldata ) {
+static bool read_definitions( AllData& alldata, OTF_Reader* reader ) {
+
+    bool error= false;
 
     /* open OTF handler array */
     OTF_HandlerArray* handlers= OTF_HandlerArray_open( );
@@ -608,16 +867,22 @@ static void read_definitions( OTF_Reader* reader, AllData& alldata ) {
         OTF_DEFKEYVALUE_RECORD );
 
     /* read definitions */
-    uint64_t defs_read_ret= OTF_Reader_readDefinitions( reader, handlers );
-    assert( OTF_READ_ERROR != defs_read_ret );
+    uint64_t read_ret= OTF_Reader_readDefinitions( reader, handlers );
+    if ( OTF_READ_ERROR == read_ret ) {
+
+        cerr << "ERROR: Could not read definitions." << endl;
+        error= true;
+
+    }
 
     /* close OTF handler array */
     OTF_HandlerArray_close( handlers );
+
+    return !error;
 }
 
 
-static void share_definitions( uint32_t my_rank, uint32_t num_ranks,
-                               AllData& alldata ) {
+static void share_definitions( AllData& alldata ) {
 
     MPI_Barrier( MPI_COMM_WORLD );
 
@@ -627,7 +892,7 @@ static void share_definitions( uint32_t my_rank, uint32_t num_ranks,
 
     /* get size needed to send definitions to workers */
 
-    if ( my_rank == 0 ) {
+    if ( 0 == alldata.myRank ) {
 
         MPI_Pack_size( 1 + alldata.collectiveOperationsToClasses.size() * 2 +
                        1 + alldata.countersOfInterest.size() +
@@ -646,7 +911,7 @@ static void share_definitions( uint32_t my_rank, uint32_t num_ranks,
 
     /* pack definitions to buffer */
 
-    if ( my_rank == 0 ) {
+    if ( 0 == alldata.myRank ) {
 
         /* collectiveOperationsToClasses.size() */
         uint64_t collop_classes_map_size=
@@ -701,7 +966,7 @@ static void share_definitions( uint32_t my_rank, uint32_t num_ranks,
 
     /* unpack definitions from buffer */
 
-    if ( my_rank != 0 ) {
+    if ( 0 != alldata.myRank ) {
 
         /* collectiveOperationsToClasses.size() */
         uint64_t collop_classes_map_size;
@@ -756,7 +1021,9 @@ static void share_definitions( uint32_t my_rank, uint32_t num_ranks,
 }
 
 
-static void read_events( OTF_Reader* reader, AllData& alldata ) {
+static bool read_events( AllData& alldata, OTF_Reader* reader ) {
+
+    bool error= false;
 
     /* open OTF handler array */
     OTF_HandlerArray* handlers= OTF_HandlerArray_open( );
@@ -810,16 +1077,67 @@ static void read_events( OTF_Reader* reader, AllData& alldata ) {
         OTF_Reader_enableProcess( reader, alldata.myProcessesList[ i ] );
     }
 
+    /* prepare progress */
+    if ( alldata.params.progress ) {
+
+        OTF_Reader_setRecordLimit( reader, 0 );
+
+        if ( OTF_READ_ERROR != OTF_Reader_readEvents( reader, handlers ) ) {
+
+            uint64_t min, cur, max;
+
+            OTF_Reader_eventBytesProgress( reader, &min, &cur, &max );
+            prepare_progress( alldata, max );
+
+        }
+
+        OTF_Reader_setRecordLimit( reader, Progress::EVENTS_RECORD_LIMIT );
+
+    }
+
     /* read events */
-    uint64_t events_read_ret= OTF_Reader_readEvents( reader, handlers );
-    assert( OTF_READ_ERROR != events_read_ret );
+
+    uint64_t records_read= 0;
+
+    while ( OTF_READ_ERROR !=
+            ( records_read= OTF_Reader_readEvents( reader, handlers ) ) ) {
+
+        /* update progress */
+        if ( alldata.params.progress ) {
+
+            uint64_t min, cur, max;
+            static uint64_t last_cur= 0;
+
+            OTF_Reader_eventBytesProgress( reader, &min, &cur, &max );
+            update_progress( alldata, cur - last_cur );
+
+            last_cur = cur;
+
+        }
+
+        /* stop reading if done */
+        if ( 0 == records_read )
+            break;
+    }
+
+    /* show error message if reading failed */
+    if ( OTF_READ_ERROR == records_read ) {
+
+        cerr << "ERROR: Could not read events." << endl;
+        error= true;
+
+    }
 
     /* close OTF handler array */
     OTF_HandlerArray_close( handlers );
+
+    return !error;
 }
 
 
-static void read_statistics( OTF_Reader* reader, AllData& alldata ) {
+static bool read_statistics( AllData& alldata, OTF_Reader* reader ) {
+
+    bool error= false;
 
     /* open OTF handler array */
     OTF_HandlerArray* handlers= OTF_HandlerArray_open( );
@@ -853,18 +1171,66 @@ static void read_statistics( OTF_Reader* reader, AllData& alldata ) {
         OTF_Reader_enableProcess( reader, alldata.myProcessesList[ i ] );
     }
 
-    /* read events */
-    uint64_t stats_read_ret= OTF_Reader_readStatistics( reader, handlers );
-    assert( OTF_READ_ERROR != stats_read_ret );
+    /* prepare progress */
+    if ( alldata.params.progress ) {
+
+        OTF_Reader_setRecordLimit( reader, 0 );
+
+        if ( OTF_READ_ERROR != OTF_Reader_readStatistics( reader, handlers ) ) {
+
+            uint64_t min, cur, max;
+            OTF_Reader_statisticBytesProgress( reader, &min, &cur, &max );
+            prepare_progress( alldata, max );
+
+        }
+
+        OTF_Reader_setRecordLimit( reader, Progress::STATS_RECORD_LIMIT );
+
+    }
+
+    /* read statistics */
+
+    uint64_t records_read= 0;
+
+    while ( OTF_READ_ERROR !=
+            ( records_read= OTF_Reader_readStatistics( reader, handlers ) ) ) {
+
+        /* update progress */
+        if ( alldata.params.progress ) {
+
+            uint64_t min, cur, max;
+            static uint64_t last_cur= 0;
+
+            OTF_Reader_statisticBytesProgress( reader, &min, &cur, &max );
+            update_progress( alldata, cur - last_cur );
+
+            last_cur = cur;
+
+        }
+
+        /* stop reading if done */
+        if ( 0 == records_read )
+            break;
+    }
+
+    /* show error message if reading failed */
+    if ( OTF_READ_ERROR == records_read ) {
+
+        cerr << "ERROR: Could not read statistics." << endl;
+        error= true;
+
+    }
 
     /* close OTF handler array */
     OTF_HandlerArray_close( handlers );
+
+    return !error;
 }
 
 
-bool collectData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata ) {
+bool CollectData( AllData& alldata ) {
 
-    bool ret= true;
+    bool error= false;
 
     /* open OTF file manager and reader */
 
@@ -876,37 +1242,65 @@ bool collectData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata ) {
         OTF_Reader_open( alldata.params.input_file_prefix.c_str(), manager );
     assert( reader );
 
-    if ( my_rank == 0 ) {
+    do {
 
-        /* read definitions */
-        read_definitions( reader, alldata );
+        if ( 0 == alldata.myRank ) {
 
-    }
+            /* read definitions */
 
-    /* share definitions needed for reading events to workers */
+            VerbosePrint( alldata, 1, true, "reading definitions\n" );
 
-    if ( num_ranks > 1 ) {
+            error= !read_definitions( alldata, reader );
 
-        share_definitions( my_rank, num_ranks, alldata );
+        }
 
-    }
+        /* broadcast error indicator to workers */
+        if ( SyncError( alldata, error, 0 ) ) {
 
-    /* either read data from events or statistics */
+            break;
 
-    if ( alldata.params.read_from_stats ) {
+        }
 
-        read_statistics( reader, alldata );
+        /* share definitions needed for reading events to workers */
 
-    } else {
+        if ( 1 < alldata.numRanks ) {
 
-        read_events( reader, alldata );
+            share_definitions( alldata );
 
-    }
+        }
+
+        /* either read data from events or statistics */
+
+        if ( alldata.params.read_from_stats ) {
+
+            VerbosePrint( alldata, 1, true, "reading statistics\n" );
+
+            error= !read_statistics( alldata, reader );
+
+        } else {
+
+            VerbosePrint( alldata, 1, true, "reading events\n" );
+
+            error= !read_events( alldata, reader );
+
+        }
+
+        /* finish progress */
+        if ( alldata.params.progress ) {
+
+            finish_progress( alldata );
+
+        }
+
+        /* synchronize error indicator with workers */
+        SyncError( alldata, error );
+
+    } while( false );
 
     /* close OTF file manager and reader */
 
     OTF_Reader_close( reader );
     OTF_FileManager_close( manager );
 
-    return ret;
+    return !error;
 }

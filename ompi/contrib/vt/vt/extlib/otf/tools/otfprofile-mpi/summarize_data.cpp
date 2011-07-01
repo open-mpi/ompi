@@ -8,13 +8,10 @@ using namespace std;
 #include <cassert>
 #include <iostream>
 
-#include "mpi.h"
-
 #include "summarize_data.h"
 
 
-static void get_clustering( uint32_t my_rank, uint32_t num_ranks,
-                AllData& alldata ) {
+static void get_clustering( AllData& alldata ) {
 
     uint32_t r_processes= alldata.allProcesses.size();
     uint32_t r_clusters= Clustering::MAX_CLUSTERS;
@@ -44,8 +41,7 @@ static void get_clustering( uint32_t my_rank, uint32_t num_ranks,
 }
 
 
-static void share_clustering( uint32_t my_rank, uint32_t num_ranks,
-                AllData& alldata ) {
+static void share_clustering( AllData& alldata ) {
 
     MPI_Barrier( MPI_COMM_WORLD );
 
@@ -53,7 +49,7 @@ static void share_clustering( uint32_t my_rank, uint32_t num_ranks,
     int buffer_size= 0;
     int buffer_pos= 0;
 
-    if ( my_rank == 0 ) {
+    if ( 0 == alldata.myRank ) {
 
         /* get size needed to send clustering information to workers */
 
@@ -86,7 +82,7 @@ static void share_clustering( uint32_t my_rank, uint32_t num_ranks,
 
     /* pack clustering information to buffer */
 
-    if ( my_rank == 0 ) {
+    if ( 0 == alldata.myRank ) {
 
         /* alldata.clustering.clustersToProcesses.size() */
         uint64_t clust_proc_map_size=
@@ -128,7 +124,7 @@ static void share_clustering( uint32_t my_rank, uint32_t num_ranks,
 
     /* unpack clustering information from buffer */
 
-    if ( my_rank != 0 ) {
+    if ( 0 != alldata.myRank ) {
 
         /* alldata.clustering.clustersToProcesses.size() */
         uint64_t clust_proc_map_size;
@@ -168,29 +164,29 @@ static void share_clustering( uint32_t my_rank, uint32_t num_ranks,
 }
 
 
-bool summarizeData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata ) {
+bool SummarizeData( AllData& alldata ) {
 
-    bool ret= true;
+    bool error= false;
 
     /* rank 0 gets clustering information */
 
-    if ( my_rank == 0 ) {
+    if ( 0 == alldata.myRank ) {
 
-        get_clustering( my_rank, num_ranks, alldata );
+        get_clustering( alldata );
 
     }
 
     /* share clustering information to workers */
 
-    if ( num_ranks > 1 ) {
+    if ( 1 < alldata.numRanks ) {
 
-        share_clustering( my_rank, num_ranks, alldata );
+        share_clustering( alldata );
 
     }
 
     /* macro to set min, max to sum before summarizing */
 #   define MINMAX2SUM(v) \
-    if( (v).cnt != 0 ) { \
+    if( 0 != (v).cnt ) { \
         (v).cnt = 1; \
         (v).min= (v).max= (v).sum; \
     } else { \
@@ -243,9 +239,9 @@ bool summarizeData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata ) {
             if ( alldata.clustering.enabled ) {
 
                 cluster_a= alldata.clustering.process2cluster( it->first.a );
-                assert( cluster_a != 0 );
+                assert( 0 != cluster_a );
                 cluster_b= alldata.clustering.process2cluster( it->first.b );
-                assert( cluster_b != 0 );
+                assert( 0 != cluster_b );
 
             }
 
@@ -273,7 +269,7 @@ bool summarizeData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata ) {
             if ( alldata.clustering.enabled ) {
 
                 cluster= alldata.clustering.process2cluster( it->first );
-                assert( cluster != 0 );
+                assert( 0 != cluster );
 
             }
 
@@ -302,7 +298,7 @@ bool summarizeData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata ) {
             if ( alldata.clustering.enabled ) {
 
                 cluster= alldata.clustering.process2cluster( it->first.b );
-                assert( cluster != 0 );
+                assert( 0 != cluster );
 
             }
 
@@ -319,5 +315,5 @@ bool summarizeData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata ) {
         alldata.collectiveMapPerRank.clear();
     }
 
-    return ret;
+    return !error;
 }

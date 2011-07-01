@@ -11,8 +11,8 @@ have_mpi2_1sided=@VT_MPIGEN_HAVE_MPI2_1SIDED@
 have_mpi2_extcoll=@VT_MPIGEN_HAVE_MPI2_EXTCOLL@
 have_mpi2_file=@VT_MPIGEN_HAVE_MPI2_IO@
 have_mpi2_proc=0 #@VT_MPIGEN_HAVE_MPI2_PROC@
-have_mpi2_proc=0 #@VT_MPIGEN_HAVE_MPI2_PROC@
-if [ $have_mpi2_thread -o $have_mpi2_1sided -o $have_mpi2_extcoll -o $have_mpi2_proc ] ; then
+have_mpi2=0
+if [ $have_mpi2_thread = 1 -o $have_mpi2_1sided = 1 -o $have_mpi2_extcoll = 1 -o $have_mpi2_proc = 1 ] ; then
   have_mpi2=1
 fi
 mpi2_src1=""; if [ $have_mpi2 = 1 ] ; then mpi2_src1="mpi2_standard.h"; fi

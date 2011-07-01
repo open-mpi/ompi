@@ -69,6 +69,9 @@ CHECK_SWIG_PYTHON
 if test x"$force_swig_python" = "xyes" -a x"$swig_python_error" = "xyes"; then exit 1; fi
 AM_CONDITIONAL(AMHAVESWIGPYTHON, test x"$have_swig_python" = xyes)
 
+# Checks for pdflatex and PGFPLOTS needed for otfprofile-mpi to convert TeX output to PDF
+CHECK_PDFLATEX_PGFPLOTS
+
 
 WITH_DEBUG
 WITH_VERBOSE
