@@ -63,10 +63,19 @@
 struct ParamsS
 {
    ParamsS()
-      : verbose_level( 0 ), docompress( true ), doclean( true ),
+      : verbose_level( 0 ), docompress( false ), doclean( true ),
         showusage( false ), showversion( false ), showprogress( false ),
-        bequiet( false ), domsgmatch( true ), droprecvs( false ),
-        prof_sort_flags( 0x22 ) {}
+        bequiet( false ), domsgmatch( false ), droprecvs( false ),
+        prof_sort_flags( 0x22 )
+   {
+#if defined(HAVE_ZLIB) && HAVE_ZLIB
+      docompress = true;
+#endif // HAVE_ZLIB
+
+#ifdef VT_UNIFY_HOOKS_MSGMATCH
+      domsgmatch = true;
+#endif // VT_UNIFY_HOOKS_MSGMATCH
+   }
 
    std::string in_file_prefix;  // input trace file prefix
    std::string out_file_prefix; // output trace file prefix

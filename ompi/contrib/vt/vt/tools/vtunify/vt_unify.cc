@@ -812,10 +812,12 @@ parseCommandLine( int argc, char ** argv )
          Params.droprecvs = true;
       }
 #endif // VT_UNIFY_HOOKS_MSGMATCH
+#if defined(HAVE_ZLIB) && HAVE_ZLIB
       else if( strcmp( argv[i], "--nocompress" ) == 0 )
       {
          Params.docompress = false;
       }
+#endif // HAVE_ZLIB
       else if( strcmp( argv[i], "-k" ) == 0
                || strcmp( argv[i], "--keeplocal" ) == 0 )
       {
@@ -1055,8 +1057,10 @@ showUsage()
       << "     -v, --verbose       Increase output verbosity." << std::endl
       << "                         (can be used more than once)" << std::endl
       << std::endl
+#if defined(HAVE_ZLIB) && HAVE_ZLIB
       << "     --nocompress        Don't compress output trace files." << std::endl
       << std::endl
+#endif // HAVE_ZLIB
 #ifdef VT_UNIFY_HOOKS_MSGMATCH
       << "     --nomsgmatch        Don't match messages." << std::endl
       << std::endl

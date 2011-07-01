@@ -796,7 +796,7 @@ static void unify_traces(void)
 
   /* compose unify arguments */
 
-  argv = (char**)calloc(10 + vt_env_verbose(), sizeof(char*));
+  argv = (char**)calloc(10 + vt_env_verbose()+1, sizeof(char*));
   if (argv == NULL) vt_error();
 
   argv[0] = NULL;
@@ -816,12 +816,14 @@ static void unify_traces(void)
   }
   argc++;
 
+#if defined(HAVE_ZLIB) && HAVE_ZLIB
   if (!vt_env_compression()) argv[argc++] = strdup("--nocompress");
+#endif /* HAVE_ZLIB */
   if (!vt_env_do_clean())    argv[argc++] = strdup("-k");
   if (vt_env_verbose() == 0) argv[argc++] = strdup("-q");
   else if (vt_env_verbose() >= 2)
   {
-    for (i=1;i<vt_env_verbose();i++)
+    for (i=0;i<vt_env_verbose()+1;i++)
       argv[argc++] = strdup("-v");
     argv[argc++] = strdup("-p");
   }

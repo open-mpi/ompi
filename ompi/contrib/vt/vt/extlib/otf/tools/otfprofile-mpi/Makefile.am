@@ -17,6 +17,7 @@ otfprofile_mpi_SOURCES = \
 	collect_data.h \
 	create_latex.h \
 	datastructs.h \
+	otfprofile-mpi.h \
 	reduce_data.h \
 	summarize_data.h \
 	collect_data.cpp \

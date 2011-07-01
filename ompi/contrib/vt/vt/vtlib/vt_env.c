@@ -1222,6 +1222,7 @@ int vt_env_max_threads()
 
 int vt_env_compression()
 {
+#if defined(HAVE_ZLIB) && HAVE_ZLIB
   static int compression = -1;
   char* tmp;
 
@@ -1238,6 +1239,9 @@ int vt_env_compression()
 	}
     }
   return compression;
+#else /* HAVE_ZLIB */
+  return 0;
+#endif /* HAVE_ZLIB */
 }
 
 int vt_env_java_native()

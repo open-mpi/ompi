@@ -6,6 +6,7 @@
 #ifndef DATASTRUCTS_H
 #define DATASTRUCTS_H
 
+
 using namespace std;
 
 #include <stdlib.h>
@@ -16,6 +17,8 @@ using namespace std;
 #include <list>
 #include <set>
 
+#include "mpi.h"
+
 #include "OTF_inttypes.h"
 
 
@@ -25,26 +28,84 @@ struct Params {
 
     static const uint32_t DEFAULT_MAX_FILE_HANDLES= 50;
     static const uint32_t DEFAULT_BUFFER_SIZE= 1024 * 1024;
-    static const string DEFAULT_OUTPUT_FILE_PREFIX() { return "result"; }
-    static const string DEFAULT_LATEX_COMMAND() { return "latex"; }
-    static const string DEFAULT_DVIPDF_COMMAND() { return "dvipdf"; }
+    static const uint8_t  DEFAULT_VERBOSE_LEVEL= 0;
+    static const string   DEFAULT_OUTPUT_FILE_PREFIX() { return "result"; }
 
     uint32_t max_file_handles;
     uint32_t buffer_size;
+    uint8_t  verbose_level;
+    bool     progress;
     bool     read_from_stats;
+
     bool     create_pdf;
     string   input_file_prefix;
     string   output_file_prefix;
-    string   latex_command;
-    string   dvipdf_command;
 
     Params()
         : max_file_handles(DEFAULT_MAX_FILE_HANDLES),
           buffer_size(DEFAULT_BUFFER_SIZE),
+          verbose_level(DEFAULT_VERBOSE_LEVEL), progress(false),
           read_from_stats(false), create_pdf(true),
-          output_file_prefix(DEFAULT_OUTPUT_FILE_PREFIX()),
-          latex_command(DEFAULT_LATEX_COMMAND()),
-          dvipdf_command(DEFAULT_DVIPDF_COMMAND()) {}
+          output_file_prefix(DEFAULT_OUTPUT_FILE_PREFIX()) {}
+};
+
+
+/* *** progress information *** */
+
+struct Progress {
+
+    /* maximum number of records to read between progress updates */
+    static const uint64_t EVENTS_RECORD_LIMIT= 1000000;
+    static const uint64_t STATS_RECORD_LIMIT= 100;
+
+    /* message tag to use for communication */
+    static const int      MSG_TAG= 500;
+
+    uint64_t     cur_bytes;      /* current bytes read */
+    uint64_t     max_bytes;      /* max. bytes readable */
+
+    MPI_Request  send_request;   /* sender request handle */
+
+    uint64_t*    recv_buffers;   /* receive buffers */
+    MPI_Request* recv_requests;  /* persistent receive request handles */
+    MPI_Status*  recv_statuses;  /* receive statuses */
+    int*         recv_indices;   /* indices of completed recv. operations */
+
+    uint32_t     ranks_left;     /* root keeps track of ranks left to query */
+};
+
+
+/* *** runtime measurement *** */
+
+struct MeasureBlock {
+
+   /* routine to get a global timestamp */
+#  define GETTIME() MPI_Wtime()
+
+   double start_time; /* start timestamp of measurement block */
+   double stop_time;  /* stop timestamp of measurement block */
+
+   MeasureBlock() : start_time(-1.0), stop_time(-1.0) {}
+
+   /* start runtime measurment */
+   void start() {
+
+       start_time= GETTIME();
+   }
+
+   /* stop runtime measurment */
+   void stop() {
+
+       assert( -1.0 != start_time );
+       stop_time= GETTIME();
+   }
+
+   /* get result of runtime measurement */
+   double duration() const {
+
+      assert( -1.0 != start_time && -1.0 != stop_time );
+      return stop_time - start_time;
+   }
 };
 
 
@@ -413,6 +474,9 @@ struct PendingCollective {
 
 struct AllData {
 
+    const uint32_t myRank;
+    const uint32_t numRanks;
+
     /* number and list of processes to be handled by every worker */
     uint32_t  myProcessesNum;
     uint32_t* myProcessesList;
@@ -423,6 +487,12 @@ struct AllData {
 
     /* program parameters */
     Params params;
+
+    /* progress information */
+    Progress progress;
+
+    /* store per-measure block runtimes */
+    map< string, MeasureBlock > measureBlockMap;
 
     /* clustering information for ranks */
     Clustering clustering;
@@ -537,7 +607,9 @@ struct AllData {
 
 
 
-    AllData() : myProcessesNum(0), myProcessesList(NULL),
+    AllData( uint32_t my_rank, uint32_t num_ranks ) :
+        myRank(my_rank), numRanks(num_ranks),
+        myProcessesNum(0), myProcessesList(NULL),
         packbuffersize(0), packbuffer(NULL), timerResolution(0),
         recvTimeKey(0) {}
 
@@ -562,6 +634,16 @@ struct AllData {
         }
 
         return packbuffer;
+    }
+
+
+    char* freePackBuffer( ) {
+
+        free( packbuffer );
+        packbuffer= NULL;
+        packbuffersize= 0;
+
+        return NULL;
     }
 
 

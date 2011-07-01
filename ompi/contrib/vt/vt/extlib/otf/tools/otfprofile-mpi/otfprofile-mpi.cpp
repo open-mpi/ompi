@@ -7,72 +7,42 @@ using namespace std;
 
 #include <cassert>
 #include <iostream>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <unistd.h>
-
-#include "mpi.h"
 
 #include "otf.h"
+#include "OTF_Platform.h"
 
-#include "datastructs.h"
 #include "collect_data.h"
+#include "otfprofile-mpi.h"
 #include "summarize_data.h"
 #include "reduce_data.h"
 #include "create_latex.h"
 
 
-#define FPRINTF_ROOT if(my_rank == 0) fprintf
+/* define the following macro to synchronize the error indicator with all
+   worker ranks
 
+   This enforces that all ranks will be terminated by calling MPI_Abort if
+   anyone fails. This is necessary to work around a bug that appears at least
+   with Open MPI where calling MPI_Abort on one task doesn't terminate all
+   other ranks. */
+#define SYNC_ERROR
 
-/* define this macro to print result data to stdout */
+/* define the following macro to print result data to stdout */
 /*#define SHOW_RESULTS*/
-
-/* define this macro to have runtime measurement of certain profile scopes */
-/*#define RUNTIME_MEASUREMENT*/
-
-
-#ifdef RUNTIME_MEASUREMENT
-
-    struct MeasureBlock {
-
-#       define GETTIME() MPI_Wtime()
-
-        double start_time;
-        double stop_time;
-
-        MeasureBlock() : start_time(-1.0), stop_time(-1.0) {}
-
-        void start() {
-            start_time= GETTIME();
-        }
-        void stop() {
-            assert( -1.0 != start_time );
-            stop_time= GETTIME();
-        }
-        double duration() const {
-            assert( -1.0 != start_time && -1.0 != stop_time );
-            return stop_time - start_time;
-        }
-    };
-
-    /* store per-measure block runtimes */
-    map < string, MeasureBlock > MeasureBlocksMap;
-
-#endif /* RUNTIME_MEASUREMENT */
 
 
 /* parse command line options
-return 0 if succeeded, 1 if help text or version showed, 2 if failed */
-static int parse_command_line( uint32_t my_rank, int argc, char** argv,
-               AllData& alldata );
+return 0 if succeeded, 1 if help text or version showed, -1 if failed */
+static int parse_command_line( int argc, char** argv, AllData& alldata );
 
 /* assign trace processes to analysis processes explicitly in order to allow
 sophisticated grouping of MPI ranks/processes/threads/GPU threads/etc.
 in the future, return true if succeeded  */
-static bool assign_procs_to_ranks( uint32_t my_rank, uint32_t num_ranks,
-                AllData& alldata );
+static bool assign_procs_to_ranks( AllData& alldata );
 
 #ifdef SHOW_RESULTS
 /* show results on stdout */
@@ -97,22 +67,33 @@ int main( int argc, char** argv ) {
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size(MPI_COMM_WORLD, &num_ranks );
 
+    AllData alldata( my_rank, num_ranks );
+
     do {
 
-        AllData alldata;
-
         /* step 0: parse command line options */
-        if ( 0 !=
-             ( ret= parse_command_line( my_rank, argc, argv, alldata ) ) ) {
+        if ( 0 != ( ret= parse_command_line( argc, argv, alldata ) ) ) {
+
+            if ( 1 == ret ) {
+
+                ret= 0;
+
+            } else { /* -1 == ret */
+
+                ret= 1;
+
+            }
 
             break;
 
         }
 
+        VerbosePrint( alldata, 1, true, "initializing\n" );
+
         MPI_Barrier( MPI_COMM_WORLD );
 
         /* step 1: assign trace processes to analysis processes */
-        if ( !assign_procs_to_ranks( my_rank, num_ranks, alldata ) ) {
+        if ( !assign_procs_to_ranks( alldata ) ) {
 
             ret= 1;
             break;
@@ -121,16 +102,14 @@ int main( int argc, char** argv ) {
 
         MPI_Barrier( MPI_COMM_WORLD );
 
-#ifdef RUNTIME_MEASUREMENT
-        if ( 0 == my_rank ) {
+        if ( 1 <= alldata.params.verbose_level && 0 == my_rank ) {
 
-            MeasureBlocksMap[ "analyze data" ].start();
+            alldata.measureBlockMap[ "analyze data" ].start();
 
         }
-#endif /* RUNTIME_MEASUREMENT */
 
         /* step 2: collect data by reading input trace file */
-        if ( !collectData( my_rank, num_ranks, alldata ) ) {
+        if ( !CollectData( alldata ) ) {
 
             ret= 1;
             break;
@@ -141,7 +120,7 @@ int main( int argc, char** argv ) {
 
         /* step 3: summarize data; every analysis rank summarizes it's local
         data independently */
-        if ( !summarizeData( my_rank, num_ranks, alldata ) ) {
+        if ( !SummarizeData( alldata ) ) {
 
             ret= 1;
             break;
@@ -151,7 +130,7 @@ int main( int argc, char** argv ) {
         MPI_Barrier( MPI_COMM_WORLD );
 
         /* step 4: reduce data to master */
-        if ( !reduceData( my_rank, num_ranks, alldata ) ) {
+        if ( !ReduceData( alldata ) ) {
 
            ret= 1;
            break;
@@ -160,13 +139,11 @@ int main( int argc, char** argv ) {
 
         MPI_Barrier( MPI_COMM_WORLD );
 
-#ifdef RUNTIME_MEASUREMENT
-        if ( 0 == my_rank ) {
+        if ( 1 <= alldata.params.verbose_level && 0 == my_rank ) {
 
-            MeasureBlocksMap[ "analyze data" ].stop();
+            alldata.measureBlockMap[ "analyze data" ].stop();
 
         }
-#endif /* RUNTIME_MEASUREMENT */
 
         /* step 5: produce outputs */
 
@@ -190,49 +167,43 @@ int main( int argc, char** argv ) {
             show_results( alldata );
 #endif /* SHOW_RESULTS */
 
-#ifdef RUNTIME_MEASUREMENT
-            MeasureBlocksMap[ "write tex" ].start();
-#endif /* RUNTIME_MEASUREMENT */
+            alldata.measureBlockMap[ "produce output" ].start();
 
             /* step 5.3: generate PGF output */
-            if ( !createTex( alldata ) ) {
+            if ( !CreateTex( alldata ) ) {
 
                 ret= 1;
                 break;
 
             }
 
-#ifdef RUNTIME_MEASUREMENT
-            MeasureBlocksMap[ "write tex" ].stop();
-#endif /* RUNTIME_MEASUREMENT */
+            alldata.measureBlockMap[ "produce output" ].stop();
 
         }
 
     } while( false );
 
-#ifdef RUNTIME_MEASUREMENT
-
-    /* show runtime measurement results */
-
-    if ( 0 == my_rank && 0 == ret ) {
-
-        cout << endl << "runtime measurement results:" << endl;
-        for ( map < string, MeasureBlock >::const_iterator it=
-              MeasureBlocksMap.begin(); it != MeasureBlocksMap.end(); it++ ) {
-
-            cout << "   " << it->first << ": " << it->second.duration()
-                 << "s" << endl;
-        }
-
-    }
-
-#endif /* RUNTIME_MEASUREMENT */
-
     /* either finalize or abort on error */
 
-    if ( 0 == ret || 1 == ret ) {
+    if ( 0 == ret ) {
+
+        /* show runtime measurement results */
+        if ( 1 <= alldata.params.verbose_level && 0 == my_rank ) {
+
+            cout << "runtime measurement results:" << endl;
+            for ( map < string, MeasureBlock >::const_iterator it=
+                  alldata.measureBlockMap.begin();
+                  it != alldata.measureBlockMap.end(); it++ ) {
+
+                cout << " " << it->first << ": " << it->second.duration()
+                     << "s" << endl;
+            }
+
+        }
 
         MPI_Finalize();
+
+        VerbosePrint( alldata, 1, true, "done\n" );
 
     } else {
 
@@ -244,36 +215,11 @@ int main( int argc, char** argv ) {
 }
 
 
-static int parse_command_line( uint32_t my_rank, int argc, char** argv,
-               AllData& alldata ) {
+static int parse_command_line( int argc, char** argv, AllData& alldata ) {
 
     int ret= 0;
 
     Params& params= alldata.params;
-
-    /* show help text if no options are given */
-    if ( 1 == argc ) {
-
-        if ( 0 == my_rank ) {
-
-            show_helptext();
-
-        }
-
-        return 1;
-
-    }
-
-    /* read environment variables */
-
-    char* env;
-
-    env= getenv( "OTF_PROFILE_LATEX" );
-    if ( env && 0 < strlen( env ) )
-        params.latex_command= env;
-    env= getenv( "OTF_PROFILE_DVIPDF" );
-    if ( env && 0 < strlen( env ) )
-        params.dvipdf_command= env;
 
     /* parse command line options */
 
@@ -288,7 +234,7 @@ static int parse_command_line( uint32_t my_rank, int argc, char** argv,
         if ( 0 == strcmp( "-h", argv[i] ) ||
              0 == strcmp( "--help", argv[i] ) ) {
 
-            if ( 0 == my_rank ) {
+            if ( 0 == alldata.myRank ) {
 
                 show_helptext();
 
@@ -300,12 +246,26 @@ static int parse_command_line( uint32_t my_rank, int argc, char** argv,
         /* -V */
         } else if ( 0 == strcmp( "-V", argv[i] ) ) {
 
-            FPRINTF_ROOT( stdout, "%u.%u.%u \"%s\"\n",
-                          OTF_VERSION_MAJOR, OTF_VERSION_MINOR, OTF_VERSION_SUB,
-                          OTF_VERSION_STRING );
+            if ( 0 == alldata.myRank ) {
+
+                printf( "%u.%u.%u \"%s\"\n",
+                        OTF_VERSION_MAJOR, OTF_VERSION_MINOR, OTF_VERSION_SUB,
+                        OTF_VERSION_STRING );
+
+            }
 
             ret= 1;
             break;
+
+        /* -v */
+        } else if ( 0 == strcmp( "-v", argv[i] ) ) {
+
+            params.verbose_level++;
+
+        /* -p */
+        } else if ( 0 == strcmp( "-p", argv[i] ) ) {
+
+            params.progress= true;
 
         /* -f */
         } else if ( 0 == strcmp( "-f", argv[i] ) ) {
@@ -364,10 +324,14 @@ static int parse_command_line( uint32_t my_rank, int argc, char** argv,
 
            params.read_from_stats= true;
 
+#if defined(PDFTEX) && defined(HAVE_PGFPLOTS_1_4) && HAVE_PGFPLOTS_1_4
+
         /* --nopdf */
         } else if ( 0 == strcmp( "--nopdf", argv[i] ) ) {
 
            params.create_pdf= false;
+
+#endif /* PDFTEX && HAVE_PGFPLOTS_1_4 */
 
         /* input file or unknown option */
         } else {
@@ -394,73 +358,101 @@ static int parse_command_line( uint32_t my_rank, int argc, char** argv,
     }
 
     /* show specific message on error */
-
     if ( ERR_OK != parse_error ) {
 
-        switch( parse_error ) {
+        if ( 0 == alldata.myRank ) {
 
-            case ERR_OPT_UNKNOWN:
+            switch( parse_error ) {
 
-                FPRINTF_ROOT( stderr, "ERROR: Unknown option '%s'.\n", argv[i] );
-                break;
+                case ERR_OPT_UNKNOWN:
 
-            case ERR_ARG_MISSING:
+                    cerr << "ERROR: Unknown option '" << argv[i] << "'."
+                         << endl;
+                    break;
 
-                FPRINTF_ROOT( stderr, "ERROR: Expected argument for option '%s'.\n",
-                              argv[i] );
-                break;
+                case ERR_ARG_MISSING:
 
-            case ERR_ARG_INVALID:
+                    cerr << "ERROR: Expected argument for option '" << argv[i]
+                         << "'." << endl;
+                    break;
 
-                FPRINTF_ROOT( stderr, "ERROR: Invalid argument for option '%s'.\n",
-                              argv[i] );
-                break;
+                case ERR_ARG_INVALID:
 
-            default:
+                    cerr << "ERROR: Invalid argument for option '" << argv[i]
+                         << "'." << endl;
+                    break;
 
-                break;
+                default:
+
+                    break;
+
+            }
 
         }
 
-        ret= 2;
+        ret= -1;
+
+    /* show help text if no input trace file is given */
+    } else if ( 0 == params.input_file_prefix.length() ) {
+
+        if ( 0 == alldata.myRank ) {
+
+            show_helptext();
+
+        }
+
+        ret= 1;
+
     }
 
     return ret;
 }
 
 
-static bool assign_procs_to_ranks( uint32_t my_rank, uint32_t num_ranks,
-                AllData& alldata ) {
+static bool assign_procs_to_ranks( AllData& alldata ) {
 
-    bool ret= true;
+    bool error= false;
 
-    if ( 0 == my_rank ) {
+    OTF_FileManager* manager= NULL;
+    OTF_MasterControl* master= NULL;
+
+    if ( 0 == alldata.myRank ) {
 
         /* rank 0 reads OTF master control of input trace file */
 
-        OTF_FileManager* manager= OTF_FileManager_open( 1 );
+        manager= OTF_FileManager_open( 1 );
         assert( manager );
 
-        OTF_MasterControl* master= OTF_MasterControl_new( manager );
+        master= OTF_MasterControl_new( manager );
         assert( master );
 
+        int master_read_ret=
+            OTF_MasterControl_read( master,
+                alldata.params.input_file_prefix.c_str() );
+
+        /* that's the first access to the input trace file; show tidy error
+        message if failed */
+        if ( 0 == master_read_ret ) {
+
+            cerr << "ERROR: Unable to open file '"
+                 << alldata.params.input_file_prefix << ".otf' for reading."
+                 << endl;
+            error= true;
+        }
+    }
+
+    /* broadcast error indicator to workers because Open MPI had all
+    ranks except rank 0 waiting endlessly in the MPI_Recv, when the '.otf' file
+    was absent. */
+    if ( SyncError( alldata, error, 0 ) ) {
+
+        return false;
+
+    }
+
+    if ( 0 == alldata.myRank ) {
+
         do {
-
-            int master_read_ret=
-                OTF_MasterControl_read( master,
-                    alldata.params.input_file_prefix.c_str() );
-
-            /* that's the first access to the input trace file; show tidy error
-            message if failed */
-            if ( 0 == master_read_ret ) {
-
-                cerr << "ERROR: Unable to open file '"
-                     << alldata.params.input_file_prefix << ".otf' for reading."
-                     << endl;
-                ret= false;
-                break;
-
-            }
 
             /* fill the global array of processes */
 
@@ -507,19 +499,20 @@ static bool assign_procs_to_ranks( uint32_t my_rank, uint32_t num_ranks,
 
             /* remaining ranks and remaining workers */
             uint32_t r_ranks= alldata.myProcessesNum;
-            uint32_t r_workers= num_ranks;
+            uint32_t r_workers= alldata.numRanks;
 
             uint32_t pos= 0;
             bool warn_for_empty= true;
-            for ( int w= 0; w < (int)num_ranks; w++ ) {
+            for ( int w= 0; w < (int)alldata.numRanks; w++ ) {
 
                 uint32_t n= ( ( r_ranks / r_workers ) * r_workers < r_ranks) ?
                     ( r_ranks / r_workers +1 ) : ( r_ranks / r_workers );
 
                 if ( ( 0 == n ) && warn_for_empty ) {
 
-                    cerr << "Warning: more analysis ranks than trace processes, " <<
-                            "ranks " << w << " to " << num_ranks -1 << " are unemployed" << endl;
+                    cerr << "Warning: more analysis ranks than trace processes, "
+                         << "ranks " << w << " to " << alldata.numRanks -1
+                         << " are unemployed" << endl;
 
                     warn_for_empty= false;
                 }
@@ -578,7 +571,7 @@ static bool assign_procs_to_ranks( uint32_t my_rank, uint32_t num_ranks,
     }
     cerr << endl;*/
 
-    return ret;
+    return !error;
 }
 
 
@@ -802,6 +795,9 @@ static void show_helptext() {
          << "   options:" << endl
          << "      -h, --help           show this help message" << endl
          << "      -V                   show OTF version" << endl
+         << "      -v                   increase output verbosity" << endl
+         << "                           (can be used more than once)" << endl
+         << "      -p                   show progress" << endl
          << "      -f <n>               max. number of filehandles available per rank" << endl
          << "                           (default: " << Params::DEFAULT_MAX_FILE_HANDLES << ")" << endl
          << "      -b <size>            set buffersize of the reader" << endl
@@ -809,15 +805,102 @@ static void show_helptext() {
          << "      -o <prefix>          specify the prefix of output file(s)" << endl
          << "                           (default: " << Params::DEFAULT_OUTPUT_FILE_PREFIX() << ")" << endl
          << "      --stat               read only summarized information, no events" << endl
+#if defined(PDFTEX) && defined(HAVE_PGFPLOTS_1_4) && HAVE_PGFPLOTS_1_4
          << "      --nopdf              do not produce PDF output" << endl
-         << endl
-         << "   environment variables:" << endl
-         << "      OTF_PROFILE_LATEX    LaTeX command" << endl
-         << "                           (default: " << Params::DEFAULT_LATEX_COMMAND() << ")" << endl
-         << "      OTF_PROFILE_DVIPDF   DVI to PDF converter command" << endl
-         << "                           (default: " << Params::DEFAULT_DVIPDF_COMMAND() << ")" << endl
+#else /* PDFTEX && HAVE_PGFPLOTS_1_4 */
          << endl
          << " PDF creation requires the PGFPLOTS package version >1.4" << endl
          << " http://sourceforge.net/projects/pgfplots/ " << endl
+#endif /* PDFTEX && HAVE_PGFPLOTS_1_4 */
          << endl;
+}
+
+
+void VerbosePrint( AllData& alldata, uint8_t level, bool root_only,
+         const char* fmt, ... ) {
+
+    if ( alldata.params.verbose_level >= level ) {
+
+        va_list ap;
+
+        va_start( ap, fmt );
+
+        /* either only rank 0 print the message */
+        if ( root_only ) {
+
+            if ( 0 == alldata.myRank ) {
+
+                vprintf( fmt, ap );
+            }
+
+        /* or all ranks print the message */
+        } else {
+
+            char msg[1024];
+
+            /* prepend current rank to message */
+            snprintf( msg, sizeof( msg ) -1, "[%u] ", alldata.myRank );
+            vsnprintf( msg + strlen( msg ), sizeof( msg ) -1, fmt, ap );
+
+            /* print message */
+            printf( "%s ", msg );
+
+        }
+
+        va_end( ap );
+
+    }
+}
+
+
+bool SyncError( AllData& alldata, bool& error, uint32_t root ) {
+
+#ifdef SYNC_ERROR
+
+    if ( 1 < alldata.numRanks ) {
+
+        int buf= ( error ) ? 1 : 0;
+
+        /* either broadcast the error indicator from one rank (root)
+        or reduce them from all */
+
+        if ( root != (uint32_t)-1 ) {
+
+            MPI_Bcast( &buf, 1, MPI_INT, (int)root, MPI_COMM_WORLD );
+
+            error= ( 1 == buf );
+
+        } else {
+
+            int recv_buf;
+
+            MPI_Allreduce( &buf, &recv_buf, 1, MPI_INT, MPI_MAX,
+                           MPI_COMM_WORLD );
+
+            error= ( 1 == recv_buf );
+
+        }
+
+    }
+
+#endif /* SYNC_ERROR */
+
+    return error;
+}
+
+
+uint64_t Logi( uint64_t x, uint64_t b ) {
+
+    assert( b > 1 );
+
+    uint64_t c= 1;
+    uint64_t i= 0;
+
+    while( c <= x ) {
+
+        c*= b;
+        i++;
+    }
+
+    return i;
 }

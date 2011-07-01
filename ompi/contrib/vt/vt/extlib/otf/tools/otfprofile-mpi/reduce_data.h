@@ -6,11 +6,12 @@
 #ifndef REDUCE_DATA_H
 #define REDUCE_DATA_H
 
+
 #include "datastructs.h"
 
 
 /* reduce the data to the master process */
-bool reduceData( uint32_t my_rank, uint32_t num_ranks, AllData& alldata );
+bool ReduceData( AllData& alldata );
 
 
 #endif /* REDUCE_DATA_H */

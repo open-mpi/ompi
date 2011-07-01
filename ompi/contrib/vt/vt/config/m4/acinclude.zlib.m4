@@ -63,7 +63,10 @@ AC_DEFUN([ACVT_ZLIB],
 		])
 
 		AS_IF([test x"$ZLIBLIB" != x -a x"$zlib_error" = "xno"],
-		[have_zlib="yes"])
+		[
+			have_zlib="yes"
+			AC_DEFINE([HAVE_ZLIB], [1], [Define to 1 if you have the ZLIB.])
+		])
 
 		AS_IF([test x"$force_zlib" = "xyes" -a x"$zlib_error" = "xyes"],
 		[exit 1])
