@@ -413,8 +413,8 @@ static int mca_btl_openib_size_queues(struct mca_btl_openib_module_t* openib_btl
         goto out;
     }
 
-    if (0 == openib_btl->num_peers && 
-            (mca_btl_openib_component.num_srq_qps > 0 || 
+    if (0 == openib_btl->num_peers &&
+            (mca_btl_openib_component.num_srq_qps > 0 ||
              mca_btl_openib_component.num_xrc_qps > 0)) {
         rc = create_srq(openib_btl);
     }
@@ -426,7 +426,7 @@ out:
 
 mca_btl_openib_transport_type_t mca_btl_openib_get_transport_type(mca_btl_openib_module_t* openib_btl)
 {
-/* If we have a driver with RDMAoE supporting as the device struct contains the same type (IB) for 
+/* If we have a driver with RDMAoE supporting as the device struct contains the same type (IB) for
    IBV_LINK_LAYER_INFINIBAND and IBV_LINK_LAYER_ETHERNET link layers and the single way
    to detect this fact is to check their link_layer fields in a port_attr struct.
    If our driver doesn't support this feature => the checking of transport type in device struct will be enough.
@@ -455,7 +455,7 @@ mca_btl_openib_transport_type_t mca_btl_openib_get_transport_type(mca_btl_openib
         case IBV_TRANSPORT_IWARP:
             return MCA_BTL_OPENIB_TRANSPORT_IWARP;
 
-        case IBV_TRANSPORT_UNKNOWN:		 
+        case IBV_TRANSPORT_UNKNOWN:
         default:
             return MCA_BTL_OPENIB_TRANSPORT_UNKNOWN;
     }
@@ -464,7 +464,7 @@ mca_btl_openib_transport_type_t mca_btl_openib_get_transport_type(mca_btl_openib
 #endif
 }
 
-static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl, 
+static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
                                             mca_btl_base_endpoint_t* endpoint)
 {
     int ret = OMPI_SUCCESS;
@@ -485,7 +485,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
                         endpoint->rem_info.rem_vendor_id,
                         endpoint->rem_info.rem_vendor_part_id,
                         mca_btl_openib_transport_name_strings[endpoint->rem_info.rem_transport_type]);
-    
+
         return OMPI_ERROR;
     }
 
@@ -503,7 +503,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
     }
 
     if(openib_btl->device->mtu < endpoint->rem_info.rem_mtu) {
-        endpoint->rem_info.rem_mtu = openib_btl->device->mtu; 
+        endpoint->rem_info.rem_mtu = openib_btl->device->mtu;
     }
 
     endpoint->use_eager_rdma = openib_btl->device->use_eager_rdma &
@@ -520,11 +520,11 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
         case BTL_OPENIB_RQ_SOURCE_MAX:
             break;
 
-        /* If the queues configuration was set from command line 
+        /* If the queues configuration was set from command line
            (with --mca btl_openib_receive_queues parameter) => both sides have a same configuration */
 
         /* In this case the local queues configuration was gotten from INI file =>
-           not possible that remote side got its queues configuration from command line => 
+           not possible that remote side got its queues configuration from command line =>
            (by prio) the configuration was set from INI file or (if not configure)
            by default queues configuration */
         case BTL_OPENIB_RQ_SOURCE_DEVICE_INI:
@@ -552,7 +552,7 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
             }
             break;
 
-        /* If the local queues configuration was set 
+        /* If the local queues configuration was set
            by default queues => check all possible cases for remote side and compare */
         case  BTL_OPENIB_RQ_SOURCE_DEFAULT:
             if(NULL != values.receive_queues) {
@@ -628,7 +628,7 @@ int mca_btl_openib_add_procs(
 
         opal_output(-1, "add procs: adding proc %d", i);
 
-        /* OOB, XOOB, RDMACM, IBCM does not support SELF comunication, so 
+        /* OOB, XOOB, RDMACM, IBCM does not support SELF comunication, so
          * mark the prco as unreachable by openib btl  */
         if (OPAL_EQUAL == orte_util_compare_name_fields
                 (ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &ompi_proc->proc_name)) {
@@ -705,7 +705,7 @@ int mca_btl_openib_add_procs(
            on the peer has a matching CPC. */
         assert(btl_rank <= ib_proc->proc_port_count);
         assert(remote_matching_port != -1);
-        if (OMPI_SUCCESS != 
+        if (OMPI_SUCCESS !=
             ompi_btl_openib_connect_base_find_match(openib_btl,
                                                     &(ib_proc->proc_ports[remote_matching_port]),
                                                     &local_cpc,
@@ -751,8 +751,8 @@ int mca_btl_openib_add_procs(
             }
         }
 #endif
-        mca_btl_openib_endpoint_init(openib_btl, endpoint, 
-                                     local_cpc, 
+        mca_btl_openib_endpoint_init(openib_btl, endpoint,
+                                     local_cpc,
                                      &(ib_proc->proc_ports[remote_matching_port]),
                                      remote_cpc_data);
 
@@ -1139,7 +1139,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 
             BTL_VERBOSE(("frag->sg_entry.lkey = %" PRIu32 " .addr = %" PRIx64
                          " frag->segment.seg_key.key32[0] = %" PRIu32,
-                         frag->sg_entry.lkey, 
+                         frag->sg_entry.lkey,
                          frag->sg_entry.addr,
                          frag->sg_entry.lkey));
 
@@ -1260,7 +1260,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     BTL_VERBOSE(("frag->sg_entry.lkey = %" PRIu32 " .addr = %" PRIx64 " "
                  "frag->segment.seg_key.key32[0] = %" PRIu32,
-                 frag->sg_entry.lkey, 
+                 frag->sg_entry.lkey,
                  frag->sg_entry.addr,
                  openib_reg->mr->rkey));
 
@@ -1317,7 +1317,7 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
                 opal_hash_table_t *srq_addr_table =
                             &mca_btl_openib_component.srq_manager.srq_addr_table;
 
-                opal_mutex_lock(lock);		
+                opal_mutex_lock(lock);
                 if (OPAL_SUCCESS !=
                         opal_hash_table_remove_value_ptr(srq_addr_table,
                                     &openib_btl->qps[qp].u.srq_qp.srq,
@@ -1353,7 +1353,7 @@ static int mca_btl_openib_finalize_resources(struct mca_btl_base_module_t* btl) 
     }
 
     if (NULL != openib_btl->qps) {
-        free(openib_btl->qps); 
+        free(openib_btl->qps);
     }
 
     return rc;
@@ -1399,7 +1399,7 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 
 /*
  *  Send immediate - Minimum function calls minimum checks, send the data ASAP.
- *  If BTL can't to send the messages imidiate, it creates messages descriptor 
+ *  If BTL can't to send the messages imidiate, it creates messages descriptor
  *  returns it to PML.
  */
 int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
@@ -1411,14 +1411,14 @@ int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
         uint8_t order,
         uint32_t flags,
         mca_btl_base_tag_t tag,
-        mca_btl_base_descriptor_t** descriptor) 
+        mca_btl_base_descriptor_t** descriptor)
 {
     mca_btl_openib_module_t *obtl = (mca_btl_openib_module_t*)btl;
     size_t size = payload_size + header_size;
     size_t eager_limit;
-    int rc,  
-        qp = frag_size_to_order(obtl, size), 
-        prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY), 
+    int rc,
+        qp = frag_size_to_order(obtl, size),
+        prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY),
         ib_rc;
     int32_t cm_return;
     bool do_rdma = false;

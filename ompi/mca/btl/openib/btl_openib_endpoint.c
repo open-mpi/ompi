@@ -310,7 +310,7 @@ void mca_btl_openib_endpoint_init(mca_btl_openib_module_t *btl,
     ep->rem_info.rem_lid = remote_proc_info->pm_port_info.lid;
     ep->rem_info.rem_subnet_id = remote_proc_info->pm_port_info.subnet_id;
     ep->rem_info.rem_mtu = remote_proc_info->pm_port_info.mtu;
-    opal_output(-1, "Got remote LID, subnet, MTU: %d, 0x%" PRIx64 ", %d", 
+    opal_output(-1, "Got remote LID, subnet, MTU: %d, 0x%" PRIx64 ", %d",
                 ep->rem_info.rem_lid,
                 ep->rem_info.rem_subnet_id,
                 ep->rem_info.rem_mtu);
@@ -508,7 +508,7 @@ static void cts_sent(mca_btl_base_module_t* btl,
 /*
  * Send CTS control fragment
  */
-void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint) 
+void mca_btl_openib_endpoint_send_cts(mca_btl_openib_endpoint_t *endpoint)
 {
     mca_btl_openib_send_control_frag_t *sc_frag;
     mca_btl_base_descriptor_t *base_des;
@@ -665,8 +665,8 @@ void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoint)
         while(master && !opal_list_is_empty(&endpoint->ib_addr->pending_ep)) {
             ep_item = opal_list_remove_first(&endpoint->ib_addr->pending_ep);
             ep = (mca_btl_openib_endpoint_t *)ep_item;
-            if (OMPI_SUCCESS != 
-                ompi_btl_openib_connect_base_start(endpoint->endpoint_local_cpc, 
+            if (OMPI_SUCCESS !=
+                ompi_btl_openib_connect_base_start(endpoint->endpoint_local_cpc,
                                                    ep)) {
                 BTL_ERROR(("Failed to connect pending endpoint\n"));
             }
@@ -874,7 +874,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
     rdma_hdr->control.type = MCA_BTL_OPENIB_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->mr->rkey;
     rdma_hdr->rdma_start.lval = ompi_ptr_ptol(endpoint->eager_rdma_local.base.pval);
-    BTL_VERBOSE(("sending rkey %" PRIu32 ", rdma_start.lval %" PRIx64 
+    BTL_VERBOSE(("sending rkey %" PRIu32 ", rdma_start.lval %" PRIx64
                  ", pval %p, ival %" PRIu32 " type %d and sizeof(rdma_hdr) %d\n",
                  rdma_hdr->rkey,
                  rdma_hdr->rdma_start.lval,

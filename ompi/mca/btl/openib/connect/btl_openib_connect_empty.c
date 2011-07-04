@@ -2,9 +2,9 @@
  * Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -16,7 +16,7 @@
 
 static void empty_component_register(void);
 static int empty_component_init(void);
-static int empty_component_query(mca_btl_openib_module_t *btl, 
+static int empty_component_query(mca_btl_openib_module_t *btl,
                                  ompi_btl_openib_connect_base_module_t **cpc);
 
 ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_empty = {
@@ -38,7 +38,7 @@ static int empty_component_init(void)
     return OMPI_ERR_NOT_SUPPORTED;
 }
 
-static int empty_component_query(mca_btl_openib_module_t *btl, 
+static int empty_component_query(mca_btl_openib_module_t *btl,
                                  ompi_btl_openib_connect_base_module_t **cpc)
 {
     /* Never let this CPC run */

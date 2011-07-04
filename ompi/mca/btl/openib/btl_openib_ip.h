@@ -32,7 +32,7 @@ extern uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
  * @param port (IN)    physical port of the IBV device
  * @return             IPv4 Address
  */
-extern uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, 
+extern uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs,
                                                  uint8_t port);
 
 /**

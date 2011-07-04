@@ -142,7 +142,7 @@ typedef enum {
 /* The structer for manage all BTL SRQs */
 typedef struct mca_btl_openib_srq_manager_t {
     opal_mutex_t lock;
-    /* The keys of this hash table are addresses of 
+    /* The keys of this hash table are addresses of
        SRQs structures, and the elements are BTL modules
        pointers that associated with these SRQs */
     opal_hash_table_t srq_addr_table;
@@ -405,7 +405,7 @@ struct mca_btl_openib_module_srq_qp_t {
     /** We post additional WQEs only if a number of WQEs (in specific SRQ) is less of this value.
          The value increased together with rd_curr_num. The value is unique for every SRQ. */
     int32_t rd_low_local;
-    /** The flag points if we want to get the 
+    /** The flag points if we want to get the
          IBV_EVENT_SRQ_LIMIT_REACHED events for dynamically resizing SRQ */
     bool srq_limit_event_flag;
     /**< In difference of the "--mca enable_srq_resize" parameter that says, if we want(or no)
@@ -580,7 +580,7 @@ extern int mca_btl_openib_sendi( struct mca_btl_base_module_t* btl,
     uint32_t flags,
     mca_btl_base_tag_t tag,
     mca_btl_base_descriptor_t** descriptor
-); 
+);
 
 /**
  * PML->BTL Initiate a put of the specified size.

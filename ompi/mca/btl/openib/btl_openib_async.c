@@ -141,7 +141,7 @@ static int btl_openib_async_poll_init(struct mca_btl_openib_async_poll *devices_
 }
 
 /* Send command completion to main thread */
-static int send_command_comp(int in) 
+static int send_command_comp(int in)
 {
     if (write(mca_btl_openib_component.async_comp_pipe[1], &in, sizeof(int)) < 0) {
         BTL_ERROR(("Write failed [%d]",errno));
@@ -227,7 +227,7 @@ static int btl_openib_async_commandh(struct mca_btl_openib_async_poll *devices_p
     return OMPI_SUCCESS;
 }
 
-/* The main idea of resizing SRQ algorithm - 
+/* The main idea of resizing SRQ algorithm -
    We create a SRQ with size = rd_num, but for efficient usage of resources
    the number of WQEs that we post = rd_curr_num < rd_num and this value is
    increased (by needs) in IBV_EVENT_SRQ_LIMIT_REACHED event handler (i.e. in this function),
@@ -327,7 +327,7 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
                 BTL_ERROR(("Alternative path migration event reported"));
                 if (APM_ENABLED) {
                     BTL_ERROR(("Trying to find additional path..."));
-                    if (!xrc_event) 
+                    if (!xrc_event)
                         mca_btl_openib_load_apm(event.element.qp,
                                 qp2endpoint(event.element.qp, device));
 #if HAVE_XRC
@@ -472,7 +472,7 @@ void* btl_openib_async_thread(void * async)
     return PTHREAD_CANCELED;
 }
 
-int btl_openib_async_command_done(int exp) 
+int btl_openib_async_command_done(int exp)
 {
     int comp;
     if (read(mca_btl_openib_component.async_comp_pipe[0], &comp,

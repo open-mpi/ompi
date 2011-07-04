@@ -3,9 +3,9 @@
  * Copyright (c) 2009      Mellanox Technologies.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -74,13 +74,13 @@ int ompi_btl_openib_connect_base_get_cpc_index
 ompi_btl_openib_connect_base_component_t *
     ompi_btl_openib_connect_base_get_cpc_byindex(uint8_t index);
 
-/* 
+/*
  * Allocate a CTS frag
  */
 int ompi_btl_openib_connect_base_alloc_cts(
         struct mca_btl_base_endpoint_t *endpoint);
 
-/* 
+/*
  * Free a CTS frag
  */
 int ompi_btl_openib_connect_base_free_cts(

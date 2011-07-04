@@ -31,9 +31,9 @@
 #include "btl_openib_ip.h"
 #if OMPI_HAVE_RDMACM
 
-/* 
+/*
  * The cruft below maintains the linked list of rdma ipv4 addresses and their
- * associated rdma device names and device port numbers.  
+ * associated rdma device names and device port numbers.
  */
 struct rdma_addr_list {
     opal_list_item_t      super;
@@ -45,7 +45,7 @@ struct rdma_addr_list {
 };
 typedef struct rdma_addr_list rdma_addr_list_t;
 
-static OBJ_CLASS_INSTANCE(rdma_addr_list_t, opal_list_item_t, 
+static OBJ_CLASS_INSTANCE(rdma_addr_list_t, opal_list_item_t,
                           NULL, NULL);
 static opal_list_t *myaddrs = NULL;
 
@@ -54,7 +54,7 @@ static char *stringify(uint32_t addr)
 {
     static char line[64];
     memset(line, 0, sizeof(line));
-    snprintf(line, sizeof(line) - 1, "%d.%d.%d.%d (0x%x)", 
+    snprintf(line, sizeof(line) - 1, "%d.%d.%d.%d (0x%x)",
 #if defined(WORDS_BIGENDIAN)
              (addr >> 24),
              (addr >> 16) & 0xff,
@@ -119,7 +119,7 @@ uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
  * mismatch if IP Aliases are being used.  For more information on
  * this, please read comment above mca_btl_openib_get_ip_subnet_id.
  */
-uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, 
+uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs,
                                           uint8_t port)
 {
     opal_list_item_t *item;
@@ -135,7 +135,7 @@ uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs,
          item != opal_list_get_end(myaddrs);
          item = opal_list_get_next(item)) {
         struct rdma_addr_list *addr = (struct rdma_addr_list *)item;
-        if (!strcmp(addr->dev_name, verbs->device->name) && 
+        if (!strcmp(addr->dev_name, verbs->device->name) &&
             port == addr->dev_port) {
             BTL_VERBOSE(("FOUND: %s:%d is %s",
                          ibv_get_device_name(verbs->device), port,
@@ -219,7 +219,7 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             subnet = ntohl(ipaddr->sin_addr.s_addr) & ~(all >> netmask);
             opal_argv_free(temp);
 
-            if (subnet == list_subnet) { 
+            if (subnet == list_subnet) {
                 return 0;
             }
         }
@@ -261,7 +261,7 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             subnet = ntohl(ipaddr->sin_addr.s_addr) & ~(all >> netmask);
             opal_argv_free(temp);
 
-            if (subnet == list_subnet) { 
+            if (subnet == list_subnet) {
                 return 1;
             }
         }
@@ -282,7 +282,7 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
     /* Ensure that this IP address is not in 127.0.0.1/8.  If it is,
        skip it because we never want loopback addresses to be
        considered RDMA devices that remote peers can use to connect
-       to.  
+       to.
 
        This check is necessary because of a change that almost went
        into RDMA CM in OFED 1.5.1.  We asked for a delay so that we
@@ -356,11 +356,11 @@ static int add_rdma_addr(struct sockaddr *ipaddr, uint32_t netmask)
 
     myaddr->addr = sinp->sin_addr.s_addr;
     myaddr->subnet = ntohl(myaddr->addr) & ~(all >> netmask);
-    inet_ntop(sinp->sin_family, &sinp->sin_addr, 
+    inet_ntop(sinp->sin_family, &sinp->sin_addr,
               myaddr->addr_str, sizeof(myaddr->addr_str));
     memcpy(myaddr->dev_name, cm_id->verbs->device->name, IBV_SYSFS_NAME_MAX);
     myaddr->dev_port = cm_id->port_num;
-    BTL_VERBOSE(("Adding addr %s (0x%x) subnet 0x%x as %s:%d", 
+    BTL_VERBOSE(("Adding addr %s (0x%x) subnet 0x%x as %s:%d",
                  myaddr->addr_str, myaddr->addr, myaddr->subnet,
                  myaddr->dev_name, myaddr->dev_port));
 
@@ -400,7 +400,7 @@ int mca_btl_openib_build_rdma_addr_list(void)
     }
     return rc;
 }
-  
+
 void mca_btl_openib_free_rdma_addr_list(void)
 {
     opal_list_item_t *item, *next;
@@ -419,27 +419,27 @@ void mca_btl_openib_free_rdma_addr_list(void)
     }
 }
 
-#else 
+#else
 /* !OMPI_HAVE_RDMACM case */
 
 uint64_t mca_btl_openib_get_ip_subnet_id(struct ibv_device *ib_dev,
-                                            uint8_t port) 
+                                            uint8_t port)
 {
     return 0;
 }
 
-uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs, 
-                                          uint8_t port) 
+uint32_t mca_btl_openib_rdma_get_ipv4addr(struct ibv_context *verbs,
+                                          uint8_t port)
 {
     return 0;
 }
 
-int mca_btl_openib_build_rdma_addr_list(void) 
+int mca_btl_openib_build_rdma_addr_list(void)
 {
     return OMPI_SUCCESS;
 }
 
-void mca_btl_openib_free_rdma_addr_list(void) 
+void mca_btl_openib_free_rdma_addr_list(void)
 {
 }
 #endif

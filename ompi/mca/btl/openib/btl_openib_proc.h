@@ -47,7 +47,7 @@ typedef struct mca_btl_openib_proc_modex_t {
 
     /** Array of the peer's CPCs available on this port */
     ompi_btl_openib_connect_base_module_data_t *pm_cpc_data;
-    
+
     /** Length of the pm_cpc_data array */
     uint8_t pm_cpc_data_count;
 } mca_btl_openib_proc_modex_t;

@@ -36,7 +36,7 @@
 #include "orte/util/show_help.h"
 
 static void xoob_component_register(void);
-static int xoob_component_query(mca_btl_openib_module_t *openib_btl, 
+static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
                                 ompi_btl_openib_connect_base_module_t **cpc);
 static int xoob_component_finalize(void);
 
@@ -812,7 +812,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
                     requested_lid, message_type);
             if ( NULL == ib_endpoint) {
                 BTL_ERROR(("Got ENDPOINT_XOOB_CONNECT_REQUEST."
-                           " Failed to find endpoint with subnet %" PRIx64 
+                           " Failed to find endpoint with subnet %" PRIx64
                            " and LID %d",
                            rem_info.rem_subnet_id,requested_lid));
                 mca_btl_openib_endpoint_invoke_error(NULL);
@@ -899,7 +899,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
             /* update ib_addr with remote qp number */
             ib_endpoint->ib_addr->remote_xrc_rcv_qp_num =
                 ib_endpoint->rem_info.rem_qps->rem_qp_num;
-            BTL_VERBOSE(("rem_info: lid %d, sid %" PRIx64 
+            BTL_VERBOSE(("rem_info: lid %d, sid %" PRIx64
                          " ep %d %" PRIx64 "\n",
                          rem_info.rem_lid,
                          rem_info.rem_subnet_id,
@@ -962,7 +962,7 @@ static void xoob_rml_recv_cb(int status, orte_process_name_t* process_name,
  */
 
 /* Quere for the XOOB priority - will be highest in XRC case */
-static int xoob_component_query(mca_btl_openib_module_t *openib_btl, 
+static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
         ompi_btl_openib_connect_base_module_t **cpc)
 {
     int rc;
@@ -986,7 +986,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
        ensure to only post it *once*, because another btl may have
        come in before this and already posted it. */
     if (!rml_recv_posted) {
-        rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, 
+        rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                      OMPI_RML_TAG_XOPENIB,
                                      ORTE_RML_PERSISTENT,
                                      xoob_rml_recv_cb,
@@ -999,7 +999,7 @@ static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
         }
         rml_recv_posted = true;
     }
-        
+
     (*cpc)->data.cbm_component = &ompi_btl_openib_connect_xoob;
     (*cpc)->data.cbm_priority = xoob_priority;
     (*cpc)->data.cbm_modex_message = NULL;

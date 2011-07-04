@@ -284,27 +284,27 @@ static int btl_openib_modex_send(void)
      *       c. a uint8_t indicating the length of the blob to follow
      *       d. a blob that is only meaningful to that CPC
      */
-    msg_size = 
+    msg_size =
         /* uint8_t for number of modules in the message */
         1 +
         /* For each module: */
-        mca_btl_openib_component.ib_num_btls * 
+        mca_btl_openib_component.ib_num_btls *
         (
          /* Common module data */
-         modex_message_size + 
+         modex_message_size +
          /* uint8_t for how many CPCs follow */
          1
          );
     /* For each module, add in the size of the per-CPC data */
     for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        for (j = 0; 
+        for (j = 0;
              j < mca_btl_openib_component.openib_btls[i]->num_cpcs;
              ++j) {
-            msg_size += 
+            msg_size +=
                 /* uint8_t for the index of the CPC */
                 1 +
                 /* uint8_t for the CPC's priority */
-                1 + 
+                1 +
                 /* uint8_t for the blob length */
                 1 +
                 /* blob length */
@@ -337,15 +337,15 @@ static int btl_openib_modex_send(void)
         (mca_btl_openib_component.openib_btls[i]->port_info).transport_type =
             mca_btl_openib_get_transport_type(mca_btl_openib_component.openib_btls[i]);
 
-        memcpy(offset, 
-               &(mca_btl_openib_component.openib_btls[i]->port_info), 
+        memcpy(offset,
+               &(mca_btl_openib_component.openib_btls[i]->port_info),
                size);
         opal_output(-1, "modex packed btl port modex message: 0x%" PRIx64 ", %d, %d (size: %d)",
                     mca_btl_openib_component.openib_btls[i]->port_info.subnet_id,
                     mca_btl_openib_component.openib_btls[i]->port_info.mtu,
                     mca_btl_openib_component.openib_btls[i]->port_info.lid,
                     (int) size);
-                    
+
 #if !defined(WORDS_BIGENDIAN) && OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         MCA_BTL_OPENIB_MODEX_MSG_HTON(*(mca_btl_openib_modex_message_t *)offset);
 #endif
@@ -354,20 +354,20 @@ static int btl_openib_modex_send(void)
                     i, (int) (offset -message));
 
         /* Pack the number of CPCs that follow */
-        pack8(&offset, 
+        pack8(&offset,
               mca_btl_openib_component.openib_btls[i]->num_cpcs);
         opal_output(-1, "modex packed btl %d: to pack %d cpcs (packed: %d, offset now %d)",
                     i, mca_btl_openib_component.openib_btls[i]->num_cpcs,
                     *((uint8_t*) (offset - 1)), (int) (offset-message));
 
         /* Pack each CPC */
-        for (j = 0; 
+        for (j = 0;
              j < mca_btl_openib_component.openib_btls[i]->num_cpcs;
              ++j) {
             uint8_t u8;
 
             cpc = mca_btl_openib_component.openib_btls[i]->cpcs[j];
-            opal_output(-1, "modex packed btl %d: packing cpc %s", 
+            opal_output(-1, "modex packed btl %d: packing cpc %s",
                         i, cpc->data.cbm_component->cbc_name);
             /* Pack the CPC index */
             u8 = ompi_btl_openib_connect_base_get_cpc_index(cpc->data.cbm_component);
@@ -434,7 +434,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
     case MCA_BTL_OPENIB_CONTROL_RDMA:
        rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)ctl_hdr;
 
-       BTL_VERBOSE(("prior to NTOH received  rkey %" PRIu32 
+       BTL_VERBOSE(("prior to NTOH received  rkey %" PRIu32
                     ", rdma_start.lval %" PRIx64 ", pval %p, ival %" PRIu32,
                     rdma_hdr->rkey,
                     rdma_hdr->rdma_start.lval,
@@ -446,7 +446,7 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
            BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH(*rdma_hdr);
        }
 
-       BTL_VERBOSE(("received  rkey %" PRIu32 
+       BTL_VERBOSE(("received  rkey %" PRIu32
                     ", rdma_start.lval %" PRIx64 ", pval %p,"
                     " ival %" PRIu32, rdma_hdr->rkey,
                     rdma_hdr->rdma_start.lval,
@@ -633,7 +633,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         BTL_VERBOSE(("my iWARP subnet_id is %016" PRIx64, subnet_id));
     } else {
         memset(&gid, 0, sizeof(gid));
-        if (0 != ibv_query_gid(device->ib_dev_context, port_num, 
+        if (0 != ibv_query_gid(device->ib_dev_context, port_num,
                                mca_btl_openib_component.gid_index, &gid)) {
             BTL_ERROR(("ibv_query_gid failed (%s:%d, %d)\n",
                        ibv_get_device_name(device->ib_dev), port_num,
@@ -643,7 +643,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
 
 #ifdef OMPI_HAVE_RDMAOE
         if (IBV_LINK_LAYER_ETHERNET == ib_port_attr->link_layer) {
-            subnet_id = mca_btl_openib_get_ip_subnet_id(device->ib_dev, 
+            subnet_id = mca_btl_openib_get_ip_subnet_id(device->ib_dev,
                                                            port_num);
         } else {
             subnet_id = ntoh64(gid.global.subnet_prefix);
@@ -652,11 +652,11 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         subnet_id = ntoh64(gid.global.subnet_prefix);
 #endif
 
-        BTL_VERBOSE(("my IB subnet_id for HCA %s port %d is %016" PRIx64, 
+        BTL_VERBOSE(("my IB subnet_id for HCA %s port %d is %016" PRIx64,
                      ibv_get_device_name(device->ib_dev), port_num, subnet_id));
     }
 #else
-    if (0 != ibv_query_gid(device->ib_dev_context, port_num, 
+    if (0 != ibv_query_gid(device->ib_dev_context, port_num,
                            mca_btl_openib_component.gid_index, &gid)) {
         BTL_ERROR(("ibv_query_gid failed (%s:%d, %d)\n",
                    ibv_get_device_name(device->ib_dev), port_num,
@@ -664,7 +664,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
         return OMPI_ERR_NOT_FOUND;
     }
     subnet_id = ntoh64(gid.global.subnet_prefix);
-    BTL_VERBOSE(("my IB-only subnet_id for HCA %s port %d is %016" PRIx64, 
+    BTL_VERBOSE(("my IB-only subnet_id for HCA %s port %d is %016" PRIx64,
                  ibv_get_device_name(device->ib_dev), port_num, subnet_id));
 #endif
 
@@ -868,9 +868,9 @@ static void device_construct(mca_btl_openib_device_t *device)
 #endif
     device->qps = NULL;
 #if OPAL_HAVE_THREADS
-    mca_btl_openib_component.async_pipe[0] = 
+    mca_btl_openib_component.async_pipe[0] =
         mca_btl_openib_component.async_pipe[1] = -1;
-    mca_btl_openib_component.async_comp_pipe[0] = 
+    mca_btl_openib_component.async_comp_pipe[0] =
         mca_btl_openib_component.async_comp_pipe[1] = -1;
 #endif
     OBJ_CONSTRUCT(&device->device_lock, opal_mutex_t);
@@ -910,7 +910,7 @@ static void device_destruct(mca_btl_openib_device_t *device)
         /* wait for ok from thread */
         if (OMPI_SUCCESS != btl_openib_async_command_done(device_to_remove)){
             goto device_error;
-        } 
+        }
     }
 #endif
 
@@ -1006,10 +1006,10 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
             return OMPI_ERROR;
         }
         /* wait for ok from thread */
-        if (OMPI_SUCCESS != 
+        if (OMPI_SUCCESS !=
             btl_openib_async_command_done(device->ib_dev_context->async_fd)) {
             return OMPI_ERROR;
-        } 
+        }
     }
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* Prepare data for thread, but not starting it */
@@ -1338,7 +1338,7 @@ static int setup_qps(void)
     if (0 == opal_argv_count(queues)) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "no qps in receive_queues", true,
-                       orte_process_info.nodename, 
+                       orte_process_info.nodename,
                        mca_btl_openib_component.receive_queues);
         ret = OMPI_ERROR;
         goto error;
@@ -1357,7 +1357,7 @@ static int setup_qps(void)
             num_xrc_qps++;
 #else
             orte_show_help("help-mpi-btl-openib.txt", "No XRC support", true,
-                           orte_process_info.nodename, 
+                           orte_process_info.nodename,
                            mca_btl_openib_component.receive_queues);
             ret = OMPI_ERR_NOT_AVAILABLE;
             goto error;
@@ -1365,7 +1365,7 @@ static int setup_qps(void)
         } else {
             orte_show_help("help-mpi-btl-openib.txt",
                            "invalid qp type in receive_queues", true,
-                           orte_process_info.nodename, 
+                           orte_process_info.nodename,
                            mca_btl_openib_component.receive_queues,
                            queues[qp]);
             ret = OMPI_ERR_BAD_PARAM;
@@ -1377,7 +1377,7 @@ static int setup_qps(void)
        and SRQ */
     if (num_xrc_qps > 0 && (num_pp_qps > 0 || num_srq_qps > 0)) {
         orte_show_help("help-mpi-btl-openib.txt", "XRC with PP or SRQ", true,
-                       orte_process_info.nodename, 
+                       orte_process_info.nodename,
                        mca_btl_openib_component.receive_queues);
         ret = OMPI_ERR_BAD_PARAM;
         goto error;
@@ -1385,8 +1385,8 @@ static int setup_qps(void)
 
     /* Current XRC implementation can't used with btls_per_lid > 1 */
     if (num_xrc_qps > 0 && mca_btl_openib_component.btls_per_lid > 1) {
-        orte_show_help("help-mpi-btl-openib.txt", "XRC with BTLs per LID", 
-                       true, orte_process_info.nodename, 
+        orte_show_help("help-mpi-btl-openib.txt", "XRC with BTLs per LID",
+                       true, orte_process_info.nodename,
                        mca_btl_openib_component.receive_queues, num_xrc_qps);
         ret = OMPI_ERR_BAD_PARAM;
         goto error;
@@ -1676,13 +1676,13 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
        ports and QPs on this device */
     need_search = false;
     if(-2 != mca_btl_openib_component.ib_max_inline_data) {
-        /* User has explicitly set btl_openib_max_inline_data MCA parameter 
+        /* User has explicitly set btl_openib_max_inline_data MCA parameter
            Per setup in _mca.c, we know that the MCA param value is guaranteed
            to be >= -1 */
         if (-1 == mca_btl_openib_component.ib_max_inline_data) {
             need_search = true;
         } else {
-            device->max_inline_data = (uint32_t) 
+            device->max_inline_data = (uint32_t)
                 mca_btl_openib_component.ib_max_inline_data;
         }
     } else if (values.max_inline_data_set) {
@@ -1691,20 +1691,20 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
         } else if (values.max_inline_data >= 0) {
             device->max_inline_data = (uint32_t) values.max_inline_data;
         } else {
-            if(default_values.max_inline_data_set && 
+            if(default_values.max_inline_data_set &&
                default_values.max_inline_data >= -1) {
                 BTL_ERROR(("Invalid max_inline_data value specified "
-                           "in INI file (%d); using default value (%d)", 
-                            values.max_inline_data, 
+                           "in INI file (%d); using default value (%d)",
+                            values.max_inline_data,
                             default_values.max_inline_data));
-                device->max_inline_data = (uint32_t) 
+                device->max_inline_data = (uint32_t)
                     default_values.max_inline_data;
             } else {
                 BTL_ERROR(("Invalid max_inline_data value specified "
                            "in INI file (%d)", values.max_inline_data));
                 ret = OMPI_ERR_BAD_PARAM;
                 goto error;
-            } 
+            }
         }
     }
     /* Horrible.  :-( Per the thread starting here:
@@ -1729,7 +1729,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
                            true, orte_process_info.nodename,
                            __FILE__, __LINE__, "ibv_create_cq",
-                           strerror(errno), errno, 
+                           strerror(errno), errno,
                            ibv_get_device_name(device->ib_dev));
             ret = OMPI_ERR_NOT_AVAILABLE;
             goto error;
@@ -1749,7 +1749,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
            that's good enough */
         init_attr.cap.max_inline_data = max_inline_data = 1 << 20;
         while (max_inline_data > 0) {
-            qp = ibv_create_qp(device->ib_pd, &init_attr); 
+            qp = ibv_create_qp(device->ib_pd, &init_attr);
             if (NULL != qp) {
                 break;
             }
@@ -1779,7 +1779,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
     /* Eager RDMA is not currently supported with progress threads */
     if (device->use_eager_rdma && OMPI_ENABLE_PROGRESS_THREADS) {
         device->use_eager_rdma = 0;
-        orte_show_help("help-mpi-btl-openib.txt", 
+        orte_show_help("help-mpi-btl-openib.txt",
                        "eager RDMA and progress threads", true);
     }
 
@@ -1896,7 +1896,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
            modules in this process.  This is an unfortunate artifact
            of the openib BTL startup sequence (see below for more
            details).  The first device will choose the receive_queues
-           value from: (in priority order): 
+           value from: (in priority order):
 
            1. If the btl_openib_receive_queues MCA param was
               specified, use that.
@@ -1991,7 +1991,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                shares one of the problems cited in case 8, below.  So
                we need to fail this scenario; print an error and
                abort.
-           
+
            Case 8: one INI value, different than default
            - MCA parameter: not specified
            - default receive_queues: value A
@@ -2036,7 +2036,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                   Server 2:
                   HCA B: no receive_queues in INI file
                   HCA C: receive_queues specified in INI file
-                
+
                   A will therefore use the default receive_queues
                   value.  B and C will use C's INI receive_queues.
                   But note that modex [currently] only sends around
@@ -2078,7 +2078,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
            - device 1: receive_queues value B in INI file
            - device 2: receive_queues value B in INI file
            --> per case 8, fail with a show_help message.
-           
+
            Case 10: two devices with different INI values
            - MCA parameter: not specified
            - default receive_queues: value A
@@ -2121,7 +2121,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                in the INI, then it must agree with
                component.receive_queues. */
             if (NULL != values.receive_queues) {
-                if (0 != strcmp(values.receive_queues, 
+                if (0 != strcmp(values.receive_queues,
                                 mca_btl_openib_component.receive_queues)) {
                     orte_show_help("help-mpi-btl-openib.txt",
                                    "locally conflicting receive_queues", true,
@@ -2187,7 +2187,7 @@ error:
 
     if (OMPI_SUCCESS != ret) {
         orte_show_help("help-mpi-btl-openib.txt",
-                       "error in device init", true, 
+                       "error in device init", true,
                        orte_process_info.nodename,
                        ibv_get_device_name(device->ib_dev));
     }
@@ -2453,7 +2453,7 @@ btl_openib_component_init(int *num_btl_modules,
        support, so the following test is [currently] good enough... */
     value = opal_mem_hooks_support_level();
 #if !OPAL_HAVE_THREADS
-    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
+    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
         orte_show_help("help-mpi-btl-openib.txt",
                        "ptmalloc2 with no threads", true,
@@ -2468,7 +2468,7 @@ btl_openib_component_init(int *num_btl_modules,
 
        We have a memory manager if we have both FREE and MUNMAP
        support */
-    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) == 
+    if ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) ==
         ((OPAL_MEMORY_FREE_SUPPORT | OPAL_MEMORY_MUNMAP_SUPPORT) & value)) {
         ret = 0;
         index = mca_base_param_find("mpi", NULL, "leave_pinned");
@@ -2481,7 +2481,7 @@ btl_openib_component_init(int *num_btl_modules,
         index = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline");
         if (index >= 0) {
             if (OPAL_SUCCESS == mca_base_param_lookup_int(index, &value) &&
-                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source, 
+                OPAL_SUCCESS == mca_base_param_lookup_source(index, &source,
                                                              NULL)) {
                 if (0 == value && MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
                     ++ret;
@@ -2498,10 +2498,10 @@ btl_openib_component_init(int *num_btl_modules,
     if (index >= 0) {
         if (OPAL_SUCCESS == mca_base_param_lookup_source(index, &source,
                                                          NULL)) {
-            if (-1 == mca_btl_openib_component.ib_max_inline_data  && 
+            if (-1 == mca_btl_openib_component.ib_max_inline_data  &&
                 MCA_BASE_PARAM_SOURCE_DEFAULT == source) {
                 /* If the user has not explicitly set this MCA parameter
-                   use max_inline_data value specified in the 
+                   use max_inline_data value specified in the
                    device-specific parameters INI file */
                 mca_btl_openib_component.ib_max_inline_data = -2;
             }
@@ -2644,7 +2644,7 @@ btl_openib_component_init(int *num_btl_modules,
     mca_btl_openib_component.async_thread = 0;
 #endif
     distance = dev_sorted[0].distance;
-    for (found = false, i = 0; 
+    for (found = false, i = 0;
          i < num_devs && (-1 == mca_btl_openib_component.ib_max_btls ||
                 mca_btl_openib_component.ib_num_btls <
                 mca_btl_openib_component.ib_max_btls); i++) {
@@ -2740,7 +2740,7 @@ btl_openib_component_init(int *num_btl_modules,
     }
 #endif
 
-    /* For XRC: 
+    /* For XRC:
      * from this point we know if MCA_BTL_XRC_ENABLED it true or false */
 
     /* Init XRC IB Addr hash table */
@@ -2807,11 +2807,11 @@ btl_openib_component_init(int *num_btl_modules,
            base device that doesn't have device->qps setup on it yet (remember
            that some modules may share the same device, so when going through
            to loop, we may hit a device that was already setup earlier in
-           the loop). 
-           
+           the loop).
+
            We may to call for prepare_device_for_use() only after adding the btl
-           to mca_btl_openib_component.openib_btls, since the prepare_device_for_use 
-           adds device to async thread that require access to 
+           to mca_btl_openib_component.openib_btls, since the prepare_device_for_use
+           adds device to async thread that require access to
            mca_btl_openib_component.openib_btls.
         */
 
@@ -2829,7 +2829,7 @@ btl_openib_component_init(int *num_btl_modules,
             ret = prepare_device_for_use(device);
             if (OMPI_SUCCESS != ret) {
                 orte_show_help("help-mpi-btl-openib.txt",
-                               "error in device init", true, 
+                               "error in device init", true,
                                orte_process_info.nodename,
                                ibv_get_device_name(device->ib_dev));
                 goto no_btls;
@@ -2856,12 +2856,12 @@ btl_openib_component_init(int *num_btl_modules,
         opal_argv_free(mca_btl_openib_component.if_exclude_list);
         mca_btl_openib_component.if_exclude_list = NULL;
     }
-    
+
     /* setup the fork warning message as we are sensitive
      * to memory corruption issues when fork is called
      */
     ompi_warn_fork();
-    
+
     return btls;
 
  no_btls:
@@ -2923,7 +2923,7 @@ static int progress_no_credits_pending_frags(mca_btl_base_endpoint_t *ep)
                  retransmit for us).
             */
             for (len = opal_list_get_size(&ep->qps[qp].no_credits_pending_frags[pri]);
-                 len > 0 && 
+                 len > 0 &&
                      (ep->eager_rdma_remote.tokens > 0 ||
                       ep->qps[qp].u.pp_qp.sd_credits > 0 ||
                       !BTL_OPENIB_QP_TYPE_PP(qp)); --len) {
@@ -3095,7 +3095,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
     if (rcredits + credits > 0) {
         int rc;
 
-        if (OMPI_SUCCESS != 
+        if (OMPI_SUCCESS !=
             (rc = progress_no_credits_pending_frags(ep))) {
             return rc;
         }
@@ -3363,7 +3363,7 @@ error:
      * SQ and RQ WRs will automatically be flushed.
      */
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
-    if (IBV_WC_WR_FLUSH_ERR == wc->status && 
+    if (IBV_WC_WR_FLUSH_ERR == wc->status &&
         IBV_TRANSPORT_IWARP == device->ib_dev->transport_type) {
         return;
     }
@@ -3373,47 +3373,47 @@ error:
         BTL_PEER_ERROR(remote_proc, ("error polling %s with status %s "
                     "status number %d for wr_id %" PRIx64 " opcode %d  vendor error %d qp_idx %d",
                     cq_name[cq], btl_openib_component_status_to_string(wc->status),
-                    wc->status, wc->wr_id, 
+                    wc->status, wc->wr_id,
                     wc->opcode, wc->vendor_err, qp));
         orte_notifier.log_peer(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
                                remote_proc ? &remote_proc->proc_name : NULL,
                                "\n\tIB polling %s with status %s "
                                "status number %d for wr_id %llu opcode %d vendor error %d qp_idx %d",
                                cq_name[cq], btl_openib_component_status_to_string(wc->status),
-                               wc->status, wc->wr_id, 
+                               wc->status, wc->wr_id,
 			       wc->opcode, wc->vendor_err, qp);
     }
 
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
         IBV_WC_RETRY_EXC_ERR == wc->status) {
-        char *peer_hostname = 
+        char *peer_hostname =
             (NULL != endpoint->endpoint_proc->proc_ompi->proc_hostname) ?
-            endpoint->endpoint_proc->proc_ompi->proc_hostname : 
+            endpoint->endpoint_proc->proc_ompi->proc_hostname :
             "<unknown -- please run with mpi_keep_peer_hostnames=1>";
-        const char *device_name = 
+        const char *device_name =
             ibv_get_device_name(endpoint->qps[qp].qp->lcl_qp->context->device);
 
         if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status) {
             orte_show_help("help-mpi-btl-openib.txt",
-                           BTL_OPENIB_QP_TYPE_PP(qp) ? 
-                           "pp rnr retry exceeded" : 
+                           BTL_OPENIB_QP_TYPE_PP(qp) ?
+                           "pp rnr retry exceeded" :
                            "srq rnr retry exceeded", true,
                            orte_process_info.nodename, device_name,
                            peer_hostname);
             orte_notifier.show_help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
                                     "help-mpi-btl-openib.txt",
-                                    BTL_OPENIB_QP_TYPE_PP(qp) ? 
-                                    "pp rnr retry exceeded" : 
+                                    BTL_OPENIB_QP_TYPE_PP(qp) ?
+                                    "pp rnr retry exceeded" :
                                     "srq rnr retry exceeded",
                                     orte_process_info.nodename, device_name,
                                     peer_hostname);
         } else if (IBV_WC_RETRY_EXC_ERR == wc->status) {
-            orte_show_help("help-mpi-btl-openib.txt", 
+            orte_show_help("help-mpi-btl-openib.txt",
                            "pp retry exceeded", true,
                            orte_process_info.nodename,
                            device_name, peer_hostname);
             orte_notifier.show_help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
-                                    "help-mpi-btl-openib.txt", 
+                                    "help-mpi-btl-openib.txt",
                                     "pp retry exceeded",
                                     orte_process_info.nodename,
                                     device_name, peer_hostname);
