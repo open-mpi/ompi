@@ -110,7 +110,7 @@ int ompi_btl_openib_ini_init(void)
 #ifndef __WINDOWS__
     char separator = ':';
 #else
-    /* ':' is part of the path on Windows, 
+    /* ':' is part of the path on Windows,
        so use ';' instead. */
     char separator = ';';
 #endif
@@ -414,7 +414,7 @@ static int parse_line(parsed_section_values_t *sv)
 
     else if (0 == strcasecmp(key_buffer, "rdmacm_reject_causes_connect_error")) {
         /* Single value */
-        sv->values.rdmacm_reject_causes_connect_error = 
+        sv->values.rdmacm_reject_causes_connect_error =
             (bool) ompi_btl_openib_ini_intify(value);
         sv->values.rdmacm_reject_causes_connect_error_set = true;
     }
@@ -558,7 +558,7 @@ static int save_section(parsed_section_values_t *s)
                     }
 
                     if (NULL != s->values.receive_queues) {
-                        h->values.receive_queues = 
+                        h->values.receive_queues =
                             strdup(s->values.receive_queues);
                     }
 
@@ -568,9 +568,9 @@ static int save_section(parsed_section_values_t *s)
                     }
 
                     if (s->values.rdmacm_reject_causes_connect_error_set) {
-                        h->values.rdmacm_reject_causes_connect_error = 
+                        h->values.rdmacm_reject_causes_connect_error =
                             s->values.rdmacm_reject_causes_connect_error;
-                        h->values.rdmacm_reject_causes_connect_error_set = 
+                        h->values.rdmacm_reject_causes_connect_error_set =
                             true;
                     }
 

@@ -3,9 +3,9 @@
  * Copyright (c) 2007 Mellanox Technologies, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "ompi_config.h"
@@ -88,7 +88,7 @@ int ompi_btl_openib_connect_base_register(void)
              all_cpc_names);
 
     mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
-                              "cpc_include", string, false, false, 
+                              "cpc_include", string, false, false,
                               NULL, &cpc_include);
     free(string);
 
@@ -97,7 +97,7 @@ int ompi_btl_openib_connect_base_register(void)
              all_cpc_names);
 
     mca_base_param_reg_string(&mca_btl_openib_component.super.btl_version,
-                              "cpc_exclude", string, false, false, 
+                              "cpc_exclude", string, false, false,
                               NULL, &cpc_exclude);
     free(string);
 
@@ -112,7 +112,7 @@ int ompi_btl_openib_connect_base_register(void)
         temp = opal_argv_split(cpc_include, ',');
         for (save = j = 0; NULL != temp[j]; ++j) {
             for (i = 0; NULL != all[i]; ++i) {
-                if (0 == strcmp(temp[j], all[i]->cbc_name)) { 
+                if (0 == strcmp(temp[j], all[i]->cbc_name)) {
                     opal_output(-1, "include: saving %s", all[i]->cbc_name);
                     available[save++] = all[i];
                     ++num_available;
@@ -123,7 +123,7 @@ int ompi_btl_openib_connect_base_register(void)
                 orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
                                "include", orte_process_info.nodename,
-                               "include", cpc_include, temp[j], 
+                               "include", cpc_include, temp[j],
                                all_cpc_names);
                 opal_argv_free(temp);
                 free(all_cpc_names);
@@ -141,7 +141,7 @@ int ompi_btl_openib_connect_base_register(void)
         /* First: error check -- ensure that all the names are valid */
         for (j = 0; NULL != temp[j]; ++j) {
             for (i = 0; NULL != all[i]; ++i) {
-                if (0 == strcmp(temp[j], all[i]->cbc_name)) { 
+                if (0 == strcmp(temp[j], all[i]->cbc_name)) {
                     break;
                 }
             }
@@ -149,7 +149,7 @@ int ompi_btl_openib_connect_base_register(void)
                 orte_show_help("help-mpi-btl-openib-cpc-base.txt",
                                "cpc name not found", true,
                                "exclude", orte_process_info.nodename,
-                               "exclude", cpc_exclude, temp[j], 
+                               "exclude", cpc_exclude, temp[j],
                                all_cpc_names);
                 opal_argv_free(temp);
                 free(all_cpc_names);
@@ -171,13 +171,13 @@ int ompi_btl_openib_connect_base_register(void)
             }
         }
         opal_argv_free(temp);
-    } 
+    }
 
     /* If there's no include/exclude list, copy all[] into available[] */
     else {
         opal_output(-1, "no include or exclude: saving all");
         memcpy(available, all, sizeof(all));
-        num_available = (sizeof(all) / 
+        num_available = (sizeof(all) /
                          sizeof(ompi_btl_openib_connect_base_module_t *)) - 1;
     }
 
@@ -241,7 +241,7 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
     int i, rc, cpc_index, len;
     ompi_btl_openib_connect_base_module_t **cpcs;
 
-    cpcs = (ompi_btl_openib_connect_base_module_t **) calloc(num_available, 
+    cpcs = (ompi_btl_openib_connect_base_module_t **) calloc(num_available,
                   sizeof(ompi_btl_openib_connect_base_module_t *));
     if (NULL == cpcs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -311,7 +311,7 @@ int ompi_btl_openib_connect_base_select_for_local_port(mca_btl_openib_module_t *
     return OMPI_SUCCESS;
 }
 
-/* 
+/*
  * This function is invoked when determining whether we have a CPC in
  * common with a specific remote port.  We already know that the
  * subnet ID is the same between a specific local port and the target
@@ -398,7 +398,7 @@ int ompi_btl_openib_connect_base_get_cpc_index(ompi_btl_openib_connect_base_comp
 ompi_btl_openib_connect_base_component_t *
 ompi_btl_openib_connect_base_get_cpc_byindex(uint8_t index)
 {
-    return (index >= (sizeof(all) / 
+    return (index >= (sizeof(all) /
                       sizeof(ompi_btl_openib_connect_base_module_t *))) ?
         NULL : all[index];
 }
@@ -421,8 +421,8 @@ int ompi_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    endpoint->endpoint_cts_mr = 
-        ibv_reg_mr(endpoint->endpoint_btl->device->ib_pd, 
+    endpoint->endpoint_cts_mr =
+        ibv_reg_mr(endpoint->endpoint_btl->device->ib_pd,
                    fli->ptr, length,
                    IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE |
                    IBV_ACCESS_REMOTE_READ);
@@ -438,14 +438,14 @@ int ompi_btl_openib_connect_base_alloc_cts(mca_btl_base_endpoint_t *endpoint)
        from underneath us. */
 
     /* Copy the lkey where it needs to go */
-    endpoint->endpoint_cts_frag.super.sg_entry.lkey = 
-        endpoint->endpoint_cts_frag.super.super.segment.seg_key.key32[0] = 
+    endpoint->endpoint_cts_frag.super.sg_entry.lkey =
+        endpoint->endpoint_cts_frag.super.super.segment.seg_key.key32[0] =
         endpoint->endpoint_cts_mr->lkey;
     endpoint->endpoint_cts_frag.super.sg_entry.length = length;
 
     /* Construct the rest of the recv_frag_t */
     OBJ_CONSTRUCT(&(endpoint->endpoint_cts_frag), mca_btl_openib_recv_frag_t);
-    endpoint->endpoint_cts_frag.super.super.base.order = 
+    endpoint->endpoint_cts_frag.super.super.base.order =
         mca_btl_openib_component.credits_qp;
     endpoint->endpoint_cts_frag.super.endpoint = endpoint;
     OPAL_OUTPUT((-1, "Got a CTS frag for peer %s, addr %p, length %d, lkey %d",

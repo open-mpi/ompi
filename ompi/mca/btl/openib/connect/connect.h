@@ -2,9 +2,9 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -30,26 +30,26 @@
  *
  * - a BTL module represents a network port (in the case of the openib
  *   BTL, a LID)
- * - a CPC module represents one way to make connections to a BTL module 
+ * - a CPC module represents one way to make connections to a BTL module
  * - hence, a BTL module has potentially multiple CPC modules
  *   associated with it
- * - an endpoint represnts a connection between a local BTL module and 
- *   a remote BTL module (in the openib BTL, because of BSRQ, an 
- *   endpoint can contain multiple QPs) 
+ * - an endpoint represnts a connection between a local BTL module and
+ *   a remote BTL module (in the openib BTL, because of BSRQ, an
+ *   endpoint can contain multiple QPs)
  * - when an endpoint is created, one of the CPC modules associated
- *   with the local BTL is selected and associated with the endpoint 
+ *   with the local BTL is selected and associated with the endpoint
  *   (obviously, it is a CPC module that is common between the local
- *   and remote BTL modules) 
- * - endpoints may be created and destroyed during the MPI job 
- * - endpoints are created lazily, during the first communication 
- *   between two peers 
- * - endpoints are destroyed when two MPI processes become 
- *   disconnected (e.g., MPI-2 dynamics or MPI_FINALIZE) 
- * - hence, BTL modules and CPC modules outlive endpoints. 
- *   Specifically, BTL modules and CPC modules live from MPI_INIT to 
- *   MPI_FINALIZE. endpoints come and go as MPI semantics demand it. 
- * - therefore, CPC modules need to cache information on endpoints that 
- *   are specific to that connection. 
+ *   and remote BTL modules)
+ * - endpoints may be created and destroyed during the MPI job
+ * - endpoints are created lazily, during the first communication
+ *   between two peers
+ * - endpoints are destroyed when two MPI processes become
+ *   disconnected (e.g., MPI-2 dynamics or MPI_FINALIZE)
+ * - hence, BTL modules and CPC modules outlive endpoints.
+ *   Specifically, BTL modules and CPC modules live from MPI_INIT to
+ *   MPI_FINALIZE. endpoints come and go as MPI semantics demand it.
+ * - therefore, CPC modules need to cache information on endpoints that
+ *   are specific to that connection.
  *
  * Component interface:
  *
@@ -57,7 +57,7 @@
  * calls the connect_base_register() function, which scans all
  * compiled-in CPC's.  If they have component_register() functions,
  * they are called (component_register() functions are only allowed to
- * register MCA parameters).  
+ * register MCA parameters).
  *
  * NOTE: The connect_base_register() function will process the
  * btl_openib_cpc_include and btl_openib_cpc_exclude MCA parameters
@@ -230,7 +230,7 @@ typedef int (*ompi_btl_openib_connect_base_component_init_fn_t)(void);
  * - Other OMPI_ERR_* code: an error occurred.
  */
 typedef int (*ompi_btl_openib_connect_base_func_component_query_t)
-    (struct mca_btl_openib_module_t *btl, 
+    (struct mca_btl_openib_module_t *btl,
      struct ompi_btl_openib_connect_base_module_t **cpc);
 
 /**

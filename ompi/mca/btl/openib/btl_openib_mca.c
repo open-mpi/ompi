@@ -64,7 +64,7 @@ enum {
 /*
  * utility routine for string parameter registration
  */
-static int reg_string(const char* param_name, 
+static int reg_string(const char* param_name,
                       const char* deprecated_param_name,
                       const char* param_desc,
                       const char* default_value, char **out_value,
@@ -76,8 +76,8 @@ static int reg_string(const char* param_name,
                                       param_name, param_desc, false, false,
                                       default_value, &value);
     if (NULL != deprecated_param_name) {
-        mca_base_param_reg_syn(index, 
-                               &mca_btl_openib_component.super.btl_version, 
+        mca_base_param_reg_syn(index,
+                               &mca_btl_openib_component.super.btl_version,
                                deprecated_param_name, true);
     }
     mca_base_param_lookup_string(index, &value);
@@ -95,7 +95,7 @@ static int reg_string(const char* param_name,
 /*
  * utility routine for integer parameter registration
  */
-static int reg_int(const char* param_name, 
+static int reg_int(const char* param_name,
                    const char* deprecated_param_name,
                    const char* param_desc,
                    int default_value, int *out_value, int flags)
@@ -105,12 +105,12 @@ static int reg_int(const char* param_name,
                                    param_name, param_desc, false, false,
                                    default_value, NULL);
     if (NULL != deprecated_param_name) {
-        mca_base_param_reg_syn(index, 
-                               &mca_btl_openib_component.super.btl_version, 
+        mca_base_param_reg_syn(index,
+                               &mca_btl_openib_component.super.btl_version,
                                deprecated_param_name, true);
     }
     mca_base_param_lookup_int(index, &value);
-    
+
     if (0 != (flags & REGINT_NEG_ONE_OK) && -1 == value) {
         *out_value = value;
         return OMPI_SUCCESS;
@@ -193,7 +193,7 @@ int btl_openib_register_mca_params(void)
     }
     CHECK(reg_string("device_param_files", "hca_param_files",
                      "Colon-delimited list of INI-style files that contain device vendor/part-specific parameters (use semicolon for Windows)",
-                     str, &mca_btl_openib_component.device_params_file_names, 
+                     str, &mca_btl_openib_component.device_params_file_names,
                      0));
     free(str);
 
@@ -264,11 +264,11 @@ int btl_openib_register_mca_params(void)
                   -1, &ival, REGINT_NEG_ONE_OK | REGINT_GE_ZERO));
     mca_btl_openib_component.ib_max_inline_data = (int32_t) ival;
 
-    CHECK(reg_string("pkey", "ib_pkey_val", 
+    CHECK(reg_string("pkey", "ib_pkey_val",
                      "OpenFabrics partition key (pkey) value. "
                      "Unsigned integer decimal or hex values are allowed (e.g., \"3\" or \"0x3f\") and will be masked against the maximum allowable IB partition key value (0x7fff)",
                      "0", &pkey, 0));
-    mca_btl_openib_component.ib_pkey_val = 
+    mca_btl_openib_component.ib_pkey_val =
         ompi_btl_openib_ini_intify(pkey) & MCA_BTL_IB_PKEY_MASK;
     free(pkey);
 
@@ -278,7 +278,7 @@ int btl_openib_register_mca_params(void)
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_psn = (uint32_t) ival;
 
-    CHECK(reg_int("ib_qp_ous_rd_atom", NULL, 
+    CHECK(reg_int("ib_qp_ous_rd_atom", NULL,
                   "InfiniBand outstanding atomic reads "
                   "(must be >= 0)",
                   4, &ival, REGINT_GE_ZERO));
@@ -402,7 +402,7 @@ int btl_openib_register_mca_params(void)
     CHECK(reg_int("ib_path_record_service_level", NULL,
                   "Enable getting InfiniBand service level from PathRecord "
                   "(must be >= 0, 0 = disabled, positive = try to get the "
-                  "service level from PathRecord)", 
+                  "service level from PathRecord)",
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_path_record_service_level = (uint32_t) ival;
 #endif
@@ -582,11 +582,11 @@ int btl_openib_register_mca_params(void)
 
     CHECK(reg_string("receive_queues", NULL,
                      "Colon-delimited, comma-delimited list of receive queues: P,4096,8,6,4:P,32768,8,6,4",
-                     default_qps, &mca_btl_openib_component.receive_queues, 
+                     default_qps, &mca_btl_openib_component.receive_queues,
                      0));
-    mca_btl_openib_component.receive_queues_source = 
-        (0 == strcmp(default_qps, 
-                     mca_btl_openib_component.receive_queues)) ? 
+    mca_btl_openib_component.receive_queues_source =
+        (0 == strcmp(default_qps,
+                     mca_btl_openib_component.receive_queues)) ?
         BTL_OPENIB_RQ_SOURCE_DEFAULT : BTL_OPENIB_RQ_SOURCE_MCA;
 
     CHECK(reg_string("if_include", NULL,

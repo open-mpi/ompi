@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
@@ -14,9 +14,9 @@
 # Copyright (c) 2007-2009 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 # This is the US/English help file for Open MPI's OpenFabrics support
@@ -151,9 +151,9 @@ sent.
 
 This error usually means one of two things:
 
-1. There is something awry within the network fabric itself.  
+1. There is something awry within the network fabric itself.
 2. A bug in Open MPI has caused flow control to malfunction.
- 
+
 #1 is usually more likely.  You should note the hosts on which this
 error has occurred; it has been observed that rebooting or removing a
 particular host from the job can sometimes resolve this issue.
@@ -200,7 +200,7 @@ exceeded.  "Retry count" is defined in the InfiniBand spec 1.2
 This error typically means that there is something awry within the
 InfiniBand fabric itself.  You should note the hosts on which this
 error has occurred; it has been observed that rebooting or removing a
-particular host from the job can sometimes resolve this issue.  
+particular host from the job can sometimes resolve this issue.
 
 Two MCA parameters can be used to control Open MPI's behavior with
 respect to the retry count:
@@ -280,7 +280,7 @@ Deactivating the OpenFabrics BTL.
 Wrong buffer alignment %d configured on host '%s'. Should be bigger
 than zero and power of two. Use default %d instead.
 #
-[of error event] 
+[of error event]
 The OpenFabrics stack has reported a network error event.  Open MPI
 will try to continue, but your job may end up failing.
 
@@ -591,7 +591,7 @@ conflict:
 WARNING: The openib BTL was directed to use "eager RDMA" for short
 messages, but the openib BTL was compiled with progress threads
 support.  Short eager RDMA is not yet supported with progress threads;
-its use has been disabled in this job.  
+its use has been disabled in this job.
 
 This is a warning only; you job will attempt to continue.
 #
@@ -644,7 +644,7 @@ be able to run successfully.
   Local host:       %s
   Local adapter:    %s (vendor 0x%x, part ID %d)
   Local queues:     %s
-  
+
   Remote host:      %s
   Remote adapter:   (vendor 0x%x, part ID %d)
   Remote queues:    %s
@@ -656,7 +656,7 @@ Such mixed network trasport configuration is not supported by Open MPI.
   Local host:            %s
   Local adapter:         %s (vendor 0x%x, part ID %d)
   Local transport type:  %s
-  
+
   Remote host:           %s
   Remote Adapter:        (vendor 0x%x, part ID %d)
   Remote transport type: %s

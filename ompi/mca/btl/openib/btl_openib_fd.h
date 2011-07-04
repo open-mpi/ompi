@@ -3,9 +3,9 @@
  * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -19,7 +19,7 @@ BEGIN_C_DECLS
 /**
  * Typedef for fd callback function
  */
-typedef void *(ompi_btl_openib_fd_event_callback_fn_t)(int fd, int flags, 
+typedef void *(ompi_btl_openib_fd_event_callback_fn_t)(int fd, int flags,
                                                        void *context);
 
 /**
@@ -37,7 +37,7 @@ int ompi_btl_openib_fd_init(void);
  * Start monitoring an fd.
  * Called by main or service thread; callback will be in service thread.
  */
-int ompi_btl_openib_fd_monitor(int fd, int flags, 
+int ompi_btl_openib_fd_monitor(int fd, int flags,
                                ompi_btl_openib_fd_event_callback_fn_t *callback,
                                void *context);
 
@@ -45,7 +45,7 @@ int ompi_btl_openib_fd_monitor(int fd, int flags,
  * Stop monitoring an fd.
  * Called by main or service thread; callback will be in service thread.
  */
-int ompi_btl_openib_fd_unmonitor(int fd, 
+int ompi_btl_openib_fd_unmonitor(int fd,
                                  ompi_btl_openib_fd_event_callback_fn_t *callback,
                                  void *context);
 

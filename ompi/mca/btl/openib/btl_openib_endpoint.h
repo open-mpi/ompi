@@ -208,7 +208,7 @@ struct mca_btl_base_endpoint_t {
     /** list of pending rget ops */
     opal_list_t                 pending_get_frags;
     /** list of pending rput ops */
-    opal_list_t                 pending_put_frags; 
+    opal_list_t                 pending_put_frags;
 
     /** number of available get tokens */
     int32_t                     get_tokens;
@@ -503,8 +503,8 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
 #if OPAL_ENABLE_DEBUG
 	do {
 	  ftr->seq = ep->eager_rdma_remote.seq;
-	} while (!OPAL_ATOMIC_CMPSET_32((int32_t*) &ep->eager_rdma_remote.seq, 
-					(int32_t) ftr->seq, 
+	} while (!OPAL_ATOMIC_CMPSET_32((int32_t*) &ep->eager_rdma_remote.seq,
+					(int32_t) ftr->seq,
                                         (int32_t) (ftr->seq+1)));
 #endif
         if(ep->nbo)

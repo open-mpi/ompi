@@ -4,9 +4,9 @@
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -14,7 +14,7 @@
  * TO-DO:
  *
  * - audit control values passed to req_send()
- * - More show_help() throughout 
+ * - More show_help() throughout
  * - error handling in case of broken connection is not good; need to
  *   notify btl module safely
  */
@@ -91,7 +91,7 @@
  *   tell IBCM (among other things) when the first message arrives on
  *   a QP when the RTU has not yet been received.  This can happen, of
  *   course, since IBCM traffic is UD.
- * - Also, note that IBCM "listener" IDs are per DEVICE, not per port.  
+ * - Also, note that IBCM "listener" IDs are per DEVICE, not per port.
  * - CM ID's are persistent throughout the life of a QP.  If you
  *   destroy a CM ID (ib_cm_destroy_id), the IBCM system will tear
  *   down the connection.  So the CM ID you get when receiving a
@@ -179,7 +179,7 @@
  *
  * 1. The "wrong" process will send a single IBCM connection request
  *    to its peer on a bogus QP that was created just for this
- *    request.  
+ *    request.
  * 2. The receiver will get the request, detect that it came
  *    in from the "wrong" direction, and reject it (IBCM has an
  *    explicit provision for rejecting incoming connections).
@@ -366,7 +366,7 @@ typedef struct {
 
 static void ibcm_listen_cm_id_constructor(ibcm_listen_cm_id_t *h);
 static void ibcm_listen_cm_id_destructor(ibcm_listen_cm_id_t *h);
-static OBJ_CLASS_INSTANCE(ibcm_listen_cm_id_t, opal_list_item_t, 
+static OBJ_CLASS_INSTANCE(ibcm_listen_cm_id_t, opal_list_item_t,
                           ibcm_listen_cm_id_constructor,
                           ibcm_listen_cm_id_destructor);
 
@@ -452,7 +452,7 @@ typedef struct {
     ibcm_module_t *ibcm_module;
 } ibcm_module_list_item_t;
 
-static OBJ_CLASS_INSTANCE(ibcm_module_list_item_t, opal_list_item_t, 
+static OBJ_CLASS_INSTANCE(ibcm_module_list_item_t, opal_list_item_t,
                           NULL, NULL);
 
 /*
@@ -506,7 +506,7 @@ typedef struct {
 /*--------------------------------------------------------------------*/
 
 static void ibcm_component_register(void);
-static int ibcm_component_query(mca_btl_openib_module_t *btl, 
+static int ibcm_component_query(mca_btl_openib_module_t *btl,
                                 ompi_btl_openib_connect_base_module_t **cpc);
 static int ibcm_component_finalize(void);
 
@@ -544,13 +544,13 @@ ompi_btl_openib_connect_base_component_t ompi_btl_openib_connect_ibcm = {
 
 #define ENABLE_TIMERS (OPAL_ENABLE_DEBUG && 0)
 
-#if ENABLE_TIMERS 
+#if ENABLE_TIMERS
 #include MCA_timer_IMPLEMENTATION_HEADER
 
 enum {
     QUERY,
     START_CONNECT,
-    QP_TO_RTR, 
+    QP_TO_RTR,
     QP_TO_RTS,
     REQUEST_RECEIVED,
     REPLY_RECEIVED,
@@ -616,7 +616,7 @@ static void ibcm_component_register(void)
     mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
                            "connect_ibcm_gid_index",
                            "GID table index to use to obtain each port's GUID",
-                           false, false, ibcm_gid_table_index, 
+                           false, false, ibcm_gid_table_index,
                            &ibcm_gid_table_index);
     if (ibcm_gid_table_index < 0) {
         ibcm_gid_table_index = 0;
@@ -625,15 +625,15 @@ static void ibcm_component_register(void)
 
 /*--------------------------------------------------------------------*/
 
-/* The IB_CM_ASSIGN_SERVICE_ID value passed to ib_cm_listen function asks, 
+/* The IB_CM_ASSIGN_SERVICE_ID value passed to ib_cm_listen function asks,
  * from IBCM , to assign service_id.
- * The value was taken from IBCM kernel level 
+ * The value was taken from IBCM kernel level
  */
 #ifndef IB_CM_ASSIGN_SERVICE_ID
 #define IB_CM_ASSIGN_SERVICE_ID hton64(0x0200000000000000ULL)
 #endif
 
-static int ibcm_component_query(mca_btl_openib_module_t *btl, 
+static int ibcm_component_query(mca_btl_openib_module_t *btl,
                                 ompi_btl_openib_connect_base_module_t **cpc)
 {
     int rc;
@@ -760,11 +760,11 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
             goto error;
         }
         OPAL_OUTPUT((-1, "opened ibcm device 0x%" PRIx64 " (%s:%d)",
-                     (uint64_t) cmh->cm_device, 
+                     (uint64_t) cmh->cm_device,
                      ibv_get_device_name(cmh->ib_context->device),
                      openib_btl->port_num));
 
-        if (0 != (rc = ib_cm_create_id(cmh->cm_device, 
+        if (0 != (rc = ib_cm_create_id(cmh->cm_device,
                                        &cmh->listen_cm_id, NULL))) {
             /* Same rationale as above */
             OBJ_RELEASE(cmh);
@@ -774,12 +774,12 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
         }
 
         if (0 != (rc = ib_cm_listen(cmh->listen_cm_id, IB_CM_ASSIGN_SERVICE_ID, 0))) {
-            /* Same rationale as above */ 
-            OBJ_RELEASE(cmh); 
-            BTL_ERROR(("failed to ib_cm_listen : rc=%d, errno=%d", rc, errno)); 
-            rc = OMPI_ERR_NOT_SUPPORTED; 
-            goto error; 
-        } 
+            /* Same rationale as above */
+            OBJ_RELEASE(cmh);
+            BTL_ERROR(("failed to ib_cm_listen : rc=%d, errno=%d", rc, errno));
+            rc = OMPI_ERR_NOT_SUPPORTED;
+            goto error;
+        }
 
         if (0 != (rc = ib_cm_attr_id(cmh->listen_cm_id, &(cmh->param)))) {
             OBJ_RELEASE(cmh);
@@ -822,7 +822,7 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
         rc = OMPI_ERR_UNREACH;
         goto error;
     }
-    rc = ibv_query_gid(btl->device->ib_dev_context, btl->port_num, ibcm_gid_table_index, 
+    rc = ibv_query_gid(btl->device->ib_dev_context, btl->port_num, ibcm_gid_table_index,
                        &gid);
     if (0 != rc) {
         BTL_ERROR(("system error (ibv_query_gid failed)"));
@@ -863,8 +863,8 @@ static int ibcm_component_query(mca_btl_openib_module_t *btl,
                      btl->port_num));
     } else {
         BTL_VERBOSE(("unavailable for use on %s:%d; fatal error %d (%s)",
-                     ibv_get_device_name(btl->device->ib_dev), 
-                     btl->port_num, rc, 
+                     ibv_get_device_name(btl->device->ib_dev),
+                     btl->port_num, rc,
                      opal_strerror(rc)));
     }
     return rc;
@@ -895,8 +895,8 @@ static uint32_t max_inline_size(int qp, mca_btl_openib_device_t *device)
  * Create the local side of one qp.  The remote side will be connected
  * later.
  */
-static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp, 
-                         struct ibv_srq *srq, uint32_t max_recv_wr, 
+static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
+                         struct ibv_srq *srq, uint32_t max_recv_wr,
                          uint32_t max_send_wr)
 {
     mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
@@ -910,7 +910,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     init_attr.send_cq = openib_btl->device->ib_cq[BTL_OPENIB_LP_CQ];
     init_attr.recv_cq = openib_btl->device->ib_cq[qp_cq_prio(qp)];
     init_attr.srq = srq;
-    init_attr.cap.max_inline_data = req_inline = 
+    init_attr.cap.max_inline_data = req_inline =
         max_inline_size(qp, openib_btl->device);
     init_attr.cap.max_send_sge = 1;
     init_attr.cap.max_recv_sge = 1; /* we do not use SG list */
@@ -922,10 +922,10 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     }
     init_attr.cap.max_send_wr = max_send_wr;
 
-    my_qp = ibv_create_qp(openib_btl->device->ib_pd, &init_attr); 
-    if (NULL == my_qp) { 
-        BTL_ERROR(("error creating qp errno says %s", strerror(errno))); 
-        return OMPI_ERROR; 
+    my_qp = ibv_create_qp(openib_btl->device->ib_pd, &init_attr);
+    if (NULL == my_qp) {
+        BTL_ERROR(("error creating qp errno says %s", strerror(errno)));
+        return OMPI_ERROR;
     }
     endpoint->qps[qp].qp->lcl_qp = my_qp;
     if (init_attr.cap.max_inline_data < req_inline) {
@@ -971,7 +971,7 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint,
         pp_qp_num = 1;
     }
 
-    for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) { 
+    for (qp = 0; qp < mca_btl_openib_component.num_qps; ++qp) {
         struct ibv_srq *srq = NULL;
         uint32_t max_recv_wr, max_send_wr;
         int32_t rd_rsv, rd_num_credits;
@@ -985,7 +985,7 @@ static int qp_create_all(mca_btl_base_endpoint_t* endpoint,
         }
 
         if (BTL_OPENIB_QP_TYPE_PP(qp)) {
-            max_recv_wr = mca_btl_openib_component.qp_infos[qp].rd_num + 
+            max_recv_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
                 rd_rsv;
             max_send_wr = mca_btl_openib_component.qp_infos[qp].rd_num +
                 rd_num_credits;
@@ -1019,14 +1019,14 @@ static int fill_path_record(ibcm_module_t *m,
                             mca_btl_base_endpoint_t *endpoint,
                             struct ibv_sa_path_rec *path_rec)
 {
-    modex_msg_t *remote_msg = 
+    modex_msg_t *remote_msg =
         (modex_msg_t*) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
-    modex_msg_t *local_msg = 
+    modex_msg_t *local_msg =
         (modex_msg_t*) m->cpc.data.cbm_modex_message;
 
     /* Global attributes */
-    path_rec->dgid.global.subnet_prefix = 
-        path_rec->sgid.global.subnet_prefix = 
+    path_rec->dgid.global.subnet_prefix =
+        path_rec->sgid.global.subnet_prefix =
         hton64(m->btl->port_info.subnet_id);
     path_rec->dgid.global.interface_id = hton64(remote_msg->mm_port_guid);
     path_rec->sgid.global.interface_id = hton64(local_msg->mm_port_guid);
@@ -1064,7 +1064,7 @@ static int fill_path_record(ibcm_module_t *m,
     path_rec->pkey = mca_btl_openib_component.ib_pkey_val;
     if (0 == path_rec->pkey) {
         uint16_t pkey;
-        ibv_query_pkey(endpoint->endpoint_btl->device->ib_dev_context, 
+        ibv_query_pkey(endpoint->endpoint_btl->device->ib_dev_context,
                        endpoint->endpoint_btl->port_num, 0, &pkey);
         path_rec->pkey = ntohs(pkey);
     }
@@ -1103,10 +1103,10 @@ static int fill_path_record(ibcm_module_t *m,
     BTL_VERBOSE(("Got src/dest subnet id: 0x%" PRIx64 " / 0x%" PRIx64,
                  path_rec->sgid.global.subnet_prefix,
                  path_rec->dgid.global.subnet_prefix));
-    BTL_VERBOSE(("Got src/dest interface id: 0x%" PRIx64 " / 0x%" PRIx64, 
+    BTL_VERBOSE(("Got src/dest interface id: 0x%" PRIx64 " / 0x%" PRIx64,
                  path_rec->sgid.global.interface_id,
                  path_rec->dgid.global.interface_id));
-    BTL_VERBOSE(("Got src/dest lid: 0x%x / 0x%x", 
+    BTL_VERBOSE(("Got src/dest lid: 0x%x / 0x%x",
                  path_rec->slid, path_rec->dlid));
     BTL_VERBOSE(("Got raw_traffic: %d", path_rec->raw_traffic));
 
@@ -1131,7 +1131,7 @@ static int fill_path_record(ibcm_module_t *m,
 
 static int ibcm_endpoint_init(struct mca_btl_base_endpoint_t *endpoint)
 {
-    ibcm_endpoint_t *ie = endpoint->endpoint_local_cpc_data = 
+    ibcm_endpoint_t *ie = endpoint->endpoint_local_cpc_data =
         calloc(1, sizeof(ibcm_endpoint_t));
     if (NULL == ie) {
         BTL_ERROR(("malloc failed!"));
@@ -1141,7 +1141,7 @@ static int ibcm_endpoint_init(struct mca_btl_base_endpoint_t *endpoint)
     BTL_VERBOSE(("endpoint %p / %p", (void*)endpoint, (void*)ie));
     ie->ie_cpc = endpoint->endpoint_local_cpc;
     ie->ie_endpoint = endpoint;
-    ie->ie_qps_created = 
+    ie->ie_qps_created =
         ie->ie_recv_buffers_posted = false;
     ie->ie_qps_to_connect = mca_btl_openib_component.num_qps;
 
@@ -1159,12 +1159,12 @@ static int ibcm_endpoint_init(struct mca_btl_base_endpoint_t *endpoint)
 static bool i_initiate(ibcm_module_t *m,
                        mca_btl_openib_endpoint_t *endpoint)
 {
-    modex_msg_t *msg = 
+    modex_msg_t *msg =
         (modex_msg_t*) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
-    uint64_t my_port_guid = ntoh64(m->btl->device->ib_dev_attr.node_guid) + 
+    uint64_t my_port_guid = ntoh64(m->btl->device->ib_dev_attr.node_guid) +
         m->btl->port_num;
     uint64_t service_id = m->cmh->param.service_id;
-    
+
     BTL_VERBOSE(("i_initiate: my guid (%0" PRIx64 "), msg guid (%0" PRIx64 ")",
                  my_port_guid, msg->mm_port_guid));
     BTL_VERBOSE(("i_initiate: my service id (%d), msg service id (%d)",
@@ -1172,7 +1172,7 @@ static bool i_initiate(ibcm_module_t *m,
 
     return
         (my_port_guid == msg->mm_port_guid &&
-         service_id < msg->mm_service_id) ? true : 
+         service_id < msg->mm_service_id) ? true :
         (my_port_guid < msg->mm_port_guid) ? true : false;
 }
 
@@ -1187,11 +1187,11 @@ static ibcm_request_t *alloc_request(ibcm_module_t *m, modex_msg_t *msg,
     struct ib_cm_req_param *cm_req;
     ibcm_request_t *req = OBJ_NEW(ibcm_request_t);
     BTL_VERBOSE(("allocated cached req id: 0x%" PRIx64, (void*)req));
-        
+
     if (NULL == req) {
         return NULL;
     }
-    
+
     /* Create this CM ID */
     if (0 != ib_cm_create_id(m->cmh->cm_device,
                              &(req->super.cm_id),
@@ -1201,11 +1201,11 @@ static ibcm_request_t *alloc_request(ibcm_module_t *m, modex_msg_t *msg,
         return NULL;
     }
     BTL_VERBOSE(("created CM ID 0x%" PRIx64, &(req->super.cm_id)));
-    
+
     /* This data is constant for all the QP's */
     req->path_rec = *path_rec;
     req->endpoint = endpoint;
-    
+
     cm_req = &(req->cm_req);
     cm_req->qp_type = IBV_QPT_RC;
     cm_req->alternate_path = NULL;
@@ -1220,7 +1220,7 @@ static ibcm_request_t *alloc_request(ibcm_module_t *m, modex_msg_t *msg,
     cm_req->remote_cm_response_timeout = 20;
     cm_req->local_cm_response_timeout = 20;
     cm_req->max_cm_retries = 5;
-    
+
     req->private_data.ireqd_pid = m->cmh->param.service_id;
     req->private_data.ireqd_ep_index = endpoint->index;
 
@@ -1249,21 +1249,21 @@ static void print_req(struct ib_cm_req_param *cm_req)
     BTL_VERBOSE(("cm_req->max_cm_retries: %d", cm_req->max_cm_retries));
     BTL_VERBOSE(("cm_req->srq: %d", cm_req->srq));
 }
- 
+
 static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
                                      mca_btl_base_endpoint_t *endpoint)
 {
     int i, rc;
     ibcm_module_t *m = (ibcm_module_t *) cpc;
-    ibcm_endpoint_t *ie = 
+    ibcm_endpoint_t *ie =
         (ibcm_endpoint_t *) endpoint->endpoint_local_cpc_data;
-    modex_msg_t *msg = 
+    modex_msg_t *msg =
         (modex_msg_t*) endpoint->endpoint_remote_cpc_data->cbm_modex_message;
     struct ibv_sa_path_rec path_rec;
     bool do_initiate;
 
     TIMER_START(START_CONNECT);
-    BTL_VERBOSE(("endpoint %p (lid %d, ep index %d)", 
+    BTL_VERBOSE(("endpoint %p (lid %d, ep index %d)",
                  (void*)endpoint, endpoint->endpoint_btl->port_info.lid,
                  endpoint->index));
 
@@ -1291,7 +1291,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
         rc = OMPI_ERR_NOT_FOUND;
         goto err;
     }
-        
+
     /* If we're not the initiator, make a bogus QP (must be done
        before we make all the other QPs) */
 
@@ -1303,14 +1303,14 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
         }
         ie->ie_bogus_qp = endpoint->qps[0].qp->lcl_qp;
     }
-        
+
     /* Make the local side of all the QP's */
     if (OMPI_SUCCESS != (rc = qp_create_all(endpoint, m))) {
         goto err;
     }
 
     /* Check initiation direction (see comment above i_initiate()
-       function): 
+       function):
 
        - if this is the side that is not supposed to initiate, then
          send a single bogus request that we expect to be rejected.
@@ -1365,12 +1365,12 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
             cm_req->srq = BTL_OPENIB_QP_TYPE_SRQ(i);
             cm_req->qp_num = endpoint->qps[i].qp->lcl_qp->qp_num;
             cm_req->starting_psn = endpoint->qps[i].qp->lcl_psn;
-            BTL_VERBOSE(("sending my qpn %d, psn %d", 
+            BTL_VERBOSE(("sending my qpn %d, psn %d",
                          cm_req->qp_num, cm_req->starting_psn));
-            
+
             req->private_data.ireqd_request = req;
             req->private_data.ireqd_qp_index = i;
-            
+
             /* Send the request */
             BTL_VERBOSE(("sending connect request %d of %d (id %p)",
                         i, mca_btl_openib_component.num_qps,
@@ -1409,7 +1409,7 @@ static int ibcm_module_start_connect(ompi_btl_openib_connect_base_module_t *cpc,
         cm_req->srq = 0;
         cm_req->qp_num = ie->ie_bogus_qp->qp_num;
         cm_req->starting_psn = 0;
-        BTL_VERBOSE(("sending BOGUS qpn %d, psn %d (id %p)", 
+        BTL_VERBOSE(("sending BOGUS qpn %d, psn %d (id %p)",
                     cm_req->qp_num, cm_req->starting_psn,
                      (void*)req->super.cm_id));
 
@@ -1472,7 +1472,7 @@ static void ibcm_listen_cm_id_destructor(ibcm_listen_cm_id_t *cmh)
 
     /* Remove all the ibcm module items */
     for (item = opal_list_remove_first(&(cmh->ibcm_modules));
-         NULL != item; 
+         NULL != item;
          item = opal_list_remove_first(&(cmh->ibcm_modules))) {
         OBJ_RELEASE(item);
     }
@@ -1494,7 +1494,7 @@ static void ibcm_listen_cm_id_destructor(ibcm_listen_cm_id_t *cmh)
 
         /* Stop monitoring the cm_device's fd (wait for it to be
            released from the monitoring entity) */
-        ompi_btl_openib_fd_unmonitor(cmh->cm_device->fd, 
+        ompi_btl_openib_fd_unmonitor(cmh->cm_device->fd,
                                      callback_unlock,
 
                                      (void*) &barrier);
@@ -1527,7 +1527,7 @@ static void ibcm_listen_cm_id_destructor(ibcm_listen_cm_id_t *cmh)
         /* Close the CM device */
         if (NULL != cmh->cm_device) {
             OPAL_OUTPUT((-1, "closing ibcm device 0x%" PRIx64 " (%s)",
-                         (uint64_t) cmh->cm_device, 
+                         (uint64_t) cmh->cm_device,
                          ibv_get_device_name(cmh->ib_context->device)));
             ib_cm_close_device(cmh->cm_device);
         }
@@ -1565,7 +1565,7 @@ static int ibcm_endpoint_finalize(struct mca_btl_base_endpoint_t *endpoint)
     ibcm_endpoint_t *ie =
         (ibcm_endpoint_t *) endpoint->endpoint_local_cpc_data;
     BTL_VERBOSE(("endpoint %p", (void*)endpoint));
-    
+
     /* Free the stuff we allocated in ibcm_module_init */
     if (NULL != ie) {
         int i;
@@ -1603,7 +1603,7 @@ static int ibcm_module_finalize(mca_btl_openib_module_t *btl,
     if (NULL != m && NULL != m->cmh) {
         OBJ_RELEASE(m->cmh);
     }
-    
+
     return OMPI_SUCCESS;
 }
 
@@ -1655,7 +1655,7 @@ static int qp_to_rtr(int qp_index, struct ib_cm_id *cm_id,
                  (mtu == IBV_MTU_2048) ? "2048" :
                  (mtu == IBV_MTU_4096) ? "4096" :
                  "unknown (!)"));
-    
+
     /* Move the QP into the INIT state */
     memset(&attr, 0, sizeof(attr));
     attr.qp_state = IBV_QPS_INIT;
@@ -1665,9 +1665,9 @@ static int qp_to_rtr(int qp_index, struct ib_cm_id *cm_id,
     }
 
     if (0 != ibv_modify_qp(qp, &attr, attr_mask)) {
-        BTL_ERROR(("error modifying qp to INIT errno says %s", strerror(errno))); 
+        BTL_ERROR(("error modifying qp to INIT errno says %s", strerror(errno)));
         return OMPI_ERROR;
-    } 
+    }
 
     /* Move the QP into the RTR state */
     attr.qp_state = IBV_QPS_RTR;
@@ -1687,7 +1687,7 @@ static int qp_to_rtr(int qp_index, struct ib_cm_id *cm_id,
     /* IBM CM does not set these values for us */
     attr.max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops;
     attr.min_rnr_timer = mca_btl_openib_component.ib_min_rnr_timer;
-    
+
     if (0 != ibv_modify_qp(qp, &attr,
                            attr_mask |
                            IBV_QP_PATH_MTU |
@@ -1696,9 +1696,9 @@ static int qp_to_rtr(int qp_index, struct ib_cm_id *cm_id,
                            )) {
         BTL_ERROR(("error modifing QP to RTR errno says %s",
                    strerror(errno)));
-        return OMPI_ERROR; 
+        return OMPI_ERROR;
     }
-    
+
     /* All done */
     TIMER_STOP(QP_TO_RTR);
     return OMPI_SUCCESS;
@@ -1727,9 +1727,9 @@ static int qp_to_rts(int qp_index, struct ib_cm_id *cm_id,
     if (0 != (rc = ibv_modify_qp(qp, &attr, attr_mask))) {
         BTL_ERROR(("error modifing QP (index %d) to RTS errno says %s; rc=%d, errno=%d",
                    qp_index, strerror(errno), rc, errno));
-        return OMPI_ERROR; 
+        return OMPI_ERROR;
     }
-    
+
     /* All done */
     BTL_VERBOSE(("successfully set RTS"));
     TIMER_STOP(QP_TO_RTS);
@@ -1742,7 +1742,7 @@ static int qp_to_rts(int qp_index, struct ib_cm_id *cm_id,
  */
 static void *callback_start_connect(void *context)
 {
-    callback_start_connect_data_t *cbdata = 
+    callback_start_connect_data_t *cbdata =
         (callback_start_connect_data_t *) context;
 
     BTL_VERBOSE(("ibcm scheduled callback: calling start_connect()"));
@@ -1763,7 +1763,7 @@ static void *callback_start_connect(void *context)
 /*
  * Passive has received a connection request from a active
  */
-static int request_received(ibcm_listen_cm_id_t *cmh, 
+static int request_received(ibcm_listen_cm_id_t *cmh,
                             struct ib_cm_event *event)
 {
     int i, rc = OMPI_ERROR;
@@ -1794,7 +1794,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
        device event, and have to find the ibcm_module_t (i.e., local
        port/openib BTL module ) that corresponds to it. */
     BTL_VERBOSE(("looking for ibcm module -- source port guid: 0x%" PRIx64 " (%p)",
-                ntoh64(req->primary_path->sgid.global.interface_id), 
+                ntoh64(req->primary_path->sgid.global.interface_id),
                  (void*)cmh));
     for (item = opal_list_get_first(&(cmh->ibcm_modules));
          item != opal_list_get_end(&(cmh->ibcm_modules));
@@ -1820,7 +1820,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
     for (found = false, ib_proc = (mca_btl_openib_proc_t*)
              opal_list_get_first(&mca_btl_openib_component.ib_procs);
-         !found && 
+         !found &&
              ib_proc != (mca_btl_openib_proc_t*)
              opal_list_get_end(&mca_btl_openib_component.ib_procs);
          ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
@@ -1828,7 +1828,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         /* Now cycle through all the endpoints on that proc */
         for (i = 0; !found && i < (int) ib_proc->proc_endpoint_count; ++i) {
             BTL_VERBOSE(("checking endpoint %d of %d (ep %p, cpc data %p)",
-                        i, (int) ib_proc->proc_endpoint_count, 
+                        i, (int) ib_proc->proc_endpoint_count,
                         (void*)ib_proc->proc_endpoints[i],
                          (void*)ib_proc->proc_endpoints[i]->endpoint_remote_cpc_data));
             if (NULL == ib_proc->proc_endpoints[i]->endpoint_remote_cpc_data) {
@@ -1841,7 +1841,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
             BTL_VERBOSE(("my LID %d, remote LID %d",
                          msg->mm_lid,
                          ntohs(req->primary_path->dlid)));
-            if (msg->mm_port_guid == 
+            if (msg->mm_port_guid ==
                 ntoh64(req->primary_path->dgid.global.interface_id) &&
                 msg->mm_service_id == active_private_data->ireqd_pid &&
                 msg->mm_port_num == req->port &&
@@ -1885,7 +1885,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         rc = OMPI_SUCCESS;
     } else if (ie->ie_connection_flags & CFLAGS_ONGOING) {
         /* See if the request for this QP already arrived */
-        if (ie->ie_qps_created && 
+        if (ie->ie_qps_created &&
             IBV_QPS_RESET != endpoint->qps[qp_index].qp->lcl_qp->state) {
             BTL_VERBOSE(("this QP (%d) already connected",
                          qp_index));
@@ -1934,7 +1934,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
        are filled in during qp_to_rtr (because we don't get them until
        we call ib_cm_attr_init()).  We already have the remote LID,
        subnet ID, and MTU from the port's modex message. */
-    endpoint->rem_info.rem_qps[qp_index].rem_psn = 
+    endpoint->rem_info.rem_qps[qp_index].rem_psn =
         event->param.req_rcvd.starting_psn;
     endpoint->rem_info.rem_index = active_private_data->ireqd_ep_index;
 
@@ -2030,14 +2030,14 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
     rep->cm_rep.qp_num = endpoint->qps[qp_index].qp->lcl_qp->qp_num;
     rep->cm_rep.srq = BTL_OPENIB_QP_TYPE_SRQ(qp_index);
     rep->cm_rep.starting_psn = endpoint->qps[qp_index].qp->lcl_psn;
-    BTL_VERBOSE(("setting reply psn %d", 
+    BTL_VERBOSE(("setting reply psn %d",
                  rep->cm_rep.starting_psn));
     rep->cm_rep.responder_resources = req->responder_resources;
     rep->cm_rep.initiator_depth = req->initiator_depth;
     rep->cm_rep.target_ack_delay = 20;
     rep->cm_rep.flow_control = req->flow_control;
     rep->cm_rep.rnr_retry_count = req->rnr_retry_count;
-    
+
     rep->private_data.irepd_request = active_private_data->ireqd_request;
     rep->private_data.irepd_reply = rep;
     rep->private_data.irepd_qp_index = qp_index;
@@ -2050,7 +2050,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
         goto reject;
     }
     opal_list_append(&ibcm_pending_replies, &(rep->super.super));
-    
+
     TIMER_STOP(REQUEST_RECEIVED);
     BTL_VERBOSE(("sent reply for qp index %d", qp_index));
     return OMPI_SUCCESS;
@@ -2058,21 +2058,21 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
  reject:
     /* Reject the request */
     BTL_VERBOSE(("rejecting request"));
-    ib_cm_send_rej(event->cm_id, IB_CM_REJ_CONSUMER_DEFINED, 
+    ib_cm_send_rej(event->cm_id, IB_CM_REJ_CONSUMER_DEFINED,
                    &rej_reason, sizeof(rej_reason),
                    event->private_data, sizeof(ibcm_req_data_t));
-    
+
     /* If we rejected because of the wrong direction, then initiate a
        connection going the other direction. */
     if (REJ_WRONG_DIRECTION == rej_reason) {
         callback_start_connect_data_t *cbdata = malloc(sizeof(*cbdata));
         if (NULL != cbdata) {
-            cbdata->cscd_cpc = 
+            cbdata->cscd_cpc =
                 (ompi_btl_openib_connect_base_module_t *) imodule;
             cbdata->cscd_endpoint = endpoint;
             BTL_VERBOSE(("starting connect in other direction"));
             ompi_btl_openib_fd_run_in_main(callback_start_connect, cbdata);
-            
+
             TIMER_STOP(REQUEST_RECEIVED);
             return OMPI_SUCCESS;
         }
@@ -2085,7 +2085,7 @@ static int request_received(ibcm_listen_cm_id_t *cmh,
                                    endpoint);
     return rc;
 }
- 
+
 /*
  * Callback (from main thread) when the endpoint has been connected
  */
@@ -2102,8 +2102,8 @@ static void *callback_set_endpoint_cpc_complete(void *context)
 
 /*
  * Helper function to find a cached CM ID in a list
- */ 
-static ibcm_base_cm_id_t *find_cm_id(struct ib_cm_id *cm_id, 
+ */
+static ibcm_base_cm_id_t *find_cm_id(struct ib_cm_id *cm_id,
                                      opal_list_t *list)
 {
    opal_list_item_t *item;
@@ -2139,7 +2139,7 @@ static int reply_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
                  p->irepd_qp_index, (void*) endpoint));
 
     ie = (ibcm_endpoint_t*) endpoint->endpoint_local_cpc_data;
-    endpoint->rem_info.rem_qps[p->irepd_qp_index].rem_psn = 
+    endpoint->rem_info.rem_qps[p->irepd_qp_index].rem_psn =
         event->param.rep_rcvd.starting_psn;
     endpoint->rem_info.rem_index = p->irepd_ep_index;
 
@@ -2253,7 +2253,7 @@ static int ready_to_use_received(ibcm_listen_cm_id_t *h,
 static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 {
     enum ib_cm_rej_reason reason = event->param.rej_rcvd.reason;
-    ibcm_reject_reason_t *rej_reason = 
+    ibcm_reject_reason_t *rej_reason =
         (ibcm_reject_reason_t *) event->param.rej_rcvd.ari;
 
     TIMER_START(REJECT_RECEIVED);
@@ -2268,7 +2268,7 @@ static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
             (ibcm_req_data_t*) event->private_data;
         ibcm_request_t *request = my_private_data->ireqd_request;
         mca_btl_openib_endpoint_t *endpoint = request->endpoint;
-        ibcm_endpoint_t *ie = (ibcm_endpoint_t*) 
+        ibcm_endpoint_t *ie = (ibcm_endpoint_t*)
             endpoint->endpoint_local_cpc_data;
 
         BTL_VERBOSE(("got WRONG_DIRECTION reject, endpoint: %p, pid %d, ep_index %d, qp_index %d",
@@ -2283,9 +2283,9 @@ static int reject_received(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
             /* Remove from the global pending_requests list because we
                no longer need to handle errors for it */
             BTL_VERBOSE(("reply received cm id %p -- original cached req %p",
-                        (void*)cmh->listen_cm_id, 
+                        (void*)cmh->listen_cm_id,
                          (void*)request));
-            opal_list_remove_item(&ibcm_pending_requests, 
+            opal_list_remove_item(&ibcm_pending_requests,
                                   &(request->super.super));
 
             /* We ack the event and then destroy the CM ID (you *must*
@@ -2326,13 +2326,13 @@ static int request_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
     if (IBV_WC_RESP_TIMEOUT_ERR != event->param.send_status) {
         orte_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
                        "unhandled error", true,
-                       "request", orte_process_info.nodename, 
+                       "request", orte_process_info.nodename,
                        event->param.send_status);
     } else {
         ibcm_request_t *req;
-        BTL_ERROR(("Got timeout in IBCM request (CM ID: %p)", 
+        BTL_ERROR(("Got timeout in IBCM request (CM ID: %p)",
                    (void*)event->cm_id));
-        req = (ibcm_request_t*) find_cm_id(event->cm_id, 
+        req = (ibcm_request_t*) find_cm_id(event->cm_id,
                                            &ibcm_pending_requests);
         if (NULL == req) {
             orte_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
@@ -2345,7 +2345,7 @@ static int request_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error, 
+    ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error,
                                    endpoint);
     return OMPI_SUCCESS;
 }
@@ -2358,13 +2358,13 @@ static int reply_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
     if (IBV_WC_RESP_TIMEOUT_ERR != event->param.send_status) {
         orte_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
                        "unhandled error", true,
-                       "reply", orte_process_info.nodename, 
+                       "reply", orte_process_info.nodename,
                        event->param.send_status);
     } else {
         ibcm_reply_t *rep;
         BTL_ERROR(("Got timeout in IBCM reply (id: %p)",
                    (void*)event->cm_id));
-        rep = (ibcm_reply_t*) find_cm_id(event->cm_id, 
+        rep = (ibcm_reply_t*) find_cm_id(event->cm_id,
                                          &ibcm_pending_replies);
         if (NULL == rep) {
             orte_show_help("help-mpi-btl-openib-cpc-ibcm.txt",
@@ -2377,7 +2377,7 @@ static int reply_error(ibcm_listen_cm_id_t *cmh, struct ib_cm_event *event)
 
     /* Communicate to the upper layer that the connection on this
        endpoint has failed */
-    ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error, 
+    ompi_btl_openib_fd_run_in_main(mca_btl_openib_endpoint_invoke_error,
                                    endpoint);
     return OMPI_SUCCESS;
 }
@@ -2390,7 +2390,7 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
     ibcm_listen_cm_id_t *cmh = (ibcm_listen_cm_id_t*) context;
     struct ib_cm_event *e = NULL;
 
-    OPAL_OUTPUT((-1, "ibcm dispatch: on device 0x%" PRIx64", fd %d", 
+    OPAL_OUTPUT((-1, "ibcm dispatch: on device 0x%" PRIx64", fd %d",
                  (uint64_t) cmh->cm_device, fd));
     TIMER_START(CM_GET_EVENT);
     /* Blocks until next event, which should be immediately (because
@@ -2415,19 +2415,19 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
             /* Incoming request */
             rc = request_received(cmh, e);
             break;
-            
+
         case IB_CM_REP_RECEIVED:
             OPAL_OUTPUT((-1, "ibcm dispatch: reply received on fd %d", fd));
             /* Reply received */
             rc = reply_received(cmh, e);
             break;
-            
+
         case IB_CM_RTU_RECEIVED:
             OPAL_OUTPUT((-1, "ibcm dispatch: RTU received on fd %d", fd));
             /* Ready to use! */
             rc = ready_to_use_received(cmh, e);
             break;
-                        
+
         case IB_CM_REJ_RECEIVED:
             OPAL_OUTPUT((-1, "ibcm dispatch: reject received on fd %d", fd));
             /* Rejected connection */
@@ -2436,19 +2436,19 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
                ID could be freed */
             want_ack = false;
             break;
-            
+
         case IB_CM_REQ_ERROR:
             OPAL_OUTPUT((-1, "ibcm dispatch: request error received on fd %d", fd));
             /* Request error */
             rc = request_error(cmh, e);
             break;
-            
+
         case IB_CM_REP_ERROR:
             OPAL_OUTPUT((-1, "ibcm dispatch: reply error received on fd %d", fd));
             /* Reply error */
             rc = reply_error(cmh, e);
             break;
-            
+
         case IB_CM_DREQ_RECEIVED:
         case IB_CM_DREP_RECEIVED:
         case IB_CM_DREQ_ERROR:
@@ -2459,7 +2459,7 @@ static void *ibcm_event_dispatch(int fd, int flags, void *context)
             /* We don't care */
             rc = OMPI_SUCCESS;
             break;
-            
+
         default:
             /* This would be odd */
             OPAL_OUTPUT((-1, "ibcm dispatch: unhandled event received on fd %d", fd));

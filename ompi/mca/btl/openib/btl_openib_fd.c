@@ -3,9 +3,9 @@
  * Copyright (c) 2009 Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -174,7 +174,7 @@ static int service_pipe_cmd_add_fd(bool use_libevent, cmd_t *cmd)
     if (use_libevent) {
         /* Make an event for this fd */
         ri->ri_event_used = true;
-        opal_event_set(opal_event_base, &ri->ri_event, ri->ri_fd, 
+        opal_event_set(opal_event_base, &ri->ri_event, ri->ri_fd,
                        ri->ri_flags | OPAL_EV_PERSIST, service_fd_callback,
                        ri);
         opal_event_add(&ri->ri_event, 0);
@@ -248,13 +248,13 @@ static int service_pipe_cmd_remove_fd(cmd_t *cmd)
                     }
                 }
             }
-            
+
             /* Let the caller know that we have stopped monitoring
                this fd (if they care) */
             if (NULL != cmd->pc_fn.event) {
                 cmd->pc_fn.event(cmd->pc_fd, 0, cmd->pc_context);
             }
-    
+
             /* Remove this item from the list of registered items and
                release it */
             opal_list_remove_item(&registered_items, item);
@@ -344,7 +344,7 @@ static bool service_pipe_cmd(void)
             --waiting_for_ack_from_main_thread;
         }
         break;
-        
+
     default:
         OPAL_OUTPUT((-1, "fd service thread: unknown pipe command!"));
         break;
@@ -390,7 +390,7 @@ static void *service_thread_start(void *context)
                     break;
                 }
                 OPAL_OUTPUT((-1, "fd service thread: back from pipe command"));
-            } 
+            }
 
             /* Go through all the registered events and see who had
                activity */
@@ -414,7 +414,7 @@ static void *service_thread_start(void *context)
                     /* If either was ready, invoke the callback */
                     if (0 != flags) {
                         OPAL_OUTPUT((-1, "fd service thread: invoking callback for registered fd %d", ri->ri_fd));
-                        ri->ri_callback.event(ri->ri_fd, flags, 
+                        ri->ri_callback.event(ri->ri_fd, flags,
                                               ri->ri_context);
                         OPAL_OUTPUT((-1, "fd service thread: back from callback for registered fd %d", ri->ri_fd));
                     }
@@ -443,7 +443,7 @@ static void main_thread_event_callback(int fd, short event, void *context)
         break;
 
     default:
-        OPAL_OUTPUT((-1, "fd main thread: unknown pipe command: %d", 
+        OPAL_OUTPUT((-1, "fd main thread: unknown pipe command: %d",
                     cmd.pc_cmd));
         break;
     }
@@ -481,12 +481,12 @@ int ompi_btl_openib_fd_init(void)
             /* Create a libevent event that is used in the main thread
                to watch its pipe */
             opal_event_set(opal_event_base, &main_thread_event, pipe_to_main_thread[0],
-                           OPAL_EV_READ | OPAL_EV_PERSIST, 
+                           OPAL_EV_READ | OPAL_EV_PERSIST,
                            main_thread_event_callback, NULL);
             opal_event_add(&main_thread_event, 0);
-            
+
             /* Start the service thread */
-            if (0 != pthread_create(&thread, NULL, service_thread_start, 
+            if (0 != pthread_create(&thread, NULL, service_thread_start,
                                     NULL)) {
                 int errno_save = errno;
                 opal_event_del(&main_thread_event);
@@ -509,7 +509,7 @@ int ompi_btl_openib_fd_init(void)
  * Start monitoring an fd
  * Called by main or service thread; callback will be in service thread
  */
-int ompi_btl_openib_fd_monitor(int fd, int flags, 
+int ompi_btl_openib_fd_monitor(int fd, int flags,
                                ompi_btl_openib_fd_event_callback_fn_t *callback,
                                void *context)
 {
@@ -542,7 +542,7 @@ int ompi_btl_openib_fd_monitor(int fd, int flags,
  * Stop monitoring an fd
  * Called by main or service thread; callback will be in service thread
  */
-int ompi_btl_openib_fd_unmonitor(int fd, 
+int ompi_btl_openib_fd_unmonitor(int fd,
                                  ompi_btl_openib_fd_event_callback_fn_t *callback,
                                  void *context)
 {
@@ -552,7 +552,7 @@ int ompi_btl_openib_fd_unmonitor(int fd,
     if (fd < 0) {
         return OMPI_ERR_BAD_PARAM;
     }
-    
+
     cmd.pc_cmd = CMD_REMOVE_FD;
     cmd.pc_fd = fd;
     cmd.pc_flags = 0;
@@ -630,7 +630,7 @@ ompi_btl_openib_fd_main_thread_drain(void)
     int nfds, ret;
     fd_set rfds;
     struct timeval tv;
-  
+
     while (1) {
         FD_ZERO(&rfds);
         FD_SET(pipe_to_main_thread[0], &rfds);
@@ -665,10 +665,10 @@ int ompi_btl_openib_fd_finalize(void)
             memset(&cmd, 0, cmd_size);
             cmd.pc_cmd = CMD_TIME_TO_QUIT;
             opal_fd_write(pipe_to_service_thread[1], cmd_size, &cmd);
-            
+
             pthread_join(thread, NULL);
             opal_atomic_rmb();
-            
+
             opal_event_del(&main_thread_event);
 
             close(pipe_to_service_thread[0]);
