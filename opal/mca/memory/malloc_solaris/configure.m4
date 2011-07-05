@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -32,9 +32,7 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_COMPILE_MODE], [
 AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
     AC_CONFIG_FILES([opal/mca/memory/malloc_solaris/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([memory_malloc_solaris_happy],
-                        [memory_malloc_solaris_should_use],
-                        [memory_malloc_solaris_munmap])
+    OPAL_VAR_SCOPE_PUSH([memory_malloc_solaris_happy memory_malloc_solaris_should_use memory_malloc_solaris_munmap memory_alloc_solaris_legacy])
 
     AC_MSG_CHECKING([for Solaris])
 
@@ -78,20 +76,25 @@ AC_DEFUN([MCA_opal_memory_malloc_solaris_CONFIG],[
               AS_IF([test "$memory_malloc_solaris_munmap" = "0"],
                     [memory_malloc_solaris_happy="no"])])
 
-        AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
-              [memory_malloc_solaris_WRAPPER_EXTRA_LIBS="$memory_malloc_solaris_LIBS"])
-
         # There is a difference in the munmap prototypes for different 
         # Solaris versions.  So determine whether we are to use Legacy
         # S10 or later prototypes.
-        AC_MSG_CHECKING([for Solaris Legacy MUNMAP])
-        AC_TRY_COMPILE([#include <sys/mman.h>
-                        char *addr;
-                        extern int munmap(caddr_t addr, size_t len);],
-                        [],
-                       [AC_DEFINE_UNQUOTED([USE_SOLARIS_LEGACY_MUNMAP_PROTOTYPE],
-                       1,[memory_malloc_solaris_munmap define USE_LEGACY_MUNMAP_PROTOTYPE])],
-                       [AC_MSG_RESULT([no])])
+        memory_alloc_solaris_legacy=0
+        AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
+              [AC_MSG_CHECKING([for Solaris Legacy MUNMAP])
+               AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/mman.h>]],
+                                                  [[char *addr;
+                                                    extern int munmap(caddr_t addr, size_t len);]])],
+                                 [memory_alloc_solaris_legacy=1
+                                  AC_MSG_RESULT([yes])],
+                                 [AC_MSG_RESULT([no])])
+               AC_DEFINE_UNQUOTED([USE_SOLARIS_LEGACY_MUNMAP_PROTOTYPE],
+                                  [$memory_alloc_solaris_legacy],
+                                  [Whether to use the legacy Solaris munmap prototype or not])
+               ])
+
+        AS_IF([test "$memory_malloc_solaris_happy" = "yes"],
+              [memory_malloc_solaris_WRAPPER_EXTRA_LIBS="$memory_malloc_solaris_LIBS"])
 
         AS_IF([test "$memory_malloc_solaris_happy" = "no" -a \
                 "$memory_malloc_solaris_should_use" = "1"],
