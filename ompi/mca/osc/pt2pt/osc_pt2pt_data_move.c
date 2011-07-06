@@ -875,7 +875,7 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
         longreq->req_module = module;
 
         /* allocate a buffer to receive into ... */
-        longreq->req_basereq.req_sendhdr = malloc(buflen + sizeof(ompi_osc_pt2pt_send_header_t));
+        longreq->req_basereq.req_sendhdr = (ompi_osc_pt2pt_send_header_t *) malloc(buflen + sizeof(ompi_osc_pt2pt_send_header_t));
 
         if (NULL == longreq->req_basereq.req_sendhdr) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         /* fill in tmp header */
