@@ -48,7 +48,9 @@ mca_mtl_psm_module_t ompi_mtl_psm = {
         ompi_mtl_psm_irecv,
         ompi_mtl_psm_iprobe,
         
-        ompi_mtl_psm_cancel
+        ompi_mtl_psm_cancel,
+        NULL,
+        NULL
     }    
 };
 
