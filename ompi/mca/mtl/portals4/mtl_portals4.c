@@ -50,7 +50,9 @@ mca_mtl_portals4_module_t ompi_mtl_portals4 = {
         ompi_mtl_portals4_irecv,
         ompi_mtl_portals4_iprobe,
 
-        NULL        /* cancel */
+        NULL,       /* cancel */
+        NULL,       /* add_comm */
+        NULL        /* del_comm */
     }
 };
 

@@ -82,13 +82,21 @@ mca_pml_cm_enable(bool enable)
 int
 mca_pml_cm_add_comm(ompi_communicator_t* comm)
 {
+    int ret;
+
     /* should never happen, but it was, so check */
     if (comm->c_contextid > ompi_pml_cm.super.pml_max_contextid) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    /* setup our per-communicator data */
+    /* initialize per-communicator data. MTLs may override this. */
     comm->c_pml_comm = NULL;
+
+    /* notify the MTL about the added communicator */
+    if ((NULL != ompi_mtl->mtl_add_comm) &&
+        (OMPI_SUCCESS != (ret = OMPI_MTL_CALL(add_comm(ompi_mtl, comm))))) {
+        return ret;
+    }
 
     return OMPI_SUCCESS;
 }
@@ -97,8 +105,13 @@ mca_pml_cm_add_comm(ompi_communicator_t* comm)
 int
 mca_pml_cm_del_comm(ompi_communicator_t* comm)
 {
-    /* clean up our per-communicator data */
-    comm->c_pml_comm = NULL;
+    int ret;
+
+    /* notify the MTL about the deleted communicator */
+    if ((NULL != ompi_mtl->mtl_del_comm) &&
+        (OMPI_SUCCESS != (ret = OMPI_MTL_CALL(del_comm(ompi_mtl, comm))))) {
+        return ret;
+    }
 
     return OMPI_SUCCESS;
 }

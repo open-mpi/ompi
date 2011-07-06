@@ -59,7 +59,9 @@ mca_mtl_mx_module_t ompi_mtl_mx = {
         ompi_mtl_mx_irecv,
         ompi_mtl_mx_iprobe,
         
-        ompi_mtl_mx_cancel
+        ompi_mtl_mx_cancel,
+        NULL,
+        NULL
     }    
 };
 
