@@ -69,8 +69,6 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
     int32_t cnt;
     int rc;
     opal_byte_object_t *bo;
-    int8_t flag;
-    char *regexp;
     
     if (!initialized) {
         /* need to construct the global arrays */
@@ -89,29 +87,6 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
     /* it is okay if the buffer is empty */
     if (NULL == buffer || 0 == buffer->bytes_used) {
         return ORTE_SUCCESS;
-    }
-    
-    /* extract the flag indicating the type of info in the buffer */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &flag, &cnt, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    if (0 < flag) {
-        /* the data is a regular expression - extract and parse it
-         * to get the daemonmap and process map
-         */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &regexp, &cnt, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (ORTE_SUCCESS != (rc = orte_regex_decode_maps(regexp, NULL))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        free(regexp);
-        return rc;
     }
     
     /* extract the byte object holding the daemonmap */

@@ -188,17 +188,13 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Create a new xterm window and display output from the specified ranks there" },
 
-    { NULL, NULL, NULL, '\0', "launch", "launch", 1,
-      &orted_launch_cmd, OPAL_CMD_LINE_TYPE_STRING,
-      "A regular expression describing the job to be launched at startup" },
-
-    { "orte", "daemon", "bootstrap", '\0', "bootstrap", "bootstrap", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Bootstrap the connection to the HNP" },
-    
     { "orte", "report", "bindings", '\0', "report-bindings", "report-bindings", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to report process bindings to stderr" },
+
+    { "orte", "node", "regex", '\0', "nodes", "nodes", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Regular expression defining nodes in system" },
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
@@ -228,17 +224,21 @@ int orte_daemon(int argc, char *argv[])
     
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
-    opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
+    if (OPAL_SUCCESS != opal_cmd_line_create(cmd_line, orte_cmd_line_opts)) {
+        OBJ_RELEASE(cmd_line);
+        exit(1);
+    }
     mca_base_cmd_line_setup(cmd_line);
     if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        orte_show_help("help-orted.txt", "orted:usage", false,
-                       argv[0], args);
+        fprintf(stderr, "Usage: %s [OPTION]...\n%s\n", argv[0], args);
         free(args);
+        OBJ_RELEASE(cmd_line);
         return ret;
     }
+    opal_output(0, "DONE PARSING CMD LINE");
     
     /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
@@ -537,14 +537,8 @@ int orte_daemon(int argc, char *argv[])
     /* if we are not the HNP...the only time we will be an HNP
      * is if we are launched by a singleton to provide support
      * for it
-     *
-     * only do this if we were not given a regexp to launch - if
-     * we were given one, we won't report back our existence
-     * to the HNP, but instead will report when procs are launched
-     * to avoid establishing an unnecessary direct connection back
-     * to the HNP
      */
-    if (!ORTE_PROC_IS_HNP && NULL == orted_launch_cmd) {
+    if (!ORTE_PROC_IS_HNP) {
         /* send the information to the orted report-back point - this function
          * will process the data, but also counts the number of
          * orteds that reported back so the launch procedure can continue.
@@ -649,9 +643,6 @@ int orte_daemon(int argc, char *argv[])
             opal_sysinfo_value_t *info;
             int32_t num_values;
 
-            /* Point my parent to be my HNP */
-            orte_process_info.my_parent = orte_process_info.my_hnp;
-
             /* include our node name */
             opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
 
@@ -672,26 +663,15 @@ int orte_daemon(int argc, char *argv[])
                 }
             }
             
-            if (orte_daemon_bootstrap) {
-                /* send to a different callback location as the
-                 * HNP didn't launch us and isn't waiting for a
-                 * callback
-                 */
-                if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
-                                                    ORTE_RML_TAG_BOOTSTRAP, 0))) {
-                    ORTE_ERROR_LOG(ret);
-                    OBJ_RELEASE(buffer);
-                    goto DONE;
-                }
-            } else {
-                /* send to the HNP's callback */
-                if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_PARENT, buffer,
-                                                    ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
-                    ORTE_ERROR_LOG(ret);
-                    OBJ_RELEASE(buffer);
-                    goto DONE;
-                }            
-            }
+            /* send to the HNP's callback - this will flow up the routing
+             * tree if static ports are enabled
+             */
+            if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
+                                                ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }            
         }
         OBJ_RELEASE(buffer);  /* done with this */
     }
@@ -700,25 +680,11 @@ int orte_daemon(int argc, char *argv[])
         opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
-    /* if we were given a launch string, then process it */
-    if (NULL != orted_launch_cmd) {
-        opal_buffer_t launch;
-        int8_t flag;
-        orte_daemon_cmd_flag_t command = ORTE_DAEMON_ADD_LOCAL_PROCS;
-        OBJ_CONSTRUCT(&launch, opal_buffer_t);
-        opal_dss.pack(&launch, &command, 1, ORTE_DAEMON_CMD);
-        flag = 1;
-        opal_dss.pack(&launch, &flag, 1, OPAL_INT8);
-        opal_dss.pack(&launch, &orted_launch_cmd, 1, OPAL_STRING);
-        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &launch, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
-        OBJ_DESTRUCT(&launch);
-    }
-
     /* wait to hear we are done */
     opal_event_dispatch(opal_event_base);
 
     /* should never get here, but if we do... */
-DONE:
+ DONE:
     /* Finalize and clean up ourselves */
     orte_quit();
     return ret;

@@ -1171,7 +1171,8 @@ PRELOAD_FILES:
 int orte_plm_base_rsh_setup_launch(int *argcptr, char ***argvptr,
                                    char *nodename,
                                    int *node_name_index1,
-                                   int *proc_vpid_index, char *prefix_dir)
+                                   int *proc_vpid_index, char *prefix_dir,
+                                   char *nodes)
 {
     int argc;
     char **argv;
@@ -1383,7 +1384,7 @@ int orte_plm_base_rsh_setup_launch(int *argcptr, char ***argvptr,
     orte_plm_base_orted_append_basic_args(&argc, &argv,
                                           "env",
                                           proc_vpid_index,
-                                          NULL);
+                                          nodes);
     
     /* ensure that only the ssh plm is selected on the remote daemon */
     opal_argv_append_nosize(&argv, "-mca");

@@ -158,6 +158,9 @@ static int orte_ras_alps_allocate(opal_list_t *nodes)
     }
     free(str);
 
+    /* record the number of allocated nodes */
+    orte_num_allocated_nodes = opal_list_get_size(nodes);
+
 cleanup:
 
     /* All done */

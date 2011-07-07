@@ -58,7 +58,6 @@ bool orte_debug_daemons_file_flag = false;
 bool orte_leave_session_attached;
 bool orte_do_not_launch = false;
 bool orted_spin_flag = false;
-bool orte_daemon_bootstrap = false;
 char *orte_local_cpu_type = NULL;
 char *orte_local_cpu_model = NULL;
 char *orte_basename = NULL;
@@ -114,7 +113,6 @@ int orte_clean_output = -1;
 /* Nidmap and job maps */
 opal_pointer_array_t orte_nidmap;
 opal_pointer_array_t orte_jobmap;
-bool orte_use_regexp;
 char *orted_launch_cmd = NULL;
 
 /* list of local children on a daemon */
@@ -156,6 +154,8 @@ char *orte_rankfile;
 #ifdef __WINDOWS__
 char *orte_ccp_headnode;
 #endif
+int orte_num_allocated_nodes = 0;
+char *orte_node_regex = NULL;
 
 /* default rank assigment and binding policy */
 orte_mapping_policy_t orte_default_mapping_policy = 0;
@@ -1104,39 +1104,5 @@ OBJ_CLASS_INSTANCE(orte_job_map_t,
                    opal_object_t,
                    orte_job_map_construct,
                    orte_job_map_destruct);
-
-static void orte_regex_node_construct(orte_regex_node_t *ptr)
-{
-    ptr->prefix = NULL;
-    OBJ_CONSTRUCT(&ptr->suffix, opal_value_array_t);
-    opal_value_array_init(&ptr->suffix, sizeof(char));
-    OBJ_CONSTRUCT(&ptr->nodes, opal_value_array_t);
-    opal_value_array_init(&ptr->nodes, sizeof(int32_t));
-    OBJ_CONSTRUCT(&ptr->cnt, opal_value_array_t);
-    opal_value_array_init(&ptr->cnt, sizeof(int32_t));
-    OBJ_CONSTRUCT(&ptr->starting_vpid, opal_value_array_t);
-    opal_value_array_init(&ptr->starting_vpid, sizeof(orte_vpid_t));
-    OBJ_CONSTRUCT(&ptr->ppn, opal_value_array_t);
-    opal_value_array_init(&ptr->ppn, sizeof(int32_t));
-    OBJ_CONSTRUCT(&ptr->nrank, opal_value_array_t);
-    opal_value_array_init(&ptr->nrank, sizeof(orte_node_rank_t));
-}
-static void orte_regex_node_destruct(orte_regex_node_t *ptr)
-{
-    if (NULL != ptr->prefix) {
-        free(ptr->prefix);
-        ptr->prefix = NULL;
-    }
-    OBJ_DESTRUCT(&ptr->suffix);
-    OBJ_DESTRUCT(&ptr->nodes);
-    OBJ_DESTRUCT(&ptr->cnt);
-    OBJ_DESTRUCT(&ptr->starting_vpid);
-    OBJ_DESTRUCT(&ptr->ppn);
-    OBJ_DESTRUCT(&ptr->nrank);
-}
-OBJ_CLASS_INSTANCE(orte_regex_node_t,
-                   opal_list_item_t,
-                   orte_regex_node_construct,
-                   orte_regex_node_destruct);
 
 #endif

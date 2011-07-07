@@ -25,18 +25,39 @@
 
 #include "orte_config.h"
 
+#include "opal/class/opal_value_array.h"
+#include "opal/class/opal_list.h"
+
 #include "orte/mca/odls/odls_types.h"
 #include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
 
+typedef struct {
+    opal_list_item_t super;
+    int start;
+    int cnt;
+} orte_regex_range_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_regex_range_t);
+
+typedef struct {
+    /* list object */
+    opal_list_item_t super;
+    char *prefix;
+    char *suffix;
+    int num_digits;
+    opal_list_t ranges;
+} orte_regex_node_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_regex_node_t);
+
+/* NOTE: this is a destructive call for the nodes param - the
+ * function will search and replace all commas with '\0'
+ */
+ORTE_DECLSPEC int orte_regex_create(char *nodes, char **regexp);
+
 ORTE_DECLSPEC int orte_regex_extract_node_names(char *regexp, char ***names);
 
 ORTE_DECLSPEC int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn);
-
-ORTE_DECLSPEC char* orte_regex_encode_maps(orte_job_t *jdata);
-
-ORTE_DECLSPEC int orte_regex_decode_maps(char *regexp, orte_odls_job_t **jobdat);
 
 END_C_DECLS
 #endif

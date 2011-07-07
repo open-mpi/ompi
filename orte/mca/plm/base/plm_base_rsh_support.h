@@ -66,7 +66,8 @@ ORTE_DECLSPEC int orte_plm_base_rsh_setup_shell(orte_plm_rsh_shell_t *rshell,
 ORTE_DECLSPEC int orte_plm_base_rsh_setup_launch(int *argcptr, char ***argvptr,
                                                  char *nodename,
                                                  int *node_name_index1,
-                                                 int *proc_vpid_index, char *prefix_dir);
+                                                 int *proc_vpid_index, char *prefix_dir,
+                                                 char *nodes);
 ORTE_DECLSPEC void orte_plm_base_ssh_child(int argc, char **argv,
                                            orte_vpid_t vpid, int proc_vpid_index);
 

@@ -554,19 +554,6 @@ typedef struct {
 } orte_jmap_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_jmap_t);
 
-typedef struct {
-    /* list object */
-    opal_list_item_t super;
-    char *prefix;
-    opal_value_array_t suffix;
-    opal_value_array_t nodes;
-    opal_value_array_t cnt;
-    opal_value_array_t starting_vpid;
-    opal_value_array_t ppn;
-    opal_value_array_t nrank;
-} orte_regex_node_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_regex_node_t);
-
 /**
 * Get a job data object
  * We cannot just reference a job data object with its jobid as
@@ -589,7 +576,6 @@ ORTE_DECLSPEC extern bool orte_debug_daemons_file_flag;
 ORTE_DECLSPEC extern bool orte_leave_session_attached;
 ORTE_DECLSPEC extern bool orte_do_not_launch;
 ORTE_DECLSPEC extern bool orted_spin_flag;
-ORTE_DECLSPEC extern bool orte_daemon_bootstrap;
 ORTE_DECLSPEC extern char *orte_local_cpu_type;
 ORTE_DECLSPEC extern char *orte_local_cpu_model;
 ORTE_DECLSPEC extern char *orte_basename;
@@ -644,7 +630,6 @@ ORTE_DECLSPEC extern int orte_clean_output;
 /* Nidmap and job maps */
 ORTE_DECLSPEC extern opal_pointer_array_t orte_nidmap;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_jobmap;
-ORTE_DECLSPEC extern bool orte_use_regexp;
 ORTE_DECLSPEC extern char *orted_launch_cmd;
 
 /* list of local children on a daemon */
@@ -686,6 +671,8 @@ ORTE_DECLSPEC extern char *orte_rankfile;
 #ifdef __WINDOWS__
 ORTE_DECLSPEC extern char *orte_ccp_headnode;
 #endif 
+ORTE_DECLSPEC extern int orte_num_allocated_nodes;
+ORTE_DECLSPEC extern char *orte_node_regex;
 
 /* default rank assigment and binding policy */
 ORTE_DECLSPEC extern orte_mapping_policy_t orte_default_mapping_policy;
