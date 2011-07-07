@@ -212,7 +212,7 @@ static int spawn(orte_job_t *jdata)
     orte_node_t *node;
     int nnode;
     int argc;
-    char **argv=NULL;
+    char **argv=NULL, **nodes=NULL, *nodelist=NULL;
     char *prefix_dir;
     int node_name_index1;
     int proc_vpid_index;
@@ -287,7 +287,7 @@ static int spawn(orte_job_t *jdata)
          orte_leave_session_attached) &&
         mca_plm_rshbase_component.num_concurrent < map->num_new_daemons) {
         /**
-        * If we are in '--debug-daemons' we keep the ssh connection 
+         * If we are in '--debug-daemons' we keep the ssh connection 
          * alive for the span of the run. If we use this option 
          * AND we launch on more than "num_concurrent" machines
          * then we will deadlock. No connections are terminated 
@@ -339,11 +339,33 @@ static int spawn(orte_job_t *jdata)
     }
     prefix_dir = app->prefix_dir;
     
+    /* if we are using static ports, then setup a string showing the
+     * nodes so we can use a regex to pass connection info
+     */
+    if (orte_static_ports) {
+        for (nnode=0; nnode < map->nodes->size; nnode++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+                continue;
+            }
+            opal_argv_append_nosize(&nodes, node->name);
+        }
+        nodelist = opal_argv_join(nodes, ',');
+        opal_argv_free(nodes);
+    }
+
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = orte_plm_base_rsh_setup_launch(&argc, &argv, node->name, &node_name_index1,
-                                                             &proc_vpid_index, prefix_dir))) {
+                                                             &proc_vpid_index, prefix_dir, nodelist))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
+        if (NULL != nodelist) {
+            free(nodelist);
+            nodelist = NULL;
+        }
+    }
+    if (NULL != nodelist) {
+        free(nodelist);
+        nodelist = NULL;
     }
     
     /* set the active jobid */
@@ -419,7 +441,7 @@ static int spawn(orte_job_t *jdata)
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh: recording launch of daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&node->daemon->name)));
+                                 ORTE_NAME_PRINT(&node->daemon->name)));
 
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
@@ -448,7 +470,7 @@ static int spawn(orte_job_t *jdata)
     }
     
 
-launch_apps:
+ launch_apps:
     /* if we get here, then the daemons succeeded, so any failure would now be
      * for the application job
      */

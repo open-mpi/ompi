@@ -758,11 +758,6 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "--report-bindings");
     }
     
-    /* check for bootstrap */
-    if (orte_daemon_bootstrap) {
-        opal_argv_append(argc, argv, "--bootstrap");
-    }
-    
     if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
         opal_argv_append(argc, argv, "--debug-failure");
         asprintf(&param, "%d", orted_debug_failure);
@@ -828,11 +823,16 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_argv_append(argc, argv, param);
     free(param);
 
-    /* if given, pass the node list */
-    if (NULL != nodes) {
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "orte_nodelist");
-        opal_argv_append(argc, argv, nodes);
+    /* if given and we have static ports, pass the node list */
+    if (orte_static_ports && NULL != nodes) {
+        /* convert the nodes to a regex */
+        if (ORTE_SUCCESS != (rc = orte_regex_create(nodes, &param))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        opal_argv_append(argc, argv, "--nodes");
+        opal_argv_append(argc, argv, param);
+        free(param);
     }
     
     /* pass along any cmd line MCA params provided to mpirun,

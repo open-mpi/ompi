@@ -124,6 +124,8 @@ static int orte_ras_slurm_allocate(opal_list_t *nodes)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return ret;
     }
+    /* record the number of allocated nodes */
+    orte_num_allocated_nodes = opal_list_get_size(nodes);
 
     /* All done */
 

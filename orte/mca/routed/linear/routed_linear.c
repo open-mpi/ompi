@@ -92,6 +92,8 @@ static int init(void)
     OBJ_CONSTRUCT(&cond, opal_condition_t);
     OBJ_CONSTRUCT(&lock, opal_mutex_t);
 
+    ORTE_PROC_MY_PARENT->jobid = ORTE_PROC_MY_NAME->jobid;
+
     lifeline = NULL;
 
     return ORTE_SUCCESS;
@@ -345,8 +347,8 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
     
-    /* if we are not using static ports and this is going to the HNP, send directly through my parent */
-    if( !orte_static_ports &&
+    /* if we are using static ports and this is going to the HNP, send through my parent */
+    if (orte_static_ports &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target) ) {
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                              "%s routing to the HNP through my parent %s",
@@ -478,8 +480,13 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return rc;
             }
 
-            /* set our lifeline to the the HNP - we will abort if that connection is lost */
-            lifeline = ORTE_PROC_MY_HNP;
+            /* if we are using static ports, set my lifeline to point at my parent */
+            if (orte_static_ports) {
+                lifeline = ORTE_PROC_MY_PARENT;
+            } else {
+                /* set our lifeline to the HNP - we will abort if that connection is lost */
+                lifeline = ORTE_PROC_MY_HNP;
+            }
             
             /* daemons will send their contact info back to the HNP as
              * part of the message confirming they are read to go. HNP's
@@ -741,6 +748,11 @@ static int update_routing_tree(orte_jobid_t jobid)
         return ORTE_ERR_NOT_SUPPORTED;
     }
     
+    /* my parent is the my_vpid-1 daemon */
+    if (!ORTE_PROC_IS_HNP) {
+        ORTE_PROC_MY_PARENT->vpid = ORTE_PROC_MY_NAME->vpid - 1;
+    }
+
     /* nothing to do here as the routing tree is fixed */
     return ORTE_SUCCESS;
 }

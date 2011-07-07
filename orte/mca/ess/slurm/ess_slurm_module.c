@@ -40,6 +40,7 @@
 #include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/util/regex.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
@@ -50,7 +51,6 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/slurm/ess_slurm.h"
 
-static char *get_slurm_nodename(int nodeid);
 static int slurm_set_name(void);
 
 static int rte_init(void);
@@ -90,7 +90,6 @@ static int rte_init(void)
     int ret;
     char *error = NULL;
     char **hosts = NULL;
-    char *slurm_nodelist;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -105,13 +104,12 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
-        /* get the list of nodes used for this job */
-        mca_base_param_reg_string_name("orte", "nodelist", "List of nodes in job",
-                                       true, false, NULL, &slurm_nodelist);
-        
-        if (NULL != slurm_nodelist) {
-            /* split the node list into an argv array */
-            hosts = opal_argv_split(slurm_nodelist, ',');
+        if (NULL != orte_node_regex) {
+            /* extract the nodes */
+            if (ORTE_SUCCESS != (ret = orte_regex_extract_node_names(orte_node_regex, &hosts))) {
+                error = "orte_regex_extract_node_names";
+                goto error;
+            }
         }
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
             ORTE_ERROR_LOG(ret);
@@ -388,12 +386,12 @@ static int slurm_set_name(void)
     if (NULL != orte_process_info.nodename) {
         free(orte_process_info.nodename);
     }
-    orte_process_info.nodename = get_slurm_nodename(slurm_nodeid);
+    orte_process_info.nodename = getenv("SLURMD_NODENAME");
 
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:slurm set nodename to %s",
-                         orte_process_info.nodename));
+                         (NULL == orte_process_info.nodename) ? "NULL" : orte_process_info.nodename));
     
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {
@@ -402,36 +400,4 @@ static int slurm_set_name(void)
     }
     
     return ORTE_SUCCESS;
-}
-
-static char *
-get_slurm_nodename(int nodeid)
-{
-    char **names = NULL;
-    char *slurm_nodelist;
-    char *ret;
-
-    mca_base_param_reg_string_name("orte", "nodelist", "List of nodes in job",
-                                   true, false, NULL, &slurm_nodelist);
-    if (NULL == slurm_nodelist) {
-        return NULL;
-    }
-    
-    /* split the node list into an argv array */
-    names = opal_argv_split(slurm_nodelist, ',');
-    if (NULL == names) {  /* got an error */
-        return NULL;
-    }
-
-    /* check to see if there are enough entries */
-    if (nodeid > opal_argv_count(names)) {
-        return NULL;
-    }
-
-    ret = strdup(names[nodeid]);
-
-    opal_argv_free(names);
-
-    /* All done */
-    return ret;
 }

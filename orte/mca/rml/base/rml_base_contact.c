@@ -23,7 +23,6 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -123,7 +122,7 @@ int orte_rml_base_update_contact_info(opal_buffer_t* data)
         /* track how many procs were in the message */
         ++num_procs;
     }
-    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != OPAL_SOS_GET_ERROR_CODE(rc)) {
+    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }    

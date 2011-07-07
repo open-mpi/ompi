@@ -84,7 +84,6 @@ static opal_condition_t         cond;
 static opal_mutex_t             lock;
 static orte_process_name_t      *lifeline=NULL;
 static orte_process_name_t      local_lifeline;
-static orte_process_name_t      my_parent;
 static int                      num_children;
 static opal_list_t              my_children;
 static bool                     ack_recvd;
@@ -102,7 +101,7 @@ static int init(void)
     /* setup the list of children */
     OBJ_CONSTRUCT(&my_children, opal_list_t);
     num_children = 0;
-    my_parent.jobid = ORTE_PROC_MY_NAME->jobid;
+    ORTE_PROC_MY_PARENT->jobid = ORTE_PROC_MY_NAME->jobid;
     
     return ORTE_SUCCESS;
 }
@@ -387,10 +386,10 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
      
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
-    if( !orte_static_ports &&
+    if (orte_static_ports &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target) ) {
         OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
-                             "%s routing to the HNP through my PLM parent %s",
+                             "%s routing to the HNP through my parent %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(ORTE_PROC_MY_PARENT)));
         ret = ORTE_PROC_MY_PARENT;
@@ -442,7 +441,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     /* if we get here, then the target daemon is not beneath
      * any of our children, so we have to step up through our parent
      */
-    daemon.vpid = my_parent.vpid;
+    daemon.vpid = ORTE_PROC_MY_PARENT->vpid;
     
     ret = &daemon;
 
@@ -537,7 +536,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
 
             /* if we are using static ports, set my lifeline to point at my parent */
             if (orte_static_ports) {
-                lifeline = &my_parent;
+                lifeline = ORTE_PROC_MY_PARENT;
             } else {
                 /* set our lifeline to the HNP - we will abort if that connection is lost */
                 lifeline = ORTE_PROC_MY_HNP;
@@ -992,13 +991,13 @@ static int update_routing_tree(orte_jobid_t jobid)
     /* compute my direct children and the bitmap that shows which vpids
      * lie underneath their branch
      */
-    my_parent.vpid = binomial_tree(0, 0, ORTE_PROC_MY_NAME->vpid,
+    ORTE_PROC_MY_PARENT->vpid = binomial_tree(0, 0, ORTE_PROC_MY_NAME->vpid,
                                    orte_process_info.max_procs,
                                    &num_children, &my_children, NULL, true, jobid);
-    my_parent.epoch = orte_ess.proc_get_epoch(&my_parent);
+    ORTE_PROC_MY_PARENT->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_PARENT);
     
     if (0 < opal_output_get_verbosity(orte_routed_base_output)) {
-        opal_output(0, "%s: parent %d num_children %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), my_parent.vpid, num_children);
+        opal_output(0, "%s: parent %d num_children %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_PROC_MY_PARENT->vpid, num_children);
         for (item = opal_list_get_first(&my_children);
              item != opal_list_get_end(&my_children);
              item = opal_list_get_next(item)) {
@@ -1043,7 +1042,7 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
     }
     
     /* return my parent's vpid */
-    return my_parent.vpid;
+    return ORTE_PROC_MY_PARENT->vpid;
 }
 
 static int get_wireup_info(opal_buffer_t *buf)

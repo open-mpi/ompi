@@ -124,11 +124,6 @@ int orte_register_params(void)
         orte_debug_daemons_flag = true;
     }
 
-    mca_base_param_reg_int_name("orte", "daemon_bootstrap",
-                                "Bootstrap the connection to the HNP",
-                                false, false, (int)false, &value);
-    orte_daemon_bootstrap = OPAL_INT_TO_BOOL(value);
-
     /* do we want session output left open? */
     mca_base_param_reg_int_name("orte", "leave_session_attached",
                                 "Whether applications and/or daemons should leave their sessions "
@@ -238,18 +233,18 @@ int orte_register_params(void)
                                    NULL, &orte_ccp_headnode);
 #endif
     
+
+    /* regex of nodes in system */
+    mca_base_param_reg_string_name("orte", "node_regex",
+                                   "Regular expression defining nodes in the system",
+                                   false, false, NULL, &orte_node_regex);
+
     /* whether or not to keep FQDN hostnames */
     mca_base_param_reg_int_name("orte", "keep_fqdn_hostnames",
                                 "Whether or not to keep FQDN hostnames [default: no]",
                                 false, false, (int)false, &value);
     orte_keep_fqdn_hostnames = OPAL_INT_TO_BOOL(value);
     
-    /* whether or not to use regular expressions for launch */
-    mca_base_param_reg_int_name("orte", "use_regexp",
-                                "Whether or not to use regular expressions for launch [default: no]",
-                                false, false, (int)false, &value);
-    orte_use_regexp = OPAL_INT_TO_BOOL(value);
-
     /* whether to tag output */
     mca_base_param_reg_int_name("orte", "tag_output",
                                 "Tag all output with [job,rank] (default: false)",

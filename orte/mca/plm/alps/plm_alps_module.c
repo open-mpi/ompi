@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -255,10 +255,16 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
     opal_argv_free(nodelist_argv);
-    opal_argv_append(&argc, &argv, "-L");
-    asprintf(&tmp, "%s", nodelist_flat);
-    opal_argv_append(&argc, &argv, tmp);
-    free(tmp);
+
+    /* if we are using all allocated nodes, then alps
+     * doesn't need a nodelist
+     */
+    if (map->num_new_daemons < orte_num_allocated_nodes) {
+        opal_argv_append(&argc, &argv, "-L");
+        asprintf(&tmp, "%s", nodelist_flat);
+        opal_argv_append(&argc, &argv, tmp);
+        free(tmp);
+    }
 
 
     /*
@@ -306,7 +312,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     cur_prefix = NULL;
     for (i=0; i < jdata->num_apps; i++) {
         char * app_prefix_dir = apps[i]->prefix_dir;
-         /* Check for already set cur_prefix_dir -- if different,
+        /* Check for already set cur_prefix_dir -- if different,
            complain */
         if (NULL != app_prefix_dir) {
             if (NULL != cur_prefix &&
@@ -357,7 +363,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
     
-launch_apps:
+ launch_apps:
     /* if we get here, then daemons launched - change to declaring apps failed */
     failed_job = active_job;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
@@ -370,15 +376,15 @@ launch_apps:
     
     if (mca_plm_alps_component.timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
-             opal_output(0, "plm_alps: could not obtain stop time");
-         } else {
-             opal_output(0, "plm_alps: daemon block launch time is %ld usec",
-                         (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
-                         (launchstop.tv_usec - launchstart.tv_usec));
-             opal_output(0, "plm_alps: total job launch time is %ld usec",
-                         (launchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
-                         (launchstop.tv_usec - joblaunchstart.tv_usec));
-         }
+            opal_output(0, "plm_alps: could not obtain stop time");
+        } else {
+            opal_output(0, "plm_alps: daemon block launch time is %ld usec",
+                        (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
+                        (launchstop.tv_usec - launchstart.tv_usec));
+            opal_output(0, "plm_alps: total job launch time is %ld usec",
+                        (launchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
+                        (launchstop.tv_usec - joblaunchstart.tv_usec));
+        }
     }
 
     if (ORTE_SUCCESS != rc) {
@@ -386,7 +392,7 @@ launch_apps:
         goto cleanup;
     }
 
-cleanup:
+ cleanup:
     if (NULL != argv) {
         opal_argv_free(argv);
     }

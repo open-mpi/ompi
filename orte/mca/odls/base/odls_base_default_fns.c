@@ -124,87 +124,8 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     if (NULL == map) {
         return ORTE_SUCCESS;
     }
-    
-    /* are we passing a regexp? */
-    if (orte_use_regexp && jdata->num_apps < 2 && NULL == orte_debugger_daemon) {
-        char *regexp;
-        flag = 1;
-        opal_dss.pack(data, &flag, 1, OPAL_INT8);
-        regexp = orte_regex_encode_maps(jdata);
-        opal_dss.pack(data, &regexp, 1, OPAL_STRING);
-        free(regexp);
-        /* if we are not using static ports, then we need to add the daemon wireup info */
-        if (!orte_static_ports) {
-            /* pack a flag indicating that wiring info is provided */
-            flag = 1;
-            opal_dss.pack(data, &flag, 1, OPAL_INT8);
-            /* get wireup info for daemons per the selected routing module */
-            wireup = OBJ_NEW(opal_buffer_t);
-            if (ORTE_SUCCESS != (rc = orte_routed.get_wireup_info(wireup))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(wireup);
-                return rc;
-            }
-            /* if anything was inserted, put it in a byte object for xmission */
-            if (0 < wireup->bytes_used) {
-                opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
-                /* pack the number of bytes required by payload */
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numbytes, 1, OPAL_INT32))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_RELEASE(wireup);
-                    return rc;
-                }
-                /* pack the byte object */
-                bo.size = numbytes;
-                boptr = &bo;
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &boptr, 1, OPAL_BYTE_OBJECT))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_RELEASE(wireup);
-                    return rc;
-                }
-                /* release the data since it has now been copied into our buffer */
-                free(bo.bytes);
-            } else {
-                /* pack numbytes=0 so the unpack routine remains sync'd to us */
-                numbytes = 0;
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numbytes, 1, OPAL_INT32))) {
-                    ORTE_ERROR_LOG(rc);
-                    OBJ_RELEASE(wireup);
-                    return rc;
-                }
-            }
-            OBJ_RELEASE(wireup);
-        } else {
-            /* pack a flag indicating no wireup info is provided */
-            flag = 0;
-            opal_dss.pack(data, &flag, 1, OPAL_INT8);
-        }
-        /* insert an "add-procs" command here so we can cleanly process it on the
-         * other end
-         */
-        command = ORTE_DAEMON_ADD_LOCAL_PROCS;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* since we will have processed this to update daemons, flag that we don't
-         * have the regexp again
-         */
-        flag = 2;
-        opal_dss.pack(data, &flag, 1, OPAL_INT8);
-        /* pack the jobid so it can be extracted later */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &job, 1, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* all done */
-        return ORTE_SUCCESS;
-    }
-    
+     
  nodemap:
-    /* if we are not passing a regexp, then pass the nodemap */
-    flag = 0;
-    opal_dss.pack(data, &flag, 1, OPAL_INT8);
     /* construct a nodemap */
     if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
         ORTE_ERROR_LOG(rc);
@@ -276,13 +197,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
-    /* pack the flag indicating that we are not using regexps - required to
-     * keep things in order when unpacking due to different ways the data
-     * can get to the unpacking routine
-     */
-    flag = 0;
-    opal_dss.pack(data, &flag, 1, OPAL_INT8);
-
     /* are we co-locating debugger daemons? */
     if (NULL != orte_debugger_daemon) {
         orte_app_context_t **apps;
@@ -472,23 +386,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     return ORTE_SUCCESS;
 }
 
-static int unpack_regexp(orte_odls_job_t **jobdat, opal_buffer_t *data)
-{
-    char *regexp;
-    int rc, cnt;
-    
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &regexp, &cnt, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_regex_decode_maps(regexp, jobdat))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    free(regexp);
-    return rc;
-}
-
 int orte_odls_base_default_update_daemon_info(opal_buffer_t *data)
 {
     opal_buffer_t wireup;
@@ -498,40 +395,7 @@ int orte_odls_base_default_update_daemon_info(opal_buffer_t *data)
     int32_t numbytes;
     int8_t flag;
 
-    /* unpack the flag for regexp */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* if we have a regexp, then process it so we know the daemonmap */
-    if (0 < flag) {
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:update:daemon:info updating nidmap from regexp",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        if (ORTE_SUCCESS != (rc = unpack_regexp(NULL, data))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        /* update the routing tree */
-        if (ORTE_SUCCESS != (rc = orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* see if we have wiring info as well */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (0 < flag) {
-            /* yes - extract and process it */
-            goto wireup;
-        }
-        return rc;
-    }
-    
-    /* otherwise, extract the byte object holding the daemonmap */
+    /* extract the byte object holding the daemonmap */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &bo, &cnt, OPAL_BYTE_OBJECT))) {
         ORTE_ERROR_LOG(rc);
@@ -573,7 +437,6 @@ int orte_odls_base_default_update_daemon_info(opal_buffer_t *data)
         return rc;
     }
 
-wireup:
     /* unpack the #bytes of daemon wireup info in the message */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &numbytes, &cnt, OPAL_INT32))) {
@@ -629,70 +492,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
 
     *job = ORTE_JOBID_INVALID;
     
-    /* unpack the flag for regexp */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    
-    if (0 < flag) {
-        if (1 == flag) {
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls: constructing jobdat from regexp",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            
-            /* need to setup the job from the regexp */
-            if (ORTE_SUCCESS != (rc = unpack_regexp(&jobdat, data))) {
-                ORTE_ERROR_LOG(rc);
-                goto REPORT_ERROR;
-            }
-            /* record the jobid */
-            *job = jobdat->jobid;
-        } else {
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls: using jobdat previously extracted from regexp",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            /* unpack the jobid */
-            cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, job, &cnt, ORTE_JOBID))) {
-                *job = ORTE_JOBID_INVALID;
-                ORTE_ERROR_LOG(rc);
-                goto REPORT_ERROR;
-            }
-            /* find the corresponding jobdat */
-            for (item = opal_list_get_first(&orte_local_jobdata);
-                 item != opal_list_get_end(&orte_local_jobdata);
-                 item = opal_list_get_next(item)) {
-                orte_odls_job_t *jdat = (orte_odls_job_t*)item;
-                
-                /* is this the specified job? */
-                if (jdat->jobid == *job) {
-                    OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                         "%s odls:construct_child_list found existing jobdat for job %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(*job)));
-                    jobdat = jdat;
-                    break;
-                }
-            }
-            if (NULL == jobdat) {
-                /* we have a problem */
-                rc = ORTE_ERR_NOT_FOUND;
-                ORTE_ERROR_LOG(rc);
-                goto REPORT_ERROR;
-            }
-        }
-        /* fake an app_idx array */
-        app_idx = (orte_app_idx_t*)malloc(jobdat->num_procs * sizeof(orte_app_idx_t));
-        memset(app_idx, 0, jobdat->num_procs * sizeof(orte_app_idx_t));
-        /* if we are doing a timing test, store the time the msg was recvd */
-        if (orte_timing) {
-            jobdat->launch_msg_recvd.tv_sec = orte_daemon_msg_recvd.tv_sec;
-            jobdat->launch_msg_recvd.tv_usec = orte_daemon_msg_recvd.tv_usec;
-        }
-        goto find_my_procs;
-    }
-    
     /* unpack the flag - are we co-locating debugger daemons? */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
@@ -743,7 +542,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         /* if the buffer was empty, then we know that all we are doing is
          * launching debugger daemons
          */
-        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
             goto done;
         }
         *job = ORTE_JOBID_INVALID;
@@ -942,7 +741,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         }
     }
     
-find_my_procs:
     /* cycle through the procs and find mine */
     proc.jobid = jobdat->jobid;
     for (j=0; j < jobdat->num_procs; j++) {
