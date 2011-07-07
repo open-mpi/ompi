@@ -670,6 +670,7 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
             break;
 
         case ORTE_PROC_STATE_TERMINATED:
+        case ORTE_PROC_STATE_TERM_NON_ZERO:
         case ORTE_PROC_STATE_KILLED_BY_CMD:
             orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
             check_job_complete(jdata);

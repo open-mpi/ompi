@@ -354,6 +354,17 @@ static int update_state(orte_jobid_t job,
         }
     }
 
+    if (ORTE_PROC_STATE_TERM_NON_ZERO == state) {
+        if (orte_abort_non_zero_exit) {
+            /* treat this as an abnormal
+             * termination - no recovery allowed
+             */
+            goto REPORT_ABORT;
+        }
+        /* treat this as normal termination */
+        goto REPORT_STATE;
+    }
+
     if (ORTE_PROC_STATE_TERMINATED < state) {
         if( jobdat->enable_recovery ) {
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
@@ -454,7 +465,7 @@ REPORT_ABORT:
         return rc;
     }
 
-
+ REPORT_STATE:
     /* find this proc in the local children so we can update its state */
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
