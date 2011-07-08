@@ -2086,7 +2086,6 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
     orte_std_cntr_t cnt;
     int rc=ORTE_SUCCESS;
     bool found=false, registering=false;
-    int8_t flag;
     orte_odls_job_t *jobdat, *jdat;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
@@ -2189,23 +2188,12 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
         /* the proc needs a copy of both the daemon/node map, and
          * the process map for its peers
          */
-        if (NULL != jobdat->regexp) {
-            /* the data is in a regexp - send that */
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:sync sending regexp %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 jobdat->regexp));
-            flag = 1;
-            opal_dss.pack(&buffer, &flag, 1, OPAL_INT8);
-            opal_dss.pack(&buffer, &jobdat->regexp, 1, OPAL_STRING);
-        } else if (NULL != orte_odls_globals.dmap &&
-                   NULL != jobdat->pmap) {
+        if (NULL != orte_odls_globals.dmap &&
+            NULL != jobdat->pmap) {
             /* the data is in the local byte objects - send them */
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:sync sending byte object",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            flag = 0;
-            opal_dss.pack(&buffer, &flag, 1, OPAL_INT8);
             opal_dss.pack(&buffer, &orte_odls_globals.dmap, 1, OPAL_BYTE_OBJECT);
             opal_dss.pack(&buffer, &jobdat->pmap, 1, OPAL_BYTE_OBJECT);
             /* add the local system info */

@@ -325,7 +325,6 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->total_slots_alloc = 0;
     ptr->num_procs = 0;
     ptr->num_local_procs = 0;
-    ptr->regexp = NULL;
     ptr->pmap = NULL;
     OBJ_CONSTRUCT(&ptr->collection_bucket, opal_buffer_t);
     OBJ_CONSTRUCT(&ptr->local_collection, opal_buffer_t);
@@ -354,10 +353,6 @@ static void orte_odls_job_destructor(orte_odls_job_t *ptr)
         if (NULL != ptr->apps) {
             free(ptr->apps);
         }
-    }
-    
-    if (NULL != ptr->regexp) {
-        free(ptr->regexp);
     }
     
     if (NULL != ptr->pmap && NULL != ptr->pmap->bytes) {
