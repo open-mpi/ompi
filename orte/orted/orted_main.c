@@ -238,7 +238,6 @@ int orte_daemon(int argc, char *argv[])
         OBJ_RELEASE(cmd_line);
         return ret;
     }
-    opal_output(0, "DONE PARSING CMD LINE");
     
     /*
      * Since this process can now handle MCA/GMCA parameters, make sure to
