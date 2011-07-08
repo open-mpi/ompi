@@ -98,6 +98,7 @@ opal_shmem_base_runtime_query(mca_base_module_t **best_module,
     env_hint_name = mca_base_param_environ_variable("shmem_RUNTIME_QUERY_hint",
                                                     NULL, NULL);
     env_hint_val = getenv(env_hint_name);
+    free(env_hint_name);
 
     /* traverse the list of available components.
      * for each call their 'run-time query' functions to determine relative

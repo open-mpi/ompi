@@ -143,6 +143,7 @@ int mca_coll_sm_init_query(bool enable_progress_threads,
     if (size <= 1) {
         opal_output_verbose(10, mca_coll_base_output,
                             "coll:sm:init_query: comm size too small; disqualifying myself");
+        free(procs);
         return OMPI_ERR_NOT_AVAILABLE;
     }
     for (i = 0; i < size; ++i) {
@@ -152,12 +153,12 @@ int mca_coll_sm_init_query(bool enable_progress_threads,
             break;
         }
     }
+    free(procs);
     if (i >= size) {
         opal_output_verbose(10, mca_coll_base_output,
                             "coll:sm:init_query: no other local procs; disqualifying myself");
         return OMPI_ERR_NOT_AVAILABLE;
     }
-    free(procs);
 
     /* Don't do much here because we don't really want to allocate any
        shared memory until this component is selected to be used. */

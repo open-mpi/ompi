@@ -161,6 +161,7 @@ static int mca_pml_csum_component_close(void)
     if (NULL != mca_pml_csum.allocator_name) {
         free(mca_pml_csum.allocator_name);
     }
+    opal_output_close(mca_pml_csum_output);
 
     return OMPI_SUCCESS;
 }
