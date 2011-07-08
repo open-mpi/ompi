@@ -153,6 +153,7 @@ int ompi_comm_cid_init (void)
             return ret;
         }
     }
+    free(procs);
 
     return OMPI_SUCCESS;
 }

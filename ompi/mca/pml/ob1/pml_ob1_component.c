@@ -158,6 +158,7 @@ static int mca_pml_ob1_component_close(void)
     if (NULL != mca_pml_ob1.allocator_name) {
         free(mca_pml_ob1.allocator_name);
     }
+    opal_output_close(mca_pml_ob1_output);
 
     return OMPI_SUCCESS;
 }

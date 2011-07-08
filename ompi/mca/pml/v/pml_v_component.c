@@ -77,6 +77,7 @@ static int mca_pml_v_component_open(void)
                                    false, false, "", &vprotocol_include_list);
    
     pml_v_output_open(output, verbose);
+    free(output);
 
     if(-1 != priority)
         V_OUTPUT_ERR("pml_v: Overriding priority setting (%d) with -1. The PML V should NEVER be the selected component; even when enabling fault tolerance.", priority);
