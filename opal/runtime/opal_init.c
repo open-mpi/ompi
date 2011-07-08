@@ -68,8 +68,8 @@
 #endif
 const char opal_version_string[] = OPAL_IDENT_STRING;
 
-int opal_initialized = 0;
-int opal_util_initialized = 0;
+bool opal_initialized = false;
+bool opal_util_initialized = false;
 int opal_cache_line_size;
 
 static int
@@ -219,12 +219,10 @@ opal_init_util(int* pargc, char*** pargv)
     int ret;
     char *error = NULL;
 
-    if( ++opal_util_initialized != 1 ) {
-        if( opal_util_initialized < 1 ) {
-            return OPAL_ERROR;
-        }
+    if (opal_util_initialized) {
         return OPAL_SUCCESS;
     }
+    opal_util_initialized = true;
 
     /* JMS See note in runtime/opal.h -- this is temporary; to be
        replaced with real hwloc information soon (in trunk/v1.5 and
@@ -324,12 +322,10 @@ opal_init(int* pargc, char*** pargv)
     int ret;
     char *error = NULL;
 
-    if( ++opal_initialized != 1 ) {
-        if( opal_initialized < 1 ) {
-            return OPAL_ERROR;
-        }
+    if (opal_initialized) {
         return OPAL_SUCCESS;
     }
+    opal_initialized = true;
 
     /* initialize util code */
     if (OPAL_SUCCESS != (ret = opal_init_util(pargc, pargv))) {
