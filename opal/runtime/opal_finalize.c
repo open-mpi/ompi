@@ -54,18 +54,16 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
 
-extern int opal_initialized;
-extern int opal_util_initialized;
+extern bool opal_initialized;
+extern bool opal_util_initialized;
 
 int
 opal_finalize_util(void)
 {
-    if( --opal_util_initialized != 0 ) {
-        if( opal_util_initialized < 0 ) {
-            return OPAL_ERROR;
-        }
+    if (!opal_util_initialized) {
         return OPAL_SUCCESS;
     }
+    opal_util_initialized = false;
 
     /* Clear out all the registered MCA params */
     mca_base_param_finalize();
@@ -111,12 +109,10 @@ opal_finalize_util(void)
 int
 opal_finalize(void)
 {
-    if( --opal_initialized != 0 ) {
-        if( opal_initialized < 0 ) {
-            return OPAL_ERROR;
-        }
+    if (!opal_initialized) {
         return OPAL_SUCCESS;
     }
+    opal_initialized = false;
 
     /* close the checkpoint and restart service */
     opal_cr_finalize();
