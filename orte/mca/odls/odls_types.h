@@ -145,7 +145,6 @@ typedef struct orte_odls_job_t {
     orte_std_cntr_t         num_nodes;              /* number of nodes involved in the job */
     orte_vpid_t             num_procs;
     int32_t                 num_local_procs;
-    char                    *regexp;                /* the regular expression describing the job */
     opal_byte_object_t      *pmap;                  /* local copy of pidmap byte object */
     opal_buffer_t           collection_bucket;
     opal_buffer_t           local_collection;
