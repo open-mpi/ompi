@@ -84,6 +84,7 @@ int orte_errmgr_hnp_global_post_startup(void);
 int orte_errmgr_hnp_global_pre_shutdown(void);
 int orte_errmgr_hnp_global_mark_processes_as_dead(opal_pointer_array_t *dead_procs);
 int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opal_buffer_t *buffer);
+int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc);
 
 /* HNP Versions */
 int orte_errmgr_hnp_base_global_init(void);

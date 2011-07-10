@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 The Trustees of Indiana University.
+ * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
@@ -617,7 +617,7 @@ static void errmgr_autor_process_fault_daemon(orte_job_t *jdata,
     /*
      * Record the dead daemon
      */
-    orte_errmgr_hnp_record_dead_daemon(jdata, proc->vpid, state, 0);
+    orte_errmgr_hnp_record_dead_process(proc);
 
     return;
 }
