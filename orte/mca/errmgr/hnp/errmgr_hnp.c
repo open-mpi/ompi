@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 The Trustees of Indiana University.
+ * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
@@ -108,7 +108,6 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid, orte_epoch_t epoch);
 static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc,
                         orte_proc_state_t state, orte_exit_code_t exit_code);
 static orte_odls_child_t* proc_is_local(orte_process_name_t *proc);
-static int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc);
 static int send_to_local_applications(opal_pointer_array_t *dead_names);
 
 /************************

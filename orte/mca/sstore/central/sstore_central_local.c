@@ -1,5 +1,5 @@
 /*
- * Copyright (c)      2010 The Trustees of Indiana University.
+ * Copyright (c)      2011 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -547,7 +547,7 @@ static orte_sstore_central_local_app_snapshot_info_t *find_app_handle_info(orte_
 {
     orte_sstore_central_local_app_snapshot_info_t *app_info = NULL;
     opal_list_item_t* item = NULL;
-    orte_bs_cmp_bitmask_t mask;
+    orte_ns_cmp_bitmask_t mask;
 
     for(item  = opal_list_get_first(handle_info->app_info_handle);
         item != opal_list_get_end(handle_info->app_info_handle);

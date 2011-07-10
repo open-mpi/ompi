@@ -1,5 +1,5 @@
 /*
- * Copyright (c)      2010 The Trustees of Indiana University.
+ * Copyright (c)      2011 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -55,6 +55,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/grpcomm/grpcomm.h"
