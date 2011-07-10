@@ -125,6 +125,9 @@ AC_CHECK_PROG(JAVA, java, java)
 
 ACVT_CONF_TITLE([Header files, types, and functions])
 
+# Added by Open MPI
+AC_LANG([C])
+
 # Check for header files
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdint.h inttypes.h fnmatch.h sys/param.h])
