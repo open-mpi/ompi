@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010 The Trustees of Indiana University.
+ * Copyright (c) 2004-2011 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -702,7 +702,7 @@ OBJ_CLASS_INSTANCE(ompi_crcp_bkmrk_pml_peer_ref_t,
 void ompi_crcp_bkmrk_pml_peer_ref_construct(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref) {
     peer_ref->proc_name.jobid  = ORTE_JOBID_INVALID;
     peer_ref->proc_name.vpid   = ORTE_VPID_INVALID;
-    peer_rev->proc_name.epoch  = ORTE_EPOCH_MIN;
+    peer_ref->proc_name.epoch  = ORTE_EPOCH_MIN;
 
     OBJ_CONSTRUCT(&peer_ref->send_list,       opal_list_t);
     OBJ_CONSTRUCT(&peer_ref->isend_list,      opal_list_t);
@@ -3237,13 +3237,13 @@ static int traffic_message_append(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
             CREATE_NEW_MSG((*msg_ref), msg_type,
                            count, ddt_size, tag, dest, comm,
                            peer_ref->proc_name.jobid,
-                           peer_ref->proc_name.vpid
+                           peer_ref->proc_name.vpid,
                            peer_ref->proc_name.epoch);
         } else {
             CREATE_NEW_MSG((*msg_ref), msg_type,
                            count, ddt_size, tag, dest, comm,
-                           ORTE_JOBID_INVALID,
-                           ORTE_VPID_INVALID);
+                           ORTE_JOBID_INVALID, ORTE_VPID_INVALID,
+                           ORTE_EPOCH_INVALID);
         }
 
         if( msg_type == COORD_MSG_TYPE_P_SEND ||
@@ -3808,7 +3808,7 @@ static int drain_message_append(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
         CREATE_NEW_DRAIN_MSG((*msg_ref), msg_type,
                              count, NULL, tag, dest, comm,
                              peer_ref->proc_name.jobid,
-                             peer_ref->proc_name.vpid
+                             peer_ref->proc_name.vpid,
                              peer_ref->proc_name.epoch);
 
         (*msg_ref)->done           = 0;
@@ -6167,7 +6167,7 @@ static int do_recv_msg_detail_check_drain(ompi_crcp_bkmrk_pml_peer_ref_t *peer_r
                        count, datatype_size, tag, rank,
                        ompi_comm_lookup(comm_id),
                        peer_ref->proc_name.jobid,
-                       peer_ref->proc_name.vpid
+                       peer_ref->proc_name.vpid,
                        peer_ref->proc_name.epoch);
 
         traffic_message_create_drain_message(true, num_left_unresolved,

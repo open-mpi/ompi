@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2009 The University of Tennessee and The University
@@ -1114,14 +1114,14 @@ int mca_btl_sm_ft_event(int state) {
              */
             orte_sstore.set_attr(orte_sstore_handle_current,
                                  SSTORE_METADATA_LOCAL_TOUCH,
-                                 mca_btl_sm_component.sm_seg->module_seg_path);
+                                 mca_btl_sm_component.sm_seg->shmem_ds.seg_name);
         }
     }
     else if(OPAL_CRS_CONTINUE == state) {
         if( orte_cr_continue_like_restart ) {
             if( NULL != mca_btl_sm_component.sm_seg ) {
                 /* Add shared memory file */
-                opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->module_seg_path, false);
+                opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->shmem_ds.seg_name, false);
             }
 
             /* Clear this so we force the module to re-init the sm files */
@@ -1132,7 +1132,7 @@ int mca_btl_sm_ft_event(int state) {
             OPAL_CRS_RESTART_PRE == state) {
         if( NULL != mca_btl_sm_component.sm_seg ) {
             /* Add shared memory file */
-            opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->module_seg_path, false);
+            opal_crs_base_cleanup_append(mca_btl_sm_component.sm_seg->shmem_ds.seg_name, false);
         }
 
         /* Clear this so we force the module to re-init the sm files */
