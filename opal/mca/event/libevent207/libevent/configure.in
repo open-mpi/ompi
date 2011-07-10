@@ -109,7 +109,7 @@ AC_ARG_ENABLE([hidden-symbols],
                              [Use linker "visibility" functionality to hide libevent symbols])],
               [], [enable_hidden_symbols=no])
 dnl   ****** OPEN MPI ******
-
+AC_LANG([C])
 AC_PROG_LIBTOOL
 
 dnl   Uncomment "AC_DISABLE_SHARED" to make shared librraries not get
