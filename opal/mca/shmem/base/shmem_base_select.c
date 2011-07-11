@@ -26,6 +26,7 @@
 #endif /* HAVE_STRING_H */
 
 #include "opal/constants.h"
+#include "opal/util/output.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
