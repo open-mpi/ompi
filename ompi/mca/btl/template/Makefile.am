@@ -29,8 +29,7 @@ sources = \
     btl_template_frag.c \
     btl_template_frag.h \
     btl_template_proc.c \
-    btl_template_proc.h \
-    btl_template_error.h
+    btl_template_proc.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
