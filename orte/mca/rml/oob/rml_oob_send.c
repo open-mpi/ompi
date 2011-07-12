@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -44,6 +45,7 @@ orte_rml_send_msg_callback(int status,
             (orte_rml_oob_msg_header_t*) iov[0].iov_base;
 
     if (msg->msg_type == ORTE_RML_BLOCKING_SEND) {
+	OPAL_THREAD_LOCK(&msg->msg_lock);
         /* blocking send */
         if (status > 0) {
             msg->msg_status = status - sizeof(orte_rml_oob_msg_header_t);
@@ -52,6 +54,7 @@ orte_rml_send_msg_callback(int status,
         }
         msg->msg_complete = true;
         opal_condition_broadcast(&msg->msg_cond);
+	OPAL_THREAD_UNLOCK(&msg->msg_lock);
     } else if (msg->msg_type == ORTE_RML_NONBLOCKING_IOV_SEND) {
         /* non-blocking iovec send */
         if (status > 0) {
