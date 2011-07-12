@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +11,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos Nation Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -443,6 +446,8 @@ rml_oob_recv_route_send_callback(int status,
                                  orte_rml_tag_t tag,
                                  void* cbdata)
 {
+    /* NTH: free the iovec allocated by rml_oob_recv_route_callback */
+    free (iov);
 }
 
 
@@ -459,6 +464,7 @@ rml_oob_recv_route_callback(int status,
     int real_tag;
     int ret;
     orte_process_name_t next, origin;
+    struct iovec *new_iov;
 
     /* BWB -- propogate errors here... */
     assert(status >= 0);
@@ -507,9 +513,19 @@ rml_oob_recv_route_callback(int status,
 
     ORTE_RML_OOB_MSG_HEADER_HTON(*hdr);
 
+    /* NTH: fix potential race condition. oob may modify iov before the oob send completes */
+    new_iov = calloc (count, sizeof (struct iovec));
+    if (NULL == new_iov) {
+	opal_output (0, "%s:route_callback malloc error!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        opal_backtrace_print(stderr);
+        orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);    
+    }
+
+    memcpy (new_iov, iov, count * sizeof (struct iovec));
+
     ret = orte_rml_oob_module.active_oob->oob_send_nb(&next,
                                                       &origin,
-                                                      iov,
+                                                      new_iov,
                                                       count,
                                                       real_tag,
                                                       0,
