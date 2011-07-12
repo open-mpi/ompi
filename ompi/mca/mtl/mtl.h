@@ -355,6 +355,34 @@ typedef int (*mca_mtl_base_module_cancel_fn_t)(
 
 
 /**
+ * Downcall from PML layer when a new communicator is created.
+ *
+ * @param comm  Communicator
+ * @return      OMPI_SUCCESS or failure status.
+ *
+ * Provides the MTL the opportunity to initialize/cache a data structure
+ * on the communicator.
+ */
+typedef int (*mca_mtl_base_module_add_comm_fn_t)(
+                          struct mca_mtl_base_module_t* mtl,
+                          struct ompi_communicator_t* comm);
+
+
+/**
+ * Downcall from PML layer when a communicator is destroyed.
+ *
+ * @param comm  Communicator
+ * @return      OMPI_SUCCESS or failure status.
+ *
+ * Provides the MTL the opportunity to cleanup any datastructures
+ * associated with the communicator.
+ */
+typedef int (*mca_mtl_base_module_del_comm_fn_t)(
+                          struct mca_mtl_base_module_t* mtl,
+                          struct ompi_communicator_t* comm);
+
+
+/**
  * MTL module interface functions and attributes.
  */
 struct mca_mtl_base_module_t {
@@ -376,6 +404,8 @@ struct mca_mtl_base_module_t {
 
     /* Optional MTL functions */
     mca_mtl_base_module_cancel_fn_t      mtl_cancel;
+    mca_mtl_base_module_add_comm_fn_t    mtl_add_comm;
+    mca_mtl_base_module_del_comm_fn_t    mtl_del_comm;
 };
 typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
 
