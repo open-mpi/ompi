@@ -64,10 +64,7 @@ int opal_carto_base_select(void)
 cleanup:
     /* Initialize the winner */
     if (NULL != opal_carto_base_module) {
-        if (OPAL_SUCCESS != (ret = opal_carto_base_module->carto_module_init()) ) {
-            exit_status = ret;
-            goto cleanup;
-        }
+        exit_status = opal_carto_base_module->carto_module_init();
     }
 
     return exit_status;
