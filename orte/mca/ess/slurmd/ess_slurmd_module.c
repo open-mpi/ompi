@@ -92,6 +92,11 @@ orte_ess_base_module_t orte_ess_slurmd_module = {
 static bool app_init_complete;
 static bool slurm20;
 
+/* Local functions */
+static int discover_nodes(char *regexp, char*** nodelist);
+static int parse_ranges(char *base, char *ranges, char ***names);
+static int parse_range(char *base, char *range, char ***names);
+
 /****    MODULE FUNCTIONS    ****/
 
 static int rte_init(void)
@@ -280,7 +285,7 @@ static int rte_init(void)
         goto error;
     }
     /* break that down into a list of nodes */
-    if (ORTE_SUCCESS != (ret = orte_regex_extract_node_names(regexp, &nodes))) {
+    if (ORTE_SUCCESS != (ret = discover_nodes(regexp, &nodes))) {
         error = "could not parse node list";
         goto error;
     }
@@ -604,38 +609,278 @@ static int update_nidmap(opal_byte_object_t *bo)
 }
 
 
+/**
+ * Discover the available resources.
+ * 
+ * In order to fully support slurm, we need to be able to handle 
+ * node regexp/task_per_node strings such as:
+ * foo,bar    5,3
+ * foo        5
+ * foo[2-10,12,99-105],bar,foobar[3-11] 2(x10),5,100(x16)
+ *
+ * @param *regexp A node regular expression from SLURM (i.e. SLURM_NODELIST)
+ * @param **nodelist argv array to return the found nodes in
+ */
+static int discover_nodes(char *regexp, char*** names)
+{
+    int i, j, len, ret;
+    char *base;
+    char *orig;
+    bool found_range = false;
+    bool more_to_come = false;
+    
+    orig = base = strdup(regexp);
+    if (NULL == base) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                         "%s ess:slurmd:discover: checking nodelist: %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         regexp));
+    
+    do {
+        /* Find the base */
+        len = strlen(base);
+        for (i = 0; i <= len; ++i) {
+            if (base[i] == '[') {
+                /* we found a range. this gets dealt with below */
+                base[i] = '\0';
+                found_range = true;
+                break;
+            }
+            if (base[i] == ',') {
+                /* we found a singleton node, and there are more to come */
+                base[i] = '\0';
+                found_range = false;
+                more_to_come = true;
+                break;
+            }
+            if (base[i] == '\0') {
+                /* we found a singleton node */
+                found_range = false;
+                more_to_come = false;
+                break;
+            }
+        }
+        if(i == 0) {
+            /* we found a special character at the beginning of the string */
+            orte_show_help("help-ras-slurm.txt", "slurm-env-var-bad-value", 1, regexp);
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            free(orig);
+            return ORTE_ERR_BAD_PARAM;
+        }
+        
+        if (found_range) {
+            /* If we found a range, now find the end of the range */
+            for (j = i; j < len; ++j) {
+                if (base[j] == ']') {
+                    base[j] = '\0';
+                    break;
+                }
+            }
+            if (j >= len) {
+                /* we didn't find the end of the range */
+                orte_show_help("help-ess-slurdm.txt", "slurm-env-var-bad-value", 1, regexp);
+                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                free(orig);
+                return ORTE_ERR_BAD_PARAM;
+            }
+            
+            ret = parse_ranges(base, base + i + 1, names);
+            if(ORTE_SUCCESS != ret) {
+                orte_show_help("help-ras-slurm.txt", "slurm-env-var-bad-value", 1, regexp);
+                ORTE_ERROR_LOG(ret);
+                free(orig);
+                return ret;
+            }    
+            if(base[j + 1] == ',') {
+                more_to_come = true;
+                base = &base[j + 2];
+            } else {
+                more_to_come = false;
+            }
+        } else {
+            /* If we didn't find a range, just add the node */
+            
+            OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                                 "%s ess:slurmd:discover: found node %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 base));
+            
+            if(ORTE_SUCCESS != (ret = opal_argv_append_nosize(names, base))) {
+                ORTE_ERROR_LOG(ret);
+                free(orig);
+                return ret;
+            }
+            /* set base equal to the (possible) next base to look at */
+            base = &base[i + 1];
+        }
+    } while(more_to_come);
+   
+    free(orig);
+    
+    /* All done */
+    return ret;
+}
 
-#if 0
-/***   AVAILABLE SLURM ENVARS   ***/
-SLURM_JOB_ID=38749
-SLURM_JOB_NUM_NODES=1
-SLURM_JOB_NODELIST=odin097
-SLURM_JOB_CPUS_PER_NODE=4
-SLURM_JOBID=38749
-SLURM_NNODES=1
-SLURM_NODELIST=odin097
-SLURM_TASKS_PER_NODE=2
-SLURM_PRIO_PROCESS=0
-SLURM_UMASK=0022
-SLURM_NPROCS=2
-SLURM_CPUS_PER_TASK=1
-SLURM_STEPID=1
-SLURM_SRUN_COMM_PORT=33650
-SLURM_STEP_ID=1
-SLURM_STEP_NODELIST=odin097
-SLURM_STEP_NUM_NODES=1
-SLURM_STEP_NUM_TASKS=2
-SLURM_STEP_TASKS_PER_NODE=2
-SLURM_STEP_LAUNCHER_HOSTNAME=(null)
-SLURM_STEP_LAUNCHER_PORT=33650
-SLURM_SRUN_COMM_HOST=129.79.240.100
-SLURM_TASK_PID=5528
-SLURM_CPUS_ON_NODE=4
-SLURM_NODEID=0
-SLURM_PROCID=1
-SLURM_LOCALID=1
-SLURM_LAUNCH_NODE_IPADDR=129.79.240.100
-SLURM_GTIDS=0,1
-SLURM_CHECKPOINT_PATH=/nfs/rinfs/san/homedirs/rhc
-SLURMD_NODENAME=odin097
-#endif
+
+/*
+ * Parse one or more ranges in a set
+ *
+ * @param base     The base text of the node name
+ * @param *ranges  A pointer to a range. This can contain multiple ranges
+ *                 (i.e. "1-3,10" or "5" or "9,0100-0130,250") 
+ * @param ***names An argv array to add the newly discovered nodes to
+ */
+static int parse_ranges(char *base, char *ranges, char ***names)
+{
+    int i, len, ret;
+    char *start, *orig;
+    
+    /* Look for commas, the separator between ranges */
+
+    len = strlen(ranges);
+    for (orig = start = ranges, i = 0; i < len; ++i) {
+        if (',' == ranges[i]) {
+            ranges[i] = '\0';
+            ret = parse_range(base, start, names);
+            if (ORTE_SUCCESS != ret) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
+            start = ranges + i + 1;
+        }
+    }
+
+    /* Pick up the last range, if it exists */
+
+    if (start < orig + len) {
+        
+        OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                             "%s ess:slurmd:discover: parse range %s (2)",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             start));
+        
+        ret = parse_range(base, start, names);
+        if (ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+    }
+
+    /* All done */
+    return ORTE_SUCCESS;
+}
+
+
+/*
+ * Parse a single range in a set and add the full names of the nodes
+ * found to the names argv
+ *
+ * @param base     The base text of the node name
+ * @param *ranges  A pointer to a single range. (i.e. "1-3" or "5") 
+ * @param ***names An argv array to add the newly discovered nodes to
+ */
+static int parse_range(char *base, char *range, char ***names)
+{
+    char *str, temp1[BUFSIZ];
+    size_t i, j, start, end;
+    size_t base_len, len, num_len;
+    size_t str_start, str_end;
+    size_t num_str_len;
+    bool found;
+    int ret;
+    
+    len = strlen(range);
+    base_len = strlen(base);
+    /* Silence compiler warnings; start and end are always assigned
+       properly, below */
+    start = end = 0;
+    
+    /* Look for the beginning of the first number */
+    
+    for (found = false, i = 0; i < len; ++i) {
+        if (isdigit((int) range[i])) {
+            if (!found) {
+                str_start = i;
+                start = atoi(range + i);
+                found = true;
+                break;
+            }
+        }
+    }
+    if (!found) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    /* Look for the end of the first number */
+    
+    for (found = false, num_str_len = 0; i < len; ++i, ++num_str_len) {
+        if (!isdigit((int) range[i])) {
+            break;
+        }
+    }
+    
+    /* Was there no range, just a single number? */
+    
+    if (i >= len) {
+        str_end = len;
+        end = start;
+        found = true;
+    }
+    
+    /* Nope, there was a range.  Look for the beginning of the second
+       number */
+    
+    else {
+        str_end = i - 1;
+        for (; i < len; ++i) {
+            if (isdigit((int) range[i])) {
+                end = atoi(range + i);
+                found = true;
+                break;
+            }
+        }
+    }
+    if (!found) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    /* Make strings for all values in the range */
+    
+    len = base_len + num_str_len + 32;
+    str = malloc(len);
+    if (NULL == str) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    strcpy(str, base);
+    for (i = start; i <= end; ++i) {
+        str[base_len] = '\0';
+        snprintf(temp1, BUFSIZ - 1, "%lu", (long) i);
+        
+        /* Do we need zero pading? */
+        
+        if ((num_len = strlen(temp1)) < num_str_len) {
+            for (j = base_len; j < base_len + (num_str_len - num_len); ++j) {
+                str[j] = '0';
+            }
+            str[j] = '\0';
+        }
+        strcat(str, temp1);
+        ret = opal_argv_append_nosize(names, str);
+        if(ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            free(str);
+            return ret;
+        }
+    }
+    free(str);
+    
+    /* All done */
+    return ORTE_SUCCESS;
+}

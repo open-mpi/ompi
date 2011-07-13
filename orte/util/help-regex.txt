@@ -57,4 +57,12 @@ it does not know how to parse:
     regexp: %s
     
 Please contact the Open MPI help list for assistance.
+#
+[regex:num-digits-missing]
+While trying to parse a regular expression to extract the node
+names, the regex parser was unable to determine the number of
+digits in the names:
 
+   regexp: %s
+
+Please contact the Open MPI help list for assistance.
