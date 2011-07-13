@@ -315,7 +315,8 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     ptr->name = NULL;
     ptr->state = ORTE_JOB_STATE_UNDEF;
     ptr->launch_msg_processed = false;
-    ptr->apps = NULL;
+    OBJ_CONSTRUCT(&ptr->apps, opal_pointer_array_t);
+    opal_pointer_array_init(&ptr->apps, 2, INT_MAX, 2);
     ptr->num_apps = 0;
     ptr->policy = 0;
     ptr->cpus_per_rank = 1;
@@ -336,8 +337,9 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
 }
 static void orte_odls_job_destructor(orte_odls_job_t *ptr)
 {
-    orte_app_idx_t i;
-    
+    int i;
+    orte_app_context_t *app;
+
     OBJ_DESTRUCT(&ptr->lock);
     OBJ_DESTRUCT(&ptr->cond);
     if (NULL != ptr->instance) {
@@ -346,15 +348,12 @@ static void orte_odls_job_destructor(orte_odls_job_t *ptr)
     if (NULL != ptr->name) {
         free(ptr->name);
     }
-    if (NULL != ptr->apps) {
-        for (i=0; i < ptr->num_apps; i++) {
-            OBJ_RELEASE(ptr->apps[i]);
+    for (i=0; i < ptr->apps.size; i++) {
+        if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(&ptr->apps, i))) {
+            OBJ_RELEASE(app);
         }
-        if (NULL != ptr->apps) {
-            free(ptr->apps);
-        }
+        OBJ_DESTRUCT(&ptr->apps);
     }
-    
     if (NULL != ptr->pmap && NULL != ptr->pmap->bytes) {
         free(ptr->pmap->bytes);
         free(ptr->pmap);

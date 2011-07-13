@@ -134,7 +134,7 @@ typedef struct orte_odls_job_t {
     char                    *instance;              /* keep handy for scheduler restart */
     char                    *name;                  /* keep handy for scheduler restart */
     bool                    launch_msg_processed;   /* launch msg has been fully processed */
-    orte_app_context_t      **apps;                 /* app_contexts for this job */
+    opal_pointer_array_t    apps;                   /* app_contexts for this job */
     orte_app_idx_t          num_apps;               /* number of app_contexts */
     orte_mapping_policy_t   policy;                 /* mapping policy */
     int16_t                 cpus_per_rank;          /* number of cpus/rank */

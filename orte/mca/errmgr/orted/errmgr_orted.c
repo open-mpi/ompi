@@ -340,7 +340,7 @@ static int update_state(orte_jobid_t job,
                     /* kill this proc */
                     killprocs(proc->jobid, proc->vpid, proc->epoch);
                 }
-                app = jobdat->apps[child->app_idx];
+                app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, child->app_idx);
                 if( jobdat->enable_recovery && child->restarts < app->max_restarts ) {
                     child->restarts++;
                     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
@@ -378,7 +378,7 @@ static int update_state(orte_jobid_t job,
                 mask = ORTE_NS_CMP_ALL;
                 if (OPAL_EQUAL == orte_util_compare_name_fields(mask, child->name, proc)) {
                     /* see if this child has reached its local restart limit */
-                    app = jobdat->apps[child->app_idx];
+                    app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, child->app_idx);
                     OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                          "%s CHECKING RESTARTS %d VS MAX %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
