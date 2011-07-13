@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+dist_pkgdata_DATA = help-ess-slurmd.txt
+
 sources = \
         ess_slurmd.h \
         ess_slurmd_component.c \

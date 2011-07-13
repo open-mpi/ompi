@@ -362,6 +362,11 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
             } else {
                 suffix = NULL;
             }
+            OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                                 "%s regex:extract:nodenames: parsing range %s %s %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 base, base + i, suffix));
+
             ret = regex_parse_node_ranges(base, base + i, num_digits, suffix, names);
             if (NULL != suffix) {
                 free(suffix);
@@ -620,156 +625,6 @@ int orte_regex_extract_ppn(int num_nodes, char *regexp, int **ppn)
     
     return ORTE_SUCCESS;
 }
-
-#if 0
-static int parse_node_range(char *orig, char ***names, orte_vpid_t *vpid_start,
-                            int *ppn, int *step, int *nrank)
-{
-    char *base, *ptr, *ptr2, *next, *suffix;
-    int i, j, len, rc=ORTE_SUCCESS;
-    bool found_range;
-
-    /* protect input */
-    base = strdup(orig);
-    suffix = '\0';
-    
-    /* default to no procs */
-    *vpid_start = ORTE_VPID_INVALID;
-    
-    /* start by searching for ranges and proc specifications */
-    len = strlen(base);
-    ptr = NULL;
-    found_range = false;
-    for (i = 0; i <= len; ++i) {
-        if (base[i] == '[') {
-            /* we found a range. this gets dealt with below */
-            base[i] = '\0';
-            found_range = true;
-            break;
-        }
-        if (base[i] == '\0') {
-            /* we found a singleton node - no procs on it */
-            base[i] = '\0';
-            found_range = false;
-            break;
-        }
-        if (base[i] == '(') {
-            /* we found a singleton node that has procs on it */
-            base[i] = '\0';
-            found_range = false;
-            ptr = &base[i+1];
-            break;
-        }
-    }
-    if (i == 0) {
-        /* we found a special character at the beginning of the string */
-        orte_show_help("help-regex.txt", "regex:special-char", true, orig);
-        rc = ORTE_ERR_BAD_PARAM;
-        goto cleanup;
-    }
-    
-    if (found_range) {
-        /* If we found a range, now find the end of the range */
-        for (j = i; j < len; ++j) {
-            if (base[j] == ']') {
-                base[j] = '\0';
-                if (j < len-2) {
-                    if (base[j+1] == '(') {
-                        /* procs are in this range and there is no suffix */
-                        ptr = &base[j+2];
-                    } else {
-                        /* we must have a suffix */
-                        suffix = base[j+1];
-                        if (j < len-3 && base[j+2] == '(') {
-                            /* we also have procs in this range */
-                            ptr = &base[j+3];
-                        }
-                    }
-                }
-                break;
-            }
-        }
-        if (j >= len) {
-            /* we didn't find the end of the range */
-            orte_show_help("help-regex.txt", "regex:end-range-missing", true, orig);
-            rc = ORTE_ERR_BAD_PARAM;
-            goto cleanup;
-        }
-        
-        rc = regex_parse_node_range(base, base + i + 1, suffix, names);
-        if (ORTE_SUCCESS != rc) {
-            orte_show_help("help-regex.txt", "regex:bad-value", true, orig);
-            rc = ORTE_ERR_BAD_PARAM;
-            goto cleanup;
-        }    
-    } else {
-        /* If we didn't find a range, just add the node */
-        
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                             "%s regex:extract:nodenames: found node: %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), base));
-        
-        if(ORTE_SUCCESS != (rc = opal_argv_append_nosize(names, base))) {
-            ORTE_ERROR_LOG(rc);
-            rc = ORTE_ERR_BAD_PARAM;
-            goto cleanup;
-        }
-    }
-    
-    if (NULL != ptr) {  /* we have procs on these nodes */
-        /* find the end of the description */
-        ptr2 = strchr(ptr, ')');
-        if (NULL == ptr2) {
-            /* malformed */
-            orte_show_help("help-regex.txt", "regex:bad-value", true, ptr);
-            return ORTE_ERROR;
-        }
-        *ptr2 = '\0';
-        
-        /* the proc description is in the format:
-         * starting-vpidxppn:step:starting-node-rank
-         * where step=step between vpids
-         */
-        
-        /* start by extracting the starting vpid */
-        if (NULL == (ptr2 = strchr(ptr, 'x'))) {
-            /* malformed */
-            orte_show_help("help-regex.txt", "regex:bad-value", true, ptr);
-            return ORTE_ERROR;
-        }
-        *ptr2 = '\0';
-        orte_util_convert_string_to_vpid(vpid_start, ptr);
-        
-        /* get ppn */
-        next = ptr2 + 1;
-        if (NULL == (ptr2 = strchr(next, ':'))) {
-            /* malformed */
-            orte_show_help("help-regex.txt", "regex:bad-value", true, next);
-            return ORTE_ERROR;
-        }
-        *ptr2 = '\0';
-        *ppn = strtol(next, NULL, 10);
-        
-        /* get step */
-        next = ptr2 + 1;
-        if (NULL == (ptr2 = strchr(next, ':'))) {
-            /* malformed */
-            orte_show_help("help-regex.txt", "regex:bad-value", true, next);
-            return ORTE_ERROR;
-        }
-        *ptr2 = '\0';
-        *step = strtol(next, NULL, 10);
-        
-        /* get the starting node rank */
-        next = ptr2 + 1;
-        *nrank = strtol(next, NULL, 10);
-    }
-    
-cleanup:
-    free(base);
-    return rc;
-}
-#endif
 
 static void range_construct(orte_regex_range_t *ptr)
 {
