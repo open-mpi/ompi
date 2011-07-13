@@ -513,8 +513,9 @@ rml_oob_recv_route_callback(int status,
 
     ORTE_RML_OOB_MSG_HEADER_HTON(*hdr);
 
-    /* NTH: fix potential race condition. oob may modify iov before the oob send completes */
-    new_iov = (iovec*) calloc (count, sizeof (struct iovec));
+    /* NTH: fix potential race condition. oob may modify iov before
+       the oob send completes */
+    new_iov = (struct iovec*) calloc (count, sizeof (struct iovec));
     if (NULL == new_iov) {
 	opal_output (0, "%s:route_callback malloc error!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         opal_backtrace_print(stderr);
