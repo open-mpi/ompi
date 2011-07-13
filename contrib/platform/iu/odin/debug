@@ -1,5 +1,5 @@
 enable_opal_multi_threads=no
-enable_multicast=yes
+enable_multicast=no
 enable_dlopen=no
 enable_pty_support=no
 with_blcr=no
