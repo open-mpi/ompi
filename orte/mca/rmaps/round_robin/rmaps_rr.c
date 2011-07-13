@@ -103,6 +103,9 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             continue;
         }
         
+        /* setup the nodelist here in case we jump to error */
+        OBJ_CONSTRUCT(&node_list, opal_list_t);
+
         /* if the number of processes wasn't specified, then we know there can be only
          * one app_context allowed in the launch, and that we are to launch it across
          * all available slots. We'll double-check the single app_context rule first
@@ -118,7 +121,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
          * use since that can now be modified with a hostfile and/or -host
          * option
          */
-        OBJ_CONSTRUCT(&node_list, opal_list_t);
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
                                                                   jdata->map->policy))) {
             ORTE_ERROR_LOG(rc);
