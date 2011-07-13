@@ -160,9 +160,7 @@ dnl                        [enable_openib_ibcm="$enableval"], [enable_openib_ibc
     #
     AC_ARG_ENABLE([openib-dynamic-sl],
         [AC_HELP_STRING([--enable-openib-dynamic-sl],
-                        [Enable openib BTL to query Subnet Manager for IB SL (default: enabled)])],
-        [enable_openib_dynamic_sl="$enableval"],
-        [enable_openib_dynamic_sl="not_provided"])
+                        [Enable openib BTL to query Subnet Manager for IB SL (default: enabled)])])
 
     # Set these up so that we can do an AC_DEFINE below
     # (unconditionally)
@@ -186,14 +184,28 @@ dnl                        [enable_openib_ibcm="$enableval"], [enable_openib_ibc
                AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
            fi
 
-           # We need ib_types.h file, which is installed with opensm-devel
-           # package. However, ib_types.h has a bad include directive,
-           # which will cause AC_CHECK_HEADER to fail.
-           # So instead, we will look for another file that is also
-           # installed as part of opensm-devel package and included in
-           # ib_types.h, but it doesn't include any other IB-related files.
-           AC_CHECK_HEADER([infiniband/complib/cl_types_osd.h],
-                           [$1_have_opensm_devel=1], [], [])
+           if test "no" != "$enable_openib_dynamic_sl"; then
+               # We need ib_types.h file, which is installed with opensm-devel
+               # package. However, ib_types.h has a bad include directive,
+               # which will cause AC_CHECK_HEADER to fail.
+               # So instead, we will look for another file that is also
+               # installed as part of opensm-devel package and included in
+               # ib_types.h, but it doesn't include any other IB-related files.
+               AC_CHECK_HEADER([infiniband/complib/cl_types_osd.h],
+                               [$1_have_opensm_devel=1], [], [])
+
+               # Abort if dynamic SL support was explicitly requested but opensm-devel
+               # package wasn't found. Otherwise, OMPI will be built w/o dynamic SL.
+               AC_MSG_CHECKING([if can use dynamic SL support])
+               AS_IF([test "$$1_have_opensm_devel" = "1"],
+                     [AC_MSG_RESULT([yes])],
+                     [AC_MSG_RESULT([no])
+                      AS_IF([test "$enable_openib_dynamic_sl" = "yes"],
+                            [AC_MSG_WARN([--enable-openib-dynamic-sl was specified but the])
+                             AC_MSG_WARN([appropriate header files could not be found])
+                             AC_MSG_WARN([Please install opensm-devel if you need dynamic SL support])
+                             AC_MSG_ERROR([Cannot continue])])])
+           fi
 
            # Do we have a recent enough RDMA CM?  Need to have the
            # rdma_get_peer_addr (inline) function (originally appeared
@@ -264,18 +276,13 @@ dnl           fi
         AC_MSG_RESULT([no])
     fi
 
-    if test "no" != "$enable_openib_dynamic_sl"; then
-        # Abort if dynamic SL support was explicitly requested but opensm-devel
-        # package wasn't found. Otherwise, OMPI will be built w/o dynamic SL.
-        AC_MSG_CHECKING([if can use dynamic SL support])
-        AS_IF([test "$$1_have_opensm_devel" = "1"],
-              [AC_MSG_RESULT([yes])],
-              [AC_MSG_RESULT([no])
-               AS_IF([test "$enable_openib_dynamic_sl" = "yes"],
-                     [AC_MSG_WARN([--enable-openib-dynamic-sl was specified but the])
-                      AC_MSG_WARN([appropriate header files could not be found])
-                      AC_MSG_WARN([Please install opensm-devel if you need dynamic SL support])
-                      AC_MSG_ERROR([Cannot continue])])])
+    AC_MSG_CHECKING([if dynamic SL is enabled])
+    AC_DEFINE_UNQUOTED([OMPI_ENABLE_DYNAMIC_SL], [$$1_have_opensm_devel],
+        [Enable features required for dynamic SL support])
+    if test "1" = "$$1_have_opensm_devel"; then
+        AC_MSG_RESULT([yes])
+    else
+        AC_MSG_RESULT([no])
     fi
 
     AC_MSG_CHECKING([if OpenFabrics RDMACM support is enabled])
