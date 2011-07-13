@@ -9,7 +9,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -580,7 +580,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
          * bus errors can occur.  Keeping things aligned also may
          * offer some performance improvements on other platforms.
          */
-        offset = OPAL_ALIGN_PAD_AMOUNT(descriptor->des_src[0].seg_len, sizeof(void*));
+        offset = OPAL_ALIGN_PAD_AMOUNT(descriptor->des_src[0].seg_len, sizeof(uint64_t));
         if (0 != offset) {
             header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_ALIGN_MASK & offset;
             descriptor->des_src[0].seg_len += offset;
