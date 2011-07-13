@@ -451,11 +451,11 @@ opal_init(int* pargc, char*** pargv)
      *       wish to use this framework, it is safe to remove the protection.
      */
     if( OPAL_SUCCESS != (ret = opal_compress_base_open()) ) {
-        error = "opal_compress_base_open() failed";
+        error = "opal_compress_base_open";
         goto return_error;
     }
     if( OPAL_SUCCESS != (ret = opal_compress_base_select()) ) {
-        error = "opal_compress_base_select() failed";
+        error = "opal_compress_base_select";
         goto return_error;
     }
 #endif
@@ -467,7 +467,7 @@ opal_init(int* pargc, char*** pargv)
      * otherwise the tools may hang or not clean up properly.
      */
     if (OPAL_SUCCESS != (ret = opal_cr_init() ) ) {
-        error = "opal_cr_init() failed";
+        error = "opal_cr_init";
         goto return_error;
     }
     
