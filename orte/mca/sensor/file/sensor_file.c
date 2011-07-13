@@ -138,7 +138,7 @@ static void start(orte_jobid_t jobid)
     mca_base_component_t *c = &mca_sensor_file_component.super.base_version;
     opal_list_item_t *item;
     orte_odls_job_t *jobdat;
-    orte_app_context_t *app;
+    orte_app_context_t *app, *aptr;
     int rc, tmp;
     char *filename;
     file_tracker_t *ft;
@@ -159,8 +159,15 @@ static void start(orte_jobid_t jobid)
          item = opal_list_get_end(&orte_local_jobdata)) {
         jobdat = (orte_odls_job_t*)item;
         if (jobid == jobdat->jobid || ORTE_JOBID_WILDCARD == jobid) {
-            /* must be at least one app_context, so use the first */
-            if (NULL == (app = jobdat->apps[0])) {
+            /* must be at least one app_context, so use the first one found */
+            app = NULL;
+            for (tmp=0; tmp < jobdat->apps.size; tmp++) {
+                if (NULL != (aptr = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, tmp))) {
+                    app = aptr;
+                    break;
+                }
+            }
+            if (NULL == app) {
                 /* got a problem */
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 continue;

@@ -207,7 +207,7 @@ void init_before_spawn(orte_job_t *jdata)
         }
         opal_argv_append_nosize(&app->argv, app->app);
         build_debugger_args(app);
-        opal_pointer_array_add(orte_debugger_daemon->apps, &app->super);
+        opal_pointer_array_add(orte_debugger_daemon->apps, app);
         orte_debugger_daemon->num_apps = 1;
     }
     return;
@@ -318,7 +318,7 @@ static void attach_debugger(int fd, short event, void *arg)
         }
         opal_argv_append_nosize(&app->argv, app->app);
         build_debugger_args(app);
-        opal_pointer_array_add(jdata->apps, &app->super);
+        opal_pointer_array_add(jdata->apps, app);
         jdata->num_apps = 1;
         /* setup the mapping policy to bynode so we get one
          * daemon on each node

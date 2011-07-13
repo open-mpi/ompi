@@ -43,7 +43,6 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/argv.h"
-#include "opal/util/opal_sos.h"
 #include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/util/sys_limits.h"
@@ -106,6 +105,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     orte_vpid_t i;
     int j;
     orte_daemon_cmd_flag_t command;
+    orte_app_context_t *app;
 
     if (NULL != orte_debugger_daemon && ORTE_JOBID_INVALID == job) {
         /* all we are doing is launching debugger daemons */
@@ -198,9 +198,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     }
     
     /* are we co-locating debugger daemons? */
-    if (NULL != orte_debugger_daemon) {
-        orte_app_context_t **apps;
-        
+    if (NULL != orte_debugger_daemon) {        
         /* flag that we are */
         flag = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &flag, 1, OPAL_INT8))) {
@@ -213,8 +211,8 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
             return rc;
         }        
         /* pack the executable name */
-        apps = (orte_app_context_t**)orte_debugger_daemon->apps->addr;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, apps, 1, ORTE_APP_CONTEXT))) {
+        app = (orte_app_context_t*)opal_pointer_array_get_item(orte_debugger_daemon->apps, 0);
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &app, 1, ORTE_APP_CONTEXT))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -315,12 +313,14 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
-    /* pack the app_contexts for this job - we already checked early on that
-     * there must be at least one, so don't bother checking here again
-     */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, jdata->apps->addr, jdata->num_apps, ORTE_APP_CONTEXT))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    /* pack the app_contexts for this job */
+    for (j=0; j < jdata->apps->size; j++) {
+        if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, j))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &app, 1, ORTE_APP_CONTEXT))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
     }
     
     /* encode the pidmap */
@@ -485,7 +485,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_jobid_t debugger;
     bool add_child;
     orte_ns_cmp_bitmask_t mask;
-    
+    orte_app_context_t *app;
+
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -518,17 +519,13 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         orte_odls_globals.debugger->num_local_procs = 1;
         opal_list_append(&orte_local_jobdata, &(orte_odls_globals.debugger)->super);
         /* retrieve the info */
-        orte_odls_globals.debugger->apps = (orte_app_context_t**)malloc(sizeof(orte_app_context_t*));
-        if (NULL == orte_odls_globals.debugger->apps) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            goto REPORT_ERROR;
-        }
         cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, orte_odls_globals.debugger->apps,
-                                                  &cnt, ORTE_APP_CONTEXT))) {
+        app = NULL;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &app, &cnt, ORTE_APP_CONTEXT))) {
             ORTE_ERROR_LOG(rc);
             goto REPORT_ERROR;
         }
+        opal_pointer_array_add(&orte_odls_globals.debugger->apps, app);
         cnt=1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &(orte_odls_globals.debugger->controls), &cnt, ORTE_JOB_CONTROL))) {
             ORTE_ERROR_LOG(rc);
@@ -668,22 +665,14 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:construct_child_list unpacking %ld app_contexts",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (long)jobdat->num_apps));
-    
-    /* allocate space and unpack the app_contexts for this job - the HNP checked
-     * that there must be at least one, so don't bother checking here again
-     */
-    if (NULL != jobdat->apps) {
-        free(jobdat->apps);
-    }
-    jobdat->apps = (orte_app_context_t**)malloc(jobdat->num_apps * sizeof(orte_app_context_t*));
-    if (NULL == jobdat->apps) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        goto REPORT_ERROR;
-    }
-    cnt = jobdat->num_apps;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, jobdat->apps, &cnt, ORTE_APP_CONTEXT))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
+    for (j=0; j < jobdat->num_apps; j++) {
+        cnt = 1;
+        app = NULL;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &app, &cnt, ORTE_APP_CONTEXT))) {
+            ORTE_ERROR_LOG(rc);
+            goto REPORT_ERROR;
+        }
+        opal_pointer_array_set_item(&jobdat->apps, app->idx, app);
     }
     
     /* unpack the pidmap byte object */
@@ -781,7 +770,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                     mask = ORTE_NS_CMP_ALL;
 
                     if (OPAL_EQUAL == 
-                            orte_util_compare_name_fields(mask, child->name, &proc)) {
+                        orte_util_compare_name_fields(mask, child->name, &proc)) {
                         /* do not duplicate this child on the list! */
                         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                              "proc %s is on list and is %s",
@@ -791,7 +780,8 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                         child->restarts = restarts[j];
                         child->do_not_barrier = true;
                         /* mark that this app_context is being used on this node */
-                        jobdat->apps[app_idx[j]]->used_on_node = true;
+                        app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, app_idx[j]);
+                        app->used_on_node = true;
                         break;
                     }
                 }
@@ -817,11 +807,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                 if (ORTE_JOB_STATE_RESTART == jobdat->state) {
                     child->do_not_barrier = true;
                 }
-               if (NULL != slot_str && NULL != slot_str[j]) {
+                if (NULL != slot_str && NULL != slot_str[j]) {
                     child->slot_list = strdup(slot_str[j]);
                 }
                 /* mark that this app_context is being used on this node */
-                jobdat->apps[app_idx[j]]->used_on_node = true;
+                app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, app_idx[j]);
+                app->used_on_node = true;
                 /* protect operation on the global list of children */
                 OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
                 opal_list_append(&orte_local_children, &child->super);
@@ -837,7 +828,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     opal_condition_broadcast(&jobdat->cond);
     OPAL_THREAD_UNLOCK(&jobdat->lock);
     
-done:
+ done:
     if (NULL != app_idx) {
         free(app_idx);
         app_idx = NULL;
@@ -856,7 +847,7 @@ done:
     
     return ORTE_SUCCESS;
 
-REPORT_ERROR:
+ REPORT_ERROR:
     /* we have to report an error back to the HNP so we don't just
      * hang. Although there shouldn't be any errors once this is
      * all debugged, it is still good practice to have a way
@@ -1253,8 +1244,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                                         orte_odls_base_fork_local_proc_fn_t fork_local)
 {
     opal_list_item_t *item;
-    orte_app_context_t *app, **apps;
-    orte_app_idx_t i, num_apps;
+    orte_app_context_t *app, *dbg;
     orte_odls_child_t *child=NULL;
     int num_processors;
     bool oversubscribed;
@@ -1265,7 +1255,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     orte_odls_job_t *jobdat;
     char basedir[MAXPATHLEN];
     char **argvsav=NULL;
-    int inm;
+    int inm, j;
     opal_event_t *delay;
     int num_procs_alive = 0;
     orte_nid_t *nid;
@@ -1305,8 +1295,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
         return ORTE_SUCCESS;
     }
-    apps = jobdat->apps;
-    num_apps = jobdat->num_apps;
     
     /* see if the mapper thinks we are oversubscribed */
     oversubscribed = false;
@@ -1344,10 +1332,13 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     /* Now we preload any files that are needed. This is done on a per
      * app context basis
      */
-    for (i=0; i < num_apps; i++) {
-        if(apps[i]->used_on_node &&
-           (apps[i]->preload_binary || NULL != apps[i]->preload_files)) {
-            if( ORTE_SUCCESS != (rc = orte_odls_base_preload_files_app_context(apps[i])) ) {
+    for (j=0; j < jobdat->apps.size; j++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, j))) {
+            continue;
+        }
+        if(app->used_on_node &&
+           (app->preload_binary || NULL != app->preload_files)) {
+            if( ORTE_SUCCESS != (rc = orte_odls_base_preload_files_app_context(app)) ) {
                 ORTE_ERROR_LOG(rc);
                 /* JJH: Do not fail here, instead try to execute without the preloaded options*/
             }
@@ -1355,8 +1346,11 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     }
 
 #if OPAL_ENABLE_FT_CR == 1
-    for (i=0; i < num_apps; i++) {
-        orte_sstore.fetch_app_deps(apps[i]);
+    for (j=0; j < jobdat->apps.size; j++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, j))) {
+            continue;
+        }
+        orte_sstore.fetch_app_deps(app);
     }
     orte_sstore.wait_all_deps();
 #endif
@@ -1415,8 +1409,10 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     /* setup to report the proc state to the HNP */
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
     
-    for (i=0; i < num_apps; i++) {
-        app = apps[i];
+    for (j=0; j < jobdat->apps.size; j++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, j))) {
+            continue;
+        }
         
         /* if this app isn't being used on our node, skip it */
         if (!app->used_on_node) {
@@ -1494,7 +1490,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                  item = opal_list_get_next(item)) {
                 child = (orte_odls_child_t*)item;
                 if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID) &&
-                    i == child->app_idx) {
+                    j == (int)child->app_idx) {
                     child->exit_code = rc;
                 }
             }
@@ -1523,7 +1519,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                  item = opal_list_get_next(item)) {
                 child = (orte_odls_child_t*)item;
                 if (OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID) &&
-                    i == child->app_idx) {
+                    j == (int)child->app_idx) {
                     child->exit_code = rc;
                 }
             }
@@ -1543,7 +1539,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                                  ORTE_NAME_PRINT(child->name)));
             
             /* does this child belong to this app? */
-            if (i != child->app_idx) {
+            if (j != (int)child->app_idx) {
                 continue;
             }
             
@@ -1839,20 +1835,16 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         if (NULL != orte_odls_globals.debugger &&
             !orte_odls_globals.debugger_launched &&
             0 < opal_list_get_size(&orte_local_children)) {
+            dbg = (orte_app_context_t*)opal_pointer_array_get_item(&orte_odls_globals.debugger->apps, 0);
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:launch forking debugger %s with %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 orte_odls_globals.debugger->apps[0]->app,
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), dbg->app,
                                  (ORTE_JOB_CONTROL_FORWARD_OUTPUT & orte_odls_globals.debugger->controls) ? "output forwarded" : "no output"));
             
-            odls_base_default_setup_fork(orte_odls_globals.debugger->apps[0],
-                                         1, orte_process_info.num_procs,
+            odls_base_default_setup_fork(dbg, 1, orte_process_info.num_procs,
                                          orte_process_info.num_procs,
-                                         orte_process_info.num_procs, false,
-                                         &(orte_odls_globals.debugger->apps[0]->env));
-            fork_local(orte_odls_globals.debugger->apps[0], NULL,
-                       orte_odls_globals.debugger->apps[0]->env,
-                       orte_odls_globals.debugger);
+                                         orte_process_info.num_procs, false, &dbg->env);
+            fork_local(dbg, NULL, dbg->env, orte_odls_globals.debugger);
             orte_odls_globals.debugger_launched = true;
             if (ORTE_SUCCESS != (rc = orte_errmgr.update_state(orte_odls_globals.debugger->jobid,
                                                                ORTE_JOB_STATE_RUNNING,
@@ -1925,7 +1917,7 @@ int orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buff
         
         /* if so, send the message */
         rc = orte_rml.send_buffer(child->name, buffer, tag, 0);
-        if (rc < 0 && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_ADDRESSEE_UNKNOWN) {
+        if (rc < 0 && rc != ORTE_ERR_ADDRESSEE_UNKNOWN) {
             /* ignore if the addressee is unknown as a race condition could
              * have allowed the child to exit before we send it a barrier
              * due to the vagaries of the event library.
@@ -2912,7 +2904,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                 rc = orte_errmgr.update_state(ORTE_JOBID_INVALID, ORTE_JOB_STATE_UNDEF,
                                               child->name, child->state, child->pid,
                                               child->exit_code);
-                if (ORTE_ERR_SILENT == OPAL_SOS_GET_ERROR_CODE(rc)) {
+                if (ORTE_ERR_SILENT == rc) {
                     /* all procs are complete - we are done */
                     break;
                 }
@@ -3044,7 +3036,7 @@ int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
         free(child->rml_uri);
         child->rml_uri = NULL;
     }
-    app = jobdat->apps[child->app_idx];
+    app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, child->app_idx);
 
     /* reset envars to match this child */    
     if (ORTE_SUCCESS != (rc = setup_child(child, jobdat, &app->env))) {
