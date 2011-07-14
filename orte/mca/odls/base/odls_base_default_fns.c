@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved. 
+ * Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved. 
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -1240,6 +1240,28 @@ static void timer_cb(int fd, short event, void *cbdata)
     time_is_up = true;
 }
 
+static int compute_num_procs_alive(orte_jobid_t *job)
+{
+    opal_list_item_t *item;
+    orte_odls_child_t *child;
+    int num_procs_alive = 0, match_job;
+
+    for (item  = opal_list_get_first(&orte_local_children);
+         item != opal_list_get_end  (&orte_local_children);
+         item  = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        if ( NULL != job ) {
+            match_job = ( OPAL_EQUAL == opal_dss.compare(job, &(child->name->jobid), ORTE_JOBID) );
+        } else {
+            match_job = 0;
+        }
+        if (child->alive || match_job) {
+            num_procs_alive++;
+        }
+    }
+    return num_procs_alive;
+}
+
 int orte_odls_base_default_launch_local(orte_jobid_t job,
                                         orte_odls_base_fork_local_proc_fn_t fork_local)
 {
@@ -1371,16 +1393,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         /* compute the number of local procs alive or about to be launched
          * as part of this job
          */
-        num_procs_alive = 0;
-        for (item = opal_list_get_first(&orte_local_children);
-             item != opal_list_get_end(&orte_local_children);
-             item = opal_list_get_next(item)) {
-            child = (orte_odls_child_t*)item;
-            if (child->alive ||
-                OPAL_EQUAL == opal_dss.compare(&job, &(child->name->jobid), ORTE_JOBID)) {
-                num_procs_alive++;
-            }
-        }
+        num_procs_alive = compute_num_procs_alive(&job);
         /* get the number of local processors */
         if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors))) {
             /* if we cannot find the number of local processors, we have no choice
@@ -1409,6 +1422,9 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     /* setup to report the proc state to the HNP */
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
     
+    /* compute the num procs alive */
+    num_procs_alive = compute_num_procs_alive(NULL);
+
     for (j=0; j < jobdat->apps.size; j++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, j))) {
             continue;
@@ -1438,15 +1454,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 /* wait */
                 ORTE_PROGRESSED_WAIT(time_is_up, 0, 1);
                 /* recompute the num procs alive */
-                num_procs_alive = 0;
-                for (item = opal_list_get_first(&orte_local_children);
-                     item != opal_list_get_end(&orte_local_children);
-                     item = opal_list_get_next(item)) {
-                    child = (orte_odls_child_t*)item;
-                    if (child->alive) {
-                        num_procs_alive++;
-                    }
-                }
+                num_procs_alive = compute_num_procs_alive(NULL);
                 /* see if we still have a problem */
                 limit = num_procs_alive + app->num_procs;
                 OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
@@ -1600,7 +1608,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
              */
             if (0 < opal_sys_limits.num_files) {
                 int limit;
-                limit = (4*num_procs_alive)+6;
+                limit = 4*(num_procs_alive + app->num_procs)+6;
                 OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
                                      "%s checking limit on file descriptors %d need %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1612,17 +1620,9 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                     /* wait */
                     ORTE_PROGRESSED_WAIT(time_is_up, 0, 1);
                     /* recompute the num procs alive */
-                    num_procs_alive = 0;
-                    for (item = opal_list_get_first(&orte_local_children);
-                         item != opal_list_get_end(&orte_local_children);
-                         item = opal_list_get_next(item)) {
-                        child = (orte_odls_child_t*)item;
-                        if (child->alive) {
-                            num_procs_alive++;
-                        }
-                    }
+                    num_procs_alive = compute_num_procs_alive(NULL);
                     /* see if we still have a problem */
-                    limit = (4*num_procs_alive)+6;
+                    limit = 4*(num_procs_alive + app->num_procs)+6;
                     OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
                                          "%s rechecking limit on file descriptors %d need %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
