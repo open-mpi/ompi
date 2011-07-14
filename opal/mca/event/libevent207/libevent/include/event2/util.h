@@ -37,6 +37,8 @@
 extern "C" {
 #endif
 
+#include "opal_rename.h"
+
 #include <event2/event-config.h>
 #ifdef _EVENT_HAVE_SYS_TIME_H
 #include <sys/time.h>
