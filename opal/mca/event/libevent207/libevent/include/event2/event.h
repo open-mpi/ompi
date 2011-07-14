@@ -37,6 +37,8 @@
 extern "C" {
 #endif
 
+#include "opal_rename.h"
+
 #include <event2/event-config.h>
 #ifdef _EVENT_HAVE_SYS_TYPES_H
 #include <sys/types.h>

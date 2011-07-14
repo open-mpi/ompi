@@ -22,7 +22,7 @@ sources = \
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
-headers += libevent/event.h libevent/evutil.h libevent/util-internal.h \
+headers += libevent/opal_rename.h libevent/event.h libevent/evutil.h libevent/util-internal.h \
            libevent/mm-internal.h libevent/ipv6-internal.h \
 	   libevent/strlcpy-internal.h libevent/evbuffer-internal.h \
 	   libevent/bufferevent-internal.h libevent/event-internal.h \
