@@ -35,8 +35,8 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
     elif test "$with_platform" = "no" ; then
         AC_MSG_ERROR([--without-platform is not a valid argument])
     elif test "$with_platform" != "" ; then
-        # if no path part, check in contrib/platform
-        if test "`basename $with_platform`" = "$with_platform" ; then
+        # if not an absolute path, check in contrib/platform
+        if test ! "`echo $with_platform | cut -c1`" = "/" -a ! "`echo $with_platform | cut -c2`" = ".." ; then
             if test -r "${srcdir}/contrib/platform/$with_platform" ; then
                 with_platform="${srcdir}/contrib/platform/$with_platform"
             fi
