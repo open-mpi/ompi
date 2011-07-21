@@ -95,7 +95,13 @@ my @files;
 while (<CMD>) {
     chomp;
     if ($_ =~ /^M/ || $_ =~ /^A/) {
-        my ($state, $filename) = split(/\s+/, $_);
+        my @tokens = split(/\s+/, $_);
+        # Handle output of both forms:
+        # M       filenameA
+        # A  +    filenameB
+        my $filename = $tokens[1];
+        $filename = $tokens[2]
+            if ($tokens[1] =~ /\+/);
         push(@files, $filename);
     }
 }
