@@ -300,7 +300,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         *temp2 = '/';
     }
     /* update path change in ds_buf */
-    memcpy(ds_buf->seg_name, temp2, OPAL_PATH_MAX);
+    memcpy(ds_buf->seg_name, temp1, OPAL_PATH_MAX);
     /* relase the temporary file name */
     free(temp1);  /* relase the temporary file name */
 
@@ -513,7 +513,7 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
          ds_buf->seg_name)
     );
 
-    if (-1 == unlink(ds_buf->seg_name)) {
+/*    if (-1 == unlink(ds_buf->seg_name)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
@@ -522,6 +522,7 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
                        "unlink(2)", ds_buf->seg_name, strerror(err), err);
         return OPAL_ERROR;
     }
+	*/
 
     /* don't completely reset the opal_shmem_ds_t.  in particular, only reset
      * the id and flip the invalid bit.  size and name values will remain valid
