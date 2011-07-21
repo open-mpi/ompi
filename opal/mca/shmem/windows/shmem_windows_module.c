@@ -513,7 +513,7 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
          ds_buf->seg_name)
     );
 
-/*    if (-1 == unlink(ds_buf->seg_name)) {
+    if (-1 == unlink(ds_buf->seg_name)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
@@ -522,7 +522,6 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
                        "unlink(2)", ds_buf->seg_name, strerror(err), err);
         return OPAL_ERROR;
     }
-	*/
 
     /* don't completely reset the opal_shmem_ds_t.  in particular, only reset
      * the id and flip the invalid bit.  size and name values will remain valid
