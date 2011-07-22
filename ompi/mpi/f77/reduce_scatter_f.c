@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -82,4 +83,5 @@ void mpi_reduce_scatter_f(char *sendbuf, char *recvbuf,
     *ierr = OMPI_INT_2_FINT(MPI_Reduce_scatter(sendbuf, recvbuf,
 				       OMPI_ARRAY_NAME_CONVERT(recvcounts),
 				       c_type, c_op, c_comm));
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
 }

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -78,4 +79,5 @@ void mpi_group_excl_f(MPI_Fint *group, MPI_Fint *n,
   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
       *newgroup = c_newgroup->grp_f_to_c_index;
   }
+  OMPI_ARRAY_FINT_2_INT_CLEANUP(ranks);
 }

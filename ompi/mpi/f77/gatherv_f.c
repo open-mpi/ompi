@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -88,4 +89,6 @@ void mpi_gatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
 					c_recvtype, 
 					OMPI_FINT_2_INT(*root),
 					c_comm));
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);
 }
