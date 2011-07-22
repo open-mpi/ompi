@@ -304,6 +304,13 @@ extern "C" {
 
 /* threads */
 #define evthread_make_base_notifiable                        opal_libevent207_evthread_make_base_notifiable
+#define _evthread_debug_get_real_lock                        opal_libevent207__evthread_debug_get_real_lock
+#define _evthread_is_debug_lock_held                         opal_libevent207__evthread_is_debug_lock_held
+#define evthread_enable_lock_debuging                        opal_libevent207_evthread_enable_lock_debuging
+#define evthread_set_condition_callbacks                     opal_libevent207_evthread_set_condition_callbacks
+#define evthread_set_id_callback                             opal_libevent207_evthread_set_id_callback
+#define evthread_set_lock_callbacks                          opal_libevent207_evthread_set_lock_callbacks
+#define evthread_use_pthreads                                opal_libevent207_evthread_use_pthreads
 
 
 /* tags */

@@ -59,6 +59,8 @@ extern "C" {
 
 #include <event2/event-config.h>
 
+#include "opal_rename.h"
+
 /** A flag passed to a locking callback when the lock was allocated as a
  * read-write lock, and we want to acquire or release the lock for writing. */
 #define EVTHREAD_WRITE	0x04
