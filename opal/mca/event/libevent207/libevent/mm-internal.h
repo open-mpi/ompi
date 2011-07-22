@@ -28,6 +28,8 @@
 
 #include <sys/types.h>
 
+#include "opal_rename.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
