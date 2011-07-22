@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -189,8 +190,8 @@
        while (--converted_n >= 0) { \
          in[converted_n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]); \
        } \
-     }  while (0) \
-     /* free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)) * No Need to free, here */
+       free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)); \
+     }  while (0)
 
 #  endif
 #else
@@ -229,8 +230,8 @@
        while (--converted_n >= 0) { \
          in[converted_n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]); \
        } \
-     }  while (0) \
-     /* free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)) * No Need to free, here */
+       free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)); \
+     }  while (0)
 #endif /* OMPI_SIZEOF_FORTRAN_LOGICAL */
 
 
