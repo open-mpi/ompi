@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -69,5 +70,7 @@ void mpi_dims_create_f(MPI_Fint *nnodes, MPI_Fint *ndims,
 					    OMPI_ARRAY_NAME_CONVERT(dims)));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_ARRAY_INT_2_FINT(dims, *ndims);
+    } else {
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(dims);
     }
 }

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -128,6 +128,8 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 
     if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_errcds)) {
 	OMPI_ARRAY_INT_2_FINT(array_errcds, size);
+    } else {
+	OMPI_ARRAY_FINT_2_INT_CLEANUP(array_errcds);
     }
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_maxprocs);
 

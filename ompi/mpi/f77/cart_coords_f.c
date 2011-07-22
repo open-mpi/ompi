@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -72,5 +73,7 @@ void mpi_cart_coords_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxdims,
                                             OMPI_ARRAY_NAME_CONVERT(coords)));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_ARRAY_INT_2_FINT(coords, OMPI_FINT_2_INT(*maxdims));
+    } else {
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(coords);
     }
 }
