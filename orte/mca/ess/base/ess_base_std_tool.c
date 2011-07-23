@@ -197,8 +197,8 @@ int orte_ess_base_tool_finalize(void)
         orte_iof_base_close();
     }
     orte_routed_base_close();
-    orte_rml_base_close();
     orte_rmcast_base_close();
+    orte_rml_base_close();
 
     return ORTE_SUCCESS;    
 }
