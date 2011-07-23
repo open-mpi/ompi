@@ -54,6 +54,7 @@
 #include <dirent.h>
 #endif  /* HAVE_DIRENT_H */
 
+#include "opal/util/basename.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
@@ -903,7 +904,8 @@ static int parseable_print(orte_ps_mpirun_info_t *hnpinfo)
     orte_job_t **jobs;
     orte_node_t **nodes;
     orte_proc_t *proc;
-    char *loc;
+    orte_app_context_t *app;
+    char *appname;
     int i, j;
 
     printf("mpirun:%lu:num nodes:%d:num jobs:%d\n",
@@ -930,17 +932,18 @@ static int parseable_print(orte_ps_mpirun_info_t *hnpinfo)
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jobs[i]->procs, j))) {
                 continue;
             }
-            if (NULL == proc->node) {
-                loc = "unassigned";
-            } else if (NULL == proc->node->name) {
-                loc = "unknown";
+            app = (orte_app_context_t*)opal_pointer_array_get_item(jobs[i]->apps, proc->app_idx);
+            if (NULL == app) {
+                appname = strdup("NULL");
             } else {
-                loc = proc->node->name;
+                appname = opal_basename(app->app);
             }
-            printf("process_name:%s:rank:%s:pid:%lu:node:%s:state:%s\n",
-                   ORTE_NAME_PRINT(&proc->name), ORTE_VPID_PRINT(proc->name.vpid),
-                   (unsigned long)proc->pid, loc,
+            printf("process:%s:rank:%s:pid:%lu:node:%s:state:%s\n",
+                   appname, ORTE_VPID_PRINT(proc->name.vpid),
+                   (unsigned long)proc->pid,
+                   (NULL == proc->nodename) ? "unknown" : proc->nodename,
                    orte_proc_state_to_str(proc->state));
+            free(appname);
         }
     }
 
