@@ -73,7 +73,7 @@ ORTE_DECLSPEC int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_li
 ORTE_DECLSPEC int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                                              orte_node_t *current_node,
                                              int32_t stride,
-                                             orte_std_cntr_t app_idx,
+                                             int32_t app_idx,
                                              opal_list_t *nodes,
                                              bool oversubscribe,
                                              bool remove_from_list,
