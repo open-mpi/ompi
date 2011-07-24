@@ -1,8 +1,8 @@
-noinst_LTLIBRARIES = libutil.la
+noinst_LTLIBRARIES = libvt_util.la
 
-libutil_la_CFLAGS = -static -prefer-pic
-libutil_la_LDFLAGS = -static
-libutil_la_SOURCES = \
+libvt_util_la_CFLAGS = -static -prefer-pic
+libvt_util_la_LDFLAGS = -static
+libvt_util_la_SOURCES = \
 	hash.h \
 	installdirs.h \
 	util.h \
@@ -10,6 +10,6 @@ libutil_la_SOURCES = \
 	installdirs.c \
 	util.c
 
-nodist_libutil_la_SOURCES = \
+nodist_libvt_util_la_SOURCES = \
 	installdirs_conf.h
 
