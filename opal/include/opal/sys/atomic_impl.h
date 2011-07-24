@@ -101,6 +101,16 @@ opal_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 }
 #endif  /* OPAL_HAVE_ATOMIC_SUB_64 */
 
+#else
+
+#if !defined(OPAL_HAVE_ATOMIC_ADD_64)
+#define OPAL_HAVE_ATOMIC_ADD_64 0
+#endif
+
+#if !defined(OPAL_HAVE_ATOMIC_SUB_64)
+#define OPAL_HAVE_ATOMIC_SUB_64 0
+#endif
+
 #endif  /* OPAL_HAVE_ATOMIC_CMPSET_64 */
 
 
