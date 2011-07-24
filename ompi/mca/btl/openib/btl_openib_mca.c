@@ -397,6 +397,15 @@ int btl_openib_register_mca_params(void)
     }
     mca_btl_openib_component.ib_service_level = (uint32_t) ival;
 
+#if (ENABLE_DYNAMIC_SL)
+    CHECK(reg_int("ib_path_record_service_level", NULL,
+                  "Enable getting InfiniBand service level from PathRecord "
+                  "(must be >= 0, 0 = disabled, positive = try to get the "
+                  "service level from PathRecord)",
+                  0, &ival, REGINT_GE_ZERO));
+    mca_btl_openib_component.ib_path_record_service_level = (uint32_t) ival;
+#endif
+
     CHECK(reg_int("use_eager_rdma", NULL, "Use RDMA for eager messages "
                   "(-1 = use device default, 0 = do not use eager RDMA, "
                   "1 = use eager RDMA)",
