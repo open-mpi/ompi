@@ -1078,6 +1078,15 @@ static int send_data(rmcast_base_send_t *snd, orte_rmcast_channel_t channel)
     return rc;    
 }
 
+static void cbfunc(int status,
+                   struct orte_process_name_t* peer,
+                   struct opal_buffer_t* buffer,
+                   orte_rml_tag_t tag,
+                   void* cbdata)
+{
+    OBJ_RELEASE(buffer);
+}
+
 static void resend_data(int status, orte_process_name_t* sender,
                         opal_buffer_t* buffer, orte_rml_tag_t tag,
                         void* cbdata)
@@ -1087,6 +1096,7 @@ static void resend_data(int status, orte_process_name_t* sender,
     orte_rmcast_seq_t start;
     rmcast_base_channel_t *ch;
     rmcast_send_log_t *log;
+    opal_buffer_t *recover;
 
     /* block any further ops until we complete the missing
      * message repair
@@ -1105,10 +1115,9 @@ static void resend_data(int status, orte_process_name_t* sender,
         goto release;
     }
 
-    OPAL_OUTPUT_VERBOSE((0, orte_rmcast_base.rmcast_output,
-                         "%s request resend data from %s for channel %d start %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender), channel, start));
+    opal_output(0, "%s request resend data from %s for channel %d start %d",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                ORTE_NAME_PRINT(sender), channel, start);
 
     /* get the referenced channel object */
     if (NULL == (ch = orte_rmcast_base_get_channel(channel))) {
@@ -1130,7 +1139,10 @@ static void resend_data(int status, orte_process_name_t* sender,
                              "%s resending msg %d to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              log->seq_num, ORTE_NAME_PRINT(sender)));
-        if (0 > (rc = orte_rml.send_buffer(sender, log->buf, ORTE_RML_TAG_MULTICAST, 0))) {
+        recover = OBJ_NEW(opal_buffer_t);
+        opal_dss.copy_payload(recover, log->buf);
+        if (0 > (rc = orte_rml.send_buffer_nb(sender, recover, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+            OBJ_RELEASE(recover);
             ORTE_ERROR_LOG(rc);
             goto release;
         }
