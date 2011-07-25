@@ -908,8 +908,9 @@ static int parseable_print(orte_ps_mpirun_info_t *hnpinfo)
     char *appname;
     int i, j;
 
+    /* don't include the daemon job in the number of jobs reported */
     printf("mpirun:%lu:num nodes:%d:num jobs:%d\n",
-           (unsigned long)hnpinfo->hnp->pid, hnpinfo->num_nodes, hnpinfo->num_jobs);
+           (unsigned long)hnpinfo->hnp->pid, hnpinfo->num_nodes, hnpinfo->num_jobs-1);
 
     if (orte_ps_globals.nodes) {
         nodes = hnpinfo->nodes;
@@ -921,7 +922,8 @@ static int parseable_print(orte_ps_mpirun_info_t *hnpinfo)
     }
 
     jobs = hnpinfo->jobs;
-    for (i=0; i < hnpinfo->num_jobs; i++) {
+    /* skip job=0 as that's the daemon job */
+    for (i=1; i < hnpinfo->num_jobs; i++) {
         printf("jobid:%d:state:%s:slots:%d:num procs:%d\n",
                ORTE_LOCAL_JOBID(jobs[i]->jobid),
                orte_job_state_to_str(jobs[i]->state),
