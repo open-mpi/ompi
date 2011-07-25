@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystmes, Inc.  All rights reserved.
+ * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -99,9 +100,11 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                             mask *= 2;
                         }
                         if (found_index < 0 || num_found > 1) {
-                            /* this is an erroneous datatype.  Let
-                               ompi_op_is_valid tell the user that */
-                            OMPI_ERRHANDLER_RETURN(MPI_ERR_TYPE, win, MPI_ERR_TYPE, FUNC_NAME);
+                            /* this is an erroneous datatype or datatype mismatch.  Let
+                               ompi_op_is_valid tell the user that 
+                               To be compatible with 1.5/trunk, return MPI_ERR_ARG
+                               rather than MPI_ERR_TYPE */
+                            OMPI_ERRHANDLER_RETURN(MPI_ERR_ARG, win, MPI_ERR_ARG, FUNC_NAME);
                         } else {
                             origin_check_dt = (ompi_datatype_t*)
                                 ompi_ddt_basicDatatypes[found_index];
