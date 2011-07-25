@@ -74,7 +74,6 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 
-static int8_t *app_idx;
 
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
@@ -207,7 +206,7 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     }
     
     /* pack the number of app_contexts for this job */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_apps, 1, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_apps, 1, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -346,6 +345,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     char **slot_str=NULL;
     orte_namelist_t *nm;
     opal_list_t daemon_tree;
+    int32_t *app_idx=NULL;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
@@ -440,7 +440,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     }
     /* unpack the number of app_contexts for this job */
     cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->num_apps, &cnt, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->num_apps, &cnt, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -1533,7 +1533,6 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     orte_odls_job_t *jobdat;
     orte_pmap_t pmap;
     int32_t one32;
-    int8_t one8;
     orte_local_rank_t lrank;
     orte_node_rank_t nrank;
     opal_buffer_t buffer;
@@ -1556,8 +1555,8 @@ static void setup_singleton_jobdat(orte_jobid_t jobid)
     opal_dss.pack(&buffer, &lrank, 1, ORTE_LOCAL_RANK);  /* local rank */
     nrank = 0;
     opal_dss.pack(&buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
-    one8 = 0;
-    opal_dss.pack(&buffer, &one8, 1, OPAL_INT8);  /* app_idx */
+    one32 = 0;
+    opal_dss.pack(&buffer, &one32, 1, OPAL_INT32);  /* app_idx */
     jobdat->pmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
     opal_dss.unload(&buffer, (void**)&jobdat->pmap->bytes, &jobdat->pmap->size);
     OBJ_DESTRUCT(&buffer);

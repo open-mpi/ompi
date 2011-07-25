@@ -162,7 +162,7 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
 
         /* pack the number of apps */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(jobs[i]->num_apps)), 1, ORTE_STD_CNTR))) {
+                         (void*)(&(jobs[i]->num_apps)), 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -499,7 +499,7 @@ int orte_dt_pack_app_context(opal_buffer_t *buffer, const void *src,
     for (i=0; i < num_vals; i++) {
         /* pack the application index (for multiapp jobs) */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->idx)), 1, ORTE_STD_CNTR))) {
+                        (void*)(&(app_context[i]->idx)), 1, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

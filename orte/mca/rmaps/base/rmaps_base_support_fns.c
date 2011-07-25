@@ -275,7 +275,7 @@ PROCESS:
 int orte_rmaps_base_claim_slot(orte_job_t *jdata,
                                orte_node_t *current_node,
                                int32_t cpus_per_rank,
-                               orte_std_cntr_t app_idx,
+                               int32_t app_idx,
                                opal_list_t *nodes,
                                bool oversubscribe,
                                bool remove_from_list,
@@ -302,9 +302,9 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
          */
         proc->app_idx = app_idx;
         OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                             "%s rmaps:base:claim_slot: created new proc %s",
+                             "%s rmaps:base:claim_slot: created new proc %s for app_idx %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc->name)));
+                             ORTE_NAME_PRINT(&proc->name), app_idx));
         
         /* provide returned proc, if requested */
         if (NULL != returnproc) {
@@ -318,9 +318,9 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
     proc->nodename = current_node->name;
     
     OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                         "%s rmaps:base:claim_slot mapping proc in job %s to node %s",
+                         "%s rmaps:base:claim_slot mapping proc in job %s app %d to node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid), current_node->name));
+                         ORTE_JOBID_PRINT(jdata->jobid), proc->app_idx, current_node->name));
     
     /* Be sure to demarcate the slots for this proc as claimed from the node */
     current_node->slots_inuse += cpus_per_rank;

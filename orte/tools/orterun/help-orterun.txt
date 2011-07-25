@@ -399,11 +399,3 @@ Error received: %s
 
 Please check to ensure that the requested server matches the actual server
 information, and that the server is in operation.
-#
-[too many app contexts]
-%s was either given a context file with more than 127 application
-contexts, or more than 127 application contexts were specified on the
-command line.  
-
-This version of Open MPI does not support more than 127 application
-contexts in a single job.

@@ -175,7 +175,7 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
         /* unpack the num apps */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                (&(jobs[i]->num_apps)), &n, ORTE_STD_CNTR))) {
+                                (&(jobs[i]->num_apps)), &n, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -548,7 +548,7 @@ int orte_dt_unpack_app_context(opal_buffer_t *buffer, void *dest,
         /* get the app index number */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &(app_context[i]->idx),
-                    &max_n, ORTE_STD_CNTR))) {
+                    &max_n, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

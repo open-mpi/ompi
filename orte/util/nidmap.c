@@ -622,7 +622,7 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     int32_t *nodes;
     orte_proc_t *proc;
     orte_vpid_t i;
-    int8_t *tmp;
+    int32_t *tmp;
     opal_buffer_t buf;
     orte_local_rank_t *lrank;
     orte_node_rank_t *nrank;
@@ -686,14 +686,14 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
     free(nrank);
     
     /* transfer and pack the app_idx in one pack */
-    tmp = (int8_t*)malloc(jdata->num_procs);
+    tmp = (int32_t*)malloc(jdata->num_procs * sizeof(int32_t));
     for (i=0; i < jdata->num_procs; i++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
             continue;
         }
         tmp[i] = proc->app_idx;
     }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, tmp, jdata->num_procs, OPAL_INT8))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, tmp, jdata->num_procs, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -708,7 +708,7 @@ int orte_util_encode_pidmap(orte_job_t *jdata, opal_byte_object_t *boptr)
 
 
 int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
-                            opal_value_array_t *procs, int8_t **app_idx,
+                            opal_value_array_t *procs, int32_t **app_idx,
                             char ***slot_str)
 {
     orte_vpid_t i, num_procs;
@@ -716,7 +716,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
     int32_t *nodes;
     orte_local_rank_t *local_rank;
     orte_node_rank_t *node_rank;
-    int8_t *idx;
+    int32_t *idx;
     orte_std_cntr_t n;
     opal_buffer_t buf;
     int rc;
@@ -790,10 +790,10 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo, orte_vpid_t *nprocs,
     }
     
     /* allocate memory for app_idx */
-    idx = (int8_t*)malloc(num_procs);
+    idx = (int32_t*)malloc(num_procs * sizeof(int32_t));
     /* unpack app_idx in one shot */
     n=num_procs;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, idx, &n, OPAL_INT8))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, idx, &n, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

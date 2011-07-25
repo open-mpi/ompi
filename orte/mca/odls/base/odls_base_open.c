@@ -126,7 +126,7 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
 }
 static void orte_odls_job_destructor(orte_odls_job_t *ptr)
 {
-    orte_std_cntr_t i;
+    int32_t i;
     
     if (NULL != ptr->apps) {
         for (i=0; i < ptr->num_apps; i++) {

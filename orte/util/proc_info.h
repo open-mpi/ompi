@@ -55,7 +55,7 @@ struct orte_proc_info_t {
     orte_process_name_t my_hnp;         /**< Name of my hnp */
     char *my_hnp_uri;                   /**< Contact info for my hnp */
     pid_t hnp_pid;                      /**< hnp pid - used if singleton */
-    orte_std_cntr_t app_num;            /**< our index into the app_context array */
+    int32_t app_num;                    /**< our index into the app_context array */
     orte_vpid_t num_procs;              /**< number of processes in this job */
     char *nodename;                     /**< string name for this node */
     uint32_t arch;                      /**< arch for this node */

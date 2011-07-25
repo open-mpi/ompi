@@ -527,8 +527,8 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
         asprintf(&pfx2, "%s", prefix);
     }
     
-    asprintf(&tmp, "\n%sData for app_context: index %lu\tapp: %s\n%s\tNum procs: %lu",
-             pfx2, (unsigned long)src->idx, src->app,
+    asprintf(&tmp, "\n%sData for app_context: index %d\tapp: %s\n%s\tNum procs: %lu",
+             pfx2, src->idx, src->app,
              pfx2, (unsigned long)src->num_procs);
     
     count = opal_argv_count(src->argv);
