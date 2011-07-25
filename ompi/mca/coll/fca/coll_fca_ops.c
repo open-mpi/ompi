@@ -82,14 +82,17 @@ static mca_coll_fca_op_info_t *mca_coll_fca_get_op(ompi_op_t *op)
 
 /**
  * If "datatype" is contiguous when it appears "count" times, return 1 and
- * set "*size" to the total buffer size. Otherwise return 0.
+ * set "*size" to the total buffer size, and *gap to the gap before the data.
+ * Otherwise return 0.
  */
-static inline int mca_coll_fca_array_size(ompi_datatype_t *dtype, int count, size_t *size)
+static inline int mca_coll_fca_array_size(ompi_datatype_t *dtype, int count,
+                                          size_t *gap, size_t *size)
 {
     ptrdiff_t true_lb, true_extent;
 
     if (FCA_DT_IS_CONTIGUOUS_MEMORY_LAYOUT(dtype, count)) {
         FCA_DT_GET_TRUE_EXTENT(dtype, &true_lb, &true_extent);
+        *gap = true_lb;
         *size = true_extent * count;
         return 1;
     } else {
@@ -177,7 +180,7 @@ int mca_coll_fca_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
     mca_coll_fca_module_t *fca_module = (mca_coll_fca_module_t*)module;
     MCA_COLL_FCA_DECLARE_CONVERTOR(conv);
     fca_bcast_spec_t spec;
-    size_t size;
+    size_t gap, size;
     int ret;
 
     FCA_VERBOSE(5, "[%d] Calling mca_coll_fca_bcast, root=%d, count=%d",
@@ -185,8 +188,8 @@ int mca_coll_fca_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
 
     /* Setup exchange buffer */
     spec.root = root;
-    if (mca_coll_fca_array_size(datatype, count, &size)) {
-        spec.buf = buff;
+    if (mca_coll_fca_array_size(datatype, count, &gap, &size)) {
+        spec.buf = buff + gap;
     } else {
         mca_coll_fca_convertor_create(&conv, datatype, count, buff,
                                       (root == fca_module->rank)
@@ -330,10 +333,10 @@ static size_t __setup_gather_sendbuf(void *sbuf, void *inplace_sbuf, int scount,
                                      struct mca_coll_fca_convertor *sconv,
                                      void **real_sendbuf)
 {
-    size_t ssize;
+    size_t gap, ssize;
 
-    if (mca_coll_fca_array_size(sdtype, scount, &ssize)) {
-        *real_sendbuf = (MPI_IN_PLACE == sbuf) ? inplace_sbuf : sbuf;
+    if (mca_coll_fca_array_size(sdtype, scount, &gap, &ssize)) {
+        *real_sendbuf = ((MPI_IN_PLACE == sbuf) ? inplace_sbuf : sbuf) + gap;
     } else {
         FCA_VERBOSE(5, "Packing send buffer");
         if (MPI_IN_PLACE == sbuf) {
@@ -367,7 +370,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
     MCA_COLL_FCA_DECLARE_CONVERTOR(sconv);
     MCA_COLL_FCA_DECLARE_CONVERTOR(rconv);
     fca_gather_spec_t spec = {0,};
-    size_t rsize;
+    size_t rgap, rsize;
     ptrdiff_t rdtype_extent;
     ssize_t total_rcount;
     int ret;
@@ -381,7 +384,7 @@ int mca_coll_fca_allgather(void *sbuf, int scount, struct ompi_datatype_t *sdtyp
 
     /* Setup recv buffer */
     total_rcount = ompi_comm_size(comm) * rcount;
-    if (mca_coll_fca_array_size(rdtype, total_rcount, &rsize)) {
+    if (mca_coll_fca_array_size(rdtype, total_rcount, &rgap, &rsize) && rgap == 0) {
         spec.rbuf = rbuf;
     } else {
         mca_coll_fca_convertor_create(&rconv, rdtype, total_rcount, rbuf,
@@ -431,7 +434,7 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
     MCA_COLL_FCA_DECLARE_CONVERTOR(sconv);
     MCA_COLL_FCA_DECLARE_CONVERTOR(rconv);
     fca_gatherv_spec_t spec;
-    size_t rsize;
+    size_t rgap, rsize;
     int sum_rcounts;
     ptrdiff_t rdtype_extent;
     int comm_size;
@@ -458,7 +461,7 @@ int mca_coll_fca_allgatherv(void *sbuf, int scount,
     }
 
     /* convert MPI counts which depend on dtype) to FCA sizes (which are in bytes) */
-    if (mca_coll_fca_array_size(rdtype, sum_rcounts, &rsize)) {
+    if (mca_coll_fca_array_size(rdtype, sum_rcounts, &rgap, &rsize) && rgap == 0) {
         spec.rbuf = rbuf;
         for (i = 0; i < comm_size; ++i) {
             spec.recvsizes[i] = rcounts[i] * rdtype_extent;
