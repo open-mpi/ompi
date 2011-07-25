@@ -153,14 +153,7 @@ static int
 ds_copy(const opal_shmem_ds_t *from,
         opal_shmem_ds_t *to)
 {
-    /* SKG */
-    to->flags = from->flags;
-    to->seg_base_addr = from->seg_base_addr;
-    to->opid = from->opid;
-    to->seg_id = from->seg_id;
-    to->seg_size = from->seg_size;
-    to->seg_cpid = from->seg_cpid;
-    memcpy(to->seg_name, from->seg_name, OPAL_PATH_MAX);
+    memcpy(to, from, sizeof(opal_shmem_ds_t));
 
     OPAL_OUTPUT_VERBOSE(
         (70, opal_shmem_base_output,

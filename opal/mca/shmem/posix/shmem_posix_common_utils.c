@@ -55,7 +55,7 @@
 int
 shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
 {
-    int attempt =  0, fd = -1;
+    int attempt = 0, fd = -1;
 
     /* workaround for simultaneous posix shm_opens on the same node (e.g.
      * multiple Open MPI jobs sharing a node).  name collision during component
