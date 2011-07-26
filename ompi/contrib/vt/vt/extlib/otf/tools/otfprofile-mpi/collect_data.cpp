@@ -46,27 +46,28 @@ static void prepare_progress( AllData& alldata, uint64_t max_bytes ) {
             assert( progress.recv_statuses );
             progress.recv_indices= new int[alldata.numRanks-1];
             assert( progress.recv_indices );
+            progress.rank_cur_bytes= new uint64_t[alldata.numRanks-1];
+            assert( progress.rank_cur_bytes );
 
             /* initialize array of current bytes read and start
             persistent communication */
 
-            for ( uint32_t i= 0; i < alldata.numRanks; i++ ) {
+            for ( uint32_t i= 0; i < alldata.numRanks -1; i++ ) {
 
-                if ( 0 < i ) {
+                progress.rank_cur_bytes[i]= 0;
 
-                    /* create persistent request handle */
-                    MPI_Recv_init( &(progress.recv_buffers[i-1]), 1,
-                                   MPI_LONG_LONG_INT, i, Progress::MSG_TAG,
-                                   MPI_COMM_WORLD,
-                                   &(progress.recv_requests[i-1]) );
+                /* create persistent request handle */
+                MPI_Recv_init( &(progress.recv_buffers[i]), 1,
+                               MPI_LONG_LONG_INT, i+1, Progress::MSG_TAG,
+                               MPI_COMM_WORLD,
+                               &(progress.recv_requests[i]) );
 
-                    /* start persistent communication */
-                    MPI_Start( &(progress.recv_requests[i-1]) );
+                /* start persistent communication */
+                MPI_Start( &(progress.recv_requests[i]) );
 
-                }
             }
 
-        } else { /* 0 != my_rank */
+        } else { /* 0 != alldata.myRank */
 
             /* initialize request handle for sending progress to rank 0 */
             progress.send_request = MPI_REQUEST_NULL;
@@ -76,6 +77,7 @@ static void prepare_progress( AllData& alldata, uint64_t max_bytes ) {
         /* block until all worker ranks have reached this point to avoid that the
         progress does a big jump at beginning */
         MPI_Barrier( MPI_COMM_WORLD );
+
     }
 
     if ( 0 == alldata.myRank ) {
@@ -93,14 +95,9 @@ static void update_progress( AllData& alldata, uint64_t delta_bytes,
 
     Progress& progress= alldata.progress;
 
-    if ( 0 == alldata.myRank ) {
+    progress.cur_bytes += delta_bytes;
 
-        progress.cur_bytes += delta_bytes;
-
-    } else {
-
-        progress.cur_bytes= delta_bytes;
-    }
+    uint64_t sum_cur_bytes= progress.cur_bytes;
 
     if ( 1 < alldata.numRanks ) {
 
@@ -109,6 +106,7 @@ static void update_progress( AllData& alldata, uint64_t delta_bytes,
             /* get current bytes read from all worker ranks */
 
             int out_count;
+            uint32_t i;
 
             /* either wait or test for one or more updates from worker ranks */
 
@@ -129,32 +127,37 @@ static void update_progress( AllData& alldata, uint64_t delta_bytes,
 
             if ( MPI_UNDEFINED != out_count ) {
 
-                int index;
-                uint32_t i;
-
                 for ( i= 0; i < (uint32_t) out_count; i++ ) {
 
-                    index= progress.recv_indices[i];
+                    int index= progress.recv_indices[i];
 
                     /* worker rank (index+1) is finished? */
-                    if ( (uint64_t)-1 != progress.recv_buffers[index] ) {
+                    if ( (uint64_t)-1 == progress.recv_buffers[index] ) {
+
+                        /* this rank is finished */
+                        progress.ranks_left--;
+
+                    } else {
 
                         /* update rank's current bytes read and restart
                         persistent communication */
 
-                        progress.cur_bytes += progress.recv_buffers[index];
+                        progress.rank_cur_bytes[index]= progress.recv_buffers[index];
 
                         MPI_Start( &(progress.recv_requests[progress.recv_indices[i]]) );
 
-                    } else {
-
-                        /* this rank is finished */
-                        progress.ranks_left -= 1;
                     }
                 }
+
             }
 
-        } else { /* 0 != my_rank */
+            /* recompute sum of current bytes read */
+            for( i= 0; i < alldata.numRanks -1; i++ ) {
+
+                sum_cur_bytes += progress.rank_cur_bytes[i];
+            }
+
+        } else { /* 0 != alldata.myRank */
 
             int do_send = 1;
             MPI_Status status;
@@ -184,7 +187,7 @@ static void update_progress( AllData& alldata, uint64_t delta_bytes,
         /* show progress */
 
         double percent =
-            100.0 * (double) progress.cur_bytes / (double) progress.max_bytes;
+            100.0 * (double) sum_cur_bytes / (double) progress.max_bytes;
 
         static const char signs[2]= { '.',' ' };
         static int signi= 0;
@@ -214,7 +217,7 @@ static void finish_progress( AllData& alldata ) {
                 update_progress( alldata, 0, true );
             }
 
-        } else { /* 0 != my_rank */
+        } else { /* 0 != alldata.myRank */
 
             MPI_Status status;
             MPI_Wait( &(progress.send_request), &status );
@@ -252,6 +255,7 @@ static void finish_progress( AllData& alldata ) {
         delete [] progress.recv_requests;
         delete [] progress.recv_statuses;
         delete [] progress.recv_indices;
+        delete [] progress.rank_cur_bytes;
 
     }
 }

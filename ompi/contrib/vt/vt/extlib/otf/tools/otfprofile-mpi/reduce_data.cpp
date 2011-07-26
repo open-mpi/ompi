@@ -592,7 +592,7 @@ bool ReduceData( AllData& alldata ) {
 
                 // DEBUG
                 //cout << "    round " << round << " recv " << peer << "--> " <<
-                //my_rank << " with " <<
+                //alldata.myRank << " with " <<
                 //sizes[0] << " bytes, " <<
                 //sizes[1] << ", " <<
                 //sizes[2] << ", " <<
@@ -615,7 +615,7 @@ bool ReduceData( AllData& alldata ) {
                 buffer= pack_worker_data( alldata, sizes );
 
                 // DEBUG
-                //cout << "    round " << round << " send " << my_rank <<
+                //cout << "    round " << round << " send " << alldata.myRank <<
                 //" --> " << peer << " with " <<
                 //sizes[0] << " bytes, " <<
                 //sizes[1] << ", " <<

@@ -36,13 +36,13 @@ public:
 protected:
 
   // prepare progress
-  bool prepareProgress( const uint64_t& maxBytes );
+  void prepareProgress( const uint64_t& maxBytes );
 
   // update progress
-  bool updateProgress( const uint64_t& bytes );
+  void updateProgress( const uint64_t& deltaBytes, bool wait = false );
 
   // finish progress
-  bool finishProgress( void );
+  void finishProgress( void );
 
 #ifdef VT_MPI
   // get number and communicator of worker ranks
@@ -71,14 +71,15 @@ private:
 
     static const VT_MPI_INT msgTag = 500; // message tag
 
-    uint64_t*        rankCurBytes; // current bytes read per rank
-
     MPI_Request      sendRequest;  // sender request handle
 
     uint64_t*        recvBuffers;  // receive buffers
     MPI_Request*     recvRequests; // persistent receive request handles
     MPI_Status*      recvStatuses; // receive statuses
     VT_MPI_INT*      recvIndices;  // indices of completed receive operations
+
+    uint64_t*        rankCurBytes; // current bytes read per rank (except rank 0)
+    uint32_t         ranksLeft;    // root keeps track of ranks left to quary
 #endif // VT_MPI
 
   };

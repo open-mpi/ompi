@@ -1,6 +1,4 @@
-<!DOCTYPE vtenv SYSTEM "/home/mk/workspace2/vtLaunch/src/vt-environmentals.dtd">
-
-<vtenv vtenvversion="1.0" vtversion="5.10">
+<vtenv vtenvversion="1.0" vtversion="@PACKAGE_VERSION@">
   <group identifier="gen" descname="General Trace Settings" priority="100">
     <desc>General options for tracing and profiling.</desc>
   </group>
@@ -118,6 +116,23 @@
     <since major="5" minor="0" patch="0" ></since>
     <available>1</available>
     <anchor>VT_SETUP_VT_BUFFER_SIZE</anchor>
+  </env>
+  <env isdeprecated="0" priority="250" descname="Buffer size per thread" isadvanced="1" group="genTset"
+    envname="VT_THREAD_BUFFER_SIZE">
+    <desc>Set the size of the internal event buffer for threads.</desc>
+    <valuedesc>
+      <value type="integer">
+        <default>0</default>
+        <range max="10000000000000000" min="1" ></range>
+      </value>
+      <value type="enum">
+        <default>K</default>
+        <enumid>sizeunitenum</enumid>
+      </value>
+    </valuedesc>
+    <since major="5" minor="0" patch="0" ></since>
+    <available>1</available>
+    <anchor>VT_SETUP_VT_THREAD_BUFFER_SIZE</anchor>
   </env>
   <env isdeprecated="0" priority="300" descname="Application path" isadvanced="1" group="genFset"
     envname="VT_APPPATH">

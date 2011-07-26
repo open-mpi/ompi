@@ -952,8 +952,7 @@ FilterTraceC::processEventsAndStatistics()
     if( !getMaxBytesToRead( max_bytes ) )
       return false;
 
-    if( !prepareProgress( max_bytes ) )
-      return false;
+    prepareProgress( max_bytes );
   }
 
   // put output stream ids into a vector, so we can iterate over it by an index
@@ -1204,7 +1203,7 @@ FilterTraceC::processEventsAndStatistics()
     // set record limit, if progress is enabled
     //
     if( Params.show_progress )
-      OTF_Reader_setRecordLimit( reader, 100000 );
+      OTF_Reader_setRecordLimit( reader, 1000000 );
 
     // read/write events and statistics
     //
@@ -1299,8 +1298,8 @@ FilterTraceC::processEventsAndStatistics()
 
   // finish progress, if enabled
   //
-  if( !error && Params.show_progress )
-    error = !finishProgress();
+  if( Params.show_progress )
+    finishProgress();
 
   return !error;
 }

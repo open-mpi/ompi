@@ -233,10 +233,18 @@ void VTThrd_open(uint32_t tid)
   VTThrd* thrd = VTThrdv[tid];
   size_t bsize = vt_env_bsize();
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
-  if ( tid == 0 ) { /* master thread gets most buffer space */
-    bsize = (bsize / 10) * 7;
-  } else {        /* worker threads get less buffer space */
-    bsize = (bsize / 10);
+  size_t tbsize = vt_env_thread_bsize();
+  if( tbsize != 0 )
+  {
+    if( tid != 0 )
+      bsize = tbsize;
+  }
+  else
+  {
+    if( tid == 0 ) /* master thread gets most buffer space */
+      bsize = (bsize / 10) * 7;
+    else           /* worker threads get less buffer space */
+      bsize = (bsize / 10);
   }
 #endif /* VT_MT || VT_HYB || VT_JAVA */
 

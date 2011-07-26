@@ -33,6 +33,7 @@ EXTERN int    vt_env_ldir_check(void);
 EXTERN char*  vt_env_fprefix(void);
 EXTERN int    vt_env_funique(void);
 EXTERN size_t vt_env_bsize(void);
+EXTERN size_t vt_env_thread_bsize(void);
 EXTERN size_t vt_env_copy_bsize(void);
 EXTERN int    vt_env_pthread_reuse(void);
 EXTERN int    vt_env_mode(void);
