@@ -140,6 +140,7 @@ Detailed Open MPI v1.5 Feature List:
       process)
     - Many other small improvements and bug fixes, too numerous to
       list here
+	- Mellanox MXM MTL layer implementation
 
 Known issues
 ------------
@@ -493,10 +494,11 @@ Network Support
     performance:
     - Myrinet MX (including Open-MX, but not GM)
     - InfiniPath PSM
+	- Mellanox MXM
     - Portals
 
   Open MPI will, by default, choose to use "cm" when the InfiniPath
-  PSM MTL can be used.  Otherwise, "ob1" will be used and the
+  PSM or Mellanox MXM MTL can be used.  Otherwise, "ob1" will be used and the
   corresponding BTLs will be selected.  "csum" will never be selected
   by default.  Users can force the use of ob1 or cm if desired by
   setting the "pml" MCA parameter at run-time:
@@ -700,6 +702,19 @@ for a full list); a summary of the more commonly used ones follows:
 --with-psm-libdir=<directory>
   Look in directory for the PSM libraries.  By default, Open MPI will
   look in <psm directory>/lib and <psm directory>/lib64, which covers
+  most cases.  This option is only needed for special configurations.
+
+--with-mxm=<directory>
+  Specify the directory where the Mellanox MXM library and
+  header files are located.  This option is generally only necessary
+  if the InfiniPath headers and libraries are not in default
+  compiler/linker search paths.
+
+  MXM is the support library for Mellanox network adapters.
+
+--with-mxm-libdir=<directory>
+  Look in directory for the MXM libraries.  By default, Open MPI will
+  look in <mxm directory>/lib and <mxm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
 
 --with-sctp=<directory>
