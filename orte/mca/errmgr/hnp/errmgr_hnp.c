@@ -1894,41 +1894,45 @@ int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
             }
         }
 
-        /*
-         * Send a message to the other daemons so they know that a daemon has
-         * died.
-         */
-        buffer = OBJ_NEW(opal_buffer_t);
-        command = ORTE_PROCESS_FAILED_NOTIFICATION;
-
-        num_failed = opal_pointer_array_get_size(dead_names);
-
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
-        } else if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_failed, 1, ORTE_VPID))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(buffer);
-        } else {
-
-            /* Iterate of the list of dead procs and send them along with
-             * the rest. The HNP needs this info so it can tell the other
-             * ORTEDs and they can inform the appropriate applications.
+        if (!orte_orteds_term_ordered) {
+            /*
+             * Send a message to the other daemons so they know that a daemon has
+             * died.
              */
-            for (i = 0; i < num_failed; i++) {
-                if (NULL != (name_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i))) {
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, name_item, 1, ORTE_NAME))) {
-                        ORTE_ERROR_LOG(rc);
-                        OBJ_RELEASE(buffer);
+            buffer = OBJ_NEW(opal_buffer_t);
+            command = ORTE_PROCESS_FAILED_NOTIFICATION;
+
+            num_failed = opal_pointer_array_get_size(dead_names);
+
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buffer);
+            } else if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_failed, 1, ORTE_VPID))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buffer);
+            } else {
+
+                /* Iterate of the list of dead procs and send them along with
+                 * the rest. The HNP needs this info so it can tell the other
+                 * ORTEDs and they can inform the appropriate applications.
+                 */
+                for (i = 0; i < num_failed; i++) {
+                    if (NULL != (name_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i))) {
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, name_item, 1, ORTE_NAME))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(buffer);
+                        }
                     }
-                }
-            } 
+                } 
 
-            OBJ_RELEASE(dead_names);
+                OBJ_RELEASE(dead_names);
 
-            orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer, ORTE_RML_TAG_DAEMON, 0);
+                orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer, ORTE_RML_TAG_DAEMON, 0);
 
-            OBJ_RELEASE(buffer);
+                OBJ_RELEASE(buffer);
+            }
+        } else {
+            orte_errmgr_hnp_global_mark_processes_as_dead(dead_names);
         }
     }
 
@@ -2029,10 +2033,10 @@ int orte_errmgr_hnp_global_mark_processes_as_dead(opal_pointer_array_t *dead_pro
     if (!orte_orteds_term_ordered) {
         /* Need to update the orted routing module. */
         orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid);
-    }
 
-    if (NULL != fault_cbfunc) {
-        (*fault_cbfunc)(dead_procs);
+        if (NULL != fault_cbfunc) {
+            (*fault_cbfunc)(dead_procs);
+        }
     }
 
     return ORTE_SUCCESS;
