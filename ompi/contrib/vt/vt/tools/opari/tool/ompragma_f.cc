@@ -130,6 +130,10 @@ void OMPragmaF::remove_empties() {
   if ( c != string::npos ) --c;
   string::size_type amp = lines[lastline].find_last_not_of(" \t", c);
   if ( lines[lastline][amp] == '&' ) lines[lastline][amp] = ' ';
+
+  // remove trailing comma
+  amp = lines[lastline].find_last_not_of(" \t", c);
+  if ( lines[lastline][amp] == ',' ) lines[lastline][amp] = ' ';
 }
 
 OMPragma* OMPragmaF::split_combined() {

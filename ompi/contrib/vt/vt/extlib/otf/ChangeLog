@@ -1,4 +1,5 @@
-1.9.1openmpi
+1.9.1sawfish
+	- improved zlib compression
 	- added progress display to otfprofile-mpi
 	- use pdf[la]tex instead of latex/dvipdf to convert otfprofile-mpi's
 	  TeX output to PDF

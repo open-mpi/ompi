@@ -43,12 +43,11 @@ FilterCommonC::~FilterCommonC()
 // protected methods
 //
 
-bool
+void
 FilterCommonC::prepareProgress( const uint64_t& maxBytes )
 {
-  bool error = false;
-
-  uint64_t max_bytes = maxBytes;
+  m_progress.curBytes = 0;
+  m_progress.maxBytes = maxBytes;
 
 #ifdef VT_MPI
   if( m_numWorkerRanks > 1 )
@@ -56,29 +55,16 @@ FilterCommonC::prepareProgress( const uint64_t& maxBytes )
     // reduce max. bytes to rank 0
     //
     uint64_t sum_max_bytes;
-    MPI_Reduce( &max_bytes, &sum_max_bytes, 1, MPI_LONG_LONG_INT, MPI_SUM, 0,
-                m_workerComm );
-    MASTER max_bytes = sum_max_bytes;
-  }
-#endif // VT_MPI
+    MPI_Reduce( &(m_progress.maxBytes), &sum_max_bytes, 1, MPI_LONG_LONG_INT,
+                MPI_SUM, 0, m_workerComm );
 
-  // initalize variables of data structure ProgressS
-  //
-
-  m_progress.curBytes = 0;
-  m_progress.maxBytes = max_bytes;
-
-#ifdef VT_MPI
-  // initialize MPI related variables of data structure ProgressS
-  //
-  if( m_numWorkerRanks > 1 )
-  {
     MASTER
     {
+      m_progress.maxBytes = sum_max_bytes;
+      m_progress.ranksLeft = m_numWorkerRanks - 1;
+
       // allocate memory for some arrays
       //
-      m_progress.rankCurBytes = new uint64_t[m_numWorkerRanks];
-      assert( m_progress.rankCurBytes );
       m_progress.recvBuffers = new uint64_t[m_numWorkerRanks-1];
       assert( m_progress.recvBuffers );
       m_progress.recvRequests = new MPI_Request[m_numWorkerRanks-1];
@@ -87,24 +73,22 @@ FilterCommonC::prepareProgress( const uint64_t& maxBytes )
       assert( m_progress.recvStatuses );
       m_progress.recvIndices = new VT_MPI_INT[m_numWorkerRanks-1];
       assert( m_progress.recvIndices );
+      m_progress.rankCurBytes = new uint64_t[m_numWorkerRanks-1];
+      assert( m_progress.rankCurBytes );
 
       // initialize arrays
       //
-      for( int i = 0; i < m_numWorkerRanks; i++ )
+      for( VT_MPI_INT i = 0; i < m_numWorkerRanks -1; i++ )
       {
-        // initialize array of current bytes read
         m_progress.rankCurBytes[i] = 0;
 
-        if( i > 0 )
-        {
-          // create persistent request handle
-          MPI_Recv_init( &(m_progress.recvBuffers[i-1]), 1, MPI_LONG_LONG_INT,
-                         i, m_progress.msgTag, m_workerComm,
-                         &(m_progress.recvRequests[i-1]) );
+        // create persistent request handle
+        MPI_Recv_init( &(m_progress.recvBuffers[i]), 1, MPI_LONG_LONG_INT,
+                       i+1, m_progress.msgTag, m_workerComm,
+                       &(m_progress.recvRequests[i]) );
 
-          // start persistent communication
-          MPI_Start( &(m_progress.recvRequests[i-1]) );
-        }
+        // start persistent communication
+        MPI_Start( &(m_progress.recvRequests[i]) );
       }
     }
     else // SLAVE
@@ -119,42 +103,46 @@ FilterCommonC::prepareProgress( const uint64_t& maxBytes )
   }
 #endif // VT_MPI
 
-  return !error;
+  MASTER
+  {
+    // show initial progress
+    printf( " %7.2f %%\r", 0.0 );
+    fflush( stdout );
+  }
 }
 
-bool
-FilterCommonC::updateProgress( const uint64_t& bytes )
+void
+FilterCommonC::updateProgress( const uint64_t& deltaBytes, bool wait )
 {
-  bool error = false;
-
 #if defined(HAVE_OMP) && HAVE_OMP
 # pragma omp critical (progress)
   {
 #endif // HAVE_OMP
 
   // add bytes to current bytes read
-  m_progress.curBytes += bytes;
+  m_progress.curBytes += deltaBytes;
+
+  uint64_t sum_cur_bytes = m_progress.curBytes;
 
 #ifdef VT_MPI
   if( m_numWorkerRanks > 1 )
   {
     MASTER
     {
-      // add bytes to current bytes read of rank 0
-      m_progress.rankCurBytes[0] += bytes;
+      // get current bytes read from all worker ranks
+      //
+
+      VT_MPI_INT i;
 
 #if defined(HAVE_OMP) && HAVE_OMP
 #     pragma omp master
       {
 #endif // HAVE_OMP
 
-      // get current bytes read from all worker ranks
-      //
-
       VT_MPI_INT out_count;
 
       // rank 0 is finished? (called from finishProgress())
-      if( bytes == 0 )
+      if( wait )
       {
         // yes, wait for one or more updates from worker ranks
         MPI_Waitsome( m_numWorkerRanks - 1, m_progress.recvRequests, &out_count,
@@ -169,34 +157,35 @@ FilterCommonC::updateProgress( const uint64_t& bytes )
 
       if( out_count != MPI_UNDEFINED )
       {
-        int index;
-        int i;
-
         for( i = 0; i < out_count; i++ )
         {
-          index = m_progress.recvIndices[i];
+          VT_MPI_INT index = m_progress.recvIndices[i];
 
           // worker rank (index+1) is finished?
-          if( m_progress.recvBuffers[index] != (uint64_t)-1 )
+          if( m_progress.recvBuffers[index] == (uint64_t)-1 )
+          {
+            // yes, decrement counter of ranks left
+            m_progress.ranksLeft--;
+          }
+          else
           {
             // no, update rank's current bytes read and restart persistent
             // communication
             //
-            m_progress.rankCurBytes[index+1] = m_progress.recvBuffers[index];
+            m_progress.rankCurBytes[index] = m_progress.recvBuffers[index];
             MPI_Start( &(m_progress.recvRequests[m_progress.recvIndices[i]]) );
           }
         }
-
-        // recompute sum of current bytes read
-        //
-        m_progress.curBytes = 0;
-        for( i = 0; i < m_numWorkerRanks; i++ )
-          m_progress.curBytes += m_progress.rankCurBytes[i];
       }
 
 #if defined(HAVE_OMP) && HAVE_OMP
       } // omp master
 #endif // HAVE_OMP
+
+      // recompute sum of current bytes read
+      //
+      for( i = 0; i < m_numWorkerRanks-1; i++ )
+        sum_cur_bytes += m_progress.rankCurBytes[i];
     }
     else // SLAVE
     {
@@ -236,24 +225,20 @@ FilterCommonC::updateProgress( const uint64_t& bytes )
     //
 
     double progress =
-      100.0 * (double)m_progress.curBytes / (double)m_progress.maxBytes;
+      100.0 * (double)sum_cur_bytes / (double)m_progress.maxBytes;
 
-    printf( " %7.2f %%\r", progress );
+    printf( " %7.2f %%\n", progress );
     fflush( stdout );
   }
 
 #if defined(HAVE_OMP) && HAVE_OMP
   } // omp critical
 #endif // HAVE_OMP
-
-  return !error;
 }
 
-bool
+void
 FilterCommonC::finishProgress()
 {
-  bool error = false;
-
 #ifdef VT_MPI
   if( m_numWorkerRanks > 1 )
   {
@@ -262,10 +247,8 @@ FilterCommonC::finishProgress()
       // update progress until all worker ranks are
       // finished / all bytes are read
       //
-      while( !error && m_progress.curBytes < m_progress.maxBytes )
-      {
-        error = !updateProgress( 0 );
-      }
+      while( m_progress.ranksLeft > 0 )
+        updateProgress( 0, true );
     }
     else // SLAVE
     {
@@ -306,16 +289,14 @@ FilterCommonC::finishProgress()
 
       // free memory
       //
-      delete [] m_progress.rankCurBytes;
       delete [] m_progress.recvBuffers;
       delete [] m_progress.recvRequests;
       delete [] m_progress.recvStatuses;
       delete [] m_progress.recvIndices;
+      delete [] m_progress.rankCurBytes;
     }
   }
 #endif // VT_MPI
-
-  return !error;
 }
 
 #ifdef VT_MPI

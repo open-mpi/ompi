@@ -1,3 +1,6 @@
+19. Revised 18.
+    to get back support for comma-separated OpenMP clauses.
+
 18. Fixed processing of Fortran line-continuation where
     commas at end of line (e.g. within OpenMP clauses) was removed
 

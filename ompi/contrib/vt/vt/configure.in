@@ -93,6 +93,8 @@ AC_PROG_F77
 AC_PROG_FC
 AM_PROG_AS
 
+AC_LANG([C])
+
 AS_IF([test x"$F77" != x],
 [AC_DEFINE([HAVE_F77], [1], [Define to 1 if VT is configured with Fortran 77 support.])])
 AM_CONDITIONAL(AMHAVEF77, test x"$F77" != x)
@@ -124,9 +126,6 @@ AC_PROG_AWK
 AC_CHECK_PROG(JAVA, java, java)
 
 ACVT_CONF_TITLE([Header files, types, and functions])
-
-# Added by Open MPI
-AC_LANG([C])
 
 # Check for header files
 AC_HEADER_STDC

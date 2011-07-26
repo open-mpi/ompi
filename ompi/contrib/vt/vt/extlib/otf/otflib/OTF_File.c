@@ -91,8 +91,6 @@ struct struct_OTF_File {
 
 	/** zlib entry buffer ... what a nice wordplay */
 	unsigned char* zbuffer;
-	
-	unsigned char* ybuffer;
 
 	uint32_t zbuffersize;
 
@@ -127,7 +125,6 @@ void OTF_File_init( OTF_File* file ) {
 #ifdef HAVE_ZLIB
 	file->z= NULL;
 	file->zbuffer= NULL;
-	file->ybuffer= NULL;
 	file->zbuffersize= 1024*10;
 #endif /* HAVE_ZLIB */
 	file->pos= 0;
@@ -148,7 +145,6 @@ void OTF_File_finalize( OTF_File* file ) {
 #ifdef HAVE_ZLIB
 	file->z= NULL;
 	file->zbuffer= NULL;
-	file->ybuffer= NULL;
 	file->zbuffersize= 0;
 #endif /* HAVE_ZLIB */
 	file->pos= 0;
@@ -218,16 +214,13 @@ OTF_File* OTF_File_open_with_external_buffer( uint32_t len, const char* buffer,
         inflateInit( ret->z );
 
         ret->zbuffer= malloc( ret->zbuffersize );
-        ret->ybuffer= malloc( ret->zbuffersize );
-        if( NULL == ret->zbuffer || NULL == ret->ybuffer) {
+        if( NULL == ret->zbuffer ) {
 
             OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
                     "no memory left.\n", __FUNCTION__, __FILE__, __LINE__ );
 
             free( ret->zbuffer );
-            free( ret->ybuffer );
             ret->zbuffer= NULL;
-            ret->ybuffer= NULL;
             free( ret->z );
             ret->z= NULL;
             free( ret );
@@ -263,11 +256,9 @@ OTF_File* OTF_File_open_with_external_buffer( uint32_t len, const char* buffer,
 size_t OTF_File_write( OTF_File* file, const void* ptr, size_t size ) {
 
 
-	size_t byteswritten;
+	size_t byteswritten = 0;
 
 #ifdef HAVE_ZLIB
-	int len = 0;
-	int rest = (int) size;
 	int status;
 #endif/* HAVE_ZLIB */
 
@@ -309,122 +300,46 @@ size_t OTF_File_write( OTF_File* file, const void* ptr, size_t size ) {
 #ifdef HAVE_ZLIB
 
 	if ( NULL != file->z ) {
-	
-		/* step 1 */
-		/* is any data in the y-buffer */
-		if ( 0 < file->z->avail_in ) {
-			
-			/* len of the piece to fill the y buffer (to 10Kbyte) */
-			len = file->zbuffersize - file->z->avail_in;
-			
-			/* is enough data in the "*ptr" to fill the ybuffer fully */
-			if ( len <= rest ) {
-			
-				memcpy( file->ybuffer + file->z->avail_in, ptr, len );
-				file->z->avail_in = file->zbuffersize;
-				file->z->next_in = file->ybuffer;
-				file->z->avail_out = file->zbuffersize;
-				file->z->next_out = file->zbuffer;
-				
-				status = deflate( file->z, Z_FULL_FLUSH );
-				if ( status != Z_OK ) {
-			
-					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-							"error in compressing, status %u.\n",
-							__FUNCTION__, __FILE__, __LINE__, status );
-					
-					return 0;
-				}
-				
-				byteswritten= fwrite( file->zbuffer, 1, file->zbuffersize - file->z->avail_out, file->file );
-				if( byteswritten < (file->zbuffersize - file->z->avail_out) ) {
 
-					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-							"less bytes written than expected %u < %u.\n",
-							__FUNCTION__, __FILE__, __LINE__, (uint32_t) byteswritten,
-							(uint32_t) (file->zbuffersize - file->z->avail_out) );
-
-				}
-
-				/* test if avail_in really ran empty */
-				if ( 0 < file->z->avail_in ) {
-
-					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-							"error in compressing.\n",
-							__FUNCTION__, __FILE__, __LINE__ );
-
-					return 0;
-				}
-
-				rest -= len;
-
-			} else {
-
-				/* no, it is not */
-			
-				/* only copy the new data into the ybuffer */
-				memcpy( file->ybuffer + file->z->avail_in, ptr, rest );
-				file->z->avail_in += rest;
-				rest = 0;
-			}
-		}
-		
-		
-		/* step 2 */
-		/* if theres more than 10k in the "*ptr" */
-		while( (uint32_t) rest >= file->zbuffersize ) {
-		
-			file->z->avail_in = file->zbuffersize;
-			file->z->next_in = ( ( ( unsigned char* ) ptr ) + len );
-			file->z->avail_out = file->zbuffersize;
-			file->z->next_out = file->zbuffer;
-			
-			rest -= file->zbuffersize;
-			len += file->zbuffersize;
-			
-			status = deflate( file->z, Z_FULL_FLUSH );
-			if ( status != Z_OK ) {
-		
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-						"error in compressing, status %u.\n",
-						__FUNCTION__, __FILE__, __LINE__, status );
-
-				return 0;
-			}
-			
-			byteswritten= fwrite( file->zbuffer, 1, file->zbuffersize - file->z->avail_out,
-				file->file );
-			if( byteswritten < (file->zbuffersize - file->z->avail_out) ) {
-
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-						"less bytes written than expected %u < %u.\n",
-						__FUNCTION__, __FILE__, __LINE__, (uint32_t) byteswritten,
-						(uint32_t) (file->zbuffersize - file->z->avail_out) );
-
-			}
-
-			/* test if avail_in really ran empty */
-			if ( 0 < file->z->avail_in ) {
-
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-						"error in compressing.\n",
-						__FUNCTION__, __FILE__, __LINE__ );
-
-				return 0;
-			}
-		}
-		
-		
-		/* step 3 */
-		/* is there less than 10k data left ... throw it into the ybuffer */
-		if ( rest > 0 ) {
-		
-			memcpy( file->ybuffer, ( ( unsigned char* ) ptr ) + len, rest );
-			file->z->avail_in = rest;
-		}
-		
-		return size;
-		
+        /* compress the data without using the ybuffer */
+        file->z->avail_in = size;
+        file->z->next_in = (void*)ptr;
+        
+        while (file->z->avail_in > 0)
+        {
+            status = deflate(file->z, Z_FULL_FLUSH);
+            if (status == Z_STREAM_ERROR)
+            {
+                OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+                                    "error in compressing, status %i.\n",
+                                    __FUNCTION__, __FILE__, __LINE__, status );
+                return byteswritten;
+            }
+            
+            while (file->z->avail_out == 0)
+            {
+                size_t towrite = file->zbuffersize - file->z->avail_out;
+                if (towrite != fwrite(file->zbuffer, 1, towrite, file->file))
+                {
+                    OTF_fprintf(stderr, "ERROR in function %s, file: %s, line %i:\n", 
+                            "Failed to write %u bytes to file!\n", 
+                            __FUNCTION__, __FILE__, __LINE__, towrite);
+                    return byteswritten;
+                }
+                file->z->avail_out = file->zbuffersize;
+                file->z->next_out = file->zbuffer;
+                status = deflate(file->z, Z_FULL_FLUSH);
+                if (status == Z_STREAM_ERROR)
+                {
+                    OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+                                    "error in compressing, status %i.\n",
+                                    __FUNCTION__, __FILE__, __LINE__, status );
+                    assert(status != Z_STREAM_ERROR);
+                    return byteswritten;
+                }
+            }
+            byteswritten = size - file->z->avail_in;
+        }
 	} else {
 
 #endif /* HAVE_ZLIB */
@@ -444,11 +359,11 @@ size_t OTF_File_write( OTF_File* file, const void* ptr, size_t size ) {
 
 		}
 
-		return byteswritten;
 
 #ifdef HAVE_ZLIB
 	}
 #endif /* HAVE_ZLIB */
+    return byteswritten;
 
 }
 
@@ -605,8 +520,7 @@ int OTF_File_seek( OTF_File* file, uint64_t pos ) {
 			file->z->total_in= 0;
 
 			/* re-initialize z object */
-			inflateEnd( file->z );
-			inflateInit( file->z );
+            inflateReset(file->z);
 
 			/* do not sync at very beginning of compressed stream because it 
 			would skip the first block */
@@ -627,12 +541,15 @@ int OTF_File_seek( OTF_File* file, uint64_t pos ) {
 			}
 			
 			if ( Z_DATA_ERROR == sync ) {
-			
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+
+                /* do not break here, this might happen with larger zlib chunks */
+				/*OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"Z_DATA_ERROR.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
 				
 				return -1;
+                */
+                continue;
 			}
 
 			if ( Z_STREAM_ERROR == sync ) {
@@ -728,57 +645,51 @@ int OTF_File_close( OTF_File* file ) {
 
 	if ( NULL != file->z ) {
 
-		if ( OTF_FILEMODE_WRITE != file->mode ) {
+        if ( OTF_FILEMODE_WRITE != file->mode ) {
 
 			inflateEnd( file->z );
 
 		} else {
-		
-			if ( file->z->avail_in > 0 ) {
-			
-				file->z->next_in = file->ybuffer;
-				file->z->next_out = file->zbuffer;
-				file->z->avail_out = file->zbuffersize;
-				
-				status = deflate( file->z, Z_FULL_FLUSH );
-				if ( status != Z_OK ) {
-			
-					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-							"error in uncompressing, status %u.\n",
-							__FUNCTION__, __FILE__, __LINE__, status );
-					
-					return 0;
-				}
-				
-				if( 0 == OTF_File_revive( file, OTF_FILEMODE_WRITE ) ) {
 
-					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+            size_t towrite;
+            /* flush buffer */
+            if( 0 == OTF_File_revive( file, OTF_FILEMODE_WRITE ) ) {
+
+                OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 							"OTF_File_revive() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
 					
-					return 0;
-				}
-					
-				byteswritten= fwrite( file->zbuffer, 1, file->zbuffersize -
-					file->z->avail_out, file->file );
-				if( byteswritten < (file->zbuffersize - file->z->avail_out) ) {
-
-					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-						"less bytes written than expected %u < %u.\n",
-						__FUNCTION__, __FILE__, __LINE__, (uint32_t) byteswritten,
-						(uint32_t) (file->zbuffersize - file->z->avail_out) );
-
-				}
-			}
-			
-			deflateEnd( file->z );
+                return 0;
+            }
+            status = deflate(file->z, Z_FULL_FLUSH);
+            assert(status != Z_STREAM_ERROR);
+            towrite = file->zbuffersize - file->z->avail_out;
+            byteswritten = 0;
+            if (towrite > 0)
+                byteswritten = fwrite(file->zbuffer, 1, towrite, file->file);
+            if (towrite != byteswritten)
+            {
+                OTF_fprintf(stderr, "ERROR in function %s, file: %s, line: %i:\n"
+                        "Failed to write compressed buffer of size %lu\n",
+                        __FUNCTION__, __FILE__, __LINE__, towrite);
+            }
+            while (file->z->avail_out != file->zbuffersize)
+            {
+                file->z->avail_out = file->zbuffersize;
+                file->z->next_out = file->zbuffer;
+                deflate(file->z, Z_FULL_FLUSH);
+                assert(status != Z_STREAM_ERROR);
+                towrite = file->zbuffersize - file->z->avail_out;
+                if (towrite > 0)
+                    fwrite(file->zbuffer, 1, towrite, file->file);
+            }
+		    deflateEnd( file->z );
 		}
-
 		free( file->z );
-		
-		free( file->ybuffer );
+        file->z = NULL;
 
 		free( file->zbuffer );
+        file->zbuffer = NULL;
 	}
 	
 #endif /* HAVE_ZLIB */
@@ -1153,7 +1064,7 @@ void OTF_File_setZBufferSize( OTF_File* file, uint32_t size ) {
 #ifdef HAVE_ZLIB
 	
 	if( NULL != file->z ) {
-	
+        void *tmp;
 		if ( 32 > size ) {
 		
 			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
@@ -1175,21 +1086,24 @@ void OTF_File_setZBufferSize( OTF_File* file, uint32_t size ) {
 					__FUNCTION__, __FILE__, __LINE__, size );
 
 		}
-	
-		file->zbuffersize= size;
-	
-		if( NULL != file->zbuffer ) {
+
+        /* use realloc instead of free()/malloc() */
+		/*if( NULL != file->zbuffer ) {
 			free( file->zbuffer );
-		}
-		file->zbuffer= malloc( size );
-		assert( file->zbuffer );
+		}*/
+        tmp = realloc( file->zbuffer, size );
+        if (tmp == NULL)
+        {
+            OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"No memory left to reallocate zlib buffer.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+            return;
+        }
+        file->zbuffer = tmp;
+		file->zbuffersize= size;
+        file->z->avail_out = size;
+        file->z->next_out  = file->z->next_in = file->zbuffer;
 		
-		if( NULL != file->ybuffer ) {
-			free( file->ybuffer );
-		}
-		file->ybuffer= malloc( size );
-		assert( file->ybuffer );
-	
 	
 	}
 
@@ -1303,17 +1217,15 @@ OTF_File* OTF_File_open_zlevel( const char* filename, OTF_FileManager* manager,
 			inflateInit( ret->z );
 
 			ret->zbuffer= malloc( ret->zbuffersize );
-			ret->ybuffer= malloc( ret->zbuffersize );
-			if( NULL == ret->zbuffer || NULL == ret->ybuffer) {
+            
+			if( NULL == ret->zbuffer ) {
 		
 				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"no memory left.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
 
 				free( ret->zbuffer );
-				free( ret->ybuffer );
 				ret->zbuffer= NULL;
-				ret->ybuffer= NULL;
 
 				free( ret->z );
 				ret->z= NULL;
@@ -1384,8 +1296,7 @@ OTF_File* OTF_File_open_zlevel( const char* filename, OTF_FileManager* manager,
 			deflateInit( ret->z, zlevel );
 
 			ret->zbuffer= malloc( ret->zbuffersize );
-			ret->ybuffer= malloc( ret->zbuffersize );
-			if( NULL == ret->zbuffer || NULL == ret->ybuffer ) {
+			if( NULL == ret->zbuffer ) {
 		
 				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
 						"no memory left.\n",

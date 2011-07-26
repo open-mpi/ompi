@@ -252,20 +252,20 @@ OpenMP events, and performance counters.
 <P>
 After a successful tracing run, VampirTrace writes all collected data to a  
 trace file in the Open Trace Format (OTF)<A NAME="tex2html3"
-  HREF="#foot1146"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1153"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 As a result, the information is available for post-mortem analysis and 
 visualization by various tools. 
 Most notably, VampirTrace provides the input data for the Vampir analysis  
 and visualization tool<A NAME="tex2html5"
-  HREF="#foot1147"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1154"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later versions.
 If not disabled explicitly, VampirTrace is built automatically when installing
 OpenMPI<A NAME="tex2html7"
-  HREF="#foot1148"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1155"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 
 <P>
@@ -1083,7 +1083,7 @@ in a single file, that
   The names in between may contain wildcards as ``?'', ``*', and ``#'', each entry gets a new line.
   The lists end with <TT>END[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>. For further information on selective 
   profiling have a look at the TAU documentation<A NAME="tex2html11"
-  HREF="#foot1172"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1179"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
   To announce the file through the compiler wrapper use the option <TT>-vt:tau</TT>:
 <PRE>
@@ -1100,7 +1100,7 @@ Binary Instrumentation Using Dyninst
 The option <TT>-vt:inst dyninst</TT> is used with the compiler wrapper to 
 instrument the application during runtime (binary instrumentation), by using 
 Dyninst<A NAME="tex2html13"
-  HREF="#foot1173"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1180"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 Recompiling is not necessary for this kind of instrumentation,
 but relinking:
@@ -1407,6 +1407,13 @@ of a VampirTrace instrumented executable:
 	&#8658; Section&nbsp;<A HREF="#sec:trace_file_size">3.3</A></TD>
 <TD ALIGN="LEFT">32M</TD>
 </TR>
+<TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_THREAD_BUFFER_SIZE"></A><TT>VT_THREAD_BUFFER_SIZE</TT></TD>
+<TD ALIGN="LEFT">Size of internal event trace buffer for threads. If not defined, the 
+	size is set to 10% of <TT>VT_BUFFER_SIZE</TT>.
+	<BR>
+	&#8658; Section&nbsp;<A HREF="#sec:trace_file_size">3.3</A></TD>
+<TD ALIGN="LEFT">0</TD>
+</TR>
 <TR><TD ALIGN="LEFT"><A NAME="VT_SETUP_VT_CLEAN"></A><TT>VT_CLEAN</TT></TD>
 <TD ALIGN="LEFT">Remove temporary trace files?</TD>
 <TD ALIGN="LEFT">yes</TD>
@@ -1702,6 +1709,17 @@ data, parts of the application may be swapped to disk, leading
 to a significant change in the behavior of the application.
 
 <P>
+In multi-threaded applications a single buffer cannot be shared across a process 
+and the associated threads for performance reasons. Thus independent 
+buffers are created for every process and thread, at which the process buffer 
+size is 70% and the thread buffer size is 10% of the value set in 
+<TT>VT_BUFFER_SIZE</TT>. The buffer size of processes and threads can be 
+explicitly specified setting the environment variable 
+<TT>VT_THREAD_BUFFER_SIZE</TT>, which defines the buffer size of a thread, 
+whereas the buffer size of a process is then defined by the value of 
+<TT>VT_BUFFER_SIZE</TT>.
+
+<P>
 Note that you can decrease the size of trace files significantly by
 using the runtime function filtering as explained in Section&nbsp;<A HREF="#sec:function_filter">5.1</A>.
 
@@ -1820,7 +1838,7 @@ for the enhanced timer synchronization:
 
 <UL>
 <LI>CLAPACK<A NAME="tex2html15"
-  HREF="#foot1183"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1190"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>
 </LI>
 <LI>AMD ACML
@@ -2211,9 +2229,9 @@ Example: <TT>VT_CUPTI_METRICS=local_store:local_load</TT>
 </DL>
 
 <P>
-Until CUDA Runtime Version 4.0 and CUDA Driver for Linux 270.27 the usage of 
-  CUDA events between asynchronous tasks serializes their on-device execution. 
-  This seems to be a bug, which has already been reported to NVIDIA. 
+Until CUDA Runtime Version 4.0 and CUDA Driver for Linux 270.41.19 
+  the usage of CUDA events between asynchronous tasks serializes their on-device 
+  execution. This seems to be a bug, which has already been reported to NVIDIA. 
   As VampirTrace uses CUDA events for time measurement and asynchronous tasks 
   may overlap (depends on the CUDA device capability), there might be a sensible 
   impact on the program flow. 
@@ -2223,7 +2241,7 @@ Until CUDA Runtime Version 4.0 and CUDA Driver for Linux 270.27 the usage of
 <P>
 
 <H3><A NAME="SECTION00550100000000000000">
-Available CUDA Counter</A>
+CUDA runtime API Counter</A>
 </H3>
   If <TT>VT_CUDATRACE_GPUMEMUSAGE</TT> is enabled, 
   <SPAN  CLASS="textit">cudaMalloc</SPAN> and <SPAN  CLASS="textit">cudaFree</SPAN> functions will be tracked to write 
@@ -2237,6 +2255,21 @@ There are three counters, which provide some information about the kernel
 <P>
 
 <H3><A NAME="SECTION00550200000000000000">
+CUDA Performance Counters - CUPTI Events</A>
+</H3>
+  To capture performance counters in CUDA applications, CUPTI metrics can be 
+  specified with the environment variable <TT>VT_CUPTI_METRICS</TT>. Metrics 
+  are separated by default with '':`` or user specified by 
+  <TT>VT_METRICS_SEP</TT>. The <SPAN  CLASS="textit">CUPTI User's Guide</SPAN> provides 
+  information about the available counters.
+  Due to the use of asynchronous CUDA events in a GPU stream, VampirTrace 
+  currently writes CUPTI counters directly on the process stream, which created 
+  the GPU stream. Future implementations will write these counter information 
+  on the GPU stream, where the corresponding CUDA kernel runs on.
+
+<P>
+
+<H3><A NAME="SECTION00550300000000000000">
 Compile and Link CUDA applications</A>
 </H3>
   Use the VampirTrace compiler wrapper <TT>vtnvcc</TT> instead of <TT>nvcc</TT> 
@@ -2293,7 +2326,7 @@ With the library tracing mechanism described in section <A HREF="#sec:3rd-party"
 
 <P>
 
-<H3><A NAME="SECTION00550300000000000000">
+<H3><A NAME="SECTION00550400000000000000">
 Tracing the NVIDIA CUDA SDK 3.x and 4.0</A>
 </H3>
   To get some example traces, replace the compiler commands in the common 
@@ -2319,7 +2352,7 @@ Tracing the NVIDIA CUDA SDK 3.x and 4.0</A>
 <BR>
 <P>
 
-<H3><A NAME="SECTION00550400000000000000">
+<H3><A NAME="SECTION00550500000000000000">
 Multithreaded CUDA applications</A>
 </H3>
   If threads are used to invoke asynchronous CUDA tasks, make sure to call a 
@@ -2331,7 +2364,7 @@ Multithreaded CUDA applications</A>
 <BR>
 <P>
 
-<H3><A NAME="SECTION00550500000000000000">
+<H3><A NAME="SECTION00550600000000000000">
 Mixed Use of CUDA runtime and driver API</A>
 </H3>
   As CUDA runtime API may implicitly create and destroy CUDA contexts, there 
@@ -2341,21 +2374,6 @@ Mixed Use of CUDA runtime and driver API</A>
   which used the asynchronous tasks, before the other API closes its thread or 
   context - cudaThreadExit() for runtime API and cuCtxDestroy() for driver API. 
   Otherwise not yet flushed, asynchronous tasks will be missing in the final trace.
-
-<P>
-
-<H3><A NAME="SECTION00550600000000000000">
-CUDA Performance Counters - CUPTI Events</A>
-</H3>
-  To capture performance counters in CUDA applications, CUPTI metrics can be 
-  specified with the environment variable <TT>VT_CUPTI_METRICS</TT>. Metrics 
-  are separated by default with '':`` or user specified by 
-  <TT>VT_METRICS_SEP</TT>. The <SPAN  CLASS="textit">CUPTI User's Guide</SPAN> provides 
-  information about the available counters.
-  Due to the use of asynchronous CUDA events in a GPU stream, VampirTrace 
-  currently writes CUPTI counters directly on the process stream, which created 
-  the GPU stream. Future implementations will write these counter information 
-  on the GPU stream, where the corresponding CUDA kernel runs on.
   
 <P><P>
 <BR>
@@ -2364,11 +2382,11 @@ CUDA Performance Counters - CUPTI Events</A>
 <P>
 <SPAN  CLASS="textbf">Note:</SPAN>
 <BR>
-For 64-bit systems VampirTrace has to be configured with the 64-bit 
+For 32-bit systems VampirTrace has to be configured with the 32-bit 
   version of cuda runtime library. If the link test fails, use the 
   following configure option (&#8658;<A HREF="#sec:configure">A.2</A>):
   <PRE>
-  --with-cudart-lib-dir=$CUDA_INSTALL_PATH/lib64
+  --with-cudart-lib-dir=$CUDA_INSTALL_PATH/lib
 </PRE>
 
 <P>
@@ -3381,21 +3399,21 @@ by the Linux 2.6 kernel are shown in the table.
 <P>
 <BR><HR><H4>Footnotes</H4>
 <DL>
-<DT><A NAME="foot1146">... (OTF)</A><A
+<DT><A NAME="foot1153">... (OTF)</A><A
  HREF="UserManual.html#tex2html3"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT><A NAME="tex2html4"
   HREF="http://www.tu-dresden.de/zih/otf">http://www.tu-dresden.de/zih/otf</A></TT>
 
 </DD>
-<DT><A NAME="foot1147">... tool </A><A
+<DT><A NAME="foot1154">... tool </A><A
  HREF="UserManual.html#tex2html5"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT><A NAME="tex2html6"
   HREF="http://www.vampir.eu">http://www.vampir.eu</A></TT>
 
 </DD>
-<DT><A NAME="foot1148">...
+<DT><A NAME="foot1155">...
 Open MPI </A><A
  HREF="UserManual.html#tex2html7"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
@@ -3403,14 +3421,14 @@ Open MPI </A><A
   HREF="http://www.open-mpi.org/faq/?category=vampirtrace">http://www.open-mpi.org/faq/?category=vampirtrace</A></TT>
 
 </DD>
-<DT><A NAME="foot1172">... documentation </A><A
+<DT><A NAME="foot1179">... documentation </A><A
  HREF="UserManual.html#tex2html11"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT><A NAME="tex2html12"
   HREF="http://www.cs.uoregon.edu/research/tau/docs/newguide/ch03s03.html#ManualSelectiveProfiling">http://www.cs.uoregon.edu/research/tau/docs/newguide/ch03s03.html#ManualSelectiveProfiling</A></TT>
 
 </DD>
-<DT><A NAME="foot1173">...
+<DT><A NAME="foot1180">...
 Dyninst </A><A
  HREF="UserManual.html#tex2html13"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
@@ -3418,7 +3436,7 @@ Dyninst </A><A
   HREF="http://www.dyninst.org">http://www.dyninst.org</A></TT>
 
 </DD>
-<DT><A NAME="foot1183">... CLAPACK</A><A
+<DT><A NAME="foot1190">... CLAPACK</A><A
  HREF="UserManual.html#tex2html15"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD><TT><A NAME="tex2html16"

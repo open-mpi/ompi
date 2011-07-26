@@ -34,18 +34,18 @@ __VT_EXTERN_DECL void VT_User_end_id__(unsigned int rid);
     ~VT_Tracer() __VT_NOINST_ATTR;
     const char* n;
   };
-  template<> VT_Tracer<sizeof(int)>::VT_Tracer(const char* r, const char* f,
+  template<> inline VT_Tracer<sizeof(int)>::VT_Tracer(const char* r, const char* f,
     int l) : n(r) { VT_User_start__(n, f, l); }
-  template<> VT_Tracer<sizeof(int)>::~VT_Tracer() { VT_User_end__(n); }
+  template<> inline VT_Tracer<sizeof(int)>::~VT_Tracer() { VT_User_end__(n); }
 
   template<> struct VT_Tracer<1> {
     VT_Tracer(unsigned int r, const char* f = 0, int l = 0) __VT_NOINST_ATTR;
     ~VT_Tracer() __VT_NOINST_ATTR;
     unsigned int i;
   };
-  VT_Tracer<1>::VT_Tracer(unsigned int r, const char* f, int l)
+  inline VT_Tracer<1>::VT_Tracer(unsigned int r, const char* f, int l)
     : i(r) { VT_User_start_id__(i); }
-  VT_Tracer<1>::~VT_Tracer() { VT_User_end_id__(i); }
+  inline VT_Tracer<1>::~VT_Tracer() { VT_User_end_id__(i); }
 #endif /* __cplusplus */
 
 #if (defined(VTRACE)) && !(defined(VTRACE_NO_REGION))

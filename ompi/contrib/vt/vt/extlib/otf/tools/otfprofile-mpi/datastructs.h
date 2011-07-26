@@ -71,6 +71,7 @@ struct Progress {
     MPI_Status*  recv_statuses;  /* receive statuses */
     int*         recv_indices;   /* indices of completed recv. operations */
 
+    uint64_t*    rank_cur_bytes; /* current bytes read per rank (except rank 0) */
     uint32_t     ranks_left;     /* root keeps track of ranks left to query */
 };
 

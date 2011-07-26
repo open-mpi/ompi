@@ -1,7 +1,10 @@
 5.11.1openmpi
-	- updated version of internal OTF to 1.9.1openmpi
+	- updated version of internal OTF to 1.9.1sawfish
 	  (see extlib/otf/ChangeLog)
+	- process and thread buffer size can be explicitly specified by the user
+	  via the environment variables VT_BUFFER_SIZE and VT_THREAD_BUFFER_SIZE
 	- improved filtering of CUDA kernels
+	- fixed CUDA kernel launch configuration
 	- fixed unification of local process group definitions
 	- fixed wrapper generation for MPI implementations which don't support
 	  the MPI-2 standard
@@ -9,6 +12,8 @@
 	  VT is configured without trace compression support
 	- fixed detection of OpenMP flag '-qsmp=*:omp:*' in the compiler
 	  wrappers
+	- fixed C++ linker issue for manual instrumentation of multiple files
+	- bugfix to OPARI (see tools/opari/ChangeLog:19)
 
 5.11
 	- updated version of internal OTF to 1.9sawfish

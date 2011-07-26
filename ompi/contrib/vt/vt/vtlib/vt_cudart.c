@@ -35,7 +35,7 @@ VTThrdMutex* VTThrdMutexCudart = NULL;
 
 /*
  * Register the finalize function of the CUDA wrapper to be called before
- * the program exits and CUDA has done its implizit clean-up.
+ * the program exits and CUDA has done its implicit clean-up.
  * A CUDA function (context creating???) has to be called before, as
  * VampirTrace CUDA wrapper has to finalize before CUDA does its clean-up!!!
  */
@@ -219,9 +219,6 @@ VTThrdMutex* VTThrdMutexCudart = NULL;
 
 #define checkCUDACall(ecode, msg) __checkCUDACall(ecode, msg, __FILE__,__LINE__)
 
-/* minimum size of an asynchronous task (in bytes) */
-#define MIN_ASYNC_ENTRY sizeof(VTCUDAMemcpy)
-
 /* library wrapper object */
 VTLibwrap* vt_cudart_lw = VT_LIBWRAP_NULL;
 
@@ -346,6 +343,14 @@ typedef struct
   size_t byteCount;          /**< number of bytes */
 }VTCUDAMemcpy;
 
+/* kernel configure stack element */
+typedef struct
+{
+  VTCUDAStrm *strm;           /**< corresponding stream/thread */
+  uint32_t blocksPerGrid;     /**< number of blocks per grid */
+  uint32_t threadsPerBlock;   /**< number of threads per block */
+}VTCUDAknconf;
+
 /* structure of a VampirTrace CUDA malloc (initiated with cudaMalloc*() */
 typedef struct vtcMallocStruct
 {
@@ -370,7 +375,7 @@ typedef struct vtcudaDev_st
   buffer_t asyncbuf;         /**< points to the first byte in buffer */
   buffer_t buf_pos;          /**< current buffer position */
   buffer_t buf_size;         /**< buffer size (in bytes) */
-  uint8_t kn_conf;           /**< flag: kernel configured? */
+  buffer_t conf_stack;       /**< top of the kernel configure stack */
   VTCUDABufEvt *evtbuf;      /**< the preallocated cuda event list */
   VTCUDABufEvt *evtbuf_pos;  /**< current unused event space */
   struct vtcudaDev_st *next; /**< pointer to next element in list */
@@ -464,6 +469,7 @@ void vt_cudartwrap_init(void)
 
   if(vt_cudart_trace_enabled){
     size_t minTaskSize = sizeof(VTCUDAKernel) + sizeof(VTCUDAMemcpy);
+    size_t minBufSize = sizeof(VTCUDAKernel) + sizeof(VTCUDAknconf);
 
     syncLevel = (uint8_t)vt_env_cudatrace_sync();
     trace_kernels = (uint8_t)vt_env_cudatrace_kernel();
@@ -481,13 +487,17 @@ void vt_cudartwrap_init(void)
 #endif
 
     trace_events = 0;
-    if(trace_kernels){
-      minTaskSize = sizeof(VTCUDAKernel);
+    
+    if(trace_memcpyAsync){
+      minTaskSize = sizeof(VTCUDAMemcpy);
+      minBufSize = sizeof(VTCUDAMemcpy);
       trace_events = 1;
     }
-
-    if(trace_memcpyAsync){
-      if(sizeof(VTCUDAMemcpy) < minTaskSize) minTaskSize = sizeof(VTCUDAMemcpy);
+    
+    if(trace_kernels){
+      if(sizeof(VTCUDAKernel) < minTaskSize) minTaskSize = sizeof(VTCUDAKernel);
+      if(sizeof(VTCUDAKernel) + sizeof(VTCUDAknconf) > minBufSize) 
+        minBufSize = sizeof(VTCUDAKernel) + sizeof(VTCUDAknconf);
       trace_events = 1;
     }
 
@@ -495,17 +505,17 @@ void vt_cudartwrap_init(void)
     if(trace_events){
       /* get user-defined task buffer size and check it */
       asyncBufSize = vt_env_cudatrace_bsize();
-      if(asyncBufSize < MIN_ASYNC_ENTRY){
+      if(asyncBufSize < minBufSize){
         if(asyncBufSize > 0){
-          vt_warning("[CUDART] Minimal buffer size is %d bytes", MIN_ASYNC_ENTRY);
+          vt_warning("[CUDART] Minimal buffer size is %d bytes", minBufSize);
         }
         asyncBufSize = VTGPU_DEFAULT_BSIZE;
       }else if(VTGPU_MAX_BSIZE < asyncBufSize){
         vt_warning("[CUDART] Current CUDA buffer size requires %d CUDA events.\n"
                    "The recommended max. CUDA buffer size is %d. "
                    "(export VT_CUDA_BUFFER_SIZE=2097152)",
-                   2*asyncBufSize/sizeof(VTCUDAKernel), VTGPU_MAX_BSIZE);
-        /* TODO: dynamic event creation for more than 2097152 bytes cuda buffer size */
+                   2*asyncBufSize/minTaskSize, VTGPU_MAX_BSIZE);
+        /* TODO: dynamic event creation for more than 2097152 bytes CUDA buffer size */
       }
 
       /* determine maximum necessary VT-events (=2 CUDA events) */
@@ -1143,7 +1153,7 @@ static VTCUDADevice* VTCUDAcreateDevice(uint32_t ptid, int device)
   vtDev->asyncbuf = NULL;
   vtDev->buf_pos = NULL;
   vtDev->buf_size = NULL;
-  vtDev->kn_conf = 0;
+  vtDev->conf_stack = NULL;
   vtDev->evtbuf = NULL;
   vtDev->evtbuf_pos = NULL;
   vtDev->strmList = NULL;
@@ -1183,6 +1193,7 @@ static VTCUDADevice* VTCUDAcreateDevice(uint32_t ptid, int device)
     }
     vtDev->buf_pos = vtDev->asyncbuf;
     vtDev->buf_size = vtDev->asyncbuf + asyncBufSize;
+    vtDev->conf_stack = vtDev->buf_size;
 
     vtDev->evtbuf = (VTCUDABufEvt*)malloc(maxEvtNum*sizeof(VTCUDABufEvt));
     if(vtDev->evtbuf == NULL)
@@ -1205,6 +1216,7 @@ static VTCUDADevice* VTCUDAcreateDevice(uint32_t ptid, int device)
     vtDev->asyncbuf = malloc(asyncBufSize);
     vtDev->buf_pos = vtDev->asyncbuf;
     vtDev->buf_size = vtDev->asyncbuf + asyncBufSize;
+    vtDev->conf_stack = vtDev->buf_size;
   }
 #endif
 
@@ -1382,11 +1394,12 @@ static VTCUDAMemcpy* addMemcpy2Buf(enum cudaMemcpyKind kind, int count,
   ptid = VT_MY_THREAD;
   vtDev = VTCUDAcheckThread(stream, ptid, &ptrStrm);
 
-  if(vtDev->kn_conf) return NULL;
-
   /* check if there is enough buffer space */
-  if(vtDev->buf_pos + sizeof(VTCUDAMemcpy) > vtDev->buf_size){
+  if(vtDev->buf_pos + sizeof(VTCUDAMemcpy) > vtDev->conf_stack){
     VTCUDAflush(vtDev, ptid);
+    if(vtDev->buf_pos + sizeof(VTCUDAMemcpy) > vtDev->conf_stack){
+      vt_error_msg("[CUDART] Not enough buffer space for asynchronous memory copy!");
+    }
   }
 
   /* get and increase entry buffer position */
@@ -2267,22 +2280,24 @@ cudaError_t  cudaConfigureCall(dim3 gridDim, dim3 blockDim, size_t sharedMem, cu
       if(vt_is_trace_on(ptid)){
         vtDev = VTCUDAcheckThread(stream, ptid, &ptrStrm);
 
-        /* avoid configure calls one after another without cudaLaunch */
-        if(vtDev->kn_conf) return ret;
-        vtDev->kn_conf = 1;
-
+        /* get kernel configure position */
+        vtDev->conf_stack = vtDev->conf_stack - sizeof(VTCUDAknconf);
+        
         /* check if there is enough buffer space */
-        if(vtDev->buf_pos + sizeof(VTCUDAKernel) > vtDev->buf_size){
+        if(vtDev->buf_pos + sizeof(VTCUDAKernel) > vtDev->conf_stack){
           VTCUDAflush(vtDev, ptid);
+          if(vtDev->buf_pos + sizeof(VTCUDAKernel) > vtDev->conf_stack){
+            vt_error_msg("[CUDART] Not enough buffer space for this kernel!");
+          }
         }
 
-        /* set already available values of kernel */
+        /* add kernel configure to stack */
         {
-          VTCUDAKernel* vtKernel = (VTCUDAKernel*) vtDev->buf_pos;
+          VTCUDAknconf *vtKnconf = (VTCUDAknconf*) vtDev->conf_stack;
 
-          vtKernel->strm = ptrStrm;
-          vtKernel->blocksPerGrid = gridDim.x * gridDim.y * gridDim.z;
-          vtKernel->threadsPerBlock = blockDim.x * blockDim.y * blockDim.z;
+          vtKnconf->strm = ptrStrm;
+          vtKnconf->blocksPerGrid = gridDim.x * gridDim.y * gridDim.z;
+          vtKnconf->threadsPerBlock = blockDim.x * blockDim.y * blockDim.z;
         }
       }
     }
@@ -2327,17 +2342,27 @@ cudaError_t  cudaLaunch(const char *entry)
         /* check if the kernel will be traced on the correct thread */
         vtDev = VTCUDAgetDevice(ptid);
 
-        /* check if this kernel has been configured */
-        if(vtDev->kn_conf == 0){
+        /* check the kernel configure stack for last configured kernel */
+        if(vtDev->conf_stack == vtDev->buf_size){
           ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (entry));
-          vt_warning("[CUDART] No stacked configure call before launch of kernel "
+          vt_warning("[CUDART] [CUDART] No kernel configure call found for "
                      "'%s' (device %d, ptid %d)", e->name, vtDev->device, ptid);
           return ret;
         }
-        vtDev->kn_conf = 0;
 
         /* get the kernel, which has been partly filled in configure call */
         kernel = (VTCUDAKernel*)vtDev->buf_pos;
+        
+        /* set configure information */
+        {
+          VTCUDAknconf *vtKnconf = (VTCUDAknconf*) vtDev->conf_stack;
+
+          kernel->blocksPerGrid = vtKnconf->blocksPerGrid;
+          kernel->threadsPerBlock = vtKnconf->threadsPerBlock;
+          kernel->strm = vtKnconf->strm;
+
+          vtDev->conf_stack = vtDev->conf_stack + sizeof(VTCUDAknconf);
+        }
 
         vt_cntl_msg(3, "[CUDART] Launch '%s' (device %d, tid %d, rid %d, strm %d)",
                       e->name, vtDev->device, vtDev->ptid,
