@@ -1014,6 +1014,11 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
      */
     orte_ess_env_put(vpid_range, num_local_procs, environ_copy);
     
+    /* forcibly set the local tmpdir base to match ours */
+    param = mca_base_param_environ_variable("orte","tmpdir","base");
+    opal_setenv(param, orte_process_info.tmpdir_base, true, environ_copy);
+    free(param);
+
     return ORTE_SUCCESS;
 }
 

@@ -78,6 +78,21 @@ int orte_register_params(void)
                                    "Base of the session directory tree",
                                    false, false, NULL,  &(orte_process_info.tmpdir_base));
    
+    mca_base_param_reg_string_name("orte", "remote_tmpdir_base",
+                                   "Base of the session directory tree on remote nodes, if required to be different from head node",
+                                   false, false, NULL,  &strval);
+    /* orterun will pickup the value and forward it along, but must not
+     * use it in its own work. So only a daemon needs to get it, and the
+     * daemon will pass it down to its application procs. Note that orterun
+     * will pass -its- value to any procs local to it
+     */
+    if (ORTE_PROC_IS_DAEMON && NULL != strval) {
+        if (NULL != orte_process_info.tmpdir_base) {
+            free(orte_process_info.tmpdir_base);
+        }
+        orte_process_info.tmpdir_base = strval;
+    }
+
     mca_base_param_reg_string_name("orte", "no_session_dirs",
                                    "Prohibited locations for session directories (multiple locations separated by ',', default=NULL)",
                                    false, false, NULL,  &orte_prohibited_session_dirs);
