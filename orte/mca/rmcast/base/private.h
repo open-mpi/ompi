@@ -109,6 +109,7 @@ typedef struct {
     opal_list_item_t super;
     orte_rmcast_channel_t channel;
     orte_rmcast_seq_t seq_num;
+    bool recovering;
 } rmcast_seq_tracker_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(rmcast_seq_tracker_t);
 

@@ -420,6 +420,7 @@ static void trk_construct(rmcast_seq_tracker_t *ptr)
 {
     ptr->channel = ORTE_RMCAST_INVALID_CHANNEL;
     ptr->seq_num = ORTE_RMCAST_SEQ_INVALID;
+    ptr->recovering = false;
 }
 OBJ_CLASS_INSTANCE(rmcast_seq_tracker_t,
                    opal_list_item_t,

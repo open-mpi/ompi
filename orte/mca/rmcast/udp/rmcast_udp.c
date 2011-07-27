@@ -1109,6 +1109,18 @@ static void resend_data(int status, orte_process_name_t* sender,
         goto release;
     }
 
+    /* if the channel is UINT32_MAX, then we know that this is a
+     * a response from a sender telling us that our request for
+     * missing messages is too far behind, so we should just
+     * abort
+     */
+    if (UINT32_MAX == channel) {
+        opal_output(0, "%s CANNOT RECOVER FROM LOST MESSAGE - TOO FAR BEHIND - ABORTING",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        orte_errmgr.abort(1, NULL);
+        goto release;
+    }
+
     n=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &start, &n, ORTE_RMCAST_SEQ_T))) {
         ORTE_ERROR_LOG(rc);
@@ -1122,6 +1134,25 @@ static void resend_data(int status, orte_process_name_t* sender,
     /* get the referenced channel object */
     if (NULL == (ch = orte_rmcast_base_get_channel(channel))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        goto release;
+    }
+
+    /* see if we can bring the proc up to date - if it is too
+     * far behind, then there is no hope of recovery
+     */
+    log = (rmcast_send_log_t*)opal_ring_buffer_poke(&ch->cache, 0);
+    if (NULL == log || start < log->seq_num) {
+        /* no hope - tell them */
+        channel = UINT32_MAX;
+        recover = OBJ_NEW(opal_buffer_t);
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(recover, &channel, 1, ORTE_RMCAST_CHANNEL_T))) {
+            ORTE_ERROR_LOG(rc);
+            goto release;
+        }
+        if (0 > (rc = orte_rml.send_buffer_nb(sender, recover, ORTE_RML_TAG_MULTICAST, 0, cbfunc, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(recover);
+        }
         goto release;
     }
 
