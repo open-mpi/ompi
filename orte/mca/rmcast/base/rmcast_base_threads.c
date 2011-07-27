@@ -218,13 +218,25 @@ void orte_rmcast_base_process_msg(orte_rmcast_msg_t *msg)
                                          "%s Repeat msg %d on channel %d from source %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), recvd_seq_num, channel,
                                          ORTE_NAME_PRINT(&name)));
+                    goto cleanup;
                 }
                 if (1 != (recvd_seq_num - trkr->seq_num) ||
                     (ORTE_RMCAST_SEQ_MAX == trkr->seq_num && 0 != recvd_seq_num)) {
+                    /* if we are already recovering, don't bother complaining again - this
+                     * let's us drain the pipe of any messages we receive prior to the
+                     * recovery message stream starting. So if (ahem) someone holds us in gdb,
+                     * for example, then we need to jetison all the messages that might have
+                     * stacked up in the interim or else we'll generate a bunch of recovery
+                     * requests.
+                     */
+                    if (trkr->recovering) {
+                        goto cleanup;
+                    }
                     /* missing a message - request it */
                     opal_output(0, "%s Missed msg %d (%d) on channel %d from source %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), recvd_seq_num,
                                 trkr->seq_num, channel, ORTE_NAME_PRINT(&name));
+                    trkr->recovering = true;
                     alert = OBJ_NEW(opal_buffer_t);
                     if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &channel, 1, ORTE_RMCAST_CHANNEL_T))) {
                         ORTE_ERROR_LOG(rc);
@@ -246,6 +258,10 @@ void orte_rmcast_base_process_msg(orte_rmcast_msg_t *msg)
                                      channel, ORTE_NAME_PRINT(&log->name), recvd_seq_num));
             }
             trkr->seq_num = recvd_seq_num;
+            /* always reset the recovering flag so we will bark if
+             * another message is lost
+             */
+            trkr->recovering = false;
         }
     }
 
