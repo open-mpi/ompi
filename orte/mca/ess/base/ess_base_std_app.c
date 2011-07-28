@@ -240,10 +240,12 @@ int orte_ess_base_app_setup(void)
     }
     
     /* Execute the post-startup errmgr code */
-    if (ORTE_SUCCESS != (ret = orte_errmgr.post_startup())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_errmgr.post_startup";
-        goto error;
+    if (NULL != orte_errmgr.post_startup) {
+        if (ORTE_SUCCESS != (ret = orte_errmgr.post_startup())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_errmgr.post_startup";
+            goto error;
+        }
     }
 
     /* if we are an ORTE app - and not an MPI app - then
@@ -278,7 +280,9 @@ error:
 
 int orte_ess_base_app_finalize(void)
 {
-    orte_errmgr.pre_shutdown();
+    if (NULL != orte_errmgr.pre_shutdown) {
+        orte_errmgr.pre_shutdown();
+    }
 
     orte_notifier_base_close();
     

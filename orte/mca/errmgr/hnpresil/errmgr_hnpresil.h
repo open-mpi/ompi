@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -13,8 +16,8 @@
  * 
  */
 
-#ifndef MCA_ERRMGR_HNP_EXPORT_H
-#define MCA_ERRMGR_HNP_EXPORT_H
+#ifndef MCA_ERRMGR_HNPRESIL_EXPORT_H
+#define MCA_ERRMGR_HNPRESIL_EXPORT_H
 
 #include "orte_config.h"
 
@@ -25,7 +28,7 @@ BEGIN_C_DECLS
 /*
  * Local Component structures
  */
-struct orte_errmgr_hnp_component_t {
+struct orte_errmgr_hnpresil_component_t {
     orte_errmgr_base_component_t super;  /** Base Errmgr component */
 
     bool ignore_current_update;
@@ -47,87 +50,88 @@ struct orte_errmgr_hnp_component_t {
     bool autor_skip_oldnode;
 #endif
 };
-typedef struct orte_errmgr_hnp_component_t orte_errmgr_hnp_component_t;
-OPAL_MODULE_DECLSPEC extern orte_errmgr_hnp_component_t mca_errmgr_hnp_component;
+typedef struct orte_errmgr_hnpresil_component_t orte_errmgr_hnpresil_component_t;
+OPAL_MODULE_DECLSPEC extern orte_errmgr_hnpresil_component_t mca_errmgr_hnpresil_component;
 
-int orte_errmgr_hnp_component_query(mca_base_module_t **module, int *priority);
+int orte_errmgr_hnpresil_component_query(mca_base_module_t **module, int *priority);
 
-void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
+void orte_errmgr_hnpresil_update_proc(orte_job_t *jdata,
                                    orte_process_name_t *proc,
                                    orte_proc_state_t state,
                                    pid_t pid,
                                    orte_exit_code_t exit_code);
-void orte_errmgr_hnp_record_dead_daemon(orte_job_t *jdat,
-                                          orte_vpid_t vpid,
-                                          orte_proc_state_t state,
-                                          orte_exit_code_t exit_code);
 
 /***************************
  * Module functions: Global
  ***************************/
-int orte_errmgr_hnp_global_module_init(void);
-int orte_errmgr_hnp_global_module_finalize(void);
+int orte_errmgr_hnpresil_global_module_init(void);
+int orte_errmgr_hnpresil_global_module_finalize(void);
 
-int orte_errmgr_hnp_global_update_state(orte_jobid_t job,
+int orte_errmgr_hnpresil_global_update_state(orte_jobid_t job,
                                         orte_job_state_t jobstate,
                                         orte_process_name_t *proc_name,
                                         orte_proc_state_t state,
                                         pid_t pid,
                                         orte_exit_code_t exit_code);
-int orte_errmgr_hnp_global_predicted_fault(opal_list_t *proc_list,
+int orte_errmgr_hnpresil_global_predicted_fault(opal_list_t *proc_list,
                                            opal_list_t *node_list,
                                            opal_list_t *suggested_map);
-int orte_errmgr_hnp_global_suggest_map_targets(orte_proc_t *proc,
+int orte_errmgr_hnpresil_global_suggest_map_targets(orte_proc_t *proc,
                                                orte_node_t *oldnode,
                                                opal_list_t *node_list);
-int orte_errmgr_hnp_global_ft_event(int state);
+int orte_errmgr_hnpresil_global_ft_event(int state);
+int orte_errmgr_hnpresil_global_post_startup(void);
+int orte_errmgr_hnpresil_global_pre_shutdown(void);
+int orte_errmgr_hnpresil_global_mark_processes_as_dead(opal_pointer_array_t *dead_procs);
+int orte_errmgr_hnpresil_global_failure_notification(orte_process_name_t *sender, opal_buffer_t *buffer);
+int orte_errmgr_hnpresil_record_dead_process(orte_process_name_t *proc);
 
-/* HNP Versions */
-int orte_errmgr_hnp_base_global_init(void);
-int orte_errmgr_hnp_base_global_finalize(void);
-int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
+/* hnpresil Versions */
+int orte_errmgr_hnpresil_base_global_init(void);
+int orte_errmgr_hnpresil_base_global_finalize(void);
+int orte_errmgr_hnpresil_base_global_update_state(orte_jobid_t job,
                                              orte_job_state_t jobstate,
                                              orte_process_name_t *proc,
                                              orte_proc_state_t state,
                                              pid_t pid,
                                              orte_exit_code_t exit_code);
-int orte_errmgr_hnp_base_global_ft_event(int state);
+int orte_errmgr_hnpresil_base_global_ft_event(int state);
 
 #if OPAL_ENABLE_FT_CR
 /* CRMig Versions */
-int orte_errmgr_hnp_crmig_global_module_init(void);
-int orte_errmgr_hnp_crmig_global_module_finalize(void);
+int orte_errmgr_hnpresil_crmig_global_module_init(void);
+int orte_errmgr_hnpresil_crmig_global_module_finalize(void);
 
-int orte_errmgr_hnp_crmig_global_update_state(orte_jobid_t job,
+int orte_errmgr_hnpresil_crmig_global_update_state(orte_jobid_t job,
                                                 orte_job_state_t jobstate,
                                                 orte_process_name_t *proc_name,
                                                 orte_proc_state_t state,
                                                 pid_t pid,
                                                 orte_exit_code_t exit_code);
-int orte_errmgr_hnp_crmig_global_predicted_fault(opal_list_t *proc_list,
+int orte_errmgr_hnpresil_crmig_global_predicted_fault(opal_list_t *proc_list,
                                                    opal_list_t *node_list,
                                                    opal_list_t *suggested_map);
-int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
+int orte_errmgr_hnpresil_crmig_global_suggest_map_targets(orte_proc_t *proc,
                                                        orte_node_t *oldnode,
                                                        opal_list_t *node_list);
-int orte_errmgr_hnp_crmig_global_ft_event(int state);
+int orte_errmgr_hnpresil_crmig_global_ft_event(int state);
 
 /* AutoR Versions */
-int orte_errmgr_hnp_autor_global_module_init(void);
-int orte_errmgr_hnp_autor_global_module_finalize(void);
+int orte_errmgr_hnpresil_autor_global_module_init(void);
+int orte_errmgr_hnpresil_autor_global_module_finalize(void);
 
-int orte_errmgr_hnp_autor_global_update_state(orte_jobid_t job,
+int orte_errmgr_hnpresil_autor_global_update_state(orte_jobid_t job,
                                                 orte_job_state_t jobstate,
                                                 orte_process_name_t *proc_name,
                                                 orte_proc_state_t state,
                                                 pid_t pid,
                                                 orte_exit_code_t exit_code);
-int orte_errmgr_hnp_autor_global_suggest_map_targets(orte_proc_t *proc,
+int orte_errmgr_hnpresil_autor_global_suggest_map_targets(orte_proc_t *proc,
                                                        orte_node_t *oldnode,
                                                        opal_list_t *node_list);
-int orte_errmgr_hnp_autor_global_ft_event(int state);
+int orte_errmgr_hnpresil_autor_global_ft_event(int state);
 #endif
 
 END_C_DECLS
 
-#endif /* MCA_ERRMGR_HNP_EXPORT_H */
+#endif /* MCA_ERRMGR_HNPRESIL_EXPORT_H */

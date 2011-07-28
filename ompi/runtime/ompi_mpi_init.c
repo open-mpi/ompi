@@ -371,7 +371,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Register errhandler callback with orte errmgr */
-    orte_errmgr.set_fault_callback(ompi_errhandler_runtime_callback);
+    if (NULL != orte_errmgr.set_fault_callback) {
+        orte_errmgr.set_fault_callback(ompi_errhandler_runtime_callback);
+    }
 
     /* Figure out the final MPI thread levels.  If we were not
        compiled for support for MPI threads, then don't allow

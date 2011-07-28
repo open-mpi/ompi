@@ -2,6 +2,9 @@
  * Copyright (c) 2009-2010 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -54,7 +57,7 @@
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
 
-#include "errmgr_hnp.h"
+#include "errmgr_hnpresil.h"
 
 #include MCA_timer_IMPLEMENTATION_HEADER
 
@@ -78,7 +81,7 @@ static int current_migration_status = ORTE_ERRMGR_MIGRATE_STATE_NONE;
 
 static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_nodes, opal_list_t *onto_map);
 
-static int orte_errmgr_hnp_crmig_global_process_fault(orte_job_t *jdata,
+static int orte_errmgr_hnpresil_crmig_global_process_fault(orte_job_t *jdata,
                                                         orte_process_name_t *proc_name,
                                                         orte_proc_state_t state);
 static void errmgr_crmig_process_fault_app(orte_job_t *jdata,
@@ -122,21 +125,21 @@ static double timer_start[OPAL_CR_TIMER_MAX];
 
 #define ERRMGR_CRMIG_CLEAR_TIMERS()                                     \
     {                                                                   \
-        if(OPAL_UNLIKELY(mca_errmgr_hnp_component.crmig_timing_enabled > 0)) { \
+        if(OPAL_UNLIKELY(mca_errmgr_hnpresil_component.crmig_timing_enabled > 0)) { \
             errmgr_crmig_clear_timers();                                \
         }                                                               \
     }
 
 #define ERRMGR_CRMIG_SET_TIMER(idx)                                     \
     {                                                                   \
-        if(OPAL_UNLIKELY(mca_errmgr_hnp_component.crmig_timing_enabled > 0)) { \
+        if(OPAL_UNLIKELY(mca_errmgr_hnpresil_component.crmig_timing_enabled > 0)) { \
             errmgr_crmig_set_time(idx);                                 \
         }                                                               \
     }
 
 #define ERRMGR_CRMIG_DISPLAY_ALL_TIMERS()                               \
     {                                                                   \
-        if(OPAL_UNLIKELY(mca_errmgr_hnp_component.crmig_timing_enabled > 0)) { \
+        if(OPAL_UNLIKELY(mca_errmgr_hnpresil_component.crmig_timing_enabled > 0)) { \
             errmgr_crmig_display_all_timers();                          \
         }                                                               \
     }
@@ -144,11 +147,11 @@ static double timer_start[OPAL_CR_TIMER_MAX];
 /************************
  * Function Definitions: Global
  ************************/
-int orte_errmgr_hnp_crmig_global_module_init(void)
+int orte_errmgr_hnpresil_crmig_global_module_init(void)
 {
     int ret;
 
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig): init()");
 
     migrating_underway = false;
@@ -169,11 +172,11 @@ int orte_errmgr_hnp_crmig_global_module_init(void)
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_crmig_global_module_finalize(void)
+int orte_errmgr_hnpresil_crmig_global_module_finalize(void)
 {
     int ret;
 
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig): finalize()");
 
     /*
@@ -194,7 +197,7 @@ int orte_errmgr_hnp_crmig_global_module_finalize(void)
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_crmig_global_predicted_fault(opal_list_t *proc_list,
+int orte_errmgr_hnpresil_crmig_global_predicted_fault(opal_list_t *proc_list,
                                                    opal_list_t *node_list,
                                                    opal_list_t *suggested_map)
 {
@@ -267,7 +270,7 @@ int orte_errmgr_hnp_crmig_global_predicted_fault(opal_list_t *proc_list,
     return exit_status;
 }
 
-int orte_errmgr_hnp_crmig_global_update_state(orte_jobid_t job,
+int orte_errmgr_hnpresil_crmig_global_update_state(orte_jobid_t job,
                                                 orte_job_state_t jobstate,
                                                 orte_process_name_t *proc_name,
                                                 orte_proc_state_t state,
@@ -280,7 +283,7 @@ int orte_errmgr_hnp_crmig_global_update_state(orte_jobid_t job,
     /*
      * if orte is trying to shutdown, just let it
      */
-    if( mca_errmgr_hnp_component.term_in_progress ) {
+    if( mca_errmgr_hnpresil_component.term_in_progress ) {
         return ORTE_SUCCESS;
     }
 
@@ -324,7 +327,7 @@ int orte_errmgr_hnp_crmig_global_update_state(orte_jobid_t job,
 
     if( ORTE_PROC_STATE_ABORTED_BY_SIG == state ||
         ORTE_PROC_STATE_COMM_FAILED    == state ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_crmig_global_process_fault(jdata, proc_name, state)) ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_crmig_global_process_fault(jdata, proc_name, state)) ) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
@@ -332,15 +335,15 @@ int orte_errmgr_hnp_crmig_global_update_state(orte_jobid_t job,
     else if( ORTE_PROC_STATE_KILLED_BY_CMD == state ) {
         if( migrating_underway ) {
             /* If we are migrating, then we need to mask this to prevent the lower level from terminating us */
-            mca_errmgr_hnp_component.ignore_current_update = true;
-            orte_errmgr_hnp_update_proc(jdata, proc_name, state, 0, exit_code);
+            mca_errmgr_hnpresil_component.ignore_current_update = true;
+            orte_errmgr_hnpresil_update_proc(jdata, proc_name, state, 0, exit_code);
         }
     }
 
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
+int orte_errmgr_hnpresil_crmig_global_suggest_map_targets(orte_proc_t *proc,
                                                        orte_node_t *oldnode,
                                                        opal_list_t *node_list)
 {
@@ -400,7 +403,7 @@ int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
                     OBJ_RELEASE(item);
                     continue;
                 } else {
-                    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+                    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                                          "errmgr:hnp(crmig):suggest() ------- Fixed use of node [%15s : %10s -> %10s (%10s)] -------",
                                          ORTE_NAME_PRINT(&proc->name), oldnode->name,
                                          current_proc_map->pre_map_fixed_node, node->name));
@@ -416,7 +419,7 @@ int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
          * If 'off_current_node' then exclude current node
          */
         if( current_proc_map->off_current_node ) {
-            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                                  "errmgr:hnp(crmig):suggest() ------- Remove old node (info) [%15s : %10s] -------",
                                  ORTE_NAME_PRINT(&proc->name), oldnode->name));
             for( item  = opal_list_get_first(node_list);
@@ -455,7 +458,7 @@ int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
                     break;
                 }
             }
-            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                                  "errmgr:hnp(crmig):suggest() ------- Force use of node with proc [%15s -> %15s: %10s -> %10s] -------",
                                  ORTE_NAME_PRINT(&proc->name), ORTE_NAME_PRINT(&peer_proc->name),
                                  oldnode->name, current_proc_map->map_node_name));
@@ -481,7 +484,7 @@ int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
                     OBJ_RELEASE(item);
                     continue;
                 } else {
-                    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+                    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                                          "errmgr:hnp(crmig):suggest() ------- Force use of node [%15s : %10s -> %10s (%10s)] -------",
                                          ORTE_NAME_PRINT(&proc->name), oldnode->name,
                                          current_proc_map->map_node_name, node->name));
@@ -496,7 +499,7 @@ int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
         /*
          * Otherwise then map as if there was no exclusive mapping
          */
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "errmgr:hnp(crmig):suggest() ------- Suggesting as if non-exclusive [%15s : 0x%x : %10s] -------",
                              ORTE_NAME_PRINT(&proc->name), proc->state, oldnode->name));
     }
@@ -508,7 +511,7 @@ int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
          * Remove the old node from the list, if there are more than 1 nodes available
          */
         if(1 < opal_list_get_size(node_list) ) {
-            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                                  "errmgr:hnp(crmig):suggest() ------- Remove old node [%15s : %10s] -------",
                                  ORTE_NAME_PRINT(&proc->name), oldnode->name));
             for( item  = opal_list_get_first(node_list);
@@ -530,7 +533,7 @@ int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
      * If we do not have any general suggestions, then just return
      */
     if( opal_list_get_size(current_onto_mapping_general) <= 0 ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "errmgr:hnp(crmig):suggest() ------- No suggestions for target [%15s : 0x%x : %10s] -------",
                              ORTE_NAME_PRINT(&proc->name), proc->state, oldnode->name));
         exit_status = ORTE_SUCCESS;
@@ -540,7 +543,7 @@ int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
     /*
      * Otherwise look through the general suggestions as an include list
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):suggest() ------- Suggest a target for [%15s : 0x%x : %10s] -------",
                          ORTE_NAME_PRINT(&proc->name), proc->state, oldnode->name));
 
@@ -571,20 +574,20 @@ int orte_errmgr_hnp_crmig_global_suggest_map_targets(orte_proc_t *proc,
 
         ++num_suggested;
 
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "errmgr:hnp(crmig):suggest() ------- Suggesting target %2d [%15s : 0x%x : %10s -> %10s] -------",
                              num_suggested, ORTE_NAME_PRINT(&proc->name), proc->state, oldnode->name, node->name));
     }
 
  cleanup:
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):suggest() ------- Suggested %2d nodes for [%15s : 0x%x : %10s] -------",
                          (int)opal_list_get_size(node_list), ORTE_NAME_PRINT(&proc->name), proc->state, oldnode->name));
 
     return exit_status;
 }
 
-int orte_errmgr_hnp_crmig_global_ft_event(int state)
+int orte_errmgr_hnpresil_crmig_global_ft_event(int state)
 {
     return ORTE_SUCCESS;
 }
@@ -593,7 +596,7 @@ int orte_errmgr_hnp_crmig_global_ft_event(int state)
 /************************
  * Function Definitions: Static
  ************************/
-static int orte_errmgr_hnp_crmig_global_process_fault(orte_job_t *jdata,
+static int orte_errmgr_hnpresil_crmig_global_process_fault(orte_job_t *jdata,
                                                         orte_process_name_t *proc_name,
                                                         orte_proc_state_t state)
 {
@@ -645,7 +648,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     ERRMGR_CRMIG_CLEAR_TIMERS();
     ERRMGR_CRMIG_SET_TIMER(ERRMGR_CRMIG_TIMER_START);
 
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):migrate() ------- Migrating (%3d, %3d, %3d) -------",
                          (int)opal_list_get_size(off_procs),
                          (int)opal_list_get_size(off_nodes),
@@ -657,7 +660,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     cur_datum = OBJ_NEW(orte_snapc_base_quiesce_t);
     cur_datum->migrating = true;
     migrating_underway = true;
-    mca_errmgr_hnp_component.crmig_in_progress = true;
+    mca_errmgr_hnpresil_component.crmig_in_progress = true;
 
     current_migration_status = ORTE_ERRMGR_MIGRATE_STATE_RUNNING;
     if( ORTE_SUCCESS != (ret = orte_errmgr_base_migrate_update(current_migration_status)) ) {
@@ -726,12 +729,12 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
              onto_map->proc_name.vpid == onto_map->map_proc_name.vpid ) &&
             (NULL == onto_map->map_node_name ||
              0 == strncmp(onto_map->map_node_name, proc->node->name, strlen(proc->node->name))) ) {
-            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                                  "errmgr:hnp(crmig):migrate() ------- Process %15s does not wish to move -------",
                                  ORTE_NAME_PRINT(&proc->name)));
 
         } else {
-            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                                  "errmgr:hnp(crmig):migrate() ------- Process %15s will be moved -------",
                                  ORTE_NAME_PRINT(&proc->name)));
             /*
@@ -747,6 +750,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
                 close_iof_stdin = true;
                 iof_name.jobid = proc->name.jobid;
                 iof_name.vpid = proc->name.vpid;
+                iof_name.epoch = proc->name.epoch;
             }
         }
     }
@@ -803,6 +807,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
                     close_iof_stdin = true;
                     iof_name.jobid = proc->name.jobid;
                     iof_name.vpid = proc->name.vpid;
+                    iof_name.epoch = proc->name.epoch;
                 }
             }
         }
@@ -850,6 +855,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
                     close_iof_stdin = true;
                     iof_name.jobid = proc->name.jobid;
                     iof_name.vpid = proc->name.vpid;
+                    iof_name.epoch = proc->name.epoch;
                 }
             }
         }
@@ -932,7 +938,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
         goto cleanup;
     }
 
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig):migrate() ------- Starting the checkpoint of job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
 
@@ -948,7 +954,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     /*
      * Terminate the migrating processes
      */
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig):migrate() ------- Terminate old processes in job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
 
@@ -958,7 +964,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
      * Clear the IOF stdin target if necessary
      */
     if( close_iof_stdin ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "errmgr:hnp(crmig):migrate() ------- Closing old STDIN target for job %s (%s)-------",
                              ORTE_JOBID_PRINT(current_global_jobdata->jobid),
                              ORTE_NAME_PRINT(&iof_name) ));
@@ -969,7 +975,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     /*
      * Wait for the processes to finish terminating
      */
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig):migrate() ------- Waiting for termination -------");
 
     while( !migrating_terminated ) {
@@ -982,7 +988,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     /*
      * Start remapping the processes
      */
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig):migrate() ------- Checkpoint finished, setting up job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
 
@@ -1016,7 +1022,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
             goto cleanup;
         }
 
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\tAdjusted: \"%s\" [0x%d] [%s]\n",
                              ORTE_NAME_PRINT(&proc->name), proc->state, proc->node->name));
     }
@@ -1027,14 +1033,14 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
      * Restart the job
      * - spawn function will remap and launch the replacement proc(s)
      */
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig):migrate() ------- Respawning migrating processes in job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
 
     orte_plm.spawn(current_global_jobdata);
 
 
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig):migrate() ------- Waiting for restart -------");
 
     migrating_restarted = false;
@@ -1048,7 +1054,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     /*
      * Finish the checkpoint
      */
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig):migrate() ------- Reconnecting processes in job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
 
@@ -1062,7 +1068,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     /*
      * All done
      */
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(crmig):migrate() ------- Finished migrating processes in job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
 
@@ -1082,7 +1088,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
     migrating_underway   = false;
     migrating_terminated = false;
     migrating_restarted  = false;
-    mca_errmgr_hnp_component.crmig_in_progress = false;
+    mca_errmgr_hnpresil_component.crmig_in_progress = false;
 
     if( NULL != err_str_procs ) {
         free(err_str_procs);
@@ -1138,7 +1144,7 @@ static int check_if_terminated(opal_pointer_array_t *migrating_procs)
         migrating_terminated = true;
     }
     else {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\t Still waiting for termination: \"%s\" [0x%x] != [0x%x]\n",
                              ORTE_NAME_PRINT(&proc->name), proc->state, ORTE_PROC_STATE_KILLED_BY_CMD));
     }
@@ -1170,7 +1176,7 @@ static int check_if_restarted(opal_pointer_array_t *migrating_procs)
         migrating_restarted = true;
     }
     else {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\tStill waiting for restart: \"%s\" [0x%x] != [0x%x]\n",
                              ORTE_NAME_PRINT(&proc->name), proc->state, ORTE_PROC_STATE_RUNNING));
     }
@@ -1182,7 +1188,7 @@ static void errmgr_crmig_process_fault_app(orte_job_t *jdata,
                                            orte_process_name_t *proc,
                                            orte_proc_state_t state)
 {
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):process_fault_app() "
                          "------- Application fault reported! proc %s (0x%x) "
                          "- %s",
@@ -1197,7 +1203,7 @@ static void errmgr_crmig_process_fault_daemon(orte_job_t *jdata,
                                               orte_process_name_t *proc,
                                               orte_proc_state_t state)
 {
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):process_fault_daemon() "
                          "------- Daemon fault reported! proc %s (0x%x) "
                          "- %s",
@@ -1211,7 +1217,7 @@ static void errmgr_crmig_process_fault_daemon(orte_job_t *jdata,
      * JJH: Check to make sure this is not a new daemon loss. 
      */
     if( ORTE_PROC_STATE_COMM_FAILED == state ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "errmgr:hnp(crmig):process_fault_daemon() "
                              "------- Daemon fault reported! proc %s (0x%x) "
                              "- Communication failure, keep going",
@@ -1262,7 +1268,7 @@ static void display_request(opal_list_t *off_procs,
     /*
      * Display all requested processes to migrate
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):migrate() Requested Processes to migrate: (%d procs)\n",
                          (int) opal_list_get_size(off_procs) ));
     for(item  = opal_list_get_first(off_procs);
@@ -1285,7 +1291,7 @@ static void display_request(opal_list_t *off_procs,
                 break;
             }
         }
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\t%s (Rank %3d) on node %s\n",
                              ORTE_NAME_PRINT(&proc->name), (int)off_proc->proc_name.vpid, proc->node->name));
     }
@@ -1293,7 +1299,7 @@ static void display_request(opal_list_t *off_procs,
     /*
      * Display Off Nodes
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):migrate() Requested Nodes to migration: (%d nodes)\n",
                          (int)opal_list_get_size(off_nodes) ));
 
@@ -1315,7 +1321,7 @@ static void display_request(opal_list_t *off_procs,
             }
         }
         if( found ) {
-            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+            OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                                  "\t\"%s\" \t%d\n",
                                  node->name, node->num_procs));
             for(i_proc = 0; i_proc < opal_pointer_array_get_size(node->procs); ++i_proc) {
@@ -1324,7 +1330,7 @@ static void display_request(opal_list_t *off_procs,
                     continue;
                 }
 
-                OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+                OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                                      "\t\t\"%s\" [0x%x]\n",
                                      ORTE_NAME_PRINT(&proc->name), proc->state));
             }
@@ -1334,26 +1340,26 @@ static void display_request(opal_list_t *off_procs,
     /*
      * Suggested onto nodes
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):migrate() Suggested nodes to migration onto: (%d nodes)\n",
                          (int)opal_list_get_size(current_onto_mapping_general) ));
     for(item  = opal_list_get_first(current_onto_mapping_general);
         item != opal_list_get_end(current_onto_mapping_general);
         item  = opal_list_get_next(item) ) {
         onto_map = (orte_errmgr_predicted_map_t*) item;
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\t\"%s\"\n",
                              onto_map->map_node_name));
     }
 
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):migrate() Suggested nodes to migration onto (exclusive): (%d nodes)\n",
                          (int)opal_list_get_size(current_onto_mapping_exclusive) ));
     for(item  = opal_list_get_first(current_onto_mapping_exclusive);
         item != opal_list_get_end(current_onto_mapping_exclusive);
         item  = opal_list_get_next(item) ) {
         onto_map = (orte_errmgr_predicted_map_t*) item;
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\t%d\t(%c)\t\"%s\"\n",
                              onto_map->proc_name.vpid,
                              (onto_map->off_current_node ? 'T' : 'F'),
@@ -1363,7 +1369,7 @@ static void display_request(opal_list_t *off_procs,
     /*
      * Display all processes scheduled to migrate
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "errmgr:hnp(crmig):migrate() All Migrating Processes: (%d procs)\n",
                          cur_datum->num_migrating));
     for(i_proc = 0; i_proc < opal_pointer_array_get_size(&(cur_datum->migrating_procs)); ++i_proc) {
@@ -1372,7 +1378,7 @@ static void display_request(opal_list_t *off_procs,
             continue;
         }
 
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\t\"%s\" [0x%x] [%s]\n",
                              ORTE_NAME_PRINT(&proc->name), proc->state, proc->node->name));
 
