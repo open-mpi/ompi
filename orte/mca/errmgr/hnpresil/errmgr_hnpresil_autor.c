@@ -1,7 +1,10 @@
 /*
- * Copyright (c) 2009-2010 The Trustees of Indiana University.
+ * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -57,7 +60,7 @@
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
 
-#include "errmgr_hnp.h"
+#include "errmgr_hnpresil.h"
 
 #include MCA_timer_IMPLEMENTATION_HEADER
 
@@ -106,7 +109,7 @@ static int display_procs(void );
 static int autor_procs_sort_compare_fn(opal_list_item_t **a,
                                        opal_list_item_t **b);
 
-static int orte_errmgr_hnp_autor_global_process_fault(orte_job_t *jdata,
+static int orte_errmgr_hnpresil_autor_global_process_fault(orte_job_t *jdata,
                                                         orte_process_name_t *proc_name,
                                                         orte_proc_state_t state);
 static void errmgr_autor_process_fault_app(orte_job_t *jdata,
@@ -140,21 +143,21 @@ static double timer_start[OPAL_CR_TIMER_MAX];
 
 #define ERRMGR_AUTOR_CLEAR_TIMERS()                                     \
     {                                                                   \
-        if(OPAL_UNLIKELY(mca_errmgr_hnp_component.autor_timing_enabled > 0)) { \
+        if(OPAL_UNLIKELY(mca_errmgr_hnpresil_component.autor_timing_enabled > 0)) { \
             errmgr_autor_clear_timers();                                \
         }                                                               \
     }
 
 #define ERRMGR_AUTOR_SET_TIMER(idx)                                     \
     {                                                                   \
-        if(OPAL_UNLIKELY(mca_errmgr_hnp_component.autor_timing_enabled > 0)) { \
+        if(OPAL_UNLIKELY(mca_errmgr_hnpresil_component.autor_timing_enabled > 0)) { \
             errmgr_autor_set_time(idx);                                 \
         }                                                               \
     }
 
 #define ERRMGR_AUTOR_DISPLAY_ALL_TIMERS()                               \
     {                                                                   \
-        if(OPAL_UNLIKELY(mca_errmgr_hnp_component.autor_timing_enabled > 0)) { \
+        if(OPAL_UNLIKELY(mca_errmgr_hnpresil_component.autor_timing_enabled > 0)) { \
             errmgr_autor_display_all_timers();                          \
         }                                                               \
     }
@@ -162,9 +165,9 @@ static double timer_start[OPAL_CR_TIMER_MAX];
 /************************
  * Function Definitions: Global
  ************************/
-int orte_errmgr_hnp_autor_global_module_init(void)
+int orte_errmgr_hnpresil_autor_global_module_init(void)
 {
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(autor):init()");
 
     procs_pending_recovery = OBJ_NEW(opal_list_t);
@@ -181,9 +184,9 @@ int orte_errmgr_hnp_autor_global_module_init(void)
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_autor_global_module_finalize(void)
+int orte_errmgr_hnpresil_autor_global_module_finalize(void)
 {
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(autor):finalize()");
 
     if( NULL != procs_pending_recovery ) {
@@ -253,7 +256,7 @@ static int autor_set_current_job_info(orte_job_t *given_jdata, orte_process_name
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_autor_global_update_state(orte_jobid_t job,
+int orte_errmgr_hnpresil_autor_global_update_state(orte_jobid_t job,
                                                 orte_job_state_t jobstate,
                                                 orte_process_name_t *proc_name,
                                                 orte_proc_state_t state,
@@ -268,7 +271,7 @@ int orte_errmgr_hnp_autor_global_update_state(orte_jobid_t job,
     /*
      * if orte is trying to shutdown, just let it
      */
-    if( mca_errmgr_hnp_component.term_in_progress ) {
+    if( mca_errmgr_hnpresil_component.term_in_progress ) {
         return ORTE_SUCCESS;
     }
 
@@ -330,7 +333,7 @@ int orte_errmgr_hnp_autor_global_update_state(orte_jobid_t job,
             break;
         }
 
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_autor_global_process_fault(jdata, &(loc_proc->name), state)) ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_autor_global_process_fault(jdata, &(loc_proc->name), state)) ) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -338,7 +341,7 @@ int orte_errmgr_hnp_autor_global_update_state(orte_jobid_t job,
     }
     else if( ORTE_PROC_STATE_ABORTED_BY_SIG == state ||
              ORTE_PROC_STATE_COMM_FAILED    == state ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_autor_global_process_fault(jdata, proc_name, state)) ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_autor_global_process_fault(jdata, proc_name, state)) ) {
             ORTE_ERROR_LOG(ret);
             exit_status = ret;
             goto cleanup;
@@ -346,8 +349,8 @@ int orte_errmgr_hnp_autor_global_update_state(orte_jobid_t job,
     }
     else if( ORTE_PROC_STATE_KILLED_BY_CMD == state ) {
         if( autor_mask_faults ) {
-            mca_errmgr_hnp_component.ignore_current_update = true;
-            orte_errmgr_hnp_update_proc(jdata, proc_name, state, 0, exit_code);
+            mca_errmgr_hnpresil_component.ignore_current_update = true;
+            orte_errmgr_hnpresil_update_proc(jdata, proc_name, state, 0, exit_code);
         }
     }
 
@@ -355,7 +358,7 @@ int orte_errmgr_hnp_autor_global_update_state(orte_jobid_t job,
     return ret;
 }
 
-static int orte_errmgr_hnp_autor_global_process_fault(orte_job_t *jdata,
+static int orte_errmgr_hnpresil_autor_global_process_fault(orte_job_t *jdata,
                                                         orte_process_name_t *proc_name,
                                                         orte_proc_state_t state)
 {
@@ -375,14 +378,14 @@ static int orte_errmgr_hnp_autor_global_process_fault(orte_job_t *jdata,
     if( proc_name->jobid == ORTE_PROC_MY_NAME->jobid ) {
         errmgr_autor_process_fault_daemon(jdata, proc_name, state);
     } else {
-        orte_errmgr_hnp_update_proc(jdata, proc_name, state, 0, 0);
+        orte_errmgr_hnpresil_update_proc(jdata, proc_name, state, 0, 0);
         errmgr_autor_process_fault_app(jdata, proc_name, state);
     }
 
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_autor_global_suggest_map_targets(orte_proc_t *proc,
+int orte_errmgr_hnpresil_autor_global_suggest_map_targets(orte_proc_t *proc,
                                                        orte_node_t *oldnode,
                                                        opal_list_t *node_list)
 {
@@ -391,6 +394,7 @@ int orte_errmgr_hnp_autor_global_suggest_map_targets(orte_proc_t *proc,
     orte_node_t *node = NULL;
     bool found = false;
     int num_removed = 0, num_to_remove;
+    orte_ns_cmp_bitmask_t mask;
 
     if( NULL == current_global_jobdata ) {
         return ORTE_SUCCESS;
@@ -404,21 +408,21 @@ int orte_errmgr_hnp_autor_global_suggest_map_targets(orte_proc_t *proc,
      * Find this process in the known failures list
      */
     found = false;
-    if( mca_errmgr_hnp_component.autor_skip_oldnode ) {
+    if( mca_errmgr_hnpresil_component.autor_skip_oldnode ) {
         for(item  = opal_list_get_first(procs_pending_recovery);
             item != opal_list_get_end(procs_pending_recovery);
             item  = opal_list_get_next(item) ) {
             wp_item = (errmgr_autor_wp_item_t*)item;
 
-            if( wp_item->name.vpid  == proc->name.vpid &&
-                wp_item->name.jobid == proc->name.jobid ) {
+            mask = ORTE_NS_CMP_ALL;
+            if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &wp_item->name, &proc->name)) {
                 found = true;
                 break;
             }
         }
     }
 
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "%s errmgr:hnp(autor): suggest_map() "
                          "Process remapping: %s oldnode %s, %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -466,7 +470,7 @@ int orte_errmgr_hnp_autor_global_suggest_map_targets(orte_proc_t *proc,
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_autor_global_ft_event(int state)
+int orte_errmgr_hnpresil_autor_global_ft_event(int state)
 {
     return ORTE_SUCCESS;
 }
@@ -482,7 +486,7 @@ static void errmgr_autor_process_fault_app(orte_job_t *jdata,
     errmgr_autor_wp_item_t *wp_item = NULL;
     struct timeval soon;
 
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "%s errmgr:hnp(autor): process_fault() "
                          "Process fault! proc %s (0x%x)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -490,7 +494,7 @@ static void errmgr_autor_process_fault_app(orte_job_t *jdata,
                          state));
 
     if( !orte_sstore_base_is_checkpoint_available ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "%s errmgr:hnp(autor): process_fault() "
                              "No checkpoints are available for this job! Cannot Automaticly Recover!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME) ));
@@ -499,13 +503,13 @@ static void errmgr_autor_process_fault_app(orte_job_t *jdata,
         return;
     }
 
-    mca_errmgr_hnp_component.ignore_current_update = true;
+    mca_errmgr_hnpresil_component.ignore_current_update = true;
 
     /*
      * If we are already in the shutdown stage of the recovery, then just skip it
      */
     if( autor_mask_faults ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "%s errmgr:hnp(autor):process_fault() "
                              "Currently recovering the job. Failure masked!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -518,6 +522,7 @@ static void errmgr_autor_process_fault_app(orte_job_t *jdata,
     wp_item = OBJ_NEW(errmgr_autor_wp_item_t);
     wp_item->name.jobid = proc->jobid;
     wp_item->name.vpid = proc->vpid;
+    wp_item->name.epoch = proc->epoch;
     wp_item->state = state;
 
     opal_list_append(procs_pending_recovery, &(wp_item->super));
@@ -529,7 +534,7 @@ static void errmgr_autor_process_fault_app(orte_job_t *jdata,
         autor_timer_active = true;
 
         opal_event_evtimer_set(opal_event_base, autor_timer_event, errmgr_autor_recover_processes, NULL);
-        soon.tv_sec  = mca_errmgr_hnp_component.autor_recovery_delay;
+        soon.tv_sec  = mca_errmgr_hnpresil_component.autor_recovery_delay;
         soon.tv_usec = 0;
         opal_event_evtimer_add(autor_timer_event, &soon);
     }
@@ -545,7 +550,7 @@ static void errmgr_autor_process_fault_daemon(orte_job_t *jdata,
     orte_std_cntr_t i_proc;
     int32_t i;
 
-    OPAL_OUTPUT_VERBOSE((15, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((15, mca_errmgr_hnpresil_component.super.output_handle,
                          "%s errmgr:hnp(autor): process_fault_daemon() "
                          "------- Daemon fault reported! proc %s (0x%x)",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -606,13 +611,13 @@ static void errmgr_autor_process_fault_daemon(orte_job_t *jdata,
         }
     } else {
         /* This daemon had no children, so just mask the failure */
-        mca_errmgr_hnp_component.ignore_current_update = true;
+        mca_errmgr_hnpresil_component.ignore_current_update = true;
     }
 
     /*
      * Record the dead daemon
      */
-    orte_errmgr_hnp_record_dead_daemon(jdata, proc->vpid, state, 0);
+    orte_errmgr_hnpresil_record_dead_process(proc);
 
     return;
 }
@@ -621,6 +626,7 @@ void errmgr_autor_wp_item_construct(errmgr_autor_wp_item_t *wp)
 {
     wp->name.jobid = ORTE_JOBID_INVALID;
     wp->name.vpid  = ORTE_VPID_INVALID;
+    wp->name.epoch = ORTE_EPOCH_MIN;
 
     wp->state = 0;
 }
@@ -629,6 +635,7 @@ void errmgr_autor_wp_item_destruct(errmgr_autor_wp_item_t *wp)
 {
     wp->name.jobid = ORTE_JOBID_INVALID;
     wp->name.vpid  = ORTE_VPID_INVALID;
+    wp->name.epoch = ORTE_EPOCH_INVALID;
 
     wp->state = 0;
 }
@@ -712,7 +719,7 @@ static void errmgr_autor_recover_processes(int fd, short event, void *cbdata)
     /*
      * Display the processes that are to be recovered
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "%s errmgr:hnp(autor):recover() "
                          "------- Display known failed processes in the job %s -------",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -724,7 +731,7 @@ static void errmgr_autor_recover_processes(int fd, short event, void *cbdata)
     /*
      * Find the latest checkpoint
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "%s errmgr:hnp(autor):recover() "
                          "------- Find the latest checkpoint for the job %s -------",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -742,7 +749,7 @@ static void errmgr_autor_recover_processes(int fd, short event, void *cbdata)
     /*
      * Safely terminate the entire job
      */
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(autor):recover() "
                         "------- Safely terminate the job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
@@ -771,7 +778,7 @@ static void errmgr_autor_recover_processes(int fd, short event, void *cbdata)
 
     ERRMGR_AUTOR_SET_TIMER(ERRMGR_AUTOR_TIMER_TERM);
 
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(autor):recover() "
                         "------- Done waiting for termination of job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
@@ -781,7 +788,7 @@ static void errmgr_autor_recover_processes(int fd, short event, void *cbdata)
     /*
      * Construct the app contexts to restart
      */
-    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+    OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                          "%s errmgr:hnp(autor):recover() "
                          "------- Rebuild job %s app context -------",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -800,7 +807,7 @@ static void errmgr_autor_recover_processes(int fd, short event, void *cbdata)
             goto cleanup;
         }
 
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\tAdjusted: \"%s\" [0x%d] [%s]\n",
                              ORTE_NAME_PRINT(&proc->name), proc->state, proc->node->name));
     }
@@ -810,7 +817,7 @@ static void errmgr_autor_recover_processes(int fd, short event, void *cbdata)
     /*
      * Spawn the restarted job
      */
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(autor):recover() "
                         "------- Respawning the job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
@@ -821,7 +828,7 @@ static void errmgr_autor_recover_processes(int fd, short event, void *cbdata)
     /*
      * Wait for all the processes to restart
      */
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(autor):recover() "
                         "------- Waiting for restart -------");
     while(!check_if_restarted(current_global_jobdata->procs) ) {
@@ -837,7 +844,7 @@ static void errmgr_autor_recover_processes(int fd, short event, void *cbdata)
         opal_progress();
     }
 
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp(autor):recover() "
                         "------- Finished recovering job %s -------",
                         ORTE_JOBID_PRINT(current_global_jobdata->jobid));
@@ -890,7 +897,7 @@ static int check_if_terminated(opal_pointer_array_t *procs)
     }
 
     if( !is_done ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\t Still waiting for termination: \"%s\" [0x%x] < [0x%x]\n",
                              ORTE_NAME_PRINT(&proc->name), proc->state, ORTE_PROC_STATE_UNTERMINATED));
     }
@@ -922,7 +929,7 @@ static int check_if_restarted(opal_pointer_array_t *procs)
     }
 
     if( !is_done ) {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "\t Still waiting for restart: \"%s\" [0x%x] != [0x%x]\n",
                              ORTE_NAME_PRINT(&proc->name), proc->state, ORTE_PROC_STATE_RUNNING));
     }

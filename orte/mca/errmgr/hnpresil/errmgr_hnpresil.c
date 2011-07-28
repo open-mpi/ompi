@@ -1,8 +1,11 @@
 /*
- * Copyright (c) 2009-2010 The Trustees of Indiana University.
+ * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,11 +40,14 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/debugger/base/base.h"
 #include "orte/mca/notifier/notifier.h"
+#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/ess/ess.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
+#include "orte/util/nidmap.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_locks.h"
@@ -50,7 +56,8 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
-#include "errmgr_hnp.h"
+
+#include "errmgr_hnpresil.h"
 
 /**********************
  * C/R Mgr Components
@@ -58,9 +65,9 @@
  **********************/
 static orte_errmgr_base_module_t global_module = {
     /** Initialization Function */
-    orte_errmgr_hnp_global_module_init,
+    orte_errmgr_hnpresil_global_module_init,
     /** Finalization Function */
-    orte_errmgr_hnp_global_module_finalize,
+    orte_errmgr_hnpresil_global_module_finalize,
     /** Error Log */
     orte_errmgr_base_log,
     /** Forced Abort */
@@ -68,19 +75,24 @@ static orte_errmgr_base_module_t global_module = {
     /** Peer Force Abort */
     orte_errmgr_base_abort_peers,
     /** Update State */
-    orte_errmgr_hnp_global_update_state,
+    orte_errmgr_hnpresil_global_update_state,
     /* Predicted Fault */
-    orte_errmgr_hnp_global_predicted_fault,
+    orte_errmgr_hnpresil_global_predicted_fault,
     /* Suggest proc to node mapping */
-    orte_errmgr_hnp_global_suggest_map_targets,
+    orte_errmgr_hnpresil_global_suggest_map_targets,
     /* FT Event hook  */
-    orte_errmgr_hnp_global_ft_event,
+    orte_errmgr_hnpresil_global_ft_event,
     orte_errmgr_base_register_migration_warning,
-    NULL, /* post_startup */
-    NULL, /* pre_shutdown */
-    NULL, /* mark_processes_as_dead */
-    NULL, /* set_fault_callback */
-    NULL  /* failure_notification */
+    /* Post-startup */
+    orte_errmgr_hnpresil_global_post_startup,
+    /* Pre-shutdown */
+    orte_errmgr_hnpresil_global_pre_shutdown,
+    /* Mark as dead */
+    orte_errmgr_hnpresil_global_mark_processes_as_dead,
+    /* Set the callback */
+    orte_errmgr_base_set_fault_callback,
+    /* Receive failure notification */
+    orte_errmgr_hnpresil_global_failure_notification
 };
 
 
@@ -92,21 +104,22 @@ static void failed_start(orte_job_t *jdata);
 static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobstate,
                                       orte_proc_state_t state, orte_exit_code_t exit_code);
 static void check_job_complete(orte_job_t *jdata);
-static void killprocs(orte_jobid_t job, orte_vpid_t vpid);
+static void killprocs(orte_jobid_t job, orte_vpid_t vpid, orte_epoch_t epoch);
 static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc,
                         orte_proc_state_t state, orte_exit_code_t exit_code);
 static orte_odls_child_t* proc_is_local(orte_process_name_t *proc);
+static int send_to_local_applications(opal_pointer_array_t *dead_names);
 
 /************************
  * API Definitions
  ************************/
-int orte_errmgr_hnp_component_query(mca_base_module_t **module, int *priority)
+int orte_errmgr_hnpresil_component_query(mca_base_module_t **module, int *priority)
 {
-    opal_output_verbose(10, mca_errmgr_hnp_component.super.output_handle,
+    opal_output_verbose(10, mca_errmgr_hnpresil_component.super.output_handle,
                         "errmgr:hnp:component_query()");
 
     if( ORTE_PROC_IS_HNP ) {
-        *priority = mca_errmgr_hnp_component.super.priority;
+        *priority = mca_errmgr_hnpresil_component.super.priority;
         *module = (mca_base_module_t *)&global_module;
     }
     /* Daemons and Apps have their own components */
@@ -121,13 +134,13 @@ int orte_errmgr_hnp_component_query(mca_base_module_t **module, int *priority)
 /*******************
  * Global Functions
  ********************/
-int orte_errmgr_hnp_global_module_init(void)
+int orte_errmgr_hnpresil_global_module_init(void)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
 #if OPAL_ENABLE_FT_CR
-    if( mca_errmgr_hnp_component.crmig_enabled ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_crmig_global_module_init()) ) {
+    if( mca_errmgr_hnpresil_component.crmig_enabled ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_crmig_global_module_init()) ) {
             exit_status = ret;
             goto cleanup;
         }
@@ -142,30 +155,30 @@ int orte_errmgr_hnp_global_module_init(void)
         }
     }
 
-    if( mca_errmgr_hnp_component.autor_enabled ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_autor_global_module_init()) ) {
+    if( mca_errmgr_hnpresil_component.autor_enabled ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_autor_global_module_init()) ) {
             exit_status = ret;
             goto cleanup;
         }
     }
 #endif /* OPAL_ENABLE_FT_CR */
 
-    if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_base_global_init()) ) {
+    if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_base_global_init()) ) {
         exit_status = ret;
         goto cleanup;
     }
 
- cleanup:
+cleanup:
     return exit_status;
 }
 
-int orte_errmgr_hnp_global_module_finalize(void)
+int orte_errmgr_hnpresil_global_module_finalize(void)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
 #if OPAL_ENABLE_FT_CR
-    if( mca_errmgr_hnp_component.crmig_enabled ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_crmig_global_module_finalize()) ) {
+    if( mca_errmgr_hnpresil_component.crmig_enabled ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_crmig_global_module_finalize()) ) {
             exit_status = ret;
             goto cleanup;
         }
@@ -180,24 +193,24 @@ int orte_errmgr_hnp_global_module_finalize(void)
         }
     }
 
-    if( mca_errmgr_hnp_component.autor_enabled ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_autor_global_module_finalize()) ) {
+    if( mca_errmgr_hnpresil_component.autor_enabled ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_autor_global_module_finalize()) ) {
             exit_status = ret;
             goto cleanup;
         }
     }
 #endif /* OPAL_ENABLE_FT_CR */
 
-    if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_base_global_finalize()) ) {
+    if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_base_global_finalize()) ) {
         exit_status = ret;
         goto cleanup;
     }
 
- cleanup:
+cleanup:
     return exit_status;
 }
 
-int orte_errmgr_hnp_global_update_state(orte_jobid_t job,
+int orte_errmgr_hnpresil_global_update_state(orte_jobid_t job,
                                           orte_job_state_t jobstate,
                                           orte_process_name_t *proc_name,
                                           orte_proc_state_t state,
@@ -206,12 +219,12 @@ int orte_errmgr_hnp_global_update_state(orte_jobid_t job,
 {
     int ret, exit_status = ORTE_SUCCESS;
 
-    mca_errmgr_hnp_component.ignore_current_update = false;
+    mca_errmgr_hnpresil_component.ignore_current_update = false;
 
     if (orte_finalizing ||
         orte_job_term_ordered ||
         ORTE_PROC_STATE_TERMINATED == state ) {
-        mca_errmgr_hnp_component.term_in_progress  = true;
+        mca_errmgr_hnpresil_component.term_in_progress  = true;
     }
 
     OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
@@ -223,9 +236,9 @@ int orte_errmgr_hnp_global_update_state(orte_jobid_t job,
                          (NULL == proc_name) ? "NULL" : ORTE_NAME_PRINT(proc_name)));
 
 #if OPAL_ENABLE_FT_CR
-    if( mca_errmgr_hnp_component.crmig_enabled &&
-        !mca_errmgr_hnp_component.autor_in_progress) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_crmig_global_update_state(job,
+    if( mca_errmgr_hnpresil_component.crmig_enabled &&
+        !mca_errmgr_hnpresil_component.autor_in_progress) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_crmig_global_update_state(job,
                                                                                jobstate,
                                                                                proc_name,
                                                                                state,
@@ -236,9 +249,9 @@ int orte_errmgr_hnp_global_update_state(orte_jobid_t job,
         }
     }
 
-    if( mca_errmgr_hnp_component.autor_enabled &&
-        !mca_errmgr_hnp_component.crmig_in_progress) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_autor_global_update_state(job,
+    if( mca_errmgr_hnpresil_component.autor_enabled &&
+        !mca_errmgr_hnpresil_component.crmig_in_progress) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_autor_global_update_state(job,
                                                                                jobstate,
                                                                                proc_name,
                                                                                state,
@@ -250,8 +263,8 @@ int orte_errmgr_hnp_global_update_state(orte_jobid_t job,
     }
 #endif /* OPAL_ENABLE_FT_CR */
 
-    if( !mca_errmgr_hnp_component.ignore_current_update ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_base_global_update_state(job,
+    if( !mca_errmgr_hnpresil_component.ignore_current_update ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_base_global_update_state(job,
                                                                              jobstate,
                                                                              proc_name,
                                                                              state,
@@ -262,19 +275,19 @@ int orte_errmgr_hnp_global_update_state(orte_jobid_t job,
         }
     }
 
- cleanup:
+cleanup:
     return exit_status;
 }
 
-int orte_errmgr_hnp_global_predicted_fault(opal_list_t *proc_list,
+int orte_errmgr_hnpresil_global_predicted_fault(opal_list_t *proc_list,
                                              opal_list_t *node_list,
                                              opal_list_t *suggested_map)
 {
 #if OPAL_ENABLE_FT_CR
     int ret, exit_status = ORTE_SUCCESS;
 
-    if( mca_errmgr_hnp_component.crmig_enabled ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_crmig_global_predicted_fault(proc_list,
+    if( mca_errmgr_hnpresil_component.crmig_enabled ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_crmig_global_predicted_fault(proc_list,
                                                                                   node_list,
                                                                                   suggested_map)) ) {
             exit_status = ret;
@@ -286,31 +299,31 @@ int orte_errmgr_hnp_global_predicted_fault(opal_list_t *proc_list,
      * which will print an appropriate message for the user.
      */
     else {
-        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnp_component.super.output_handle,
+        OPAL_OUTPUT_VERBOSE((10, mca_errmgr_hnpresil_component.super.output_handle,
                              "errmgr:hnp:predicted_fault() Command line asked for a migration, but it is not enabled\n"));
         orte_errmgr_base_migrate_update(ORTE_ERRMGR_MIGRATE_STATE_ERROR);
         exit_status = ORTE_ERR_NOT_IMPLEMENTED;
         goto cleanup;
     }
 
- cleanup:
+cleanup:
     return exit_status;
 #else
     return ORTE_ERR_NOT_IMPLEMENTED;
 #endif /* OPAL_ENABLE_FT_CR */
 }
 
-int orte_errmgr_hnp_global_suggest_map_targets(orte_proc_t *proc,
+int orte_errmgr_hnpresil_global_suggest_map_targets(orte_proc_t *proc,
                                                  orte_node_t *oldnode,
                                                  opal_list_t *node_list)
 {
 #if OPAL_ENABLE_FT_CR
     int ret, exit_status = ORTE_ERR_NOT_IMPLEMENTED;
 
-    if( mca_errmgr_hnp_component.crmig_enabled &&
-        !mca_errmgr_hnp_component.autor_in_progress ) {
+    if( mca_errmgr_hnpresil_component.crmig_enabled &&
+        !mca_errmgr_hnpresil_component.autor_in_progress ) {
         exit_status = ORTE_SUCCESS;
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_crmig_global_suggest_map_targets(proc,
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_crmig_global_suggest_map_targets(proc,
                                                                                       oldnode,
                                                                                       node_list)) ) {
             exit_status = ret;
@@ -318,10 +331,10 @@ int orte_errmgr_hnp_global_suggest_map_targets(orte_proc_t *proc,
         }
     }
 
-    if( mca_errmgr_hnp_component.autor_enabled &&
-        !mca_errmgr_hnp_component.crmig_in_progress ) {
+    if( mca_errmgr_hnpresil_component.autor_enabled &&
+        !mca_errmgr_hnpresil_component.crmig_in_progress ) {
         exit_status = ORTE_SUCCESS;
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_autor_global_suggest_map_targets(proc,
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_autor_global_suggest_map_targets(proc,
                                                                                       oldnode,
                                                                                       node_list)) ) {
             exit_status = ret;
@@ -329,39 +342,39 @@ int orte_errmgr_hnp_global_suggest_map_targets(orte_proc_t *proc,
         }
     }
 
- cleanup:
+cleanup:
     return exit_status;
 #else
     return ORTE_ERR_NOT_IMPLEMENTED;
 #endif /* OPAL_ENABLE_FT_CR */
 }
 
-int orte_errmgr_hnp_global_ft_event(int state)
+int orte_errmgr_hnpresil_global_ft_event(int state)
 {
     int ret, exit_status = ORTE_SUCCESS;
 
 #if OPAL_ENABLE_FT_CR
-    if( !mca_errmgr_hnp_component.crmig_enabled ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_crmig_global_ft_event(state)) ) {
+    if( !mca_errmgr_hnpresil_component.crmig_enabled ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_crmig_global_ft_event(state)) ) {
             exit_status = ret;
             goto cleanup;
         }
     }
 
-    if( !mca_errmgr_hnp_component.autor_enabled ) {
-        if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_autor_global_ft_event(state)) ) {
+    if( !mca_errmgr_hnpresil_component.autor_enabled ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_autor_global_ft_event(state)) ) {
             exit_status = ret;
             goto cleanup;
         }
     }
 #endif /* OPAL_ENABLE_FT_CR */
 
-    if( ORTE_SUCCESS != (ret = orte_errmgr_hnp_base_global_ft_event(state)) ) {
+    if( ORTE_SUCCESS != (ret = orte_errmgr_hnpresil_base_global_ft_event(state)) ) {
         exit_status = ret;
         goto cleanup;
     }
 
- cleanup:
+cleanup:
     return exit_status;
 }
 
@@ -369,17 +382,17 @@ int orte_errmgr_hnp_global_ft_event(int state)
 /**********************
  * From HNP
  **********************/
-int orte_errmgr_hnp_base_global_init(void)
+int orte_errmgr_hnpresil_base_global_init(void)
 {
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_base_global_finalize(void)
+int orte_errmgr_hnpresil_base_global_finalize(void)
 {
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
+int orte_errmgr_hnpresil_base_global_update_state(orte_jobid_t job,
                                              orte_job_state_t jobstate,
                                              orte_process_name_t *proc,
                                              orte_proc_state_t state,
@@ -391,8 +404,7 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
     orte_odls_child_t *child;
     int rc;
     orte_app_context_t *app;
-    orte_proc_t *pdat;
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
                          "%s errmgr:hnp: job %s reported state %s"
                          " for proc %s state %s pid %d exit_code %d",
@@ -423,7 +435,7 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
             hnp_abort(job, exit_code);
             return ORTE_SUCCESS;
         }
-        
+
         /* get the job object */
         if (NULL == (jdata = orte_get_job_data_object(job))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -431,7 +443,7 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
         }
         /* update the state */
         jdata->state = jobstate;
-        
+
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
                              "%s errmgr:hnp: job %s reported state %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -524,7 +536,7 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
                                       ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED,
                                       exit_code);
             /* order all local procs for this job to be killed */
-            killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
+            killprocs(jdata->jobid, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD);
             check_job_complete(jdata);  /* set the local proc states */
             /* the job object for this job will have been NULL'd
              * in the array if the job was solely local. If it isn't
@@ -536,7 +548,7 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
             break;
         case ORTE_JOB_STATE_COMM_FAILED:
             /* order all local procs for this job to be killed */
-            killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
+            killprocs(jdata->jobid, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD);
             check_job_complete(jdata);  /* set the local proc states */
             /* the job object for this job will have been NULL'd
              * in the array if the job was solely local. If it isn't
@@ -548,7 +560,7 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
             break;
         case ORTE_JOB_STATE_HEARTBEAT_FAILED:
             /* order all local procs for this job to be killed */
-            killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
+            killprocs(jdata->jobid, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD);
             check_job_complete(jdata);  /* set the local proc states */
             /* the job object for this job will have been NULL'd
              * in the array if the job was solely local. If it isn't
@@ -617,7 +629,12 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
                 /* guess not - let it fall thru to abort */
             }
         }
-        orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
+
+        if (ORTE_PROC_STATE_ABORTED_BY_SIG == state) {
+            exit_code = 0;
+        }
+
+        orte_errmgr_hnpresil_update_proc(jdata, proc, state, pid, exit_code);
         check_job_complete(jdata);  /* need to set the job state */
         /* the job object for this job will have been NULL'd
          * in the array if the job was solely local. If it isn't
@@ -628,182 +645,348 @@ int orte_errmgr_hnp_base_global_update_state(orte_jobid_t job,
         }
         break;
 
-    case ORTE_PROC_STATE_FAILED_TO_START:
-    case ORTE_PROC_STATE_CALLED_ABORT:
-        orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
-        check_job_complete(jdata);
-        /* the job object for this job will have been NULL'd
-         * in the array if the job was solely local. If it isn't
-         * NULL, then we need to tell everyone else to die
-         */
-        if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
-            hnp_abort(jdata->jobid, exit_code);
-        }
-        break;
-        
-    case ORTE_PROC_STATE_REGISTERED:
-    case ORTE_PROC_STATE_RUNNING:
-        orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
-        break;
-
-    case ORTE_PROC_STATE_LAUNCHED:
-        /* record the pid for this child */
-        orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
-        break;
-
-    case ORTE_PROC_STATE_TERMINATED:
-    case ORTE_PROC_STATE_TERM_NON_ZERO:
-    case ORTE_PROC_STATE_KILLED_BY_CMD:
-        orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
-        check_job_complete(jdata);
-        break;
-
-    case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-         if (jdata->enable_recovery) {
-             killprocs(proc->jobid, proc->vpid);
-             /* is this a local proc */
-             if (NULL != (child = proc_is_local(proc))) {
-                 /* local proc - see if it has reached its restart limit */
-                 app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, child->app_idx);
-                 if (child->restarts < app->max_restarts) {
-                     child->restarts++;
-                     if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
-                         return ORTE_SUCCESS;
-                     }
-                     /* reset the child's state as restart_proc would
-                      * have cleared it
-                      */
-                     child->state = state;
-                     /* see if we can relocate it somewhere else */
-                     if (ORTE_SUCCESS == hnp_relocate(jdata, proc, state, exit_code)) {
-                         return ORTE_SUCCESS;
-                     }
-                     /* let it fall thru to abort */
-                 }
-             } else {
-                 /* this is a remote process - see if we can relocate it */
-                 if (ORTE_SUCCESS == hnp_relocate(jdata, proc, state, exit_code)) {
-                     return ORTE_SUCCESS;
-                 }
-                 /* guess not - let it fall thru to abort */
-             }
-         }
-         /* kill all jobs */
-        orte_errmgr_hnp_update_proc(jdata, proc, state, pid, exit_code);
-        check_job_complete(jdata);  /* need to set the job state */
-        /* the job object for this job will have been NULL'd
-         * in the array if the job was solely local. If it isn't
-         * NULL, then we need to tell everyone else to die
-         */
-        if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
-            hnp_abort(jdata->jobid, exit_code);
-        }
-        break;
-
-    case ORTE_PROC_STATE_COMM_FAILED:
-        /* is this to a daemon? */
-        if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
-            /* if this is my own connection, ignore it */
-            if (ORTE_PROC_MY_NAME->vpid == proc->vpid) {
-                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                     "%s My own connection - ignoring it",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                break;
-            }
-            /* if we have ordered orteds to terminate, record it */
-            if (orte_orteds_term_ordered) {
-                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                     "%s Daemons terminating - recording daemon %s as gone",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
-                /* remove from dependent routes, if it is one */
-                orte_routed.route_lost(proc);
-                /* update daemon job */
-                orte_errmgr_hnp_record_dead_daemon(jdata, proc->vpid, state, 0);
-                /* check for complete */
-                check_job_complete(jdata);
-                break;
-            }
-            /* if abort is in progress, see if this one failed to tell
-             * us it had terminated
+        case ORTE_PROC_STATE_FAILED_TO_START:
+        case ORTE_PROC_STATE_CALLED_ABORT:
+            orte_errmgr_hnpresil_update_proc(jdata, proc, state, pid, exit_code);
+            check_job_complete(jdata);
+            /* the job object for this job will have been NULL'd
+             * in the array if the job was solely local. If it isn't
+             * NULL, then we need to tell everyone else to die
              */
-            if (orte_abnormal_term_ordered) {
-                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                     "%s Abort in progress - recording daemon %s as gone",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
-                /* remove from dependent routes, if it is one */
-                orte_routed.route_lost(proc);
-                /* update daemon job */
-                orte_errmgr_hnp_record_dead_daemon(jdata, proc->vpid, state, exit_code);
-                /* check for complete */
-                check_job_complete(jdata);
-                break;
+            if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
+                hnp_abort(jdata->jobid, exit_code);
             }
+            break;
 
-            /* delete the route */
-            orte_routed.delete_route(proc);
-            /* purge the oob */
-            orte_rml.purge(proc);
+        case ORTE_PROC_STATE_REGISTERED:
+        case ORTE_PROC_STATE_RUNNING:
+            orte_errmgr_hnpresil_update_proc(jdata, proc, state, pid, exit_code);
+            break;
 
+        case ORTE_PROC_STATE_LAUNCHED:
+            /* record the pid for this child */
+            orte_errmgr_hnpresil_update_proc(jdata, proc, state, pid, exit_code);
+            break;
+
+        case ORTE_PROC_STATE_TERMINATED:
+        case ORTE_PROC_STATE_TERM_NON_ZERO:
+        case ORTE_PROC_STATE_KILLED_BY_CMD:
+            orte_errmgr_hnpresil_update_proc(jdata, proc, state, pid, exit_code);
+            check_job_complete(jdata);
+            break;
+
+        case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
+            if (jdata->enable_recovery) {
+                killprocs(proc->jobid, proc->vpid, proc->epoch);
+                /* is this a local proc */
+                if (NULL != (child = proc_is_local(proc))) {
+                    /* local proc - see if it has reached its restart limit */
+                    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, child->app_idx);
+                    if (child->restarts < app->max_restarts) {
+                        child->restarts++;
+                        if (ORTE_SUCCESS == (rc = orte_odls.restart_proc(child))) {
+                            return ORTE_SUCCESS;
+                        }
+                        /* reset the child's state as restart_proc would
+                         * have cleared it
+                         */
+                        child->state = state;
+                        /* see if we can relocate it somewhere else */
+                        if (ORTE_SUCCESS == hnp_relocate(jdata, proc, state, exit_code)) {
+                            return ORTE_SUCCESS;
+                        }
+                        /* let it fall thru to abort */
+                    }
+                } else {
+                    /* this is a remote process - see if we can relocate it */
+                    if (ORTE_SUCCESS == hnp_relocate(jdata, proc, state, exit_code)) {
+                        return ORTE_SUCCESS;
+                    }
+                    /* guess not - let it fall thru to abort */
+                }
+            }
+            /* kill all jobs */
+            orte_errmgr_hnpresil_update_proc(jdata, proc, state, pid, exit_code);
+            check_job_complete(jdata);  /* need to set the job state */
+            /* the job object for this job will have been NULL'd
+             * in the array if the job was solely local. If it isn't
+             * NULL, then we need to tell everyone else to die
+             */
+            if (NULL != (jdata = orte_get_job_data_object(proc->jobid))) {
+                hnp_abort(jdata->jobid, exit_code);
+            }
+            break;
+
+        case ORTE_PROC_STATE_COMM_FAILED:
+            /* is this to a daemon? */
+            if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+                /* if this is my own connection, ignore it */
+                if (ORTE_PROC_MY_NAME->vpid == proc->vpid) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                "%s My own connection - ignoring it",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    break;
+                }
+                /* if we have ordered orteds to terminate, record it */
+                if (orte_orteds_term_ordered) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                "%s Daemons terminating - recording daemon %s as gone",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
+                    /* remove from dependent routes, if it is one */
+                    orte_routed.route_lost(proc);
+                    /* update daemon job */
+                    orte_errmgr_hnpresil_record_dead_process(proc);
+                    /* We'll check if the job was complete when we get the
+                     * message back from the HNP notifying us of the dead
+                     * process
+                     */
+                    check_job_complete(jdata);
+                    break;
+                }
+                /* if abort is in progress, see if this one failed to tell
+                 * us it had terminated
+                 */
+                if (orte_abnormal_term_ordered) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                                "%s Abort in progress - recording daemon %s as gone",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc)));
+                    /* remove from dependent routes, if it is one */
+                    orte_routed.route_lost(proc);
+                    /* update daemon job */
+                    orte_errmgr_hnpresil_record_dead_process(proc);
+                    /* We'll check if the job was complete when we get the
+                     * message back from the HNP notifying us of the dead
+                     * process
+                     */
+                    check_job_complete(jdata);
+                    break;
+                }
+
+                /* delete the route */
+                orte_routed.delete_route(proc);
+                /* purge the oob */
+                orte_rml.purge(proc);
+
+                if( orte_enable_recovery ) {
+                    /* relocate its processes */
+                    if (ORTE_SUCCESS != (rc = hnp_relocate(jdata, proc, state, exit_code))) {
+                        /* unable to relocate for some reason */
+                        opal_output(0, "%s UNABLE TO RELOCATE PROCS FROM FAILED DAEMON %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc));
+                        /* kill all local procs */
+                        killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD);
+                        /* kill all jobs */
+                        hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
+                        /* check if all is complete so we can terminate */
+                        check_job_complete(jdata);
+                    }
+                } else {
+                    if (ORTE_SUCCESS != orte_errmgr_hnpresil_record_dead_process(proc)) {
+                        /* The process is already dead so don't keep trying to do
+                         * this stuff. */
+                        return ORTE_SUCCESS;
+                    }
+                    /* We'll check if the job was complete when we get the
+                     * message back from the HNP notifying us of the dead
+                     * process */
+                }
+            }
+            break;
+
+        case ORTE_PROC_STATE_HEARTBEAT_FAILED:
+            /* heartbeats are only from daemons */
             if( orte_enable_recovery ) {
                 /* relocate its processes */
-                if (ORTE_SUCCESS != (rc = hnp_relocate(jdata, proc, state, exit_code))) {
-                    /* unable to relocate for some reason */
-                    opal_output(0, "%s UNABLE TO RELOCATE PROCS FROM FAILED DAEMON %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(proc));
-                    /* kill all local procs */
-                    killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
-                    /* kill all jobs */
-                    hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
-                    /* check if all is complete so we can terminate */
-                    check_job_complete(jdata);
-                }
             } else {
-                if (NULL == (pdat = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    orte_show_help("help-orte-errmgr-hnp.txt", "errmgr-hnp:daemon-died", true,
-                                   ORTE_VPID_PRINT(proc->vpid), "Unknown");
-                } else {
-                    orte_show_help("help-orte-errmgr-hnp.txt", "errmgr-hnp:daemon-died", true,
-                                   ORTE_VPID_PRINT(proc->vpid),
-                                   (NULL == pdat->node) ? "Unknown" : 
-                                   ((NULL == pdat->node->name) ? "Unknown" : pdat->node->name));
-                }
-                /* remove this proc from the daemon job */
-                orte_errmgr_hnp_record_dead_daemon(jdata, proc->vpid, state, exit_code);
+                orte_errmgr_hnpresil_record_dead_process(proc);
                 /* kill all local procs */
-                killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
+                killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD);
                 /* kill all jobs */
                 hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
-                /* check if all is complete so we can terminate */
-                check_job_complete(jdata);
+                return ORTE_ERR_UNRECOVERABLE;
             }
-        }
-        break;
+            break;
 
-    case ORTE_PROC_STATE_HEARTBEAT_FAILED:
-        /* heartbeats are only from daemons */
-        if( orte_enable_recovery ) {
-            /* relocate its processes */
-        } else {
-            orte_errmgr_hnp_record_dead_daemon(jdata, proc->vpid, state, exit_code);
-            /* kill all local procs */
-            killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
-            /* kill all jobs */
-            hnp_abort(ORTE_JOBID_WILDCARD, exit_code);
-            return ORTE_ERR_UNRECOVERABLE;
-        }
-        break;
-
-    default:
-        break;
+        default:
+            break;
     }
 
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_base_global_ft_event(int state)
+int orte_errmgr_hnpresil_base_global_ft_event(int state)
 {
     return ORTE_SUCCESS;
+}
+
+int orte_errmgr_hnpresil_global_post_startup(void) {
+    return ORTE_SUCCESS;
+}
+
+int orte_errmgr_hnpresil_global_pre_shutdown(void) {
+    return ORTE_SUCCESS;
+}
+
+int orte_errmgr_hnpresil_global_failure_notification(orte_process_name_t *sender, opal_buffer_t *buffer) {
+    orte_std_cntr_t n;
+    int ret = ORTE_SUCCESS, num_failed;
+    opal_pointer_array_t *dead_names;
+    int32_t i;
+    orte_process_name_t *name_item;
+    orte_epoch_t epoch;
+    orte_job_t *jdat;
+    orte_proc_t *pdat, *pdat2;
+    opal_buffer_t *answer;
+    orte_daemon_cmd_flag_t command;
+    
+    if (orte_debug_daemons_flag) {
+        opal_output(0, "%s errmgr:hnp HNP received process failed from orted %s",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(sender));
+    }
+    
+    n = 1;
+    /* Get the number of failed procs */
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_failed, &n, ORTE_VPID))) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    dead_names = OBJ_NEW(opal_pointer_array_t);
+    
+    for (i = 0; i < num_failed; i++) {
+        name_item = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
+        
+        /* Unpack the buffer to get the dead process' name. */
+        n = 1;
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, name_item, &n, ORTE_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        
+        /* Check to see if the message is telling us about an old epoch.  
+         * If so ignore the message.
+         */
+        epoch = orte_util_lookup_epoch(name_item);
+        if (name_item->epoch < epoch) {
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s errmgr:hnp HNP ignoring duplicate notification for %s failure (reported epoch: %s local epoch: %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(name_item),
+                            ORTE_EPOCH_PRINT(name_item->epoch),
+                            ORTE_EPOCH_PRINT(epoch));
+            }
+            free(name_item);
+            continue;
+        } else {
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s errmgr:hnp HNP received notification for %s failure (reported epoch: %s local epoch: %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            ORTE_NAME_PRINT(name_item),
+                            ORTE_EPOCH_PRINT(name_item->epoch),
+                            ORTE_EPOCH_PRINT(epoch));
+            }
+        }
+        
+        opal_pointer_array_add(dead_names, name_item);
+        
+        /* Check to see if the message is telling us about an orted and
+         * it is from another orted. Orteds don't have the list of all
+         * the application processes so they don't know if there were
+         * any child processes on the nodes that they are reporting. */
+        if (OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, sender, ORTE_PROC_MY_NAME)) {
+            if (NULL == (jdat = orte_get_job_data_object(name_item->jobid))) {
+                continue;
+            } else if (NULL == (pdat = (orte_proc_t *) opal_pointer_array_get_item(jdat->procs, name_item->vpid))) {
+                continue;
+            } else if (NULL == pdat->node) {
+                continue;
+            }
+            
+            if (ORTE_PROC_MY_NAME->jobid == name_item->jobid) {
+                for (i = 0; i < opal_pointer_array_get_size(pdat->node->procs); i++) {
+                    if (NULL == (pdat2 = (orte_proc_t *) opal_pointer_array_get_item(pdat->node->procs, i))) {
+                        continue;
+                    }
+                    
+                    /* ignore this process if it has already terminated */
+                    if (ORTE_PROC_STATE_TERMINATED <= pdat2->state) {
+                        continue;
+                    }
+
+                    /* the proc must have been alive, so notify everyone that it died */
+                    name_item = (orte_process_name_t *) malloc(sizeof(orte_process_name_t));
+                        
+                    name_item->jobid = pdat2->name.jobid;
+                    name_item->vpid = pdat2->name.vpid;
+                    name_item->epoch = orte_util_lookup_epoch(&(pdat2->name));
+                        
+                    opal_pointer_array_add(dead_names, name_item);
+                }
+            }
+        }
+        
+    }
+    
+    /* Update the number of failed process so any duplicates don't get
+     * re-reported.
+     */
+    num_failed = opal_pointer_array_get_size(dead_names);
+    
+    if (num_failed > 0) {
+        orte_errmgr.mark_processes_as_dead(dead_names);
+        
+        if (!orte_orteds_term_ordered) {
+            /* Send a message out to all the orteds to inform them that the
+             * process is dead. Long live the process (or not if it is so 
+             * decided)!
+             */
+            answer = OBJ_NEW(opal_buffer_t);
+            command = ORTE_PROCESS_FAILED_NOTIFICATION;
+            
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &command, 1, ORTE_DAEMON_CMD))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(answer);
+                return ret;
+            }
+            
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_failed, 1, ORTE_VPID))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(answer);
+                return ret;
+            }
+            
+            for (i = 0; i < opal_pointer_array_get_size(dead_names); i++) {
+                if (NULL != (name_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i))) {
+                    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, name_item, 1, ORTE_NAME))) {
+                        ORTE_ERROR_LOG(ret);
+                        OBJ_RELEASE(answer);
+                        return ret;
+                    }
+                }
+            }
+            
+            if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, answer, ORTE_RML_TAG_DAEMON))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(answer);
+                return ret;
+            }
+            
+            /* Tell the applications' ORTE layers that there is a failure. */
+            if (ORTE_SUCCESS != (ret = send_to_local_applications(dead_names))) {
+                return ret;
+            }
+        }
+        
+        for (i = 0; i < num_failed; i++) {
+            name_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i);
+            free(name_item);
+        }
+    }
+    
+    OBJ_RELEASE(dead_names);
+    
+    return ret;
 }
 
 /*****************
@@ -812,7 +995,7 @@ int orte_errmgr_hnp_base_global_ft_event(int state)
 static void hnp_abort(orte_jobid_t job, orte_exit_code_t exit_code)
 {
     int rc;
-    
+
     /* if we are already in progress, then ignore this call */
     if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
@@ -821,7 +1004,7 @@ static void hnp_abort(orte_jobid_t job, orte_exit_code_t exit_code)
                              ORTE_JOBID_PRINT(job), exit_code));
         return;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
                          "%s errmgr:hnp: abort called on job %s with status %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -855,14 +1038,14 @@ static void failed_start(orte_job_t *jdata)
     orte_odls_job_t *jobdat;
     orte_odls_child_t *child;
     orte_proc_t *proc;
-    
+
     /* lookup the local jobdat for this job */
     jobdat = NULL;
     for (item = opal_list_get_first(&orte_local_jobdata);
          item != opal_list_get_end(&orte_local_jobdata);
          item = opal_list_get_next(item)) {
         jobdat = (orte_odls_job_t*)item;
-        
+
         /* is this the specified job? */
         if (jobdat->jobid == jdata->jobid) {
             break;
@@ -873,7 +1056,7 @@ static void failed_start(orte_job_t *jdata)
         return;
     }
     jobdat->state = ORTE_JOB_STATE_FAILED_TO_START;
-    
+
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
          item = next) {
@@ -895,7 +1078,7 @@ static void failed_start(orte_job_t *jdata)
             }
         }
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
                          "%s errmgr:hnp: job %s reported incomplete start",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -909,14 +1092,14 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
     orte_odls_job_t *jobdat;
     orte_odls_child_t *child;
     orte_proc_t *proc;
-    
+
     /* lookup the local jobdat for this job */
     jobdat = NULL;
     for (item = opal_list_get_first(&orte_local_jobdata);
          item != opal_list_get_end(&orte_local_jobdata);
          item = opal_list_get_next(item)) {
         jobdat = (orte_odls_job_t*)item;
-        
+
         /* is this the specified job? */
         if (jobdat->jobid == jdata->jobid) {
             break;
@@ -960,7 +1143,7 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
     }
 }
 
-void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
+void orte_errmgr_hnpresil_update_proc(orte_job_t *jdata,
                                    orte_process_name_t *proc,
                                    orte_proc_state_t state,
                                    pid_t pid,
@@ -1032,7 +1215,7 @@ void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
             }
         }
     }
-    
+
     /***   UPDATE REMOTE CHILD   ***/
     for (i=0; i < jdata->procs->size; i++) {
         if (NULL == (proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
@@ -1100,14 +1283,14 @@ static void check_job_complete(orte_job_t *jdata)
              */
             continue;
         }
-        
+
         if (0 != proc->exit_code) {
             non_zero++;
             if (0 == lowest) {
                 lowest = proc->exit_code;
             }
         }
-        
+
         switch (proc->state) {
         case ORTE_PROC_STATE_KILLED_BY_CMD:
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
@@ -1145,7 +1328,7 @@ static void check_job_complete(orte_job_t *jdata)
             break;
         case ORTE_PROC_STATE_FAILED_TO_START:
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                                 "%s errmgr_hnp:check_job_completed proc %s failed to start",
+                                 "%s errmgr_hnpresil:check_job_completed proc %s failed to start",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
             if (!jdata->abort) {
@@ -1158,6 +1341,7 @@ static void check_job_complete(orte_job_t *jdata)
                 ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
             }
             break;
+#if 0
         case ORTE_PROC_STATE_ABORTED_BY_SIG:
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                  "%s errmgr:hnp:check_job_completed proc %s aborted by signal",
@@ -1173,6 +1357,7 @@ static void check_job_complete(orte_job_t *jdata)
                 ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
             }
             break;
+#endif
         case ORTE_PROC_STATE_TERM_WO_SYNC:
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                  "%s errmgr:hnp:check_job_completed proc %s terminated without sync",
@@ -1195,6 +1380,7 @@ static void check_job_complete(orte_job_t *jdata)
             }
             break;
         case ORTE_PROC_STATE_COMM_FAILED:
+#if 0
             if (!jdata->abort) {
                 jdata->state = ORTE_JOB_STATE_COMM_FAILED;
                 /* point to the lowest rank to cause the problem */
@@ -1204,6 +1390,7 @@ static void check_job_complete(orte_job_t *jdata)
                 jdata->abort = true;
                 ORTE_UPDATE_EXIT_STATUS(proc->exit_code);
             }
+#endif
             break;
         case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
             if (!jdata->abort) {
@@ -1273,7 +1460,7 @@ static void check_job_complete(orte_job_t *jdata)
             break;
         }
     }
-
+    
     if (jdata->abort) {
         /* the job aborted - turn off any sensors on this job */
         orte_sensor.stop(jdata->jobid);
@@ -1308,7 +1495,7 @@ static void check_job_complete(orte_job_t *jdata)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(jdata->jobid)));
     }
-    
+
     /* if this job is a continuously operating one, then don't do
      * anything further - just return here
      */
@@ -1317,7 +1504,7 @@ static void check_job_complete(orte_job_t *jdata)
          ORTE_JOB_CONTROL_RECOVERABLE & jdata->controls)) {
         goto CHECK_ALIVE;
     }
-    
+
     /* if the job that is being checked is the HNP, then we are
      * trying to terminate the orteds. In that situation, we
      * do -not- check all jobs - we simply notify the HNP
@@ -1328,9 +1515,9 @@ static void check_job_complete(orte_job_t *jdata)
      * This can happen if a ctrl-c hits in the "wrong" place
      * while launching
      */
- CHECK_DAEMONS:
+CHECK_DAEMONS:
     if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-        if (0 == orte_routed.num_routes()) {
+        if ((jdata->num_procs - 1) <= jdata->num_terminated) { /* Subtract one for the HNP */
             /* orteds are done! */
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                  "%s orteds complete - exiting",
@@ -1344,7 +1531,7 @@ static void check_job_complete(orte_job_t *jdata)
         }
         return;
     }
-    
+
     /* Release the resources used by this job. Since some errmgrs may want
      * to continue using resources allocated to the job as part of their
      * fault recovery procedure, we only do this once the job is "complete".
@@ -1386,8 +1573,8 @@ static void check_job_complete(orte_job_t *jdata)
         OBJ_RELEASE(map);
         jdata->map = NULL;
     }
-    
- CHECK_ALIVE:
+
+CHECK_ALIVE:
     /* now check to see if all jobs are done - release this jdata
      * object when we find it
      */
@@ -1493,28 +1680,29 @@ static void check_job_complete(orte_job_t *jdata)
     }
 }
 
-static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
+static void killprocs(orte_jobid_t job, orte_vpid_t vpid, orte_epoch_t epoch)
 {
     opal_pointer_array_t cmd;
     orte_proc_t proc;
     int rc;
-    
+
     /* stop local sensors for this job */
     if (ORTE_VPID_WILDCARD == vpid) {
         orte_sensor.stop(job);
     }
-    
-    if (ORTE_JOBID_WILDCARD == job && ORTE_VPID_WILDCARD == vpid) {
+
+    if (ORTE_JOBID_WILDCARD == job && ORTE_VPID_WILDCARD == vpid && ORTE_EPOCH_WILDCARD == epoch) {
         if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(NULL))) {
             ORTE_ERROR_LOG(rc);
         }
         return;
     }
-    
+
     OBJ_CONSTRUCT(&cmd, opal_pointer_array_t);
     OBJ_CONSTRUCT(&proc, orte_proc_t);
     proc.name.jobid = job;
     proc.name.vpid = vpid;
+    proc.name.epoch = epoch;
     opal_pointer_array_add(&cmd, &proc);
     if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(&cmd))) {
         ORTE_ERROR_LOG(rc);
@@ -1532,6 +1720,11 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc,
     orte_app_context_t *app;
     char *app_name;
     int rc, i, n;
+
+    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+                         "%s CHECKING ON RELOCATE FOR APP %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
 
     /* get the proc_t object for this process */
     pdata = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
@@ -1551,7 +1744,7 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc,
      */
     if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
         /* remove this proc from the daemon job */
-        orte_errmgr_hnp_record_dead_daemon(jdata, proc->vpid, state, exit_code);
+        orte_errmgr_hnpresil_record_dead_process(proc);
         /* check to see if any other nodes are "alive" */
         if (!orte_hnp_is_allocated && jdata->num_procs == 1) {
             return ORTE_ERR_FATAL;
@@ -1635,10 +1828,10 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc,
     if (app->max_restarts < pdata->restarts) {
         return ORTE_ERR_RESTART_LIMIT_EXCEEDED;
     }
-    
+
     /* reset the job params for restart */
     orte_plm_base_reset_job(jdata);
-    
+
     /* flag the current node as not-to-be-used */
     pdata->node->state = ORTE_NODE_STATE_DO_NOT_USE;
 
@@ -1662,7 +1855,7 @@ static orte_odls_child_t* proc_is_local(orte_process_name_t *proc)
 {
     orte_odls_child_t *child;
     opal_list_item_t *item;
-    
+
     child = NULL;
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
@@ -1676,59 +1869,244 @@ static orte_odls_child_t* proc_is_local(orte_process_name_t *proc)
     return NULL;
 }
 
-void orte_errmgr_hnp_record_dead_daemon(orte_job_t *jdat,
-                                          orte_vpid_t vpid,
-                                          orte_proc_state_t state,
-                                          orte_exit_code_t exit_code)
-{
-    orte_job_t *jdt;
-    orte_proc_t *pdat;
-    orte_node_t *node;
-    int i;
+static void cbfunc(int status,
+                   orte_process_name_t *peer,
+                   opal_buffer_t *buffer,
+                   orte_rml_tag_t tag,
+                   void* cbdata) {
+    OBJ_RELEASE(buffer);
+}
 
-    if (NULL != (pdat = (orte_proc_t*)opal_pointer_array_get_item(jdat->procs, vpid)) &&
-        ORTE_PROC_STATE_TERMINATED != pdat->state) {
-        /* need to record that this one died */
-        pdat->state = state;
-        pdat->exit_code = exit_code;
-        ORTE_UPDATE_EXIT_STATUS(exit_code);
-        /* remove it from the job array */
-        opal_pointer_array_set_item(jdat->procs, vpid, NULL);
-        orte_process_info.num_procs--;
-        jdat->num_procs--;
-        /* mark the node as down so it won't be used in mapping
-         * procs to be relaunched
-         */
-        node = pdat->node;
-        node->state = ORTE_NODE_STATE_DOWN;
-        node->daemon = NULL;
-        OBJ_RELEASE(pdat);  /* maintain accounting */
-        /* mark all procs on this node as having terminated */
-        for (i=0; i < node->procs->size; i++) {
-            if (NULL == (pdat = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
-                continue;
-            }
-            /* get the job data object for this process */
-            if (NULL == (jdt = orte_get_job_data_object(pdat->name.jobid))) {
-                /* It is possible that the process job finishes before the daemons.
-                 * In that case the process state is set to normal termination, and
-                 * the job data has already been cleared. So no need to throw an
-                 * error.
-                 */
-                if( ORTE_PROC_STATE_TERMINATED != pdat->state ) {
-                    opal_output(0,
-                                "%s Error: Failed to find job_data for proc %s (%s) on node %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&pdat->name),
-                                orte_proc_state_to_str(pdat->state),
-                                node->name );
-                    /* major problem */
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+int orte_errmgr_hnpresil_record_dead_process(orte_process_name_t *proc) {
+    orte_job_t *jdat;
+    orte_proc_t *pdat;
+    opal_buffer_t *buffer;
+    orte_daemon_cmd_flag_t command;
+    int i, rc, num_failed;
+    opal_pointer_array_t *dead_names;
+    orte_process_name_t *name_item;
+    orte_proc_t *proc_item;
+
+    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+                         "%s RECORDING DEAD PROCESS %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(proc)));
+
+    if (NULL == (jdat = orte_get_job_data_object(proc->jobid))) {
+        opal_output(0, "Can't find job object");
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    if (NULL != (pdat = (orte_proc_t*)opal_pointer_array_get_item(jdat->procs, proc->vpid)) &&
+        ORTE_PROC_STATE_TERMINATED < pdat->state) {
+
+        /* Make sure that the epochs match. */
+        if (proc->epoch != pdat->name.epoch) {
+            opal_output(1, "The epoch does not match the current epoch. Throwing the request out.");
+            return ORTE_SUCCESS;
+        }
+
+        dead_names = OBJ_NEW(opal_pointer_array_t);
+
+        if (ORTE_PROC_MY_NAME->jobid == proc->jobid) {
+            opal_pointer_array_add(dead_names, &(pdat->name));
+
+            for (i = 0; i < opal_pointer_array_get_size(pdat->node->procs); i++) {
+                if (NULL == (proc_item = (orte_proc_t *) opal_pointer_array_get_item(pdat->node->procs, i))) {
+                    continue;
                 }
-                continue;
+
+                opal_pointer_array_add(dead_names, &(proc_item->name));
             }
-            pdat->state = ORTE_PROC_STATE_ABORTED;
-            jdt->num_terminated++;
+        }
+
+        if (!orte_orteds_term_ordered) {
+            /*
+             * Send a message to the other daemons so they know that a daemon has
+             * died.
+             */
+            buffer = OBJ_NEW(opal_buffer_t);
+            command = ORTE_PROCESS_FAILED_NOTIFICATION;
+
+            num_failed = opal_pointer_array_get_size(dead_names);
+
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buffer);
+            } else if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_failed, 1, ORTE_VPID))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(buffer);
+            } else {
+
+                /* Iterate of the list of dead procs and send them along with
+                 * the rest. The HNP needs this info so it can tell the other
+                 * ORTEDs and they can inform the appropriate applications.
+                 */
+                for (i = 0; i < num_failed; i++) {
+                    if (NULL != (name_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i))) {
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, name_item, 1, ORTE_NAME))) {
+                            ORTE_ERROR_LOG(rc);
+                            OBJ_RELEASE(buffer);
+                        }
+                    }
+                } 
+
+                OBJ_RELEASE(dead_names);
+
+                OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output, 
+                                    "%s SENDING DEAD PROCESS MESSAGE TO HNP", 
+                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+                orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer, ORTE_RML_TAG_DAEMON, 0, cbfunc, NULL);
+            }
+        } else {
+            orte_errmgr_hnpresil_global_mark_processes_as_dead(dead_names);
         }
     }
+
+    return ORTE_SUCCESS;
+}
+
+int orte_errmgr_hnpresil_global_mark_processes_as_dead(opal_pointer_array_t *dead_procs) {
+    int i;
+    orte_process_name_t *name_item;
+    orte_job_t *jdat;
+    orte_proc_t *pdat;
+    orte_node_t *node;
+
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+                "HNP %s marking procs as dead",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* Iterate over the list of processes */
+    for (i = 0; i < opal_pointer_array_get_size(dead_procs); i++) {
+        if (NULL == (name_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_procs, i))) {
+            opal_output(1, "NULL found in dead process list.");
+            continue;
+        }
+
+        if (NULL == (jdat = orte_get_job_data_object(name_item->jobid))) {
+            OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+                        "%s Job data not found.",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            return ORTE_ERR_NOT_FOUND;
+        }
+
+        if (NULL != (pdat = (orte_proc_t *) opal_pointer_array_get_item(jdat->procs, name_item->vpid)) &&
+            pdat->state < ORTE_PROC_STATE_TERMINATED) {
+
+            OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+                        "HNP %s marking %s as dead",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&pdat->name)));
+
+            /* Make sure the epochs match, if not it probably means that we
+             * already reported this failure. */
+            if (name_item->epoch != pdat->name.epoch) {
+                continue;
+            }
+
+            orte_util_set_epoch(name_item, name_item->epoch + 1);
+
+            /* Remove it from the job array */
+            opal_pointer_array_set_item(jdat->procs, name_item->vpid, NULL);
+            orte_process_info.num_procs--;
+            jdat->num_procs--;
+
+            /* Check if this is an ORTED */
+            if (ORTE_PROC_MY_NAME->jobid == name_item->jobid) {
+                /* Mark the node as down so it won't be used in mapping anymore. */
+                node = pdat->node;
+                node->state = ORTE_NODE_STATE_DOWN;
+                node->daemon = NULL;
+            }
+
+            OBJ_RELEASE(pdat);
+
+            /* Create a new proc object that will keep track of the epoch
+             * information */
+            pdat = OBJ_NEW(orte_proc_t);
+            pdat->name.jobid = jdat->jobid;
+            pdat->name.vpid = name_item->vpid;
+            pdat->name.epoch = name_item->epoch + 1;
+
+            /* Set the state as terminated so we'll know the process isn't
+             * actually there. */
+            pdat->state = ORTE_PROC_STATE_TERMINATED;
+
+            opal_pointer_array_set_item(jdat->procs, name_item->vpid, pdat);
+            jdat->num_procs++;
+            jdat->num_terminated++;
+        } else {
+            opal_output(0, "Proc data not found for %s", ORTE_NAME_PRINT(name_item));
+            /* Create a new proc object that will keep track of the epoch
+             * information */
+            pdat = OBJ_NEW(orte_proc_t);
+            pdat->name.jobid = jdat->jobid;
+            pdat->name.vpid = name_item->vpid;
+            pdat->name.epoch = name_item->epoch + 1;
+
+            /* Set the state as terminated so we'll know the process isn't
+             * actually there. */
+            pdat->state = ORTE_PROC_STATE_TERMINATED;
+
+            opal_pointer_array_set_item(jdat->procs, name_item->vpid, pdat);
+            jdat->num_procs++;
+            jdat->num_terminated++;
+        }
+
+        check_job_complete(jdat);
+    }
+
+    if (!orte_orteds_term_ordered) {
+        /* Need to update the orted routing module. */
+        orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid);
+
+        if (NULL != fault_cbfunc) {
+            (*fault_cbfunc)(dead_procs);
+        }
+    }
+
+    return ORTE_SUCCESS;
+}
+
+int send_to_local_applications(opal_pointer_array_t *dead_names) {
+    opal_buffer_t *buf;
+    int ret = ORTE_SUCCESS;
+    orte_process_name_t *name_item;
+    int size, i;
+
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+                "%s Sending failure to local applications.",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        
+    buf = OBJ_NEW(opal_buffer_t);
+        
+    size = opal_pointer_array_get_size(dead_names);
+        
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(buf, &size, 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(buf);
+        return ret;
+    }
+        
+    for (i = 0; i < size; i++) {
+        if (NULL != (name_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i))) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buf, name_item, 1, ORTE_NAME))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buf);
+                return ret;
+            }
+        }
+    }
+        
+    if (ORTE_SUCCESS != (ret = orte_odls.deliver_message(ORTE_JOBID_WILDCARD, buf, ORTE_RML_TAG_EPOCH_CHANGE))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(buf);
+        return ret;
+    }
+        
+    OBJ_RELEASE(buf);
+
+    return ret;
 }

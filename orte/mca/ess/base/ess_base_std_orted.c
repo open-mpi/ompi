@@ -505,10 +505,12 @@ int orte_ess_base_orted_setup(char **hosts)
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
 
     /* Execute the post-startup errmgr code */
-    if (ORTE_SUCCESS != (ret = orte_errmgr.post_startup())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_errmgr.post_startup";
-        goto error;
+    if (NULL != orte_errmgr.post_startup) {
+        if (ORTE_SUCCESS != (ret = orte_errmgr.post_startup())) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_errmgr.post_startup";
+            goto error;
+        }
     }
 
     return ORTE_SUCCESS;
@@ -523,7 +525,9 @@ int orte_ess_base_orted_setup(char **hosts)
 
 int orte_ess_base_orted_finalize(void)
 {
-    orte_errmgr.pre_shutdown();
+    if (NULL != orte_errmgr.pre_shutdown) {
+        orte_errmgr.pre_shutdown();
+    }
 
     /* stop the local sensors */
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
