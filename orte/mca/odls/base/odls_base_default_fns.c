@@ -1546,11 +1546,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
              item = opal_list_get_next(item)) {
             child = (orte_odls_child_t*)item;
             
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:launch working child %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
-            
             /* does this child belong to this app? */
             if (j != (int)child->app_idx) {
                 continue;
@@ -1585,6 +1580,11 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 continue;
             }
             
+            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                 "%s odls:launch working child %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(child->name)));
+
             /* ensure we clear any prior info regarding state or exit status in
              * case this is a restart
              */
@@ -2700,7 +2700,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                                             orte_odls_base_child_died_fn_t child_died)
 {
     orte_odls_child_t *child;
-    opal_list_item_t *item, *next;
+    opal_list_item_t *item;
     int rc = ORTE_SUCCESS;
     opal_list_t procs_killed;
     orte_proc_t *proc, proctmp;
@@ -2745,9 +2745,8 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
         }
         for (item = opal_list_get_first(&orte_local_children);
              item != opal_list_get_end(&orte_local_children);
-             item = next) {
+             item = opal_list_get_next(item)) {
             child = (orte_odls_child_t*)item;
-            next = opal_list_get_next(item);
             
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc checking child process %s",
@@ -2788,7 +2787,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             /* is this process alive? if not, then nothing for us
              * to do to it
              */
-            if (!child->alive) {
+            if (!child->alive || 0 == child->pid) {
                 
                 OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                      "%s odls:kill_local_proc child %s is not alive",
