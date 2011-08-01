@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * $COPYRIGHT$
@@ -632,6 +632,21 @@ static int mca_btl_tcp_component_create_instances(void)
     }
 
     mca_btl_tcp_component.tcp_addr_count = if_count;
+
+    /* It's an error to specify both tcp_if_include and
+       tcp_if_exclude */
+    if ((NULL != mca_btl_tcp_component.tcp_if_include &&
+         strlen(mca_btl_tcp_component.tcp_if_include) > 0) &&
+        (NULL != mca_btl_tcp_component.tcp_if_exclude &&
+         strlen(mca_btl_tcp_component.tcp_if_exclude) > 0)) {
+        orte_show_help("help-mpi-btl-tcp.txt", 
+                       "both if_include and if_exclude specified",
+                       true, orte_process_info.nodename,
+                       mca_btl_tcp_component.tcp_if_include,
+                       mca_btl_tcp_component.tcp_if_exclude);
+        ret = OMPI_ERR_BAD_PARAM;
+        goto cleanup;
+    }
 
     /* if the user specified an interface list - use these exclusively */
     argv = include = split_and_resolve(&mca_btl_tcp_component.tcp_if_include,
