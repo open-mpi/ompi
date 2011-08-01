@@ -42,7 +42,7 @@ const char *ibv_get_sysfs_path(void);
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stddef.h>
 
 #include "opal/event/event.h"
