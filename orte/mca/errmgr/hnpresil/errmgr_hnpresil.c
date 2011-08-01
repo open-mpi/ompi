@@ -762,6 +762,8 @@ int orte_errmgr_hnpresil_base_global_update_state(orte_jobid_t job,
                     break;
                 }
 
+                /* remove from dependent routes, if it is one */
+                orte_routed.route_lost(proc);
                 /* delete the route */
                 orte_routed.delete_route(proc);
                 /* purge the oob */
@@ -789,6 +791,7 @@ int orte_errmgr_hnpresil_base_global_update_state(orte_jobid_t job,
                     /* We'll check if the job was complete when we get the
                      * message back from the HNP notifying us of the dead
                      * process */
+                    check_job_complete(jdata);
                 }
             }
             break;
@@ -838,6 +841,12 @@ int orte_errmgr_hnpresil_global_failure_notification(orte_process_name_t *sender
     orte_proc_t *pdat, *pdat2;
     opal_buffer_t *answer;
     orte_daemon_cmd_flag_t command;
+
+    /* If processes have started terminating, don't worry about reported
+     * failures. The ORTEDs don't know the difference. */
+    if (mca_errmgr_hnpresil_component.term_in_progress) {
+        return ret;
+    }
     
     if (orte_debug_daemons_flag) {
         opal_output(0, "%s errmgr:hnp HNP received process failed from orted %s",
@@ -1380,7 +1389,7 @@ static void check_job_complete(orte_job_t *jdata)
             }
             break;
         case ORTE_PROC_STATE_COMM_FAILED:
-#if 0
+#if 1
             if (!jdata->abort) {
                 jdata->state = ORTE_JOB_STATE_COMM_FAILED;
                 /* point to the lowest rank to cause the problem */
@@ -1517,7 +1526,8 @@ static void check_job_complete(orte_job_t *jdata)
      */
 CHECK_DAEMONS:
     if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-        if ((jdata->num_procs - 1) <= jdata->num_terminated) { /* Subtract one for the HNP */
+        /* if ((jdata->num_procs - 1) <= jdata->num_terminated) { /* Subtract one for the HNP */
+        if (0 == orte_routed.num_routes()) {
             /* orteds are done! */
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                                  "%s orteds complete - exiting",
@@ -1920,7 +1930,7 @@ int orte_errmgr_hnpresil_record_dead_process(orte_process_name_t *proc) {
             }
         }
 
-        if (!orte_orteds_term_ordered) {
+        if (!mca_errmgr_hnpresil_component.term_in_progress) {
             /*
              * Send a message to the other daemons so they know that a daemon has
              * died.
