@@ -16,7 +16,7 @@
 
 struct mca_mtl_mxm_request_t {
     struct mca_mtl_request_t super;
-    mxm_req_t mxm_request;
+    mxm_req_base_t *mxm_base_request;
     /* mxm_segment_t mxm_segment[1]; */
     void *buf;
     size_t length;

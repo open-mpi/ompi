@@ -62,6 +62,7 @@ Trunk (not on release branches yet)
   OPAL levels - intended for use when configuring without MPI support
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
+- Added Mellanox MTL layer implementation (mxm)
 
 
 1.5.3
