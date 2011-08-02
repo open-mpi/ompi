@@ -509,6 +509,9 @@ Network Support
     or
     shell$ mpirun --mca pml cm ...
 
+- MXM MTL is an transport layer utilizing various Mellanox proprietary
+  technologies and providing better scalability and performance for large scale jobs
+
 - Myrinet MX (and Open-MX) support is shared between the 2 internal
   devices, the MTL and the BTL.  The design of the BTL interface in
   Open MPI assumes that only naive one-sided communication
@@ -707,7 +710,7 @@ for a full list); a summary of the more commonly used ones follows:
 --with-mxm=<directory>
   Specify the directory where the Mellanox MXM library and
   header files are located.  This option is generally only necessary
-  if the InfiniPath headers and libraries are not in default
+  if the MXM headers and libraries are not in default
   compiler/linker search paths.
 
   MXM is the support library for Mellanox network adapters.
