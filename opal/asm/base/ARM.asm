@@ -73,6 +73,7 @@ START_FUNC(opal_atomic_cmpset_64)
        LSYM(7)
        ldrexd  r4, r5, [r0]
        cmp     r4, r2
+       it      eq
        cmpeq   r5, r3
        bne     REFLSYM(8)
        strexd  r1, r6, r7, [r0]
@@ -91,6 +92,7 @@ START_FUNC(opal_atomic_cmpset_acq_64)
        LSYM(9)
        ldrexd  r4, r5, [r0]
        cmp     r4, r2
+       it      eq
        cmpeq   r5, r3
        bne     REFLSYM(10)
        strexd  r1, r6, r7, [r0]
@@ -111,6 +113,7 @@ START_FUNC(opal_atomic_cmpset_rel_64)
        LSYM(11)
        ldrexd  r4, r5, [r0]
        cmp     r4, r2
+       it      eq
        cmpeq   r5, r3
        bne     REFLSYM(12)
        dmb
