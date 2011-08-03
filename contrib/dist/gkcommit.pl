@@ -157,8 +157,15 @@ print "Retrieving Trac CMR summaries...\n";
 my $cmr_summaries;
 foreach my $cmr (@cmrs) {
     my $url = sprintf($base_trac_url, $cmr);
-    my %params = { env_proxy => 0 };
-    my $ua = LWP::UserAgent->new(%params);
+
+    # Recent (as of 3 Aug 2011) versions of LWP in Macports seem to
+    # have broken SSL certificate verification.  The IU CA is in my
+    # Mac system keychain (and has been there for quite a long time),
+    # but after a recent ports update, LWP fails the SSL certificate
+    # verification.  Fine.  So we'll just turn it off, per
+    # http://search.cpan.org/~gaas/libwww-perl-6.02/lib/LWP/UserAgent.pm.
+    my $ua = LWP::UserAgent->new(env_proxy => 0, 
+                                 ssl_opts => { verify_hostname => 0 });
 
     # @#$@!$# LWP proxying for https *does not work*.  So don't set
     # $ua->proxy() for it.  Instead, rely on $ENV{https_proxy} being
