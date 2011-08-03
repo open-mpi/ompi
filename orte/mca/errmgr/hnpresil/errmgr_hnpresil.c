@@ -1526,7 +1526,9 @@ static void check_job_complete(orte_job_t *jdata)
      */
 CHECK_DAEMONS:
     if (jdata == NULL || jdata->jobid == ORTE_PROC_MY_NAME->jobid) {
-        /* if ((jdata->num_procs - 1) <= jdata->num_terminated) { /* Subtract one for the HNP */
+#if 0
+        if ((jdata->num_procs - 1) <= jdata->num_terminated) { /* Subtract one for the HNP */
+#endif
         if (0 == orte_routed.num_routes()) {
             /* orteds are done! */
             OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
