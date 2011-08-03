@@ -10,7 +10,6 @@
 #ifndef MCA_MTL_MXM_ENDPOINT_H
 #define MCA_MTL_MXM_ENDPOINT_H
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "mtl_mxm.h"
 

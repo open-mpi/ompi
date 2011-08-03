@@ -11,6 +11,8 @@
 #define MTL_MXM_H_HAS_BEEN_INCLUDED
 
 #include <stdint.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <mxm/api/mxm_api.h>
 #include <mxm/api/mxm_addr.h>
