@@ -238,7 +238,11 @@ foreach my $cmr (@cmrs) {
 }
 print FILE "\n";
 
-# If we have r numbers, print them
+# If we have r numbers, print them.  Use a special line to make the
+# pre-commit hook ignore all of these messages (i.e., so that it
+# doesn't try to close some ticket twice, or something like that).
+print FILE "---svn-pre-commit-ignore-below---\n"
+    if ($#rs >= 0);
 foreach my $r (@rs) {
     print FILE "r$r
 $logentries->{$r}->{msg}\n\n";
