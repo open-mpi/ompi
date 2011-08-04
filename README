@@ -509,11 +509,15 @@ Network Support
     or
     shell$ mpirun --mca pml cm ...
 
-- The MXM MTL is a transport layer utilizing various Mellanox
-  proprietary InfiniBand-based technologies that provides better
-  scalability and performance for large-scale jobs.  
-
-  MXM will only work with ConnectX (or newer) HCAs.
+- MXM is a MellanoX Messaging library (unreleased yet) utilizing full range 
+  of IB transports to provide the following messaging services to the upper 
+  level MPI:
+  - Usage of all available IB transports 
+  - Native RDMA support
+  - Progress thread
+  - Shared memory communication
+  - hardware assisted reliability
+  - MXM supports all HCAs that are being supported under Open MPI.
 
 - Myrinet MX (and Open-MX) support is shared between the 2 internal
   devices, the MTL and the BTL.  The design of the BTL interface in
@@ -716,7 +720,7 @@ for a full list); a summary of the more commonly used ones follows:
   MXM headers and libraries are not in default compiler/linker search
   paths.
 
-  MXM is the support library for Mellanox ConnectX adapters.
+  MXM is the support library for Mellanox Network adapters.
 
 --with-mxm-libdir=<directory>
   Look in directory for the MXM libraries.  By default, Open MPI will
