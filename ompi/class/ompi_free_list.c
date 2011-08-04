@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -202,7 +203,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         if(elem_size != 0) {
             mpool_alloc_ptr = (unsigned char *) flist->fl_mpool->mpool_alloc(flist->fl_mpool,
                    num_elements * elem_size, flist->fl_payload_buffer_alignment,
-                   MCA_MPOOL_FLAGS_CACHE_BYPASS, &reg);
+                   MCA_MPOOL_FLAGS_CACHE_BYPASS | MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM, &reg);
             if(NULL == mpool_alloc_ptr) {
                 free(alloc_ptr);
                 return OMPI_ERR_TEMP_OUT_OF_RESOURCE;

@@ -12,6 +12,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -23,6 +24,7 @@
 #include <string.h>
 #include "ompi/mca/mpool/sm/mpool_sm.h"
 #include "ompi/mca/common/sm/common_sm.h"
+#include "ompi/mca/common/cuda/common_cuda.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -94,6 +96,13 @@ void* mca_mpool_sm_alloc(
         mseg.mbs_len = size;
         opal_maffinity_base_bind(&mseg, 1, mpool_sm->mem_node);
     }
+
+#if OPAL_CUDA_SUPPORT
+    if (flags & MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM) {
+        mca_common_cuda_register(mseg.mbs_start_addr, size,
+                                 mpool->mpool_component->mpool_version.mca_component_name);
+    }
+#endif
 
     return mseg.mbs_start_addr;
 }

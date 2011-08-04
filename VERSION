@@ -1,5 +1,6 @@
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -102,4 +103,5 @@ libopen_pal_so_version=0:0:0
 libmca_common_sm_so_version=0:0:0
 libmca_common_mx_so_version=0:0:0
 libmca_common_portals_so_version=0:0:0
+libmca_common_cuda_so_version=0:0:0
 libmca_opal_common_hwloc_so_version=0:0:0

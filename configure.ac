@@ -15,6 +15,7 @@
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -129,6 +130,7 @@ m4_ifdef([project_ompi],
           # right now.
           AC_SUBST(libmca_common_sm_so_version)
           AC_SUBST(libmca_common_mx_so_version)
+          AC_SUBST(libmca_common_cuda_so_version)
           AC_SUBST(libmca_common_portals_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
