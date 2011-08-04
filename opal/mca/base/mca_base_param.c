@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -112,7 +112,6 @@ static int syn_register(int index_orig, const char *syn_type_name,
                         const char *syn_component_name,
                         const char *syn_param_name, bool deprecated);
 static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
-                         opal_hash_table_t *attrs,
                          mca_base_param_source_t *source,
                          char **source_file);
 static bool param_set_override(size_t index, 
@@ -488,7 +487,7 @@ int mca_base_param_lookup_int(int index, int *value)
 {
   mca_base_param_storage_t storage;
   
-  if (param_lookup(index, &storage, NULL, NULL, NULL)) {
+  if (param_lookup(index, &storage, NULL, NULL)) {
     *value = storage.intval;
     return OPAL_SUCCESS;
   }
@@ -532,7 +531,7 @@ int mca_base_param_lookup_string(int index, char **value)
 {
   mca_base_param_storage_t storage;
   
-  if (param_lookup(index, &storage, NULL, NULL, NULL)) {
+  if (param_lookup(index, &storage, NULL, NULL)) {
     *value = storage.stringval;
     return OPAL_SUCCESS;
   }
@@ -561,7 +560,7 @@ int mca_base_param_lookup_source(int index, mca_base_param_source_t *source, cha
 {
     mca_base_param_storage_t storage;
   
-    if (param_lookup(index, &storage, NULL, source, source_file)) {
+    if (param_lookup(index, &storage, source, source_file)) {
         return OPAL_SUCCESS;
     }
     return OPAL_ERROR;
@@ -857,7 +856,7 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
         }
 
         if (array[i].mbp_internal == internal || internal) {
-            if (param_lookup(i, &storage, NULL, NULL, NULL)) {
+            if (param_lookup(i, &storage, NULL, NULL)) {
                 if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type) {
                     asprintf(&str, "%s=%d", array[i].mbp_env_var_name, 
                              storage.intval);
@@ -1491,7 +1490,7 @@ static int param_register(const char *type_name,
       /* Finally, if we have a lookup value, look it up */
       
       if (NULL != current_value) {
-          if (!param_lookup(i, current_value, NULL, NULL, NULL)) {
+          if (!param_lookup(i, current_value, NULL, NULL)) {
               return OPAL_ERR_NOT_FOUND;
           }
       }
@@ -1515,7 +1514,7 @@ static int param_register(const char *type_name,
   /* Finally, if we have a lookup value, look it up */
 
   if (NULL != current_value) {
-      if (!param_lookup(ret, current_value, NULL, NULL, NULL)) {
+      if (!param_lookup(ret, current_value, NULL, NULL)) {
           return OPAL_ERR_NOT_FOUND;
       }
   }
@@ -1685,7 +1684,6 @@ static bool param_set_override(size_t index,
  * Lookup a parameter in multiple places
  */
 static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
-                         opal_hash_table_t *attrs,
                          mca_base_param_source_t *source_param,
                          char **source_file)
 {
