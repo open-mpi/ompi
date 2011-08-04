@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
+ * Copyright (c) 2007-2011 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 The University of Tennessee and The University
@@ -34,6 +34,9 @@
 #include "btl_openib_async.h"
 #include "connect/connect.h"
 #include "orte/util/show_help.h"
+#if (ENABLE_DYNAMIC_SL)
+#include "connect/btl_openib_connect_sl.h"
+#endif
 
 static void xoob_component_register(void);
 static int xoob_component_query(mca_btl_openib_module_t *openib_btl,
@@ -474,10 +477,24 @@ static int xoob_send_qp_connect(mca_btl_openib_endpoint_t *endpoint, mca_btl_ope
     attr.min_rnr_timer  = mca_btl_openib_component.ib_min_rnr_timer;
     attr.ah_attr.is_global     = 0;
     attr.ah_attr.dlid          = rem_info->rem_lid;
-    attr.ah_attr.sl            = mca_btl_openib_component.ib_service_level;
     attr.ah_attr.src_path_bits = openib_btl->src_path_bits;
     attr.ah_attr.port_num      = openib_btl->port_num;
     attr.ah_attr.static_rate   = 0;
+    attr.ah_attr.sl            = mca_btl_openib_component.ib_service_level;
+
+#if (ENABLE_DYNAMIC_SL)
+    /* if user enabled dynamic SL, get it from PathRecord */
+    if (0 != mca_btl_openib_component.ib_path_record_service_level) {
+        int rc = btl_openib_connect_get_pathrecord_sl(qp->context,
+                                                      attr.ah_attr.port_num,
+                                                      openib_btl->lid,
+                                                      attr.ah_attr.dlid);
+        if (OMPI_ERROR == rc) {
+            return OMPI_ERROR;
+        }
+        attr.ah_attr.sl = rc;
+    }
+#endif
 
     if (mca_btl_openib_component.verbose) {
         BTL_VERBOSE(("Set MTU to IBV value %d (%s bytes)", attr.path_mtu,
@@ -575,10 +592,26 @@ static int xoob_recv_qp_create(mca_btl_openib_endpoint_t *endpoint, mca_btl_open
     attr.min_rnr_timer  = mca_btl_openib_component.ib_min_rnr_timer;
     attr.ah_attr.is_global     = 0;
     attr.ah_attr.dlid          = rem_info->rem_lid;
-    attr.ah_attr.sl            = mca_btl_openib_component.ib_service_level;
     attr.ah_attr.src_path_bits = openib_btl->src_path_bits;
     attr.ah_attr.port_num      = openib_btl->port_num;
     attr.ah_attr.static_rate   = 0;
+    attr.ah_attr.sl            = mca_btl_openib_component.ib_service_level;
+
+#if (ENABLE_DYNAMIC_SL)
+    /* if user enabled dynamic SL, get it from PathRecord */
+    if (0 != mca_btl_openib_component.ib_path_record_service_level) {
+        int rc = btl_openib_connect_get_pathrecord_sl(
+                                openib_btl->device->xrc_domain->context,
+                                attr.ah_attr.port_num,
+                                openib_btl->lid,
+                                attr.ah_attr.dlid);
+        if (OMPI_ERROR == rc) {
+            return OMPI_ERROR;
+        }
+        attr.ah_attr.sl = rc;
+    }
+#endif
+
     ret = ibv_modify_xrc_rcv_qp(openib_btl->device->xrc_domain,
             endpoint->xrc_recv_qp_num,
             &attr,
@@ -1102,5 +1135,8 @@ static int xoob_component_finalize(void)
         orte_rml.recv_cancel(ORTE_NAME_WILDCARD, OMPI_RML_TAG_XOPENIB);
         rml_recv_posted = false;
     }
+#if (ENABLE_DYNAMIC_SL)
+    btl_openib_connect_sl_finalize();
+#endif
     return OMPI_SUCCESS;
 }

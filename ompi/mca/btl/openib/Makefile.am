@@ -12,6 +12,7 @@
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2011      Mellanox Technologies.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -96,6 +97,13 @@ sources += \
     connect/btl_openib_connect_rdmacm.h
 
 dist_pkgdata_DATA += connect/help-mpi-btl-openib-cpc-rdmacm.txt
+endif
+
+# If we have dynamic SL support, build those files
+if MCA_btl_openib_have_dynamic_sl
+sources += \
+    connect/btl_openib_connect_sl.c \
+    connect/btl_openib_connect_sl.h
 endif
 
 # Make the output library in this directory, and name it either

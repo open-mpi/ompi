@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2008      Mellanox Technologies.  All rights reserved.
+# Copyright (c) 2008-2011 Mellanox Technologies.  All rights reserved.
 # Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -26,6 +26,7 @@ AC_DEFUN([MCA_ompi_btl_openib_POST_CONFIG], [
     AM_CONDITIONAL([MCA_btl_openib_have_xrc], [test $1 -eq 1 -a "x$btl_openib_have_xrc" = "x1"])
     AM_CONDITIONAL([MCA_btl_openib_have_rdmacm], [test $1 -eq 1 -a "x$btl_openib_have_rdmacm" = "x1"])
     AM_CONDITIONAL([MCA_btl_openib_have_ibcm], [test $1 -eq 1 -a "x$btl_openib_have_ibcm" = "x1"])
+    AM_CONDITIONAL([MCA_btl_openib_have_dynamic_sl], [test $1 -eq 1 -a "x$btl_openib_have_opensm_devel" = "x1"])
 ])
 
 
