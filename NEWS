@@ -63,6 +63,9 @@ Trunk (not on release branches yet)
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
 - Added Mellanox MTL layer implementation (mxm)
+- Fixed C++ bindings cosmetic/warnings issue with
+  MPI::Comm::NULL_COPY_FN and MPI::Comm::NULL_DELETE_FN.  Thanks to
+  Júlio Hoffimann for identifying the issues.
 
 
 1.5.3
