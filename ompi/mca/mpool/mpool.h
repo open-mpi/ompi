@@ -11,6 +11,7 @@
   * Copyright (c) 2004-2005 The Regents of the University of California.
   *                         All rights reserved.
   * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
   * $COPYRIGHT$
   * 
   * Additional copyrights may follow
@@ -36,6 +37,7 @@
 #define MCA_MPOOL_FLAGS_MPI_ALLOC_MEM 0x4
 #define MCA_MPOOL_FLAGS_INVALID 0x8
 #define MCA_MPOOL_FLAGS_SO_MEM 0x10
+#define MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM 0x20
 
 struct mca_mpool_base_resources_t;
 

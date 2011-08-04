@@ -1,0 +1,27 @@
+# -*- text -*-
+#
+# Copyright (c) 2011      NVIDIA.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+[cuCtxGetCurrent failed]
+WARNING: The call to cuCtxGetCurrent() failed while initializing the
+CUDA support.  Support for CUDA registered memory is disabled.
+  cuCtxGetCurrent return value:   %d
+
+NOTE: You can turn off this warning by setting the MCA parameter
+      mpi_common_cuda_warning to 0.
+#
+[cuMemHostRegister failed]
+The call to cuMemHostRegister(%p, %d, 0) failed.
+  cuMemHostRegister return value:   %d
+  Memory Pool: %s
+#
+[cuMemHostUnregister failed]
+The call to cuMemHostUnregister(%p) failed.
+  cuMemHostUnregister return value:   %d
+  Memory Pool: %s
+#

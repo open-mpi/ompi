@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -394,6 +395,13 @@ mca_pml_ob1_send_request_start_btl( mca_pml_ob1_send_request_t* sendreq,
                                                          MCA_PML_OB1_HDR_FLAGS_CONTIG);
             }
         } else {
+#if OPAL_CUDA_SUPPORT
+            /* Do not send anything with first rendezvous message as copying GPU
+             * memory into RNDV message is expensive. */
+            if (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) {
+                size = 0;
+            }
+#endif
             rc = mca_pml_ob1_send_request_start_rndv(sendreq, bml_btl, size, 0);
         }
     }

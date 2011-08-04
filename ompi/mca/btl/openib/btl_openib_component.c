@@ -16,6 +16,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -70,6 +71,7 @@ const char *ibv_get_sysfs_path(void);
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/btl/btl.h"
+#include "ompi/mca/common/cuda/common_cuda.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/base.h"
@@ -542,6 +544,13 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+#if OMPI_CUDA_SUPPORT
+    if (reg->flags & MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM) {
+        mca_common_cuda_register(base, size,
+            openib_reg->base.mpool->mpool_component->mpool_version.mca_component_name);
+    }
+#endif
+
     return OMPI_SUCCESS;
 }
 
@@ -555,6 +564,14 @@ static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
                        __func__, strerror(errno)));
             return OMPI_ERROR;
         }
+
+#if OMPI_CUDA_SUPPORT
+        if (reg->flags & MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM) {
+            mca_common_cuda_unregister(openib_reg->base.base,
+                openib_reg->base.mpool->mpool_component->mpool_version.mca_component_name);
+        }
+#endif
+
     }
     openib_reg->mr = NULL;
     return OMPI_SUCCESS;

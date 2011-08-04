@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -118,6 +119,10 @@ mcacomponent_LTLIBRARIES = $(component)
 mca_btl_openib_la_SOURCES = $(component_sources)
 mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS)
 mca_btl_openib_la_LIBADD = $(btl_openib_LIBS)
+if MCA_ompi_cuda_support
+mca_btl_openib_la_LIBADD += \
+    $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
+endif
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_openib_la_SOURCES = $(lib_sources)
