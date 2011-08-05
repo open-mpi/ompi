@@ -209,11 +209,13 @@ static int orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename, u
     int32_t         sNodes=0;
     char            *cpBuf;
     char            *hostname;
-    orte_node_t     *node = NULL;
+    orte_node_t     *node = NULL, *n2;
     appInfoHdr_t    *apHdr;                 /* ALPS header structure          */
     appInfo_t       *apInfo;                /* ALPS table info structure      */
     cmdDetail_t     *apDet;                 /* ALPS command details           */
     placeList_t     *apSlots;               /* ALPS node specific info        */
+    bool            added;
+    opal_list_item_t *item;
 
     orte_ras_alps_get_appinfo_attempts(&max_appinfo_read_attempts);
     oNow=0;
@@ -331,11 +333,29 @@ static int orte_ras_alps_read_appinfo_file(opal_list_t *nodes, char *filename, u
 
                 node = OBJ_NEW(orte_node_t);
                 node->name = hostname;
-                node->launch_id = sNodes;
+                node->launch_id = apSlots[ix].nid;
                 node->slots_inuse = 0;
                 node->slots_max = 0;
                 node->slots = 1;
-                opal_list_append(nodes, &node->super);
+                /* need to order these node ids so the regex generator
+                 * can properly function
+                 */
+                added = false;
+                for (item = opal_list_get_first(nodes);
+                     item != opal_list_get_end(nodes);
+                     item = opal_list_get_next(item)) {
+                    n2 = (orte_node_t*)item;
+                    if (node->launch_id < n2->launch_id) {
+                        /* insert the new node before this one */
+                        opal_list_insert_pos(nodes, item, &node->super);
+                        added = true;
+                        break;
+                    }
+                }
+                if (!added) {
+                    /* add it to the end */
+                    opal_list_append(nodes, &node->super);
+                }
                 sNodes++;                   /* Increment the node count       */
             }
         }
