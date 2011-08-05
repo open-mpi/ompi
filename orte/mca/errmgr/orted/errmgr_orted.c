@@ -836,7 +836,7 @@ static void failed_start(orte_odls_job_t *jobdat, orte_exit_code_t exit_code)
         }
     }
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
-                         "%s errmgr:hnp: job %s reported incomplete start",
+                         "%s errmgr:orted: job %s reported incomplete start",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jobdat->jobid)));
     return;
