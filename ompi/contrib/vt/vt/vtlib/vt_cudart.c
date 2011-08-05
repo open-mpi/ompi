@@ -526,7 +526,7 @@ void vt_cudartwrap_init(void)
         maxEvtNum = 0;
         trace_events = 0;
         /*asyncBufSize = (sizeof(VTCUDAKernel) > sizeof(VTCUDAMemcpy)) ? sizeof(VTCUDAKernel) : sizeof(VTCUDAMemcpy);*/
-        asyncBufSize = sizeof(VTCUDAKernel);
+        asyncBufSize = sizeof(VTCUDAKernel) + sizeof(VTCUDAknconf);
       }
 #endif
 
@@ -896,7 +896,8 @@ static uint64_t VTCUDAsynchronizeEvt(cudaEvent_t syncEvt)
 
   {
     /* Record and synchronization events on stream 0 (prior to FERMI)
-       see NVIDIA CUDA Programming Guide 2.3, sections 3.2.6.1 and 3.2.6.2
+       see NVIDIA CUDA Programming Guide (4.0), Chapter 3. -> CUDA C Runtime -> 
+       subsection Events (3.2.5.6)
        -> "Events in stream zero are recorded after all preceding tasks/commands
            from all streams are completed by the device." */
     cudaEventRecord_ptr(syncEvt, 0);
@@ -907,14 +908,13 @@ static uint64_t VTCUDAsynchronizeEvt(cudaEvent_t syncEvt)
     /* error handling */
     if(cudaSuccess != ret){
       if(cudaErrorInvalidResourceHandle == ret){
-        vt_warning("[CUDART] Synchronization stop event is invalid. Context has "
-                 "been destroyed, \nbefore asynchronous tasks could be flushed! "
+        vt_warning("[CUDART] Synchronization stop event is invalid. Context has"
+               " been destroyed, \nbefore asynchronous tasks could be flushed! "
                    "Traces might be incomplete!");
-        return (uint64_t)-1;
       }else{
-        vt_error_msg("[CUDA Error <%s>:%i] %s",  __FILE__,__LINE__,
-                     cudaGetErrorString_ptr(ret));
+        checkCUDACall(ret, NULL);
       }
+      return (uint64_t)-1;
     }
   }
 
@@ -2337,11 +2337,11 @@ cudaError_t  cudaLaunch(const char *entry)
 
       /* get kernel element */
       e = getKernelElement(entry);
-      if(e != NULL){       
-
-        /* check if the kernel will be traced on the correct thread */
-        vtDev = VTCUDAgetDevice(ptid);
-
+      
+      /* get the active device */
+      vtDev = VTCUDAgetDevice(ptid);
+      
+      if(e != NULL){
         /* check the kernel configure stack for last configured kernel */
         if(vtDev->conf_stack == vtDev->buf_size){
           ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (entry));
@@ -2360,8 +2360,6 @@ cudaError_t  cudaLaunch(const char *entry)
           kernel->blocksPerGrid = vtKnconf->blocksPerGrid;
           kernel->threadsPerBlock = vtKnconf->threadsPerBlock;
           kernel->strm = vtKnconf->strm;
-
-          vtDev->conf_stack = vtDev->conf_stack + sizeof(VTCUDAknconf);
         }
 
         vt_cntl_msg(3, "[CUDART] Launch '%s' (device %d, tid %d, rid %d, strm %d)",
@@ -2404,8 +2402,13 @@ cudaError_t  cudaLaunch(const char *entry)
 #endif
           checkCUDACall(cudaEventRecord_ptr(kernel->evt->strt, kernel->strm->stream),
                       "cudaEventRecord(startEvt, strmOfLastKernel) failed!");
-      }
-    }
+      
+      }/* e != NULL */
+      
+      /* pop this kernel from configure stack */
+      vtDev->conf_stack = vtDev->conf_stack + sizeof(VTCUDAknconf);
+      
+    } /* trace_kernels && do_trace */
   }
 
   /* call cudaLaunch itself */

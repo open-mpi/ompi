@@ -4,6 +4,7 @@
 	- process and thread buffer size can be explicitly specified by the user
 	  via the environment variables VT_BUFFER_SIZE and VT_THREAD_BUFFER_SIZE
 	- improved filtering of CUDA kernels
+	- enhanced creating global definitions in vtunify
 	- fixed CUDA kernel launch configuration
 	- fixed unification of local process group definitions
 	- fixed wrapper generation for MPI implementations which don't support
