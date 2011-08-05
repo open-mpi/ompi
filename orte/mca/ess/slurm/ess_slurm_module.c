@@ -386,7 +386,11 @@ static int slurm_set_name(void)
     if (NULL != orte_process_info.nodename) {
         free(orte_process_info.nodename);
     }
-    orte_process_info.nodename = getenv("SLURMD_NODENAME");
+    if (NULL == (tmp = getenv("SLURMD_NODENAME"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
+    orte_process_info.nodename = strdup(tmp);
 
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
