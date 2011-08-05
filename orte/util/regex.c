@@ -130,6 +130,11 @@ int orte_regex_create(char *nodelist, char **regexp)
             ndreg = OBJ_NEW(orte_regex_node_t);
             ndreg->prefix = strdup(node);
             opal_list_append(&nodeids, &ndreg->super);
+            /* move to the next posn */
+            if (NULL == cptr) {
+                break;
+            }
+            node = cptr + 1;
             continue;
         }
         /* convert the digits and get any suffix */
