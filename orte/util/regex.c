@@ -150,7 +150,14 @@ int orte_regex_create(char *nodelist, char **regexp)
              !found && item != opal_list_get_end(&nodeids);
              item = opal_list_get_next(item)) {
             ndreg = (orte_regex_node_t*)item;
-            if (0 != strcmp(prefix, ndreg->prefix)) {
+            if (0 < strlen(prefix) && NULL == ndreg->prefix) {
+                continue;
+            }
+            if (0 == strlen(prefix) && NULL != ndreg->prefix) {
+                continue;
+            }
+            if (0 < strlen(prefix) && NULL != ndreg->prefix
+                && 0 != strcmp(prefix, ndreg->prefix)) {
                 continue;
             }
             if (NULL == suffix && NULL != ndreg->suffix) {
@@ -159,7 +166,8 @@ int orte_regex_create(char *nodelist, char **regexp)
             if (NULL != suffix && NULL == ndreg->suffix) {
                 continue;
             }
-            if (0 != strcmp(suffix, ndreg->suffix)) {
+            if (NULL != suffix && NULL != ndreg->suffix &&
+                0 != strcmp(suffix, ndreg->suffix)) {
                 continue;
             }
             if (numdigits != ndreg->num_digits) {
@@ -195,7 +203,9 @@ int orte_regex_create(char *nodelist, char **regexp)
         if (!found) {
             /* need to add it */
             ndreg = OBJ_NEW(orte_regex_node_t);
-            ndreg->prefix = strdup(prefix);
+            if (0 < strlen(prefix)) {
+                ndreg->prefix = strdup(prefix);
+            }
             if (NULL != suffix) {
                 ndreg->suffix = strdup(suffix);
             }
