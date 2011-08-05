@@ -1516,9 +1516,9 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          */
         if (ORTE_SUCCESS != (rc = setup_path(app))) {
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:launch:setup_path failed with error %s",
+                                 "%s odls:launch:setup_path failed with error %s(%d)",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_ERROR_NAME(rc)));
+                                 ORTE_ERROR_NAME(rc), rc));
             /* do not ERROR_LOG this failure - it will be reported
              * elsewhere. The launch is going to fail. Since we could have
              * multiple app_contexts, we need to ensure that we flag only
@@ -2805,13 +2805,15 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
                      * at least have a value that will let us eventually wakeup
                      */
                     child->state = ORTE_PROC_STATE_TERMINATED;
+                    /* ensure we realize that the waitpid will never come, if
+                     * it already hasn't
+                     */
+                    child->waitpid_recvd = true;
+                    child->pid = 0;
+                    goto CLEANUP;
+                } else {
+                    continue;
                 }
-                /* ensure we realize that the waitpid will never come, if
-                 * it already hasn't
-                 */
-                child->waitpid_recvd = true;
-                child->pid = 0;
-                goto CLEANUP;
             }
 
             /* mark the child as "killed" since the waitpid will
