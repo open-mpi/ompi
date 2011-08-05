@@ -14,6 +14,7 @@
 #define _VT_UNIFY_HANDLERS_H_
 
 #include "vt_unify_defs_recs.h"
+#include "vt_unify_lvector.hh"
 #include "vt_unify_markers.h"
 
 #include "otf.h"
@@ -25,68 +26,68 @@ void Handle_KeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs );
 // definition record handlers
 //
 
-int Handle_DefComment( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefComment( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, const char * comment );
 
-int Handle_DefCreator( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefCreator( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, const char * creator );
 
-int Handle_DefTimerResolution( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefTimerResolution( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint64_t ticksPerSecond );
 
-int Handle_DefTimeRange( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefTimeRange( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint64_t minTime, uint64_t maxTime );
 
-int Handle_DefProcess( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefProcess( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * name,
        uint32_t parent );
 
-int Handle_DefProcessGroup( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefProcessGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * name,
        uint32_t n, uint32_t * array );
 
-int Handle_DefSclFile( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefSclFile( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * filename );
 
-int Handle_DefScl( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefScl( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, uint32_t sclfile,
        uint32_t sclline );
 
-int Handle_DefFileGroup( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefFileGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * name );
 
-int Handle_DefFile( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefFile( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * name,
        uint32_t group );
 
-int Handle_DefFunctionGroup( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefFunctionGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * name );
 
-int Handle_DefFunction( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefFunction( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * name, uint32_t group,
        uint32_t scltoken );
 
-int Handle_DefCollOp( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefCollOp( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t collOp, const char * name, uint32_t type );
 
-int Handle_DefCounterGroup( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefCounterGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * name );
 
-int Handle_DefCounter( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefCounter( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * name,
        uint32_t properties, uint32_t countergroup, const char * unit );
 
-int Handle_DefKeyValue( std::vector<DefRec_BaseS*> * locDefs,
+int Handle_DefKeyValue( LargeVectorC<DefRec_BaseS*> * locDefs,
        uint32_t streamid, uint32_t key, OTF_Type type, const char * name,
        const char * description );
 
 // marker record handlers
 //
 
-int Handle_DefMarker( std::vector<DefRec_DefMarkerS*> * locDefs,
+int Handle_DefMarker( LargeVectorC<DefRec_DefMarkerS*> * locDefs,
        uint32_t streamid, uint32_t deftoken, const char * name, uint32_t type );
 
-int Handle_MarkerSpot( std::vector<MarkersC::MarkerSpotS*> * locSpots,
+int Handle_MarkerSpot( LargeVectorC<MarkersC::MarkerSpotS*> * locSpots,
        uint64_t time, uint32_t proc, uint32_t marker, const char * text );
 
 // event record handlers

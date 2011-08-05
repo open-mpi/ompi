@@ -41,8 +41,7 @@ TokenFactoryScopeC<T>::create( const void * localDef )
    uint32_t global_token;
 
    // search for already created global definition
-   typename std::set<T>::const_iterator it =
-      std::find( m_globDefs->begin(), m_globDefs->end(), local_def );
+   typename std::set<T>::const_iterator it = m_globDefs->find( local_def );
 
    // get its global token, if found
    //

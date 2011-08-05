@@ -26,6 +26,8 @@ class LargeVectorC
 public:
 
    typedef typename std::allocator<T>::size_type size_type;
+   typedef typename std::vector<T>::iterator iterator;
+   typedef typename std::vector<T>::const_iterator const_iterator;
 
    // default chunk size (num. of elements to pre-allocate)
    static const size_type DEFAULT_CHUNK_SIZE = 100000;
@@ -69,6 +71,21 @@ public:
       m_size = 0;
    }
 
+   // get iterator to the first element
+   typename std::vector<T>::iterator begin()
+   {
+      return m_vector.begin();
+   }
+
+   // get iterator to the element following the last element
+   typename std::vector<T>::iterator end()
+   {
+      if( m_size == 0 )
+         return m_vector.end();
+      else
+         return m_vector.begin() + m_size;
+   }
+
    // access the first element
    T & front()
    {
@@ -96,6 +113,13 @@ public:
 
    // get reference to element at specific location
    T & operator[]( size_type pos )
+   {
+      assert( pos < m_size );
+      return m_vector[pos];
+   }
+
+   // get reference to element at specific location (const version)
+   const T & operator[]( size_type pos ) const
    {
       assert( pos < m_size );
       return m_vector[pos];

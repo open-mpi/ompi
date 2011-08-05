@@ -395,14 +395,14 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
    const VT_MPI_INT msg_tag = 100;
 
    // minimum message size
-   const VT_MPI_INT min_msg_size = 1024 * 1024;
+   const VT_MPI_INT min_msg_size = 100 * 1024 * 1024;
 #endif // VT_MPI
 
    // read local definitions of each given stream
    //
 
    // vector of local definitions
-   std::vector<DefRec_BaseS*> loc_defs;
+   LargeVectorC<DefRec_BaseS*> loc_defs;
 
    for( uint32_t i = 0; i < streamIds.size(); i++ )
    {
@@ -825,7 +825,7 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
 
 bool
 DefinitionsC::readLocal( const uint32_t & streamId,
-                         std::vector<DefRec_BaseS*> & locDefs )
+                         LargeVectorC<DefRec_BaseS*> & locDefs )
 {
    bool error = false;
 
@@ -1022,7 +1022,7 @@ DefinitionsC::readLocal( const uint32_t & streamId,
 }
 
 bool
-DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
+DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
 {
    bool error = false;
 
@@ -1034,7 +1034,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
       {
          case DEF_REC_TYPE__DefComment:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefCommentS * loc_def_entry =
                static_cast<DefRec_DefCommentS*>( locDefs[i] );
 
@@ -1045,7 +1045,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefCreator:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefCreatorS * loc_def_entry =
                static_cast<DefRec_DefCreatorS*>( locDefs[i] );
 
@@ -1062,7 +1062,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefTimerResolution:
          {
-            // get reference to local definitions entry
+            // get local definitions entry
             const DefRec_DefTimerResolutionS * loc_def_entry =
                static_cast<DefRec_DefTimerResolutionS*>( locDefs[i] );
 
@@ -1079,7 +1079,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefTimeRange:
          {
-            // get reference to local definitions entry
+            // get local definitions entry
             const DefRec_DefTimeRangeS * loc_def_entry =
                static_cast<DefRec_DefTimeRangeS*>( locDefs[i] );
 
@@ -1091,7 +1091,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefProcess:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefProcessS * loc_def_entry =
                static_cast<DefRec_DefProcessS*>( locDefs[i] );
 
@@ -1103,7 +1103,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefProcessGroup:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefProcessGroupS * loc_def_entry =
                static_cast<DefRec_DefProcessGroupS*>( locDefs[i] );
 
@@ -1114,7 +1114,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefSclFile:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefSclFileS * loc_def_entry =
                static_cast<DefRec_DefSclFileS*>( locDefs[i] );
 
@@ -1129,7 +1129,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefScl:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefSclS * loc_def_entry =
                static_cast<DefRec_DefSclS*>( locDefs[i] );
 
@@ -1156,7 +1156,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefFileGroup:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefFileGroupS * loc_def_entry =
                static_cast<DefRec_DefFileGroupS*>( locDefs[i] );
 
@@ -1171,7 +1171,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefFile:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefFileS * loc_def_entry =
                static_cast<DefRec_DefFileS*>( locDefs[i] );
 
@@ -1198,7 +1198,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefFunctionGroup:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefFunctionGroupS * loc_def_entry =
                static_cast<DefRec_DefFunctionGroupS*>( locDefs[i] );
 
@@ -1213,7 +1213,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefFunction:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefFunctionS * loc_def_entry =
                static_cast<DefRec_DefFunctionS*>( locDefs[i] );
 
@@ -1255,7 +1255,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefCollOp:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefCollOpS * loc_def_entry =
                static_cast<DefRec_DefCollOpS*>( locDefs[i] );
 
@@ -1270,7 +1270,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefCounterGroup:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefCounterGroupS * loc_def_entry =
                static_cast<DefRec_DefCounterGroupS*>( locDefs[i] );
 
@@ -1285,7 +1285,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefCounter:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefCounterS * loc_def_entry =
                static_cast<DefRec_DefCounterS*>( locDefs[i] );
 
@@ -1312,7 +1312,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefKeyValue:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefKeyValueS * loc_def_entry =
                static_cast<DefRec_DefKeyValueS*>( locDefs[i] );
 
@@ -1333,6 +1333,18 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
    }
 
    return !error;
+}
+
+// function for resorting global definitions based on T::SortS
+template <class T>
+static void resort_glob_defs( const std::set<T> & in,
+   std::set<const T*, typename T::SortS> & out )
+{
+   for( typename std::set<T>::const_iterator it =
+        in.begin(); it != in.end(); it++ )
+   {
+      out.insert( &(*it) );
+   }
 }
 
 bool
@@ -1438,16 +1450,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefComment:
             {
+               // resort definition comments
+               //
+
+               typedef
+                  std::set<const DefRec_DefCommentS*, DefRec_DefCommentS::SortS>
+                     resorted_comments_t;
+
+               resorted_comments_t resorted_comments;
+
+               resort_glob_defs<DefRec_DefCommentS>(
+                  m_globDefs.comments, resorted_comments );
+
                // iterate over all definition comments
-               for( std::set<DefRec_DefCommentS>::const_iterator it =
-                    m_globDefs.comments.begin();
-                    it != m_globDefs.comments.end() && !error; it++ )
+               for( resorted_comments_t::const_iterator it =
+                    resorted_comments.begin(); it != resorted_comments.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefCommentS record = *it;
+                  DefRec_DefCommentS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook(
@@ -1464,16 +1488,27 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefProcess:
             {
+               // resort process definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefProcessS*, DefRec_DefProcessS::SortS>
+                     resorted_procs_t;
+
+               resorted_procs_t resorted_procs;
+
+               resort_glob_defs<DefRec_DefProcessS>(
+                  m_globDefs.procs, resorted_procs );
+
                // iterate over all process definitions
-               for( std::set<DefRec_DefProcessS>::const_iterator it =
-                    m_globDefs.procs.begin();
-                    it != m_globDefs.procs.end() && !error; it++ )
+               for( resorted_procs_t::const_iterator it =
+                    resorted_procs.begin(); it != resorted_procs.end(); it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefProcessS record = *it;
+                  DefRec_DefProcessS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefProcess,
@@ -1491,16 +1526,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefProcessGroup:
             {
+               // resort process group definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefProcessGroupS*, DefRec_DefProcessGroupS::SortS>
+                     resorted_proc_grps_t;
+
+               resorted_proc_grps_t resorted_proc_grps;
+
+               resort_glob_defs<DefRec_DefProcessGroupS>(
+                  m_globDefs.procGrps, resorted_proc_grps );
+
                // iterate over all process group definitions
-               for( std::set<DefRec_DefProcessGroupS>::const_iterator it =
-                    m_globDefs.procGrps.begin();
-                    it != m_globDefs.procGrps.end() && !error; it++ )
+               for( resorted_proc_grps_t::const_iterator it =
+                    resorted_proc_grps.begin(); it != resorted_proc_grps.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefProcessGroupS record = *it;
+                  DefRec_DefProcessGroupS record = **it;
 
                   // inflate group members
                   m_procGrps->inflateMembers( record.members );
@@ -1535,16 +1582,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefSclFile:
             {
+               // resort scl file definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefSclFileS*, DefRec_DefSclFileS::SortS>
+                     resorted_scl_files_t;
+
+               resorted_scl_files_t resorted_scl_files;
+
+               resort_glob_defs<DefRec_DefSclFileS>(
+                  m_globDefs.sclFiles, resorted_scl_files );
+
                // iterate over all scl file definitions
-               for( std::set<DefRec_DefSclFileS>::const_iterator it =
-                    m_globDefs.sclFiles.begin();
-                    it != m_globDefs.sclFiles.end() && !error; it++ )
+               for( resorted_scl_files_t::const_iterator it =
+                    resorted_scl_files.begin(); it != resorted_scl_files.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefSclFileS record = *it;
+                  DefRec_DefSclFileS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefSclFile,
@@ -1562,16 +1621,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefScl:
             {
+               // resort scl definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefSclS*, DefRec_DefSclS::SortS>
+                     resorted_scls_t;
+
+               resorted_scls_t resorted_scls;
+
+               resort_glob_defs<DefRec_DefSclS>(
+                  m_globDefs.scls, resorted_scls );
+
                // iterate over all scl definitions
-               for( std::set<DefRec_DefSclS>::const_iterator it =
-                    m_globDefs.scls.begin();
-                    it != m_globDefs.scls.end() && !error; it++ )
+               for( resorted_scls_t::const_iterator it =
+                    resorted_scls.begin(); it != resorted_scls.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefSclS record = *it;
+                  DefRec_DefSclS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefScl, 5,
@@ -1589,16 +1660,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefFileGroup:
             {
+               // resort file group definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefFileGroupS*, DefRec_DefFileGroupS::SortS>
+                     resorted_file_grps_t;
+
+               resorted_file_grps_t resorted_file_grps;
+
+               resort_glob_defs<DefRec_DefFileGroupS>(
+                  m_globDefs.fileGrps, resorted_file_grps );
+
                // iterate over all file group definitions
-               for( std::set<DefRec_DefFileGroupS>::const_iterator it =
-                    m_globDefs.fileGrps.begin();
-                    it != m_globDefs.fileGrps.end() && !error; it++ )
+               for( resorted_file_grps_t::const_iterator it =
+                    resorted_file_grps.begin(); it != resorted_file_grps.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefFileGroupS record = *it;
+                  DefRec_DefFileGroupS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefFileGroup,
@@ -1615,16 +1698,27 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefFile:
             {
+               // resort file definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefFileS*, DefRec_DefFileS::SortS>
+                     resorted_files_t;
+
+               resorted_files_t resorted_files;
+
+               resort_glob_defs<DefRec_DefFileS>(
+                  m_globDefs.files, resorted_files );
+
                // iterate over all file definitions
-               for( std::set<DefRec_DefFileS>::const_iterator it =
-                    m_globDefs.files.begin();
-                    it != m_globDefs.files.end() && !error; it++ )
+               for( resorted_files_t::const_iterator it =
+                    resorted_files.begin(); it != resorted_files.end(); it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefFileS record = *it;
+                  DefRec_DefFileS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefFile, 5,
@@ -1642,16 +1736,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefFunctionGroup:
             {
+               // resort function group definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefFunctionGroupS*, DefRec_DefFunctionGroupS::SortS>
+                     resorted_func_grps_t;
+
+               resorted_func_grps_t resorted_func_grps;
+
+               resort_glob_defs<DefRec_DefFunctionGroupS>(
+                  m_globDefs.funcGrps, resorted_func_grps );
+
                // iterate over all function group definitions
-               for( std::set<DefRec_DefFunctionGroupS>::const_iterator
-                    it = m_globDefs.funcGrps.begin();
-                    it != m_globDefs.funcGrps.end() && !error; it++ )
+               for( resorted_func_grps_t::const_iterator it =
+                    resorted_func_grps.begin(); it != resorted_func_grps.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefFunctionGroupS record = *it;
+                  DefRec_DefFunctionGroupS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook(
@@ -1668,16 +1774,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefFunction:
             {
+               // resort function definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefFunctionS*, DefRec_DefFunctionS::SortS>
+                    resorted_funcs_t;
+
+               resorted_funcs_t resorted_funcs;
+
+               resort_glob_defs<DefRec_DefFunctionS>(
+                  m_globDefs.funcs, resorted_funcs );
+
                // iterate over all function definitions
-               for( std::set<DefRec_DefFunctionS>::const_iterator it =
-                    m_globDefs.funcs.begin();
-                    it != m_globDefs.funcs.end() && !error; it++ )
+               for( resorted_funcs_t::const_iterator it =
+                    resorted_funcs.begin(); it != resorted_funcs.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefFunctionS record = *it;
+                  DefRec_DefFunctionS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefFunction,
@@ -1695,16 +1813,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefCollOp:
             {
+               // resort collop. definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefCollOpS*, DefRec_DefCollOpS::SortS>
+                    resorted_collops_t;
+
+               resorted_collops_t resorted_collops;
+
+               resort_glob_defs<DefRec_DefCollOpS>(
+                  m_globDefs.collops, resorted_collops );
+
                // iterate over all collop. definitions
-               for( std::set<DefRec_DefCollOpS>::const_iterator
-                    it = m_globDefs.collops.begin();
-                    it != m_globDefs.collops.end() && !error; it++ )
+               for( resorted_collops_t::const_iterator it =
+                    resorted_collops.begin(); it != resorted_collops.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefCollOpS record = *it;
+                  DefRec_DefCollOpS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefCollOp, 5,
@@ -1722,16 +1852,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefCounterGroup:
             {
+               // resort counter group definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefCounterGroupS*, DefRec_DefCounterGroupS::SortS>
+                     resorted_cntr_grps_t;
+
+               resorted_cntr_grps_t resorted_cntr_grps;
+
+               resort_glob_defs<DefRec_DefCounterGroupS>(
+                  m_globDefs.cntrGrps, resorted_cntr_grps );
+
                // iterate over all counter group definitions
-               for( std::set<DefRec_DefCounterGroupS>::const_iterator
-                    it = m_globDefs.cntrGrps.begin();
-                    it != m_globDefs.cntrGrps.end() && !error; it++ )
+               for( resorted_cntr_grps_t::const_iterator it =
+                    resorted_cntr_grps.begin(); it != resorted_cntr_grps.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefCounterGroupS record = *it;
+                  DefRec_DefCounterGroupS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook(
@@ -1748,16 +1890,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefCounter:
             {
+               // resort counter definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefCounterS*, DefRec_DefCounterS::SortS>
+                     resorted_cntrs_t;
+
+               resorted_cntrs_t resorted_cntrs;
+
+               resort_glob_defs<DefRec_DefCounterS>(
+                  m_globDefs.cntrs, resorted_cntrs );
+
                // iterate over all counter definitions
-               for( std::set<DefRec_DefCounterS>::const_iterator it =
-                    m_globDefs.cntrs.begin();
-                    it != m_globDefs.cntrs.end() && !error; it++ )
+               for( resorted_cntrs_t::const_iterator it =
+                    resorted_cntrs.begin(); it != resorted_cntrs.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefCounterS record = *it;
+                  DefRec_DefCounterS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefCounter,
@@ -1777,16 +1931,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefKeyValue:
             {
-               // iterate over all function definitions
-               for( std::set<DefRec_DefKeyValueS>::const_iterator it =
-                    m_globDefs.keyVals.begin();
-                    it != m_globDefs.keyVals.end() && !error; it++ )
+               // resort key-value definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefKeyValueS*, DefRec_DefKeyValueS::SortS>
+                     resorted_keyvals_t;
+
+               resorted_keyvals_t resorted_keyvals;
+
+               resort_glob_defs<DefRec_DefKeyValueS>(
+                  m_globDefs.keyVals, resorted_keyvals );
+
+               // iterate over all key-value definitions
+               for( resorted_keyvals_t::const_iterator it =
+                    resorted_keyvals.begin(); it != resorted_keyvals.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefKeyValueS record = *it;
+                  DefRec_DefKeyValueS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefKeyValue,
@@ -1940,8 +2106,7 @@ DefinitionsC::CommentsC::processLocal(
 
          // search for already created global definition comment
          std::set<DefRec_DefCommentS>::const_iterator it =
-            std::find( glob_comments.begin(), glob_comments.end(),
-                       new_comment );
+            glob_comments.find( new_comment );
 
          // add global definition comment to set, if not found
          if( it == glob_comments.end() )

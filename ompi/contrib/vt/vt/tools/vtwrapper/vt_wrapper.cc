@@ -748,7 +748,7 @@ Wrapper::parseCommandLine( int argc, char ** argv )
       // -vt:inst, -vt:opari, -vt:tau, -vt:pdt
       // (processed above; ignore here)
       //
-      if( arg.compare("-vt:help") == 0 
+      if( arg.compare("-vt:help") == 0
           || arg.compare("-vt:version") == 0
           || arg.compare("-vt:show") == 0
           || arg.compare("-vt:verbose") == 0
@@ -772,10 +772,13 @@ Wrapper::parseCommandLine( int argc, char ** argv )
            i++;
       }
       //
-      // -vt:<cc|cxx|f77|f90> <cmd>
+      // -vt:<cc|CC|c++|cxx|f77|f90> <cmd>
       //
-      else if( (m_pConfig->m_eLangType == LANG_CC && arg.compare("-vt:cc") == 0)
-               || (m_pConfig->m_eLangType == LANG_CXX && arg.compare("-vt:cxx") == 0)
+      else if( ( m_pConfig->m_eLangType == LANG_CC && arg.compare("-vt:cc") == 0 )
+               || ( m_pConfig->m_eLangType == LANG_CXX &&
+                    ( arg.compare("-vt:CC") == 0
+                      || arg.compare("-vt:c++") == 0
+                      || arg.compare("-vt:cxx") == 0 ) )
                || (m_pConfig->m_eLangType == LANG_F77 && arg.compare("-vt:f77") == 0)
                || (m_pConfig->m_eLangType == LANG_F90 && arg.compare("-vt:f90") == 0) )
       {

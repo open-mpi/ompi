@@ -17,10 +17,10 @@
 
 #include "vt_unify.h"
 #include "vt_unify_defs_recs.h"
+#include "vt_unify_lvector.hh"
 #include "vt_unify_tkfac.h"
 
 #include <set>
-#include <vector>
 
 //
 // MarkersC class
@@ -87,8 +87,8 @@ private:
 
    // read local markers of certain stream
    bool readLocal( const uint32_t & streamId,
-                   std::vector<DefRec_DefMarkerS*> & locDefs,
-                   std::vector<MarkerSpotS*> & locSpots );
+           LargeVectorC<DefRec_DefMarkerS*> & locDefs,
+           LargeVectorC<MarkerSpotS*> & locSpots );
 
    // write global markers
    bool writeGlobal();
@@ -108,7 +108,7 @@ private:
    std::set<DefRec_DefMarkerS> m_globDefs;
 
    // global marker spots
-   std::vector<MarkerSpotS> m_globSpots;
+   LargeVectorC<MarkerSpotS> m_globSpots;
 
 };
 

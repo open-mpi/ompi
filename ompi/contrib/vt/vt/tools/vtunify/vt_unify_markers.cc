@@ -194,10 +194,10 @@ MarkersC::readLocal()
    VPrint( 2, " Reading local markers\n" );
 
    // vector of local marker definitions
-   std::vector<DefRec_DefMarkerS*> loc_defs;
+   LargeVectorC<DefRec_DefMarkerS*> loc_defs;
 
    // vector of local marker spots
-   std::vector<MarkerSpotS*> loc_spots;
+   LargeVectorC<MarkerSpotS*> loc_spots;
 
    do
    {
@@ -316,8 +316,8 @@ MarkersC::readLocal()
 
 bool
 MarkersC::readLocal( const uint32_t & streamId,
-                     std::vector<DefRec_DefMarkerS*> & locDefs,
-                     std::vector<MarkerSpotS*> & locSpots )
+    LargeVectorC<DefRec_DefMarkerS*> & locDefs,
+    LargeVectorC<MarkerSpotS*> & locSpots )
 {
    bool error = false;
 
@@ -432,16 +432,33 @@ MarkersC::writeGlobal()
 
    do
    {
+      // resort marker definitions
+      //
+
+      typedef
+         std::set<const DefRec_DefMarkerS*, DefRec_DefMarkerS::SortS>
+            resorted_markers_t;
+
+      resorted_markers_t resorted_markers;
+
+      for( std::set<DefRec_DefMarkerS>::const_iterator it =
+           m_globDefs.begin(); it != m_globDefs.end(); it++ )
+      {
+         resorted_markers.insert( &(*it) );
+      }
+
       // write global marker definition records
       //
-      for( std::set<DefRec_DefMarkerS>::const_iterator it =
-           m_globDefs.begin(); it != m_globDefs.end() && !error; it++ )
+
+      // iterate over all marker definitions
+      for( resorted_markers_t::const_iterator it = resorted_markers.begin();
+           it != resorted_markers.end(); it++ )
       {
          bool do_write = true;
 
          // get copy of marker def. record in order that hook(s) can
          // modify it
-         DefRec_DefMarkerS record = *it;
+         DefRec_DefMarkerS record = **it;
 
          // trigger write record hook
          theHooks->triggerWriteRecordHook( HooksC::Record_DefMarker, 5,

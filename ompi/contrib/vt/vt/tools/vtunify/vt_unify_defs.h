@@ -14,6 +14,7 @@
 #define _VT_UNIFY_DEFS_H_
 
 #include "vt_unify_defs_recs.h"
+#include "vt_unify_lvector.hh"
 #include "vt_unify_usrcom.h"
 
 #include "vt_inttypes.h"
@@ -341,11 +342,11 @@ private:
 
    // read local definitions of certain single stream
    bool readLocal( const uint32_t & streamId,
-                   std::vector<DefRec_BaseS*> & locDefs );
+                   LargeVectorC<DefRec_BaseS*> & locDefs );
 
    // process local definitions
    // (i.e. create global tokens)
-   bool processLocal( const std::vector<DefRec_BaseS*> & locDefs );
+   bool processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs );
 
    // write global definitions
    bool writeGlobal();

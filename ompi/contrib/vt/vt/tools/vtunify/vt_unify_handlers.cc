@@ -58,7 +58,7 @@ Handle_KeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
 //
 
 int
-Handle_DefComment( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefComment( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, const char * comment )
 {
    // get common string identifiers as std::string's for more convenient use
@@ -148,7 +148,7 @@ Handle_DefComment( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefCreator( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefCreator( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, const char * creator )
 {
    std::string _creator(creator);
@@ -164,7 +164,7 @@ Handle_DefCreator( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefTimerResolution( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefTimerResolution( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint64_t ticksPerSecond )
 {
    // trigger read record hook
@@ -178,7 +178,7 @@ Handle_DefTimerResolution( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefTimeRange( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefTimeRange( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint64_t minTime, uint64_t maxTime )
 {
    // trigger read record hook
@@ -193,7 +193,7 @@ Handle_DefTimeRange( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefProcess( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefProcess( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t parent )
 {
    std::string _name(name);
@@ -209,7 +209,7 @@ Handle_DefProcess( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefProcessGroup( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefProcessGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t n,
    uint32_t * array )
 {
@@ -302,7 +302,7 @@ Handle_DefProcessGroup( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefSclFile( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefSclFile( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, const char * filename )
 {
    std::string _filename(filename);
@@ -319,7 +319,7 @@ Handle_DefSclFile( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefScl( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefScl( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, uint32_t sclfile, uint32_t sclline )
 {
    // trigger read record hook
@@ -334,7 +334,7 @@ Handle_DefScl( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefFileGroup( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefFileGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, const char * name )
 {
    std::string _name(name);
@@ -351,7 +351,7 @@ Handle_DefFileGroup( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefFile( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefFile( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t group )
 {
    std::string _name(name);
@@ -368,7 +368,7 @@ Handle_DefFile( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefFunctionGroup( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefFunctionGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, const char * name )
 {
    std::string _name(name);
@@ -385,7 +385,7 @@ Handle_DefFunctionGroup( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefFunction( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefFunction( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t group,
    uint32_t scltoken )
 {
@@ -404,7 +404,7 @@ Handle_DefFunction( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefCollOp( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefCollOp( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t collOp, const char * name, uint32_t type )
 {
    std::string _name(name);
@@ -421,7 +421,7 @@ Handle_DefCollOp( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefCounterGroup( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefCounterGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, const char * name )
 {
    std::string _name(name);
@@ -438,7 +438,7 @@ Handle_DefCounterGroup( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefCounter( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefCounter( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t properties,
    uint32_t countergroup, const char * unit )
 {
@@ -458,7 +458,7 @@ Handle_DefCounter( std::vector<DefRec_BaseS*> * locDefs,
 }
 
 int
-Handle_DefKeyValue( std::vector<DefRec_BaseS*> * locDefs,
+Handle_DefKeyValue( LargeVectorC<DefRec_BaseS*> * locDefs,
    uint32_t streamid, uint32_t key, OTF_Type type, const char * name,
    const char * description )
 {
@@ -479,7 +479,7 @@ Handle_DefKeyValue( std::vector<DefRec_BaseS*> * locDefs,
 //
 
 int
-Handle_DefMarker( std::vector<DefRec_DefMarkerS*> * locDefs,
+Handle_DefMarker( LargeVectorC<DefRec_DefMarkerS*> * locDefs,
                   uint32_t streamid, uint32_t deftoken, const char * name,
                   uint32_t type )
 {
@@ -497,7 +497,7 @@ Handle_DefMarker( std::vector<DefRec_DefMarkerS*> * locDefs,
 }
 
 int
-Handle_MarkerSpot( std::vector<MarkersC::MarkerSpotS*> * locSpots,
+Handle_MarkerSpot( LargeVectorC<MarkersC::MarkerSpotS*> * locSpots,
                    uint64_t time, uint32_t proc, uint32_t marker,
                    const char * text )
 {
