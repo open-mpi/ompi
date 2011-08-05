@@ -220,19 +220,53 @@ int orte_regex_create(char *nodelist, char **regexp)
         
         /* if no ranges, then just add the name */
         if (0 == opal_list_get_size(&ndreg->ranges)) {
-            /* solitary node */
-            asprintf(&tmp, "%s", ndreg->prefix);
+            if (NULL != ndreg->prefix) {
+                /* solitary node */
+                asprintf(&tmp, "%s", ndreg->prefix);
+                opal_argv_append_nosize(&regexargs, tmp);
+                free(tmp);
+            }
+            OBJ_RELEASE(ndreg);
+            continue;
+        }
+        /* must be at least one */
+        range = (orte_regex_range_t*)opal_list_get_first(&ndreg->ranges);
+        /* if there is only one node in the range, then
+         * just add its name
+         */
+        if (1 == range->cnt) {
+            if (NULL != ndreg->suffix) {
+                if (NULL != ndreg->prefix) {
+                    asprintf(&tmp, "%s%d%s", ndreg->prefix, range->start, ndreg->suffix);
+                } else {
+                    asprintf(&tmp, "%d%s", range->start, ndreg->suffix);
+                }
+            } else {
+                if (NULL != ndreg->prefix) {
+                    asprintf(&tmp, "%s%d", ndreg->prefix, range->start);
+                } else {
+                    asprintf(&tmp, "%d", range->start);
+                }
+            }
             opal_argv_append_nosize(&regexargs, tmp);
             free(tmp);
             OBJ_RELEASE(ndreg);
             continue;
         }
         /* start the regex for this nodeid with the prefix */
-        asprintf(&tmp, "%s[%d:", ndreg->prefix, ndreg->num_digits);
+        if (NULL != ndreg->prefix) {
+            asprintf(&tmp, "%s[%d:", ndreg->prefix, ndreg->num_digits);
+        } else {
+            asprintf(&tmp, "[%d:", ndreg->num_digits);
+        }
         /* add the ranges */
         while (NULL != (itm2 = opal_list_remove_first(&ndreg->ranges))) {
             range = (orte_regex_range_t*)itm2;
-            asprintf(&tmp2, "%s%d-%d,", tmp, range->start, range->start + range->cnt - 1);
+            if (1 == range->cnt) {
+                asprintf(&tmp2, "%s%d,", tmp, range->start);
+            } else {
+                asprintf(&tmp2, "%s%d-%d,", tmp, range->start, range->start + range->cnt - 1);
+            }
             free(tmp);
             tmp = tmp2;
             OBJ_RELEASE(range);
@@ -310,7 +344,7 @@ int orte_regex_extract_node_names(char *regexp, char ***names)
                 break;
             }
         }
-        if (i == 0) {
+        if (i == 0 && !found_range) {
             /* we found a special character at the beginning of the string */
             orte_show_help("help-regex.txt", "regex:special-char", true, regexp);
             free(orig);
