@@ -255,16 +255,10 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
     opal_argv_free(nodelist_argv);
-
-    /* if we are using all allocated nodes, then alps
-     * doesn't need a nodelist
-     */
-    if (map->num_new_daemons < orte_num_allocated_nodes) {
-        opal_argv_append(&argc, &argv, "-L");
-        asprintf(&tmp, "%s", nodelist_flat);
-        opal_argv_append(&argc, &argv, tmp);
-        free(tmp);
-    }
+    opal_argv_append(&argc, &argv, "-L");
+    asprintf(&tmp, "%s", nodelist_flat);
+    opal_argv_append(&argc, &argv, tmp);
+    free(tmp);
 
 
     /*
