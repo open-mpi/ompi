@@ -25,7 +25,7 @@ static void ompi_mtl_mxm_send_completion_cb(void *context)
         free(mtl_mxm_request->buf);
     }
 
-    mtl_mxm_request->super.ompi_req->req_status.MPI_ERROR  = ompi_mtl_mxm_to_mpi_status(mtl_mxm_request->mxm_base_request->error);
+    mtl_mxm_request->super.ompi_req->req_status.MPI_ERROR  = ompi_mtl_mxm_to_mpi_status(mtl_mxm_request->mxm.base.error);
 
     mtl_mxm_request->super.completion_callback(&mtl_mxm_request->super);
 }
@@ -93,7 +93,7 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
         return ret;
     }
 
-    mxm_send_req = (mxm_send_req_t *) mtl_mxm_request->mxm_base_request;
+    mxm_send_req = &mtl_mxm_request->mxm.send;
 
     /* prepare a send request embedded in the MTL request */
     mxm_send_req->base.state        		= MXM_REQ_NEW;

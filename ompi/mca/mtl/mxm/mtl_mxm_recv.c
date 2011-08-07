@@ -22,12 +22,12 @@ static void ompi_mtl_mxm_recv_completion_cb(void *context)
 {
 	mca_mtl_mxm_request_t *req = (mca_mtl_mxm_request_t *) context;
     struct ompi_request_t *ompi_req = req->super.ompi_req;
-    mxm_recv_req_t *mxm_recv_req = (mxm_recv_req_t *)req->mxm_base_request;
+    mxm_recv_req_t *mxm_recv_req = &req->mxm.recv;
 
     /* Set completion status and envelope */
     ompi_req->req_status.MPI_TAG    = mxm_recv_req->completion.sender_tag;
     ompi_req->req_status.MPI_SOURCE = mxm_recv_req->completion.sender_imm;
-    ompi_req->req_status.MPI_ERROR  = ompi_mtl_mxm_to_mpi_status(req->mxm_base_request->error);
+    ompi_req->req_status.MPI_ERROR  = ompi_mtl_mxm_to_mpi_status(mxm_recv_req->base.error);
     ompi_req->req_status._ucount    = mxm_recv_req->completion.actual_len;
 
     /* Copy data */
@@ -63,7 +63,7 @@ int ompi_mtl_mxm_irecv(struct mca_mtl_base_module_t* mtl,
         return ret;
     }
 
-    mxm_recv_req = (mxm_recv_req_t *)mtl_mxm_request->mxm_base_request;
+    mxm_recv_req = &mtl_mxm_request->mxm.recv;
 
     /* prepare a receive request embedded in the MTL request */
     mxm_recv_req->base.state    = MXM_REQ_NEW;
