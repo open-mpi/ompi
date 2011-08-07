@@ -742,7 +742,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             goto REPORT_ERROR;
         }
         
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+        OPAL_OUTPUT_VERBOSE((20, orte_odls_globals.output,
                              "%s odls:constructing child list - checking proc %s on daemon %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&proc),
                              ORTE_VPID_PRINT(host_daemon)));
@@ -750,7 +750,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         /* does this proc belong to us? */
         if (ORTE_PROC_MY_NAME->vpid == host_daemon) {
             
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+            OPAL_OUTPUT_VERBOSE((10, orte_odls_globals.output,
                                  "%s odls:constructing child list - found proc %s for me!",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&proc)));
             
