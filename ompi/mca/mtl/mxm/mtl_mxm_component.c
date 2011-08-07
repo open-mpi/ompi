@@ -72,28 +72,9 @@ static int ompi_mtl_mxm_component_register(void)
 
 static int ompi_mtl_mxm_component_open(void)
 {
-    struct stat st;
 
-    /* Component available only if IB hardware is present */
-    if (0 == stat("/dev/infiniband/uverbs0", &st)) {
-        return OMPI_SUCCESS;
-    } else {
-        return OPAL_ERR_NOT_AVAILABLE;
-    }
-}
-
-static int ompi_mtl_mxm_component_close(void)
-{
-    return OMPI_SUCCESS;
-}
-
-static mca_mtl_base_module_t*
-ompi_mtl_mxm_component_init(bool enable_progress_threads,
-                            bool enable_mpi_threads)
-{
     mxm_context_opts_t mxm_opts;
     mxm_error_t err;
-    int rc;
 
     mca_mtl_mxm_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_mtl_mxm_output, ompi_mtl_mxm.verbose);
@@ -103,8 +84,23 @@ ompi_mtl_mxm_component_init(bool enable_progress_threads,
     if (MXM_OK != err) {
         orte_show_help("help-mtl-mxm.txt", "mxm init", true,
                        mxm_error_string(err));
-        return NULL;
+        return OPAL_ERR_NOT_AVAILABLE;
     }
+    return OMPI_SUCCESS;
+}
+
+static int ompi_mtl_mxm_component_close(void)
+{
+    mxm_cleanup(ompi_mtl_mxm.mxm_context);
+    ompi_mtl_mxm.mxm_context = NULL;
+    return OMPI_SUCCESS;
+}
+
+static mca_mtl_base_module_t*
+ompi_mtl_mxm_component_init(bool enable_progress_threads,
+                            bool enable_mpi_threads)
+{
+    int rc;
 
     rc = ompi_mtl_mxm_module_init();
     if (OMPI_SUCCESS != rc) {
