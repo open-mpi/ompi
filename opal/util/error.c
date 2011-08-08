@@ -55,9 +55,11 @@ opal_strerror_int(int errnum, const char **str)
     *str = NULL;
 
     for (i = 0 ; i < MAX_CONVERTERS ; ++i) {
-        if (0 != converters[i].init) {
+        if (0 != converters[i].init &&
+            errnum < converters[i].err_base &&
+            converters[i].err_max < errnum) {
             ret = converters[i].converter(errnum, str);
-            if (OPAL_SUCCESS == ret) break;
+            break;
         }
     }
 
