@@ -62,6 +62,15 @@ private:
   //
   struct ProgressS
   {
+    // contructor
+    ProgressS()
+      : curBytes( 0 ), maxBytes( 0 )
+#ifdef VT_MPI
+      , sendRequest( MPI_REQUEST_NULL ), recvBuffers( 0 ), recvRequests( 0 ),
+      recvStatuses( 0 ), recvIndices( 0 ), rankCurBytes( 0 ), ranksLeft( 0 )
+#endif // VT_MPI
+    {}
+
     uint64_t         curBytes;     // current bytes read
     uint64_t         maxBytes;     // max. bytes readable
 

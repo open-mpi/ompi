@@ -437,7 +437,6 @@ HooksMsgMatchC::getRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
          recv_msgs[i]->clear();
          delete recv_msgs[i];
       }
-      delete [] recv_msgs;
 
 #ifdef VT_MPI
       // distribute receive messages to ranks which processes the corresponding
@@ -450,6 +449,8 @@ HooksMsgMatchC::getRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
       }
 #endif // VT_MPI
    }
+
+   delete [] recv_msgs;
 
    return !error;
 }

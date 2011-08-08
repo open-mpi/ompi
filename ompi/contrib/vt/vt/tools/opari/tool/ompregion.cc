@@ -47,6 +47,8 @@ void OMPRegion::generate_descr(ostream& os) {
   os << "\n";
 
   if (descrs.size()) {
+    ostream::fmtflags sav_os_flags = os.flags();
+
     os << "#define POMP_DLIST_" << setw(5) << setfill('0') << id
         << " shared(";
     for (set<int>::const_iterator it = descrs.begin();
@@ -63,6 +65,8 @@ void OMPRegion::generate_descr(ostream& os) {
     }
 #endif // OPARI_VT
     os << ")\n\n";
+
+    os.flags( sav_os_flags );
   }
 }
 
