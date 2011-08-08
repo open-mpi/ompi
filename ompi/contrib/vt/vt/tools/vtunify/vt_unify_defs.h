@@ -244,7 +244,7 @@ private:
          {
             // constructor for searching a communicator by its members
             OtherCommS( const uint32_t & _membersid )
-               : membersid( _membersid ) {}
+               : deftoken ( 0 ), membersid( _membersid ), index( 0 ) {}
 
             // constructor for creating a new communicator entry
             OtherCommS( const uint32_t & _deftoken, const uint32_t & _membersid,

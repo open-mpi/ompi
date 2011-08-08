@@ -51,7 +51,7 @@ FilterGeneratorC::run()
 
   do
   {
-    char** envp = new char*[2];
+    envp = new char*[2];
     envp[0] = envp[1] = 0;
 
     // convert program parameters for the old vtfilter

@@ -16,7 +16,7 @@
 string OMPragmaC::find_next_word() {
   while ( pline < lines.size() ) {
     string::size_type wbeg = lines[pline].find_first_not_of(" \t", ppos);
-    if ( lines[pline][wbeg] == '\\' || wbeg == string::npos ) {
+    if ( wbeg == string::npos || lines[pline][wbeg] == '\\' ) {
       ++pline;
       if ( pline < lines.size() ) { ppos = 0; } else { return ""; }
     } else if ( lines[pline][wbeg] == '(' || lines[pline][wbeg] == ')' ) {

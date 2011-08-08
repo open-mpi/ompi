@@ -29,7 +29,7 @@ MarkersC * theMarkers = 0; // instance of class MarkersC
 // public methods
 //
 
-MarkersC::MarkersC()
+MarkersC::MarkersC() : m_tkfacScope( 0 )
 {
    assert( theTokenFactory );
 

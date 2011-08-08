@@ -713,49 +713,47 @@ getParams( int argc, char** argv )
 
   // show error message, if necessary
   //
-  if( opt_error != OPT_ERR_OK )
+  MASTER
   {
-    MASTER
+    switch( opt_error )
     {
-      switch( opt_error )
+      case OPT_ERR_OK:
       {
-        case OPT_ERR_ARG_MISSING:
-        {
-          std::cerr << ExeName << ": option '" << args[i]
-                    << "' requires an argument" << std::endl;
-          break;
-        }
-        case OPT_ERR_ARG_INVALID:
-        {
-          std::cerr << ExeName << ": invalid argument `"
-                    << args[i+1] << "' for `" << args[i] << "'" << std::endl;
-          break;
-        }
-        case OPT_ERR_UNRECOGNIZED:
-        {
-          std::cerr << ExeName << ": unrecognized option -- '"
-                    << args[i] << "'" << std::endl;
-          break;
-        }
-        case OPT_ERR_OTHER:
-        {
-          std::cerr << opt_error_other << std::endl;
-          break;
-        }
-        default:
-        {
-          break;
-        }
+        break;
       }
+      case OPT_ERR_ARG_MISSING:
+      {
+        std::cerr << ExeName << ": option '" << args[i]
+                  << "' requires an argument" << std::endl;
+        break;
+      }
+      case OPT_ERR_ARG_INVALID:
+      {
+        std::cerr << ExeName << ": invalid argument `"
+                  << args[i+1] << "' for `" << args[i] << "'" << std::endl;
+        break;
+      }
+      case OPT_ERR_UNRECOGNIZED:
+      {
+        std::cerr << ExeName << ": unrecognized option -- '"
+                  << args[i] << "'" << std::endl;
+        break;
+      }
+      case OPT_ERR_OTHER:
+      {
+        std::cerr << opt_error_other << std::endl;
+        break;
+      }
+    }
 
+    if( opt_error != OPT_ERR_OK )
+    {
       std::cerr << "Try `" << ExeName << " --help' for more information."
                 << std::endl;
     }
-
-    return false;
   }
 
-  return true;
+  return ( opt_error == OPT_ERR_OK );
 }
 
 static void
@@ -895,8 +893,12 @@ stringList2Vector( const std::string& str, std::vector<std::string>& vec,
 
       // trim list entry
       //
-      entry.erase( 0, entry.find_first_not_of( " " ) );
-      entry.erase( entry.find_last_not_of( " " ) + 1 );
+      std::string::size_type si = entry.find_first_not_of( " " );
+      if( si != std::string::npos )
+        entry.erase( 0, si );
+      si = entry.find_last_not_of( " " );
+      if( si != std::string::npos )
+        entry.erase( si + 1 );
 
       // add list entry to output vector, if it's not empty
       //

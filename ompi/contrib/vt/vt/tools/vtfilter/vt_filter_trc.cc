@@ -1396,6 +1396,8 @@ FilterTraceC::getMaxBytesToRead( uint64_t& maxBytes )
       maxBytes += max;
     }
 
+    // close OTF handler array
+    OTF_HandlerArray_close( handlers );
     // close OTF reader
     OTF_Reader_close( reader );
     // close OTF file manager
@@ -1474,8 +1476,8 @@ FilterTraceC::FilterS::pack( const uint32_t& proc, char*& buffer,
     for( std::set<uint32_t>::const_iterator proc_it = procsOff.begin();
          proc_it != procsOff.end(); proc_it++ )
     {
-      uint32_t proc = *proc_it;
-      MPI_Pack( &proc, 1, MPI_UNSIGNED, buffer, bufferSize, &bufferPos,
+      uint32_t off_proc = *proc_it;
+      MPI_Pack( &off_proc, 1, MPI_UNSIGNED, buffer, bufferSize, &bufferPos,
                 comm );
     }
   }
@@ -1529,10 +1531,12 @@ FilterTraceC::FilterS::unpack( const uint32_t& proc, char*& buffer,
     MPI_Unpack( buffer, bufferSize, &bufferPos, &procsOff_size, 1, MPI_UNSIGNED,
                 comm );
 
+    // procsOff
+    //
     for( uint32_t i = 0; i < procsOff_size; i++ )
     {
-      uint32_t proc;
-      MPI_Unpack( buffer, bufferSize, &bufferPos, &proc, 1, MPI_UNSIGNED, comm );
+      uint32_t off_proc;
+      MPI_Unpack( buffer, bufferSize, &bufferPos, &off_proc, 1, MPI_UNSIGNED, comm );
 
       procsOff.insert( proc );
     }

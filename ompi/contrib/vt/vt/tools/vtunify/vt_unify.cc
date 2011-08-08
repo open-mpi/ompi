@@ -430,6 +430,7 @@ getUnifyControls()
                {
                   uint32_t stream_id;
                   bool stream_avail = true;
+                  std::istringstream iss;
 
                   // is stream not available?
                   if( buffer[strlen( buffer ) - 1] == '!' )
@@ -443,11 +444,15 @@ getUnifyControls()
                      any_stream_avail = true;
                   }
 
-                  sscanf(buffer, "%x", &stream_id);
-                  if( stream_id == 0 ) { error = true; break; }
+                  iss.str( buffer );
+                  assert( iss );
+                  error = !( iss >> std::hex >> stream_id );
 
-                  streamids.push_back( stream_id );
-                  streamavs.push_back( stream_avail );
+                  if( !error && stream_id > 0 )
+                  {
+                     streamids.push_back( stream_id );
+                     streamavs.push_back( stream_avail );
+                  }
 
                   break;
                }
@@ -456,30 +461,29 @@ getUnifyControls()
                //
                case 2:
                {
+                  std::istringstream iss( buffer );
+                  assert( iss );
+
                   switch( ++(col_no[line_no_sec-2]) )
                   {
                      case 1:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(ltime[0]));
+                        error = !( iss >> std::hex >> ltime[0] );
                         break;
                      }
                      case 2:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(offset[0]));
+                        error = !( iss >> std::hex >> offset[0] );
                         break;
                      }
                      case 3:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(ltime[1]));
+                        error = !( iss >> std::hex >> ltime[1] );
                         break;
                      }
                      case 4:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(offset[1]));
+                        error = !( iss >> std::hex >> offset[1] );
                         break;
                      }
                      default:
@@ -496,6 +500,8 @@ getUnifyControls()
                case 3:
                {
                   static ETimeSyncC::SyncPhaseS sync_phase;
+                  std::istringstream iss( buffer );
+                  assert( iss );
 
                   theTimeSync->setSyncMethod( TimeSyncC::METHOD_ENHANCED );
 
@@ -503,23 +509,24 @@ getUnifyControls()
                   {
                      case 1:
                      {
-                        sscanf(buffer, "%x", &(sync_phase.mapid));
+                        error = !( iss >> std::hex >> sync_phase.mapid );
                         break;
                      }
                      case 2:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(sync_phase.time));
+                        error = !( iss >> std::hex >> sync_phase.time );
                         break;
                      }
                      case 3:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(sync_phase.duration));
+                        error = !( iss >> std::hex >> sync_phase.duration );
 
-                        sync_phases.push_back( sync_phase );
+                        if( !error )
+                        {
+                           sync_phases.push_back( sync_phase );
+                           col_no[line_no_sec-2] = 0;
+                        }
 
-                        col_no[line_no_sec-2] = 0;
                         break;
                      }
                      default:
@@ -536,6 +543,8 @@ getUnifyControls()
                {
                   static std::pair<uint32_t, uint32_t> sync_pair;
                   static ETimeSyncC::SyncTimeS sync_time;
+                  std::istringstream iss( buffer );
+                  assert( iss );
 
                   if( 4 <= line_no_sec &&
                       line_no_sec <= 4 + sync_phases.size() - 1 )
@@ -544,42 +553,43 @@ getUnifyControls()
                      {
                         case 1:
                         {
-                           sscanf(buffer, "%x", &(sync_pair.first));
+                           error = !( iss >> std::hex >> sync_pair.first );
                            break;
                         }
                         case 2:
                         {
-                           sscanf(buffer, "%x", &(sync_pair.second));
+                           error = !( iss >> std::hex >> sync_pair.second );
                            break;
                         }
                         case 3:
                         {
-                           sscanf(buffer, "%llx",
-                                  (unsigned long long int*)&(sync_time.t[0]));
+                           error = !( iss >> std::hex >> sync_time.t[0] );
                            break;
                         }
                         case 4:
                         {
-                           sscanf(buffer, "%llx",
-                                  (unsigned long long int*)&(sync_time.t[1]));
+                           error = !( iss >> std::hex >> sync_time.t[1] );
                            break;
                         }
                         case 5:
                         {
-                           sscanf(buffer, "%llx",
-                                  (unsigned long long int*)&(sync_time.t[2]));
+                           error = !( iss >> std::hex >> sync_time.t[2] );
                            break;
                         }
                         case 6:
                         {
-                           sscanf(buffer, "%llx",
-                                  (unsigned long long int*)&(sync_time.t[3]));
-                           sync_time.phase_idx = line_no_sec - 4;
+                           error = !( iss >> std::hex >> sync_time.t[3] );
 
-                           sync_pairs.push_back( sync_pair );
-                           sync_times.push_back( sync_time );
+                           if( !error )
+                           {
+                              sync_time.phase_idx = line_no_sec - 4;
 
-                           col_no[line_no_sec-2] = 0;
+                              sync_pairs.push_back( sync_pair );
+                              sync_times.push_back( sync_time );
+
+                              col_no[line_no_sec-2] = 0;
+                           }
+
                            break;
                         }
                         default:

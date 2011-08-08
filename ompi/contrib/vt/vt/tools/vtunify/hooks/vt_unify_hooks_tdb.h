@@ -48,7 +48,7 @@ private:
       CollOpC();
       CollOpC( uint64_t _num, uint64_t _bytes_sent, uint64_t _bytes_recv );
 
-      CollOpC operator+=( CollOpC cs );
+      CollOpC operator+=( const CollOpC & cs );
 
       uint64_t num;
       uint64_t bytes_sent;
@@ -68,7 +68,7 @@ private:
 //           uint64_t _bytes_written, uint64_t _num_open, uint64_t _num_close,
 //           uint64_t _num_seek );
 
-      IoC operator+=( IoC is );
+      IoC operator+=( const IoC & is );
 
       uint64_t num_read;
       uint64_t bytes_read;
@@ -157,7 +157,7 @@ private:
 
       ThreadDataC();
 
-      ThreadDataC operator+=( ThreadDataC td );
+      ThreadDataC operator+=( const ThreadDataC & td );
 
       bool toBuffer( uint64_t * buf );
 

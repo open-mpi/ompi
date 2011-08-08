@@ -448,20 +448,29 @@ void HooksTdbC::writeRecHook_DefComment( HooksC::VaArgsT & args ) {
         std::string vt_comment = *comment;
         std::string vt_env_name;
         std::string vt_env_value;
-        int start_pos;
-        int pos;
+        std::string::size_type start_pos;
+        std::string::size_type pos;
 
         start_pos = vt_comment.find_first_not_of( ' ', 0 );
 
-        vt_comment.erase( 0, start_pos );
+        if( start_pos != std::string::npos ) {
 
-        if( vt_comment.substr( 0, 3 ) == "VT_" ) {
+            vt_comment.erase( 0, start_pos );
 
-            pos = vt_comment.find( ": ", 0 );
-            vt_env_name = vt_comment.substr( 0, pos );
-            vt_env_value = vt_comment.substr( pos + 2, vt_comment.length() );
+            if( vt_comment.length() > 3 && vt_comment.substr( 0, 3 ) == "VT_" ) {
 
-            RootData.vt_env[vt_env_name] = vt_env_value;
+                pos = vt_comment.find( ": ", 0 );
+
+                if( pos != std::string::npos ) {
+
+                    vt_env_name = vt_comment.substr( 0, pos );
+                    vt_env_value = vt_comment.substr( pos + 2, vt_comment.length() );
+
+                    RootData.vt_env[vt_env_name] = vt_env_value;
+
+                }
+
+            }
 
         }
 
@@ -1022,7 +1031,7 @@ HooksTdbC::CollOpC::CollOpC()
 HooksTdbC::CollOpC::CollOpC( uint64_t _num, uint64_t _bytes_sent, uint64_t _bytes_recv )
     : num(_num), bytes_sent(_bytes_sent), bytes_recv(_bytes_recv) {}
 
-HooksTdbC::CollOpC HooksTdbC::CollOpC::operator+=( HooksTdbC::CollOpC cs ) {
+HooksTdbC::CollOpC HooksTdbC::CollOpC::operator+=( const HooksTdbC::CollOpC & cs ) {
 
     num += cs.num;
     bytes_sent += cs.bytes_sent;
@@ -1040,7 +1049,7 @@ HooksTdbC::IoC::IoC()
     : num_read(0), bytes_read(0), num_written(0), bytes_written(0), num_open(0),
       num_close(0), num_seek(0) {}
 
-HooksTdbC::IoC HooksTdbC::IoC::operator+=( HooksTdbC::IoC is) {
+HooksTdbC::IoC HooksTdbC::IoC::operator+=( const HooksTdbC::IoC & is) {
 
     num_read += is.num_read;
     bytes_read += is.bytes_read;
@@ -1061,13 +1070,20 @@ HooksTdbC::IoC HooksTdbC::IoC::operator+=( HooksTdbC::IoC is) {
 
 HooksTdbC::MasterDataC::MasterDataC() {
 
+    starttime = 0;
+    runtime = 0;
+    filesize = 0;
+    num_streams = 0;
+
     num_processes = 0;
     num_active_processes = 0;
     num_threads = 0;
 
-    vt_flush_id = 0;
+    is_compressed = false;
 
     create_output = false;
+
+    vt_flush_id = 0;
 
 }
 
@@ -1124,6 +1140,7 @@ uint64_t HooksTdbC::MasterDataC::calcFilesize() {
     }
 
     return filesize;
+
 }
 
 std::string HooksTdbC::MasterDataC::intToHex( int i ) {
@@ -1157,6 +1174,8 @@ std::string HooksTdbC::MasterDataC::safeCwd() {
         } else {
 
             /* an error occurred */
+
+            delete [] buf;
             return NULL;
 
         }
@@ -1164,6 +1183,8 @@ std::string HooksTdbC::MasterDataC::safeCwd() {
       } else {
 
           /* all right */
+
+          delete [] buf;
           return std::string( buf );
 
       }
@@ -1250,10 +1271,10 @@ HooksTdbC::ThreadDataC::ThreadDataC()
       bytes_rma(0), num_marker(0), num_stats(0), num_snaps(0),
       num_vt_flushes(0) {}
 
-HooksTdbC::ThreadDataC HooksTdbC::ThreadDataC::operator+=( HooksTdbC::ThreadDataC td ) {
+HooksTdbC::ThreadDataC HooksTdbC::ThreadDataC::operator+=( const HooksTdbC::ThreadDataC & td ) {
 
-    std::map<uint32_t, HooksTdbC::CollOpC>::iterator collop_it;
-    std::map<uint32_t, HooksTdbC::IoC>::iterator io_it;
+    std::map<uint32_t, HooksTdbC::CollOpC>::const_iterator collop_it;
+    std::map<uint32_t, HooksTdbC::IoC>::const_iterator io_it;
 
     num_events += td.num_events;
     num_enter += td.num_enter;

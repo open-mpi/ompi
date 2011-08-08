@@ -14,7 +14,7 @@
 string OMPragmaF::find_next_word() {
   while ( pline < lines.size() ) {
     string::size_type wbeg = lines[pline].find_first_not_of(" \t", ppos);
-    if ( lines[pline][wbeg] == '&' || wbeg == string::npos ) {
+    if ( wbeg == string::npos || lines[pline][wbeg] == '&' ) {
       ++pline;
       if ( pline < lines.size() ) {
 	ppos = lines[pline].find(sentinel) + slen;
@@ -120,7 +120,7 @@ void OMPragmaF::remove_empties() {
     lines[0][slen] = ' ';
   } else {
     string::size_type l = lines[0].find_first_not_of(" \t", s+slen);
-    if ( lines[0][l] == '&' ) lines[0][l] = ' ';
+    if ( l != string::npos && lines[0][l] == '&' ) lines[0][l] = ' ';
   }
 
   // make sure last line is not a continuated line
@@ -133,7 +133,8 @@ void OMPragmaF::remove_empties() {
 
   // remove trailing comma
   amp = lines[lastline].find_last_not_of(" \t", c);
-  if ( lines[lastline][amp] == ',' ) lines[lastline][amp] = ' ';
+  if ( amp != string::npos && lines[lastline][amp] == ',' )
+    lines[lastline][amp] = ' ';
 }
 
 OMPragma* OMPragmaF::split_combined() {
@@ -153,9 +154,11 @@ OMPragma* OMPragmaF::split_combined() {
     string::size_type com = lines[i].find("!", s+slen);
     if ( com != string::npos ) --com;
     string::size_type amp2 = lines[i].find_last_not_of(" \t", com);
-    if ( lines[i][amp2] == '&' ) inner->lines[i][amp2] = '&';
+    if ( amp2 != string::npos && lines[i][amp2] == '&' )
+      inner->lines[i][amp2] = '&';
     string::size_type amp1 = lines[i].find_first_not_of(" \t", s+slen);
-    if ( lines[i][amp1] == '&' ) inner->lines[i][amp1] = '&';
+    if ( amp1 != string::npos && lines[i][amp1] == '&' )
+      inner->lines[i][amp1] = '&';
   }
 
   // fix pragma name

@@ -46,7 +46,8 @@ struct Function {
 	int64_t accDurationIncl;
 	
 
-	Function() {}
+	Function() :
+		id(0), invocations(0), depth(0), accDurationExcl(0), accDurationIncl(0) {}
 
 	Function( uint32_t _id, const std::string& nm ) :
 		id(_id), name(nm), invocations(0), depth(0), accDurationExcl(0), accDurationIncl(0) {}

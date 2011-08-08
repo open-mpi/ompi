@@ -109,11 +109,11 @@ struct DefRec_DefCommentS : DefRec_BaseS
    typedef enum
    {
       TYPE_START_TIME, TYPE_STOP_TIME, TYPE_VT, TYPE_USER,
-      TYPE_USRCOM_SEND, TYPE_USRCOM_RECV
+      TYPE_USRCOM_SEND, TYPE_USRCOM_RECV, TYPE_UNKNOWN
    } CommentTypeT;
 
    DefRec_DefCommentS()
-      : DefRec_BaseS( DEF_REC_TYPE__DefComment ) {}
+      : DefRec_BaseS( DEF_REC_TYPE__DefComment ), type( TYPE_UNKNOWN ) {}
    DefRec_DefCommentS( const uint32_t & _loccpuid, const uint32_t _orderidx,
        const CommentTypeT & _type, const std::string & _comment )
       : DefRec_BaseS( DEF_REC_TYPE__DefComment, _loccpuid, _orderidx ),
@@ -291,11 +291,12 @@ struct DefRec_DefProcessGroupS : DefRec_BaseS
    typedef enum
    {
       TYPE_NODE, TYPE_MPI_COMM_WORLD, TYPE_MPI_COMM_SELF, TYPE_MPI_COMM_OTHER,
-      TYPE_OMP_TEAM, TYPE_GPU_COMM, TYPE_GPU_GROUP, TYPE_USER_COMM, TYPE_OTHER
+      TYPE_OMP_TEAM, TYPE_GPU_COMM, TYPE_GPU_GROUP, TYPE_USER_COMM, TYPE_OTHER,
+      TYPE_UNKNOWN
    } ProcessGroupTypeT;
 
    DefRec_DefProcessGroupS()
-      : DefRec_BaseS( DEF_REC_TYPE__DefProcessGroup ) {}
+      : DefRec_BaseS( DEF_REC_TYPE__DefProcessGroup ), type( TYPE_UNKNOWN ) {}
    DefRec_DefProcessGroupS( const uint32_t & _loccpuid,
       const uint32_t & _deftoken, const ProcessGroupTypeT & _type,
       const std::string & _name, const uint32_t & _nmembers,

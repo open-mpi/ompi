@@ -646,7 +646,7 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
                // create instance for local definition relating to its type
                //
 
-               DefRec_BaseS * new_loc_def;
+               DefRec_BaseS * new_loc_def = 0;
 
                switch( def_type )
                {
@@ -2015,10 +2015,12 @@ DefinitionsC::CommentsC::~CommentsC()
 }
 
 bool
-DefinitionsC::CommentsC::processLocal(
-   const DefRec_DefCommentS & locComment )
+DefinitionsC::CommentsC::processLocal( const DefRec_DefCommentS & locComment )
 {
    bool error = false;
+
+   std::istringstream iss( locComment.comment );
+   assert( iss );
 
    switch( locComment.type )
    {
@@ -2027,8 +2029,8 @@ DefinitionsC::CommentsC::processLocal(
          // get minimum start time from comment
          //
          uint64_t starttime;
-         sscanf( locComment.comment.c_str(), "%llu",
-                 (unsigned long long int*)&starttime );
+         iss >> starttime;
+         assert( iss );
 
          // update minimum start time, if necessary
          if( starttime < m_traceTimes.minStartTimeEpoch )
@@ -2041,11 +2043,10 @@ DefinitionsC::CommentsC::processLocal(
          // get maximum stop time from comment
          //
          uint64_t stoptime;
-         sscanf( locComment.comment.c_str(), "%llu",
-                 (unsigned long long int*)&stoptime );
+         iss >> stoptime;
+         assert( iss );
 
          // update maximum stop time, if necessary
-         //
          if( stoptime > m_traceTimes.maxStopTimeEpoch )
            m_traceTimes.maxStopTimeEpoch = stoptime;
 
@@ -2056,10 +2057,45 @@ DefinitionsC::CommentsC::processLocal(
       {
          // get peer process id, local communicator token, and tag from comment
          //
+
          uint32_t peer = locComment.loccpuid;
          uint32_t comm;
          uint32_t tag;
-         sscanf( locComment.comment.c_str(), "C%xT%x", &comm, &tag );
+         char delim;
+
+         for( uint8_t i = 0; i < 4; i++ )
+         {
+            switch( i )
+            {
+               case 0: // 'C'
+               {
+                  iss >> delim;
+                  assert( iss );
+                  assert( delim == 'C' );
+                  break;
+               }
+               case 1: // communicator token
+               {
+                  iss >> std::hex >> comm;
+                  assert( iss );
+                  break;
+               }
+               case 2: // 'T'
+               {
+                  iss >> delim;
+                  assert( iss );
+                  assert( delim == 'T' );
+                  break;
+               }
+               case 3: // tag
+               default:
+               {
+                  iss >> std::hex >> tag;
+                  assert( iss );
+                  break;
+               }
+            }
+         }
 
          // temporary store user communication id and peer
          m_userCom.comIdsAndPeers.push_back(
@@ -2113,6 +2149,10 @@ DefinitionsC::CommentsC::processLocal(
             glob_comments.insert( new_comment );
 
          break;
+      }
+      default: // DefRec_DefCommentS::TYPE_UNKNOWN
+      {
+         assert( 0 );
       }
    }
 
@@ -2486,7 +2526,7 @@ DefinitionsC::ProcessGroupsC::processLocal(
 
          break;
       }
-      default:
+      case DefRec_DefProcessGroupS::TYPE_OTHER:
       {
          // deflate group members
          deflateMembers( locProcGrp.members );
@@ -2495,6 +2535,10 @@ DefinitionsC::ProcessGroupsC::processLocal(
          tkfac_defprocgrp->create( &locProcGrp );
 
          break;
+      }
+      default: // DefRec_DefProcessGroupS::TYPE_UNKNOWN
+      {
+         assert( 0 );
       }
    }
 

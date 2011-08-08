@@ -424,7 +424,7 @@ void process_fortran(istream& is, const char* infile, ostream& os,
       string::size_type com = lowline.find("!", pstart+4+pomp);
       if ( com != string::npos ) --com;
       string::size_type amp = lowline.find_last_not_of(" \t", com);
-      if ( lowline[amp] == '&' ) {
+      if ( amp != string::npos && lowline[amp] == '&' ) {
         // last non-white non-comment character == '&' --> continuation
         needPragma = true;
       } else {
@@ -532,4 +532,9 @@ void process_fortran(istream& is, const char* infile, ostream& os,
       }
     }
   }
+
+  // currPragma should be deleted at this point; ensure that to prevent
+  // memory leak
+  if ( currPragma )
+    delete currPragma;
 }
