@@ -1,7 +1,10 @@
 /*
- * Copyright (c) 2009-2010 The Trustees of Indiana University.
+ * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  * 
@@ -391,6 +394,7 @@ int orte_errmgr_hnp_autor_global_suggest_map_targets(orte_proc_t *proc,
     orte_node_t *node = NULL;
     bool found = false;
     int num_removed = 0, num_to_remove;
+    orte_ns_cmp_bitmask_t mask;
 
     if( NULL == current_global_jobdata ) {
         return ORTE_SUCCESS;
@@ -410,8 +414,8 @@ int orte_errmgr_hnp_autor_global_suggest_map_targets(orte_proc_t *proc,
             item  = opal_list_get_next(item) ) {
             wp_item = (errmgr_autor_wp_item_t*)item;
 
-            if( wp_item->name.vpid  == proc->name.vpid &&
-                wp_item->name.jobid == proc->name.jobid ) {
+            mask = ORTE_NS_CMP_ALL;
+            if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &wp_item->name, &proc->name)) {
                 found = true;
                 break;
             }
@@ -518,6 +522,7 @@ static void errmgr_autor_process_fault_app(orte_job_t *jdata,
     wp_item = OBJ_NEW(errmgr_autor_wp_item_t);
     wp_item->name.jobid = proc->jobid;
     wp_item->name.vpid = proc->vpid;
+    wp_item->name.epoch = proc->epoch;
     wp_item->state = state;
 
     opal_list_append(procs_pending_recovery, &(wp_item->super));
@@ -612,7 +617,7 @@ static void errmgr_autor_process_fault_daemon(orte_job_t *jdata,
     /*
      * Record the dead daemon
      */
-    orte_errmgr_hnp_record_dead_daemon(jdata, proc->vpid, state, 0);
+    orte_errmgr_hnp_record_dead_process(proc);
 
     return;
 }
@@ -621,6 +626,7 @@ void errmgr_autor_wp_item_construct(errmgr_autor_wp_item_t *wp)
 {
     wp->name.jobid = ORTE_JOBID_INVALID;
     wp->name.vpid  = ORTE_VPID_INVALID;
+    wp->name.epoch = ORTE_EPOCH_MIN;
 
     wp->state = 0;
 }
@@ -629,6 +635,7 @@ void errmgr_autor_wp_item_destruct(errmgr_autor_wp_item_t *wp)
 {
     wp->name.jobid = ORTE_JOBID_INVALID;
     wp->name.vpid  = ORTE_VPID_INVALID;
+    wp->name.epoch = ORTE_EPOCH_INVALID;
 
     wp->state = 0;
 }

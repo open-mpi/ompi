@@ -72,7 +72,7 @@ static int errmgr_orted_component_query(mca_base_module_t **module, int *priorit
         /* keep our priority low so that other modules are higher
          * and will run before us
          */
-        *priority = 10;
+        *priority = 0;
         *module = (mca_base_module_t *)&orte_errmgr_orted_module;
         return ORTE_SUCCESS;        
     }

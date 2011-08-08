@@ -1,9 +1,13 @@
 /*
- * Copyright (c) 2009-2010 The Trustees of Indiana University.
+ * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  *
+ * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ *
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ *    
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,11 +26,15 @@
 #endif
 
 #include "opal/util/output.h"
+#include "opal/dss/dss.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/util/error_strings.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
+#include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -48,8 +56,21 @@ static int update_state(orte_jobid_t job,
                         orte_proc_state_t state,
                         pid_t pid,
                         orte_exit_code_t exit_code);
+
 static int orte_errmgr_app_abort_peers(orte_process_name_t *procs,
                                        orte_std_cntr_t num_procs);
+
+static int post_startup(void);
+static int pre_shutdown(void);
+
+void epoch_change_recv(int status, 
+                       orte_process_name_t *sender, 
+                       opal_buffer_t *buffer, 
+                       orte_rml_tag_t tag, 
+                       void *cbdata);
+void epoch_change(int fd, 
+                  short event, 
+                  void *data);
 
 /******************
  * HNP module
@@ -65,11 +86,11 @@ orte_errmgr_base_module_t orte_errmgr_app_module = {
     NULL,
     NULL,
     orte_errmgr_base_register_migration_warning,
-    NULL, /* post_startup */
-    NULL, /* pre_shutdown */
-    NULL, /* mark_processes_as_dead */
-    NULL, /* set_fault_callback */
-    NULL  /* failure_notification */
+    post_startup,
+    pre_shutdown,
+    NULL,
+    orte_errmgr_base_set_fault_callback,
+    NULL
 };
 
 /************************
@@ -92,6 +113,8 @@ static int update_state(orte_jobid_t job,
                         pid_t pid,
                         orte_exit_code_t exit_code)
 {
+    orte_ns_cmp_bitmask_t mask;
+
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
                          "%s errmgr:app: job %s reported state %s"
                          " for proc %s state %s exit_code %d",
@@ -109,9 +132,9 @@ static int update_state(orte_jobid_t job,
     }
 
     if (ORTE_PROC_STATE_COMM_FAILED == state) {
+        mask = ORTE_NS_CMP_ALL;
         /* if it is our own connection, ignore it */
-        if (ORTE_PROC_MY_NAME->jobid == proc->vpid &&
-            ORTE_PROC_MY_NAME->vpid == proc->vpid) {
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, ORTE_PROC_MY_NAME, proc)) {
             return ORTE_SUCCESS;
         }
         
@@ -123,6 +146,95 @@ static int update_state(orte_jobid_t job,
         }
     }
     return ORTE_SUCCESS;
+}
+
+static int post_startup(void) {
+    int ret = ORTE_SUCCESS;
+    
+    ret = orte_rml.recv_buffer_nb(ORTE_PROC_MY_DAEMON,
+                                  ORTE_RML_TAG_EPOCH_CHANGE, 
+                                  ORTE_RML_PERSISTENT, 
+                                  epoch_change_recv, 
+                                  NULL);
+                                                                                                                                                                                                                             
+    return ret;
+}
+
+static int pre_shutdown(void) {
+    int ret = ORTE_SUCCESS;
+    
+    ret = orte_rml.recv_cancel(ORTE_PROC_MY_DAEMON,
+                               ORTE_RML_TAG_EPOCH_CHANGE);
+                                                                                                                                                                                                                             
+    return ret;
+}
+
+void epoch_change_recv(int status, 
+                       orte_process_name_t *sender, 
+                       opal_buffer_t *buffer, 
+                       orte_rml_tag_t tag, 
+                       void *cbdata) {
+
+    ORTE_MESSAGE_EVENT(sender, buffer, tag, epoch_change);
+}
+
+void epoch_change(int fd, 
+                  short event, 
+                  void *data) {
+    orte_message_event_t *mev = (orte_message_event_t *) data;
+    opal_buffer_t *buffer = mev->buffer;
+    orte_process_name_t *proc;
+    int n = 1, ret, num_dead, i;
+    opal_pointer_array_t *procs;
+
+    if (orte_finalizing || orte_job_term_ordered || orte_orteds_term_ordered) {
+        return;
+    }
+
+    OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+                "%s errmgr:app Received epoch change notification",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    procs = OBJ_NEW(opal_pointer_array_t);
+
+    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_dead, &n, ORTE_VPID))) {
+        ORTE_ERROR_LOG(ret);
+        opal_output(0, "%s Error unpacking message.", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        return;
+    }
+
+    proc = (orte_process_name_t *) malloc(sizeof(orte_process_name_t) * num_dead);
+    for (i = 0; i < num_dead; i++) {
+        if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &proc[i], &n, ORTE_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            opal_output(0, "%s Error unpacking message.", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            return;
+        }
+        proc[i].epoch++;
+        orte_util_set_epoch(&proc[i], proc[i].epoch);
+
+        opal_pointer_array_add(procs, &proc[i]);
+
+        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+                    "%s errmgr:app Epoch for %s updated",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                    ORTE_NAME_PRINT(&proc[i])));
+    }
+        
+    if (NULL != fault_cbfunc && 0 < num_dead) {
+        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+                    "%s errmgr:app Calling fault callback",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+        (*fault_cbfunc)(procs);
+    } else {
+        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+                    "%s errmgr:app Calling fault callback failed!",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    }
+    
+    free(proc);
+    OBJ_RELEASE(procs);
 }
 
 static int orte_errmgr_app_abort_peers(orte_process_name_t *procs, orte_std_cntr_t num_procs)
@@ -166,7 +278,7 @@ static int orte_errmgr_app_abort_peers(orte_process_name_t *procs, orte_std_cntr
         goto cleanup;
     }
 
- cleanup:
+cleanup:
     OBJ_DESTRUCT(&buffer);
 
     return exit_status;
