@@ -20,7 +20,7 @@
  * Public string for version number
  */
 const char *orte_errmgr_hnp_component_version_string = 
-    "ORTE ERRMGR Hnp MCA component version " ORTE_VERSION;
+    "ORTE ERRMGR hnp MCA component version " ORTE_VERSION;
 
 /*
  * Local functionality
@@ -61,7 +61,7 @@ orte_errmgr_hnp_component_t mca_errmgr_hnp_component = {
         /* opal_output handler */
         -1,
         /* Default priority */
-        50
+        0
     }
 };
 

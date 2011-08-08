@@ -13,8 +13,8 @@
  * 
  */
 
-#ifndef MCA_ERRMGR_ORTED_EXPORT_H
-#define MCA_ERRMGR_ORTED_EXPORT_H
+#ifndef MCA_ERRMGR_orted_EXPORT_H
+#define MCA_ERRMGR_orted_EXPORT_H
 
 #include "orte_config.h"
 
@@ -32,4 +32,4 @@ ORTE_DECLSPEC extern orte_errmgr_base_module_t orte_errmgr_orted_module;
 
 END_C_DECLS
 
-#endif /* MCA_ERRMGR_ORTED_EXPORT_H */
+#endif /* MCA_ERRMGR_orted_EXPORT_H */
