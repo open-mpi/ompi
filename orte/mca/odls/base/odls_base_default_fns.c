@@ -1245,22 +1245,17 @@ static void timer_cb(int fd, short event, void *cbdata)
     time_is_up = true;
 }
 
-static int compute_num_procs_alive(orte_jobid_t *job)
+static int compute_num_procs_alive(void)
 {
     opal_list_item_t *item;
     orte_odls_child_t *child;
-    int num_procs_alive = 0, match_job;
+    int num_procs_alive = 0;
 
     for (item  = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end  (&orte_local_children);
          item  = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
-        if ( NULL != job ) {
-            match_job = ( OPAL_EQUAL == opal_dss.compare(job, &(child->name->jobid), ORTE_JOBID) );
-        } else {
-            match_job = 0;
-        }
-        if (child->alive || match_job) {
+        if (child->alive) {
             num_procs_alive++;
         }
     }
@@ -1284,7 +1279,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     char **argvsav=NULL;
     int inm, j;
     opal_event_t *delay;
-    int num_procs_alive = 0;
+    int total_num_local_procs = 0;
     orte_nid_t *nid;
     orte_node_t *node;
 
@@ -1398,7 +1393,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         /* compute the number of local procs alive or about to be launched
          * as part of this job
          */
-        num_procs_alive = compute_num_procs_alive(&job);
+        total_num_local_procs = compute_num_procs_alive() + jobdat->num_local_procs;
         /* get the number of local processors */
         if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors))) {
             /* if we cannot find the number of local processors, we have no choice
@@ -1406,7 +1401,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
              */
             oversubscribed = true;
         } else {
-            if (num_procs_alive > num_processors) {
+            if (total_num_local_procs > num_processors) {
                 /* if the #procs > #processors, declare us oversubscribed. This
                  * covers the case where the user didn't tell us anything about the
                  * number of available slots, so we defaulted to a value of 1
@@ -1427,8 +1422,8 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     /* setup to report the proc state to the HNP */
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
     
-    /* compute the num procs alive */
-    num_procs_alive = compute_num_procs_alive(NULL);
+    /* compute the total number of local procs currently alive and about to be launched */
+    total_num_local_procs = compute_num_procs_alive() + jobdat->num_local_procs;
 
     for (j=0; j < jobdat->apps.size; j++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, j))) {
@@ -1446,27 +1441,24 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
          * no limit, so treat it as unlimited here.
          */
         if (0 < opal_sys_limits.num_procs) {
-            int limit;
-            limit = num_procs_alive + app->num_procs;
             OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
                                  "%s checking limit on num procs %d #children needed %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 opal_sys_limits.num_procs, limit));
-            if (opal_sys_limits.num_procs < limit) {
+                                 opal_sys_limits.num_procs, total_num_local_procs));
+            if (opal_sys_limits.num_procs < total_num_local_procs) {
                 /* don't have enough - wait a little time */
                 time_is_up = false;
                 ORTE_DETECT_TIMEOUT(&delay, 1000, 1000, -1, timer_cb);
                 /* wait */
                 ORTE_PROGRESSED_WAIT(time_is_up, 0, 1);
-                /* recompute the num procs alive */
-                num_procs_alive = compute_num_procs_alive(NULL);
+                /* recompute the num local procs */
+                total_num_local_procs = compute_num_procs_alive() + jobdat->num_local_procs;
                 /* see if we still have a problem */
-                limit = num_procs_alive + app->num_procs;
                 OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
                                      "%s rechecking limit on num procs %d #children needed %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     opal_sys_limits.num_procs, limit));
-                if (opal_sys_limits.num_procs < limit) {
+                                     opal_sys_limits.num_procs, total_num_local_procs));
+                if (opal_sys_limits.num_procs < total_num_local_procs) {
                     /* at the system limit - abort */
                     ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
                     rc = ORTE_ERR_SYS_LIMITS_CHILDREN;
@@ -1613,7 +1605,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
              */
             if (0 < opal_sys_limits.num_files) {
                 int limit;
-                limit = 4*(num_procs_alive + app->num_procs)+6;
+                limit = 4*total_num_local_procs + 6;
                 OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
                                      "%s checking limit on file descriptors %d need %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1625,9 +1617,9 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                     /* wait */
                     ORTE_PROGRESSED_WAIT(time_is_up, 0, 1);
                     /* recompute the num procs alive */
-                    num_procs_alive = compute_num_procs_alive(NULL);
+                    total_num_local_procs = compute_num_procs_alive() + jobdat->num_local_procs;
                     /* see if we still have a problem */
-                    limit = 4*(num_procs_alive + app->num_procs)+6;
+                    limit = 4*total_num_local_procs + 6;
                     OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
                                          "%s rechecking limit on file descriptors %d need %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1796,8 +1788,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 free(app->app);
                 app->app = strdup(app->argv[0]);
             }
-            /* we have another alive proc! */
-            num_procs_alive++;
         }  /* complete launching all children for this app */
         /* reset our working directory back to our default location - if we
          * don't do this, then we will be looking for relative paths starting
