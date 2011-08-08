@@ -1245,7 +1245,7 @@ static void timer_cb(int fd, short event, void *cbdata)
     time_is_up = true;
 }
 
-static int compute_num_procs_alive(void)
+static int compute_num_procs_alive(orte_jobid_t job)
 {
     opal_list_item_t *item;
     orte_odls_child_t *child;
@@ -1255,9 +1255,13 @@ static int compute_num_procs_alive(void)
          item != opal_list_get_end  (&orte_local_children);
          item  = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
-        if (child->alive) {
-            num_procs_alive++;
+        if (!child->alive) {
+            continue;
         }
+        if (job == child->name->jobid) {
+            continue;
+        }
+        num_procs_alive++;
     }
     return num_procs_alive;
 }
@@ -1393,7 +1397,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
         /* compute the number of local procs alive or about to be launched
          * as part of this job
          */
-        total_num_local_procs = compute_num_procs_alive() + jobdat->num_local_procs;
+        total_num_local_procs = compute_num_procs_alive(job) + jobdat->num_local_procs;
         /* get the number of local processors */
         if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors))) {
             /* if we cannot find the number of local processors, we have no choice
@@ -1423,7 +1427,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
     
     /* compute the total number of local procs currently alive and about to be launched */
-    total_num_local_procs = compute_num_procs_alive() + jobdat->num_local_procs;
+    total_num_local_procs = compute_num_procs_alive(job) + jobdat->num_local_procs;
 
     for (j=0; j < jobdat->apps.size; j++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, j))) {
@@ -1452,7 +1456,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 /* wait */
                 ORTE_PROGRESSED_WAIT(time_is_up, 0, 1);
                 /* recompute the num local procs */
-                total_num_local_procs = compute_num_procs_alive() + jobdat->num_local_procs;
+                total_num_local_procs = compute_num_procs_alive(job) + jobdat->num_local_procs;
                 /* see if we still have a problem */
                 OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
                                      "%s rechecking limit on num procs %d #children needed %d",
@@ -1617,7 +1621,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                     /* wait */
                     ORTE_PROGRESSED_WAIT(time_is_up, 0, 1);
                     /* recompute the num procs alive */
-                    total_num_local_procs = compute_num_procs_alive() + jobdat->num_local_procs;
+                    total_num_local_procs = compute_num_procs_alive(job) + jobdat->num_local_procs;
                     /* see if we still have a problem */
                     limit = 4*total_num_local_procs + 6;
                     OPAL_OUTPUT_VERBOSE((10,  orte_odls_globals.output,
