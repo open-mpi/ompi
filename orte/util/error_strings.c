@@ -142,8 +142,23 @@ int orte_err2str(int errnum, const char **errmsg)
     case ORTE_ERR_RESTART_LIMIT_EXCEEDED:
         retval = "Limit on number of process restarts was exceeded";
         break;
+    case ORTE_ERR_INVALID_NODE_RANK:
+        retval = "Invalid node rank";
+        break;
+    case ORTE_ERR_INVALID_LOCAL_RANK:
+        retval = "Invalid local rank";
+        break;
     case ORTE_ERR_UNRECOVERABLE:
         retval = "Unrecoverable error";
+        break;
+    case ORTE_ERR_MEM_LIMIT_EXCEEDED:
+        retval = "Memory limit exceeded";
+        break;
+    case ORTE_ERR_HEARTBEAT_LOST:
+        retval = "Heartbeat lost";
+        break;
+    case ORTE_ERR_PROC_STALLED:
+        retval = "Proc appears to be stalled";
         break;
     case ORTE_ERR_NO_APP_SPECIFIED:
         retval = "No application specified";
