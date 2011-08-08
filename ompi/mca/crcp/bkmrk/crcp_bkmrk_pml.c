@@ -5284,6 +5284,7 @@ static int send_bookmarks(int peer_idx)
      */
     peer_name.jobid  = ORTE_PROC_MY_NAME->jobid;
     peer_name.vpid   = peer_idx;
+    peer_name.epoch  = ORTE_EPOCH_INVALID;
     peer_name.epoch  = orte_ess.proc_get_epoch(&peer_name);
 
     if( NULL == (peer_ref = find_peer(peer_name))) {
@@ -5345,6 +5346,7 @@ static int recv_bookmarks(int peer_idx)
 
     peer_name.jobid  = ORTE_PROC_MY_NAME->jobid;
     peer_name.vpid   = peer_idx;
+    peer_name.epoch  = ORTE_EPOCH_INVALID;
     peer_name.epoch  = orte_ess.proc_get_epoch(&peer_name);
 
     if ( 0 > (ret = orte_rml.recv_buffer_nb(&peer_name,

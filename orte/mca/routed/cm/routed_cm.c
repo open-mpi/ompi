@@ -257,6 +257,7 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
+                jfam->route.epoch = ORTE_EPOCH_INVALID;
                 jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
                 
                 return ORTE_SUCCESS;
@@ -272,6 +273,7 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
+        jfam->route.epoch = ORTE_EPOCH_INVALID;
         jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
         
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
@@ -365,6 +367,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
   
     /* Initialize daemon's epoch, based on its current vpid/jobid */
+    daemon.epoch = ORTE_EPOCH_INVALID;
     daemon.epoch = orte_ess.proc_get_epoch(&daemon);
 
     /* if the daemon is me, then send direct to the target! */
@@ -811,6 +814,7 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
+    local_lifeline.epoch = ORTE_EPOCH_INVALID;
     local_lifeline.epoch = orte_ess.proc_get_epoch(&local_lifeline);
     
     lifeline = &local_lifeline;

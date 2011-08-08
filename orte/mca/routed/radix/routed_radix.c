@@ -413,6 +413,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
             if (opal_bitmap_is_set_bit(&child->relatives, daemon.vpid)) {
                 /* yep - we need to step through this child */
                 daemon.vpid = child->vpid;
+                daemon.epoch = ORTE_EPOCH_INVALID;
                 daemon.epoch = orte_ess.proc_get_epoch(&daemon);
                 ret = &daemon;
                 goto found;
@@ -424,6 +425,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      * any of our children, so we have to step up through our parent
      */
     daemon.vpid = ORTE_PROC_MY_PARENT->vpid;
+    daemon.epoch = ORTE_EPOCH_INVALID;
     daemon.epoch = orte_ess.proc_get_epoch(&daemon);
     
     ret = &daemon;
@@ -879,6 +881,7 @@ static int update_routing_tree(orte_jobid_t jobid)
         ORTE_PROC_MY_PARENT->vpid = (Ii-Sum) % NInPrevLevel;
         ORTE_PROC_MY_PARENT->vpid += (Sum - NInPrevLevel);
     }
+    ORTE_PROC_MY_PARENT->epoch = ORTE_EPOCH_INVALID;
     ORTE_PROC_MY_PARENT->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_PARENT);
     
     /* compute my direct children and the bitmap that shows which vpids

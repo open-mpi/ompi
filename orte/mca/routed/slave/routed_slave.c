@@ -275,6 +275,7 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
+    local_lifeline.epoch = ORTE_EPOCH_INVALID;
     local_lifeline.epoch = orte_ess.proc_get_epoch(&local_lifeline);
     
     lifeline = &local_lifeline;

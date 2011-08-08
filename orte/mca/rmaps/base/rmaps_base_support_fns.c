@@ -559,6 +559,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                         }
                     }
                     proc->name.vpid = vpid;
+                    proc->name.epoch = ORTE_EPOCH_INVALID;
                     proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
                     /* If there is an invalid epoch here, it's because it doesn't exist yet. */
                     if (ORTE_NODE_RANK_INVALID == proc->name.epoch) {
@@ -600,6 +601,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                         }
                     }
                     proc->name.vpid = vpid;
+                    proc->name.epoch = ORTE_EPOCH_INVALID;
                     proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
                 }
                 if (NULL == opal_pointer_array_get_item(jdata->procs, proc->name.vpid)) {
@@ -1012,6 +1014,7 @@ int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         proc->name.vpid = jdata->num_procs;  /* take the next available vpid */
+        proc->name.epoch = ORTE_EPOCH_INVALID;
         proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
         proc->node = node;
         proc->nodename = node->name;

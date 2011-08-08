@@ -363,7 +363,6 @@ rml_oob_queued_progress(int fd, short event, void *arg)
         origin = hdr->origin;
 
         next = orte_routed.get_route(&hdr->destination);
-#if 0
         if (next.vpid == ORTE_VPID_INVALID) {
             opal_output(0,
                         "%s:queued progress tried routing message from %s to %s:%d, can't find route",
@@ -374,7 +373,6 @@ rml_oob_queued_progress(int fd, short event, void *arg)
             opal_backtrace_print(stderr);
             orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
         }
-#endif
 
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &next, ORTE_PROC_MY_NAME)) {
             opal_output(0, "%s:queued progress trying to get message from %s to %s:%d, routing loop",
@@ -475,7 +473,6 @@ rml_oob_recv_route_callback(int status,
 
     next = orte_routed.get_route(&hdr->destination);
     if (next.vpid == ORTE_VPID_INVALID) {
-#if 0
         opal_output(0, "%s:route_callback tried routing message from %s to %s:%d, can't find route",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&origin),
@@ -483,7 +480,6 @@ rml_oob_recv_route_callback(int status,
                     hdr->tag);
         opal_backtrace_print(stderr);
         orte_errmgr.abort(ORTE_ERROR_DEFAULT_EXIT_CODE, NULL);
-#endif
         return;
     }
 

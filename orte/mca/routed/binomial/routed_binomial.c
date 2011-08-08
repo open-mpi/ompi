@@ -274,6 +274,7 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
+                jfam->route.epoch = ORTE_EPOCH_INVALID;
                 jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
                 
                 return ORTE_SUCCESS;
@@ -289,6 +290,7 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
+        jfam->route.epoch = ORTE_EPOCH_INVALID;
         jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
         
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
@@ -459,6 +461,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     ret = &daemon;
 
  found:
+    daemon.epoch = ORTE_EPOCH_INVALID;
     daemon.epoch = orte_ess.proc_get_epoch(&daemon);
 
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
@@ -1007,6 +1010,7 @@ static int update_routing_tree(orte_jobid_t jobid)
     ORTE_PROC_MY_PARENT->vpid = binomial_tree(0, 0, ORTE_PROC_MY_NAME->vpid,
                                    orte_process_info.max_procs,
                                    &num_children, &my_children, NULL, true, jobid);
+    ORTE_PROC_MY_PARENT->epoch = ORTE_EPOCH_INVALID;
     ORTE_PROC_MY_PARENT->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_PARENT);
     
     if (0 < opal_output_get_verbosity(orte_routed_base_output)) {

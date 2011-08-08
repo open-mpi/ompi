@@ -357,6 +357,7 @@ static int lsf_set_name(void)
     
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
+    ORTE_PROC_MY_NAME->epoch = ORTE_EPOCH_INVALID;
     ORTE_PROC_MY_NAME->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME);
     
     /* fix up the base name and make it the "real" name */

@@ -281,6 +281,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                                  &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
             sink->daemon.vpid = proc->node->daemon->name.vpid;
+            sink->daemon.epoch = ORTE_EPOCH_INVALID;
             sink->daemon.epoch = orte_ess.proc_get_epoch(&sink->daemon);
         }
     }

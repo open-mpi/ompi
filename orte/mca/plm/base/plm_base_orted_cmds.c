@@ -163,6 +163,7 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
                 continue;
             }
             peer.vpid = v;
+            peer.epoch = ORTE_EPOCH_INVALID;
             peer.epoch = orte_ess.proc_get_epoch(&peer);
             
             /* don't worry about errors on the send here - just
@@ -339,6 +340,7 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
                 continue;
             }
             peer.vpid = v;
+            peer.epoch = ORTE_EPOCH_INVALID;
             peer.epoch = orte_ess.proc_get_epoch(&peer);
             /* check to see if this daemon is known to be "dead" */
             if (proc->state > ORTE_PROC_STATE_UNTERMINATED) {

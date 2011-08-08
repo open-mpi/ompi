@@ -74,7 +74,7 @@ main(int argc, char *argv[]){
     
     for (j=1; j < count+1; j++) {
         peer.vpid = (ORTE_PROC_MY_NAME->vpid + j) % orte_process_info.num_procs;
-
+        peer.epoch = ORTE_EPOCH_INVALID;
         peer.epoch = orte_ess.proc_get_epoch(&peer);
         
         /* rank0 starts ring */

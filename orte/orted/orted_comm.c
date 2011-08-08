@@ -129,6 +129,7 @@ static void send_relay(opal_buffer_t *buf)
             continue;
         }
 
+        target.epoch = ORTE_EPOCH_INVALID;
         if (ORTE_NODE_RANK_INVALID == (target.epoch = orte_ess.proc_get_epoch(&target))) {
             /* If we are trying to send to a previously failed process it's
              * better to fail silently. */

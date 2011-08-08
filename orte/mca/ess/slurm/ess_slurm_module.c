@@ -368,6 +368,7 @@ static int slurm_set_name(void)
     /* fix up the vpid and make it the "real" vpid */
     slurm_nodeid = atoi(getenv("SLURM_NODEID"));
     ORTE_PROC_MY_NAME->vpid = vpid + slurm_nodeid;
+    ORTE_PROC_MY_NAME->epoch = ORTE_EPOCH_INVALID;
     ORTE_PROC_MY_NAME->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME);
 
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
