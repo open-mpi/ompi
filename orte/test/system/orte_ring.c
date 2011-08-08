@@ -41,6 +41,7 @@ main(int argc, char *argv[]){
     if( right_peer_orte_name.vpid >= num_peers ) {
         right_peer_orte_name.vpid = 0;
     }
+    right_peer_orte_name.epoch = ORTE_EPOCH_INVALID;
     right_peer_orte_name.epoch = orte_ess.proc_get_epoch(&right_peer_orte_name);
 
     left_peer_orte_name.jobid  = ORTE_PROC_MY_NAME->jobid;
@@ -48,6 +49,7 @@ main(int argc, char *argv[]){
     if( ORTE_PROC_MY_NAME->vpid == 0 ) {
         left_peer_orte_name.vpid = num_peers - 1;
     }
+    left_peer_orte_name.epoch = ORTE_EPOCH_INVALID;
     left_peer_orte_name.epoch = orte_ess.proc_get_epoch(&left_peer_orte_name);
 
     printf("My name is: %s -- PID %d\tMy Left Peer is %s\tMy Right Peer is %s\n",

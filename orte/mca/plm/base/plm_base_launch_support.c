@@ -377,6 +377,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
     /* push stdin - the IOF will know what to do with the specified target */
     name.jobid = job;
     name.vpid = jdata->stdin_target;
+    name.epoch = ORTE_EPOCH_INVALID;
     name.epoch = orte_ess.proc_get_epoch(&name);
     
     if (ORTE_SUCCESS != (rc = orte_iof.push(&name, ORTE_IOF_STDIN, 0))) {

@@ -373,6 +373,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
     
     /* Initialize daemon's epoch, based on its current vpid/jobid */
+    daemon.epoch = ORTE_EPOCH_INVALID;
     daemon.epoch = orte_ess.proc_get_epoch(&daemon);
 
     /* if the daemon is me, then send direct to the target! */
@@ -394,6 +395,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
                 /* we are at end of chain - wrap around */
                 daemon.vpid = 0;
             }
+            daemon.epoch = ORTE_EPOCH_INVALID;
             daemon.epoch = orte_ess.proc_get_epoch(&daemon);
             ret = &daemon;
         }

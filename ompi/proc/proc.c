@@ -362,7 +362,7 @@ int ompi_proc_refresh(void) {
 
         /* Does not change: proc->proc_name.vpid */
         proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
-        
+        proc->proc_name.epoch = ORTE_EPOCH_INVALID;
         proc->proc_name.epoch = orte_ess.proc_get_epoch(&proc->proc_name);
 
         /* Make sure to clear the local flag before we set it below */

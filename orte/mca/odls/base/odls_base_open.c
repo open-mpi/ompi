@@ -200,6 +200,7 @@ int orte_odls_base_open(void)
                  * will be in the job - we'll check later
                  */
                 nm->name.vpid = rank;
+                nm->name.epoch = ORTE_EPOCH_INVALID;
                 nm->name.epoch = orte_ess.proc_get_epoch(&nm->name);
             }
             opal_list_append(&orte_odls_globals.xterm_ranks, &nm->item);

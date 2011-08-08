@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
     for (i=0; i < app->num_procs; i++) {
         name.vpid = i;
 
+        name.epoch = ORTE_EPOCH_INVALID;
         name.epoch = orte_ess.proc_get_epoch(&name);
         fprintf(stderr, "Parent: sending message to child %s\n", ORTE_NAME_PRINT(&name));
         if (0 > (rc = orte_rml.send(&name, &msg, 1, MY_TAG, 0))) {
