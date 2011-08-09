@@ -138,7 +138,6 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     int rc;
     char *tmp;
     char** env = NULL;
-    char* var;
     char *nodelist_flat;
     char **nodelist_argv;
     int nodelist_argc;
@@ -255,10 +254,14 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
     opal_argv_free(nodelist_argv);
-    opal_argv_append(&argc, &argv, "-L");
-    asprintf(&tmp, "%s", nodelist_flat);
-    opal_argv_append(&argc, &argv, tmp);
-    free(tmp);
+
+    /* if we are using all allocated nodes, then alps
+     * doesn't need a nodelist
+     */
+    if (map->num_new_daemons < orte_num_allocated_nodes) {
+        opal_argv_append(&argc, &argv, "-L");
+        opal_argv_append(&argc, &argv, nodelist_flat);
+    }
 
 
     /*
@@ -304,7 +307,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
        don't support different --prefix'es for different nodes in
        the ALPS plm) */
     cur_prefix = NULL;
-    for (i=0; i < jdata->num_apps; i++) {
+    for (i=0; i < (int)jdata->num_apps; i++) {
         char * app_prefix_dir = apps[i]->prefix_dir;
         /* Check for already set cur_prefix_dir -- if different,
            complain */
