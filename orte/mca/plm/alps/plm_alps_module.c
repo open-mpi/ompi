@@ -424,9 +424,22 @@ static int plm_alps_terminate_orteds(void)
      */
     orte_wait_cb_cancel(alps_pid);
     
-    /* tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
-        ORTE_ERROR_LOG(rc);
+    /* now tell them to die */
+    if (orte_abnormal_term_ordered) {
+        /* cannot know if a daemon is able to
+         * tell us it died, so just ensure they
+         * all terminate
+         */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_HALT_VM_CMD))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    } else {
+        /* we need them to "phone home", though,
+         * so we can know that they have exited
+         */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
     
     return rc;
