@@ -101,9 +101,10 @@ Trunk (not on release branches yet)
   MPI_THREAD_MULTIPLE. 
 - Fix mpirun handling of prefix conflicts.
 - Ensure mpirun's --xterm options leaves sessions attached.
-- Fix types of the sendcounts and displs parameters to the F90 module
-  for MPI_Scatterv (while still preserving the F90 ABI).  Thanks to
-  Stanislav Sazykin for identifying the issue.
+- Fixed type of sendcounts and displs in the "use mpi" F90 module.
+  ABI is preserved, but applications may well be broken.  See the
+  README for more details.  Thanks to Stanislav Sazykin for
+  identifying the issue.
 - Fix indexed datatype leaks.  Thanks to Pascal Deveze for supplying
   the initial patch.
 - Fix debugger mapping when mpirun's -npernode option is used.
