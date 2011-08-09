@@ -142,6 +142,7 @@ static inline int opal_atomic_cmpset_64(volatile int64_t *addr,
    __asm__ __volatile__ (
                          "1:  ldrexd  %0, %H0, [%2]           \n"
                          "    cmp     %0, %3                  \n"
+                         "    it      eq                      \n"
                          "    cmpeq   %H0, %H3                \n"
                          "    bne     2f                      \n"
                          "    strexd  %1, %4, %H4, [%2]       \n"
