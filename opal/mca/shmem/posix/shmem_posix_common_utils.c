@@ -46,6 +46,7 @@
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 
 #include "shmem_posix.h"
@@ -78,15 +79,19 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
             if (EEXIST == err) {
                 continue;
             }
-            /* a real error occurred, notify the user and set fd to -1 */
+            /* a "real" error occurred. fd is already set to -1, so get out
+             * of here. we can't be selected :-(.
+             */
             else {
                 char hn[MAXHOSTNAMELEN];
                 gethostname(hn, MAXHOSTNAMELEN - 1);
                 hn[MAXHOSTNAMELEN - 1] = '\0';
-                opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1,
-                               hn, "shm_open(2)", posix_file_name_buff,
-                               strerror(err), err);
-                fd = -1;
+                OPAL_OUTPUT_VERBOSE(
+                    (70, opal_shmem_base_output,
+                     "shmem_posix_shm_open: disqualifying posix because "
+                     "shm_open(2) failed with error: %s (errno %d)\n",
+                     strerror(err), err)
+                );
                 break;
             }
         }
