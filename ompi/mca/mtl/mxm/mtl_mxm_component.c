@@ -82,8 +82,12 @@ static int ompi_mtl_mxm_component_open(void)
     mxm_fill_context_opts(&mxm_opts);
     err = mxm_init(&mxm_opts, &ompi_mtl_mxm.mxm_context);
     if (MXM_OK != err) {
-        orte_show_help("help-mtl-mxm.txt", "mxm init", true,
-                       mxm_error_string(err));
+        if (MXM_ERR_NO_DEVICE == err) {
+            MXM_VERBOSE(1, "No supported device found, disqualifying mxm");
+        } else {
+            orte_show_help("help-mtl-mxm.txt", "mxm init", true,
+                    mxm_error_string(err));
+        }
         return OPAL_ERR_NOT_AVAILABLE;
     }
     return OMPI_SUCCESS;
@@ -104,7 +108,7 @@ ompi_mtl_mxm_component_init(bool enable_progress_threads,
 
     rc = ompi_mtl_mxm_module_init();
     if (OMPI_SUCCESS != rc) {
-    	return NULL;
+        return NULL;
     }
 
     /* Calculate MTL constraints according to MXM types */
