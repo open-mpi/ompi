@@ -383,12 +383,13 @@ Network Support
     performance:
     - Myrinet MX (including Open-MX, but not GM)
     - InfiniPath PSM
+    - Mellanox MXM
     - Portals
 
     Open MPI will, by default, choose to use "cm" when the InfiniPath
-    PSM MTL can be used.  Otherwise, "ob1" will be used and the
-    corresponding BTLs will be selected.  "csum" will never be
-    selected by default.  Users can force the use of ob1 or cm if
+    PSM or the Mellanox MXM MTL can be used.  Otherwise, "ob1" will be
+    used and the corresponding BTLs will be selected.  "csum" will never
+    be selected by default.  Users can force the use of ob1 or cm if
     desired by setting the "pml" MCA parameter at run-time:
 
       shell$ mpirun --mca pml ob1 ...
@@ -396,6 +397,16 @@ Network Support
       shell$ mpirun --mca pml csum ...
       or
       shell$ mpirun --mca pml cm ...
+
+- MXM is a MellanoX Messaging library (unreleased yet) utilizing full range 
+  of IB transports to provide the following messaging services to the upper 
+  level MPI:
+  - Usage of all available IB transports 
+  - Native RDMA support
+  - Progress thread
+  - Shared memory communication
+  - hardware assisted reliability
+  - MXM supports all HCAs that are being supported under Open MPI.
 
   - There are also the "v" and "crcpw" PML components for differing
     flavors of specialized fault tolerant support.
@@ -615,6 +626,19 @@ for a full list); a summary of the more commonly used ones follows:
 --with-psm-libdir=<directory>
   Look in directory for the PSM libraries.  By default, Open MPI will
   look in <psm directory>/lib and <psm directory>/lib64, which covers
+  most cases.  This option is only needed for special configurations.
+
+--with-mxm=<directory>
+  Specify the directory where the Mellanox MXM library and header
+  files are located.  This option is generally only necessary if the
+  MXM headers and libraries are not in default compiler/linker search
+  paths.
+
+  MXM is the support library for Mellanox Network adapters.
+
+--with-mxm-libdir=<directory>
+  Look in directory for the MXM libraries.  By default, Open MPI will
+  look in <mxm directory>/lib and <mxm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
 
 --with-sctp=<directory>
