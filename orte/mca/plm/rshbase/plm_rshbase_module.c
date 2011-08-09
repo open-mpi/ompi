@@ -261,7 +261,7 @@ static int spawn(orte_job_t *jdata)
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:rsh: launching job %s",
+                         "%s plm:rshbase: launching job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
     
@@ -278,7 +278,7 @@ static int spawn(orte_job_t *jdata)
     if (0 == map->num_new_daemons) {
         /* have all the daemons we need - launch app */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:rsh: no new daemons to launch",
+                             "%s plm:rshbase: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         goto launch_apps;
     }
@@ -383,7 +383,7 @@ static int spawn(orte_job_t *jdata)
         /* if this daemon already exists, don't launch it! */
         if (node->daemon_launched) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                                 "%s plm:rsh:launch daemon already exists on node %s",
+                                 "%s plm:rshbase:launch daemon already exists on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  node->name));
             continue;
@@ -395,7 +395,7 @@ static int spawn(orte_job_t *jdata)
         if (NULL == node->daemon) {
             ORTE_ERROR_LOG(ORTE_ERR_FATAL);
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                                 "%s plm:rsh:launch daemon failed to be defined on node %s",
+                                 "%s plm:rshbase:launch daemon failed to be defined on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  node->name));
             rc = ORTE_ERR_FATAL;
@@ -413,7 +413,7 @@ static int spawn(orte_job_t *jdata)
         }
 
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:rsh: launching on node %s",
+                             "%s plm:rshbase: launching on node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              node->name));
 
@@ -439,7 +439,7 @@ static int spawn(orte_job_t *jdata)
             node->daemon->pid = pid;
             
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                                 "%s plm:rsh: recording launch of daemon %s",
+                                 "%s plm:rshbase: recording launch of daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&node->daemon->name)));
 
@@ -477,7 +477,7 @@ static int spawn(orte_job_t *jdata)
     failed_job = active_job;
     if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:rsh: launch of apps failed for job %s on error %s",
+                             "%s plm:rshbase: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
         goto cleanup;
@@ -499,9 +499,9 @@ static int spawn(orte_job_t *jdata)
     
     if (orte_timing ) {
         if (0 != gettimeofday(&joblaunchstop, NULL)) {
-            opal_output(0, "plm_rsh: could not obtain job launch stop time");
+            opal_output(0, "plm:rshbase: could not obtain job launch stop time");
         } else {
-            opal_output(0, "plm_rsh: total job launch time is %ld usec",
+            opal_output(0, "plm:rshbase: total job launch time is %ld usec",
                         (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
                         (joblaunchstop.tv_usec - joblaunchstart.tv_usec));
         }
@@ -528,11 +528,22 @@ static int terminate_orteds(void)
 {
     int rc;
     
-    /* now tell them to die - we need them to "phone home", though,
-     * so we can know that they have exited
-     */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
-        ORTE_ERROR_LOG(rc);
+    /* now tell them to die */
+    if (orte_abnormal_term_ordered) {
+        /* cannot know if a daemon is able to
+         * tell us it died, so just ensure they
+         * all terminate
+         */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_HALT_VM_CMD))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    } else {
+        /* we need them to "phone home", though,
+         * so we can know that they have exited
+         */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_EXIT_CMD))) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
     
     return rc;
