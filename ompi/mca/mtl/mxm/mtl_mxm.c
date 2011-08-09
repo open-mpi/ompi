@@ -22,7 +22,6 @@
 #include "mtl_mxm_types.h"
 #include "mtl_mxm_endpoint.h"
 #include "mtl_mxm_request.h"
-#include "mtl_mxm_debug.h"
 
 mca_mtl_mxm_module_t ompi_mtl_mxm = {
     {
