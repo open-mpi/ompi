@@ -22,6 +22,8 @@
 #include "ompi/mca/mtl/base/base.h"
 #include "opal/datatype/opal_convertor.h"
 
+#include "mtl_mxm_debug.h"
+
 BEGIN_C_DECLS
 
 /* MTL interface functions */
