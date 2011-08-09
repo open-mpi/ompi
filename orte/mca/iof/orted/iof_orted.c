@@ -96,7 +96,7 @@ static int init(void)
      from the HNP IOF component */
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_IOF_PROXY,
-                                                      ORTE_RML_NON_PERSISTENT,
+                                                      ORTE_RML_PERSISTENT,
                                                       orte_iof_orted_recv,
                                                       NULL))) {
         ORTE_ERROR_LOG(rc);

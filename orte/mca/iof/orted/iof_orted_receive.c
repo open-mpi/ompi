@@ -192,14 +192,6 @@ void orte_iof_orted_recv(int status, orte_process_name_t* sender,
      * to the message buffer for later processing
      */
     ORTE_MESSAGE_EVENT(sender, buffer, tag, process_msg);
-    
-    /* reissue the recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_IOF_PROXY,
-                                                      ORTE_RML_NON_PERSISTENT,
-                                                      orte_iof_orted_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
+
     return;
 }

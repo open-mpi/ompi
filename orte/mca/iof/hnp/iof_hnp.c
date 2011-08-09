@@ -97,7 +97,7 @@ static int init(void)
      */    
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_IOF_HNP,
-                                                      ORTE_RML_NON_PERSISTENT,
+						      ORTE_RML_PERSISTENT,
                                                       orte_iof_hnp_recv,
                                                       NULL))) {
         ORTE_ERROR_LOG(rc);
