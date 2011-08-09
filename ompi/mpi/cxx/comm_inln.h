@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -640,10 +640,16 @@ MPI::Comm::Delete_attr(int comm_keyval)
   (void)MPI_Attr_delete(mpi_comm, comm_keyval);
 }
 
+// Comment out the unused parameters so that compilers don't warn
+// about them.  Use comments instead of just deleting the param names
+// outright so that we know/remember what they are.
 inline int
-MPI::Comm::NULL_COPY_FN(const MPI::Comm& oldcomm, int comm_keyval,
-			       void* extra_state, void* attribute_val_in,
-			       void* attribute_val_out, bool& flag)
+MPI::Comm::NULL_COPY_FN(const MPI::Comm& /* oldcomm */, 
+                        int /* comm_keyval */,
+                        void* /* extra_state */, 
+                        void* /* attribute_val_in */,
+                        void* /* attribute_val_out */, 
+                        bool& flag)
 {
     flag = false;
     return MPI_SUCCESS;
@@ -667,9 +673,14 @@ MPI::Comm::DUP_FN(const MPI::Comm& oldcomm, int comm_keyval,
 #endif
 }
 
+// Comment out the unused parameters so that compilers don't warn
+// about them.  Use comments instead of just deleting the param names
+// outright so that we know/remember what they are.
 inline int
-MPI::Comm::NULL_DELETE_FN(MPI::Comm& comm, int comm_keyval, void* attribute_val,
-				 void* extra_state)
+MPI::Comm::NULL_DELETE_FN(MPI::Comm& /* comm */, 
+                          int /* comm_keyval */, 
+                          void* /* attribute_val */,
+                          void* /* extra_state */)
 {
     return MPI_SUCCESS;
 }
