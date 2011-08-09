@@ -69,7 +69,7 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
          */
         snprintf(posix_file_name_buff, size, "%s%04d",
                  OPAL_SHMEM_POSIX_FILE_NAME_PREFIX, attempt++);
-        /* the check for the existence of the object and its * creation if it
+        /* the check for the existence of the object and its creation if it
          * does not exist are performed atomically.
          */
         if (-1 == (fd = shm_open(posix_file_name_buff,
@@ -86,12 +86,10 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
                 char hn[MAXHOSTNAMELEN];
                 gethostname(hn, MAXHOSTNAMELEN - 1);
                 hn[MAXHOSTNAMELEN - 1] = '\0';
-                OPAL_OUTPUT_VERBOSE(
-                    (70, opal_shmem_base_output,
+                opal_output_verbose(10, opal_shmem_base_output,
                      "shmem_posix_shm_open: disqualifying posix because "
                      "shm_open(2) failed with error: %s (errno %d)\n",
-                     strerror(err), err)
-                );
+                     strerror(err), err);
                 break;
             }
         }
