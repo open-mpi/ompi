@@ -63,9 +63,77 @@ Trunk (not on release branches yet)
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
 - Added Mellanox MTL layer implementation (mxm)
+
+1.5.4
+-----
+
+- Add support for the (as yet unreleased) Mellanox MXM transport.
+- Add support for dynamic service levels (SLs) in the openib BTL.
 - Fixed C++ bindings cosmetic/warnings issue with
   MPI::Comm::NULL_COPY_FN and MPI::Comm::NULL_DELETE_FN.  Thanks to
   Júlio Hoffimann for identifying the issues.
+- Also allow the word "slots" in rankfiles (i.e., not just "slot").
+- Add Mellanox ConnectX 3 device IDs to the openib BTL defaults.
+- Various FCA updates.
+- Fix 32 bit SIGBUS errors on Solaris SPARC platforms.
+- Add missing ARM assembly code files.
+- Update to allow more than 128 entries in an appfile.
+- Various VT updates and bug fixes.
+- Update description of btl_openib_cq_size to be more accurate.
+- Various assembly "clobber" fixes.
+- Fix a hang in carto selection in obscure situations.
+- Fix for NetBSD, which doesn't have <execinfo.h>
+- Support Solaris legacy munmap prototype changes.
+- Updated to Automake 1.11.1 per 
+  http://www.open-mpi.org/community/lists/devel/2011/07/9492.php.
+- Fix compilation of LSF support.
+- Update MPI_Comm_spawn_multiple.3 man page to reflect what it
+  actually does.
+- Fix for possible corruption of the environment.  Thanks to Peter
+  Thompson for the suggestion.
+- Enable use of PSM on direct-launch SLURM jobs.
+- Update paffinity hwloc to v1.2, and to fix minor bugs affinity
+  assignment bugs on PPC64/Linux platforms.
+- Let the openib BTL auto-detect its bandwidth.
+- Support new MPI-2.2 datatypes.
+- Updates to support more datatypes in MPI one-sided communication.
+- Fix recursive locking bug when MPI-IO was used with
+  MPI_THREAD_MULTIPLE. 
+- Fix mpirun handling of prefix conflicts.
+- Ensure mpirun's --xterm options leaves sessions attached.
+- Fix types of the sendcounts and displs parameters to the F90 module
+  for MPI_Scatterv (while still preserving the F90 ABI).  Thanks to
+  Stanislav Sazykin for identifying the issue.
+- Fix indexed datatype leaks.  Thanks to Pascal Deveze for supplying
+  the initial patch.
+- Fix debugger mapping when mpirun's -npernode option is used.
+- Fixed support for configure's --disable-dlopen option when used with
+  "make distclean".
+- Fix segv associated with MPI_Comm_create with MPI_GROUP_EMPTY.
+- Improved LoadLeveler ORTE support.
+- Add new WindVerbs BTL plugin, supporting native OpenFabrics verbs on
+  Windows (the "wv" BTL).
+- Add new btl_openib_gid_index MCA parameter to allow selecting which
+  GID to use on an OpenFabrics device's GID table.
+- Add support for PCI relaxed ordering in the OpenFabrics BTL (when
+  available).
+- Update rsh logic to allow correct SGE operation.
+- Ensure that the mca_paffinity_alone MCA parameter only appears once
+  in the ompi_info output.  Thanks to Gus Correa for identifying the
+  issue.
+- Fix return status from MPI_Probe.
+- Remove --enable-progress-thread configure option; it doesn't work on
+  the v1.5 branch.  Rename --enable-mpi-threads to
+  --enable-mpi-thread-multiple.  Add new --enable-opal-multi-threads
+  option. 
+- Updates for Intel Fortran compiler version 12.
+- Remove bproc support.  Farewell bproc!
+- If something goes wrong during during MPI_INIT, fix the error
+  message to say that it's illegal to invoke MPI_INIT before
+  MPI_INIT.  
+- Fixed type of sendcounts and displs in the "use mpi" F90 module.
+  ABI is preserved, but applications may well be broken.  See the README
+  for more details.
 
 
 1.5.3
