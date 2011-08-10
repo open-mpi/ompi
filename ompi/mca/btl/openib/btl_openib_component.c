@@ -101,6 +101,7 @@ const char *ibv_get_sysfs_path(void);
 /*
  * Local functions
  */
+static int btl_openib_component_register(void);
 static int btl_openib_component_open(void);
 static int btl_openib_component_close(void);
 static mca_btl_base_module_t **btl_openib_component_init(int*, bool, bool);
@@ -124,7 +125,9 @@ mca_btl_openib_component_t mca_btl_openib_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             btl_openib_component_open,  /* component open */
-            btl_openib_component_close  /* component close */
+            btl_openib_component_close,  /* component close */
+            NULL, /* component query */
+            btl_openib_component_register, /* component register */
         },
         {
             /* The component is checkpoint ready */
@@ -136,14 +139,40 @@ mca_btl_openib_component_t mca_btl_openib_component = {
     }
 };
 
-/*
- *  Called by MCA framework to open the component, registers
- *  component parameters.
- */
-int btl_openib_component_open(void)
+static int btl_openib_component_register(void)
 {
     int ret;
 
+    /* register IB component parameters */
+    ret = btl_openib_register_mca_params();
+
+    mca_btl_openib_component.max_send_size =
+        mca_btl_openib_module.super.btl_max_send_size;
+    mca_btl_openib_component.eager_limit =
+        mca_btl_openib_module.super.btl_eager_limit;
+
+    /* if_include and if_exclude need to be mutually exclusive */
+    if (OPAL_SUCCESS != 
+        mca_base_param_check_exclusive_string(
+        mca_btl_openib_component.super.btl_version.mca_type_name,
+        mca_btl_openib_component.super.btl_version.mca_component_name,
+        "if_include",
+        mca_btl_openib_component.super.btl_version.mca_type_name,
+        mca_btl_openib_component.super.btl_version.mca_component_name,
+        "if_exclude")) {
+        /* Return ERR_NOT_AVAILABLE so that a warning message about
+           "open" failing is not printed */
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+/*
+ *  Called by MCA framework to open the component
+ */
+static int btl_openib_component_open(void)
+{
 #if OPAL_HAVE_THREADS
     opal_mutex_t *lock = &mca_btl_openib_component.srq_manager.lock;
     opal_hash_table_t *srq_addr_table = &mca_btl_openib_component.srq_manager.srq_addr_table;
@@ -164,16 +193,8 @@ int btl_openib_component_open(void)
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
 
-    /* register IB component parameters */
-    ret = btl_openib_register_mca_params();
-
-    mca_btl_openib_component.max_send_size =
-        mca_btl_openib_module.super.btl_max_send_size;
-    mca_btl_openib_component.eager_limit =
-        mca_btl_openib_module.super.btl_eager_limit;
-
     srand48(getpid() * time(NULL));
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 /*

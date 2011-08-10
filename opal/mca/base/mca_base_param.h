@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -714,6 +714,41 @@ OPAL_DECLSPEC int mca_base_param_find_string_name(const char *type,
                                                   const char *param_name,
                                                   char **env,
                                                   char **current_value);
+
+/**
+ * Check that two MCA parameters were not both set to non-default
+ * values.
+ *
+ * @param type_a [in] Framework name of parameter A (string).
+ * @param component_a [in] Component name of parameter A (string).
+ * @param param_a [in] Parameter name of parameter A (string.
+ * @param type_b [in] Framework name of parameter A (string).
+ * @param component_b [in] Component name of parameter A (string).
+ * @param param_b [in] Parameter name of parameter A (string.
+ *
+ * This function is useful for checking that the user did not set both
+ * of 2 mutually-exclusive MCA parameters.
+ *
+ * This function will print an opal_show_help() message and return
+ * OPAL_ERR_BAD_PARAM if it finds that the two parameters both have
+ * value sources that are not MCA_BASE_PARAM_SOURCE_DEFAULT.  This
+ * means that both parameters have been set by the user (i.e., they're
+ * not default values).
+ *
+ * Note that opal_show_help() allows itself to be hooked, so if this
+ * happens after the aggregated orte_show_help() system is
+ * initialized, the messages will be aggregated (w00t).
+ *
+ * @returns OPAL_ERR_BAD_PARAM if the two parameters have sources that
+ * are not MCA_BASE_PARAM_SOURCE_DEFAULT.
+ * @returns OPAL_SUCCESS otherwise.
+ */
+OPAL_DECLSPEC int mca_base_param_check_exclusive_string(const char *type_a,
+                                          const char *component_a,
+                                          const char *param_a,
+                                          const char *type_b,
+                                          const char *component_b,
+                                          const char *param_b);
 
     /**
      * Set the "internal" flag on an MCA parameter to true or false.

@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -161,20 +162,6 @@ struct mca_btl_ud_module_t {
 
 struct mca_btl_ud_frag_t;
 extern mca_btl_ud_module_t mca_btl_ofud_module;
-
-
-/**
- * Open the component; register UD/IB parameters with the MCA framework
- */
-
-extern int mca_btl_ud_component_open(void);
-
-
-/**
- * Any final cleanup before being unloaded.
- */
-
-extern int mca_btl_ud_component_close(void);
 
 
 /**

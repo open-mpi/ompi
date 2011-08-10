@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2010 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -98,6 +98,9 @@ OBJ_CLASS_INSTANCE(
  * Local utility functions
  */
 
+static int mca_oob_tcp_component_register(void);
+static int mca_oob_tcp_component_open(void);
+static int mca_oob_tcp_component_close(void);
 static int  mca_oob_tcp_create_listen(int *target_sd, unsigned short *port, uint16_t af_family);
 static int  mca_oob_tcp_create_listen_thread(void);
 static void mca_oob_tcp_recv_handler(int sd, short flags, void* user);
@@ -126,7 +129,9 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
         ORTE_MINOR_VERSION,
         ORTE_RELEASE_VERSION,
         mca_oob_tcp_component_open,  /* component open */
-        mca_oob_tcp_component_close /* component close */
+        mca_oob_tcp_component_close, /* component close */
+        NULL, /* component query */
+        mca_oob_tcp_component_register, /* component register */
     },
     {
         /* The component is checkpoint ready */
@@ -153,21 +158,10 @@ mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_ft_event
 };
 
-/*
- * Initialize global variables used w/in this module.
- */
-int mca_oob_tcp_component_open(void)
+static int mca_oob_tcp_component_register(void)
 {
     int tmp, value = 0;
     char *listen_type, *str = NULL;
-
-#ifdef __WINDOWS__
-    WSADATA win_sock_data;
-    if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-        opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: error %d\n", WSAGetLastError());
-        return ORTE_ERROR;
-    }
-#endif
 
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
                            "verbose",
@@ -175,26 +169,7 @@ int mca_oob_tcp_component_open(void)
                            false, false,
                            0,
                            &value);
-    mca_oob_tcp_output_handle = opal_output_open(NULL);
     opal_output_set_verbosity(mca_oob_tcp_output_handle, value);
-
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,         opal_hash_table_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    opal_hash_table_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     opal_free_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,          opal_free_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_lock,          opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_events,        opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_post,      opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_recv,      opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_completed, opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_lock,    opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_cond,    opal_condition_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_available_devices, opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_listen_thread, opal_thread_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections, opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_connections_return, opal_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_connections_lock, opal_mutex_t);
 
     /* register oob module parameters */
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
@@ -313,10 +288,6 @@ int mca_oob_tcp_component_open(void)
     mca_oob_tcp_component.tcp_listen_thread_tv.tv_sec = tmp / (1000);
     mca_oob_tcp_component.tcp_listen_thread_tv.tv_usec = (tmp % 1000) * 1000; 
 
-    mca_oob_tcp_component.tcp_listen_thread_num_sockets = 0;
-    mca_oob_tcp_component.tcp_listen_thread_sds[0] = -1;
-    mca_oob_tcp_component.tcp_listen_thread_sds[1] = -1;
-
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "static_ports", "Static ports for daemons and procs (IPv4)",
                               false, false,
@@ -407,11 +378,65 @@ int mca_oob_tcp_component_open(void)
     mca_oob_tcp_component.tcp6_listen_sd = -1;
 #endif  /* OPAL_WANT_IPV6 */
 
+    return ORTE_SUCCESS;
+}
+
+/*
+ * Initialize global variables used w/in this module.
+ */
+static int mca_oob_tcp_component_open(void)
+{
+#ifdef __WINDOWS__
+    WSADATA win_sock_data;
+    if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
+        opal_output (0, "mca_oob_tcp_component_init: failed to initialise windows sockets: error %d\n", WSAGetLastError());
+        return ORTE_ERROR;
+    }
+#endif
+
+    mca_oob_tcp_output_handle = opal_output_open(NULL);
+
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,         opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,          opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_lock,          opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_events,        opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_post,      opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_recv,      opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_completed, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_lock,    opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_cond,    opal_condition_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_available_devices, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_listen_thread, opal_thread_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_connections_return, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_connections_lock, opal_mutex_t);
+
+    mca_oob_tcp_component.tcp_listen_thread_num_sockets = 0;
+    mca_oob_tcp_component.tcp_listen_thread_sds[0] = -1;
+    mca_oob_tcp_component.tcp_listen_thread_sds[1] = -1;
+
     /* initialize state */
     mca_oob_tcp_component.tcp_shutdown = false;
     mca_oob_tcp_component.tcp_listen_sd = -1;
     mca_oob_tcp_component.tcp_match_count = 0;
 
+    /* if_include and if_exclude need to be mutually exclusive */
+    if (OPAL_SUCCESS != 
+        mca_base_param_check_exclusive_string(
+        mca_oob_tcp_component.super.oob_base.mca_type_name,
+        mca_oob_tcp_component.super.oob_base.mca_component_name,
+        "if_include",
+        mca_oob_tcp_component.super.oob_base.mca_type_name,
+        mca_oob_tcp_component.super.oob_base.mca_component_name,
+        "if_exclude")) {
+        /* Return ERR_NOT_AVAILABLE so that a warning message about
+           "open" failing is not printed */
+        return ORTE_ERR_NOT_AVAILABLE;
+    }
+    
     return ORTE_SUCCESS;
 }
 
@@ -419,7 +444,7 @@ int mca_oob_tcp_component_open(void)
  * Cleanup of global variables used by this module.
  */
 
-int mca_oob_tcp_component_close(void)
+static int mca_oob_tcp_component_close(void)
 {
     opal_list_item_t *item;
 

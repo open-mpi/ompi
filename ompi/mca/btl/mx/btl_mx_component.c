@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,6 +40,11 @@
 #include "mx_internals/mx__driver_interface.h"
 #endif  /* MX_HAVE_MAPPER_STATE */
 
+static int mca_btl_mx_component_register(void);
+static int mca_btl_mx_component_open(void);
+static int mca_btl_mx_component_close(void);
+
+
 mca_btl_mx_component_t mca_btl_mx_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -52,7 +58,9 @@ mca_btl_mx_component_t mca_btl_mx_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_btl_mx_component_open,  /* component open */
-            mca_btl_mx_component_close  /* component close */
+            mca_btl_mx_component_close,  /* component close */
+            NULL, /* component query */
+            mca_btl_mx_component_register, /* component register */
         },
         {
             /* The component is checkpoint ready */
@@ -64,20 +72,9 @@ mca_btl_mx_component_t mca_btl_mx_component = {
     }
 };
 
-/*
- *  Called by MCA framework to open the component, registers
- *  component parameters.
- */
 
-int mca_btl_mx_component_open(void)
+static int mca_btl_mx_component_register(void)
 {
-    /* initialize state */
-    mca_btl_mx_component.mx_num_btls = 0;
-    mca_btl_mx_component.mx_btls = NULL;
-    mca_btl_mx_component.mx_use_unexpected = 0;
-
-    /* initialize objects */ 
-    OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_btls",
                             "Maximum number of accepted Myrinet cards",
                             false, false, 8, &mca_btl_mx_component.mx_max_btls );
@@ -164,6 +161,24 @@ int mca_btl_mx_component_open(void)
     mca_btl_base_param_register(&mca_btl_mx_component.super.btl_version,
                                 &mca_btl_mx_module.super);
 
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ *  Called by MCA framework to open the component, registers
+ *  component parameters.
+ */
+
+static int mca_btl_mx_component_open(void)
+{
+    /* initialize state */
+    mca_btl_mx_component.mx_num_btls = 0;
+    mca_btl_mx_component.mx_btls = NULL;
+    mca_btl_mx_component.mx_use_unexpected = 0;
+
+    /* initialize objects */ 
+    OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
     if( 0 == mca_btl_mx_component.mx_support_sharedmem )
         opal_setenv( "MX_DISABLE_SHMEM", "1", true, &environ );
     if( 0 == mca_btl_mx_component.mx_support_self )
@@ -178,7 +193,7 @@ int mca_btl_mx_component_open(void)
  * component cleanup - sanity checking of queue lengths
  */
 
-int mca_btl_mx_component_close(void)
+static int mca_btl_mx_component_close(void)
 {
     if( NULL == mca_btl_mx_component.mx_btls )
         return OMPI_SUCCESS;

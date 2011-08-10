@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,8 +64,6 @@ extern mca_oob_t mca_oob_tcp;
 /*
  * standard component functions
  */
-int        mca_oob_tcp_component_open(void);
-int        mca_oob_tcp_component_close(void);
 mca_oob_t* mca_oob_tcp_component_init(int* priority);
 
 /**
