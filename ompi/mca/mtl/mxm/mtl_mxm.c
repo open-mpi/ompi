@@ -154,8 +154,6 @@ int ompi_mtl_mxm_finalize(struct mca_mtl_base_module_t* mtl)
 {
     opal_progress_unregister(ompi_mtl_mxm_progress);
     mxm_ep_destroy(ompi_mtl_mxm.ep);
-    mxm_cleanup(ompi_mtl_mxm.mxm_context);
-    ompi_mtl_mxm.mxm_context = NULL;
     return OMPI_SUCCESS;
 }
 
