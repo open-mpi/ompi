@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -75,6 +75,7 @@
 /*
  * Local functions
  */
+static int btl_wv_component_register(void);
 static int btl_wv_component_open(void);
 static int btl_wv_component_close(void);
 static mca_btl_base_module_t **btl_wv_component_init(int*, bool, bool);
@@ -99,7 +100,9 @@ mca_btl_wv_component_t mca_btl_wv_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             btl_wv_component_open,  /* component open */
-            btl_wv_component_close  /* component close */
+            btl_wv_component_close,  /* component close */
+            NULL, /* component query */
+            btl_wv_component_register, /* component register */
         },
         {
             /* The component is checkpoint ready */
@@ -123,13 +126,27 @@ static enum wv_mtu wv_convert_mtu(UINT32 mtu)
     }
 }
 
+static int btl_wv_component_register(void)
+{
+    int ret;
+
+    /* register IB component parameters */
+    ret = btl_wv_register_mca_params();
+
+    mca_btl_wv_component.max_send_size =
+        mca_btl_wv_module.super.btl_max_send_size;
+    mca_btl_wv_component.eager_limit =
+        mca_btl_wv_module.super.btl_eager_limit;
+
+    return OMPI_SUCCESS;
+}
+
 /*
  *  Called by MCA framework to open the component, registers
  *  component parameters.
  */
-int btl_wv_component_open(void)
+static int btl_wv_component_open(void)
 {
-    int ret;
     /* initialize state */
     mca_btl_wv_component.ib_num_btls = 0;
     mca_btl_wv_component.wv_btls = NULL;
@@ -140,14 +157,6 @@ int btl_wv_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_wv_component.ib_procs, opal_list_t);
-
-    /* register IB component parameters */
-    ret = btl_wv_register_mca_params();
-
-    mca_btl_wv_component.max_send_size =
-        mca_btl_wv_module.super.btl_max_send_size;
-    mca_btl_wv_component.eager_limit =
-        mca_btl_wv_module.super.btl_eager_limit;
 
     srand48(getpid() * time(NULL));
     return ret;

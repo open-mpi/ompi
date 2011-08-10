@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,6 +49,10 @@
 #include "btl_ofud_endpoint.h"
 
 
+static int mca_btl_ud_component_register(void);
+static int mca_btl_ud_component_open(void);
+static int mca_btl_ud_component_close(void);
+
 mca_btl_ud_component_t mca_btl_ofud_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -61,7 +65,9 @@ mca_btl_ud_component_t mca_btl_ofud_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_btl_ud_component_open,  /* component open */
-            mca_btl_ud_component_close  /* component close */
+            mca_btl_ud_component_close,  /* component close */
+            NULL, /* component query */
+            mca_btl_ud_component_register, /* component register */
         },
         {
             /* The component is not checkpoint ready */
@@ -108,22 +114,9 @@ static inline void mca_btl_ud_param_reg_int(const char* param_name,
 }
 
 
-/*
- *  Called by MCA framework to open the component, registers
- *  component parameters.
- */
-
-int mca_btl_ud_component_open(void)
+static int mca_btl_ud_component_register(void)
 {
     int val;
-    
-    /* initialize state */
-    mca_btl_ofud_component.num_btls = 0;
-    mca_btl_ofud_component.ud_btls = NULL;
-    
-    /* initialize objects */
-    OBJ_CONSTRUCT(&mca_btl_ofud_component.ud_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_ofud_component.ud_procs, opal_list_t);
 
     /* register IB component parameters */
     mca_btl_ud_param_reg_int("max_btls",
@@ -180,7 +173,7 @@ int mca_btl_ud_component_open(void)
     mca_btl_ud_param_reg_int("bandwidth",
                              "Approximate maximum bandwidth of interconnect",
                              800, (int*)&mca_btl_ofud_module.super.btl_bandwidth);
-    
+
     mca_btl_ofud_module.super.btl_eager_limit -= sizeof(mca_btl_ud_header_t);
     mca_btl_ofud_module.super.btl_max_send_size -= sizeof(mca_btl_ud_header_t);
 
@@ -189,10 +182,42 @@ int mca_btl_ud_component_open(void)
 
 
 /*
+ *  Called by MCA framework to open the component
+ */
+
+static int mca_btl_ud_component_open(void)
+{
+    /* initialize state */
+    mca_btl_ofud_component.num_btls = 0;
+    mca_btl_ofud_component.ud_btls = NULL;
+    
+    /* initialize objects */
+    OBJ_CONSTRUCT(&mca_btl_ofud_component.ud_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_btl_ofud_component.ud_procs, opal_list_t);
+    
+    /* if_include and if_exclude need to be mutually exclusive */
+    if (OPAL_SUCCESS != 
+        mca_base_param_check_exclusive_string(
+        mca_btl_ofud_component.super.btl_version.mca_type_name,
+        mca_btl_ofud_component.super.btl_version.mca_component_name,
+        "if_include",
+        mca_btl_ofud_component.super.btl_version.mca_type_name,
+        mca_btl_ofud_component.super.btl_version.mca_component_name,
+        "if_exclude")) {
+        /* Return ERR_NOT_AVAILABLE so that a warning message about
+           "open" failing is not printed */
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
+    
+    return OMPI_SUCCESS;
+}
+
+
+/*
  * Component cleanup 
  */
 
-int mca_btl_ud_component_close(void)
+static int mca_btl_ud_component_close(void)
 {
     OBJ_DESTRUCT(&mca_btl_ofud_component.ud_lock);
     OBJ_DESTRUCT(&mca_btl_ofud_component.ud_procs);

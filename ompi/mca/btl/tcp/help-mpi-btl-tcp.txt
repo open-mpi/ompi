@@ -18,19 +18,6 @@ value will be ignored.
   Value:      %s
   Message:    %s
 #
-[both if_include and if_exclude specified]
-WARNING: Values for both the btl_tcp_if_include and btl_tcp_if_exclude
-MCA parameters were specified.  These two parameters are mututally
-exclusive; you can only specify one or the other.
-
-The TCP BTL will exclude itself from this run; your MPI job *may* end
-up aborting with messages about how MPI processes are not reachable
-from each other.
-
-  Local host:       %s
-  if_include value: %s
-  if_exclude value: %s
-#
 [invalid minimum port]
 WARNING: An invalid value was given for the btl_tcp_port_min_%s. Legal
 values are in the range [1 .. 2^16-1]. This value will be ignored

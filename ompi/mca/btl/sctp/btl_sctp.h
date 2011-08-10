@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -119,16 +120,6 @@ extern mca_btl_sctp_module_t mca_btl_sctp_module;
 #else
 #define CLOSE_THE_SOCKET(socket)   close(socket)
 #endif  /* defined(__WINDOWS__) */
-
-/**
- * Register SCTP component parameters with the MCA framework
- */
-extern int mca_btl_sctp_component_open(void);
-
-/**
- * Any final cleanup before being unloaded.
- */
-extern int mca_btl_sctp_component_close(void);
 
 /**
  * SCTP component initialization.

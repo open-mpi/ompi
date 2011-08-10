@@ -2304,3 +2304,117 @@ int mca_base_param_find_string_name(const char *type,
     return rc;
 }
 
+static char *source_name(mca_base_param_source_t source, 
+                               const char *filename)
+{
+    char *ret;
+
+    switch (source) {
+    case MCA_BASE_PARAM_SOURCE_DEFAULT:
+        return strdup("default value");
+        break;
+
+    case MCA_BASE_PARAM_SOURCE_ENV:
+        return strdup("command line or environment variable");
+        break;
+
+    case MCA_BASE_PARAM_SOURCE_FILE:
+        asprintf(&ret, "file (%s)", filename);
+        return ret;
+        break;
+
+    case MCA_BASE_PARAM_SOURCE_OVERRIDE:
+        return strdup("internal override");
+        break;
+
+    default:
+        return strdup("unknown (!)");
+        break;
+    }
+}
+
+int mca_base_param_check_exclusive_string(const char *type_a,
+                                          const char *component_a,
+                                          const char *param_a,
+                                          const char *type_b,
+                                          const char *component_b,
+                                          const char *param_b)
+{
+    int i, ret;
+    mca_base_param_source_t source_a, source_b;
+    char *filename_a, *filename_b;
+
+    i = mca_base_param_find(type_a, component_a, param_a);
+    if (i < 0) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    ret = mca_base_param_lookup_source(i, &source_a, &filename_a);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    i = mca_base_param_find(type_b, component_b, param_b);
+    if (i < 0) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+    ret = mca_base_param_lookup_source(i, &source_b, &filename_b);
+    if (OPAL_SUCCESS != ret) {
+        return ret;
+    }
+
+    if (MCA_BASE_PARAM_SOURCE_DEFAULT != source_a &&
+        MCA_BASE_PARAM_SOURCE_DEFAULT != source_b) {
+        size_t len;
+        char *str_a, *str_b, *name_a, *name_b;
+
+        /* Form cosmetic string names for A */
+        str_a = source_name(source_a, filename_a);
+        len = 5;
+        if (NULL != type_a) len += strlen(type_a);
+        if (NULL != component_a) len += strlen(component_a);
+        if (NULL != param_a) len += strlen(param_a);
+        name_a = calloc(1, len);
+        if (NULL == name_a) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        if (NULL != type_a) {
+            strncat(name_a, type_a, len);
+            strncat(name_a, "_", len);
+        }
+        if (NULL != component_a) strncat(name_a, component_a, len);
+        strncat(name_a, "_", len);
+        strncat(name_a, param_a, len);
+
+        /* Form cosmetic string names for B */
+        str_b = source_name(source_b, filename_b);
+        len = 5;
+        if (NULL != type_b) len += strlen(type_b);
+        if (NULL != component_b) len += strlen(component_b);
+        if (NULL != param_b) len += strlen(param_b);
+        name_b = calloc(1, len);
+        if (NULL == name_b) {
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
+        if (NULL != type_b) {
+            strncat(name_b, type_b, len);
+            strncat(name_b, "_", len);
+        }
+        if (NULL != component_b) strncat(name_b, component_b, len);
+        strncat(name_b, "_", len);
+        strncat(name_b, param_b, len);
+
+        /* Print it all out */
+        opal_show_help("help-mca-param.txt", 
+                       "mutually exclusive params",
+                       true, name_a, str_a, name_b, str_b);
+
+        /* Free the temp strings */
+        free(str_a);
+        free(name_a);
+        free(str_b);
+        free(name_b);
+        return OPAL_ERR_BAD_PARAM;
+    }
+
+    return OPAL_SUCCESS;
+}
