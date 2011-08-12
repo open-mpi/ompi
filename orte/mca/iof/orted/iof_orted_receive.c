@@ -175,8 +175,6 @@ void orte_iof_orted_recv(int status, orte_process_name_t* sender,
                          opal_buffer_t* buffer, orte_rml_tag_t tag,
                          void* cbdata)
 {
-    int rc;
-    
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                          "%s iof:orted:receive got message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
