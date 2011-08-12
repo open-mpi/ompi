@@ -41,6 +41,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/nidmap.h"
+#include "orte/util/regex.h"
 
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
@@ -85,7 +86,6 @@ static int rte_init(void)
     int ret;
     char *error = NULL;
     char **hosts = NULL;
-    char *nodelist;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -100,12 +100,12 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
-        /* get the list of nodes used for this job */
-        nodelist = getenv("OMPI_MCA_orte_nodelist");
-        
-        if (NULL != nodelist) {
-            /* split the node list into an argv array */
-            hosts = opal_argv_split(nodelist, ',');
+        if (NULL != orte_node_regex) {
+            /* extract the nodes */
+            if (ORTE_SUCCESS != (ret = orte_regex_extract_node_names(orte_node_regex, &hosts))) {
+                error = "orte_regex_extract_node_names";
+                goto error;
+            }
         }
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
             ORTE_ERROR_LOG(ret);
