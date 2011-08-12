@@ -212,8 +212,6 @@ void orte_iof_hnp_recv(int status, orte_process_name_t* sender,
                        opal_buffer_t* buffer, orte_rml_tag_t tag,
                        void* cbdata)
 {
-    int rc;
-    
     OPAL_OUTPUT_VERBOSE((5, orte_iof_base.iof_output,
                          "%s iof:hnp:receive got message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
