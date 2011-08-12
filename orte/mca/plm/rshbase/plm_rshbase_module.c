@@ -323,6 +323,21 @@ static int spawn(orte_job_t *jdata)
      * doing this.
      */
     app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+
+    /* if we are using static ports, then setup a string showing the
+     * nodes so we can use a regex to pass connection info
+     */
+    if (orte_static_ports) {
+        for (nnode=0; nnode < map->nodes->size; nnode++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+                continue;
+            }
+            opal_argv_append_nosize(&nodes, node->name);
+        }
+        nodelist = opal_argv_join(nodes, ',');
+        opal_argv_free(nodes);
+    }
+
     /* we also need at least one node name so we can check what shell is
      * being used, if we have to
      */
@@ -339,20 +354,6 @@ static int spawn(orte_job_t *jdata)
     }
     prefix_dir = app->prefix_dir;
     
-    /* if we are using static ports, then setup a string showing the
-     * nodes so we can use a regex to pass connection info
-     */
-    if (orte_static_ports) {
-        for (nnode=0; nnode < map->nodes->size; nnode++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
-                continue;
-            }
-            opal_argv_append_nosize(&nodes, node->name);
-        }
-        nodelist = opal_argv_join(nodes, ',');
-        opal_argv_free(nodes);
-    }
-
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = orte_plm_base_rsh_setup_launch(&argc, &argv, node->name, &node_name_index1,
                                                              &proc_vpid_index, prefix_dir, nodelist))) {
