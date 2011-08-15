@@ -159,7 +159,7 @@ INSTALL(FILES runtime/help-opal-runtime.txt
     mca/base/help-mca-param.txt
     DESTINATION share/openmpi)
 
-IF (OMPI_DEBUG_BUILD)
+IF (OMPI_DEBUG_BUILD AND WINDOWS_VS)
   INSTALL(FILES ${OpenMPI_BINARY_DIR}/Debug/libopen-pal${CMAKE_DEBUG_POSTFIX}.pdb
     DESTINATION bin)
-ENDIF (OMPI_DEBUG_BUILD)
+ENDIF (OMPI_DEBUG_BUILD AND WINDOWS_VS)

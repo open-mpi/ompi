@@ -54,9 +54,9 @@ IF(NOT MINGW_CHECK_DONE)
     "C compiler option for setting object file name.")
   SET(OMPI_C_OUTPUT_EXE "-o" CACHE INTERNAL
     "C compiler option for setting executable file name.")
-  SET(OMPI_C_LAN_FLAG "-x c" CACHE INTERNAL
+  SET(OMPI_C_LAN_FLAG "-Wno-write-strings -x c" CACHE INTERNAL
     "C compiler option for compiling source as C.")
-  SET(OMPI_CXX_LAN_FLAG "-x c++" CACHE INTERNAL
+  SET(OMPI_CXX_LAN_FLAG "-Wno-write-strings -x c++" CACHE INTERNAL
     "C compiler option for compiling source as C++.")
   SET(OMPI_C_DEF_PRE "-D" CACHE INTERNAL
     "C compiler option for preprocessor definition.")

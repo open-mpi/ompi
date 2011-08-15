@@ -85,6 +85,16 @@
 /* for alloca */
 #include <malloc.h>
 
+
+#define STDIN_FILENO  0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
+typedef unsigned short mode_t;
+typedef long ssize_t;
+typedef DWORD in_port_t;
+typedef char* caddr_t;
+typedef unsigned int uint;
+
 #ifdef _MSC_VER
 #if defined(OMPI_BUILDING) && OMPI_BUILDING
 #include "opal/win32/ompi_uio.h"
@@ -95,15 +105,6 @@
 #include "opal/win32/ompi_inet.h"
 #include "opal/win32/ompi_socket.h"
 #endif
-
-#define STDIN_FILENO  0
-#define STDOUT_FILENO 1
-#define STDERR_FILENO 2
-typedef unsigned short mode_t;
-typedef long ssize_t;
-typedef DWORD in_port_t;
-typedef char* caddr_t;
-typedef unsigned int uint;
 
 /* Defines for the access functions */
 #define F_OK  0x00
@@ -153,6 +154,9 @@ typedef unsigned int uint;
 #else
 
 #undef WSABASEERR
+/* in MinGW, PACKED is defined to __attribute__((packed)), will have problem for our basic types */
+#undef PACKED
+#define pthread_atfork
 #include <winsock.h>
 #if defined(OMPI_BUILDING) && OMPI_BUILDING
 #include "opal/win32/ompi_uio.h"
