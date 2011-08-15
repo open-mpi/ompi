@@ -54,8 +54,8 @@ BEGIN_C_DECLS
      * If one of the BTLs that shutdown require a full, clean rebuild of the
      * point-to-point stack on 'continue' as well as 'restart'.
      */
-    OPAL_DECLSPEC extern bool orte_cr_continue_like_restart;
-    OPAL_DECLSPEC extern bool orte_cr_flush_restart_files;
+    ORTE_DECLSPEC extern bool orte_cr_continue_like_restart;
+    ORTE_DECLSPEC extern bool orte_cr_flush_restart_files;
 
 END_C_DECLS
 
