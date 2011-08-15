@@ -51,7 +51,7 @@ struct orte_errmgr_hnp_component_t {
 #endif
 };
 typedef struct orte_errmgr_hnp_component_t orte_errmgr_hnp_component_t;
-OPAL_MODULE_DECLSPEC extern orte_errmgr_hnp_component_t mca_errmgr_hnp_component;
+ORTE_MODULE_DECLSPEC extern orte_errmgr_hnp_component_t mca_errmgr_hnp_component;
 
 int orte_errmgr_hnp_component_query(mca_base_module_t **module, int *priority);
 

@@ -45,83 +45,83 @@ typedef struct ompi_pml_cm_t ompi_pml_cm_t;
 extern ompi_pml_cm_t ompi_pml_cm;
 
 /* PML interface functions */
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_add_procs(struct ompi_proc_t **procs, size_t nprocs);
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_del_procs(struct ompi_proc_t **procs, size_t nprocs);
+OMPI_DECLSPEC extern int mca_pml_cm_add_procs(struct ompi_proc_t **procs, size_t nprocs);
+OMPI_DECLSPEC extern int mca_pml_cm_del_procs(struct ompi_proc_t **procs, size_t nprocs);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_enable(bool enable);
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_progress(void);
+OMPI_DECLSPEC extern int mca_pml_cm_enable(bool enable);
+OMPI_DECLSPEC extern int mca_pml_cm_progress(void);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_add_comm(struct ompi_communicator_t* comm);
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_del_comm(struct ompi_communicator_t* comm);
+OMPI_DECLSPEC extern int mca_pml_cm_add_comm(struct ompi_communicator_t* comm);
+OMPI_DECLSPEC extern int mca_pml_cm_del_comm(struct ompi_communicator_t* comm);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_irecv_init(void *buf,
-                                                      size_t count,
-                                                      ompi_datatype_t *datatype,
-                                                      int src,
-                                                      int tag,
-                                                      struct ompi_communicator_t* comm,
-                                                      struct ompi_request_t **request);
+OMPI_DECLSPEC extern int mca_pml_cm_irecv_init(void *buf,
+                                               size_t count,
+                                               ompi_datatype_t *datatype,
+                                               int src,
+                                               int tag,
+                                               struct ompi_communicator_t* comm,
+                                               struct ompi_request_t **request);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_irecv(void *buf,
-                                                 size_t count,
-                                                 ompi_datatype_t *datatype,
-                                                 int src,
-                                                 int tag,
-                                                 struct ompi_communicator_t* comm,
-                                                 struct ompi_request_t **request);
+OMPI_DECLSPEC extern int mca_pml_cm_irecv(void *buf,
+                                          size_t count,
+                                          ompi_datatype_t *datatype,
+                                          int src,
+                                          int tag,
+                                          struct ompi_communicator_t* comm,
+                                          struct ompi_request_t **request);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_recv(void *buf,
-                                                size_t count,
-                                                ompi_datatype_t *datatype,
-                                                int src,
-                                                int tag,
-                                                struct ompi_communicator_t* comm,
-                                                ompi_status_public_t* status );
+OMPI_DECLSPEC extern int mca_pml_cm_recv(void *buf,
+                                         size_t count,
+                                         ompi_datatype_t *datatype,
+                                         int src,
+                                         int tag,
+                                         struct ompi_communicator_t* comm,
+                                         ompi_status_public_t* status );
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_isend_init(void *buf,
-                                                      size_t count,
-                                                      ompi_datatype_t *datatype,
-                                                      int dst,
-                                                      int tag,
-                                                      mca_pml_base_send_mode_t mode,
-                                                      struct ompi_communicator_t* comm,
-                                                      struct ompi_request_t **request);
+OMPI_DECLSPEC extern int mca_pml_cm_isend_init(void *buf,
+                                               size_t count,
+                                               ompi_datatype_t *datatype,
+                                               int dst,
+                                               int tag,
+                                               mca_pml_base_send_mode_t mode,
+                                               struct ompi_communicator_t* comm,
+                                               struct ompi_request_t **request);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_isend(void *buf,
-                                                 size_t count,
-                                                 ompi_datatype_t *datatype,
-                                                 int dst,
-                                                 int tag,
-                                                 mca_pml_base_send_mode_t mode,
-                                                 struct ompi_communicator_t* comm,
-                                                 struct ompi_request_t **request);
+OMPI_DECLSPEC extern int mca_pml_cm_isend(void *buf,
+                                          size_t count,
+                                          ompi_datatype_t *datatype,
+                                          int dst,
+                                          int tag,
+                                          mca_pml_base_send_mode_t mode,
+                                          struct ompi_communicator_t* comm,
+                                          struct ompi_request_t **request);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_send(void *buf,
-                                                size_t count,
-                                                ompi_datatype_t *datatype,
-                                                int dst,
-                                                int tag,
-                                                mca_pml_base_send_mode_t mode,
-                                                struct ompi_communicator_t* comm);
+OMPI_DECLSPEC extern int mca_pml_cm_send(void *buf,
+                                         size_t count,
+                                         ompi_datatype_t *datatype,
+                                         int dst,
+                                         int tag,
+                                         mca_pml_base_send_mode_t mode,
+                                         struct ompi_communicator_t* comm);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_iprobe(int dst,
-                                                  int tag,
-                                                  struct ompi_communicator_t* comm,
-                                                  int *matched,
-                                                  ompi_status_public_t* status);
+OMPI_DECLSPEC extern int mca_pml_cm_iprobe(int dst,
+                                           int tag,
+                                           struct ompi_communicator_t* comm,
+                                           int *matched,
+                                           ompi_status_public_t* status);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_probe(int dst,
-                                                 int tag,
-                                                 struct ompi_communicator_t* comm,
-                                                 ompi_status_public_t* status);
+OMPI_DECLSPEC extern int mca_pml_cm_probe(int dst,
+                                          int tag,
+                                          struct ompi_communicator_t* comm,
+                                          ompi_status_public_t* status);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_start(size_t count, ompi_request_t** requests);
+OMPI_DECLSPEC extern int mca_pml_cm_start(size_t count, ompi_request_t** requests);
 
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_dump(struct ompi_communicator_t* comm,
-                                                int verbose);
+OMPI_DECLSPEC extern int mca_pml_cm_dump(struct ompi_communicator_t* comm,
+                                         int verbose);
 
-OPAL_MODULE_DECLSPEC extern int mca_pml_cm_cancel(struct ompi_request_t *request, int flag);
+OMPI_DECLSPEC extern int mca_pml_cm_cancel(struct ompi_request_t *request, int flag);
 
 END_C_DECLS
 
