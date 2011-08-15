@@ -93,8 +93,8 @@ INSTALL(FILES orted/help-orted.txt runtime/help-orte-runtime.txt
   mca/odls/default/help-orte-odls-default.txt
   DESTINATION share/openmpi)
 
-IF (OMPI_DEBUG_BUILD)
+IF (OMPI_DEBUG_BUILD AND WINDOWS_VS)
   INSTALL(FILES ${OpenMPI_BINARY_DIR}/Debug/libopen-rte${CMAKE_DEBUG_POSTFIX}.pdb
     DESTINATION bin)
-ENDIF (OMPI_DEBUG_BUILD)
+ENDIF (OMPI_DEBUG_BUILD AND WINDOWS_VS)
 
