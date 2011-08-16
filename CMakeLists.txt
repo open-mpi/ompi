@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2011 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -28,7 +28,7 @@ IF(MSVC)
   ELSE(CMAKE_CL_64)
     SET(COMPILER_TYPE "win32")
   ENDIF(CMAKE_CL_64)
-ELSEIF(NOT "$ENV{MSYSTEM}" STREQUAL "")
+ELSEIF("${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles")
   SET(WINDOWS_MINGW TRUE CACHE INTERNAL "Windows MinGW env")
 ENDIF(MSVC)
 
