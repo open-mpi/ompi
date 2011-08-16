@@ -978,14 +978,22 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
     for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
         peer = rank | mask;
         if (peer < num_procs) {
+            OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                                 "%s routed:binomial find children checking peer %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), peer));
             /* execute compute on this child */
             if (0 <= (found = binomial_tree(peer, rank, me, num_procs, nchildren, childrn, relatives, mine, jobid))) {
                 proc_name.vpid = found;
 
                 if (!orte_util_proc_is_running(&proc_name) && ORTE_EPOCH_MIN < orte_util_lookup_epoch(&proc_name)) {
+                    OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                                         "%s routed:binomial find children proc out of date - returning parent %d",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), parent));
                     return parent;
                 }
-
+                OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                                     "%s routed:binomial find children returning found value %d",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), found));
                 return found;
             }
         }
