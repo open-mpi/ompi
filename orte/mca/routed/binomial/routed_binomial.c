@@ -897,9 +897,9 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
     proc_name.jobid = jobid;
     
     OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
-                         "%s routed:binomial rank %d parent %d me %d",
+                         "%s routed:binomial rank %d parent %d me %d num_procs %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         rank, parent, me));
+                         rank, parent, me, num_procs));
 
     /* is this me? */
     if (me == rank) {
@@ -977,10 +977,13 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
     
     for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
         peer = rank | mask;
+        OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                             "%s routed:binomial find children checking peer %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), peer));
         if (peer < num_procs) {
             OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
-                                 "%s routed:binomial find children checking peer %d",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), peer));
+                                 "%s routed:binomial find children computing tree",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* execute compute on this child */
             if (0 <= (found = binomial_tree(peer, rank, me, num_procs, nchildren, childrn, relatives, mine, jobid))) {
                 proc_name.vpid = found;
