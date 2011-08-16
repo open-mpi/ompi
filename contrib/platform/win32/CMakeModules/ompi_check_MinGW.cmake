@@ -1,6 +1,6 @@
 # -*- cmake-script -*-
 #
-# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2011 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -46,6 +46,9 @@ OMPI_DEF(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR ${GCC_VERSION} "Compiler versi
 IF(NOT MINGW_CHECK_DONE)
 
   MESSAGE( STATUS "Start MinGW specific detection....")
+
+  GET_FILENAME_COMPONENT(CC ${CMAKE_C_COMPILER} NAME)
+  GET_FILENAME_COMPONENT(CXX ${CMAKE_CXX_COMPILER} NAME)
 
   # Default compiler settings.
   SET(OMPI_C_OPTION_COMPILE "-c" CACHE INTERNAL

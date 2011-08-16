@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2011 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
@@ -127,7 +127,7 @@ SET_TARGET_PROPERTIES(libmpi PROPERTIES
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
   SET_TARGET_PROPERTIES(libmpi PROPERTIES 
-    COMPILE_FLAGS "${OMPI_C_DEF_PRE}_USRDLL ${OMPI_C_DEF_PRE}HAVE_CONFIG_H ${OMPI_C_DEF_PRE}OMPI_EXPORTS ${OMPI_C_DEF_PRE}OPAL_IMPORTS ${OMPI_C_DEF_PRE}ORTE_IMPORTS ${OMPI_CXX_LAN_FLAG} PREFIX "" IMPORT_PREFIX """)
+    COMPILE_FLAGS "${OMPI_C_DEF_PRE}_USRDLL ${OMPI_C_DEF_PRE}HAVE_CONFIG_H ${OMPI_C_DEF_PRE}OMPI_EXPORTS ${OMPI_C_DEF_PRE}OPAL_IMPORTS ${OMPI_C_DEF_PRE}ORTE_IMPORTS ${OMPI_CXX_LAN_FLAG}" PREFIX "" IMPORT_PREFIX "")
   TARGET_LINK_LIBRARIES (libmpi ${OpenMPI_BINARY_DIR}/${CMAKE_CFG_INTDIR}/event${CMAKE_DEBUG_POSTFIX}.lib
     libopen-rte Ws2_32.lib shlwapi.lib ${EXTRA_LINK_LIBRARIES}) 
 ELSE (BUILD_SHARED_LIBS)

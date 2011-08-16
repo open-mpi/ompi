@@ -56,13 +56,13 @@
 #include "opal/util/basename.h"
 #include "opal/util/os_path.h"
 
-#if !defined(__WINDOWS__)
-#define OPAL_INCLUDE_FLAG  "-I"
-#define OPAL_LIBDIR_FLAG   "-L"
-#else
+#if defined(__WINDOWS__) && defined(_MSC_VER)
 #define OPAL_INCLUDE_FLAG  "/I"
 #define OPAL_LIBDIR_FLAG   "/LIBPATH:"
-#endif  /* !defined(__WINDOWS__) */
+#else
+#define OPAL_INCLUDE_FLAG  "-I"
+#define OPAL_LIBDIR_FLAG   "-L"
+#endif  /* !defined(__WINDOWS__) && defined(_MSC_VER) */
 
 struct options_data_t {
     char **compiler_args;
@@ -358,14 +358,20 @@ data_callback(const char *key, const char *value)
     } else if (0 == strcmp(key, "libdir")) {
         if (NULL != value) options_data[parse_options_idx].path_libdir = 
                                opal_install_dirs_expand(value);
-#if defined(__WINDOWS__)
+#if defined(__WINDOWS__) && defined(_MSC_VER)
         opal_argv_append_nosize( &options_data[parse_options_idx].link_flags, "/link" );
-#endif  /* defined(__WINDOWS__) */
+#endif  /* defined(__WINDOWS__) && defined(_MSC_VER) */
         if (0 != strcmp(options_data[parse_options_idx].path_libdir, "/usr/lib")) {
             char *line;
 #if defined(__WINDOWS__)
+#  if defined(_MSC_VER)
             asprintf(&line, OPAL_LIBDIR_FLAG"\"%s\"", 
                      options_data[parse_options_idx].path_libdir);
+#  else
+            /* linked DLLs are in bin for MinGW build*/
+            asprintf(&line, OPAL_LIBDIR_FLAG"\"%s/../bin\"", 
+                     options_data[parse_options_idx].path_libdir);
+#  endif /* defined(_MSC_VER) */
 #else
             asprintf(&line, OPAL_LIBDIR_FLAG"%s", 
                      options_data[parse_options_idx].path_libdir);
