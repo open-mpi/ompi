@@ -896,6 +896,11 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
 
     proc_name.jobid = jobid;
     
+    OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                         "%s routed:binomial rank %d parent %d me %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         rank, parent, me));
+
     /* is this me? */
     if (me == rank) {
         bitmap = opal_cube_dim(num_procs);
@@ -922,8 +927,8 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
                 proc_name.epoch = orte_util_lookup_epoch(&proc_name);
 
                 if (!orte_util_proc_is_running(&proc_name) 
-                        && ORTE_EPOCH_MIN < proc_name.epoch
-                        && ORTE_EPOCH_INVALID != proc_name.epoch) {
+                    && ORTE_EPOCH_MIN < proc_name.epoch
+                    && ORTE_EPOCH_INVALID != proc_name.epoch) {
                     OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
                                          "%s routed:binomial child %s is dead",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -935,10 +940,10 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
                      * then we want it's relatives as our own. */
                     binomial_tree(0, 0, peer, num_procs, nchildren, childrn, relations, mine, jobid);
 
-                /* If we use the proc_is_running as a way of measuring of the
-                 * process is dead, then we get screwed up on startup. By also
-                 * testing the epoch, we make sure that the process really did
-                 * start up and then died. */
+                    /* If we use the proc_is_running as a way of measuring of the
+                     * process is dead, then we get screwed up on startup. By also
+                     * testing the epoch, we make sure that the process really did
+                     * start up and then died. */
                 } else if (mine) {
                     /* this is a direct child - add it to my list */
                     opal_list_append(childrn, &child->super);
@@ -962,6 +967,9 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
     }
     
     /* find the children of this rank */
+    OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                         "%s routed:binomial find children of rank %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rank));
     bitmap = opal_cube_dim(num_procs);
     
     hibit = opal_hibit(rank, bitmap);
