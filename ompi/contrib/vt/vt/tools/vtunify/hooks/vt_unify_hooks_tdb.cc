@@ -1154,42 +1154,45 @@ std::string HooksTdbC::MasterDataC::intToHex( int i ) {
 
 std::string HooksTdbC::MasterDataC::safeCwd() {
 
+    std::string ret;
+
     int max_path = 4096;
     char *buf = new char[max_path];
 
     while( 1 ) {
 
-      if( ! getcwd( buf, max_path ) ) {
+        if( ! getcwd( buf, max_path ) ) {
 
-        if( errno == ERANGE ) {
+            if( errno == ERANGE ) {
 
-            /* buf is too small */
+                /* buf is too small */
 
-            /* resize buf and try again */
-            max_path += 1024;
+                /* resize buf and try again */
+                max_path += 1024;
 
-            delete [] buf;
-            buf = new char[max_path];
+                delete [] buf;
+                buf = new char[max_path];
+
+            } else {
+
+                /* an error occurred */
+                break;
+
+            }
 
         } else {
 
-            /* an error occurred */
-
-            delete [] buf;
-            return NULL;
+            /* all right */
+            ret= buf;
+            break;
 
         }
 
-      } else {
-
-          /* all right */
-
-          delete [] buf;
-          return std::string( buf );
-
-      }
-
     }
+
+    delete [] buf;
+
+    return ret;
 
 }
 

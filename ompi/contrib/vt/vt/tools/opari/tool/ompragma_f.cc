@@ -129,7 +129,8 @@ void OMPragmaF::remove_empties() {
   string::size_type c = lines[lastline].find('!', s);
   if ( c != string::npos ) --c;
   string::size_type amp = lines[lastline].find_last_not_of(" \t", c);
-  if ( lines[lastline][amp] == '&' ) lines[lastline][amp] = ' ';
+  if ( amp != string::npos && lines[lastline][amp] == '&' )
+    lines[lastline][amp] = ' ';
 
   // remove trailing comma
   amp = lines[lastline].find_last_not_of(" \t", c);

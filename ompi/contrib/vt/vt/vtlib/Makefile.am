@@ -367,6 +367,7 @@ VT_HYB_SOURCES = \
 	$(VT_MT_SOURCES)
 
 VT_JAVA_SOURCES = \
+	vt_jvmti.h \
 	vt_java.c \
 	vt_thrd_java.c
 

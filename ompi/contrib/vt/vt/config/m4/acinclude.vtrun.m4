@@ -48,7 +48,7 @@ AC_DEFUN([ACVT_RUN],
 			VT_RUN_VTMPILIB="libvt-mpi$SHREXT"
 			VT_RUN_VTMTLIB="libvt-mt$SHREXT"
 			VT_RUN_VTHYBLIB="libvt-hyb$SHREXT"
-			VT_RUN_FMPILIB="libvt-fmpi$SHREXT"
+			AS_IF([test x"$build_fmpiwraplib" = "xyes"], [VT_RUN_FMPILIB="libvt-fmpi$SHREXT"])
 			VT_RUN_DYNATTLIB="libvt-dynatt$SHREXT"
 
 			build_vtrun=yes
