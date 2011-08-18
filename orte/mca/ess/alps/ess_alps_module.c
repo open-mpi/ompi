@@ -73,11 +73,11 @@ orte_ess_base_module_t orte_ess_alps_module = {
  * Local variables
  */
 static orte_node_rank_t my_node_rank=ORTE_NODE_RANK_INVALID;
-
+static orte_vpid_t starting_vpid=0;
 
 static int rte_init(void)
 {
-    int ret;
+    int ret, i;
     char *error = NULL;
     char **hosts = NULL;
 
@@ -96,11 +96,24 @@ static int rte_init(void)
     if (ORTE_PROC_IS_DAEMON) {
         if (NULL != orte_node_regex) {
             /* extract the nodes */
-            if (ORTE_SUCCESS != (ret = orte_regex_extract_node_names(orte_node_regex, &hosts))) {
+            if (ORTE_SUCCESS != (ret = orte_regex_extract_node_names(orte_node_regex, &hosts)) ||
+                NULL == hosts) {
                 error = "orte_regex_extract_node_names";
                 goto error;
             }
         }
+        /* find our host in the list */
+        for (i=0; NULL != hosts[i]; i++) {
+            if (0 == strncmp(hosts[i], orte_process_info.nodename, strlen(hosts[i]))) {
+                /* correct our vpid */
+                ORTE_PROC_MY_NAME->vpid = starting_vpid + i;
+                OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                                     "ess:alps reset name to %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                break;
+            }
+        }
+        
         if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
@@ -319,7 +332,6 @@ static int alps_set_name(void)
 {
     int rc;
     orte_jobid_t jobid;
-    orte_vpid_t starting_vpid;
     char* tmp;
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
@@ -357,16 +369,11 @@ static int alps_set_name(void)
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:alps set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* get my node rank in case we are using static ports - this won't
-     * be present for daemons, so don't error out if we don't have it
-     */
-    mca_base_param_reg_string_name("orte", "ess_node_rank", "Process node rank",
-                                   true, false, NULL, &tmp);
-    if (NULL != tmp) {
-        my_node_rank = strtol(tmp, NULL, 10);
+    /* get the num procs as provided in the cmd line param */
+    if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
-    
-    orte_process_info.num_procs = (orte_std_cntr_t) cnos_get_size();
 
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
         orte_process_info.max_procs = orte_process_info.num_procs;

@@ -61,6 +61,7 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
 #include "opal/util/bit_ops.h"
+#include "opal/util/if.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/util/show_help.h"
@@ -328,13 +329,22 @@ static int spawn(orte_job_t *jdata)
      * nodes so we can use a regex to pass connection info
      */
     if (orte_static_ports) {
+        nodelist = NULL;
         for (nnode=0; nnode < map->nodes->size; nnode++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
                 continue;
             }
+            /* if this is me, then don't include it - I'm already present
+             * in the cmd line options
+             */
+            if (0 == strcmp(node->name, orte_process_info.nodename) || opal_ifislocal(node->name)) {
+                continue;
+            }
             opal_argv_append_nosize(&nodes, node->name);
         }
-        nodelist = opal_argv_join(nodes, ',');
+        if (0 < opal_argv_count(nodes)) {
+            nodelist = opal_argv_join(nodes, ',');
+        }
         opal_argv_free(nodes);
     }
 
