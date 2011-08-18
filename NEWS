@@ -27,62 +27,113 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+As more fully described in the "Software Version Number" section in
+the README file, Open MPI typically releases two separate version
+series simultaneously.  Since these series have different goals and
+are semi-independent of each other, a single NEWS-worthy item may be
+introduced into different series at different times.  For example,
+feature F was introduced in the vA.B series at version vA.B.C, and was
+later introduced into the vX.Y series at vX.Y.Z.
+
+The first time feature F is released, the item will be listed in the
+vA.B.C section, denoted as:
+
+   (** also to appear: X.Y.Z) -- indicating that this item is also
+                                 likely to be included in future release
+                                 version vX.Y.Z.
+
+When vX.Y.Z is later released, the same NEWS-worthy item will also be
+included in the vX.Y.Z section and be denoted as:
+
+   (** also appeared: A.B.C)  -- indicating that this item was previously
+                                 included in release version vA.B.C.
+
+
 1.4.4
 -----
 
-- Fix to prevent the SM BTL from creating its mmap'd file in
-  directories that are remotely mounted.
-- Fixed use of memory barriers in the SM BTL.  This fixed segv's when
-  compiling with Intel 10.0.025 or PGI 9.0-3.
-- When specifying OOB ports, fix to convert the ports into network
-  byte order before binding.
-- Removed an extraneous #include from the TCP BTL.
-- Updated SLURM support to 1.5.1.
-- Restored a missing debugger flag to support TotalView.  Thanks to
-  David Turner and the TV folks for supplying the fix.
-- Fix to detect and avoid overlapping memcpy().  Thanks to
-  Francis Pellegrini for identifying the issue.
-- Libtool patch to get around a build problem when using the IBM XL
-  compilers.
-- Added <sys/stat.h> to ptmalloc's hooks.c (It's not always included
-  by default on some systems).
-- Fixed a misleading MPI_Bcast error message.  Thanks to Jeremiah
-  Willcock for reporting this.
-- Fixed paffinity base MCA duplicate registrations.  Thanks to Gus
-  Correa for bringing this to our attention.
-- Fix for VT rpmbuild on RHEL5.
-- Man page cleanups.  Thanks to Jeremiah Willcock and Jed Brown.
-- Fix for memchecking buffers during MPI_*INIT.
-- Various autogen.sh fixes.
-- Fixed a problem in which duplicated libs were being specified for
-  linking.  Thanks to Hicham Mouline for noticing it.
-- Fixed an indexing problem in precondition_transports.
-- Clarification of MPI_Init_thread man page.
-- Fixed a race condition in osc_rdma_sync.  Thanks to Guillaume
-  Thouvenin for finding this issue.
-- Fix for libtool issue when using pgcc to compile ompi in conjunction
-  with the -tp option.
-- Fix in MPI_Init_thread for checkpoint/restart.
-- Fixed incorrect text in MPI_File_set_view man page.
+- Ensure that MPI_Accumulate error return in 1.4 is consistent with
+  1.5.x and trunk.
+- Allow the word "slots" in rankfiles (i.e., not just "slot").
+  (** also appeared in 1.5.4)
+- Add Mellanox ConnectX 3 device IDs to the openib BTL defaults.
+  (** also appeared in 1.5.4)
+- Update description of btl_openib_cq_size to be more accurate.
+- Ensure mpirun's --xterm options leaves sessions attached.
+  (** also appeared in 1.5.4)
+- Update to allow more than 128 entries in an appfile.
+  (** also appeared in 1.5.4)
+- Update description of btl_openib_cq_size to be more accurate.
+  (** also appeared in 1.5.4)
+- Fix for deadlock when handling recursive attribute keyval deletions
+  (e.g., when using ROMIO with MPI_THREAD_MULTIPLE).
+- Fix indexed datatype leaks.  Thanks to Pascal Deveze for supplying
+  the initial patch.  (** also appeared in 1.5.4)
+- Fixed the F90 types of the sendcounts and displs parameters to
+  MPI_SCATTERV.  Thanks to Stanislav Sazykin for identifying the issue.
+  (** also appeared in 1.5.4)
+- Exclude opal/libltdl from "make distclean" when --disable-dlopen is
+  used.  Thanks to David Gunter for reporting the issue.
+- Fixed a segv in MPI_Comm_create when called with GROUP_EMPTY.
+  Thanks to Dominik Goeddeke for finding this.
+  (** also appeared in 1.5.4)
+- Fixed return codes from MPI_PROBE and MPI_IPROBE.
+  (** also appeared in 1.5.4)
+- Fixed undefined symbol error when using the vtf90 profiling tool.
+- Fix for referencing an uninitialized variable in DPM ORTE.  Thanks
+  to Avinash Malik for reporting the issue.
+- Fix for correctly handling multi-token args when using debuggers.
+- Eliminated the unneeded u_int*_t datatype definitions.
 - Change in ORTE DPM to get around gcc 4.[45].x compiler wanrings
   about possibly calling free() on a non-heap variable, even though it
   will never happen because the refcount will never go to zero.
-- Eliminated the unneeded u_int*_t datatype definitions.
-- Fix for correctly handling multi-token args when using debuggers.
-- Fix for referencing an uninitialized variable in DPM ORTE.  Thanks
-  to Avinash Malik for reporting the issue.
-- Fixed undefined symbol error when using the vtf90 profiling tool.
-- Fixed return codes from MPI_PROBE and MPI_IPROBE.
-- Fixed a segv in MPI_Comm_create when called with GROUP_EMPTY.
-  Thanks to Dominik Goeddeke for finding this.
-- Exclude opal/libltdl from "make distclean" when --disable-dlopen is
-  used.  Thanks to David Gunter for reporting the issue.
-- Fixed the F90 types of the sendcounts and displs parameters to
-  MPI_SCATTERV. ABI is preserved, but applications may well be broken.
-  See the README for more details.
-- Fixed memory leaks associated with indexed datatypes.
-- Fix for deadlock when handling recursive attribute keyval deletions
-  (e.g., when using ROMIO with MPI_THREAD_MULTIPLE).
+- Fixed incorrect text in MPI_File_set_view man page.
+- Fix in MPI_Init_thread for checkpoint/restart.
+- Fix for libtool issue when using pgcc to compile ompi in conjunction
+  with the -tp option.
+- Fixed a race condition in osc_rdma_sync.  Thanks to Guillaume
+  Thouvenin for finding this issue.
+- Clarification of MPI_Init_thread man page.
+- Fixed an indexing problem in precondition_transports.
+- Fixed a problem in which duplicated libs were being specified for
+  linking.  Thanks to Hicham Mouline for noticing it.
+- Various autogen.sh fixes.
+- Fix for memchecking buffers during MPI_*INIT.
+- Man page cleanups.  Thanks to Jeremiah Willcock and Jed Brown.
+- Fix for VT rpmbuild on RHEL5.
+- Support Solaris legacy munmap prototype changes.
+  (** also appeared in 1.5.4)
+- Expands app_idx to int32_t to allow more than 127 app_contexts.
+- Guard the inclusion of execinfo.h since not all platforms have it.  Thanks
+  to Aleksej Saushev for identifying this issue.
+  (** also appeared in 1.5.4)
+- Fix to avoid possible environment corruption.  Thanks to Peter Thompson
+  for identifying the issue and supplying a patch.
+  (** also appeared in 1.5.4)
+- Fixed paffinity base MCA duplicate registrations.  Thanks to Gus
+  Correa for bringing this to our attention.
+- Fix recursive locking bug when MPI-IO was used with
+  MPI_THREAD_MULTIPLE.  (** also appeared in 1.5.4)
+- F90 MPI API fixes.
+- Fixed a misleading MPI_Bcast error message.  Thanks to Jeremiah
+  Willcock for reporting this.
+- Added <sys/stat.h> to ptmalloc's hooks.c (it's not always included
+  by default on some systems).
+- Libtool patch to get around a build problem when using the IBM XL
+  compilers.
+- Fix to detect and avoid overlapping memcpy().  Thanks to
+  Francis Pellegrini for identifying the issue.
+- Fix to allow ompi to work on top of RoCE vLANs.
+- Restored a missing debugger flag to support TotalView.  Thanks to
+  David Turner and the TV folks for supplying the fix.
+- Updated SLURM support to 1.5.1.
+- Removed an extraneous #include from the TCP BTL.
+- When specifying OOB ports, fix to convert the ports into network
+  byte order before binding.
+- Fixed use of memory barriers in the SM BTL.  This fixed segv's when
+  compiling with Intel 10.0.025 or PGI 9.0-3.
+- Fix to prevent the SM BTL from creating its mmap'd file in
+  directories that are remotely mounted.
 
 
 1.4.3
