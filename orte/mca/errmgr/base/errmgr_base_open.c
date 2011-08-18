@@ -58,7 +58,7 @@ orte_errmgr_base_component_t orte_errmgr_base_selected_component;
 orte_errmgr_fault_callback_t *fault_cbfunc;
 
 /* Public module provides a wrapper around previous functions */
-orte_errmgr_base_module_t orte_errmgr = {
+orte_errmgr_base_module_t orte_errmgr_default_fns = {
     NULL, /* init     */
     NULL, /* finalize */
     orte_errmgr_base_log,
@@ -70,6 +70,7 @@ orte_errmgr_base_module_t orte_errmgr = {
     NULL, /* ft_event            */
     orte_errmgr_base_register_migration_warning
 };
+orte_errmgr_base_module_t orte_errmgr;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -85,6 +86,9 @@ int orte_errmgr_base_open(void)
     }
 
     orte_errmgr_base.output = opal_output_open(NULL);
+
+    /* load the default fns */
+    orte_errmgr = orte_errmgr_default_fns;
 
     /*
      * Open up all available components

@@ -62,6 +62,10 @@ static void update_local_children(orte_odls_job_t *jobdat,
 static void killprocs(orte_jobid_t job, orte_vpid_t vpid, orte_epoch_t epoch);
 static int record_dead_process(orte_process_name_t *proc);
 static int send_to_local_applications(opal_pointer_array_t *dead_names);
+static int mark_processes_as_dead(opal_pointer_array_t *dead_procs);
+static void failure_notification(int status, orte_process_name_t* sender,
+                                 opal_buffer_t *buffer, orte_rml_tag_t tag,
+                                 void* cbdata);
 
 /*
  * Module functions: Global
@@ -86,11 +90,6 @@ static int suggest_map_targets(orte_proc_t *proc,
 
 static int ft_event(int state);
 
-static int post_startup(void);
-static int pre_shutdown(void);
-
-static int mark_processes_as_dead(opal_pointer_array_t *dead_procs);
-static int failure_notification(orte_process_name_t *sender, opal_buffer_t *buffer);
 
 /******************
  * orted module
@@ -106,11 +105,7 @@ orte_errmgr_base_module_t orte_errmgr_orted_module = {
     suggest_map_targets,
     ft_event,
     orte_errmgr_base_register_migration_warning,
-    post_startup,
-    pre_shutdown,
-    mark_processes_as_dead,
-    orte_errmgr_base_set_fault_callback,  /* Set callback function */
-    failure_notification
+    orte_errmgr_base_set_fault_callback  /* Set callback function */
 };
 
 /************************
@@ -118,12 +113,24 @@ orte_errmgr_base_module_t orte_errmgr_orted_module = {
  ************************/
 static int init(void)
 {
-    return ORTE_SUCCESS;
+    int ret;
+
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FAILURE_NOTICE,
+                                  ORTE_RML_PERSISTENT, failure_notification, NULL);
+    return ret;
 }
 
 static int finalize(void)
 {
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FAILURE_NOTICE);
     return ORTE_SUCCESS;
+}
+
+static void cbfunc(int status, orte_process_name_t* sender,
+                                 opal_buffer_t *buffer, orte_rml_tag_t tag,
+                                 void* cbdata)
+{
+    OBJ_RELEASE(buffer);
 }
 
 static int update_state(orte_jobid_t job,
@@ -136,7 +143,7 @@ static int update_state(orte_jobid_t job,
     opal_list_item_t *item, *next;
     orte_odls_job_t *jobdat = NULL;
     orte_odls_child_t *child;
-    opal_buffer_t alert;
+    opal_buffer_t *alert;
     orte_plm_cmd_flag_t cmd;
     int rc=ORTE_SUCCESS;
     orte_vpid_t null=ORTE_VPID_INVALID;
@@ -173,24 +180,23 @@ static int update_state(orte_jobid_t job,
              */
             orte_show_help("help-orte-errmgr-orted.txt", "errmgr-orted:unknown-job-error",
                            true, orte_job_state_to_str(jobstate));
-            OBJ_CONSTRUCT(&alert, opal_buffer_t);
+            alert = OBJ_NEW(opal_buffer_t);
             /* pack update state command */
             cmd = ORTE_PLM_UPDATE_PROC_STATE;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
             /* pack the "invalid" jobid */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &job, 1, ORTE_JOBID))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &job, 1, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert, ORTE_RML_TAG_PLM, 0, cbfunc, NULL))) {
                 ORTE_ERROR_LOG(rc);
             } else {
                 rc = ORTE_SUCCESS;
             }
-            OBJ_DESTRUCT(&alert);
             return rc;
         }
 
@@ -237,24 +243,23 @@ static int update_state(orte_jobid_t job,
         default:
             break;
         }
-        OBJ_CONSTRUCT(&alert, opal_buffer_t);
+        alert = OBJ_NEW(opal_buffer_t);
         /* pack update state command */
         cmd = ORTE_PLM_UPDATE_PROC_STATE;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
             ORTE_ERROR_LOG(rc);
             goto FINAL_CLEANUP;
         }
         /* pack the job info */
-        if (ORTE_SUCCESS != (rc = pack_state_update(&alert, jobdat))) {
+        if (ORTE_SUCCESS != (rc = pack_state_update(alert, jobdat))) {
             ORTE_ERROR_LOG(rc);
         }
         /* send it */
-        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert, ORTE_RML_TAG_PLM, 0, cbfunc, NULL))) {
             ORTE_ERROR_LOG(rc);
         } else {
             rc = ORTE_SUCCESS;
         }
-        OBJ_DESTRUCT(&alert);
         return rc;
     }
 
@@ -409,17 +414,17 @@ REPORT_ABORT:
         /* if the job hasn't completed and the state is abnormally
          * terminated, then we need to alert the HNP right away
          */
-        OBJ_CONSTRUCT(&alert, opal_buffer_t);
+        alert = OBJ_NEW(opal_buffer_t);
         /* pack update state command */
         cmd = ORTE_PLM_UPDATE_PROC_STATE;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
             ORTE_ERROR_LOG(rc);
             goto FINAL_CLEANUP;
         }
         /* pack only the data for this proc - have to start with the jobid
          * so the receiver can unpack it correctly
          */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &proc->jobid, 1, ORTE_JOBID))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &proc->jobid, 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -436,7 +441,7 @@ REPORT_ABORT:
                     child->exit_code = exit_code;
                 }
                 /* now pack the child's info */
-                if (ORTE_SUCCESS != (rc = pack_state_for_proc(&alert, child))) {
+                if (ORTE_SUCCESS != (rc = pack_state_for_proc(alert, child))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
@@ -459,12 +464,11 @@ REPORT_ABORT:
         }
 
         /* send it */
-        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert, ORTE_RML_TAG_PLM, 0, cbfunc, NULL))) {
             ORTE_ERROR_LOG(rc);
         } else {
             rc = ORTE_SUCCESS;
         }
-        OBJ_DESTRUCT(&alert);
         return rc;
     }
 
@@ -500,15 +504,15 @@ REPORT_ABORT:
                                  "%s errmgr:orted: sending contact info to HNP",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
-            OBJ_CONSTRUCT(&alert, opal_buffer_t);
+            alert = OBJ_NEW(opal_buffer_t);
             /* pack init routes command */
             cmd = ORTE_PLM_INIT_ROUTES_CMD;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
                 ORTE_ERROR_LOG(rc);
                 goto FINAL_CLEANUP;
             }
             /* pack the jobid */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &proc->jobid, 1, ORTE_JOBID))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &proc->jobid, 1, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
                 goto FINAL_CLEANUP;
             }
@@ -518,34 +522,33 @@ REPORT_ABORT:
                  item = opal_list_get_next(item)) {
                 child = (orte_odls_child_t*)item;
                 if (child->name->jobid == proc->jobid) {
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &child->name->vpid, 1, ORTE_VPID))) {
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->name->vpid, 1, ORTE_VPID))) {
                         ORTE_ERROR_LOG(rc);
                         goto FINAL_CLEANUP;
                     }
-                    if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &child->name->epoch, 1, ORTE_EPOCH))) {
+                    if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->name->epoch, 1, ORTE_EPOCH))) {
                         ORTE_ERROR_LOG(rc);
                         goto FINAL_CLEANUP;
                     }
                 }
             }
             /* pack an invalid marker */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &null, 1, ORTE_VPID))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &null, 1, ORTE_VPID))) {
                 ORTE_ERROR_LOG(rc);
                 goto FINAL_CLEANUP;
             }
             /* add in contact info for all procs in the job */
-            if (ORTE_SUCCESS != (rc = pack_child_contact_info(proc->jobid, &alert))) {
+            if (ORTE_SUCCESS != (rc = pack_child_contact_info(proc->jobid, alert))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&alert);
                 return rc;
             }
             /* send it */
-            if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert, ORTE_RML_TAG_PLM, 0, cbfunc, NULL))) {
                 ORTE_ERROR_LOG(rc);
             } else {
                 rc = ORTE_SUCCESS;
             }
-            OBJ_DESTRUCT(&alert);
         }        
         return rc;
     }
@@ -569,15 +572,15 @@ REPORT_ABORT:
             return ORTE_SUCCESS;
         }
 
-        OBJ_CONSTRUCT(&alert, opal_buffer_t);
+        alert = OBJ_NEW(opal_buffer_t);
         /* pack update state command */
         cmd = ORTE_PLM_UPDATE_PROC_STATE;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&alert, &cmd, 1, ORTE_PLM_CMD))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
             ORTE_ERROR_LOG(rc);
             goto FINAL_CLEANUP;
         }
         /* pack the data for the job */
-        if (ORTE_SUCCESS != (rc = pack_state_update(&alert, jobdat))) {
+        if (ORTE_SUCCESS != (rc = pack_state_update(alert, jobdat))) {
             ORTE_ERROR_LOG(rc);
         }
 
@@ -610,12 +613,11 @@ FINAL_CLEANUP:
         OBJ_RELEASE(jobdat);
 
         /* send it */
-        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert, ORTE_RML_TAG_PLM, 0, cbfunc, NULL))) {
             ORTE_ERROR_LOG(rc);
         } else {
             rc = ORTE_SUCCESS;
         }
-        OBJ_DESTRUCT(&alert);
 
         /* indicate that the job is complete */
         return rc;
@@ -639,14 +641,6 @@ static int suggest_map_targets(orte_proc_t *proc,
 
 static int ft_event(int state)
 {
-    return ORTE_SUCCESS;
-}
-
-static int post_startup(void) {
-    return ORTE_SUCCESS;
-}
-
-static int pre_shutdown(void) {
     return ORTE_SUCCESS;
 }
 
@@ -712,7 +706,10 @@ static int mark_processes_as_dead(opal_pointer_array_t *dead_procs) {
     return ORTE_SUCCESS;
 }
 
-static int failure_notification(orte_process_name_t *sender, opal_buffer_t *buffer) {
+static void failure_notification(int status, orte_process_name_t* sender,
+                                 opal_buffer_t *buffer, orte_rml_tag_t tag,
+                                 void* cbdata)
+{
     opal_pointer_array_t *dead_names;
     orte_std_cntr_t n;
     int ret = ORTE_SUCCESS, num_failed;
@@ -725,7 +722,7 @@ static int failure_notification(orte_process_name_t *sender, opal_buffer_t *buff
     /* Get the number of failed procs */
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_failed, &n, ORTE_VPID))) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        return;
     }
     
     for (i = 0; i < num_failed; i++) {
@@ -736,7 +733,7 @@ static int failure_notification(orte_process_name_t *sender, opal_buffer_t *buff
         
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, name_item, &n, ORTE_NAME))) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            return;
         } 
         
         if (orte_debug_daemons_flag) {
@@ -762,15 +759,13 @@ static int failure_notification(orte_process_name_t *sender, opal_buffer_t *buff
     
     /* Tell the applications' ORTE layers that there is a failure. */
     if (ORTE_SUCCESS != (ret = send_to_local_applications(dead_names))) {
-        return ret;
+        return;
     }
     
     for (i = 0; i < num_failed; i++) {
         name_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i);
         free(name_item);
     }
-    
-    return ret;
 }
 
 /*****************
@@ -1054,7 +1049,6 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid, orte_epoch_t epoch)
 static int record_dead_process(orte_process_name_t *proc) {
     opal_pointer_array_t *dead_name;
     opal_buffer_t *buffer;
-    orte_daemon_cmd_flag_t command;
     int rc = ORTE_SUCCESS;
     int num_failed;
 
@@ -1071,21 +1065,18 @@ static int record_dead_process(orte_process_name_t *proc) {
     
     /* Send a message to the HNP */
     buffer = OBJ_NEW(opal_buffer_t);
-    command = ORTE_PROCESS_FAILED_NOTIFICATION;
 
     num_failed = 1;
 
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
-        ORTE_ERROR_LOG(rc);
-    } else if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_failed, 1, ORTE_VPID))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_failed, 1, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
     } else if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, proc, 1, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
     }
 
-    orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer, ORTE_RML_TAG_DAEMON, 0);
+    orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer, ORTE_RML_TAG_FAILURE_NOTICE, 0,
+                            cbfunc, NULL);
 
-    OBJ_RELEASE(buffer);
     OBJ_RELEASE(dead_name);
 
     return rc;

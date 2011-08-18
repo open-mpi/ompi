@@ -60,9 +60,6 @@ static int update_state(orte_jobid_t job,
 static int orte_errmgr_app_abort_peers(orte_process_name_t *procs,
                                        orte_std_cntr_t num_procs);
 
-static int post_startup(void);
-static int pre_shutdown(void);
-
 void epoch_change_recv(int status, 
                        orte_process_name_t *sender, 
                        opal_buffer_t *buffer, 
@@ -86,11 +83,7 @@ orte_errmgr_base_module_t orte_errmgr_app_module = {
     NULL,
     NULL,
     orte_errmgr_base_register_migration_warning,
-    post_startup,
-    pre_shutdown,
-    NULL,
-    orte_errmgr_base_set_fault_callback,
-    NULL
+    orte_errmgr_base_set_fault_callback
 };
 
 /************************
@@ -98,11 +91,21 @@ orte_errmgr_base_module_t orte_errmgr_app_module = {
  ************************/
 static int init(void)
 {
-    return ORTE_SUCCESS;
+    int ret = ORTE_SUCCESS;
+    
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                  ORTE_RML_TAG_EPOCH_CHANGE, 
+                                  ORTE_RML_PERSISTENT, 
+                                  epoch_change_recv, 
+                                  NULL);
+    return ret;
 }
 
 static int finalize(void)
 {
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
+                         ORTE_RML_TAG_EPOCH_CHANGE);
+
     return ORTE_SUCCESS;
 }
 
@@ -146,27 +149,6 @@ static int update_state(orte_jobid_t job,
         }
     }
     return ORTE_SUCCESS;
-}
-
-static int post_startup(void) {
-    int ret = ORTE_SUCCESS;
-    
-    ret = orte_rml.recv_buffer_nb(ORTE_PROC_MY_DAEMON,
-                                  ORTE_RML_TAG_EPOCH_CHANGE, 
-                                  ORTE_RML_PERSISTENT, 
-                                  epoch_change_recv, 
-                                  NULL);
-                                                                                                                                                                                                                             
-    return ret;
-}
-
-static int pre_shutdown(void) {
-    int ret = ORTE_SUCCESS;
-    
-    ret = orte_rml.recv_cancel(ORTE_PROC_MY_DAEMON,
-                               ORTE_RML_TAG_EPOCH_CHANGE);
-                                                                                                                                                                                                                             
-    return ret;
 }
 
 void epoch_change_recv(int status, 

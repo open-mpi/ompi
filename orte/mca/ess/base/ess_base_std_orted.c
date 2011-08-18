@@ -173,6 +173,13 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
+    /* open the errmgr */
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_open";
+        goto error;
+    }
+
     /* some environments allow remote launches - e.g., ssh - so
      * open the PLM and select something -only- if we are given
      * a specific module to use
@@ -211,6 +218,13 @@ int orte_ess_base_orted_setup(char **hosts)
     if (ORTE_SUCCESS != (ret = orte_rml_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rml_base_select";
+        goto error;
+    }
+
+    /* select the errmgr */
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_select";
         goto error;
     }
 
@@ -274,18 +288,6 @@ int orte_ess_base_orted_setup(char **hosts)
     /* set the communication function */
     orte_comm = orte_global_comm;
     
-    /* open/select the errmgr */
-    if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_errmgr_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_errmgr_base_select";
-        goto error;
-    }
-
     /* initialize the nidmaps */
     if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -504,15 +506,6 @@ int orte_ess_base_orted_setup(char **hosts)
     /* start the local sensors */
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
 
-    /* Execute the post-startup errmgr code */
-    if (NULL != orte_errmgr.post_startup) {
-        if (ORTE_SUCCESS != (ret = orte_errmgr.post_startup())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_errmgr.post_startup";
-            goto error;
-        }
-    }
-
     return ORTE_SUCCESS;
     
  error:
@@ -525,10 +518,6 @@ int orte_ess_base_orted_setup(char **hosts)
 
 int orte_ess_base_orted_finalize(void)
 {
-    if (NULL != orte_errmgr.pre_shutdown) {
-        orte_errmgr.pre_shutdown();
-    }
-
     /* stop the local sensors */
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
 
@@ -575,6 +564,8 @@ int orte_ess_base_orted_finalize(void)
         orte_plm_base_close();
     }
     
+    orte_errmgr_base_close();
+
     /* now can close the rml and its friendly group comm */
     orte_grpcomm_base_close();
     /* close the multicast */

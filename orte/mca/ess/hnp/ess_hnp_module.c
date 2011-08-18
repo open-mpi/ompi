@@ -238,6 +238,11 @@ static int rte_init(void)
         goto error;
     }
 
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
+        error = "orte_errmgr_base_open";
+        goto error;
+    }
+
     /* Since we are the HNP, then responsibility for
      * defining the name falls to the PLM component for our
      * respective environment - hence, we have to open the PLM
@@ -275,6 +280,13 @@ static int rte_init(void)
         error = "orte_rml_base_select";
         goto error;
     }
+
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_select";
+        goto error;
+    }
+    
     /*
      * Routed system
      */
@@ -353,16 +365,6 @@ static int rte_init(void)
     if (ORTE_SUCCESS != (ret = orte_rmaps_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rmaps_base_find_available";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
-        error = "orte_errmgr_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_errmgr_base_select";
         goto error;
     }
     

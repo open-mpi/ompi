@@ -194,6 +194,9 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 /* For Epoch Updates */
 #define ORTE_RML_TAG_EPOCH_CHANGE           47
 
+/* Notify of failed processes */
+#define ORTE_RML_TAG_FAILURE_NOTICE         48
+
 #define ORTE_RML_TAG_MAX                   100
 
 

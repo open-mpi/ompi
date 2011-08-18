@@ -60,6 +60,9 @@ typedef uint8_t orte_errmgr_cmd_flag_t;
 #define ORTE_ERRMGR_ABORT_PROCS_REQUEST_CMD     0x01
 #define ORTE_ERRMGR_REGISTER_CALLBACK_CMD       0x02
 
+/* declare the base default module */
+ORTE_DECLSPEC extern orte_errmgr_base_module_t orte_errmgr_default_fns;
+
 /*
  * Base functions
  */

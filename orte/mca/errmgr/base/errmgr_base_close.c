@@ -53,5 +53,8 @@ int orte_errmgr_base_close(void)
 
     orte_errmgr_base.initialized = false;
     
+    /* always leave a default set of fn pointers */
+    orte_errmgr = orte_errmgr_default_fns;
+
     return ORTE_SUCCESS;
 }
