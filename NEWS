@@ -26,12 +26,106 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+As more fully described in the "Software Version Number" section in
+the README file, Open MPI typically releases two separate version
+series simultaneously.  Since these series have different goals and
+are semi-independent of each other, a single NEWS-worthy item may be
+introduced into different series at different times.  For example,
+feature F was introduced in the vA.B series at version vA.B.C, and was
+later introduced into the vX.Y series at vX.Y.Z.
+
+The first time feature F is released, the item will be listed in the
+vA.B.C section, denoted as:
+
+   (** also to appear: X.Y.Z) -- indicating that this item is also
+                                 likely to be included in future release
+                                 version vX.Y.Z.
+
+When vX.Y.Z is later released, the same NEWS-worthy item will also be
+included in the vX.Y.Z section and be denoted as:
+
+   (** also appeared: A.B.C)  -- indicating that this item was previously
+                                 included in release version vA.B.C.
+
 1.5.4
 -----
 
+- Add support for the (as yet unreleased) Mellanox MXM transport.
+- Add support for dynamic service levels (SLs) in the openib BTL.
+- Fixed C++ bindings cosmetic/warnings issue with
+  MPI::Comm::NULL_COPY_FN and MPI::Comm::NULL_DELETE_FN.  Thanks to
+  Júlio Hoffimann for identifying the issues.
+- Also allow the word "slots" in rankfiles (i.e., not just "slot").
+  (** also to appear in 1.4.4)
+- Add Mellanox ConnectX 3 device IDs to the openib BTL defaults.
+  (** also to appear in 1.4.4)
+- Various FCA updates.
+- Fix 32 bit SIGBUS errors on Solaris SPARC platforms.
+- Add missing ARM assembly code files.
+- Update to allow more than 128 entries in an appfile.
+  (** also to appear in 1.4.4)
+- Various VT updates and bug fixes.
+- Update description of btl_openib_cq_size to be more accurate.
+  (** also to appear in 1.4.4)
+- Various assembly "clobber" fixes.
+- Fix a hang in carto selection in obscure situations.
+- Guard the inclusion of execinfo.h since not all platforms have it.  Thanks
+  to Aleksej Saushev for identifying this issue.
+  (** also to appear in 1.4.4)
+- Support Solaris legacy munmap prototype changes.
+  (** also to appear in 1.4.4)
+- Updated to Automake 1.11.1 per
+  http://www.open-mpi.org/community/lists/devel/2011/07/9492.php.
+- Fix compilation of LSF support.
+- Update MPI_Comm_spawn_multiple.3 man page to reflect what it
+  actually does.
+- Fix for possible corruption of the environment.  Thanks to Peter
+  Thompson for the suggestion.  (** also to appear in 1.4.4)
+- Enable use of PSM on direct-launch SLURM jobs.
+- Update paffinity hwloc to v1.2, and to fix minor bugs affinity
+  assignment bugs on PPC64/Linux platforms.
+- Let the openib BTL auto-detect its bandwidth.
+- Support new MPI-2.2 datatypes.
+- Updates to support more datatypes in MPI one-sided communication.
+- Fix recursive locking bug when MPI-IO was used with
+  MPI_THREAD_MULTIPLE.  (** also to appear in 1.4.4)
+- Fix mpirun handling of prefix conflicts.
+- Ensure mpirun's --xterm options leaves sessions attached.
+  (** also to appear in 1.4.4)
 - Fixed type of sendcounts and displs in the "use mpi" F90 module.
-  ABI is preserved, but applications may well be broken.  See the README
-  for more details.
+  ABI is preserved, but applications may well be broken.  See the
+  README for more details.  Thanks to Stanislav Sazykin for
+  identifying the issue.  (** also to appear in 1.4.4)
+- Fix indexed datatype leaks.  Thanks to Pascal Deveze for supplying
+  the initial patch.  (** also to appear in 1.4.4)
+- Fix debugger mapping when mpirun's -npernode option is used.
+- Fixed support for configure's --disable-dlopen option when used with
+  "make distclean".
+- Fix segv associated with MPI_Comm_create with MPI_GROUP_EMPTY.
+  Thanks to Dominik Goeddeke for finding this.
+  (** also to appear in 1.4.4)
+- Improved LoadLeveler ORTE support.
+- Add new WindVerbs BTL plugin, supporting native OpenFabrics verbs on 
+  Windows (the "wv" BTL).
+- Add new btl_openib_gid_index MCA parameter to allow selecting which
+  GID to use on an OpenFabrics device's GID table.
+- Add support for PCI relaxed ordering in the OpenFabrics BTL (when
+  available).
+- Update rsh logic to allow correct SGE operation.
+- Ensure that the mca_paffinity_alone MCA parameter only appears once
+  in the ompi_info output.  Thanks to Gus Correa for identifying the
+  issue.
+- Fixed return codes from MPI_PROBE and MPI_IPROBE.
+  (** also to appear in 1.4.4)
+- Remove --enable-progress-thread configure option; it doesn't work on
+  the v1.5 branch.  Rename --enable-mpi-threads to
+  --enable-mpi-thread-multiple.  Add new --enable-opal-multi-threads
+  option.
+- Updates for Intel Fortran compiler version 12.
+- Remove bproc support.  Farewell bproc!
+- If something goes wrong during MPI_INIT, fix the error
+  message to say that it's illegal to invoke MPI_INIT before
+  MPI_INIT.
 
 
 1.5.3
