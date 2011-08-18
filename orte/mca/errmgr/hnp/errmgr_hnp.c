@@ -33,6 +33,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
+#include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -1066,6 +1067,8 @@ static void failed_start(orte_job_t *jdata)
     }
     jobdat->state = ORTE_JOB_STATE_FAILED_TO_START;
 
+    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
          item = next) {
@@ -1087,6 +1090,9 @@ static void failed_start(orte_job_t *jdata)
             }
         }
     }
+
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
 
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
                          "%s errmgr:hnp: job %s reported incomplete start",
@@ -1120,6 +1126,9 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
     }
     jobdat->state = jobstate;
     jdata->state = jobstate;
+
+    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+
     for (item = opal_list_get_first(&orte_local_children);
          item != opal_list_get_end(&orte_local_children);
          item = next) {
@@ -1150,6 +1159,10 @@ static void update_local_procs_in_job(orte_job_t *jdata, orte_job_state_t jobsta
             }
         }
     }
+
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+
 }
 
 void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
@@ -1177,6 +1190,8 @@ void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
     if (NULL == jobdat) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
     }
+
+    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
 
     /***   UPDATE LOCAL CHILD   ***/
     for (item = opal_list_get_first(&orte_local_children);
@@ -1224,6 +1239,9 @@ void orte_errmgr_hnp_update_proc(orte_job_t *jdata,
             }
         }
     }
+
+    opal_condition_signal(&orte_odls_globals.cond);
+    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
 
     /***   UPDATE REMOTE CHILD   ***/
     for (i=0; i < jdata->procs->size; i++) {

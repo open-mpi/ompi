@@ -37,6 +37,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
+#include "orte/mca/odls/base/odls_private.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/sensor/sensor.h"
@@ -422,6 +423,7 @@ REPORT_ABORT:
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+
         /* find this proc in the local children */
         for (item = opal_list_get_first(&orte_local_children);
              item != opal_list_get_end(&orte_local_children);
@@ -455,6 +457,7 @@ REPORT_ABORT:
                 break;
             }
         }
+
         /* send it */
         if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &alert, ORTE_RML_TAG_PLM, 0))) {
             ORTE_ERROR_LOG(rc);
@@ -676,6 +679,8 @@ static int mark_processes_as_dead(opal_pointer_array_t *dead_procs) {
         orte_util_set_proc_state(name_item, ORTE_PROC_STATE_TERMINATED);
         orte_util_set_epoch(name_item, name_item->epoch + 1);
 
+        OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
+
         /* Remove the dead process from my list of children if applicable */
         for (item = opal_list_get_first(&orte_local_children);
              item != opal_list_get_end(&orte_local_children);
@@ -689,6 +694,9 @@ static int mark_processes_as_dead(opal_pointer_array_t *dead_procs) {
                 break;
             }
         }
+
+        opal_condition_signal(&orte_odls_globals.cond);
+        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
 
         /* Remove the route from the routing layer */
         orte_routed.delete_route(name_item);
