@@ -429,7 +429,7 @@ static int opal_dss_pack_float(opal_buffer_t *buffer, float val)
     if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp1, 1, OPAL_INT32))) {
         return ret;
     }
-    tmp2 = (int)((100.0 * val) - ((int)val));
+    tmp2 = (int)(100.0 * (val - (int)val));
     if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &tmp2, 1, OPAL_INT32))) {
         return ret;
     }
