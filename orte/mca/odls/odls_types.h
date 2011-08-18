@@ -89,9 +89,6 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* process called "errmgr.abort_procs" */
 #define ORTE_DAEMON_ABORT_PROCS_CALLED      (orte_daemon_cmd_flag_t) 28
 
-/* commands used for fault recovery */
-#define ORTE_PROCESS_FAILED_NOTIFICATION    (orte_daemon_cmd_flag_t) 30
-
 /*
  * List object to locally store the process names and pids of
  * our children. This can subsequently be used to order termination

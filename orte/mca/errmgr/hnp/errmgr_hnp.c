@@ -84,16 +84,8 @@ static orte_errmgr_base_module_t global_module = {
     /* FT Event hook  */
     orte_errmgr_hnp_global_ft_event,
     orte_errmgr_base_register_migration_warning,
-    /* Post-startup */
-    orte_errmgr_hnp_global_post_startup,
-    /* Pre-shutdown */
-    orte_errmgr_hnp_global_pre_shutdown,
-    /* Mark as dead */
-    orte_errmgr_hnp_global_mark_processes_as_dead,
     /* Set the callback */
-    orte_errmgr_base_set_fault_callback,
-    /* Receive failure notification */
-    orte_errmgr_hnp_global_failure_notification
+    orte_errmgr_base_set_fault_callback
 };
 
 
@@ -110,6 +102,9 @@ static int hnp_relocate(orte_job_t *jdata, orte_process_name_t *proc,
                         orte_proc_state_t state, orte_exit_code_t exit_code);
 static orte_odls_child_t* proc_is_local(orte_process_name_t *proc);
 static int send_to_local_applications(opal_pointer_array_t *dead_names);
+static void failure_notification(int status, orte_process_name_t* sender,
+                                 opal_buffer_t *buffer, orte_rml_tag_t tag,
+                                 void* cbdata);
 
 /************************
  * API Definitions
@@ -385,11 +380,17 @@ cleanup:
  **********************/
 int orte_errmgr_hnp_base_global_init(void)
 {
-    return ORTE_SUCCESS;
+    int ret;
+
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FAILURE_NOTICE,
+                                  ORTE_RML_PERSISTENT, failure_notification, NULL);
+    return ret;
 }
 
 int orte_errmgr_hnp_base_global_finalize(void)
 {
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FAILURE_NOTICE);
+
     return ORTE_SUCCESS;
 }
 
@@ -823,15 +824,10 @@ int orte_errmgr_hnp_base_global_ft_event(int state)
     return ORTE_SUCCESS;
 }
 
-int orte_errmgr_hnp_global_post_startup(void) {
-    return ORTE_SUCCESS;
-}
-
-int orte_errmgr_hnp_global_pre_shutdown(void) {
-    return ORTE_SUCCESS;
-}
-
-int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opal_buffer_t *buffer) {
+static void failure_notification(int status, orte_process_name_t* sender,
+                                 opal_buffer_t *buffer, orte_rml_tag_t tag,
+                                 void* cbdata)
+{
     orte_std_cntr_t n;
     int ret = ORTE_SUCCESS, num_failed;
     opal_pointer_array_t *dead_names;
@@ -841,12 +837,11 @@ int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opa
     orte_job_t *jdat;
     orte_proc_t *pdat, *pdat2;
     opal_buffer_t *answer;
-    orte_daemon_cmd_flag_t command;
 
     /* If processes have started terminating, don't worry about reported
      * failures. The ORTEDs don't know the difference. */
     if (mca_errmgr_hnp_component.term_in_progress) {
-        return ret;
+        return;
     }
     
     if (orte_debug_daemons_flag) {
@@ -859,7 +854,7 @@ int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opa
     /* Get the number of failed procs */
     if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &num_failed, &n, ORTE_VPID))) {
         ORTE_ERROR_LOG(ret);
-        return ret;
+        return;
     }
     
     dead_names = OBJ_NEW(opal_pointer_array_t);
@@ -871,7 +866,7 @@ int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opa
         n = 1;
         if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, name_item, &n, ORTE_NAME))) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            return;
         }
         
         /* Check to see if the message is telling us about an old epoch.  
@@ -944,7 +939,7 @@ int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opa
     num_failed = opal_pointer_array_get_size(dead_names);
     
     if (num_failed > 0) {
-        orte_errmgr.mark_processes_as_dead(dead_names);
+        orte_errmgr_hnp_global_mark_processes_as_dead(dead_names);
         
         if (!orte_orteds_term_ordered) {
             /* Send a message out to all the orteds to inform them that the
@@ -952,18 +947,11 @@ int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opa
              * decided)!
              */
             answer = OBJ_NEW(opal_buffer_t);
-            command = ORTE_PROCESS_FAILED_NOTIFICATION;
-            
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &command, 1, ORTE_DAEMON_CMD))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(answer);
-                return ret;
-            }
             
             if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &num_failed, 1, ORTE_VPID))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);
-                return ret;
+                return;
             }
             
             for (i = 0; i < opal_pointer_array_get_size(dead_names); i++) {
@@ -971,20 +959,20 @@ int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opa
                     if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, name_item, 1, ORTE_NAME))) {
                         ORTE_ERROR_LOG(ret);
                         OBJ_RELEASE(answer);
-                        return ret;
+                        return;
                     }
                 }
             }
             
-            if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, answer, ORTE_RML_TAG_DAEMON))) {
+            if (ORTE_SUCCESS != (ret = orte_grpcomm.xcast(ORTE_PROC_MY_NAME->jobid, answer, ORTE_RML_TAG_FAILURE_NOTICE))) {
                 ORTE_ERROR_LOG(ret);
                 OBJ_RELEASE(answer);
-                return ret;
+                return;
             }
             
             /* Tell the applications' ORTE layers that there is a failure. */
             if (ORTE_SUCCESS != (ret = send_to_local_applications(dead_names))) {
-                return ret;
+                return;
             }
         }
         
@@ -995,8 +983,6 @@ int orte_errmgr_hnp_global_failure_notification(orte_process_name_t *sender, opa
     }
     
     OBJ_RELEASE(dead_names);
-    
-    return ret;
 }
 
 /*****************
@@ -1911,7 +1897,6 @@ int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
     orte_job_t *jdat;
     orte_proc_t *pdat;
     opal_buffer_t *buffer;
-    orte_daemon_cmd_flag_t command;
     int i, rc, num_failed;
     opal_pointer_array_t *dead_names;
     orte_process_name_t *name_item;
@@ -1956,14 +1941,10 @@ int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
              * died.
              */
             buffer = OBJ_NEW(opal_buffer_t);
-            command = ORTE_PROCESS_FAILED_NOTIFICATION;
 
             num_failed = opal_pointer_array_get_size(dead_names);
 
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &command, 1, ORTE_DAEMON_CMD))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(buffer);
-            } else if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_failed, 1, ORTE_VPID))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_failed, 1, ORTE_VPID))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(buffer);
             } else {
@@ -1987,7 +1968,7 @@ int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
                                     "%s SENDING DEAD PROCESS MESSAGE TO HNP", 
                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-                orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer, ORTE_RML_TAG_DAEMON, 0, cbfunc, NULL);
+                orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer, ORTE_RML_TAG_FAILURE_NOTICE, 0, cbfunc, NULL);
             }
         } else {
             orte_errmgr_hnp_global_mark_processes_as_dead(dead_names);
