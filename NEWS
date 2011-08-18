@@ -62,7 +62,7 @@ Trunk (not on release branches yet)
   OPAL levels - intended for use when configuring without MPI support
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
-- Added Mellanox MTL layer implementation (mxm)
+
 
 1.5.4
 -----
@@ -73,24 +73,31 @@ Trunk (not on release branches yet)
   MPI::Comm::NULL_COPY_FN and MPI::Comm::NULL_DELETE_FN.  Thanks to
   Júlio Hoffimann for identifying the issues.
 - Also allow the word "slots" in rankfiles (i.e., not just "slot").
+  (** also to appear in 1.4.4)
 - Add Mellanox ConnectX 3 device IDs to the openib BTL defaults.
+  (** also to appear in 1.4.4)
 - Various FCA updates.
 - Fix 32 bit SIGBUS errors on Solaris SPARC platforms.
 - Add missing ARM assembly code files.
 - Update to allow more than 128 entries in an appfile.
+  (** also to appear in 1.4.4)
 - Various VT updates and bug fixes.
 - Update description of btl_openib_cq_size to be more accurate.
+  (** also to appear in 1.4.4)
 - Various assembly "clobber" fixes.
 - Fix a hang in carto selection in obscure situations.
-- Fix for NetBSD, which doesn't have <execinfo.h>
+- Guard the inclusion of execinfo.h since not all platforms have it.  Thanks
+  to Aleksej Saushev for identifying this issue.
+  (** also to appear in 1.4.4)
 - Support Solaris legacy munmap prototype changes.
-- Updated to Automake 1.11.1 per 
+  (** also to appear in 1.4.4)
+- Updated to Automake 1.11.1 per
   http://www.open-mpi.org/community/lists/devel/2011/07/9492.php.
 - Fix compilation of LSF support.
 - Update MPI_Comm_spawn_multiple.3 man page to reflect what it
   actually does.
 - Fix for possible corruption of the environment.  Thanks to Peter
-  Thompson for the suggestion.
+  Thompson for the suggestion.  (** also to appear in 1.4.4)
 - Enable use of PSM on direct-launch SLURM jobs.
 - Update paffinity hwloc to v1.2, and to fix minor bugs affinity
   assignment bugs on PPC64/Linux platforms.
@@ -98,21 +105,24 @@ Trunk (not on release branches yet)
 - Support new MPI-2.2 datatypes.
 - Updates to support more datatypes in MPI one-sided communication.
 - Fix recursive locking bug when MPI-IO was used with
-  MPI_THREAD_MULTIPLE. 
+  MPI_THREAD_MULTIPLE.  (** also to appear in 1.4.4)
 - Fix mpirun handling of prefix conflicts.
 - Ensure mpirun's --xterm options leaves sessions attached.
+  (** also to appear in 1.4.4)
 - Fixed type of sendcounts and displs in the "use mpi" F90 module.
   ABI is preserved, but applications may well be broken.  See the
   README for more details.  Thanks to Stanislav Sazykin for
-  identifying the issue.
+  identifying the issue.  (** also to appear in 1.4.4)
 - Fix indexed datatype leaks.  Thanks to Pascal Deveze for supplying
-  the initial patch.
+  the initial patch.  (** also to appear in 1.4.4)
 - Fix debugger mapping when mpirun's -npernode option is used.
 - Fixed support for configure's --disable-dlopen option when used with
   "make distclean".
 - Fix segv associated with MPI_Comm_create with MPI_GROUP_EMPTY.
+  Thanks to Dominik Goeddeke for finding this.
+  (** also to appear in 1.4.4)
 - Improved LoadLeveler ORTE support.
-- Add new WindVerbs BTL plugin, supporting native OpenFabrics verbs on
+- Add new WindVerbs BTL plugin, supporting native OpenFabrics verbs on 
   Windows (the "wv" BTL).
 - Add new btl_openib_gid_index MCA parameter to allow selecting which
   GID to use on an OpenFabrics device's GID table.
@@ -122,19 +132,17 @@ Trunk (not on release branches yet)
 - Ensure that the mca_paffinity_alone MCA parameter only appears once
   in the ompi_info output.  Thanks to Gus Correa for identifying the
   issue.
-- Fix return status from MPI_Probe.
+- Fixed return codes from MPI_PROBE and MPI_IPROBE.
+  (** also to appear in 1.4.4)
 - Remove --enable-progress-thread configure option; it doesn't work on
   the v1.5 branch.  Rename --enable-mpi-threads to
   --enable-mpi-thread-multiple.  Add new --enable-opal-multi-threads
-  option. 
+  option.
 - Updates for Intel Fortran compiler version 12.
 - Remove bproc support.  Farewell bproc!
-- If something goes wrong during during MPI_INIT, fix the error
+- If something goes wrong during MPI_INIT, fix the error
   message to say that it's illegal to invoke MPI_INIT before
-  MPI_INIT.  
-- Fixed type of sendcounts and displs in the "use mpi" F90 module.
-  ABI is preserved, but applications may well be broken.  See the README
-  for more details.
+  MPI_INIT.
 
 
 1.5.3
@@ -316,63 +324,92 @@ Trunk (not on release branches yet)
 1.4.4
 -----
 
-- Fix to prevent the SM BTL from creating its mmap'd file in
-  directories that are remotely mounted.
-- Fixed use of memory barriers in the SM BTL.  This fixed segv's when
-  compiling with Intel 10.0.025 or PGI 9.0-3.
-- When specifying OOB ports, fix to convert the ports into network
-  byte order before binding.
-- Removed an extraneous #include from the TCP BTL.
-- Updated SLURM support to 1.5.1.
-- Restored a missing debugger flag to support TotalView.  Thanks to
-  David Turner and the TV folks for supplying the fix.
-- Fix to detect and avoid overlapping memcpy().  Thanks to
-  Francis Pellegrini for identifying the issue.
-- Libtool patch to get around a build problem when using the IBM XL
-  compilers.
-- Added <sys/stat.h> to ptmalloc's hooks.c (It's not always included
-  by default on some systems).
-- Fixed a misleading MPI_Bcast error message.  Thanks to Jeremiah
-  Willcock for reporting this.
-- Fixed paffinity base MCA duplicate registrations.  Thanks to Gus
-  Correa for bringing this to our attention.
-- Fix for VT rpmbuild on RHEL5.
-- Man page cleanups.  Thanks to Jeremiah Willcock and Jed Brown.
-- Fix for memchecking buffers during MPI_*INIT.
-- Various autogen.sh fixes.
-- Fixed a problem in which duplicated libs were being specified for
-  linking.  Thanks to Hicham Mouline for noticing it.
-- Fixed an indexing problem in precondition_transports.
-- Clarification of MPI_Init_thread man page.
-- Fixed a race condition in osc_rdma_sync.  Thanks to Guillaume
-  Thouvenin for finding this issue.
-- Fix for libtool issue when using pgcc to compile ompi in conjunction
-  with the -tp option.
-- Fix in MPI_Init_thread for checkpoint/restart.
-- Fixed incorrect text in MPI_File_set_view man page.
+- Ensure that MPI_Accumulate error return in 1.4 is consistent with
+  1.5.x and trunk.
+- Allow the word "slots" in rankfiles (i.e., not just "slot").
+  (** also appeared in 1.5.4)
+- Add Mellanox ConnectX 3 device IDs to the openib BTL defaults.
+  (** also appeared in 1.5.4)
+- Update description of btl_openib_cq_size to be more accurate.
+- Ensure mpirun's --xterm options leaves sessions attached.
+  (** also appeared in 1.5.4)
+- Update to allow more than 128 entries in an appfile.
+  (** also appeared in 1.5.4)
+- Update description of btl_openib_cq_size to be more accurate.
+  (** also appeared in 1.5.4)
+- Fix for deadlock when handling recursive attribute keyval deletions
+  (e.g., when using ROMIO with MPI_THREAD_MULTIPLE).
+- Fix indexed datatype leaks.  Thanks to Pascal Deveze for supplying
+  the initial patch.  (** also appeared in 1.5.4)
+- Fixed the F90 types of the sendcounts and displs parameters to
+  MPI_SCATTERV.  Thanks to Stanislav Sazykin for identifying the issue.
+  (** also appeared in 1.5.4)
+- Exclude opal/libltdl from "make distclean" when --disable-dlopen is
+  used.  Thanks to David Gunter for reporting the issue.
+- Fixed a segv in MPI_Comm_create when called with GROUP_EMPTY.
+  Thanks to Dominik Goeddeke for finding this.
+  (** also appeared in 1.5.4)
+- Fixed return codes from MPI_PROBE and MPI_IPROBE.
+  (** also appeared in 1.5.4)
+- Fixed undefined symbol error when using the vtf90 profiling tool.
+- Fix for referencing an uninitialized variable in DPM ORTE.  Thanks
+  to Avinash Malik for reporting the issue.
+- Fix for correctly handling multi-token args when using debuggers.
+- Eliminated the unneeded u_int*_t datatype definitions.
 - Change in ORTE DPM to get around gcc 4.[45].x compiler wanrings
   about possibly calling free() on a non-heap variable, even though it
   will never happen because the refcount will never go to zero.
-- Eliminated the unneeded u_int*_t datatype definitions.
-- Fix for correctly handling multi-token args when using debuggers.
-- Fix for referencing an uninitialized variable in DPM ORTE.  Thanks
-  to Avinash Malik for reporting the issue.
-- Fixed undefined symbol error when using the vtf90 profiling tool.
-- Fixed return codes from MPI_PROBE and MPI_IPROBE.
-- Fixed a segv in MPI_Comm_create when called with GROUP_EMPTY.
-  Thanks to Dominik Goeddeke for finding this.
-- Exclude opal/libltdl from "make distclean" when --disable-dlopen is
-  used.  Thanks to David Gunter for reporting the issue.
-- Fixed the F90 types of the sendcounts and displs parameters to
-  MPI_SCATTERV.  Thanks to Stanislav Sazykin for identifying the
-  issue.
-- Fixed memory leaks associated with indexed datatypes.
-- Fix for deadlock when handling recursive attribute keyval deletions
-  (e.g., when using ROMIO with MPI_THREAD_MULTIPLE).
+- Fixed incorrect text in MPI_File_set_view man page.
+- Fix in MPI_Init_thread for checkpoint/restart.
+- Fix for libtool issue when using pgcc to compile ompi in conjunction
+  with the -tp option.
+- Fixed a race condition in osc_rdma_sync.  Thanks to Guillaume
+  Thouvenin for finding this issue.
+- Clarification of MPI_Init_thread man page.
+- Fixed an indexing problem in precondition_transports.
+- Fixed a problem in which duplicated libs were being specified for
+  linking.  Thanks to Hicham Mouline for noticing it.
+- Various autogen.sh fixes.
+- Fix for memchecking buffers during MPI_*INIT.
+- Man page cleanups.  Thanks to Jeremiah Willcock and Jed Brown.
+- Fix for VT rpmbuild on RHEL5.
+- Support Solaris legacy munmap prototype changes.
+  (** also appeared in 1.5.4)
+- Expands app_idx to int32_t to allow more than 127 app_contexts.
+- Guard the inclusion of execinfo.h since not all platforms have it.  Thanks
+  to Aleksej Saushev for identifying this issue.
+  (** also appeared in 1.5.4)
+- Fix to avoid possible environment corruption.  Thanks to Peter Thompson
+  for identifying the issue and supplying a patch.
+  (** also appeared in 1.5.4)
+- Fixed paffinity base MCA duplicate registrations.  Thanks to Gus
+  Correa for bringing this to our attention.
+- Fix recursive locking bug when MPI-IO was used with
+  MPI_THREAD_MULTIPLE.  (** also appeared in 1.5.4)
+- F90 MPI API fixes.
+- Fixed a misleading MPI_Bcast error message.  Thanks to Jeremiah
+  Willcock for reporting this.
+- Added <sys/stat.h> to ptmalloc's hooks.c (it's not always included
+  by default on some systems).
+- Libtool patch to get around a build problem when using the IBM XL
+  compilers.
+- Fix to detect and avoid overlapping memcpy().  Thanks to
+  Francis Pellegrini for identifying the issue.
+- Fix to allow ompi to work on top of RoCE vLANs.
+- Restored a missing debugger flag to support TotalView.  Thanks to
+  David Turner and the TV folks for supplying the fix.
+- Updated SLURM support to 1.5.1.
+- Removed an extraneous #include from the TCP BTL.
+- When specifying OOB ports, fix to convert the ports into network
+  byte order before binding.
+- Fixed use of memory barriers in the SM BTL.  This fixed segv's when
+  compiling with Intel 10.0.025 or PGI 9.0-3.
+- Fix to prevent the SM BTL from creating its mmap'd file in
+  directories that are remotely mounted.
 
 
 1.4.3
-----------------
+-----
 
 - Fixed handling of the array_of_argv parameter in the Fortran
   binding of MPI_COMM_SPAWN_MULTIPLE (** also to appear: 1.5).
