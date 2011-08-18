@@ -196,7 +196,8 @@ int orte_util_build_daemon_nidmap(char **nodes)
     num_nodes = opal_argv_count(nodes);
     
     OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
-                         "orte:util:build:daemon:nidmap found %d nodes", num_nodes));
+                         "%s orte:util:build:daemon:nidmap found %d nodes",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_nodes));
     
     if (0 == num_nodes) {
         /* nothing to do */
@@ -240,11 +241,6 @@ int orte_util_build_daemon_nidmap(char **nodes)
         }
         addr = inet_ntoa(*(struct in_addr*)h->h_addr_list[0]);
         
-        OPAL_OUTPUT_VERBOSE((3, orte_debug_output,
-                             "%s orte:util:build:daemon:nidmap node %s daemon %d addr %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             node->name, (int)node->daemon, addr));
-        
         /* since we are using static ports, all my fellow daemons will be on my
          * port. Setup the contact info for each daemon in my hash tables. Note
          * that this will -not- open a port to those daemons, but will only
@@ -257,6 +253,10 @@ int orte_util_build_daemon_nidmap(char **nodes)
 
         orte_util_convert_process_name_to_string(&proc_name, &proc);
         asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
+        OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+                             "%s orte:util:build:daemon:nidmap node %s daemon %d addr %s uri %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             node->name, (int)node->daemon, addr, uri));
         opal_dss.pack(&buf, &uri, 1, OPAL_STRING);
         free(proc_name);
         free(uri);
