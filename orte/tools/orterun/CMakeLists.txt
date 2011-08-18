@@ -20,7 +20,7 @@ ENDIF(BUILD_SHARED_LIBS)
 SET_TARGET_PROPERTIES(orterun PROPERTIES
   DEBUG_POSTFIX "${OMPI_EXE_DEBUG_POSTFIX}")
 
-TARGET_LINK_LIBRARIES (orterun libopen-pal libopen-rte shlwapi.lib)
+TARGET_LINK_LIBRARIES (orterun libopen-pal libopen-rte Ws2_32.lib shlwapi.lib)
 
 ADD_CUSTOM_COMMAND (TARGET orterun
   POST_BUILD
