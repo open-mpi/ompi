@@ -41,22 +41,29 @@ int ompi_mtl_mxm_send(struct mca_mtl_base_module_t* mtl,
     int ret;
 
     /* prepare local send request */
-    mxm_send_req.base.state			= MXM_REQ_NEW;
-    mxm_send_req.base.mq       		= ompi_mtl_mxm_mq_lookup(comm);
-    mxm_send_req.base.conn     		= ompi_mtl_mxm_conn_lookup(comm, dest);
-    mxm_send_req.op.send.tag        = tag;
-    mxm_send_req.op.send.imm_data   = ompi_comm_rank(comm);
-    mxm_send_req.base.completed_cb  = NULL;
+    mxm_send_req.base.state         = MXM_REQ_NEW;
+    mxm_send_req.base.mq            = ompi_mtl_mxm_mq_lookup(comm);
+    mxm_send_req.base.conn          = ompi_mtl_mxm_conn_lookup(comm, dest);
     mxm_send_req.base.flags         = MXM_REQ_FLAG_WAIT;
-
     if (mode == MCA_PML_BASE_SEND_SYNCHRONOUS) {
         mxm_send_req.base.flags |= MXM_REQ_FLAG_SEND_SYNC;
     }
-    ret = ompi_mtl_datatype_pack(convertor, &mxm_send_req.base.data.buffer.ptr, &mxm_send_req.base.data.buffer.length,
+
+    mxm_send_req.base.data_type     = MXM_REQ_DATA_BUFFER;
+    ret = ompi_mtl_datatype_pack(convertor, &mxm_send_req.base.data.buffer.ptr,
+                                 &mxm_send_req.base.data.buffer.length,
                                  &free_after);
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
+
+    mxm_send_req.base.data.buffer.mkey   = MXM_MKEY_NONE;
+    mxm_send_req.base.context            = NULL;
+    mxm_send_req.base.completed_cb       = NULL;
+    mxm_send_req.opcode                  = MXM_REQ_OP_SEND;
+    mxm_send_req.op.send.tag             = tag;
+    mxm_send_req.op.send.imm_data        = ompi_comm_rank(comm);
+
 
     /* post-send */
     err = mxm_req_send(&mxm_send_req);
@@ -96,15 +103,19 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
     mxm_send_req = &mtl_mxm_request->mxm.send;
 
     /* prepare a send request embedded in the MTL request */
-    mxm_send_req->base.state        		= MXM_REQ_NEW;
-    mxm_send_req->base.mq           		= ompi_mtl_mxm_mq_lookup(comm);
-    mxm_send_req->base.conn         		= ompi_mtl_mxm_conn_lookup(comm, dest);
-    mxm_send_req->op.send.tag          		= tag;
-    mxm_send_req->op.send.imm_data     		= ompi_comm_rank(comm);
-    mxm_send_req->base.data.buffer.ptr 		= mtl_mxm_request->buf;
-    mxm_send_req->base.data.buffer.length 	= mtl_mxm_request->length;
-    mxm_send_req->base.completed_cb 		= ompi_mtl_mxm_send_completion_cb;
-    mxm_send_req->base.context      		= mtl_mxm_request;
+    mxm_send_req->base.state               = MXM_REQ_NEW;
+    mxm_send_req->base.mq                  = ompi_mtl_mxm_mq_lookup(comm);
+    mxm_send_req->base.conn                = ompi_mtl_mxm_conn_lookup(comm, dest);
+    mxm_send_req->base.flags               = 0;
+    mxm_send_req->base.data_type           = MXM_REQ_DATA_BUFFER;
+    mxm_send_req->base.data.buffer.ptr     = mtl_mxm_request->buf;
+    mxm_send_req->base.data.buffer.length  = mtl_mxm_request->length;
+    mxm_send_req->base.data.buffer.mkey    = MXM_MKEY_NONE;
+    mxm_send_req->base.context             = mtl_mxm_request;
+    mxm_send_req->base.completed_cb        = ompi_mtl_mxm_send_completion_cb;
+    mxm_send_req->opcode                   = MXM_REQ_OP_SEND;
+    mxm_send_req->op.send.tag              = tag;
+    mxm_send_req->op.send.imm_data         = ompi_comm_rank(comm);
 
     if (mode == MCA_PML_BASE_SEND_SYNCHRONOUS) {
         mxm_send_req->base.flags |= MXM_REQ_FLAG_SEND_SYNC;
