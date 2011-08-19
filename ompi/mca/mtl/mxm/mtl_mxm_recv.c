@@ -63,19 +63,22 @@ int ompi_mtl_mxm_irecv(struct mca_mtl_base_module_t* mtl,
         return ret;
     }
 
+    /* prepare a receive request embedded in the MTL request */
     mxm_recv_req = &mtl_mxm_request->mxm.recv;
 
-    /* prepare a receive request embedded in the MTL request */
-    mxm_recv_req->base.state    = MXM_REQ_NEW;
-    mxm_recv_req->base.mq       = (mxm_mq_h)comm->c_pml_comm;
-    mxm_recv_req->tag      		= tag;
-    mxm_recv_req->tag_mask  	= (tag == MPI_ANY_TAG) ? 0 : 0xffffffffU;
-    mxm_recv_req->base.conn     = (src == MPI_ANY_SOURCE) ? NULL : ompi_mtl_mxm_conn_lookup(comm, src);
-
-    mxm_recv_req->base.data.buffer.ptr 		= mtl_mxm_request->buf;
-    mxm_recv_req->base.data.buffer.length	= mtl_mxm_request->length;
-    mxm_recv_req->base.completed_cb 		= ompi_mtl_mxm_recv_completion_cb;
-    mxm_recv_req->base.context 				= mtl_mxm_request;
+    mxm_recv_req->base.state               = MXM_REQ_NEW;
+    mxm_recv_req->base.mq                  = ompi_mtl_mxm_mq_lookup(comm);
+    mxm_recv_req->base.conn                = (src == MPI_ANY_SOURCE) ? NULL :
+                                             ompi_mtl_mxm_conn_lookup(comm, src);
+    mxm_recv_req->base.flags               = 0;
+    mxm_recv_req->base.data_type           = MXM_REQ_DATA_BUFFER;
+    mxm_recv_req->base.data.buffer.ptr     = mtl_mxm_request->buf;
+    mxm_recv_req->base.data.buffer.length  = mtl_mxm_request->length;
+    mxm_recv_req->base.data.buffer.mkey    = MXM_MKEY_NONE;
+    mxm_recv_req->base.context             = mtl_mxm_request;
+    mxm_recv_req->base.completed_cb        = ompi_mtl_mxm_recv_completion_cb;
+    mxm_recv_req->tag                      = tag;
+    mxm_recv_req->tag_mask                 = (tag == MPI_ANY_TAG) ? 0 : 0xffffffffU;
 
     /* post-recv */
     err = mxm_req_recv(mxm_recv_req);
