@@ -528,17 +528,17 @@ MarkersC::gatherLocal( const GatherTypeT & type, void * locRecs )
    // cast input vector for more convenient access
    //
 
-   std::vector<DefRec_DefMarkerS*> * loc_defs = 0;
-   std::vector<MarkerSpotS*> * loc_spots = 0;
+   LargeVectorC<DefRec_DefMarkerS*> * loc_defs = 0;
+   LargeVectorC<MarkerSpotS*> * loc_spots = 0;
 
    if( type == GATHER_TYPE_DEFS )
    {
-      loc_defs = static_cast<std::vector<DefRec_DefMarkerS*>*>( locRecs );
+      loc_defs = static_cast<LargeVectorC<DefRec_DefMarkerS*>*>( locRecs );
       VPrint( 2, " Gathering local marker definitions\n" );
    }
    else // type == GATHER_TYPE_SPOTS
    {
-      loc_spots = static_cast<std::vector<MarkerSpotS*>*>( locRecs );
+      loc_spots = static_cast<LargeVectorC<MarkerSpotS*>*>( locRecs );
       VPrint( 2, " Gathering local marker spots\n" );
    }
 

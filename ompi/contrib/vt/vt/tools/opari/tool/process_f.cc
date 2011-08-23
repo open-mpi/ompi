@@ -416,6 +416,9 @@ void process_fortran(istream& is, const char* infile, ostream& os,
         // continuation directive line
         currPragma->lines.push_back(lowline);
       } else {
+        if ( currPragma ) {
+          delete currPragma;
+        }
         // new directive
         currPragma
                 = new OMPragmaF(infile, lineno, pstart+5+pomp, lowline, pomp,
