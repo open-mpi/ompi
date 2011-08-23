@@ -734,13 +734,14 @@ Wrapper::parseCommandLine( int argc, char ** argv )
    {
       arg = args[i];
 
-      // escape spaces and double quotes
+      // escape '\', '"', ''', ' ', '(', and ')'
       //
-      size_t found = arg.find_first_of(" \"");
-      while(found!=std::string::npos)
+      const char special_char[] = "\\\"' ()";
+      size_t found = arg.find_first_of( special_char );
+      while( found!=std::string::npos )
       {
          arg.insert(found,"\\");
-         found = arg.find_first_of(" \"",found+2);
+         found = arg.find_first_of( special_char, found+2 );
       }
 
       //

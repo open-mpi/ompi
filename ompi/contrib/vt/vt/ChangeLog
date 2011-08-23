@@ -1,4 +1,8 @@
-5.11.1openmpi
+5.11.2openmpi
+	- fixed segmentation fault in vtunify-mpi which might occur during
+	  gathering local marker definitions/spots to master process
+
+5.11.1
 	- updated version of internal OTF to 1.9.1sawfish
 	  (see extlib/otf/ChangeLog)
 	- process and thread buffer size can be explicitly specified by the user
