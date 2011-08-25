@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,9 +24,10 @@
 #include "opal/threads/mutex.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/io/io.h"
-#include "io_romio.h"
+#include "io_ompio.h"
 
-#define ROMIO_VERSION_STRING "from MPICH2 v1.3.1 with an additional patch from romio-maint@mcs.anl.gov about an attribute issue"
+int mca_io_ompio_cycle_buffer_size = OMPIO_PREALLOC_MAX_BUF_SIZE;
+int mca_io_ompio_bytes_per_agg = OMPIO_PREALLOC_MAX_BUF_SIZE;
 
 /*
  * Private functions
@@ -35,52 +36,62 @@ static int open_component(void);
 static int close_component(void);
 static int init_query(bool enable_progress_threads,
                       bool enable_mpi_threads);
-static const struct mca_io_base_module_2_0_0_t *
-  file_query(struct ompi_file_t *file, 
-             struct mca_io_base_file_t **private_data,
-             int *priority);
+static const struct mca_io_base_module_2_0_0_t * 
+file_query (struct ompi_file_t *file, 
+            struct mca_io_base_file_t **private_data,
+            int *priority);
 static int file_unquery(struct ompi_file_t *file, 
                         struct mca_io_base_file_t *private_data);
 
 static int delete_query(char *filename, struct ompi_info_t *info, 
                         struct mca_io_base_delete_t **private_data,
                         bool *usable, int *priorty);
+
 static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
+/*
+static int io_progress(void);
 
 static int register_datarep(char *,
                             MPI_Datarep_conversion_function*,
                             MPI_Datarep_conversion_function*,
                             MPI_Datarep_extent_function*,
                             void*);
+*/
 
 /*
  * Private variables
  */
-static int priority_param = 20;
-static int delete_priority_param = 20;
+static int priority_param = 10;
+static int delete_priority_param = 10;
 
 
 /*
- * Global, component-wide ROMIO mutex because ROMIO is not thread safe
+ * Global, component-wide OMPIO mutex because OMPIO is not thread safe
  */
-opal_mutex_t mca_io_romio_mutex;
+opal_mutex_t mca_io_ompio_mutex;
+
+
+/*
+ * Global list of requests for this component
+ */
+opal_list_t mca_io_ompio_pending_requests;
 
 
 /*
  * Public string showing this component's version number
  */
-const char *mca_io_romio_component_version_string =
-"OMPI/MPI ROMIO io MCA component version " OMPI_VERSION ", " ROMIO_VERSION_STRING;
+const char *mca_io_ompio_component_version_string =
+"OMPI/MPI OMPIO io MCA component version " OMPI_VERSION;
 
 
-mca_io_base_component_2_0_0_t mca_io_romio_component = {
+mca_io_base_component_2_0_0_t mca_io_ompio_component = {
     /* First, the mca_base_component_t struct containing meta information
        about the component itself */
 
     {
         MCA_IO_BASE_VERSION_2_0_0,
-        "romio",
+        "ompio",
         OMPI_MAJOR_VERSION,
         OMPI_MINOR_VERSION,
         OMPI_RELEASE_VERSION,
@@ -101,46 +112,72 @@ mca_io_base_component_2_0_0_t mca_io_romio_component = {
     /* Delete a file */
 
     delete_query,
-    NULL,
-    delete_select,
+    NULL, /* delete_unquery */
+    delete_select, /* delete_select */
 
-    register_datarep
+    NULL  /* io_register_datarep */
 };
 
 
 static int open_component(void)
 {
-    /* Use a low priority, but allow other components to be lower */
-    
+    int param;
+
+    param = mca_base_param_find ("io", NULL, "ompio_cycle_buffer_size");
+    if (param >= 0) {
+        mca_base_param_lookup_int (param, &mca_io_ompio_cycle_buffer_size);
+    }
+    param = mca_base_param_find ("io", NULL, "ompio_bytes_per_agg");
+    if (param >= 0) {
+        mca_base_param_lookup_int (param, &mca_io_ompio_bytes_per_agg);
+    }
+
     priority_param = 
-        mca_base_param_reg_int(&mca_io_romio_component.io_version, 
+        mca_base_param_reg_int(&mca_io_ompio_component.io_version, 
                                "priority",
-                               "Priority of the io romio component",
-                               false, false, 10, NULL);
+                               "Priority of the io ompio component",
+                               false, false, priority_param, NULL);
     delete_priority_param = 
-        mca_base_param_reg_int(&mca_io_romio_component.io_version,
+        mca_base_param_reg_int(&mca_io_ompio_component.io_version,
                                "delete_priority", 
-                               "Delete priority of the io romio component",
-                               false, false, 10, NULL);
+                               "Delete priority of the io ompio component",
+                               false, false, delete_priority_param, NULL);
 
-    mca_base_param_reg_string(&mca_io_romio_component.io_version,
+    mca_base_param_reg_string(&mca_io_ompio_component.io_version,
                               "version", 
-                              "Version of ROMIO",
-                              false, true, ROMIO_VERSION_STRING, NULL);
+                              "Version of OMPIO",
+                              false, true, NULL, NULL);
 
-    mca_base_param_reg_string(&mca_io_romio_component.io_version,
+    mca_base_param_reg_int (&mca_io_ompio_component.io_version,
+                            "cycle_buffer_size",
+                            "Cycle Buffer Size of individual reads/writes",
+                            false, false, mca_io_ompio_cycle_buffer_size,
+                            &mca_io_ompio_cycle_buffer_size);
+
+    mca_base_param_reg_int (&mca_io_ompio_component.io_version,
+                            "bytes_per_agg",
+                            "Bytes per aggregator process for automatic selection",
+                            false, false, mca_io_ompio_bytes_per_agg,
+                            &mca_io_ompio_bytes_per_agg);
+
+    /*
+    mca_base_param_reg_string(&mca_io_ompio_component.io_version,
                               "user_configure_params", 
-                              "User-specified command line parameters passed to ROMIO's configure script",
+                              "User-specified command line parameters passed to OMPIO's configure script",
                               false, true, 
-                              MCA_io_romio_USER_CONFIGURE_FLAGS, NULL);
-    mca_base_param_reg_string(&mca_io_romio_component.io_version,
+                              MCA_io_ompio_USER_CONFIGURE_FLAGS, NULL);
+    mca_base_param_reg_string(&mca_io_ompio_component.io_version,
                               "complete_configure_params", 
-                              "Complete set of command line parameters passed to ROMIO's configure script",
+                              "Complete set of command line parameters passed to OMPIO's configure script",
                               false, true, 
-                              MCA_io_romio_COMPLETE_CONFIGURE_FLAGS, NULL);
-
+                              MCA_io_ompio_COMPLETE_CONFIGURE_FLAGS, NULL);
+    */
     /* Create the mutex */
-    OBJ_CONSTRUCT(&mca_io_romio_mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_io_ompio_mutex, opal_mutex_t);
+
+    /* Create the list of pending requests */
+
+    OBJ_CONSTRUCT(&mca_io_ompio_pending_requests, opal_list_t);
 
     return OMPI_SUCCESS;
 }
@@ -148,7 +185,13 @@ static int open_component(void)
 
 static int close_component(void)
 {
-    OBJ_DESTRUCT(&mca_io_romio_mutex);
+    /* Destroy the list of pending requests */
+    /* JMS: Good opprotunity here to list out all the IO requests that
+       were not destroyed / completed upon MPI_FINALIZE */
+
+    OBJ_DESTRUCT(&mca_io_ompio_pending_requests);
+
+    OBJ_DESTRUCT(&mca_io_ompio_mutex);
 
     return OMPI_SUCCESS;
 }
@@ -157,11 +200,6 @@ static int close_component(void)
 static int init_query(bool enable_progress_threads,
                       bool enable_mpi_threads)
 {
-    /* Note that it's ok if mpi_enable_threads==true here because we
-       self-enforce only allowing one user thread into ROMIO at a time
-       -- this fact will be clearly documented for users (ROMIO itself
-       is not thread safe). */
-
     return OMPI_SUCCESS;
 }
 
@@ -171,7 +209,7 @@ file_query(struct ompi_file_t *file,
            struct mca_io_base_file_t **private_data,
            int *priority)
 {
-    mca_io_romio_data_t *data;
+    mca_io_ompio_data_t *data;
 
     /* Lookup our priority */
 
@@ -181,25 +219,25 @@ file_query(struct ompi_file_t *file,
     }
 
     /* Allocate a space for this module to hang private data (e.g.,
-       the ROMIO file handle) */
+       the OMPIO file handle) */
 
-    data = malloc(sizeof(mca_io_romio_data_t));
+    data = malloc(sizeof(mca_io_ompio_data_t));
     if (NULL == data) {
         return NULL;
     }
-    data->romio_fh = NULL;
+
     *private_data = (struct mca_io_base_file_t*) data;
 
     /* All done */
 
-    return &mca_io_romio_module;
+    return &mca_io_ompio_module;
 }
 
 
 static int file_unquery(struct ompi_file_t *file, 
                         struct mca_io_base_file_t *private_data)
 {
-    /* Free the romio module-specific data that was allocated in
+    /* Free the ompio module-specific data that was allocated in
        _file_query(), above */
 
     if (NULL != private_data) {
@@ -227,33 +265,20 @@ static int delete_query(char *filename, struct ompi_info_t *info,
     return OMPI_SUCCESS;
 }
 
-
 static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data)
 {
     int ret;
 
-    OPAL_THREAD_LOCK (&mca_io_romio_mutex);
-    ret = ROMIO_PREFIX(MPI_File_delete)(filename, info);
-    OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
+    OPAL_THREAD_LOCK (&mca_io_ompio_mutex);
+    ret = mca_io_ompio_file_delete (filename, info);
+    OPAL_THREAD_UNLOCK (&mca_io_ompio_mutex);
 
     return ret;
 }
-
-
-static int
-register_datarep(char * datarep,
-                 MPI_Datarep_conversion_function* read_fn,
-                 MPI_Datarep_conversion_function* write_fn,
-                 MPI_Datarep_extent_function* extent_fn,
-                 void* state)
+/*
+static int io_progress (void)
 {
-    int ret;
-
-    OPAL_THREAD_LOCK(&mca_io_romio_mutex);
-    ret = ROMIO_PREFIX(MPI_Register_datarep(datarep, read_fn, write_fn,
-                                            extent_fn, state));
-    OPAL_THREAD_UNLOCK(&mca_io_romio_mutex);
-
-    return ret;
+    return OMPI_SUCCESS;
 }
+*/
