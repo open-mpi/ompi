@@ -22,6 +22,7 @@
 #include "fs_ufs.h"
 
 #include <fcntl.h>
+#include <sys/stat.h>
 #include "mpi.h"
 #include "ompi/constants.h"
 #include "orte/util/show_help.h"
