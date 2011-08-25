@@ -53,6 +53,15 @@ AC_DEFUN([OMPI_F77_CHECK_REAL16_C_EQUIV],[
                                 [CFLAGS="$CFLAGS_save"
                                  AC_MSG_RESULT([does not work])])
                          ])
+                   AS_IF([test "$ompi_cv_c_compiler_vendor" = "gnu" -a "$ac_cv_type___float128" = "yes"],
+                         [AC_MSG_CHECKING([if gnu compiler __float128 == REAL*16])
+                          OPAL_UNIQ([CFLAGS])
+                          OMPI_F77_CHECK_REAL16_EQUIV_TYPE([__float128], [q])
+                          AS_IF([test "$happy" = "yes"],
+                                [OMPI_FORTRAN_REAL16_C_TYPE="__float128"
+                                 AC_MSG_RESULT([works!])],
+                                [AC_MSG_RESULT([does not work])])
+                         ])
                    # We have to [re-]print a new message here, because
                    # AC_CACHE_CHECK will automatically AC_MSG_RESULT
                    AC_MSG_CHECKING([for C type matching bit representation of REAL*16])
@@ -122,20 +131,20 @@ EOF
     OPAL_LOG_COMMAND([$CC $CFLAGS -I. -c conftest_c.c],
         [OPAL_LOG_COMMAND([$F77 $FFLAGS conftest_f.f conftest_c.o -o conftest $LDFLAGS $LIBS],
             [happy="yes"], [happy="no"])], [happy="no"])
-    AS_IF([test "$happy" = "no"],
-        [AC_MSG_RESULT([Error!])
-         AC_MSG_ERROR([Could not determine if REAL*16 bit-matches C type])])
 
-    # If it worked so far, try running to see what we get
-    AS_IF([test "$cross_compiling" = "yes"],
-        [AC_MSG_RESULT([Error!])
-         AC_MSG_ERROR([Can not determine if REAL*16 bit-matches C if cross compiling])],
-        [OPAL_LOG_COMMAND([./conftest],
-            [happy=`cat conftestval`],
-            [AC_MSG_RESULT([Error!])
-             AC_MSG_ERROR([Could not determine if REAL*16 bit-matches C type])
-            ])
-        ])
+    AS_IF([test "$happy" = "no"],
+        [AC_MSG_RESULT([Could not determine if REAL*16 bit-matches C type])],
+        # If it worked so far, try running to see what we get
+        [AS_IF([test "$happy" = "yes" -a "$cross_compiling" = "yes"],
+             [AC_MSG_RESULT([Error!])
+              AC_MSG_ERROR([Can not determine if REAL*16 bit-matches C if cross compiling])],
+             [OPAL_LOG_COMMAND([./conftest],
+                 [happy=`cat conftestval`],
+                 [AC_MSG_RESULT([Error!])
+                  AC_MSG_ERROR([Could not determine if REAL*16 bit-matches C type])
+                 ])
+             ])
+         ])
 
     # All done; whack tmp files
     rm -rf conftest*
