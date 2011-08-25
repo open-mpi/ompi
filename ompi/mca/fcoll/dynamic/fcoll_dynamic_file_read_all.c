@@ -331,7 +331,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
             }
             else {
                 if (bytes_to_read_in_cycle < 
-                    global_fview[sorted[current_index]].iov_len) {
+                    (MPI_Aint) global_fview[sorted[current_index]].iov_len) {
                     if (fh->f_procs_in_group[fh->f_aggregator_index] == fh->f_rank) {
                         bytes_per_process[n] += bytes_to_read_in_cycle;
                     }
@@ -461,7 +461,7 @@ mca_fcoll_dynamic_file_read_all (mca_io_ompio_file_t *fh,
                     }
                 }
                 else {
-                    if (bytes_to_read < global_fview[sorted[x]].iov_len) {
+                    if (bytes_to_read < (MPI_Aint) global_fview[sorted[x]].iov_len) {
                         fh->f_io_array[k].offset = global_fview[sorted[x]].iov_base;
                         fh->f_io_array[k].length = bytes_to_read;
                         fh->f_io_array[k].memory_address = &global_buf[start+temp[n]];
