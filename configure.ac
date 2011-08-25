@@ -323,6 +323,7 @@ AC_CHECK_TYPES(int128_t)
 AC_CHECK_TYPES(uint128_t)
 AC_CHECK_TYPES(long long)
 
+AC_CHECK_TYPES(__float128)
 AC_CHECK_TYPES(long double)
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
@@ -344,15 +345,17 @@ AC_CHECK_SIZEOF(char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
-if test $ac_cv_type_long_long = yes; then
+if test "$ac_cv_type_long_long" = yes; then
     AC_CHECK_SIZEOF(long long)
 fi
 AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
-if test $ac_cv_type_long_double = yes; then
+if test "$ac_cv_type_long_double" = yes; then
     AC_CHECK_SIZEOF(long double)
 fi
-
+if test "$ac_cv_type___float128" = yes; then
+    AC_CHECK_SIZEOF(__float128)
+fi
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
 if test "$ac_cv_type_float__Complex" = yes; then
@@ -367,10 +370,10 @@ fi
 
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(size_t)
-if test $ac_cv_type_ssize_t = yes ; then
+if test "$ac_cv_type_ssize_t" = yes ; then
     AC_CHECK_SIZEOF(ssize_t)
 fi
-if test $ac_cv_type_ptrdiff_t = yes; then
+if test "$ac_cv_type_ptrdiff_t" = yes; then
     AC_CHECK_SIZEOF(ptrdiff_t)
 fi
 AC_CHECK_SIZEOF(wchar_t)
@@ -401,6 +404,10 @@ OMPI_C_GET_ALIGNMENT(double, OPAL_ALIGNMENT_DOUBLE)
 if test "$ac_cv_type_long_double" = yes; then
     OMPI_C_GET_ALIGNMENT(long double, OPAL_ALIGNMENT_LONG_DOUBLE)
 fi
+if test "$ac_cv_type___float128" = yes; then
+    OMPI_C_GET_ALIGNMENT(__float128, OPAL_ALIGNMENT___FLOAT128)
+fi
+
 
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
