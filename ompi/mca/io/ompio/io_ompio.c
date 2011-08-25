@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2011      Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +32,19 @@
 
 #include <math.h>
 #include <unistd.h>
+
+#ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h> /* or <sys/vfs.h> */ 
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #ifdef HAVE_PVFS2_H
 #include "pvfs2.h"
