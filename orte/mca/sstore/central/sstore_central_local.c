@@ -210,7 +210,7 @@ void orte_sstore_central_local_app_snapshot_info_construct(orte_sstore_central_l
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
-    info->name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(info->name.epoch,ORTE_EPOCH_MIN);
 
     info->local_location = NULL;
     info->metadata_filename = NULL;
@@ -222,7 +222,7 @@ void orte_sstore_central_local_app_snapshot_info_destruct( orte_sstore_central_l
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
-    info->name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(info->name.epoch,ORTE_EPOCH_MIN);
 
     if( NULL != info->local_location ) {
         free(info->local_location);
@@ -535,7 +535,7 @@ static int append_new_app_handle_info(orte_sstore_central_local_snapshot_info_t 
 
     app_info->name.jobid = name->jobid;
     app_info->name.vpid  = name->vpid;
-    app_info->name.epoch = name->epoch;
+    ORTE_EPOCH_SET(app_info->name.epoch,name->epoch);
 
     opal_list_append(handle_info->app_info_handle, &(app_info->super));
 

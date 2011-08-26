@@ -45,9 +45,11 @@ int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type)
             *size = sizeof(orte_std_cntr_t);
             break;
 
+#if ORTE_ENABLE_EPOCH
         case ORTE_EPOCH:
             *size = sizeof(orte_epoch_t);
             break;
+#endif
             
         case ORTE_VPID:
             *size = sizeof(orte_vpid_t);

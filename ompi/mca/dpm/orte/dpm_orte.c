@@ -1130,7 +1130,7 @@ static void process_cb(int fd, short event, void *data)
     /* flag the identity of the remote proc */
     carport.jobid = mev->sender.jobid;
     carport.vpid = mev->sender.vpid;
-    carport.epoch = mev->sender.epoch;
+    ORTE_EPOCH_SET(carport.epoch,mev->sender.epoch);
     
     /* release the event */
     OBJ_RELEASE(mev);

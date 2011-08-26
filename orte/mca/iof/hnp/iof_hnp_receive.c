@@ -109,21 +109,21 @@ static void process_msg(int fd, short event, void *cbdata)
                                  NULL, &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = mev->sender.jobid;
             sink->daemon.vpid = mev->sender.vpid;
-            sink->daemon.epoch = mev->sender.epoch;
+            ORTE_EPOCH_SET(sink->daemon.epoch,mev->sender.epoch);
         }
         if (ORTE_IOF_STDERR & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDERR,
                                  NULL, &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = mev->sender.jobid;
             sink->daemon.vpid = mev->sender.vpid;
-            sink->daemon.epoch = mev->sender.epoch;
+            ORTE_EPOCH_SET(sink->daemon.epoch,mev->sender.epoch);
         }
         if (ORTE_IOF_STDDIAG & stream) {
             ORTE_IOF_SINK_DEFINE(&sink, &origin, -1, ORTE_IOF_STDDIAG,
                                  NULL, &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = mev->sender.jobid;
             sink->daemon.vpid = mev->sender.vpid;
-            sink->daemon.epoch = mev->sender.epoch;
+            ORTE_EPOCH_SET(sink->daemon.epoch,mev->sender.epoch);
         }
         goto CLEAN_RETURN;
     }

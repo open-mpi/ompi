@@ -61,9 +61,13 @@ ORTE_DECLSPEC char* orte_util_print_vpids(const orte_vpid_t vpid);
 #define ORTE_VPID_PRINT(n) \
     orte_util_print_vpids(n)
 
+#if ORTE_ENABLE_EPOCH
 ORTE_DECLSPEC char* orte_util_print_epoch(const orte_epoch_t epoch);
 #define ORTE_EPOCH_PRINT(n) \
     orte_util_print_epoch(n)
+#else
+#define ORTE_EPOCH_PRINT(n)
+#endif
 
 ORTE_DECLSPEC char* orte_util_print_job_family(const orte_jobid_t job);
 #define ORTE_JOB_FAMILY_PRINT(n) \
@@ -104,6 +108,24 @@ ORTE_DECLSPEC char *orte_pretty_print_timing(int64_t secs, int64_t usecs);
 #define ORTE_JOBID_IS_DAEMON(n)  \
     !((n) & 0x0000ffff)
 
+/* Macro for getting the epoch out of the process name */
+#if ORTE_ENABLE_EPOCH
+#define ORTE_EPOCH_GET(n) \
+    ((n)->epoch)
+#else
+#define ORTE_EPOCH_GET(n)
+#endif
+
+/* Macro for setting the epoch in the process name */
+#if ORTE_ENABLE_EPOCH
+#define ORTE_EPOCH_SET(n,m) \
+    ( (n) = (m) )
+#else
+#define ORTE_EPOCH_SET(n,m) \
+    do {                    \
+    } while(0);
+#endif
+
 /* List of names for general use */
 struct orte_namelist_t {
     opal_list_item_t item;      /**< Allows this item to be placed on a list */
@@ -117,16 +139,24 @@ ORTE_DECLSPEC int orte_util_convert_jobid_to_string(char **jobid_string, const o
 ORTE_DECLSPEC int orte_util_convert_string_to_jobid(orte_jobid_t *jobid, const char* jobidstring);
 ORTE_DECLSPEC int orte_util_convert_vpid_to_string(char **vpid_string, const orte_vpid_t vpid);
 ORTE_DECLSPEC int orte_util_convert_string_to_vpid(orte_vpid_t *vpid, const char* vpidstring);
+#if ORTE_ENABLE_EPOCH
 ORTE_DECLSPEC int orte_util_convert_epoch_to_string(char **epoch_string, const orte_epoch_t epoch);
 ORTE_DECLSPEC int orte_util_convert_string_to_epoch(orte_vpid_t *epoch, const char* epochstring);
+#endif
 ORTE_DECLSPEC int orte_util_convert_string_to_process_name(orte_process_name_t *name,
                                              const char* name_string);
 ORTE_DECLSPEC int orte_util_convert_process_name_to_string(char** name_string,
                                              const orte_process_name_t *name);
+#if ORTE_ENABLE_EPOCH
 ORTE_DECLSPEC int orte_util_create_process_name(orte_process_name_t **name,
                                   orte_jobid_t job,
                                   orte_vpid_t vpid,
                                   orte_epoch_t epoch);
+#else
+ORTE_DECLSPEC int orte_util_create_process_name(orte_process_name_t **name,
+                                  orte_jobid_t job,
+                                  orte_vpid_t vpid);
+#endif
 ORTE_DECLSPEC int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
                                   const orte_process_name_t* name1,
                                   const orte_process_name_t* name2);

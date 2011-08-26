@@ -471,7 +471,7 @@ main(int argc, char *argv[])
     if (NULL == ranks) {
         /* take all ranks */
         proc.vpid = ORTE_VPID_WILDCARD;
-        proc.epoch = ORTE_EPOCH_WILDCARD;
+        ORTE_EPOCH_SET(proc.epoch,ORTE_EPOCH_WILDCARD);
         if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmdbuf, &proc, 1, ORTE_NAME))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;

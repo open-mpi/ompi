@@ -70,7 +70,9 @@ typedef struct {
     opal_list_item_t super;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
+#if ORTE_ENABLE_EPOCH
     orte_epoch_t epoch;
+#endif
     char *file;
     int tick;
     bool check_size;

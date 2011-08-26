@@ -734,8 +734,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     proc.jobid = jobdat->jobid;
     for (j=0; j < jobdat->num_procs; j++) {
         proc.vpid = j;
-        proc.epoch = ORTE_EPOCH_INVALID;
-        proc.epoch = orte_ess.proc_get_epoch(&proc);
+        ORTE_EPOCH_SET(proc.epoch,orte_ess.proc_get_epoch(&proc));
         /* get the vpid of the daemon that is to host this proc */
         if (ORTE_VPID_INVALID == (host_daemon = orte_ess.proc_get_daemon(&proc))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -1044,6 +1043,7 @@ static int setup_child(orte_odls_child_t *child, orte_odls_job_t *jobdat, char *
     free(param);
     free(value);
 
+#if ORTE_ENABLE_EPOCH
     /* setup the epoch */
     if (ORTE_SUCCESS != (rc = orte_util_convert_epoch_to_string(&value, child->name->epoch))) {
         ORTE_ERROR_LOG(rc);
@@ -1057,6 +1057,7 @@ static int setup_child(orte_odls_child_t *child, orte_odls_job_t *jobdat, char *
     opal_setenv(param, value, true, env);
     free(param);
     free(value);
+#endif
 
     /* setup the vpid */
     if (ORTE_SUCCESS != (rc = orte_util_convert_vpid_to_string(&value, child->name->vpid))) {
@@ -2721,7 +2722,7 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
         OBJ_CONSTRUCT(&proctmp, orte_proc_t);
         proctmp.name.jobid = ORTE_JOBID_WILDCARD;
         proctmp.name.vpid = ORTE_VPID_WILDCARD;
-        proctmp.name.epoch = ORTE_EPOCH_WILDCARD;
+        ORTE_EPOCH_SET(proctmp.name.epoch,ORTE_EPOCH_WILDCARD);
         opal_pointer_array_add(&procarray, &proctmp);
         procptr = &procarray;
         do_cleanup = true;

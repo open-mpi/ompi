@@ -24,6 +24,7 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/data_type_support/orte_dt_support.h"
 
 #include "orte/mca/rml/base/rml_contact.h"
 
@@ -135,7 +136,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        target->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
         ret = ORTE_NAME_INVALID;
     } else {
         /* all routes are direct */

@@ -57,8 +57,17 @@ int orte_debug_verbosity;
 char *orte_prohibited_session_dirs = NULL;
 bool orte_create_session_dirs = true;
 
+#if ORTE_ENABLE_EPOCH
+orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD};
+#else
 orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
+#endif
+
+#if ORTE_ENABLE_EPOCH
+orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_INVALID}; 
+#else
 orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
+#endif
 
 
 #if OPAL_CC_USE_PRAGMA_IDENT

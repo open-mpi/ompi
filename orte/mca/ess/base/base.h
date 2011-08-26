@@ -57,7 +57,11 @@ ORTE_DECLSPEC extern int orte_ess_base_output;
 
 ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
 
+#if ORTE_ENABLE_EPOCH
 ORTE_DECLSPEC orte_epoch_t orte_ess_base_proc_get_epoch(orte_process_name_t *proc);
+#else
+ORTE_DECLSPEC int orte_ess_base_proc_get_epoch(orte_process_name_t *proc);
+#endif
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 

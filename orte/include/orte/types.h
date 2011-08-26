@@ -81,24 +81,43 @@ typedef uint32_t orte_vpid_t;
 #define ORTE_VPID_T         OPAL_UINT32
 #define ORTE_VPID_MAX       UINT32_MAX-2
 #define ORTE_VPID_MIN       0
+
+#if ORTE_ENABLE_EPOCH
 typedef uint32_t orte_epoch_t;
 #define ORTE_EPOCH_T        OPAL_UINT32
 #define ORTE_EPOCH_MAX      UINT32_MAX-2
 #define ORTE_EPOCH_MIN      0
+#endif
 
+#if ORTE_ENABLE_EPOCH
 #define ORTE_PROCESS_NAME_HTON(n)       \
 do {                                    \
     n.jobid = htonl(n.jobid);           \
     n.vpid = htonl(n.vpid);             \
     n.epoch = htonl(n.epoch);           \
 } while (0)
+#else
+#define ORTE_PROCESS_NAME_HTON(n)       \
+do {                                    \
+    n.jobid = htonl(n.jobid);           \
+    n.vpid = htonl(n.vpid);             \
+} while (0)
+#endif
 
+#if ORTE_ENABLE_EPOCH
 #define ORTE_PROCESS_NAME_NTOH(n)       \
 do {                                    \
     n.jobid = ntohl(n.jobid);           \
     n.vpid = ntohl(n.vpid);             \
     n.epoch = ntohl(n.epoch);           \
 } while (0)
+#else
+#define ORTE_PROCESS_NAME_NTOH(n)       \
+do {                                    \
+    n.jobid = ntohl(n.jobid);           \
+    n.vpid = ntohl(n.vpid);             \
+} while (0)
+#endif
 
 #define ORTE_NAME_ARGS(n) \
     (unsigned long) ((NULL == n) ? (unsigned long)ORTE_JOBID_INVALID : (unsigned long)(n)->jobid), \
@@ -127,6 +146,7 @@ do {                                    \
 struct orte_process_name_t {
     orte_jobid_t jobid;     /**< Job number */
     orte_vpid_t vpid;       /**< Process id - equivalent to rank */
+#if ORTE_ENABLE_EPOCH
     orte_epoch_t epoch;     /**< Epoch - used to measure the generation of a recovered process.
                              *   The epoch will start at ORTE_EPOCH_MIN and
                              *   increment every time the process is detected as
@@ -135,6 +155,7 @@ struct orte_process_name_t {
                              *   processes that did not directly detect the
                              *   failure to increment their epochs.
                              */
+#endif
 };
 typedef struct orte_process_name_t orte_process_name_t;
 
@@ -157,7 +178,10 @@ typedef void* orte_iov_base_ptr_t;
 #define    ORTE_NAME                (OPAL_DSS_ID_DYNAMIC + 2)  /**< an orte_process_name_t */
 #define    ORTE_VPID                (OPAL_DSS_ID_DYNAMIC + 3)  /**< a vpid */
 #define    ORTE_JOBID               (OPAL_DSS_ID_DYNAMIC + 4)  /**< a jobid */
+
+#if ORTE_ENABLE_EPOCH
 #define    ORTE_EPOCH               (OPAL_DSS_ID_DYNAMIC + 5)  /**< an epoch */
+#endif
 
 #if !ORTE_DISABLE_FULL_SUPPORT
     /* State-related types */

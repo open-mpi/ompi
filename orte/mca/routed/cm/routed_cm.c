@@ -35,6 +35,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/data_type_support/orte_dt_support.h"
 
 #include "orte/mca/rml/base/rml_contact.h"
 
@@ -139,7 +140,7 @@ static int delete_route(orte_process_name_t *proc)
     
     if (proc->jobid == ORTE_JOBID_INVALID ||
         proc->vpid == ORTE_VPID_INVALID ||
-        proc->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(proc->epoch,ORTE_EPOCH_INVALID)) {
         return ORTE_ERR_BAD_PARAM;
     }
     
@@ -200,7 +201,7 @@ static int update_route(orte_process_name_t *target,
     
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        target->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -257,8 +258,7 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
-                jfam->route.epoch = ORTE_EPOCH_INVALID;
-                jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
+                ORTE_EPOCH_SET(jfam->route.epoch,orte_ess.proc_get_epoch(&jfam->route));
                 
                 return ORTE_SUCCESS;
             }
@@ -273,8 +273,7 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
-        jfam->route.epoch = ORTE_EPOCH_INVALID;
-        jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
+        ORTE_EPOCH_SET(jfam->route.epoch,orte_ess.proc_get_epoch(&jfam->route));
         
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
         return ORTE_SUCCESS;
@@ -299,7 +298,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        target->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
         ret = ORTE_NAME_INVALID;
         goto found;
     }
@@ -367,8 +366,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     }
   
     /* Initialize daemon's epoch, based on its current vpid/jobid */
-    daemon.epoch = ORTE_EPOCH_INVALID;
-    daemon.epoch = orte_ess.proc_get_epoch(&daemon);
+    ORTE_EPOCH_SET(daemon.epoch,orte_ess.proc_get_epoch(&daemon));
 
     /* if the daemon is me, then send direct to the target! */
     if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
@@ -814,8 +812,7 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
-    local_lifeline.epoch = ORTE_EPOCH_INVALID;
-    local_lifeline.epoch = orte_ess.proc_get_epoch(&local_lifeline);
+    ORTE_EPOCH_SET(local_lifeline.epoch,orte_ess.proc_get_epoch(&local_lifeline));
     
     lifeline = &local_lifeline;
     

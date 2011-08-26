@@ -46,7 +46,7 @@ static void orte_namelist_construct(orte_namelist_t* list)
 {
     list->name.jobid = ORTE_JOBID_INVALID;
     list->name.vpid = ORTE_VPID_INVALID;
-    list->name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(list->name.epoch,ORTE_EPOCH_MIN);
 }
 
 /* destructor - used to free any resources held by instance */
@@ -116,7 +116,10 @@ get_print_name_buffer(void)
 char* orte_util_print_name_args(const orte_process_name_t *name)
 {
     orte_print_args_buffers_t *ptr;
-    char *job, *vpid, *epoch;
+    char *job, *vpid; 
+#if ORTE_ENABLE_EPOCH
+    char *epoch;
+#endif
     
     /* protect against NULL names */
     if (NULL == name) {
@@ -141,7 +144,7 @@ char* orte_util_print_name_args(const orte_process_name_t *name)
      */
     job = orte_util_print_jobids(name->jobid);
     vpid = orte_util_print_vpids(name->vpid);
-    epoch = orte_util_print_epoch(name->epoch);
+    ORTE_EPOCH_SET(epoch,orte_util_print_epoch(name->epoch));
     
     /* get the next buffer */
     ptr = get_print_name_buffer();
@@ -156,9 +159,15 @@ char* orte_util_print_name_args(const orte_process_name_t *name)
         ptr->cntr = 0;
     }
     
+#if ORTE_ENABLE_EPOCH
     snprintf(ptr->buffers[ptr->cntr++], 
              ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
              "[%s,%s,%s]", job, vpid, epoch);
+#else
+    snprintf(ptr->buffers[ptr->cntr++], 
+             ORTE_PRINT_NAME_ARGS_MAX_SIZE, 
+             "[%s,%s]", job, vpid);
+#endif
     
     return ptr->buffers[ptr->cntr-1];
 }
@@ -282,6 +291,7 @@ char* orte_util_print_vpids(const orte_vpid_t vpid)
     return ptr->buffers[ptr->cntr-1];
 }
 
+#if ORTE_ENABLE_EPOCH
 char* orte_util_print_epoch(const orte_epoch_t epoch)
 {
     orte_print_args_buffers_t *ptr;
@@ -309,6 +319,7 @@ char* orte_util_print_epoch(const orte_epoch_t epoch)
     }
     return ptr->buffers[ptr->cntr-1];
 }
+#endif
 
 
 
@@ -403,6 +414,7 @@ int orte_util_convert_string_to_vpid(orte_vpid_t *vpid, const char* vpidstring)
     return ORTE_SUCCESS;
 }
 
+#if ORTE_ENABLE_EPOCH
 int orte_util_convert_epoch_to_string(char **epoch_string, const orte_epoch_t epoch)
 {
     /* check for wildcard value - handle appropriately */
@@ -424,7 +436,6 @@ int orte_util_convert_epoch_to_string(char **epoch_string, const orte_epoch_t ep
     
     return ORTE_SUCCESS;
 }
-
 
 int orte_util_convert_string_to_epoch(orte_epoch_t *epoch, const char* epoch_string)
 {
@@ -450,6 +461,7 @@ int orte_util_convert_string_to_epoch(orte_epoch_t *epoch, const char* epoch_str
 
     return ORTE_SUCCESS;
 }
+#endif
 
 int orte_util_convert_string_to_process_name(orte_process_name_t *name,
                                              const char* name_string)
@@ -457,13 +469,15 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
     char *temp, *token;
     orte_jobid_t job;
     orte_vpid_t vpid;
+#if ORTE_ENABLE_EPOCH
     orte_epoch_t epoch;
+#endif
     int return_code=ORTE_SUCCESS;
-    
+
     /* set default */
     name->jobid = ORTE_JOBID_INVALID;
     name->vpid = ORTE_VPID_INVALID;
-    name->epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(name->epoch,ORTE_EPOCH_MIN);
     
     /* check for NULL string - error */
     if (NULL == name_string) {
@@ -510,6 +524,7 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
         vpid = strtoul(token, NULL, 10);
     }
     
+#if ORTE_ENABLE_EPOCH
     token = strtok(NULL, ORTE_SCHEMA_DELIMITER_STRING);  /** get next field -> epoch*/
     
     /* check for error */
@@ -528,10 +543,11 @@ int orte_util_convert_string_to_process_name(orte_process_name_t *name,
     } else {
         epoch = strtoul(token, NULL, 10);
     }
+#endif
     
     name->jobid = job;
     name->vpid = vpid;
-    name->epoch = epoch;
+    ORTE_EPOCH_SET(name->epoch,epoch);
 
     free(temp);
     
@@ -568,6 +584,7 @@ int orte_util_convert_process_name_to_string(char **name_string,
         asprintf(&tmp2, "%s%c%lu", tmp, ORTE_SCHEMA_DELIMITER_CHAR, (unsigned long)name->vpid);
     }
 
+#if ORTE_ENABLE_EPOCH
     if (ORTE_EPOCH_WILDCARD == name->epoch) {
         asprintf(name_string, "%s%c%s", tmp2, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_WILDCARD_STRING);
     } else if (ORTE_EPOCH_INVALID == name->epoch) {
@@ -575,6 +592,10 @@ int orte_util_convert_process_name_to_string(char **name_string,
     } else {
         asprintf(name_string, "%s%c%lu", tmp2, ORTE_SCHEMA_DELIMITER_CHAR, (unsigned long)name->epoch);
     }
+#else
+    asprintf(name_string, "%s", tmp2);
+#endif
+
     free(tmp);
     free(tmp2);
 
@@ -585,8 +606,11 @@ int orte_util_convert_process_name_to_string(char **name_string,
 /****    CREATE PROCESS NAME    ****/
 int orte_util_create_process_name(orte_process_name_t **name,
                                   orte_jobid_t job,
-                                  orte_vpid_t vpid,
-                                  orte_epoch_t epoch)
+                                  orte_vpid_t vpid
+#if ORTE_ENABLE_EPOCH
+                                  ,orte_epoch_t epoch
+#endif
+                                  )
 {
     *name = NULL;
     
@@ -598,7 +622,8 @@ int orte_util_create_process_name(orte_process_name_t **name,
 
     (*name)->jobid = job;
     (*name)->vpid = vpid;
-    (*name)->epoch = epoch;
+    ORTE_EPOCH_SET((*name)->epoch,epoch);
+
     return ORTE_SUCCESS;
 }
 
@@ -655,6 +680,7 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
         }
     }
 
+#if ORTE_ENABLE_EPOCH
     /* Get here if jobid's and vpid's are equal, or not being checked.
      * Now check epoch.
      */
@@ -666,6 +692,7 @@ int orte_util_compare_name_fields(orte_ns_cmp_bitmask_t fields,
             return OPAL_VALUE1_GREATER;
         }
     }
+#endif
     
     /* only way to get here is if all fields are being checked and are equal,
     * or jobid not checked, but vpid equal,

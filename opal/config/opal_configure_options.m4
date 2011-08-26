@@ -416,6 +416,14 @@ AM_CONDITIONAL(WANT_FT, test "$opal_want_ft" = "1")
 AM_CONDITIONAL(WANT_FT_CR,  test "$opal_want_ft_cr" = "1")
 
 #
+# Compile in resilient runtime code
+#
+AC_ARG_ENABLE(resilient-orte,
+    [AC_HELP_STRING([--enable-resilient-orte], [Enable the resilient runtime code.])])
+AM_CONDITIONAL(ORTE_RESIL_ORTE, [test "$enable_resilient_orte" = "yes"])
+AM_CONDITIONAL(ORTE_ENABLE_EPOCH, [test "$enable_resilient_orte" = "yes"])
+
+#
 # Do we want to install binaries?
 #
 AC_ARG_ENABLE([binaries],

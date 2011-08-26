@@ -287,7 +287,7 @@ void orte_sstore_stage_local_app_snapshot_info_construct(orte_sstore_stage_local
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
-    info->name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(info->name.epoch,ORTE_EPOCH_MIN);
 
     info->local_location = NULL;
     info->compressed_local_location = NULL;
@@ -302,7 +302,7 @@ void orte_sstore_stage_local_app_snapshot_info_destruct( orte_sstore_stage_local
 {
     info->name.jobid = ORTE_JOBID_INVALID;
     info->name.vpid  = ORTE_VPID_INVALID;
-    info->name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(info->name.epoch,ORTE_EPOCH_MIN);
 
     if( NULL != info->local_location ) {
         free(info->local_location);
@@ -1014,7 +1014,7 @@ static int append_new_app_handle_info(orte_sstore_stage_local_snapshot_info_t *h
 
     app_info->name.jobid = name->jobid;
     app_info->name.vpid  = name->vpid;
-    app_info->name.epoch = name->epoch;
+    ORTE_EPOCH_SET(app_info->name.epoch,name->epoch);
 
     opal_list_append(handle_info->app_info_handle, &(app_info->super));
 
@@ -2057,17 +2057,17 @@ static int orte_sstore_stage_local_preload_files(char **local_location, bool *sk
         /* if I am the HNP, then use me as the source */
         p_set->source.jobid = ORTE_PROC_MY_NAME->jobid;
         p_set->source.vpid  = ORTE_PROC_MY_NAME->vpid;
-        p_set->source.epoch = ORTE_PROC_MY_NAME->epoch;
+        ORTE_EPOCH_SET(p_set->source.epoch,ORTE_PROC_MY_NAME->epoch);
     }
     else {
         /* otherwise, set the HNP as the source */
         p_set->source.jobid = ORTE_PROC_MY_HNP->jobid;
         p_set->source.vpid  = ORTE_PROC_MY_HNP->vpid;
-        p_set->source.epoch = ORTE_PROC_MY_HNP->epoch;
+        ORTE_EPOCH_SET(p_set->source.epoch,ORTE_PROC_MY_HNP->epoch);
     }
     p_set->sink.jobid   = ORTE_PROC_MY_NAME->jobid;
     p_set->sink.vpid    = ORTE_PROC_MY_NAME->vpid;
-    p_set->sink.epoch   = ORTE_PROC_MY_NAME->epoch;
+    ORTE_EPOCH_SET(p_set->sink.epoch,ORTE_PROC_MY_NAME->epoch);
     opal_list_append(&(filem_request->process_sets), &(p_set->super) );
 
     /* Define the file set */

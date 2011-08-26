@@ -1097,11 +1097,11 @@ static int  orte_filem_rsh_start_command(orte_filem_base_process_set_t *proc_set
     if( NULL != proc_set ) {
         wp_item->proc_set.source.jobid = proc_set->source.jobid;
         wp_item->proc_set.source.vpid  = proc_set->source.vpid;
-        wp_item->proc_set.source.epoch = proc_set->source.epoch;
+        ORTE_EPOCH_SET(wp_item->proc_set.source.epoch,proc_set->source.epoch);
 
         wp_item->proc_set.sink.jobid = proc_set->sink.jobid;
         wp_item->proc_set.sink.vpid  = proc_set->sink.vpid;
-        wp_item->proc_set.sink.epoch = proc_set->sink.epoch;
+        ORTE_EPOCH_SET(wp_item->proc_set.sink.epoch,proc_set->sink.epoch);
     }
     /* Copy the File Set */
     if( NULL != file_set ) {
@@ -1396,7 +1396,7 @@ static void orte_filem_rsh_permission_callback(int status,
             wp_item = OBJ_NEW(orte_filem_rsh_work_pool_item_t);
             wp_item->proc_set.source.jobid = sender->jobid;
             wp_item->proc_set.source.vpid  = sender->vpid;
-            wp_item->proc_set.source.epoch = sender->epoch;
+            ORTE_EPOCH_SET(wp_item->proc_set.source.epoch,sender->epoch);
 
             opal_list_append(&work_pool_waiting, &(wp_item->super));
         }

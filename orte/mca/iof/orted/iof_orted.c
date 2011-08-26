@@ -163,7 +163,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     proct = OBJ_NEW(orte_iof_proc_t);
     proct->name.jobid = dst_name->jobid;
     proct->name.vpid = dst_name->vpid;
-    proct->name.epoch = dst_name->epoch;
+    ORTE_EPOCH_SET(proct->name.epoch,dst_name->epoch);
     opal_list_append(&mca_iof_orted_component.procs, &proct->super);
     /* see if we are to output to a file */
     if (NULL != orte_output_filename) {

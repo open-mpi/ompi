@@ -364,7 +364,7 @@ static int tm_set_name(void)
     
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
-    ORTE_PROC_MY_NAME->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME);
+    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME));
 
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:tm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

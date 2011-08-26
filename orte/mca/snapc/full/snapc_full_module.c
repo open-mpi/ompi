@@ -83,7 +83,7 @@ OBJ_CLASS_INSTANCE(orte_snapc_full_app_snapshot_t,
 void orte_snapc_full_orted_construct(orte_snapc_full_orted_snapshot_t *snapshot) {
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
-    snapshot->process_name.epoch  = 0;
+    ORTE_EPOCH_SET(snapshot->process_name.epoch,0);
 
     snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
 }
@@ -91,7 +91,7 @@ void orte_snapc_full_orted_construct(orte_snapc_full_orted_snapshot_t *snapshot)
 void orte_snapc_full_orted_destruct( orte_snapc_full_orted_snapshot_t *snapshot) {
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
-    snapshot->process_name.epoch  = 0;
+    ORTE_EPOCH_SET(snapshot->process_name.epoch,0);
 
     snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
 }

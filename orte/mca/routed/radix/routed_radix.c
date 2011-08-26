@@ -31,6 +31,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/data_type_support/orte_dt_support.h"
 
 #include "orte/mca/rml/base/rml_contact.h"
 
@@ -145,7 +146,7 @@ static int delete_route(orte_process_name_t *proc)
 
     if (proc->jobid == ORTE_JOBID_INVALID ||
         proc->vpid == ORTE_VPID_INVALID ||
-        proc->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(proc->epoch,ORTE_EPOCH_INVALID)) {
         return ORTE_ERR_BAD_PARAM;
     }
     
@@ -214,7 +215,7 @@ static int update_route(orte_process_name_t *target,
     
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        target->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -272,7 +273,7 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
-                jfam->route.epoch = route->epoch;
+                ORTE_EPOCH_SET(jfam->route.epoch,route->epoch);
                 return ORTE_SUCCESS;
             }
         }
@@ -286,7 +287,7 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
-        jfam->route.epoch = route->epoch;
+        ORTE_EPOCH_SET(jfam->route.epoch,route->epoch);
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
         return ORTE_SUCCESS;
     }
@@ -310,7 +311,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        target->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
         ret = ORTE_NAME_INVALID;
         goto found;
     }
@@ -413,8 +414,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
             if (opal_bitmap_is_set_bit(&child->relatives, daemon.vpid)) {
                 /* yep - we need to step through this child */
                 daemon.vpid = child->vpid;
-                daemon.epoch = ORTE_EPOCH_INVALID;
-                daemon.epoch = orte_ess.proc_get_epoch(&daemon);
+                ORTE_EPOCH_SET(daemon.epoch,orte_ess.proc_get_epoch(&daemon));
                 ret = &daemon;
                 goto found;
             }
@@ -425,8 +425,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      * any of our children, so we have to step up through our parent
      */
     daemon.vpid = ORTE_PROC_MY_PARENT->vpid;
-    daemon.epoch = ORTE_EPOCH_INVALID;
-    daemon.epoch = orte_ess.proc_get_epoch(&daemon);
+    ORTE_EPOCH_SET(daemon.epoch,orte_ess.proc_get_epoch(&daemon));
     
     ret = &daemon;
     
@@ -788,7 +787,7 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
-    local_lifeline.epoch = proc->epoch;
+    ORTE_EPOCH_SET(local_lifeline.epoch,proc->epoch);
     lifeline = &local_lifeline;
     
     return ORTE_SUCCESS;
@@ -881,8 +880,7 @@ static int update_routing_tree(orte_jobid_t jobid)
         ORTE_PROC_MY_PARENT->vpid = (Ii-Sum) % NInPrevLevel;
         ORTE_PROC_MY_PARENT->vpid += (Sum - NInPrevLevel);
     }
-    ORTE_PROC_MY_PARENT->epoch = ORTE_EPOCH_INVALID;
-    ORTE_PROC_MY_PARENT->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_PARENT);
+    ORTE_EPOCH_SET(ORTE_PROC_MY_PARENT->epoch,orte_ess.proc_get_epoch(ORTE_PROC_MY_PARENT));
     
     /* compute my direct children and the bitmap that shows which vpids
      * lie underneath their branch

@@ -127,7 +127,9 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     orte_std_cntr_t cnt;
     char *rml_uri;
     orte_vpid_t vpid;
+#if ORTE_ENABLE_EPOCH
     orte_epoch_t epoch;
+#endif
     int rc;
 
     if (ORTE_JOB_FAMILY(job) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
@@ -146,11 +148,13 @@ int orte_routed_base_process_callback(orte_jobid_t job, opal_buffer_t *buffer)
     cnt = 1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(buffer, &vpid, &cnt, ORTE_VPID))) {
 
+#if ORTE_ENABLE_EPOCH
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &epoch, &cnt, ORTE_EPOCH))) {
             ORTE_ERROR_LOG(rc);
             continue;
         }        
+#endif
         
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &cnt, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);

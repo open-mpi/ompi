@@ -494,7 +494,7 @@ static int rte_init(void)
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
     proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
-    proc->name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
     
     proc->pid = orte_process_info.pid;
     proc->rml_uri = orte_rml.get_contact_info();

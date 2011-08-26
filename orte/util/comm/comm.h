@@ -52,7 +52,10 @@ ORTE_DECLSPEC int orte_util_comm_query_node_info(const orte_process_name_t *hnp,
                                                  int *num_nodes, orte_node_t ***node_info_array);
 
 ORTE_DECLSPEC int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t job, orte_vpid_t vpid,
-                                                 orte_epoch_t epoch, int *num_procs, orte_proc_t ***proc_info_array);
+#if ORTE_ENABLE_EPOCH
+                                                 orte_epoch_t epoch, 
+#endif
+                                                 int *num_procs, orte_proc_t ***proc_info_array);
 
 ORTE_DECLSPEC int orte_util_comm_spawn_job(const orte_process_name_t *hnp, orte_job_t *jdata);
 

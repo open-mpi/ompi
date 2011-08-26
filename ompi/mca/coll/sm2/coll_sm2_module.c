@@ -1208,7 +1208,8 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
             peer = OBJ_NEW(orte_namelist_t);
             peer->name.jobid = comm->c_local_group->grp_proc_pointers[i]->proc_name.jobid;
             peer->name.vpid =  comm->c_local_group->grp_proc_pointers[i]->proc_name.vpid;
-            peer->name.epoch = comm->c_local_group->grp_proc_pointers[i]->proc_name.epoch;
+            ORTE_EPOCH_SET(peer->name.epoch,comm->c_local_group->grp_proc_pointers[i]->proc_name.epoch);
+
             opal_list_append(&peers, &peer->item);
         }
         /* prepare send data */

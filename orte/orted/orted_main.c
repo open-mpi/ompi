@@ -388,14 +388,14 @@ int orte_daemon(int argc, char *argv[])
     orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
     ORTE_PROC_MY_DAEMON->jobid = ORTE_PROC_MY_NAME->jobid;
     ORTE_PROC_MY_DAEMON->vpid = ORTE_PROC_MY_NAME->vpid;
-    ORTE_PROC_MY_DAEMON->epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(ORTE_PROC_MY_DAEMON->epoch,ORTE_EPOCH_MIN);
     
     /* if I am also the hnp, then update that contact info field too */
     if (ORTE_PROC_IS_HNP) {
         orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
         ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
         ORTE_PROC_MY_HNP->vpid = ORTE_PROC_MY_NAME->vpid;
-        ORTE_PROC_MY_HNP->epoch = ORTE_EPOCH_MIN;
+        ORTE_EPOCH_SET(ORTE_PROC_MY_HNP->epoch,ORTE_EPOCH_MIN);
     }
     
     /* setup the primary daemon command receive function */
@@ -495,7 +495,8 @@ int orte_daemon(int argc, char *argv[])
         proc = OBJ_NEW(orte_proc_t);
         proc->name.jobid = jdata->jobid;
         proc->name.vpid = 0;
-        proc->name.epoch = ORTE_EPOCH_MIN;
+        ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
+
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
         proc->node = nodes[0]; /* hnp node must be there */

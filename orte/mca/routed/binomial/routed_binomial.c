@@ -33,6 +33,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/data_type_support/orte_dt_support.h"
 
 #include "orte/mca/rml/base/rml_contact.h"
 
@@ -147,7 +148,7 @@ static int delete_route(orte_process_name_t *proc)
 
     if (proc->jobid == ORTE_JOBID_INVALID ||
         proc->vpid == ORTE_VPID_INVALID ||
-        proc->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(proc->epoch,ORTE_EPOCH_INVALID)) {
         return ORTE_ERR_BAD_PARAM;
     }
     
@@ -216,7 +217,7 @@ static int update_route(orte_process_name_t *target,
     
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        target->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -274,8 +275,7 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
-                jfam->route.epoch = ORTE_EPOCH_INVALID;
-                jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
+                ORTE_EPOCH_SET(jfam->route.epoch,orte_ess.proc_get_epoch(&jfam->route));
                 
                 return ORTE_SUCCESS;
             }
@@ -290,8 +290,7 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
-        jfam->route.epoch = ORTE_EPOCH_INVALID;
-        jfam->route.epoch = orte_ess.proc_get_epoch(&jfam->route);
+        ORTE_EPOCH_SET(jfam->route.epoch,orte_ess.proc_get_epoch(&jfam->route));
         
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
         return ORTE_SUCCESS;
@@ -317,11 +316,21 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     /* initialize */
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
     daemon.vpid = ORTE_PROC_MY_DAEMON->vpid;
-    daemon.epoch = ORTE_PROC_MY_DAEMON->epoch;
+    ORTE_EPOCH_SET(daemon.epoch,ORTE_PROC_MY_DAEMON->epoch);
 
+#if ORTE_ENABLE_EPOCH
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
         target->epoch == ORTE_EPOCH_INVALID) {
+#else
+    if (target->jobid == ORTE_JOBID_INVALID ||
+        target->vpid == ORTE_VPID_INVALID) {
+#endif
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+
+    if (0 > ORTE_EPOCH_CMP(target->epoch, orte_ess.proc_get_epoch(target))) {
         ret = ORTE_NAME_INVALID;
         goto found;
     }
@@ -443,7 +452,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
             /* If the daemon to which we should be routing is dead, then update
              * the routing tree and start over. */
-            if (!orte_util_proc_is_running(&daemon)) {
+            if (!PROC_IS_RUNNING(&daemon)) {
                 update_routing_tree(daemon.jobid);
                 goto startover;
             }
@@ -461,8 +470,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     ret = &daemon;
 
  found:
-    daemon.epoch = ORTE_EPOCH_INVALID;
-    daemon.epoch = orte_ess.proc_get_epoch(&daemon);
+    ORTE_EPOCH_SET(daemon.epoch,orte_ess.proc_get_epoch(&daemon));
 
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_binomial_get(%s) --> %s",
@@ -879,7 +887,7 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
-    local_lifeline.epoch = proc->epoch;
+    ORTE_EPOCH_SET(local_lifeline.epoch,proc->epoch);
     lifeline = &local_lifeline;
     
     return ORTE_SUCCESS;
@@ -924,11 +932,11 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
                  * that process so we can check it's state.
                  */
                 proc_name.vpid = peer;
-                proc_name.epoch = orte_util_lookup_epoch(&proc_name);
+                ORTE_EPOCH_SET(proc_name.epoch,orte_util_lookup_epoch(&proc_name));
 
-                if (!orte_util_proc_is_running(&proc_name) 
-                    && ORTE_EPOCH_MIN < proc_name.epoch
-                    && ORTE_EPOCH_INVALID != proc_name.epoch) {
+                if (!PROC_IS_RUNNING(&proc_name)
+                    && 0 < ORTE_EPOCH_CMP(ORTE_EPOCH_MIN,proc_name.epoch)
+                    && 0 != ORTE_EPOCH_CMP(ORTE_EPOCH_INVALID,proc_name.epoch)) {
                     OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
                                          "%s routed:binomial child %s is dead",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -967,7 +975,7 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
     }
     
     /* find the children of this rank */
-    OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s routed:binomial find children of rank %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), rank));
     bitmap = opal_cube_dim(num_procs);
@@ -977,24 +985,25 @@ static int binomial_tree(int rank, int parent, int me, int num_procs,
     
     for (i = hibit + 1, mask = 1 << i; i <= bitmap; ++i, mask <<= 1) {
         peer = rank | mask;
-        OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+        OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                              "%s routed:binomial find children checking peer %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), peer));
         if (peer < num_procs) {
-            OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+            OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                                  "%s routed:binomial find children computing tree",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             /* execute compute on this child */
             if (0 <= (found = binomial_tree(peer, rank, me, num_procs, nchildren, childrn, relatives, mine, jobid))) {
                 proc_name.vpid = found;
 
-                if (!orte_util_proc_is_running(&proc_name) && ORTE_EPOCH_MIN < orte_util_lookup_epoch(&proc_name)) {
-                    OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                if (!PROC_IS_RUNNING(&proc_name) 
+                    && 0 < ORTE_EPOCH_CMP(ORTE_EPOCH_MIN,orte_util_lookup_epoch(&proc_name))) {
+                    OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                                          "%s routed:binomial find children proc out of date - returning parent %d",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), parent));
                     return parent;
                 }
-                OPAL_OUTPUT_VERBOSE((3, orte_routed_base_output,
+                OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                                      "%s routed:binomial find children returning found value %d",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), found));
                 return found;
@@ -1029,8 +1038,7 @@ static int update_routing_tree(orte_jobid_t jobid)
     ORTE_PROC_MY_PARENT->vpid = binomial_tree(0, 0, ORTE_PROC_MY_NAME->vpid,
                                    orte_process_info.max_procs,
                                    &num_children, &my_children, NULL, true, jobid);
-    ORTE_PROC_MY_PARENT->epoch = ORTE_EPOCH_INVALID;
-    ORTE_PROC_MY_PARENT->epoch = orte_ess.proc_get_epoch(ORTE_PROC_MY_PARENT);
+    ORTE_EPOCH_SET(ORTE_PROC_MY_PARENT->epoch,orte_ess.proc_get_epoch(ORTE_PROC_MY_PARENT));
     
     if (0 < opal_output_get_verbosity(orte_routed_base_output)) {
         opal_output(0, "%s: parent %d num_children %d", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_PROC_MY_PARENT->vpid, num_children);

@@ -123,18 +123,13 @@ static void send_relay(opal_buffer_t *buf)
         nm = (orte_routed_tree_t*)item;
         
         target.vpid = nm->vpid;
-        target.epoch = orte_util_lookup_epoch(&target);
+        ORTE_EPOCH_SET(target.epoch,orte_ess.proc_get_epoch(&target));
 
-        if (!orte_util_proc_is_running(&target)) {
+        if (!PROC_IS_RUNNING(&target)) {
             continue;
         }
 
-        target.epoch = ORTE_EPOCH_INVALID;
-        if (ORTE_NODE_RANK_INVALID == (target.epoch = orte_ess.proc_get_epoch(&target))) {
-            /* If we are trying to send to a previously failed process it's
-             * better to fail silently. */
-            continue;
-        }
+        ORTE_EPOCH_SET(target.epoch,orte_ess.proc_get_epoch(&target));
         
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                              "%s orte:daemon:send_relay sending relay msg to %s",
@@ -422,7 +417,8 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
             proct = OBJ_NEW(orte_proc_t);
             proct->name.jobid = proc.jobid;
             proct->name.vpid = proc.vpid;
-            proct->name.epoch = proc.epoch;
+            ORTE_EPOCH_SET(proct->name.epoch,proc.epoch);
+
             opal_pointer_array_add(&procarray, proct);
             num_replies++;
         }
@@ -1059,7 +1055,9 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
             orte_job_t *jdata;
             orte_proc_t *proc;
             orte_vpid_t vpid;
+#if ORTE_ENABLE_EPOCH
             orte_epoch_t epoch;
+#endif
             int32_t i, num_procs;
                 
             /* setup the answer */
@@ -1086,12 +1084,14 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                 goto CLEANUP;
             }
 
+#if ORTE_ENABLE_EPOCH
             /* unpack the epoch */
             n = 1;
             if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &epoch, &n, ORTE_EPOCH))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;
             }
+#endif
 
             /* if they asked for a specific proc, then just get that info */
             if (ORTE_VPID_WILDCARD != vpid) {
@@ -1201,7 +1201,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
                     /* loop across all daemons */
                     proc2.jobid = ORTE_PROC_MY_NAME->jobid;
                     for (proc2.vpid=1; proc2.vpid < orte_process_info.num_procs; proc2.vpid++) {
-                        proc2.epoch = orte_util_lookup_epoch(&proc2);
+                        ORTE_EPOCH_SET(proc2.epoch,orte_util_lookup_epoch(&proc2));
 
                         /* setup the cmd */
                         relay_msg = OBJ_NEW(opal_buffer_t);

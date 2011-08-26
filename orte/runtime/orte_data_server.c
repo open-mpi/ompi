@@ -220,7 +220,7 @@ static void process_message(int fd, short event, void *evdat)
             data->port = port_name;
             data->owner.jobid = sender->jobid;
             data->owner.vpid = sender->vpid;
-            data->owner.epoch = sender->epoch;
+            ORTE_EPOCH_SET(data->owner.epoch,sender->epoch);
             
             /* store the data */
             data->index = opal_pointer_array_add(orte_data_server_store, data);
