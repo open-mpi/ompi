@@ -307,8 +307,8 @@ static int update_state(orte_jobid_t job,
                 OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                             "%s errmgr:orted not exiting, num_routes() == %d, num children == %d",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            orte_routed.num_routes(),
-                            opal_list_get_size(&orte_local_children)));
+                            (int)orte_routed.num_routes(),
+                            (int)opal_list_get_size(&orte_local_children)));
             }
         }
 

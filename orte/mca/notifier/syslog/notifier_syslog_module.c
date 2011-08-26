@@ -103,7 +103,7 @@ static void myhelplog(orte_notifier_base_severity_t severity, int errcode,
     }
     
     /* go ahead and output it */
-    syslog(severity, output);
+    syslog(severity, output, NULL);
     free(output);
 }
 
@@ -114,7 +114,7 @@ static void mypeerlog(orte_notifier_base_severity_t severity, int errcode,
     char *buf = orte_notifier_base_peer_log(errcode, peer_proc, msg, ap);
 
     if (NULL != buf) {
-        syslog(severity, buf);
+        syslog(severity, buf, NULL);
         free(buf);
     }
 }
@@ -122,6 +122,6 @@ static void mypeerlog(orte_notifier_base_severity_t severity, int errcode,
 static void myeventlog(const char *msg)
 {
     /* If there was a message, output it */
-    syslog(LOG_LOCAL0 | LOG_NOTICE, msg);
+    syslog(LOG_LOCAL0 | LOG_NOTICE, msg, NULL);
 }
 
