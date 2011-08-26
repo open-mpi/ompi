@@ -1,7 +1,7 @@
 dnl -*- Autoconf -*-
 dnl
 dnl Copyright (c) 2009 INRIA.  All rights reserved.
-dnl Copyright (c) 2009 Université Bordeaux 1
+dnl Copyright (c) 2009, 2011 Université Bordeaux 1
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
@@ -211,9 +211,12 @@ EOF
     hwloc_build_utils=yes
 
     # Cairo support
+    hwloc_cairo_happy=
     if test "x$enable_cairo" != "xno"; then
-      HWLOC_PKG_CHECK_MODULES([CAIRO], [cairo], [cairo_fill], [:], [enable_cairo=no])
-      if test "x$enable_cairo" != "xno"; then
+      HWLOC_PKG_CHECK_MODULES([CAIRO], [cairo], [cairo_fill],
+                              [hwloc_cairo_happy=yes],
+                              [hwloc_cairo_happy=no])
+      if test "x$hwloc_cairo_happy" = "xyes"; then
         AC_PATH_XTRA
 	CFLAGS_save=$CFLAGS
 	LIBS_save=$LIBS
@@ -232,6 +235,7 @@ EOF
         )
         if test "x$enable_X11" != "xyes"; then
           AC_MSG_WARN([X11 headers not found, Cairo/X11 back-end disabled])
+          hwloc_cairo_happy=no
         fi
 
 	CFLAGS=$CFLAGS_save
@@ -239,8 +243,12 @@ EOF
       fi
     fi
     
-    if test "x$enable_cairo" != "xno"; then
+    if test "x$hwloc_cairo_happy" = "xyes"; then
         AC_DEFINE([HWLOC_HAVE_CAIRO], [1], [Define to 1 if you have the `cairo' library.])
+    else
+        AS_IF([test "$enable_cairo" = "yes"],
+              [AC_MSG_WARN([--enable-cairo requested, but Cairo/X11 support was not found])
+               AC_MSG_ERROR([Cannot continue])])
     fi
 
     AC_CHECK_TYPES([wchar_t], [
@@ -254,16 +262,33 @@ EOF
       AC_CHECK_FUNCS([nl_langinfo])
     ])
     hwloc_old_LIBS="$LIBS"
-    LIBS=
-    AC_CHECK_HEADERS([curses.h], [
-      AC_CHECK_HEADERS([term.h], [
-        AC_SEARCH_LIBS([tparm], [termcap ncursesw ncurses curses], [
-            AC_SUBST([HWLOC_TERMCAP_LIBS], ["$LIBS"])
-            AC_DEFINE([HWLOC_HAVE_LIBTERMCAP], [1],
-                      [Define to 1 if you have a library providing the termcap interface])
-          ])
-      ], [], [[#include <curses.h>]])
-    ])
+    chosen_curses=""
+    for curses in ncurses curses
+    do
+      for lib in "" -ltermcap -l${curses}w -l$curses
+      do
+        AC_MSG_CHECKING(termcap support using $curses and $lib)
+        LIBS="$hwloc_old_LIBS $lib"
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <$curses.h>
+#include <term.h>
+]], [[tparm(NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0)]])], [
+          AC_MSG_RESULT(yes)
+          AC_SUBST([HWLOC_TERMCAP_LIBS], ["$LIBS"])
+          AC_DEFINE([HWLOC_HAVE_LIBTERMCAP], [1],
+                    [Define to 1 if you have a library providing the termcap interface])
+          chosen_curses=$curses
+        ], [
+          AC_MSG_RESULT(no)
+        ])
+        test "x$chosen_curses" != "x" && break
+      done
+      test "x$chosen_curses" != "x" && break
+    done
+    if test "$chosen_curses" = ncurses
+    then
+      AC_DEFINE([HWLOC_USE_NCURSES], [1], [Define to 1 if ncurses works, preferred over curses])
+    fi
     LIBS="$hwloc_old_LIBS"
     unset hwloc_old_LIBS
 
@@ -357,9 +382,10 @@ EOF
         hwloc_config_prefix[tests/linux/gather/test-gather-topology.sh]
         hwloc_config_prefix[tests/linux/test-topology.sh]
         hwloc_config_prefix[tests/xml/test-topology.sh]
+        hwloc_config_prefix[utils/test-hwloc-calc.sh]
         hwloc_config_prefix[utils/test-hwloc-distrib.sh])
 
-    AC_CONFIG_COMMANDS([chmoding-scripts], [chmod +x ]hwloc_config_prefix[tests/linux/test-topology.sh ]hwloc_config_prefix[tests/xml/test-topology.sh ]hwloc_config_prefix[tests/linux/hwloc-gather-topology ]hwloc_config_prefix[tests/linux/gather/test-gather-topology.sh ]hwloc_config_prefix[utils/test-hwloc-distrib.sh])
+    AC_CONFIG_COMMANDS([chmoding-scripts], [chmod +x ]hwloc_config_prefix[tests/linux/test-topology.sh ]hwloc_config_prefix[tests/xml/test-topology.sh ]hwloc_config_prefix[tests/linux/hwloc-gather-topology ]hwloc_config_prefix[tests/linux/gather/test-gather-topology.sh ]hwloc_config_prefix[utils/test-hwloc-calc.sh ]hwloc_config_prefix[utils/test-hwloc-distrib.sh])
 
     # These links are only needed in standalone mode.  It would
     # be nice to m4 foreach this somehow, but whenever I tried

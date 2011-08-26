@@ -1,7 +1,7 @@
 /*
  * Copyright © 2009 CNRS
  * Copyright © 2009-2011 INRIA.  All rights reserved.
- * Copyright © 2009-2010 Université Bordeaux 1
+ * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * See COPYING in top-level directory.
  */
@@ -292,7 +292,7 @@ hwloc_get_next_obj_inside_cpuset_by_type (hwloc_topology_t topology, hwloc_const
   return hwloc_get_next_obj_inside_cpuset_by_depth(topology, set, depth, prev);
 }
 
-/** \brief Return the \p index -th object at depth \p depth included in CPU set \p set.
+/** \brief Return the (logically) \p idx -th object at depth \p depth included in CPU set \p set.
  */
 static __hwloc_inline hwloc_obj_t __hwloc_attribute_pure
 hwloc_get_obj_inside_cpuset_by_depth (hwloc_topology_t topology, hwloc_const_cpuset_t set,
@@ -529,8 +529,8 @@ HWLOC_DECLSPEC unsigned hwloc_get_closest_objs (hwloc_topology_t topology, hwloc
 /** \brief Find an object below another object, both specified by types and indexes.
  *
  * Start from the top system object and find object of type \p type1
- * and index \p idx1.  Then look below this object and find another
- * object of type \p type2 and index \p idx2.  Indexes are specified
+ * and logical index \p idx1.  Then look below this object and find another
+ * object of type \p type2 and logical index \p idx2.  Indexes are specified
  * within the parent, not withing the entire system.
  *
  * For instance, if type1 is SOCKET, idx1 is 2, type2 is CORE and idx2
@@ -557,7 +557,7 @@ hwloc_get_obj_below_by_type (hwloc_topology_t topology,
  * Arrays \p typev and \p idxv must contain \p nr types and indexes.
  *
  * Start from the top system object and walk the arrays \p typev and \p idxv.
- * For each type and index couple in the arrays, look under the previously found
+ * For each type and logical index couple in the arrays, look under the previously found
  * object to find the index-th object of the given type.
  * Indexes are specified within the parent, not withing the entire system.
  *

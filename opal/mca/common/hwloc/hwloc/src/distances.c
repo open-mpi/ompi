@@ -165,9 +165,11 @@ static void hwloc_get_type_distances_from_string(struct hwloc_topology *topology
   } else {
     /* parse a comma separated list of distances */
     for(i=0; i<nbobjs*nbobjs; i++) {
-      distances[i] = strtof(tmp, &next);
-      tmp = next+1;
-      if (!*next && i!=nbobjs*nbobjs-1) {
+      distances[i] = atof(tmp);
+      next = strchr(tmp, ',');
+      if (next) {
+        tmp = next+1;
+      } else if (i!=nbobjs*nbobjs-1) {
 	fprintf(stderr, "Ignoring %s distances from environment variable, not enough values (%u out of %u)\n",
 		hwloc_obj_type_string(type), i+1, nbobjs*nbobjs);
 	free(indexes);

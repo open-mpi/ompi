@@ -17,6 +17,28 @@ bug fixes (and other actions) for each version of hwloc since version
 in v0.9.1).
 
 
+Version 1.2.1
+-------------
+* Improve support of AMD Bulldozer "Compute-Unit" modules by detecting
+  logical processors with different core IDs on Linux.
+* Fix hwloc-ps crash when listing processes from another Linux cpuset.
+  Thanks to Carl Smith for reporting the problem.
+* Fix build on AIX and Solaris. Thanks to Carl Smith and Andreas Kupries
+  for reporting the problems.
+* Fix cache size detection on Darwin. Thanks to Erkcan Özcan for reporting
+  the problem.
+* Make configure fail if --enable-xml or --enable-cairo is given and
+  proper support cannot be found. Thanks to Andreas Kupries for reporting
+  the XML problem.
+* Fix spurious L1 cache detection on AIX. Thanks to Hendryk Bockelmann
+  for reporting the problem.
+* Fix hwloc_get_last_cpu_location(THREAD) on Linux. Thanks to Gabriele
+  Fatigati for reporting the problem.
+* Fix object distance detection on Solaris.
+* Add pthread_self weak symbol to ease static linking.
+* Minor documentation fixes.
+
+
 Version 1.2.0
 -------------
 * Major features
