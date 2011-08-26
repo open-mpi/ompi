@@ -186,7 +186,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         proct = OBJ_NEW(orte_iof_proc_t);
         proct->name.jobid = dst_name->jobid;
         proct->name.vpid = dst_name->vpid;
-        proct->name.epoch = dst_name->epoch;
+        ORTE_EPOCH_SET(proct->name.epoch,dst_name->epoch);
         opal_list_append(&mca_iof_hnp_component.procs, &proct->super);
         /* see if we are to output to a file */
         if (NULL != orte_output_filename) {
@@ -281,8 +281,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                                  &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
             sink->daemon.vpid = proc->node->daemon->name.vpid;
-            sink->daemon.epoch = ORTE_EPOCH_INVALID;
-            sink->daemon.epoch = orte_ess.proc_get_epoch(&sink->daemon);
+            ORTE_EPOCH_SET(sink->daemon.epoch,orte_ess.proc_get_epoch(&sink->daemon));
         }
     }
     
@@ -389,7 +388,7 @@ static int hnp_pull(const orte_process_name_t* dst_name,
                          &mca_iof_hnp_component.sinks);
     sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     sink->daemon.vpid = ORTE_PROC_MY_NAME->vpid;
-    sink->daemon.epoch = ORTE_PROC_MY_NAME->epoch;
+    ORTE_EPOCH_SET(sink->daemon.epoch,ORTE_PROC_MY_NAME->epoch);
 
     return ORTE_SUCCESS;
 }

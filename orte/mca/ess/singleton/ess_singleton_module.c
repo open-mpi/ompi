@@ -188,7 +188,7 @@ static int rte_init(void)
         /* set the name */
         ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
         ORTE_PROC_MY_NAME->vpid = 0;
-        ORTE_PROC_MY_NAME->epoch = ORTE_EPOCH_MIN;
+        ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_MIN);
         
     } else {
         /*

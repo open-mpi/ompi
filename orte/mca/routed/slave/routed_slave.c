@@ -26,6 +26,7 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/data_type_support/orte_dt_support.h"
 
 #include "orte/mca/rml/base/rml_contact.h"
 
@@ -134,7 +135,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        target->epoch == ORTE_EPOCH_INVALID) {
+        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
         ret = ORTE_NAME_INVALID;
     } else {
         /* a slave must always route via its parent daemon */
@@ -275,8 +276,7 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
-    local_lifeline.epoch = ORTE_EPOCH_INVALID;
-    local_lifeline.epoch = orte_ess.proc_get_epoch(&local_lifeline);
+    ORTE_EPOCH_SET(local_lifeline.epoch,orte_ess.proc_get_epoch(&local_lifeline));
     
     lifeline = &local_lifeline;
     

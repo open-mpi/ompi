@@ -386,7 +386,7 @@ static void recv_cmd(int status,
             dat = OBJ_NEW(orte_db_data_t);
             dat->name.jobid = sender->jobid;
             dat->name.vpid = sender->vpid;
-            dat->name.epoch= sender->epoch;
+            ORTE_EPOCH_SET(dat->name.epoch,sender->epoch);
             dat->key = key;
             count=1;
             opal_dss.unpack(buf, &dat->size, &count, OPAL_INT32);

@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
     orte_process_info.my_name->cellid = 0;
     orte_process_info.my_name->jobid = 0;
     orte_process_info.my_name->vpid = 0;
-    orte_process_info.my_name->epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(orte_process_info.my_name->epoch,ORTE_EPOCH_MIN);
     
     test_init("orte_session_dir_t");
     test_out = fopen( "test_session_dir_out", "w+" );

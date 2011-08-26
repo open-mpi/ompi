@@ -267,7 +267,7 @@ static int errmgr_base_tool_start_cmdline_listener(void)
      */
     errmgr_cmdline_sender.jobid = ORTE_JOBID_INVALID;
     errmgr_cmdline_sender.vpid  = ORTE_VPID_INVALID;
-    errmgr_cmdline_sender.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(errmgr_cmdline_sender.epoch,ORTE_EPOCH_MIN);
     if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                        ORTE_RML_TAG_MIGRATE,
                                                        0,
@@ -379,14 +379,14 @@ static void errmgr_base_tool_cmdline_process_recv(int fd, short event, void *cbd
     if( OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_NAME_INVALID, &errmgr_cmdline_sender) ) {
         swap_dest.jobid = errmgr_cmdline_sender.jobid;
         swap_dest.vpid  = errmgr_cmdline_sender.vpid;
-        swap_dest.epoch = errmgr_cmdline_sender.epoch;
+        ORTE_EPOCH_SET(swap_dest.epoch,errmgr_cmdline_sender.epoch);
 
         errmgr_cmdline_sender = *sender;
         orte_errmgr_base_migrate_update(ORTE_ERRMGR_MIGRATE_STATE_ERR_INPROGRESS);
 
         errmgr_cmdline_sender.jobid = swap_dest.jobid;
         errmgr_cmdline_sender.vpid  = swap_dest.vpid;
-        errmgr_cmdline_sender.epoch = swap_dest.epoch;
+        ORTE_EPOCH_SET(errmgr_cmdline_sender.epoch,swap_dest.epoch);
 
         goto cleanup;
     }

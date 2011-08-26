@@ -187,7 +187,7 @@ int orte_odls_base_open(void)
             if (-1 == rank) {
                 /* wildcard */
                 nm->name.vpid = ORTE_VPID_WILDCARD;
-                nm->name.epoch = ORTE_EPOCH_WILDCARD;
+                ORTE_EPOCH_SET(nm->name.epoch,ORTE_EPOCH_WILDCARD);
             } else if (rank < 0) {
                 /* error out on bozo case */
                 orte_show_help("help-odls-base.txt",
@@ -200,8 +200,7 @@ int orte_odls_base_open(void)
                  * will be in the job - we'll check later
                  */
                 nm->name.vpid = rank;
-                nm->name.epoch = ORTE_EPOCH_INVALID;
-                nm->name.epoch = orte_ess.proc_get_epoch(&nm->name);
+                ORTE_EPOCH_SET(nm->name.epoch,orte_ess.proc_get_epoch(&nm->name));
             }
             opal_list_append(&orte_odls_globals.xterm_ranks, &nm->item);
         }

@@ -146,7 +146,9 @@ static void process_msg(int fd, short event, void *data)
     orte_job_t *jdata, *parent;
     opal_buffer_t answer;
     orte_vpid_t vpid;
+#if ORTE_ENABLE_EPOCH
     orte_epoch_t epoch;
+#endif
     orte_proc_t *proc;
     orte_proc_state_t state;
     orte_exit_code_t exit_code;
@@ -394,8 +396,7 @@ static void process_msg(int fd, short event, void *data)
                         break;
                     }
                     name.vpid = vpid;
-                    name.epoch = ORTE_EPOCH_INVALID;
-                    name.epoch = orte_ess.proc_get_epoch(&name);
+                    ORTE_EPOCH_SET(name.epoch,orte_ess.proc_get_epoch(&name));
 
                     /* unpack the pid */
                     count = 1;
@@ -488,9 +489,11 @@ static void process_msg(int fd, short event, void *data)
                 }
                 name.vpid = vpid;
                 
+#if ORTE_ENABLE_EPOCH
                 count=1;
                 opal_dss.unpack(msgpkt->buffer, &epoch, &count, ORTE_EPOCH);
                 name.epoch = epoch;
+#endif
 
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s plm:base:receive Described rank %s",

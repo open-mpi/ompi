@@ -277,6 +277,7 @@ int orte_dt_init(void)
         return rc;
     }
 
+#if ORTE_ENABLE_EPOCH
     tmp = ORTE_EPOCH;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_epoch,
                                                      orte_dt_unpack_epoch,
@@ -290,6 +291,7 @@ int orte_dt_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+#endif
 
 #if !ORTE_DISABLE_FULL_SUPPORT
     tmp = ORTE_JOB;
@@ -933,7 +935,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->beat = 0;
     OBJ_CONSTRUCT(&proc->stats, opal_ring_buffer_t);
     opal_ring_buffer_init(&proc->stats, orte_stat_history_size);
-    proc->name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;

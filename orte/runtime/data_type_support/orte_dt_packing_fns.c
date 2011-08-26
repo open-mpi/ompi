@@ -58,7 +58,9 @@ int orte_dt_pack_name(opal_buffer_t *buffer, const void *src,
     orte_process_name_t* proc;
     orte_jobid_t *jobid;
     orte_vpid_t *vpid;
+#if ORTE_ENABLE_EPOCH
     orte_epoch_t *epoch;
+#endif
     
     /* collect all the jobids in a contiguous array */
     jobid = (orte_jobid_t*)malloc(num_vals * sizeof(orte_jobid_t));
@@ -100,6 +102,7 @@ int orte_dt_pack_name(opal_buffer_t *buffer, const void *src,
     }
     free(vpid);
 
+#if ORTE_ENABLE_EPOCH
     /* Collect all the epochs in a contiguous array */
     epoch = (orte_epoch_t *) malloc(num_vals * sizeof(orte_epoch_t));
     if (NULL == epoch) {
@@ -118,6 +121,7 @@ int orte_dt_pack_name(opal_buffer_t *buffer, const void *src,
         return rc;
     }
     free(epoch);
+#endif
     
     return ORTE_SUCCESS;
 }
@@ -156,6 +160,7 @@ int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
     return ret;
 }
 
+#if ORTE_ENABLE_EPOCH
 /*
  * EPOCH
  */
@@ -171,6 +176,7 @@ int orte_dt_pack_epoch(opal_buffer_t *buffer, const void *src,
 
     return ret;
 }
+#endif
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 /*

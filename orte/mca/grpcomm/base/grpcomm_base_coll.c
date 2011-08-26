@@ -168,8 +168,7 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
     if (vpids[0] == ORTE_PROC_MY_NAME->vpid) {
         /* I send first */
         peer.vpid = vpids[1];
-        peer.epoch = ORTE_EPOCH_INVALID;
-        peer.epoch = orte_ess.proc_get_epoch(&peer);
+        ORTE_EPOCH_SET(peer.epoch,orte_ess.proc_get_epoch(&peer));
 
         /* setup a temp buffer so I can inform the other side as to the
          * number of entries in my buffer
@@ -226,8 +225,7 @@ static int twoproc(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_e
         opal_dss.pack(&buf, &num_entries, 1, OPAL_INT32);
         opal_dss.copy_payload(&buf, sendbuf);
         peer.vpid = vpids[0];
-        peer.epoch = ORTE_EPOCH_INVALID;
-        peer.epoch = orte_ess.proc_get_epoch(&peer);
+        ORTE_EPOCH_SET(peer.epoch,orte_ess.proc_get_epoch(&peer));
 
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                              "%s grpcomm:coll:two-proc sending to %s",
@@ -320,8 +318,7 @@ static int bruck(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_ent
         /* first send my current contents */
         nv = (rank - distance + np) % np;
         peer.vpid = vpids[nv];
-        peer.epoch = ORTE_EPOCH_INVALID;
-        peer.epoch = orte_ess.proc_get_epoch(&peer);
+        ORTE_EPOCH_SET(peer.epoch,orte_ess.proc_get_epoch(&peer));
 
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         opal_dss.pack(&buf, &total_entries, 1, OPAL_INT32);
@@ -340,8 +337,7 @@ static int bruck(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int32_t num_ent
         num_recvd = 0;
         nv = (rank + distance) % np;
         peer.vpid = vpids[nv];
-        peer.epoch = ORTE_EPOCH_INVALID;
-        peer.epoch = orte_ess.proc_get_epoch(&peer);
+        ORTE_EPOCH_SET(peer.epoch,orte_ess.proc_get_epoch(&peer));
         
         OBJ_CONSTRUCT(&bucket, opal_buffer_t);
         if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(&peer,
@@ -439,8 +435,7 @@ static int recursivedoubling(opal_buffer_t *sendbuf, opal_buffer_t *recvbuf, int
         /* first send my current contents */
         nv = rank ^ distance;
         peer.vpid = vpids[nv];
-        peer.epoch = ORTE_EPOCH_INVALID;
-        peer.epoch = orte_ess.proc_get_epoch(&peer);
+        ORTE_EPOCH_SET(peer.epoch,orte_ess.proc_get_epoch(&peer));
 
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         opal_dss.pack(&buf, &total_entries, 1, OPAL_INT32);
@@ -646,8 +641,7 @@ void orte_grpcomm_base_daemon_collective(orte_process_name_t *sender,
         proc.jobid = jobid;
         proc.vpid = 0;
         while (proc.vpid < jobdat->num_procs && 0 < opal_list_get_size(&daemon_tree)) {
-            proc.epoch = ORTE_EPOCH_INVALID;
-            proc.epoch = orte_ess.proc_get_epoch(&proc);
+            ORTE_EPOCH_SET(proc.epoch,orte_ess.proc_get_epoch(&proc));
 
             /* get the daemon that hosts this proc */
             daemonvpid = orte_ess.proc_get_daemon(&proc);
@@ -713,8 +707,7 @@ void orte_grpcomm_base_daemon_collective(orte_process_name_t *sender,
         /* send it */
         my_parent.jobid = ORTE_PROC_MY_NAME->jobid;
         my_parent.vpid = orte_routed.get_routing_tree(NULL);
-        my_parent.epoch = ORTE_EPOCH_INVALID;
-        my_parent.epoch = orte_ess.proc_get_epoch(&my_parent);
+        ORTE_EPOCH_SET(my_parent.epoch,orte_ess.proc_get_epoch(&my_parent));
 
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                              "%s grpcomm:base:daemon_coll: daemon collective not the HNP - sending to parent %s",

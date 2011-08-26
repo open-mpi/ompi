@@ -76,6 +76,7 @@ int orte_dt_compare_name(orte_process_name_t *value1,
         }
     }
 
+#if ORTE_ENABLE_EPOCH
     /** check the epochs - if one of them is WILDCARD, then ignore
     * this field since anything is okay
     */
@@ -87,6 +88,7 @@ int orte_dt_compare_name(orte_process_name_t *value1,
             return OPAL_VALUE1_GREATER;
         }
     }
+#endif
     
     /** only way to get here is if all fields are equal or WILDCARD */
     return OPAL_EQUAL;
@@ -122,6 +124,7 @@ int orte_dt_compare_jobid(orte_jobid_t *value1,
     return OPAL_EQUAL;
 }
 
+#if ORTE_ENABLE_EPOCH
 int orte_dt_compare_epoch(orte_epoch_t *value1,
                           orte_epoch_t *value2,
                           opal_data_type_t type)
@@ -136,6 +139,7 @@ int orte_dt_compare_epoch(orte_epoch_t *value1,
     
     return OPAL_EQUAL;
 }
+#endif
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 /**

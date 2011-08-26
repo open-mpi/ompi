@@ -750,7 +750,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
                 close_iof_stdin = true;
                 iof_name.jobid = proc->name.jobid;
                 iof_name.vpid = proc->name.vpid;
-                iof_name.epoch = proc->name.epoch;
+                ORTE_EPOCH_SET(iof_name.epoch,proc->name.epoch);
             }
         }
     }
@@ -807,7 +807,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
                     close_iof_stdin = true;
                     iof_name.jobid = proc->name.jobid;
                     iof_name.vpid = proc->name.vpid;
-                    iof_name.epoch = proc->name.epoch;
+                    ORTE_EPOCH_SET(iof_name.epoch,proc->name.epoch);
                 }
             }
         }
@@ -855,7 +855,7 @@ static int errmgr_crmig_global_migrate(opal_list_t *off_procs, opal_list_t *off_
                     close_iof_stdin = true;
                     iof_name.jobid = proc->name.jobid;
                     iof_name.vpid = proc->name.vpid;
-                    iof_name.epoch = proc->name.epoch;
+                    ORTE_EPOCH_SET(iof_name.epoch,proc->name.epoch);
                 }
             }
         }

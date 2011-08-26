@@ -82,8 +82,10 @@ orte_errmgr_base_module_t orte_errmgr_app_module = {
     NULL,
     NULL,
     NULL,
-    orte_errmgr_base_register_migration_warning,
-    orte_errmgr_base_set_fault_callback
+    orte_errmgr_base_register_migration_warning
+#if ORTE_RESIL_ORTE
+    ,orte_errmgr_base_set_fault_callback
+#endif
 };
 
 /************************
@@ -93,18 +95,23 @@ static int init(void)
 {
     int ret = ORTE_SUCCESS;
     
+#if ORTE_RESIL_ORTE
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                   ORTE_RML_TAG_EPOCH_CHANGE, 
                                   ORTE_RML_PERSISTENT, 
                                   epoch_change_recv, 
                                   NULL);
+#endif
+
     return ret;
 }
 
 static int finalize(void)
 {
+#if ORTE_RESIL_ORTE
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD,
                          ORTE_RML_TAG_EPOCH_CHANGE);
+#endif
 
     return ORTE_SUCCESS;
 }
@@ -151,6 +158,7 @@ static int update_state(orte_jobid_t job,
     return ORTE_SUCCESS;
 }
 
+#if ORTE_RESIL_ORTE
 void epoch_change_recv(int status, 
                        orte_process_name_t *sender, 
                        opal_buffer_t *buffer, 
@@ -209,15 +217,20 @@ void epoch_change(int fd,
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
         (*fault_cbfunc)(procs);
+    } else if (NULL == fault_cbfunc) {
+        OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
+                    "%s errmgr:app Calling fault callback failed (NULL pointer)!",
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     } else {
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
-                    "%s errmgr:app Calling fault callback failed!",
+                    "%s errmgr:app Calling fault callback failed (num_dead <= 0)!",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
     
     free(proc);
     OBJ_RELEASE(procs);
 }
+#endif
 
 static int orte_errmgr_app_abort_peers(orte_process_name_t *procs, orte_std_cntr_t num_procs)
 {

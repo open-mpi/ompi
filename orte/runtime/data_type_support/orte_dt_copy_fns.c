@@ -61,7 +61,7 @@ int orte_dt_copy_name(orte_process_name_t **dest, orte_process_name_t *src, opal
     
     val->jobid = src->jobid;
     val->vpid = src->vpid;
-    val->epoch = src->epoch;
+    ORTE_EPOCH_SET(val->epoch,src->epoch);
     
     *dest = val;
     return ORTE_SUCCESS;
@@ -105,6 +105,7 @@ int orte_dt_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, opal_data_type_t typ
     return ORTE_SUCCESS;
 }
 
+#if ORTE_ENABLE_EPOCH
 /*
  * EPOCH
  */
@@ -123,6 +124,7 @@ int orte_dt_copy_epoch(orte_epoch_t **dest, orte_epoch_t *src, opal_data_type_t 
     
     return ORTE_SUCCESS;
 }
+#endif
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 

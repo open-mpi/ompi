@@ -869,8 +869,14 @@ static int gather_vpid_info(orte_ps_mpirun_info_t *hnpinfo) {
         }
 
         /* query the HNP for info on the procs in this job */
-        if (ORTE_SUCCESS != (ret = orte_util_comm_query_proc_info(&(hnpinfo->hnp->name), job->jobid,
-                                                                  ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD, &cnt, &procs))) {
+        if (ORTE_SUCCESS != (ret = orte_util_comm_query_proc_info(&(hnpinfo->hnp->name), 
+                                                                  job->jobid,
+                                                                  ORTE_VPID_WILDCARD, 
+#if ORTE_ENABLE_EPOCH
+                                                                  ORTE_EPOCH_WILDCARD, 
+#endif
+                                                                  &cnt, 
+                                                                  &procs))) {
             ORTE_ERROR_LOG(ret);
         }
         job->procs->addr = (void**)procs;

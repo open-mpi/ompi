@@ -1527,7 +1527,9 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
 {
     char *param, *path, *tmp, *cmd, *basename, *dest_dir;
     int i;
+#if ORTE_ENABLE_EPOCH
     orte_epoch_t epoch;
+#endif
     orte_process_name_t proc;
     
     /* if a prefix is set, pass it to the bootproxy in a special way */
@@ -1638,6 +1640,7 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     opal_setenv("OMPI_COMM_WORLD_RANK", cmd, true, argv);
     free(cmd);
 
+#if ORTE_ENABLE_EPOCH
     /* set the epoch */
     proc.jobid = jobid;
     proc.vpid = vpid;
@@ -1648,6 +1651,7 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     opal_setenv(param, cmd, true, argv);
     free(param);
     free(cmd);
+#endif
     
     /* set the number of procs */
     asprintf(&cmd, "%d", (int)num_procs);

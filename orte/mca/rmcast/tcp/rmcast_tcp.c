@@ -681,7 +681,7 @@ static int tcp_recv(orte_process_name_t *name,
         /* caller requested id of sender */
         name->jobid = recvptr->name.jobid;
         name->vpid = recvptr->name.vpid;
-        name->epoch= recvptr->name.epoch;
+        ORTE_EPOCH_SET(name->epoch,recvptr->name.epoch);
     }
     *seq_num = recvptr->seq_num;
     *msg = recvptr->iovec_array;
@@ -776,7 +776,7 @@ static int tcp_recv_buffer(orte_process_name_t *name,
         /* caller requested id of sender */
         name->jobid = recvptr->name.jobid;
         name->vpid = recvptr->name.vpid;
-        name->epoch= recvptr->name.epoch;
+        ORTE_EPOCH_SET(name->epoch,recvptr->name.epoch);
     }
     *seq_num = recvptr->seq_num;
     if (ORTE_SUCCESS != (ret = opal_dss.copy_payload(buf, recvptr->buf))) {

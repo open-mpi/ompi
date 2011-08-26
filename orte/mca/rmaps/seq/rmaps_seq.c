@@ -235,8 +235,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
             }
             /* assign the vpid */
             proc->name.vpid = vpid++;
-            proc->name.epoch = ORTE_EPOCH_INVALID;
-            proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
+            ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
 
             /* add to the jdata proc array */
             if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {

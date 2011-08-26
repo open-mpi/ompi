@@ -125,8 +125,10 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
             orte_dt_quick_print(output, "ORTE_STD_CNTR", prefix, src, ORTE_STD_CNTR_T);
             break;
 
+#if ORTE_ENABLE_EPOCH
         case ORTE_EPOCH:
             orte_dt_quick_print(output, "ORTE_EPOCH", prefix, src, ORTE_EPOCH_T);
+#endif
 
         case ORTE_VPID:
             orte_dt_quick_print(output, "ORTE_VPID", prefix, src, ORTE_VPID_T);
@@ -478,11 +480,21 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     if (orte_xml_output) {
         /* need to create the output in XML format */
         if (0 == src->pid) {
+#if ORTE_ENABLE_EPOCH
             asprintf(output, "%s<process rank=\"%s\" status=\"%s\" epoch=\"%s\"/>\n", pfx2,
                      ORTE_VPID_PRINT(src->name.vpid), orte_proc_state_to_str(src->state), ORTE_EPOCH_PRINT(src->name.epoch));
+#else
+            asprintf(output, "%s<process rank=\"%s\" status=\"%s\"/>\n", pfx2,
+                     ORTE_VPID_PRINT(src->name.vpid), orte_proc_state_to_str(src->state));
+#endif
         } else {
+#if ORTE_ENABLE_EPOCH
             asprintf(output, "%s<process rank=\"%s\" pid=\"%d\" status=\"%s\" epoch=\"%s\"/>\n", pfx2,
                      ORTE_VPID_PRINT(src->name.vpid), (int)src->pid, orte_proc_state_to_str(src->state), ORTE_EPOCH_PRINT(src->name.epoch));
+#else
+            asprintf(output, "%s<process rank=\"%s\" pid=\"%d\" status=\"%s\"/>\n", pfx2,
+                     ORTE_VPID_PRINT(src->name.vpid), (int)src->pid, orte_proc_state_to_str(src->state));
+#endif
         }
         free(pfx2);
         return ORTE_SUCCESS;
@@ -490,10 +502,17 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     
     if (!orte_devel_level_output) {
         /* just print a very simple output for users */
+#if ORTE_ENABLE_EPOCH
         asprintf(&tmp, "\n%sProcess OMPI jobid: %s Process rank: %s Epoch: %s", pfx2,
                  ORTE_JOBID_PRINT(src->name.jobid),
                  ORTE_VPID_PRINT(src->name.vpid),
                  ORTE_EPOCH_PRINT(src->name.epoch));
+#else
+        asprintf(&tmp, "\n%sProcess OMPI jobid: %s Process rank: %s Epoch: %s", pfx2,
+                 ORTE_JOBID_PRINT(src->name.jobid),
+                 ORTE_VPID_PRINT(src->name.vpid));
+#endif
+        
         /* set the return */
         *output = tmp;
         free(pfx2);

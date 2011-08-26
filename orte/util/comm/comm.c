@@ -433,8 +433,13 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     return ORTE_SUCCESS;
 }
 
+#if ORTE_ENABLE_EPOCH
 int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t job, orte_vpid_t vpid,
                                    orte_epoch_t epoch, int *num_procs, orte_proc_t ***proc_info_array)
+#else
+int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t job, orte_vpid_t vpid,
+                                   int *num_procs, orte_proc_t ***proc_info_array)
+#endif
 {
     int ret;
     int32_t cnt, cnt_procs, n;
@@ -463,11 +468,13 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
         OBJ_RELEASE(cmd);
         return ret;
     }
+#if ORTE_ENABLE_EPOCH
     if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &epoch, 1, ORTE_EPOCH))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
         return ret;
     }
+#endif
     /* define a max time to wait for send to complete */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;

@@ -522,7 +522,7 @@ static void errmgr_autor_process_fault_app(orte_job_t *jdata,
     wp_item = OBJ_NEW(errmgr_autor_wp_item_t);
     wp_item->name.jobid = proc->jobid;
     wp_item->name.vpid = proc->vpid;
-    wp_item->name.epoch = proc->epoch;
+    ORTE_EPOCH_SET(wp_item->name.epoch,proc->epoch);
     wp_item->state = state;
 
     opal_list_append(procs_pending_recovery, &(wp_item->super));
@@ -626,7 +626,7 @@ void errmgr_autor_wp_item_construct(errmgr_autor_wp_item_t *wp)
 {
     wp->name.jobid = ORTE_JOBID_INVALID;
     wp->name.vpid  = ORTE_VPID_INVALID;
-    wp->name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(wp->name.epoch,ORTE_EPOCH_MIN);
 
     wp->state = 0;
 }
@@ -635,7 +635,7 @@ void errmgr_autor_wp_item_destruct(errmgr_autor_wp_item_t *wp)
 {
     wp->name.jobid = ORTE_JOBID_INVALID;
     wp->name.vpid  = ORTE_VPID_INVALID;
-    wp->name.epoch = ORTE_EPOCH_INVALID;
+    ORTE_EPOCH_SET(wp->name.epoch,ORTE_EPOCH_INVALID);
 
     wp->state = 0;
 }

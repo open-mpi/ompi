@@ -137,6 +137,7 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
 bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t * peer)
 {
     int rc;
+
     while(1) {
         rc = writev(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
         if(rc < 0) {
@@ -338,6 +339,7 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
     orte_process_name_t src = msg->msg_hdr.msg_src;
     
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+
     if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &peer->peer_name, &src) != OPAL_EQUAL) {
         opal_hash_table_remove_value_uint64(&mca_oob_tcp_component.tcp_peers, 
                                             orte_util_hash_name(&peer->peer_name));

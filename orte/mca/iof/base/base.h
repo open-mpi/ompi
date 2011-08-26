@@ -135,7 +135,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         ep = OBJ_NEW(orte_iof_sink_t);                              \
         ep->name.jobid = (nm)->jobid;                               \
         ep->name.vpid = (nm)->vpid;                                 \
-        ep->name.epoch = (nm)->epoch;                               \
+        ORTE_EPOCH_SET(ep->name.epoch,(nm)->epoch);                 \
         ep->tag = (tg);                                             \
         if (0 <= (fid)) {                                           \
             ep->wev->fd = (fid);                                    \
@@ -169,7 +169,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
-        rev->name.epoch = (nm)->epoch;                              \
+        ORTE_EPOCH_SET(rev->name.epoch,(nm)->epoch);                \
         rev->tag = (tg);                                            \
         rev->fd = (fid);                                            \
         *(rv) = rev;                                                \
@@ -194,7 +194,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         ep = OBJ_NEW(orte_iof_sink_t);                              \
         ep->name.jobid = (nm)->jobid;                               \
         ep->name.vpid = (nm)->vpid;                                 \
-        ep->name.epoch = (nm)->epoch;                               \
+        ORTE_EPOCH_SET(ep->name.epoch,(nm)->epoch);                 \
         ep->tag = (tg);                                             \
         if (0 <= (fid)) {                                           \
             ep->wev->fd = (fid);                                    \
@@ -215,7 +215,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
-        rev->name.epoch= (nm)->epoch;                               \
+        ORTE_EPOCH_SET(rev->name.epoch,(nm)->epoch);                \
         rev->tag = (tg);                                            \
         *(rv) = rev;                                                \
         opal_event_set(opal_event_base,                             \

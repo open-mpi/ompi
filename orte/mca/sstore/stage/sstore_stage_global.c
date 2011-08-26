@@ -1218,10 +1218,10 @@ static int process_local_push(orte_process_name_t* peer, opal_buffer_t* buffer, 
         p_set = OBJ_NEW(orte_filem_base_process_set_t);
         p_set->source.jobid = peer->jobid;
         p_set->source.vpid  = peer->vpid;
-        p_set->source.epoch = peer->epoch;
+        ORTE_EPOCH_SET(p_set->source.epoch,peer->epoch);
         p_set->sink.jobid   = ORTE_PROC_MY_NAME->jobid;
         p_set->sink.vpid    = ORTE_PROC_MY_NAME->vpid;
-        p_set->sink.epoch   = ORTE_PROC_MY_NAME->epoch;
+        ORTE_EPOCH_SET(p_set->sink.epoch,ORTE_PROC_MY_NAME->epoch);
         opal_list_append(&(filem_request->process_sets), &(p_set->super) );
     }
 
@@ -1706,8 +1706,7 @@ static int orte_sstore_stage_extract_global_metadata(orte_sstore_stage_global_sn
 
         vpid_snapshot->process_name.jobid  = handle_info->jobid;
         vpid_snapshot->process_name.vpid   = i;
-        vpid_snapshot->process_name.epoch = ORTE_EPOCH_INVALID;
-        vpid_snapshot->process_name.epoch = orte_ess.proc_get_epoch(&vpid_snapshot->process_name);
+        ORTE_EPOCH_SET(vpid_snapshot->process_name.epoch,orte_ess.proc_get_epoch(&vpid_snapshot->process_name));
 
         /* JJH: Currently we do not have this information since we do not save
          * individual vpid info in the Global SStore. It is in the metadata

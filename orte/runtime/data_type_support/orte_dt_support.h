@@ -52,9 +52,14 @@ int orte_dt_compare_jobid(orte_jobid_t *value1,
 int orte_dt_compare_vpid(orte_vpid_t *value1,
                          orte_vpid_t *value2,
                          opal_data_type_t type);
+#if ORTE_ENABLE_EPOCH
 int orte_dt_compare_epoch(orte_epoch_t *value1,
                           orte_epoch_t *value2,
                           opal_data_type_t type);
+#define ORTE_EPOCH_CMP(n,m) ( (m) - (n) )
+#else
+#define ORTE_EPOCH_CMP(n,m) ( 0 )
+#endif
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_compare_job(orte_job_t *value1, orte_job_t *value2, opal_data_type_t type);
 int orte_dt_compare_node(orte_node_t *value1, orte_node_t *value2, opal_data_type_t type);
@@ -86,7 +91,9 @@ int orte_dt_copy_std_cntr(orte_std_cntr_t **dest, orte_std_cntr_t *src, opal_dat
 int orte_dt_copy_name(orte_process_name_t **dest, orte_process_name_t *src, opal_data_type_t type);
 int orte_dt_copy_jobid(orte_jobid_t **dest, orte_jobid_t *src, opal_data_type_t type);
 int orte_dt_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, opal_data_type_t type);
+#if ORTE_ENABLE_EPOCH
 int orte_dt_copy_epoch(orte_epoch_t **dest, orte_epoch_t *src, opal_data_type_t type);
+#endif
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_copy_job(orte_job_t **dest, orte_job_t *src, opal_data_type_t type);
 int orte_dt_copy_node(orte_node_t **dest, orte_node_t *src, opal_data_type_t type);
@@ -116,8 +123,10 @@ int orte_dt_pack_jobid(opal_buffer_t *buffer, const void *src,
                        int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
                       int32_t num_vals, opal_data_type_t type);
+#if ORTE_ENABLE_EPOCH
 int orte_dt_pack_epoch(opal_buffer_t *buffer, const void *src,
                       int32_t num_vals, opal_data_type_t type);
+#endif
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
                      int32_t num_vals, opal_data_type_t type);
@@ -185,8 +194,10 @@ int orte_dt_unpack_jobid(opal_buffer_t *buffer, void *dest,
                          int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_vpid(opal_buffer_t *buffer, void *dest,
                         int32_t *num_vals, opal_data_type_t type);
+#if ORTE_ENABLE_EPOCH
 int orte_dt_unpack_epoch(opal_buffer_t *buffer, void *dest,
                         int32_t *num_vals, opal_data_type_t type);
+#endif
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
                        int32_t *num_vals, opal_data_type_t type);

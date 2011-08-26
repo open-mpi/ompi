@@ -195,7 +195,7 @@ static int rte_init(void)
     }
     ORTE_PROC_MY_NAME->vpid = strtol(envar, NULL, 10);
 #endif
-    ORTE_PROC_MY_NAME->epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_MIN);
     /* get our local rank */
     if (NULL == (envar = getenv("SLURM_LOCALID"))) {
         error = "could not get SLURM_LOCALID";
@@ -260,7 +260,7 @@ static int rte_init(void)
     nodeid = strtol(envar, NULL, 10);
     ORTE_PROC_MY_DAEMON->jobid = 0;
     ORTE_PROC_MY_DAEMON->vpid = nodeid;
-    ORTE_PROC_MY_DAEMON->epoch = ORTE_PROC_MY_NAME->epoch;
+    ORTE_EPOCH_SET(ORTE_PROC_MY_DAEMON->epoch,ORTE_PROC_MY_NAME->epoch);
     
     /* get the number of ppn */
     if (NULL == (tasks_per_node = getenv("SLURM_STEP_TASKS_PER_NODE"))) {

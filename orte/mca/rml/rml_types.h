@@ -62,7 +62,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
         pkt = OBJ_NEW(orte_msg_packet_t);                           \
         pkt->sender.jobid = (sndr)->jobid;                          \
         pkt->sender.vpid = (sndr)->vpid;                            \
-        pkt->sender.epoch = (sndr)->epoch;                          \
+        ORTE_EPOCH_SET(pkt->sender.epoch,(sndr)->epoch);            \
         if ((crt)) {                                                \
             pkt->buffer = OBJ_NEW(opal_buffer_t);                   \
             opal_dss.copy_payload(pkt->buffer, *(buf));             \
@@ -85,7 +85,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
         pkt = OBJ_NEW(orte_msg_packet_t);                           \
         pkt->sender.jobid = (sndr)->jobid;                          \
         pkt->sender.vpid = (sndr)->vpid;                            \
-        pkt->sender.epoch = (sndr)->epoch;                          \
+        ORTE_EPOCH_SET(pkt->sender.epoch,(sndr)->epoch);            \
         if ((crt)) {                                                \
             pkt->buffer = OBJ_NEW(opal_buffer_t);                   \
             opal_dss.copy_payload(pkt->buffer, *(buf));             \
@@ -191,8 +191,10 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_msg_packet_t);
 
 #define ORTE_RML_TAG_SUBSCRIBE              46
 
+#if ORTE_ENABLE_EPOCH
 /* For Epoch Updates */
 #define ORTE_RML_TAG_EPOCH_CHANGE           47
+#endif
 
 /* Notify of failed processes */
 #define ORTE_RML_TAG_FAILURE_NOTICE         48

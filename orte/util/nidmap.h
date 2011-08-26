@@ -48,11 +48,19 @@ ORTE_DECLSPEC orte_jmap_t* orte_util_lookup_jmap(orte_jobid_t job);
 ORTE_DECLSPEC orte_pmap_t* orte_util_lookup_pmap(orte_process_name_t *proc);
 ORTE_DECLSPEC orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc);
 
+#if ORTE_ENABLE_EPOCH
 ORTE_DECLSPEC orte_epoch_t orte_util_lookup_epoch(orte_process_name_t *proc);
 ORTE_DECLSPEC orte_epoch_t orte_util_set_epoch(orte_process_name_t *proc, orte_epoch_t epoch);
+#endif
 
 ORTE_DECLSPEC int orte_util_set_proc_state(orte_process_name_t *proc, orte_proc_state_t state);
+
+#if ORTE_RESIL_ORTE
+#define PROC_IS_RUNNING(n) orte_util_proc_is_running(n)
 ORTE_DECLSPEC bool orte_util_proc_is_running(orte_process_name_t *proc);
+#else
+#define PROC_IS_RUNNING(n) ( true )
+#endif
 
 ORTE_DECLSPEC int orte_util_encode_nodemap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_nodemap(opal_byte_object_t *boptr);
@@ -72,5 +80,8 @@ ORTE_DECLSPEC void orte_jobmap_dump(void);
 END_C_DECLS
 
 /* Local functions */
+#if ORTE_ENABLE_EPOCH
 orte_epoch_t get_epoch_from_orte_job_data(orte_process_name_t *proc, orte_epoch_t epoch);
+#endif
+
 #endif

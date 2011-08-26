@@ -81,7 +81,7 @@ void orte_snapc_base_local_snapshot_construct(orte_snapc_base_local_snapshot_t *
 {
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
-    snapshot->process_name.epoch  = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(snapshot->process_name.epoch,ORTE_EPOCH_MIN);
 
     snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
 
@@ -92,7 +92,7 @@ void orte_snapc_base_local_snapshot_destruct( orte_snapc_base_local_snapshot_t *
 {
     snapshot->process_name.jobid  = 0;
     snapshot->process_name.vpid   = 0;
-    snapshot->process_name.epoch  = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(snapshot->process_name.epoch,ORTE_EPOCH_MIN);
 
     snapshot->state = ORTE_SNAPC_CKPT_STATE_NONE;
 

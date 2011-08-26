@@ -34,6 +34,7 @@
 #include "orte/util/show_help.h"
 #include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/data_type_support/orte_dt_support.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/base/base.h"
@@ -41,7 +42,9 @@
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/sensor/sensor.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/runtime/orte_quit.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -59,13 +62,15 @@ static void failed_start(orte_odls_job_t *jobdat, orte_exit_code_t exit_code);
 static void update_local_children(orte_odls_job_t *jobdat,
                                   orte_job_state_t jobstate,
                                   orte_proc_state_t state);
-static void killprocs(orte_jobid_t job, orte_vpid_t vpid, orte_epoch_t epoch);
+static void killprocs(orte_jobid_t job, orte_vpid_t vpid);
 static int record_dead_process(orte_process_name_t *proc);
-static int send_to_local_applications(opal_pointer_array_t *dead_names);
 static int mark_processes_as_dead(opal_pointer_array_t *dead_procs);
+#if ORTE_RESIL_ORTE
+static int send_to_local_applications(opal_pointer_array_t *dead_names);
 static void failure_notification(int status, orte_process_name_t* sender,
                                  opal_buffer_t *buffer, orte_rml_tag_t tag,
                                  void* cbdata);
+#endif
 
 /*
  * Module functions: Global
@@ -104,8 +109,10 @@ orte_errmgr_base_module_t orte_errmgr_orted_module = {
     predicted_fault,
     suggest_map_targets,
     ft_event,
-    orte_errmgr_base_register_migration_warning,
-    orte_errmgr_base_set_fault_callback  /* Set callback function */
+    orte_errmgr_base_register_migration_warning
+#if ORTE_RESIL_ORTE
+    ,orte_errmgr_base_set_fault_callback  /* Set callback function */
+#endif
 };
 
 /************************
@@ -113,16 +120,22 @@ orte_errmgr_base_module_t orte_errmgr_orted_module = {
  ************************/
 static int init(void)
 {
-    int ret;
+    int ret = ORTE_SUCCESS;
 
+#if ORTE_RESIL_ORTE
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FAILURE_NOTICE,
                                   ORTE_RML_PERSISTENT, failure_notification, NULL);
+#endif
+
     return ret;
 }
 
 static int finalize(void)
 {
+#if ORTE_RESIL_ORTE
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_FAILURE_NOTICE);
+#endif
+
     return ORTE_SUCCESS;
 }
 
@@ -228,10 +241,10 @@ static int update_state(orte_jobid_t job,
             /* update all procs in job */
             update_local_children(jobdat, jobstate, ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED);
             /* order all local procs for this job to be killed */
-            killprocs(jobdat->jobid, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD);
+            killprocs(jobdat->jobid, ORTE_VPID_WILDCARD);
         case ORTE_JOB_STATE_COMM_FAILED:
             /* kill all local procs */
-            killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD);
+            killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
             /* tell the caller we can't recover */
             return ORTE_ERR_UNRECOVERABLE;
             break;
@@ -276,7 +289,7 @@ static int update_state(orte_jobid_t job,
         /* see if this was a lifeline */
         if (ORTE_SUCCESS != orte_routed.route_lost(proc)) {
             /* kill our children */
-            killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD);
+            killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
             /* terminate - our routed children will see
              * us leave and automatically die
              */
@@ -290,10 +303,18 @@ static int update_state(orte_jobid_t job,
             if (0 == orte_routed.num_routes() &&
                     0 == opal_list_get_size(&orte_local_children)) {
                 orte_quit();
+            } else {
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                            "%s errmgr:orted not exiting, num_routes() == %d, num children == %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            orte_routed.num_routes(),
+                            opal_list_get_size(&orte_local_children)));
             }
         }
 
+#if ORTE_RESIL_ORTE
         record_dead_process(proc);
+#endif
 
         /* if not, then indicate we can continue */
         return ORTE_SUCCESS;
@@ -344,7 +365,7 @@ static int update_state(orte_jobid_t job,
                     /* Decrement the number of local procs */
                     jobdat->num_local_procs--;
                     /* kill this proc */
-                    killprocs(proc->jobid, proc->vpid, proc->epoch);
+                    killprocs(proc->jobid, proc->vpid);
                 }
                 app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, child->app_idx);
                 if( jobdat->enable_recovery && child->restarts < app->max_restarts ) {
@@ -526,10 +547,12 @@ REPORT_ABORT:
                         ORTE_ERROR_LOG(rc);
                         goto FINAL_CLEANUP;
                     }
+#if ORTE_ENABLE_EPOCH
                     if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &child->name->epoch, 1, ORTE_EPOCH))) {
                         ORTE_ERROR_LOG(rc);
                         goto FINAL_CLEANUP;
                     }
+#endif
                 }
             }
             /* pack an invalid marker */
@@ -660,7 +683,7 @@ static int mark_processes_as_dead(opal_pointer_array_t *dead_procs) {
             continue;
         }
 
-        if (name_item->epoch < orte_util_lookup_epoch(name_item)) {
+        if (0 < ORTE_EPOCH_CMP(name_item->epoch,orte_ess.proc_get_epoch(name_item))) {
             continue;
         }
 
@@ -669,9 +692,11 @@ static int mark_processes_as_dead(opal_pointer_array_t *dead_procs) {
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(name_item)));
 
+#if ORTE_ENABLE_EPOCH
         /* Increment the epoch */
         orte_util_set_proc_state(name_item, ORTE_PROC_STATE_TERMINATED);
         orte_util_set_epoch(name_item, name_item->epoch + 1);
+#endif
 
         OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
 
@@ -706,6 +731,7 @@ static int mark_processes_as_dead(opal_pointer_array_t *dead_procs) {
     return ORTE_SUCCESS;
 }
 
+#if ORTE_RESIL_ORTE
 static void failure_notification(int status, orte_process_name_t* sender,
                                  opal_buffer_t *buffer, orte_rml_tag_t tag,
                                  void* cbdata)
@@ -714,7 +740,7 @@ static void failure_notification(int status, orte_process_name_t* sender,
     orte_std_cntr_t n;
     int ret = ORTE_SUCCESS, num_failed;
     int32_t i;
-    orte_process_name_t *name_item, proc;
+    orte_process_name_t *name_item;
     
     dead_names = OBJ_NEW(opal_pointer_array_t);
     
@@ -746,7 +772,7 @@ static void failure_notification(int status, orte_process_name_t* sender,
         /* There shouldn't be an issue of receiving this message multiple 
          * times but it doesn't hurt to double check.
          */
-        if (proc.epoch < orte_util_lookup_epoch(name_item)) {
+        if (0 < ORTE_EPOCH_CMP(name_item->epoch,orte_ess.proc_get_epoch(name_item))) {
             opal_output(1, "Received from proc %s local epoch %d", ORTE_NAME_PRINT(name_item), orte_util_lookup_epoch(name_item));
             continue;
         }
@@ -767,6 +793,7 @@ static void failure_notification(int status, orte_process_name_t* sender,
         free(name_item);
     }
 }
+#endif
 
 /*****************
  * Local Functions
@@ -948,11 +975,13 @@ static int pack_child_contact_info(orte_jobid_t job, opal_buffer_t *buf)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }            
+#if ORTE_ENABLE_EPOCH
             /* Pack the child's epoch. */
             if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &(child->name->epoch), 1, ORTE_EPOCH))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+#endif
             /* pack the contact info */
             if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &child->rml_uri, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
@@ -1015,7 +1044,7 @@ static void update_local_children(orte_odls_job_t *jobdat, orte_job_state_t jobs
     }
 }
 
-static void killprocs(orte_jobid_t job, orte_vpid_t vpid, orte_epoch_t epoch)
+static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
 {
     opal_pointer_array_t cmd;
     orte_proc_t proc;
@@ -1026,7 +1055,9 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid, orte_epoch_t epoch)
         orte_sensor.stop(job);
     }
 
-    if (ORTE_JOBID_WILDCARD == job && ORTE_VPID_WILDCARD == vpid && ORTE_EPOCH_WILDCARD == epoch) {
+    if (ORTE_JOBID_WILDCARD == job 
+        && ORTE_VPID_WILDCARD == vpid 
+        && 0 == ORTE_EPOCH_CMP(ORTE_EPOCH_WILDCARD,epoch)) {
         if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(NULL))) {
             ORTE_ERROR_LOG(rc);
         }
@@ -1037,7 +1068,7 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid, orte_epoch_t epoch)
     OBJ_CONSTRUCT(&proc, orte_proc_t);
     proc.name.jobid = job;
     proc.name.vpid = vpid;
-    proc.name.epoch = epoch;
+    ORTE_EPOCH_SET(proc.name.epoch,epoch);
     opal_pointer_array_add(&cmd, &proc);
     if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(&cmd))) {
         ORTE_ERROR_LOG(rc);
@@ -1082,19 +1113,20 @@ static int record_dead_process(orte_process_name_t *proc) {
     return rc;
 }
 
+#if ORTE_RESIL_ORTE
 int send_to_local_applications(opal_pointer_array_t *dead_names) {
     opal_buffer_t *buf;
     int ret;
     orte_process_name_t *name_item;
     int size, i;
 
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                "%s Sending failure to local applications.",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
     buf = OBJ_NEW(opal_buffer_t);
     
     size = opal_pointer_array_get_size(dead_names);
+    
+    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
+                "%s Sending %d failure(s) to local applications.",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), size));
     
     if (ORTE_SUCCESS != (ret = opal_dss.pack(buf, &size, 1, ORTE_VPID))) {
         ORTE_ERROR_LOG(ret);
@@ -1122,4 +1154,5 @@ int send_to_local_applications(opal_pointer_array_t *dead_names) {
 
     return ORTE_SUCCESS;
 }
+#endif
 

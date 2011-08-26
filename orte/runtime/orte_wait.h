@@ -204,7 +204,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         mev = OBJ_NEW(orte_message_event_t);                    \
         mev->sender.jobid = (sndr)->jobid;                      \
         mev->sender.vpid = (sndr)->vpid;                        \
-        mev->sender.epoch = (sndr)->epoch;                      \
+        ORTE_EPOCH_SET(mev->sender.epoch,(sndr)->epoch);        \
         opal_dss.copy_payload(mev->buffer, (buf));              \
         mev->tag = (tg);                                        \
         mev->file = strdup((buf)->parent.cls_init_file_name);   \
@@ -228,7 +228,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
         mev = OBJ_NEW(orte_message_event_t);                    \
         mev->sender.jobid = (sndr)->jobid;                      \
         mev->sender.vpid = (sndr)->vpid;                        \
-        mev->sender.epoch = (sndr)->epoch;                      \
+        ORTE_EPOCH_SET(mev->sender.epoch,(sndr)->epoch);        \
         opal_dss.copy_payload(mev->buffer, (buf));              \
         mev->tag = (tg);                                        \
         opal_event_evtimer_set(opal_event_base,                 \
@@ -258,7 +258,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
         tmp = OBJ_NEW(orte_notify_event_t);                     \
         tmp->proc.jobid = (data)->jobid;                        \
         tmp->proc.vpid = (data)->vpid;                          \
-        tmp->proc.epoch = (data)->epoch;                        \
+        ORTE_EPOCH_SET(tmp->proc.epoch,(data)->epoch);          \
         opal_event.evtimer_set(opal_event_base,                 \
                                tmp->ev, (cbfunc), tmp);         \
         now.tv_sec = 0;                                         \

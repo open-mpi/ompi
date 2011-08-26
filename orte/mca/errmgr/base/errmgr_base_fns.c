@@ -97,13 +97,13 @@ void orte_errmgr_predicted_proc_construct(orte_errmgr_predicted_proc_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
     item->proc_name.jobid = ORTE_JOBID_INVALID;
-    item->proc_name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(item->proc_name.epoch,ORTE_EPOCH_MIN);
 }
 
 void orte_errmgr_predicted_proc_destruct( orte_errmgr_predicted_proc_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
-    item->proc_name.epoch = ORTE_EPOCH_INVALID;
+    ORTE_EPOCH_SET(item->proc_name.epoch,ORTE_EPOCH_INVALID);
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 }
 
@@ -139,13 +139,13 @@ OBJ_CLASS_INSTANCE(orte_errmgr_predicted_map_t,
 void orte_errmgr_predicted_map_construct(orte_errmgr_predicted_map_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
-    item->proc_name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(item->proc_name.epoch,ORTE_EPOCH_MIN);
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 
     item->node_name = NULL;
 
     item->map_proc_name.vpid  = ORTE_VPID_INVALID;
-    item->map_proc_name.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(item->map_proc_name.epoch,ORTE_EPOCH_MIN);
     item->map_proc_name.jobid = ORTE_JOBID_INVALID;
 
     item->map_node_name = NULL;
@@ -156,7 +156,7 @@ void orte_errmgr_predicted_map_construct(orte_errmgr_predicted_map_t *item)
 void orte_errmgr_predicted_map_destruct( orte_errmgr_predicted_map_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
-    item->proc_name.epoch = ORTE_EPOCH_INVALID;
+    ORTE_EPOCH_SET(item->proc_name.epoch,ORTE_EPOCH_INVALID);
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 
     if( NULL != item->node_name ) {
@@ -165,7 +165,7 @@ void orte_errmgr_predicted_map_destruct( orte_errmgr_predicted_map_t *item)
     }
 
     item->map_proc_name.vpid  = ORTE_VPID_INVALID;
-    item->map_proc_name.epoch = ORTE_EPOCH_INVALID;
+    ORTE_EPOCH_SET(item->map_proc_name.epoch,ORTE_EPOCH_INVALID);
     item->map_proc_name.jobid = ORTE_JOBID_INVALID;
 
     if( NULL != item->map_node_name ) {

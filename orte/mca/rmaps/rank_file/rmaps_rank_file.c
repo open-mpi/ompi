@@ -502,8 +502,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
             }
             proc->name.vpid = rank;
             /* Either init or update the epoch. */
-            proc->name.epoch = ORTE_EPOCH_INVALID;
-            proc->name.epoch = orte_ess.proc_get_epoch(&proc->name);
+            ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
             
             proc->slot_list = strdup(rfmap->slot_list);
             /* insert the proc into the proper place */

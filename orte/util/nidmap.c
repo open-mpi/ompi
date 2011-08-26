@@ -249,7 +249,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
          */
         /* construct the URI */
         proc.vpid = node->daemon;
-        proc.epoch = ORTE_EPOCH_MIN;
+        ORTE_EPOCH_SET(proc.epoch,ORTE_EPOCH_MIN);
 
         orte_util_convert_process_name_to_string(&proc_name, &proc);
         asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
@@ -1001,6 +1001,7 @@ void print_orte_job_data() {
 }
 #endif
 
+#if ORTE_ENABLE_EPOCH
 /* Look up the current epoch value that we have stored locally.
  *
  * Note that this will not ping the HNP to get the most up to date epoch stored
@@ -1023,7 +1024,9 @@ orte_epoch_t orte_util_set_epoch(orte_process_name_t *proc, orte_epoch_t epoch)
     /*print_orte_job_data();*/
     return e;
 }
+#endif
 
+#if ORTE_RESIL_ORTE
 bool orte_util_proc_is_running(orte_process_name_t *proc) {
     int i;
     unsigned int j;
@@ -1078,7 +1081,9 @@ int orte_util_set_proc_state(orte_process_name_t *proc, orte_proc_state_t state)
 
     return ORTE_ERROR;
 }
+#endif
 
+#if ORTE_ENABLE_EPOCH
 /*
  * This function performs both the get and set operations on the epoch for a
  * sepcific process name. If the epoch passed into the function is
@@ -1090,6 +1095,11 @@ orte_epoch_t get_epoch_from_orte_job_data(orte_process_name_t *proc, orte_epoch_
     unsigned int j;
     orte_job_t *jdata;
     orte_proc_t *pdata;
+
+    if (ORTE_JOBID_INVALID == proc->jobid || 
+        ORTE_VPID_INVALID  == proc->vpid) {
+        return ORTE_EPOCH_INVALID;
+    }
 
     /* Sanity check just to make sure we don't overwrite our existing
      * orte_job_data.
@@ -1165,4 +1175,5 @@ orte_epoch_t get_epoch_from_orte_job_data(orte_process_name_t *proc, orte_epoch_
         return ORTE_EPOCH_MIN;
     }
 }
+#endif
 

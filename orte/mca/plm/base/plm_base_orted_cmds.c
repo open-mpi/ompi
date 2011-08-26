@@ -163,8 +163,7 @@ int orte_plm_base_orted_exit(orte_daemon_cmd_flag_t command)
                 continue;
             }
             peer.vpid = v;
-            peer.epoch = ORTE_EPOCH_INVALID;
-            peer.epoch = orte_ess.proc_get_epoch(&peer);
+            ORTE_EPOCH_SET(peer.epoch,orte_ess.proc_get_epoch(&peer));
             
             /* don't worry about errors on the send here - just
              * issue it and keep going
@@ -242,7 +241,7 @@ int orte_plm_base_orted_terminate_job(orte_jobid_t jobid)
     OBJ_CONSTRUCT(&proc, orte_proc_t);
     proc.name.jobid = jobid;
     proc.name.vpid = ORTE_VPID_WILDCARD;
-    proc.name.epoch  = ORTE_EPOCH_WILDCARD;
+    ORTE_EPOCH_SET(proc.name.epoch,ORTE_EPOCH_WILDCARD);
     opal_pointer_array_add(&procs, &proc);
     if (ORTE_SUCCESS != (rc = orte_plm_base_orted_kill_local_procs(&procs))) {
         ORTE_ERROR_LOG(rc);
@@ -340,8 +339,7 @@ int orte_plm_base_orted_kill_local_procs(opal_pointer_array_t *procs)
                 continue;
             }
             peer.vpid = v;
-            peer.epoch = ORTE_EPOCH_INVALID;
-            peer.epoch = orte_ess.proc_get_epoch(&peer);
+            ORTE_EPOCH_SET(peer.epoch,orte_ess.proc_get_epoch(&peer));
             /* check to see if this daemon is known to be "dead" */
             if (proc->state > ORTE_PROC_STATE_UNTERMINATED) {
                 /* don't try to send this */

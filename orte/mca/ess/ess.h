@@ -111,7 +111,11 @@ typedef orte_node_rank_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_pr
  * will get the most up to date version stored within the orte_proc_t struct.
  * Obviously the epoch of the proc that is passed in will be ignored.
  */
+#if ORTE_ENABLE_EPOCH
 typedef orte_epoch_t (*orte_ess_base_module_proc_get_epoch_fn_t)(orte_process_name_t *proc);
+#else
+typedef int (*orte_ess_base_module_proc_get_epoch_fn_t)(orte_process_name_t *proc);
+#endif
 
 /**
  * Update the pidmap

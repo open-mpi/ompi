@@ -95,7 +95,7 @@ static int init(void)
 
     my_local_rank_zero_proc.jobid = ORTE_PROC_MY_NAME->jobid;
     my_local_rank_zero_proc.vpid = ORTE_VPID_INVALID;
-    my_local_rank_zero_proc.epoch = ORTE_EPOCH_MIN;
+    ORTE_EPOCH_SET(my_local_rank_zero_proc.epoch,ORTE_EPOCH_MIN);
 
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_init())) {
         ORTE_ERROR_LOG(rc);
@@ -270,7 +270,7 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
         proc.jobid = ORTE_PROC_MY_NAME->jobid;
         for (v=0; v < orte_process_info.num_procs; v++) {
             proc.vpid = v;
-            proc.epoch = orte_util_lookup_epoch(&proc);
+            ORTE_EPOCH_SET(proc.epoch,orte_util_lookup_epoch(&proc));
 
             /* is this proc local_rank=0 on its node? */
             if (0 == my_local_rank && 0 == orte_ess.get_local_rank(&proc)) {
@@ -285,7 +285,7 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
             nm = OBJ_NEW(orte_namelist_t);
             nm->name.jobid = proc.jobid;
             nm->name.vpid = proc.vpid;
-            nm->name.epoch = proc.epoch;
+            ORTE_EPOCH_SET(nm->name.epoch,proc.epoch);
 
             opal_list_append(&my_local_peers, &nm->item);
             /* if I am not local_rank=0, is this one? */
@@ -293,7 +293,7 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
                 0 == orte_ess.get_local_rank(&proc)) {
                 my_local_rank_zero_proc.jobid = proc.jobid;
                 my_local_rank_zero_proc.vpid = proc.vpid;
-                my_local_rank_zero_proc.epoch = proc.epoch;
+                ORTE_EPOCH_SET(my_local_rank_zero_proc.epoch,proc.epoch);
             }
         }
 
