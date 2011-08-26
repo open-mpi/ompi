@@ -508,7 +508,7 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
                  ORTE_VPID_PRINT(src->name.vpid),
                  ORTE_EPOCH_PRINT(src->name.epoch));
 #else
-        asprintf(&tmp, "\n%sProcess OMPI jobid: %s Process rank: %s Epoch: %s", pfx2,
+        asprintf(&tmp, "\n%sProcess OMPI jobid: %s Process rank: %s", pfx2,
                  ORTE_JOBID_PRINT(src->name.jobid),
                  ORTE_VPID_PRINT(src->name.vpid));
 #endif
