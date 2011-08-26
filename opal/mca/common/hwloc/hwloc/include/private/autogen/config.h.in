@@ -42,9 +42,6 @@
 /* Define to 1 if you have the <cuda_runtime_api.h> header file. */
 #undef HAVE_CUDA_RUNTIME_API_H
 
-/* Define to 1 if you have the <curses.h> header file. */
-#undef HAVE_CURSES_H
-
 /* Define to 1 if you have the declaration of `CTL_HW', and to 0 if you don't.
    */
 #undef HAVE_DECL_CTL_HW
@@ -261,9 +258,6 @@
 /* Define to 1 if you have the <sys/utsname.h> header file. */
 #undef HAVE_SYS_UTSNAME_H
 
-/* Define to 1 if you have the <term.h> header file. */
-#undef HAVE_TERM_H
-
 /* Define to 1 if you have the `uname' function. */
 #undef HAVE_UNAME
 
@@ -476,6 +470,9 @@
 
 /* Define to 1 on unsupported systems */
 #undef HWLOC_UNSUPPORTED_SYS
+
+/* Define to 1 if ncurses works, preferred over curses */
+#undef HWLOC_USE_NCURSES
 
 /* Define to 1 on WINDOWS */
 #undef HWLOC_WIN_SYS

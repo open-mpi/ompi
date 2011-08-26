@@ -524,15 +524,21 @@ EOF])
     )
 
     # XML support
+    hwloc_xml_happy=
     if test "x$enable_xml" != "xno"; then
-        HWLOC_PKG_CHECK_MODULES([XML], [libxml-2.0], [xmlNewDoc], [:], [enable_xml="no"])
+        HWLOC_PKG_CHECK_MODULES([XML], [libxml-2.0], [xmlNewDoc], 
+                                [hwloc_xml_happy=yes], 
+                                [hwloc_xml_happy=no])
     fi
-    if test "x$enable_xml" != "xno"; then
+    if test "x$hwloc_xml_happy" = "xyes"; then
         HWLOC_REQUIRES="libxml-2.0 $HWLOC_REQUIRES"
         AC_DEFINE([HWLOC_HAVE_XML], [1], [Define to 1 if you have the `xml' library.])
         AC_SUBST([HWLOC_HAVE_XML], [1])
     else
         AC_SUBST([HWLOC_HAVE_XML], [0])
+	AS_IF([test "$enable_xml" = "yes"],
+              [AC_MSG_WARN([--enable-xml requested, but XML support was not found])
+               AC_MSG_ERROR([Cannot continue])])
     fi
     HWLOC_CFLAGS="$HWLOC_CFLAGS $HWLOC_XML_CFLAGS"    
 
@@ -623,7 +629,7 @@ AC_DEFUN([HWLOC_DO_AM_CONDITIONALS],[
 	AM_CONDITIONAL([HWLOC_HAVE_CUDART],
 		       [test "x$hwloc_have_cudart" = "xyes"])
         AM_CONDITIONAL([HWLOC_HAVE_CAIRO], [test "x$enable_cairo" != "xno"])
-        AM_CONDITIONAL([HWLOC_HAVE_XML], [test "x$enable_xml" != "xno"])
+        AM_CONDITIONAL([HWLOC_HAVE_XML], [test "$hwloc_xml_happy" = "yes"])
         AM_CONDITIONAL([HWLOC_HAVE_SET_MEMPOLICY], [test "x$enable_set_mempolicy" != "xno"])
         AM_CONDITIONAL([HWLOC_HAVE_MBIND], [test "x$enable_mbind" != "xno"])
         AM_CONDITIONAL([HWLOC_HAVE_BUNZIPP], [test "x$BUNZIPP" != "xfalse"])

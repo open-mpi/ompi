@@ -133,8 +133,8 @@ hwloc_look_darwin(struct hwloc_topology *topology)
           cacheconfig[i] = cacheconfig32[i];
       }
 
-      memset(cachesize, 0, sizeof(cachesize));
-      size = sizeof(cachesize);
+      memset(cachesize, 0, sizeof(uint64_t) * n);
+      size = sizeof(uint64_t) * n;
       if (sysctlbyname("hw.cachesize", cachesize, &size, NULL, 0)) {
         if (n > 0)
           cachesize[0] = memsize;

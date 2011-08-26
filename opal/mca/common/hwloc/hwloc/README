@@ -89,7 +89,7 @@ CLI Examples
 On a 4-socket 2-core machine with hyperthreading, the lstopo tool may show the
 following graphical output:
 
-                               dudley.png
+dudley.png
 
 Here's the equivalent output in textual form:
 
@@ -193,7 +193,7 @@ line), and only socket #0 is shown for brevity:
 On a 4-socket 2-core Opteron NUMA machine, the lstopo tool may show the
 following graphical output:
 
-                               hagrid.png
+hagrid.png
 
 Here's the equivalent output in textual form:
 
@@ -263,7 +263,7 @@ added and only PU #0 is shown for brevity:
 On a 2-socket quad-core Xeon (pre-Nehalem, with 2 dual-core dies into each
 socket):
 
-                               emmett.png
+emmett.png
 
 Here's the same output in textual form:
 
@@ -381,12 +381,12 @@ interfaces for them are usually available on the supported Operating Systems.
 Here's the graphical output from lstopo on this platform when Simultaneous
 Multi-Threading (SMT) is enabled:
 
-                           ppc64-with-smt.png
+ppc64-with-smt.png
 
 And here's the graphical output from lstopo on this platform when SMT is
 disabled:
 
-                          ppc64-without-smt.png
+ppc64-without-smt.png
 
 Notice that hwloc only sees half the PUs when SMT is disabled. PU #15, for
 example, seems to change location from NUMA node #0 to #1. In reality, no PUs
@@ -403,7 +403,7 @@ Note that upgrading the Linux kernel on the same PPC64 system mentioned above
 to 2.6.34, hwloc is able to discover all the topology information. The
 following picture shows the entire topology layout when SMT is enabled:
 
-                         ppc64-full-with-smt.png
+ppc64-full-with-smt.png
 
 Developers using the hwloc API or XML output for portable applications should
 therefore be extremely careful to not make any assumptions about the structure
@@ -684,5 +684,5 @@ Make sure to have had a look at those too!
 
 -------------------------------------------------------------------------------
 
-Generated on Thu Apr 14 2011 22:34:49 for Hardware Locality (hwloc) by  doxygen
-1.7.3
+Generated on Tue Aug 16 2011 19:37:04 for Hardware Locality (hwloc) by  doxygen
+1.7.4
