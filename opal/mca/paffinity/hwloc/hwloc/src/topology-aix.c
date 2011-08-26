@@ -475,6 +475,7 @@ look_rset(int sdl, hwloc_obj_type_t type, struct hwloc_topology *topology, int l
 	break;
       case HWLOC_OBJ_GROUP:
 	obj->attr->group.depth = level;
+	break;
       case HWLOC_OBJ_CORE:
       {
 	hwloc_obj_t obj2 = hwloc_alloc_setup_object(HWLOC_OBJ_CACHE, i);
@@ -504,6 +505,8 @@ hwloc_look_aix(struct hwloc_topology *topology)
 {
   int i;
   /* TODO: R_LGPGDEF/R_LGPGFREE for large pages */
+
+  hwloc_debug("Note: SMPSDL is at %d\n", rs_getinfo(NULL, R_SMPSDL, 0));
 
   for (i=0; i<=rs_getinfo(NULL, R_MAXSDL, 0); i++)
     {

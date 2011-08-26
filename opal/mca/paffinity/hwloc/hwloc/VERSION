@@ -7,7 +7,7 @@
 
 major=1
 minor=2
-release=0
+release=1
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
 # it will be appended to the version number.  It does not have to be
@@ -41,11 +41,11 @@ want_repo_rev=0
 # from an SVN checkout, if repo_rev=-1, then its value is replaced
 # with the output of "svnversion".
 
-repo_rev=r3454
+repo_rev=r3619
 
 # The date when this release was created
 
-date="Apr 14, 2011"
+date="Aug 16, 2011"
 
 # The shared library version of hwloc's public library.  This version
 # is maintained in accordance with the "Library Interface Versions"
@@ -58,4 +58,4 @@ date="Apr 14, 2011"
 # 2. Version numbers are described in the Libtool current:revision:age
 # format.
 
-libhwloc_so_version=3:0:3
+libhwloc_so_version=3:1:3
