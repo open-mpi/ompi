@@ -1056,8 +1056,7 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
     }
 
     if (ORTE_JOBID_WILDCARD == job 
-        && ORTE_VPID_WILDCARD == vpid 
-        && 0 == ORTE_EPOCH_CMP(ORTE_EPOCH_WILDCARD,epoch)) {
+        && ORTE_VPID_WILDCARD == vpid) {
         if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(NULL))) {
             ORTE_ERROR_LOG(rc);
         }
@@ -1068,7 +1067,7 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
     OBJ_CONSTRUCT(&proc, orte_proc_t);
     proc.name.jobid = job;
     proc.name.vpid = vpid;
-    ORTE_EPOCH_SET(proc.name.epoch,epoch);
+    ORTE_EPOCH_SET(proc.name.epoch,orte_ess.proc_get_epoch(&(proc.name)));
     opal_pointer_array_add(&cmd, &proc);
     if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(&cmd))) {
         ORTE_ERROR_LOG(rc);
