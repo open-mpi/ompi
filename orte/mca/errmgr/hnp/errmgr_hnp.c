@@ -1729,8 +1729,8 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
     }
 
     if (ORTE_JOBID_WILDCARD == job 
-        && ORTE_VPID_WILDCARD == vpid 
-        && ORTE_EPOCH_CMP(ORTE_EPOCH_WILDCARD,epoch)) {
+        && ORTE_VPID_WILDCARD == vpid) {
+        
         if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(NULL))) {
             ORTE_ERROR_LOG(rc);
         }
@@ -1741,7 +1741,7 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
     OBJ_CONSTRUCT(&proc, orte_proc_t);
     proc.name.jobid = job;
     proc.name.vpid = vpid;
-    ORTE_EPOCH_SET(proc.name.epoch,epoch);
+    ORTE_EPOCH_SET(proc.name.epoch,orte_ess.proc_get_epoch(&(proc.name)));
     opal_pointer_array_add(&cmd, &proc);
     if (ORTE_SUCCESS != (rc = orte_odls.kill_local_procs(&cmd))) {
         ORTE_ERROR_LOG(rc);
@@ -1921,6 +1921,7 @@ static void cbfunc(int status,
 int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
     orte_job_t *jdat;
     orte_proc_t *pdat, *proc_item;
+    orte_process_name_t *proc_name;
     int i;
     opal_pointer_array_t *dead_names;
 
@@ -1978,8 +1979,8 @@ int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
                  * ORTEDs and they can inform the appropriate applications.
                  */
                 for (i = 0; i < num_failed; i++) {
-                    if (NULL != (proc_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i))) {
-                        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, proc_item, 1, ORTE_NAME))) {
+                    if (NULL != (proc_name = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i))) {
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, proc_name, 1, ORTE_NAME))) {
                             ORTE_ERROR_LOG(rc);
                             OBJ_RELEASE(buffer);
                         }
@@ -2102,7 +2103,7 @@ int orte_errmgr_hnp_global_mark_processes_as_dead(opal_pointer_array_t *dead_pro
     }
 
 #if ORTE_RESIL_ORTE
-    if (!orte_orteds_term_ordered) {
+    if (!mca_errmgr_hnp_component.term_in_progress) {
         /* Need to update the orted routing module. */
         orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid);
 
