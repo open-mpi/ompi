@@ -1921,7 +1921,6 @@ static void cbfunc(int status,
 int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
     orte_job_t *jdat;
     orte_proc_t *pdat, *proc_item;
-    orte_process_name_t *proc_name;
     int i;
     opal_pointer_array_t *dead_names;
 
@@ -1968,6 +1967,7 @@ int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
              */
             int rc, num_failed = opal_pointer_array_get_size(dead_names);
             opal_buffer_t* buffer = OBJ_NEW(opal_buffer_t);
+            orte_process_name_t *proc_name;
 
             if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_failed, 1, ORTE_VPID))) {
                 ORTE_ERROR_LOG(rc);
