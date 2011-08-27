@@ -1529,8 +1529,8 @@ int orte_plm_base_append_bootproxy_args(orte_app_context_t *app, char ***argv,
     int i;
 #if ORTE_ENABLE_EPOCH
     orte_epoch_t epoch;
-#endif
     orte_process_name_t proc;
+#endif
     
     /* if a prefix is set, pass it to the bootproxy in a special way */
     if (NULL != app->prefix_dir) {
