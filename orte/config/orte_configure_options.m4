@@ -132,4 +132,20 @@ AC_DEFINE_UNQUOTED([ORTE_ENABLE_HEARTBEAT],
                    [$orte_want_heartbeats],
                    [Whether we want daemon heartbeat monitoring enabled])
 
+#
+# Compile in resilient runtime code
+#
+AC_ARG_ENABLE(resilient-orte,
+    [AC_HELP_STRING([--enable-resilient-orte], [Enable the resilient runtime code.])])
+AS_IF( [test "$enable_resilient_orte" = "yes"], [result=1], [result=0] )
+
+AM_CONDITIONAL(ORTE_RESIL_ORTE, [test "$enable_resilient_orte" = "yes"])
+AC_DEFINE_UNQUOTED([ORTE_RESIL_ORTE], [$result],
+     [Compile a resilient version of Open MPI])
+
+AM_CONDITIONAL(ORTE_ENABLE_EPOCH, [test "$enable_resilient_orte" = "yes"])
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_EPOCH], [$result],
+     [Support for epoch in the ORTE process name enabled or not])
+
+
 ])dnl
