@@ -63,9 +63,9 @@ static void update_local_children(orte_odls_job_t *jobdat,
                                   orte_job_state_t jobstate,
                                   orte_proc_state_t state);
 static void killprocs(orte_jobid_t job, orte_vpid_t vpid);
-static int record_dead_process(orte_process_name_t *proc);
-static int mark_processes_as_dead(opal_pointer_array_t *dead_procs);
 #if ORTE_RESIL_ORTE
+static int mark_processes_as_dead(opal_pointer_array_t *dead_procs);
+static int record_dead_process(orte_process_name_t *proc);
 static int send_to_local_applications(opal_pointer_array_t *dead_names);
 static void failure_notification(int status, orte_process_name_t* sender,
                                  opal_buffer_t *buffer, orte_rml_tag_t tag,
@@ -667,6 +667,7 @@ static int ft_event(int state)
     return ORTE_SUCCESS;
 }
 
+#if ORTE_RESIL_ORTE
 static int mark_processes_as_dead(opal_pointer_array_t *dead_procs) {
     int i;
     orte_process_name_t *name_item;
@@ -731,7 +732,6 @@ static int mark_processes_as_dead(opal_pointer_array_t *dead_procs) {
     return ORTE_SUCCESS;
 }
 
-#if ORTE_RESIL_ORTE
 static void failure_notification(int status, orte_process_name_t* sender,
                                  opal_buffer_t *buffer, orte_rml_tag_t tag,
                                  void* cbdata)
@@ -1076,6 +1076,7 @@ static void killprocs(orte_jobid_t job, orte_vpid_t vpid)
     OBJ_DESTRUCT(&proc);
 }
 
+#if ORTE_RESIL_ORTE
 static int record_dead_process(orte_process_name_t *proc) {
     opal_pointer_array_t *dead_name;
     opal_buffer_t *buffer;
@@ -1112,7 +1113,6 @@ static int record_dead_process(orte_process_name_t *proc) {
     return rc;
 }
 
-#if ORTE_RESIL_ORTE
 int send_to_local_applications(opal_pointer_array_t *dead_names) {
     opal_buffer_t *buf;
     int ret;
