@@ -1908,6 +1908,7 @@ static orte_odls_child_t* proc_is_local(orte_process_name_t *proc)
     return NULL;
 }
 
+#if ORTE_RESIL_ORTE
 static void cbfunc(int status,
                    orte_process_name_t *peer,
                    opal_buffer_t *buffer,
@@ -1915,15 +1916,13 @@ static void cbfunc(int status,
                    void* cbdata) {
     OBJ_RELEASE(buffer);
 }
+#endif
 
 int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
     orte_job_t *jdat;
-    orte_proc_t *pdat;
-    opal_buffer_t *buffer;
-    int i, rc, num_failed;
+    orte_proc_t *pdat, *proc_item;
+    int i;
     opal_pointer_array_t *dead_names;
-    orte_process_name_t *name_item;
-    orte_proc_t *proc_item;
 
     OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
                          "%s RECORDING DEAD PROCESS %s",
@@ -1966,9 +1965,8 @@ int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
              * Send a message to the other daemons so they know that a daemon has
              * died.
              */
-            buffer = OBJ_NEW(opal_buffer_t);
-
-            num_failed = opal_pointer_array_get_size(dead_names);
+            int rc, num_failed = opal_pointer_array_get_size(dead_names);
+            opal_buffer_t* buffer = OBJ_NEW(opal_buffer_t);
 
             if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, &num_failed, 1, ORTE_VPID))) {
                 ORTE_ERROR_LOG(rc);
@@ -1980,8 +1978,8 @@ int orte_errmgr_hnp_record_dead_process(orte_process_name_t *proc) {
                  * ORTEDs and they can inform the appropriate applications.
                  */
                 for (i = 0; i < num_failed; i++) {
-                    if (NULL != (name_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i))) {
-                        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, name_item, 1, ORTE_NAME))) {
+                    if (NULL != (proc_item = (orte_process_name_t *) opal_pointer_array_get_item(dead_names, i))) {
+                        if (ORTE_SUCCESS != (rc = opal_dss.pack(buffer, proc_item, 1, ORTE_NAME))) {
                             ORTE_ERROR_LOG(rc);
                             OBJ_RELEASE(buffer);
                         }
