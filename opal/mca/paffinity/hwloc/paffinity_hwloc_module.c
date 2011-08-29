@@ -173,7 +173,7 @@ static int module_set(opal_paffinity_base_cpu_set_t mask)
 
     set = hwloc_bitmap_alloc();
     hwloc_bitmap_zero(set);
-    for (i = 0; ((unsigned int) i) < OPAL_PAFFINITY_BITMASK_T_NUM_BITS; ++i) {
+    for (i = 0; ((unsigned int) i) < OPAL_PAFFINITY_BITMASK_CPU_MAX; ++i) {
         if (OPAL_PAFFINITY_CPU_ISSET(i, mask)) {
             hwloc_bitmap_set(set, i);
         }
