@@ -450,6 +450,20 @@ AS_IF([test x"$have_mpi" = "xyes"],
 ACVT_CONF_TITLE([Final output])
 AC_OUTPUT
 
+# Patch Makefiles which define library targets that depend on other libraries
+# to prevent the following Libtool warning:
+# "libtool: link: warning: `...//*.la' seems to be moved"
+#
+# Libtool is getting confused by the "//" in the library paths, so remove the
+# trailing '/' from the *LIBDIR variables.
+# Actually, this should be done in the *.m4 files where the variables are being
+# set, but it's less elaborate at this point. ;-)
+makefile_to_patch="vtlib/Makefile tools/vtunify/mpi/Makefile"
+for makefile in $makefile_to_patch; do
+	sed -e "s/^\(.*LIBDIR =.*\)\/$/\1/g" $makefile >$makefile.tmp
+	mv $makefile.tmp $makefile
+done
+
 # Generate MPI wrappers
 AS_IF([test x"$have_mpi" = "xyes"],
 [
