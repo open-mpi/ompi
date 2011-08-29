@@ -10,1926 +10,2129 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include "vt_wrapper.h"
+#include "vt_inttypes.h"
 
-static char * ExeName;
+#include "util/installdirs.h"
 
-int
-main( int argc, char ** argv )
-{
-   int rc;
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <map>
+#include <string>
+#include <vector>
 
-   // get name of executable
-   if( ( ExeName = strrchr( argv[0], '/' ) ) )
-      ExeName++;
-   else
-      ExeName = argv[0];
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-   // create instance of wrapper (initialize)
-   Wrapper * p_wrapper = new Wrapper();
-   assert( p_wrapper );
-
-   // read wrapper's data file
-   if( !p_wrapper->readDataFile() )
-      return 1;
-
-   // read environment variables
-   if( !p_wrapper->readEnvironmentVars() )
-      return 1;
-
-   // parse command line
-   if( !p_wrapper->parseCommandLine( argc, argv ) )
-      return 1;
-
-   // start compiling/linking
-   rc = p_wrapper->run();
-
-   delete p_wrapper;
-   return rc;
-}
-
-
-//////////////////// class Wrapper ////////////////////
-
-// public methods
+// types, enumerations, and structures
 //
 
-Wrapper::Wrapper()
+//
+// languages types
+//
+typedef enum
 {
-   m_pConfig = new Config();
-   assert( m_pConfig );
-}
+  LANG_CC,  // C
+  LANG_CXX, // C++
+  LANG_F77, // Fortran 77
+  LANG_F90  // Fortran 90
+} LangTypeT;
 
-Wrapper::~Wrapper()
+//
+// instrumentation types
+//
+typedef enum
 {
-   delete m_pConfig;
+  INST_TYPE_COMPINST = 0x1, // auto. instr. by compiler
+  INST_TYPE_MANUAL   = 0x2, // manual instr. by VT API
+  INST_TYPE_DYNINST  = 0x4, // binary instrumentation by Dyninst
+  INST_TYPE_TAUINST  = 0x8  // auto. source code instr. by TAU
+} InstTypeT;
+
+//
+// flags for the "showme" mode
+//
+enum
+{
+  SHOWME_FLAG_ALL     = 0x1, // show all commands that would be executed
+  SHOWME_FLAG_COMPILE = 0x2, // show the compiler flags
+  SHOWME_FLAG_LINK    = 0x4  // show the linker flags
+};
+
+//
+// data structure to store wrapper configuration
+//
+struct ConfigS
+{
+  ConfigS()
+    : lang_type( LANG_CC ), inst_type( INST_TYPE_MANUAL ), inst_avail( 0 ),
+      showme_flags( 0 ), be_verbose( false ), comp_only( false ),
+      outfile_given( false ), uses_mpi( false ), uses_threads( false ),
+      uses_openmp( false ), opari_keep_rcfile( false )
+  {
+    opari_rcfile = "opari.rc";
+    opari_tabfile =
+      std::make_pair( std::string( "opari.tab.c" ),
+        std::string( "opari.tab.o" ) );
+  }
+
+  // set language type
+  inline bool setLanguage( const LangTypeT lang );
+
+  // language type is set to Fortran?
+  inline bool fortran() const;
+
+  // set compiler command
+  inline void setCompilerCmd( const std::string& cmd );
+
+  // add compiler argument
+  inline void addCompilerArg( const std::string& arg );
+
+  // add library to link
+  inline void addCompilerLib( const std::string& lib );
+
+  // add source file to be modified by OPARI and/or TAU
+  inline void addModSrcFile( const std::string& file );
+
+  // set OPARI table file
+  inline void setOpariTabFile( const std::string& file );
+
+  // set OPARI rc file
+  inline void setOpariRcFile( const std::string& file );
+
+  // add OPARI argument
+  inline void addOpariArg( const std::string& arg );
+
+  // add TAU instumentor argument
+  inline void addTauinstArg( const std::string& arg );
+
+  // add TAU parser argument
+  inline void addTauinstParseArg( const std::string& arg );
+
+  // set flag for MPI usage
+  inline void setUsesMpi( const bool set, const bool ovwrt = false );
+
+  // set flag for Thread usage
+  inline void setUsesThreads( const bool set, const bool ovwrt = false );
+
+  // set flag for OpenMP usage
+  inline void setUsesOpenMP( const bool set, const bool ovwrt = false );
+
+  // set available instrumentation type
+  inline bool setInstAvail( const std::string& type );
+
+  // set instrumentation type
+  //
+  inline bool setInstType( const InstTypeT type );
+  inline bool setInstType( const std::string& type );
+
+  // instrumentation type is available?
+  inline bool isInstAvail( const InstTypeT type ) const;
+
+  LangTypeT   lang_type;             // language type
+  InstTypeT   inst_type;             // instrumentation type
+                                     // (e.g. compinst, manual, ...)
+
+  int         inst_avail;            // bitmask for available instr.-types
+  int         showme_flags;          // bitmask for showme flags
+  bool        be_verbose;            // Flag: be verbose?
+  bool        comp_only;             // Flag: compile only?
+  bool        outfile_given;         // Flag: output file given?
+  bool        uses_mpi;              // Flag: uses MPI?
+  bool        uses_threads;          // Flag: uses Threads?
+  bool        uses_openmp;           // Flag: uses OpenMP? (use OPARI)
+
+  std::string vt_version;            // VT version
+
+  std::string vt_incdir;             // VT's include directory
+  std::string vt_libdir;             // VT's library directory
+
+  std::string vt_seqlib;             // VT-library for sequential programs
+  std::string vt_mpilib;             // VT-library for MPI programs
+  std::string vt_mtlib;              // VT-library for multithreading programs
+  std::string vt_hyblib;             // VT-library for hybrid (MPI/Threads)
+                                     // programs
+  std::string vt_pomplib;            // VT's POMP library
+  std::string vt_dynattlib;          // VT's Dyninst attach library
+
+  std::string comp_cmdenv;           // compiler command env. name
+  std::string comp_flagsenv;         // compiler flags env. name
+  std::string comp_cmd;              // compiler command
+  std::string comp_args;             // compiler arguments
+  std::string comp_flags;            // compiler flags
+  std::string comp_ldflags;          // linker flags
+  std::string comp_fdflag;           // flag to define preprocessor macro
+  std::string comp_instflags;        // compiler instrumentation flags
+  std::string comp_libs;             // libraries to link
+
+  std::string opari_cmd;             // OPARI command
+  std::string opari_args;            // OPARI arguments
+  std::string opari_rcfile;          // OPARI's rc file
+  std::pair<std::string, std::string>
+    opari_tabfile;                   // OPARI's table source/object file
+  std::string opari_tab_compcmd;     // compiler command for OPARI's table file
+  std::string opari_tab_compflags;   // compiler flags for OPARI's table file
+  bool        opari_keep_rcfile;     // Flag: don't delete OPARI's rc file?
+
+  std::string compinst_flags;        // compiler flags to enable instrumentation
+  std::string dyninst_flags;         // compiler flags to produce debugging
+                                     // information (needed for binary inst.)
+
+  std::string tauinst_cmd;           // TAU instrumentor command
+  std::string tauinst_args;          // TAU instrumentor arguments
+  std::string tauinst_parsecmd;      // PDT source code parser command
+  std::string tauinst_parseargs;     // PDT parser arguments
+
+  std::vector<std::pair<std::string, std::string> >
+    mod_files;                       // source/object files to be modified by
+                                     // OPARI and/or TAU
+
+};
+
+// function declarations
+//
+
+// read wrapper's data file
+bool readDataFile( void );
+
+// read environment variables
+bool readEnvironmentVars( void );
+
+// parse command line parameters
+bool parseCommandLine( int argc, char** argv );
+
+// wrap compiler command
+int doWrap( void );
+
+// show compiler/linker flags
+void showFlags( void );
+
+// show usage text
+void showUsage( void );
+
+// show or execute command
+int showOrExecuteCommand( std::string& cmd );
+
+// get OPARI generated include files from table file
+// (only necessary for Fortran)
+void getIncFilesFromTabFile( std::vector<std::string>& incfiles );
+
+// remove leading, trailing, and double spaces from a string
+inline void trimString( std::string& str );
+
+// global variables
+//
+
+// name of program's executable
+char* ExeName;
+
+// wrapper configuration
+ConfigS Config;
+
+int
+main( int argc, char** argv )
+{
+  int rc = 0;
+
+  // get name of program's executable
+  //
+  if( ( ExeName = strrchr( argv[0], '/' ) ) )
+    ExeName++;
+  else
+    ExeName = argv[0];
+
+  // read wrapper's data file
+  //
+  if( !readDataFile() )
+    return 1;
+
+  // read environment variables
+  //
+  if( !readEnvironmentVars() )
+    return 1;
+
+  // parse command line parameters
+  //
+  if( !parseCommandLine( argc, argv ) )
+    return 1;
+
+  // either wrap compiler command or show compiler/linker flags
+  //
+  if( Config.showme_flags == 0 || Config.showme_flags == SHOWME_FLAG_ALL )
+  {
+    rc = doWrap();
+  }
+  else
+  {
+    showFlags();
+  }
+
+  return rc;
 }
 
 bool
-Wrapper::readDataFile()
+readDataFile()
 {
-   bool error = false;
+  bool error = false;
 
-   const std::string data_file =
-     std::string(vt_installdirs_get(VT_INSTALLDIR_DATADIR)) + "/" +
-     std::string(ExeName) + "-wrapper-data.txt";
+  const std::string data_file =
+    std::string( vt_installdirs_get( VT_INSTALLDIR_DATADIR ) ) + "/" +
+    std::string( ExeName ) + "-wrapper-data.txt";
 
-   const uint32_t keys_num = 29;
-   const std::string keys[] = {
-      "version", "language", "compiler_env", "compiler_flags_env",
-      "compiler", "compiler_flags", "linker_flags", "libs", "includedir",
-      "libdir", "vtlib", "vtmpilib", "vtmtlib", "vthyblib", "vtpomplib",
-      "vtdynattlib", "opari_bin", "opari_opts", "opari_tab_compiler",
-      "opari_tab_compiler_flags", "compinst_compiler_flags",
-      "dyninst_compiler_flags", "tauinst_bin", "tauinst_opts",
-      "tauinst_parse_bin", "tauinst_parse_opts",
-      "inst_avail", "inst_default", "partype_default"
-   };
+  const uint32_t keys_num = 29;
+  const std::string keys[] = {
+    "version", "language", "compiler_env", "compiler_flags_env",
+    "compiler", "compiler_flags", "linker_flags", "libs", "includedir",
+    "libdir", "vtlib", "vtmpilib", "vtmtlib", "vthyblib", "vtpomplib",
+    "vtdynattlib", "opari_bin", "opari_opts", "opari_tab_compiler",
+    "opari_tab_compiler_flags", "compinst_compiler_flags",
+    "dyninst_compiler_flags", "tauinst_bin", "tauinst_opts",
+    "tauinst_parse_bin", "tauinst_parse_opts",
+    "inst_avail", "inst_default", "partype_default"
+  };
 
-   std::ifstream in( data_file.c_str() );
-   if( !in )
-   {
-      std::cerr << ExeName << ": error: could not open configuration file "
-                << data_file << std::endl;
-      return false;
-   }
+  std::ifstream in( data_file.c_str() );
+  if( !in )
+  {
+    std::cerr << ExeName << ": Error: Could not open configuration file "
+              << data_file << ". Aborting." << std::endl;
+    return false;
+  }
 
-   char buffer[1024];
-   std::string line;
-   uint32_t line_no = 0;
-   uint32_t key_idx = 0;
+  char buffer[1024];
+  std::string line;
+  uint32_t line_no = 0;
+  uint32_t key_idx = 0;
 
-   while( key_idx < keys_num 
-          && in.getline( buffer, sizeof( buffer ) ) )
-   {
-      line_no++;
+  while( !error && key_idx < keys_num &&
+         in.getline( buffer, sizeof( buffer ) ) )
+  {
+    line_no++;
 
-      if( buffer[0] == '#' || buffer[0] == '\n' || buffer[0] == '\0' )
-         continue;
-      if( buffer[strlen(buffer)-1] == '\n' )
-         buffer[strlen(buffer)-1] = '\0';
+    if( buffer[0] == '#' || buffer[0] == '\n' || buffer[0] == '\0' )
+      continue;
+    if( buffer[strlen(buffer)-1] == '\n' )
+      buffer[strlen(buffer)-1] = '\0';
 
-      line = buffer;
+    line = buffer;
 
-      std::string::size_type valpos = line.find( "=" );
-      std::string key;
-      std::string value;
+    std::string::size_type valpos = line.find( '=' );
+    std::string key;
+    std::string value;
 
-      if( valpos == std::string::npos || valpos < 1 )
-      {
-         std::cerr << ExeName << ": "
-                   << data_file << ":" << line_no << ": "
-                   << "could not be parsed" << std::endl;
-         error = true;
-         break;
-      }
-
-      key = line.substr( 0, valpos );
-      value = line.substr( valpos+1 );
-
-      if( key.compare( keys[key_idx++] ) != 0 )
-      {
-         std::cerr << ExeName << ": "
-                   << data_file << ":" << line_no << ": "
-                   << "unexpected key '"
-                   << key << "'" << std::endl;
-         error = true;
-         break;
-      }
-
-      // expand install directories from value except keys 1-4
-      //
-      if( key_idx > 4 )
-      {
-         char* tmp = vt_installdirs_expand( value.c_str() );
-         if( !tmp )
-         {
-            std::cerr << ExeName << ": "
-                      << data_file << ":" << line_no << ": "
-                      << "could not be parsed" << std::endl;
-            error = true;
-            break;
-         }
-
-         value = tmp;
-         free( tmp );
-      }
-
-      switch( key_idx )
-      {
-         case 1: // version
-         {
-            m_pConfig->m_sVT_Version = value;
-            break;
-         }
-         case 2: // language
-         {
-            if( value.compare( "C" ) == 0 )
-               error = !m_pConfig->setLanguage( LANG_CC );
-            else if( value.compare( "C++" ) == 0 )
-               error = !m_pConfig->setLanguage( LANG_CXX );
-            else if( value.compare( "Fortran 77" ) == 0 )
-               error = !m_pConfig->setLanguage( LANG_F77 );
-            else if( value.compare( "Fortran 90" ) == 0 )
-               error = !m_pConfig->setLanguage( LANG_F90 );
-            else
-            {
-               std::cerr << ExeName << ": "
-                         << data_file << ":" << line_no << ": "
-                         << "unknown language '" << value << "'" << std::endl;
-               error = true;
-            }
-            break;
-         }
-         case 3: // compiler_env
-         {
-            m_pConfig->m_sComp_CmdEnv = value;
-            break;
-         }
-         case 4: // compiler_flags_env
-         {
-            m_pConfig->m_sComp_FlagsEnv = value;
-            break;
-         }
-         case 5: // compiler
-         {
-            m_pConfig->compiler_setCmd( value );
-            break;
-         }
-         case 6: // compiler_flags
-         {
-            m_pConfig->m_sComp_Flags = value;
-            break;
-         }
-         case 7: // linker flags
-         {
-            m_pConfig->m_sComp_LdFlags = value;
-            break;
-         }
-         case 8: // libs
-         {
-            m_pConfig->m_sComp_Libs = value;
-            break;
-         }
-         case 9: // includedir
-         {
-            m_pConfig->m_sVT_IncDir = "-I" + value;
-            break;
-         }
-         case 10: // libdir
-         {
-            m_pConfig->m_sVT_LibDir = "-L" + value;
-            break;
-         }
-         case 11: // vtlib
-         {
-            m_pConfig->m_sVT_SeqLib = value;
-            break;
-         }
-         case 12: // vtmpilib
-         {
-            m_pConfig->m_sVT_MpiLib = value;
-            break;
-         }
-         case 13: // vtmtlib
-         {
-            m_pConfig->m_sVT_MtLib = value;
-            break;
-         }
-         case 14: // vthyblib
-         {
-            m_pConfig->m_sVT_HybLib = value;
-            break;
-         }
-         case 15: // vtpomplib
-         {
-            m_pConfig->m_sVT_PompLib = value;
-            break;
-         }
-         case 16: // vtdynattlib
-         {
-            m_pConfig->m_sVT_DynAttLib = value;
-            break;
-         }
-         case 17: // opari_bin
-         {
-            m_pConfig->m_sOpari_Cmd = value;
-            break;
-         }
-         case 18: // opari_opts
-         {
-           m_pConfig->m_sOpari_Args = value;
-           break;
-         }
-         case 19: // opari_tab_compiler
-         {
-            m_pConfig->m_sOpari_TabCompCmd = value;
-            break;
-         }
-         case 20: // opari_tab_compiler_flags
-         {
-            m_pConfig->m_sOpari_TabCompFlags = value;
-            break;
-         }
-         case 21: // compinst_compiler_flags
-         {
-            m_pConfig->m_sCompInst_Flags = value;
-            break;
-         }
-         case 22: // dyninst_compiler_flags
-         {
-            m_pConfig->m_sDynInst_Flags = value;
-            break;
-         }
-         case 23: // tauinst_bin
-         {
-            m_pConfig->m_sTauInst_Cmd = value;
-            break;
-         }
-         case 24: // tauinst_opts
-         {
-            m_pConfig->m_sTauInst_Args = value;
-            break;
-         }
-         case 25: // tauinst_parse_bin
-         {
-            m_pConfig->m_sTauInst_ParseCmd = value;
-            break;
-         }
-         case 26: // tauinst_parse_opts
-         {
-            m_pConfig->m_sTauInst_ParseArgs = value;
-            break;
-         }
-         case 27: // inst_avail
-         {
-            char cvalue[128];
-            strncpy( cvalue, value.c_str(), sizeof( cvalue ) - 1 );
-            cvalue[sizeof(cvalue) - 1]  = '\0';
-
-            char * token = strtok( cvalue, " " );
-            if( !token )
-            {
-               std::cerr << ExeName << ": "
-                         << data_file << ":" << line_no << ": "
-                         << "could not be parsed" << std::endl;
-               error = true;
-               break;
-            }
-
-            do
-            {
-               if( !m_pConfig->setInstAvail( token ) )
-               {
-                  std::cerr << ExeName << ": "
-                            << data_file << ":" << line_no << ": "
-                            << "unknown instrumentation type '"
-                            << token << "'" << std::endl;
-                  error = true;
-                  break;
-               }
-            } while( ( token = strtok( 0, " " ) ) );
-
-            break;
-         }
-         case 28: // inst_default
-         {
-            if( !m_pConfig->setInstType( value ) )
-            {
-               std::cerr << ExeName << ": "
-                         << data_file << ":" << line_no << ": "
-                         << "unknown or not supported instrumentation type '"
-                         << value << "'" << std::endl;
-               error = true;
-            }
-            break;
-         }
-         case 29: // partype_default
-         {
-            if( value.compare( "seq" ) == 0 )
-            {
-            }
-            else if( value.compare( "mpi" ) == 0 )
-            {
-               m_pConfig->setUsesMpi( true );
-            }
-            else if( value.compare( "mt" ) == 0 )
-            {
-               m_pConfig->setUsesThreads( true );
-            }
-            else if( value.compare( "hyb" ) == 0 )
-            {
-               m_pConfig->setUsesMpi( true );
-               m_pConfig->setUsesThreads( true );
-            }
-            else
-            {
-               std::cerr << ExeName << ": "
-                         << data_file << ":" << line_no << ": "
-                         << "unknown parallelization type '"
-                         << value << "'" << std::endl;
-               error = true;
-            }
-            break;
-         }
-         default:
-         {
-            std::cerr << ExeName << ": "
-                      << data_file << ":" << line_no << ": "
-                      << "could not be parsed" << std::endl;
-            error = true;
-            break; 
-         }
-      }
-
-      if( error ) break;
-   }
-
-   in.close();
-
-   if( !error && key_idx < keys_num )
-   {
+    if( valpos == std::string::npos || valpos < 1 )
+    {
       std::cerr << ExeName << ": "
-                << data_file << ": "
-                << "unexpected end of file" << std::endl;
-      return false;
-   }
+                << data_file << ":" << line_no << ": "
+                << "could not be parsed" << std::endl;
+      error = true;
+      break;
+    }
 
-   return !error;
-}
+    key = line.substr( 0, valpos );
+    value = line.substr( valpos + 1 );
 
-bool
-Wrapper::readEnvironmentVars()
-{
-   char * env;
+    if( key.compare( keys[key_idx++] ) != 0 )
+    {
+      std::cerr << ExeName << ": "
+                << data_file << ":" << line_no << ": "
+                << "unexpected key '"
+                << key << "'" << std::endl;
+      error = true;
+      break;
+    }
 
-   // read environment var. for compiler command
-   // (VT_<CC|CXX|F77|F90>)
-   //
-   env = getenv( m_pConfig->m_sComp_CmdEnv.c_str() );
-   if( env ) m_pConfig->compiler_setCmd( env );
-
-   // read environment var. for extra compiler flags
-   // (VT_<C|CXX|F|FC>FLAGS)
-   env = getenv( m_pConfig->m_sComp_FlagsEnv.c_str() );
-   if( env )
-   {
-      if( m_pConfig->m_sComp_Flags.length() > 0 )
-         m_pConfig->m_sComp_Flags += " ";
-      m_pConfig->m_sComp_Flags += env;
-   }
-
-   // read environment var. for extra linker flags
-   // (VT_LDFLAGS)
-   env = getenv( "VT_LDFLAGS" );
-   if( env ) m_pConfig->m_sComp_LdFlags = env;
-
-   // read environment var. for extra libs
-   // (VT_LIBS)
-   env = getenv( "VT_LIBS" );
-   if( env )
-   {
-      if( m_pConfig->m_sComp_Libs.length() > 0 )
-         m_pConfig->m_sComp_Libs += " ";
-      m_pConfig->m_sComp_Libs += env;
-   }
-
-   // read environment var. for instrumentation type
-   // (VT_INST)
-   //
-   env = getenv( "VT_INST" );
-   if( env )
-   {
-      if( !m_pConfig->setInstType( env ) )
+    // expand install directories from value except keys 1-4
+    //
+    if( key_idx > 4 )
+    {
+      char* tmp = vt_installdirs_expand( value.c_str() );
+      if( !tmp )
       {
-         std::cerr << ExeName << ": error: VT_INST: "
-                   << "unknown or not supported instrumentation type '"
-                   << env << "'" << std::endl;
-         return false;
-      }
-   }
-
-   return true;
-}
-
-bool
-Wrapper::parseCommandLine( int argc, char ** argv )
-{
-   std::vector<std::string> args;
-   std::string arg;
-   uint32_t i;
-
-   // pre-process arguments
-   //
-   for( i = 1; i < (uint32_t)argc; i++ )
-   {
-      arg = argv[i];
-
-      // we also accept "--vt:" - modify "--vt:" to "-vt:"
-      //
-      if( arg.compare(0,5,"--vt:") == 0 )
-      {
-         arg.erase(0,1);
+        std::cerr << ExeName << ": "
+                  << data_file << ":" << line_no << ": "
+                  << "could not be parsed" << std::endl;
+        error = true;
+        break;
       }
 
-      // merge separated compiler arguments
-      // -<I|D|L|l> <dir|lib>
-      //             ^
-      if( arg.compare( "-I" ) == 0
-          || arg.compare( "-D" ) == 0
-          || arg.compare( "-L" ) == 0
-          || arg.compare( "-l" ) == 0 )
-      {
-         if( i < (uint32_t)argc - 1 )
-            arg += argv[++i];
-      }
+      value = tmp;
+      free( tmp );
+    }
 
-      args.push_back( arg );
-   }
-
-   for( i = 0; i < args.size(); i++ )
-   {
-      arg = args[i];
-
-      //
-      // -vt:help
-      //
-      if( arg.compare("-vt:help") == 0 )
+    switch( key_idx )
+    {
+      case 1: // version
       {
-         showUsageText();
-         exit(0);
+        Config.vt_version = value;
+        break;
       }
-      //
-      // -vt:version
-      //
-      if( arg.compare("-vt:version") == 0 )
+      case 2: // language
       {
-         showVersion();
-         exit(0); 
+        if( value.compare( "C" ) == 0 )
+          error = !Config.setLanguage( LANG_CC );
+        else if( value.compare( "C++" ) == 0 )
+          error = !Config.setLanguage( LANG_CXX );
+        else if( value.compare( "Fortran 77" ) == 0 )
+          error = !Config.setLanguage( LANG_F77 );
+        else if( value.compare( "Fortran 90" ) == 0 )
+          error = !Config.setLanguage( LANG_F90 );
+        else
+        {
+          std::cerr << ExeName << ": "
+                     << data_file << ":" << line_no << ": "
+                     << "unknown language '" << value << "'" << std::endl;
+          error = true;
+        }
+        break;
       }
-      //
-      // -vt:show
-      //
-      else if( arg.compare("-vt:show") == 0 )
+      case 3: // compiler_env
       {
-         m_pConfig->m_bShow = true;
+        Config.comp_cmdenv = value;
+        break;
       }
-      //
-      // -vt:verbose
-      //
-      else if( arg.compare("-vt:verbose") == 0 )
+      case 4: // compiler_flags_env
       {
-         m_pConfig->m_bBeVerbose = true;
+        Config.comp_flagsenv = value;
+        break;
       }
-      //
-      // -vt:inst <type>
-      //
-      else if( arg.compare("-vt:inst") == 0 )
+      case 5: // compiler
       {
-         if( i == args.size() - 1 )
-         {
-            std::cerr << ExeName << ": <type> expected -- -vt:inst"
-                      << std::endl;
-            return false;
-         }
+        Config.setCompilerCmd( value );
+        break;
+      }
+      case 6: // compiler_flags
+      {
+        Config.comp_flags = value;
+        break;
+      }
+      case 7: // linker flags
+      {
+        Config.comp_ldflags = value;
+        break;
+      }
+      case 8: // libs
+      {
+        Config.comp_libs = value;
+        break;
+      }
+      case 9: // includedir
+      {
+        Config.vt_incdir = "-I" + value;
+        break;
+      }
+      case 10: // libdir
+      {
+        Config.vt_libdir = "-L" + value;
+        break;
+      }
+      case 11: // vtlib
+      {
+        Config.vt_seqlib = value;
+        break;
+      }
+      case 12: // vtmpilib
+      {
+        Config.vt_mpilib = value;
+        break;
+      }
+      case 13: // vtmtlib
+      {
+        Config.vt_mtlib = value;
+        break;
+      }
+      case 14: // vthyblib
+      {
+        Config.vt_hyblib = value;
+        break;
+      }
+      case 15: // vtpomplib
+      {
+        Config.vt_pomplib = value;
+        break;
+      }
+      case 16: // vtdynattlib
+      {
+        Config.vt_dynattlib = value;
+        break;
+      }
+      case 17: // opari_bin
+      {
+        Config.opari_cmd = value;
+        break;
+      }
+      case 18: // opari_opts
+      {
+        Config.opari_args = value;
+        break;
+      }
+      case 19: // opari_tab_compiler
+      {
+        Config.opari_tab_compcmd = value;
+        break;
+      }
+      case 20: // opari_tab_compiler_flags
+      {
+        Config.opari_tab_compflags = value;
+        break;
+      }
+      case 21: // compinst_compiler_flags
+      {
+        Config.compinst_flags = value;
+        break;
+      }
+      case 22: // dyninst_compiler_flags
+      {
+        Config.dyninst_flags = value;
+        break;
+      }
+      case 23: // tauinst_bin
+      {
+        Config.tauinst_cmd = value;
+        break;
+      }
+      case 24: // tauinst_opts
+      {
+        Config.tauinst_args = value;
+        break;
+      }
+      case 25: // tauinst_parse_bin
+      {
+        Config.tauinst_parsecmd = value;
+        break;
+      }
+      case 26: // tauinst_parse_opts
+      {
+        Config.tauinst_parseargs = value;
+        break;
+      }
+      case 27: // inst_avail
+      {
+        char cvalue[128];
+        strncpy( cvalue, value.c_str(), sizeof( cvalue ) - 1 );
+        cvalue[sizeof( cvalue ) - 1]  = '\0';
 
-         arg = args[++i];
+        char* token = strtok( cvalue, " " );
+        if( !token )
+        {
+          std::cerr << ExeName << ": "
+                    << data_file << ":" << line_no << ": "
+                    << "could not be parsed" << std::endl;
+          error = true;
+          break;
+        }
 
-         if( !m_pConfig->setInstType( arg ) )
-         {
+        do
+        {
+          if( !Config.setInstAvail( token ) )
+          {
             std::cerr << ExeName << ": "
-                      << "unknown or not supported instrumentation type '"
-                      << arg << "'" << std::endl;
-            return false;
-         }
+                      << data_file << ":" << line_no << ": "
+                      << "unknown instrumentation type '"
+                      << token << "'" << std::endl;
+            error = true;
+            break;
+          }
+        } while( ( token = strtok( 0, " " ) ) );
+
+        break;
       }
-      //
-      // -vt:opari <args>
-      //
-      else if( arg.compare("-vt:opari") == 0 )
+      case 28: // inst_default
       {
-         if( i == args.size() - 1 )
-         {
-            std::cerr << ExeName << ": <args> expected -- -vt:opari"
-                      << std::endl;
-            return false;
-         }
-
-         size_t opari_args_len = args[i+1].length()+1;
-         char * opari_args = new char[opari_args_len];
-         strncpy( opari_args, args[++i].c_str(), opari_args_len - 1 );
-         opari_args[opari_args_len - 1] = '\0';
-
-         char * token = strtok( opari_args, " " );
-         do
-         {
-            if( strcmp( token, "-rcfile" ) == 0 )
-            {
-               token = strtok( 0, " " );
-               if( !token )
-               {
-                  std::cerr << ExeName << ": <rcfile> expected -- -rcfile"
-                            << std::endl;
-                  delete [] opari_args;
-                  return false;
-               }
-               m_pConfig->opari_setRcFile( token );
-            }
-            else if( strcmp( token, "-table" ) == 0 )
-            {
-               token = strtok( 0, " " );
-               if( !token )
-               {
-                  std::cerr << ExeName << ": <tabfile> expected -- -table"
-                            << std::endl;
-                  delete [] opari_args;
-                  return false;
-               }
-
-               m_pConfig->opari_setTabFile( token );
-            }
-            else
-            {
-               m_pConfig->opari_addArg( token );
-            }
-         } while( ( token = strtok( 0, " " ) ) );
-
-         delete [] opari_args;
+        if( !Config.setInstType( value ) )
+        {
+          std::cerr << ExeName << ": "
+                    << data_file << ":" << line_no << ": "
+                    << "unknown or not supported instrumentation type '"
+                    << value << "'" << std::endl;
+          error = true;
+        }
+        break;
       }
-      //
-      // -vt:noopari
-      //
-      else if( arg.compare("-vt:noopari") == 0 )
+      case 29: // partype_default
       {
-         m_pConfig->setUsesOpenMP( false, true );
+        if( value.compare( "seq" ) == 0 )
+        {
+        }
+        else if( value.compare( "mpi" ) == 0 )
+        {
+          Config.setUsesMpi( true );
+        }
+        else if( value.compare( "mt" ) == 0 )
+        {
+          Config.setUsesThreads( true );
+        }
+        else if( value.compare( "hyb" ) == 0 )
+        {
+          Config.setUsesMpi( true );
+          Config.setUsesThreads( true );
+        }
+        else
+        {
+          std::cerr << ExeName << ": "
+                    << data_file << ":" << line_no << ": "
+                    << "unknown parallelization type '"
+                    << value << "'" << std::endl;
+          error = true;
+        }
+        break;
       }
-      //
-      // -vt:tau <args>
-      //
-      else if( arg.compare("-vt:tau") == 0 )
+      default:
       {
-         if( i == args.size() - 1 )
-         {
-            std::cerr << ExeName << ": <args> expected -- -vt:tau"
-                      << std::endl;
-            return false;
-         }
-
-         m_pConfig->tauinst_addArg( args[++i] );
+        std::cerr << ExeName << ": "
+                  << data_file << ":" << line_no << ": "
+                  << "could not be parsed" << std::endl;
+        error = true;
+        break;
       }
-      //
-      // -vt:pdt <args>
-      //
-      else if( arg.compare("-vt:pdt") == 0 )
-      {
-         if( i == args.size() - 1 )
-         {
-            std::cerr << ExeName << ": <args> expected -- -vt:pdt"
-                      << std::endl;
-            return false;
-         }
-
-         m_pConfig->tauinst_addParseArg( args[++i] );
-      }
-      //
-      // -vt:seq
-      //
-      else if( arg.compare("-vt:seq") == 0 )
-      {
-         m_pConfig->setUsesMpi( false, true );
-         m_pConfig->setUsesThreads( false, true );
-         m_pConfig->setUsesOpenMP( false, true );
-      }
-      //
-      // -vt:mpi
-      //
-      else if( arg.compare("-vt:mpi") == 0 )
-      {
-         m_pConfig->setUsesMpi( true, true );
-         m_pConfig->setUsesThreads( false, true );
-         m_pConfig->setUsesOpenMP( false, true );
-      }
-      //
-      // -vt:mt
-      //
-      else if( arg.compare("-vt:mt") == 0 )
-      {
-         m_pConfig->setUsesMpi( false, true );
-         m_pConfig->setUsesThreads( true, true );
-      }
-      //
-      // -vt:hyb
-      //
-      else if( arg.compare("-vt:hyb") == 0 )
-      {
-         m_pConfig->setUsesMpi( true, true );
-         m_pConfig->setUsesThreads( true, true );
-      }
-      //
-      // pthread flags/libs
-      //
-      else if( arg.compare( "-Kthread" ) == 0
-               || arg.compare( "-kthread" ) == 0
-               || arg.compare( "-pthread" ) == 0
-               || arg.compare( "-pthreads" ) == 0
-               || arg.compare( "-mthreads" ) == 0
-               || arg.compare( "--thread-safe" ) == 0
-               || arg.compare( "-lpthreads" ) == 0
-               || arg.compare( "-llthread" ) == 0
-               || arg.compare( "-lpthread" ) == 0 )
-      {
-         m_pConfig->setUsesThreads( true );
-      }
-      //
-      // openmp flag
-      //
-      else if( arg.compare( "-openmp" ) == 0
-               || arg.compare( "-fopenmp" ) == 0
-               || arg.compare( "-Popenmp" ) == 0
-               || arg.compare( "-xopenmp" ) == 0
-               || arg.compare( "-mp" ) == 0 )
-      {
-         m_pConfig->setUsesThreads( true );
-         m_pConfig->setUsesOpenMP( true );
-      }
-      else if( arg.length() > 6 && arg.compare( 0, 6, "-qsmp=" ) == 0 )
-      {
-         char carg[128];
-         strncpy( carg, arg.substr(6).c_str(), sizeof( carg ) - 1 );
-         carg[sizeof(carg) - 1]  = '\0';
-
-         char * token = strtok( carg, ":" );
-         do
-         {
-            if( strcmp( token, "omp" ) == 0 )
-            {
-               m_pConfig->setUsesThreads( true );
-               m_pConfig->setUsesOpenMP( true );
-               break;
-            }
-         } while( ( token = strtok( 0, ":" ) ) );
-      }
-      //
-      // nvcc's pthread/openmp flag
-      //
-      else if( arg.compare( 0, 10, "-Xcompiler" ) == 0
-               || arg.compare( 0, 18, "--compiler-options" ) == 0
-               || arg.compare( 0, 8, "-Xlinker" ) == 0
-               || arg.compare( 0, 16, "--linker-options" ) == 0 )
-      {
-         if( arg.find( "-pthread" ) != std::string::npos )
-            m_pConfig->setUsesThreads( true );
-
-         if( arg.find( "-fopenmp" ) != std::string::npos )
-         {
-            m_pConfig->setUsesThreads( true );
-            m_pConfig->setUsesOpenMP( true );
-         }
-      }
-   }
-
-   bool addlibs = false;
-
-   for( i = 0; i < args.size(); i++ )
-   {
-      arg = args[i];
-
-      // escape '\', '"', ''', ' ', '(', and ')'
-      //
-      const char special_char[] = "\\\"' ()";
-      size_t found = arg.find_first_of( special_char );
-      while( found!=std::string::npos )
-      {
-         arg.insert(found,"\\");
-         found = arg.find_first_of( special_char, found+2 );
-      }
-
-      //
-      // -vt:help, -vt:version, -vt:show, -vt:seq, -vt:mpi, -vt:mt, -vt:hyb,
-      // -vt:inst, -vt:opari, -vt:tau, -vt:pdt
-      // (processed above; ignore here)
-      //
-      if( arg.compare("-vt:help") == 0
-          || arg.compare("-vt:version") == 0
-          || arg.compare("-vt:show") == 0
-          || arg.compare("-vt:verbose") == 0
-          || arg.compare("-vt:seq") == 0
-          || arg.compare("-vt:mpi") == 0
-          || arg.compare("-vt:mt") == 0
-          || arg.compare("-vt:hyb") == 0
-          || arg.compare("-vt:inst") == 0
-          || arg.compare("-vt:opari") == 0
-          || arg.compare("-vt:noopari") == 0
-          || arg.compare("-vt:tau") == 0
-          || arg.compare("-vt:pdt") == 0 )
-      {
-         // do nothing
-
-         // skip next argument, if necessary
-         if( arg.compare("-vt:inst") == 0
-             || arg.compare("-vt:opari") == 0
-             || arg.compare("-vt:tau") == 0
-             || arg.compare("-vt:pdt") == 0 )
-           i++;
-      }
-      //
-      // -vt:<cc|CC|c++|cxx|f77|f90> <cmd>
-      //
-      else if( ( m_pConfig->m_eLangType == LANG_CC && arg.compare("-vt:cc") == 0 )
-               || ( m_pConfig->m_eLangType == LANG_CXX &&
-                    ( arg.compare("-vt:CC") == 0
-                      || arg.compare("-vt:c++") == 0
-                      || arg.compare("-vt:cxx") == 0 ) )
-               || (m_pConfig->m_eLangType == LANG_F77 && arg.compare("-vt:f77") == 0)
-               || (m_pConfig->m_eLangType == LANG_F90 && arg.compare("-vt:f90") == 0) )
-      {
-         if( i == args.size() - 1 )
-         {
-            std::cerr << ExeName << ": <cmd> expected -- "
-                      << arg << std::endl;
-            return false;
-         }
-
-         m_pConfig->compiler_setCmd( args[++i] );
-      }
-      //
-      // -vt:*  -> unknown wrapper argument
-      //
-      else if( arg.compare( 0, 4, "-vt:" ) == 0 )
-      {
-         std::cerr << ExeName << ": unknown option -- "
-                   << arg << std::endl;
-         return false; 
-      }
-      //
-      // source file
-      //
-      else if( ( arg.length() >= 2
-                 && arg.compare( arg.length() - 2, 2, ".c" ) == 0 )
-               || ( arg.length() >= 2
-                    && arg.compare( arg.length() - 2, 2, ".C" ) == 0 )
-               || ( arg.length() >= 3
-                    && arg.compare( arg.length() - 3, 3, ".cc" ) == 0 )
-               || ( arg.length() >= 3
-                    && arg.compare( arg.length() - 3, 3, ".CC" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".cpp" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".CPP" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".cxx" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".CXX" ) == 0 )
-               || ( arg.length() >= 2
-                    && arg.compare( arg.length() - 2, 2, ".f" ) == 0 )
-               || ( arg.length() >= 2
-                    && arg.compare( arg.length() - 2, 2, ".F" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".f77" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".F77" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".f90" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".F90" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".f95" ) == 0 )
-               || ( arg.length() >= 4
-                    && arg.compare( arg.length() - 4, 4, ".F95" ) == 0 )
-               || ( arg.length() >= 3
-                    && arg.compare( arg.length() - 3, 3, ".cu" ) == 0 ) )
-      {
-         m_pConfig->compiler_addSrcFile( arg );
-      }
-      //
-      // -<I|D>*
-      //
-      else if( arg.compare( 0, 2, "-I" ) == 0
-               || arg.compare( 0, 2, "-D" ) == 0 )
-      {
-         if( m_pConfig->m_eInstType == INST_TYPE_TAUINST )
-            m_pConfig->tauinst_addParseArg( arg );
-         m_pConfig->compiler_addArg( arg );
-      }
-      //
-      // -WF,-D*
-      //
-      else if( ( m_pConfig->m_eLangType == LANG_F77
-                 || m_pConfig->m_eLangType == LANG_F90 )
-               && arg.compare( 0, 6, "-WF,-D" ) == 0 )
-      {
-         if( m_pConfig->m_eInstType == INST_TYPE_TAUINST )
-            m_pConfig->tauinst_addParseArg( arg.substr(4) );
-         m_pConfig->compiler_addArg( arg );
-      }
-      //
-      // Fortran line length flag
-      //
-      else if( ( m_pConfig->m_eLangType == LANG_F77
-                 || m_pConfig->m_eLangType == LANG_F90 )
-               && ( arg.compare( "-ffixed-line-length-132" ) == 0
-                    || arg.compare( "-extend_source" ) == 0
-                    || arg.compare( "-Mextend" ) == 0
-                    || arg.compare( "-e" ) == 0
-                    || arg.compare( "-qfixed=132" ) == 0 ) )
-      {
-         if( m_pConfig->m_eInstType == INST_TYPE_TAUINST )
-            m_pConfig->tauinst_addParseArg( "-ffixed-line-length-132" );
-         m_pConfig->compiler_addArg( arg );
-      }
-      //
-      // Fortran free format flag
-      //
-      else if( ( m_pConfig->m_eLangType == LANG_F77
-                 || m_pConfig->m_eLangType == LANG_F90 )
-               && ( arg.compare( "-ffree-form" ) == 0
-                    || arg.compare( "-free" ) == 0
-                    || arg.compare( "-Mfree" ) == 0
-                    || arg.compare( 0, 6, "-qfree" ) == 0 ) )
-      {
-         if( m_pConfig->m_eInstType == INST_TYPE_TAUINST
-             && m_pConfig->m_sTauInst_ParseCmd.compare( "f95parse" ) == 0 )
-            m_pConfig->tauinst_addParseArg( "-R free" );
-         m_pConfig->compiler_addArg( arg );
-      }
-      //
-      // Fortran fixed format flag
-      //
-      else if( ( m_pConfig->m_eLangType == LANG_F77
-                 || m_pConfig->m_eLangType == LANG_F90 )
-               && ( arg.compare( "-ffixed-form" ) == 0
-                    || arg.compare( "-fixed" ) == 0
-                    || arg.compare( "-Mfixed" ) == 0
-                    || arg.compare( 0, 7, "-qfixed" ) == 0 ) )
-      {
-         if( m_pConfig->m_eInstType == INST_TYPE_TAUINST
-             && m_pConfig->m_sTauInst_ParseCmd.compare( "f95parse" ) == 0 )
-            m_pConfig->tauinst_addParseArg( "-R fixed" );
-         m_pConfig->compiler_addArg( arg );
-      }
-      //
-      // -c
-      //
-      else if( arg.compare( "-c" ) == 0 )
-      {
-         m_pConfig->m_bCompOnly = true;
-         m_pConfig->compiler_addArg( arg );
-      }
-      //
-      // -o
-      //
-      else if( arg.compare( "-o" ) == 0 )
-      {
-         m_pConfig->m_bOutfileGiven = true;
-         m_pConfig->compiler_addArg( arg );
-      }
-      //
-      // -lcuda[rt]
-      //
-      else if( arg.compare( "-lcuda" ) == 0
-               || arg.compare( "-lcudart" ) == 0 )
-      {
-         m_pConfig->compiler_addLib( arg );
-      }
-      //
-      // -l<mpilib>
-      //
-      else if( arg.compare( 0, 5, "-lmpi" ) == 0
-               || arg.compare( 0, 7, "-lmtmpi" ) == 0
-               || arg.compare( 0, 7, "-lhpmpi" ) == 0
-               || arg.compare( 0, 7, "-lscmpi" ) == 0 )
-      {
-         m_pConfig->setUsesMpi( true );
-         m_pConfig->compiler_addLib( arg );
-         addlibs = true;
-      }
-      //
-      // -<L|l>*
-      //
-      else if( arg.compare( 0, 2, "-L" ) == 0
-               || arg.compare( 0, 2, "-l" ) == 0 )
-      {
-         if( addlibs )
-            m_pConfig->compiler_addLib( arg );
-         else
-            m_pConfig->compiler_addArg( arg );
-      }
-      //
-      // unknown argument
-      //
-      else
-      {
-         m_pConfig->compiler_addArg( arg );
-      }
-   }
-
-   return true;
-}
-
-int
-Wrapper::run()
-{
-   std::string cmd;
-   int rc = 0;
-
-   uint32_t i;
-
-   // get frequently used members from config class for easier access
-   //
-   LangTypeT lang_type = m_pConfig->m_eLangType;
-   InstTypeT inst_type = m_pConfig->m_eInstType;
-   bool uses_mpi       = m_pConfig->m_bUsesMpi;
-   bool uses_threads   = m_pConfig->m_bUsesThreads;
-   bool uses_openmp    = m_pConfig->m_bUsesOpenMP;
-   bool beverbose      = m_pConfig->m_bBeVerbose;
-   bool show           = m_pConfig->m_bShow;
-
-   // vector which holds all intermediately created files
-   std::vector<std::string> files_to_remove;
-
-   // map which holds all object files created by the compiler
-   // which must be renamed to original file names
-   std::map<std::string, std::string> obj_files_to_rename;
-
-   // call compiler without any parameters, if
-   // insufficient arguments given
-   //
-   if( !show
-       && m_pConfig->m_sComp_Args.length() == 0
-       && m_pConfig->m_vecComp_SrcFiles.size() == 0 )
-   {
-      rc = system( m_pConfig->m_sComp_Cmd.c_str() );
-      return WEXITSTATUS( rc );
-   }
-
-   // process collected source files by OPARI and/or TAU
-   //
-   for( i = 0; i < m_pConfig->m_vecComp_SrcFiles.size(); i++ )
-   {
-      std::string src_file = m_pConfig->m_vecComp_SrcFiles[i];
-
-      std::string::size_type si;
-
-      // run OPARI command on source file
-      //
-      if( uses_openmp )
-      {
-         // build OPARI command
-         //
-         cmd =
-            m_pConfig->m_sOpari_Cmd + " "
-            + m_pConfig->m_sOpari_Args + " "
-            + "-rcfile "
-            + m_pConfig->m_sOpari_RcFile + " "
-            + "-table "
-            + m_pConfig->m_sOpari_TabFile.first + " "
-            + src_file;
-
-         // execute/show OPARI command
-         //
-         if( ( rc = executeOrShowCommand( cmd ) ) != 0 )
-            return rc;
-
-         // create OPARI modified source file name
-         //
-
-         std::string mod_file = src_file;
-         si = mod_file.rfind( '.' );
-         assert( si != std::string::npos );
-         mod_file.insert( si, ".mod" );
-
-         // convert Fortran source file suffix to upper case, in order to
-         // invoke the C preprocessor before compiling
-         //
-         if( lang_type == LANG_F77 || lang_type == LANG_F90 )
-         {
-            si = mod_file.rfind( ".f" );
-            if( si != std::string::npos ) mod_file.replace( si, 2, ".F" );
-         }
-
-         files_to_remove.push_back( mod_file );
-
-         // create OPARI include file name
-         //
-         if( lang_type == LANG_CC || lang_type == LANG_CXX )
-         {
-            std::string inc_file = src_file + ".opari.inc";
-            files_to_remove.push_back( inc_file );
-         }
-
-         src_file = mod_file;
-      }
-
-      // run PDT parser and TAU instrumentor command on source file
-      //
-      if( inst_type == INST_TYPE_TAUINST )
-      {
-         // adjust PDT parser options, if source file is instrumented by OPARI
-         //
-         if( uses_openmp )
-         {
-            // current directory to find OPARI generated header files
-            // (only necessary for C/C++)
-            //
-            if( lang_type == LANG_CC || lang_type == LANG_CXX )
-               m_pConfig->tauinst_addParseArg( "-I." );
-
-            // macro definition '_OPENMP'
-            // (the PDT parser has no own option to enable OpenMP)
-            m_pConfig->tauinst_addParseArg( "-D_OPENMP" );
-         }
-
-         // build PDT parse command
-         //
-         cmd =
-            m_pConfig->m_sTauInst_ParseCmd + " "
-            + src_file + " "
-            + m_pConfig->m_sVT_IncDir + " "
-            + m_pConfig->m_sTauInst_ParseArgs;
-
-         // execute/show PDT parse command
-         //
-         if( ( rc = executeOrShowCommand( cmd ) ) != 0 )
-            return rc;
-
-         // create PDB file name
-         //
-
-         std::string pdb_file = src_file;
-         si = src_file.rfind( '/' );
-         if( si != std::string::npos )
-            pdb_file = src_file.substr( si+1 );
-
-         si = pdb_file.rfind( '.' );
-         assert( si != std::string::npos );
-         pdb_file.replace( si, 4, ".pdb" );
-
-         files_to_remove.push_back( pdb_file );
-
-         // create TAU modified source file name
-         //
-         std::string tau_file = src_file;
-         if( uses_openmp )
-         {
-            si = tau_file.rfind( ".mod" );
-            assert( si != std::string::npos );
-            tau_file.replace( si, 4, ".tau" );
-         }
-         else
-         {
-            si = tau_file.rfind( '.' );
-            assert( si != std::string::npos );
-            tau_file.insert( si, ".tau" );
-
-            // convert Fortran source file suffix to upper case, in order to
-            // invoke the C preprocessor before compiling
-            //
-            if( lang_type == LANG_F77 || lang_type == LANG_F90 )
-            {
-               si = tau_file.rfind( ".f" );
-               if( si != std::string::npos ) tau_file.replace( si, 2, ".F" );
-            }
-         }
-         files_to_remove.push_back( tau_file );
-
-         // build TAU instrumentor command
-         //
-         cmd =
-            m_pConfig->m_sTauInst_Cmd + " "
-            + pdb_file + " "
-            + src_file + " "
-            + "-o "
-            + tau_file + " "
-            + m_pConfig->m_sTauInst_Args;
-
-         // execute/show TAU instrumentor command
-         //
-         if( ( rc = executeOrShowCommand( cmd ) ) != 0 )
-            return rc;
-
-         src_file = tau_file;
-      }
-
-      // create and store compiler output file name for renaming, if it's not
-      // specified by the command line
-      //
-      if( m_pConfig->m_bCompOnly && !m_pConfig->m_bOutfileGiven
-          && ( uses_openmp || inst_type == INST_TYPE_TAUINST ) )
-      {
-         std::string obj_file = src_file;
-
-         si = src_file.rfind( '/' );
-         if( si != std::string::npos )
-            obj_file = src_file.substr( si+1 );
-
-         si = obj_file.rfind( '.' );
-         assert( si != std::string::npos );
-         obj_file = obj_file.substr( 0, si ) + ".o";
-
-         obj_files_to_rename[obj_file] = m_pConfig->m_vecComp_ObjFiles[i];
-      }
-   }
-
-   if( uses_openmp )
-   {
-      // add current working directory to include search path to find OPARI
-      // generated header files (only necessary for C/C++)
-      //
-      if( lang_type == LANG_CC || lang_type == LANG_CXX )
-         m_pConfig->compiler_addArg( "-I." );
-
-      // If the source file(s) are instrumented by OPARI *and* TAU, the source
-      // code locations determined by TAU are nonsense. Add compiler flag to
-      // disable recording of source code locations.
-      //
-      if( inst_type == INST_TYPE_TAUINST )
-      {
-         m_pConfig->compiler_addArg(
-            m_pConfig->m_sComp_FDFlag + "TAUINST_NOSRC" );
-      }
-   }
-
-   // compile only ?
-   if( m_pConfig->m_bCompOnly )
-   {
-      // build compiler command
-      //
-      cmd = m_pConfig->m_sComp_Cmd + " "
-         + m_pConfig->m_sVT_IncDir + " "
-         + m_pConfig->m_sComp_InstFlags + " "
-         + m_pConfig->m_sComp_Flags + " "
-         + m_pConfig->m_sComp_Args;
-
-      // execute/show compiler command
-      //
-      if( ( rc = executeOrShowCommand( cmd ) ) != 0 )
-         return rc;
-
-      // rename compiler output files to original file names
-      //
-      if( !show )
-      {
-         for( std::map<std::string, std::string>::iterator it =
-                 obj_files_to_rename.begin(); it != obj_files_to_rename.end();
-                 it++ )
-         {
-            if( beverbose )
-               std::cout << "+++ rename " << it->first
-                         << " to " << it->second << std::endl;
-            if( rename( it->first.c_str(), it->second.c_str() ) == -1 )
-            {
-               std::cerr << ExeName << ": could not rename " << it->first
-                         << " to " << it->second << std::endl;
-               return 1;
-            }
-         }
-      }
-   }
-   else
-   {
-      std::string vtlib;
-
-      if( uses_openmp )
-      {
-         // build command for compiling OPARI table file
-         //
-         cmd =
-            m_pConfig->m_sOpari_TabCompCmd + " "
-            + m_pConfig->m_sOpari_TabCompFlags + " "
-            + m_pConfig->m_sVT_IncDir + " "
-            + ( (lang_type == LANG_F77 || lang_type == LANG_F90) ? "-I. " : "" )
-            + "-c " + m_pConfig->m_sOpari_TabFile.first + " "
-            + "-o " + m_pConfig->m_sOpari_TabFile.second;
-
-         // execute/show compiler command
-         //
-         if( ( rc = executeOrShowCommand( cmd ) ) != 0 )
-            return rc;
-
-         // add OPARI table object file to to linker arguments
-         m_pConfig->compiler_addArg( m_pConfig->m_sOpari_TabFile.second );
-
-         // collect intermediate OPARI output files for removing
-         //
-
-         // OPARI include files
-         //
-         if( lang_type == LANG_F77 || lang_type == LANG_F90 )
-         {
-            std::vector<std::string> vec_incfiles = getIncFilesFromTabFile();
-            for( i = 0; i < vec_incfiles.size(); i++ )
-               files_to_remove.push_back( vec_incfiles[i].c_str() );
-         }
-
-         // OPARI table source/object file
-         //
-         files_to_remove.push_back( m_pConfig->m_sOpari_TabFile.first );
-         files_to_remove.push_back( m_pConfig->m_sOpari_TabFile.second );
-
-         // OPARI rc file
-         //
-         if( !m_pConfig->m_bKeepOpariRcFile )
-            files_to_remove.push_back( m_pConfig->m_sOpari_RcFile );
-      }
-
-      // build compiler command
-      //
-      vtlib = ( ( inst_type == INST_TYPE_DYNINST ) ?
-                m_pConfig->m_sVT_DynAttLib : "" );
-
-      if( uses_threads )
-      {
-         vtlib += " "
-            + ( uses_openmp ?
-                m_pConfig->m_sVT_PompLib : "" );
-
-         if( uses_mpi )
-            vtlib += " " + m_pConfig->m_sVT_HybLib;
-         else
-            vtlib += " " + m_pConfig->m_sVT_MtLib;
-      }
-      else
-      {
-         if( uses_mpi )
-            vtlib += " " + m_pConfig->m_sVT_MpiLib;
-         else
-            vtlib += " " + m_pConfig->m_sVT_SeqLib;
-      }
-
-      cmd =
-         m_pConfig->m_sComp_Cmd + " "
-         + m_pConfig->m_sVT_IncDir + " "
-         + m_pConfig->m_sComp_InstFlags + " "
-         + m_pConfig->m_sComp_Flags + " "
-         + m_pConfig->m_sComp_Args + " "
-         + m_pConfig->m_sComp_LdFlags + " "
-         + m_pConfig->m_sVT_LibDir + " "
-         + vtlib + " "
-         + m_pConfig->m_sComp_Libs;
-
-      // execute/show compiler command
-      //
-      if( ( rc = executeOrShowCommand( cmd ) ) != 0 )
-         return rc;
-   }
-
-   // remove intermediate files (in non-verbose mode)
-   //
-   if( !show && !beverbose )
-   {
-      for( i = 0; i < files_to_remove.size(); i++ )
-         remove( files_to_remove[i].c_str() );
-   }
-
-   return 0;
-}
-
-// private methods
-//
-
-void
-Wrapper::showVersion()
-{
-   std::cout << m_pConfig->m_sVT_Version << std::endl;
-}
-
-void
-Wrapper::showUsageText()
-{
-   std::string str_lang;
-   std::string str_lang_suffix;
-
-   if( m_pConfig->m_eLangType == LANG_CC )
-   {
-      str_lang = "C";
-      str_lang_suffix = "cc ";
-   }
-   else if( m_pConfig->m_eLangType == LANG_CXX )
-   {
-      str_lang = "C++";
-      str_lang_suffix = "cxx";
-   }
-   else if( m_pConfig->m_eLangType == LANG_F77 )
-   {
-      str_lang = "Fortran 77";
-      str_lang_suffix = "f77";
-   }
-   else if( m_pConfig->m_eLangType == LANG_F90 )
-   {
-      str_lang = "Fortran 90";
-      str_lang_suffix = "f90";
-   }
-
-   std::cout << std::endl
-             << " " << ExeName << " - " << str_lang
-             << " compiler wrapper for VampirTrace."
-             << std::endl << std::endl
-             << " Syntax: " << ExeName << " "
-             << "[-vt:help] "
-             << "[-vt:version] "
-             << "[-vt:" << str_lang_suffix << " <cmd>] "
-             << "[-vt:inst <insttype>] "
-             << std::endl << "         "
-             << "[-vt:<seq|mpi|mt|hyb>] "
-             << "[-vt:opari <args>] [-vt:noopari]" << std::endl
-             << "         [-vt:tau <args>] [-vt:pdt <args>] [-vt:verbose] [-vt:show] ..."
-             << std::endl << std::endl
-             << "   options:"
-             << std::endl
-             << "     -vt:help            Show this help message."
-             << std::endl << std::endl
-             << "     -vt:version         Show VampirTrace version."
-             << std::endl << std::endl
-             << "     -vt:" << str_lang_suffix << " <cmd>       "
-             << "Set the underlying compiler command."
-             <<  std::endl << std::endl
-             << "     -vt:inst <insttype> Set the instrumentation type."
-             << std::endl << std::endl
-             << "      possible values:"
-             << std::endl << std::endl
-             << "       compinst          fully-automatic by compiler"
-             << std::endl
-             << "       manual            manual by using VampirTrace's API"
-             << std::endl
-             << "       dyninst           binary by using Dyninst"
-             << std::endl
-             << "       tauinst           automatic source code instrumentation by using PDT/TAU"
-             << std::endl << std::endl
-             << "     -vt:opari <args>    Set options for the OPARI command."
-             << std::endl
-             << "                         (see "
-             << vt_installdirs_get(VT_INSTALLDIR_DATADIR)
-             << "/doc/opari/Readme.html for more information)"
-             << std::endl << std::endl
-             << "     -vt:noopari         Disable instrumentation of OpenMP contructs by OPARI."
-             << std::endl << std::endl
-
-
-             << "     -vt:tau <args>      Set options for the TAU instrumentor command."
-             << std::endl << std::endl
-             << "     -vt:pdt <args>      Set options for the PDT parse command."
-             << std::endl << std::endl
-             << "     -vt:<seq|mpi|mt|hyb>"
-             << std::endl
-             << "                         Enforce application's parallelization type."
-             << std::endl
-             << "                         It's only necessary if it could not be determined"
-             << std::endl
-             << "                         automatically based on underlying compiler and flags."
-             << std::endl
-             << "                         seq = sequential"
-             << std::endl
-             << "                         mpi = parallel (uses MPI)"
-             << std::endl
-             << "                         mt = parallel (uses OpenMP/POSIX threads)"
-             << std::endl
-             << "                         hyb = hybrid parallel (MPI + Threads)"
-             << std::endl
-             << "                         (default: automatically)"
-             << std::endl << std::endl
-             << "     -vt:verbose         Enable verbose mode."
-             << std::endl << std::endl
-             << "     -vt:show            Do not invoke the underlying compiler."
-             << std::endl
-             << "                         Instead, show the command line that would be"
-             << std::endl
-             << "                         executed to compile and link the program."
-             << std::endl << std::endl
-             << "     See the man page for your underlying compiler for other options that can"
-             << std::endl
-             << "     be passed through '" << ExeName << "'."
-             << std::endl << std::endl
-             << "   environment variables:"
-             << std::endl
-             << "     VT_INST             Instrumentation type (equivalent to '-vt:inst'*)"
-             << std::endl;
-   if( m_pConfig->m_eLangType == LANG_CC )
-   {
-      std::cout << "     VT_CC               C compiler command (equivalent to '-vt:"
-                << str_lang_suffix << "'*)" << std::endl
-                << "     VT_CFLAGS           C compiler flags" << std::endl;
-   }
-   else if( m_pConfig->m_eLangType == LANG_CXX )
-   {
-      std::cout << "     VT_CXX              C++ compiler command (equivalent to '-vt:"
-                << str_lang_suffix << "'*)" << std::endl
-                << "     VT_CXXFLAGS         C++ compiler flags" << std::endl;
-   }
-   else if( m_pConfig->m_eLangType == LANG_F77 )
-   {
-      std::cout << "     VT_F77              Fortran 77 compiler command (equivalent to '-vt:"
-                << str_lang_suffix << "'*)" << std::endl
-                << "     VT_FFLAGS           Fortran 77 compiler flags" << std::endl;
-   }
-   else if( m_pConfig->m_eLangType == LANG_F90 )
-   {
-      std::cout << "     VT_F90              Fortran 90 compiler command (equivalent to '-vt:"
-                << str_lang_suffix <<"'*)" << std::endl
-                << "     VT_FCFLAGS          Fortran 90 compiler flags" << std::endl;
-   }
-   std::cout << "     VT_LDFLAGS          Linker flags"
-             << std::endl
-             << "     VT_LIBS             Libraries to pass to the linker"
-             << std::endl << std::endl
-             << "     * The corresponding command line options overwrites the environment"
-             << std::endl
-             << "       variables setting."
-             << std::endl << std::endl
-             << "   examples:"
-             << std::endl
-             << "     automatically instrumentation by compiler:"
-             << std::endl << std::endl;
-   if( m_pConfig->m_eLangType == LANG_CC )
-   {
-      std::cout << "        vtcc -vt:cc gcc -vt:inst compinst -c foo.c -o foo.o"
-                << std::endl
-                << "        vtcc -vt:cc gcc -vt:inst compinst -c bar.c -o bar.o"
-                << std::endl
-                << "        vtcc -vt:cc gcc -vt:inst compinst foo.o bar.o -o foo"
-                << std::endl << std::endl
-                << "     manually instrumentation by using VT's API:"
-                << std::endl << std::endl
-                << "        vtcc -vt:inst manual foobar.c -o foobar -DVTRACE";
-   }
-   else if( m_pConfig->m_eLangType == LANG_CXX )
-   {
-      std::cout << "        vtcxx -vt:cxx g++ -vt:inst compinst -c foo.cpp -o foo.o"
-                << std::endl
-                << "        vtcxx -vt:cxx g++ -vt:inst compinst bar.cpp -o bar.o"
-                << std::endl
-                << "        vtcxx -vt:cxx g++ -vt:inst compinst foo.o bar.o -o foo"
-                << std::endl << std::endl
-                << "     manually instrumentation by using VT's API:"
-                << std::endl << std::endl
-                << "        vtcxx -vt:inst manual foobar.cpp -o foobar -DVTRACE";
-   }
-   else if( m_pConfig->m_eLangType == LANG_F77 )
-   {
-      std::cout << "        vtf77 -vt:f77 g77 -vt:inst compinst -c foo.F -o foo.o"
-                << std::endl
-                << "        vtf77 -vt:f77 g77 -vt:inst compinst bar.F -o bar.o"
-                << std::endl
-                << "        vtf77 -vt:f77 g77 -vt:inst compinst foo.o bar.o -o foo"
-                << std::endl << std::endl
-                << "     manually instrumentation by using VT's API:"
-                << std::endl << std::endl
-                << "        vtf77 -vt:inst manual foobar.F -o foobar -DVTRACE";
-   }
-   else if( m_pConfig->m_eLangType == LANG_F90 )
-   {
-      std::cout << "        vtf90 -vt:f90 gfortran -vt:inst compinst -c foo.F90 -o foo.o"
-                << std::endl
-                << "        vtf90 -vt:f90 gfortran -vt:inst compinst bar.F90 -o bar.o"
-                << std::endl
-                << "        vtf90 -vt:f90 gfortran -vt:inst compinst foo.o bar.o -o foo"
-                << std::endl << std::endl
-                << "     manually instrumentation by using VT's API:"
-                << std::endl << std::endl
-                << "        vtf90 -vt:inst manual foobar.F90 -o foobar -DVTRACE";
-   }
-
-   if( m_pConfig->m_eLangType == LANG_F77 || m_pConfig->m_eLangType == LANG_F90 )
-   {
-      std::cout << std::endl << std::endl
-                << "     IMPORTANT: Fortran source files instrumented by using VT's API"
-                << std::endl
-                << "                have to be (CPP) preprocessed.";
-   }
-   std::cout << std::endl << std::endl;
-}
-
-int
-Wrapper::executeOrShowCommand( std::string & cmd )
-{
-   int rc = 0;
-
-   // remove double spaces from command
-   //
-   std::string::size_type i;
-   while( ( i = cmd.find( "  " ) ) != std::string::npos )
-      cmd.erase( i, 1 );
-
-   // either show
-   if( m_pConfig->m_bShow )
-   {
-     std::cout << cmd << std::endl;
-   }
-   // or execute command
-   else
-   {
-      if( m_pConfig->m_bBeVerbose )
-         std::cout << "+++ " << cmd << std::endl;
-      if( ( rc = system( cmd.c_str() ) ) != -1 )
-         rc = WEXITSTATUS( rc );
-   }
-
-   return rc;
-}
-
-std::vector<std::string>
-Wrapper::getIncFilesFromTabFile()
-{
-   std::vector<std::string> vec_incfiles;
-
-   std::ifstream in( m_pConfig->m_sOpari_TabFile.first.c_str() );
-   if( in )
-   {
-      char buffer[1024];
-      std::string line;
-
-      while( in.getline( buffer, sizeof( buffer ) ) )
-      {
-         line = buffer;
-
-         if( line.find( "#include" ) != std::string::npos
-            && line.find( ".opari.inc" ) != std::string::npos )
-         {
-            std::string incfile = line.substr( line.find("#include")+10 );
-            incfile.erase( incfile.length()-1 );
-
-            vec_incfiles.push_back( incfile );
-         }
-      }
-
-      in.close();
-   }
-
-   return vec_incfiles;
-}
-
-
-//////////////////// class Config ////////////////////
-
-// public methods
-//
-
-Config::Config() :
-   m_eLangType(LANG_CC), m_eInstType(INST_TYPE_MANUAL), m_iInstAvail(0),
-
-   m_bBeVerbose(false), m_bCompOnly(false), m_bOutfileGiven(false),
-   m_bUsesMpi(false), m_bUsesThreads(false),
-   m_bUsesOpenMP(false), m_bKeepOpariRcFile(false),
-   m_bShow(false)
-{
-   m_sOpari_RcFile = "opari.rc";
-   m_sOpari_TabFile = std::make_pair(std::string("opari.tab.c"),
-                                     std::string("opari.tab.o"));
-}
-
-Config::~Config()
-{
-   // empty
+    }
+  }
+
+  in.close();
+
+  if( !error && key_idx < keys_num )
+  {
+    std::cerr << ExeName << ": "
+              << data_file << ": "
+              << "unexpected end of file" << std::endl;
+    return false;
+  }
+
+  return !error;
 }
 
 bool
-Config::setLanguage( const LangTypeT lang )
+readEnvironmentVars()
 {
-#if !(defined(HAVE_F77) && HAVE_F77) || !(defined(HAVE_F90) && HAVE_F90)
-   bool error = false;
-   std::string str_lang;
+  char* env;
 
-   if( lang == LANG_F77 )
-   {
-#     if !(defined(HAVE_F77) && HAVE_F77)
-      str_lang = "Fortran 77";
-      error = true;
-#     endif // HAVE_F77
-   }
-   else if( lang == LANG_F90 )
-   {
-#     if !(defined(HAVE_F90) && HAVE_F90)
-      str_lang = "Fortran 90";
-      error = true;
-#     endif // HAVE_F90
-   }
+  // read environment var. for compiler command
+  // (VT_<CC|CXX|F77|F90>)
+  //
+  env = getenv( Config.comp_cmdenv.c_str() );
+  if( env ) Config.setCompilerCmd( env );
 
-   if( !error )
-   {
-      m_eLangType = lang;
-   }
-   else
-   {
-      std::cerr << "Unfortunately, this installation of VampirTrace "
-                << "was not compiled with" << std::endl
-                << str_lang << " support.  As such, the " << ExeName
-                << " compiler is non-functional." << std::endl;
-   }
+  // read environment var. for extra compiler flags
+  // (VT_<C|CXX|F|FC>FLAGS)
+  env = getenv( Config.comp_flagsenv.c_str() );
+  if( env )
+  {
+    if( Config.comp_flags.length() > 0 )
+      Config.comp_flags += " ";
+    Config.comp_flags += env;
+  }
 
-   return !error;
-#else // HAVE_F77 || HAVE_F90
-   m_eLangType = lang;
-   return true;
-#endif // HAVE_F77 || HAVE_F90
+  // read environment var. for extra linker flags
+  // (VT_LDFLAGS)
+  env = getenv( "VT_LDFLAGS" );
+  if( env ) Config.comp_ldflags = env;
+
+  // read environment var. for extra libs
+  // (VT_LIBS)
+  env = getenv( "VT_LIBS" );
+  if( env )
+  {
+    if( Config.comp_libs.length() > 0 )
+      Config.comp_libs += " ";
+    Config.comp_libs += env;
+  }
+
+  // read environment var. for instrumentation type
+  // (VT_INST)
+  //
+  env = getenv( "VT_INST" );
+  if( env )
+  {
+    if( !Config.setInstType( env ) )
+    {
+      std::cerr << ExeName << ": Error: VT_INST: "
+                << "Unknown or not supported instrumentation type '"
+                << env << "'. Aborting." << std::endl;
+      return false;
+    }
+  }
+
+  return true;
 }
 
-void
-Config::compiler_setCmd( const std::string cmd )
+bool
+parseCommandLine( int argc, char** argv )
 {
-   std::string bcomp = cmd;
-   std::string::size_type ls = cmd.rfind('/');
+  std::vector<std::string> args;
+  std::string arg;
+  uint32_t i;
 
-   if( ls != std::string::npos ) bcomp = cmd.substr( ls+1 );
+  // pre-process arguments
+  //
+  for( i = 1; i < (uint32_t)argc; i++ )
+  {
+    arg = argv[i];
 
-   if( !m_bUsesMpi &&
-       ( bcomp.compare( 0, 2, "mp" ) == 0
-         || bcomp.compare( 0, 4, "sxmp" ) == 0
-         || bcomp.compare( 0, 4, "scmp" ) == 0 ) )
-      setUsesMpi( true );
+    // we also accept "--vt:" - modify "--vt:" to "-vt:"
+    //
+    if( arg.compare( 0, 5, "--vt:" ) == 0 )
+    {
+      arg.erase( 0, 1 );
+    }
 
-   if( bcomp.compare( 0, 3, "xlf" ) == 0
-       || bcomp.compare( 0, 9, "blrts_xlf" ) == 0
-       || bcomp.compare( 0, 3, "bgf" ) == 0 )
-     m_sComp_FDFlag = "-WF,-D";
-   else
-     m_sComp_FDFlag = "-D";
+    // merge separated compiler arguments
+    // -<I|D|L|l> <dir|lib>
+    //             ^
+    if( arg.compare( "-I" ) == 0 ||
+        arg.compare( "-D" ) == 0 ||
+        arg.compare( "-L" ) == 0 ||
+        arg.compare( "-l" ) == 0 )
+    {
+      if( i < (uint32_t)argc - 1 )
+        arg += argv[++i];
+    }
 
-   m_sComp_Cmd = cmd;
+    args.push_back( arg );
+  }
+
+  for( i = 0; i < args.size(); i++ )
+  {
+    arg = args[i];
+
+    // -vt:help
+    //
+    if( arg.compare( "-vt:help" ) == 0 )
+    {
+      showUsage();
+      exit(0);
+    }
+
+    // -vt:version
+    //
+    if( arg.compare( "-vt:version" ) == 0 )
+    {
+      std::cout << Config.vt_version << std::endl;
+      exit(0);
+    }
+    // -vt:show, -vt:showme
+    //
+    else if( arg.compare( "-vt:show" ) == 0 ||
+             arg.compare( "-vt:showme" ) == 0 )
+    {
+      Config.showme_flags = SHOWME_FLAG_ALL;
+    }
+    // -vt:showme-compile
+    //
+    else if( arg.compare( "-vt:showme-compile" ) == 0 )
+    {
+      if( ( Config.showme_flags & SHOWME_FLAG_ALL ) != 0 )
+        Config.showme_flags ^= SHOWME_FLAG_ALL;
+      Config.showme_flags |= SHOWME_FLAG_COMPILE;
+    }
+    // -vt:showme-link
+    //
+    else if( arg.compare( "-vt:showme-link" ) == 0 )
+    {
+      if( ( Config.showme_flags & SHOWME_FLAG_ALL ) != 0 )
+        Config.showme_flags ^= SHOWME_FLAG_ALL;
+      Config.showme_flags |= SHOWME_FLAG_LINK;
+    }
+    // -vt:verbose
+    //
+    else if( arg.compare( "-vt:verbose" ) == 0 )
+    {
+      Config.be_verbose = true;
+    }
+    // -vt:inst <type>
+    //
+    else if( arg.compare( "-vt:inst" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <type> expected -- -vt:inst"
+                  << std::endl;
+        return false;
+      }
+
+      arg = args[++i];
+
+      if( !Config.setInstType( arg ) )
+      {
+        std::cerr << ExeName << ": "
+                  << "unknown or not supported instrumentation type '"
+                  << arg << "'" << std::endl;
+        return false;
+      }
+    }
+    // -vt:opari <args>
+    //
+    else if( arg.compare( "-vt:opari" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <args> expected -- -vt:opari"
+                  << std::endl;
+        return false;
+      }
+
+      size_t opari_args_len = args[i+1].length()+1;
+      char* opari_args = new char[opari_args_len];
+      strncpy( opari_args, args[++i].c_str(), opari_args_len - 1 );
+      opari_args[opari_args_len - 1] = '\0';
+
+      char* token = strtok( opari_args, " " );
+      do
+      {
+        if( strcmp( token, "-rcfile" ) == 0 )
+        {
+          token = strtok( 0, " " );
+          if( !token )
+          {
+            std::cerr << ExeName << ": <rcfile> expected -- -rcfile"
+                      << std::endl;
+            delete [] opari_args;
+            return false;
+          }
+
+          Config.setOpariRcFile( token );
+        }
+        else if( strcmp( token, "-table" ) == 0 )
+        {
+          token = strtok( 0, " " );
+          if( !token )
+          {
+            std::cerr << ExeName << ": <tabfile> expected -- -table"
+                      << std::endl;
+            delete [] opari_args;
+            return false;
+          }
+
+          Config.setOpariTabFile( token );
+        }
+        else
+        {
+          Config.addOpariArg( token );
+        }
+      } while( ( token = strtok( 0, " " ) ) );
+
+      delete [] opari_args;
+    }
+    // -vt:noopari
+    //
+    else if( arg.compare( "-vt:noopari" ) == 0 )
+    {
+      Config.setUsesOpenMP( false, true );
+    }
+    // -vt:tau <args>
+    //
+    else if( arg.compare( "-vt:tau" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <args> expected -- -vt:tau"
+                  << std::endl;
+        return false;
+      }
+
+      Config.addTauinstArg( args[++i] );
+    }
+    // -vt:pdt <args>
+    //
+    else if( arg.compare( "-vt:pdt" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <args> expected -- -vt:pdt"
+                  << std::endl;
+        return false;
+      }
+
+      Config.addTauinstParseArg( args[++i] );
+    }
+    // -vt:seq
+    //
+    else if( arg.compare( "-vt:seq" ) == 0 )
+    {
+      Config.setUsesMpi( false, true );
+      Config.setUsesThreads( false, true );
+      Config.setUsesOpenMP( false, true );
+    }
+    // -vt:mpi
+    //
+    else if( arg.compare( "-vt:mpi" ) == 0 )
+    {
+      Config.setUsesMpi( true, true );
+      Config.setUsesThreads( false, true );
+      Config.setUsesOpenMP( false, true );
+    }
+    // -vt:mt
+    //
+    else if( arg.compare( "-vt:mt" ) == 0 )
+    {
+      Config.setUsesMpi( false, true );
+      Config.setUsesThreads( true, true );
+    }
+    // -vt:hyb
+    //
+    else if( arg.compare( "-vt:hyb" ) == 0 )
+    {
+      Config.setUsesMpi( true, true );
+      Config.setUsesThreads( true, true );
+    }
+    // pthread flags/libs
+    //
+    else if( arg.compare( "-Kthread" ) == 0 ||
+             arg.compare( "-kthread" ) == 0 ||
+             arg.compare( "-pthread" ) == 0 ||
+             arg.compare( "-pthreads" ) == 0 ||
+             arg.compare( "-mthreads" ) == 0 ||
+             arg.compare( "--thread-safe" ) == 0 ||
+             arg.compare( "-lpthreads" ) == 0 ||
+             arg.compare( "-llthread" ) == 0 ||
+             arg.compare( "-lpthread" ) == 0 )
+    {
+      Config.setUsesThreads( true );
+    }
+    // openmp flag
+    //
+    else if( arg.compare( "-openmp" ) == 0 ||
+             arg.compare( "-fopenmp" ) == 0 ||
+             arg.compare( "-Popenmp" ) == 0 ||
+             arg.compare( "-xopenmp" ) == 0 ||
+             arg.compare( "-mp" ) == 0 )
+    {
+      Config.setUsesThreads( true );
+      Config.setUsesOpenMP( true );
+    }
+    else if( arg.length() > 6 && arg.compare( 0, 6, "-qsmp=" ) == 0 )
+    {
+      char carg[128];
+      strncpy( carg, arg.substr(6).c_str(), sizeof( carg ) - 1 );
+      carg[sizeof( carg ) - 1]  = '\0';
+
+      char* token = strtok( carg, ":" );
+      do
+      {
+        if( strcmp( token, "omp" ) == 0 )
+        {
+          Config.setUsesThreads( true );
+          Config.setUsesOpenMP( true );
+          break;
+        }
+      } while( ( token = strtok( 0, ":" ) ) );
+    }
+    // nvcc's pthread/openmp flag
+    //
+    else if( arg.compare( 0, 10, "-Xcompiler" ) == 0 ||
+             arg.compare( 0, 18, "--compiler-options" ) == 0 ||
+             arg.compare( 0, 8, "-Xlinker" ) == 0 ||
+             arg.compare( 0, 16, "--linker-options" ) == 0 )
+    {
+      if( arg.find( "-pthread" ) != std::string::npos )
+        Config.setUsesThreads( true );
+
+      if( arg.find( "-fopenmp" ) != std::string::npos )
+      {
+        Config.setUsesThreads( true );
+        Config.setUsesOpenMP( true );
+      }
+    }
+  }
+
+  bool addlibs = false;
+
+  for( i = 0; i < args.size(); i++ )
+  {
+    arg = args[i];
+
+    // escape '\', '"', ''', ' ', '(', and ')'
+    //
+    const char special_char[] = "\\\"' ()";
+    size_t found = arg.find_first_of( special_char );
+    while( found != std::string::npos )
+    {
+      arg.insert( found, "\\" );
+      found = arg.find_first_of( special_char, found + 2 );
+    }
+
+    // -vt:help, -vt:version, -vt:show, -vt:showme, vt:showme-compile,
+    // -vt:showme-link, -vt:seq, -vt:mpi, -vt:mt, -vt:hyb,
+    // -vt:inst, -vt:opari, -vt:tau, -vt:pdt
+    // (processed above; ignore here)
+    //
+    if( arg.compare( "-vt:help" ) == 0 ||
+        arg.compare( "-vt:version" ) == 0 ||
+        arg.compare( "-vt:show" ) == 0 ||
+        arg.compare( "-vt:showme" ) == 0 ||
+        arg.compare( "-vt:showme-compile" ) == 0 ||
+        arg.compare( "-vt:showme-link" ) == 0 ||
+        arg.compare( "-vt:verbose" ) == 0 ||
+        arg.compare( "-vt:seq" ) == 0 ||
+        arg.compare( "-vt:mpi" ) == 0 ||
+        arg.compare( "-vt:mt" ) == 0 ||
+        arg.compare( "-vt:hyb" ) == 0 ||
+        arg.compare( "-vt:inst" ) == 0 ||
+        arg.compare( "-vt:opari" ) == 0 ||
+        arg.compare( "-vt:noopari" ) == 0 ||
+        arg.compare( "-vt:tau" ) == 0 ||
+        arg.compare( "-vt:pdt" ) == 0 )
+    {
+      // do nothing
+
+      // skip next argument, if necessary
+      if( arg.compare("-vt:inst") == 0 ||
+          arg.compare("-vt:opari") == 0 ||
+          arg.compare("-vt:tau") == 0 ||
+          arg.compare("-vt:pdt") == 0 )
+      {
+        i++;
+      }
+    }
+    // -vt:<cc|CC|c++|cxx|f77|f90> <cmd>
+    //
+    else if( ( Config.lang_type == LANG_CC &&
+               arg.compare( "-vt:cc" ) == 0 ) ||
+             ( Config.lang_type == LANG_CXX &&
+               ( arg.compare( "-vt:CC" ) == 0 ||
+                 arg.compare( "-vt:c++" ) == 0 ||
+                 arg.compare( "-vt:cxx" ) == 0 ) ) ||
+             ( Config.lang_type == LANG_F77 &&
+               arg.compare( "-vt:f77" ) == 0 ) ||
+             ( Config.lang_type == LANG_F90 &&
+               arg.compare( "-vt:f90" ) == 0 ) )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <cmd> expected -- "
+                  << arg << std::endl;
+        return false;
+      }
+
+      Config.setCompilerCmd( args[++i] );
+    }
+    // -vt:*  -> unknown wrapper argument
+    //
+    else if( arg.compare( 0, 4, "-vt:" ) == 0 )
+    {
+      std::cerr << ExeName << ": unknown option -- "
+                << arg << std::endl;
+      return false;
+    }
+    // source file
+    //
+    else if( ( arg.length() >= 2 &&
+               arg.compare( arg.length() - 2, 2, ".c" ) == 0 ) ||
+             ( arg.length() >= 2 &&
+               arg.compare( arg.length() - 2, 2, ".C" ) == 0 ) ||
+             ( arg.length() >= 3 &&
+               arg.compare( arg.length() - 3, 3, ".cc" ) == 0 ) ||
+             ( arg.length() >= 3 &&
+               arg.compare( arg.length() - 3, 3, ".CC" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".cpp" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".CPP" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".cxx" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".CXX" ) == 0 ) ||
+             ( arg.length() >= 2 &&
+               arg.compare( arg.length() - 2, 2, ".f" ) == 0 ) ||
+             ( arg.length() >= 2 &&
+               arg.compare( arg.length() - 2, 2, ".F" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".f77" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".F77" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".f90" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".F90" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".f95" ) == 0 ) ||
+             ( arg.length() >= 4 &&
+               arg.compare( arg.length() - 4, 4, ".F95" ) == 0 ) ||
+             ( arg.length() >= 3 &&
+               arg.compare( arg.length() - 3, 3, ".cu" ) == 0 ) )
+    {
+      if( Config.showme_flags == 0 || Config.showme_flags == SHOWME_FLAG_ALL )
+      {
+        Config.addModSrcFile( arg );
+      }
+      else
+      {
+        Config.addCompilerArg( arg );
+      }
+    }
+    // -<I|D>*
+    //
+    else if( arg.compare( 0, 2, "-I" ) == 0 ||
+             arg.compare( 0, 2, "-D" ) == 0 )
+    {
+      if( Config.inst_type == INST_TYPE_TAUINST )
+        Config.addTauinstParseArg( arg );
+      Config.addCompilerArg( arg );
+    }
+    // -WF,-D*
+    //
+    else if( Config.fortran() && arg.compare( 0, 6, "-WF,-D" ) == 0 )
+    {
+      if( Config.inst_type == INST_TYPE_TAUINST )
+        Config.addTauinstParseArg( arg.substr( 4 ) );
+      Config.addCompilerArg( arg );
+    }
+    // Fortran line length flag
+    //
+    else if( Config.fortran() &&
+             ( arg.compare( "-ffixed-line-length-132" ) == 0 ||
+               arg.compare( "-extend_source" ) == 0 ||
+               arg.compare( "-Mextend" ) == 0 ||
+               arg.compare( "-e" ) == 0 ||
+               arg.compare( "-qfixed=132" ) == 0 ) )
+    {
+      if( Config.inst_type == INST_TYPE_TAUINST )
+        Config.addTauinstParseArg( "-ffixed-line-length-132" );
+      Config.addCompilerArg( arg );
+    }
+    // Fortran free format flag
+    //
+    else if( Config.fortran() &&
+             ( arg.compare( "-ffree-form" ) == 0 ||
+               arg.compare( "-free" ) == 0 ||
+               arg.compare( "-Mfree" ) == 0 ||
+               arg.compare( 0, 6, "-qfree" ) == 0 ) )
+    {
+      if( Config.inst_type == INST_TYPE_TAUINST ||
+          Config.tauinst_parsecmd.compare( "f95parse" ) == 0 )
+        Config.addTauinstParseArg( "-R free" );
+      Config.addCompilerArg( arg );
+    }
+    // Fortran fixed format flag
+    //
+    else if( Config.fortran() &&
+             ( arg.compare( "-ffixed-form" ) == 0 ||
+               arg.compare( "-fixed" ) == 0 ||
+               arg.compare( "-Mfixed" ) == 0 ||
+               arg.compare( 0, 7, "-qfixed" ) == 0 ) )
+    {
+      if( Config.inst_type == INST_TYPE_TAUINST &&
+          Config.tauinst_parsecmd.compare( "f95parse" ) == 0 )
+        Config.addTauinstParseArg( "-R fixed" );
+      Config.addCompilerArg( arg );
+    }
+    // -c
+    //
+    else if( arg.compare( "-c" ) == 0 )
+    {
+      Config.comp_only = true;
+      Config.addCompilerArg( arg );
+    }
+    // -o
+    //
+    else if( arg.compare( "-o" ) == 0 )
+    {
+      Config.outfile_given = true;
+      Config.addCompilerArg( arg );
+    }
+    // -lcuda[rt]
+    //
+    else if( arg.compare( "-lcuda" ) == 0 || arg.compare( "-lcudart" ) == 0 )
+    {
+      Config.addCompilerLib( arg );
+    }
+    // -l<mpilib>
+    //
+    else if( arg.compare( 0, 5, "-lmpi" ) == 0 ||
+             arg.compare( 0, 7, "-lmtmpi" ) == 0 ||
+             arg.compare( 0, 7, "-lhpmpi" ) == 0 ||
+             arg.compare( 0, 7, "-lscmpi" ) == 0 )
+    {
+      Config.setUsesMpi( true );
+      Config.addCompilerLib( arg );
+      addlibs = true;
+    }
+    // -<L|l>*
+    //
+    else if( arg.compare( 0, 2, "-L" ) == 0 || arg.compare( 0, 2, "-l" ) == 0 )
+    {
+      if( addlibs )
+        Config.addCompilerLib( arg );
+      else
+        Config.addCompilerArg( arg );
+    }
+    // unknown argument
+    //
+    else
+    {
+      Config.addCompilerArg( arg );
+    }
+  }
+
+  return true;
 }
 
-void
-Config::compiler_addArg( const std::string arg )
+int
+doWrap()
 {
-   if( m_sComp_Args.length() > 0 ) m_sComp_Args += " ";
-   m_sComp_Args += arg;
-}
+  int rc = 0;
 
-void
-Config::compiler_addLib( const std::string lib )
-{
-   if( m_sComp_Libs.length() > 0 ) m_sComp_Libs += " ";
-   m_sComp_Libs += lib;
-}
+  // call compiler without any parameters, if
+  // insufficient arguments given
+  //
+  if( Config.showme_flags == 0 && Config.comp_args.length() == 0 )
+  {
+    rc = system( Config.comp_cmd.c_str() );
+    return WEXITSTATUS( rc );
+  }
 
-void
-Config::compiler_addSrcFile( const std::string file )
-{
-   std::string file_base;
-   std::string file_obj;
-   std::string::size_type si;
+  std::string cmd;
+  uint32_t i;
 
-   // get base name of source file
-   //
-   file_base = file;
-   si = file.rfind( '/' );
-   if( si != std::string::npos )
-      file_base = file.substr( si+1 );
+  // vector which holds all intermediately created files
+  std::vector<std::string> files_to_remove;
 
-   // create object file name of source file
-   //
-   si = file_base.rfind( '.' );
-   assert( si != std::string::npos );
-   file_obj = file_base.substr( 0, si ) + ".o";
+  // map which holds all object files created by the compiler
+  // which must be renamed to original file names
+  std::map<std::string, std::string> obj_files_to_rename;
 
-   // store source/object file name for later processing by OPARI and/or TAU
-   //
-   m_vecComp_SrcFiles.push_back( file );
-   m_vecComp_ObjFiles.push_back( file_obj );
+  // process source files by OPARI and/or TAU
+  //
+  for( i = 0; i < Config.mod_files.size(); i++ )
+  {
+    std::string src_file = Config.mod_files[i].first;
 
-   // add (modified) source file name to compiler arguments
-   //
-   if( m_eInstType == INST_TYPE_TAUINST || m_bUsesOpenMP )
-   {
-      std::string mod_file = file;
+    std::string::size_type si;
 
+    // run OPARI command on source file
+    //
+    if( Config.uses_openmp )
+    {
+      // compose OPARI command
+      //
+      cmd =
+        Config.opari_cmd + " " +
+        Config.opari_args + " " +
+        "-rcfile " + Config.opari_rcfile + " " +
+        "-table " + Config.opari_tabfile.first + " " +
+        src_file;
+
+      // show/execute OPARI command
+      if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+        return rc;
+
+      // create OPARI modified source file name
+      //
+
+      std::string mod_file = src_file;
       si = mod_file.rfind( '.' );
       assert( si != std::string::npos );
-
-      if( m_eInstType == INST_TYPE_TAUINST )
-         mod_file.insert( si, ".tau" );
-      else
-         mod_file.insert( si, ".mod" );
+      mod_file.insert( si, ".mod" );
 
       // convert Fortran source file suffix to upper case, in order to
       // invoke the C preprocessor before compiling
       //
-      if( m_eLangType == LANG_F77 || m_eLangType == LANG_F90 )
+      if( Config.fortran() )
       {
-         si = mod_file.rfind( ".f" );
-         if( si != std::string::npos ) mod_file.replace( si, 2, ".F" );
+        si = mod_file.rfind( ".f" );
+        if( si != std::string::npos ) mod_file.replace( si, 2, ".F" );
       }
 
-      compiler_addArg( mod_file );
-   }
-   else
-   {
-      compiler_addArg( file );
-   }
-}
+      files_to_remove.push_back( mod_file );
 
-void
-Config::opari_setRcFile( const std::string file )
-{
-   m_sOpari_RcFile = file;
-   m_bKeepOpariRcFile = true;
-}
-
-void
-Config::opari_setTabFile( const std::string file )
-{
-   std::string file_src;
-   std::string file_obj;
-
-   if( !( file.length() >= 2
-          && file.compare( file.length()-2, 2, ".c" ) == 0 ) )
-   {
-      file_src = file + ".c";
-      file_obj = file + ".o";
-   }
-   else
-   {
-      file_src = file_obj = file;
-      file_obj.replace( file.length()-2, 2, ".o" );
-   }
-
-   m_sOpari_TabFile = std::make_pair( file_src, file_obj );
-}
-
-void
-Config::opari_addArg( const std::string arg )
-{
-   if( m_sOpari_Args.length() > 0 ) m_sOpari_Args += " ";
-   m_sOpari_Args += arg;
-}
-
-void
-Config::tauinst_addArg( const std::string arg )
-{
-   if( m_sTauInst_Args.length() > 0 ) m_sTauInst_Args += " ";
-   m_sTauInst_Args += arg;
-}
-
-void
-Config::tauinst_addParseArg( const std::string arg )
-{
-   if( m_sTauInst_ParseArgs.length() > 0 ) m_sTauInst_ParseArgs += " ";
-   m_sTauInst_ParseArgs += arg;
-}
-
-void
-Config::setUsesMpi( const bool set, const bool ovwrt )
-{
-   static bool first = true;
-
-   if( first || ovwrt )
-   {
-      if( set )
+      // create OPARI include file name
+      //
+      if( !Config.fortran() )
       {
+        std::string inc_file = src_file + ".opari.inc";
+        files_to_remove.push_back( inc_file );
+      }
+
+      src_file = mod_file;
+    }
+
+    // run PDT parser and TAU instrumentor command on source file
+    //
+    if( Config.inst_type == INST_TYPE_TAUINST )
+    {
+      // adjust PDT parser options, if source file is instrumented by OPARI
+      //
+      if( Config.uses_openmp )
+      {
+        // current directory to find OPARI generated header files
+        // (only necessary for C/C++)
+        //
+        if( !Config.fortran() )
+          Config.addTauinstParseArg( "-I." );
+
+        // macro definition '_OPENMP'
+        // (the PDT parser has no own option to enable OpenMP)
+        Config.addTauinstParseArg( "-D_OPENMP" );
+      }
+
+      // compose PDT parse command
+      //
+      cmd =
+        Config.tauinst_parsecmd + " " +
+        src_file + " " +
+        Config.vt_incdir + " " +
+        Config.tauinst_parseargs;
+
+      // show/execute PDT parse command
+      if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+        return rc;
+
+      // create PDB file name
+      //
+
+      std::string pdb_file = src_file;
+      si = src_file.rfind( '/' );
+      if( si != std::string::npos )
+        pdb_file = src_file.substr( si+1 );
+
+      si = pdb_file.rfind( '.' );
+      assert( si != std::string::npos );
+      pdb_file.replace( si, 4, ".pdb" );
+
+      files_to_remove.push_back( pdb_file );
+
+      // create TAU modified source file name
+      //
+      std::string tau_file = src_file;
+      if( Config.uses_openmp )
+      {
+        si = tau_file.rfind( ".mod" );
+        assert( si != std::string::npos );
+        tau_file.replace( si, 4, ".tau" );
+      }
+      else
+      {
+        si = tau_file.rfind( '.' );
+        assert( si != std::string::npos );
+        tau_file.insert( si, ".tau" );
+
+        // convert Fortran source file suffix to upper case, in order to
+        // invoke the C preprocessor before compiling
+        //
+        if( Config.fortran() )
+        {
+          si = tau_file.rfind( ".f" );
+          if( si != std::string::npos ) tau_file.replace( si, 2, ".F" );
+        }
+      }
+      files_to_remove.push_back( tau_file );
+
+      // compose TAU instrumentor command
+      //
+      cmd =
+        Config.tauinst_cmd + " " +
+        pdb_file + " " +
+        src_file + " " +
+        "-o " +
+        tau_file + " " +
+        Config.tauinst_args;
+
+      // show/execute TAU instrumentor command
+      if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+        return rc;
+
+      src_file = tau_file;
+    }
+
+    // create and store compiler output file name for renaming, if it's not
+    // specified by the command line
+    //
+    if( Config.comp_only && !Config.outfile_given )
+    {
+      std::string obj_file = src_file;
+
+      si = src_file.rfind( '/' );
+      if( si != std::string::npos )
+        obj_file = src_file.substr( si+1 );
+
+      si = obj_file.rfind( '.' );
+      assert( si != std::string::npos );
+      obj_file = obj_file.substr( 0, si ) + ".o";
+
+      obj_files_to_rename[obj_file] = Config.mod_files[i].second;
+    }
+  }
+
+  if( Config.uses_openmp )
+  {
+    // add current working directory to include search path to find OPARI
+    // generated header files (only necessary for C/C++)
+    //
+    if( !Config.fortran() )
+      Config.addCompilerArg( "-I." );
+
+    // If the source file(s) are instrumented by OPARI *and* TAU, the source
+    // code locations determined by TAU are nonsense. Add compiler flag to
+    // disable recording of source code locations.
+    //
+    if( Config.inst_type == INST_TYPE_TAUINST )
+      Config.addCompilerArg( Config.comp_fdflag + "TAUINST_NOSRC" );
+  }
+
+  // compile only ?
+  if( Config.comp_only )
+  {
+    // compose compiler command
+    //
+    cmd =
+      Config.comp_cmd + " " +
+      Config.vt_incdir + " " +
+      Config.comp_instflags + " " +
+      Config.comp_flags + " " +
+      Config.comp_args;
+
+    // show/execute compiler command
+    if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+      return rc;
+
+    // rename compiler output files to original file names
+    //
+    if( Config.showme_flags == 0 )
+    {
+      for( std::map<std::string, std::string>::iterator it =
+           obj_files_to_rename.begin(); it != obj_files_to_rename.end(); it++ )
+      {
+        if( Config.be_verbose )
+        {
+          std::cout << "+++ rename " << it->first
+                    << " to " << it->second << std::endl;
+        }
+
+        if( rename( it->first.c_str(), it->second.c_str() ) == -1 )
+        {
+          std::cerr << ExeName << ": could not rename " << it->first
+                    << " to " << it->second << std::endl;
+          return 1;
+        }
+      }
+    }
+  }
+  // [compile and] link
+  else
+  {
+    std::string vtlib;
+
+    if( Config.uses_openmp )
+    {
+      // compose command for compiling OPARI table file
+      //
+      cmd =
+        Config.opari_tab_compcmd + " " +
+        Config.opari_tab_compflags + " " +
+        Config.vt_incdir + " " +
+        ( Config.fortran() ? "-I. " : "" ) +
+        "-c " +
+        Config.opari_tabfile.first + " " +
+        "-o " +
+        Config.opari_tabfile.second;
+
+      // show/execute compiler command
+      if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+        return rc;
+
+      // add OPARI table object file to to linker arguments
+      Config.addCompilerArg( Config.opari_tabfile.second );
+
+      // collect intermediate OPARI output files for removing
+      //
+
+      // OPARI include files
+      //
+      if( Config.fortran() )
+      {
+        std::vector<std::string> incfiles;
+        getIncFilesFromTabFile( incfiles );
+        for( i = 0; i < incfiles.size(); i++ )
+          files_to_remove.push_back( incfiles[i].c_str() );
+      }
+
+      // OPARI table source/object file
+      //
+      files_to_remove.push_back( Config.opari_tabfile.first );
+      files_to_remove.push_back( Config.opari_tabfile.second );
+
+      // OPARI rc file
+      //
+      if( !Config.opari_keep_rcfile )
+        files_to_remove.push_back( Config.opari_rcfile );
+    }
+
+    // compose compiler command
+    //
+
+    if( Config.inst_type == INST_TYPE_DYNINST )
+      vtlib = Config.vt_dynattlib;
+
+    if( Config.uses_threads )
+    {
+      if( Config.uses_openmp )
+        vtlib += " " + Config.vt_pomplib;
+
+      if( Config.uses_mpi )
+        vtlib += " " + Config.vt_hyblib;
+      else
+        vtlib += " " + Config.vt_mtlib;
+    }
+    else
+    {
+      if( Config.uses_mpi )
+        vtlib += " " + Config.vt_mpilib;
+      else
+        vtlib += " " + Config.vt_seqlib;
+    }
+
+    cmd =
+      Config.comp_cmd + " " +
+      Config.vt_incdir + " " +
+      Config.comp_instflags + " " +
+      Config.comp_flags + " " +
+      Config.comp_args + " " +
+      Config.comp_ldflags + " " +
+      Config.vt_libdir + " " +
+      vtlib + " " +
+      Config.comp_libs;
+
+    // show/execute compiler command
+    if( ( rc = showOrExecuteCommand( cmd ) ) != 0 )
+      return rc;
+  }
+
+  // remove intermediate files (in non-verbose mode)
+  //
+  if( Config.showme_flags == 0 && !Config.be_verbose )
+  {
+    for( i = 0; i < files_to_remove.size(); i++ )
+      remove( files_to_remove[i].c_str() );
+  }
+
+  return 0;
+}
+
+void
+showFlags()
+{
+  std::string flags;
+
+  // add compiler flags
+  //
+  if( ( Config.showme_flags & SHOWME_FLAG_COMPILE ) != 0 )
+  {
+    flags +=
+      Config.vt_incdir + " " +
+      Config.comp_flags + " ";
+  }
+
+  // add linker flags
+  //
+  if( ( Config.showme_flags & SHOWME_FLAG_LINK ) != 0 )
+  {
+    std::string vtlib;
+
+    if( Config.inst_type == INST_TYPE_DYNINST )
+      vtlib = Config.vt_dynattlib;
+
+    if( Config.uses_threads )
+    {
+      if( Config.uses_openmp )
+        vtlib += " " + Config.vt_pomplib;
+
+      if( Config.uses_mpi )
+        vtlib += " " + Config.vt_hyblib;
+      else
+        vtlib += " " + Config.vt_mtlib;
+    }
+    else
+    {
+      if( Config.uses_mpi )
+        vtlib += " " + Config.vt_mpilib;
+      else
+        vtlib += " " + Config.vt_seqlib;
+    }
+
+    flags +=
+      Config.comp_ldflags + " " +
+      Config.vt_libdir + " " +
+      vtlib + " " +
+      Config.comp_libs;
+  }
+
+  // add common flags
+  //
+  flags +=
+    Config.comp_instflags + " " +
+    Config.comp_args;
+
+  // remove leading, trailing, and double spaces
+  trimString( flags );
+
+  // show flags
+  std::cout << flags << std::endl;
+}
+
+void
+showUsage()
+{
+  std::string str_lang;
+  std::string str_lang_suffix;
+
+  switch( Config.lang_type )
+  {
+    case LANG_CC:
+      str_lang = "C";
+      str_lang_suffix = "cc ";
+      break;
+    case LANG_CXX:
+      str_lang = "C++";
+      str_lang_suffix = "cxx";
+      break;
+    case LANG_F77:
+      str_lang = "Fortran 77";
+      str_lang_suffix = "f77";
+      break;
+    case LANG_F90:
+      str_lang = "Fortran 90";
+      str_lang_suffix = "f90";
+      break;
+  }
+
+  std::cout << std::endl
+            << " " << ExeName << " - " << str_lang << " compiler wrapper for VampirTrace." << std::endl
+            << std::endl
+            << " Syntax: " << ExeName << " [-vt:help] [-vt:version] [-vt:" << str_lang_suffix << " <cmd>] [-vt:inst <insttype>] " << std::endl
+            << "         [-vt:<seq|mpi|mt|hyb>] " << "[-vt:opari <args>] [-vt:noopari]" << std::endl
+            << "         [-vt:tau <args>] [-vt:pdt <args>] [-vt:verbose]" << std::endl
+            << "         [-vt:showme|-vt:showme-compile|-vt:showme-link] ..." << std::endl
+            << std::endl
+            << "   options:" << std::endl
+            << "     -vt:help            Show this help message." << std::endl
+            << std::endl
+            << "     -vt:version         Show VampirTrace version." << std::endl
+            << std::endl
+            << "     -vt:" << str_lang_suffix << " <cmd>       Set the underlying compiler command." <<  std::endl
+            << std::endl
+            << "     -vt:inst <insttype> Set the instrumentation type." << std::endl
+            << std::endl
+            << "      possible values:" << std::endl
+            << std::endl
+            << "       compinst          fully-automatic by compiler" << std::endl
+            << "       manual            manual by using VampirTrace's API" << std::endl
+            << "       dyninst           binary by using Dyninst" << std::endl
+            << "       tauinst           automatic source code instrumentation by using PDT/TAU" << std::endl
+            << std::endl
+            << "     -vt:opari <args>    Set options for the OPARI command." << std::endl
+            << "                         (see " << vt_installdirs_get(VT_INSTALLDIR_DATADIR) << "/doc/opari/Readme.html for more information)" << std::endl
+            << std::endl
+            << "     -vt:noopari         Disable instrumentation of OpenMP contructs by OPARI." << std::endl
+            << std::endl
+            << "     -vt:tau <args>      Set options for the TAU instrumentor command." << std::endl
+            << std::endl
+            << "     -vt:pdt <args>      Set options for the PDT parse command." << std::endl
+            << std::endl
+            << "     -vt:<seq|mpi|mt|hyb>" << std::endl
+            << "                         Enforce application's parallelization type." << std::endl
+            << "                         It's only necessary if it could not be determined" << std::endl
+            << "                         automatically based on underlying compiler and flags." << std::endl
+            << "                         seq = sequential" << std::endl
+            << "                         mpi = parallel (uses MPI)" << std::endl
+            << "                         mt = parallel (uses OpenMP/POSIX threads)" << std::endl
+            << "                         hyb = hybrid parallel (MPI + Threads)" << std::endl
+            << "                         (default: automatically)" << std::endl
+            << std::endl
+            << "     -vt:verbose         Enable verbose mode." << std::endl
+            << std::endl
+            << "     -vt:show[me]        Do not invoke the underlying compiler." << std::endl
+            << "                         Instead, show the command line(s) that would be" << std::endl
+            << "                         executed to compile and link the program." << std::endl
+            << std::endl
+            << "     -vt:showme-compile  Do not invoke the underlying compiler." << std::endl
+            << "                         Instead, show the compiler flags that would be" << std::endl
+            << "                         supplied to the compiler." << std::endl
+            << std::endl
+            << "     -vt:showme-link     Do not invoke the underlying compiler." << std::endl
+            << "                         Instead, show the linker flags that would be" << std::endl
+            << "                         supplied to the compiler." << std::endl
+            << std::endl
+            << "     See the man page for your underlying compiler for other options that can" << std::endl
+            << "     be passed through '" << ExeName << "'." << std::endl
+            << std::endl
+            << "   environment variables:" << std::endl
+            << "     VT_INST             Instrumentation type (equivalent to '-vt:inst'*)" << std::endl;
+  switch( Config.lang_type )
+  {
+    case LANG_CC:
+      std::cout << "     VT_CC               C compiler command (equivalent to '-vt:" << str_lang_suffix << "'*)" << std::endl
+                << "     VT_CFLAGS           C compiler flags" << std::endl;
+      break;
+    case LANG_CXX:
+      std::cout << "     VT_CXX              C++ compiler command (equivalent to '-vt:" << str_lang_suffix << "'*)" << std::endl
+                << "     VT_CXXFLAGS         C++ compiler flags" << std::endl;
+      break;
+    case LANG_F77:
+      std::cout << "     VT_F77              Fortran 77 compiler command (equivalent to '-vt:" << str_lang_suffix << "'*)" << std::endl
+                << "     VT_FFLAGS           Fortran 77 compiler flags" << std::endl;
+      break;
+    case LANG_F90:
+      std::cout << "     VT_F90              Fortran 90 compiler command (equivalent to '-vt:" << str_lang_suffix <<"'*)" << std::endl
+                << "     VT_FCFLAGS          Fortran 90 compiler flags" << std::endl;
+      break;
+  }
+  std::cout << "     VT_LDFLAGS          Linker flags" << std::endl
+            << "     VT_LIBS             Libraries to pass to the linker" << std::endl
+            << std::endl
+            << "     * The corresponding command line options overwrites the environment" << std::endl
+            << "       variables setting." << std::endl
+            << std::endl
+            << "   examples:" << std::endl
+            << "     automatically instrumentation by compiler:" << std::endl
+            << std::endl;
+  switch( Config.lang_type )
+  {
+    case LANG_CC:
+      std::cout << "        vtcc -vt:cc gcc -vt:inst compinst -c foo.c -o foo.o" << std::endl
+                << "        vtcc -vt:cc gcc -vt:inst compinst -c bar.c -o bar.o" << std::endl
+                << "        vtcc -vt:cc gcc -vt:inst compinst foo.o bar.o -o foo" << std::endl
+                << std::endl
+                << "     manually instrumentation by using VT's API:"  << std::endl
+                << std::endl
+                << "        vtcc -vt:inst manual foobar.c -o foobar -DVTRACE";
+      break;
+    case LANG_CXX:
+      std::cout << "        vtcxx -vt:cxx g++ -vt:inst compinst -c foo.cpp -o foo.o" << std::endl
+                << "        vtcxx -vt:cxx g++ -vt:inst compinst bar.cpp -o bar.o" << std::endl
+                << "        vtcxx -vt:cxx g++ -vt:inst compinst foo.o bar.o -o foo" << std::endl
+                << std::endl
+                << "     manually instrumentation by using VT's API:" << std::endl
+                << std::endl
+                << "        vtcxx -vt:inst manual foobar.cpp -o foobar -DVTRACE";
+      break;
+    case LANG_F77:
+      std::cout << "        vtf77 -vt:f77 g77 -vt:inst compinst -c foo.F -o foo.o" << std::endl
+                << "        vtf77 -vt:f77 g77 -vt:inst compinst bar.F -o bar.o" << std::endl
+                << "        vtf77 -vt:f77 g77 -vt:inst compinst foo.o bar.o -o foo" << std::endl
+                << std::endl
+                << "     manually instrumentation by using VT's API:" << std::endl
+                << std::endl
+                << "        vtf77 -vt:inst manual foobar.F -o foobar -DVTRACE";
+      break;
+    case LANG_F90:
+      std::cout << "        vtf90 -vt:f90 gfortran -vt:inst compinst -c foo.F90 -o foo.o" << std::endl
+                << "        vtf90 -vt:f90 gfortran -vt:inst compinst bar.F90 -o bar.o" << std::endl
+                << "        vtf90 -vt:f90 gfortran -vt:inst compinst foo.o bar.o -o foo" << std::endl
+                << std::endl
+                << "     manually instrumentation by using VT's API:" << std::endl
+                << std::endl
+                << "        vtf90 -vt:inst manual foobar.F90 -o foobar -DVTRACE";
+      break;
+  }
+
+  if( Config.fortran() )
+  {
+    std::cout << std::endl << std::endl
+              << "     IMPORTANT: Fortran source files instrumented by using VT's API" << std::endl
+              << "                have to be (CPP) preprocessed.";
+  }
+  std::cout << std::endl << std::endl;
+}
+
+int
+showOrExecuteCommand( std::string& cmd )
+{
+  int rc = 0;
+
+  // remove leading, trailing, and double spaces
+  trimString( cmd );
+
+  // either show
+  if( Config.showme_flags )
+  {
+    std::cout << cmd << std::endl;
+  }
+  // or execute command
+  else
+  {
+    if( Config.be_verbose )
+      std::cout << "+++ " << cmd << std::endl;
+    if( ( rc = system( cmd.c_str() ) ) != -1 )
+      rc = WEXITSTATUS( rc );
+  }
+
+  return rc;
+}
+
+void
+getIncFilesFromTabFile( std::vector<std::string>& incfiles )
+{
+  std::ifstream in( Config.opari_tabfile.first.c_str() );
+  if( in )
+  {
+    char buffer[1024];
+    std::string line;
+
+    while( in.getline( buffer, sizeof( buffer ) ) )
+    {
+      line = buffer;
+
+      if( line.find( "#include" ) != std::string::npos &&
+          line.find( ".opari.inc" ) != std::string::npos )
+      {
+        std::string incfile = line.substr( line.find( "#include" ) + 10 );
+        incfile.erase( incfile.length() - 1 );
+
+        incfiles.push_back( incfile );
+      }
+    }
+
+    in.close();
+  }
+}
+
+void
+trimString( std::string& str )
+{
+  std::string::size_type i, j;
+
+  // remove leading and trailing spaces
+  //
+
+  i = str.find_first_not_of( " \t" );
+  j = str.find_last_not_of( " \t" );
+
+  if( ( i == std::string::npos ) || ( j == std::string::npos ) )
+    str = "";
+  else
+    str = str.substr( i, j - i + 1 );
+
+  // remove double spaces
+  //
+  while( str.length() > 0 && ( i = str.find( "  " ) ) != std::string::npos )
+    str.erase( i, 1 );
+}
+
+//////////////////// struct ConfigS ////////////////////
+
+bool
+ConfigS::setLanguage( const LangTypeT lang )
+{
+#if !(defined(HAVE_F77) && HAVE_F77) || !(defined(HAVE_F90) && HAVE_F90)
+  bool error = false;
+  std::string str_lang;
+
+  if( lang == LANG_F77 )
+  {
+#   if !(defined(HAVE_F77) && HAVE_F77)
+      str_lang = "Fortran 77";
+      error = true;
+#   endif // HAVE_F77
+  }
+  else if( lang == LANG_F90 )
+  {
+#   if !(defined(HAVE_F90) && HAVE_F90)
+      str_lang = "Fortran 90";
+      error = true;
+#   endif // HAVE_F90
+  }
+
+  if( !error )
+  {
+    lang_type = lang;
+  }
+  else
+  {
+    std::cerr << "Unfortunately, this installation of VampirTrace "
+              << "was not compiled with" << std::endl
+              << str_lang << " support.  As such, the " << ExeName
+              << " compiler is non-functional." << std::endl;
+  }
+
+  return !error;
+#else // HAVE_F77 || HAVE_F90
+  lang_type = lang;
+  return true;
+#endif // HAVE_F77 || HAVE_F90
+}
+
+bool
+ConfigS::fortran() const
+{
+  return ( lang_type == LANG_F77 || lang_type == LANG_F90 );
+}
+
+void
+ConfigS::setCompilerCmd( const std::string& cmd )
+{
+  std::string bcomp = cmd;
+  std::string::size_type ls = cmd.rfind('/');
+
+  if( ls != std::string::npos ) bcomp = cmd.substr( ls+1 );
+
+  if( !uses_mpi &&
+      ( bcomp.compare( 0, 2, "mp" ) == 0 ||
+        bcomp.compare( 0, 4, "sxmp" ) == 0 ||
+        bcomp.compare( 0, 4, "scmp" ) == 0 ) )
+  {
+    setUsesMpi( true );
+  }
+
+  if( bcomp.compare( 0, 3, "xlf" ) == 0 ||
+      bcomp.compare( 0, 9, "blrts_xlf" ) == 0 ||
+      bcomp.compare( 0, 3, "bgf" ) == 0 )
+  {
+    comp_fdflag = "-WF,-D";
+  }
+  else
+  {
+    comp_fdflag = "-D";
+  }
+
+  comp_cmd = cmd;
+}
+
+void
+ConfigS::addCompilerArg( const std::string& arg )
+{
+  if( comp_args.length() > 0 ) comp_args += " ";
+  comp_args += arg;
+}
+
+void
+ConfigS::addCompilerLib( const std::string& lib )
+{
+  if( comp_libs.length() > 0 ) comp_libs += " ";
+  comp_libs += lib;
+}
+
+void
+ConfigS::addModSrcFile( const std::string& file )
+{
+  std::string file_base;
+  std::string file_obj;
+  std::string::size_type si;
+
+  // get base name of source file
+  //
+  file_base = file;
+  si = file.rfind( '/' );
+  if( si != std::string::npos )
+    file_base = file.substr( si+1 );
+
+  // create object file name of source file
+  //
+  si = file_base.rfind( '.' );
+  assert( si != std::string::npos );
+  file_obj = file_base.substr( 0, si ) + ".o";
+
+  // store source/object file name for later processing by OPARI and/or TAU
+  mod_files.push_back( std::make_pair( file, file_obj ) );
+
+  // add (modified) source file name to compiler arguments
+  //
+
+  std::string mod_file = file;
+
+  si = mod_file.rfind( '.' );
+  assert( si != std::string::npos );
+
+  if( inst_type == INST_TYPE_TAUINST )
+    mod_file.insert( si, ".tau" );
+  else
+    mod_file.insert( si, ".mod" );
+
+  // convert Fortran source file suffix to upper case, in order to
+  // invoke the C preprocessor before compiling
+  //
+  if( fortran() )
+  {
+    si = mod_file.rfind( ".f" );
+    if( si != std::string::npos ) mod_file.replace( si, 2, ".F" );
+  }
+
+  addCompilerArg( mod_file );
+}
+
+void
+ConfigS::setOpariTabFile( const std::string& file )
+{
+  std::string file_src;
+  std::string file_obj;
+
+  if( !( file.length() >= 2 &&
+         file.compare( file.length()-2, 2, ".c" ) == 0 ) )
+  {
+    file_src = file + ".c";
+    file_obj = file + ".o";
+  }
+  else
+  {
+    file_src = file_obj = file;
+    file_obj.replace( file.length()-2, 2, ".o" );
+  }
+
+  opari_tabfile = std::make_pair( file_src, file_obj );
+}
+
+void
+ConfigS::setOpariRcFile( const std::string& file )
+{
+  opari_rcfile = file;
+  opari_keep_rcfile = true;
+}
+
+void
+ConfigS::addOpariArg( const std::string& arg )
+{
+  if( opari_args.length() > 0 ) opari_args += " ";
+  opari_args += arg;
+}
+
+void
+ConfigS::addTauinstArg( const std::string& arg )
+{
+  if( tauinst_args.length() > 0 ) tauinst_args += " ";
+  tauinst_args += arg;
+}
+
+void
+ConfigS::addTauinstParseArg( const std::string& arg )
+{
+  if( tauinst_parseargs.length() > 0 ) tauinst_parseargs += " ";
+  tauinst_parseargs += arg;
+}
+
+void
+ConfigS::setUsesMpi( const bool set, const bool ovwrt )
+{
+  static bool first = true;
+
+  if( first || ovwrt )
+  {
+    if( set )
+    {
 #if !(defined(HAVE_MPI) && HAVE_MPI)
-         std::cerr << "Unfortunately, this installation of VampirTrace was not "
-                   << "compiled with" << std::endl
-                   << "MPI support." << std::endl;
-         exit(1);
+      std::cerr << "Unfortunately, this installation of VampirTrace was not "
+                << "compiled with" << std::endl
+                << "MPI support." << std::endl;
+      exit(1);
 #else // HAVE_MPI
-         if( m_eLangType == LANG_F77 || m_eLangType == LANG_F90 )
-         {
+      if( fortran() )
+      {
 #  if !(defined(HAVE_FMPI) && HAVE_FMPI)
-            std::cerr << "Unfortunately, this installation of VampirTrace was "
-                      << "not compiled with" << std::endl
-                      << "MPI Fortran support." << std::endl;
-            exit(1);
+        std::cerr << "Unfortunately, this installation of VampirTrace was "
+                  << "not compiled with" << std::endl
+                  << "MPI Fortran support." << std::endl;
+        exit(1);
 #  endif // WRAP_FMPI
-         }
-#endif // HAVE_MPI
       }
+#endif // HAVE_MPI
+    }
 
-      first = false;
-      m_bUsesMpi = set;
-   }
+    first = false;
+    uses_mpi = set;
+  }
 }
 
 void
-Config::setUsesThreads( const bool set, const bool ovwrt )
+ConfigS::setUsesThreads( const bool set, const bool ovwrt )
 {
-   static bool first = true;
+  static bool first = true;
 
-   if( first || ovwrt )
-   {
+  if( first || ovwrt )
+  {
 #if !(defined(HAVE_THREADS) && HAVE_THREADS)
-      if( set )
-      {
-         std::cerr << "Unfortunately, this installation of VampirTrace was not "
-                   << "compiled with" << std::endl
-                   << "Multithreading support." << std::endl;
-         exit(1);
-      }
+    if( set )
+    {
+      std::cerr << "Unfortunately, this installation of VampirTrace was not "
+                << "compiled with" << std::endl
+                << "Multithreading support." << std::endl;
+      exit(1);
+    }
 #endif // HAVE_THREADS
 
-      first = false;
-      m_bUsesThreads = set;
-   }
+    first = false;
+    uses_threads = set;
+  }
 }
 
 void
-Config::setUsesOpenMP( const bool set, const bool ovwrt )
+ConfigS::setUsesOpenMP( const bool set, const bool ovwrt )
 {
-   static bool first = true;
+  static bool first = true;
 
-   if( first || ovwrt )
-   {
+  if( first || ovwrt )
+  {
 #if !(defined(HAVE_OMP) && HAVE_OMP)
-      if( set )
-      {
-         std::cerr << "Unfortunately, this installation of VampirTrace was not "
-                   << "compiled with" << std::endl
-                   << "OpenMP support." << std::endl;
-         exit(1);
-      }
+    if( set )
+    {
+      std::cerr << "Unfortunately, this installation of VampirTrace was not "
+                << "compiled with" << std::endl
+                << "OpenMP support." << std::endl;
+      exit(1);
+    }
 #endif // HAVE_OMP
 
-      first = false;
-      m_bUsesOpenMP = set;
-   }
+    first = false;
+    uses_openmp = set;
+  }
 }
 
 bool
-Config::setInstAvail( const std::string type )
+ConfigS::setInstAvail( const std::string& type )
 {
-   if( type.compare( "compinst" ) == 0 )
-      setInstAvail( INST_TYPE_COMPINST );
-   else if( type.compare( "dyninst" ) == 0 )
-      setInstAvail( INST_TYPE_DYNINST );
-   else if( type.compare( "tauinst" ) == 0 )
-      setInstAvail( INST_TYPE_TAUINST );
-   else if( type.compare( "manual" ) == 0 )
-      setInstAvail( INST_TYPE_MANUAL );
-   else
-      return false;
+  if( type.compare( "compinst" ) == 0 )
+    inst_avail |= INST_TYPE_COMPINST;
+  else if( type.compare( "dyninst" ) == 0 )
+    inst_avail |= INST_TYPE_DYNINST;
+  else if( type.compare( "tauinst" ) == 0 )
+    inst_avail |= INST_TYPE_TAUINST;
+  else if( type.compare( "manual" ) == 0 )
+    inst_avail |= INST_TYPE_MANUAL;
+  else
+    return false;
 
-   return true;
+  return true;
 }
 
 bool
-Config::setInstType( const InstTypeT type )
+ConfigS::setInstType( const InstTypeT type )
 {
-   assert( m_iInstAvail != 0 );
+  assert( inst_avail != 0 );
 
-   // instrumentation available ?
-   if( !isInstAvail( type ) )
-      return false;
+  // instrumentation available ?
+  if( !isInstAvail( type ) )
+    return false;
 
-   m_eInstType = type;
+  inst_type = type;
 
-   if( type == INST_TYPE_COMPINST )
-      m_sComp_InstFlags = m_sCompInst_Flags;
-   else if( type == INST_TYPE_DYNINST )
-      m_sComp_InstFlags = m_sDynInst_Flags;
-   else
-      m_sComp_InstFlags = "";
+  if( type == INST_TYPE_COMPINST )
+    comp_instflags = compinst_flags;
+  else if( type == INST_TYPE_DYNINST )
+    comp_instflags = dyninst_flags;
+  else
+    comp_instflags = "";
 
-   return true;
+  return true;
 }
 
 bool
-Config::setInstType( const std::string type )
+ConfigS::setInstType( const std::string& type )
 {
-   if( type.compare( "compinst" ) == 0 )
-      return setInstType( INST_TYPE_COMPINST );
-   else if( type.compare( "dyninst" ) == 0 )
-      return setInstType( INST_TYPE_DYNINST );
-   else if( type.compare( "tauinst" ) == 0 )
-      return setInstType( INST_TYPE_TAUINST );
-   else if( type.compare( "manual" ) == 0 )
-      return setInstType( INST_TYPE_MANUAL );
-   else
-      return false;
+  if( type.compare( "compinst" ) == 0 )
+    return setInstType( INST_TYPE_COMPINST );
+  else if( type.compare( "dyninst" ) == 0 )
+    return setInstType( INST_TYPE_DYNINST );
+  else if( type.compare( "tauinst" ) == 0 )
+    return setInstType( INST_TYPE_TAUINST );
+  else if( type.compare( "manual" ) == 0 )
+    return setInstType( INST_TYPE_MANUAL );
+  else
+    return false;
+}
+
+bool
+ConfigS::isInstAvail( const InstTypeT type ) const
+{
+  return ( inst_avail & type );
 }

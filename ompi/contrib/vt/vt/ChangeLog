@@ -1,4 +1,7 @@
 5.11.2openmpi
+	- added options '-vt:showme-<compile|link>' to the compiler wrapper
+	  to show the compiler/linker flags that would be supplied to the
+	  underlying compiler
 	- fixed segmentation fault in vtunify-mpi which might occur during
 	  gathering local marker definitions/spots to master process
 
