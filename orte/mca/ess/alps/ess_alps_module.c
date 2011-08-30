@@ -363,8 +363,8 @@ static int alps_set_name(void)
     
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = (orte_vpid_t) cnos_get_rank() + starting_vpid;
-    ORTE_EPOCH_PRINT(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_INVALID);
-    ORTE_EPOCH_PRINT(ORTE_PROC_MY_NAME->epoch,orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME));
+    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_INVALID);
+    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME));
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:alps set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
