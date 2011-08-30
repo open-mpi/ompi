@@ -1055,7 +1055,9 @@ parseCommandLine( int argc, char** argv )
              ( arg.length() >= 3 &&
                arg.compare( arg.length() - 3, 3, ".cu" ) == 0 ) )
     {
-      if( Config.showme_flags == 0 || Config.showme_flags == SHOWME_FLAG_ALL )
+      if( ( Config.showme_flags == 0 ||
+            Config.showme_flags == SHOWME_FLAG_ALL ) &&
+          ( Config.inst_type == INST_TYPE_TAUINST || Config.uses_openmp ) )
       {
         Config.addModSrcFile( arg );
       }
