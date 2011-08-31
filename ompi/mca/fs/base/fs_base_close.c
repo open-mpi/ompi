@@ -26,6 +26,7 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
+#include "opal/util/output.h"
 
 int mca_fs_base_close(void)
 {

@@ -24,6 +24,7 @@
 #include "ompi/constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 #include "ompi/mca/fcache/fcache.h"
 #include "ompi/mca/fcache/base/base.h"
 

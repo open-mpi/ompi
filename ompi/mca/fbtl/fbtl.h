@@ -25,7 +25,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "ompi/request/request.h"
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
 
 BEGIN_C_DECLS
 
