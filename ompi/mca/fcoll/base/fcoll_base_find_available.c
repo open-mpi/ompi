@@ -31,6 +31,7 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
+#include "opal/util/output.h"
 
 opal_list_t mca_fcoll_base_modules_available;
 bool mca_fcoll_base_modules_available_valid = false;

@@ -26,6 +26,7 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
 #include "ompi/mca/sharedfp/base/base.h"
+#include "opal/util/output.h"
 
 int mca_sharedfp_base_close(void)
 {

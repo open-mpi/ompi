@@ -26,6 +26,7 @@
 #include "opal/mca/base/base.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
+#include "opal/util/output.h"
 
 int mca_fcoll_base_close(void)
 {

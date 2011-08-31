@@ -31,6 +31,7 @@
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/mca/fcache/fcache.h"
 #include "ompi/mca/fcache/base/base.h"
+#include "opal/util/output.h"
 
 opal_list_t mca_fcache_base_modules_available;
 bool mca_fcache_base_modules_available_valid = false;
