@@ -150,6 +150,8 @@ typedef unsigned int uint;
 #define lrand48                   rand
 #define usleep(t)                 Sleep(t/1000)
 #define posix_memalign(p, a, s)   *p=_aligned_malloc(s,a)
+#define inet_ntop                 ompi_inet_ntop
+#define inet_pton                 ompi_inet_pton
 
 #else
 
