@@ -694,15 +694,13 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
 
     BTL_VERBOSE(("Searching for ep and proc with follow parameters:"
                 "jobid %d, vpid %d, "
-#if ORTE_ENABLE_EPOCH
                 "epoch %d, "
-#endif
                 "sid %" PRIx64 ", lid %d",
-                process_name->jobid, process_name->vpid, 
-#if ORTE_ENABLE_EPOCH
-                process_name->epoch, 
-#endif
+                process_name->jobid, process_name->vpid,
+                ORTE_EPOCH_GET(process_name),
                 subnet_id, lid));
+
+
     /* find ibproc */
     OPAL_THREAD_LOCK(&mca_btl_openib_component.ib_lock);
     for (ib_proc = (mca_btl_openib_proc_t*)

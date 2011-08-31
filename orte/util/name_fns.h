@@ -113,7 +113,7 @@ ORTE_DECLSPEC char *orte_pretty_print_timing(int64_t secs, int64_t usecs);
 #define ORTE_EPOCH_GET(n) \
     ((n)->epoch)
 #else
-#define ORTE_EPOCH_GET(n)
+#define ORTE_EPOCH_GET(n) 0
 #endif
 
 /* Macro for setting the epoch in the process name */
