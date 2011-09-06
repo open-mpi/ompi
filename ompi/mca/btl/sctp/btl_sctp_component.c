@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -66,6 +66,11 @@
 #include "btl_sctp_recv_handler.h"
 #include "btl_sctp_component.h"
 
+static int mca_btl_sctp_component_register(void);
+static int mca_btl_sctp_component_open(void);
+static int mca_btl_sctp_component_close(void);
+
+
 mca_btl_sctp_component_t mca_btl_sctp_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -79,7 +84,9 @@ mca_btl_sctp_component_t mca_btl_sctp_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_btl_sctp_component_open,  /* component open */
-            mca_btl_sctp_component_close  /* component close */
+            mca_btl_sctp_component_close,  /* component close */
+            NULL,
+            mca_btl_sctp_component_register, /* component register */
         },
         {
             /* Whether the component is checkpointable or not */
@@ -164,47 +171,8 @@ static void mca_btl_sctp_component_recv_handler(int, short, void*); /* for 1-1 *
 /* mca_btl_sctp_recv_handler(int, short, void*) for 1-many is in btl_sctp_recv_handler.h */
 
 
-/*
- *  Called by MCA framework to open the component, registers
- *  component parameters.
- */
-
-int mca_btl_sctp_component_open(void)
+static int mca_btl_sctp_component_register(void)
 {
-#ifdef __WINDOWS__
-    WSADATA win_sock_data;
-    if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
-        BTL_ERROR(("failed to initialise windows sockets:%d", WSAGetLastError()));
-        return OMPI_ERROR;
-    }
-#endif
-
-    /* initialize state */
-    mca_btl_sctp_component.sctp_listen_sd = -1;
-    /* TODO different sd for ipv6 */
-    mca_btl_sctp_component.sctp_num_btls=0;
-    /* addr_count */
-    mca_btl_sctp_component.sctp_btls=NULL;
-    
-    /* initialize objects */ 
-    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_procs, opal_hash_table_t);
-    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_events, opal_list_t);
-    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_frag_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_frag_max, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_frag_user, ompi_free_list_t);
-    opal_hash_table_init(&mca_btl_sctp_component.sctp_procs, 256);
-#if MCA_BTL_SCTP_DONT_USE_HASH
-    /* TODO make this only allocate how much it needs to.  Currently
-     *  allocates 256 (to match sctp_procs). recvr_proc_table and
-     *  sender_proc_table are malloc'd in mca_btl_sctp_component_init.
-     */
-    recvr_proc_table = NULL;
-    sender_proc_table = NULL;
-#else
-    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_assocID_hash, opal_hash_table_t);
-    opal_hash_table_init(&mca_btl_sctp_component.sctp_assocID_hash, 256);
-#endif
     /* register SCTP component parameters */
     /* num links */
     mca_btl_sctp_component.sctp_if_include =
@@ -254,7 +222,63 @@ int mca_btl_sctp_component_open(void)
     mca_btl_base_param_register(&mca_btl_sctp_component.super.btl_version,
             &mca_btl_sctp_module.super);
 
-    /* disable_family */
+    return OMPI_SUCCESS;
+}
+
+/*
+ *  Called by MCA framework to open the component
+ */
+
+static int mca_btl_sctp_component_open(void)
+{
+#ifdef __WINDOWS__
+    WSADATA win_sock_data;
+    if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
+        BTL_ERROR(("failed to initialise windows sockets:%d", WSAGetLastError()));
+        return OMPI_ERROR;
+    }
+#endif
+
+    /* initialize state */
+    mca_btl_sctp_component.sctp_listen_sd = -1;
+    /* TODO different sd for ipv6 */
+    mca_btl_sctp_component.sctp_num_btls=0;
+    /* addr_count */
+    mca_btl_sctp_component.sctp_btls=NULL;
+    
+    /* initialize objects */ 
+    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_procs, opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_frag_eager, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_frag_max, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_frag_user, ompi_free_list_t);
+    opal_hash_table_init(&mca_btl_sctp_component.sctp_procs, 256);
+#if MCA_BTL_SCTP_DONT_USE_HASH
+    /* TODO make this only allocate how much it needs to.  Currently
+     *  allocates 256 (to match sctp_procs). recvr_proc_table and
+     *  sender_proc_table are malloc'd in mca_btl_sctp_component_init.
+     */
+    recvr_proc_table = NULL;
+    sender_proc_table = NULL;
+#else
+    OBJ_CONSTRUCT(&mca_btl_sctp_component.sctp_assocID_hash, opal_hash_table_t);
+    opal_hash_table_init(&mca_btl_sctp_component.sctp_assocID_hash, 256);
+#endif
+
+    /* if_include and if_exclude need to be mutually exclusive */
+    if (OPAL_SUCCESS != 
+        mca_base_param_check_exclusive_string(
+        mca_btl_sctp_component.super.btl_version.mca_type_name,
+        mca_btl_sctp_component.super.btl_version.mca_component_name,
+        "if_include",
+        mca_btl_sctp_component.super.btl_version.mca_type_name,
+        mca_btl_sctp_component.super.btl_version.mca_component_name,
+        "if_exclude")) {
+        /* Return ERR_NOT_AVAILABLE so that a warning message about
+           "open" failing is not printed */
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
 
     /* setup receive buffer */
     if(0 == mca_btl_sctp_recv_handler_initbuf()) {

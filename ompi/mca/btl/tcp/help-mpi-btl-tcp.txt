@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,7 +17,7 @@ value will be ignored.
   Local host: %s
   Value:      %s
   Message:    %s
-%
+#
 [invalid minimum port]
 WARNING: An invalid value was given for the btl_tcp_port_min_%s. Legal
 values are in the range [1 .. 2^16-1]. This value will be ignored

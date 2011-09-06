@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
  * $COPYRIGHT$
@@ -72,6 +72,14 @@
 #include "btl_tcp_endpoint.h" 
 
 
+/* 
+ * Local functions
+ */
+static int mca_btl_tcp_component_register(void);
+static int mca_btl_tcp_component_open(void);
+static int mca_btl_tcp_component_close(void);
+
+
 mca_btl_tcp_component_t mca_btl_tcp_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -85,7 +93,9 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
             OMPI_MINOR_VERSION,  /* MCA component minor version */
             OMPI_RELEASE_VERSION,  /* MCA component release version */
             mca_btl_tcp_component_open,  /* component open */
-            mca_btl_tcp_component_close  /* component close */
+            mca_btl_tcp_component_close,  /* component close */
+            NULL, /* component query */
+            mca_btl_tcp_component_register, /* component register */
         },
         {
             /* The component is checkpoint ready */
@@ -169,34 +179,9 @@ static void mca_btl_tcp_component_accept_handler(int, short, void*);
  *  component parameters.
  */
 
-int mca_btl_tcp_component_open(void)
+static int mca_btl_tcp_component_register(void)
 {
     char* message;
-#ifdef __WINDOWS__
-    WSADATA win_sock_data;
-    if( WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0 ) {
-        BTL_ERROR(("failed to initialise windows sockets:%d", WSAGetLastError()));
-        return OMPI_ERROR;
-    }
-#endif
-
-    /* initialize state */
-    mca_btl_tcp_component.tcp_listen_sd = -1;
-#if OPAL_WANT_IPV6
-    mca_btl_tcp_component.tcp6_listen_sd = -1;
-#endif
-    mca_btl_tcp_component.tcp_num_btls=0;
-    mca_btl_tcp_component.tcp_addr_count = 0;
-    mca_btl_tcp_component.tcp_btls=NULL;
-    
-    /* initialize objects */ 
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_hash_table_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_events, opal_list_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, ompi_free_list_t);
-    opal_hash_table_init(&mca_btl_tcp_component.tcp_procs, 256);
 
     /* register TCP component parameters */
     mca_btl_tcp_component.tcp_num_links =
@@ -205,6 +190,7 @@ int mca_btl_tcp_component_open(void)
         mca_btl_tcp_param_register_string("if_include", "Comma-delimited list of devices or CIDR notation of networks to use for MPI communication (e.g., \"eth0,eth1\" or \"192.168.0.0/16,10.1.4.0/24\").  Mutually exclusive with btl_tcp_if_exclude.", "");
     mca_btl_tcp_component.tcp_if_exclude =
         mca_btl_tcp_param_register_string("if_exclude", "Comma-delimited list of devices or CIDR notation of networks to NOT use for MPI communication -- all devices not matching these specifications will be used (e.g., \"eth0,eth1\" or \"192.168.0.0/16,10.1.4.0/24\").  Mutually exclusive with btl_tcp_if_include.", "lo,sppp");
+
     mca_btl_tcp_component.tcp_free_list_num =
         mca_btl_tcp_param_register_int ("free_list_num", NULL, 8);
     mca_btl_tcp_component.tcp_free_list_max =
@@ -261,6 +247,7 @@ int mca_btl_tcp_component_open(void)
                                         (0x1 << 16) - mca_btl_tcp_component.tcp6_port_min - 1);
     free(message);
 #endif
+
     mca_btl_tcp_module.super.btl_exclusivity =  MCA_BTL_EXCLUSIVITY_LOW + 100;
     mca_btl_tcp_module.super.btl_eager_limit = 64*1024;
     mca_btl_tcp_module.super.btl_rndv_eager_limit = 64*1024;
@@ -275,6 +262,7 @@ int mca_btl_tcp_component_open(void)
                                        MCA_BTL_FLAGS_HETEROGENEOUS_RDMA;
     mca_btl_tcp_module.super.btl_bandwidth = 100;
     mca_btl_tcp_module.super.btl_latency = 100;
+
     mca_btl_base_param_register(&mca_btl_tcp_component.super.btl_version,
                                 &mca_btl_tcp_module.super);
 
@@ -331,12 +319,57 @@ int mca_btl_tcp_component_open(void)
     return OMPI_SUCCESS;
 }
 
+static int mca_btl_tcp_component_open(void)
+{
+#ifdef __WINDOWS__
+    WSADATA win_sock_data;
+    if( WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0 ) {
+        BTL_ERROR(("failed to initialise windows sockets:%d", WSAGetLastError()));
+        return OMPI_ERROR;
+    }
+#endif
+
+    /* initialize state */
+    mca_btl_tcp_component.tcp_listen_sd = -1;
+#if OPAL_WANT_IPV6
+    mca_btl_tcp_component.tcp6_listen_sd = -1;
+#endif
+    mca_btl_tcp_component.tcp_num_btls=0;
+    mca_btl_tcp_component.tcp_addr_count = 0;
+    mca_btl_tcp_component.tcp_btls=NULL;
+    
+    /* initialize objects */ 
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_procs, opal_hash_table_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_events, opal_list_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_eager, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_max, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_btl_tcp_component.tcp_frag_user, ompi_free_list_t);
+    opal_hash_table_init(&mca_btl_tcp_component.tcp_procs, 256);
+
+    /* if_include and if_exclude need to be mutually exclusive */
+    if (OPAL_SUCCESS != 
+        mca_base_param_check_exclusive_string(
+        mca_btl_tcp_component.super.btl_version.mca_type_name,
+        mca_btl_tcp_component.super.btl_version.mca_component_name,
+        "if_include",
+        mca_btl_tcp_component.super.btl_version.mca_type_name,
+        mca_btl_tcp_component.super.btl_version.mca_component_name,
+        "if_exclude")) {
+        /* Return ERR_NOT_AVAILABLE so that a warning message about
+           "open" failing is not printed */
+        return OMPI_ERR_NOT_AVAILABLE;
+    }
+    
+    return OMPI_SUCCESS;
+}
+
 
 /*
  * module cleanup - sanity checking of queue lengths
  */
 
-int mca_btl_tcp_component_close(void)
+static int mca_btl_tcp_component_close(void)
 {
     opal_list_item_t* item;
     opal_list_item_t* next;

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -127,16 +127,6 @@ extern mca_btl_tcp_module_t mca_btl_tcp_module;
 #else
 #define CLOSE_THE_SOCKET(socket)   close(socket)
 #endif  /* defined(__WINDOWS__) */
-
-/**
- * Register TCP component parameters with the MCA framework
- */
-extern int mca_btl_tcp_component_open(void);
-
-/**
- * Any final cleanup before being unloaded.
- */
-extern int mca_btl_tcp_component_close(void);
 
 /**
  * TCP component initialization.
