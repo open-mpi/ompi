@@ -95,8 +95,11 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
             # check for pvfs2
 	    AC_CHECK_HEADERS([pvfs2.h],
 		[AC_MSG_CHECKING([if possible to link PVFS2])
-		    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <pvfs2.h>], 
-				[int i;])],
+		    AC_LINK_IFELSE(
+			[AC_LANG_PROGRAM(
+				[[#include <stdio.h>
+				  #include <pvfs2.h>]],
+				[[PVFS_util_resolve(NULL,NULL,NULL,0);]])],
 			[AC_MSG_RESULT([yes])
 			    ompi_check_pvfs2_happy="yes"],
 			[AC_MSG_RESULT([no])
