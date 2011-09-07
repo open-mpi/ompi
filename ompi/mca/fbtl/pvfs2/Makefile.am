@@ -45,10 +45,10 @@ AM_CPPFLAGS = $(fbtl_pvfs2_CPPFLAGS)
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fbtl_pvfs2_la_SOURCES = $(fbtl_pvfs2_sources)
-mca_fbtl_pvfs2_la_LIBADD =
+mca_fbtl_pvfs2_la_LIBADD = $(fbtl_pvfs2_LIBS)
 mca_fbtl_pvfs2_la_LDFLAGS = -module -avoid-version $(fbtl_pvfs2_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_fbtl_pvfs2_la_SOURCES = $(fbtl_pvfs2_sources)
-libmca_fbtl_pvfs2_la_LIBADD =
+libmca_fbtl_pvfs2_la_LIBADD = $(fbtl_pvfs2_LIBS)
 libmca_fbtl_pvfs2_la_LDFLAGS = -module -avoid-version $(fbtl_pvfs2_LDFLAGS)

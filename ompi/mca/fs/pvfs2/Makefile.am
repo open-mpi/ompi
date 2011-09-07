@@ -48,10 +48,10 @@ AM_CPPFLAGS = $(fs_pvfs2_CPPFLAGS)
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fs_pvfs2_la_SOURCES = $(fs_pvfs2_sources)
-mca_fs_pvfs2_la_LIBADD =
+mca_fs_pvfs2_la_LIBADD = $(fs_pvfs_LIBS)
 mca_fs_pvfs2_la_LDFLAGS = -module -avoid-version $(fs_pvfs2_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_fs_pvfs2_la_SOURCES = $(fs_pvfs2_sources)
-libmca_fs_pvfs2_la_LIBADD = 
+libmca_fs_pvfs2_la_LIBADD =  $(fs_pvfs2_LIBS)
 libmca_fs_pvfs2_la_LDFLAGS = -module -avoid-version $(fs_pvfs2_LDFLAGS)

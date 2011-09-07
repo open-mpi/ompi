@@ -48,10 +48,10 @@ AM_CPPFLAGS = $(fs_lustre_CPPFLAGS)
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_fs_lustre_la_SOURCES = $(fs_lustre_sources)
-mca_fs_lustre_la_LIBADD = 
+mca_fs_lustre_la_LIBADD = $(fs_lustre_LIBS)
 mca_fs_lustre_la_LDFLAGS = -module -avoid-version $(fs_lustre_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_fs_lustre_la_SOURCES = $(fs_lustre_sources)
-libmca_fs_lustre_la_LIBADD = 
+libmca_fs_lustre_la_LIBADD = $(fs_lustre_LIBS)
 libmca_fs_lustre_la_LDFLAGS = -module -avoid-version $(fs_lustre_LDFLAGS)

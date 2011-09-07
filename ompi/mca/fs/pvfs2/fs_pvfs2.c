@@ -23,10 +23,25 @@
  * modules just to query their version and parameters
  */
 
+
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/mca/fs/fs.h"
+#include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fs/pvfs2/fs_pvfs2.h"
+
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h> /* or <sys/vfs.h> */ 
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 /*
  * *******************************************************************
@@ -61,15 +76,62 @@ int mca_fs_pvfs2_component_init_query(bool enable_progress_threads,
 struct mca_fs_base_module_1_0_0_t *
 mca_fs_pvfs2_component_file_query (mca_io_ompio_file_t *fh, int *priority)
 {
+
+    /* The code in this function is based on the ADIO FS selection in ROMIO
+     *   Copyright (C) 1997 University of Chicago. 
+     *   See COPYRIGHT notice in top-level directory.
+     */
+
+    int err;
+    char *dir;
+    struct statfs fsbuf;
+    char *tmp;
+
+    /* The code in this function is based on the ADIO FS selection in ROMIO
+     *   Copyright (C) 1997 University of Chicago. 
+     *   See COPYRIGHT notice in top-level directory.
+     */
+
    *priority = mca_fs_pvfs2_priority;
 
+    tmp = strchr (fh->f_filename, ':');
+    if (!tmp) {
+        if (OMPIO_ROOT == fh->f_rank) {
+            do {
+                err = statfs (fh->f_filename, &fsbuf);
+            } while (err && (errno == ESTALE));
+            
+            if (err && (errno == ENOENT)) {
+                mca_fs_base_get_parent_dir (fh->f_filename, &dir);
+                err = statfs (dir, &fsbuf);
+                free (dir);
+            }
+            if (fsbuf.f_type == PVFS2_SUPER_MAGIC) {
+                fh->f_fstype = PVFS2;
+            }
+	}
+	fh->f_comm->c_coll.coll_bcast (&(fh->f_fstype),
+				       1,
+				       MPI_INT,
+				       OMPIO_ROOT,
+				       fh->f_comm,
+				       fh->f_comm->c_coll.coll_bcast_module);
+    }
+    else {
+        if (!strncmp(fh->f_filename, "pvfs2:", 6) || 
+            !strncmp(fh->f_filename, "PVFS2:", 6)) {
+            fh->f_fstype = PVFS2;
+        }
+    }
+    
    if (PVFS2 == fh->f_fstype) {
        if (*priority < 50) {
            *priority = 50;
+	   return &pvfs2;
        }
    }
 
-   return &pvfs2;
+   return NULL;
 }
 
 int mca_fs_pvfs2_component_file_unquery (mca_io_ompio_file_t *file)

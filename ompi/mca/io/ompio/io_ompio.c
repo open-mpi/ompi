@@ -46,13 +46,8 @@
 #include <sys/stat.h>
 #endif
 
-#ifdef HAVE_PVFS2_H
-#include "pvfs2.h"
-#endif
 
 #include "io_ompio.h"
-
-static void get_parent_dir (char *filename, char **dirnamep);
 
 int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
 {
@@ -888,132 +883,6 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
 
     return OMPI_SUCCESS;
 }
-
-void ompi_io_ompio_resolve_fs_type (mca_io_ompio_file_t *fh, 
-                                    enum ompio_fs_type *fstype)
-{
-    /* The code in this function is based on the ADIO FS selection in ROMIO
-     *   Copyright (C) 1997 University of Chicago. 
-     *   See COPYRIGHT notice in top-level directory.
-     */
-
-    int err;
-    char *dir;
-    struct statfs fsbuf;
-    char *tmp;
-
-
-    tmp = strchr (fh->f_filename, ':');
-    if (!tmp) {
-        if (OMPIO_ROOT == fh->f_rank) {
-            do {
-                err = statfs (fh->f_filename, &fsbuf);
-            } while (err && (errno == ESTALE));
-            
-            if (err && (errno == ENOENT)) {
-                get_parent_dir (fh->f_filename, &dir);
-                err = statfs (dir, &fsbuf);
-                free (dir);
-            }
-
-#ifdef HAVE_LUSTRE_LIBLUSTREAPI_H
-#ifndef LL_SUPER_MAGIC
-#define LL_SUPER_MAGIC 0x0BD00BD0
-#endif
-            if (fsbuf.f_type == LL_SUPER_MAGIC) {
-                *fstype = LUSTRE;
-            }
-#endif
-
-#ifdef HAVE_PVFS2_H
-            if (fsbuf.f_type == PVFS2_SUPER_MAGIC) {
-                *fstype = PVFS2;
-            }
-#endif
-            if (0 == *fstype) {
-                *fstype = UFS;
-            }
-        }
-
-        fh->f_comm->c_coll.coll_bcast (&(*fstype),
-                                       1,
-                                       MPI_INT,
-                                       OMPIO_ROOT,
-                                       fh->f_comm,
-                                       fh->f_comm->c_coll.coll_bcast_module);
-    }
-    else {
-        if (!strncmp(fh->f_filename, "pvfs2:", 6) || 
-            !strncmp(fh->f_filename, "PVFS2:", 6)) {
-            *fstype = PVFS2;
-        }
-        else if (!strncmp(fh->f_filename, "lustre:", 7) || 
-                 !strncmp(fh->f_filename, "LUSTRE:", 7)) {
-            *fstype = LUSTRE;
-        }
-        else if (!strncmp(fh->f_filename, "ufs:", 4) || 
-                 !strncmp(fh->f_filename, "UFS:", 4)) {
-            *fstype = UFS;
-        }
-    }
-    return;
-}
-
-static void get_parent_dir (char *filename, char **dirnamep)
-{
-
-
-    int err;
-    char *dir = NULL, *slash;
-    struct stat statbuf;
-    
-
-
-    err = lstat(filename, &statbuf);
-
-    if (err || (!S_ISLNK(statbuf.st_mode))) {
-	/* no such file, or file is not a link; these are the "normal"
-	 * cases where we can just return the parent directory.
-	 */
-	dir = strdup(filename);
-    }
-    else {
-	/* filename is a symlink.  we've presumably already tried
-	 * to stat it and found it to be missing (dangling link),
-	 * but this code doesn't care if the target is really there
-	 * or not.
-	 */
-	int namelen;
-	char *linkbuf;
-
-	linkbuf = malloc(PATH_MAX+1);
-	namelen = readlink(filename, linkbuf, PATH_MAX+1);
-	if (namelen == -1) {
-	    /* something strange has happened between the time that
-	     * we determined that this was a link and the time that
-	     * we attempted to read it; punt and use the old name.
-	     */
-	    dir = strdup(filename);
-	}
-	else {
-	    /* successfully read the link */
-	    linkbuf[namelen] = '\0'; /* readlink doesn't null terminate */
-	    dir = strdup(linkbuf);
-	    free(linkbuf);
-	}
-    }
-
-    slash = strrchr(dir, '/');
-    if (!slash) strncpy(dir, ".", 2);
-    else {
-	if (slash == dir) *(dir + 1) = '\0';
-	else *slash = '\0';
-    }
-
-    *dirnamep = dir;
-    return;
-}
-
 
 
 int ompi_io_ompio_break_file_view (mca_io_ompio_file_t *fh,

@@ -102,7 +102,6 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
     data->ompio_fh.f_convertor = opal_convertor_create (remote_arch, 0);
 
     data->ompio_fh.f_fstype = 0;
-    ompi_io_ompio_resolve_fs_type (&data->ompio_fh, &data->ompio_fh.f_fstype);
 
     if (OMPI_SUCCESS != (ret = mca_fs_base_file_select (&data->ompio_fh, 
                                                         NULL))) {
