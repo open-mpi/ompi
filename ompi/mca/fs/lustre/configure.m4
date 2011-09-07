@@ -36,10 +36,10 @@ AC_DEFUN([MCA_ompi_fs_lustre_CONFIG],[
            $1],
           [$2])
 
-    AC_CHECK_HEADERS([lustre/liblustreapi.h], [],
-                      [AC_CHECK_HEADERS([lustre/liblustreapi.h], [], [$2],
-                          [AC_INCLUDES_DEFAULT])],
-                      [AC_INCLUDES_DEFAULT])
+#    AC_CHECK_HEADERS([lustre/liblustreapi.h], [],
+#                      [AC_CHECK_HEADERS([lustre/liblustreapi.h], [], [$2],
+#                          [AC_INCLUDES_DEFAULT])],
+#                      [AC_INCLUDES_DEFAULT])
 
 
     # substitute in the things needed to build lustre

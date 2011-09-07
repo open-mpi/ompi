@@ -26,7 +26,25 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/mca/fs/fs.h"
+#include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/fs/lustre/fs_lustre.h"
+
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h> /* or <sys/vfs.h> */ 
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+
+#include <sys/ioctl.h>
+#include <lustre/liblustreapi.h>
+#include <lustre/lustre_user.h>
 
 /*
  * *******************************************************************
@@ -61,15 +79,58 @@ int mca_fs_lustre_component_init_query(bool enable_progress_threads,
 struct mca_fs_base_module_1_0_0_t *
 mca_fs_lustre_component_file_query (mca_io_ompio_file_t *fh, int *priority)
 {
-   *priority = mca_fs_lustre_priority;
+    int err;
+    char *dir;
+    struct statfs fsbuf;
+    char *tmp;
 
-   if (LUSRE == fh->f_fstype) {
+    /* The code in this function is based on the ADIO FS selection in ROMIO
+     *   Copyright (C) 1997 University of Chicago. 
+     *   See COPYRIGHT notice in top-level directory.
+     */
+
+    *priority = mca_fs_lustre_priority;
+    
+    tmp = strchr (fh->f_filename, ':');
+    if (!tmp) {
+        if (OMPIO_ROOT == fh->f_rank) {
+            do {
+                err = statfs (fh->f_filename, &fsbuf);
+            } while (err && (errno == ESTALE));
+            
+            if (err && (errno == ENOENT)) {
+                mca_fs_base_get_parent_dir (fh->f_filename, &dir);
+                err = statfs (dir, &fsbuf);
+                free (dir);
+            }
+#ifndef LL_SUPER_MAGIC
+#define LL_SUPER_MAGIC 0x0BD00BD0
+            if (fsbuf.f_type == LL_SUPER_MAGIC) {
+                fh->f_fstype = LUSTRE;
+            }
+	}
+	fh->f_comm->c_coll.coll_bcast (&(fh->f_fstype),
+				       1,
+				       MPI_INT,
+				       OMPIO_ROOT,
+				       fh->f_comm,
+				       fh->f_comm->c_coll.coll_bcast_module);
+    }
+    else {
+	if (!strncmp(fh->f_filename, "lustre:", 7) || 
+	    !strncmp(fh->f_filename, "LUSTRE:", 7)) {
+            fh->f_fstype = LUSTRE;
+        }
+    }
+    
+   if (LUSTRE == fh->f_fstype) {
        if (*priority < 50) {
            *priority = 50;
+	   return &lustre;
        }
    }
 
-   return &lustre;
+   return NULL;
 }
 
 int mca_fs_lustre_component_file_unquery (mca_io_ompio_file_t *file)

@@ -52,6 +52,7 @@ OMPI_DECLSPEC int mca_fs_base_find_available(bool enable_progress_threads,
 OMPI_DECLSPEC int mca_fs_base_init_file (struct mca_io_ompio_file_t *file);
 
 OMPI_DECLSPEC int mca_fs_base_get_param (struct mca_io_ompio_file_t *file, int keyval);
+OMPI_DECLSPEC void mca_fs_base_get_parent_dir (char *filename, char **dirnamep);
 /*
  * Globals
  */

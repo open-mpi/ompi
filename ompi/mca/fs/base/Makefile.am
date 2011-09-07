@@ -25,4 +25,5 @@ libmca_fs_la_SOURCES += \
         base/fs_base_file_select.c \
         base/fs_base_file_unselect.c \
         base/fs_base_find_available.c \
+        base/fs_base_get_parent_dir.c \
         base/fs_base_open.c

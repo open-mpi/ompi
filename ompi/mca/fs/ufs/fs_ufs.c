@@ -23,6 +23,7 @@
  * modules just to query their version and parameters
  */
 
+
 #include "ompi_config.h"
 #include "mpi.h"
 #include "ompi/mca/fs/fs.h"
@@ -61,12 +62,11 @@ int mca_fs_ufs_component_init_query(bool enable_progress_threads,
 struct mca_fs_base_module_1_0_0_t *
 mca_fs_ufs_component_file_query (mca_io_ompio_file_t *fh, int *priority)
 {
-   *priority = mca_fs_ufs_priority;
+    /* UFS can always be used, will however have a low priority */
 
-   if (UFS == fh->f_fstype) {
-       if (*priority < 50) {
-           *priority = 50;
-       }
+   *priority = mca_fs_ufs_priority;
+   if (0 == fh->f_fstype ) {
+       fh->f_fstype = UFS;
    }
 
    return &ufs;

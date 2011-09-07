@@ -176,9 +176,6 @@ typedef struct mca_io_ompio_data_t mca_io_ompio_data_t;
 
 OMPI_DECLSPEC int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh);
 
-OMPI_DECLSPEC void ompi_io_ompio_resolve_fs_type (mca_io_ompio_file_t *fh, 
-                                                  enum ompio_fs_type *fstype);
-
 /*
  * Function that takes in a datatype and buffer, and decodes that datatype
  * into an iovec using the convertor_raw function
