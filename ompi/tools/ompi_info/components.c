@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2011      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -82,6 +83,17 @@
 #include "ompi/mca/dpm/base/base.h"
 #include "ompi/mca/op/base/base.h"
 #include "ompi/mca/vprotocol/base/base.h"
+#include "ompi/mca/fbtl/fbtl.h"
+#include "ompi/mca/fbtl/base/base.h"
+#include "ompi/mca/fs/fs.h"
+#include "ompi/mca/fs/base/base.h"
+#include "ompi/mca/fcache/fcache.h"
+#include "ompi/mca/fcache/base/base.h"
+#include "ompi/mca/fcoll/fcoll.h"
+#include "ompi/mca/fcoll/base/base.h"
+#include "ompi/mca/sharedfp/sharedfp.h"
+#include "ompi/mca/sharedfp/base/base.h"
+
 
 #if OPAL_ENABLE_FT_CR == 1
 #include "ompi/mca/crcp/crcp.h"
@@ -571,6 +583,46 @@ void ompi_info_open_components(void)
     map->type = strdup("io");
     map->components = &mca_io_base_components_opened;
     opal_pointer_array_add(&component_map, map);
+
+    if (OMPI_SUCCESS != mca_fcoll_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("fcoll");
+    map->components = &mca_fcoll_base_components_opened;
+    opal_pointer_array_add(&component_map, map);
+
+    if (OMPI_SUCCESS != mca_fs_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("fs");
+    map->components = &mca_fs_base_components_opened;
+    opal_pointer_array_add(&component_map, map);
+
+    if (OMPI_SUCCESS != mca_fbtl_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("fbtl");
+    map->components = &mca_fbtl_base_components_opened;
+    opal_pointer_array_add(&component_map, map);
+
+    if (OMPI_SUCCESS != mca_fcache_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("fcache");
+    map->components = &mca_fcache_base_components_opened;
+    opal_pointer_array_add(&component_map, map);
+
+    if (OMPI_SUCCESS != mca_sharedfp_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("sharedfp");
+    map->components = &mca_sharedfp_base_components_opened;
+    opal_pointer_array_add(&component_map, map);
     
     if (OMPI_SUCCESS != mca_rcache_base_open()) {
         goto error;
@@ -735,6 +787,11 @@ void ompi_info_close_components()
         (void) mca_mpool_base_close();
         (void) mca_rcache_base_close();
         (void) mca_io_base_close();
+        (void) mca_fbtl_base_close();
+        (void) mca_fcoll_base_close();
+        (void) mca_fcache_base_close();
+        (void) mca_fs_base_close();
+        (void) mca_sharedfp_base_close();
         (void) mca_coll_base_close();
         (void) mca_allocator_base_close();
         (void) ompi_osc_base_close();
