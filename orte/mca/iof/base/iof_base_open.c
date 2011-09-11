@@ -112,6 +112,8 @@ OBJ_CLASS_INSTANCE(orte_iof_sink_t,
 
 static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
 {
+    rev->fd = -1;
+    rev->active = false;
 }
 static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
@@ -122,6 +124,7 @@ static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              rev->fd, ORTE_NAME_PRINT(&rev->name)));
         close(rev->fd);
+        rev->fd = -1;
     }
 }
 OBJ_CLASS_INSTANCE(orte_iof_read_event_t,

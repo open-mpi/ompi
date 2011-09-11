@@ -217,6 +217,7 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev->name.vpid = (nm)->vpid;                                \
         ORTE_EPOCH_SET(rev->name.epoch,(nm)->epoch);                \
         rev->tag = (tg);                                            \
+        rev->fd = (fid);                                            \
         *(rv) = rev;                                                \
         opal_event_set(opal_event_base,                             \
                        &rev->ev, (fid),                             \
