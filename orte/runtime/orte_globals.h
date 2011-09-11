@@ -38,6 +38,7 @@
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/threads/threads.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rml/rml_types.h"
@@ -298,8 +299,10 @@ typedef struct {
     char *cpu_set;
     /** Username on this node, if specified */
     char *username;
-    /* list of known system resources for this node */
-    opal_list_t resources;
+#if OPAL_HAVE_HWLOC
+    /* system topology for this node */
+    hwloc_topology_t topology;
+#endif
     /* history of resource usage - sized by sensor framework */
     opal_ring_buffer_t stats;
 } orte_node_t;
@@ -623,6 +626,7 @@ ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 /* global arrays for data storage */
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
+ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_topologies;
 
 /* a clean output channel without prefix */
 ORTE_DECLSPEC extern int orte_clean_output;

@@ -137,15 +137,6 @@ typedef int (*orte_ess_base_module_update_pidmap_fn_t)(opal_byte_object_t *bo);
 typedef int (*orte_ess_base_module_update_nidmap_fn_t)(opal_byte_object_t *bo);
 
 /**
- * Query node configuration info
- *
- * Request information on the system capabilities of a specific node. A NULL nodename
- * indicates that the local node info is requested. An empty list of results is
- * returned on systems that do not support this functionality.
- */
-typedef int (*orte_ess_base_module_query_sys_info_t)(char *node, char **keys, opal_list_t *values);
-    
-/**
  * Handle fault tolerance updates
  *
  * @param[in] state Fault tolerance state update
@@ -170,7 +161,6 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_proc_get_epoch_fn_t        proc_get_epoch;
     orte_ess_base_module_update_pidmap_fn_t         update_pidmap;
     orte_ess_base_module_update_nidmap_fn_t         update_nidmap;
-    orte_ess_base_module_query_sys_info_t           query_sys_info;
     orte_ess_base_module_ft_event_fn_t              ft_event;
 };
 typedef struct orte_ess_base_module_1_0_0_t orte_ess_base_module_1_0_0_t;

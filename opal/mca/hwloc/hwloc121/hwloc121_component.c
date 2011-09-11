@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved. 
  *
  * $COPYRIGHT$
  * 
@@ -15,46 +15,44 @@
  */
 
 #include "opal_config.h"
-
 #include "opal/constants.h"
-#include "opal/mca/sysinfo/sysinfo.h"
-#include "sysinfo_linux.h"
+
+#include "opal/mca/hwloc/hwloc.h"
+#include "hwloc121.h"
 
 /*
  * Public string showing the sysinfo ompi_linux component version number
  */
-const char *opal_sysinfo_linux_component_version_string =
-    "OPAL linux sysinfo MCA component version " OPAL_VERSION;
+const char *opal_hwloc_hwloc121_component_version_string =
+    "OPAL hwloc121 hwloc MCA component version " OPAL_VERSION;
 
 /*
  * Local function
  */
-static int sysinfo_linux_component_query(mca_base_module_t **module, int *priority);
+static int hwloc121_open(void);
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
 
-const opal_sysinfo_base_component_t mca_sysinfo_linux_component = {
+const opal_hwloc_component_t mca_hwloc_hwloc121_component = {
 
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
     {
-        OPAL_SYSINFO_BASE_VERSION_2_0_0,
+        OPAL_HWLOC_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "linux",
+        "hwloc121",
         OPAL_MAJOR_VERSION,
         OPAL_MINOR_VERSION,
         OPAL_RELEASE_VERSION,
 
         /* Component open and close functions */
-        NULL,
-        NULL,
-        sysinfo_linux_component_query,
-        NULL,
+        hwloc121_open,
+        NULL
     },
     {
         /* The component is checkpoint ready */
@@ -63,11 +61,8 @@ const opal_sysinfo_base_component_t mca_sysinfo_linux_component = {
 };
 
 
-static int sysinfo_linux_component_query(mca_base_module_t **module, int *priority)
-{
-    *priority = 20;
-    *module = (mca_base_module_t *)&opal_sysinfo_linux_module;
-    
+static int hwloc121_open(void)
+{    
     return OPAL_SUCCESS;
 }
 

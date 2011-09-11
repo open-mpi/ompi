@@ -101,7 +101,6 @@ orte_ess_base_module_t orte_ess_slave_module = {
     orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     update_pidmap,
     update_nidmap,
-    orte_ess_base_query_sys_info,
 #if OPAL_ENABLE_FT_CR == 1
     rte_ft_event
 #else

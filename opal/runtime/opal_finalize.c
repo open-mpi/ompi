@@ -42,6 +42,7 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/event/base/base.h"
 #include "opal/runtime/opal_progress.h"
@@ -150,6 +151,9 @@ opal_finalize(void)
     /* close the carto framework */
     opal_carto_base_close();
     
+    /* close the hwloc framework */
+    opal_hwloc_base_close();
+
     /* close the processor affinity base */
     opal_paffinity_base_close();
 

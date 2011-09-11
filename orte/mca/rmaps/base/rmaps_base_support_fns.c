@@ -31,7 +31,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/ess/ess.h"
-#include "opal/mca/sysinfo/sysinfo_types.h"
 
 #include "orte/types.h"
 #include "orte/util/show_help.h"
@@ -51,14 +50,11 @@
 int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr_t *total_num_slots,
                                      orte_app_context_t *app, orte_mapping_policy_t policy)
 {
-    opal_list_item_t *item, *item2, *item3, *next;
+    opal_list_item_t *item, *next;
     orte_node_t *node;
     orte_std_cntr_t num_slots;
     orte_std_cntr_t i;
     int rc;
-    bool found;
-    opal_sysinfo_value_t *req_res, *ninfo;
-    char **vals;
 
     /** set default answer */
     *total_num_slots = 0;
@@ -197,6 +193,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
     
     /* finally, filter thru any resource constraints */
+#if 0
     for (item = opal_list_get_first(&app->resource_constraints);
          item != opal_list_get_end(&app->resource_constraints);
          item = opal_list_get_next(item)) {
@@ -265,6 +262,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
             item2 = next;
         }
     }
+#endif
 
     /* If the "no local" option was set, then remove the local node
      * from the list

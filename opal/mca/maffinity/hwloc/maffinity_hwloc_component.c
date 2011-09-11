@@ -24,7 +24,7 @@
 #include "opal/constants.h"
 #include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/common/hwloc/common_hwloc.h"
+#include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "maffinity_hwloc.h"
 
@@ -80,18 +80,6 @@ opal_maffinity_hwloc_component_2_0_0_t mca_maffinity_hwloc_component = {
 
 static int hwloc_register(void)
 {
-    int i;
-
-    /* Call the registration function of common hwloc */
-    opal_common_hwloc_register();
-
-    i = mca_base_param_find("common", NULL, "hwloc_version");
-    if (OPAL_ERROR != i) {
-        mca_base_param_reg_syn(i, 
-                               &mca_maffinity_hwloc_component.base.base_version,
-                               "hwloc_version", false);
-    }
-
     mca_base_param_reg_int(&mca_maffinity_hwloc_component.base.base_version,
                            "priority",
                            "Priority of the hwloc maffinity component",

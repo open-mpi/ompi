@@ -51,8 +51,7 @@
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/installdirs/base/base.h"
-#include "opal/mca/sysinfo/sysinfo.h"
-#include "opal/mca/sysinfo/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
@@ -344,14 +343,16 @@ void ompi_info_open_components(void)
     map->components = &opal_maffinity_base_components_opened;
     opal_pointer_array_add(&component_map, map);
     
-    if (OPAL_SUCCESS != opal_sysinfo_base_open()) {
+#if OPAL_HAVE_HWLOC
+    if (OPAL_SUCCESS != opal_hwloc_base_open()) {
         goto error;
     }
     map = OBJ_NEW(ompi_info_component_map_t);
-    map->type = strdup("sysinfo");
-    map->components = &opal_sysinfo_base_components_opened;
+    map->type = strdup("hwloc");
+    map->components = &opal_hwloc_components;
     opal_pointer_array_add(&component_map, map);
-    
+#endif
+
     if (OPAL_SUCCESS != opal_timer_base_open()) {
         goto error;
     }
@@ -827,7 +828,9 @@ void ompi_info_close_components()
         (void) opal_carto_base_close();
         (void) opal_maffinity_base_close();
         (void) opal_timer_base_close();
-        (void) opal_sysinfo_base_close();
+#if OPAL_HAVE_HWLOC
+        (void) opal_hwloc_base_close();
+#endif
 #if OPAL_ENABLE_FT_CR == 1
         (void) opal_crs_base_close();
 #endif

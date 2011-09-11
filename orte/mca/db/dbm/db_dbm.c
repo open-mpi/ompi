@@ -33,7 +33,6 @@
 #include "opal/util/basename.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
-#include "opal/mca/sysinfo/base/base.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/base/base.h"

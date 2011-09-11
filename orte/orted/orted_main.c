@@ -60,7 +60,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/daemon_init.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/sysinfo/sysinfo.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
@@ -638,30 +638,18 @@ int orte_daemon(int argc, char *argv[])
                 goto DONE;
             }
         } else {
-            opal_list_item_t *item;
-            opal_sysinfo_value_t *info;
-            int32_t num_values;
-
             /* include our node name */
             opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
 
-            /* add number of sysinfo values to the buffer */
-            num_values = opal_list_get_size(&orte_odls_globals.sysinfo);
-            opal_dss.pack(buffer, &num_values, 1, OPAL_INT32);
-            /* add them to the buffer */
-            for (item = opal_list_get_first(&orte_odls_globals.sysinfo);
-                 item != opal_list_get_end(&orte_odls_globals.sysinfo);
-                 item = opal_list_get_next(item)) {
-                info = (opal_sysinfo_value_t*)item;
-                opal_dss.pack(buffer, &info->key, 1, OPAL_STRING);
-                opal_dss.pack(buffer, &info->type, 1, OPAL_DATA_TYPE_T);
-                if (OPAL_INT64 == info->type) {
-                    opal_dss.pack(buffer, &(info->data.i64), 1, OPAL_INT64);
-                } else if (OPAL_STRING == info->type) {
-                    opal_dss.pack(buffer, &(info->data.str), 1, OPAL_STRING);
+#if OPAL_HAVE_HWLOC && OPAL_HAVE_HWLOC_XML
+            /* add the local topology */
+            if (NULL != opal_hwloc_topology) {
+                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+                    ORTE_ERROR_LOG(ret);
                 }
             }
-            
+#endif
+
             /* send to the HNP's callback - this will flow up the routing
              * tree if static ports are enabled
              */

@@ -46,10 +46,10 @@
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
 #include "opal/util/argv.h"
-#include "opal/mca/sysinfo/sysinfo_types.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/base/odls_private.h"
@@ -114,10 +114,17 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
         return rc;
     }
     /* the bytes in the object were free'd by the decode */
-    
-    /* unpack the system info */
-    orte_util_decode_sysinfo(buffer);
-    
+#if OPAL_HAVE_HWLOC
+    /* extract the topology */
+    if (NULL == opal_hwloc_topology) {
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &opal_hwloc_topology, &cnt, OPAL_HWLOC_TOPO))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+#endif
+
     return ORTE_SUCCESS;
 }
 
@@ -148,6 +155,13 @@ void orte_util_nidmap_finalize(void)
     }
     OBJ_DESTRUCT(&orte_jobmap);
     
+#if OPAL_HAVE_HWLOC
+    /* destroy the topology */
+    if (NULL != opal_hwloc_topology) {
+        hwloc_topology_destroy(opal_hwloc_topology);
+    }
+#endif
+
     /* flag that these are no longer initialized */
     initialized = false;
 }
@@ -909,68 +923,6 @@ void orte_jobmap_dump(void)
         orte_jmap_dump(jmap);
     }
     opal_output(orte_clean_output, "\n\n");
-}
-
-void orte_util_encode_sysinfo(opal_buffer_t *buf, opal_list_t *info)
-{
-    opal_sysinfo_value_t *sys;
-    opal_list_item_t *item;
-    uint8_t flag;
-
-    for (item = opal_list_get_first(info);
-         item != opal_list_get_end(info);
-         item = opal_list_get_next(item)) {
-        sys = (opal_sysinfo_value_t*)item;
-        /* pack the key */
-        opal_dss.pack(buf, &sys->key, 1, OPAL_STRING);
-        /* pack the value */
-        if (OPAL_STRING == sys->type) {
-            flag = 0;
-            opal_dss.pack(buf, &flag, 1, OPAL_UINT8);
-            opal_dss.pack(buf, &sys->data.str, 1, OPAL_STRING);
-        } else {
-            flag = 1;
-            opal_dss.pack(buf, &flag, 1, OPAL_UINT8);
-            opal_dss.pack(buf, &sys->data.i64, 1, OPAL_INT64);
-        }
-    }
-}
-
-void orte_util_decode_sysinfo(opal_buffer_t *buf)
-{
-    orte_nid_t *nid;
-    int32_t n;
-    char *key;
-    opal_sysinfo_value_t *sys;
-    uint8_t flag;
-
-    /* get the nid of our local node */
-    if (NULL == (nid = orte_util_lookup_nid(ORTE_PROC_MY_NAME))) {
-        /* can't get it */
-        return ;
-    }
-    
-    /* if it already has sysinfo, then we are receiving
-     * a repeat copy - so discard it
-     */
-    if (0 < opal_list_get_size(&nid->sysinfo)) {
-        return;
-    }
-    
-    n=1;
-    while (ORTE_SUCCESS == opal_dss.unpack(buf, &key, &n, OPAL_STRING)) {
-        sys = OBJ_NEW(opal_sysinfo_value_t);
-        sys->key = key;
-        opal_dss.unpack(buf, &flag, &n, OPAL_UINT8);
-        if (0 == flag) {
-            sys->type = OPAL_STRING;
-            opal_dss.unpack(buf, &sys->data.str, &n, OPAL_STRING);
-        } else {
-            sys->type = OPAL_INT64;
-            opal_dss.unpack(buf, &sys->data.i64, &n, OPAL_INT64);
-        }
-        opal_list_append(&nid->sysinfo, &sys->super);
-    }
 }
 
 #if 0
