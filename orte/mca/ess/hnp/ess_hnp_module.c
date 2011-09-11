@@ -42,7 +42,7 @@
 #include "opal/util/basename.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
-#include "opal/mca/sysinfo/base/base.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"
@@ -112,7 +112,6 @@ orte_ess_base_module_t orte_ess_hnp_module = {
     orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     update_pidmap,
     update_nidmap,
-    orte_ess_base_query_sys_info,
     NULL /* ft_event */
 };
 
@@ -142,7 +141,6 @@ static int rte_init(void)
     orte_node_t *node;
     orte_proc_t *proc;
     orte_app_context_t *app;
-    int value;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -185,27 +183,52 @@ static int rte_init(void)
     
     signals_set = true;
     
-    /* determine the topology info */
-    if (0 == orte_default_num_sockets_per_board) {
-        /* we weren't given a number, so try to determine it */
-        if (OPAL_SUCCESS != opal_paffinity_base_get_socket_info(&value)) {
-            /* can't get any info - default to 1 */
-            value = 1;
-        }
-        orte_default_num_sockets_per_board = (uint8_t)value;
-    }
-    if (0 == orte_default_num_cores_per_socket) {
-        /* we weren't given a number, so try to determine it */
-        if (OPAL_SUCCESS != (ret = opal_paffinity_base_get_core_info(0, &value))) {
-            /* don't have topo info - can we at least get #processors? */
-            if (OPAL_SUCCESS != opal_paffinity_base_get_processor_info(&value)) {
-                /* can't get any info - default to 1 */
-                value = 1;
+#if OPAL_HAVE_HWLOC
+    {
+        hwloc_obj_t obj;
+        int i, j;
+
+        /* get the local topology */
+        if (NULL == opal_hwloc_topology) {
+            if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
+                0 != hwloc_topology_load(opal_hwloc_topology)) {
+                error = "topology discovery";
+                goto error;
             }
         }
-        orte_default_num_cores_per_socket = (uint8_t)value;
+
+        /* remove the hostname from the topology. Unfortunately, hwloc
+         * decided to add the source hostname to the "topology", thus
+         * rendering it unusable as a pure topological description. So
+         * we remove that information here.
+         */
+        obj = hwloc_get_root_obj(opal_hwloc_topology);
+        for (i=0; i < obj->infos_count; i++) {
+            if (NULL == obj->infos[i].name ||
+                NULL == obj->infos[i].value) {
+                continue;
+            }
+            if (0 == strncmp(obj->infos[i].name, "HostName", strlen("HostName"))) {
+                free(obj->infos[i].name);
+                free(obj->infos[i].value);
+                /* left justify the array */
+                for (j=i; j < obj->infos_count-1; j++) {
+                    obj->infos[j] = obj->infos[j+1];
+                }
+                obj->infos[obj->infos_count-1].name = NULL;
+                obj->infos[obj->infos_count-1].value = NULL;
+                obj->infos_count--;
+                break;
+            }
+        }
+
+        if (4 < opal_output_get_verbosity(orte_ess_base_output)) {
+            opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
+        }
     }
-    
+#endif
+
     /* if we are using xml for output, put an mpirun start tag */
     if (orte_xml_output) {
         fprintf(orte_xml_fp, "<mpirun>\n");
@@ -226,18 +249,6 @@ static int rte_init(void)
         goto error;
     }
     
-    /* open and setup the local resource discovery framework */
-    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_sysinfo_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = opal_sysinfo_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "opal_sysinfo_base_select";
-        goto error;
-    }
-
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
         error = "orte_errmgr_base_open";
         goto error;
@@ -473,7 +484,15 @@ static int rte_init(void)
         error = "setup node array";
         goto error;
     }
-    
+    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node topologies array";
+        goto error;
+    }
     /* Setup the job data object for the daemons */        
     /* create and store the job data object */
     jdata = OBJ_NEW(orte_job_t);
@@ -489,6 +508,10 @@ static int rte_init(void)
     node = OBJ_NEW(orte_node_t);
     node->name = strdup(orte_process_info.nodename);
     node->index = opal_pointer_array_set_item(orte_node_pool, 0, node);
+#if OPAL_HAVE_HWLOC
+    /* point our topology to the one detected locally */
+    node->topology = opal_hwloc_topology;
+#endif
 
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
@@ -792,8 +815,13 @@ static int rte_finalize(void)
     }
     
     /* handle the orted-specific OPAL stuff */
-    opal_sysinfo_base_close();
     opal_pstat_base_close();
+#if OPAL_HAVE_HWLOC
+    /* destroy the topology, if required */
+    if (NULL != opal_hwloc_topology) {
+        hwloc_topology_destroy(opal_hwloc_topology);
+    }
+#endif
 
     return ORTE_SUCCESS;    
 }

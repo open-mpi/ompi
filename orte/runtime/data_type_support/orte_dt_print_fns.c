@@ -23,8 +23,6 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
-#include "opal/util/opal_sos.h"
-#include "opal/mca/sysinfo/sysinfo.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -302,8 +300,6 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     int32_t i;
     int rc;
     orte_proc_t *proc;
-    opal_list_item_t *item;
-    opal_sysinfo_value_t *info;
 
     /* set default result */
     *output = NULL;
@@ -411,25 +407,24 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     free(tmp);
     tmp = tmp2;
     
-    asprintf(&tmp2, "%s\n%s\tDetected Resources:", tmp, pfx2);
-    free(tmp);
-    tmp = tmp2;
-    
-    for (item = opal_list_get_first(&src->resources);
-         item != opal_list_get_end(&src->resources);
-         item = opal_list_get_next(item)) {
-        info = (opal_sysinfo_value_t*)item;
-        if (OPAL_INT64 == info->type) {
-            asprintf(&tmp2, "%s\n%s\t\t%s: %ld", tmp, pfx2,
-                     info->key, (long int)info->data.i64);
-        } else if (OPAL_STRING == info->type) {
-            asprintf(&tmp2, "%s\n%s\t\t%s: %s", tmp, pfx2,
-                     info->key, info->data.str);
-        }
+#if OPAL_HAVE_HWLOC
+    if (NULL != src->topology) {
+        char *pfx3;
+        asprintf(&tmp2, "%s\n%s\tDetected Resources:", tmp, pfx2);
         free(tmp);
-        tmp = tmp2;            
-    }
+        tmp = tmp2;
     
+        tmp2 = NULL;
+        asprintf(&pfx3, "%s\t", pfx2);
+        opal_dss.print(&tmp2, pfx3, src->topology, OPAL_HWLOC_TOPO);
+        free(pfx3);
+        asprintf(&tmp3, "%s%s", tmp, tmp2);
+        free(tmp);
+        free(tmp2);
+        tmp = tmp3;            
+    }
+#endif
+
     asprintf(&tmp2, "%s\n%s\tNum procs: %ld\tNext node_rank: %ld", tmp, pfx2,
              (long)src->num_procs, (long)src->next_node_rank);
     free(tmp);

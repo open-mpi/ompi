@@ -106,6 +106,7 @@ opal_buffer_t *orte_tree_launch_cmd = NULL;
 /* global arrays for data storage */
 opal_pointer_array_t *orte_job_data;
 opal_pointer_array_t *orte_node_pool;
+opal_pointer_array_t *orte_node_topologies;
 
 /* a clean output channel without prefix */
 int orte_clean_output = -1;
@@ -846,7 +847,9 @@ static void orte_node_construct(orte_node_t* node)
     
     node->username = NULL;
     
-    OBJ_CONSTRUCT(&node->resources, opal_list_t);
+#if OPAL_HAVE_HWLOC
+    node->topology = NULL;
+#endif
 
     OBJ_CONSTRUCT(&node->stats, opal_ring_buffer_t);
     opal_ring_buffer_init(&node->stats, orte_stat_history_size);
@@ -855,7 +858,6 @@ static void orte_node_construct(orte_node_t* node)
 static void orte_node_destruct(orte_node_t* node)
 {
     int i;
-    opal_list_item_t *item;
     opal_node_stats_t *stats;
 
     if (NULL != node->name) {
@@ -892,10 +894,7 @@ static void orte_node_destruct(orte_node_t* node)
         node->username = NULL;
     }
     
-    while (NULL != (item = opal_list_remove_first(&node->resources))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&node->resources);
+    /* do NOT destroy the topology */
 
     while (NULL != (stats = (opal_node_stats_t*)opal_ring_buffer_pop(&node->stats))) {
         OBJ_RELEASE(stats);

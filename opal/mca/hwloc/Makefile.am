@@ -1,6 +1,5 @@
 #
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
-#                         All rights reserved.
+# Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -9,13 +8,12 @@
 #
 
 # main library setup
-noinst_LTLIBRARIES = libmca_sysinfo.la
-libmca_sysinfo_la_SOURCES =
+noinst_LTLIBRARIES = libmca_hwloc.la
+libmca_hwloc_la_SOURCES =
 
 # local files
-headers = sysinfo.h \
-          sysinfo_types.h
-libmca_sysinfo_la_SOURCES += $(headers)
+headers = hwloc.h
+libmca_hwloc_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS

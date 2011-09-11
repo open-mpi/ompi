@@ -37,6 +37,7 @@
 #include "opal/mca/installdirs/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
@@ -339,6 +340,14 @@ opal_init(int* pargc, char*** pargv)
     /* initialize the mca */
     if (OPAL_SUCCESS != (ret = mca_base_open())) {
         error = "mca_base_open";
+        goto return_error;
+    }
+
+    /* open hwloc - since this is a static framework, no
+     * select is required
+     */
+    if (OPAL_SUCCESS != (ret = opal_hwloc_base_open())) {
+        error = "opal_paffinity_base_open";
         goto return_error;
     }
 

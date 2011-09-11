@@ -68,9 +68,6 @@ ORTE_DECLSPEC int orte_util_decode_nodemap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_encode_pidmap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_pidmap(opal_byte_object_t *boptr);
 
-ORTE_DECLSPEC void orte_util_encode_sysinfo(opal_buffer_t *buf, opal_list_t *info);
-ORTE_DECLSPEC void orte_util_decode_sysinfo(opal_buffer_t *buf);
-
 ORTE_DECLSPEC int orte_util_build_daemon_nidmap(char **nodes);
 
 ORTE_DECLSPEC void orte_nidmap_dump(void);

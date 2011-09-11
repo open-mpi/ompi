@@ -47,7 +47,6 @@ orte_ess_base_module_t orte_ess = {
     NULL,  /* proc_get_epoch */
     NULL,  /* update_pidmap */
     NULL,  /* update_nidmap */
-    NULL,  /* query_sys_info */
     NULL   /* ft_event */
 };
 int orte_ess_base_output;

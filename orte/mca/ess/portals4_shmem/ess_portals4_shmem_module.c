@@ -45,7 +45,6 @@ static uint8_t proc_get_locality(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
-static int query_sys_info(char *node, char **keys, opal_list_t *values);
 
 orte_ess_base_module_t orte_ess_portals4_shmem_module = {
     rte_init,
@@ -59,7 +58,6 @@ orte_ess_base_module_t orte_ess_portals4_shmem_module = {
     orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     NULL,   /* add_pidmap is only used in ORTE */
     NULL,   /* update_nidmap is only used in ORTE */
-    query_sys_info,
     NULL /* ft_event */
 };
 
@@ -155,9 +153,4 @@ static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
 {
     return 0;
-}
-
-static int query_sys_info(char *node, char **keys, opal_list_t *values)
-{
-    return ORTE_SUCCESS;
 }

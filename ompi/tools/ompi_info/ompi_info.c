@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "maffinity");
     opal_pointer_array_add(&mca_types, "timer");
     opal_pointer_array_add(&mca_types, "installdirs");
-    opal_pointer_array_add(&mca_types, "sysinfo");
+    opal_pointer_array_add(&mca_types, "hwloc");
 #if OPAL_ENABLE_FT_CR == 1
     opal_cr_set_enabled(true);
     opal_pointer_array_add(&mca_types, "crs");

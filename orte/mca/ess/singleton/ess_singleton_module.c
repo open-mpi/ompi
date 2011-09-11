@@ -38,7 +38,6 @@
 #include "opal/util/path.h"
 #include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/sysinfo/sysinfo.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/paffinity/paffinity.h"
 
@@ -91,7 +90,6 @@ orte_ess_base_module_t orte_ess_singleton_module = {
     orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     update_pidmap,
     update_nidmap,
-    orte_ess_base_query_sys_info,
     NULL /* ft_event */
 };
 

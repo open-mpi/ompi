@@ -34,7 +34,7 @@
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "paffinity_hwloc.h"
-#include "opal/mca/common/hwloc/hwloc/include/hwloc.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 /*
  * Local functions

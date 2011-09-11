@@ -2189,8 +2189,12 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             opal_dss.pack(&buffer, &orte_odls_globals.dmap, 1, OPAL_BYTE_OBJECT);
             opal_dss.pack(&buffer, &jobdat->pmap, 1, OPAL_BYTE_OBJECT);
-            /* add the local system info */
-            orte_util_encode_sysinfo(&buffer, &orte_odls_globals.sysinfo);
+#if OPAL_HAVE_HWLOC
+            /* send the local topology so the individual apps
+             * don't hammer the system to collect it themselves
+             */
+            opal_dss.pack(&buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO);
+#endif
         }
     }
     

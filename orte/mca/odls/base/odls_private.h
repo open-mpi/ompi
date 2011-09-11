@@ -78,8 +78,6 @@ typedef struct {
     opal_bitmap_t sockets;
     /* number of sockets available to us */
     int num_sockets;
-    /* system capabilities */
-    opal_list_t sysinfo;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;

@@ -65,7 +65,6 @@ orte_ess_base_module_t orte_ess_alps_module = {
     orte_ess_base_proc_get_epoch,
     update_pidmap,
     update_nidmap,
-    orte_ess_base_query_sys_info,
     NULL /* ft_event */
 };
 

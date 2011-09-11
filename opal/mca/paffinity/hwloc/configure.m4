@@ -24,10 +24,12 @@
 AC_DEFUN([MCA_opal_paffinity_hwloc_CONFIG],[
     AC_CONFIG_FILES([opal/mca/paffinity/hwloc/Makefile])
 
-    # All we check for is the results of opal/mca/common/hwloc's
-    # configury
-    AC_MSG_CHECKING([if common hwloc was happy])
-    AC_MSG_RESULT([$opal_common_hwloc_support])
-
-    AS_IF([test "$opal_common_hwloc_support" = "yes"], [$1], [$2])
+    # All we check for is whether --without-hwloc was given
+    # configury.  See big comment in opal/mca/hwloc/configure.m4.
+    AC_MSG_CHECKING([if hwloc is enabled])
+    AS_IF([test "$with_hwloc" != "no"],
+          [AC_MSG_RESULT([yes])
+           $1],
+          [AC_MSG_RESULT([no])
+           $2])
 ])dnl

@@ -45,7 +45,6 @@
 static int rte_init(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
-static int query_sys_info(char *node, char **keys, opal_list_t *values);
 
 
 orte_ess_base_module_t orte_ess_tool_module = {
@@ -60,7 +59,6 @@ orte_ess_base_module_t orte_ess_tool_module = {
     orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     NULL,   /* don't need to update_pidmap */
     NULL,   /* don't need to update_nidmap */
-    query_sys_info,
     NULL /* ft_event */
 };
 
@@ -156,9 +154,4 @@ static void rte_abort(int status, bool report)
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
 {
     return ORTE_VPID_INVALID;
-}
-
-static int query_sys_info(char *node, char **keys, opal_list_t *values)
-{
-    return ORTE_SUCCESS;
 }

@@ -36,7 +36,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/sysinfo/sysinfo.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -416,12 +416,8 @@ static void process_orted_launch_report(int fd, short event, void *data)
     int64_t setupsec, setupusec;
     int64_t startsec, startusec;
     orte_proc_t *daemon=NULL;
-    int32_t i, num_values;
-    opal_sysinfo_value_t *info;
-    orte_node_t *node;
     char *nodename;
-    opal_list_item_t *item;
-    
+
     /* see if we need to timestamp this receipt */
     if (orte_timing) {
         gettimeofday(&recvtime, NULL);
@@ -542,57 +538,55 @@ static void process_orted_launch_report(int fd, short event, void *data)
         goto CLEANUP;
     }
     
+#if OPAL_HAVE_HWLOC && OPAL_HAVE_HWLOC_XML
     /* store the local resources for that node */
-    idx=1;
-    node = daemon->node;
-    if (OPAL_SUCCESS == opal_dss.unpack(buffer, &num_values, &idx, OPAL_INT32) &&
-        0 < num_values) {
-        /* clear the old list, if it exists */
-        while (NULL != (item = opal_list_remove_first(&node->resources))) {
-            OBJ_RELEASE(item);
-        }
-        for (i=0; i < num_values; i++) {
-            info = OBJ_NEW(opal_sysinfo_value_t);
-            idx=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &info->key, &idx, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                orted_failed_launch = true;
-                goto CLEANUP;
-            }
-            idx=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &info->type, &idx, OPAL_DATA_TYPE_T))) {
-                ORTE_ERROR_LOG(rc);
-                orted_failed_launch = true;
-                goto CLEANUP;
-            }
-            idx=1;
-            if (OPAL_INT64 == info->type) {
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &(info->data.i64), &idx, OPAL_INT64))) {
-                    ORTE_ERROR_LOG(rc);
-                    orted_failed_launch = true;
-                    goto CLEANUP;
+    {
+        hwloc_topology_t topo, t;
+        orte_node_t *node;
+        int i;
+        bool found;
+
+        idx=1;
+        node = daemon->node;
+        if (OPAL_SUCCESS == opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO)) {
+            /* do we already have this topology from some other node? */
+            found = false;
+            for (i=0; i < orte_node_topologies->size; i++) {
+                if (NULL == (t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, i))) {
+                    continue;
                 }
-            } else if (OPAL_STRING == info->type) {
-                if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &(info->data.str), &idx, OPAL_STRING))) {
-                    ORTE_ERROR_LOG(rc);
-                    orted_failed_launch = true;
-                    goto CLEANUP;
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s RECEIVED TOPOLOGY FROM NODE %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
+                if (OPAL_EQUAL == opal_dss.compare(topo, t, OPAL_HWLOC_TOPO)) {
+                    /* yes - just point to it */
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s TOPOLOGY MATCHES - DISCARDING",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    found = true;
+                    node->topology = t;
+                    hwloc_topology_destroy(topo);
+                    break;
                 }
             }
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                 "%s adding resource %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 info->key));
-            opal_list_append(&node->resources, &info->super);
+            if (!found) {
+                /* nope - add it */
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s NEW TOPOLOGY - ADDING",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                opal_pointer_array_add(orte_node_topologies, topo);
+                node->topology = topo;
+            }
         }
     }
+#endif
     
     /* if a tree-launch is underway, send the cmd back */
     if (NULL != orte_tree_launch_cmd) {
         orte_rml.send_buffer(&peer, orte_tree_launch_cmd, ORTE_RML_TAG_DAEMON, 0);
     }
     
-CLEANUP:
+ CLEANUP:
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_report_launch %s for daemon %s (via %s) at contact %s",
