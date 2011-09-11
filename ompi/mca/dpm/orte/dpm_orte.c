@@ -422,7 +422,10 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                              "%s dpm:orte:connect_accept adding procs",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-        MCA_PML_CALL(add_procs(new_proc_list, new_proc_len));
+        if (OMPI_SUCCESS != (rc = MCA_PML_CALL(add_procs(new_proc_list, new_proc_len)))) {
+            ORTE_ERROR_LOG(rc);
+            goto exit;
+        }
 
         OPAL_OUTPUT_VERBOSE((3, ompi_dpm_base_output,
                              "%s dpm:orte:connect_accept new procs added",
