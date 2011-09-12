@@ -56,6 +56,10 @@ void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
 
     err = lstat(filename, &statbuf);
 
+/* no symlink on Windows */
+#ifdef __WINDOWS__
+    dir = strdup(filename);
+#else
     if (err || (!S_ISLNK(statbuf.st_mode))) {
 	/* no such file, or file is not a link; these are the "normal"
 	 * cases where we can just return the parent directory.
@@ -87,6 +91,7 @@ void mca_fs_base_get_parent_dir ( char *filename, char **dirnamep)
 	    free(linkbuf);
 	}
     }
+#endif
 
     slash = strrchr(dir, '/');
     if (!slash) strncpy(dir, ".", 2);

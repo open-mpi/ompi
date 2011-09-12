@@ -186,6 +186,7 @@ typedef unsigned int uint;
 #define pipe(array_fd)            _pipe(array_fd, 1024, O_BINARY )
 #define inet_ntop                 ompi_inet_ntop
 #define inet_pton                 ompi_inet_pton
+#define lstat                     stat
 
 #ifndef UINT64_MAX
 #define UINT64_MAX            0xffffffffffffffffULL  /* 18446744073709551615ULL */
