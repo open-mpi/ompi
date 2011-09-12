@@ -1142,12 +1142,12 @@ remove_empty(hwloc_topology_t topology, hwloc_obj_t *pobj)
     remove_empty(topology, pchild);
 
   if (obj->type != HWLOC_OBJ_NODE
-      && obj->cpuset /* FIXME: needed for PCI devices? */
+      && !obj->first_child /* only remove if all children were removed above, so that we don't remove parents of NUMAnode */
       && hwloc_bitmap_iszero(obj->cpuset)) {
     /* Remove empty children */
     hwloc_debug("%s", "\nRemoving empty object ");
     print_object(topology, 0, obj);
-    unlink_and_free_object_and_children(pobj);
+    unlink_and_free_single_object(pobj);
   }
 }
 
@@ -1800,8 +1800,13 @@ hwloc_discover(struct hwloc_topology *topology)
   propagate_total_memory(topology->levels[0][0]);
 
   /*
-   * Now that objects are numbered, take distance matrices from backends and put them in the main topology
+   * Now that objects are numbered, take distance matrices from backends and put them in the main topology.
+   *
+   * Some objects may have disappeared (in removed_empty or removed_ignored) since we setup os distances
+   * (hwloc_distances_finalize_os()) above. Reset them so as to not point to disappeared objects anymore.
    */
+  hwloc_restrict_distances(topology, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
+  hwloc_convert_distances_indexes_into_objects(topology);
   hwloc_finalize_logical_distances(topology);
 
 #  ifdef HWLOC_HAVE_XML
