@@ -211,20 +211,6 @@ int orte_odls_base_open(void)
         opal_argv_append_nosize(&orte_odls_globals.xtermcmd, "-e");
     }
     
-#if OPAL_HAVE_HWLOC
-    {
-        hwloc_obj_t obj;
-        /* get the root object */
-        obj = hwloc_get_obj_by_depth(opal_hwloc_topology, 0, 0);
-        if (NULL == orte_local_cpu_type && NULL != obj->name) {
-            orte_local_cpu_type = strdup(obj->name);
-        }
-        if (NULL == orte_local_cpu_model && NULL != obj->name) {
-            orte_local_cpu_model = strdup(obj->name);
-        }
-    }
-#endif
-
     /* Open up all available components */
     if (ORTE_SUCCESS != 
         mca_base_components_open("odls", orte_odls_globals.output,
