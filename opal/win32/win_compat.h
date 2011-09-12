@@ -150,8 +150,6 @@ typedef unsigned int uint;
 #define lrand48                   rand
 #define usleep(t)                 Sleep(t/1000)
 #define posix_memalign(p, a, s)   *p=_aligned_malloc(s,a)
-#define inet_ntop                 ompi_inet_ntop
-#define inet_pton                 ompi_inet_pton
 
 #else
 
@@ -186,6 +184,8 @@ typedef unsigned int uint;
 #define mkdir(PATH, MODE)         _mkdir((PATH))
 #define nanosleep(tp, rem)        Sleep(*tp.tv_sec*1000+*tp.tv_nsec/1000000)
 #define pipe(array_fd)            _pipe(array_fd, 1024, O_BINARY )
+#define inet_ntop                 ompi_inet_ntop
+#define inet_pton                 ompi_inet_pton
 
 #ifndef UINT64_MAX
 #define UINT64_MAX            0xffffffffffffffffULL  /* 18446744073709551615ULL */
