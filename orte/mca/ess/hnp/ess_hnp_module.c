@@ -186,7 +186,7 @@ static int rte_init(void)
 #if OPAL_HAVE_HWLOC
     {
         hwloc_obj_t obj;
-        int i, j;
+        unsigned i, j;
 
         /* get the local topology */
         if (NULL == opal_hwloc_topology) {
