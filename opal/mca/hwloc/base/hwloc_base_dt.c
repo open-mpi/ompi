@@ -115,8 +115,8 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
     unsigned d1, d2;
 
     /* stop stupid compiler warnings */
-    t1 = topo1;
-    t2 = topo2;
+    t1 = (hwloc_topology_t)topo1;
+    t2 = (hwloc_topology_t)topo2;
 
     /* do something quick first */
     d1 = hwloc_topology_get_depth(t1);
