@@ -820,6 +820,7 @@ static int rte_finalize(void)
     /* destroy the topology, if required */
     if (NULL != opal_hwloc_topology) {
         hwloc_topology_destroy(opal_hwloc_topology);
+        opal_hwloc_topology = NULL;
     }
 #endif
 

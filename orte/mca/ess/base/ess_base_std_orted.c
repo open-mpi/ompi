@@ -128,7 +128,7 @@ int orte_ess_base_orted_setup(char **hosts)
 #if OPAL_HAVE_HWLOC
     {
         hwloc_obj_t obj;
-        int i, j;
+        unsigned i, j;
 
         /* get the local topology */
         if (NULL == opal_hwloc_topology) {
@@ -594,6 +594,7 @@ int orte_ess_base_orted_finalize(void)
     /* destroy the topology, if required */
     if (NULL != opal_hwloc_topology) {
         hwloc_topology_destroy(opal_hwloc_topology);
+        opal_hwloc_topology = NULL;
     }
 #endif
 
