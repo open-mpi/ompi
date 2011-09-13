@@ -85,7 +85,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc121_CONFIG],[
                    hwloc_hwloc121_WRAPPER_EXTRA_LIBS=$HWLOC_EMBEDDED_LIBS
 
                    opal_hwloc_hwloc121_LDFLAGS='$(HWLOC_EMBEDDED_LDFLAGS)'
-                   opal_hwloc_hwloc121_LIBS='$(top_ompi_builddir)/$opal_hwloc_hwloc121_basedir/hwloc/src/libhwloc_embedded.la $(HWLOC_EMBEDDED_LIBS)'
+                   opal_hwloc_hwloc121_LIBS='$(top_ompi_builddir)/'"$opal_hwloc_hwloc121_basedir"'/hwloc/src/libhwloc_embedded.la $(HWLOC_EMBEDDED_LIBS)'
                    opal_hwloc_hwloc121_support=yes], 
                   [AC_MSG_CHECKING([whether hwloc 1.2.1 configure succeeded])
                    AC_MSG_RESULT([no])
@@ -129,8 +129,6 @@ AC_DEFUN([MCA_opal_hwloc_hwloc121_CONFIG],[
            if test "$with_devel_headers" = "yes" ; then
                hwloc_hwloc121_WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/'"$opal_hwloc_hwloc121_basedir/hwloc/include"
            fi
-           hwloc_hwloc121_WRAPPER_EXTRA_LIBS=$HWLOC_XML_LIBS
-           hwloc_hwloc121_WRAPPER_EXTRA_LDFLAGS=$HWLOC_XML_LDFLAGS
 
            $1],
           [$2])

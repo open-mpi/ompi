@@ -24,5 +24,5 @@ sources = hwloc121_component.c
 
 noinst_LTLIBRARIES = libmca_hwloc_hwloc121.la
 libmca_hwloc_hwloc121_la_SOURCES = $(headers) $(sources)
-libmca_hwloc_hwloc121_la_LDFLAGS = -module -avoid-version
-libmca_hwloc_hwloc121_la_LIBADD = $(builddir)/hwloc/src/libhwloc_embedded.la
+libmca_hwloc_hwloc121_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc121_LDFLAGS)
+libmca_hwloc_hwloc121_la_LIBADD = $(opal_hwloc_hwloc121_LIBS)
