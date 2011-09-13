@@ -7,7 +7,7 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
+EXTRA_DIST = base/.windows
 
 headers += \
         base/base.h
