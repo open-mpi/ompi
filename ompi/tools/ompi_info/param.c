@@ -516,6 +516,7 @@ void ompi_info_do_config(bool want_all)
     char *symbol_visibility;
     char *ft_support;
     char *crdebug_support;
+    char *hwloc_support;
     /* Do a little preprocessor trickery here to figure ompi_info_out the
      * tri-state of MPI_PARAM_CHECK (which will be either 0, 1, or
      * ompi_mpi_param_check).  The preprocessor will only allow
@@ -560,6 +561,7 @@ void ompi_info_do_config(bool want_all)
     have_mpi_io = OMPI_PROVIDE_MPI_FILE_INTERFACE ? "yes" : "no";
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
+    hwloc_support = OPAL_HAVE_HWLOC ? "yes" : "no";
     
     /* setup strings that require allocation */
     if (OMPI_WANT_F77_BINDINGS) {
@@ -832,6 +834,7 @@ void ompi_info_do_config(bool want_all)
     ompi_info_out("MPI I/O support", "options:mpi-io", have_mpi_io);
     ompi_info_out("MPI_WTIME support", "options:mpi-wtime", wtime_support);
     ompi_info_out("Symbol vis. support", "options:visibility", symbol_visibility);
+    ompi_info_out("Hwloc support", "options:hwloc", hwloc_support);
     
     ompi_info_out("MPI extensions", "options:mpi_ext", OMPI_MPIEXT_COMPONENTS);
     

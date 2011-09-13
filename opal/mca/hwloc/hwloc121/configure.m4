@@ -108,7 +108,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc121_CONFIG],[
     fi
 
     # Done!
-    AS_IF([test "$OPAL_HAVE_HWLOC" -eq 1 -a "$opal_hwloc_hwloc121_support" = "yes"],
+    AS_IF([test "$opal_hwloc_hwloc121_support" = "yes"],
           [AC_DEFINE_UNQUOTED([HWLOC_HWLOC121_HWLOC_VERSION], 
                               ["$HWLOC_VERSION"], 
                               [Version of hwloc])
