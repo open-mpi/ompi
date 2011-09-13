@@ -21,9 +21,6 @@
 #if OMPI_HAVE_RDMACM && OPAL_HAVE_THREADS
 #include "connect/btl_openib_connect_rdmacm.h"
 #endif
-#if OMPI_HAVE_IBCM && OPAL_HAVE_THREADS
-#include "connect/btl_openib_connect_ibcm.h"
-#endif
 
 #include "orte/util/show_help.h"
 #include "opal/util/argv.h"
@@ -48,14 +45,6 @@ static ompi_btl_openib_connect_base_component_t *all[] = {
        the same: if RDMA CM is not available, use the "empty" CPC */
 #if OMPI_HAVE_RDMACM && OPAL_HAVE_THREADS
     &ompi_btl_openib_connect_rdmacm,
-#else
-    &ompi_btl_openib_connect_empty,
-#endif
-
-    /* Always have an entry here so that the CP indexes will always be
-       the same: if IB CM is not available, use the "empty" CPC */
-#if OMPI_HAVE_IBCM && OPAL_HAVE_THREADS
-    &ompi_btl_openib_connect_ibcm,
 #else
     &ompi_btl_openib_connect_empty,
 #endif

@@ -81,15 +81,6 @@ sources += \
     connect/btl_openib_connect_xoob.h
 endif
 
-# If we have ibcm support, build that CPC
-if MCA_btl_openib_have_ibcm
-sources += \
-    connect/btl_openib_connect_ibcm.c \
-    connect/btl_openib_connect_ibcm.h
-
-dist_pkgdata_DATA += connect/help-mpi-btl-openib-cpc-ibcm.txt
-endif
-
 # If we have rdmacm support, build that CPC
 if MCA_btl_openib_have_rdmacm
 sources += \
