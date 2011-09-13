@@ -25,7 +25,6 @@
 AC_DEFUN([MCA_ompi_btl_openib_POST_CONFIG], [
     AM_CONDITIONAL([MCA_btl_openib_have_xrc], [test $1 -eq 1 -a "x$btl_openib_have_xrc" = "x1"])
     AM_CONDITIONAL([MCA_btl_openib_have_rdmacm], [test $1 -eq 1 -a "x$btl_openib_have_rdmacm" = "x1"])
-    AM_CONDITIONAL([MCA_btl_openib_have_ibcm], [test $1 -eq 1 -a "x$btl_openib_have_ibcm" = "x1"])
     AM_CONDITIONAL([MCA_btl_openib_have_dynamic_sl], [test $1 -eq 1 -a "x$btl_openib_have_opensm_devel" = "x1"])
 ])
 
@@ -58,7 +57,7 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
            $1],
           [$2])
 
-    AC_MSG_CHECKING([for thread support (needed for ibcm/rdmacm)])
+    AC_MSG_CHECKING([for thread support (needed for rdmacm)])
     have_threads=`echo $THREAD_TYPE | awk '{ print [$]1 }'`
     if test "x$have_threads" = "x"; then
         have_threads=none
@@ -72,10 +71,6 @@ AC_DEFUN([MCA_ompi_btl_openib_CONFIG],[
           if test "x$btl_openib_have_rdmacm" = "x1" -a \
                   "$have_threads" != "none"; then
               cpcs="$cpcs rdmacm"
-          fi
-          if test "x$btl_openib_have_ibcm" = "x1" -a \
-                  "$have_threads" != "none"; then
-              cpcs="$cpcs ibcm"
           fi
           AC_MSG_CHECKING([which openib btl cpcs will be built])
           AC_MSG_RESULT([$cpcs])])
