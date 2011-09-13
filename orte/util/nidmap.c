@@ -159,6 +159,7 @@ void orte_util_nidmap_finalize(void)
     /* destroy the topology */
     if (NULL != opal_hwloc_topology) {
         hwloc_topology_destroy(opal_hwloc_topology);
+        opal_hwloc_topology = NULL;
     }
 #endif
 
