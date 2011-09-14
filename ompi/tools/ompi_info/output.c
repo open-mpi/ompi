@@ -43,8 +43,6 @@
 
 #include "opal/util/show_help.h"
 
-#define OMPI_max(a,b) (((a) > (b)) ? (a) : (b)) 
-
 
 /*
  * Private variables - set some reasonable screen size defaults
