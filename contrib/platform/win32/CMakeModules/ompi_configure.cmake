@@ -752,6 +752,10 @@ IF(WIN32)
 
   OMPI_DEF_CACHE(OMPI_MPI_CONTRIBS none STRING "List of contributed package names that will be built." 1 1)
 
+  OMPI_DEF(OPAL_HAVE_HWLOC 0 "Whether we have hwloc support or not" 0 1)
+  
+  OMPI_DEF(OPAL_HAVE_HWLOC_XML 0 "Enable xml support or not" 0 1)
+  
   CHECK_C_INLINE()
 
 ENDIF(WIN32)
