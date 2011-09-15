@@ -325,6 +325,10 @@ Trunk (not on release branches yet)
 1.4.4
 -----
 
+- Increase rdmacm adress resolution timeout from 1s to 30s & 
+  update Chelsio T4 openib BTL defaults.  Thanks to Steve Wise
+  for these updates.
+  (** also to appear in 1.5.5)
 - Ensure that MPI_Accumulate error return in 1.4 is consistent with
   1.5.x and trunk.
 - Allow the word "slots" in rankfiles (i.e., not just "slot").
