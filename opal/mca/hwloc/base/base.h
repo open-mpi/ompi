@@ -60,7 +60,7 @@ OPAL_DECLSPEC int opal_hwloc_base_close(void);
  * Debugging output stream
  */
 OPAL_DECLSPEC extern int opal_hwloc_base_output;
-OPAL_DECLSPEC extern opal_list_t opal_hwloc_components;
+OPAL_DECLSPEC extern opal_list_t opal_hwloc_base_components;
 OPAL_DECLSPEC extern bool opal_hwloc_base_inited;
 OPAL_DECLSPEC extern bool opal_hwloc_topology_inited;
 
