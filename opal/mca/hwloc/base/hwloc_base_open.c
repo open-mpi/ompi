@@ -33,7 +33,7 @@
  * Globals
  */
 int opal_hwloc_base_output = -1;
-opal_list_t opal_hwloc_components;
+opal_list_t opal_hwloc_base_components;
 bool opal_hwloc_base_inited = false;
 #if OPAL_HAVE_HWLOC
 hwloc_topology_t opal_hwloc_topology=NULL;
@@ -65,11 +65,11 @@ int opal_hwloc_base_open(void)
         /* to support tools such as ompi_info, add the components
          * to a list
          */
-        OBJ_CONSTRUCT(&opal_hwloc_components, opal_list_t);
+        OBJ_CONSTRUCT(&opal_hwloc_base_components, opal_list_t);
         if (OPAL_SUCCESS !=
             mca_base_components_open("hwloc", opal_hwloc_base_output,
                                      mca_hwloc_base_static_components,
-                                     &opal_hwloc_components, true)) {
+                                     &opal_hwloc_base_components, true)) {
             return OPAL_ERROR;
         }
 

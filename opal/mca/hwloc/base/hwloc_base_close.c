@@ -28,12 +28,12 @@ int opal_hwloc_base_close(void)
         /* no need to close the component as it was statically opened */
 
         /* for support of tools such as ompi_info */
-        for (item = opal_list_remove_first(&opal_hwloc_components);
+        for (item = opal_list_remove_first(&opal_hwloc_base_components);
              NULL != item; 
-             item = opal_list_remove_first(&opal_hwloc_components)) {
+             item = opal_list_remove_first(&opal_hwloc_base_components)) {
             OBJ_RELEASE(item);
         }
-        OBJ_DESTRUCT(&opal_hwloc_components);
+        OBJ_DESTRUCT(&opal_hwloc_base_components);
     }
 #endif
 

@@ -19,8 +19,8 @@
 # $HEADER$
 #
 
-# MCA_paffinity_hwloc_CONFIG([action-if-found], [action-if-not-found])
-# --------------------------------------------------------------------
+# MCA_opal_paffinity_hwloc_CONFIG([action-if-found], [action-if-not-found])
+# -------------------------------------------------------------------------
 AC_DEFUN([MCA_opal_paffinity_hwloc_CONFIG],[
     AC_REQUIRE([MCA_opal_hwloc_CONFIG_REQUIRE])
     AC_CONFIG_FILES([opal/mca/paffinity/hwloc/Makefile])

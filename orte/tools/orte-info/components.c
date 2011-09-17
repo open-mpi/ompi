@@ -299,7 +299,7 @@ void orte_info_open_components(void)
     }
     map = OBJ_NEW(orte_info_component_map_t);
     map->type = strdup("hwloc");
-    map->components = &opal_hwloc_components;
+    map->components = &opal_hwloc_base_components;
     opal_pointer_array_add(&component_map, map);
 #endif
 
