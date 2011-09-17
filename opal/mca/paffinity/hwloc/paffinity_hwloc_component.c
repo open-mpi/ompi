@@ -34,8 +34,6 @@ const char *opal_paffinity_hwloc_component_version_string =
 /*
  * Local function
  */
-static int hwloc_open(void);
-static int hwloc_close(void);
 static int hwloc_register(void);
 
 /*
@@ -43,64 +41,38 @@ static int hwloc_register(void);
  * and pointers to our public functions in it
  */
 
-opal_paffinity_hwloc_component_t mca_paffinity_hwloc_component = {
+opal_paffinity_base_component_t mca_paffinity_hwloc_component = {
+    /* First, the mca_component_t struct containing meta information
+       about the component itself */
     {
-        /* First, the mca_component_t struct containing meta information
-           about the component itself */
-        {
-            OPAL_PAFFINITY_BASE_VERSION_2_0_1,
-            
-            /* Component name and version */
-            "hwloc",
-            OPAL_MAJOR_VERSION,
-            OPAL_MINOR_VERSION,
-            OPAL_RELEASE_VERSION,
-            
-            /* Component open and close functions */
-            hwloc_open,
-            hwloc_close,
-            opal_paffinity_hwloc_component_query,
-            hwloc_register,
-        },
-        {
-            /* The component is checkpoint ready */
-            MCA_BASE_METADATA_PARAM_CHECKPOINT
-        }
+        OPAL_PAFFINITY_BASE_VERSION_2_0_1,
+        
+        /* Component name and version */
+        "hwloc",
+        OPAL_MAJOR_VERSION,
+        OPAL_MINOR_VERSION,
+        OPAL_RELEASE_VERSION,
+        
+        /* Component open and close functions */
+        NULL,
+        NULL,
+        opal_paffinity_hwloc_component_query,
+        hwloc_register,
     },
-    /* NULL fill the rest of the component data */
+    {
+        /* The component is checkpoint ready */
+        MCA_BASE_METADATA_PARAM_CHECKPOINT
+    }
 };
+
 
 
 static int hwloc_register(void)
 {
-    mca_base_param_reg_int(&mca_paffinity_hwloc_component.super.base_version,
+    mca_base_param_reg_int(&mca_paffinity_hwloc_component.base_version,
                            "priority",
                            "Priority of the hwloc paffinity component",
                            false, false, 40, NULL);
-
-    return OPAL_SUCCESS;
-}
-
-
-static int hwloc_open(void)
-{
-    /* Initialize hwloc */
-    if (0 != hwloc_topology_init(&(mca_paffinity_hwloc_component.topology)) ||
-        0 != hwloc_topology_load(mca_paffinity_hwloc_component.topology)) {
-        return OPAL_ERR_NOT_AVAILABLE;
-    }
-    mca_paffinity_hwloc_component.topology_need_destroy = true;
-
-    return OPAL_SUCCESS;
-}
-
-static int hwloc_close(void)
-{
-    /* If we set up hwloc, tear it down */
-    if (mca_paffinity_hwloc_component.topology_need_destroy) {
-        hwloc_topology_destroy(mca_paffinity_hwloc_component.topology);
-        mca_paffinity_hwloc_component.topology_need_destroy = false;
-    }
 
     return OPAL_SUCCESS;
 }

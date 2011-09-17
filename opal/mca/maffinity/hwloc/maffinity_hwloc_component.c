@@ -37,8 +37,6 @@ const char *opal_maffinity_hwloc_component_version_string =
 /*
  * Local function
  */
-static int hwloc_open(void);
-static int hwloc_close(void);
 static int hwloc_register(void);
 
 /*
@@ -60,8 +58,8 @@ opal_maffinity_hwloc_component_2_0_0_t mca_maffinity_hwloc_component = {
             OPAL_RELEASE_VERSION,
             
             /* Component open and close functions */
-            hwloc_open,
-            hwloc_close,
+            NULL,
+            NULL,
             opal_maffinity_hwloc_component_query,
             hwloc_register,
         },
@@ -85,31 +83,6 @@ static int hwloc_register(void)
                            "Priority of the hwloc maffinity component",
                            false, false, 40, 
                            &mca_maffinity_hwloc_component.priority);
-
-    return OPAL_SUCCESS;
-}
-
-
-static int hwloc_open(void)
-{
-    /* Initialize hwloc */
-    if (0 != hwloc_topology_init(&(mca_maffinity_hwloc_component.topology)) ||
-        0 != hwloc_topology_load(mca_maffinity_hwloc_component.topology)) {
-        mca_maffinity_hwloc_component.topology = NULL;
-        return OPAL_ERR_NOT_AVAILABLE;
-    }
-    mca_maffinity_hwloc_component.topology_need_destroy = true;
-
-    return OPAL_SUCCESS;
-}
-
-static int hwloc_close(void)
-{
-    /* If we set up hwloc, tear it down */
-    if (mca_maffinity_hwloc_component.topology_need_destroy) {
-        hwloc_topology_destroy(mca_maffinity_hwloc_component.topology);
-        mca_maffinity_hwloc_component.topology_need_destroy = false;
-    }
 
     return OPAL_SUCCESS;
 }

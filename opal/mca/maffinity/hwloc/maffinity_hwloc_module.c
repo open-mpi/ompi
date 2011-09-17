@@ -61,7 +61,7 @@ static const opal_maffinity_base_module_1_0_0_t local_module = {
 int opal_maffinity_hwloc_component_query(mca_base_module_t **module, 
                                          int *priority)
 {
-    if (NULL == mca_maffinity_hwloc_component.topology) {
+    if (NULL == opal_hwloc_topology) {
         return OPAL_ERROR;
     }
 
@@ -97,9 +97,9 @@ static int hwloc_module_init(void)
     if (NULL == cpuset) {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
     } else {
-        hwloc_get_cpubind(mca_maffinity_hwloc_component.topology, 
+        hwloc_get_cpubind(opal_hwloc_topology, 
                           cpuset, 0);
-        rc = hwloc_set_membind(mca_maffinity_hwloc_component.topology, 
+        rc = hwloc_set_membind(opal_hwloc_topology, 
                                cpuset, HWLOC_MEMBIND_BIND, flags);
         hwloc_bitmap_free(cpuset);
     }
@@ -125,9 +125,9 @@ static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
         msg = "hwloc_bitmap_alloc() failure";
         goto out;
     }
-    hwloc_get_cpubind(mca_maffinity_hwloc_component.topology, cpuset, 0);
+    hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
     for (i = 0; i < num_segments; ++i) {
-        if (0 != hwloc_set_area_membind(mca_maffinity_hwloc_component.topology, 
+        if (0 != hwloc_set_area_membind(opal_hwloc_topology, 
                                         segments[i].mbs_start_addr,
                                         segments[i].mbs_len, cpuset,
                                         HWLOC_MEMBIND_BIND, 
@@ -173,7 +173,7 @@ static int hwloc_module_bind(opal_maffinity_base_segment_t *segs,
     }
     hwloc_bitmap_set(cpuset, node_id);
     for(i = 0; i < count; i++) {
-        if (0 != hwloc_set_area_membind(mca_maffinity_hwloc_component.topology, 
+        if (0 != hwloc_set_area_membind(opal_hwloc_topology, 
                                         segs[i].mbs_start_addr,
                                         segs[i].mbs_len, cpuset,
                                         HWLOC_MEMBIND_BIND, 
