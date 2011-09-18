@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -582,7 +582,7 @@ int mca_coll_sm2_barrier_intra_recursive_doubling(
         for(exchange=0 ; exchange < my_exchange_node->n_exchanges ; exchange++) {
 
             /* debug 
-            t4=opal_sys_timer_get_cycles();
+            t4=opal_timer_base_get_cycles();
              end debug */
 
             /* is the remote data read */
@@ -670,7 +670,7 @@ int mca_coll_sm2_barrier_intra_recursive_doubling(
 
     /* debug 
 
-    t9=opal_sys_timer_get_cycles();
+    t9=opal_timer_base_get_cycles();
     timers[5]+=(t9-t8);
      end debug */
 
