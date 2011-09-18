@@ -1,5 +1,8 @@
 /*
  * Copyright (c) 2007-2008 UT-Battelle, LLC
+ * Copyright (c) 2011      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -464,7 +467,7 @@ int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf,
     for( stripe_number=0 ; stripe_number < n_data_segments ; stripe_number++ ) {
         /* get number of elements to process in this stripe */
         /* debug 
-        t2=opal_sys_timer_get_cycles();
+        t2=opal_timer_base_get_cycles();
          end debug */
         count_this_stripe=n_dts_per_buffer;
         if( count_processed + count_this_stripe > count )
@@ -513,7 +516,7 @@ int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf,
          end debug */
 
             /* debug 
-            t3=opal_sys_timer_get_cycles();
+            t3=opal_timer_base_get_cycles();
             timers[1]+=(t3-t2);
              end debug */
             
@@ -725,7 +728,7 @@ int mca_coll_sm2_reduce_intra_reducescatter_gather(void *sbuf, void *rbuf,
         } /* end exchange loop */
 
            /* debug 
-            t8=opal_sys_timer_get_cycles();
+            t8=opal_timer_base_get_cycles();
              end debug */
         /* copy data out to final destination.  Could do some sort of
          * recursive doubleing in the sm, then copy to process private,

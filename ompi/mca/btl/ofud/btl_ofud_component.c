@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -438,8 +438,8 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int* num_btl_modules,
     num_devs = 0;
 
     seedv[0] = ORTE_PROC_MY_NAME->vpid;
-    seedv[1] = opal_sys_timer_get_cycles();
-    seedv[2] = opal_sys_timer_get_cycles();
+    seedv[1] = opal_timer_base_get_cycles();
+    seedv[2] = opal_timer_base_get_cycles();
     seed48(seedv);
 
 

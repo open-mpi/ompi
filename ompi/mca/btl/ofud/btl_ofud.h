@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -324,12 +324,12 @@ extern int mca_btl_ud_ft_event(int state);
 #if MCA_BTL_UD_ENABLE_PROFILE
 
 #define MCA_BTL_UD_START_TIME(var) \
-    ((mca_btl_ud_profile.tmp_ ## var) = opal_sys_timer_get_cycles())
+    ((mca_btl_ud_profile.tmp_ ## var) = opal_timer_base_get_cycles())
 
 #define MCA_BTL_UD_END_TIME(var)                                             \
 do {                                                                         \
     mca_btl_ud_profile.avg_ ## var +=                                        \
-        opal_sys_timer_get_cycles() - mca_btl_ud_profile.tmp_ ## var;        \
+        opal_timer_base_get_cycles() - mca_btl_ud_profile.tmp_ ## var;        \
     mca_btl_ud_profile.cnt_ ## var++;                                        \
 } while(0)
 
