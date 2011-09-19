@@ -90,6 +90,15 @@ sources += \
 dist_pkgdata_DATA += connect/help-mpi-btl-openib-cpc-rdmacm.txt
 endif
 
+# If we have udcm support, build that CPC
+if MCA_btl_openib_have_udcm
+sources += \
+    connect/btl_openib_connect_udcm.c \
+    connect/btl_openib_connect_udcm.h
+
+# dist_pkgdata_DATA += connect/help-mpi-btl-openib-cpc-ud.txt
+endif
+
 # If we have dynamic SL support, build those files
 if MCA_btl_openib_have_dynamic_sl
 sources += \

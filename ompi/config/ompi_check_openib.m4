@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+# Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
 # Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
@@ -67,6 +67,14 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         [AC_HELP_STRING([--enable-openib-connectx-xrc],
                         [Enable ConnectX XRC support. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])],
                         [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="yes"])
+
+    #
+    # Unconnect Datagram (UD) based connection manager
+    #
+    AC_ARG_ENABLE([openib-udcm],
+        [AC_HELP_STRING([--enable-openib-udcm],
+                        [Enable datagram connection support in openib BTL (default: enabled)])], 
+                        [enable_openib_udcm="$enableval"], [enable_openib_udcm="yes"])
 
     #
     # Openfabrics RDMACM
@@ -158,6 +166,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     # Set these up so that we can do an AC_DEFINE below
     # (unconditionally)
     $1_have_xrc=0
+    $1_have_udcm=0
     $1_have_rdmacm=0
     $1_have_opensm_devel=0
 
@@ -175,6 +184,11 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
            if test "$enable_connectx_xrc" = "yes"; then
                AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
            fi
+
+	   # is udcm enabled
+	   if test "$enable_openib_udcm" = "yes"; then
+	       $1_have_udcm=1
+	   fi
 
            if test "no" != "$enable_openib_dynamic_sl"; then
                # We need ib_types.h file, which is installed with opensm-devel
@@ -262,6 +276,14 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         AC_MSG_RESULT([yes])
     else
         AC_MSG_RESULT([no])
+    fi
+
+    AC_DEFINE_UNQUOTED([OMPI_HAVE_UDCM], [$$1_have_udcm],
+	[Whether UD CM is available or not])
+    if test "1" = "$$1_have_udcm"; then
+	AC_MSG_RESULT([yes])
+    else
+	AC_MSG_RESULT([no])
     fi
 
     AC_MSG_CHECKING([if OpenFabrics RDMACM support is enabled])
