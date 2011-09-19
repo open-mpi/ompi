@@ -413,7 +413,11 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
     qp_init_attr.xrc_domain = openib_btl->device->xrc_domain;
     *qp = ibv_create_qp(openib_btl->device->ib_pd, &qp_init_attr);
     if (NULL == *qp) {
-        BTL_ERROR(("Error creating QP, errno says: %s", strerror(errno)));
+	orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+		       "ibv_create_qp failed", true,
+		       orte_process_info.nodename,
+		       ibv_get_device_name(m->btl->device->ib_dev),
+		       "Reliable connected (XRC)");
         return OMPI_ERROR;
     }
 
