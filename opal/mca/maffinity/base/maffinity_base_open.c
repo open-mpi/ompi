@@ -53,10 +53,6 @@ int opal_maffinity_base_output = -1;
 bool opal_maffinity_base_components_opened_valid = false;
 opal_list_t opal_maffinity_base_components_opened;
 bool opal_maffinity_setup = false;
-opal_maffinity_base_map_t opal_maffinity_base_map = 
-    OPAL_MAFFINITY_BASE_MAP_NONE;
-opal_maffinity_base_bfa_t opal_maffinity_base_bfa =
-    OPAL_MAFFINITY_BASE_BFA_ERROR;
 
 /*
  * Function for finding and opening either all MCA components, or the one
@@ -65,7 +61,6 @@ opal_maffinity_base_bfa_t opal_maffinity_base_bfa =
 int opal_maffinity_base_open(void)
 {
     int int_value;
-    char *str_value;
 
     /* Debugging / verbose output */
 
@@ -77,55 +72,6 @@ int opal_maffinity_base_open(void)
         opal_maffinity_base_output = opal_output_open(NULL);
     } else {
         opal_maffinity_base_output = -1;
-    }
-
-    /* maffinity_base_mbind_policy */
-    switch (opal_maffinity_base_map) {
-    case OPAL_MAFFINITY_BASE_MAP_NONE:
-        str_value = "none";
-        break;
-    case OPAL_MAFFINITY_BASE_MAP_LOCAL_ONLY:
-        str_value = "local_only";
-        break;
-    }
-    mca_base_param_reg_string_name("maffinity", "base_alloc_policy",
-                                   "Policy that determines how general memory allocations are bound after MPI_INIT.  A value of \"none\" means that no memory policy is applied.  A value of \"local_only\" means that all memory allocations will be restricted to the local NUMA node where each process is placed.  Note that operating system paging policies are unaffected by this setting.  For example, if \"local_only\" is used and local NUMA node memory is exhausted, a new memory allocation may cause paging.",
-                                   false, false, str_value, &str_value);
-    if (strcasecmp(str_value, "none") == 0) {
-        opal_maffinity_base_map = OPAL_MAFFINITY_BASE_MAP_NONE;
-    } else if (strcasecmp(str_value, "local_only") == 0 ||
-               strcasecmp(str_value, "local-only") == 0) {
-        opal_maffinity_base_map = OPAL_MAFFINITY_BASE_MAP_LOCAL_ONLY;
-    } else {
-        char hostname[32];
-        gethostname(hostname, sizeof(hostname));
-        opal_show_help("help-opal-maffinity-base.txt", "invalid policy",
-                       true, hostname, getpid(), str_value);
-        return OPAL_ERR_BAD_PARAM;
-    }
-
-    /* maffinity_base_bind_failure_action */
-    switch (opal_maffinity_base_bfa) {
-    case OPAL_MAFFINITY_BASE_BFA_WARN:
-        str_value = "warn";
-        break;
-    case OPAL_MAFFINITY_BASE_BFA_ERROR:
-        str_value = "error";
-        break;
-    }
-    mca_base_param_reg_string_name("maffinity", "base_bind_failure_action",
-                                   "What Open MPI will do if it explicitly tries to bind memory to a specific NUMA location, and fails.  Note that this is a different case than the general allocation policy described by maffinity_base_alloc_policy.  A value of \"warn\" means that Open MPI will warn the first time this happens, but allow the job to continue (possibly with degraded performance).  A value of \"error\" means that Open MPI will abort the job if this happens.",
-                                   false, false, str_value, &str_value);
-    if (strcasecmp(str_value, "warn") == 0) {
-        opal_maffinity_base_bfa = OPAL_MAFFINITY_BASE_BFA_WARN;
-    } else if (strcasecmp(str_value, "error") == 0) {
-        opal_maffinity_base_bfa = OPAL_MAFFINITY_BASE_BFA_ERROR;
-    } else {
-        char hostname[32];
-        gethostname(hostname, sizeof(hostname));
-        opal_show_help("help-opal-maffinity-base.txt", "invalid error action",
-                       true, hostname, getpid(), str_value);
-        return OPAL_ERR_BAD_PARAM;
     }
 
     opal_maffinity_base_components_opened_valid = false;

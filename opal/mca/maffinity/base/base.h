@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -170,34 +171,6 @@ extern int opal_maffinity_base_output;
  */
 OPAL_DECLSPEC extern bool opal_maffinity_setup;
 
-/**
- * Enum for what memory allocation policy we want for user allocations.
- * MAP = memory allocation policy.
- */
-typedef enum {
-    OPAL_MAFFINITY_BASE_MAP_NONE,
-    OPAL_MAFFINITY_BASE_MAP_LOCAL_ONLY
-} opal_maffinity_base_map_t;
-
-/**
- * Global reflecting the MAP (set by MCA param).
- */
-OPAL_DECLSPEC extern opal_maffinity_base_map_t opal_maffinity_base_map;
-
-/**
- * Enum for what to do if the maffinity framework tries to bind memory
- * and fails.  BFA = bind failure action.
- */
-typedef enum {
-    OPAL_MAFFINITY_BASE_BFA_WARN,
-    OPAL_MAFFINITY_BASE_BFA_ERROR
-} opal_maffinity_base_bfa_t;
-
-/**
- * Global reflecting the BFA (set by MCA param).
- */
-OPAL_DECLSPEC extern opal_maffinity_base_bfa_t opal_maffinity_base_bfa;
-
 END_C_DECLS
     
-#endif /* OPAL_BASE_MAFFINITY_H */
+#endif /* OPAL_MAFFINITY_BASE_H */

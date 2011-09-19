@@ -74,37 +74,9 @@ int opal_maffinity_hwloc_component_query(mca_base_module_t **module,
 
 static int hwloc_module_init(void)
 {
-    int rc = 0, flags;
-    hwloc_membind_policy_t policy;
-    hwloc_cpuset_t cpuset;
+    /* Nothing to do! */
 
-    /* Set the default memory allocation policy according to MCA param */
-    switch (opal_maffinity_base_map) {
-    case OPAL_MAFFINITY_BASE_MAP_LOCAL_ONLY:
-        policy = HWLOC_MEMBIND_BIND;
-        flags = HWLOC_MEMBIND_STRICT;
-        break;
-
-    case OPAL_MAFFINITY_BASE_MAP_NONE:
-    default:
-        policy = HWLOC_MEMBIND_DEFAULT;
-        flags = 0;
-        break;
-
-    }
-
-    cpuset = hwloc_bitmap_alloc();
-    if (NULL == cpuset) {
-        rc = OPAL_ERR_OUT_OF_RESOURCE;
-    } else {
-        hwloc_get_cpubind(opal_hwloc_topology, 
-                          cpuset, 0);
-        rc = hwloc_set_membind(opal_hwloc_topology, 
-                               cpuset, HWLOC_MEMBIND_BIND, flags);
-        hwloc_bitmap_free(cpuset);
-    }
-
-    return (0 == rc) ? OPAL_SUCCESS : OPAL_ERROR;
+    return OPAL_SUCCESS;
 }
 
 
