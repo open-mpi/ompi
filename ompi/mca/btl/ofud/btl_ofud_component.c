@@ -33,6 +33,7 @@
 #include "orte/util/show_help.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/sys/timer.h"
+#include "opal/mca/timer/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
