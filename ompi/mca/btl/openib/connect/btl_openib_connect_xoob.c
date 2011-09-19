@@ -416,7 +416,7 @@ static int xoob_send_qp_create (mca_btl_base_endpoint_t* endpoint)
 	orte_show_help("help-mpi-btl-openib-cpc-base.txt",
 		       "ibv_create_qp failed", true,
 		       orte_process_info.nodename,
-		       ibv_get_device_name(m->btl->device->ib_dev),
+		       ibv_get_device_name(openib_btl->device->ib_dev),
 		       "Reliable connected (XRC)");
         return OMPI_ERROR;
     }
