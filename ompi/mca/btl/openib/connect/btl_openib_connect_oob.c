@@ -42,7 +42,6 @@
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
 #include "connect/connect.h"
-#include "orte/util/show_help.h"
 
 #if (ENABLE_DYNAMIC_SL)
 #include "connect/btl_openib_connect_sl.h"
@@ -493,7 +492,7 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
 	orte_show_help("help-mpi-btl-openib-cpc-base.txt",
 		       "ibv_create_qp failed", true,
 		       orte_process_info.nodename,
-		       ibv_get_device_name(m->btl->device->ib_dev),
+		       ibv_get_device_name(openib_btl->device->ib_dev),
 		       "Reliable connected (RC)");
         return OMPI_ERROR;
     }
