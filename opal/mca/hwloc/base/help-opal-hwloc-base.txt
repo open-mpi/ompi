@@ -7,14 +7,14 @@
 # 
 # $HEADER$
 #
-# This is the US/English help file for Open MPI's maffinity base support
+# This is the US/English help file for Open MPI's hwloc base support
 #
 [invalid policy]
 WARNING: An invalid value was given for the
-maffinity_base_general_alloc_policy MCA parameter.  This MCA parameter
+hwloc_base_general_alloc_policy MCA parameter.  This MCA parameter
 determines the policy used for general memory allocations.  Note that
 this parameter *only* has effect when MPI processes are bound to
-specific processors.  
+specific processors.
 
 The value provided was:
 
@@ -25,8 +25,6 @@ The value provided was:
 Valid values are:
 
   none:         no memory binding policy is enforced
-  prefer_local: try allocating memory on the local NUMA node, but
-                allow spilling over to remote NUMA nodes if necessary
   local_only:   fail an allocation if it cannot be placed entirely on
                 the local NUMA node
 

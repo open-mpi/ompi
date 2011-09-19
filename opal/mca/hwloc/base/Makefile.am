@@ -18,6 +18,8 @@ libmca_hwloc_la_SOURCES += \
 
 if OPAL_HAVE_HWLOC
 libmca_hwloc_la_SOURCES += \
-        base/hwloc_base_dt.c
+        base/hwloc_base_dt.c \
+        base/hwloc_base_util.c \
+        base/hwloc_base_proc_mempolicy.c
 endif
 

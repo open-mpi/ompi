@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,8 +30,6 @@ if WANT_INSTALL_HEADERS
 opaldir = $(includedir)/openmpi/$(subdir)
 nobase_opal_HEADERS = $(headers)
 endif
-
-dist_pkgdata_DATA =
 
 include base/Makefile.am
 

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,11 +29,11 @@
 
 #include "opal/constants.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/maffinity/maffinity.h"
-#include "opal/mca/maffinity/base/base.h"
+#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/base/base.h"
 
 
-int opal_maffinity_base_report_bind_failure(const char *file,
+int opal_hwloc_base_report_bind_failure(const char *file,
                                             int line,
                                             const char *msg, int rc)
 {
@@ -42,9 +43,9 @@ int opal_maffinity_base_report_bind_failure(const char *file,
         char hostname[64];
         gethostname(hostname, sizeof(hostname));
 
-        opal_show_help("help-opal-maffinity-base.txt", "mbind failure", true,
+        opal_show_help("help-opal-hwloc-base.txt", "mbind failure", true,
                        hostname, getpid(), file, line, msg,
-                       (OPAL_MAFFINITY_BASE_BFA_WARN == opal_maffinity_base_bfa) ?
+                       (OPAL_HWLOC_BASE_BFA_WARN == opal_hwloc_base_bfa) ?
                        "Warning -- your job will continue, but possibly with degraded performance" :
                        "ERROR -- your job may abort or behave erraticly");
         already_reported = 1;
