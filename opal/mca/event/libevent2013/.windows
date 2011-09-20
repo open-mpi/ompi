@@ -1,0 +1,13 @@
+#
+# Copyright (c) 2010      High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+not_single_shared_lib=1
+in_use=1
+required_check=opal_event_config
