@@ -88,6 +88,13 @@ static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
     size_t i;
     hwloc_cpuset_t cpuset = NULL;
 
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        msg = "hwloc_set_area_membind() failure - topology not available";
+        return opal_maffinity_base_report_bind_failure(__FILE__, __LINE__,
+                                                       msg, rc);
+    }
+
     /* This module won't be used unless the process is already
        processor-bound.  So find out where we're processor bound, and
        bind our memory there, too. */
@@ -136,6 +143,13 @@ static int hwloc_module_bind(opal_maffinity_base_segment_t *segs,
     int rc = OPAL_SUCCESS;
     char *msg = NULL;
     hwloc_cpuset_t cpuset = NULL;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        msg = "hwloc_set_area_membind() failure - topology not available";
+        return opal_maffinity_base_report_bind_failure(__FILE__, __LINE__,
+                                                       msg, rc);
+    }
 
     cpuset = hwloc_bitmap_alloc();
     if (NULL == cpuset) {
