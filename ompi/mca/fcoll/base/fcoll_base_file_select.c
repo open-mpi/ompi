@@ -379,8 +379,8 @@ int mca_fcoll_base_query_table (struct mca_io_ompio_file_t *file, char *name)
             file->f_cc_size >= file->f_stripe_size) {
             return 1;
         }
-    }
-    if (!strcmp (name, "two_phase")) {
+/*    }
+      if (!strcmp (name, "two_phase")) {*/
         if ((int)file->f_cc_size < file->f_bytes_per_agg && 
             file->f_cc_size < file->f_stripe_size) {
             return 1;
