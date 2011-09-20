@@ -10,12 +10,15 @@
 # Only one libevent component should be used, selection is done by editing .windows in_use property.
 
 FILE(STRINGS ${CURRENT_PATH}/.windows IN_USE REGEX "^in_use=")
+STRING(REPLACE "in_use=" "" IN_USE ${IN_USE})
 
-IF(IN_USE STREQUAL "0")
+STRING(REGEX MATCH "libevent[0-9]+" libevent_dir "${CURRENT_PATH}")
+
+IF(${IN_USE} STREQUAL "0")
 
   SET(RESULT FALSE)
 
-ELSE(IN_USE STREQUAL "0")
+ELSE(${IN_USE} STREQUAL "0")
 
   SET(LIBEVENT_FOUND TRUE CACHE INTERNAL "allow only one event mca.")
 
@@ -26,22 +29,22 @@ ELSE(IN_USE STREQUAL "0")
     "${CURRENT_PATH}/libevent/WIN32-Code/"
     "${CURRENT_PATH}/libevent/include/"
     "${CURRENT_PATH}/libevent"
-    "${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/")
+    "${PROJECT_BINARY_DIR}/mca/event/${libevent_dir}/libevent/include/")
 
-  SET(LIBEVENT_INCLUDE_DIRS ${CURRENT_PATH}/libevent/compat;${CURRENT_PATH}/libevent/WIN32-Code/;${CURRENT_PATH}/libevent/include/;${CURRENT_PATH}/libevent;${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/
+  SET(LIBEVENT_INCLUDE_DIRS ${CURRENT_PATH}/libevent/compat;${CURRENT_PATH}/libevent/WIN32-Code/;${CURRENT_PATH}/libevent/include/;${CURRENT_PATH}/libevent;${PROJECT_BINARY_DIR}/mca/event/${libevent_dir}/libevent/include/
   CACHE INTERNAL "the libevent dirs that have to be included on the top level.")
 
   IF(WIN32)
 
     # generating config.h
     # windows doesn't need this file, just make an empty one
-    FILE(WRITE ${PROJECT_BINARY_DIR}/mca/event/libevent207/libevent/include/config.h
+    FILE(WRITE ${PROJECT_BINARY_DIR}/mca/event/${libevent_dir}/libevent/include/config.h
       " /* config.h.  Generated automatically by CMake. */ ")
 
     SET(RESULT_COMPONENT_FILES
       ${RESULT_COMPONENT_FILES}
-      ${CURRENT_PATH}/libevent207_component.c
-      ${CURRENT_PATH}/libevent207_module.c
+      ${CURRENT_PATH}/${libevent_dir}_component.c
+      ${CURRENT_PATH}/${libevent_dir}_module.c
       #system sources
       ${CURRENT_PATH}/libevent/win32select.c
       ${CURRENT_PATH}/libevent/evthread_win32.c
@@ -85,7 +88,7 @@ ELSE(IN_USE STREQUAL "0")
                                   ${CURRENT_PATH}/libevent/signal.c
                                   ${CURRENT_PATH}/libevent/event_tagging.c
                                   PROPERTIES COMPILE_FLAGS "-D intptr_t=int -D _INTPTR_T_DEFINED")
-      SET(OBJ_PATH "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/libopen-pal.dir/mca/event/libevent207/libevent")
+      SET(OBJ_PATH "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/libopen-pal.dir/mca/event/${libevent_dir}/libevent")
       SET(EVENT_OBJ_FILES "${OBJ_PATH}/*.obj" CACHE INTERNAL "event obj files")
     ELSEIF(WINDOWS_VS)
       SET(OBJ_PATH "${PROJECT_BINARY_DIR}/libopen-pal.dir/${CMAKE_CFG_INTDIR}")
@@ -118,7 +121,7 @@ ELSE(IN_USE STREQUAL "0")
     OMPI_DEF(OPAL_HAVE_WORKING_EVENTOPS 1 
       "Whether our event component has working event operations or not if not, then assumedly it only has working timers and signals)." 0 1)
 
-    OMPI_DEF(MCA_event_IMPLEMENTATION_HEADER "${CURRENT_PATH}/libevent207.h"
+    OMPI_DEF(MCA_event_IMPLEMENTATION_HEADER "${CURRENT_PATH}/${libevent_dir}.h"
       "Header to include for event implementation" 1 1)
 
     SET(LIBEVENT_CONFIG_DONE TRUE CACHE INTERNAL "Libevent config done.")
@@ -131,4 +134,4 @@ ELSE(IN_USE STREQUAL "0")
 
   SET(RESULT TRUE)
 
-ENDIF(IN_USE STREQUAL "0")
+ENDIF(${IN_USE} STREQUAL "0")
