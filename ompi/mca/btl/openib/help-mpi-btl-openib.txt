@@ -207,7 +207,7 @@ respect to the retry count:
 * btl_openib_ib_retry_count - The number of times the sender will
   attempt to retry (defaulted to 7, the maximum value).
 * btl_openib_ib_timeout - The local ACK timeout parameter (defaulted
-  to 10).  The actual timeout value used is calculated as:
+  to 20).  The actual timeout value used is calculated as:
 
      4.096 microseconds * (2^btl_openib_ib_timeout)
 
