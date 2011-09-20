@@ -8,7 +8,7 @@
 # 
 # $HEADER$
 #
-AC_DEFUN([MCA_opal_event_libevent2013_PRIORITY], [60])
+AC_DEFUN([MCA_opal_event_libevent2013_PRIORITY], [80])
 
 #
 # Force this component to compile in static-only mode
