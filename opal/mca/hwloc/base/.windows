@@ -8,4 +8,4 @@
 # $HEADER$
 #
 
-exclude_list=hwloc_base_dt.c
+exclude_list=hwloc_base_dt.c;hwloc_base_proc_mempolicy.c
