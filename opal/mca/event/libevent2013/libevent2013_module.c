@@ -303,6 +303,6 @@ int opal_event_reinit(opal_event_base_t *evbase)
 struct timeval *opal_event_base_init_common_timeout (opal_event_base_t *evbase,
 						     struct timeval *tv_in)
 {
-    return event_base_init_common_timeout (evbase->base, tv_in);
+    return (struct timeval*)event_base_init_common_timeout (evbase->base, tv_in);
 }
 
