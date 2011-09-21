@@ -68,10 +68,10 @@ AC_DEFUN([MCA_opal_hwloc_hwloc121_CONFIG],[
                 [enable xml support for hwloc (experimental)]))
         if test "$enable_hwloc_xml" = "yes"; then
             enable_xml=yes
-            hwloc_base_enable_xml=1
+            opal_hwloc_hwloc121_enable_xml=1
         else
             enable_xml=no
-            hwloc_base_enable_xml=0
+            opal_hwloc_hwloc121_enable_xml=0
         fi
 
         HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc121/hwloc], 
@@ -115,7 +115,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc121_CONFIG],[
 
            # Set these variables so that the framework m4 knows
            # what file to include in opal/mca/hwloc/hwloc.h
-           hwloc_base_include="$opal_hwloc_hwloc121_basedir/hwloc121.h"
+           opal_hwloc_hwloc121_include="$opal_hwloc_hwloc121_basedir/hwloc121.h"
 
            # We also set _cppflags so that when including
            # opal/mca/hwloc/hwloc.h (and therefore this component's
@@ -123,9 +123,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc121_CONFIG],[
            # files.  Be a little friendly and only include the -I for
            # the builddir if it's different than the srcdir.
            opal_hwloc_hwloc121_file=$opal_hwloc_hwloc121_basedir/hwloc
-           hwloc_base_cppflags="-I$OMPI_TOP_SRCDIR/$opal_hwloc_hwloc121_file/include"
+           opal_hwloc_hwloc121_cppflags="-I$OMPI_TOP_SRCDIR/$opal_hwloc_hwloc121_file/include"
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
-                 [hwloc_base_cppflags="$hwloc_base_cppflags -I$OMPI_TOP_BUILDDIR/$opal_hwloc_hwloc121_file/include"])
+                 [opal_hwloc_hwloc121_cppflags="$opal_hwloc_hwloc121_cppflags -I$OMPI_TOP_BUILDDIR/$opal_hwloc_hwloc121_file/include"])
            if test "$with_devel_headers" = "yes" ; then
                hwloc_hwloc121_WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/'"$opal_hwloc_hwloc121_basedir/hwloc/include"
            fi

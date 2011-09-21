@@ -36,7 +36,7 @@ AC_DEFUN([MCA_opal_hwloc_external_POST_CONFIG],[
 AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
     AC_CONFIG_FILES([opal/mca/hwloc/external/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([opal_hwloc_external_CPPFLAGS_save opal_hwloc_external_CFLAGS_save opal_hwloc_external_LDFLAGS_save opal_hwloc_external_LIBS_save opal_hwloc_external_want])
+    OPAL_VAR_SCOPE_PUSH([opal_hwloc_external_CPPFLAGS_save opal_hwloc_external_CFLAGS_save opal_hwloc_external_LDFLAGS_save opal_hwloc_external_LIBS_save opal_hwloc_external_want opal_hwloc_external_tmp opal_hwloc_external_lstopo])
 
     AC_ARG_WITH([hwloc-libdir],
        [AC_HELP_STRING([--with-hwloc-libdir=DIR],
@@ -85,7 +85,7 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
                               [opal_hwloc_external_support=yes],
                               [opal_hwloc_external_support=no])
 
-           CPPFLAGS=$opal_hwloc_external_CPPFLAGS_save
+           CPPFLAGS=$opal_hwloc_external_CPPFLAGS_savew
            CFLAGS=$opal_hwloc_external_CFLAGS_save
            LDFLAGS=$opal_hwloc_external_LDFLAGS_save
            LIBS=$opal_hwloc_external_LIBS_save
@@ -96,10 +96,25 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
           [AC_DEFINE_UNQUOTED([HWLOC_EXTERNAL_HWLOC_VERSION], 
                               [external], 
                               [Version of hwloc])
+
+           # See if the external hwloc supports XML
+           AC_MSG_CHECKING([if external hwloc supports XML])
+           AS_IF([test "$opal_hwloc_dir" != ""],
+                 [opal_hwloc_external_lstopo="$opal_hwloc_dir/bin/lstopo"],
+                 [OPAL_WHICH(lstopo, opal_hwloc_external_lstopo)])
+           opal_hwloc_external_tmp=`$opal_hwloc_external_lstopo --help | $GREP "Supported output file formats" | grep xml`
+           AS_IF([test "$opal_hwloc_external_tmp" = ""],
+                 [opal_hwloc_external_enable_xml=0
+                  AC_MSG_RESULT([no])],
+                 [opal_hwloc_external_enable_xml=1
+                  AC_MSG_RESULT([yes])])
+
            # Must set this variable so that the framework m4 knows
            # what file to include in opal/mca/hwloc/hwloc.h
-           hwloc_base_include="$opal_hwloc_dir/include/hwloc.h"
-           hwloc_base_cppflags=$opal_hwloc_external_CPPFLAGS
+           opal_hwloc_external_include="$opal_hwloc_dir/include/hwloc.h"
+           opal_hwloc_external_cppflags=$opal_hwloc_external_CPPFLAGS
+           opal_hwloc_external_ldflags=$opal_hwloc_external_LDFLAGS
+           opal_hwloc_external_libs=$opal_hwloc_external_LIBS
 
            # These flags need to get passed to the wrapper compilers
            # (this is unnecessary for the internal/embedded hwloc)
