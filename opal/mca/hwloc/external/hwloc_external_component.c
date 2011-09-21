@@ -1,3 +1,13 @@
+/*
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved. 
+ *
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
 #include "opal_config.h"
 #include "opal/constants.h"
 
@@ -30,7 +40,7 @@ const opal_hwloc_component_t mca_hwloc_external_component = {
         OPAL_HWLOC_BASE_VERSION_2_0_0,
 
         /* Component name and version */
-        "hwloc_external",
+        "external",
         OPAL_MAJOR_VERSION,
         OPAL_MINOR_VERSION,
         OPAL_RELEASE_VERSION,

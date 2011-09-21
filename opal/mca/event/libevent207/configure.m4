@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -169,16 +169,16 @@ EOF
 
            # Must set this variable so that the framework m4 knows
            # what file to include in opal/mca/event/event.h
-           event_base_include="libevent207/libevent207.h"
+           opal_event_libevent207_include="libevent207/libevent207.h"
 
            # We also set _cppflags so that when including
            # libevent207.h, it can find all the actual libevent files.
            # Be a little friendly and only include the -I for the
            # builddir if it's different than the srcdir.
            file=$basedir/libevent
-           event_base_include_cppflags="-I$OMPI_TOP_SRCDIR/$file -I$OMPI_TOP_SRCDIR/$file/include"
+           opal_event_libevent207_include_cppflags="-I$OMPI_TOP_SRCDIR/$file -I$OMPI_TOP_SRCDIR/$file/include"
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
-                 [event_base_include_cppflags="$event_base_include_cppflags -I$OMPI_TOP_BUILDDIR/$file/include"])
+                 [opal_event_libevent207_include_cppflags="$opal_event_libevent207_include_cppflags -I$OMPI_TOP_BUILDDIR/$file/include"])
            if test "$with_devel_headers" = "yes" ; then
                WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/opal/mca/event/libevent207/libevent -I${includedir}/openmpi/opal/mca/event/libevent207/libevent/include'
            fi
