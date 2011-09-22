@@ -110,16 +110,6 @@ OPAL_DECLSPEC int opal_maffinity_base_node_name_to_id(char *, int *);
 OPAL_DECLSPEC int opal_maffinity_base_bind(opal_maffinity_base_segment_t *, size_t, int);
 
 /**
- * Report a bind failure using the normal mechanisms if a component
- * fails to bind memory -- according to the value of the
- * maffinity_base_bind_failure_action MCA parameter.
- */
-OPAL_DECLSPEC int opal_maffinity_base_report_bind_failure(const char *file,
-                                                          int line,
-                                                          const char *msg, 
-                                                          int rc);
-
-/**
  * Shut down the maffinity MCA framework.
  *
  * @retval OPAL_SUCCESS Always
