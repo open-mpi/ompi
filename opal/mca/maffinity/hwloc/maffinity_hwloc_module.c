@@ -33,6 +33,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "maffinity_hwloc.h"
 #include "opal/mca/hwloc/hwloc.h"
 
@@ -91,8 +92,8 @@ static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
         msg = "hwloc_set_area_membind() failure - topology not available";
-        return opal_maffinity_base_report_bind_failure(__FILE__, __LINE__,
-                                                       msg, rc);
+        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
+                                                   msg, rc);
     }
 
     /* This module won't be used unless the process is already
@@ -122,8 +123,8 @@ static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
         hwloc_bitmap_free(cpuset);
     }
     if (OPAL_SUCCESS != rc) {
-        return opal_maffinity_base_report_bind_failure(__FILE__, __LINE__,
-                                                       msg, rc);
+        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
+                                                   msg, rc);
     }
     return OPAL_SUCCESS;
 }
@@ -147,8 +148,8 @@ static int hwloc_module_bind(opal_maffinity_base_segment_t *segs,
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
         msg = "hwloc_set_area_membind() failure - topology not available";
-        return opal_maffinity_base_report_bind_failure(__FILE__, __LINE__,
-                                                       msg, rc);
+        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
+                                                   msg, rc);
     }
 
     cpuset = hwloc_bitmap_alloc();
@@ -175,8 +176,8 @@ static int hwloc_module_bind(opal_maffinity_base_segment_t *segs,
         hwloc_bitmap_free(cpuset);
     }
     if (OPAL_SUCCESS != rc) {
-        return opal_maffinity_base_report_bind_failure(__FILE__, __LINE__,
-                                                       msg, rc);
+        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
+                                                   msg, rc);
     }
     return OPAL_SUCCESS;
 }
