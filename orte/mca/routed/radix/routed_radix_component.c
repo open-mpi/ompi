@@ -50,21 +50,12 @@ orte_routed_radix_component_t mca_routed_radix_component = {
 
 static int orte_routed_radix_component_query(mca_base_module_t **module, int *priority)
 {
-    int tmp;
     mca_base_component_t *c = &mca_routed_radix_component.super.base_version;
 
     mca_base_param_reg_int(c, NULL,
                            "Radix to be used for routed radix tree",
-                           false, false, -1, &tmp);
-    if (0 < tmp) {
-        mca_routed_radix_component.radix = tmp;
-        *priority = 150;
-        *module = (mca_base_module_t *) &orte_routed_radix_module;
-        return ORTE_SUCCESS;
-    }
-    
-    /* if radix not provided, then we can't run */
-    *priority = 0;
-    *module = NULL;
-    return ORTE_ERROR;
+                           false, false, 32, &mca_routed_radix_component.radix);
+    *priority = 65;
+    *module = (mca_base_module_t *) &orte_routed_radix_module;
+    return ORTE_SUCCESS;
 }

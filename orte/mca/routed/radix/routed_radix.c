@@ -273,7 +273,7 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
-                ORTE_EPOCH_SET(jfam->route.epoch,route->epoch);
+                ORTE_EPOCH_SET(jfam->route.epoch,orte_ess.proc_get_epoch(&jfam->route));
                 return ORTE_SUCCESS;
             }
         }
@@ -287,7 +287,7 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
-        ORTE_EPOCH_SET(jfam->route.epoch,route->epoch);
+        ORTE_EPOCH_SET(jfam->route.epoch,orte_ess.proc_get_epoch(&jfam->route));
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
         return ORTE_SUCCESS;
     }
@@ -309,13 +309,28 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     orte_routed_jobfam_t *jfam;
     uint16_t jfamily;
 
+    /* initialize */
+    daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
+    daemon.vpid = ORTE_PROC_MY_DAEMON->vpid;
+    ORTE_EPOCH_SET(daemon.epoch,ORTE_PROC_MY_DAEMON->epoch);
+
+#if ORTE_ENABLE_EPOCH
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
+        target->epoch == ORTE_EPOCH_INVALID) {
+#else
+    if (target->jobid == ORTE_JOBID_INVALID ||
+        target->vpid == ORTE_VPID_INVALID) {
+#endif
         ret = ORTE_NAME_INVALID;
         goto found;
     }
-    
+
+    if (0 > ORTE_EPOCH_CMP(target->epoch, orte_ess.proc_get_epoch(target))) {
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+
     /* if it is me, then the route is just direct */
     if (OPAL_EQUAL == opal_dss.compare(ORTE_PROC_MY_NAME, target, ORTE_NAME)) {
         ret = target;
@@ -328,6 +343,20 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         goto found;
     }
 
+    /* if I am a tool, the route is direct if target is in
+     * my own job family, and to the target's HNP if not
+     */
+    if (ORTE_PROC_IS_TOOL) {
+        if (ORTE_JOB_FAMILY(target->jobid) == ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+            ret = target;
+            goto found;
+        } else {
+            ORTE_HNP_NAME_FROM_JOB(&daemon, target->jobid);
+            ret = &daemon;
+            goto found;
+        }
+    }
+    
     /******     HNP AND DAEMONS ONLY     ******/
     
     /* if the job family is zero, then this is going to a local slave,
@@ -734,6 +763,34 @@ static int route_lost(const orte_process_name_t *route)
 {
     opal_list_item_t *item;
     orte_routed_tree_t *child;
+    orte_routed_jobfam_t *jfam;
+    uint16_t jfamily;
+    int i;
+
+    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                         "%s route to %s lost",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(route)));
+
+    /* if the route is to a different job family and we are the HNP, look it up */
+    if ((ORTE_JOB_FAMILY(route->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) &&
+        ORTE_PROC_IS_HNP) {
+        jfamily = ORTE_JOB_FAMILY(route->jobid);
+        for (i=0; i < orte_routed_jobfams.size; i++) {
+            if (NULL == (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&orte_routed_jobfams, i))) {
+                continue;
+            }
+            if (jfam->job_family == jfamily) {
+                OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                                     "%s routed_radix: route to %s lost",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_JOB_FAMILY_PRINT(route->jobid)));
+                opal_pointer_array_set_item(&orte_routed_jobfams, i, NULL);
+                OBJ_RELEASE(jfam);
+                break;
+            }
+        }
+    }
 
     /* if we lose the connection to the lifeline and we are NOT already,
      * in finalize, tell the OOB to abort.
@@ -772,6 +829,34 @@ static int route_lost(const orte_process_name_t *route)
 
 static bool route_is_defined(const orte_process_name_t *target)
 {
+    int i;
+    orte_routed_jobfam_t *jfam;
+    uint16_t jfamily;
+
+    /* if the route is to a different job family and we are the HNP, look it up */
+    if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
+        if (ORTE_PROC_IS_HNP) {
+            jfamily = ORTE_JOB_FAMILY(target->jobid);
+            for (i=0; i < orte_routed_jobfams.size; i++) {
+                if (NULL == (jfam = (orte_routed_jobfam_t*)opal_pointer_array_get_item(&orte_routed_jobfams, i))) {
+                    continue;
+                }
+                if (jfam->job_family == jfamily) {
+                    OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                                         "%s routed_radix: route to %s is defined",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_JOB_FAMILY_PRINT(target->jobid)));
+                    return true;
+                }
+            }
+            return false;
+        }
+        /* if we are not the HNP, then the answer is always true as
+         * we send it via the HNP
+         */
+        return true;
+    }
+
     /* find out what daemon hosts this proc */
     if (ORTE_VPID_INVALID == orte_ess.proc_get_daemon((orte_process_name_t*)target)) {
         return false;
