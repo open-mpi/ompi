@@ -51,6 +51,7 @@ const char *ibv_get_sysfs_path(void);
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/sys/timer.h"
+#include "opal/mca/timer/base/base.h"
 #include "opal/sys/atomic.h"
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
