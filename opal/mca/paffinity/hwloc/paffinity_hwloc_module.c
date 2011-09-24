@@ -220,6 +220,14 @@ static int module_get(opal_paffinity_base_cpu_set_t *mask)
                 OPAL_PAFFINITY_CPU_SET(i, *mask);
             }
         }
+
+        /* Ensure that hwloc does not have any bits set above the size
+           of the paffinity mask.  If it does, we're hosed. :-(
+           (remember: hwloc has a dynamic bitmask size, but paffinity
+           has a fixed size) */
+        if (hwloc_bitmap_last(set) > OPAL_PAFFINITY_BITMASK_CPU_MAX) {
+            ret = OPAL_ERR_VALUE_OUT_OF_BOUNDS;
+        }
     }
     hwloc_bitmap_free(set);
 
