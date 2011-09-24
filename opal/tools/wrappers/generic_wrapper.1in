@@ -1,6 +1,6 @@
 .\" Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+.\" Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
 .TH #COMMAND# 1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
-
 .
 .SH NAME
 #COMMAND# -- #PROJECT# #LANGUAGE# wrapper compiler
@@ -10,25 +10,55 @@
 .
 .SH OPTIONS
 .TP
--showme 
-Do not invoke the underlying compiler.  Instead, show the command line
-that would be executed to compile the program.  \fBNOTE:\fR If a
-non-filename argument is passed on the command line, the \fI-showme\fR
-option will \fInot\fR display any additional flags.  For example, both
-"#COMMAND# --showme" and "#COMMAND# --showme my_source.c" will show all the
-wrapper-supplied flags.  But "#COMMAND# -showme -v" will only show the
-underlying compiler name and "-v".
+--showme 
+This option comes in several different variants (see below).  None of
+the variants invokes the underlying compiler; they all provide
+information on how the underlying compiler would have been invoked had
+.I --showme 
+not been used.
+The basic
+.I --showme
+option outputs the command line that would be executed to compile the
+program.  \fBNOTE:\fR If a non-filename argument is passed on the
+command line, the \fI-showme\fR option will \fInot\fR display any
+additional flags.  For example, both "#COMMAND# --showme" and
+"#COMMAND# --showme my_source.c" will show all the wrapper-supplied
+flags.  But "#COMMAND# --showme -v" will only show the underlying
+compiler name and "-v".
 .TP
--showme:compile
-Do not invoke the underlying #LANGUAGE# compiler.  Instead, show the
-compiler flags that would be supplied to the #LANGUAGE# compiler.
+--showme:compile
+Output the compiler flags that would have been supplied to the
+#LANGUAGE# compiler.
 .TP
--showme:link
-Do not invoke the underlying #LANGUAGE# compiler.  Instead, show the linker
-flags that would be supplied to the #LANGUAGE# compiler.
+--showme:link
+Output the linker flags that would have been supplied to the
+#LANGUAGE# compiler.
+.TP
+--showme:command
+Outputs the underlying #LANGUAGE# compiler command (which may be one
+or more tokens).
+.TP
+--showme:incdirs
+Outputs a space-delimited (but otherwise undecorated) list of
+directories that the wrapper compiler would have provided to the
+underlying #LANGUAGE# compiler to indicate where relevant header files
+are located.
+.TP
+--showme:libdirs
+Outputs a space-delimited (but otherwise undecorated) list of
+directories that the wrapper compiler would have provided to the
+underlying linker to indicate where relevant libraries are located.
+.TP
+--showme:libs
+Outputs a space-delimited (but otherwise undecorated) list of library
+names that the wrapper compiler would have used to link an
+application.  For example: "mpi open-rte open-pal util".
+.TP
+--showme:version
+Outputs the version number of Open MPI.
 .PP
-See the man page for your underlying compiler for other options that
-can be passed through #COMMAND#
+See the man page for your underlying #LANGUAGE# compiler for other
+options that can be passed through #COMMAND#.
 .
 .
 .SH DESCRIPTION
