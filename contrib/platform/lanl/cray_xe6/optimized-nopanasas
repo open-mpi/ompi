@@ -1,0 +1,36 @@
+enable_dlopen=no
+enable_mem_debug=no
+enable_mem_profile=no
+enable_debug_symbols=no
+enable_binaries=yes
+enable_heterogeneous=no
+enable_picky=no
+enable_debug=no
+enable_shared=yes
+enable_static=yes
+enable_ipv6=no
+enable_mpi_f77=yes
+enable_mpi_f90=yes
+enable_mpi_cxx=yes
+enable_mpi_cxx_seek=yes
+enable_cxx_exceptions=yes
+enable_ft_thread=no
+enable_per_user_config_files=no
+enable_pty_support=no
+# TODO LANL: add btl-tcp back to list
+enable_mca_no_build=carto,crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos
+enable_contrib_no_build=libnbc,vt
+with_openib=no
+with_devel_headers=yes
+with_alps=yes
+with_tm=no
+with_slurm=no
+with_io_romio_flags=--with-file-system=ufs+nfs
+with_memory_manager=ptmalloc2
+with_valgrind=no
+CFLAGS="-I/opt/cray/pmi/default/include"
+CXXFLAGS="-I/opt/cray/pmi/default/include"
+FCFLAGS="-I/opt/cray/pmi/default/include"
+FFLAGS="-I/opt/cray/pmi/default/include"
+CCASFLAGS="-I/opt/cray/pmi/default/include"
+LDFLAGS="-L/opt/cray/pmi/default/lib64 -lpmi"
