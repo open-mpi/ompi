@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008-2011 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2009-2011 IBM Corporation.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
  *
  * $COPYRIGHT$
@@ -277,7 +277,11 @@ static int set_remote_info(mca_btl_base_endpoint_t* endpoint,
            rem_info, sizeof(mca_btl_openib_rem_info_t));
 
     /* copy over the rem qp info */
-    memcpy(endpoint->rem_info.rem_qps,
+    /* per #2871, changed this from memcpy() to memmove() to handle
+     * the case of overlapping (or same) src/dest addresses.
+     * However, we still *should* figure out why the src and dest
+     * addresses are sometimes the same. */
+    memmove(endpoint->rem_info.rem_qps,
            rem_info->rem_qps, sizeof(mca_btl_openib_rem_qp_info_t) *
            mca_btl_openib_component.num_qps);
 
