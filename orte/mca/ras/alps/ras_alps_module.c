@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -52,6 +54,7 @@ orte_ras_base_module_t orte_ras_alps_module = {
     orte_ras_alps_finalize
 };
 
+
 /**
  * Discover available (pre-allocated) nodes.  Allocate the
  * requested number of nodes/process slots to the job.
@@ -61,29 +64,13 @@ static int orte_ras_alps_allocate(opal_list_t *nodes)
 {
     const char  alps_sysconfig[] = "/etc/sysconfig/alps"; /** Get ALPS scheduler information
                                                               file pathname from system configuration. **/
-    unsigned int alps_res_id;
     int         ret;
     FILE        *fp;
-    char        *alps_batch_id;
-    char        *endptr;
     char        *str;
     char        *alps_config_str;
-    
-    alps_batch_id = getenv("OMPI_ALPS_RESID");
-    /* BASIL_RESERVATION_ID is the equivalent of OMPI_ALPS_RESID
-     * on some systems
-     */
-    if (NULL == alps_batch_id) alps_batch_id = getenv("BASIL_RESERVATION_ID");
-    if (NULL == alps_batch_id) {
+ 
+    if (0 == orte_ras_alps_res_id) {
         orte_show_help("help-ras-alps.txt", "alps-env-var-not-found", 1);
-        return ORTE_ERR_NOT_FOUND;
-    }
-
-    alps_res_id=(unsigned int)strtol(alps_batch_id, &endptr, 10);
-
-    if (alps_batch_id[0] == '\0' || endptr[0] != '\0') {
-        orte_show_help("help-ras-alps.txt", "alps-env-var-invalid", 1,
-                       alps_batch_id);
         return ORTE_ERR_NOT_FOUND;
     }
 
@@ -152,7 +139,9 @@ static int orte_ras_alps_allocate(opal_list_t *nodes)
                         "ras:alps:allocate: Located ALPS scheduler file: \"%s\"", str);
 
 /*  Parse ALPS scheduler information file (appinfo) for node list.            */
-    if (ORTE_SUCCESS != (ret = orte_ras_alps_read_appinfo_file(nodes, str, &alps_res_id))) {
+    if (ORTE_SUCCESS != (ret = orte_ras_alps_read_appinfo_file(
+                                   nodes, str,
+                                   (unsigned int *)&orte_ras_alps_res_id))) {
         ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
