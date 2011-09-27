@@ -35,7 +35,6 @@
 /* Open MPI includes */
 #include "opal/class/opal_hash_table.h"
 #include "orte/util/show_help.h"
-#include "opal/sys/timer.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/btl/btl.h"
