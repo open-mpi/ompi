@@ -249,7 +249,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
     me.length = length;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.ac_id.uid = PTL_UID_ANY;
+    me.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id = endpoint->ptl_proc;
     if (ompi_mtl_portals4.protocol == rndv) {
@@ -368,7 +368,7 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localra
     me.length = 0;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
-    me.ac_id.uid = PTL_UID_ANY;
+    me.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE;
     me.match_id = endpoint->ptl_proc;
     me.match_bits = endpoint->send_count;
