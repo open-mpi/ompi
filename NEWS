@@ -325,8 +325,17 @@ Trunk (not on release branches yet)
 1.4.4
 -----
 
-- Increase rdmacm adress resolution timeout from 1s to 30s & 
-  update Chelsio T4 openib BTL defaults.  Thanks to Steve Wise
+- Modified a memcpy() call in the openib btl connection setup to use
+  memmove() instead because of the possibility of an overlapping
+  copy (as identified by valgrind).
+- Changed use of sys_timer_get_cycles() to the more appropriate
+  wrapper: opal_timer_base_get_cycles().  Thanks to Jani Monoses
+  for this fix.
+- Corrected the reported default value of btl_openib_ib_timeout
+  in the "IB retries exceeded" error message.  Thanks to Kevin Buckley
+  for this correction.
+- Increased rdmacm address resolution timeout from 1s to 30s & 
+  updated Chelsio T4 openib BTL defaults.  Thanks to Steve Wise
   for these updates.
   (** also to appear in 1.5.5)
 - Ensure that MPI_Accumulate error return in 1.4 is consistent with
