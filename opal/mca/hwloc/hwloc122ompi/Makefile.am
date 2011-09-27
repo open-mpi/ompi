@@ -17,15 +17,14 @@ EXTRA_DIST = \
 SUBDIRS = hwloc
 
 # Headers and sources
-headers = hwloc121.h
-sources = hwloc121_component.c hwloc121_module.c
+headers = hwloc122ompi.h
+sources = hwloc122ompi_component.c hwloc122ompi_module.c
 
 # We only ever build this component statically
-
-noinst_LTLIBRARIES = libmca_hwloc_hwloc121.la
-libmca_hwloc_hwloc121_la_SOURCES = $(headers) $(sources)
-libmca_hwloc_hwloc121_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc121_LDFLAGS)
-libmca_hwloc_hwloc121_la_LIBADD = $(opal_hwloc_hwloc121_LIBS)
+noinst_LTLIBRARIES = libmca_hwloc_hwloc122ompi.la
+libmca_hwloc_hwloc122ompi_la_SOURCES = $(headers) $(sources)
+libmca_hwloc_hwloc122ompi_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc122ompi_LDFLAGS)
+libmca_hwloc_hwloc122ompi_la_LIBADD = $(opal_hwloc_hwloc122ompi_LIBS)
 
 # Since the rest of the code base includes the underlying hwloc.h, we
 # also have to install the underlying header files when

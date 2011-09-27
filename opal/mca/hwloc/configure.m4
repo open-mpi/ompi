@@ -15,15 +15,21 @@ dnl
 # name (relative to the top OMPI source directory) that will be
 # included in opal/mca/hwloc/hwloc.h.
 
-# Optionally, components may also set the shell variable
-# $opal_hwloc_<component>_cppflags if additional CPPFLAGS must be used
-# with this header file, and $opal_hwloc_<component>_ldflags and
-# $opal_hwloc_<component>_libs.  The hwloc framework will add the
-# winning component's $opal_hwloc_<c,oponent>_* to CPPFLAGS, LDFLAGS,
-# and LIBS, respectively.
-
-# Finally, components set $opal_hwloc_<component>_enable_xml to 0 or
-# 1, indicating whether they have XML support or not.
+# Optionally, components may also set the following shell variables:
+#
+# opal_hwloc_<component>_ADD_CPPFLAGS
+# opal_hwloc_<component>_ADD_LDFLAGS
+# opal_hwloc_<component>_ADD_LIBS
+# opal_hwloc_<component>_ADD_WRAPPER_EXTRA_CPPFLAGS
+# opal_hwloc_<component>_ADD_WRAPPER_EXTRA_LDFLAGS
+# opal_hwloc_<component>_ADD_WRAPPER_EXTRA_LIBS
+#
+# The first 3 will be added to the over all CPPFLAGS/LDFLAGS/LIBS if
+# that component is chosen as the winning component.  Similarly, the
+# latter 3 will be added to WRAPPER_EXTRA_* if that component wins.
+#
+# Finally, the component must set $opal_hwloc_<component>_enable_xml
+# to 0 or 1, indicating whether they have XML support or not.
 
 dnl We only want one winning component.
 m4_define(MCA_opal_hwloc_CONFIGURE_MODE, STOP_AT_FIRST_PRIORITY)
@@ -116,24 +122,12 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
                            [Header to include for hwloc implementation])
 
         # See if they set any flags for us
-        AC_MSG_CHECKING([for winning hwloc component additional CPPFLAGS])
-        eval "opal_hwloc_base_cppflags=\`echo \$opal_hwloc_${opal_hwloc_winner}_cppflags\`"
-        AS_IF([test "$opal_hwloc_base_cppflags" != ""],
-              [AC_MSG_RESULT([$opal_hwloc_base_cppflags])
-               CPPFLAGS="$CPPFLAGS $opal_hwloc_base_cppflags"],
-              [AC_MSG_RESULT([none])])
-        AC_MSG_CHECKING([for winning hwloc component additional LDFLAGS])
-        eval "opal_hwloc_base_ldflags=\`echo \$opal_hwloc_${opal_hwloc_winner}_ldflags\`"
-        AS_IF([test "$opal_hwloc_base_ldflags" != ""],
-              [AC_MSG_RESULT([$opal_hwloc_base_ldflags])
-               LDFLAGS="$LDFLAGS $opal_hwloc_base_ldflags"],
-              [AC_MSG_RESULT([none])])
-        AC_MSG_CHECKING([for winning hwloc component additional LIBS])
-        eval "opal_hwloc_base_libs=\`echo \$opal_hwloc_${opal_hwloc_winner}_libs\`"
-        AS_IF([test "$opal_hwloc_base_libs" != ""],
-              [AC_MSG_RESULT([$opal_hwloc_base_libs])
-               LIB="$LIBS $opal_hwloc_base_libs"],
-              [AC_MSG_RESULT([none])])
+        _MCA_opal_hwloc_base_flags([CPPFLAGS], [CPPFLAGS])
+        _MCA_opal_hwloc_base_flags([LDFLAGS], [LDFLAGS])
+        _MCA_opal_hwloc_base_flags([LIBS], [LIBS])
+        _MCA_opal_hwloc_base_flags([wrapper CPPFLAGS], [WRAPPER_EXTRA_CPPFLAGS])
+        _MCA_opal_hwloc_base_flags([wrapper LDFLAGS], [WRAPPER_EXTRA_LDFLAGS])
+        _MCA_opal_hwloc_base_flags([wrapper LIBS], [WRAPPER_EXTRA_LIBS])
 
         AC_MSG_CHECKING([if winning hwloc supports XML])
         eval "opal_hwloc_base_enable_xml=\`echo \$opal_hwloc_${opal_hwloc_winner}_enable_xml\`"
@@ -157,3 +151,16 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
           echo "<== We now return you to your regularly scheduled programming."
           echo " "]);
 ])
+
+
+dnl Helper function
+dnl $1 = message to display
+dnl $2 = output variable to set / input variable suffix
+AC_DEFUN([_MCA_opal_hwloc_base_flags],[
+        AC_MSG_CHECKING([for winning hwloc component additional $1])
+        eval "opal_hwloc_base_tmp=\`echo \$opal_hwloc_${opal_hwloc_winner}_ADD_$2\`"
+        AS_IF([test "$opal_hwloc_base_tmp" != ""],
+              [AC_MSG_RESULT([$opal_hwloc_base_tmp])
+               $2="[$]$2 $opal_hwloc_base_tmp"],
+              [AC_MSG_RESULT([none])])
+])dnl
