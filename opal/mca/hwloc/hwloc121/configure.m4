@@ -52,8 +52,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc121_CONFIG],[
         opal_hwloc_hwloc121_save_LDFLAGS=$LDFLAGS
         opal_hwloc_hwloc121_save_LIBS=$LIBS
 
-        # Run the hwloc configuration.
-        HWLOC_SET_SYMBOL_PREFIX([opal_])
+        # Run the hwloc configuration - set the prefix to minimize
+        # the chance that someone will use the internal symbols
+        HWLOC_SET_SYMBOL_PREFIX([opal_hwloc121_])
 
         # save XML or graphical options
         opal_hwloc_hwloc121_save_cairo=$enable_cairo
@@ -75,19 +76,15 @@ AC_DEFUN([MCA_opal_hwloc_hwloc121_CONFIG],[
         fi
 
         HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc121/hwloc], 
-                  [AC_MSG_CHECKING([whether hwloc 1.2.1 configure succeeded])
+                  [AC_MSG_CHECKING([whether hwloc configure succeeded])
                    AC_MSG_RESULT([yes])
                    HWLOC_VERSION="internal v`$srcdir/$opal_hwloc_hwloc121_basedir/hwloc/config/hwloc_get_version.sh $srcdir/$opal_hwloc_hwloc121_basedir/hwloc/VERSION`"
 
-                   # Add flags to the wrappers for static builds.
-                   # Note that we don't add the project name to the
-                   # wrapper extra flags.  :-(
-                   hwloc_hwloc121_WRAPPER_EXTRA_LIBS=$HWLOC_EMBEDDED_LIBS
-
+                   # Build flags for our Makefile.am
                    opal_hwloc_hwloc121_LDFLAGS='$(HWLOC_EMBEDDED_LDFLAGS)'
                    opal_hwloc_hwloc121_LIBS='$(top_ompi_builddir)/'"$opal_hwloc_hwloc121_basedir"'/hwloc/src/libhwloc_embedded.la $(HWLOC_EMBEDDED_LIBS)'
                    opal_hwloc_hwloc121_support=yes], 
-                  [AC_MSG_CHECKING([whether hwloc 1.2.1 configure succeeded])
+                  [AC_MSG_CHECKING([whether hwloc configure succeeded])
                    AC_MSG_RESULT([no])
                    opal_hwloc_hwloc121_support=no])
 
@@ -117,17 +114,17 @@ AC_DEFUN([MCA_opal_hwloc_hwloc121_CONFIG],[
            # what file to include in opal/mca/hwloc/hwloc.h
            opal_hwloc_hwloc121_include="$opal_hwloc_hwloc121_basedir/hwloc121.h"
 
-           # We also set _cppflags so that when including
-           # opal/mca/hwloc/hwloc.h (and therefore this component's
-           # underlying hwloc.h), it can find all the actual hwloc
-           # files.  Be a little friendly and only include the -I for
-           # the builddir if it's different than the srcdir.
+           # Also pass some *_ADD_* flags upwards to the framework m4
+           # for various compile/link flags that are needed a) to
+           # build the rest of the source tree, and b) for the wrapper
+           # compilers (in the --with-devel-headers case).
            opal_hwloc_hwloc121_file=$opal_hwloc_hwloc121_basedir/hwloc
-           opal_hwloc_hwloc121_cppflags="-I$OMPI_TOP_SRCDIR/$opal_hwloc_hwloc121_file/include"
+           opal_hwloc_hwloc121_ADD_CPPFLAGS="-I$OMPI_TOP_SRCDIR/$opal_hwloc_hwloc121_file/include"
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
-                 [opal_hwloc_hwloc121_cppflags="$opal_hwloc_hwloc121_cppflags -I$OMPI_TOP_BUILDDIR/$opal_hwloc_hwloc121_file/include"])
+                 [opal_hwloc_hwloc121_ADD_CPPFLAGS="$opal_hwloc_hwloc121_ADD_CPPFLAGS -I$OMPI_TOP_BUILDDIR/$opal_hwloc_hwloc121_file/include"])
            if test "$with_devel_headers" = "yes" ; then
-               hwloc_hwloc121_WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/'"$opal_hwloc_hwloc121_basedir/hwloc/include"
+               opal_hwloc_hwloc121_ADD_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/'"$opal_hwloc_hwloc121_basedir/hwloc/include"
+               opal_hwloc_hwloc121_ADD_WRAPPER_EXTRA_LIBS=$HWLOC_EMBEDDED_LIBS
            fi
 
            $1],
