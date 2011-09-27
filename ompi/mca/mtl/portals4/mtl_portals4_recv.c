@@ -454,7 +454,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
         me.ct_handle = PTL_CT_NONE;
     }
     me.min_free = 0;
-    me.ac_id.uid = PTL_UID_ANY;
+    me.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE;
     if (ompi_mtl_portals4.protocol == triggered && length > ompi_mtl_portals4.eager_limit) {
         me.options |= PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_CT_BYTES | PTL_ME_ACK_DISABLE;

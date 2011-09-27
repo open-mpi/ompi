@@ -87,7 +87,7 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     } else {
         me.min_free = block->mtl->eager_limit + 8;
     }
-    me.ac_id.uid = PTL_UID_ANY;
+    me.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | PTL_ME_MANAGE_LOCAL | PTL_ME_NO_TRUNCATE | 
         PTL_ME_MAY_ALIGN | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;

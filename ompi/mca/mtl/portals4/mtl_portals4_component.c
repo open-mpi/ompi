@@ -116,7 +116,10 @@ ompi_mtl_portals4_component_open(void)
     } else if (0 == strcmp(tmp_proto, "rndv")) {
         ompi_mtl_portals4.protocol = rndv;
     } else if (0 == strcmp(tmp_proto, "triggered")) {
-        ompi_mtl_portals4.protocol = triggered;
+        /* BWB: FIX ME */
+        opal_output(ompi_mtl_base_output,
+                    "WARNING: Triggered long protocol currently does not work.  Setting to eager.\n");
+        ompi_mtl_portals4.protocol = eager;
     } else {
         opal_output(ompi_mtl_base_output,
                     "Unknown protocol type %s", tmp_proto);
@@ -174,9 +177,6 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     ret = PtlNIInit(PTL_IFACE_DEFAULT,
                     PTL_NI_PHYSICAL | PTL_NI_MATCHING,
                     PTL_PID_ANY,
-                    NULL,
-                    NULL,
-                    0,
                     NULL,
                     NULL,
                     &ompi_mtl_portals4.ni_h);
@@ -263,7 +263,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         me.length = 0;
         me.ct_handle = PTL_CT_NONE;
         me.min_free = 0;
-        me.ac_id.uid = PTL_UID_ANY;
+        me.uid = PTL_UID_ANY;
         me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
         me.match_id.phys.nid = PTL_NID_ANY;
         me.match_id.phys.pid = PTL_PID_ANY;
@@ -373,9 +373,6 @@ ompi_mtl_portals4_get_error(int ptl_error)
         break;
     case PTL_PT_IN_USE:
         ret = OMPI_ERR_RESOURCE_BUSY;
-        break;
-    case PTL_SIZE_INVALID:
-        ret = OMPI_ERR_BAD_PARAM;
         break;
     default:
         ret = OMPI_ERROR;
