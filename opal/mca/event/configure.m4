@@ -15,11 +15,18 @@ dnl
 # name (relative to opal/mca/event) that will be included in
 # opal/mca/event/event.h.
 
-# Optionally, components may also set the shell variable
-# $opal_event_<component>_include_cppflags if additional CPPFLAGS must
-# be used with this header file.  The event framework will add the
-# winning component's $opal_event_<component>_include_cppflags to the
-# global $CPPFLAGS.
+# Optionally, components may also set the following shell variables:
+#
+# opal_event_<component>_ADD_CPPFLAGS
+# opal_event_<component>_ADD_LDFLAGS
+# opal_event_<component>_ADD_LIBS
+# opal_event_<component>_ADD_WRAPPER_EXTRA_CPPFLAGS
+# opal_event_<component>_ADD_WRAPPER_EXTRA_LDFLAGS
+# opal_event_<component>_ADD_WRAPPER_EXTRA_LIBS
+#
+# The first 3 will be added to the over all CPPFLAGS/LDFLAGS/LIBS if
+# that component is chosen as the winning component.  Similarly, the
+# latter 3 will be added to WRAPPER_EXTRA_* if that component wins.
 
 dnl We only want one winning component.
 m4_define(MCA_opal_event_CONFIGURE_MODE, STOP_AT_FIRST_PRIORITY)
@@ -76,10 +83,24 @@ AC_DEFUN([MCA_opal_event_CONFIG],[
     AC_DEFINE_UNQUOTED([MCA_event_IMPLEMENTATION_HEADER],
                        ["opal/mca/event/$opal_event_base_include"],
                        [Header to include for event implementation])
-    AC_MSG_CHECKING([for winning component additional CPPFLAGS])
-    eval "opal_event_base_include_cppflags=\`echo \$opal_event_${opal_event_winner}_include_cppflags\`"
-    AS_IF([test "$opal_event_base_include_cppflags" != ""],
-          [AC_MSG_RESULT([$opal_event_base_include_cppflags])
-           CPPFLAGS="$CPPFLAGS $opal_event_base_include_cppflags"],
-          [AC_MSG_RESULT([none])])
+
+    # See if they set any flags for us
+    _MCA_opal_event_base_flags([CPPFLAGS], [CPPFLAGS])
+    _MCA_opal_event_base_flags([LDFLAGS], [LDFLAGS])
+    _MCA_opal_event_base_flags([LIBS], [LIBS])
+    _MCA_opal_event_base_flags([wrapper CPPFLAGS], [WRAPPER_EXTRA_CPPFLAGS])
+    _MCA_opal_event_base_flags([wrapper LDFLAGS], [WRAPPER_EXTRA_LDFLAGS])
+    _MCA_opal_event_base_flags([wrapper LIBS], [WRAPPER_EXTRA_LIBS])
 ])
+
+dnl Helper function
+dnl $1 = message to display
+dnl $2 = output variable to set / input variable suffix
+AC_DEFUN([_MCA_opal_event_base_flags],[
+        AC_MSG_CHECKING([for winning event component additional $1])
+        eval "opal_event_base_tmp=\`echo \$opal_event_${opal_event_winner}_ADD_$2\`"
+        AS_IF([test "$opal_event_base_tmp" != ""],
+              [AC_MSG_RESULT([$opal_event_base_tmp])
+               $2="[$]$2 $opal_event_base_tmp"],
+              [AC_MSG_RESULT([none])])
+])dnl

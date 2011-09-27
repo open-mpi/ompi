@@ -171,16 +171,16 @@ EOF
            # what file to include in opal/mca/event/event.h
            opal_event_libevent2013_include="libevent2013/libevent2013.h"
 
-           # We also set _cppflags so that when including
-           # libevent2013.h, it can find all the actual libevent files.
-           # Be a little friendly and only include the -I for the
-           # builddir if it's different than the srcdir.
+           # Also pass some *_ADD_* flags upwards to the framework m4
+           # for various compile/link flags that are needed a) to
+           # build the rest of the source tree, and b) for the wrapper
+           # compilers (in the --with-devel-headers case).
            file=$basedir/libevent
-           opal_event_libevent2013_include_cppflags="-I$OMPI_TOP_SRCDIR/$file -I$OMPI_TOP_SRCDIR/$file/include"
+           opal_event_libevent2013_ADD_CPPFLAGS="-I$OMPI_TOP_SRCDIR/$file -I$OMPI_TOP_SRCDIR/$file/include"
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
-                 [opal_event_libevent2013_include_cppflags="$opal_event_libevent2013_include_cppflags -I$OMPI_TOP_BUILDDIR/$file/include"])
+                 [opal_event_libevent2013_ADD_CPPFLAGS="$opal_event_libevent2013_ADD_CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
            if test "$with_devel_headers" = "yes" ; then
-               WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS "'-I${includedir}/openmpi/opal/mca/event/libevent2013/libevent -I${includedir}/openmpi/opal/mca/event/libevent2013/libevent/include'
+               opal_event_libevent2013_ADD_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/opal/mca/event/libevent2013/libevent -I${includedir}/openmpi/opal/mca/event/libevent2013/libevent/include'
            fi
            $1],
           [$2
