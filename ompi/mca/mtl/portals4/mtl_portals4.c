@@ -104,8 +104,6 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
         }
 
         mtl_peer_data[i]->ptl_proc = *id;
-        mtl_peer_data[i]->send_count = 0;
-        mtl_peer_data[i]->recv_count = 0;
     }
 
     return OMPI_SUCCESS;
@@ -163,7 +161,7 @@ ompi_mtl_portals4_progress(void)
 {
     int count = 0, ret;
     ptl_event_t ev;
-    ompi_mtl_portals4_request_t *ptl_request;
+    ompi_mtl_portals4_base_request_t *ptl_request;
 
     while (true) {
 	ret = PtlEQGet(ompi_mtl_portals4.eq_h, &ev);

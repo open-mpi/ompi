@@ -23,17 +23,52 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/mtl.h"
 
-struct ompi_mtl_portals4_request_t {
+
+struct ompi_mtl_portals4_base_request_t {
     struct mca_mtl_request_t super;
-    int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals4_request_t*);
-    void *buffer_ptr; /* send and receive side */
-    ptl_handle_md_t md_h; /* send and receive side */
-    ptl_handle_me_t me_h; /* send and receive side */
+    int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals4_base_request_t*);
+};
+typedef struct ompi_mtl_portals4_base_request_t ompi_mtl_portals4_base_request_t;
+
+
+struct ompi_mtl_portals4_send_request_t {
+    ompi_mtl_portals4_base_request_t super;
+    void *buffer_ptr;
+    ptl_handle_md_t md_h;
+    ptl_handle_me_t me_h;
+    volatile int event_count;
+};
+typedef struct ompi_mtl_portals4_send_request_t ompi_mtl_portals4_send_request_t;
+
+
+struct ompi_mtl_portals4_recv_request_t {
+    ompi_mtl_portals4_base_request_t super;
+    void *buffer_ptr;
+    ptl_handle_md_t md_h;
+    ptl_handle_me_t me_h;
     ptl_handle_ct_t ct_h;
-    int event_count; /* send side */
-    struct opal_convertor_t *convertor; /* recv side */
-    void *delivery_ptr; /* recv side */
-    size_t delivery_len; /* recv side */
+    struct opal_convertor_t *convertor;
+    void *delivery_ptr;
+    size_t delivery_len;
+};
+typedef struct ompi_mtl_portals4_recv_request_t ompi_mtl_portals4_recv_request_t;
+
+
+struct ompi_mtl_portals4_probe_request_t {
+    ompi_mtl_portals4_base_request_t super;
+    volatile int req_complete;
+    int found_match;
+    struct ompi_status_public_t status;
+};
+typedef struct ompi_mtl_portals4_probe_request_t ompi_mtl_portals4_probe_request_t;
+
+
+struct ompi_mtl_portals4_request_t {
+    union {
+        ompi_mtl_portals4_send_request_t send;
+        ompi_mtl_portals4_recv_request_t recv;
+        ompi_mtl_portals4_probe_request_t probe;
+    } u;
 };
 typedef struct ompi_mtl_portals4_request_t ompi_mtl_portals4_request_t;
 
