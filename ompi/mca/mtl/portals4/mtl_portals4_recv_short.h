@@ -40,6 +40,6 @@ ompi_mtl_portals4_recv_short_block_repost(ptl_event_t *ev);
 
 extern int
 ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
-                                ompi_mtl_portals4_base_request_t* ptl_bae_request);
+                                ompi_mtl_portals4_base_request_t* ptl_request);
 
 #endif /* OMPI_MTL_PORTALS_RECV_SHORT_H */
