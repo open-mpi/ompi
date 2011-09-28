@@ -368,17 +368,10 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->delivery_len = length;
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    if (MPI_ANY_SOURCE == src) {
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                             "ANY_SOURCE Recv of length %d\n",
-                             (int)length));
-    } else {
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                             "Recv from %x,%x of length %d\n",
-                             endpoint->ptl_proc.phys.nid, endpoint->ptl_proc.phys.pid, 
-                             (int)length));
-    }
-
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                         "Recv from %x,%x of length %d\n",
+                         remote_proc.phys.nid, remote_proc.phys.pid, 
+                         (int)length));
 
     me.start = start;
     me.length = length;
