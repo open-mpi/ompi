@@ -68,12 +68,12 @@ ompi_mtl_portals4_recv_short_block_free(ompi_mtl_portals4_recv_short_block_t *bl
 static inline int
 ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
 {
-    ptl_match_bits_t match_bits = PTL_SHORT_MSG;
+    ptl_match_bits_t match_bits = MTL_PORTALS4_SHORT_MSG;
     ptl_match_bits_t ignore_bits;
     ptl_me_t me;
     int ret;
 
-    ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
+    ignore_bits = MTL_PORTALS4_CONTEXT_MASK | MTL_PORTALS4_SOURCE_MASK | MTL_PORTALS4_TAG_MASK;
 
     me.start = block->start;
     me.length = block->mtl->recv_short_size;

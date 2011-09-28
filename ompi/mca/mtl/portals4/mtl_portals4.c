@@ -199,7 +199,78 @@ ompi_mtl_portals4_progress(void)
                 break;
             case PTL_EVENT_PT_DISABLED:
                 /* do stuff - flow control */
-                opal_output(ompi_mtl_base_output, "Unhandled flow control event.");
+                opal_output(ompi_mtl_base_output, "Unhandled send flow control event.");
+                abort();
+                break;
+            case PTL_EVENT_AUTO_UNLINK:
+                break;
+            case PTL_EVENT_AUTO_FREE:
+                if (OMPI_SUCCESS != (ret = ompi_mtl_portals4_recv_short_block_repost(&ev))) {
+                    opal_output(ompi_mtl_base_output,
+                                "Error returned from PTL_EVENT_FREE callback: %d", ret);
+                    abort();
+                }
+                break;
+            case PTL_EVENT_SEARCH:
+                if (NULL != ev.user_ptr) {
+                    ptl_request = ev.user_ptr;
+                    ret = ptl_request->event_callback(&ev, ptl_request);
+                    if (OMPI_SUCCESS != ret) {
+                        opal_output(ompi_mtl_base_output,
+                                    "Error returned from target event callback: %d", ret);
+                        abort();
+                    }
+                }
+                break;
+            default:
+                opal_output(ompi_mtl_base_output,
+                            "Unknown event type %d (error: %d)", (int)ev.type, ret);
+                abort();
+            }
+        } else if (PTL_EQ_EMPTY == ret) {
+            break;
+        } else {
+            opal_output(ompi_mtl_base_output,
+                        "Error returned from PtlEQGet: %d", ret);
+            abort();
+        }
+
+	ret = PtlEQGet(ompi_mtl_portals4.tmp_eq_h, &ev);
+        if (PTL_OK == ret) {
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                                 "Found event of type %d\n", ev.type));
+            switch (ev.type) {
+            case PTL_EVENT_GET:
+            case PTL_EVENT_PUT:
+            case PTL_EVENT_PUT_OVERFLOW:
+            case PTL_EVENT_ATOMIC:
+            case PTL_EVENT_ATOMIC_OVERFLOW:
+                if (NULL != ev.user_ptr) {
+                    ptl_request = ev.user_ptr;
+                    ret = ptl_request->event_callback(&ev, ptl_request);
+                    if (OMPI_SUCCESS != ret) {
+                        opal_output(ompi_mtl_base_output,
+                                    "Error returned from target event callback: %d", ret);
+                        abort();
+                    }
+                }
+                break;
+            case PTL_EVENT_REPLY:
+            case PTL_EVENT_SEND:
+            case PTL_EVENT_ACK:
+                if (NULL != ev.user_ptr) {
+                    ptl_request = ev.user_ptr;
+                    ret = ptl_request->event_callback(&ev, ptl_request);
+                    if (OMPI_SUCCESS != ret) {
+                        opal_output(ompi_mtl_base_output,
+                                    "Error returned from initiator event callback: %d", ret);
+                        abort();
+                    }
+                }
+                break;
+            case PTL_EVENT_PT_DISABLED:
+                /* do stuff - flow control */
+                opal_output(ompi_mtl_base_output, "Unhandled read flow control event.");
                 abort();
                 break;
             case PTL_EVENT_AUTO_UNLINK:

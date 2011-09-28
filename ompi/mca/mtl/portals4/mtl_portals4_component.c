@@ -211,6 +211,16 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
+    ret = PtlEQAlloc(ompi_mtl_portals4.ni_h,
+                     ompi_mtl_portals4.queue_size,
+                     &ompi_mtl_portals4.tmp_eq_h);
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlEQAlloc failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        goto error;
+    }
+
     /* Create portal table entries */
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
                      PTL_PT_FLOWCTRL,
@@ -225,7 +235,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     }
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
                      PTL_PT_FLOWCTRL,
-                     ompi_mtl_portals4.eq_h,
+                     ompi_mtl_portals4.tmp_eq_h,
                      REQ_READ_TABLE_ID,
                      &ompi_mtl_portals4.read_idx);
     if (PTL_OK != ret) {
@@ -261,8 +271,8 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
-    me.match_bits = PTL_LONG_MSG;
-    me.ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
+    me.match_bits = MTL_PORTALS4_LONG_MSG;
+    me.ignore_bits = MTL_PORTALS4_CONTEXT_MASK | MTL_PORTALS4_SOURCE_MASK | MTL_PORTALS4_TAG_MASK;
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
                       ompi_mtl_portals4.send_idx,
                       &me,
