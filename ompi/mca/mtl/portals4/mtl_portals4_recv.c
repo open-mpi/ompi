@@ -102,12 +102,6 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                 }
 
                 break;
-            } else if (!PTL_IS_SHORT_MSG(ev->match_bits) && ompi_mtl_portals4.protocol == triggered) {
-                ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
-                    PTL_GET_SOURCE(ev->match_bits);
-                ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
-                    PTL_GET_TAG(ev->match_bits);
-                break;
             } else {
                 /* make sure the data is in the right place */
                 ret = ompi_mtl_datatype_unpack(ptl_request->convertor,
@@ -156,7 +150,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                the PtlGet */
             ptl_request->super.super.ompi_req->req_status._ucount = 
                 ev->mlength;
-            if (ompi_mtl_portals4.protocol == rndv || ompi_mtl_portals4.protocol == triggered) {
+            if (ompi_mtl_portals4.protocol == rndv) {
                 ptl_request->super.super.ompi_req->req_status._ucount +=
                     ompi_mtl_portals4.eager_limit;
             }
@@ -171,14 +165,6 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             opal_output(ompi_mtl_base_output,
                         "%s:%d: PtlMDRelease failed: %d",
                         __FILE__, __LINE__, ret);
-        }
-        if (ompi_mtl_portals4.protocol == triggered) {
-            ret = PtlCTFree(ptl_request->ct_h);
-            if (PTL_OK != ret) {
-                opal_output(ompi_mtl_base_output,
-                            "%s:%d: PtlCTFree failed: %d",
-                            __FILE__, __LINE__, ret);
-            }
         }
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "recv completed"));
         ptl_request->super.super.completion_callback(&ptl_request->super.super);
@@ -261,10 +247,6 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                     PTL_GET_SOURCE(ev->match_bits);
                 ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
                     PTL_GET_TAG(ev->match_bits);
-
-                if (ompi_mtl_portals4.protocol == triggered) {
-                    break;
-                }
 
                 if (ompi_mtl_portals4.protocol == rndv) {
                     ev->rlength = ev->hdr_data & 0xFFFFFFFFULL;
@@ -362,14 +344,10 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     if  (MPI_ANY_SOURCE == src) {
         remote_proc.phys.nid = PTL_NID_ANY;
         remote_proc.phys.pid = PTL_PID_ANY;
-        if (ompi_mtl_portals4.protocol == triggered) {
-            printf("Brian broke any_source with triggered rndv\n"); abort();
-        }
     } else {
         ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
         endpoint = (mca_mtl_base_endpoint_t*) ompi_proc->proc_pml;
         remote_proc = endpoint->ptl_proc;
-        endpoint->recv_count++;
     }
 
     PTL_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,
@@ -396,71 +374,18 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
                              (int)length));
     } else {
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                             "Recv %d from %x,%x of length %d\n",
-                             endpoint->recv_count,
+                             "Recv from %x,%x of length %d\n",
                              endpoint->ptl_proc.phys.nid, endpoint->ptl_proc.phys.pid, 
                              (int)length));
     }
 
-    if (ompi_mtl_portals4.protocol == triggered && length > ompi_mtl_portals4.eager_limit) {
-        ptl_md_t md;
-
-        ret = PtlCTAlloc(ompi_mtl_portals4.ni_h, 
-                         &ptl_request->ct_h);
-        if (PTL_OK != ret) {
-            opal_output(ompi_mtl_base_output,
-                        "%s:%d: PtlCTAlloc failed: %d",
-                        __FILE__, __LINE__, ret);
-            return ompi_mtl_portals4_get_error(ret);
-        }
-        
-        md.start = ptl_request->delivery_ptr;
-        md.length = ptl_request->delivery_len;
-        md.options = 0;
-        md.eq_handle = ompi_mtl_portals4.eq_h;
-        md.ct_handle = PTL_CT_NONE;
-
-        ret = PtlMDBind(ompi_mtl_portals4.ni_h,
-                        &md,
-                        &ptl_request->md_h);
-        if (PTL_OK != ret) {
-            opal_output(ompi_mtl_base_output,
-                        "%s:%d: PtlMDBind failed: %d",
-                        __FILE__, __LINE__, ret);
-            return ompi_mtl_portals4_get_error(ret);
-        }
-
-        ret = PtlTriggeredGet(ptl_request->md_h, 
-                              ompi_mtl_portals4.eager_limit, 
-                              length - ompi_mtl_portals4.eager_limit, 
-                              remote_proc,
-                              ompi_mtl_portals4.read_idx,
-                              endpoint->recv_count,
-                              ompi_mtl_portals4.eager_limit,
-                              ptl_request,
-                              ptl_request->ct_h,
-                              ompi_mtl_portals4.eager_limit + 1);
-        if (PTL_OK != ret) {
-            opal_output(ompi_mtl_base_output,
-                        "%s:%d: PtlTriggeredGet failed: %d",
-                        __FILE__, __LINE__, ret);
-            return ompi_mtl_portals4_get_error(ret);
-        }
-    }
 
     me.start = start;
     me.length = length;
-    if (ompi_mtl_portals4.protocol == triggered && length > ompi_mtl_portals4.eager_limit) {
-        me.ct_handle = ptl_request->ct_h;
-    } else {
-        me.ct_handle = PTL_CT_NONE;
-    }
+    me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
     me.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE;
-    if (ompi_mtl_portals4.protocol == triggered && length > ompi_mtl_portals4.eager_limit) {
-        me.options |= PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_CT_BYTES | PTL_ME_ACK_DISABLE;
-    }
     me.match_id = remote_proc;
     me.match_bits = match_bits;
     me.ignore_bits = ignore_bits;

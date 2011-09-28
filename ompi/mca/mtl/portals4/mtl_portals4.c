@@ -104,8 +104,6 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
         }
 
         mtl_peer_data[i]->ptl_proc = *id;
-        mtl_peer_data[i]->send_count = 0;
-        mtl_peer_data[i]->recv_count = 0;
     }
 
     return OMPI_SUCCESS;
