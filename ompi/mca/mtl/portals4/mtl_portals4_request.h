@@ -37,6 +37,7 @@ struct ompi_mtl_portals4_send_request_t {
     ptl_handle_md_t md_h;
     ptl_handle_me_t me_h;
     volatile int event_count;
+    int opcount;
 };
 typedef struct ompi_mtl_portals4_send_request_t ompi_mtl_portals4_send_request_t;
 
@@ -46,10 +47,13 @@ struct ompi_mtl_portals4_recv_request_t {
     void *buffer_ptr;
     ptl_handle_md_t md_h;
     ptl_handle_me_t me_h;
-    ptl_handle_ct_t ct_h;
     struct opal_convertor_t *convertor;
     void *delivery_ptr;
     size_t delivery_len;
+#if OPAL_ENABLE_DEBUG
+    int opcount;
+    ptl_hdr_data_t hdr_data;
+#endif
 };
 typedef struct ompi_mtl_portals4_recv_request_t ompi_mtl_portals4_recv_request_t;
 
