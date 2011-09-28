@@ -35,7 +35,7 @@
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "maffinity_hwloc.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/base/base.h"
 
 /*
  * Local functions
@@ -123,8 +123,7 @@ static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
         hwloc_bitmap_free(cpuset);
     }
     if (OPAL_SUCCESS != rc) {
-        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
-                                                   msg, rc);
+        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__, msg, rc);
     }
     return OPAL_SUCCESS;
 }
@@ -176,8 +175,7 @@ static int hwloc_module_bind(opal_maffinity_base_segment_t *segs,
         hwloc_bitmap_free(cpuset);
     }
     if (OPAL_SUCCESS != rc) {
-        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__,
-                                                   msg, rc);
+        return opal_hwloc_base_report_bind_failure(__FILE__, __LINE__, msg, rc);
     }
     return OPAL_SUCCESS;
 }
