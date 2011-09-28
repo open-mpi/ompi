@@ -48,7 +48,6 @@ struct mca_mtl_portals4_module_t {
     /* global handles */
     ptl_handle_ni_t ni_h;
     ptl_handle_eq_t eq_h;
-    ptl_handle_eq_t tmp_eq_h;
 
     /* for zero-length sends and acks */
     ptl_handle_md_t zero_md_h;
@@ -58,8 +57,11 @@ struct mca_mtl_portals4_module_t {
 
     opal_list_t recv_short_blocks;
 
-    /* number of send-side operations started */
+    /* number of operations started */
     uint32_t opcount;
+#if OPAL_ENABLE_DEBUG
+    uint32_t recv_opcount;
+#endif
 
     enum { eager, rndv } protocol;
 };
@@ -91,9 +93,8 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 #define MTL_PORTALS4_TAG_IGNR      0x000000007FFFFFFFULL
 
 #define MTL_PORTALS4_SHORT_MSG      0x1000000000000000ULL
-#define MTL_PORTALS4_SHORT_SYNC_MSG 0x2000000000000000ULL
-#define MTL_PORTALS4_LONG_MSG       0x4000000000000000ULL
-#define MTL_PORTALS4_READY_MSG      0x8000000000000000ULL
+#define MTL_PORTALS4_LONG_MSG       0x2000000000000000ULL
+#define MTL_PORTALS4_READY_MSG      0x4000000000000000ULL
 
 /* send posting */
 #define MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, source, tag, type) \
@@ -135,22 +136,27 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
     (0 != (MTL_PORTALS4_LONG_MSG & match_bits))
 #define MTL_PORTALS4_IS_READY_MSG(match_bits)           \
     (0 != (MTL_PORTALS4_READY_MSG & match_bits))
-#define MTL_PORTALS4_IS_SYNC_MSG(match_bits)            \
-    (0 != (MTL_PORTALS4_SHORT_SYNC_MSG & match_bits))
 
 #define MTL_PORTALS4_GET_TAG(match_bits)                \
     ((int)(match_bits & MTL_PORTALS4_TAG_MASK))
 #define MTL_PORTALS4_GET_SOURCE(match_bits)             \
     ((int)((match_bits & MTL_PORTALS4_SOURCE_MASK) >> 32))
 
-#define MTL_PORTALS4_SET_HDR_DATA(hdr_data, opcount, length)    \
-    {                                                           \
-        hdr_data = opcount & 0xFFFFULL;                         \
-        hdr_data = (hdr_data << 48);                            \
-        hdr_data |= (length & 0xFFFFFFFFFFFFULL);               \
+
+#define MTL_PORTALS4_SYNC_MSG       0x8000000000000000ULL
+
+#define MTL_PORTALS4_SET_HDR_DATA(hdr_data, opcount, length, sync)   \
+    {                                                                \
+        hdr_data = (sync) ? 1 : 0;                                   \
+        hdr_data = (hdr_data << 15);                                 \
+        hdr_data |= opcount & 0x7FFFULL;                             \
+        hdr_data = (hdr_data << 48);                                 \
+        hdr_data |= (length & 0xFFFFFFFFFFFFULL);                    \
     }
 
 #define MTL_PORTALS4_GET_LENGTH(hdr_data) ((size_t)(hdr_data & 0xFFFFFFFFFFFFULL))
+#define MTL_PORTALS4_IS_SYNC_MSG(hdr_data)            \
+    (0 != (MTL_PORTALS4_SYNC_MSG & hdr_data))
 
 /* MTL interface functions */
 extern int ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl);

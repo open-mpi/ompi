@@ -110,5 +110,5 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
         *status = request.status;
     }
 
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    return OMPI_SUCCESS;
 }

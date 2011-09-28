@@ -200,20 +200,14 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                         "My nid,pid = %x,%x",
+                         id.phys.nid, id.phys.pid));
+
     /* create event queue */
     ret = PtlEQAlloc(ompi_mtl_portals4.ni_h,
                      ompi_mtl_portals4.queue_size,
                      &ompi_mtl_portals4.eq_h);
-    if (PTL_OK != ret) {
-        opal_output(ompi_mtl_base_output,
-                    "%s:%d: PtlEQAlloc failed: %d\n",
-                    __FILE__, __LINE__, ret);
-        goto error;
-    }
-
-    ret = PtlEQAlloc(ompi_mtl_portals4.ni_h,
-                     ompi_mtl_portals4.queue_size,
-                     &ompi_mtl_portals4.tmp_eq_h);
     if (PTL_OK != ret) {
         opal_output(ompi_mtl_base_output,
                     "%s:%d: PtlEQAlloc failed: %d\n",
@@ -235,7 +229,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     }
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
                      PTL_PT_FLOWCTRL,
-                     ompi_mtl_portals4.tmp_eq_h,
+                     ompi_mtl_portals4.eq_h,
                      REQ_READ_TABLE_ID,
                      &ompi_mtl_portals4.read_idx);
     if (PTL_OK != ret) {
@@ -296,6 +290,9 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     }
 
     ompi_mtl_portals4.opcount = 0;
+#if OPAL_ENABLE_DEBUG
+    ompi_mtl_portals4.recv_opcount = 0;
+#endif
 
     /* activate progress callback */
     ret = opal_progress_register(ompi_mtl_portals4_progress);
