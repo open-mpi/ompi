@@ -73,20 +73,12 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     ptl_me_t me;
     int ret;
 
-    if (ompi_mtl_portals4.protocol != triggered) {
-        ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
-    } else {
-        ignore_bits = ~0ULL;
-    }
+    ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
 
     me.start = block->start;
     me.length = block->mtl->recv_short_size;
     me.ct_handle = PTL_CT_NONE;
-    if (ompi_mtl_portals4.protocol != triggered) {
-        me.min_free = block->mtl->eager_limit;
-    } else {
-        me.min_free = block->mtl->eager_limit + 8;
-    }
+    me.min_free = block->mtl->eager_limit;
     me.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | PTL_ME_MANAGE_LOCAL | PTL_ME_NO_TRUNCATE | 
         PTL_ME_MAY_ALIGN | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE;

@@ -57,7 +57,10 @@ struct mca_mtl_portals4_module_t {
 
     opal_list_t recv_short_blocks;
 
-    enum { eager, rndv, triggered } protocol;
+    /* number of send-side operations started */
+    uint32_t opcount;
+
+    enum { eager, rndv } protocol;
 };
 typedef struct mca_mtl_portals4_module_t mca_mtl_portals4_module_t;
 

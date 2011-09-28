@@ -106,7 +106,7 @@ ompi_mtl_portals4_component_open(void)
 
     mca_base_param_reg_string(&mca_mtl_portals4_component.mtl_version,
                               "long_proto",
-                              "Protocol to use for long messages.  Valid entries are eager, rndv, and triggered",
+                              "Protocol to use for long messages.  Valid entries are eager and rndv",
                               false,
                               false,
                               "eager",
@@ -115,11 +115,6 @@ ompi_mtl_portals4_component_open(void)
         ompi_mtl_portals4.protocol = eager;        
     } else if (0 == strcmp(tmp_proto, "rndv")) {
         ompi_mtl_portals4.protocol = rndv;
-    } else if (0 == strcmp(tmp_proto, "triggered")) {
-        /* BWB: FIX ME */
-        opal_output(ompi_mtl_base_output,
-                    "WARNING: Triggered long protocol currently does not work.  Setting to eager.\n");
-        ompi_mtl_portals4.protocol = eager;
     } else {
         opal_output(ompi_mtl_base_output,
                     "Unknown protocol type %s", tmp_proto);
@@ -136,7 +131,7 @@ ompi_mtl_portals4_component_open(void)
                         "Long protocol: %s", 
                         (ompi_mtl_portals4.protocol == eager) ? "Eager" :
                         (ompi_mtl_portals4.protocol == rndv) ? "Rendezvous" :
-                        (ompi_mtl_portals4.protocol == triggered) ? "Triggered" : "Other");
+                         "Other");
 
     ompi_mtl_portals4.ni_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.eq_h = PTL_INVALID_HANDLE;
@@ -258,29 +253,27 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     }
 
     /* Handle long overflows */
-    if (ompi_mtl_portals4.protocol != triggered) {
-        me.start = NULL;
-        me.length = 0;
-        me.ct_handle = PTL_CT_NONE;
-        me.min_free = 0;
-        me.uid = PTL_UID_ANY;
-        me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
-        me.match_id.phys.nid = PTL_NID_ANY;
-        me.match_id.phys.pid = PTL_PID_ANY;
-        me.match_bits = PTL_LONG_MSG;
-        me.ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
-        ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
-                          ompi_mtl_portals4.send_idx,
-                          &me,
-                          PTL_OVERFLOW,
-                          NULL,
-                          &ompi_mtl_portals4.long_overflow_me_h);
-        if (PTL_OK != ret) {
-            opal_output(ompi_mtl_base_output,
-                        "%s:%d: PtlMEAppend failed: %d\n",
-                        __FILE__, __LINE__, ret);
-            goto error;
-        }
+    me.start = NULL;
+    me.length = 0;
+    me.ct_handle = PTL_CT_NONE;
+    me.min_free = 0;
+    me.uid = PTL_UID_ANY;
+    me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
+    me.match_id.phys.nid = PTL_NID_ANY;
+    me.match_id.phys.pid = PTL_PID_ANY;
+    me.match_bits = PTL_LONG_MSG;
+    me.ignore_bits = PTL_CONTEXT_MASK | PTL_SOURCE_MASK | PTL_TAG_MASK;
+    ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
+                      ompi_mtl_portals4.send_idx,
+                      &me,
+                      PTL_OVERFLOW,
+                      NULL,
+                      &ompi_mtl_portals4.long_overflow_me_h);
+    if (PTL_OK != ret) {
+        opal_output(ompi_mtl_base_output,
+                    "%s:%d: PtlMEAppend failed: %d\n",
+                    __FILE__, __LINE__, ret);
+        goto error;
     }
 
     /* attach short unex recv blocks */
@@ -291,6 +284,8 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                     __FILE__, __LINE__, ret);
         goto error;
     }
+
+    ompi_mtl_portals4.opcount = 0;
 
     /* activate progress callback */
     ret = opal_progress_register(ompi_mtl_portals4_progress);

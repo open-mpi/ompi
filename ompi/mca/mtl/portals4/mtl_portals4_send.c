@@ -259,9 +259,9 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
     me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id = endpoint->ptl_proc;
     if (ompi_mtl_portals4.protocol == rndv) {
-        me.match_bits = ((uint64_t) endpoint->send_count << 32) | length;
+        me.match_bits = ((uint64_t) ompi_mtl_portals4.opcount << 32) | length;
     } else {
-        me.match_bits = endpoint->send_count;
+        me.match_bits = ompi_mtl_portals4.opcount;
     }
     me.ignore_bits = 0;
 
@@ -288,17 +288,6 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int localra
         ret = PtlPut(ptl_request->md_h,
                      0,
                      ompi_mtl_portals4.eager_limit,
-                     PTL_NO_ACK_REQ,
-                     endpoint->ptl_proc,
-                     ompi_mtl_portals4.send_idx,
-                     match_bits,
-                     0,
-                     ptl_request,
-                     me.match_bits);
-    } else if (ompi_mtl_portals4.protocol == triggered) {
-        ret = PtlPut(ptl_request->md_h,
-                     0,
-                     ompi_mtl_portals4.eager_limit + 1,
                      PTL_NO_ACK_REQ,
                      endpoint->ptl_proc,
                      ompi_mtl_portals4.send_idx,
@@ -377,7 +366,7 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int localra
     me.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE;
     me.match_id = endpoint->ptl_proc;
-    me.match_bits = endpoint->send_count;
+    me.match_bits = ompi_mtl_portals4.opcount;
     me.ignore_bits = 0;
 
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
@@ -458,11 +447,11 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
     ptl_request->event_count = 0;
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    endpoint->send_count++;
+    ompi_mtl_portals4.opcount++;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
                          "Send %d to %x,%x of length %d\n",
-                         endpoint->send_count,
+                         ompi_mtl_portals4.opcount,
                          endpoint->ptl_proc.phys.nid, endpoint->ptl_proc.phys.pid, 
                          (int)length));
 
