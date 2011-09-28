@@ -57,9 +57,6 @@ struct mca_mtl_portals4_module_t {
 
     opal_list_t recv_short_blocks;
 
-    /* note: this isn't entirely accurate... it's really long op count */
-    uint32_t opcount;
-
     enum { eager, rndv, triggered } protocol;
 };
 typedef struct mca_mtl_portals4_module_t mca_mtl_portals4_module_t;
@@ -138,14 +135,6 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 
 #define PTL_GET_TAG(match_bits) ((int)(match_bits & PTL_TAG_MASK))
 #define PTL_GET_SOURCE(match_bits) ((int)((match_bits & PTL_SOURCE_MASK) >> 32))
-
-#define MTL_PORTALS4_SET_HDR_DATA(hdr_data, opcount, length) \
-    {                                                        \
-        hdr_data = ((length << 16) | (opcount & 0xFFFF));    \
-    }
-
-#define MTL_PORTALS4_GET_LENGTH(hdr_data) (hdr_data >> 16)
-
 
 /* MTL interface functions */
 extern int ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl);

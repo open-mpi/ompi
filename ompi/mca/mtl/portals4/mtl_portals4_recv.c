@@ -38,28 +38,26 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                 ompi_mtl_portals4_base_request_t* ptl_base_request)
 {
     int ret;
-    ompi_mtl_portals4_recv_request_t *ptl_request = 
+    ompi_mtl_portals4_recv_request_t* ptl_request = 
         (ompi_mtl_portals4_recv_request_t*) ptl_base_request;
 
     switch (ev->type) {
     case PTL_EVENT_PUT:
         if (ev->ni_fail_type == PTL_NI_OK) {
-            size_t msg_length = MTL_PORTALS4_GET_LENGTH(ev->hdr_data);
-            /* set the status */
-            ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
-                PTL_GET_SOURCE(ev->match_bits);
-            ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
-                PTL_GET_TAG(ev->match_bits);
-            if (msg_length > ptl_request->delivery_len) {
-                ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
-            }
-
             if (!PTL_IS_SHORT_MSG(ev->match_bits) && ompi_mtl_portals4.protocol == rndv) {
                 ptl_md_t md;
+                ev->rlength = ev->hdr_data & 0xFFFFFFFFULL;
+                ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
+                    PTL_GET_SOURCE(ev->match_bits);
+                ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
+                    PTL_GET_TAG(ev->match_bits);
+                if (ev->rlength > ptl_request->delivery_len) {
+                    ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
+                }
 
                 md.start = (char*) ptl_request->delivery_ptr + ompi_mtl_portals4.eager_limit;
-                md.length = ((msg_length > ptl_request->delivery_len) ?
-                             ptl_request->delivery_len : msg_length) - ompi_mtl_portals4.eager_limit;
+                md.length = ((ev->rlength > ptl_request->delivery_len) ?
+                             ptl_request->delivery_len : ev->rlength) - ompi_mtl_portals4.eager_limit;
                 md.options = 0;
                 md.eq_handle = ompi_mtl_portals4.eq_h;
                 md.ct_handle = PTL_CT_NONE;
@@ -105,6 +103,10 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
 
                 break;
             } else if (!PTL_IS_SHORT_MSG(ev->match_bits) && ompi_mtl_portals4.protocol == triggered) {
+                ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
+                    PTL_GET_SOURCE(ev->match_bits);
+                ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
+                    PTL_GET_TAG(ev->match_bits);
                 break;
             } else {
                 /* make sure the data is in the right place */
@@ -117,7 +119,16 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                 __FILE__, __LINE__, ret);
                     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
                 }
-                ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
+                /* set the status */
+                ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
+                    PTL_GET_SOURCE(ev->match_bits);
+                ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
+                    PTL_GET_TAG(ev->match_bits);
+                if (ev->rlength > ev->mlength) {
+                    ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
+                }
+                ptl_request->super.super.ompi_req->req_status._ucount =
+                    ev->mlength;
             }
         } else {
             opal_output(ompi_mtl_base_output,
@@ -141,12 +152,14 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                             __FILE__, __LINE__, ret);
                 ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
             }
-            ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
+            /* set the status - most of this filled in right after issuing
+               the PtlGet */
+            ptl_request->super.super.ompi_req->req_status._ucount = 
+                ev->mlength;
             if (ompi_mtl_portals4.protocol == rndv || ompi_mtl_portals4.protocol == triggered) {
-                ptl_request->super.super.ompi_req->req_status._ucount += 
+                ptl_request->super.super.ompi_req->req_status._ucount +=
                     ompi_mtl_portals4.eager_limit;
             }
-
         } else {
             opal_output(ompi_mtl_base_output,
                         "%s:%d: recv(PTL_EVENT_REPLY) ni_fail_type: %d",
@@ -174,18 +187,17 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
     case PTL_EVENT_PUT_OVERFLOW:
         /* overflow case.  Short messages have the buffer stashed
            somewhere.  Long messages left in buffer at the source */
-        if (ev->ni_fail_type == PTL_NI_OK) {
-            size_t msg_length = MTL_PORTALS4_GET_LENGTH(ev->hdr_data);
-            ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
-                PTL_GET_SOURCE(ev->match_bits);
-            ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
-                PTL_GET_TAG(ev->match_bits);
-            if (msg_length > ptl_request->delivery_len) {
-                ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
-            }
-
-            if (PTL_IS_SHORT_MSG(ev->match_bits)) {
-                ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
+        if (PTL_IS_SHORT_MSG(ev->match_bits)) {
+            if (ev->ni_fail_type == PTL_NI_OK) {
+                ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
+                    PTL_GET_SOURCE(ev->match_bits);
+                ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
+                    PTL_GET_TAG(ev->match_bits);
+                if (ev->rlength > ptl_request->delivery_len) {
+                    ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
+                }
+                ptl_request->super.super.ompi_req->req_status._ucount = 
+                    ev->mlength;
                 if (ev->mlength > 0) {
                     struct iovec iov;
                     uint32_t iov_count = 1;
@@ -231,17 +243,40 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                         return OMPI_SUCCESS;
                     }
                 }
-
             } else {
-                ptl_md_t md;
+                opal_output(ompi_mtl_base_output,
+                            "%s:%d: recv(PTL_EVENT_PUT_OVERFLOW) ni_fail_type: %d",
+                            __FILE__, __LINE__, ret);
+                ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
+            }
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "recv completed"));
+            ptl_request->super.super.completion_callback(&ptl_request->super.super);
+
+        } else {
+            ptl_md_t md;
+
+            if (ev->ni_fail_type == PTL_NI_OK) {
+                /* set the status */
+                ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
+                    PTL_GET_SOURCE(ev->match_bits);
+                ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
+                    PTL_GET_TAG(ev->match_bits);
 
                 if (ompi_mtl_portals4.protocol == triggered) {
                     break;
                 }
 
+                if (ompi_mtl_portals4.protocol == rndv) {
+                    ev->rlength = ev->hdr_data & 0xFFFFFFFFULL;
+                }
+
+                if (ev->rlength > ptl_request->delivery_len) {
+                    ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
+                }
+
                 md.start = (char*) ptl_request->delivery_ptr + ev->mlength;
-                md.length = ((msg_length > ptl_request->delivery_len) ?
-                             ptl_request->delivery_len : msg_length) - ev->mlength;
+                md.length = ((ev->rlength > ptl_request->delivery_len) ?
+                             ptl_request->delivery_len : ev->rlength) - ev->mlength;
                 md.options = 0;
                 md.eq_handle = ompi_mtl_portals4.eq_h;
                 md.ct_handle = PTL_CT_NONE;
@@ -280,17 +315,17 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                     __FILE__, __LINE__, ret);
                     }
                     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = 
-                        ompi_mtl_portals4_get_error(ret);
+                        ompi_mtl_portals4_get_error(ret);;
                     ptl_request->super.super.completion_callback(&ptl_request->super.super);
                     return OMPI_SUCCESS;
                 }
+            } else {
+                opal_output(ompi_mtl_base_output,
+                            "%s:%d: recv(PTL_EVENT_PUT_OVERFLOW) ni_fail_type: %d",
+                            __FILE__, __LINE__, ret);
+                ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
+                ptl_request->super.super.completion_callback(&ptl_request->super.super);
             }
-        } else {
-            opal_output(ompi_mtl_base_output,
-                        "%s:%d: recv(PTL_EVENT_PUT_OVERFLOW) ni_fail_type: %d",
-                        __FILE__, __LINE__, ret);
-            ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
-            ptl_request->super.super.completion_callback(&ptl_request->super.super);
         }
         break;
 
@@ -334,10 +369,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
         ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
         endpoint = (mca_mtl_base_endpoint_t*) ompi_proc->proc_pml;
         remote_proc = endpoint->ptl_proc;
-    }
-
-    if (MPI_ANY_TAG == tag && ompi_mtl_portals4.protocol == triggered) {
-        printf("Brian broke any_tag with triggered rndv\n"); abort();
+        endpoint->recv_count++;
     }
 
     PTL_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,
@@ -358,16 +390,20 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->delivery_len = length;
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "Recv from %x,%x of length %d\n",
-                         remote_proc.phys.nid, remote_proc.phys.pid, 
-                         (int)length));
+    if (MPI_ANY_SOURCE == src) {
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "ANY_SOURCE Recv of length %d\n",
+                             (int)length));
+    } else {
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "Recv %d from %x,%x of length %d\n",
+                             endpoint->recv_count,
+                             endpoint->ptl_proc.phys.nid, endpoint->ptl_proc.phys.pid, 
+                             (int)length));
+    }
 
     if (ompi_mtl_portals4.protocol == triggered && length > ompi_mtl_portals4.eager_limit) {
         ptl_md_t md;
-        ptl_match_bits_t match_bits;
-
-        PTL_SET_SEND_BITS(match_bits, comm->c_contextid, src, tag, PTL_LONG_MSG);
 
         ret = PtlCTAlloc(ompi_mtl_portals4.ni_h, 
                          &ptl_request->ct_h);
@@ -399,7 +435,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
                               length - ompi_mtl_portals4.eager_limit, 
                               remote_proc,
                               ompi_mtl_portals4.read_idx,
-                              match_bits,
+                              endpoint->recv_count,
                               ompi_mtl_portals4.eager_limit,
                               ptl_request,
                               ptl_request->ct_h,
