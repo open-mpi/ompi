@@ -30,6 +30,34 @@ OBJ_CLASS_INSTANCE(ompi_mtl_portals4_recv_short_block_t,
                    opal_list_item_t,
                    NULL, NULL);
 
+static inline int ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block);
+
+static int
+ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
+                                     ompi_mtl_portals4_base_request_t* ptl_base_request)
+{
+    ompi_mtl_portals4_recv_short_request_t *ptl_request = 
+        (ompi_mtl_portals4_recv_short_request_t*) ptl_base_request;
+
+    ompi_mtl_portals4_recv_short_block_t *block = ptl_request->block;
+
+    if (PTL_EVENT_AUTO_FREE == ev->type) {
+        return ompi_mtl_portals4_activate_block(block);
+    } else {
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "OVERFLOW EVENT %d, hdr_data = %lx", ev->type, ev->hdr_data));
+    }
+
+    return OMPI_SUCCESS;
+}
+
+int
+ompi_mtl_portals4_recv_short_block_repost(ptl_event_t *ev)
+{
+    return ompi_mtl_portals4_activate_block(ev->user_ptr);
+}
+
+
 static ompi_mtl_portals4_recv_short_block_t* 
 ompi_mtl_portals4_recv_short_block_init(mca_mtl_portals4_module_t *mtl)
 {
@@ -41,6 +69,8 @@ ompi_mtl_portals4_recv_short_block_init(mca_mtl_portals4_module_t *mtl)
     if (block->start == NULL) return NULL;
 
     block->me_h = PTL_INVALID_HANDLE;
+    block->request.block = block;
+    block->request.super.event_callback = ompi_mtl_portals4_recv_block_progress;
 
     return block;
 }
@@ -81,7 +111,10 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     me.min_free = block->mtl->eager_limit;
     me.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | PTL_ME_MANAGE_LOCAL | PTL_ME_NO_TRUNCATE | 
-        PTL_ME_MAY_ALIGN | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE;
+        PTL_ME_MAY_ALIGN | PTL_ME_ACK_DISABLE;
+#if OPAL_ENABLE_DEBUG
+    me.options |= PTL_ME_EVENT_COMM_DISABLE;
+#endif
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
     me.match_bits = match_bits;
@@ -91,16 +124,9 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
                       ompi_mtl_portals4.send_idx,
                       &me,
                       PTL_OVERFLOW,
-                      block,
+                      &block->request,
                       &block->me_h);
     return (ret == PTL_OK) ? OMPI_SUCCESS : ompi_mtl_portals4_get_error(ret);
-}
-
-
-int
-ompi_mtl_portals4_recv_short_block_repost(ptl_event_t *ev)
-{
-    return ompi_mtl_portals4_activate_block(ev->user_ptr);
 }
 
 

@@ -205,10 +205,14 @@ ompi_mtl_portals4_progress(void)
             case PTL_EVENT_AUTO_UNLINK:
                 break;
             case PTL_EVENT_AUTO_FREE:
-                if (OMPI_SUCCESS != (ret = ompi_mtl_portals4_recv_short_block_repost(&ev))) {
-                    opal_output(ompi_mtl_base_output,
-                                "Error returned from PTL_EVENT_FREE callback: %d", ret);
-                    abort();
+                if (NULL != ev.user_ptr) {
+                    ptl_request = ev.user_ptr;
+                    ret = ptl_request->event_callback(&ev, ptl_request);
+                    if (OMPI_SUCCESS != ret) {
+                        opal_output(ompi_mtl_base_output,
+                                    "Error returned from auto_free event callback: %d", ret);
+                        abort();
+                    }
                 }
                 break;
             case PTL_EVENT_SEARCH:

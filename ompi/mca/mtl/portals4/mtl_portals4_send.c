@@ -123,8 +123,8 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "Send %d short send with hdr_data 0x%lx",
-                         ptl_request->opcount, hdr_data));
+                         "Send %d short send with hdr_data 0x%lx (0x%lx)",
+                         ptl_request->opcount, hdr_data, match_bits));
 
     ret = PtlPut(ptl_request->md_h,
                  0,
@@ -208,8 +208,8 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int tag,
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "Send %d short sync send with hdr_data 0x%lx",
-                         ptl_request->opcount, hdr_data));
+                         "Send %d short sync send with hdr_data 0x%lx (0x%lx)",
+                         ptl_request->opcount, hdr_data, match_bits));
 
     ret = PtlPut(ptl_request->md_h,
                  0,
@@ -294,8 +294,8 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
     }
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "Send %d long send with hdr_data 0x%lx",
-                         ptl_request->opcount, hdr_data));
+                         "Send %d long send with hdr_data 0x%lx (0x%lx)",
+                         ptl_request->opcount, hdr_data, match_bits));
 
     if (ompi_mtl_portals4.protocol == rndv) {
         ret = PtlPut(ptl_request->md_h,

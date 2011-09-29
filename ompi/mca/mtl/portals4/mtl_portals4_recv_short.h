@@ -25,6 +25,7 @@ struct ompi_mtl_portals4_recv_short_block_t {
     mca_mtl_portals4_module_t *mtl;
     void *start;
     ptl_handle_me_t me_h;
+    struct ompi_mtl_portals4_recv_short_request_t request;
 };
 typedef struct ompi_mtl_portals4_recv_short_block_t ompi_mtl_portals4_recv_short_block_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_portals4_recv_short_block_t);
