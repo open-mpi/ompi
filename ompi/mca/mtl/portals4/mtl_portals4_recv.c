@@ -60,7 +60,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
             MTL_PORTALS4_GET_TAG(ev->match_bits);
         if (msg_length > ptl_request->delivery_len) {
-            opal_output(ompi_mtl_base_output, "truncate: %d %d", 
+            opal_output(ompi_mtl_base_output, "truncate expected: %d %d", 
                         msg_length, ptl_request->delivery_len);
             ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
         }
@@ -137,23 +137,27 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             PtlMDRelease(ptl_request->md_h);
             goto callback_error;
         }
-
-        /* make sure the data is in the right place */
-        ret = ompi_mtl_datatype_unpack(ptl_request->convertor, 
-                                       ev->start,
-                                       ev->mlength);
-        if (OMPI_SUCCESS != ret) {
-            opal_output(ompi_mtl_base_output,
-                        "%s:%d: ompi_mtl_datatype_unpack failed: %d",
-                        __FILE__, __LINE__, ret);
-            ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
-        }
         /* set the status - most of this filled in right after issuing
            the PtlGet */
         ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
         if (ompi_mtl_portals4.protocol == rndv) {
             ptl_request->super.super.ompi_req->req_status._ucount +=
                 ompi_mtl_portals4.eager_limit;
+        }
+
+        /* make sure the data is in the right place.  Use _ucount for
+           the total length because it will be set correctly for all
+           three protocols. mlength is only correct for eager, and
+           delivery_len is the length of the buffer, not the length of
+           the send. */
+        ret = ompi_mtl_datatype_unpack(ptl_request->convertor, 
+                                       ptl_request->delivery_ptr, 
+                                       ptl_request->super.super.ompi_req->req_status._ucount);
+        if (OMPI_SUCCESS != ret) {
+            opal_output(ompi_mtl_base_output,
+                        "%s:%d: ompi_mtl_datatype_unpack failed: %d",
+                        __FILE__, __LINE__, ret);
+            ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
         }
         PtlMDRelease(ptl_request->md_h);
 
@@ -179,7 +183,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
             MTL_PORTALS4_GET_TAG(ev->match_bits);
         if (msg_length > ptl_request->delivery_len) {
-            opal_output(ompi_mtl_base_output, "truncate: %d %d", 
+            opal_output(ompi_mtl_base_output, "truncate unexpected: %d %d", 
                                 msg_length, ptl_request->delivery_len);
             ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
         }
@@ -239,6 +243,11 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
 
         } else {
             ptl_md_t md;
+
+            if (ev->mlength > 0) {
+                /* if rndv or triggered, copy the eager part to the right place */
+                memcpy(ptl_request->delivery_ptr, ev->start, ev->mlength);
+            }
 
             md.start = (char*) ptl_request->delivery_ptr + ev->mlength;
             md.length = ((msg_length > ptl_request->delivery_len) ?
