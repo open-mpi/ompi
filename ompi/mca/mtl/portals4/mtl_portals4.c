@@ -72,34 +72,34 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
         size_t size;
 
         if (procs[i]->proc_arch != ompi_proc_local()->proc_arch) {
-            opal_output(ompi_mtl_base_output,
-                        "Portals 4 MTL does not support heterogeneous operations.");
-            opal_output(ompi_mtl_base_output,
-                        "Proc %s architecture %x, mine %x.",
-                        ORTE_NAME_PRINT(&procs[i]->proc_name), 
-                        procs[i]->proc_arch, ompi_proc_local()->proc_arch);
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "Portals 4 MTL does not support heterogeneous operations.");
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "Proc %s architecture %x, mine %x.",
+                                ORTE_NAME_PRINT(&procs[i]->proc_name), 
+                                procs[i]->proc_arch, ompi_proc_local()->proc_arch);
             return OMPI_ERR_NOT_SUPPORTED;
         }
 
         mtl_peer_data[i] = malloc(sizeof(struct mca_mtl_base_endpoint_t));
         if (NULL == mtl_peer_data[i]) {
-            opal_output(ompi_mtl_base_output,
-                        "%s:%d: malloc failed: %d\n",
-                        __FILE__, __LINE__, ret);
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: malloc failed: %d\n",
+                                __FILE__, __LINE__, ret);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         ret = ompi_modex_recv(&mca_mtl_portals4_component.mtl_version,
                               procs[i], (void**) &id, &size);
         if (OMPI_SUCCESS != ret) {
-            opal_output(ompi_mtl_base_output,
-                        "%s:%d: ompi_modex_recv failed: %d\n",
-                        __FILE__, __LINE__, ret);
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: ompi_modex_recv failed: %d\n",
+                                __FILE__, __LINE__, ret);
             return ret;
         } else if (sizeof(ptl_process_t) != size) {
-            opal_output(ompi_mtl_base_output,
-                        "%s:%d: ompi_modex_recv failed: %d\n",
-                        __FILE__, __LINE__, ret);
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: ompi_modex_recv failed: %d\n",
+                                __FILE__, __LINE__, ret);
             return OMPI_ERR_BAD_PARAM;
         }
 
@@ -174,47 +174,10 @@ ompi_mtl_portals4_progress(void)
             case PTL_EVENT_PUT_OVERFLOW:
             case PTL_EVENT_ATOMIC:
             case PTL_EVENT_ATOMIC_OVERFLOW:
-                if (NULL != ev.user_ptr) {
-                    ptl_request = ev.user_ptr;
-                    ret = ptl_request->event_callback(&ev, ptl_request);
-                    if (OMPI_SUCCESS != ret) {
-                        opal_output(ompi_mtl_base_output,
-                                    "Error returned from target event callback: %d", ret);
-                        abort();
-                    }
-                }
-                break;
             case PTL_EVENT_REPLY:
             case PTL_EVENT_SEND:
             case PTL_EVENT_ACK:
-                if (NULL != ev.user_ptr) {
-                    ptl_request = ev.user_ptr;
-                    ret = ptl_request->event_callback(&ev, ptl_request);
-                    if (OMPI_SUCCESS != ret) {
-                        opal_output(ompi_mtl_base_output,
-                                    "Error returned from initiator event callback: %d", ret);
-                        abort();
-                    }
-                }
-                break;
-            case PTL_EVENT_PT_DISABLED:
-                /* do stuff - flow control */
-                opal_output(ompi_mtl_base_output, "Unhandled send flow control event.");
-                abort();
-                break;
-            case PTL_EVENT_AUTO_UNLINK:
-                break;
             case PTL_EVENT_AUTO_FREE:
-                if (NULL != ev.user_ptr) {
-                    ptl_request = ev.user_ptr;
-                    ret = ptl_request->event_callback(&ev, ptl_request);
-                    if (OMPI_SUCCESS != ret) {
-                        opal_output(ompi_mtl_base_output,
-                                    "Error returned from auto_free event callback: %d", ret);
-                        abort();
-                    }
-                }
-                break;
             case PTL_EVENT_SEARCH:
                 if (NULL != ev.user_ptr) {
                     ptl_request = ev.user_ptr;
@@ -226,10 +189,20 @@ ompi_mtl_portals4_progress(void)
                     }
                 }
                 break;
-            default:
-                opal_output(ompi_mtl_base_output,
-                            "Unknown event type %d (error: %d)", (int)ev.type, ret);
+            case PTL_EVENT_PT_DISABLED:
+                /* BWB: FIX ME: do stuff - flow control */
+                opal_output(ompi_mtl_base_output, "Unhandled send flow control event.");
                 abort();
+                break;
+            case PTL_EVENT_AUTO_UNLINK:
+                opal_output_verbose(1, ompi_mtl_base_output,
+                                    "Unexpected auto unlink event");
+                break;
+            case PTL_EVENT_GET_OVERFLOW:
+            case PTL_EVENT_FETCH_ATOMIC:
+            case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:
+                opal_output_verbose(1, ompi_mtl_base_output,
+                                    "Unexpected event of type %d", ev.type);
             }
         } else if (PTL_EQ_EMPTY == ret) {
             break;
