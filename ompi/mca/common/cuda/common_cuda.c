@@ -71,18 +71,33 @@ void mca_common_cuda_init(void)
     mca_common_cuda_warning = OPAL_INT_TO_BOOL(value);
 
     /* Check to see if this process is running in a CUDA context.  If
-     * so, all is good.  If not, then disable CUDA support. */
+     * so, all is good.  If not, then disable registration of memory. */
     res = cuCtxGetCurrent(&cuContext);
     if (CUDA_SUCCESS != res) {
         if (mca_common_cuda_warning) {
-            orte_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent failed",
-                           true, res);
+            /* Check for the not initialized error since we can make suggestions to
+             * user for this error. */
+            if (CUDA_ERROR_NOT_INITIALIZED == res) {
+                orte_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent failed not initialized",
+                               true);
+            } else {
+                orte_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent failed",
+                               true, res);
+            }
         }
         mca_common_cuda_enabled = false;
         mca_common_cuda_register_memory = false;
-        initialized = true;
-        return;
+    } else if ((CUDA_SUCCESS == res) && (NULL == cuContext)) {
+        if (mca_common_cuda_warning) {
+            orte_show_help("help-mpi-common-cuda.txt", "cuCtxGetCurrent returned NULL",
+                           true);
+        }
+        mca_common_cuda_enabled = false;
+        mca_common_cuda_register_memory = false;
     } else {
+        /* All is good.  mca_common_cuda_register_memory will retain its original
+		 * value.  Normally, that is 1, but the user can override it to disable
+		 * registration of the internal buffers. */
         mca_common_cuda_enabled = true;
         opal_output_verbose(20, mca_common_cuda_output,
                             "CUDA: cuCtxGetCurrent succeeded");
