@@ -60,7 +60,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
             MTL_PORTALS4_GET_TAG(ev->match_bits);
         if (msg_length > ptl_request->delivery_len) {
-            opal_output(ompi_mtl_base_output, "truncate expected: %d %d", 
+            opal_output(ompi_mtl_base_output, "truncate expected: %ld %ld", 
                         msg_length, ptl_request->delivery_len);
             ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
         }
@@ -183,8 +183,8 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         ptl_request->super.super.ompi_req->req_status.MPI_TAG = 
             MTL_PORTALS4_GET_TAG(ev->match_bits);
         if (msg_length > ptl_request->delivery_len) {
-            opal_output(ompi_mtl_base_output, "truncate unexpected: %d %d", 
-                                msg_length, ptl_request->delivery_len);
+            opal_output(ompi_mtl_base_output, "truncate unexpected: %ld %ld %d", 
+                        msg_length, ptl_request->delivery_len, MTL_PORTALS4_IS_SHORT_MSG(ev->match_bits));
             ptl_request->super.super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
         }
 
@@ -237,8 +237,8 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                 }
             }
 
-            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) completed, unexpected short",
-                                 ptl_request->opcount, ptl_request->hdr_data));
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) completed, unexpected short (0x%lx)",
+                                 ptl_request->opcount, ptl_request->hdr_data, (long) ev->start));
             ptl_request->super.super.completion_callback(&ptl_request->super.super);
 
         } else {
@@ -357,10 +357,10 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "Recv %d from %x,%x of length %d\n",
+                         "Recv %d from %x,%x of length %d (0x%lx, 0x%lx)\n",
                          ptl_request->opcount,
                          remote_proc.phys.nid, remote_proc.phys.pid, 
-                         (int)length));
+                         (int)length, match_bits, ignore_bits));
 
     me.start = start;
     me.length = length;

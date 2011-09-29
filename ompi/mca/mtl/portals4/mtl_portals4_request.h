@@ -66,12 +66,18 @@ struct ompi_mtl_portals4_probe_request_t {
 };
 typedef struct ompi_mtl_portals4_probe_request_t ompi_mtl_portals4_probe_request_t;
 
+struct ompi_mtl_portals4_recv_short_request_t {
+    ompi_mtl_portals4_base_request_t super;
+    struct ompi_mtl_portals4_recv_short_block_t *block;
+};
+typedef struct ompi_mtl_portals4_recv_short_request_t ompi_mtl_portals4_recv_short_request_t;
 
 struct ompi_mtl_portals4_request_t {
     union {
         ompi_mtl_portals4_send_request_t send;
         ompi_mtl_portals4_recv_request_t recv;
         ompi_mtl_portals4_probe_request_t probe;
+        ompi_mtl_portals4_recv_short_request_t recv_short;
     } u;
 };
 typedef struct ompi_mtl_portals4_request_t ompi_mtl_portals4_request_t;
