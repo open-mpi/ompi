@@ -95,9 +95,9 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
                       PTL_SEARCH_ONLY,
                       &request);
     if (PTL_OK != ret) {
-        opal_output(ompi_mtl_base_output,
-                    "%s:%d: PtlMESearch failed: %d",
-                    __FILE__, __LINE__, ret);
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d: PtlMESearch failed: %d",
+                            __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
     }
 

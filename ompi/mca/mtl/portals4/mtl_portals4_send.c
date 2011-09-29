@@ -39,9 +39,9 @@ ompi_mtl_portals4_send_callback(ptl_event_t *ev, struct ompi_mtl_portals4_base_r
     assert(NULL != ptl_request->super.super.ompi_req);
 
     if (ev->ni_fail_type != PTL_NI_OK) {
-        opal_output(ompi_mtl_base_output,
-                    "%s:%d: send callback ni_fail_type: %d",
-                    __FILE__, __LINE__, ev->ni_fail_type);
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d: send callback ni_fail_type: %d",
+                            __FILE__, __LINE__, ev->ni_fail_type);
         ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
         ptl_request->super.super.completion_callback(&ptl_request->super.super);
         abort();
