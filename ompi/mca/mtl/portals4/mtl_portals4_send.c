@@ -44,7 +44,6 @@ ompi_mtl_portals4_send_callback(ptl_event_t *ev, struct ompi_mtl_portals4_base_r
                             __FILE__, __LINE__, ev->ni_fail_type);
         ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
         ptl_request->super.super.completion_callback(&ptl_request->super.super);
-        abort();
         return OMPI_ERROR;
     }
 
@@ -425,7 +424,7 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
         break;
 
     case MCA_PML_BASE_SEND_SIZE:
-        abort();
+        return OMPI_ERR_NOT_SUPPORTED;
         break;
     }
 
