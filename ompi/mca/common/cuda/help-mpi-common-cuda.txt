@@ -7,10 +7,31 @@
 # 
 # $HEADER$
 #
+[cuCtxGetCurrent failed not initialized]
+WARNING: The call to cuCtxGetCurrent() failed while attempting to register
+internal memory with the CUDA environment.  The program will continue to run,
+but the performance of GPU memory transfers may be reduced.  This failure
+indicates that the CUDA environment is not yet initialized.  To eliminate
+this warning, ensure that CUDA is initialized prior to calling MPI_Init.
+
+NOTE: You can turn off this warning by setting the MCA parameter
+      mpi_common_cuda_warning to 0.
+#
 [cuCtxGetCurrent failed]
-WARNING: The call to cuCtxGetCurrent() failed while initializing the
-CUDA support.  Support for CUDA registered memory is disabled.
+WARNING: The call to cuCtxGetCurrent() failed while attempting to register
+internal memory with the CUDA environment.  The program will continue to run,
+but the performance of GPU memory transfers may be reduced.
   cuCtxGetCurrent return value:   %d
+
+NOTE: You can turn off this warning by setting the MCA parameter
+      mpi_common_cuda_warning to 0.
+#
+[cuCtxGetCurrent returned NULL]
+WARNING: The call to cuCtxGetCurrent() failed while attempting to register
+internal memory with the CUDA environment.  The program will continue to run,
+but the performance of GPU memory transfers may be reduced.  This failure
+indicates that there is no CUDA context yet.  To eliminate this warning,
+ensure that there is a CUDA context prior to calling MPI_Init.
 
 NOTE: You can turn off this warning by setting the MCA parameter
       mpi_common_cuda_warning to 0.
