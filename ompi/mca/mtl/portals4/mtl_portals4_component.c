@@ -217,7 +217,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 
     /* Create portal table entries */
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
-                     PTL_PT_FLOWCTRL,
+                     PTL_PT_ONLY_USE_ONCE | PTL_PT_FLOWCTRL,
                      ompi_mtl_portals4.eq_h,
                      REQ_SEND_TABLE_ID,
                      &ompi_mtl_portals4.send_idx);
@@ -228,7 +228,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
-                     PTL_PT_FLOWCTRL,
+                     PTL_PT_ONLY_USE_ONCE,
                      ompi_mtl_portals4.eq_h,
                      REQ_READ_TABLE_ID,
                      &ompi_mtl_portals4.read_idx);
