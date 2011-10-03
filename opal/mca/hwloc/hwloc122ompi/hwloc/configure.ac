@@ -86,7 +86,7 @@ AC_SUBST([libhwloc_so_version])
 AH_TOP([/* -*- c -*-
  *
  * Copyright © 2009 CNRS, INRIA., Université Bordeaux 1  All rights reserved.
- * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow

@@ -6,6 +6,36 @@
  * See COPYING in top-level directory.
  */
 
+/*=====================================================================
+ *                 PLEASE GO READ THE DOCUMENTATION!
+ *         ------------------------------------------------
+ *               $tarball_directory/doc/doxygen-doc/
+ *                                or                            
+ *           http://www.open-mpi.org/projects/hwloc/doc/
+ *=====================================================================
+ *
+ * FAIR WARNING: Do NOT expect to be able to figure out all the
+ * subtleties of hwloc by simply reading function prototypes and
+ * constant descrptions here in this file.
+ *
+ * Hwloc has wonderful documentation in both PDF and HTML formats for
+ * your reading pleasure.  The formal documentation explains a LOT of
+ * hwloc-specific concepts, provides definitions, and discusses the
+ * "big picture" for many of the things that you'll find here in this
+ * header file.
+ *
+ * The PDF/HTML documentation was generated via Doxygen; much of what
+ * you'll see in there is also here in this file.  BUT THERE IS A LOT
+ * THAT IS IN THE PDF/HTML THAT IS ***NOT*** IN hwloc.h!
+ *
+ * There are entire paragraph-length descriptions, discussions, and
+ * pretty prictures to explain subtle corner cases, provide concrete
+ * examples, etc.
+ *
+ * Please, go read the documentation.  :-)
+ *
+ *=====================================================================*/
+
 /** \file
  * \brief The hwloc API.
  *
@@ -398,7 +428,7 @@ union hwloc_obj_attr_u {
   /** \brief Cache-specific Object Attributes */
   struct hwloc_cache_attr_s {
     hwloc_uint64_t size;			  /**< \brief Size of cache in bytes */
-    unsigned depth;			  /**< \brief Depth of cache */
+    unsigned depth;			  /**< \brief Depth of cache (e.g., L1, L2, ...etc.) */
     unsigned linesize;			  /**< \brief Cache-line size in bytes */
   } cache;
   /** \brief Group-specific Object Attributes */
@@ -775,7 +805,7 @@ HWLOC_DECLSPEC const struct hwloc_topology_support *hwloc_topology_get_support(h
 
 
 
-/** \defgroup hwlocality_tinker Tinker with topologies.
+/** \defgroup hwlocality_tinker Tinker With Topologies.
  * @{
  */
 
@@ -860,8 +890,13 @@ HWLOC_DECLSPEC int hwloc_topology_restrict(hwloc_topology_t __hwloc_restrict top
 
 
 
-/** \defgroup hwlocality_information Get some Topology Information
+/** \defgroup hwlocality_information Get Some Topology Information
  * @{
+ *
+ * Be sure to see the figure in \ref termsanddefs that shows a
+ * complete topology tree, including depths, child/sibling/cousin
+ * relationships, and an example of an asymmetric topology where one
+ * socket has fewer caches than its peers.
  */
 
 /** \brief Get the depth of the hierarchical tree of objects.
@@ -895,7 +930,8 @@ enum hwloc_get_type_depth_e {
  */
 HWLOC_DECLSPEC hwloc_obj_type_t hwloc_get_depth_type (hwloc_topology_t topology, unsigned depth) __hwloc_attribute_pure;
 
-/** \brief Returns the width of level at depth \p depth */
+/** \brief Returns the width of level at depth \p depth.
+ */
 HWLOC_DECLSPEC unsigned hwloc_get_nbobjs_by_depth (hwloc_topology_t topology, unsigned depth) __hwloc_attribute_pure;
 
 /** \brief Returns the width of level type \p type
@@ -929,6 +965,11 @@ HWLOC_DECLSPEC int hwloc_topology_is_thissystem(hwloc_topology_t  __hwloc_restri
 
 /** \defgroup hwlocality_traversal Retrieve Objects
  * @{
+ *
+ * Be sure to see the figure in \ref termsanddefs that shows a
+ * complete topology tree, including depths, child/sibling/cousin
+ * relationships, and an example of an asymmetric topology where one
+ * socket has fewer caches than its peers.
  */
 
 /** \brief Returns the topology object at logical index \p idx from depth \p depth */
@@ -1146,24 +1187,30 @@ typedef enum {
                                    * support of CPU bindings, i.e. potentially
                                    * return -1 with errno set to ENOSYS in some
                                    * cases.
+                                   *
+                                   * This flag is only meaningful when
+                                   * used with functions that set the
+                                   * CPU binding.  It is ignored when
+                                   * used with functions that get CPU
+                                   * binding information.
                                    */
 } hwloc_cpubind_flags_t;
 
-/** \brief Bind current process or thread on cpus given in bitmap \p set
+/** \brief Bind current process or thread on cpus given in bitmap \p set.
  *
  * \return -1 with errno set to ENOSYS if the action is not supported
  * \return -1 with errno set to EXDEV if the binding cannot be enforced
  */
 HWLOC_DECLSPEC int hwloc_set_cpubind(hwloc_topology_t topology, hwloc_const_cpuset_t set, int flags);
 
-/** \brief Get current process or thread binding
+/** \brief Get current process or thread binding.
  *
  * Writes into \p set the cpuset which the process or thread (according to \e
  * flags) was last bound to.
  */
 HWLOC_DECLSPEC int hwloc_get_cpubind(hwloc_topology_t topology, hwloc_cpuset_t set, int flags);
 
-/** \brief Bind a process \p pid on cpus given in bitmap \p set
+/** \brief Bind a process \p pid on cpus given in bitmap \p set.
  *
  * \note hwloc_pid_t is pid_t on unix platforms, and HANDLE on native Windows
  * platforms
@@ -1172,17 +1219,21 @@ HWLOC_DECLSPEC int hwloc_get_cpubind(hwloc_topology_t topology, hwloc_cpuset_t s
  */
 HWLOC_DECLSPEC int hwloc_set_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_const_cpuset_t set, int flags);
 
-/** \brief Get the current binding of process \p pid
+/** \brief Get the current binding of process \p pid.
  *
  * \note hwloc_pid_t is pid_t on unix platforms, and HANDLE on native Windows
  * platforms
  *
  * \note HWLOC_CPUBIND_THREAD can not be used in \p flags.
+ *
+ * \note As a special case on Linux, if a tid (thread ID) is supplied
+ * instead of a pid (process ID), the binding for that specific thread
+ * is returned.
  */
 HWLOC_DECLSPEC int hwloc_get_proc_cpubind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_cpuset_t set, int flags);
 
 #ifdef hwloc_thread_t
-/** \brief Bind a thread \p thread on cpus given in bitmap \p set
+/** \brief Bind a thread \p thread on cpus given in bitmap \p set.
  *
  * \note hwloc_thread_t is pthread_t on unix platforms, and HANDLE on native
  * Windows platforms
@@ -1193,7 +1244,7 @@ HWLOC_DECLSPEC int hwloc_set_thread_cpubind(hwloc_topology_t topology, hwloc_thr
 #endif
 
 #ifdef hwloc_thread_t
-/** \brief Get the current binding of thread \p tid
+/** \brief Get the current binding of thread \p tid.
  *
  * \note hwloc_thread_t is pthread_t on unix platforms, and HANDLE on native
  * Windows platforms
@@ -1220,6 +1271,10 @@ HWLOC_DECLSPEC int hwloc_get_last_cpu_location(hwloc_topology_t topology, hwloc_
  * outdated.
  *
  * \note HWLOC_CPUBIND_THREAD can not be used in \p flags.
+ *
+ * \note As a special case on Linux, if a tid (thread ID) is supplied
+ * instead of a pid (process ID), the binding for that specific thread
+ * is returned.
  */
 HWLOC_DECLSPEC int hwloc_get_proc_last_cpu_location(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_cpuset_t set, int flags);
 
