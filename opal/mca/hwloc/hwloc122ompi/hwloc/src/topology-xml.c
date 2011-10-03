@@ -354,10 +354,10 @@ hwloc__xml_import_next_attr(hwloc__xml_import_state_t state, char **namep, char 
 	if (hwloc__xml_verbose())
 	  fprintf(stderr, "ignoring unexpected xml attr type %u\n", attr->type);
       }
-    return -1;
 #else
     assert(0);
 #endif
+    return -1;
   } else {
     int namelen;
     size_t len, escaped;
@@ -444,10 +444,10 @@ hwloc__xml_import_find_child(hwloc__xml_import_state_t state,
 	if (hwloc__xml_verbose())
 	  fprintf(stderr, "ignoring unexpected xml node type %u\n", child->type);
       }
-    return 0;
 #else
     assert(0);
 #endif
+    return 0;
   } else {
     char *buffer = state->tagbuffer;
     char *end;
@@ -506,10 +506,10 @@ hwloc__xml_import_close_tag(hwloc__xml_import_state_t state)
   if (state->use_libxml) {
 #ifdef HWLOC_HAVE_LIBXML2
     /* nothing */
-    return 0;
 #else
     assert(0);
 #endif
+    return 0;
   } else {
     char *buffer = state->tagbuffer;
     char *end;
@@ -950,7 +950,7 @@ hwloc__xml_export_escape_string(const char *src)
     case '<':  strcpy(dst, "&lt;");   replen=4; break;
     case '>':  strcpy(dst, "&gt;");   replen=4; break;
     case '&':  strcpy(dst, "&amp;");  replen=5; break;
-    default: break;
+    default: replen=0; break;
     }
     dst+=replen; src++;
 
