@@ -1120,22 +1120,6 @@ remove_ignored(hwloc_topology_t topology, hwloc_obj_t *pparent)
   }
 }
 
-/* Remove an object and its children from its parent and free them.
- * Only updates next_sibling/first_child pointers,
- * so may only be used during early discovery.
- */
-static void
-unlink_and_free_object_and_children(hwloc_obj_t *pobj)
-{
-  hwloc_obj_t obj = *pobj, child, *pchild;
-
-  for_each_child_safe(child, obj, pchild)
-    unlink_and_free_object_and_children(pchild);
-
-  *pobj = obj->next_sibling;
-  hwloc_free_unlinked_object(obj);
-}
-
 /* Remove all children whose cpuset is empty, except NUMA nodes
  * since we want to keep memory information.  */
 static void
