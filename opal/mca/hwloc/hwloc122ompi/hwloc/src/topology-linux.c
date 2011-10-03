@@ -2059,7 +2059,7 @@ hwloc_read_raw(const char *p, const char *p1, size_t *bytes_read, int root_fd)
 
   file = hwloc_open(fname, root_fd);
   if (-1 == file) {
-      goto out;
+      goto out_no_close;
   }
   if (fstat(file, &fs)) {
     goto out;
@@ -2079,6 +2079,7 @@ hwloc_read_raw(const char *p, const char *p1, size_t *bytes_read, int root_fd)
 
  out:
   close(file);
+ out_no_close:
   if (NULL != fname) {
       free(fname);
   }

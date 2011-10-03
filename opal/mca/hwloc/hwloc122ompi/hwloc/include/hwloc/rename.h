@@ -263,6 +263,9 @@ extern "C" {
 #define hwloc_cpuset_zero HWLOC_NAME(cpuset_zero)
 #define hwloc_cpuset_fill HWLOC_NAME(cpuset_fill)
 #define hwloc_cpuset_from_ulong HWLOC_NAME(cpuset_from_ulong)
+#define hwloc_cpuset_taskset_snprintf HWLOC_NAME(cpuset_taskset_snprintf)
+#define hwloc_cpuset_taskset_asprintf HWLOC_NAME(cpuset_taskset_asprintf)
+#define hwloc_cpuset_taskset_sscanf HWLOC_NAME(cpuset_taskset_sscanf)
 
 #define hwloc_cpuset_from_ith_ulong HWLOC_NAME(cpuset_from_ith_ulong)
 #define hwloc_cpuset_to_ulong HWLOC_NAME(cpuset_to_ulong)

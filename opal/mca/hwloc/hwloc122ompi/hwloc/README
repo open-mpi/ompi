@@ -335,7 +335,8 @@ The basic interface is available in hwloc.h. It essentially offers low-level
 routines for advanced programmers that want to manually manipulate objects and
 follow links between them. Documentation for everything in hwloc.h are provided
 later in this document. Developers should also look at hwloc/helper.h (and also
-in this document, which provides good higher-level topology traversal examples.
+in this document, which provides good higher-level topology traversal
+examples).
 
 To precisely define the vocabulary used by hwloc, a Terms and Definitions
 section is available and should probably be read first.
@@ -684,5 +685,5 @@ Make sure to have had a look at those too!
 
 -------------------------------------------------------------------------------
 
-Generated on Thu Sep 22 2011 10:07:44 for Hardware Locality (hwloc) by  doxygen
+Generated on Mon Oct 3 2011 09:54:38 for Hardware Locality (hwloc) by  doxygen
 1.7.4

@@ -28,6 +28,11 @@ extern "C" {
 
 /** \defgroup hwlocality_helper_types Object Type Helpers
  * @{
+ *
+ * Be sure to see the figure in \ref termsanddefs that shows a
+ * complete topology tree, including depths, child/sibling/cousin
+ * relationships, and an example of an asymmetric topology where one
+ * socket has fewer caches than its peers.
  */
 
 /** \brief Returns the depth of objects of type \p type or below
@@ -82,6 +87,11 @@ hwloc_get_type_or_above_depth (hwloc_topology_t topology, hwloc_obj_type_t type)
 
 /** \defgroup hwlocality_helper_traversal_basic Basic Traversal Helpers
  * @{
+ *
+ * Be sure to see the figure in \ref termsanddefs that shows a
+ * complete topology tree, including depths, child/sibling/cousin
+ * relationships, and an example of an asymmetric topology where one
+ * socket has fewer caches than its peers.
  */
 
 /** \brief Returns the top-object of the topology-tree.
@@ -514,6 +524,11 @@ hwloc_get_shared_cache_covering_obj (hwloc_topology_t topology __hwloc_attribute
 
 /** \defgroup hwlocality_helper_traversal Advanced Traversal Helpers
  * @{
+ *
+ * Be sure to see the figure in \ref termsanddefs that shows a
+ * complete topology tree, including depths, child/sibling/cousin
+ * relationships, and an example of an asymmetric topology where one
+ * socket has fewer caches than its peers.
  */
 
 /** \brief Do a depth-first traversal of the topology to find and sort

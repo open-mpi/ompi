@@ -16,7 +16,7 @@ release=2
 # requirement is that it must be entirely printable ASCII characters
 # and have no white space.
 
-greek=ompirc2
+greek=ompi
 
 # If want_repo_rev=1, then the SVN r number will be included in the overall
 # hwloc version number in some form.
@@ -41,7 +41,7 @@ want_repo_rev=1
 # from an SVN checkout, if repo_rev=-1, then its value is replaced
 # with the output of "svnversion".
 
-repo_rev=r3839
+repo_rev=r3896
 
 # The date when this release was created
 

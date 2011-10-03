@@ -23,7 +23,8 @@ Version 1.2.2
 * Fix XML import of very large page sizes or counts on 32bits platform,
   thanks to Karsten Hopp for the RedHat ticket.
 * Fix crash when administrator limitations such as Linux cgroup require
-  to restrict distance matrices.
+  to restrict distance matrices. Thanks to Ake Sandgren for reporting the
+  problem.
 * Fix the removal of objects such as AMD Magny-Cours dual-node sockets
   in case of administrator restrictions.
 * Improve error reporting and messages in case of wrong synthetic topology
