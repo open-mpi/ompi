@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -17,7 +17,6 @@
  * $HEADER$
  */
 
-
 #include "ompi_config.h"
 #include "fbtl_posix.h"
 
@@ -26,7 +25,6 @@
 #include <sys/uio.h>
 #include <aio.h>
 #include "ompi/constants.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/fbtl/fbtl.h"
 
 size_t 

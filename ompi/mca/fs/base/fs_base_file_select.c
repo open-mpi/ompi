@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -25,7 +25,6 @@
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
 #include "ompi/mca/io/ompio/io_ompio.h"
@@ -292,7 +291,6 @@ int mca_fs_base_file_select (struct mca_io_ompio_file_t *file,
        /*
         * This typically means that there was no component which was
         * able to run properly this time. So, we need to abort
-        * JMS replace with show_help
         */
         OBJ_DESTRUCT(&queried);
         return OMPI_ERROR;
