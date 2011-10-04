@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -76,5 +76,5 @@ static int pubsub_orte_component_query(mca_base_module_t **module, int *priority
     
     *priority = 50;
     *module = (mca_base_module_t *) &ompi_pubsub_orte_module;
-    return ORTE_SUCCESS;
+    return OMPI_SUCCESS;
 }
