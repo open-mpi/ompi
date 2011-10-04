@@ -1080,7 +1080,7 @@ do {                                             \
 #define UNPACK_BUFFER(buffer, var, count, type, error_msg)                     \
  {                                                                             \
     orte_std_cntr_t n = count;                                                 \
-    if (ORTE_SUCCESS != (ret = opal_dss.unpack(buffer, &(var), &n, type)) ) {  \
+    if (OPAL_SUCCESS != (ret = opal_dss.unpack(buffer, &(var), &n, type)) ) {  \
         opal_output(mca_crcp_bkmrk_component.super.output_handle,               \
                     "%s (Return %d)", error_msg, ret);                         \
         exit_status = ret;                                                     \
@@ -2372,7 +2372,7 @@ static int ompi_crcp_bkmrk_request_complete_irecv_init(struct ompi_request_t *re
                                          false, /* Mark as inactive */
                                          &content_ref);
     if( NULL == content_ref ) {
-        exit_status = ORTE_ERROR;
+        exit_status = OMPI_ERROR;
         goto DONE;
     }
 
@@ -3197,7 +3197,7 @@ static int traffic_message_append(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                   struct ompi_communicator_t* comm,
                                   ompi_crcp_bkmrk_pml_traffic_message_ref_t **msg_ref)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int ret, exit_status = OMPI_SUCCESS;
     size_t ddt_size = 0;
 
     if( NULL != datatype ) {
@@ -3312,7 +3312,7 @@ static int traffic_message_move(ompi_crcp_bkmrk_pml_traffic_message_ref_t *old_m
                                 bool keep_active,
                                 bool remove)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int ret, exit_status = OMPI_SUCCESS;
     ompi_crcp_bkmrk_pml_message_content_ref_t *new_content = NULL, *prev_content = NULL;
     ompi_request_t *request = NULL;
     bool loc_already_drained = false;
@@ -3783,7 +3783,7 @@ static int drain_message_append(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
                                 struct ompi_communicator_t* comm,
                                 ompi_crcp_bkmrk_pml_drain_message_ref_t **msg_ref)
 {
-    int ret, exit_status = ORTE_SUCCESS;
+    int ret, exit_status = OMPI_SUCCESS;
     ompi_crcp_bkmrk_pml_message_content_ref_t *content_ref = NULL;
 
     /*
@@ -4751,7 +4751,7 @@ static int ft_event_post_drain_acks(void)
         drain_msg_ack = (ompi_crcp_bkmrk_pml_drain_message_ack_ref_t*)item;
 
         /* Post the receive */
-        if( OMPI_SUCCESS != (ret = orte_rml.recv_buffer_nb( &drain_msg_ack->peer,
+        if( ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb( &drain_msg_ack->peer,
                                                             OMPI_CRCP_COORD_BOOKMARK_TAG,
                                                             0,
                                                             drain_message_ack_cbfunc,
@@ -5624,7 +5624,7 @@ static int do_send_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
      * Check return value from peer to see if we found a match.
      */
     if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
-        exit_status = ORTE_ERROR;
+        exit_status = OMPI_ERROR;
         goto cleanup;
     }
         
@@ -5799,7 +5799,6 @@ static int do_recv_msg_detail(ompi_crcp_bkmrk_pml_peer_ref_t *peer_ref,
     int ret;
 
     if (NULL == (buffer = OBJ_NEW(opal_buffer_t))) {
-        exit_status = ORTE_ERROR;
         goto cleanup;
     }
 

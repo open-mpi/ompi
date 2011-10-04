@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -212,7 +212,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         /*
          * Abort peers in this communicator group. Does not include self.
          */
-        if( OMPI_SUCCESS != (ret = orte_errmgr.abort_peers(abort_procs, nabort_procs)) ) {
+        if( ORTE_SUCCESS != (ret = orte_errmgr.abort_peers(abort_procs, nabort_procs)) ) {
             orte_errmgr.abort(ret, "Open MPI failed to abort all of the procs requested (%d).", ret);
         }
     }

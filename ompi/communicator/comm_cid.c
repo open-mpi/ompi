@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -802,7 +802,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         sbuf = OBJ_NEW(opal_buffer_t);
         rbuf = OBJ_NEW(opal_buffer_t);
         
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(sbuf, tmpbuf, (orte_std_cntr_t)count, OPAL_INT))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(sbuf, tmpbuf, (orte_std_cntr_t)count, OPAL_INT))) {
             goto exit;
         }
 
@@ -823,7 +823,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
             }
         }
 
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, outbuf, &size_count, OPAL_INT))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(rbuf, outbuf, &size_count, OPAL_INT))) {
             goto exit;
         }
         OBJ_RELEASE(sbuf);

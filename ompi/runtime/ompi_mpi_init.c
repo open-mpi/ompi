@@ -306,7 +306,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Setup enough to check get/set MCA params */
 
-    if (ORTE_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
+    if (OPAL_SUCCESS != (ret = opal_init_util(&argc, &argv))) {
         error = "ompi_mpi_init: opal_init_util failed";
         goto error;
     }
@@ -717,7 +717,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* exchange connection info - this function also acts as a barrier
      * as it will not return until the exchange is complete
      */
-    if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
         error = "orte_grpcomm_modex failed";
         goto error;
     }
@@ -800,7 +800,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* wait for everyone to reach this point */
-    if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
         error = "orte_grpcomm_barrier failed";
         goto error;
     }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2010 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -112,7 +112,7 @@ int ompi_crcp_bkmrk_component_query(mca_base_module_t **module, int *priority)
     *priority = mca_crcp_bkmrk_component.super.priority;
     *module = (mca_base_module_t *)&loc_module;
 
-    return ORTE_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 int ompi_crcp_bkmrk_module_init(void)

@@ -186,7 +186,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             return OMPI_ERROR;
         }
         
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(nbuf, &size, 1, OPAL_INT))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(nbuf, &size, 1, OPAL_INT))) {
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
@@ -268,7 +268,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
             rc = orte_rml.send_buffer(&carport, nbuf, tag, 0);
         }
 
-        if (ORTE_SUCCESS != (rc = opal_dss.unload(cabuf, &rnamebuf, &rnamebuflen))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.unload(cabuf, &rnamebuf, &rnamebuflen))) {
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
@@ -319,13 +319,13 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
     if (NULL == nrbuf) {
         goto exit;
     }
-    if ( ORTE_SUCCESS != ( rc = opal_dss.load(nrbuf, rnamebuf, rnamebuflen))) {
+    if ( OPAL_SUCCESS != ( rc = opal_dss.load(nrbuf, rnamebuf, rnamebuflen))) {
         ORTE_ERROR_LOG(rc);
         goto exit;
     }
 
     num_vals = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(nrbuf, &rsize, &num_vals, OPAL_INT))) {
+    if (OPAL_SUCCESS != (rc = opal_dss.unpack(nrbuf, &rsize, &num_vals, OPAL_INT))) {
         ORTE_ERROR_LOG(rc);
         goto exit;
     }
@@ -402,7 +402,7 @@ static int connect_accept ( ompi_communicator_t *comm, int root,
                              "%s dpm:orte:connect_accept executing modex",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-        if (OMPI_SUCCESS != (rc = orte_grpcomm.modex(&all_procs))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.modex(&all_procs))) {
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
@@ -929,13 +929,13 @@ static int open_port(char *port_name, orte_rml_tag_t given_tag)
     OPAL_THREAD_LOCK(&ompi_dpm_port_mutex);
 
     if (NULL == orte_process_info.my_hnp_uri) {
-        rc = ORTE_ERR_NOT_AVAILABLE;
+        rc = OMPI_ERR_NOT_AVAILABLE;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     
     if (NULL == (rml_uri = orte_rml.get_contact_info())) {
-        rc = ORTE_ERROR;
+        rc = OMPI_ERROR;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -1011,7 +1011,7 @@ static int parse_port_name(char *port_name,
     
     /* find the ':' demarking the RML tag we added to the end */
     if (NULL == (ptr = strrchr(tmpstring, ':'))) {
-        rc = ORTE_ERR_NOT_FOUND;
+        rc = OMPI_ERR_NOT_FOUND;
         goto cleanup;
     }
     
@@ -1024,7 +1024,7 @@ static int parse_port_name(char *port_name,
     
     /* now split out the second field - the uri of the remote proc */
     if (NULL == (ptr = strchr(tmpstring, '+'))) {
-        rc = ORTE_ERR_NOT_FOUND;
+        rc = OMPI_ERR_NOT_FOUND;
         goto cleanup;
     }
     *ptr = '\0';
@@ -1036,7 +1036,7 @@ static int parse_port_name(char *port_name,
     if(NULL != rml_uri) *rml_uri = strdup(ptr);
     if(NULL != ptag) *ptag = tag;
     
-    return ORTE_SUCCESS;
+    return OMPI_SUCCESS;
     
 cleanup:
     /* release the tmp storage */

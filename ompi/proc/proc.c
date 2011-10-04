@@ -420,19 +420,19 @@ ompi_proc_pack(ompi_proc_t **proclist, int proclistsize, opal_buffer_t* buf)
      */
     for (i=0; i<proclistsize; i++) {
         rc = opal_dss.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
-        if(rc != ORTE_SUCCESS) {
+        if(rc != OPAL_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
         rc = opal_dss.pack(buf, &(proclist[i]->proc_arch), 1, OPAL_UINT32);
-        if(rc != ORTE_SUCCESS) {
+        if(rc != OPAL_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
         rc = opal_dss.pack(buf, &(proclist[i]->proc_hostname), 1, OPAL_STRING);
-        if(rc != ORTE_SUCCESS) {
+        if(rc != OPAL_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
@@ -515,21 +515,21 @@ ompi_proc_unpack(opal_buffer_t* buf,
         int rc;
         
         rc = opal_dss.unpack(buf, &new_name, &count, ORTE_NAME);
-        if (rc != ORTE_SUCCESS) {
+        if (rc != OPAL_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             free(plist);
             free(newprocs);
             return rc;
         }
         rc = opal_dss.unpack(buf, &new_arch, &count, OPAL_UINT32);
-        if (rc != ORTE_SUCCESS) {
+        if (rc != OPAL_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             free(plist);
             free(newprocs);
             return rc;
         }
         rc = opal_dss.unpack(buf, &new_hostname, &count, OPAL_STRING);
-        if (rc != ORTE_SUCCESS) {
+        if (rc != OPAL_SUCCESS) {
             ORTE_ERROR_LOG(rc);
             free(plist);
             free(newprocs);

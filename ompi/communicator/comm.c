@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -1041,7 +1041,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
                                      ompi_communicator_t *bridge_comm, 
                                      int local_leader,
                                      int remote_leader,
-                                     orte_rml_tag_t tag,
+                                     int tag,
                                      int rsize)
 {
 
@@ -1063,7 +1063,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     if (local_rank == local_leader) {
         sbuf = OBJ_NEW(opal_buffer_t);
         if (NULL == sbuf) {
-            rc = ORTE_ERROR;
+            rc = OMPI_ERROR;
             goto err_exit;
         } 
         if(OMPI_GROUP_IS_DENSE(local_comm->c_local_group)) {
@@ -1081,7 +1081,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        if (ORTE_SUCCESS != (rc = opal_dss.unload(sbuf, &sendbuf, &size_len))) {
+        if (OPAL_SUCCESS != (rc = opal_dss.unload(sbuf, &sendbuf, &size_len))) {
             goto err_exit;
         }
     
@@ -1149,7 +1149,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
 
     rbuf = OBJ_NEW(opal_buffer_t);
     if (NULL == rbuf) {
-        rc = ORTE_ERROR;
+        rc = OMPI_ERROR;
         goto err_exit;
     }
     
@@ -1166,7 +1166,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
  err_exit:
     /* rprocs isn't freed unless we have an error, 
        since it is used in the communicator */
-    if ( OMPI_SUCCESS !=rc ) {
+    if ( OMPI_SUCCESS != rc ) {
         opal_output(0, "%d: Error in ompi_get_rprocs\n", local_rank);
         if ( NULL != rprocs ) {
             free ( rprocs );

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -372,8 +372,7 @@ static int set_remote_info(mca_btl_base_endpoint_t* endpoint,
            mca_btl_wv_component.num_qps);
     
     BTL_VERBOSE(("Setting QP info,  LID = %d", endpoint->rem_info.rem_lid));
-    return ORTE_SUCCESS;
-
+    return OMPI_SUCCESS;
 }
 
 
@@ -616,20 +615,20 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
     
     if (NULL == buffer) {
          ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-         return ORTE_ERR_OUT_OF_RESOURCE;
+         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* pack the info in the send buffer */ 
     BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT8));
     rc = opal_dss.pack(buffer, &message_type, 1, OPAL_UINT8);
-    if (ORTE_SUCCESS != rc) {
+    if (OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT64));
     rc = opal_dss.pack(buffer, &endpoint->subnet_id, 1, OPAL_UINT64);
-    if (ORTE_SUCCESS != rc) {
+    if (OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -640,13 +639,13 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
         rc = opal_dss.pack(buffer,
                            &endpoint->rem_info.rem_qps[0].rem_qp_num, 1,
                            OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT16));
         rc = opal_dss.pack(buffer, &endpoint->rem_info.rem_lid, 1, OPAL_UINT16);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -659,14 +658,14 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
             BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
             rc = opal_dss.pack(buffer, &endpoint->qps[qp].qp->lcl_qp->qp_num,
                                1, OPAL_UINT32);
-            if (ORTE_SUCCESS != rc) {
+            if (OPAL_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
             BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
             rc = opal_dss.pack(buffer, &endpoint->qps[qp].qp->lcl_psn, 1,
                                OPAL_UINT32); 
-            if (ORTE_SUCCESS != rc) {
+            if (OPAL_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -674,20 +673,20 @@ static int send_connect_data(mca_btl_base_endpoint_t* endpoint,
         
         BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT16));
         rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->lid, 1, OPAL_UINT16);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
         rc = opal_dss.pack(buffer, &endpoint->endpoint_btl->device->mtu, 1,
                 OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         BTL_VERBOSE(("packing %d of %d\n", 1, OPAL_UINT32));
         rc = opal_dss.pack(buffer, &endpoint->index, 1, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

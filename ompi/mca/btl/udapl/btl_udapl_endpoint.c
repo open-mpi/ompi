@@ -524,20 +524,20 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
 
     if(NULL == buf) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     OPAL_THREAD_ADD32(&(endpoint->endpoint_btl->udapl_connect_inprogress), 1);
 
     /* Pack our address information */
     rc = opal_dss.pack(buf, &addr->port, 1, OPAL_UINT64);
-    if(ORTE_SUCCESS != rc) {
+    if(OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     rc = opal_dss.pack(buf, &addr->addr, sizeof(DAT_SOCK_ADDR), OPAL_UINT8);
-    if(ORTE_SUCCESS != rc) {
+    if(OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -567,14 +567,14 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
 
     /* Unpack data */
     rc = opal_dss.unpack(buffer, &addr.port, &cnt, OPAL_UINT64);
-    if(ORTE_SUCCESS != rc) {
+    if(OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
 
     cnt = sizeof(mca_btl_udapl_addr_t);
     rc = opal_dss.unpack(buffer, &addr.addr, &cnt, OPAL_UINT8);
-    if(ORTE_SUCCESS != rc) {
+    if(OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
     }
