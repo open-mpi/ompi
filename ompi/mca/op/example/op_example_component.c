@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -194,8 +194,8 @@ static int example_component_init_query(bool enable_progress_threads,
          background regardless of the value of this parameter as lone
          as the HAVE_THREADS macro is true and the component uses its
          own locking schemes (i.e., does not rely on external
-         OPAL/ORTE/OMPI data structures to be thread safe).  This flag
-         simply indicates whether OPAL/ORTE/OMPI data structures are
+         OPAL/OMPI data structures to be thread safe).  This flag
+         simply indicates whether OPAL/OMPI data structures are
          multi-threaded safe and whether multi-threading sync/IPC
          mechanisms in the OMPI code base are active.
 

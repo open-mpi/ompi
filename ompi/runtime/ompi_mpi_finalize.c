@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -227,7 +227,7 @@ int ompi_mpi_finalize(void)
        MPI barrier doesn't ensure that all messages have been transmitted
        before exiting, so the possibility of a stranded message exists.
     */
-    if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -427,11 +427,11 @@ int ompi_mpi_finalize(void)
 
     /* Leave the RTE */
 
-    if (OMPI_SUCCESS != (ret = orte_finalize())) {
+    if (ORTE_SUCCESS != (ret = orte_finalize())) {
         return ret;
     }
 
-    if (OMPI_SUCCESS != (ret = opal_finalize_util())) {
+    if (OPAL_SUCCESS != (ret = opal_finalize_util())) {
         return ret;
     }
 

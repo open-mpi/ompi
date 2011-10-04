@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -269,9 +269,9 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         /* this won't work for comm spawn and other dynamic
            processes, but will work for initial job start */
         idx = opal_pointer_array_add(&mca_pml_dr.endpoints, (void*) endpoint);
-        if(orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+        if(OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
                            ORTE_PROC_MY_NAME,
-                           &(endpoint->proc_ompi->proc_name)) == OPAL_EQUAL) {
+                           &(endpoint->proc_ompi->proc_name))) {
             mca_pml_dr.my_rank = idx;
         }
         endpoint->local = endpoint->dst = idx;

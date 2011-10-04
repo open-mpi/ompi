@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -360,7 +360,7 @@ static int ompi_cr_coord_pre_ckpt(void) {
      * Notify PML
      *  - Will notify BML and BTL's
      */
-    if( ORTE_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CHECKPOINT))) {
+    if( OMPI_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CHECKPOINT))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -383,7 +383,7 @@ static int ompi_cr_coord_pre_restart(void) {
      *    and handles. On the second pass (once ORTE is restarted) we can
      *    reconnect processes.
      */
-    if( ORTE_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_RESTART_PRE))) {
+    if( OMPI_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_RESTART_PRE))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -405,7 +405,7 @@ static int ompi_cr_coord_pre_continue(void) {
 
     if( orte_cr_continue_like_restart ) {
         /* Mimic ompi_cr_coord_pre_restart(); */
-        if( ORTE_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CONTINUE))) {
+        if( OMPI_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CONTINUE))) {
             exit_status = ret;
             goto cleanup;
         }
@@ -452,7 +452,7 @@ static int ompi_cr_coord_post_restart(void) {
      * Notify PML
      *  - Will notify BML and BTL's
      */
-    if( ORTE_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_RESTART))) {
+    if( OMPI_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_RESTART))) {
         exit_status = ret;
         goto cleanup;
     }
@@ -481,7 +481,7 @@ static int ompi_cr_coord_post_continue(void) {
      * Notify PML
      *  - Will notify BML and BTL's
      */
-    if( ORTE_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CONTINUE))) {
+    if( OMPI_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CONTINUE))) {
         exit_status = ret;
         goto cleanup;
     }

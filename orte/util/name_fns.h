@@ -66,7 +66,7 @@ ORTE_DECLSPEC char* orte_util_print_epoch(const orte_epoch_t epoch);
 #define ORTE_EPOCH_PRINT(n) \
     orte_util_print_epoch(n)
 #else
-#define ORTE_EPOCH_PRINT(n)
+#define ORTE_EPOCH_PRINT(n) ""
 #endif
 
 ORTE_DECLSPEC char* orte_util_print_job_family(const orte_jobid_t job);

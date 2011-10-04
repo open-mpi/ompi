@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -31,7 +31,6 @@
 #include "mpi.h"
 #include "ompi/group/group.h"
 #include "ompi/mca/coll/coll.h"
-#include "orte/mca/rml/rml_types.h"
 #include "ompi/proc/proc.h"
 
 BEGIN_C_DECLS
@@ -470,7 +469,7 @@ struct ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
                                             ompi_communicator_t *bridge_comm,
                                             int local_leader,
                                             int remote_leader,
-                                            orte_rml_tag_t tag,
+                                            int tag,
                                             int rsize);
 
 /**

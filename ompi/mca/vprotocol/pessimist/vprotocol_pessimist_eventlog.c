@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -34,12 +34,12 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     port = ompi_pubsub.lookup(name, MPI_INFO_NULL);
     if(NULL == port)
     {
-        return ORTE_ERR_NOT_FOUND;
+        return OMPI_ERR_NOT_FOUND;
     }
     V_OUTPUT_VERBOSE(45, "Found port < %s >", port);
     
     /* separate the string into the HNP and RML URI and tag */
-    if (ORTE_SUCCESS != (rc = ompi_dpm.parse_port(port, &hnp_uri, &rml_uri, &el_tag))) {
+    if (OMPI_SUCCESS != (rc = ompi_dpm.parse_port(port, &hnp_uri, &rml_uri, &el_tag))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -50,7 +50,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
         return rc;
     }
     /* make sure we can route rml messages to the destination */
-    if (ORTE_SUCCESS != (rc = ompi_dpm.route_to_port(hnp_uri, &el_proc))) {
+    if (OMPI_SUCCESS != (rc = ompi_dpm.route_to_port(hnp_uri, &el_proc))) {
         ORTE_ERROR_LOG(rc);
         free(rml_uri); free(hnp_uri);
         return rc;
@@ -61,7 +61,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
      * connect/accept */
     OBJ_CONSTRUCT(&buffer, opal_buffer_t);
     rc = orte_rml.send_buffer(&el_proc, &buffer, el_tag+1, 0);
-    if(OMPI_SUCCESS > rc) {
+    if(ORTE_SUCCESS > rc) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);        
         return rc;

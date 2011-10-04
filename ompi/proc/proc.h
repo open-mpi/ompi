@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -57,7 +57,7 @@ struct ompi_proc_t {
     /** this process' name */
     orte_process_name_t             proc_name;
     /** PML specific proc data */
-    struct mca_pml_endpoint_t* proc_pml;
+    struct mca_pml_endpoint_t*      proc_pml;
     /** BML specific proc data */
     struct mca_bml_base_endpoint_t* proc_bml;
     /** architecture of this process */

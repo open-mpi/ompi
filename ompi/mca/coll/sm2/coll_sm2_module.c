@@ -1216,11 +1216,11 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         if (NULL == sbuffer || NULL == rbuffer) {
             fprintf(stderr," Can't allocte memory for sbuffer or rbuffer \n");
             fflush(stderr);
-            return ORTE_ERR_OUT_OF_RESOURCE;
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
         /* Pack my rank , I need it because allgather doesnot work as expected */
         ret = opal_dss.pack(sbuffer, &my_rank, 1, OPAL_UINT32);
-        if (ORTE_SUCCESS != ret) {
+        if (OPAL_SUCCESS != ret) {
             fprintf(stderr," pack returned error %d for my_rank \n",ret);
             fflush(stderr);
             return ret;
@@ -1228,7 +1228,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
         /* Pack socket index */
         ret = opal_dss.pack(sbuffer, my_socket_index, 1, OPAL_UINT32);
-        if (ORTE_SUCCESS != ret) {
+        if (OPAL_SUCCESS != ret) {
             fprintf(stderr," pack returned error %d for my_socket_index \n",ret);
             fflush(stderr);
             return ret;
@@ -1244,8 +1244,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
         ** note !!!! - not sure why this is here, but will leave if for now
         */
         ret = opal_dss.unpack(rbuffer, &dummy, &cnt, ORTE_STD_CNTR);
-        OPAL_OUTPUT_VERBOSE((10, mca_coll_base_output,"Get dummy value %d \n", dummy));
-        if (ORTE_SUCCESS != ret) {
+        if (OPAL_SUCCESS != ret) {
             fprintf(stderr," unpack returned error %d for dummy \n",ret);
             fflush(stderr);
             return OMPI_ERROR;
@@ -1264,7 +1263,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
             /* note !!!! need to store the data for manipulation */
             /* unpack rank*/
             ret = opal_dss.unpack(rbuffer, &rem_rank, &cnt, OPAL_UINT32);
-            if (ORTE_SUCCESS != ret) {
+            if (OPAL_SUCCESS != ret) {
                 fprintf(stderr," unpack returned error %d for rem_rank \n",ret);
                 fflush(stderr);
                 return OMPI_ERROR;
@@ -1272,7 +1271,7 @@ mca_coll_sm2_comm_query(struct ompi_communicator_t *comm, int *priority)
 
             /* unpack socket index */
             ret = opal_dss.unpack(rbuffer, &rem_socket_index, &cnt, OPAL_UINT32);
-            if (ORTE_SUCCESS != ret) {
+            if (OPAL_SUCCESS != ret) {
                 fprintf(stderr," unpack returned error %d for rem_socket_index \n",ret);
                 fflush(stderr);
                 return OMPI_ERROR;
