@@ -314,14 +314,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     daemon.vpid = ORTE_PROC_MY_DAEMON->vpid;
     ORTE_EPOCH_SET(daemon.epoch,ORTE_PROC_MY_DAEMON->epoch);
 
-#if ORTE_ENABLE_EPOCH
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        target->epoch == ORTE_EPOCH_INVALID) {
-#else
-    if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID) {
-#endif
+        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID) ) {
         ret = ORTE_NAME_INVALID;
         goto found;
     }
