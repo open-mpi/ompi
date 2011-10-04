@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -25,7 +25,6 @@
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/util/show_help.h"
 #include "ompi/mca/fcache/fcache.h"
 #include "ompi/mca/fcache/base/base.h"
 #include "ompi/mca/io/ompio/io_ompio.h"

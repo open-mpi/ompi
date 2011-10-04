@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -25,7 +25,6 @@
 
 #include "mpi.h"
 #include "opal/mca/mca.h"
-/*#include "orte/mca/ns/ns_types.h" */
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "ompi/request/request.h"
