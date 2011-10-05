@@ -46,9 +46,6 @@ AC_DEFUN([ORTE_CHECK_PMI],[
 		AC_CHECK_LIB([pmi],[PMI_Init],[],orte_have_pmi_support=no)
 	        AS_IF([test "$orte_have_pmi_support" = "yes"], [
 			AC_MSG_RESULT([yes])
-			AC_MSG_WARN([PMI SUPPORT HAS BEEN INCLUDED - RESULTING])
-			AC_MSG_WARN([BINARIES ARE SUBJECT TO ADDITIONAL LICENSING])
-			AC_MSG_WARN([RESTRICTIONS - SEE THE SLURM LICENSE FOR INFO])
 			orte_enable_pmi=1] [$2],[
 			AC_MSG_RESULT([no])
 			AC_MSG_WARN([PMI support requested (via --with-pmi) but not found.])
