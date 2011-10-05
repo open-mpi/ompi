@@ -60,7 +60,7 @@ void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
 bool opal_cuda_check_bufs(char *dest, char *src)
 {
     int res;
-    CUmemorytype memType;
+    CUmemorytype memType = CU_MEMORYTYPE_HOST;
 
     res = cuPointerGetAttribute(&memType, CU_POINTER_ATTRIBUTE_MEMORY_TYPE, (CUdeviceptr)dest);
     if( memType == CU_MEMORYTYPE_DEVICE){
