@@ -388,7 +388,9 @@ AC_DEFUN([_OMPI_CXX_CHECK_BUILTIN_BACKEND],[
           [ompi_cv_cxx_supports___builtin_expect="yes"],
           [ompi_cv_cxx_supports___builtin_expect="no"])])
     if test "$ompi_cv_cxx_supports___builtin_expect" = "yes" ; then
-        have_builtin_expect=1
+        have_cxx_builtin_expect=1
+    else
+        have_cxx_builtin_expect=0
     fi
     AC_LANG_POP(C++)
 
@@ -402,7 +404,9 @@ AC_DEFUN([_OMPI_CXX_CHECK_BUILTIN_BACKEND],[
           [ompi_cv_cxx_supports___builtin_prefetch="yes"],
           [ompi_cv_cxx_supports___builtin_prefetch="no"])])
     if test "$ompi_cv_cxx_supports___builtin_prefetch" = "yes" ; then
-        have_builtin_prefetch=1
+        have_cxx_builtin_prefetch=1
+    else
+        have_cxx_builtin_prefetch=0
     fi
     AC_LANG_POP(C++)
 ])
