@@ -6,6 +6,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2011      Oracle and/or all its affiliates.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -196,6 +197,8 @@ static int update_state(orte_jobid_t job,
         case ORTE_JOB_STATE_ABORTED:
             /* support batch-operated jobs */
             update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_ABORTED, exit_code);
+            /* order all local procs for this job to be killed */
+            killprocs(jdata->jobid, ORTE_VPID_WILDCARD);
             jdata->num_terminated = jdata->num_procs;
             check_job_complete(jdata);
             break;
@@ -331,6 +334,8 @@ static int update_state(orte_jobid_t job,
     case ORTE_PROC_STATE_ABORTED_BY_SIG:
     case ORTE_PROC_STATE_TERM_WO_SYNC:
         update_proc(jdata, proc, state, pid, exit_code);
+        /* kill all local procs */
+        killprocs(proc->jobid, ORTE_VPID_WILDCARD);
         check_job_complete(jdata);  /* need to set the job state */
         /* the job object for this job will have been NULL'd
          * in the array if the job was solely local. If it isn't
@@ -374,6 +379,8 @@ static int update_state(orte_jobid_t job,
     case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
         /* kill all jobs */
         update_proc(jdata, proc, state, pid, exit_code);
+        /* kill all local procs */
+        killprocs(proc->jobid, ORTE_VPID_WILDCARD);
         check_job_complete(jdata);  /* need to set the job state */
         /* the job object for this job will have been NULL'd
          * in the array if the job was solely local. If it isn't
