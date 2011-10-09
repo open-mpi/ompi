@@ -194,7 +194,7 @@ static void *stdin_main(opal_object_t *obj)
 
     asprintf(&data, "<stdin>\n<notifier severity_int=\"%d\" severity_str=\"%s\" errcode=\"%d\">\n<message>%s</message>\n</notifier>\n</stdin>\n",
              arg->sat_severity,
-             orte_notifier_base_sev2str(arg->sat_severity),
+             orte_notifier_base_sev2str((orte_notifier_base_severity_t)arg->sat_severity),
              arg->sat_errcode,
              arg->sat_msg);
     if (NULL != data) {
@@ -289,7 +289,7 @@ static void do_exec(void)
         while (NULL != (p = strstr(cmd, "$S"))) {
             *p = '\0';
             asprintf(&temp, "%s%s%s", cmd, 
-                     orte_notifier_base_sev2str(sel[0]), p + 2);
+                     orte_notifier_base_sev2str((orte_notifier_base_severity_t)sel[0]), p + 2);
             free(cmd);
             cmd = temp;
         }

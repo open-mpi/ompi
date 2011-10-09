@@ -462,7 +462,7 @@ static int module_get_core_info(int socket, int *num_cores)
 static int module_get_physical_processor_id(int logical_processor_id,
                                             int *physical_processor_id)
 {
-    int obj_type = HWLOC_OBJ_CORE;
+    hwloc_obj_type_t obj_type = HWLOC_OBJ_CORE;
     hwloc_obj_t obj;
     hwloc_bitmap_t good;
     hwloc_topology_t *t;
