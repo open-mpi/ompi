@@ -81,6 +81,7 @@ BEGIN_C_DECLS
 
 enum ompio_fs_type
 {
+    NONE = 0,
     UFS = 1,
     PVFS2 = 2,
     LUSTRE = 3

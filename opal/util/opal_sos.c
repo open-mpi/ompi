@@ -310,13 +310,14 @@ int opal_sos_reporter(const char *file, int line, const char *func,
 void
 opal_sos_report_error(opal_sos_error_t *error)
 {
-    int severity, errnum, ret;
+    opal_sos_severity_t severity;
     char *pretty_error;
+    int errnum, ret;
 
     if (NULL == error)
         return;
 
-    severity = OPAL_SOS_GET_SEVERITY(error->errnum);
+    severity = (opal_sos_severity_t)OPAL_SOS_GET_SEVERITY(error->errnum);
 
     /* An OPAL SOS encoded error number holds no meaning outside
      * the context of Open MPI. We convert it back to the native
