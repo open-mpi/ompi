@@ -143,6 +143,9 @@ void orte_quit(void)
         return;
     }
 
+    /* flag that we are finalizing */
+    orte_finalizing = true;
+
     /* whack any lingering session directory files from our jobs */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
 
