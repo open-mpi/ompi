@@ -1,3 +1,5 @@
+%option nounput
+
 %{ /* -*- C -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
