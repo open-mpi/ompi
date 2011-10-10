@@ -27,8 +27,10 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_grpcomm_pmi_la_SOURCES = $(sources)
-mca_grpcomm_pmi_la_LDFLAGS = -module -avoid-version
+mca_grpcomm_pmi_la_LDFLAGS = -module -avoid-version $(grpcomm_pmi_LDFLAGS)
+mca_grpcomm_pmi_la_LIBADD = $(grpcomm_pmi_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_grpcomm_pmi_la_SOURCES =$(sources)
-libmca_grpcomm_pmi_la_LDFLAGS = -module -avoid-version
+libmca_grpcomm_pmi_la_LDFLAGS = -module -avoid-version $(grpcomm_pmi_LDFLAGS)
+libmca_grpcomm_pmi_la_LIBADD = $(grpcomm_pmi_LIBS)
