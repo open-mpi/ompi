@@ -14,10 +14,19 @@ AC_DEFUN([MCA_orte_grpcomm_pmi_PRIORITY], [10])
 AC_DEFUN([MCA_orte_grpcomm_pmi_CONFIG], [
     AC_CONFIG_FILES([orte/mca/grpcomm/pmi/Makefile])
          
+    ORTE_CHECK_SLURM([grpcomm_pmi], [grpcomm_pmi_good=1], [grpcomm_pmi_good=0])
+         
+    # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
-    AS_IF([test "$orte_enable_slurm_pmi" = "1"],
-          [$1],
+    AS_IF([test "$grpcomm_pmi_good" = "1"],
+          [grpcomm_pmi_WRAPPER_EXTRA_LDFLAGS="$grpcomm_pmi_LDFLAGS"
+           grpcomm_pmiWRAPPER_EXTRA_LIBS="$grpcomm_pmi_LIBS"
+           $1],
           [$2])
 
+    # set build flags to use in makefile
+    AC_SUBST([grpcomm_pmi_CPPFLAGS])
+    AC_SUBST([grpcomm_pmi_LDFLAGS])
+    AC_SUBST([grpcomm_pmi_LIBS])
 
 ])
