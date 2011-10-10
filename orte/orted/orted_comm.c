@@ -745,14 +745,11 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
         }
         /* kill the local procs */
         orte_odls.kill_local_procs(NULL);
-        /* if all our dependent routes are gone, exit */
-        if (0 == orte_routed.num_routes()) {
-            if (ORTE_PROC_IS_HNP) {
-                orte_jobs_complete();
-            } else {
-                orte_quit();
-            }
-        }
+        /* trigger our appropriate exit procedure
+         * NOTE: this event will fire -after- any zero-time events
+         * so any pending relays -do- get sent first
+         */
+        orte_quit();
         return ORTE_SUCCESS;
         break;
             
