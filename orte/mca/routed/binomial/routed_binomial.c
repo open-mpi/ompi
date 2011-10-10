@@ -32,6 +32,7 @@
 #include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/orte_quit.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/data_type_support/orte_dt_support.h"
 
@@ -830,10 +831,21 @@ static int route_lost(const orte_process_name_t *route)
              item = opal_list_get_next(item)) {
             child = (orte_routed_tree_t*)item;
             if (child->vpid == route->vpid) {
+                OPAL_OUTPUT_VERBOSE((4, orte_routed_base_output,
+                                     "%s routed_binomial: removing route to child daemon %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(route)));
                 opal_list_remove_item(&my_children, item);
                 OBJ_RELEASE(item);
                 return ORTE_SUCCESS;
             }
+        }
+        /* if we are the HNP or daemon, AND we are terminating,
+         * then we want to finalize if all our child daemons
+         * have left
+         */
+        if (orte_terminating && 0 == opal_list_get_size(&my_children)) {
+            orte_quit();
         }
     }
 

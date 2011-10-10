@@ -743,6 +743,8 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
             opal_output(0, "%s orted_cmd: received exit cmd",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
+        /* flag that we are terminating */
+        orte_terminating = true;
         /* kill the local procs */
         orte_odls.kill_local_procs(NULL);
         /* trigger our appropriate exit procedure

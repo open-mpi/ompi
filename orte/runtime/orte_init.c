@@ -52,6 +52,7 @@
  */
 bool orte_initialized = false;
 bool orte_finalizing = false;
+bool orte_terminating = false;
 bool orte_debug_flag = false;
 int orte_debug_verbosity;
 char *orte_prohibited_session_dirs = NULL;
