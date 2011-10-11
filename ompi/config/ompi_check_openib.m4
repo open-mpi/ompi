@@ -81,8 +81,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     #
     AC_ARG_ENABLE([openib-rdmacm],
         [AC_HELP_STRING([--enable-openib-rdmacm],
-                        [Enable Open Fabrics RDMACM support in openib BTL (default: enabled)])],
-                        [enable_openib_rdmacm="$enableval"], [enable_openib_rdmacm="yes"])
+                        [Enable Open Fabrics RDMACM support in openib BTL (default: enabled)])])
 
     AS_IF([test ! -z "$with_openib" -a "$with_openib" != "yes"],
           [ompi_check_openib_dir="$with_openib"])
@@ -216,7 +215,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
            # Do we have a recent enough RDMA CM?  Need to have the
            # rdma_get_peer_addr (inline) function (originally appeared
            # in OFED v1.3).
-           if test "$enable_openib_rdmacm" = "yes"; then
+           if test "$enable_openib_rdmacm" != "no"; then
                  AC_CHECK_HEADERS([rdma/rdma_cma.h],
                      [AC_CHECK_LIB([rdmacm], [rdma_create_id],
                          [AC_MSG_CHECKING([for rdma_get_peer_addr])
@@ -228,7 +227,13 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                          AC_MSG_RESULT([$$1_msg])])])
 
                  if test "1" = "$$1_have_rdmacm"; then
-                 $1_LIBS="-lrdmacm $$1_LIBS"
+                     $1_LIBS="-lrdmacm $$1_LIBS"
+                 else
+                     AS_IF([test "$enable_openib_rdmacm" = "yes"],
+                           [AC_MSG_WARN([--enable-openib-rdmacm was specified but the])
+                            AC_MSG_WARN([appropriate files could not be found])
+                            AC_MSG_WARN([Please install librdmacm and librdmacm-devel or disable rdmacm support])
+                            AC_MSG_ERROR([Cannot continue])])
                  fi
            fi
 
