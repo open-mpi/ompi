@@ -68,8 +68,6 @@ AC_DEFUN([MCA_opal_hwloc_hwloc122ompi_CONFIG],[
         # native hwloc XML support
         enable_libxml2=no
         enable_xml=yes
-        opal_hwloc_hwloc122ompi_enable_xml=1
-        AM_CONDITIONAL([HWLOC_HAVE_XML], [test 1 = 1])
 
         HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc122ompi/hwloc], 
                   [AC_MSG_CHECKING([whether hwloc configure succeeded])

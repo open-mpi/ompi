@@ -24,14 +24,12 @@ int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
     for (i=0; i < num_vals; i++) {
         t = tarray[i];
 
-#if OPAL_HAVE_HWLOC_XML
     {
         int len;
 
         /* extract an xml-buffer representation of the tree */
         hwloc_topology_export_xmlbuffer(t, &xmlbuffer, &len);
     }
-#endif
 
         /* add to buffer */
         if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &xmlbuffer, 1, OPAL_STRING))) {
@@ -64,13 +62,11 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
 
         /* convert the xml */
         hwloc_topology_init(&t);
-#if OPAL_HAVE_HWLOC_XML
         if (0 != (rc = hwloc_topology_set_xmlbuffer(t, xmlbuffer, strlen(xmlbuffer)))) {
             hwloc_topology_destroy(t);
             goto cleanup;
         }
         hwloc_topology_load(t);
-#endif
         if (NULL != xmlbuffer) {
             free(xmlbuffer);
         }
@@ -89,7 +85,6 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
 
 int opal_hwloc_copy(hwloc_topology_t *dest, hwloc_topology_t src, opal_data_type_t type)
 {
-#if OPAL_HAVE_HWLOC_XML
     char *xml;
     int len;
 
@@ -102,9 +97,6 @@ int opal_hwloc_copy(hwloc_topology_t *dest, hwloc_topology_t src, opal_data_type
     hwloc_topology_load(*dest);
     free(xml);
     return OPAL_SUCCESS;
-#else
-    return OPAL_ERR_NOT_SUPPORTED;
-#endif
 }
 
 int opal_hwloc_compare(const hwloc_topology_t topo1,
@@ -127,7 +119,6 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
         return OPAL_VALUE2_GREATER;
     }
 
-#if OPAL_HAVE_HWLOC_XML
     {
         char *x1=NULL, *x2=NULL;
         int l1, l2;
@@ -148,7 +139,6 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
             return OPAL_VALUE2_GREATER;
         }
     }
-#endif
 
     return OPAL_EQUAL;
 }
