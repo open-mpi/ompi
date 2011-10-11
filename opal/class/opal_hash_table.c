@@ -25,6 +25,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/constants.h"
+#include "opal/util/bit_ops.h"
 
 /*
  * opal_hash_table_t
@@ -70,12 +71,7 @@ static void opal_hash_table_destruct(opal_hash_table_t* ht)
 int opal_hash_table_init(opal_hash_table_t* ht, size_t table_size)
 {
     size_t i;
-    size_t power2 = 1;
-    size_t tmp = table_size;
-    while(tmp) {
-       tmp >>= 1;
-       power2 <<= 1;
-    }
+    size_t power2 = opal_next_poweroftwo (table_size);
 
     ht->ht_mask = power2-1;
     ht->ht_table = (opal_list_t *)malloc(power2 * sizeof(opal_list_t));

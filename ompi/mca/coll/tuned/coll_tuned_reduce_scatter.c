@@ -21,6 +21,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "opal/util/bit_ops.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
@@ -132,7 +133,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
 							    mca_coll_base_module_t *module)
 {
     int i, rank, size, count, err = OMPI_SUCCESS;
-    int tmp_size = 1, remain = 0, tmp_rank;
+    int tmp_size, remain = 0, tmp_rank;
     int *disps = NULL;
     ptrdiff_t true_lb, true_extent, lb, extent, buf_size;
     char *recv_buf = NULL, *recv_buf_free = NULL;
@@ -189,7 +190,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
     /* figure out power of two mapping: grow until larger than
        comm size, then go back one, to get the largest power of
        two less than comm size */
-    while (tmp_size <= size) tmp_size <<= 1;
+    tmp_size = opal_next_poweroftwo (size); 
     tmp_size >>= 1;
     remain = size - tmp_size;
    

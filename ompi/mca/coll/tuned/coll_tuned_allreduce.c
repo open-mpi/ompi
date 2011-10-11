@@ -20,6 +20,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "opal/util/bit_ops.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
@@ -170,7 +171,8 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
    tmprecv = (char*) rbuf;
 
    /* Determine nearest power of two less than or equal to size */
-   for (adjsize = 0x1; adjsize <= size; adjsize <<= 1); adjsize = adjsize >> 1;
+   adjsize = opal_next_poweroftwo (size);
+   adjsize >>= 1;
 
    /* Handle non-power-of-two case:
       - Even ranks less than 2 * extra_ranks send their data to (rank + 1), and 

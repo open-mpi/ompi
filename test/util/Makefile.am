@@ -5,7 +5,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2011 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -31,8 +31,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
 
 check_PROGRAMS = \
-	opal_sos \
-	opal_path_nfs
+	opal_bit_ops \
+	opal_path_nfs \
+	opal_sos
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -65,6 +66,13 @@ TESTS = \
 #        $(top_builddir)/opal/libopen-pal.la \
 #        $(top_builddir)/test/support/libsupport.a 
 #opal_basename_DEPENDENCIES = $(opal_basename_LDADD)
+
+opal_bit_ops_SOURCES = opal_bit_ops.c
+opal_bit_ops_LDADD = \
+        $(top_builddir)/opal/libopen-pal.la \
+        $(top_builddir)/test/support/libsupport.a
+opal_bit_ops_DEPENDENCIES = $(opal_path_nfs_LDADD)
+
 
 opal_path_nfs_SOURCES = opal_path_nfs.c
 opal_path_nfs_LDADD = \

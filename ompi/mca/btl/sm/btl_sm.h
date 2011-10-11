@@ -39,6 +39,7 @@
 #include "knem_io.h"
 #endif  /* OMPI_BTL_SM_HAVE_KNEM */
 
+#include "opal/util/bit_ops.h"
 #include "opal/class/opal_free_list.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/common/sm/common_sm.h"
@@ -265,9 +266,7 @@ static inline int sm_fifo_init(int fifo_size, mca_mpool_base_module_t *mpool,
     int i, qsize;
 
     /* figure out the queue size (a power of two that is at least 1) */
-    qsize = 1;
-    while ( qsize < fifo_size )
-        qsize <<= 1;
+    qsize = opal_next_poweroftwo_inclusive (fifo_size);
 
     /* allocate the queue in the receiver's address space */
     fifo->queue_recv = (volatile void **)mpool->mpool_alloc(

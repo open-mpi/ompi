@@ -24,6 +24,7 @@
 #include <errno.h>
 
 #include "mpi.h"
+#include "opal/util/bit_ops.h"
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -112,7 +113,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
 
     if ((op->o_flags & OMPI_OP_FLAGS_COMMUTE) &&
         (buf_size < COMMUTATIVE_LONG_MSG) && (!zerocounts)) {
-        int tmp_size = 1, remain = 0, tmp_rank;
+        int tmp_size, remain = 0, tmp_rank;
 
         /* temporary receive buffer.  See coll_basic_reduce.c for details on sizing */
         recv_buf_free = (char*) malloc(buf_size);
@@ -133,7 +134,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
         /* figure out power of two mapping: grow until larger than
            comm size, then go back one, to get the largest power of
            two less than comm size */
-        while (tmp_size <= size) tmp_size <<= 1;
+        tmp_size = opal_next_poweroftwo(size);
         tmp_size >>= 1;
         remain = size - tmp_size;
 

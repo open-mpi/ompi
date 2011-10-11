@@ -20,6 +20,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "opal/util/bit_ops.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
@@ -489,7 +490,7 @@ int ompi_coll_tuned_reduce_scatter_intra_dec_fixed( void *sbuf, void *rbuf,
     total_message_size *= dsize;
 
     /* compute the nearest power of 2 */
-    for (pow2 = 1; pow2 < comm_size; pow2 <<= 1);
+    pow2 = opal_next_poweroftwo_inclusive (comm_size);
 
     if ((total_message_size <= small_message_size) ||
         ((total_message_size <= large_message_size) && (pow2 == comm_size)) ||
@@ -540,7 +541,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
                  " rank %d com_size %d msg_length %lu",
                  ompi_comm_rank(comm), communicator_size, (unsigned long)total_dsize));
 
-    for (pow2_size  = 1; pow2_size < communicator_size; pow2_size <<=1); 
+    pow2_size = opal_next_poweroftwo_inclusive (communicator_size);
 
     /* Decision based on MX 2Gb results from Grig cluster at 
        The University of Tennesse, Knoxville 

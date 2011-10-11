@@ -20,6 +20,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "opal/util/bit_ops.h"
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"
@@ -271,7 +272,7 @@ ompi_coll_tuned_allgather_intra_recursivedoubling(void *sbuf, int scount,
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
 
-   for (pow2size  = 1; pow2size <= size; pow2size <<=1);
+   pow2size = opal_next_poweroftwo (size);
    pow2size >>=1;
 
    /* Current implementation only handles power-of-two number of processes.
