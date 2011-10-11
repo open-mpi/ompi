@@ -915,7 +915,7 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
             return frag; /* match found */
         }
     }
-    for (i = 0; i < comm->last_probed; i++) {
+    for (i = 0; i <= comm->last_probed; i++) {
         mca_pml_ob1_recv_frag_t* frag;
 
         /* loop over messages from the current proc */
