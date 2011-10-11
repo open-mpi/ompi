@@ -230,11 +230,9 @@ supported: given the choice of making parsing code portable between
 all flavors of lex and doing more interesting work on Open MPI, we
 greatly prefer the latter.  
 
-Several POSIXly-oriented developers use the stable flex version
-v2.5.4a from July of 1997.  Others have upgraded to more recent
-versions; these also seem to work fine.  Note that no testing has been
-performed to see what the minimum version of Flex is required by Open
-MPI.  We suggest that you use v2.5.4a at the earliest.
+Note that no testing has been performed to see what the minimum
+version of Flex is required by Open MPI.  We suggest that you use
+v2.5.35 at the earliest.
 
 *** NOTE: Windows builds of Open MPI require Flex version 2.5.35.
 Specifically, we know that v2.5.35 works and 2.5.4a does not.  We have
