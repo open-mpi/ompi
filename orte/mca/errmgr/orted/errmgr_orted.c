@@ -171,12 +171,13 @@ static int update_state(orte_jobid_t job,
     }
 
     OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                "errmgr:orted:update_state() %s) "
-                "------- %s state updated for process %s",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                ((NULL == proc) ? "App. Process" : 
-                 (proc->jobid == ORTE_PROC_MY_HNP->jobid ? "Daemon" : "App. Process")),
-                (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc)));
+                         "errmgr:orted:update_state() %s) "
+                         "------- %s state updated for process %s to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ((NULL == proc) ? "App. Process" : 
+                          (proc->jobid == ORTE_PROC_MY_HNP->jobid ? "Daemon" : "App. Process")),
+                         (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc),
+                        orte_proc_state_to_str(state)));
 
     /* if this is a heartbeat failure, let the HNP handle it */
     if (ORTE_JOB_STATE_HEARTBEAT_FAILED == jobstate ||
