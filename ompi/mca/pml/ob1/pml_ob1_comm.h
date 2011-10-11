@@ -58,6 +58,7 @@ struct mca_pml_comm_t {
     opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
     mca_pml_ob1_comm_proc_t* procs;
     size_t num_procs;
+    size_t last_probed;
 };
 typedef struct mca_pml_comm_t mca_pml_ob1_comm_t;
 
