@@ -230,11 +230,12 @@ int orte_errmgr_hnp_global_update_state(orte_jobid_t job,
 
     OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
                          "errmgr:hnp:update_state() %s) "
-                         "------- %s state updated for process %s",
+                         "------- %s state updated for process %s to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ((NULL == proc_name) ? "App. Process" : 
                           (proc_name->jobid == ORTE_PROC_MY_HNP->jobid ? "Daemon" : "App. Process")),
-                         (NULL == proc_name) ? "NULL" : ORTE_NAME_PRINT(proc_name)));
+                         (NULL == proc_name) ? "NULL" : ORTE_NAME_PRINT(proc_name),
+                         orte_proc_state_to_str(state)));
 
 #if OPAL_ENABLE_FT_CR
     if( mca_errmgr_hnp_component.crmig_enabled &&
