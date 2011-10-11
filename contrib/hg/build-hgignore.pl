@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 #
 # Dumb script to run through all the svn:ignore's in the tree and build
 # build a .hgignore file for Mercurial.  Do a few trivial things to
@@ -29,6 +29,8 @@ my @globals = qw/.libs
 *.dSYM
 *.S
 *.loT
+*.orig
+*.rej
 .git*
 .DS_Store
 stamp-h[1-9]
@@ -59,17 +61,19 @@ $debug = 1
 print "Thinking...\n"
     if (!$debug);
 
-if (-f ".hgignore-local") {
-    open(IN, ".hgignore-local");
-    while (<IN>) {
-	chomp;
-	push(@globals, $_);
-    }
-    close(IN);
-}
-
 # Start at the top level
 process(".");
+
+# See if there's an .hgignore_local file.  If so, add its contents to the end.
+if (-f ".hgignore_local") {
+    open(IN, ".hgignore_local") || die "Can't open .hgignore_local";
+    while (<IN>) {
+        chomp;
+        push(@globals, $_);
+    }
+
+    close(IN);
+}
 
 # If there's an old .hgignore, delete it
 unlink(".hgignore")
