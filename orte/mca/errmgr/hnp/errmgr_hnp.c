@@ -1021,7 +1021,7 @@ static void hnp_abort(orte_jobid_t job, orte_exit_code_t exit_code)
     int rc;
 
     /* if we are already in progress, then ignore this call */
-    if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
+    if (opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
                              "%s errmgr:hnp: abort in progress, ignoring abort on job %s with status %d",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

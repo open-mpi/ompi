@@ -1065,7 +1065,7 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     /* if we have already ordered this once, don't keep
      * doing it to avoid race conditions
      */
-    if (!opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
+    if (opal_atomic_trylock(&orte_abort_inprogress_lock)) { /* returns 1 if already locked */
         if (forcibly_die) {
             /* kill any local procs */
             orte_odls.kill_local_procs(NULL);

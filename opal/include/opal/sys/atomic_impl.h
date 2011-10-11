@@ -357,8 +357,9 @@ opal_atomic_init( opal_atomic_lock_t* lock, int32_t value )
 static inline int
 opal_atomic_trylock(opal_atomic_lock_t *lock)
 {
-   return opal_atomic_cmpset_acq_32( &(lock->u.lock),
-                                     OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED);
+    int ret = opal_atomic_cmpset_acq_32( &(lock->u.lock),
+                                         OPAL_ATOMIC_UNLOCKED, OPAL_ATOMIC_LOCKED);
+    return (ret == 0) ? 1 : 0;
 }
 
 

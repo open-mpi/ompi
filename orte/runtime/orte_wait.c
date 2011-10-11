@@ -538,7 +538,7 @@ void orte_trigger_event(orte_trigger_event_t *trig)
     /* if we already fired it, don't do it again - this automatically
      * records that we did fire it
      */
-    if (!opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */
+    if (opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */
         return;
     }
     
@@ -842,7 +842,7 @@ void orte_trigger_event(orte_trigger_event_t *trig)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          trig->name));
     
-    if (!opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */
+    if (opal_atomic_trylock(&trig->lock)) { /* returns 1 if already locked */
         return;
     }
         
