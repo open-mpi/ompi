@@ -18,7 +18,7 @@ AC_DEFUN([MCA_orte_grpcomm_pmi_CONFIG], [
          
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
-    AS_IF([test "$grpcomm_pmi_good" = "1"],
+    AS_IF([test "$grpcomm_pmi_good" = 1 -a "$orte_enable_slurm_pmi" = "1"],
           [grpcomm_pmi_WRAPPER_EXTRA_LDFLAGS="$grpcomm_pmi_LDFLAGS"
            grpcomm_pmiWRAPPER_EXTRA_LIBS="$grpcomm_pmi_LIBS"
            $1],
