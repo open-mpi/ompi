@@ -59,26 +59,20 @@ static void mca_btl_sm_user_constructor(mca_btl_sm_frag_t* frag)
 	mca_btl_sm_frag_common_constructor(frag);
 }
 
-
-static void mca_btl_sm_frag_destructor(mca_btl_sm_frag_t* frag)
-{
-}
-
-
 OBJ_CLASS_INSTANCE(
     mca_btl_sm_frag1_t,
     mca_btl_base_descriptor_t,
     mca_btl_sm_frag1_constructor,
-    mca_btl_sm_frag_destructor);
+    NULL);
 
 OBJ_CLASS_INSTANCE(
     mca_btl_sm_frag2_t,
     mca_btl_base_descriptor_t,
     mca_btl_sm_frag2_constructor,
-    mca_btl_sm_frag_destructor);
+    NULL);
 
 OBJ_CLASS_INSTANCE(
     mca_btl_sm_user_t,
     mca_btl_base_descriptor_t,
     mca_btl_sm_user_constructor,
-    mca_btl_sm_frag_destructor);
+    NULL);

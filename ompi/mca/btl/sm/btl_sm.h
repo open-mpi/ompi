@@ -35,39 +35,12 @@
 #ifdef HAVE_SCHED_H
 #include <sched.h>
 #endif  /* HAVE_SCHED_H */
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif  /* HAVE_SYS_IOCTL_H */
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif  /* HAVE_SYS_MMAN_H */
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif  /* HAVE_FCNTL_H */
 #if OMPI_BTL_SM_HAVE_KNEM
 #include "knem_io.h"
 #endif  /* OMPI_BTL_SM_HAVE_KNEM */
 
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif  /* HAVE_SYS_TYPES_H */
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif  /* HAVE_SYS_SOCKET_H */
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif  /* HAVE_NETINET_IN_H */
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif  /* HAVE_UNISTD_H */
 #include "opal/class/opal_free_list.h"
-#include "ompi/class/ompi_free_list.h"
-#include "opal/mca/event/event.h"
-#include "opal/threads/threads.h"
 #include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/base.h"
-
-#include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/common/sm/common_sm.h"
 
 BEGIN_C_DECLS
