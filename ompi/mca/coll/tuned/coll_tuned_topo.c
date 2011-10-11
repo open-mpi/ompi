@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "opal/util/bit_ops.h"
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/base/coll_tags.h"
@@ -363,7 +364,7 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
 
     if( index < 0 ) index += size;
 
-    while( mask <= index ) mask <<= 1;
+    mask = opal_next_poweroftwo(index);
 
     /* Now I can compute my father rank */
     if( root == rank ) {

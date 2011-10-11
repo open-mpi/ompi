@@ -20,6 +20,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "opal/util/bit_ops.h"
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
@@ -134,7 +135,7 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
                  rank));
 
     /* do nearest power of 2 less than size calc */
-    for( adjsize = 1; adjsize <= size; adjsize <<= 1 );
+    adjsize = opal_next_poweroftwo(size);
     adjsize >>= 1;
 
     /* if size is not exact power of two, perform an extra step */
@@ -354,7 +355,7 @@ int ompi_coll_tuned_barrier_intra_tree(struct ompi_communicator_t *comm,
                  rank));
 
     /* Find the nearest power of 2 of the communicator size. */
-    for(depth = 1; depth < size; depth <<= 1 );
+    depth = opal_next_poweroftwo_inclusive(size);
 
     for (jump=1; jump<depth; jump<<=1) {
         partner = rank ^ jump;

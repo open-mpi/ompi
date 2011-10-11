@@ -43,6 +43,7 @@
 
 #include "ompi/constants.h"
 #include "opal/mca/event/event.h"
+#include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/show_help.h"
@@ -225,13 +226,9 @@ static int sm_register(void)
 static int mca_btl_sm_component_open(void)
 {
     mca_btl_sm_component.sm_max_btls = 1;
+
     /* make sure the number of fifos is a power of 2 */
-    {
-        int i = 1;
-        while ( i < mca_btl_sm_component.nfifos )
-            i <<= 1;
-        mca_btl_sm_component.nfifos = i;
-    }
+    mca_btl_sm_component.nfifos = opal_next_poweroftwo_inclusive (mca_btl_sm_component.nfifos);
 
     /* make sure that queue size and lazy free parameter are compatible */
     if (mca_btl_sm_component.fifo_lazy_free >= (mca_btl_sm_component.fifo_size >> 1) )

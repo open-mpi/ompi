@@ -26,10 +26,11 @@
 
 #include <string.h>
 
+#include "opal/util/bit_ops.h"
 #include "opal/mca/installdirs/installdirs.h"
-#include "orte/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "orte/util/show_help.h"
 #include "btl_wv.h"
 #include "btl_wv_mca.h"
 #include "btl_wv_ini.h"
@@ -471,16 +472,10 @@ int btl_wv_register_mca_params(void)
             &mca_btl_wv_module.super));
 
     /* setup all the qp stuff */
-    mid_qp_size = mca_btl_wv_module.super.btl_eager_limit / 4;
     /* round mid_qp_size to smallest power of two */
-    for(i = 31; i > 0; i--) {
-        if(!(mid_qp_size & (1<<i))) {
-            continue;
-        }
-        mid_qp_size = (1<<i);
-        break;
-    }
+    mid_qp_size = opal_next_poweroftwo (mca_btl_wv_module.super.btl_eager_limit / 4) >> 1;
 
+    /* mid_qp_size = MAX (mid_qp_size, 1024); ?! */
     if(mid_qp_size <= 128) {
         mid_qp_size = 1024;
     }

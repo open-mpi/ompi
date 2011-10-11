@@ -246,7 +246,7 @@ AC_DEFUN([OPAL_SETUP_CC],[
         have_cc_builtin_expect=0
     fi
     AC_DEFINE_UNQUOTED([OPAL_C_HAVE_BUILTIN_EXPECT], [$have_cc_builtin_expect],
-          [Whether C compiler supports __builtin_expect])
+        [Whether C compiler supports __builtin_expect])
 
     # see if the C compiler supports __builtin_prefetch
     AC_CACHE_CHECK([if $CC supports __builtin_prefetch],
@@ -262,7 +262,23 @@ AC_DEFUN([OPAL_SETUP_CC],[
         have_cc_builtin_prefetch=0
     fi
     AC_DEFINE_UNQUOTED([OPAL_C_HAVE_BUILTIN_PREFETCH], [$have_cc_builtin_prefetch],
-          [Whether C compiler supports __builtin_prefetch])
+        [Whether C compiler supports __builtin_prefetch])
+
+    # see if the C compiler supports __builtin_clz
+    AC_CACHE_CHECK([if $CC supports __builtin_clz],
+        [ompi_cv_cc_supports___builtin_clz],
+        [AC_TRY_LINK([],
+            [int value = 0xffff; /* we know we have 16 bits set */
+             if ((8*sizeof(int)-16) != __builtin_clz(value)) return 0;],
+            [ompi_cv_cc_supports___builtin_clz="yes"],
+            [ompi_cv_cc_supports___builtin_clz="no"])])
+    if test "$ompi_cv_cc_supports___builtin_clz" = "yes" ; then
+        have_cc_builtin_clz=1
+    else
+        have_cc_builtin_clz=0
+    fi
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_BUILTIN_CLZ], [$have_cc_builtin_clz],
+        [Whether C compiler supports __builtin_clz])
 
     # Preload the optflags for the case where the user didn't specify
     # any.  If we're using GNU compilers, use -O3 (since it GNU
