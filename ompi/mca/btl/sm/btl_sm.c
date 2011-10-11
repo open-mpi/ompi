@@ -22,12 +22,15 @@
 
 #include "ompi_config.h"
 
-#include <string.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif  /* HAVE_FCNTL_H */
 #include <errno.h>
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif  /* HAVE_SYS_MMAN_H */
 
 #include "opal/sys/atomic.h"
 #include "opal/class/opal_bitmap.h"
@@ -43,10 +46,6 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/sm/mpool_sm.h"
-
-#if OMPI_BTL_SM_HAVE_KNEM
-#include <knem_io.h>
-#endif
 
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/crs/base/base.h"

@@ -23,9 +23,7 @@
 #ifndef MCA_BTL_SM_SEND_FRAG_H
 #define MCA_BTL_SM_SEND_FRAG_H
 
-#include <sys/types.h>
 #include "ompi_config.h"
-#include "ompi/class/ompi_free_list.h"
 #include "btl_sm.h"
 
 
