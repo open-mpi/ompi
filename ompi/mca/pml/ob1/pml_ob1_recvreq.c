@@ -900,13 +900,28 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
      * There is an outer loop over lists of messages from each
      * process, then an inner loop over the messages from the
      * process.
+     *
+     * In order to avoid starvation do this in a round-robin fashion.
      */
-    for (i = 0; i < proc_count; i++) {
+    for (i = comm->last_probed + 1; i < comm->num_procs; i++) {
         mca_pml_ob1_recv_frag_t* frag;
 
         /* loop over messages from the current proc */
         if((frag = recv_req_match_specific_proc(req, &proc[i]))) {
             *p = &proc[i];
+            comm->last_probed = i;
+            req->req_recv.req_base.req_proc = proc[i].ompi_proc;
+            prepare_recv_req_converter(req);
+            return frag; /* match found */
+        }
+    }
+    for (i = 0; i < comm->last_probed; i++) {
+        mca_pml_ob1_recv_frag_t* frag;
+
+        /* loop over messages from the current proc */
+        if((frag = recv_req_match_specific_proc(req, &proc[i]))) {
+            *p = &proc[i];
+            comm->last_probed = i;
             req->req_recv.req_base.req_proc = proc[i].ompi_proc;
             prepare_recv_req_converter(req);
             return frag; /* match found */

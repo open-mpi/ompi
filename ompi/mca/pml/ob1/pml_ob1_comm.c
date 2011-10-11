@@ -56,6 +56,7 @@ static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t* comm)
     OBJ_CONSTRUCT(&comm->matching_lock, opal_mutex_t);
     comm->recv_sequence = 0;
     comm->procs = NULL;
+    comm->last_probed = 0;
     comm->num_procs = 0;
 }
 
