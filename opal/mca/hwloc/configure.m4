@@ -27,9 +27,6 @@ dnl
 # The first 3 will be added to the over all CPPFLAGS/LDFLAGS/LIBS if
 # that component is chosen as the winning component.  Similarly, the
 # latter 3 will be added to WRAPPER_EXTRA_* if that component wins.
-#
-# Finally, the component must set $opal_hwloc_<component>_enable_xml
-# to 0 or 1, indicating whether they have XML support or not.
 
 dnl We only want one winning component.
 m4_define(MCA_opal_hwloc_CONFIGURE_MODE, STOP_AT_FIRST_PRIORITY)
@@ -128,19 +125,11 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
         _MCA_opal_hwloc_base_flags([wrapper CPPFLAGS], [WRAPPER_EXTRA_CPPFLAGS])
         _MCA_opal_hwloc_base_flags([wrapper LDFLAGS], [WRAPPER_EXTRA_LDFLAGS])
         _MCA_opal_hwloc_base_flags([wrapper LIBS], [WRAPPER_EXTRA_LIBS])
-
-        AC_MSG_CHECKING([if winning hwloc supports XML])
-        eval "opal_hwloc_base_enable_xml=\`echo \$opal_hwloc_${opal_hwloc_winner}_enable_xml\`"
-        AS_IF([test "$opal_hwloc_base_enable_xml" = "1"],
-              [AC_MSG_RESULT([yes])],
-              [AC_MSG_RESULT([no])])
     ])
 
     AM_CONDITIONAL(OPAL_HAVE_HWLOC, test $OPAL_HAVE_HWLOC -eq 1)
     AC_DEFINE_UNQUOTED(OPAL_HAVE_HWLOC, $OPAL_HAVE_HWLOC,
         [Whether we have hwloc support or not])
-    AC_DEFINE_UNQUOTED(OPAL_HAVE_HWLOC_XML, $opal_hwloc_base_enable_xml,
-        [Enable xml support or not])
 
    # Similar to above, if this m4 is being invoked "early" via AC
    # REQUIRE, print out a nice banner that we have now finished

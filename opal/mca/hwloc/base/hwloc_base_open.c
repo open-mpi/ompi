@@ -140,20 +140,6 @@ int opal_hwloc_base_open(void)
                                                             "OPAL_HWLOC_TOPO", &tmp))) {
             return value;
         }
-
-#if !OPAL_HAVE_HWLOC_XML
-        /* if we don't have xml support, then an app
-         * cannot get the local topology passed down to
-         * it - so go get it ourselves
-         */
-        if (NULL == opal_hwloc_topology) {
-            if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
-                0 != hwloc_topology_load(opal_hwloc_topology)) {
-                return OPAL_ERR_NOT_SUPPORTED;
-            }
-        }
-#endif
-
     }
 #endif
 

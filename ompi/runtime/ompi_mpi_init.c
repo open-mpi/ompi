@@ -411,6 +411,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	goto error;
     }
 
+    /* If orte_init() didn't fill in opal_hwloc_topology, then we need
+       to go fill it in ourselves. */
+    if (NULL == opal_hwloc_topology) {
+        if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
+            0 != hwloc_topology_load(opal_hwloc_topology)) {
+            return OPAL_ERR_NOT_SUPPORTED;
+        }
+    }
+    
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
 
