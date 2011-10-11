@@ -288,11 +288,6 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     free(procs);
     free(sm_ctl_file);
 
-    /* set the pointer to the shared memory control structure */
-    mca_btl_sm_component.sm_ctl_header =
-        (mca_common_sm_seg_header_t*)mca_btl_sm_component.sm_seg->module_seg;
-
-
     /* check to make sure number of local procs is within the
      * specified limits */
     if(mca_btl_sm_component.sm_max_procs > 0 &&
