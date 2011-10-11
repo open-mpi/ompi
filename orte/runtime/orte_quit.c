@@ -75,7 +75,7 @@ void orte_jobs_complete(void)
 {
 #if !ORTE_DISABLE_FULL_SUPPORT
     /* check one-time lock to protect against multiple calls */
-    if (!opal_atomic_trylock(&orte_jobs_complete_lock)) { /* returns 1 if already locked */
+    if (opal_atomic_trylock(&orte_jobs_complete_lock)) { /* returns 1 if already locked */
         return;
     }
 
@@ -139,7 +139,7 @@ void orte_jobs_complete(void)
 void orte_quit(void)
 {
     /* check one-time lock to protect against "bounce" */
-    if (!opal_atomic_trylock(&orte_quit_lock)) { /* returns 1 if already locked */
+    if (opal_atomic_trylock(&orte_quit_lock)) { /* returns 1 if already locked */
         return;
     }
 

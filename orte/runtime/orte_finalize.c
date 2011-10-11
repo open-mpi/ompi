@@ -47,7 +47,7 @@ int orte_finalize(void)
     }
     
     /* protect against multiple calls */
-    if (!opal_atomic_trylock(&orte_finalize_lock)) {
+    if (opal_atomic_trylock(&orte_finalize_lock)) {
         return ORTE_SUCCESS;
     }
     
