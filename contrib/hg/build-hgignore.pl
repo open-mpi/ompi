@@ -59,6 +59,15 @@ $debug = 1
 print "Thinking...\n"
     if (!$debug);
 
+if (-f ".hgignore-local") {
+    open(IN, ".hgignore-local");
+    while (<IN>) {
+	chomp;
+	push(@globals, $_);
+    }
+    close(IN);
+}
+
 # Start at the top level
 process(".");
 
