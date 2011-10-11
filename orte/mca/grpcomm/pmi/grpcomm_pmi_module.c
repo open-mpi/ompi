@@ -149,6 +149,9 @@ static int pmi_barrier(void)
     
     /* if I am alone, just return */
     if (1 == orte_process_info.num_procs) {
+        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+                             "%s grpcomm:pmi:barrier only one proc",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         return ORTE_SUCCESS;
     }
     
@@ -186,7 +189,7 @@ static int pmi_set_proc_attr(const char* attr_name,
     char *attr, *attrval;
     int rc;
 
-    if (NULL == pmi_kvs_name) {
+     if (NULL == pmi_kvs_name) {
         int max_length;
 
         rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
@@ -214,6 +217,11 @@ static int pmi_set_proc_attr(const char* attr_name,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+                         "%s grpcomm:pmi: set attr %s of size %lu in KVS %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attr_name,
+                         (unsigned long)size, pmi_kvs_name));
+    
     attrval = pmi_encode(buffer, size);
     if (NULL == attrval) {
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -247,6 +255,11 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
         return ORTE_ERR_UNREACH;
     }
 
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+                         "%s grpcomm:pmi: get attr %s for proc %s in KVS %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attr_name,
+                         ORTE_NAME_PRINT(&name), pmi_kvs_name));
+    
     attrval = malloc(pmi_vallen_max);
     if (NULL == attrval) {
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -267,6 +280,11 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
     free(attrval);
     free(attr);
 
+    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+                         "%s grpcomm:pmi: got attr %s of size %lu",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         attr, (unsigned long)(*size)));
+    
     if (NULL == buffer) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
