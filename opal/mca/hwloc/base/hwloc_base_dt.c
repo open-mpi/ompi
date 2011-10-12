@@ -66,6 +66,11 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
             hwloc_topology_destroy(t);
             goto cleanup;
         }
+        /* since we are loading this from an external source, we have to
+         * explicitly set a flag so hwloc sets things up correctly
+         */
+        hwloc_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM);
+        /* now load the topology */
         hwloc_topology_load(t);
         if (NULL != xmlbuffer) {
             free(xmlbuffer);
