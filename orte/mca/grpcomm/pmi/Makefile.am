@@ -7,6 +7,8 @@
 # $HEADER$
 #
 
+AM_CPPFLAGS = $(grpcomm_pmi_CPPFLAGS)
+
 sources = \
         grpcomm_pmi.h \
 	grpcomm_pmi_module.c \

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,7 +34,7 @@
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
-#if WANT_SLURM_PMI_SUPPORT
+#if WANT_PMI_SUPPORT
 #include <slurm/pmi.h>
 #endif
 
@@ -179,7 +179,7 @@ static int rte_init(void)
     free(cs_env);
     free(string_key);
 
-#if WANT_SLURM_PMI_SUPPORT
+#if WANT_PMI_SUPPORT
     /* get our rank from PMI */
     if (PMI_SUCCESS != PMI_Get_rank(&i)) {
         error = "PMI_Get_rank failed";
@@ -206,7 +206,7 @@ static int rte_init(void)
                          "%s local rank %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          local_rank));
-#if WANT_SLURM_PMI_SUPPORT
+#if WANT_PMI_SUPPORT
     if (PMI_SUCCESS != PMI_Get_universe_size(&i)) {
         error = "PMI_Get_universe_size failed";
         goto error;
@@ -224,7 +224,7 @@ static int rte_init(void)
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
-#if WANT_SLURM_PMI_SUPPORT
+#if WANT_PMI_SUPPORT
     if (PMI_SUCCESS != PMI_Get_appnum(&i)) {
         error = "PMI_Get_appnum failed";
         goto error;
@@ -417,7 +417,7 @@ static int rte_init(void)
     free(ppn);
 
     /* ensure we pick the correct critical components */
-#if WANT_SLURM_PMI_SUPPORT
+#if WANT_PMI_SUPPORT
     putenv("OMPI_MCA_grpcomm=pmi");
 #else
     putenv("OMPI_MCA_grpcomm=hier");

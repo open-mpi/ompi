@@ -14,22 +14,13 @@
 #include "orte/types.h"
 
 #include <string.h>
-#include <slurm/pmi.h>
+#include <pmi.h>
 
-#include "orte/util/proc_info.h"
 #include "opal/dss/dss.h"
-#include "opal/util/opal_sos.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/odls/base/base.h"
-#include "orte/mca/odls/odls_types.h"
-#include "orte/mca/ess/ess.h"
+
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
-#include "orte/mca/routed/routed.h"
-#include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
-#include "orte/orted/orted.h"
-#include "orte/runtime/orte_wait.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/grpcomm/base/base.h"
 #include "grpcomm_pmi.h"
@@ -283,7 +274,7 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:pmi: got attr %s of size %lu",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         attr, (unsigned long)(*size)));
+                         attr_name, (unsigned long)(*size)));
     
     if (NULL == buffer) {
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -295,11 +286,36 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 static int modex(opal_list_t *procs)
 {
     int rc;
+    char *rml_uri, *attr;
+    orte_vpid_t v;
+    orte_process_name_t name;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:pmi: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
+    /* add our oob endpoint info so that oob communications
+     * can be supported
+     */
+    rml_uri = orte_rml.get_contact_info();
+    if (strlen(rml_uri) > (size_t)pmi_vallen_max) {
+        opal_output(0, "grpcomm:pmi: RML uri length is too long\n");
+        return ORTE_ERROR;
+    }
+    if (0 > asprintf(&attr, "%s-RMLURI", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME))) {
+        free(rml_uri);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    rc = PMI_KVS_Put(pmi_kvs_name, attr, rml_uri);
+    if (PMI_SUCCESS != rc) {
+        ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
+        free(rml_uri);
+        free(attr);
+        return ORTE_ERROR;
+    }
+    free(rml_uri);
+    free(attr);
+
     /* commit our modex info */
     if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmi_kvs_name))) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Commit failed");
@@ -308,9 +324,45 @@ static int modex(opal_list_t *procs)
 
     /* Barrier here to ensure all other procs have committed */
     if (ORTE_SUCCESS != (rc = pmi_barrier())) {
-        ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+    /* harvest the oob endpoint info for all other procs
+     * in our job so oob wireup can be completed
+     */
+    rml_uri = malloc(pmi_vallen_max);
+    if (NULL == rml_uri) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    name.jobid = ORTE_PROC_MY_NAME->jobid;
+    for (v=0; v < orte_process_info.num_procs; v++) {
+        if (v == ORTE_PROC_MY_NAME->vpid) {
+            continue;
+        }
+        name.vpid = v;
+        if (0 > asprintf(&attr, "%s-RMLURI", ORTE_NAME_PRINT(&name))) {
+            free(rml_uri);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        rc = PMI_KVS_Get(pmi_kvs_name, attr, rml_uri, pmi_vallen_max);
+        if (PMI_SUCCESS != rc) {
+            ORTE_PMI_ERROR(rc, "PMI_KVS_Get");
+            free(rml_uri);
+            free(attr);
+            return ORTE_ERROR;
+        }
+        free(attr);
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                             "%s grpcomm:pmi: proc %s oob endpoint %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&name), rml_uri));
+        /* set the contact info into the hash table */
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
+            free(rml_uri);
+            return rc;
+        }
+    }
+    free(rml_uri);
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:pmi: modex completed",
