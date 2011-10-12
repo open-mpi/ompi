@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+AM_CPPFLAGS = $(ess_slurmd_pmi_CPPFLAGS)
+
 dist_pkgdata_DATA = help-ess-slurmd.txt
 
 sources = \
@@ -38,8 +40,10 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_ess_slurmd_la_SOURCES = $(sources)
-mca_ess_slurmd_la_LDFLAGS = -module -avoid-version
+mca_ess_slurmd_la_LDFLAGS = -module -avoid-version $(ess_slurmd_LDFLAGS) $(ess_slurmd_pmi_LDFLAGS)
+mca_ess_slurmd_la_LIBADD = $(ess_slurmd_LIBS) $(ess_slurmd_pmi_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_ess_slurmd_la_SOURCES =$(sources)
-libmca_ess_slurmd_la_LDFLAGS = -module -avoid-version
+libmca_ess_slurmd_la_LDFLAGS = -module -avoid-version $(ess_slurmd_LDFLAGS) $(ess_slurmd_pmi_LDFLAGS)
+libmca_ess_slurmd_la_LIBADD = $(ess_slurmd_LIBS) $(ess_slurmd_pmi_LIBS)

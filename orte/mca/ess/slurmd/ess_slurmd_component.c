@@ -25,7 +25,7 @@
 #include "orte_config.h"
 #include "orte/constants.h"
 
-#if WANT_SLURM_PMI_SUPPORT
+#if WANT_PMI_SUPPORT
 #include <slurm/pmi.h>
 #endif
 
@@ -82,7 +82,7 @@ int orte_ess_slurmd_component_query(mca_base_module_t **module, int *priority)
         NULL != getenv("SLURM_JOBID") &&
         NULL != getenv("SLURM_STEPID") &&
         NULL == orte_process_info.my_hnp_uri) {
-#if WANT_SLURM_PMI_SUPPORT
+#if WANT_PMI_SUPPORT
         {
             int spawned;
             /* if we can't startup the PMI, we can't be used */
