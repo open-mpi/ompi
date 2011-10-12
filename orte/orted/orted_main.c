@@ -641,7 +641,7 @@ int orte_daemon(int argc, char *argv[])
             /* include our node name */
             opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
 
-#if OPAL_HAVE_HWLOC && OPAL_HAVE_HWLOC_XML
+#if OPAL_HAVE_HWLOC
             /* add the local topology */
             if (NULL != opal_hwloc_topology) {
                 if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
