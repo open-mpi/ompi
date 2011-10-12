@@ -134,15 +134,27 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 {
     orte_process_name_t *ret;
 
+#if ORTE_ENABLE_EPOCH
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
         0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
+#else
+    if (target->jobid == ORTE_JOBID_INVALID ||
+        target->vpid == ORTE_VPID_INVALID) {
+#endif
         ret = ORTE_NAME_INVALID;
-    } else {
-        /* all routes are direct */
-        ret = target;
+        goto found;
     }
 
+    if (0 > ORTE_EPOCH_CMP(target->epoch, orte_ess.proc_get_epoch(target))) {
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+
+    /* all routes go direct */
+    ret = target;
+
+ found:
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                          "%s routed_direct_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
