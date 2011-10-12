@@ -133,15 +133,27 @@ static orte_process_name_t get_route(orte_process_name_t *target)
 {
     orte_process_name_t *ret;
 
+#if ORTE_ENABLE_EPOCH
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
         0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
+#else
+    if (target->jobid == ORTE_JOBID_INVALID ||
+        target->vpid == ORTE_VPID_INVALID) {
+#endif
         ret = ORTE_NAME_INVALID;
-    } else {
-        /* a slave must always route via its parent daemon */
-        ret = ORTE_PROC_MY_DAEMON;
+        goto found;
     }
 
+    if (0 > ORTE_EPOCH_CMP(target->epoch, orte_ess.proc_get_epoch(target))) {
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+
+    /* a slave must always route via its parent daemon */
+    ret = ORTE_PROC_MY_DAEMON;
+
+  found:
     OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                          "%s routed_slave_get(%s) --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

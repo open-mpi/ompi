@@ -138,12 +138,17 @@ static int delete_route(orte_process_name_t *proc)
     orte_routed_jobfam_t *jfam;
     uint16_t jfamily;
     
+#if ORTE_ENABLE_EPOCH
     if (proc->jobid == ORTE_JOBID_INVALID ||
         proc->vpid == ORTE_VPID_INVALID ||
-        0 == ORTE_EPOCH_CMP(proc->epoch,ORTE_EPOCH_INVALID)) {
+        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
+#else
+    if (proc->jobid == ORTE_JOBID_INVALID ||
+        proc->vpid == ORTE_VPID_INVALID) {
+#endif
         return ORTE_ERR_BAD_PARAM;
     }
-    
+
     /* if I am anything other than the HNP, I don't have any routes
      * so there is nothing for me to do
      */
@@ -199,9 +204,14 @@ static int update_route(orte_process_name_t *target,
     orte_routed_jobfam_t *jfam;
     uint16_t jfamily;
     
+#if ORTE_ENABLE_EPOCH
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
         0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
+#else
+    if (target->jobid == ORTE_JOBID_INVALID ||
+        target->vpid == ORTE_VPID_INVALID) {
+#endif
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -296,13 +306,23 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     orte_routed_jobfam_t *jfam;
     uint16_t jfamily;
 
+#if ORTE_ENABLE_EPOCH
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
-        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
+        0 == ORTE_EPOCH_CMP(proc->epoch,ORTE_EPOCH_INVALID)) {
+#else
+    if (target->jobid == ORTE_JOBID_INVALID ||
+        target->vpid == ORTE_VPID_INVALID) {
+#endif
         ret = ORTE_NAME_INVALID;
         goto found;
     }
-    
+
+    if (0 > ORTE_EPOCH_CMP(target->epoch, orte_ess.proc_get_epoch(target))) {
+        ret = ORTE_NAME_INVALID;
+        goto found;
+    }
+
     /* if it is me, then the route is just direct */
     if (OPAL_EQUAL == opal_dss.compare(ORTE_PROC_MY_NAME, target, ORTE_NAME)) {
         ret = target;
