@@ -538,7 +538,7 @@ static void process_orted_launch_report(int fd, short event, void *data)
         goto CLEANUP;
     }
     
-#if OPAL_HAVE_HWLOC && OPAL_HAVE_HWLOC_XML
+#if OPAL_HAVE_HWLOC
     /* store the local resources for that node */
     {
         hwloc_topology_t topo, t;
