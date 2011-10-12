@@ -128,18 +128,18 @@ OPAL_DECLSPEC extern opal_hwloc_base_map_t opal_hwloc_base_map;
  * and fails.  BFA = bind failure action.
  */
 typedef enum {
-    OPAL_HWLOC_BASE_BFA_WARN,
-    OPAL_HWLOC_BASE_BFA_ERROR
-} opal_hwloc_base_bfa_t;
+    OPAL_HWLOC_BASE_MBFA_WARN,
+    OPAL_HWLOC_BASE_MBFA_ERROR
+} opal_hwloc_base_mbfa_t;
 
 /**
  * Global reflecting the BFA (set by MCA param).
  */
-OPAL_DECLSPEC extern opal_hwloc_base_bfa_t opal_hwloc_base_bfa;
+OPAL_DECLSPEC extern opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa;
 
 /**
  * This function sets the process-wide memory affinity policy
- * according to opal_hwloc_base_map and opal_hwloc_base_bfa.  It needs
+ * according to opal_hwloc_base_map and opal_hwloc_base_mbfa.  It needs
  * to be a separate, standalone function (as opposed to being done
  * during opal_hwloc_base_open()) because opal_hwloc_topology is not
  * loaded by opal_hwloc_base_open().  Hence, an upper layer needs to

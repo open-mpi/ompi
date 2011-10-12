@@ -40,7 +40,7 @@ bool opal_hwloc_base_inited = false;
 hwloc_topology_t opal_hwloc_topology=NULL;
 #endif
 opal_hwloc_base_map_t opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
-opal_hwloc_base_bfa_t opal_hwloc_base_bfa = OPAL_HWLOC_BASE_BFA_ERROR;
+opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_ERROR;
 
 
 int opal_hwloc_base_open(void)
@@ -76,7 +76,7 @@ int opal_hwloc_base_open(void)
             str_value = "local_only";
             break;
         }
-        mca_base_param_reg_string_name("hwloc", "base_alloc_policy",
+        mca_base_param_reg_string_name("hwloc", "base_mem_alloc_policy",
                                        "Policy that determines how general memory allocations are bound after MPI_INIT.  A value of \"none\" means that no memory policy is applied.  A value of \"local_only\" means that all memory allocations will be restricted to the local NUMA node where each process is placed.  Note that operating system paging policies are unaffected by this setting.  For example, if \"local_only\" is used and local NUMA node memory is exhausted, a new memory allocation may cause paging.",
                                        false, false, str_value, &str_value);
         if (strcasecmp(str_value, "none") == 0) {
@@ -93,21 +93,21 @@ int opal_hwloc_base_open(void)
         }
         
         /* hwloc_base_bind_failure_action */
-        switch (opal_hwloc_base_bfa) {
-        case OPAL_HWLOC_BASE_BFA_WARN:
+        switch (opal_hwloc_base_mbfa) {
+        case OPAL_HWLOC_BASE_MBFA_WARN:
             str_value = "warn";
             break;
-        case OPAL_HWLOC_BASE_BFA_ERROR:
+        case OPAL_HWLOC_BASE_MBFA_ERROR:
             str_value = "error";
             break;
         }
-        mca_base_param_reg_string_name("hwloc", "base_bind_failure_action",
+        mca_base_param_reg_string_name("hwloc", "base_mem_bind_failure_action",
                                        "What Open MPI will do if it explicitly tries to bind memory to a specific NUMA location, and fails.  Note that this is a different case than the general allocation policy described by hwloc_base_alloc_policy.  A value of \"warn\" means that Open MPI will warn the first time this happens, but allow the job to continue (possibly with degraded performance).  A value of \"error\" means that Open MPI will abort the job if this happens.",
                                        false, false, str_value, &str_value);
         if (strcasecmp(str_value, "warn") == 0) {
-            opal_hwloc_base_bfa = OPAL_HWLOC_BASE_BFA_WARN;
+            opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_WARN;
         } else if (strcasecmp(str_value, "error") == 0) {
-            opal_hwloc_base_bfa = OPAL_HWLOC_BASE_BFA_ERROR;
+            opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_ERROR;
         } else {
             char hostname[32];
             gethostname(hostname, sizeof(hostname));
