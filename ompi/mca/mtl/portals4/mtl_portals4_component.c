@@ -270,7 +270,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
                       ompi_mtl_portals4.send_idx,
                       &me,
-                      PTL_OVERFLOW,
+                      PTL_OVERFLOW_LIST,
                       NULL,
                       &ompi_mtl_portals4.long_overflow_me_h);
     if (PTL_OK != ret) {

@@ -45,7 +45,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
         return ompi_mtl_portals4_activate_block(block);
     } else {
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                             "OVERFLOW EVENT %d, hdr_data = %lx", ev->type, ev->hdr_data));
+                             "OVERFLOW EVENT %d, hdr_data = %lx", ev->type, (long unsigned) ev->hdr_data));
     }
 
     return OMPI_SUCCESS;
@@ -123,7 +123,7 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
     ret = PtlMEAppend(block->mtl->ni_h,
                       ompi_mtl_portals4.send_idx,
                       &me,
-                      PTL_OVERFLOW,
+                      PTL_OVERFLOW_LIST,
                       &block->request,
                       &block->me_h);
     return (ret == PTL_OK) ? OMPI_SUCCESS : ompi_mtl_portals4_get_error(ret);
