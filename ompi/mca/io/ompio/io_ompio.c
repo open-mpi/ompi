@@ -77,29 +77,29 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
         fh->f_procs_in_group = NULL;
         fh->f_procs_per_group = -1;
 
-
 	ompi_datatype_create_contiguous(1048576, &ompi_mpi_byte.dt, &default_file_view);
 		
 	fh->f_etype = default_file_view;
-	fh->f_filetype =  default_file_view; 
+	fh->f_filetype =  default_file_view;
 
         /* Default file View */
         fh->f_iov_type = MPI_DATATYPE_NULL;
         fh->f_iov_count = 1;
-        fh->f_decoded_iov = (struct iovec*)malloc(fh->f_iov_count * 
-                                                  sizeof(struct iovec));
+        fh->f_decoded_iov = (struct iovec*)malloc(fh->f_iov_count *
+						  sizeof(struct iovec));
         if (NULL == fh->f_decoded_iov) {
             opal_output (1, "OUT OF MEMORY\n");
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
+
         fh->f_cc_size = 1;
         fh->f_stripe_size = mca_io_ompio_bytes_per_agg;
-        fh->f_decoded_iov[0].iov_len = 1;
+        fh->f_decoded_iov[0].iov_len = 1048576;
         fh->f_decoded_iov[0].iov_base = 0;
 
-        /* 
-         * Create a derived datatype for the created iovec 
-         */
+        
+	/*Create a derived datatype for the created iovec */
+         
         types[0] = &ompi_mpi_long.dt;
         types[1] = &ompi_mpi_long.dt;
         MPI_Address( fh->f_decoded_iov, d); 
@@ -115,8 +115,8 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
                                      &fh->f_iov_type);
         ompi_datatype_commit (&fh->f_iov_type);
 
-        fh->f_view_extent = 1;
-        fh->f_view_size = 1;
+	fh->f_view_extent = 1048576;
+        fh->f_view_size = 1048576;
         fh->f_etype_size = 1;
 
         return OMPI_SUCCESS;
@@ -140,6 +140,17 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     size_t sum_previous_counts = 0;
     int j, k;
     int block = 1;
+ 
+   /*Merging if the data is split-up */
+    int merge = 0, i;
+    int merge_count = 0;    
+    struct iovec *merged_iov = NULL;
+    size_t merge_length = 0;
+    IOVBASE_TYPE * merge_offset = 0;
+
+
+
+
 
 
     /* allocate an initial iovec, will grow if needed */
@@ -203,8 +214,65 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     fh->f_position_in_file_view = sum_previous_counts;
     fh->f_index_in_file_view = j;
 
-    *iov_count = k;
-    *f_iov = iov;
+    
+    /* Merging Contiguous entries in case of using default fileview*/
+    merged_iov = (struct iovec *)malloc(k*sizeof(struct iovec));
+    for(i=0;i<k;i++){
+	if(k != i+1){
+	    if(((OPAL_PTRDIFF_TYPE)iov[i].iov_base +
+		(OPAL_PTRDIFF_TYPE)iov[i].iov_len)==
+	       (OPAL_PTRDIFF_TYPE)iov[i+1].iov_base) {
+		if(!merge){
+		    merge_offset = (IOVBASE_TYPE *)iov[i].iov_base;
+		}
+		merge_length += (size_t)iov[i].iov_len;
+		merge++;
+	    }
+	    else{ /*If there are many contiguous blocks... with breaks in-between*/
+		if (merge){
+		    merged_iov[merge_count].iov_base =(IOVBASE_TYPE *)merge_offset;
+		    /*1 has to be added as k goes till i+1*/
+		    merged_iov[merge_count].iov_len = merge_length+1;
+		    merge_count++;
+		    merge = 0;
+		}
+		else{ /* Non-contiguous entry also has to be added!,
+			 Handles cases where there are only non-contiguous
+			 entries and a mix*/
+		    merged_iov[merge_count].iov_base = iov[i].iov_base;
+		    merged_iov[merge_count].iov_len = iov[i].iov_len;
+		    merge_count++;
+		}
+	    }
+	}
+	else{/*When everything is contiguous*/
+	    if (merge){
+		merged_iov[merge_count].iov_base = (IOVBASE_TYPE *)merge_offset;
+		merged_iov[merge_count].iov_len = merge_length+1048576;
+		merge_count++;
+		merge = 0;
+	    }
+	    else{ /* When there is nothing to be merged */	    
+		merged_iov[merge_count].iov_base = iov[i].iov_base;
+		merged_iov[merge_count].iov_len = iov[i].iov_len;
+		merge_count++;
+	    }
+		
+	}
+	
+    }
+    
+    #if 0
+    printf("%d: Number of new_entries : %d\n", fh->f_rank, merge_count);
+    for (i=0;i<merge_count;i++){
+	printf("%d: OFFSET: %d, length: %ld\n",
+	       fh->f_rank, merged_iov[i].iov_base, merged_iov[i].iov_len);
+    }
+    #endif
+    *iov_count = merge_count;
+    *f_iov = merged_iov;
+
+
 
     return OMPI_SUCCESS;
 }
@@ -327,8 +395,9 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
     }
 
     remaining_length -= temp_data;
-    /*
+    #if 0
     if (0 == fh->f_rank) {
+
         printf ("%d Entries: \n",*iovec_count);
         for (i=0 ; i<*iovec_count ; i++) {
             printf ("\t{%p, %d}\n", 
@@ -336,7 +405,7 @@ int ompi_io_ompio_decode_datatype (mca_io_ompio_file_t *fh,
                     (*iov)[i].iov_len);
         }
     }
-    */
+    #endif
     if (remaining_length != 0) {
         printf( "Not all raw description was been extracted (%lu bytes missing)\n",
                 (unsigned long) remaining_length );
