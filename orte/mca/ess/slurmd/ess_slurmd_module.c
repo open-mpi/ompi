@@ -35,7 +35,7 @@
 #include <ifaddrs.h>
 #endif
 #if WANT_PMI_SUPPORT
-#include <slurm/pmi.h>
+#include <pmi.h>
 #endif
 
 #include "opal/util/opal_environ.h"
