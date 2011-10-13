@@ -26,7 +26,7 @@
 #include "orte/constants.h"
 
 #if WANT_PMI_SUPPORT
-#include <slurm/pmi.h>
+#include <pmi.h>
 #endif
 
 #include "orte/util/proc_info.h"
