@@ -70,7 +70,23 @@ orte_errmgr_base_module_t orte_errmgr_default_fns = {
     NULL, /* ft_event            */
     orte_errmgr_base_register_migration_warning
 };
-orte_errmgr_base_module_t orte_errmgr;
+/* NOTE: ABSOLUTELY MUST initialize this
+ * struct to include the log function as it
+ * gets called even if the errmgr hasn't been
+ * opened yet due to error
+ */
+orte_errmgr_base_module_t orte_errmgr = {
+    NULL,
+    NULL,
+    orte_errmgr_base_log,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
 
 /**
  * Function for finding and opening either all MCA components, or the one
