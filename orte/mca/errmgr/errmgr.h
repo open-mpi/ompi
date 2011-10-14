@@ -52,7 +52,6 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
 #include "opal/util/error.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/plm/plm_types.h"
@@ -149,11 +148,7 @@ OBJ_CLASS_DECLARATION(orte_errmgr_predicted_map_t);
 
 #define ORTE_ERROR_NAME(n)  opal_strerror(n)
 #define ORTE_ERROR_LOG(n)                       \
-    if (true == OPAL_SOS_IS_NATIVE(n)) {        \
-        orte_errmgr.log(n, __FILE__, __LINE__); \
-    } else {                                    \
-        OPAL_SOS_LOG(n);                        \
-    }
+        orte_errmgr.log(n, __FILE__, __LINE__);
 
 
 /*

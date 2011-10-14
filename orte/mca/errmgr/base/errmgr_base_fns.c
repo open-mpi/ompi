@@ -55,7 +55,6 @@
 #include "opal/util/argv.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/util/session_dir.h"
