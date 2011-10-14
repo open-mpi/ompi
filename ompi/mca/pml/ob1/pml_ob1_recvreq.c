@@ -893,7 +893,7 @@ recv_req_match_wild( mca_pml_ob1_recv_request_t* req,
 {
     mca_pml_ob1_comm_t* comm = req->req_recv.req_base.req_comm->c_pml_comm;
     mca_pml_ob1_comm_proc_t* proc = comm->procs;
-    size_t proc_count = comm->num_procs, i;
+    size_t i;
 
     /*
      * Loop over all the outstanding messages to find one that matches.
