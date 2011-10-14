@@ -4,6 +4,10 @@
  *
  * Additional copyrights may follow.
  */
+
+/* OMPI change: With Intel Compiler v12.1 on linux, any launch fails even before main() */
+#pragma optimize("", off)
+
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "opal_config.h"
 
