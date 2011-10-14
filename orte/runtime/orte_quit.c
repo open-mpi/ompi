@@ -235,7 +235,7 @@ static void dump_aborted_procs(void)
                                    orte_basename);
                     return;
                 }
-                switch (OPAL_SOS_GET_ERROR_CODE(proc->exit_code)) {
+                switch (proc->exit_code) {
                     case ORTE_ERR_SYS_LIMITS_PIPES:
                         orte_show_help("help-orterun.txt", "orterun:sys-limit-pipe", true,
                                        orte_basename, proc->node->name,
