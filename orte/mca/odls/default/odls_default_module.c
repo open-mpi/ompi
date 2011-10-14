@@ -190,10 +190,12 @@ static bool odls_default_child_died(orte_odls_child_t *child)
 {
     time_t end;
     pid_t ret;
-    struct timeval t;
-    fd_set bogus;
         
-    end = time(NULL) + orte_odls_globals.timeout_before_sigkill;
+    /* Because of rounding in time (which returns whole seconds) we
+     * have to add 1 to our wait number: this means that we wait
+     * somewhere between (target) and (target)+1 seconds.  Otherwise,
+     * the default 1s actually means 'somwhere between 0 and 1s'. */
+    end = time(NULL) + orte_odls_globals.timeout_before_sigkill + 1;
     do {
         ret = waitpid(child->pid, &child->exit_code, WNOHANG);
         if (child->pid == ret) {
@@ -208,13 +210,17 @@ static bool odls_default_child_died(orte_odls_child_t *child)
              * as there is no error - this is a race condition problem
              * that occasionally causes us to incorrectly report a proc
              * as refusing to die. Unfortunately, errno may not be reset
-             * by waitpid in this case, so we cannot check it - just assume
-             * the proc has indeed died
+             * by waitpid in this case, so we cannot check it.
+	     *
+	     * (note the previous fix to this, to return 'process dead'
+	     * here, fixes the race condition at the cost of reporting
+	     * all live processes have immediately died!  Better to
+	     * occasionally report a dead process as still living -
+	     * which will occasionally trip the timeout for cases that
+	     * are right on the edge.)
              */
-            OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                                 "%s odls:default:WAITPID INDICATES PROC %d HAS ALREADY EXITED",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), (int)(child->pid)));
-            return true;
+
+	    /* Do nothing, process still alive */
         } else if (-1 == ret && ECHILD == errno) {
             /* The pid no longer exists, so we'll call this "good
                enough for government work" */
@@ -224,14 +230,14 @@ static bool odls_default_child_died(orte_odls_child_t *child)
             return true;
         }
         
-        /* Bogus delay for 1 usec (sched_yeild() -- even if we have it
-           -- changed behavior in 2.6.3x Linux flavors to be
-           undesirable. */
-        t.tv_sec = 0;
-        t.tv_usec = 1;
-        FD_ZERO(&bogus);
-        FD_SET(0, &bogus);
-        select(1, &bogus, NULL, NULL, &t);
+        /* Bogus delay for 1 msec - let's actually give the CPU some time
+         * to quit the other process (sched_yield() -- even if we have it
+         * -- changed behavior in 2.6.3x Linux flavors to be undesirable)
+         * Don't use select on a bogus file descriptor here as it has proven
+         * unreliable and sometimes immediately returns - we really, really
+         * -do- want to wait a bit!
+         */
+        usleep(1000);
     } while (time(NULL) < end);
 
     /* The child didn't die, so return false */

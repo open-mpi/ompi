@@ -2851,7 +2851,13 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
             kill_local(child->pid, SIGTERM);
 
             /* check to see if it died - the child_died function will continue
-             * to check every microsecond until we reach the timeout
+             * to check until we reach the timeout
+	     *
+	     * In practice, it doesn't matter what child_died reports
+	     * - we KILL the process anyway, to be sure it's dead.
+	     * However, what it does do is delay the KILL until either
+	     * the process is verified dead or the timeout elapsed,
+	     * which gives it time enough to shut down.
              */
             if (!child_died(child)) {
                 /* if it still isn't dead, try killing it one more time */

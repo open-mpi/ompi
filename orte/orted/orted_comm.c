@@ -739,7 +739,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
 
         /****    EXIT COMMAND    ****/
     case ORTE_DAEMON_EXIT_CMD:
-        if (orte_debug_daemons_flag) {
+        if (1) {
             opal_output(0, "%s orted_cmd: received exit cmd",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
@@ -757,10 +757,12 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
             
         /****    HALT VM COMMAND    ****/
     case ORTE_DAEMON_HALT_VM_CMD:
-        if (orte_debug_daemons_flag) {
+        if (1) {
             opal_output(0, "%s orted_cmd: received halt vm",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
+        /* kill the local procs */
+        orte_odls.kill_local_procs(NULL);
         /* trigger our appropriate exit procedure
          * NOTE: this event will fire -after- any zero-time events
          * so any pending relays -do- get sent first
