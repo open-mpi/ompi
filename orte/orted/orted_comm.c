@@ -739,7 +739,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
 
         /****    EXIT COMMAND    ****/
     case ORTE_DAEMON_EXIT_CMD:
-        if (1) {
+        if (orte_debug_daemons_flag) {
             opal_output(0, "%s orted_cmd: received exit cmd",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
@@ -757,7 +757,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
             
         /****    HALT VM COMMAND    ****/
     case ORTE_DAEMON_HALT_VM_CMD:
-        if (1) {
+        if (orte_debug_daemons_flag) {
             opal_output(0, "%s orted_cmd: received halt vm",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         }
