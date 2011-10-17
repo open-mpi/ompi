@@ -7,8 +7,6 @@
 # 
 # $HEADER$
 #
-AC_DEFUN([MCA_ompi_pubsub_pmi_PRIORITY], [10])
-
 # MCA_ompi_pubsub_pmi_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_ompi_pubsub_pmi_CONFIG], [
