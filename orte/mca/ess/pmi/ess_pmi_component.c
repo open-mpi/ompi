@@ -67,7 +67,8 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
     PMI_BOOL initialized;
 
     /* for now, only use PMI when direct launched */
-    if (NULL == orte_process_info.my_hnp_uri &&
+    if (!ORTE_PROC_IS_HNP &&
+        NULL == orte_process_info.my_hnp_uri &&
         PMI_SUCCESS == PMI_Initialized(&initialized)) {
         if (PMI_TRUE != initialized) {
             /* if we can't startup the PMI, we can't be used */
