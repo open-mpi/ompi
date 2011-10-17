@@ -130,7 +130,7 @@ static inline int32_t opal_atomic_swap_32( volatile int32_t *addr,
 {
     int32_t oldval;
 
-    __asm__ __volatile__("xchg %0, %1" :
+    __asm__ __volatile__("xchg %1, %0" :
 			 "=r" (oldval), "=m" (*addr) :
 			 "0" (newval), "m" (*addr) :
 			 "memory");
