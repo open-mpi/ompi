@@ -416,7 +416,11 @@ int opal_os_dirpath_access(const char *path, const mode_t in_mode ) {
 #ifndef __WINDOWS__
     struct stat buf;
 #else
+#  ifndef _MSC_VER
+    struct stat buf;
+#  else
     struct __stat64 buf;
+#  endif
 #endif
     mode_t loc_mode = S_IRWXU;  /* looking for full rights */
 

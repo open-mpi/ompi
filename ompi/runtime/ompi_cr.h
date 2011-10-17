@@ -53,7 +53,7 @@ BEGIN_C_DECLS
      * If one of the BTLs that shutdown require a full, clean rebuild of the
      * point-to-point stack on 'continue' as well as 'restart'.
      */
-    OPAL_DECLSPEC extern bool ompi_cr_continue_like_restart;
+    OMPI_DECLSPEC extern bool ompi_cr_continue_like_restart;
 
 END_C_DECLS
 

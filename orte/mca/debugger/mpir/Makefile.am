@@ -7,6 +7,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST = .windows
+
 sources = \
         mpir.h \
 	mpir.c \

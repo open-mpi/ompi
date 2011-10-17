@@ -27,9 +27,9 @@
 
 BEGIN_C_DECLS
 
-OPAL_DECLSPEC int inet_pton(int af, const char *src, void *dst);
+OPAL_DECLSPEC int ompi_inet_pton(int af, const char *src, void *dst);
 
-OPAL_DECLSPEC const char *inet_ntop(int af, const void *src, char *dst, size_t size);
+OPAL_DECLSPEC const char *ompi_inet_ntop(int af, const void *src, char *dst, size_t size);
 
 END_C_DECLS
 

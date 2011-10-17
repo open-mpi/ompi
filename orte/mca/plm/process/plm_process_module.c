@@ -57,6 +57,7 @@
 #include <pwd.h>
 #endif
 
+#ifdef _MSC_VER
 #include <winsock2.h>
 #include <comutil.h>
 #include <Wbemidl.h>
@@ -65,6 +66,7 @@
 #pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib, "comsuppw.lib")
 #pragma comment(lib, "Credui.lib")
+#endif
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -148,6 +150,13 @@ static const char * orte_plm_process_shell_name[] = {
     "unknown"
 }; 
 
+/* local global storage of timing variables */
+static struct timeval joblaunchstart, joblaunchstop;
+
+/* global storage of active jobid being launched */
+static orte_jobid_t active_job = ORTE_JOBID_INVALID;
+
+#ifdef _MSC_VER
 /*
  * local functions
  */
@@ -156,9 +165,6 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
 static int get_credential(char *node_name);
 static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char *remote_node, char *ntlm_auth);
 
-
-/* local global storage of timing variables */
-static struct timeval joblaunchstart, joblaunchstop;
 
 /* local global storage of user credential */
 static char user_name[CREDUI_MAX_USERNAME_LENGTH+1];
@@ -171,66 +177,6 @@ IWbemServices *pSvc_registry = NULL;
 /* namespace for \hostname\root\cimv2 */
 IWbemServices *pSvc_cimv2 = NULL;
 
-/* global storage of active jobid being launched */
-static orte_jobid_t active_job = ORTE_JOBID_INVALID;
-
-/**
-* Init the module
- */
-int orte_plm_process_init(void)
-{
-    int rc;
-    HRESULT hres;
-    
-    if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
-        ORTE_ERROR_LOG(rc);
-    }
-
-    /* Initialize COM for WMI */
-    hres =  CoInitializeEx(0, COINIT_APARTMENTTHREADED); 
-    if (FAILED(hres)) {
-        opal_output(0, "Failed to initialize COM library. Error code = %d \n", hres);
-        return ORTE_ERROR;
-    }
-
-    /* Set general COM security levels. */
-    hres =  CoInitializeSecurity(NULL, 
-                                 -1,                          /* COM authentication */ 
-                                 NULL,                        /* Authentication services */ 
-                                 NULL,                        /* Reserved */ 
-                                 RPC_C_AUTHN_LEVEL_CONNECT,   /* Default authentication */  
-                                 RPC_C_IMP_LEVEL_IMPERSONATE, /* Default Impersonation */  
-                                 NULL,                        /* Authentication info */ 
-                                 EOAC_NONE,                   /* Additional capabilities */  
-                                 NULL                         /* Reserved */ 
-                                );
-
-    if (FAILED(hres)) {     
-        opal_output(0, "Failed to initialize security. Error code = %d \n",hres);
-        CoUninitialize();
-        return ORTE_ERROR;
-    }
-
-    /* Obtain the initial locator to WMI. */ 
-    hres = CoCreateInstance(CLSID_WbemLocator,
-                            0,
-                            CLSCTX_INPROC_SERVER, 
-                            IID_IWbemLocator, (LPVOID *) &pLoc);
- 
-    if (FAILED(hres)) {   
-        opal_output(0,"Failed to create IWbemLocator object. Err code = %d \n", hres);
-        CoUninitialize();
-        return ORTE_ERROR;
-    }
-    
-    SecureZeroMemory(user_name, sizeof(user_name));
-    SecureZeroMemory(user_password, sizeof(user_password));
-    
-    /* we don't need a barrier to exit */ 
-    orte_orted_exit_with_barrier = false;
-
-    return rc;
-}
 
 
 static char *generate_commandline(char *prefix, int argc, char **argv)
@@ -674,6 +620,66 @@ cleanup:
     return pid;
 }
 
+#endif /*_MSC_VER*/
+
+
+/**
+* Init the module
+ */
+int orte_plm_process_init(void)
+{
+    int rc;
+    HRESULT hres;
+    
+    if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+#ifdef _MSC_VER
+    /* Initialize COM for WMI */
+    hres =  CoInitializeEx(0, COINIT_APARTMENTTHREADED); 
+    if (FAILED(hres)) {
+        opal_output(0, "Failed to initialize COM library. Error code = %d \n", hres);
+        return ORTE_ERROR;
+    }
+
+    /* Set general COM security levels. */
+    hres =  CoInitializeSecurity(NULL, 
+                                 -1,                          /* COM authentication */ 
+                                 NULL,                        /* Authentication services */ 
+                                 NULL,                        /* Reserved */ 
+                                 RPC_C_AUTHN_LEVEL_CONNECT,   /* Default authentication */  
+                                 RPC_C_IMP_LEVEL_IMPERSONATE, /* Default Impersonation */  
+                                 NULL,                        /* Authentication info */ 
+                                 EOAC_NONE,                   /* Additional capabilities */  
+                                 NULL                         /* Reserved */ 
+                                );
+
+    if (FAILED(hres)) {     
+        opal_output(0, "Failed to initialize security. Error code = %d \n",hres);
+        CoUninitialize();
+        return ORTE_ERROR;
+    }
+
+    /* Obtain the initial locator to WMI. */ 
+    hres = CoCreateInstance(CLSID_WbemLocator,
+                            0,
+                            CLSCTX_INPROC_SERVER, 
+                            IID_IWbemLocator, (LPVOID *) &pLoc);
+ 
+    if (FAILED(hres)) {   
+        opal_output(0,"Failed to create IWbemLocator object. Err code = %d \n", hres);
+        CoUninitialize();
+        return ORTE_ERROR;
+    }
+    
+    SecureZeroMemory(user_name, sizeof(user_name));
+    SecureZeroMemory(user_password, sizeof(user_password));
+    
+#endif /*_MSC_VER*/
+    
+    return rc;
+}
 
 
 /**
@@ -959,7 +965,7 @@ static void orte_plm_process_wait_daemon(pid_t pid, int status, void* cbdata)
  * you encounter an error so that orterun will be woken up and
  * the job can cleanly terminate
  */
-int orte_plm_process_launch(orte_job_t *jdata)
+static int orte_plm_process_launch(orte_job_t *jdata)
 {
     orte_job_map_t *map = NULL;
     int proc_vpid_index;
@@ -1295,8 +1301,12 @@ int orte_plm_process_launch(orte_job_t *jdata)
                 if (NULL != param) free(param);
             }
             
+#ifdef _MSC_VER
             /* launch remote process */
             pid = wmi_launch_child(prefix_dir, nodes[nnode]->name, argc, exec_argv);
+#else
+            pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env);
+#endif
 
             if (pid < 0) {
                 failed_launch = true;
@@ -1374,7 +1384,7 @@ launch_apps:
 /**
 * Terminate the orteds for a given job
  */
-int orte_plm_process_terminate_orteds(void)
+static int orte_plm_process_terminate_orteds(void)
 {
     int rc;
     
@@ -1386,7 +1396,7 @@ int orte_plm_process_terminate_orteds(void)
     return rc;
 }
 
-int orte_plm_process_signal_job(orte_jobid_t jobid, int32_t signal)
+static int orte_plm_process_signal_job(orte_jobid_t jobid, int32_t signal)
 {
     int rc;
     
@@ -1402,6 +1412,7 @@ int orte_plm_process_finalize(void)
 {
     int rc;
 
+#ifdef _MSC_VER
     /* release the locator and service objects*/
     if(NULL!=pLoc) {
         pLoc->Release();
@@ -1416,6 +1427,7 @@ int orte_plm_process_finalize(void)
     }
 
     CoUninitialize();
+#endif
     
     /* cleanup any pending recvs */
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_stop())) {

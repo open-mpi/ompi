@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2009 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2011 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2008      The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
@@ -23,12 +23,12 @@ MACRO(CONFIGURE_WRAPPER_DATA_FILE APP_NAME)
     SET(INPUT_PREFIX ${APP_NAME})
   ENDIF(${APP_NAME} STREQUAL "mpicxx")
   
-  FILE(READ ${OpenMPI_SOURCE_DIR}/ompi/tools/wrappers/${INPUT_PREFIX}-wrapper-data.txt.in FILE_STRING)
-  STRING(REGEX REPLACE "-l[-a-zA-Z0-9_]+ " "" OUTPUT ${FILE_STRING})
+  FILE(READ ${OpenMPI_SOURCE_DIR}/ompi/tools/wrappers/${INPUT_PREFIX}-wrapper-data.txt.in DATA_FILE)
+  STRING(REGEX REPLACE "-l[-a-zA-Z0-9_]+ " "" DATA_FILE ${DATA_FILE})
 
   # create a temporary input file, for "write file" command only
   # replace the variables in the first level. :(
-  FILE(WRITE ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt.in "${OUTPUT}")
+  FILE(WRITE ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt.in "${DATA_FILE}")
 
   CONFIGURE_FILE(${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}-wrapper-data.txt.in
                  ${OMPI_BINARY_DIR}/tools/wrappers/${APP_NAME}${OMPI_EXE_DEBUG_POSTFIX}-wrapper-data.txt @ONLY)
@@ -40,14 +40,23 @@ MACRO(CONFIGURE_WRAPPER_DATA_FILE APP_NAME)
           DESTINATION share/openmpi)
 ENDMACRO()
 
+
 # select debug or release libraries at configure time
-IF(OMPI_DEBUG_BUILD)
-  SET(OMPI_WRAPPER_BASE_LIBS
-    "libmpid.lib libopen-pald.lib libopen-rted.lib advapi32.lib Ws2_32.lib shlwapi.lib")
-ELSE(OMPI_DEBUG_BUILD)
-  SET(OMPI_WRAPPER_BASE_LIBS
-    "libmpi.lib libopen-pal.lib libopen-rte.lib advapi32.lib Ws2_32.lib shlwapi.lib")
-ENDIF(OMPI_DEBUG_BUILD)
+IF(WINDOWS_VS)
+  IF(OMPI_DEBUG_BUILD)
+    SET(OMPI_WRAPPER_BASE_LIBS
+      "libmpid.lib libopen-pald.lib libopen-rted.lib advapi32.lib Ws2_32.lib shlwapi.lib")
+  ELSE(OMPI_DEBUG_BUILD)
+    SET(OMPI_WRAPPER_BASE_LIBS
+      "libmpi.lib libopen-pal.lib libopen-rte.lib advapi32.lib Ws2_32.lib shlwapi.lib")
+  ENDIF(OMPI_DEBUG_BUILD)
+ELSEIF(WINDOWS_MINGW)
+  IF(OMPI_DEBUG_BUILD)
+    SET(OMPI_WRAPPER_BASE_LIBS "-lmpid")
+  ELSE(OMPI_DEBUG_BUILD)
+    SET(OMPI_WRAPPER_BASE_LIBS "-lmpi")
+  ENDIF(OMPI_DEBUG_BUILD)
+ENDIF(WINDOWS_VS)
 
 IF(BUILD_SHARED_LIBS)
   SET(OMPI_WRAPPER_EXTRA_CFLAGS
@@ -65,6 +74,22 @@ CONFIGURE_WRAPPER_DATA_FILE(mpicc)
 UNSET(OMPI_WRAPPER_EXTRA_LIBS)
 
 IF(OMPI_WANT_CXX_BINDINGS)
+
+  # select debug or release libraries at configure time
+  IF(WINDOWS_VS)
+    IF(OMPI_DEBUG_BUILD)
+      SET(OMPI_WRAPPER_CXX_LIB "libmpi_cxxd.lib ${OMPI_WRAPPER_BASE_LIBS}")
+    ELSE(OMPI_DEBUG_BUILD)
+      SET(OMPI_WRAPPER_CXX_LIB "libmpi_cxx.lib ${OMPI_WRAPPER_BASE_LIBS}")
+    ENDIF(OMPI_DEBUG_BUILD)
+  ELSEIF(WINDOWS_MINGW)
+    IF(OMPI_DEBUG_BUILD)
+      SET(OMPI_WRAPPER_CXX_LIB "-lmpi_cxxd ${OMPI_WRAPPER_BASE_LIBS}")
+    ELSE(OMPI_DEBUG_BUILD)
+      SET(OMPI_WRAPPER_CXX_LIB "-lmpi_cxx ${OMPI_WRAPPER_BASE_LIBS}")
+    ENDIF(OMPI_DEBUG_BUILD)
+  ENDIF(WINDOWS_VS)
+
   IF(BUILD_SHARED_LIBS)
     SET(OMPI_WRAPPER_EXTRA_CXXFLAGS 
       "${OMPI_CXX_LAN_FLAG} ${OMPI_CXX_EXCEPTION} ${OMPI_C_DEF_PRE}OMPI_IMPORTS ${OMPI_C_DEF_PRE}OPAL_IMPORTS ${OMPI_C_DEF_PRE}ORTE_IMPORTS")
@@ -76,18 +101,26 @@ IF(OMPI_WANT_CXX_BINDINGS)
     ENDIF(OMPI_DEBUG_BUILD)
   ENDIF(BUILD_SHARED_LIBS)
 
-  # select debug or release libraries at configure time
-  IF(OMPI_DEBUG_BUILD)
-    SET(OMPI_WRAPPER_CXX_LIB "libmpi_cxxd.lib ${OMPI_WRAPPER_BASE_LIBS}")
-  ELSE(OMPI_DEBUG_BUILD)
-    SET(OMPI_WRAPPER_CXX_LIB "libmpi_cxx.lib ${OMPI_WRAPPER_BASE_LIBS}")
-  ENDIF(OMPI_DEBUG_BUILD)
-
   CONFIGURE_WRAPPER_DATA_FILE(mpic++)
   CONFIGURE_WRAPPER_DATA_FILE(mpicxx)
 ENDIF(OMPI_WANT_CXX_BINDINGS)
 
 IF(OMPI_WANT_F77_BINDINGS)
+  # select debug or release libraries at configure time
+  IF(WINDOWS_VS)
+    IF(OMPI_DEBUG_BUILD)
+      SET(OMPI_WRAPPER_EXTRA_LIBS "libmpi_f77d.lib ${OMPI_WRAPPER_BASE_LIBS}")
+    ELSE(OMPI_DEBUG_BUILD)
+      SET(OMPI_WRAPPER_EXTRA_LIBS "libmpi_f77.lib ${OMPI_WRAPPER_BASE_LIBS}")
+    ENDIF(OMPI_DEBUG_BUILD)
+  ELSEIF(WINDOWS_MINGW)
+    IF(OMPI_DEBUG_BUILD)
+      SET(OMPI_WRAPPER_EXTRA_LIBS "-lmpi_f77d ${OMPI_WRAPPER_BASE_LIBS}")
+    ELSE(OMPI_DEBUG_BUILD)
+      SET(OMPI_WRAPPER_EXTRA_LIBS "-lmpi_f77 ${OMPI_WRAPPER_BASE_LIBS}")
+    ENDIF(OMPI_DEBUG_BUILD)
+  ENDIF(WINDOWS_VS)
+
   IF(BUILD_SHARED_LIBS)
     SET(OMPI_WRAPPER_EXTRA_FFLAGS 
       "")
@@ -99,12 +132,6 @@ IF(OMPI_WANT_F77_BINDINGS)
     ENDIF(OMPI_DEBUG_BUILD)
   ENDIF(BUILD_SHARED_LIBS)
 
-  # select debug or release libraries at configure time
-  IF(OMPI_DEBUG_BUILD)
-    SET(OMPI_WRAPPER_EXTRA_LIBS "libmpi_f77d.lib ${OMPI_WRAPPER_BASE_LIBS}")
-  ELSE(OMPI_DEBUG_BUILD)
-    SET(OMPI_WRAPPER_EXTRA_LIBS "libmpi_f77.lib ${OMPI_WRAPPER_BASE_LIBS}")
-  ENDIF(OMPI_DEBUG_BUILD)
   CONFIGURE_WRAPPER_DATA_FILE(mpif77)
   UNSET(OMPI_WRAPPER_EXTRA_LIBS)
 ENDIF(OMPI_WANT_F77_BINDINGS)

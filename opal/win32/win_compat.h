@@ -85,18 +85,7 @@
 /* for alloca */
 #include <malloc.h>
 
-#if defined(OMPI_BUILDING) && OMPI_BUILDING
-#include "opal/win32/ompi_uio.h"
-#include "opal/win32/ompi_time.h"
-#include "opal/win32/ompi_utsname.h"
-#include "opal/win32/ompi_util.h"
-#include "opal/win32/ompi_misc.h"
-#include "opal/win32/ompi_inet.h"
-#endif
 
-#define MAXPATHLEN _MAX_PATH
-#define MAXHOSTNAMELEN _MAX_PATH
-#define PATH_MAX _MAX_PATH
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
@@ -106,6 +95,16 @@ typedef DWORD in_port_t;
 typedef char* caddr_t;
 typedef unsigned int uint;
 
+#ifdef _MSC_VER
+#if defined(OMPI_BUILDING) && OMPI_BUILDING
+#include "opal/win32/ompi_uio.h"
+#include "opal/win32/ompi_time.h"
+#include "opal/win32/ompi_utsname.h"
+#include "opal/win32/ompi_util.h"
+#include "opal/win32/ompi_misc.h"
+#include "opal/win32/ompi_inet.h"
+#endif
+
 /* Defines for the access functions */
 #define F_OK  0x00
 #define R_OK  0x04
@@ -113,12 +112,6 @@ typedef unsigned int uint;
 #define X_OK  R_OK  /* no execution right on Windows */
 #define S_IRWXU (_S_IREAD | _S_IWRITE | _S_IEXEC)
 
-#define WTERMSIG(EXIT_CODE)    (1)
-#define WIFEXITED(EXIT_CODE)   (1)
-#define WEXITSTATUS(EXIT_CODE) (EXIT_CODE)
-#define WIFSIGNALED(EXIT_CODE) (0)
-#define WIFSTOPPED(EXIT_CODE)  (0)
-#define WSTOPSIG(EXIT_CODE)    (11)
 
 /**
  * Microsoft compiler complain about non conformance of the default UNIX function.
@@ -130,7 +123,6 @@ typedef unsigned int uint;
 #define strdup                    _strdup
 #define putenv                    _putenv
 #define getcwd                    _getcwd
-#define mkdir(PATH, MODE)         _mkdir((PATH))
 #define rmdir                     _rmdir
 #define chdir                     _chdir
 #define chmod                     _chmod
@@ -145,7 +137,6 @@ typedef unsigned int uint;
 #define fileno                    _fileno 
 #define isatty                    _isatty 
 #define execvp                    _execvp
-#define pipe(array_fd)            _pipe(array_fd, 1024, O_BINARY )
 #define S_ISDIR(STAT_MODE)        ((STAT_MODE) & _S_IFDIR)
 #define S_ISREG(STAT_MODE)        ((STAT_MODE) & _S_IFREG)
 #define strncasecmp               _strnicmp
@@ -153,37 +144,96 @@ typedef unsigned int uint;
 #define umask                     _umask
 #define getch                     _getch
 #define random                    rand
-#define nanosleep(tp, rem)        Sleep(*tp.tv_sec*1000+*tp.tv_nsec/1000000)
+#define strtok_r                  strtok_s
+#define srand48                   srand
+#define lrand48                   rand
+#define usleep(t)                 Sleep(t/1000)
+#define posix_memalign(p, a, s)   *p=_aligned_malloc(s,a)
 
+#else
+
+#undef WSABASEERR
+/* in MinGW, PACKED is defined to __attribute__((packed)), will have problem for our basic types */
+#undef PACKED
+#define pthread_atfork
+#include <winsock.h>
+#if defined(OMPI_BUILDING) && OMPI_BUILDING
+#include "opal/win32/ompi_uio.h"
+#include "opal/win32/ompi_utsname.h"
+#include "opal/win32/ompi_util.h"
+#include "opal/win32/ompi_inet.h"
+#include "opal/win32/ompi_misc.h"
+#endif
+
+#define strtok_r(s,d,p)           *p = strtok(s,d)
+#define random()                  rand()
+
+#endif
+
+#define MAXPATHLEN _MAX_PATH
+#define MAXHOSTNAMELEN _MAX_PATH
+#define PATH_MAX _MAX_PATH
+#define WTERMSIG(EXIT_CODE)    (1)
+#define WIFEXITED(EXIT_CODE)   (1)
+#define WEXITSTATUS(EXIT_CODE) (EXIT_CODE)
+#define WIFSIGNALED(EXIT_CODE) (0)
+#define WIFSTOPPED(EXIT_CODE)  (0)
+#define WSTOPSIG(EXIT_CODE)    (11)
+
+#define mkdir(PATH, MODE)         _mkdir((PATH))
+#define nanosleep(tp, rem)        Sleep(*tp.tv_sec*1000+*tp.tv_nsec/1000000)
+#define pipe(array_fd)            _pipe(array_fd, 1024, O_BINARY )
+#define inet_ntop                 ompi_inet_ntop
+#define inet_pton                 ompi_inet_pton
+#define lstat                     stat
+
+#ifndef UINT64_MAX
+#define UINT64_MAX            0xffffffffffffffffULL  /* 18446744073709551615ULL */
+#endif
+#ifndef UINT64_MIN
+#define UINT64_MIN            0
+#endif
+#ifndef INT64_MAX
+#define INT64_MAX             0x7fffffffffffffffLL  /*9223372036854775807LL*/
+#endif
+#ifndef INT64_MIN
+#define INT64_MIN             (-0x7fffffffffffffffLL - 1)  /* (-9223372036854775807 - 1) */
+#endif
 #ifndef UINT32_MAX
-#define UINT32_MAX            _UI32_MAX
+#define UINT32_MAX            0xffffffff  /* 4294967295U */
 #endif
 #ifndef UINT32_MIN
-#define UINT32_MIN            _UI32_MIN
+#define UINT32_MIN            0
 #endif
 #ifndef INT32_MAX
-#define INT32_MAX             _I32_MAX
+#define INT32_MAX             0x7fffffff  /* 2147483647 */
 #endif
 #ifndef INT32_MIN
-#define INT32_MIN             _I32_MIN
-#endif
-#ifndef UINT16_MIN
-#define UINT16_MIN            _UI16_MIN
+#define INT32_MIN             (-0x7fffffff - 1)  /* (-2147483647 - 1) */
 #endif
 #ifndef UINT16_MAX
-#define UINT16_MAX            _UI16_MAX
+#define UINT16_MAX            0xffff  /* 65535U */
 #endif
-#ifndef INT16_MIN
-#define INT16_MIN             _I16_MIN
+#ifndef UINT16_MIN
+#define UINT16_MIN            0
 #endif
 #ifndef INT16_MAX
-#define INT16_MAX             _I16_MAX
+#define INT16_MAX             0x7fff  /* 32767 */
+#endif
+#ifndef INT16_MIN
+#define INT16_MIN             (-0x7fff - 1)  /* (-32768) */
 #endif
 #ifndef UINT8_MAX
-#define UINT8_MAX             _UI8_MAX
+#define UINT8_MAX             0xff  /* 255U */
 #endif
 #ifndef UINT8_MIN
-#define UINT8_MIN             _UI8_MIN
+#define UINT8_MIN             0
+#endif
+#ifndef INT8_MAX
+#define INT8_MAX             0x7f  /* 127 */
+#endif
+#ifndef INT8_MIN
+#define INT8_MIN             (-0x7f - 1)  /* (-128) */
 #endif
 
 /* Make sure we let the compiler know that we support __func__ */
@@ -201,11 +251,37 @@ typedef unsigned int uint;
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt_raise.asp
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnucmg/html/UCMGch09.asp
  */
-#define SIGCHLD SIGILL
-#define SIGKILL WM_QUIT
-#define SIGCONT 18
-#define SIGSTOP 19
-#define SIGTSTP 20
+#define SIGHUP    1
+/* 2 is used for SIGINT on windows */
+#define SIGQUIT   3
+/* 4 is used for SIGILL on windows */
+#define SIGTRAP   5
+#define SIGIOT    6
+#define SIGBUS    7
+/* 8 is used for SIGFPE on windows */
+#define SIGKILL   9
+#define SIGUSR1   10
+/* 11 is used for SIGSEGV on windows */
+#define SIGUSR2   12   
+#define SIGPIPE   13
+#define SIGALRM   14
+/* 15 is used for SIGTERM on windows */
+#define SIGSTKFLT 16
+#define SIGCHLD   17
+#define SIGCONT   18
+#define SIGSTOP   19
+#define SIGTSTP   20
+/* 21 is used for SIGBREAK on windows */
+/* 22 is used for SIGABRT on windows */
+#define SIGTTIN   23
+#define SIGTTOU   24
+#define SIGURG    25
+#define SIGXCPU   26
+#define SIGXFSZ   27
+#define SIGVTALRM 28
+#define SIGPROF   29
+#define SIGWINCH  30
+#define SIGIO     31
 
 /* Note: 
  *   The two defines below are likely to break the orte_wait
@@ -217,21 +293,20 @@ typedef unsigned int uint;
 
 #define sigset_t int
 #define in_addr_t uint32_t
- 
-/* Need to define _Bool here for different version of VS.  
-   The definition in opal_config_bottom.h won't help,  
-   as long as we have a mixed C and C++ projects in one solution. */ 
-#if defined(_MSC_VER) && _MSC_VER < 1600 
-#define _Bool BOOL 
-#else 
-#define _Bool bool 
+
+/* Need to define _Bool here for different version of VS. 
+   The definition in opal_config_bottom.h won't help, 
+   as long as we have a mixed C and C++ projects in one solution. */
+#if defined(_MSC_VER) && _MSC_VER < 1600
+#define _Bool BOOL
+#else
+#define _Bool bool
 #endif
 
 /*
  * No syslog.h on Windows, but these have to be defined somehow.
  * There could also be a notifier component later for Windows.
  */
-
 #define LOG_EMERG   0
 #define LOG_ALERT   1
 #define LOG_CRIT    2
@@ -240,6 +315,7 @@ typedef unsigned int uint;
 #define LOG_NOTICE  5
 #define LOG_INFO    6
 #define LOG_DEBUG   7
+
 
 /*
  * Mask these to Windows equivalents

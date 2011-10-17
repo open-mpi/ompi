@@ -1,4 +1,4 @@
-# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2011 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -23,7 +23,7 @@ ENDIF(NOT OMPI_PROVIDE_MPI_FILE_INTERFACE)
 
 ADD_LIBRARY (libmpi_cxx ${CXX_SOURCE_FILES})
 
-SET_TARGET_PROPERTIES (libmpi_cxx PROPERTIES LINKER_LANGUAGE CXX)
+SET_TARGET_PROPERTIES (libmpi_cxx PROPERTIES LINKER_LANGUAGE CXX PREFIX "" IMPORT_PREFIX "")
 
 # Set compile flags for this target
 IF (BUILD_SHARED_LIBS)
@@ -48,8 +48,8 @@ INSTALL(TARGETS libmpi_cxx
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 
-IF (OMPI_DEBUG_BUILD)
+IF (OMPI_DEBUG_BUILD AND WINDOWS_VS)
   INSTALL(FILES ${OpenMPI_BINARY_DIR}/Debug/libmpi_cxx${CMAKE_DEBUG_POSTFIX}.pdb
     DESTINATION bin)
-ENDIF (OMPI_DEBUG_BUILD)
+ENDIF (OMPI_DEBUG_BUILD AND WINDOWS_VS)
 

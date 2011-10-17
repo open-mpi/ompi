@@ -124,7 +124,7 @@ int orte_pre_condition_transports(orte_job_t *jdata)
     orte_app_context_t *app;
     char *string_key, *cs_env;
 
-#if !defined(__WINDOWS__)
+#if !defined(__WINDOWS__) || !defined(_MSC_VER)
     int fd_rand;
     size_t bytes_read; 
     struct stat buf;

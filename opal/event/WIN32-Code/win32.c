@@ -26,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "opal_config.h"
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__WINDOWS__)
 #include "./config.h"
 #else
 /* Avoid the windows/msvc thing. */
