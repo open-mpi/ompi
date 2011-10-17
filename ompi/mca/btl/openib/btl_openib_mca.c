@@ -134,7 +134,6 @@ int btl_openib_register_mca_params(void)
 {
     char default_qps[100];
     uint32_t mid_qp_size;
-    int i;
     char *msg, *str, *pkey;
     int ival, ival2, ret, tmp;
 
