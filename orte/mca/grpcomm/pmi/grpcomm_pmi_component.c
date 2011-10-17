@@ -16,6 +16,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/util/proc_info.h"
 
 #include "grpcomm_pmi.h"
 
@@ -49,20 +50,44 @@ int orte_grpcomm_pmi_open(void)
 
 int orte_grpcomm_pmi_close(void)
 {
+    PMI_BOOL initialized;
+
+    /* if we weren't selected, cleanup if necessary */
+    if (PMI_SUCCESS == PMI_Initialized(&initialized) &&
+        PMI_TRUE == initialized) {
+        PMI_Finalize();
+    }
     return ORTE_SUCCESS;
 }
 
 int orte_grpcomm_pmi_component_query(mca_base_module_t **module, int *priority)
 {
     int spawned;
-    /* if we can't startup the PMI, we can't be used */
-    if (PMI_SUCCESS != PMI_Init(&spawned)) {
-        *priority = -1;
-        *module = NULL;
-        return ORTE_ERROR;
+    PMI_BOOL initialized;
+
+    /* for now, only use PMI when direct launched */
+    if (!ORTE_PROC_IS_HNP &&
+        NULL == orte_process_info.my_hnp_uri &&
+        PMI_SUCCESS == PMI_Initialized(&initialized)) {
+        /* if we aren't already initialized, then try */
+        if (PMI_TRUE != initialized) {
+            /* if we can't startup the PMI, we can't be used */
+            if (PMI_SUCCESS != PMI_Init(&spawned)) {
+                *priority = -1;
+                *module = NULL;
+                return ORTE_ERROR;
+            }
+        }
+        /* if we were able to startup PMI, or it was already
+         * running, then use us
+         */
+        *priority = 100;
+        *module = (mca_base_module_t *)&orte_grpcomm_pmi_module;
+        return ORTE_SUCCESS;    
     }
-    /* we are a default, so set a low priority so we can be overridden */
-    *priority = 1;
-    *module = (mca_base_module_t *)&orte_grpcomm_pmi_module;
-    return ORTE_SUCCESS;    
+
+    /* we can't run */
+    *priority = -1;
+    *module = NULL;
+    return ORTE_ERROR;
 }

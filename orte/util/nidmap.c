@@ -187,9 +187,6 @@ int orte_util_setup_local_nidmap_entries(void)
     pmap->local_rank = 0;
     pmap->node_rank = 0;
     node->index = opal_pointer_array_add(&orte_nidmap, node);
-    /* value array copies values, so everything must be set before
-     * calling the set_item function
-     */
     pmap->node = node->index;
     opal_pointer_array_set_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid, pmap);
     

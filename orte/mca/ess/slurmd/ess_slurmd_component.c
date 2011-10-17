@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,10 +25,6 @@
 
 #include "orte_config.h"
 #include "orte/constants.h"
-
-#if WANT_PMI_SUPPORT
-#include <pmi.h>
-#endif
 
 #include "orte/util/proc_info.h"
 
@@ -82,17 +79,6 @@ int orte_ess_slurmd_component_query(mca_base_module_t **module, int *priority)
         NULL != getenv("SLURM_JOBID") &&
         NULL != getenv("SLURM_STEPID") &&
         NULL == orte_process_info.my_hnp_uri) {
-#if WANT_PMI_SUPPORT
-        {
-            int spawned;
-            /* if we can't startup the PMI, we can't be used */
-            if (PMI_SUCCESS != PMI_Init(&spawned)) {
-                *priority = -1;
-                *module = NULL;
-                return ORTE_ERROR;
-            }
-        }
-#endif
         *priority = 30;
         *module = (mca_base_module_t *)&orte_ess_slurmd_module;
         return ORTE_SUCCESS;
