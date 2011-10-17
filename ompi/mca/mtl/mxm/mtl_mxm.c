@@ -89,15 +89,26 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm
     return OMPI_SUCCESS;
 }
 
+#define max(a,b) ((a)>(b)?(a):(b))
 
 int ompi_mtl_mxm_module_init(void)
 {
     struct sockaddr_mxm_local_proc sa_bind_self;
     struct sockaddr_mxm_ib_local sa_bind_rdma;
+    struct sockaddr_mxm_shm_proc sa_bind_shm;
     mxm_ep_opts_t ep_opt;
     ompi_mtl_mxm_ep_conn_info_t ep_info;
     mxm_error_t err;
     uint32_t jobid;
+    uint64_t mxlr;
+    int rc;
+    ompi_proc_t *mp, **procs;
+    size_t totps, proc;
+    int lr, nlps;
+
+    mxlr = 0;
+    lr = -1;
+    nlps = 0;
 
     jobid = ompi_mtl_mxm_get_job_id();
     if (0 == jobid) {
@@ -110,7 +121,7 @@ int ompi_mtl_mxm_module_init(void)
 
     sa_bind_self.sa_family = AF_MXM_LOCAL_PROC;
     sa_bind_self.context_id = jobid;
-    sa_bind_self.process_id = getpid();
+    sa_bind_self.process_id = 0;
 
     sa_bind_rdma.sa_family = AF_MXM_IB_LOCAL;
     sa_bind_rdma.lid = 0;
@@ -118,8 +129,42 @@ int ompi_mtl_mxm_module_init(void)
     sa_bind_rdma.qp_num = 0;
     sa_bind_rdma.sl = 0;
 
+    sa_bind_shm.sa_family = AF_MXM_SHM_PROC;
+    sa_bind_shm.process_id = 0;
+    sa_bind_shm.num_procs = 0;
+    sa_bind_shm.context_id = 0;
+
+    if ((rc = ompi_proc_refresh()) != OMPI_SUCCESS) {
+        MXM_ERROR("Unable to refresh processes");
+        return OMPI_ERROR;
+    }
+
+    mp = ompi_proc_local();
+    if (NULL == (procs = ompi_proc_world(&totps))) {
+        MXM_ERROR("Unable to obtain process list");
+        return OMPI_ERROR;
+    }
+
+    for (proc = 0; proc < totps; proc++) {
+        if (mp == procs[proc]) {
+            lr = nlps++;
+            mxlr = max(mxlr, procs[proc]->proc_name.vpid);
+            continue;
+        }
+
+        if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
+            mxlr = max(mxlr, procs[proc]->proc_name.vpid);
+            nlps++;
+        }
+    }
+
+    sa_bind_self.process_id = sa_bind_shm.process_id = lr;
+    sa_bind_shm.context_id = mxlr;
+    sa_bind_shm.num_procs = nlps;
+
     ep_opt.ptl_bind_addr[MXM_PTL_SELF] = (struct sockaddr*)&sa_bind_self;
     ep_opt.ptl_bind_addr[MXM_PTL_RDMA] = (struct sockaddr*)&sa_bind_rdma;
+    ep_opt.ptl_bind_addr[MXM_PTL_SHM] = (struct sockaddr*)&sa_bind_shm;
 
     /* Open MXM endpoint */
     err = mxm_ep_create(ompi_mtl_mxm.mxm_context, &ep_opt, &ompi_mtl_mxm.ep);
@@ -138,7 +183,9 @@ int ompi_mtl_mxm_module_init(void)
     if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_RDMA)) {
     	return OMPI_ERROR;
     }
-
+    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SHM)) {
+            return OMPI_ERROR;
+    }
     if (OMPI_SUCCESS != ompi_modex_send(&mca_mtl_mxm_component.super.mtl_version,
                                         &ep_info, sizeof(ep_info))) {
         MXM_ERROR("Open MPI couldn't distribute EP connection details");
@@ -187,7 +234,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         }
 
         conn_reqs[i].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&ep_info[i]->ptl_addr[MXM_PTL_SELF];
-        conn_reqs[i].ptl_addr[MXM_PTL_SHM] = NULL;
+        conn_reqs[i].ptl_addr[MXM_PTL_SHM] = (struct sockaddr *)&ep_info[i]->ptl_addr[MXM_PTL_SHM];
         conn_reqs[i].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&ep_info[i]->ptl_addr[MXM_PTL_RDMA];
     }
 
