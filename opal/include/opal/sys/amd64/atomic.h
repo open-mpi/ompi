@@ -44,6 +44,10 @@
 
 #define OPAL_HAVE_ATOMIC_CMPSET_64 1
 
+#define OPAL_HAVE_ATOMIC_SWAP_32 1
+
+#define OPAL_HAVE_ATOMIC_SWAP_64 1
+
 /**********************************************************************
  *
  * Memory Barriers
@@ -118,6 +122,40 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
 
 #define opal_atomic_cmpset_acq_64 opal_atomic_cmpset_64
 #define opal_atomic_cmpset_rel_64 opal_atomic_cmpset_64
+
+#if OMPI_GCC_INLINE_ASSEMBLY
+
+static inline int32_t opal_atomic_swap_32( volatile int32_t *addr,
+					   int32_t newval)
+{
+    int32_t oldval;
+
+    __asm__ __volatile__("xchg %0, %1" :
+			 "=r" (oldval), "=m" (*addr) :
+			 "0" (newval), "m" (*addr) :
+			 "memory");
+    return oldval;
+}
+
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+
+#if OMPI_GCC_INLINE_ASSEMBLY
+
+static inline int64_t opal_atomic_swap_64( volatile int64_t *addr,
+                                           int64_t newval)
+{
+    int64_t oldval;
+
+    __asm__ __volatile__("xchgq %1, %0" :
+			 "=r" (oldval) :
+			 "m" (*addr), "0" (newval) :
+			 "memory");
+    return oldval;
+}
+
+#endif /* OMPI_GCC_INLINE_ASSEMBLY */
+
+
 
 #if OMPI_GCC_INLINE_ASSEMBLY
 
