@@ -2439,8 +2439,8 @@ btl_openib_component_init(int *num_btl_modules,
     }
 
     seedv[0] = ORTE_PROC_MY_NAME->vpid;
-    seedv[1] = opal_sys_timer_get_cycles();
-    seedv[2] = opal_sys_timer_get_cycles();
+    seedv[1] = opal_timer_base_get_cycles();
+    seedv[2] = opal_timer_base_get_cycles();
     seed48(seedv);
 
     /* Read in INI files with device-specific parameters */
