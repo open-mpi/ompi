@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
@@ -88,4 +88,5 @@ AC_DEFUN([ORTE_CHECK_PMI],[
    AC_DEFINE_UNQUOTED([WANT_PMI_SUPPORT],
                       [$orte_enable_pmi],
                       [Whether we want PMI support])
+   AM_CONDITIONAL(WANT_PMI_SUPPORT, [test "$orte_enable_pmi" = 1])
 ])

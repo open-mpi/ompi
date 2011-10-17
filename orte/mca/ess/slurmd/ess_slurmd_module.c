@@ -34,13 +34,9 @@
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
-#if WANT_PMI_SUPPORT
-#include <pmi.h>
-#endif
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
@@ -130,7 +126,6 @@ static int rte_init(void)
         goto error;
     }
     
-    
     /* Only application procs can use this module. Since we
      * were directly launched by srun, we need to bootstrap
      * our own global info so we can startup. Srun will have
@@ -179,63 +174,56 @@ static int rte_init(void)
     free(cs_env);
     free(string_key);
 
-#if WANT_PMI_SUPPORT
-    /* get our rank from PMI */
-    if (PMI_SUCCESS != PMI_Get_rank(&i)) {
-        error = "PMI_Get_rank failed";
+    /* get my local nodeid */
+    if (NULL == (envar = getenv("SLURM_NODEID"))) {
+        error = "could not get SLURM_NODEID";
         goto error;
     }
-    ORTE_PROC_MY_NAME->vpid = i;
-#else
+    nodeid = strtol(envar, NULL, 10);
+    ORTE_PROC_MY_DAEMON->jobid = 0;
+    ORTE_PROC_MY_DAEMON->vpid = nodeid;
+    ORTE_EPOCH_SET(ORTE_PROC_MY_DAEMON->epoch,ORTE_PROC_MY_NAME->epoch);
+    
+    /* get the node list */
+    if (NULL == (regexp = getenv("SLURM_STEP_NODELIST"))) {
+        error = "could not get SLURM_STEP_NODELIST";
+        goto error;
+    }
+    /* break that down into a list of nodes */
+    if (ORTE_SUCCESS != (ret = discover_nodes(regexp, &nodes))) {
+        error = "could not parse node list";
+        goto error;
+    }
+    num_nodes = opal_argv_count(nodes);
+    orte_process_info.num_nodes = num_nodes;
+    
+    /* setup the nidmap arrays */
+    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_util_nidmap_init";
+        goto error;
+    }
+    
+    /* set the size of the nidmap storage so we minimize realloc's */
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&orte_nidmap, orte_process_info.num_nodes))) {
+        error = "could not set pointer array size for nidmap";
+        goto error;
+    }
+    
     /* get the slurm procid - this will be our vpid */
     if (NULL == (envar = getenv("SLURM_PROCID"))) {
         error = "could not get SLURM_PROCID";
         goto error;
     }
     ORTE_PROC_MY_NAME->vpid = strtol(envar, NULL, 10);
-#endif
-    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_MIN);
-    /* get our local rank */
-    if (NULL == (envar = getenv("SLURM_LOCALID"))) {
-        error = "could not get SLURM_LOCALID";
-        goto error;
-    }
-    local_rank = strtol(envar, NULL, 10);
-
-    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
-                         "%s local rank %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         local_rank));
-#if WANT_PMI_SUPPORT
-    if (PMI_SUCCESS != PMI_Get_universe_size(&i)) {
-        error = "PMI_Get_universe_size failed";
-        goto error;
-    }
-    orte_process_info.num_procs = i;
-#else
     /* get the number of procs in this job */
     if (NULL == (envar = getenv("SLURM_STEP_NUM_TASKS"))) {
         error = "could not get SLURM_STEP_NUM_TASKS";
         goto error;
     }
     orte_process_info.num_procs = strtol(envar, NULL, 10);
-#endif
-
-    if (orte_process_info.max_procs < orte_process_info.num_procs) {
-        orte_process_info.max_procs = orte_process_info.num_procs;
-    }
-#if WANT_PMI_SUPPORT
-    if (PMI_SUCCESS != PMI_Get_appnum(&i)) {
-        error = "PMI_Get_appnum failed";
-        goto error;
-    }
-    
-    orte_process_info.app_num = i;
-#else
     /* set the app_num so that MPI attributes get set correctly */
     orte_process_info.app_num = 1;
-#endif
-
     /* if this is SLURM 2.0 or above, get our port
      * assignments for use in the OOB
      */
@@ -250,18 +238,8 @@ static int rte_init(void)
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              envar));
     }
-    
-    /* get my local nodeid */
-    if (NULL == (envar = getenv("SLURM_NODEID"))) {
-        error = "could not get SLURM_NODEID";
-        goto error;
-    }
-    nodeid = strtol(envar, NULL, 10);
-    ORTE_PROC_MY_DAEMON->jobid = 0;
-    ORTE_PROC_MY_DAEMON->vpid = nodeid;
-    ORTE_EPOCH_SET(ORTE_PROC_MY_DAEMON->epoch,ORTE_PROC_MY_NAME->epoch);
-    
-    /* get the number of ppn */
+
+    /* get the number of tasks/node */
     if (NULL == (tasks_per_node = getenv("SLURM_STEP_TASKS_PER_NODE"))) {
         error = "could not get SLURM_STEP_TASKS_PER_NODE";
         goto error;
@@ -277,19 +255,6 @@ static int rte_init(void)
     } else {
         cpus_per_task = 1;
     }
-    
-    /* get the node list */
-    if (NULL == (regexp = getenv("SLURM_STEP_NODELIST"))) {
-        error = "could not get SLURM_STEP_NODELIST";
-        goto error;
-    }
-    /* break that down into a list of nodes */
-    if (ORTE_SUCCESS != (ret = discover_nodes(regexp, &nodes))) {
-        error = "could not parse node list";
-        goto error;
-    }
-    num_nodes = opal_argv_count(nodes);
-    orte_process_info.num_nodes = num_nodes;
     
     /* compute the ppn */
     if (ORTE_SUCCESS != (ret = orte_regex_extract_ppn(num_nodes, tasks_per_node, &ppn))) {
@@ -314,24 +279,7 @@ static int rte_init(void)
         error = "distribution/mapping mode not supported";
         goto error;
     }
-#if 0
-    SLURM_DIST_PLANESIZE=0
-    SLURM_DIST_LLLP=
-#endif
-    
-    /* setup the nidmap arrays */
-    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_util_nidmap_init";
-        goto error;
-    }
-    
-    /* set the size of the nidmap storage so we minimize realloc's */
-    if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&orte_nidmap, orte_process_info.num_nodes))) {
-        error = "could not set pointer array size for nidmap";
-        goto error;
-    }
-    
+
     /* construct the nidmap */
     for (i=0; i < num_nodes; i++) {
         node = OBJ_NEW(orte_nid_t);
@@ -352,7 +300,7 @@ static int rte_init(void)
     /* set the size of the pidmap storage so we minimize realloc's */
     if (ORTE_SUCCESS != (ret = opal_pointer_array_set_size(&jmap->pmap, jmap->num_procs))) {
         ORTE_ERROR_LOG(ret);
-        error = "could not set value array size for pidmap";
+        error = "could not set array size for pidmap";
         goto error;
     }
         
@@ -415,14 +363,29 @@ static int rte_init(void)
         }
     }
     free(ppn);
-
     /* ensure we pick the correct critical components */
-#if WANT_PMI_SUPPORT
-    putenv("OMPI_MCA_grpcomm=pmi");
-#else
     putenv("OMPI_MCA_grpcomm=hier");
-#endif
     putenv("OMPI_MCA_routed=direct");
+
+    /* complete definition of process name */
+    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_MIN);
+
+    /* get our local rank */
+    if (NULL == (envar = getenv("SLURM_LOCALID"))) {
+        error = "could not get SLURM_LOCALID";
+        goto error;
+    }
+    local_rank = strtol(envar, NULL, 10);
+
+    OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
+                         "%s local rank %d",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         local_rank));
+
+    /* set max procs */
+    if (orte_process_info.max_procs < orte_process_info.num_procs) {
+        orte_process_info.max_procs = orte_process_info.num_procs;
+    }
     
     /* now use the default procedure to finish my setup */
     if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
@@ -466,14 +429,13 @@ static int rte_finalize(void)
      * before things were initialized
      */
     orte_util_nidmap_finalize();
-    
+
     return ret;    
 }
 
 static void rte_abort(int error_code, bool report)
 {
-    if (ORTE_ERR_SOCKET_NOT_AVAILABLE == OPAL_SOS_GET_ERROR_CODE(error_code) &&
-        slurm20) {
+    if (ORTE_ERR_SOCKET_NOT_AVAILABLE == error_code && slurm20) {
         /* exit silently with a special error code for slurm 2.0 */
         orte_ess_base_app_abort(108, false);
     } else {

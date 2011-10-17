@@ -39,20 +39,4 @@ AC_DEFUN([MCA_orte_ess_slurmd_CONFIG],[
     AC_SUBST([ess_slurmd_LDFLAGS])
     AC_SUBST([ess_slurmd_LIBS])
 
-    # see if PMI support also requested
-    ORTE_CHECK_PMI([ess_slurmd_pmi], [ess_slurmd_pmi_good=1], [ess_slurmd_pmi_good=0])
-
-   # if check worked, set wrapper flags if so.  
-    # Evaluate succeed / fail
-    AS_IF([test "$ess_slurmd_pmi_good" = 1],
-          [ess_slurmd_WRAPPER_EXTRA_LDFLAGS="$ess_slurmd_LDFLAGS $ess_slurmd_pmi_LDFLAGS"
-           ess_slurmd_WRAPPER_EXTRA_LIBS="$ess_slurmd_LIBS $ess_slurmd_pmi_LIBS"
-           ],
-          [])
-
-    # set build flags to use in makefile
-    AC_SUBST([ess_slurmd_pmi_CPPFLAGS])
-    AC_SUBST([ess_slurmd_pmi_LDFLAGS])
-    AC_SUBST([ess_slurmd_pmi_LIBS])
-
 ])dnl
