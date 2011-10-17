@@ -121,6 +121,8 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_32 0
 #define OPAL_HAVE_INLINE_ATOMIC_ADD_64 0
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_64 0
+#define OPAL_HAVE_INLINE_ATOMIC_SWAP_32 0
+#define OPAL_HAVE_INLINE_ATOMIC_SWAP_64 0
 #else
 #define OPAL_HAVE_INLINE_ATOMIC_MEM_BARRIER 1
 #define OPAL_HAVE_INLINE_ATOMIC_CMPSET_32 1
@@ -129,6 +131,8 @@ typedef struct opal_atomic_lock_t opal_atomic_lock_t;
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_32 1
 #define OPAL_HAVE_INLINE_ATOMIC_ADD_64 1
 #define OPAL_HAVE_INLINE_ATOMIC_SUB_64 1
+#define OPAL_HAVE_INLINE_ATOMIC_SWAP_32 1
+#define OPAL_HAVE_INLINE_ATOMIC_SWAP_64 1
 #endif
 
 /**********************************************************************
@@ -560,6 +564,16 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
                               (int64_t)(NEWVAL), sizeof(*(ADDR)) )
 
 #endif /* (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64) */
+
+#if defined(DOXYGEN) || (OPAL_HAVE_ATOMIC_SWAP_32 || OPAL_HAVE_ATOMIC_SWAP_64)
+
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_SWAP_32
+#define opal_atomic_swap_ptr(addr, value) opal_atomic_swap_32((int32_t *) addr, value)
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SWAP_64
+#define opal_atomic_swap_ptr(addr, value) opal_atomic_swap_64((int64_t *) addr, value)
+#endif
+
+#endif /* (OPAL_HAVE_ATOMIC_SWAP_32 || OPAL_HAVE_ATOMIC_SWAP_64) */
 
 #if defined(DOXYGEN) || (OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64)
 
