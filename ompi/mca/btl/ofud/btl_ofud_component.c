@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Oracle and/or all affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +33,6 @@
 #include "opal/prefetch.h"
 #include "orte/util/show_help.h"
 #include "ompi/mca/btl/btl.h"
-#include "opal/sys/timer.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/timer/base/base.h"
