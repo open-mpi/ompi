@@ -558,7 +558,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                            ORTE_VPID_INVALID != ptr->name.vpid) {
                         vpid++;
                     }
-                    proc->name.vpid = vpid;
+                    proc->name.vpid = vpid++;
                     ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
                     ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
                     
@@ -567,6 +567,10 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                         ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
                     }
                 }
+                /* some mappers require that we insert the proc into the jdata->procs
+                 * array, while others will have already done it - so check and
+                 * do the operation if required
+                 */
                 if (NULL == opal_pointer_array_get_item(jdata->procs, proc->name.vpid)) {
                     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                         ORTE_ERROR_LOG(rc);
@@ -597,8 +601,10 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                     }
                     if (ORTE_VPID_INVALID != proc->name.vpid) {
                         /* vpid was already assigned, probably by the
-                         * round-robin mapper - still needs to be
-                         * added to the jdata proc array!
+                         * round-robin mapper. Some mappers require that
+                         * we insert the proc into the jdata->procs
+                         * array, while others will have already done it - so check and
+                         * do the operation if required
                          */
                         if (NULL == opal_pointer_array_get_item(jdata->procs, proc->name.vpid)) {
                             if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
@@ -621,6 +627,10 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                     proc->name.vpid = vpid++;
                     ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
                     ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
+                    /* insert the proc into the jdata->procs array - can't already
+                     * be there as the only way to this point in the code is for the
+                     * vpid to have been INVALID
+                     */
                     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                         ORTE_ERROR_LOG(rc);
                         return rc;
