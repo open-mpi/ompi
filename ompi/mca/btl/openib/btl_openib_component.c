@@ -58,6 +58,7 @@ const char *ibv_get_sysfs_path(void);
 #include "opal/mca/carto/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
+#include "opal/mca/timer/base/base.h"
 #include "opal_stdint.h"
 
 #include "orte/util/show_help.h"

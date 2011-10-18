@@ -35,6 +35,7 @@
 #include "opal/sys/timer.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/timer/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
