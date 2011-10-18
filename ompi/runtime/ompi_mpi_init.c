@@ -743,8 +743,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* identify the architectures of remote procs and setup
      * their datatype convertors, if required
      */
-    if (OMPI_SUCCESS != (ret = ompi_proc_set_arch())) {
-        error = "ompi_proc_set_arch failed";
+    if (OMPI_SUCCESS != (ret = ompi_proc_complete_init())) {
+        error = "ompi_proc_complete_init failed";
         goto error;
     }
 

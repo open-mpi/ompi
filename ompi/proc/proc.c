@@ -126,20 +126,20 @@ int ompi_proc_init(void)
 }
 
 
-/* in some cases, all MPI procs are required to do a modex so they
- * can (at the least) exchange their architecture. Since we cannot
- * know in advance if this was required, we provide a separate function
- * to set the arch (instead of doing it inside of ompi_proc_init) that
- * can be called after the modex completes in ompi_mpi_init. Thus, we
- * know that - regardless of how the arch is known, whether via modex
- * or dropped in from a local daemon - the arch can be set correctly
- * at this time
+/**
+ * The process creation is split into two steps. The second step
+ * is the important one, it sets the properties of the remote
+ * process, such as architecture, node name and locality flags.
+ *
+ * This function is to be called __only__ after the modex exchange
+ * has been performed, in order to allow the modex to carry the data
+ * instead of requiring the runtime to provide it.
  */
-int ompi_proc_set_arch(void)
+int ompi_proc_complete_init(void)
 {
     ompi_proc_t *proc = NULL;
     opal_list_item_t *item = NULL;
-    int ret;
+    int ret, errcode = OMPI_SUCCESS;
     
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     
@@ -149,6 +149,11 @@ int ompi_proc_set_arch(void)
         proc = (ompi_proc_t*)item;
         
         if (proc->proc_name.vpid != ORTE_PROC_MY_NAME->vpid) {
+            /* get the locality information */
+            proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
+            /* get the name of the node it is on */
+            proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
+
             ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void*)&(proc->proc_arch), OPAL_UINT32);
             if (OMPI_SUCCESS == ret) {
                 /* if arch is different than mine, create a new convertor for this proc */
@@ -160,26 +165,21 @@ int ompi_proc_set_arch(void)
                     orte_show_help("help-mpi-runtime",
                                    "heterogeneous-support-unavailable",
                                    true, orte_process_info.nodename, 
-                                   proc->proc_hostname == NULL ? "<hostname unavailable>" :
-                                   proc->proc_hostname);
-                    OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-                    return OMPI_ERR_NOT_SUPPORTED;
+                                   proc->proc_hostname == NULL ? "<hostname unavailable>" : proc->proc_hostname);
+                    errcode = OMPI_ERR_NOT_SUPPORTED;
+                    break;
 #endif
                 }
             } else if (OMPI_ERR_NOT_IMPLEMENTED == OPAL_SOS_GET_ERROR_CODE(ret)) {
                 proc->proc_arch = opal_local_arch;
             } else {
-                OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-                return ret;
+                errcode = ret;
+                break;
             }
-            /* get the locality information */
-            proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
-            /* get the name of the node it is on */
-            proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
         }
     }
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
-    return OMPI_SUCCESS;
+    return errcode;
 }
 
 
