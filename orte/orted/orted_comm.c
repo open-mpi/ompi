@@ -745,11 +745,16 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
         }
         /* kill the local procs */
         orte_odls.kill_local_procs(NULL);
-        /* trigger our appropriate exit procedure
-         * NOTE: this event will fire -after- any zero-time events
-         * so any pending relays -do- get sent first
-         */
-        orte_quit();
+        /* if all my routes are gone, then terminate ourselves */
+        if (0 == orte_routed.num_routes() &&
+            0 == opal_list_get_size(&orte_local_children)) {
+            /* call our appropriate exit procedure */
+            if (orte_debug_daemons_flag) {
+                opal_output(0, "%s orted_cmd: all routes and children gone - exiting",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            }
+            orte_quit();
+        }
         return ORTE_SUCCESS;
         break;
             
@@ -761,10 +766,7 @@ int orte_daemon_process_commands(orte_process_name_t* sender,
         }
         /* kill the local procs */
         orte_odls.kill_local_procs(NULL);
-        /* trigger our appropriate exit procedure
-         * NOTE: this event will fire -after- any zero-time events
-         * so any pending relays -do- get sent first
-         */
+        /* call our appropriate exit procedure */
         orte_quit();
         return ORTE_SUCCESS;
         break;

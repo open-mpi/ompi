@@ -148,12 +148,9 @@ static int update_state(orte_jobid_t job,
         return ORTE_SUCCESS;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                         "errmgr:default_orted:update_state() %s) "
-                         "------- %s state updated for process %s to %s",
+    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+                         "%s errmgr:default_orted:update_state process %s to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ((NULL == proc) ? "App. Process" : 
-                          (proc->jobid == ORTE_PROC_MY_HNP->jobid ? "Daemon" : "App. Process")),
                          (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc),
                          orte_proc_state_to_str(state)));
 
@@ -268,8 +265,16 @@ static int update_state(orte_jobid_t job,
             /* nope - ignore */
             return ORTE_SUCCESS;
         }
+        OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+                             "%s errmgr:default:orted daemon %s exited",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
         /* see if this was a lifeline */
         if (ORTE_SUCCESS != orte_routed.route_lost(proc)) {
+            OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+                                 "%s errmgr:orted daemon %s was a lifeline - exiting",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(proc)));
             /* kill our children */
             killprocs(ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD);
             /* terminate - our routed children will see
@@ -281,14 +286,17 @@ static int update_state(orte_jobid_t job,
         if (proc->jobid == ORTE_PROC_MY_NAME->jobid) {
             /* if all my routes are gone, then terminate ourselves */
             if (0 == orte_routed.num_routes() &&
-                    0 == opal_list_get_size(&orte_local_children)) {
+                0 == opal_list_get_size(&orte_local_children)) {
+                OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+                                     "%s errmgr:default:orted all routes gone - exiting",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 orte_quit();
             } else {
-                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
-                            "%s errmgr:orted not exiting, num_routes() == %d, num children == %d",
-                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                            (int)orte_routed.num_routes(),
-                            (int)opal_list_get_size(&orte_local_children)));
+                OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
+                                     "%s errmgr:default:orted not exiting, num_routes() == %d, num children == %d",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     (int)orte_routed.num_routes(),
+                                     (int)opal_list_get_size(&orte_local_children)));
             }
         }
         /* if not, then indicate we can continue */
@@ -319,7 +327,7 @@ static int update_state(orte_jobid_t job,
         return ORTE_SUCCESS;
     }
 
-    OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+    OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
                          "%s errmgr:default_orted got state %s for proc %s pid %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orte_proc_state_to_str(state),
@@ -408,7 +416,7 @@ static int update_state(orte_jobid_t job,
         }
 
         /* send it */
-    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert, ORTE_RML_TAG_PLM, 0, cbfunc, NULL))) {
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert, ORTE_RML_TAG_PLM, 0, cbfunc, NULL))) {
             ORTE_ERROR_LOG(rc);
         } else {
             rc = ORTE_SUCCESS;
@@ -524,7 +532,7 @@ static int update_state(orte_jobid_t job,
             ORTE_ERROR_LOG(rc);
         }
 
-FINAL_CLEANUP:
+    FINAL_CLEANUP:
         OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
                              "%s errmgr:default_orted reporting all procs in %s terminated",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
