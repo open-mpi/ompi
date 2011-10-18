@@ -149,12 +149,13 @@ static int update_state(orte_jobid_t job,
     }
 
     OPAL_OUTPUT_VERBOSE((10, orte_errmgr_base.output,
-                "errmgr:default_orted:update_state() %s) "
-                "------- %s state updated for process %s",
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                ((NULL == proc) ? "App. Process" : 
-                 (proc->jobid == ORTE_PROC_MY_HNP->jobid ? "Daemon" : "App. Process")),
-                (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc)));
+                         "errmgr:default_orted:update_state() %s) "
+                         "------- %s state updated for process %s to %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ((NULL == proc) ? "App. Process" : 
+                          (proc->jobid == ORTE_PROC_MY_HNP->jobid ? "Daemon" : "App. Process")),
+                         (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc),
+                         orte_proc_state_to_str(state)));
 
     /* if this is a heartbeat failure, let the HNP handle it */
     if (ORTE_JOB_STATE_HEARTBEAT_FAILED == jobstate ||
@@ -275,6 +276,20 @@ static int update_state(orte_jobid_t job,
              * us leave and automatically die
              */
             orte_quit();
+        }
+        /* was it a daemon that failed? */
+        if (proc->jobid == ORTE_PROC_MY_NAME->jobid) {
+            /* if all my routes are gone, then terminate ourselves */
+            if (0 == orte_routed.num_routes() &&
+                    0 == opal_list_get_size(&orte_local_children)) {
+                orte_quit();
+            } else {
+                OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                            "%s errmgr:orted not exiting, num_routes() == %d, num children == %d",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (int)orte_routed.num_routes(),
+                            (int)opal_list_get_size(&orte_local_children)));
+            }
         }
         /* if not, then indicate we can continue */
         return ORTE_SUCCESS;
