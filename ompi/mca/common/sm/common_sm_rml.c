@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2009 High Performance Computing Center Stuttgart,
@@ -82,7 +82,7 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *ds_buf,
             iovrc = orte_rml.send(&(procs[p]->proc_name), iov,
                                   MCA_COMMON_SM_RML_MSG_LEN, tag, 0);
             if ((ssize_t)(iov[0].iov_len + iov[1].iov_len) > iovrc) {
-                ORTE_ERROR_LOG(OMPI_ERR_COMM_FAILURE);
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
                 opal_progress_event_users_decrement();
                 rc = OMPI_ERROR;
                 goto out;
@@ -123,7 +123,7 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *ds_buf,
                                       MCA_COMMON_SM_RML_MSG_LEN, tag, 0);
                 opal_progress_event_users_decrement();
                 if (iovrc < 0) {
-                    ORTE_ERROR_LOG(OMPI_ERR_RECV_LESS_THAN_POSTED);
+                    ORTE_ERROR_LOG(ORTE_ERR_RECV_LESS_THAN_POSTED);
                     rc = OMPI_ERROR;
                     goto out;
                 }
