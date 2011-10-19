@@ -70,7 +70,7 @@ static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
             if (PMI_SUCCESS != PMI_Init(&spawned)) {
                 *priority = -1;
                 *module = NULL;
-                return ORTE_ERROR;
+                return OMPI_ERROR;
             }
         }
         /* if we were able to startup PMI, or it was already
@@ -78,11 +78,11 @@ static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
          */
         *priority = 100;
         *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;
-        return ORTE_SUCCESS;    
+        return OMPI_SUCCESS;
     }
 
     /* we can't run */
     *priority = -1;
     *module = NULL;
-    return ORTE_ERROR;
+    return OMPI_ERROR;
 }
