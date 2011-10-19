@@ -260,8 +260,8 @@ void ompi_wait_for_debugger(void)
             /* if it failed for some reason, then we are in trouble -
              * for now, just report the problem and give up waiting
              */
-            opal_output(0, "Debugger_attach[rank=%ld]: could not wait for debugger - error %s!",
-                        (long)ORTE_PROC_MY_NAME->vpid, ORTE_ERROR_NAME(rc));
+            opal_output(0, "Debugger_attach[rank=%ld]: could not wait for debugger!",
+                        (long)ORTE_PROC_MY_NAME->vpid);
         }
     }
 #endif
