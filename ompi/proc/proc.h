@@ -63,7 +63,7 @@ struct ompi_proc_t {
     /** architecture of this process */
     uint32_t                        proc_arch;
     /** flags for this proc */
-    uint8_t                         proc_flags;
+    uint16_t                        proc_flags;
     /** Base convertor for the proc described by this process */
     struct opal_convertor_t*        proc_convertor;
     /** A pointer to the name of this host - data is

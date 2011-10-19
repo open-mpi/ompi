@@ -17,6 +17,7 @@
 #include <pmi.h>
 
 #include "opal/dss/dss.h"
+#include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -311,12 +312,44 @@ static int modex(opal_list_t *procs)
     }
     free(rml_uri);
 
+#if OPAL_HAVE_HWLOC
+    {
+        char *locale;
+
+        /* provide the locality info */
+        if (NULL != opal_hwloc_topology) {
+            /* our cpuset should already be known, but check for safety */
+            if (NULL == opal_hwloc_my_cpuset) {
+                opal_hwloc_base_get_local_cpuset();
+            }
+            /* convert to a string */
+            hwloc_bitmap_list_asprintf(&locale, opal_hwloc_my_cpuset);
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                 "%s grpcomm:pmi LOCALE %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), locale));
+            /*  get the key */
+            if (ORTE_SUCCESS != (rc = setup_key(ORTE_PROC_MY_NAME, "HWLOC"))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /* enter the key-value */
+            rc = PMI_KVS_Put(pmi_kvs_name, pmi_kvs_key, locale);
+            if (PMI_SUCCESS != rc) {
+                ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
+                free(locale);
+                return ORTE_ERROR;
+            }
+            free(locale);
+        }
+    }
+#endif
+
     /* get the job map for this job */
     jmap = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, 0);
     /* get my pidmap entry */
     pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid);
 
-    /* add our locality info */
+    /* add our local/node rank info */
     if (ORTE_SUCCESS != (rc = setup_key(ORTE_PROC_MY_NAME, "LOCALRANK"))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -369,7 +402,7 @@ static int modex(opal_list_t *procs)
             ORTE_PMI_ERROR(rc, "PMI_KVS_Get");
             return ORTE_ERROR;
         }
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                              "%s grpcomm:pmi: proc %s oob endpoint %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name), pmi_attr_val));
@@ -386,7 +419,7 @@ static int modex(opal_list_t *procs)
             ORTE_PMI_ERROR(rc, "PMI_KVS_Get");
             return ORTE_ERROR;
         }
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                              "%s grpcomm:pmi: proc %s location %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name), pmi_attr_val));
@@ -421,7 +454,7 @@ static int modex(opal_list_t *procs)
                 return rc;
             }
         }
-        /* get the proc's locality info */
+        /* get the proc's local/node rank info */
         if (ORTE_SUCCESS != (rc = setup_key(&name, "LOCALRANK"))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -442,12 +475,65 @@ static int modex(opal_list_t *procs)
             return ORTE_ERROR;
         }
         pmap->node_rank = (uint16_t)strtoul(pmi_attr_val, NULL, 10);
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                              "%s grpcomm:pmi: proc %s lrank %u nrank %u",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&name),
                              (unsigned int)pmap->local_rank,
                              (unsigned int)pmap->node_rank));
+#if OPAL_HAVE_HWLOC
+        /* get the proc's locality info, if available */
+        if (ORTE_SUCCESS != (rc = setup_key(&name, "HWLOC"))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        rc = PMI_KVS_Get(pmi_kvs_name, pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
+        /* don't error out here - if not found, that's okay */
+        if (PMI_SUCCESS == rc) {
+            if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &name, ORTE_PROC_MY_NAME)) {
+                /* if this data is from myself, then set locality to all */
+                OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                     "%s grpcomm:pmi setting proc %s locale ALL",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name)));
+                pmap->locality = OPAL_PROC_ALL_LOCAL;
+            } else if (loc->daemon != ORTE_PROC_MY_DAEMON->vpid) {
+                /* this is on a different node, then mark as non-local */
+                OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                     "%s grpcomm:pmi setting proc %s locale NONLOCAL",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name)));
+                pmap->locality = OPAL_PROC_NON_LOCAL;
+            } else if (0 == strlen(pmi_attr_val)){
+                /* if we share a node, but we don't know anything more, then
+                 * mark us as on the node as this is all we know
+                 */
+                OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                     "%s grpcomm:pmi setting proc %s locale NODE",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name)));
+                pmap->locality = OPAL_PROC_ON_NODE;
+            } else {
+                /* convert the locale to a cpuset */
+                if (NULL == orte_grpcomm_base.working_cpuset) {
+                    orte_grpcomm_base.working_cpuset = hwloc_bitmap_alloc();
+                }
+                if (0 != hwloc_bitmap_list_sscanf(orte_grpcomm_base.working_cpuset, pmi_attr_val)) {
+                    /* got a bad locale */
+                    ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+                    return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+                }
+                /* determine relative location on our node */
+                pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                       opal_hwloc_my_cpuset,
+                                                                       orte_grpcomm_base.working_cpuset);
+                OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                     "%s grpcommpmi setting proc %s locale %04x",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name), pmap->locality));
+            }
+        }
+#endif
     }
 
     /* cycle thru the array of our peers and assign local and node ranks */

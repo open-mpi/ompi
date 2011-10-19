@@ -67,6 +67,8 @@ END_C_DECLS
 #include MCA_hwloc_IMPLEMENTATION_HEADER
 
 OPAL_DECLSPEC extern hwloc_topology_t opal_hwloc_topology;
+OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_my_cpuset;
+
 #endif
 
 #endif /* OPAL_HWLOC_H_ */

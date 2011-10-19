@@ -96,18 +96,32 @@
 #include "opal/mca/base/base.h"
 
 /* ******************************************************************** */
+typedef uint16_t opal_paffinity_locality_t;
 
 /** Process locality definitions */
-#define OPAL_PROC_ON_CLUSTER    0x10
-#define OPAL_PROC_ON_CU         0x08
-#define OPAL_PROC_ON_NODE       0x04
-#define OPAL_PROC_ON_BOARD      0x02
-#define OPAL_PROC_ON_SOCKET     0x01
-#define OPAL_PROC_NON_LOCAL     0x00
-#define OPAL_PROC_ALL_LOCAL     0x1f
+#define OPAL_PROC_LOCALITY_UNKNOWN  0x0000
+#define OPAL_PROC_NON_LOCAL         0x8000
+#define OPAL_PROC_ON_CLUSTER        0x0400
+#define OPAL_PROC_ON_CU             0x0200
+#define OPAL_PROC_ON_NODE           0x0100
+#define OPAL_PROC_ON_BOARD          0x0080
+#define OPAL_PROC_ON_NUMA           0x0040
+#define OPAL_PROC_ON_SOCKET         0x0020
+#define OPAL_PROC_ON_L3CACHE        0x0010
+#define OPAL_PROC_ON_L2CACHE        0x0008
+#define OPAL_PROC_ON_L1CACHE        0x0004
+#define OPAL_PROC_ON_CORE           0x0002
+#define OPAL_PROC_ON_HWTHREAD       0x0001
+#define OPAL_PROC_ALL_LOCAL         0x0fff
 
 /** Process locality macros */
+#define OPAL_PROC_ON_LOCAL_HWTHREAD(n)  ((n) & OPAL_PROC_ON_HWTHREAD)
+#define OPAL_PROC_ON_LOCAL_CORE(n)      ((n) & OPAL_PROC_ON_CORE)
+#define OPAL_PROC_ON_LOCAL_L1CACHE(n)   ((n) & OPAL_PROC_ON_L1CACHE)
+#define OPAL_PROC_ON_LOCAL_L2CACHE(n)   ((n) & OPAL_PROC_ON_L2CACHE)
+#define OPAL_PROC_ON_LOCAL_L3CACHE(n)   ((n) & OPAL_PROC_ON_L3CACHE)
 #define OPAL_PROC_ON_LOCAL_SOCKET(n)    ((n) & OPAL_PROC_ON_SOCKET)
+#define OPAL_PROC_ON_LOCAL_NUMA(n)      ((n) & OPAL_PROC_ON_NUMA)
 #define OPAL_PROC_ON_LOCAL_BOARD(n)     ((n) & OPAL_PROC_ON_BOARD)
 #define OPAL_PROC_ON_LOCAL_NODE(n)      ((n) & OPAL_PROC_ON_NODE)
 #define OPAL_PROC_ON_LOCAL_CU(n)        ((n) & OPAL_PROC_ON_CU)

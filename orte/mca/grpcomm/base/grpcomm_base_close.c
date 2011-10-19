@@ -22,6 +22,8 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/hwloc/hwloc.h"
+
 #include "orte/mca/grpcomm/base/base.h"
 
 
@@ -38,6 +40,13 @@ int orte_grpcomm_base_close(void)
 
   mca_base_components_close(orte_grpcomm_base.output, 
                             &orte_grpcomm_base.components_available, NULL);
+
+#if OPAL_HAVE_HWLOC
+  if (NULL != orte_grpcomm_base.working_cpuset) {
+      hwloc_bitmap_free(orte_grpcomm_base.working_cpuset);
+      orte_grpcomm_base.working_cpuset = NULL;
+  }
+#endif
 
   /* All done */
 
