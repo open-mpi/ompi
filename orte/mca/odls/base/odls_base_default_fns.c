@@ -2006,8 +2006,8 @@ int orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, i
 void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid)
 {
     orte_odls_job_t *jobdat;
+    orte_vpid_t vpid1;
     int32_t one32;
-    int8_t one8;
     orte_local_rank_t lrank;
     orte_node_rank_t nrank;
     opal_buffer_t buffer;
@@ -2023,15 +2023,14 @@ void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid)
     /* need to setup a pidmap for it */
     OBJ_CONSTRUCT(&buffer, opal_buffer_t);
     opal_dss.pack(&buffer, &jobid, 1, ORTE_JOBID); /* jobid */
-    opal_dss.pack(&buffer, &(ORTE_PROC_MY_NAME->vpid), 1, ORTE_VPID); /* num_procs */
+    vpid1 = 1;
+    opal_dss.pack(&buffer, &vpid1, 1, ORTE_VPID); /* num_procs */
     one32 = 0;
     opal_dss.pack(&buffer, &one32, 1, OPAL_INT32); /* node index */
     lrank = 0;
     opal_dss.pack(&buffer, &lrank, 1, ORTE_LOCAL_RANK);  /* local rank */
     nrank = 0;
     opal_dss.pack(&buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
-    one8 = 0;
-    opal_dss.pack(&buffer, &one8, 1, OPAL_INT8);  /* app_idx */
     /* setup a byte object and unload the packed data to it */
     bo = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
     opal_dss.unload(&buffer, (void**)&bo->bytes, &bo->size);
