@@ -76,7 +76,7 @@ static int slave_set_name(void);
 
 static int rte_init(void);
 static int rte_finalize(void);
-static uint8_t proc_get_locality(orte_process_name_t *proc);
+static opal_paffinity_locality_t proc_get_locality(orte_process_name_t *proc);
 static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
@@ -168,7 +168,7 @@ static int rte_finalize(void)
     return ret;    
 }
 
-static uint8_t proc_get_locality(orte_process_name_t *proc)
+static opal_paffinity_locality_t proc_get_locality(orte_process_name_t *proc)
 {
     /* no proc can be local */
     

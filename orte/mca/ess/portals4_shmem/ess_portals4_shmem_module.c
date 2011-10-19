@@ -41,7 +41,7 @@
 static int rte_init(void);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
-static uint8_t proc_get_locality(orte_process_name_t *proc);
+static opal_paffinity_locality_t proc_get_locality(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
@@ -128,7 +128,7 @@ static void rte_abort(int status, bool report)
     exit(status);
 }
 
-static uint8_t proc_get_locality(orte_process_name_t *proc)
+static opal_paffinity_locality_t proc_get_locality(orte_process_name_t *proc)
 {
     if (map[ORTE_PROC_MY_NAME->vpid].nid ==
         map[proc->vpid].nid) {

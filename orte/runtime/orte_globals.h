@@ -39,6 +39,7 @@
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rml/rml_types.h"
@@ -542,6 +543,8 @@ typedef struct {
     orte_local_rank_t local_rank;
     /* node rank */
     orte_node_rank_t node_rank;
+    /* locality */
+    opal_paffinity_locality_t locality;
 } orte_pmap_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_pmap_t);
 

@@ -24,9 +24,10 @@
 #include <string.h>
 
 
-#include "orte/util/proc_info.h"
 #include "opal/dss/dss.h"
 #include "opal/util/opal_sos.h"
+#include "opal/mca/hwloc/base/base.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/odls_types.h"
@@ -36,6 +37,7 @@
 #include "orte/mca/routed/routed.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/proc_info.h"
 #include "orte/orted/orted.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -280,6 +282,7 @@ static int modex(opal_list_t *procs)
 {
     int rc;
     opal_buffer_t buf, rbuf;
+    char *locale=NULL;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:bad: modex entered",
@@ -305,6 +308,47 @@ static int modex(opal_list_t *procs)
             goto cleanup;
         }
         
+#if OPAL_HAVE_HWLOC
+        {
+            if (NULL != opal_hwloc_topology) {
+                /* our cpuset should already be known, but check for safety */
+                if (NULL == opal_hwloc_my_cpuset) {
+                    opal_hwloc_base_get_local_cpuset();
+                }
+                /* convert to a string */
+                hwloc_bitmap_list_asprintf(&locale, opal_hwloc_my_cpuset);
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                     "%s grpcomm:bad LOCALE %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), locale));
+                /* pack it */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &locale, 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    free(locale);
+                    goto cleanup;
+                }
+                free(locale);
+            } else {
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                     "%s grpcomm:bad NO TOPO - ADDING PLACEHOLDER",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                /* pack a placeholder */
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &locale, 1, OPAL_STRING))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+            }
+        }
+#else
+        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                             "%s grpcomm:bad NO HWLOC - ADDING PLACEHOLDER",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        /* pack a placeholder */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &locale, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+#endif
+
         /* pack the entries we have received */
         if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf))) {
             ORTE_ERROR_LOG(rc);
@@ -325,7 +369,7 @@ static int modex(opal_list_t *procs)
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                              "%s grpcomm:bad: modex posted",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
- cleanup:
+    cleanup:
         OBJ_DESTRUCT(&buf);
         OBJ_DESTRUCT(&rbuf);
 

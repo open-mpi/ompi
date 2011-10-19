@@ -79,13 +79,6 @@ static int env_set_name(void);
 
 static int rte_init(void);
 static int rte_finalize(void);
-static uint8_t proc_get_locality(orte_process_name_t *proc);
-static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
-static char* proc_get_hostname(orte_process_name_t *proc);
-static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
-static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
-static int update_pidmap(opal_byte_object_t *bo);
-static int update_nidmap(opal_byte_object_t *bo);
 
 #if OPAL_ENABLE_FT_CR == 1
 static int rte_ft_event(int state);
@@ -95,25 +88,20 @@ orte_ess_base_module_t orte_ess_env_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
-    proc_get_locality,
-    proc_get_daemon,
-    proc_get_hostname,
-    proc_get_local_rank,
-    proc_get_node_rank,
+    orte_ess_base_proc_get_locality,
+    orte_ess_base_proc_get_daemon,
+    orte_ess_base_proc_get_hostname,
+    orte_ess_base_proc_get_local_rank,
+    orte_ess_base_proc_get_node_rank,
     orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
-    update_pidmap,
-    update_nidmap,
+    orte_ess_base_update_pidmap,
+    orte_ess_base_update_nidmap,
 #if OPAL_ENABLE_FT_CR == 1
     rte_ft_event
 #else
     NULL
 #endif
 };
-
-/*
- * Local variables
- */
-static orte_node_rank_t my_node_rank=ORTE_NODE_RANK_INVALID;
 
 static int rte_init(void)
 {
@@ -219,145 +207,6 @@ static int rte_finalize(void)
     return ret;    
 }
 
-static uint8_t proc_get_locality(orte_process_name_t *proc)
-{
-    orte_nid_t *nid;
-    
-    if (NULL == (nid = orte_util_lookup_nid(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return OPAL_PROC_NON_LOCAL;
-    }
-    
-    if (nid->daemon == ORTE_PROC_MY_DAEMON->vpid) {
-        OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                             "%s ess:env: proc %s on LOCAL NODE",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(proc)));
-        return (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
-    }
-
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:env: proc %s is REMOTE",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc)));
-    
-    return OPAL_PROC_NON_LOCAL;
-    
-}
-
-static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
-{
-    orte_nid_t *nid;
-
-    if( ORTE_JOBID_IS_DAEMON(proc->jobid) ) {
-        return proc->vpid;
-    }
-
-    if (NULL == (nid = orte_util_lookup_nid(proc))) {
-        return ORTE_VPID_INVALID;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:env: proc %s is hosted by daemon %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         ORTE_VPID_PRINT(nid->daemon)));
-    
-    return nid->daemon;
-}
-
-static char* proc_get_hostname(orte_process_name_t *proc)
-{
-    orte_nid_t *nid;
-        
-    if (NULL == (nid = orte_util_lookup_nid(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return NULL;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:env: proc %s is on host %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         nid->name));
-    
-    return nid->name;
-}
-
-static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
-{
-    orte_pmap_t *pmap;
-    
-    if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_LOCAL_RANK_INVALID;
-    }    
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:env: proc %s has local rank %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         (int)pmap->local_rank));
-    
-    return pmap->local_rank;
-}
-
-static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
-{
-    orte_pmap_t *pmap;
-    orte_ns_cmp_bitmask_t mask;
-
-    mask = ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
-    
-    /* is this me? */
-    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, proc, ORTE_PROC_MY_NAME)) {
-        /* yes it is - reply with my rank. This is necessary
-         * because the pidmap will not have arrived when I
-         * am starting up, and if we use static ports, then
-         * I need to know my node rank during init
-         */
-        return my_node_rank;
-    }
-    
-    if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
-        return ORTE_NODE_RANK_INVALID;
-    }    
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:env: proc %s has node rank %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         (int)pmap->node_rank));
-    
-    return pmap->node_rank;
-}
-
-static int update_pidmap(opal_byte_object_t *bo)
-{
-    int ret;
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:env: updating pidmap",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* build the pmap */
-    if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo))) {
-        ORTE_ERROR_LOG(ret);
-    }
-    
-    return ret;
-}
-
-static int update_nidmap(opal_byte_object_t *bo)
-{
-    int rc;
-    /* decode the nidmap - the util will know what to do */
-    if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo))) {
-        ORTE_ERROR_LOG(rc);
-    }    
-    return rc;
-}
-
 static int env_set_name(void)
 {
     char *tmp;
@@ -395,15 +244,6 @@ static int env_set_name(void)
     
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:env set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* get my node rank in case we are using static ports - this won't
-     * be present for daemons, so don't error out if we don't have it
-     */
-    mca_base_param_reg_string_name("orte", "ess_node_rank", "Process node rank",
-                                   true, false, NULL, &tmp);
-    if (NULL != tmp) {
-        my_node_rank = strtol(tmp, NULL, 10);
-    }
     
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {

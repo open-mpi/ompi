@@ -61,6 +61,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .sync_buf =             */   NULL,
     /*  .my_port =              */   0,
     /*  .num_restarts =         */   0,
+    /*  .my_node_rank =         */   ORTE_NODE_RANK_INVALID,
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,
     /*  .job_session_dir =      */   NULL,
@@ -169,6 +170,13 @@ int orte_proc_info(void)
                                 true, false, 0, &tmp);
     orte_process_info.app_rank = tmp;
 
+    /* get my node rank in case we are using static ports - this won't
+     * be present for daemons, so don't error out if we don't have it
+     */
+    mca_base_param_reg_int_name("orte", "ess_node_rank", "Process node rank",
+                                true, false, ORTE_NODE_RANK_INVALID, &tmp);
+    orte_process_info.my_node_rank = (orte_node_rank_t)tmp;
+    
     /* setup the sync buffer */
     orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
     

@@ -25,7 +25,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-
 #include "orte/mca/grpcomm/base/base.h"
 
 
@@ -61,6 +60,10 @@ int orte_grpcomm_base_open(void)
     orte_grpcomm_base.daemon_coll = orte_grpcomm_base_daemon_collective;
 #endif
     
+#if OPAL_HAVE_HWLOC
+    orte_grpcomm_base.working_cpuset = NULL;
+#endif
+
     /* Open up all available components */
 
     if (ORTE_SUCCESS !=

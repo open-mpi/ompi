@@ -30,6 +30,7 @@
 #include "opal/mca/mca.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/odls/odls_types.h"
 
@@ -60,6 +61,9 @@ typedef struct {
     opal_list_t components_available;
     orte_grpcomm_base_component_t selected_component;
     orte_grpcomm_daemon_collective_fn_t daemon_coll;
+#if OPAL_HAVE_HWLOC
+    hwloc_cpuset_t working_cpuset;
+#endif
 } orte_grpcomm_base_t;
 
 ORTE_DECLSPEC extern orte_grpcomm_base_t orte_grpcomm_base;

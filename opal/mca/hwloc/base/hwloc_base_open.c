@@ -38,6 +38,7 @@ opal_list_t opal_hwloc_base_components;
 bool opal_hwloc_base_inited = false;
 #if OPAL_HAVE_HWLOC
 hwloc_topology_t opal_hwloc_topology=NULL;
+hwloc_cpuset_t opal_hwloc_my_cpuset=NULL;
 #endif
 opal_hwloc_base_map_t opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
 opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_ERROR;

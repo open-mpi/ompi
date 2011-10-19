@@ -37,6 +37,7 @@
 #include "mpi.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/runtime/opal_progress.h"
@@ -411,6 +412,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	goto error;
     }
 
+#if OPAL_HAVE_HWLOC
     /* If orte_init() didn't fill in opal_hwloc_topology, then we need
        to go fill it in ourselves. */
     if (NULL == opal_hwloc_topology) {
@@ -419,7 +421,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
             return OPAL_ERR_NOT_SUPPORTED;
         }
     }
-    
+#endif
+
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
 
@@ -488,9 +491,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                 int phys_cpu;
                 orte_node_rank_t nrank;
                 if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME))) {
-                    ret = OMPI_ERR_BAD_PARAM;
-                    error = "Could not get node rank - cannot set processor affinity";
-                    goto error;
+                    /* this is okay - we probably were direct-launched, which means
+                     * we won't get our node rank until the modex. So just ignore
+                     */
+                    goto MOVEON;
                 }
                 OPAL_PAFFINITY_CPU_ZERO(mask);
                 ret = opal_paffinity_base_get_physical_processor_id(nrank, &phys_cpu);
@@ -520,7 +524,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
             }
         }
     }
-    
+
+MOVEON:
+#if OPAL_HAVE_HWLOC
+    /* get or update our local cpuset - it will get used multiple
+     * times, so it's more efficient to keep a global copy
+     */
+    opal_hwloc_base_get_local_cpuset();
+#endif
+
     /* If we were able to set processor affinity, try setting up
        memory affinity */
     if (!opal_maffinity_setup && paffinity_enabled) {

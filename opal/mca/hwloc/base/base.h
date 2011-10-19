@@ -13,6 +13,7 @@
 #include "opal_config.h"
 
 #include "opal/dss/dss_types.h"
+#include "opal/mca/paffinity/paffinity.h"
 
 #include "opal/mca/hwloc/hwloc.h"
 
@@ -106,6 +107,12 @@ OPAL_DECLSPEC int opal_hwloc_base_report_bind_failure(const char *file,
                                                       int line,
                                                       const char *msg, 
                                                       int rc);
+
+OPAL_DECLSPEC opal_paffinity_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
+                                                                              hwloc_cpuset_t peer1,
+                                                                              hwloc_cpuset_t peer2);
+
+OPAL_DECLSPEC void opal_hwloc_base_get_local_cpuset(void);
 
 #endif
 

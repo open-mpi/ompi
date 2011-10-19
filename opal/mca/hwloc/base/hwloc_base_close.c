@@ -34,6 +34,12 @@ int opal_hwloc_base_close(void)
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&opal_hwloc_base_components);
+
+        /* free memory */
+        if (NULL != opal_hwloc_my_cpuset) {
+            hwloc_bitmap_free(opal_hwloc_my_cpuset);
+            opal_hwloc_my_cpuset = NULL;
+        }
     }
 #endif
 
