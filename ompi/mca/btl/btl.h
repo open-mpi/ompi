@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -237,10 +238,11 @@ struct mca_btl_base_segment_t {
 #endif
     /** Memory segment key required by some RDMA networks */
     union {
-        uint32_t key32[2];
-        uint64_t key64;
-        uint8_t  key8[8];
-    } seg_key;     
+        uint32_t  key32[2];
+        uint64_t  key64;
+        uint8_t   key8[8];
+	uintptr_t ptr;
+    } seg_key;
 };
 typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
 
