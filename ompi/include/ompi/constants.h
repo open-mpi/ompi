@@ -19,9 +19,9 @@
 #ifndef OMPI_CONSTANTS_H
 #define OMPI_CONSTANTS_H
 
-#include "opal/constants.h"
+#include "orte/constants.h"
 
-#define OMPI_ERR_BASE   OPAL_ERR_MAX
+#define OMPI_ERR_BASE   ORTE_ERR_MAX
 
 /* error codes */
 enum {
@@ -58,10 +58,10 @@ enum {
     OMPI_ERR_DATA_OVERWRITE_ATTEMPT = OPAL_ERR_DATA_OVERWRITE_ATTEMPT,
 
     OMPI_ERR_BUFFER                 = OPAL_ERR_BUFFER,
-    OMPI_ERR_REQUEST                = OMPI_ERR_BASE + 1
+    OMPI_ERR_REQUEST                = OMPI_ERR_BASE - 1
 };
 
-#define OMPI_ERR_MAX                    (OMPI_ERR_BASE + 2)
+#define OMPI_ERR_MAX                    (OMPI_ERR_BASE - 2)
 
 #endif /* OMPI_CONSTANTS_H */
 
