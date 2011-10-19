@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -104,8 +104,6 @@ static void mca_pml_dr_error_completion(
 
     switch(OPAL_SOS_GET_ERROR_CODE(status)) {
         case OMPI_ERR_UNREACH:
-        case OMPI_ERR_CONNECTION_FAILED:
-        case OMPI_ERR_CONNECTION_REFUSED:
             /**
              * peer is no longer reachable through this btl
              */
@@ -113,7 +111,6 @@ static void mca_pml_dr_error_completion(
             break;
 
         case OMPI_ERR_FATAL:
-        case OMPI_ERR_COMM_FAILURE:
             /**
              * btl is no longer available
              */

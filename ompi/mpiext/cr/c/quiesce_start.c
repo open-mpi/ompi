@@ -2,6 +2,9 @@
  * Copyright (c) 2004-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2011      The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -205,6 +208,6 @@ static int extract_info_into_datum(ompi_info_t *info, orte_snapc_base_quiesce_t 
         info_char = NULL;
     }
 
-    return ORTE_SUCCESS;
+    return OMPI_SUCCESS;
 }
 #endif

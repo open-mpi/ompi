@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,9 +35,6 @@ static ompi_errcode_intern_t ompi_err_out_of_resource;
 static ompi_errcode_intern_t ompi_err_temp_out_of_resource;
 static ompi_errcode_intern_t ompi_err_resource_busy;
 static ompi_errcode_intern_t ompi_err_bad_param;
-static ompi_errcode_intern_t ompi_err_recv_less_than_posted;
-static ompi_errcode_intern_t ompi_err_recv_more_than_posted;
-static ompi_errcode_intern_t ompi_err_no_match_yet;
 static ompi_errcode_intern_t ompi_err_fatal;
 static ompi_errcode_intern_t ompi_err_not_implemented;
 static ompi_errcode_intern_t ompi_err_not_supported;
@@ -114,30 +111,6 @@ int ompi_errcode_intern_init (void)
     strncpy(ompi_err_bad_param.errstring, "OMPI_ERR_BAD_PARAM", OMPI_MAX_ERROR_STRING);
     opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_bad_param.index, 
                                 &ompi_err_bad_param);
-
-    OBJ_CONSTRUCT(&ompi_err_recv_less_than_posted, ompi_errcode_intern_t);
-    ompi_err_recv_less_than_posted.code = OMPI_ERR_RECV_LESS_THAN_POSTED;
-    ompi_err_recv_less_than_posted.mpi_code = MPI_SUCCESS;
-    ompi_err_recv_less_than_posted.index = pos++;
-    strncpy(ompi_err_recv_less_than_posted.errstring, "OMPI_ERR_RECV_LESS_THAN_POSTED", OMPI_MAX_ERROR_STRING);
-    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_recv_less_than_posted.index, 
-                                &ompi_err_recv_less_than_posted);
-
-    OBJ_CONSTRUCT(&ompi_err_recv_more_than_posted, ompi_errcode_intern_t);
-    ompi_err_recv_more_than_posted.code = OMPI_ERR_RECV_MORE_THAN_POSTED;
-    ompi_err_recv_more_than_posted.mpi_code = MPI_ERR_TRUNCATE;
-    ompi_err_recv_more_than_posted.index = pos++;
-    strncpy(ompi_err_recv_more_than_posted.errstring, "OMPI_ERR_RECV_MORE_THAN_POSTED", OMPI_MAX_ERROR_STRING);
-    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_recv_more_than_posted.index, 
-                                &ompi_err_recv_more_than_posted);
-
-    OBJ_CONSTRUCT(&ompi_err_no_match_yet, ompi_errcode_intern_t);
-    ompi_err_no_match_yet.code = OMPI_ERR_NO_MATCH_YET;
-    ompi_err_no_match_yet.mpi_code = MPI_ERR_PENDING;
-    ompi_err_no_match_yet.index = pos++;
-    strncpy(ompi_err_no_match_yet.errstring, "OMPI_ERR_NO_MATCH_YET", OMPI_MAX_ERROR_STRING);
-    opal_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_no_match_yet.index, 
-                                &ompi_err_no_match_yet);
 
     OBJ_CONSTRUCT(&ompi_err_fatal, ompi_errcode_intern_t);
     ompi_err_fatal.code = OMPI_ERR_FATAL;
@@ -232,9 +205,6 @@ int ompi_errcode_intern_finalize(void)
     OBJ_DESTRUCT(&ompi_err_temp_out_of_resource);
     OBJ_DESTRUCT(&ompi_err_resource_busy);
     OBJ_DESTRUCT(&ompi_err_bad_param);
-    OBJ_DESTRUCT(&ompi_err_recv_less_than_posted);
-    OBJ_DESTRUCT(&ompi_err_recv_more_than_posted);
-    OBJ_DESTRUCT(&ompi_err_no_match_yet);
     OBJ_DESTRUCT(&ompi_err_fatal);
     OBJ_DESTRUCT(&ompi_err_not_implemented);
     OBJ_DESTRUCT(&ompi_err_not_supported);
