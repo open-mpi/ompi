@@ -23,6 +23,7 @@ enable_contrib_no_build=libnbc,vt
 with_openib=no
 with_devel_headers=yes
 with_alps=yes
+with_xpmem=/opt/cray/xpmem/default
 with_tm=no
 with_slurm=no
 with_io_romio_flags=--with-file-system=ufs+nfs
