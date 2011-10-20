@@ -23,7 +23,8 @@ AC_DEFUN([OMPI_CHECK_XPMEM], [
 
     AC_ARG_WITH([xpmem],
                 [AC_HELP_STRING([--with-xpmem(=DIR)],
-                [Build with XPMEM kernel module support, searching for headers in DIR])])
+                [Build with XPMEM kernel module support, searching for headers in DIR (default: no)])],
+		[], with_xpmem=no)
     OMPI_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h])
 
     AC_ARG_WITH([xpmem-libdir],
