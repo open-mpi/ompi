@@ -119,7 +119,10 @@ static char* pmi_error(int pmi_err)
         case PMI_ERR_INVALID_NUM_PARSED: err_msg = "Invalid num_parsed length argument"; break;
         case PMI_ERR_INVALID_KEYVALP: err_msg = "Invalid invalid keyvalp atgument"; break;
         case PMI_ERR_INVALID_SIZE: err_msg = "Invalid size argument"; break;
+#if defined(PMI_ERR_INVALID_KVS)
+	/* pmi.h calls this a valid return code but mpich doesn't define it (slurm does). wtf */
         case PMI_ERR_INVALID_KVS: err_msg = "Invalid kvs argument"; break;
+#endif
         case PMI_SUCCESS: err_msg = "Success"; break;
         default: err_msg = "Unkown error";
     }
