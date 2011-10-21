@@ -2129,7 +2129,7 @@ static orte_snapc_full_app_snapshot_t *find_vpid_snapshot(orte_process_name_t *n
         item  = opal_list_get_next(item) ) {
         vpid_snapshot = (orte_snapc_full_app_snapshot_t*)item;
 
-        mask = ORTE_NS_CMP_JOBID;
+        mask = ORTE_NS_CMP_ALL;
 
         if (OPAL_EQUAL == 
                 orte_util_compare_name_fields(mask, name, &vpid_snapshot->super.process_name)) {
