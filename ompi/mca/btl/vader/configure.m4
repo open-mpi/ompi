@@ -23,8 +23,7 @@ AC_DEFUN([OMPI_CHECK_XPMEM], [
 
     AC_ARG_WITH([xpmem],
                 [AC_HELP_STRING([--with-xpmem(=DIR)],
-                [Build with XPMEM kernel module support, searching for headers in DIR (default: no)])],
-		[], with_xpmem=no)
+                [Build with XPMEM kernel module support, searching for headers in DIR])])
     OMPI_CHECK_WITHDIR([xpmem], [$with_xpmem], [include/xpmem.h])
 
     AC_ARG_WITH([xpmem-libdir],
@@ -64,8 +63,9 @@ AC_DEFUN([MCA_ompi_btl_vader_CONFIG],[
     AC_DEFINE_UNQUOTED([OMPI_BTL_VADER_HAVE_XPMEM],
                        [$btl_vader_xpmem_happy],
                        [If XPMEM support can be enabled within vader])
+
     # at this point, we can only build vader if we have XPMEM support
-    AS_IF([test "$btl_vader_xpmem_happy"],
+    AS_IF([test "$btl_vader_xpmem_happy" = "1"],
           [btl_vader_WRAPPER_EXTRA_LDFLAGS="$btl_vader_LDFLAGS"
            btl_vader_WRAPPER_EXTRA_LIBS="$btl_vader_LIBS"
            $1],
