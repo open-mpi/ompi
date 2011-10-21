@@ -11,6 +11,9 @@
 #include "ompi/constants.h"
 
 #include <pmi.h>
+#if WANT_CRAY_PMI2_EXT
+#include <pmi2.h>
+#endif
 
 #include "orte/util/proc_info.h"
 
@@ -46,39 +49,62 @@ static int pubsub_pmi_component_open(void)
 
 static int pubsub_pmi_component_close(void)
 {
+#if WANT_CRAY_PMI2_EXT
+    if (PMI2_Initialized()) {
+        PMI2_Finalize();
+    }
+#else
     PMI_BOOL initialized;
 
-    /* if we weren't selected, cleanup if necessary */
+    /* if we weren't selected, cleanup */
     if (PMI_SUCCESS == PMI_Initialized(&initialized) &&
         PMI_TRUE == initialized) {
         PMI_Finalize();
     }
+#endif
     return OMPI_SUCCESS;
+}
+
+static bool pmi_startup(void)
+{
+#if WANT_CRAY_PMI2_EXT
+    int spawned, size, rank, appnum;
+
+    if (PMI2_Initialized()) {
+        /* already initialized */
+        return true;
+    }
+    /* if we can't startup PMI, we can't be used */
+    if (PMI_SUCCESS != PMI2_Init(&spawned, &size, &rank, &appnum)) {
+        return false;
+    }
+    /* ignore the info - we'll pick it up elsewhere */
+    return true;
+#else
+    PMI_BOOL initialized;
+
+    if (PMI_SUCCESS != PMI_Init(&initialized)) {
+        return false;
+    }
+    if (PMI_TRUE != initialized) {
+        if (PMI_SUCCESS != PMI_Init(&initialized)) {
+            return false;
+        }
+    }
+
+    return true;
+#endif
 }
 
 static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
 {
-    int spawned;
-    PMI_BOOL initialized;
-
     /* for now, only use PMI when direct launched */
     if (NULL == orte_process_info.my_hnp_uri &&
-        PMI_SUCCESS == PMI_Initialized(&initialized)) {
-        /* if we aren't already initialized, then try */
-        if (PMI_TRUE != initialized) {
-            /* if we can't startup the PMI, we can't be used */
-            if (PMI_SUCCESS != PMI_Init(&spawned)) {
-                *priority = -1;
-                *module = NULL;
-                return OMPI_ERROR;
-            }
-        }
-        /* if we were able to startup PMI, or it was already
-         * running, then use us
-         */
+        pmi_startup()) {
+        /* if PMI is available, use it */
         *priority = 100;
         *module = (mca_base_module_t *)&ompi_pubsub_pmi_module;
-        return OMPI_SUCCESS;
+        return ORTE_SUCCESS;
     }
 
     /* we can't run */
