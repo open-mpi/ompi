@@ -2,6 +2,8 @@
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC. All
+ *                         rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -15,6 +17,9 @@
 
 #include <string.h>
 #include <pmi.h>
+#if WANT_CRAY_PMI2_EXT
+#include <pmi2.h>
+#endif
 
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
@@ -62,14 +67,6 @@ orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
 
 static int pmi_encode(const void *val, size_t vallen);
 static void* pmi_decode(size_t *retlen);
-static char* pmi_error(int pmi_err);
-#define ORTE_PMI_ERROR(pmi_err, pmi_func)                               \
-    do {                                                                \
-        opal_output(0, "%s[%s:%d:%s] %s: %s\n",                         \
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                 \
-                    __FILE__, __LINE__, __func__,                       \
-                    pmi_func, pmi_error(pmi_err));                      \
-    } while(0);
 static int setup_pmi(void);
 static int setup_key(const orte_process_name_t *name, const char *key);
 
@@ -79,6 +76,45 @@ static char *pmi_kvs_key = NULL;
 static char *pmi_attr_val = NULL;
 static int pmi_vallen_max = -1;
 static int pmi_keylen_max = -1;
+
+/* Because Cray uses PMI2 extensions for some, but not all,
+ * PMI functions, we define a set of wrappers for those
+ * common functions we will use
+ */
+static int kvs_put(const char *key, const char *value)
+{
+#if WANT_CRAY_PMI2_EXT
+    return PMI2_KVS_Put(key, value);
+#else
+    return PMI_KVS_Put(pmi_kvs_name, key, value);
+#endif
+}
+
+static int kvs_get(const char *key, char *value, int valuelen)
+{
+#if WANT_CRAY_PMI2_EXT
+    int len;
+
+    return PMI2_KVS_Get(pmi_kvs_name, PMI2_ID_NULL, key, value, valuelen, &len);
+#else
+    return PMI_KVS_Get(pmi_kvs_name, key, value, valuelen);
+#endif
+}
+
+static int kvs_commit(void)
+{
+#if WANT_CRAY_PMI2_EXT
+    return PMI2_KVS_Fence())) {
+#else
+    int rc;
+
+    if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmi_kvs_name))) {
+        return rc;
+    }
+    /* Barrier here to ensure all other procs have committed */
+    return PMI_Barrier();
+#endif
+}
 
 /**
  * Initialize the module
@@ -146,11 +182,19 @@ static int pmi_barrier(void)
         return ORTE_SUCCESS;
     }
     
+#if WANT_CRAY_PMI2_EXT
+    /* Cray doesn't provide a barrier, so use the Fence function here */
+    if (PMI_SUCCESS != (rc = PMI2_KVS_Fence())) {
+        ORTE_PMI_ERROR(rc, "PMI2_KVS_Fence");
+        return ORTE_ERROR;
+    }
+#else
     /* use the PMI barrier function */
     if (PMI_SUCCESS != (rc = PMI_Barrier())) {
         ORTE_PMI_ERROR(rc, "PMI_Barrier");
         return ORTE_ERROR;
     }
+#endif
 
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                          "%s grpcomm:pmi barrier complete",
@@ -201,7 +245,7 @@ static int pmi_set_proc_attr(const char* attr_name,
         return rc;
     }
 
-    rc = PMI_KVS_Put(pmi_kvs_name, pmi_kvs_key, pmi_attr_val);
+    rc = kvs_put(pmi_kvs_key, pmi_attr_val);
     if (PMI_SUCCESS != rc) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
         return ORTE_ERROR;
@@ -237,7 +281,7 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
         return rc;
     }
 
-    rc = PMI_KVS_Get(pmi_kvs_name, pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
+    rc = kvs_get(pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
     if (PMI_SUCCESS != rc) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Get");
         return ORTE_ERROR;
@@ -259,6 +303,7 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 static int modex(opal_list_t *procs)
 {
     int rc, i;
+    size_t len;
     char *rml_uri, val[64];
     orte_vpid_t v;
     orte_process_name_t name;
@@ -286,7 +331,7 @@ static int modex(opal_list_t *procs)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    rc = PMI_KVS_Put(pmi_kvs_name, pmi_kvs_key, orte_process_info.nodename);
+    rc = kvs_put(pmi_kvs_key, orte_process_info.nodename);
     if (PMI_SUCCESS != rc) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
         return ORTE_ERROR;
@@ -302,9 +347,17 @@ static int modex(opal_list_t *procs)
     }
     if (ORTE_SUCCESS != (rc = setup_key(ORTE_PROC_MY_NAME, "RMLURI"))) {
         ORTE_ERROR_LOG(rc);
+        free(rml_uri);
         return rc;
     }
-    rc = PMI_KVS_Put(pmi_kvs_name, pmi_kvs_key, rml_uri);
+    /* NTH: some characters are not allowed in pmi2 land so we need to encode */
+    if (ORTE_SUCCESS != (rc = pmi_encode(rml_uri, strlen(rml_uri)))) {
+        ORTE_ERROR_LOG(rc);
+        free(rml_uri);
+        return rc;
+    }
+    /* encoding puts the encoded value in pmi_attr_val */
+    rc = kvs_put(pmi_kvs_key, pmi_attr_val);
     if (PMI_SUCCESS != rc) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
         free(rml_uri);
@@ -327,13 +380,22 @@ static int modex(opal_list_t *procs)
             OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                                  "%s grpcomm:pmi LOCALE %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), locale));
+            /* NTH: some characters are not allowed in pmi2 land - not sure
+             * if hwloc would use them, but just to be safe we need to encode
+             */
+            if (ORTE_SUCCESS != (rc = pmi_encode(locale, strlen(locale)))) {
+                ORTE_ERROR_LOG(rc);
+                free(locale);
+                return rc;
+            }
             /*  get the key */
             if (ORTE_SUCCESS != (rc = setup_key(ORTE_PROC_MY_NAME, "HWLOC"))) {
                 ORTE_ERROR_LOG(rc);
+                free(locale);
                 return rc;
             }
-            /* enter the key-value */
-            rc = PMI_KVS_Put(pmi_kvs_name, pmi_kvs_key, locale);
+            /* encoding puts the encoded value in pmi_attr_val */
+            rc = kvs_put(pmi_kvs_key, pmi_attr_val);
             if (PMI_SUCCESS != rc) {
                 ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
                 free(locale);
@@ -355,7 +417,7 @@ static int modex(opal_list_t *procs)
         return rc;
     }
     snprintf(val, 64, "%lu", (unsigned long)pmap->local_rank);
-    rc = PMI_KVS_Put(pmi_kvs_name, pmi_kvs_key, val);
+    rc = kvs_put(pmi_kvs_key, val);
     if (PMI_SUCCESS != rc) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
         return ORTE_ERROR;
@@ -365,21 +427,16 @@ static int modex(opal_list_t *procs)
         return rc;
     }
     snprintf(val, 64, "%lu", (unsigned long)pmap->node_rank);
-    rc = PMI_KVS_Put(pmi_kvs_name, pmi_kvs_key, val);
+    rc = kvs_put(pmi_kvs_key, val);
     if (PMI_SUCCESS != rc) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
         return ORTE_ERROR;
     }
 
     /* commit our modex info */
-    if (PMI_SUCCESS != (rc = PMI_KVS_Commit(pmi_kvs_name))) {
+    if (PMI_SUCCESS != (rc = kvs_commit())) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Commit failed");
         return ORTE_ERROR;
-    }
-
-    /* Barrier here to ensure all other procs have committed */
-    if (ORTE_SUCCESS != (rc = pmi_barrier())) {
-        return rc;
     }
 
     /* harvest the oob endpoint info and hostname for all other procs
@@ -393,28 +450,37 @@ static int modex(opal_list_t *procs)
             continue;
         }
         name.vpid = v;
+
         if (ORTE_SUCCESS != (rc = setup_key(&name, "RMLURI"))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        rc = PMI_KVS_Get(pmi_kvs_name, pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
+        rc = kvs_get(pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
         if (PMI_SUCCESS != rc) {
             ORTE_PMI_ERROR(rc, "PMI_KVS_Get");
             return ORTE_ERROR;
         }
+        /* Had to encode to protect against pmi2-prohibited chars */
+	rml_uri = pmi_decode(&len);
+	if (NULL == rml_uri) {
+	    return ORTE_ERROR;
+	}
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                              "%s grpcomm:pmi: proc %s oob endpoint %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&name), pmi_attr_val));
+                             ORTE_NAME_PRINT(&name), rml_uri));
         /* set the contact info into the hash table */
-        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(pmi_attr_val))) {
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
+            free(rml_uri);
             return rc;
         }
+        free(rml_uri);
+
         if (ORTE_SUCCESS != (rc = setup_key(&name, "HOSTNAME"))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        rc = PMI_KVS_Get(pmi_kvs_name, pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
+        rc = kvs_get(pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
         if (PMI_SUCCESS != rc) {
             ORTE_PMI_ERROR(rc, "PMI_KVS_Get");
             return ORTE_ERROR;
@@ -459,22 +525,22 @@ static int modex(opal_list_t *procs)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        rc = PMI_KVS_Get(pmi_kvs_name, pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
+        rc = kvs_get(pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
         if (PMI_SUCCESS != rc) {
             ORTE_PMI_ERROR(rc, "PMI_KVS_Get");
             return ORTE_ERROR;
         }
-        pmap->local_rank = (uint16_t)strtoul(pmi_attr_val, NULL, 10);
+        pmap->local_rank = (orte_local_rank_t)strtoul(pmi_attr_val, NULL, 10);
         if (ORTE_SUCCESS != (rc = setup_key(&name, "NODERANK"))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        rc = PMI_KVS_Get(pmi_kvs_name, pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
+        rc = kvs_get(pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
         if (PMI_SUCCESS != rc) {
             ORTE_PMI_ERROR(rc, "PMI_KVS_Get");
             return ORTE_ERROR;
         }
-        pmap->node_rank = (uint16_t)strtoul(pmi_attr_val, NULL, 10);
+        pmap->node_rank = (orte_node_rank_t)strtoul(pmi_attr_val, NULL, 10);
         OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                              "%s grpcomm:pmi: proc %s lrank %u nrank %u",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -482,55 +548,66 @@ static int modex(opal_list_t *procs)
                              (unsigned int)pmap->local_rank,
                              (unsigned int)pmap->node_rank));
 #if OPAL_HAVE_HWLOC
-        /* get the proc's locality info, if available */
-        if (ORTE_SUCCESS != (rc = setup_key(&name, "HWLOC"))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        rc = PMI_KVS_Get(pmi_kvs_name, pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
-        /* don't error out here - if not found, that's okay */
-        if (PMI_SUCCESS == rc) {
-            if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &name, ORTE_PROC_MY_NAME)) {
-                /* if this data is from myself, then set locality to all */
-                OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                     "%s grpcomm:pmi setting proc %s locale ALL",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&name)));
-                pmap->locality = OPAL_PROC_ALL_LOCAL;
-            } else if (loc->daemon != ORTE_PROC_MY_DAEMON->vpid) {
-                /* this is on a different node, then mark as non-local */
-                OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                     "%s grpcomm:pmi setting proc %s locale NONLOCAL",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&name)));
-                pmap->locality = OPAL_PROC_NON_LOCAL;
-            } else if (0 == strlen(pmi_attr_val)){
-                /* if we share a node, but we don't know anything more, then
-                 * mark us as on the node as this is all we know
-                 */
-                OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                     "%s grpcomm:pmi setting proc %s locale NODE",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&name)));
-                pmap->locality = OPAL_PROC_ON_NODE;
-            } else {
-                /* convert the locale to a cpuset */
-                if (NULL == orte_grpcomm_base.working_cpuset) {
-                    orte_grpcomm_base.working_cpuset = hwloc_bitmap_alloc();
+        {
+            char *locale;
+
+            /* get the proc's locality info, if available */
+            if (ORTE_SUCCESS != (rc = setup_key(&name, "HWLOC"))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            rc = kvs_get(pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
+            /* don't error out here - if not found, that's okay */
+            if (PMI_SUCCESS == rc) {
+                if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &name, ORTE_PROC_MY_NAME)) {
+                    /* if this data is from myself, then set locality to all */
+                    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                         "%s grpcomm:pmi setting proc %s locale ALL",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&name)));
+                    pmap->locality = OPAL_PROC_ALL_LOCAL;
+                } else if (loc->daemon != ORTE_PROC_MY_DAEMON->vpid) {
+                    /* this is on a different node, then mark as non-local */
+                    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                         "%s grpcomm:pmi setting proc %s locale NONLOCAL",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&name)));
+                    pmap->locality = OPAL_PROC_NON_LOCAL;
+                } else if (0 == strlen(pmi_attr_val)){
+                    /* if we share a node, but we don't know anything more, then
+                     * mark us as on the node as this is all we know
+                     */
+                    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                         "%s grpcomm:pmi setting proc %s locale NODE",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&name)));
+                    pmap->locality = OPAL_PROC_ON_NODE;
+                } else {
+                    /* we encoded to protect against pmi2 restrictions */
+                    locale = pmi_decode(&len);
+                    if (NULL == locale) {
+                        return ORTE_ERROR;
+                    }
+                    /* convert the locale to a cpuset */
+                    if (NULL == orte_grpcomm_base.working_cpuset) {
+                        orte_grpcomm_base.working_cpuset = hwloc_bitmap_alloc();
+                    }
+                    if (0 != hwloc_bitmap_list_sscanf(orte_grpcomm_base.working_cpuset, locale)) {
+                        /* got a bad locale */
+                        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+                        free(locale);
+                        return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+                    }
+                    free(locale);
+                    /* determine relative location on our node */
+                    pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                           opal_hwloc_my_cpuset,
+                                                                           orte_grpcomm_base.working_cpuset);
+                    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                         "%s grpcommpmi setting proc %s locale %04x",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&name), pmap->locality));
                 }
-                if (0 != hwloc_bitmap_list_sscanf(orte_grpcomm_base.working_cpuset, pmi_attr_val)) {
-                    /* got a bad locale */
-                    ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-                    return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
-                }
-                /* determine relative location on our node */
-                pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                       opal_hwloc_my_cpuset,
-                                                                       orte_grpcomm_base.working_cpuset);
-                OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                     "%s grpcommpmi setting proc %s locale %04x",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&name), pmap->locality));
             }
         }
 #endif
@@ -598,68 +675,56 @@ static void* pmi_decode(size_t *retlen) {
     return ret;
 }
 
-/* useful util */
-static char* pmi_error(int pmi_err)
-{
-    char * err_msg;
-
-    switch(pmi_err) {
-        case PMI_FAIL: err_msg = "Operation failed"; break;
-        case PMI_ERR_INIT: err_msg = "PMI is not initialized"; break;
-        case PMI_ERR_NOMEM: err_msg = "Input buffer not large enough"; break;
-        case PMI_ERR_INVALID_ARG: err_msg = "Invalid argument"; break;
-        case PMI_ERR_INVALID_KEY: err_msg = "Invalid key argument"; break;
-        case PMI_ERR_INVALID_KEY_LENGTH: err_msg = "Invalid key length argument"; break;
-        case PMI_ERR_INVALID_VAL: err_msg = "Invalid value argument"; break;
-        case PMI_ERR_INVALID_VAL_LENGTH: err_msg = "Invalid value length argument"; break;
-        case PMI_ERR_INVALID_LENGTH: err_msg = "Invalid length argument"; break;
-        case PMI_ERR_INVALID_NUM_ARGS: err_msg = "Invalid number of arguments"; break;
-        case PMI_ERR_INVALID_ARGS: err_msg = "Invalid args argument"; break;
-        case PMI_ERR_INVALID_NUM_PARSED: err_msg = "Invalid num_parsed length argument"; break;
-        case PMI_ERR_INVALID_KEYVALP: err_msg = "Invalid invalid keyvalp atgument"; break;
-        case PMI_ERR_INVALID_SIZE: err_msg = "Invalid size argument"; break;
-#if defined(PMI_ERR_INVALID_KVS)
-	/* pmi.h calls this a valid return code but mpich doesn't define it (slurm does). wtf */
-        case PMI_ERR_INVALID_KVS: err_msg = "Invalid kvs argument"; break;
-#endif
-        case PMI_SUCCESS: err_msg = "Success"; break;
-        default: err_msg = "Unkown error";
-    }
-    return err_msg;
-}
-
 static int setup_pmi(void)
 {
     int max_length, rc;
 
+#if WANT_CRAY_PMI2_EXT
+    pmi_vallen_max = PMI2_MAX_VALLEN;
+#else
     rc = PMI_KVS_Get_value_length_max(&pmi_vallen_max);
     if (PMI_SUCCESS != rc) {
         ORTE_PMI_ERROR(rc, "PMI_Get_value_length_max");
         return ORTE_ERROR;
     }
+#endif
     pmi_attr_val = malloc(pmi_vallen_max);
     if (NULL == pmi_attr_val) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+#if WANT_CRAY_PMI2_EXT
+    /* TODO -- is this ok */
+    max_length = 1024;
+#else
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_name_length_max(&max_length))) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Get_name_length_max");
         return ORTE_ERROR;
     }
+#endif
     pmi_kvs_name = malloc(max_length);
     if (NULL == pmi_kvs_name) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+
+#if WANT_CRAY_PMI2_EXT
+    rc = PMI2_Job_GetId(pmi_kvs_name, max_length);
+#else
     rc = PMI_KVS_Get_my_name(pmi_kvs_name,max_length);
+#endif
     if (PMI_SUCCESS != rc) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Get_my_name");
         return ORTE_ERROR;
     }
 
+#if WANT_CRAY_PMI2_EXT
+    pmi_keylen_max = PMI2_MAX_KEYLEN;
+#else
     if (PMI_SUCCESS != (rc = PMI_KVS_Get_key_length_max(&pmi_keylen_max))) {
         ORTE_PMI_ERROR(rc, "PMI_KVS_Get_key_length_max");
         return ORTE_ERROR;
     }
+#endif
     pmi_kvs_key = malloc(pmi_keylen_max);
 
     return ORTE_SUCCESS;
