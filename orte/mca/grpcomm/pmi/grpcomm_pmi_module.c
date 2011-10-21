@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
@@ -104,7 +105,7 @@ static int kvs_get(const char *key, char *value, int valuelen)
 static int kvs_commit(void)
 {
 #if WANT_CRAY_PMI2_EXT
-    return PMI2_KVS_Fence())) {
+    return PMI2_KVS_Fence();
 #else
     int rc;
 
