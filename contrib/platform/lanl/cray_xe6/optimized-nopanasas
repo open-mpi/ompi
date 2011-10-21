@@ -24,14 +24,10 @@ with_openib=no
 with_devel_headers=yes
 with_alps=yes
 with_xpmem=/opt/cray/xpmem/default
+with_pmi=/opt/cray/pmi/default
+with_cray_pmi2_ext=yes
 with_tm=no
 with_slurm=no
 with_io_romio_flags=--with-file-system=ufs+nfs
 with_memory_manager=ptmalloc2
 with_valgrind=no
-CFLAGS="-I/opt/cray/pmi/default/include"
-CXXFLAGS="-I/opt/cray/pmi/default/include"
-FCFLAGS="-I/opt/cray/pmi/default/include"
-FFLAGS="-I/opt/cray/pmi/default/include"
-CCASFLAGS="-I/opt/cray/pmi/default/include"
-LDFLAGS="-L/opt/cray/pmi/default/lib64 -lpmi"
