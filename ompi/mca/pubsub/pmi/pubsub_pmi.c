@@ -40,7 +40,7 @@ static int publish ( char *service_name, ompi_info_t *info, char *port_name )
     int rc;
 
 #if WANT_CRAY_PMI2_EXT
-    if (PMI2_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, NULL, port_name))) {
+    if (PMI_SUCCESS != (rc = PMI2_Nameserv_publish(service_name, NULL, port_name))) {
         ORTE_PMI_ERROR(rc, "PMI2_Nameserv_publish");
         return OMPI_ERROR;
     }
@@ -60,7 +60,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
 
 #if WANT_CRAY_PMI2_EXT
     port = (char*)malloc(1024*sizeof(char));  /* arbitrary size */
-    if (PMI2_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, NULL, port, 1024))) {
+    if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, NULL, port, 1024))) {
         ORTE_PMI_ERROR(rc, "PMI2_Nameserv_lookup");
         free(port);
         return OMPI_ERROR;
