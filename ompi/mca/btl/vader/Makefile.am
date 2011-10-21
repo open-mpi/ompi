@@ -21,8 +21,6 @@
 
 AM_CPPFLAGS = $(btl_vader_CPPFLAGS)
 
-EXTRA_DIST = .windows
-
 dist_pkgdata_DATA = help-mpi-btl-vader.txt
 
 libmca_btl_vader_la_sources = \
