@@ -653,7 +653,7 @@ static void* pmi_decode(size_t *retlen) {
     size_t i;
     *retlen = strlen(pmi_attr_val)/2;
 
-    ret = malloc(*retlen);
+    ret = calloc(1, *retlen + 1);
     if (NULL == ret) {
         return ret;
     }
