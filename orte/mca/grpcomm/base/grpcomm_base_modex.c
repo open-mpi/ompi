@@ -324,6 +324,7 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
                                  ORTE_NAME_PRINT(&proc_name)));
             pmap->locality = OPAL_PROC_ON_NODE;
         } else {
+#if OPAL_HAVE_HWLOC
             /* convert the locale to a cpuset */
             if (NULL == orte_grpcomm_base.working_cpuset) {
                 orte_grpcomm_base.working_cpuset = hwloc_bitmap_alloc();
@@ -342,6 +343,7 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
                                  "%s grpcomm:base:modex setting proc %s locale %04x",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name), pmap->locality));
+#endif
         }
 
 
@@ -455,6 +457,7 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
                                  ORTE_NAME_PRINT(&proc_name)));
             pmap->locality = OPAL_PROC_ON_NODE;
         } else {
+#if OPAL_HAVE_HWLOC
             /* convert the locale to a cpuset */
             if (NULL == orte_grpcomm_base.working_cpuset) {
                 orte_grpcomm_base.working_cpuset = hwloc_bitmap_alloc();
@@ -473,6 +476,7 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
                                  "%s grpcomm:base:modex:unpack setting proc %s locale %04x",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name), pmap->locality));
+#endif
         }
 
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
