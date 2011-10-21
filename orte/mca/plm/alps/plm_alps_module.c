@@ -229,6 +229,8 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     free(tmp);
     opal_argv_append(&argc, &argv, "-N");
     opal_argv_append(&argc, &argv, "1");
+    opal_argv_append(&argc, &argv, "-cc");
+    opal_argv_append(&argc, &argv, "none");
 
     /* create nodelist */
     nodelist_argv = NULL;
