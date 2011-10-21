@@ -25,6 +25,8 @@ noinst_LTLIBRARIES = libmca_hwloc_hwloc122ompi.la
 libmca_hwloc_hwloc122ompi_la_SOURCES = $(headers) $(sources)
 libmca_hwloc_hwloc122ompi_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc122ompi_LDFLAGS)
 libmca_hwloc_hwloc122ompi_la_LIBADD = $(opal_hwloc_hwloc122ompi_LIBS)
+libmca_hwloc_hwloc122ompi_la_DEPENDENCIES = \
+    $(HWLOC_top_builddir)/src/libhwloc_embedded.la
 
 # Since the rest of the code base includes the underlying hwloc.h, we
 # also have to install the underlying header files when
