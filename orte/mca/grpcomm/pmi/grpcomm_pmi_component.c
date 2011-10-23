@@ -25,6 +25,8 @@
 
 #include "grpcomm_pmi.h"
 
+static int my_priority=5;  /* must be below "bad" module */
+
 /*
  * Struct of function pointers that need to be initialized
  */
@@ -50,6 +52,16 @@ orte_grpcomm_base_component_t mca_grpcomm_pmi_component = {
 /* Open the component */
 int orte_grpcomm_pmi_open(void)
 {
+    mca_base_component_t *c = &mca_grpcomm_pmi_component.base_version;
+
+    /* make the priority adjustable so users can select
+     * pmi for use by apps without affecting daemons
+     */
+    mca_base_param_reg_int(c, "priority",
+                           "Priority of the grpcomm pmi component",
+                           false, false, my_priority,
+                           &my_priority);
+
     return ORTE_SUCCESS;
 }
 
@@ -105,11 +117,10 @@ static bool pmi_startup(void)
 int orte_grpcomm_pmi_component_query(mca_base_module_t **module, int *priority)
 {
     /* for now, only use PMI when direct launched */
-    if (!ORTE_PROC_IS_HNP &&
-        NULL == orte_process_info.my_hnp_uri &&
+    if (ORTE_PROC_IS_MPI &&
         pmi_startup()) {
         /* if PMI is available, use it */
-        *priority = 100;
+        *priority = my_priority;
         *module = (mca_base_module_t *)&orte_grpcomm_pmi_module;
         return ORTE_SUCCESS;
     }
