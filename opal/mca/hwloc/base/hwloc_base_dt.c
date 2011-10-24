@@ -20,16 +20,16 @@ int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
     hwloc_topology_t t, *tarray  = (hwloc_topology_t*)src;
     int rc, i;
     char *xmlbuffer=NULL;
+    int len;
 
     for (i=0; i < num_vals; i++) {
         t = tarray[i];
 
-    {
-        int len;
 
         /* extract an xml-buffer representation of the tree */
-        hwloc_topology_export_xmlbuffer(t, &xmlbuffer, &len);
-    }
+        if (0 != hwloc_topology_export_xmlbuffer(t, &xmlbuffer, &len)) {
+            return OPAL_ERROR;
+        }
 
         /* add to buffer */
         if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &xmlbuffer, 1, OPAL_STRING))) {
@@ -61,17 +61,30 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         }
 
         /* convert the xml */
-        hwloc_topology_init(&t);
-        if (0 != (rc = hwloc_topology_set_xmlbuffer(t, xmlbuffer, strlen(xmlbuffer)))) {
+        if (0 != hwloc_topology_init(&t)) {
+            rc = OPAL_ERROR;
+            goto cleanup;
+        }
+        if (0 != hwloc_topology_set_xmlbuffer(t, xmlbuffer, strlen(xmlbuffer))) {
+            rc = OPAL_ERROR;
+            free(xmlbuffer);
             hwloc_topology_destroy(t);
             goto cleanup;
         }
         /* since we are loading this from an external source, we have to
          * explicitly set a flag so hwloc sets things up correctly
          */
-        hwloc_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM);
+        if (0 != hwloc_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM)) {
+            free(xmlbuffer);
+            rc = OPAL_ERROR;
+            goto cleanup;
+        }
         /* now load the topology */
-        hwloc_topology_load(t);
+        if (0 != hwloc_topology_load(t)) {
+            free(xmlbuffer);
+            rc = OPAL_ERROR;
+            goto cleanup;
+        }
         if (NULL != xmlbuffer) {
             free(xmlbuffer);
         }
@@ -93,13 +106,24 @@ int opal_hwloc_copy(hwloc_topology_t *dest, hwloc_topology_t src, opal_data_type
     char *xml;
     int len;
 
-    hwloc_topology_export_xmlbuffer(src, &xml, &len);
-    hwloc_topology_init(dest);
-    if (0 != hwloc_topology_set_xmlbuffer(*dest, xml, len)) {
-        hwloc_topology_destroy(*dest);
+    if (0 != hwloc_topology_export_xmlbuffer(src, &xml, &len)) {
         return OPAL_ERROR;
     }
-    hwloc_topology_load(*dest);
+    if (0 != hwloc_topology_init(dest)) {
+        free(xml);
+        return OPAL_ERROR;
+    }
+    if (0 != hwloc_topology_set_xmlbuffer(*dest, xml, len)) {
+        hwloc_topology_destroy(*dest);
+        free(xml);
+        return OPAL_ERROR;
+    }
+    if (0 != hwloc_topology_load(*dest)) {
+        hwloc_topology_destroy(*dest);
+        free(xml);
+        return OPAL_ERROR;
+    }
+
     free(xml);
     return OPAL_SUCCESS;
 }
@@ -110,6 +134,9 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
 {
     hwloc_topology_t t1, t2;
     unsigned d1, d2;
+    char *x1=NULL, *x2=NULL;
+    int l1, l2;
+    int s;
 
     /* stop stupid compiler warnings */
     t1 = (hwloc_topology_t)topo1;
@@ -124,25 +151,25 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
         return OPAL_VALUE2_GREATER;
     }
 
-    {
-        char *x1=NULL, *x2=NULL;
-        int l1, l2;
-        int s;
 
-        /* do the comparison the "cheat" way - get an xml representation
-         * of each tree, and strcmp!
-         */
-        hwloc_topology_export_xmlbuffer(t1, &x1, &l1);
-        hwloc_topology_export_xmlbuffer(t2, &x2, &l2);
-
-        s = strcmp(x1, x2);
+    /* do the comparison the "cheat" way - get an xml representation
+     * of each tree, and strcmp!
+     */
+    if (0 != hwloc_topology_export_xmlbuffer(t1, &x1, &l1)) {
+        return OPAL_EQUAL;
+    }
+    if (0 != hwloc_topology_export_xmlbuffer(t2, &x2, &l2)) {
         free(x1);
-        free(x2);
-        if (s > 0) {
-            return OPAL_VALUE1_GREATER;
-        } else if (s < 0) {
-            return OPAL_VALUE2_GREATER;
-        }
+        return OPAL_EQUAL;
+    }
+
+    s = strcmp(x1, x2);
+    free(x1);
+    free(x2);
+    if (s > 0) {
+        return OPAL_VALUE1_GREATER;
+    } else if (s < 0) {
+        return OPAL_VALUE2_GREATER;
     }
 
     return OPAL_EQUAL;
