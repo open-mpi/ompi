@@ -30,13 +30,13 @@
 #define MCA_BTL_VADER_FLAG_SINGLE_COPY 1
 
 struct mca_btl_vader_hdr_t {
-    volatile void *next;        /* next item in fifo. many peers may touch this */
+    volatile void *next;    /* next item in fifo. many peers may touch this */
+    volatile bool complete; /* fragment completion (usually 1 byte) */
+    mca_btl_base_tag_t tag; /* tag associated with this fragment (used to lookup callback) */
     char pad[2];
-    volatile bool complete;     /* fragment completion (usually 1 byte) */
-    mca_btl_base_tag_t tag;     /* tag associated with this fragment (used to lookup callback) */
     int flags;              /* vader send flags */
-    int my_smp_rank;       /* smp rank of owning process */
-    size_t len;                 /* length of data following this header */
+    int my_smp_rank;        /* smp rank of owning process */
+    size_t len;             /* length of data following this header */
 };
 typedef struct mca_btl_vader_hdr_t mca_btl_vader_hdr_t;
 
