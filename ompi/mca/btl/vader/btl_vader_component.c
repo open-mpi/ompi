@@ -129,12 +129,12 @@ static int mca_btl_vader_component_register (void)
 	msb(mca_btl_vader_param_register_int("segment_multiple", mca_btl_vader_segment_multiple));
 
     mca_btl_vader.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
-    mca_btl_vader.super.btl_eager_limit = 4*1024;
-    mca_btl_vader.super.btl_rndv_eager_limit = 4*1024;
-    mca_btl_vader.super.btl_max_send_size = 4*1024;
-    mca_btl_vader.super.btl_rdma_pipeline_send_length = 4*1024;
-    mca_btl_vader.super.btl_rdma_pipeline_frag_size = 4*1024;
-    mca_btl_vader.super.btl_min_rdma_pipeline_size = 4*1024;
+    mca_btl_vader.super.btl_eager_limit = 64 * 1024;
+    mca_btl_vader.super.btl_rndv_eager_limit = mca_btl_vader.super.btl_eager_limit;
+    mca_btl_vader.super.btl_max_send_size    = mca_btl_vader.super.btl_eager_limit;
+    mca_btl_vader.super.btl_rdma_pipeline_send_length = mca_btl_vader.super.btl_eager_limit;
+    mca_btl_vader.super.btl_rdma_pipeline_frag_size = mca_btl_vader.super.btl_eager_limit;
+    mca_btl_vader.super.btl_min_rdma_pipeline_size = mca_btl_vader.super.btl_eager_limit;
     mca_btl_vader.super.btl_flags = MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_PUT |
 	MCA_BTL_FLAGS_SEND_INPLACE;
 
@@ -264,7 +264,7 @@ static inline void mca_btl_vader_progress_sends (void)
 	frag = (mca_btl_vader_frag_t *) item;
 	next = opal_list_get_next (item);
 
-	if (frag->hdr->complete) {
+	if (OPAL_LIKELY(frag->hdr->complete)) {
 	    opal_list_remove_item (&mca_btl_vader_component.active_sends, item);
 
 	    if (OPAL_UNLIKELY(MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
@@ -289,13 +289,15 @@ static int mca_btl_vader_component_progress (void)
     mca_btl_active_message_callback_t *reg;
     mca_btl_vader_frag_t frag;
     mca_btl_vader_hdr_t *hdr;
+    mca_btl_base_segment_t segments[2];
+    mca_mpool_base_registration_t *xpmem_reg = NULL;
+    bool single_copy;
 
     /* check active sends for completion */
     mca_btl_vader_progress_sends ();
 
     /* poll the fifo once */
     hdr = (mca_btl_vader_hdr_t *) vader_fifo_read (fifo);
-
     if (VADER_FIFO_FREE == hdr) {
 	return 0;
     }
@@ -304,13 +306,29 @@ static int mca_btl_vader_component_progress (void)
      * memory address, to a true virtual address */
     hdr = (mca_btl_vader_hdr_t *) RELATIVE2VIRTUAL(hdr);
 
-    /* recv upcall */
     reg = mca_btl_base_active_message_trigger + hdr->tag;
-    frag.segment.seg_addr.pval = (void *) (hdr + 1);
-    frag.segment.seg_len       = hdr->len;
-    frag.base.des_dst_cnt = 1;
-    frag.base.des_dst = &(frag.segment);
-    reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
+    frag.base.des_dst     = segments;
+
+    segments[0].seg_addr.pval = (void *) (hdr + 1);
+    segments[0].seg_len       = hdr->len;
+
+    if (OPAL_UNLIKELY(hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY)) {
+	struct iovec *rem_mem = (struct iovec *) ((uintptr_t)segments[0].seg_addr.pval + hdr->len);
+
+	xpmem_reg = vader_get_registation (hdr->my_smp_rank, rem_mem->iov_base,
+					   rem_mem->iov_len, 0);
+
+	segments[1].seg_addr.pval = vader_reg_to_ptr (xpmem_reg, rem_mem->iov_base);
+	segments[1].seg_len       = rem_mem->iov_len;
+
+	/* recv upcall */
+	frag.base.des_dst_cnt = 2;
+	reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
+	vader_return_registration (xpmem_reg, hdr->my_smp_rank);
+    } else {
+	frag.base.des_dst_cnt = 1;
+	reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
+    }
 
     /* return the fragment */
     hdr->complete = true;
