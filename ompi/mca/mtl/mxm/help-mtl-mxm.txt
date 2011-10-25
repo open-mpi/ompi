@@ -20,14 +20,10 @@ active on the node and the hardware is functioning.
 
   Error: %s
 
-[unable to extract endpoint ib address]
-MXM was unable to read IB settings for endpoint 
+[unable to extract endpoint address]
+MXM was unable to read settings for endpoint 
 
-  Error: %s
-
-[unable to extract endpoint local address]
-MXM was unable to read shmem settings for endpoint 
-
+  PTL ID: %d
   Error: %s
 
 [mxm mq create]
@@ -61,7 +57,6 @@ Unable to post application send buffer
   Error:      %s
 
 [error while waiting in send]
-Unable while waiting in send
+Error while waiting in send
 
   Error:      %s
-  
