@@ -148,7 +148,7 @@ static inline uintptr_t get_mask (uintptr_t x)
     x |= (x >> 8);
     x |= (x >> 16);
     x |= (x >> 32);
-    return (x >> 1) + 1;
+    return (x >> 1);
 }
 
 /* look up the remote pointer in the peer rcache and attach if
