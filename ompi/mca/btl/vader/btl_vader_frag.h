@@ -26,12 +26,17 @@
 
 #include "ompi_config.h"
 
+#define MCA_BTL_VADER_FLAG_INLINE      0
+#define MCA_BTL_VADER_FLAG_SINGLE_COPY 1
+
 struct mca_btl_vader_hdr_t {
-    size_t len;             /* length of data following this header */
-    int my_smp_rank;        /* smp rank of owning process */
-    mca_btl_base_tag_t tag; /* tag associated with this fragment (used to lookup callback) */
-    volatile void *next;    /* next item in fifo */
-    volatile bool complete; /* fragment completion */
+    volatile void *next;        /* next item in fifo. many peers may touch this */
+    char pad[2];
+    volatile bool complete;     /* fragment completion (usually 1 byte) */
+    mca_btl_base_tag_t tag;     /* tag associated with this fragment (used to lookup callback) */
+    int flags;              /* vader send flags */
+    int my_smp_rank;       /* smp rank of owning process */
+    size_t len;                 /* length of data following this header */
 };
 typedef struct mca_btl_vader_hdr_t mca_btl_vader_hdr_t;
 
@@ -57,6 +62,7 @@ OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 	OMPI_FREE_LIST_GET(&mca_btl_vader_component.vader_frags_eager, item, rc); \
 	frag = (mca_btl_vader_frag_t *) item;				\
 	frag->hdr->complete = false;					\
+	frag->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;			\
 	frag->my_list = &mca_btl_vader_component.vader_frags_eager;	\
     } while (0)
 

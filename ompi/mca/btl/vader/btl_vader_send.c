@@ -53,6 +53,11 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     vader_fifo_write ((void *) VIRTUAL2RELATIVE(frag->hdr),
 		      mca_btl_vader_component.fifo[endpoint->peer_smp_rank]);
 
+    if (frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) {
+	frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+	return 0;
+    }
+
     /* data is gone */
     return 1;
 }
