@@ -82,7 +82,7 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm
     		(struct sockaddr *) &ep_info->ptl_addr[ptlid], &addrlen);
     if (MXM_OK != err) {
         orte_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
-        		true, mxm_error_string(err));
+        		true, (int)ptlid, mxm_error_string(err));
         return OMPI_ERROR;
     }
 
