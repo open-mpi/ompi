@@ -56,9 +56,6 @@
 #include "btl_openib_ip.h"
 #include "btl_openib_ini.h"
 
-/* JMS to be removed: see #1264 */
-#undef event
-
 #define mymin(a, b) ((a) < (b) ? (a) : (b))
 
 static void rdmacm_component_register(void);
