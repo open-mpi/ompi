@@ -44,9 +44,9 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
 
     if (OPAL_LIKELY((uintptr_t)rem_ptr != src->seg_key.ptr) &&
 	src->seg_len >= mca_btl_vader_memcpy_limit) {
-	memcpy (dst->seg_addr.pval, rem_ptr, size);
+	memcpy ((void *) dst->seg_key.ptr, rem_ptr, size);
     } else {
-	memmove (dst->seg_addr.pval, rem_ptr, size);
+	memmove ((void *) dst->seg_key.ptr, rem_ptr, size);
     }
 
     vader_return_registration (reg, endpoint->peer_smp_rank);
