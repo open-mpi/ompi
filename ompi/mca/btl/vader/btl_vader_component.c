@@ -47,6 +47,8 @@ static mca_btl_base_module_t** mca_btl_vader_component_init(int *num_btls,
 /* limit where we should switch from bcopy to memcpy */
 int mca_btl_vader_memcpy_limit     = 524288;
 int mca_btl_vader_segment_multiple = 4194304;
+/* maximum size for using copy-in-copy out semantics for contiguous sends */
+int mca_btl_vader_max_inline_send = 256;
 
 /*
  * Shared Memory (VADER) component instance.
@@ -127,6 +129,8 @@ static int mca_btl_vader_component_register (void)
 	mca_btl_vader_param_register_int("memcpy_limit", mca_btl_vader_memcpy_limit);
     mca_btl_vader_segment_multiple =
 	msb(mca_btl_vader_param_register_int("segment_multiple", mca_btl_vader_segment_multiple));
+    mca_btl_vader_max_inline_send =
+	mca_btl_vader_param_register_int("max_inline_send", mca_btl_vader_max_inline_send);
 
     mca_btl_vader.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
     mca_btl_vader.super.btl_eager_limit = 64 * 1024;
