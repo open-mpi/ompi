@@ -31,8 +31,6 @@
 #include "btl_vader_endpoint.h"
 #include "btl_vader_fifo.h"
 
-int mca_btl_vader_max_inline_send = 256;
-
 static int vader_del_procs (struct mca_btl_base_module_t *btl,
 			    size_t nprocs, struct ompi_proc_t **procs,
 			    struct mca_btl_base_endpoint_t **peers);
@@ -41,10 +39,6 @@ static int vader_register_error_cb (struct mca_btl_base_module_t* btl,
 				    mca_btl_base_module_error_cb_fn_t cbfunc);
 
 static int vader_finalize (struct mca_btl_base_module_t* btl);
-
-static mca_btl_base_descriptor_t* vader_alloc (struct mca_btl_base_module_t* btl,
-					       struct mca_btl_base_endpoint_t* endpoint,
-					       uint8_t order, size_t size, uint32_t flags);
 
 static int vader_free (struct mca_btl_base_module_t* btl, mca_btl_base_descriptor_t* des);
 
@@ -93,12 +87,12 @@ mca_btl_vader_t mca_btl_vader = {
         vader_del_procs,
         NULL, /* btl_register */
         vader_finalize,
-        vader_alloc,
+        mca_btl_vader_alloc,
         vader_free,
         vader_prepare_src,
         vader_prepare_dst,
         mca_btl_vader_send,
-	NULL, /* btl_sendi is implemented but not used at the momement */
+	mca_btl_vader_sendi,
         mca_btl_vader_put,
         mca_btl_vader_get,
         mca_btl_base_dump,
@@ -562,9 +556,9 @@ static int vader_register_error_cb(struct mca_btl_base_module_t* btl,
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
  */
-static mca_btl_base_descriptor_t *vader_alloc(struct mca_btl_base_module_t *btl,
-					      struct mca_btl_base_endpoint_t *endpoint,
-					      uint8_t order, size_t size, uint32_t flags)
+mca_btl_base_descriptor_t *mca_btl_vader_alloc(struct mca_btl_base_module_t *btl,
+					       struct mca_btl_base_endpoint_t *endpoint,
+					       uint8_t order, size_t size, uint32_t flags)
 {
     mca_btl_vader_frag_t *frag = NULL;
     int rc;
@@ -576,14 +570,14 @@ static mca_btl_base_descriptor_t *vader_alloc(struct mca_btl_base_module_t *btl,
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
-        frag->segment.seg_len = size;
-	frag->endpoint        = endpoint;
+        frag->segment.seg_len  = size;
+	frag->endpoint         = endpoint;
 
-        frag->base.des_flags  = flags;
-	frag->base.order      = order;
-	frag->base.des_src = &frag->segment;
+        frag->base.des_flags   = flags;
+	frag->base.order       = order;
+	frag->base.des_src     = &frag->segment;
 	frag->base.des_src_cnt = 1;
-	frag->base.des_dst = &frag->segment;
+	frag->base.des_dst     = &frag->segment;
 	frag->base.des_src_cnt = 1;
     }
 
@@ -681,12 +675,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 		return NULL;
 	    }
 
-	    if ((*size + reserve) < mca_btl_vader_max_inline_send) {
-		/* inline send */
-		/* NTH: the covertor adds some latency so we bypass it here */
-		memmove ((void *)((uintptr_t)frag->segment.seg_addr.pval + reserve), data_ptr, *size);
-		frag->segment.seg_len = reserve + *size;
-	    } else {
+	    if ((*size + reserve) > mca_btl_vader_max_inline_send) {
 		/* single copy send */
 		/* pack the iovec after the reserved memory */
 		lcl_mem = (struct iovec *) ((uintptr_t)frag->segment.seg_addr.pval + reserve);
@@ -697,6 +686,11 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 		lcl_mem->iov_len  = *size;
 
 		frag->segment.seg_len = reserve;
+	    } else {
+		/* inline send */
+		/* NTH: the covertor adds some latency so we bypass it here */
+		memmove ((void *)((uintptr_t)frag->segment.seg_addr.pval + reserve), data_ptr, *size);
+		frag->segment.seg_len = reserve + *size;
 	    }
 	}
     } else {
@@ -707,7 +701,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 	}
 
 	frag->segment.seg_key.ptr = (uintptr_t) data_ptr;
-	frag->segment.seg_len = *size;
+	frag->segment.seg_len = reserve + *size;
     }
 
     frag->base.des_src     = &frag->segment;

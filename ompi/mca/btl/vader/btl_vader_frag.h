@@ -63,7 +63,6 @@ OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 	frag = (mca_btl_vader_frag_t *) item;				\
 	frag->hdr->complete = false;					\
 	frag->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;			\
-	frag->hdr->len = 0;						\
 	frag->my_list = &mca_btl_vader_component.vader_frags_eager;	\
     } while (0)
 
@@ -74,7 +73,6 @@ OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 	frag = (mca_btl_vader_frag_t *) item;				\
 	frag->hdr->complete = false;					\
 	frag->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;			\
-	frag->hdr->len = 0;						\
 	frag->my_list = &mca_btl_vader_component.vader_frags_user;	\
     } while (0)
 

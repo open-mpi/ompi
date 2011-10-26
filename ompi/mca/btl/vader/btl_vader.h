@@ -64,6 +64,7 @@ BEGIN_C_DECLS
 
 extern int mca_btl_vader_memcpy_limit;
 extern int mca_btl_vader_segment_multiple;
+extern int mca_btl_vader_max_inline_send;
 
 #define VADER_FIFO_FREE  (void *) (-2)
 /* We can't use opal_cache_line_size here because we need a
@@ -267,7 +268,7 @@ int mca_btl_vader_send(struct mca_btl_base_module_t *btl,
 			      mca_btl_base_tag_t tag);
 
 /**
- * Initiate an inline send to the peer. Return a descriptor on failure.
+ * Initiate an inline send to the peer.
  *
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
@@ -275,12 +276,9 @@ int mca_btl_vader_send(struct mca_btl_base_module_t *btl,
 int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
 			 struct mca_btl_base_endpoint_t *endpoint,
 			 struct opal_convertor_t *convertor,
-			 void *header,
-			 size_t header_size,
-			 size_t payload_size,
-			 uint8_t order,
-			 uint32_t flags,
-			 mca_btl_base_tag_t tag,
+			 void *header, size_t header_size,
+			 size_t payload_size, uint8_t order,
+			 uint32_t flags, mca_btl_base_tag_t tag,
 			 mca_btl_base_descriptor_t **descriptor);
 
 /**
@@ -304,6 +302,17 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
 int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
 		       struct mca_btl_base_endpoint_t *endpoint,
 		       struct mca_btl_base_descriptor_t *des);
+
+/**
+ * Allocate a segment.
+ *
+ * @param btl (IN)      BTL module
+ * @param size (IN)     Request segment size.
+ */
+mca_btl_base_descriptor_t* mca_btl_vader_alloc (struct mca_btl_base_module_t* btl,
+						struct mca_btl_base_endpoint_t* endpoint,
+						uint8_t order, size_t size, uint32_t flags);
+
 
 END_C_DECLS
 
