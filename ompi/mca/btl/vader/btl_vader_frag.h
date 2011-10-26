@@ -57,12 +57,13 @@ typedef struct mca_btl_vader_frag_t mca_btl_vader_frag_t;
 OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 
 #define MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, rc)			\
-    do {									\
+    do {								\
 	ompi_free_list_item_t *item;					\
 	OMPI_FREE_LIST_GET(&mca_btl_vader_component.vader_frags_eager, item, rc); \
 	frag = (mca_btl_vader_frag_t *) item;				\
 	frag->hdr->complete = false;					\
 	frag->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;			\
+	frag->hdr->len = 0;						\
 	frag->my_list = &mca_btl_vader_component.vader_frags_eager;	\
     } while (0)
 
@@ -72,11 +73,13 @@ OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 	OMPI_FREE_LIST_GET(&mca_btl_vader_component.vader_frags_user, item, rc); \
 	frag = (mca_btl_vader_frag_t *) item;				\
 	frag->hdr->complete = false;					\
+	frag->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;			\
+	frag->hdr->len = 0;						\
 	frag->my_list = &mca_btl_vader_component.vader_frags_user;	\
     } while (0)
 
 
 #define MCA_BTL_VADER_FRAG_RETURN(frag)					\
-	OMPI_FREE_LIST_RETURN((frag)->my_list, (ompi_free_list_item_t *)(frag)); \
+	OMPI_FREE_LIST_RETURN((frag)->my_list, (ompi_free_list_item_t *)(frag))
 
 #endif /* MCA_BTL_VADER_SEND_FRAG_H */

@@ -45,8 +45,6 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
 
-    frag->endpoint = endpoint;
-
     opal_list_append (&mca_btl_vader_component.active_sends, (opal_list_item_t *) frag);
 
     /* post the relative address of the descriptor into the peer's fifo */

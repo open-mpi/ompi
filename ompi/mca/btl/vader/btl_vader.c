@@ -145,7 +145,7 @@ static void vader_init_maffinity (int *my_mem_node)
         /* no topology info available */
         goto out;
     }
-    
+
     asprintf(&myslot, "slot%d", socket);
 
     slot_node = opal_carto_base_find_node(topo, myslot);
@@ -569,13 +569,22 @@ static mca_btl_base_descriptor_t *vader_alloc(struct mca_btl_base_module_t *btl,
     mca_btl_vader_frag_t *frag = NULL;
     int rc;
 
-    if(size <= mca_btl_vader_component.eager_limit) {
+    if (size <= mca_btl_vader_max_inline_send) {
+	MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
+    } else if (size <= mca_btl_vader_component.eager_limit) {
         MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, rc);
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
         frag->segment.seg_len = size;
-        frag->base.des_flags = flags;
+	frag->endpoint        = endpoint;
+
+        frag->base.des_flags  = flags;
+	frag->base.order      = order;
+	frag->base.des_src = &frag->segment;
+	frag->base.des_src_cnt = 1;
+	frag->base.des_dst = &frag->segment;
+	frag->base.des_src_cnt = 1;
     }
 
     return (mca_btl_base_descriptor_t *) frag;
@@ -602,6 +611,7 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
 						    uint32_t flags)
 {
     mca_btl_vader_frag_t *frag;
+    void *data_ptr;
     int rc;
 
     MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
@@ -609,15 +619,17 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
         return NULL;
     }
     
-    opal_convertor_get_current_pointer (convertor, (void **) &frag->segment.seg_addr.pval);
-    frag->segment.seg_key.ptr = (uintptr_t) frag->segment.seg_addr.pval;
-    frag->segment.seg_len = *size;
+    opal_convertor_get_current_pointer (convertor, (void **) &data_ptr);
+
+    frag->segment.seg_key.ptr = (uintptr_t) data_ptr;
+    frag->segment.seg_len     = *size;
     
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
-    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst     = &frag->segment;
     frag->base.des_dst_cnt = 1;
-    frag->base.des_flags = flags;
+    frag->base.order       = order;
+    frag->base.des_flags   = flags;
+
+    frag->endpoint = endpoint;
 
     return &frag->base;
 }
@@ -634,57 +646,58 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 							    uint8_t order, size_t reserve, size_t *size,
 							    uint32_t flags)
 {
+    struct iovec iov, *lcl_mem;
     mca_btl_vader_frag_t *frag;
     uint32_t iov_count = 1;
     void *data_ptr;
-    struct iovec iov, *lcl_mem;
     int rc;
+
+    opal_convertor_get_current_pointer (convertor, &data_ptr);
 
     if (OPAL_LIKELY(reserve)) {
 	/* in place send fragment */
-	if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor)) ||
-	    (*size + reserve) < mca_btl_vader_max_inline_send) {
+	if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
 	    /* non-contiguous data requires the convertor */
 	    MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag,rc);
 	    if (OPAL_UNLIKELY(NULL == frag)) {
 		return NULL;
 	    }
 
-	    if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
-		iov.iov_len = mca_btl_vader_component.eager_limit - reserve;
-		iov.iov_base =
-		    (IOVBASE_TYPE *)(((uintptr_t)(frag->segment.seg_addr.pval)) +
-				     reserve);
+	    iov.iov_len = mca_btl_vader_component.eager_limit - reserve;
+	    iov.iov_base =
+		(IOVBASE_TYPE *)(((uintptr_t)(frag->segment.seg_addr.pval)) +
+				 reserve);
 
-		rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
-		if (OPAL_UNLIKELY(rc < 0)) {
-		    MCA_BTL_VADER_FRAG_RETURN(frag);
-		    return NULL;
-		}
-	    } else {
-		/* NTH: the covertor adds some latency so we bypass it if possible */
-		opal_convertor_get_current_pointer (convertor, &data_ptr);
-		memmove ((void *)((uintptr_t)frag->segment.seg_addr.pval + reserve), data_ptr, *size);
+	    rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
+	    if (OPAL_UNLIKELY(rc < 0)) {
+		MCA_BTL_VADER_FRAG_RETURN(frag);
+		return NULL;
 	    }
 
 	    frag->segment.seg_len = reserve + *size;
 	} else {
-	    /* single copy send */
 	    MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
 	    if (OPAL_UNLIKELY(NULL == frag)) {
 		return NULL;
 	    }
 
-	    /* pack the iovec after the reserved memory */
-	    lcl_mem = (struct iovec *) ((uintptr_t)(frag->hdr + 1) + reserve);
+	    if ((*size + reserve) < mca_btl_vader_max_inline_send) {
+		/* inline send */
+		/* NTH: the covertor adds some latency so we bypass it here */
+		memmove ((void *)((uintptr_t)frag->segment.seg_addr.pval + reserve), data_ptr, *size);
+		frag->segment.seg_len = reserve + *size;
+	    } else {
+		/* single copy send */
+		/* pack the iovec after the reserved memory */
+		lcl_mem = (struct iovec *) ((uintptr_t)frag->segment.seg_addr.pval + reserve);
 
-	    frag->hdr->flags = MCA_BTL_VADER_FLAG_SINGLE_COPY;
- 	    opal_convertor_get_current_pointer (convertor, &data_ptr);
+		frag->hdr->flags = MCA_BTL_VADER_FLAG_SINGLE_COPY;
 
-	    lcl_mem->iov_base = data_ptr;
-	    lcl_mem->iov_len  = *size;
+		lcl_mem->iov_base = data_ptr;
+		lcl_mem->iov_len  = *size;
 
-	    frag->segment.seg_len = reserve;
+		frag->segment.seg_len = reserve;
+	    }
 	}
     } else {
 	/* put/get fragment */
@@ -693,16 +706,16 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 	    return NULL;
 	}
 
-	opal_convertor_get_current_pointer (convertor, (void **) &frag->segment.seg_key.ptr);
+	frag->segment.seg_key.ptr = (uintptr_t) data_ptr;
 	frag->segment.seg_len = *size;
     }
 
-    frag->base.des_src = &frag->segment;
+    frag->base.des_src     = &frag->segment;
     frag->base.des_src_cnt = 1;
-    frag->base.order = MCA_BTL_NO_ORDER;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = flags;
+    frag->base.order       = order;
+    frag->base.des_flags   = flags;
+
+    frag->endpoint = endpoint;
 
     return &frag->base;
 }
