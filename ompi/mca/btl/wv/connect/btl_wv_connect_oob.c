@@ -744,7 +744,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
        our door */ 
     BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT8));
     rc = opal_dss.unpack(buffer, &message_type, &cnt, OPAL_UINT8);
-    if (ORTE_SUCCESS != rc) {
+    if (OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         mca_btl_wv_endpoint_invoke_error(NULL);
         return;
@@ -752,7 +752,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
     
     BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT64));
     rc = opal_dss.unpack(buffer, &rem_info.rem_subnet_id, &cnt, OPAL_UINT64);
-    if (ORTE_SUCCESS != rc) {
+    if (OPAL_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         mca_btl_wv_endpoint_invoke_error(NULL);
         return;
@@ -761,14 +761,14 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
     if (ENDPOINT_CONNECT_REQUEST != message_type) {
         BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         rc = opal_dss.unpack(buffer, &lcl_qp, &cnt, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             mca_btl_wv_endpoint_invoke_error(NULL);
             return;
         }
         BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
         rc = opal_dss.unpack(buffer, &lcl_lid, &cnt, OPAL_UINT16);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             mca_btl_wv_endpoint_invoke_error(NULL);
             return;
@@ -786,7 +786,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
             rc = opal_dss.unpack(buffer, &rem_info.rem_qps[qp].rem_qp_num, &cnt,
                                  OPAL_UINT32);
-            if (ORTE_SUCCESS != rc) {
+            if (OPAL_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 mca_btl_wv_endpoint_invoke_error(NULL);
                 return;
@@ -794,7 +794,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
             rc = opal_dss.unpack(buffer, &rem_info.rem_qps[qp].rem_psn, &cnt,
                                  OPAL_UINT32);
-            if (ORTE_SUCCESS != rc) {
+            if (OPAL_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 mca_btl_wv_endpoint_invoke_error(NULL);
                 return;
@@ -803,21 +803,21 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         
         BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT16));
         rc = opal_dss.unpack(buffer, &rem_info.rem_lid, &cnt, OPAL_UINT16);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             mca_btl_wv_endpoint_invoke_error(NULL);
             return;
         }
         BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         rc = opal_dss.unpack(buffer, &rem_info.rem_mtu, &cnt, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             mca_btl_wv_endpoint_invoke_error(NULL);
             return;
         }
         BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT32));
         rc = opal_dss.unpack(buffer, &rem_info.rem_index, &cnt, OPAL_UINT32);
-        if (ORTE_SUCCESS != rc) {
+        if (OPAL_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             mca_btl_wv_endpoint_invoke_error(NULL);
             return;
