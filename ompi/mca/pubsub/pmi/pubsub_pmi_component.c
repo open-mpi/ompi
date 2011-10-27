@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -92,7 +94,7 @@ static bool pmi_startup(void)
 #else
     PMI_BOOL initialized;
 
-    if (PMI_SUCCESS != PMI_Init(&initialized)) {
+    if (PMI_SUCCESS != PMI_Initialized(&initialized)) {
         return false;
     }
     if (PMI_TRUE != initialized) {
