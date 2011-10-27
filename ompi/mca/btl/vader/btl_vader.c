@@ -30,6 +30,7 @@
 #include "btl_vader.h"
 #include "btl_vader_endpoint.h"
 #include "btl_vader_fifo.h"
+#include "btl_vader_fbox.h"
 
 static int vader_del_procs (struct mca_btl_base_module_t *btl,
 			    size_t nprocs, struct ompi_proc_t **procs,
@@ -274,8 +275,8 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     component->shm_bases[component->my_smp_rank] = (char *)component->vader_mpool_base;
     component->shm_seg_ids[component->my_smp_rank] = my_segid;
 
-    /* initialize the array of fifo's "owned" by this process */
-    posix_memalign ((void **)&my_fifos, getpagesize (), sizeof (vader_fifo_t));
+    /* initialize the fifo and fast boxes "owned" by this process */
+    posix_memalign ((void **)&my_fifos, getpagesize (), (n + 1) * getpagesize ());
     if(NULL == my_fifos)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
@@ -295,6 +296,22 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     component->xpmem_rcaches =
 	(struct mca_rcache_base_module_t **) calloc (n, sizeof (struct mca_rcache_base_module_t *));
     if (NULL == component->xpmem_rcaches)
+	return OMPI_ERR_OUT_OF_RESOURCE;
+
+    component->vader_fboxes_in = (char **) calloc (n, sizeof (char *));
+    if (NULL == component->vader_fboxes_in)
+	return OMPI_ERR_OUT_OF_RESOURCE;
+
+    component->vader_fboxes_out = (char **) calloc (n, sizeof (char *));
+    if (NULL == component->vader_fboxes_out)
+	return OMPI_ERR_OUT_OF_RESOURCE;
+
+    component->vader_next_fbox_in = (unsigned char *) calloc (64, 1);
+    if (NULL == component->vader_next_fbox_in)
+	return OMPI_ERR_OUT_OF_RESOURCE;
+
+    component->vader_next_fbox_out = (unsigned char *) calloc (64, 1);
+    if (NULL == component->vader_next_fbox_out)
 	return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* initialize fragment descriptor free lists */
@@ -482,8 +499,19 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
 	    /* get a persistent pointer to the peer's fifo */
 	    component->fifo[peer_smp_rank] =
 		vader_reg_to_ptr (vader_get_registation (peer_smp_rank, rem_ptr,
-							 sizeof (vader_fifo_t),
+							 (n_local_procs + 1) * getpagesize (),
 							 MCA_MPOOL_FLAGS_PERSIST), rem_ptr);
+
+	    /* fast boxes are allocated at the same time as the fifos */
+	    component->vader_fboxes_in[peer_smp_rank] = (char *) component->fifo[my_smp_rank] +
+		(peer_smp_rank + 1) * getpagesize ();
+	    component->vader_fboxes_out[peer_smp_rank] = (char *) component->fifo[peer_smp_rank] +
+		(my_smp_rank + 1) * getpagesize ();
+
+	    component->vader_next_fbox_in[peer_smp_rank] = 0;
+	    component->vader_next_fbox_out[peer_smp_rank] = 0;
+
+	    memset (component->vader_fboxes_in[peer_smp_rank], MCA_BTL_VADER_FBOX_FREE, getpagesize());
 	}
     }
 
@@ -643,7 +671,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
     struct iovec iov, *lcl_mem;
     mca_btl_vader_frag_t *frag;
     uint32_t iov_count = 1;
-    void *data_ptr;
+    void *data_ptr, *fbox_ptr;
     int rc;
 
     opal_convertor_get_current_pointer (convertor, &data_ptr);
@@ -688,8 +716,18 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 		frag->segment.seg_len = reserve;
 	    } else {
 		/* inline send */
+
+		/* try to reserve a fast box for this transfer */
+		fbox_ptr = mca_btl_vader_reserve_fbox (endpoint->peer_smp_rank, reserve + *size);
+
+		if (fbox_ptr) {
+		    frag->hdr->flags |= MCA_BTL_VADER_FLAG_FBOX;
+		    frag->segment.seg_addr.pval = fbox_ptr;
+		}
+
 		/* NTH: the covertor adds some latency so we bypass it here */
-		memmove ((void *)((uintptr_t)frag->segment.seg_addr.pval + reserve), data_ptr, *size);
+		vader_memmove ((void *)((uintptr_t)frag->segment.seg_addr.pval + reserve),
+			       data_ptr, *size);
 		frag->segment.seg_len = reserve + *size;
 	    }
 	}

@@ -26,6 +26,7 @@
 #include "btl_vader.h"
 #include "btl_vader_frag.h"
 #include "btl_vader_fifo.h"
+#include "btl_vader_fbox.h"
 
 /**
  * Initiate a send to the peer.
@@ -39,6 +40,16 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
 			mca_btl_base_tag_t tag)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
+
+    if (frag->hdr->flags & MCA_BTL_VADER_FLAG_FBOX) {
+	mca_btl_vader_fbox_send (frag->segment.seg_addr.pval, tag, frag->segment.seg_len);
+
+	if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+	    MCA_BTL_VADER_FRAG_RETURN(frag);
+	}
+
+	return 1;
+    }
 
     /* available header space */
     frag->hdr->len = frag->segment.seg_len;
