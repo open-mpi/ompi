@@ -102,7 +102,7 @@ static bool pmi_startup(void)
 #else
     PMI_BOOL initialized;
 
-    if (PMI_SUCCESS != PMI_Init(&initialized)) {
+    if (PMI_SUCCESS != PMI_Initialized(&initialized)) {
         return false;
     }
     if (PMI_TRUE != initialized) {
