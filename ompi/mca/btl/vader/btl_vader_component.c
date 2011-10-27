@@ -35,6 +35,7 @@
 #include "btl_vader.h"
 #include "btl_vader_frag.h"
 #include "btl_vader_fifo.h"
+#include "btl_vader_fbox.h"
 
 static int mca_btl_vader_component_progress (void);
 static int mca_btl_vader_component_open(void);
@@ -286,6 +287,7 @@ static inline void mca_btl_vader_progress_sends (void)
     }
 }
 
+
 static int mca_btl_vader_component_progress (void)
 {
     int my_smp_rank = mca_btl_vader_component.my_smp_rank;
@@ -296,6 +298,9 @@ static int mca_btl_vader_component_progress (void)
     mca_btl_base_segment_t segments[2];
     mca_mpool_base_registration_t *xpmem_reg = NULL;
     bool single_copy;
+
+    /* check for messages in fast boxes */
+    mca_btl_vader_check_fboxes ();
 
     /* check active sends for completion */
     mca_btl_vader_progress_sends ();

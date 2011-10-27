@@ -29,7 +29,6 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
 {
     frag->hdr = (mca_btl_vader_hdr_t*)frag->base.super.ptr;
     if(frag->hdr != NULL) {
-	frag->segment.seg_addr.pval = (char *)(frag->hdr + 1);
         frag->hdr->my_smp_rank = mca_btl_vader_component.my_smp_rank;
     }
 }

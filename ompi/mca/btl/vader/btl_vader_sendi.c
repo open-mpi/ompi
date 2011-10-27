@@ -27,6 +27,8 @@
 #include "btl_vader_frag.h"
 #include "btl_vader_fifo.h"
 
+#include "btl_vader_fbox.h"
+
 /**
  * Initiate an inline send to the peer.
  *
@@ -46,7 +48,7 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     uint32_t iov_count = 1;
     struct iovec iov;
     size_t max_data;
-    void *data_ptr;
+    void *data_ptr = NULL;
 
     assert (length < mca_btl_vader_component.eager_limit);
     assert (0 == (flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK));
@@ -54,9 +56,19 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     /* we won't ever return a descriptor */
     *descriptor = NULL;
 
+    if (OPAL_LIKELY(!(payload_size && opal_convertor_need_buffers (convertor)))) {
+	if (payload_size) {
+	    opal_convertor_get_current_pointer (convertor, &data_ptr);
+	}
+
+	if (mca_btl_vader_fbox_sendi (endpoint, tag, header, header_size, data_ptr, payload_size)) {
+	    return OMPI_SUCCESS;
+	}
+    }
+
     /* allocate a fragment, giving up if we can't get one */
-    frag = mca_btl_vader_alloc (btl, endpoint, order, length,
-				flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+    frag = (mca_btl_vader_frag_t *) mca_btl_vader_alloc (btl, endpoint, order, length,
+							 flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     if (OPAL_UNLIKELY(NULL == frag)) {
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -85,7 +97,7 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     } else if (payload_size) {
 	/* bypassing the convertor may speed things up a little */
 	opal_convertor_get_current_pointer (convertor, &data_ptr);
-	memcpy ((uintptr_t)frag->segment.seg_addr.pval + header_size, data_ptr, payload_size);
+	memcpy ((void *)((uintptr_t)frag->segment.seg_addr.pval + header_size), data_ptr, payload_size);
     }
 
     opal_list_append (&mca_btl_vader_component.active_sends, (opal_list_item_t *) frag);

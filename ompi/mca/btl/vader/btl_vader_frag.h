@@ -28,6 +28,7 @@
 
 #define MCA_BTL_VADER_FLAG_INLINE      0
 #define MCA_BTL_VADER_FLAG_SINGLE_COPY 1
+#define MCA_BTL_VADER_FLAG_FBOX        2
 
 struct mca_btl_vader_hdr_t {
     volatile void *next;    /* next item in fifo. many peers may touch this */
@@ -63,6 +64,7 @@ OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 	frag = (mca_btl_vader_frag_t *) item;				\
 	frag->hdr->complete = false;					\
 	frag->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;			\
+	frag->segment.seg_addr.pval = (char *)(frag->hdr + 1);		\
 	frag->my_list = &mca_btl_vader_component.vader_frags_eager;	\
     } while (0)
 
@@ -73,6 +75,7 @@ OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 	frag = (mca_btl_vader_frag_t *) item;				\
 	frag->hdr->complete = false;					\
 	frag->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;			\
+	frag->segment.seg_addr.pval = (char *)(frag->hdr + 1);		\
 	frag->my_list = &mca_btl_vader_component.vader_frags_user;	\
     } while (0)
 

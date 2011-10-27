@@ -33,6 +33,7 @@ libmca_btl_vader_la_sources = \
     btl_vader_frag.h \
     btl_vader_send.c \
     btl_vader_sendi.c \
+    btl_vader_fbox.h \
     btl_vader_get.c \
     btl_vader_put.c
 
