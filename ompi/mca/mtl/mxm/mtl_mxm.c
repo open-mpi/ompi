@@ -133,6 +133,7 @@ int ompi_mtl_mxm_module_init(void)
     sa_bind_shm.process_id = 0;
     sa_bind_shm.num_procs = 0;
     sa_bind_shm.context_id = 0;
+    sa_bind_shm.jobid = jobid;
 
     if ((rc = ompi_proc_refresh()) != OMPI_SUCCESS) {
         MXM_ERROR("Unable to refresh processes");
