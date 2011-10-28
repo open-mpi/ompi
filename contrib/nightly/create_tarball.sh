@@ -272,9 +272,12 @@ do_command "svn co $svnroot -r $r ompi"
 cd ompi
 svnversion="r`svnversion .`"
 version_files="`find . -name VERSION`"
+d=`date +'%m/%d/%Y'`
 for file in $version_files; do
     sed -e 's/^want_repo_rev=.*/want_repo_rev=1/' \
-        -e 's/^repo_rev=.*/repo_rev='$svnversion/ $file > $file.new
+        -e 's/^repo_rev=.*/repo_rev='$svnversion/ \
+        -e 's@^date=.*@date="Nightly snapshot tarball, '$d'"@' \
+        $file > $file.new
     cp -f $file.new $file
     rm -f $file.new
 done
@@ -291,7 +294,6 @@ do_command "./autogen.pl"
 # do config
 do_command "./configure --enable-dist"
 
-# do make dist
 # distcheck does many things; we need to ensure it doesn't pick up any 
 # other OMPI installs via LD_LIBRARY_PATH.  It may be a bit Draconian
 # to totally clean LD_LIBRARY_PATH (i.e., we may need something in there),
