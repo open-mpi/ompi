@@ -72,7 +72,6 @@ orte_ess_base_module_t orte_ess_tm_module = {
 /*
  * Local variables
  */
-static orte_node_rank_t my_node_rank=ORTE_NODE_RANK_INVALID;
 
 
 static int rte_init(void)
@@ -214,29 +213,20 @@ static int tm_set_name(void)
         return(rc);
     }
     free(tmp);
-    
+
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
     ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME));
 
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:tm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* get my node rank in case we are using static ports - this won't
-     * be present for daemons, so don't error out if we don't have it
-     */
-    mca_base_param_reg_string_name("orte", "ess_node_rank", "Process node rank",
-                                   true, false, NULL, &tmp);
-    if (NULL != tmp) {
-        my_node_rank = strtol(tmp, NULL, 10);
-    }
-    
+
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
+
     return ORTE_SUCCESS;
 }
 
