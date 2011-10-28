@@ -218,15 +218,6 @@ static int lsf_set_name(void)
     lsf_nodeid = atoi(getenv("LSF_PM_TASKID"));
     ORTE_PROC_MY_NAME->vpid = lsf_nodeid;
 
-    /* get my node rank in case we are using static ports - this won't
-     * be present for daemons, so don't error out if we don't have it
-     */
-    mca_base_param_reg_string_name("orte", "ess_node_rank", "Process node rank",
-                                   true, false, NULL, &tmp);
-    if (NULL != tmp) {
-        my_node_rank = strtol(tmp, NULL, 10);
-    }
-    
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {
         ORTE_ERROR_LOG(rc);
