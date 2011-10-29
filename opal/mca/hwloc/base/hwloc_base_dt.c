@@ -77,12 +77,14 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         if (0 != hwloc_topology_set_flags(t, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM)) {
             free(xmlbuffer);
             rc = OPAL_ERROR;
+            hwloc_topology_destroy(t);
             goto cleanup;
         }
         /* now load the topology */
         if (0 != hwloc_topology_load(t)) {
             free(xmlbuffer);
             rc = OPAL_ERROR;
+            hwloc_topology_destroy(t);
             goto cleanup;
         }
         if (NULL != xmlbuffer) {
