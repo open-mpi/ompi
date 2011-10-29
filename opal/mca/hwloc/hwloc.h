@@ -66,8 +66,55 @@ END_C_DECLS
 #if OPAL_HAVE_HWLOC
 #include MCA_hwloc_IMPLEMENTATION_HEADER
 
+/* Define a hierarchical level value that
+ * helps resolve the hwloc behavior of
+ * treating caches as a single type of
+ * entity
+ */
+typedef enum {
+    OPAL_HWLOC_NODE_LEVEL=1,
+    OPAL_HWLOC_NUMA_LEVEL,
+    OPAL_HWLOC_SOCKET_LEVEL,
+    OPAL_HWLOC_L3CACHE_LEVEL,
+    OPAL_HWLOC_L2CACHE_LEVEL,
+    OPAL_HWLOC_L1CACHE_LEVEL,
+    OPAL_HWLOC_CORE_LEVEL,
+    OPAL_HWLOC_HWTHREAD_LEVEL
+} opal_hwloc_level_t;
+
+/* define type of processor info requested */
+typedef uint8_t opal_hwloc_resource_type_t;
+#define OPAL_HWLOC_PHYSICAL   1
+#define OPAL_HWLOC_LOGICAL    2
+#define OPAL_HWLOC_AVAILABLE  3
+
+/* structs for storing info on objects */
+typedef struct {
+    opal_object_t super;
+    hwloc_cpuset_t available;
+    unsigned int npus;
+} opal_hwloc_obj_data_t;
+OBJ_CLASS_DECLARATION(opal_hwloc_obj_data_t);
+
+typedef struct {
+    opal_list_item_t super;
+    hwloc_obj_type_t type;
+    unsigned cache_level;
+    unsigned int num_objs;
+    opal_hwloc_resource_type_t rtype;
+} opal_hwloc_summary_t;
+OBJ_CLASS_DECLARATION(opal_hwloc_summary_t);
+
+typedef struct {
+    opal_object_t super;
+    hwloc_cpuset_t available;
+    opal_list_t summaries;
+} opal_hwloc_topo_data_t;
+OBJ_CLASS_DECLARATION(opal_hwloc_topo_data_t);
+
 OPAL_DECLSPEC extern hwloc_topology_t opal_hwloc_topology;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_my_cpuset;
+OPAL_DECLSPEC extern hwloc_obj_type_t opal_hwloc_levels[];
 
 #endif
 

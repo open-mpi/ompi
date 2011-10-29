@@ -39,6 +39,18 @@ bool opal_hwloc_base_inited = false;
 #if OPAL_HAVE_HWLOC
 hwloc_topology_t opal_hwloc_topology=NULL;
 hwloc_cpuset_t opal_hwloc_my_cpuset=NULL;
+char *opal_hwloc_base_cpu_set=NULL;
+hwloc_obj_type_t opal_hwloc_levels[] = {
+    HWLOC_OBJ_MACHINE,
+    HWLOC_OBJ_NODE,
+    HWLOC_OBJ_SOCKET,
+    HWLOC_OBJ_CACHE,
+    HWLOC_OBJ_CACHE,
+    HWLOC_OBJ_CACHE,
+    HWLOC_OBJ_CORE,
+    HWLOC_OBJ_PU
+};
+
 #endif
 opal_hwloc_base_map_t opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_NONE;
 opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_ERROR;
@@ -117,6 +129,11 @@ int opal_hwloc_base_open(void)
             return OPAL_ERR_BAD_PARAM;
         }
         
+        /* cpu allocation specification */
+        mca_base_param_reg_string_name("hwloc", "base_cpu_set",
+                                   "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]",
+                                   false, false, NULL, &opal_hwloc_base_cpu_set);
+
         /* to support tools such as ompi_info, add the components
          * to a list
          */
@@ -146,3 +163,50 @@ int opal_hwloc_base_open(void)
 
     return OPAL_SUCCESS;
 }
+
+#if OPAL_HAVE_HWLOC
+static void obj_data_const(opal_hwloc_obj_data_t *ptr)
+{
+    ptr->available = NULL;
+    ptr->npus = 0;
+}
+static void obj_data_dest(opal_hwloc_obj_data_t *ptr)
+{
+    if (NULL != ptr->available) {
+        hwloc_bitmap_free(ptr->available);
+    }
+}
+OBJ_CLASS_INSTANCE(opal_hwloc_obj_data_t,
+                   opal_object_t,
+                   obj_data_const, obj_data_dest);
+
+static void sum_const(opal_hwloc_summary_t *ptr)
+{
+    ptr->num_objs = 0;
+    ptr->rtype = 0;
+}
+OBJ_CLASS_INSTANCE(opal_hwloc_summary_t,
+                   opal_list_item_t,
+                   sum_const, NULL);
+static void topo_data_const(opal_hwloc_topo_data_t *ptr)
+{
+    ptr->available = NULL;
+    OBJ_CONSTRUCT(&ptr->summaries, opal_list_t);
+}
+static void topo_data_dest(opal_hwloc_topo_data_t *ptr)
+{
+    opal_list_item_t *item;
+
+    if (NULL != ptr->available) {
+        hwloc_bitmap_free(ptr->available);
+    }
+    while (NULL != (item = opal_list_remove_first(&ptr->summaries))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&ptr->summaries);
+}
+OBJ_CLASS_INSTANCE(opal_hwloc_topo_data_t,
+                   opal_object_t,
+                   topo_data_const,
+                   topo_data_dest);
+#endif
