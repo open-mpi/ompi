@@ -736,6 +736,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         proc.vpid = j;
         ORTE_EPOCH_SET(proc.epoch,orte_ess.proc_get_epoch(&proc));
         /* get the vpid of the daemon that is to host this proc */
+        OPAL_OUTPUT_VERBOSE((20, orte_odls_globals.output,
+                             "%s odls:constructing child list - looking for daemon for proc %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&proc)));
         if (ORTE_VPID_INVALID == (host_daemon = orte_ess.proc_get_daemon(&proc))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             rc = ORTE_ERR_NOT_FOUND;
