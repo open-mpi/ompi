@@ -21,6 +21,7 @@ struct orte_ras_sim_component_t {
     int num_nodes;
     int slots;
     int slots_max;
+    char *topofile;
 };
 typedef struct orte_ras_sim_component_t orte_ras_sim_component_t;
 

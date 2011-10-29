@@ -77,6 +77,12 @@ static int ras_sim_open(void)
                            "max_slots",
                            "Number of max slots on each node to simulate",
                            false, false, 0, &mca_ras_simulator_component.slots_max);
+#if OPAL_HAVE_HWLOC
+    mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
+                              "topo_file",
+                              "File containing xml topology description for simulated nodes",
+                              false, false, NULL, &mca_ras_simulator_component.topofile);
+#endif
 
     return ORTE_SUCCESS;
 }
