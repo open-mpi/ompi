@@ -1432,6 +1432,12 @@ static int param_register(const char *type_name,
               NULL != param.mbp_default_value.stringval) {
               array[i].mbp_default_value.stringval =
                   strdup(param.mbp_default_value.stringval);
+          } else {
+              /* If the new STRING doesn't have a default value, we
+                 must set the default value to "NULL" because it still
+                 contains the old INT default value (which may not
+                 compare equally to NULL) */
+              array[i].mbp_default_value.stringval = NULL;
           }
 
           if (NULL != file_value &&
@@ -1439,6 +1445,12 @@ static int param_register(const char *type_name,
               array[i].mbp_file_value.stringval =
                   strdup(param.mbp_file_value.stringval);
               array[i].mbp_file_value_set = true;
+          } else {
+              /* Similar to above, be sure to set the file default
+                 value to NULL to ensure that it's not still set to a
+                 non-NULL value from the prior INT default value */
+              array[i].mbp_file_value.stringval = NULL;
+              array[i].mbp_file_value_set = false;
           }
 
           if (NULL != override_value &&
@@ -1446,6 +1458,12 @@ static int param_register(const char *type_name,
               array[i].mbp_override_value.stringval =
                   strdup(param.mbp_override_value.stringval);
               array[i].mbp_override_value_set = true;
+          } else {
+              /* Similar to above, be sure to set the file default
+                 value to NULL to ensure that it's not still set to a
+                 non-NULL value from the prior INT default value */
+              array[i].mbp_file_value.stringval = NULL;
+              array[i].mbp_file_value_set = false;
           }
 
           array[i].mbp_type = param.mbp_type;
@@ -1455,13 +1473,19 @@ static int param_register(const char *type_name,
 
       else if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type &&
                  MCA_BASE_PARAM_TYPE_INT == param.mbp_type) {
+          /* Free the old STRING default value, if it exists */
+          if (NULL != array[i].mbp_default_value.stringval) {
+              free(array[i].mbp_default_value.stringval);
+          }
+
+          /* Set the new default value, or 0 if one wasn't provided */
           if (NULL != default_value) {
-              if (NULL != array[i].mbp_default_value.stringval) {
-                  free(array[i].mbp_default_value.stringval);
-              }
               array[i].mbp_default_value.intval =
                   param.mbp_default_value.intval;
+          } else {
+              array[i].mbp_default_value.intval = 0;
           }
+
           if (NULL != file_value) {
               if (NULL != array[i].mbp_file_value.stringval) {
                   free(array[i].mbp_file_value.stringval);
@@ -1469,7 +1493,11 @@ static int param_register(const char *type_name,
               array[i].mbp_file_value.intval =
                   param.mbp_file_value.intval;
               array[i].mbp_file_value_set = true;
+          } else {
+              array[i].mbp_file_value.intval = 0;
+              array[i].mbp_file_value_set = false;
           }
+
           if (NULL != override_value) {
               if (NULL != array[i].mbp_override_value.stringval) {
                   free(array[i].mbp_override_value.stringval);
@@ -1477,6 +1505,9 @@ static int param_register(const char *type_name,
               array[i].mbp_override_value.intval =
                   param.mbp_override_value.intval;
               array[i].mbp_override_value_set = true;
+          } else {
+              array[i].mbp_file_value.intval = 0;
+              array[i].mbp_file_value_set = false;
           }
 
           array[i].mbp_type = param.mbp_type;
