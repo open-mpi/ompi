@@ -179,7 +179,12 @@ int orte_rmaps_base_open(void)
         orte_rmaps_base.display_map = true;
         orte_devel_level_output = true;
     }
-    
+    /* should we display the topology along with the map? */
+    mca_base_param_reg_int_name("rmaps", "base_display_topo_with_map",
+                                "Whether to display the topology with the map",
+                                false, false, (int)false, &value);
+    orte_display_topo_with_map = OPAL_INT_TO_BOOL(value);
+   
     /* Open up all the components that we can find */
     if (ORTE_SUCCESS != 
         mca_base_components_open("rmaps", orte_rmaps_base.rmaps_output,

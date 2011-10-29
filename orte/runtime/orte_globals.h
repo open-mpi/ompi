@@ -481,6 +481,10 @@ struct orte_proc_t {
     orte_exit_code_t exit_code;
     /* the app_context that generated this proc */
     orte_app_idx_t app_idx;
+#if OPAL_HAVE_HWLOC
+    /* hwloc object to which this process was mapped */
+    hwloc_obj_t locale;
+#endif
     /* a cpu list, if specified by the user */
     char *slot_list;
     /* pointer to the node where this proc is executing */
@@ -599,6 +603,7 @@ ORTE_DECLSPEC extern bool orte_homogeneous_nodes;
 ORTE_DECLSPEC extern bool orte_hetero_apps;
 ORTE_DECLSPEC extern bool orte_never_launched;
 ORTE_DECLSPEC extern bool orte_devel_level_output;
+ORTE_DECLSPEC extern bool orte_display_topo_with_map;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
 

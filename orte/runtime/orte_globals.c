@@ -75,6 +75,7 @@ bool orte_homogeneous_nodes = false;
 bool orte_hetero_apps = false;
 bool orte_never_launched = false;
 bool orte_devel_level_output = false;
+bool orte_display_topo_with_map = false;
 
 char **orte_launch_environ;
 
@@ -920,6 +921,9 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->last_errmgr_state = ORTE_PROC_STATE_UNDEF;
     proc->state = ORTE_PROC_STATE_UNDEF;
     proc->app_idx = 0;
+#if OPAL_HAVE_HWLOC
+    proc->locale = NULL;
+#endif
     proc->slot_list = NULL;
     proc->node = NULL;
     proc->prior_node = NULL;

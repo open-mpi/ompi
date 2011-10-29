@@ -23,6 +23,7 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -408,7 +409,7 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     tmp = tmp2;
     
 #if OPAL_HAVE_HWLOC
-    if (NULL != src->topology) {
+    if (orte_display_topo_with_map && NULL != src->topology) {
         char *pfx3;
         asprintf(&tmp2, "%s\n%s\tDetected Resources:", tmp, pfx2);
         free(tmp);
@@ -461,7 +462,8 @@ PRINT_PROCS:
 int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_type_t type)
 {
     char *tmp, *tmp2, *pfx2;
-    
+    char *locale=NULL;
+
     /* set default result */
     *output = NULL;
     
@@ -521,9 +523,15 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     free(tmp);
     tmp = tmp2;
     
-    asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tSlot list: %s", tmp, pfx2,
+#if OPAL_HAVE_HWLOC
+    if (NULL != src->locale) {
+        hwloc_bitmap_list_asprintf(&locale, src->locale->cpuset);
+    }
+#endif
+
+    asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tLocale: %s\tSlot list: %s", tmp, pfx2,
              orte_proc_state_to_str(src->state), src->restarts, (long)src->app_idx,
-             (NULL == src->slot_list) ? "NULL" : src->slot_list);
+             (NULL == locale) ? "UNKNOWN" : locale, (NULL == src->slot_list) ? "NULL" : src->slot_list);
     free(tmp);
     
     /* set the return */
