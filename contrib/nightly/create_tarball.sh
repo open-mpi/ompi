@@ -272,11 +272,11 @@ do_command "svn co $svnroot -r $r ompi"
 cd ompi
 svnversion="r`svnversion .`"
 version_files="`find . -name VERSION`"
-d=`date +'%m/%d/%Y'`
+d=`date +'%b %d, %Y'`
 for file in $version_files; do
     sed -e 's/^want_repo_rev=.*/want_repo_rev=1/' \
         -e 's/^repo_rev=.*/repo_rev='$svnversion/ \
-        -e 's@^date=.*@date="Nightly snapshot tarball, '$d'"@' \
+        -e 's@^date=.*@date="'"$d"' (nightly snapshot tarball)"@' \
         $file > $file.new
     cp -f $file.new $file
     rm -f $file.new
