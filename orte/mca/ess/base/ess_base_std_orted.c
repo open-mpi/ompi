@@ -34,7 +34,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pstat/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/util/os_path.h"
@@ -132,8 +132,7 @@ int orte_ess_base_orted_setup(char **hosts)
 
         /* get the local topology */
         if (NULL == opal_hwloc_topology) {
-            if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
-                0 != hwloc_topology_load(opal_hwloc_topology)) {
+            if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
                 error = "topology discovery";
                 goto error;
             }
@@ -593,7 +592,7 @@ int orte_ess_base_orted_finalize(void)
 #if OPAL_HAVE_HWLOC
     /* destroy the topology, if required */
     if (NULL != opal_hwloc_topology) {
-        hwloc_topology_destroy(opal_hwloc_topology);
+        opal_hwloc_base_free_topology(opal_hwloc_topology);
         opal_hwloc_topology = NULL;
     }
 #endif
