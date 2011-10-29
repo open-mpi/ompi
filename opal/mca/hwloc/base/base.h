@@ -77,6 +77,8 @@ OPAL_DECLSPEC extern bool opal_hwloc_base_inited;
 OPAL_DECLSPEC extern bool opal_hwloc_topology_inited;
 
 #if OPAL_HAVE_HWLOC
+OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_set;
+
 /* datatype support */
 OPAL_DECLSPEC int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
                                   int32_t num_vals,
@@ -113,6 +115,24 @@ OPAL_DECLSPEC opal_paffinity_locality_t opal_hwloc_base_get_relative_locality(hw
                                                                               hwloc_cpuset_t peer2);
 
 OPAL_DECLSPEC void opal_hwloc_base_get_local_cpuset(void);
+
+/* some critical helper functions */
+OPAL_DECLSPEC int opal_hwloc_base_filter_cpus(hwloc_topology_t topo);
+OPAL_DECLSPEC int opal_hwloc_base_get_topology(void);
+OPAL_DECLSPEC void opal_hwloc_base_free_topology(hwloc_topology_t topo);
+OPAL_DECLSPEC hwloc_cpuset_t opal_hwloc_base_get_available_cpus(hwloc_topology_t topo,
+                                                                hwloc_obj_t obj);
+OPAL_DECLSPEC unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
+                                                              hwloc_obj_type_t target,
+                                                              unsigned cache_level,
+                                                              opal_hwloc_resource_type_t rtype);
+OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
+                                                          hwloc_obj_type_t target,
+                                                          unsigned cache_level,
+                                                          unsigned int instance,
+                                                          opal_hwloc_resource_type_t rtype);
+OPAL_DECLSPEC unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
+                                                    hwloc_obj_t target);
 
 #endif
 
