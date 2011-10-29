@@ -41,12 +41,68 @@ static int allocate(opal_list_t *nodes)
 {
     int i, val, dig;
     orte_node_t *node;
+#if OPAL_HAVE_HWLOC
+    hwloc_topology_t topo;
+    hwloc_obj_t obj;
+    unsigned j, k;
+#endif
 
     /* get number of digits */
     val = mca_ras_simulator_component.num_nodes;
     for (dig=0; 0 != val; dig++) {
         val /= 10;
     }
+
+    /* check for topology */
+#if OPAL_HAVE_HWLOC
+    if (NULL == mca_ras_simulator_component.topofile) {
+        /* use our topology */
+        topo = opal_hwloc_topology;
+    } else {
+        if (0 != hwloc_topology_init(&topo)) {
+            return ORTE_ERROR;
+        }
+        if (0 != hwloc_topology_set_xml(topo, mca_ras_simulator_component.topofile)) {
+            hwloc_topology_destroy(topo);
+            return ORTE_ERROR;
+        }
+        /* since we are loading this from an external source, we have to
+         * explicitly set a flag so hwloc sets things up correctly
+         */
+        if (0 != hwloc_topology_set_flags(topo, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM)) {
+            hwloc_topology_destroy(topo);
+            return ORTE_ERROR;
+        }
+        if (0 != hwloc_topology_load(topo)) {
+            hwloc_topology_destroy(topo);
+            return ORTE_ERROR;
+        }
+        /* remove the hostname from the topology. Unfortunately, hwloc
+         * decided to add the source hostname to the "topology", thus
+         * rendering it unusable as a pure topological description. So
+         * we remove that information here.
+         */
+        obj = hwloc_get_root_obj(topo);
+        for (k=0; k < obj->infos_count; k++) {
+            if (NULL == obj->infos[k].name ||
+                NULL == obj->infos[k].value) {
+                continue;
+            }
+            if (0 == strncmp(obj->infos[k].name, "HostName", strlen("HostName"))) {
+                free(obj->infos[k].name);
+                free(obj->infos[k].value);
+                /* left justify the array */
+                for (j=k; j < obj->infos_count-1; j++) {
+                    obj->infos[j] = obj->infos[j+1];
+                }
+                obj->infos[obj->infos_count-1].name = NULL;
+                obj->infos[obj->infos_count-1].value = NULL;
+                obj->infos_count--;
+                break;
+            }
+        }
+    }
+#endif
 
     for (i=0; i < mca_ras_simulator_component.num_nodes; i++) {
         node = OBJ_NEW(orte_node_t);
@@ -56,7 +112,7 @@ static int allocate(opal_list_t *nodes)
         node->slots_max = mca_ras_simulator_component.slots_max;
         node->slots = mca_ras_simulator_component.slots;
 #if OPAL_HAVE_HWLOC
-        node->topology = opal_hwloc_topology;
+        node->topology = topo;
 #endif
         opal_list_append(nodes, &node->super);
      }
