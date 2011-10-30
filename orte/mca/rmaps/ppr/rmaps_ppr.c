@@ -35,8 +35,11 @@ orte_rmaps_base_module_t orte_rmaps_ppr_module = {
     ppr
 };
 
-static orte_proc_t* setup_proc(orte_job_t *jdata, orte_node_t *node);
-static void prune(orte_node_t *node,
+static orte_proc_t* setup_proc(orte_job_t *jdata, orte_node_t *node,
+                               orte_app_idx_t idx);
+static void prune(orte_jobid_t jobid,
+                  orte_app_idx_t app_idx,
+                  orte_node_t *node,
                   opal_hwloc_level_t *level,
                   orte_vpid_t *nmapped);
 
@@ -56,7 +59,7 @@ static int ppr(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
     unsigned int nobjs, i;
-    orte_std_cntr_t idx;
+    orte_app_idx_t idx;
 
     /* only handle initial launch of loadbalanced
      * or NPERxxx jobs - allow restarting of failed apps
@@ -100,7 +103,7 @@ static int ppr(orte_job_t *jdata)
         cache_level = 1;
     }
 
-    for (idx=0; idx < jdata->apps->size; idx++) {
+    for (idx=0; idx < (orte_app_idx_t)jdata->apps->size; idx++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, idx))) {
             continue;
         }
@@ -138,7 +141,7 @@ static int ppr(orte_job_t *jdata)
              */
             if (HWLOC_OBJ_MACHINE == lowest) {
                 for (j=0; j < local_limit && nprocs_mapped < total_procs; j++) {
-                    if (NULL == (proc = setup_proc(jdata, node))) {
+                    if (NULL == (proc = setup_proc(jdata, node, idx))) {
                         rc = ORTE_ERR_OUT_OF_RESOURCE;
                         goto error;
                     }
@@ -159,7 +162,7 @@ static int ppr(orte_job_t *jdata)
                                                           lowest, cache_level,
                                                           i, OPAL_HWLOC_AVAILABLE);
                     for (j=0; j < local_limit && nprocs_mapped < total_procs; j++) {
-                        if (NULL == (proc = setup_proc(jdata, node))) {
+                        if (NULL == (proc = setup_proc(jdata, node, idx))) {
                             rc = ORTE_ERR_OUT_OF_RESOURCE;
                             goto error;
                         }
@@ -174,7 +177,7 @@ static int ppr(orte_job_t *jdata)
                      * node as we go
                      */
                     level--;
-                    prune(node, &level, &nprocs_mapped);
+                    prune(jdata->jobid, idx, node, &level, &nprocs_mapped);
                 }
             }
 
@@ -260,7 +263,9 @@ static hwloc_obj_t find_split(hwloc_topology_t topo, hwloc_obj_t obj)
 /* recursively climb the topology, pruning procs beyond that allowed
  * by the given ppr
  */
-static void prune(orte_node_t *node,
+static void prune(orte_jobid_t jobid,
+                  orte_app_idx_t app_idx,
+                  orte_node_t *node,
                   opal_hwloc_level_t *level,
                   orte_vpid_t *nmapped)
 {
@@ -293,7 +298,7 @@ static void prune(orte_node_t *node,
             return;
         }
         *level -= 1;
-        prune(node, level, nmapped);
+        prune(jobid, app_idx, node, level, nmapped);
         return;
     }
 
@@ -322,12 +327,16 @@ static void prune(orte_node_t *node,
         avail = opal_hwloc_base_get_available_cpus(node->topology, obj);
 
         /* look at the intersection of this object's cpuset and that
-         * of each proc - if they intersect, then count this proc
+         * of each proc in the job/app - if they intersect, then count this proc
          * against the limit
          */
         nprocs = 0;
         for (n=0; n < node->procs->size; n++) {
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, n))) {
+                continue;
+            }
+            if (proc->name.jobid != jobid ||
+                proc->app_idx != app_idx) {
                 continue;
             }
             cpus = opal_hwloc_base_get_available_cpus(node->topology, proc->locale);
@@ -375,6 +384,10 @@ static void prune(orte_node_t *node,
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, n))) {
                         continue;
                     }
+                    if (proc->name.jobid != jobid ||
+                        proc->app_idx != app_idx) {
+                        continue;
+                    }
                     cpus = opal_hwloc_base_get_available_cpus(node->topology, proc->locale);
                     if (hwloc_bitmap_intersects(childcpus, cpus)) {
                         nunder++;
@@ -414,14 +427,16 @@ static void prune(orte_node_t *node,
         return;
     }
     *level -= 1;
-    prune(node, level, nmapped);
+    prune(jobid, app_idx, node, level, nmapped);
     return;
 
  error:
     opal_output(0, "INFINITE LOOP");
 }
 
-static orte_proc_t* setup_proc(orte_job_t *jdata, orte_node_t *node)
+static orte_proc_t* setup_proc(orte_job_t *jdata,
+                               orte_node_t *node,
+                               orte_app_idx_t idx)
 {
     orte_proc_t *proc;
     int rc;
@@ -435,7 +450,7 @@ static orte_proc_t* setup_proc(orte_job_t *jdata, orte_node_t *node)
     ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
     /* flag the proc as ready for launch */
     proc->state = ORTE_PROC_STATE_INIT;
-    proc->app_idx = 0;
+    proc->app_idx = idx;
 
     OBJ_RETAIN(node);  /* maintain accounting on object */    
     proc->node = node;
