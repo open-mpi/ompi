@@ -21,6 +21,7 @@ int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
     int rc, i;
     char *xmlbuffer=NULL;
     int len;
+    struct hwloc_topology_support *support;
 
     for (i=0; i < num_vals; i++) {
         t = tarray[i];
@@ -33,6 +34,7 @@ int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
 
         /* add to buffer */
         if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, &xmlbuffer, 1, OPAL_STRING))) {
+            free(xmlbuffer);
             return rc;
         }
 
@@ -40,7 +42,30 @@ int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
         if (NULL != xmlbuffer) {
             free(xmlbuffer);
         }
+        /* get the available support - hwloc unfortunately does
+         * not include this info in its xml export!
+         */
+        support = (struct hwloc_topology_support*)hwloc_topology_get_support(opal_hwloc_topology);
+        /* pack the discovery support */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, support->discovery,
+                                                sizeof(struct hwloc_topology_discovery_support),
+                                                OPAL_BYTE))) {
+            return rc;
+        }
+        /* pack the cpubind support */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, support->cpubind,
+                                                sizeof(struct hwloc_topology_cpubind_support),
+                                                OPAL_BYTE))) {
+            return rc;
+        }
+        /* pack the membind support */
+        if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, support->membind,
+                                                sizeof(struct hwloc_topology_membind_support),
+                                                OPAL_BYTE))) {
+            return rc;
+        }
     }
+
     return OPAL_SUCCESS;
 }
 
@@ -52,6 +77,7 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
     hwloc_topology_t t, *tarray  = (hwloc_topology_t*)dest;
     int rc=OPAL_SUCCESS, i, cnt, j;
     char *xmlbuffer=NULL;
+    struct hwloc_topology_support *support;
 
     for (i=0, j=0; i < *num_vals; i++) {
         /* unpack the xml string */
@@ -90,7 +116,22 @@ int opal_hwloc_unpack(opal_buffer_t *buffer, void *dest,
         if (NULL != xmlbuffer) {
             free(xmlbuffer);
         }
-
+        /* get the available support - hwloc unfortunately does
+         * not include this info in its xml import!
+         */
+        support = (struct hwloc_topology_support*)hwloc_topology_get_support(t);
+        cnt = sizeof(struct hwloc_topology_discovery_support);
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, support->discovery, &cnt, OPAL_BYTE))) {
+            goto cleanup;
+        }
+        cnt = sizeof(struct hwloc_topology_cpubind_support);
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, support->cpubind, &cnt, OPAL_BYTE))) {
+            goto cleanup;
+        }
+        cnt = sizeof(struct hwloc_topology_membind_support);
+        if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, support->membind, &cnt, OPAL_BYTE))) {
+            goto cleanup;
+        }
         /* pass it back */
         tarray[i] = t;
 
@@ -107,6 +148,7 @@ int opal_hwloc_copy(hwloc_topology_t *dest, hwloc_topology_t src, opal_data_type
 {
     char *xml;
     int len;
+    struct hwloc_topology_support *support, *destsupport;
 
     if (0 != hwloc_topology_export_xmlbuffer(src, &xml, &len)) {
         return OPAL_ERROR;
@@ -125,8 +167,15 @@ int opal_hwloc_copy(hwloc_topology_t *dest, hwloc_topology_t src, opal_data_type
         free(xml);
         return OPAL_ERROR;
     }
-
     free(xml);
+
+    /* get the available support - hwloc unfortunately does
+     * not include this info in its xml support!
+     */
+    support = (struct hwloc_topology_support*)hwloc_topology_get_support(src);
+    destsupport = (struct hwloc_topology_support*)hwloc_topology_get_support(*dest);
+    *destsupport = *support;
+
     return OPAL_SUCCESS;
 }
 
@@ -139,6 +188,7 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
     char *x1=NULL, *x2=NULL;
     int l1, l2;
     int s;
+    struct hwloc_topology_support *s1, *s2;
 
     /* stop stupid compiler warnings */
     t1 = (hwloc_topology_t)topo1;
@@ -174,44 +224,87 @@ int opal_hwloc_compare(const hwloc_topology_t topo1,
         return OPAL_VALUE2_GREATER;
     }
 
+    /* compare the available support - hwloc unfortunately does
+     * not include this info in its xml support!
+     */
+    if (NULL == (s1 = (struct hwloc_topology_support*)hwloc_topology_get_support(t1)) ||
+        NULL == s1->cpubind || NULL == s1->membind) {
+        return OPAL_EQUAL;
+    }
+    if (NULL == (s2 = (struct hwloc_topology_support*)hwloc_topology_get_support(t2)) ||
+        NULL == s2->cpubind || NULL == s2->membind) {
+        return OPAL_EQUAL;
+    }
+    /* compare the fields we care about */
+    if (s1->cpubind->set_thisproc_cpubind != s2->cpubind->set_thisproc_cpubind ||
+        s1->cpubind->set_thisthread_cpubind != s2->cpubind->set_thisthread_cpubind ||
+        s1->membind->set_thisproc_membind != s2->membind->set_thisproc_membind ||
+        s1->membind->set_thisthread_membind != s2->membind->set_thisthread_membind) {
+        OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
+                             "hwloc:base:compare BINDING CAPABILITIES DIFFER"));
+        return OPAL_VALUE1_GREATER;
+    }
+
     return OPAL_EQUAL;
 }
 
-static void print_hwloc_obj(char **output, char *prefix, hwloc_obj_t obj)
+#define OPAL_HWLOC_MAX_STRING   2048
+
+static void print_hwloc_obj(char **output, char *prefix,
+                            hwloc_topology_t topo, hwloc_obj_t obj)
 {
     hwloc_obj_t obj2;
     char string[1024], *tmp, *tmp2, *pfx;
     unsigned i;
+    struct hwloc_topology_support *support;
 
     /* print the object type */
     hwloc_obj_type_snprintf(string, 1024, obj, 1);
     asprintf(&pfx, "\n%s\t", (NULL == prefix) ? "" : prefix);
-    asprintf(&tmp, "%sType: %s Number of child objects: %u\n%s\tName=%s%s",
+    asprintf(&tmp, "%sType: %s Number of child objects: %u%sName=%s",
              (NULL == prefix) ? "" : prefix, string, obj->arity,
-             (NULL == prefix) ? "" : prefix, (NULL == obj->name) ? "NULL" : obj->name, pfx);
-    /* print the attributes */
+             pfx, (NULL == obj->name) ? "NULL" : obj->name);
     if (0 < hwloc_obj_attr_snprintf(string, 1024, obj, pfx, 1)) {
-        asprintf(&tmp2, "%s%s", tmp, string);
+        /* print the attributes */
+        asprintf(&tmp2, "%s%s%s", tmp, pfx, string);
         free(tmp);
         tmp = tmp2;
-        /* print the cpuset */
-        hwloc_obj_cpuset_snprintf(string, 1024, 1, &obj);
-        asprintf(&tmp2, "%s%sCpuset: %s\n", tmp, pfx, string);
-    } else {
-    /* print the cpuset */
-        hwloc_obj_cpuset_snprintf(string, 1024, 1, &obj);
-        asprintf(&tmp2, "%sCpuset: %s\n", tmp, string);
     }
+    /* print the cpusets */
+    hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->cpuset);
+    asprintf(&tmp2, "%s%sCpuset:  %s", tmp, pfx, string);
     free(tmp);
     tmp = tmp2;
-    asprintf(&tmp2, "%s%s", (NULL == *output) ? "" : *output, tmp);
+    hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->online_cpuset);
+    asprintf(&tmp2, "%s%sOnline:  %s", tmp, pfx, string);
+    free(tmp);
+    tmp = tmp2;
+    hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->allowed_cpuset);
+    asprintf(&tmp2, "%s%sAllowed: %s", tmp, pfx, string);
+    free(tmp);
+    tmp = tmp2;
+    if (HWLOC_OBJ_MACHINE == obj->type) {
+        /* root level object - add support values */
+        support = (struct hwloc_topology_support*)hwloc_topology_get_support(topo);
+        asprintf(&tmp2, "%s%sBind CPU proc:   %s%sBind CPU thread: %s", tmp, pfx,
+                 (support->cpubind->set_thisproc_cpubind) ? "TRUE" : "FALSE", pfx,
+                 (support->cpubind->set_thisthread_cpubind) ? "TRUE" : "FALSE");
+        free(tmp);
+        tmp = tmp2;
+        asprintf(&tmp2, "%s%sBind MEM proc:   %s%sBind MEM thread: %s", tmp, pfx,
+                 (support->membind->set_thisproc_membind) ? "TRUE" : "FALSE", pfx,
+                 (support->membind->set_thisthread_membind) ? "TRUE" : "FALSE");
+        free(tmp);
+        tmp = tmp2;
+    }
+    asprintf(&tmp2, "%s%s\n", (NULL == *output) ? "" : *output, tmp);
     free(tmp);
     free(pfx);
     asprintf(&pfx, "%s\t", (NULL == prefix) ? "" : prefix);
     for (i=0; i < obj->arity; i++) {
         obj2 = obj->children[i];
         /* print the object */
-        print_hwloc_obj(&tmp2, pfx, obj2);
+        print_hwloc_obj(&tmp2, pfx, topo, obj2);
     }
     free(pfx);
     if (NULL != *output) {
@@ -228,7 +321,7 @@ int opal_hwloc_print(char **output, char *prefix, hwloc_topology_t src, opal_dat
     /* get root object */
     obj = hwloc_get_root_obj(src);
     /* print it */
-    print_hwloc_obj(&tmp, prefix, obj);
+    print_hwloc_obj(&tmp, prefix, src, obj);
     *output = tmp;
     return OPAL_SUCCESS;
 }
