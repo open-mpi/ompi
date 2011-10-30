@@ -411,12 +411,12 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
 #if OPAL_HAVE_HWLOC
     if (orte_display_topo_with_map && NULL != src->topology) {
         char *pfx3;
-        asprintf(&tmp2, "%s\n%s\tDetected Resources:", tmp, pfx2);
+        asprintf(&tmp2, "%s\n%s\tDetected Resources:\n", tmp, pfx2);
         free(tmp);
         tmp = tmp2;
     
         tmp2 = NULL;
-        asprintf(&pfx3, "%s\t", pfx2);
+        asprintf(&pfx3, "%s\t\t", pfx2);
         opal_dss.print(&tmp2, pfx3, src->topology, OPAL_HWLOC_TOPO);
         free(pfx3);
         asprintf(&tmp3, "%s%s", tmp, tmp2);
