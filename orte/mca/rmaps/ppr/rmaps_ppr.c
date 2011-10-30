@@ -129,6 +129,13 @@ static int ppr(orte_job_t *jdata)
         /* cycle across the nodes */
         nprocs_mapped = 0;
         while (NULL != (node = (orte_node_t*)opal_list_remove_first(&node_list))) {
+            /* bozo check */
+            if (NULL == node->topology) {
+                orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
+                               true, node->name);
+                rc = ORTE_ERR_SILENT;
+                goto error;
+            }
             /* add the node to the map */
             if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                 ORTE_ERROR_LOG(rc);
