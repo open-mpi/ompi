@@ -45,7 +45,7 @@ int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,
         /* get the available support - hwloc unfortunately does
          * not include this info in its xml export!
          */
-        support = (struct hwloc_topology_support*)hwloc_topology_get_support(opal_hwloc_topology);
+        support = (struct hwloc_topology_support*)hwloc_topology_get_support(t);
         /* pack the discovery support */
         if (OPAL_SUCCESS != (rc = opal_dss.pack(buffer, support->discovery,
                                                 sizeof(struct hwloc_topology_discovery_support),
