@@ -69,3 +69,13 @@ this topology can support:
   PPR: %s
 
 Please revise the conflict and try again.
+#
+[ppr-topo-missing]
+A ppr pattern was specified, but the topology information
+for the following node is missing:
+
+  Node:  %s
+
+Please ensure that vm launch mode is enabled, either via the
+-vm option to mpirun or using the orte_vm_launch MCA
+parameter.
