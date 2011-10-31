@@ -103,6 +103,7 @@ int ompi_mtl_mxm_module_init(void)
     uint64_t mxlr;
     int rc;
     ompi_proc_t *mp, **procs;
+    unsigned    ptl_bitmap;
     size_t totps, proc;
     int lr, nlps;
 
@@ -163,9 +164,14 @@ int ompi_mtl_mxm_module_init(void)
     sa_bind_shm.context_id = mxlr;
     sa_bind_shm.num_procs = nlps;
 
-    ep_opt.ptl_bind_addr[MXM_PTL_SELF] = (struct sockaddr*)&sa_bind_self;
-    ep_opt.ptl_bind_addr[MXM_PTL_RDMA] = (struct sockaddr*)&sa_bind_rdma;
-    ep_opt.ptl_bind_addr[MXM_PTL_SHM] = (struct sockaddr*)&sa_bind_shm;
+    ptl_bitmap = ompi_mtl_mxm.mxm_opts.ptl_bitmap;
+
+    ep_opt.ptl_bind_addr[MXM_PTL_SELF] = (ptl_bitmap & MXM_BIT(MXM_PTL_SELF))?
+            (struct sockaddr*)&sa_bind_self:NULL;
+    ep_opt.ptl_bind_addr[MXM_PTL_RDMA] =(ptl_bitmap & MXM_BIT(MXM_PTL_RDMA))?
+            (struct sockaddr*)&sa_bind_rdma:NULL;
+    ep_opt.ptl_bind_addr[MXM_PTL_SHM] =(ptl_bitmap & MXM_BIT(MXM_PTL_SHM))?
+            (struct sockaddr*)&sa_bind_shm:NULL;
 
     /* Open MXM endpoint */
     err = mxm_ep_create(ompi_mtl_mxm.mxm_context, &ep_opt, &ompi_mtl_mxm.ep);
@@ -178,13 +184,16 @@ int ompi_mtl_mxm_module_init(void)
     /*
      * Get address for each PTL on this endpoint, and share it with other ranks.
      */
-    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SELF)) {
+    if ((ptl_bitmap & MXM_BIT(MXM_PTL_SELF)) &&
+            OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SELF)) {
     	return OMPI_ERROR;
     }
-    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_RDMA)) {
+    if ((ptl_bitmap & MXM_BIT(MXM_PTL_RDMA)) &&
+            OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_RDMA)) {
     	return OMPI_ERROR;
     }
-    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SHM)) {
+    if ((ptl_bitmap & MXM_BIT(MXM_PTL_SHM)) &&
+            OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SHM)) {
             return OMPI_ERROR;
     }
     if (OMPI_SUCCESS != ompi_modex_send(&mca_mtl_mxm_component.super.mtl_version,
