@@ -9,6 +9,8 @@
 #include "opal_config.h"
 #include "opal/constants.h"
 
+#include "opal/util/output.h"
+
 #include "opal/dss/dss.h"
 #include "opal/mca/hwloc/base/base.h"
 
