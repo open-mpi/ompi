@@ -222,6 +222,7 @@ void ompi_info_open_components(void)
             putenv(target);
             free(target);
         }
+        free(env);
     }
     
     /* some components require the event library be active, so activate it */
@@ -834,6 +835,7 @@ void ompi_info_close_components()
 #if OPAL_ENABLE_FT_CR == 1
         (void) opal_crs_base_close();
 #endif
+        (void) opal_dss_close();
         (void) opal_event_base_close();
         
         /* Do not call OPAL's installdirs close; it will be handled in
