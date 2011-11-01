@@ -104,6 +104,7 @@ int opal_hwloc_base_open(void)
                            true, hostname, getpid(), str_value);
             return OPAL_ERR_BAD_PARAM;
         }
+        free(str_value);
         
         /* hwloc_base_bind_failure_action */
         switch (opal_hwloc_base_mbfa) {
@@ -128,6 +129,7 @@ int opal_hwloc_base_open(void)
                            true, hostname, getpid(), str_value);
             return OPAL_ERR_BAD_PARAM;
         }
+        free(str_value);
         
         /* cpu allocation specification */
         mca_base_param_reg_string_name("hwloc", "base_cpu_set",
