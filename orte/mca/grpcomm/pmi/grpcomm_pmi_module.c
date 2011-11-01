@@ -124,11 +124,9 @@ static int init(void)
 {
     int rc;
 
-    if (NULL == pmi_kvs_name) {
-        if (ORTE_SUCCESS != (rc = setup_pmi())) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
+    if (ORTE_SUCCESS != (rc = setup_pmi())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     return ORTE_SUCCESS;
 }
@@ -224,13 +222,6 @@ static int pmi_set_proc_attr(const char* attr_name,
 {
     int rc;
 
-     if (NULL == pmi_kvs_name) {
-         if (ORTE_SUCCESS != (rc = setup_pmi())) {
-             ORTE_ERROR_LOG(rc);
-             return rc;
-         }
-    }
-
      if (ORTE_SUCCESS != (rc = setup_key(ORTE_PROC_MY_NAME, attr_name))) {
          ORTE_ERROR_LOG(rc);
          return rc;
@@ -264,13 +255,6 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
     /* set default */
     *size = 0;
     *buffer = NULL;
-
-    if (NULL == pmi_kvs_name) {
-         if (ORTE_SUCCESS != (rc = setup_pmi())) {
-             ORTE_ERROR_LOG(rc);
-             return rc;
-         }
-    }
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:pmi: get attr %s for proc %s in KVS %s",
@@ -316,13 +300,6 @@ static int modex(opal_list_t *procs)
                          "%s grpcomm:pmi: modex entered",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    if (NULL == pmi_kvs_name) {
-        if (ORTE_SUCCESS != (rc = setup_pmi())) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-
     /* provide our hostname so others can know our location */
     if (strlen(orte_process_info.nodename) > (size_t)pmi_vallen_max) {
         ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
@@ -614,8 +591,6 @@ static int modex(opal_list_t *procs)
 #endif
     }
 
-    /* cycle thru the array of our peers and assign local and node ranks */
-
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:pmi: modex completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -703,7 +678,7 @@ static int setup_pmi(void)
         return ORTE_ERROR;
     }
 #endif
-    pmi_kvs_name = malloc(max_length);
+    pmi_kvs_name = (char*)malloc(max_length);
     if (NULL == pmi_kvs_name) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
