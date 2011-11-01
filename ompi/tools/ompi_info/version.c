@@ -129,17 +129,18 @@ void ompi_info_do_version(bool want_all, opal_cmd_line_t *cmd_line)
  */
 void ompi_info_show_ompi_version(const char *scope)
 {
-    char *tmp;
+    char *tmp, *tmp2;
 
     ompi_info_out("Package", "package", OPAL_PACKAGE_STRING);
     asprintf(&tmp, "%s:version:full", ompi_info_type_ompi);
-    ompi_info_out("Open MPI", tmp,
-                  make_version_str(scope, 
-                                   OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, 
-                                   OMPI_RELEASE_VERSION, 
-                                   OMPI_GREEK_VERSION,
-                                   OMPI_WANT_REPO_REV, OMPI_REPO_REV));
+    tmp2 = make_version_str(scope, 
+                            OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, 
+                            OMPI_RELEASE_VERSION, 
+                            OMPI_GREEK_VERSION,
+                            OMPI_WANT_REPO_REV, OMPI_REPO_REV);
+    ompi_info_out("Open MPI", tmp, tmp2);
     free(tmp);
+    free(tmp2);
     asprintf(&tmp, "%s:version:repo", ompi_info_type_ompi);
     ompi_info_out("Open MPI repo revision", tmp, OMPI_REPO_REV);
     free(tmp);
@@ -148,13 +149,14 @@ void ompi_info_show_ompi_version(const char *scope)
     free(tmp);
     
     asprintf(&tmp, "%s:version:full", ompi_info_type_orte);
-    ompi_info_out("Open RTE", tmp,
-                  make_version_str(scope, 
-                                   ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION, 
-                                   ORTE_RELEASE_VERSION, 
-                                   ORTE_GREEK_VERSION,
-                                   ORTE_WANT_REPO_REV, ORTE_REPO_REV));
+    tmp2 = make_version_str(scope, 
+                            ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION, 
+                            ORTE_RELEASE_VERSION, 
+                            ORTE_GREEK_VERSION,
+                            ORTE_WANT_REPO_REV, ORTE_REPO_REV);
+    ompi_info_out("Open RTE", tmp, tmp2);
     free(tmp);
+    free(tmp2);
     asprintf(&tmp, "%s:version:repo", ompi_info_type_orte);
     ompi_info_out("Open RTE repo revision", tmp, ORTE_REPO_REV);
     free(tmp);
@@ -163,13 +165,14 @@ void ompi_info_show_ompi_version(const char *scope)
     free(tmp);
     
     asprintf(&tmp, "%s:version:full", ompi_info_type_opal);
-    ompi_info_out("OPAL", tmp,
-                  make_version_str(scope, 
-                                   OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
-                                   OPAL_RELEASE_VERSION, 
-                                   OPAL_GREEK_VERSION,
-                                   OPAL_WANT_REPO_REV, OPAL_REPO_REV));
+    tmp2 = make_version_str(scope, 
+                            OPAL_MAJOR_VERSION, OPAL_MINOR_VERSION, 
+                            OPAL_RELEASE_VERSION, 
+                            OPAL_GREEK_VERSION,
+                            OPAL_WANT_REPO_REV, OPAL_REPO_REV);
+    ompi_info_out("OPAL", tmp, tmp2);
     free(tmp);
+    free(tmp2);
     asprintf(&tmp, "%s:version:repo", ompi_info_type_opal);
     ompi_info_out("OPAL repo revision", tmp, OPAL_REPO_REV);
     free(tmp);
@@ -293,7 +296,6 @@ static void show_mca_version(const mca_base_component_t* component,
                                          component->mca_component_minor_version,
                                          component->mca_component_release_version, 
                                          "", false, "");
-    
     if (ompi_info_pretty) {
         asprintf(&message, "MCA %s", component->mca_type_name);
         printed = false;
@@ -360,6 +362,16 @@ static void show_mca_version(const mca_base_component_t* component,
             free(tmp);
         }
         free(message);
+    }
+
+    if (NULL != mca_version) {
+        free(mca_version);
+    }
+    if (NULL != api_version) {
+        free(api_version);
+    }
+    if (NULL != component_version) {
+        free(component_version);
     }
 }
 

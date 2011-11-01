@@ -186,6 +186,9 @@ void ompi_info_out(const char *pretty_message, const char *plain_message, const 
             printf("  %s\n", value);
         }
     }
+    if (NULL != v) {
+        free(v);
+    }
 }
 
 void ompi_info_out_int(const char *pretty_message, 
