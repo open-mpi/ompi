@@ -601,6 +601,7 @@ ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;
 ORTE_DECLSPEC extern bool orte_homogeneous_nodes;
 ORTE_DECLSPEC extern bool orte_hetero_apps;
+ORTE_DECLSPEC extern bool orte_hetero_nodes;
 ORTE_DECLSPEC extern bool orte_never_launched;
 ORTE_DECLSPEC extern bool orte_devel_level_output;
 ORTE_DECLSPEC extern bool orte_display_topo_with_map;

@@ -510,6 +510,8 @@ static int rte_init(void)
 #if OPAL_HAVE_HWLOC
     /* point our topology to the one detected locally */
     node->topology = opal_hwloc_topology;
+    /* add it to the array of known topologies */
+    opal_pointer_array_add(orte_node_topologies, opal_hwloc_topology);
 #endif
 
     /* create and store a proc object for us */

@@ -73,6 +73,7 @@ int orted_debug_failure;
 int orted_debug_failure_delay;
 bool orte_homogeneous_nodes = false;
 bool orte_hetero_apps = false;
+bool orte_hetero_nodes = false;
 bool orte_never_launched = false;
 bool orte_devel_level_output = false;
 bool orte_display_topo_with_map = false;
