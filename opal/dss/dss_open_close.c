@@ -489,6 +489,7 @@ int opal_dss_open(void)
     }
     /* All done */
 
+    opal_dss_initialized = true;
     return OPAL_SUCCESS;
 }
 
@@ -497,6 +498,9 @@ int opal_dss_close(void)
 {
     int32_t i;
 
+    if (!opal_dss_initialized) {
+        return OPAL_SUCCESS;
+    }
     opal_dss_initialized = false;
 
     for (i = 0 ; i < opal_pointer_array_get_size(&opal_dss_types) ; ++i) {
