@@ -682,11 +682,10 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
          */
         if (!orte_hetero_nodes) {
             if (NULL == (t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, 1))) {
-                /* got a problem */
-                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                return ORTE_ERR_NOT_FOUND;
+                /* all collapsed down into mpirun's topology */
+                t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, 0);
             }
-            for (i=2; i < orte_node_pool->size; i++) {
+            for (i=1; i < orte_node_pool->size; i++) {
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                     continue;
                 }
