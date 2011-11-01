@@ -91,45 +91,26 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority)
     tuned_module->super.coll_module_enable = tuned_module_enable;
     tuned_module->super.ft_event = mca_coll_tuned_ft_event;
 
-    if (ompi_coll_tuned_use_dynamic_rules) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_dynamic"));
-
-        tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_dynamic;
-        tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_dynamic;
-        tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_dynamic;
-        tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_dynamic;
-        tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_dynamic;
-        tuned_module->super.coll_alltoallw  = NULL;
-        tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_dynamic;
-        tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_dynamic;
-        tuned_module->super.coll_exscan     = NULL;
-        tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_dynamic;
-        tuned_module->super.coll_gatherv    = NULL;
-        tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_dynamic;
-        tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_dynamic;
-        tuned_module->super.coll_scan       = NULL;
-        tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_dynamic;
-        tuned_module->super.coll_scatterv   = NULL;
-    } else {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_fixed"));
-
-        tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_fixed;
-        tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_fixed;
-        tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_fixed;
-        tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_fixed;
-        tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_fixed;
-        tuned_module->super.coll_alltoallw  = NULL;
-        tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_fixed;
-        tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_fixed;
-        tuned_module->super.coll_exscan     = NULL;
-        tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_fixed;
-        tuned_module->super.coll_gatherv    = NULL;
-        tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_fixed;
-        tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_fixed;
-        tuned_module->super.coll_scan       = NULL;
-        tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_fixed;
-        tuned_module->super.coll_scatterv   = NULL;
-    }
+    /* By default stick with the fixed version of the tuned collectives. Later on,
+     * when the module get enabled, set the correct version based on the availability
+     * of the dynamic rules.
+     */
+    tuned_module->super.coll_allgather  = ompi_coll_tuned_allgather_intra_dec_fixed;
+    tuned_module->super.coll_allgatherv = ompi_coll_tuned_allgatherv_intra_dec_fixed;
+    tuned_module->super.coll_allreduce  = ompi_coll_tuned_allreduce_intra_dec_fixed;
+    tuned_module->super.coll_alltoall   = ompi_coll_tuned_alltoall_intra_dec_fixed;
+    tuned_module->super.coll_alltoallv  = ompi_coll_tuned_alltoallv_intra_dec_fixed;
+    tuned_module->super.coll_alltoallw  = NULL;
+    tuned_module->super.coll_barrier    = ompi_coll_tuned_barrier_intra_dec_fixed;
+    tuned_module->super.coll_bcast      = ompi_coll_tuned_bcast_intra_dec_fixed;
+    tuned_module->super.coll_exscan     = NULL;
+    tuned_module->super.coll_gather     = ompi_coll_tuned_gather_intra_dec_fixed;
+    tuned_module->super.coll_gatherv    = NULL;
+    tuned_module->super.coll_reduce     = ompi_coll_tuned_reduce_intra_dec_fixed;
+    tuned_module->super.coll_reduce_scatter = ompi_coll_tuned_reduce_scatter_intra_dec_fixed;
+    tuned_module->super.coll_scan       = NULL;
+    tuned_module->super.coll_scatter    = ompi_coll_tuned_scatter_intra_dec_fixed;
+    tuned_module->super.coll_scatterv   = NULL;
 
     return &(tuned_module->super);
 }
