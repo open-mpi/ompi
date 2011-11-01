@@ -315,6 +315,10 @@ int orte_register_params(void)
                                 "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries (default: false)",
                                 false, false, (int) false, &value);
     orte_hetero_apps = OPAL_INT_TO_BOOL(value);
+    mca_base_param_reg_int_name("orte", "hetero_nodes",
+                                "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]",
+                                false, false, (int) false, &value);
+    orte_hetero_nodes = OPAL_INT_TO_BOOL(value);
     
     /* allow specification of the launch agent */
     mca_base_param_reg_string_name("orte", "launch_agent",

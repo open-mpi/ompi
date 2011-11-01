@@ -195,6 +195,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Regular expression defining nodes in system" },
 
+    { "orte", "hetero", "nodes", '\0', NULL, "hetero-nodes", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -643,7 +647,8 @@ int orte_daemon(int argc, char *argv[])
 
 #if OPAL_HAVE_HWLOC
             /* add the local topology */
-            if (NULL != opal_hwloc_topology) {
+            if (NULL != opal_hwloc_topology &&
+                (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes)) {
                 if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
                     ORTE_ERROR_LOG(ret);
                 }

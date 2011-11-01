@@ -143,7 +143,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Return the exit status of the primary job only" },
     
     /* hetero apps */
-    { "orte", "hetero", "apps", '\0', NULL, "hetero", 0,
+    { "orte", "hetero", "apps", '\0', NULL, "hetero-apps", 0,
         NULL, OPAL_CMD_LINE_TYPE_BOOL,
     "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries" },
     
@@ -435,6 +435,10 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "orte", "vm", "launch", '\0', "vm", "vm", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Launch daemons on all nodes at start to create a virtual machine [Default = false]" },
+
+    { "orte", "hetero", "nodes", '\0', NULL, "hetero-nodes", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
 
 #if OPAL_ENABLE_CRDEBUG == 1
     { "opal", "cr", "enable_crdebug", '\0', "crdebug", "crdebug", 0,

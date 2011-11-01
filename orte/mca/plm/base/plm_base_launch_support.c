@@ -31,7 +31,6 @@
 #endif  /* HAVE_SYS_TIME_H */
 
 #include "opal/util/argv.h"
-#include "opal/util/opal_sos.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
@@ -549,15 +548,15 @@ static void process_orted_launch_report(int fd, short event, void *data)
         idx=1;
         node = daemon->node;
         if (OPAL_SUCCESS == opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO)) {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s RECEIVED TOPOLOGY FROM NODE %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
             /* do we already have this topology from some other node? */
             found = false;
             for (i=0; i < orte_node_topologies->size; i++) {
                 if (NULL == (t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, i))) {
                     continue;
                 }
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                     "%s RECEIVED TOPOLOGY FROM NODE %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
                 if (OPAL_EQUAL == opal_dss.compare(topo, t, OPAL_HWLOC_TOPO)) {
                     /* yes - just point to it */
                     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -629,7 +628,7 @@ static void orted_report_launch(int status, orte_process_name_t* sender,
     /* reissue the recv */
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
                                  ORTE_RML_NON_PERSISTENT, orted_report_launch, NULL);
-    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         orted_failed_launch = true;
     }
@@ -654,7 +653,7 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
 
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
                                  ORTE_RML_NON_PERSISTENT, orted_report_launch, NULL);
-    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -666,6 +665,36 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+#if OPAL_HAVE_HWLOC
+    {
+        hwloc_topology_t t;
+        orte_node_t *node;
+        int i;
+
+        /* if the user didn't indicate that the node topologies were
+         * different, then set the nodes to point to the topology
+         * of the first node.
+         *
+         * NOTE: We do -not- point the nodes at the topology of
+         * mpirun because many "homogeneous" clusters have a head
+         * node that differs from all the compute nodes!
+         */
+        if (!orte_hetero_nodes) {
+            if (NULL == (t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, 1))) {
+                /* got a problem */
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                return ORTE_ERR_NOT_FOUND;
+            }
+            for (i=2; i < orte_node_pool->size; i++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                    continue;
+                }
+                node->topology = t;
+            }
+        }
+    }
+#endif
 
     /* if we are timing, output the results */
     if (orte_timing) {
@@ -751,7 +780,10 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (orte_report_bindings) {
         opal_argv_append(argc, argv, "--report-bindings");
     }
-    
+    if (orte_hetero_nodes) {
+        opal_argv_append(argc, argv, "--hetero-nodes");
+    }
+
     if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
         opal_argv_append(argc, argv, "--debug-failure");
         asprintf(&param, "%d", orted_debug_failure);
