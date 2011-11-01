@@ -34,6 +34,8 @@ static int pmi_component_open(void);
 static int pmi_component_close(void);
 static int pmi_component_query(mca_base_module_t **module, int *priority);
 
+static bool started_by_me=false;
+
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
@@ -78,6 +80,8 @@ static bool pmi_startup(void)
     if (PMI_SUCCESS != PMI2_Init(&spawned, &size, &rank, &appnum)) {
         return false;
     }
+    /* flag that we started PMI */
+    started_by_me = true;
     /* ignore the info - we'll pick it up elsewhere */
     return true;
 #else
@@ -90,6 +94,8 @@ static bool pmi_startup(void)
         if (PMI_SUCCESS != PMI_Init(&initialized)) {
             return false;
         }
+        /* flag that we started PMI */
+        started_by_me = true;
     }
     return true;
 #endif
@@ -117,14 +123,14 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
 static int pmi_component_close(void)
 {
 #if WANT_CRAY_PMI2_EXT
-    if (PMI2_Initialized()) {
+    if (started_by_me && PMI2_Initialized()) {
         PMI2_Finalize();
     }
 #else
     PMI_BOOL initialized;
 
     /* if we weren't selected, cleanup */
-    if (PMI_SUCCESS == PMI_Initialized(&initialized) &&
+    if (started_by_me && PMI_SUCCESS == PMI_Initialized(&initialized) &&
         PMI_TRUE == initialized) {
         PMI_Finalize();
     }
