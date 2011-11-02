@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -25,9 +26,8 @@
 #include <fcntl.h>
 
 #include "opal/dss/dss.h"
-#include "opal/util/opal_sos.h"
-#include "opal/runtime/opal.h"
 #include "opal/mca/paffinity/paffinity.h"
+#include "opal/runtime/opal.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -41,7 +41,6 @@
 #include "orte/orted/orted.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
-#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/grpcomm/base/base.h"
 #include "grpcomm_hier.h"
