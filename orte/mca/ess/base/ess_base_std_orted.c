@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,7 +37,6 @@
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/pstat/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
 #include "opal/util/os_path.h"
 
 #include "orte/mca/rml/base/base.h"
@@ -524,7 +524,7 @@ int orte_ess_base_orted_setup(char **hosts)
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
     
-    return ret;
+    return ORTE_ERR_SILENT;
 }
 
 int orte_ess_base_orted_finalize(void)

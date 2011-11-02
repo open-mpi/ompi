@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,8 +64,8 @@ orte_ess_base_select(void)
                                         &orte_ess_base_components_available,
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component) ) {
-        /* This will only happen if no component was selected */
-        return ORTE_ERR_NOT_FOUND;
+        /* error message emitted by fn above */
+        return ORTE_ERR_SILENT;
     }
 
     /* Save the winner */

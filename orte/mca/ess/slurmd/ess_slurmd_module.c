@@ -40,7 +40,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/paffinity/paffinity.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
 
 #include "orte/util/proc_info.h"
@@ -128,6 +128,16 @@ static int rte_init(void)
     /* declare ourselves to be standalone - i.e., not launched by orted */
     orte_standalone_operation = true;
     
+#if OPAL_HAVE_HWLOC
+    /* get the topology */
+    if (NULL == opal_hwloc_topology) {
+        if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+            error = "topology discovery";
+            goto error;
+        }
+    }
+#endif
+
     /* get the slurm jobid - this will be our job family */
     envar = getenv("SLURM_JOBID");
     /* don't need to check this for NULL - if it was, we would
@@ -422,6 +432,13 @@ static int rte_finalize(void)
      * before things were initialized
      */
     orte_util_nidmap_finalize();
+
+#if OPAL_HAVE_HWLOC
+    if (NULL != opal_hwloc_topology) {
+        opal_hwloc_base_free_topology(opal_hwloc_topology);
+        opal_hwloc_topology = NULL;
+    }
+#endif
 
     return ret;    
 }
