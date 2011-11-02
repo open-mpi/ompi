@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -36,12 +36,12 @@
  * @param peer (IN)     BTL peer addressing
  */
 int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
-			 struct mca_btl_base_endpoint_t *endpoint,
-			 struct opal_convertor_t *convertor,
-			 void *header, size_t header_size,
-			 size_t payload_size, uint8_t order,
-			 uint32_t flags, mca_btl_base_tag_t tag,
-			 mca_btl_base_descriptor_t **descriptor)
+                         struct mca_btl_base_endpoint_t *endpoint,
+                         struct opal_convertor_t *convertor,
+                         void *header, size_t header_size,
+                         size_t payload_size, uint8_t order,
+                         uint32_t flags, mca_btl_base_tag_t tag,
+                         mca_btl_base_descriptor_t **descriptor)
 {
     size_t length = (header_size + payload_size);
     mca_btl_vader_frag_t *frag;
@@ -57,20 +57,20 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     *descriptor = NULL;
 
     if (OPAL_LIKELY(!(payload_size && opal_convertor_need_buffers (convertor)))) {
-	if (payload_size) {
-	    opal_convertor_get_current_pointer (convertor, &data_ptr);
-	}
+        if (payload_size) {
+            opal_convertor_get_current_pointer (convertor, &data_ptr);
+        }
 
-	if (mca_btl_vader_fbox_sendi (endpoint, tag, header, header_size, data_ptr, payload_size)) {
-	    return OMPI_SUCCESS;
-	}
+        if (mca_btl_vader_fbox_sendi (endpoint, tag, header, header_size, data_ptr, payload_size)) {
+            return OMPI_SUCCESS;
+        }
     }
 
     /* allocate a fragment, giving up if we can't get one */
     frag = (mca_btl_vader_frag_t *) mca_btl_vader_alloc (btl, endpoint, order, length,
-							 flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+                                                         flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
     if (OPAL_UNLIKELY(NULL == frag)) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* fill in fragment fields */
@@ -87,24 +87,24 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     /* we can't use single-copy semantics here since as caller will consider the send
        complete if we return success */
     if (OPAL_UNLIKELY(payload_size && opal_convertor_need_buffers (convertor))) {
-	/* pack the data into the supplied buffer */
-	iov.iov_base = (IOVBASE_TYPE *)((uintptr_t)frag->segment.seg_addr.pval + header_size);
-	iov.iov_len  = max_data = payload_size;
+        /* pack the data into the supplied buffer */
+        iov.iov_base = (IOVBASE_TYPE *)((uintptr_t)frag->segment.seg_addr.pval + header_size);
+        iov.iov_len  = max_data = payload_size;
 
-	(void) opal_convertor_pack (convertor, &iov, &iov_count, &max_data);
+        (void) opal_convertor_pack (convertor, &iov, &iov_count, &max_data);
 
-	assert (max_data == payload_size);
+        assert (max_data == payload_size);
     } else if (payload_size) {
-	/* bypassing the convertor may speed things up a little */
-	opal_convertor_get_current_pointer (convertor, &data_ptr);
-	memcpy ((void *)((uintptr_t)frag->segment.seg_addr.pval + header_size), data_ptr, payload_size);
+        /* bypassing the convertor may speed things up a little */
+        opal_convertor_get_current_pointer (convertor, &data_ptr);
+        memcpy ((void *)((uintptr_t)frag->segment.seg_addr.pval + header_size), data_ptr, payload_size);
     }
 
     opal_list_append (&mca_btl_vader_component.active_sends, (opal_list_item_t *) frag);
 
     /* write the fragment pointer to peer's the FIFO */
     vader_fifo_write ((void *) VIRTUAL2RELATIVE(frag->hdr),
-		      mca_btl_vader_component.fifo[endpoint->peer_smp_rank]);
+                      mca_btl_vader_component.fifo[endpoint->peer_smp_rank]);
 
     /* the progress function will return the fragment */
 

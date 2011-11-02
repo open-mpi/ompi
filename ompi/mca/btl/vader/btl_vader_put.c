@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
@@ -23,8 +23,8 @@
  * @param descriptor (IN)  Description of the data to be transferred
  */
 int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
-		       struct mca_btl_base_endpoint_t *endpoint,
-		       struct mca_btl_base_descriptor_t *des)
+                       struct mca_btl_base_endpoint_t *endpoint,
+                       struct mca_btl_base_descriptor_t *des)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) des;
     mca_btl_base_segment_t *src = des->des_src;
@@ -34,10 +34,10 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
     void *rem_ptr;
 
     reg = vader_get_registation (endpoint->peer_smp_rank,
-				 (void *) dst->seg_key.ptr,
-				 dst->seg_len, 0);
+                                 (void *) dst->seg_key.ptr,
+                                 dst->seg_len, 0);
     if (OPAL_UNLIKELY(NULL == reg)) {
-	return OMPI_ERROR;
+        return OMPI_ERROR;
     }
 
     rem_ptr = vader_reg_to_ptr (reg, (void *) dst->seg_key.ptr);
@@ -49,7 +49,7 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
     /* always call the callback function (if it exists) */
     if (OPAL_LIKELY(NULL != frag->base.des_cbfunc)) {
         frag->base.des_cbfunc(&mca_btl_vader.super, frag->endpoint,
-			      &frag->base, OMPI_SUCCESS);
+                              &frag->base, OMPI_SUCCESS);
     }
 
     if (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {

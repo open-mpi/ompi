@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -91,19 +91,19 @@ struct mca_btl_vader_component_t {
     int vader_free_list_num;                /**< initial size of free lists */
     int vader_free_list_max;                /**< maximum size of free lists */
     int vader_free_list_inc;                /**< number of elements to alloc
-					     * when growing free lists */
+                                             * when growing free lists */
     char *vader_mpool_name;                 /**< name of shared memory pool module */
     mca_mpool_base_module_t *vader_mpool;   /**< mpool on local node */
     void *vader_mpool_base;                 /**< base address of shared memory pool */
     size_t eager_limit;                     /**< send fragment size */
     mca_common_sm_module_t *vader_seg;      /**< description of shared memory segment */
     volatile struct vader_fifo_t **shm_fifo;/**< pointer to fifo 2D array in
-					     * shared memory */
+                                             * shared memory */
     char **shm_bases;                       /**< pointer to base pointers in
-					     * shared memory */
+                                             * shared memory */
     xpmem_segid_t *shm_seg_ids;             /* xpmem segment ids */
     struct vader_fifo_t **fifo;             /**< cached copy of the pointer to
-					     * the 2D fifo array. */
+                                             * the 2D fifo array. */
     struct mca_rcache_base_module_t **xpmem_rcaches;
     xpmem_apid_t *apids;                    /* xpmem apids */
     int32_t num_smp_procs;                  /**< current number of smp procs on this host */
@@ -161,7 +161,7 @@ static inline uintptr_t get_mask (uintptr_t x)
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
 static inline mca_mpool_base_registration_t *vader_get_registation (int peer_smp_rank, void *rem_ptr,
-								    size_t size, int flags)
+                                                                    size_t size, int flags)
 {
     struct mca_rcache_base_module_t *rcache = mca_btl_vader_component.xpmem_rcaches[peer_smp_rank];
     mca_mpool_base_registration_t *regs[10], *reg = NULL;
@@ -170,75 +170,75 @@ static inline mca_mpool_base_registration_t *vader_get_registation (int peer_smp
     int rc, i;
 
     if (OPAL_UNLIKELY(peer_smp_rank == mca_btl_vader_component.my_smp_rank)) {
-	return rem_ptr;
+        return rem_ptr;
     }
 
     mask = get_mask (mca_btl_vader_segment_multiple);
 
     base = (uintptr_t) down_align_addr(rem_ptr, mca_mpool_base_page_size_log);
     bound = (uintptr_t) up_align_addr((void *)((uintptr_t) rem_ptr + size - 1),
-				      mca_mpool_base_page_size_log) + 1;
+                                      mca_mpool_base_page_size_log) + 1;
 
     /* several segments may match the base pointer */
     rc = rcache->rcache_find_all (rcache, (void *) base, bound - base, regs, 10);
     for (i = 0 ; i < rc ; ++i) {
-	if (bound <= (uintptr_t)regs[i]->bound && base  >= (uintptr_t)regs[i]->base) {
-	    opal_atomic_add (&regs[i]->ref_count, 1);
-	    return regs[i];
-	}
+        if (bound <= (uintptr_t)regs[i]->bound && base  >= (uintptr_t)regs[i]->base) {
+            opal_atomic_add (&regs[i]->ref_count, 1);
+            return regs[i];
+        }
 
-	if (regs[i]->flags & MCA_MPOOL_FLAGS_PERSIST) {
-	    continue;
-	}
+        if (regs[i]->flags & MCA_MPOOL_FLAGS_PERSIST) {
+            continue;
+        }
 
-	/* remove this pointer from the rcache and decrement its reference count
-	   (so it is detached later) */
-	rc = rcache->rcache_delete (rcache, regs[i]);
-	if (OPAL_UNLIKELY(0 != rc)) {
-	    /* someone beat us to it? */
-	    break;
-	}
+        /* remove this pointer from the rcache and decrement its reference count
+           (so it is detached later) */
+        rc = rcache->rcache_delete (rcache, regs[i]);
+        if (OPAL_UNLIKELY(0 != rc)) {
+            /* someone beat us to it? */
+            break;
+        }
 
-	/* start the new segment from the lower of the two bases */
-	base = (uintptr_t) regs[i]->base < base ? (uintptr_t) regs[i]->base : base;	    	    
+        /* start the new segment from the lower of the two bases */
+        base = (uintptr_t) regs[i]->base < base ? (uintptr_t) regs[i]->base : base;                        
 
-	opal_atomic_add (&regs[i]->ref_count, -1);
+        opal_atomic_add (&regs[i]->ref_count, -1);
 
-	if (OPAL_LIKELY(0 == regs[i]->ref_count)) {
-	    /* this pointer is not in use */
-	    (void) xpmem_detach (regs[i]->alloc_base);
-	    OBJ_RELEASE(regs[i]);
-	}
+        if (OPAL_LIKELY(0 == regs[i]->ref_count)) {
+            /* this pointer is not in use */
+            (void) xpmem_detach (regs[i]->alloc_base);
+            OBJ_RELEASE(regs[i]);
+        }
 
-	break;
+        break;
     }
 
     if ((ptrdiff_t) (bound - base) & mask) {
-	bound = base + ((bound - base) & ~mask) + mca_btl_vader_segment_multiple;
+        bound = base + ((bound - base) & ~mask) + mca_btl_vader_segment_multiple;
     }
 
     if (OPAL_UNLIKELY(bound > VADER_MAX_ADDRESS)) {
-	bound = VADER_MAX_ADDRESS;
+        bound = VADER_MAX_ADDRESS;
     }
 
     reg = OBJ_NEW(mca_mpool_base_registration_t);
     if (OPAL_UNLIKELY(NULL != reg)) {
-	/* stick around for awhile */
-	reg->ref_count = 2;
-	reg->base  = (unsigned char *) base;
-	reg->bound = (unsigned char *) bound;
-	reg->flags = flags;
-	
-	xpmem_addr.apid   = mca_btl_vader_component.apids[peer_smp_rank];
-	xpmem_addr.offset = base;
+        /* stick around for awhile */
+        reg->ref_count = 2;
+        reg->base  = (unsigned char *) base;
+        reg->bound = (unsigned char *) bound;
+        reg->flags = flags;
+        
+        xpmem_addr.apid   = mca_btl_vader_component.apids[peer_smp_rank];
+        xpmem_addr.offset = base;
 
-	reg->alloc_base = xpmem_attach (xpmem_addr, bound - base, NULL);
-	if (OPAL_UNLIKELY((void *)-1 == reg->alloc_base)) {
-	    OBJ_RELEASE(reg);
-	    reg = NULL;
-	} else {
-	    rcache->rcache_insert (rcache, reg, 0);
-	}
+        reg->alloc_base = xpmem_attach (xpmem_addr, bound - base, NULL);
+        if (OPAL_UNLIKELY((void *)-1 == reg->alloc_base)) {
+            OBJ_RELEASE(reg);
+            reg = NULL;
+        } else {
+            rcache->rcache_insert (rcache, reg, 0);
+        }
     }
 
     return reg;
@@ -250,16 +250,16 @@ static inline void vader_return_registration (mca_mpool_base_registration_t *reg
 
     opal_atomic_add (&reg->ref_count, -1);
     if (OPAL_UNLIKELY(0 == reg->ref_count && !(reg->flags & MCA_MPOOL_FLAGS_PERSIST))) {
-	rcache->rcache_delete (rcache, reg);
-	(void)xpmem_detach (reg->alloc_base);
-	OBJ_RELEASE (reg);
+        rcache->rcache_delete (rcache, reg);
+        (void)xpmem_detach (reg->alloc_base);
+        OBJ_RELEASE (reg);
     }
 }
 
 static inline void *vader_reg_to_ptr (mca_mpool_base_registration_t *reg, void *rem_ptr)
 {
     return (void *) ((uintptr_t) reg->alloc_base +
-		     (ptrdiff_t)((uintptr_t) rem_ptr - (uintptr_t) reg->base));
+                     (ptrdiff_t)((uintptr_t) rem_ptr - (uintptr_t) reg->base));
 }
 
 /* memcpy is faster at larger sizes but is undefined if the
@@ -267,9 +267,9 @@ static inline void *vader_reg_to_ptr (mca_mpool_base_registration_t *reg, void *
 static inline void vader_memmove (void *dst, void *src, size_t size)
 {
     if (size >= mca_btl_vader_memcpy_limit) {
-	memcpy (dst, src, size);
+        memcpy (dst, src, size);
     } else {
-	memmove (dst, src, size);
+        memmove (dst, src, size);
     }
 }
 
@@ -280,9 +280,9 @@ static inline void vader_memmove (void *dst, void *src, size_t size)
  * @param peer (IN)     BTL peer addressing
  */
 int mca_btl_vader_send(struct mca_btl_base_module_t *btl,
-			      struct mca_btl_base_endpoint_t *endpoint,
-			      struct mca_btl_base_descriptor_t *descriptor,
-			      mca_btl_base_tag_t tag);
+                       struct mca_btl_base_endpoint_t *endpoint,
+                       struct mca_btl_base_descriptor_t *descriptor,
+                       mca_btl_base_tag_t tag);
 
 /**
  * Initiate an inline send to the peer.
@@ -291,12 +291,12 @@ int mca_btl_vader_send(struct mca_btl_base_module_t *btl,
  * @param peer (IN)     BTL peer addressing
  */
 int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
-			 struct mca_btl_base_endpoint_t *endpoint,
-			 struct opal_convertor_t *convertor,
-			 void *header, size_t header_size,
-			 size_t payload_size, uint8_t order,
-			 uint32_t flags, mca_btl_base_tag_t tag,
-			 mca_btl_base_descriptor_t **descriptor);
+                         struct mca_btl_base_endpoint_t *endpoint,
+                         struct opal_convertor_t *convertor,
+                         void *header, size_t header_size,
+                         size_t payload_size, uint8_t order,
+                         uint32_t flags, mca_btl_base_tag_t tag,
+                         mca_btl_base_descriptor_t **descriptor);
 
 /**
  * Initiate an synchronous put.
@@ -306,8 +306,8 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
  * @param descriptor (IN)  Description of the data to be transferred
  */
 int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
-		       struct mca_btl_base_endpoint_t *endpoint,
-		       struct mca_btl_base_descriptor_t *des);
+                       struct mca_btl_base_endpoint_t *endpoint,
+                       struct mca_btl_base_descriptor_t *des);
 
 /**
  * Initiate an synchronous get.
@@ -317,8 +317,8 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
  * @param descriptor (IN)  Description of the data to be transferred
  */
 int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
-		       struct mca_btl_base_endpoint_t *endpoint,
-		       struct mca_btl_base_descriptor_t *des);
+                       struct mca_btl_base_endpoint_t *endpoint,
+                       struct mca_btl_base_descriptor_t *des);
 
 /**
  * Allocate a segment.
@@ -327,8 +327,8 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
  * @param size (IN)     Request segment size.
  */
 mca_btl_base_descriptor_t* mca_btl_vader_alloc (struct mca_btl_base_module_t* btl,
-						struct mca_btl_base_endpoint_t* endpoint,
-						uint8_t order, size_t size, uint32_t flags);
+                                                struct mca_btl_base_endpoint_t* endpoint,
+                                                uint8_t order, size_t size, uint32_t flags);
 
 
 END_C_DECLS

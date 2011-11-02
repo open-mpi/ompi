@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -42,8 +42,8 @@ static int mca_btl_vader_component_open(void);
 static int mca_btl_vader_component_close(void);
 static int mca_btl_vader_component_register(void);
 static mca_btl_base_module_t** mca_btl_vader_component_init(int *num_btls,
-							    bool enable_progress_threads,
-							    bool enable_mpi_threads);
+                                                            bool enable_progress_threads,
+                                                            bool enable_mpi_threads);
 
 /* limit where we should switch from bcopy to memcpy */
 int mca_btl_vader_memcpy_limit     = 524288;
@@ -57,7 +57,7 @@ int mca_btl_vader_max_inline_send = 256;
 mca_btl_vader_component_t mca_btl_vader_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
-	   about the component itself */
+           about the component itself */
         {
             MCA_BTL_BASE_VERSION_2_0_0,
 
@@ -86,21 +86,21 @@ mca_btl_vader_component_t mca_btl_vader_component = {
  */
 
 static inline char *mca_btl_vader_param_register_string(const char *param_name,
-							const char *default_value)
+                                                        const char *default_value)
 {
     char *param_value;
     int id = mca_base_param_register_string("btl", "vader",
-					    param_name, NULL,
-					    default_value);
+                                            param_name, NULL,
+                                            default_value);
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
 
 static inline int mca_btl_vader_param_register_int(const char *param_name,
-						   int value)
+                                                   int value)
 {
     int id = mca_base_param_register_int("btl", "vader", param_name,
-					 NULL, value);
+                                         NULL, value);
     mca_base_param_lookup_int(id, &value);
     return value;
 }
@@ -127,11 +127,11 @@ static int mca_btl_vader_component_register (void)
     mca_btl_vader_component.vader_mpool_name =
         mca_btl_vader_param_register_string("mpool", "sm");
     mca_btl_vader_memcpy_limit =
-	mca_btl_vader_param_register_int("memcpy_limit", mca_btl_vader_memcpy_limit);
+        mca_btl_vader_param_register_int("memcpy_limit", mca_btl_vader_memcpy_limit);
     mca_btl_vader_segment_multiple =
-	msb(mca_btl_vader_param_register_int("segment_multiple", mca_btl_vader_segment_multiple));
+        msb(mca_btl_vader_param_register_int("segment_multiple", mca_btl_vader_segment_multiple));
     mca_btl_vader_max_inline_send =
-	mca_btl_vader_param_register_int("max_inline_send", mca_btl_vader_max_inline_send);
+        mca_btl_vader_param_register_int("max_inline_send", mca_btl_vader_max_inline_send);
 
     mca_btl_vader.super.btl_exclusivity = MCA_BTL_EXCLUSIVITY_HIGH;
     mca_btl_vader.super.btl_eager_limit = 64 * 1024;
@@ -141,7 +141,7 @@ static int mca_btl_vader_component_register (void)
     mca_btl_vader.super.btl_rdma_pipeline_frag_size = mca_btl_vader.super.btl_eager_limit;
     mca_btl_vader.super.btl_min_rdma_pipeline_size = mca_btl_vader.super.btl_eager_limit;
     mca_btl_vader.super.btl_flags = MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_PUT |
-	MCA_BTL_FLAGS_SEND_INPLACE;
+        MCA_BTL_FLAGS_SEND_INPLACE;
 
     mca_btl_vader.super.btl_bandwidth = 40000; /* Mbs */
     mca_btl_vader.super.btl_latency   = 1;     /* Microsecs */
@@ -199,7 +199,7 @@ static int mca_btl_vader_component_close(void)
          * to it are gone - no error checking, since we want all procs
          * to call this, so that in an abnormal termination scenario,
          * this file will still get cleaned up */
-	/* XXX LANL TODO -- remove unlink once the shmem segment uses xpmem */
+        /* XXX LANL TODO -- remove unlink once the shmem segment uses xpmem */
         unlink(mca_btl_vader_component.vader_seg->shmem_ds.seg_name);
         OBJ_RELEASE(mca_btl_vader_component.vader_seg);
     }
@@ -220,8 +220,8 @@ static int mca_btl_vader_component_close(void)
  *  VADER component initialization
  */
 static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
-							     bool enable_progress_threads,
-							     bool enable_mpi_threads)
+                                                             bool enable_progress_threads,
+                                                             bool enable_mpi_threads)
 {
     mca_btl_vader_component_t *component = &mca_btl_vader_component;
     mca_btl_base_module_t **btls = NULL;
@@ -266,24 +266,24 @@ static inline void mca_btl_vader_progress_sends (void)
     mca_btl_vader_frag_t *frag;
 
     for (item = opal_list_get_first (list) ; item != opal_list_get_end (list) ; ) {
-	frag = (mca_btl_vader_frag_t *) item;
-	next = opal_list_get_next (item);
+        frag = (mca_btl_vader_frag_t *) item;
+        next = opal_list_get_next (item);
 
-	if (OPAL_LIKELY(frag->hdr->complete)) {
-	    opal_list_remove_item (&mca_btl_vader_component.active_sends, item);
+        if (OPAL_LIKELY(frag->hdr->complete)) {
+            opal_list_remove_item (&mca_btl_vader_component.active_sends, item);
 
-	    if (OPAL_UNLIKELY(MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-		/* completion callback */
-		frag->base.des_cbfunc(&mca_btl_vader.super, frag->endpoint,
-				      &frag->base, OMPI_SUCCESS);
-	    }
+            if (OPAL_UNLIKELY(MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
+                /* completion callback */
+                frag->base.des_cbfunc(&mca_btl_vader.super, frag->endpoint,
+                                      &frag->base, OMPI_SUCCESS);
+            }
 
-	    if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-		MCA_BTL_VADER_FRAG_RETURN(frag);
-	    }
-	}
+            if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+                MCA_BTL_VADER_FRAG_RETURN(frag);
+            }
+        }
 
-	item = next;
+        item = next;
     }
 }
 
@@ -308,7 +308,7 @@ static int mca_btl_vader_component_progress (void)
     /* poll the fifo once */
     hdr = (mca_btl_vader_hdr_t *) vader_fifo_read (fifo);
     if (VADER_FIFO_FREE == hdr) {
-	return 0;
+        return 0;
     }
 
     /* change the address from address relative to the shared
@@ -322,21 +322,21 @@ static int mca_btl_vader_component_progress (void)
     segments[0].seg_len       = hdr->len;
 
     if (OPAL_UNLIKELY(hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY)) {
-	struct iovec *rem_mem = (struct iovec *) ((uintptr_t)segments[0].seg_addr.pval + hdr->len);
+        struct iovec *rem_mem = (struct iovec *) ((uintptr_t)segments[0].seg_addr.pval + hdr->len);
 
-	xpmem_reg = vader_get_registation (hdr->my_smp_rank, rem_mem->iov_base,
-					   rem_mem->iov_len, 0);
+        xpmem_reg = vader_get_registation (hdr->my_smp_rank, rem_mem->iov_base,
+                                           rem_mem->iov_len, 0);
 
-	segments[1].seg_addr.pval = vader_reg_to_ptr (xpmem_reg, rem_mem->iov_base);
-	segments[1].seg_len       = rem_mem->iov_len;
+        segments[1].seg_addr.pval = vader_reg_to_ptr (xpmem_reg, rem_mem->iov_base);
+        segments[1].seg_len       = rem_mem->iov_len;
 
-	/* recv upcall */
-	frag.base.des_dst_cnt = 2;
-	reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
-	vader_return_registration (xpmem_reg, hdr->my_smp_rank);
+        /* recv upcall */
+        frag.base.des_dst_cnt = 2;
+        reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
+        vader_return_registration (xpmem_reg, hdr->my_smp_rank);
     } else {
-	frag.base.des_dst_cnt = 1;
-	reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
+        frag.base.des_dst_cnt = 1;
+        reg->cbfunc(&mca_btl_vader.super, hdr->tag, &(frag.base), reg->cbdata);
     }
 
     /* return the fragment */

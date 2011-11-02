@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2011      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
@@ -23,10 +23,10 @@
 
 enum {MCA_BTL_VADER_FBOX_FREE = 0xfe, MCA_BTL_VADER_FBOX_RESERVED = 0xff};
 
-#define MCA_BTL_VADER_FBOX_OUT_PTR(peer_smp_rank, fbox)			\
+#define MCA_BTL_VADER_FBOX_OUT_PTR(peer_smp_rank, fbox)                        \
     (mca_btl_vader_component.vader_fboxes_out[peer_smp_rank] + FBOX_SIZE * (fbox))
 
-#define MCA_BTL_VADER_FBOX_IN_PTR(peer_smp_rank, fbox)			\
+#define MCA_BTL_VADER_FBOX_IN_PTR(peer_smp_rank, fbox)                        \
     (mca_btl_vader_component.vader_fboxes_in[peer_smp_rank] + FBOX_SIZE * (fbox))
 
 static inline unsigned char *mca_btl_vader_reserve_fbox (int peer_smp_rank, size_t size)
@@ -37,12 +37,12 @@ static inline unsigned char *mca_btl_vader_reserve_fbox (int peer_smp_rank, size
     /* todo -- need thread locks here for the multi-threaded case */
 
     if (size > MAX_MSG || fbox[0] != MCA_BTL_VADER_FBOX_FREE) {
-	/* fall back on fifo */
-	return NULL;
+        /* fall back on fifo */
+        return NULL;
     }
 
     mca_btl_vader_component.vader_next_fbox_out[peer_smp_rank] =
-	next_fbox == LAST_FBOX ? 0 : next_fbox + 1;
+        next_fbox == LAST_FBOX ? 0 : next_fbox + 1;
 
     /* mark this fast box as in use */
     fbox[0] = MCA_BTL_VADER_FBOX_RESERVED;
@@ -61,20 +61,20 @@ static inline void mca_btl_vader_fbox_send (unsigned char *fbox, unsigned char t
 }
 
 static inline int mca_btl_vader_fbox_sendi (struct mca_btl_base_endpoint_t *endpoint, char tag,
-					    void *header, size_t header_size,
-					    void *payload, size_t payload_size)
+                                            void *header, size_t header_size,
+                                            void *payload, size_t payload_size)
 {
     unsigned char *fbox;
 
     fbox = mca_btl_vader_reserve_fbox(endpoint->peer_smp_rank, header_size + payload_size);
     if (NULL == fbox) {
-	return 0;
+        return 0;
     }
 
     memcpy (fbox, header, header_size);
     if (OPAL_UNLIKELY(payload)) {
-	/* inline sends are typically just pml headers (due to MCA_BTL_FLAGS_SEND_INPLACE) */
-	memcpy (fbox + header_size, payload, payload_size);
+        /* inline sends are typically just pml headers (due to MCA_BTL_FLAGS_SEND_INPLACE) */
+        memcpy (fbox + header_size, payload, payload_size);
     }
 
     /* mark the fbox as sent */
@@ -93,35 +93,35 @@ static inline void mca_btl_vader_check_fboxes (void)
     int i;
 
     for (i = 0 ; i < mca_btl_vader_component.num_smp_procs ; ++i) {
-	int next_fbox = mca_btl_vader_component.vader_next_fbox_in[i];
-	unsigned char *fbox = MCA_BTL_VADER_FBOX_IN_PTR(i, next_fbox);
+        int next_fbox = mca_btl_vader_component.vader_next_fbox_in[i];
+        unsigned char *fbox = MCA_BTL_VADER_FBOX_IN_PTR(i, next_fbox);
 
-	if (my_smp_rank == i) {
-	    continue;
-	}
+        if (my_smp_rank == i) {
+            continue;
+        }
 
-	/* process all fast-box messages */
-	while (0xfe != ((size = fbox[0]) & 0xfe)) {
-	    opal_atomic_rmb ();
+        /* process all fast-box messages */
+        while (0xfe != ((size = fbox[0]) & 0xfe)) {
+            opal_atomic_rmb ();
 
-	    tag = fbox[1];
+            tag = fbox[1];
 
-	    reg = mca_btl_base_active_message_trigger + tag;
+            reg = mca_btl_base_active_message_trigger + tag;
 
-	    frag.segment.seg_addr.pval = fbox + 2;
-	    frag.segment.seg_len       = size;
+            frag.segment.seg_addr.pval = fbox + 2;
+            frag.segment.seg_len       = size;
 
-	    frag.base.des_dst     = &frag.segment;
-	    frag.base.des_dst_cnt = 1;
-	    reg->cbfunc(&mca_btl_vader.super, tag, &(frag.base), reg->cbdata);
+            frag.base.des_dst     = &frag.segment;
+            frag.base.des_dst_cnt = 1;
+            reg->cbfunc(&mca_btl_vader.super, tag, &(frag.base), reg->cbdata);
 
-	    fbox[0] = MCA_BTL_VADER_FBOX_FREE;
+            fbox[0] = MCA_BTL_VADER_FBOX_FREE;
 
-	    next_fbox = next_fbox == LAST_FBOX ? 0 : next_fbox + 1;
-	    fbox = MCA_BTL_VADER_FBOX_IN_PTR(i, next_fbox);
-	}
+            next_fbox = next_fbox == LAST_FBOX ? 0 : next_fbox + 1;
+            fbox = MCA_BTL_VADER_FBOX_IN_PTR(i, next_fbox);
+        }
 
-	mca_btl_vader_component.vader_next_fbox_in[i] = next_fbox;
+        mca_btl_vader_component.vader_next_fbox_in[i] = next_fbox;
     }
 }
 
