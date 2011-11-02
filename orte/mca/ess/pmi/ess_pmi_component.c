@@ -130,7 +130,8 @@ static int pmi_component_close(void)
     PMI_BOOL initialized;
 
     /* if we weren't selected, cleanup */
-    if (started_by_me && PMI_SUCCESS == PMI_Initialized(&initialized) &&
+    if (started_by_me &&
+        PMI_SUCCESS == PMI_Initialized(&initialized) &&
         PMI_TRUE == initialized) {
         PMI_Finalize();
     }
