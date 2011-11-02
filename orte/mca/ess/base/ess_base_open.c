@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,7 +64,8 @@ orte_ess_base_open(void)
         mca_base_components_open("ess", orte_ess_base_output, mca_ess_base_static_components, 
                                  &orte_ess_base_components_available,
                                  true)) {
-        return ORTE_ERROR;
+        /* error message emitted by fn above */
+        return ORTE_ERR_SILENT;
     }
 
     return ORTE_SUCCESS;

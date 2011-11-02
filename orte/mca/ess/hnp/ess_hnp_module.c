@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,7 +42,6 @@
 #include "opal/util/malloc.h"
 #include "opal/util/basename.h"
 #include "opal/mca/pstat/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/rml/base/base.h"
@@ -410,7 +410,7 @@ static int rte_init(void)
     /* setup the orte_show_help system to recv remote output */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                                  ORTE_RML_NON_PERSISTENT, orte_show_help_recv, NULL);
-    if (ret != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(ret) != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         error = "setup receive for orte_show_help";
         goto error;
@@ -693,13 +693,13 @@ static int rte_init(void)
     return ORTE_SUCCESS;
 
 error:
-    if (ORTE_ERR_SILENT != OPAL_SOS_GET_ERROR_CODE(ret)) {
+    if (ORTE_ERR_SILENT != ret) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
     }
     
-    return ret;
+    return ORTE_ERR_SILENT;
 }
 
 static int rte_finalize(void)

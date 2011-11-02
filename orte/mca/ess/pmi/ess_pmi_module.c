@@ -42,7 +42,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/paffinity/paffinity.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/util/printf.h"
 
 #include "orte/util/proc_info.h"
@@ -103,6 +103,16 @@ static int rte_init(void)
         goto error;
     }
     
+#if OPAL_HAVE_HWLOC
+    /* get the topology */
+    if (NULL == opal_hwloc_topology) {
+        if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
+            error = "topology discovery";
+            goto error;
+        }
+    }
+#endif
+
     /* get our PMI id length */
     if (PMI_SUCCESS != (ret = PMI_Get_id_length_max(&pmi_maxlen))) {
         error = "PMI_Get_id_length_max";
@@ -291,6 +301,13 @@ static int rte_finalize(void)
      * before things were initialized
      */
     orte_util_nidmap_finalize();
+
+#if OPAL_HAVE_HWLOC
+    if (NULL != opal_hwloc_topology) {
+        opal_hwloc_base_free_topology(opal_hwloc_topology);
+        opal_hwloc_topology = NULL;
+    }
+#endif
 
     return ret;    
 }
