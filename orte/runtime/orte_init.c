@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -87,8 +87,8 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
 
     /* initialize the opal layer */
     if (ORTE_SUCCESS != (ret = opal_init(pargc, pargv))) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
+        error = "opal_init";
+        goto error;
     }
     
     /* ensure we know the type of proc for when we finalize */
@@ -108,7 +108,6 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     
     /* setup the orte_show_help system */
     if (ORTE_SUCCESS != (ret = orte_show_help_init())) {
-        ORTE_ERROR_LOG(ret);
         error = "opal_output_init";
         goto error;
     }
@@ -124,20 +123,17 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
 
     /* open the ESS and select the correct module for this environment */
     if (ORTE_SUCCESS != (ret = orte_ess_base_open())) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_open";
         goto error;
     }
     if (ORTE_SUCCESS != (ret = orte_ess_base_select())) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_ess_base_select";
         goto error;
     }
     
     /* initialize the RTE for this environment */
     if (ORTE_SUCCESS != (ret = orte_ess.init())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_ess_set_name";
+        error = "orte_ess_init";
         goto error;
     }
     
