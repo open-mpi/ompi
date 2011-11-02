@@ -170,17 +170,10 @@ static void orte_plm_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
             /* increment the #daemons terminated so we will exit properly */
             jdata->num_terminated++;
-#if 0
+
             /* report that the daemon has failed so we can exit */
             orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
-                                     NULL, ORTE_PROC_STATE_UNDEF, status);
-#else
-            /* JJH: Look into a better way of doing this. If we let the daemon
-             *      know, then it kills the job when we are trying to restart.. */
-            opal_output(0, "%s daemon %s failed. SKIPPING orte_plm_base_launch_failed()",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&daemon->name));
-#endif
+                                     NULL, ORTE_PROC_STATE_UNDEF, pid, status);
         }
     }
 
