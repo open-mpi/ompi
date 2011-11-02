@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Los Alamos National Security, LLC.
@@ -347,7 +347,7 @@ opal_init(int* pargc, char*** pargv)
      * select is required
      */
     if (OPAL_SUCCESS != (ret = opal_hwloc_base_open())) {
-        error = "opal_paffinity_base_open";
+        error = "opal_hwloc_base_open";
         goto return_error;
     }
 
@@ -360,7 +360,7 @@ opal_init(int* pargc, char*** pargv)
         error = "opal_paffinity_base_select";
         goto return_error;
     }
-    
+
     /* the memcpy component should be one of the first who get
      * loaded in order to make sure we ddo have all the available
      * versions of memcpy correctly configured.
