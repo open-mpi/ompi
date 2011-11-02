@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -76,10 +76,10 @@ static inline void vader_fifo_write (void *value, vader_fifo_t *fifo)
     opal_atomic_wmb ();
 
     if (OPAL_LIKELY(VADER_FIFO_FREE != prev)) {
-	hdr = (mca_btl_vader_hdr_t *) RELATIVE2VIRTUAL(prev);
-	hdr->next = value;
+        hdr = (mca_btl_vader_hdr_t *) RELATIVE2VIRTUAL(prev);
+        hdr->next = value;
     } else {
- 	fifo->fifo_head = value;
+         fifo->fifo_head = value;
     }
 
     opal_atomic_wmb ();
@@ -94,22 +94,22 @@ static inline void *vader_fifo_read (vader_fifo_t *fifo)
 
     value = (void *) opal_atomic_swap_ptr (&fifo->fifo_head, (intptr_t) VADER_FIFO_FREE);
     if (VADER_FIFO_FREE == value) {
-	/* fifo is empty or we lost the race with another thread */
-	return value;
+        /* fifo is empty or we lost the race with another thread */
+        return value;
     }
 
     hdr = (mca_btl_vader_hdr_t *) RELATIVE2VIRTUAL(value);
 
     if (OPAL_UNLIKELY(VADER_FIFO_FREE == hdr->next)) {
-	if (!opal_atomic_cmpset_ptr (&fifo->fifo_tail, value, VADER_FIFO_FREE)) {
-	    while (VADER_FIFO_FREE == hdr->next) {
-		opal_atomic_rmb ();
-	    }
+        if (!opal_atomic_cmpset_ptr (&fifo->fifo_tail, value, VADER_FIFO_FREE)) {
+            while (VADER_FIFO_FREE == hdr->next) {
+                opal_atomic_rmb ();
+            }
 
-	    fifo->fifo_head = hdr->next;
-	}
+            fifo->fifo_head = hdr->next;
+        }
     } else {
-	fifo->fifo_head = hdr->next;
+        fifo->fifo_head = hdr->next;
     }
 
     opal_atomic_wmb ();
@@ -154,10 +154,10 @@ static inline int vader_fifo_write (void *value, vader_fifo_t *fifo)
     fifo->fifo_tail = value;
 
     if (OPAL_LIKELY(VADER_FIFO_FREE != prev)) {
-	hdr = (mca_btl_vader_hdr_t *) RELATIVE2VIRTUAL(prev);
-	hdr->next = value;
+        hdr = (mca_btl_vader_hdr_t *) RELATIVE2VIRTUAL(prev);
+        hdr->next = value;
     } else {
- 	fifo->fifo_head = value;
+         fifo->fifo_head = value;
     }
 
     opal_atomic_unlock(&(fifo->tail_lock));
@@ -174,12 +174,12 @@ static inline void *vader_fifo_read (vader_fifo_t *fifo)
 
     /* aquire thread lock */
     if (opal_using_threads ()) {
-	opal_atomic_lock (&fifo->head_lock);
+        opal_atomic_lock (&fifo->head_lock);
     }
 
     opal_atomic_rmb();
     if (VADER_FIFO_FREE == fifo->fifo_head) {
-	return VADER_FIFO_FREE;
+        return VADER_FIFO_FREE;
     }
 
     value = (void *) fifo->fifo_head;
@@ -187,20 +187,20 @@ static inline void *vader_fifo_read (vader_fifo_t *fifo)
     fifo->fifo_head = hdr->next;
 
     if (OPAL_UNLIKELY(VADER_FIFO_FREE == fifo->fifo_head)) {
-	opal_atomic_rmb();
-	opal_atomic_lock(&(fifo->tail_lock));
+        opal_atomic_rmb();
+        opal_atomic_lock(&(fifo->tail_lock));
 
-	if (OPAL_LIKELY(fifo->fifo_tail == value)) {
-	    fifo->fifo_tail = VADER_FIFO_FREE;
-	} else {
-	    fifo->fifo_head = hdr->next;
-	}
-	opal_atomic_unlock(&(fifo->tail_lock));
+        if (OPAL_LIKELY(fifo->fifo_tail == value)) {
+            fifo->fifo_tail = VADER_FIFO_FREE;
+        } else {
+            fifo->fifo_head = hdr->next;
+        }
+        opal_atomic_unlock(&(fifo->tail_lock));
     }
 
     /* release thread lock */
     if (opal_using_threads ()) {
-	opal_atomic_unlock (&fifo->head_lock);
+        opal_atomic_unlock (&fifo->head_lock);
     }
     
     return value;

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -33,41 +33,41 @@
 #include "btl_vader_fbox.h"
 
 static int vader_del_procs (struct mca_btl_base_module_t *btl,
-			    size_t nprocs, struct ompi_proc_t **procs,
-			    struct mca_btl_base_endpoint_t **peers);
+                            size_t nprocs, struct ompi_proc_t **procs,
+                            struct mca_btl_base_endpoint_t **peers);
 
 static int vader_register_error_cb (struct mca_btl_base_module_t* btl,
-				    mca_btl_base_module_error_cb_fn_t cbfunc);
+                                    mca_btl_base_module_error_cb_fn_t cbfunc);
 
 static int vader_finalize (struct mca_btl_base_module_t* btl);
 
 static int vader_free (struct mca_btl_base_module_t* btl, mca_btl_base_descriptor_t* des);
 
 static struct mca_btl_base_descriptor_t *vader_prepare_src (
-							    struct mca_btl_base_module_t *btl,
-							    struct mca_btl_base_endpoint_t *endpoint,
-							    mca_mpool_base_registration_t *registration,
-							    struct opal_convertor_t *convertor,
-							    uint8_t order,
-							    size_t reserve,
-							    size_t *size,
-							    uint32_t flags
-							    );
+                                                            struct mca_btl_base_module_t *btl,
+                                                            struct mca_btl_base_endpoint_t *endpoint,
+                                                            mca_mpool_base_registration_t *registration,
+                                                            struct opal_convertor_t *convertor,
+                                                            uint8_t order,
+                                                            size_t reserve,
+                                                            size_t *size,
+                                                            uint32_t flags
+                                                            );
 
 static struct mca_btl_base_descriptor_t *vader_prepare_dst (
-							    struct mca_btl_base_module_t *btl,
-							    struct mca_btl_base_endpoint_t *endpoint,
-							    struct mca_mpool_base_registration_t *registration,
-							    struct opal_convertor_t *convertor,
-							    uint8_t order,
-							    size_t reserve,
-							    size_t *size,
-							    uint32_t flags);
+                                                            struct mca_btl_base_module_t *btl,
+                                                            struct mca_btl_base_endpoint_t *endpoint,
+                                                            struct mca_mpool_base_registration_t *registration,
+                                                            struct opal_convertor_t *convertor,
+                                                            uint8_t order,
+                                                            size_t reserve,
+                                                            size_t *size,
+                                                            uint32_t flags);
 
 static int vader_add_procs(struct mca_btl_base_module_t* btl,
-			   size_t nprocs, struct ompi_proc_t **procs,
-			   struct mca_btl_base_endpoint_t** peers,
-			   struct opal_bitmap_t* reachability);
+                           size_t nprocs, struct ompi_proc_t **procs,
+                           struct mca_btl_base_endpoint_t** peers,
+                           struct opal_bitmap_t* reachability);
 
 static int vader_ft_event (int state);
 
@@ -93,7 +93,7 @@ mca_btl_vader_t mca_btl_vader = {
         vader_prepare_src,
         vader_prepare_dst,
         mca_btl_vader_send,
-	mca_btl_vader_sendi,
+        mca_btl_vader_sendi,
         mca_btl_vader_put,
         mca_btl_vader_get,
         mca_btl_base_dump,
@@ -131,9 +131,9 @@ static void vader_init_maffinity (int *my_mem_node)
 
     /* find core we are running on */
     for (i = 0; i < num_core; ++i) {
-	if (OPAL_PAFFINITY_CPU_ISSET(i, cpus)) {
-	    break;
-	}
+        if (OPAL_PAFFINITY_CPU_ISSET(i, cpus)) {
+            break;
+        }
     }
 
     if (OMPI_SUCCESS != opal_paffinity_base_get_map_to_socket_core(i, &socket, &i)) {
@@ -146,17 +146,17 @@ static void vader_init_maffinity (int *my_mem_node)
     slot_node = opal_carto_base_find_node(topo, myslot);
 
     if (NULL == slot_node) {
-	goto out;
+        goto out;
     }
 
     opal_carto_base_get_nodes_distance(topo, slot_node, "Memory", &dists);
     if (opal_value_array_get_size(&dists) > 1) {
-	dist = (opal_carto_node_distance_t *) opal_value_array_get_item(&dists, 0);
-	opal_maffinity_base_node_name_to_id(dist->node->node_name, my_mem_node);
+        dist = (opal_carto_node_distance_t *) opal_value_array_get_item(&dists, 0);
+        opal_maffinity_base_node_name_to_id(dist->node->node_name, my_mem_node);
     }
  out:
     if (myslot) {
-	free(myslot);
+        free(myslot);
     }
 
     OBJ_DESTRUCT(&dists);
@@ -181,7 +181,7 @@ static inline int vader_init_mpool (mca_btl_vader_t *vader_btl, int n)
      * in the allocator.
      */
     res.size = sizeof (vader_fifo_t) + 4 * opal_cache_line_size +
-	(2 * n + component->vader_free_list_inc) * (component->eager_limit + 2 * opal_cache_line_size);
+        (2 * n + component->vader_free_list_inc) * (component->eager_limit + 2 * opal_cache_line_size);
 
     /* before we multiply by n, make sure the result won't overflow */
     /* Stick that little pad in, particularly since we'll eventually
@@ -190,21 +190,21 @@ static inline int vader_init_mpool (mca_btl_vader_t *vader_btl, int n)
      * added.
      */
     if ( ((double) res.size) * n > LONG_MAX - 4096 )
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     res.size *= n;
 
     /* now, create it */
     component->vader_mpool =
-	mca_mpool_base_module_create(component->vader_mpool_name,
-				     vader_btl, &res);
+        mca_mpool_base_module_create(component->vader_mpool_name,
+                                     vader_btl, &res);
     /* Sanity check to ensure that we found it */
     if(NULL == component->vader_mpool) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     component->vader_mpool_base =
-	component->vader_mpool->mpool_base (component->vader_mpool);
+        component->vader_mpool->mpool_base (component->vader_mpool);
 
     return OMPI_SUCCESS;
 }
@@ -222,14 +222,14 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 
     /* make the entire memory space of this process accessible */
     my_segid = xpmem_make (0, 0xffffffffffffffffll, XPMEM_PERMIT_MODE,
-			   (void *)0666);
+                           (void *)0666);
     if (-1 == my_segid) {
-	return OMPI_ERROR;
+        return OMPI_ERROR;
     }
 
     rc = vader_init_mpool (vader_btl, n);
     if (OMPI_SUCCESS != rc) {
-	return rc;
+        return rc;
     }
 
     /* create a list of peers */
@@ -251,7 +251,7 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
        segment (only the shared control structure) */
     size = sizeof (mca_common_sm_seg_header_t) +
         n * (sizeof (vader_fifo_t *) + sizeof (char *)
-	     + sizeof (xpmem_segid_t)) + opal_cache_line_size;
+             + sizeof (xpmem_segid_t)) + opal_cache_line_size;
     procs = ompi_proc_world(&num_procs);
     if (!(mca_btl_vader_component.vader_seg =
           mca_common_sm_init(procs, num_procs, size, vader_ctl_file,
@@ -287,40 +287,40 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     component->shm_fifo[component->my_smp_rank] =
-	component->fifo[component->my_smp_rank] = my_fifos;
+        component->fifo[component->my_smp_rank] = my_fifos;
 
     component->apids = (xpmem_apid_t *) calloc (n, sizeof (xpmem_apid_t));
     if (NULL == component->apids)
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     component->xpmem_rcaches =
-	(struct mca_rcache_base_module_t **) calloc (n, sizeof (struct mca_rcache_base_module_t *));
+        (struct mca_rcache_base_module_t **) calloc (n, sizeof (struct mca_rcache_base_module_t *));
     if (NULL == component->xpmem_rcaches)
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     component->vader_fboxes_in = (char **) calloc (n, sizeof (char *));
     if (NULL == component->vader_fboxes_in)
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     component->vader_fboxes_out = (char **) calloc (n, sizeof (char *));
     if (NULL == component->vader_fboxes_out)
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     component->vader_next_fbox_in = (unsigned char *) calloc (64, 1);
     if (NULL == component->vader_next_fbox_in)
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     component->vader_next_fbox_out = (unsigned char *) calloc (64, 1);
     if (NULL == component->vader_next_fbox_out)
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* initialize fragment descriptor free lists */
     /* initialize free list for send fragments */
     i = ompi_free_list_init_new(&component->vader_frags_eager,
-				sizeof (mca_btl_vader_frag_t),
+                                sizeof (mca_btl_vader_frag_t),
                                 opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
-				sizeof (mca_btl_vader_hdr_t) + component->eager_limit,
-				opal_cache_line_size,
+                                sizeof (mca_btl_vader_hdr_t) + component->eager_limit,
+                                opal_cache_line_size,
                                 component->vader_free_list_num,
                                 component->vader_free_list_max,
                                 component->vader_free_list_inc,
@@ -330,16 +330,16 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 
     /* initialize free list for put/get fragments */
     i = ompi_free_list_init_new(&component->vader_frags_user, 
-				sizeof(mca_btl_vader_frag_t),
-				opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
-				sizeof(mca_btl_vader_hdr_t) + mca_btl_vader_max_inline_send,
-				opal_cache_line_size,
-				component->vader_free_list_num,
-				component->vader_free_list_max,
-				component->vader_free_list_inc,
-				component->vader_mpool);
+                                sizeof(mca_btl_vader_frag_t),
+                                opal_cache_line_size, OBJ_CLASS(mca_btl_vader_frag_t),
+                                sizeof(mca_btl_vader_hdr_t) + mca_btl_vader_max_inline_send,
+                                opal_cache_line_size,
+                                component->vader_free_list_num,
+                                component->vader_free_list_max,
+                                component->vader_free_list_inc,
+                                component->vader_mpool);
     if (OMPI_SUCCESS != i)
-	return i;
+        return i;
 
     /* set flag indicating btl has been inited */
     vader_btl->btl_inited = true;
@@ -353,7 +353,7 @@ mca_btl_base_endpoint_t *create_vader_endpoint (int local_proc, struct ompi_proc
     struct mca_btl_base_endpoint_t *ep = (struct mca_btl_base_endpoint_t *)
         calloc(1, sizeof (struct mca_btl_base_endpoint_t));
     if(NULL != ep) {
-	ep->peer_smp_rank = local_proc + mca_btl_vader_component.num_smp_procs;
+        ep->peer_smp_rank = local_proc + mca_btl_vader_component.num_smp_procs;
     }
 
     return ep;
@@ -374,9 +374,9 @@ mca_btl_base_endpoint_t *create_vader_endpoint (int local_proc, struct ompi_proc
  */
 
 static int vader_add_procs (struct mca_btl_base_module_t* btl,
-			    size_t nprocs, struct ompi_proc_t **procs,
-			    struct mca_btl_base_endpoint_t **peers,
-			    opal_bitmap_t *reachability)
+                            size_t nprocs, struct ompi_proc_t **procs,
+                            struct mca_btl_base_endpoint_t **peers,
+                            opal_bitmap_t *reachability)
 {
     mca_btl_vader_component_t *component = &mca_btl_vader_component;
     mca_btl_vader_t *vader_btl = (mca_btl_vader_t *) btl;
@@ -408,7 +408,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
         /* check to see if this is me */
         if (my_proc == procs[proc]) {
             my_smp_rank = component->my_smp_rank = n_local_procs++;
-	    continue;
+            continue;
         }
 
         /* we have someone to talk to */
@@ -424,7 +424,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
         rc = opal_bitmap_set_bit (reachability, proc);
         if(OMPI_SUCCESS != rc) {
             goto CLEANUP;
-	}
+        }
     }
 
     /* jump out if there's not someone we can talk to */
@@ -442,7 +442,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
         rc = vader_btl_first_time_init(vader_btl, n_local_procs);
         if(rc != OMPI_SUCCESS) {
             goto CLEANUP;
-	}
+        }
     }
 
     /* set local proc's smp rank in the peers structure for
@@ -462,7 +462,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
      */
     rc = vader_fifo_init (component->fifo[my_smp_rank]);
     if (OMPI_SUCCESS != rc) {
-	goto CLEANUP;
+        goto CLEANUP;
     }
 
     opal_atomic_wmb();
@@ -479,7 +479,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
 
     /* coordinate with other processes */
     for (i = 0 ; i < n_local_procs ; ++i) {
-	int peer_smp_rank = i + component->num_smp_procs;
+        int peer_smp_rank = i + component->num_smp_procs;
 
         /* spin until this element is allocated */
         /* doesn't really wait for that process... FIFO might be allocated, but not initialized */
@@ -488,31 +488,31 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
             opal_atomic_rmb();
         }
 
-	if (my_smp_rank != peer_smp_rank) {
-	    void *rem_ptr = (void *) component->shm_fifo[peer_smp_rank];
+        if (my_smp_rank != peer_smp_rank) {
+            void *rem_ptr = (void *) component->shm_fifo[peer_smp_rank];
 
-	    component->apids[peer_smp_rank] =
-		xpmem_get (component->shm_seg_ids[peer_smp_rank],
-			   XPMEM_RDWR, XPMEM_PERMIT_MODE, (void *) 0666);
-	    component->xpmem_rcaches[peer_smp_rank] = mca_rcache_base_module_create("vma");
+            component->apids[peer_smp_rank] =
+                xpmem_get (component->shm_seg_ids[peer_smp_rank],
+                           XPMEM_RDWR, XPMEM_PERMIT_MODE, (void *) 0666);
+            component->xpmem_rcaches[peer_smp_rank] = mca_rcache_base_module_create("vma");
 
-	    /* get a persistent pointer to the peer's fifo */
-	    component->fifo[peer_smp_rank] =
-		vader_reg_to_ptr (vader_get_registation (peer_smp_rank, rem_ptr,
-							 (n_local_procs + 1) * getpagesize (),
-							 MCA_MPOOL_FLAGS_PERSIST), rem_ptr);
+            /* get a persistent pointer to the peer's fifo */
+            component->fifo[peer_smp_rank] =
+                vader_reg_to_ptr (vader_get_registation (peer_smp_rank, rem_ptr,
+                                                         (n_local_procs + 1) * getpagesize (),
+                                                         MCA_MPOOL_FLAGS_PERSIST), rem_ptr);
 
-	    /* fast boxes are allocated at the same time as the fifos */
-	    component->vader_fboxes_in[peer_smp_rank] = (char *) component->fifo[my_smp_rank] +
-		(peer_smp_rank + 1) * getpagesize ();
-	    component->vader_fboxes_out[peer_smp_rank] = (char *) component->fifo[peer_smp_rank] +
-		(my_smp_rank + 1) * getpagesize ();
+            /* fast boxes are allocated at the same time as the fifos */
+            component->vader_fboxes_in[peer_smp_rank] = (char *) component->fifo[my_smp_rank] +
+                (peer_smp_rank + 1) * getpagesize ();
+            component->vader_fboxes_out[peer_smp_rank] = (char *) component->fifo[peer_smp_rank] +
+                (my_smp_rank + 1) * getpagesize ();
 
-	    component->vader_next_fbox_in[peer_smp_rank] = 0;
-	    component->vader_next_fbox_out[peer_smp_rank] = 0;
+            component->vader_next_fbox_in[peer_smp_rank] = 0;
+            component->vader_next_fbox_out[peer_smp_rank] = 0;
 
-	    memset (component->vader_fboxes_in[peer_smp_rank], MCA_BTL_VADER_FBOX_FREE, getpagesize());
-	}
+            memset (component->vader_fboxes_in[peer_smp_rank], MCA_BTL_VADER_FBOX_FREE, getpagesize());
+        }
     }
 
     /* update the local smp process count */
@@ -520,7 +520,7 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
 
     /* make sure we have enough eager fragmnents for each process */
     rc = ompi_free_list_resize(&component->vader_frags_eager,
-			       component->num_smp_procs * 2);
+                               component->num_smp_procs * 2);
 
  CLEANUP:
 
@@ -538,8 +538,8 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
  */
 
 static int vader_del_procs(struct mca_btl_base_module_t *btl,
-			   size_t nprocs, struct ompi_proc_t **procs,
-			   struct mca_btl_base_endpoint_t **peers)
+                           size_t nprocs, struct ompi_proc_t **procs,
+                           struct mca_btl_base_endpoint_t **peers)
 {
     return OMPI_SUCCESS;
 }
@@ -572,7 +572,7 @@ static int vader_finalize(struct mca_btl_base_module_t *btl)
  * @return             Status indicating if cleanup was successful
  */
 static int vader_register_error_cb(struct mca_btl_base_module_t* btl,
-				   mca_btl_base_module_error_cb_fn_t cbfunc)
+                                   mca_btl_base_module_error_cb_fn_t cbfunc)
 {
     ((mca_btl_vader_t *)btl)->error_cb = cbfunc;
     return OMPI_SUCCESS;
@@ -585,28 +585,28 @@ static int vader_register_error_cb(struct mca_btl_base_module_t* btl,
  * @param size (IN)     Request segment size.
  */
 mca_btl_base_descriptor_t *mca_btl_vader_alloc(struct mca_btl_base_module_t *btl,
-					       struct mca_btl_base_endpoint_t *endpoint,
-					       uint8_t order, size_t size, uint32_t flags)
+                                               struct mca_btl_base_endpoint_t *endpoint,
+                                               uint8_t order, size_t size, uint32_t flags)
 {
     mca_btl_vader_frag_t *frag = NULL;
     int rc;
 
     if (size <= mca_btl_vader_max_inline_send) {
-	MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
+        MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
     } else if (size <= mca_btl_vader_component.eager_limit) {
         MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, rc);
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
         frag->segment.seg_len  = size;
-	frag->endpoint         = endpoint;
+        frag->endpoint         = endpoint;
 
         frag->base.des_flags   = flags;
-	frag->base.order       = order;
-	frag->base.des_src     = &frag->segment;
-	frag->base.des_src_cnt = 1;
-	frag->base.des_dst     = &frag->segment;
-	frag->base.des_src_cnt = 1;
+        frag->base.order       = order;
+        frag->base.des_src     = &frag->segment;
+        frag->base.des_src_cnt = 1;
+        frag->base.des_dst     = &frag->segment;
+        frag->base.des_src_cnt = 1;
     }
 
     return (mca_btl_base_descriptor_t *) frag;
@@ -626,11 +626,11 @@ static int vader_free (struct mca_btl_base_module_t *btl, mca_btl_base_descripto
 }
 
 struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t *btl,
-						    struct mca_btl_base_endpoint_t *endpoint,
-						    struct mca_mpool_base_registration_t *registration,
-						    struct opal_convertor_t *convertor,
-						    uint8_t order, size_t reserve, size_t *size,
-						    uint32_t flags)
+                                                    struct mca_btl_base_endpoint_t *endpoint,
+                                                    struct mca_mpool_base_registration_t *registration,
+                                                    struct opal_convertor_t *convertor,
+                                                    uint8_t order, size_t reserve, size_t *size,
+                                                    uint32_t flags)
 {
     mca_btl_vader_frag_t *frag;
     void *data_ptr;
@@ -662,11 +662,11 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
  * @param btl (IN)      BTL module
  */
 static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_module_t *btl,
-							    struct mca_btl_base_endpoint_t *endpoint,
-							    mca_mpool_base_registration_t *registration,
-							    struct opal_convertor_t *convertor,
-							    uint8_t order, size_t reserve, size_t *size,
-							    uint32_t flags)
+                                                            struct mca_btl_base_endpoint_t *endpoint,
+                                                            mca_mpool_base_registration_t *registration,
+                                                            struct opal_convertor_t *convertor,
+                                                            uint8_t order, size_t reserve, size_t *size,
+                                                            uint32_t flags)
 {
     struct iovec iov, *lcl_mem;
     mca_btl_vader_frag_t *frag;
@@ -677,69 +677,69 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
     opal_convertor_get_current_pointer (convertor, &data_ptr);
 
     if (OPAL_LIKELY(reserve)) {
-	/* in place send fragment */
-	if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
-	    /* non-contiguous data requires the convertor */
-	    MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag,rc);
-	    if (OPAL_UNLIKELY(NULL == frag)) {
-		return NULL;
-	    }
+        /* in place send fragment */
+        if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
+            /* non-contiguous data requires the convertor */
+            MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag,rc);
+            if (OPAL_UNLIKELY(NULL == frag)) {
+                return NULL;
+            }
 
-	    iov.iov_len = mca_btl_vader_component.eager_limit - reserve;
-	    iov.iov_base =
-		(IOVBASE_TYPE *)(((uintptr_t)(frag->segment.seg_addr.pval)) +
-				 reserve);
+            iov.iov_len = mca_btl_vader_component.eager_limit - reserve;
+            iov.iov_base =
+                (IOVBASE_TYPE *)(((uintptr_t)(frag->segment.seg_addr.pval)) +
+                                 reserve);
 
-	    rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
-	    if (OPAL_UNLIKELY(rc < 0)) {
-		MCA_BTL_VADER_FRAG_RETURN(frag);
-		return NULL;
-	    }
+            rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
+            if (OPAL_UNLIKELY(rc < 0)) {
+                MCA_BTL_VADER_FRAG_RETURN(frag);
+                return NULL;
+            }
 
-	    frag->segment.seg_len = reserve + *size;
-	} else {
-	    MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
-	    if (OPAL_UNLIKELY(NULL == frag)) {
-		return NULL;
-	    }
+            frag->segment.seg_len = reserve + *size;
+        } else {
+            MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
+            if (OPAL_UNLIKELY(NULL == frag)) {
+                return NULL;
+            }
 
-	    if ((*size + reserve) > mca_btl_vader_max_inline_send) {
-		/* single copy send */
-		/* pack the iovec after the reserved memory */
-		lcl_mem = (struct iovec *) ((uintptr_t)frag->segment.seg_addr.pval + reserve);
+            if ((*size + reserve) > mca_btl_vader_max_inline_send) {
+                /* single copy send */
+                /* pack the iovec after the reserved memory */
+                lcl_mem = (struct iovec *) ((uintptr_t)frag->segment.seg_addr.pval + reserve);
 
-		frag->hdr->flags = MCA_BTL_VADER_FLAG_SINGLE_COPY;
+                frag->hdr->flags = MCA_BTL_VADER_FLAG_SINGLE_COPY;
 
-		lcl_mem->iov_base = data_ptr;
-		lcl_mem->iov_len  = *size;
+                lcl_mem->iov_base = data_ptr;
+                lcl_mem->iov_len  = *size;
 
-		frag->segment.seg_len = reserve;
-	    } else {
-		/* inline send */
+                frag->segment.seg_len = reserve;
+            } else {
+                /* inline send */
 
-		/* try to reserve a fast box for this transfer */
-		fbox_ptr = mca_btl_vader_reserve_fbox (endpoint->peer_smp_rank, reserve + *size);
+                /* try to reserve a fast box for this transfer */
+                fbox_ptr = mca_btl_vader_reserve_fbox (endpoint->peer_smp_rank, reserve + *size);
 
-		if (fbox_ptr) {
-		    frag->hdr->flags |= MCA_BTL_VADER_FLAG_FBOX;
-		    frag->segment.seg_addr.pval = fbox_ptr;
-		}
+                if (fbox_ptr) {
+                    frag->hdr->flags |= MCA_BTL_VADER_FLAG_FBOX;
+                    frag->segment.seg_addr.pval = fbox_ptr;
+                }
 
-		/* NTH: the covertor adds some latency so we bypass it here */
-		vader_memmove ((void *)((uintptr_t)frag->segment.seg_addr.pval + reserve),
-			       data_ptr, *size);
-		frag->segment.seg_len = reserve + *size;
-	    }
-	}
+                /* NTH: the covertor adds some latency so we bypass it here */
+                vader_memmove ((void *)((uintptr_t)frag->segment.seg_addr.pval + reserve),
+                               data_ptr, *size);
+                frag->segment.seg_len = reserve + *size;
+            }
+        }
     } else {
-	/* put/get fragment */
-	MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
-	if (OPAL_UNLIKELY(NULL == frag)) {
-	    return NULL;
-	}
+        /* put/get fragment */
+        MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
+        if (OPAL_UNLIKELY(NULL == frag)) {
+            return NULL;
+        }
 
-	frag->segment.seg_key.ptr = (uintptr_t) data_ptr;
-	frag->segment.seg_len = reserve + *size;
+        frag->segment.seg_key.ptr = (uintptr_t) data_ptr;
+        frag->segment.seg_len = reserve + *size;
     }
 
     frag->base.des_src     = &frag->segment;

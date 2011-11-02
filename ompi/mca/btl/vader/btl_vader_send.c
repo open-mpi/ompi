@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2011 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -35,20 +35,20 @@
  * @param peer (IN)     BTL peer addressing
  */
 int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
-			struct mca_btl_base_endpoint_t *endpoint,
-			struct mca_btl_base_descriptor_t *descriptor,
-			mca_btl_base_tag_t tag)
+                        struct mca_btl_base_endpoint_t *endpoint,
+                        struct mca_btl_base_descriptor_t *descriptor,
+                        mca_btl_base_tag_t tag)
 {
     mca_btl_vader_frag_t *frag = (mca_btl_vader_frag_t *) descriptor;
 
     if (frag->hdr->flags & MCA_BTL_VADER_FLAG_FBOX) {
-	mca_btl_vader_fbox_send (frag->segment.seg_addr.pval, tag, frag->segment.seg_len);
+        mca_btl_vader_fbox_send (frag->segment.seg_addr.pval, tag, frag->segment.seg_len);
 
-	if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-	    MCA_BTL_VADER_FRAG_RETURN(frag);
-	}
+        if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+            MCA_BTL_VADER_FRAG_RETURN(frag);
+        }
 
-	return 1;
+        return 1;
     }
 
     /* available header space */
@@ -60,11 +60,11 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
 
     /* post the relative address of the descriptor into the peer's fifo */
     vader_fifo_write ((void *) VIRTUAL2RELATIVE(frag->hdr),
-		      mca_btl_vader_component.fifo[endpoint->peer_smp_rank]);
+                      mca_btl_vader_component.fifo[endpoint->peer_smp_rank]);
 
     if (frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) {
-	frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-	return 0;
+        frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+        return 0;
     }
 
     /* data is gone */

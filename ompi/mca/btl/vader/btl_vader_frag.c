@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -34,4 +34,4 @@ static inline void mca_btl_vader_frag_constructor (mca_btl_vader_frag_t *frag)
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_vader_frag_t, mca_btl_base_descriptor_t,
-		   mca_btl_vader_frag_constructor, NULL);
+                   mca_btl_vader_frag_constructor, NULL);
