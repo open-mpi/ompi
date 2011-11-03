@@ -111,6 +111,7 @@ int ompi_mtl_mxm_module_init(void)
     lr = -1;
     nlps = 0;
 
+    mp = ompi_proc_local();
     jobid = ompi_mtl_mxm_get_job_id();
     if (0 == jobid) {
     	MXM_ERROR("Failed to generate jobid");
@@ -122,7 +123,7 @@ int ompi_mtl_mxm_module_init(void)
 
     sa_bind_self.sa_family = AF_MXM_LOCAL_PROC;
     sa_bind_self.context_id = jobid;
-    sa_bind_self.process_id = 0;
+    sa_bind_self.process_id = mp->proc_name.vpid;
 
     sa_bind_rdma.sa_family = AF_MXM_IB_LOCAL;
     sa_bind_rdma.lid = 0;
@@ -141,7 +142,6 @@ int ompi_mtl_mxm_module_init(void)
         return OMPI_ERROR;
     }
 
-    mp = ompi_proc_local();
     if (NULL == (procs = ompi_proc_world(&totps))) {
         MXM_ERROR("Unable to obtain process list");
         return OMPI_ERROR;
