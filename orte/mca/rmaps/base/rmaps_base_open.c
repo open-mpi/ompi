@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -185,6 +185,16 @@ int orte_rmaps_base_open(void)
                                 false, false, (int)false, &value);
     orte_display_topo_with_map = OPAL_INT_TO_BOOL(value);
    
+    /* should we display a diffable report of proc locations after determining it? */
+    mca_base_param_reg_int_name("rmaps", "base_display_diffable_map",
+                                "Whether to display a diffable process map after it is computed",
+                                false, false, (int)false, &value);
+    btmp = OPAL_INT_TO_BOOL(value);
+    if (btmp) {
+        orte_rmaps_base.display_map = true;
+        orte_display_diffable_output = true;
+    }
+
     /* Open up all the components that we can find */
     if (ORTE_SUCCESS != 
         mca_base_components_open("rmaps", orte_rmaps_base.rmaps_output,

@@ -605,6 +605,7 @@ ORTE_DECLSPEC extern bool orte_hetero_nodes;
 ORTE_DECLSPEC extern bool orte_never_launched;
 ORTE_DECLSPEC extern bool orte_devel_level_output;
 ORTE_DECLSPEC extern bool orte_display_topo_with_map;
+ORTE_DECLSPEC extern bool orte_display_diffable_output;
 
 ORTE_DECLSPEC extern char **orte_launch_environ;
 
