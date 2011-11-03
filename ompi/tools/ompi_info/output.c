@@ -59,7 +59,7 @@ void ompi_info_out(const char *pretty_message, const char *plain_message, const 
     size_t i, len, max_value_width;
     char *spaces = NULL;
     char *filler = NULL;
-    char *pos, *v, savev;
+    char *pos, *v, savev, *v_to_free;
     
 #ifdef HAVE_ISATTY
     /* If we have isatty(), if this is not a tty, then disable
@@ -80,7 +80,7 @@ void ompi_info_out(const char *pretty_message, const char *plain_message, const 
 #endif
 
     /* Strip leading and trailing whitespace from the string value */
-    v = strdup(value);
+    v = v_to_free = strdup(value);
     len = strlen(v);
     if (isspace(v[0])) {
         char *newv;
@@ -186,8 +186,8 @@ void ompi_info_out(const char *pretty_message, const char *plain_message, const 
             printf("  %s\n", value);
         }
     }
-    if (NULL != v) {
-        free(v);
+    if (NULL != v_to_free) {
+        free(v_to_free);
     }
 }
 
