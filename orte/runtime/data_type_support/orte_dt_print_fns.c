@@ -474,6 +474,23 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
         asprintf(&pfx2, "%s", prefix);
     }
     
+    if (orte_display_diffable_output) {
+        /* print only the parts important to testing
+         * mapping operations
+         */
+#if OPAL_HAVE_HWLOC
+        if (NULL != src->locale) {
+            hwloc_bitmap_list_asprintf(&locale, src->locale->cpuset);
+        }
+#endif
+        asprintf(output, "%s<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu locale=%s>",
+                 pfx2, ORTE_VPID_PRINT(src->name.vpid),  (long)src->app_idx,
+                 (unsigned long)src->local_rank,
+                 (unsigned long)src->node_rank,
+                 (NULL == locale) ? "UNKNOWN" : locale);
+        return ORTE_SUCCESS;
+    }
+
     if (orte_xml_output) {
         /* need to create the output in XML format */
         if (0 == src->pid) {
@@ -645,6 +662,38 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
         asprintf(&pfx2, "%s", prefix);
     }
     
+    if (orte_display_diffable_output) {
+        /* display just the procs in a diffable format */
+        asprintf(&tmp, "<map>\n");
+        /* loop through nodes */
+        for (i=0; i < src->nodes->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(src->nodes, i))) {
+                continue;
+            }
+            asprintf(&tmp2, "%s\n\t<host name=%s>", tmp, (NULL == node->name) ? "UNKNOWN" : node->name);
+            free(tmp);
+            tmp = tmp2;
+            for (j=0; j < node->procs->size; j++) {
+                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                    continue;
+                }
+                orte_dt_print_proc(&tmp2, "\t\t", proc, ORTE_PROC);
+                asprintf(&tmp3, "%s\n%s", tmp, tmp2);
+                free(tmp2);
+                free(tmp);
+                tmp = tmp3;
+            }
+            asprintf(&tmp2, "%s\n\t</host>", tmp);
+            free(tmp);
+            tmp = tmp2;
+        }
+        asprintf(&tmp2, "%s\n</map>\n", tmp);
+        free(tmp);
+        free(pfx2);
+        *output = tmp2;
+        return ORTE_SUCCESS;
+    }
+
     if (orte_xml_output) {
         /* need to create the output in XML format */
         asprintf(&tmp, "<map>\n");

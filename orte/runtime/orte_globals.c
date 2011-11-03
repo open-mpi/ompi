@@ -77,6 +77,7 @@ bool orte_hetero_nodes = false;
 bool orte_never_launched = false;
 bool orte_devel_level_output = false;
 bool orte_display_topo_with_map = false;
+bool orte_display_diffable_output = false;
 
 char **orte_launch_environ;
 
