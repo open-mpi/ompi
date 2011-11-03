@@ -6,7 +6,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
-# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
@@ -14,9 +14,9 @@
 # Copyright (c) 2011      Los Alamos National Security, LLC. All rights
 #                         reserved.
 # $COPYRIGHT$
-# 
+#
 # Additional copyrights may follow
-# 
+#
 # $HEADER$
 #
 
@@ -47,10 +47,9 @@ AC_DEFUN([ORTE_CHECK_PMI],[
     AC_MSG_CHECKING([if user requested PMI support])
     AS_IF([test "$with_pmi" = "no"],
           [AC_MSG_RESULT([no])
-	   orte_want_pmi_support=no
-           orte_use_cray_pmi2_ext=0],
+           orte_use_cray_pmi2_ext=0
+           $3],
           [AC_MSG_RESULT([yes])
-           orte_want_pmi_support=yes
            AC_MSG_CHECKING([if PMI support installed])
            # cannot use OMPI_CHECK_PACKAGE as its backend header
            # support appends "include" to the path, which won't
@@ -95,7 +94,8 @@ AC_DEFUN([ORTE_CHECK_PMI],[
                   # will use some of the functions in it.
                   AC_MSG_CHECKING([if PMI2 extensions installed])
                   AS_IF([test -f "$with_pmi/include/pmi2.h"],
-                        [orte_use_pmi2_ext=1],
+                        [orte_use_pmi2_ext=1
+                         AC_MSG_RESULT(yes)],
                         [AC_MSG_RESULT([no])
                          AC_MSG_WARN([PMI2 extensions requested (via --with-cray-pmi2-ext) but not found.])
                          AC_MSG_ERROR([Aborting.])
