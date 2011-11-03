@@ -89,8 +89,8 @@ void ompi_info_out(const char *pretty_message, const char *plain_message, const 
             ++i;
         }
         newv = strdup(v + i);
-        free(v);
-        v = newv;
+        free(v_to_free);
+        v_to_free = v = newv;
         len = strlen(v);
     }
     if (len > 0 && isspace(v[len - 1])) {
