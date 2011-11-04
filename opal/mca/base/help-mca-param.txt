@@ -52,3 +52,11 @@ parameters are supposed to affect.
     Source of value: %s
   2nd MCA parameter: %s
     Source of value: %s
+#
+[re-register with different type]
+An MCA parameter was re-registered with a different type (i.e., it was
+either originally registered as an INT and re-registered as a STRING,
+or it was originially registered as a STRING and re-registered as an
+INT).  This a developer error; your job may abort.
+
+  MCA parameter name: %s
