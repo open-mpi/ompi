@@ -43,6 +43,7 @@
 #include "opal/constants.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
+#include "opal/runtime/opal.h"
 
 /*
  * Local types
@@ -1362,8 +1363,8 @@ static int param_register(const char *type_name,
   for (i = 0; i < len; ++i) {
     if (0 == strcmp(param.mbp_full_name, array[i].mbp_full_name)) {
 
-        /* We found an entry with the same param name.  Check to see
-           if we're changing types */
+        /* We found an entry with the same param name.  Check to
+           ensure that we're not changing types */
         /* Easy case: both are INT */
 
       if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type &&
@@ -1424,93 +1425,22 @@ static int param_register(const char *type_name,
           }
       } 
 
-      /* Original is INT, new is STRING */
+      /* If the original is INT and the new is STRING, or the original
+         is STRING and the new is INT, this is an OMPI developer
+         error. */
 
-      else if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type &&
-               MCA_BASE_PARAM_TYPE_STRING == param.mbp_type) {
-          if (NULL != default_value && 
-              NULL != param.mbp_default_value.stringval) {
-              array[i].mbp_default_value.stringval =
-                  strdup(param.mbp_default_value.stringval);
-          } else {
-              /* If the new STRING doesn't have a default value, we
-                 must set the default value to "NULL" because it still
-                 contains the old INT default value (which may not
-                 compare equally to NULL) */
-              array[i].mbp_default_value.stringval = NULL;
-          }
-
-          if (NULL != file_value &&
-              NULL != param.mbp_file_value.stringval) {
-              array[i].mbp_file_value.stringval =
-                  strdup(param.mbp_file_value.stringval);
-              array[i].mbp_file_value_set = true;
-          } else {
-              /* Similar to above, be sure to set the file default
-                 value to NULL to ensure that it's not still set to a
-                 non-NULL value from the prior INT default value */
-              array[i].mbp_file_value.stringval = NULL;
-              array[i].mbp_file_value_set = false;
-          }
-
-          if (NULL != override_value &&
-              NULL != param.mbp_override_value.stringval) {
-              array[i].mbp_override_value.stringval =
-                  strdup(param.mbp_override_value.stringval);
-              array[i].mbp_override_value_set = true;
-          } else {
-              /* Similar to above, be sure to set the file default
-                 value to NULL to ensure that it's not still set to a
-                 non-NULL value from the prior INT default value */
-              array[i].mbp_file_value.stringval = NULL;
-              array[i].mbp_file_value_set = false;
-          }
-
-          array[i].mbp_type = param.mbp_type;
-      } 
-
-      /* Original is STRING, new is INT */
-
-      else if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type &&
-                 MCA_BASE_PARAM_TYPE_INT == param.mbp_type) {
-          /* Free the old STRING default value, if it exists */
-          if (NULL != array[i].mbp_default_value.stringval) {
-              free(array[i].mbp_default_value.stringval);
-          }
-
-          /* Set the new default value, or 0 if one wasn't provided */
-          if (NULL != default_value) {
-              array[i].mbp_default_value.intval =
-                  param.mbp_default_value.intval;
-          } else {
-              array[i].mbp_default_value.intval = 0;
-          }
-
-          if (NULL != file_value) {
-              if (NULL != array[i].mbp_file_value.stringval) {
-                  free(array[i].mbp_file_value.stringval);
-              }
-              array[i].mbp_file_value.intval =
-                  param.mbp_file_value.intval;
-              array[i].mbp_file_value_set = true;
-          } else {
-              array[i].mbp_file_value.intval = 0;
-              array[i].mbp_file_value_set = false;
-          }
-
-          if (NULL != override_value) {
-              if (NULL != array[i].mbp_override_value.stringval) {
-                  free(array[i].mbp_override_value.stringval);
-              }
-              array[i].mbp_override_value.intval =
-                  param.mbp_override_value.intval;
-              array[i].mbp_override_value_set = true;
-          } else {
-              array[i].mbp_file_value.intval = 0;
-              array[i].mbp_file_value_set = false;
-          }
-
-          array[i].mbp_type = param.mbp_type;
+      else if ((MCA_BASE_PARAM_TYPE_INT    == array[i].mbp_type &&
+                MCA_BASE_PARAM_TYPE_STRING == param.mbp_type) ||
+               (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type &&
+                MCA_BASE_PARAM_TYPE_INT    == param.mbp_type)) {
+#if OPAL_ENABLE_DEBUG
+          opal_show_help("help-mca-param.txt", 
+                         "re-register with different type",
+                         true, array[i].mbp_full_name);
+#endif
+          /* Return an error code and hope for the best. */
+          OBJ_DESTRUCT(&param);
+          return OPAL_ERR_VALUE_OUT_OF_BOUNDS;
       }
 
       /* Now delete the newly-created entry (since we just saved the
