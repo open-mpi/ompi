@@ -272,18 +272,13 @@ static int reply_start_connect(mca_btl_openib_endpoint_t *endpoint,
 static int set_remote_info(mca_btl_base_endpoint_t* endpoint,
                            mca_btl_openib_rem_info_t* rem_info)
 {
+    /* Free up the memory pointed to by rem_qps before overwriting the pointer
+       in the following memcpy */
+    free(endpoint->rem_info.rem_qps);
+
     /* copy the rem_info stuff */
     memcpy(&((mca_btl_openib_endpoint_t*) endpoint)->rem_info,
            rem_info, sizeof(mca_btl_openib_rem_info_t));
-
-    /* copy over the rem qp info */
-    /* per #2871, changed this from memcpy() to memmove() to handle
-     * the case of overlapping (or same) src/dest addresses.
-     * However, we still *should* figure out why the src and dest
-     * addresses are sometimes the same. */
-    memmove(endpoint->rem_info.rem_qps,
-           rem_info->rem_qps, sizeof(mca_btl_openib_rem_qp_info_t) *
-           mca_btl_openib_component.num_qps);
 
     BTL_VERBOSE(("Setting QP info,  LID = %d", endpoint->rem_info.rem_lid));
     return OMPI_SUCCESS;
@@ -671,7 +666,12 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
     uint8_t message_type;
     bool master;
 
-    /* start by unpacking data first so we know who is knocking at
+    /* We later memcpy this whole structure. Make sure
+       that all the parameters are initialized, especially
+       the pointers */
+    memset(&rem_info,0, sizeof(rem_info));
+
+   /* start by unpacking data first so we know who is knocking at
        our door */
     BTL_VERBOSE(("unpacking %d of %d\n", cnt, OPAL_UINT8));
     rc = opal_dss.unpack(buffer, &message_type, &cnt, OPAL_UINT8);
@@ -857,6 +857,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                to CONNECTING, and then reply with our QP
                information */
             if (master) {
+	        assert(rem_info.rem_qps != NULL);
                 rc = reply_start_connect(ib_endpoint, &rem_info);
             } else {
                 rc = oob_module_start_connect(ib_endpoint->endpoint_local_cpc,
@@ -879,6 +880,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             break;
 
         case MCA_BTL_IB_CONNECTING :
+	    assert(rem_info.rem_qps != NULL);
             set_remote_info(ib_endpoint, &rem_info);
             if (OMPI_SUCCESS != (rc = qp_connect_all(ib_endpoint))) {
                 BTL_ERROR(("endpoint connect error: %d", rc));
