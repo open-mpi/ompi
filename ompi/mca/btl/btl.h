@@ -241,7 +241,7 @@ struct mca_btl_base_segment_t {
         uint32_t  key32[2];
         uint64_t  key64;
         uint8_t   key8[8];
-	uintptr_t ptr;
+        uintptr_t ptr;
     } seg_key;
 };
 typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
