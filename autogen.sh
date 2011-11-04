@@ -662,6 +662,9 @@ EOF
     sed -e 's/\*pgCC\\ \[1-5\]\* | \*pgcpp\\ \[1-5\]\*/*pgCC\\ [1-5]\.* | *pgcpp\\ [1-5]\.*/' configure > configure.patched
     cp configure.patched configure
     rm -f configure.patched
+
+    echo "  ++ Modifying configure for Sun Studio Fortran compilers"
+    config/modify-configure-for-sun-fortran.pl
 }
 
 
