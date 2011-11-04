@@ -452,6 +452,9 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     free(endpoint->qps);
     endpoint->qps = NULL;
 
+    free(endpoint->rem_info.rem_qps);
+    free(endpoint->rem_info.rem_srqs);
+
     /* unregister xrc recv qp */
 #if HAVE_XRC
     if (0 != endpoint->xrc_recv_qp_num) {
