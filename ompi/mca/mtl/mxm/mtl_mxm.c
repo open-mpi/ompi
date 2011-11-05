@@ -82,7 +82,7 @@ static int ompi_mtl_mxm_get_ep_address(ompi_mtl_mxm_ep_conn_info_t *ep_info, mxm
     		(struct sockaddr *) &ep_info->ptl_addr[ptlid], &addrlen);
     if (MXM_OK != err) {
         orte_show_help("help-mtl-mxm.txt", "unable to extract endpoint address",
-        		true, mxm_error_string(err));
+        		true, (int)ptlid, mxm_error_string(err));
         return OMPI_ERROR;
     }
 
@@ -103,6 +103,7 @@ int ompi_mtl_mxm_module_init(void)
     uint64_t mxlr;
     int rc;
     ompi_proc_t *mp, **procs;
+    unsigned    ptl_bitmap;
     size_t totps, proc;
     int lr, nlps;
 
@@ -110,6 +111,7 @@ int ompi_mtl_mxm_module_init(void)
     lr = -1;
     nlps = 0;
 
+    mp = ompi_proc_local();
     jobid = ompi_mtl_mxm_get_job_id();
     if (0 == jobid) {
     	MXM_ERROR("Failed to generate jobid");
@@ -121,7 +123,7 @@ int ompi_mtl_mxm_module_init(void)
 
     sa_bind_self.sa_family = AF_MXM_LOCAL_PROC;
     sa_bind_self.context_id = jobid;
-    sa_bind_self.process_id = 0;
+    sa_bind_self.process_id = mp->proc_name.vpid;
 
     sa_bind_rdma.sa_family = AF_MXM_IB_LOCAL;
     sa_bind_rdma.lid = 0;
@@ -133,13 +135,13 @@ int ompi_mtl_mxm_module_init(void)
     sa_bind_shm.process_id = 0;
     sa_bind_shm.num_procs = 0;
     sa_bind_shm.context_id = 0;
+    sa_bind_shm.jobid = jobid;
 
     if ((rc = ompi_proc_refresh()) != OMPI_SUCCESS) {
         MXM_ERROR("Unable to refresh processes");
         return OMPI_ERROR;
     }
 
-    mp = ompi_proc_local();
     if (NULL == (procs = ompi_proc_world(&totps))) {
         MXM_ERROR("Unable to obtain process list");
         return OMPI_ERROR;
@@ -162,9 +164,14 @@ int ompi_mtl_mxm_module_init(void)
     sa_bind_shm.context_id = mxlr;
     sa_bind_shm.num_procs = nlps;
 
-    ep_opt.ptl_bind_addr[MXM_PTL_SELF] = (struct sockaddr*)&sa_bind_self;
-    ep_opt.ptl_bind_addr[MXM_PTL_RDMA] = (struct sockaddr*)&sa_bind_rdma;
-    ep_opt.ptl_bind_addr[MXM_PTL_SHM] = (struct sockaddr*)&sa_bind_shm;
+    ptl_bitmap = ompi_mtl_mxm.mxm_opts.ptl_bitmap;
+
+    ep_opt.ptl_bind_addr[MXM_PTL_SELF] = (ptl_bitmap & MXM_BIT(MXM_PTL_SELF))?
+            (struct sockaddr*)&sa_bind_self:NULL;
+    ep_opt.ptl_bind_addr[MXM_PTL_RDMA] =(ptl_bitmap & MXM_BIT(MXM_PTL_RDMA))?
+            (struct sockaddr*)&sa_bind_rdma:NULL;
+    ep_opt.ptl_bind_addr[MXM_PTL_SHM] =(ptl_bitmap & MXM_BIT(MXM_PTL_SHM))?
+            (struct sockaddr*)&sa_bind_shm:NULL;
 
     /* Open MXM endpoint */
     err = mxm_ep_create(ompi_mtl_mxm.mxm_context, &ep_opt, &ompi_mtl_mxm.ep);
@@ -177,13 +184,16 @@ int ompi_mtl_mxm_module_init(void)
     /*
      * Get address for each PTL on this endpoint, and share it with other ranks.
      */
-    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SELF)) {
+    if ((ptl_bitmap & MXM_BIT(MXM_PTL_SELF)) &&
+            OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SELF)) {
     	return OMPI_ERROR;
     }
-    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_RDMA)) {
+    if ((ptl_bitmap & MXM_BIT(MXM_PTL_RDMA)) &&
+            OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_RDMA)) {
     	return OMPI_ERROR;
     }
-    if (OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SHM)) {
+    if ((ptl_bitmap & MXM_BIT(MXM_PTL_SHM)) &&
+            OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SHM)) {
             return OMPI_ERROR;
     }
     if (OMPI_SUCCESS != ompi_modex_send(&mca_mtl_mxm_component.super.mtl_version,
