@@ -61,7 +61,7 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
     size_t i, len, max_value_width;
     char *spaces = NULL;
     char *filler = NULL;
-    char *pos, *v, savev;
+    char *pos, *v, savev, *v_to_free;
     
 #ifdef HAVE_ISATTY
     /* If we have isatty(), if this is not a tty, then disable
@@ -82,7 +82,7 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
 #endif
 
     /* Strip leading and trailing whitespace from the string value */
-    v = strdup(value);
+    v = v_to_free = strdup(value);
     len = strlen(v);
     if (isspace(v[0])) {
         char *newv;
@@ -91,8 +91,8 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
             ++i;
         }
         newv = strdup(v + i);
-        free(v);
-        v = newv;
+        free(v_to_free);
+        v_to_free = v = newv;
         len = strlen(v);
     }
     if (len > 0 && isspace(v[len - 1])) {
@@ -187,6 +187,9 @@ void orte_info_out(const char *pretty_message, const char *plain_message, const 
         } else {
             printf("  %s\n", value);
         }
+    }
+    if (NULL != v_to_free) {
+        free(v_to_free);
     }
 }
 
