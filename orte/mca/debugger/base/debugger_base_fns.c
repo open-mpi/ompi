@@ -90,10 +90,14 @@ void orte_debugger_base_init_after_spawn(orte_job_t *jdata)
     orte_process_name_t rank0;
     int rc;
 
-    if (MPIR_proctable) {
+    /* if we couldn't get thru the mapper stage, we might
+     * enter here with no procs. Avoid the "zero byte malloc"
+     * message by checking here
+     */
+    if (MPIR_proctable || 0 == jdata->num_procs) {
         /* already initialized */
         opal_output_verbose(5, orte_debugger_base.output,
-                            "%s: debugger already initialized",
+                            "%s: debugger already initialized or zero procs",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
         return;
     }
