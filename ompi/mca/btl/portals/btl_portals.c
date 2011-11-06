@@ -357,7 +357,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
 
         frag->segments[0].seg_len = max_data;
         frag->segments[0].seg_addr.pval = iov.iov_base;
-        frag->segments[0].seg_key.key64 = 
+        frag->segments[0].seg_key.key64[0] = 
             OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
         frag->base.des_src_cnt = 1;
 
@@ -366,13 +366,13 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                              "rdma src posted for frag 0x%lx, callback 0x%lx, bits %"PRIu64", flags say %d" ,
                              (unsigned long) frag, 
                              (unsigned long) frag->base.des_cbfunc,
-                             frag->segments[0].seg_key.key64, flags));
+                             frag->segments[0].seg_key.key64[0], flags));
 
         /* create a match entry */
         ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
                           OMPI_BTL_PORTALS_RDMA_TABLE_ID,
                           *((mca_btl_base_endpoint_t*) peer),
-                          frag->segments[0].seg_key.key64, /* match */
+                          frag->segments[0].seg_key.key64[0], /* match */
                           0, /* ignore */
                           PTL_UNLINK,
                           PTL_INS_AFTER,
@@ -449,7 +449,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
 
     frag->segments[0].seg_len = *size;
     opal_convertor_get_current_pointer( convertor, (void**)&(frag->segments[0].seg_addr.pval) );
-    frag->segments[0].seg_key.key64 = 
+    frag->segments[0].seg_key.key64[0] = 
         OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
@@ -461,14 +461,14 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                          "rdma dest posted for frag 0x%lx, callback 0x%lx, bits %" PRIu64 " flags %d",
                          (unsigned long) frag,
                          (unsigned long) frag->base.des_cbfunc,
-                         frag->segments[0].seg_key.key64,
+                         frag->segments[0].seg_key.key64[0],
                          flags));
 
     /* create a match entry */
     ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
                       OMPI_BTL_PORTALS_RDMA_TABLE_ID,
                       *((mca_btl_base_endpoint_t*) peer),
-                      frag->segments[0].seg_key.key64, /* match */
+                      frag->segments[0].seg_key.key64[0], /* match */
                       0, /* ignore */
                       PTL_UNLINK,
                       PTL_INS_AFTER,

@@ -34,7 +34,7 @@ mca_btl_portals_frag_common_send_constructor(mca_btl_portals_frag_t* frag)
 
     frag->segments[0].seg_addr.pval = frag + 1;
     frag->segments[0].seg_len = frag->size;
-    frag->segments[0].seg_key.key64 = 0;
+    frag->segments[0].seg_key.key64[0] = 0;
 
     frag->md_h = PTL_INVALID_HANDLE;
 }
