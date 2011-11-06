@@ -238,10 +238,10 @@ struct mca_btl_base_segment_t {
 #endif
     /** Memory segment key required by some RDMA networks */
     union {
-        uint32_t  key32[2];
-        uint64_t  key64;
-        uint8_t   key8[8];
-        uintptr_t ptr;
+        uint32_t  key32[4];
+        uint64_t  key64[2];
+        uint8_t   key8[16];
+        uintptr_t ptr[2];
     } seg_key;
 };
 typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;

@@ -739,7 +739,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
         if (OPAL_UNLIKELY(ioctl(sm_btl->knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
             return NULL;
         }
-        frag->segment.seg_key.key64 = knem_cr.cookie;
+        frag->segment.seg_key.key64[0] = knem_cr.cookie;
     }
 #endif
     frag->base.des_src = &(frag->segment);
@@ -968,7 +968,7 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
     recv_iovec.len =  dst->seg_len;
     icopy.local_iovec_array = (uintptr_t)&recv_iovec;
     icopy.local_iovec_nr = 1;
-    icopy.remote_cookie = src->seg_key.key64;
+    icopy.remote_cookie = src->seg_key.key64[0];
     icopy.remote_offset = 0;
     icopy.write = 0;
 
@@ -1044,7 +1044,7 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
         sm_btl->knem_status_first_avail = 0;
     }
     ++sm_btl->knem_status_num_used;
-    icopy.remote_cookie = src->seg_key.key64;
+    icopy.remote_cookie = src->seg_key.key64[0];
     icopy.remote_offset = 0;
 
     /* Use the DMA flag if knem supports it *and* the segment length

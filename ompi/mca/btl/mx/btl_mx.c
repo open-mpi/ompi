@@ -323,13 +323,13 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
 
     frag->segment[0].seg_len       = *size;
     opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment[0].seg_addr.pval) );
-    frag->segment[0].seg_key.key64 = (uint64_t)(intptr_t)frag;
+    frag->segment[0].seg_key.key64[0] = (uint64_t)(intptr_t)frag;
 
     mx_segment.segment_ptr    = frag->segment[0].seg_addr.pval;
     mx_segment.segment_length = frag->segment[0].seg_len;
 
     mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
-                          frag->segment[0].seg_key.key64, 
+                          frag->segment[0].seg_key.key64[0], 
                           BTL_MX_PUT_MASK, NULL, &(frag->mx_request) );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );
@@ -396,7 +396,7 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
 
     mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt,
                           endpoint->mx_peer_addr,
-                          descriptor->des_dst[0].seg_key.key64, frag,
+                          descriptor->des_dst[0].seg_key.key64[0], frag,
                           &frag->mx_request );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
