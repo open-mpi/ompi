@@ -612,7 +612,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     orte_jobid_t jobid;
     orte_vpid_t i, num_procs;
     orte_pmap_t *pmap;
-    int32_t *nodes;
+    int32_t *nodes, my_node;
     orte_local_rank_t *local_rank;
     orte_node_rank_t *node_rank;
     orte_std_cntr_t n;
@@ -666,7 +666,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        
+        /* track my node */
+        my_node = nodes[ORTE_PROC_MY_NAME->vpid];
+
         /* allocate memory for local ranks */
         local_rank = (orte_local_rank_t*)malloc(num_procs*sizeof(orte_local_rank_t));
         /* unpack them in one shot */
@@ -720,6 +722,12 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 pmap->node = nodes[i];
                 pmap->local_rank = local_rank[i];
                 pmap->node_rank = node_rank[i];
+                /* set locality - for now, just do node level */
+                if (pmap->node == my_node) {
+                    pmap->locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+                } else {
+                    pmap->locality = OPAL_PROC_NON_LOCAL;
+                }
             }
             /* update the #procs */
             jmap->num_procs = num_procs;
@@ -746,6 +754,12 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 pmap->node = nodes[i];
                 pmap->local_rank = local_rank[i];
                 pmap->node_rank = node_rank[i];
+                /* set locality - for now, just do node level */
+                if (pmap->node == my_node) {
+                    pmap->locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
+                } else {
+                    pmap->locality = OPAL_PROC_NON_LOCAL;
+                }
                 /* add the pidmap entry at the specific site corresponding
                  * to the proc's vpid
                  */
