@@ -29,8 +29,6 @@
 #  elif defined(HAVE_CATAMOUNT_CNOS_MPI_OS_H)
 #    include "catamount/cnos_mpi_os.h"
 #  endif
-#elif ORTE_MCA_ESS_ALPS_HAVE_PMI == 1
-#  include "pmi.h"
 #endif
 
 #include "orte/util/show_help.h"
@@ -46,6 +44,8 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/mca/ess/alps/ess_alps.h"
+
+#include <errno.h>
 
 static int alps_set_name(void);
 static int rte_init(void);
@@ -78,23 +78,25 @@ get_vpid(orte_vpid_t *outvp,
 #if ORTE_MCA_ESS_ALPS_HAVE_CNOS == 1
     *outvp = (orte_vpid_t)cnos_get_rank() + start_vpid;
     return ORTE_SUCCESS;
-#else /* using PMI */
-    /* TODO SKG - PMI utility functions should be in a common area */
-    int rank;
-    PMI_BOOL pmi_initialized;
+#else
+    /* Cray XE6 Notes:
+     * using PMI_GNI_LOC_ADDR to set vpid.
+     */
+    int rank = 0;
+    char *env;
 
-    if (PMI_SUCCESS != PMI_Initialized(&pmi_initialized)) {
+    if (NULL == (env = getenv("PMI_GNI_LOC_ADDR"))) {
+        OPAL_OUTPUT_VERBOSE((0, orte_ess_base_output,
+                             "PMI_GNI_LOC_ADDR not found, cannot continue\n"));
         ORTE_ERROR_LOG(ORTE_ERROR);
         return ORTE_ERROR;
     }
-    if (PMI_FALSE == pmi_initialized) {
-        int tmp;
-        if (PMI_SUCCESS != PMI_Init(&tmp)) {
-            ORTE_ERROR_LOG(ORTE_ERROR);
-            return ORTE_ERROR;
-        }
-    }
-    if (PMI_SUCCESS != PMI_Get_rank(&rank)) {
+    errno = 0;
+    rank = (int)strtol(env, (char **)NULL, 10);
+    if (0 != errno) {
+        OPAL_OUTPUT_VERBOSE((0, orte_ess_base_output,
+                             "strtol error detected at %s:%d\n", __FILE__,
+                             __LINE__));
         ORTE_ERROR_LOG(ORTE_ERROR);
         return ORTE_ERROR;
     }

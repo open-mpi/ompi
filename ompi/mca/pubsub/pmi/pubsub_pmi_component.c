@@ -115,7 +115,8 @@ static bool pmi_startup(void)
 static int pubsub_pmi_component_query(mca_base_module_t **module, int *priority)
 {
     /* for now, only use PMI when direct launched */
-    if (ORTE_PROC_IS_MPI &&
+    if (NULL == orte_process_info.my_hnp_uri &&
+        ORTE_PROC_IS_MPI &&
         pmi_startup()) {
         /* if PMI is available, use it */
         *priority = my_priority;

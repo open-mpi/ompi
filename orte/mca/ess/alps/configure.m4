@@ -48,34 +48,14 @@ AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
             [orte_mca_ess_alps_have_cnos=1],
             [orte_mca_ess_alps_have_cnos=0])])
 
-    dnl now check for PMI support
-    ORTE_CHECK_PMI([ess_alps],
-                   [orte_mca_ess_alps_have_pmi=1],
-                   [orte_mca_ess_alps_have_pmi=0])
-
     dnl was ess alps requested?
     ORTE_CHECK_ALPS([ess_alps],
         [orte_mca_ess_alps_happy="yes"],
         [orte_mca_ess_alps_happy="no"])
 
-    dnl cannot continue if we don't have CNOS or PMI
-    AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_mca_ess_alps_have_cnos" = "0" -a "$orte_mca_ess_alps_have_pmi" = "0"],
-        [AC_MSG_WARN([Alps support requested (via --with-alps) but adequate support was not found.])
-         AC_MSG_ERROR([Cannot continue.])])
-
-    dnl cannot continue if we have both CNOS and PMI. this will probably
-    dnl never happen, but it can't hurt to also check for this case.
-    AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_mca_ess_alps_have_cnos" = "1" -a "$orte_mca_ess_alps_have_pmi" = "1"],
-        [AC_MSG_WARN([Alps support requested (via --with-alps) but CNOS and PMI support was found.])
-         AC_MSG_ERROR([Cannot continue.])])
-
     AC_DEFINE_UNQUOTED([ORTE_MCA_ESS_ALPS_HAVE_CNOS],
                        [$orte_mca_ess_alps_have_cnos],
                        [Whether we have CNOS support in alps ess or not])
-
-    AC_DEFINE_UNQUOTED([ORTE_MCA_ESS_ALPS_HAVE_PMI],
-                       [$orte_mca_ess_alps_have_pmi],
-                       [Whether we have PMI support in alps ess or not])
 
     AS_IF([test "$orte_mca_ess_alps_happy" = "yes"],
           [$1],
