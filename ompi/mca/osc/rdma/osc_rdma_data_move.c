@@ -193,7 +193,7 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
                 ((unsigned long)sendreq->req_target_disp * module->m_win->w_disp_unit);
             descriptor->des_dst[0].seg_len = 
                 sendreq->req_origin_bytes_packed;
-            descriptor->des_dst[0].seg_key.key64 = 
+            descriptor->des_dst[0].seg_key.key64[0] = 
                 rdma_btl->peer_seg_key;
 #if 0
             opal_output(0, "putting to %d: 0x%lx(%d), %d, %d",
@@ -221,7 +221,7 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
                 ((unsigned long)sendreq->req_target_disp * module->m_win->w_disp_unit);
             descriptor->des_src[0].seg_len = 
                 sendreq->req_origin_bytes_packed;
-            descriptor->des_src[0].seg_key.key64 = 
+            descriptor->des_src[0].seg_key.key64[0] = 
                 rdma_btl->peer_seg_key;
 
             descriptor->des_cbdata = sendreq;

@@ -1300,7 +1300,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
             peer_send_info->proc = ompi_comm_peer_lookup(module->m_comm, i);
             peer_send_info->bml_btl = peer_info->local_btls[j];
             peer_send_info->seg_key = 
-                peer_info->local_descriptors[j]->des_dst[0].seg_key.key64;
+                peer_info->local_descriptors[j]->des_dst[0].seg_key.key64[0];
 
             ret = rdma_send_info_send(module, peer_send_info);
             if (OMPI_SUCCESS != ret) {

@@ -886,7 +886,8 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
         for( i = 0; i < dst->des_dst_cnt; i++ ) {
             hdr->hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(dst->des_dst[i].seg_addr.pval);
             hdr->hdr_segs[i].seg_len       = dst->des_dst[i].seg_len;
-            hdr->hdr_segs[i].seg_key.key64 = dst->des_dst[i].seg_key.key64;
+            hdr->hdr_segs[i].seg_key.key64[0] = dst->des_dst[i].seg_key.key64[0];
+            hdr->hdr_segs[i].seg_key.key64[1] = dst->des_dst[i].seg_key.key64[1];
         }
 
         if(!recvreq->req_ack_sent)
