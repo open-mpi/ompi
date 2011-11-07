@@ -26,6 +26,9 @@ with_alps=yes
 with_xpmem=/opt/cray/xpmem/default
 with_pmi=/opt/cray/pmi/default
 with_cray_pmi2_ext=yes
+# enable ugni btl
+with_ugni=/opt/cray/ugni/default
+with_ugni_includedir=/opt/cray/gni-headers/default/include
 with_tm=no
 with_slurm=no
 with_io_romio_flags=--with-file-system=ufs+nfs
