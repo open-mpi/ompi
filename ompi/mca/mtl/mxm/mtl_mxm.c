@@ -258,6 +258,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
                           mxm_error_string(conn_reqs[i].error));
             }
         }
+        rc = OMPI_ERR_CONNECTION_FAILED;
         goto bail;
     }
 
