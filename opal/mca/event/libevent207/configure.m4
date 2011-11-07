@@ -8,23 +8,23 @@
 # 
 # $HEADER$
 #
-AC_DEFUN([MCA_opal_event_libevent2013_PRIORITY], [80])
+AC_DEFUN([MCA_opal_event_libevent207_PRIORITY], [60])
 
 #
 # Force this component to compile in static-only mode
 #
-AC_DEFUN([MCA_opal_event_libevent2013_COMPILE_MODE], [
+AC_DEFUN([MCA_opal_event_libevent207_COMPILE_MODE], [
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
     $4="static"
     AC_MSG_RESULT([$$4])
 ])
 
-# MCA_event_libevent2013_CONFIG([action-if-can-compile], 
+# MCA_event_libevent207_CONFIG([action-if-can-compile], 
 #                              [action-if-cant-compile])
 # ------------------------------------------------
-AC_DEFUN([MCA_opal_event_libevent2013_CONFIG],[
-    AC_CONFIG_FILES([opal/mca/event/libevent2013/Makefile])
-    basedir="opal/mca/event/libevent2013"
+AC_DEFUN([MCA_opal_event_libevent207_CONFIG],[
+    AC_CONFIG_FILES([opal/mca/event/libevent207/Makefile])
+    basedir="opal/mca/event/libevent207"
 
     CFLAGS_save="$CFLAGS"
     CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
@@ -132,8 +132,8 @@ AC_DEFUN([MCA_opal_event_libevent2013_CONFIG],[
            # other things are built before the event framework that
            # end up including event-config.h).  The steps below were
            # copied from libevent's Makefile.am.
-           AC_CONFIG_COMMANDS([opal/mca/event/libevent2013/libevent/include/event2/event-config.h],
-                              [basedir="opal/mca/event/libevent2013"
+           AC_CONFIG_COMMANDS([opal/mca/event/libevent207/libevent/include/event2/event-config.h],
+                              [basedir="opal/mca/event/libevent207"
                                file="$basedir/libevent/include/event2/event-config.h"
                                rm -f "$file.new"
                                cat > "$file.new" <<EOF
@@ -169,18 +169,18 @@ EOF
 
            # Must set this variable so that the framework m4 knows
            # what file to include in opal/mca/event/event.h
-           opal_event_libevent2013_include="libevent2013/libevent2013.h"
+           opal_event_libevent207_include="libevent207/libevent207.h"
 
            # Also pass some *_ADD_* flags upwards to the framework m4
            # for various compile/link flags that are needed a) to
            # build the rest of the source tree, and b) for the wrapper
            # compilers (in the --with-devel-headers case).
            file=$basedir/libevent
-           opal_event_libevent2013_ADD_CPPFLAGS="-I$OMPI_TOP_SRCDIR/$file -I$OMPI_TOP_SRCDIR/$file/include"
+           opal_event_libevent207_ADD_CPPFLAGS="-I$OMPI_TOP_SRCDIR/$file -I$OMPI_TOP_SRCDIR/$file/include"
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
-                 [opal_event_libevent2013_ADD_CPPFLAGS="$opal_event_libevent2013_ADD_CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
+                 [opal_event_libevent207_ADD_CPPFLAGS="$opal_event_libevent207_ADD_CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
            if test "$with_devel_headers" = "yes" ; then
-               opal_event_libevent2013_ADD_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/opal/mca/event/libevent2013/libevent -I${includedir}/openmpi/opal/mca/event/libevent2013/libevent/include'
+               opal_event_libevent207_ADD_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/opal/mca/event/libevent207/libevent -I${includedir}/openmpi/opal/mca/event/libevent207/libevent/include'
            fi
            $1],
           [$2

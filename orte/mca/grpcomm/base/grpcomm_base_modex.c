@@ -383,7 +383,7 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
         goto cleanup;
     }
     
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+    OPAL_OUTPUT_VERBOSE((0, orte_grpcomm_base.output,
                          "%s grpcomm:base:modex:unpack: received %ld data bytes from %d procs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (long)(rbuf->pack_ptr - rbuf->unpack_ptr), num_procs));

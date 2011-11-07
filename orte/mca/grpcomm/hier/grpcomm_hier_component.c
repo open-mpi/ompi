@@ -30,6 +30,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/util/proc_info.h"
 
 #include "grpcomm_hier.h"
 
@@ -67,8 +68,11 @@ int orte_grpcomm_hier_close(void)
 
 int orte_grpcomm_hier_component_query(mca_base_module_t **module, int *priority)
 {
-    /* only selected upon request */
-    *priority = 0;
+    if (ORTE_PROC_IS_MPI) {
+        *priority = 1000;
+    } else {
+        *priority = 0;
+    }
     *module = (mca_base_module_t *)&orte_grpcomm_hier_module;
     return ORTE_SUCCESS;    
 }
