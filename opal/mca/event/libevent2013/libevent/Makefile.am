@@ -178,12 +178,14 @@ endif
 #	echo "#endif" >> $@
 
 # Open MPI: -- eliminate extra libevent libraries. We compile
-# everything that is enabled into the core.
-CORE_SRC = event.c evthread.c buffer.c \
+# everything that is enabled into the core, removing bufferevents
+# as OMPI does not use them
+#       buffer.c \
 	bufferevent.c bufferevent_sock.c bufferevent_filter.c \
-	bufferevent_pair.c listener.c bufferevent_ratelim.c \
-	evmap.c	log.c evutil.c evutil_rand.c strlcpy.c event_tagging.c \
-	$(SYS_SRC)
+	bufferevent_pair.c bufferevent_ratelim.c
+CORE_SRC = event.c evthread.c listener.c \
+           evmap.c log.c evutil.c evutil_rand.c strlcpy.c event_tagging.c \
+           $(SYS_SRC)
 CORE_LIBS =
 
 if HTTP
@@ -200,17 +202,20 @@ if PTHREADS
 CORE_SRC += evthread_pthread.c
 endif
 
-if OPENSSL
-CORE_SRC += bufferevent_openssl.c
-CORE_LIBS += -lcrypto -lssl
-endif
+# Open MPI: do not include ssl
+#if OPENSSL
+#CORE_SRC += bufferevent_openssl.c
+#CORE_LIBS += -lcrypto -lssl
+#endif
 
 libevent_la_SOURCES = $(CORE_SRC) $(headers)
 libevent_la_LIBADD = $(CORE_LIBS) $(SYS_LIBS)
 
+# Open MPI: do not include bufferevent
+# evbuffer-internal.h \
+	bufferevent-internal.h
 EXTRA_DIST += event.h evutil.h util-internal.h mm-internal.h ipv6-internal.h \
-	strlcpy-internal.h evbuffer-internal.h \
-	bufferevent-internal.h event-internal.h \
+	strlcpy-internal.h event-internal.h \
 	evthread-internal.h defer-internal.h \
 	minheap-internal.h log-internal.h evsignal-internal.h evmap-internal.h \
 	changelist-internal.h iocp-internal.h \
