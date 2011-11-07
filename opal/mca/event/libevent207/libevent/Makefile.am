@@ -9,11 +9,12 @@ ACLOCAL_AMFLAGS = -I m4
 # "Release" are never binary-compatible.
 #
 # This number incremented once for the 2.0 release candidate, and
-# will increment for each series until we revise our interfaces enough
-# that we can seriously expect ABI compatibility between series.
+# shouldn't increment again until Libevent 3.0.  Also, we shouldn't
+# increment to Libevent 3.0 unless we know in advance we're breaking
+# the ABI.
 #
-# Open MPI: Comment out release
 #RELEASE = -release 2.0
+#RELEASE =
 
 # This is the version info for the libevent binary API.  It has three
 # numbers:
@@ -31,10 +32,8 @@ ACLOCAL_AMFLAGS = -I m4
 #    If the ABI changed and it isn't backward-compatible:
 #        Return (current+1:0:0)
 #
-# Once an RC is out, DO NOT MAKE ANY ABI-BREAKING CHANGES IN THAT SERIES
-# UNLESS YOU REALLY REALLY HAVE TO.
-# OMPI CHANGE Comment version info
-#VERSION_INFO = 6:2:1
+# Once an RC is out, DO NOT MAKE ANY ABI-BREAKING CHANGES IN THAT SERIES.
+#VERSION_INFO = 3:0:1
 
 # History:          RELEASE    VERSION_INFO
 #  2.0.1-alpha --     2.0        1:0:0
@@ -43,17 +42,14 @@ ACLOCAL_AMFLAGS = -I m4
 #  2.0.4-alpha --                3:0:0
 #  2.0.5-beta  --                4:0:0
 #  2.0.6-rc    --     2.0        2:0:0
-#  2.0.7-rc    --     2.0        3:0:1
-#  2.0.8-rc    --     2.0        4:0:2
-#  2.0.9-rc    --     2.0        5:0:0 (ABI changed slightly)
-#  2.0.10-stable--    2.0        5:1:0 (No ABI change)
-#  2.0.11-stable--    2.0        6:0:1 (ABI changed, backward-compatible)
-#  2.0.12-stable--    2.0        6:1:1 (No ABI change)
-#  2.0.13-stable--    2.0        6:2:1 (No ABI change)
+#  2.0.7-rc   --      2.0        3:0:1
+# Planned:
+#  2.0.8-stable --    2.0        3:1:1  (Assuming no ABI change)
 #
-# For Libevent 2.1:
+# If Libevent 2.1.1 makes 'struct event' etc opaque in the headers:
 #  2.1.1-alpha --     2.1        1:0:0
-
+# If Libevent 2.1.1 does not makes 'struct event' opaque in the headers:
+#  2.1.1-alpha --     2.1        1:0:0
 
 # ABI version history for this package effectively restarts every time
 # we change RELEASE.  Version 1.4.x had RELEASE of 1.4.
@@ -73,51 +69,33 @@ ACLOCAL_AMFLAGS = -I m4
 # is user-visible, and so we can pretty much guarantee that release
 # series won't be binary-compatible.
 
-if INSTALL_LIBEVENT
+if RPC
 dist_bin_SCRIPTS = event_rpcgen.py
 endif
-
-# Open MPI: disable pkg-config stuff (left commented for reference)
-# pkgconfigdir=$(libdir)/pkgconfig
-# LIBEVENT_PKGCONFIG=libevent.pc
 
 # These sources are conditionally added by configure.in or conditionally
 # included from other files.
 PLATFORM_DEPENDENT_SRC = \
-	epoll_sub.c \
-	arc4random.c
+        epoll_sub.c \
+        arc4random.c
 
-# Open MPI: removed test/Makefile.nmake from EXTRA_DIST
 EXTRA_DIST = \
 	LICENSE \
 	autogen.sh \
-	event_rpcgen.py \
 	libevent.pc.in \
 	Doxyfile \
 	whatsnew-2.0.txt \
 	Makefile.nmake \
 	$(PLATFORM_DEPENDENT_SRC)
 
-# Open MPI: disable these lines
-#LIBEVENT_LIBS_LA = libevent.la libevent_core.la libevent_extra.la
-#if PTHREADS
-#LIBEVENT_LIBS_LA += libevent_pthreads.la
-#LIBEVENT_PKGCONFIG += libevent_pthreads.pc
-#endif
-#if OPENSSL
-#LIBEVENT_LIBS_LA += libevent_openssl.la
-#LIBEVENT_PKGCONFIG += libevent_openssl.pc
-#endif
-
-# Open MPI: Changed to noinst and libevent.la
+# OMPI: Changed to noinst and libevent.la
 noinst_LTLIBRARIES = libevent.la
 
-# Open MPI: removed sample and test dirs
 SUBDIRS = . include
 
 if BUILD_WIN32
 
-SYS_LIBS = -lws2_32 -lshell32 -ladvapi32
+SYS_LIBS = -lws2_32
 SYS_SRC = win32select.c evthread_win32.c buffer_iocp.c event_iocp.c \
 	bufferevent_async.c
 SYS_INCLUDES = -IWIN32-Code
@@ -157,7 +135,7 @@ endif
 #BUILT_SOURCES = ./include/event2/event-config.h
 
 # Open MPI: commented this out.  We generate event-config.h in the
-# component configure.m4
+# component configure.m4.
 #./include/event2/event-config.h: config.h
 #	@MKDIR_P@ ./include/event2
 #	echo '/* event2/event-config.h' > $@
@@ -171,19 +149,15 @@ endif
 #	echo ' */' >> $@
 #	echo '#ifndef _EVENT2_EVENT_CONFIG_H_' >> $@
 #	echo '#define _EVENT2_EVENT_CONFIG_H_' >> $@
-#
 #	sed -e 's/#define /#define _EVENT_/' \
 #	    -e 's/#undef /#undef _EVENT_/' \
 #	    -e 's/#ifndef /#ifndef _EVENT_/' < config.h >> $@
 #	echo "#endif" >> $@
 
-# Open MPI: -- eliminate extra libevent libraries. We compile
-# everything that is enabled into the core.
 CORE_SRC = event.c evthread.c buffer.c \
 	bufferevent.c bufferevent_sock.c bufferevent_filter.c \
 	bufferevent_pair.c listener.c bufferevent_ratelim.c \
-	evmap.c	log.c evutil.c evutil_rand.c strlcpy.c event_tagging.c \
-	$(SYS_SRC)
+	evmap.c	log.c evutil.c evutil_rand.c strlcpy.c event_tagging.c $(SYS_SRC)
 CORE_LIBS =
 
 if HTTP
@@ -222,9 +196,7 @@ EXTRA_DIST += event.h evutil.h util-internal.h mm-internal.h ipv6-internal.h \
         evrpc.h evrpc-internal.h \
         evdns.h
 
-AM_CPPFLAGS = -I$(srcdir)/compat -I$(srcdir)/include -I./include $(SYS_INCLUDES)
+AM_CPPFLAGS = -I$(srcdir)/compat -I$(srcdir)/include -I$(builddir)/include $(SYS_INCLUDES)
 
-# Open MPI: remove verify, doxygen, and FORXCE
-
-DISTCLEANFILES = *~ libevent.pc ./include/event2/event-config.h
+DISTCLEANFILES = *~ libevent.pc $(builddir)/include/event2/event-config.h
 
