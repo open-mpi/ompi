@@ -18,14 +18,12 @@
 
 int main(int argc, char **argv, char **envp)
 {
-    int i;
     int pmi_rank = -1;
     int pmi_process_group_size = -1;
     int num_local_procs = 0;
     int *local_rank_ids = NULL;
     int spawned = PMI_FALSE;
-    int rc = EXIT_FAILURE;
-    pid_t pid = 0;
+    int rc = EXIT_SUCCESS;
     char *err = NULL;
     PMI_BOOL pmi_initialized = PMI_FALSE;
 
@@ -66,8 +64,6 @@ int main(int argc, char **argv, char **envp)
         }
     }
 
-    rc = EXIT_SUCCESS;
-
 done:
     if (PMI_TRUE == pmi_initialized) {
         if (PMI_SUCCESS != PMI_Finalize()) {
@@ -76,6 +72,7 @@ done:
     }
     if (NULL != err) {
         fprintf(stderr, "=== ERROR [rank:%d] %s\n", pmi_rank, err);
+        rc = EXIT_FAILURE;
     }
     return rc;
 }
