@@ -33,8 +33,8 @@ AC_DEFUN([MCA_opal_event_libevent2013_CONFIG],[
     
     AC_MSG_CHECKING([libevent configuration args])
 
-    str=`event_args="--disable-dns --disable-http --disable-rpc --disable-openssl --enable-hidden-symbols --includedir=$includedir/openmpi/opal/event/libevent/include"`
-    eval $str
+    eval "str=\"${includedir}\""
+    event_args="--disable-dns --disable-http --disable-rpc --disable-openssl --enable-hidden-symbols --includedir=$str/openmpi/opal/event/libevent/include"
     unset str
 
     AC_ARG_ENABLE(event-rtsig,
