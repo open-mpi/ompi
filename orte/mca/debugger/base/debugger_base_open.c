@@ -44,7 +44,7 @@ int MPIR_proctable_size = 0;
 volatile int MPIR_being_debugged = 0;
 volatile int MPIR_debug_state = 0;
 volatile int MPIR_i_am_starter = 0;
-volatile int MPIR_partial_attach_ok = 1;
+int MPIR_partial_attach_ok = 1;
 volatile char MPIR_executable_path[MPIR_MAX_PATH_LENGTH];
 volatile char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH];
 volatile int MPIR_forward_output = 0;
