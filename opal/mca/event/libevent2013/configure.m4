@@ -30,12 +30,9 @@ AC_DEFUN([MCA_opal_event_libevent2013_CONFIG],[
     CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $OPAL_VISIBILITY_CFLAGS"
     CPPFLAGS_save="$CPPFLAGS"
     CPPFLAGS="-I$OMPI_TOP_SRCDIR -I$OMPI_TOP_BUILDDIR -I$OMPI_TOP_SRCDIR/opal/include $CPPFLAGS"
-    
-    AC_MSG_CHECKING([libevent configuration args])
 
-    eval "str=\"${includedir}\""
-    event_args="--disable-dns --disable-http --disable-rpc --disable-openssl --enable-hidden-symbols --includedir=$str/openmpi/opal/event/libevent/include"
-    unset str
+    AC_MSG_CHECKING([libevent configuration args])
+    event_args="--disable-dns --disable-http --disable-rpc --disable-openssl --enable-hidden-symbols"
 
     AC_ARG_ENABLE(event-rtsig,
         AC_HELP_STRING([--enable-event-rtsig],
