@@ -61,18 +61,18 @@ ORTE_DECLSPEC extern struct MPIR_PROCDESC *MPIR_proctable;
 ORTE_DECLSPEC extern int MPIR_proctable_size;
 ORTE_DECLSPEC extern volatile int MPIR_being_debugged;
 ORTE_DECLSPEC extern volatile int MPIR_debug_state;
-ORTE_DECLSPEC extern volatile int MPIR_i_am_starter;
+ORTE_DECLSPEC extern int MPIR_i_am_starter;
 ORTE_DECLSPEC extern int MPIR_partial_attach_ok;
-ORTE_DECLSPEC extern volatile char MPIR_executable_path[MPIR_MAX_PATH_LENGTH];
-ORTE_DECLSPEC extern volatile char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH];
+ORTE_DECLSPEC extern char MPIR_executable_path[MPIR_MAX_PATH_LENGTH];
+ORTE_DECLSPEC extern char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH];
 ORTE_DECLSPEC extern volatile int MPIR_forward_output;
 ORTE_DECLSPEC extern volatile int MPIR_forward_comm;
 ORTE_DECLSPEC extern char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH];
 ORTE_DECLSPEC extern int MPIR_force_to_main;
 
-typedef void* (*orte_debugger_breakpoint_fn_t)(void);
+typedef void (*orte_debugger_breakpoint_fn_t)(void);
 
-ORTE_DECLSPEC void* MPIR_Breakpoint(void);
+ORTE_DECLSPEC void MPIR_Breakpoint(void);
 
 /* --- end MPICH/TotalView std debugger interface definitions */
 

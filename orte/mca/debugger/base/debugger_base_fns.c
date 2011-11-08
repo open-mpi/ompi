@@ -168,7 +168,7 @@ void orte_debugger_base_init_after_spawn(orte_job_t *jdata)
          */
         ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
         
-        (void) MPIR_Breakpoint();
+        MPIR_Breakpoint();
         
         /* send a message to rank=0 to release it */
         OBJ_CONSTRUCT(&buf, opal_buffer_t); /* don't need anything in this */
@@ -186,7 +186,7 @@ void orte_debugger_base_init_after_spawn(orte_job_t *jdata)
 /*
  * Breakpoint function for parallel debuggers
  */
-void *MPIR_Breakpoint(void)
+void MPIR_Breakpoint(void)
 {
-    return NULL;
+    return;
 }
