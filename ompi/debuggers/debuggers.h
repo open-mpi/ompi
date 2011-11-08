@@ -31,20 +31,20 @@
 
 BEGIN_C_DECLS
 
-    /**
-     * Wait for a debugger if asked.
-     */
-    extern void ompi_wait_for_debugger(void);
+/**
+ * Wait for a debugger if asked.
+ */
+extern void ompi_wait_for_debugger(void);
 
-    /**
-     * Notify a debugger that we're about to abort
-     */
-    extern void ompi_debugger_notify_abort(char *string);
+/**
+ * Notify a debugger that we're about to abort
+ */
+extern void ompi_debugger_notify_abort(char *string);
 
-    /**
-     * Breakpoint function for parallel debuggers.
-     */
-    ORTE_DECLSPEC extern void *MPIR_Breakpoint(void);
+/**
+ * Breakpoint function for parallel debuggers.
+ */
+ORTE_DECLSPEC extern void MPIR_Breakpoint(void);
 
 END_C_DECLS
 
