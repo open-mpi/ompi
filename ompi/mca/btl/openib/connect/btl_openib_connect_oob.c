@@ -487,11 +487,11 @@ static int qp_create_one(mca_btl_base_endpoint_t* endpoint, int qp,
     my_qp = ibv_create_qp(openib_btl->device->ib_pd, &init_attr);
 
     if (NULL == my_qp) {
-	orte_show_help("help-mpi-btl-openib-cpc-base.txt",
-		       "ibv_create_qp failed", true,
-		       orte_process_info.nodename,
-		       ibv_get_device_name(openib_btl->device->ib_dev),
-		       "Reliable connected (RC)");
+        orte_show_help("help-mpi-btl-openib-cpc-base.txt",
+                       "ibv_create_qp failed", true,
+                       orte_process_info.nodename,
+                       ibv_get_device_name(openib_btl->device->ib_dev),
+                       "Reliable connected (RC)");
         return OMPI_ERROR;
     }
     endpoint->qps[qp].qp->lcl_qp = my_qp;
@@ -834,7 +834,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                just ignore this connection request */
             if (found && !master &&
                 MCA_BTL_IB_CLOSED != ib_endpoint->endpoint_state) {
-		OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+                OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
                 return;
             }
         }
@@ -842,7 +842,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
         if (!found) {
             BTL_ERROR(("can't find suitable endpoint for this peer\n"));
             mca_btl_openib_endpoint_invoke_error(NULL);
-	    OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
+            OPAL_THREAD_UNLOCK(&mca_btl_openib_component.ib_lock);
             return;
         }
 
@@ -857,7 +857,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
                to CONNECTING, and then reply with our QP
                information */
             if (master) {
-	        assert(rem_info.rem_qps != NULL);
+                assert(rem_info.rem_qps != NULL);
                 rc = reply_start_connect(ib_endpoint, &rem_info);
             } else {
                 rc = oob_module_start_connect(ib_endpoint->endpoint_local_cpc,
@@ -880,7 +880,7 @@ static void rml_recv_cb(int status, orte_process_name_t* process_name,
             break;
 
         case MCA_BTL_IB_CONNECTING :
-	    assert(rem_info.rem_qps != NULL);
+            assert(rem_info.rem_qps != NULL);
             set_remote_info(ib_endpoint, &rem_info);
             if (OMPI_SUCCESS != (rc = qp_connect_all(ib_endpoint))) {
                 BTL_ERROR(("endpoint connect error: %d", rc));
