@@ -187,7 +187,11 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int tag,
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
     me.uid = PTL_UID_ANY;
-    me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE;
+    me.options = 
+        PTL_ME_OP_PUT | 
+        PTL_ME_USE_ONCE | 
+        PTL_ME_EVENT_LINK_DISABLE |
+        PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id = endpoint->ptl_proc;
     me.match_bits = hdr_data;
     me.ignore_bits = 0;
@@ -273,7 +277,11 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
     me.uid = PTL_UID_ANY;
-    me.options = PTL_ME_OP_GET | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE;
+    me.options = 
+        PTL_ME_OP_GET | 
+        PTL_ME_USE_ONCE | 
+        PTL_ME_EVENT_LINK_DISABLE |
+        PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id = endpoint->ptl_proc;
     me.match_bits = hdr_data;
     me.ignore_bits = 0;

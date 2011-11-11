@@ -31,8 +31,9 @@
 
 static int ompi_mtl_portals4_component_open(void);
 static int ompi_mtl_portals4_component_close(void);
-static mca_mtl_base_module_t* ompi_mtl_portals4_component_init(
-                                                               bool enable_progress_threads, bool enable_mpi_threads);
+static mca_mtl_base_module_t* 
+ompi_mtl_portals4_component_init(bool enable_progress_threads, 
+                                 bool enable_mpi_threads);
 
 OMPI_MODULE_DECLSPEC extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
 
@@ -262,11 +263,17 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
     me.uid = PTL_UID_ANY;
-    me.options = PTL_ME_OP_PUT | PTL_ME_ACK_DISABLE | PTL_ME_EVENT_COMM_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE;
+    me.options = PTL_ME_OP_PUT | 
+        PTL_ME_ACK_DISABLE | 
+        PTL_ME_EVENT_LINK_DISABLE |
+        PTL_ME_EVENT_COMM_DISABLE | 
+        PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
     me.match_bits = MTL_PORTALS4_LONG_MSG;
-    me.ignore_bits = MTL_PORTALS4_CONTEXT_MASK | MTL_PORTALS4_SOURCE_MASK | MTL_PORTALS4_TAG_MASK;
+    me.ignore_bits = MTL_PORTALS4_CONTEXT_MASK | 
+        MTL_PORTALS4_SOURCE_MASK | 
+        MTL_PORTALS4_TAG_MASK;
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
                       ompi_mtl_portals4.send_idx,
                       &me,
