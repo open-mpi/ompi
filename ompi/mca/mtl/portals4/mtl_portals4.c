@@ -50,7 +50,7 @@ mca_mtl_portals4_module_t ompi_mtl_portals4 = {
         ompi_mtl_portals4_irecv,
         ompi_mtl_portals4_iprobe,
 
-        NULL,       /* cancel */
+        ompi_mtl_portals4_cancel,
         NULL,       /* add_comm */
         NULL        /* del_comm */
     }
@@ -198,6 +198,7 @@ ompi_mtl_portals4_progress(void)
                 opal_output_verbose(1, ompi_mtl_base_output,
                                     "Unexpected auto unlink event");
                 break;
+            case PTL_EVENT_LINK:
             case PTL_EVENT_GET_OVERFLOW:
             case PTL_EVENT_FETCH_ATOMIC:
             case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:

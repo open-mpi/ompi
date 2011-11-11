@@ -339,9 +339,6 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
 
     ret = ompi_mtl_datatype_recv_buf(convertor, &start, &length, &free_after);
     if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
-                            "%s:%d: PtlMEAppend failed: %d",
-                            __FILE__, __LINE__, ret);
         return ret;
     }
 
@@ -357,17 +354,21 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "Recv %d from %x,%x of length %d (0x%lx, 0x%lx)\n",
+                         "Recv %d from %x,%x of length %d (0x%lx, 0x%lx, 0x%lx)\n",
                          ptl_request->opcount,
                          remote_proc.phys.nid, remote_proc.phys.pid, 
-                         (int)length, match_bits, ignore_bits));
+                         (int)length, match_bits, ignore_bits, (unsigned long) ptl_request));
 
     me.start = start;
     me.length = length;
     me.ct_handle = PTL_CT_NONE;
     me.min_free = 0;
     me.uid = PTL_UID_ANY;
-    me.options = PTL_ME_OP_PUT | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE;
+    me.options = 
+        PTL_ME_OP_PUT | 
+        PTL_ME_USE_ONCE | 
+        PTL_ME_EVENT_LINK_DISABLE | /* BWB: FIX ME */
+        PTL_ME_EVENT_UNLINK_DISABLE;
     me.match_id = remote_proc;
     me.match_bits = match_bits;
     me.ignore_bits = ignore_bits;
