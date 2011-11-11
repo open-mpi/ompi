@@ -115,7 +115,7 @@ do {                                                                       \
     frag->iov_idx = 0;                                                     \
     frag->iov_ptr = frag->iov;                                             \
     frag->base.des_src = NULL;                                             \
-    frag->base.des_dst_cnt = 0;                                            \
+    frag->base.des_src_cnt = 0;                                            \
     frag->base.des_dst = frag->segments;                                   \
     frag->base.des_dst_cnt = 1;                                            \
 } while(0)
