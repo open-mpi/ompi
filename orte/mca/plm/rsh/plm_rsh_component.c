@@ -150,11 +150,14 @@ int orte_plm_rsh_component_open(void)
                            "Delay (in seconds) between invocations of the remote agent, but only used when the \"debug\" MCA parameter is true, or the top-level MCA debugging is enabled (otherwise this value is ignored)",
                            false, false, 1,
                            &mca_plm_rsh_component.delay);
+#if 0
+    /* NEEDS TO BE FIXED */
     mca_base_param_reg_int(c, "tree_spawn",
                            "If set to 1, launch via a tree-based topology",
                            false, false, (int)false, &tmp);
     mca_plm_rsh_component.tree_spawn = OPAL_INT_TO_BOOL(tmp);
-    
+#endif
+    mca_plm_rsh_component.tree_spawn = false;
     return ORTE_SUCCESS;
 }
 

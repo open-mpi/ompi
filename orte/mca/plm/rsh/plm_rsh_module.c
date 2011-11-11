@@ -63,7 +63,6 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
@@ -975,6 +974,9 @@ cleanup:
 
 static int orted_num_callback = 0;
 static bool orted_failed_launch = false;
+static orte_job_t *jdatorted;
+static struct timeval daemonlaunchtime = {0,0}, daemonsetuptime = {0,0}, daemoncbtime = {0,0};
+
 static void
 plm_rsh_report_orted_launch(int status, orte_process_name_t* sender,
                             opal_buffer_t *buffer,
@@ -984,7 +986,11 @@ plm_rsh_report_orted_launch(int status, orte_process_name_t* sender,
     char *rml_uri = NULL;
     int rc, idx;
     orte_proc_t *daemon=NULL;
-    orte_job_t *jdatorted;
+    struct timeval recvtime;
+    long secs, usecs;
+    int64_t setupsec, setupusec;
+    int64_t startsec, startusec;
+    char *nodename;
     
     orted_failed_launch = true;
     /* unpack its contact info */
@@ -1032,8 +1038,128 @@ plm_rsh_report_orted_launch(int status, orte_process_name_t* sender,
 
     /* if we are doing a timing test, unload the start and setup times of the daemon */
     if (orte_timing) {
-        /* Deal with the timing if this information is considered useful */
+        /* get the time stamp when the daemon first started */
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &startsec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &startusec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        /* save the latest daemon to start */
+        if (startsec > daemonlaunchtime.tv_sec) {
+            daemonlaunchtime.tv_sec = startsec;
+            daemonlaunchtime.tv_usec = startusec;
+        } else if (startsec == daemonlaunchtime.tv_sec &&
+                   startusec > daemonlaunchtime.tv_usec) {
+            daemonlaunchtime.tv_usec = startusec;
+        }
+        /* get the time required for the daemon to setup - locally computed by each daemon */
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &setupsec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &setupusec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        /* save the longest */
+        if (setupsec > daemonsetuptime.tv_sec) {
+            daemonsetuptime.tv_sec = setupsec;
+            daemonsetuptime.tv_usec = setupusec;
+        } else if (setupsec == daemonsetuptime.tv_sec &&
+                   setupusec > daemonsetuptime.tv_usec) {
+            daemonsetuptime.tv_usec = setupusec;
+        }
+        /* get the time stamp of when the daemon started to send this message to us */
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &setupsec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &setupusec, &idx, OPAL_INT64))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        /* check the time for the callback to complete and save the longest */
+        ORTE_COMPUTE_TIME_DIFF(secs, usecs, setupsec, setupusec, recvtime.tv_sec, recvtime.tv_usec);
+        if (secs > daemoncbtime.tv_sec) {
+            daemoncbtime.tv_sec = secs;
+            daemoncbtime.tv_usec = usecs;
+        } else if (secs == daemoncbtime.tv_sec &&
+                   usecs > daemoncbtime.tv_usec) {
+            daemoncbtime.tv_usec = usecs;
+        }
     }
+    
+    /* unpack the node name - we don't need it here, but it is included
+     * in the message for other uses
+     */
+    idx = 1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nodename, &idx, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        orted_failed_launch = true;
+        goto CLEANUP;
+    }
+    
+#if OPAL_HAVE_HWLOC
+    /* store the local resources for that node */
+    {
+        hwloc_topology_t topo, t;
+        orte_node_t *node;
+        int i;
+        bool found;
+
+        idx=1;
+        node = daemon->node;
+        if (OPAL_SUCCESS == opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO)) {
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s RECEIVED TOPOLOGY FROM NODE %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
+            if (10 < opal_output_get_verbosity(orte_plm_globals.output)) {
+                opal_dss.dump(0, topo, OPAL_HWLOC_TOPO);
+            }
+            /* do we already have this topology from some other node? */
+            found = false;
+            for (i=0; i < orte_node_topologies->size; i++) {
+                if (NULL == (t = (hwloc_topology_t)opal_pointer_array_get_item(orte_node_topologies, i))) {
+                    continue;
+                }
+                if (OPAL_EQUAL == opal_dss.compare(topo, t, OPAL_HWLOC_TOPO)) {
+                    /* yes - just point to it */
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s TOPOLOGY MATCHES - DISCARDING",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    found = true;
+                    node->topology = t;
+                    hwloc_topology_destroy(topo);
+                    break;
+                }
+            }
+            if (!found) {
+                /* nope - add it */
+                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                     "%s NEW TOPOLOGY - ADDING",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                
+                opal_pointer_array_add(orte_node_topologies, topo);
+                node->topology = topo;
+            }
+        }
+    }
+#endif
     
     /* if a tree-launch is underway, send the cmd back */
     if (NULL != orte_tree_launch_cmd) {
@@ -1272,7 +1398,7 @@ int orte_plm_rsh_launch(orte_job_t *jdata)
     orted_failed_launch = false;
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK,
                                  ORTE_RML_PERSISTENT, plm_rsh_report_orted_launch, NULL);
-    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
