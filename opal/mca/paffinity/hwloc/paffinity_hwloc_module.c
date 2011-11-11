@@ -34,7 +34,7 @@
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "paffinity_hwloc.h"
-#include "opal/mca/paffinity/hwloc/hwloc/include/hwloc.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 /*
  * Local functions
@@ -166,7 +166,13 @@ static int module_set(opal_paffinity_base_cpu_set_t mask)
 {
     int i, ret = OPAL_SUCCESS;
     hwloc_bitmap_t set;
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    t = &opal_hwloc_topology;
 
     set = hwloc_bitmap_alloc();
     hwloc_bitmap_zero(set);
@@ -189,7 +195,13 @@ static int module_get(opal_paffinity_base_cpu_set_t *mask)
 {
     int i, ret = OPAL_SUCCESS;
     hwloc_bitmap_t set;
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    t = &opal_hwloc_topology;
 
     if (NULL == mask) {
         return OPAL_ERR_BAD_PARAM;
@@ -220,8 +232,14 @@ static int module_get(opal_paffinity_base_cpu_set_t *mask)
  */
 static int module_map_to_processor_id(int socket, int core, int *processor_id)
 {
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t;
     hwloc_obj_t obj;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    t = &opal_hwloc_topology;
 
     /* Traverse all sockets, looking for the right physical ID number.
        Once we find it, traverse all that socket's cores looking for
@@ -271,8 +289,14 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core)
 {
     int ret = OPAL_ERR_NOT_FOUND;
     hwloc_obj_t obj;
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t;
     hwloc_bitmap_t good;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    t = &opal_hwloc_topology;
 
     good = hwloc_bitmap_alloc();
     if (NULL == good) {
@@ -324,7 +348,13 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core)
  */
 static int module_get_processor_info(int *num_processors)
 {
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    t = &opal_hwloc_topology;
 
     /* Try the simple hwloc_get_nbobjs_by_type() first.  If we get -1,
        go aggregate ourselves (because it means that there are cores
@@ -351,7 +381,13 @@ static int module_get_processor_info(int *num_processors)
  */
 static int module_get_socket_info(int *num_sockets)
 {
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    t = &opal_hwloc_topology;
 
     /* Try the simple hwloc_get_nbobjs_by_type() first.  If we get -1,
        go aggregate ourselves (because it means that there are cores
@@ -379,7 +415,13 @@ static int module_get_socket_info(int *num_sockets)
 static int module_get_core_info(int socket, int *num_cores)
 {
     hwloc_obj_t obj;
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    t = &opal_hwloc_topology;
 
     /* Traverse all sockets, looking for the right physical ID
        number. */
@@ -411,9 +453,15 @@ static int module_get_physical_processor_id(int logical_processor_id)
     int obj_type = HWLOC_OBJ_CORE;
     hwloc_obj_t obj;
     hwloc_bitmap_t good;
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t = &opal_hwloc_topology;
     int physical_processor_id;
 
+     /* bozo check */
+     if (NULL == opal_hwloc_topology) {
+         return OPAL_ERR_NOT_SUPPORTED;
+     }
+     t = &opal_hwloc_topology;
+ 
     /* hwloc isn't able to find cores on all platforms.  Example:
        PPC64 running RHEL 5.4 (linux kernel 2.6.18) only reports NUMA
        nodes and PU's.  Fine.  
@@ -457,7 +505,13 @@ static int module_get_physical_processor_id(int logical_processor_id)
 static int module_get_physical_socket_id(int logical_socket_id)
 {
     hwloc_obj_t obj;
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    t = &opal_hwloc_topology;
 
     obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_SOCKET, logical_socket_id);
     if (NULL == obj) {
@@ -475,7 +529,13 @@ static int module_get_physical_core_id(int physical_socket_id,
 {
     unsigned count = 0;
     hwloc_obj_t obj;
-    hwloc_topology_t *t = &mca_paffinity_hwloc_component.topology;
+    hwloc_topology_t *t;
+
+    /* bozo check */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_SUPPORTED;
+    }
+    t = &opal_hwloc_topology;
 
     obj = hwloc_get_root_obj(*t);
     if (NULL == obj) {

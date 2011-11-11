@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,8 +20,17 @@
 
 #include "opal_config.h"
 
+#include <string.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -50,15 +60,15 @@ bool opal_maffinity_setup = false;
  */
 int opal_maffinity_base_open(void)
 {
-    int value;
+    int int_value;
 
     /* Debugging / verbose output */
 
     mca_base_param_reg_int_name("maffinity", "base_verbose", 
                                 "Verbosity level of the maffinity framework",
                                 false, false,
-                                0, &value);
-    if (0 != value) {
+                                0, &int_value);
+    if (0 != int_value) {
         opal_maffinity_base_output = opal_output_open(NULL);
     } else {
         opal_maffinity_base_output = -1;

@@ -30,19 +30,10 @@
 
 BEGIN_C_DECLS
 
-typedef struct {
-    /* Base paffinity component */
-    opal_paffinity_base_component_t super;
-
-    /* This component's data */
-    hwloc_topology_t topology;
-    bool topology_need_destroy;
-} opal_paffinity_hwloc_component_t;
-
 /**
  * Globally exported variable
  */
-OPAL_DECLSPEC extern opal_paffinity_hwloc_component_t
+OPAL_DECLSPEC extern opal_paffinity_base_component_t
      mca_paffinity_hwloc_component;
 
 /**

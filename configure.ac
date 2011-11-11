@@ -29,8 +29,10 @@
 
 # Load project list and names
 m4_include([config/project_list.m4])
-
+# Load the version code.  Because this is also used directly as a
+# shell script, no ac_defun
 m4_pattern_allow([m4_ifval])
+AC_LANG([C])
 
 # Init autoconf
 

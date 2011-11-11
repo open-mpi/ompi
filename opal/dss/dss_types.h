@@ -70,6 +70,7 @@ typedef struct {
 #define    OPAL_NULL                (opal_data_type_t)   18 /**< don't interpret data type */
 #define    OPAL_DATA_VALUE          (opal_data_type_t)   19 /**< data value */
 #define    OPAL_PSTAT               (opal_data_type_t)   20 /**< process statistics */
+#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   22 /**< hwloc topology */
 
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
 

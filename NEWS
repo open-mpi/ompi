@@ -47,6 +47,16 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+1.5.5
+-----
+
+- Upgrade embedded Hardware Locality (hwloc) v1.2.2 with some OMPI
+  customizations.
+- New MCA parameters to control process-wide memory binding policy:
+  hwloc_base_mem_alloc_policy, hwloc_base_mem_bind_failure_action (see
+  ompi_info --param hwloc base).
+
+
 1.5.4
 -----
 

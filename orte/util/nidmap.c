@@ -48,6 +48,7 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
+#include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/show_help.h"
@@ -137,6 +138,20 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
     }
     /* the bytes in the object were free'd by the decode */
     
+#if OPAL_HAVE_HWLOC
+    /* extract the topology, if not already set */
+    if (NULL == opal_hwloc_topology) {
+        /* it is okay if there isn't anything present */
+        cnt = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &opal_hwloc_topology, &cnt, OPAL_HWLOC_TOPO))) {
+            if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+#endif
+
     return ORTE_SUCCESS;
 }
 

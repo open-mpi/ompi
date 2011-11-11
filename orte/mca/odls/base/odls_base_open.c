@@ -29,6 +29,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/sysinfo/sysinfo.h"
 #include "opal/util/output.h"
@@ -308,6 +309,16 @@ int orte_odls_base_open(void)
             }
         }
     }
+
+#if OPAL_HAVE_HWLOC
+    /* ensure we have the local topology */
+    if (NULL == opal_hwloc_topology) {
+        if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
+            0 != hwloc_topology_load(opal_hwloc_topology)) {
+            return ORTE_ERR_NOT_SUPPORTED;
+        }
+    }
+#endif
 
     /* Open up all available components */
 

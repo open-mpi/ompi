@@ -71,6 +71,7 @@
 
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/opal_environ.h"
 
@@ -815,6 +816,9 @@ LAUNCH_PROCS:
                 opal_setenv(param, tmp, true, &environ_copy);
                 free(tmp);
             }
+
+            /* Also set the memory affininty policy */
+            opal_hwloc_base_set_process_membind_policy();
         }
 
         /* close all file descriptors w/ exception of

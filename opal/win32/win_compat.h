@@ -316,6 +316,9 @@ typedef unsigned int uint;
 #define LOG_INFO    6
 #define LOG_DEBUG   7
 
+/* hwloc support is not ready on Windows,
+   will remove this lines when it's done. */
+#define OPAL_HAVE_HWLOC 0
 
 /*
  * Mask these to Windows equivalents

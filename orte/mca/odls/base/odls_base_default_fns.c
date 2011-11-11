@@ -43,6 +43,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/sys_limits.h"
 #include "opal/dss/dss.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/pstat/pstat.h"
 
@@ -2451,6 +2452,12 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
             opal_dss.pack(&buffer, &flag, 1, OPAL_INT8);
             opal_dss.pack(&buffer, &orte_odls_globals.dmap, 1, OPAL_BYTE_OBJECT);
             opal_dss.pack(&buffer, &jobdat->pmap, 1, OPAL_BYTE_OBJECT);
+#if OPAL_HAVE_HWLOC
+            /* add the local topology, if available */
+            if (NULL != opal_hwloc_topology) {
+                opal_dss.pack(&buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO);
+            }
+#endif
         }
     }
     

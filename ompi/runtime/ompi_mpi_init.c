@@ -47,6 +47,7 @@
 #include "opal/util/show_help.h"
 #include "opal/runtime/opal.h"
 #include "opal/event/event.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
@@ -404,6 +405,17 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	error = "ompi_mpi_init: modex send thread level";
 	goto error;
     }
+
+#if OPAL_HAVE_HWLOC
+    /* If orte_init() didn't fill in opal_hwloc_topology, then we need
+       to go fill it in ourselves. */
+    if (NULL == opal_hwloc_topology) {
+        if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
+            0 != hwloc_topology_load(opal_hwloc_topology)) {
+            return OPAL_ERR_NOT_SUPPORTED;
+        }
+    }
+#endif
 
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
