@@ -93,10 +93,6 @@ exit(0);
 sub process {
     my $dir = shift;
 
-    # Ensure we're in a svn-controlled directory
-    return
-        if (! -d "$dir/.svn");
-
     # Look at the svn:ignore property for this directory
     my $svn_ignore = `svn pg svn:ignore $dir 2> /dev/null`;
     # If svn failed, bail on this directory.
