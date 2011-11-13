@@ -65,10 +65,8 @@ orte_ras_sim_component_t mca_ras_simulator_component = {
 
 static int ras_sim_open(void)
 {
-    mca_base_param_reg_int(&mca_ras_simulator_component.super.base_version,
-                           "num_nodes",
-                           "Number of nodes to simulate",
-                           false, false, 0, &mca_ras_simulator_component.num_nodes);
+    int tmp;
+
     mca_base_param_reg_int(&mca_ras_simulator_component.super.base_version,
                            "slots",
                            "Number of slots on each node to simulate",
@@ -79,18 +77,37 @@ static int ras_sim_open(void)
                            false, false, 0, &mca_ras_simulator_component.slots_max);
 #if OPAL_HAVE_HWLOC
     mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
-                              "topo_file",
-                              "File containing xml topology description for simulated nodes",
-                              false, false, NULL, &mca_ras_simulator_component.topofile);
+                              "num_nodes",
+                              "Comma-separated list of number of nodes to simulate for each topology",
+                              false, false, NULL, &mca_ras_simulator_component.num_nodes);
+    mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
+                              "topo_files",
+                              "Comma-separated list of files containing xml topology descriptions for simulated nodes",
+                              false, false, NULL, &mca_ras_simulator_component.topofiles);
+    mca_base_param_reg_int(&mca_ras_simulator_component.super.base_version,
+                           "have_cpubind",
+                           "Topology supports binding to cpus",
+                           false, false, (int)true, &tmp);
+    mca_ras_simulator_component.have_cpubind = OPAL_INT_TO_BOOL(tmp);
+    mca_base_param_reg_int(&mca_ras_simulator_component.super.base_version,
+                           "have_membind",
+                           "Topology supports binding to memory",
+                           false, false, (int)true, &tmp);
+    mca_ras_simulator_component.have_membind = OPAL_INT_TO_BOOL(tmp);
+#else
+    mca_base_param_reg_string(&mca_ras_simulator_component.super.base_version,
+                              "num_nodes",
+                              "Number of nodes to simulate",
+                              false, false, NULL, &mca_ras_simulator_component.num_nodes);
 #endif
-
+        
     return ORTE_SUCCESS;
 }
 
 
 static int ras_sim_component_query(mca_base_module_t **module, int *priority)
 {
-    if (0 < mca_ras_simulator_component.num_nodes) {
+    if (NULL != mca_ras_simulator_component.num_nodes) {
         *module = (mca_base_module_t *) &orte_ras_sim_module;
         *priority = 1000;
         /* cannot launch simulated nodes or resolve their names to addresses */
