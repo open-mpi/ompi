@@ -150,7 +150,7 @@ static int allocate(opal_list_t *nodes)
 
         for (i=0; i < num_nodes; i++) {
             node = OBJ_NEW(orte_node_t);
-            asprintf(&node->name, "%s%0*d", prefix, dig, val++);
+            asprintf(&node->name, "%s%0*d", prefix, dig, i);
             node->state = ORTE_NODE_STATE_UP;
             node->slots_inuse = 0;
             node->slots_max = mca_ras_simulator_component.slots_max;
