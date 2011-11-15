@@ -51,6 +51,7 @@ static int allocate(opal_list_t *nodes)
     bool use_local_topology = false;
 #endif
     char **node_cnt=NULL;
+    char prefix[6];
 
     node_cnt = opal_argv_split(mca_ras_simulator_component.num_nodes, ',');
 
@@ -72,20 +73,21 @@ static int allocate(opal_list_t *nodes)
 
 #endif
 
-    /* count the total number of nodes */
-    val = 0;
-    for (n=0; NULL != node_cnt[n]; n++) {
-        val += strtol(node_cnt[n], NULL, 10);
-    }
-    /* get number of digits */
-    for (dig=0; 0 != val; dig++) {
-        val /= 10;
-    }
+    /* setup the prefix to the node names */
+    snprintf(prefix, 6, "nodeA");
 
     /* process the request */
-    val = 0;
     for (n=0; NULL != node_cnt[n]; n++) {
         num_nodes = strtol(node_cnt[n], NULL, 10);
+
+        /* get number of digits */
+        val = num_nodes;
+        for (dig=0; 0 != val; dig++) {
+            val /= 10;
+        }
+
+        /* set the prefix for this group of nodes */
+        prefix[4] += n;
 
         /* check for topology */
 #if OPAL_HAVE_HWLOC
@@ -148,7 +150,7 @@ static int allocate(opal_list_t *nodes)
 
         for (i=0; i < num_nodes; i++) {
             node = OBJ_NEW(orte_node_t);
-            asprintf(&node->name, "node%0*d", dig, val++);
+            asprintf(&node->name, "%s%0*d", prefix, dig, val++);
             node->state = ORTE_NODE_STATE_UP;
             node->slots_inuse = 0;
             node->slots_max = mca_ras_simulator_component.slots_max;
