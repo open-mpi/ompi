@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -311,9 +312,14 @@ int orte_dt_copy_map(orte_job_map_t **dest, orte_job_map_t *src, opal_data_type_
     }
     
     /* copy data into it */
-    (*dest)->policy = src->policy;
-    (*dest)->npernode = src->npernode;
-    (*dest)->oversubscribe = src->oversubscribe;
+    (*dest)->mapping = src->mapping;
+    (*dest)->ranking = src->ranking;
+#if OPAL_HAVE_HWLOC
+    (*dest)->binding = src->binding;
+#endif
+    if (NULL != src->ppr) {
+        (*dest)->ppr = strdup(src->ppr);
+    }
     (*dest)->display_map = src->display_map;
     (*dest)->num_new_daemons = src->num_new_daemons;
     (*dest)->daemon_vpid_start = src->daemon_vpid_start;

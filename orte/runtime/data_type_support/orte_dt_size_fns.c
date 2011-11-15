@@ -7,6 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -195,10 +196,6 @@ int orte_dt_size_proc(size_t *size, orte_proc_t *src, opal_data_type_t type)
     
     /* if src is NULL, then that's all we wanted */
     if (NULL == src) return ORTE_SUCCESS;
-    
-    if (NULL != src->slot_list) {
-        *size += strlen(src->slot_list);
-    }
     
 #if OPAL_ENABLE_FT_CR == 1
     if (NULL != src->ckpt_snapshot_ref) {

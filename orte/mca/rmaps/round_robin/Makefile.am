@@ -24,7 +24,8 @@ dist_pkgdata_DATA = help-orte-rmaps-rr.txt
 sources = \
         rmaps_rr.c \
         rmaps_rr.h \
-        rmaps_rr_component.c
+        rmaps_rr_component.c \
+        rmaps_rr_mappers.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

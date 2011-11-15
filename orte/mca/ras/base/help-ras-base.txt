@@ -31,5 +31,8 @@ please check that none of the following exist:
 MCA param file: orte_allocation_required = 1
 Environment: OMPI_MCA_orte_allocation_required=1
 Cmd line: -mca orte_allocation_required 1
-
-
+#
+[ras-sim:mismatch]
+The number of topology files and the list of number of nodes
+must match - i.e., a number of nodes must be given for each
+topology.

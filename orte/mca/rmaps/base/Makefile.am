@@ -36,5 +36,12 @@ libmca_rmaps_la_SOURCES += \
         base/rmaps_base_map_job.c \
         base/rmaps_base_get_job_map.c \
         base/rmaps_base_support_fns.c \
-	base/rmaps_base_common_mappers.c
+        base/rmaps_base_ranking.c \
+        base/rmaps_base_print_fns.c
+
+if OPAL_HAVE_HWLOC
+libmca_rmaps_la_SOURCES += \
+        base/rmaps_base_binding.c
+endif
+
 endif

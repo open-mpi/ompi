@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,6 +40,7 @@
 #include "orte/mca/rmaps/base/base.h"
 #include "rmaps_rr.h"
 
+static orte_node_t* get_starting_point(opal_list_t *node_list, orte_job_t *jdata);
 
 /*
  * Create a round-robin mapping for the job.
@@ -52,7 +53,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     opal_list_item_t *item;
     orte_std_cntr_t num_nodes, num_slots;
     int rc;
-    opal_list_item_t *cur_node_item;
     mca_base_component_t *c = &mca_rmaps_round_robin_component.base_version;
 
     /* this mapper can only handle initial launch
@@ -74,9 +74,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    if (0 < jdata->map->npernode ||
-        0 < jdata->map->nperboard ||
-        0 < jdata->map->npersocket) {
+    if (ORTE_MAPPING_RR < ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
         /* I don't know how to do these - defer */
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:rr: job %s not using rr mapper",
@@ -122,14 +120,14 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
          * option
          */
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  jdata->map->policy))) {
+                                                                  jdata->map->mapping))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }
         num_nodes = (orte_std_cntr_t)opal_list_get_size(&node_list);
 
         /* if a bookmark exists from some prior mapping, set us to start there */
-        cur_node_item = orte_rmaps_base_get_starting_point(&node_list, jdata);
+        jdata->bookmark = get_starting_point(&node_list, jdata);
         
         if (0 == app->num_procs) {
             /* set the num_procs to equal the number of slots on these mapped nodes */
@@ -137,12 +135,42 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         }
         
         /* Make assignments */
-        if (jdata->map->policy & ORTE_MAPPING_BYNODE) {
-            rc = orte_rmaps_base_map_bynode(jdata, app, &node_list,
-                                            app->num_procs, cur_node_item);
+        if (ORTE_MAPPING_BYNODE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+            rc = orte_rmaps_rr_bynode(jdata, app, &node_list, num_slots,
+                                      app->num_procs);
+        } else if (ORTE_MAPPING_BYSLOT == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+            rc = orte_rmaps_rr_byslot(jdata, app, &node_list, num_slots,
+                                      app->num_procs);
+#if OPAL_HAVE_HWLOC
+        } else if (ORTE_MAPPING_BYHWTHREAD == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
+                                     app->num_procs, HWLOC_OBJ_PU, 0);
+        } else if (ORTE_MAPPING_BYCORE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
+                                     app->num_procs, HWLOC_OBJ_CORE, 0);
+        } else if (ORTE_MAPPING_BYL1CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
+                                     app->num_procs, HWLOC_OBJ_CACHE, 1);
+        } else if (ORTE_MAPPING_BYL2CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
+                                     app->num_procs, HWLOC_OBJ_CACHE, 2);
+        } else if (ORTE_MAPPING_BYL3CACHE == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
+                                     app->num_procs, HWLOC_OBJ_CACHE, 3);
+        } else if (ORTE_MAPPING_BYSOCKET == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
+                                     app->num_procs, HWLOC_OBJ_SOCKET, 0);
+        } else if (ORTE_MAPPING_BYNUMA == ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
+            rc = orte_rmaps_rr_byobj(jdata, app, &node_list, num_slots,
+                                     app->num_procs, HWLOC_OBJ_NODE, 0);
+#endif
         } else {
-            rc = orte_rmaps_base_map_byslot(jdata, app, &node_list,
-                                            app->num_procs, cur_node_item);
+            /* unrecognized mapping directive */
+            orte_show_help("help-orte-rmaps-base.txt", "unrecognized-policy",
+                           true, "mapping",
+                           orte_rmaps_base_print_mapping(jdata->map->mapping));
+            rc = ORTE_ERR_SILENT;
+            goto error;
         }
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -155,28 +183,19 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
         /* cleanup the node list - it can differ from one app_context
          * to another, so we have to get it every time
          */
-        while(NULL != (item = opal_list_remove_first(&node_list))) {
+        while (NULL != (item = opal_list_remove_first(&node_list))) {
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&node_list);
-    }
 
-    /* compute vpids and add proc objects to the job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* compute and save local ranks */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* define the daemons that we will use for this job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+        /* compute vpids and add proc objects to the job - do this after
+         * each app_context so that the ranks within each context are
+         * contiguous
+         */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     return ORTE_SUCCESS;
@@ -188,6 +207,85 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     OBJ_DESTRUCT(&node_list);
 
     return rc;
+}
+
+/*
+ * determine the proper starting point for the next mapping operation
+ */
+static orte_node_t* get_starting_point(opal_list_t *node_list, orte_job_t *jdata)
+{
+    opal_list_item_t *item, *cur_node_item;
+    orte_node_t *node, *nd1, *ndmin;
+    int overload;
+    
+    /* if a bookmark exists from some prior mapping, set us to start there */
+    if (NULL != jdata->bookmark) {
+        cur_node_item = NULL;
+        /* find this node on the list */
+        for (item = opal_list_get_first(node_list);
+             item != opal_list_get_end(node_list);
+             item = opal_list_get_next(item)) {
+            node = (orte_node_t*)item;
+            
+            if (node->index == jdata->bookmark->index) {
+                cur_node_item = item;
+                break;
+            }
+        }
+        /* see if we found it - if not, just start at the beginning */
+        if (NULL == cur_node_item) {
+            cur_node_item = opal_list_get_first(node_list); 
+        }
+    } else {
+        /* if no bookmark, then just start at the beginning of the list */
+        cur_node_item = opal_list_get_first(node_list);
+    }
+    
+    /* is this node fully subscribed? If so, then the first
+     * proc we assign will oversubscribe it, so let's look
+     * for another candidate
+     */
+    node = (orte_node_t*)cur_node_item;
+    ndmin = node;
+    overload = ndmin->slots_inuse - ndmin->slots_alloc;
+    if (node->slots_inuse >= node->slots_alloc) {
+        /* work down the list - is there another node that
+         * would not be oversubscribed?
+         */
+        if (cur_node_item != opal_list_get_last(node_list)) {
+            item = opal_list_get_next(cur_node_item);
+        } else {
+            item = opal_list_get_first(node_list);
+        }
+        while (item != cur_node_item) {
+            nd1 = (orte_node_t*)item;
+            if (nd1->slots_inuse < nd1->slots_alloc) {
+                /* this node is not oversubscribed! use it! */
+                return (orte_node_t*)item;
+            }
+            /* this one was also oversubscribed, keep track of the
+             * node that has the least usage - if we can't
+             * find anyone who isn't fully utilized, we will
+             * start with the least used node
+             */
+            if (overload >= (nd1->slots_inuse - nd1->slots_alloc)) {
+                ndmin = nd1;
+                overload = ndmin->slots_inuse - ndmin->slots_alloc;
+            }
+            if (item == opal_list_get_last(node_list)) {
+                item = opal_list_get_first(node_list);
+            } else {
+                item= opal_list_get_next(item);
+            }
+        }
+        /* if we get here, then we cycled all the way around the
+         * list without finding a better answer - just use the node
+         * that is minimally overloaded
+         */
+        cur_node_item = (opal_list_item_t*)ndmin;
+    }
+
+    return (orte_node_t*)cur_node_item;
 }
 
 orte_rmaps_base_module_t orte_rmaps_round_robin_module = {

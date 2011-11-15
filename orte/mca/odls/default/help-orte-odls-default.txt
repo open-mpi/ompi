@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -94,3 +94,24 @@ Your job may behave unpredictably after this, or abort.
   Application name:  %s
   Function:          %s
   Location:          %s:%d
+#
+[memory not bound]
+WARNING: Open MPI tried to bind a process but failed.  This is a
+warning only; your job will continue, though performance may
+be degraded.
+
+  Local host:        %s
+  Application name:  %s
+  Error message:     %s
+  Location:          %s:%d
+
+#
+[memory binding error]
+Open MPI tried to bind memory for a new process but something went
+wrong. The process was killed without launching the target
+application. Your job will now abort.
+
+  Local host:        %s
+  Application name:  %s
+  Error message: %s
+  Location:  %s:%d

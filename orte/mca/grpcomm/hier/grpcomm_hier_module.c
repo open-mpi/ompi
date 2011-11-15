@@ -54,7 +54,6 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag);
 static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
 static int hier_barrier(void);
-static int modex(opal_list_t *procs);
 
 /* Module def */
 orte_grpcomm_base_module_t orte_grpcomm_hier_module = {
@@ -66,7 +65,7 @@ orte_grpcomm_base_module_t orte_grpcomm_hier_module = {
     hier_barrier,
     orte_grpcomm_base_set_proc_attr,
     orte_grpcomm_base_get_proc_attr,
-    modex,
+    orte_grpcomm_base_full_modex,
     orte_grpcomm_base_purge_proc_attrs
 };
 
@@ -420,36 +419,4 @@ static int hier_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return ORTE_SUCCESS;
-}
-
-/***   MODEX SECTION ***/
-
-static int modex(opal_list_t *procs)
-{
-    int rc;
-
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:hier: modex entered",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* if we were given a list of procs to modex with, then this is happening
-     * as part of a connect/accept operation
-     */
-    if (NULL != procs) {
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs))) {
-            ORTE_ERROR_LOG(rc);
-        }
-    } else {
-    
-        /* otherwise, we are doing this across our peers */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_peer_modex())) {
-            ORTE_ERROR_LOG(rc);
-        }
-    }
-
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:hier: modex completed",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    return rc;
 }

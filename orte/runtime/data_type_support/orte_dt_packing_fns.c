@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +23,9 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
-#include "opal/util/opal_sos.h"
+#include "opal/dss/dss.h"
+#include "opal/dss/dss_internal.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/class/opal_pointer_array.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -442,15 +445,6 @@ int orte_dt_pack_node(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
-        /* do not pack the local board, socket, and core info */
-        
-        /* pack the cpu set info */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                          (void*)(&(nodes[i]->cpu_set)), 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* do not pack the username */
     }
     return ORTE_SUCCESS;
@@ -477,13 +471,6 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
-        /* pack the pid */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(procs[i]->pid)), 1, OPAL_PID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* pack the local rank */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)(&(procs[i]->local_rank)), 1, ORTE_LOCAL_RANK))) {
@@ -498,6 +485,14 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
             return rc;
         }
         
+#if OPAL_HAVE_HWLOC
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
+                          (void*)(&procs[i]->cpu_bitmap), 1, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+#endif
+
         /* pack the state */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)(&(procs[i]->state)), 1, ORTE_PROC_STATE))) {
@@ -508,13 +503,6 @@ int orte_dt_pack_proc(opal_buffer_t *buffer, const void *src,
         /* pack the app context index */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                          (void*)(&(procs[i]->app_idx)), 1, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* pack the name of the node where this proc is executing */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(procs[i]->nodename)), 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -906,50 +894,29 @@ int orte_dt_pack_map(opal_buffer_t *buffer, const void *src,
             return rc;
         }
 
-        /* pack the mapper used */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->last_mapper), 1, OPAL_STRING))) {
+        /* pack the policies */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->mapping), 1, ORTE_MAPPING_POLICY))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
-        /* pack the policy used to generate it */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->policy), 1, ORTE_MAPPING_POLICY))) {
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->ranking), 1, ORTE_RANKING_POLICY))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        
-        /* pack the #procs/node */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->npernode), 1, ORTE_STD_CNTR))) {
+#if OPAL_HAVE_HWLOC
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->binding), 1, OPAL_BINDING_POLICY))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        
-        /* pack the oversubscribe flag */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->oversubscribe), 1, OPAL_BOOL))) {
+#endif
+        /* pack any ppr */
+        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->ppr), 1, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
         /* pack the display map flag */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->display_map), 1, OPAL_BOOL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* pack the number of new daemons */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->num_new_daemons), 1, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* pack the daemon starting vpid */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->daemon_vpid_start), 1, ORTE_VPID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* pack the number of nodes */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer, &(maps[i]->num_nodes), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

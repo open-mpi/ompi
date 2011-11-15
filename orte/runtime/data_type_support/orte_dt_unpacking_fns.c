@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,10 +22,11 @@
 
 #include <sys/types.h>
 
-#include "orte/mca/errmgr/errmgr.h"
 #include "opal/dss/dss.h"
 #include "opal/dss/dss_internal.h"
-#include "opal/util/opal_sos.h"
+#include "opal/mca/hwloc/hwloc.h"
+
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/data_type_support/orte_dt_support.h"
 
 /*
@@ -474,16 +476,6 @@ int orte_dt_unpack_node(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        /* do not unpack the board, socket, and core info */
-        
-        /* unpack the cpu set */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                        &(nodes[i]->cpu_set), &n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* do not unpack the username */
     }
     return ORTE_SUCCESS;
@@ -518,14 +510,6 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        /* unpack the pid */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                         (&(procs[i]->pid)), &n, OPAL_PID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* unpack the local rank */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
@@ -534,7 +518,7 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        /* unpack the local rank */
+        /* unpack the node rank */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
                           (&(procs[i]->node_rank)), &n, ORTE_NODE_RANK))) {
@@ -542,6 +526,16 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
+#if OPAL_HAVE_HWLOC
+        /* unpack the binding pattern */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
+                         (void*)(&(procs[i]->cpu_bitmap)), &n, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+#endif
+
         /* unpack the state */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
@@ -554,13 +548,6 @@ int orte_dt_unpack_proc(opal_buffer_t *buffer, void *dest,
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
                          (&(procs[i]->app_idx)), &n, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* unpack the name of the node where this proc is executing */
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                          (void*)(&(procs[i]->nodename)), &n, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -965,7 +952,7 @@ int orte_dt_unpack_job_state(opal_buffer_t *buffer, void *dest,
  * sending a map - hence, we do not pack that field, so don't unpack it here
  */
 int orte_dt_unpack_map(opal_buffer_t *buffer, void *dest,
-                               int32_t *num_vals, opal_data_type_t type)
+                       int32_t *num_vals, opal_data_type_t type)
 {
     int rc;
     int32_t i, n;
@@ -990,34 +977,31 @@ int orte_dt_unpack_map(opal_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        /* unpack the mapper used */
+        /* unpack the policies */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                                         &(maps[i]->last_mapper), &n, OPAL_STRING))) {
+                                                         &(maps[i]->mapping), &n, ORTE_MAPPING_POLICY))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        
-        /* unpack the policy */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                                         &(maps[i]->policy), &n, ORTE_MAPPING_POLICY))) {
+                                                         &(maps[i]->ranking), &n, ORTE_RANKING_POLICY))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        
-        /* unpack the #procs/node */
+#if OPAL_HAVE_HWLOC
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                                         &(maps[i]->npernode), &n, ORTE_STD_CNTR))) {
+                                                         &(maps[i]->binding), &n, OPAL_BINDING_POLICY))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        
-        /* unpack the oversubscribe flag */
+#endif
+        /* unpack the ppr */
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                                         &(maps[i]->oversubscribe), &n, OPAL_BOOL))) {
+                                                         &(maps[i]->ppr), &n, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -1026,28 +1010,6 @@ int orte_dt_unpack_map(opal_buffer_t *buffer, void *dest,
         n = 1;
         if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
                                                          &(maps[i]->display_map), &n, OPAL_BOOL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* unpack the number of daemons to be created */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &(maps[i]->num_new_daemons), &n, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* unpack the starting vpid of the new daemons */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer, &(maps[i]->daemon_vpid_start), &n, ORTE_VPID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* unpack the number of nodes */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                                         &(maps[i]->num_nodes), &n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

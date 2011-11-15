@@ -24,6 +24,10 @@
 #define ORTE_RMAPS_RR_H
 
 #include "orte_config.h"
+
+#include "opal/mca/hwloc/hwloc.h"
+#include "opal/class/opal_list.h"
+
 #include "orte/mca/rmaps/rmaps.h"
 
 BEGIN_C_DECLS
@@ -31,6 +35,24 @@ BEGIN_C_DECLS
 ORTE_MODULE_DECLSPEC extern orte_rmaps_base_component_t mca_rmaps_round_robin_component;
 extern orte_rmaps_base_module_t orte_rmaps_round_robin_module;
 
+ORTE_MODULE_DECLSPEC int orte_rmaps_rr_bynode(orte_job_t *jdata,
+                                              orte_app_context_t *app,
+                                              opal_list_t *node_list,
+                                              orte_std_cntr_t num_slots,
+                                              orte_vpid_t nprocs);
+ORTE_MODULE_DECLSPEC int orte_rmaps_rr_byslot(orte_job_t *jdata,
+                                              orte_app_context_t *app,
+                                              opal_list_t *node_list,
+                                              orte_std_cntr_t num_slots,
+                                              orte_vpid_t nprocs);
+
+#if OPAL_HAVE_HWLOC
+ORTE_MODULE_DECLSPEC int orte_rmaps_rr_byobj(orte_job_t *jdata, orte_app_context_t *app,
+                                             opal_list_t *node_list,
+                                             orte_std_cntr_t num_slots,
+                                             orte_vpid_t num_procs,
+                                             hwloc_obj_type_t target, unsigned cache_level);
+#endif
 
 END_C_DECLS
 

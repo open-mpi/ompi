@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,7 @@
 #include <sys/types.h>
 
 #include "opal/util/argv.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -279,9 +280,9 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         tmp = tmp3;
     }
 
-    asprintf(&tmp2, "%s\n%s\tNum launched: %ld\tNum reported: %ld\n%s\tNum terminated: %ld\tOversubscribe override?: %s",
-             tmp, pfx, (long)src->num_launched, (long)src->num_reported, pfx,
-             (long)src->num_terminated, src->oversubscribe_override ? "True" : "False");
+    asprintf(&tmp2, "%s\n%s\tNum launched: %ld\tNum reported: %ld\tNum terminated: %ld",
+             tmp, pfx, (long)src->num_launched, (long)src->num_reported,
+             (long)src->num_terminated);
     free(tmp);
     tmp = tmp2;
     
@@ -376,11 +377,6 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
         }
     }
     
-    asprintf(&tmp2, "%s\n%s\tNum boards: %ld\tNum sockets/board: %ld\tNum cores/socket: %ld", tmp, pfx2,
-             (long)src->boards, (long)src->sockets_per_board, (long)src->cores_per_socket);
-    free(tmp);
-    tmp = tmp2;
-    
     if (NULL == src->daemon) {
         asprintf(&tmp2, "%s\n%s\tDaemon: %s\tDaemon launched: %s", tmp, pfx2,
                  "Not defined", src->daemon_launched ? "True" : "False");
@@ -397,9 +393,8 @@ int orte_dt_print_node(char **output, char *prefix, orte_node_t *src, opal_data_
     free(tmp);
     tmp = tmp2;
     
-    asprintf(&tmp2, "%s\n%s\tNum slots allocated: %ld\tMax slots: %ld:\tCpu set: %s", tmp, pfx2,
-             (long)src->slots_alloc, (long)src->slots_max,
-             (NULL == src->cpu_set) ? "NULL" : src->cpu_set);
+    asprintf(&tmp2, "%s\n%s\tNum slots allocated: %ld\tMax slots: %ld", tmp, pfx2,
+             (long)src->slots_alloc, (long)src->slots_max);
     free(tmp);
     tmp = tmp2;
     
@@ -462,7 +457,6 @@ PRINT_PROCS:
 int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_type_t type)
 {
     char *tmp, *tmp2, *pfx2;
-    char *locale=NULL;
 
     /* set default result */
     *output = NULL;
@@ -474,23 +468,6 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
         asprintf(&pfx2, "%s", prefix);
     }
     
-    if (orte_display_diffable_output) {
-        /* print only the parts important to testing
-         * mapping operations
-         */
-#if OPAL_HAVE_HWLOC
-        if (NULL != src->locale) {
-            hwloc_bitmap_list_asprintf(&locale, src->locale->cpuset);
-        }
-#endif
-        asprintf(output, "%s<process rank=%s app_idx=%ld local_rank=%lu node_rank=%lu locale=%s>",
-                 pfx2, ORTE_VPID_PRINT(src->name.vpid),  (long)src->app_idx,
-                 (unsigned long)src->local_rank,
-                 (unsigned long)src->node_rank,
-                 (NULL == locale) ? "UNKNOWN" : locale);
-        return ORTE_SUCCESS;
-    }
-
     if (orte_xml_output) {
         /* need to create the output in XML format */
         if (0 == src->pid) {
@@ -541,14 +518,24 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     tmp = tmp2;
     
 #if OPAL_HAVE_HWLOC
-    if (NULL != src->locale) {
-        hwloc_bitmap_list_asprintf(&locale, src->locale->cpuset);
-    }
-#endif
+    {
+        char *locale=NULL;
 
-    asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tLocale: %s\tSlot list: %s", tmp, pfx2,
-             orte_proc_state_to_str(src->state), src->restarts, (long)src->app_idx,
-             (NULL == locale) ? "UNKNOWN" : locale, (NULL == src->slot_list) ? "NULL" : src->slot_list);
+        if (NULL != src->locale) {
+            hwloc_bitmap_list_asprintf(&locale, src->locale->cpuset);
+        }
+        asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld\tLocale: %s\tBinding: %s[%u]", tmp, pfx2,
+                 orte_proc_state_to_str(src->state), src->restarts, (long)src->app_idx,
+                 (NULL == locale) ? "UNKNOWN" : locale,
+                 (NULL == src->cpu_bitmap) ? "NULL" : src->cpu_bitmap, src->bind_idx);
+        if (NULL != locale) {
+            free(locale);
+        }
+    }
+#else
+    asprintf(&tmp2, "%s\n%s\tState: %s\tRestarts: %d\tApp_context: %ld", tmp, pfx2,
+             orte_proc_state_to_str(src->state), src->restarts, (long)src->app_idx);
+#endif
     free(tmp);
     
     /* set the return */
@@ -662,38 +649,6 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
         asprintf(&pfx2, "%s", prefix);
     }
     
-    if (orte_display_diffable_output) {
-        /* display just the procs in a diffable format */
-        asprintf(&tmp, "<map>\n");
-        /* loop through nodes */
-        for (i=0; i < src->nodes->size; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(src->nodes, i))) {
-                continue;
-            }
-            asprintf(&tmp2, "%s\n\t<host name=%s>", tmp, (NULL == node->name) ? "UNKNOWN" : node->name);
-            free(tmp);
-            tmp = tmp2;
-            for (j=0; j < node->procs->size; j++) {
-                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
-                    continue;
-                }
-                orte_dt_print_proc(&tmp2, "\t\t", proc, ORTE_PROC);
-                asprintf(&tmp3, "%s\n%s", tmp, tmp2);
-                free(tmp2);
-                free(tmp);
-                tmp = tmp3;
-            }
-            asprintf(&tmp2, "%s\n\t</host>", tmp);
-            free(tmp);
-            tmp = tmp2;
-        }
-        asprintf(&tmp2, "%s\n</map>\n", tmp);
-        free(tmp);
-        free(pfx2);
-        *output = tmp2;
-        return ORTE_SUCCESS;
-    }
-
     if (orte_xml_output) {
         /* need to create the output in XML format */
         asprintf(&tmp, "<map>\n");
@@ -733,13 +688,25 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
     asprintf(&pfx, "%s\t", pfx2);
     
     if (orte_devel_level_output) {
-        asprintf(&tmp, "\n%sMapper requested: %s\tLast mapper: %s\tMapping policy: %04x\n%s\tNpernode: %ld\tOversubscribe allowed: %s\tCPU Lists: %s",
+#if OPAL_HAVE_HWLOC
+        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  Binding policy: %s[%s]  Cpu set: %s  PPR: %s",
                  pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
                  (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
-                 src->policy, pfx2, (long)src->npernode,
-                 (src->oversubscribe) ? "TRUE" : "FALSE",
-                 (src->cpu_lists) ? "TRUE" : "FALSE");
-        
+                 orte_rmaps_base_print_mapping(src->mapping),
+                 orte_rmaps_base_print_ranking(src->ranking),
+                 opal_hwloc_base_print_binding(src->binding),
+                 opal_hwloc_base_print_level(src->bind_level),
+                 (NULL == opal_hwloc_base_cpu_set) ? "NULL" : opal_hwloc_base_cpu_set,
+                 (NULL == src->ppr) ? "NULL" : src->ppr);
+#else
+        asprintf(&tmp, "\n%sMapper requested: %s  Last mapper: %s  Mapping policy: %s  Ranking policy: %s  PPR: %s",
+                 pfx2, (NULL == src->req_mapper) ? "NULL" : src->req_mapper,
+                 (NULL == src->last_mapper) ? "NULL" : src->last_mapper,
+                 orte_rmaps_base_print_mapping(src->mapping),
+                 orte_rmaps_base_print_ranking(src->ranking),
+                 (NULL == src->ppr) ? "NULL" : src->ppr);
+#endif
+
         if (ORTE_VPID_INVALID == src->daemon_vpid_start) {
             asprintf(&tmp2, "%s\n%sNum new daemons: %ld\tNew daemon starting vpid INVALID\n%sNum nodes: %ld",
                      tmp, pfx, (long)src->num_new_daemons, pfx, (long)src->num_nodes);

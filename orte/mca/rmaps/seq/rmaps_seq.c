@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +31,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
-#include "opal/util/opal_sos.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -72,7 +72,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
     opal_list_t *node_list=NULL;
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_seq_component.base_version;
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                          "%s rmaps:seq mapping job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -96,9 +96,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
-    if (0 < jdata->map->npernode ||
-        0 < jdata->map->nperboard ||
-        0 < jdata->map->npersocket) {
+    if (ORTE_MAPPING_SEQ != ORTE_GET_MAPPING_POLICY(jdata->map->mapping)) {
         /* I don't know how to do these - defer */
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:seq: job %s not using seq mapper",
@@ -168,7 +166,7 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         }
         
         /* check for nolocal and remove the head node, if required */
-        if (map->policy & ORTE_MAPPING_NO_USE_LOCAL) {
+        if (map->mapping & ORTE_MAPPING_NO_USE_LOCAL) {
             for (item  = opal_list_get_first(node_list);
                  item != opal_list_get_end(node_list);
                  item  = opal_list_get_next(item) ) {
@@ -218,24 +216,54 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
+            /* ensure the node is in the map */
+            if (!node->mapped) {
+                OBJ_RETAIN(node);
+                opal_pointer_array_add(map->nodes, node);
+                node->mapped = true;
+            }
+            proc = OBJ_NEW(orte_proc_t);
+            /* set the jobid */
+            proc->name.jobid = jdata->jobid;
+            proc->name.vpid = vpid++;
+            ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
+            /* flag the proc as ready for launch */
+            proc->state = ORTE_PROC_STATE_INIT;
+            proc->app_idx = i;
             
-            /* assign proc to this node - do NOT allow claim_slot to remove
-             * an oversubscribed node from the list!
-             */
-            proc = NULL;
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, node,
-                                                                 jdata->map->cpus_per_rank, app->idx,
-                                                                 node_list,
-                                                                 jdata->map->oversubscribe,
-                                                                 false, &proc))) {
-                if (ORTE_ERR_NODE_FULLY_USED != OPAL_SOS_GET_ERROR_CODE(rc)) {
-                    ORTE_ERROR_LOG(rc);
+            OBJ_RETAIN(node);  /* maintain accounting on object */    
+            proc->node = node;
+            proc->nodename = node->name;
+            node->num_procs++;
+            if ((node->slots < node->slots_inuse) ||
+                (0 < node->slots_max && node->slots_max < node->slots_inuse)) {
+                if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                   true, node->num_procs, app->app);
+                    rc = ORTE_ERR_SILENT;
                     goto error;
                 }
+                /* flag the node as oversubscribed so that sched-yield gets
+                 * properly set
+                 */
+                node->oversubscribed = true;
             }
-            /* assign the vpid */
-            proc->name.vpid = vpid++;
-            ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
+            if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(proc);
+                return rc;
+            }
+            /* retain the proc struct so that we correctly track its release */
+            OBJ_RETAIN(proc);
+
+#if OPAL_HAVE_HWLOC
+            /* assign the locale - okay for the topo to be null as
+             * it just means it wasn't returned
+             */
+            if (NULL != node->topology) {
+                proc->locale = hwloc_get_root_obj(node->topology);
+            }
+#endif
 
             /* add to the jdata proc array */
             if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
@@ -260,21 +288,9 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
         }
     }
 
-    /* compute and save local ranks */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* define the daemons that we will use for this job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
     return ORTE_SUCCESS;
 
-error:
+ error:
     if (NULL != default_node_list) {
         while (NULL != (item = opal_list_remove_first(default_node_list))) {
             OBJ_RELEASE(item);

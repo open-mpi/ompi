@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,14 +40,6 @@ struct orterun_globals_t {
     char *report_pid;
     char *report_uri;
     bool exit;
-    bool by_node;
-    bool by_slot;
-    bool by_board;
-    bool by_socket;
-    bool bind_to_none;
-    bool bind_to_core;
-    bool bind_to_board;
-    bool bind_to_socket;
     bool debugger;
     int num_procs;
     char *env_val;

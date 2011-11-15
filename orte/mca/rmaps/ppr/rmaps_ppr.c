@@ -29,37 +29,48 @@
 #include "orte/mca/rmaps/base/base.h"
 #include "rmaps_ppr.h"
 
-static int ppr(orte_job_t *jdata);
+static int ppr_mapper(orte_job_t *jdata);
 
 orte_rmaps_base_module_t orte_rmaps_ppr_module = {
-    ppr
+    ppr_mapper
 };
 
-static orte_proc_t* setup_proc(orte_job_t *jdata, orte_node_t *node,
+static orte_proc_t* setup_proc(orte_job_t *jdata,
+                               orte_node_t *node,
                                orte_app_idx_t idx);
+
+#if OPAL_HAVE_HWLOC
 static void prune(orte_jobid_t jobid,
                   orte_app_idx_t app_idx,
                   orte_node_t *node,
                   opal_hwloc_level_t *level,
                   orte_vpid_t *nmapped);
+#endif
 
-static int ppr(orte_job_t *jdata)
+static int ppr[OPAL_HWLOC_HWTHREAD_LEVEL+1];
+
+static int ppr_mapper(orte_job_t *jdata)
 {
-    int rc, local_limit, j;
-    orte_rmaps_ppr_component_t *c = &mca_rmaps_ppr_component;
+    int rc, j, n;
+    mca_base_component_t *c=&mca_rmaps_ppr_component.base_version;
     orte_node_t *node;
     orte_proc_t *proc;
     orte_app_context_t *app;
     orte_vpid_t total_procs, nprocs_mapped;
+    opal_hwloc_level_t level, start=OPAL_HWLOC_NODE_LEVEL;
+#if OPAL_HAVE_HWLOC
     hwloc_obj_t obj;
     hwloc_obj_type_t lowest;
-    opal_hwloc_level_t level;
-    unsigned cache_level;
+    unsigned cache_level=0;
+    unsigned int nobjs, i;
+#endif
     opal_list_t node_list;
     opal_list_item_t *item;
     orte_std_cntr_t num_slots;
-    unsigned int nobjs, i;
     orte_app_idx_t idx;
+    char **ppr_req, **ck;
+    size_t len;
+    bool pruning_reqd = false;
 
     /* only handle initial launch of loadbalanced
      * or NPERxxx jobs - allow restarting of failed apps
@@ -71,8 +82,16 @@ static int ppr(orte_job_t *jdata)
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }
     if (NULL != jdata->map->req_mapper &&
-        0 != strcasecmp(jdata->map->req_mapper, c->super.base_version.mca_component_name)) {
+        0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
         /* a mapper has been specified, and it isn't me */
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:ppr: job %s not using ppr mapper",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+        return ORTE_ERR_TAKE_NEXT_OPTION;
+    }
+    if (NULL == jdata->map->ppr ||
+        !(ORTE_MAPPING_PPR & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping))) {
+        /* not for us */
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:ppr: job %s not using ppr mapper",
                             ORTE_JOBID_PRINT(jdata->jobid));
@@ -80,28 +99,121 @@ static int ppr(orte_job_t *jdata)
     }
 
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                        "mca:rmaps:ppr: mapping job %s",
-                        ORTE_JOBID_PRINT(jdata->jobid));
+                        "mca:rmaps:ppr: mapping job %s with ppr %s",
+                        ORTE_JOBID_PRINT(jdata->jobid), jdata->map->ppr);
  
     /* flag that I did the mapping */
     if (NULL != jdata->map->last_mapper) {
         free(jdata->map->last_mapper);
     }
-    jdata->map->last_mapper = strdup(c->super.base_version.mca_component_name);
+    jdata->map->last_mapper = strdup(c->mca_component_name);
+
+    /* initialize */
+    memset(ppr, 0, OPAL_HWLOC_HWTHREAD_LEVEL * sizeof(opal_hwloc_level_t));
+
+    /* parse option */
+    n=0;
+    ppr_req = opal_argv_split(jdata->map->ppr, ',');
+    for (j=0; NULL != ppr_req[j]; j++) {
+        /* split on the colon */
+        ck = opal_argv_split(ppr_req[j], ':');
+        if (2 != opal_argv_count(ck)) {
+            /* must provide a specification */
+            orte_show_help("help-orte-rmaps-ppr.txt", "invalid-ppr", true, jdata->map->ppr);
+            opal_argv_free(ppr_req);
+            opal_argv_free(ck);
+            return ORTE_ERR_SILENT;
+        }
+        len = strlen(ck[1]);
+        if (0 == strncasecmp(ck[1], "node", len)) {
+            ppr[OPAL_HWLOC_NODE_LEVEL] = strtol(ck[0], NULL, 10);
+            ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYNODE);
+            start = OPAL_HWLOC_NODE_LEVEL;
+            n++;
+#if OPAL_HAVE_HWLOC
+        } else if (0 == strncasecmp(ck[1], "hwthread", len) ||
+                   0 == strncasecmp(ck[1], "thread", len)) {
+            ppr[OPAL_HWLOC_HWTHREAD_LEVEL] = strtol(ck[0], NULL, 10);
+            start = OPAL_HWLOC_HWTHREAD_LEVEL;
+            ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYHWTHREAD);
+            n++;
+        } else if (0 == strncasecmp(ck[1], "core", len)) {
+            ppr[OPAL_HWLOC_CORE_LEVEL] = strtol(ck[0], NULL, 10);
+            if (start < OPAL_HWLOC_CORE_LEVEL) {
+                start = OPAL_HWLOC_CORE_LEVEL;
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYCORE);
+            }
+            n++;
+        } else if (0 == strncasecmp(ck[1], "socket", len) ||
+                   0 == strncasecmp(ck[1], "skt", len)) {
+            ppr[OPAL_HWLOC_SOCKET_LEVEL] = strtol(ck[0], NULL, 10);
+            if (start < OPAL_HWLOC_SOCKET_LEVEL) {
+                start = OPAL_HWLOC_SOCKET_LEVEL;
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYSOCKET);
+            }
+            n++;
+        } else if (0 == strncasecmp(ck[1], "l1cache", len)) {
+            ppr[OPAL_HWLOC_L1CACHE_LEVEL] = strtol(ck[0], NULL, 10);
+            if (start < OPAL_HWLOC_L1CACHE_LEVEL) {
+                start = OPAL_HWLOC_L1CACHE_LEVEL;
+                cache_level = 1;
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYL1CACHE);
+            }
+            n++;
+        } else if (0 == strncasecmp(ck[1], "l2cache", len)) {
+            ppr[OPAL_HWLOC_L2CACHE_LEVEL] = strtol(ck[0], NULL, 10);
+            if (start < OPAL_HWLOC_L2CACHE_LEVEL) {
+                start = OPAL_HWLOC_L2CACHE_LEVEL;
+                cache_level = 2;
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYL2CACHE);
+            }
+            n++;
+        } else if (0 == strncasecmp(ck[1], "l3cache", len)) {
+            ppr[OPAL_HWLOC_L3CACHE_LEVEL] = strtol(ck[0], NULL, 10);
+            if (start < OPAL_HWLOC_L3CACHE_LEVEL) {
+                start = OPAL_HWLOC_L3CACHE_LEVEL;
+                cache_level = 3;
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYL3CACHE);
+            }
+            n++;
+        } else if (0 == strncasecmp(ck[1], "numa", len)) {
+            ppr[OPAL_HWLOC_NUMA_LEVEL] = strtol(ck[0], NULL, 10);
+            if (start < OPAL_HWLOC_NUMA_LEVEL) {
+                start = OPAL_HWLOC_NUMA_LEVEL;
+                ORTE_SET_MAPPING_POLICY(jdata->map->mapping, ORTE_MAPPING_BYNUMA);
+            }
+            n++;
+#endif
+        } else {
+            /* unknown spec */
+            orte_show_help("help-orte-rmaps-ppr.txt", "unrecognized-ppr-option", true, ck[1], jdata->map->ppr);
+            opal_argv_free(ppr_req);
+            opal_argv_free(ck);
+            return ORTE_ERR_SILENT;
+        }
+        opal_argv_free(ck);
+    }
+    opal_argv_free(ppr_req);
+    /* if nothing was given, that's an error */
+    if (0 == n) {
+        opal_output(0, "NOTHING GIVEN");
+        return ORTE_ERR_SILENT;
+    }
+    /* if more than one level was specified, then pruning will be reqd */
+    if (1 < n) {
+        pruning_reqd = true;
+    }
+
+    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                        "mca:rmaps:ppr: job %s assigned policy %s",
+                        ORTE_JOBID_PRINT(jdata->jobid),
+                        orte_rmaps_base_print_mapping(jdata->map->mapping));
 
     /* convenience */
-    local_limit = mca_rmaps_ppr_component.ppr[mca_rmaps_ppr_component.start];
-    level = mca_rmaps_ppr_component.start;
-
-    /* find the lowest level that was defined in the ppr */
-    lowest = opal_hwloc_levels[mca_rmaps_ppr_component.start];
-    if (OPAL_HWLOC_L3CACHE_LEVEL == mca_rmaps_ppr_component.start) {
-        cache_level = 3;
-    } else if (OPAL_HWLOC_L2CACHE_LEVEL == mca_rmaps_ppr_component.start) {
-        cache_level = 2;
-    } else if (OPAL_HWLOC_L1CACHE_LEVEL == mca_rmaps_ppr_component.start) {
-        cache_level = 1;
-    }
+    level = start;
+#if OPAL_HAVE_HWLOC
+    lowest = opal_hwloc_levels[start];
+#endif
 
     for (idx=0; idx < (orte_app_idx_t)jdata->apps->size; idx++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, idx))) {
@@ -121,7 +233,7 @@ static int ppr(orte_job_t *jdata)
         /* get the available nodes */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  jdata->map->policy))) {
+                                                                  jdata->map->mapping))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }
@@ -129,6 +241,7 @@ static int ppr(orte_job_t *jdata)
         /* cycle across the nodes */
         nprocs_mapped = 0;
         while (NULL != (node = (orte_node_t*)opal_list_remove_first(&node_list))) {
+#if OPAL_HAVE_HWLOC
             /* bozo check */
             if (NULL == node->topology) {
                 orte_show_help("help-orte-rmaps-ppr.txt", "ppr-topo-missing",
@@ -136,6 +249,7 @@ static int ppr(orte_job_t *jdata)
                 rc = ORTE_ERR_SILENT;
                 goto error;
             }
+#endif
             /* add the node to the map */
             if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
                 ORTE_ERROR_LOG(rc);
@@ -146,15 +260,21 @@ static int ppr(orte_job_t *jdata)
             /* if we are mapping solely at the node level, just put
              * that many procs on this node
              */
-            if (HWLOC_OBJ_MACHINE == lowest) {
-                for (j=0; j < local_limit && nprocs_mapped < total_procs; j++) {
+            if (OPAL_HWLOC_NODE_LEVEL == start) {
+#if OPAL_HAVE_HWLOC
+                obj = hwloc_get_root_obj(node->topology);
+#endif
+                for (j=0; j < ppr[start] && nprocs_mapped < total_procs; j++) {
                     if (NULL == (proc = setup_proc(jdata, node, idx))) {
                         rc = ORTE_ERR_OUT_OF_RESOURCE;
                         goto error;
                     }
                     nprocs_mapped++;
+#if OPAL_HAVE_HWLOC
                     proc->locale = obj;
+#endif
                 }
+#if OPAL_HAVE_HWLOC
             } else {
                 /* get the number of lowest resources on this node */
                 nobjs = opal_hwloc_base_get_nbobjs_by_type(node->topology,
@@ -168,7 +288,7 @@ static int ppr(orte_job_t *jdata)
                     obj = opal_hwloc_base_get_obj_by_type(node->topology,
                                                           lowest, cache_level,
                                                           i, OPAL_HWLOC_AVAILABLE);
-                    for (j=0; j < local_limit && nprocs_mapped < total_procs; j++) {
+                    for (j=0; j < ppr[start] && nprocs_mapped < total_procs; j++) {
                         if (NULL == (proc = setup_proc(jdata, node, idx))) {
                             rc = ORTE_ERR_OUT_OF_RESOURCE;
                             goto error;
@@ -178,7 +298,7 @@ static int ppr(orte_job_t *jdata)
                     }
                 }
 
-                if (mca_rmaps_ppr_component.pruning_reqd) {
+                if (pruning_reqd) {
                     /* go up the ladder and prune the procs according to
                      * the specification, adjusting the count of procs on the
                      * node as we go
@@ -186,6 +306,7 @@ static int ppr(orte_job_t *jdata)
                     level--;
                     prune(jdata->jobid, idx, node, &level, &nprocs_mapped);
                 }
+#endif
             }
 
             /* set the total slots used to the number of procs placed
@@ -197,12 +318,18 @@ static int ppr(orte_job_t *jdata)
              * we have violated the total slot specification - regardless,
              * if slots_max was given, we are not allowed to violate it!
              */
-            if ((!(jdata->map->oversubscribe) && node->slots < node->slots_inuse) ||
+            if ((node->slots < node->slots_inuse) ||
                 (0 < node->slots_max && node->slots_max < node->slots_inuse)) {
-                orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
-                               true, node->num_procs, app->app);
-                rc = ORTE_ERR_SILENT;
-                goto error;
+                if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                   true, node->num_procs, app->app);
+                    rc = ORTE_ERR_SILENT;
+                    goto error;
+                }
+                /* flag the node as oversubscribed so that sched-yield gets
+                 * properly set
+                 */
+                node->oversubscribed = true;
             }
 
             /* update the number of procs in the job and the app */
@@ -216,10 +343,10 @@ static int ppr(orte_job_t *jdata)
                 break;
             }
         }
-        if (nprocs_mapped < total_procs) {
+        if (ORTE_VPID_MAX != total_procs && nprocs_mapped < total_procs) {
             /* couldn't map them all */
             orte_show_help("help-orte-rmaps-ppr.txt", "ppr-too-many-procs",
-                           true, app->app, app->num_procs, mca_rmaps_ppr_component.given_ppr);
+                           true, app->app, app->num_procs, jdata->map->ppr);
             rc = ORTE_ERR_SILENT;
             goto error;
         }
@@ -231,17 +358,6 @@ static int ppr(orte_job_t *jdata)
     }
 
 
-    /* compute and save local ranks */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        goto error;
-    }
-
-    /* define the daemons that we will use for this job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata))) {
-        ORTE_ERROR_LOG(rc);
-    }
-
  error:
     while (NULL != (item = opal_list_remove_first(&node_list))) {
         OBJ_RELEASE(item);
@@ -250,6 +366,7 @@ static int ppr(orte_job_t *jdata)
     return rc;
 }
 
+#if OPAL_HAVE_HWLOC
 static hwloc_obj_t find_split(hwloc_topology_t topo, hwloc_obj_t obj)
 {
     unsigned k;
@@ -296,7 +413,7 @@ static void prune(orte_jobid_t jobid,
 
     /* convenience */
     lvl = opal_hwloc_levels[ll];
-    limit = mca_rmaps_ppr_component.ppr[ll];
+    limit = ppr[ll];
 
     if (0 == limit) {
         /* no limit at this level, so move up if necessary */
@@ -440,6 +557,7 @@ static void prune(orte_jobid_t jobid,
  error:
     opal_output(0, "INFINITE LOOP");
 }
+#endif
 
 static orte_proc_t* setup_proc(orte_job_t *jdata,
                                orte_node_t *node,

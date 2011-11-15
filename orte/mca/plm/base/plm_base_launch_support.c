@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * $COPYRIGHT$
@@ -81,41 +81,44 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_JOBID_PRINT(jdata->jobid)));
 
-    /* if the job is not being restarted or hasn't already been given a jobid, prep it */
-    if (ORTE_JOB_STATE_RESTART != jdata->state &&  ORTE_JOBID_INVALID == jdata->jobid) {
-        /* get a jobid for it */
-        if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(jdata))) {
+    /* if this is the daemon job, we don't perform certain functions */
+    if (jdata->jobid != ORTE_PROC_MY_NAME->jobid) {
+        /* if the job is not being restarted or hasn't already been given a jobid, prep it */
+        if (ORTE_JOB_STATE_RESTART != jdata->state &&  ORTE_JOBID_INVALID == jdata->jobid) {
+            /* get a jobid for it */
+            if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(jdata))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+
+            /* store it on the global job data pool */
+            ljob = ORTE_LOCAL_JOBID(jdata->jobid);
+            opal_pointer_array_set_item(orte_job_data, ljob, jdata);
+        
+            /* set the job state */
+            jdata->state = ORTE_JOB_STATE_INIT;
+
+            /* if job recovery is not defined, set it to default */
+            if (!jdata->recovery_defined) {
+                /* set to system default */
+                jdata->enable_recovery = orte_enable_recovery;
+            }
+            /* if app recovery is not defined, set apps to defaults */
+            for (i=0; i < jdata->apps->size; i++) {
+                if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+                    continue;
+                }
+                if (!app->recovery_defined) {
+                    app->max_restarts = orte_max_restarts;
+                }
+            }
+        }
+    
+        /* get the allocation */
+        if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
-        /* store it on the global job data pool */
-        ljob = ORTE_LOCAL_JOBID(jdata->jobid);
-        opal_pointer_array_set_item(orte_job_data, ljob, jdata);
-        
-        /* set the job state */
-        jdata->state = ORTE_JOB_STATE_INIT;
-
-        /* if job recovery is not defined, set it to default */
-        if (!jdata->recovery_defined) {
-            /* set to system default */
-            jdata->enable_recovery = orte_enable_recovery;
-        }
-        /* if app recovery is not defined, set apps to defaults */
-        for (i=0; i < jdata->apps->size; i++) {
-            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-                continue;
-            }
-            if (!app->recovery_defined) {
-                app->max_restarts = orte_max_restarts;
-            }
-        }
-    }
-    
-    /* get the allocation */
-    if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
     }
 
     if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(jdata))) {
@@ -123,64 +126,6 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         return rc;
     }         
 
-#if 0
-    /* RHC: Please leave this code here - it is needed for
-     * rare debugging that doesn't merit a separate debug-flag,
-     * but is a pain to have to replicate when needed
-     */
-    {
-        char *crud;
-        orte_odls_job_t *jobdat;
-        crud = orte_regex_encode_maps(jdata);
-        opal_output(0, "maps regex: %s", (NULL == crud) ? "NULL" : crud);
-        if (NULL == crud) {
-            orte_never_launched = true;
-            ORTE_UPDATE_EXIT_STATUS(0);
-            orte_jobs_complete();
-            return ORTE_ERROR;
-        }
-        orte_util_nidmap_init(NULL);
-        orte_regex_decode_maps(crud, &jobdat);
-        free(crud);
-        /* print-out the map */
-        orte_nidmap_dump();
-        orte_jobmap_dump();
-        /* printout the jobdat */
-        opal_output(orte_clean_output, "****   DUMP OF JOBDAT %s (%d nodes %d procs)   ***",
-                    ORTE_JOBID_PRINT(jobdat->jobid), (int)jobdat->num_nodes, (int)(jobdat->num_procs));
-        opal_output(orte_clean_output, "\tNum slots: %d\tControl: %x\tStdin: %d",
-                    (int)jobdat->total_slots_alloc, jobdat->controls, (int)jobdat->stdin_target);
-        opal_output(orte_clean_output, "\tApp: %s", jobdat->apps[0]->app);
-        opal_output(orte_clean_output, "\tCwd: %s", jobdat->apps[0]->cwd);
-        crud = opal_argv_join(jobdat->apps[0]->argv, ',');
-        opal_output(orte_clean_output, "\tArgv: %s", crud);
-        free(crud);
-        crud = opal_argv_join(jobdat->apps[0]->env, ',');
-        opal_output(orte_clean_output, "\tEnv: %s", crud);
-        free(crud);
-        orte_never_launched = true;
-        ORTE_UPDATE_EXIT_STATUS(0);
-        orte_jobs_complete();
-        return ORTE_ERROR;
-    }
-
-    {
-        opal_byte_object_t bo;
-
-        /* construct a nodemap */
-        if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(&bo))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* print-out the map */
-        orte_nidmap_dump();
-    }
-#endif
-    
     /* if we don't want to launch, now is the time to leave */
     if (orte_do_not_launch) {
         orte_never_launched = true;
@@ -192,7 +137,8 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     /* quick sanity check - is the stdin target within range
      * of the job?
      */
-    if (ORTE_VPID_WILDCARD != jdata->stdin_target &&
+    if (jdata->jobid != ORTE_PROC_MY_NAME->jobid &&
+        ORTE_VPID_WILDCARD != jdata->stdin_target &&
         ORTE_VPID_INVALID != jdata->stdin_target &&
         jdata->num_procs <= jdata->stdin_target) {
         /* this request cannot be met */
@@ -551,6 +497,9 @@ static void process_orted_launch_report(int fd, short event, void *data)
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s RECEIVED TOPOLOGY FROM NODE %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
+            if (10 < opal_output_get_verbosity(orte_plm_globals.output)) {
+                opal_dss.dump(0, topo, OPAL_HWLOC_TOPO);
+            }
             /* do we already have this topology from some other node? */
             found = false;
             for (i=0; i < orte_node_topologies->size; i++) {
@@ -573,6 +522,7 @@ static void process_orted_launch_report(int fd, short event, void *data)
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s NEW TOPOLOGY - ADDING",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                
                 opal_pointer_array_add(orte_node_topologies, topo);
                 node->topology = topo;
             }
@@ -776,12 +726,14 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (orted_spin_flag) {
         opal_argv_append(argc, argv, "--spin");
     }
-    if (orte_report_bindings) {
+#if OPAL_HAVE_HWLOC
+    if (opal_hwloc_report_bindings) {
         opal_argv_append(argc, argv, "--report-bindings");
     }
     if (orte_hetero_nodes) {
         opal_argv_append(argc, argv, "--hetero-nodes");
     }
+#endif
 
     if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
         opal_argv_append(argc, argv, "--debug-failure");

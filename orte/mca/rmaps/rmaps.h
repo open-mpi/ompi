@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -109,13 +110,6 @@ typedef struct orte_rmaps_base_component_2_0_0_t orte_rmaps_base_component_2_0_0
 /** Convenience typedef */
 typedef orte_rmaps_base_component_2_0_0_t orte_rmaps_base_component_t;
 
-
-/**
- * Macro for use in components that are of type rmaps
- */
-#define ORTE_RMAPS_BASE_VERSION_2_0_0 \
-  MCA_BASE_VERSION_2_0_0, \
-  "rmaps", 2, 0, 0
 
 END_C_DECLS
 

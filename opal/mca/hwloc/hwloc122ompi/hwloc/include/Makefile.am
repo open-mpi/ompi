@@ -1,6 +1,7 @@
 # Copyright © 2009-2010 INRIA.  All rights reserved.
 # Copyright © 2009-2010 Université Bordeaux 1
 # Copyright © 2009-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright © 2011      Oracle and/or its affiliates.  All rights reserved.
 # See COPYING in top-level directory.
 
 # Only install the headers if we're in standalone mode (meaning:
@@ -32,6 +33,11 @@ include_hwloc_HEADERS += \
         hwloc/linux.h \
         hwloc/linux-libnuma.h
 endif HWLOC_HAVE_LINUX
+
+if HWLOC_HAVE_SOLARIS
+include_hwloc_HEADERS += \
+       private/solaris-chiptype.h
+endif HWLOC_HAVE_SOLARIS
 
 if HWLOC_HAVE_SCHED_SETAFFINITY
 include_hwloc_HEADERS += hwloc/glibc-sched.h

@@ -31,7 +31,6 @@
 BEGIN_C_DECLS
 
 ORTE_DECLSPEC int orte_util_add_hostfile_nodes(opal_list_t *nodes,
-                                               bool *override_oversubscribed,
                                                char *hostfile);
     
 ORTE_DECLSPEC int orte_util_filter_hostfile_nodes(opal_list_t *nodes,

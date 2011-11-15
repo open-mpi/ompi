@@ -46,7 +46,7 @@
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 
@@ -88,6 +88,24 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
         return ORTE_SUCCESS;
     }
     
+#if OPAL_HAVE_HWLOC
+    {
+        hwloc_topology_t topo;
+
+        /* extract the topology */
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &cnt, OPAL_HWLOC_TOPO))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (NULL == opal_hwloc_topology) {
+            opal_hwloc_topology = topo;
+        } else {
+            hwloc_topology_destroy(topo);
+        }
+    }
+#endif
+
     /* extract the byte object holding the daemonmap */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &bo, &cnt, OPAL_BYTE_OBJECT))) {
@@ -113,16 +131,6 @@ int orte_util_nidmap_init(opal_buffer_t *buffer)
         return rc;
     }
     /* the bytes in the object were free'd by the decode */
-#if OPAL_HAVE_HWLOC
-    /* extract the topology */
-    if (NULL == opal_hwloc_topology) {
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &opal_hwloc_topology, &cnt, OPAL_HWLOC_TOPO))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-#endif
 
     return ORTE_SUCCESS;
 }
@@ -522,6 +530,9 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
     orte_job_t *jdata = NULL;
     int32_t *nodes = NULL;
     int i, j, k, rc = ORTE_SUCCESS;
+#if OPAL_HAVE_HWLOC
+    unsigned int *bind_idx=NULL;
+#endif
 
     /* setup the working buffer */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -550,12 +561,21 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
             ORTE_ERROR_LOG(rc);
             goto cleanup_and_return;
         }
-        
-        /* allocate memory for the nodes, local ranks and node ranks */
+#if OPAL_HAVE_HWLOC
+        /* pack the bind level */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &(jdata->map->bind_level), 1, OPAL_HWLOC_LEVEL_T))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup_and_return;
+        }
+#endif
+
+        /* allocate memory for the nodes, local ranks, node ranks, and bind_idx */
         nodes = (int32_t*)malloc(jdata->num_procs * sizeof(int32_t));
         lrank = (orte_local_rank_t*)malloc(jdata->num_procs*sizeof(orte_local_rank_t));
         nrank = (orte_node_rank_t*)malloc(jdata->num_procs*sizeof(orte_node_rank_t));
-        
+#if OPAL_HAVE_HWLOC
+        bind_idx = (unsigned int*)malloc(jdata->num_procs*sizeof(unsigned int));
+#endif
         /* transfer and pack the node info in one pack */
         for (i=0, k=0; i < jdata->procs->size; i++) {
             if (NULL == (proc = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, i))) {
@@ -569,6 +589,9 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
             nodes[k] = proc->node->index;
             lrank[k] = proc->local_rank;
             nrank[k] = proc->node_rank;
+#if OPAL_HAVE_HWLOC
+            bind_idx[k] = proc->bind_idx;
+#endif
             ++k;
         }
         if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, nodes, jdata->num_procs, OPAL_INT32))) {
@@ -585,6 +608,13 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
             ORTE_ERROR_LOG(rc);
             goto cleanup_and_return;
         }
+#if OPAL_HAVE_HWLOC
+        /* transfer and pack the bind_idx in one pack */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, bind_idx, jdata->num_procs, OPAL_UINT))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup_and_return;
+        }
+#endif
     }
     
     /* transfer the payload to the byte object */
@@ -601,6 +631,11 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
     if( NULL != nodes ) {
         free(nodes);
     }
+#if OPAL_HAVE_HWLOC
+    if( NULL != bind_idx ) {
+        free(bind_idx);
+    }
+#endif
     OBJ_DESTRUCT(&buf);
     
     return rc;
@@ -612,9 +647,13 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     orte_jobid_t jobid;
     orte_vpid_t i, num_procs;
     orte_pmap_t *pmap;
-    int32_t *nodes, my_node;
-    orte_local_rank_t *local_rank;
-    orte_node_rank_t *node_rank;
+    int32_t *nodes=NULL, my_node;
+    orte_local_rank_t *local_rank=NULL;
+    orte_node_rank_t *node_rank=NULL;
+#if OPAL_HAVE_HWLOC
+    opal_hwloc_level_t bind_level;
+    unsigned int *bind_idx=NULL;
+#endif
     orte_std_cntr_t n;
     opal_buffer_t buf;
     orte_jmap_t *jmap;
@@ -658,6 +697,17 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             goto cleanup;
         }
 
+#if OPAL_HAVE_HWLOC
+        /* unpack the binding level */
+        n=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, &bind_level, &n, OPAL_HWLOC_LEVEL_T))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        /* set mine */
+        orte_process_info.bind_level = bind_level;
+#endif
+
         /* allocate memory for the node info */
         nodes = (int32_t*)malloc(num_procs * 4);
         /* unpack it in one shot */
@@ -687,6 +737,19 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             goto cleanup;
         }
         
+#if OPAL_HAVE_HWLOC
+        /* allocate memory for bind_idx */
+        bind_idx = (unsigned int*)malloc(num_procs*sizeof(unsigned int));
+        /* unpack bind_idx in one shot */
+        n=num_procs;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, bind_idx, &n, OPAL_UINT))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        /* set mine */
+        orte_process_info.bind_idx = bind_idx[ORTE_PROC_MY_NAME->vpid];
+#endif
+
         /* if we already know about this job, we need to check the data to see
          * if something has changed - e.g., a proc that is being restarted somewhere
          * other than where it previously was
@@ -703,34 +766,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             }
             /* now use the opal function to reset the internal pointers */
             opal_pointer_array_remove_all(&jmap->pmap);
-            /* set the size of the storage so we minimize realloc's */
-            if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(&jmap->pmap, num_procs))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            /* add in the updated array */
-            for (i=0; i < num_procs; i++) {
-                pmap = OBJ_NEW(orte_pmap_t);
-                /* add the pidmap entry at the specific site corresponding
-                 * to the proc's vpid
-                 */
-                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(&jmap->pmap, i, pmap))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-                /* add/update the data */
-                pmap->node = nodes[i];
-                pmap->local_rank = local_rank[i];
-                pmap->node_rank = node_rank[i];
-                /* set locality - for now, just do node level */
-                if (pmap->node == my_node) {
-                    pmap->locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-                } else {
-                    pmap->locality = OPAL_PROC_NON_LOCAL;
-                }
-            }
-            /* update the #procs */
-            jmap->num_procs = num_procs;
         } else {
             /* if we don't already have this data, store it
              * unfortunately, job objects cannot be stored
@@ -740,40 +775,67 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
              */
             jmap = OBJ_NEW(orte_jmap_t);
             jmap->job = jobid;
-            jmap->num_procs = num_procs;
             if (0 > (j = opal_pointer_array_add(&orte_jobmap, jmap))) {
                 ORTE_ERROR_LOG(j);
                 rc = j;
                 goto cleanup;
             }
-            /* allocate memory for the procs array */
-            opal_pointer_array_set_size(&jmap->pmap, num_procs);
-            /* xfer the data */
-            for (i=0; i < num_procs; i++) {
-                pmap = OBJ_NEW(orte_pmap_t);
-                pmap->node = nodes[i];
-                pmap->local_rank = local_rank[i];
-                pmap->node_rank = node_rank[i];
-                /* set locality - for now, just do node level */
-                if (pmap->node == my_node) {
-                    pmap->locality = OPAL_PROC_ON_CLUSTER | OPAL_PROC_ON_CU | OPAL_PROC_ON_NODE;
-                } else {
-                    pmap->locality = OPAL_PROC_NON_LOCAL;
-                }
-                /* add the pidmap entry at the specific site corresponding
-                 * to the proc's vpid
-                 */
-                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(&jmap->pmap, i, pmap))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
+        }
+        /* update the binding level and num_procs */
+#if OPAL_HAVE_HWLOC
+        jmap->bind_level = bind_level;
+#endif
+        jmap->num_procs = num_procs;
+        /* set the size of the storage so we minimize realloc's */
+        if (ORTE_SUCCESS != (rc = opal_pointer_array_set_size(&jmap->pmap, num_procs))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* xfer the data */
+        for (i=0; i < num_procs; i++) {
+            pmap = OBJ_NEW(orte_pmap_t);
+            pmap->node = nodes[i];
+            pmap->local_rank = local_rank[i];
+            pmap->node_rank = node_rank[i];
+            /* set locality */
+            if (ORTE_PROC_MY_NAME->vpid == i) {
+                /* this is me */
+                pmap->locality = OPAL_PROC_ALL_LOCAL;
+#if OPAL_HAVE_HWLOC
+            } else if (pmap->node == my_node) {
+                /* we share a node - see what else we share */
+                pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                       orte_process_info.bind_level,
+                                                                       orte_process_info.bind_idx,
+                                                                       jmap->bind_level,
+                                                                       bind_idx[i]);
+#else
+            } else if (pmap->node == my_node) {
+                pmap->locality = OPAL_PROC_ON_NODE;
+#endif
+            } else {
+                pmap->locality = OPAL_PROC_NON_LOCAL;
+            }
+            /* add the pidmap entry at the specific site corresponding
+             * to the proc's vpid
+             */
+            if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(&jmap->pmap, i, pmap))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
             }
         }
         
         /* release data */
         free(nodes);
+        nodes = NULL;
         free(local_rank);
+        local_rank = NULL;
         free(node_rank);
+        node_rank = NULL;
+#if OPAL_HAVE_HWLOC
+        free(bind_idx);
+        bind_idx = NULL;
+#endif
         /* setup for next cycle */
         n = 1;
     }
@@ -781,7 +843,21 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         rc = ORTE_SUCCESS;
     }
     
-cleanup:
+ cleanup:
+    if (NULL != nodes) {
+        free(nodes);
+    }
+    if (NULL != local_rank) {
+        free(local_rank);
+    }
+    if (NULL != node_rank) {
+        free(node_rank);
+    }
+#if OPAL_HAVE_HWLOC
+    if (NULL != bind_idx) {
+        free(bind_idx);
+    }
+#endif
     OBJ_DESTRUCT(&buf);
     return rc;
 }

@@ -205,6 +205,9 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_NETWORK_NOT_PARSEABLE:
         retval = "Provided network specification is not parseable";
         break;
+    case OPAL_ERR_SILENT:
+        retval = NULL;
+        break;
     default:
         retval = NULL;
 }

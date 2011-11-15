@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -50,7 +50,6 @@
 #include "opal/mca/event/event.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
@@ -81,6 +80,7 @@
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
+#include "orte/mca/ras/ras.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rml/base/rml_contact.h"
@@ -254,37 +254,7 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL,
       "Export an environment variable, optionally specifying a value (e.g., \"-x foo\" exports the environment variable foo and takes its value from the current environment; \"-x foo=bar\" exports the environment variable name foo and sets its value to \"bar\" in the started processes)" },
 
-    /* Mapping options */
-    { NULL, NULL, NULL, '\0', "bynode", "bynode", 0,
-      &orterun_globals.by_node, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to assign processes round-robin by node" },
-    { NULL, NULL, NULL, '\0', "byslot", "byslot", 0,
-      &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to assign processes round-robin by slot (the default)" },
-    { NULL, NULL, NULL, '\0', "bycore", "bycore", 0,
-      &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
-      "Alias for byslot" },
-    { NULL, NULL, NULL, '\0', "bysocket", "bysocket", 0,
-      &orterun_globals.by_socket, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to assign processes round-robin by socket" },
-    { NULL, NULL, NULL, '\0', "byboard", "byboard", 0,
-      &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to assign processes round-robin by board (equivalent to bynode if only 1 board/node)" },
-    { "rmaps", "base", "pernode", '\0', "pernode", "pernode", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Launch one process per available node on the specified number of nodes [no -np => use all allocated nodes]" },
-    { "rmaps", "base", "n_pernode", '\0', "npernode", "npernode", 1,
-        NULL, OPAL_CMD_LINE_TYPE_INT,
-        "Launch n processes per node on all allocated nodes" },
-    { "rmaps", "base", "slot_list", '\0', "slot-list", "slot-list", 1,
-        NULL, OPAL_CMD_LINE_TYPE_STRING,
-        "List of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files)" },
-    { "rmaps", "base", "no_oversubscribe", '\0', "nooversubscribe", "nooversubscribe", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Nodes are not to be oversubscribed, even if the system supports such operation"},
-    { "rmaps", "base", "loadbalance", '\0', "loadbalance", "loadbalance", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Balance total number of procs across all allocated nodes"},
+      /* Mapping controls */
     { "rmaps", "base", "display_map", '\0', "display-map", "display-map", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the process map just before launch"},
@@ -303,38 +273,97 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps", "base", "no_schedule_local", '\0', "nolocal", "nolocal", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not run any MPI applications on the local node" },
+    { "rmaps", "base", "no_oversubscribe", '\0', "nooversubscribe", "nooversubscribe", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Nodes are not to be oversubscribed, even if the system supports such operation"},
+    { "rmaps", "base", "oversubscribe", '\0', "oversubscribe", "oversubscribe", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Nodes are allowed to be oversubscribed, even on a managed system"},
+#if 0
     { "rmaps", "base", "cpus_per_rank", '\0', "cpus-per-proc", "cpus-per-proc", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Number of cpus to use for each process [default=1]" },
     { "rmaps", "base", "cpus_per_rank", '\0', "cpus-per-rank", "cpus-per-rank", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Synonym for cpus-per-proc" },
-    { "rmaps", "base", "n_perboard", '\0', "nperboard", "nperboard", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Launch n processes per board on all allocated nodes" },
-    { "rmaps", "base", "n_persocket", '\0', "npersocket", "npersocket", 1,
+#endif
+
+    /* backward compatiblity */
+    { "rmaps", "base", "bynode", '\0', "bynode", "bynode", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to map and rank processes round-robin by node" },
+    { "rmaps", "base", "byslot", '\0', "byslot", "byslot", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to map and rank processes round-robin by slot" },
+
+    /* Nperxxx options that do not require topology and are always
+     * available - included for backwards compatibility
+     */
+    { "rmaps", "ppr", "pernode", '\0', "pernode", "pernode", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Launch one process per available node" },
+    { "rmaps", "ppr", "n_pernode", '\0', "npernode", "npernode", 1,
+        NULL, OPAL_CMD_LINE_TYPE_INT,
+        "Launch n processes per node on all allocated nodes" },
+
+#if OPAL_HAVE_HWLOC
+    /* declare hardware threads as independent cpus */
+    { "hwloc", "base", "use_hwthreads_as_cpus", '\0', "use-hwthread-cpus", "use-hwthread-cpus", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Use hardware threads as independent cpus" },
+
+    /* include npersocket for backwards compatibility */
+    { "rmaps", "ppr", "n_persocket", '\0', "npersocket", "npersocket", 1,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Launch n processes per socket on all allocated nodes" },
 
-    /* binding options */
-    { NULL, NULL, NULL, '\0', "bind-to-none", "bind-to-none", 0,
-      &orterun_globals.bind_to_none, OPAL_CMD_LINE_TYPE_BOOL,
-      "Do not bind processes to cores or sockets (default)" },
-    { NULL, NULL, NULL, '\0', "bind-to-core", "bind-to-core", 0,
-      &orterun_globals.bind_to_core, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to bind processes to specific cores" },
-    { NULL, NULL, NULL, '\0', "bind-to-board", "bind-to-board", 0,
-      &orterun_globals.bind_to_board, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to bind processes to specific boards (meaningless on 1 board/node)" },
-    { NULL, NULL, NULL, '\0', "bind-to-socket", "bind-to-socket", 0,
-      &orterun_globals.bind_to_socket, OPAL_CMD_LINE_TYPE_BOOL,
-      "Whether to bind processes to sockets" },
-    { "rmaps", "base", "stride", '\0', "stride", "stride", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
-      "When binding multiple cores to a rank, the step size to use between cores [default: 1]" },
-    { "orte", "report", "bindings", '\0', "report-bindings", "report-bindings", 0,
+    /* Mapping options */
+    { "rmaps", "base", "mapping_policy", '\0', NULL, "map-by", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Mapping Policy [slot (default) | hwthread | core | socket | numa | board | node]" },
+
+      /* Ranking options */
+    { "rmaps", "base", "ranking_policy", '\0', NULL, "rank-by", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Ranking Policy [slot (default) | hwthread | core | socket | numa | board | node]" },
+
+      /* Binding options */
+    { "hwloc", "base", "binding_policy", '\0', NULL, "bind-to", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Policy for binding processes [none (default) | hwthread | core | socket | numa | board] (supported qualifiers: overload-allowed,if-supported)" },
+
+    /* backward compatiblity */
+    { "hwloc", "base", "bind_to_core", '\0', "bind-to-core", "bind-to-core", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Bind processes to cores" },
+    { "hwloc", "base", "bind_to_socket", '\0', "bind-to-socket", "bind-to-socket", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Bind processes to sockets" },
+
+    { "hwloc", "base", "report_bindings", '\0', "report-bindings", "report-bindings", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to report process bindings to stderr" },
+
+    /* slot list option */
+    { "hwloc", "base", "slot_list", '\0', "slot-list", "slot-list", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "List of processor IDs to bind processes to [default=NULL]"},
+
+    /* generalized pattern mapping option */
+    { "rmaps", "ppr", "pattern", '\0', NULL, "ppr", 1,
+        NULL, OPAL_CMD_LINE_TYPE_STRING,
+        "Comma-separated list of number of processes on a given resource type [default: none]" },
+#else
+    /* Mapping options */
+    { "rmaps", "base", "mapping_policy", '\0', NULL, "map-by", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Mapping Policy [slot (default) | node]" },
+
+      /* Ranking options */
+    { "rmaps", "base", "ranking_policy", '\0', NULL, "rank-by", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Ranking Policy [slot (default) | node]" },
+#endif
 
     /* Allocation options */
     { "ras", "base", "display_alloc", '\0', "display-allocation", "display-allocation", 0,
@@ -343,20 +372,14 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "ras", "base", "display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display a detailed list (mostly intended for developers) of the allocation being used by this job"},
-    { "orte", "cpu", "set", '\0', "cpu-set", "cpu-set", 1,
+#if OPAL_HAVE_HWLOC
+    { "hwloc", "base", "cpu_set", '\0', "cpu-set", "cpu-set", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]"},
-
-    /* cluster hardware info */
-    { "orte", "num", "boards", '\0', "num-boards", "num-boards", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Number of processor boards/node (1-256) [default: 1]"},
-    { "orte", "num", "sockets", '\0', "num-sockets", "num-sockets", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Number of sockets/board (1-256) [default: 1]"},
-    { "orte", "num", "cores", '\0', "num-cores", "num-cores", 1,
-      NULL, OPAL_CMD_LINE_TYPE_INT,
-      "Number of cores/socket (1-256) [default: 1]"},
+#endif
+    { NULL, NULL, NULL, 'H', "host", "host", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "List of hosts to invoke processes on" },
 
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
@@ -435,13 +458,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Max number of times to restart a failed process" },
 
-    { "orte", "vm", "launch", '\0', "vm", "vm", 0,
-      NULL, OPAL_CMD_LINE_TYPE_BOOL,
-      "Launch daemons on all nodes at start to create a virtual machine [Default = false]" },
-
+#if OPAL_HAVE_HWLOC
     { "orte", "hetero", "nodes", '\0', NULL, "hetero-nodes", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
+#endif
 
 #if OPAL_ENABLE_CRDEBUG == 1
     { "opal", "cr", "enable_crdebug", '\0', "crdebug", "crdebug", 0,
@@ -477,6 +498,8 @@ int orterun(int argc, char *argv[])
     char * tmp_env_var = NULL;
     orte_debugger_breakpoint_fn_t foo;
     orte_job_t *daemons;
+    int32_t ljob, i;
+    orte_app_context_t *app, *dapp;
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
@@ -572,7 +595,9 @@ int orterun(int argc, char *argv[])
      */
     jdata = OBJ_NEW(orte_job_t);
     if (NULL == jdata) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        /* cannot call ORTE_ERROR_LOG as the errmgr
+         * hasn't been loaded yet!
+         */
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
@@ -625,13 +650,18 @@ int orterun(int argc, char *argv[])
      * require
      */
     if (ORTE_SUCCESS != (rc = orte_init(&argc, &argv, ORTE_PROC_HNP))) {
-        ORTE_ERROR_LOG(rc);
+        /* cannot call ORTE_ERROR_LOG as it could be the errmgr
+         * never got loaded!
+         */
         return rc;
     }
     /* finalize the OPAL utils. As they are opened again from orte_init->opal_init
      * we continue to have a reference count on them. So we have to finalize them twice...
      */
     opal_finalize_util();
+
+    /* get the daemon job object */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
 
     /* check for request to report uri */
     if (NULL != orterun_globals.report_uri) {
@@ -678,14 +708,25 @@ int orterun(int argc, char *argv[])
        Since there always MUST be at least one app_context, we are safe in
        doing this.
     */
-    if (NULL != ((orte_app_context_t*)jdata->apps->addr[0])->prefix_dir) {
+    if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0)) &&
+        NULL != app->prefix_dir) {
         char *oldenv, *newenv, *lib_base, *bin_base;
         
+        /* copy the prefix into the daemon job so that any launcher
+         * can find the orteds when we launch the virtual machine
+         */
+        if (NULL == (dapp = (orte_app_context_t*)opal_pointer_array_get_item(daemons->apps, 0))) {
+            /* that's an error in the ess */
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        dapp->prefix_dir = strdup(app->prefix_dir);
+
         lib_base = opal_basename(opal_install_dirs.libdir);
         bin_base = opal_basename(opal_install_dirs.bindir);
 
         /* Reset PATH */
-        newenv = opal_os_path( false, ((orte_app_context_t*)jdata->apps->addr[0])->prefix_dir, bin_base, NULL );
+        newenv = opal_os_path( false, app->prefix_dir, bin_base, NULL );
         oldenv = getenv("PATH");
         if (NULL != oldenv) {
             char *temp;
@@ -701,7 +742,7 @@ int orterun(int argc, char *argv[])
         free(bin_base);
         
         /* Reset LD_LIBRARY_PATH */
-        newenv = opal_os_path( false, ((orte_app_context_t*)jdata->apps->addr[0])->prefix_dir, lib_base, NULL );
+        newenv = opal_os_path( false, app->prefix_dir, lib_base, NULL );
         oldenv = getenv("LD_LIBRARY_PATH");
         if (NULL != oldenv) {
             char* temp;
@@ -783,58 +824,63 @@ int orterun(int argc, char *argv[])
         }
     }
     
-    /* if we are launching the vm, now is the time to do so */
-    if (orte_vm_launch) {
-        int32_t ljob, i;
-        orte_app_context_t *app;
+    /***   LAUNCH THE ORTE VIRTUAL MACHINE   ***/
 
-        /* we may need to look at the apps for the user's job
-         * to get our full list of nodes, so prep the job for
-         * launch. This duplicates some code in orte_plm_base_setup_job
-         * that won't run if we do this here - eventually, we'll want
-         * to refactor the plm_base routine to avoid the duplication
+    /* we may need to look at the apps for the user's job
+     * to get our full list of nodes, so prep the job for
+     * launch - start by getting a jobid for it */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        goto DONE;
+    }
+
+    /* store it on the global job data pool - this is the key
+     * step required before we launch the daemons. It allows
+     * the orte_rmaps_base_setup_virtual_machine routine to
+     * search all apps for any hosts to be used by the vm
+     */
+    ljob = ORTE_LOCAL_JOBID(jdata->jobid);
+    opal_pointer_array_set_item(orte_job_data, ljob, jdata);
+        
+    /* set the job state */
+    jdata->state = ORTE_JOB_STATE_INIT;
+
+    /* if job recovery is not defined, set it to default */
+    if (!jdata->recovery_defined) {
+        /* set to system default */
+        jdata->enable_recovery = orte_enable_recovery;
+    }
+    /* if app recovery is not defined, set apps to defaults */
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        if (!app->recovery_defined) {
+            app->max_restarts = orte_max_restarts;
+        }
+    }
+    
+    /* if we don't want to launch, then don't attempt to
+     * launch the daemons - the user really wants to just
+     * look at the proposed process map
+     */
+    if (!orte_do_not_launch) {
+        /* run the allocator on the application job - this allows us to
+         * pickup any host or hostfile arguments so we get the full
+         * array of nodes in our allocation
          */
-        /* get a jobid for it */
-        if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(jdata))) {
-            ORTE_ERROR_LOG(rc);
+        if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
             goto DONE;
         }
-        /* store it on the global job data pool - this is the key
-         * step required before we launch the daemons. It allows
-         * the orte_rmaps_base_setup_virtual_machine routine to
-         * search all apps for any hosts to be used by the vm
-         */
-        ljob = ORTE_LOCAL_JOBID(jdata->jobid);
-        opal_pointer_array_set_item(orte_job_data, ljob, jdata);
-        
-        /* set the job state */
-        jdata->state = ORTE_JOB_STATE_INIT;
 
-        /* if job recovery is not defined, set it to default */
-        if (!jdata->recovery_defined) {
-            /* set to system default */
-            jdata->enable_recovery = orte_enable_recovery;
-        }
-        /* if app recovery is not defined, set apps to defaults */
-        for (i=0; i < jdata->apps->size; i++) {
-            if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-                continue;
-            }
-            if (!app->recovery_defined) {
-                app->max_restarts = orte_max_restarts;
-            }
-        }
-        /* get the daemon job object */
-        daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
         /* launch the daemons */
         if (ORTE_SUCCESS != (rc = orte_plm.spawn(daemons))) {
             fprintf(stderr, "%s: UNABLE TO LAUNCH VIRTUAL MACHINE\n", orte_basename);
             goto DONE;
         }
-        /* ensure all future jobs use the VM */
-        orte_default_mapping_policy |= ORTE_MAPPING_USE_VM;
     }
 
+    /***   LAUNCH THE APPLICATION   ***/
     /* setup for debugging */
     orte_debugger.init_before_spawn(jdata);
     
@@ -880,13 +926,6 @@ static int init_globals(void)
     orterun_globals.help                       = false;
     orterun_globals.version                    = false;
     orterun_globals.verbose                    = false;
-    orterun_globals.by_node                    = false;
-    orterun_globals.by_slot                    = false;
-    orterun_globals.by_board                   = false;
-    orterun_globals.by_socket                  = false;
-    orterun_globals.bind_to_core               = false;
-    orterun_globals.bind_to_board              = false;
-    orterun_globals.bind_to_socket             = false;
     orterun_globals.debugger                   = false;
     orterun_globals.num_procs                  =  0;
     if( NULL != orterun_globals.env_val )
@@ -982,35 +1021,7 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
         run_debugger(orte_basename, cmd_line, argc, argv, orterun_globals.num_procs);
     }
 
-    /* extract any rank assignment policy directives */
-    if (orterun_globals.by_node) {
-        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYNODE);
-    } else if (orterun_globals.by_board) {
-        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYBOARD);
-    } else if (orterun_globals.by_socket) {
-        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSOCKET);
-    } else if (orterun_globals.by_slot) {
-        ORTE_SET_MAPPING_POLICY(ORTE_MAPPING_BYSLOT);
-    }
-    /* if nothing was specified, leave it as set by
-     * mca param
-     */
-    
-    /* extract any binding policy directives */
-    if (orterun_globals.bind_to_socket) {
-        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_SOCKET);
-    } else if (orterun_globals.bind_to_board) {
-        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_BOARD);
-    } else if (orterun_globals.bind_to_core) {
-        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE);
-    } else if (orterun_globals.bind_to_none) {
-        ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_NONE);
-    }
-    /* if nothing was specified, leave it as set
-     * by mca param
-     */
-    
-    /* if recovery was disabled on the cmd line, do so */
+     /* if recovery was disabled on the cmd line, do so */
     if (orterun_globals.disable_recovery) {
         orte_enable_recovery = false;
         orte_max_restarts = 0;

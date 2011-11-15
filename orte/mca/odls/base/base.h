@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,8 +54,6 @@ typedef struct orte_odls_base_t {
     opal_list_t available_components;
     /** selected component */
     orte_odls_base_component_t selected_component;
-    /* warn if binding no-op */
-    bool warn_if_not_bound;
 } orte_odls_base_t;
 
 /**

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -27,7 +27,7 @@
 #endif
 
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/paffinity/paffinity.h"
+#include "opal/mca/hwloc/hwloc.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
@@ -146,23 +146,14 @@ bool orte_assume_same_shell = true;
 /* report launch progress */
 bool orte_report_launch_progress = false;
 
-/* cluster hardware info */
-uint8_t orte_default_num_boards;
-uint8_t orte_default_num_sockets_per_board;
-uint8_t orte_default_num_cores_per_socket;
-
 /* allocation specification */
-char *orte_default_cpu_set;
 char *orte_default_hostfile = NULL;
-char *orte_rankfile;
+char *orte_rankfile = NULL;
 #ifdef __WINDOWS__
 char *orte_ccp_headnode;
 #endif
 int orte_num_allocated_nodes = 0;
 char *orte_node_regex = NULL;
-
-/* default rank assigment and binding policy */
-orte_mapping_policy_t orte_default_mapping_policy = 0;
 
 /* tool communication controls */
 bool orte_report_events = false;
@@ -705,7 +696,6 @@ static void orte_job_construct(orte_job_t* job)
     
     job->map = NULL;
     job->bookmark = NULL;
-    job->oversubscribe_override = false;
     job->state = ORTE_JOB_STATE_UNDEF;
 
     job->num_launched = 0;
@@ -839,15 +829,6 @@ static void orte_node_construct(orte_node_t* node)
     node->slots_alloc = 0;
     node->slots_max = 0;
     
-    node->boards = orte_default_num_boards;
-    node->sockets_per_board = orte_default_num_sockets_per_board;
-    node->cores_per_socket = orte_default_num_cores_per_socket;
-    if (NULL != orte_default_cpu_set) {
-        node->cpu_set = strdup(orte_default_cpu_set);
-    } else {
-        node->cpu_set = NULL;
-    }
-    
     node->username = NULL;
     
 #if OPAL_HAVE_HWLOC
@@ -862,6 +843,7 @@ static void orte_node_destruct(orte_node_t* node)
 {
     int i;
     opal_node_stats_t *stats;
+    orte_proc_t *proc;
 
     if (NULL != node->name) {
         free(node->name);
@@ -880,18 +862,15 @@ static void orte_node_destruct(orte_node_t* node)
     }
     
     for (i=0; i < node->procs->size; i++) {
-        if (NULL != node->procs->addr[i]) {
-            ((orte_proc_t*)(node->procs->addr[i]))->node = NULL;
-            OBJ_RELEASE(node->procs->addr[i]);
-            node->procs->addr[i] = NULL;
+        if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
+            opal_pointer_array_set_item(node->procs, i, NULL);
+            OBJ_RELEASE(proc);
         }
     }
     OBJ_RELEASE(node->procs);
     
-    if (NULL != node->cpu_set) {
-        free(node->cpu_set);
-        node->cpu_set = NULL;
-    }
+    /* we release the topology elsewhere */
+
     if (NULL != node->username) {
         free(node->username);
         node->username = NULL;
@@ -925,8 +904,9 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->app_idx = 0;
 #if OPAL_HAVE_HWLOC
     proc->locale = NULL;
+    proc->bind_idx = 0;
+    proc->cpu_bitmap = NULL;
 #endif
-    proc->slot_list = NULL;
     proc->node = NULL;
     proc->prior_node = NULL;
     proc->nodename = NULL;
@@ -957,11 +937,11 @@ static void orte_proc_destruct(orte_proc_t* proc)
      * associated node object - the node object
      * will free it
      */
-    
-    if (NULL != proc->slot_list) {
-        free(proc->slot_list);
-        proc->slot_list = NULL;
+#if OPAL_HAVE_HWLOC
+    if (NULL != proc->cpu_bitmap) {
+        free(proc->cpu_bitmap);
     }
+#endif
 
     if (NULL != proc->node) {
         OBJ_RELEASE(proc->node);
@@ -1000,21 +980,14 @@ static void orte_nid_construct(orte_nid_t *ptr)
     ptr->name = NULL;
     ptr->daemon = ORTE_VPID_INVALID;
     ptr->oversubscribed = false;
-    OBJ_CONSTRUCT(&ptr->sysinfo, opal_list_t);
 }
 
 static void orte_nid_destruct(orte_nid_t *ptr)
 {
-    opal_list_item_t *item;
-    
     if (NULL != ptr->name) {
         free(ptr->name);
         ptr->name = NULL;
     }
-    while (NULL != (item = opal_list_remove_first(&ptr->sysinfo))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&ptr->sysinfo);
 }
 
 OBJ_CLASS_INSTANCE(orte_nid_t,
@@ -1039,6 +1012,9 @@ static void orte_jmap_construct(orte_jmap_t *ptr)
 {
     ptr->job = ORTE_JOBID_INVALID;
     ptr->num_procs = 0;
+#if OPAL_HAVE_HWLOC
+    ptr->bind_level = OPAL_HWLOC_NODE_LEVEL;
+#endif
     OBJ_CONSTRUCT(&ptr->pmap, opal_pointer_array_t);
     opal_pointer_array_init(&ptr->pmap,
                             ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
@@ -1048,12 +1024,13 @@ static void orte_jmap_construct(orte_jmap_t *ptr)
 
 static void orte_jmap_destruct(orte_jmap_t *ptr)
 {
-    orte_pmap_t **pmaps;
+    orte_pmap_t *pmap;
     int i;
     
-    pmaps = (orte_pmap_t**)ptr->pmap.addr;
-    for (i=0; i < ptr->pmap.size && NULL != pmaps[i]; i++) {
-        OBJ_RELEASE(pmaps[i]);
+    for (i=0; i < ptr->pmap.size; i++) {
+        if (NULL != (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&ptr->pmap, i))) {
+            OBJ_RELEASE(pmap);
+        }
     }
     OBJ_DESTRUCT(&ptr->pmap);
 }
@@ -1064,20 +1041,19 @@ OBJ_CLASS_INSTANCE(orte_jmap_t,
                    orte_jmap_destruct);
 
 
-
 static void orte_job_map_construct(orte_job_map_t* map)
 {
     map->req_mapper = NULL;
     map->last_mapper = NULL;
-    map->policy = 0;
-    map->npernode = 0;
-    map->nperboard = 0;
-    map->npersocket = 0;
+    map->mapping = 0;
+    map->ranking = 0;
+#if OPAL_HAVE_HWLOC
+    map->binding = 0;
+    map->bind_level = OPAL_HWLOC_NODE_LEVEL;
+#endif
+    map->ppr = NULL;
     map->cpus_per_rank = 1;
-    map->stride = 1;
-    map->oversubscribe = true;  /* default to allowing oversubscribe */
     map->display_map = false;
-    map->cpu_lists = false;
     map->num_new_daemons = 0;
     map->daemon_vpid_start = ORTE_VPID_INVALID;
     map->num_nodes = 0;
@@ -1091,17 +1067,21 @@ static void orte_job_map_construct(orte_job_map_t* map)
 static void orte_job_map_destruct(orte_job_map_t* map)
 {
     orte_std_cntr_t i;
-    
+    orte_node_t *node;
+
     if (NULL != map->req_mapper) {
         free(map->req_mapper);
     }
     if (NULL != map->last_mapper) {
         free(map->last_mapper);
     }
+    if (NULL != map->ppr) {
+        free(map->ppr);
+    }
     for (i=0; i < map->nodes->size; i++) {
-        if (NULL != map->nodes->addr[i]) {
-            OBJ_RELEASE(map->nodes->addr[i]);
-            map->nodes->addr[i] = NULL;
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            OBJ_RELEASE(node);
+            opal_pointer_array_set_item(map->nodes, i, NULL);
         }
     }
     OBJ_RELEASE(map->nodes);

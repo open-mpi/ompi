@@ -61,7 +61,6 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
     orte_pmap_t *pmap;
     orte_vpid_t daemon;
     char *hostname;
-    char *locale=NULL;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:base:full:modex: performing modex",
@@ -104,42 +103,12 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
     }
     
 #if OPAL_HAVE_HWLOC
-    {
-        /* get and pack our cpuset so other procs can determine our locality */
-        if (NULL != opal_hwloc_topology) {
-            /* our cpuset should already be known, but check for safety */
-            if (NULL == opal_hwloc_my_cpuset) {
-                opal_hwloc_base_get_local_cpuset();
-            }
-            /* convert to a string */
-            hwloc_bitmap_list_asprintf(&locale, opal_hwloc_my_cpuset);
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex LOCALE %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), locale));
-            /* pack it */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &locale, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                free(locale);
-                goto cleanup;
-            }
-            free(locale);
-        } else {
-            /* pack a placeholder */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex NO TOPO - ADDING PLACEHOLDER",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &locale, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-        }
+    /* pack our binding info so other procs can determine our locality */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.bind_level, 1, OPAL_HWLOC_LEVEL_T))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
-#else
-    /* pack a placeholder */
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:base:modex NO HWLOC - ADDING PLACEHOLDER",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &locale, 1, OPAL_STRING))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.bind_idx, 1, OPAL_UINT))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -155,12 +124,20 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
                          "%s grpcomm:base:full:modex: executing allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* exchange the buffer with the list of peers */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather_list(procs, &buf, &rbuf))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
+    if (NULL == procs) {
+        /* exchange the buffer with my peers */
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(&buf, &rbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    } else {
+        /* exchange the buffer with the list of peers */
+        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather_list(procs, &buf, &rbuf))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     }
-    
+
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                          "%s grpcomm:base:full:modex: processing modex info",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -234,7 +211,8 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
             /* node wasn't found - let's add it */
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                  "%s grpcomm:base:full:modex no nidmap entry for node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), hostname));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 (NULL == hostname) ? "NULL" : hostname));
             nid = OBJ_NEW(orte_nid_t);
             nid->name = strdup(hostname);
             nid->daemon = daemon;
@@ -287,19 +265,63 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
             }
         }
 
-        /* unpack the locality info */
-        cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &locale, &cnt, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                             "%s grpcomm:base:modex setting proc %s locale %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc_name),
-                             (NULL == locale) ? "NULL" : locale));
+#if OPAL_HAVE_HWLOC
+        {
+            opal_hwloc_level_t bind_level;
+            unsigned int bind_idx;
 
-        /* store on the pmap */
+            /* unpack the locality info */
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &bind_level, &cnt, OPAL_HWLOC_LEVEL_T))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            cnt = 1;
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &bind_idx, &cnt, OPAL_UINT))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                 "%s grpcomm:base:modex setting proc %s level %s idx %u",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&proc_name),
+                                 opal_hwloc_base_print_level(bind_level), bind_idx));
+
+            /* store on the pmap */
+            if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc_name, ORTE_PROC_MY_NAME)) {
+                /* if this data is from myself, then set locality to all */
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                     "%s grpcomm:base:modex setting proc %s locale ALL",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc_name)));
+                pmap->locality = OPAL_PROC_ALL_LOCAL;
+            } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
+                /* this is on a different node, then mark as non-local */
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                     "%s grpcomm:base:modex setting proc %s locale NONLOCAL",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc_name)));
+                pmap->locality = OPAL_PROC_NON_LOCAL;
+            } else if (OPAL_HWLOC_NODE_LEVEL == orte_process_info.bind_level ||
+                       OPAL_HWLOC_NODE_LEVEL == bind_level) {
+                /* one or both of us is not bound, so all we can say is we are on the
+                 * same node
+                 */
+                pmap->locality = OPAL_PROC_ON_NODE;
+            } else {
+                /* determine relative location on our node */
+                pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                       orte_process_info.bind_level,
+                                                                       orte_process_info.bind_idx,
+                                                                       bind_level, bind_idx);
+                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
+                                     "%s grpcomm:base:modex setting proc %s locale %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&proc_name),
+                                     opal_hwloc_base_print_locality(pmap->locality)));
+            }
+        }
+#else
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc_name, ORTE_PROC_MY_NAME)) {
             /* if this data is from myself, then set locality to all */
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
@@ -314,38 +336,11 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name)));
             pmap->locality = OPAL_PROC_NON_LOCAL;
-        } else if (NULL == locale || 0 == strlen(locale)){
-            /* if we share a node, but we don't know anything more, then
-             * mark us as on the node as this is all we know
-             */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex setting proc %s locale NODE",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name)));
-            pmap->locality = OPAL_PROC_ON_NODE;
         } else {
-#if OPAL_HAVE_HWLOC
-            /* convert the locale to a cpuset */
-            if (NULL == orte_grpcomm_base.working_cpuset) {
-                orte_grpcomm_base.working_cpuset = hwloc_bitmap_alloc();
-            }
-            if (0 != hwloc_bitmap_list_sscanf(orte_grpcomm_base.working_cpuset, locale)) {
-                /* got a bad locale */
-                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-                rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
-                goto cleanup;
-            }
-            /* determine relative location on our node */
-            pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                   opal_hwloc_my_cpuset,
-                                                                   orte_grpcomm_base.working_cpuset);
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex setting proc %s locale %04x",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name), pmap->locality));
-#endif
+            /* must be on our node */
+            pmap->locality = OPAL_PROC_ON_NODE;
         }
-
+#endif
 
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                              "%s grpcomm:base:full:modex: adding modex entry for proc %s",
@@ -373,7 +368,6 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
     int rc=ORTE_SUCCESS;
     orte_vpid_t daemon;
     orte_pmap_t *pmap;
-    char *locale;
 
     /* process the results */
     /* extract the number of procs that put data in the buffer */
@@ -402,9 +396,7 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
             goto cleanup;
         }
         
-        /* SINCE THIS IS AMONGST PEERS, THERE IS NO NEED TO UPDATE THE NIDMAP/PIDMAP
-         * ITSELF, EXCEPT FOR LOCALITY INFO
-         */
+        /* SINCE THIS IS AMONGST PEERS, THERE IS NO NEED TO UPDATE THE NIDMAP/PIDMAP */
         
         if (ORTE_VPID_INVALID == (daemon = orte_ess.proc_get_daemon(&proc_name))) {
             /* clear problem */
@@ -420,65 +412,6 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
             goto cleanup;
         }
 
-        /* unpack the locality info */
-        cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &locale, &cnt, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                             "%s grpcomm:base:modex:unpack received proc %s locale %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc_name),
-                             (NULL == locale) ? "NULL" : locale));
-
-        if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc_name, ORTE_PROC_MY_NAME)) {
-            /* if this data is from myself, then set locality to all */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex:unpack setting proc %s locale ALL",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name)));
-            pmap->locality = OPAL_PROC_ALL_LOCAL;
-        } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
-            /* this is on a different node, then mark as non-local */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex:unpack setting proc %s locale NONLOCAL",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name)));
-            pmap->locality = OPAL_PROC_NON_LOCAL;
-        } else if (NULL == locale || 0 == strlen(locale)){
-            /* if we share a node, but we don't know anything more, then
-             * mark us as on the node as this is all we know
-             */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex:unpack setting proc %s locale NODE",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name)));
-            pmap->locality = OPAL_PROC_ON_NODE;
-        } else {
-#if OPAL_HAVE_HWLOC
-            /* convert the locale to a cpuset */
-            if (NULL == orte_grpcomm_base.working_cpuset) {
-                orte_grpcomm_base.working_cpuset = hwloc_bitmap_alloc();
-            }
-            if (0 != hwloc_bitmap_list_sscanf(orte_grpcomm_base.working_cpuset, locale)) {
-                /* got a bad locale */
-                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-                rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
-                goto cleanup;
-            }
-            /* determine relative location on our node */
-            pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                   opal_hwloc_my_cpuset,
-                                                                   orte_grpcomm_base.working_cpuset);
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:modex:unpack setting proc %s locale %04x",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc_name), pmap->locality));
-#endif
-        }
-
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                              "%s grpcomm:base:modex:unpack: adding modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -492,99 +425,6 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
     }
 
  cleanup:
-    return rc;
-}
-
-int orte_grpcomm_base_peer_modex(void)
-{
-    opal_buffer_t buf, rbuf;
-    int rc = ORTE_SUCCESS;
-    char *locale=NULL;
-
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:base:peer:modex: performing modex",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* setup the buffer that will actually be sent */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    OBJ_CONSTRUCT(&rbuf, opal_buffer_t);
-    
-    /* put our process name in the buffer so it can be unpacked later */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-#if OPAL_HAVE_HWLOC
-    {
-        if (NULL != opal_hwloc_topology) {
-            /* our cpuset should already be known, but check for safety */
-            if (NULL == opal_hwloc_my_cpuset) {
-                opal_hwloc_base_get_local_cpuset();
-            }
-            /* convert to a string */
-            hwloc_bitmap_list_asprintf(&locale, opal_hwloc_my_cpuset);
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:peer:modex LOCALE %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), locale));
-            /* pack it */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &locale, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                free(locale);
-                goto cleanup;
-            }
-            free(locale);
-        } else {
-            /* pack a placeholder */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:peer:modex NO TOPO - ADDING PLACEHOLDER",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &locale, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-        }
-    }
-#else
-    /* pack a placeholder */
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:base:peer:modex NO HWLOC - ADDING PLACEHOLDER",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &locale, 1, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-#endif
-
-    /* pack the entries we have received */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                         "%s grpcomm:base:peer:modex: executing allgather",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* exchange the buffer with my peers */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(&buf, &rbuf))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                         "%s grpcomm:base:peer:modex: processing modex info",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_unpack(&rbuf)) ) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
- cleanup:
-    OBJ_DESTRUCT(&buf);
-    OBJ_DESTRUCT(&rbuf);
     return rc;
 }
 

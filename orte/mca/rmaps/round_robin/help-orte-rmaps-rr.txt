@@ -51,3 +51,11 @@ You have specified a rank-to-node/slot mapping, but failed to provide
 the number of processes to be executed. For some reason, this information
 could not be obtained from the mapping you provided, so we cannot continue
 with executing the specified application.
+#
+[orte-rmaps-rr:not-enough-objs]
+There are not enough resources on the available nodes
+to meet the requested mapping.
+
+  Application: %s
+  Number of procs:  %d
+  Number of resources: %d

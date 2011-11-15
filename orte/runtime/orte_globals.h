@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -84,8 +84,6 @@ ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
 
 /* error manager callback function */
 typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t state, void *cbdata);
-
-typedef uint16_t orte_mapping_policy_t;
 
 ORTE_DECLSPEC extern int orte_exit_status;
 
@@ -169,7 +167,20 @@ typedef struct orte_app_context_t orte_app_context_t;
         }                                                   \
     } while(0);
 
-        
+/* define a set of flags to control the launch of a job */
+typedef uint16_t orte_job_controls_t;
+#define ORTE_JOB_CONTROL    OPAL_UINT16
+
+#define ORTE_JOB_CONTROL_LOCAL_SLAVE        0x0001
+#define ORTE_JOB_CONTROL_NON_ORTE_JOB       0x0002
+#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    0x0014
+#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x0008
+#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x0010
+#define ORTE_JOB_CONTROL_FORWARD_COMM       0x0020
+#define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x0040
+#define ORTE_JOB_CONTROL_RECOVERABLE        0x0080
+#define ORTE_JOB_CONTROL_SPIN_FOR_DEBUG     0x0100
+
 /* global type definitions used by RTE - instanced in orte_globals.c */
 
 /************
@@ -264,6 +275,8 @@ typedef struct {
     orte_node_rank_t next_node_rank;
     /* whether or not we are oversubscribed */
     bool oversubscribed;
+    /* whether we have been added to the current map */
+    bool mapped;
     /** State of this node */
     orte_node_state_t state;
     /** A "soft" limit on the number of slots available on the node.
@@ -290,14 +303,6 @@ typedef struct {
         specified limit.  For example, if we have two processors, we
         may want to allow up to four processes but no more. */
     orte_std_cntr_t slots_max;
-    /* number of physical boards in the node - defaults to 1 */
-    uint8_t boards;
-    /* number of sockets on each board - defaults to 1 */
-    uint8_t sockets_per_board;
-    /* number of cores per socket - defaults to 1 */
-    uint8_t cores_per_socket;
-    /* cpus on this node that are assigned for our use */
-    char *cpu_set;
     /** Username on this node, if specified */
     char *username;
 #if OPAL_HAVE_HWLOC
@@ -308,70 +313,6 @@ typedef struct {
     opal_ring_buffer_t stats;
 } orte_node_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
-
-/* define a set of flags to control the launch of a job */
-typedef uint16_t orte_job_controls_t;
-#define ORTE_JOB_CONTROL    OPAL_UINT16
-
-#define ORTE_JOB_CONTROL_LOCAL_SLAVE        0x0001
-#define ORTE_JOB_CONTROL_NON_ORTE_JOB       0x0002
-#define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    0x0014
-#define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x0008
-#define ORTE_JOB_CONTROL_DO_NOT_MONITOR     0x0010
-#define ORTE_JOB_CONTROL_FORWARD_COMM       0x0020
-#define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x0040
-#define ORTE_JOB_CONTROL_RECOVERABLE        0x0080
-#define ORTE_JOB_CONTROL_SPIN_FOR_DEBUG     0x0100
-
-#define ORTE_MAPPING_POLICY OPAL_UINT16
-/* put the rank assignment method in the upper 8 bits */
-#define ORTE_MAPPING_USE_VM         0x0100
-#define ORTE_MAPPING_BYNODE         0x0200
-#define ORTE_MAPPING_BYSLOT         0x0400
-#define ORTE_MAPPING_BYSOCKET       0x0800
-#define ORTE_MAPPING_BYBOARD        0x1000
-#define ORTE_MAPPING_NO_USE_LOCAL   0x2000
-#define ORTE_MAPPING_NPERXXX        0x4000
-#define ORTE_MAPPING_BYUSER         0x8000
-/* check if policy is set */
-#define ORTE_MAPPING_POLICY_IS_SET(pol) (pol & 0xff00)
-/* nice macro for setting these */
-#define ORTE_SET_MAPPING_POLICY(pol) \
-    orte_default_mapping_policy = (orte_default_mapping_policy & 0x00ff) | (pol);
-/* macro to detect if some other policy has been set */
-#define ORTE_XSET_MAPPING_POLICY(pol)                           \
-    do {                                                        \
-        orte_mapping_policy_t tmp;                              \
-        tmp = (orte_default_mapping_policy & 0xff00) & ~(pol);  \
-        if (0 == tmp) {                                         \
-            ORTE_SET_MAPPING_POLICY((pol));                     \
-        }                                                       \
-    } while(0);
-/* macro to add another mapping policy */
-#define ORTE_ADD_MAPPING_POLICY(pol) \
-    orte_default_mapping_policy |= (pol);
-
-/* put the binding policy in the lower 8 bits, using the paffinity values */
-#define ORTE_BIND_TO_NONE           (uint16_t)OPAL_PAFFINITY_DO_NOT_BIND
-#define ORTE_BIND_TO_CORE           (uint16_t)OPAL_PAFFINITY_BIND_TO_CORE
-#define ORTE_BIND_TO_SOCKET         (uint16_t)OPAL_PAFFINITY_BIND_TO_SOCKET
-#define ORTE_BIND_TO_BOARD          (uint16_t)OPAL_PAFFINITY_BIND_TO_BOARD
-#define ORTE_BIND_IF_SUPPORTED      (uint16_t)OPAL_PAFFINITY_BIND_IF_SUPPORTED
-/* nice macro for setting these */
-#define ORTE_SET_BINDING_POLICY(pol) \
-    orte_default_mapping_policy = (orte_default_mapping_policy & 0xff00) | (pol);
-/* macro to detect if some other policy has been set */
-#define ORTE_XSET_BINDING_POLICY(pol)                           \
-    do {                                                        \
-        orte_mapping_policy_t tmp;                              \
-        tmp = (orte_default_mapping_policy & 0x00ff) & ~(pol);  \
-        if (0 == tmp) {                                         \
-            ORTE_SET_BINDING_POLICY((pol));                     \
-        }                                                       \
-    } while(0);
-/* macro to detect if binding was qualified */
-#define ORTE_BINDING_NOT_REQUIRED(n) \
-    (ORTE_BIND_IF_SUPPORTED & (n))
 
 typedef struct {
     /** Base object so this can be put on a list */
@@ -406,11 +347,6 @@ typedef struct {
      * indicates the node where we stopped
      */
     orte_node_t *bookmark;
-    /** Whether or not to override oversubscription based on local
-     *  hardware - used to indicate uncertainty in number of
-     *  actual processors available on this node
-     */
-    bool oversubscribe_override;
     /* state of the overall job */
     orte_job_state_t state;
     /* number of procs launched */
@@ -484,9 +420,11 @@ struct orte_proc_t {
 #if OPAL_HAVE_HWLOC
     /* hwloc object to which this process was mapped */
     hwloc_obj_t locale;
+    /* where the proc was bound */
+    unsigned int bind_idx;
+    /* string representation of cpu bindings */
+    char *cpu_bitmap;
 #endif
-    /* a cpu list, if specified by the user */
-    char *slot_list;
     /* pointer to the node where this proc is executing */
     orte_node_t *node;
     /* pointer to the node where this proc last executed */
@@ -533,8 +471,6 @@ typedef struct {
     orte_vpid_t daemon;
     /* whether or not this node is oversubscribed */
     bool oversubscribed;
-    /* list of system info */
-    opal_list_t sysinfo;
 } orte_nid_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_nid_t);
 
@@ -559,6 +495,10 @@ typedef struct {
     orte_jobid_t job;
     /* number of procs in this job */
     orte_vpid_t num_procs;
+#if OPAL_HAVE_HWLOC
+    /* binding level of the job */
+    opal_hwloc_level_t bind_level;
+#endif
     /* array of data for procs */
     opal_pointer_array_t pmap;
 } orte_jmap_t;
@@ -673,13 +613,7 @@ ORTE_DECLSPEC extern bool orte_assume_same_shell;
 /* whether or not to report launch progress */
 ORTE_DECLSPEC extern bool orte_report_launch_progress;
 
-/* cluster hardware info */
-ORTE_DECLSPEC extern uint8_t orte_default_num_boards;
-ORTE_DECLSPEC extern uint8_t orte_default_num_sockets_per_board;
-ORTE_DECLSPEC extern uint8_t orte_default_num_cores_per_socket;
-
 /* allocation specification */
-ORTE_DECLSPEC extern char *orte_default_cpu_set;
 ORTE_DECLSPEC extern char *orte_default_hostfile;
 ORTE_DECLSPEC extern char *orte_rankfile;
 #ifdef __WINDOWS__
@@ -688,15 +622,9 @@ ORTE_DECLSPEC extern char *orte_ccp_headnode;
 ORTE_DECLSPEC extern int orte_num_allocated_nodes;
 ORTE_DECLSPEC extern char *orte_node_regex;
 
-/* default rank assigment and binding policy */
-ORTE_DECLSPEC extern orte_mapping_policy_t orte_default_mapping_policy;
-
 /* tool communication controls */
 ORTE_DECLSPEC extern bool orte_report_events;
 ORTE_DECLSPEC extern char *orte_report_events_uri;
-
-/* report bindings */
-ORTE_DECLSPEC extern bool orte_report_bindings;
 
 /* barrier control */
 ORTE_DECLSPEC extern bool orte_do_not_barrier;

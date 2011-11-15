@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,7 +34,6 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/dss/dss_types.h"
-#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/grpcomm/grpcomm_types.h"
 #include "orte/mca/rml/rml_types.h"
@@ -66,18 +66,6 @@ typedef struct {
     opal_list_t xterm_ranks;
     /* the xterm cmd to be used */
     char **xtermcmd;
-    /* any externally provided bindings */
-    opal_paffinity_base_cpu_set_t my_cores;
-    /* flag whether or not we are bound */
-    bool bound;
-    /* local number of processors */
-    int num_processors;
-    /* map of locally available sockets
-     * as determined by external bindings
-     */
-    opal_bitmap_t sockets;
-    /* number of sockets available to us */
-    int num_sockets;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;

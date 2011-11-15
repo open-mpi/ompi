@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -75,8 +76,7 @@ extern orte_hostfile_value_t  orte_util_hostfile_value;
 #define ORTE_HOSTFILE_BOARDS                17
 #define ORTE_HOSTFILE_SOCKETS_PER_BOARD     18
 #define ORTE_HOSTFILE_CORES_PER_SOCKET      19
-#define ORTE_HOSTFILE_CPU_SET               20
 /* ensure we can handle a rank_file input */
-#define ORTE_HOSTFILE_RANK                  21
+#define ORTE_HOSTFILE_RANK                  20
 
 #endif

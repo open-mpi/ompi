@@ -63,7 +63,7 @@ static int orte_rmaps_round_robin_open(void)
 
     mca_base_param_reg_int(c, "priority",
                            "Priority of the rr rmaps component",
-                           false, false, 100,
+                           false, false, 10,
                            &my_priority);
     return ORTE_SUCCESS;
 }

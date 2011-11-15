@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -318,12 +318,12 @@ static void attach_debugger(int fd, short event, void *arg)
         build_debugger_args(app);
         opal_pointer_array_add(jdata->apps, app);
         jdata->num_apps = 1;
-        /* setup the mapping policy to bynode so we get one
+        /* setup the mapping policy to pernode so we get one
          * daemon on each node
          */
         jdata->map = OBJ_NEW(orte_job_map_t);
-        jdata->map->policy = ORTE_MAPPING_BYNODE;
-	jdata->map->npernode = 1;
+        jdata->map->mapping = ORTE_MAPPING_PPR;
+	jdata->map->ppr = strdup("1:n");
         /* now go ahead and spawn this job */
         if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
             ORTE_ERROR_LOG(rc);
