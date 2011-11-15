@@ -77,6 +77,9 @@ EXTRA_DIST = \
         platform/lanl/tlcc/optimized-nopanasas.conf \
         platform/lanl/tlcc/optimized-panasas \
         platform/lanl/tlcc/optimized-panasas.conf \
+	platform/snl/portals4-m5 \
+	platform/snl/portals4-orte \
+	platform/snl/portals4-shmem \
         platform/win32/CMakeModules/check_bool.cmake \
         platform/win32/CMakeModules/check_c_inline.cmake \
         platform/win32/CMakeModules/check_c_type_exists.cmake \
