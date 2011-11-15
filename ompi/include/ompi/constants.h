@@ -58,6 +58,8 @@ enum {
     OMPI_ERR_DATA_OVERWRITE_ATTEMPT = OPAL_ERR_DATA_OVERWRITE_ATTEMPT,
 
     OMPI_ERR_BUFFER                 = OPAL_ERR_BUFFER,
+    OMPI_ERR_SILENT                 = OPAL_ERR_SILENT,
+
     OMPI_ERR_REQUEST                = OMPI_ERR_BASE - 1
 };
 

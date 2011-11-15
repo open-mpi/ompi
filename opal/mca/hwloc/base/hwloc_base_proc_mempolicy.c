@@ -34,7 +34,7 @@ int opal_hwloc_base_set_process_membind_policy(void)
     if (NULL == opal_hwloc_topology) {
         return OPAL_ERR_BAD_PARAM;
     }
-    
+
     /* Set the default memory allocation policy according to MCA
        param */
     switch (opal_hwloc_base_map) {
@@ -54,10 +54,20 @@ int opal_hwloc_base_set_process_membind_policy(void)
     if (NULL == cpuset) {
         rc = OPAL_ERR_OUT_OF_RESOURCE;
     } else {
+        int e;
         hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
         rc = hwloc_set_membind(opal_hwloc_topology, 
-                               cpuset, HWLOC_MEMBIND_BIND, flags);
+                               cpuset, policy, flags);
+        e = errno;
         hwloc_bitmap_free(cpuset);
+
+        /* See if hwloc was able to do it.  If hwloc failed due to
+           ENOSYS, but the base_map == NONE, then it's not really an
+           error. */
+        if (0 != rc && ENOSYS == e &&
+            OPAL_HWLOC_BASE_MAP_NONE == opal_hwloc_base_map) {
+            rc = 0;
+        }
     }
     
     return (0 == rc) ? OPAL_SUCCESS : OPAL_ERROR;

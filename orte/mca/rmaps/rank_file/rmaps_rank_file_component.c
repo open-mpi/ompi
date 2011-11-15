@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  *  
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,10 +26,11 @@
 #include <string.h>
 #endif
 
-#include "orte/mca/ras/ras_types.h"
-
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/hwloc/base/base.h"
+
+#include "orte/util/show_help.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
@@ -82,17 +84,29 @@ static int orte_rmaps_rank_file_open(void)
                            false, false, 0,
                            &my_priority);
     
-    /* did the user provide a slot list? */
-    tmp = mca_base_param_reg_string(c, "slot_list",
-                           "List of processor IDs to bind MPI processes to (e.g., used in conjunction with rank files) [default=NULL]",
-                           false, false, NULL, NULL);
-    mca_base_param_reg_syn_name(tmp, "rmaps", "base_slot_list", false);
-    mca_base_param_lookup_string(tmp, &mca_rmaps_rank_file_component.slot_list);
+    tmp = mca_base_param_reg_string(c, "path",
+                                    "Name of the rankfile to be used for mapping processes (relative or absolute path)",
+                                    false, false, NULL, NULL);
+    mca_base_param_reg_syn_name(tmp, "orte", "rankfile", false);
+    mca_base_param_lookup_string(tmp, &orte_rankfile);
 
     /* ensure we flag mapping by user */
-    if (NULL != mca_rmaps_rank_file_component.slot_list ||
-        NULL != orte_rankfile) {
-        ORTE_ADD_MAPPING_POLICY(ORTE_MAPPING_BYUSER);
+#if OPAL_HAVE_HWLOC
+    if (NULL != opal_hwloc_base_slot_list || NULL != orte_rankfile) {
+#else
+    if (NULL != orte_rankfile) {
+#endif
+        if (ORTE_MAPPING_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping)) {
+            /* if a non-default mapping is already specified, then we
+             * have an error
+             */
+            orte_show_help("help-orte-rmaps-base.txt", "redefining-policy", true, "mapping",
+                           "RANK_FILE", orte_rmaps_base_print_mapping(orte_rmaps_base.mapping));
+            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_CONFLICTED);
+            return ORTE_ERR_SILENT;
+        }
+        ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYUSER);
+        ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
         /* make us first */
         my_priority = 10000;
     }

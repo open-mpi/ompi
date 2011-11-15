@@ -29,11 +29,11 @@
 #include "opal/mca/base/base.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
+#include "opal/dss/dss.h"
 
 #include "orte/util/show_help.h"
-#include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmaps/base/base.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
@@ -91,7 +91,6 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     opal_list_t nodes;
     orte_node_t *node;
     orte_std_cntr_t i;
-    bool override_oversubscribed;
     orte_app_context_t *app;
 
     OPAL_OUTPUT_VERBOSE((5, orte_ras_base.ras_output,
@@ -139,7 +138,7 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     if (NULL != orte_ras_base.active_module)  {
         /* read the allocation */
         if (ORTE_SUCCESS != (rc = orte_ras_base.active_module->allocate(&nodes))) {
-            if (ORTE_ERR_SYSTEM_WILL_BOOTSTRAP == OPAL_SOS_GET_ERROR_CODE(rc)) {
+            if (ORTE_ERR_SYSTEM_WILL_BOOTSTRAP == rc) {
                 /* this module indicates that nodes will be discovered
                  * on a bootstrap basis, so all we do here is add our
                  * own node to the list
@@ -162,6 +161,10 @@ int orte_ras_base_allocate(orte_job_t *jdata)
             return rc;
         }
         OBJ_DESTRUCT(&nodes);
+        /* default to no-oversubscribe-allowed for managed systems */
+        if (!(ORTE_MAPPING_SUBSCRIBE_GIVEN & ORTE_GET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping))) {
+            ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_NO_OVERSUBSCRIBE);
+        }
         goto DISPLAY;
     } else if (orte_allocation_required) {
         /* if nothing was found, and an allocation is
@@ -197,7 +200,6 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         
         /* a default hostfile was provided - parse it */
         if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
-                                                               &override_oversubscribed,
                                                                orte_default_hostfile))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
@@ -214,8 +216,6 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
         }
-        /* update the jdata object with override_oversubscribed flag */
-        jdata->oversubscribe_override = override_oversubscribed;
         /* cleanup */
         OBJ_DESTRUCT(&nodes);
         goto DISPLAY;
@@ -246,7 +246,6 @@ int orte_ras_base_allocate(orte_job_t *jdata)
             
             /* hostfile was specified - parse it and add it to the list */
             if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
-                                                &override_oversubscribed,
                                                 app->hostfile))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
@@ -265,8 +264,6 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
         }
-        /* update the jdata object with override_oversubscribed flag */
-        jdata->oversubscribe_override = override_oversubscribed;
         /* cleanup */
         OBJ_DESTRUCT(&nodes);
         goto DISPLAY;
@@ -300,7 +297,6 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         }
         if (NULL != app->dash_host) {
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
-                                                    &override_oversubscribed,
                                                     app->dash_host))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
@@ -319,8 +315,6 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
         }
-        /* update the jdata object with override_oversubscribed flag */
-        jdata->oversubscribe_override = override_oversubscribed;
         /* cleanup */
         OBJ_DESTRUCT(&nodes);
         goto DISPLAY;
@@ -336,7 +330,6 @@ int orte_ras_base_allocate(orte_job_t *jdata)
     if (NULL != orte_rankfile) {
         /* check the rankfile for node information */
         if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
-                                                               &override_oversubscribed,
                                                                orte_rankfile))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&nodes);
@@ -353,8 +346,6 @@ int orte_ras_base_allocate(orte_job_t *jdata)
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
         }
-        /* update the jdata object with override_oversubscribed flag */
-        jdata->oversubscribe_override = false;
         /* cleanup */
         OBJ_DESTRUCT(&nodes);
         goto DISPLAY;
@@ -383,8 +374,6 @@ addlocal:
     node->slots_inuse = 0;
     node->slots_max = 0;
     node->slots = 1;
-    /* indicate that we don't know anything about over_subscribing */
-    jdata->oversubscribe_override = true;
     opal_list_append(&nodes, &node->super);
     
     /* store the results in the global resource pool - this removes the
@@ -416,7 +405,6 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
 {
     int rc;
     opal_list_t nodes;
-    bool override_oversubscribed;
     int i;
     orte_app_context_t *app;
 
@@ -448,7 +436,6 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
             
             /* hostfile was specified - parse it and add it to the list */
             if (ORTE_SUCCESS != (rc = orte_util_add_hostfile_nodes(&nodes,
-                                                                   &override_oversubscribed,
                                                                    app->add_hostfile))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
@@ -472,7 +459,6 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
         }
         if (NULL != app->add_host) {
             if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&nodes,
-                                                                    &override_oversubscribed,
                                                                     app->add_host))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_DESTRUCT(&nodes);
@@ -489,8 +475,6 @@ int orte_ras_base_add_hosts(orte_job_t *jdata)
         if (ORTE_SUCCESS != (rc = orte_ras_base_node_insert(&nodes, jdata))) {
             ORTE_ERROR_LOG(rc);
         }
-        /* update the jdata object with override_oversubscribed flag */
-        jdata->oversubscribe_override = override_oversubscribed;
         /* cleanup */
         OBJ_DESTRUCT(&nodes);
     }

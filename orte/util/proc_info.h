@@ -37,7 +37,9 @@
 #endif
 
 #include "orte/types.h"
+
 #include "opal/dss/dss_types.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 BEGIN_C_DECLS
 
@@ -111,6 +113,10 @@ struct orte_proc_info_t {
     char *sock_stdin;                   /**< Path name to temp file for stdin. */
     char *sock_stdout;                  /**< Path name to temp file for stdout. */
     char *sock_stderr;                  /**< Path name to temp file for stderr. */
+#if OPAL_HAVE_HWLOC
+    opal_hwloc_level_t bind_level;
+    unsigned int bind_idx;
+#endif
     /* name/instance info for debug support */
     char *job_name;
     char *job_instance;

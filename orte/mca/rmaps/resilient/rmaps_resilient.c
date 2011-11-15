@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -59,9 +59,9 @@ static int map_to_ftgrps(orte_job_t *jdata);
 static int orte_rmaps_resilient_map(orte_job_t *jdata)
 {
     orte_app_context_t *app;
-    int i;
+    int i, j;
     int rc = ORTE_SUCCESS;
-    orte_node_t *nd=NULL, *oldnode, *node;
+    orte_node_t *nd=NULL, *oldnode, *node, *nptr;
     orte_rmaps_res_ftgrp_t *target = NULL;
     orte_proc_t *proc;
     orte_vpid_t totprocs;
@@ -69,6 +69,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     orte_std_cntr_t num_slots;
     opal_list_item_t *item;
     mca_base_component_t *c = &mca_rmaps_resilient_component.super.base_version;
+    bool found;
 
     if (ORTE_JOB_STATE_INIT == jdata->state) {
         if (NULL != jdata->map->req_mapper &&
@@ -172,7 +173,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list,
                                                                        &num_slots,
                                                                        app,
-                                                                       jdata->map->policy))) {
+                                                                       jdata->map->mapping))) {
                 ORTE_ERROR_LOG(rc);
                 while (NULL != (item = opal_list_remove_first(&node_list))) {
                     OBJ_RELEASE(item);
@@ -231,25 +232,31 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                 }
             }
         }
-        /*
-         * Put the process on the found node (add it if not already in the map)
+        /* add node to map if necessary - nothing we can do here
+         * but search for it
          */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata,
-                                                             nd,
-                                                             jdata->map->cpus_per_rank,
-                                                             proc->app_idx,
-                                                             NULL,
-                                                             jdata->map->oversubscribe,
-                                                             false,
-                                                             &proc))) {
-            /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
-             * really isn't an error
-             */
-            if (ORTE_ERR_NODE_FULLY_USED != rc) {
-                ORTE_ERROR_LOG(rc);
-                goto error;
+        found = false;
+        for (j=0; j < jdata->map->nodes->size; j++) {
+            if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(jdata->map->nodes, j))) {
+                continue;
+            }
+            if (nptr == nd) {
+                found = true;
+                break;
             }
         }
+        if (!found) {
+            OBJ_RETAIN(nd);
+            opal_pointer_array_add(jdata->map->nodes, nd);
+            nd->mapped = true;
+        }
+        OBJ_RETAIN(nd);  /* maintain accounting on object */    
+        proc->node = nd;
+        proc->nodename = nd->name;
+        nd->num_procs++;
+        opal_pointer_array_add(nd->procs, (void*)proc);
+        /* retain the proc struct so that we correctly track its release */
+        OBJ_RETAIN(proc);
 
         /* flag the proc state as non-launched so we'll know to launch it */
         proc->state = ORTE_PROC_STATE_INIT;
@@ -258,11 +265,6 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
          * be properly selected if active
          */
         orte_rmaps_base_update_local_ranks(jdata, oldnode, nd, proc);
-    }
-    /* define the daemons that we will use for this job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
     }
 
  error:
@@ -474,7 +476,7 @@ static int get_new_node(orte_proc_t *proc,
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list,
                                                                &num_slots,
                                                                app,
-                                                               map->policy))) {
+                                                               map->mapping))) {
         ORTE_ERROR_LOG(rc);
         goto release;
     }
@@ -716,7 +718,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
          */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                   map->policy))) {
+                                                                   map->mapping))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -813,18 +815,36 @@ static int map_to_ftgrps(orte_job_t *jdata)
                                  "%s rmaps:resilient: placing proc into fault group %d node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == target) ? -1 : target->ftgrp, nd->name));
-            /* put proc on that node */
-            proc=NULL;
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(jdata, nd, jdata->map->cpus_per_rank, app->idx,
-                                                                 &node_list, jdata->map->oversubscribe, false, &proc))) {
-                /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
-                 * really isn't an error
-                 */
-                if (ORTE_ERR_NODE_FULLY_USED != rc) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
+            /* if the node isn't in the map, add it */
+            if (!nd->mapped) {
+                OBJ_RETAIN(node);
+                opal_pointer_array_add(map->nodes, nd);
+                nd->mapped = true;
             }
+            proc = OBJ_NEW(orte_proc_t);
+            /* set the jobid */
+            proc->name.jobid = jdata->jobid;
+            proc->app_idx = app->idx;
+            OBJ_RETAIN(node);  /* maintain accounting on object */    
+            proc->node = nd;
+            proc->nodename = nd->name;
+            nd->num_procs++;
+            if ((nd->slots < nd->slots_inuse) ||
+                (0 < nd->slots_max && nd->slots_max < nd->slots_inuse)) {
+                if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
+                    orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
+                                   true, nd->num_procs, app->app);
+                    return ORTE_ERR_SILENT;
+                }
+                /* flag the node as oversubscribed so that sched-yield gets
+                 * properly set
+                 */
+                nd->oversubscribed = true;
+            }
+            opal_pointer_array_add(nd->procs, (void*)proc);
+            /* retain the proc struct so that we correctly track its release */
+            OBJ_RETAIN(proc);
+
             /* flag the proc as ready for launch */
             proc->state = ORTE_PROC_STATE_INIT;
 
@@ -864,11 +884,5 @@ static int map_to_ftgrps(orte_job_t *jdata)
         return rc;
     }
 
-    /* define the daemons that we will use for this job */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_define_daemons(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     return ORTE_SUCCESS;
 }

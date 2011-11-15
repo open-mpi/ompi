@@ -42,7 +42,6 @@
  * relative node syntax should generate an immediate error
  */
 int orte_util_add_dash_host_nodes(opal_list_t *nodes,
-                                  bool *override_oversubscribed,
                                   char ** host_argv)
 {
     opal_list_item_t* item;
@@ -129,14 +128,6 @@ int orte_util_add_dash_host_nodes(opal_list_t *nodes,
             node->slots_inuse = 0;
             node->slots_max = 0;
             node->slots = 1;
-            /* indicate that ORTE should override any oversubscribed conditions
-             * based on local hardware limits since the user (a) might not have
-             * provided us any info on the #slots for a node, and (b) the user
-             * might have been wrong! If we don't check the number of local physical
-             * processors, then we could be too aggressive on our sched_yield setting
-             * and cause performance problems.
-             */
-            *override_oversubscribed = true;
             opal_list_append(nodes, &node->super);
         }
     }

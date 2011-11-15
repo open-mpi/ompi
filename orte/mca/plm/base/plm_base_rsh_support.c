@@ -203,7 +203,6 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
     orte_node_t *node;
     char *nodename;
     char *exec_path;
-    bool flag;
     orte_app_context_t *app;
     int rc;
     pid_t pid;
@@ -221,7 +220,7 @@ int orte_plm_base_local_slave_launch(orte_job_t *jdata)
 
     /* identify the target host - can only be one! */
     OBJ_CONSTRUCT(&hosts, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&hosts, &flag, app->dash_host))) {
+    if (ORTE_SUCCESS != (rc = orte_util_add_dash_host_nodes(&hosts, app->dash_host))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&hosts);
         return rc;

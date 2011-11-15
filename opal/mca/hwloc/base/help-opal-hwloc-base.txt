@@ -39,3 +39,25 @@ message will only be reported at most once per process.
   File:       %s:%d
   Message:    %s
   Severity:   %s
+#
+[unrecognized-policy]
+The specified %s policy is not recognized:
+
+  Policy: %s
+
+Please check for a typo or ensure that the option is a supported
+one.
+#
+[logical-cpu-not-found]
+A specified logical processor does not exist in this topology:
+
+  Cpu set given:  %s
+#
+[redefining-policy]
+Conflicting directives for binding policy are causing the policy
+to be redefined:
+
+  New policy:   %s
+  Prior policy:  %s
+
+Please check that only one policy is defined.

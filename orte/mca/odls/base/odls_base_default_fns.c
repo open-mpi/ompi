@@ -13,6 +13,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,7 +48,7 @@
 #include "opal/util/path.h"
 #include "opal/util/sys_limits.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/pstat/pstat.h"
 
@@ -85,8 +86,6 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
 
-static bool override_oversubscribed = false;
-
 /* IT IS CRITICAL THAT ANY CHANGE IN THE ORDER OF THE INFO PACKED IN
  * THIS FUNCTION BE REFLECTED IN THE CONSTRUCT_CHILD_LIST PARSER BELOW
 */
@@ -99,10 +98,8 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     orte_job_map_t *map=NULL;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
-    int32_t numbytes, *restarts;
+    int32_t numbytes;
     int8_t flag;
-    orte_app_idx_t *app_idx;
-    orte_vpid_t i;
     int j;
     orte_daemon_cmd_flag_t command;
     orte_app_context_t *app;
@@ -265,30 +262,14 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
-    /* pack the oversubscribe override flag */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->oversubscribe_override, 1, OPAL_BOOL))) {
+#if OPAL_HAVE_HWLOC
+    /* pack the binding policy so the daemon knows if binding is required */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->map->binding, 1, OPAL_BINDING_POLICY))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+#endif
 
-    /* pack the map & binding policy for this job */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->policy, 1, ORTE_MAPPING_POLICY))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* pack the cpus_per_rank for this job */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->cpus_per_rank, 1, OPAL_INT16))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /* pack the stride for this job */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->stride, 1, OPAL_INT16))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     /* pack the control flags for this job */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->controls, 1, ORTE_JOB_CONTROL))) {
         ORTE_ERROR_LOG(rc);
@@ -337,52 +318,17 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     /* release the data since it has now been copied into our buffer */
     free(bo.bytes);
     
-    /* transfer and pack the app_idx and restart arrays for this job */
-    app_idx = (orte_app_idx_t*)malloc(jdata->num_procs * sizeof(orte_app_idx_t));
-    restarts = (int32_t*)malloc(jdata->num_procs * sizeof(int32_t));
-    for (j=0, i=0; i < jdata->num_procs && j < jdata->procs->size; j++) {
+    /* pack the procs for this job */
+    for (j=0; j < jdata->procs->size; j++) {
         if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
             continue;
         }
-        app_idx[i] = proc->app_idx;
-        restarts[i++] = proc->restarts;
-    }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, app_idx, jdata->num_procs, ORTE_APP_IDX))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    free(app_idx);
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, restarts, jdata->num_procs, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    free(restarts);
-    
-    /* are there cpu_list strings? */
-    if (jdata->map->cpu_lists) {
-        flag = (int8_t)true;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &flag, 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        for (j=0, i=0; i < jdata->num_procs && j < jdata->procs->size; j++) {
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
-                continue;
-            }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc->slot_list, 1, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc; 
-            }
-            i++;
-        }
-    } else {
-        flag = (int8_t)false;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &flag, 1, OPAL_INT8))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc, 1, ORTE_PROC))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     }
-    
+
     return ORTE_SUCCESS;
 }
 
@@ -474,18 +420,15 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_vpid_t j, host_daemon;
     orte_odls_child_t *child;
     orte_std_cntr_t cnt;
-    orte_process_name_t proc;
     orte_odls_job_t *jobdat=NULL;
     opal_byte_object_t *bo;
     opal_list_item_t *item;
     int8_t flag;
-    orte_app_idx_t *app_idx=NULL;
-    int32_t *restarts=NULL;
-    char **slot_str=NULL;
     orte_jobid_t debugger;
     bool add_child;
     orte_ns_cmp_bitmask_t mask;
     orte_app_context_t *app;
+    orte_proc_t *pptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
@@ -614,30 +557,14 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
-    /* unpack the override oversubscribed flag */
+#if OPAL_HAVE_HWLOC
+    /* unpack the binding policy */
     cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &override_oversubscribed, &cnt, OPAL_BOOL))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->binding, &cnt, OPAL_BINDING_POLICY))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
-    /* unpack the mapping policy for the job */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->policy, &cnt, ORTE_MAPPING_POLICY))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    /* unpack the cpus/rank for the job */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->cpus_per_rank, &cnt, OPAL_INT16))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    /* unpack the stride for the job */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->stride, &cnt, OPAL_INT16))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
+#endif
     /* unpack the control flags for the job */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->controls, &cnt, ORTE_JOB_CONTROL))) {
@@ -693,53 +620,21 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto REPORT_ERROR;
     }
    
-    /* allocate memory for app_idx */
-    app_idx = (orte_app_idx_t*)malloc(jobdat->num_procs * sizeof(orte_app_idx_t));
-    /* unpack app_idx in one shot */
-    cnt=jobdat->num_procs;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, app_idx, &cnt, ORTE_APP_IDX))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    
-    /* allocate memory for restarts */
-    restarts = (int32_t*)malloc(jobdat->num_procs  * sizeof(int32_t));
-    /* unpack restarts in one shot */
-    cnt=jobdat->num_procs;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, restarts, &cnt, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    
-    /* unpack flag to indicate if slot_strings are present */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    
-    if (flag) {
-        /* allocate space */
-        slot_str = (char**)malloc(jobdat->num_procs * sizeof(char*));
-        for (j=0; j < jobdat->num_procs; j++) {
-            cnt=1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &slot_str[j], &cnt, OPAL_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                goto REPORT_ERROR;
-            }
-        }
-    }
-    
-    /* cycle through the procs and find mine */
-    proc.jobid = jobdat->jobid;
+    /* unpack the procs */
     for (j=0; j < jobdat->num_procs; j++) {
-        proc.vpid = j;
-        ORTE_EPOCH_SET(proc.epoch,orte_ess.proc_get_epoch(&proc));
+        cnt=1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &pptr, &cnt, ORTE_PROC))) {
+            ORTE_ERROR_LOG(rc);
+            goto REPORT_ERROR;
+        }
+
+        /* see if it is one of mine */
+        ORTE_EPOCH_SET(proc.epoch,orte_ess.proc_get_epoch(&pptr->name));
         /* get the vpid of the daemon that is to host this proc */
         OPAL_OUTPUT_VERBOSE((20, orte_odls_globals.output,
                              "%s odls:constructing child list - looking for daemon for proc %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&proc)));
-        if (ORTE_VPID_INVALID == (host_daemon = orte_ess.proc_get_daemon(&proc))) {
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&pptr->name)));
+        if (ORTE_VPID_INVALID == (host_daemon = orte_ess.proc_get_daemon(&pptr->name))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             rc = ORTE_ERR_NOT_FOUND;
             goto REPORT_ERROR;
@@ -747,7 +642,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         
         OPAL_OUTPUT_VERBOSE((20, orte_odls_globals.output,
                              "%s odls:constructing child list - checking proc %s on daemon %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&proc),
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&pptr->name),
                              ORTE_VPID_PRINT(host_daemon)));
 
         /* does this proc belong to us? */
@@ -755,7 +650,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             
             OPAL_OUTPUT_VERBOSE((10, orte_odls_globals.output,
                                  "%s odls:constructing child list - found proc %s for me!",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&proc)));
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_NAME_PRINT(&pptr->name)));
             
             add_child = true;
             /* if this job is restarting procs, then we need to treat things
@@ -773,17 +668,17 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                     mask = ORTE_NS_CMP_ALL;
 
                     if (OPAL_EQUAL == 
-                        orte_util_compare_name_fields(mask, child->name, &proc)) {
+                        orte_util_compare_name_fields(mask, child->name, &pptr->name)) {
                         /* do not duplicate this child on the list! */
                         OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                              "proc %s is on list and is %s",
-                                             ORTE_NAME_PRINT(&proc),
+                                             ORTE_NAME_PRINT(&pptr->name),
                                              (child->alive) ? "ALIVE" : "DEAD"));
                         add_child = false;
-                        child->restarts = restarts[j];
+                        child->restarts = pptr->restarts;
                         child->do_not_barrier = true;
                         /* mark that this app_context is being used on this node */
-                        app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, app_idx[j]);
+                        app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, pptr->app_idx);
                         app->used_on_node = true;
                         break;
                     }
@@ -794,27 +689,29 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
             if (add_child) {
                 OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                      "adding proc %s to my local list",
-                                     ORTE_NAME_PRINT(&proc)));
+                                     ORTE_NAME_PRINT(&pptr->name)));
                 /* keep tabs of the number of local procs */
                 jobdat->num_local_procs++;
                 /* add this proc to our child list */
                 child = OBJ_NEW(orte_odls_child_t);
                 /* copy the name to preserve it */
-                if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, &proc, ORTE_NAME))) {
+                if (ORTE_SUCCESS != (rc = opal_dss.copy((void**)&child->name, &pptr->name, ORTE_NAME))) {
                     ORTE_ERROR_LOG(rc);
                     goto REPORT_ERROR;
                 }
-                child->app_idx = app_idx[j];  /* save the index into the app_context objects */
-                child->restarts = restarts[j];
+                child->app_idx = pptr->app_idx;  /* save the index into the app_context objects */
+                child->restarts = pptr->restarts;
                 /* if the job is in restart mode, the child must not barrier when launched */
                 if (ORTE_JOB_STATE_RESTART == jobdat->state) {
                     child->do_not_barrier = true;
                 }
-                if (NULL != slot_str && NULL != slot_str[j]) {
-                    child->slot_list = strdup(slot_str[j]);
+#if OPAL_HAVE_HWLOC
+                if (NULL != pptr->cpu_bitmap) {
+                    child->cpu_bitmap = strdup(pptr->cpu_bitmap);
                 }
+#endif
                 /* mark that this app_context is being used on this node */
-                app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, app_idx[j]);
+                app = (orte_app_context_t*)opal_pointer_array_get_item(&jobdat->apps, pptr->app_idx);
                 app->used_on_node = true;
                 /* protect operation on the global list of children */
                 OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
@@ -823,6 +720,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                 OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
             }
         }
+        OBJ_RELEASE(pptr);
     }
     
     /* flag that the launch msg has been processed so daemon collectives can proceed */
@@ -832,22 +730,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     OPAL_THREAD_UNLOCK(&jobdat->lock);
     
  done:
-    if (NULL != app_idx) {
-        free(app_idx);
-        app_idx = NULL;
-    }
-    if (NULL != restarts) {
-        free(restarts);
-        restarts = NULL;
-    }
-    if (NULL != slot_str) {
-        for (j=0; j < jobdat->num_procs; j++) {
-            free(slot_str[j]);
-        }
-        free(slot_str);
-        slot_str = NULL;
-    }
-    
     return ORTE_SUCCESS;
 
  REPORT_ERROR:
@@ -860,24 +742,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_errmgr.update_state(*job, ORTE_JOB_STATE_NEVER_LAUNCHED,
                              NULL, ORTE_PROC_STATE_UNDEF, 0, rc);
    
-    if (NULL != app_idx) {
-        free(app_idx);
-        app_idx = NULL;
-    }
-    if (NULL != restarts) {
-        free(restarts);
-        restarts = NULL;
-    }
-    if (NULL != slot_str && NULL != jobdat) {
-        for (j=0; j < jobdat->num_procs; j++) {
-            if (NULL != slot_str[j]) {
-                free(slot_str[j]);
-            }
-        }
-        free(slot_str);
-        slot_str = NULL;
-    }
-    
     return rc;
 }
 
@@ -900,15 +764,15 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     }
 
     /* special case handling for --prefix: this is somewhat icky,
-        but at least some users do this.  :-\ It is possible that
-        when using --prefix, the user will also "-x PATH" and/or
-        "-x LD_LIBRARY_PATH", which would therefore clobber the
-        work that was done in the prior pls to ensure that we have
-        the prefix at the beginning of the PATH and
-        LD_LIBRARY_PATH.  So examine the context->env and see if we
-        find PATH or LD_LIBRARY_PATH.  If found, that means the
-        prior work was clobbered, and we need to re-prefix those
-        variables. */
+       but at least some users do this.  :-\ It is possible that
+       when using --prefix, the user will also "-x PATH" and/or
+       "-x LD_LIBRARY_PATH", which would therefore clobber the
+       work that was done in the prior pls to ensure that we have
+       the prefix at the beginning of the PATH and
+       LD_LIBRARY_PATH.  So examine the context->env and see if we
+       find PATH or LD_LIBRARY_PATH.  If found, that means the
+       prior work was clobbered, and we need to re-prefix those
+       variables. */
     for (i = 0; NULL != context->prefix_dir && NULL != context->env && NULL != context->env[i]; ++i) {
         char *newenv;
         
@@ -979,19 +843,42 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
     free(param);
     free(param2);
 
-    /* pass a param telling the child what type and model of cpu we are on,
-     * if we know it
-     */
-    if (NULL != orte_local_cpu_type) {
-        param = mca_base_param_environ_variable("orte","cpu","type");
-        opal_setenv(param, orte_local_cpu_type, true, environ_copy);
-        free(param);
+#if OPAL_HAVE_HWLOC
+    {
+        /* pass a param telling the child what type and model of cpu we are on,
+         * if we know it. If hwloc has the value, use what it knows. Otherwise,
+         * see if we were explicitly given it and use that value.
+         */
+        hwloc_obj_t obj;
+        char *htmp;
+        if (NULL != opal_hwloc_topology) {
+            obj = hwloc_get_root_obj(opal_hwloc_topology);
+            if (NULL != (htmp = hwloc_obj_get_info_by_name(obj, "CPUType")) ||
+                NULL != (htmp = orte_local_cpu_type)) {
+                param = mca_base_param_environ_variable("orte","cpu","type");
+                opal_setenv(param, htmp, true, environ_copy);
+                free(param);
+            }
+            if (NULL != (htmp = hwloc_obj_get_info_by_name(obj, "CPUModel")) ||
+                NULL != (htmp = orte_local_cpu_model)) {
+                param = mca_base_param_environ_variable("orte","cpu","model");
+                opal_setenv(param, htmp, true, environ_copy);
+                free(param);
+            }
+        } else {
+            if (NULL != orte_local_cpu_type) {
+                param = mca_base_param_environ_variable("orte","cpu","type");
+                opal_setenv(param, orte_local_cpu_type, true, environ_copy);
+                free(param);
+            }
+            if (NULL != orte_local_cpu_model) {
+                param = mca_base_param_environ_variable("orte","cpu","model");
+                opal_setenv(param, orte_local_cpu_model, true, environ_copy);
+                free(param);
+            }
+        }
     }
-    if (NULL != orte_local_cpu_model) {
-        param = mca_base_param_environ_variable("orte","cpu","model");
-        opal_setenv(param, orte_local_cpu_model, true, environ_copy);
-        free(param);
-    }
+#endif
 
     /* get shmem's best component name so we can provide a hint to the shmem
      * framework. the idea here is to have someone figure out what component to
@@ -1277,7 +1164,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     opal_list_item_t *item;
     orte_app_context_t *app, *dbg;
     orte_odls_child_t *child=NULL;
-    int num_processors;
     bool oversubscribed;
     int rc=ORTE_SUCCESS;
     bool launch_failed=true;
@@ -1386,48 +1272,6 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
     orte_sstore.wait_all_deps();
 #endif
 
-    /* if the mapper says we are oversubscribed, then we trust it - unless
-     * it told us -not- to!
-     */
-    if (oversubscribed && !override_oversubscribed) {
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:launch mapper declares this node oversubscribed",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    } else {
-        /* if the mapper thinks we are not oversubscribed, then we
-         * do a final smoke test by checking against the #processors. This
-         * is done solely in case the mapper had incorrect knowledge of
-         * the #local processors
-         */
-        /* compute the number of local procs alive or about to be launched
-         * as part of this job
-         */
-        total_num_local_procs = compute_num_procs_alive(job) + jobdat->num_local_procs;
-        /* get the number of local processors */
-        if (ORTE_SUCCESS != (rc = opal_paffinity_base_get_processor_info(&num_processors))) {
-            /* if we cannot find the number of local processors, we have no choice
-             * but to default to conservative settings
-             */
-            oversubscribed = true;
-        } else {
-            if (total_num_local_procs > num_processors) {
-                /* if the #procs > #processors, declare us oversubscribed. This
-                 * covers the case where the user didn't tell us anything about the
-                 * number of available slots, so we defaulted to a value of 1
-                 */
-                oversubscribed = true;
-            } else {
-                /* otherwise, declare us to not be oversubscribed so we can be aggressive */
-                oversubscribed = false;
-            }
-        }
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:launch found %d processors for %d children and locally set oversubscribed to %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             (ORTE_SUCCESS == rc) ? num_processors : -1, (int)opal_list_get_size(&orte_local_children),
-                             oversubscribed ? "true" : "false"));
-    }
-    
     /* setup to report the proc state to the HNP */
     OBJ_CONSTRUCT(&alert, opal_buffer_t);
     
@@ -2016,7 +1860,11 @@ void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid)
     opal_buffer_t buffer;
     opal_byte_object_t *bo;
     int rc;
-    
+#if OPAL_HAVE_HWLOC
+    opal_hwloc_level_t bind_level;
+    unsigned int bind_idx;
+#endif
+
     /* create a job tracking object for it */
     jobdat = OBJ_NEW(orte_odls_job_t);
     jobdat->jobid = jobid;
@@ -2028,12 +1876,20 @@ void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid)
     opal_dss.pack(&buffer, &jobid, 1, ORTE_JOBID); /* jobid */
     vpid1 = 1;
     opal_dss.pack(&buffer, &vpid1, 1, ORTE_VPID); /* num_procs */
+#if OPAL_HAVE_HWLOC
+    bind_level = OPAL_HWLOC_NODE_LEVEL;
+    opal_dss.pack(&buffer, &bind_level, 1, OPAL_HWLOC_LEVEL_T); /* num_procs */
+#endif
     one32 = 0;
     opal_dss.pack(&buffer, &one32, 1, OPAL_INT32); /* node index */
     lrank = 0;
     opal_dss.pack(&buffer, &lrank, 1, ORTE_LOCAL_RANK);  /* local rank */
     nrank = 0;
     opal_dss.pack(&buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
+#if OPAL_HAVE_HWLOC
+    bind_idx = 0;
+    opal_dss.pack(&buffer, &bind_idx, 1, OPAL_UINT);
+#endif
     /* setup a byte object and unload the packed data to it */
     bo = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
     opal_dss.unload(&buffer, (void**)&bo->bytes, &bo->size);
@@ -2189,14 +2045,14 @@ int orte_odls_base_default_require_sync(orte_process_name_t *proc,
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:sync sending byte object",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            opal_dss.pack(&buffer, &orte_odls_globals.dmap, 1, OPAL_BYTE_OBJECT);
-            opal_dss.pack(&buffer, &jobdat->pmap, 1, OPAL_BYTE_OBJECT);
 #if OPAL_HAVE_HWLOC
             /* send the local topology so the individual apps
              * don't hammer the system to collect it themselves
              */
             opal_dss.pack(&buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO);
 #endif
+            opal_dss.pack(&buffer, &orte_odls_globals.dmap, 1, OPAL_BYTE_OBJECT);
+            opal_dss.pack(&buffer, &jobdat->pmap, 1, OPAL_BYTE_OBJECT);
         }
     }
     

@@ -568,7 +568,7 @@ static int spawn(int count, char **array_of_commands,
     char stdin_target[OPAL_PATH_MAX];
     char params[OPAL_PATH_MAX];
     char mapper[OPAL_PATH_MAX];
-    int nperxxx;
+    int npernode;
     char slot_list[OPAL_PATH_MAX];
 
     orte_job_t *jdata;
@@ -735,7 +735,7 @@ static int spawn(int count, char **array_of_commands,
             }
 
             /* check for 'mapper' */ 
-            ompi_info_get (array_of_info[i], "mapper", sizeof(mapper) - 1, mapper, &flag);
+            ompi_info_get(array_of_info[i], "mapper", sizeof(mapper) - 1, mapper, &flag);
             if ( flag ) {
                 if (NULL == jdata->map) {
                     jdata->map = OBJ_NEW(orte_job_map_t);
@@ -743,20 +743,27 @@ static int spawn(int count, char **array_of_commands,
                         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                         return ORTE_ERR_OUT_OF_RESOURCE;
                     }
-                    /* load it with the system defaults */
-                    jdata->map->policy = orte_default_mapping_policy;
-                    jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
-                    jdata->map->stride = orte_rmaps_base.stride;
-                    jdata->map->oversubscribe = orte_rmaps_base.oversubscribe;
-                    jdata->map->display_map = orte_rmaps_base.display_map;
                 }
                 jdata->map->req_mapper = strdup(mapper);
             }
 
-            /* check for 'npernode' */ 
+            /* check for 'display_map' */ 
+            ompi_info_get_bool(array_of_info[i], "display_map", &local_spawn, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                jdata->map->display_map = true;
+            }
+
+            /* check for 'npernode' and 'ppr' */ 
             ompi_info_get (array_of_info[i], "npernode", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
-                if (ORTE_SUCCESS != ompi_info_value_to_int(slot_list, &nperxxx)) {
+                if (ORTE_SUCCESS != ompi_info_value_to_int(slot_list, &npernode)) {
                     ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                     return ORTE_ERR_BAD_PARAM;
                 }
@@ -766,18 +773,14 @@ static int spawn(int count, char **array_of_commands,
                         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                         return ORTE_ERR_OUT_OF_RESOURCE;
                     }
-                    /* load it with the system defaults */
-                    jdata->map->policy = orte_default_mapping_policy;
-                    jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
-                    jdata->map->stride = orte_rmaps_base.stride;
-                    jdata->map->oversubscribe = orte_rmaps_base.oversubscribe;
-                    jdata->map->display_map = orte_rmaps_base.display_map;
                 }
-                jdata->map->npernode = nperxxx;
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_PPR;
+                asprintf(&(jdata->map->ppr), "%d:n", npernode);
             }
-
-            /* check for 'map_bynode' */
-            ompi_info_get_bool(array_of_info[i], "map_bynode", &local_bynode, &flag);
+            ompi_info_get (array_of_info[i], "pernode", sizeof(slot_list) - 1, slot_list, &flag);
             if ( flag ) {
                 if (NULL == jdata->map) {
                     jdata->map = OBJ_NEW(orte_job_map_t);
@@ -785,20 +788,438 @@ static int spawn(int count, char **array_of_commands,
                         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                         return ORTE_ERR_OUT_OF_RESOURCE;
                     }
-                    /* load it with the system defaults */
-                    jdata->map->policy = orte_default_mapping_policy;
-                    jdata->map->cpus_per_rank = orte_rmaps_base.cpus_per_rank;
-                    jdata->map->stride = orte_rmaps_base.stride;
-                    jdata->map->oversubscribe = orte_rmaps_base.oversubscribe;
-                    jdata->map->display_map = orte_rmaps_base.display_map;
                 }
-                if( local_bynode ) {
-                    jdata->map->policy = ORTE_MAPPING_BYNODE;
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
                 }
-                else {
-                    jdata->map->policy = ORTE_MAPPING_BYSLOT;
-                }
+                jdata->map->mapping |= ORTE_MAPPING_PPR;
+                jdata->map->ppr = strdup("1:n");
             }
+            ompi_info_get (array_of_info[i], "ppr", sizeof(slot_list) - 1, slot_list, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_PPR;
+                jdata->map->ppr = strdup(slot_list);
+            }
+
+            /* check for 'map_byxxx' */
+            ompi_info_get_bool(array_of_info[i], "map_by_node", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_BYNODE;
+            }
+#if OPAL_HAVE_HWLOC
+            ompi_info_get_bool(array_of_info[i], "map_by_board", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_BYBOARD;
+            }
+            ompi_info_get_bool(array_of_info[i], "map_by_numa", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_BYNUMA;
+            }
+            ompi_info_get_bool(array_of_info[i], "map_by_socket", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_BYSOCKET;
+            }
+            ompi_info_get_bool(array_of_info[i], "map_by_l3cache", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_BYL3CACHE;
+            }
+            ompi_info_get_bool(array_of_info[i], "map_by_l2cache", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_BYL2CACHE;
+            }
+            ompi_info_get_bool(array_of_info[i], "map_by_l1cache", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_BYL1CACHE;
+            }
+            ompi_info_get_bool(array_of_info[i], "map_by_core", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_BYCORE;
+            }
+            ompi_info_get_bool(array_of_info[i], "map_by_hwthread", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (ORTE_MAPPING_POLICY_IS_SET(jdata->map->mapping)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->mapping |= ORTE_MAPPING_BYHWTHREAD;
+            }
+#endif
+
+            /* check for 'rank_byxxx' */
+            ompi_info_get_bool(array_of_info[i], "rank_by_node", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (0 != jdata->map->ranking) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->ranking = ORTE_RANK_BY_NODE;
+            }
+#if OPAL_HAVE_HWLOC
+            ompi_info_get_bool(array_of_info[i], "rank_by_board", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (0 != jdata->map->ranking) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->ranking = ORTE_RANK_BY_BOARD;
+            }
+            ompi_info_get_bool(array_of_info[i], "rank_by_numa", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (0 != jdata->map->ranking) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->ranking = ORTE_RANK_BY_NUMA;
+            }
+            ompi_info_get_bool(array_of_info[i], "rank_by_socket", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (0 != jdata->map->ranking) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->ranking = ORTE_RANK_BY_SOCKET;
+            }
+            ompi_info_get_bool(array_of_info[i], "rank_by_l3cache", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (0 != jdata->map->ranking) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->ranking = ORTE_RANK_BY_L3CACHE;
+            }
+            ompi_info_get_bool(array_of_info[i], "rank_by_l2cache", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (0 != jdata->map->ranking) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->ranking = ORTE_RANK_BY_L2CACHE;
+            }
+            ompi_info_get_bool(array_of_info[i], "rank_by_l1cache", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (0 != jdata->map->ranking) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->ranking = ORTE_RANK_BY_L1CACHE;
+            }
+            ompi_info_get_bool(array_of_info[i], "rank_by_core", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (0 != jdata->map->ranking) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->ranking = ORTE_RANK_BY_CORE;
+            }
+            ompi_info_get_bool(array_of_info[i], "rank_by_hwthread", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (0 != jdata->map->ranking) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->ranking = ORTE_RANK_BY_HWTHREAD;
+            }
+
+            /* check for 'bind_toxxx' */
+            ompi_info_get_bool(array_of_info[i], "bind_if_supported", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                jdata->map->binding |= OPAL_BIND_IF_SUPPORTED;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_overload_allowed", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                jdata->map->binding |= OPAL_BIND_ALLOW_OVERLOAD;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_to_none", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->binding |= OPAL_BIND_TO_NONE;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_to_board", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->binding |= OPAL_BIND_TO_BOARD;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_to_numa", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->binding |= OPAL_BIND_TO_NUMA;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_to_socket", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->binding |= OPAL_BIND_TO_SOCKET;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_to_l3cache", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->binding |= OPAL_BIND_TO_L3CACHE;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_to_l2cache", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->binding |= OPAL_BIND_TO_L2CACHE;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_to_l1cache", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->binding |= OPAL_BIND_TO_L1CACHE;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_to_core", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->binding |= OPAL_BIND_TO_CORE;
+            }
+            ompi_info_get_bool(array_of_info[i], "bind_to_hwthread", &local_bynode, &flag);
+            if ( flag ) {
+                if (NULL == jdata->map) {
+                    jdata->map = OBJ_NEW(orte_job_map_t);
+                    if (NULL == jdata->map) {
+                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                        return ORTE_ERR_OUT_OF_RESOURCE;
+                    }
+                }
+                if (OPAL_BINDING_POLICY_IS_SET(jdata->map->binding)) {
+                    return OMPI_ERROR;
+                }
+                jdata->map->binding |= OPAL_BIND_TO_HWTHREAD;
+            }
+#endif
 
             /* check for 'preload_binary' */
             ompi_info_get_bool(array_of_info[i], "ompi_preload_binary", &local_spawn, &flag);

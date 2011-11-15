@@ -12,6 +12,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -143,12 +144,6 @@ cores_per_socket   { orte_util_hostfile_value.sval = yytext;
 
 "cores-per-socket" { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_CORES_PER_SOCKET; }
-
-cpu_set            { orte_util_hostfile_value.sval = yytext;
-                     return ORTE_HOSTFILE_CPU_SET; }
-
-"cpu-set"           { orte_util_hostfile_value.sval = yytext;
-                     return ORTE_HOSTFILE_CPU_SET; }
 
 \+n[0-9]+	   { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_RELATIVE; }

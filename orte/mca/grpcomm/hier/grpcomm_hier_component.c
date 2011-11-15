@@ -68,11 +68,8 @@ int orte_grpcomm_hier_close(void)
 
 int orte_grpcomm_hier_component_query(mca_base_module_t **module, int *priority)
 {
-    if (ORTE_PROC_IS_MPI) {
-        *priority = 1000;
-    } else {
-        *priority = 0;
-    }
+    /* only select if directed */
+    *priority = 0;
     *module = (mca_base_module_t *)&orte_grpcomm_hier_module;
     return ORTE_SUCCESS;    
 }

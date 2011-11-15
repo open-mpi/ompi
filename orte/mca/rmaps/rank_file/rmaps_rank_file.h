@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  * 
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +31,6 @@
 #include "orte_config.h"
 
 #include "opal/class/opal_object.h"
-#include "opal/mca/paffinity/paffinity.h"
 
 #include "orte/mca/rmaps/rmaps.h"
 

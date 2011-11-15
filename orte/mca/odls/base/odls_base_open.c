@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +32,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/hwloc/hwloc.h"
-#include "opal/mca/paffinity/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
@@ -89,7 +89,7 @@ orte_odls_globals_t orte_odls_globals;
 int orte_odls_base_open(void)
 {
     char **ranks=NULL, *tmp;
-    int i, rank, sock, core;
+    int i, rank;
     orte_namelist_t *nm;
     bool xterm_hold;
     
@@ -101,13 +101,6 @@ int orte_odls_base_open(void)
                                 "Time to wait for a process to die after issuing a kill signal to it",
                                 false, false, 1, &orte_odls_globals.timeout_before_sigkill);
 
-    mca_base_param_reg_int_name("odls", "warn_if_not_bound",
-                                "If nonzero, issue a warning if the program asked "
-                                "for a binding that results in a no-op (ex: "
-                                "bind-to-socket on a single socket node)",
-                                false, false, 1, &i);
-    orte_odls_base.warn_if_not_bound = OPAL_INT_TO_BOOL(i);
-    
     /* initialize the global list of local children and job data */
     OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
     OBJ_CONSTRUCT(&orte_local_children_lock, opal_mutex_t);
@@ -124,43 +117,6 @@ int orte_odls_base_open(void)
     orte_odls_globals.dmap = NULL;
     orte_odls_globals.debugger = NULL;
     orte_odls_globals.debugger_launched = false;
-    
-    /* get any external processor bindings */
-    OPAL_PAFFINITY_CPU_ZERO(orte_odls_globals.my_cores);
-    orte_odls_globals.bound = false;
-    orte_odls_globals.num_processors = 0;
-    OBJ_CONSTRUCT(&orte_odls_globals.sockets, opal_bitmap_t);
-    opal_bitmap_init(&orte_odls_globals.sockets, 16);
-    /* default the number of sockets to those found during startup */
-    orte_odls_globals.num_sockets = orte_default_num_sockets_per_board;
-    /* see if paffinity is supported */
-    if (ORTE_SUCCESS == opal_paffinity_base_get(&orte_odls_globals.my_cores)) {
-        /* get the number of local processors */
-        opal_paffinity_base_get_processor_info(&orte_odls_globals.num_processors);
-        /* determine if we are bound */
-        OPAL_PAFFINITY_PROCESS_IS_BOUND(orte_odls_globals.my_cores, &orte_odls_globals.bound);
-        /* if we are bound, determine the number of sockets - and which ones - that are available to us */
-        if (orte_odls_globals.bound) {
-            for (i=0; i < orte_odls_globals.num_processors; i++) {
-                if (OPAL_PAFFINITY_CPU_ISSET(i, orte_odls_globals.my_cores)) {
-                    opal_paffinity_base_get_map_to_socket_core(i, &sock, &core);
-                    opal_bitmap_set_bit(&orte_odls_globals.sockets, sock);
-                }
-            }
-            /* determine how many sockets we have available to us */
-            orte_odls_globals.num_sockets = 0;
-            for (i=0; i < opal_bitmap_size(&orte_odls_globals.sockets); i++) {
-                if (opal_bitmap_is_set_bit(&orte_odls_globals.sockets, i)) {
-                    orte_odls_globals.num_sockets++;
-                }
-            }
-            if (orte_report_bindings) {
-                orte_show_help("help-odls-base.txt",
-                               "orte-odls-base:show-bindings",
-                               false, orte_odls_globals.my_cores.bitmask[0]);
-            }
-        }
-    }
     
     /* check if the user requested that we display output in xterms */
     if (NULL != orte_xterm) {
@@ -250,13 +206,15 @@ static void orte_odls_child_constructor(orte_odls_child_t *ptr)
     ptr->init_recvd = false;
     ptr->fini_recvd = false;
     ptr->rml_uri = NULL;
-    ptr->slot_list = NULL;
     ptr->waitpid_recvd = false;
     ptr->iof_complete = false;
     ptr->do_not_barrier = false;
     ptr->notified = false;
     OBJ_CONSTRUCT(&ptr->stats, opal_ring_buffer_t);
     opal_ring_buffer_init(&ptr->stats, orte_stat_history_size);
+#if OPAL_HAVE_HWLOC
+    ptr->cpu_bitmap = NULL;
+#endif
 }
 static void orte_odls_child_destructor(orte_odls_child_t *ptr)
 {
@@ -264,12 +222,16 @@ static void orte_odls_child_destructor(orte_odls_child_t *ptr)
 
     if (NULL != ptr->name) free(ptr->name);
     if (NULL != ptr->rml_uri) free(ptr->rml_uri);
-    if (NULL != ptr->slot_list) free(ptr->slot_list);
 
     while (NULL != (st = (opal_pstats_t*)opal_ring_buffer_pop(&ptr->stats))) {
         OBJ_RELEASE(st);
     }
     OBJ_DESTRUCT(&ptr->stats);
+#if OPAL_HAVE_HWLOC
+    if (NULL != ptr->cpu_bitmap) {
+        free(ptr->cpu_bitmap);
+    }
+#endif
 }
 OBJ_CLASS_INSTANCE(orte_odls_child_t,
                    opal_list_item_t,
@@ -288,7 +250,9 @@ static void orte_odls_job_constructor(orte_odls_job_t *ptr)
     OBJ_CONSTRUCT(&ptr->apps, opal_pointer_array_t);
     opal_pointer_array_init(&ptr->apps, 2, INT_MAX, 2);
     ptr->num_apps = 0;
-    ptr->policy = 0;
+#if OPAL_HAVE_HWLOC
+    ptr->binding = 0;
+#endif
     ptr->cpus_per_rank = 1;
     ptr->stride = 1;
     ptr->controls = 0;

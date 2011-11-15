@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -93,4 +94,94 @@ Your job failed to map. Either no mapper was available, or none
 of the available mappers was able to perform the requested
 mapping operation. This can happen if you request a map type
 (e.g., loadbalance) and the corresponding mapper was not built.
+#
+[unrecognized-policy]
+The specified %s policy is not recognized:
 
+  Policy: %s
+
+Please check for a typo or ensure that the option is a supported
+one.
+#
+[redefining-policy]
+Conflicting directives for %s policy are causing the policy
+to be redefined:
+
+  New policy:   %s
+  Prior policy:  %s
+
+Please check that only one policy is defined.
+#
+[rmaps:binding-target-not-found]
+A request was made to bind to %s, but an appropriate target could not
+be found on node %s.
+#
+[rmaps:binding-overload]
+A request was made to bind to that would result in binding more
+processes than cpus on a resource:
+
+   Bind to:         %s
+   Node:            %s
+   #processes:  %d
+   #cpus:          %d
+
+You can override this protection by adding the "overload-allowed"
+option to your binding directive.
+#
+[rmaps:no-topology]
+A request was made for nperxxx that requires knowledge of
+a remote node's topology. However, no topology info is
+available for the following node:
+
+  Node: %s
+
+The job cannot be executed under this condition. Please either
+remove the nperxxx directive and specify the number of processes
+to use, or investigate the lack of topology info.
+#
+[rmaps:no-available-cpus]
+While computing bindings, we found no available cpus on
+the following node:
+
+  Node:  %s
+
+Please check your allocation.
+#
+[rmaps:cpubind-not-supported]
+A request was made to bind a process, but at least one node does NOT
+support binding processes to cpus.
+
+  Node:  %s
+#
+[rmaps:membind-not-supported]
+WARNING: a request was made to bind a process. While the system
+supports binding the process itself, at least one node does NOT
+support binding memory to the process location.
+
+  Node:  %s
+
+This is a warning only; your job will continue, though performance may
+be degraded.
+#
+[rmaps:membind-not-supported-fatal]
+A request was made to bind a process. While the system
+supports binding the process itself, at least one node does NOT
+support binding memory to the process location.
+
+  Node:  %s
+
+The provided memory binding policy requires that we abort the
+job at this time.
+#
+[rmaps:no-bindable-objects]
+No bindable objects of the specified type were available
+on at least one node:
+
+  Node:    %s
+  Target:  %s
+#
+[rmaps:unknown-binding-level]
+Unknown binding level:
+
+  Target:  %s
+  Cache level:  %u

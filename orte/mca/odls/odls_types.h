@@ -9,6 +9,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,9 +34,11 @@
 #include "opal/dss/dss_types.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/grpcomm/grpcomm_types.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/runtime/orte_globals.h"
 
 BEGIN_C_DECLS
@@ -107,7 +110,9 @@ typedef struct {
     bool init_recvd;             /* process called orte_init */
     bool fini_recvd;             /* process called orte_finalize */
     char *rml_uri;               /* contact info for this child */
-    char *slot_list;             /* list of slots for this child */
+#if OPAL_HAVE_HWLOC
+    char *cpu_bitmap;            /* binding pattern for this child */
+#endif
     bool waitpid_recvd;          /* waitpid has detected proc termination */
     bool iof_complete;           /* IOF has noted proc terminating all channels */
     struct timeval starttime;    /* when the proc was started - for timing purposes only */
@@ -133,7 +138,9 @@ typedef struct orte_odls_job_t {
     bool                    launch_msg_processed;   /* launch msg has been fully processed */
     opal_pointer_array_t    apps;                   /* app_contexts for this job */
     orte_app_idx_t          num_apps;               /* number of app_contexts */
-    orte_mapping_policy_t   policy;                 /* mapping policy */
+#if OPAL_HAVE_HWLOC
+    opal_binding_policy_t   binding;                /* binding policy */
+#endif
     int16_t                 cpus_per_rank;          /* number of cpus/rank */
     int16_t                 stride;                 /* step size between cores of multi-core/rank procs */
     orte_job_controls_t     controls;               /* control flags for job */

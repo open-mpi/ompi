@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -28,7 +28,6 @@
 #include <stdio.h>
 
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/paffinity/base/base.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 
@@ -43,8 +42,7 @@ static bool passed_thru = false;
 int orte_register_params(void)
 {
     int value, tmp;
-    char *strval, **params;
-    uint16_t binding;
+    char *strval;
     
     /* only go thru this once - mpirun calls it twice, which causes
      * any error messages to show up twice
@@ -234,12 +232,6 @@ int orte_register_params(void)
     mca_base_param_reg_string_name("orte", "default_hostfile",
                                    "Name of the default hostfile (relative or absolute path)",
                                    false, false, NULL, &orte_default_hostfile);
-    /* rankfile */
-    tmp = mca_base_param_reg_string_name("orte", "rankfile",
-                                         "Name of the rankfile to be used for mapping processes (relative or absolute path)",
-                                         false, false, NULL, NULL);
-    mca_base_param_reg_syn_name(tmp, "rmaps", "rank_file_path", false);
-    mca_base_param_lookup_string(tmp, &orte_rankfile);
     
 #ifdef __WINDOWS__
     mca_base_param_reg_string_name("orte", "ccp_headnode",
@@ -315,11 +307,14 @@ int orte_register_params(void)
                                 "Indicates that multiple app_contexts are being provided that are a mix of 32/64 bit binaries (default: false)",
                                 false, false, (int) false, &value);
     orte_hetero_apps = OPAL_INT_TO_BOOL(value);
+
+#if OPAL_HAVE_HWLOC
     mca_base_param_reg_int_name("orte", "hetero_nodes",
                                 "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]",
                                 false, false, (int) false, &value);
     orte_hetero_nodes = OPAL_INT_TO_BOOL(value);
-    
+#endif
+
     /* allow specification of the launch agent */
     mca_base_param_reg_string_name("orte", "launch_agent",
                                    "Command used to start processes on remote nodes (default: orted)",
@@ -394,71 +389,6 @@ int orte_register_params(void)
                                    "cpu model detected in node",
                                    true, false, NULL, &orte_local_cpu_model);
 
-    /* cluster hardware info */
-    mca_base_param_reg_int_name("orte", "num_boards",
-                                "Number of processor boards/node (1-256) [default: 1]",
-                                false, false, 1, &value);
-    orte_default_num_boards = (uint8_t)value;
-
-    mca_base_param_reg_int_name("orte", "num_sockets",
-                                "Number of sockets/board (1-256)",
-                                false, false, 0, &value);
-    orte_default_num_sockets_per_board = (uint8_t)value;
-
-    mca_base_param_reg_int_name("orte", "num_cores",
-                                "Number of cores/socket (1-256)",
-                                false, false, 0, &value);
-    orte_default_num_cores_per_socket = (uint8_t)value;
-    
-    /* cpu allocation specification */
-    mca_base_param_reg_string_name("orte", "cpu_set",
-                                   "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]",
-                                   false, false, NULL, &orte_default_cpu_set);
-    
-    /* binding specification - this will be overridden by any cmd line directive, and
-     * ignored unless opal_paffinity_alone is set
-     */
-    mca_base_param_reg_string_name("orte", "process_binding",
-                                   "Policy for binding processes [none | core | socket | board] (supported qualifier: if-avail)",
-                                   false, false, NULL, &strval);
-    if (NULL != strval) {
-        if (0 == strcasecmp(strval, "none")) {
-            /* no binding */
-            ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_NONE);
-        } else {
-            binding = 0;
-            params = opal_argv_split(strval, ':');
-            if (1 < opal_argv_count(params)) {
-                if (0 != strcasecmp(params[1], "if-avail")) {
-                    /* unknown option */
-                    opal_output(0, "Unknown qualifier to orte_process_binding: %s", strval);
-                    return ORTE_ERR_BAD_PARAM;
-                }
-                binding = ORTE_BIND_IF_SUPPORTED;
-            }
-            if (0 == strcasecmp(params[0], "socket")) {
-                ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_SOCKET | binding);
-            } else if (0 == strcasecmp(params[0], "board")) {
-                ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_BOARD | binding);
-            } else if (0 == strcasecmp(params[0], "core")) {
-                ORTE_SET_BINDING_POLICY(ORTE_BIND_TO_CORE | binding);
-            }
-        }
-    }
-    /* if nothing was set, but opal_paffinity_alone is set, then default
-     * to bind-to-core
-     */
-    if (opal_paffinity_alone) {
-        ORTE_XSET_BINDING_POLICY(ORTE_BIND_TO_CORE);
-    }
-    
-    /* whether or not to report bindings */
-    mca_base_param_reg_int_name("orte", "report_bindings",
-                                "Report bindings",
-                                false, false,
-                                (int) false, &value);
-    orte_report_bindings = OPAL_INT_TO_BOOL(value);
-    
     /* tool communication controls */
     mca_base_param_reg_string_name("orte", "report_events",
                                    "URI to which events are to be reported (default: NULL)",

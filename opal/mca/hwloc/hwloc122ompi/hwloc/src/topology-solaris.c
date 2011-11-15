@@ -3,6 +3,7 @@
  * Copyright © 2009-2011 INRIA.  All rights reserved.
  * Copyright © 2009-2011 Université Bordeaux 1
  * Copyright © 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright © 2011      Oracle and/or its affiliates.  All rights reserved.
  * See COPYING in top-level directory.
  */
 
@@ -10,6 +11,7 @@
 #include <hwloc.h>
 #include <private/private.h>
 #include <private/debug.h>
+#include <private/solaris-chiptype.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -607,9 +609,22 @@ hwloc_look_kstat(struct hwloc_topology *topology)
        * pkg_core_id for the core ID (not unique).  They are not useful to us
        * however. */
     }
-
-  if (look_chips)
-    hwloc_setup_level(procid_max, numsockets, osphysids, proc_physids, topology, HWLOC_OBJ_SOCKET);
+  if (look_chips) {
+      /* Set up the Socket object inline instead of using hwloc_setup_level
+       * so we can add the CPUVendor and CPUModel info objects.
+       */
+      struct hwloc_obj *obj;
+      unsigned j;
+      for (j = 0; j < numsockets; j++) {
+          obj = hwloc_alloc_setup_object(HWLOC_OBJ_SOCKET, osphysids[j]);
+          hwloc_object_cpuset_from_array(obj, j, proc_physids, procid_max);
+          hwloc_debug_2args_bitmap("%s %d has cpuset %s\n",
+                                   hwloc_obj_type_string(HWLOC_OBJ_SOCKET),
+                                   j, obj->cpuset);
+          hwloc_insert_object_by_cpuset(topology, obj);
+      }
+      hwloc_debug("%s", "\n");
+  }
 
   if (look_cores)
     hwloc_setup_level(procid_max, numcores, oscoreids, proc_coreids, topology, HWLOC_OBJ_CORE);
@@ -627,17 +642,30 @@ void
 hwloc_look_solaris(struct hwloc_topology *topology)
 {
   unsigned nbprocs = hwloc_fallback_nbprocessors (topology);
+  char *CPUType;
+  char *CPUModel;
 #ifdef HAVE_LIBLGRP
   hwloc_look_lgrp(topology);
 #endif /* HAVE_LIBLGRP */
 #ifdef HAVE_LIBKSTAT
   nbprocs = 0;
-  if (hwloc_look_kstat(topology))
-    return;
+  if (hwloc_look_kstat(topology)) {
+      /* Set CPU Type and Model for machine. */
+      CPUType = hwloc_solaris_get_chip_type();
+      CPUModel = hwloc_solaris_get_chip_model();
+      hwloc_add_object_info(topology->levels[0][0], "CPUType", CPUType);
+      hwloc_add_object_info(topology->levels[0][0], "CPUModel", CPUModel);
+      return;
+  }
 #endif /* HAVE_LIBKSTAT */
   hwloc_setup_pu_level(topology, nbprocs);
-
   hwloc_add_object_info(topology->levels[0][0], "Backend", "Solaris");
+
+  /* Set CPU Type and Model for machine. */
+  CPUType = hwloc_solaris_get_chip_type();
+  CPUModel = hwloc_solaris_get_chip_model();
+  hwloc_add_object_info(topology->levels[0][0], "CPUType", CPUType);
+  hwloc_add_object_info(topology->levels[0][0], "CPUModel", CPUModel);
 }
 
 void

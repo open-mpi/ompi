@@ -344,43 +344,25 @@ static int modex(opal_list_t *procs)
     free(rml_uri);
 
 #if OPAL_HAVE_HWLOC
-    {
-        char *locale;
-
-        /* provide the locality info */
-        if (NULL != opal_hwloc_topology) {
-            /* our cpuset should already be known, but check for safety */
-            if (NULL == opal_hwloc_my_cpuset) {
-                opal_hwloc_base_get_local_cpuset();
-            }
-            /* convert to a string */
-            hwloc_bitmap_list_asprintf(&locale, opal_hwloc_my_cpuset);
-            OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                 "%s grpcomm:pmi LOCALE %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), locale));
-            /* NTH: some characters are not allowed in pmi2 land - not sure
-             * if hwloc would use them, but just to be safe we need to encode
-             */
-            if (ORTE_SUCCESS != (rc = pmi_encode(locale, strlen(locale)))) {
-                ORTE_ERROR_LOG(rc);
-                free(locale);
-                return rc;
-            }
-            /*  get the key */
-            if (ORTE_SUCCESS != (rc = setup_key(ORTE_PROC_MY_NAME, "HWLOC"))) {
-                ORTE_ERROR_LOG(rc);
-                free(locale);
-                return rc;
-            }
-            /* encoding puts the encoded value in pmi_attr_val */
-            rc = kvs_put(pmi_kvs_key, pmi_attr_val);
-            if (PMI_SUCCESS != rc) {
-                ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
-                free(locale);
-                return ORTE_ERROR;
-            }
-            free(locale);
-        }
+    if (ORTE_SUCCESS != (rc = setup_key(ORTE_PROC_MY_NAME, "BIND_LEVEL"))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    snprintf(val, 64, "%u", (unsigned int)orte_process_info.bind_level);
+    rc = kvs_put(pmi_kvs_key, val);
+    if (PMI_SUCCESS != rc) {
+        ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
+        return ORTE_ERROR;
+    }
+    if (ORTE_SUCCESS != (rc = setup_key(ORTE_PROC_MY_NAME, "BIND_IDX"))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    snprintf(val, 64, "%u", orte_process_info.bind_idx);
+    rc = kvs_put(pmi_kvs_key, val);
+    if (PMI_SUCCESS != rc) {
+        ORTE_PMI_ERROR(rc, "PMI_KVS_Put");
+        return ORTE_ERROR;
     }
 #endif
 
@@ -527,10 +509,11 @@ static int modex(opal_list_t *procs)
                              (unsigned int)pmap->node_rank));
 #if OPAL_HAVE_HWLOC
         {
-            char *locale;
+            opal_hwloc_level_t bind_level;
+            unsigned int bind_idx;
 
             /* get the proc's locality info, if available */
-            if (ORTE_SUCCESS != (rc = setup_key(&name, "HWLOC"))) {
+            if (ORTE_SUCCESS != (rc = setup_key(&name, "BIND_LEVEL"))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -561,30 +544,28 @@ static int modex(opal_list_t *procs)
                                          ORTE_NAME_PRINT(&name)));
                     pmap->locality = OPAL_PROC_ON_NODE;
                 } else {
-                    /* we encoded to protect against pmi2 restrictions */
-                    locale = pmi_decode(&len);
-                    if (NULL == locale) {
-                        return ORTE_ERROR;
+                    bind_level = strtol(pmi_attr_val, NULL, 10);
+                    if (ORTE_SUCCESS != (rc = setup_key(&name, "BIND_IDX"))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
                     }
-                    /* convert the locale to a cpuset */
-                    if (NULL == orte_grpcomm_base.working_cpuset) {
-                        orte_grpcomm_base.working_cpuset = hwloc_bitmap_alloc();
+                    rc = kvs_get(pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
+                    if (PMI_SUCCESS != rc) {
+                        /* all we know is we share a node */
+                        pmap->locality = OPAL_PROC_ON_NODE;
+                    } else {
+                        bind_idx = strtol(pmi_attr_val, NULL, 10);
+                        /* determine relative location on our node */
+                        pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                               orte_process_info.bind_level,
+                                                                               orte_process_info.bind_idx,
+                                                                               bind_level, bind_idx);
+                        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                                             "%s grpcommpmi setting proc %s locale %s",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                             ORTE_NAME_PRINT(&name),
+                                             opal_hwloc_base_print_locality(pmap->locality)));
                     }
-                    if (0 != hwloc_bitmap_list_sscanf(orte_grpcomm_base.working_cpuset, locale)) {
-                        /* got a bad locale */
-                        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-                        free(locale);
-                        return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
-                    }
-                    free(locale);
-                    /* determine relative location on our node */
-                    pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                           opal_hwloc_my_cpuset,
-                                                                           orte_grpcomm_base.working_cpuset);
-                    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                         "%s grpcommpmi setting proc %s locale %04x",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&name), pmap->locality));
                 }
             }
         }

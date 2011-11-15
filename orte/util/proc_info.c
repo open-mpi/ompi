@@ -69,6 +69,10 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .sock_stdin =           */   NULL,
     /*  .sock_stdout =          */   NULL,
     /*  .sock_stderr =          */   NULL,
+#if OPAL_HAVE_HWLOC
+    /*  .bind_level =           */   OPAL_HWLOC_NODE_LEVEL,
+    /*  .bind_idx =             */   0,
+#endif
     /*  .job_name =             */   NULL,
     /*  .job_instance =         */   NULL,
     /*  .executable =           */   NULL,

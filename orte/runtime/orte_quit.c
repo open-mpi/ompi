@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -274,13 +274,13 @@ static void dump_aborted_procs(void)
                         break;
                     case ORTE_ERR_MULTIPLE_AFFINITIES:
                         orte_show_help("help-orterun.txt",
-                                       "orterun:multiple-paffinity-schemes", true, proc->slot_list);
+                                       "orterun:multiple-paffinity-schemes", true, NULL);
                         break;
                     case ORTE_ERR_TOPO_SLOT_LIST_NOT_SUPPORTED:
                         orte_show_help("help-orterun.txt",
                                        "orterun:topo-not-supported", 
                                        true, orte_process_info.nodename, "rankfile containing a slot_list of ", 
-                                       proc->slot_list, approc->app);
+                                       NULL, approc->app);
                         break;
                     case ORTE_ERR_INVALID_NODE_RANK:
                         orte_show_help("help-orterun.txt",
@@ -326,7 +326,7 @@ static void dump_aborted_procs(void)
                     case ORTE_ERR_SLOT_LIST_RANGE:
                         orte_show_help("help-orterun.txt",
                                        "orterun:invalid-slot-list-range", 
-                                       true, node->name, proc->slot_list);
+                                       true, node->name, NULL);
                         break;
                     case ORTE_ERR_PIPE_READ_FAILURE:
                         orte_show_help("help-orterun.txt", "orterun:pipe-read-failure", true,
