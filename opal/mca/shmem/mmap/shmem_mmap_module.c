@@ -42,6 +42,12 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif /* HAVE_NETDB_H */
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif /* HAVE_NETDB_H */
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif /* HAVE_SYS_STAT_H */
 
 #include "opal/constants.h"
 #include "opal/util/output.h"
@@ -115,7 +121,7 @@ shmem_ds_reset(opal_shmem_ds_t *ds_buf)
          "(opid: %lu id: %d, size:  %lu, name: %s)\n",
          mca_shmem_mmap_component.super.base_version.mca_type_name,
          mca_shmem_mmap_component.super.base_version.mca_component_name,
-         (unsigned long)ds_buf->opid, ds_buf->seg_id, 
+         (unsigned long)ds_buf->opid, ds_buf->seg_id,
          (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
     );
 
@@ -169,6 +175,64 @@ ds_copy(const opal_shmem_ds_t *from,
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
+static unsigned long
+sdbm_hash(const unsigned char *hash_key)
+{
+    unsigned long str_hash = 0;
+    int c;
+
+    /* hash using sdbm algorithm */
+    while ((c = *hash_key++)) {
+        str_hash = c + (str_hash << 6) + (str_hash << 16) - str_hash;
+    }
+    return str_hash;
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
+static bool
+path_usable(const char *path, int *stat_errno)
+{
+    struct stat buf;
+    int rc;
+
+    rc = stat(path, &buf);
+    *stat_errno = errno;
+    return (0 == rc);
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
+/* the file name is only guaranteed to be unique on the local host.  if there
+ * was a failure that left backing files behind, then no such guarantees can be
+ * made.  we use the pid + file_name hash + random number to help avoid issues.
+ *
+ * caller is responsible for freeing returned resources. the returned string
+ * will be OPAL_PATH_MAX long.
+ */
+static char *
+get_uniq_file_name(const char *base_path, const char *hash_key)
+{
+    char uniq_name_buf[OPAL_PATH_MAX];
+    unsigned long str_hash = 0;
+    pid_t my_pid;
+    int rand_num;
+
+    /* invalid argument */
+    if (NULL == hash_key) {
+        return NULL;
+    }
+
+    my_pid = getpid();
+    srand((unsigned int)(time(NULL) + my_pid));
+    rand_num = rand() % 1024;
+    str_hash = sdbm_hash((unsigned char *)hash_key);
+    /* build the name */
+    snprintf(uniq_name_buf, OPAL_PATH_MAX, "%s/open_mpi_shmem_mmap.%d_%lu_%d",
+             base_path, (int)my_pid, str_hash, rand_num);
+
+    return strdup(uniq_name_buf);
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
 static int
 segment_create(opal_shmem_ds_t *ds_buf,
                const char *file_name,
@@ -176,6 +240,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
 {
     int rc = OPAL_SUCCESS;
     char *tmp_fn = NULL;
+    char *real_file_name = NULL;
     pid_t my_pid = getpid();
     /* the real size of the shared memory segment.  this includes enough space
      * to store our segment header.
@@ -186,26 +251,64 @@ segment_create(opal_shmem_ds_t *ds_buf,
     /* init the contents of opal_shmem_ds_t */
     shmem_ds_reset(ds_buf);
 
+    /* change the path of shmem mmap's backing store? */
+    if (0 != relocate_backing_file) {
+        int err;
+        if (path_usable(backing_file_base_dir, &err)) {
+            if (NULL ==
+                (real_file_name = get_uniq_file_name(backing_file_base_dir,
+                                                     file_name))) {
+                /* out of resources */
+                return OPAL_ERROR;
+            }
+        }
+        /* a relocated backing store was requested, but the path specified
+         * cannot be used :-(. if the flag is negative, then warn and continue
+         * with the default path.  otherwise, fail.
+         */
+        else if (relocate_backing_file < 0) {
+            opal_output(0, "shmem: mmap: WARNING: could not relocate "
+                        "backing store to \"%s\" (%s).  Continuing with "
+                        "default path.\n", backing_file_base_dir,
+                        strerror(err));
+        }
+        /* must be positive, so fail */
+        else {
+            opal_output(0, "shmem: mmap: WARNING: could not relocate "
+                        "backing store to \"%s\" (%s).  Cannot continue with "
+                        "shmem mmap.\n", backing_file_base_dir, strerror(err));
+            return OPAL_ERROR;
+        }
+    }
+    /* are we using the default path? */
+    if (NULL == real_file_name) {
+        /* use the path specified by the caller of this function */
+        if (NULL == (real_file_name = strdup(file_name))) {
+            /* out of resources */
+            return OPAL_ERROR;
+        }
+    }
+
+    OPAL_OUTPUT_VERBOSE(
+        (70, opal_shmem_base_output,
+         "%s: %s: backing store base directory: %s\n",
+         mca_shmem_mmap_component.super.base_version.mca_type_name,
+         mca_shmem_mmap_component.super.base_version.mca_component_name,
+         real_file_name)
+    );
+
     /* determine whether the specified filename is on a network file system.
      * this is an important check because if the backing store is located on
      * a network filesystem, the user will see a shared memory performance hit.
-     *
-     * strduping file_name because opal_path_nfs doesn't take a const char *
      */
-    if (NULL == (tmp_fn = strdup(file_name))) {
-        /* out of resources */
-        return OPAL_ERROR;
-    }
-    else if (opal_path_nfs(tmp_fn)) {
+    if (opal_path_nfs(real_file_name)) {
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-mmap.txt", "mmap on nfs", 1, hn,
                        tmp_fn);
     }
-    free(tmp_fn);
-
-    if (-1 == (ds_buf->seg_id = open(file_name, O_CREAT | O_RDWR, 0600))) {
+    if (-1 == (ds_buf->seg_id = open(real_file_name, O_CREAT | O_RDWR, 0600))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
@@ -216,7 +319,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         goto out;
     }
     /* size backing file - note the use of real_size here */
-    else if (0 != ftruncate(ds_buf->seg_id, real_size)) {
+    if (0 != ftruncate(ds_buf->seg_id, real_size)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
@@ -226,10 +329,10 @@ segment_create(opal_shmem_ds_t *ds_buf,
         rc = OPAL_ERROR;
         goto out;
     }
-    else if (MAP_FAILED == (seg_hdrp = (opal_shmem_seg_hdr_t *)
-                                            mmap(NULL, real_size,
-                                            PROT_READ | PROT_WRITE, MAP_SHARED,
-                                            ds_buf->seg_id, 0))) {
+    if (MAP_FAILED == (seg_hdrp = (opal_shmem_seg_hdr_t *)
+                                  mmap(NULL, real_size,
+                                       PROT_READ | PROT_WRITE, MAP_SHARED,
+                                       ds_buf->seg_id, 0))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
@@ -256,7 +359,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         ds_buf->seg_cpid = my_pid;
         ds_buf->seg_size = real_size;
         ds_buf->seg_base_addr = (unsigned char *)seg_hdrp;
-        strncpy(ds_buf->seg_name, file_name, OPAL_PATH_MAX - 1);
+        strncpy(ds_buf->seg_name, real_file_name, OPAL_PATH_MAX - 1);
 
         /* set "valid" bit because setment creation was successful */
         OPAL_SHMEM_DS_SET_VALID(ds_buf);
@@ -267,7 +370,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
              "(opid: %lu id: %d, size: %lu, name: %s)\n",
              mca_shmem_mmap_component.super.base_version.mca_type_name,
              mca_shmem_mmap_component.super.base_version.mca_component_name,
-             (unsigned long)ds_buf->opid, ds_buf->seg_id, 
+             (unsigned long)ds_buf->opid, ds_buf->seg_id,
              (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
         );
     }
@@ -289,13 +392,16 @@ out:
             rc = OPAL_ERROR;
          }
      }
-
     /* an error occured, so invalidate the shmem object and munmap if needed */
     if (OPAL_SUCCESS != rc) {
         if (MAP_FAILED != seg_hdrp) {
             munmap((void *)seg_hdrp, real_size);
         }
         shmem_ds_reset(ds_buf);
+    }
+    /* safe to free now because its contents have already been copied */
+    if (NULL != real_file_name) {
+        free(real_file_name);
     }
     return rc;
 }
@@ -361,7 +467,7 @@ segment_attach(opal_shmem_ds_t *ds_buf)
          "(opid: %lu id: %d, size: %lu, name: %s)\n",
          mca_shmem_mmap_component.super.base_version.mca_type_name,
          mca_shmem_mmap_component.super.base_version.mca_component_name,
-         (unsigned long)ds_buf->opid, ds_buf->seg_id, 
+         (unsigned long)ds_buf->opid, ds_buf->seg_id,
          (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
     );
 
@@ -381,7 +487,7 @@ segment_detach(opal_shmem_ds_t *ds_buf)
          "(opid: %lu id: %d, size: %lu, name: %s)\n",
          mca_shmem_mmap_component.super.base_version.mca_type_name,
          mca_shmem_mmap_component.super.base_version.mca_component_name,
-         (unsigned long)ds_buf->opid, ds_buf->seg_id, 
+         (unsigned long)ds_buf->opid, ds_buf->seg_id,
          (unsigned long)ds_buf->seg_size, ds_buf->seg_name)
     );
 
@@ -411,7 +517,7 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
          "(opid: %lu id: %d, size: %lu, name: %s)\n",
          mca_shmem_mmap_component.super.base_version.mca_type_name,
          mca_shmem_mmap_component.super.base_version.mca_component_name,
-         (unsigned long)ds_buf->opid, ds_buf->seg_id, 
+         (unsigned long)ds_buf->opid, ds_buf->seg_id,
          (unsigned long)ds_buf->seg_size,
          ds_buf->seg_name)
     );

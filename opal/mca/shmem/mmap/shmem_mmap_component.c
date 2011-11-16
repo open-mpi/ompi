@@ -37,10 +37,14 @@
 const char *opal_shmem_mmap_component_version_string =
     "OPAL mmap shmem MCA component version " OPAL_VERSION;
 
+int relocate_backing_file = 0;
+char *backing_file_base_dir = NULL;
+
 /**
  * local functions
  */
 static int mmap_open(void);
+static int mmap_close(void);
 static int mmap_query(mca_base_module_t **module, int *priority);
 static int mmap_runtime_query(mca_base_module_t **module,
                               int *priority,
@@ -70,7 +74,7 @@ opal_shmem_mmap_component_t mca_shmem_mmap_component = {
             /* component open */
             mmap_open,
             /* component close */
-            NULL,
+            mmap_close,
             /* component query */
             mmap_query
         },
@@ -111,6 +115,25 @@ mmap_open(void)
         mca_shmem_mmap_component.priority, &mca_shmem_mmap_component.priority
     );
 
+    mca_base_param_reg_int(
+        &mca_shmem_mmap_component.super.base_version,
+        "relocate_backing_file",
+        "Whether to change the default placement of backing files or not "
+        "(Negative = try to relocate backing files to an area rooted at "
+        "the path specified by shmem_mmap_backing_file_base_dir, but continue "
+        "with the default path if the relocation fails, 0 = do not relocate, "
+        "Positive = same as the negative option, but will fail if the "
+        "relocation fails.", false, false, 0, &relocate_backing_file
+    );
+
+    mca_base_param_reg_string(
+        &mca_shmem_mmap_component.super.base_version,
+        "backing_file_base_dir",
+        "Specifies where backing files will be created when "
+        "shmem_mmap_relocate_backing_file is in use.", false, false, "/dev/shm",
+        &backing_file_base_dir
+    );
+
     return OPAL_SUCCESS;
 }
 
@@ -120,6 +143,16 @@ mmap_query(mca_base_module_t **module, int *priority)
 {
     *priority = mca_shmem_mmap_component.priority;
     *module = (mca_base_module_t *)&opal_shmem_mmap_module.super;
+    return OPAL_SUCCESS;
+}
+
+/* ////////////////////////////////////////////////////////////////////////// */
+static int
+mmap_close(void)
+{
+    if (NULL != backing_file_base_dir) {
+        free(backing_file_base_dir);
+    }
     return OPAL_SUCCESS;
 }
 
