@@ -136,8 +136,6 @@ cat <<End-of-File >$tmp.awk
     type="VT_MPI_COLL_ALL2ONE"
   else if ( lastparam[3] == "/*COLL_ALL2ALL*/" )
     type="VT_MPI_COLL_ALL2ALL"
-  else if ( lastparam[3] == "/*COLL_OTHER*/" )
-    type="VT_MPI_COLL_OTHER"
   else
     type="VT_MPI_FUNCTION"
 

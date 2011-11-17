@@ -22,6 +22,9 @@
 #ifdef VT_UNIFY_HOOKS_AEVENTS
 #  include "hooks/vt_unify_hooks_aevents.h"
 #endif // VT_UNIFY_HOOKS_AEVENTS
+#ifdef VT_UNIFY_HOOKS_MARGINS
+#  include "hooks/vt_unify_hooks_margins.h"
+#endif // VT_UNIFY_HOOKS_MARGINS
 #ifdef VT_UNIFY_HOOKS_MSGMATCH
 #  include "hooks/vt_unify_hooks_msgmatch.h"
 #endif // VT_UNIFY_HOOKS_MSGMATCH
@@ -31,6 +34,10 @@
 #ifdef VT_UNIFY_HOOKS_TDB
 #  include "hooks/vt_unify_hooks_tdb.h"
 #endif // VT_UNIFY_HOOKS_TDB
+#ifdef VT_UNIFY_HOOKS_THUMB
+#  include "hooks/vt_unify_hooks_thumb.h"
+#endif // VT_UNIFY_HOOKS_THUMB
+
 
 HooksC * theHooks = 0; // instance of class HooksC
 
@@ -70,6 +77,11 @@ HooksC::registerHooks()
       m_hooks.push_back( new HooksMsgMatchC() );
 #endif // VT_UNIFY_HOOKS_MSGMATCH
 
+#ifdef VT_UNIFY_HOOKS_THUMB
+   if( HooksThumbC::isEnabled() )
+      m_hooks.push_back( new HooksThumbC() );
+#endif // VT_UNIFY_HOOKS_THUMB
+
 #ifdef VT_UNIFY_HOOKS_PROF
    if( HooksProfC::isEnabled() )
       m_hooks.push_back( new HooksProfC() );
@@ -79,6 +91,11 @@ HooksC::registerHooks()
    if( HooksTdbC::isEnabled() )
       m_hooks.push_back( new HooksTdbC() );
 #endif // VT_UNIFY_HOOKS_TDB
+
+#ifdef VT_UNIFY_HOOKS_MARGINS
+   if( HooksProcessMarginsC::isEnabled() )
+      m_hooks.push_back( new HooksProcessMarginsC() );
+#endif // VT_UNIFY_HOOKS_MSGMATCH
 }
 
 void

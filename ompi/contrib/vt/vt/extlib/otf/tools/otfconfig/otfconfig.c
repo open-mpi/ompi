@@ -8,6 +8,9 @@
 #endif
 
 
+#include <stdio.h>
+#include <string.h>
+
 #include "OTF_inttypes.h"
 #include "OTF_Platform.h"
 #include "otf.h"
@@ -35,64 +38,93 @@ int main( int argc, char** argv ) {
 
 
 	int i;
-	char tmp[1024];
+	char includes[1024]= "";
+	char libs[1024]= "";
 
 
 	if( argc == 1 ) {
 
 		SHOW_HELPTEXT;
+		return 0;
 	}
-	
 
 	for( i= 1; i < argc; ++i ) {
 
-		if( 0 == strcmp( argv[i], "-h" ) || 0 == strcmp( argv[i], "--help" )) {
-		
+		if( 0 == strcmp( argv[i], "-h" ) ||
+		    0 == strcmp( argv[i], "--help" ) ) {
+
 			SHOW_HELPTEXT;
-			
+			return 0;
+
 		} else if ( 0 == strcmp( argv[i], "--version" ) ) {
 
-			printf( "%u.%u.%u %s\n", OTF_VERSION_MAJOR, OTF_VERSION_MINOR, OTF_VERSION_SUB, OTF_VERSION_STRING );
-		
+			printf( "%u.%u.%u %s\n",
+				OTF_VERSION_MAJOR, OTF_VERSION_MINOR,
+				OTF_VERSION_SUB, OTF_VERSION_STRING );
+			return 0;
+
 		} else if ( 0 == strcmp( argv[i], "--have-zlib" ) ) {
 
 #ifdef HAVE_ZLIB
-				printf( "yes\n" );
-#else
-				printf( "no\n" );
-#endif
+			printf( "yes\n" );
+#else /* HAVE_ZLIB */
+			printf( "no\n" );
+#endif /* HAVE_ZLIB */
+			return 0;
 
 		} else if ( 0 == strcmp( argv[i], "--includes" ) ) {
 
-			printf( "-I%s\n", OTFCONFIG_INCLUDEDIR );
-		
+			if ( !(*includes) ) {
+
+				strncpy( includes, "-I"OTFCONFIG_INCLUDEDIR,
+					 sizeof( includes) - 1 );
+			}
+
 		} else if ( 0 == strcmp( argv[i], "--libs" ) ) {
 
-#ifdef HAVE_ZLIB
-			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotfaux -lotf -lz\n",
-				OTFCONFIG_LIBDIR );
-#else /* HAVE_ZLIB */
-			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotfaux -lotf\n",
-				OTFCONFIG_LIBDIR );
-#endif /* HAVE_ZLIB */
+		        if ( !(*libs) ) {
 
-			printf( "%s", tmp );
+				strncpy( libs,
+					 "-L"OTFCONFIG_LIBDIR" -lotfaux -lotf",
+					 sizeof( libs ) - 1 );
+#ifdef HAVE_ZLIB
+				strncat( libs, " -lz",
+					 sizeof( libs ) - strlen( libs ) - 1 );
+#endif /* HAVE_ZLIB */
+			}
 
 		} else if ( 0 == strcmp( argv[i], "--sizes" ) ) {
 
 			/* print size of integer types */
-			printf( " sizeof(%s)= %llu\n", "  int8_t  ", (long long unsigned) sizeof(int8_t) );
-			printf( " sizeof(%s)= %llu\n", "  int16_t ", (long long unsigned) sizeof(int16_t) );
-			printf( " sizeof(%s)= %llu\n", "  int32_t ", (long long unsigned) sizeof(int32_t) );
-			printf( " sizeof(%s)= %llu\n", "  int64_t ", (long long unsigned) sizeof(int64_t) );
-			printf( " sizeof(%s)= %llu\n", " uint8_t  ", (long long unsigned) sizeof(uint8_t) );
-			printf( " sizeof(%s)= %llu\n", " uint16_t ", (long long unsigned) sizeof(uint16_t) );
-			printf( " sizeof(%s)= %llu\n", " uint32_t ", (long long unsigned) sizeof(uint32_t) );
-			printf( " sizeof(%s)= %llu\n", " uint64_t ", (long long unsigned) sizeof(uint64_t) );
+			printf( " sizeof(%s)= %llu\n", "  int8_t  ",
+				(long long unsigned) sizeof(int8_t) );
+			printf( " sizeof(%s)= %llu\n", "  int16_t ",
+				(long long unsigned) sizeof(int16_t) );
+			printf( " sizeof(%s)= %llu\n", "  int32_t ",
+				(long long unsigned) sizeof(int32_t) );
+			printf( " sizeof(%s)= %llu\n", "  int64_t ",
+				(long long unsigned) sizeof(int64_t) );
+			printf( " sizeof(%s)= %llu\n", " uint8_t  ",
+				(long long unsigned) sizeof(uint8_t) );
+			printf( " sizeof(%s)= %llu\n", " uint16_t ",
+				(long long unsigned) sizeof(uint16_t) );
+			printf( " sizeof(%s)= %llu\n", " uint32_t ",
+				(long long unsigned) sizeof(uint32_t) );
+			printf( " sizeof(%s)= %llu\n", " uint64_t ",
+				(long long unsigned) sizeof(uint64_t) );
 
+			return 0;
 		}
 	}
 
+	if ( *includes ) {
+
+		printf( "%s%c", includes, *libs ? ' ' : '\n' );
+	}
+	if ( *libs ) {
+
+		printf( "%s\n", libs );
+	}
 
 	return 0;
 }

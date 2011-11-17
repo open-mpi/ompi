@@ -9,5 +9,6 @@
  */
 
 #include <OTFAUX_MsgMatching.h>
+#include <OTFAUX_Thumbnail.h>
 
 #endif /* OTFAUX_H */

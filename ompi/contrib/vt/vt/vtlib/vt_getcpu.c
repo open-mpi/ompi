@@ -29,9 +29,9 @@ void vt_getcpu_init()
   vt_assert(vt_misc_cgid != 0);
 
   /* write counter definition */
-  vt_getcpu_cid = vt_def_counter(VT_CURRENT_THREAD, "CPU_ID",
+  vt_getcpu_cid = vt_def_counter(VT_CURRENT_THREAD, "CPU_ID", "#",
                                  VT_CNTR_ABS | VT_CNTR_NEXT,
-                                 vt_misc_cgid, "#");
+                                 vt_misc_cgid, 0);
 }
 
 void vt_getcpu_finalize()

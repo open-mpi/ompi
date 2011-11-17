@@ -20,6 +20,8 @@ uint8_t *vt_gpu_prop;
 /* gpu debugging flag is '0' by default */
 uint8_t vt_gpu_debug = 0;
 
+uint8_t vt_gpu_error = 0;
+
 static uint8_t finalized = 0;
 
 static void vt_gpu_createGroups(void);
@@ -41,7 +43,8 @@ void vt_gpu_init(void)
     vt_gpu_commCID = vt_get_curid();
     vt_gpu_groupCID = vt_get_curid();
 
-    vt_gpu_debug = vt_env_gputrace_debug();
+    vt_gpu_debug = (uint8_t)vt_env_gputrace_debug();
+    vt_gpu_error = (uint8_t)vt_env_gputrace_error();
 
     initflag = 1;
   }
@@ -88,30 +91,41 @@ static void vt_gpu_createGroups()
   if(ctrGPUComm > 0){
     uint32_t *gpu_comm_array = (uint32_t*)malloc(ctrGPUComm*sizeof(uint32_t));
     int j = 0;
+    
     for(i = 0; i < VTThrdn; i++){
       if((vt_gpu_prop[i] & VTGPU_GPU_COMM) == VTGPU_GPU_COMM){
-        gpu_comm_array[j++] = i;
+        gpu_comm_array[j++] = VT_PROCESS_ID(vt_my_trace, i);
       }
     }
-    vt_def_gpu_comm(ctrGPUComm, gpu_comm_array, 
-                    VT_UNIFY_STRID_GPU_COMM_PROCGRP, vt_gpu_commCID);
+    
+    vt_def_procgrp(VT_CURRENT_THREAD, "GPU_COMM_GLOBAL",
+                   VT_PROCGRP_ISCOMMUNICATOR, ctrGPUComm, gpu_comm_array,
+                   vt_gpu_commCID);
+    
+    free(gpu_comm_array);
   }
 
   /* create array of GPU threads and define group */
   if(ctrGPUGroup > 0){
     uint32_t *gpu_group_array = (uint32_t*)malloc(ctrGPUGroup*sizeof(uint32_t));
     int j = 0;
+    
     for(i = 0; i < VTThrdn; i++){
       if((vt_gpu_prop[i] & VTGPU_GPU) == VTGPU_GPU){
-        gpu_group_array[j++] = i;
+        gpu_group_array[j++] = VT_PROCESS_ID(vt_my_trace, i);
       }
     }
-    vt_def_gpu_comm(ctrGPUGroup, gpu_group_array, 
-                    VT_UNIFY_STRID_GPU_GROUP_PROCGRP, vt_gpu_groupCID);
+
+    vt_def_procgrp(VT_CURRENT_THREAD, "GPU_GROUP", 0, ctrGPUGroup,
+                   gpu_group_array, vt_gpu_groupCID);
+    
+    free(gpu_group_array);
   }
 }
 
-/* Uses VampirTrace Thread API to create a GPU thread
+/* 
+ * Uses VampirTrace Thread API to create a GPU thread.
+ * 
  * @param tname the name of the thread to be registered
  * @param the parent thread id
  * @param vt_tid pointer to the thread id of the thread to be registered
@@ -125,8 +139,35 @@ void vt_gpu_registerThread(const char* tname, uint32_t ptid, uint32_t *vt_tid)
   }
 
   /* create new thread object */
-  *vt_tid = VTThrd_createNewThreadId();
-  VTThrd_create(*vt_tid, ptid, tname, 1);
+  *vt_tid = VTThrd_create(tname, ptid, 1);
+  /* open thread associated trace file */
   VTThrd_open(*vt_tid);
+
   vt_cntl_msg(2, "[GPU] Created thread '%s' with id: %d", tname, *vt_tid);
 }
+
+/****************** common for CUDA driver API and CUPTI **********************/
+#if (defined(VT_CUDAWRAP) || defined(VT_CUPTI))
+
+/*
+ * Handles errors returned from CUDA driver API calls.
+ * 
+ * @param ecode the CUDA driver API error code
+ * @param msg a message to get more detailed information about the error
+ * @param the corresponding file
+ * @param the line the error occurred
+ */
+void vt_gpu_handleCuError(CUresult ecode, const char* msg,
+                          const char *file, const int line)
+{
+  if(msg != NULL) vt_cntl_msg(1, "[CUDA] %s", msg);
+  VT_CHECK_THREAD;
+  if(vt_gpu_error){
+    vt_error_msg("[CUDA Error %d in <%s>:%i] (ptid %d)", ecode, file, line, VT_MY_THREAD);
+  }else{
+    vt_warning("[CUDA Error %d in <%s>:%i] (ptid %d)", ecode, file, line, VT_MY_THREAD);
+  }
+}
+
+#endif
+/******************************************************************************/

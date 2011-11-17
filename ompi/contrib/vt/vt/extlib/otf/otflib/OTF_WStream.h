@@ -617,8 +617,9 @@ int OTF_WStream_writeDefKeyValue( OTF_WStream* wstream,	uint32_t key,
  * @see OTF_Writer_writeDefKeyValueKV()
  * \ingroup wstream 
  */
-int OTF_WStream_writeDefKeyValueKV( OTF_WStream* wstream, uint32_t key,	OTF_Type type,
-	const char* name, const char *description, OTF_KeyValueList* list );
+int OTF_WStream_writeDefKeyValueKV( OTF_WStream* wstream, uint32_t key,
+	OTF_Type type, const char* name, const char *description,
+	OTF_KeyValueList* list );
 
 
 /** Write a DEFTIMERANGE record including an OTF_KeyValueList to
@@ -626,21 +627,27 @@ int OTF_WStream_writeDefKeyValueKV( OTF_WStream* wstream, uint32_t key,	OTF_Type
  * @see OTF_Writer_writeDefTimeRange()
  * \ingroup wstream
  */
-int OTF_WStream_writeDefTimeRange( OTF_WStream*      wstream,
-                                   uint64_t          minTime,
-                                   uint64_t          maxTime,
-                                   OTF_KeyValueList* list );
+int OTF_WStream_writeDefTimeRange( OTF_WStream* wstream, uint64_t minTime,
+	uint64_t maxTime, OTF_KeyValueList* list );
 
 /** Write a DEFCOUNTERASSIGNMENTS record including an OTF_KeyValueList to
  *  stream 'wstream'.
  * @see OTF_Writer_writeDefCounterAssignments()
  * \ingroup wstream
  */
-int OTF_WStream_writeDefCounterAssignments( OTF_WStream*      wstream,
-                                            uint32_t          counter_token,
-                                            uint32_t          number_of_members,
-                                            const uint32_t*   procs_or_groups,
-                                            OTF_KeyValueList* list );
+int OTF_WStream_writeDefCounterAssignments( OTF_WStream* wstream,
+	uint32_t counter_token, uint32_t number_of_members,
+	const uint32_t* procs_or_groups, OTF_KeyValueList* list );
+
+/** Write a DEFPROCESSSUBTITUTES record including an OTF_KeyValueList to
+ *  stream 'wstream'.
+ * @see OTF_Writer_writeDefProcessSubsitutes()
+ * \ingroup wstream
+ */
+int OTF_WStream_writeDefProcessSubstitutes( OTF_WStream* wstream,
+	uint32_t representative, uint32_t numberOfProcs, const uint32_t* procs,
+	OTF_KeyValueList* list );
+
 
 /* *** event record write handlers *** ************************************* */
 

@@ -24,6 +24,7 @@
 EXTERN char*  vt_env_apppath(void);
 EXTERN char*  vt_env_dyn_shlibs(void);
 EXTERN int    vt_env_dyn_ignore_nodbg(void);
+EXTERN int    vt_env_dyn_detach(void);
 EXTERN char*  vt_env_gnu_nm(void);
 EXTERN char*  vt_env_gnu_nmfile(void);
 EXTERN char*  vt_env_gdir(void);
@@ -55,19 +56,21 @@ EXTERN int    vt_env_omptrace(void);
 EXTERN int    vt_env_mpitrace(void);
 EXTERN int    vt_env_mpicheck(void);
 EXTERN int    vt_env_mpicheck_errexit(void);
-EXTERN int    vt_env_max_mpi_comms(void);
-EXTERN int    vt_env_max_mpi_wins(void);
 EXTERN char*  vt_env_rusage(void);
 EXTERN int    vt_env_rusage_intv(void);
 EXTERN char*  vt_env_metrics(void);
 EXTERN char*  vt_env_metrics_sep(void);
 EXTERN char*  vt_env_metrics_spec(void);
 EXTERN int    vt_env_sync_flush(void);
+EXTERN int    vt_env_sync_flush_skip(void);
 EXTERN int    vt_env_sync_flush_level(void);
+EXTERN int    vt_env_onoff_check_stack_balance(void);
 EXTERN int    vt_env_max_stack_depth(void);
 EXTERN int    vt_env_max_flushes(void);
 EXTERN int    vt_env_max_threads(void);
 EXTERN int    vt_env_compression(void);
+EXTERN size_t vt_env_otf_bsize(void);
+EXTERN size_t vt_env_compression_bsize(void);
 EXTERN int    vt_env_java_native(void);
 EXTERN int    vt_env_java_synthetic(void);
 EXTERN int    vt_env_java_group_classes(void);
@@ -83,10 +86,11 @@ EXTERN int    vt_env_cudatrace_kernel(void);
 EXTERN int    vt_env_cudatrace_memcpyasync(void);
 EXTERN int    vt_env_cudatrace_sync(void);
 EXTERN int    vt_env_cudatrace_gpumem(void);
-EXTERN int    vt_env_cudatrace_error(void);
 EXTERN char*  vt_env_cupti_metrics(void);
 EXTERN int    vt_env_cupti_sampling(void);
+EXTERN int    vt_env_cupti_api_callback(void);
 EXTERN int    vt_env_gputrace_debug(void);
+EXTERN int    vt_env_gputrace_error(void);
 
 #endif /* _VT_ENV_H */
 

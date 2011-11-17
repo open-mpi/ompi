@@ -1,3 +1,43 @@
+1.10openmpi
+	- added process substitute record
+	- added process group attribute 'OTF_ATTR_IsCommunicator'
+	- renamed OTF_fprintf to OTF_Error which sets the error variables
+	  otf_errno and otf_strerr
+	- added OTF_Warning which prints warning messages if verbosity
+	  (--with-verbose) is enabled
+	- fixed detection of C compiler flags for compiling the python interface
+	- corrected return value of OTF_WStream_write* functions
+	- fixed parsing of process[group] attributes record
+	- otfmerge-mpi:
+		- build sequential version; replaces the old otfmerge
+	- otfprofile-mpi:
+		- added process clustering based on feature vectors from every
+		  process trace
+		  (see docu/tools/otfprofile_clustering.pdf for more details)
+		- added CSV output
+		- changeable number of process groups for LaTeX output
+		- build sequential version; replaces the old otfprofile
+		- fixed problem with pgfplots 1.5
+		- improved y axis labeling for message length charts
+	- otfshrink:
+		- added mapping mode where all but one members per group are
+		  removed with multiple groups
+		- reworked parameter parsing, <from>-<to> ranges no longer
+		  supported
+		- fixed creation of symbolic links when non-contiguous
+		  stream IDs are used
+		- disable 'parent' in a remaining process definition in case
+		  the parent is removed
+
+1.9.2sawfish
+	- otfprofile-mpi:
+		- ignore "backward-running" P2P-messages when calculating
+		  durations
+		- removed '0' in message length charts and added '1' as
+		  extra label
+		- added thousands separator for large integer numbers in
+		  latex output
+
 1.9.1sawfish
 	- improved zlib compression
 	- added progress display to otfprofile-mpi

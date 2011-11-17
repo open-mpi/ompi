@@ -137,6 +137,10 @@ the keywords identifying record types must follow some special rules:
 #define OTF_KEYWORD_S_DEFCOUNTERASSIGNMENTS		"CA"
 #define OTF_KEYWORD_F_DEFCOUNTERASSIGNMENTS		'C'
 
+#define OTF_KEYWORD_L_DEFPROCESSSUBSTITUTES 	"PROCESSSUBSTITUTES"
+#define OTF_KEYWORD_S_DEFPROCESSSUBSTITUTES 	"PS"
+#define OTF_KEYWORD_F_DEFPROCESSSUBSTITUTES 	'P'
+
 /* *** event record keywords *** */
 
 #define OTF_KEYWORD_L_NOOP 					"NOOP"

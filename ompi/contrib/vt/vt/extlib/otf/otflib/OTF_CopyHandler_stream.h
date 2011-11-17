@@ -81,18 +81,16 @@ int OTF_CopyHandler_stream_DefFileGroup( void* userData, uint32_t stream,
 int OTF_CopyHandler_stream_DefKeyValue( void* userData, uint32_t stream, uint32_t key,
 	OTF_Type type, const char* name, const char* description, OTF_KeyValueList* list );
 	
-int OTF_CopyHandler_stream_DefTimeRange( void*             userData,
-                                         uint32_t          stream,
-                                         uint64_t          minTime,
-                                         uint64_t          maxTime,
-                                         OTF_KeyValueList* list );
+int OTF_CopyHandler_stream_DefTimeRange( void* userData, uint32_t stream,
+	uint64_t minTime, uint64_t maxTime, OTF_KeyValueList* list );
 
-int OTF_CopyHandler_stream_DefCounterAssignments( void*             userData,
-                                                  uint32_t          stream,
-                                                  uint32_t          counter,
-                                                  uint32_t          number_of_members,
-                                                  const uint32_t*   procs_or_groups,
-                                                  OTF_KeyValueList* list );
+int OTF_CopyHandler_stream_DefCounterAssignments( void* userData, uint32_t stream,
+	uint32_t counter, uint32_t number_of_members, const uint32_t* procs_or_groups,
+	OTF_KeyValueList* list );
+
+int OTF_CopyHandler_stream_DefProcessSubstitutes( void* userData, uint32_t stream,
+	uint32_t representative, uint32_t numberOfProcs, const uint32_t* procs,
+	OTF_KeyValueList* list );
 
 int OTF_CopyHandler_stream_NoOp( void* userData, uint64_t time, uint32_t process,
 	OTF_KeyValueList* list );

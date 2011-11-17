@@ -49,11 +49,20 @@ typedef unsigned char* buffer_t;
  *-----------------------------------------------------------------------------
  */
 
+/* maximum number of threads */
+#define VT_MAX_THREADS \
+  1<<(VT_PROCESS_ID_BITNESS - VT_PROCESS_ID_SPLITTING)
+/* maximum string lengths */
 #define VT_MAX_COMMENT_LEN      4096
 #define VT_MAX_MARKER_LEN       4096
 #define VT_MAX_THREAD_NAME_LEN  100
-#define VT_MAX_THREADS \
-  1<<(VT_PROCESS_ID_BITNESS - VT_PROCESS_ID_SPLITTING)
+/* maximum number of certain MPI handles defined per process
+   (initial maximums; raised as needed) */
+#define VT_MAX_MPI_COMMS_INIT   100
+#define VT_MAX_MPI_GROUPS_INIT  100
+#define VT_MAX_MPI_WINS_INIT    100
+/* maximum number of regions to be instrumented by Dyninst */
+#define VT_MAX_DYNINST_REGIONS  100000
 
 /*
  *-----------------------------------------------------------------------------
@@ -147,7 +156,6 @@ typedef unsigned char* buffer_t;
 #define VT_MPI_COLL_ONE2ALL     10
 #define VT_MPI_COLL_ALL2ONE     11
 #define VT_MPI_COLL_ALL2ALL     12
-#define VT_MPI_COLL_OTHER       13
 
 #define VT_OMP_FUNCTION         14
 #define VT_OMP_PARALLEL         15
@@ -181,17 +189,27 @@ typedef unsigned char* buffer_t;
 
 /*
  *-----------------------------------------------------------------------------
- * MPI communicators
+ * MPI communicators/groups
  *-----------------------------------------------------------------------------
  */
 
 #define VT_MPI_COMM_WORLD        0
 #define VT_MPI_COMM_SELF         1
 #define VT_MPI_COMM_OTHER        2
+#define VT_MPI_GROUP             3
 
 /*
  *-----------------------------------------------------------------------------
- * Counter flags
+ * Process group attributes
+ *-----------------------------------------------------------------------------
+ */
+
+#define VT_PROCGRP_ISCOMMUNICATOR  1<<0
+#define VT_PROCGRP_HASCOUNTERS     1<<1
+
+/*
+ *-----------------------------------------------------------------------------
+ * Counter properties
  *-----------------------------------------------------------------------------
  */
 
@@ -272,13 +290,12 @@ typedef unsigned char* buffer_t;
 #define VT_UNIFY_STRID_USRCOM_RECV_COMMENT      "__USRCOM_R__"
 #define VT_UNIFY_STRID_ETIMESYNC_COMMENT        "__ETIMESYNC__"
 
+#define VT_UNIFY_STRID_ALL_PROCGRP              "__ALL__"
 #define VT_UNIFY_STRID_NODE_PROCGRP             "__NODE__"
 #define VT_UNIFY_STRID_MPI_COMM_WORLD_PROCGRP   "__MPI_COMM_WORLD__"
 #define VT_UNIFY_STRID_MPI_COMM_SELF_PROCGRP    "__MPI_COMM_SELF__"
 #define VT_UNIFY_STRID_MPI_COMM_OTHER_PROCGRP   "__MPI_COMM_OTHER__"
-#define VT_UNIFY_STRID_OMP_TEAM_PROCGRP         "__OMP_TEAM__"
-#define VT_UNIFY_STRID_GPU_COMM_PROCGRP         "__GPU_COMM__"
-#define VT_UNIFY_STRID_GPU_GROUP_PROCGRP        "__GPU_GROUP__"
+#define VT_UNIFY_STRID_MPI_GROUP_PROCGRP        "__MPI_GROUP__"
 #define VT_UNIFY_STRID_USER_COMM_PROCGRP        "__USER_COMM__"
 
 #define VT_UNIFY_STRID_ASYNC_SOURCE_KEY         "__ASYNC_SOURCE__"

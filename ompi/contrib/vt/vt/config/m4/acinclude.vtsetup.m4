@@ -33,7 +33,6 @@ AC_DEFUN([ACVT_SETUP],
 		AC_CHECK_PROG(JAVA, java, java)
 		AS_IF([test x"$JAVA" = x],
 		[
-			AC_MSG_RESULT([no])
 			AC_MSG_NOTICE([error: no java found; check path for JAVA package first...])
 			vtsetup_error="yes"
 		])

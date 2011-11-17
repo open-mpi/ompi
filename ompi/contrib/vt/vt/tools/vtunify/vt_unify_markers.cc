@@ -31,28 +31,22 @@ MarkersC * theMarkers = 0; // instance of class MarkersC
 
 MarkersC::MarkersC() : m_tkfacScope( 0 )
 {
-   assert( theTokenFactory );
-
    MASTER
    {
-      // create token factory scope for marker definitions
+      // create global token factory scope for marker definitions
       //
       m_tkfacScope =
          new TokenFactoryScopeC<DefRec_DefMarkerS>( &m_globDefs );
       assert( m_tkfacScope );
-      theTokenFactory->addScope( DEF_REC_TYPE__DefMarker, m_tkfacScope );
    }
 }
 
 MarkersC::~MarkersC()
 {
-   assert( theTokenFactory );
-
    MASTER
    {
-      // delete token factory scope of def. marker records
-      //
-      theTokenFactory->deleteScope( DEF_REC_TYPE__DefMarker );
+      // delete global token factory scope for marker definitions
+      delete m_tkfacScope;
    }
 }
 
@@ -118,8 +112,53 @@ MarkersC::cleanUp()
    char filename1[STRBUFSIZE];
    char filename2[STRBUFSIZE];
 
+   // remove local marker files, if necessary
+   //
+   if( Params.doclean )
+   {
+      int streams_num = (int)MyStreamIds.size();
+      int i;
+
+#if defined(HAVE_OMP) && HAVE_OMP
+#     pragma omp parallel for private(i, filename1)
+#endif // HAVE_OMP
+      for( i = 0; i < streams_num; i++ )
+      {
+         const uint32_t & streamid = MyStreamIds[i];
+
+         // try to remove file without compression suffix
+         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
+                          OTF_FILETYPE_MARKER, STRBUFSIZE, filename1 );
+         if( remove( filename1 ) == 0 )
+            PVPrint( 3, " Removed %s\n", filename1 );
+
+         // try to remove file with compression suffix
+         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
+                          OTF_FILETYPE_MARKER | OTF_FILECOMPRESSION_COMPRESSED,
+                          STRBUFSIZE, filename1 );
+         if( remove( filename1 ) == 0 )
+            PVPrint( 3, " Removed %s\n", filename1 );
+      }
+   }
+
    MASTER
    {
+      // remove previous created marker output file
+      //
+
+      // try to remove file without compression suffix
+      OTF_getFilename( Params.out_file_prefix.c_str(), 0,
+                       OTF_FILETYPE_MARKER, STRBUFSIZE, filename1 );
+      if( remove( filename1 ) == 0 )
+         VPrint( 3, " Removed %s\n", filename1 );
+
+      // try to remove file with compression suffix
+      OTF_getFilename( Params.out_file_prefix.c_str(), 0,
+                       OTF_FILETYPE_MARKER | OTF_FILECOMPRESSION_COMPRESSED,
+                       STRBUFSIZE, filename1 );
+      if( remove( filename1 ) == 0 )
+         VPrint( 3, " Removed %s\n", filename1 );
+
       // rename temporary marker output file
       //
 
@@ -143,42 +182,9 @@ MarkersC::cleanUp()
          VPrint( 3, " Renamed %s to %s\n", filename1, filename2 );
    }
 
-   // remove local marker files, if necessary
-   //
-   if( Params.doclean )
-   {
-      int streams_num = (int)MyStreamIds.size();
-      int i;
-
-#if defined(HAVE_OMP) && HAVE_OMP
-#     pragma omp parallel for private(i, filename1)
-#endif // HAVE_OMP
-      for( i = 0; i < streams_num; i++ )
-      {
-         const uint32_t & streamid = MyStreamIds[i];
-
-         bool removed = false;
-
-         // get file name without compression suffix
-         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
-            OTF_FILETYPE_MARKER, STRBUFSIZE, filename1 );
-
-         // try to remove file
-         if( !( removed = ( remove( filename1 ) == 0 ) ) )
-         {
-            // if failed, get file name with compression suffix
-            OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
-               OTF_FILETYPE_MARKER | OTF_FILECOMPRESSION_COMPRESSED,
-               STRBUFSIZE, filename1 );
-
-            // try to remove file again
-            removed = ( remove( filename1 ) == 0 );
-         }
-
-         if( removed )
-            PVPrint( 3, " Removed %s\n", filename1 );
-      }
-   }
+#ifdef VT_MPI
+   SyncError( &error );
+#endif // VT_MPI
 
    return !error;
 }
@@ -353,24 +359,31 @@ MarkersC::readLocal( const uint32_t & streamId,
       // first handler argument for ...
       //
 
+
+      // create record handler array
+      //
       OTF_HandlerArray * handler_array = OTF_HandlerArray_open();
       assert( handler_array );
 
+      // create first handler argument
+      FirstHandlerArg_MarkersS fha( locDefs, locSpots );
+
+      // set record handler and its first argument for ...
+      //
+
       // ... OTF_DEFMARKER_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefMarker,
+         (OTF_FunctionPointer*)HandleDefMarker,
          OTF_DEFMARKER_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFMARKER_RECORD );
+         &fha, OTF_DEFMARKER_RECORD );
 
       // ... OTF_MARKER_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_MarkerSpot,
+         (OTF_FunctionPointer*)HandleMarkerSpot,
          OTF_MARKER_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locSpots,
-         OTF_MARKER_RECORD );
+         &fha, OTF_MARKER_RECORD );
 
       // read local markers
       //

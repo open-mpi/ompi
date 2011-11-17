@@ -44,4 +44,6 @@
 # include "vt_wrap_pthread.h"
 #endif /* VTRACE_PTHREAD */
 
+#include <stdlib.h>
+
 #endif /* _VT_USER_H */

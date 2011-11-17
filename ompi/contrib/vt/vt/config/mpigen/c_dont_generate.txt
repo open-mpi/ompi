@@ -1,6 +1,8 @@
 # This file lists all calls, which should not be generated
 # automatically by mk_c_wrapper.sh 
 
+MPI_Address
+MPI_Get_address
 MPI_Pcontrol
 MPI_Wtick
 MPI_Wtime
@@ -38,6 +40,8 @@ MPI_Cart_sub
 MPI_Comm_create
 MPI_Comm_dup
 MPI_Comm_free
+MPI_Comm_group
+MPI_Comm_remote_group
 MPI_Comm_split
 MPI_Exscan
 MPI_Gather
@@ -97,6 +101,7 @@ MPI_Win_complete
 MPI_Win_create
 MPI_Win_fence
 MPI_Win_free
+MPI_Win_get_group
 MPI_Win_lock
 MPI_Win_post
 MPI_Win_start

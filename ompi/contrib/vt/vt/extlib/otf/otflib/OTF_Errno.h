@@ -32,19 +32,16 @@
 #define OTF_ERRNO_H
 
 
-#include <stdio.h>
-#include <stdarg.h>
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
 /** @cond Errno.h */
 
-/** the following line is ignored by doxygen */
+/** the following lines is ignored by doxygen */
 
-void OTF_fprintf( FILE* stream, const char* format, ... );
+void OTF_Error( const char* format, ... );
+void OTF_Warning( const char* format, ... );
 
 /** @endcond */
 

@@ -111,7 +111,7 @@ unsigned int VT_User_count_def__(const char* cname, const char* cunit, int ctype
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_LOCK_IDS();
 #endif
-  cid = vt_def_counter(VT_CURRENT_THREAD, cname, cprop, gid, cunit);
+  cid = vt_def_counter(VT_CURRENT_THREAD, cname, cunit, cprop, gid, 0);
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_UNLOCK_IDS();
 #endif

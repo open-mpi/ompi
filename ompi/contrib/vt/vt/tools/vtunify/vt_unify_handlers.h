@@ -19,158 +19,203 @@
 
 #include "otf.h"
 
+//
+// first handler argument structures for reading ...
+//
+
+// ... definitions
+struct FirstHandlerArg_DefsS
+{
+   FirstHandlerArg_DefsS( LargeVectorC<DefRec_BaseS*> & _loc_defs )
+      : loc_defs( _loc_defs ) {}
+
+   LargeVectorC<DefRec_BaseS*> & loc_defs;
+
+};
+
+// ... marker
+struct FirstHandlerArg_MarkersS
+{
+  FirstHandlerArg_MarkersS( LargeVectorC<DefRec_DefMarkerS*> & _loc_defs,
+     LargeVectorC<MarkersC::MarkerSpotS*> & _loc_spots )
+     : loc_defs( _loc_defs ), loc_spots( _loc_spots ) {}
+
+   LargeVectorC<DefRec_DefMarkerS*> & loc_defs;
+   LargeVectorC<MarkersC::MarkerSpotS*> & loc_spots;
+
+};
+
+// ... events
+struct FirstHandlerArg_EventsS
+{
+   FirstHandlerArg_EventsS( OTF_WStream *& _wstream )
+      : wstream( _wstream ) {}
+
+   OTF_WStream * wstream;
+
+};
+
+// ... statistics
+typedef FirstHandlerArg_EventsS FirstHandlerArg_StatsS;
+
 // key-value list "record handler"
 // translate local key tokens to global tokens
-void Handle_KeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs );
+void HandleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs );
 
 // definition record handlers
 //
 
-int Handle_DefComment( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefComment( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, const char * comment );
 
-int Handle_DefCreator( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefCreator( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, const char * creator );
 
-int Handle_DefTimerResolution( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefTimerResolution( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint64_t ticksPerSecond );
 
-int Handle_DefTimeRange( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefTimeRange( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint64_t minTime, uint64_t maxTime );
 
-int Handle_DefProcess( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefProcess( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, const char * name,
        uint32_t parent );
 
-int Handle_DefProcessGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefProcessGroup( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, const char * name,
        uint32_t n, uint32_t * array );
 
-int Handle_DefSclFile( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefProcessGroupAttributes( FirstHandlerArg_DefsS * fha,
+       uint32_t streamid, uint32_t group, uint32_t attributes );
+
+int HandleDefSclFile( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, const char * filename );
 
-int Handle_DefScl( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefScl( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, uint32_t sclfile,
        uint32_t sclline );
 
-int Handle_DefFileGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefFileGroup( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, const char * name );
 
-int Handle_DefFile( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefFile( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, const char * name,
        uint32_t group );
 
-int Handle_DefFunctionGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefFunctionGroup( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, const char * name );
 
-int Handle_DefFunction( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefFunction( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, const char * name, uint32_t group,
        uint32_t scltoken );
 
-int Handle_DefCollOp( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefCollOp( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t collOp, const char * name, uint32_t type );
 
-int Handle_DefCounterGroup( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefCounterGroup( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, const char * name );
 
-int Handle_DefCounter( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefCounter( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t deftoken, const char * name,
        uint32_t properties, uint32_t countergroup, const char * unit );
 
-int Handle_DefKeyValue( LargeVectorC<DefRec_BaseS*> * locDefs,
+int HandleDefCounterAssignments( FirstHandlerArg_DefsS * fha,
+       uint32_t streamid, uint32_t counter, uint32_t n, uint32_t * array );
+
+int HandleDefKeyValue( FirstHandlerArg_DefsS * fha,
        uint32_t streamid, uint32_t key, OTF_Type type, const char * name,
        const char * description );
 
 // marker record handlers
 //
 
-int Handle_DefMarker( LargeVectorC<DefRec_DefMarkerS*> * locDefs,
+int HandleDefMarker( FirstHandlerArg_MarkersS * fha,
        uint32_t streamid, uint32_t deftoken, const char * name, uint32_t type );
 
-int Handle_MarkerSpot( LargeVectorC<MarkersC::MarkerSpotS*> * locSpots,
+int HandleMarkerSpot( FirstHandlerArg_MarkersS * fha,
        uint64_t time, uint32_t proc, uint32_t marker, const char * text );
 
 // event record handlers
 //
 
-int Handle_EventComment( OTF_WStream * wstream,
+int HandleEventComment( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, const char * comment,
        OTF_KeyValueList * kvs );
 
-int Handle_Enter( OTF_WStream * wstream,
+int HandleEnter( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t func, uint32_t proc, uint32_t scl,
        OTF_KeyValueList * kvs );
 
-int Handle_Leave( OTF_WStream * wstream,
+int HandleLeave( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t func, uint32_t proc, uint32_t scl,
        OTF_KeyValueList * kvs );
 
-int Handle_Counter( OTF_WStream * wstream,
+int HandleCounter( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint32_t counter, uint64_t value,
        OTF_KeyValueList * kvs );
 
-int Handle_BeginFileOp( OTF_WStream * wstream,
+int HandleBeginFileOp( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint64_t matchid, uint32_t scl,
        OTF_KeyValueList * kvs );
 
-int Handle_EndFileOp( OTF_WStream * wstream,
+int HandleEndFileOp( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint32_t file, uint64_t matchid,
        uint64_t handleid, uint32_t operation, uint64_t bytes, uint32_t scl,
        OTF_KeyValueList * kvs );
 
-int Handle_SendMsg( OTF_WStream * wstream,
+int HandleSendMsg( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t sender, uint32_t receiver, uint32_t comm,
        uint32_t tag, uint32_t length, uint32_t scl, OTF_KeyValueList * kvs );
 
-int Handle_RecvMsg( OTF_WStream * wstream,
+int HandleRecvMsg( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t receiver, uint32_t sender, uint32_t comm,
        uint32_t tag, uint32_t length, uint32_t scl, OTF_KeyValueList * kvs );
 
-int Handle_BeginCollOp( OTF_WStream * wstream,
+int HandleBeginCollOp( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint32_t operation, uint64_t matchid,
        uint32_t comm, uint32_t root, uint64_t sent, uint64_t recvd,
        uint32_t scl, OTF_KeyValueList * kvs );
 
-int Handle_EndCollOp( OTF_WStream * wstream,
+int HandleEndCollOp( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint64_t matchid, OTF_KeyValueList * kvs );
 
-int Handle_RMAPut( OTF_WStream * wstream,
+int HandleRMAPut( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint32_t origin, uint32_t dest,
        uint32_t comm, uint32_t tag, uint64_t bytes, uint32_t scl,
        OTF_KeyValueList * kvs );
 
-int Handle_RMAPutRemoteEnd( OTF_WStream * wstream,
+int HandleRMAPutRemoteEnd( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint32_t origin, uint32_t dest,
        uint32_t comm, uint32_t tag, uint64_t bytes, uint32_t scl,
        OTF_KeyValueList * kvs );
 
-int Handle_RMAGet( OTF_WStream * wstream,
+int HandleRMAGet( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint32_t origin, uint32_t dest,
        uint32_t comm, uint32_t tag, uint64_t bytes, uint32_t scl,
        OTF_KeyValueList * kvs );
 
-int Handle_RMAEnd( OTF_WStream * wstream,
+int HandleRMAEnd( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint32_t remote, uint32_t comm,
        uint32_t tag, uint32_t scl, OTF_KeyValueList * kvs );
 
 // summary record handlers
 //
 
-int Handle_FunctionSummary( OTF_WStream * wstream,
+int HandleFunctionSummary( FirstHandlerArg_StatsS * fha,
        uint64_t time, uint32_t func, uint32_t proc, uint64_t invocations,
        uint64_t exclTime, uint64_t inclTime );
 
-int Handle_MessageSummary( OTF_WStream * wstream,
+int HandleMessageSummary( FirstHandlerArg_StatsS * fha,
        uint64_t time, uint32_t proc, uint32_t peer, uint32_t comm,
        uint32_t type, uint64_t sentNum, uint64_t recvNum,
        uint64_t sentBytes, uint64_t recvBytes );
 
-int Handle_CollOpSummary( OTF_WStream * wstream,
+int HandleCollOpSummary( FirstHandlerArg_StatsS * fha,
        uint64_t time, uint32_t proc, uint32_t comm, uint32_t collop,
        uint64_t sentNum, uint64_t recvNum, uint64_t sentBytes,
        uint64_t recvBytes );
 
-int Handle_FileOpSummary( OTF_WStream * wstream,
+int HandleFileOpSummary( FirstHandlerArg_StatsS * fha,
        uint64_t time, uint32_t file, uint32_t proc, uint64_t nopen,
        uint64_t nclose, uint64_t nread, uint64_t nwrite, uint64_t nseek,
        uint64_t bytesRead, uint64_t bytesWrite );

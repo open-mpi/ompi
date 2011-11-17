@@ -1374,75 +1374,6 @@ cudaError_t  cudaHostUnregister(void *ptr)
   return ret;
 }
 
-/* -- cuda_runtime_api.h:cudaMemcpy3DPeer -- */
-cudaError_t  cudaMemcpy3DPeer(const struct cudaMemcpy3DPeerParms *p)
-{
-  cudaError_t  ret;
-
-  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaMemcpy3DPeer",
-    cudaError_t , (const struct cudaMemcpy3DPeerParms *), NULL, 0);
-
-  CUDARTWRAP_FUNC_START(vt_cudart_lw);
-
-  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (p));
-
-  CUDARTWRAP_FUNC_END(vt_cudart_lw);
-
-  return ret;
-}
-
-/* -- cuda_runtime_api.h:cudaMemcpy3DPeerAsync -- */
-cudaError_t  cudaMemcpy3DPeerAsync(const struct cudaMemcpy3DPeerParms *p, cudaStream_t stream)
-{
-  cudaError_t  ret;
-
-  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaMemcpy3DPeerAsync",
-    cudaError_t , (const struct cudaMemcpy3DPeerParms *, cudaStream_t ), NULL, 0);
-
-  CUDARTWRAP_FUNC_START(vt_cudart_lw);
-
-  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (p, stream));
-
-  CUDARTWRAP_FUNC_END(vt_cudart_lw);
-
-  return ret;
-}
-
-/* -- cuda_runtime_api.h:cudaMemcpyPeer -- */
-cudaError_t  cudaMemcpyPeer(void *dst, int dstDevice, const void *src, int srcDevice, size_t count)
-{
-  cudaError_t  ret;
-
-  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaMemcpyPeer",
-    cudaError_t , (void *, int , const void *, int , size_t ), NULL, 0);
-
-  CUDARTWRAP_FUNC_START(vt_cudart_lw);
-
-  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (dst, dstDevice, src, srcDevice, count));
-
-  CUDARTWRAP_FUNC_END(vt_cudart_lw);
-
-  return ret;
-}
-
-/* -- cuda_runtime_api.h:cudaMemcpyPeerAsync -- */
-cudaError_t  cudaMemcpyPeerAsync(void *dst, int dstDevice, const void *src, int srcDevice, size_t count, cudaStream_t stream)
-{
-  cudaError_t  ret;
-
-  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaMemcpyPeerAsync",
-    cudaError_t , (void *, int , const void *, int , size_t , cudaStream_t ),
-    NULL, 0);
-
-  CUDARTWRAP_FUNC_START(vt_cudart_lw);
-
-  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (dst, dstDevice, src, srcDevice, count, stream));
-
-  CUDARTWRAP_FUNC_END(vt_cudart_lw);
-
-  return ret;
-}
-
 /* -- cuda_runtime_api.h:cudaPointerGetAttributes -- */
 cudaError_t  cudaPointerGetAttributes(struct cudaPointerAttributes *attributes, void *ptr)
 {
@@ -1510,5 +1441,56 @@ cudaError_t  cudaDeviceDisablePeerAccess(int peerDevice)
 
   return ret;
 }
+
+/* -- cuda_runtime_api.h:cudaPeerRegister -- 
+cudaError_t  cudaPeerRegister(void *peerDevicePointer, int peerDevice, unsigned int flags)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaPeerRegister",
+    cudaError_t , (void *, int , unsigned int ), NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (peerDevicePointer, peerDevice, flags));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}*/
+
+/* -- cuda_runtime_api.h:cudaPeerUnregister -- 
+cudaError_t  cudaPeerUnregister(void *peerDevicePointer, int peerDevice)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaPeerUnregister",
+    cudaError_t , (void *, int ), NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (peerDevicePointer, peerDevice));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}*/
+
+/* -- cuda_runtime_api.h:cudaPeerGetDevicePointer -- 
+cudaError_t  cudaPeerGetDevicePointer(void **pDevice, void *peerDevicePointer, int peerDevice, unsigned int flags)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaPeerGetDevicePointer",
+    cudaError_t , (void **, void *, int , unsigned int ), NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (pDevice, peerDevicePointer, peerDevice, flags));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}*/
 
 #endif /* CUDA 4.0 */

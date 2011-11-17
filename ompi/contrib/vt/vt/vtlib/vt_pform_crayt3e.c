@@ -78,7 +78,7 @@ uint64_t vt_pform_clockres() {
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_clckrt();
 #elif TIMER == TIMER_PAPI_REAL_USEC
-  return 1e6;
+  return 1000000LL;
 #endif
 }
 

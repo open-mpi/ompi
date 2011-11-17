@@ -18,6 +18,8 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -28,34 +30,6 @@
 #include "BPatch_snippet.h"
 #include "BPatch_statement.h"
 
-// macros
-// (TODO: replace by inline functions)
-//
-
-// macro to print verbose message
-#define VPRINT(level, text) \
-   if( Params.verbose_level >= level ) \
-      std::cout << ExeName << ": [" << ExePid << "]: " << text << std::endl;
-
-// macro to remove newline character from string
-#define CHOMP(str) { \
-  if( str[strlen(str)-1] == '\n' ) \
-    str[strlen(str)-1] = '\0'; }
-
-// macro to strip whitespace from string
-#define TRIM(str) { \
-  int _trim_start_idx_ = 0; \
-  int _trim_stop_idx_ = strlen( str ); \
-  int i, j; \
-  if( strlen( str ) > 0 ) { \
-    for( i = 0; i < (int)strlen( str ) \
-         && str[i] == ' '; i++ ) _trim_start_idx_++; \
-    for( i = (int)strlen( str ) - 1; i >= 0 \
-         && str[i] == ' '; i-- ) _trim_stop_idx_--; \
-    for( j = 0, i = _trim_start_idx_; i < _trim_stop_idx_; i++, j++ ) \
-      str[j] = str[i]; \
-    str[j] = '\0'; } }
-
 // local functions
 //
 
@@ -64,6 +38,9 @@ static bool parseCommandLine( int argc, char ** argv );
 
 // show usage text
 static void showUsage( void );
+
+// print verbose message
+static void vPrint( uint8_t level, const char * fmt, ... );
 
 // global variables
 //
@@ -221,9 +198,11 @@ parseCommandLine( int argc, char ** argv )
       {
          Params.ignore_no_dbg = true;
       }
+
+      // hidden options - only for using within the VampirTrace library
+      //
+
       // -p, --pid
-      // NOTE: these options are hidden - only for using within the VampirTrace
-      //       library to attach the mutator to a running process
       //
       else if( strcmp( argv[i], "-p" ) == 0
                || strcmp( argv[i], "--pid" ) == 0 )
@@ -239,6 +218,13 @@ parseCommandLine( int argc, char ** argv )
          Params.mutatee_pid = atoi( argv[++i] );
          Params.mode = MODE_ATTACH;
       }
+      // --nodetach
+      //
+      else if( strcmp( argv[i], "--nodetach" ) == 0 )
+      {
+          Params.detach = false;
+      }
+
       // <executable> [arguments ...]
       //
       else
@@ -277,6 +263,7 @@ showUsage()
       << "                         (can be used more than once)" << std::endl
       << std::endl
       << "     -q, --quiet         Enable quiet mode." << std::endl
+      << "                         (only emergency output)" << std::endl
       << std::endl
       << "     -o, --output FILE   Rewrite instrumented executable to specified pathname." << std::endl
       << std::endl
@@ -289,6 +276,26 @@ showUsage()
       << "     --ignore-nodbg      Don't instrument functions which have no debug" << std::endl
       << "                         information." << std::endl
       << std::endl;
+}
+
+static void
+vPrint( uint8_t level, const char * fmt, ... )
+{
+   va_list ap;
+
+   if( Params.verbose_level >= level )
+   {
+      va_start( ap, fmt );
+
+      char msg[1024] = "";
+
+      snprintf( msg, sizeof( msg ) - 1, "%s: [%d]: ", ExeName.c_str(), ExePid );
+      vsnprintf( msg + strlen( msg ), sizeof( msg ) - 1, fmt, ap );
+
+      printf( "%s", msg );
+
+      va_end( ap );
+   }
 }
 
 //////////////////// class MutatorC ////////////////////
@@ -330,10 +337,31 @@ MutatorC::run()
       // instrument functions
       //
 
-      VPRINT( 1, "Instrumenting functions" );
+      vPrint( 1, "Instrumenting functions\n" );
 
-      for( uint32_t i = 0; i < inst_funcs.size() && !error; i++ )
-         error = !instrumentFunction( inst_funcs[i] );
+      for( uint32_t i = 0; i < inst_funcs.size(); i++ )
+      {
+         // begin insertion set
+         m_appAddrSpace->beginInsertionSet();
+
+         // instrument function entry points
+         if( ( error = !instrumentFunctionEntry( inst_funcs[i] ) ) )
+            break;
+         // instrument function exit points
+         if( ( error = !instrumentFunctionExit( inst_funcs[i] ) ) )
+            break;
+
+         // finalize insertion set
+         //
+         if( !error && !m_appAddrSpace->finalizeInsertionSet( true, 0 ) )
+         {
+            std::cerr << ExeName << ": [" << ExePid << "]: "
+                      << "Error: Could not finalize instrumentation set for "
+                      << "function '" << inst_funcs[i].name << "'. Aborting."
+                      << std::endl;
+            error = true;
+         }
+      }
       inst_funcs.clear();
 
    } while( false );
@@ -354,19 +382,37 @@ MutatorC::initialize()
 
    do
    {
+      // set recommended optimizations to reduce runtime overhead
+      //
+
+      // turn on inlined trampolines
+      m_bpatch.setMergeTramp( true );
+
+      // turn on trampoline recursion because there is no way for the snippets
+      // to call themselves
+      m_bpatch.setTrampRecursive( true );
+
+      // turn off stack frames in instrumentation
+      m_bpatch.setInstrStackFrames( false );
+
+      // turn on floating point saves due to the instrumentation does clobber
+      // floating point registers
+      //
+
+      m_bpatch.setSaveFPR( true );
+#ifdef DYNINST_7_0
+      m_bpatch.forceSaveFPR( true );
+#endif // DYNINST_7_0
+
       // read input filter file
       if( ( error = !readFilter() ) )
          break;
-
-      // turn on trampoline recursion because there is no way for the snippets
-      // to call themselves; reduces runtime overhead
-      m_bpatch.setTrampRecursive( true );
 
       switch( Params.mode )
       {
          case MODE_CREATE:
          {
-            VPRINT( 1, "Creating process" );
+            vPrint( 1, "Creating process\n" );
 
             assert( Params.mutatee.length() > 0 );
 
@@ -412,9 +458,9 @@ MutatorC::initialize()
          }
          case MODE_ATTACH:
          {
-            VPRINT( 1, "Attaching to PID " << Params.mutatee_pid );
-
             assert( Params.mutatee_pid );
+
+            vPrint( 1, "Attaching to PID %d\n", Params.mutatee_pid );
 
             // attach to running process
             m_appAddrSpace =
@@ -445,9 +491,9 @@ MutatorC::initialize()
          }
          case MODE_REWRITE:
          {
-            VPRINT( 1, "Opening " << Params.mutatee );
-
             assert( Params.mutatee.length() > 0 );
+
+            vPrint( 1, "Opening %s\n", Params.mutatee.c_str() );
 
             // open binary for rewriting
             m_appAddrSpace =
@@ -514,12 +560,12 @@ MutatorC::finalize( bool & error )
          //
          if( !error )
          {
-            VPRINT( 1, "Executing application" );
+            vPrint( 1, "Continuing process execution\n" );
 
             if( !app_process->isStopped() || app_process->isTerminated() )
             {
                std::cerr << ExeName << ": [" << ExePid << "]: "
-                         << "Error: Could not continue execution of process. "
+                         << "Error: Could not continue process execution. "
                          << "Aborting." << std::endl;
                error = true;
             }
@@ -530,18 +576,27 @@ MutatorC::finalize( bool & error )
                if( Params.mutatee_pid != -1 )
                   kill( Params.mutatee_pid, SIGUSR1 );
 
-               // continue execution
-               app_process->continueExecution();
-
-               // wait until mutatee is terminated
-               //
-               while( !app_process->isTerminated() )
+               if( Params.mode == MODE_CREATE || !Params.detach )
                {
-                  m_bpatch.waitForStatusChange();
-                  sleep(1);
-               }
+                  // continue execution of mutatee
+                  app_process->continueExecution();
 
-               VPRINT( 1, "End of application" );
+                  // wait until mutatee is terminated
+                  //
+                  while( !app_process->isTerminated() )
+                  {
+                     m_bpatch.waitForStatusChange();
+                     sleep(1);
+                  }
+
+                  vPrint( 1, "End of process\n" );
+                  vPrint( 1, "Done\n" );
+               }
+               else // Params.mode == MODE_ATTACH && Params.detach
+               {
+                  // continue execution of mutatee and detach from its process
+                  app_process->detach( true );
+               }
             }
          }
          // ... or terminate execution on error
@@ -558,7 +613,7 @@ MutatorC::finalize( bool & error )
       {
          if( !error )
          {
-            VPRINT( 1, "Writing " << Params.outfile );
+            vPrint( 1, "Writing %s\n", Params.outfile.c_str() );
 
             BPatch_binaryEdit * app_editor =
                dynamic_cast<BPatch_binaryEdit*>(m_appAddrSpace);
@@ -572,6 +627,10 @@ MutatorC::finalize( bool & error )
                          << ". Aborting." << std::endl;
                error = true;
             }
+            else
+            {
+               vPrint( 1, "Done\n" );
+            }
          }
 
          break;
@@ -582,9 +641,6 @@ MutatorC::finalize( bool & error )
    if( m_filter )
       RFG_Filter_free( m_filter );
 
-   if( !error )
-      VPRINT( 1, "Done" );
-
    return !error;
 }
 
@@ -593,15 +649,13 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
 {
    bool error = false;
 
-   VPRINT( 1, "Get instrumentable functions" );
+   vPrint( 1, "Get instrumentable functions\n" );
 
    do
    {
       // get list of modules from image
       //
-
-      BPatch_Vector<BPatch_module*> * modules = m_appImage->getModules();
-
+      const BPatch_Vector<BPatch_module*> * modules = m_appImage->getModules();
       if( !modules )
       {
          std::cerr << ExeName << ": [" << ExePid << "]: "
@@ -612,24 +666,29 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
       }
 
       // iterate over all modules
-      for( uint32_t i = 0; i < modules->size(); i++ )
+      for( uint32_t i = 0; i < modules->size() && !error; i++ )
       {
+         // get module name
+         //
+
          std::string module_name;
          char buffer[STRBUFSIZE] = "";
 
          (*modules)[i]->getName( buffer, STRBUFSIZE );
          module_name = buffer;
 
+         // check whether module should be instrumented
+         //
          if( constraintModule( module_name ) )
          {
-            VPRINT( 2, " Skip module '" << module_name << "'" );
+            vPrint( 2, " Skip module '%s'\n", module_name.c_str() );
             continue;
          }
 
          // get functions of module
          //
 
-         BPatch_Vector<BPatch_function*> * functions =
+         const BPatch_Vector<BPatch_function*> * functions =
             (*modules)[i]->getProcedures();
 
          if( !functions )
@@ -644,21 +703,52 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
          // iterate over all functions
          for( uint32_t j = 0; j < functions->size(); j++ )
          {
+            // get function name
+            //
+
             std::string function_name;
 
             (*functions)[j]->getName( buffer, STRBUFSIZE );
             function_name = buffer;
 
+            // check whether function is instrumentable
+            //
             if( !(*functions)[j]->isInstrumentable() )
             {
-               VPRINT( 2, " Skip function '" << function_name <<
-                          "' (not instrumentable)" );
+               vPrint( 2, " Skip function '%s' (not instrumentable)\n",
+                       function_name.c_str() );
                continue;
             }
 
+            // get function entry points
+            //
+            const BPatch_Vector<BPatch_point*>* entry_points =
+               (*functions)[j]->findPoint( BPatch_entry );
+            if( !entry_points || entry_points->size() == 0 )
+            {
+               vPrint( 2, " Skip function '%s' "
+                          "(no entry instrumentation points found)\n",
+                       function_name.c_str() );
+               continue;
+            }
+
+            // get function exit points
+            //
+            const BPatch_Vector<BPatch_point*>* exit_points =
+               (*functions)[j]->findPoint( BPatch_exit );
+            if( !exit_points || exit_points->size() == 0 )
+            {
+               vPrint( 2, " Skip function '%s' "
+                          "(no exit instrumentation points found)\n",
+                       function_name.c_str() );
+               continue;
+            }
+
+            // check whether function should be instrumented
+            //
             if( constraintFunction( function_name ) )
             {
-               VPRINT( 2, " Skip function '" << function_name << "'" );
+               vPrint( 2, " Skip function '%s'\n", function_name.c_str() );
                continue;
             }
 
@@ -683,7 +773,7 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
             {
                if( constraintModule( file_name ) )
                {
-                  VPRINT( 2, " Skip function '" << function_name << "'" );
+                  vPrint( 2, " Skip function '%s'\n", function_name.c_str() );
                   continue;
                }
             }
@@ -691,8 +781,8 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
             {
                if( Params.ignore_no_dbg )
                {
-                  VPRINT( 2, " Skip function '" << function_name <<
-                             "' (no debug)" );
+                  vPrint( 2, " Skip function '%s' (no debug information)\n",
+                          function_name.c_str() );
                   continue;
                }
 
@@ -700,35 +790,50 @@ MutatorC::getFunctions( std::vector<InstFuncS> & instFuncs )
                line_number = 0;
             }
 
-            VPRINT( 2, " Add function '" << function_name <<
-                       "' for instrumenting" );
+            vPrint( 2, " Add function '%s' for instrumenting\n",
+                    function_name.c_str() );
+
+            // get function index
+            //
+            uint32_t function_index = instFuncs.size();
+            if( function_index + 1 > VT_MAX_DYNINST_REGIONS )
+            {
+               std::cerr << ExeName << ": [" << ExePid << "]: "
+                         << "Error: Too many functions to instrument (max. "
+                         << VT_MAX_DYNINST_REGIONS << "). Aborting."
+                         << std::endl;
+               error = true;
+               break;
+            }
 
             // add function for instrumenting
             instFuncs.push_back(
-               InstFuncS( (*functions)[j], addr, function_name,
-                  file_name, line_number ) );
+               InstFuncS( function_index, function_name, file_name,
+                          line_number, entry_points, exit_points ) );
          }
       }
 
    } while( false );
 
-   return true;
+   return !error;
 }
 
 bool
-MutatorC::instrumentFunction( const InstFuncS & instFunc )
+MutatorC::instrumentFunctionEntry( const InstFuncS & instFunc )
 {
    bool error = false;
+
+   vPrint( 2, " Instrumenting-> '%s' Entry\n", instFunc.name.c_str() );
 
    // set callee arguments
    //
 
    static BPatch_Vector<BPatch_snippet*> callee_args( 4 );
 
-   // function address
+   // function index
    //
-   BPatch_constExpr const_expr_faddr( instFunc.addr );
-   callee_args[0] = &const_expr_faddr;
+   BPatch_constExpr const_expr_findex( instFunc.index );
+   callee_args[0] = &const_expr_findex;
 
    // function name
    //
@@ -745,54 +850,55 @@ MutatorC::instrumentFunction( const InstFuncS & instFunc )
    BPatch_constExpr const_expr_lno( instFunc.lno );
    callee_args[3] = &const_expr_lno;
 
-   // create instrumentation snippets
+   // create instrumentation snippet
+   BPatch_snippet snippet = BPatch_funcCallExpr( *m_vtStartFunc, callee_args );
+
+   // insert instrumentation snippet
    //
-
-   static BPatch_snippet snippets[2];
-
-   snippets[0] = BPatch_funcCallExpr( *m_vtStartFunc, callee_args );
-   snippets[1] = BPatch_funcCallExpr( *m_vtEndFunc, callee_args );
-
-   // insert instrumentation snippets
-   //
-
-   m_appAddrSpace->beginInsertionSet();
-
-   for( uint32_t i = 0; i < 2; i++ )
+   if( !m_appAddrSpace->insertSnippet( snippet, *(instFunc.entry_points),
+          BPatch_callBefore, BPatch_lastSnippet ) )
    {
-      const BPatch_snippet & snippet = snippets[i];
-
-      // search point for insertion
-      //
-
-      const BPatch_Vector<BPatch_point*> * points =
-         instFunc.func->findPoint( (i == 0) ? BPatch_entry : BPatch_exit );
-
-      if( points == 0 )
-      {
-         std::cerr << ExeName << ": [" << ExePid << "]: "
-                   << "Error: Unable to find insert point for callee. "
-                   << "Aborting." << std::endl;
-         error = true;
-         break;
-      }
-
-      // insert snippets
-      //
-      if( i == 0 )
-      {
-         VPRINT( 2, " Instrumenting-> '" << instFunc.name << "' Entry" );
-         m_appAddrSpace->insertSnippet( snippet, *points,
-            BPatch_callBefore, BPatch_lastSnippet );
-      }
-      else // i == 1
-      {
-         VPRINT( 2, " Instrumenting-> '" << instFunc.name << "' Exit" );
-         m_appAddrSpace->insertSnippet( snippet, *points );
-      }
+      std::cerr << ExeName << ": [" << ExePid << "]: "
+                << "Error: Could not instrument entry points of "
+                << "function '" << instFunc.name << "'. Aborting."
+                << std::endl;
+      error = true;
    }
 
-   m_appAddrSpace->finalizeInsertionSet( true, 0 );
+   return !error;
+}
+
+bool
+MutatorC::instrumentFunctionExit( const InstFuncS & instFunc )
+{
+   bool error = false;
+
+   vPrint( 2, " Instrumenting-> '%s' Exit\n", instFunc.name.c_str() );
+
+   // set callee argument
+   //
+
+   static BPatch_Vector<BPatch_snippet*> callee_args( 1 );
+
+   // function index
+   //
+   BPatch_constExpr const_expr_findex( instFunc.index );
+   callee_args[0] = &const_expr_findex;
+
+   // create instrumentation snippet
+   BPatch_snippet snippet = BPatch_funcCallExpr( *m_vtEndFunc, callee_args );
+
+   // insert instrumentation snippet
+   //
+   if( !m_appAddrSpace->insertSnippet( snippet, *(instFunc.exit_points),
+          BPatch_callAfter, BPatch_lastSnippet ) )
+   {
+      std::cerr << ExeName << ": [" << ExePid << "]: "
+                << "Error: Could not instrument exit points of "
+                << "function '" << instFunc.name << "'. Aborting."
+                << std::endl;
+      error = true;
+   }
 
    return !error;
 }
@@ -807,7 +913,7 @@ MutatorC::readFilter()
 
    do
    {
-      VPRINT( 1, "Reading filter file" );
+      vPrint( 1, "Reading filter file\n" );
 
       // get RFG filter object
       m_filter = RFG_Filter_init();
@@ -881,6 +987,10 @@ MutatorC::constraintFunction( const std::string & name ) const
    {
       return true;           // don't instrument MPI functions
                              // (already done by function wrapper)
+   }
+   else if( name.compare( 0, 7, "UNIMCI_" ) == 0 )
+   {
+      return true;
    }
    else if( m_filter )
    {

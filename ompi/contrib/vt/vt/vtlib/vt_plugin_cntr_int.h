@@ -80,8 +80,9 @@ void vt_plugin_cntr_thread_exit(VTThrd * thrd);
 
 /**
  * This should free all general ressources
+ * nr_threads is the number of threads the process generated
  */
-void vt_plugin_cntr_finalize(void);
+void vt_plugin_cntr_finalize(uint32_t nr_threads);
 /**
  * This should be used to check whether the current thread is
  * a monitor thread of a callback function.

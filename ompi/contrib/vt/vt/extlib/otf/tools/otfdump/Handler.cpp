@@ -241,12 +241,38 @@ int handleDefProcessGroup( void* userData, uint32_t stream,
 	return OTF_RETURN_OK;
 }
 
+#define CASE_RETURN(type) \
+	case OTF_ATTR_##type: return #type
+
+static const char* attrToString( OTF_ATTR_TYPE type ) {
+
+	switch( type ) {
+	CASE_RETURN( IsMPIRank );
+	CASE_RETURN( IsPThread );
+	CASE_RETURN( IsOMPThread );
+	CASE_RETURN( IsCellSPUThread );
+	CASE_RETURN( hasGroupCounters );
+	CASE_RETURN( hasEnterLeaveRecords );
+	CASE_RETURN( IsCommunicator );
+
+	case OTF_ATTR_UNKNOWN:
+	default: {
+		static char unknown_buffer[ 64 ];
+		sprintf( unknown_buffer, "UNKNOWN <%u>", type );
+		return unknown_buffer;
+	}
+
+	}
+}
+
+#undef CASE_RETURN
+
 int handleDefAttributeList( void* userData, uint32_t stream,
 	uint32_t attr_token, uint32_t num, OTF_ATTR_TYPE* array,
 	OTF_KeyValueList* kvlist ) {
 
 
-  	uint32_t i;
+	uint32_t i;
 	Control* c= (Control*) userData;
 
 
@@ -258,12 +284,12 @@ int handleDefAttributeList( void* userData, uint32_t stream,
 			fprintf( c->outfile, "(#%llu) \tDefAttributeList: stream %u, attr_token %u, attributes ",
 				(long long unsigned) c->num, stream, attr_token);
 
-			for( i= 0; i < (num - 1); ++i ) {
-				fprintf( c->outfile, "%u, ", array[i] );
+			const char* sep = "";
+			for( i= 0; i < num; ++i ) {
+				fprintf( c->outfile, "%s%s", sep, attrToString( array[i] ) );
+				sep = ", ";
 			}
 			
-			fprintf( c->outfile, "%u", array[i] );
-		
 			printKeyValueList(c, kvlist);
 		}
 	}
@@ -345,6 +371,29 @@ int handleDefFunctionGroup( void* userData, uint32_t stream,
 }
 
 
+#define CASE_RETURN(name) \
+	case OTF_COLLECTIVE_TYPE_##name: return #name
+
+static const char* collOpTypeToString( uint32_t type ) {
+
+	switch( type ) {
+	CASE_RETURN( BARRIER );
+	CASE_RETURN( ONE2ALL );
+	CASE_RETURN( ALL2ONE );
+	CASE_RETURN( ALL2ALL );
+
+	case OTF_COLLECTIVE_TYPE_UNKNOWN:
+	default: {
+		static char unknown_buffer[ 64 ];
+		sprintf( unknown_buffer, "UNKNOWN <%u>", type );
+		return unknown_buffer;
+	}
+
+	}
+}
+
+#undef CASE_RETURN
+
 int handleDefCollectiveOperation( void* userData, uint32_t stream,
 	uint32_t collOp, const char* name, uint32_t type, OTF_KeyValueList* kvlist ) {
 
@@ -357,8 +406,8 @@ int handleDefCollectiveOperation( void* userData, uint32_t stream,
 		++c->num;
 		if( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
 
-			fprintf( c->outfile, "(#%llu) \tDefCollective: stream %u, collective %u, name \"%s\", type %u",
-				(long long unsigned) c->num, stream,  collOp, name, type );
+			fprintf( c->outfile, "(#%llu) \tDefCollective: stream %u, collective %u, name \"%s\", type %s",
+				(long long unsigned) c->num, stream,  collOp, name, collOpTypeToString( type ) );
 				
 			printKeyValueList(c, kvlist);
 		}
@@ -369,6 +418,67 @@ int handleDefCollectiveOperation( void* userData, uint32_t stream,
 }
 
 
+#define CASE_RETURN(prefix, name) \
+	case OTF_COUNTER_##prefix##_##name: return #name
+
+static const char* counterTypeToString( uint32_t properties ) {
+
+	switch( properties & OTF_COUNTER_TYPE_BITS ) {
+	CASE_RETURN( TYPE, ACC );
+	CASE_RETURN( TYPE, ABS );
+
+	default: {
+		static char unknown_buffer[ 64 ];
+		sprintf( unknown_buffer, "UNKNOWN <%u>",
+			properties & OTF_COUNTER_TYPE_BITS );
+		return unknown_buffer;
+	}
+
+	}
+}
+
+static const char* counterScopeToString( uint32_t properties ) {
+
+	switch( properties & OTF_COUNTER_SCOPE_BITS ) {
+	CASE_RETURN( SCOPE, START );
+	CASE_RETURN( SCOPE, POINT );
+	CASE_RETURN( SCOPE, LAST );
+	CASE_RETURN( SCOPE, NEXT );
+
+	default: {
+		static char unknown_buffer[ 64 ];
+		sprintf( unknown_buffer, "UNKNOWN <%u>",
+			properties & OTF_COUNTER_SCOPE_BITS );
+		return unknown_buffer;
+	}
+
+	}
+}
+
+static const char* counterVarTypeToString( uint32_t properties ) {
+
+	switch( properties & OTF_COUNTER_VARTYPE_BITS ) {
+	CASE_RETURN( VARTYPE, UNSIGNED8 );
+	CASE_RETURN( VARTYPE, SIGNED8 );
+	CASE_RETURN( VARTYPE, UNSIGNED4 );
+	CASE_RETURN( VARTYPE, SIGNED4 );
+	CASE_RETURN( VARTYPE, UNSIGNED2 );
+	CASE_RETURN( VARTYPE, SIGNED2 );
+	CASE_RETURN( VARTYPE, FLOAT );
+	CASE_RETURN( VARTYPE, DOUBLE );
+
+	default: {
+		static char unknown_buffer[ 64 ];
+		sprintf( unknown_buffer, "UNKNOWN <%u>",
+			properties & OTF_COUNTER_VARTYPE_BITS );
+		return unknown_buffer;
+	}
+
+	}
+}
+
+#undef CASE_RETURN
+
 int handleDefCounter( void* userData, uint32_t stream, uint32_t counter,
 	const char* name, uint32_t properties, uint32_t counterGroup,
 	const char* unit, OTF_KeyValueList* kvlist ) {
@@ -376,14 +486,20 @@ int handleDefCounter( void* userData, uint32_t stream, uint32_t counter,
 
 	Control* c= (Control*) userData;
 
+	c->counter_props[counter] = properties;
 
 	if( c->records[OTF_DEFCOUNTER_RECORD] ) {
 	
 		++c->num;
 		if( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
 
-			fprintf( c->outfile, "(#%llu) \tDefCounter: stream %u, counter %u, name \"%s\", properties %u, group %u, unit \"%s\"",
-				(long long unsigned) c->num, stream, counter, name, properties, counterGroup, unit );
+			fprintf( c->outfile, "(#%llu) \tDefCounter: stream %u, "
+				"counter %u, name \"%s\", properties %s/%s/%s, group %u, unit \"%s\"",
+				(long long unsigned) c->num, stream, counter, name,
+				counterTypeToString( properties ),
+				counterScopeToString( properties ),
+				counterVarTypeToString( properties ),
+				counterGroup, unit );
 				
 			printKeyValueList(c, kvlist);
 		}
@@ -555,10 +671,41 @@ int handleDefFileGroup( void* userData, uint32_t stream,
 }
 
 
-int handleDefKeyValue( void *userData, uint32_t streamid, uint32_t token, OTF_Type type,
-		const char *name, const char* desc, OTF_KeyValueList* kvlist ) {    
+#define CASE_RETURN(type) \
+	case OTF_##type: return #type
 
+static const char* keyValueTypeToString( OTF_Type type ) {
 
+	switch( type ) {
+	CASE_RETURN( CHAR );
+	CASE_RETURN( INT8 );
+	CASE_RETURN( UINT8 );
+	CASE_RETURN( INT16 );
+	CASE_RETURN( UINT16 );
+	CASE_RETURN( INT32 );
+	CASE_RETURN( UINT32 );
+	CASE_RETURN( INT64 );
+	CASE_RETURN( UINT64 );
+	CASE_RETURN( FLOAT );
+	CASE_RETURN( DOUBLE );
+	CASE_RETURN( BYTE_ARRAY );
+
+	case OTF_UNKNOWN:
+	default: {
+		static char unknown_buffer[ 64 ];
+		sprintf( unknown_buffer, "UNKNOWN <%u>", type );
+		return unknown_buffer;
+	}
+
+	}
+}
+
+#undef CASE_RETURN
+
+int handleDefKeyValue( void *userData, uint32_t streamid, uint32_t token,
+                OTF_Type type, const char *name, const char* desc,
+                OTF_KeyValueList* kvlist )
+{
 	Control* c= (Control*) userData;
 
 
@@ -567,8 +714,9 @@ int handleDefKeyValue( void *userData, uint32_t streamid, uint32_t token, OTF_Ty
 		++c->num;
 		if( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
 
-			fprintf( c->outfile, "(#%llu) \tDefKeyValue: stream %u, token %u, type %u, name \"%s\", desc \"%s\"",
-				(long long unsigned) c->num, streamid, token, type, name, desc );
+			fprintf( c->outfile, "(#%llu) \tDefKeyValue: stream %u, token %u, type %s, name \"%s\", desc \"%s\"",
+				(long long unsigned) c->num, streamid, token,
+				keyValueTypeToString( type ), name, desc );
 				
 			printKeyValueList(c, kvlist);
 		}
@@ -578,68 +726,101 @@ int handleDefKeyValue( void *userData, uint32_t streamid, uint32_t token, OTF_Ty
 }
 
 
-int handleDefTimeRange( void*             userData,
-                        uint32_t          streamid,
-                        uint64_t          minTime,
-                        uint64_t          maxTime,
-                        OTF_KeyValueList* kvlist ) {
+int handleDefTimeRange( void* userData, uint32_t streamid, uint64_t minTime,
+                uint64_t maxTime, OTF_KeyValueList* kvlist )
+{
+	Control* c= (Control*) userData;
 
-    Control* c= (Control*) userData;
+	if ( c->records[OTF_DEFTIMERANGE_RECORD] ) {
 
-    if ( c->records[OTF_DEFTIMERANGE_RECORD] ) {
+		++c->num;
+		if ( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
 
-        ++c->num;
-        if ( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
+			fprintf( c->outfile,
+				"(#%llu) \tDefTimeRange: stream %u, "
+				"[%llu, %llu]",
+				(long long unsigned) c->num,
+				streamid,
+				(long long unsigned) minTime,
+				(long long unsigned) maxTime );
 
-            fprintf( c->outfile,
-                     "(#%llu) \tDefTimeRange: stream %u, "
-                     "[%llu, %llu]",
-                     (long long unsigned) c->num,
-                     streamid,
-                     (long long unsigned) minTime,
-                     (long long unsigned) maxTime );
+			printKeyValueList( c, kvlist );
+		}
+	}
 
-            printKeyValueList( c, kvlist );
-        }
-    }
-
-    return OTF_RETURN_OK;
+	return OTF_RETURN_OK;
 }
 
-int handleDefCounterAssignments( void*             userData,
-                                 uint32_t          streamid,
-                                 uint32_t          counter_token,
-                                 uint32_t          number_of_members,
-                                 const uint32_t*   procs_or_groups,
-                                 OTF_KeyValueList* kvlist ) {
 
-    uint32_t i;
-    Control* c= (Control*) userData;
+int handleDefCounterAssignments( void* userData, uint32_t streamid,
+                uint32_t counter_token, uint32_t number_of_members,
+                const uint32_t* procs_or_groups, OTF_KeyValueList* kvlist )
+{
+	Control* c= (Control*) userData;
+	uint32_t i;
 
-    if ( c->records[OTF_DEFCOUNTERASSIGNMENTS_RECORD] ) {
+	if ( c->records[OTF_DEFCOUNTERASSIGNMENTS_RECORD] ) {
 
-        ++c->num;
-        if ( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
-            const char* sep= "";
+		++c->num;
+		if ( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
 
-            fprintf( c->outfile,
-                     "(#%llu) \tDefCounterAssignments: stream %u, "
-                     "counter_token %u, assignees ",
-                     (long long unsigned) c->num,
-                     streamid,
-                     counter_token );
+			const char* sep= "";
 
-            for ( i= 0; i < number_of_members; ++i ) {
-                    fprintf( c->outfile, "%s%u", sep, procs_or_groups[i] );
-                    sep= ", ";
-            }
+			fprintf( c->outfile,
+				"(#%llu) \tDefCounterAssignments: stream %u, "
+				"counter_token %u, assignees ",
+				(long long unsigned) c->num,
+				streamid,
+				counter_token );
 
-            printKeyValueList( c, kvlist );
-        }
-    }
+			for ( i= 0; i < number_of_members; ++i ) {
 
-    return OTF_RETURN_OK;
+				fprintf( c->outfile, "%s%u", sep, procs_or_groups[i] );
+				sep= ", ";
+			}
+
+			printKeyValueList( c, kvlist );
+		}
+	}
+
+	return OTF_RETURN_OK;
 }
+
+
+int handleDefProcessSubstitutes( void* userData, uint32_t streamid,
+	uint32_t representative, uint32_t numberOfProcs, const uint32_t* procs,
+	OTF_KeyValueList* kvlist ) {
+
+	Control* c= (Control*) userData;
+	uint32_t i;
+
+	if ( c->records[OTF_DEFPROCESSSUBSTITUTES_RECORD] ) {
+
+		++c->num;
+		if ( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
+
+			const char* sep= "";
+
+			fprintf( c->outfile,
+				"(#%llu) \tDefProcessSubstitutes: stream %u, "
+				"representative process %u, procs ",
+				(long long unsigned) c->num,
+				streamid,
+				representative );
+
+			for ( i= 0; i < numberOfProcs; ++i ) {
+
+				fprintf( c->outfile, "%s%u", sep, procs[i] );
+				sep= ", ";
+			}
+
+			printKeyValueList( c, kvlist );
+		}
+	}
+
+	return OTF_RETURN_OK;
+}
+
 
 int handleNoOp( void* userData, uint64_t time, uint32_t process,
 	OTF_KeyValueList* kvlist ) {
@@ -664,6 +845,7 @@ int handleNoOp( void* userData, uint64_t time, uint32_t process,
 
 	return OTF_RETURN_OK;
 }
+
 
 int handleEnter( void* userData, uint64_t time, uint32_t function,
 	uint32_t process, uint32_t source, OTF_KeyValueList* kvlist ) {
@@ -767,6 +949,55 @@ int handleRecvMsg( void* userData, uint64_t time, uint32_t recvProc,
 }
 
 
+static void printCounterValue( Control* c, uint32_t counter, uint64_t value ) {
+
+	uint32_t properties = OTF_COUNTER_VARTYPE_UNSIGNED8;
+	std::map<uint32_t,uint32_t>::const_iterator it
+		= c->counter_props.find( counter );
+	if( it != c->counter_props.end() ) {
+
+		properties= it->second & OTF_COUNTER_VARTYPE_BITS;
+	}
+
+	switch( properties ) {
+
+	case OTF_COUNTER_VARTYPE_UNSIGNED8:
+	case OTF_COUNTER_VARTYPE_UNSIGNED4:
+	case OTF_COUNTER_VARTYPE_UNSIGNED2: {
+
+		uint64_t conv_value = OTF_Counter2Unsigned( value );
+		fprintf( c->outfile, "%llu", (unsigned long long) conv_value );
+		break;
+	}
+
+	case OTF_COUNTER_VARTYPE_SIGNED8:
+	case OTF_COUNTER_VARTYPE_SIGNED4:
+	case OTF_COUNTER_VARTYPE_SIGNED2: {
+
+		int64_t conv_value = OTF_Counter2Signed( value );
+		fprintf( c->outfile, "%lld", (long long) conv_value );
+		break;
+	}
+
+	case OTF_COUNTER_VARTYPE_FLOAT: {
+
+		float conv_value = OTF_Counter2Float( value );
+		fprintf( c->outfile, "%f", conv_value );
+		break;
+	}
+
+	case OTF_COUNTER_VARTYPE_DOUBLE: {
+
+		double conv_value = OTF_Counter2Double( value );
+		fprintf( c->outfile, "%f", conv_value );
+		break;
+	}
+
+	default:
+		fprintf( c->outfile, "<invalid>" );
+	}
+}
+
 int handleCounter( void* userData, uint64_t time, uint32_t process,
 	uint32_t counter, uint64_t value, OTF_KeyValueList* kvlist ) {
 
@@ -779,9 +1010,10 @@ int handleCounter( void* userData, uint64_t time, uint32_t process,
 		++c->num;
 		if( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
 
-			fprintf( c->outfile, "(#%llu) \t%llu Counter: process %u, counter %u, value %llu",
+			fprintf( c->outfile, "(#%llu) \t%llu Counter: process %u, counter %u, value ",
 				(long long unsigned) c->num, (long long unsigned) time,
-				process, counter, (long long unsigned) value );
+				process, counter );
+			printCounterValue( c, counter, value );
 				
 			printKeyValueList(c, kvlist);
 		}
@@ -1256,6 +1488,68 @@ int handleCollopSummary( void* userData, uint64_t time, uint32_t process,
 }
 
 
+#define CASE_RETURN(op) \
+	case OTF_FILEOP_##op: return #op
+
+static const char* fileOpToString( uint32_t operation ) {
+
+	switch( operation & OTF_FILEOP_BITS ) {
+	CASE_RETURN( OPEN );
+	CASE_RETURN( CLOSE );
+	CASE_RETURN( READ );
+	CASE_RETURN( WRITE );
+	CASE_RETURN( SEEK );
+	CASE_RETURN( UNLINK );
+	CASE_RETURN( RENAME );
+	CASE_RETURN( DUP );
+	CASE_RETURN( SYNC );
+	CASE_RETURN( LOCK );
+	CASE_RETURN( UNLOCK );
+
+	case OTF_FILEOP_OTHER:
+	default: {
+		static char unknown_buffer[ 64 ];
+		sprintf( unknown_buffer, "UNKNOWN <%u>",
+			operation & OTF_FILEOP_BITS );
+		return unknown_buffer;
+	}
+
+	}
+}
+
+#undef CASE_RETURN
+
+#define PRINT_FLAG(flag) \
+	if( io_flags & OTF_IOFLAG_##flag ) { \
+		fprintf( c->outfile, "%s%s", sep, #flag ); \
+		io_flags &= ~OTF_IOFLAG_##flag; \
+		sep = ", "; \
+	}
+
+static void printIoFlags( Control* c, uint32_t operation ) {
+
+
+	uint32_t io_flags = operation & OTF_IOFLAGS_BITS;
+
+	if( !io_flags ) {
+		fprintf( c->outfile, "%s", "EMPTY" );
+	}
+
+	const char* sep = "";
+	PRINT_FLAG( IOFAILED )
+	PRINT_FLAG( ASYNC )
+	PRINT_FLAG( COLL )
+	PRINT_FLAG( DIRECT )
+	PRINT_FLAG( SYNC )
+	PRINT_FLAG( ISREADLOCK )
+
+	if( io_flags ) {
+		fprintf( c->outfile, "%sUNKNOWN <%u>", sep, io_flags );
+	}
+}
+
+#undef PRINT_FLAG
+
 int handleFileOperation( void* userData, uint64_t time,
                  uint32_t fileid, uint32_t process,
                  uint64_t handleid, uint32_t operation,
@@ -1270,11 +1564,12 @@ int handleFileOperation( void* userData, uint64_t time,
                 if( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
         
                         fprintf( c->outfile, "(#%llu) \t%llu FileOperation: file ID %llu, "
-                                             "process %llu, handle ID %llu, operation %llu, "
-                                             "bytes %llu, duration %llu, source %llu",
+                                             "process %llu, handle ID %llu, operation %s, flags ",
                                 (long long unsigned) c->num, (long long unsigned) time,
                                 (long long unsigned) fileid, (long long unsigned) process,
-                                (long long unsigned) handleid, (long long unsigned) operation,
+                                (long long unsigned) handleid, fileOpToString( operation ) );
+                        printIoFlags( c, operation );
+                        fprintf( c->outfile, ", bytes %llu, duration %llu, source %llu",
                                 (long long unsigned) bytes, (long long unsigned) duration,
                                 (long long unsigned) source);
 				
@@ -1326,15 +1621,17 @@ int handleEndFileOperation( void* userData, uint64_t time,
 
 			fprintf( c->outfile, "(#%llu) \t%llu EndFileOperation: "
 					"process %llu, file ID %llu, "
-					"matching ID %llu, handle ID %llu, operation %llu, "
-					"bytes %llu, source %llu",
+					"matching ID %llu, handle ID %llu, "
+					"operation %s, flags ",
 					(long long unsigned) c->num,
 					(long long unsigned) time,
 					(long long unsigned) process,
 					(long long unsigned) fileid,
 					(long long unsigned) matchingId,
-                    (long long unsigned) handleId,
-					(long long unsigned) operation,
+					(long long unsigned) handleId,
+					fileOpToString( operation ) );
+			printIoFlags( c, operation );
+			fprintf( c->outfile, ", bytes %llu, source %llu",
 					(long long unsigned) bytes,
 					(long long unsigned) scltoken );
 					
@@ -1520,6 +1817,27 @@ int handleUnknown( void* userData, uint64_t time, uint32_t process,
 }
 
 
+#define CASE_RETURN(name) \
+	case OTF_MARKER_TYPE_##name: return #name
+
+static const char* markerTypeToString( uint32_t type ) {
+
+	switch( type ) {
+	CASE_RETURN( ERROR );
+	CASE_RETURN( WARNING );
+	CASE_RETURN( HINT );
+
+	default: {
+		static char unknown_buffer[ 64 ];
+		sprintf( unknown_buffer, "UNKNOWN <%u>", type );
+		return unknown_buffer;
+	}
+
+	}
+}
+
+#undef CASE_RETURN
+
 int handleDefMarker( void *userData, uint32_t stream, uint32_t token, const char* name,
 	uint32_t type, OTF_KeyValueList* kvlist ) {
 
@@ -1530,8 +1848,9 @@ int handleDefMarker( void *userData, uint32_t stream, uint32_t token, const char
 		++c->num;
 		if( c->num >= c->minNum && c->num <= c->maxNum && ! c->silent_mode ) {
 
-			fprintf( c->outfile, "(#%llu) DefMarker: ID %u, name \"%s\", type %u",
-				(long long unsigned) c->num, token, name, type );
+			fprintf( c->outfile, "(#%llu) DefMarker: ID %u, name \"%s\", type %s",
+				(long long unsigned) c->num, token, name,
+				markerTypeToString( type ) );
 				
 			printKeyValueList(c, kvlist);
 		}

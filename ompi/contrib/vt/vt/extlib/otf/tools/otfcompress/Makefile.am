@@ -6,7 +6,7 @@ if AMBUILDBINARIES
 bin_PROGRAMS = otfcompress
 
 install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f otfdecompress; \
+	(cd $(DESTDIR)$(bindir); rm -f otfdecompress$(EXEEXT); \
 	$(LN_S) otfcompress$(EXEEXT) otfdecompress$(EXEEXT))
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/otfdecompress$(EXEEXT)

@@ -61,6 +61,7 @@ yet it breaks the link compatibility of library versions.*/
 #define OTF_DEFPROCESSGROUP_RECORD				15
 #define OTF_DEFATTRLIST_RECORD						55
 #define OTF_DEFPROCESSORGROUPATTR_RECORD				56
+#define OTF_DEFPROCESSSUBSTITUTES_RECORD				63
 #define OTF_DEFFUNCTION_RECORD					16
 #define OTF_DEFFUNCTIONGROUP_RECORD				17
 #define OTF_DEFCOUNTER_RECORD					18
@@ -102,7 +103,7 @@ yet it breaks the link compatibility of library versions.*/
 #define OTF_MARKER_RECORD						46
 
 /* Number of records */
-#define OTF_NRECORDS							63
+#define OTF_NRECORDS							64
 
 /* Stream format definition */
 
@@ -193,8 +194,8 @@ could be added for convenience.
 
 /*
 File Operations - 32-bit
-The bits 0-4 contain the identifier of the file operation that has happened.
-The bits 5-31 are bit flags that carry additional information on the operation.
+The bits 0-5 contain the identifier of the file operation that has happened.
+The bits 6-31 are bit flags that carry additional information on the operation.
 A macro allows for accessing the file operation in a convenient way.
 */
 #define OTF_FILEOP_BITS			0x0000001f
@@ -251,7 +252,8 @@ typedef enum OTF_ATTR_TYPE_enum {
 	OTF_ATTR_IsOMPThread = 3, /**< */
 	OTF_ATTR_IsCellSPUThread = 4, /**< */
 	OTF_ATTR_hasGroupCounters = 5, /**< */
-	OTF_ATTR_hasEnterLeaveRecords = 6 /**< */
+	OTF_ATTR_hasEnterLeaveRecords = 6, /**< */
+	OTF_ATTR_IsCommunicator = 7 /**< */
 } OTF_ATTR_TYPE;
 
 

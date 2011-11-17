@@ -34,7 +34,8 @@ public:
    virtual ~TokenFactoryScopeI() {}
 
    // create global definition
-   virtual uint32_t create( const void * localDef ) = 0;
+   virtual uint32_t create( const void * localDef,
+                       uint32_t globalToken = 0 ) = 0;
 
    // set token translation for process
    virtual void setTranslation( const uint32_t & process,
@@ -81,7 +82,7 @@ public:
    ~TokenFactoryScopeC();
 
    // create global definition
-   uint32_t create( const void * localDef );
+   uint32_t create( const void * localDef, uint32_t globalToken = 0 );
 
    // set token translation for process
    inline void setTranslation( const uint32_t & process,

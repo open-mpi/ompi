@@ -1,28 +1,18 @@
-INCLUDES = -I$(top_builddir)/otflib -I$(top_srcdir)/otflib
+if AMHAVEMPI
+SUBDIRS = . mpi
+endif
 
 if AMBUILDBINARIES
-bin_PROGRAMS = \
-	otfprofile
+bin_PROGRAMS = otfprofile
 endif
 
-if AMHAVEOMP
-otfprofile_CXXFLAGS = $(OPENMP_CXXFLAGS)
-otfprofile_LDFLAGS = $(OPENMP_CXXFLAGS)
-endif
+OTFPROFILESRCDIR = $(srcdir)
+include $(srcdir)/Makefile.common
 
-otfprofile_LDADD = $(top_builddir)/otflib/libotf.la $(MATHLIB)
-otfprofile_DEPENDENCIES = $(top_builddir)/otflib/libotf.la
-otfprofile_SOURCES = \
-	CSVParse.h \
-	DataStructure.h \
-	Definitions.h \
-	Handler.h \
-	Prodtex.h \
-	Summary.h \
-	otfprofile.cpp \
-	CSVParse.cpp \
-	DataStructure.cpp \
-	Handler.cpp \
-	Prodtex.cpp \
-	Summary.cpp
+INCLUDES = $(COMMONINCLUDES)
+
+otfprofile_CXXFLAGS = $(COMMONCXXFLAGS)
+otfprofile_LDADD = $(COMMONLDADD)
+otfprofile_DEPENDENCIES = $(COMMONDEPENDENCIES)
+otfprofile_SOURCES = $(COMMONSOURCES)
 

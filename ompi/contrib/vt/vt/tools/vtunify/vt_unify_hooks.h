@@ -19,24 +19,28 @@
 
 #include <assert.h>
 
-// ids of generic hooks
-// (NOTE: all ids must be unique over all hook classes)
+// generic hooks' identifier bits
 //
 enum
 {
-   // HooksRawC's ids (example; not used)
+   // HooksRawC's (example; not used)
    //
-   VT_UNIFY_HOOKS_RAW_GENID__SOMETHING1                                  = 100,
-   VT_UNIFY_HOOKS_RAW_GENID__SOMETHING2                                  = 101,
+   VT_UNIFY_HOOKS_RAW_GENID__SOMETHING1                                 = 1<<0,
+   VT_UNIFY_HOOKS_RAW_GENID__SOMETHING2                                 = 1<<1,
 
-   // HooksAsyncEventsC's ids
+   // HooksAsyncEventsC's
    //
-   VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_OPEN                       = 200,
-   VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_CLOSE                      = 201,
+   VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_OPEN                      = 1<<2,
+   VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_CLOSE                     = 1<<3,
 
-   // HooksTdbC's ids
+   // HooksTdbC's
    //
-   VT_UNIFY_HOOKS_TDB_GENID__STARTSTOPTIME_EPOCH                         = 300
+   VT_UNIFY_HOOKS_TDB_GENID__STARTSTOPTIME_EPOCH                        = 1<<4,
+
+   // HooksProcessMarginsC's
+   //
+   VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_STREAM_OPEN                      = 1<<5,
+   VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_STREAM_CLOSE                     = 1<<6
 
 };
 
@@ -86,6 +90,7 @@ public:
       Record_DefTimerResolution,
       Record_DefTimeRange,
       Record_DefProcessGroup,
+      Record_DefProcessGroupAttributes,
       Record_DefProcess,
       Record_DefSclFile,
       Record_DefScl,
@@ -96,6 +101,7 @@ public:
       Record_DefCollOp,
       Record_DefCounterGroup,
       Record_DefCounter,
+      Record_DefCounterAssignments,
       Record_DefKeyValue,
 
       // summary records

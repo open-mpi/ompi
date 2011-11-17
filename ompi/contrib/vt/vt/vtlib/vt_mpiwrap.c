@@ -508,6 +508,78 @@ VT_MPI_INT MPI_Comm_create( MPI_Comm comm,
   return result;
 }
 
+/* -- MPI_Comm_group -- */
+
+VT_MPI_INT MPI_Comm_group( MPI_Comm comm,
+                           MPI_Group* group )
+{
+  VT_MPI_INT result;
+  uint64_t time;
+  uint8_t was_recorded;
+
+  if (IS_MPI_TRACE_ON)
+    {
+      MPI_TRACE_OFF();
+
+      time = vt_pform_wtime();
+      was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_COMM_GROUP]);
+
+      CALL_PMPI_2(MPI_Comm_group, comm, group,
+                  result, was_recorded, &time);
+
+      if ( *group != MPI_GROUP_NULL)
+        vt_group_create(*group);
+
+      time = vt_pform_wtime();
+      vt_exit(VT_CURRENT_THREAD, &time);
+
+      MPI_TRACE_ON();
+    }
+  else
+    {
+      CALL_PMPI_2(MPI_Comm_group, comm, group,
+                  result, 0, NULL);
+    }
+
+  return result;
+}
+
+/* -- MPI_Comm_remote_group -- */
+
+VT_MPI_INT MPI_Comm_remote_group( MPI_Comm comm,
+                                  MPI_Group* group )
+{
+  VT_MPI_INT result;
+  uint64_t time;
+  uint8_t was_recorded;
+
+  if (IS_MPI_TRACE_ON)
+    {
+      MPI_TRACE_OFF();
+
+      time = vt_pform_wtime();
+      was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_COMM_REMOTE_GROUP]);
+
+      CALL_PMPI_2(MPI_Comm_remote_group, comm, group,
+                  result, was_recorded, &time);
+
+      if ( *group != MPI_GROUP_NULL)
+        vt_group_create(*group);
+
+      time = vt_pform_wtime();
+      vt_exit(VT_CURRENT_THREAD, &time);
+
+      MPI_TRACE_ON();
+    }
+  else
+    {
+      CALL_PMPI_2(MPI_Comm_remote_group, comm, group,
+                  result, 0, NULL);
+    }
+
+  return result;
+}
+
 /* -- MPI_Comm_split -- */
 
 VT_MPI_INT MPI_Comm_split( MPI_Comm comm,
@@ -900,7 +972,7 @@ VT_MPI_INT MPI_Win_create( void* base,
 
 /* -- MPI_Win_free -- */
 
-VT_MPI_INT MPI_Win_free ( MPI_Win* win )
+VT_MPI_INT MPI_Win_free( MPI_Win* win )
 {
   VT_MPI_INT result;
   uint64_t time;
@@ -926,6 +998,45 @@ VT_MPI_INT MPI_Win_free ( MPI_Win* win )
     {
       CALL_PMPI_1(MPI_Win_free, win,
                   result, 0, NULL);
+    }
+
+  return result;
+}
+
+VT_MPI_INT MPI_Win_get_group( MPI_Win win, MPI_Group* group )
+{
+  VT_MPI_INT result;
+  uint64_t time;
+  uint8_t was_recorded;
+
+  if (IS_MPI_TRACE_ON)
+    {
+      MPI_TRACE_OFF();
+
+      time = vt_pform_wtime();
+      was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_WIN_GET_GROUP]);
+
+      /* UNIMCI_check_<pre|post>__MPI_Win_get_group not yet available;
+         call PMPI function directly */
+      result = PMPI_Win_get_group(win, group);
+      /*CALL_PMPI_2(MPI_Win_get_group, win, group,
+                  result, was_recorded, &time);*/
+
+      if (*group != MPI_GROUP_NULL)
+        vt_group_create(*group);
+
+      time = vt_pform_wtime();
+      vt_exit(VT_CURRENT_THREAD, &time);
+
+      MPI_TRACE_ON();
+    }
+  else
+    {
+      /* UNIMCI_check_<pre|post>__MPI_Win_get_group not yet available;
+         call PMPI function directly */
+      result = PMPI_Win_get_group(win, group);
+      /*CALL_PMPI_2(MPI_Win_get_group, win, group,
+                  result, was_recorded, &time);*/
     }
 
   return result;
@@ -965,7 +1076,7 @@ VT_MPI_INT MPI_Cart_create( MPI_Comm comm_old,
                   comm_cart,
                   result, was_recorded, &time);
 
-      if ( *comm_cart != MPI_COMM_NULL)
+      if (*comm_cart != MPI_COMM_NULL)
         vt_comm_create(*comm_cart);
 
       time = vt_pform_wtime();
@@ -1003,7 +1114,7 @@ VT_MPI_INT MPI_Cart_sub( MPI_Comm comm,
       CALL_PMPI_3(MPI_Cart_sub, comm, rem_dims, newcomm,
                   result, was_recorded, &time);
 
-      if ( *newcomm != MPI_COMM_NULL)
+      if (*newcomm != MPI_COMM_NULL)
         vt_comm_create(*newcomm);
 
       time = vt_pform_wtime();
@@ -1044,7 +1155,7 @@ VT_MPI_INT MPI_Graph_create( MPI_Comm comm_old,
                   comm_graph,
                   result, was_recorded, &time);
 
-      if ( *comm_graph != MPI_COMM_NULL)
+      if (*comm_graph != MPI_COMM_NULL)
         vt_comm_create(*comm_graph);
 
       time = vt_pform_wtime();
@@ -1087,7 +1198,7 @@ VT_MPI_INT MPI_Intercomm_create( MPI_Comm local_comm,
                   remote_leader, tag, newintercomm,
                   result, was_recorded, &time);
 
-      if ( *newintercomm != MPI_COMM_NULL)
+      if (*newintercomm != MPI_COMM_NULL)
         vt_comm_create(*newintercomm);
 
       time = vt_pform_wtime();
@@ -1125,7 +1236,7 @@ VT_MPI_INT MPI_Intercomm_merge( MPI_Comm intercomm,
       CALL_PMPI_3(MPI_Intercomm_merge, intercomm, high, newcomm,
                   result, was_recorded, &time);
 
-      if ( *newcomm != MPI_COMM_NULL)
+      if (*newcomm != MPI_COMM_NULL)
         vt_comm_create(*newcomm);
 
       time = vt_pform_wtime();
@@ -2645,10 +2756,7 @@ VT_MPI_INT MPI_Allreduce ( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -2694,10 +2802,7 @@ VT_MPI_INT MPI_Barrier( MPI_Comm comm )
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -2754,10 +2859,7 @@ VT_MPI_INT MPI_Bcast( void* buf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -2799,6 +2901,14 @@ VT_MPI_INT MPI_Gather( void* sendbuf,
         {
           matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
+#if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
+          if (sendbuf == MPI_IN_PLACE)
+            {
+              sendtype = recvtype;
+              sendcount = recvcount;
+            }
+#endif /* HAVE_DECL_MPI_IN_PLACE */
+
           PMPI_Type_size(sendtype, &ssz);
           PMPI_Comm_rank(comm, &me);
           if ( me == root ) {
@@ -2820,10 +2930,7 @@ VT_MPI_INT MPI_Gather( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -2884,10 +2991,7 @@ VT_MPI_INT MPI_Reduce( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -2931,16 +3035,32 @@ VT_MPI_INT MPI_Gatherv( void* sendbuf,
         {
           matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
+          PMPI_Comm_size(comm, &N);
+
+          recvcount = 0;
+          for(i = 0; i<N; i++) recvcount += recvcounts[i];
+
+#if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
+          if (sendbuf == MPI_IN_PLACE)
+            {
+              sendtype = recvtype;
+              sendcount = recvcount;
+            }
+#endif /* HAVE_DECL_MPI_IN_PLACE */
+
           PMPI_Type_size(recvtype, &recvsz);
           PMPI_Type_size(sendtype, &sendsz);
           PMPI_Comm_rank(comm, &me);
 
-          recvcount = recvsz = 0;
-          if ( me == root ) {
-            PMPI_Comm_size(comm, &N);
-            PMPI_Type_size(recvtype, &recvsz);
-            for(i = 0; i<N; i++) recvcount += recvcounts[i];
-          }
+          recvsz = 0;
+          if ( me == root )
+            {
+              PMPI_Type_size(recvtype, &recvsz);
+            }
+          else
+            {
+              recvcount = 0;
+            }
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_GATHERV], matchid,
@@ -2954,10 +3074,7 @@ VT_MPI_INT MPI_Gatherv( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -2999,6 +3116,14 @@ VT_MPI_INT MPI_Allgather( void* sendbuf,
         {
           matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
+#if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
+          if (sendbuf == MPI_IN_PLACE)
+            {
+              sendtype = recvtype;
+              sendcount = recvcount;
+            }
+#endif /* HAVE_DECL_MPI_IN_PLACE */
+
           PMPI_Type_size(recvtype, &recvsz);
           PMPI_Type_size(sendtype, &sendsz);
           PMPI_Comm_size(comm, &N);
@@ -3015,10 +3140,7 @@ VT_MPI_INT MPI_Allgather( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3061,11 +3183,21 @@ VT_MPI_INT MPI_Allgatherv( void* sendbuf,
         {
           matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
-          PMPI_Type_size(recvtype, &recvsz);
-          PMPI_Type_size(sendtype, &sendsz);
           PMPI_Comm_size(comm, &N);
+
           recvcount = 0;
           for(i = 0; i<N; i++) recvcount += recvcounts[i];
+
+#if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
+          if (sendbuf == MPI_IN_PLACE)
+            {
+              sendtype = recvtype;
+              sendcount = recvcount;
+            }
+#endif /* HAVE_DECL_MPI_IN_PLACE */
+
+          PMPI_Type_size(recvtype, &recvsz);
+          PMPI_Type_size(sendtype, &sendsz);
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_ALLGATHERV], matchid,
@@ -3079,10 +3211,7 @@ VT_MPI_INT MPI_Allgatherv( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3140,10 +3269,7 @@ VT_MPI_INT MPI_Alltoall( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3208,10 +3334,7 @@ VT_MPI_INT MPI_Alltoallv( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3266,10 +3389,7 @@ VT_MPI_INT MPI_Scan( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3311,6 +3431,14 @@ VT_MPI_INT MPI_Scatter( void* sendbuf,
         {
           matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
+#if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
+          if (sendbuf == MPI_IN_PLACE)
+            {
+              sendtype = recvtype;
+              sendcount = recvcount;
+            }
+#endif /* HAVE_DECL_MPI_IN_PLACE */
+
           PMPI_Type_size(recvtype, &recvsz);
           PMPI_Comm_rank(comm, &me);
           if ( me == root ) {
@@ -3332,10 +3460,7 @@ VT_MPI_INT MPI_Scatter( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3380,14 +3505,30 @@ VT_MPI_INT MPI_Scatterv( void* sendbuf,
         {
           matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
-          sendcount = sendsz = 0;
+          PMPI_Comm_size(comm, &N);
+
+          sendcount = 0;
+          for(i = 0; i<N; i++) sendcount += sendcounts[i];
+
+#if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
+          if (recvbuf == MPI_IN_PLACE)
+            {
+              recvtype = sendtype;
+              recvcount = sendcount;
+            }
+#endif /* HAVE_DECL_MPI_IN_PLACE */
+
+          sendsz = 0;
           PMPI_Type_size(recvtype, &recvsz);
           PMPI_Comm_rank(comm, &me);
-          if ( me == root ) {
-            PMPI_Comm_size(comm, &N);
-            PMPI_Type_size(sendtype, &sendsz);
-            for(i = 0; i<N; i++) sendcount += sendcounts[i];
-          }
+          if ( me == root )
+            {
+              PMPI_Type_size(sendtype, &sendsz);
+            }
+          else
+            {
+              sendcount = 0;
+            }
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_SCATTERV], matchid,
@@ -3401,10 +3542,7 @@ VT_MPI_INT MPI_Scatterv( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -3463,10 +3601,7 @@ VT_MPI_INT MPI_Reduce_scatter( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -4071,10 +4206,7 @@ VT_MPI_INT MPI_Alltoallw( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
@@ -4129,10 +4261,7 @@ VT_MPI_INT MPI_Exscan( void* sendbuf,
 
       time = vt_pform_wtime();
 
-      if (was_recorded)
-        {
-          vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm);
-        }
+      vt_mpi_collend(VT_CURRENT_THREAD, &time, matchid, &comm, was_recorded);
 
       vt_exit(VT_CURRENT_THREAD, &time);
 
