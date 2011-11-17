@@ -99,6 +99,11 @@ HooksBaseC::HooksBaseC()
    m_writeRecHookMethods[HooksC::Record_DefProcessGroup] =
       &HooksBaseC::writeRecHook_DefProcessGroup;
 
+   m_readRecHookMethods[HooksC::Record_DefProcessGroupAttributes] =
+      &HooksBaseC::readRecHook_DefProcessGroupAttributes;
+   m_writeRecHookMethods[HooksC::Record_DefProcessGroupAttributes] =
+      &HooksBaseC::writeRecHook_DefProcessGroupAttributes;
+
    m_readRecHookMethods[HooksC::Record_DefProcess] =
       &HooksBaseC::readRecHook_DefProcess;
    m_writeRecHookMethods[HooksC::Record_DefProcess] =
@@ -148,6 +153,11 @@ HooksBaseC::HooksBaseC()
       &HooksBaseC::readRecHook_DefCounter;
    m_writeRecHookMethods[HooksC::Record_DefCounter] =
       &HooksBaseC::writeRecHook_DefCounter;
+
+   m_readRecHookMethods[HooksC::Record_DefCounterAssignments] =
+      &HooksBaseC::readRecHook_DefCounterAssignments;
+   m_writeRecHookMethods[HooksC::Record_DefCounterAssignments] =
+      &HooksBaseC::writeRecHook_DefCounterAssignments;
 
    m_readRecHookMethods[HooksC::Record_DefKeyValue] =
       &HooksBaseC::readRecHook_DefKeyValue;

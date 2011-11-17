@@ -10,7 +10,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define STRBUF_SIZE  0x400   /* buffer size for strings */
 #define MAX_LINE_LEN 0x20000 /* max file line length */
 
 /* data structure for filter assignments */
@@ -248,7 +247,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
 
   /* read lines */
   while( !l_rank_off && !parse_err &&
-         get_deffile_content_line( filter, line, MAX_LINE_LEN - 1, &pos ) )
+         get_deffile_content_line( filter, line, MAX_LINE_LEN, &pos ) )
   {
     int32_t climit;
     char* p;
@@ -257,15 +256,17 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
     lineno++;
 
     /* remove newline */
-
     if( strlen(line) > 0 && line[strlen(line)-1] == '\n' )
       line[strlen(line)-1] = '\0';
 
+    /* remove leading and trailing spaces from line */
     vt_strtrim( line );
 
+    /* continue if line is empty */
     if( strlen( line ) == 0 )
       continue;
 
+    /* continue if line is a comment */
     if( line[0] == '#' )
       continue;
 
@@ -398,7 +399,7 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
       p = strtok( line, ";" );
       do
       {
-        char pattern[STRBUF_SIZE];
+        char* pattern;
 
         if( !p )
         {
@@ -406,13 +407,14 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
           break;
         }
 
-        strcpy( pattern, p );
-
+        pattern = strdup( p );
         vt_strtrim( pattern );
 
         /* add call limit assignment */
         if( strlen( pattern ) > 0 && includes_current_rank )
           RFG_Filter_add( filter, pattern, climit );
+
+        free( pattern );
 
       } while( ( p = strtok( 0, ";" ) ) );
     }

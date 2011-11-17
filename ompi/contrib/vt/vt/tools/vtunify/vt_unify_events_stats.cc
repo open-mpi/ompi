@@ -111,6 +111,32 @@ EventsAndStatsC::cleanUp()
    const OTF_FileType common_file_type =
       m_scope == SCOPE_EVENTS ? OTF_FILETYPE_EVENT : OTF_FILETYPE_STATS;
 
+   // remove local event/stat. files, if necessary
+   //
+   if( Params.doclean )
+   {
+#if defined(HAVE_OMP) && HAVE_OMP
+#     pragma omp parallel for private(i, filename1)
+#endif // HAVE_OMP
+      for( i = 0; i < streams_num; i++ )
+      {
+         const uint32_t & streamid = MyStreamIds[i];
+
+         // try to remove file without compression suffix
+         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
+            common_file_type, STRBUFSIZE, filename1 );
+         if( remove( filename1 ) == 0 )
+            PVPrint( 3, " Removed %s\n", filename1 );
+
+         // try to remove file with compression suffix
+         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
+            common_file_type | OTF_FILECOMPRESSION_COMPRESSED, STRBUFSIZE,
+            filename1 );
+         if( remove( filename1 ) == 0 )
+            PVPrint( 3, " Removed %s\n", filename1 );
+      }
+   }
+
    // rename temporary event/stat. output files
    //
 
@@ -139,41 +165,6 @@ EventsAndStatsC::cleanUp()
       // rename file
       if( rename( filename1, filename2 ) == 0 )
          PVPrint( 3, " Renamed %s to %s\n", filename1, filename2 );
-   }
-
-   // remove local event/stat. files, if necessary
-   //
-   if( Params.doclean &&
-       Params.in_file_prefix.compare( Params.out_file_prefix ) != 0 )
-   {
-#if defined(HAVE_OMP) && HAVE_OMP
-#     pragma omp parallel for private(i, filename1)
-#endif // HAVE_OMP
-      for( i = 0; i < streams_num; i++ )
-      {
-         const uint32_t & streamid = MyStreamIds[i];
-
-         bool removed = false;
-
-         // get file name without compression suffix
-         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
-            common_file_type, STRBUFSIZE, filename1 );
-
-         // try to remove file
-         if( !( removed = ( remove( filename1 ) == 0 ) ) )
-         {
-            // if failed, get file name with compression suffix
-            OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
-               common_file_type | OTF_FILECOMPRESSION_COMPRESSED,
-               STRBUFSIZE, filename1 );
-
-            // try to remove file again
-            removed = ( remove( filename1 ) == 0 );
-         }
-
-         if( removed )
-            PVPrint( 3, " Removed %s\n", filename1 );
-      }
    }
 
    return !error;
@@ -256,17 +247,17 @@ EventsAndStatsC::rewrite()
          PVPrint( 3, " Opened OTF writer stream [namestub %s id %x]\n",
                   tmp_out_file_prefix.c_str(), streamid );
 
-#ifdef VT_UNIFY_HOOKS_AEVENTS
+#if (defined(VT_UNIFY_HOOKS_AEVENTS) || defined(VT_UNIFY_HOOKS_MARGINS))
          if( m_scope == SCOPE_EVENTS )
          {
-            // trigger HooksAsyncEventsC's generic hook for opened event stream
+            // trigger generic hooks for opened event stream
             theHooks->triggerGenericHook(
-               VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_OPEN, 3,
-                  const_cast<uint32_t*>( &streamid ),
-                  const_cast<std::string*>( &in_file_prefix ),
-                  &wstream );
+               VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_OPEN |
+               VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_STREAM_OPEN, 3,
+               &wstream, const_cast<uint32_t*>( &streamid ),
+               const_cast<std::string*>( &in_file_prefix ) );
          }
-#endif // VT_UNIFY_HOOKS_AEVENTS
+#endif // VT_UNIFY_HOOKS_AEVENTS || VT_UNIFY_HOOKS_MARGINS
 
          // set file compression
          //
@@ -283,105 +274,108 @@ EventsAndStatsC::rewrite()
 
          if( m_scope == SCOPE_EVENTS )
          {
+            // create first handler argument
+            FirstHandlerArg_EventsS fha( wstream );
+
             // set record handler and its first argument for ...
             //
 
             // ... OTF_EVENTCOMMENT_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_EventComment,
+               (OTF_FunctionPointer*)HandleEventComment,
                OTF_EVENTCOMMENT_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_EVENTCOMMENT_RECORD );
 
             // ... OTF_ENTER_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_Enter,
+               (OTF_FunctionPointer*)HandleEnter,
                OTF_ENTER_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_ENTER_RECORD );
 
             // ... OTF_LEAVE_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_Leave,
+               (OTF_FunctionPointer*)HandleLeave,
                OTF_LEAVE_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_LEAVE_RECORD );
 
             // ... OTF_COUNTER_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_Counter,
+               (OTF_FunctionPointer*)HandleCounter,
                OTF_COUNTER_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_COUNTER_RECORD );
 
             // ... OTF_BEGINFILEOPERATION_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_BeginFileOp,
+               (OTF_FunctionPointer*)HandleBeginFileOp,
                OTF_BEGINFILEOP_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_BEGINFILEOP_RECORD );
 
             // ... OTF_ENDFILEOPERATION_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_EndFileOp,
+               (OTF_FunctionPointer*)HandleEndFileOp,
                OTF_ENDFILEOP_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_ENDFILEOP_RECORD );
 
             // ... OTF_SEND_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_SendMsg,
+               (OTF_FunctionPointer*)HandleSendMsg,
                OTF_SEND_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_SEND_RECORD );
 
             // ... OTF_RECEIVE_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_RecvMsg,
+               (OTF_FunctionPointer*)HandleRecvMsg,
                OTF_RECEIVE_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_RECEIVE_RECORD );
 
             // ... OTF_BEGINCOLLOP_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_BeginCollOp,
+               (OTF_FunctionPointer*)HandleBeginCollOp,
                OTF_BEGINCOLLOP_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_BEGINCOLLOP_RECORD );
 
             // ... OTF_ENDCOLLOP_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_EndCollOp,
+               (OTF_FunctionPointer*)HandleEndCollOp,
                OTF_ENDCOLLOP_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_ENDCOLLOP_RECORD );
 
             // ... OTF_RMAPUT_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_RMAPut,
+               (OTF_FunctionPointer*)HandleRMAPut,
                OTF_RMAPUT_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_RMAPUT_RECORD );
 
             // ... OTF_RMAPUTRE_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_RMAPutRemoteEnd,
+               (OTF_FunctionPointer*)HandleRMAPutRemoteEnd,
                OTF_RMAPUTRE_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_RMAPUTRE_RECORD );
 
             // ... OTF_RMAGET_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_RMAGet,
+               (OTF_FunctionPointer*)HandleRMAGet,
                OTF_RMAGET_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_RMAGET_RECORD );
 
             // ... OTF_RMAEND_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_RMAEnd,
+               (OTF_FunctionPointer*)HandleRMAEnd,
                OTF_RMAEND_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_RMAEND_RECORD );
 
             // rewrite events
@@ -399,35 +393,38 @@ EventsAndStatsC::rewrite()
          }
          else // m_scope == SCOPE_STATS
          {
+            // create first handler argument
+            FirstHandlerArg_StatsS fha( wstream );
+
             // set record handler and its first argument for ...
             //
 
             // ... OTF_FUNCTIONSUMMARY_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_FunctionSummary,
+               (OTF_FunctionPointer*)HandleFunctionSummary,
                OTF_FUNCTIONSUMMARY_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_FUNCTIONSUMMARY_RECORD );
 
             // ... OTF_MESSAGESUMMARY_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_MessageSummary,
+               (OTF_FunctionPointer*)HandleMessageSummary,
                OTF_MESSAGESUMMARY_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_MESSAGESUMMARY_RECORD );
 
             // ... OTF_COLLOPSUMMARY_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_CollOpSummary,
+               (OTF_FunctionPointer*)HandleCollOpSummary,
                OTF_COLLOPSUMMARY_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_COLLOPSUMMARY_RECORD );
 
             // ... OTF_FILEOPERATIONSUMMARY_RECORD
             OTF_HandlerArray_setHandler( handler_array,
-               (OTF_FunctionPointer*)Handle_FileOpSummary,
+               (OTF_FunctionPointer*)HandleFileOpSummary,
                OTF_FILEOPERATIONSUMMARY_RECORD );
-            OTF_HandlerArray_setFirstHandlerArg( handler_array, wstream,
+            OTF_HandlerArray_setFirstHandlerArg( handler_array, &fha,
                OTF_FILEOPERATIONSUMMARY_RECORD );
 
             // rewrite statistics
@@ -444,15 +441,16 @@ EventsAndStatsC::rewrite()
             }
          }
 
-#ifdef VT_UNIFY_HOOKS_AEVENTS
+#if (defined(VT_UNIFY_HOOKS_AEVENTS) || defined(VT_UNIFY_HOOKS_MARGINS))
          if( m_scope == SCOPE_EVENTS )
          {
-            // trigger HooksAsyncEventsC's generic hook for closing event stream
+            // trigger generic hooks for closing event stream
             theHooks->triggerGenericHook(
-               VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_CLOSE, 1,
-                  const_cast<uint32_t*>( &streamid ) );
+               VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_CLOSE |
+               VT_UNIFY_HOOKS_MARGINS_GENID__EVENT_STREAM_CLOSE, 1,
+               const_cast<uint32_t*>( &streamid ) );
          }
-#endif // VT_UNIFY_HOOKS_AEVENTS
+#endif // VT_UNIFY_HOOKS_AEVENTS || VT_UNIFY_HOOKS_MARGINS
 
          // close writer stream
          OTF_WStream_close( wstream );

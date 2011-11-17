@@ -91,6 +91,9 @@ void HooksRawC::writeRecHook_DefTimeRange( HooksC::VaArgsT & args ) { DOSOMETHIN
 void HooksRawC::readRecHook_DefProcessGroup( HooksC::VaArgsT & args ) { DOSOMETHING; }
 void HooksRawC::writeRecHook_DefProcessGroup( HooksC::VaArgsT & args ) { DOSOMETHING; }
 
+void HooksRawC::readRecHook_DefProcessGroupAttributes( HooksC::VaArgsT & args ) { DOSOMETHING; }
+void HooksRawC::writeRecHook_DefProcessGroupAttributes( HooksC::VaArgsT & args ) { DOSOMETHING; }
+
 void HooksRawC::readRecHook_DefProcess( HooksC::VaArgsT & args ) { DOSOMETHING; }
 void HooksRawC::writeRecHook_DefProcess( HooksC::VaArgsT & args ) { DOSOMETHING; }
 
@@ -120,6 +123,9 @@ void HooksRawC::writeRecHook_DefCounterGroup( HooksC::VaArgsT & args ) { DOSOMET
 
 void HooksRawC::readRecHook_DefCounter( HooksC::VaArgsT & args ) { DOSOMETHING; }
 void HooksRawC::writeRecHook_DefCounter( HooksC::VaArgsT & args ) { DOSOMETHING; }
+
+void HooksRawC::readRecHook_DefCounterAssignments( HooksC::VaArgsT & args ) { DOSOMETHING; }
+void HooksRawC::writeRecHook_DefCounterAssignments( HooksC::VaArgsT & args ) { DOSOMETHING; }
 
 void HooksRawC::readRecHook_DefKeyValue( HooksC::VaArgsT & args ) { DOSOMETHING; }
 void HooksRawC::writeRecHook_DefKeyValue( HooksC::VaArgsT & args ) { DOSOMETHING; }

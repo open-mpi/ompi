@@ -302,25 +302,33 @@ static void metric_descriptions(void)
       if (metricv[i]->descr[j] == '\n') metricv[i]->descr[j]='\0';
       j=strlen(metricv[i]->descr)-1;
       if (metricv[i]->descr[j] != '.')
-	strncat(metricv[i]->descr, ".", sizeof(metricv[i]->descr));
+	strncat(metricv[i]->descr, ".",
+	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
     }
 
     if (metricv[i]->papi_code & PAPI_PRESET_MASK) { /* PAPI preset */
       char *postfix_chp = info.postfix;
       char derive_ch = strcmp(info.derived,"DERIVED_SUB")?'+':'-';
-      strncat(metricv[i]->descr, " [ ", sizeof(metricv[i]->descr));
-      strncat(metricv[i]->descr, info.name[0], sizeof(metricv[i]->descr));
+      strncat(metricv[i]->descr, " [ ",
+              sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
+      strncat(metricv[i]->descr, info.name[0],
+              sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
       for (k=1; k<(int)info.count; k++) {
 	char op[4];
 	postfix_chp = postfix_chp?strpbrk(++postfix_chp, "+-*/"):NULL;
 	sprintf(op, " %c ", (postfix_chp?*postfix_chp:derive_ch));
-	strncat(metricv[i]->descr, op, sizeof(metricv[i]->descr));
-	strncat(metricv[i]->descr, info.name[k], sizeof(metricv[i]->descr));
+	strncat(metricv[i]->descr, op,
+	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
+	strncat(metricv[i]->descr, info.name[k],
+	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
       }
-      strncat(metricv[i]->descr, " ]", sizeof(metricv[i]->descr));
+      strncat(metricv[i]->descr, " ]",
+              sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
       if (strcmp(info.symbol, metricv[i]->name) != 0) { /* add preset name */
-	strncat(metricv[i]->descr, " = ", sizeof(metricv[i]->descr)); 
-	strncat(metricv[i]->descr, info.symbol, sizeof(metricv[i]->descr));
+	strncat(metricv[i]->descr, " = ",
+	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
+	strncat(metricv[i]->descr, info.symbol,
+	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
       }
     }
 

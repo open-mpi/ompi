@@ -9,7 +9,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define STRBUF_SIZE  0x400   /* buffer size for strings */
 #define MAX_LINE_LEN 0x20000 /* max file line length */
 
 /* data structure for group assignments */
@@ -103,7 +102,7 @@ int RFG_Groups_setDefFile( RFG_Groups* groups, const char* deffile )
 int RFG_Groups_readDefFile( RFG_Groups* groups )
 {
   FILE*    f;
-  char*    orgline;
+  char*    line;
   uint32_t lineno = 0;
   uint8_t  parse_err = 0;
 
@@ -122,8 +121,8 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     return 0;
   }
 
-  orgline = ( char* )malloc( MAX_LINE_LEN * sizeof( char ) );
-  if( orgline == NULL )
+  line = ( char* )malloc( MAX_LINE_LEN * sizeof( char ) );
+  if( line == NULL )
   {
     fclose( f );
     return 0;
@@ -131,36 +130,29 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
 
   /* read lines */
 
-  while( !parse_err && fgets( orgline, MAX_LINE_LEN - 1, f ) )
+  while( !parse_err && fgets( line, MAX_LINE_LEN, f ) )
   {
-    char  group[STRBUF_SIZE];
+    char* group;
     char* p;
-    char* line;
 
-    /* remove newline */
-
-    if( strlen(orgline) > 0 && orgline[strlen(orgline)-1] == '\n' )
-      orgline[strlen(orgline)-1] = '\0';
-
-    /* copy line so that the original line keep alive */
-
-    line = strdup( orgline );
-
+    /* increment line number */
     lineno++;
 
-    if( strlen( line ) == 0 )
-    {
-      free( line );
-      continue;
-    }
+    /* remove newline */
+    if( strlen( line ) > 0 && line[strlen(line)-1] == '\n' )
+      line[strlen(line)-1] = '\0';
 
+    /* remove leading and trailing spaces from line */
     vt_strtrim( line );
 
-    if( line[0] == '#' )
-    {
-      free( line );
+    /* continue if line is empty */
+    if( strlen( line ) == 0 )
       continue;
-    }
+
+    /* continue if line is a comment */
+    if( line[0] == '#' )
+      continue;
+
 
     /* search for '='
        e.g. "GROUP=func1;func2;func3"
@@ -171,7 +163,6 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     if( p == NULL )
     {
       parse_err = 1;
-      free( line );
       break;
     }
 
@@ -181,7 +172,8 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     */
 
     *p = '\0';
-    strcpy( group, line );
+
+    group = strdup( line );
     vt_strtrim( group );
 
     /* split remaining line at ';' to get pattern */
@@ -189,7 +181,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
     p = strtok( p+1, ";" );
     do
     {
-      char pattern[STRBUF_SIZE];
+      char* pattern;
 
       if( !p )
       {
@@ -197,8 +189,7 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
 	break;
       }
 
-      strcpy( pattern, p );
-
+      pattern = strdup( p );
       vt_strtrim( pattern );
 
       /* add group assignment */
@@ -206,18 +197,20 @@ int RFG_Groups_readDefFile( RFG_Groups* groups )
       if( strlen( pattern ) > 0 )
 	RFG_Groups_addAssign( groups, group, pattern );
 
+      free( pattern );
+
     } while( ( p = strtok( 0, ";" ) ) );
 
-    free( line );
+    free( group );
   }
 
   if( parse_err )
   {
-    fprintf( stderr, "%s:%u: Could not parse line '%s'\n",
-	     groups->deffile, lineno, orgline );
+    fprintf( stderr, "%s:%u: Could not be parsed\n",
+             groups->deffile, lineno );
   }
 
-  free( orgline );
+  free( line );
 
   fclose( f );
 

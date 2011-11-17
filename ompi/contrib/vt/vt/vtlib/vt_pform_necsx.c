@@ -71,7 +71,7 @@ char* vt_pform_exec() {
 
 /* clock resolution */
 uint64_t vt_pform_clockres() {
-  return 1e6;
+  return 1000000LL;
 }
 
 /* local or global wall-clock time */

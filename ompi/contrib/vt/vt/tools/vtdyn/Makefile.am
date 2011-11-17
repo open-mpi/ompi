@@ -6,7 +6,7 @@ if AMBUILDBINARIES
 bin_PROGRAMS = vtdyn
 endif
 
-INCLUDES = $(DYNIINCDIR) -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/rfg
+INCLUDES = $(DYNIINCDIR) -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/vtlib -I$(top_srcdir)/rfg
 
 vtdyn_SOURCES = \
 	vt_dyn.h \

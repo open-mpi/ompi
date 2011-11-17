@@ -85,6 +85,9 @@ private:
    void readRecHook_DefProcessGroup( HooksC::VaArgsT & args );
    void writeRecHook_DefProcessGroup( HooksC::VaArgsT & args );
 
+   void readRecHook_DefProcessGroupAttributes( HooksC::VaArgsT & args );
+   void writeRecHook_DefProcessGroupAttributes( HooksC::VaArgsT & args );
+
    void readRecHook_DefProcess( HooksC::VaArgsT & args );
    void writeRecHook_DefProcess( HooksC::VaArgsT & args );
 
@@ -114,6 +117,9 @@ private:
 
    void readRecHook_DefCounter( HooksC::VaArgsT & args );
    void writeRecHook_DefCounter( HooksC::VaArgsT & args );
+
+   void readRecHook_DefCounterAssignments( HooksC::VaArgsT & args );
+   void writeRecHook_DefCounterAssignments( HooksC::VaArgsT & args );
 
    void readRecHook_DefKeyValue( HooksC::VaArgsT & args );
    void writeRecHook_DefKeyValue( HooksC::VaArgsT & args );

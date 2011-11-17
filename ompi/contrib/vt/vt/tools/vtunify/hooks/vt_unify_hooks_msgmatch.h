@@ -103,10 +103,10 @@ private:
    // event record handlers
    //
 
-   static int Handle_EventComment( void * userData,
+   static int HandleEventComment( void * userData,
                  uint64_t time, uint32_t proc, const char * comment );
 
-   static int Handle_RecvMsg( LargeVectorC<RecvMsgS*> * recvMsgs,
+   static int HandleRecvMsg( LargeVectorC<RecvMsgS*> * recvMsgs,
                  uint64_t time, uint32_t receiver, uint32_t sender,
                  uint32_t comm, uint32_t tag, uint32_t length, uint32_t scl );
 

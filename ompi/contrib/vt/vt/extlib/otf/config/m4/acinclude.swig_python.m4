@@ -34,7 +34,10 @@ canonical name.])
 
             if test x"$python_config" != x; then
                 AC_MSG_CHECKING([for python compiler flags])
-                SWIG_PYTHON_CFLAGS=`$python_config --cflags`
+                # cannot use '--cflags' here; the resulting flags might contain GNU specific flags
+                # which are not compatible with other compilers; use '--includes' instead of '--cflags'
+                #SWIG_PYTHON_CFLAGS=`$python_config --cflags
+                SWIG_PYTHON_CFLAGS=`$python_config --includes`
                 AC_MSG_RESULT([$SWIG_PYTHON_CFLAGS])
             fi
         fi

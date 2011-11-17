@@ -1081,6 +1081,38 @@ int OTF_Writer_writeDefCounterAssignments( OTF_Writer*       writer,
                                            const uint32_t*   procs_or_groups,
                                            OTF_KeyValueList* list );
 
+
+/**
+ * Writes a ProcessSubstitutes definition record
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg().
+ * @param streamid     Identifies the stream to which this definition
+ *                     belongs to. stream = 0 represents a global
+ *                     definition.
+ *
+ * @param representative     Process ID of the process that represents several others.
+ *
+ * @param numberOfProcs      Number of entries in @procs array.
+ *
+ * @param procs              The processes which are represented by
+ *                           @representative. It may or may not include 
+ *                           @representative itself.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @return             1 on success, 0 if an error occurs.
+ *
+ * \ingroup writer
+ */
+int OTF_Writer_writeDefProcessSubstitutes( OTF_Writer*       writer,
+                                           uint32_t          streamid,
+                                           uint32_t          representative,
+                                           uint32_t          numberOfProcs,
+                                           const uint32_t*   procs,
+                                           OTF_KeyValueList* list );
+
+
 /**
  * Write a no-operation record. This can be used to write an OTF_KeyValueList
  * that is not attached to a special event record.

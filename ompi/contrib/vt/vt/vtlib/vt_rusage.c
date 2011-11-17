@@ -10,6 +10,8 @@
  * See the file COPYING in the package base directory for details
  **/
 
+#define _GNU_SOURCE
+
 #include "config.h"
 
 #include <ctype.h>
@@ -33,6 +35,14 @@
 
 /* maximum number of resource usage counters */
 #define RU_CNTR_MAXNUM 16
+
+/* if possible, get resource usage measures for the calling thread
+   (RUSAGE_THREAD) instead of the process (RUSAGE_SELF) */
+#if defined(HAVE_DECL_RUSAGE_THREAD) && HAVE_DECL_RUSAGE_THREAD
+# define RU_WHO RUSAGE_THREAD
+#else /* HAVE_DECL_RUSAGE_THREAD */
+# define RU_WHO RUSAGE_SELF
+#endif /* HAVE_DECL_RUSAGE_THREAD */
 
 /* resource usage counter indices */
 typedef enum {
@@ -201,9 +211,10 @@ void vt_rusage_init()
     vt_rusage_cidv[i] =
       vt_def_counter(VT_CURRENT_THREAD,
 		     ru_active_cntrv[i]->name,
+		     ru_active_cntrv[i]->unit,
 		     ru_active_cntrv[i]->prop,
 		     gid,
-		     ru_active_cntrv[i]->unit);
+		     0);
   }
 }
 
@@ -213,7 +224,7 @@ void vt_rusage_read(struct vt_rusage* rusage, uint64_t* values, uint32_t* change
   uint64_t new_value = 0;
   
   /* get resource usage */
-  if ( getrusage(RUSAGE_SELF, &(rusage->ru)) == -1 )
+  if ( getrusage(RU_WHO, &(rusage->ru)) == -1 )
     vt_error_msg("getrusage: %s", strerror(errno));
 
 #ifdef RU_WRITE_ONLY_CHANGED_VALS
@@ -227,13 +238,13 @@ void vt_rusage_read(struct vt_rusage* rusage, uint64_t* values, uint32_t* change
     {
       case RU_UTIME:
       {
-	new_value = ((uint64_t)rusage->ru.ru_utime.tv_sec * 1e6 +
+	new_value = ((uint64_t)rusage->ru.ru_utime.tv_sec * 1000000LL +
 		     (uint64_t)rusage->ru.ru_utime.tv_usec);
 	break;
       }
       case RU_STIME:
       {
-	new_value = ((uint64_t)rusage->ru.ru_stime.tv_sec * 1e6 +
+	new_value = ((uint64_t)rusage->ru.ru_stime.tv_sec * 1000000LL +
 		     (uint64_t)rusage->ru.ru_stime.tv_usec);
 	break;
       }

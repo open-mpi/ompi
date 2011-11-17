@@ -1,4 +1,4 @@
-<vtconfig vtconfigversion="1.0" vtversion="@PACKAGE_VERSION@">
+<vtconfig vtconfigversion="1.0.1" vtversion="@PACKAGE_VERSION@">
 
 <config attr="nm">@VT_SETUP_NM@</config>
 

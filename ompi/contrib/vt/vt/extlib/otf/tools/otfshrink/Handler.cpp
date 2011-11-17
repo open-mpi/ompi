@@ -4,35 +4,83 @@
 */
 
 #include "Handler.h"
+#include <cassert>
+#include <iostream>
 
 
-/* most of these hanlders act like copyhandlers, except handleDefProcess and handleDefProcessGroup */
+int handleDefProcess (void *userData, uint32_t stream, uint32_t process,
+		const char *name, uint32_t parent, OTF_KeyValueList* list) {
 
-int handleDefinitionComment (void *userData, uint32_t stream, const char *comment) {
-	
-	return ( 0 == OTF_Writer_writeDefinitionComment ( (OTF_Writer*) userData, stream, comment) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
 
-int handleDefTimerResolution (void *userData, uint32_t stream, uint64_t ticksPerSecond) {
-
-	return ( 0 == OTF_Writer_writeDefTimerResolution ( (OTF_Writer*) userData, stream, ticksPerSecond) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
-
-int handleDefProcess (void *userData, uint32_t stream, uint32_t process, const char *name, uint32_t parent) {
-	
+	int ret;
 	firstarg *first = (firstarg*) userData;
 
-	if (  first->procMap.end() == first->procMap.find(process) ) {
+	if ( ( cpuMap.end() == cpuMap.find( process ) ) != inverse ) {
+
+		/* process was replaced, drop definition */
 		return OTF_RETURN_OK;
 	}
 
-	return ( 0 == OTF_Writer_writeDefProcess ( (OTF_Writer*) first->writer, stream, process, name, parent) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
+    /* disable parent process specification if the original parent process was dropped */
+    if ( parent ) {
+
+        if ( ( cpuMap.end() == cpuMap.find( parent ) ) != inverse ) {
+
+            parent= 0;
+        } 
+    }
+
+	/* if process represents other processes, modify its name */
+
+	map< uint32_t, set< uint32_t > >::const_iterator ft= replacementMap.find( process );
+	map< uint32_t, set< uint32_t > >::const_iterator ftend= replacementMap.end();
+	if ( ftend != ft && 0 < ft->second.size() ) {
+
+		uint32_t len= ft->second.size() +1;
+		/* copy of name, truncate at 99 characters */
+		char newname[100];
+		/* alter process name, append hint about the number of processes replaced by this 
+		one including itself */
+		snprintf( newname, 100, "%s #%u", name, len );
+
+		uint32_t* substitutes= (uint32_t*) malloc( len * sizeof(uint32_t) );
+		assert( substitutes );
+		uint32_t* p= substitutes;
+		*p= process; ++p;
+
+		set< uint32_t >::const_iterator it= ft->second.begin();
+		set< uint32_t >::const_iterator itend= ft->second.end();
+		for ( ; it != itend; ++it ) {
+
+			*p= *it; ++p;
+		}
+
+		ret= OTF_Writer_writeDefProcessSubstitutes( (OTF_Writer*) first->writer, 
+			stream, process, len, substitutes, NULL );
+		if ( 0 == ret ) return OTF_RETURN_ABORT;
+
+		free( substitutes );
+		substitutes= NULL;
+
+		ret= OTF_Writer_writeDefProcessKV ( (OTF_Writer*) first->writer, 
+			stream, process, newname, parent, list);
+		if ( 0 == ret ) return OTF_RETURN_ABORT;
+
+	} else {
+
+		ret= OTF_Writer_writeDefProcessKV ( (OTF_Writer*) first->writer, 
+		stream, process, name, parent, list);
+		if ( 0 == ret ) return OTF_RETURN_ABORT;
+	}
+
+	return OTF_RETURN_OK;
 }
 
-int handleDefProcessGroup (void *userData, uint32_t stream, uint32_t procGroup, const char *name, uint32_t numberOfProcs, const uint32_t *procs) {
+
+int handleDefProcessGroup (void *userData, uint32_t stream, uint32_t procGroup,
+		const char *name, uint32_t numberOfProcs, const uint32_t *procs,
+		OTF_KeyValueList* list) {
+
 
 	firstarg *first = (firstarg*) userData;
 	
@@ -41,7 +89,9 @@ int handleDefProcessGroup (void *userData, uint32_t stream, uint32_t procGroup, 
 	int ret;
 
 	for(uint32_t i = 0; i < numberOfProcs; i++) {
-		if (  first->procMap.end() != first->procMap.find(procs[i]) ) {
+
+		if ( ( cpuMap.end() == cpuMap.find( procs[i] ) ) == inverse ) {
+
 			mod_procs[mod_numberOfProcs] = procs[i];
 			mod_numberOfProcs++;
 		}
@@ -53,8 +103,8 @@ int handleDefProcessGroup (void *userData, uint32_t stream, uint32_t procGroup, 
 		return OTF_RETURN_OK;
 	}
 	
-	ret = ( 0 == OTF_Writer_writeDefProcessGroup ( (OTF_Writer*) first->writer, stream, procGroup, name,
-		mod_numberOfProcs, mod_procs) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+	ret = ( 0 == OTF_Writer_writeDefProcessGroupKV ( (OTF_Writer*) first->writer, stream, procGroup, name,
+		mod_numberOfProcs, mod_procs, list) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
 
 	delete[] mod_procs;
 
@@ -62,71 +112,17 @@ int handleDefProcessGroup (void *userData, uint32_t stream, uint32_t procGroup, 
 
 }
 
-int handleDefFunction (void *userData, uint32_t stream, uint32_t func, const char *name, uint32_t funcGroup, uint32_t source) {
 
-	return ( 0 == OTF_Writer_writeDefFunction ( (OTF_Writer*) userData, stream, func, name, funcGroup, source) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
+int handleDefProcessSubstitutes (void* userData, uint32_t stream,
+		uint32_t representative, uint32_t numberOfProcs,
+		const uint32_t* procs, OTF_KeyValueList* list) {
 
-int handleDefFunctionGroup (void *userData, uint32_t stream, uint32_t funcGroup, const char *name) {
 
-	return ( 0 == OTF_Writer_writeDefFunctionGroup ( (OTF_Writer*) userData, stream, funcGroup, name) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
+	/* it isn't clear yet how to handle this definition; abort for now */
 
-int handleDefCollectiveOperation (void *userData, uint32_t stream, uint32_t collOp, const char *name, uint32_t type) {
+	cerr << endl << "Conflict: The input trace already contains process substitution information."
+        "This probably means that it has been created by otfshrink and cannot be processed again. "
+        "Please start with the original trace instead." << endl << endl;
 
-	return ( 0 == OTF_Writer_writeDefCollectiveOperation ( (OTF_Writer*) userData, stream, collOp, name, type) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
-
-int handleDefCounter (void *userData, uint32_t stream, uint32_t counter, const char *name, uint32_t properties, uint32_t counterGroup, const char *unit) {
-
-	return ( 0 == OTF_Writer_writeDefCounter ( (OTF_Writer*) userData, stream, counter, name, properties,
-		counterGroup, unit) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
-
-int handleDefCounterGroup (void *userData, uint32_t stream, uint32_t counterGroup, const char *name) {
-
-	return ( 0 == OTF_Writer_writeDefCounterGroup ( (OTF_Writer*) userData, stream, counterGroup, name) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
-
-int handleDefScl (void *userData, uint32_t stream, uint32_t source, uint32_t sourceFile, uint32_t line) {
-
-	return ( 0 == OTF_Writer_writeDefScl ( (OTF_Writer*) userData, stream, source, sourceFile, line) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
-
-int handleDefSclFile (void *userData, uint32_t stream, uint32_t sourceFile, const char *name) {
-
-	return ( 0 == OTF_Writer_writeDefSclFile ( (OTF_Writer*) userData, stream, sourceFile, name) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
-
-int handleDefCreator (void *userData, uint32_t stream, const char *creator) {
-
-	return ( 0 == OTF_Writer_writeDefCreator ( (OTF_Writer*) userData, stream, creator) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
-
-int handleDefVersion (void *userData, uint32_t stream, uint8_t major, uint8_t minor, uint8_t sub, const char *string) {
-
-	/* this is deprecated and not necessary at all */
-	/*return ( 0 == OTF_Writer_writeOtfVersion ( (OTF_Writer*) userData, stream) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;*/
-
-	return OTF_RETURN_OK;
-}
-
-int handleDefFile (void *userData, uint32_t stream, uint32_t token, const char *name, uint32_t group) {
-
-	return ( 0 == OTF_Writer_writeDefFile ( (OTF_Writer*) userData, stream, token, name, group) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
-}
-
-int handleDefFileGroup (void *userData, uint32_t stream, uint32_t token, const char *name) {
-
-	return ( 0 == OTF_Writer_writeDefFileGroup ( (OTF_Writer*) userData, stream, token, name) )
-		? OTF_RETURN_ABORT : OTF_RETURN_OK;
+	return OTF_RETURN_ABORT;
 }

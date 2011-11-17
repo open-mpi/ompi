@@ -15,6 +15,7 @@
 
 #include "config.h"
 
+#include "vt_defs.h"
 #include "vt_inttypes.h"
 
 #include "rfg_filter.h"
@@ -53,7 +54,8 @@ struct ParamsS
 {
    ParamsS()
       : mode(MODE_CREATE), mutatee_pid(-1), verbose_level(1),
-        ignore_no_dbg(false), show_usage(false), show_version(false) {}
+        detach(true), ignore_no_dbg(false), show_usage(false),
+        show_version(false) {}
 
    MutationT                mode;          // mutation mode
    std::string              mutatee;       // mutatee executable name
@@ -63,6 +65,7 @@ struct ParamsS
    std::string              filtfile;      // pathname of filter file
    std::string              outfile;       // file name of binary to rewrite
    uint32_t                 verbose_level; // verbose level
+   bool                     detach;        // flag: detach from mutatee?
    bool                     ignore_no_dbg; // flag: ignore funcs. without debug?
    bool                     show_usage;    // flag: show usage text?
    bool                     show_version;  // flag: show VampirTrace version?
@@ -93,16 +96,28 @@ private:
    //
    struct InstFuncS
    {
-      InstFuncS() : func(0), addr(0), lno(0) {}
-      InstFuncS(BPatch_function * _func, unsigned long _addr,
-                std::string _name, std::string _file, uint32_t _lno )
-         : func(_func), addr(_addr), name(_name), file(_file), lno(_lno) {}
+      InstFuncS( const uint32_t & _index, const std::string & _name,
+                 const std::string & _file, const uint32_t & _lno,
+                 const BPatch_Vector<BPatch_point*> *& _entry_points,
+                 const BPatch_Vector<BPatch_point*> *& _exit_points )
+         : index( _index ), name( _name ), file( _file ), lno( _lno ),
+           entry_points( _entry_points ), exit_points( _exit_points ) {}
 
-      BPatch_function * func;   // BPatch function object
-      unsigned long addr;       // function address
-      std::string name;         // function name
-      std::string file;         // source file name of function definition
-      uint32_t lno;             // line number of function definition
+      // function index within region id table
+      uint32_t index;
+
+      // function name
+      std::string name;
+
+      // source file name and line number of function definition
+      //
+      std::string file;
+      uint32_t lno;
+
+      // function entry and exit points to be instrumented
+      //
+      const BPatch_Vector<BPatch_point*> * entry_points;
+      const BPatch_Vector<BPatch_point*> * exit_points;
 
    };
 
@@ -115,8 +130,11 @@ private:
    // get functions to be instrumented
    bool getFunctions( std::vector<InstFuncS> & instFuncs );
 
-   // instrument a function
-   bool instrumentFunction( const InstFuncS & instFunc );
+   // instrument a function entry
+   bool instrumentFunctionEntry( const InstFuncS & instFunc );
+
+   // instrument a function exit
+   bool instrumentFunctionExit( const InstFuncS & instFunc );
 
    // read input filter file
    bool readFilter();

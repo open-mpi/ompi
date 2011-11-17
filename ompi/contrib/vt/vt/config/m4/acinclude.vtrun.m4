@@ -30,9 +30,18 @@ AC_DEFUN([ACVT_RUN],
 
 	AS_IF([test x"$check_vtrun" = "xyes"],
 	[
-		AC_MSG_CHECKING([whether we can build shared libraries])
-		AS_IF([test x"$enable_shared" = "xyes"],
-		[AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); vtrun_error="yes"])
+		AS_IF([test "$PLATFORM" = "bgl" -o "$PLATFORM" = "bgp"],
+		[
+			AC_MSG_NOTICE([error: application execution wrapper not supported on this platform])
+			vtrun_error="yes"
+		])
+
+		AS_IF([test x"$vtrun_error" = "xno"],
+		[
+			AC_MSG_CHECKING([whether we can build shared libraries])
+			AS_IF([test x"$enable_shared" = "xyes"],
+			[AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); vtrun_error="yes"])
+		])
 
 		AS_IF([test x"$vtrun_error" = "xno"],
 		[

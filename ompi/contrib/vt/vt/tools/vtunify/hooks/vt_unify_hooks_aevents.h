@@ -80,10 +80,12 @@ private:
    {
       // constructor
       AsyncEventCounterS( const uint64_t & _time, OTF_KeyValueList *& _kvs,
-                          const uint32_t & _counter, const uint64_t & _value )
+                          const uint32_t & _procgrp, const uint32_t & _counter,
+                          const uint64_t & _value )
          : AsyncEventBaseS(ASYNC_EVENT_TYPE_COUNTER, _time, _kvs),
-           counter(_counter), value(_value) {}
+           procgrp(_procgrp), counter(_counter), value(_value) {}
 
+      uint32_t procgrp; // global process group token (if it's a group counter)
       uint32_t counter; // global counter token
       uint64_t value;   // counter value
 
@@ -183,38 +185,91 @@ private:
    // event records
 
    // common stuff for write event record hooks
-   void writeRecHook_Event( HooksC::VaArgsT & args,
-           const uint32_t & timeArgIdx, const uint32_t & streamIdArgIdx,
-           const uint32_t & kvsArgIdx, const uint32_t & doWriteArgIdx );
+   void writeRecHook_Event( uint64_t * time, uint32_t * streamid,
+           OTF_KeyValueList ** kvs, bool * dowrite );
 
    void writeRecHook_EventComment( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 4, 5 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[4], (bool*)args[5] );
+   }
+
    void writeRecHook_Enter( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 3, 5, 6 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[3],
+         (OTF_KeyValueList**)args[5], (bool*)args[6] );
+   }
+
    void writeRecHook_Leave( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 3, 5, 6 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[3],
+         (OTF_KeyValueList**)args[5], (bool*)args[6] );
+   }
+
    void writeRecHook_Counter( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 5, 6 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[6], (bool*)args[7] );
+   }
+
    void writeRecHook_BeginFileOp( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 5, 6 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[5], (bool*)args[6] );
+   }
+
    void writeRecHook_EndFileOp( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 9, 10 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[9], (bool*)args[10] );
+   }
+
    void writeRecHook_SendMsg( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 8, 9 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[8], (bool*)args[9] );
+   }
+
    void writeRecHook_RecvMsg( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 8, 9 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[8], (bool*)args[9] );
+   }
+
    void writeRecHook_BeginCollOp( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 10, 11 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[10], (bool*)args[11] );
+   }
+
    void writeRecHook_EndCollOp( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 4, 5 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[4], (bool*)args[5] );
+   }
+
    void writeRecHook_RMAPut( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 9, 10 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[9], (bool*)args[10] );
+   }
+
    void writeRecHook_RMAPutRemoteEnd( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 9, 10 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[9], (bool*)args[10] );
+   }
    void writeRecHook_RMAGet( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 9, 10 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[9], (bool*)args[10] );
+   }
+
    void writeRecHook_RMAEnd( HooksC::VaArgsT & args )
-   { writeRecHook_Event( args, 1, 2, 7, 8 ); }
+   {
+      writeRecHook_Event( (uint64_t*)args[1], (uint32_t*)args[2],
+         (OTF_KeyValueList**)args[7], (bool*)args[8] );
+   }
 
    // generic hook
    void genericHook( const uint32_t & id, HooksC::VaArgsT & args );

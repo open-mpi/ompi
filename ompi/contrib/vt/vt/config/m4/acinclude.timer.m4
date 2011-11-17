@@ -129,7 +129,7 @@ AC_DEFUN([ACVT_TIMER],
 	AC_MSG_NOTICE([selected timer: $timer])
 
 	case $timer in
-		TIMER_BGP_GET_TIMEBASE | TIMER_BGP_GET_TIMEBASE | TIMER_GETTIMEOFDAY)
+		TIMER_RTS_GET_TIMEBASE | TIMER_BGP_GET_TIMEBASE | TIMER_SYSSX_HGTIME | TIMER_GETTIMEOFDAY)
 			timer_is_global=yes
 			timer_is_global_def=1
 			;;

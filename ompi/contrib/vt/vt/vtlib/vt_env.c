@@ -207,20 +207,42 @@ int vt_env_dyn_ignore_nodbg()
   char* tmp;
 
   if (dyn_ignore_nodbg == -1)
-  {
-    tmp = getenv("VT_DYN_IGNORE_NODBG");
-    if (tmp != NULL && strlen(tmp) > 0)
     {
-      vt_cntl_msg(2, "VT_DYN_IGNORE_NODBG=%s", tmp);
+      tmp = getenv("VT_DYN_IGNORE_NODBG");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_DYN_IGNORE_NODBG=%s", tmp);
 
-      dyn_ignore_nodbg = parse_bool(tmp);
+          dyn_ignore_nodbg = parse_bool(tmp);
+        }
+      else
+        {
+          dyn_ignore_nodbg = 0;
+        }
     }
-    else
-    {
-      dyn_ignore_nodbg = 0;
-    }
-  }
   return dyn_ignore_nodbg;
+}
+
+int vt_env_dyn_detach()
+{
+  static int dyn_detach = -1;
+  char* tmp;
+
+  if (dyn_detach == -1)
+    {
+      tmp = getenv("VT_DYN_DETACH");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_DYN_DETACH=%s", tmp);
+
+          dyn_detach = parse_bool(tmp);
+        }
+      else
+        {
+          dyn_detach = 1;
+        }
+    }
+  return dyn_detach;
 }
 
 char* vt_env_gnu_nm()
@@ -1057,54 +1079,6 @@ int vt_env_mpicheck()
   return mpicheck;
 }
 
-int vt_env_max_mpi_comms()
-{
-  static int max_mpi_comms = -1;
-  char* tmp;
-
-  if (max_mpi_comms == -1)
-    {
-      tmp = getenv("VT_MAX_MPI_COMMS");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_MAX_MPI_COMMS=%s", tmp);
-
-          max_mpi_comms = atoi(tmp);
-          if (max_mpi_comms < 2)
-            vt_error_msg("VT_MAX_MPI_COMMS not properly set");
-        }
-      else
-        {
-          max_mpi_comms = 100;
-        }
-    }
-  return max_mpi_comms;
-}
-
-int vt_env_max_mpi_wins()
-{
-  static int max_mpi_wins = -1;
-  char* tmp;
-
-  if (max_mpi_wins == -1)
-    {
-      tmp = getenv("VT_MAX_MPI_WINS");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_MAX_MPI_WINS=%s", tmp);
-
-          max_mpi_wins = atoi(tmp);
-          if (max_mpi_wins < 1)
-            vt_error_msg("VT_MAX_MPI_WINS not properly set");
-        }
-      else
-        {
-          max_mpi_wins = 100;
-        }
-    }
-  return max_mpi_wins;
-}
-
 int vt_env_mpicheck_errexit()
 {
   static int mpicheck_errexit = -1;
@@ -1267,6 +1241,27 @@ int vt_env_sync_flush()
   return sync_flush;
 }
 
+int vt_env_sync_flush_skip(void)
+{
+  static int skip = -1;
+  if (skip == -1)
+    {
+      char* tmp = getenv("VT_SYNC_FLUSH_SKIP");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_SYNC_FLUSH_SKIP=%s", tmp);
+
+          skip = atoi(tmp);
+          if (skip < 0) skip = 0;
+        }
+      else
+        {
+          skip = 0;
+        }
+    }
+  return skip;
+}
+
 int vt_env_sync_flush_level()
 {
   static int sync_flush_level = -1;
@@ -1289,6 +1284,27 @@ int vt_env_sync_flush_level()
         }
     }
   return sync_flush_level;
+}
+
+int vt_env_onoff_check_stack_balance()
+{
+  static int check_stack_balance = -1;
+
+  if (check_stack_balance == -1)
+    {
+      char* tmp = getenv("VT_ONOFF_CHECK_STACK_BALANCE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_ONOFF_CHECK_STACK_BALANCE=%s", tmp);
+
+          check_stack_balance = parse_bool(tmp);
+        }
+      else
+        {
+          check_stack_balance = 1;
+        }
+    }
+  return check_stack_balance;
 }
 
 int vt_env_max_stack_depth()
@@ -1387,6 +1403,38 @@ int vt_env_compression()
 #else /* HAVE_ZLIB */
   return 0;
 #endif /* HAVE_ZLIB */
+}
+
+size_t vt_env_compression_bsize(void)
+{
+  static size_t bsize = 0;
+  if (bsize == 0)
+    {
+      char* tmp = getenv("VT_COMPRESSION_BUFFER_SIZE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_COMPRESSION_BUFFER_SIZE=%s", tmp);
+
+          bsize = parse_size(tmp);
+        }
+    }
+  return bsize;
+}
+
+size_t vt_env_otf_bsize(void)
+{
+  static size_t bsize = 0;
+  if (bsize == 0)
+    {
+      char* tmp = getenv("VT_OTF_BUFFER_SIZE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_OTF_BUFFER_SIZE=%s", tmp);
+
+          bsize = parse_size(tmp);
+        }
+    }
+  return bsize;
 }
 
 int vt_env_java_native()
@@ -1706,27 +1754,6 @@ int vt_env_cudatrace_gpumem()
   return cudamem;
 }
 
-int vt_env_cudatrace_error()
-{
-  static int error = -1;
-
-  if (error == -1)
-    {
-      char* tmp = getenv("VT_CUDATRACE_ERROR");
-      if(tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_CUDATRACE_ERROR=%s", tmp);
-
-          error = parse_bool(tmp);
-        }
-      else
-        {
-          error = 0;
-        }
-    }
-  return error;
-}
-
 char* vt_env_cupti_metrics()
 {
   static int read = 1;
@@ -1768,6 +1795,27 @@ int vt_env_cupti_sampling()
   return cuptisampling;
 }
 
+int vt_env_cupti_api_callback()
+{
+  static int cupti_cb = -1;
+
+  if (cupti_cb == -1)
+    {
+      char* tmp = getenv("VT_CUPTI_API_CALLBACK");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUPTI_API_CALLBACK=%s", tmp);
+
+          cupti_cb = parse_bool(tmp);
+        }
+      else
+        {
+          cupti_cb = 0;
+        }
+    }
+  return cupti_cb;
+}
+
 int vt_env_gputrace_debug()
 {
   static int debug = -1;
@@ -1789,4 +1837,25 @@ int vt_env_gputrace_debug()
         }
     }
   return debug;
+}
+
+int vt_env_gputrace_error()
+{
+  static int error = -1;
+
+  if (error == -1)
+    {
+      char* tmp = getenv("VT_GPUTRACE_ERROR");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_GPUTRACE_ERROR=%s", tmp);
+
+          error = parse_bool(tmp);
+        }
+      else
+        {
+          error = 0;
+        }
+    }
+  return error;
 }

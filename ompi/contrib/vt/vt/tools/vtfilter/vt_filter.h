@@ -38,8 +38,8 @@
 //
 typedef enum
 {
-  MODE_GENFILT, // generate a filter file
-  MODE_FILTTRC  // filter a trace using an already existing filter file
+  MODE_GEN, // generate a filter file
+  MODE_FILT // filter a trace using an already existing filter file
 } FilterModeT;
 
 // data structure for program parameters
@@ -47,7 +47,7 @@ typedef enum
 struct ParamsS
 {
   ParamsS()
-  : mode(MODE_GENFILT), input_trcfile(""), verbose_level(0),
+  : mode(default_mode), input_trcfile(""), verbose_level(0),
     show_progress(false), show_usage(false), show_version(false),
     g_output_filtfile(""), g_incl_file(""), g_excl_file(""),
     g_call_limit(g_default_call_limit), g_reduce_ratio(0),
@@ -59,6 +59,7 @@ struct ParamsS
 
   // defaults
   //
+  static const FilterModeT default_mode                 = MODE_FILT;
   static const uint32_t    g_default_call_limit         = 0;
   static const uint32_t    f_default_max_output_streams = 0;
   static const uint32_t    f_default_max_file_handles   = 256;
@@ -108,7 +109,7 @@ extern void PVPrint( uint8_t level, const char * fmt, ... );
 //
 
 // name of program's executable
-extern const std::string ExeName;
+extern std::string ExeName;
 
 // program parameters
 extern ParamsS           Params;

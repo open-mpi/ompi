@@ -3,7 +3,8 @@ otfdoc_DATA = \
 	$(top_srcdir)/LICENSE \
 	api/specification.pdf \
 	tools/otftools.pdf \
-	tools/otfprofile.pdf
+	tools/otfprofile.pdf \
+	tools/otfprofile_clustering.pdf
 
 otfdocdir = $(docdir)
 

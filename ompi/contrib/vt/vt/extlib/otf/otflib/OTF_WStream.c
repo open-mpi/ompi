@@ -84,7 +84,7 @@ int OTF_WStream_finish( OTF_WStream* wstream ) {
 #		else
 			tmpret= OTF_WBuffer_close( wstream->defBuffer );
 			if( 0 == tmpret ) {
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_close() failed for the def buffer.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -101,7 +101,7 @@ int OTF_WStream_finish( OTF_WStream* wstream ) {
 #		else
 			tmpret= OTF_WBuffer_close( wstream->eventBuffer );
 			if( 0 == tmpret ) {
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_close() failed for the event buffer.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -118,7 +118,7 @@ int OTF_WStream_finish( OTF_WStream* wstream ) {
 #		else
 			tmpret= OTF_WBuffer_close( wstream->snapsBuffer );
 			if( 0 == tmpret ) {
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_close() failed for the snapshots buffer.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -135,7 +135,7 @@ int OTF_WStream_finish( OTF_WStream* wstream ) {
 #		else
 			tmpret= OTF_WBuffer_close( wstream->statsBuffer );
 			if( 0 == tmpret ) {
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_close() failed for the statistics buffer.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -152,7 +152,7 @@ int OTF_WStream_finish( OTF_WStream* wstream ) {
 #		else
 			tmpret= OTF_WBuffer_close( wstream->markerBuffer );
 			if( 0 == tmpret ) {
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_close() failed for the statistics buffer.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -174,7 +174,7 @@ OTF_WStream* OTF_WStream_open( const char* namestub, uint32_t id,
 
 	if( NULL == manager ) {
 	
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"manager has not been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -184,7 +184,7 @@ OTF_WStream* OTF_WStream_open( const char* namestub, uint32_t id,
 	ret= (OTF_WStream*) malloc( sizeof(OTF_WStream) );
 	if( NULL == ret ) {
 	
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -213,7 +213,7 @@ int OTF_WStream_close( OTF_WStream* wstream ) {
 		ret= OTF_WStream_finish( wstream );
 		if( 0 == ret ) {
 			
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WStream_finish() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -277,7 +277,7 @@ OTF_WBuffer* OTF_WStream_getDefBuffer( OTF_WStream* wstream ) {
 			wstream->id, OTF_FILETYPE_DEF, 0, NULL );
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_getFilename() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -293,7 +293,7 @@ OTF_WBuffer* OTF_WStream_getDefBuffer( OTF_WStream* wstream ) {
 
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -305,7 +305,7 @@ OTF_WBuffer* OTF_WStream_getDefBuffer( OTF_WStream* wstream ) {
 
 		if( NULL == wstream->defBuffer ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_open() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -325,7 +325,7 @@ OTF_WBuffer* OTF_WStream_getDefBuffer( OTF_WStream* wstream ) {
 			if( 0 == OTF_WBuffer_setSize( wstream->defBuffer,
 				wstream->buffersizes ) ) {
 			
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_setSize() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -353,7 +353,7 @@ OTF_WBuffer* OTF_WStream_getEventBuffer( OTF_WStream* wstream ) {
 			wstream->id, OTF_FILETYPE_EVENT, 0, NULL );
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_getFilename() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -369,7 +369,7 @@ OTF_WBuffer* OTF_WStream_getEventBuffer( OTF_WStream* wstream ) {
 
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -381,7 +381,7 @@ OTF_WBuffer* OTF_WStream_getEventBuffer( OTF_WStream* wstream ) {
 
 		if( NULL == wstream->eventBuffer ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_open() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -401,7 +401,7 @@ OTF_WBuffer* OTF_WStream_getEventBuffer( OTF_WStream* wstream ) {
 			if( 0 == OTF_WBuffer_setSize( wstream->eventBuffer,
 				wstream->buffersizes ) ) {
 			
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_setSize() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -429,7 +429,7 @@ OTF_WBuffer* OTF_WStream_getSnapshotBuffer( OTF_WStream* wstream ) {
 			wstream->id, OTF_FILETYPE_SNAPS, 0, NULL );
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_getFilename() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -445,7 +445,7 @@ OTF_WBuffer* OTF_WStream_getSnapshotBuffer( OTF_WStream* wstream ) {
 
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -456,7 +456,7 @@ OTF_WBuffer* OTF_WStream_getSnapshotBuffer( OTF_WStream* wstream ) {
 			wstream->compression );
 		if( NULL == wstream->snapsBuffer ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_open() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -476,7 +476,7 @@ OTF_WBuffer* OTF_WStream_getSnapshotBuffer( OTF_WStream* wstream ) {
 			if( 0 == OTF_WBuffer_setSize( wstream->snapsBuffer,
 				wstream->buffersizes ) ) {
 			
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_setSize() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -504,7 +504,7 @@ OTF_WBuffer* OTF_WStream_getStatsBuffer( OTF_WStream* wstream ) {
 			wstream->id, OTF_FILETYPE_STATS, 0, NULL );
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_getFilename() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -520,7 +520,7 @@ OTF_WBuffer* OTF_WStream_getStatsBuffer( OTF_WStream* wstream ) {
 
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -531,7 +531,7 @@ OTF_WBuffer* OTF_WStream_getStatsBuffer( OTF_WStream* wstream ) {
 			wstream->compression );
 		if( NULL == wstream->statsBuffer ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_open() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -547,7 +547,7 @@ OTF_WBuffer* OTF_WStream_getStatsBuffer( OTF_WStream* wstream ) {
 			if( 0 == OTF_WBuffer_setSize( wstream->statsBuffer,
 				wstream->buffersizes ) ) {
 			
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_setSize() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -575,7 +575,7 @@ OTF_WBuffer* OTF_WStream_getMarkerBuffer( OTF_WStream* wstream ) {
 			wstream->id, OTF_FILETYPE_MARKER, 0, NULL );
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_getFilename() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -591,7 +591,7 @@ OTF_WBuffer* OTF_WStream_getMarkerBuffer( OTF_WStream* wstream ) {
 
 		if( NULL == filename ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"no memory left.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -602,7 +602,7 @@ OTF_WBuffer* OTF_WStream_getMarkerBuffer( OTF_WStream* wstream ) {
 			wstream->compression );
 		if( NULL == wstream->markerBuffer ) {
 		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_open() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -618,7 +618,7 @@ OTF_WBuffer* OTF_WStream_getMarkerBuffer( OTF_WStream* wstream ) {
 			if( 0 == OTF_WBuffer_setSize( wstream->markerBuffer,
 				wstream->buffersizes ) ) {
 			
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"OTF_WBuffer_setSize() failed.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 			}
@@ -642,7 +642,7 @@ int OTF_WStream_setCompression( OTF_WStream* wstream, OTF_FileCompression
 
 	} else {
 	
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"compression is no expected value (%u). ignored.\n",
 				__FUNCTION__, __FILE__, __LINE__, compression );
 
@@ -679,20 +679,20 @@ void OTF_WStream_setBufferSizes( OTF_WStream* wstream, uint32_t size ) {
 
 	if ( 50 > size ) {
 	
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"intended buffer size %u is too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
 		return;
 
 	} else if ( 500 > size ) {
 	
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"buffer size %u is very small, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
 
 	} else if ( 10 * 1024 *1024 < size ) {
 
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"buffer size %u is rather big, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
 
@@ -716,7 +716,7 @@ void OTF_WStream_setZBufferSizes( OTF_WStream* wstream, uint32_t size ) {
 	
 	if ( 32 > size ) {
 	
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"intended zbuffer size %u is too small, rejected.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
 		
@@ -724,13 +724,13 @@ void OTF_WStream_setZBufferSizes( OTF_WStream* wstream, uint32_t size ) {
 
 	} else if ( 512 > size ) {
 	
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"zbuffer size %u is very small, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
 
 	} else if ( 10 * 1024 *1024 < size ) {
 
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"zbuffer size %u is rather big, accepted though.\n",
 				__FUNCTION__, __FILE__, __LINE__, size );
 
@@ -758,7 +758,7 @@ void OTF_WStream_setFormat( OTF_WStream* wstream, uint32_t format ) {
 
 	if ( format > 1 ) {
 	
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"unknown ouput format chosen.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 	}
@@ -809,7 +809,9 @@ int OTF_WStream_writeDefinitionCommentKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefinitionComment( OTF_WStream* wstream,
@@ -852,7 +854,9 @@ int OTF_WStream_writeDefTimerResolutionKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefTimerResolution( OTF_WStream* wstream, 
@@ -874,7 +878,7 @@ int OTF_WStream_writeDefProcessKV( OTF_WStream* wstream, uint32_t deftoken,
 #	ifdef OTF_DEBUG
 		if( 0 == deftoken ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -930,7 +934,9 @@ int OTF_WStream_writeDefProcessKV( OTF_WStream* wstream, uint32_t deftoken,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefProcess( OTF_WStream* wstream, uint32_t deftoken, 
@@ -953,7 +959,7 @@ int OTF_WStream_writeDefProcessGroupKV( OTF_WStream* wstream, uint32_t deftoken,
 #	ifdef OTF_DEBUG
 		if( 0 == deftoken ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1004,7 +1010,9 @@ int OTF_WStream_writeDefProcessGroupKV( OTF_WStream* wstream, uint32_t deftoken,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefProcessGroup( OTF_WStream* wstream, uint32_t deftoken, 
@@ -1067,7 +1075,9 @@ int OTF_WStream_writeDefAttributeListKV( OTF_WStream* wstream, uint32_t attr_tok
 
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefAttributeList( OTF_WStream* wstream, uint32_t attr_token,
@@ -1118,7 +1128,9 @@ int OTF_WStream_writeDefProcessOrGroupAttributesKV( OTF_WStream* wstream,
 
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefProcessOrGroupAttributes( OTF_WStream* wstream,
@@ -1140,7 +1152,7 @@ int OTF_WStream_writeDefFunctionKV( OTF_WStream* wstream, uint32_t deftoken,
 #	ifdef OTF_DEBUG
 		if( 0 == deftoken ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1192,7 +1204,9 @@ int OTF_WStream_writeDefFunctionKV( OTF_WStream* wstream, uint32_t deftoken,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefFunction( OTF_WStream* wstream, uint32_t deftoken, 
@@ -1214,7 +1228,7 @@ int OTF_WStream_writeDefFunctionGroupKV( OTF_WStream* wstream,
 #	ifdef OTF_DEBUG
 		if( 0 == deftoken ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1248,7 +1262,9 @@ int OTF_WStream_writeDefFunctionGroupKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefFunctionGroup( OTF_WStream* wstream, 
@@ -1270,7 +1286,7 @@ int OTF_WStream_writeDefCollectiveOperationKV( OTF_WStream* wstream,
 #	ifdef OTF_DEBUG
 		if( 0 == collOp ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1308,7 +1324,9 @@ int OTF_WStream_writeDefCollectiveOperationKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefCollectiveOperation( OTF_WStream* wstream, 
@@ -1331,7 +1349,7 @@ int OTF_WStream_writeDefCounterKV( OTF_WStream* wstream, uint32_t deftoken,
 #	ifdef OTF_DEBUG
 		if( 0 == deftoken ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1377,7 +1395,9 @@ int OTF_WStream_writeDefCounterKV( OTF_WStream* wstream, uint32_t deftoken,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefCounter( OTF_WStream* wstream, uint32_t deftoken, 
@@ -1401,7 +1421,7 @@ int OTF_WStream_writeDefCounterGroupKV( OTF_WStream* wstream,
 #	ifdef OTF_DEBUG
 		if( 0 == deftoken ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1435,7 +1455,9 @@ int OTF_WStream_writeDefCounterGroupKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefCounterGroup( OTF_WStream* wstream, 
@@ -1457,7 +1479,7 @@ int OTF_WStream_writeDefSclKV( OTF_WStream* wstream, uint32_t deftoken,
 #	ifdef OTF_DEBUG
 		if( 0 == deftoken ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1495,7 +1517,9 @@ int OTF_WStream_writeDefSclKV( OTF_WStream* wstream, uint32_t deftoken,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefScl( OTF_WStream* wstream, uint32_t deftoken, 
@@ -1517,7 +1541,7 @@ int OTF_WStream_writeDefSclFileKV( OTF_WStream* wstream, uint32_t deftoken,
 #	ifdef OTF_DEBUG
 		if( 0 == deftoken ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1551,7 +1575,9 @@ int OTF_WStream_writeDefSclFileKV( OTF_WStream* wstream, uint32_t deftoken,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefSclFile( OTF_WStream* wstream, uint32_t deftoken, 
@@ -1603,7 +1629,9 @@ int OTF_WStream_writeDefVersionKV( OTF_WStream* wstream, uint8_t major,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefVersion( OTF_WStream* wstream, uint8_t major,
@@ -1652,7 +1680,9 @@ int OTF_WStream_writeDefCreatorKV( OTF_WStream* wstream, const char* creator,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefCreator( OTF_WStream* wstream, const char* creator ) {
@@ -1673,7 +1703,7 @@ int OTF_WStream_writeDefFileKV( OTF_WStream* wstream, uint32_t token,
 #	ifdef OTF_DEBUG
 		if( 0 == token ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1714,7 +1744,9 @@ int OTF_WStream_writeDefFileKV( OTF_WStream* wstream, uint32_t token,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefFile( OTF_WStream* wstream, uint32_t token,
@@ -1735,7 +1767,7 @@ int OTF_WStream_writeDefFileGroupKV( OTF_WStream* wstream, uint32_t token,
 #	ifdef OTF_DEBUG
 		if( 0 == token ) {
 		
-			OTF_fprintf( stderr, "WARNING in function %s, file: %s, line: %i:\n "
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
 				"'0' is an invalid token.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		}
@@ -1772,7 +1804,9 @@ int OTF_WStream_writeDefFileGroupKV( OTF_WStream* wstream, uint32_t token,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefFileGroup( OTF_WStream* wstream, uint32_t token,
@@ -1829,7 +1863,9 @@ int OTF_WStream_writeDefKeyValueKV( OTF_WStream* wstream, uint32_t key, OTF_Type
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefKeyValue( OTF_WStream* wstream,	uint32_t key,
@@ -1876,7 +1912,9 @@ int OTF_WStream_writeDefTimeRange( OTF_WStream* wstream, uint64_t minTime,
 
 	OTF_WBuffer_writeNewline( buffer );
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefCounterAssignments( OTF_WStream* wstream,
@@ -1922,8 +1960,74 @@ int OTF_WStream_writeDefCounterAssignments( OTF_WStream* wstream,
 
 	OTF_WBuffer_writeNewline( buffer );
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
+
+int OTF_WStream_writeDefProcessSubstitutes( OTF_WStream* wstream,
+		uint32_t representative, uint32_t numberOfProcs,
+		const uint32_t* procs, OTF_KeyValueList* list ) {
+
+
+	unsigned int i;
+	OTF_WBuffer* buffer= OTF_WStream_getDefBuffer( wstream );
+
+	
+#	ifdef OTF_DEBUG
+		if( 0 == representative ) {
+		
+			OTF_Warning( "WARNING in function %s, file: %s, line: %i:\n "
+				"'0' is an invalid token.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+		}
+#	endif
+
+	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
+
+		OTF_WBuffer_writeKeyValueList_short(buffer, list);
+	
+		OTF_WBuffer_writeKeyword( buffer, 
+			OTF_KEYWORD_S_DEF_PREFIX 
+			OTF_KEYWORD_S_DEFPROCESSSUBSTITUTES );
+
+		OTF_WBuffer_writeUint32( buffer, representative );
+		OTF_WBuffer_writeKeyword( buffer, OTF_KEYWORD_S_LOCAL_MEMBERS );
+
+		for ( i = 0; i < numberOfProcs; ++i ) {
+
+			OTF_WBuffer_writeUint32( buffer, procs[i] );
+			OTF_WBuffer_writeChar( buffer, ',' );
+		}
+
+		OTF_WBuffer_writeNewline( buffer );
+	
+	} else if ( OTF_WSTREAM_FORMAT_LONG == wstream->format ) {
+
+		OTF_WBuffer_writeKeyValueList_long(buffer, list);
+
+		OTF_WBuffer_writeKeyword( buffer, 
+			OTF_KEYWORD_L_DEF_PREFIX 
+			OTF_KEYWORD_L_DEFPROCESSSUBSTITUTES " " );
+
+		OTF_WBuffer_writeUint32( buffer, representative );
+		OTF_WBuffer_writeKeyword( buffer, " " OTF_KEYWORD_L_LOCAL_MEMBERS " " );
+
+		for ( i = 0; i < numberOfProcs; ++i ) {
+
+			OTF_WBuffer_writeUint32( buffer, procs[i] );
+			OTF_WBuffer_writeChar( buffer, ',' );
+		}
+
+		OTF_WBuffer_writeNewline( buffer );
+	}
+
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
+}
+
+
 
 /* *** event record write handlers *** ************************************* */
 
@@ -1957,7 +2061,9 @@ int OTF_WStream_writeNoOpKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeEnterKV( OTF_WStream* wstream, uint64_t time, 
@@ -2007,7 +2113,9 @@ int OTF_WStream_writeEnterKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeEnter( OTF_WStream* wstream, uint64_t time, 
@@ -2077,7 +2185,9 @@ int OTF_WStream_writeRecvMsgKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeRecvMsg( OTF_WStream* wstream, uint64_t time, 
@@ -2149,7 +2259,9 @@ int OTF_WStream_writeSendMsgKV( OTF_WStream* wstream, uint64_t time, uint32_t se
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeSendMsg( OTF_WStream* wstream, uint64_t time, uint32_t sender,
@@ -2215,7 +2327,9 @@ int OTF_WStream_writeLeaveKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeLeave( OTF_WStream* wstream, uint64_t time, 
@@ -2262,7 +2376,9 @@ int OTF_WStream_writeCounterKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeCounter( OTF_WStream* wstream, uint64_t time, 
@@ -2338,7 +2454,9 @@ int OTF_WStream_writeCollectiveOperationKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeCollectiveOperation( OTF_WStream* wstream, uint64_t time, 
@@ -2363,8 +2481,7 @@ int OTF_WStream_writeBeginCollectiveOperationKV( OTF_WStream* wstream,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) )
-		return 0;
+	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
 	if( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
 
@@ -2429,7 +2546,9 @@ int OTF_WStream_writeBeginCollectiveOperationKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeBeginCollectiveOperation( OTF_WStream* wstream,
@@ -2453,8 +2572,7 @@ int OTF_WStream_writeEndCollectiveOperationKV( OTF_WStream* wstream,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) )
-		return 0;
+	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
 	if( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
 
@@ -2479,7 +2597,9 @@ int OTF_WStream_writeEndCollectiveOperationKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeEndCollectiveOperation( OTF_WStream* wstream,
@@ -2521,7 +2641,9 @@ int OTF_WStream_writeEventCommentKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeEventComment( OTF_WStream* wstream, uint64_t time, 
@@ -2562,7 +2684,9 @@ int OTF_WStream_writeBeginProcessKV( OTF_WStream* wstream, uint64_t time,
 
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeBeginProcess( OTF_WStream* wstream, uint64_t time,
@@ -2603,7 +2727,9 @@ int OTF_WStream_writeEndProcessKV( OTF_WStream* wstream, uint64_t time,
 
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeEndProcess( OTF_WStream* wstream, uint64_t time,
@@ -2679,7 +2805,9 @@ int OTF_WStream_writeFileOperationKV( OTF_WStream* wstream, uint64_t time,
 
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeFileOperation( OTF_WStream* wstream, uint64_t time,
@@ -2700,8 +2828,7 @@ int OTF_WStream_writeBeginFileOperationKV( OTF_WStream* wstream, uint64_t time,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) )
-		return 0;
+	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
 	if( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
 
@@ -2739,7 +2866,9 @@ int OTF_WStream_writeBeginFileOperationKV( OTF_WStream* wstream, uint64_t time,
 
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeBeginFileOperation( OTF_WStream* wstream, uint64_t time,
@@ -2761,8 +2890,7 @@ int OTF_WStream_writeEndFileOperationKV( OTF_WStream* wstream, uint64_t time,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) )
-		return 0;
+	if( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
 	if( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
 
@@ -2819,7 +2947,9 @@ int OTF_WStream_writeEndFileOperationKV( OTF_WStream* wstream, uint64_t time,
 
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeEndFileOperation( OTF_WStream* wstream, uint64_t time,
@@ -2894,7 +3024,9 @@ int OTF_WStream_writeRMAPutKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeRMAPut( OTF_WStream* wstream, uint64_t time,
@@ -2969,7 +3101,9 @@ int OTF_WStream_writeRMAPutRemoteEndKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeRMAPutRemoteEnd( OTF_WStream* wstream, uint64_t time,
@@ -3044,7 +3178,9 @@ int OTF_WStream_writeRMAGetKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeRMAGet( OTF_WStream* wstream, uint64_t time,
@@ -3110,7 +3246,9 @@ int OTF_WStream_writeRMAEndKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeRMAEnd( OTF_WStream* wstream, uint64_t time,
@@ -3157,7 +3295,9 @@ int OTF_WStream_writeSnapshotCommentKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeSnapshotComment( OTF_WStream* wstream, uint64_t time, 
@@ -3220,7 +3360,9 @@ int OTF_WStream_writeEnterSnapshotKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeEnterSnapshot( OTF_WStream* wstream, uint64_t time,
@@ -3302,8 +3444,10 @@ int OTF_WStream_writeSendSnapshotKV( OTF_WStream* wstream, uint64_t time,
 
 		OTF_WBuffer_writeNewline( buffer );
 	}
-	
-	return 1;
+
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeSendSnapshot( OTF_WStream* wstream, uint64_t time,
@@ -3374,8 +3518,9 @@ int OTF_WStream_writeOpenFileSnapshotKV( OTF_WStream* wstream,uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
-
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeOpenFileSnapshot( OTF_WStream* wstream,uint64_t time,
@@ -3397,8 +3542,7 @@ int OTF_WStream_writeBeginCollopSnapshotKV( OTF_WStream* wstream, uint64_t time,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) )
-		return 0;
+	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
 	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
 
@@ -3471,7 +3615,9 @@ int OTF_WStream_writeBeginCollopSnapshotKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeBeginCollopSnapshot( OTF_WStream* wstream, uint64_t time,
@@ -3494,8 +3640,7 @@ int OTF_WStream_writeBeginFileOpSnapshotKV( OTF_WStream* wstream, uint64_t time,
 	/* buffer can be NULL if file-open fails */
 	if ( NULL == buffer ) return 0;
 
-	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) )
-		return 0;
+	if ( 0 == OTF_WBuffer_setTimeAndProcess( buffer, time, process ) ) return 0;
 
 	if ( OTF_WSTREAM_FORMAT_SHORT == wstream->format ) {
 
@@ -3538,8 +3683,9 @@ int OTF_WStream_writeBeginFileOpSnapshotKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeBeginFileOpSnapshot( OTF_WStream* wstream, uint64_t time,
@@ -3587,7 +3733,9 @@ int OTF_WStream_writeSummaryCommentKV( OTF_WStream* wstream, uint64_t time,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeSummaryComment( OTF_WStream* wstream, uint64_t time, 
@@ -3642,8 +3790,10 @@ int OTF_WStream_writeFunctionSummaryKV( OTF_WStream* wstream,
 	}
 
 	OTF_WBuffer_writeNewline( buffer );
-	
-	return 1;
+
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeFunctionSummary( OTF_WStream* wstream, 
@@ -3700,8 +3850,10 @@ int OTF_WStream_writeFunctionGroupSummaryKV( OTF_WStream* wstream,
 	}
 
 	OTF_WBuffer_writeNewline( buffer );
-	
-	return 1;
+
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeFunctionGroupSummary( OTF_WStream* wstream, 
@@ -3771,8 +3923,10 @@ int OTF_WStream_writeMessageSummaryKV( OTF_WStream* wstream,
 	}
 
 	OTF_WBuffer_writeNewline( buffer );
-	
-	return 1;
+
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeMessageSummary( OTF_WStream* wstream, 
@@ -3840,7 +3994,9 @@ int OTF_WStream_writeCollopSummaryKV( OTF_WStream* wstream,
 
 	OTF_WBuffer_writeNewline( buffer );
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeCollopSummary( OTF_WStream* wstream, 
@@ -3914,9 +4070,10 @@ int OTF_WStream_writeFileOperationSummaryKV( OTF_WStream* wstream, uint64_t time
 	}
 
 	OTF_WBuffer_writeNewline( buffer );
-	
-	return 1;
-	
+
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeFileOperationSummary( OTF_WStream* wstream, uint64_t time,
@@ -3990,9 +4147,10 @@ int OTF_WStream_writeFileGroupOperationSummaryKV( OTF_WStream* wstream, uint64_t
 	}
 
 	OTF_WBuffer_writeNewline( buffer );
-	
-	return 1;
-	
+
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeFileGroupOperationSummary( OTF_WStream* wstream, uint64_t time,
@@ -4046,7 +4204,9 @@ int OTF_WStream_writeDefMarkerKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeDefMarker( OTF_WStream* wstream, 
@@ -4103,7 +4263,9 @@ int OTF_WStream_writeMarkerKV( OTF_WStream* wstream,
 		OTF_WBuffer_writeNewline( buffer );
 	}
 
-	return 1;
+	/* one or more of the last write operations could be failed;
+	check otf_errno for errors */
+	return ( OTF_NO_ERROR == otf_errno ) ? 1 : 0;
 }
 
 int OTF_WStream_writeMarker( OTF_WStream* wstream, 

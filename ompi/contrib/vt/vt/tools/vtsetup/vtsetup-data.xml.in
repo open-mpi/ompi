@@ -45,8 +45,12 @@
     <desc> </desc>
     <parentid>FiltGrp</parentid>
   </group>
-  <group identifier="f6out" priority="300" descname="Output Files">
+  <group identifier="FiltGrpOutput" priority="300" descname="Output Files">
     <desc>Output Files</desc>
+    <parentid>FiltGrp</parentid>
+  </group>
+  <group identifier="FiltGrpMisc" priority="400" descname="Miscellaneous">
+    <desc>Miscellaneous</desc>
     <parentid>FiltGrp</parentid>
   </group>
   <group identifier="ats" priority="300" descname="Enhanced Time Synchronization">
@@ -518,10 +522,21 @@
         <default>0</default>
       </value>
     </valuedesc>
-    <since major="5" minor="0" patch="0" /><available>@VT_SETUP_DYNINST@</available>
+    <since major="5" minor="11" patch="0" /><available>@VT_SETUP_DYNINST@</available>
     <anchor>VT_SETUP_VT_DYN_IGNORE_NODBG</anchor>
   </env>
-  <env isdeprecated="0" priority="100" descname="Name of filter output file" isadvanced="0" group="f6out"
+  <env isdeprecated="0" priority="100" descname="Detach Dyninst mutator-program from application process" isadvanced="1" group="Dyninst"
+    envname="VT_DYN_DETACH">
+    <desc>Whether to detach the Dyninst mutator-program (vtdyn) from the application process.</desc>
+    <valuedesc>
+      <value type="bool">
+        <default>1</default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="12" patch="0" /><available>@VT_SETUP_DYNINST@</available>
+    <anchor>VT_SETUP_VT_DYN_DETACH</anchor>
+  </env>
+  <env isdeprecated="0" priority="100" descname="Filter file" isadvanced="0" group="FiltGrpOutput"
     envname="VT_FILTER_SPEC">
     <desc>Name of function/region filter file.</desc>
     <valuedesc>
@@ -532,9 +547,9 @@
     <since major="5" minor="0" patch="0" ></since><available>1</available>
     <anchor>VT_SETUP_VT_FILTER_SPEC</anchor>
   </env>
-  <env isdeprecated="0" priority="100" descname="Name of group output file" isadvanced="0" group="f6out"
+  <env isdeprecated="0" priority="100" descname="Group file" isadvanced="0" group="FiltGrpOutput"
     envname="VT_GROUPS_SPEC">
-    <desc>Name of function grouping file.</desc>
+    <desc>Name of function/region group file.</desc>
     <valuedesc>
       <value type="filepath">
         <default>vtsetup_groups.spec</default><!--need to build a new groupfile--><noDefault>0</noDefault>
@@ -544,9 +559,9 @@
     <since major="5" minor="0" patch="0" ></since><available>1</available>
     <anchor>VT_SETUP_VT_GROUPS_SPEC</anchor>
   </env>
-  <env isdeprecated="0" priority="100" descname="Name of java" isadvanced="1" group="java"
+  <env isdeprecated="0" priority="100" descname="Filter file" isadvanced="1" group="java"
     envname="VT_JAVA_FILTER_SPEC">
-    <desc>Name of Java specific filter file.</desc>
+    <desc>Name of Java specific input filter file.</desc>
     <valuedesc>
       <value type="filepath">
         <default></default>
@@ -567,7 +582,18 @@
     <since major="5" minor="0" patch="0" /><available>@VT_SETUP_JAVA@</available>
     <anchor>VT_SETUP_VT_GROUP_CLASSES</anchor>
   </env>
-  <env isdeprecated="0" priority="100" descname="Maximum stack level" isadvanced="1" group="f6out"
+  <env isdeprecated="0" priority="100" descname="Check stack level balance when switching tracing on/off" isadvanced="1" group="FiltGrpMisc"
+    envname="VT_ONOFF_CHECK_STACK_BALANCE">
+    <desc>When restarting the recording of events by VT_ON check whether the call stack has the same depth as when the recording was stopped by VT_OFF.</desc>
+    <valuedesc>
+      <value type="bool">
+        <default>1</default>
+      </value>
+    </valuedesc>
+    <since major="5" minor="12" patch="0" /><available>1</available>
+    <anchor>VT_SETUP_VT_ONOFF_CHECK_STACK_BALANCE</anchor>
+  </env>
+  <env isdeprecated="0" priority="100" descname="Maximum stack level" isadvanced="1" group="FiltGrpMisc"
     envname="VT_MAX_STACK_DEPTH">
     <desc>Maximum number of stack level to be traced (0 = unlimited).</desc>
     <valuedesc>
@@ -589,27 +615,6 @@
     </valuedesc>
     <since major="5" minor="0" patch="0" /><available>1</available>
     <anchor>VT_SETUP_VT_GNU_NMFILE</anchor>
-  </env>
-  <env isdeprecated="0" priority="300" descname="Maximum number of MPI communicators " isadvanced="1" group="adpost"
-    envname="VT_MAX_MPI_COMMS">
-    <desc>Maximum number of MPI communicators used in a MPI program.</desc>
-    <valuedesc>
-      <value type="integer">
-        <default>100</default>
-      </value>
-    </valuedesc>
-    <since major="5" minor="0" patch="0" ></since><available>@VT_SETUP_MPI@</available>
-    <anchor>VT_SETUP_VT_MAX_MPI_COMMS</anchor>
-  </env>
-  <env isdeprecated="0" priority="400" descname="Maximum number of MPI windows" isadvanced="1" group="adpost"
-    envname="VT_MAX_MPI_WINS">
-    <desc>Maximum number of MPI windows used in a MPI program.</desc>
-    <valuedesc>
-      <value type="integer">
-        <default>100</default>
-      </value>
-    </valuedesc>
-    <since major="5" minor="0" patch="0" /><available>@VT_SETUP_MPI@</available><anchor>VT_SETUP_VT_MAX_MPI_WINS</anchor>
   </env>
   <env isdeprecated="0" priority="200" descname="Trace OpenMP events" isadvanced="0" group="libtrace"
     envname="VT_OMPTRACE">

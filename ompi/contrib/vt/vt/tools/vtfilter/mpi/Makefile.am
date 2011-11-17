@@ -5,6 +5,12 @@ endif
 VTFILTERSRCDIR = $(srcdir)/..
 include $(srcdir)/../Makefile.common
 
+install-exec-hook:
+	(cd $(DESTDIR)$(bindir); rm -f vtfiltergen-mpi$(EXEEXT); \
+	$(LN_S) vtfilter-mpi$(EXEEXT) vtfiltergen-mpi$(EXEEXT))
+uninstall-local:
+	rm -f $(DESTDIR)$(bindir)/vtfiltergen-mpi$(EXEEXT)
+
 CXX = $(MPICXX)
 
 vtfilter_mpi_CXXFLAGS = $(COMMONCXXFLAGS) -DVT_MPI $(MPICXXFLAGS) $(MPIINCDIR)

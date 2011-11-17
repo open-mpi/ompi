@@ -90,11 +90,11 @@ char* vt_pform_exec() {
 /* clock resolution */
 uint64_t vt_pform_clockres() {
 #if TIMER == TIMER_CLOCK_GETTIME
-  return 1e9;
+  return 1000000000LL;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_clckrt();
 #elif TIMER == TIMER_PAPI_REAL_USEC
-  return 1e6;
+  return 1000000LL;
 #endif
 }
 
@@ -103,7 +103,7 @@ uint64_t vt_pform_wtime() {
 #if TIMER == TIMER_CLOCK_GETTIME
   struct timespec tp;
   clock_gettime(CLOCK_SGI_CYCLE,&tp);
-  return ((tp.tv_sec - vt_time_base) * 1e9) + tp.tv_nsec;
+  return ((tp.tv_sec - vt_time_base) * 1000000000LL) + tp.tv_nsec;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_real_cyc();
 #elif TIMER == TIMER_PAPI_REAL_USEC

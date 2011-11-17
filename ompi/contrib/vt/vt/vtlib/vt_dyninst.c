@@ -31,62 +31,18 @@
 
 static int dyn_init = 1;       /* is initialization needed? */
 
-/*
- *-----------------------------------------------------------------------------
- * Simple hash table to map function addresses to region names/identifier
- *-----------------------------------------------------------------------------
- */
-
-typedef struct HN {
-  size_t id;          /* hash code (address of function) */
-  uint32_t vtid;      /* associated region identifier    */
-  struct HN* next;
-} HashNode;
-
-#define HASH_MAX 1021
-
-static HashNode* htab[HASH_MAX];
-
-/*
- * Stores region identifier `e' under hash code `h'
- */
-
-static HashNode* hash_put(size_t h, uint32_t e) {
-  size_t id = h % HASH_MAX;
-  HashNode *add = (HashNode*)malloc(sizeof(HashNode));
-  add->id = h;
-  add->vtid = e;
-  add->next = htab[id];
-  htab[id] = add;
-  return add;
-}
-
-/*
- * Lookup hash code `h'
- * Returns hash table entry if already stored, otherwise NULL
- */
-
-static HashNode* hash_get(size_t h) {
-  size_t id = h % HASH_MAX;
-  HashNode *curr = htab[id];
-  while ( curr ) {
-    if ( curr->id == h ) {
-      return curr;
-    }
-    curr = curr->next;
-  }
-  return NULL;
-}
+static uint32_t* rtab = NULL;  /* region id lookup table */
 
 /*
  * Register new region
  */
 
-static HashNode *register_region(size_t addr, char* func, char* file, int lno) {
-  uint32_t rid;
+static void register_region(uint32_t* rid, char* func, char* file, int lno)
+{
   uint32_t fid;
 
-  /* -- register file if available -- */
+  /* Register file if available
+   */
   if( file[0] )
   {
     fid = vt_def_scl_file(VT_CURRENT_THREAD, file);
@@ -97,15 +53,13 @@ static HashNode *register_region(size_t addr, char* func, char* file, int lno) {
     lno = VT_NO_LNO;
   }
 
-  /* -- register region and store region identifier -- */
-  rid = vt_def_region(VT_CURRENT_THREAD, func, fid, lno, VT_NO_LNO, NULL,
-                      VT_FUNCTION);
-
-  return hash_put(addr, rid);
+  /* Register region and store region identifier */
+  *rid = vt_def_region(VT_CURRENT_THREAD, func, fid, lno, VT_NO_LNO, NULL,
+                       VT_FUNCTION);
 }
 
-void VT_Dyn_start(void* addr, char* name, char* fname, int lno);
-void VT_Dyn_end(void* addr);
+void VT_Dyn_start(uint32_t index, char* name, char* fname, int lno);
+void VT_Dyn_end(uint32_t index);
 void VT_Dyn_attach(void);
 void VT_Dyn_finalize(void);
 
@@ -113,45 +67,55 @@ void VT_Dyn_finalize(void);
  * This function is called at the entry of each function
  */
 
-void VT_Dyn_start(void* addr, char* name, char* fname, int lno)
+void VT_Dyn_start(uint32_t index, char* name, char* fname, int lno)
 {
-  HashNode *hn;
   uint64_t time;
+  uint32_t* rid;
 
-  /* -- ignore events if VT is initializing -- */
+  vt_assert(index < VT_MAX_DYNINST_REGIONS);
+
+  /* Ignore events if VT is initializing */
   if( !dyn_init && !vt_is_alive ) return;
 
-  /* -- if not yet initialized, initialize VampirTrace -- */
-  if ( dyn_init ) {
+  /* If not yet initialized, initialize VampirTrace */
+  if ( dyn_init )
+  {
     VT_MEMHOOKS_OFF();
     dyn_init = 0;
+    rtab = (uint32_t*)calloc(VT_MAX_DYNINST_REGIONS, sizeof(uint32_t));
+    if ( rtab == NULL )
+      vt_error();
     vt_open();
     vt_comp_finalize = VT_Dyn_finalize;
     VT_MEMHOOKS_ON();
   }
 
-  /* -- if VampirTrace already finalized, return -- */
+  /* If VampirTrace already finalized, return */
   if ( !vt_is_alive ) return;
 
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
 
-  /* -- get region identifier -- */
-  if ( (hn = hash_get((size_t)addr)) == 0 ) {
-    /* -- region entered the first time, register region -- */
+  /* Get region identifier
+   */
+  rid = &(rtab[index]);
+  if ( *rid == 0 )
+  {
+    /* If region entered the first time, register region
+     */
 #if (defined(VT_MT) || defined(VT_HYB))
     VTTHRD_LOCK_IDS();
-    if ( (hn = hash_get((size_t) addr)) == 0 )
-      hn = register_region((size_t) addr, name, fname, lno);
+    if ( *rid == 0 )
+      register_region(rid, name, fname, lno);
     VTTHRD_UNLOCK_IDS();
 #else /* VT_MT || VT_HYB */
-    hn = register_region((size_t) addr, name, fname, lno);
+    register_region(rid, name, fname, lno);
 #endif /* VT_MT || VT_HYB */
   }
 
-  /* -- write enter record -- */
-  vt_enter(VT_CURRENT_THREAD, &time, hn->vtid);
+  /* Write enter record */
+  vt_enter(VT_CURRENT_THREAD, &time, *rid);
 
   VT_MEMHOOKS_ON();
 }
@@ -160,20 +124,24 @@ void VT_Dyn_start(void* addr, char* name, char* fname, int lno)
  * This function is called at the exit of each function
  */
 
-void VT_Dyn_end(void* addr)
+void VT_Dyn_end(uint32_t index)
 {
   uint64_t time;
 
-  /* -- if VampirTrace already finalized, return -- */
+  vt_assert(index < VT_MAX_DYNINST_REGIONS);
+
+  /* If VampirTrace already finalized, return */
   if ( !vt_is_alive ) return;
+
+  /* If region id isn't present, return */
+  if ( rtab[index] == 0 ) return;
 
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
 
-  /* -- write exit record -- */
-  if ( hash_get((size_t) addr) )
-    vt_exit(VT_CURRENT_THREAD, &time);
+  /* Write exit record */
+  vt_exit(VT_CURRENT_THREAD, &time);
 
   VT_MEMHOOKS_ON();
 }
@@ -201,14 +169,14 @@ void sig_usr2_handler(int signum)
 }
 
 /*
- * This function is called by the shared dyninst attach library (libvt-dynatt)
+ * This function is called by the shared Dyninst attach library (libvt-dynatt)
  */
 
 void VT_Dyn_attach()
 {
   int mutatee_pid = getpid();
 
-  vt_cntl_msg(1, "Attaching instrumentor to PID %i ...", mutatee_pid);
+  vt_cntl_msg(1, "[%i]: Attaching instrumentor", mutatee_pid);
 
   /* Install signal handler for continue execution (SIGUSR1)
      and abort execution (SIGUSR2)
@@ -219,18 +187,18 @@ void VT_Dyn_attach()
   if( signal(SIGUSR2, sig_usr2_handler) == SIG_ERR )
     vt_error_msg("Could not install handler for signal SIGUSR2");
 
-  /* The dyninst attach library (libvt-dynatt) could be set by LD_PRELOAD.
+  /* The Dyninst attach library (libvt-dynatt) could be set by LD_PRELOAD.
      Unset this environment variable to avoid recursion. */
   putenv((char*)"LD_PRELOAD=");
   putenv((char*)"DYLD_INSERT_LIBRARIES="); /* equivalent on MacOS */
 
-  /* Attach dyninst instrumentor on running executable
+  /* Attach Dyninst instrumentor on running executable
    */
   switch( fork() )
   {
     case -1:
     {
-      vt_error_msg("Could not attach dyninst instrumentor");
+      vt_error_msg("Could not attach Dyninst instrumentor");
       break;
     }
     case 0:
@@ -267,13 +235,14 @@ void VT_Dyn_attach()
         shlibs_arg[strlen(shlibs_arg)-1] = '\0';
       }
 
-      snprintf(cmd, sizeof(cmd)-1, "%s/vtdyn %s %s %s %s %s %s %s -p %i %s",
+      snprintf(cmd, sizeof(cmd)-1, "%s/vtdyn %s %s %s %s %s %s %s %s -p %i %s",
               vt_installdirs_get(VT_INSTALLDIR_BINDIR),
               (vt_env_verbose() == 0) ? "-q" : "",
               (vt_env_verbose() >= 2) ? "-v" : "",
               filter ? "-f" : "", filter ? filter : "",
               shlibs_arg ? "-s" : "", shlibs_arg ? shlibs_arg : "",
               (vt_env_dyn_ignore_nodbg()) ? "--ignore-nodbg" : "",
+              (vt_env_dyn_detach()) ? "" : "--nodetach",
               mutatee_pid,
               mutatee_path ? mutatee_path : "");
 
@@ -281,7 +250,7 @@ void VT_Dyn_attach()
         free(shlibs_arg);
 
       /* Start mutator (instrumentor) */
-      vt_cntl_msg(2, "Executing %s", cmd);
+      vt_cntl_msg(2, "[%i]: Executing %s", mutatee_pid, cmd);
       rc = system(cmd);
 
       /* Kill mutatee, if an error occurred during attaching
@@ -297,7 +266,7 @@ void VT_Dyn_attach()
     {
       /* Wait until mutator send signal to continue execution
        */
-      vt_cntl_msg(1, "[%i]: Wait until instrumentation is done ...",
+      vt_cntl_msg(1, "[%i]: Waiting until instrumentation is done",
                   mutatee_pid);
 
       do { sleep(1); } while(mutatee_cont == 0);
@@ -325,14 +294,12 @@ void VT_Dyn_attach()
 
 void VT_Dyn_finalize()
 {
-  int i;
+  if ( dyn_init ) return;
 
-  for ( i = 0; i < HASH_MAX; i++ )
-  {
-    if ( htab[i] ) {
-      free(htab[i]);
-      htab[i] = NULL;
-    }
-  }
+  /* Free region id table
+   */
+  free( rtab );
+  rtab = NULL;
+
   dyn_init = 1;
 }

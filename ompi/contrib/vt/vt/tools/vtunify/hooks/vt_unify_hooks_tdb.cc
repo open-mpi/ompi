@@ -894,7 +894,7 @@ void HooksTdbC::writeRecHook_Counter( HooksC::VaArgsT & args ) {
     GET_THREAD_ID( thread_id );
 
     /* get hook arguments */
-    GET_PARAM( bool*, do_write, 6 );
+    GET_PARAM( bool*, do_write, 7 );
 
     if( *do_write ) {
 
@@ -922,7 +922,7 @@ void HooksTdbC::writeRecHook_EventComment( HooksC::VaArgsT & args ) {
 // generic hook
 void HooksTdbC::genericHook( const uint32_t & id, HooksC::VaArgsT & args ) {
 
-    if( id == VT_UNIFY_HOOKS_TDB_GENID__STARTSTOPTIME_EPOCH ) {
+    if( ( id & VT_UNIFY_HOOKS_TDB_GENID__STARTSTOPTIME_EPOCH ) != 0 ) {
 
         MinStartTimeEpoch = *((uint64_t*)args[0]);
         MaxStopTimeEpoch = *((uint64_t*)args[1]);

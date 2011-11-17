@@ -47,6 +47,7 @@ typedef enum
   VTBUF_ENTRY_TYPE__DefCounterGroup,
   VTBUF_ENTRY_TYPE__DefCounter,
   VTBUF_ENTRY_TYPE__DefProcessGroup,
+  VTBUF_ENTRY_TYPE__DefProcessGroupAttributes,
   VTBUF_ENTRY_TYPE__DefMarker,
   VTBUF_ENTRY_TYPE__DefKeyValue,
   VTBUF_ENTRY_TYPE__KeyValue,
@@ -199,7 +200,8 @@ typedef struct
   uint32_t cid;
   uint32_t cprop;
   uint32_t gid;
-  char     cunit[100];
+  uint32_t pgid;
+  char     cunit[128];
   char     cname[1];
 } VTBuf_Entry_DefCounter;
 
@@ -210,11 +212,22 @@ typedef struct
   VTBuf_EntryTypes type;
   uint32_t length;
 
-  uint32_t  cid;
-  char      grpn[100];
-  uint32_t  grpc;
-  uint32_t  grpv[1];
+  uint32_t gid;
+  char     grpn[128];
+  uint32_t grpc;
+  uint32_t grpv[1];
 } VTBuf_Entry_DefProcessGroup;
+
+/* - VTBUF_ENTRY_TYPE__DefProcessGroupAttributes - */
+
+typedef struct
+{
+  VTBuf_EntryTypes type;
+  uint32_t length;
+
+  uint32_t gid;
+  uint32_t gattr;
+} VTBuf_Entry_DefProcessGroupAttributes;
 
 /* - VTBUF_ENTRY_TYPE__DefMarker - */
 
@@ -572,12 +585,16 @@ EXTERN void VTGen_write_DEF_COUNTER_GROUP(VTGen* gen, uint32_t gid,
                                           const char* gname);
 
 EXTERN void VTGen_write_DEF_COUNTER(VTGen* gen, uint32_t cid,
-                                    const char* cname, uint32_t cprop,
-                                    uint32_t gid, const char* cunit);
+                                    const char* cname, const char* cunit,
+                                    uint32_t cprop, uint32_t gid,
+                                    uint32_t pgid);
 
-EXTERN void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen, uint32_t cid,
+EXTERN void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen, uint32_t gid,
                                           const char* grpn, uint32_t grpc,
                                           uint32_t grpv[]);
+
+EXTERN void VTGen_write_DEF_PROCESS_GROUP_ATTRIBUTES(VTGen* gen, uint32_t gid,
+                                                     uint32_t gattr);
 
 EXTERN void VTGen_write_DEF_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype,
                                    const char* kname);

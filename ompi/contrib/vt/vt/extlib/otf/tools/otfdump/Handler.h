@@ -10,6 +10,7 @@
 #include "config.h"
 #endif
 
+#include <map>
 
 #include "OTF_inttypes.h"
 
@@ -31,6 +32,8 @@ typedef struct {
     bool silent_mode;
 
 	bool records[OTF_NRECORDS]; /* enabled record types */
+
+	std::map<uint32_t,uint32_t> counter_props;
 
 	FILE* outfile;
 
@@ -93,19 +96,16 @@ int handleDefVersion( void* userData, uint32_t stream, uint8_t major,
 int handleDefKeyValue( void *userData, uint32_t streamid, uint32_t token,
 	OTF_Type type, const char *name, const char *desc, OTF_KeyValueList* kvlist );
 
-int handleDefTimeRange( void*             userData,
-                        uint32_t          streamid,
-                        uint64_t          minTime,
-                        uint64_t          maxTime,
-                        OTF_KeyValueList* kvlist );
+int handleDefTimeRange( void* userData, uint32_t streamid, uint64_t minTime,
+	uint64_t maxTime, OTF_KeyValueList* kvlist );
 
-int handleDefCounterAssignments( void*             userData,
-                                 uint32_t          streamid,
-                                 uint32_t          counter_token,
-                                 uint32_t          number_of_members,
-                                 const uint32_t*   procs_or_groups,
-                                 OTF_KeyValueList* kvlist );
+int handleDefCounterAssignments( void* userData, uint32_t streamid,
+	uint32_t counter_token, uint32_t number_of_members,
+	const uint32_t* procs_or_groups, OTF_KeyValueList* kvlist );
 
+int handleDefProcessSubstitutes( void* userData, uint32_t streamid,
+	uint32_t representative, uint32_t numberOfProcs, const uint32_t* procs,
+	OTF_KeyValueList* kvlist );
 
 int handleNoOp( void* userData, uint64_t time, uint32_t process,
 	OTF_KeyValueList* kvlist );

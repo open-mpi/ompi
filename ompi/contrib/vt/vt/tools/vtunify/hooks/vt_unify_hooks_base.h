@@ -114,6 +114,9 @@ private:
    virtual void readRecHook_DefProcessGroup( HooksC::VaArgsT & args ) { (void)args; }
    virtual void writeRecHook_DefProcessGroup( HooksC::VaArgsT & args ) { (void)args; }
 
+   virtual void readRecHook_DefProcessGroupAttributes( HooksC::VaArgsT & args ) { (void)args; }
+   virtual void writeRecHook_DefProcessGroupAttributes( HooksC::VaArgsT & args ) { (void)args; }
+
    virtual void readRecHook_DefProcess( HooksC::VaArgsT & args ) { (void)args; }
    virtual void writeRecHook_DefProcess( HooksC::VaArgsT & args ) { (void)args; }
 
@@ -143,6 +146,9 @@ private:
 
    virtual void readRecHook_DefCounter( HooksC::VaArgsT & args ) { (void)args; }
    virtual void writeRecHook_DefCounter( HooksC::VaArgsT & args ) { (void)args; }
+
+   virtual void readRecHook_DefCounterAssignments( HooksC::VaArgsT & args ) { (void)args; }
+   virtual void writeRecHook_DefCounterAssignments( HooksC::VaArgsT & args ) { (void)args; }
 
    virtual void readRecHook_DefKeyValue( HooksC::VaArgsT & args ) { (void)args; }
    virtual void writeRecHook_DefKeyValue( HooksC::VaArgsT & args ) { (void)args; }
