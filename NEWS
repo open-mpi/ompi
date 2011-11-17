@@ -115,7 +115,7 @@ included in the vX.Y.Z section and be denoted as:
   Thanks to Dominik Goeddeke for finding this.
   (** also to appear in 1.4.4)
 - Improved LoadLeveler ORTE support.
-- Add new WindVerbs BTL plugin, supporting native OpenFabrics verbs on 
+- Add new WinVerbs BTL plugin, supporting native OpenFabrics verbs on 
   Windows (the "wv" BTL).
 - Add new btl_openib_gid_index MCA parameter to allow selecting which
   GID to use on an OpenFabrics device's GID table.
