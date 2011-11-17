@@ -29,8 +29,8 @@
 
 BEGIN_C_DECLS
 
-extern int relocate_backing_file;
-extern char *backing_file_base_dir;
+extern int opal_shmem_mmap_relocate_backing_file;
+extern char *opal_shmem_mmap_backing_file_base_dir;
 
 /**
  * globally exported variable to hold the mmap component.

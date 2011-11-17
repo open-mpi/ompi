@@ -37,8 +37,8 @@
 const char *opal_shmem_mmap_component_version_string =
     "OPAL mmap shmem MCA component version " OPAL_VERSION;
 
-int relocate_backing_file = 0;
-char *backing_file_base_dir = NULL;
+int opal_shmem_mmap_relocate_backing_file = 0;
+char *opal_shmem_mmap_backing_file_base_dir = NULL;
 
 /**
  * local functions
@@ -120,10 +120,12 @@ mmap_open(void)
         "relocate_backing_file",
         "Whether to change the default placement of backing files or not "
         "(Negative = try to relocate backing files to an area rooted at "
-        "the path specified by shmem_mmap_backing_file_base_dir, but continue "
+        "the path specified by "
+        "shmem_mmap_opal_shmem_mmap_backing_file_base_dir, but continue "
         "with the default path if the relocation fails, 0 = do not relocate, "
         "Positive = same as the negative option, but will fail if the "
-        "relocation fails.", false, false, 0, &relocate_backing_file
+        "relocation fails.", false, false, 0,
+        &opal_shmem_mmap_relocate_backing_file
     );
 
     mca_base_param_reg_string(
@@ -131,7 +133,7 @@ mmap_open(void)
         "backing_file_base_dir",
         "Specifies where backing files will be created when "
         "shmem_mmap_relocate_backing_file is in use.", false, false, "/dev/shm",
-        &backing_file_base_dir
+        &opal_shmem_mmap_backing_file_base_dir
     );
 
     return OPAL_SUCCESS;
@@ -150,8 +152,8 @@ mmap_query(mca_base_module_t **module, int *priority)
 static int
 mmap_close(void)
 {
-    if (NULL != backing_file_base_dir) {
-        free(backing_file_base_dir);
+    if (NULL != opal_shmem_mmap_backing_file_base_dir) {
+        free(opal_shmem_mmap_backing_file_base_dir);
     }
     return OPAL_SUCCESS;
 }

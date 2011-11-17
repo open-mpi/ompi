@@ -256,12 +256,13 @@ segment_create(opal_shmem_ds_t *ds_buf,
     shmem_ds_reset(ds_buf);
 
     /* change the path of shmem mmap's backing store? */
-    if (0 != relocate_backing_file) {
+    if (0 != opal_shmem_mmap_relocate_backing_file) {
         int err;
-        if (path_usable(backing_file_base_dir, &err)) {
+        if (path_usable(opal_shmem_mmap_backing_file_base_dir, &err)) {
             if (NULL ==
-                (real_file_name = get_uniq_file_name(backing_file_base_dir,
-                                                     file_name))) {
+                (real_file_name =
+                     get_uniq_file_name(opal_shmem_mmap_backing_file_base_dir,
+                                        file_name))) {
                 /* out of resources */
                 return OPAL_ERROR;
             }
@@ -270,17 +271,17 @@ segment_create(opal_shmem_ds_t *ds_buf,
          * cannot be used :-(. if the flag is negative, then warn and continue
          * with the default path.  otherwise, fail.
          */
-        else if (relocate_backing_file < 0) {
+        else if (opal_shmem_mmap_relocate_backing_file < 0) {
             opal_output(0, "shmem: mmap: WARNING: could not relocate "
                         "backing store to \"%s\" (%s).  Continuing with "
-                        "default path.\n", backing_file_base_dir,
-                        strerror(err));
+                        "default path.\n",
+                        opal_shmem_mmap_backing_file_base_dir, strerror(err));
         }
         /* must be positive, so fail */
         else {
             opal_output(0, "shmem: mmap: WARNING: could not relocate "
                         "backing store to \"%s\" (%s).  Cannot continue with "
-                        "shmem mmap.\n", backing_file_base_dir, strerror(err));
+                        "shmem mmap.\n", opal_shmem_mmap_backing_file_base_dir, strerror(err));
             return OPAL_ERROR;
         }
     }
