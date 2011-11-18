@@ -381,7 +381,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
     orte_node_t *node;
     orte_proc_t *proc, *ptr;
     int rc;
-    bool added_one=false;
 
     map = jdata->map;
     
@@ -396,7 +395,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         cnt=0;
         vpid=0;
         while (cnt < jdata->num_procs) {
-            added_one = false;
             for (i=0; i < map->nodes->size; i++) {
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
                     continue;
@@ -424,7 +422,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                              * it in our loop - otherwise don't as we would be
                              * double counting
                              */
-                            added_one = true;
                             cnt++;
                         }
                         continue;
@@ -446,17 +443,8 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                         return rc;
                     }
                     cnt++;
-                    added_one = true;
                     break;  /* move on to next node */
                 }                
-            }
-            /* it should be impossible, but check to see if there was nothing
-             * added during this pass and error out if not
-             */
-            if (!added_one) {
-                orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:ranking-error",
-                               true, "bynode");
-                return ORTE_ERR_SILENT;
             }
         }
         return ORTE_SUCCESS;
