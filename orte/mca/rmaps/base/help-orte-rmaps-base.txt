@@ -185,9 +185,3 @@ Unknown binding level:
 
   Target:  %s
   Cache level:  %u
-#
-[ranking-error]
-An infinite loop condition has been detected in the ranking
-code when computing ranks %s. This indicates a problem
-in the mapper. Please refer the problem to the attention
-of the OMPI developers.
