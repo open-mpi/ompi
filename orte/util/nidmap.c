@@ -651,7 +651,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     orte_local_rank_t *local_rank=NULL;
     orte_node_rank_t *node_rank=NULL;
 #if OPAL_HAVE_HWLOC
-    opal_hwloc_level_t bind_level;
+    opal_hwloc_level_t bind_level = 0;
     unsigned int *bind_idx=NULL;
 #endif
     orte_std_cntr_t n;
@@ -801,8 +801,8 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             if (ORTE_PROC_MY_NAME->vpid == i) {
                 /* this is me */
                 pmap->locality = OPAL_PROC_ALL_LOCAL;
-#if OPAL_HAVE_HWLOC
             } else if (pmap->node == my_node) {
+#if OPAL_HAVE_HWLOC
                 /* we share a node - see what else we share */
                 pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
                                                                        orte_process_info.bind_level,
@@ -810,7 +810,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                                                                        jmap->bind_level,
                                                                        bind_idx[i]);
 #else
-            } else if (pmap->node == my_node) {
                 pmap->locality = OPAL_PROC_ON_NODE;
 #endif
             } else {
