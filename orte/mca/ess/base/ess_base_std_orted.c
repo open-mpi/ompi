@@ -88,7 +88,7 @@ static void epipe_signal_callback(int fd, short flags, void *arg);
 
 int orte_ess_base_orted_setup(char **hosts)
 {
-    int ret;
+    int ret = ORTE_ERROR;
     int fd;
     char log_file[PATH_MAX];
     char *jobidstring;

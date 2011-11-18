@@ -51,7 +51,7 @@ static int ppr[OPAL_HWLOC_HWTHREAD_LEVEL+1];
 
 static int ppr_mapper(orte_job_t *jdata)
 {
-    int rc, j, n;
+    int rc = ORTE_SUCCESS, j, n;
     mca_base_component_t *c=&mca_rmaps_ppr_component.base_version;
     orte_node_t *node;
     orte_proc_t *proc;
@@ -396,10 +396,10 @@ static void prune(orte_jobid_t jobid,
     hwloc_obj_t obj, top;
     unsigned int i, nobjs;
     hwloc_obj_type_t lvl;
-    unsigned cache_level, k;
+    unsigned cache_level = 0, k;
     int nprocs;
     hwloc_cpuset_t avail, cpus, childcpus;
-    int n, limit, nmax, nunder, idx, idxmax;
+    int n, limit, nmax, nunder, idx, idxmax = 0;
     orte_proc_t *proc, *pptr, *procmax;
     opal_hwloc_level_t ll;
     char dang[64];

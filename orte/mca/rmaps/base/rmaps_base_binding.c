@@ -63,7 +63,7 @@ static int bind_upwards(orte_job_t *jdata,
     orte_proc_t *proc;
     hwloc_obj_t obj;
     hwloc_cpuset_t cpus;
-    unsigned int idx, ncpus, nobjs, nsave, *nbound=NULL;
+    unsigned int idx, ncpus, nobjs, nsave = 0, *nbound=NULL;
     struct hwloc_topology_support *support;
 
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
@@ -218,7 +218,7 @@ static int bind_downwards(orte_job_t *jdata,
     orte_proc_t *proc;
     hwloc_obj_t obj;
     hwloc_cpuset_t cpus;
-    unsigned int n, idx, minval, ncpus, nobjs, nsave, *nbound=NULL;
+    unsigned int n, idx, minval, ncpus, nobjs, nsave = 0, *nbound=NULL;
     struct hwloc_topology_support *support;
 
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
@@ -354,7 +354,7 @@ static int bind_in_place(orte_job_t *jdata,
     orte_node_t *node;
     orte_proc_t *proc;
     hwloc_cpuset_t cpus;
-    unsigned int idx, ncpus, nobjs, nsave, *nbound=NULL;
+    unsigned int idx, ncpus, nobjs, nsave = 0, *nbound=NULL;
     struct hwloc_topology_support *support;
 
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
