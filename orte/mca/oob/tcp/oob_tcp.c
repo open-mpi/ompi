@@ -814,14 +814,7 @@ mca_oob_tcp_create_listen(int *target_sd, unsigned short *target_port, uint16_t 
     /* cleanup */
     CLOSE_THE_SOCKET(*target_sd);
     opal_argv_free(ports);
-    if (orte_standalone_operation) {
-        /* if we are running as a standalone app - i.e., one
-         * not launched by orteds - then abort
-         */
-        orte_errmgr.abort(ORTE_ERR_SOCKET_NOT_AVAILABLE, NULL);
-    }
     return ORTE_ERR_SOCKET_NOT_AVAILABLE;
-
 
 socket_binded:
     /* done with this, so release it */
