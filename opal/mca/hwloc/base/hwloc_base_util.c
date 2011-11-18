@@ -85,7 +85,7 @@ static hwloc_obj_t get_pu(hwloc_topology_t topo,  int lid)
 int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
 {
     hwloc_obj_t root, pu;
-    hwloc_cpuset_t avail, pucpus, res;
+    hwloc_cpuset_t avail = NULL, pucpus, res;
     opal_hwloc_topo_data_t *sum;
     char **ranges=NULL, **range=NULL;
     int idx, cpu, start, end;
@@ -93,12 +93,10 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
     root = hwloc_get_root_obj(topo);
 
     if (NULL == root->userdata) {
-        /* create the summary object */
-        sum = OBJ_NEW(opal_hwloc_topo_data_t);
-        root->userdata = (void*)sum;
-    } else {
-        sum = (opal_hwloc_topo_data_t*)root->userdata;
+        root->userdata = (void*)OBJ_NEW(opal_hwloc_topo_data_t);
     }
+    sum = (opal_hwloc_topo_data_t*)root->userdata;
+
     /* should only ever enter here once, but check anyway */
     if (NULL != sum->available) {
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
@@ -1261,7 +1259,7 @@ char* opal_hwloc_base_print_binding(opal_binding_policy_t binding)
 
 char* opal_hwloc_base_print_level(opal_hwloc_level_t level)
 {
-    char *ret;
+    char *ret = "unknown";
 
     switch(level) {
     case OPAL_HWLOC_NODE_LEVEL:

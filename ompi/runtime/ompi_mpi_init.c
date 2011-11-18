@@ -443,7 +443,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         bool paffinity_enabled=false;
         orte_node_rank_t nrank;
         hwloc_obj_type_t target;
-        unsigned cache_level;
+        unsigned int cache_level = 0;
         struct hwloc_topology_support *support;
 
         /* see if we were bound when launched */
