@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2008 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -192,7 +192,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
     }
 
     /* compute how many extra procs to put on each node */
-    balance = (float)(app->num_procs - (navg * opal_list_get_size(node_list))) / (float)opal_list_get_size(node_list);
+    balance = (float)(app->num_procs - (navg * (float)opal_list_get_size(node_list))) / (float)opal_list_get_size(node_list);
     extra_procs_to_assign = (int)balance;
     if (0 < (balance - (float)extra_procs_to_assign)) {
         /* compute how many nodes need an extra proc */
