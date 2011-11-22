@@ -14,6 +14,7 @@
 # Copyright (c) 2009 INRIA.  All rights reserved.
 # Copyright (c) 2009-2010 Université Bordeaux 1
 # Copyright (c) 2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011 Oracle and/or its affiliates.  All rights reserved.
 # See COPYING in top-level directory.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -60,7 +61,6 @@ AC_DEFUN([_HWLOC_CHECK_VISIBILITY],[
              [AC_REQUIRE([AC_PROG_GREP])],
              [GREP=grep])
 
-    msg="whether to enable visibility"
     # Check if the compiler has support for visibility, like some
     # versions of gcc, icc.
     AC_ARG_ENABLE(visibility, 
@@ -73,50 +73,76 @@ AC_DEFUN([_HWLOC_CHECK_VISIBILITY],[
         ;;
     esac
 
+    hwloc_visibility_define=0
+    hwloc_msg="whether to enable symbol visibility"
     if test "$enable_visibility" = "no"; then
-        AC_MSG_CHECKING([$msg])
+        AC_MSG_CHECKING([$hwloc_msg])
         AC_MSG_RESULT([no (disabled)]) 
-        have_visibility=0
     else
-        CFLAGS_orig="$CFLAGS"
-        CFLAGS="$CFLAGS_orig -fvisibility=hidden"
-        hwloc_add=
-        AC_CACHE_CHECK([if $CC supports -fvisibility],
-            [hwloc_cv_cc_fvisibility],
-            [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-                    __attribute__((visibility("default"))) int foo;
-                    ]],[[int i;]])],
-                    [hwloc_cv_cc_fvisibility=yes],
-                    [if test -s conftest.err ; then
-                        $GREP -iq "visibility" conftest.err
-                        if test "$?" = "0" ; then
-                            hwloc_cv_cc_fvisibility=no
-                        else
-                            hwloc_cv_cc_fvisibility=yes
-                        fi
-                     else
-                        hwloc_cv_cc_fvisibility=yes
-                     fi],
-                    [hwloc_cv_cc_fvisibility=no])
-                ])
+        CFLAGS_orig=$CFLAGS
 
-        if test "$hwloc_cv_cc_fvisibility" = "yes" ; then
-            hwloc_add=" -fvisibility=hidden"
-            have_visibility=1
-            AC_MSG_CHECKING([$msg])
-            AC_MSG_RESULT([yes (via$hwloc_add)]) 
-        elif test "$enable_visibility" = "yes"; then
-            AC_MSG_ERROR([Symbol visibility support requested but compiler does not seem to support it.  Aborting])
-        else 
-            AC_MSG_CHECKING([$msg])
-            AC_MSG_RESULT([no (unsupported)]) 
-            have_visibility=0
-        fi
+        hwloc_add=
+        case "$ompi_c_vendor" in
+        sun)
+            # Check using Sun Studio -xldscope=hidden flag
+            hwloc_add="-xldscope=hidden"
+            CFLAGS="$CFLAGS_orig $hwloc_add"
+
+            AC_MSG_CHECKING([if $CC supports -xldscope])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+                __attribute__((visibility("default"))) int foo;
+                ]],[[int i;]])],
+                [],
+                [AS_IF([test -s conftest.err],
+                       [$GREP -iq visibility conftest.err
+                        # If we find "visibility" in the stderr, then
+                        # assume it doesn't work
+                        AS_IF([test "$?" = "0"], [hwloc_add=])])
+                ])
+            AS_IF([test "$hwloc_add" = ""],
+                  [AC_MSG_RESULT([no])],
+                  [AC_MSG_RESULT([yes])])
+            ;;
+
+        *)
+            # Check using -fvisibility=hidden
+            hwloc_add=-fvisibility=hidden
+            CFLAGS="$CFLAGS_orig $hwloc_add"
+
+            AC_MSG_CHECKING([if $CC supports -fvisibility])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+                __attribute__((visibility("default"))) int foo;
+                ]],[[int i;]])],
+                [],
+                [AS_IF([test -s conftest.err],
+                       [$GREP -iq visibility conftest.err
+                        # If we find "visibility" in the stderr, then
+                        # assume it doesn't work
+                        AS_IF([test "$?" = "0"], [hwloc_add=])])
+                ])
+            AS_IF([test "$hwloc_add" = ""],
+                  [AC_MSG_RESULT([no])],
+                  [AC_MSG_RESULT([yes])])
+            ;;
+
+        esac
+
         CFLAGS=$CFLAGS_orig
         HWLOC_VISIBILITY_CFLAGS=$hwloc_add
-        unset hwloc_add 
+
+        if test "$hwloc_add" != "" ; then
+            hwloc_visibility_define=1
+            AC_MSG_CHECKING([$hwloc_msg])
+            AC_MSG_RESULT([yes (via $hwloc_add)])
+        elif test "$enable_visibility" = "yes"; then
+            AC_MSG_ERROR([Symbol visibility support requested but compiler does not seem to support it.  Aborting])
+        else
+            AC_MSG_CHECKING([$hwloc_msg])
+            AC_MSG_RESULT([no (unsupported)])
+        fi
+        unset hwloc_add
     fi
 
-    AC_DEFINE_UNQUOTED([HWLOC_C_HAVE_VISIBILITY], [$have_visibility],
-            [Whether C compiler supports -fvisibility])
+    AC_DEFINE_UNQUOTED([HWLOC_C_HAVE_VISIBILITY], [$hwloc_visibility_define],
+            [Whether C compiler supports symbol visibility or not])
 ])
