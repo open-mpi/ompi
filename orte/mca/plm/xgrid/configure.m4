@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,7 +30,7 @@ AC_DEFUN([MCA_orte_plm_xgrid_CONFIG],[
     # For very dumb reasons involving linking, it's near impossible
     # to build the XGrid components as static libraries.  Disable if that's
     # the case.
-    AS_IF([test "$plm_xgrid_good" = "0"], [$2],
+    AS_IF([test "$plm_xgrid_good" = "0" -a "$orte_without_full_support" = 0], [$2],
           [AS_IF([test "$compile_mode" = "dso"],
                   [ # plm_xgrid_LDFLAGS will be set by ORTE_CHECK_XGRID
                    plm_xgrid_WRAPPER_EXTRA_LDFLAGS="$plm_xgrid_LDFLAGS"

@@ -47,7 +47,6 @@
 #include "opal/mca/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/util/opal_environ.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_progress.h"
@@ -69,7 +68,6 @@
 #include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/rmcast/rmcast.h"
 
 #include "orte/mca/odls/base/odls_private.h"
 
@@ -347,7 +345,7 @@ CLEANUP:
     /* reissue the non-blocking receive */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
                                   ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
-    if (ret != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(ret) != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
     }
     

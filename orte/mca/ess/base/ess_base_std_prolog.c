@@ -28,8 +28,6 @@
 #include <unistd.h>
 #endif
 
-#include "opal/util/opal_sos.h"
-
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_wait.h"

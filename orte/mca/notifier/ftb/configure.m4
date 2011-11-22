@@ -62,7 +62,7 @@ AC_DEFUN([MCA_orte_notifier_ftb_CONFIG], [
                      [notifier_ftb_happy="yes"],
                      [notifier_ftb_happy="no"])
 
-    AS_IF([test "$notifier_ftb_happy" = "yes"],
+    AS_IF([test "$notifier_ftb_happy" = "yes" -a "$orte_without_full_support" = 0],
           [notifier_ftb_WRAPPER_EXTRA_LDFLAGS="$notifier_ftb_LDFLAGS"
            notifier_ftb_WRAPPER_EXTRA_LIBS="$notifier_ftb_LIBS"
            $1],

@@ -170,9 +170,7 @@ int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_dat
 #endif
 
 /** Data type release functions */
-#if !ORTE_DISABLE_FULL_SUPPORT
 void orte_dt_std_obj_release(opal_dss_value_t *value);
-#endif
 void orte_dt_std_release(opal_dss_value_t *value);
 
 /** Data type size functions */

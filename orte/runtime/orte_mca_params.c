@@ -41,9 +41,12 @@ static bool passed_thru = false;
 
 int orte_register_params(void)
 {
-    int value, tmp;
+    int value;
     char *strval;
-    
+#if !ORTE_DISABLE_FULL_SUPPORT
+    int tmp;
+#endif
+
     /* only go thru this once - mpirun calls it twice, which causes
      * any error messages to show up twice
      */

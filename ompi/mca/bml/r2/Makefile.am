@@ -21,8 +21,8 @@ r2_sources  = \
 	bml_r2.c \
 	bml_r2.h \
 	bml_r2_component.c \
-	bml_r2_ft.c \
-	bml_r2_ft.h
+        bml_r2_ft.c \
+        bml_r2_ft.h
 
 dist_pkgdata_DATA = help-mca-bml-r2.txt
 

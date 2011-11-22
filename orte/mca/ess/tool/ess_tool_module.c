@@ -29,8 +29,6 @@
 #include <unistd.h>
 #endif
 
-#include "opal/util/opal_sos.h"
-
 #include "orte/util/show_help.h"
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/plm.h"
@@ -116,10 +114,12 @@ static int rte_init(void)
     return ORTE_SUCCESS;        
 
 error:
-    orte_show_help("help-ess-tool.txt",
-                   "tool:rte_init:startup:internal-failure",
-                   true, error, ORTE_ERROR_NAME(ret), ret);
-    
+    if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
+        orte_show_help("help-ess-tool.txt",
+                       "tool:rte_init:startup:internal-failure",
+                       true, error, ORTE_ERROR_NAME(ret), ret);
+    }
+
     return ret;
 }
 

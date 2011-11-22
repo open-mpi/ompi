@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,7 +20,7 @@ AC_DEFUN([MCA_orte_grpcomm_pmi_CONFIG], [
          
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
-    AS_IF([test "$grpcomm_pmi_good" = 1],
+    AS_IF([test "$grpcomm_pmi_good" = 1 -a "$orte_without_full_support" = 0],
           [grpcomm_pmi_WRAPPER_EXTRA_LDFLAGS="$grpcomm_pmi_LDFLAGS"
            grpcomm_pmi_WRAPPER_EXTRA_LIBS="$grpcomm_pmi_LIBS"
            $1],

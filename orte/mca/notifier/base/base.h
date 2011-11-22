@@ -51,13 +51,14 @@ typedef struct {
 
 OBJ_CLASS_DECLARATION(orte_notifier_base_selected_pair_t);
 
-#if !ORTE_DISABLE_FULL_SUPPORT
-
 /*
  * function definitions
  */
 ORTE_DECLSPEC int orte_notifier_base_open(void);
+ORTE_DECLSPEC int orte_notifier_base_close(void);
 ORTE_DECLSPEC int orte_notifier_base_select(void);
+
+#if !ORTE_DISABLE_FULL_SUPPORT
 ORTE_DECLSPEC void orte_notifier_log(orte_notifier_base_severity_t severity, 
                                      int errcode, 
                                      const char *msg, ...);
@@ -73,7 +74,6 @@ ORTE_DECLSPEC const char* orte_notifier_base_sev2str(orte_notifier_base_severity
 ORTE_DECLSPEC char *orte_notifier_base_peer_log(int errcode, 
                                                 orte_process_name_t *peer_proc, 
                                                 const char *msg, va_list ap);
-ORTE_DECLSPEC int orte_notifier_base_close(void);
 
 #if ORTE_WANT_NOTIFIER_LOG_EVENT
 

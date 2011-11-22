@@ -22,7 +22,6 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"

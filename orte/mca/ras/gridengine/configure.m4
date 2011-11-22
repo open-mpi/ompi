@@ -13,6 +13,8 @@
 # Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
 #                         Use is subject to license terms.
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,5 +27,7 @@
 AC_DEFUN([MCA_orte_ras_gridengine_CONFIG],[
     AC_CONFIG_FILES([orte/mca/ras/gridengine/Makefile])
 
-    ORTE_CHECK_GRIDENGINE([ras_gridengine], [$1], [$2])
+    ORTE_CHECK_GRIDENGINE([ras_gridengine], [ras_gridengine_happy="yes"], [ras_gridengine_happy="no"])
+
+    AS_IF([test "$ras_gridengine_happy" = "yes" -a "$orte_without_full_support" = 0], [$1], [$2])
 ])dnl

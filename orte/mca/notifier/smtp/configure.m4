@@ -32,6 +32,10 @@ AC_DEFUN([MCA_orte_notifier_smtp_CONFIG], [
                               [esmtp],
                               [smtp_create_session],
                               [],
-                              [$1],
-                              [$2])
+                              [$orte_notifier_want_smtp=1],
+                              [$orte_notifier_want_smtp=0])
+
+    AS_IF([test "$orte_notifier_want_smtp" = 1 -a "$orte_without_full_support" = 0],
+          [$1],
+          [$2])
 ])dnl

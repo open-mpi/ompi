@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -62,15 +62,13 @@
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
-#include "orte/mca/db/db.h"
-#include "orte/mca/db/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
-#include "orte/mca/notifier/notifier.h"
-#include "orte/mca/notifier/base/base.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #if !ORTE_DISABLE_FULL_SUPPORT
+#include "orte/mca/notifier/notifier.h"
+#include "orte/mca/notifier/base/base.h"
 #include "orte/mca/debugger/debugger.h"
 #include "orte/mca/debugger/base/base.h"
 #include "orte/mca/iof/iof.h"
@@ -83,8 +81,6 @@
 #include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/rmcast/rmcast.h"
-#include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/routed.h"
@@ -360,14 +356,6 @@ void orte_info_open_components(void)
     map->components = &orte_grpcomm_base.components_available;
     opal_pointer_array_add(&component_map, map);
     
-    if (ORTE_SUCCESS != orte_db_base_open()) {
-        goto error;
-    }
-    map = OBJ_NEW(orte_info_component_map_t);
-    map->type = strdup("db");
-    map->components = &orte_db_base_components_available;
-    opal_pointer_array_add(&component_map, map);
-
     if (ORTE_SUCCESS != orte_ess_base_open()) {
         goto error;
     }
@@ -376,6 +364,7 @@ void orte_info_open_components(void)
     map->components = &orte_ess_base_components_available;
     opal_pointer_array_add(&component_map, map);
     
+#if !ORTE_DISABLE_FULL_SUPPORT
     if (ORTE_SUCCESS != orte_notifier_base_open()) {
         goto error;
     }
@@ -384,7 +373,6 @@ void orte_info_open_components(void)
     map->components = &orte_notifier_base_components_available;
     opal_pointer_array_add(&component_map, map);
     
-#if !ORTE_DISABLE_FULL_SUPPORT
     if (ORTE_SUCCESS != orte_debugger_base_open()) {
         goto error;
     }
@@ -433,14 +421,6 @@ void orte_info_open_components(void)
     map->components = &orte_rmaps_base.available_components;
     opal_pointer_array_add(&component_map, map);
     
-    if (ORTE_SUCCESS != orte_rmcast_base_open()) {
-        goto error;
-    }
-    map = OBJ_NEW(orte_info_component_map_t);
-    map->type = strdup("rmcast");
-    map->components = &orte_rmcast_base.rmcast_opened;
-    opal_pointer_array_add(&component_map, map);
-
     if (ORTE_SUCCESS != orte_rml_base_open()) {
         goto error;
     }
@@ -539,14 +519,13 @@ void orte_info_close_components()
          */
         
         (void) orte_grpcomm_base_close();
-        (void) orte_db_base_close();
-        (void) orte_notifier_base_close();
         (void) orte_ess_base_close();
         (void) orte_show_help_finalize();
 #if !ORTE_DISABLE_FULL_SUPPORT
 #if OPAL_ENABLE_FT_CR == 1
         (void) orte_snapc_base_close();
 #endif
+        (void) orte_notifier_base_close();
         (void) orte_filem_base_close();
         (void) orte_iof_base_close();
         (void) orte_plm_base_close();
@@ -556,7 +535,6 @@ void orte_info_close_components()
         (void) orte_rml_base_close();
         (void) orte_routed_base_close();
         (void) mca_oob_base_close();
-        (void) orte_rmcast_base_close();
 #endif
         (void) orte_errmgr_base_close();
         

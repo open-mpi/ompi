@@ -52,7 +52,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/util/basename.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/opal_environ.h"
@@ -653,6 +652,7 @@ int orterun(int argc, char *argv[])
         /* cannot call ORTE_ERROR_LOG as it could be the errmgr
          * never got loaded!
          */
+        fprintf(stderr, "FAILED ORTE INIT\n");
         return rc;
     }
     /* finalize the OPAL utils. As they are opened again from orte_init->opal_init
@@ -775,7 +775,7 @@ int orterun(int argc, char *argv[])
      */
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
-    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
         goto DONE;

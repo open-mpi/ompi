@@ -26,7 +26,6 @@
 #include "orte/types.h"
 
 #include "orte/util/show_help.h"
-#include "opal/util/opal_sos.h"
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 

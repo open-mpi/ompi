@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,7 +30,7 @@ AC_DEFUN([MCA_orte_ess_tm_CONFIG],[
          
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
-    AS_IF([test "$ess_tm_good" = "1"],
+    AS_IF([test "$ess_tm_good" = "1" -a test "$orte_without_full_support" = 0],
           [ess_tm_WRAPPER_EXTRA_LDFLAGS="$ess_tm_LDFLAGS"
            ess_tm_WRAPPER_EXTRA_LIBS="$ess_tm_LIBS"
            $1],

@@ -22,7 +22,7 @@ AC_DEFUN([MCA_orte_rml_ftrm_CONFIG],[
     AC_CONFIG_FILES([orte/mca/rml/ftrm/Makefile])
 
     # If we don't want FT, don't compile this component
-    AS_IF([test "$opal_want_ft_cr" = "1"],
+    AS_IF([test "$opal_want_ft_cr" = "1" -a "$orte_without_full_support" = 0],
         [$1],
         [$2])
 ])dnl

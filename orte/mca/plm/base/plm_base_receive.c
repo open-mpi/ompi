@@ -34,7 +34,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
 #include "opal/threads/threads.h"
 
@@ -457,7 +456,7 @@ static void process_msg(int fd, short event, void *data)
                 }
                 count = 1;
             }
-            if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != OPAL_SOS_GET_ERROR_CODE(rc)) {
+            if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
                 ORTE_ERROR_LOG(rc);
             } else {
                 rc = ORTE_SUCCESS;

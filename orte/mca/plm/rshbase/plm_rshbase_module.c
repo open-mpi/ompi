@@ -55,7 +55,6 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/mca/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"

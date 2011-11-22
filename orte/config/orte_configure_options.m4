@@ -78,25 +78,6 @@ AC_DEFINE_UNQUOTED([ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT],
                    [Whether we want orterun to effect "--prefix $prefix" by default])
 
 #
-# Do we want reliable multicast enabled?
-#
-
-AC_MSG_CHECKING([if want reliable multicast])
-AC_ARG_ENABLE([multicast],
-    [AC_HELP_STRING([--enable-multicast],
-                    [Enable reliable multicast messaging (default: disabled)])])
-if test "$enable_multicast" = "yes"; then
-    AC_MSG_RESULT([yes])
-    orte_want_multicast=1
-else
-    AC_MSG_RESULT([no])
-    orte_want_multicast=0
-fi
-AC_DEFINE_UNQUOTED([ORTE_ENABLE_MULTICAST],
-                   [$orte_want_multicast],
-                   [Whether we want multicast messaging enabled])
-
-#
 # Do we want sensors enabled?
 
 AC_MSG_CHECKING([if want sensors])
@@ -135,16 +116,22 @@ AC_DEFINE_UNQUOTED([ORTE_ENABLE_HEARTBEAT],
 #
 # Compile in resilient runtime code
 #
+AC_MSG_CHECKING([if want resilient runtime code enabled])
 AC_ARG_ENABLE(resilient-orte,
     [AC_HELP_STRING([--enable-resilient-orte], [Enable the resilient runtime code.])])
-AS_IF( [test "$enable_resilient_orte" = "yes"], [result=1], [result=0] )
-
+if test "$enable_resilient_orte" = "yes"; then
+    AC_MSG_RESULT([yes])
+    orte_enable_resilient_code=1
+else
+    AC_MSG_RESULT([no])
+    orte_enable_resilient_code=0
+fi
 AM_CONDITIONAL(ORTE_RESIL_ORTE, [test "$enable_resilient_orte" = "yes"])
-AC_DEFINE_UNQUOTED([ORTE_RESIL_ORTE], [$result],
+AC_DEFINE_UNQUOTED([ORTE_RESIL_ORTE], [$orte_enable_resilient_code],
      [Compile a resilient version of Open MPI])
 
 AM_CONDITIONAL(ORTE_ENABLE_EPOCH, [test "$enable_resilient_orte" = "yes"])
-AC_DEFINE_UNQUOTED([ORTE_ENABLE_EPOCH], [$result],
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_EPOCH], [$orte_enable_resilient_code],
      [Support for epoch in the ORTE process name enabled or not])
 
 

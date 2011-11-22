@@ -23,7 +23,6 @@
 #include "orte/mca/routed/routed.h"
 #include "opal/dss/dss.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml_types.h"

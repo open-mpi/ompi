@@ -64,12 +64,13 @@
 /*
  * Globals
  */
-
+#if !ORTE_DISABLE_FULL_SUPPORT
 static int num_aborted = 0;
 static int num_killed = 0;
 static int num_failed_start = 0;
 
 static void dump_aborted_procs(void);
+#endif
 
 void orte_jobs_complete(void)
 {

@@ -11,7 +11,6 @@
 #include "rml_oob.h"
 
 #include "opal/util/argv.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 

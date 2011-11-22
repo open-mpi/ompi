@@ -29,7 +29,6 @@
 
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/event/event.h"
@@ -410,7 +409,7 @@ rml_oob_queued_progress(int fd, short event, void *arg)
                                                           qmsg);
 
         if (ORTE_SUCCESS != ret) {
-            if (ORTE_ERR_ADDRESSEE_UNKNOWN == OPAL_SOS_GET_ERROR_CODE(ret)) {
+            if (ORTE_ERR_ADDRESSEE_UNKNOWN == ret) {
                 /* still no route -- try again */
                 ORTE_RML_OOB_MSG_HEADER_NTOH(*hdr);
                 OPAL_THREAD_LOCK(&orte_rml_oob_module.queued_lock);
@@ -530,7 +529,7 @@ rml_oob_recv_route_callback(int status,
                                                       NULL);
 
     if (ORTE_SUCCESS != ret) {
-        if (ORTE_ERR_ADDRESSEE_UNKNOWN == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        if (ORTE_ERR_ADDRESSEE_UNKNOWN == ret) {
             /* no route -- queue and hope we find a route */
             orte_rml_oob_queued_msg_t *qmsg = OBJ_NEW(orte_rml_oob_queued_msg_t);
             OPAL_OUTPUT_VERBOSE((1, orte_rml_base_output,

@@ -25,7 +25,6 @@
 #include <string.h>
 
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/threads/tsd.h"
 #include "opal/mca/event/event.h"
 

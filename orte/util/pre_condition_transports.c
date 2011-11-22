@@ -40,7 +40,6 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/opal_environ.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/constants.h"
 #include "orte/types.h"

@@ -49,7 +49,6 @@
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/opal_socket_errno.h"
 #include "opal/util/if.h"
 #include "opal/util/net.h"

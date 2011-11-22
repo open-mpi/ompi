@@ -2,6 +2,8 @@
 #
 # Copyright (c)      2010 The Trustees of Indiana University.
 #                         All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -16,7 +18,7 @@ AC_DEFUN([MCA_orte_sstore_central_CONFIG],[
     AC_CONFIG_FILES([orte/mca/sstore/central/Makefile])
 
     # If we don't want FT, don't compile this component
-    AS_IF([test "$opal_want_ft_cr" = "1"],
+    AS_IF([test "$opal_want_ft_cr" = "1" -a "$orte_without_full_support" = 0],
         [$1],
         [$2])
 ])dnl
