@@ -52,7 +52,6 @@
 #include "opal/dss/dss_types.h"
 #include "opal/class/opal_object.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/event/event.h"
 #include "opal/threads/mutex.h"

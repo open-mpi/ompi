@@ -36,7 +36,6 @@
 #include "opal/mca/base/mca_base_param.h"
 
 #include "opal/mca/event/event.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/constants.h"
 #include "orte/util/show_help.h"

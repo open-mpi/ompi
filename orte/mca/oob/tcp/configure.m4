@@ -10,7 +10,9 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved.
+# Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,10 +27,12 @@ AC_DEFUN([MCA_orte_oob_tcp_CONFIG],[
 
     # check for sockaddr_in (a good sign we have TCP)
     AC_CHECK_TYPES([struct sockaddr_in], 
-                   [$1],
-                   [$2], 
+                   [oob_tcp_happy="yes"],
+                   [oob_tcp_happy="no"], 
                    [AC_INCLUDES_DEFAULT
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif])
+
+    AS_IF([test "$oob_tcp_happy" = "yes" -a "$orte_without_full_support" = 0], [$1], [$2])
 ])dnl

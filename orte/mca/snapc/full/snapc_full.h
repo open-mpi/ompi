@@ -29,7 +29,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/event/event.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/mca/sstore/sstore.h"
 #include "orte/mca/snapc/snapc.h"

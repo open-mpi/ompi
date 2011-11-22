@@ -211,7 +211,6 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "odls");
     opal_pointer_array_add(&mca_types, "ras");
     opal_pointer_array_add(&mca_types, "rmaps");
-    opal_pointer_array_add(&mca_types, "rmcast");
     opal_pointer_array_add(&mca_types, "rml");
     opal_pointer_array_add(&mca_types, "routed");
     opal_pointer_array_add(&mca_types, "plm");
@@ -225,7 +224,6 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "errmgr");
     opal_pointer_array_add(&mca_types, "ess");
     opal_pointer_array_add(&mca_types, "grpcomm");
-    opal_pointer_array_add(&mca_types, "db");
     opal_pointer_array_add(&mca_types, "notifier");
     
     /* Execute the desired action(s) */

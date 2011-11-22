@@ -37,7 +37,6 @@
 #endif
 #endif
 
-#include "opal/util/opal_sos.h"
 #include "opal/mca/event/event.h"
 
 #include "orte/runtime/orte_globals.h"

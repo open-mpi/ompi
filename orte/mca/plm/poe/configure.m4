@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      IBM Corporation.  All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -42,5 +44,5 @@ AC_DEFUN([MCA_orte_plm_poe_CONFIG],[
         happy=no
         ;;
     esac
-    AS_IF([test "$happy" = "yes"], [$1], [$2])
+    AS_IF([test "$happy" = "yes" -a "$orte_without_full_support" = 0], [$1], [$2])
 ])

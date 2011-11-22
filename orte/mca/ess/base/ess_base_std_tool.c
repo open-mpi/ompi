@@ -42,7 +42,6 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
-#include "orte/mca/rmcast/base/base.h"
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
@@ -86,18 +85,6 @@ int orte_ess_base_tool_setup(void)
     if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed_base_select";
-        goto error;
-    }
-    
-    /* multicast */
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
         goto error;
     }
     
@@ -197,7 +184,6 @@ int orte_ess_base_tool_finalize(void)
         orte_iof_base_close();
     }
     orte_routed_base_close();
-    orte_rmcast_base_close();
     orte_rml_base_close();
 
     return ORTE_SUCCESS;    

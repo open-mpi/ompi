@@ -1,6 +1,8 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -15,7 +17,7 @@ AC_DEFUN([MCA_orte_sensor_heartbeat_CONFIG], [
 
     # if we don't want heartbeats, don't compile
     # this component
-    AS_IF([test "$orte_want_heartbeats" = "1"],
+    AS_IF([test "$orte_want_heartbeats" = "1" -a "$orte_without_full_support" = 0],
         [$1], [$2])
 ])dnl
 

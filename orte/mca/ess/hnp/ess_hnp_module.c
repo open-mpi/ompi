@@ -56,8 +56,6 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/notifier/base/base.h"
-#include "orte/mca/rmcast/base/base.h"
-#include "orte/mca/db/base/base.h"
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/sensor/sensor.h"
 #include "orte/mca/debugger/base/base.h"
@@ -308,18 +306,6 @@ static int rte_init(void)
     if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed_base_select";
-        goto error;
-    }
-    
-    /* multicast */
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
         goto error;
     }
     
@@ -622,18 +608,6 @@ static int rte_init(void)
         goto error;
     }
 
-    /* setup the db framework */
-    if (ORTE_SUCCESS != (ret = orte_db_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_db_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_db_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_db_select";
-        goto error;
-    }
-    
     /* setup the SENSOR framework */
     if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -693,7 +667,7 @@ static int rte_init(void)
     return ORTE_SUCCESS;
 
 error:
-    if (ORTE_ERR_SILENT != ret) {
+    if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",
                        "orte_init:startup:internal-failure",
                        true, error, ORTE_ERROR_NAME(ret), ret);
@@ -740,7 +714,6 @@ static int rte_finalize(void)
     free(contact_path);
     
     orte_sensor_base_close();
-    orte_db_base_close();
     orte_notifier_base_close();
     
     orte_cr_finalize();
@@ -763,9 +736,6 @@ static int rte_finalize(void)
     orte_plm_base_close();
     orte_errmgr_base_close();
     orte_grpcomm_base_close();
-
-    /* close the multicast */
-    orte_rmcast_base_close();
 
     /* now can close the rml */
     orte_routed_base_close();

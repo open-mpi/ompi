@@ -26,7 +26,6 @@
 
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/event/event.h"
 
@@ -490,7 +489,7 @@ static int show_help(const char *filename, const char *topic,
         }
     } 
     /* Not already displayed */
-    else if (ORTE_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(rc)) {
+    else if (ORTE_ERR_NOT_FOUND == rc) {
         if (orte_xml_output) {
             char *tmp;
             tmp = xml_format((unsigned char*)output);
@@ -587,7 +586,7 @@ cleanup:
     /* reissue the recv */
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
                                  ORTE_RML_NON_PERSISTENT, orte_show_help_recv, NULL);
-    if (rc != ORTE_SUCCESS && OPAL_SOS_GET_ERROR_CODE(rc) != ORTE_ERR_NOT_IMPLEMENTED) {
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
     }
 }

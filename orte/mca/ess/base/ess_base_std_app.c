@@ -40,7 +40,6 @@
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/base/base.h"
-#include "orte/mca/rmcast/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/plm.h"
@@ -54,7 +53,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/notifier/base/base.h"
-#include "orte/mca/db/base/base.h"
 
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_globals.h"
@@ -104,18 +102,6 @@ int orte_ess_base_app_setup(void)
     if (ORTE_SUCCESS != (ret = orte_routed_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_routed_base_select";
-        goto error;
-    }
-    
-    /* multicast */
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_rmcast_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmcast_base_select";
         goto error;
     }
     
@@ -229,18 +215,6 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
     
-    /* setup the db system */
-    if (ORTE_SUCCESS != (ret = orte_db_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_db_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_db_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_db_select";
-        goto error;
-    }
-    
     /* if we are an ORTE app - and not an MPI app - then
      * we need to barrier here. MPI_Init has its own barrier,
      * so we don't need to do two of them. However, if we
@@ -288,8 +262,6 @@ int orte_ess_base_app_finalize(void)
 
     /* now can close the rml and its friendly group comm */
     orte_grpcomm_base_close();
-    /* close the multicast */
-    orte_rmcast_base_close();
     orte_routed_base_close();
     orte_rml_base_close();
     

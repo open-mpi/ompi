@@ -25,7 +25,6 @@
 
 
 #include "opal/dss/dss.h"
-#include "opal/util/opal_sos.h"
 #include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/errmgr/errmgr.h"

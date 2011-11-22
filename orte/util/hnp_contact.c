@@ -37,7 +37,6 @@
 
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/util/os_dirpath.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -193,7 +192,7 @@ int orte_list_local_hnps(opal_list_t *hnps, bool connect)
         /* it is okay not to find this as there may not be any
          * HNP's present, and we don't write our own session dir
          */
-        if (ORTE_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret)) {
+        if (ORTE_ERR_NOT_FOUND != ret) {
             ORTE_ERROR_LOG(ret);
         }
         goto cleanup;

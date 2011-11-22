@@ -38,6 +38,7 @@
 
 int mca_bml_r2_ft_event(int state)
 {
+#if !ORTE_DISABLE_FULL_SUPPORT
     static bool first_continue_pass = false;
     ompi_proc_t** procs = NULL;
     size_t num_procs;
@@ -297,6 +298,7 @@ int mca_bml_r2_ft_event(int state)
     else {
         ;
     }
-    
+#endif
+
     return OMPI_SUCCESS;
 }

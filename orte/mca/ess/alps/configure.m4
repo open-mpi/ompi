@@ -57,7 +57,7 @@ AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
                        [$orte_mca_ess_alps_have_cnos],
                        [Whether we have CNOS support in alps ess or not])
 
-    AS_IF([test "$orte_mca_ess_alps_happy" = "yes"],
+    AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_without_full_support" = 0],
           [$1],
           [$2])
 ])dnl
