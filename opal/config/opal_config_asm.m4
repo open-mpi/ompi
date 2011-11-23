@@ -19,6 +19,17 @@ dnl $HEADER$
 dnl
 
 
+AC_DEFUN([OPAL_CHECK_SYNC_BUILTINS], [
+  AC_MSG_CHECKING([for __sync builtin atomics])
+
+  AC_TRY_COMPILE([], [__sync_synchronize()], 
+    [AC_MSG_RESULT([yes])
+     $1],
+    [AC_MSG_RESULT([no])
+     $2])
+])
+
+
 dnl #################################################################
 dnl
 dnl OMPI_CHECK_ASM_TEXT
@@ -841,8 +852,21 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
     AC_DEFINE_UNQUOTED([OPAL_WANT_SMP_LOCKS], [$want_smp_locks],
                        [whether we want to have smp locks in atomic ops or not])
 
+    AC_ARG_ENABLE([builtin-atomics],
+      [AC_HELP_STRING([--enable-builtin-atomics],
+         [Enable use of __sync builtin atomics (default: disabled)])])
+
     if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
         ompi_cv_asm_arch="WINDOWS"
+    elif test "$enable_builtin_atomics" = "yes" ; then
+       OPAL_CHECK_SYNC_BUILTINS([ompi_cv_asm_arch="SYNC_BUILTIN"],
+         [AC_MSG_ERROR([__sync builtin atomics requested but not found.])])
+       AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
+         [Whether C compiler supports GCC style inline assembly])
+       m4_ifdef([project_ompi],
+                [AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
+         [AC_DEFINE([OMPI_CXX_GCC_INLINE_ASSEMBLY], [1],
+           [Whether C++ compiler supports GCC style inline assembly])])])
     else
         OMPI_CHECK_ASM_PROC
         OMPI_CHECK_ASM_TEXT
@@ -946,10 +970,19 @@ AC_MSG_ERROR([Can not continue.])
             ;;
 
         *)
-            AC_MSG_ERROR([No atomic primitives available for $host])
+            OPAL_CHECK_SYNC_BUILTINS([ompi_cv_asm_arch="SYNC_BUILTIN"],
+              [AC_MSG_ERROR([No atomic primitives available for $host])])
             ;;
         esac
 
+      if test "$ompi_cv_asm_arch" = "SYNC_BUILTIN" ; then
+        AC_DEFINE([OPAL_C_GCC_INLINE_ASSEMBLY], [1],
+          [Whether C compiler supports GCC style inline assembly])
+        m4_ifdef([project_ompi],
+                 [AS_IF([test "$WANT_MPI_CXX_SUPPORT" = "1"],
+          [AC_DEFINE([OMPI_CXX_GCC_INLINE_ASSEMBLY], [1],
+            [Whether C++ compiler supports GCC style inline assembly])])])
+      else
         AC_DEFINE_UNQUOTED([OPAL_ASM_SUPPORT_64BIT],
             [$OPAL_ASM_SUPPORT_64BIT],
             [Whether we can do 64bit assembly operations or not.  Should not be used outside of the assembly header files])
@@ -1004,6 +1037,7 @@ AC_MSG_ERROR([Can not continue.])
         AC_DEFINE_UNQUOTED([OPAL_ASSEMBLY_FORMAT], ["$OPAL_ASSEMBLY_FORMAT"],
                            [Format of assembly file])
         AC_SUBST([OPAL_ASSEMBLY_FORMAT])
+      fi # if ompi_cv_asm_arch = SYNC_BUILTIN
     fi # if cv_c_compiler_vendor = microsoft
 
     result="OMPI_$ompi_cv_asm_arch"
@@ -1032,7 +1066,7 @@ AC_DEFUN([OMPI_ASM_FIND_FILE], [
     AC_REQUIRE([AC_PROG_GREP])
     AC_REQUIRE([AC_PROG_FGREP])
 
-if test "$ompi_cv_asm_arch" != "WINDOWS" ; then
+if test "$ompi_cv_asm_arch" != "WINDOWS" -a "$ompi_cv_asm_arch" != "SYNC_BUILTIN" ; then
     AC_CHECK_PROG([PERL], [perl], [perl])
 
     # see if we have a pre-built one already
