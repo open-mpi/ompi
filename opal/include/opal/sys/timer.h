@@ -103,7 +103,7 @@ BEGIN_C_DECLS
 #ifndef OPAL_HAVE_SYS_TIMER_GET_CYCLES
 #define OPAL_HAVE_SYS_TIMER_GET_CYCLES 0
 
-typedef int opal_timer_t;
+typedef long opal_timer_t;
 #endif
 #endif
 

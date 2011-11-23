@@ -20,5 +20,4 @@
 # This makefile.am does not stand on its own - it is included from opal/include/Makefile.am
 
 headers += \
-	opal/sys/sync_builtin/atomic.h \
-	opal/sys/sync_builtin/timer.h
+	opal/sys/sync_builtin/atomic.h
