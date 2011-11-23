@@ -38,6 +38,17 @@
  *********************************************************************/
 #if OPAL_HAVE_ATOMIC_CMPSET_32
 
+#if !defined(OPAL_HAVE_ATOMIC_SWAP_32
+#define OPAL_HAVE_ATOMIC_SWAP_32
+static inline int32_t opal_atomic_swap_32(volatile int32_t *addr,
+                                          int32_t newval)
+{
+    do {
+        int32_t old = *addr;
+    } while (0 == opal_atomic_cmpset_32(addr, old, newval));
+}
+#endif /* OPAL_HAVE_ATOMIC_SWAP_32 */
+
 #if !defined(OPAL_HAVE_ATOMIC_ADD_32)
 #define OPAL_HAVE_ATOMIC_ADD_32 1
 static inline int32_t
@@ -71,6 +82,17 @@ opal_atomic_sub_32(volatile int32_t *addr, int delta)
 
 
 #if OPAL_HAVE_ATOMIC_CMPSET_64
+
+#if !defined(OPAL_HAVE_ATOMIC_SWAP_64
+#define OPAL_HAVE_ATOMIC_SWAP_64
+static inline int32_t opal_atomic_swap_64(volatile int32_t *addr,
+                                          int32_t newval)
+{
+    do {
+        int64_t old = *addr;
+    } while (0 == opal_atomic_cmpset_64(addr, old, newval));
+}
+#endif /* OPAL_HAVE_ATOMIC_SWAP_32 */
 
 #if !defined(OPAL_HAVE_ATOMIC_ADD_64)
 #define OPAL_HAVE_ATOMIC_ADD_64 1
@@ -244,6 +266,16 @@ static inline int opal_atomic_cmpset_rel_ptr(volatile void* addr,
 }
 
 #endif /* (OPAL_HAVE_ATOMIC_CMPSET_32 || OPAL_HAVE_ATOMIC_CMPSET_64) */
+
+#if (OPAL_HAVE_ATOMIC_SWAP_32 || OPAL_HAVE_ATOMIC_SWAP_64)
+
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_SWAP_32
+#define opal_atomic_swap_ptr(addr, value) opal_atomic_swap_32((int32_t *) addr, value)
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_SWAP_64
+#define opal_atomic_swap_ptr(addr, value) opal_atomic_swap_64((int64_t *) addr, value)
+#endif
+
+#endif /* (OPAL_HAVE_ATOMIC_SWAP_32 || OPAL_HAVE_ATOMIC_SWAP_64) */
 
 #if OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64
 
