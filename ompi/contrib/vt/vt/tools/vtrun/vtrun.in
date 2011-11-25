@@ -306,26 +306,26 @@ fi
 #
 
 if test $mpi -eq 1 -a $HAVE_MPI -eq 0; then
-  echo "$EXENAME: Error: This installation of VampirTrace was not compiled \
-with MPI support. Aborting."
+  echo "$EXENAME: Error: This installation of VampirTrace was not compiled" \
+"with MPI support. Aborting."
   exit 1
 fi
 
 if test $mpi -eq 1 -a $fortran -eq 1 -a $HAVE_FMPI -eq 0; then
-  echo "$EXENAME: Error: This installation of VampirTrace was not compiled \
-with MPI Fortran support. Aborting."
+  echo "$EXENAME: Error: This installation of VampirTrace was not compiled" \
+"with MPI Fortran support. Aborting."
   exit 1
 fi
 
 if test $mt -eq 1 -a $HAVE_THREADS -eq 0; then
-  echo "$EXENAME: Error: This installation of VampirTrace was not compiled \
-with Multithreading support. Aborting."
+  echo "$EXENAME: Error: This installation of VampirTrace was not compiled" \
+"with Multithreading support. Aborting."
   exit 1
 fi
 
 if test $dyninst -eq 1 -a $HAVE_DYNINST -eq 0; then
-  echo "$EXENAME: Error: This installation of VampirTrace was not compiled \
-with Dyninst support. Aborting."
+  echo "$EXENAME: Error: This installation of VampirTrace was not compiled" \
+"with Dyninst support. Aborting."
   exit 1
 fi
 
@@ -339,7 +339,13 @@ if test $mpi -eq 1 -a $fortran -eq 1 -a x"$FMPILIB" != x; then
 fi
 
 if test $dyninst -eq 1; then
-  ld_preload="$libdir/$DYNATTLIB:$ld_preload"
+  if test x"$DYNINSTAPI_RT_LIB" = x; then
+    echo "$EXENAME: Error: Environment variable DYNINSTAPI_RT_LIB is not" \
+"defined. Aborting."
+    exit 1
+  fi
+
+  ld_preload="$DYNINSTAPI_RT_LIB:$libdir/$DYNATTLIB:$ld_preload"
 fi
 
 if test x"$extra_libs" != x; then

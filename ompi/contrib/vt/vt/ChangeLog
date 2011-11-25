@@ -11,6 +11,7 @@
 		- merge groups which have the same members to one group
 		- name groups to "MPI Group X"
 	- added writing of process begin/end records
+	- added support for LIBC [I/O] tracing on Cray XT platforms
 	- added environment variable VT_ONOFF_CHECK_STACK_BALANCE to
 	  enable/disable check for stack level balance when switching tracing
 	  on/off by using the user API
@@ -18,15 +19,22 @@
 	  building of Fortran support
 	- install a symbolic link 'vtfiltergen[-mpi]' which is a synonym for
 	  'vtfilter[-mpi] --gen'
+	- if possible, get resource usage counters for the calling thread
+	  instead of the process
 	- disabled unnecessary time synchronization on NEC SX platforms
+	- removed MPI_Address and MPI_Get_address from MPI wrappers
 	- removed limitation of maximum defined MPI handles (groups, comms.,
 	  and windows) in a MPI program
 	- fixed incorrect handling of MPI_IN_PLACE
 	- fixed erroneous handling of MPI_Aint within the Fortran MPI wrappers
+	- fixed incomplete tracking of MPI inter-communicators
 	- fixed error handling on flushing the trace buffer
 	- fixed potential memory corruption when flushing the trace buffer
 	  multiple times (VT_MAX_FLUSHES != 1)
 	- fixed numbering in thread names
+	- vtunify:
+		- fixed parsing of negative time offsets within unify
+		  control data
 	- vtdyn:
 		- detach from application process before continuing its
 		  execution (allows signal trapping (e.g. Ctrl+C) within the
@@ -37,16 +45,13 @@
 	- compiler wrappers:
 		- added options '-vt:preprocess', '-vt:cpp', and '-vt:cppflags'
 		  to preprocess source files before parsing by OPARI and/or TAU
+		- added options '-vt:opari-rcfile' and '-vt:opari-table' to set
+		  pathnames of the OPARI resource and runtime table file
 		- added option '-vt:nocleanup' to keep intermediate files
+	- vtrun:
+		- do preload Dyninst runtime library (DYNINSTAPI_RT_LIB) when
+		  instrumenting user functions by Dyninst
 	- vtsetup: (see tools/vtsetup/ChangeLog:1.0.1)
-
-5.11.3
-	- if possible, get resource usage counters for the calling thread
-	  instead of the process
-	- removed MPI_Address and MPI_Get_address from MPI wrappers
-	- fixed incomplete tracking of MPI inter-communicators
-	- vtunify: fixed parsing of negative time offsets within unify
-	  control data
 
 5.11.2
 	- updated version of internal OTF to 1.9.2sawfish

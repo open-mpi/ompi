@@ -33,7 +33,7 @@ AC_DEFUN([ACVT_DL],
 		AC_HELP_STRING([--with-dl-lib=DLLIB], [use given libdl lib, default: -ldl]),
 	[DLLIB="$withval"])
 
-	AS_IF([test "$PLATFORM" = "bgl" -o "$PLATFORM" = "crayxt"],
+	AS_IF([test "$PLATFORM" = "bgl"],
 	[
 		AC_MSG_NOTICE([error: dynamic linking library (libdl) isn't suitable on this platform])
 		dl_error="yes"
