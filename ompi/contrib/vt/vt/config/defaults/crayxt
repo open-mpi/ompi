@@ -8,3 +8,4 @@ FFLAGS="-target=$XTPE_COMPILE_TARGET"
 FCFLAGS="-target=$XTPE_COMPILE_TARGET"
 enable_shared="no"
 with_mpich2="yes"
+with_libc=/lib64/libc-2.4.so

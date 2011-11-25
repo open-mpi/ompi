@@ -860,6 +860,32 @@ parseCommandLine( int argc, char** argv )
 
       delete [] opari_args;
     }
+    // -vt:opari-rcfile
+    //
+    else if( arg.compare( "-vt:opari-rcfile" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <file> expected -- -vt:opari-rcfile"
+                  << std::endl;
+        return false;
+      }
+
+      Config.setOpariRcFile( args[++i] );
+    }
+    // -vt:opari-table
+    //
+    else if( arg.compare( "-vt:opari-table" ) == 0 )
+    {
+      if( i == args.size() - 1 )
+      {
+        std::cerr << ExeName << ": <file> expected -- -vt:opari-table"
+                  << std::endl;
+        return false;
+      }
+
+      Config.setOpariTabFile( args[++i] );
+    }
     // -vt:noopari
     //
     else if( arg.compare( "-vt:noopari" ) == 0 )
@@ -1030,11 +1056,7 @@ parseCommandLine( int argc, char** argv )
       found = arg.find_first_of( special_char, found + 2 );
     }
 
-    // -vt:help, -vt:version, -vt:show, -vt:showme, vt:showme-compile,
-    // -vt:showme-link, -vt:seq, -vt:mpi, -vt:mt, -vt:hyb,
-    // -vt:inst, -vt:opari, -vt:tau, -vt:pdt, -vt:preprocess, -vt:cpp,
-    // -vt:cppflags
-    // (processed above; ignore here)
+    // ignore arguments already processed above
     //
     if( arg.compare( "-vt:help" ) == 0 ||
         arg.compare( "-vt:version" ) == 0 ||
@@ -1048,27 +1070,22 @@ parseCommandLine( int argc, char** argv )
         arg.compare( "-vt:mpi" ) == 0 ||
         arg.compare( "-vt:mt" ) == 0 ||
         arg.compare( "-vt:hyb" ) == 0 ||
-        arg.compare( "-vt:inst" ) == 0 ||
-        arg.compare( "-vt:opari" ) == 0 ||
         arg.compare( "-vt:noopari" ) == 0 ||
-        arg.compare( "-vt:tau" ) == 0 ||
-        arg.compare( "-vt:pdt" ) == 0 ||
-        arg.compare( "-vt:preprocess" ) == 0 ||
-        arg.compare( "-vt:cpp" ) == 0 ||
-        arg.compare( "-vt:cppflags" ) == 0 )
+        arg.compare( "-vt:preprocess" ) == 0 )
     {
       // do nothing
-
+    }
+    else if( arg.compare("-vt:inst") == 0 ||
+             arg.compare("-vt:opari") == 0 ||
+             arg.compare("-vt:opari-rcfile") == 0 ||
+             arg.compare("-vt:opari-table") == 0 ||
+             arg.compare("-vt:tau") == 0 ||
+             arg.compare("-vt:pdt") == 0 ||
+             arg.compare("-vt:cpp") == 0 ||
+             arg.compare("-vt:cppflags") == 0 )
+    {
       // skip next argument, if necessary
-      if( arg.compare("-vt:inst") == 0 ||
-          arg.compare("-vt:opari") == 0 ||
-          arg.compare("-vt:tau") == 0 ||
-          arg.compare("-vt:pdt") == 0 ||
-          arg.compare("-vt:cpp") == 0 ||
-          arg.compare("-vt:cppflags") == 0 )
-      {
-        i++;
-      }
+      i++;
     }
     // -vt:<cc|CC|c++|cxx|f77|f90> <cmd>
     //
@@ -1746,6 +1763,14 @@ showUsage()
             << std::endl
             << "     -vt:opari <[!]args> Set/add options for the OPARI command." << std::endl
             << "                         (see " << vt_installdirs_get(VT_INSTALLDIR_DATADIR) << "/doc/opari/Readme.html for more information, default: " << Config.opari_args << ")" << std::endl
+            << std::endl
+            << "     -vt:opari-rcfile <file>" << std::endl
+            << "                         Set pathname of the OPARI resource file." << std::endl
+            << "                         (default: " << ConfigS::DEFAULT_OPARI_RCFILE() << ")" << std::endl
+            << std::endl
+            << "     -vt:opari-table <file>" << std::endl
+            << "                         Set pathname of the OPARI runtime table file." << std::endl
+            << "                         (default: " << ConfigS::DEFAULT_OPARI_TABFILE().first << ")" << std::endl
             << std::endl
             << "     -vt:noopari         Disable instrumentation of OpenMP contructs by OPARI." << std::endl
             << std::endl

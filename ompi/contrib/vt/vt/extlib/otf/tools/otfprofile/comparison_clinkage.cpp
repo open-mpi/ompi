@@ -3,8 +3,6 @@
  Authors: Andreas Knuepfer, Robert Dietrich, Matthias Jurenz, Andre Groetzsch
 */
 
-using namespace std;
-
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -12,6 +10,9 @@ using namespace std;
 #include <vector>
 
 #include "comparison.h"
+
+
+using namespace std;
 
 
 /* type for pairs in the distance map of CLINKAGE
