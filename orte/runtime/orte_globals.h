@@ -606,10 +606,6 @@ ORTE_DECLSPEC extern char *orte_output_filename;
 /* generate new xterm windows to display output from specified ranks */
 ORTE_DECLSPEC extern char *orte_xterm;
 
-/* rsh support */
-ORTE_DECLSPEC extern char *orte_rsh_agent;
-ORTE_DECLSPEC extern bool orte_assume_same_shell;
-
 /* whether or not to report launch progress */
 ORTE_DECLSPEC extern bool orte_report_launch_progress;
 

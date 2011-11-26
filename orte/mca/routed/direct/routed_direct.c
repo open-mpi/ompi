@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007      Los Alamos National Security, LLC.
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -330,7 +330,7 @@ static int update_routing_tree(orte_jobid_t jobid)
 static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
     orte_vpid_t i;
-    orte_routed_tree_t *nm;
+    orte_namelist_t *nm;
     
     if (!ORTE_PROC_IS_HNP) {
         /* if I am not the HNP, there is nothing to do */
@@ -341,9 +341,10 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
      * daemons so I can relay messages to them
      */
     for (i=0; i < orte_process_info.num_procs; i++) {
-        nm = OBJ_NEW(orte_routed_tree_t);
-        nm->vpid = i;
-        opal_list_append(children, &nm->super);
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
+        nm->name.vpid = i;
+        opal_list_append(children, &nm->item);
     }
     return ORTE_VPID_INVALID;
 }

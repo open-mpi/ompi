@@ -33,6 +33,7 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
+#include "opal/dss/dss_types.h"
 #include "opal/threads/condition.h"
 
 #include "opal/dss/dss_types.h"
@@ -43,19 +44,6 @@
 
 
 BEGIN_C_DECLS
-
-/* types for use solely within PLM framework */
-typedef struct {
-    opal_list_item_t super;
-    char *node;
-    bool local;
-    char *prefix;
-    char *bootproxy;
-    bool positioned;
-    opal_pointer_array_t apps;
-    opal_pointer_array_t files;
-} orte_slave_files_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_slave_files_t);
 
 /* globals for use solely within PLM framework */
 typedef struct {
@@ -69,14 +57,6 @@ typedef struct {
     uint16_t next_jobid;
     /* time when daemons started launch */
     struct timeval daemonlaunchstart;
-    /* rsh launch agent path */
-    char *rsh_agent_path;
-    /* rsh launch agent argv */
-    char **rsh_agent_argv;
-    /* jobid for local slaves */
-    orte_jobid_t local_slaves;
-    /* list of local slave files */
-    opal_list_t slave_files;
     /* spawn lock */
     opal_mutex_t spawn_lock;
     /* spawn cond */
@@ -89,6 +69,8 @@ typedef struct {
     opal_condition_t spawn_in_progress_cond;
     /* flag */
     bool spawn_in_progress;
+    /* tree spawn cmd */
+    opal_buffer_t tree_spawn_cmd;
 } orte_plm_globals_t;
 /**
  * Global instance of PLM framework data

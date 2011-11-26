@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007      Los Alamos National Security, LLC.
+ * Copyright (c) 2007-201  Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
@@ -87,7 +87,7 @@ static orte_process_name_t      local_lifeline;
 static int                      num_children;
 static opal_list_t              my_children;
 static bool                     ack_recvd;
-
+static bool                     hnp_direct=true;
 
 static int init(void)
 {
@@ -237,19 +237,22 @@ static int update_route(orte_process_name_t *target,
         return ORTE_SUCCESS;
     }
 
-    /* if the job family is zero, then this is going to a local slave,
-     * so the path is direct and there is nothing to do here
-     */
-    if (0 == ORTE_JOB_FAMILY(target->jobid)) {
-        return ORTE_SUCCESS;
-    }
-    
     OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                          "%s routed_binomial_update: %s --> %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(target), 
                          ORTE_NAME_PRINT(route)));
 
+
+    /* if I am a daemon and the target is my HNP, then check
+     * the route - if it isn't direct, then we just flag that
+     * we have a route to the HNP
+     */
+    if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target) &&
+        OPAL_EQUAL != orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, route)) {
+        hnp_direct = false;
+        return ORTE_SUCCESS;
+    }
 
     /* if this is from a different job family, then I need to
      * track how to send messages to it
@@ -372,14 +375,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     
     /******     HNP AND DAEMONS ONLY     ******/
     
-    /* if the job family is zero, then this is going to a local slave,
-     * so the path is direct
-     */
-    if (0 == ORTE_JOB_FAMILY(target->jobid)) {
-        ret = target;
-        goto found;
-    }
-    
     /* IF THIS IS FOR A DIFFERENT JOB FAMILY... */
     if (ORTE_JOB_FAMILY(target->jobid) != ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid)) {
         /* if I am a daemon, route this via the HNP */
@@ -412,7 +407,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
     if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target)) {
-        if (orte_static_ports) {
+        if (!hnp_direct || orte_static_ports) {
             OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                                  "%s routing to the HNP through my parent %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -647,15 +642,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
             OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                  "%s routed_binomial: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            
-            /* if this is for a job family of zero, then we know that the enclosed
-             * procs are local slaves to our daemon. In that case, we can just ignore this
-             * as our daemon - given that it had to spawn the local slave - already
-             * knows how to talk to them
-             */
-            if (0 == ORTE_JOB_FAMILY(job)) {
-                return ORTE_SUCCESS;
-            }
             
             if (ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) != ORTE_JOB_FAMILY(job)) {
                 /* if this is for a different job family, then we route via our HNP
@@ -1074,7 +1060,8 @@ static int update_routing_tree(orte_jobid_t jobid)
 static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
     opal_list_item_t *item;
-    orte_routed_tree_t *child, *nm;
+    orte_routed_tree_t *child;
+    orte_namelist_t *nm;
     
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
@@ -1091,10 +1078,10 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
              item != opal_list_get_end(&my_children);
              item = opal_list_get_next(item)) {
             child = (orte_routed_tree_t*)item;
-            nm = OBJ_NEW(orte_routed_tree_t);
-            nm->vpid = child->vpid;
-            opal_bitmap_copy(&nm->relatives, &child->relatives);
-            opal_list_append(children, &nm->super);
+            nm = OBJ_NEW(orte_namelist_t);
+            nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
+            nm->name.vpid = child->vpid;
+            opal_list_append(children, &nm->item);
         }
     }
     

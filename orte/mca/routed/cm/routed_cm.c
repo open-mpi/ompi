@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007      Los Alamos National Security, LLC.
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -288,11 +288,8 @@ static int update_route(orte_process_name_t *target,
         return ORTE_SUCCESS;
     }
     
-    /* THIS CAME FROM OUR OWN JOB FAMILY... */
-    
-    opal_output(0, "%s CALL TO UPDATE ROUTE FOR OWN JOB FAMILY", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-    
-    return ORTE_ERR_NOT_SUPPORTED;
+    /* THIS CAME FROM OUR OWN JOB FAMILY...ignore it */
+    return ORTE_SUCCESS;
 }
 
 
@@ -646,15 +643,6 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                                  "%s routed_cm: init routes w/non-NULL data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             
-            /* if this is for a job family of zero, then we know that the enclosed
-             * procs are local slaves to our daemon. In that case, we can just ignore this
-             * as our daemon - given that it had to spawn the local slave - already
-             * knows how to talk to them
-             */
-            if (0 == ORTE_JOB_FAMILY(job)) {
-                return ORTE_SUCCESS;
-            }
-            
             if (ORTE_JOB_FAMILY(ORTE_PROC_MY_NAME->jobid) != ORTE_JOB_FAMILY(job)) {
                 /* if this is for a different job family, then we route via our HNP
                  * to minimize connection counts to entities such as ompi-server, so
@@ -846,7 +834,7 @@ static int update_routing_tree(orte_jobid_t jobid)
 
 static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
-    orte_routed_tree_t *nm;
+    orte_namelist_t *nm;
     int32_t i;
     orte_job_t *jdata;
     orte_proc_t *proc;
@@ -886,10 +874,10 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
                                      ORTE_NAME_PRINT(&(proc->name)),
                                      proc->state));
 
-                nm = OBJ_NEW(orte_routed_tree_t);
-                nm->vpid = proc->name.vpid;
-                opal_bitmap_clear_all_bits(&nm->relatives);
-                opal_list_append(children, &nm->super);
+                nm = OBJ_NEW(orte_namelist_t);
+                nm->name.jobid = proc->name.jobid;
+                nm->name.vpid = proc->name.vpid;
+                opal_list_append(children, &nm->item);
             }
             else {
                 OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,

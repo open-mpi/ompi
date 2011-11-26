@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
@@ -94,8 +94,7 @@ static void send_relay(opal_buffer_t *buf)
 {
     opal_list_t recips;
     opal_list_item_t *item;
-    orte_routed_tree_t *nm;
-    orte_process_name_t target;
+    orte_namelist_t *nm;
     int ret;
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
@@ -116,26 +115,24 @@ static void send_relay(opal_buffer_t *buf)
     }
     
     /* send the message to each recipient on list, deconstructing it as we go */
-    target.jobid = ORTE_PROC_MY_NAME->jobid;
     while (NULL != (item = opal_list_remove_first(&recips))) {
-        nm = (orte_routed_tree_t*)item;
+        nm = (orte_namelist_t*)item;
         
-        target.vpid = nm->vpid;
-        ORTE_EPOCH_SET(target.epoch,orte_ess.proc_get_epoch(&target));
+        ORTE_EPOCH_SET(nm->name.epoch,orte_ess.proc_get_epoch(&nm->name));
 
-        if (!PROC_IS_RUNNING(&target)) {
+        if (!PROC_IS_RUNNING(&nm->name)) {
             continue;
         }
 
-        ORTE_EPOCH_SET(target.epoch,orte_ess.proc_get_epoch(&target));
+        ORTE_EPOCH_SET(nm->name.epoch,orte_ess.proc_get_epoch(&nm->name));
         
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                              "%s orte:daemon:send_relay sending relay msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&target)));
+                             ORTE_NAME_PRINT(&nm->name)));
         
-        if (ORTE_SUCCESS != (ret = orte_comm(&target, buf, ORTE_RML_TAG_DAEMON,
-                                                      orte_daemon_cmd_processor))) {
+        if (ORTE_SUCCESS != (ret = orte_comm(&nm->name, buf, ORTE_RML_TAG_DAEMON,
+                                             orte_daemon_cmd_processor))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;
         }

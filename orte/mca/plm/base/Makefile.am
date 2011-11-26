@@ -28,8 +28,7 @@ if !ORTE_DISABLE_FULL_SUPPORT
 dist_pkgdata_DATA += base/help-plm-base.txt
 
 headers += \
-        base/plm_private.h \
-        base/plm_base_rsh_support.h
+        base/plm_private.h
 
 libmca_plm_la_SOURCES += \
         base/plm_base_close.c \
@@ -38,6 +37,5 @@ libmca_plm_la_SOURCES += \
 	base/plm_base_launch_support.c \
 	base/plm_base_jobid.c \
 	base/plm_base_proxy.c \
-	base/plm_base_orted_cmds.c \
-        base/plm_base_rsh_support.c
+	base/plm_base_orted_cmds.c
 endif
