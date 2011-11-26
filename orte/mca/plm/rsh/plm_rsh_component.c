@@ -149,8 +149,8 @@ static int rsh_component_open(void)
                            false, false, 10,
                            &mca_plm_rsh_component.priority);
     mca_base_param_reg_int(c, "delay",
-                           "Delay (in seconds) between invocations of the remote agent, but only used when the \"debug\" MCA parameter is true, or the top-level MCA debugging is enabled (otherwise this value is ignored)",
-                           false, false, 1,
+                           "Delay (in seconds) between invocations of the remote agent, but only used when the top-level MCA debugging is enabled (otherwise this value is ignored)",
+                           false, false, 0,
                            &mca_plm_rsh_component.delay);
 
     mca_base_param_reg_int(c, "no_tree_spawn",
