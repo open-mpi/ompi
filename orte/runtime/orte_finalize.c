@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -70,9 +72,6 @@ int orte_finalize(void)
     /* Free some MCA param strings */
     if (NULL != orte_launch_agent) {
         free(orte_launch_agent);
-    }
-    if (NULL != orte_rsh_agent) {
-        free(orte_rsh_agent);
     }
     if( NULL != orte_default_hostfile ) {
         free(orte_default_hostfile);

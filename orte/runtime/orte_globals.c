@@ -138,10 +138,6 @@ char *orte_xterm;
 /* whether or not to forward SIGTSTP and SIGCONT signals */
 bool orte_forward_job_control;
 
-/* rsh support */
-char *orte_rsh_agent = NULL;
-bool orte_assume_same_shell = true;
-
 /* report launch progress */
 bool orte_report_launch_progress = false;
 

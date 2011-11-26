@@ -207,7 +207,8 @@ typedef int (*orte_routed_module_update_routing_tree_fn_t)(orte_jobid_t jobid);
  * Fills the provided list with the direct children of this process
  * in the routing tree, and returns the vpid of the parent. Only valid
  * when called by a daemon or the HNP. Passing a NULL pointer will result
- * in onlly the parent vpid being returned.
+ * in only the parent vpid being returned. The returned list will be filled
+ * with orte_namelist_t items.
  */
 typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(opal_list_t *children);
 

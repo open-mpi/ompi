@@ -38,26 +38,6 @@
 
 BEGIN_C_DECLS
 
-/*
- * Module open / close
- */
-int orte_plm_rsh_component_open(void);
-int orte_plm_rsh_component_close(void);
-int orte_plm_rsh_component_query(mca_base_module_t **module, int *priority);
-
-/*
- * Startup / Shutdown
- */
-int orte_plm_rsh_finalize(void);
-
-/*
- * Interface
- */
-int orte_plm_rsh_init(void);
-int orte_plm_rsh_launch(orte_job_t *jdata);
-int orte_plm_rsh_terminate_orteds(void);
-int orte_plm_rsh_signal_job(orte_jobid_t, int32_t);
-
 /**
  * PLS Component
  */
@@ -73,16 +53,18 @@ struct orte_plm_rsh_component_t {
     int delay;
     int priority;
     bool tree_spawn;
-    opal_list_t children;
-    orte_std_cntr_t num_children;
-    orte_std_cntr_t num_concurrent;
+    size_t num_concurrent;
     opal_mutex_t lock;
     opal_condition_t cond;
+    char *agent;
+    bool assume_same_shell;
 };
 typedef struct orte_plm_rsh_component_t orte_plm_rsh_component_t;
 
 ORTE_MODULE_DECLSPEC extern orte_plm_rsh_component_t mca_plm_rsh_component;
 extern orte_plm_base_module_t orte_plm_rsh_module;
+
+ORTE_MODULE_DECLSPEC char **orte_plm_rsh_search(const char* agent_list, const char *path);
 
 END_C_DECLS
 

@@ -206,6 +206,15 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
+static void rml_cbfunc(int status,
+                       struct orte_process_name_t* peer,
+                       struct opal_buffer_t* buffer,
+                       orte_rml_tag_t tag,
+                       void* cbdata)
+{
+    OBJ_RELEASE(buffer);
+}
+
 int orte_daemon(int argc, char *argv[])
 {
     int ret = 0;
@@ -539,6 +548,39 @@ int orte_daemon(int argc, char *argv[])
         opal_event_add(&pipe_handler, NULL);
     }
 
+    /* If I have a parent, then save his contact info so
+     * any messages we send can flow thru him.
+     */
+    mca_base_param_reg_string_name("orte", "parent_uri",
+                                   "URI for the parent if tree launch is enabled.",
+                                   true, false, NULL,  &rml_uri);
+    if (NULL != rml_uri) {
+        orte_process_name_t parent;
+
+        /* set the contact info into the hash table */
+        if (ORTE_SUCCESS != (ret = orte_rml.set_contact_info(rml_uri))) {
+            ORTE_ERROR_LOG(ret);
+            free(rml_uri);
+            OBJ_RELEASE(buffer);
+            goto DONE;
+        }
+        ret = orte_rml_base_parse_uris(rml_uri, &parent, NULL );
+        if( ORTE_SUCCESS != ret ) {
+            ORTE_ERROR_LOG(ret);
+            free(rml_uri);
+            OBJ_RELEASE(buffer);
+            goto DONE;
+        }
+        free(rml_uri);
+        /* tell the routed module that we have a path
+         * back to the HNP
+         */
+        if (ORTE_SUCCESS != (ret = orte_routed.update_route(ORTE_PROC_MY_HNP, &parent))) {
+            ORTE_ERROR_LOG(ret);
+            goto DONE;
+        }
+    }
+
     /* if we are not the HNP...the only time we will be an HNP
      * is if we are launched by a singleton to provide support
      * for it
@@ -612,62 +654,29 @@ int orte_daemon(int argc, char *argv[])
             }
         }
 
-        /* If I have a parent, then first let him know my URI, and only
-         * after report back to the HNP.
-         */
-        mca_base_param_reg_string_name("orte", "parent_uri",
-                                       "URI for the parent if tree launch is enabled.",
-                                       true, false, NULL,  &rml_uri);
-        if (NULL != rml_uri) {
-            orte_process_name_t parent;
-
-            /* set the contact info into the hash table */
-            if (ORTE_SUCCESS != (ret = orte_rml.set_contact_info(rml_uri))) {
-                ORTE_ERROR_LOG(ret);
-                free(rml_uri);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-            ret = orte_rml_base_parse_uris(rml_uri, &parent, NULL );
-            if( ORTE_SUCCESS != ret ) {
-                ORTE_ERROR_LOG(ret);
-                free(rml_uri);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-            free(rml_uri);
-
-            if( 0 > (ret = orte_rml.send_buffer(&parent, buffer,
-                                                ORTE_RML_TAG_ORTED_CALLBACK, 0)) ) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-        } else {
-            /* include our node name */
-            opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
+        /* include our node name */
+        opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
 
 #if OPAL_HAVE_HWLOC
-            /* add the local topology */
-            if (NULL != opal_hwloc_topology &&
-                (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes)) {
-                if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
-                    ORTE_ERROR_LOG(ret);
-                }
+        /* add the local topology */
+        if (NULL != opal_hwloc_topology &&
+            (1 == ORTE_PROC_MY_NAME->vpid || orte_hetero_nodes)) {
+            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &opal_hwloc_topology, 1, OPAL_HWLOC_TOPO))) {
+                ORTE_ERROR_LOG(ret);
             }
+        }
 #endif
 
-            /* send to the HNP's callback - this will flow up the routing
-             * tree if static ports are enabled
-             */
-            if (0 > (ret = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buffer,
-                                                ORTE_RML_TAG_ORTED_CALLBACK, 0))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }            
-        }
-        OBJ_RELEASE(buffer);  /* done with this */
+        /* send to the HNP's callback - this will flow up the routing
+         * tree if static ports are enabled
+         */
+        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
+                                               ORTE_RML_TAG_ORTED_CALLBACK, 0,
+                                               rml_cbfunc, NULL))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buffer);
+            goto DONE;
+        }            
     }
 
     if (orte_debug_daemons_flag) {

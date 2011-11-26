@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +32,6 @@
 
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/base/plm_private.h"
-#include "orte/mca/plm/base/plm_base_rsh_support.h"
 
 int orte_plm_base_finalize(void)
 {
@@ -65,21 +66,6 @@ int orte_plm_base_close(void)
     /* clearout the spawn locks */
     OBJ_DESTRUCT(&orte_plm_globals.spawn_lock);
     OBJ_DESTRUCT(&orte_plm_globals.spawn_cond);
-    
-#ifndef __WINDOWS__
-    /* clearout the rsh support */
-    orte_plm_base_local_slave_finalize();
-#endif
-    
-    /* remove the rsh agent info */
-    if (NULL != orte_plm_globals.rsh_agent_argv) {
-        opal_argv_free(orte_plm_globals.rsh_agent_argv);
-    }
-    if (NULL != orte_plm_globals.rsh_agent_path) {
-        free(orte_plm_globals.rsh_agent_path);
-    }
-    
-    OBJ_DESTRUCT(&orte_plm_globals.slave_files);
     
     /* Close all open components */
     mca_base_components_close(orte_plm_globals.output, 

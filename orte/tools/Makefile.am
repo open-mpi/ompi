@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,7 +26,6 @@ EXTRA_DIST += tools/CMakeLists.txt
 # orte/Makefile.am
 
 SUBDIRS += \
-	tools/orte-bootproxy \
 	tools/orte-checkpoint \
 	tools/orte-clean \
 	tools/orte-ps \
@@ -37,7 +38,6 @@ SUBDIRS += \
         tools/orte-migrate
 
 DIST_SUBDIRS += \
-	tools/orte-bootproxy \
 	tools/orte-checkpoint \
 	tools/orte-clean \
 	tools/orte-ps \

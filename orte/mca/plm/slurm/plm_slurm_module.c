@@ -74,7 +74,6 @@
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
-#include "orte/mca/plm/base/plm_base_rsh_support.h"
 #include "plm_slurm.h"
 
 
@@ -113,7 +112,6 @@ static pid_t primary_srun_pid = 0;
 static bool primary_pid_set = false;
 static orte_jobid_t active_job = ORTE_JOBID_INVALID;
 static bool launching_daemons;
-static bool local_launch_available = false;
 
 /**
 * Init the module
@@ -124,10 +122,6 @@ static int plm_slurm_init(void)
     
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
-    }
-    
-    if (ORTE_SUCCESS == orte_plm_base_rsh_launch_agent_setup(NULL, NULL)) {
-        local_launch_available = true;
     }
     
     return rc;
@@ -171,22 +165,6 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         /* just launching debugger daemons */
         active_job = ORTE_JOBID_INVALID;
         goto launch_apps;
-    }
-    
-    if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
-        /* if this is a request to launch a local slave,
-         * then we will not be launching an orted - we will
-         * directly ssh the slave process itself. No mapping
-         * is performed to support this - the caller must
-         * provide all the info required to launch the job,
-         * including the target hosts
-         */
-        if (!local_launch_available) {
-            /* if we can't support this, then abort */
-            orte_show_help("help-plm-slurm.txt", "no-local-slave-support", true);
-            return ORTE_ERR_FAILED_TO_START;
-        }
-        return orte_plm_base_local_slave_launch(jdata);
     }
     
     /* flag the daemons as failing by default */
