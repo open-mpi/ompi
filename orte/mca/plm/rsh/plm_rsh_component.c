@@ -102,6 +102,7 @@ static int rsh_component_open(void)
 {
     int tmp, value;
     mca_base_component_t *c = &mca_plm_rsh_component.super.base_version;
+    char *ctmp, **cargv;
 
     /* initialize globals */
     OBJ_CONSTRUCT(&mca_plm_rsh_component.lock, opal_mutex_t);
@@ -148,10 +149,19 @@ static int rsh_component_open(void)
                            "Priority of the rsh plm component",
                            false, false, 10,
                            &mca_plm_rsh_component.priority);
-    mca_base_param_reg_int(c, "delay",
-                           "Delay (in seconds) between invocations of the remote agent, but only used when the top-level MCA debugging is enabled (otherwise this value is ignored)",
-                           false, false, 0,
-                           &mca_plm_rsh_component.delay);
+    mca_base_param_reg_string(c, "delay",
+                              "Delay between invocations of the remote agent (sec[:usec])",
+                              false, false, NULL,
+                              &ctmp);
+    if (NULL != ctmp) {
+        cargv = opal_argv_split(ctmp, ':');
+        mca_plm_rsh_component.delay.tv_sec = strtol(cargv[0], NULL, 10);
+        if (1 < opal_argv_count(cargv)) {
+            mca_plm_rsh_component.delay.tv_nsec = 1000 * strtol(cargv[1], NULL, 10);
+        }
+        opal_argv_free(cargv);
+        free(ctmp);
+    }
 
     mca_base_param_reg_int(c, "no_tree_spawn",
                            "If set to 1, do not launch via a tree-based topology",

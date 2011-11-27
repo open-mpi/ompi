@@ -30,6 +30,9 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#if HAVE_TIME_H
+#include <time.h>
+#endif
 
 #include "opal/threads/condition.h"
 #include "opal/mca/mca.h"
@@ -50,7 +53,7 @@ struct orte_plm_rsh_component_t {
     bool disable_llspawn;
     bool using_llspawn;
     bool daemonize_llspawn;
-    int delay;
+    struct timespec delay;
     int priority;
     bool tree_spawn;
     size_t num_concurrent;

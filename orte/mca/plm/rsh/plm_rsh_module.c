@@ -45,6 +45,9 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -867,7 +870,7 @@ static int rsh_launch(orte_job_t *jdata)
          orte_leave_session_attached) &&
         mca_plm_rsh_component.num_concurrent < (size_t)map->num_new_daemons) {
         /**
-        * If we are in '--debug-daemons' we keep the ssh connection 
+         * If we are in '--debug-daemons' we keep the ssh connection 
          * alive for the span of the run. If we use this option 
          * AND we launch on more than "num_concurrent" machines
          * then we will deadlock. No connections are terminated 
@@ -1001,10 +1004,10 @@ static int rsh_launch(orte_job_t *jdata)
                 }
             }
             /* didn't find it - ignore this node */
-           continue;
+            continue;
         }
     
-launch:
+    launch:
         /* if this daemon already exists, don't launch it! */
         if (node->daemon_launched) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -1066,7 +1069,7 @@ launch:
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:rsh: recording launch of daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&node->daemon->name)));
+                                 ORTE_NAME_PRINT(&node->daemon->name)));
 
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
@@ -1084,9 +1087,14 @@ launch:
             OPAL_THREAD_UNLOCK(&mca_plm_rsh_component.lock);
             
             /* if required - add delay to avoid problems w/ X11 authentication */
-            if (0 < opal_output_get_verbosity(orte_plm_globals.output)
-                && mca_plm_rsh_component.delay) {
-                sleep(mca_plm_rsh_component.delay);
+            if (0 < mca_plm_rsh_component.delay.tv_sec ||
+                0 < mca_plm_rsh_component.delay.tv_nsec) {
+                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                     "%s plm:rsh: adding delay of %ds:%dusec to launch cycle",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     (int)mca_plm_rsh_component.delay.tv_sec,
+                                     (int)mca_plm_rsh_component.delay.tv_nsec/1000));
+                nanosleep(&mca_plm_rsh_component.delay, NULL);
             }
         }
     }
@@ -1102,7 +1110,7 @@ launch:
         goto cleanup;
     }
 
-launch_apps:
+ launch_apps:
     /* if we get here, then the daemons succeeded, so any failure would now be
      * for the application job
      */
