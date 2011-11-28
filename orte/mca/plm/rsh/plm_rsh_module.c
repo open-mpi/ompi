@@ -641,7 +641,6 @@ static void ssh_child(int argc, char **argv,
 static int remote_spawn(opal_buffer_t *launch)
 {
     opal_list_item_t *item;
-    orte_vpid_t vpid;
     int node_name_index1;
     int proc_vpid_index;
     char **argv = NULL;
@@ -652,6 +651,7 @@ static int remote_spawn(opal_buffer_t *launch)
     pid_t pid;
     orte_std_cntr_t n;
     opal_byte_object_t *bo;
+    orte_process_name_t target;
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:rsh: remote spawn called",
@@ -708,16 +708,17 @@ static int remote_spawn(opal_buffer_t *launch)
         goto cleanup;
     }
     
+    target.jobid = ORTE_PROC_MY_NAME->jobid;
     for (item = opal_list_get_first(&my_children);
          item != opal_list_get_end(&my_children);
          item = opal_list_get_next(item)) {
-        orte_namelist_t *child = (orte_namelist_t*)item;
-        vpid = child->name.vpid;
+        orte_routed_tree_t *child = (orte_routed_tree_t*)item;
+        target.vpid = child->vpid;
         
         /* get the host where this daemon resides */
-        if (NULL == (hostname = orte_ess.proc_get_hostname(&child->name))) {
+        if (NULL == (hostname = orte_ess.proc_get_hostname(&target))) {
             opal_output(0, "%s unable to get hostname for daemon %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(vpid));
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_VPID_PRINT(child->vpid));
             rc = ORTE_ERR_NOT_FOUND;
             goto cleanup;
         }
@@ -741,7 +742,7 @@ static int remote_spawn(opal_buffer_t *launch)
                                  hostname));
             
             /* do the ssh launch - this will exit if it fails */
-            ssh_child(argc, argv, vpid, proc_vpid_index);
+            ssh_child(argc, argv, child->vpid, proc_vpid_index);
             
         }
         /* father */
@@ -758,7 +759,7 @@ static int remote_spawn(opal_buffer_t *launch)
         /* setup callback on sigchild - wait until setup above is complete
          * as the callback can occur in the call to orte_wait_cb
          */
-        orte_wait_cb(pid, rsh_wait_daemon, (void*)&vpid);
+        orte_wait_cb(pid, rsh_wait_daemon, (void*)&child->vpid);
     }
 
     failed_launch = false;
@@ -777,7 +778,7 @@ cleanup:
         OBJ_CONSTRUCT(&buf, opal_buffer_t);
         opal_dss.pack(&buf, &cnt, 1, ORTE_STD_CNTR);
         opal_dss.pack(&buf, &flag, 1, OPAL_UINT8);
-        opal_dss.pack(&buf, &vpid, 1, ORTE_VPID);
+        opal_dss.pack(&buf, &target.vpid, 1, ORTE_VPID);
         orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buf, ORTE_RML_TAG_REPORT_REMOTE_LAUNCH, 0);
         OBJ_DESTRUCT(&buf);
     }

@@ -94,7 +94,8 @@ static void send_relay(opal_buffer_t *buf)
 {
     opal_list_t recips;
     opal_list_item_t *item;
-    orte_namelist_t *nm;
+    orte_routed_tree_t *nm;
+    orte_process_name_t target;
     int ret;
     
     OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
@@ -115,23 +116,25 @@ static void send_relay(opal_buffer_t *buf)
     }
     
     /* send the message to each recipient on list, deconstructing it as we go */
+    target.jobid = ORTE_PROC_MY_NAME->jobid;
     while (NULL != (item = opal_list_remove_first(&recips))) {
-        nm = (orte_namelist_t*)item;
-        
-        ORTE_EPOCH_SET(nm->name.epoch,orte_ess.proc_get_epoch(&nm->name));
+        nm = (orte_routed_tree_t*)item;
+        target.vpid = nm->vpid;
 
-        if (!PROC_IS_RUNNING(&nm->name)) {
+        ORTE_EPOCH_SET(target.epoch,orte_ess.proc_get_epoch(&target));
+
+        if (!PROC_IS_RUNNING(&target)) {
             continue;
         }
 
-        ORTE_EPOCH_SET(nm->name.epoch,orte_ess.proc_get_epoch(&nm->name));
+        ORTE_EPOCH_SET(target.epoch,orte_ess.proc_get_epoch(&target));
         
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                              "%s orte:daemon:send_relay sending relay msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&nm->name)));
+                             ORTE_NAME_PRINT(&target)));
         
-        if (ORTE_SUCCESS != (ret = orte_comm(&nm->name, buf, ORTE_RML_TAG_DAEMON,
+        if (ORTE_SUCCESS != (ret = orte_comm(&target, buf, ORTE_RML_TAG_DAEMON,
                                              orte_daemon_cmd_processor))) {
             ORTE_ERROR_LOG(ret);
             goto CLEANUP;

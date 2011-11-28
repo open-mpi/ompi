@@ -834,7 +834,7 @@ static int update_routing_tree(orte_jobid_t jobid)
 
 static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
-    orte_namelist_t *nm;
+    orte_routed_tree_t *nm;
     int32_t i;
     orte_job_t *jdata;
     orte_proc_t *proc;
@@ -874,10 +874,9 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
                                      ORTE_NAME_PRINT(&(proc->name)),
                                      proc->state));
 
-                nm = OBJ_NEW(orte_namelist_t);
-                nm->name.jobid = proc->name.jobid;
-                nm->name.vpid = proc->name.vpid;
-                opal_list_append(children, &nm->item);
+                nm = OBJ_NEW(orte_routed_tree_t);
+                nm->vpid = proc->name.vpid;
+                opal_list_append(children, &nm->super);
             }
             else {
                 OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,

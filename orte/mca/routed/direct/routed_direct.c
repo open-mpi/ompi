@@ -330,7 +330,7 @@ static int update_routing_tree(orte_jobid_t jobid)
 static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
     orte_vpid_t i;
-    orte_namelist_t *nm;
+    orte_routed_tree_t *nm;
     
     if (!ORTE_PROC_IS_HNP) {
         /* if I am not the HNP, there is nothing to do */
@@ -341,10 +341,8 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
      * daemons so I can relay messages to them
      */
     for (i=0; i < orte_process_info.num_procs; i++) {
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
-        nm->name.vpid = i;
-        opal_list_append(children, &nm->item);
+        nm = OBJ_NEW(orte_routed_tree_t);
+        nm->vpid = i;
     }
     return ORTE_VPID_INVALID;
 }

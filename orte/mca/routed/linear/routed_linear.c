@@ -778,8 +778,9 @@ static int update_routing_tree(orte_jobid_t jobid)
 
 static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
-    orte_namelist_t *nm;
-    
+    orte_routed_tree_t *nm;
+    orte_vpid_t v;
+
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
      */
@@ -794,10 +795,14 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
     if (NULL != children &&
         ORTE_PROC_MY_NAME->vpid < orte_process_info.num_procs-1) {
         /* my child is just the vpid+1 daemon */
-        nm = OBJ_NEW(orte_namelist_t);
-        nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
-        nm->name.vpid = ORTE_PROC_MY_NAME->vpid + 1;
-        opal_list_append(children, &nm->item);
+        nm = OBJ_NEW(orte_routed_tree_t);
+        nm->vpid = ORTE_PROC_MY_NAME->vpid + 1;
+        opal_bitmap_init(&nm->relatives, orte_process_info.num_procs); 
+        /* my relatives are everyone above that point */ 
+        for (v=nm->vpid+1; v < orte_process_info.num_procs; v++) { 
+            opal_bitmap_set_bit(&nm->relatives, v); 
+        }
+        opal_list_append(children, &nm->super);
     }
     
     if (ORTE_PROC_IS_HNP) {
