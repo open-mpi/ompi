@@ -138,7 +138,7 @@ attach_and_init(const char *file_name,
      * seg_num_procs_attached_and_inited. this value is used by
      * opal_shmem_unlink.
      */
-    opal_atomic_add_size_t(&map->module_seg->seg_num_procs_inited, 1);
+    (void)opal_atomic_add_size_t(&map->module_seg->seg_num_procs_inited, 1);
     opal_atomic_wmb();
 
     return map;
