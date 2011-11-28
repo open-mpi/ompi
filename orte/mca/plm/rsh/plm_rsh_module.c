@@ -999,8 +999,8 @@ static int rsh_launch(orte_job_t *jdata)
             for (item = opal_list_get_first(&my_children);
                  item != opal_list_get_end(&my_children);
                  item = opal_list_get_next(item)) {
-                orte_namelist_t *child = (orte_namelist_t*)item;
-                if (child->name.vpid == node->daemon->name.vpid) {
+                orte_routed_tree_t *child = (orte_routed_tree_t*)item;
+                if (child->vpid == node->daemon->name.vpid) {
                     goto launch;
                 }
             }
