@@ -407,7 +407,7 @@ AC_CHECK_SIZEOF(long)
 dnl   ****** Open MPI Changes ******
 dnl See if we need to check and set visibility capabilities
 AS_IF([test "$enable_hidden_symbols" = "yes"],
-      [OMPI_CHECK_VISIBILITY])
+      [OPAL_CHECK_VISIBILITY])
 dnl   ****** END Open MPI Changes ******
 
 AC_MSG_CHECKING(for F_SETFD in fcntl.h)
