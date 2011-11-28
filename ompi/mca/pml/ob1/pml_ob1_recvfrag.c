@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
@@ -112,8 +112,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     size_t num_segments = des->des_dst_cnt;
     size_t bytes_received = 0;
 
-    /* NTH: FIXME -- we will clobber the stack if num_segments > 2 (see lines 199, 215-220) */
-    assert(num_segments < 3);
+    assert(num_segments <= MCA_BTL_DES_MAX_SEGMENTS);
     
     if( OPAL_UNLIKELY(segments->seg_len < OMPI_PML_OB1_MATCH_HDR_LEN) ) {
         return;
@@ -196,7 +195,7 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
         
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
         if(match->req_bytes_expected > 0) { 
-            struct iovec iov[2];
+            struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];
             uint32_t iov_count = 1;
             
             /*
