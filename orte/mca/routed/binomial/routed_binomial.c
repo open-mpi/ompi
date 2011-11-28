@@ -1061,7 +1061,7 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
 {
     opal_list_item_t *item;
     orte_routed_tree_t *child;
-    orte_namelist_t *nm;
+    orte_routed_tree_t *nm;
     
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
@@ -1078,10 +1078,10 @@ static orte_vpid_t get_routing_tree(opal_list_t *children)
              item != opal_list_get_end(&my_children);
              item = opal_list_get_next(item)) {
             child = (orte_routed_tree_t*)item;
-            nm = OBJ_NEW(orte_namelist_t);
-            nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
-            nm->name.vpid = child->vpid;
-            opal_list_append(children, &nm->item);
+            nm = OBJ_NEW(orte_routed_tree_t);
+            nm->vpid = child->vpid;
+            opal_bitmap_copy(&nm->relatives, &child->relatives);
+            opal_list_append(children, &nm->super);
         }
     }
     
