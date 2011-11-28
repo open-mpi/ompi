@@ -243,7 +243,6 @@ segment_create(opal_shmem_ds_t *ds_buf,
                size_t size)
 {
     int rc = OPAL_SUCCESS;
-    char *tmp_fn = NULL;
     char *real_file_name = NULL;
     pid_t my_pid = getpid();
     /* the real size of the shared memory segment.  this includes enough space
@@ -312,7 +311,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
         gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-mmap.txt", "mmap on nfs", 1, hn,
-                       tmp_fn);
+                       real_file_name);
     }
     if (-1 == (ds_buf->seg_id = open(real_file_name, O_CREAT | O_RDWR, 0600))) {
         int err = errno;

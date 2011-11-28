@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -126,9 +126,6 @@ opal_finalize(void)
     opal_compress_base_close();
 #endif
     
-    /* close the shmem framework */
-    opal_shmem_base_close();
-
     opal_progress_finalize();
 
     opal_event_base_close();
@@ -150,6 +147,9 @@ opal_finalize(void)
 
     /* close the carto framework */
     opal_carto_base_close();
+
+    /* close the shmem framework */
+    opal_shmem_base_close();
     
     /* close the hwloc framework */
     opal_hwloc_base_close();
