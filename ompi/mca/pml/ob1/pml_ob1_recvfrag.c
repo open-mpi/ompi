@@ -111,6 +111,9 @@ void mca_pml_ob1_recv_frag_callback_match(mca_btl_base_module_t* btl,
     mca_pml_ob1_comm_proc_t *proc;
     size_t num_segments = des->des_dst_cnt;
     size_t bytes_received = 0;
+
+    /* NTH: FIXME -- we will clobber the stack if num_segments > 2 (see lines 199, 215-220) */
+    assert(num_segments < 3);
     
     if( OPAL_UNLIKELY(segments->seg_len < OMPI_PML_OB1_MATCH_HDR_LEN) ) {
         return;

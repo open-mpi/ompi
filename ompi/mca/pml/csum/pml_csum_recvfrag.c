@@ -147,6 +147,9 @@ void mca_pml_csum_recv_frag_callback_match(mca_btl_base_module_t* btl,
     size_t bytes_received = 0;
     uint16_t csum_received, csum=0;
     uint32_t csum_data;
+
+    /* NTH: FIXME -- we will clobber the stack if num_segments > 2 (see lines 260, 276-281) */
+    assert(num_segments < 3);
     
     if( OPAL_UNLIKELY(segments->seg_len < OMPI_PML_CSUM_MATCH_HDR_LEN) ) {
         return;
