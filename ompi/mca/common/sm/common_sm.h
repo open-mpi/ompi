@@ -68,10 +68,6 @@ typedef struct mca_common_sm_module_t {
     unsigned char *module_data_addr;
     /* shared memory backing facility object that encapsulates shmem info */
     opal_shmem_ds_t shmem_ds;
-#if defined(__WINDOWS__)
-    /* handle to the object */
-    HANDLE hMappedObject;
-#endif  /* defined(__WINDOWS__) */
 } mca_common_sm_module_t;
 
 OBJ_CLASS_DECLARATION(mca_common_sm_module_t);

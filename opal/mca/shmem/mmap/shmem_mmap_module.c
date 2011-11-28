@@ -281,7 +281,8 @@ segment_create(opal_shmem_ds_t *ds_buf,
         else {
             opal_output(0, "shmem: mmap: WARNING: could not relocate "
                         "backing store to \"%s\" (%s).  Cannot continue with "
-                        "shmem mmap.\n", opal_shmem_mmap_backing_file_base_dir, strerror(err));
+                        "shmem mmap.\n", opal_shmem_mmap_backing_file_base_dir,
+                        strerror(err));
             return OPAL_ERROR;
         }
     }
