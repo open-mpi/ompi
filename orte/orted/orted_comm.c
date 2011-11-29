@@ -637,6 +637,8 @@ static int process_commands(orte_process_name_t* sender,
                 opal_output(0, "%s orted_cmd: received halt vm",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             }
+            /* be sure to kill our local procs */
+            orte_odls.kill_local_procs(NULL, false);
             /* trigger our appropriate exit procedure
              * NOTE: this event will fire -after- any zero-time events
              * so any pending relays -do- get sent first

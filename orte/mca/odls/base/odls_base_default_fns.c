@@ -3250,7 +3250,13 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
             kill_local(child->pid, SIGTERM);
 
             /* check to see if it died - the child_died function will continue
-             * to check every microsecond until we reach the timeout
+             * to check until we reach the timeout
+	     *
+	     * In practice, it doesn't matter what child_died reports
+	     * - we KILL the process anyway, to be sure it's dead.
+	     * However, what it does do is delay the KILL until either
+	     * the process is verified dead or the timeout elapsed,
+	     * which gives it time enough to shut down.
              */
             if (!child_died(child->pid, orte_odls_globals.timeout_before_sigkill, &exit_status)) {
                 /* if it still isn't dead, try killing it one more time */
@@ -3261,7 +3267,27 @@ int orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs, bool se
                                    "odls-default:could-not-kill",
                                    true, orte_process_info.nodename, child->pid);
                 }
+            } else {
+                /* Force the SIGKILL just to make sure things are dead
+                 * This fixes an issue that, if the application is masking
+                 * SIGTERM, then the child_died()
+                 * may return 'true' even though waipid returns with 0.
+                 * It does this to avoid a race condition, per documentation
+                 * in odls_default_module.c.
+                 */
+                OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                                     "%s SENDING FORCE SIGKILL TO %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(child->name)));
+                kill_local(child->pid, SIGKILL);
+                /* Double check that it actually died this time */
+                if (!child_died(child->pid, orte_odls_globals.timeout_before_sigkill, &exit_status)) {
+                    orte_show_help("help-odls-default.txt",
+                                   "odls-default:could-not-kill",
+                                   true, orte_process_info.nodename, child->pid);
+                }
             }
+
             OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                  "%s odls:kill_local_proc child %s killed",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
