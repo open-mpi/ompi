@@ -56,6 +56,7 @@
 #include "opal/util/os_path.h"
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
+#include "opal/util/gethostname.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/daemon_init.h"
@@ -291,7 +292,7 @@ int orte_daemon(int argc, char *argv[])
      * away just in case we have a problem along the way
      */
     if (orted_globals.debug) {
-        gethostname(hostname, 100);
+        opal_gethostname(hostname, 100);
         fprintf(stderr, "Daemon was launched on %s - beginning to initialize\n", hostname);
     }
     

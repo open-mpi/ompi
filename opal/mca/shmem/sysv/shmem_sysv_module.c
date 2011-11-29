@@ -54,6 +54,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
+#include "opal/util/gethostname.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
@@ -200,7 +201,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
                                    IPC_CREAT | IPC_EXCL | SHM_R | SHM_W))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-sysv.txt", "sys call fail", 1, hn,
                        "shmget(2)", "", strerror(err), err);
@@ -211,7 +212,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
     else if ((void *)-1 == (seg_hdrp = shmat(ds_buf->seg_id, NULL, 0))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-sysv.txt", "sys call fail", 1, hn,
                        "shmat(2)", "", strerror(err), err);
@@ -226,7 +227,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
     else if (0 != shmctl(ds_buf->seg_id, IPC_RMID, NULL)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-sysv.txt", "sys call fail", 1, hn,
                        "shmctl(2)", "", strerror(err), err);
@@ -301,7 +302,7 @@ segment_attach(opal_shmem_ds_t *ds_buf)
                                                          0))) {
             int err = errno;
             char hn[MAXHOSTNAMELEN];
-            gethostname(hn, MAXHOSTNAMELEN - 1);
+            opal_gethostname(hn, MAXHOSTNAMELEN - 1);
             hn[MAXHOSTNAMELEN - 1] = '\0';
             opal_show_help("help-opal-shmem-sysv.txt", "sys call fail", 1, hn,
                            "shmat(2)", "", strerror(err), err);
@@ -346,7 +347,7 @@ segment_detach(opal_shmem_ds_t *ds_buf)
     if (0 != shmdt(ds_buf->seg_base_addr)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-sysv.txt", "sys call fail", 1, hn,
                        "shmdt(2)", "", strerror(err), err);
