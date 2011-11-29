@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mpi.h"
+
 #include "opal/version.h"
 #include "orte/version.h"
 #include "ompi/version.h"
@@ -177,6 +179,12 @@ void ompi_info_show_ompi_version(const char *scope)
     ompi_info_out("OPAL release date", tmp, OPAL_RELEASE_DATE);
     free(tmp);
     
+    tmp2 = make_version_str(scope, 
+                            MPI_VERSION, MPI_SUBVERSION, 
+                            0, "", 0, "");
+    ompi_info_out("MPI API", "mpi-api:version:full", tmp2);
+    free(tmp2);
+
     ompi_info_out("Ident string", "ident", OPAL_IDENT_STRING);
 }
 
