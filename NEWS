@@ -50,6 +50,8 @@ included in the vX.Y.Z section and be denoted as:
 1.5.5
 -----
 
+- Workaround an Intel compiler v12.1.0 2011.6.233 vector optimization
+  bug.
 - Output the MPI API in ompi_info output.
 - Various VT fixes and updates (5.12).
 - Upgrade embedded Hardware Locality (hwloc) v1.2.2 with some OMPI
