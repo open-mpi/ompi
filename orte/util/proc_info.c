@@ -33,6 +33,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
+#include "opal/util/gethostname.h"
 
 #include "orte/util/proc_info.h"
 
@@ -141,7 +142,7 @@ int orte_proc_info(void)
     orte_process_info.pid = getpid();
 
     /* get the nodename */
-    gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
+    opal_gethostname(hostname, ORTE_MAX_HOSTNAME_SIZE);
     orte_process_info.nodename = strdup(hostname);
     
     /* get the number of nodes in the job */

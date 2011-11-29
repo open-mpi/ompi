@@ -15,6 +15,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
+#include "opal/util/gethostname.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -105,7 +106,7 @@ int opal_hwloc_base_open(void)
             opal_hwloc_base_map = OPAL_HWLOC_BASE_MAP_LOCAL_ONLY;
         } else {
             char hostname[32];
-            gethostname(hostname, sizeof(hostname));
+            opal_gethostname(hostname, sizeof(hostname));
             opal_show_help("help-opal-hwloc-base.txt", "invalid policy",
                            true, hostname, getpid(), str_value);
             free(str_value);
@@ -136,7 +137,7 @@ int opal_hwloc_base_open(void)
             opal_hwloc_base_mbfa = OPAL_HWLOC_BASE_MBFA_ERROR;
         } else {
             char hostname[32];
-            gethostname(hostname, sizeof(hostname));
+            opal_gethostname(hostname, sizeof(hostname));
             opal_show_help("help-opal-hwloc-base.txt", "invalid error action",
                            true, hostname, getpid(), str_value);
             free(str_value);

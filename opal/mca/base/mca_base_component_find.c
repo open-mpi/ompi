@@ -57,6 +57,7 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
+#include "opal/util/gethostname.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -210,7 +211,7 @@ int mca_base_component_find(const char *directory, const char *type,
 
         if (opal_list_get_end(found_components) == item) {
             char h[MAXHOSTNAMELEN];
-            gethostname(h, sizeof(h));
+            opal_gethostname(h, sizeof(h));
             opal_show_help("help-mca-base.txt", 
                            "find-available:not-valid", true,
                            h, type, requested_component_names[i]);

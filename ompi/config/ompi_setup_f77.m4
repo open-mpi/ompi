@@ -143,6 +143,37 @@ else
     AC_LANG_POP
 fi
 
+# Per #1982, on OS X, we may need some esoteric linker flags in the
+# wrapper compilers.  Assume that we need it for both F77 and FC flags
+# (note that in an upcoming update where there will only be one
+# Fortran compiler, anyway).
+AC_MSG_CHECKING([to see if mpif77/mpif90 compilers need additional linker flags])
+if test $OMPI_WANT_F77_BINDINGS -eq 0; then
+    AC_MSG_RESULT([none (no F77 bindings)])
+else
+    case "$host" in
+    *apple-darwin*)
+        # Test whether -Wl,-commons,use_dylibs works; if it does, use it.
+        LDFLAGS_save=$LDFLAGS
+        LDFLAGS="$LDFLAGS -Wl,-commons,use_dylibs"
+        AC_LANG_PUSH(Fortran 77)
+        AC_LINK_IFELSE([AC_LANG_SOURCE([[       program test
+        integer :: i
+        end program]])],
+                       [OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-commons,use_dylibs"
+                        WRAPPER_EXTRA_FFLAGS="$WRAPPER_EXTRA_FFLAGS $OMPI_FORTRAN_WRAPPER_FLAGS"
+                        WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $OMPI_FORTRAN_WRAPPER_FLAGS"],
+                       [OMPI_FORTRAN_WRAPPER_FLAGS=none])
+        AC_LANG_POP
+        LDFLAGS=$LDFLAGS_save
+        AC_MSG_RESULT([$OMPI_FORTRAN_WRAPPER_FLAGS])
+        ;;
+    *)
+        AC_MSG_RESULT([none])
+        ;;
+    esac
+fi
+
 AC_DEFINE_UNQUOTED(OMPI_WANT_F77_BINDINGS, $OMPI_WANT_F77_BINDINGS,
     [Whether we want the MPI f77 bindings or not])
 AC_DEFINE_UNQUOTED(OMPI_F77, "$OMPI_F77", [OMPI underlying F77 compiler])

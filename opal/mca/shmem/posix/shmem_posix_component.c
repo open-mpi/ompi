@@ -46,6 +46,7 @@
 #include "opal/constants.h"
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
+#include "opal/util/gethostname.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 #include "shmem_posix.h"
@@ -173,7 +174,7 @@ posix_runtime_query(mca_base_module_t **module,
         if (0 != shm_unlink(tmp_buff)) {
             int err = errno;
             char hn[MAXHOSTNAMELEN];
-            gethostname(hn, MAXHOSTNAMELEN - 1);
+            opal_gethostname(hn, MAXHOSTNAMELEN - 1);
             hn[MAXHOSTNAMELEN - 1] = '\0';
             opal_show_help("help-opal-shmem-posix.txt", "sys call fail", 1,
                            hn, "shm_unlink(2)", "", strerror(err), err);

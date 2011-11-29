@@ -53,6 +53,7 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
+#include "opal/util/gethostname.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
@@ -308,7 +309,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
      */
     if (opal_path_nfs(real_file_name)) {
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-mmap.txt", "mmap on nfs", 1, hn,
                        real_file_name);
@@ -316,7 +317,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
     if (-1 == (ds_buf->seg_id = open(real_file_name, O_CREAT | O_RDWR, 0600))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1, hn,
                        "open(2)", "", strerror(err), err);
@@ -327,7 +328,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
     if (0 != ftruncate(ds_buf->seg_id, real_size)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1, hn,
                        "ftruncate(2)", "", strerror(err), err);
@@ -340,7 +341,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
                                        ds_buf->seg_id, 0))) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1, hn,
                        "mmap(2)", "", strerror(err), err);
@@ -390,7 +391,7 @@ out:
         if (0 != close(ds_buf->seg_id)) {
             int err = errno;
             char hn[MAXHOSTNAMELEN];
-            gethostname(hn, MAXHOSTNAMELEN - 1);
+            opal_gethostname(hn, MAXHOSTNAMELEN - 1);
             hn[MAXHOSTNAMELEN - 1] = '\0';
             opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1, hn,
                            "close(2)", "", strerror(err), err);
@@ -425,7 +426,7 @@ segment_attach(opal_shmem_ds_t *ds_buf)
                                          0600))) {
             int err = errno;
             char hn[MAXHOSTNAMELEN];
-            gethostname(hn, MAXHOSTNAMELEN - 1);
+            opal_gethostname(hn, MAXHOSTNAMELEN - 1);
             hn[MAXHOSTNAMELEN - 1] = '\0';
             opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1, hn,
                            "open(2)", "", strerror(err), err);
@@ -437,7 +438,7 @@ segment_attach(opal_shmem_ds_t *ds_buf)
                                      ds_buf->seg_id, 0))) {
             int err = errno;
             char hn[MAXHOSTNAMELEN];
-            gethostname(hn, MAXHOSTNAMELEN - 1);
+            opal_gethostname(hn, MAXHOSTNAMELEN - 1);
             hn[MAXHOSTNAMELEN - 1] = '\0';
             opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1, hn,
                            "mmap(2)", "", strerror(err), err);
@@ -455,7 +456,7 @@ segment_attach(opal_shmem_ds_t *ds_buf)
             if (0 != close(ds_buf->seg_id)) {
                 int err = errno;
                 char hn[MAXHOSTNAMELEN];
-                gethostname(hn, MAXHOSTNAMELEN - 1);
+                opal_gethostname(hn, MAXHOSTNAMELEN - 1);
                 hn[MAXHOSTNAMELEN - 1] = '\0';
                 opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1,
                                hn, "close(2)", "", strerror(err), err);
@@ -499,7 +500,7 @@ segment_detach(opal_shmem_ds_t *ds_buf)
     if (0 != munmap((void *)ds_buf->seg_base_addr, ds_buf->seg_size)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1, hn,
                        "munmap(2)", "", strerror(err), err);
@@ -530,7 +531,7 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
     if (-1 == unlink(ds_buf->seg_name)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
-        gethostname(hn, MAXHOSTNAMELEN - 1);
+        opal_gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-mmap.txt", "sys call fail", 1, hn,
                        "unlink(2)", ds_buf->seg_name, strerror(err), err);
