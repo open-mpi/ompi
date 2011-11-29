@@ -56,6 +56,11 @@ included in the vX.Y.Z section and be denoted as:
   raising the issue.
 - Workaround an Intel compiler v12.1.0 2011.6.233 vector optimization
   bug.
+- Fix issues on Solaris with the openib BTL.
+- Fix Fortran compile issues with Oracle Studio 12.2 compilers.
+- Update iWARP parameters for the Intel NICs.
+- Fix obscure cases where MPI_ALLGATHER could crash.  Thanks to Andrew
+  Senin for reporting the problem.
 
 
 1.4.4
