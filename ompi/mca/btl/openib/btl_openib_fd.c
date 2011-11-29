@@ -381,8 +381,21 @@ static void *service_thread_start(void *context)
         if (0 != rc && EAGAIN == errno) {
             continue;
         }
-
+    
         OPAL_OUTPUT((-1, "fd service thread woke up!"));
+
+        if (0 > rc) {
+            if (EBADF == errno) {
+                /* We are assuming we lost a socket so set rc to 1 so we'll 
+                 * try to read a command off the service pipe to receive a 
+                 * rm command (corresponding to the socket that went away).  
+                 * If the EBADF is from the service pipe then the error
+		 * condition will be handled by the service_pipe_cmd().
+                 */
+                OPAL_OUTPUT((-1,"fd service thread: non-EAGAIN from select %d", errno));
+                rc = 1;
+            }
+        }
         if (rc > 0) {
             if (FD_ISSET(pipe_to_service_thread[0], &read_fds_copy)) {
                 OPAL_OUTPUT((-1, "fd service thread: pipe command"));
@@ -390,6 +403,14 @@ static void *service_thread_start(void *context)
                     break;
                 }
                 OPAL_OUTPUT((-1, "fd service thread: back from pipe command"));
+                /* Continue to the top of the loop to see if there are more
+                 * commands on the pipe.  This is done to reset the fds
+                 * list just in case the last select incurred an EBADF.
+                 * Please do not remove this continue thinking one is trying
+                 * to enforce a fairness of reading the sockets or we'll
+                 * end up with segv's below when select incurs an EBADF.
+                 */
+                continue;
             }
 
             /* Go through all the registered events and see who had
