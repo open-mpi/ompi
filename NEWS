@@ -321,6 +321,19 @@ Trunk (not on release branches yet)
   - hnp to send the output to mpirun.
   - smtp (requires libesmtp) to send an email.
 
+1.4.5
+-----
+
+- Fix Fortran value for MPI_MAX_PORT_NAME.  Thanks to Enzo Dari for
+  raising the issue.
+- Workaround an Intel compiler v12.1.0 2011.6.233 vector optimization
+  bug.
+- Fix issues on Solaris with the openib BTL.
+- Fix Fortran compile issues with Oracle Studio 12.2 compilers.
+- Update iWARP parameters for the Intel NICs.
+- Fix obscure cases where MPI_ALLGATHER could crash.  Thanks to Andrew
+  Senin for reporting the problem.
+
 
 1.4.4
 -----
