@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,86 +25,83 @@
 AC_DEFUN([OMPI_CHECK_VISIBILITY],[
     AC_REQUIRE([AC_PROG_GREP])
 
-    # Check if the compiler has support for visibility, like some versions of gcc, icc Sun Studio cc.
+    # Check if the compiler has support for visibility, like some
+    # versions of gcc, icc Sun Studio cc.
     AC_ARG_ENABLE(visibility, 
         AC_HELP_STRING([--enable-visibility],
             [enable visibility feature of certain compilers/linkers (default: enabled)]))
-    if test "$enable_visibility" = "no" -o "$opal_cv___attribute__visibility" = "0"; then
-        AC_MSG_CHECKING([enable symbol visibility])
-        AC_MSG_RESULT([no]) 
-        have_visibility=0
-    else
-        CFLAGS_orig="$CFLAGS"
-        add=
 
-        # check using gcc -fvisibility=hidden flag
-        CFLAGS="$CFLAGS_orig -fvisibility=hidden"
-        AC_CACHE_CHECK([if $CC supports -fvisibility],
-            [ompi_cv_cc_fvisibility],
-            [AC_TRY_LINK([
-                    #include <stdio.h>
-                    __attribute__((visibility("default"))) int foo;
-                    void bar(void) { fprintf(stderr, "bar\n"); }
-                    ],[],
-                    [if test -s conftest.err ; then
-                        $GREP -iq "visibility" conftest.err
-                        if test "$?" = "0" ; then
-                            ompi_cv_cc_fvisibility="no"
-                        else
-                            ompi_cv_cc_fvisibility="yes"
-                        fi
-                     else
-                        ompi_cv_cc_fvisibility="yes"
-                     fi],
-                    [ompi_cv_cc_fvisibility="no"])
-                ])
-        if test "$ompi_c_vendor" = "sun" ; then
+    opal_visibility_define=0
+    opal_msg="whether to enable symbol visibility"
+
+    if test "$enable_visibility" = "no"; then
+        AC_MSG_CHECKING([$opal_msg])
+        AC_MSG_RESULT([no (disabled)]) 
+    else
+        CFLAGS_orig=$CFLAGS
+
+        opal_add=
+        case "$ompi_c_vendor" in
+        sun)
             # Check using Sun Studio -xldscope=hidden flag
-            CFLAGS="$CFLAGS_orig -xldscope=hidden"
-            AC_CACHE_CHECK([if $CC supports -xldscope],
-                [ompi_cv_cc_xldscope],
-                [AC_TRY_LINK([
-                        #include <stdio.h>
-                        __attribute__((visibility("default"))) int foo;
-                        void bar(void) { fprintf(stderr, "bar\n"); }
-                        ],[],
-                        [if test -s conftest.err ; then
-                            $GREP -iq "visibility" conftest.err
-                            if test "$?" = "0" ; then
-                                ompi_cv_cc_xldscope="no"
-                            else
-                                ompi_cv_cc_xldscope="yes"
-                            fi
-                         else
-                            ompi_cv_cc_xldscope="yes"
-                         fi],
-                        [ompi_cv_cc_xldscope="no"])
-                    ])
-        fi 
-        if test "$ompi_cv_cc_fvisibility" = "yes" ; then
-            add=" -fvisibility=hidden"
-            have_visibility=1
-            AC_MSG_CHECKING([enable symbol visibility])
-            AC_MSG_RESULT([yes]) 
-            AC_MSG_WARN([$add has been added to CFLAGS])
-        elif test "$ompi_cv_cc_xldscope" = "yes" ; then
-            add=" -xldscope=hidden"
-            have_visibility=1
-            AC_MSG_CHECKING([enable symbol visibility])
-            AC_MSG_RESULT([yes]) 
-            AC_MSG_WARN([$add has been added to CFLAGS])
+            opal_add="-xldscope=hidden"
+            CFLAGS="$CFLAGS_orig $opal_add"
+
+            AC_MSG_CHECKING([if $CC supports -xldscope])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+                __attribute__((visibility("default"))) int foo;
+                ]],[[int i;]])],
+                [],
+                [AS_IF([test -s conftest.err],
+                       [$GREP -iq visibility conftest.err
+                        # If we find "visibility" in the stderr, then
+                        # assume it doesn't work
+                        AS_IF([test "$?" = "0"], [opal_add=])])
+                ])
+            AS_IF([test "$opal_add" = ""],
+                  [AC_MSG_RESULT([no])],
+                  [AC_MSG_RESULT([yes])])
+            ;;
+
+        *)
+            # Check using -fvisibility=hidden
+            opal_add=-fvisibility=hidden
+            CFLAGS="$CFLAGS_orig $opal_add"
+
+            AC_MSG_CHECKING([if $CC supports -fvisibility])
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+                __attribute__((visibility("default"))) int foo;
+                ]],[[int i;]])],
+                [],
+                [AS_IF([test -s conftest.err],
+                       [$GREP -iq visibility conftest.err
+                        # If we find "visibility" in the stderr, then
+                        # assume it doesn't work
+                        AS_IF([test "$?" = "0"], [opal_add=])])
+                ])
+            AS_IF([test "$opal_add" = ""],
+                  [AC_MSG_RESULT([no])],
+                  [AC_MSG_RESULT([yes])])
+            ;;
+
+        esac
+
+        CFLAGS=$CFLAGS_orig
+        OPAL_VISIBILITY_CFLAGS=$opal_add
+
+        if test "$opal_add" != "" ; then
+            opal_visibility_define=1
+            AC_MSG_CHECKING([$opal_msg])
+            AC_MSG_RESULT([yes (via $opal_add)])
         elif test "$enable_visibility" = "yes"; then
             AC_MSG_ERROR([Symbol visibility support requested but compiler does not seem to support it.  Aborting])
-        else 
-            AC_MSG_CHECKING([enable symbol visibility])
-            AC_MSG_RESULT([no]) 
-            have_visibility=0
+        else
+            AC_MSG_CHECKING([$opal_msg])
+            AC_MSG_RESULT([no (unsupported)])
         fi
-        CFLAGS="$CFLAGS_orig$add"
-        OPAL_VISIBILITY_CFLAGS="$add"
-        unset add 
+        unset opal_add
     fi
-    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_VISIBILITY], [$have_visibility],
-            [Whether C compiler supports -fvisibility])
+    AC_DEFINE_UNQUOTED([OPAL_C_HAVE_VISIBILITY], [$opal_visibility_define],
+            [Whether C compiler supports symbol visibility or not])
 
 ])
