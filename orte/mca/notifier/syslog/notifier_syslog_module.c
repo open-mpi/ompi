@@ -87,7 +87,7 @@ static void mylog(orte_notifier_base_severity_t severity, int errcode,
 #else
     char *output;
     vasprintf(&output, msg, ap);
-    syslog(severity, output);
+    syslog(severity, output, NULL);
     free(output);
 #endif
 }
