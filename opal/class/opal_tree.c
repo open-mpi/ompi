@@ -207,6 +207,7 @@ void opal_tree_add_child(opal_tree_item_t *parent_item,
 /* 
  * check to see if item is in tree
  */
+#if OPAL_ENABLE_DEBUG
 static bool item_in_tree(opal_tree_item_t *item, opal_tree_item_t *search_item)
 {
     bool result = false;
@@ -226,6 +227,7 @@ static bool item_in_tree(opal_tree_item_t *item, opal_tree_item_t *search_item)
     }
     return(result);
 }
+#endif  /* OPAL_ENABLE_DEBUG */
 
 /*
  * remove item and all items below it from tree and return it to the caller
