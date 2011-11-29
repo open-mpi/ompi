@@ -385,7 +385,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 OPAL_PAFFINITY_CPU_ZERO(mask);
                 if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
                     /* we need to balance the children from this job across the available sockets */
-                    npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
+                    npersocket = jobdat->npersocket;
                     /* determine the socket to use based on those available */
                     if (npersocket < 2) {
                         /* if we only have 1/sock, or we have less procs than sockets,
@@ -580,7 +580,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 }
                 if (ORTE_MAPPING_NPERXXX & jobdat->policy) {
                     /* we need to balance the children from this job across the available sockets */
-                    npersocket = jobdat->num_local_procs / orte_odls_globals.num_sockets;
+                    npersocket = jobdat->npersocket;
                     /* determine the socket to use based on those available */
                     if (npersocket < 2) {
                         /* if we only have 1/sock, or we have less procs than sockets,

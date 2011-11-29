@@ -353,6 +353,12 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
+    /* pack the npersocket for this job */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->npersocket, 1, OPAL_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* pack the cpus_per_rank for this job */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->cpus_per_rank, 1, OPAL_INT16))) {
         ORTE_ERROR_LOG(rc);
@@ -807,6 +813,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack the mapping policy for the job */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->policy, &cnt, ORTE_MAPPING_POLICY))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the npersocket for the job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jobdat->npersocket, &cnt, OPAL_INT32))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }

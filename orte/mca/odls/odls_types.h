@@ -116,6 +116,7 @@ typedef struct orte_odls_job_t {
     orte_app_context_t      **apps;                 /* app_contexts for this job */
     int32_t                 num_apps;               /* number of app_contexts */
     orte_mapping_policy_t   policy;                 /* mapping policy */
+    int32_t                 npersocket;             /* number of ranks/socket */
     int16_t                 cpus_per_rank;          /* number of cpus/rank */
     int16_t                 stride;                 /* step size between cores of multi-core/rank procs */
     orte_job_controls_t     controls;               /* control flags for job */
