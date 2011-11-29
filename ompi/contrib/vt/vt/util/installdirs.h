@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -27,6 +27,7 @@ typedef enum {
   VT_INSTALLDIR_LIBDIR,
   VT_INSTALLDIR_DATADIR,
   VT_INSTALLDIR_DATAROOTDIR,
+  VT_INSTALLDIR_DOCDIR,
   VT_INSTALLDIR_SYSCONFDIR
 } VTInstallDirT;
 

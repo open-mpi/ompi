@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -15,6 +15,8 @@
 #include "OTF_Platform.h"
 #include "OTF_WBuffer.h"
 #include "OTF_Errno.h"
+
+#include "OTF_Keywords.h"
 
 
 /** constructor - internal use only */
@@ -402,6 +404,102 @@ uint32_t OTF_WBuffer_writeChar( OTF_WBuffer* wbuffer, const char character ) {
 }
 
 
+uint32_t OTF_WBuffer_writeUint8( OTF_WBuffer* wbuffer, uint8_t value ) {
+
+
+	static char dig[16] = {	'0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
+	uint32_t l= 0;
+	int s= 4;	
+	uint32_t v= 0;
+	char* p = NULL;
+	
+
+	/* at max 2 digits will be written */
+	if( 0 == OTF_WBuffer_guarantee( wbuffer, 2 ) ) {
+		
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"OTF_WBuffer_guarantee() failed.\n",
+				__FUNCTION__, __FILE__, __LINE__  );
+
+		return 0;
+	}
+
+
+	p= wbuffer->buffer + wbuffer->pos;
+
+	/* skip leading zeros */
+	while ( ( 0 == v ) && ( s >= 0 ) ) {
+	
+		v= ( value >> s ) & 0xf ;
+		s -= 4;
+	}
+
+	p[l++]= dig[v];
+
+	while ( s >= 0 ) {
+	
+		v= ( value >> s ) & 0xf ;
+		s -= 4;
+
+		p[l++]= dig[v];
+	}
+
+	wbuffer->pos += l;
+
+	return l;
+}
+
+
+uint32_t OTF_WBuffer_writeUint16( OTF_WBuffer* wbuffer, uint16_t value ) {
+
+
+	static char dig[16] = {	'0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
+	uint32_t l= 0;
+	int s= 12;	
+	uint32_t v= 0;
+	char* p = NULL;
+	
+
+	/* at max 4 digits will be written */
+	if( 0 == OTF_WBuffer_guarantee( wbuffer, 4 ) ) {
+		
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"OTF_WBuffer_guarantee() failed.\n",
+				__FUNCTION__, __FILE__, __LINE__  );
+
+		return 0;
+	}
+
+
+	p= wbuffer->buffer + wbuffer->pos;
+
+	/* skip leading zeros */
+	while ( ( 0 == v ) && ( s >= 0 ) ) {
+	
+		v= ( value >> s ) & 0xf ;
+		s -= 4;
+	}
+
+	p[l++]= dig[v];
+
+	while ( s >= 0 ) {
+	
+		v= ( value >> s ) & 0xf ;
+		s -= 4;
+
+		p[l++]= dig[v];
+	}
+
+	wbuffer->pos += l;
+
+	return l;
+}
+
+
 uint32_t OTF_WBuffer_writeUint32( OTF_WBuffer* wbuffer, uint32_t value ) {
 
 
@@ -513,6 +611,251 @@ uint32_t OTF_WBuffer_writeNewline( OTF_WBuffer* wbuffer ) {
 	++wbuffer->pos;
 
 	return 1;
+}
+
+uint32_t OTF_WBuffer_writeBytes( OTF_WBuffer* wbuffer, const uint8_t *value, uint32_t len) {
+
+	static char dig[16] = {	'0', '1', '2', '3', '4', '5', '6', '7',
+		'8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
+	uint32_t l= 0;
+	char v;
+	char* p = NULL;
+	uint32_t i;
+
+	/* at max 2 * len digits will be written */
+	if( 0 == OTF_WBuffer_guarantee( wbuffer, len*2 ) ) {
+		
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"OTF_WBuffer_guarantee() failed.\n",
+				__FUNCTION__, __FILE__, __LINE__  );
+
+		return 0;
+	}
+
+
+	p= wbuffer->buffer + wbuffer->pos;
+
+	for( i=0; i<len; i++) {
+		v = value[i];
+		p[l+1] = dig[v & 0xF];
+		v >>= 4;
+		p[l] = dig[v & 0xF];
+		l += 2;
+	
+		wbuffer->pos += 2;
+
+	}	
+
+	return len*2;
+}
+
+
+uint32_t OTF_WBuffer_writeKeyValuePair_short(OTF_WBuffer* buffer, OTF_KeyValuePair* pair) {
+
+	uint32_t written = 0;
+
+	if ( pair == NULL) {
+		return 0;
+	}
+
+	written += OTF_WBuffer_writeKeyword( buffer,
+			OTF_KEYWORD_S_KEYVALUE_PREFIX );
+
+	written += OTF_WBuffer_writeUint32( buffer, pair->key );
+
+	written += OTF_WBuffer_writeKeyword( buffer, OTF_KEYWORD_S_LOCAL_TYPE );
+
+	written += OTF_WBuffer_writeUint32( buffer, pair->type );
+
+	written += OTF_WBuffer_writeKeyword( buffer,
+			OTF_KEYWORD_S_LOCAL_VALUE );
+
+	switch (pair->type) {
+	case OTF_CHAR:
+		written += OTF_WBuffer_writeUint8( buffer, (uint8_t) pair->value.otf_char );
+		break;
+	case OTF_INT8:
+		written += OTF_WBuffer_writeUint8( buffer, pair->value.otf_int8 );
+		break;
+	case OTF_UINT8:
+		written += OTF_WBuffer_writeUint8( buffer, pair->value.otf_uint8 );
+		break;
+	case OTF_INT16:
+		written += OTF_WBuffer_writeUint16( buffer, pair->value.otf_int16 );
+		break;
+	case OTF_UINT16:
+		written += OTF_WBuffer_writeUint16( buffer, pair->value.otf_uint16 );
+		break;
+	case OTF_INT32:
+		written += OTF_WBuffer_writeUint32( buffer, pair->value.otf_int32 );
+		break;
+	case OTF_UINT32:
+		written += OTF_WBuffer_writeUint32( buffer, pair->value.otf_uint32 );
+		break;
+	case OTF_INT64:
+		written += OTF_WBuffer_writeUint64( buffer, pair->value.otf_int64 );
+		break;
+	case OTF_UINT64:
+		written += OTF_WBuffer_writeUint64( buffer, pair->value.otf_uint64 );
+		break;
+	case OTF_DOUBLE:
+		written += OTF_WBuffer_writeUint64( buffer, OTF_DoubleToInt64(pair->value.otf_double) );
+		break;
+	case OTF_FLOAT:
+		written += OTF_WBuffer_writeUint32( buffer, OTF_FloatToInt32(pair->value.otf_float) );
+		break;
+	case OTF_BYTE_ARRAY:
+		written += OTF_WBuffer_writeBytes( buffer,
+				pair->value.otf_byte_array.array,
+				pair->value.otf_byte_array.len > OTF_KEYVALUE_MAX_ARRAY_LEN
+				? OTF_KEYVALUE_MAX_ARRAY_LEN : pair->value.otf_byte_array.len );
+
+		written += OTF_WBuffer_writeKeyword( buffer,
+				OTF_KEYWORD_S_LOCAL_LENGTH );
+
+		written += OTF_WBuffer_writeUint32( buffer, pair->value.otf_byte_array.len );
+		break;
+	default:
+		/* wrong type */
+		written += OTF_WBuffer_writeNewline( buffer );
+		return written;
+	}
+
+	written += OTF_WBuffer_writeNewline( buffer );
+
+	return written;
+}
+
+
+uint32_t OTF_WBuffer_writeKeyValuePair_long(OTF_WBuffer* buffer, OTF_KeyValuePair* pair) {
+
+	uint32_t written = 0;
+
+	if ( pair == NULL) {
+		return 0;
+	}
+
+	written += OTF_WBuffer_writeKeyword( buffer,
+			OTF_KEYWORD_L_KEYVALUE_PREFIX " " );
+
+	written += OTF_WBuffer_writeUint32( buffer, pair->key );
+
+	written += OTF_WBuffer_writeKeyword( buffer,
+			" " OTF_KEYWORD_L_LOCAL_TYPE " " );
+
+	written += OTF_WBuffer_writeUint32( buffer, pair->type );
+
+	written += OTF_WBuffer_writeKeyword( buffer,
+			" " OTF_KEYWORD_L_LOCAL_VALUE " " );
+
+	switch (pair->type) {
+	case OTF_CHAR:
+		written += OTF_WBuffer_writeUint8( buffer, (uint8_t) pair->value.otf_char );
+		break;
+	case OTF_INT8:
+		written += OTF_WBuffer_writeUint8( buffer, pair->value.otf_int8 );
+		break;
+	case OTF_UINT8:
+		written += OTF_WBuffer_writeUint8( buffer, pair->value.otf_uint8 );
+		break;
+	case OTF_INT16:
+		written += OTF_WBuffer_writeUint16( buffer, pair->value.otf_int16 );
+		break;
+	case OTF_UINT16:
+		written += OTF_WBuffer_writeUint16( buffer, pair->value.otf_uint16 );
+		break;
+	case OTF_INT32:
+		written += OTF_WBuffer_writeUint32( buffer, pair->value.otf_int32 );
+		break;
+	case OTF_UINT32:
+		written += OTF_WBuffer_writeUint32( buffer, pair->value.otf_uint32 );
+		break;
+	case OTF_INT64:
+		written += OTF_WBuffer_writeUint64( buffer, pair->value.otf_int64 );
+		break;
+	case OTF_UINT64:
+		written += OTF_WBuffer_writeUint64( buffer, pair->value.otf_uint64 );
+		break;
+	case OTF_DOUBLE:
+		written += OTF_WBuffer_writeUint64( buffer, OTF_DoubleToInt64(pair->value.otf_double) );
+		break;
+	case OTF_FLOAT:
+		written += OTF_WBuffer_writeUint32( buffer, OTF_FloatToInt32(pair->value.otf_float) );
+		break;
+	case OTF_BYTE_ARRAY:
+		written += OTF_WBuffer_writeBytes( buffer,
+				pair->value.otf_byte_array.array,
+				pair->value.otf_byte_array.len > OTF_KEYVALUE_MAX_ARRAY_LEN
+				? OTF_KEYVALUE_MAX_ARRAY_LEN : pair->value.otf_byte_array.len );
+
+		written += OTF_WBuffer_writeKeyword( buffer,
+				OTF_KEYWORD_L_LOCAL_LENGTH );
+
+		written += OTF_WBuffer_writeUint32( buffer, pair->value.otf_byte_array.len );
+		break;
+	default:
+		/* wrong type */
+		written += OTF_WBuffer_writeNewline( buffer );
+		return written;
+	}
+
+	written += OTF_WBuffer_writeNewline( buffer );
+
+	return written;
+}
+
+
+uint32_t OTF_WBuffer_writeKeyValueList_short(OTF_WBuffer* buffer, OTF_KeyValueList *list ) {
+
+	OTF_KeyValuePairList *p;
+	uint32_t i;
+	uint32_t written = 0;
+
+
+	if ( list == NULL) {
+		return 0;
+	}
+
+	p = list->kvBegin;
+
+	for( i = 0; i < list->count; i++ ) {
+
+		written += OTF_WBuffer_writeKeyValuePair_short( buffer,
+				&(p->kvPair) );
+
+		p = p->kvNext;
+	}
+
+	OTF_KeyValueList_reset(list);
+
+	return written;
+}
+
+
+uint32_t OTF_WBuffer_writeKeyValueList_long(OTF_WBuffer* buffer, OTF_KeyValueList *list ) {
+
+	OTF_KeyValuePairList *p;
+	uint32_t i;
+	uint32_t written = 0;
+
+
+	if ( list == NULL) {
+		return 0;
+	}
+
+	p = list->kvBegin;
+
+	for( i = 0; i < list->count; i++ ) {
+
+		written += OTF_WBuffer_writeKeyValuePair_long( buffer, &(p->kvPair) );
+
+		p = p->kvNext;
+	}
+
+	OTF_KeyValueList_reset(list);
+
+	return written;
 }
 
 

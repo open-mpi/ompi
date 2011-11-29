@@ -2,7 +2,8 @@ otfdoc_DATA = \
 	$(top_srcdir)/ChangeLog \
 	$(top_srcdir)/LICENSE \
 	api/specification.pdf \
-	tools/otftools.pdf
+	tools/otftools.pdf \
+	tools/otfprofile.pdf
 
 otfdocdir = $(docdir)
 

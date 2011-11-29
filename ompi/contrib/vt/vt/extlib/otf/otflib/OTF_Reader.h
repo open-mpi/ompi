@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -45,7 +45,7 @@ extern "C" {
  * #include "otf.h"
  * \endcode
  *
- * Define handlers/callbacls for the records you want to read.
+ * Define handlers/callbacks for the records you want to read.
  * \code
  * int handleEnter (void *userData, uint64_t time, uint32_t function, uint32_t process, uint32_t source) {
  *
@@ -573,10 +573,15 @@ int OTF_Reader_setProcessStatusAll( OTF_Reader* reader, uint8_t status );
 /**
  * Set the minimum time and the maximum time of the reader.
  *
+ * \par For example:
+ *    minTime = 100000;
+ * \n maxTime = 100003;
+ * \n Times to read: 100000, 100001, 100002
+ *
  * @param reader     Pointer to an initialized OTF_Reader object. See 
  *                   also OTF_Reader_open().
- * @param minTime    minimum to read records
- * @param maxTime    maximum time to read records
+ * @param minTime    time where reading starts (including this timestamp)
+ * @param maxTime    time where reading ends (excluding this timestamp)
  *
  * \ingroup reader
  */

@@ -1,6 +1,7 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
- Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
+ Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch 
+ also: patches by Rainer Keller, thanks a lot!
 */
 
 #ifdef HAVE_CONFIG_H
@@ -19,6 +20,7 @@
 #include "OTF_Platform.h"
 #include "OTF_Errno.h"
 
+#include "OTF_Keywords.h"
 
 /** constructor - internal use only */
 int OTF_RBuffer_init( OTF_RBuffer* rbuffer );
@@ -161,6 +163,8 @@ int OTF_RBuffer_init( OTF_RBuffer* rbuffer ) {
 	rbuffer->firstTime= (uint64_t) -1;
 	rbuffer->lastTime= (uint64_t) -1;
 	
+	rbuffer->list = NULL;
+	
 #ifdef HAVE_ZLIB
 	rbuffer->zbuffersize= 1024*10;
 #endif /* HAVE_ZLIB */
@@ -186,8 +190,19 @@ int OTF_RBuffer_finish( OTF_RBuffer* rbuffer ) {
 
 OTF_RBuffer* OTF_RBuffer_open( const char* filename, OTF_FileManager* manager ) {
 
+	OTF_RBuffer* ret;
 
-	OTF_RBuffer* ret= (OTF_RBuffer*) malloc( sizeof(OTF_RBuffer) );
+	/* Check the input parameters */
+	if( NULL == manager ) {
+		
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"manager has not been defined.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+
+		return NULL;
+	}
+
+	ret= (OTF_RBuffer*) malloc( sizeof(OTF_RBuffer) );
 	if ( NULL == ret ) {
 
 		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
@@ -197,21 +212,8 @@ OTF_RBuffer* OTF_RBuffer_open( const char* filename, OTF_FileManager* manager ) 
 		return NULL;
 	}
 
-
 	OTF_RBuffer_init( ret );
 
-	if( NULL == manager ) {
-		
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-				"manager has not been defined.\n",
-				__FUNCTION__, __FILE__, __LINE__ );
-
-		free( ret );
-		ret= NULL;
-				
-		return NULL;
-	}
-	
 	ret->file= OTF_File_open( filename, manager, OTF_FILEMODE_READ );
 
 	if ( NULL == ret->file ) {
@@ -226,6 +228,73 @@ OTF_RBuffer* OTF_RBuffer_open( const char* filename, OTF_FileManager* manager ) 
 		ret= NULL;
 
 		return ret;
+	}
+
+	ret->list = OTF_KeyValueList_new();
+
+	if (ret->list == NULL) {
+
+		OTF_File_close(ret->file);
+		ret->file = NULL;
+
+		free( ret );
+		ret= NULL;
+				
+		return NULL;
+	}
+
+#ifdef HAVE_ZLIB
+	OTF_File_setZBufferSize( ret->file, ret->zbuffersize );
+#endif /* HAVE_ZLIB */
+
+	return ret;
+}
+
+
+OTF_RBuffer* OTF_RBuffer_open_with_external_buffer( uint32_t len, const char* buffer, uint8_t is_compressed ) {
+
+
+	OTF_RBuffer* ret;
+
+
+	ret= (OTF_RBuffer*) malloc( sizeof(OTF_RBuffer) );
+	if ( NULL == ret ) {
+
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"no memory left.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+
+		return NULL;
+	}
+
+	OTF_RBuffer_init( ret );
+
+	ret->file= OTF_File_open_with_external_buffer( len, buffer, is_compressed, OTF_FILEMODE_READ );
+	if ( NULL == ret->file ) {
+
+/* *** commented because it can happen when defstream cannot be loaded
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				"OTF_File_open() failed. filename '%s'\n",
+				__FUNCTION__, __FILE__, __LINE__, filename );
+*/
+
+		free( ret );
+		ret= NULL;
+
+		return ret;
+	}
+
+	ret->list = OTF_KeyValueList_new();
+
+	if (ret->list == NULL) {
+
+		OTF_File_close(ret->file);
+		ret->file = NULL;
+
+		free( ret );
+		ret= NULL;
+				
+		return NULL;
 	}
 
 #ifdef HAVE_ZLIB
@@ -245,6 +314,10 @@ int OTF_RBuffer_close( OTF_RBuffer* rbuffer ) {
 	
 	rbuffer->file= NULL;
 
+	if( rbuffer->list != NULL) {
+		OTF_KeyValueList_close( rbuffer->list);
+	}
+
 	OTF_RBuffer_finish( rbuffer );
 
 	free( rbuffer );
@@ -252,7 +325,6 @@ int OTF_RBuffer_close( OTF_RBuffer* rbuffer ) {
 
 	return ret;
 }
-
 
 int OTF_RBuffer_setSize( OTF_RBuffer* rbuffer, size_t size ) {
 
@@ -524,6 +596,14 @@ size_t OTF_RBuffer_advance( OTF_RBuffer* rbuffer ) {
 	uint32_t d;
 	size_t ret;
 
+
+	if ( 0 == rbuffer->size ) {
+
+		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			"buffer size not set!\n",
+			__FUNCTION__, __FILE__, __LINE__ );
+		exit(1);
+	}
 
 	if( rbuffer->pos > rbuffer->end ) {
 		
@@ -1244,3 +1324,160 @@ uint64_t OTF_RBuffer_getFilePos( OTF_RBuffer* rbuffer ) {
 
 	return OTF_File_tell( rbuffer->file );
 }
+
+uint32_t OTF_RBuffer_readBytes( OTF_RBuffer* rbuffer, uint8_t *array, uint32_t max_len ) {
+
+	char c;
+	uint32_t k = 0;
+	uint32_t i = 0;
+
+	OTF_RBuffer_skipSpaces( rbuffer );
+
+	while( 1 ) {
+
+		if (k == 2) {
+			i++;
+			k = 0;
+		}
+
+		c= rbuffer->buffer[rbuffer->pos];
+
+		if ( '0' <= c && c <= '9' ) {
+          
+            if ( i >= max_len )         
+                return i + 1;
+
+			array[i] = ( array[i] << 4) | ( c - '0' );
+			++(rbuffer->pos);
+
+		} else if ( 'a' <= c && c <= 'f' ) {
+          
+            if ( i >= max_len )
+                return i + 1;
+
+			array[i] = ( array[i] << 4) | ( c - ( 'a' - 10 ) );
+			++(rbuffer->pos);
+
+		} else {
+          
+			return i;
+		}
+
+		k++;
+	}
+}
+
+uint32_t OTF_RBuffer_readKeyValueList(OTF_RBuffer* buffer ) {
+
+
+	OTF_KeyValuePair pair;
+
+	if ( buffer->list == NULL) {
+
+		return 0;
+	}
+
+	pair.key = OTF_RBuffer_readUint32( buffer );
+
+	if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_TYPE ) ||
+				OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_TYPE ) ) {
+
+		pair.type = (OTF_Type) OTF_RBuffer_readUint32( buffer );
+
+	} else {
+		/* Parse error */
+		PARSE_ERROR( buffer );
+		
+		return 0;
+	}
+	
+	if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_VALUE ) ||
+				OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_VALUE ) ) {
+		switch (pair.type) {
+		case OTF_CHAR:
+			OTF_RBuffer_readBytes( buffer, (uint8_t*) &(pair.value.otf_char), 1 );
+			break;
+		case OTF_INT8:
+		  	pair.value.otf_int8 = OTF_RBuffer_readUint32( buffer );
+			break;
+		case OTF_UINT8:
+			pair.value.otf_uint8 = OTF_RBuffer_readUint32( buffer );
+			break;
+		case OTF_INT16:
+			pair.value.otf_int16 = OTF_RBuffer_readUint32( buffer );
+			break;
+		case OTF_UINT16:
+			pair.value.otf_uint16 = OTF_RBuffer_readUint32( buffer );
+			break;
+		case OTF_INT32:
+			pair.value.otf_int32 = OTF_RBuffer_readUint32( buffer );
+			break;
+		case OTF_UINT32:
+			pair.value.otf_uint32 = OTF_RBuffer_readUint32( buffer );
+			break;
+		case OTF_INT64:
+			pair.value.otf_int64 = OTF_RBuffer_readUint64( buffer );
+			break;
+		case OTF_UINT64:
+			pair.value.otf_uint64 = OTF_RBuffer_readUint64( buffer );
+			break;
+		case OTF_DOUBLE:
+			pair.value.otf_double = OTF_Int64ToDouble( OTF_RBuffer_readUint64( buffer ) );
+			break;
+		case OTF_FLOAT:
+			pair.value.otf_float = OTF_Int32ToFloat( OTF_RBuffer_readUint32( buffer ) );
+			break;
+		case OTF_BYTE_ARRAY:
+			pair.value.otf_byte_array.len = OTF_RBuffer_readBytes( buffer,
+                pair.value.otf_byte_array.array, OTF_KEYVALUE_MAX_ARRAY_LEN);
+            
+            if( pair.value.otf_byte_array.len > OTF_KEYVALUE_MAX_ARRAY_LEN ) {
+              
+                OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+                        "byte-array exceeds the maximum length of %u bytes per line.\n",
+                        __FUNCTION__, __FILE__, __LINE__, OTF_KEYVALUE_MAX_ARRAY_LEN );
+              
+                PARSE_ERROR( buffer );
+                
+                return 0;
+              
+            }
+                        
+            if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_LENGTH ) ||
+                OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_LENGTH ) ) {
+
+                pair.value.otf_byte_array.len = OTF_RBuffer_readUint32( buffer );
+
+            }
+            
+			break;
+		default:
+          
+			/* Pasre error */
+			PARSE_ERROR( buffer );
+
+			return 0;
+		}
+
+	} else {
+      
+		/* Parse error */
+		PARSE_ERROR( buffer );
+		
+		return 0;
+	}
+
+	if ( OTF_RBuffer_readNewline( buffer ) ) {
+
+		OTF_KeyValueList_appendPair(buffer->list, pair);
+
+	} else {
+
+		PARSE_ERROR( buffer );
+		
+		return 0;
+	}
+
+	return 1;
+}
+

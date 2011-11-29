@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -29,7 +29,7 @@ EXTERN void            vt_metric_close(void);
 /* create per-thread counter sets */
 EXTERN struct vt_metv* vt_metric_create(void);
 /* free per-thread counter sets */
-EXTERN void            vt_metric_free(struct vt_metv* metv);
+EXTERN void            vt_metric_free(struct vt_metv* metv, uint32_t tid);
 
 /* register thread (supply pthread_self() / omp_get_thread_num() as argument) */
 EXTERN void            vt_metric_thread_init(long (*id_fn)(void));

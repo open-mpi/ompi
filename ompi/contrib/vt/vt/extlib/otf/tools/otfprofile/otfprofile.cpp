@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Denis Huenich, Johannes Spazier
 */
 
@@ -41,6 +41,7 @@ using namespace std;
 "                                                                  \n" \
 "   options:                                                       \n" \
 "      -h, --help    show this help message                        \n" \
+"      -V            show OTF version                              \n" \
 "      -b <x>        readbuffer size                               \n" \
 "      -f <x>        max. number of filehandles to use             \n" \
 "      -i <file>     specify an input trace name                   \n" \
@@ -51,17 +52,25 @@ using namespace std;
 "      -tex <x>      writes Latex output in different flavours:    \n" \
 "                    (all,func,p2p,collop,none)                    \n" \
 "      -notex        disable Latex output                          \n" \
-"      -nops         disable Postscript output			   \n" \
+"      -nops         disable Postscript output                     \n" \
 "      -var          also show statistic variance                  \n" \
 "      -top <x>      max. number of functions shown (default 50)   \n" \
 "      -progress     show progress information                     \n" \
 "      -sum          reads only summarized information, no events  \n" \
 "      -omp <x>      specify the number of threads which are used  \n" \
-"                    while reading the otf-file parallel	   \n" \
+"                    while reading the otf-file parallel           \n" \
 "                    Note: This option overrides the environment   \n" \
-"                    variable OMP_NUM_THREADS,    		   \n" \
+"                    variable OMP_NUM_THREADS,                     \n" \
 "                    only useful if compiled with OpenMP support   \n" \
+"      -lite         ignore P2P and collective communication       \n" \
+"                    (saves memory for highly parallel cases       \n" \
 "                                                                  \n" \
+"                                                                  \n" \
+
+
+/* global variable to switch operation mode, see '-lite' command line switch */
+bool lite= false;
+
 
 int main( int argc, const char** argv ) 
 {
@@ -115,6 +124,10 @@ int main( int argc, const char** argv )
 			num_p = 1;
 		}
 	}
+
+    /* global variable: bool lite  */
+    lite= false;
+
 	
 	if ( 1 >= argc ) {
 
@@ -194,6 +207,13 @@ int main( int argc, const char** argv )
 			cout << HELPTEXT;
 			return 0;
 		} 
+		else if ( 0 == strcmp( "-V", argv[i] ) ) 
+		{
+		
+			printf( "%u.%u.%u \"%s\"\n", OTF_VERSION_MAJOR, OTF_VERSION_MINOR,
+				OTF_VERSION_SUB, OTF_VERSION_STRING);
+			exit( 0 );
+		}
 		else if ((0 == strcmp("-i", argv[i])) && (i+1 < argc))
 		{
 			if(!check)
@@ -254,6 +274,10 @@ int main( int argc, const char** argv )
 			cerr << "\nThe option \"-omp\" has no effect because you compiled without OpenMP-Support.\nInstall OpenMP and recompile otfprofile to use this option.\n" << endl;
 			++i;
 #			endif
+		}
+		else if (0 == strcmp("-lite", argv[i]))
+		{
+			lite= true;
 		}
 		else 
 		{

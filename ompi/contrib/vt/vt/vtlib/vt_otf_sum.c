@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -166,7 +166,7 @@
 }
 
 #define VT_CHECK_DUMP(_sum, _time)                                    \
-  if (*_time >= _sum->next_dump) VTSum_dump(_sum, 1);
+  if (*_time >= _sum->next_dump) VTSum_dump(_sum, _time, 1);
 
 #define VTSUM_IS_PROP_ON(_sum, _prop) \
   ((_sum->props & _prop) != 0)
@@ -306,6 +306,7 @@ struct VTSum_struct
   uint64_t               fileop_stat_size;
   uint64_t               fileop_stat_num;
 
+  uint32_t               tid;
   uint64_t               intv;
   uint64_t               next_dump;
   uint8_t                props;
@@ -547,7 +548,7 @@ static void hash_clear_fileop(VTSum* sum) {
   free(sum->fileop_stat_htab);
 }
 
-VTSum* VTSum_open(VTGen* gen)
+VTSum* VTSum_open(VTGen* gen, uint32_t tid)
 {
   VTSum* sum;
   uint32_t intv = (uint32_t)vt_env_stat_intv();
@@ -660,12 +661,15 @@ VTSum* VTSum_open(VTGen* gen)
       vt_error();
   }
 
+  /* set thread id */
+  sum->tid = tid;
+
   /* set summary interval */
 
   if (intv > 0)
   {
     SumIntv = (vt_pform_clockres() * intv) / 1000;
-    sum->next_dump = SumIntv;
+    sum->next_dump = vt_pform_wtime() + SumIntv;
   }
   else
   {
@@ -676,15 +680,13 @@ VTSum* VTSum_open(VTGen* gen)
   return sum;
 }
 
-void VTSum_dump(VTSum* sum, uint8_t markDump)
+void VTSum_dump(VTSum* sum, uint64_t* time, uint8_t markDump)
 {
-  uint64_t time = vt_pform_wtime();
   uint32_t i;
-
 
   /* mark begin of statistics dump */
   if (markDump)
-    vt_enter_stat(&time);
+    vt_enter_stat(sum->tid, time);
 
   /* dump function statistics */
 
@@ -692,7 +694,7 @@ void VTSum_dump(VTSum* sum, uint8_t markDump)
   {
     for(i = 0; i < sum->func_stat_num; i++)
     {
-      VTGen_write_FUNCTION_SUMMARY(sum->gen, &time,
+      VTGen_write_FUNCTION_SUMMARY(sum->gen, time,
 	sum->func_stat[i].rid,
 	sum->func_stat[i].cnt,
 	sum->func_stat[i].excl,
@@ -706,7 +708,7 @@ void VTSum_dump(VTSum* sum, uint8_t markDump)
   {
     for(i = 0; i < sum->msg_stat_num; i++)
     {
-      VTGen_write_MESSAGE_SUMMARY(sum->gen, &time,
+      VTGen_write_MESSAGE_SUMMARY(sum->gen, time,
 	sum->msg_stat[i].peer,
 	sum->msg_stat[i].cid,
 	sum->msg_stat[i].tag,
@@ -723,7 +725,7 @@ void VTSum_dump(VTSum* sum, uint8_t markDump)
   {
     for(i = 0; i < sum->collop_stat_num; i++)
     {
-      VTGen_write_COLLECTIVE_OPERATION_SUMMARY(sum->gen, &time,
+      VTGen_write_COLLECTIVE_OPERATION_SUMMARY(sum->gen, time,
 	sum->collop_stat[i].cid,
 	sum->collop_stat[i].rid,
 	sum->collop_stat[i].scnt,
@@ -739,7 +741,7 @@ void VTSum_dump(VTSum* sum, uint8_t markDump)
   {
     for(i = 0; i < sum->fileop_stat_num; i++)
     {
-      VTGen_write_FILE_OPERATION_SUMMARY(sum->gen, &time,
+      VTGen_write_FILE_OPERATION_SUMMARY(sum->gen, time,
 	sum->fileop_stat[i].fid,
         sum->fileop_stat[i].nopen,
         sum->fileop_stat[i].nclose,
@@ -751,20 +753,21 @@ void VTSum_dump(VTSum* sum, uint8_t markDump)
     }
   }
 
-  time = vt_pform_wtime();
+  *time = vt_pform_wtime();
 
   /* mark end of statistics dump */
   if (markDump)
-    vt_exit_stat(&time);
+    vt_exit_stat(sum->tid, time);
 
   if (sum->next_dump != (uint64_t)-1)
-    sum->next_dump = time + SumIntv;
+    sum->next_dump = *time + SumIntv;
 }
 
 void VTSum_close(VTSum* sum)
 {
   /* dump statistics */
-  VTSum_dump(sum, 0);
+  uint64_t time = vt_pform_wtime();
+  VTSum_dump(sum, &time, 0);
 }
 
 void VTSum_delete(VTSum* sum)
@@ -933,18 +936,26 @@ void VTSum_collop(VTSum* sum, uint64_t* time, uint32_t rid, uint32_t cid,
     VTSUM_COLLOP_STAT_ADD(sum, lrid, lcid, stat_idx);
     hash_put_collop(sum, lrid, lcid, stat_idx);
   }
-  
-  if ( sent > 0 )
+ 
+  if ( sent == 0 && recvd == 0 ) /* no bytes => barrier */
   {
     sum->collop_stat[stat_idx].scnt++;
-    sum->collop_stat[stat_idx].sent += sent;
-  }
-  if ( recvd > 0 )
-  {
     sum->collop_stat[stat_idx].rcnt++;
-    sum->collop_stat[stat_idx].recvd += recvd;
   }
-  
+  else
+  {
+    if ( sent > 0 )
+    {
+      sum->collop_stat[stat_idx].scnt++;
+      sum->collop_stat[stat_idx].sent += sent;
+    }
+    if ( recvd > 0 )
+    {
+      sum->collop_stat[stat_idx].rcnt++;
+      sum->collop_stat[stat_idx].recvd += recvd;
+    }
+  }
+
   VT_CHECK_DUMP(sum, time);
 }
 

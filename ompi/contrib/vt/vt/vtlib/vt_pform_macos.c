@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -43,7 +43,7 @@
 # include <sys/time.h>
   static uint64_t vt_time_base = 0;
 #elif TIMER == TIMER_CYCLE_COUNTER
-  static uint64_t vt_ticks_per_sec = 1;
+  static uint64_t vt_ticks_per_sec = 0;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   extern uint64_t vt_metric_clckrt(void);
   extern uint64_t vt_metric_real_cyc(void);
@@ -65,16 +65,27 @@ void vt_pform_init()
   size_t len;
   int    hostid_retries;
 
+  /* get timer resolution */
 #if TIMER == TIMER_GETTIMEOFDAY
   struct timeval tp;
   gettimeofday(&tp, 0);
   vt_time_base = tp.tv_sec - (tp.tv_sec & 0xFFFF);
 #elif TIMER == TIMER_CYCLE_COUNTER
-  mib[0] = CTL_HW;
-  mib[1] = HW_CPU_FREQ;
-  len = sizeof(vt_ticks_per_sec);
-  if (sysctl(mib, 2, &vt_ticks_per_sec, &len, NULL, 0) == -1)
-    vt_error_msg("sysctl[HW_CPU_FREQ] failed: %s", strerror(errno));
+# if defined(__powerpc64__) || defined(__powerpc__) || defined(__POWERPC__)
+    struct clockinfo clk_info;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_CLOCKRATE;
+    len = sizeof(clk_info);
+    if (sysctl(mib, 2, &clk_info, &len, NULL, 0) == -1)
+      vt_error_msg("sysctl[KERN_CLOCKRATE] failed: %s", strerror(errno));
+    vt_ticks_per_sec = clk_info.hz * 1000000;
+# else
+    mib[0] = CTL_HW;
+    mib[1] = HW_CPU_FREQ;
+    len = sizeof(vt_ticks_per_sec);
+    if (sysctl(mib, 2, &vt_ticks_per_sec, &len, NULL, 0) == -1)
+      vt_error_msg("sysctl[HW_CPU_FREQ] failed: %s", strerror(errno));
+# endif
 #elif TIMER == TIMER_PAPI_REAL_USEC
   vt_time_base = vt_metric_real_usec();
 #endif

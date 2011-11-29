@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -10,14 +10,16 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include <stdlib.h>
+#include "config.h"
 
+#include "vt_defs.h"
+#include "vt_env.h"
+#include "vt_thrd.h"
 #include "vt_trc.h"
 #include "vt_mpicom.h"
 #include "vt_error.h"
 
-#define VT_MAX_COMM 50
-#define VT_MAX_WIN 100
+#include <stdlib.h>
 
 struct VTWorld
 {
@@ -50,31 +52,33 @@ struct VTWin
 
 struct VTWorld world;
 
-static uint32_t currcid = 0; /* 0/1 reserved for MPI_COMM_WORLD/MPI_COMM_SELF */
+static uint32_t world_cid = (uint32_t)-1;
+static uint32_t self_cid = (uint32_t)-1;
 static uint32_t last_comm = 0;
+static uint32_t max_comms = (uint32_t)-1;
 static VT_MPI_INT* ranks;
-static struct VTComm comms[VT_MAX_COMM];
+static struct VTComm* comms;
 static uint8_t* grpv;
 
 static uint8_t comm_initialized = 0;
 
 #if defined(HAVE_MPI2_1SIDED) && HAVE_MPI2_1SIDED
-static uint32_t currwid = 0;
 static uint32_t free_win = (uint32_t)-1;
 static uint32_t last_win = 0;
-static struct VTWin wins[VT_MAX_WIN];
+static uint32_t max_wins = (uint32_t)-1;
+static struct VTWin* wins;
 #endif /* HAVE_MPI2_1SIDED */
 
 
 static uint32_t group_search(MPI_Group group)
 {
   uint32_t i = 0;
-  
+
   while ((i < last_comm) && (comms[i].group != group))
     i++;
-      
+
   if (i != last_comm)
-    return i;  
+    return i;
   else
     return (uint32_t)-1; 
 }
@@ -83,7 +87,7 @@ static uint32_t group_search(MPI_Group group)
 static uint32_t win_search(MPI_Win win)
 {
   uint32_t i = 0;
-  
+
   free_win = (uint32_t)-1;
   while ((i < last_win)&& (wins[i].win != win))
     {
@@ -98,7 +102,7 @@ static uint32_t win_search(MPI_Win win)
   else
     return (uint32_t)-1;
 }
-#endif /*HAVE_MPI2_1SIDED */
+#endif /* HAVE_MPI2_1SIDED */
 
 /* 
  *-----------------------------------------------------------------------------
@@ -134,25 +138,46 @@ void vt_comm_init()
   if ( !comm_initialized )
   {
     comm_initialized = 1;
+
+    max_comms = vt_env_max_mpi_comms();
+    comms = (struct VTComm*)calloc(max_comms, sizeof(struct VTComm));
+    if ( !comms )
+      vt_error();
+
+#if defined(HAVE_MPI2_1SIDED) && HAVE_MPI2_1SIDED
+    max_wins = vt_env_max_mpi_wins();
+    wins = (struct VTWin*)calloc(max_wins, sizeof(struct VTWin));
+    if ( !wins )
+      vt_error();
+#endif /* HAVE_MPI2_1SIDED */
+
     PMPI_Comm_group(MPI_COMM_WORLD, &world.group);
     PMPI_Group_size(world.group, &world.size);
     world.size_grpv = world.size / 8 + (world.size % 8 ? 1 : 0);
 
     world.ranks  = (VT_MPI_INT*)calloc(world.size, sizeof(VT_MPI_INT));
+    if ( !world.ranks )
+      vt_error();
+
     for (i = 0; i < world.size; i++)
-      world.ranks[i] = i;  
+      world.ranks[i] = i;
 
     ranks  = (VT_MPI_INT*)calloc(world.size, sizeof(VT_MPI_INT));
     grpv = (uint8_t*)calloc(world.size_grpv, sizeof(uint8_t));
 
-    vt_comm_create( MPI_COMM_WORLD );
-    vt_comm_create( MPI_COMM_SELF );
+    vt_comm_create(MPI_COMM_WORLD);
+    vt_comm_create(MPI_COMM_SELF);
   }
 }
 
 void vt_comm_finalize()
 {
   PMPI_Group_free(&world.group);
+
+  free(comms);
+#if defined(HAVE_MPI2_1SIDED) && HAVE_MPI2_1SIDED
+  free(wins);
+#endif /* HAVE_MPI2_1SIDED */
 
   free(world.ranks);
   free(ranks);
@@ -165,7 +190,7 @@ void vt_group_to_bitvector(MPI_Group group)
 
   /* translate ranks */
   PMPI_Group_translate_ranks(world.group, world.size, world.ranks, group, ranks);
-  
+
   /* initialize grpv */
   for (i = 0; i < world.size_grpv; i++)
     grpv[i] = 0;
@@ -180,9 +205,9 @@ void vt_comm_create(MPI_Comm comm)
 {
   int i;
   MPI_Group group;
-  
-  if (last_comm >= VT_MAX_COMM) 
-    vt_error_msg("Too many communicators");
+
+  if (last_comm >= max_comms) 
+    vt_error_msg("Too many communicators (VT_MAX_MPI_COMMS=%d", max_comms);
 
   /* ask for group of comm */
   PMPI_Comm_group(comm, &group);
@@ -190,25 +215,48 @@ void vt_comm_create(MPI_Comm comm)
   /* check if group already exists w/o communicator */
   if ((i = group_search( group ) != (uint32_t)-1) &&
       (comms[i].comm == MPI_COMM_NULL))
-    { 
+    {
       /* just set communicator to comm */
       comms[i].comm = comm;
-    }  
+    }
   else
     {
-      /* create group entry in grpv */
-      vt_group_to_bitvector( group );
-  
-      /* register mpi communicator definition */
-      vt_def_mpi_comm(currcid, world.size_grpv, grpv);
+      uint32_t cid;
+      VT_MPI_INT size_grpv = 0;
 
-      /* enter comm in comms[] arrray */
+      /* create group entry in grpv except for
+         MPI_COMM_SELF and
+         MPI_COMM_WORLD (if the current rank isn't the first available one) */
+      if ((comm != MPI_COMM_SELF && comm != MPI_COMM_WORLD) ||
+          (comm == MPI_COMM_WORLD && vt_my_trace_is_first_avail))
+        {
+          vt_group_to_bitvector( group );
+          size_grpv = world.size_grpv;
+        }
+
+      /* register mpi communicator definition */
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+      VTTHRD_LOCK_IDS();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+      cid = vt_def_mpi_comm(VT_CURRENT_THREAD,
+              comm == MPI_COMM_WORLD ? VT_MPI_COMM_WORLD :
+              comm == MPI_COMM_SELF ? VT_MPI_COMM_SELF : VT_MPI_COMM_OTHER,
+              size_grpv, grpv);
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+      VTTHRD_UNLOCK_IDS();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+
+      /* save communicator id for fast access in vt_comm_id */
+      if (comm == MPI_COMM_WORLD) world_cid = cid;
+      else if (comm == MPI_COMM_SELF) self_cid = cid;
+
+      /* enter comm in comms[] array */
       comms[last_comm].comm  = comm;
       comms[last_comm].group = group;
-      comms[last_comm].cid   = currcid++;
+      comms[last_comm].cid   = cid;
       last_comm++;
     }
-  
+
   /* clean up */
   PMPI_Group_free(&group);
 }
@@ -222,31 +270,36 @@ void vt_comm_free(MPI_Comm comm)
   else if (last_comm > 1)
     {
       uint32_t i = 0;
-      
+
       while(i < last_comm && comms[i].comm != comm)
         i++;
-      
+
       if (i < last_comm--)
         comms[i] = comms[last_comm];
       else
         vt_error_msg("vt_comm_free1: Cannot find communicator");
     }
   else
+    {
       vt_error_msg("vt_comm_free2: Cannot find communicator");
+    }
 }
 
 uint32_t vt_comm_id(MPI_Comm comm)
 {
   uint32_t i = 0;
 
+  if (comm == MPI_COMM_WORLD) return world_cid;
+  else if (comm == MPI_COMM_SELF) return self_cid;
+
   while(i < last_comm && comms[i].comm != comm)
     i++;
-  
+
   if (i != last_comm)
     return comms[i].cid;
-  else 
+  else
     {
-      vt_error_msg("vt_comm_id: Cannot find communicator");  
+      vt_error_msg("vt_comm_id: Cannot find communicator");
       return (uint32_t)-1;
     }
 }
@@ -261,23 +314,32 @@ uint32_t vt_comm_id(MPI_Comm comm)
 
 void vt_group_create(MPI_Group group)
 {
-  if (last_comm >= VT_MAX_COMM) 
-    vt_error_msg("Too many communicators");
+  if (last_comm >= max_comms)
+    vt_error_msg("Too many communicators (VT_MAX_MPI_COMMS=%d", max_comms);
 
   /* check if group already exists w/ communicator */
   if (group_search( group ) == (uint32_t)-1)
     {
+      uint32_t cid;
+
       /* create group entry in grpv */
       vt_group_to_bitvector( group );
-  
-      /* register mpi communicator definition */
-      vt_def_mpi_comm(currcid, world.size_grpv, grpv);
 
-      /* enter comm in comms[] arrray */
+      /* register mpi communicator definition */
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+      VTTHRD_LOCK_IDS();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+      cid = vt_def_mpi_comm(VT_CURRENT_THREAD, VT_MPI_COMM_OTHER,
+                            world.size_grpv, grpv);
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+      VTTHRD_UNLOCK_IDS();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+
+      /* enter comm in comms[] array */
       comms[last_comm].comm  = MPI_COMM_NULL;
       comms[last_comm].group = group;
-      comms[last_comm].cid   = currcid++;
-      last_comm++;  
+      comms[last_comm].cid   = cid;
+      last_comm++;
     }
 }
 
@@ -312,7 +374,7 @@ uint32_t vt_group_id(MPI_Group group)
     }
   else
     {
-      vt_error_msg("Cannot find group");  
+      vt_error_msg("Cannot find group");
       return (uint32_t)-1; 
     }
 }
@@ -334,27 +396,39 @@ void vt_win_create( MPI_Win win, MPI_Comm comm )
   /* check if window already exists */
   if (win_search( win ) == (uint32_t)-1)
     {
+      uint32_t wid;
+
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+      VTTHRD_LOCK_IDS();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+      wid = vt_get_curid();
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+      VTTHRD_UNLOCK_IDS();
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+
       PMPI_Win_get_group(win, &group); 
 
-      /* enter win in wins[] arrray */
+      /* enter win in wins[] array */
 
       if( free_win != (uint32_t)-1 )
         {
           wins[free_win].win  = win;
           wins[free_win].comm = comm;
           wins[free_win].gid  = vt_group_id(group);
-          wins[free_win].wid  = currwid++;
+          wins[free_win].wid  = wid;
         }
-      else if ( last_win < VT_MAX_WIN ) 
+      else if ( last_win < max_wins ) 
         {
           wins[last_win].win  = win;
           wins[last_win].comm = comm;
           wins[last_win].gid  = vt_group_id(group);
-          wins[last_win].wid  = currwid++;
+          wins[last_win].wid  = wid;
           last_win++;
         }
-      else 
-        vt_error_msg("Too many windows");
+      else
+        {
+          vt_error_msg("Too many windows (VT_MAX_MPI_WINS=%d", max_wins);
+        }
     }
 }
 

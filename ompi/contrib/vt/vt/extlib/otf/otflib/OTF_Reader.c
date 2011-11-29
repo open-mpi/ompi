@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -17,6 +17,8 @@
 #include "OTF_Errno.h"
 
 /* #include "OTF_Keywords.h" */
+
+#include "OTF_Keywords.h"
 
 #define HEAP_CHILDRENCOUNT 2
 
@@ -279,11 +281,16 @@ void OTF_ProcessList_finalize( OTF_ProcessList* list ) {
 
 	list->n= 0;
 
-	free( list->processes );
-	free( list->status );
+	if( list->processes != NULL ) {
+		free( list->processes );
+		list->processes= NULL;
+	}
 
-	list->processes= NULL;
-	list->status= NULL;
+	if( list->status != NULL ) {
+		free( list->status );
+		list->status= NULL;
+	}
+
 }
 
 
@@ -452,6 +459,18 @@ int OTF_Heap_initEventHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 		if ( enabled ) {
 
 			stream= OTF_Reader_getStream( reader, entry->argument );
+			if( NULL == stream ) {
+	
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						"cannot get stream '%llu'\n",
+						__FUNCTION__, __FILE__, __LINE__,
+						(long long unsigned) entry->argument );
+
+				free( heap->buffers );
+				heap->buffers= NULL;
+		
+				return 0;
+			}
 
 			buffer= OTF_RStream_getEventBuffer( stream );
 			if ( NULL != buffer ) {
@@ -713,6 +732,18 @@ int OTF_Heap_initSnapshotsHeap( OTF_Heap* heap, OTF_Reader* reader ) {
 		if ( enabled ) {
 
 			stream= OTF_Reader_getStream( reader, entry->argument );
+			if( NULL == stream ) {
+	
+				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+						"cannot get stream '%llu'\n",
+						__FUNCTION__, __FILE__, __LINE__,
+						(long long unsigned) entry->argument );
+
+				free( heap->buffers );
+				heap->buffers= NULL;
+		
+				return 0;
+			}
 
 			buffer= OTF_RStream_getSnapsBuffer( stream );
 			if ( NULL != buffer ) {
@@ -1192,6 +1223,8 @@ OTF_Reader* OTF_Reader_open( const char* namestub, OTF_FileManager* manager ) {
 		
 		return NULL;
 	}
+	ret->processList->status = NULL;
+	ret->processList->processes = NULL;
 	
 	if( 0 == OTF_ProcessList_init( ret->processList, ret->mc ) ) {
 	
@@ -1449,6 +1482,7 @@ uint64_t OTF_Reader_readDefinitions( OTF_Reader* reader,
 	OTF_MapEntry* entry;
 	uint32_t streamId;
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == reader->definitionHeap ) {
@@ -1522,6 +1556,10 @@ uint64_t OTF_Reader_readDefinitions( OTF_Reader* reader,
 				return recordcount;
 			}
 
+			/* remember next record type, if it will be a none
+			   KEYVALUE record, dont't account it in recordcount */
+			next_char = *(reader->definitionHeap->buffers[i]->buffer + reader->definitionHeap->buffers[i]->pos);
+
 			ret= OTF_Reader_parseDefRecord( reader->definitionHeap->buffers[i], 
 				handlers, streamId );
 			if ( 0 == ret ) {
@@ -1537,7 +1575,12 @@ uint64_t OTF_Reader_readDefinitions( OTF_Reader* reader,
 				return OTF_READ_ERROR;
 			}
 
-			recordcount++;
+			/* Now reset the KeyValue list, if we consumed a none
+			   KEYVALUE record */
+			if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+				OTF_KeyValueList_reset(reader->definitionHeap->buffers[i]->list);
+				recordcount++;
+			}
 
 			/* prepare next record in that stream */
 			pos= OTF_RBuffer_getRecord( reader->definitionHeap->buffers[i] );
@@ -1599,6 +1642,7 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 
 	uint64_t p;
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == reader->eventHeap ) {
@@ -1674,7 +1718,7 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 			if( 0 == ret ) {
 			
 				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-						"OTF_RBuffer_searchTime failed.\n",
+						"OTF_RBuffer_searchTime() failed.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
 
 				OTF_Heap_finalize( reader->eventHeap );
@@ -1704,6 +1748,7 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 
 				/* make sure to repeat this for loop with the same index i */
 				i--;
+				continue;
 			}
 			
 			/* inlined OTF_RBuffer_getCurrentTime() */
@@ -1845,6 +1890,10 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 			continue;
 		}
 
+		/* remember next record type, if it will be a none KEYVALUE
+		   record, dont't account it in recordcount */
+		next_char = *(reader->eventHeap->buffers[0]->buffer + reader->eventHeap->buffers[0]->pos);
+
 		ret= OTF_Reader_parseEventRecord( reader->eventHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
@@ -1859,7 +1908,12 @@ uint64_t OTF_Reader_readEvents( OTF_Reader* reader, OTF_HandlerArray* handlers )
 			return OTF_READ_ERROR;
 		}
 
-		recordcount++;
+		/* Now reset the KeyValue list, if we consumed a none KEYVALUE
+		   record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(reader->eventHeap->buffers[0]->list);
+			recordcount++;
+		}
 
 		/* prepare next record in that stream */
 		pos= OTF_RBuffer_getRecord( reader->eventHeap->buffers[0] );
@@ -1917,7 +1971,7 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 	double s_reziprok;
 	uint64_t delta_t;
 	
-
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == reader->eventHeap ) {
@@ -2023,6 +2077,7 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 
 				/* make sure to repeat this for loop with the same index i */
 				i--;
+				continue;
 			}
 			
 			/* inlined OTF_RBuffer_getCurrentTime() */
@@ -2142,6 +2197,10 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 			continue;
 		}
 
+		/* remember next record type, if it will be a none KEYVALUE
+		   record, dont't account it in recordcount */
+		next_char = *(reader->eventHeap->buffers[0]->buffer + reader->eventHeap->buffers[0]->pos);
+
 		ret= OTF_Reader_parseEventRecord( reader->eventHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
@@ -2156,7 +2215,12 @@ uint64_t OTF_Reader_readEventsUnsorted( OTF_Reader* reader, OTF_HandlerArray* ha
 			return OTF_READ_ERROR;
 		}
 
-		recordcount++;
+		/* Now reset the KeyValue list, if we consumed a none KEYVALUE
+		   record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(reader->eventHeap->buffers[0]->list);
+			recordcount++;
+		}
 
 		/* prepare next record in that stream */
 		pos= OTF_RBuffer_getRecord( reader->eventHeap->buffers[0] );
@@ -2217,6 +2281,8 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 #	endif
 
 	uint64_t p;
+
+	char next_char = '\0';
 
 
 	/* initialized? */
@@ -2327,6 +2393,7 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 
 				/* make sure to repeat this for loop with the same index i */
 				i--;
+				continue;
 			}
 			
 			/* inlined OTF_RBuffer_getCurrentTime() */
@@ -2468,6 +2535,10 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 			continue;
 		}
 
+		/* remember next record type, if it will be a none KEYVALUE
+		   record, dont't account it in recordcount */
+		next_char = *(reader->snapshotsHeap->buffers[0]->buffer + reader->snapshotsHeap->buffers[0]->pos);
+
 		ret= OTF_Reader_parseSnapshotsRecord( reader->snapshotsHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
@@ -2482,7 +2553,12 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 			return OTF_READ_ERROR;
 		}
 
-		recordcount++;
+		/* Now reset the KeyValue list, if we consumed a none KEYVALUE
+		   record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(reader->snapshotsHeap->buffers[0]->list);
+			recordcount++;
+		}
 
 		/* prepare next record in that stream */
 		pos= OTF_RBuffer_getRecord( reader->snapshotsHeap->buffers[0] );
@@ -2498,7 +2574,7 @@ uint64_t OTF_Reader_readSnapshots( OTF_Reader* reader,
 				if ( 0 == ret ) {
 
 					OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-							"OTF_Reader_parseSnapshotsRecord() failed.\n",
+							"OTF_Reader_readUnknownRecord() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
 					
 					OTF_Heap_finalize( reader->snapshotsHeap );
@@ -2539,6 +2615,7 @@ uint64_t OTF_Reader_readSnapshotsUnsorted( OTF_Reader* reader, OTF_HandlerArray*
 	double s_reziprok;
 	uint64_t delta_t;
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == reader->snapshotsHeap ) {
@@ -2644,6 +2721,7 @@ uint64_t OTF_Reader_readSnapshotsUnsorted( OTF_Reader* reader, OTF_HandlerArray*
 
 				/* make sure to repeat this for loop with the same index i */
 				i--;
+				continue;
 			}
 			
 			/* inlined OTF_RBuffer_getCurrentTime() */
@@ -2762,17 +2840,30 @@ uint64_t OTF_Reader_readSnapshotsUnsorted( OTF_Reader* reader, OTF_HandlerArray*
 			continue;
 		}
 
+		/* remember next record type, if it will be a none KEYVALUE
+		   record, dont't account it in recordcount */
+		next_char = *(reader->snapshotsHeap->buffers[0]->buffer + reader->snapshotsHeap->buffers[0]->pos);
+
 		ret= OTF_Reader_parseSnapshotsRecord( reader->snapshotsHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
+			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+					"OTF_Reader_parseSnapshotsRecord() failed.\n",
+					__FUNCTION__, __FILE__, __LINE__ );
+			
 			OTF_Heap_finalize( reader->snapshotsHeap );
 			free( reader->snapshotsHeap );
 			reader->snapshotsHeap= NULL;
-			
-			return 0;
+
+			return OTF_READ_ERROR;
 		}
 
-		recordcount++;
+		/* Now reset the KeyValue list, if we consumed a none KEYVALUE
+		   record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(reader->snapshotsHeap->buffers[0]->list);
+			recordcount++;
+		}
 
 		/* prepare next record in that stream */
 		pos= OTF_RBuffer_getRecord( reader->snapshotsHeap->buffers[0] );
@@ -2833,6 +2924,7 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 
 	uint64_t p;
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == reader->statisticsHeap ) {
@@ -2943,6 +3035,7 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 
 				/* make sure to repeat this for loop with the same index i */
 				i--;
+				continue;
 			}
 			
 			/* inlined OTF_RBuffer_getCurrentTime() */
@@ -3059,7 +3152,7 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 					if ( 0 == ret ) {
 
 						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-							"OTF_RBuffer_searchTime() failed.\n",
+							"OTF_Reader_readUnknownRecord() failed.\n",
 							__FUNCTION__, __FILE__, __LINE__ );
 						
 						OTF_Heap_finalize( reader->statisticsHeap );
@@ -3085,6 +3178,10 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 			continue;
 		}
 
+		/* remember next record type, if it will be a none KEYVALUE
+		   record, dont't account it in recordcount */
+		next_char = *(reader->statisticsHeap->buffers[0]->buffer + reader->statisticsHeap->buffers[0]->pos);
+
 		ret= OTF_Reader_parseStatisticsRecord( reader->statisticsHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
@@ -3099,7 +3196,12 @@ uint64_t OTF_Reader_readStatistics( OTF_Reader* reader,
 			return OTF_READ_ERROR;
 		}
 
-		recordcount++;
+		/* Now reset the KeyValue list, if we consumed a none KEYVALUE
+		   record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(reader->statisticsHeap->buffers[0]->list);
+			recordcount++;
+		}
 
 		/* prepare next record in that stream */
 		pos= OTF_RBuffer_getRecord( reader->statisticsHeap->buffers[0] );
@@ -3158,6 +3260,8 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 	double s_reziprok;
 	uint64_t delta_t;
 
+
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == reader->statisticsHeap ) {
@@ -3263,6 +3367,7 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 
 				/* make sure to repeat this for loop with the same index i */
 				i--;
+				continue;
 			}
 			
 			/* inlined OTF_RBuffer_getCurrentTime() */
@@ -3381,6 +3486,10 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 			continue;
 		}
 
+		/* remember next record type, if it will be a none KEYVALUE
+		   record, dont't account it in recordcount */
+		next_char = *(reader->statisticsHeap->buffers[0]->buffer + reader->statisticsHeap->buffers[0]->pos);
+
 		ret= OTF_Reader_parseStatisticsRecord( reader->statisticsHeap->buffers[0], handlers );
 		if ( 0 == ret ) {
 
@@ -3395,7 +3504,12 @@ uint64_t OTF_Reader_readStatisticsUnsorted( OTF_Reader* reader, OTF_HandlerArray
 			return OTF_READ_ERROR;
 		}
 
-		recordcount++;
+		/* Now reset the KeyValue list, if we consumed a none KEYVALUE
+		   record */
+		if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+			OTF_KeyValueList_reset(reader->statisticsHeap->buffers[0]->list);
+			recordcount++;
+		}
 
 		/* prepare next record in that stream */
 		pos= OTF_RBuffer_getRecord( reader->statisticsHeap->buffers[0] );
@@ -3452,6 +3566,7 @@ uint64_t OTF_Reader_readMarkers( OTF_Reader* reader, OTF_HandlerArray* handlers 
 	OTF_MapEntry* entry;
 	uint32_t streamId;
 
+	char next_char = '\0';
 
 	/* initialized? */
 	if ( NULL == reader->markerHeap ) {
@@ -3525,11 +3640,15 @@ uint64_t OTF_Reader_readMarkers( OTF_Reader* reader, OTF_HandlerArray* handlers 
 				return recordcount;
 			}
 
+			/* remember next record type, if it will be a none
+			   KEYVALUE record, dont't account it in recordcount */
+			next_char = *(reader->markerHeap->buffers[i]->buffer + reader->markerHeap->buffers[i]->pos);
+
 			ret= OTF_Reader_parseMarkerRecord( reader->markerHeap->buffers[i], handlers, streamId );
 			if ( 0 == ret ) {
 
 				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-						"OTF_Reader_parseDefRecord() failed.\n",
+						"OTF_Reader_parseMarkerRecord() failed.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
 
 				OTF_Heap_finalize( reader->markerHeap );
@@ -3539,7 +3658,12 @@ uint64_t OTF_Reader_readMarkers( OTF_Reader* reader, OTF_HandlerArray* handlers 
 				return OTF_READ_ERROR;
 			}
 
-			recordcount++;
+			/* Now reset the KeyValue list, if we consumed a none
+			   KEYVALUE record */
+			if ( next_char != OTF_KEYWORD_F_KEYVALUE_PREFIX /* 'K' */ ) {
+				OTF_KeyValueList_reset(reader->markerHeap->buffers[i]->list);
+				recordcount++;
+			}
 
 			/* prepare next record in that stream */
 			pos= OTF_RBuffer_getRecord( reader->markerHeap->buffers[i] );
@@ -3555,7 +3679,7 @@ uint64_t OTF_Reader_readMarkers( OTF_Reader* reader, OTF_HandlerArray* handlers 
 					if ( 0 == ret ) {
 
 						OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-								"OTF_Reader_readUnknownDefRecord() failed.\n",
+								"OTF_Reader_readUnknownMarkerRecord() failed.\n",
 								__FUNCTION__, __FILE__, __LINE__ );
 						
 						OTF_Heap_finalize( reader->markerHeap );

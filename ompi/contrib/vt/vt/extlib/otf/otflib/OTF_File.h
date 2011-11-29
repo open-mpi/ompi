@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -37,7 +37,8 @@ typedef enum enum_OTF_FileMode OTF_FileMode;
 /** status of a file */
 enum enum_OTF_FileStatus {
 
-	OTF_FILESTATUS_ACTIVE= 1, 
+	OTF_FILESTATUS_UNKNOWN= 0,
+	OTF_FILESTATUS_ACTIVE= 1,
 	OTF_FILESTATUS_SUSPENDED= 2,
 	OTF_FILESTATUS_CLOSED= 3
 };
@@ -52,6 +53,13 @@ void OTF_File_finalize( OTF_File* o );
 /** open an OTF_File */
 OTF_File* OTF_File_open( const char* filename, OTF_FileManager* manager,
 	OTF_FileMode mode );
+
+/** open a pseudo OTF_File that actually reads from the given memory buffer. 
+The buffer is not copied, you need to manage it yourself! 
+Don't touch it during access operations. */
+OTF_File* OTF_File_open_with_external_buffer( uint32_t len, const char* buffer, uint8_t is_compressed, 
+    OTF_FileMode mode );
+
 
 /** OTF_File to an OTF_File */
 size_t OTF_File_write( OTF_File* file, const void* ptr, size_t size );
@@ -88,6 +96,12 @@ void OTF_File_setZBufferSize( OTF_File* file, uint32_t size );
 /** internal use */
 OTF_File* OTF_File_open_zlevel( const char* filename, OTF_FileManager* manager,
 	OTF_FileMode mode, OTF_FileCompression compression );
+
+
+/* internal function */
+/** read 'length' bytes from underlying file or from special memory buffer */
+size_t OTF_File_read_internal( OTF_File* file, void* dest, size_t length );
+
 
 #ifdef __cplusplus
 }

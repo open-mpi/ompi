@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -69,10 +69,10 @@ int main( int argc, char** argv ) {
 		} else if ( 0 == strcmp( argv[i], "--libs" ) ) {
 
 #ifdef HAVE_ZLIB
-			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotf -lz\n",
+			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotfaux -lotf -lz\n",
 				OTFCONFIG_LIBDIR );
 #else /* HAVE_ZLIB */
-			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotf\n",
+			snprintf( tmp, sizeof(tmp) -1, "-L%s -lotfaux -lotf\n",
 				OTFCONFIG_LIBDIR );
 #endif /* HAVE_ZLIB */
 

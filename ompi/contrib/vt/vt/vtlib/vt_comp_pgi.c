@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -107,22 +107,22 @@ void ___rouent2(struct s1 *p) {
       VTTHRD_LOCK_IDS();
       if (!p->isseen)
         {
-          p->fid = vt_def_scl_file(p->file);
-          p->rid = vt_def_region(rname, p->fid, p->lineno, VT_NO_LNO, NULL,
-                                 VT_FUNCTION);
+          p->fid = vt_def_scl_file(VT_CURRENT_THREAD, p->file);
+          p->rid = vt_def_region(VT_CURRENT_THREAD, rname, p->fid, p->lineno,
+                                 VT_NO_LNO, NULL, VT_FUNCTION);
           p->isseen = 1;
         }
       VTTHRD_UNLOCK_IDS();
 #else /* VT_MT || VT_HYB */
-      p->fid = vt_def_scl_file(p->file);
-      p->rid = vt_def_region(rname, p->fid, p->lineno, VT_NO_LNO, NULL,
-                             VT_FUNCTION);
+      p->fid = vt_def_scl_file(VT_CURRENT_THREAD, p->file);
+      p->rid = vt_def_region(VT_CURRENT_THREAD, rname, p->fid, p->lineno,
+                             VT_NO_LNO, NULL, VT_FUNCTION);
       p->isseen = 1;
 #endif /* VT_MT || VT_HYB */
     }
 
   /* write enter trace record */
-  vt_enter(&time, p->rid);  
+  vt_enter(VT_CURRENT_THREAD, &time, p->rid);  
 
   VT_MEMHOOKS_ON();
 }
@@ -143,7 +143,7 @@ void ___rouret2(void) {
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
-  vt_exit(&time);
+  vt_exit(VT_CURRENT_THREAD, &time);
 
   VT_MEMHOOKS_ON();
 }

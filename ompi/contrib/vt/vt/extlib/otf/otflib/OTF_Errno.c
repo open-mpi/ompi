@@ -16,7 +16,7 @@ int otf_errno = OTF_NO_ERROR;
 
 		vsnprintf( otf_strerr, OTF_ERR_LEN, format, ap );
 		otf_errno = OTF_ERROR;
-		vfprintf( stream, format, ap);
+		fprintf( stream, "%s", otf_strerr );
 
 		va_end(ap);
 	}

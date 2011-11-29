@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -20,14 +20,13 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "vt_defs.h"
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
 #include "vt_pform.h"
 #include "vt_rusage.h"
 #include "vt_trc.h"
-
-#include "otf.h"
 
 /* define this macro to write only changed counter values */
 #undef RU_WRITE_ONLY_CHANGED_VALS
@@ -54,23 +53,22 @@ struct ru_cntr
 
 /* vector of resource usage counter specifications */
 static struct ru_cntr ru_cntrv[RU_CNTR_MAXNUM] = {
-  { RU_UTIME,    "ru_utime",    "us", OTF_COUNTER_TYPE_ACC },
-  { RU_STIME,    "ru_stime",    "us", OTF_COUNTER_TYPE_ACC },
-  { RU_MAXRSS,   "ru_maxrss",   "kBytes",
-    OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT },
-  { RU_IXRSS,    "ru_ixrss",    "kBytes", OTF_COUNTER_TYPE_ACC }, 
-  { RU_IDRSS,    "ru_idrss",    "kBytes", OTF_COUNTER_TYPE_ACC },
-  { RU_ISRSS,    "ru_isrss",    "kBytes", OTF_COUNTER_TYPE_ACC },
-  { RU_MINFLT,   "ru_minflt",   "#", OTF_COUNTER_TYPE_ACC },
-  { RU_MAJFLT,   "ru_majflt",   "#", OTF_COUNTER_TYPE_ACC },
-  { RU_NSWAP,    "ru_nswap",    "#", OTF_COUNTER_TYPE_ACC },
-  { RU_INBLOCK,  "ru_inblock",  "#", OTF_COUNTER_TYPE_ACC },
-  { RU_OUBLOCK,  "ru_oublock",  "#", OTF_COUNTER_TYPE_ACC },
-  { RU_MSGSND,   "ru_msgsnd",   "#", OTF_COUNTER_TYPE_ACC },
-  { RU_MSGRCV,   "ru_msgrcv",   "#", OTF_COUNTER_TYPE_ACC },
-  { RU_NSIGNALS, "ru_nsignals", "#", OTF_COUNTER_TYPE_ACC },
-  { RU_NVCSW,    "ru_nvcsw",    "#", OTF_COUNTER_TYPE_ACC },
-  { RU_NIVCSW,   "ru_nivcsw",   "#", OTF_COUNTER_TYPE_ACC }
+  { RU_UTIME,    "ru_utime",    "us", VT_CNTR_ACC },
+  { RU_STIME,    "ru_stime",    "us", VT_CNTR_ACC },
+  { RU_MAXRSS,   "ru_maxrss",   "kBytes", VT_CNTR_ABS | VT_CNTR_NEXT },
+  { RU_IXRSS,    "ru_ixrss",    "kBytes", VT_CNTR_ACC },
+  { RU_IDRSS,    "ru_idrss",    "kBytes", VT_CNTR_ACC },
+  { RU_ISRSS,    "ru_isrss",    "kBytes", VT_CNTR_ACC },
+  { RU_MINFLT,   "ru_minflt",   "#", VT_CNTR_ACC },
+  { RU_MAJFLT,   "ru_majflt",   "#", VT_CNTR_ACC },
+  { RU_NSWAP,    "ru_nswap",    "#", VT_CNTR_ACC },
+  { RU_INBLOCK,  "ru_inblock",  "#", VT_CNTR_ACC },
+  { RU_OUBLOCK,  "ru_oublock",  "#", VT_CNTR_ACC },
+  { RU_MSGSND,   "ru_msgsnd",   "#", VT_CNTR_ACC },
+  { RU_MSGRCV,   "ru_msgrcv",   "#", VT_CNTR_ACC },
+  { RU_NSIGNALS, "ru_nsignals", "#", VT_CNTR_ACC },
+  { RU_NVCSW,    "ru_nvcsw",    "#", VT_CNTR_ACC },
+  { RU_NIVCSW,   "ru_nivcsw",   "#", VT_CNTR_ACC }
 };
 		
 /* vector of active resource usage counters */ 
@@ -195,13 +193,14 @@ void vt_rusage_init()
     vt_error();
 
   /* write counter group name definition */
-  gid = vt_def_counter_group("Resources");
+  gid = vt_def_counter_group(VT_CURRENT_THREAD, "Resources");
 
   /* write counter definition for active counters */
   for ( i = 0; i < ru_active_cntrn; i++ )
   {
     vt_rusage_cidv[i] =
-      vt_def_counter(ru_active_cntrv[i]->name,
+      vt_def_counter(VT_CURRENT_THREAD,
+		     ru_active_cntrv[i]->name,
 		     ru_active_cntrv[i]->prop,
 		     gid,
 		     ru_active_cntrv[i]->unit);

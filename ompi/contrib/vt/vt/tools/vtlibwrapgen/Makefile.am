@@ -2,7 +2,7 @@ if AMBUILDBINARIES
 bin_PROGRAMS = vtlibwrapgen
 endif
 
-INCLUDES = $(CTOOLINCDIR) -I$(top_srcdir)/util -I$(top_builddir)/util -I$(top_srcdir)/vtlib/
+INCLUDES = $(CTOOLINCDIR) -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/util -I$(top_builddir)/util
 
 CC = $(CC_FOR_BUILD)
 CFLAGS = $(CFLAGS_FOR_BUILD)

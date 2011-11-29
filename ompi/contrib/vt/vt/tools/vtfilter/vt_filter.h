@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -13,164 +13,112 @@
 #ifndef _VT_FILTER_H_
 #define _VT_FILTER_H_
 
-#include <set>
-#include <map>
-#include <stack>
-#include <string>
-#include <vector>
-#include <algorithm>
+#include "config.h"
+
+// disable OpenMP on NEC SX platforms to work around a compiler error
+#if (defined(HAVE_OMP) && HAVE_OMP) && defined(_SX)
+# undef HAVE_OMP
+#endif // HAVE_OMP && _SX
 
 #include "vt_inttypes.h"
 
-struct Function {
+#include <string>
+#include <vector>
 
-	uint32_t id;
-	
-	std::string name;
-	
-	std::set<uint32_t> subFuncs;
-	
-	uint64_t invocations;
-	
-	/* maximum depth of functions under itself */
-	uint32_t depth;
+#ifdef VT_MPI
+# include "vt_defs.h" // to get VT_MPI_INT
+# define MASTER if( MyRank == 0 )
+# define SLAVE  if( MyRank != 0 )
+#else // VT_MPI
+# define MASTER
+# define SLAVE
+#endif // VT_MPI
 
-	/* accumulated duration time in ticks
-	divided by the number of invocations it is the average duration */
-	int64_t accDurationExcl;
-	int64_t accDurationIncl;
-	
+// typedef for filter modes
+//
+typedef enum
+{
+  MODE_GENFILT, // generate a filter file
+  MODE_FILTTRC  // filter a trace using an already existing filter file
+} FilterModeT;
 
-	Function( uint32_t _id, const std::string& nm ) :
-		id(_id), name(nm), invocations(0), depth(0), accDurationExcl(0), accDurationIncl(0) {}
+// data structure for program parameters
+//
+struct ParamsS
+{
+  ParamsS()
+  : mode(MODE_GENFILT), input_trcfile(""), verbose_level(0),
+    show_progress(false), show_usage(false), show_version(false),
+    g_output_filtfile(""), g_incl_file(""), g_excl_file(""),
+    g_call_limit(g_default_call_limit), g_reduce_ratio(0),
+    g_print_stats(false), g_incl_callees(false),
+    f_output_trcfile(""), f_input_filtfile(""),
+    f_max_output_streams(f_default_max_output_streams),
+    f_max_file_handles(f_default_max_file_handles),
+    f_compress_level(f_default_compress_level) {}
 
-	bool operator<( const Function& func ) const {
+  // defaults
+  //
+  static const uint32_t    g_default_call_limit         = 0;
+  static const uint32_t    f_default_max_output_streams = 0;
+  static const uint32_t    f_default_max_file_handles   = 256;
+  static const uint32_t    f_default_compress_level     = 4;
 
-		/* order function by depth, subfunction count and invocation count */
-		if( depth != func.depth ) return depth < func.depth;
-		else if( subFuncs.size() != func.subFuncs.size() ) return subFuncs.size() < func.subFuncs.size();
-		else return invocations > func.invocations;
-	}
+  // command line parameters
+  //
 
-	void operator+=( const Function& func ) {
-		invocations += func.invocations;
-		if( depth < func.depth ) depth = func.depth;
-		accDurationExcl += func.accDurationExcl;
-		accDurationIncl += func.accDurationIncl;
+  // general
+  //
+  FilterModeT              mode;
+  std::string              input_trcfile;
+  uint32_t                 verbose_level;
+  bool                     show_progress;
+  bool                     show_usage;
+  bool                     show_version;
 
-		std::set<uint32_t>::const_iterator itsf;
+  // generate
+  //
+  std::string              g_output_filtfile;
+  std::string              g_incl_file;
+  std::string              g_excl_file;
+  std::vector<std::string> g_incl_funcs;
+  std::vector<std::string> g_excl_funcs;
+  uint32_t                 g_call_limit;
+  uint32_t                 g_reduce_ratio;
+  bool                     g_print_stats;
+  bool                     g_incl_callees;
 
-		for( itsf = func.subFuncs.begin(); itsf != func.subFuncs.end(); ++itsf ) {
-			if( subFuncs.find( *itsf ) == subFuncs.end() ) subFuncs.insert( *itsf );
-		}
-	}
+  // filter
+  //
+  std::string              f_output_trcfile;
+  std::string              f_input_filtfile;
+  uint32_t                 f_max_output_streams;
+  uint32_t                 f_max_file_handles;
+  uint32_t                 f_compress_level;
+
 };
 
+// print verbose message
+extern void VPrint( uint8_t level, const char * fmt, ... );
 
+// print verbose message in a parallel region
+extern void PVPrint( uint8_t level, const char * fmt, ... );
 
-struct StackItem {
+// global variables
+//
 
-	StackItem( std::map<uint32_t, Function>::iterator _it ) : it( _it ) {}
+// name of program's executable
+extern const std::string ExeName;
 
-	std::map<uint32_t, Function>::iterator it;
-};
+// program parameters
+extern ParamsS           Params;
 
+#ifdef VT_MPI
+  // number of MPI-ranks
+  extern VT_MPI_INT      NumRanks;
 
-struct PostStackItem {
+  // MPI-rank of calling process
+  extern VT_MPI_INT      MyRank;
+#endif // VT_MPI
 
-	PostStackItem( uint32_t _id, const std::set<uint32_t>& vs ) :
-		id( _id ), visited( vs ) { visited.insert( _id ); }
-
-	uint32_t id;//
-
-	std::set<uint32_t> visited;
-};
-
-
-class Filter {
-
-public:
-
-	Filter();
-
-	void setTimerResolution( uint64_t tickspersecond );
-	void addFunction( uint32_t func, const std::string& name );
-	void addEnter( uint32_t func, uint32_t process, uint64_t time );
-	void addLeave( uint32_t process, uint64_t time );
-
-	void incrMessageCount()
-		{ ++messageCount; }
-	void incrCollectiveCount()
-		{ ++collectiveCount; }
-
-
-	/* calculates 'maxStackDepth', 'totalInvocations', 'maxInvocations'
-	 * calculates the 'depth' of every function
-	 */
-	void postProcessing();
-
-
-
-	/* returns a set of functions ordered by their importance for filtering
-	 * 1. stackdepth 2. subfunction count 3. invocation count
-	 */
-	std::vector<Function> getFunctions() const;
-
-
-	/* Reduces the count of events to 'percent' percent.
-	 * It does not filter functions included in 'excludesymbols'.
-	 * Returns a set of function tokens, which have been filtered.
-	 */
-	std::set<uint32_t> reduceTo( float* percent,
-	                             const std::set<uint32_t>& excludesymbols,
-	                             const std::set<uint32_t>& includesymbols,
-	                             bool includechildren,
-	                             uint64_t limit );
-
-
-	uint32_t getMaxStackDepth() const { return maxStackDepth; }
-	uint64_t getTotalInvocations() const { return totalInvocations; }
-	uint64_t getMaxInvocations() const { return maxInvocations; }
-	uint64_t getTimerResolution() const { return timerResolution; }
-	uint64_t getMessageCount() const { return messageCount; }
-	uint64_t getCollectiveCount() const { return collectiveCount; }
-
-	void operator+=( const Filter& filter );
-
-	const std::map<uint32_t, Function>& getFunctionMap() const { return functions; }
-
-
-protected:
-
-	/* visites a function and its children (recursively) to gather information
-	about the stackdepth.
-	If killed is not NULL it adds the visited functions to the set and
-	counts the killed invocations */
-	uint32_t visitFunction( std::stack<PostStackItem>& stck,
-		std::set<uint32_t>* killed, uint64_t* killedinvocations,
-		const std::set<uint32_t>* nokill );
-
-	/* visites a function and its children (recursively) in order to
-	add the parents of nokill-functions to the nokill-set as well */
-	void visitFunctionExclude( std::stack<PostStackItem>& stck,
-		std::set<uint32_t>& nokill );
-
-protected:
-	
-	uint32_t maxStackDepth;
-	uint64_t totalInvocations;
-	uint64_t maxInvocations;
-	uint64_t timerResolution;
-
-	uint64_t messageCount;
-	uint64_t collectiveCount;
-
-	/* all functions */
-	std::map<uint32_t /*token*/, Function> functions;
-
-	std::map<uint32_t /*procid*/, std::stack< StackItem > > callStack;
-};
-
-
-#endif /* _VT_FILTER_H_ */
-
+#endif // _VT_FILTER_H_

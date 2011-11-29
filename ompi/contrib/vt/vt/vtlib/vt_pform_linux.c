@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -105,8 +105,8 @@ static uint32_t vt_cpu_count = 0;
 void vt_pform_init()
 {
   int  pid = getpid();
-  char exec_proc[512];
-  char exec[1024];
+  char exec_proc[VT_PATH_MAX];
+  char exec[VT_PATH_MAX];
   int  exec_len;
   FILE *cpuinfofp;
   char line[1024];
@@ -205,11 +205,24 @@ void vt_pform_init()
 
   /* get full path of executable */
   snprintf(exec_proc, sizeof (exec_proc), VT_PROCDIR"%d/exe", pid);
-  exec_len = readlink(exec_proc, exec, sizeof (exec));
-  if(exec_len != -1)
+  exec_len = readlink(exec_proc, exec, sizeof (exec)-1);
+  if(exec_len > 0 )
   {
     exec[exec_len] = '\0';
-    vt_exec = strdup(exec);
+
+    /* if the result of readlink isn't accessable it could be that we are on an
+       unionfs. In this case crop the first directory (/cow) from the pathname
+       of the executable. */
+    if(access(exec, F_OK) != 0)
+    {
+      char* root = strchr(exec+1, '/');
+      if(root)
+        vt_exec = strdup(root);
+    }
+    else
+    {
+      vt_exec = strdup(exec);
+    }
   }
 
   /* get unique numeric SMP-node identifier */

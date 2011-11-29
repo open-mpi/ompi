@@ -18,6 +18,12 @@ endif
 
 if AMBUILDJAVA
 VTJAVALIBRARY = libvt-java.la
+if AMMACOS
+install-exec-hook:
+	(cd $(DESTDIR)$(libdir); \
+	rm -f libvt-java.jnilib; \
+	$(LN_S) libvt-java$(SHREXT) libvt-java.jnilib)
+endif
 else
 VTJAVALIBRARY =
 endif
@@ -53,14 +59,29 @@ OTFLIBRARY = $(top_builddir)/extlib/otf/otflib/libotf.la
 OTFDEPENDENCIES = $(OTFLIBRARY)
 endif
 
+if AMBUILDMPIUNIFYLIB
+VTMPIUNIFYLIBSOURCES = 
+VTMPIUNIFYLIBCFLAGS = -DVT_MPIUNIFYLIB -I$(top_srcdir)/tools/vtunify/mpi -I$(top_builddir)/tools/vtunify/mpi
+VTMPIUNIFYLIBLIBRARY = $(top_builddir)/tools/vtunify/mpi/libvt-mpi-unify.la
+VTMPIUNIFYLIBDEPENDENCIES = $(VTMPIUNIFYLIBLIBRARY)
+$(VTMPIUNIFYLIBLIBRARY):
+	@($(am__cd) $(top_builddir)/tools/vtunify/mpi && $(MAKE) $(AM_MAKEFLAGS) libvt-mpi-unify.la)
+install-exec-hook-pre:
+	@($(am__cd) $(top_builddir)/tools/vtunify/mpi && $(MAKE) $(AM_MAKEFLAGS) install)
+install: install-exec-hook-pre
+	@$(MAKE) $(AM_MAKEFLAGS) install-am
+else
+VTMPIUNIFYLIBCFLAGS =
+VTMPIUNIFYLIBLIBRARY =
+VTMPIUNIFYLIBDEPENDENCIES =
+endif
+
 if AMHAVEPTHREAD
 PTHREADSOURCES = vt_pthreadreg.c vt_pthreadwrap.c
 PTHREADCFLAGS = -DVT_PTHREAD
-PTHREADHEADERS = vt_wrap_pthread.h
 else
 PTHREADSOURCES =
 PTHREADCFLAGS =
-PTHREADHEADERS =
 endif
 
 if AMHAVEOMP
@@ -115,11 +136,9 @@ endif
 
 if AMBUILDLIBWRAP
 LIBWRAPSOURCES = vt_libwrap.c
-LIBWRAPHEADERS = vt_libwrap.h
 LIBWRAPCFLAGS = -DVT_LIBWRAP
 else
 LIBWRAPSOURCES =
-LIBWRAPHEADERS =
 LIBWRAPCFLAGS =
 endif
 
@@ -145,6 +164,31 @@ IOWRAPSOURCES =
 IOWRAPCFLAGS =
 endif
 
+GPUSOURCES =
+GPUHEADERS = vt_gpu.h
+GPUCFLAGS =
+GPULIBRARY =
+
+if AMBUILDCUDAWRAP
+#GPUSOURCES += vt_cudawrap.c vt_cuda.c
+GPUHEADERS += vt_cuda_driver_api.h
+GPUCFLAGS += -DVT_CUDAWRAP $(CUDATKINCDIR)
+endif
+
+if AMBUILDCUDARTWRAP
+GPUSOURCES += vt_cudartwrap.c vt_cudart.c vt_gpu.c
+GPUHEADERS += vt_cudartwrap.h vt_cuda_runtime_api.h
+GPUCFLAGS += -DVT_CUDARTWRAP $(CUDATKINCDIR)
+if AMBUILDCUPTI
+if AMBUILDCUDAWRAP
+GPUSOURCES += vt_cudacupti.c
+GPUHEADERS += vt_cudacupti.h vt_cupti_events.h
+GPULIBRARY += $(CUPTILIBDIR) $(CUPTILIB)
+GPUCFLAGS += -DVT_CUDACUPTI $(CUPTIINCDIR)
+endif
+endif
+endif
+
 if AMHAVEMEMHOOKS
 MEMHOOKSOURCES = vt_memhook.c
 MEMHOOKCFLAGS = -DVT_MEMHOOK
@@ -167,6 +211,14 @@ RUSAGECFLAGS = -DVT_RUSAGE
 else
 RUSAGESOURCES =
 RUSAGECFLAGS =
+endif
+
+if AMHAVEPLUGINCNTR
+PLUGINCNTRSOURCES = vt_plugin_cntr.c
+PLUGINCNTRCFLAGS = -DVT_PLUGIN_CNTR
+else
+PLUGINCNTRSOURCES =
+PLUGINCNTRCFLAGS =
 endif
 
 if AMHAVEMETRICS
@@ -234,28 +286,9 @@ else
 MATHLIBRARY =
 endif
 
-include_HEADERS = \
-	vt_user.h \
-	vt_user.inc \
-	vt_user_comment.h \
-	vt_user_comment.inc \
-	vt_user_control.h \
-	vt_user_control.inc \
-	vt_user_count.h \
-	vt_user_count.inc \
-	vt_user_marker.h \
-	vt_user_marker.inc \
-	vt_user_region.h \
-	vt_user_region.inc \
-	$(PTHREADHEADERS) \
-	$(LIBWRAPHEADERS)
-
 VT_COMMON_SOURCES = \
-	rfg.h \
-	rfg_filter.h \
-	rfg_groups.h \
-	rfg_regions.h \
 	vt_comp.h \
+	$(GPUHEADERS) \
 	vt_defs.h \
 	vt_env.h \
 	vt_error.h \
@@ -263,7 +296,7 @@ VT_COMMON_SOURCES = \
 	vt_fbindings.h \
 	vt_fork.h \
 	vt_getcpu.h \
-	vt_inttypes.h \
+	vt_gpu.h \
 	vt_iowrap.h \
 	vt_iowrap_helper.h \
 	vt_java.h \
@@ -278,6 +311,7 @@ VT_COMMON_SOURCES = \
 	vt_otf_gen.h \
 	vt_otf_sum.h \
 	vt_pform.h \
+	vt_plugin_cntr_int.h \
 	vt_pthreadreg.h \
 	vt_rusage.h \
 	vt_sync.h \
@@ -289,25 +323,25 @@ VT_COMMON_SOURCES = \
 	$(LIBWRAPSOURCES) \
 	$(LIBCWRAPSOURCES) \
 	$(IOWRAPSOURCES) \
+	$(GPUSOURCES) \
 	$(MEMHOOKSOURCES) \
 	$(GETCPUSOURCES) \
+	$(PLUGINCNTRSOURCES) \
 	$(RUSAGESOURCES) \
 	$(METRSOURCES) \
-	rfg_filter.c \
-	rfg_groups.c \
-	rfg_regions.c \
 	vt_env.c \
 	vt_error.c \
 	vt_fbindings.c \
 	vt_otf_gen.c \
 	vt_otf_sum.c \
-	vt_otf_trc.c \
 	vt_pform_@PLATFORM@.c \
 	vt_thrd.c \
+	vt_trc.c \
 	vt_user_comment.c \
 	vt_user_control.c \
 	vt_user_count.c \
 	vt_user_marker.c \
+	vt_user_message.c \
 	vt_user_region.c
 
 VT_SEQ_SOURCES = \
@@ -349,31 +383,31 @@ VT_FMPI_SOURCES = \
 	$(FMPI2CONSTSOURCES)
 
 CC = $(MPICC)
-AM_CFLAGS = $(OTFCFLAGS) $(DLCFLAGS) $(LIBWRAPCFLAGS) $(LIBCWRAPCFLAGS) $(IOWRAPCFLAGS) $(MEMHOOKCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS)
+AM_CFLAGS = -I$(top_srcdir)/include -I$(top_builddir)/include -I$(top_srcdir)/rfg $(OTFCFLAGS) $(DLCFLAGS) $(LIBWRAPCFLAGS) $(GPUCFLAGS) $(LIBCWRAPCFLAGS) $(IOWRAPCFLAGS) $(MEMHOOKCFLAGS) $(GETCPUCFLAGS) $(RUSAGECFLAGS) $(METRCFLAGS) $(PLUGINCNTRCFLAGS)
 
-libvt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
+libvt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES)
 libvt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_SEQ_SOURCES)
 
-libvt_mpi_la_CFLAGS = -DVT_MPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
-libvt_mpi_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_mpi_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
+libvt_mpi_la_CFLAGS = -DVT_MPI $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(VTMPIUNIFYLIBCFLAGS) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
+libvt_mpi_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(VTMPIUNIFYLIBLIBRARY) $(MPILIBDIR) $(PMPILIB) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_mpi_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES) $(VTMPIUNIFYLIBDEPENDENCIES)
 libvt_mpi_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MPI_SOURCES)
 
 libvt_mt_la_CFLAGS = -DVT_MT $(AM_CFLAGS) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS)
-libvt_mt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_mt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
+libvt_mt_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_mt_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES)
 libvt_mt_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_MT_SOURCES)
 
-libvt_hyb_la_CFLAGS = -DVT_HYB $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
-libvt_hyb_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
-libvt_hyb_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
+libvt_hyb_la_CFLAGS = -DVT_HYB $(AM_CFLAGS) $(MPICFLAGS) $(MPIINCDIR) $(VTMPIUNIFYLIBCFLAGS) $(PTHREADCFLAGS) $(OMPCFLAGS) $(THRDCFLAGS) $(ETIMESYNCCFLAGS) $(UNIMCICFLAGS)
+libvt_hyb_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(VTMPIUNIFYLIBLIBRARY) $(MPILIBDIR) $(PMPILIB) $(METRLIBRARY) $(GPULIBRARY) $(DLLIBRARY) $(MATHLIBRARY)
+libvt_hyb_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES) $(VTMPIUNIFYLIBDEPENDENCIES)
 libvt_hyb_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_HYB_SOURCES)
 
 libvt_java_la_CFLAGS = -DVT_JAVA $(AM_CFLAGS) $(JVMTIINCDIR)
 libvt_java_la_LDFLAGS = -shared
-libvt_java_la_LIBADD = $(top_builddir)/util/libvt_util.la $(OTFLIBRARY) $(METRLIBRARY)
-libvt_java_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(OTFDEPENDENCIES)
+libvt_java_la_LIBADD = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFLIBRARY) $(METRLIBRARY) $(GPULIBRARY)
+libvt_java_la_DEPENDENCIES = $(top_builddir)/util/libvt_util.la $(top_builddir)/rfg/libvt_rfg.la $(OTFDEPENDENCIES)
 libvt_java_la_SOURCES = $(VT_COMMON_SOURCES) $(VT_JAVA_SOURCES)
 
 libvt_pomp_la_CFLAGS = -static -prefer-pic $(AM_CFLAGS) $(OPENMP_CFLAGS) -I$(top_srcdir)/tools/opari/lib
@@ -391,6 +425,7 @@ EXTRA_DIST = \
 	vt_pform_bgp.c \
 	vt_pform_crayt3e.c \
 	vt_pform_crayx1.c \
+	vt_pform_crayxe.c \
 	vt_pform_crayxt.c \
 	vt_pform_generic.c \
 	vt_pform_ibm.c \

@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -222,6 +222,20 @@ int OTF_RStream_close( OTF_RStream* rstream );
  * \ingroup rstream
  */
 OTF_RBuffer* OTF_RStream_getDefBuffer( OTF_RStream* rstream );
+
+
+/** 
+ * Forces the given definition buffer to the according reader stream.
+ *
+ * @param rstream  Pointer to an initialized OTF_RStream object. See 
+ *                 also OTF_RStream_open().
+ * @param rbuffer  The OTF_RBuffer to use.
+ * 
+ * @return         The previously used Buffer or NULL if none.
+ *
+ * \ingroup rstream
+ */
+OTF_RBuffer* OTF_RStream_setDefBuffer( OTF_RStream* rstream, OTF_RBuffer* rbuffer );
 
 
 /**

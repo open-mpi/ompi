@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -13,93 +13,157 @@
 #ifndef _VT_UNIFY_SYNC_H_
 #define _VT_UNIFY_SYNC_H_
 
+#include "vt_unify.h"
+
+#ifdef VT_ETIMESYNC
+#  include "vt_unify_esync.h"
+#endif // VT_ETIMESYNC
+
 #include "vt_inttypes.h"
 
-#include <list>
 #include <map>
-#include <string>
-#include <vector>
 
 #include <assert.h>
 
 //
-// Synchronization class
+// TimeSyncC class
 //
-class Synchronization
+class TimeSyncC
 {
 public:
 
-  struct SyncPhase_struct
-  {
-  SyncPhase_struct(): mapid(0),time(0),duration(0){}
-    SyncPhase_struct(uint32_t _mapid, uint64_t _time, uint64_t _duration)
-    : mapid(_mapid), time( _time), duration( _duration)
-    {}
+   // type for time synchronization methods
+   typedef enum { METHOD_OFFSET, METHOD_ENHANCED } MethodTypeT;
 
-    uint32_t mapid;
-    uint64_t time;
-    uint64_t duration;
-  };
+   // type for time ranges
+   typedef std::pair<uint64_t, uint64_t> TimeRangeT;
 
-  //
-  // synchronization timestamp structure
-  //
-  struct SyncTime_struct
-  {
-    SyncTime_struct() : phase_idx(0) { t[0] = t[1] = t[2] = t[3] = 0; }
-    ~SyncTime_struct() {}
-    uint64_t t[4];
-    uint32_t phase_idx;
-  };
+   // constructor
+   TimeSyncC();
 
-  // constructor
-  Synchronization();
-  
-  // destructor
-  ~Synchronization();
+   // destructor
+   ~TimeSyncC();
 
-  bool run();
+   // initialize time synchronization
+   bool initialize();
 
-  void setMinStartTimeForStreamId( uint32_t streamId, uint64_t minStartTime );
+   // set time sync. method
+   void setSyncMethod( const MethodTypeT & method )
+   {
+#ifndef VT_ETIMESYNC
+      assert( method != METHOD_ENHANCED );
+#endif // VT_ETIMESYNC
 
-  uint64_t getMinStartTimeForStreamId( uint32_t streamId );
+      m_syncMethod = method;
+   }
 
-  bool updateSyncParam( uint32_t procId );
+   // get time sync. method
+   MethodTypeT getSyncMethod() const
+   {
+      return m_syncMethod;
+   }
+
+   // set time range of certain process and update minimum start time
+   void setTimeRange( const uint32_t & proc, const uint64_t & minTime,
+           const uint64_t & maxTime )
+   {
+      assert( proc != 0 );
+
+      // set time range of certain process
+      m_proc2TimeRange[proc] = TimeRangeT( minTime, maxTime );
+   }
+
+   // get time range of certain process
+   // (if proc is 0, the global time range will be returned)
+   TimeRangeT getTimeRange( const uint32_t & proc = 0 ) const
+   {
+      // search for time range of given process
+      std::map<uint32_t, TimeRangeT>::const_iterator it =
+         m_proc2TimeRange.find( proc );
+      assert( it != m_proc2TimeRange.end() );
+
+      // return time range
+      return it->second;
+   }
+
+   // get minimum start time
+   uint64_t getMinStartTime() const
+   {
+      return m_minStartTime;
+   }
+
+#ifdef VT_ETIMESYNC
+
+   // update timer parameters of certain process
+   void updateSyncParam( const uint32_t & proc )
+   {
+      assert( m_eTimeSync );
+      m_eTimeSync->updateSyncParam( proc );
+   }
+
+   // reset timer parameters of certain process
+   void resetSyncParam( const uint32_t & proc )
+   {
+      assert( m_eTimeSync );
+      m_eTimeSync->resetSyncParam( proc );
+   }
+
+#endif // VT_ETIMESYNC
+
+   // translate local timestamp to global
+   // (defined here to become inlined)
+   uint64_t correctTime( const uint32_t & process, const uint64_t & time ) const
+   {
+      // get master process id
+      uint32_t mprocess = process & VT_TRACEID_BITMASK;
+
+      std::map<uint32_t, UnifyControlS*>::const_iterator it =
+         StreamId2UnifyCtl.find( mprocess );
+      assert( it != StreamId2UnifyCtl.end() );
+
+#ifdef VT_ETIMESYNC
+      if( m_syncMethod == METHOD_ENHANCED )
+      {
+         const int64_t & offset = it->second->sync_offset;
+         const double & drift = it->second->sync_drift;
+
+         return (uint64_t)( offset + (uint64_t)( drift * (double)time ) );
+      }
+      else
+#endif // VT_ETIMESYNC
+      {
+         const int64_t * ltime = it->second->ltime;
+         const int64_t * offset = it->second->offset;
+
+         return
+            (uint64_t)( ( (double)time +
+                        ( ( ( (double)offset[1] - (double)offset[0] ) /
+                            ( (double)ltime[1] - (double)ltime[0] ) )
+                          * ( (double)time - (double)ltime[0]) )
+                        + (double)offset[0] ) - m_minStartTime );
+      }
+   }
 
 private:
 
-   //
-   // sychronization parameter structure
-   //
-   struct SyncParam_struct
-   {
-     SyncParam_struct() : offset(0), drift(1.0){}
-     SyncParam_struct(int64_t _offset, double _drift) 
-     : offset(_offset), drift(_drift) 
-      {}
-  
-     ~SyncParam_struct() {}
-     
-     int64_t offset;
-     double drift;
-   };
+   // time sync. method to use
+   MethodTypeT m_syncMethod;
 
-   bool calcSync( uint32_t round,
-		  std::map<std::pair<uint32_t, uint32_t>, SyncTime_struct*> &first_time_stamps, 
-		  std::map<std::pair<uint32_t, uint32_t>, SyncTime_struct*> &last_time_stamps );
+   // map process id <-> time range
+   // (on rank 0 the first map entry (process id 0) holds the global time range)
+   std::map<uint32_t, TimeRangeT> m_proc2TimeRange;
 
-   void print(double *a, int m, int n, char* info);
+   // minimum start time
+   uint64_t m_minStartTime;
 
-   std::map<uint32_t, std::map<std::pair<uint32_t, uint32_t>, SyncTime_struct*>*> m_mapSyncPhasemapProcessIdsTimestamps;
-   std::map<uint32_t, std::vector<struct SyncParam_struct*>*> m_mapIdxvecSyncParam;
-   std::map<uint32_t, uint64_t> m_mapIdxMinStartTime;
-   std::vector<double> m_vecSyncPreCorrection;
-   std::vector<uint32_t> m_vecRoundNum;
-   uint32_t m_uProcNum;
-   uint32_t m_uRoundMax;
+#ifdef VT_ETIMESYNC
+   // instance of class ETimeSyncC which cares about enhanced time sync.
+   ETimeSyncC * m_eTimeSync;
+#endif // VT_ETIMESYNC
+
 };
 
-// instance of class Synchronization
-extern Synchronization * theSynchronization;
+// instance of class TimeSyncC
+extern TimeSyncC * theTimeSync;
 
 #endif // _VT_UNIFY_SYNC_H_

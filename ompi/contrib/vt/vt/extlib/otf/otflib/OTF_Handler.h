@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -30,6 +30,8 @@
  * 
  */
 
+#include "OTF_KeyValue.h"
+
 
 /* Handlers for OTF definition records *****+++***************************** */
 
@@ -44,12 +46,14 @@
  *                        definition.  
  * @param comment         Arbitrary comment string.
  *
+ * @param list            Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return                OTF_RETURN_ABORT  for aborting the reading process immediately
  *                        OTF_RETURN_OK     for continue reading
  *
  * \ingroup handler
  */
-int OTF_Handler_DefinitionComment( void* userData, uint32_t stream, const char* comment );
+int OTF_Handler_DefinitionComment( void* userData, uint32_t stream, const char* comment, OTF_KeyValueList *list );
 
 
 
@@ -65,6 +69,8 @@ int OTF_Handler_DefinitionComment( void* userData, uint32_t stream, const char* 
  *                        definition.  
  * @param ticksPerSecond  Clock ticks per second of the timer.
  *
+ * @param list            Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return                OTF_RETURN_ABORT  for aborting the reading process immediately
  *                        OTF_RETURN_OK     for continue reading
  *
@@ -72,7 +78,8 @@ int OTF_Handler_DefinitionComment( void* userData, uint32_t stream, const char* 
  */
 int OTF_Handler_DefTimerResolution( void* userData, 
                                     uint32_t stream,
-                                    uint64_t ticksPerSecond );
+                                    uint64_t ticksPerSecond,
+				    OTF_KeyValueList *list );
 
 
 /**
@@ -88,6 +95,8 @@ int OTF_Handler_DefTimerResolution( void* userData,
  * @param parent    Previously declared parent process identifier or 0 if 
  *                  process has no parent.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -97,7 +106,8 @@ int OTF_Handler_DefProcess( void* userData,
                             uint32_t stream,
                             uint32_t process, 
                             const char* name, 
-                            uint32_t parent );
+                            uint32_t parent,
+			    OTF_KeyValueList *list );
 
 
 /**
@@ -118,6 +128,8 @@ int OTF_Handler_DefProcess( void* userData,
  * @param procs          Vector of process identifiers as provided by
  *                       OTF_Handler_DefProcess().
  *
+ * @param list           Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return               OTF_RETURN_ABORT  for aborting the reading process immediately
  *                       OTF_RETURN_OK     for continue reading
  *
@@ -128,7 +140,60 @@ int OTF_Handler_DefProcessGroup( void* userData,
                                  uint32_t procGroup, 
                                  const char* name, 
                                  uint32_t numberOfProcs, 
-                                 const uint32_t* procs );
+                                 const uint32_t* procs,
+				 OTF_KeyValueList *list );
+
+
+/**
+ * Provides a list of attributes that is assigned to a unique token.
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg(). 
+ * @param stream       Identifies the stream to which this definition
+ *                     belongs to. stream = 0 represents a global
+ *                     definition. 
+ * @param attr_token   Arbitrary but unique attribute list identifier > 0.
+ * @param num          Number of elements in the attribute list array.
+ * @param array        An array of different attributes with type of OTF_ATTR_TYPE(). 
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
+ *                     OTF_RETURN_OK     for continue reading
+ * 
+ * \ingroup handler
+ */
+int OTF_Handler_DefAttributeList( void* userData,
+				  uint32_t stream,
+				  uint32_t attr_token,
+				  uint32_t num,
+				  OTF_ATTR_TYPE* array,
+				  OTF_KeyValueList *list );
+
+
+/**
+ * Provides a process or group attributes definition.
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg(). 
+ * @param stream       Identifies the stream to which this definition
+ *                     belongs to. stream = 0 represents a global
+ *                     definition.
+ * @param proc_token   Arbitrary but unique process or process group identifier > 0.
+ * @param attr_token   A unique token that was defined with OTF_Writer_writeDefAttributeList().
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
+ *                     OTF_RETURN_OK     for continue reading
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_DefProcessOrGroupAttributes( void* userData,
+					     uint32_t stream,
+					     uint32_t proc_token,
+					     uint32_t attr_token,
+				  	     OTF_KeyValueList *list );
 
 
 /**
@@ -153,6 +218,8 @@ int OTF_Handler_DefProcessGroup( void* userData,
  *                   preliminary provided by OTF_Handler_DefScl() or
  *                   0 for no source code location assignment.
  *
+ * @param list       Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return           OTF_RETURN_ABORT  for aborting the reading process immediately
  *                   OTF_RETURN_OK     for continue reading
  *
@@ -163,7 +230,8 @@ int OTF_Handler_DefFunction( void* userData,
                              uint32_t func, 
                              const char* name, 
                              uint32_t funcGroup, 
-                             uint32_t source );
+                             uint32_t source,
+			     OTF_KeyValueList *list );
 
 
 /**
@@ -177,6 +245,8 @@ int OTF_Handler_DefFunction( void* userData,
  * @param funcGroup  An arbitrary but unique function group identifier > 0.
  * @param name       Name of the function group e.g. "Computation".
  *
+ * @param list       Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return           OTF_RETURN_ABORT  for aborting the reading process immediately
  *                   OTF_RETURN_OK     for continue reading
  *
@@ -185,7 +255,8 @@ int OTF_Handler_DefFunction( void* userData,
 int OTF_Handler_DefFunctionGroup( void* userData, 
                                   uint32_t stream,
                                   uint32_t funcGroup, 
-                                  const char* name );
+                                  const char* name,
+				  OTF_KeyValueList *list );
 
 
 /**
@@ -205,6 +276,8 @@ int OTF_Handler_DefFunctionGroup( void* userData,
  *                    OTF_COLLECTIVE_TYPE_ALL2ONE,
  *                    OTF_COLLECTIVE_TYPE_ALL2ALL.
  *
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return            OTF_RETURN_ABORT  for aborting the reading process immediately
  *                    OTF_RETURN_OK     for continue reading
  *
@@ -214,7 +287,8 @@ int OTF_Handler_DefCollectiveOperation( void* userData,
                                         uint32_t stream,
                                         uint32_t collOp,
                                         const char* name,
-                                        uint32_t type );
+                                        uint32_t type,
+				    	OTF_KeyValueList *list );
 
 
 /**
@@ -254,7 +328,9 @@ int OTF_Handler_DefCollectiveOperation( void* userData,
  * @param counterGroup  A previously defined counter group identifier or 0 for
  *                      no group.
  * @param unit          Unit of the counter e.g. "#" for "number of..." or 0 
- *                      for no unit. 
+ *                      for no unit.
+ *
+ * @param list          Pointer to an OTF_KeyValueList() that contains individual data. 
  *
  * @return              OTF_RETURN_ABORT  for aborting the reading process immediately
  *                      OTF_RETURN_OK     for continue reading
@@ -267,7 +343,8 @@ int OTF_Handler_DefCounter( void* userData,
                             const char* name, 
                             uint32_t properties,
                             uint32_t counterGroup,
-                            const char* unit );
+                            const char* unit,
+			    OTF_KeyValueList *list );
 
 
 /**
@@ -281,6 +358,8 @@ int OTF_Handler_DefCounter( void* userData,
  * @param counterGroup An arbitrary but unique counter group identifier > 0.
  * @param name         Counter group name.
  *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
  *                     OTF_RETURN_OK     for continue reading
  *
@@ -289,7 +368,8 @@ int OTF_Handler_DefCounter( void* userData,
 int OTF_Handler_DefCounterGroup( void* userData, 
                                  uint32_t stream,
                                  uint32_t counterGroup, 
-                                 const char* name );
+                                 const char* name,
+				 OTF_KeyValueList *list );
 
 
 /**
@@ -306,6 +386,8 @@ int OTF_Handler_DefCounterGroup( void* userData,
  *                     OTW_Handler_DefSclFile(). 
  * @param line         Line number.
  *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
  *                     OTF_RETURN_OK     for continue reading
  *
@@ -315,7 +397,8 @@ int OTF_Handler_DefScl( void* userData,
                         uint32_t stream,
                         uint32_t source,
                         uint32_t sourceFile, 
-                        uint32_t line );
+                        uint32_t line,
+			OTF_KeyValueList *list );
 
 
 /**
@@ -328,7 +411,9 @@ int OTF_Handler_DefScl( void* userData,
  *                     definition.  
  * @param sourceFile   Arbitrary but unique source code location 
  *                     identifier != 0.
- * @param name         File name. 
+ * @param name         File name.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data. 
  *
  * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
  *                     OTF_RETURN_OK     for continue reading
@@ -338,7 +423,8 @@ int OTF_Handler_DefScl( void* userData,
 int OTF_Handler_DefSclFile( void* userData, 
                             uint32_t stream,
                             uint32_t sourceFile,
-                            const char* name );
+                            const char* name,
+			    OTF_KeyValueList *list );
 
 
 /**
@@ -352,6 +438,8 @@ int OTF_Handler_DefSclFile( void* userData,
  * @param creator      String which identifies the creator of the 
  *                     file e.g. "TAU Version x.y.z".
  *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
  *                     OTF_RETURN_OK     for continue reading
  *
@@ -359,7 +447,8 @@ int OTF_Handler_DefSclFile( void* userData,
  */
 int OTF_Handler_DefCreator( void* userData, 
                             uint32_t stream,
-                            const char* creator );
+                            const char* creator,
+                            OTF_KeyValueList *list );
 
 
 /**
@@ -376,6 +465,8 @@ int OTF_Handler_DefCreator( void* userData,
  * @param sub          sub version number
  * @param string       string identifing the version
  *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
  *                     OTF_RETURN_OK     for continue reading
  *
@@ -386,7 +477,8 @@ int OTF_Handler_DefVersion( void* userData,
                             uint8_t major,
                             uint8_t minor,
                             uint8_t sub,
-                            const char* string );
+                            const char* string,
+                            OTF_KeyValueList *list );
 
 
 /**
@@ -404,6 +496,8 @@ int OTF_Handler_DefVersion( void* userData,
  *
  * @param name         name of the file
  *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @param group        A previously defined file group identifier or 0 for
  *                     no group.
  *
@@ -413,7 +507,8 @@ int OTF_Handler_DefFile( void* userData,
                          uint32_t stream,
                          uint32_t token,
                          const char *name,
-                         uint32_t group );
+                         uint32_t group,
+		         OTF_KeyValueList *list );
 
 
 /**
@@ -429,6 +524,8 @@ int OTF_Handler_DefFile( void* userData,
  * @param token        Arbitrary, unique identifier of the file group
  *                     Has to be > 0.
  *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @param name         Name of the file group
  *
  * \ingroup handler
@@ -436,9 +533,113 @@ int OTF_Handler_DefFile( void* userData,
 int OTF_Handler_DefFileGroup( void* userData,
                               uint32_t stream,
                               uint32_t token,
-                              const char *name );
+                              const char *name,
+			      OTF_KeyValueList *list );
+
+
+/**
+ * Provides a KeyValue definition
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg(). 
+ * @param stream       Identifies the stream to which this definition
+ *                     belongs to. stream = 0 represents a global
+ *                     definition.
+ *
+ * @param key          Arbitrary, unique identifier of the KeyValue.
+ *
+ * @param type         Type of the KeyValue. See OTF_Type().
+ * 
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @param name         Name of the KeyValue.
+ *
+ * @param description  Description of the KeyValue.
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_DefKeyValue( void* userData,
+                             uint32_t stream,
+                             uint32_t key,
+			     OTF_Type type,
+                             const char *name,
+			     const char *description,
+			     OTF_KeyValueList *list );
+
+
+/**
+ * Provides a TimeRange definition
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg().
+ * @param stream       Identifies the stream to which this definition
+ *                     belongs to. stream = 0 represents a global
+ *                     definition.
+ *
+ * @param minTime      The smallest timestamp of the events in this @a stream.
+ *
+ * @param maxTime      The greates timestamp of the events in this @a stream (inclusive).
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_DefTimeRange( void*             userData,
+                              uint32_t          stream,
+                              uint64_t          minTime,
+                              uint64_t          maxTime,
+                              OTF_KeyValueList* list );
+
+
+/**
+ * Provides a CounterAssignments definition
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg().
+ * @param stream       Identifies the stream to which this definition
+ *                     belongs to. stream = 0 represents a global
+ *                     definition.
+ *
+ * @param counter      Counter id.
+ *
+ * @param number_of_members Number of entries in @procs_or_groups array.
+ *
+ * @param procs_or_groups The processes or process groups which have recorded
+ *                        counter data for counter @counter.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_DefCounterAssignments( void*             userData,
+                                       uint32_t          stream,
+                                       uint32_t          counter,
+                                       uint32_t          number_of_members,
+                                       const uint32_t*   procs_or_groups,
+                                       OTF_KeyValueList* list );
+
 
 /* Handlers for OTF event records ****************************************** */
+
+/**
+ * Provides a no-operation event. This event only stores a OTF_KeyValueList
+ * together with a process number and a timestamp.
+ *
+ * @param userData  Pointer to user data which can be set with
+ *                  OTF_HandlerArray_setFirstHandlerArg(). 
+ * @param time      The time associated with this event.
+ * @param process   Process where action took place.
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
+ *                  OTF_RETURN_OK     for continue reading
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_NoOp( void* userData,
+                      uint64_t time,
+                      uint32_t process,
+                      OTF_KeyValueList *list );
 
 
 /**
@@ -453,6 +654,8 @@ int OTF_Handler_DefFileGroup( void* userData,
  * @param source    Explicit source code location identifier > 0 or 0 if 
  *                  no source information available.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -462,7 +665,8 @@ int OTF_Handler_Enter( void* userData,
                        uint64_t time, 
                        uint32_t function, 
                        uint32_t process, 
-                       uint32_t source );
+                       uint32_t source,
+		       OTF_KeyValueList *list );
 
 
 /**
@@ -477,6 +681,8 @@ int OTF_Handler_Enter( void* userData,
  * @param source    Explicit source code location identifier > 0 or 0 if 
  *                  no source information available.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -486,7 +692,8 @@ int OTF_Handler_Leave( void* userData,
                        uint64_t time, 
                        uint32_t function, 
                        uint32_t process, 
-                       uint32_t source );
+                       uint32_t source,
+		       OTF_KeyValueList *list );
 
 
 /**
@@ -504,6 +711,8 @@ int OTF_Handler_Leave( void* userData,
  * @param source    Explicit source code location identifier > 0 or 0 if 
  *                  no source information available.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -516,7 +725,8 @@ int OTF_Handler_SendMsg( void* userData,
                          uint32_t group, 
                          uint32_t type, 
                          uint32_t length, 
-                         uint32_t source );
+                         uint32_t source,
+			 OTF_KeyValueList *list );
 
 
 /**
@@ -534,6 +744,8 @@ int OTF_Handler_SendMsg( void* userData,
  * @param source    Explicit source code location identifier > 0 or 0 if 
  *                  no source information available.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -546,7 +758,8 @@ int OTF_Handler_RecvMsg( void* userData,
                          uint32_t group, 
                          uint32_t type, 
                          uint32_t length, 
-                         uint32_t source );
+                         uint32_t source,
+			 OTF_KeyValueList *list );
 
 
 /**
@@ -559,6 +772,8 @@ int OTF_Handler_RecvMsg( void* userData,
  * @param counter   Counter which was measured. 
  * @param value     Counter value.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -568,7 +783,8 @@ int OTF_Handler_Counter( void* userData,
                          uint64_t time, 
                          uint32_t process, 
                          uint32_t counter, 
-                         uint64_t value );
+                         uint64_t value,
+		         OTF_KeyValueList *list );
 
 
 /**
@@ -587,6 +803,8 @@ int OTF_Handler_Counter( void* userData,
  * @param duration    Time spent in collective operation.
  * @param source      Explicit source code location or 0.
  *
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return            OTF_RETURN_ABORT  for aborting the reading process immediately
  *                    OTF_RETURN_OK     for continue reading
  *
@@ -601,7 +819,8 @@ int OTF_Handler_CollectiveOperation( void* userData,
                                      uint32_t sent, 
                                      uint32_t received, 
                                      uint64_t duration, 
-                                     uint32_t source );
+                                     uint32_t source,
+				     OTF_KeyValueList *list );
 
 
 /**
@@ -621,6 +840,8 @@ int OTF_Handler_CollectiveOperation( void* userData,
  * @param received    Data volume received by member or 0.
  * @param scltoken    Explicit source code location or 0.
  *
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return            1 on success, 0 if an error occurs.       
  *
  * \ingroup handler
@@ -634,7 +855,8 @@ int OTF_Handler_BeginCollectiveOperation( void* userData,
 					  uint32_t rootProc,
 					  uint64_t sent,
 					  uint64_t received,
-					  uint32_t scltoken );
+					  uint32_t scltoken,
+				    	  OTF_KeyValueList *list );
 
 
 /**
@@ -647,6 +869,8 @@ int OTF_Handler_BeginCollectiveOperation( void* userData,
  * @param matchingId  Matching identifier, must match a previous start
  *                    collective operation.
  *
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return            1 on success, 0 if an error occurs.       
  *
  * \ingroup handler
@@ -654,7 +878,8 @@ int OTF_Handler_BeginCollectiveOperation( void* userData,
 int OTF_Handler_EndCollectiveOperation( void* userData,
 					uint64_t time,
 					uint32_t process,
-					uint64_t matchingId );
+					uint64_t matchingId,
+				    	OTF_KeyValueList *list );
 
 
 /**
@@ -668,6 +893,8 @@ int OTF_Handler_EndCollectiveOperation( void* userData,
  *                  positioning in the trace. 
  * @param comment   Arbitrary comment string.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -676,7 +903,8 @@ int OTF_Handler_EndCollectiveOperation( void* userData,
 int OTF_Handler_EventComment( void* userData, 
                               uint64_t time, 
                               uint32_t process, 
-                              const char* comment );
+                              const char* comment,
+			      OTF_KeyValueList *list );
 
 
 /**
@@ -694,6 +922,8 @@ int OTF_Handler_EventComment( void* userData,
  * @param time      Time when process was referenced for the first time. 
  * @param process   Process identifier > 0.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -701,7 +931,8 @@ int OTF_Handler_EventComment( void* userData,
  */
 int OTF_Handler_BeginProcess( void* userData, 
                               uint64_t time, 
-                              uint32_t process );
+                              uint32_t process,
+			      OTF_KeyValueList *list );
 
 
 /**
@@ -713,6 +944,8 @@ int OTF_Handler_BeginProcess( void* userData,
  *                  Process identifiers must not be recycled!
  * @param process   Process identifier > 0.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -720,7 +953,8 @@ int OTF_Handler_BeginProcess( void* userData,
  */
 int OTF_Handler_EndProcess( void* userData, 
                             uint64_t time, 
-                            uint32_t process );
+                            uint32_t process,
+			    OTF_KeyValueList *list );
 
 
 /**
@@ -742,8 +976,34 @@ int OTF_Handler_EndProcess( void* userData,
  *                    or an increasing(with every fileopen record) variable for
  *                    this.
  *
- * @param operation   kind of operation done on the file.
- *                    has to be OTF_FILEOP_{OPEN,CLOSE,READ,WRITE,SEEK}
+ * @param operation   Kind of operation done on the file and flags further
+ *                    describing the operation.
+ *                    The macro OTF_FILEOP(operation) should be used to check
+ *                    for the kind of I/O operation.
+ *                    - OTF_FILEOP(operation) can be checked for equality on
+ *                       - OTF_FILEOP_OPEN -- open a file
+ *                       - OTF_FILEOP_CLOSE -- close a file
+ *                       - OTF_FILEOP_READ -- read some bytes off a file
+ *                       - OTF_FILEOP_WRITE -- write some bytes to a file
+ *                       - OTF_FILEOP_SEEK -- set the file pointer
+ *                       - OTF_FILEOP_UNLINK -- delete a file
+ *                       - OTF_FILEOP_RENAME -- rename a file
+ *                       - OTF_FILEOP_DUP -- duplicate a file desriptor
+ *                       - OTF_FILEOP_SYNC -- write dirty buffers to disk
+ *                       - OTF_FILEOP_LOCK -- acquire a file lock
+ *                       - OTF_FILEOP_UNLOCK -- release a file lock
+ *                       - OTF_FILEOP_OTHER -- none of the above
+ *                    - The following flags are supported and can be checked
+ *                    bit-wise for existence in operation:
+ *                       - OTF_IOFLAG_IOFAILED -- e.g. could not open file,
+ *                       could not read or write all bytes, a lock could not be
+ *                       acquired, a rename operation failed, etc.
+ *                       - OTF_IOFLAG_ASYNC -- I/O is done asynchronously
+ *                       - OTF_IOFLAG_COLL -- this is a collective I/O operation
+ *                       - OTF_IOFLAG_DIRECT -- I/O is done bypassing the cache
+ *                       - OTF_IOFLAG_SYNC -- I/O is done synchronously
+ *                       - OTF_IOFLAG_ISREADLOCK -- lock is a read-only file
+ *                       lock
  *
  * @param bytes       Should be 0 for open and close.
  *                    Number of read/written bytes for read/write operations.
@@ -752,6 +1012,8 @@ int OTF_Handler_EndProcess( void* userData,
  * @param duration    Time spent in the file operation.
  *
  * @param source      Explicit source code location or 0.
+ *
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
  *
  * \ingroup handler
  */
@@ -763,7 +1025,8 @@ int OTF_Handler_FileOperation( void* userData,
                                uint32_t operation,
                                uint64_t bytes,
                                uint64_t duration,
-                               uint32_t source );
+                               uint32_t source,
+			       OTF_KeyValueList *list );
 
 
 /**
@@ -771,21 +1034,24 @@ int OTF_Handler_FileOperation( void* userData,
  *
  * @param userData    Pointer to user data which can be set with
  *                    OTF_HandlerArray_setFirstHandlerArg(). 
- * @param time      Start time of file operation. 
- * @param process   Process identifier > 0.
- * @param handleid  Operation identifier, used for finding the associated end
- *                  file operation event record.
- * @param scltoken  Optional reference to source code.
+ * @param time        Start time of file operation. 
+ * @param process     Process identifier > 0.
+ * @param matchingId  Operation identifier, used for finding the associated end
+ *                    file operation event record.
+ * @param scltoken    Optional reference to source code.
  *
- * @return          1 on success, 0 if an error occurs.       
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @return            1 on success, 0 if an error occurs.       
  *
  * \ingroup handler
  */
 int OTF_Handler_BeginFileOperation( void* userData,
 					uint64_t time,
 					uint32_t process,
-					uint64_t handleid,
-					uint32_t scltoken );
+					uint64_t matchingId,
+					uint32_t scltoken,
+				    OTF_KeyValueList *list );
 
 
 /**
@@ -793,16 +1059,19 @@ int OTF_Handler_BeginFileOperation( void* userData,
  *
  * @param userData    Pointer to user data which can be set with
  *                    OTF_HandlerArray_setFirstHandlerArg(). 
- * @param time      End time of file operation. 
- * @param process   Process identifier > 0.
- * @param fileid    File identifier > 0.
- * @param handleid  Operation identifier, must match a previous start file
- *                  operation event record.
- * @param operation Type of file operation @see OTF_Handler_FileOperation()
- * @param bytes     Depends on operation @see OTF_Handler_FileOperation()
- * @param scltoken  Optional reference to source code.
+ * @param time        End time of file operation. 
+ * @param process     Process identifier > 0.
+ * @param fileid      File identifier > 0.
+ * @param matchingId  Operation identifier, must match a previous start file
+ *                    operation event record.
+ * @param handleId    Unique file open identifier.
+ * @param operation   Type of file operation. See OTF_Handler_FileOperation().
+ * @param bytes       Depends on operation. See OTF_Handler_FileOperation().
+ * @param scltoken    Optional reference to source code.
  *
- * @return          1 on success, 0 if an error occurs.       
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @return            1 on success, 0 if an error occurs.       
  *
  * \ingroup handler
  */
@@ -810,10 +1079,12 @@ int OTF_Handler_EndFileOperation( void* userData,
 				  uint64_t time,
 				  uint32_t process,
 				  uint32_t fileid,
-				  uint64_t handleid,
+				  uint64_t matchingId,
+                  uint64_t handleId,
 				  uint32_t operation,
 				  uint64_t bytes,
-				  uint32_t scltoken );
+				  uint32_t scltoken,
+				  OTF_KeyValueList *list );
 
 
 /**
@@ -842,6 +1113,8 @@ int OTF_Handler_EndFileOperation( void* userData,
  * @param bytes       Number of bytes that have been transferred by this call.
  * @param source      Explicit source code location or 0.
  *
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return            1 on success, 0 if an error occurs.
  *
  * \ingroup handler
@@ -854,7 +1127,8 @@ int OTF_Handler_RMAPut( void* userData,
                         uint32_t communicator,
                         uint32_t tag,
                         uint64_t bytes,
-                        uint32_t source );
+                        uint32_t source,
+			OTF_KeyValueList *list );
 
 /**
  * Provides a RMA put event with remote finalization marker, i.e. RMA end marker
@@ -885,6 +1159,8 @@ int OTF_Handler_RMAPut( void* userData,
  * @param bytes       Number of bytes that have been transferred by this call.
  * @param source      Explicit source code location or 0.
  *
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return            1 on success, 0 if an error occurs.
  *
  * \ingroup handler
@@ -897,7 +1173,8 @@ int OTF_Handler_RMAPutRemoteEnd( void* userData,
                                  uint32_t communicator,
                                  uint32_t tag,
                                  uint64_t bytes,
-                                 uint32_t source );
+                                 uint32_t source,
+				 OTF_KeyValueList *list );
 
 /**
  * Provides a RMA get event - end marker is anticipated on initiating Process.
@@ -925,6 +1202,8 @@ int OTF_Handler_RMAPutRemoteEnd( void* userData,
  * @param bytes       Number of bytes that have been transferred by this call.
  * @param source      Explicit source code location or 0.
  *
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return            1 on success, 0 if an error occurs.
  *
  * \ingroup handler
@@ -937,7 +1216,8 @@ int OTF_Handler_RMAGet( void* userData,
                         uint32_t communicator,
                         uint32_t tag,
                         uint64_t bytes,
-                        uint32_t source );
+                        uint32_t source,
+			OTF_KeyValueList *list );
 
 /**
  * Provide a RMA end event.
@@ -957,6 +1237,8 @@ int OTF_Handler_RMAGet( void* userData,
  *                    related RMA transfer records.
  * @param source      Explicit source code location or 0.
  *
+ * @param list        Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return            1 on success, 0 if an error occurs.
  *
  * \ingroup handler
@@ -967,7 +1249,8 @@ int OTF_Handler_RMAEnd( void* userData,
                         uint32_t remote,
                         uint32_t communicator,
                         uint32_t tag,
-                        uint32_t source );
+                        uint32_t source,
+			OTF_KeyValueList *list );
 
 
 /* Handlers for OTF snapshot records *************************************** */
@@ -984,6 +1267,8 @@ int OTF_Handler_RMAEnd( void* userData,
  *                  positioning in the trace. 
  * @param comment   Arbitrary comment string.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -991,9 +1276,10 @@ int OTF_Handler_RMAEnd( void* userData,
  */
  
 int OTF_Handler_SnapshotComment( void* userData, 
-                                     uint64_t time, 
-                                     uint32_t process, 
-                                     const char* comment );
+                                 uint64_t time, 
+                                 uint32_t process, 
+                                 const char* comment,
+				                 OTF_KeyValueList *list );
 
 
 /** provides information about a past function call at the time 'originaltime'.
@@ -1005,11 +1291,12 @@ int OTF_Handler_EnterSnapshot( void *userData,
                            uint64_t originaltime, 
                            uint32_t function, 
                            uint32_t process, 
-                           uint32_t source );
+                           uint32_t source,
+			               OTF_KeyValueList *list );
 
 
 /** provides information about a past message send operation at the time
-'originaltime'. Parameters 'time', 'sender', 'receiver', 'procGroup', 'tag',
+'originaltime'. Parameters 'time', 'sender', 'receiver', 'procGroup', 'tag', 'length',
 'source' and the return value have the same meaning as in OTF_Handler_SendMsg().
 \ingroup handler */
 int OTF_Handler_SendSnapshot( void *userData,
@@ -1019,7 +1306,9 @@ int OTF_Handler_SendSnapshot( void *userData,
                            uint32_t receiver,
                            uint32_t procGroup,
                            uint32_t tag,
-                           uint32_t source );
+                           uint32_t length,
+                           uint32_t source,
+			               OTF_KeyValueList *list );
 
 
 /**
@@ -1030,8 +1319,11 @@ int OTF_Handler_SendSnapshot( void *userData,
  * @param time         Current timestamp.
  * @param originaltime Timestamp when the file has been opened.
  * @param process      Process identifier.
- * @param handleid     Unique file open identifier. @see OTF_Handler_FileOperation()
+ * @param handleid     Unique file open identifier. See
+ *                     OTF_Handler_FileOperation().
  * @param source       Optional reference to source code.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
  *
  * \ingroup handler
  */
@@ -1041,7 +1333,65 @@ int OTF_Handler_OpenFileSnapshot( void* userData,
                                   uint32_t fileid,
                                   uint32_t process,
                                   uint64_t handleid,
-                                  uint32_t source );
+                                  uint32_t source,
+				                  OTF_KeyValueList *list );
+
+
+/**
+ * Provides a snapshot record for unfinished collective operations
+ *
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg(). 
+ * @param time         Current timestamp.
+ * @param originaltime Time when the collective operation began.
+ * @param process      Process identifier.
+ * @param collOp       Collective identifier to be defined with
+ *                     OTF_Writer_writeDefCollectiveOperation(). 
+ * @param matchingId   Identifier for finding the associated end collective event
+ *                     record. It must be unique within this procGroup.
+ * @param procGroup    Group of processes participating in this collective.
+ * @param rootProc     Root process if != 0.
+ * @param sent         Data volume sent by member or 0.
+ * @param received     Data volume received by member or 0.
+ * @param scltoken     Optional reference to source code.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_BeginCollopSnapshot ( void* userData,
+                                        uint64_t time,
+                                        uint64_t originaltime,
+                                        uint32_t process,
+                                        uint32_t collOp,
+                                        uint64_t matchingId,
+                                        uint32_t procGroup,
+                                        uint32_t rootProc,
+                                        uint64_t sent,
+                                        uint64_t received,
+                                        uint32_t scltoken,
+				  		                OTF_KeyValueList *list );
+/**
+ * @param userData     Pointer to user data which can be set with
+ *                     OTF_HandlerArray_setFirstHandlerArg(). 
+ * @param time         Current timestamp.
+ * @param originaltime Timestamp when the file has been opened.
+ * @param process      Process identifier.
+ * @param matchingId   Identifier for finding the associated end file operation event
+ *                     record. It must be unique.
+ * @param scltoken     Optional reference to source code.
+ *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * \ingroup handler
+ */
+int OTF_Handler_BeginFileOpSnapshot ( void* userData,
+                                        uint64_t time,
+                                        uint64_t originaltime,
+                                        uint32_t process,
+                                        uint64_t matchingId,
+                                        uint32_t scltoken,
+				  	                    OTF_KeyValueList *list );
 
 
 /* Handlers for OTF summary records **************************************** */
@@ -1057,6 +1407,8 @@ int OTF_Handler_OpenFileSnapshot( void* userData,
  *                  positioning in the trace. 
  * @param comment   Arbitrary comment string.
  *
+ * @param list      Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return          OTF_RETURN_ABORT  for aborting the reading process immediately
  *                  OTF_RETURN_OK     for continue reading
  *
@@ -1066,7 +1418,8 @@ int OTF_Handler_OpenFileSnapshot( void* userData,
 int OTF_Handler_SummaryComment( void * userData, 
                                 uint64_t time, 
                                 uint32_t process, 
-                                const char* comment );
+                                const char* comment,
+				                OTF_KeyValueList *list );
 
 
 /**
@@ -1083,8 +1436,10 @@ int OTF_Handler_SummaryComment( void * userData,
  * @param inclTime     Time spent in the given function including all
  *                     sub-routine calls.
  *
- * @return            OTF_RETURN_ABORT  for aborting the reading process immediately
- *                    OTF_RETURN_OK     for continue reading
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
+ * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
+ *                     OTF_RETURN_OK     for continue reading
  *
  * \ingroup handler
  */
@@ -1094,7 +1449,8 @@ int OTF_Handler_FunctionSummary( void* userData,
                                  uint32_t process, 
                                  uint64_t invocations, 
                                  uint64_t exclTime, 
-                                 uint64_t inclTime );
+                                 uint64_t inclTime,
+				                 OTF_KeyValueList *list );
 
 
 /**
@@ -1111,6 +1467,8 @@ int OTF_Handler_FunctionSummary( void* userData,
  * @param inclTime     Time spent in the given function group including all
  *                     sub-routine calls.
  *
+ * @param list         Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return             OTF_RETURN_ABORT  for aborting the reading process immediately
  *                     OTF_RETURN_OK     for continue reading
  *
@@ -1122,7 +1480,8 @@ int OTF_Handler_FunctionGroupSummary( void* userData,
                                       uint32_t process,  
                                       uint64_t invocations,  
                                       uint64_t exclTime,  
-                                      uint64_t inclTime );
+                                      uint64_t inclTime,
+				      OTF_KeyValueList *list );
 
 
 /**
@@ -1142,6 +1501,8 @@ int OTF_Handler_FunctionGroupSummary( void* userData,
  * @param receivedBytes  The number of bytes received through messages of the 
  *                       given type.
  *
+ * @param list           Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return               OTF_RETURN_ABORT  for aborting the reading process immediately
  *                       OTF_RETURN_OK     for continue reading
  *
@@ -1156,7 +1517,8 @@ int OTF_Handler_MessageSummary( void* userData,
                                 uint64_t sentNumber,
                                 uint64_t receivedNumber,
                                 uint64_t sentBytes,
-                                uint64_t receivedBytes );
+                                uint64_t receivedBytes,
+				OTF_KeyValueList *list );
 
 
 /**
@@ -1174,6 +1536,8 @@ int OTF_Handler_MessageSummary( void* userData,
  * @param sentBytes      The number of bytes sent by member or 0.
  * @param receivedBytes  The number of bytes received by member or 0.
  *
+ * @param list           Pointer to an OTF_KeyValueList() that contains individual data.
+ *
  * @return               OTF_RETURN_ABORT  for aborting the reading process immediately
  *                       OTF_RETURN_OK     for continue reading
  *
@@ -1187,7 +1551,8 @@ int OTF_Handler_CollopSummary( void *userData,
                                uint64_t sentNumber,
                                uint64_t receivedNumber,
                                uint64_t sentBytes,
-                               uint64_t receivedBytes );
+                               uint64_t receivedBytes,
+			       OTF_KeyValueList *list );
 
 
 /**
@@ -1205,6 +1570,7 @@ int OTF_Handler_CollopSummary( void *userData,
  * @param nseek          Number of seek events.
  * @param bytesread      Number of bytes read.
  * @param byteswrite     Number of bytes written.
+ * @param list           Pointer to an OTF_KeyValueList() that contains individual data.
  *
  * \ingroup handler
  */
@@ -1218,7 +1584,8 @@ int OTF_Handler_FileOperationSummary( void* userData,
                                       uint64_t nwrite,
                                       uint64_t nseek,
                                       uint64_t bytesread,
-                                      uint64_t byteswrite );
+                                      uint64_t byteswrite,
+				      OTF_KeyValueList *list );
 
 
 /**
@@ -1236,6 +1603,7 @@ int OTF_Handler_FileOperationSummary( void* userData,
  * @param nseek          Number of seek events.
  * @param bytesread      Number of bytes read.
  * @param byteswrite     Number of bytes written.
+ * @param list           Pointer to an OTF_KeyValueList() that contains individual data.
  *
  * \ingroup handler
  */
@@ -1249,7 +1617,8 @@ int OTF_Handler_FileGroupOperationSummary( void* userData,
                                            uint64_t nwrite,
                                            uint64_t nseek,
                                            uint64_t bytesread,
-                                           uint64_t byteswrite );
+                                           uint64_t byteswrite,
+				    	   OTF_KeyValueList *list );
 
 
 /**
@@ -1310,6 +1679,7 @@ int OTF_Handler_UnknownRecord( void *userData,
  * @param token          The newly defined marker token.
  * @param name           Its name
  * @param type           Marker type, one of OTF_MARKER_TYPE_xxx
+ * @param list           Pointer to an OTF_KeyValueList() that contains individual data.
  *
  * @return               OTF_RETURN_ABORT  for aborting the reading process immediately
  *                       OTF_RETURN_OK     for continue reading
@@ -1320,7 +1690,8 @@ int OTF_Handler_DefMarker( void *userData,
                            uint32_t stream,
                            uint32_t token,
                            const char* name,
-                           uint32_t type );
+                           uint32_t type,
+			   OTF_KeyValueList *list );
 
 
 /**
@@ -1333,6 +1704,7 @@ int OTF_Handler_DefMarker( void *userData,
  * @param process        The process or process group of the marker.
  * @param token          A marker token defined by 'DefMarker' before.
  * @param text           Descriptive text.
+ * @param list           Pointer to an OTF_KeyValueList() that contains individual data.
  *
  * @return               OTF_RETURN_ABORT  for aborting the reading process immediately
  *                       OTF_RETURN_OK     for continue reading
@@ -1343,10 +1715,6 @@ int OTF_Handler_Marker( void *userData,
                         uint64_t time,
                         uint32_t process,
                         uint32_t token,
-                        const char* text );
+                        const char* text,
+			OTF_KeyValueList *list );
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
-#endif /* OTF_HANDLER_H */

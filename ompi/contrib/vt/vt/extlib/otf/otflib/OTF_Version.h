@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -17,8 +17,8 @@
 
 
 #define OTF_VERSION_MAJOR	1
-#define OTF_VERSION_MINOR	6
-#define OTF_VERSION_SUB 	5
+#define OTF_VERSION_MINOR	9
+#define OTF_VERSION_SUB 	1
 #define OTF_VERSION_STRING	"openmpi"
 
 /**

@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -30,15 +30,22 @@ public:
 
 	uint64_t time;
 	uint32_t token;
+    OTF_KeyValueList *kvlist;
 
 
 public:
 
 	/** constructor */
-	FunctionCall( uint64_t t, uint32_t f ) : time( t ), token( f ) {};
+	FunctionCall( uint64_t _time, uint32_t _token, OTF_KeyValueList *_kvlist );
 
 	/** copy constructor */
-	FunctionCall( const FunctionCall& other ) : time(other.time), token(other.token) {};
+	FunctionCall( const FunctionCall& fc );
+    
+    /** destructor */
+    ~FunctionCall();
+    
+    /** assignment operator */
+    FunctionCall operator=( const FunctionCall& fc );
 };
 
 
@@ -75,17 +82,24 @@ public:
 	uint32_t receiver;
 	uint32_t procGroup;
 	uint32_t tag;
+    uint32_t length;
 	uint32_t source;
+    OTF_KeyValueList *kvlist;
 	
 public:
-
-	Send( uint64_t ot, uint32_t r, uint32_t pg, uint32_t t, uint32_t s ) : 
-		originaltime( ot ), receiver( r ), procGroup( pg ), tag( t ),
-		source( s ) {};
-		
-	Send( const Send& other ) : originaltime( other.originaltime ),
-		receiver( other.receiver ), procGroup( other.procGroup ),
-		tag( other.tag ), source( other.source ) {};
+  
+    /** constructor */
+	Send( uint64_t _originaltime, uint32_t _receiver, uint32_t _procGroup, uint32_t _tag,
+          uint32_t _length, uint32_t _source, OTF_KeyValueList *_kvlist );
+          
+    /** copy constructor */
+	Send( const Send& s );
+    
+    /** destructor */
+    ~Send();
+    
+    /** assignment operator */
+    Send operator=( const Send& s );
 };
 
 
@@ -122,6 +136,65 @@ public:
 };
 
 
+struct BeginCollOperation {
+
+public:
+  
+    uint64_t time;
+    uint32_t root;
+    uint32_t procGroup;
+    uint32_t col;
+    uint32_t type;
+    uint64_t invoc_sent;
+    uint64_t invoc_recv;
+    uint64_t bytesSent;
+    uint64_t bytesRecv;
+    uint32_t scltoken;
+    OTF_KeyValueList *kvlist;
+    
+public:    
+ 
+    /** constructor */
+    BeginCollOperation( uint64_t _time, uint32_t _root, uint32_t _procGroup,
+        uint32_t _col, uint32_t _type, uint64_t _invoc_sent, uint64_t _invoc_recv,
+        uint64_t _bytesSent, uint64_t _bytesRecv, uint32_t _scltoken, OTF_KeyValueList *_kvlist );
+        
+    /** copy constructor */
+    BeginCollOperation( const BeginCollOperation& cop );
+    
+    /** destructor */
+    ~BeginCollOperation();
+    
+    /** assignment operator */
+    BeginCollOperation operator=( const BeginCollOperation& cop );
+  
+};
+
+struct BeginFileOperation {
+
+public:
+  
+    uint64_t time;
+    uint32_t scltoken;
+    OTF_KeyValueList *kvlist;
+    
+    
+public:    
+ 
+    /** constructor */
+    BeginFileOperation( uint64_t _time, uint32_t _scltoken, OTF_KeyValueList *_kvlist );
+    
+    /** copy constructor */
+    BeginFileOperation( const BeginFileOperation& fop );
+    
+    /** destructor */
+    ~BeginFileOperation();
+    
+    /** assignment operator */
+    BeginFileOperation operator=( const BeginFileOperation& fop );
+    
+};
+
 /* *** file operation stuff ******************************** */
 struct FileOpen {
 
@@ -130,11 +203,21 @@ public:
 	uint64_t time;
 	uint32_t fileid;
 	uint32_t source;
+    OTF_KeyValueList *kvlist;
 
 public:
-
-	FileOpen( uint64_t tm, uint32_t id, uint32_t src ) :
-		time( tm ), fileid( id ), source( src ) {};
+  
+    /** constructor */
+	FileOpen( uint64_t _time, uint32_t _fileid, uint32_t _source, OTF_KeyValueList *_kvlist );
+    
+    /** copy constructor */
+    FileOpen( const FileOpen& fo );
+    
+    /** destructor */
+    ~FileOpen();
+    
+    /** assignment operator */
+    FileOpen operator=( const FileOpen& fo );
 };
 
 
@@ -181,6 +264,12 @@ public:
 
 	/* map of open files */
 	std::map<uint64_t/*handleid*/, FileOpen> openfiles;
+    
+    /* map of begun collective operations */
+    std::map<uint64_t/*matchingId*/, BeginCollOperation> beginCollOps;
+    
+    /* map of unfinished file operations */
+    std::map<uint64_t/*handleid*/, BeginFileOperation> beginFileOps;
 
 	/* statistic per function since the beginning of the trace */
 	std::map<uint32_t,FunctionStatistics> fstatistics;
@@ -201,12 +290,12 @@ public:
 	ProcessState() {};
 
 
-	void enterFunction( uint64_t time, uint32_t token );
+	void enterFunction( uint64_t time, uint32_t token, OTF_KeyValueList *kvlist );
 
 	void leaveFunction( uint64_t time, uint32_t token );
 
 	void sendMessage( uint64_t time, uint32_t receiver, uint32_t procGroup,
-		uint32_t tag, uint32_t msglength, uint32_t source );
+		uint32_t tag, uint32_t msglength, uint32_t source, OTF_KeyValueList *kvlist );
 
 	void collOperation( uint64_t time, uint32_t col, uint32_t type, uint32_t numSent, uint32_t numRecv, 
 		uint32_t bytesSent, uint32_t bytesRecv );
@@ -216,11 +305,24 @@ public:
 	void matchMessage( uint32_t receiver, uint32_t procGroup, uint32_t tag );
 
 	int openFile( uint64_t time, uint32_t fileid, uint64_t handleid,
-		uint32_t source );
+		uint32_t source, OTF_KeyValueList *kvlist );
 	int closeFile( uint64_t handleid );
 	int writeFile( uint32_t fileid, uint64_t bytes );
 	int readFile( uint32_t fileid, uint64_t bytes );
 	int seekFile( uint32_t fileid, uint64_t bytes );
+    
+    
+    int beginCollOperation( uint64_t time, uint32_t root, uint32_t procGroup,
+        uint32_t col, uint32_t type, uint64_t matchingId, uint64_t invoc_sent,
+        uint64_t invoc_recv, uint64_t bytesSent, uint64_t bytesRecv,
+        uint32_t scltoken, OTF_KeyValueList *kvlist );
+        
+    int endCollOperation( uint64_t time, uint32_t matchingId );
+    
+    int beginFileOperation( uint64_t time, uint64_t matchingId, uint32_t scltoken,
+        OTF_KeyValueList *kvlist );
+    
+    int endFileOperation( uint64_t matchingId );
 	
 	
 	void printStack( uint32_t processid ) const;
@@ -237,6 +339,8 @@ public:
 		std::map< uint32_t, uint32_t> *filegroups ) const;
 	void writeSends( OTF_Writer* writer, uint64_t time, uint32_t processid ) const;
 	void writeOpenFiles( OTF_Writer* writer, uint64_t time, uint32_t processid ) const;
+    void writeCollOps( OTF_Writer* writer, uint64_t time, uint32_t processid ) const;
+    void writeFileOps( OTF_Writer* writer, uint64_t time, uint32_t processid ) const;
 };
 
 /* *** State *** **************************************** */
@@ -278,12 +382,13 @@ public:
 
 	void defCollOp( uint32_t col, uint32_t type );
 
-	void enterFunction( uint64_t time, uint32_t processid, uint32_t token );
+	void enterFunction( uint64_t time, uint32_t processid, uint32_t token, OTF_KeyValueList *kvlist );
 
 	void leaveFunction( uint64_t time, uint32_t processid, uint32_t token );
 	
 	void sendMessage( uint64_t time, uint32_t sender, uint32_t receiver,
-		uint32_t procGroup, uint32_t tag, uint32_t length, uint32_t source );
+		uint32_t procGroup, uint32_t tag, uint32_t length, uint32_t source,
+        OTF_KeyValueList *kvlist );
 
 	void collOperation( uint64_t time, uint32_t proc, uint32_t root, uint32_t col,
 		uint32_t bytesSent, uint32_t bytesRecv );
@@ -293,7 +398,19 @@ public:
 
 	int fileOperation( uint64_t time, uint32_t fileid, uint32_t process,
 		uint64_t handleid, uint32_t operation, uint64_t bytes,
-		uint64_t duration, uint32_t source );
+		uint64_t duration, uint32_t source, OTF_KeyValueList *kvlist );
+        
+    int beginCollOperation( uint64_t time, uint32_t proc, uint32_t root, uint32_t procGroup,
+        uint32_t col, uint64_t matchingId, uint64_t bytesSent, uint64_t bytesRecv,
+        uint32_t scltoken, OTF_KeyValueList *kvlist );
+        
+    int endCollOperation( uint64_t time, uint32_t proc, uint64_t matchingId );
+    
+    int beginFileOperation( uint64_t time, uint32_t process, uint64_t matchingId,
+        uint32_t scltoken, OTF_KeyValueList *kvlist );
+    
+    int endFileOperation( uint64_t time, uint32_t process, uint32_t fileid, uint64_t matchingId,
+        uint64_t handleId, uint32_t operation, uint64_t bytes, uint32_t scltoken, OTF_KeyValueList *kvlist );
 	
 
 	void printStack() const;
@@ -302,7 +419,7 @@ public:
 	void printOpenFiles() const;
 	
 	
-	void writeSnapshot( OTF_Writer* writer, uint64_t time ) const;
+	void writeSnapshot( OTF_Writer* writer, uint64_t time );
 	void writeStatistics( OTF_Writer* writer, uint64_t time );
 };
 

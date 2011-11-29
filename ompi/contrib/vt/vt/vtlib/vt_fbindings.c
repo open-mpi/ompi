@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -11,15 +11,13 @@
  **/
 
 #include "vt_fbindings.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-/*
- * creates a C string from an F77 string
- */
-void vt_string_f2c(char* fstr, int len, char** cstr)
+void vt_string_f2c(const char* fstr, int len, char** cstr)
 {
-  char* end;
+  const char* end;
   int i;
 
   /* Leading and trailing blanks are discarded. */
@@ -40,10 +38,13 @@ void vt_string_f2c(char* fstr, int len, char** cstr)
     len = end - fstr + 1;
   }
 
-  /* Allocate space for the C string. */
+  /* Allocate space for the C string, if necessary. */
 
-  if (NULL == (*cstr = malloc(len + 1)))
-    return;
+  if (*cstr == NULL) {
+    if ((*cstr = malloc(len + 1)) == NULL) {
+      return;
+    }
+  }
 
   /* Copy F77 string into C string and NULL terminate it. */
 
@@ -53,10 +54,7 @@ void vt_string_f2c(char* fstr, int len, char** cstr)
   (*cstr)[len] = '\0';
 }
 
-/*
- * creates a F77 string from an C string
- */
-void vt_string_c2f(char* cstr, char* fstr, int len)
+void vt_string_c2f(const char* cstr, char* fstr, int len)
 {
   int i;
 

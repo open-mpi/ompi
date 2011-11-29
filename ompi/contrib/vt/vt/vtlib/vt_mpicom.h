@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -18,6 +18,8 @@
 #else
 # define EXTERN extern 
 #endif
+
+#include "config.h"
 
 #include "vt_inttypes.h"
 
@@ -47,7 +49,7 @@ EXTERN void     vt_win_set_gid(MPI_Win win, uint32_t gid);
 #endif /* HAVE_MPI2_1SIDED */
 
 /* MPI communicator |-> VampirTrace communicator id */
-#define VT_COMM_ID(c) (((c)==MPI_COMM_WORLD) ? 0 : ((c)==MPI_COMM_SELF) ? 1 : vt_comm_id(c))
+#define VT_COMM_ID(c) vt_comm_id(c)
 
 /* Rank with respect to arbitrary communicator |-> global rank */
 #define VT_RANK_TO_PE(r,c) (((c)==MPI_COMM_WORLD) ? (uint32_t)r : vt_rank_to_pe(r,c))

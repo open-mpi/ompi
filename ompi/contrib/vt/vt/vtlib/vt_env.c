@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -133,22 +133,22 @@ static size_t parse_size(char *str) {
        case '7':
        case '8':
        case '9':
-	 multiply = 1;
-	 break;
+         multiply = 1;
+         break;
        case 'K':
        case 'k':
-	 multiply = 1024;
-	 break;
+         multiply = 1024;
+         break;
        case 'M':
        case 'm':
-	 multiply = 1024*1024;
-	 break;
+         multiply = 1024*1024;
+         break;
        case 'G':
        case 'g':
-	 multiply = 1024*1024*1024;
-	 break;
+         multiply = 1024*1024*1024;
+         break;
        default:
-	 break;
+         break;
      }
 
      size = atoll(str) * multiply;
@@ -169,32 +169,14 @@ char* vt_env_apppath()
       tmp = getenv("VT_APPPATH");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  apppath = replace_vars(tmp);
-	}
+          apppath = replace_vars(tmp);
+        }
       else
         {
-	  apppath = vt_pform_exec();
-	}
+          apppath = vt_pform_exec();
+        }
     }
   return apppath;
-}
-
-char* vt_env_dyn_blacklist()
-{
-  static int read = 1;
-  static char* dyn_blacklist = NULL;
-  char* tmp;
-
-  if (read)
-    {
-      read = 0;
-      tmp = getenv("VT_DYN_BLACKLIST");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-	  dyn_blacklist = replace_vars(tmp);
-	}
-    }
-  return dyn_blacklist;
 }
 
 char* vt_env_dyn_shlibs()
@@ -209,10 +191,30 @@ char* vt_env_dyn_shlibs()
       tmp = getenv("VT_DYN_SHLIBS");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  dyn_shlibs = replace_vars(tmp);
-	}
+          dyn_shlibs = replace_vars(tmp);
+        }
     }
   return dyn_shlibs;
+}
+
+int vt_env_dyn_ignore_nodbg()
+{
+  static int dyn_ignore_nodbg = -1;
+  char* tmp;
+
+  if (dyn_ignore_nodbg == -1)
+  {
+    tmp = getenv("VT_DYN_IGNORE_NODBG");
+    if (tmp != NULL && strlen(tmp) > 0)
+    {
+      dyn_ignore_nodbg = parse_bool(tmp);
+    }
+    else
+    {
+      dyn_ignore_nodbg = 0;
+    }
+  }
+  return dyn_ignore_nodbg;
 }
 
 char* vt_env_gnu_nm()
@@ -272,7 +274,7 @@ char* vt_env_gdir()
       else
         {
           gdir = replace_vars(vt_pform_gdir());
-        } 
+        }
     }
   return gdir;
 }
@@ -292,7 +294,7 @@ char* vt_env_ldir()
       else
         {
           ldir = replace_vars(vt_pform_ldir());
-        } 
+        }
     }
   return ldir;
 }
@@ -351,21 +353,21 @@ char* vt_env_fprefix()
         }
       else
         {
-	  tmp = vt_env_apppath();
-	  if (tmp != NULL && strlen(tmp) > 0)
-	    {
-	      fprefix = strip_dir(tmp);
-	      if (strlen(fprefix) >= 4 &&
-		  (strcmp(fprefix+(strlen(fprefix)-4), ".out") == 0 ||
-		   strcmp(fprefix+(strlen(fprefix)-4), ".exe") == 0))
-	        {
-		  fprefix[strlen(fprefix)-4] = '\0';
-		}
-	    }
-	  else
-	    {
-	      fprefix = "a";
-	    }
+          tmp = vt_env_apppath();
+          if (tmp != NULL && strlen(tmp) > 0)
+            {
+              fprefix = strip_dir(tmp);
+              if (strlen(fprefix) >= 4 &&
+                  (strcmp(fprefix+(strlen(fprefix)-4), ".out") == 0 ||
+                   strcmp(fprefix+(strlen(fprefix)-4), ".exe") == 0))
+                {
+                  fprefix[strlen(fprefix)-4] = '\0';
+                }
+            }
+          else
+            {
+              fprefix = "a";
+            }
         }
     }
   return fprefix;
@@ -381,58 +383,93 @@ int vt_env_funique()
       tmp = getenv("VT_FILE_UNIQUE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  char tmpbuf[128];
-	  char* p = tmpbuf;
-	  strncpy(tmpbuf, tmp, 128);
+          char tmpbuf[128];
+          char* p = tmpbuf;
+          strncpy(tmpbuf, tmp, 128);
           tmpbuf[127] = '\0';
-	  while( *p ) { *p = tolower(*p); p++; }
-	  
-	  if (strcmp(tmpbuf, "yes") == 0  ||
-	      strcmp(tmpbuf, "true") == 0 ||
-	      strcmp(tmpbuf, "auto") == 0)
-	    {
-	      funique = 0;
-	    }
-	  else
-	    {
-	      funique = atoi(tmp);
-	      if (funique == 0)	funique = -1;
-	      else if (funique < 0)
-		vt_error_msg("VT_FILE_UNIQUE not properly set");
-	    }
-	}
+          while( *p ) { *p = tolower(*p); p++; }
+
+          if (strcmp(tmpbuf, "yes") == 0  ||
+              strcmp(tmpbuf, "true") == 0 ||
+              strcmp(tmpbuf, "auto") == 0)
+            {
+              funique = 0;
+            }
+          else
+            {
+              funique = atoi(tmp);
+              if (funique == 0) funique = -1;
+              else if (funique < 0)
+                vt_error_msg("VT_FILE_UNIQUE not properly set");
+            }
+        }
       else
         {
-	  funique = -1;
-	}
+          funique = -1;
+        }
     }
   return funique;
 }
 
 size_t vt_env_bsize()
 {
-   static size_t buffer_size = 0;
-   char* tmp;
+  static size_t buffer_size = 0;
+  char* tmp;
 
-   if (buffer_size == 0)
-     {
-       tmp = getenv("VT_BUFFER_SIZE");
-       if (tmp != NULL && strlen(tmp) > 0)
-         {
-	   buffer_size = parse_size(tmp);
-	   if (buffer_size <= 0)
-	     vt_error_msg("VT_BUFFER_SIZE not properly set");
-	   else if (buffer_size < VT_MIN_BUFSIZE) {
-	     vt_warning("VT_BUFFER_SIZE=%d resized to %d bytes", 
-			buffer_size, VT_MIN_BUFSIZE);
-	     buffer_size = VT_MIN_BUFSIZE;
-	   }
-	 }
-       else
-         {
-	   buffer_size = VT_DEF_BUFSIZE;
-	 }
-     }
+  if (buffer_size == 0)
+    {
+      tmp = getenv("VT_BUFFER_SIZE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          buffer_size = parse_size(tmp);
+          if (buffer_size <= 0)
+            {
+              vt_error_msg("VT_BUFFER_SIZE not properly set");
+            }
+          else if (buffer_size < VT_MIN_BUFSIZE)
+            {
+              vt_warning("VT_BUFFER_SIZE=%d resized to %d bytes", 
+                         buffer_size, VT_MIN_BUFSIZE);
+              buffer_size = VT_MIN_BUFSIZE;
+            }
+        }
+      else
+        {
+          buffer_size = VT_DEFAULT_BUFSIZE;
+        }
+    }
+
+  return buffer_size;
+}
+
+size_t vt_env_thread_bsize()
+{
+  static size_t buffer_size = 0;
+  char* tmp;
+
+  if (buffer_size == 0)
+    {
+      tmp = getenv("VT_THREAD_BUFFER_SIZE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          buffer_size = parse_size(tmp);
+          if (buffer_size <= 0)
+            {
+              vt_error_msg("VT_BUFFER_SIZE not properly set");
+            }
+          else if (buffer_size < VT_MIN_BUFSIZE)
+            {
+              vt_warning("VT_BUFFER_SIZE=%d resized to %d bytes", 
+                         buffer_size, VT_MIN_BUFSIZE);
+              buffer_size = VT_MIN_BUFSIZE;
+            }
+        }
+      else
+        {
+          buffer_size = 0;
+        }
+    }
+
   return buffer_size;
 }
 
@@ -446,14 +483,14 @@ size_t vt_env_copy_bsize()
        tmp = getenv("VT_COPY_BUFFER_SIZE");
        if (tmp != NULL && strlen(tmp) > 0)
          {
-	   buffer_size = parse_size(tmp);
-	   if (buffer_size <= 0)
-	     vt_error_msg("VT_COPY_BUFFER_SIZE not properly set");
-	 }
+           buffer_size = parse_size(tmp);
+           if (buffer_size <= 0)
+             vt_error_msg("VT_COPY_BUFFER_SIZE not properly set");
+         }
        else
          {
-	   buffer_size = VT_DEFAULT_COPY_BUFFER_SIZE;
-	 }
+           buffer_size = VT_DEFAULT_COPY_BUFFER_SIZE;
+         }
      }
   return buffer_size;
 }
@@ -488,34 +525,34 @@ int vt_env_mode()
       tmp = getenv("VT_MODE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  char tmpbuf[128];
-	  char* p = tmpbuf;
-	  char* tk;
-	  int dc;
+          char tmpbuf[128];
+          char* p = tmpbuf;
+          char* tk;
+          int dc;
 
-	  strncpy(tmpbuf, tmp, 127);
-    tmpbuf[127] = '\0';
-	  while( *p ) { *p = tolower(*p); p++; }
+          strncpy(tmpbuf, tmp, 127);
+          tmpbuf[127] = '\0';
+          while( *p ) { *p = tolower(*p); p++; }
 
-	  tk = strtok(tmpbuf, ":");
-	  dc = 0;
-	  modeflags = 0;
-	  do {
-	    if (dc <= 1 &&
-	       (strcmp( tk, "trace" ) == 0))
-	      modeflags |= VT_MODE_TRACE;
-	    else if(dc <= 1 &&
-		    (strcmp( tk, "stat" ) == 0))
-	      modeflags |= VT_MODE_STAT;
-	    else
-	      vt_error_msg("VT_MODE not properly set");
-	    dc++;
-	  } while((tk = strtok(0, ":")));
-	}
+          tk = strtok(tmpbuf, ":");
+          dc = 0;
+          modeflags = 0;
+          do {
+            if (dc <= 1 &&
+               (strcmp( tk, "trace" ) == 0))
+              modeflags |= VT_MODE_TRACE;
+            else if(dc <= 1 &&
+                    (strcmp( tk, "stat" ) == 0))
+              modeflags |= VT_MODE_STAT;
+            else
+              vt_error_msg("VT_MODE not properly set");
+            dc++;
+          } while((tk = strtok(0, ":")));
+        }
       else
         {
-	  modeflags = VT_MODE_TRACE;
-	}
+          modeflags = VT_MODE_TRACE;
+        }
     }
   return modeflags;
 }
@@ -530,14 +567,14 @@ int vt_env_stat_intv()
       tmp = getenv("VT_STAT_INTV");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  stat_intv = atoi(tmp);
-	  if (stat_intv < 0)
-	    vt_error_msg("VT_STAT_INTV not properly set");
-	}
+          stat_intv = atoi(tmp);
+          if (stat_intv < 0)
+            vt_error_msg("VT_STAT_INTV not properly set");
+        }
       else
         {
-	   stat_intv = 0;
-	}
+          stat_intv = 0;
+        }
     }
   return stat_intv;
 }
@@ -552,49 +589,49 @@ int vt_env_stat_props()
       tmp = getenv("VT_STAT_PROPS");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  char tmpbuf[128];
-	  char* p = tmpbuf;
-	  char* tk;
-	  int dc;
+          char tmpbuf[128];
+          char* p = tmpbuf;
+          char* tk;
+          int dc;
 
-	  strncpy(tmpbuf, tmp, 127);
-    tmpbuf[127] = '\0';
-	  while( *p ) { *p = tolower(*p); p++; }
+          strncpy(tmpbuf, tmp, 127);
+          tmpbuf[127] = '\0';
+          while( *p ) { *p = tolower(*p); p++; }
 
-	  if (strcmp( tmpbuf, "all" ) == 0)
-	    {
-	      propflags = (VT_SUM_PROP_FUNC | VT_SUM_PROP_MSG | VT_SUM_PROP_COLLOP);
-	    }
-	  else
-	    {
-	      tk = strtok(tmpbuf, ":");
-	      dc = 0;
-	      propflags = 0;
-	      do {
-		if (dc <= 2 &&
-		    (strcmp( tk, "func" ) == 0))
-		  propflags |= VT_SUM_PROP_FUNC;
-		else if(dc <= 2 &&
-			(strcmp( tk, "msg" ) == 0))
-		  propflags |= VT_SUM_PROP_MSG;
-		else if(dc <= 2 &&
-			(strcmp( tk, "collop" ) == 0))
-		  propflags |= VT_SUM_PROP_COLLOP;
-/*		else if(dc <= 3 &&
-			(strcmp( tk, "fileop" ) == 0))
-			propflags |= VT_SUM_PROP_FILEOP; */
-		else
-		  vt_error_msg("VT_STAT_PROPS not properly set");
-		dc++;
-	      } while((tk = strtok(0, ":")));
-	    }
-	}
+          if (strcmp( tmpbuf, "all" ) == 0)
+            {
+              propflags = (VT_SUM_PROP_FUNC | VT_SUM_PROP_MSG | VT_SUM_PROP_COLLOP);
+            }
+          else
+            {
+              tk = strtok(tmpbuf, ":");
+              dc = 0;
+              propflags = 0;
+              do {
+                if (dc <= 2 &&
+                    (strcmp( tk, "func" ) == 0))
+                  propflags |= VT_SUM_PROP_FUNC;
+                else if(dc <= 2 &&
+                        (strcmp( tk, "msg" ) == 0))
+                  propflags |= VT_SUM_PROP_MSG;
+                else if(dc <= 2 &&
+                        (strcmp( tk, "collop" ) == 0))
+                  propflags |= VT_SUM_PROP_COLLOP;
+/*              else if(dc <= 3 &&
+                        (strcmp( tk, "fileop" ) == 0))
+                        propflags |= VT_SUM_PROP_FILEOP; */
+                else
+                  vt_error_msg("VT_STAT_PROPS not properly set");
+                dc++;
+              } while((tk = strtok(0, ":")));
+            }
+        }
       else
         {
-	  /* propflags =
-	       (VT_SUM_PROP_FUNC | VT_SUM_PROP_MSG | VT_SUM_PROP_COLLOP | VT_SUM_PROP_FILEOP); */
-	  propflags = (VT_SUM_PROP_FUNC | VT_SUM_PROP_MSG | VT_SUM_PROP_COLLOP);
-	}
+          /* propflags =
+               (VT_SUM_PROP_FUNC | VT_SUM_PROP_MSG | VT_SUM_PROP_COLLOP | VT_SUM_PROP_FILEOP); */
+          propflags = (VT_SUM_PROP_FUNC | VT_SUM_PROP_MSG | VT_SUM_PROP_COLLOP);
+        }
     }
   return propflags;
 }
@@ -609,37 +646,37 @@ int vt_env_stat_msg_dtls()
       tmp = getenv("VT_STAT_MSG_DTLS");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  char tmpbuf[128];
-	  char* p = tmpbuf;
-	  char* tk;
-	  int dc;
+          char tmpbuf[128];
+          char* p = tmpbuf;
+          char* tk;
+          int dc;
 
-	  strncpy(tmpbuf, tmp, 127);
-    tmpbuf[127] = '\0';
-	  while( *p ) { *p = tolower(*p); p++; }
+          strncpy(tmpbuf, tmp, 127);
+          tmpbuf[127] = '\0';
+          while( *p ) { *p = tolower(*p); p++; }
 
-	  tk = strtok(tmpbuf, ":");
-	  dc = 0;
-	  dtlsflags = 0;
-	  do {
-	    if (dc <= 2 &&
-	       (strcmp( tk, "peer" ) == 0))
-	      dtlsflags |= VT_SUM_MSG_DTL_PEER;
-	    else if(dc <= 2 &&
-		    (strcmp( tk, "comm" ) == 0))
-	      dtlsflags |= VT_SUM_MSG_DTL_COMM;
-	    else if(dc <= 2 &&
-		    (strcmp( tk, "tag" ) == 0))
-	      dtlsflags |= VT_SUM_MSG_DTL_TAG;
-	    else
-	      vt_error_msg("VT_STAT_MSG_DTLS not properly set");
-	    dc++;
-	  } while((tk = strtok(0, ":")));
-	}
+          tk = strtok(tmpbuf, ":");
+          dc = 0;
+          dtlsflags = 0;
+          do {
+            if (dc <= 2 &&
+               (strcmp( tk, "peer" ) == 0))
+              dtlsflags |= VT_SUM_MSG_DTL_PEER;
+            else if(dc <= 2 &&
+                    (strcmp( tk, "comm" ) == 0))
+              dtlsflags |= VT_SUM_MSG_DTL_COMM;
+            else if(dc <= 2 &&
+                    (strcmp( tk, "tag" ) == 0))
+              dtlsflags |= VT_SUM_MSG_DTL_TAG;
+            else
+              vt_error_msg("VT_STAT_MSG_DTLS not properly set");
+            dc++;
+          } while((tk = strtok(0, ":")));
+        }
       else
         {
-	  dtlsflags = VT_SUM_MSG_DTL_PEER;
-	}
+          dtlsflags = VT_SUM_MSG_DTL_PEER;
+        }
     }
   return dtlsflags;
 }
@@ -654,34 +691,34 @@ int vt_env_stat_collop_dtls()
       tmp = getenv("VT_STAT_COLLOP_DTLS");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  char tmpbuf[128];
-	  char* p = tmpbuf;
-	  char* tk;
-	  int dc;
+          char tmpbuf[128];
+          char* p = tmpbuf;
+          char* tk;
+          int dc;
 
-	  strncpy(tmpbuf, tmp, 127);
-    tmpbuf[127] = '\0';
-	  while( *p ) { *p = tolower(*p); p++; }
+          strncpy(tmpbuf, tmp, 127);
+          tmpbuf[127] = '\0';
+          while( *p ) { *p = tolower(*p); p++; }
 
-	  tk = strtok(tmpbuf, ":");
-	  dc = 0;
-	  dtlsflags = 0;
-	  do {
-	    if (dc <= 1 &&
-	       (strcmp( tk, "comm" ) == 0))
-	      dtlsflags |= VT_SUM_COLLOP_DTL_COMM;
-	    else if(dc <= 1 &&
-		    (strcmp( tk, "op" ) == 0))
-	      dtlsflags |= VT_SUM_COLLOP_DTL_OP;
-	    else
-	      vt_error_msg("VT_STAT_COLLOP_DTLS not properly set");
-	    dc++;
-	  } while((tk = strtok(0, ":")));
-	}
+          tk = strtok(tmpbuf, ":");
+          dc = 0;
+          dtlsflags = 0;
+          do {
+            if (dc <= 1 &&
+               (strcmp( tk, "comm" ) == 0))
+              dtlsflags |= VT_SUM_COLLOP_DTL_COMM;
+            else if(dc <= 1 &&
+                    (strcmp( tk, "op" ) == 0))
+              dtlsflags |= VT_SUM_COLLOP_DTL_OP;
+            else
+              vt_error_msg("VT_STAT_COLLOP_DTLS not properly set");
+            dc++;
+          } while((tk = strtok(0, ":")));
+        }
       else
         {
-	  dtlsflags = VT_SUM_COLLOP_DTL_OP;
-	}
+          dtlsflags = VT_SUM_COLLOP_DTL_OP;
+        }
     }
   return dtlsflags;
 }
@@ -696,13 +733,13 @@ int vt_env_verbose()
       tmp = getenv("VT_VERBOSE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  verbose = atoi(tmp);
-	  if (verbose < 0) verbose = 0;
-	}
+          verbose = atoi(tmp);
+          if (verbose < 0) verbose = 0;
+        }
       else
         {
-	  verbose = 1;
-	}
+          verbose = 1;
+        }
     }
   return verbose;
 }
@@ -717,13 +754,13 @@ int vt_env_debug()
       tmp = getenv("VT_DEBUG");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  debug = atoi(tmp);
-	  if (debug < 0) debug = 0;
-	}
+          debug = atoi(tmp);
+          if (debug < 0) debug = 0;
+        }
       else
         {
-	  debug = 0;
-	}
+          debug = 0;
+        }
     }
   return debug;
 }
@@ -738,12 +775,12 @@ int vt_env_do_unify()
       tmp = getenv("VT_UNIFY");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  do_unify = parse_bool(tmp);
-	}
+          do_unify = parse_bool(tmp);
+        }
       else
         {
-	  do_unify = 1;
-	}
+          do_unify = 1;
+        }
     }
   return do_unify;
 }
@@ -758,12 +795,12 @@ int vt_env_do_clean()
       tmp = getenv("VT_CLEAN");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  do_clean = parse_bool(tmp);
-	}
+          do_clean = parse_bool(tmp);
+        }
       else
         {
-	  do_clean = 1;
-	}
+          do_clean = 1;
+        }
     }
   return do_clean;
 }
@@ -778,12 +815,12 @@ int vt_env_memtrace()
       tmp = getenv("VT_MEMTRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  memtrace = parse_bool(tmp);
-	}
+          memtrace = parse_bool(tmp);
+        }
       else
         {
-	  memtrace = 0;
-	}
+          memtrace = 0;
+        }
     }
   return memtrace;
 }
@@ -838,12 +875,12 @@ int vt_env_iotrace()
       tmp = getenv("VT_IOTRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  iotrace = parse_bool(tmp);
-	}
+          iotrace = parse_bool(tmp);
+        }
       else
         {
-	  iotrace = 0;
-	}
+          iotrace = 0;
+        }
     }
   return iotrace;
 }
@@ -878,14 +915,34 @@ int vt_env_libctrace()
       tmp = getenv("VT_LIBCTRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  libctrace = parse_bool(tmp);
-	}
+          libctrace = parse_bool(tmp);
+        }
       else
         {
-	  libctrace = 1;
-	}
+          libctrace = 1;
+        }
     }
   return libctrace;
+}
+
+int vt_env_omptrace()
+{
+  static int omptrace = -1;
+  char* tmp;
+
+  if (omptrace == -1)
+    {
+      tmp = getenv("VT_OMPTRACE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          omptrace = parse_bool(tmp);
+        }
+      else
+        {
+          omptrace = 1;
+        }
+    }
+  return omptrace;
 }
 
 int vt_env_mpitrace()
@@ -898,12 +955,12 @@ int vt_env_mpitrace()
       tmp = getenv("VT_MPITRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  mpitrace = parse_bool(tmp);
-	}
+          mpitrace = parse_bool(tmp);
+        }
       else
         {
-	  mpitrace = 1;
-	}
+          mpitrace = 1;
+        }
     }
   return mpitrace;
 }
@@ -926,6 +983,50 @@ int vt_env_mpicheck()
         }
     }
   return mpicheck;
+}
+
+int vt_env_max_mpi_comms()
+{
+  static int max_mpi_comms = -1;
+  char* tmp;
+
+  if (max_mpi_comms == -1)
+    {
+      tmp = getenv("VT_MAX_MPI_COMMS");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          max_mpi_comms = atoi(tmp);
+          if (max_mpi_comms < 2)
+            vt_error_msg("VT_MAX_MPI_COMMS not properly set");
+        }
+      else
+        {
+          max_mpi_comms = 100;
+        }
+    }
+  return max_mpi_comms;
+}
+
+int vt_env_max_mpi_wins()
+{
+  static int max_mpi_wins = -1;
+  char* tmp;
+
+  if (max_mpi_wins == -1)
+    {
+      tmp = getenv("VT_MAX_MPI_WINS");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          max_mpi_wins = atoi(tmp);
+          if (max_mpi_wins < 1)
+            vt_error_msg("VT_MAX_MPI_WINS not properly set");
+        }
+      else
+        {
+          max_mpi_wins = 100;
+        }
+    }
+  return max_mpi_wins;
 }
 
 int vt_env_mpicheck_errexit()
@@ -971,14 +1072,14 @@ int vt_env_rusage_intv()
       tmp = getenv("VT_RUSAGE_INTV");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  rusage_intv = atoi(tmp);
-	  if (rusage_intv < 0)
-	    vt_error_msg("VT_RUSAGE_INTV not properly set");
-	}
+          rusage_intv = atoi(tmp);
+          if (rusage_intv < 0)
+            vt_error_msg("VT_RUSAGE_INTV not properly set");
+        }
       else
         {
-	  rusage_intv = 100;
-	}
+          rusage_intv = 100;
+        }
     }
   return rusage_intv;
 }
@@ -993,7 +1094,7 @@ char* vt_env_metrics()
       read = 0;
       metrics = getenv("VT_METRICS");
       if ( metrics != NULL && strlen(metrics) == 0 )
-	metrics = NULL;
+        metrics = NULL;
     }
   return metrics;
 }
@@ -1056,12 +1157,12 @@ int vt_env_sync_flush()
       tmp = getenv("VT_SYNC_FLUSH");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  sync_flush = parse_bool(tmp);
-	}
+          sync_flush = parse_bool(tmp);
+        }
       else
         {
-	  sync_flush = 0;
-	}
+          sync_flush = 0;
+        }
     }
   return sync_flush;
 }
@@ -1076,14 +1177,14 @@ int vt_env_sync_flush_level()
       tmp = getenv("VT_SYNC_FLUSH_LEVEL");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  sync_flush_level = atoi(tmp);
-	  if (sync_flush_level < 0 || sync_flush_level > 100)
-	    vt_error_msg("VT_SYNC_FLUSH_LEVEL not properly set");
-	}
+          sync_flush_level = atoi(tmp);
+          if (sync_flush_level < 0 || sync_flush_level > 100)
+            vt_error_msg("VT_SYNC_FLUSH_LEVEL not properly set");
+        }
       else
         {
-	   sync_flush_level = 80;
-	}
+           sync_flush_level = 80;
+        }
     }
   return sync_flush_level;
 }
@@ -1098,14 +1199,14 @@ int vt_env_max_stack_depth()
       tmp = getenv("VT_MAX_STACK_DEPTH");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  max_stack_depth = atoi(tmp);
-	  if (max_stack_depth < 0)
-	    vt_error_msg("VT_MAX_STACK_DEPTH not properly set");
-	}
+          max_stack_depth = atoi(tmp);
+          if (max_stack_depth < 0)
+            vt_error_msg("VT_MAX_STACK_DEPTH not properly set");
+        }
       else
         {
-	  max_stack_depth = 0;
-	}
+          max_stack_depth = 0;
+        }
     }
   return max_stack_depth;
 }
@@ -1120,14 +1221,14 @@ int vt_env_max_flushes()
       tmp = getenv("VT_MAX_FLUSHES");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  max_flushes = atoi(tmp);
-	  if (max_flushes < 0)
-	    vt_error_msg("VT_MAX_FLUSHES not properly set");
-	}
+          max_flushes = atoi(tmp);
+          if (max_flushes < 0)
+            vt_error_msg("VT_MAX_FLUSHES not properly set");
+        }
       else
         {
-	  max_flushes = 1;
-	}
+          max_flushes = 1;
+        }
     }
   return max_flushes;
 }
@@ -1142,18 +1243,21 @@ int vt_env_max_threads()
       tmp = getenv("VT_MAX_THREADS");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  max_threads = atoi(tmp);
-	}
+          max_threads = atoi(tmp);
+          if (max_threads < 1 || max_threads > VT_MAX_THREADS)
+            vt_error_msg("VT_MAX_THREADS not properly set");
+        }
       else
         {
-	  max_threads = VT_MAX_THREADS;
-	}
+          max_threads = VT_MAX_THREADS;
+        }
     }
   return max_threads;
 }
 
 int vt_env_compression()
 {
+#if defined(HAVE_ZLIB) && HAVE_ZLIB
   static int compression = -1;
   char* tmp;
 
@@ -1162,14 +1266,17 @@ int vt_env_compression()
       tmp = getenv("VT_COMPRESSION");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  compression = parse_bool(tmp);
-	}
+          compression = parse_bool(tmp);
+        }
       else
         {
-	  compression = 1;
-	}
+          compression = 1;
+        }
     }
   return compression;
+#else /* HAVE_ZLIB */
+  return 0;
+#endif /* HAVE_ZLIB */
 }
 
 int vt_env_java_native()
@@ -1262,8 +1369,8 @@ char* vt_env_filter_spec()
       tmp = getenv("VT_FILTER_SPEC");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  spec = replace_vars(tmp);
-	}
+          spec = replace_vars(tmp);
+        }
     }
   return spec;
 }
@@ -1280,8 +1387,8 @@ char* vt_env_groups_spec()
       tmp = getenv("VT_GROUPS_SPEC");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  spec = replace_vars(tmp);
-	}
+          spec = replace_vars(tmp);
+        }
     }
   return spec;
 }
@@ -1296,12 +1403,12 @@ int vt_env_etimesync()
       tmp = getenv("VT_ETIMESYNC");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  etimesync = parse_bool(tmp);
-	}
+          etimesync = parse_bool(tmp);
+        }
       else
         {
-	  etimesync = 0;
-	}
+          etimesync = 0;
+        }
     }
   return etimesync;
 }
@@ -1316,14 +1423,189 @@ int vt_env_etimesync_intv()
       tmp = getenv("VT_ETIMESYNC_INTV");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-	  etimesync_intv = atoi(tmp);
-	  if (etimesync_intv < 0)
-	    vt_error_msg("VT_ETIMESYNC_INTV not properly set");
-	}
+          etimesync_intv = atoi(tmp);
+          if (etimesync_intv < 0)
+            vt_error_msg("VT_ETIMESYNC_INTV not properly set");
+        }
       else
         {
-	  etimesync_intv = 120;
-	}
+          etimesync_intv = 120;
+        }
     }
   return etimesync_intv;
+}
+
+int vt_env_cudarttrace()
+{
+  static int cudarttrace = -1;
+
+  if (cudarttrace == -1){
+    char* tmp = getenv("VT_CUDARTTRACE");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      cudarttrace = parse_bool(tmp);
+    }else{
+      cudarttrace = 0;
+    }
+  }
+  return cudarttrace;
+}
+
+int vt_env_cudatrace_idle(){
+  static int cudaidle = -1;
+
+  if (cudaidle == -1){
+    char* tmp = getenv("VT_CUDATRACE_IDLE");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      cudaidle = parse_bool(tmp);
+    }else{
+      cudaidle = 0;
+    }
+  }
+  return cudaidle;
+}
+
+size_t vt_env_cudatrace_bsize(){
+  static size_t limit = 0;
+
+  if (limit == 0) {
+    char* tmp = getenv("VT_CUDATRACE_BUFFER_SIZE");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      limit = parse_size(tmp);
+    }
+  }
+  return limit;
+}
+
+int vt_env_cudatrace_kernel()
+{
+  static int cudakernels = -1;
+
+  if(cudakernels == -1){
+    char* tmp = getenv("VT_CUDATRACE_KERNEL");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      cudakernels = parse_bool(tmp);
+    }else{
+      cudakernels = 1;
+    }
+  }
+  return cudakernels;
+}
+
+int vt_env_cudatrace_memcpyasync()
+{
+  static int cudamcpy = -1;
+
+  if(cudamcpy == -1){
+    char* tmp = getenv("VT_CUDATRACE_MEMCPYASYNC");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      cudamcpy = parse_bool(tmp);
+    }else{
+      cudamcpy = 1;
+    }
+  }
+  return cudamcpy;
+}
+
+int vt_env_cudatrace_sync()
+{
+  static int sync = -1;
+
+  if(sync == -1){
+    char* tmp = getenv("VT_CUDATRACE_SYNC");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      sync = atoi(tmp);
+      /* perhaps user wrote 'yes' or 'true' */
+      if(sync == 0 && parse_bool(tmp) == 1) sync = 3;
+    }else{
+      sync = 3;
+    }
+  }
+  return sync;
+}
+
+int vt_env_cudatrace_gpumem()
+{
+  static int cudamem = -1;
+
+  if(cudamem == -1){
+    char* tmp = getenv("VT_CUDATRACE_GPUMEMUSAGE");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      cudamem = parse_bool(tmp);
+    }else{
+      cudamem = 0;
+    }
+  }
+  return cudamem;
+}
+
+int vt_env_cudatrace_error()
+{
+  static int error = -1;
+
+  if(error == -1){
+    char* tmp = getenv("VT_CUDATRACE_ERROR");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      error = parse_bool(tmp);
+    }else{
+      error = 0;
+    }
+  }
+  return error;
+}
+
+char* vt_env_cupti_metrics()
+{
+  static int read = 1;
+  static char* metrics = NULL;
+
+  if(read){
+    read = 0;
+    metrics = getenv("VT_CUPTI_METRICS");
+    if(metrics != NULL && strlen(metrics) == 0){
+      metrics = NULL;
+    }
+  }
+  return metrics;
+}
+
+int vt_env_cupti_sampling()
+{
+  static int cuptisampling = -1;
+
+  if (cuptisampling == -1){
+    char* tmp = getenv("VT_CUPTI_SAMPLING");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      cuptisampling = parse_bool(tmp);
+    }else{
+      cuptisampling = 0;
+    }
+  }
+  return cuptisampling;
+}
+
+int vt_env_gputrace_debug()
+{
+    static int debug = -1;
+
+  if(debug == -1){
+    char* tmp = getenv("VT_GPUTRACE_DEBUG");
+
+    if(tmp != NULL && strlen(tmp) > 0){
+      debug = atoi(tmp);
+      /* perhaps user wrote 'yes' or 'true' */
+      if(debug == 0 && parse_bool(tmp) == 1) debug = 1;
+    }else{
+      debug = 0;
+    }
+  }
+  return debug;
 }

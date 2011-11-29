@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "vt_defs.h"
+#include "vt_error.h"
 #include "vt_inttypes.h"
 #include "vt_mpireq.h"
 #include "vt_mpicom.h"
@@ -111,6 +113,7 @@ void vt_request_create(MPI_Request request,
 
 void vt_iorequest_create( MPI_Request request,
                           MPI_Datatype datatype,
+                          uint64_t matchingid,
 			  uint64_t handleid,
 			  uint32_t fileid,
 			  uint32_t fileop )
@@ -157,6 +160,7 @@ void vt_iorequest_create( MPI_Request request,
   lastreq->request  = request;
   lastreq->datatype = datatype;
   lastreq->flags    = ERF_IO;
+  lastreq->matchingid = matchingid;
   lastreq->handleid = handleid;
   lastreq->fileid   = fileid;
   lastreq->fileop   = fileop;
@@ -243,8 +247,9 @@ void vt_check_request(uint64_t* time, struct VTRequest* req, MPI_Status *status,
     VT_MPI_INT count, sz;
     PMPI_Type_size(req->datatype, &sz);
     PMPI_Get_count(status, req->datatype, &count);
-    vt_mpi_recv(time, VT_RANK_TO_PE(status->MPI_SOURCE, req->comm),
-		VT_COMM_ID(req->comm), status->MPI_TAG, count * sz);
+    vt_mpi_recv(VT_CURRENT_THREAD, time,
+                VT_RANK_TO_PE(status->MPI_SOURCE, req->comm),
+                VT_COMM_ID(req->comm), status->MPI_TAG, count * sz);
   }
 
   if (record_event && (req->flags & ERF_IO))
@@ -254,7 +259,7 @@ void vt_check_request(uint64_t* time, struct VTRequest* req, MPI_Status *status,
     PMPI_Get_count(status, req->datatype, &count);
     if (count == MPI_UNDEFINED)
       count = 0;
-    vt_ioend(time, req->fileid, req->handleid, req->fileop,
+    vt_ioend(VT_CURRENT_THREAD, time, req->fileid, req->matchingid, req->handleid, req->fileop,
              (uint64_t)count*(uint64_t)sz);
   }
 

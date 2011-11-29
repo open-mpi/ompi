@@ -230,7 +230,7 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 			[answer="yes"], [answer="no"])
 			echo "    I/O:                                     $answer"
 
-			AS_IF([test x"$have_etimesync" = "xyes"],
+			AS_IF([test x"$build_etimesync" = "xyes"],
 			[answer="yes"], [answer="no"])
 			echo "   Build enhanced time sync. support:        $answer"
 
@@ -238,6 +238,10 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 			[answer="yes ($unimci_checker_name $unimci_checker_version)"],
 			[answer="no"])
 			echo "   Build MPI correctness checking support:   $answer"
+
+			AS_IF([test x"$build_mpiunifylib" = "xyes"],
+			[answer="yes"], [answer="no"])
+			echo "   Build MPI trace unification library:      $answer"
 		])
 
 		AS_IF([test x"$have_threads" = "xyes"],
@@ -267,6 +271,10 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		[answer="yes (NEC SX)"], [answer="no"])])])
 		echo "  Build Hardware Perf. Counter support:      $answer"
 
+		AS_IF([test x"$have_plugin_cntr" = "xyes"],
+		[answer="yes"], [answer="no"])
+		echo "  Build Plugin Counter support:              $answer"
+
 		AS_IF([test x"$have_rusage" = "xyes"],
 		[answer="yes"], [answer="no"])
 		echo "  Build Resource usage trace support:        $answer"
@@ -281,18 +289,20 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 
 		AS_IF([test x"$have_libwrap" = "xyes"],
 		[
-			answer="yes"
-			AS_IF([test x"$have_libcwrap" = "xyes" -o x"$have_iowrap" = "xyes"],
-			[
-				answer=
+			answer=
 				AS_IF([test x"$have_libcwrap" = "xyes"],
-				[answer="LIBC"])
+				[AS_IF([test x"$answer" != x],
+				 [answer="$answer, LIBC"],
+				 [answer="LIBC"])])
 				AS_IF([test x"$have_iowrap" = "xyes"],
 				[AS_IF([test x"$answer" != x],
 				 [answer="$answer, LIBC-I/O"],
 				 [answer="LIBC-I/O"])])
-				answer="yes ($answer)"
-			])
+				AS_IF([test x"$have_cudawrap" = "xyes"],
+				[AS_IF([test x"$answer" != x],
+				 [answer="$answer, CUDA"],
+				 [answer="CUDA"])])
+			answer="yes ($answer)"
 		], [answer="no"])
 		echo "  Build Library trace support:               $answer"
 
@@ -303,7 +313,7 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 			echo "   Build Library wrapper generator:          $answer"
 		])
 
-		AS_IF([test x"$compinst_type" != x],
+		AS_IF([test x"$have_compinst" != x],
 		[answer=`echo $compinst_type | sed s/gnu/gnu*/g`],
 		[answer="no"])
 		echo ""
@@ -311,9 +321,7 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 
 		AS_IF([test x"$compinst_type" = "xgnu"],
 		[
-			echo ""
-			echo "   * The instrumentation type 'gnu' also"
-			echo "     works for Intel and Pathscale compilers."
+			echo "   *The instrumentation type 'gnu' also works for Intel and PathScale compilers."
 		])
 
 		AS_IF([test x"$have_dyninst" = "xyes"],
@@ -325,6 +333,24 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 		AS_IF([test x"$build_dynattlib" = "xyes"],
 		[answer="yes"], [answer="no"])
 		echo "   Build Dyninst attach library:             $answer"
+
+		AS_IF([test x"$have_tauinst" = "xyes"],
+		[answer="yes"], [answer="no"])
+		echo ""
+		echo "  Build automatic source code"
+		echo "  instrumentation support by using TAU:      $answer"
+
+		AS_IF([test x"$build_vtsetup" = "xyes"],
+		[answer="yes"], [answer="no"])
+		echo ""
+		echo "  Build vtsetup - a GUI to prepare"
+		echo "  measurement runs with VampirTrace          $answer"
+
+		AS_IF([test x"$build_vtrun" = "xyes"],
+		[answer="yes"], [answer="no"])
+		echo ""
+		echo "  Build vtrun - an application execution"
+		echo "  wrapper script                             $answer"
 
 		echo ""
 		echo "  See config.h for further configuration information."

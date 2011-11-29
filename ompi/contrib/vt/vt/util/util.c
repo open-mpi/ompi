@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2007,      Cisco Systems, Inc.
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -100,7 +100,7 @@ static int guess_strlen(const char* fmt, va_list ap)
 	  do {
 	    ++len;
 	    farg /= 10.0;
-	  } while (0 != farg);
+	  } while (0.0 != farg);
 	  break;
 
         case 'g':
@@ -116,7 +116,7 @@ static int guess_strlen(const char* fmt, va_list ap)
 	  do {
 	    ++len;
 	    darg /= 10.0;
-	  } while (0 != darg);
+	  } while (0.0 != darg);
 	  break;
 
         case 'l':
@@ -147,7 +147,7 @@ static int guess_strlen(const char* fmt, va_list ap)
 		  do {
 		    ++len;
 		    darg /= 10.0;
-		  } while (0 != darg);
+		  } while (0.0 != darg);
 		  break;
 
 	        case 'd':
@@ -295,4 +295,23 @@ char* vt_strtrim(char* s)
   }
 
   return s;
+}
+
+void* vt_memmove(void* dest, const void* src, size_t n)
+{
+  char *d = (char*)dest;
+  char *s = (char*)src;
+  
+  if(src>dest)
+  {
+    while(n-- != 0) *(d++) = *(s++);
+  }
+  else if(src<dest)
+  {
+    d += n;
+    s += n;
+    while(n-- != 0) *(--d) = *(--s);
+  }
+  
+  return dest;
 }

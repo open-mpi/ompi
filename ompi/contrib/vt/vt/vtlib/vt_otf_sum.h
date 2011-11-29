@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -39,9 +39,10 @@ typedef struct VTSum_struct VTSum;
  *-----------------------------------------------------------------------------
  */
 
-EXTERN VTSum* VTSum_open              ( VTGen* gen );
+EXTERN VTSum* VTSum_open              ( VTGen* gen, uint32_t tid );
 
-EXTERN void   VTSum_dump              ( VTSum* sum, uint8_t markDump );
+EXTERN void   VTSum_dump              ( VTSum* sum, uint64_t* time,
+                                        uint8_t markDump );
 
 EXTERN void   VTSum_close             ( VTSum* sum );
 

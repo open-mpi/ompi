@@ -9,11 +9,11 @@ AC_DEFUN([ACVT_PLATFORM],
 
 	AC_ARG_WITH(platform,
 		AC_HELP_STRING([--with-platform=PLATFORM],
-		[configure for given platform (altix,bgl,bgp,crayt3e,crayx1,crayxt,ibm,linux,macos,necsx,origin,sicortex,sun,generic), default: automatically by configure]),
+		[configure for given platform (altix,bgl,bgp,crayt3e,crayx1,crayxt,crayxe,ibm,linux,macos,necsx,origin,sicortex,sun,generic), default: automatically by configure]),
 	[
 		AC_MSG_RESULT([skipped (--with-platform=$withval)])
 
-		pform_list="altix bgl bgp crayt3e crayx1 crayxt ibm linux macos necsx origin sicortex sun generic"
+		pform_list="altix bgl bgp crayt3e crayx1 crayxt crayxe ibm linux macos necsx origin sicortex sun generic"
 		pform_found="no"
 		for p in $pform_list
 		do
@@ -34,11 +34,13 @@ AC_DEFUN([ACVT_PLATFORM],
 				 [PLATFORM=bgl],
 				 [AS_IF([test "$host_cpu" = "powerpc64" -a -d /bgsys],
 				  [PLATFORM=bgp],
-				  [AS_IF([test "$host_cpu" = "x86_64" -a -d /opt/xt-boot],
-				   [PLATFORM=crayxt],
-				   [AS_IF([test "$host_cpu" = "mips64" -a -d /opt/sicortex],
-				    [PLATFORM=sicortex],
-				    [PLATFORM=linux])])])])])
+				  [AS_IF([test "$host_cpu" = "x86_64" -a "x`uname -r | grep -q cray_gem && echo TRUE`" = "xTRUE"],
+				   [PLATFORM=crayxe],
+				   [AS_IF([test "$host_cpu" = "x86_64" -a -d /opt/xt-boot],
+				    [PLATFORM=crayxt],
+				    [AS_IF([test "$host_cpu" = "mips64" -a -d /opt/sicortex],
+				     [PLATFORM=sicortex],
+				     [PLATFORM=linux])])])])])])
 				;;
 			sunos* | solaris*)
 				PLATFORM=sun

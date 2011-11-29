@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -14,6 +14,7 @@
 
 #include "otf.h"
 
+#include "vt_defs.h"
 #include "vt_error.h"
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
@@ -47,7 +48,7 @@ unsigned int VT_User_count_group_def__(const char* gname)
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_LOCK_IDS();
 #endif
-  gid = (uint32_t)vt_def_counter_group(gname);
+  gid = vt_def_counter_group(VT_CURRENT_THREAD, gname);
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_UNLOCK_IDS();
 #endif
@@ -61,7 +62,7 @@ unsigned int VT_User_count_def__(const char* cname, const char* cunit, int ctype
 				 unsigned int gid)
 {
   uint32_t cid;
-  uint32_t cprop = OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT;
+  uint32_t cprop = VT_CNTR_ABS | VT_CNTR_NEXT;
 
   VT_INIT;
 
@@ -81,23 +82,23 @@ unsigned int VT_User_count_def__(const char* cname, const char* cunit, int ctype
     case VT_COUNT_TYPE_INTEGER:
     case VT_COUNT_TYPE_INTEGER8:
     {
-      cprop |= OTF_COUNTER_VARTYPE_SIGNED8;
+      cprop |= VT_CNTR_SIGNED;
       break;
     }
     case VT_COUNT_TYPE_UNSIGNED:
     {
-      cprop |= OTF_COUNTER_VARTYPE_UNSIGNED8;
+      cprop |= VT_CNTR_UNSIGNED;
       break;
     }
     case VT_COUNT_TYPE_FLOAT:
     case VT_COUNT_TYPE_REAL:
     {
-      cprop |= OTF_COUNTER_VARTYPE_FLOAT;
+      cprop |= VT_CNTR_FLOAT;
       break;
     }
     case VT_COUNT_TYPE_DOUBLE:
     {
-      cprop |= OTF_COUNTER_VARTYPE_DOUBLE;
+      cprop |= VT_CNTR_DOUBLE;
       break;
     }
     default:
@@ -110,7 +111,7 @@ unsigned int VT_User_count_def__(const char* cname, const char* cunit, int ctype
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_LOCK_IDS();
 #endif
-  cid = (uint32_t)vt_def_counter(cname, cprop, gid, cunit);
+  cid = vt_def_counter(VT_CURRENT_THREAD, cname, cprop, gid, cunit);
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_UNLOCK_IDS();
 #endif
@@ -131,7 +132,7 @@ void VT_User_count_signed_val__(unsigned int cid, long long val)
 
   time = vt_pform_wtime();
   cval = OTF_Signed2Counter((int64_t)val);
-  vt_count(&time, cid, cval);
+  vt_count(VT_CURRENT_THREAD, &time, cid, cval);
 
   VT_MEMHOOKS_ON();
 }
@@ -147,7 +148,7 @@ void VT_User_count_unsigned_val__(unsigned int cid, unsigned long long val)
 
   time = vt_pform_wtime();
   cval = OTF_Unsigned2Counter((uint64_t)val);
-  vt_count(&time, cid, cval);
+  vt_count(VT_CURRENT_THREAD, &time, cid, cval);
 
   VT_MEMHOOKS_ON();
 }
@@ -163,7 +164,7 @@ void VT_User_count_float_val__(unsigned int cid, float val)
 
   time = vt_pform_wtime();
   cval = OTF_Float2Counter(val);
-  vt_count(&time, cid, cval);
+  vt_count(VT_CURRENT_THREAD, &time, cid, cval);
 
   VT_MEMHOOKS_ON();
 }
@@ -179,7 +180,7 @@ void VT_User_count_double_val__(unsigned int cid, double val)
 
   time = vt_pform_wtime();
   cval = OTF_Double2Counter(val);
-  vt_count(&time, cid, cval);
+  vt_count(VT_CURRENT_THREAD, &time, cid, cval);
 
   VT_MEMHOOKS_ON();
 }
@@ -188,16 +189,8 @@ void VT_User_count_double_val__(unsigned int cid, double val)
  * Fortran version
  */
 
-void VT_User_count_group_def___f(const char* gname, unsigned int* gid, int nl);
-void VT_User_count_def___f(const char* cname, const char* cunit, int* ctype,
-			   unsigned int* gid, unsigned int* cid,
-			   int nl, int ul);
-void VT_User_count_integer_val___f(unsigned int* cid, int* val);
-void VT_User_count_integer8_val___f(unsigned int* cid, long long* val);
-void VT_User_count_real_val___f(unsigned int* cid, float* val);
-void VT_User_count_double_val___f(unsigned int* cid, double* val);
-
-void VT_User_count_group_def___f(const char* gname, unsigned int* gid, int nl)
+VT_DECLDEF(void VT_User_count_group_def___f(const char* gname,
+					    unsigned int* gid, int nl))
 {
   int namlen;
   char fnambuf[128];
@@ -213,9 +206,10 @@ void VT_User_count_group_def___f(const char* gname, unsigned int* gid, int nl)
 			   (const char* gname, unsigned int* gid, int nl),
 			   (gname, gid, nl))
 
-void VT_User_count_def___f(const char* cname, const char* cunit, int* ctype,
-			   unsigned int* gid, unsigned int* cid,
-			   int nl, int ul)
+VT_DECLDEF(void VT_User_count_def___f(const char* cname, const char* cunit,
+				      int* ctype, unsigned int* gid,
+				      unsigned int* cid,
+				      int nl, int ul))
 {
   int namlen;
   int unilen;
@@ -237,7 +231,7 @@ void VT_User_count_def___f(const char* cname, const char* cunit, int* ctype,
 			   (cname, cunit, ctype, gid, cid, nl, ul))
 
 
-void VT_User_count_integer_val___f(unsigned int* cid, int* val)
+VT_DECLDEF(void VT_User_count_integer_val___f(unsigned int* cid, int* val))
 {
   uint64_t time;
   uint64_t cval;
@@ -248,7 +242,7 @@ void VT_User_count_integer_val___f(unsigned int* cid, int* val)
 
   time = vt_pform_wtime();
   cval = OTF_Signed2Counter((int64_t)(*val));
-  vt_count(&time, *cid, cval);
+  vt_count(VT_CURRENT_THREAD, &time, *cid, cval);
 
   VT_MEMHOOKS_ON();
 } VT_GENERATE_F77_BINDINGS(vt_user_count_integer_val__,
@@ -257,7 +251,8 @@ void VT_User_count_integer_val___f(unsigned int* cid, int* val)
 			   (unsigned int* cid, int* val),
 			   (cid, val))
 
-void VT_User_count_integer8_val___f(unsigned int* cid, long long* val)
+VT_DECLDEF(void VT_User_count_integer8_val___f(unsigned int* cid,
+					       long long* val))
 {
   uint64_t time;
   uint64_t cval;
@@ -268,7 +263,7 @@ void VT_User_count_integer8_val___f(unsigned int* cid, long long* val)
 
   time = vt_pform_wtime();
   cval = OTF_Signed2Counter((int64_t)(*val));
-  vt_count(&time, *cid, cval);
+  vt_count(VT_CURRENT_THREAD, &time, *cid, cval);
 
   VT_MEMHOOKS_ON();
 } VT_GENERATE_F77_BINDINGS(vt_user_count_integer8_val__,
@@ -277,7 +272,7 @@ void VT_User_count_integer8_val___f(unsigned int* cid, long long* val)
 			   (unsigned int* cid, long long* val),
 			   (cid, val))
 
-void VT_User_count_real_val___f(unsigned int* cid, float* val)
+VT_DECLDEF(void VT_User_count_real_val___f(unsigned int* cid, float* val))
 {
   uint64_t time;
   uint64_t cval;
@@ -288,7 +283,7 @@ void VT_User_count_real_val___f(unsigned int* cid, float* val)
 
   time = vt_pform_wtime();
   cval = OTF_Float2Counter(*val);
-  vt_count(&time, *cid, cval);
+  vt_count(VT_CURRENT_THREAD, &time, *cid, cval);
 
   VT_MEMHOOKS_ON();
 } VT_GENERATE_F77_BINDINGS(vt_user_count_real_val__,
@@ -297,7 +292,7 @@ void VT_User_count_real_val___f(unsigned int* cid, float* val)
 			   (unsigned int* cid, float* val),
 			   (cid, val))
 
-void VT_User_count_double_val___f(unsigned int* cid, double* val)
+VT_DECLDEF(void VT_User_count_double_val___f(unsigned int* cid, double* val))
 {
   uint64_t time;
   uint64_t cval;
@@ -308,7 +303,7 @@ void VT_User_count_double_val___f(unsigned int* cid, double* val)
 
   time = vt_pform_wtime();
   cval = OTF_Double2Counter(*val);
-  vt_count(&time, *cid, cval);
+  vt_count(VT_CURRENT_THREAD, &time, *cid, cval);
 
   VT_MEMHOOKS_ON();
 } VT_GENERATE_F77_BINDINGS(vt_user_count_double_val__,

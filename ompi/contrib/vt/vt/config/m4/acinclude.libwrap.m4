@@ -1,7 +1,7 @@
 AC_DEFUN([ACVT_LIBWRAP],
 [
 	libwrap_error="no"
-	check_libwrap="gen libc io"
+	check_libwrap="gen libc io cuda"
 	force_libwrap="no"
 	have_libwrap="no"
 
@@ -9,12 +9,13 @@ AC_DEFUN([ACVT_LIBWRAP],
 	build_libwrapgen="no"
 	force_libcwrap="no"
 	force_iowrap="no"
+	force_cudawrap="no"
 
 	AC_REQUIRE([ACVT_PLATFORM])
 
 	AC_ARG_ENABLE(libtrace,
 		AC_HELP_STRING([--enable-libtrace=LIST],
-			[enable library tracing support (gen,libc,io), default: automatically by configure]),
+			[enable library tracing support (gen,libc,io,cuda), default: automatically by configure]),
 	[
 		AS_IF([test x"$enableval" = "xno"], [check_libwrap="no"])
 		AS_IF([test x"$enableval" = "xyes"], [force_libwrap="yes"])
@@ -32,6 +33,9 @@ AC_DEFUN([ACVT_LIBWRAP],
 						;;
 					io)
 						force_iowrap="yes"
+						;;
+					cuda)
+						force_cudawrap="yes"
 						;;
 					*)
 						AC_MSG_ERROR([value of '--enable-libtrace' not properly set])
@@ -86,6 +90,15 @@ AC_DEFUN([ACVT_LIBWRAP],
 					AS_IF([test x"$have_iowrap" = "xyes"], [have_libwrap="yes"],
 					[
 						AS_IF([test x"$force_iowrap" = "xyes"],
+						[libwrap_error="yes"; break])
+					])
+					;;
+				cuda)
+					ACVT_CONF_SUBTITLE([CUDA])
+					ACVT_CUDAWRAP
+					AS_IF([test x"$have_cudawrap" = "xyes"], [have_libwrap="yes"],
+					[
+						AS_IF([test x"$force_cudawrap" = "xyes"],
 						[libwrap_error="yes"; break])
 					])
 					;;

@@ -1,9 +1,6 @@
 # This file lists all calls, which should not be generated
 # automatically by mk_fortran_wrapper.sh 
 
-MPI_Init
-MPI_Initialized
-MPI_Init_thread
 MPI_Pcontrol
 MPI_Wtick
 MPI_Wtime
@@ -27,3 +24,13 @@ MPI_Win_create_keyval
 
 MPI_Comm_spawn
 MPI_Comm_spawn_multiple
+
+# TODO: Fortran/C conversion of type 'MPI_Datarep_conversion_function'
+MPI_Register_datarep
+
+# conflicting argument types with SGI-MPT (noticed on version 1.26)
+MPI_Grequest_complete
+
+# implemented MPI functions
+MPI_Init
+MPI_Init_thread

@@ -16,7 +16,7 @@ else
 VTDYN =
 endif
 
-if AMBUILDJAVA
+if AMBUILDVTJAVA
 VTJAVA = vtjava
 else
 VTJAVA =
@@ -28,6 +28,18 @@ else
 VTLIBWRAPGEN =
 endif
 
+if AMBUILDVTRUN
+VTRUN = vtrun
+else
+VTRUN =
+endif
+
+if AMBUILDVTSETUP
+VTSETUP = vtsetup
+else
+VTSETUP =
+endif
+
 SUBDIRS = \
 	$(OPARI) \
 	$(VTCPCAVAIL) \
@@ -35,6 +47,8 @@ SUBDIRS = \
 	vtfilter \
 	$(VTJAVA) \
 	$(VTLIBWRAPGEN) \
-        vtunify \
+	$(VTRUN) \
+	$(VTSETUP) \
+	vtunify \
 	vtwrapper
 

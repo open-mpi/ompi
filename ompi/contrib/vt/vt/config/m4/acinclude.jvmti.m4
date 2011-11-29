@@ -22,7 +22,7 @@ AC_DEFUN([ACVT_JVMTI],
 
 	extra_inc_dir=
 	case $PLATFORM in
-		linux)
+		altix | linux)
 			extra_inc_dir=linux
 			;;
 		sun)

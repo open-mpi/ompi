@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -14,6 +14,7 @@
 
 #include "config.h"
 
+#include "vt_defs.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
 #include "vt_libwrap.h"
@@ -138,7 +139,11 @@ void VTLibwrap_create(VTLibwrap** lw, VTLibwrapAttr* lwattr)
       {
         (void)dlerror();
         (*lw)->handlev[i] = dlopen((*lw)->attr->shlibs[i],
-                                   RTLD_LAZY | RTLD_LOCAL);
+                                   RTLD_LAZY | RTLD_LOCAL
+#ifdef _AIX
+                                   | RTLD_MEMBER
+#endif /* _AIX */
+                                  );
         if( (*lw)->handlev[i] == NULL )
         {
           error = 1;
@@ -309,11 +314,11 @@ void VTLibwrap_func_init(const VTLibwrap* lw, const char* func,
       /* register source file, if available */
       if( file != NULL && line > 0 )
       {
-        fid = vt_def_scl_file(file);
+        fid = vt_def_scl_file(VT_CURRENT_THREAD, file);
         lno = line;
       }
       /* register function */
-      *funcid = vt_def_region(func, fid, lno, VT_NO_LNO,
+      *funcid = vt_def_region(VT_CURRENT_THREAD, func, fid, lno, VT_NO_LNO,
                               lw->attr->func_group, VT_FUNCTION);
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
       }
@@ -339,7 +344,7 @@ void VTLibwrap_func_start(const VTLibwrap* lw, const int funcid)
 
   time = vt_pform_wtime();
 
-  (void)vt_enter(&time, funcid);
+  (void)vt_enter(VT_CURRENT_THREAD, &time, funcid);
 
   VT_MEMHOOKS_ON();
 }
@@ -358,7 +363,7 @@ void VTLibwrap_func_end(const VTLibwrap* lw, const int funcid)
 
   time = vt_pform_wtime();
 
-  vt_exit(&time);
+  vt_exit(VT_CURRENT_THREAD, &time);
 
   VT_MEMHOOKS_ON();
 }

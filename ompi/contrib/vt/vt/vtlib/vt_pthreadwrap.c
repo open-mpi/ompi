@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -18,7 +18,6 @@
 
 #include "vt_defs.h"
 #include "vt_error.h"
-#include "vt_inttypes.h"
 #include "vt_pform.h"
 #include "vt_pthreadreg.h"
 #include "vt_thrd.h"
@@ -29,10 +28,10 @@ VT_DECLDEF(_rtype VT_ ## _fname ## __ _defarg) {                \
    _rtype rc; uint64_t time;                                    \
    if (vt_init) { vt_init = 0; vt_open(); }                     \
    time = vt_pform_wtime();                                     \
-   vt_enter(&time, vt_pthread_regid[_fidx]);                    \
+   vt_enter(VT_CURRENT_THREAD, &time, vt_pthread_regid[_fidx]); \
    rc = _fname _callargs;                                       \
    time = vt_pform_wtime();                                     \
-   vt_exit(&time);                                              \
+   vt_exit(VT_CURRENT_THREAD, &time);                           \
    return rc;                                                   \
 }
 
@@ -41,10 +40,10 @@ VT_DECLDEF(void VT_ ## _fname ## __ _defarg) {                  \
    uint64_t time;                                               \
    if (vt_init) { vt_init = 0; vt_open(); }                     \
    time = vt_pform_wtime();                                     \
-   vt_enter(&time, vt_pthread_regid[_fidx]);                    \
+   vt_enter(VT_CURRENT_THREAD, &time, vt_pthread_regid[_fidx]); \
    _fname _callargs;                                            \
    time = vt_pform_wtime();                                     \
-   vt_exit(&time);                                              \
+   vt_exit(VT_CURRENT_THREAD, &time);                           \
 }
 
 static int vt_init = 1; /* is initialization needed? */
@@ -96,7 +95,7 @@ VT_DECLDEF(int VT_pthread_create__(pthread_t* thread,
   }
 
   time = vt_pform_wtime();
-  vt_enter(&time, vt_pthread_regid[VT__PTHREAD_CREATE]);
+  vt_enter(VT_CURRENT_THREAD, &time, vt_pthread_regid[VT__PTHREAD_CREATE]);
 
   pack = (struct vt_pthread_pack_struct*)malloc(
            sizeof(struct vt_pthread_pack_struct));
@@ -110,7 +109,7 @@ VT_DECLDEF(int VT_pthread_create__(pthread_t* thread,
   rc = pthread_create(thread, attr, vt_pthread_function, (void*)pack);
 
   time = vt_pform_wtime();
-  vt_exit(&time);
+  vt_exit(VT_CURRENT_THREAD, &time);
 
   return rc;
 }
@@ -135,14 +134,14 @@ VT_DECLDEF(void VT_pthread_exit__(void* value_ptr))
   }
 
   time = vt_pform_wtime();
-  vt_enter(&time, vt_pthread_regid[VT__PTHREAD_EXIT]);
+  vt_enter(VT_CURRENT_THREAD, &time, vt_pthread_regid[VT__PTHREAD_EXIT]);
 
   /* shutdown call stack */
   stack_level = VTTHRD_STACK_LEVEL(VTThrdv[VT_MY_THREAD]);
   for(i = stack_level; i > 0; i--)
   {
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
 
   pthread_exit(value_ptr);

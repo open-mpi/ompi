@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -40,9 +40,6 @@ static int dyn_init = 1;       /* is initialization needed? */
 typedef struct HN {
   size_t id;          /* hash code (address of function) */
   uint32_t vtid;      /* associated region identifier    */
-  char* func;
-  char* file;
-  int lno;
   struct HN* next;
 } HashNode;
 
@@ -88,16 +85,23 @@ static HashNode* hash_get(size_t h) {
 static HashNode *register_region(size_t addr, char* func, char* file, int lno) {
   uint32_t rid;
   uint32_t fid;
-  HashNode* nhn;
 
-  /* -- register file and region and store region identifier -- */
-  fid = vt_def_scl_file(file);
-  rid = vt_def_region(func, fid, lno, VT_NO_LNO, NULL, VT_FUNCTION);
-  nhn = hash_put(addr, rid);
-  nhn->func = strdup(func);
-  nhn->file = strdup(file);
-  nhn->lno  = lno;
-  return nhn;
+  /* -- register file if available -- */
+  if( file[0] )
+  {
+    fid = vt_def_scl_file(VT_CURRENT_THREAD, file);
+  }
+  else
+  {
+    fid = VT_NO_ID;
+    lno = VT_NO_LNO;
+  }
+
+  /* -- register region and store region identifier -- */
+  rid = vt_def_region(VT_CURRENT_THREAD, func, fid, lno, VT_NO_LNO, NULL,
+                      VT_FUNCTION);
+
+  return hash_put(addr, rid);
 }
 
 void VT_Dyn_start(void* addr, char* name, char* fname, int lno);
@@ -126,6 +130,9 @@ void VT_Dyn_start(void* addr, char* name, char* fname, int lno)
     VT_MEMHOOKS_ON();
   }
 
+  /* -- if VampirTrace already finalized, return -- */
+  if ( !vt_is_alive ) return;
+
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
@@ -144,7 +151,7 @@ void VT_Dyn_start(void* addr, char* name, char* fname, int lno)
   }
 
   /* -- write enter record -- */
-  vt_enter(&time, hn->vtid);
+  vt_enter(VT_CURRENT_THREAD, &time, hn->vtid);
 
   VT_MEMHOOKS_ON();
 }
@@ -166,7 +173,7 @@ void VT_Dyn_end(void* addr)
 
   /* -- write exit record -- */
   if ( hash_get((size_t) addr) )
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
 
   VT_MEMHOOKS_ON();
 }
@@ -194,14 +201,14 @@ void sig_usr2_handler(int signum)
 }
 
 /*
- * This function is called by the shared dyninst attach library (vt.dynatt)
+ * This function is called by the shared dyninst attach library (libvt-dynatt)
  */
 
 void VT_Dyn_attach()
 {
   int mutatee_pid = getpid();
-  
-  vt_cntl_msg(1, "Attaching instrumentor at pid %i ...", mutatee_pid);
+
+  vt_cntl_msg(1, "Attaching instrumentor to PID %i ...", mutatee_pid);
 
   /* Install signal handler for continue execution (SIGUSR1)
      and abort execution (SIGUSR2)
@@ -211,6 +218,11 @@ void VT_Dyn_attach()
 
   if( signal(SIGUSR2, sig_usr2_handler) == SIG_ERR )
     vt_error_msg("Could not install handler for signal SIGUSR2");
+
+  /* The dyninst attach library (libvt-dynatt) could be set by LD_PRELOAD.
+     Unset this environment variable to avoid recursion. */
+  putenv((char*)"LD_PRELOAD=");
+  putenv((char*)"DYLD_INSERT_LIBRARIES="); /* equivalent on MacOS */
 
   /* Attach dyninst instrumentor on running executable
    */
@@ -225,7 +237,7 @@ void VT_Dyn_attach()
     {
       int rc;
       char cmd[1024];
-      char* blist = vt_env_dyn_blacklist();
+      char* filter = vt_env_filter_spec();
       char* shlibs = vt_env_dyn_shlibs();
       char* shlibs_arg = NULL;
       char* mutatee_path = NULL;
@@ -244,35 +256,38 @@ void VT_Dyn_attach()
        */
       if ( shlibs && strlen(shlibs) > 0 )
       {
-	char* tk;
-	shlibs_arg = (char*)calloc(strlen(shlibs)+2, sizeof(char));
-	tk = strtok( shlibs, ":" );
-	do
-	{
-	   strcat(shlibs_arg, tk);
-	   strcat(shlibs_arg, ",");
-	} while( (tk = strtok( 0, ":" )) );
-	shlibs_arg[strlen(shlibs_arg)-1] = '\0';
+        char* tk;
+        shlibs_arg = (char*)calloc(strlen(shlibs)+2, sizeof(char));
+        tk = strtok( shlibs, ":" );
+        do
+        {
+           strcat(shlibs_arg, tk);
+           strcat(shlibs_arg, ",");
+        } while( (tk = strtok( 0, ":" )) );
+        shlibs_arg[strlen(shlibs_arg)-1] = '\0';
       }
 
-      sprintf(cmd, "%s/vtdyn %s %s %s %s %s -p %i %s",
-	      vt_installdirs_get(VT_INSTALLDIR_BINDIR),
-	      (vt_env_verbose() >= 2) ? "-v" : "",
-	      blist ? "-b" : "", blist ? blist : "",
-	      shlibs_arg ? "-s" : "", shlibs_arg ? shlibs_arg : "",
-	      mutatee_pid,
-	      mutatee_path ? mutatee_path : "");
+      snprintf(cmd, sizeof(cmd)-1, "%s/vtdyn %s %s %s %s %s %s %s -p %i %s",
+              vt_installdirs_get(VT_INSTALLDIR_BINDIR),
+              (vt_env_verbose() == 0) ? "-q" : "",
+              (vt_env_verbose() >= 2) ? "-v" : "",
+              filter ? "-f" : "", filter ? filter : "",
+              shlibs_arg ? "-s" : "", shlibs_arg ? shlibs_arg : "",
+              (vt_env_dyn_ignore_nodbg()) ? "--ignore-nodbg" : "",
+              mutatee_pid,
+              mutatee_path ? mutatee_path : "");
 
       if ( shlibs_arg )
-	free(shlibs_arg);
+        free(shlibs_arg);
 
       /* Start mutator (instrumentor) */
+      vt_cntl_msg(2, "Executing %s", cmd);
       rc = system(cmd);
 
       /* Kill mutatee, if an error occurred during attaching
        */
       if(rc != 0)
-	kill(mutatee_pid, SIGUSR2);
+        kill(mutatee_pid, SIGUSR2);
 
       exit(rc);
 
@@ -280,26 +295,23 @@ void VT_Dyn_attach()
     }
     default:
     {
-      /* disable unifying local traces */
-      putenv((char*)"VT_UNIFY=no");
-      
       /* Wait until mutator send signal to continue execution
        */
       vt_cntl_msg(1, "[%i]: Wait until instrumentation is done ...",
-		  mutatee_pid);
+                  mutatee_pid);
 
       do { sleep(1); } while(mutatee_cont == 0);
-      
+
       if ( !mutator_error )
       {
-	/* Restore original signal handler
-	 */
-	signal(SIGUSR1, SIG_DFL);
-	signal(SIGUSR2, SIG_DFL);
+        /* Restore original signal handler
+         */
+        signal(SIGUSR1, SIG_DFL);
+        signal(SIGUSR2, SIG_DFL);
       }
       else
       {
-	vt_error_msg("An error occurred during instrumenting");
+        vt_error_msg("An error occurred during instrumenting");
       }
 
       break;
@@ -318,8 +330,6 @@ void VT_Dyn_finalize()
   for ( i = 0; i < HASH_MAX; i++ )
   {
     if ( htab[i] ) {
-      free(htab[i]->func);
-      free(htab[i]->file);
       free(htab[i]);
       htab[i] = NULL;
     }

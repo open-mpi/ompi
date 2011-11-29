@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -15,14 +15,13 @@
 #include <malloc.h>
 #include <stdlib.h>
 
+#include "vt_defs.h"
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
-
-#include "otf.h"
 
 #define MEMHOOK_REG_MALLOC  0
 #define MEMHOOK_REG_REALLOC 1
@@ -71,32 +70,35 @@ void vt_memhook_init()
   vt_free_hook_org = __free_hook;
 
   /* define source */
-  fid = vt_def_scl_file("MEM");
+  fid = vt_def_scl_file(VT_CURRENT_THREAD, "MEM");
 
   /* define regions */
   memhook_regid[MEMHOOK_REG_MALLOC] =
-    vt_def_region("malloc", fid, VT_NO_LNO, VT_NO_LNO, NULL, VT_MEMORY);
+    vt_def_region(VT_CURRENT_THREAD, "malloc", fid, VT_NO_LNO, VT_NO_LNO, NULL,
+                  VT_MEMORY);
   memhook_regid[MEMHOOK_REG_REALLOC] =
-    vt_def_region("realloc", fid, VT_NO_LNO, VT_NO_LNO, NULL, VT_MEMORY);
+    vt_def_region(VT_CURRENT_THREAD, "realloc", fid, VT_NO_LNO, VT_NO_LNO, NULL,
+                  VT_MEMORY);
   memhook_regid[MEMHOOK_REG_FREE] =
-    vt_def_region("free", fid, VT_NO_LNO, VT_NO_LNO, NULL, VT_MEMORY);
+    vt_def_region(VT_CURRENT_THREAD, "free", fid, VT_NO_LNO, VT_NO_LNO, NULL,
+                  VT_MEMORY);
 
   /* define markers, if necessary */
   if( (memalloc_marker = vt_env_memtrace_marker()) )
   {
     memalloc_mid[MEMHOOK_MARK_ALLOC] =
-      vt_def_marker("Memory Allocation", OTF_MARKER_TYPE_HINT);
+      vt_def_marker(VT_CURRENT_THREAD, "Memory Allocation", VT_MARKER_HINT);
     memalloc_mid[MEMHOOK_MARK_FREE] =
-      vt_def_marker("Memory Deallocation", OTF_MARKER_TYPE_HINT);
+      vt_def_marker(VT_CURRENT_THREAD, "Memory Deallocation", VT_MARKER_HINT);
   }
 
   /* define counter group */
-  gid = vt_def_counter_group("Memory");
+  gid = vt_def_counter_group(VT_CURRENT_THREAD, "Memory");
 
   /* define counter */
   memalloc_cid =
-    vt_def_counter("MEM_ALLOC",
-                   OTF_COUNTER_TYPE_ABS|OTF_COUNTER_SCOPE_NEXT,
+    vt_def_counter(VT_CURRENT_THREAD, "MEM_ALLOC",
+                   VT_CNTR_ABS | VT_CNTR_NEXT,
                    gid, "Bytes");
 
   vt_memhook_is_initialized = 1;
@@ -124,7 +126,8 @@ void* vt_malloc_hook(size_t size, const void* caller)
   VT_MEMHOOKS_OFF(); /* restore original hooks */
 
   time = vt_pform_wtime();
-  was_recorded = vt_enter(&time, memhook_regid[MEMHOOK_REG_MALLOC]);
+  was_recorded = vt_enter(VT_CURRENT_THREAD, &time,
+                          memhook_regid[MEMHOOK_REG_MALLOC]);
 
   result = malloc(size); /* call recursively */
 
@@ -148,15 +151,15 @@ void* vt_malloc_hook(size_t size, const void* caller)
     /* write marker, if desired */
     if( memalloc_marker )
     {
-      vt_marker(&time, memalloc_mid[MEMHOOK_MARK_ALLOC],
+      vt_marker(VT_CURRENT_THREAD, &time, memalloc_mid[MEMHOOK_MARK_ALLOC],
                 "Allocated %llu Bytes", (unsigned long long)bytes);
     }
 
     /* write counter value */
-    vt_count(&time, memalloc_cid, memalloc_val);
+    vt_count(VT_CURRENT_THREAD, &time, memalloc_cid, memalloc_val);
   }
 
-  vt_exit(&time);
+  vt_exit(VT_CURRENT_THREAD, &time);
 
   VT_MEMHOOKS_ON(); /* restore our own hooks */
 
@@ -175,7 +178,8 @@ void* vt_realloc_hook(void* ptr, size_t size, const void* caller)
   VT_MEMHOOKS_OFF(); /* restore original hooks */
 
   time = vt_pform_wtime();
-  was_recorded = vt_enter(&time, memhook_regid[MEMHOOK_REG_REALLOC]);
+  was_recorded = vt_enter(VT_CURRENT_THREAD, &time,
+                          memhook_regid[MEMHOOK_REG_REALLOC]);
 
   /* get total allocated memory before realloc */
   if ( NULL != ptr )
@@ -235,15 +239,15 @@ void* vt_realloc_hook(void* ptr, size_t size, const void* caller)
       }
 
       /* write marker */
-      vt_marker(&time, memalloc_mid[marker_type], "%s %llu Bytes",
-                marker_prefix, (unsigned long long)bytes);
+      vt_marker(VT_CURRENT_THREAD, &time, memalloc_mid[marker_type],
+                "%s %llu Bytes", marker_prefix, (unsigned long long)bytes);
     }
 
     /* write counter value */
-    vt_count(&time, memalloc_cid, memalloc_val);
+    vt_count(VT_CURRENT_THREAD, &time, memalloc_cid, memalloc_val);
   }
 
-  vt_exit(&time);
+  vt_exit(VT_CURRENT_THREAD, &time);
 
   VT_MEMHOOKS_ON(); /* restore our own hooks */
 
@@ -259,7 +263,8 @@ void vt_free_hook(void* ptr, const void* caller)
   VT_MEMHOOKS_OFF(); /* restore original hooks */
 
   time = vt_pform_wtime();
-  was_recorded = vt_enter(&time, memhook_regid[MEMHOOK_REG_FREE]);
+  was_recorded = vt_enter(VT_CURRENT_THREAD, &time,
+                          memhook_regid[MEMHOOK_REG_FREE]);
 
   if ( NULL != ptr )
   {
@@ -285,15 +290,15 @@ void vt_free_hook(void* ptr, const void* caller)
     /* write marker, if desired */
     if( memalloc_marker )
     {
-      vt_marker(&time, memalloc_mid[MEMHOOK_MARK_FREE],
+      vt_marker(VT_CURRENT_THREAD, &time, memalloc_mid[MEMHOOK_MARK_FREE],
                 "Freed %llu Bytes", (unsigned long long)bytes);
     }
 
     /* write counter value */
-    vt_count(&time, memalloc_cid, memalloc_val);
+    vt_count(VT_CURRENT_THREAD, &time, memalloc_cid, memalloc_val);
   }
 
-  vt_exit(&time);
+  vt_exit(VT_CURRENT_THREAD, &time);
 
   VT_MEMHOOKS_ON(); /* restore our own hooks */
 }

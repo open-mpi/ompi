@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -47,6 +47,7 @@ static struct install_dirs_struct
   char* LIBDIR;
   char* DATADIR;
   char* DATAROOTDIR;
+  char* DOCDIR;
   char* SYSCONFDIR;
 } install_dirs;
 
@@ -91,6 +92,11 @@ char* vt_installdirs_get( VTInstallDirT type )
     case VT_INSTALLDIR_DATAROOTDIR:
     {
       GETDIR( DATAROOTDIR, ret );
+      break;
+    }
+    case VT_INSTALLDIR_DOCDIR:
+    {
+      GETDIR( DOCDIR, ret );
       break;
     }
     case VT_INSTALLDIR_SYSCONFDIR:
@@ -143,6 +149,8 @@ char* vt_installdirs_expand(const char* input)
       insert = vt_installdirs_get( VT_INSTALLDIR_DATADIR );
     else if( strncmp( start, "${datarootdir}", 14 ) == 0 )
       insert = vt_installdirs_get( VT_INSTALLDIR_DATAROOTDIR );
+    else if( strncmp( start, "${docdir}", 9 ) == 0 )
+      insert = vt_installdirs_get( VT_INSTALLDIR_DOCDIR );
     else if( strncmp( start, "${sysconfdir}", 13 ) == 0 )
       insert = vt_installdirs_get( VT_INSTALLDIR_SYSCONFDIR );
     else

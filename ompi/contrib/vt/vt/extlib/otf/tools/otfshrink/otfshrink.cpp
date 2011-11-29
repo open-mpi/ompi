@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Denis Huenich, Johannes Spazier
 */
 
@@ -15,12 +15,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "OTF_Platform.h"
 
 #include "Handler.h"
 
-#define MAX_L	4
+#define MAX_L	10
 #define LIST_MODE 0
 #define RANGE_MODE 1
 #define TABLE_MODE 2
@@ -35,6 +36,7 @@
 "                                                                  \n" \
 "  options:                                                        \n" \
 "      -h, --help    show this help message                        \n" \
+"      -V            show OTF version                              \n" \
 "      -i <file>     specify the input trace file                  \n" \
 "      -o <file>     specify the output file                       \n" \
 "      -l <list>     a space-separated list of processes           \n" \
@@ -49,7 +51,7 @@
 "                    defaut: range                                 \n" \
 "                                                                  \n" \
 
-map<int, bool> cpuMap;
+map<uint32_t, bool> cpuMap;
 
 int write_master(string input, string output, bool invers, bool show, int sim_mode);
 int display_processes(firstarg *first, int sim_mode);
@@ -86,13 +88,18 @@ int main (int argc, char* argv[]) {
 			cout << HELPTEXT << endl;
 			return 0;
 
+		} else if ( 0 == strcmp( "-V", argv[i] ) ) {
+
+			printf( "%u.%u.%u \"%s\"\n", OTF_VERSION_MAJOR, OTF_VERSION_MINOR,
+				OTF_VERSION_SUB, OTF_VERSION_STRING);
+			exit( 0 );
+
 		} else if ( 0 == strcmp("-l", argv[i]) ) {
 			bool is_hyphen = false;
-			char min[MAX_L + 1];
-			char max[MAX_L + 1];
-			int count;
-			int left;
-			int right;
+            string min;
+			string max;
+			uint32_t left;
+			uint32_t right;
 
 			if ( ((i+1) >= argc) || ( argv[i+1][0] == '-') ) {
 				cerr << "At least one argument expected after " << arg << endl;
@@ -103,26 +110,20 @@ int main (int argc, char* argv[]) {
 				if ( argv[i+1][0] == '-' ) break;
 				i++;
 
-				memset(max, '\0', MAX_L + 1);
-				memset(min, '\0', MAX_L + 1);
-				count = 0;
 				is_hyphen = false;
+                min = "";
+                max = "";
 				for (uint32_t j = 0; j < strlen(argv[i]); j++) {
 					if ( argv[i][j] > 47 && argv[i][j] < 58 ) {
-						if (count >= MAX_L ) {
-							cerr << "Error: CPU can be " << MAX_L << "-digit at most." << endl;
-							return 1;
-						}
 						if ( is_hyphen ) {
-							max[count] =argv[i][j];
+                            max += argv[i][j];
 						} else {
-							min[count] =argv[i][j];
+                            min += argv[i][j];
 						}
-						count++;
 
 					} else if ( (argv[i][j] == '-') && (is_hyphen == false) && (argv[i][j+1] != '\0') ) {
 						is_hyphen = true;
-						count = 0;
+                        max = "";
 
 					} else {
 						cerr << "Error: Wrong argument after " << arg << endl;
@@ -130,21 +131,23 @@ int main (int argc, char* argv[]) {
 					}
 				}
 
-				left = atoi(min);
-				right = atoi(max);
+                sscanf( min.c_str(), "%u", &left );
+                if( max != "") {
+                    sscanf( max.c_str(), "%u", &right );
+                }
 
 				if ( ! is_hyphen ) {
 					right = left;
 				}
-
+                
 				if ( left > right ) {
 					int tmp = left;
 					left = right;
 					right = tmp;
 				}
 
-				for ( int k = left; k <= right; k++ ) {
-					cpuMap[k] = enable;
+				for ( uint64_t k = left; k <= right; k++ ) {
+					cpuMap[ (uint32_t)k ] = enable;
 				}
 			}
 
@@ -378,7 +381,7 @@ int write_master(string input, string output, bool invers, bool show, int sim_mo
 		}
 
 		/* create symbolic links */
-		snprintf(ch_i, MAX_L, "%x", i+1);
+		sprintf(ch_i, "%x", i+1);
 		
 		for(int k = 0; k < 4; k++) {
 			

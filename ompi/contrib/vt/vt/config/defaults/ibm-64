@@ -1,4 +1,5 @@
 AR="ar -X64"
+NM="nm -B -X64"
 CC="xlc_r"
 CXX="xlC_r"
 F77="xlf_r"

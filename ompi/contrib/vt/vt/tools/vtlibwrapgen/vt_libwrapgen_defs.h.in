@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -15,6 +15,7 @@
 #ifndef _VT_LIBWRAPGEN_DEFS_H_
 #define _VT_LIBWRAPGEN_DEFS_H_
 
+#define VT_LIBWRAPGEN_VERSION                   "@PACKAGE_VERSION@"
 #define VT_LIBWRAPGEN_DEFAULT_OUTPUT_SRC_FILE   "wrap.c"
 #define VT_LIBWRAPGEN_DEFAULT_OUTPUT_LIB_PREFIX "libwrap"
 #define VT_LIBWRAPGEN_DEFAULT_LIBTOOL           "${datadir}/libtool"

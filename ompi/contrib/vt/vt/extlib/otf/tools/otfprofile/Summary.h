@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Denis Huenich, Johannes Spazier
 */
 
@@ -13,6 +13,7 @@
 #include <stack>
 #include <list>
 
+
 #include "OTF_inttypes.h"
 #include "otf.h"
 
@@ -20,6 +21,11 @@
 #include "DataStructure.h"
 
 using namespace std;
+
+
+/* global variable to switch operation mode, see '-lite' command line switch */
+extern bool lite;
+
 
 struct global_data;
 
@@ -103,6 +109,7 @@ class Process
 			uint32_t length;
 		};
 
+		/* not used in lite mode */
 		map<uint32_t, list<send_str> > recv_map;
 };
 
@@ -182,6 +189,7 @@ inline uint64_t Process::get_proc_end()
 
 inline void Process::clear_recv_map(int i)
 {
+
 	recv_map[i].clear();
 }
 

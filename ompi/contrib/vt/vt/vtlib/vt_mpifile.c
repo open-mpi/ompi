@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -10,9 +10,13 @@
  * See the file COPYING in the package base directory for details
  **/
 
+#include "config.h"
+
+#include "vt_defs.h"
 #include "vt_error.h"
 #include "vt_trc.h"
 #include "vt_mpifile.h"
+#include "vt_thrd.h"
 
 #include "util/hash.h"
 
@@ -74,15 +78,19 @@ static uint32_t mpifile_gid;
 static int mpifile_initialized = 0;
 
 /* Save the mapping fh-->id */
-static void store_id( const MPI_File fh, const uint32_t id )
+static vt_mpifile_data* store_id( const MPI_File fh, const uint32_t id )
 {
+  struct mpifh_fid_map *newentry;
   if( nfiles >= nmaxfiles ) 
     vt_error_msg( "Too many MPI_File handles" );
 
   /* nfiles is always the index to the next free entry */
-  mpifh_fid_map[nfiles].mpifh = fh;
-  mpifh_fid_map[nfiles].file_data.fid = id;
+  newentry = &(mpifh_fid_map[nfiles]);
+  newentry->mpifh = fh;
+  newentry->file_data.fid = id;
+  newentry->file_data.handle = VTTHRD_IO_NEXT_HANDLE(VTTHRD_MY_VTTHRD);
   nfiles++;
+  return &(newentry->file_data);
 }
 
 void vt_mpifile_init()
@@ -91,7 +99,7 @@ void vt_mpifile_init()
   {
     struct rlimit rl;
 
-    mpifile_gid = vt_def_file_group( "MPI I/O" );
+    mpifile_gid = vt_def_file_group( VT_CURRENT_THREAD, "MPI I/O" );
     if( getrlimit(RLIMIT_NOFILE, &rl) )
       vt_error_msg( "getrlimit() failed reading max no. of open files" );
     nmaxfiles = (rl.rlim_cur == RLIM_INFINITY) ? 131072 : (int)rl.rlim_cur;
@@ -128,25 +136,12 @@ void vt_mpifile_finalize()
   mpifile_initialized = 0;
 }
 
-/* Return file id for the given fh */
-uint32_t vt_mpifile_get_id( const MPI_File fh )
-{
-  int i = 0;
-
-  while( (i < nfiles) && (fh != mpifh_fid_map[i].mpifh) )
-    i++;
-
-  if( i < nfiles )
-    return mpifh_fid_map[i].file_data.fid;
-  else {
-    vt_error_msg("vt_mpifile_get_id: Cannot find file handle");
-    return 0;
-  }
-}
-
 /* Return complete data for the given fh */
 vt_mpifile_data* vt_mpifile_get_data( const MPI_File fh )
 {
+  /* TODO: This should really be another container when many open files exist.
+   * The list implies O(n) complexity for lookups!
+   */
   int i = 0;
   struct mpifh_fid_map *m = mpifh_fid_map;
 
@@ -160,7 +155,7 @@ vt_mpifile_data* vt_mpifile_get_data( const MPI_File fh )
     return &(m->file_data);
   else {
     vt_error_msg("vt_mpifile_get_data: Cannot find file handle");
-    return 0;
+    return NULL;
   }
 }
 
@@ -176,7 +171,7 @@ uint32_t vt_mpifilename_get_id( const char* fname )
   if( entry )
     return entry->fid;
   else {
-    uint32_t fid = vt_def_file( fname, mpifile_gid );
+    uint32_t fid = vt_def_file( VT_CURRENT_THREAD, fname, mpifile_gid );
     hash_put( fname, fid );
     return fid;
   }
@@ -208,7 +203,7 @@ uint32_t vt_mpifile_free( const MPI_File fh )
  * the given fh to the file id
  * Returns: file id
  */
-uint32_t vt_mpifile_create( const MPI_File fh, const char* fname )
+vt_mpifile_data* vt_mpifile_create( const MPI_File fh, const char* fname )
 {
   uint32_t fid;
   HashNode_file* entry;
@@ -218,12 +213,10 @@ uint32_t vt_mpifile_create( const MPI_File fh, const char* fname )
   if( entry )
     fid = entry->fid;
   else {
-    fid = vt_def_file( fname, mpifile_gid );
+    fid = vt_def_file( VT_CURRENT_THREAD, fname, mpifile_gid );
     hash_put( fname, fid );
   }
 
   /* save mapping fh-->fid */
-  store_id( fh, fid );
-
-  return fid;
+  return store_id( fh, fid );
 }

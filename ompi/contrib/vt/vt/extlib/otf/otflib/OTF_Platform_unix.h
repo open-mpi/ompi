@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -38,13 +38,10 @@
 
 #if !(defined(HAVE_FSEEKO) && HAVE_FSEEKO)
 #	undef fseeko
-#	define fseeko fseek
-#endif /* HAVE_FSEEKO */
-
-#if !(defined(HAVE_FTELLO) && HAVE_FTELLO)
 #	undef ftello
+#	define fseeko fseek
 #	define ftello ftell
-#endif /* HAVE_FTELLO */
+#endif /* HAVE_FSEEKO */
 
 #if !(defined(HAVE_ASPRINTF) && HAVE_ASPRINTF)
 #	undef asprintf

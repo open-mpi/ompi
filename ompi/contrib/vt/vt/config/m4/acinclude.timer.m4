@@ -105,6 +105,12 @@ AC_DEFUN([ACVT_TIMER],
 			timer=TIMER_DCLOCK
 		])])])
 		;;
+	crayxe)
+		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])
+		AC_DEFINE([TIMER_CYCLE_COUNTER], [2], [Cycle counter (e.g. TSC)])
+		AC_DEFINE([TIMER_GETTIMEOFDAY], [3], [Use `gettimeofday' function])
+		timer=TIMER_CYCLE_COUNTER
+		;;
 	origin)
 		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])
 		timer=TIMER_CLOCK_GETTIME

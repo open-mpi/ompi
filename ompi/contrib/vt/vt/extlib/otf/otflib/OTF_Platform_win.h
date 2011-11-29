@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -26,6 +26,10 @@ extern "C" {
 
 #	define HAVE_IO_H
 #	define HAVE_ZLIB
+
+#	ifndef PATH_MAX
+#		define PATH_MAX 255
+#	endif
 
 #	define OTF_PATH_MAX PATH_MAX
 

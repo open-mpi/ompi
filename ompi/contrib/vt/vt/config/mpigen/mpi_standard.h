@@ -40,8 +40,8 @@ VT_MPI_INT MPI_Address(void* location, MPI_Aint* address_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Allgather(void* sendbuf_CLASS_BUFFER_IN_PLACE, VT_MPI_INT sendcount, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER, VT_MPI_INT recvcount, MPI_Datatype recvtype, MPI_Comm comm); /*COLL_ALL2ALL*/
 VT_MPI_INT MPI_Allgatherv(void* sendbuf_CLASS_BUFFER_IN_PLACE, VT_MPI_INT sendcount, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER, VT_MPI_INT* recvcounts, VT_MPI_INT* displs, MPI_Datatype recvtype, MPI_Comm comm); /*COLL_ALL2ALL*/
 VT_MPI_INT MPI_Allreduce(void* sendbuf_CLASS_BUFFER_IN_PLACE, void* recvbuf_CLASS_BUFFER, VT_MPI_INT count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm); /*COLL_ALL2ALL*/
-VT_MPI_INT MPI_Alltoall(void* sendbuf_CLASS_BUFFER_IN_PLACE, VT_MPI_INT sendcount, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER, VT_MPI_INT recvcount, MPI_Datatype recvtype, MPI_Comm comm); /*COLL_ALL2ALL*/
-VT_MPI_INT MPI_Alltoallv(void* sendbuf_CLASS_BUFFER_IN_PLACE, VT_MPI_INT* sendcounts, VT_MPI_INT* sdispls, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER, VT_MPI_INT* recvcounts, VT_MPI_INT* rdispls, MPI_Datatype recvtype, MPI_Comm comm); /*COLL_ALL2ALL*/
+VT_MPI_INT MPI_Alltoall(void* sendbuf_CLASS_BUFFER, VT_MPI_INT sendcount, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER, VT_MPI_INT recvcount, MPI_Datatype recvtype, MPI_Comm comm); /*COLL_ALL2ALL*/
+VT_MPI_INT MPI_Alltoallv(void* sendbuf_CLASS_BUFFER, VT_MPI_INT* sendcounts, VT_MPI_INT* sdispls, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER, VT_MPI_INT* recvcounts, VT_MPI_INT* rdispls, MPI_Datatype recvtype, MPI_Comm comm); /*COLL_ALL2ALL*/
 VT_MPI_INT MPI_Attr_delete(MPI_Comm comm, VT_MPI_INT keyval);
 VT_MPI_INT MPI_Attr_get(MPI_Comm comm, VT_MPI_INT keyval, void* attribute_val, VT_MPI_INT* flag);
 VT_MPI_INT MPI_Attr_put(MPI_Comm comm, VT_MPI_INT keyval, void* attribute_val);
@@ -129,8 +129,8 @@ VT_MPI_INT MPI_Request_free(MPI_Request* request_CLASS_SINGLE_IO);
 VT_MPI_INT MPI_Rsend(void* buf_CLASS_BUFFER, VT_MPI_INT count, MPI_Datatype datatype, VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm);
 VT_MPI_INT MPI_Rsend_init(void* buf_CLASS_BUFFER, VT_MPI_INT count, MPI_Datatype datatype, VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm, MPI_Request* request_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Scan(void* sendbuf_CLASS_BUFFER_IN_PLACE, void* recvbuf_CLASS_BUFFER, VT_MPI_INT count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm); /*COLL_OTHER*/
-VT_MPI_INT MPI_Scatter(void* sendbuf_CLASS_BUFFER_IN_PLACE, VT_MPI_INT sendcount, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER, VT_MPI_INT recvcount, MPI_Datatype recvtype, VT_MPI_INT root, MPI_Comm comm); /*COLL_ONE2ALL*/
-VT_MPI_INT MPI_Scatterv(void* sendbuf_CLASS_BUFFER_IN_PLACE, VT_MPI_INT* sendcounts, VT_MPI_INT* displs, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER, VT_MPI_INT recvcount, MPI_Datatype recvtype, VT_MPI_INT root, MPI_Comm comm); /*COLL_ONE2ALL*/
+VT_MPI_INT MPI_Scatter(void* sendbuf_CLASS_BUFFER, VT_MPI_INT sendcount, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER_IN_PLACE, VT_MPI_INT recvcount, MPI_Datatype recvtype, VT_MPI_INT root, MPI_Comm comm); /*COLL_ONE2ALL*/
+VT_MPI_INT MPI_Scatterv(void* sendbuf_CLASS_BUFFER, VT_MPI_INT* sendcounts, VT_MPI_INT* displs, MPI_Datatype sendtype, void* recvbuf_CLASS_BUFFER_IN_PLACE, VT_MPI_INT recvcount, MPI_Datatype recvtype, VT_MPI_INT root, MPI_Comm comm); /*COLL_ONE2ALL*/
 VT_MPI_INT MPI_Send(void* buf_CLASS_BUFFER, VT_MPI_INT count, MPI_Datatype datatype, VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm);
 VT_MPI_INT MPI_Send_init(void* buf_CLASS_BUFFER, VT_MPI_INT count, MPI_Datatype datatype, VT_MPI_INT dest, VT_MPI_INT tag, MPI_Comm comm, MPI_Request* request_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Sendrecv(void* sendbuf_CLASS_BUFFER, VT_MPI_INT sendcount, MPI_Datatype sendtype, VT_MPI_INT dest, VT_MPI_INT sendtag, void* recvbuf_CLASS_BUFFER, VT_MPI_INT recvcount, MPI_Datatype recvtype, VT_MPI_INT source, VT_MPI_INT recvtag, MPI_Comm comm, MPI_Status* status_CLASS_SINGLE_OUT);

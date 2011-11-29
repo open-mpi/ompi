@@ -4,9 +4,6 @@ AC_DEFUN([ACVT_ZLIB],
 	check_zlib="yes"
         force_zlib="no"
 	have_zlib="no"
-	zlib_dir_withval=
-	zlib_incdir_withval=
-	zlib_libdir_withval=
 
 	ZLIBDIR=
 	ZLIBINCDIR=
@@ -20,18 +17,18 @@ AC_DEFUN([ACVT_ZLIB],
 
 	AC_ARG_WITH(zlib-dir,
 		AC_HELP_STRING([--with-zlib-dir=ZLIBDIR], [give the path for ZLIB, default: /usr]),
-	[zlib_dir_withval=$withval; ZLIBDIR="$withval/"])
+	[ZLIBDIR="$withval/"])
 
 	AC_ARG_WITH(zlib-inc-dir,
 		AC_HELP_STRING([--with-zlib-inc-dir=ZLIBINCDIR],
 		[give the path for ZLIB-include files, default: ZLIB/include]),
-	[zlib_incdir_withval=$withval; ZLIBINCDIR="-I$withval/"],
+	[ZLIBINCDIR="-I$withval/"],
 	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBINCDIR="-I$ZLIBDIR"include/])])
 
 	AC_ARG_WITH(zlib-lib-dir,
 		AC_HELP_STRING([--with-zlib-lib-dir=ZLIBLIBDIR],
 		[give the path for ZLIB-libraries, default: ZLIBDIR/lib]),
-	[zlib_libdir_withval=$withval; ZLIBLIBDIR="-L$withval/"],
+	[ZLIBLIBDIR="-L$withval/"],
 	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBLIBDIR="-L$ZLIBDIR"lib/])])
 
 	AC_ARG_WITH(zlib-lib,
@@ -66,7 +63,10 @@ AC_DEFUN([ACVT_ZLIB],
 		])
 
 		AS_IF([test x"$ZLIBLIB" != x -a x"$zlib_error" = "xno"],
-		[have_zlib="yes"])
+		[
+			have_zlib="yes"
+			AC_DEFINE([HAVE_ZLIB], [1], [Define to 1 if you have the ZLIB.])
+		])
 
 		AS_IF([test x"$force_zlib" = "xyes" -a x"$zlib_error" = "xyes"],
 		[exit 1])

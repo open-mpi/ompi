@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -31,7 +31,7 @@ EXTERN void vt_esync_finalize(void);
 
 EXTERN void vt_esync(MPI_Comm comm);
 
-EXTERN void vt_esync_app_uctl_file(FILE* uctlFile);
+EXTERN void vt_esync_app_uctl_data(char** data);
 
 EXTERN uint64_t vt_esync_next(void);
 

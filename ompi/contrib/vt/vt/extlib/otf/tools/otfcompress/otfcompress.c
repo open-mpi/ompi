@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -42,22 +42,23 @@
 	int l = 0; while( Helptext[l] ) { printf( "%s", Helptext[l++] ); } }
 
 static const char* Helptext[] = {
-"                                                                      \n",
-" otf(de)compress - compression program for single OTF files.          \n",
-"                                                                      \n",
-"    Usage: otf(de)compress [OPTIONS] <FILES>                          \n",
-"                                                                      \n",
-"      -h, --help     show this help message                           \n",
-"      -V     show OTF version                                         \n",
-"      -c     compress (default action when called as 'otfcompress')   \n",
-"      -d     decompress (default action if called as 'otfdecompress') \n",
-"      -h     show this help message                                   \n",
-"      -k     keep original file (compressed resp. uncompressed)       \n",
-"      -[0-9] use given compression level (default 4)                  \n",
-"                0 - plain                                             \n",
-"                1 - minimum compression, fastest                      \n",
-"                9 - maximum compression, slowest                      \n",
-"                                                                      \n", NULL };
+"                                                                           \n",
+" otf(de)compress - compression program for single OTF files.               \n",
+"                                                                           \n",
+"    Usage: otf(de)compress [OPTIONS] <FILES>                               \n",
+"                                                                           \n",
+"      -h, --help   show this help message                                  \n",
+"      -V           show OTF version                                        \n",
+"      -c           compress (default action when called as 'otfcompress')  \n",
+"      -d           decompress (default action if called as 'otfdecompress')\n",
+"      -k           keep original file (compressed resp. uncompressed)      \n",
+"      -o <dir>     output directory (implicitly sets -k)                   \n",
+"      -[0-9]       use given compression level (default 4)                 \n",
+"                   0 - plain                                               \n",
+"                   1 - minimum compression, fastest                        \n",
+"                   9 - maximum compression, slowest                        \n",
+"                                                                           \n",
+NULL };
 
 #ifdef HAVE_ZLIB
 
@@ -77,7 +78,7 @@ int decompressFile( const char* filename, const char* outfilename,
 #define MODE_DECOMPRESS 2
 
 
-int main ( int argc, const char** argv ) {
+int main ( int argc, char** argv ) {
 
 
 	int ret;
@@ -87,9 +88,9 @@ int main ( int argc, const char** argv ) {
 	const char* command= NULL;
 	const char* p;
 
-	uint32_t len;
 	const char* infilename;
-	char* outfilename= NULL;
+	char outfilename[OTF_PATH_MAX];
+	char* outdir= NULL;
 
 	int keep= 0;
 	int zlevel= ZLEVEL;
@@ -114,6 +115,13 @@ int main ( int argc, const char** argv ) {
 
 		if ( 0 == strcmp( "-k", argv[i] ) ) {
 
+			keep= 1;
+
+		} else 
+
+		if ( 0 == strcmp( "-o", argv[i] ) && i < argc -1 ) {
+
+			outdir= argv[++i];
 			keep= 1;
 
 		} else 
@@ -164,20 +172,12 @@ int main ( int argc, const char** argv ) {
 		p= strrchr( argv[0], '/' );
 		command = NULL != p ? p+1 : argv[0];
 
-		if ( 0 == strcmp( "otfcompress", command ) ) {
-
-			mode= MODE_COMPRESS;
-		}
-
-		if ( 0 == strcmp( "otfdecompress", command ) ) {
+		if ( 0 == strcmp( "otfdecompress", command ) || 0 == strcmp( "otfdecompress.exe", command ) ) {
 
 			mode= MODE_DECOMPRESS;
+
 		}
 
-		if ( 0 == strcmp( "otfuncompress", command ) ) {
-
-			mode= MODE_DECOMPRESS;
-		}
 	}
 
 
@@ -188,33 +188,55 @@ int main ( int argc, const char** argv ) {
 
 			/* switches already handled */
 
+			if ( outdir != NULL && 0 == strcmp( argv[i], "-o" ) ) {
+
+				/* skip value of option '-o' */
+				i++;
+
+			}
+
 		} else {
 		
 			/* assume argument is a file name */
+
+			infilename= argv[i];
+
+			/* compose output file name */
+
+			if ( NULL == outdir ) {
+
+				snprintf( outfilename, sizeof( outfilename ) -1, "%s",
+					  infilename );
+
+			} else {
+
+				p= strrchr( infilename, '/' );
+				if ( NULL != p ) p++;
+				else p= infilename;
+				
+				snprintf( outfilename, sizeof( outfilename ) -1, "%s/%s",
+					  outdir, p );
+
+			}
 
 			switch ( mode ) {
 
 			case MODE_DECOMPRESS:
 
 				/* decompress file */
-				infilename= argv[i];
-				len= (uint32_t) strlen( infilename );
-				outfilename= realloc( outfilename, len +1 );
-				assert( NULL != outfilename );
 
-				/* built outfilename */
-				strncpy( outfilename, infilename, len +1 );
-
-				/* find and remove ".z" at the end */
-				if ( ( 2 >= len ) || ( 0 != strcmp( ".z", outfilename +len -2 ) ) ) {
+				/* check for ".z" at the end and refuse uncompression if not found */
+				if ( ( 2 >= strlen( infilename ) ) ||
+				     ( 0 != strcmp( infilename +strlen( infilename ) -2, ".z" ) ) ) {
 				
 					fprintf( stderr, "ERROR: no trailing '.z' in filename '%s', rejecting\n", 
-						infilename );
+						 infilename );
 
 					continue;
 				}
 
-				outfilename[len -2]= '\0';
+				/* cut trailing '.z' from output file name */
+				outfilename[strlen( outfilename )-2] = '\0';
 
 				fprintf( stdout, "decompress \"%s\" -> \"%s\"\n", 
 					infilename, outfilename );
@@ -250,11 +272,10 @@ int main ( int argc, const char** argv ) {
 			default:
 
 				/* compress file */
-				infilename= argv[i];
-				len= (uint32_t) strlen( infilename );
 
 				/* check for ".z" at the end and refuse compression if found */
-				if ( ( 2 < len ) && ( 0 == strcmp( ".z", infilename +len -2 ) ) ) {
+				if ( ( 2 < strlen( infilename ) ) &&
+				     ( 0 == strcmp( infilename +strlen( infilename ) -2, ".z" ) ) ) {
 				
 					fprintf( stderr, "ERROR: found '.z' suffix in filename, "
 						"file '%s' seems already compressed, skip\n", 
@@ -263,13 +284,10 @@ int main ( int argc, const char** argv ) {
 					continue;
 				}
 
-				outfilename= realloc( outfilename, len +3 );
-				assert( NULL != outfilename );
+				/* add trailing '.z' to output file name */
+				if ( strlen( outfilename ) +2 < sizeof( outfilename ) )
+					strcat( outfilename, ".z" );
 
-				/* built outfilename */
-				strncpy( outfilename, infilename, len +1 );
-				strncpy( outfilename +len, ".z", 3 );
-				
 				fprintf( stdout, "compress \"%s\" -> \"%s\"\n", 
 					infilename, outfilename );
 
@@ -279,23 +297,28 @@ int main ( int argc, const char** argv ) {
 
 					if ( keep ) {
 
-						/* rename original file */
+						if ( outdir ) {
 
-						outfilename= realloc( outfilename, len +3 );
-						assert( NULL != outfilename );
+							/* keep uncompressed file */
 
-						/* built outfilename */
-						strncpy( outfilename, infilename, len +1 );
-						strncpy( outfilename +len, ".original", 10 );
+						} else {
 
-						ret= rename( infilename, outfilename );
+							/* rename original file */
+
+							snprintf( outfilename, sizeof( outfilename ) -1, "%s.original",
+								  infilename );
+
+							ret= rename( infilename, outfilename );
 						
-						if ( 0 != ret ) {
+							if ( 0 != ret ) {
 
-							fprintf( stderr, "error renaming '%s' to '%s'\n", 
-								infilename, outfilename );
+								fprintf( stderr, "error renaming '%s' to '%s'\n", 
+									 infilename, outfilename );
+
+							}
+
 						}
-						
+
 					} else {
 
 						/* remove uncompressed */
@@ -317,10 +340,6 @@ int main ( int argc, const char** argv ) {
 			}
 		}
 	}
-
-	free( outfilename );
-	outfilename= NULL;
-	infilename= NULL;
 
 	return 0;
 }

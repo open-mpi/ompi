@@ -21,10 +21,14 @@ AC_DEFUN([ACVT_IOWRAP],
 			open64 \
 			pread64 \
 			pwrite64 \
-		        flockfile \
-		        ftrylockfile \
-		        funlockfile \
-		        lockf])
+			flockfile \
+			ftrylockfile \
+			funlockfile \
+			sync \
+			fflush \
+			fsync \
+			fdatasync \
+			lockf])
 		CPPFLAGS=$sav_CPPFLAGS
 
 		have_iowrap="yes"

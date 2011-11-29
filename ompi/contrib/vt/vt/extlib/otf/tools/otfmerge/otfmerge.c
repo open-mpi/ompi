@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -274,6 +274,18 @@ int main ( int argc, char** argv ) {
         &fcb, OTF_DEFPROCESSGROUP_RECORD );
 
 	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleDefAttributeList,
+		OTF_DEFATTRLIST_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fcb, OTF_DEFATTRLIST_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleDefProcessOrGroupAttributes,
+		OTF_DEFPROCESSORGROUPATTR_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fcb, OTF_DEFPROCESSORGROUPATTR_RECORD );
+
+	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) handleDefFunction,
 		OTF_DEFFUNCTION_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, 
@@ -339,7 +351,32 @@ int main ( int argc, char** argv ) {
 	OTF_HandlerArray_setFirstHandlerArg( handlers, 
         &fcb, OTF_DEFFILEGROUP_RECORD );
 
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleDefKeyValue,
+		OTF_DEFKEYVALUE_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fcb, OTF_DEFKEYVALUE_RECORD );
 
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleDefTimeRange,
+        OTF_DEFTIMERANGE_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers,
+        &fcb,
+        OTF_DEFTIMERANGE_RECORD );
+
+    OTF_HandlerArray_setHandler( handlers,
+        (OTF_FunctionPointer*) handleDefCounterAssignments,
+        OTF_DEFCOUNTERASSIGNMENTS_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers,
+        &fcb,
+        OTF_DEFCOUNTERASSIGNMENTS_RECORD );
+
+	
+	OTF_HandlerArray_setHandler( handlers, 
+		(OTF_FunctionPointer*) handleNoOp,
+		OTF_NOOP_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, 
+        &fcb, OTF_NOOP_RECORD );
 
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) handleEventComment,
@@ -475,7 +512,18 @@ int main ( int argc, char** argv ) {
 		OTF_OPENFILESNAPSHOT_RECORD );
 	OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb, 
 		OTF_OPENFILESNAPSHOT_RECORD );
+        
+    OTF_HandlerArray_setHandler( handlers, 
+        (OTF_FunctionPointer*) handleBeginCollopSnapshot,
+        OTF_BEGINCOLLOPSNAPSHOT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb, 
+        OTF_BEGINCOLLOPSNAPSHOT_RECORD );
 
+    OTF_HandlerArray_setHandler( handlers, 
+        (OTF_FunctionPointer*) handleBeginFileOpSnapshot,
+        OTF_BEGINFILEOPSNAPSHOT_RECORD );
+    OTF_HandlerArray_setFirstHandlerArg( handlers, &fcb, 
+        OTF_BEGINFILEOPSNAPSHOT_RECORD );
 
 	/* summary records */
 

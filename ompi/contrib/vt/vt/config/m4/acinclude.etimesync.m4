@@ -3,7 +3,7 @@ AC_DEFUN([ACVT_ETIMESYNC],
 	etimesync_error="no"
 	check_etimesync="yes"
 	force_etimesync="no"
-	have_etimesync="no"
+	build_etimesync="no"
 
 	AC_ARG_ENABLE(etimesync, 
 		AC_HELP_STRING([--enable-etimesync],
@@ -19,7 +19,7 @@ AC_DEFUN([ACVT_ETIMESYNC],
 		[
 			ACVT_CLAPACK
 			AS_IF([test x"$have_clapack" = "xyes"],
-			[have_etimesync="yes"], [etimesync_error="yes"])
+			[build_etimesync="yes"], [etimesync_error="yes"])
 		])
 	])
 ])

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "vt_comp.h"
+#include "vt_defs.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
@@ -80,8 +81,8 @@ static uint32_t register_region(char *func, int len) {
 
   strncpy(fname, func, len);
   fname[len] = '\0';
-  rid = vt_def_region(fname, VT_NO_ID, VT_NO_LNO, VT_NO_LNO, NULL,
-                      VT_FUNCTION);
+  rid = vt_def_region(VT_CURRENT_THREAD, fname, VT_NO_ID, VT_NO_LNO, VT_NO_LNO,
+                      NULL, VT_FUNCTION);
   hash_put((long) func, rid);
   return rid;
 }
@@ -153,7 +154,7 @@ void _ftrace_enter2_() {
   }
 
   /* -- write enter record -- */
-  vt_enter(&time, rid);
+  vt_enter(VT_CURRENT_THREAD, &time, rid);
 
   VT_MEMHOOKS_ON();
 }
@@ -183,7 +184,7 @@ void _ftrace_exit2_() {
 
   /* -- write exit record -- */
   time = vt_pform_wtime();
-  vt_exit(&time);
+  vt_exit(VT_CURRENT_THREAD, &time);
 
   VT_MEMHOOKS_ON();
 }

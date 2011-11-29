@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -37,6 +37,7 @@
 
 
 #include "OTF_Writer.h"
+#include "OTF_WStream.h"
 
 
 #ifdef __cplusplus
@@ -81,6 +82,10 @@ int OTF_HandlerArray_setFirstHandlerArg( OTF_HandlerArray* handlers,
 int OTF_HandlerArray_getCopyHandler( OTF_HandlerArray* handlers, 
         OTF_Writer* writer );
 
+/** Provide copy handlers to every record type for OTF streams. \ingroup ha */
+int OTF_HandlerArray_getCopyHandler_stream( OTF_HandlerArray* handlers, 
+        OTF_WStream* writer );
+
 
 /* typdefs for OTF definition records *************************** */
 
@@ -113,19 +118,23 @@ int OTF_HandlerArray_getCopyHandler( OTF_HandlerArray* handlers,
 
 /* # OTF_DEFINITIONCOMMENT_RECORD */
 typedef int (OTF_Handler_DefinitionComment) ( void* userData,
-					      uint32_t stream,
-					      const char* comment );
-/* # OTF_DEFTIMERRESOLUTION_RECORD */
+					                          uint32_t stream,
+					                          const char* comment,
+				  	                          OTF_KeyValueList *list );
+
+/* # OTF_DEFTIMERRESOLUTION_RECORD */				  	      
 typedef int (OTF_Handler_DefTimerResolution) ( void* userData,
                                                uint32_t stream,
-                                               uint64_t ticksPerSecond );
+                                               uint64_t ticksPerSecond,
+				  	                           OTF_KeyValueList *list );
 
 /* # OTF_DEFPROCESS_RECORD */
 typedef int (OTF_Handler_DefProcess) ( void* userData,
                                        uint32_t stream,
                                        uint32_t process,
                                        const char* name,
-                                       uint32_t parent );
+                                       uint32_t parent,
+				                       OTF_KeyValueList *list );
 
 /* # OTF_DEFPROCESSGROUP_RECORD */
 typedef int (OTF_Handler_DefProcessGroup) ( void* userData,
@@ -133,7 +142,23 @@ typedef int (OTF_Handler_DefProcessGroup) ( void* userData,
                                             uint32_t procGroup,
                                             const char* name,
                                             uint32_t numberOfProcs,
-                                            const uint32_t* procs );
+                                            const uint32_t* procs,
+				  	                        OTF_KeyValueList *list );
+
+/* # OTF_DEFATTRLIST_RECORD */
+typedef int (OTF_Handler_DefAttributeList) ( void* userData,
+					                         uint32_t stream,
+					                         uint32_t attr_token,
+					                         uint32_t num,
+					                         OTF_ATTR_TYPE* array,
+                                             OTF_KeyValueList *list );
+
+/* # OTF_DEFPROCESSORGROUPATTR_RECORD */
+typedef int (OTF_Handler_DefProcessOrGroupAttributes) ( void* userData,
+						                                uint32_t stream,
+						                                uint32_t proc_token,
+						                                uint32_t attr_token,
+				  	    		                        OTF_KeyValueList *list ); 
 
 /* # OTF_DEFFUNCTION_RECORD */
 typedef int (OTF_Handler_DefFunction) ( void* userData,
@@ -141,20 +166,23 @@ typedef int (OTF_Handler_DefFunction) ( void* userData,
                                         uint32_t func,
                                         const char* name,
                                         uint32_t funcGroup,
-                                        uint32_t source );
+                                        uint32_t source,
+				  	                    OTF_KeyValueList *list );
 
 /* # OTF_DEFFUNCTIONGROUP_RECORD */
 typedef int (OTF_Handler_DefFunctionGroup) ( void* userData,
                                              uint32_t stream,
                                              uint32_t funcGroup,
-                                             const char* name );
+                                             const char* name,
+				  	                        OTF_KeyValueList *list );
 
 /* # OTF_DEFCOLLOP_RECORD */
 typedef int (OTF_Handler_DefCollectiveOperation) ( void* userData,
                                                    uint32_t stream,
                                                    uint32_t collOp,
                                                    const char* name,
-                                                   uint32_t type );
+                                                   uint32_t type,
+				  		                           OTF_KeyValueList *list );
 
 /* # OTF_DEFCOUNTER_RECORD */
 typedef int (OTF_Handler_DefCounter) ( void* userData,
@@ -163,31 +191,36 @@ typedef int (OTF_Handler_DefCounter) ( void* userData,
                                        const char* name,
                                        uint32_t properties,
                                        uint32_t counterGroup,
-                                       const char* unit );
+                                       const char* unit,
+				                       OTF_KeyValueList *list );
 
 /* # OTF_DEFCOUNTERGROUP_RECORD */
 typedef int (OTF_Handler_DefCounterGroup) ( void* userData,
                                             uint32_t stream,
                                             uint32_t counterGroup,
-                                            const char* name );
+                                            const char* name,
+				  	                        OTF_KeyValueList *list );
 
 /* # OTF_DEFSCL_RECORD */
 typedef int (OTF_Handler_DefScl) ( void* userData,
                                    uint32_t stream,
                                    uint32_t source,
                                    uint32_t sourceFile,
-                                   uint32_t line );
+                                   uint32_t line,
+				                   OTF_KeyValueList *list );
 
 /* # OTF_DEFSCLFILE_RECORD */
 typedef int (OTF_Handler_DefSclFile) ( void* userData,
                                        uint32_t stream,
                                        uint32_t sourceFile,
-                                       const char* name );
+                                       const char* name,
+				                       OTF_KeyValueList *list );
 
 /* # OTF_DEFCREATOR_RECORD */
 typedef int (OTF_Handler_DefCreator) ( void* userData,
                                        uint32_t stream,
-                                       const char* creator );
+                                       const char* creator,
+                                       OTF_KeyValueList *list );
 
 /* # OTF_DEFVERSION_RECORD */
 typedef int (OTF_Handler_DefVersion) ( void* userData,
@@ -195,37 +228,71 @@ typedef int (OTF_Handler_DefVersion) ( void* userData,
                                        uint8_t major,
                                        uint8_t minor,
                                        uint8_t sub,
-                                       const char* string );
+                                       const char* string,
+                                       OTF_KeyValueList *list );
 
 /* # OTF_DEFFILE_RECORD */
 typedef int (OTF_Handler_DefFile) ( void* userData,
                                     uint32_t stream,
                                     uint32_t token,
                                     const char *name,
-                                    uint32_t group );
+                                    uint32_t group,
+				                    OTF_KeyValueList *list );
 
 /* # OTF_DEFFILEGROUP_RECORD */
 typedef int (OTF_Handler_DefFileGroup) ( void* userData,
                                          uint32_t stream,
                                          uint32_t token,
-                                         const char *name );
+                                         const char *name,
+				  	                     OTF_KeyValueList *list );
+
+/* # OTF_DEFKEYVALUE_RECORD */
+typedef int (OTF_Handler_DefKeyValue) (  void* userData,
+                                         uint32_t stream,
+                                         uint32_t key,
+					                     OTF_Type type,
+                                         const char *name,
+					                     const char *description,
+				  	                     OTF_KeyValueList *list );
+
+/* # OTF_DEFTIMERANGE_RECORD */
+typedef int (OTF_Handler_DefTimeRange) ( void*             userData,
+                                         uint32_t          stream,
+                                         uint64_t          minTime,
+                                         uint64_t          maxTime,
+                                         OTF_KeyValueList* list );
+
+/* # OTF_DEFCOUNTERASSIGNMENTS_RECORD */
+typedef int (OTF_Handler_DefCounterAssignments) ( void*             userData,
+                                                  uint32_t          stream,
+                                                  uint32_t          counter,
+                                                  uint32_t          number_of_members,
+                                                  const uint32_t*   procs_or_groups,
+                                                  OTF_KeyValueList* list );
 
 /* typedefs for OTF event records ****************************************** */
 
+/* # OTF_NOOP_RECORD */
+typedef int (OTF_Handler_NoOp) ( void* userData,
+                                 uint64_t time,
+                                 uint32_t process,
+                                 OTF_KeyValueList *list );
 
-/* # OTF_ENTER_RECORD */
+/* # OTF_ENTER_RECORD */                             
 typedef int (OTF_Handler_Enter) ( void* userData,
                                   uint64_t time,
                                   uint32_t function,
                                   uint32_t process,
-                                  uint32_t source );
+                                  uint32_t source,
+				                  OTF_KeyValueList *list );
 
 /* # OTF_LEAVE_RECORD */
 typedef int (OTF_Handler_Leave) ( void* userData,
                                   uint64_t time,
                                   uint32_t function,
                                   uint32_t process,
-                                  uint32_t source );
+                                  uint32_t source,
+				                  OTF_KeyValueList *list );
 
 /* # OTF_SEND_RECORD */
 typedef int (OTF_Handler_SendMsg) ( void* userData,
@@ -235,7 +302,8 @@ typedef int (OTF_Handler_SendMsg) ( void* userData,
                                     uint32_t group,
                                     uint32_t type,
                                     uint32_t length,
-                                    uint32_t source );
+                                    uint32_t source,
+				                    OTF_KeyValueList *list );
 
 /* # OTF_RECEIVE_RECORD */
 typedef int (OTF_Handler_RecvMsg) ( void* userData,
@@ -245,14 +313,16 @@ typedef int (OTF_Handler_RecvMsg) ( void* userData,
                                     uint32_t group,
                                     uint32_t type,
                                     uint32_t length,
-                                    uint32_t source );
+                                    uint32_t source,
+				                    OTF_KeyValueList *list );
 
 /* # OTF_COUNTER_RECORD */
 typedef int (OTF_Handler_Counter) ( void* userData,
                                     uint64_t time,
                                     uint32_t process,
                                     uint32_t counter,
-                                    uint64_t value );
+                                    uint64_t value,
+				                    OTF_KeyValueList *list );
 
 /* # OTF_COLLOP_RECORD */
 typedef int (OTF_Handler_CollectiveOperation) ( void* userData,
@@ -264,7 +334,8 @@ typedef int (OTF_Handler_CollectiveOperation) ( void* userData,
                                                 uint32_t sent,
                                                 uint32_t received,
                                                 uint64_t duration,
-                                                uint32_t source );
+                                                uint32_t source,
+				  		                        OTF_KeyValueList *list );
 
 /* # OTF_BEGINCOLLOP_RECORD */
 typedef int (OTF_Handler_BeginCollectiveOperation) ( void* userData,
@@ -276,29 +347,34 @@ typedef int (OTF_Handler_BeginCollectiveOperation) ( void* userData,
                                                      uint32_t rootProc,
                                                      uint64_t sent,
                                                      uint64_t received,
-                                                     uint32_t scltoken );
+                                                     uint32_t scltoken,
+				  		                             OTF_KeyValueList *list );
 
 /* # OTF_ENDCOLLOP_RECORD */
 typedef int (OTF_Handler_EndCollectiveOperation) ( void* userData,
                                                    uint64_t time,
                                                    uint32_t process,
-                                                   uint64_t matchingId );
+                                                   uint64_t matchingId,
+				  		                           OTF_KeyValueList *list );
 
 /* # OTF_EVENTCOMMENT_RECORD */
 typedef int (OTF_Handler_EventComment) ( void* userData,
                                          uint64_t time,
                                          uint32_t process,
-                                         const char* comment );
+                                         const char* comment,
+				  	                     OTF_KeyValueList *list );
 
 /* # OTF_BEGINPROCESS_RECORD */
 typedef int (OTF_Handler_BeginProcess) ( void* userData,
                                          uint64_t time,
-                                         uint32_t process );
+                                         uint32_t process,
+				  	                     OTF_KeyValueList *list );
 
 /* # OTF_ENDPROCESS_RECORD */
 typedef int (OTF_Handler_EndProcess) ( void* userData,
                                        uint64_t time,
-                                       uint32_t process );
+                                       uint32_t process,
+				                       OTF_KeyValueList *list );
 
 
 /* # OTF_FILEOPERATION_RECORD */
@@ -310,24 +386,28 @@ typedef int (OTF_Handler_FileOperation) ( void* userData,
                                           uint32_t operation,
                                           uint64_t bytes,
                                           uint64_t duration,
-                                          uint32_t source );
+                                          uint32_t source,
+				  	                      OTF_KeyValueList *list );
 
 /* # OTF_BEGINFILEOP_RECORD */
 typedef int (OTF_Handler_BeginFileOperation) ( void* userData,
                                                uint64_t time,
                                                uint32_t process,
-                                               uint64_t handleid,
-                                               uint32_t scltoken );
+                                               uint64_t matchingId,
+                                               uint32_t scltoken,
+				  	                           OTF_KeyValueList *list );
 
 /* # OTF_ENDFILEOP_RECORD */
 typedef int (OTF_Handler_EndFileOperation) ( void* userData,
                                              uint64_t time,
                                              uint32_t process,
                                              uint32_t fileid,
-                                             uint64_t handleid,
+                                             uint64_t matchingId,
+                                             uint64_t handleId,
                                              uint32_t operation,
                                              uint64_t bytes,
-                                             uint32_t scltoken );
+                                             uint32_t scltoken,
+				  	                         OTF_KeyValueList *list );
 
 /* # OTF_RMAPUT_RECORD */
 typedef int (OTF_Handler_RMAPut) ( void* userData,
@@ -338,7 +418,8 @@ typedef int (OTF_Handler_RMAPut) ( void* userData,
                                    uint32_t communicator,
                                    uint32_t tag,
                                    uint64_t bytes,
-                                   uint32_t source );
+                                   uint32_t source,
+				                   OTF_KeyValueList *list );
 
 /* # OTF_RMAPUTRE_RECORD */
 typedef int (OTF_Handler_RMAPutRemoteEnd) ( void* userData,
@@ -349,7 +430,8 @@ typedef int (OTF_Handler_RMAPutRemoteEnd) ( void* userData,
                                             uint32_t communicator,
                                             uint32_t tag,
                                             uint64_t bytes,
-                                            uint32_t source );
+                                            uint32_t source,
+				  	                        OTF_KeyValueList *list );
 
 /* # OTF_RMAGET_RECORD */
 typedef int (OTF_Handler_RMAGet) ( void* userData,
@@ -360,7 +442,8 @@ typedef int (OTF_Handler_RMAGet) ( void* userData,
                                    uint32_t communicator,
                                    uint32_t tag,
                                    uint64_t bytes,
-                                   uint32_t source );
+                                   uint32_t source,
+				                   OTF_KeyValueList *list );
 
 /* # OTF_RMAEND_RECORD */
 typedef int (OTF_Handler_RMAEnd) ( void* userData,
@@ -369,7 +452,8 @@ typedef int (OTF_Handler_RMAEnd) ( void* userData,
                                    uint32_t remote,
                                    uint32_t communicator,
                                    uint32_t tag,
-                                   uint32_t source );
+                                   uint32_t source,
+				                   OTF_KeyValueList *list );
 
 
 /* typedefs for OTF snapshot records *************************************** */
@@ -379,7 +463,8 @@ typedef int (OTF_Handler_RMAEnd) ( void* userData,
 typedef int (OTF_Handler_SnapshotComment) ( void* userData,
                                             uint64_t time,
                                             uint32_t process,
-                                            const char* comment );
+                                            const char* comment,
+				  	                        OTF_KeyValueList *list );
 
 /* # OTF_ENTERSNAPSHOT_RECORD */
 typedef int (OTF_Handler_EnterSnapshot) ( void *userData,
@@ -387,7 +472,8 @@ typedef int (OTF_Handler_EnterSnapshot) ( void *userData,
                                           uint64_t originaltime,
                                           uint32_t function,
                                           uint32_t process,
-                                          uint32_t source );
+                                          uint32_t source,
+				  	                      OTF_KeyValueList *list );
 
 /* # OTF_SENDSNAPSHOT_RECORD */
 typedef int (OTF_Handler_SendSnapshot) ( void *userData,
@@ -397,7 +483,9 @@ typedef int (OTF_Handler_SendSnapshot) ( void *userData,
                                             uint32_t receiver,
                                             uint32_t procGroup,
                                             uint32_t tag,
-                                            uint32_t source );
+                                            uint32_t length,
+                                            uint32_t source,
+				  	                        OTF_KeyValueList *list );
 
 /* # OTF_OPENFILESNAPSHOT_RECORD */
 typedef int (OTF_Handler_OpenFileSnapshot) ( void* userData,
@@ -406,7 +494,31 @@ typedef int (OTF_Handler_OpenFileSnapshot) ( void* userData,
                                              uint32_t fileid,
                                              uint32_t process,
                                              uint64_t handleid,
-                                             uint32_t source );
+                                             uint32_t source,
+				  	                         OTF_KeyValueList *list );
+
+/* # OTF_BEGINCOLLOPSNAPSHOT_RECORD */
+typedef int (OTF_Handler_BeginCollopSnapshot) ( void* userData,
+                                                uint64_t time,
+                                                uint64_t originaltime,
+                                                uint32_t process,
+                                                uint32_t collOp,
+                                                uint64_t matchingId,
+                                                uint32_t procGroup,
+                                                uint32_t rootProc,
+                                                uint64_t sent,
+                                                uint64_t received,
+                                                uint32_t scltoken,
+				  		                        OTF_KeyValueList *list );
+
+/* # OTF_BEGINFILEOPSNAPSHOT_RECORD */
+typedef int (OTF_Handler_BeginFileOpSnapshot) ( void* userData,
+                                               uint64_t time,
+                                               uint64_t originaltime,
+                                               uint32_t process,
+                                               uint64_t matchingId,
+                                               uint32_t scltoken,
+				  	                           OTF_KeyValueList *list );
 
 
 /* typedefs for OTF summary records **************************************** */
@@ -416,7 +528,8 @@ typedef int (OTF_Handler_OpenFileSnapshot) ( void* userData,
 typedef int (OTF_Handler_SummaryComment) ( void* userData,
                                            uint64_t time,
                                            uint32_t process,
-                                           const char* comment );
+                                           const char* comment,
+				  	                       OTF_KeyValueList *list );
 
 /* # OTF_FUNCTIONSUMMARY_RECORD */
 typedef int (OTF_Handler_FunctionSummary) ( void* userData,
@@ -425,7 +538,8 @@ typedef int (OTF_Handler_FunctionSummary) ( void* userData,
                                             uint32_t process,
                                             uint64_t invocations,
                                             uint64_t exclTime,
-                                            uint64_t inclTime );
+                                            uint64_t inclTime,
+				  	                        OTF_KeyValueList *list );
 
 /* # OTF_FUNCTIONGROUPSUMMARY_RECORD */
 typedef int (OTF_Handler_FunctionGroupSummary) ( void* userData,
@@ -434,7 +548,8 @@ typedef int (OTF_Handler_FunctionGroupSummary) ( void* userData,
                                                  uint32_t process,
                                                  uint64_t invocations,
                                                  uint64_t exclTime,
-                                                 uint64_t inclTime );
+                                                 uint64_t inclTime,
+				  	                             OTF_KeyValueList *list );
 
 /* # OTF_MESSAGESUMMARY_RECORD */
 typedef int (OTF_Handler_MessageSummary) ( void* userData,
@@ -446,7 +561,8 @@ typedef int (OTF_Handler_MessageSummary) ( void* userData,
                                            uint64_t sentNumber,
                                            uint64_t receivedNumber,
                                            uint64_t sentBytes,
-                                           uint64_t receivedBytes );
+                                           uint64_t receivedBytes,
+				  	                       OTF_KeyValueList *list );
 
 /* # OTF_COLLOPSUMMARY_RECORD */
 typedef int (OTF_Handler_CollopSummary) ( void *userData,
@@ -457,7 +573,8 @@ typedef int (OTF_Handler_CollopSummary) ( void *userData,
                                           uint64_t sentNumber,
                                           uint64_t receivedNumber,
                                           uint64_t sentBytes,
-                                          uint64_t receivedBytes );
+                                          uint64_t receivedBytes,
+				  	                      OTF_KeyValueList *list );
 
 /* # OTF_FILEOPERATIONSUMMARY_RECORD */
 typedef int (OTF_Handler_FileOperationSummary) ( void* userData,
@@ -470,7 +587,8 @@ typedef int (OTF_Handler_FileOperationSummary) ( void* userData,
                                                  uint64_t nwrite,
                                                  uint64_t nseek,
                                                  uint64_t bytesread,
-                                                 uint64_t byteswrite );
+                                                 uint64_t byteswrite,
+				  		                         OTF_KeyValueList *list );
 
 /* # OTF_FILEGROUPOPERATIONSUMMARY_RECORD */
 typedef int (OTF_Handler_FileGroupOperationSummary) ( void* userData,
@@ -483,7 +601,8 @@ typedef int (OTF_Handler_FileGroupOperationSummary) ( void* userData,
                                                       uint64_t nwrite,
                                                       uint64_t nseek,
                                                       uint64_t bytesread,
-                                                      uint64_t byteswrite );
+                                                      uint64_t byteswrite,
+				  	 	                              OTF_KeyValueList *list );
 
 /* # OTF_UNKNOWN_RECORD */
 typedef int (OTF_Handler_UnknownRecord) ( void *userData,
@@ -500,14 +619,16 @@ typedef int (OTF_Handler_DefMarker) ( void *userData,
                                       uint32_t stream,
                                       uint32_t token,
                                       const char* name,
-                                      uint32_t type );
+                                      uint32_t type,
+				                      OTF_KeyValueList *list );
 
 /* # OTF_MARKER_RECORD */
 typedef int (OTF_Handler_Marker) ( void *userData,
                                    uint64_t time,
                                    uint32_t process,
                                    uint32_t token,
-                                   const char* text );
+                                   const char* text,
+				                   OTF_KeyValueList *list );
 
 /** @endcond */
 

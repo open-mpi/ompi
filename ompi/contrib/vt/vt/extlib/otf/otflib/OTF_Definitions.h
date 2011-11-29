@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -18,7 +18,6 @@
 
 #include "OTF_Version.h"
 
-
 /* definitions of record type identifiers */
 
 
@@ -30,6 +29,8 @@ yet it breaks the link compatibility of library versions.*/
 #define OTF_EVENTCOMMENT_RECORD					0
 #define OTF_COUNTER_RECORD						1
 #define OTF_ENTER_RECORD						2
+
+#define OTF_NOOP_RECORD						58
 
 #define OTF_COLLOP_RECORD						5
 
@@ -58,6 +59,8 @@ yet it breaks the link compatibility of library versions.*/
 #define OTF_DEFTIMERRESOLUTION_RECORD			13
 #define OTF_DEFPROCESS_RECORD					14
 #define OTF_DEFPROCESSGROUP_RECORD				15
+#define OTF_DEFATTRLIST_RECORD						55
+#define OTF_DEFPROCESSORGROUPATTR_RECORD				56
 #define OTF_DEFFUNCTION_RECORD					16
 #define OTF_DEFFUNCTIONGROUP_RECORD				17
 #define OTF_DEFCOUNTER_RECORD					18
@@ -69,6 +72,10 @@ yet it breaks the link compatibility of library versions.*/
 #define OTF_DEFCREATOR_RECORD					24
 #define OTF_DEFFILE_RECORD						25
 #define OTF_DEFFILEGROUP_RECORD					26
+#define OTF_DEFTIMERANGE_RECORD					61
+#define OTF_DEFCOUNTERASSIGNMENTS_RECORD		62
+
+#define OTF_DEFKEYVALUE_RECORD						57
 
 
 #define OTF_FUNCTIONSUMMARY_RECORD				28
@@ -86,6 +93,8 @@ yet it breaks the link compatibility of library versions.*/
 #define OTF_SUMMARYCOMMENT_RECORD				39
 #define OTF_SNAPSHOTCOMMENT_RECORD				40
 #define OTF_OPENFILESNAPSHOT_RECORD				43
+#define OTF_BEGINCOLLOPSNAPSHOT_RECORD          59
+#define OTF_BEGINFILEOPSNAPSHOT_RECORD          60
 
 #define OTF_UNKNOWN_RECORD						41
 
@@ -93,7 +102,7 @@ yet it breaks the link compatibility of library versions.*/
 #define OTF_MARKER_RECORD						46
 
 /* Number of records */
-#define OTF_NRECORDS							55
+#define OTF_NRECORDS							63
 
 /* Stream format definition */
 
@@ -182,7 +191,12 @@ could be added for convenience.
 #define OTF_COLLECTIVE_TYPE_ALL2ALL 	4
 
 
-/* File Operations */
+/*
+File Operations - 32-bit
+The bits 0-4 contain the identifier of the file operation that has happened.
+The bits 5-31 are bit flags that carry additional information on the operation.
+A macro allows for accessing the file operation in a convenient way.
+*/
 #define OTF_FILEOP_BITS			0x0000001f
 #define OTF_FILEOP_OPEN			0
 #define OTF_FILEOP_CLOSE		1
@@ -203,6 +217,7 @@ could be added for convenience.
 #define OTF_IOFLAG_DIRECT		256
 #define OTF_IOFLAG_SYNC			512
 #define OTF_IOFLAG_ISREADLOCK           1024
+#define OTF_FILEOP(x) (x & OTF_FILEOP_BITS)
 
 /* Types of markers */
 
@@ -218,6 +233,27 @@ could be added for convenience.
 
 extern char otf_strerr[OTF_ERR_LEN];
 extern int otf_errno;
+
+/* OTF_KeyValueList related defines */
+
+/* This macro defines the maximum length of a byte array that can be
+   appended internally to an OTF_KeyValueList() --> internal use only
+   For the user a byte array can contain an unlimited number of bytes.
+NOTE: Do not edit this constant unless you know exactly what you do! */
+#define OTF_KEYVALUE_MAX_ARRAY_LEN 100
+
+/* enum used for DefAttributeList record */
+/**  An enum which holds all values that are possible to set with datatype OTF_ATTR_TYPE().*/
+typedef enum OTF_ATTR_TYPE_enum { 
+	OTF_ATTR_UNKNOWN = 0, /**< */
+	OTF_ATTR_IsMPIRank = 1, /**< */
+	OTF_ATTR_IsPThread = 2, /**< */
+	OTF_ATTR_IsOMPThread = 3, /**< */
+	OTF_ATTR_IsCellSPUThread = 4, /**< */
+	OTF_ATTR_hasGroupCounters = 5, /**< */
+	OTF_ATTR_hasEnterLeaveRecords = 6 /**< */
+} OTF_ATTR_TYPE;
+
 
 /* return values for handlers. they are not yet evaluated!!! */
 

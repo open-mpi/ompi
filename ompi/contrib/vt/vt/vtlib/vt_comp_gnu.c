@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -19,7 +19,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 #include "vt_comp.h"
+#include "vt_defs.h"
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
@@ -118,7 +120,7 @@ static void get_symtab(void)
 
   uint8_t parse_error = 0;
 
-  VT_SUSPEND_IO_TRACING();
+  VT_SUSPEND_IO_TRACING(VT_CURRENT_THREAD);
 
   /* open nm-file, if given */
   nm_filename = vt_env_gnu_nmfile();
@@ -249,9 +251,8 @@ static void get_symtab(void)
            undefined; try get its address later (nc==3) */
         if ( strlen(col) == 1 )
         {
-          nc = 3;
+          nc++; /* <- will be 3 in the next round */
           strcpy(delim, "\t");
-          continue;
         }
         /* otherwise, convert address string */
         else
@@ -302,14 +303,14 @@ static void get_symtab(void)
     {
       break;
     }
-    /* at least three columns must be read (nc>=3) */
+    /* at least two columns must be read */
     else if ( nc < 3 )
     {
       parse_error = 1;
       break;
     }
-    /* add symbol to hash table, if we have its address */
-    else if ( addr > 0 )
+    /* add symbol to hash table, if we have its address and name */
+    else if ( addr > 0 && funcname )
     {
       char* n = strdup(funcname);
       char* p;
@@ -367,7 +368,7 @@ static void get_symtab(void)
 
   free(line);
 
-  VT_RESUME_IO_TRACING();
+  VT_RESUME_IO_TRACING(VT_CURRENT_THREAD);
 }
 
 /*
@@ -381,12 +382,13 @@ static void register_region(HashNode* hn) {
   /* -- register file if available -- */
   if (hn->fname != NULL)
   {
-    fid = vt_def_scl_file(hn->fname);
+    fid = vt_def_scl_file(VT_CURRENT_THREAD, hn->fname);
     lno = hn->lno;
   }
 
   /* -- register region and store region identifier -- */
-  hn->vtid = vt_def_region(hn->name, fid, lno, VT_NO_LNO, NULL, VT_FUNCTION);
+  hn->vtid = vt_def_region(VT_CURRENT_THREAD, hn->name, fid, lno, VT_NO_LNO,
+                           NULL, VT_FUNCTION);
 }
 
 void gnu_finalize(void);
@@ -400,26 +402,27 @@ void __cyg_profile_func_exit(void* func, void* callsite);
 void gnu_finalize()
 {
   int i, idx_min, idx_max;
-  uint32_t min, max, n;
+  uint32_t min, max;
   double avg;
   min = 0xffffffff;
   max = 0;
   idx_min = idx_max = 0;
   avg = 0.0;
 
-  n = n_htab_entries;
   for( i = 0; i < HASH_MAX; i++ )
   {
     uint32_t n_bucket_entries = 0;
-    while( htab[i] )
+
+    struct HN* p = htab[i];
+    while( p )
     {
-      struct HN* next = htab[i]->next;
-      free(htab[i]->name);
-      if( htab[i]->fname ) free(htab[i]->fname);
-      free(htab[i]);
-      htab[i] = next;
-      n_htab_entries--;
       n_bucket_entries++;
+
+      /* Set assigned region id back to VT_NO_ID instead of freeing the
+         hash-node, because after a fork the hash-node will be re-used for the
+         child process. This implies a small/non-increasing memory leak. */
+      p->vtid = VT_NO_ID;
+      p = p->next;
     }
     if( n_bucket_entries < min ) {
       min = n_bucket_entries;
@@ -429,21 +432,19 @@ void gnu_finalize()
       max = n_bucket_entries;
       idx_max = i;
     }
-    vt_cntl_msg( 3, "Hash bucket %i had %u entries (%.1f/1000)", i, n_bucket_entries, ((double)n_bucket_entries*1000)/n );
+    vt_cntl_msg(3, "Hash bucket %i had %u entries (%.1f/1000)",
+                i, n_bucket_entries, ((double)n_bucket_entries*1000)/n_htab_entries);
   }
-  avg = (double)n / HASH_MAX;
+  avg = (double)n_htab_entries / HASH_MAX;
   vt_cntl_msg( 3, "Hash statistics:\n"
                   "\tNumber of entries: %u\n"
                   "\tMin bucket size:   %u (%.1f/1000) at index %i\n"
                   "\tMax bucket size:   %u (%.1f/1000) at index %i\n"
                   "\tAvg bucket size:   %.1f",
-                  n,
-                  min, ((double)min*1000)/n, idx_min,
-                  max, ((double)max*1000)/n, idx_max,
+                  n_htab_entries,
+                  min, ((double)min*1000)/n_htab_entries, idx_min,
+                  max, ((double)max*1000)/n_htab_entries, idx_max,
                   avg );
-  vt_assert( n_htab_entries==0 );
-
-  gnu_init = 1;
 }
 
 /*
@@ -490,7 +491,7 @@ void __cyg_profile_func_enter(void* func, void* callsite) {
     }
 
     /* -- write enter record -- */
-    vt_enter(&time, hn->vtid);
+    vt_enter(VT_CURRENT_THREAD, &time, hn->vtid);
   }
 
   VT_MEMHOOKS_ON();
@@ -516,7 +517,7 @@ void __cyg_profile_func_exit(void* func, void* callsite) {
 
   /* -- write exit record -- */
   if ( hash_get((long)funcptr) ) {
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
 
   VT_MEMHOOKS_ON();

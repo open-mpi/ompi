@@ -8,6 +8,8 @@ bin_PROGRAMS = otfcompress
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f otfdecompress; \
 	$(LN_S) otfcompress$(EXEEXT) otfdecompress$(EXEEXT))
+uninstall-local:
+	rm -f $(DESTDIR)$(bindir)/otfdecompress$(EXEEXT)
 endif
 
 otfcompress_LDADD = $(top_builddir)/otflib/libotf.la

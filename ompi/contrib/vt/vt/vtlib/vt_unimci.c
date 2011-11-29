@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,6 +12,7 @@
 
 #include "config.h"
 
+#include "vt_defs.h"
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_inttypes.h"
@@ -19,8 +20,6 @@
 #include "vt_unimci.h"
 
 #include <stdlib.h>
-
-#include "otf.h"
 
 #define MSG_TYPE_INFO    0
 #define MSG_TYPE_WARNING 1
@@ -41,11 +40,14 @@ void vt_unimci_init()
   /* define markers for UniMCI's message types */
 
   marker_id[MSG_TYPE_INFO] =
-    vt_def_marker(UNIMCI_CHECKER_NAME" Info", OTF_MARKER_TYPE_HINT);
+    vt_def_marker(VT_CURRENT_THREAD, UNIMCI_CHECKER_NAME" Info",
+                  VT_MARKER_HINT);
   marker_id[MSG_TYPE_WARNING] =
-    vt_def_marker(UNIMCI_CHECKER_NAME" Warning", OTF_MARKER_TYPE_WARNING);
+    vt_def_marker(VT_CURRENT_THREAD, UNIMCI_CHECKER_NAME" Warning",
+                  VT_MARKER_WARNING);
   marker_id[MSG_TYPE_ERROR] =
-    vt_def_marker(UNIMCI_CHECKER_NAME" Error", OTF_MARKER_TYPE_ERROR);
+    vt_def_marker(VT_CURRENT_THREAD, UNIMCI_CHECKER_NAME" Error",
+                  VT_MARKER_ERROR);
 
   exit_on_error = (uint8_t)vt_env_mpicheck_errexit();
 }
@@ -86,7 +88,7 @@ void vt_unimci_check_msg(uint8_t record, uint64_t* time)
       }
 
       /* write marker */
-      vt_marker( time, marker_id[msg_type], msg->strText );
+      vt_marker( VT_CURRENT_THREAD, time, marker_id[msg_type], msg->strText );
     }
 
     /* free message */
@@ -95,10 +97,11 @@ void vt_unimci_check_msg(uint8_t record, uint64_t* time)
     /* do exit on error? */
     if( exit_on_error && record && msg_type == MSG_TYPE_ERROR )
     {
-      vt_cntl_msg(1, "Application terminated due to "UNIMCI_CHECKER_NAME" "
-                     "detected an error, see the trace for details");
-      vt_def_comment("__VT_COMMENT__ WARNING: This trace is incomplete, "
-                     "because "UNIMCI_CHECKER_NAME" detected an error.");
+      vt_cntl_msg( 1, "Application terminated due to "UNIMCI_CHECKER_NAME" "
+                      "detected an error, see the trace for details" );
+      vt_def_comment( VT_CURRENT_THREAD,
+                      VT_UNIFY_STRID_VT_COMMENT"WARNING: This trace is incomplete, "
+                      "because "UNIMCI_CHECKER_NAME" detected an error." );
 
       /* this should invoke vt_close() to shutdown VampirTrace */
       exit(EXIT_FAILURE);

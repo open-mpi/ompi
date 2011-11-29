@@ -35,10 +35,6 @@
  *
  **/
 
-VT_MPI_INT MPI_File_call_errhandler(MPI_File fh, VT_MPI_INT errorcode);
-VT_MPI_INT MPI_File_create_errhandler(MPI_File_errhandler_fn* function_CLASS_SINGLE_IN, MPI_Errhandler* errhandler_CLASS_SINGLE_OUT);
-VT_MPI_INT MPI_File_get_errhandler(MPI_File file, MPI_Errhandler* errhandler_CLASS_SINGLE_OUT);
-VT_MPI_INT MPI_File_set_errhandler(MPI_File file, MPI_Errhandler errhandler);
 VT_MPI_INT MPI_File_open(MPI_Comm comm, char* filename_CLASS_SINGLE_IN, VT_MPI_INT amode, MPI_Info info, MPI_File* fh_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_File_close(MPI_File* fh_CLASS_SINGLE_IO);
 VT_MPI_INT MPI_File_delete(char* filename_CLASS_SINGLE_IN, MPI_Info info);
@@ -90,3 +86,4 @@ VT_MPI_INT MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, MPI_Aint
 VT_MPI_INT MPI_File_set_atomicity(MPI_File fh, VT_MPI_INT flag);
 VT_MPI_INT MPI_File_get_atomicity(MPI_File fh, VT_MPI_INT* flag);
 VT_MPI_INT MPI_File_sync(MPI_File fh);
+VT_MPI_INT MPI_Register_datarep(char* datarep_CLASS_SINGLE_IN, MPI_Datarep_conversion_function* read_conversion_fn, MPI_Datarep_conversion_function* write_conversion_fn, MPI_Datarep_extent_function* dtype_file_extent_fn, void* extra_state);

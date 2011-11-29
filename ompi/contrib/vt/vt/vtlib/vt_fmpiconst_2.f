@@ -2,7 +2,7 @@ c     **
 c     * VampirTrace
 c     * http://www.tu-dresden.de/zih/vampirtrace
 c     *
-c     * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+c     * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
 c     *
 c     * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
 c     *                          Centre, Federal Republic of Germany

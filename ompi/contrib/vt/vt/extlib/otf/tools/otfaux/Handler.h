@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2010.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
  Authors: Andreas Knuepfer, Holger Brunst, Ronny Brendel, Thomas Kriebitzsch
 */
 
@@ -12,6 +12,8 @@
 
 
 #include "OTF_inttypes.h"
+
+#include "otf.h"
 
 
 /* *** Definition handler *** ************************************* */
@@ -38,7 +40,7 @@ int handleCounter( void* firsthandlerarg, uint64_t time, uint32_t process,
 	uint32_t counter_token, uint64_t value );
 
 int handleEnter( void* firsthandlerarg, uint64_t time, uint32_t statetoken,
-	uint32_t cpuid, uint32_t scltoken );
+	uint32_t cpuid, uint32_t scltoken, OTF_KeyValueList *kvlist );
 
 int handleRecvmsg( void* firsthandlerarg, uint64_t time, uint32_t receiver,
 	uint32_t sender, uint32_t procGroup, uint32_t msgtag, uint32_t msglength,
@@ -46,7 +48,7 @@ int handleRecvmsg( void* firsthandlerarg, uint64_t time, uint32_t receiver,
 
 int handleSendmsg( void* firsthandlerarg, uint64_t time, uint32_t sender,
 	uint32_t receiver, uint32_t procGroup, uint32_t msgtag, uint32_t msglength,
-	uint32_t scltoken );
+	uint32_t scltoken, OTF_KeyValueList *kvlist );
 
 int handleLeave( void* firsthandlerarg, uint64_t time, uint32_t statetoken,
 	uint32_t cpuid, uint32_t scltoken );
@@ -67,7 +69,20 @@ int handleCollectiveOperation( void* firsthandlerarg, uint64_t time,
 
 int handleFileOperation( void* firsthandlerarg, uint64_t time, uint32_t fileid,
 	uint32_t process, uint64_t handleid, uint32_t operation, uint64_t bytes,
-	uint64_t duration, uint32_t source );
+	uint64_t duration, uint32_t source, OTF_KeyValueList *kvlist );
+    
+int handleBeginCollectiveOperation( void *firsthandlerarg, uint64_t time, uint32_t process,
+    uint32_t collOp, uint64_t matchingId, uint32_t procGroup, uint32_t rootProc,
+    uint64_t sent, uint64_t received, uint32_t scltoken, OTF_KeyValueList *kvlist );
+    
+int handleEndCollectiveOperation( void *firsthandlerarg, uint64_t time,
+    uint32_t process, uint64_t matchingId );
 
+int handleBeginFileOperation( void *firsthandlerarg, uint64_t time, uint32_t process,
+    uint64_t matchingId, uint32_t scltoken, OTF_KeyValueList *kvlist );
+    
+int handleEndFileOperation( void *firsthandlerarg, uint64_t time, uint32_t process,
+    uint32_t fileid, uint64_t matchingId, uint64_t handleId, uint32_t operation,
+    uint64_t bytes, uint32_t scltoken, OTF_KeyValueList *kvlist );
 
 #endif /* OTFTOVTF3_HANDLER_H */

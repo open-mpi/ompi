@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -28,8 +28,6 @@ struct VTThrdMutex_struct
 
 static uint32_t threadId     = VT_NO_ID;
 #pragma omp threadprivate(threadId)
-static uint32_t threadCount  = 1;
-static uint32_t threadMaxNum = 0;
 
 void VTThrd_initOmp()
 {
@@ -38,9 +36,6 @@ void VTThrd_initOmp()
   if (initflag)
   {
     initflag = 0;
-
-    /* get the maximum number of threads */
-    threadMaxNum = (uint32_t)vt_env_max_threads();
 
     /* set ID for master thread (=0) */
     threadId = 0;
@@ -57,20 +52,17 @@ void VTThrd_registerThread(uint32_t ptid)
   if (!vt_is_alive) return;
 
   /* check whether an ID is already created for this thread */
-  if (threadId == VT_NO_ID)
-  {
-#pragma omp critical (threadCountLock)
-    threadId = threadCount++;
-
-    /* check upper bound of thread count */
-    if (threadId >= threadMaxNum)
-      vt_error_msg("Cannot create more than %d threads", threadMaxNum);
-
+  if (threadId == VT_NO_ID){
     /* create new thread object */
     vt_cntl_msg(2, "Dynamic thread creation. Thread #%d", threadId);
-    VTThrdv[threadId] = VTThrd_create(threadId, ptid, NULL);
-    VTThrd_open(VTThrdv[threadId], threadId);
+    VTThrd_create(threadId, ptid, NULL, 0);
+    VTThrd_open(threadId);
   }
+}
+
+uint8_t VTThrd_is_alive()
+{
+  return (threadId != VT_NO_ID);
 }
 
 uint32_t VTThrd_getThreadId()

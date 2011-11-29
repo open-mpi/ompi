@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -10,20 +10,19 @@
  * See the file COPYING in the package base directory for details
  **/
 
-#include <string.h>
-
-#include "otf.h"
-
+#include "vt_defs.h"
+#include "vt_error.h"
 #include "vt_fbindings.h"
 #include "vt_inttypes.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
 #include "vt_thrd.h"
 #include "vt_trc.h"
-#include "vt_error.h"
 #define VTRACE
 #undef VTRACE_NO_MARKER
 #include "vt_user.h"
+
+#include <string.h>
 
 static int vt_init = 1;        /* is initialization needed? */
 
@@ -38,7 +37,7 @@ static int vt_init = 1;        /* is initialization needed? */
 unsigned int VT_User_marker_def__(const char* mname, int mtype)
 {
   uint32_t mid;
-  uint32_t mtype_otf = OTF_MARKER_TYPE_UNKNOWN;
+  uint32_t _mtype = VT_MARKER_UNKNOWN;
 
   VT_INIT;
 
@@ -48,17 +47,17 @@ unsigned int VT_User_marker_def__(const char* mname, int mtype)
   {
     case VT_MARKER_TYPE_ERROR:
     {
-      mtype_otf = OTF_MARKER_TYPE_ERROR;
+      _mtype = VT_MARKER_ERROR;
       break;
     }
     case VT_MARKER_TYPE_WARNING:
     {
-      mtype_otf = OTF_MARKER_TYPE_WARNING;
+      _mtype = VT_MARKER_WARNING;
       break;
     }
     case VT_MARKER_TYPE_HINT:
     {
-      mtype_otf = OTF_MARKER_TYPE_HINT;
+      _mtype = VT_MARKER_HINT;
       break;
     }
     default:
@@ -71,14 +70,14 @@ unsigned int VT_User_marker_def__(const char* mname, int mtype)
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_LOCK_IDS();
 #endif
-  mid = (uint32_t)vt_def_marker(mname, mtype_otf);
+  mid = vt_def_marker(VT_CURRENT_THREAD, mname, _mtype);
 #if (defined(VT_MT) || defined(VT_HYB))
   VTTHRD_UNLOCK_IDS();
 #endif
 
-    VT_MEMHOOKS_ON();
+  VT_MEMHOOKS_ON();
 
-    return mid;
+  return mid;
 }
 
 void VT_User_marker__(unsigned int mid, const char* mtext)
@@ -90,7 +89,7 @@ void VT_User_marker__(unsigned int mid, const char* mtext)
   VT_MEMHOOKS_OFF();
 
   time = vt_pform_wtime();
-  vt_marker(&time, mid, mtext);
+  vt_marker(VT_CURRENT_THREAD, &time, mid, mtext);
 
   VT_MEMHOOKS_ON();
 }
@@ -99,10 +98,8 @@ void VT_User_marker__(unsigned int mid, const char* mtext)
  * Fortran version
  */
 
-void VT_User_marker_def___f(const char* mname, int* mtype, unsigned int* mid, int nl);
-void VT_User_marker___f(unsigned int* mid, const char* mtext, int tl);
-
-void VT_User_marker_def___f(const char* mname, int* mtype, unsigned int* mid, int nl)
+VT_DECLDEF(void VT_User_marker_def___f(const char* mname, int* mtype,
+				       unsigned int* mid, int nl))
 {
   int namlen;
   char fnambuf[128];
@@ -118,7 +115,8 @@ void VT_User_marker_def___f(const char* mname, int* mtype, unsigned int* mid, in
 			   (const char* mname, int* mtype, unsigned int* mid, int nl),
 			   (mname, mtype, mid, nl))
 
-void VT_User_marker___f(unsigned int* mid, const char* mtext, int tl)
+VT_DECLDEF(void VT_User_marker___f(unsigned int* mid, const char* mtext,
+				   int tl))
 {
   int texlen;
   char ftexbuf[1024];

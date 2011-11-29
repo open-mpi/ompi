@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2010, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -12,6 +12,7 @@
 
 #include "config.h"
 
+#include "vt_defs.h"
 #include "vt_env.h"
 #include "vt_error.h"
 #include "vt_fork.h"
@@ -69,8 +70,8 @@
 #define INIT_FUNC(fname)                                             \
   libc_funcs[FUNCIDX(fname)].traceme = 1;                            \
   libc_funcs[FUNCIDX(fname)].rid =                                   \
-    vt_def_region(#fname, libc_fid, VT_NO_LNO, VT_NO_LNO, NULL,      \
-                  VT_LIBC);  \
+    vt_def_region(VT_CURRENT_THREAD, #fname, libc_fid, VT_NO_LNO,    \
+                  VT_NO_LNO, NULL, VT_LIBC);                         \
   GET_REAL_FUNC(fname);
 
 /* macro: gets (real) function pointer */
@@ -129,7 +130,13 @@ static void get_libc_handle(void)
     const char *libc_pathname = DEFAULT_LIBC_PATHNAME;
 
     (void)dlerror();
-    libc_handle = dlopen( libc_pathname, RTLD_LAZY | RTLD_LOCAL );
+    libc_handle = dlopen( libc_pathname,
+                          RTLD_LAZY | RTLD_LOCAL
+#ifdef _AIX
+                          | RTLD_MEMBER
+#endif /* _AIX */
+                        );
+
     if( !libc_handle ) {
       printf("VampirTrace: FATAL: dlopen(\"%s\") error: %s\n", libc_pathname, dlerror());
       exit(EXIT_FAILURE);
@@ -140,7 +147,7 @@ static void get_libc_handle(void)
 void vt_libcwrap_init(void)
 {
   /* get file-id for LIBC functions */
-  libc_fid = vt_def_scl_file("LIBC");
+  libc_fid = vt_def_scl_file(VT_CURRENT_THREAD, "LIBC");
 
 #if (!defined (VT_MPI) && !defined (VT_MT) && !defined(VT_HYB) && !defined(VT_JAVA))
 
@@ -223,7 +230,7 @@ int execl(const char* path, const char* arg, ...)
   {
     /* mark enter function */
     uint64_t time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(execl)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(execl)].rid);
   }
 
   /* close VT for current process */
@@ -266,7 +273,7 @@ int execle(const char* path, const char* arg, ...)
   {
     /* mark enter function */
     uint64_t time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(execle)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(execle)].rid);
   }
 
   /* close VT for current process */
@@ -307,7 +314,7 @@ int execlp(const char* file, const char* arg, ...)
   {
     /* mark enter function */
     uint64_t time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(execlp)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(execlp)].rid);
   }
 
   /* close VT for current process */
@@ -334,7 +341,7 @@ int execv(const char* path, char* const argv[])
   {
     /* mark enter function */
     uint64_t time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(execv)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(execv)].rid);
   }
 
   /* close VT for current process */
@@ -361,7 +368,7 @@ int execve(const char* file, char* const argv[], char* const envp[])
   {
     /* mark enter function */
     uint64_t time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(execve)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(execve)].rid);
   }
 
   /* close VT for current process */
@@ -388,7 +395,7 @@ int execvp(const char* path, char* const argv[])
   {
     /* mark enter function */
     uint64_t time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(execvp)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(execvp)].rid);
   }
 
   /* close VT for current process */
@@ -417,7 +424,7 @@ pid_t fork(void)
   {
     /* mark enter function */
     time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(fork)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(fork)].rid);
   }
 
   /* call (real) function */
@@ -433,10 +440,10 @@ pid_t fork(void)
     {
       /* mark leave function */
       time = vt_pform_wtime();
-      vt_exit(&time);
+      vt_exit(VT_CURRENT_THREAD, &time);
     }
   }
-    
+
   VT_MEMHOOKS_ON();
 
   return rc;
@@ -459,7 +466,7 @@ int system(const char* string)
   {
     /* mark enter function */
     time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(system)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(system)].rid);
   }
 
   /* call (real) function */
@@ -469,7 +476,7 @@ int system(const char* string)
   {
     /* mark leave function */
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
 
   VT_MEMHOOKS_ON();
@@ -492,7 +499,7 @@ pid_t wait(WAIT_STATUS_TYPE status)
   {
     /* mark enter function */
     time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(wait)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(wait)].rid);
   }
 
   /* call (real) function */
@@ -502,7 +509,7 @@ pid_t wait(WAIT_STATUS_TYPE status)
   {
     /* mark leave function */
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
 
   VT_MEMHOOKS_ON();
@@ -525,7 +532,7 @@ pid_t waitpid(pid_t pid, int* status, int options)
   {
     /* mark enter function */
     time = vt_pform_wtime();
-    vt_enter(&time, libc_funcs[FUNCIDX(waitpid)].rid);
+    vt_enter(VT_CURRENT_THREAD, &time, libc_funcs[FUNCIDX(waitpid)].rid);
   }
 
   /* call (real) function */
@@ -535,7 +542,7 @@ pid_t waitpid(pid_t pid, int* status, int options)
   {
     /* mark leave function */
     time = vt_pform_wtime();
-    vt_exit(&time);
+    vt_exit(VT_CURRENT_THREAD, &time);
   }
 
   VT_MEMHOOKS_ON();
