@@ -160,7 +160,7 @@ int ompi_mtl_mxm_module_init(void)
         }
     }
 
-    sa_bind_self.process_id = sa_bind_shm.process_id = lr;
+    sa_bind_shm.process_id = lr;
     sa_bind_shm.context_id = mxlr;
     sa_bind_shm.num_procs = nlps;
 
@@ -258,6 +258,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
                           mxm_error_string(conn_reqs[i].error));
             }
         }
+        rc = OMPI_ERROR;
         goto bail;
     }
 
