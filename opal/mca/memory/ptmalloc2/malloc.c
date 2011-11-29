@@ -3945,6 +3945,23 @@ public_mALLOPt(int p, int v)
   ------------------------------ malloc ------------------------------
 */
 
+/* With Intel Composer XE V12.1.0, release 2011.6.233, any launch   */
+/* fails, even before main(), due to a bug in the vectorizer (see   */
+/* https://svn.open-mpi.org/trac/ompi/changeset/25290).  The fix is */
+/* to disable vectorization by reducing the optimization level to   */
+/* -O1 for _int_malloc().  The only reliable method to identify     */
+/* release 2011.6.233 is the predefined __INTEL_COMPILER_BUILD_DATE */
+/* macro, which will have the value 20110811 (Linux, Windows, and   */
+/* Mac OS X).  (The predefined __INTEL_COMPILER macro is nonsense,  */
+/* 9999, and both the 2011.6.233 and 2011.7.256 releases identify   */
+/* themselves as V12.1.0 from the -v command line option.)          */
+ 
+#ifdef __INTEL_COMPILER_BUILD_DATE
+#  if __INTEL_COMPILER_BUILD_DATE == 20110811
+#    pragma GCC optimization_level 1
+#  endif
+#endif
+
 Void_t*
 _int_malloc(mstate av, size_t bytes)
 {
