@@ -37,7 +37,6 @@
 #include "opal/constants.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/util/gethostname.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/memoryhooks/memory_internal.h"
@@ -88,7 +87,7 @@ int opal_memory_linux_ummunotify_open(void)
         open(DEV_UMMUNOTIFY, O_RDONLY | O_NONBLOCK);
     if (mca_memory_linux_component.ummunotify_fd < 0) {
         char hostname[HOST_NAME_MAX];
-        opal_gethostname(hostname, sizeof(hostname));
+        gethostname(hostname, sizeof(hostname));
 
         if (EACCES == errno) {
             /* This will get a proper show_help when merged into the

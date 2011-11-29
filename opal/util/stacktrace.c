@@ -34,7 +34,6 @@
 #endif
 
 #include "opal/util/stacktrace.h"
-#include "opal/util/gethostname.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/constants.h"
@@ -462,7 +461,7 @@ int opal_util_register_stackhandlers (void)
     int param, i;
     bool complain, showed_help = false;
 
-    opal_gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
+    gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
     stacktrace_hostname[sizeof(stacktrace_hostname) - 1] = '\0';
     /* to keep these somewhat readable, only print the machine name */
     for (i = 0 ; i < (int)sizeof(stacktrace_hostname) ; ++i) {

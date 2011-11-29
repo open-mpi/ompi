@@ -35,7 +35,6 @@
 
 #include "opal/mca/backtrace/backtrace.h"
 #include "orte/util/proc_info.h"
-#include "orte/util/gethostname.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
@@ -72,7 +71,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     if (orte_initialized) {
         host = orte_process_info.nodename;
     } else {
-        opal_gethostname(hostname, sizeof(hostname));
+        gethostname(hostname, sizeof(hostname));
         host = hostname;
     }
     pid = getpid();

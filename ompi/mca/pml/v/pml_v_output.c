@@ -10,7 +10,6 @@
 
 #include "ompi_config.h"
 #include "opal/util/output.h"
-#include "opal/util/gethostname.h"
 
 
 #include "pml_v_output.h"
@@ -43,7 +42,7 @@ int pml_v_output_open(char *output, int verbosity) {
             lds.lds_file_suffix = output;
         }
         lds.lds_is_debugging = true;
-        opal_gethostname(hostname, 32);
+        gethostname(hostname, 32);
         asprintf(&lds.lds_prefix, "[%s:%05d] pml_v: ", hostname, getpid());
         lds.lds_verbose_level = verbosity;
         mca_pml_v.output = opal_output_open(&lds);
