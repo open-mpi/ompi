@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -187,7 +187,9 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
 
             packed_buffer = (unsigned char *) iov[iov_count].iov_base;
             done = pConv->bConverted - i * pData->size;  /* partial data from last pack */
-            if( done != 0 ) {  /* still some data to copy from the last time */
+            /* data left from last round and enough space in the buffer */ 
+            if( (done + max_allowed) >= pData->size ) { 
+                /* copy the partial left-over from the previous round */
                 done = pData->size - done;
                 OMPI_DDT_SAFEGUARD_POINTER( user_memory, done, pConv->pBaseBuf, pData, pConv->count );
                 MEMCPY_CSUM( packed_buffer, user_memory, done, pConv );
@@ -195,18 +197,20 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
                 max_allowed -= done;
                 total_bytes_converted += done;
                 user_memory += (extent - pData->size + done);
+
+                /* copy entire types */
+                counter = (uint32_t)(max_allowed / pData->size);
+                if( counter > pConv->count ) counter = pConv->count;
+                for( i = 0; i < counter; i++ ) {
+                    OMPI_DDT_SAFEGUARD_POINTER( user_memory, pData->size, pConv->pBaseBuf, pData, pConv->count );
+                    MEMCPY_CSUM( packed_buffer, user_memory, pData->size, pConv );
+                    packed_buffer+= pData->size;
+                    user_memory += extent;
+                }
+                done = (counter * pData->size);
+                max_allowed -= done;
+                total_bytes_converted += done;
             }
-            counter = (uint32_t)(max_allowed / pData->size);
-            if( counter > pConv->count ) counter = pConv->count;
-            for( i = 0; i < counter; i++ ) {
-                OMPI_DDT_SAFEGUARD_POINTER( user_memory, pData->size, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY_CSUM( packed_buffer, user_memory, pData->size, pConv );
-                packed_buffer+= pData->size;
-                user_memory += extent;
-            }
-            done = (counter * pData->size);
-            max_allowed -= done;
-            total_bytes_converted += done;
             /* If there is anything pending ... */
             if( 0 != max_allowed ) {
                 done = max_allowed;
