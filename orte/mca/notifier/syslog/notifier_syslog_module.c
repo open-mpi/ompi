@@ -111,7 +111,7 @@ static void myhelplog(int severity, int errcode, const char *filename, const cha
     }
     
     /* go ahead and output it */
-    syslog(severity, output);
+    syslog(severity, output, NULL);
     free(output);
 }
 
@@ -164,5 +164,5 @@ static void mypeerlog(int severity, int errcode, orte_process_name_t *peer_proc,
     }
 
     buf[ORTE_NOTIFIER_MAX_BUF] = '\0'; /* not needed? */
-    syslog(severity, buf);
+    syslog(severity, buf, NULL);
 }

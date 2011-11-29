@@ -131,7 +131,7 @@ void ompi_info_do_version(bool want_all, opal_cmd_line_t *cmd_line)
  */
 void ompi_info_show_ompi_version(const char *scope)
 {
-    char *tmp;
+    char *tmp, *tmp2;
 
     ompi_info_out("Package", "package", OPAL_PACKAGE_STRING);
     asprintf(&tmp, "%s:version:full", ompi_info_type_ompi);
