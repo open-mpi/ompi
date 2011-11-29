@@ -46,7 +46,6 @@
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/util/gethostname.h"
 #include "opal/mca/shmem/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 
@@ -85,7 +84,7 @@ shmem_posix_shm_open(char *posix_file_name_buff, size_t size)
              */
             else {
                 char hn[MAXHOSTNAMELEN];
-                opal_gethostname(hn, MAXHOSTNAMELEN - 1);
+                gethostname(hn, MAXHOSTNAMELEN - 1);
                 hn[MAXHOSTNAMELEN - 1] = '\0';
                 opal_output_verbose(10, opal_shmem_base_output,
                      "shmem_posix_shm_open: disqualifying posix because "

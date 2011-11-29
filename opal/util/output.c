@@ -36,7 +36,6 @@
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
-#include "opal/util/gethostname.h"
 #include "opal/threads/mutex.h"
 #include "opal/constants.h"
 
@@ -180,7 +179,7 @@ bool opal_output_init(void)
     } else {
         verbose.lds_want_stderr = true;
     }
-    opal_gethostname(hostname, sizeof(hostname));
+    gethostname(hostname, sizeof(hostname));
     asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
@@ -266,7 +265,7 @@ void opal_output_reopen_all(void)
         default_stderr_fd = -1;
     }
 
-    opal_gethostname(hostname, sizeof(hostname));
+    gethostname(hostname, sizeof(hostname));
     if( NULL != verbose.lds_prefix ) {
         free(verbose.lds_prefix);
         verbose.lds_prefix = NULL;

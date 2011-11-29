@@ -40,7 +40,6 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
-#include "opal/util/gethostname.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/base/base.h"
@@ -105,7 +104,7 @@ int ompi_mpi_finalize(void)
            to stderr. */
         char hostname[MAXHOSTNAMELEN];
         pid_t pid = getpid();
-        opal_gethostname(hostname, sizeof(hostname));
+        gethostname(hostname, sizeof(hostname));
 
         orte_show_help("help-mpi-runtime.txt",
                        "mpi_finalize:invoked_multiple_times",

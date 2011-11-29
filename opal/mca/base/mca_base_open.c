@@ -31,7 +31,6 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "opal/util/gethostname.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
@@ -113,7 +112,7 @@ int mca_base_open(void)
   } else {
     set_defaults(&lds);
   }
-  opal_gethostname(hostname, 64);
+  gethostname(hostname, 64);
   asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
   opal_output_reopen(0, &lds);
   opal_output_verbose(5, 0, "mca: base: opening components");

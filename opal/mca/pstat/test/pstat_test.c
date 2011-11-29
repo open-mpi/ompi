@@ -32,7 +32,6 @@
 #include <sys/time.h>
 #endif
 
-#include "opal/util/gethostname.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/pstat/pstat.h"
 #include "opal/mca/pstat/base/base.h"
@@ -87,7 +86,7 @@ static int query(pid_t pid,
     }
 
     if (NULL != stats) {
-        opal_gethostname(hostname, 128);
+        gethostname(hostname, 128);
         strncpy(stats->node, hostname, OPAL_PSTAT_MAX_STRING_LEN);
    
         stats->pid = pid;
