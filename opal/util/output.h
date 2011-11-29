@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -306,7 +306,7 @@ struct opal_output_stream_t {
      * characteristics of the reopened output stream should be.
      *
      * This function redirects an existing stream into a new [set of]
-     * location[s], as specified by the lds parameter.  If the output_is
+     * location[s], as specified by the lds parameter.  If the output_id
      * passed is invalid, this call is effectively the same as opening a
      * new stream with a specific stream handle.
      */
