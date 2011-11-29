@@ -390,48 +390,19 @@ int orte_rmaps_base_claim_slot(orte_job_t *jdata,
 int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
 {
     orte_job_map_t *map;
-    orte_vpid_t vpid, vpid_start;
+    orte_vpid_t vpid, cnt;
     int i, j;
     orte_node_t *node;
-    orte_proc_t *proc;
+    orte_proc_t *proc, *ptr;
     int rc;
     
     map = jdata->map;
-    
-    /* find the max vpid already assigned */
-    vpid_start = ORTE_VPID_MIN;
-    for (i=0; i < map->nodes->size; i++) {
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
-            continue;
-        }
-        for (j=0; j < node->procs->size; j++) {
-            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
-                continue;
-            }
-            /* ignore procs from other jobs */
-            if (proc->name.jobid != jdata->jobid) {
-                continue;
-            }
-            /* if the vpid is already defined, then update start */
-            if (ORTE_VPID_INVALID != proc->name.vpid &&
-                vpid_start < proc->name.vpid) {
-                vpid_start = proc->name.vpid;
-            }
-        }
-    }
-    if (ORTE_VPID_MIN == vpid_start) {
-        /* start at zero */
-        vpid_start = 0;
-    } else {
-        /* we start one higher than the max found */
-        vpid_start++;
-    }
     
     if (ORTE_MAPPING_BYSLOT & map->policy ||
         ORTE_MAPPING_BYSOCKET & map->policy ||
         ORTE_MAPPING_BYBOARD & map->policy) {
         /* assign the ranks sequentially */
-        vpid = vpid_start;
+        vpid = 0;
         for (i=0; i < map->nodes->size; i++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
                 continue;
@@ -445,12 +416,22 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                     continue;
                 }
                 if (ORTE_VPID_INVALID == proc->name.vpid) {
+                    /* find the next available vpid */
+                    while (NULL != (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid)) &&
+                           ORTE_VPID_INVALID != ptr->name.vpid) {
+                        vpid++;
+                    }
                     proc->name.vpid = vpid++;
                 }
-                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
-                                                                      proc->name.vpid, proc))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
+                /* some mappers require that we insert the proc into the jdata->procs
+                 * array, while others will have already done it - so check and
+                 * do the operation if required
+                 */
+                if (NULL == opal_pointer_array_get_item(jdata->procs, proc->name.vpid)) {
+                    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }                    
                 }
             }
         }
@@ -459,27 +440,57 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
     
     if (ORTE_MAPPING_BYNODE & map->policy) {
         /* assign the ranks round-robin across nodes */
-        for (i=0; i < map->nodes->size; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
-                continue;
-            }
-            vpid = i + vpid_start;
-            for (j=0; j < node->procs->size; j++) {
-                if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+        cnt=0;
+        vpid=0;
+        while (cnt < jdata->num_procs) {
+            for (i=0; i < map->nodes->size; i++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
                     continue;
                 }
-                /* ignore procs from other jobs */
-                if (proc->name.jobid != jdata->jobid) {
-                    continue;
-                }
-                if (ORTE_VPID_INVALID == proc->name.vpid) {
-                    proc->name.vpid = vpid;
-                    vpid += map->num_nodes;
-                }
-                if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs,
-                                                                      proc->name.vpid, proc))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
+                for (j=0; j < node->procs->size; j++) {
+                    if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                        continue;
+                    }
+                    /* ignore procs from other jobs */
+                    if (proc->name.jobid != jdata->jobid) {
+                        continue;
+                    }
+                    if (ORTE_VPID_INVALID != proc->name.vpid) {
+                        /* vpid was already assigned, probably by the
+                         * round-robin mapper. Some mappers require that
+                         * we insert the proc into the jdata->procs
+                         * array, while others will have already done it - so check and
+                         * do the operation if required
+                         */
+                        if (NULL == opal_pointer_array_get_item(jdata->procs, proc->name.vpid)) {
+                            if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
+                                ORTE_ERROR_LOG(rc);
+                                return rc;
+                            }
+                            /* if we added it to the array, then account for
+                             * it in our loop - otherwise don't as we would be
+                             * double counting
+                             */
+                            cnt++;
+                        }
+                        continue;
+                    }
+                    /* find next available vpid */
+                    while (NULL != (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid)) &&
+                           ORTE_VPID_INVALID != ptr->name.vpid) {
+                        vpid++;
+                    }
+                    proc->name.vpid = vpid++;
+                    /* insert the proc into the jdata->procs array - can't already
+                     * be there as the only way to this point in the code is for the
+                     * vpid to have been INVALID
+                     */
+                    if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
+                    cnt++;
+                    break;  /* move on to next node */
                 }
             }
         }
