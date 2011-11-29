@@ -561,14 +561,12 @@ int orte_daemon(int argc, char *argv[])
         if (ORTE_SUCCESS != (ret = orte_rml.set_contact_info(rml_uri))) {
             ORTE_ERROR_LOG(ret);
             free(rml_uri);
-            OBJ_RELEASE(buffer);
             goto DONE;
         }
         ret = orte_rml_base_parse_uris(rml_uri, &parent, NULL );
         if( ORTE_SUCCESS != ret ) {
             ORTE_ERROR_LOG(ret);
             free(rml_uri);
-            OBJ_RELEASE(buffer);
             goto DONE;
         }
         free(rml_uri);
