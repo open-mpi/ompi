@@ -54,6 +54,8 @@ included in the vX.Y.Z section and be denoted as:
 
 - Fix Fortran value for MPI_MAX_PORT_NAME.  Thanks to Enzo Dari for
   raising the issue.
+- Workaround an Intel compiler v12.1.0 2011.6.233 vector optimization
+  bug.
 
 
 1.4.4
