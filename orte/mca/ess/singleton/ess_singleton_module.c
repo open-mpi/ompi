@@ -491,13 +491,30 @@ static int fork_hnp(void)
         return ORTE_ERR_HNP_COULD_NOT_START;
     }
 
-    /* parse the name from the returned info */
     if (']' != orted_uri[strlen(orted_uri)-1]) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         free(orted_uri);
         return ORTE_ERR_COMM_FAILURE;
     }
     orted_uri[strlen(orted_uri)-1] = '\0';
+
+    /* parse the sysinfo from the returned info */
+    if (NULL == (param = strrchr(orted_uri, '['))) {
+	ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+	free(orted_uri);
+	return ORTE_ERR_COMM_FAILURE;
+    }
+    param[-1] = '\0'; /* terminate the string */
+
+    /* save the cpu model */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_sysinfo(&orte_local_cpu_type,
+								  &orte_local_cpu_model, ++param))) {
+	ORTE_ERROR_LOG(rc);
+	free(orted_uri);
+	return rc;
+    }
+
+    /* parse the name from the returned info */
     if (NULL == (param = strrchr(orted_uri, '['))) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         free(orted_uri);
