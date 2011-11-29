@@ -133,7 +133,7 @@
       parameter (MPI_BSEND_OVERHEAD=128)
       parameter (MPI_MAX_INFO_KEY=35)
       parameter (MPI_MAX_INFO_VAL=255)
-      parameter (MPI_MAX_PORT_NAME=255)
+      parameter (MPI_MAX_PORT_NAME=1023)
       parameter (MPI_MAX_OBJECT_NAME=63)
       parameter (MPI_ORDER_C=0)
       parameter (MPI_ORDER_FORTRAN=1)
