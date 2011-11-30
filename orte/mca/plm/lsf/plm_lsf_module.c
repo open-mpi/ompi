@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
@@ -98,11 +98,6 @@ orte_plm_base_module_t orte_plm_lsf_module = {
     plm_lsf_finalize
 };
 
-/*
- * Local variables
- */
-static orte_jobid_t active_job = ORTE_JOBID_INVALID;
-
 /**
  * Init the module
  */
@@ -113,6 +108,15 @@ int plm_lsf_init(void)
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }
+
+    /* we do NOT assign daemons to nodes at launch - we will
+     * determine that mapping when the daemon
+     * calls back. This is required because lsf does
+     * its own mapping of proc-to-node, and we cannot know
+     * in advance which daemon will wind up on which node
+     */
+    orte_plm_globals.daemon_nodes_assigned_at_launch = false;
+
     return rc;
 }
 
@@ -138,11 +142,12 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     struct timeval joblaunchstart, launchstart, launchstop;
     int proc_vpid_index = 0;
     bool failed_launch = true;
-    orte_app_context_t **apps;
-    orte_node_t **nodes;
+    orte_app_context_t *app;
+    orte_node_t *node;
     orte_std_cntr_t nnode;
     orte_jobid_t failed_job;
     orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
+    orte_job_t *daemons;
 
     /* default to declaring the daemons failed*/
     failed_job = ORTE_PROC_MY_NAME->jobid;
@@ -153,28 +158,32 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
         }        
     }
     
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+    /* if we don't want to launch, then don't attempt to
+     * launch the daemons - the user really wants to just
+     * look at the proposed process map
+     */
+    if (orte_do_not_launch) {
+        goto launch_apps;
+    }
+
+    /* start by setting up the virtual machine */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:lsf: launching job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
+                         "%s plm:slurm: launching vm",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* save the active jobid */
-    active_job = jdata->jobid;
     
     /* Get the map for this job */
-    if (NULL == (map = orte_rmaps.get_job_map(active_job))) {
+    if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    nodes = (orte_node_t**)map->nodes->addr;
     
     num_nodes = map->num_new_daemons;
     if (num_nodes == 0) {
@@ -189,18 +198,21 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     nodelist_argv = NULL;
     nodelist_argc = 0;
 
-    for (nnode=0; nnode < map->num_nodes; nnode++) {
+    for (nnode=0; nnode < map->nodes->size; nnode++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+            continue;
+        }
         /* if the daemon already exists on this node, then
          * don't include it
          */
-        if (nodes[nnode]->daemon_launched) {
+        if (node->daemon_launched) {
             continue;
         }
         
         /* otherwise, add it to the list of nodes upon which
          * we need to launch a daemon
          */
-        opal_argv_append(&nodelist_argc, &nodelist_argv, nodes[nnode]->name);
+        opal_argv_append(&nodelist_argc, &nodelist_argv, node->name);
     }
     nodelist = opal_argv_join(nodelist_argv, ',');
 
@@ -248,13 +260,17 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     /* Copy the prefix-directory specified in the
        corresponding app_context.  If there are multiple,
        different prefix's in the app context, complain (i.e., only
-       allow one --prefix option for the entire slurm run -- we
+       allow one --prefix option for the entire lsf run -- we
        don't support different --prefix'es for different nodes in
-       the SLURM plm) */
+       the LSF plm) */
     cur_prefix = NULL;
-    for (i=0; i < jdata->num_apps; i++) {
-        char * app_prefix_dir = apps[i]->prefix_dir;
-         /* Check for already set cur_prefix_dir -- if different,
+    for (i=0; i < jdata->apps->size; i++) {
+        char *app_prefix_dir;
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
+            continue;
+        }
+        app_prefix_dir = app->prefix_dir;
+        /* Check for already set cur_prefix_dir -- if different,
            complain */
         if (NULL != app_prefix_dir) {
             if (NULL != cur_prefix &&
@@ -314,20 +330,25 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     if (ORTE_SUCCESS != 
         (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:lsf: daemon launch failed for job %s on error %s",
+                             "%s plm:lsf: daemon launch failed on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
 
 launch_apps:
+    /* setup the job */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
     /* daemons succeeded - any failure now would be from apps */
-    failed_job = active_job;
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
+    failed_job = jdata->jobid;
+    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:lsf: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     

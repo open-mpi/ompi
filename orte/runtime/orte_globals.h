@@ -171,7 +171,6 @@ typedef struct orte_app_context_t orte_app_context_t;
 typedef uint16_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL    OPAL_UINT16
 
-#define ORTE_JOB_CONTROL_LOCAL_SLAVE        0x0001
 #define ORTE_JOB_CONTROL_NON_ORTE_JOB       0x0002
 #define ORTE_JOB_CONTROL_DEBUGGER_DAEMON    0x0014
 #define ORTE_JOB_CONTROL_FORWARD_OUTPUT     0x0008

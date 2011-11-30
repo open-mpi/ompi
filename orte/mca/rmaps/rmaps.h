@@ -62,12 +62,9 @@ BEGIN_C_DECLS
  */
 typedef int (*orte_rmaps_base_API_map_fn_t)(orte_job_t *jdata);
 
-typedef orte_job_map_t* (*orte_rmaps_base_API_get_job_map_fn_t)(orte_jobid_t job);
-
 /* global structure for accessing RMAPS API's */
 typedef struct {
     orte_rmaps_base_API_map_fn_t            map_job;
-    orte_rmaps_base_API_get_job_map_fn_t    get_job_map;
 } orte_rmaps_t;
 
 ORTE_DECLSPEC extern orte_rmaps_t orte_rmaps;

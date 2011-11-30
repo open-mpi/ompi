@@ -80,6 +80,7 @@
 #include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
 
+#include "orte/mca/debugger/debugger.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/ess/ess.h"
@@ -152,7 +153,6 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
 static struct timeval joblaunchstart, joblaunchstop;
 
 /* local global storage */
-static orte_jobid_t active_job=ORTE_JOBID_INVALID;
 static char *rsh_agent_path=NULL;
 static char **rsh_agent_argv=NULL;
 static opal_list_t my_children;
@@ -216,6 +216,9 @@ static int rsh_init(void)
     /* initialize the children tree */
     OBJ_CONSTRUCT(&my_children, opal_list_t);
     num_children = 0;
+
+    /* we assign daemon nodes at launch */
+    orte_plm_globals.daemon_nodes_assigned_at_launch = true;
 
     return rc;
 }
@@ -806,12 +809,12 @@ static int rsh_launch(orte_job_t *jdata)
     int rc;
     bool failed_launch = true;
     orte_app_context_t *app;
-    orte_node_t *node;
+    orte_node_t *node, *nd;
     orte_std_cntr_t nnode;
     orte_jobid_t failed_job;
     orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
-    bool recv_issued = false;
     opal_list_item_t *item;
+    orte_job_t *daemons;
 
     /* wait for the launch to complete */
     OPAL_THREAD_LOCK(&orte_plm_globals.spawn_lock);
@@ -823,12 +826,6 @@ static int rsh_launch(orte_job_t *jdata)
     orte_plm_globals.spawn_status = ORTE_ERR_FATAL;
     OPAL_THREAD_UNLOCK(&orte_plm_globals.spawn_lock);
     
-    if (NULL == jdata) {
-        /* just launching debugger daemons */
-        active_job = ORTE_JOBID_INVALID;
-        goto launch_apps;
-    }
-    
     /* default to declaring the daemon launch as having failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
@@ -838,22 +835,27 @@ static int rsh_launch(orte_job_t *jdata)
         joblaunchstart = orte_plm_globals.daemonlaunchstart;
     }
     
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+    /* if we don't want to launch, then don't attempt to
+     * launch the daemons - the user really wants to just
+     * look at the proposed process map
+     */
+    if (orte_do_not_launch) {
+        goto launch_apps;
+    }
+
+    /* start by launching the virtual machine */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:rsh: launching job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
+                         "%s plm:rsh: launching vm",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* set the active jobid */
-    active_job = jdata->jobid;
-
     /* Get the map for this job */
-    if (NULL == (map = orte_rmaps.get_job_map(active_job))) {
+    if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
@@ -912,8 +914,15 @@ static int rsh_launch(orte_job_t *jdata)
      */
     node = NULL;
     for (nnode = 0; nnode < map->nodes->size; nnode++) {
-        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
-            break;
+        if (NULL != (nd = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+            node = nd;
+            /* if the node is me, then we continue - we would
+             * prefer to find some other node so we can tell what the remote
+             * shell is, if necessary
+             */
+            if (0 != strcmp(node->name, orte_process_info.nodename)) {
+                break;
+            }
         }
     }
     if (NULL == node) {
@@ -934,7 +943,6 @@ static int rsh_launch(orte_job_t *jdata)
     if (mca_plm_rsh_component.tree_spawn) {
         orte_daemon_cmd_flag_t command = ORTE_DAEMON_TREE_SPAWN;
         opal_byte_object_t bo, *boptr;
-        orte_job_t *jdatorted;
 
         orte_tree_launch_cmd= OBJ_NEW(opal_buffer_t);
         /* insert the tree_spawn cmd */
@@ -965,12 +973,6 @@ static int rsh_launch(orte_job_t *jdata)
         }
         /* release the data since it has now been copied into our buffer */
         free(bo.bytes);
-        /* get the orted job data object */
-        if (NULL == (jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            rc = ORTE_ERR_NOT_FOUND;
-            goto cleanup;
-        }
         /* clear out any previous child info */
         while (NULL != (item = opal_list_remove_first(&my_children))) {
             OBJ_RELEASE(item);
@@ -1105,9 +1107,9 @@ static int rsh_launch(orte_job_t *jdata)
      */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:tm: daemon launch failed for job %s on error %s",
+                             "%s plm:tm: daemon launch failed on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
+                             ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
 
@@ -1115,12 +1117,18 @@ static int rsh_launch(orte_job_t *jdata)
     /* if we get here, then the daemons succeeded, so any failure would now be
      * for the application job
      */
-    failed_job = active_job;
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
+    /* setup the job */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    failed_job = jdata->jobid;
+
+    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:rsh: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
 
@@ -1160,15 +1168,6 @@ static int rsh_launch(orte_job_t *jdata)
                                  0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
 
-    /* cancel the lingering recv */
-    if (recv_issued) {
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        recv_issued = false;
-    }
-    
     return rc;
 }
 

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -54,7 +56,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                                      orte_app_context_t *app, orte_mapping_policy_t policy)
 {
     opal_list_item_t *item, *next;
-    orte_node_t *node;
+    orte_node_t *node, *nd;
     orte_std_cntr_t num_slots;
     orte_std_cntr_t i;
     int rc;
@@ -76,7 +78,16 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
     }
     
-    /* add everything in the node pool that can be used */
+    /* add everything in the node pool that can be used - add them
+     * in daemon order, which may be different than the order in the
+     * node pool
+     */
+    if (0 == opal_list_get_size(allocated_nodes)) {
+        /* the list is empty */
+        nd = NULL;
+    } else {
+        nd = (orte_node_t*)opal_list_get_last(allocated_nodes);
+    }
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             /* ignore nodes that are marked as do-not-use for this mapping */
@@ -97,8 +108,23 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              */
             OBJ_RETAIN(node);
             node->mapped = false;
-            opal_list_append(allocated_nodes, &node->super);
-        } 
+            if (NULL == nd || nd->daemon->name.vpid < node->daemon->name.vpid) {
+                /* just append to end */
+                opal_list_append(allocated_nodes, &node->super);
+                nd = node;
+            } else {
+                /* starting from end, put this node in daemon-vpid order */
+                while (node->daemon->name.vpid < nd->daemon->name.vpid) {
+                    if (opal_list_get_begin(allocated_nodes) == opal_list_get_prev(&nd->super)) {
+                        /* insert at beginning */
+                        opal_list_prepend(allocated_nodes, &node->super);
+                        continue;
+                    }
+                    nd = (orte_node_t*)opal_list_get_prev(&nd->super);
+                }
+                opal_list_insert_pos(allocated_nodes, &nd->super, &node->super);
+            }
+        }
     }
 
     /** check that anything is here */
@@ -339,76 +365,6 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
     
     *total_num_slots = num_slots;
-    
-    return ORTE_SUCCESS;
-}
-
-int orte_rmaps_base_setup_virtual_machine(orte_job_t *jdata)
-{
-    orte_node_t *node;
-    orte_proc_t *proc;
-    orte_job_map_t *map;
-    int rc, i;
-
-    map = jdata->map;
-    
-    /* cycle thru all available nodes and find those that do not already
-     * have a daemon on them - no need to include our own as we are
-     * obviously already here!
-     */
-    for (i=1; i < orte_node_pool->size; i++) {
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-            continue;
-        }
-        /* if this node already has a daemon, skip it */
-        if (NULL != node->daemon) {
-            continue;
-        }
-        /* add the node to the map */
-        opal_pointer_array_add(map->nodes, (void*)node);
-        ++(map->num_nodes);
-        /* maintain accounting */
-        OBJ_RETAIN(node);
-        /* create a new daemon object for this node */
-        proc = OBJ_NEW(orte_proc_t);
-        if (NULL == proc) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
-        if (ORTE_VPID_MAX-1 <= jdata->num_procs) {
-            /* no more daemons available */
-            orte_show_help("help-orte-rmaps-base.txt", "out-of-vpids", true);
-            OBJ_RELEASE(proc);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        proc->name.vpid = jdata->num_procs;  /* take the next available vpid */
-        ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
-        ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
-        /* point the proc to the node and maintain accounting */
-        OBJ_RETAIN(node);
-        proc->node = node;
-        proc->nodename = node->name;
-        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
-                             "%s rmaps:base:setup_vm add new daemon %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&proc->name)));
-        /* add the daemon to the daemon job object */
-        if (0 > (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, (void*)proc))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        ++jdata->num_procs;
-        /* point the node to the daemon */
-        node->daemon = proc;
-        OBJ_RETAIN(proc);  /* maintain accounting */
-        /* track number of daemons to be launched */
-        ++map->num_new_daemons;
-        /* and their starting vpid */
-        if (ORTE_VPID_INVALID == map->daemon_vpid_start) {
-            map->daemon_vpid_start = proc->name.vpid;
-        }
-    }
     
     return ORTE_SUCCESS;
 }

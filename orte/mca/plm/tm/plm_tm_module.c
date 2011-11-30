@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -121,6 +121,9 @@ static int plm_tm_init(void)
         ORTE_ERROR_LOG(rc);
     }
 
+    /* we assign daemon nodes at launch */
+    orte_plm_globals.daemon_nodes_assigned_at_launch = true;
+
     return rc;
 }
 
@@ -151,16 +154,11 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     tm_event_t event;
     bool failed_launch = true;
     mode_t current_umask;
-    orte_jobid_t failed_job, active_job;
+    orte_jobid_t failed_job;
     char *nodelist;
     char* vpid_string;
+    orte_job_t *daemons;
 
-    if (NULL == jdata) {
-        /* just launching debugger daemons */
-        active_job = ORTE_JOBID_INVALID;
-        goto launch_apps;
-    }
-    
     /* if we are timing, record the start time */
     if (orte_timing) {
         gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
@@ -169,20 +167,27 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* default to declaring the daemons as failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+    /* if we don't want to launch, then don't attempt to
+     * launch the daemons - the user really wants to just
+     * look at the proposed process map
+     */
+    if (orte_do_not_launch) {
+        goto launch_apps;
+    }
+
+    /* start by launching the virtual machine */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    active_job = jdata->jobid;
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:tm: launching job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
+                         "%s plm:tm: launching vm",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* Get the map for this job */
-    if (NULL == (map = orte_rmaps.get_job_map(jdata->jobid))) {
+    if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
@@ -212,7 +217,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
 
     /* create a list of nodes in this launch */
     nodeargv = NULL;
-    for (i = 0; i < map->num_nodes; i++) {
+    for (i = 0; i < map->nodes->size; i++) {
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
             continue;
         }
@@ -310,7 +315,7 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* Iterate through each of the nodes and spin
      * up a daemon.
      */
-    for (i = 0; i < map->num_nodes; i++) {
+    for (i = 0; i < map->nodes->size; i++) {
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
             continue;
         }
@@ -393,9 +398,9 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:tm: daemon launch failed for job %s on error %s",
+                             "%s plm:tm: daemon launch failed on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
+                             ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
@@ -405,15 +410,20 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     }
     
 launch_apps:
-    /* since the daemons have launched, any failures now will be for the
+     /* setup the job */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+   /* since the daemons have launched, any failures now will be for the
      * application job
      */
-    failed_job = active_job;
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
+    failed_job = jdata->jobid;
+    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:tm: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     

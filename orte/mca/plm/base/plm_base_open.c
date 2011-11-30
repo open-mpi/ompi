@@ -110,6 +110,9 @@ int orte_plm_base_open(void)
     /* init the next jobid */
     orte_plm_globals.next_jobid = 1;
     
+    /* default to assigning daemons to nodes at launch */
+    orte_plm_globals.daemon_nodes_assigned_at_launch = true;
+
     /* Open up all the components that we can find */
 
     if (ORTE_SUCCESS != 
