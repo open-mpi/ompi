@@ -467,6 +467,17 @@ static void process_orted_launch_report(int fd, short event, void *data)
     
     /* look this node up, if necessary */
     if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
+        if (NULL == nodename) {
+            /* it is permissible to transmit a NULL string, but
+             * that would be a problem here
+             */
+            opal_output(0, "%s NULL nodename returned by daemon %s - cannot process",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        ORTE_NAME_PRINT(&daemon->name));
+            rc = ORTE_ERR_FATAL;
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
         len = strlen(nodename);
         for (idx=0; idx < orte_node_pool->size; idx++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, idx))) {
@@ -475,6 +486,14 @@ static void process_orted_launch_report(int fd, short event, void *data)
             if (NULL != node->daemon) {
                 /* already known */
                 continue;
+            }
+            if (NULL == node->name) {
+                /* this shouldn't happen */
+                opal_output(0, "%s NULL nodename detected during daemon callback - cannot process",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+                rc = ORTE_ERR_FATAL;
+                orted_failed_launch = true;
+                goto CLEANUP;
             }
             if (len <= strlen(node->name)) {
                 len2 = len;
