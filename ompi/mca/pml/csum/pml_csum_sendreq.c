@@ -712,7 +712,7 @@ int mca_pml_csum_send_request_start_rdma( mca_pml_csum_send_request_t* sendreq,
                                   MCA_BTL_NO_ORDER,
                                   0,
                                   &size,
-                                  0,
+                                  MCA_BTL_DES_FLAGS_GET,
                                   &src );
         MEMCHECKER(
             memchecker_call(&opal_memchecker_base_mem_noaccess,
@@ -1212,7 +1212,8 @@ int mca_pml_csum_send_request_put_frag( mca_pml_csum_rdma_frag_t* frag )
                               MCA_BTL_NO_ORDER,
                               0,
                               &frag->rdma_length,
-                              MCA_BTL_DES_FLAGS_BTL_OWNERSHIP,
+                              MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
+			      MCA_BTL_DES_FLAGS_PUT,
                               &des );
     
     if( OPAL_UNLIKELY(NULL == des) ) {
