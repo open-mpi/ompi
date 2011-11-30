@@ -74,7 +74,6 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/hnp_contact.h"
 
-#include "orte/mca/debugger/debugger.h"
 #include "orte/mca/debugger/base/base.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
@@ -497,7 +496,7 @@ int orterun(int argc, char *argv[])
     char * tmp_env_var = NULL;
     orte_debugger_breakpoint_fn_t foo;
     orte_job_t *daemons;
-    int32_t ljob, i;
+    int32_t ljob;
     orte_app_context_t *app, *dapp;
 
     /* find our basename (the name of the executable) so that we can
@@ -824,8 +823,6 @@ int orterun(int argc, char *argv[])
         }
     }
     
-    /***   LAUNCH THE ORTE VIRTUAL MACHINE   ***/
-
     /* we may need to look at the apps for the user's job
      * to get our full list of nodes, so prep the job for
      * launch - start by getting a jobid for it */
@@ -842,53 +839,16 @@ int orterun(int argc, char *argv[])
     ljob = ORTE_LOCAL_JOBID(jdata->jobid);
     opal_pointer_array_set_item(orte_job_data, ljob, jdata);
         
-    /* set the job state */
-    jdata->state = ORTE_JOB_STATE_INIT;
-
-    /* if job recovery is not defined, set it to default */
-    if (!jdata->recovery_defined) {
-        /* set to system default */
-        jdata->enable_recovery = orte_enable_recovery;
-    }
-    /* if app recovery is not defined, set apps to defaults */
-    for (i=0; i < jdata->apps->size; i++) {
-        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
-            continue;
-        }
-        if (!app->recovery_defined) {
-            app->max_restarts = orte_max_restarts;
-        }
-    }
-    
-    /* if we don't want to launch, then don't attempt to
-     * launch the daemons - the user really wants to just
-     * look at the proposed process map
+    /* run the allocator on the application job - this allows us to
+     * pickup any host or hostfile arguments so we get the full
+     * array of nodes in our allocation
      */
-    if (!orte_do_not_launch) {
-        /* run the allocator on the application job - this allows us to
-         * pickup any host or hostfile arguments so we get the full
-         * array of nodes in our allocation
-         */
-        if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
-            goto DONE;
-        }
-
-        /* launch the daemons */
-        if (ORTE_SUCCESS != (rc = orte_plm.spawn(daemons))) {
-            fprintf(stderr, "%s: UNABLE TO LAUNCH VIRTUAL MACHINE\n", orte_basename);
-            goto DONE;
-        }
+    if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
+        goto DONE;
     }
 
-    /***   LAUNCH THE APPLICATION   ***/
-    /* setup for debugging */
-    orte_debugger.init_before_spawn(jdata);
-    
     /* Spawn the job */
     rc = orte_plm.spawn(jdata);
-    
-    /* complete debugger interface */
-    orte_debugger.init_after_spawn(jdata);
     
     /* now wait until the termination event fires */
     opal_event_dispatch(opal_event_base);

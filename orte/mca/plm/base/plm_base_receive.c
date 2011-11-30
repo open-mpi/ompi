@@ -204,99 +204,78 @@ static void process_msg(int fd, short event, void *data)
             /* flag that this is a dynamic spawn */
             jdata->dyn_spawn_active = true;
 
-            /* if is a LOCAL slave cmd */
-            if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                     "%s plm:base:receive local launch",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                /* In this case, I cannot lookup job info. All I do is pass
-                 * this along to the local launcher, IF it is available
-                 */
-                if (NULL == orte_plm.spawn) {
-                    /* can't do this operation */
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
-                    rc = ORTE_ERR_NOT_SUPPORTED;
-                    goto ANSWER_LAUNCH;
-                }
-                if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto ANSWER_LAUNCH;
-                }
-                job = jdata->jobid;
-            } else {  /* this is a GLOBAL launch cmd */
-                /* get the parent's job object */
-                if (NULL == (parent = orte_get_job_data_object(msgpkt->sender.jobid))) {
-                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-                    goto ANSWER_LAUNCH;
-                }
-                    
-                /* if the prefix was set in the parent's job, we need to transfer
-                 * that prefix to the child's app_context so any further launch of
-                 * orteds can find the correct binary. There always has to be at
-                 * least one app_context in both parent and child, so we don't
-                 * need to check that here. However, be sure not to overwrite
-                 * the prefix if the user already provided it!
-                 */
-                app = (orte_app_context_t*)opal_pointer_array_get_item(parent->apps, 0);
-                child_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
-                if (NULL != app->prefix_dir &&
-                    NULL == child_app->prefix_dir) {
-                    child_app->prefix_dir = strdup(app->prefix_dir);
-                }
-                    
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                     "%s plm:base:receive adding hosts",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                    
-                /* process any add-hostfile and add-host options that were provided */
-                if (ORTE_SUCCESS != (rc = orte_ras_base_add_hosts(jdata))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto ANSWER_LAUNCH;
-                }
-                    
-                if( NULL == parent->bookmark ) {
-                    /* find the sender's node in the job map */
-                    if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(parent->procs, msgpkt->sender.vpid))) {
-                        /* set the bookmark so the child starts from that place - this means
-                         * that the first child process could be co-located with the proc
-                         * that called comm_spawn, assuming slots remain on that node. Otherwise,
-                         * the procs will start on the next available node
-                         */
-                        jdata->bookmark = proc->node;
-                    }
-                } else {
-                    jdata->bookmark = parent->bookmark;
-                }
-                    
-                /* launch it */
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                     "%s plm:base:receive calling spawn",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                OPAL_RELEASE_THREAD(&lock, &cond, &processing);
-                if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto ANSWER_LAUNCH;
-                }
-                OPAL_ACQUIRE_THREAD(&lock, &cond, &processing);
-
-                job = jdata->jobid;
-                    
-                /* output debugger proctable, if requested */
-                if (orte_debugger_base.dump_proctable) {
-                    char *output;
-                    opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
-                    if (orte_xml_output) {
-                        fprintf(orte_xml_fp, "%s\n", output);
-                        fflush(orte_xml_fp);
-                    } else {
-                        opal_output(orte_clean_output, "%s", output);
-                    }
-                    free(output);
-                }
-
-                /* return the favor so that any repetitive comm_spawns track each other */
-                parent->bookmark = jdata->bookmark;
+            /* get the parent's job object */
+            if (NULL == (parent = orte_get_job_data_object(msgpkt->sender.jobid))) {
+                ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                goto ANSWER_LAUNCH;
             }
+                    
+            /* if the prefix was set in the parent's job, we need to transfer
+             * that prefix to the child's app_context so any further launch of
+             * orteds can find the correct binary. There always has to be at
+             * least one app_context in both parent and child, so we don't
+             * need to check that here. However, be sure not to overwrite
+             * the prefix if the user already provided it!
+             */
+            app = (orte_app_context_t*)opal_pointer_array_get_item(parent->apps, 0);
+            child_app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+            if (NULL != app->prefix_dir &&
+                NULL == child_app->prefix_dir) {
+                child_app->prefix_dir = strdup(app->prefix_dir);
+            }
+                    
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:receive adding hosts",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+                    
+            /* process any add-hostfile and add-host options that were provided */
+            if (ORTE_SUCCESS != (rc = orte_ras_base_add_hosts(jdata))) {
+                ORTE_ERROR_LOG(rc);
+                goto ANSWER_LAUNCH;
+            }
+                    
+            if( NULL == parent->bookmark ) {
+                /* find the sender's node in the job map */
+                if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(parent->procs, msgpkt->sender.vpid))) {
+                    /* set the bookmark so the child starts from that place - this means
+                     * that the first child process could be co-located with the proc
+                     * that called comm_spawn, assuming slots remain on that node. Otherwise,
+                     * the procs will start on the next available node
+                     */
+                    jdata->bookmark = proc->node;
+                }
+            } else {
+                jdata->bookmark = parent->bookmark;
+            }
+                    
+            /* launch it */
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:receive calling spawn",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+            OPAL_RELEASE_THREAD(&lock, &cond, &processing);
+            if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
+                ORTE_ERROR_LOG(rc);
+                goto ANSWER_LAUNCH;
+            }
+            OPAL_ACQUIRE_THREAD(&lock, &cond, &processing);
+
+            job = jdata->jobid;
+                    
+            /* output debugger proctable, if requested */
+            if (orte_debugger_base.dump_proctable) {
+                char *output;
+                opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
+                if (orte_xml_output) {
+                    fprintf(orte_xml_fp, "%s\n", output);
+                    fflush(orte_xml_fp);
+                } else {
+                    opal_output(orte_clean_output, "%s", output);
+                }
+                free(output);
+            }
+
+            /* return the favor so that any repetitive comm_spawns track each other */
+            parent->bookmark = jdata->bookmark;
                 
             /* if the child is an ORTE job, wait for the procs to report they are alive */
             if (!(jdata->controls & ORTE_JOB_CONTROL_NON_ORTE_JOB)) {

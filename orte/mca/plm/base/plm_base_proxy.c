@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +42,6 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
     opal_buffer_t buf;
     orte_plm_cmd_flag_t command;
     orte_std_cntr_t count;
-    orte_process_name_t *target;
     int rc;
     
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -64,20 +65,13 @@ int orte_plm_proxy_spawn(orte_job_t *jdata)
         
     }
     
-    /* identify who gets this command - the HNP or the local orted */
-    if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
-        target = ORTE_PROC_MY_DAEMON;
-    } else {
-        target = ORTE_PROC_MY_HNP;
-    }
-    
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:proxy sending spawn cmd to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(target)));
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_HNP)));
     
     /* tell the target to launch the job */
-    if (0 > (rc = orte_rml.send_buffer(target, &buf, ORTE_RML_TAG_PLM, 0))) {
+    if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buf, ORTE_RML_TAG_PLM, 0))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }

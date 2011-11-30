@@ -71,6 +71,8 @@ typedef struct {
     bool spawn_in_progress;
     /* tree spawn cmd */
     opal_buffer_t tree_spawn_cmd;
+    /* daemon nodes assigned at launch */
+    bool daemon_nodes_assigned_at_launch;
 } orte_plm_globals_t;
 /**
  * Global instance of PLM framework data
@@ -98,6 +100,7 @@ ORTE_DECLSPEC int orte_plm_base_create_jobid(orte_job_t *jdata);
 ORTE_DECLSPEC void orte_plm_base_reset_job(orte_job_t *jdata);
 
 ORTE_DECLSPEC int orte_plm_base_setup_orted_cmd(int *argc, char ***argv);
+ORTE_DECLSPEC int orte_plm_base_setup_virtual_machine(orte_job_t *jdata);
 
 /**
  * Utilities for plm components that use proxy daemons

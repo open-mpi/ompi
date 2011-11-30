@@ -110,7 +110,6 @@ orte_plm_base_module_1_0_0_t orte_plm_slurm_module = {
  */
 static pid_t primary_srun_pid = 0;
 static bool primary_pid_set = false;
-static orte_jobid_t active_job = ORTE_JOBID_INVALID;
 static bool launching_daemons;
 
 /**
@@ -124,6 +123,14 @@ static int plm_slurm_init(void)
         ORTE_ERROR_LOG(rc);
     }
     
+    /* we do NOT assign daemons to nodes at launch - we will
+     * determine that mapping when the daemon
+     * calls back. This is required because slurm does
+     * its own mapping of proc-to-node, and we cannot know
+     * in advance which daemon will wind up on which node
+     */
+    orte_plm_globals.daemon_nodes_assigned_at_launch = false;
+
     return rc;
 }
 
@@ -144,7 +151,6 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     int rc;
     char *tmp;
     char** env = NULL;
-    char* var;
     char *nodelist_flat;
     char **nodelist_argv;
     char *name_string;
@@ -155,19 +161,14 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     int proc_vpid_index;
     orte_jobid_t failed_job;
     bool failed_launch=true;
+    orte_job_t *daemons;
 
     /* if we are timing, record the start time */
     if (orte_timing) {
         gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
     }
     
-    if (NULL == jdata) {
-        /* just launching debugger daemons */
-        active_job = ORTE_JOBID_INVALID;
-        goto launch_apps;
-    }
-    
-    /* flag the daemons as failing by default */
+     /* flag the daemons as failing by default */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
     if (orte_timing) {
@@ -178,25 +179,34 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         }        
     }
     
-    /* indicate the state of the launch */
-    launching_daemons = true;
-    
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+    /* if we don't want to launch, then don't attempt to
+     * launch the daemons - the user really wants to just
+     * look at the proposed process map
+     */
+    if (orte_do_not_launch) {
+        goto launch_apps;
+    }
+
+    /* start by setting up the virtual machine */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
+    /* indicate the state of the launch */
+    launching_daemons = true;
+    
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:slurm: launching job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
+                         "%s plm:slurm: launching vm",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     
     /* set the active jobid */
-    active_job = jdata->jobid;
+    failed_job = daemons->jobid;
     
     /* Get the map for this job */
-    if (NULL == (map = orte_rmaps.get_job_map(active_job))) {
+    if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
@@ -211,7 +221,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     }
 
     /* need integer value for command line parameter */
-    asprintf(&jobid_string, "%lu", (unsigned long) jdata->jobid);
+    asprintf(&jobid_string, "%lu", (unsigned long) daemons->jobid);
 
     /*
      * start building argv array
@@ -270,11 +280,11 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
      * require any further arguments
      */
     if (map->num_new_daemons < orte_num_allocated_nodes) {
-        asprintf(&tmp, "--nodes=%lu", (unsigned long) map->num_new_daemons);
+        asprintf(&tmp, "--nodes=%lu", (unsigned long)map->num_new_daemons);
         opal_argv_append(&argc, &argv, tmp);
         free(tmp);
 
-        asprintf(&tmp, "--ntasks=%lu", (unsigned long) map->num_new_daemons);
+        asprintf(&tmp, "--ntasks=%lu", (unsigned long)map->num_new_daemons);
         opal_argv_append(&argc, &argv, tmp);
         free(tmp);
 
@@ -352,11 +362,6 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
 
-    /* enable local launch by the orteds */
-    var = mca_base_param_environ_variable("plm", NULL, NULL);
-    opal_setenv(var, "rsh", true, &env);
-    free(var);
-    
     if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
         param = opal_argv_join(argv, ' ');
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -380,21 +385,27 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:slurm: daemon launch failed for job %s on error %s",
+                             "%s plm:slurm: daemon launch failed on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
  launch_apps:
     /* get here if daemons launch okay - any failures now by apps */
     launching_daemons = false;
-    failed_job = active_job;
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
+    /* setup the job */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    failed_job = jdata->jobid;
+
+    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
 

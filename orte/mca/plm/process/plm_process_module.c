@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -144,9 +144,6 @@ static const char * orte_plm_process_shell_name[] = {
 
 /* local global storage of timing variables */
 static struct timeval joblaunchstart, joblaunchstop;
-
-/* global storage of active jobid being launched */
-static orte_jobid_t active_job = ORTE_JOBID_INVALID;
 
 #ifdef _MSC_VER
 /*
@@ -627,6 +624,9 @@ int orte_plm_process_init(void)
         ORTE_ERROR_LOG(rc);
     }
 
+    /* we assign daemon nodes at launch */
+    orte_plm_globals.daemon_nodes_assigned_at_launch = true;
+
 #ifdef _MSC_VER
     /* Initialize COM for WMI */
     hres =  CoInitializeEx(0, COINIT_APARTMENTTHREADED); 
@@ -922,7 +922,7 @@ static void orte_plm_process_wait_daemon(pid_t pid, int status, void* cbdata)
         /* report that the daemon has failed so we break out of the daemon
          * callback receive and can exit
          */
-        orte_errmgr.update_state(active_job, ORTE_JOB_STATE_FAILED_TO_START,
+        orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
                                  NULL, ORTE_PROC_STATE_UNDEF,
                                  0, status);
     } /* if abnormal exit */
@@ -972,10 +972,11 @@ static int orte_plm_process_launch(orte_job_t *jdata)
     int rc;
     char *lib_base = NULL, *bin_base = NULL;
     bool failed_launch = true;
-    orte_app_context_t **apps;
-    orte_node_t **nodes;
+    orte_app_context_t *app;
+    orte_node_t *node;
     orte_std_cntr_t nnode;
     orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
+    orte_job_t *daemons;
 
     if (orte_timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -985,29 +986,32 @@ static int orte_plm_process_launch(orte_job_t *jdata)
         }        
     }
     
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+    /* if we don't want to launch, then don't attempt to
+     * launch the daemons - the user really wants to just
+     * look at the proposed process map
+     */
+    if (orte_do_not_launch) {
+        goto launch_apps;
+    }
+
+    /* start by launching the virtual machine */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:process: launching job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
-    
-    /* set the active jobid */
-    active_job = jdata->jobid;
 
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:process: launching vm",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     /* Get the map for this job */
-    if (NULL == (map = orte_rmaps.get_job_map(active_job))) {
+    if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    nodes = (orte_node_t**)map->nodes->addr;
-    
+        
      if (0 == map->num_new_daemons) {
         /* have all the daemons we need - launch app */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -1054,7 +1058,8 @@ static int orte_plm_process_launch(orte_job_t *jdata)
      * Since there always MUST be at least one app_context, we are safe in
      * doing this.
      */
-    prefix_dir = apps[0]->prefix_dir;
+    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+    prefix_dir = app->prefix_dir;
     
     /*
      * Build argv array
@@ -1123,25 +1128,29 @@ static int orte_plm_process_launch(orte_job_t *jdata)
      * Iterate through each of the nodes
      */
     
-    for(nnode=0; nnode < map->num_nodes; nnode++) {
+    for(nnode=0; nnode < map->nodes->size; nnode++) {
         pid_t pid = -1;
         char *exec_path = NULL;
         char **exec_argv;
         
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+            continue;
+        }
+
         /* if this daemon already exists, don't launch it! */ 
-        if (nodes[nnode]->daemon_launched) { 
+        if (node->daemon_launched) { 
             continue; 
         }
 
         /* if the node's daemon has not been defined, then we
          * have an error!
          */
-        if (NULL == nodes[nnode]->daemon) {
+        if (NULL == node->daemon) {
             ORTE_ERROR_LOG(ORTE_ERR_FATAL);
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:process:launch daemon failed to be defined on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 nodes[nnode]->name));
+                                 node->name));
             return ORTE_ERR_FATAL;
         }
         
@@ -1159,7 +1168,7 @@ static int orte_plm_process_launch(orte_job_t *jdata)
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:process: launching on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 nodes[nnode]->name));
+                                 node->name));
 
             exec_argv = &argv[local_exec_index];
             /* If the user provide a prefix then first try to find the application there */
@@ -1262,7 +1271,7 @@ static int orte_plm_process_launch(orte_job_t *jdata)
 #endif                
         
             /* pass the vpid */
-            rc = orte_util_convert_vpid_to_string(&vpid_string, nodes[nnode]->daemon->name.vpid);
+            rc = orte_util_convert_vpid_to_string(&vpid_string, node->daemon->name.vpid);
             if (ORTE_SUCCESS != rc) {
                 opal_output(0, "plm:process: unable to get daemon vpid as string");
                 goto cleanup;
@@ -1297,7 +1306,7 @@ static int orte_plm_process_launch(orte_job_t *jdata)
             
 #ifdef _MSC_VER
             /* launch remote process */
-            pid = wmi_launch_child(prefix_dir, nodes[nnode]->name, argc, exec_argv);
+            pid = wmi_launch_child(prefix_dir, node->name, argc, exec_argv);
 #else
             pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env);
 #endif
@@ -1308,7 +1317,7 @@ static int orte_plm_process_launch(orte_job_t *jdata)
                 goto cleanup;
             }
             /* indicate this daemon has been launched in case anyone is sitting on that trigger */
-            nodes[nnode]->daemon->state = ORTE_PROC_STATE_LAUNCHED;
+            node->daemon->state = ORTE_PROC_STATE_LAUNCHED;
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:process: daemon launched (pid %d on %s)\n",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -1336,18 +1345,23 @@ static int orte_plm_process_launch(orte_job_t *jdata)
     /* wait for daemons to callback */
     if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:process: launch of apps failed for job %s on error %s",
+                             "%s plm:process: daemon launch failed on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     
 launch_apps:
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
+    /* setup the job */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:process: launch of apps failed for job %s on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(active_job), ORTE_ERROR_NAME(rc)));
+                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
         goto cleanup;
     }
     

@@ -111,18 +111,6 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
 #endif
     }
 
-    /* if the job is the daemon job, then we are just mapping daemons and
-     * not apps in preparation to launch a virtual machine
-     */
-    if (ORTE_PROC_MY_NAME->jobid == jdata->jobid) {
-        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "mca:rmaps: mapping daemons");
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_setup_virtual_machine(jdata))) {
-            ORTE_ERROR_LOG(rc);
-        }
-        return rc;
-    }
-
     /* cycle thru the available mappers until one agrees to map
      * the job
      */

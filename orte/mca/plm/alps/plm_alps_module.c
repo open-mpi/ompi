@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -106,7 +106,6 @@ orte_plm_base_module_t orte_plm_alps_module = {
  * Local variables
  */
 static pid_t alps_pid = 0;
-static orte_jobid_t active_job = ORTE_JOBID_INVALID;
 static bool failed_launch;
 
 
@@ -120,6 +119,15 @@ static int plm_alps_init(void)
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
     }
+
+    /* we do NOT assign daemons to nodes at launch - we will
+     * determine that mapping when the daemon
+     * calls back. This is required because alps does
+     * its own mapping of proc-to-node, and we cannot know
+     * in advance which daemon will wind up on which node
+     */
+    orte_plm_globals.daemon_nodes_assigned_at_launch = false;
+
     return rc;
 }
 
@@ -147,11 +155,12 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     char *cur_prefix;
     struct timeval joblaunchstart, launchstart, launchstop;
     int proc_vpid_index;
-    orte_app_context_t **apps;
-    orte_node_t **nodes;
+    orte_app_context_t *app;
+    orte_node_t *node;
     orte_std_cntr_t nnode;
     orte_jobid_t failed_job;
     orte_job_state_t job_state =  ORTE_JOB_STATE_NEVER_LAUNCHED;
+    orte_job_t *daemons;
 
     /* default to declaring the daemon launch failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
@@ -165,29 +174,32 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     /* indicate the state of the launch */
     failed_launch = true;
     
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+    /* if we don't want to launch, then don't attempt to
+     * launch the daemons - the user really wants to just
+     * look at the proposed process map
+     */
+    if (orte_do_not_launch) {
+        goto launch_apps;
+    }
+
+    /* start by setting up the virtual machine */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:alps: launching job %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(jdata->jobid)));
-    
-    /* save the active jobid */
-    active_job = jdata->jobid;
+                         "%s plm:alps: launching vm",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* Get the map for this job */
-    if (NULL == (map = orte_rmaps.get_job_map(active_job))) {
+    if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
-    apps = (orte_app_context_t**)jdata->apps->addr;
-    nodes = (orte_node_t**)map->nodes->addr;
-    
+
     if (0 == map->num_new_daemons) {
         /* have all the daemons we need - launch app */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
@@ -197,7 +209,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
     
     /* need integer value for command line parameter */
-    orte_util_convert_jobid_to_string(&jobid_string, jdata->jobid);
+    orte_util_convert_jobid_to_string(&jobid_string, daemons->jobid);
 
     /*
      * start building argv array
@@ -236,18 +248,22 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     nodelist_argv = NULL;
     nodelist_argc = 0;
 
-    for (nnode=0; nnode < map->num_nodes; nnode++) {
+    for (nnode=0; nnode < map->nodes->size; nnode++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, nnode))) {
+            continue;
+        }
+
         /* if the daemon already exists on this node, then
          * don't include it
          */
-        if (nodes[nnode]->daemon_launched) {
+        if (node->daemon_launched) {
             continue;
         }
         
         /* otherwise, add it to the list of nodes upon which
          * we need to launch a daemon
          */
-        opal_argv_append(&nodelist_argc, &nodelist_argv, nodes[nnode]->name);
+        opal_argv_append(&nodelist_argc, &nodelist_argv, node->name);
     }
     if (0 == opal_argv_count(nodelist_argv)) {
         orte_show_help("help-plm-alps.txt", "no-hosts-in-list", true);
@@ -309,8 +325,11 @@ static int plm_alps_launch_job(orte_job_t *jdata)
        don't support different --prefix'es for different nodes in
        the ALPS plm) */
     cur_prefix = NULL;
-    for (i=0; i < (int)jdata->num_apps; i++) {
-        char * app_prefix_dir = apps[i]->prefix_dir;
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        char * app_prefix_dir = app->prefix_dir;
         /* Check for already set cur_prefix_dir -- if different,
            complain */
         if (NULL != app_prefix_dir) {
@@ -363,9 +382,14 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
     
  launch_apps:
-    /* if we get here, then daemons launched - change to declaring apps failed */
-    failed_job = active_job;
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(active_job))) {
+    /* setup the job */
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    failed_job = jdata->jobid;
+
+    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }

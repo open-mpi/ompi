@@ -725,15 +725,6 @@ static int spawn(int count, char **array_of_commands,
                 have_wdir = 1;
             }
             
-            /* check for 'ompi_local_slave' - OMPI-specific -- indicates that
-             * the specified app is to be launched by the local orted as a
-             * "slave" process, typically to support an attached co-processor
-             */
-            ompi_info_get_bool(array_of_info[i], "ompi_local_slave", &local_spawn, &flag);
-            if ( flag && local_spawn ) {
-                jdata->controls |= ORTE_JOB_CONTROL_LOCAL_SLAVE;
-            }
-
             /* check for 'mapper' */ 
             ompi_info_get(array_of_info[i], "mapper", sizeof(mapper) - 1, mapper, &flag);
             if ( flag ) {
