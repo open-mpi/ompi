@@ -402,7 +402,8 @@ int mca_pml_csum_recv_request_get_frag( mca_pml_csum_rdma_frag_t* frag )
                               MCA_BTL_NO_ORDER,
                               0,
                               &frag->rdma_length,
-                              MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK,
+                              MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK |
+			      MCA_BTL_DES_FLAGS_GET,
                               &descriptor );
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         frag->rdma_length = save_size;
@@ -846,7 +847,8 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
         /* prepare a descriptor for RDMA */
         mca_bml_base_prepare_dst(bml_btl, reg, 
                                  &recvreq->req_recv.req_base.req_convertor,
-                                 MCA_BTL_NO_ORDER, 0, &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP, &dst);
+                                 MCA_BTL_NO_ORDER, 0, &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
+				 MCA_BTL_DES_FLAGS_PUT, &dst);
         OPAL_THREAD_UNLOCK(&recvreq->lock);
 
         if(OPAL_UNLIKELY(dst == NULL)) {

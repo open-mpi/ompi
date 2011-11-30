@@ -290,6 +290,11 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
  */
 #define MCA_BTL_DES_SEND_ALWAYS_CALLBACK    0x0004
 
+/* Type of transfer that will be done with this frag.
+ */
+#define MCA_BTL_DES_FLAGS_PUT               0x0010
+#define MCA_BTL_DES_FLAGS_GET               0x0020
+
 /**
  * Maximum number of allowed segments in src/dst fields of a descriptor.
  */
