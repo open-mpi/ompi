@@ -109,7 +109,7 @@ opal_convertor_raw( opal_convertor_t* pConvertor,
                                            index, source_base, (unsigned long)blength ); );
                     iov[index].iov_base = (IOVBASE_TYPE *) source_base;
                     iov[index].iov_len  = blength;
-                    source_base += blength;
+                    source_base += pElem->elem.extent;
                     raw_data += blength;
                     count_desc--;
                 }
