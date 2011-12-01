@@ -45,6 +45,10 @@ EXTRA_DIST = \
         platform/lanl/macosx-dynamic \
         platform/lanl/macosx-dynamic-optimized \
         platform/lanl/macosx-static-leopard \
+        platform/lanl/cray_xe6/debug-nopanasas \
+        platform/lanl/cray_xe6/debug-nopanasas.conf \
+        platform/lanl/cray_xe6/optimized-nopanasas \
+        platform/lanl/cray_xe6/optimized-nopanasas.conf \
         platform/lanl/rr-class/cross-debug-slave \
         platform/lanl/rr-class/cross-debug-slave.conf \
         platform/lanl/rr-class/cross-optimized-slave \
@@ -77,6 +81,14 @@ EXTRA_DIST = \
         platform/lanl/tlcc/optimized-nopanasas.conf \
         platform/lanl/tlcc/optimized-panasas \
         platform/lanl/tlcc/optimized-panasas.conf \
+        platform/lanl/tlcc2/debug-nopanasas \
+        platform/lanl/tlcc2/debug-nopanasas.conf \
+        platform/lanl/tlcc2/debug-panasas \
+        platform/lanl/tlcc2/debug-panasas.conf \
+        platform/lanl/tlcc2/optimized-nopanasas \
+        platform/lanl/tlcc2/optimized-nopanasas.conf \
+        platform/lanl/tlcc2/optimized-panasas \
+        platform/lanl/tlcc2/optimized-panasas.conf \
 	platform/snl/portals4-m5 \
 	platform/snl/portals4-orte \
 	platform/snl/portals4-shmem \
