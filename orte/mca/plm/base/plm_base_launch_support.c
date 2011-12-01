@@ -485,6 +485,32 @@ static void process_orted_launch_report(int fd, short event, void *data)
             }
             if (NULL != node->daemon) {
                 /* already known */
+                if (len <= strlen(node->name)) {
+                    len2 = len;
+                } else {
+                    len2 = strlen(node->name);
+                }
+                if (0 == strncmp(nodename, node->name, len2)) {
+                    /* this shouldn't happen, but protect against it just in case */
+                    opal_output(0, "%s Node %s already has daemon %s assigned to it - assigning daemon %s",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                nodename, ORTE_NAME_PRINT(&node->daemon->name),
+                                ORTE_NAME_PRINT(&daemon->name));
+                    if (NULL != node->daemon->node) {
+                        OBJ_RELEASE(node->daemon->node);
+                        node->daemon->node = NULL;
+                    }
+                    OBJ_RELEASE(node->daemon);
+                    node->daemon = daemon;
+                    OBJ_RETAIN(daemon);
+                    if (NULL != daemon->node) {
+                        OBJ_RELEASE(daemon->node);
+                    }
+                    daemon->node = node;
+                    daemon->nodename = node->name;
+                    OBJ_RETAIN(node);
+                    break;
+                }
                 continue;
             }
             if (NULL == node->name) {
@@ -530,9 +556,9 @@ static void process_orted_launch_report(int fd, short event, void *data)
             /* this shouldn't happen - it indicates an error in the
              * prior node matching logic, so report it and error out
              */
-            opal_output(0, "%s No daemon recorded for node %s",
+            opal_output(0, "%s Daemon %s has no recorded node - returned nodename %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        node->name);
+                        ORTE_NAME_PRINT(&daemon->name), nodename);
             rc = ORTE_ERR_FATAL;
             orted_failed_launch = true;
             goto CLEANUP;
