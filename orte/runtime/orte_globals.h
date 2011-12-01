@@ -535,6 +535,7 @@ ORTE_DECLSPEC extern char *orte_oob_static_ports;
 ORTE_DECLSPEC extern bool orte_standalone_operation;
 
 ORTE_DECLSPEC extern bool orte_keep_fqdn_hostnames;
+ORTE_DECLSPEC extern bool orte_have_fqdn_allocation;
 ORTE_DECLSPEC extern bool orte_show_resolved_nodenames;
 ORTE_DECLSPEC extern int orted_debug_failure;
 ORTE_DECLSPEC extern int orted_debug_failure_delay;

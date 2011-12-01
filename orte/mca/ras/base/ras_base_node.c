@@ -65,6 +65,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
     orte_std_cntr_t num_nodes;
     int rc, i;
     orte_node_t *node, *hnp_node;
+    char *ptr;
 
     /* get the number of nodes */
     num_nodes = (orte_std_cntr_t)opal_list_get_size(nodes);
@@ -154,6 +155,20 @@ int orte_ras_base_node_insert(opal_list_t* nodes, orte_job_t *jdata)
             }
             /* update the total slots in the job */
             jdata->total_slots_alloc += node->slots;
+            /* check if we have fqdn names in the allocation */
+            if (NULL != strchr(node->name, '.')) {
+                orte_have_fqdn_allocation = true;
+            }
+        }
+    }
+
+    /* if we didn't find any fqdn names in the allocation, then
+     * ensure we don't have any domain info in the node record
+     * for the hnp
+     */
+    if (!orte_have_fqdn_allocation) {
+        if (NULL != (ptr = strchr(hnp_node->name, '.'))) {
+            *ptr = '\0';
         }
     }
     

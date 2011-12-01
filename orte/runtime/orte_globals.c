@@ -67,6 +67,7 @@ char *orte_oob_static_ports = NULL;
 bool orte_standalone_operation = false;
 
 bool orte_keep_fqdn_hostnames = false;
+bool orte_have_fqdn_allocation = false;
 bool orte_show_resolved_nodenames;
 int orted_debug_failure;
 int orted_debug_failure_delay;

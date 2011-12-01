@@ -336,7 +336,7 @@ static void process_orted_launch_report(int fd, short event, void *data)
     orte_message_event_t *mev = (orte_message_event_t*)data;
     opal_buffer_t *buffer = mev->buffer;
     orte_process_name_t peer;
-    char *rml_uri = NULL;
+    char *rml_uri = NULL, *ptr;
     int rc, idx;
     struct timeval recvtime;
     long secs, usecs;
@@ -344,7 +344,6 @@ static void process_orted_launch_report(int fd, short event, void *data)
     int64_t startsec, startusec;
     orte_proc_t *daemon=NULL;
     char *nodename;
-    size_t len, len2;
     orte_node_t *node;
 
     /* see if we need to timestamp this receipt */
@@ -467,30 +466,19 @@ static void process_orted_launch_report(int fd, short event, void *data)
     
     /* look this node up, if necessary */
     if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
-        if (NULL == nodename) {
-            /* it is permissible to transmit a NULL string, but
-             * that would be a problem here
-             */
-            opal_output(0, "%s NULL nodename returned by daemon %s - cannot process",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&daemon->name));
-            rc = ORTE_ERR_FATAL;
-            orted_failed_launch = true;
-            goto CLEANUP;
+        if (!orte_have_fqdn_allocation) {
+            /* remove any domain info */
+            if (NULL != (ptr = strchr(nodename, '.'))) {
+                *ptr = '\0';
+            }
         }
-        len = strlen(nodename);
         for (idx=0; idx < orte_node_pool->size; idx++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, idx))) {
                 continue;
             }
             if (NULL != node->daemon) {
                 /* already known */
-                if (len <= strlen(node->name)) {
-                    len2 = len;
-                } else {
-                    len2 = strlen(node->name);
-                }
-                if (0 == strncmp(nodename, node->name, len2)) {
+                if (0 == strcmp(nodename, node->name)) {
                     /* this shouldn't happen, but protect against it just in case */
                     opal_output(0, "%s Node %s already has daemon %s assigned to it - assigning daemon %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -513,20 +501,7 @@ static void process_orted_launch_report(int fd, short event, void *data)
                 }
                 continue;
             }
-            if (NULL == node->name) {
-                /* this shouldn't happen */
-                opal_output(0, "%s NULL nodename detected during daemon callback - cannot process",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-                rc = ORTE_ERR_FATAL;
-                orted_failed_launch = true;
-                goto CLEANUP;
-            }
-            if (len <= strlen(node->name)) {
-                len2 = len;
-            } else {
-                len2 = strlen(node->name);
-            }
-            if (0 == strncmp(nodename, node->name, len2)) {
+            if (0 == strcmp(nodename, node->name)) {
                 /* associate this daemon with the node */
                 node->daemon = daemon;
                 OBJ_RETAIN(daemon);
