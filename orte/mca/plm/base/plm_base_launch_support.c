@@ -526,6 +526,17 @@ static void process_orted_launch_report(int fd, short event, void *data)
 
         idx=1;
         node = daemon->node;
+        if (NULL == node) {
+            /* this shouldn't happen - it indicates an error in the
+             * prior node matching logic, so report it and error out
+             */
+            opal_output(0, "%s No daemon recorded for node %s",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        node->name);
+            rc = ORTE_ERR_FATAL;
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
         if (OPAL_SUCCESS == opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO)) {
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s RECEIVED TOPOLOGY FROM NODE %s",
