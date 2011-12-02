@@ -1094,7 +1094,9 @@ static hwloc_obj_t df_search_level(hwloc_obj_t start,
         } else if (HWLOC_OBJ_PU == start->type) {
             *bind_level = OPAL_HWLOC_HWTHREAD_LEVEL;
         } else {
-            *bind_level = 0;
+            /* We don't know what level it is, so just assign it to
+               "node" */
+            *bind_level = OPAL_HWLOC_NODE_LEVEL;
         }
         return start;
     }
