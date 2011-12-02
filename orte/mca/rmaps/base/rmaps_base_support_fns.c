@@ -87,6 +87,13 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         nd = NULL;
     } else {
         nd = (orte_node_t*)opal_list_get_last(allocated_nodes);
+        /* sanity check */
+        if (NULL == nd->daemon) {
+            orte_show_help("help-orte-rmaps-base.txt",
+                           "orte-rmaps-base:missing-daemon",
+                           true, nd->name);
+            return ORTE_ERR_SILENT;
+        }
     }
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
@@ -108,6 +115,13 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              */
             OBJ_RETAIN(node);
             node->mapped = false;
+            /* quick sanity check */
+            if (NULL == node->daemon) {
+                orte_show_help("help-orte-rmaps-base.txt",
+                               "orte-rmaps-base:missing-daemon",
+                               true, node->name);
+                return ORTE_ERR_SILENT;
+            }
             if (NULL == nd || nd->daemon->name.vpid < node->daemon->name.vpid) {
                 /* just append to end */
                 opal_list_append(allocated_nodes, &node->super);

@@ -326,10 +326,11 @@ static int plm_alps_launch_job(orte_job_t *jdata)
        the ALPS plm) */
     cur_prefix = NULL;
     for (i=0; i < jdata->apps->size; i++) {
+        char *app_prefix_dir;
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
-        char * app_prefix_dir = app->prefix_dir;
+        app_prefix_dir = app->prefix_dir;
         /* Check for already set cur_prefix_dir -- if different,
            complain */
         if (NULL != app_prefix_dir) {

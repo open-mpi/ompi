@@ -239,6 +239,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
             return "PROCS MIGRATING";
         case ORTE_JOB_STATE_NON_ZERO_TERM:
             return "AT LEAST ONE PROCESS EXITED WITH NON-ZERO STATUS";
+        case ORTE_JOB_STATE_SILENT_ABORT:
+            return "ERROR REPORTED ELSEWHERE";
         default:
             return "UNKNOWN STATE!";
     }

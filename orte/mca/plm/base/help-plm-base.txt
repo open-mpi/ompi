@@ -23,6 +23,15 @@ This is an unusual error; it means that Open RTE was unable to find
 any mechanism to launch proceses, and therefore is unable to start the
 process(es) required by your application.
 #
+[daemon-no-assigned-node]
+A daemon has no recorded node:
+
+  Daemon:  %s
+  Reported from nodename:  %s
+
+This usually indicates a difference between the names of nodes in the
+allocation versus what is returned on the node by get_hostname.
+#
 [daemon-died-no-signal]
 A daemon died unexpectedly with status %d while attempting
 to launch so we are aborting.

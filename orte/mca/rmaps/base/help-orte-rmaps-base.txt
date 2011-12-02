@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Los Alamos National Security, LLC.
+#                         All rights reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -185,3 +187,13 @@ Unknown binding level:
 
   Target:  %s
   Cache level:  %u
+#
+[orte-rmaps-base:missing-daemon]
+While attempting to build a map of this job, a node
+was detected to be missing a daemon:
+
+  Node:  %s
+
+This usually indicates a mismatch between what the
+allocation provided for the node name versus what was
+actually found on the node.

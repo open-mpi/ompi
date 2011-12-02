@@ -241,6 +241,25 @@ static int update_state(orte_jobid_t job,
                 default_hnp_abort(jdata->jobid, sts);
             }
             break;
+
+        case ORTE_JOB_STATE_SILENT_ABORT:
+            failed_start(jdata);
+            check_job_complete(jdata);  /* set the local proc states */
+            /* the job object for this job will have been NULL'd
+             * in the array if the job was solely local. If it isn't
+             * NULL, then we need to tell everyone else to die
+             */
+            if (NULL != (jdata = orte_get_job_data_object(job))) {
+                if (ORTE_PROC_MY_NAME->jobid == job && !orte_abnormal_term_ordered) {
+                    /* set the flag indicating that a daemon failed so we use the proper
+                     * methods for attempting to shutdown the rest of the system
+                     */
+                    orte_abnormal_term_ordered = true;
+                }
+                default_hnp_abort(jdata->jobid, exit_code);
+            }
+            break;
+
         case ORTE_JOB_STATE_RUNNING:
             /* update all procs in job */
             update_local_procs_in_job(jdata, jobstate, ORTE_PROC_STATE_RUNNING, 0);

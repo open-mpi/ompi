@@ -31,6 +31,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
+#include <ctype.h>
 
 #include "opal/util/argv.h"
 #include "opal/runtime/opal_progress.h"
@@ -464,41 +465,47 @@ static void process_orted_launch_report(int fd, short event, void *data)
         goto CLEANUP;
     }
     
+    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                         "%s plm:base:orted_report_launch from daemon %s on node %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(&peer), nodename));
+
     /* look this node up, if necessary */
     if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
         if (!orte_have_fqdn_allocation) {
             /* remove any domain info */
             if (NULL != (ptr = strchr(nodename, '.'))) {
                 *ptr = '\0';
+                ptr = strdup(nodename);
+                free(nodename);
+                nodename = ptr;
             }
         }
+        if (orte_plm_globals.strip_prefix_from_node_names) {
+            /* remove all leading characters and zeroes */
+            ptr = nodename;
+            while (idx < (int)strlen(nodename) &&
+                   (isalpha(nodename[idx]) || '0' == nodename[idx])) {
+                idx++;
+            }
+            if (idx == (int)strlen(nodename)) {
+                ptr = strdup(nodename);
+            } else {
+                ptr = strdup(&nodename[idx]);
+            }
+            free(nodename);
+            nodename = ptr;
+        }
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s plm:base:orted_report_launch attempting to assign daemon %s to node %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&peer), nodename));
         for (idx=0; idx < orte_node_pool->size; idx++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, idx))) {
                 continue;
             }
             if (NULL != node->daemon) {
-                /* already known */
-                if (0 == strcmp(nodename, node->name)) {
-                    /* this shouldn't happen, but protect against it just in case */
-                    opal_output(0, "%s Node %s already has daemon %s assigned to it - assigning daemon %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                nodename, ORTE_NAME_PRINT(&node->daemon->name),
-                                ORTE_NAME_PRINT(&daemon->name));
-                    if (NULL != node->daemon->node) {
-                        OBJ_RELEASE(node->daemon->node);
-                        node->daemon->node = NULL;
-                    }
-                    OBJ_RELEASE(node->daemon);
-                    node->daemon = daemon;
-                    OBJ_RETAIN(daemon);
-                    if (NULL != daemon->node) {
-                        OBJ_RELEASE(daemon->node);
-                    }
-                    daemon->node = node;
-                    daemon->nodename = node->name;
-                    OBJ_RETAIN(node);
-                    break;
-                }
+                /* already assigned */
                 continue;
             }
             if (0 == strcmp(nodename, node->name)) {
@@ -531,10 +538,8 @@ static void process_orted_launch_report(int fd, short event, void *data)
             /* this shouldn't happen - it indicates an error in the
              * prior node matching logic, so report it and error out
              */
-            opal_output(0, "%s Daemon %s has no recorded node - returned nodename %s",
-                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                        ORTE_NAME_PRINT(&daemon->name), nodename);
-            rc = ORTE_ERR_FATAL;
+            orte_show_help("help-plm-base.txt", "daemon-no-assigned-node", true,
+                           ORTE_NAME_PRINT(&daemon->name), nodename);
             orted_failed_launch = true;
             goto CLEANUP;
         }
@@ -594,8 +599,8 @@ static void process_orted_launch_report(int fd, short event, void *data)
     OBJ_RELEASE(mev);
 
     if (orted_failed_launch) {
-        if( NULL != rml_uri ) free(rml_uri);
-        orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
+        orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid,
+                                 ORTE_JOB_STATE_SILENT_ABORT,
                                  NULL, ORTE_PROC_STATE_FAILED_TO_START,
                                  0, ORTE_ERROR_DEFAULT_EXIT_CODE);
     } else {
@@ -656,9 +661,13 @@ int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons)
     ORTE_PROGRESSED_WAIT(orted_failed_launch, orted_num_callback, num_daemons);
     
     /* cancel the lingering recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ORTED_CALLBACK);
+
+    if (orted_failed_launch) {
+        /* we will have already emitted an error log or show
+         * help, so exit quietly from here
+         */
+        return ORTE_ERR_SILENT;
     }
 
 #if OPAL_HAVE_HWLOC
