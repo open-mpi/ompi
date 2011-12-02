@@ -773,7 +773,7 @@ int ompi_attr_set_c(ompi_attribute_type_t type, void *object,
 
 
 /*
- * Front-end function called by the Fortran MPI-2 API functions to set
+ * Front-end function called by the Fortran MPI-1 API functions to set
  * an attribute.
  */
 int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object, 
