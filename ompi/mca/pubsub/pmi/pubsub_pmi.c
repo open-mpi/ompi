@@ -63,7 +63,7 @@ static char* lookup ( char *service_name, ompi_info_t *info )
     if (PMI_SUCCESS != (rc = PMI2_Nameserv_lookup(service_name, NULL, port, 1024))) {
         ORTE_PMI_ERROR(rc, "PMI2_Nameserv_lookup");
         free(port);
-        return OMPI_ERROR;
+        return NULL;
     }
 #else
     if (PMI_SUCCESS != (rc = PMI_Lookup_name(service_name, port))) {
