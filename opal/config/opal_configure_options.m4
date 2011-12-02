@@ -623,6 +623,12 @@ AS_IF([test "$opal_check_cuda_happy" = "yes"],
                     [AC_MSG_RESULT([ok - found directory ($with_cuda_libdir)])])])],
       [AC_MSG_RESULT([not applicable since --with-cuda is not set])])
 
+# If we have CUDA support, check to see if we have CUDA 4.1 support
+AS_IF([test "$opal_check_cuda_happy"="yes"],
+    AC_CHECK_MEMBER([struct CUipcMemHandle_st.reserved], [CUDA_SUPPORT_41=1], [CUDA_SUPPORT_41=0],
+        [#include <$with_cuda/include/cuda.h>]),
+    [])
+
 AC_MSG_CHECKING([if have cuda support])
 if test "$opal_check_cuda_happy" = "yes"; then
     AC_MSG_RESULT([yes (-I$with_cuda/include -L$with_cuda_libdir -lcuda)])
@@ -639,5 +645,9 @@ fi
 AM_CONDITIONAL([OPAL_cuda_support], [test "x$CUDA_SUPPORT" = "x1"])
 AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT],$CUDA_SUPPORT,
                    [Whether we want cuda device pointer support])
+
+AM_CONDITIONAL([OPAL_cuda_support_41], [test "x$CUDA_SUPPORT_41" = "x1"])
+AC_DEFINE_UNQUOTED([OPAL_CUDA_SUPPORT_41],$CUDA_SUPPORT_41,
+                   [Whether we have CUDA 4.1 support available])
 
 ])dnl
