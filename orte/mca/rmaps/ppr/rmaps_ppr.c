@@ -421,7 +421,7 @@ static void prune(orte_jobid_t jobid,
             /* done */
             return;
         }
-        *level -= 1;
+        --(*level);
         prune(jobid, app_idx, node, level, nmapped);
         return;
     }
@@ -550,7 +550,7 @@ static void prune(orte_jobid_t jobid,
     if (0 == ll) {
         return;
     }
-    *level -= 1;
+    --(*level);
     prune(jobid, app_idx, node, level, nmapped);
     return;
 

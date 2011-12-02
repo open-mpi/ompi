@@ -651,7 +651,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     orte_local_rank_t *local_rank=NULL;
     orte_node_rank_t *node_rank=NULL;
 #if OPAL_HAVE_HWLOC
-    opal_hwloc_level_t bind_level = 0;
+    opal_hwloc_level_t bind_level = OPAL_HWLOC_NODE_LEVEL;
     unsigned int *bind_idx=NULL;
 #endif
     orte_std_cntr_t n;
