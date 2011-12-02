@@ -89,6 +89,8 @@ orte_plm_base_module_t orte_plm = {
  */
 int orte_plm_base_open(void)
 {
+    int value;
+
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
     orte_plm_globals.output = opal_output_open(NULL);
@@ -112,6 +114,11 @@ int orte_plm_base_open(void)
     
     /* default to assigning daemons to nodes at launch */
     orte_plm_globals.daemon_nodes_assigned_at_launch = true;
+
+    mca_base_param_reg_int_name("plm", "base_strip_prefix_from_node_names",
+                                "Whether to strip leading characters and zeroes from node names returned by daemons",
+                                false, false, (int)false, &value);
+    orte_plm_globals.strip_prefix_from_node_names = OPAL_INT_TO_BOOL(value);
 
     /* Open up all the components that we can find */
 

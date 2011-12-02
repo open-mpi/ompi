@@ -101,6 +101,7 @@ typedef uint32_t orte_job_state_t;
 #define ORTE_JOB_STATE_HEARTBEAT_FAILED         0x00010000  /* heartbeat failed to arrive */
 #define ORTE_JOB_STATE_PROCS_MIGRATING          0x00020000  /* procs waiting to migrate */
 #define ORTE_JOB_STATE_NON_ZERO_TERM            0x00040000  /* at least one process exited with non-zero status */
+#define ORTE_JOB_STATE_SILENT_ABORT             0x00080000  /* an error occurred and was reported elsewhere, so error out quietly */
 
 /* the job never even attempted to launch due to an error earlier in the
  * launch procedure

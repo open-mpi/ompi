@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -73,6 +75,8 @@ typedef struct {
     opal_buffer_t tree_spawn_cmd;
     /* daemon nodes assigned at launch */
     bool daemon_nodes_assigned_at_launch;
+    /* handle allocator-to-actual nodename matches */
+    bool strip_prefix_from_node_names;
 } orte_plm_globals_t;
 /**
  * Global instance of PLM framework data
