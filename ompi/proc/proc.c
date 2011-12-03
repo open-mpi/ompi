@@ -116,11 +116,6 @@ int ompi_proc_init(void)
             if (OMPI_SUCCESS != (ret = ompi_modex_send_key_value("OMPI_ARCH", &proc->proc_arch, OPAL_UINT32))) {
                 return ret;
             }
-        } else {
-            /* get the locality information */
-            proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
-            /* get the name of the node it is on */
-            proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
         }
     }
 
@@ -174,6 +169,10 @@ int ompi_proc_set_arch(void)
                 OPAL_THREAD_UNLOCK(&ompi_proc_lock);
                 return ret;
             }
+            /* get the locality information */
+            proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
+            /* get the name of the node it is on */
+            proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
         }
     }
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);

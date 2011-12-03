@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2007 The University of Tennessee and The University
+ * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,6 +24,8 @@
 static int pubsub_orte_component_open(void);
 static int pubsub_orte_component_close(void);
 static int pubsub_orte_component_query(mca_base_module_t **module, int *priority);
+
+static int my_priority = 50;
 
 ompi_pubsub_orte_component_t mca_pubsub_orte_component = {
     {
@@ -51,6 +53,12 @@ ompi_pubsub_orte_component_t mca_pubsub_orte_component = {
 
 static int pubsub_orte_component_open(void)
 {
+    mca_base_component_t *c = &mca_pubsub_orte_component.super.base_version;
+
+    mca_base_param_reg_int(c, "priority",
+                           "Priority of the pubsub pmi component",
+                           false, false, my_priority,
+                           &my_priority);
     return OMPI_SUCCESS;
 }
 
@@ -74,7 +82,7 @@ static int pubsub_orte_component_query(mca_base_module_t **module, int *priority
     
     mca_pubsub_orte_component.server_found = false;
     
-    *priority = 50;
+    *priority = my_priority;
     *module = (mca_base_module_t *) &ompi_pubsub_orte_module;
-    return ORTE_SUCCESS;
+    return OMPI_SUCCESS;
 }

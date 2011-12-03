@@ -53,6 +53,17 @@ BEGIN_C_DECLS
 #define ORTE_ERROR_LOG(n) \
     orte_errmgr_base_log(n, __FILE__, __LINE__)
 
+#if WANT_PMI_SUPPORT
+#define ORTE_PMI_ERROR(pmi_err, pmi_func)                               \
+    do {                                                                \
+        opal_output(0, "%s[%s:%d:%s] %s: %s\n",                         \
+                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),                 \
+                    __FILE__, __LINE__, __func__,                       \
+                    pmi_func, orte_errmgr_base_pmi_error(pmi_err));     \
+    } while(0);
+OPAL_DECLSPEC char* orte_errmgr_base_pmi_error(int pmi_err);
+#endif
+
 /**
  * This is not part of any
  * module so it can be used at any time!

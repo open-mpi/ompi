@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -69,9 +71,24 @@ orte_ess_alps_component_open(void)
 
 int orte_ess_alps_component_query(mca_base_module_t **module, int *priority)
 {
+#if ORTE_MCA_ESS_ALPS_HAVE_CNOS == 1
     *priority = 35;
     *module = (mca_base_module_t *)&orte_ess_alps_module;
     return ORTE_SUCCESS;
+#else
+    /* if i'm a daemon, then only i can safely select this component if
+     * PMI_GNI_LOC_ADDR exists */
+    if (NULL != getenv("PMI_GNI_LOC_ADDR") &&
+        ORTE_PROC_IS_DAEMON) {
+        *priority = 35;
+        *module = (mca_base_module_t *)&orte_ess_alps_module;
+        return ORTE_SUCCESS;
+    }
+    /* can't be selected, so disqualify myself */
+    *priority = -1;
+    *module = NULL;
+    return ORTE_ERROR;
+#endif /* ORTE_MCA_ESS_ALPS_HAVE_CNOS == 1 */
 }
 
 
