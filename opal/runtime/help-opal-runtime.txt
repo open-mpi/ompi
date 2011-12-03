@@ -28,3 +28,11 @@ Open MPI developer):
 
   %s failed
   --> Returned value %d instead of OPAL_SUCCESS
+#
+[opal_paffinity_alone:deprecated]
+The [opal | mpi]_paffinity_alone MCA params are now deprecated
+and do not do anything.  Meaning: your job may be running without
+processor affinity support (!).  
+
+You should probably be using the --bind-to option to
+mpirun instead.  
