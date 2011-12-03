@@ -22,6 +22,8 @@
 
 #include "opal/constants.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -73,10 +75,13 @@ int opal_paffinity_base_register_params(void)
         opal_paffinity_base_output = -1;
     }
 
+    /***   DEPRECATED - NO LONGER FUNCTIONAL, BUT MPIRUN
+     * WILL OUTPUT WARNING FOR NOW
+     ***/
     id = mca_base_param_reg_int_name("opal", "paffinity_alone", 
                                 "If nonzero, assume that this job is the only (set of) process(es) running on each node and bind processes to processors, starting with processor ID 0",
                                 false, false,
-                                0, NULL);
+                                -1, NULL);
     /* register the historical mpi_paffinity_alone synonym, but don't
      * declare it deprecated so we don't scare the users.
      *
@@ -85,7 +90,12 @@ int opal_paffinity_base_register_params(void)
      */
     mca_base_param_reg_syn_name(id, "mpi", "paffinity_alone", false);
     mca_base_param_lookup_int(id, &value);
-    opal_paffinity_alone = OPAL_INT_TO_BOOL(value);
+    /* we just want to know if someone set it */
+    if (-1 != value) {
+        opal_paffinity_alone = true;
+    } else {
+        opal_paffinity_alone = false;
+    }
 
     mca_base_param_reg_int_name("paffinity", "base_bound", 
                                 "Process affinity was set by an external entity",
