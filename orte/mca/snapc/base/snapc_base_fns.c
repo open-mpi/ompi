@@ -403,6 +403,7 @@ static void snapc_none_global_cmdline_request(int status,
      * Unknown command
      */
     else {
+        ORTE_ERROR_LOG(ret);
         goto cleanup;
     }
     
