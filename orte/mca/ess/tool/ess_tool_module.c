@@ -31,6 +31,7 @@
 
 #include "orte/util/show_help.h"
 #include "orte/mca/plm/base/base.h"
+#include "orte/mca/plm/base/plm_private.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/proc_info.h"
@@ -71,38 +72,21 @@ static int rte_init(void)
         error = "orte_ess_base_std_prolog";
         goto error;
     }
-    
+
     /* If we are a tool with no name, then responsibility for
      * defining the name falls to the PLM component for our
-     * respective environment - hence, we have to open the PLM
-     * first and select that component. Note that ONLY the
-     * HNP ever uses a PLM component, so we ONLY use the PLM
-     * here to set our name and then close it
+     * respective environment.
+     * Just call the base function for this.
      *
      * NOTE: Tools with names - i.e., tools consisting of a
      * distributed set of processes - will select and use
      * the appropriate enviro-specific module and -not- this one!
      */
-    if (ORTE_SUCCESS != (ret = orte_plm_base_open())) {
+    if (ORTE_SUCCESS != (ret = orte_plm_base_set_hnp_name())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_plm_base_open";
+        error = "orte_plm_base_set_hnp_name";
         goto error;
     }
-    
-    if (ORTE_SUCCESS != (ret = orte_plm_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_plm_base_select";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_plm.set_hnp_name())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_plm_set_hnp_name";
-        goto error;
-    }
-    /* close the plm since we opened it to set our
-     * name, but have no further use for it
-     */
-    orte_plm_base_close();
 
     /* do the rest of the standard tool init */
     if (ORTE_SUCCESS != (ret = orte_ess_base_tool_setup())) {
