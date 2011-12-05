@@ -79,6 +79,7 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     orte_proc_t *proc;
     mca_base_component_t *c = &mca_rmaps_rank_file_component.super.base_version;
     char *slots;
+    bool initial_map=true;
 
     /* only handle initial launch of rf job */
     if (ORTE_JOB_STATE_INIT != jdata->state) {
@@ -158,12 +159,14 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
          * option
          */
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  map->mapping))) {
+                                                                  map->mapping, initial_map))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }
         num_nodes = (orte_std_cntr_t)opal_list_get_size(&node_list);
-        
+        /* flag that all subsequent requests should not reset the node->mapped flag */
+        initial_map = false;
+
         /* we already checked for sanity, so it's okay to just do here */
         if (0 == app->num_procs) {
             /** set the num_procs to equal the number of slots on these mapped nodes */
@@ -240,21 +243,9 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                 opal_pointer_array_add(map->nodes, node);
                 node->mapped = true;
             }
-            proc = OBJ_NEW(orte_proc_t);
-            /* set the jobid */
-            proc->name.jobid = jdata->jobid;
-            proc->name.vpid = rank;
-            ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
-            /* flag the proc as ready for launch */
-            proc->state = ORTE_PROC_STATE_INIT;
-            proc->app_idx = i;
-            
-            OBJ_RETAIN(node);  /* maintain accounting on object */    
-            proc->node = node;
-            proc->nodename = node->name;
-            node->num_procs++;
-            if ((node->slots < node->slots_inuse) ||
-                (0 < node->slots_max && node->slots_max < node->slots_inuse)) {
+            proc = orte_rmaps_base_setup_proc(jdata, node, i);
+            if ((node->slots < (int)node->num_procs) ||
+                (0 < node->slots_max && node->slots_max < (int)node->num_procs)) {
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                     orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                    true, node->num_procs, app->app);
@@ -266,13 +257,8 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
                  */
                 node->oversubscribed = true;
             }
-            if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(proc);
-                return rc;
-            }
-            /* retain the proc struct so that we correctly track its release */
-            OBJ_RETAIN(proc);
+            /* set the vpid */
+            proc->name.vpid = rank;
             
 #if OPAL_HAVE_HWLOC
             if (NULL != slots) {

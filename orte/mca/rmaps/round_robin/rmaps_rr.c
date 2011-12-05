@@ -39,8 +39,6 @@
 #include "orte/mca/rmaps/base/base.h"
 #include "rmaps_rr.h"
 
-static orte_node_t* get_starting_point(opal_list_t *node_list, orte_job_t *jdata);
-
 /*
  * Create a round-robin mapping for the job.
  */
@@ -53,6 +51,7 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     orte_std_cntr_t num_nodes, num_slots;
     int rc;
     mca_base_component_t *c = &mca_rmaps_round_robin_component.base_version;
+    bool initial_map=true;
 
     /* this mapper can only handle initial launch
      * when rr mapping is desired - allow
@@ -119,14 +118,16 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
          * option
          */
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  jdata->map->mapping))) {
+                                                                  jdata->map->mapping, initial_map))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }
         num_nodes = (orte_std_cntr_t)opal_list_get_size(&node_list);
+        /* flag that all subsequent requests should not reset the node->mapped flag */
+        initial_map = false;
 
         /* if a bookmark exists from some prior mapping, set us to start there */
-        jdata->bookmark = get_starting_point(&node_list, jdata);
+        jdata->bookmark = orte_rmaps_base_get_starting_point(&node_list, jdata);
         
         if (0 == app->num_procs) {
             /* set the num_procs to equal the number of slots on these mapped nodes */
@@ -206,85 +207,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
     OBJ_DESTRUCT(&node_list);
 
     return rc;
-}
-
-/*
- * determine the proper starting point for the next mapping operation
- */
-static orte_node_t* get_starting_point(opal_list_t *node_list, orte_job_t *jdata)
-{
-    opal_list_item_t *item, *cur_node_item;
-    orte_node_t *node, *nd1, *ndmin;
-    int overload;
-    
-    /* if a bookmark exists from some prior mapping, set us to start there */
-    if (NULL != jdata->bookmark) {
-        cur_node_item = NULL;
-        /* find this node on the list */
-        for (item = opal_list_get_first(node_list);
-             item != opal_list_get_end(node_list);
-             item = opal_list_get_next(item)) {
-            node = (orte_node_t*)item;
-            
-            if (node->index == jdata->bookmark->index) {
-                cur_node_item = item;
-                break;
-            }
-        }
-        /* see if we found it - if not, just start at the beginning */
-        if (NULL == cur_node_item) {
-            cur_node_item = opal_list_get_first(node_list); 
-        }
-    } else {
-        /* if no bookmark, then just start at the beginning of the list */
-        cur_node_item = opal_list_get_first(node_list);
-    }
-    
-    /* is this node fully subscribed? If so, then the first
-     * proc we assign will oversubscribe it, so let's look
-     * for another candidate
-     */
-    node = (orte_node_t*)cur_node_item;
-    ndmin = node;
-    overload = ndmin->slots_inuse - ndmin->slots_alloc;
-    if (node->slots_inuse >= node->slots_alloc) {
-        /* work down the list - is there another node that
-         * would not be oversubscribed?
-         */
-        if (cur_node_item != opal_list_get_last(node_list)) {
-            item = opal_list_get_next(cur_node_item);
-        } else {
-            item = opal_list_get_first(node_list);
-        }
-        while (item != cur_node_item) {
-            nd1 = (orte_node_t*)item;
-            if (nd1->slots_inuse < nd1->slots_alloc) {
-                /* this node is not oversubscribed! use it! */
-                return (orte_node_t*)item;
-            }
-            /* this one was also oversubscribed, keep track of the
-             * node that has the least usage - if we can't
-             * find anyone who isn't fully utilized, we will
-             * start with the least used node
-             */
-            if (overload >= (nd1->slots_inuse - nd1->slots_alloc)) {
-                ndmin = nd1;
-                overload = ndmin->slots_inuse - ndmin->slots_alloc;
-            }
-            if (item == opal_list_get_last(node_list)) {
-                item = opal_list_get_first(node_list);
-            } else {
-                item= opal_list_get_next(item);
-            }
-        }
-        /* if we get here, then we cycled all the way around the
-         * list without finding a better answer - just use the node
-         * that is minimally overloaded
-         */
-        cur_node_item = (opal_list_item_t*)ndmin;
-    }
-
-    return (orte_node_t*)cur_node_item;
 }
 
 orte_rmaps_base_module_t orte_rmaps_round_robin_module = {

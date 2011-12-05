@@ -222,21 +222,9 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                 opal_pointer_array_add(map->nodes, node);
                 node->mapped = true;
             }
-            proc = OBJ_NEW(orte_proc_t);
-            /* set the jobid */
-            proc->name.jobid = jdata->jobid;
-            proc->name.vpid = vpid++;
-            ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
-            /* flag the proc as ready for launch */
-            proc->state = ORTE_PROC_STATE_INIT;
-            proc->app_idx = i;
-            
-            OBJ_RETAIN(node);  /* maintain accounting on object */    
-            proc->node = node;
-            proc->nodename = node->name;
-            node->num_procs++;
-            if ((node->slots < node->slots_inuse) ||
-                (0 < node->slots_max && node->slots_max < node->slots_inuse)) {
+            proc = orte_rmaps_base_setup_proc(jdata, node, i);
+            if ((node->slots < (int)node->num_procs) ||
+                (0 < node->slots_max && node->slots_max < (int)node->num_procs)) {
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                     orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                    true, node->num_procs, app->app);
@@ -248,13 +236,8 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
                  */
                 node->oversubscribed = true;
             }
-            if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(proc);
-                return rc;
-            }
-            /* retain the proc struct so that we correctly track its release */
-            OBJ_RETAIN(proc);
+            /* assign the vpid */
+            proc->name.vpid = vpid++;
 
 #if OPAL_HAVE_HWLOC
             /* assign the locale - okay for the topo to be null as

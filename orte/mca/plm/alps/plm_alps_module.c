@@ -120,13 +120,18 @@ static int plm_alps_init(void)
         ORTE_ERROR_LOG(rc);
     }
 
-    /* we do NOT assign daemons to nodes at launch - we will
-     * determine that mapping when the daemon
-     * calls back. This is required because alps does
-     * its own mapping of proc-to-node, and we cannot know
-     * in advance which daemon will wind up on which node
-     */
-    orte_plm_globals.daemon_nodes_assigned_at_launch = false;
+    if (orte_do_not_launch) {
+        /* must map daemons since we won't be launching them */
+        orte_plm_globals.daemon_nodes_assigned_at_launch = true;
+    } else {
+        /* we do NOT assign daemons to nodes at launch - we will
+         * determine that mapping when the daemon
+         * calls back. This is required because alps does
+         * its own mapping of proc-to-node, and we cannot know
+         * in advance which daemon will wind up on which node
+         */
+        orte_plm_globals.daemon_nodes_assigned_at_launch = false;
+    }
 
     return rc;
 }
@@ -174,19 +179,19 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     /* indicate the state of the launch */
     failed_launch = true;
     
+    /* start by setting up the virtual machine */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
     /* if we don't want to launch, then don't attempt to
      * launch the daemons - the user really wants to just
      * look at the proposed process map
      */
     if (orte_do_not_launch) {
         goto launch_apps;
-    }
-
-    /* start by setting up the virtual machine */
-    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,

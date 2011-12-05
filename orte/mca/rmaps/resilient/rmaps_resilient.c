@@ -173,7 +173,8 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list,
                                                                        &num_slots,
                                                                        app,
-                                                                       jdata->map->mapping))) {
+                                                                       jdata->map->mapping,
+                                                                       false))) {
                 ORTE_ERROR_LOG(rc);
                 while (NULL != (item = opal_list_remove_first(&node_list))) {
                     OBJ_RELEASE(item);
@@ -476,7 +477,8 @@ static int get_new_node(orte_proc_t *proc,
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list,
                                                                &num_slots,
                                                                app,
-                                                               map->mapping))) {
+                                                               map->mapping,
+                                                               false))) {
         ORTE_ERROR_LOG(rc);
         goto release;
     }
@@ -687,6 +689,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
     orte_rmaps_res_ftgrp_t *ftgrp, *target = NULL;
     orte_vpid_t totprocs, num_assigned;
     orte_proc_t *proc;
+    bool initial_map=true;
 
     OPAL_OUTPUT_VERBOSE((1, orte_rmaps_base.rmaps_output,
                          "%s rmaps:resilient: creating initial map for job %s",
@@ -718,10 +721,13 @@ static int map_to_ftgrps(orte_job_t *jdata)
          */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                   map->mapping))) {
+                                                                   map->mapping, initial_map))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        /* flag that all subsequent requests should not reset the node->mapped flag */
+        initial_map = false;
+
         /* remove all nodes that are not "up" or do not have a running daemon on them */
         item = opal_list_get_first(&node_list);
         while (item != opal_list_get_end(&node_list)) {
@@ -821,16 +827,9 @@ static int map_to_ftgrps(orte_job_t *jdata)
                 opal_pointer_array_add(map->nodes, nd);
                 nd->mapped = true;
             }
-            proc = OBJ_NEW(orte_proc_t);
-            /* set the jobid */
-            proc->name.jobid = jdata->jobid;
-            proc->app_idx = app->idx;
-            OBJ_RETAIN(node);  /* maintain accounting on object */    
-            proc->node = nd;
-            proc->nodename = nd->name;
-            nd->num_procs++;
-            if ((nd->slots < nd->slots_inuse) ||
-                (0 < nd->slots_max && nd->slots_max < nd->slots_inuse)) {
+            proc = orte_rmaps_base_setup_proc(jdata, node, app->idx);
+            if ((nd->slots < (int)nd->num_procs) ||
+                (0 < nd->slots_max && nd->slots_max < (int)nd->num_procs)) {
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                     orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                    true, nd->num_procs, app->app);
@@ -841,12 +840,6 @@ static int map_to_ftgrps(orte_job_t *jdata)
                  */
                 nd->oversubscribed = true;
             }
-            opal_pointer_array_add(nd->procs, (void*)proc);
-            /* retain the proc struct so that we correctly track its release */
-            OBJ_RETAIN(proc);
-
-            /* flag the proc as ready for launch */
-            proc->state = ORTE_PROC_STATE_INIT;
 
             /* track number of procs mapped */
             num_assigned++;

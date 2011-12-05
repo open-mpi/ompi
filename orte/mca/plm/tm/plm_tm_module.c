@@ -167,19 +167,19 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     /* default to declaring the daemons as failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
+    /* start by launching the virtual machine */
+    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
     /* if we don't want to launch, then don't attempt to
      * launch the daemons - the user really wants to just
      * look at the proposed process map
      */
     if (orte_do_not_launch) {
         goto launch_apps;
-    }
-
-    /* start by launching the virtual machine */
-    daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
     }
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,

@@ -35,10 +35,6 @@ orte_rmaps_base_module_t orte_rmaps_ppr_module = {
     ppr_mapper
 };
 
-static orte_proc_t* setup_proc(orte_job_t *jdata,
-                               orte_node_t *node,
-                               orte_app_idx_t idx);
-
 #if OPAL_HAVE_HWLOC
 static void prune(orte_jobid_t jobid,
                   orte_app_idx_t app_idx,
@@ -71,6 +67,7 @@ static int ppr_mapper(orte_job_t *jdata)
     char **ppr_req, **ck;
     size_t len;
     bool pruning_reqd = false;
+    bool initial_map=true;
 
     /* only handle initial launch of loadbalanced
      * or NPERxxx jobs - allow restarting of failed apps
@@ -233,11 +230,16 @@ static int ppr_mapper(orte_job_t *jdata)
         /* get the available nodes */
         OBJ_CONSTRUCT(&node_list, opal_list_t);
         if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&node_list, &num_slots, app,
-                                                                  jdata->map->mapping))) {
+                                                                  jdata->map->mapping, initial_map))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }
+        /* flag that all subsequent requests should not reset the node->mapped flag */
+        initial_map = false;
 
+        /* if a bookmark exists from some prior mapping, set us to start there */
+        jdata->bookmark = orte_rmaps_base_get_starting_point(&node_list, jdata);
+        
         /* cycle across the nodes */
         nprocs_mapped = 0;
         while (NULL != (node = (orte_node_t*)opal_list_remove_first(&node_list))) {
@@ -250,13 +252,16 @@ static int ppr_mapper(orte_job_t *jdata)
                 goto error;
             }
 #endif
-            /* add the node to the map */
-            if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                ORTE_ERROR_LOG(rc);
-                goto error;
+            /* add the node to the map, if needed */
+            if (!node->mapped) {
+                if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto error;
+                }
+                node->mapped = true;
+                OBJ_RETAIN(node);  /* maintain accounting on object */
+                jdata->map->num_nodes++;
             }
-            OBJ_RETAIN(node);  /* maintain accounting on object */
-            jdata->map->num_nodes++;
             /* if we are mapping solely at the node level, just put
              * that many procs on this node
              */
@@ -265,7 +270,7 @@ static int ppr_mapper(orte_job_t *jdata)
                 obj = hwloc_get_root_obj(node->topology);
 #endif
                 for (j=0; j < ppr[start] && nprocs_mapped < total_procs; j++) {
-                    if (NULL == (proc = setup_proc(jdata, node, idx))) {
+                    if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, idx))) {
                         rc = ORTE_ERR_OUT_OF_RESOURCE;
                         goto error;
                     }
@@ -289,7 +294,7 @@ static int ppr_mapper(orte_job_t *jdata)
                                                           lowest, cache_level,
                                                           i, OPAL_HWLOC_AVAILABLE);
                     for (j=0; j < ppr[start] && nprocs_mapped < total_procs; j++) {
-                        if (NULL == (proc = setup_proc(jdata, node, idx))) {
+                        if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, idx))) {
                             rc = ORTE_ERR_OUT_OF_RESOURCE;
                             goto error;
                         }
@@ -309,17 +314,19 @@ static int ppr_mapper(orte_job_t *jdata)
 #endif
             }
 
-            /* set the total slots used to the number of procs placed
-             * on this node
-             */
-            node->slots_inuse = node->num_procs;
+            /* set the total slots used */
+            if ((int)node->num_procs <= node->slots) {
+                node->slots_inuse = (int)node->num_procs;
+            } else {
+                node->slots_inuse = node->slots;
+            }
 
             /* if no-oversubscribe was specified, check to see if
              * we have violated the total slot specification - regardless,
              * if slots_max was given, we are not allowed to violate it!
              */
-            if ((node->slots < node->slots_inuse) ||
-                (0 < node->slots_max && node->slots_max < node->slots_inuse)) {
+            if ((node->slots < (int)node->num_procs) ||
+                (0 < node->slots_max && node->slots_max < (int)node->num_procs)) {
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
                     orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                                    true, node->num_procs, app->app);
@@ -332,9 +339,8 @@ static int ppr_mapper(orte_job_t *jdata)
                 node->oversubscribed = true;
             }
 
-            /* update the number of procs in the job and the app */
+            /* update the number of procs in the job */
             jdata->num_procs += node->num_procs;
-            app->num_procs = node->num_procs;
 
             /* if we haven't mapped all the procs, continue on to the
              * next node
@@ -342,6 +348,9 @@ static int ppr_mapper(orte_job_t *jdata)
             if (total_procs == nprocs_mapped) {
                 break;
             }
+        }
+        if (0 == app->num_procs) {
+            app->num_procs = nprocs_mapped;
         }
         if (ORTE_VPID_MAX != total_procs && nprocs_mapped < total_procs) {
             /* couldn't map them all */
@@ -541,6 +550,10 @@ static void prune(orte_jobid_t jobid,
                                 idxmax);
             opal_pointer_array_set_item(node->procs, idxmax, NULL);
             node->num_procs--;
+            node->slots_inuse--;
+            if (node->slots_inuse < 0) {
+                node->slots_inuse = 0;
+            }
             nprocs--;
             *nmapped -= 1;
             OBJ_RELEASE(procmax);
@@ -558,36 +571,3 @@ static void prune(orte_jobid_t jobid,
     opal_output(0, "INFINITE LOOP");
 }
 #endif
-
-static orte_proc_t* setup_proc(orte_job_t *jdata,
-                               orte_node_t *node,
-                               orte_app_idx_t idx)
-{
-    orte_proc_t *proc;
-    int rc;
-
-    proc = OBJ_NEW(orte_proc_t);
-    /* set the jobid */
-    proc->name.jobid = jdata->jobid;
-    /* we do not set the vpid here - this will be done
-     * during a second phase, but we do set the epoch here
-     since they all start with the same value. */
-    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
-    /* flag the proc as ready for launch */
-    proc->state = ORTE_PROC_STATE_INIT;
-    proc->app_idx = idx;
-
-    OBJ_RETAIN(node);  /* maintain accounting on object */    
-    proc->node = node;
-    proc->nodename = node->name;
-    node->num_procs++;
-    if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(proc);
-        return NULL;
-    }
-    /* retain the proc struct so that we correctly track its release */
-    OBJ_RETAIN(proc);
-
-    return proc;
-}
