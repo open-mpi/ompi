@@ -102,7 +102,7 @@ static void snapc_full_process_request_op_cmd(orte_process_name_t* sender,
                                               opal_buffer_t* buffer);
 
 /*** Command Line Interactions */
-static orte_process_name_t orte_checkpoint_sender = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID};
+static orte_process_name_t orte_checkpoint_sender;
 static bool snapc_cmdline_recv_issued = false;
 static int snapc_full_global_start_cmdline_listener(void);
 static int snapc_full_global_stop_cmdline_listener(void);
@@ -211,6 +211,8 @@ int global_coord_init(void)
 {
     current_global_jobid = ORTE_JOBID_INVALID;
     orte_snapc_base_snapshot_seq_number = -1;
+
+    orte_checkpoint_sender = orte_name_invalid;
 
     SNAPC_FULL_CLEAR_TIMERS();
 
@@ -585,6 +587,7 @@ static int global_init_job_structs(void)
 {
     orte_snapc_full_orted_snapshot_t *orted_snapshot = NULL;
     orte_snapc_base_local_snapshot_t *app_snapshot = NULL;
+    opal_list_item_t* orted_item = NULL;
     orte_node_t *cur_node = NULL;
     orte_job_map_t *map = NULL;
     orte_job_t *jdata = NULL;
@@ -592,6 +595,7 @@ static int global_init_job_structs(void)
     orte_std_cntr_t i = 0;
     orte_vpid_t p = 0;
     orte_ns_cmp_bitmask_t mask;
+    bool found = false;
 
     /* look up job data object */
     if (NULL == (jdata = orte_get_job_data_object(current_global_jobid))) {
@@ -609,6 +613,32 @@ static int global_init_job_structs(void)
         }
 
         procs = (orte_proc_t**)cur_node->procs->addr;
+
+        /*
+         * Look out for duplicates
+         * JJH: Should not happen, but does if rmaps get a bug in setting up the map.
+         */
+        found = false;
+        for(orted_item  = opal_list_get_first(&(global_snapshot.local_snapshots));
+            orted_item != opal_list_get_end(&(global_snapshot.local_snapshots));
+            orted_item  = opal_list_get_next(orted_item) ) {
+            orted_snapshot = (orte_snapc_full_orted_snapshot_t*)orted_item;
+            /*
+             * Is in list?
+             */
+            if(OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
+                                                           &(cur_node->daemon->name),
+                                                           &(orted_snapshot->process_name) )) {
+                found = true;
+                break;
+            }
+        }
+        if( found ) {
+            OPAL_OUTPUT_VERBOSE((1, mca_snapc_full_component.super.output_handle,
+                                 "Global) [%d] Found Daemon %s with %d procs - Duplicate!! - Should not happen!",
+                                 i, ORTE_NAME_PRINT(&(cur_node->daemon->name)), cur_node->num_procs));
+            continue;
+        }
 
         OPAL_OUTPUT_VERBOSE((10, mca_snapc_full_component.super.output_handle,
                              "Global) [%d] Found Daemon %s with %d procs",
@@ -1090,8 +1120,15 @@ static void snapc_full_process_cmdline_request_cmd(int fd, short event, void *cb
                                                                                     ORTE_SNAPC_CKPT_STATE_ERROR))) {
                 ORTE_ERROR_LOG(ret);
             }
+
             orte_checkpoint_sender = orte_name_invalid;
             is_orte_checkpoint_connected = false;
+
+            /* Reset the listener */
+            if( ORTE_SUCCESS != (ret = snapc_full_global_start_cmdline_listener() ) ){
+                ORTE_ERROR_LOG(ret);
+            }
+
             goto cleanup;
         }
 
