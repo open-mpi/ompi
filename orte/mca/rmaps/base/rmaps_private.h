@@ -52,14 +52,15 @@ ORTE_DECLSPEC orte_job_map_t* orte_rmaps_base_get_job_map(orte_jobid_t job);
 ORTE_DECLSPEC int orte_rmaps_base_get_target_nodes(opal_list_t* node_list,
                                                    orte_std_cntr_t *total_num_slots,
                                                    orte_app_context_t *app,
-                                                   orte_mapping_policy_t policy);
-ORTE_DECLSPEC int orte_rmaps_base_get_target_procs(opal_list_t *procs);
+                                                   orte_mapping_policy_t policy,
+                                                   bool initial_map);
 
-ORTE_DECLSPEC int orte_rmaps_base_update_node_usage(opal_list_t *nodes);
-ORTE_DECLSPEC int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
-                                                     orte_app_context_t *app,
-                                                     opal_list_t *master_node_list,
-                                                     orte_std_cntr_t *total_num_slots);
+ORTE_DECLSPEC orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
+                                                      orte_node_t *node,
+                                                      orte_app_idx_t idx);
+
+ORTE_DECLSPEC orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
+                                                              orte_job_t *jdata);
 
 ORTE_DECLSPEC int orte_rmaps_base_compute_vpids(orte_job_t *jdata);
 

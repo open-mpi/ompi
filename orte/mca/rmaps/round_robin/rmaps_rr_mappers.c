@@ -34,10 +34,6 @@
 #include "orte/mca/rmaps/base/base.h"
 #include "rmaps_rr.h"
 
-static orte_proc_t* setup_proc(orte_job_t *jdata,
-                               orte_node_t *node,
-                               orte_app_idx_t idx);
-
 int orte_rmaps_rr_byslot(orte_job_t *jdata,
                          orte_app_context_t *app,
                          opal_list_t *node_list,
@@ -89,6 +85,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
     nprocs_mapped = 0;
     while (NULL != (item = opal_list_remove_first(node_list))) {
         node = (orte_node_t*)item;
+        opal_output(0, "MAPPING TO %s", node->name);
 #if OPAL_HAVE_HWLOC
         /* get the root object as we are not assigning
          * locale except at the node level
@@ -111,30 +108,34 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
              */
             node->oversubscribed = true;
         }
-        if (0 == node->slots_alloc) {
+        if (0 == (node->slots_alloc - node->slots_inuse)) {
             num_procs_to_assign = 1 + extra_procs_to_assign;
         } else {
-            num_procs_to_assign = node->slots_alloc + extra_procs_to_assign;
+            num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
         }
         for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
             if (0 == i) {
                 /* add this node to the map - do it only once */
-                if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
+                if (!node->mapped) {
+                    if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
+                    node->mapped = true;
+                    OBJ_RETAIN(node);  /* maintain accounting on object */
+                    ++(jdata->map->num_nodes);
                 }
-                OBJ_RETAIN(node);  /* maintain accounting on object */
-                ++(jdata->map->num_nodes);
             }
-            if (NULL == (proc = setup_proc(jdata, node, app->idx))) {
+            if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             nprocs_mapped++;
 #if OPAL_HAVE_HWLOC
             proc->locale = obj;
 #endif
-        }
-        jdata->bookmark = node;
+            /* keep track of the node we last used */
+            jdata->bookmark = node;
+       }
         /* release the node - the object will persist */
         OBJ_RELEASE(node);
     }
@@ -221,13 +222,16 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             obj = hwloc_get_root_obj(node->topology);
         }
 #endif
-        /* add this node to the map */
-        if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-            ORTE_ERROR_LOG(idx);
-            return idx;
+        /* add this node to the map, but only do so once */
+        if (!node->mapped) {
+            if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                ORTE_ERROR_LOG(idx);
+                return idx;
+            }
+            node->mapped = true;
+            OBJ_RETAIN(node);  /* maintain accounting on object */
+            ++(jdata->map->num_nodes);
         }
-        OBJ_RETAIN(node);  /* maintain accounting on object */
-        ++(jdata->map->num_nodes);
         /* compute the number of procs to go on this node */
         if (add_one) {
             if (0 == nxtra_nodes) {
@@ -251,7 +255,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
              * have to track how many procs to "shift" elsewhere
              * to make up the difference
              */
-            if (0 == node->slots_alloc) {
+            if (0 == (node->slots_alloc - node->slots_inuse)) {
                 /* if there are no extras to take, then we can
                  * safely remove this node as we don't need it
                  */
@@ -269,15 +273,15 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                 lag += navg;
             } else {
                 /* if slots_alloc < avg, then take all */
-                if (node->slots_alloc < navg) {
-                    num_procs_to_assign = node->slots_alloc + extra_procs_to_assign;
+                if ((node->slots_alloc - node->slots_inuse) < navg) {
+                    num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
                     /* update how many we are lagging behind */
-                    lag += navg - node->slots_alloc;
+                    lag += navg - (node->slots_alloc - node->slots_inuse);
                 } else {
                     /* take the avg plus as much of the "lag" as we can */
                     delta = 0;
                     if (0 < lag) {
-                        delta = node->slots_alloc - navg;
+                        delta = (node->slots_alloc - node->slots_inuse) - navg;
                         if (lag < delta) {
                             delta = lag;
                         }
@@ -288,15 +292,16 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
             }
         }
         for (j=0; j < num_procs_to_assign && nprocs_mapped < app->num_procs; j++) {
-            if (NULL == (proc = setup_proc(jdata, node, app->idx))) {
+            if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             nprocs_mapped++;
 #if OPAL_HAVE_HWLOC
             proc->locale = obj;
 #endif
+            /* keep track of the node we last used */
+            jdata->bookmark = node;
         }
-        jdata->bookmark = node;
         /* maintain acctg */
         OBJ_RELEASE(node);
         if (nprocs_mapped == app->num_procs) {
@@ -427,11 +432,11 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 --nxtra_nodes;
             }
         }
-        if (0 == node->slots_alloc) {
+        if (0 == (node->slots_alloc - node->slots_inuse)) {
             /* everybody takes at least the extras */
             num_procs_to_assign = extra_procs_to_assign;
         } else {
-            num_procs_to_assign = node->slots_alloc + extra_procs_to_assign;
+            num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
         }
 
         /* get the number of objects of this type on this node */
@@ -463,14 +468,15 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 nprocs = nperobj;
             }
             for (j=0; j < nprocs && nprocs_mapped < app->num_procs; j++) {
-                if (NULL == (proc = setup_proc(jdata, node, app->idx))) {
+                if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
                     return ORTE_ERR_OUT_OF_RESOURCE;
                 }
                 nprocs_mapped++;
                 proc->locale = obj;
             }
+            /* keep track of the node we last used */
+            jdata->bookmark = node;
         }
-        jdata->bookmark = node;
         /* maintain acctg */
         OBJ_RELEASE(node);
         if (nprocs_mapped == app->num_procs) {
@@ -591,7 +597,7 @@ static int byobj_span(orte_job_t *jdata,
              * have to track how many procs to "shift" elsewhere
              * to make up the difference
              */
-            if (0 == node->slots_alloc) {
+            if (0 == (node->slots_alloc - node->slots_inuse)) {
                 /* if there are no extras to take, then we can
                  * safely remove this node as we don't need it
                  */
@@ -609,15 +615,15 @@ static int byobj_span(orte_job_t *jdata,
                 lag += navg;
             } else {
                 /* if slots_alloc < avg, then take all */
-                if (node->slots_alloc < navg) {
-                    num_procs_to_assign = node->slots_alloc + extra_procs_to_assign;
+                if ((node->slots_alloc - node->slots_inuse) < navg) {
+                    num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
                     /* update how many we are lagging behind */
-                    lag += navg - node->slots_alloc;
+                    lag += navg - (node->slots_alloc - node->slots_inuse);
                 } else {
                     /* take the avg plus as much of the "lag" as we can */
                     delta = 0;
                     if (0 < lag) {
-                        delta = node->slots_alloc - navg;
+                        delta = (node->slots_alloc - node->slots_inuse) - navg;
                         if (lag < delta) {
                             delta = lag;
                         }
@@ -657,14 +663,15 @@ static int byobj_span(orte_job_t *jdata,
                 nprocs = nperobj;
             }
             for (j=0; j < nprocs && nprocs_mapped < app->num_procs; j++) {
-                if (NULL == (proc = setup_proc(jdata, node, app->idx))) {
+                if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
                     return ORTE_ERR_OUT_OF_RESOURCE;
                 }
                 nprocs_mapped++;
                 proc->locale = obj;
             }
+            /* keep track of the node we last used */
+            jdata->bookmark = node;
         }
-        jdata->bookmark = node;
         /* maintain acctg */
         OBJ_RELEASE(node);
         if (nprocs_mapped == app->num_procs) {
@@ -677,36 +684,3 @@ static int byobj_span(orte_job_t *jdata,
 }
 #endif
 
-static orte_proc_t* setup_proc(orte_job_t *jdata,
-                               orte_node_t *node,
-                               orte_app_idx_t idx)
-{
-    orte_proc_t *proc;
-    int rc;
-
-    proc = OBJ_NEW(orte_proc_t);
-    /* set the jobid */
-    proc->name.jobid = jdata->jobid;
-    /* we do not set the vpid here - this will be done
-     * during a second phase, but we do set the epoch here
-     * since they all start with the same value.
-     */
-    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
-    /* flag the proc as ready for launch */
-    proc->state = ORTE_PROC_STATE_INIT;
-    proc->app_idx = idx;
-
-    OBJ_RETAIN(node);  /* maintain accounting on object */    
-    proc->node = node;
-    proc->nodename = node->name;
-    node->num_procs++;
-    if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(proc);
-        return NULL;
-    }
-    /* retain the proc struct so that we correctly track its release */
-    OBJ_RETAIN(proc);
-
-    return proc;
-}

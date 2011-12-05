@@ -123,13 +123,21 @@ static int plm_slurm_init(void)
         ORTE_ERROR_LOG(rc);
     }
     
-    /* we do NOT assign daemons to nodes at launch - we will
-     * determine that mapping when the daemon
-     * calls back. This is required because slurm does
-     * its own mapping of proc-to-node, and we cannot know
-     * in advance which daemon will wind up on which node
+    /* if we don't want to launch (e.g., someone just wants
+     * to test the mappers), then we assign vpids at "launch"
+     * so the mapper has something to work with
      */
-    orte_plm_globals.daemon_nodes_assigned_at_launch = false;
+    if (orte_do_not_launch) {
+        orte_plm_globals.daemon_nodes_assigned_at_launch = true;
+    } else {
+        /* we do NOT assign daemons to nodes at launch - we will
+         * determine that mapping when the daemon
+         * calls back. This is required because slurm does
+         * its own mapping of proc-to-node, and we cannot know
+         * in advance which daemon will wind up on which node
+         */
+        orte_plm_globals.daemon_nodes_assigned_at_launch = false;
+    }
 
     return rc;
 }

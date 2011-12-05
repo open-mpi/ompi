@@ -494,13 +494,13 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     if (!orte_devel_level_output) {
         /* just print a very simple output for users */
 #if ORTE_ENABLE_EPOCH
-        asprintf(&tmp, "\n%sProcess OMPI jobid: %s Process rank: %s Epoch: %s", pfx2,
-                 ORTE_JOBID_PRINT(src->name.jobid),
+        asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Epoch: %s", pfx2,
+                 ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
                  ORTE_VPID_PRINT(src->name.vpid),
                  ORTE_EPOCH_PRINT(src->name.epoch));
 #else
-        asprintf(&tmp, "\n%sProcess OMPI jobid: %s Process rank: %s", pfx2,
-                 ORTE_JOBID_PRINT(src->name.jobid),
+        asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s", pfx2,
+                 ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
                  ORTE_VPID_PRINT(src->name.vpid));
 #endif
         

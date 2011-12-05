@@ -53,7 +53,8 @@
  * Query the registry for all nodes allocated to a specified app_context
  */
 int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr_t *total_num_slots,
-                                     orte_app_context_t *app, orte_mapping_policy_t policy)
+                                     orte_app_context_t *app, orte_mapping_policy_t policy,
+                                     bool initial_map)
 {
     opal_list_item_t *item, *next;
     orte_node_t *node, *nd;
@@ -72,7 +73,13 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 node->state = ORTE_NODE_STATE_UP;
             } else if (ORTE_NODE_STATE_NOT_INCLUDED != node->state) {
                 OBJ_RETAIN(node);
-                node->mapped = false;
+                if (initial_map) {
+                    /* if this is the first app_context we
+                     * are getting for an initial map of a job,
+                     * then mark all nodes as unmapped
+                     */
+                    node->mapped = false;
+                }
                 opal_list_append(allocated_nodes, &node->super);
             }
         }
@@ -114,7 +121,13 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
              * destructed along the way
              */
             OBJ_RETAIN(node);
-            node->mapped = false;
+            if (initial_map) {
+                /* if this is the first app_context we
+                 * are getting for an initial map of a job,
+                 * then mark all nodes as unmapped
+                 */
+                node->mapped = false;
+            }
             /* quick sanity check */
             if (NULL == node->daemon) {
                 orte_show_help("help-orte-rmaps-base.txt",
@@ -381,4 +394,141 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     *total_num_slots = num_slots;
     
     return ORTE_SUCCESS;
+}
+
+orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
+                                        orte_node_t *node,
+                                        orte_app_idx_t idx)
+{
+    orte_proc_t *proc;
+    int rc;
+
+    proc = OBJ_NEW(orte_proc_t);
+    /* set the jobid */
+    proc->name.jobid = jdata->jobid;
+    /* we do not set the vpid here - this will be done
+     * during a second phase, but we do set the epoch here
+     * since they all start with the same value.
+     */
+    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
+    /* flag the proc as ready for launch */
+    proc->state = ORTE_PROC_STATE_INIT;
+    proc->app_idx = idx;
+
+    OBJ_RETAIN(node);  /* maintain accounting on object */    
+    proc->node = node;
+    proc->nodename = node->name;
+    node->num_procs++;
+    if (node->slots_inuse < node->slots_alloc) {
+        node->slots_inuse++;
+    }
+    if (0 > (rc = opal_pointer_array_add(node->procs, (void*)proc))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(proc);
+        return NULL;
+    }
+    /* retain the proc struct so that we correctly track its release */
+    OBJ_RETAIN(proc);
+
+    return proc;
+}
+
+/*
+ * determine the proper starting point for the next mapping operation
+ */
+orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
+                                                orte_job_t *jdata)
+{
+    opal_list_item_t *item, *cur_node_item;
+    orte_node_t *node, *nd1, *ndmin;
+    int overload;
+    
+    /* if a bookmark exists from some prior mapping, set us to start there */
+    if (NULL != jdata->bookmark) {
+        cur_node_item = NULL;
+        /* find this node on the list */
+        for (item = opal_list_get_first(node_list);
+             item != opal_list_get_end(node_list);
+             item = opal_list_get_next(item)) {
+            node = (orte_node_t*)item;
+            
+            if (node->index == jdata->bookmark->index) {
+                cur_node_item = item;
+                break;
+            }
+        }
+        /* see if we found it - if not, just start at the beginning */
+        if (NULL == cur_node_item) {
+            cur_node_item = opal_list_get_first(node_list); 
+        }
+    } else {
+        /* if no bookmark, then just start at the beginning of the list */
+        cur_node_item = opal_list_get_first(node_list);
+    }
+    
+    opal_output(0, "INITIAL STARTING PT: %s", ((orte_node_t*)cur_node_item)->name);
+
+    /* is this node fully subscribed? If so, then the first
+     * proc we assign will oversubscribe it, so let's look
+     * for another candidate
+     */
+    node = (orte_node_t*)cur_node_item;
+    ndmin = node;
+    overload = ndmin->slots_inuse - ndmin->slots_alloc;
+    if (node->slots_inuse >= node->slots_alloc) {
+        opal_output(0, "NODE %s IS FULL", node->name);
+        /* work down the list - is there another node that
+         * would not be oversubscribed?
+         */
+        if (cur_node_item != opal_list_get_last(node_list)) {
+            item = opal_list_get_next(cur_node_item);
+        } else {
+            item = opal_list_get_first(node_list);
+        }
+        while (item != cur_node_item) {
+            nd1 = (orte_node_t*)item;
+            if (nd1->slots_inuse < nd1->slots_alloc) {
+                /* this node is not oversubscribed! use it! */
+                cur_node_item = item;
+                goto process;
+            }
+            /* this one was also oversubscribed, keep track of the
+             * node that has the least usage - if we can't
+             * find anyone who isn't fully utilized, we will
+             * start with the least used node
+             */
+            if (overload >= (nd1->slots_inuse - nd1->slots_alloc)) {
+                ndmin = nd1;
+                overload = ndmin->slots_inuse - ndmin->slots_alloc;
+            }
+            if (item == opal_list_get_last(node_list)) {
+                item = opal_list_get_first(node_list);
+            } else {
+                item= opal_list_get_next(item);
+            }
+        }
+        /* if we get here, then we cycled all the way around the
+         * list without finding a better answer - just use the node
+         * that is minimally overloaded
+         */
+        cur_node_item = (opal_list_item_t*)ndmin;
+    }
+
+ process:
+    node = (orte_node_t*)cur_node_item;
+    opal_dss.dump(0, node, ORTE_NODE);
+
+    /* make life easier - put the bookmark at the top of the list,
+     * shifting everything above it to the end of the list while
+     * preserving order
+     */
+    while (cur_node_item != (item = opal_list_get_first(node_list))) {
+        opal_output(0, "ROTATING NODE:");
+        node = (orte_node_t*)item;
+        opal_dss.dump(0, node, ORTE_NODE);
+        opal_list_remove_item(node_list, item);
+        opal_list_append(node_list, item);
+    }
+
+    return (orte_node_t*)cur_node_item;
 }
