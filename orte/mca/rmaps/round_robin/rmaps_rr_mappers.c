@@ -85,7 +85,6 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
     nprocs_mapped = 0;
     while (NULL != (item = opal_list_remove_first(node_list))) {
         node = (orte_node_t*)item;
-        opal_output(0, "MAPPING TO %s", node->name);
 #if OPAL_HAVE_HWLOC
         /* get the root object as we are not assigning
          * locale except at the node level
