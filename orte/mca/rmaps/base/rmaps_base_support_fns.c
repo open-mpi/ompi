@@ -466,8 +466,6 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         cur_node_item = opal_list_get_first(node_list);
     }
     
-    opal_output(0, "INITIAL STARTING PT: %s", ((orte_node_t*)cur_node_item)->name);
-
     /* is this node fully subscribed? If so, then the first
      * proc we assign will oversubscribe it, so let's look
      * for another candidate
@@ -476,7 +474,6 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
     ndmin = node;
     overload = ndmin->slots_inuse - ndmin->slots_alloc;
     if (node->slots_inuse >= node->slots_alloc) {
-        opal_output(0, "NODE %s IS FULL", node->name);
         /* work down the list - is there another node that
          * would not be oversubscribed?
          */
@@ -515,17 +512,11 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
     }
 
  process:
-    node = (orte_node_t*)cur_node_item;
-    opal_dss.dump(0, node, ORTE_NODE);
-
     /* make life easier - put the bookmark at the top of the list,
      * shifting everything above it to the end of the list while
      * preserving order
      */
     while (cur_node_item != (item = opal_list_get_first(node_list))) {
-        opal_output(0, "ROTATING NODE:");
-        node = (orte_node_t*)item;
-        opal_dss.dump(0, node, ORTE_NODE);
         opal_list_remove_item(node_list, item);
         opal_list_append(node_list, item);
     }
