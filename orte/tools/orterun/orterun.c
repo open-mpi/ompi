@@ -104,7 +104,6 @@
  */
 static orte_job_t *jdata=NULL;
 static char **global_mca_env = NULL;
-static bool have_zero_np = false;
 static orte_std_cntr_t total_num_apps = 0;
 static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 static char *ompi_server=NULL;
@@ -1646,31 +1645,6 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     app->num_procs = (orte_std_cntr_t)orterun_globals.num_procs;
 
-    /* If the user didn't specify the number of processes to run, then we
-       default to launching an app process using every slot. We can't do
-       anything about that here - we leave it to the RMAPS framework's
-       components to note this and deal with it later.
-        
-       HOWEVER, we ONLY support this mode of operation if the number of
-       app_contexts is equal to ONE. If the user provides multiple applications,
-       we simply must have more information - in this case, generate an
-       error.
-    */
-    if (app->num_procs == 0) {
-        have_zero_np = true;  /** flag that we have a zero_np situation */
-    }
-
-    if (0 < total_num_apps && have_zero_np) {
-        /** we have more than one app and a zero_np - that's no good.
-         * note that we have to do this as a two step logic check since
-         * the user may fail to specify num_procs for the first app, but
-         * then give us another application.
-         */
-        orte_show_help("help-orterun.txt", "orterun:multi-apps-and-zero-np",
-                       true, orte_basename, NULL);
-        return ORTE_ERR_FATAL;
-    }
-    
     total_num_apps++;
 
     /* Preserve if we are to preload the binary */

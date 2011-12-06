@@ -50,16 +50,20 @@
 
 #if OPAL_HAVE_HWLOC
 static int rank_span(orte_job_t *jdata,
+                     orte_app_context_t *app,
+                     opal_list_t *nodes,
                      hwloc_obj_type_t target,
                      unsigned cache_level)
 {
     orte_job_map_t *map;
     hwloc_obj_t obj;
-    int num_objs, i, j, n, rc;
+    int num_objs, i, j, rc;
     orte_vpid_t num_ranked=0;
     orte_node_t *node;
     orte_proc_t *proc;
     orte_vpid_t vpid;
+    int cnt;
+    opal_list_item_t *item;
 
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                         "mca:rmaps:rank_span: for job %s",
@@ -83,12 +87,13 @@ static int rank_span(orte_job_t *jdata,
      */
 
     map = jdata->map;
-    vpid = 0;
-    while (vpid < jdata->num_procs) {
-        for (n=0; n < map->nodes->size && vpid < jdata->num_procs; n++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, n))) {
-                continue;
-            }
+    vpid = jdata->num_procs;
+    cnt = 0;
+    while (cnt < app->num_procs) {
+        for (item = opal_list_get_first(nodes);
+             item != opal_list_get_end(nodes);
+             item = opal_list_get_next(item)) {
+            node = (orte_node_t*)item;
             /* get the number of objects - only consider those we can actually use */
             num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target,
                                                           cache_level, OPAL_HWLOC_AVAILABLE);
@@ -97,7 +102,7 @@ static int rank_span(orte_job_t *jdata,
                                 num_objs, node->name, (int)node->num_procs);
 
             /* for each object */
-            for (i=0; i < num_objs && vpid < jdata->num_procs; i++) {
+            for (i=0; i < num_objs && cnt < app->num_procs; i++) {
                 obj = opal_hwloc_base_get_obj_by_type(node->topology, target,
                                                       cache_level, i, OPAL_HWLOC_AVAILABLE);
 
@@ -105,7 +110,7 @@ static int rank_span(orte_job_t *jdata,
                                     "mca:rmaps:rank_span: working object %d", i);
 
                 /* cycle thru the procs on this node */
-                for (j=0; j < node->procs->size && vpid < jdata->num_procs; j++) {
+                for (j=0; j < node->procs->size && cnt < app->num_procs; j++) {
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                         continue;
                     }
@@ -118,6 +123,10 @@ static int rank_span(orte_job_t *jdata,
                     }
                     /* ignore procs that are already assigned */
                     if (ORTE_VPID_INVALID != proc->name.vpid) {
+                        continue;
+                    }
+                    /* ignore procs from other apps */
+                    if (proc->app_idx != app->idx) {
                         continue;
                     }
                     /* protect against bozo case */
@@ -135,6 +144,7 @@ static int rank_span(orte_job_t *jdata,
                     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                         "mca:rmaps:rank_span: assigning vpid %s", ORTE_VPID_PRINT(vpid));
                     proc->name.vpid = vpid++;
+                    cnt++;
                     ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
                     ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
                         
@@ -146,6 +156,10 @@ static int rank_span(orte_job_t *jdata,
                         ORTE_ERROR_LOG(rc);
                         return rc;
                     }
+                    /* track where the highest vpid landed - this is our
+                     * new bookmark
+                     */
+                    jdata->bookmark = node;
                     /* move to next object */
                     break;
                 }
@@ -157,16 +171,20 @@ static int rank_span(orte_job_t *jdata,
 }
 
 static int rank_fill(orte_job_t *jdata,
+                     orte_app_context_t *app,
+                     opal_list_t *nodes,
                      hwloc_obj_type_t target,
                      unsigned cache_level)
 {
     orte_job_map_t *map;
     hwloc_obj_t obj;
-    int num_objs, i, j, n, rc;
+    int num_objs, i, j, rc;
     orte_vpid_t num_ranked=0;
     orte_node_t *node;
     orte_proc_t *proc;
     orte_vpid_t vpid;
+    int cnt;
+    opal_list_item_t *item;
 
     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                         "mca:rmaps:rank_fill: for job %s",
@@ -182,11 +200,12 @@ static int rank_fill(orte_job_t *jdata,
      */
 
     map = jdata->map;
-    vpid = 0;
-    for (n=0; n < map->nodes->size && vpid < jdata->num_procs; n++) {
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, n))) {
-            continue;
-        }
+    vpid = jdata->num_procs;
+    cnt = 0;
+    for (item = opal_list_get_first(nodes);
+         item != opal_list_get_end(nodes);
+         item = opal_list_get_next(item)) {
+        node = (orte_node_t*)item;
         /* get the number of objects - only consider those we can actually use */
         num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target,
                                                       cache_level, OPAL_HWLOC_AVAILABLE);
@@ -195,7 +214,7 @@ static int rank_fill(orte_job_t *jdata,
                             num_objs, node->name, (int)node->num_procs);
 
         /* for each object */
-        for (i=0; i < num_objs && vpid < jdata->num_procs; i++) {
+        for (i=0; i < num_objs && cnt < app->num_procs; i++) {
             obj = opal_hwloc_base_get_obj_by_type(node->topology, target,
                                                   cache_level, i, OPAL_HWLOC_AVAILABLE);
 
@@ -203,7 +222,7 @@ static int rank_fill(orte_job_t *jdata,
                                 "mca:rmaps:rank_fill: working object %d", i);
 
             /* cycle thru the procs on this node */
-            for (j=0; j < node->procs->size && vpid < jdata->num_procs; j++) {
+            for (j=0; j < node->procs->size && cnt < app->num_procs; j++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
                 }
@@ -216,6 +235,10 @@ static int rank_fill(orte_job_t *jdata,
                 }
                 /* ignore procs that are already assigned */
                 if (ORTE_VPID_INVALID != proc->name.vpid) {
+                    continue;
+                }
+                /* ignore procs from other apps */
+                if (proc->app_idx != app->idx) {
                     continue;
                 }
                  /* protect against bozo case */
@@ -233,6 +256,7 @@ static int rank_fill(orte_job_t *jdata,
                 opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                     "mca:rmaps:rank_fill: assigning vpid %s", ORTE_VPID_PRINT(vpid));
                 proc->name.vpid = vpid++;
+                cnt++;
                 ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
                 ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
                         
@@ -244,6 +268,10 @@ static int rank_fill(orte_job_t *jdata,
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
+                /* track where the highest vpid landed - this is our
+                 * new bookmark
+                 */
+                jdata->bookmark = node;
             }
         }
     }
@@ -252,23 +280,27 @@ static int rank_fill(orte_job_t *jdata,
 }
 
 static int rank_by(orte_job_t *jdata,
+                   orte_app_context_t *app,
+                   opal_list_t *nodes,
                    hwloc_obj_type_t target,
                    unsigned cache_level)
 {
     orte_job_map_t *map;
     hwloc_obj_t obj;
-    int num_objs, i, j, n;
+    int num_objs, i, j;
     orte_vpid_t num_ranked=0;
     orte_node_t *node;
     orte_proc_t *proc;
     orte_vpid_t vpid;
+    int cnt;
     opal_pointer_array_t objs;
     bool all_done;
+    opal_list_item_t *item;
 
     if (ORTE_RANKING_SPAN & ORTE_GET_RANKING_DIRECTIVE(jdata->map->ranking)) {
-        return rank_span(jdata, target, cache_level);
+        return rank_span(jdata, app, nodes, target, cache_level);
     } else if (ORTE_RANKING_FILL & ORTE_GET_RANKING_DIRECTIVE(jdata->map->ranking)) {
-        return rank_fill(jdata, target, cache_level);
+        return rank_fill(jdata, app, nodes, target, cache_level);
     }
 
     /* if ranking is not spanned or filled, then we
@@ -288,11 +320,12 @@ static int rank_by(orte_job_t *jdata,
     opal_pointer_array_init(&objs, 2, INT_MAX, 2);
 
     map = jdata->map;
-    vpid = 0;
-    for (n=0; n < map->nodes->size && vpid < jdata->num_procs; n++) {
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, n))) {
-            continue;
-        }
+    vpid = jdata->num_procs;
+    cnt = 0;
+    for (item = opal_list_get_first(nodes);
+         item != opal_list_get_end(nodes);
+         item = opal_list_get_next(item)) {
+        node = (orte_node_t*)item;
         /* get the number of objects - only consider those we can actually use */
         num_objs = opal_hwloc_base_get_nbobjs_by_type(node->topology, target,
                                                       cache_level, OPAL_HWLOC_AVAILABLE);
@@ -318,14 +351,14 @@ static int rank_by(orte_job_t *jdata,
          * algorithm, but this works for now.
          */
         all_done = false;
-        while (!all_done && vpid < jdata->num_procs) {
+        while (!all_done && cnt < app->num_procs) {
             all_done = true;
             /* cycle across the objects */
-            for (i=0; i < num_objs && vpid < jdata->num_procs; i++) {
+            for (i=0; i < num_objs && cnt < app->num_procs; i++) {
                 obj = (hwloc_obj_t)opal_pointer_array_get_item(&objs, i);
 
                 /* find the next proc on this object */
-                for (j=0; j < node->procs->size && vpid < jdata->num_procs; j++) {
+                for (j=0; j < node->procs->size && cnt < app->num_procs; j++) {
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                         continue;
                     }
@@ -340,6 +373,10 @@ static int rank_by(orte_job_t *jdata,
                     if (ORTE_VPID_INVALID != proc->name.vpid) {
                         continue;
                     }
+                    /* ignore procs from other apps */
+                    if (proc->app_idx != app->idx) {
+                        continue;
+                    }
                     /* ignore procs on other objects */
                     if (!hwloc_bitmap_intersects(obj->cpuset, proc->locale->cpuset)) {
                         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
@@ -348,6 +385,7 @@ static int rank_by(orte_job_t *jdata,
                         continue;
                     }
                     proc->name.vpid = vpid++;
+                    cnt++;
                     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                         "mca:rmaps:rank_by: assigned rank %s", ORTE_VPID_PRINT(proc->name.vpid));
                     ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
@@ -359,6 +397,10 @@ static int rank_by(orte_job_t *jdata,
                     }
                     /* flag that one was mapped */
                     all_done = false;
+                    /* track where the highest vpid landed - this is our
+                     * new bookmark
+                     */
+                    jdata->bookmark = node;
                     /* move to next object */
                     break;
                 }
@@ -373,32 +415,40 @@ static int rank_by(orte_job_t *jdata,
 }
 #endif
 
-int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
+int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
+                                  orte_app_context_t *app,
+                                  opal_list_t *nodes)
 {
     orte_job_map_t *map;
-    orte_vpid_t vpid, cnt;
-    int i, j;
+    orte_vpid_t vpid;
+    int j, cnt;
     orte_node_t *node;
-    orte_proc_t *proc, *ptr;
+    orte_proc_t *proc;
     int rc;
+    opal_list_item_t *item;
 
     map = jdata->map;
-    
+
     if (ORTE_RANK_BY_NODE == ORTE_GET_RANKING_POLICY(map->ranking) ||
         ORTE_RANK_BY_BOARD == ORTE_GET_RANKING_POLICY(map->ranking)) {
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:base: computing vpids by node for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
+        /* bozo check */
+        if (0 == opal_list_get_size(nodes)) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
+        }
         /* assign the ranks round-robin across nodes - only one board/node
          * at this time, so they are equivalent
          */
         cnt=0;
-        vpid=0;
-        while (cnt < jdata->num_procs) {
-            for (i=0; i < map->nodes->size; i++) {
-                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
-                    continue;
-                }
+        vpid=jdata->num_procs;
+        while (cnt < app->num_procs) {
+            for (item = opal_list_get_first(nodes);
+                 item != opal_list_get_end(nodes);
+                 item = opal_list_get_next(item)) {
+                node = (orte_node_t*)item;
                 for (j=0; j < node->procs->size; j++) {
                     if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                         continue;
@@ -407,29 +457,12 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                     if (proc->name.jobid != jdata->jobid) {
                         continue;
                     }
-                    if (ORTE_VPID_INVALID != proc->name.vpid) {
-                        /* vpid was already assigned. Some mappers require that
-                         * we insert the proc into the jdata->procs
-                         * array, while others will have already done it - so check and
-                         * do the operation if required
-                         */
-                        if (NULL == opal_pointer_array_get_item(jdata->procs, proc->name.vpid)) {
-                            if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
-                                ORTE_ERROR_LOG(rc);
-                                return rc;
-                            }
-                            /* if we added it to the array, then account for
-                             * it in our loop - otherwise don't as we would be
-                             * double counting
-                             */
-                            cnt++;
-                        }
+                    /* ignore procs from other apps */
+                    if (proc->app_idx != app->idx) {
                         continue;
                     }
-                    /* find next available vpid */
-                    while (NULL != (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid)) &&
-                           ORTE_VPID_INVALID != ptr->name.vpid) {
-                        vpid++;
+                    if (ORTE_VPID_INVALID != proc->name.vpid) {
+                        continue;
                     }
                     proc->name.vpid = vpid++;
                     ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
@@ -443,6 +476,10 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                         return rc;
                     }
                     cnt++;
+                    /* track where the highest vpid landed - this is our
+                     * new bookmark
+                     */
+                    jdata->bookmark = node;
                     break;  /* move on to next node */
                 }                
             }
@@ -455,11 +492,12 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:base: computing vpids by slot for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        vpid = 0;
-        for (i=0; i < map->nodes->size; i++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
-                continue;
-            }
+        vpid = jdata->num_procs;
+        for (item = opal_list_get_first(nodes);
+             item != opal_list_get_end(nodes);
+             item = opal_list_get_next(item)) {
+            node = (orte_node_t*)item;
+
             for (j=0; j < node->procs->size; j++) {
                 if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
                     continue;
@@ -468,12 +506,11 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                 if (proc->name.jobid != jdata->jobid) {
                     continue;
                 }
+                /* ignore procs from other apps */
+                if (proc->app_idx != app->idx) {
+                    continue;
+                }
                 if (ORTE_VPID_INVALID == proc->name.vpid) {
-                    /* find the next available vpid */
-                    while (NULL != (ptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, vpid)) &&
-                           ORTE_VPID_INVALID != ptr->name.vpid) {
-                        vpid++;
-                    }
                     proc->name.vpid = vpid++;
                     ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
                     ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
@@ -482,6 +519,10 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
                     if (0 == ORTE_EPOCH_CMP(ORTE_EPOCH_INVALID,proc->name.epoch)) {
                         ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
                     }
+                    /* track where the highest vpid landed - this is our
+                     * new bookmark
+                     */
+                    jdata->bookmark = node;
                 }
                 /* some mappers require that we insert the proc into the jdata->procs
                  * array, while others will have already done it - so check and
@@ -503,7 +544,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps: computing ranks by NUMA for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_NODE, 0))) {
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_NODE, 0))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
@@ -513,7 +554,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps: computing ranks by socket for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_SOCKET, 0))) {
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_SOCKET, 0))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
@@ -523,7 +564,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps: computing ranks by L3cache for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_CACHE, 3))) {
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CACHE, 3))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
@@ -533,7 +574,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps: computing ranks by L2cache for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_CACHE, 2))) {
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CACHE, 2))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
@@ -543,7 +584,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps: computing ranks by L1cache for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_CACHE, 1))) {
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CACHE, 1))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
@@ -553,7 +594,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps: computing ranks by core for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_CORE, 0))) {
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_CORE, 0))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;
@@ -563,7 +604,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata)
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps: computing ranks by hwthread for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-        if (ORTE_SUCCESS != (rc = rank_by(jdata, HWLOC_OBJ_PU, 0))) {
+        if (ORTE_SUCCESS != (rc = rank_by(jdata, app, nodes, HWLOC_OBJ_PU, 0))) {
             ORTE_ERROR_LOG(rc);
         }
         return rc;

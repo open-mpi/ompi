@@ -857,7 +857,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
          * done after each app_context is mapped in order to keep the
          * vpids contiguous within an app_context
          */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata, app, &node_list))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
