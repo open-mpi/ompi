@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,7 +44,7 @@ static int orte_ras_slurm_allocate(opal_list_t *nodes);
 static int orte_ras_slurm_finalize(void);
 
 static int orte_ras_slurm_discover(char *regexp, char* tasks_per_node,
-                                   int cpus_per_task, opal_list_t *nodelist);
+                                   opal_list_t *nodelist);
 static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***nodelist);
 static int orte_ras_slurm_parse_range(char *base, char *range, char ***nodelist);
 
@@ -114,7 +116,7 @@ static int orte_ras_slurm_allocate(opal_list_t *nodes)
         cpus_per_task = 1;
     }
  
-    ret = orte_ras_slurm_discover(regexp, node_tasks, cpus_per_task, nodes);
+    ret = orte_ras_slurm_discover(regexp, node_tasks, nodes);
     free(regexp);
     free(node_tasks);
     if (ORTE_SUCCESS != ret) {
@@ -167,7 +169,7 @@ static int orte_ras_slurm_finalize(void)
  *                  the found nodes in
  */
 static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
-                                   int cpus_per_task, opal_list_t* nodelist)
+                                   opal_list_t* nodelist)
 {
     int i, j, len, ret, count, reps, num_nodes;
     char *base, **names = NULL;
@@ -353,7 +355,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
         node->state = ORTE_NODE_STATE_UP;
         node->slots_inuse = 0;
         node->slots_max = 0;
-        node->slots = slots[i] / cpus_per_task;
+        node->slots = slots[i];
         opal_list_append(nodelist, &node->super);
     }
     free(slots);
