@@ -74,6 +74,9 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
          item != opal_list_get_end(node_list);
          item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
+        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:rr:slot working node %s",
+                            node->name);
 #if OPAL_HAVE_HWLOC
         /* get the root object as we are not assigning
          * locale except at the node level
@@ -83,6 +86,9 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         }
 #endif
         if (node->slots_alloc == node->slots_inuse) {
+            opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+                                "mca:rmaps:rr:slot working node %s is full - skipping",
+                                node->name);
             continue;
         }
         num_procs_to_assign = node->slots_alloc - node->slots_inuse;
@@ -112,6 +118,10 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
         return ORTE_SUCCESS;
     }
 
+    opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+                        "mca:rmaps:rr:slot job %s is oversubscribed - performing second pass",
+                        ORTE_JOBID_PRINT(jdata->jobid));
+
     /* second pass: if we haven't mapped everyone yet, it is
      * because we are oversubscribed. Figure out how many procs
      * to add
@@ -133,6 +143,9 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
          item != opal_list_get_end(node_list);
          item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
+        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:rr:slot working node %s",
+                            node->name);
 #if OPAL_HAVE_HWLOC
         /* get the root object as we are not assigning
          * locale except at the node level
@@ -141,6 +154,16 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             obj = hwloc_get_root_obj(node->topology);
         }
 #endif
+        /* add this node to the map - do it only once */
+        if (!node->mapped) {
+            if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            node->mapped = true;
+            OBJ_RETAIN(node);  /* maintain accounting on object */
+            ++(jdata->map->num_nodes);
+        }
         if (add_one) {
             if (0 == nxtra_nodes) {
                 --extra_procs_to_assign;
@@ -150,6 +173,9 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             }
         }
         num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
+        opal_output_verbose(2, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps:rr:slot adding up to %d procs to node %s",
+                            num_procs_to_assign, node->name);
         for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
             if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
                 return ORTE_ERR_OUT_OF_RESOURCE;

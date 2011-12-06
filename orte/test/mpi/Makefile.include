@@ -54,4 +54,6 @@ EXTRA_DIST += \
         test/mpi/spawn_multiple.c \
         test/mpi/ziatest.c \
         test/mpi/ziaprobe.c \
-        test/mpi/singleton_client_server.c
+        test/mpi/singleton_client_server.c \
+	test/mpi/spawn_tree.c
+
