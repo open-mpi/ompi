@@ -434,14 +434,13 @@ int orte_register_params(void)
     orte_child_time_to_exit.tv_sec = value;
     orte_child_time_to_exit.tv_usec = 0;
  
-    mca_base_param_reg_int_name("orte", "vm_launch",
-                                "Launch daemons on all nodes at start to form a virtual machine for subsequent jobs",
-                                false, false, (int)false, &value);
-    orte_vm_launch = OPAL_INT_TO_BOOL(value);
-
     mca_base_param_reg_int_name("orte", "stat_history_size",
                                 "Number of stat samples to keep",
                                 false, false, 1, &orte_stat_history_size);
+
+    mca_base_param_reg_string_name("orte", "forward_envars",
+                                   "Comma-delimited environmental variables to forward, can include value to set",
+                                   false, false, NULL, &orte_forward_envars);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     

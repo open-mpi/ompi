@@ -1469,8 +1469,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         opal_setenv("OMPI_MCA_pubsub_orte_server", ompi_server, true, &app->env);
     }
 
-    /* Did the user request to export any environment variables? */
-
+    /* Did the user request to export any environment variables on the cmd line? */
     if (opal_cmd_line_is_taken(&cmd_line, "x")) {
         j = opal_cmd_line_get_ninsts(&cmd_line, "x");
         for (i = 0; i < j; ++i) {
@@ -1493,6 +1492,33 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                 }
             }
         }
+    }
+
+    /* Did the user request to export any environment variables via MCA param? */
+    if (NULL != orte_forward_envars) {
+        char **vars;
+        vars = opal_argv_split(orte_forward_envars, ',');
+        for (i=0; NULL != vars[i]; i++) {
+            if (NULL != strchr(vars[i], '=')) {
+                /* user supplied a value */
+                opal_argv_append_nosize(&app->env, vars[i]);
+            } else {
+                /* get the value from the environ */
+                value = getenv(vars[i]);
+                if (NULL != value) {
+                    if (NULL != strchr(value, '=')) {
+                        opal_argv_append_nosize(&app->env, value);
+                    } else {
+                        asprintf(&value2, "%s=%s", vars[i], value);
+                        opal_argv_append_nosize(&app->env, value2);
+                        free(value2);
+                    }
+                } else {
+                    opal_output(0, "Warning: could not find environment variable \"%s\"\n", param);
+                }
+            }
+        }
+        opal_argv_free(vars);
     }
 
     /* If the user specified --path, store it in the user's app
