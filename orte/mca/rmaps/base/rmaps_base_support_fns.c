@@ -487,6 +487,7 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         } else {
             item = opal_list_get_first(node_list);
         }
+        nd1 = NULL;
         while (item != cur_node_item) {
             nd1 = (orte_node_t*)item;
             if (nd1->slots_inuse < nd1->slots_alloc) {
@@ -514,7 +515,8 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
          * that is minimally overloaded if it is better than
          * what we already have
          */
-        if ((nd1->slots_inuse - nd1->slots_alloc) < (node->slots_inuse - node->slots_alloc)) {
+        if (NULL != nd1 &&
+            (nd1->slots_inuse - nd1->slots_alloc) < (node->slots_inuse - node->slots_alloc)) {
             cur_node_item = (opal_list_item_t*)ndmin;
         }
     }
