@@ -466,6 +466,11 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         cur_node_item = opal_list_get_first(node_list);
     }
     
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                         "%s Starting bookmark at node %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ((orte_node_t*)cur_node_item)->name));
+
     /* is this node fully subscribed? If so, then the first
      * proc we assign will oversubscribe it, so let's look
      * for another candidate
@@ -506,12 +511,20 @@ orte_node_t* orte_rmaps_base_get_starting_point(opal_list_t *node_list,
         }
         /* if we get here, then we cycled all the way around the
          * list without finding a better answer - just use the node
-         * that is minimally overloaded
+         * that is minimally overloaded if it is better than
+         * what we already have
          */
-        cur_node_item = (opal_list_item_t*)ndmin;
+        if ((nd1->slots_inuse - nd1->slots_alloc) < (node->slots_inuse - node->slots_alloc)) {
+            cur_node_item = (opal_list_item_t*)ndmin;
+        }
     }
 
  process:
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                         "%s Starting at node %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ((orte_node_t*)cur_node_item)->name));
+
     /* make life easier - put the bookmark at the top of the list,
      * shifting everything above it to the end of the list while
      * preserving order

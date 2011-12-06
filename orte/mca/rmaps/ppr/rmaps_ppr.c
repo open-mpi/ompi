@@ -242,7 +242,10 @@ static int ppr_mapper(orte_job_t *jdata)
         
         /* cycle across the nodes */
         nprocs_mapped = 0;
-        while (NULL != (node = (orte_node_t*)opal_list_remove_first(&node_list))) {
+        for (item = opal_list_get_first(&node_list);
+             item != opal_list_get_end(&node_list);
+             item = opal_list_get_next(item)) {
+            node = (orte_node_t*)item;
 #if OPAL_HAVE_HWLOC
             /* bozo check */
             if (NULL == node->topology) {
@@ -339,9 +342,6 @@ static int ppr_mapper(orte_job_t *jdata)
                 node->oversubscribed = true;
             }
 
-            /* update the number of procs in the job */
-            jdata->num_procs += node->num_procs;
-
             /* if we haven't mapped all the procs, continue on to the
              * next node
              */
@@ -360,12 +360,23 @@ static int ppr_mapper(orte_job_t *jdata)
             goto error;
         }
         /* compute vpids and add proc objects to the job */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata, app, &node_list))) {
             ORTE_ERROR_LOG(rc);
             goto error;
         }
-    }
 
+        /* track the total number of processes we mapped - must update
+         * this AFTER we compute vpids so that computation is done
+         * correctly
+         */
+        jdata->num_procs += app->num_procs;
+
+        while (NULL != (item = opal_list_remove_first(&node_list))) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_DESTRUCT(&node_list);
+    }
+    return ORTE_SUCCESS;
 
  error:
     while (NULL != (item = opal_list_remove_first(&node_list))) {

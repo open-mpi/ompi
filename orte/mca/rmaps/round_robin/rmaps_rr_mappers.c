@@ -57,33 +57,81 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                         ORTE_JOBID_PRINT(jdata->jobid), (int)num_slots, (unsigned long)num_procs);
 
     /* check to see if we can map all the procs */
-    if (num_slots < app->num_procs) {
+    if (num_slots < (int)(jdata->num_procs + app->num_procs)) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
             return ORTE_ERR_SILENT;
         }
         oversubscribed = true;
-        /* compute how many extra procs to put on each node */
-        balance = (float)(app->num_procs - num_slots) / (float)opal_list_get_size(node_list);
-        extra_procs_to_assign = (int)balance;
-        if (0 < (balance - (float)extra_procs_to_assign)) {
-            /* compute how many nodes need an extra proc */
-            nxtra_nodes = app->num_procs - num_slots - (extra_procs_to_assign * opal_list_get_size(node_list));
-            /* add one so that we add an extra proc to the first nodes
-             * until all procs are mapped
-             */
-            extra_procs_to_assign++;
-            /* flag that we added one */
-            add_one = true;
+    }
+
+    /* first pass: map the number of procs to each node until we
+     * map all specified procs or use all allocated slots
+     */
+    nprocs_mapped = 0;
+    for (item = opal_list_get_first(node_list);
+         item != opal_list_get_end(node_list);
+         item = opal_list_get_next(item)) {
+        node = (orte_node_t*)item;
+#if OPAL_HAVE_HWLOC
+        /* get the root object as we are not assigning
+         * locale except at the node level
+         */
+        if (NULL != node->topology) {
+            obj = hwloc_get_root_obj(node->topology);
+        }
+#endif
+        if (node->slots_alloc == node->slots_inuse) {
+            continue;
+        }
+        num_procs_to_assign = node->slots_alloc - node->slots_inuse;
+        for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
+            /* add this node to the map - do it only once */
+            if (!node->mapped) {
+                if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+                node->mapped = true;
+                OBJ_RETAIN(node);  /* maintain accounting on object */
+                ++(jdata->map->num_nodes);
+            }
+            if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            nprocs_mapped++;
+#if OPAL_HAVE_HWLOC
+            proc->locale = obj;
+#endif
         }
     }
 
-    /* map the number of procs to each node until we
-     * map all specified procs
+    if (nprocs_mapped == app->num_procs) {
+        /* we are done */
+        return ORTE_SUCCESS;
+    }
+
+    /* second pass: if we haven't mapped everyone yet, it is
+     * because we are oversubscribed. Figure out how many procs
+     * to add
      */
-    nprocs_mapped = 0;
-    while (NULL != (item = opal_list_remove_first(node_list))) {
+    balance = (float)(app->num_procs - nprocs_mapped) / (float)opal_list_get_size(node_list);
+    extra_procs_to_assign = (int)balance;
+    if (0 < (balance - (float)extra_procs_to_assign)) {
+        /* compute how many nodes need an extra proc */
+        nxtra_nodes = app->num_procs - nprocs_mapped - (extra_procs_to_assign * opal_list_get_size(node_list));
+        /* add one so that we add an extra proc to the first nodes
+         * until all procs are mapped
+         */
+        extra_procs_to_assign++;
+        /* flag that we added one */
+        add_one = true;
+    }
+
+    for (item = opal_list_get_first(node_list);
+         item != opal_list_get_end(node_list);
+         item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
 #if OPAL_HAVE_HWLOC
         /* get the root object as we are not assigning
@@ -101,30 +149,8 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                 --nxtra_nodes;
             }
         }
-        if (oversubscribed) {
-            /* flag the node as oversubscribed so that sched-yield gets
-             * properly set
-             */
-            node->oversubscribed = true;
-        }
-        if (0 == (node->slots_alloc - node->slots_inuse)) {
-            num_procs_to_assign = 1 + extra_procs_to_assign;
-        } else {
-            num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
-        }
+        num_procs_to_assign = (node->slots_alloc - node->slots_inuse) + extra_procs_to_assign;
         for (i=0; i < num_procs_to_assign && nprocs_mapped < app->num_procs; i++) {
-            if (0 == i) {
-                /* add this node to the map - do it only once */
-                if (!node->mapped) {
-                    if (ORTE_SUCCESS > (rc = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
-                    node->mapped = true;
-                    OBJ_RETAIN(node);  /* maintain accounting on object */
-                    ++(jdata->map->num_nodes);
-                }
-            }
             if (NULL == (proc = orte_rmaps_base_setup_proc(jdata, node, app->idx))) {
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
@@ -132,13 +158,17 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
 #if OPAL_HAVE_HWLOC
             proc->locale = obj;
 #endif
-            /* keep track of the node we last used */
-            jdata->bookmark = node;
-       }
-        /* release the node - the object will persist */
-        OBJ_RELEASE(node);
+        }
+        /* not all nodes are equal, so only set oversubscribed for
+         * this node if it is in that state
+         */
+        if (node->slots_alloc < (int)node->num_procs) {
+            /* flag the node as oversubscribed so that sched-yield gets
+             * properly set
+             */
+            node->oversubscribed = true;
+        }
     }
-
     return ORTE_SUCCESS;
 }
 
@@ -167,7 +197,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                         (int)num_slots, (unsigned long)num_procs);
 
     /* quick check to see if we can map all the procs */
-    if (num_slots < app->num_procs) {
+    if (num_slots < (int)(jdata->num_procs + app->num_procs)) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -211,7 +241,9 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
 
     nprocs_mapped = 0;
     lag = 0;
-    while (NULL != (item = opal_list_remove_first(node_list))) {
+    for (item = opal_list_get_first(node_list);
+         item != opal_list_get_end(node_list);
+         item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
 #if OPAL_HAVE_HWLOC
         /* get the root object as we are not assigning
@@ -243,10 +275,6 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
         if (oversubscribed) {
             /* everybody just takes their share */
             num_procs_to_assign = navg + extra_procs_to_assign;
-            /* flag the node as oversubscribed so that sched-yield gets
-             * properly set
-             */
-            node->oversubscribed = true;
         } else {
             /* if we are not oversubscribed, then there are enough
              * slots to handle all the procs. However, not every
@@ -254,14 +282,11 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
              * have to track how many procs to "shift" elsewhere
              * to make up the difference
              */
-            if (0 == (node->slots_alloc - node->slots_inuse)) {
+            if (node->slots_alloc == node->slots_inuse) {
                 /* if there are no extras to take, then we can
-                 * safely remove this node as we don't need it
+                 * ignore this node
                  */
                 if (0 == extra_procs_to_assign) {
-                    opal_pointer_array_set_item(jdata->map->nodes, idx, NULL);
-                    OBJ_RELEASE(node);
-                    --(jdata->map->num_nodes);
                     /* update how many we are lagging behind */
                     lag += navg;
                     continue;
@@ -298,11 +323,16 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
 #if OPAL_HAVE_HWLOC
             proc->locale = obj;
 #endif
-            /* keep track of the node we last used */
-            jdata->bookmark = node;
         }
-        /* maintain acctg */
-        OBJ_RELEASE(node);
+        /* not all nodes are equal, so only set oversubscribed for
+         * this node if it is in that state
+         */
+        if (node->slots_alloc < (int)node->num_procs) {
+            /* flag the node as oversubscribed so that sched-yield gets
+             * properly set
+             */
+            node->oversubscribed = true;
+        }
         if (nprocs_mapped == app->num_procs) {
             /* we are done */
             break;
@@ -372,7 +402,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
      * do more because we don't know how many total objects exist
      * across all the nodes
      */
-    if (num_slots < app->num_procs) {
+    if (num_slots < (int)(jdata->num_procs + app->num_procs)) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -380,11 +410,11 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
         }
         oversubscribed = true;
         /* compute how many extra procs to put on each node */
-        balance = (float)(app->num_procs - num_slots) / (float)opal_list_get_size(node_list);
+        balance = (float)((jdata->num_procs + app->num_procs) - num_slots) / (float)opal_list_get_size(node_list);
         extra_procs_to_assign = (int)balance;
         if (0 < (balance - (float)extra_procs_to_assign)) {
             /* compute how many nodes need an extra proc */
-            nxtra_nodes = app->num_procs - num_slots - (extra_procs_to_assign * opal_list_get_size(node_list));
+            nxtra_nodes = (jdata->num_procs + app->num_procs) - num_slots - (extra_procs_to_assign * opal_list_get_size(node_list));
             /* add one so that we add an extra proc to the first nodes
              * until all procs are mapped
              */
@@ -400,7 +430,9 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                         extra_procs_to_assign, nxtra_nodes);
 
     nprocs_mapped = 0;
-    while (NULL != (item = opal_list_remove_first(node_list))) {
+    for (item = opal_list_get_first(node_list);
+         item != opal_list_get_end(node_list);
+         item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
         /* bozo check */
         if (NULL == node->topology) {
@@ -408,21 +440,18 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                            true, node->name);
             return ORTE_ERR_SILENT;
         }
-        /* add this node to the map */
-        if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-            ORTE_ERROR_LOG(idx);
-            return idx;
+        /* add this node to the map, if reqd */
+        if (!node->mapped) {
+            if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                ORTE_ERROR_LOG(idx);
+                return idx;
+            }
+            node->mapped = true;
+            OBJ_RETAIN(node);  /* maintain accounting on object */
+            ++(jdata->map->num_nodes);
         }
-        OBJ_RETAIN(node);  /* maintain accounting on object */
-        ++(jdata->map->num_nodes);
 
-        if (oversubscribed) {
-            /* flag the node as oversubscribed so that sched-yield gets
-             * properly set
-             */
-            node->oversubscribed = true;
-        }
-        /* compute the number of procs to go on this node */
+         /* compute the number of procs to go on this node */
         if (add_one) {
             if (0 == nxtra_nodes) {
                 --extra_procs_to_assign;
@@ -431,7 +460,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 --nxtra_nodes;
             }
         }
-        if (0 == (node->slots_alloc - node->slots_inuse)) {
+        if (node->slots_alloc == node->slots_inuse) {
             /* everybody takes at least the extras */
             num_procs_to_assign = extra_procs_to_assign;
         } else {
@@ -473,11 +502,16 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 nprocs_mapped++;
                 proc->locale = obj;
             }
-            /* keep track of the node we last used */
-            jdata->bookmark = node;
         }
-        /* maintain acctg */
-        OBJ_RELEASE(node);
+        /* not all nodes are equal, so only set oversubscribed for
+         * this node if it is in that state
+         */
+        if (node->slots_alloc < (int)node->num_procs) {
+            /* flag the node as oversubscribed so that sched-yield gets
+             * properly set
+             */
+            node->oversubscribed = true;
+        }
         if (nprocs_mapped == app->num_procs) {
             /* we are done */
             break;
@@ -516,7 +550,7 @@ static int byobj_span(orte_job_t *jdata,
      * do more because we don't know how many total objects exist
      * across all the nodes
      */
-    if (num_slots < app->num_procs) {
+    if (num_slots < (int)(jdata->num_procs + app->num_procs)) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -542,11 +576,11 @@ static int byobj_span(orte_job_t *jdata,
 
 
     /* compute how many extra procs to put on each node */
-    balance = (float)(app->num_procs - (navg * opal_list_get_size(node_list))) / (float)opal_list_get_size(node_list);
+    balance = (float)((jdata->num_procs + app->num_procs) - (navg * opal_list_get_size(node_list))) / (float)opal_list_get_size(node_list);
     extra_procs_to_assign = (int)balance;
     if (0 < (balance - (float)extra_procs_to_assign)) {
         /* compute how many nodes need an extra proc */
-        nxtra_nodes = app->num_procs - ((navg + extra_procs_to_assign) * opal_list_get_size(node_list));
+        nxtra_nodes = (jdata->num_procs + app->num_procs) - ((navg + extra_procs_to_assign) * opal_list_get_size(node_list));
         /* add one so that we add an extra proc to the first nodes
          * until all procs are mapped
          */
@@ -562,7 +596,9 @@ static int byobj_span(orte_job_t *jdata,
 
     nprocs_mapped = 0;
     lag = 0;
-    while (NULL != (item = opal_list_remove_first(node_list))) {
+    for (item = opal_list_get_first(node_list);
+         item != opal_list_get_end(node_list);
+         item = opal_list_get_next(item)) {
         node = (orte_node_t*)item;
         /* bozo check */
         if (NULL == node->topology) {
@@ -570,13 +606,16 @@ static int byobj_span(orte_job_t *jdata,
                            true, node->name);
             return ORTE_ERR_SILENT;
         }
-        /* add this node to the map */
-        if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
-            ORTE_ERROR_LOG(idx);
-            return idx;
+        /* add this node to the map, if reqd */
+        if (!node->mapped) {
+            if (ORTE_SUCCESS > (idx = opal_pointer_array_add(jdata->map->nodes, (void*)node))) {
+                ORTE_ERROR_LOG(idx);
+                return idx;
+            }
+            node->mapped = true;
+            OBJ_RETAIN(node);  /* maintain accounting on object */
+            ++(jdata->map->num_nodes);
         }
-        OBJ_RETAIN(node);  /* maintain accounting on object */
-        ++(jdata->map->num_nodes);
         /* compute the number of procs to go on this node */
         if (add_one) {
             if (0 == nxtra_nodes) {
@@ -671,8 +710,15 @@ static int byobj_span(orte_job_t *jdata,
             /* keep track of the node we last used */
             jdata->bookmark = node;
         }
-        /* maintain acctg */
-        OBJ_RELEASE(node);
+        /* not all nodes are equal, so only set oversubscribed for
+         * this node if it is in that state
+         */
+        if (node->slots_alloc < (int)node->num_procs) {
+            /* flag the node as oversubscribed so that sched-yield gets
+             * properly set
+             */
+            node->oversubscribed = true;
+        }
         if (nprocs_mapped == app->num_procs) {
             /* we are done */
             break;

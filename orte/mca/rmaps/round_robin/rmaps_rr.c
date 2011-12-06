@@ -177,9 +177,21 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             goto error;
         }
 
-        /* track the total number of processes we mapped */
+        /* compute vpids and add proc objects to the job - do this after
+         * each app_context so that the ranks within each context are
+         * contiguous
+         */
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata, app, &node_list))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* track the total number of processes we mapped - must update
+         * this value AFTER we compute vpids so that computation
+         * is done correctly
+         */
         jdata->num_procs += app->num_procs;
-        
+
         /* cleanup the node list - it can differ from one app_context
          * to another, so we have to get it every time
          */
@@ -187,15 +199,6 @@ static int orte_rmaps_rr_map(orte_job_t *jdata)
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&node_list);
-
-        /* compute vpids and add proc objects to the job - do this after
-         * each app_context so that the ranks within each context are
-         * contiguous
-         */
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_vpids(jdata))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
     }
 
     return ORTE_SUCCESS;
