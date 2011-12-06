@@ -15,7 +15,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
- * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2010-2011 IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -448,6 +448,9 @@ static void mca_btl_openib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
     /* free the qps */
     free(endpoint->qps);
     endpoint->qps = NULL;
+
+    free(endpoint->rem_info.rem_qps);
+    free(endpoint->rem_info.rem_srqs);
 
     /* unregister xrc recv qp */
 #if HAVE_XRC
