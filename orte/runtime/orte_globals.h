@@ -647,11 +647,11 @@ ORTE_DECLSPEC extern bool orte_report_child_jobs_separately;
 ORTE_DECLSPEC extern struct timeval orte_child_time_to_exit;
 ORTE_DECLSPEC extern bool orte_abort_non_zero_exit;
 
-/* VM control */
-ORTE_DECLSPEC extern bool orte_vm_launch;
-
 /* length of stat history to keep */
 ORTE_DECLSPEC extern int orte_stat_history_size;
+
+/* envars to forward */
+ORTE_DECLSPEC extern char *orte_forward_envars;
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 

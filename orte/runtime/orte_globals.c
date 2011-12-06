@@ -173,11 +173,11 @@ bool orte_report_child_jobs_separately;
 struct timeval orte_child_time_to_exit;
 bool orte_abort_non_zero_exit;
 
-/* VM control */
-bool orte_vm_launch = false;
-
 /* length of stat history to keep */
 int orte_stat_history_size;
+
+/* envars to forward */
+char *orte_forward_envars = NULL;
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
