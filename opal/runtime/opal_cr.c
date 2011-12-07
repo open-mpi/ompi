@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -48,6 +49,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/util/malloc.h"
 #include "opal/util/keyval_parse.h"
@@ -407,15 +409,17 @@ int opal_cr_init(void )
      * Open the checkpoint / restart service components
      */
     if (OPAL_SUCCESS != (ret = opal_crs_base_open())) {
-        opal_output(opal_cr_output,
-                    "opal_cr: init: opal_crs_base_open Failed to open. (%d)\n", ret);
+        opal_show_help( "help-opal-runtime.txt",
+                        "opal_cr_init:no-crs", true,
+                        "opal_crs_base_open", ret );
         exit_status = ret;
         goto cleanup;
     }
     
     if (OPAL_SUCCESS != (ret = opal_crs_base_select())) {
-        opal_output(opal_cr_output,
-                    "opal_cr: init: opal_crs_base_select Failed. (%d)\n", ret);
+        opal_show_help( "help-opal-runtime.txt",
+                        "opal_cr_init:no-crs", true,
+                        "opal_crs_base_select", ret );
         exit_status = ret;
         goto cleanup;
     }
