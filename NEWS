@@ -324,6 +324,7 @@ Trunk (not on release branches yet)
 1.4.5
 -----
 
+- Fix SLURM cpus-per-task allocation.
 - Fix the datatype engine for when data left over from the previous
   pack was larger than the allowed space in the pack buffer. Thanks to
   Yuki Matsumoto and Takahiro Kawashima for the bug report and the
