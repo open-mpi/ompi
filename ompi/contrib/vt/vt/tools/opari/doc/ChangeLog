@@ -1,3 +1,17 @@
+21. Fixed processing of Fortran line-continuation
+    appearing after a complete OpenMP directive
+
+    For example
+
+      !$omp parallel
+      !$omp do private(a,b,c, &
+      !$omp            d,e,f)
+
+    will not cause an "unbalanced pragma/directive nesting" error anymore.
+    
+20. Fixed Fortran parsing
+    for detecting DO loop beginnings
+
 19. Revised 18.
     to get back support for comma-separated OpenMP clauses.
 

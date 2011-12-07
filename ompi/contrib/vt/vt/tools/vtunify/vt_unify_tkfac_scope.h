@@ -45,21 +45,23 @@ public:
    // translate local to global token
    virtual uint32_t translate( const uint32_t & process,
                        const uint32_t & localToken,
-                       const bool & showError = true ) const = 0;
+                       const bool showError = true ) const = 0;
 
    // get next unused global token
    virtual uint32_t getNextToken() = 0;
 
 #ifdef VT_MPI
 
-   // get size needed to pack token translation map
-   virtual VT_MPI_INT getPackSize() = 0;
+   // get size needed to pack token translation tables of certain process into
+   // a buffer
+   virtual VT_MPI_INT getPackSize( const uint32_t & process ) = 0;
 
-   // pack token translations into a buffer
-   virtual void pack( char *& buffer, const VT_MPI_INT & bufferSize,
-                   VT_MPI_INT & bufferPos ) = 0;
+   // pack token translation tables of certain process into a buffer
+   virtual void pack( const uint32_t & process, char *& buffer,
+                   const VT_MPI_INT & bufferSize, VT_MPI_INT & bufferPos,
+                   const bool clear = true ) = 0;
 
-   // unpack token translations from a buffer
+   // unpack token translation tables from a buffer
    virtual void unpack( char *& buffer, const VT_MPI_INT & bufferSize,
                    VT_MPI_INT & bufferPos ) = 0;
 
@@ -91,30 +93,32 @@ public:
    // translate local to global token
    inline uint32_t translate( const uint32_t & process,
                       const uint32_t & localToken,
-                      const bool & showError = true ) const;
+                      const bool showError = true ) const;
 
    // get next unused global token
    inline uint32_t getNextToken();
 
 #ifdef VT_MPI
 
-   // get size needed to pack token translation map
-   VT_MPI_INT getPackSize();
+   // get size needed to pack token translation tables of certain process into
+   // a buffer
+   VT_MPI_INT getPackSize( const uint32_t & process );
 
-   // pack token translations into a buffer
-   void pack( char *& buffer, const VT_MPI_INT & bufferSize,
-              VT_MPI_INT & bufferPos );
+   // pack token translation tables of certain process into a buffer
+   void pack( const uint32_t & process, char *& buffer,
+           const VT_MPI_INT & bufferSize, VT_MPI_INT & bufferPos,
+           const bool clear = true );
 
-   // unpack token translations from a buffer
+   // unpack token translation tables from a buffer
    void unpack( char *& buffer, const VT_MPI_INT & bufferSize,
-                VT_MPI_INT & bufferPos );
+           VT_MPI_INT & bufferPos );
 
 #endif // VT_MPI
 
 private:
 
-   // map process id <-> local/global token
-   std::map<uint32_t, std::map<uint32_t, uint32_t> > m_mapLocGlobToken;
+   // map process id <-> map local/global token
+   std::map<uint32_t, std::map<uint32_t, uint32_t> > m_proc2TokenMap;
 
    // pointer to target global definitions
    std::set<T> * m_globDefs;

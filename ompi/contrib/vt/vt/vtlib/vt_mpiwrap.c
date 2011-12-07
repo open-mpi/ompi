@@ -1968,9 +1968,8 @@ VT_MPI_INT MPI_Waitall( VT_MPI_INT count,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_WAITALL]);
 
-      if (array_of_statuses == MPI_STATUSES_IGNORE) {
+      if (array_of_statuses == MPI_STATUSES_IGNORE)
         array_of_statuses = vt_get_status_array(count);
-      }
       vt_save_request_array(requests, count);
 
       CALL_PMPI_3(MPI_Waitall, count, requests, array_of_statuses,
@@ -2062,9 +2061,8 @@ VT_MPI_INT MPI_Waitsome( VT_MPI_INT incount,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_WAITSOME]);
 
-      if (array_of_statuses == MPI_STATUSES_IGNORE) {
+      if (array_of_statuses == MPI_STATUSES_IGNORE)
         array_of_statuses = vt_get_status_array(incount);
-      }
       vt_save_request_array(array_of_requests, incount);
 
       CALL_PMPI_5(MPI_Waitsome, incount, array_of_requests, outcount,
@@ -2202,9 +2200,8 @@ VT_MPI_INT MPI_Testall( VT_MPI_INT count,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_TESTALL]);
 
-      if (array_of_statuses == MPI_STATUSES_IGNORE) {
+      if (array_of_statuses == MPI_STATUSES_IGNORE)
         array_of_statuses = vt_get_status_array(count);
-      }
       vt_save_request_array(array_of_requests, count);
 
       CALL_PMPI_4(MPI_Testall, count, array_of_requests, flag,
@@ -2256,9 +2253,8 @@ VT_MPI_INT MPI_Testsome( VT_MPI_INT incount,
       time = vt_pform_wtime();
       was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_TESTSOME]);
 
-      if (array_of_statuses == MPI_STATUSES_IGNORE) {
+      if (array_of_statuses == MPI_STATUSES_IGNORE)
         array_of_statuses = vt_get_status_array(incount);
-      }
       vt_save_request_array(array_of_requests, incount);
 
       CALL_PMPI_5(MPI_Testsome, incount, array_of_requests, outcount,
@@ -2911,12 +2907,15 @@ VT_MPI_INT MPI_Gather( void* sendbuf,
 
           PMPI_Type_size(sendtype, &ssz);
           PMPI_Comm_rank(comm, &me);
-          if ( me == root ) {
-            PMPI_Comm_size(comm, &N);
-            PMPI_Type_size(recvtype, &rsz);
-          } else {
-            N = rsz = 0;
-          }
+          if ( me == root )
+            {
+              PMPI_Comm_size(comm, &N);
+              PMPI_Type_size(recvtype, &rsz);
+            }
+          else
+            {
+              N = rsz = 0;
+            }
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_GATHER], matchid,
@@ -3035,10 +3034,15 @@ VT_MPI_INT MPI_Gatherv( void* sendbuf,
         {
           matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
-          PMPI_Comm_size(comm, &N);
+          PMPI_Comm_rank(comm, &me);
 
-          recvcount = 0;
-          for(i = 0; i<N; i++) recvcount += recvcounts[i];
+          recvcount = recvsz = 0;
+          if (me == root)
+            {
+              PMPI_Comm_size(comm, &N);
+              PMPI_Type_size(recvtype, &recvsz);
+              for(i = 0; i<N; i++) recvcount += recvcounts[i];
+            }
 
 #if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
           if (sendbuf == MPI_IN_PLACE)
@@ -3048,19 +3052,7 @@ VT_MPI_INT MPI_Gatherv( void* sendbuf,
             }
 #endif /* HAVE_DECL_MPI_IN_PLACE */
 
-          PMPI_Type_size(recvtype, &recvsz);
           PMPI_Type_size(sendtype, &sendsz);
-          PMPI_Comm_rank(comm, &me);
-
-          recvsz = 0;
-          if ( me == root )
-            {
-              PMPI_Type_size(recvtype, &recvsz);
-            }
-          else
-            {
-              recvcount = 0;
-            }
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_GATHERV], matchid,
@@ -3441,12 +3433,15 @@ VT_MPI_INT MPI_Scatter( void* sendbuf,
 
           PMPI_Type_size(recvtype, &recvsz);
           PMPI_Comm_rank(comm, &me);
-          if ( me == root ) {
-            PMPI_Comm_size(comm, &N);
-            PMPI_Type_size(sendtype, &sendsz);
-          } else {
-            N = sendsz = 0;
-          }
+          if ( me == root )
+            {
+              PMPI_Comm_size(comm, &N);
+              PMPI_Type_size(sendtype, &sendsz);
+            }
+          else
+            {
+              N = sendsz = 0;
+            }
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_SCATTER], matchid,
@@ -3505,10 +3500,15 @@ VT_MPI_INT MPI_Scatterv( void* sendbuf,
         {
           matchid = VTTHRD_MPICOLLOP_NEXT_MATCHINGID(VTTHRD_MY_VTTHRD);
 
-          PMPI_Comm_size(comm, &N);
+          PMPI_Comm_rank(comm, &me);
 
-          sendcount = 0;
-          for(i = 0; i<N; i++) sendcount += sendcounts[i];
+          sendcount = sendsz = 0;
+          if (me == root)
+            {
+              PMPI_Comm_size(comm, &N);
+              PMPI_Type_size(sendtype, &sendsz);
+              for(i = 0; i<N; i++) sendcount += sendcounts[i];
+            }
 
 #if defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE
           if (recvbuf == MPI_IN_PLACE)
@@ -3518,17 +3518,7 @@ VT_MPI_INT MPI_Scatterv( void* sendbuf,
             }
 #endif /* HAVE_DECL_MPI_IN_PLACE */
 
-          sendsz = 0;
           PMPI_Type_size(recvtype, &recvsz);
-          PMPI_Comm_rank(comm, &me);
-          if ( me == root )
-            {
-              PMPI_Type_size(sendtype, &sendsz);
-            }
-          else
-            {
-              sendcount = 0;
-            }
 
           vt_mpi_collbegin(VT_CURRENT_THREAD, &time,
                            vt_mpi_regid[VT__MPI_SCATTERV], matchid,

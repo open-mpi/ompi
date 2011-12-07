@@ -353,13 +353,14 @@ MutatorC::run()
 
          // finalize insertion set
          //
-         if( !error && !m_appAddrSpace->finalizeInsertionSet( true, 0 ) )
+         if( !m_appAddrSpace->finalizeInsertionSet( true, 0 ) )
          {
             std::cerr << ExeName << ": [" << ExePid << "]: "
                       << "Error: Could not finalize instrumentation set for "
                       << "function '" << inst_funcs[i].name << "'. Aborting."
                       << std::endl;
             error = true;
+            break;
          }
       }
       inst_funcs.clear();
