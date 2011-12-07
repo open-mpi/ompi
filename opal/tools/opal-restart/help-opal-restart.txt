@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+# Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -40,6 +41,8 @@ Error: The local checkpoint contains invalid or incomplete metadata.
 [restart_cmd_failure]
 Error: Unable to obtain the proper restart command to restart from the 
        checkpoint file (%s). Returned %d.
+       Check the installation of the %s checkpoint/restart service
+       on all of the machines in your system.
 
 [comp_open_failure]
 Error: Unable to open the %s framework.

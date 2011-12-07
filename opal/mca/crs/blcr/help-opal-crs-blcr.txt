@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -18,13 +19,10 @@
 #
 # This is the US/English general help file for Open PAL CRS framework.
 #
-[blcr:callback-warn]
-----------------------------------------------------------------------
-Warning: This program is using the BLCR callbacks, which 
-         means that you may have used the 'cr_checkpoint' or
-         'cr_restart' commands by accident.
-         If you have an OPAL only application you should use:
-           opal_checkpoint --pid XXX
-         If you have and ORTE or OMPI application you should use:
-           ompi_checkpoint --pid XXX
-----------------------------------------------------------------------
+[blcr:restart_failed_exec]
+Error: BLCR was not able to restart the process because exec failed.
+       Check the installation of BLCR on all of the machines in your
+       system. The following information may be of help:
+ Return Code : %d
+ BLCR Restart Command : %s
+ Restart Command Line : %s
