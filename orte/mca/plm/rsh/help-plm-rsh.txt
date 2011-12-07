@@ -75,3 +75,13 @@ The prefix we were given are:
 
 opal_prefix: %s
 prefix_dir: %s
+#
+[cmd-line-too-long]
+The cmd line to launch remote daemons is too long:
+
+  Length:         %d
+  Max length:  %d
+
+Consider setting -mca plm_rsh_pass_environ_mca_params 0 to
+avoid including any environmentally set MCA parameters on the
+command line.

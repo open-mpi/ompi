@@ -187,6 +187,11 @@ static int rsh_component_open(void)
     mca_base_param_lookup_int(tmp, &value);
     mca_plm_rsh_component.assume_same_shell = OPAL_INT_TO_BOOL(value);
     
+    mca_base_param_reg_int(c, "pass_environ_mca_params",
+                           "If set to 0, do not include mca params from the environment on the orted cmd line",
+                           false, false, 1, &tmp);
+    mca_plm_rsh_component.pass_environ_mca_params = OPAL_INT_TO_BOOL(tmp);
+
     return ORTE_SUCCESS;
 }
 
