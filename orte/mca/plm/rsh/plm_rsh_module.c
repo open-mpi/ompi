@@ -62,6 +62,12 @@
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
+#if HAVE_LIMITS_H
+#include <limits.h>
+#endif
+#if HAVE_SYS_SYSLIMITS_H
+#include <sys/syslimits.h>
+#endif
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -287,7 +293,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
 {
     int argc;
     char **argv;
-    char *param;
+    char *param, *value;
     orte_plm_rsh_shell_t remote_shell, local_shell;
     char *lib_base, *bin_base;
     int orted_argc;
@@ -295,34 +301,35 @@ static int setup_launch(int *argcptr, char ***argvptr,
     char *orted_cmd, *orted_prefix, *final_cmd;
     int orted_index;
     int rc;
-
+    int cnt, i, j;
+    bool found;
     
     /* Figure out the basenames for the libdir and bindir.  This
-     requires some explanation:
+       requires some explanation:
      
-     - Use opal_install_dirs.libdir and opal_install_dirs.bindir.
+       - Use opal_install_dirs.libdir and opal_install_dirs.bindir.
      
-     - After a discussion on the devel-core mailing list, the
-     developers decided that we should use the local directory
-     basenames as the basis for the prefix on the remote note.
-     This does not handle a few notable cases (e.g., if the
-     libdir/bindir is not simply a subdir under the prefix, if the
-     libdir/bindir basename is not the same on the remote node as
-     it is here on the local node, etc.), but we decided that
-     --prefix was meant to handle "the common case".  If you need
-     something more complex than this, a) edit your shell startup
-     files to set PATH/LD_LIBRARY_PATH properly on the remove
-     node, or b) use some new/to-be-defined options that
-     explicitly allow setting the bindir/libdir on the remote
-     node.  We decided to implement these options (e.g.,
-     --remote-bindir and --remote-libdir) to orterun when it
-     actually becomes a problem for someone (vs. a hypothetical
-     situation).
+       - After a discussion on the devel-core mailing list, the
+       developers decided that we should use the local directory
+       basenames as the basis for the prefix on the remote note.
+       This does not handle a few notable cases (e.g., if the
+       libdir/bindir is not simply a subdir under the prefix, if the
+       libdir/bindir basename is not the same on the remote node as
+       it is here on the local node, etc.), but we decided that
+       --prefix was meant to handle "the common case".  If you need
+       something more complex than this, a) edit your shell startup
+       files to set PATH/LD_LIBRARY_PATH properly on the remove
+       node, or b) use some new/to-be-defined options that
+       explicitly allow setting the bindir/libdir on the remote
+       node.  We decided to implement these options (e.g.,
+       --remote-bindir and --remote-libdir) to orterun when it
+       actually becomes a problem for someone (vs. a hypothetical
+       situation).
      
-     Hence, for now, we simply take the basename of this install's
-     libdir and bindir and use it to append this install's prefix
-     and use that on the remote node.
-     */
+       Hence, for now, we simply take the basename of this install's
+       libdir and bindir and use it to append this install's prefix
+       and use that on the remote node.
+    */
     
     lib_base = opal_basename(opal_install_dirs.libdir);
     bin_base = opal_basename(opal_install_dirs.bindir);
@@ -429,13 +436,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
         } else if (ORTE_PLM_RSH_SHELL_TCSH == remote_shell ||
                    ORTE_PLM_RSH_SHELL_CSH == remote_shell) {
             /* [t]csh is a bit more challenging -- we
-             have to check whether LD_LIBRARY_PATH
-             is already set before we try to set it.
-             Must be very careful about obeying
-             [t]csh's order of evaluation and not
-             using a variable before it is defined.
-             See this thread for more details:
-             http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
+               have to check whether LD_LIBRARY_PATH
+               is already set before we try to set it.
+               Must be very careful about obeying
+               [t]csh's order of evaluation and not
+               using a variable before it is defined.
+               See this thread for more details:
+               http://www.open-mpi.org/community/lists/users/2006/01/0517.php. */
             /* if there is nothing preceding orted, then we can just
              * assemble the cmd with the orted_cmd at the end. Otherwise,
              * we have to insert the orted_prefix in the right place
@@ -489,9 +496,9 @@ static int setup_launch(int *argcptr, char ***argvptr,
         /* Daemonize when not using qrsh.  Or, if using qrsh, only
          * daemonize if told to by user with daemonize_qrsh flag. */
         ((!mca_plm_rsh_component.using_qrsh) ||
-        (mca_plm_rsh_component.using_qrsh && mca_plm_rsh_component.daemonize_qrsh)) &&
+         (mca_plm_rsh_component.using_qrsh && mca_plm_rsh_component.daemonize_qrsh)) &&
         ((!mca_plm_rsh_component.using_llspawn) ||
-        (mca_plm_rsh_component.using_llspawn && mca_plm_rsh_component.daemonize_llspawn))) {
+         (mca_plm_rsh_component.using_llspawn && mca_plm_rsh_component.daemonize_llspawn))) {
         opal_argv_append(&argc, &argv, "--daemonize");
     }
     
@@ -513,24 +520,65 @@ static int setup_launch(int *argcptr, char ***argvptr,
      * by enclosing them in quotes. Check for any multi-word
      * mca params passed to mpirun and include them
      */
-    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
-        int cnt, i;
-        cnt = opal_argv_count(orted_cmd_line);    
-        for (i=0; i < cnt; i+=3) {
-            /* check if the specified option is more than one word - all
-             * others have already been passed
-             */
-            if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
-                /* must add quotes around it */
-                asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
-                /* now pass it along */
-                opal_argv_append(&argc, &argv, orted_cmd_line[i]);
-                opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
-                opal_argv_append(&argc, &argv, param);
+    cnt = opal_argv_count(orted_cmd_line);    
+    for (i=0; i < cnt; i+=3) {
+        /* check if the specified option is more than one word - all
+         * others have already been passed
+         */
+        if (NULL != strchr(orted_cmd_line[i+2], ' ')) {
+            /* must add quotes around it */
+            asprintf(&param, "\"%s\"", orted_cmd_line[i+2]);
+            /* now pass it along */
+            opal_argv_append(&argc, &argv, orted_cmd_line[i]);
+            opal_argv_append(&argc, &argv, orted_cmd_line[i+1]);
+            opal_argv_append(&argc, &argv, param);
+            free(param);
+        }
+    }
+
+    /* unless told otherwise... */
+    if (mca_plm_rsh_component.pass_environ_mca_params) {
+        /* now check our local environment for MCA params - add them
+         * only if they aren't already present
+         */
+        for (i = 0; NULL != environ[i]; ++i) {
+            if (0 == strncmp("OMPI_", environ[i], 5)) {
+                /* check for duplicate in app->env - this
+                 * would have been placed there by the
+                 * cmd line processor. By convention, we
+                 * always let the cmd line override the
+                 * environment
+                 */
+                param = strdup(&environ[i][9]);
+                value = strchr(param, '=');
+                *value = '\0';
+                value++;
+                /* see if this param exists on the cmd line */
+                for (j=0; NULL != argv[j]; j++) {
+                    if (0 == strcmp(param, argv[j])) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    /* add it */
+                    opal_argv_append(&argc, &argv, "-mca");
+                    opal_argv_append(&argc, &argv, param);
+                    opal_argv_append(&argc, &argv, value);
+                }
                 free(param);
             }
         }
     }
+
+    value = opal_argv_join(argv, ' ');
+    if (ARG_MAX < strlen(value)) {
+        orte_show_help("help-plm-rsh.txt", "cmd-line-too-long",
+                       true, strlen(value), ARG_MAX);
+        free(value);
+        return ORTE_ERR_SILENT;
+    }
+    free(value);
 
     if (ORTE_PLM_RSH_SHELL_SH == remote_shell ||
         ORTE_PLM_RSH_SHELL_KSH == remote_shell) {
@@ -938,7 +986,7 @@ static int rsh_launch(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    
+
     /* if we are tree launching, find our children and create the launch cmd */
     if (mca_plm_rsh_component.tree_spawn) {
         orte_daemon_cmd_flag_t command = ORTE_DAEMON_TREE_SPAWN;

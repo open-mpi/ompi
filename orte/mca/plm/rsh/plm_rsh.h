@@ -61,6 +61,7 @@ struct orte_plm_rsh_component_t {
     opal_condition_t cond;
     char *agent;
     bool assume_same_shell;
+    bool pass_environ_mca_params;
 };
 typedef struct orte_plm_rsh_component_t orte_plm_rsh_component_t;
 
