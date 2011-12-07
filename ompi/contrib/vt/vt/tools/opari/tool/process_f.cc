@@ -206,7 +206,7 @@ namespace {
     pragma->find_name();
     pragma->pline=save_pline;               // reset parse position
     pragma->ppos=save_ppos;
-    if(pragma->name.find("do")!=string::npos) {
+    if(pragma->name.find("do ")!=string::npos) {
       linetype=PRAGMA_LOOPSTART;
       if(pragma->name == "enddo")              linetype=PRAGMA_LOOPEND;
       else if(pragma->name == "paralleldo")    linetype=PRAGMA_PARLOOPSTART;
@@ -416,10 +416,16 @@ void process_fortran(istream& is, const char* infile, ostream& os,
         // continuation directive line
         currPragma->lines.push_back(lowline);
       } else {
-        if ( currPragma ) {
-          delete currPragma;
-        }
         // new directive
+        if ( currPragma ) {
+          // if necessary process last complete directive
+          typeOfLastLine = check_pragma(currPragma);
+          test_and_insert_ompenddo(os, typeOfLastLine, waitforOMPEndDo,
+                                   infile, currPragma->lineno, pragma_indent,
+                                   pomp, addSharedDecl);
+          process_pragma(currPragma, os);
+          currPragma = 0;
+        }
         currPragma
                 = new OMPragmaF(infile, lineno, pstart+5+pomp, lowline, pomp,
                                 addSharedDecl);

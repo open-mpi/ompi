@@ -39,8 +39,11 @@ public:
    TokenFactoryScopeI * getScope( const DefRecTypeT & type ) const;
 
 #ifdef VT_MPI
-   // share token translations to all ranks
-   bool share();
+
+   // distribute token translation tables
+   bool distTranslations( const VT_MPI_INT & destRank = 0,
+           const bool wait = false );
+
 #endif // VT_MPI
 
 private:

@@ -78,94 +78,180 @@ TokenFactoryC::getScope( const DefRecTypeT & type ) const
 #ifdef VT_MPI
 
 bool
-TokenFactoryC::share()
+TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
+   const bool wait )
 {
    bool error = false;
 
    assert( NumRanks > 1 );
-   assert( !m_def2scope.empty() );
 
-   // block until all ranks have reached this point
-   CALL_MPI( MPI_Barrier( MPI_COMM_WORLD ) );
+   // message tag to use for p2p communication
+   const VT_MPI_INT msg_tag = 200;
 
-   VPrint( 1, "Sharing token translation tables\n" );
-
-   char * buffer;
    VT_MPI_INT buffer_pos;
    VT_MPI_INT buffer_size;
+   MPI_Status status;
 
    MASTER
    {
+      assert( destRank != 0 );
+
+      // send token translation tables to given destination rank
+      //
+
+      PVPrint( 3, "  Sending token translation tables to rank %d\n", destRank );
+
+      // request handle for non-blocking send
+      static MPI_Request request = MPI_REQUEST_NULL;
+
+      // send buffer
+      static char * buffer = 0;
+
+      // get stream ids associated with given destination rank
+      const std::set<uint32_t> & stream_ids = Rank2StreamIds[destRank];
+
+      // convert stream ids to master process ids
+      // (=keys of token translation tables)
+      //
+      std::set<uint32_t> mprocess_ids;
+      for( std::set<uint32_t>::const_iterator stream_it = stream_ids.begin();
+           stream_it != stream_ids.end(); stream_it++ )
+         mprocess_ids.insert( *stream_it & VT_TRACEID_BITMASK );
+
       // get size needed for the send buffer
       //
 
+      VT_MPI_INT size;
+
       buffer_size = 0;
 
-      for( std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator it =
-           m_def2scope.begin(); it != m_def2scope.end(); it++ )
+      for( std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator scope_it =
+           m_def2scope.begin(); scope_it != m_def2scope.end(); scope_it++ )
       {
          // get scope
          TokenFactoryScopeC<DefRec_BaseS> * scope =
-            static_cast<TokenFactoryScopeC<DefRec_BaseS>*>( it->second );
+            static_cast<TokenFactoryScopeC<DefRec_BaseS>*>( scope_it->second );
 
-         // get size of token translation map
-         buffer_size += scope->getPackSize();
+         // get size needed to pack the number of translation tables into
+         // the send buffer
+         //
+         CALL_MPI( MPI_Pack_size( 1, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
+         buffer_size += size;
+
+         // get size needed to pack the token translation tables into the
+         // send buffer
+         //
+         for( std::set<uint32_t>::const_iterator proc_it = mprocess_ids.begin();
+              proc_it != mprocess_ids.end(); proc_it++ )
+            buffer_size += scope->getPackSize( *proc_it );
       }
-   }
 
-   // broadcast buffer size
-   CALL_MPI( MPI_Bcast( &buffer_size, 1, MPI_INT, 0, MPI_COMM_WORLD ) );
+      // wait until previous send is completed and free memory of the
+      // send buffer
+      //
+      if( request != MPI_REQUEST_NULL )
+      {
+         assert( buffer );
 
-   // allocate memory for the send/receive buffer
-   //
-   buffer = new char[buffer_size];
-   assert( buffer );
+         CALL_MPI( MPI_Wait( &request, &status ) );
+         delete [] buffer;
+      }
 
-   MASTER
-   {
+      // allocate memory for the send buffer
+      //
+      buffer = new char[buffer_size];
+      assert( buffer );
+
       // pack send buffer
       //
 
       buffer_pos = 0;
 
-      for( std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator it =
-           m_def2scope.begin(); it != m_def2scope.end(); it++ )
+      for( std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator scope_it =
+           m_def2scope.begin(); scope_it != m_def2scope.end(); scope_it++ )
       {
          // get scope
          TokenFactoryScopeC<DefRec_BaseS> * scope =
-            static_cast<TokenFactoryScopeC<DefRec_BaseS>*>( it->second );
+            static_cast<TokenFactoryScopeC<DefRec_BaseS>*>( scope_it->second );
 
-         // pack token translation map to buffer
-         scope->pack( buffer, buffer_size, buffer_pos );
+         // pack number of token translation tables into the send buffer
+         //
+         uint32_t mprocess_size = mprocess_ids.size();
+         CALL_MPI( MPI_Pack( &mprocess_size, 1, MPI_UNSIGNED, buffer,
+                             buffer_size, &buffer_pos, MPI_COMM_WORLD ) );
+
+         // pack token translation tables into the send buffer
+         //
+         for( std::set<uint32_t>::const_iterator proc_it = mprocess_ids.begin();
+              proc_it != mprocess_ids.end(); proc_it++ )
+            scope->pack( *proc_it, buffer, buffer_size, buffer_pos );
+      }
+
+      // send buffer
+      CALL_MPI( MPI_Isend( buffer, buffer_size, MPI_PACKED, destRank, msg_tag,
+                           MPI_COMM_WORLD, &request ) );
+
+      // if it's the last send, wait until completion and free memory of the
+      // send buffer
+      //
+      if( wait )
+      {
+         CALL_MPI( MPI_Wait( &request, &status ) );
+         delete [] buffer;
       }
    }
-
-   // broadcast buffer
-   CALL_MPI( MPI_Bcast( buffer, buffer_size, MPI_PACKED, 0, MPI_COMM_WORLD ) );
-
-   SLAVE
+   else // SLAVE
    {
+      // receive token translation tables from rank 0
+      //
+
+      PVPrint( 3, "  Receiving token translation tables from rank 0\n" );
+
+      // receive buffer
+      char * buffer;
+
+      // test for a message from rank 0
+      CALL_MPI( MPI_Probe( 0, msg_tag, MPI_COMM_WORLD, &status ) );
+
+      // get size needed for the receive buffer
+      CALL_MPI( MPI_Get_count( &status, MPI_PACKED, &buffer_size ) );
+
+      // allocate memory for the receive buffer
+      //
+      buffer = new char[buffer_size];
+      assert( buffer );
+
+      // receive buffer
+      CALL_MPI( MPI_Recv( buffer, buffer_size, MPI_PACKED, 0, msg_tag,
+                          MPI_COMM_WORLD, &status ) );
+
       // unpack receive buffer
       //
 
       buffer_pos = 0;
 
-      for( std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator it =
-           m_def2scope.begin(); it != m_def2scope.end(); it++ )
+      for( std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator scope_it =
+           m_def2scope.begin(); scope_it != m_def2scope.end(); scope_it++ )
       {
          // get scope
          TokenFactoryScopeC<DefRec_BaseS> * scope =
-            static_cast<TokenFactoryScopeC<DefRec_BaseS>*>( it->second );
+            static_cast<TokenFactoryScopeC<DefRec_BaseS>*>( scope_it->second );
 
-         // unpack token translation map from buffer
-         scope->unpack( buffer, buffer_size, buffer_pos );
+         // unpack the number of token translation tables from the
+         // receive buffer
+         uint32_t mprocess_size;
+         CALL_MPI( MPI_Unpack( buffer, buffer_size, &buffer_pos, &mprocess_size, 1,
+                               MPI_UNSIGNED, MPI_COMM_WORLD ) );
+
+         // unpack token translation tables from the receive buffer
+         //
+         for( uint32_t i = 0; i < mprocess_size; i++ )
+            scope->unpack( buffer, buffer_size, buffer_pos );
       }
+
+      // free memory of the receive buffer
+      delete [] buffer;
    }
-
-   // free memory of send/receive buffer
-   delete [] buffer;
-
-//   SyncError( &error );
 
    return !error;
 }

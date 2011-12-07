@@ -1,5 +1,15 @@
-5.12openmpi
-	- updated version of internal OTF to 1.10openmpi
+5.12.1openmpi
+	- fixed a bug in the MPI wrapper functions MPI_Gatherv and MPI_Scatterv
+	  which occurred due to illegal access to insignificant parameters on
+	  non-root ranks
+	- vtunify-mpi:
+		- added option '--stats' to unify only summarized information,
+		  no events
+		- reduced memory usage
+	- OPARI: (see tools/opari/ChangeLog:20,21)
+
+5.12
+	- updated version of internal OTF to 1.10coelacanth
 	  (see extlib/otf/ChangeLog)
 	- added support for CUDA runtime tracing via CUPTI callbacks
 	- added support for process group counters

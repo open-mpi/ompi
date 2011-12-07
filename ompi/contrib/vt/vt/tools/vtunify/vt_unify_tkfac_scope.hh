@@ -79,13 +79,13 @@ TokenFactoryScopeC<T>::setTranslation( const uint32_t & process,
    uint32_t mprocess = process & VT_TRACEID_BITMASK;
 
    // set token translation
-   m_mapLocGlobToken[mprocess][localToken] = globalToken;
+   m_proc2TokenMap[mprocess][localToken] = globalToken;
 }
 
 template <class T>
 uint32_t
 TokenFactoryScopeC<T>::translate( const uint32_t & process,
-   const uint32_t & localToken, const bool & showError ) const
+   const uint32_t & localToken, const bool showError ) const
 {
    uint32_t global_token = 0;
 
@@ -94,10 +94,10 @@ TokenFactoryScopeC<T>::translate( const uint32_t & process,
 
    // search token mappings of process
    std::map<uint32_t, std::map<uint32_t, uint32_t> >::const_iterator
-      proc_it = m_mapLocGlobToken.find( mprocess );
+      proc_it = m_proc2TokenMap.find( mprocess );
 
    // found?
-   if( proc_it != m_mapLocGlobToken.end() )
+   if( proc_it != m_proc2TokenMap.end() )
    {
       // search token mapping by local token
       std::map<uint32_t, uint32_t>::const_iterator map_it =
@@ -131,37 +131,28 @@ TokenFactoryScopeC<T>::getNextToken()
 
 template <class T>
 VT_MPI_INT
-TokenFactoryScopeC<T>::getPackSize()
+TokenFactoryScopeC<T>::getPackSize( const uint32_t & process )
 {
-   VT_MPI_INT buffer_size;
+   VT_MPI_INT buffer_size = 0;
+   VT_MPI_INT size;
 
-   // m_mapLocGlobToken.size()
-   CALL_MPI( MPI_Pack_size( 1, MPI_UNSIGNED, MPI_COMM_WORLD, &buffer_size ) );
-
-   // m_mapLocGlobToken
+   // process + m_proc2TokenMap[process].size()
    //
-   if( m_mapLocGlobToken.size() > 0 )
+   CALL_MPI( MPI_Pack_size( 2, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
+   buffer_size += size;
+
+   // get token translation table of process
+   std::map<uint32_t, std::map<uint32_t, uint32_t> >::const_iterator
+      token_map_it = m_proc2TokenMap.find( process );
+
+   // m_proc2TokenMap[process]
+   //
+   if( token_map_it != m_proc2TokenMap.end() &&
+       !token_map_it->second.empty() )
    {
-      VT_MPI_INT size;
-
-      std::map<uint32_t, std::map<uint32_t, uint32_t> >::const_iterator proc_it;
-      for( proc_it = m_mapLocGlobToken.begin();
-           proc_it != m_mapLocGlobToken.end(); proc_it++ )
-      {
-         // m_mapLocGlobToken[].first + m_mapLocGlobToken[].second.size()
-         //
-         CALL_MPI( MPI_Pack_size( 2, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
-         buffer_size += size;
-
-         if( proc_it->second.size() > 0 )
-         {
-            // m_mapLocGlobToken[].second
-            //
-            CALL_MPI( MPI_Pack_size( (VT_MPI_INT)proc_it->second.size() * 2,
-                                     MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
-            buffer_size += size;
-         }
-      }
+      CALL_MPI( MPI_Pack_size( token_map_it->second.size() * 2, MPI_UNSIGNED,
+                               MPI_COMM_WORLD, &size ) );
+      buffer_size += size;
    }
 
    return buffer_size;
@@ -169,64 +160,43 @@ TokenFactoryScopeC<T>::getPackSize()
 
 template <class T>
 void
-TokenFactoryScopeC<T>::pack( char *& buffer, const VT_MPI_INT & bufferSize,
-   VT_MPI_INT & bufferPos )
+TokenFactoryScopeC<T>::pack( const uint32_t & process,
+   char *& buffer, const VT_MPI_INT & bufferSize, VT_MPI_INT & bufferPos,
+   const bool clear )
 {
-   // m_mapLocGlobToken.size()
+   // process
+   CALL_MPI( MPI_Pack( const_cast<uint32_t*>( &process ), 1, MPI_UNSIGNED,
+                       buffer, bufferSize, &bufferPos, MPI_COMM_WORLD ) );
+
+   // get token translation table of process
+   std::map<uint32_t, std::map<uint32_t, uint32_t> >::iterator token_map_it =
+      m_proc2TokenMap.find( process );
+
+   // m_proc2TokenMap[process].size()
    //
-   uint32_t proc_map_size = m_mapLocGlobToken.size();
-   CALL_MPI( MPI_Pack( &proc_map_size, 1, MPI_UNSIGNED, buffer, bufferSize,
+   uint32_t token_map_size =
+      ( token_map_it != m_proc2TokenMap.end() ) ?
+         token_map_it->second.size() : 0;
+   CALL_MPI( MPI_Pack( &token_map_size, 1, MPI_UNSIGNED, buffer, bufferSize,
                        &bufferPos, MPI_COMM_WORLD ) );
 
-   // m_mapLocGlobToken
+   // m_proc2TokenMap[process]
    //
-   if( proc_map_size > 0 )
+   if( token_map_it != m_proc2TokenMap.end() )
    {
-      std::map<uint32_t, std::map<uint32_t, uint32_t> >::const_iterator proc_it;
-      for( proc_it = m_mapLocGlobToken.begin();
-           proc_it != m_mapLocGlobToken.end(); proc_it++ )
+      for( std::map<uint32_t, uint32_t>::const_iterator token_pair_it =
+           token_map_it->second.begin();
+           token_pair_it != token_map_it->second.end(); token_pair_it++ )
       {
-         // m_mapLocGlobToken[].first
-         //
-         uint32_t proc = proc_it->first;
-         CALL_MPI( MPI_Pack( &proc, 1, MPI_UNSIGNED, buffer, bufferSize,
-                             &bufferPos, MPI_COMM_WORLD ) );
-
-         // m_mapLocGlobToken[].second.size()
-         //
-         uint32_t token_map_size = proc_it->second.size();
-         CALL_MPI( MPI_Pack( &token_map_size, 1, MPI_UNSIGNED, buffer,
+         uint32_t token_pair[2] =
+            { token_pair_it->first, token_pair_it->second };
+         CALL_MPI( MPI_Pack( token_pair, 2, MPI_UNSIGNED, buffer,
                              bufferSize, &bufferPos, MPI_COMM_WORLD ) );
-
-         // m_mapLocGlobToken[].second
-         //
-         if( token_map_size > 0 )
-         {
-            uint32_t * token_map_firsts = new uint32_t[token_map_size];
-            uint32_t * token_map_seconds = new uint32_t[token_map_size];
-
-            std::map<uint32_t, uint32_t>::const_iterator tk_it;
-            uint32_t i;
-
-            for( tk_it = proc_it->second.begin(), i = 0;
-                 tk_it != proc_it->second.end(), i < token_map_size;
-                 tk_it++, i++ )
-            {
-               token_map_firsts[i] = tk_it->first;
-               token_map_seconds[i] = tk_it->second;
-            }
-
-            CALL_MPI( MPI_Pack( token_map_firsts, (VT_MPI_INT)token_map_size,
-                                MPI_UNSIGNED, buffer, bufferSize, &bufferPos,
-                                MPI_COMM_WORLD ) );
-            CALL_MPI( MPI_Pack( token_map_seconds, (VT_MPI_INT)token_map_size,
-                                MPI_UNSIGNED, buffer, bufferSize, &bufferPos,
-                                MPI_COMM_WORLD ) );
-
-            delete [] token_map_firsts;
-            delete [] token_map_seconds;
-         }
       }
+
+      // clear token translation table of certain process id
+      if( clear )
+         m_proc2TokenMap.erase( token_map_it );
    }
 }
 
@@ -235,52 +205,30 @@ void
 TokenFactoryScopeC<T>::unpack( char *& buffer, const VT_MPI_INT & bufferSize,
    VT_MPI_INT & bufferPos )
 {
-   // m_mapLocGlobToken.size()
+   // process
    //
-   uint32_t proc_map_size;
-   CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, &proc_map_size, 1,
+   uint32_t process;
+   CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, &process, 1,
                          MPI_UNSIGNED, MPI_COMM_WORLD ) );
 
-   // m_mapLocGlobToken
+   // m_proc2TokenMap[process].size()
    //
-   if( proc_map_size > 0 )
+   uint32_t token_map_size;
+   CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, &token_map_size, 1,
+                         MPI_UNSIGNED, MPI_COMM_WORLD ) );
+
+   // m_proc2TokenMap[process]
+   //
+   if( token_map_size > 0 )
    {
-      for( uint32_t i = 0; i < proc_map_size; i++ )
+      for( uint32_t i = 0; i < token_map_size; i++ )
       {
-         // m_mapLocGlobToken[].first
-         //
-         uint32_t proc;
-         CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, &proc, 1,
+         uint32_t token_pair[2];
+         CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, token_pair, 2,
                                MPI_UNSIGNED, MPI_COMM_WORLD ) );
 
-         // m_mapLocGlobToken[].second.size()
-         //
-         uint32_t token_map_size;
-         CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos, &token_map_size,
-                               1, MPI_UNSIGNED, MPI_COMM_WORLD ) );
-
-         // m_mapLocGlobToken[].second
-         //
-         if( token_map_size > 0 )
-         {
-            uint32_t * token_map_firsts = new uint32_t[token_map_size];
-            uint32_t * token_map_seconds = new uint32_t[token_map_size];
-
-            CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos,
-                                  token_map_firsts, (VT_MPI_INT)token_map_size,
-                                  MPI_UNSIGNED, MPI_COMM_WORLD ) );
-            CALL_MPI( MPI_Unpack( buffer, bufferSize, &bufferPos,
-                                  token_map_seconds, (VT_MPI_INT)token_map_size,
-                                  MPI_UNSIGNED, MPI_COMM_WORLD ) );
-
-            // set token translations for process
-            //
-            for( uint32_t j = 0; j < token_map_size; j++ )
-               setTranslation( proc, token_map_firsts[j], token_map_seconds[j] );
-
-            delete [] token_map_firsts;
-            delete [] token_map_seconds;
-         }
+         // set token translation
+         m_proc2TokenMap[process][token_pair[0]] = token_pair[1];
       }
    }
 }

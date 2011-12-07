@@ -113,6 +113,9 @@ std::vector<uint32_t> MyStreamIds;
 
    // map stream id <-> processing MPI-rank
    std::map<uint32_t, VT_MPI_INT> StreamId2Rank;
+
+   // map MPI-rank <-> stream ids
+   std::map<VT_MPI_INT, std::set<uint32_t> > Rank2StreamIds;
 #endif // VT_MPI
 
 int
@@ -201,10 +204,6 @@ VTUNIFY_MAIN( int argc, char ** argv )
 #ifdef VT_MPI
      if( NumRanks > 1 )
      {
-        // share token translations to all ranks
-        if( (error = !theTokenFactory->share()) )
-           break;
-
         // share user communication ids to all ranks
         if( (error = !theUserCom->share()) )
            break;
@@ -212,7 +211,7 @@ VTUNIFY_MAIN( int argc, char ** argv )
 #endif // VT_MPI
 
      // unify events
-     if( (error = !theEvents->run()) )
+     if( !Params.onlystats && (error = !theEvents->run()) )
         break;
 
      // unify statistics
@@ -756,6 +755,9 @@ getUnifyControls()
                // set stream id/rank mapping
                StreamId2Rank[uctl->streamid] = rank;
 
+               // add stream id to processing rank
+               Rank2StreamIds[rank].insert( uctl->streamid );
+
                // get rank for the next stream id
                //
                if( i < UnifyCtls.size() - 1 && UnifyCtls[i+1]->pstreamid == 0 )
@@ -891,6 +893,10 @@ parseCommandLine( int argc, char ** argv )
          Params.bequiet = true;
          Params.showprogress = false;
          Params.verbose_level = 0;
+      }
+      else if( strcmp( argv[i], "--stats" ) == 0 )
+      {
+         Params.onlystats = true;
       }
       else if( strcmp( argv[i], "-v" ) == 0 
                || strcmp( argv[i], "--verbose" ) == 0 )
@@ -1044,7 +1050,7 @@ cleanUp()
          break;
 
       // rename temporary event output files
-      if( (error = !theEvents->cleanUp()) )
+      if( !Params.onlystats && (error = !theEvents->cleanUp()) )
          break;
 
       // rename temporary statistic output files
@@ -1140,6 +1146,8 @@ showUsage()
       << "     -q, --quiet         Enable quiet mode." << std::endl
       << "                         (only emergency output)" << std::endl
       << std::endl
+      << "     --stats             Unify only summarized information (*.stats), no events" << std::endl
+      << std::endl
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
       << "     --nocompress        Don't compress output trace files." << std::endl
       << std::endl
@@ -1174,8 +1182,8 @@ shareParams()
    //
 
    char **filenames;
-   char flags[8];
-   VT_MPI_INT blockcounts[4] = { 3*1024, 1, 1, 8 };
+   char flags[9];
+   VT_MPI_INT blockcounts[4] = { 3*1024, 1, 1, 9 };
    MPI_Aint displ[4];
    MPI_Datatype oldtypes[4] =
    { MPI_CHAR, MPI_UNSIGNED_SHORT, MPI_INT,
@@ -1210,8 +1218,9 @@ shareParams()
      flags[3] = (char)Params.showversion;
      flags[4] = (char)Params.showprogress;
      flags[5] = (char)Params.bequiet;
-     flags[6] = (char)Params.domsgmatch;
-     flags[7] = (char)Params.droprecvs;
+     flags[6] = (char)Params.onlystats;
+     flags[7] = (char)Params.domsgmatch;
+     flags[8] = (char)Params.droprecvs;
    }
 
    // share unify parameters
@@ -1230,8 +1239,9 @@ shareParams()
       Params.showversion = (flags[3] == 1);
       Params.showprogress = (flags[4] == 1);
       Params.bequiet = (flags[5] == 1);
-      Params.domsgmatch = (flags[6] == 1);
-      Params.droprecvs = (flags[7] == 1);
+      Params.onlystats = (flags[6] == 1);
+      Params.domsgmatch = (flags[7] == 1);
+      Params.droprecvs = (flags[8] == 1);
    }
 
    delete [] filenames[0];
