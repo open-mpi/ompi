@@ -19,7 +19,6 @@
 #include <iostream>
 #include <list>
 
-#include <assert.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>

@@ -13,8 +13,6 @@
 #include "vt_unify.h"
 #include "vt_unify_hooks_margins.h"
 
-#include <assert.h>
-
 //////////////////// class HooksProcessMarginsC ////////////////////
 
 // public methods

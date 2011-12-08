@@ -199,7 +199,7 @@ void VTLibwrap_delete(VTLibwrap** lw)
 {
   uint32_t i;
 
-  vt_assert(*lw);
+  vt_libassert(*lw);
 
   /* close all opened handles */
   for( i = 0; i < (*lw)->handlen; i++ )
@@ -236,7 +236,7 @@ void VTLibwrap_func_init(const VTLibwrap* lw, const char* func,
 {
   uint32_t i;
 
-  vt_assert(lw);
+  vt_libassert(lw);
 
   VT_MEMHOOKS_OFF();
 
@@ -334,13 +334,13 @@ void VTLibwrap_func_start(const VTLibwrap* lw, const int funcid)
 {
   uint64_t time;
 
-  vt_assert(lw);
+  vt_libassert(lw);
 
   if( !vt_is_alive ) return;
 
   VT_MEMHOOKS_OFF();
 
-  vt_assert(funcid != VT_LIBWRAP_NOID);
+  vt_libassert(funcid != VT_LIBWRAP_NOID);
 
   time = vt_pform_wtime();
 
@@ -353,13 +353,13 @@ void VTLibwrap_func_end(const VTLibwrap* lw, const int funcid)
 {
   uint64_t time;
 
-  vt_assert(lw);
+  vt_libassert(lw);
 
   if( !vt_is_alive ) return;
 
   VT_MEMHOOKS_OFF();
 
-  vt_assert(funcid != VT_LIBWRAP_NOID);
+  vt_libassert(funcid != VT_LIBWRAP_NOID);
 
   time = vt_pform_wtime();
 

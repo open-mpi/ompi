@@ -16,7 +16,6 @@
 
 #include "mpi.h"
 
-#include <assert.h>
 #include <stdlib.h>
 
 #define MAX_TYPES 50

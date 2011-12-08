@@ -823,7 +823,7 @@ void vt_java_get_thread_name(jvmtiEnv* jvmti, jthread thread,
   jvmtiError      error;
 
   if ( jvmti == NULL ) jvmti = vt_jvmti_agent->jvmti;
-  vt_assert(jvmti != NULL);
+  vt_libassert(jvmti != NULL);
 
   /* initialize thread name */
   strcpy(tname, "Unknown");
@@ -851,7 +851,7 @@ void vt_java_get_thread_name(jvmtiEnv* jvmti, jthread thread,
 void vt_java_check_error(jvmtiEnv* jvmti, jvmtiError error, const char* str)
 {
   if ( jvmti == NULL ) jvmti = vt_jvmti_agent->jvmti;
-  vt_assert(jvmti != NULL);
+  vt_libassert(jvmti != NULL);
 
   if ( error != JVMTI_ERROR_NONE )
   {

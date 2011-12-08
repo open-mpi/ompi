@@ -21,8 +21,6 @@
 
 #include "otf.h"
 
-#include <assert.h>
-
 void
 HandleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
 {

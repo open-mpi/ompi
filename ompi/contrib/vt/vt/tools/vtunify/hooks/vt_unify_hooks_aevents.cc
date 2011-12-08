@@ -19,8 +19,6 @@
 
 #include <iostream>
 
-#include <assert.h>
-
 //////////////////// class HooksAsyncEventsC ////////////////////
 
 // class's instance object to allow access from static member methods

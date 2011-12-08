@@ -1,4 +1,5 @@
 5.12.1openmpi
+	- fixed build issues on MacOS using GCC v4.2
 	- fixed a bug in the MPI wrapper functions MPI_Gatherv and MPI_Scatterv
 	  which occurred due to illegal access to insignificant parameters on
 	  non-root ranks

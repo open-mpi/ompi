@@ -50,7 +50,7 @@ static void vt_print_msg(const char* prefix, const char* fmt, va_list az)
   fflush(NULL);
 }
 
-void vt_assert_impl(const char* f, int l, const char* expr)
+void vt_libassert_fail(const char* f, int l, const char* expr)
 {
   vt_iowrap_externals_init();
   libc_fprintf(stderr, "%s: FATAL: %s:%d: Assertion `%s' failed\n\nPlease report this incident to " PACKAGE_BUGREPORT "\n",

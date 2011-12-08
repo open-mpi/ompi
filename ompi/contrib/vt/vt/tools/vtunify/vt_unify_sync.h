@@ -13,6 +13,8 @@
 #ifndef _VT_UNIFY_SYNC_H_
 #define _VT_UNIFY_SYNC_H_
 
+#include "config.h"
+
 #include "vt_unify.h"
 
 #ifdef VT_ETIMESYNC
@@ -22,8 +24,6 @@
 #include "vt_inttypes.h"
 
 #include <map>
-
-#include <assert.h>
 
 //
 // TimeSyncC class

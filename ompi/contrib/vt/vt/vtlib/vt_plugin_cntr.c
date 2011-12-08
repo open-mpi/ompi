@@ -697,13 +697,13 @@ void vt_plugin_cntr_finalize(uint32_t tnum) {
 
 static void maybe_register_new_thread(VTThrd * thrd, uint32_t tid) {
   struct vt_plugin_cntr_defines * plugin_cntr_defines;
-  vt_assert(thrd!=NULL);
+  vt_libassert(thrd!=NULL);
   /* "register" a thread */
   if (thrd->plugin_cntr_defines == NULL) {
     uint32_t i;
     thrd->plugin_cntr_defines
         = calloc(1, sizeof(struct vt_plugin_cntr_defines));
-    vt_assert(thrd->plugin_cntr_defines!=NULL);
+    vt_libassert(thrd->plugin_cntr_defines!=NULL);
     plugin_cntr_defines
         = (struct vt_plugin_cntr_defines *) thrd->plugin_cntr_defines;
     plugin_cntr_defines->counters = calloc(VT_PLUGIN_CNTR_SYNCH_TYPE_MAX,
@@ -829,7 +829,7 @@ static void add_events(struct vt_plugin current_plugin, VTThrd * thrd) {
 
 uint32_t vt_plugin_cntr_get_num_synch_metrics(VTThrd * thrd) {
   uint32_t num = 0;
-  vt_assert(thrd != NULL);
+  vt_libassert(thrd != NULL);
   if (thrd->plugin_cntr_defines == NULL)
     return 0;
   num = ((struct vt_plugin_cntr_defines *)(thrd->plugin_cntr_defines))

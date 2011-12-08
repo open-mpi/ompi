@@ -77,25 +77,25 @@ VT_DECLDEF(void vt_get_mpi_f_statuses_ignore_cb_f(void* addr1, void* addr2)) {
 void vt_fmpiconst_init()
 {
   vt_get_mpi_f_bottom___();
-  vt_assert(vt_mpi_f_bottom_addr != NULL);
+  vt_libassert(vt_mpi_f_bottom_addr != NULL);
   vt_cntl_msg(2, "Detected address of MPI_BOTTOM=%x",
               vt_mpi_f_bottom_addr);
 #if (defined(HAVE_DECL_MPI_IN_PLACE) && HAVE_DECL_MPI_IN_PLACE)
   vt_get_mpi_f_in_place___();
-  vt_assert(vt_mpi_f_in_place_addr != NULL);
+  vt_libassert(vt_mpi_f_in_place_addr != NULL);
   vt_cntl_msg(2, "Detected address of MPI_IN_PLACE=%x",
               vt_mpi_f_in_place_addr);
 #endif /* HAVE_DECL_MPI_IN_PLACE */
   vt_get_mpi_f_statuses_ignore___();
-  vt_assert(vt_mpi_f_status_ignore_addr != NULL);
+  vt_libassert(vt_mpi_f_status_ignore_addr != NULL);
   vt_cntl_msg(2, "Detected address of MPI_F_STATUS_IGNORE=%x",
               vt_mpi_f_status_ignore_addr);
-  vt_assert(vt_mpi_f_statuses_ignore_addr != NULL);
+  vt_libassert(vt_mpi_f_statuses_ignore_addr != NULL);
   vt_cntl_msg(2, "Detected address of MPI_F_STATUSES_IGNORE=%x",
               vt_mpi_f_statuses_ignore_addr);
 #if !(defined(HAVE_DECL_MPI_STATUS_SIZE) && HAVE_DECL_MPI_STATUS_SIZE)
   vt_get_mpi_status_size___(&vt_mpi_status_size);
-  vt_assert(vt_mpi_status_size > 0);
+  vt_libassert(vt_mpi_status_size > 0);
   vt_cntl_msg(2, "Detected value of MPI_STATUS_SIZE=%d",
               vt_mpi_status_size);
 #endif /* HAVE_DECL_MPI_STATUS_SIZE */

@@ -72,7 +72,7 @@ void VT_Dyn_start(uint32_t index, char* name, char* fname, int lno)
   uint64_t time;
   uint32_t* rid;
 
-  vt_assert(index < VT_MAX_DYNINST_REGIONS);
+  vt_libassert(index < VT_MAX_DYNINST_REGIONS);
 
   /* Ignore events if VT is initializing */
   if( !dyn_init && !vt_is_alive ) return;
@@ -128,7 +128,7 @@ void VT_Dyn_end(uint32_t index)
 {
   uint64_t time;
 
-  vt_assert(index < VT_MAX_DYNINST_REGIONS);
+  vt_libassert(index < VT_MAX_DYNINST_REGIONS);
 
   /* If VampirTrace already finalized, return */
   if ( !vt_is_alive ) return;

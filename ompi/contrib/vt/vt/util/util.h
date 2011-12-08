@@ -35,6 +35,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#define vt_assert(expr) if(!(expr)) vt_assert_fail(__FILE__, __LINE__, #expr);
+
+EXTERN void vt_assert_fail(const char* file, int line, const char* expr);
 EXTERN int vt_asprintf(char** ptr, const char* fmt, ...);
 EXTERN int vt_snprintf(char* str, size_t size, const char* fmt, ...);
 EXTERN int vt_vasprintf(char** ptr, const char* fmt, va_list ap);

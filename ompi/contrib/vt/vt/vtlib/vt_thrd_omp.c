@@ -66,7 +66,7 @@ uint8_t VTThrd_isAlive()
 
 uint32_t VTThrd_getThreadId()
 {
-  vt_assert(threadId != VT_NO_ID);
+  vt_libassert(threadId != VT_NO_ID);
   return threadId;
 }
 
@@ -109,7 +109,7 @@ void VTThrd_lock(VTThrdMutex** mutex)
 
 void VTThrd_unlock(VTThrdMutex** mutex)
 {
-  vt_assert(*mutex != NULL);
+  vt_libassert(*mutex != NULL);
 
   omp_unset_lock(&((*mutex)->m));
 }
