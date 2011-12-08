@@ -21,13 +21,13 @@
 
 #if (defined(VT_LIBCWRAP))
 
-#define VT_ENABLE_LIBC_TRACING() vt_libc_tracing_enabled = 1;
-#define VT_DISABLE_LIBC_TRACING() vt_libc_tracing_enabled = 0;
+#define VT_ENABLE_LIBC_TRACING() vt_libc_tracing_enabled = 1
+#define VT_DISABLE_LIBC_TRACING() vt_libc_tracing_enabled = 0
 #define VT_SUSPEND_LIBC_TRACING() \
   vt_libc_tracing_state = vt_libc_tracing_enabled; \
-  vt_libc_tracing_enabled = 0;
+  vt_libc_tracing_enabled = 0
 #define VT_RESUME_LIBC_TRACING() \
-  vt_libc_tracing_enabled = vt_libc_tracing_state;
+  vt_libc_tracing_enabled = vt_libc_tracing_state
 
 /* libc wrapper initialization */
 EXTERN void vt_libcwrap_init(void);

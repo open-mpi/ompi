@@ -25,7 +25,7 @@
 EXTERN void vt_error_pid(const int pid);
 
 /* abort if assertion is false */
-#define vt_libassert(expr) if(!(expr)) vt_libassert_fail(__FILE__, __LINE__, #expr);
+#define vt_libassert(expr) if(!(expr)) vt_libassert_fail(__FILE__, __LINE__, #expr)
 EXTERN void vt_libassert_fail(const char* f, int l, const char* expr);
 
 /* abort and system error message */
