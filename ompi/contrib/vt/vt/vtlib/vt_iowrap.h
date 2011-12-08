@@ -33,12 +33,12 @@
 #define VT_ENABLE_IO_TRACING() \
   VT_CHECK_THREAD; \
   VTTHRD_IO_TRACING_ENABLED(VTTHRD_MY_VTTHRD) = 1; \
-  vt_debug_msg( DBG_INIT, "ENABLED I/O tracing (susp=%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(VTTHRD_MY_VTTHRD), __LINE__ );
+  vt_debug_msg( DBG_INIT, "ENABLED I/O tracing (susp=%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(VTTHRD_MY_VTTHRD), __LINE__ )
 
 #define VT_DISABLE_IO_TRACING() \
   VT_CHECK_THREAD; \
   VTTHRD_IO_TRACING_ENABLED(VTTHRD_MY_VTTHRD) = 0; \
-  vt_debug_msg( DBG_INIT, "DISABLED I/O tracing (susp=%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(VTTHRD_MY_VTTHRD), __LINE__ );
+  vt_debug_msg( DBG_INIT, "DISABLED I/O tracing (susp=%hhu) at " __FILE__ ", %i", VTTHRD_IO_TRACING_SUSPEND_CNT(VTTHRD_MY_VTTHRD), __LINE__ )
 
 #define VT_SUSPEND_IO_TRACING(tid) \
   { \

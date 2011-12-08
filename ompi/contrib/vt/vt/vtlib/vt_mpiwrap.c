@@ -36,7 +36,7 @@
 #include "mpi.h"
 
 /* this macro calls PMPI */
-#define CALL_PMPI(_call, _result) _result = P##_call;
+#define CALL_PMPI(_call, _result) _result = P##_call
 
 /* macros for calling PMPI and do something before and after it
    syntax: CALL_PMPI_#args(call, [arg1, arg2, ...], result, record, time)
@@ -48,22 +48,22 @@
 #define CALL_PMPI_0(_call, _result, _record, _time)                            \
   VT_UNIMCI_CHECK_PRE(_call, ("", 0, 0), _record, _time);                      \
   CALL_PMPI(_call(), _result);                                                 \
-  VT_UNIMCI_CHECK_POST(_call, ("", 0, 0), _record, _time);
+  VT_UNIMCI_CHECK_POST(_call, ("", 0, 0), _record, _time)
 
 #define CALL_PMPI_1(_call, _arg1, _result, _record, _time)                     \
   VT_UNIMCI_CHECK_PRE(_call, (_arg1, "", 0, 0), _record, _time);               \
   CALL_PMPI(_call(_arg1), _result);                                            \
-  VT_UNIMCI_CHECK_POST(_call, (_arg1, "", 0, 0), _record, _time);
+  VT_UNIMCI_CHECK_POST(_call, (_arg1, "", 0, 0), _record, _time)
 
 #define CALL_PMPI_2(_call, _arg1, _arg2, _result, _record, _time)              \
   VT_UNIMCI_CHECK_PRE(_call, (_arg1, _arg2, "", 0, 0), _record, _time);        \
   CALL_PMPI(_call(_arg1, _arg2), _result);                                     \
-  VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, "", 0, 0), _record, _time);
+  VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, "", 0, 0), _record, _time)
 
 #define CALL_PMPI_3(_call, _arg1, _arg2, _arg3, _result, _record, _time)       \
   VT_UNIMCI_CHECK_PRE(_call, (_arg1, _arg2, _arg3, "", 0, 0), _record, _time); \
   CALL_PMPI(_call(_arg1, _arg2, _arg3), _result);                              \
-  VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, "", 0, 0), _record, _time);
+  VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, "", 0, 0), _record, _time)
 
 #define CALL_PMPI_4(_call, _arg1, _arg2, _arg3, _arg4, _result, _record,       \
                     _time)                                                     \
@@ -71,7 +71,7 @@
                       _record, _time);                                         \
   CALL_PMPI(_call(_arg1, _arg2, _arg3, _arg4), _result);                       \
   VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, _arg4, "", 0, 0), _record, \
-                       _time);
+                       _time)
 
 #define CALL_PMPI_5(_call, _arg1, _arg2, _arg3, _arg4, _arg5, _result,         \
                     _record, _time)                                            \
@@ -79,7 +79,7 @@
                       _record, _time);                                         \
   CALL_PMPI(_call(_arg1, _arg2, _arg3, _arg4, _arg5), _result);                \
   VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, _arg4, _arg5, "", 0, 0),   \
-                       _record, _time);
+                       _record, _time)
 
 #define CALL_PMPI_6(_call, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _result,  \
                     _record, _time)                                            \
@@ -87,7 +87,7 @@
                       "", 0, 0), _record, _time);                              \
   CALL_PMPI(_call(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6), _result);         \
   VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, _arg4, _arg5, _arg6,       \
-                       "", 0, 0), _record, _time);
+                       "", 0, 0), _record, _time)
 
 #define CALL_PMPI_7(_call, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,    \
                     _result, _record, _time)                                   \
@@ -95,7 +95,7 @@
                       "", 0, 0), _record, _time);                              \
   CALL_PMPI(_call(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7), _result);  \
   VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,\
-                       "", 0, 0), _record, _time);
+                       "", 0, 0), _record, _time)
 
 #define CALL_PMPI_8(_call, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,    \
                     _arg8, _result, _record, _time)                            \
@@ -104,7 +104,7 @@
   CALL_PMPI(_call(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8),     \
             _result);                                                          \
   VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,\
-                       _arg8, "", 0, 0), _record, _time);
+                       _arg8, "", 0, 0), _record, _time)
 
 #define CALL_PMPI_9(_call, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,    \
                     _arg8, _arg9, _result, _record, _time)                     \
@@ -113,7 +113,7 @@
   CALL_PMPI(_call(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8,      \
             _arg9), _result);                                                  \
   VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,\
-                       _arg8, _arg9, "", 0, 0), _record, _time);
+                       _arg8, _arg9, "", 0, 0), _record, _time)
 
 #define CALL_PMPI_10(_call, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,   \
                      _arg8, _arg9, _arg10, _result, _record, _time)            \
@@ -122,7 +122,7 @@
   CALL_PMPI(_call(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8,      \
             _arg9, _arg10), _result);                                          \
   VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,\
-                       _arg8, _arg9, _arg10, "", 0, 0), _record, _time);
+                       _arg8, _arg9, _arg10, "", 0, 0), _record, _time)
 
 #define CALL_PMPI_12(_call, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,   \
                      _arg8, _arg9, _arg10, _arg11, _arg12, _result, _record,   \
@@ -134,7 +134,7 @@
             _arg9, _arg10, _arg11, _arg12), _result);                          \
   VT_UNIMCI_CHECK_POST(_call, (_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7,\
                        _arg8, _arg9, _arg10, _arg11, _arg12, "", 0, 0),        \
-                       _record, _time);
+                       _record, _time)
 
 static MPI_Status *my_status_array = 0;
 static VT_MPI_INT my_status_array_size = 0;
