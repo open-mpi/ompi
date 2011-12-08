@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -13,9 +13,9 @@
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 
@@ -30,34 +30,29 @@
 
 #include <ctype.h>
 
-/*
- * Local variables
- */
+/* Local variables */
 static int param_priority;
 static int param_read_attempts;
 
-
-/*
- * Local functions
- */
+/* Local functions */
 static int ras_alps_open(void);
-static int orte_ras_alps_component_query(mca_base_module_t **module, int *priority);
+static int orte_ras_alps_component_query(mca_base_module_t **module,
+                                         int *priority);
 unsigned long int orte_ras_alps_res_id;
 
-
 orte_ras_base_component_t mca_ras_alps_component = {
-    /* First, the mca_base_component_t struct containing meta
-       information about the component itself */
-
+    /* First, the mca_base_component_t struct containing meta information about
+     * the component itself
+     * */
     {
         ORTE_RAS_BASE_VERSION_2_0_0,
-        
+
         /* Component name and version */
         "alps",
         ORTE_MAJOR_VERSION,
         ORTE_MINOR_VERSION,
         ORTE_RELEASE_VERSION,
-        
+
         /* Component open and close functions */
         ras_alps_open,
         NULL,
@@ -72,7 +67,7 @@ orte_ras_base_component_t mca_ras_alps_component = {
 /* simple function used to strip off characters on and after a period. NULL
  * will be returned upon failure.  Otherwise, a "prepped" string will be
  * returned.  The caller is responsible for freeing returned resources.
- * for example: if jid is 138295.sdb, then 138295 will be returned. 
+ * for example: if jid is 138295.sdb, then 138295 will be returned.
  */
 static char *
 prep_job_id(const char *jid)
@@ -92,9 +87,11 @@ prep_job_id(const char *jid)
 
 /* this function replicates some of the id setting functionality found in
  * ras-alps-command.sh. we wanted the ability to just "mpirun" the application
- * without having to set an environment variable */
-static unsigned long int 
-get_res_id(void) {
+ * without having to set an environment variable
+ */
+static unsigned long int
+get_res_id(void)
+{
     const char *apstat_cmd = "/usr/bin/apstat -r";
     char *id = NULL;
     char read_buf[512];
@@ -137,24 +134,27 @@ get_res_id(void) {
     return jid;
 }
 
-static int ras_alps_open(void)
+static int
+ras_alps_open(void)
 {
-    param_priority = 
-        mca_base_param_reg_int(&mca_ras_alps_component.base_version,
-                               "priority",
-                               "Priority of the alps ras component",
-                               false, false, 75, NULL);
+    param_priority = mca_base_param_reg_int(
+                         &mca_ras_alps_component.base_version,
+                         "priority",
+                         "Priority of the alps ras component",
+                         false, false, 75, NULL);
 
-    param_read_attempts = 
+    param_read_attempts =
         mca_base_param_reg_int(&mca_ras_alps_component.base_version,
                                "appinfo_read_attempts",
-                               "Maximum number of attempts to read ALPS appinfo file",
-                               false, false, 10, NULL);
+                               "Maximum number of attempts to read ALPS "
+                               "appinfo file", false, false, 10, NULL);
 
     return ORTE_SUCCESS;
 }
 
-static int orte_ras_alps_component_query(mca_base_module_t **module, int *priority)
+static int
+orte_ras_alps_component_query(mca_base_module_t **module,
+                              int *priority)
 {
     char *jid_str = NULL;
     /* default to an invalid value */
@@ -165,7 +165,7 @@ static int orte_ras_alps_component_query(mca_base_module_t **module, int *priori
         *module = NULL;
         return ORTE_ERROR;
     }
-    
+
     /* Are we running under a ALPS job? */
     /* BASIL_RESERVATION_ID is the equivalent of OMPI_ALPS_RESID
      * on some systems
@@ -188,15 +188,18 @@ static int orte_ras_alps_component_query(mca_base_module_t **module, int *priori
     /* Sadly, no */
 
     opal_output(orte_ras_base.ras_output,
-                "ras:alps: NOT available for selection -- OMPI_ALPS_RESID or BASIL_RESERVATION_ID not set?");
+                "ras:alps: NOT available for selection -- "
+                "OMPI_ALPS_RESID or BASIL_RESERVATION_ID not set?");
     *module = NULL;
     return ORTE_ERROR;
 }
 
-int orte_ras_alps_get_appinfo_attempts( int *attempts ) {
-
+int
+orte_ras_alps_get_appinfo_attempts(int *attempts)
+{
     mca_base_param_lookup_int(param_read_attempts, attempts);
     opal_output_verbose(1, orte_ras_base.ras_output,
-                         "ras:alps:orte_ras_alps_get_appinfo_attempts: %d", *attempts);
+                         "ras:alps:orte_ras_alps_get_appinfo_attempts: %d",
+                         *attempts);
     return ORTE_SUCCESS;
 }
