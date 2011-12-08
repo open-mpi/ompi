@@ -572,7 +572,7 @@ static int setup_launch(int *argcptr, char ***argvptr,
     }
 
     value = opal_argv_join(argv, ' ');
-    if (sysconf(_SC_ARG_MAX) < strlen(value)) {
+    if (sysconf(_SC_ARG_MAX) < (int)strlen(value)) {
         orte_show_help("help-plm-rsh.txt", "cmd-line-too-long",
                        true, strlen(value), sysconf(_SC_ARG_MAX));
         free(value);
