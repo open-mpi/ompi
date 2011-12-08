@@ -166,87 +166,6 @@ ds_copy(const opal_shmem_ds_t *from,
 }
 
 /* ////////////////////////////////////////////////////////////////////////// */
-/* mmap equivalent implementation on Windows */
-
-#ifdef __USE_FILE_OFFSET64
-# define DWORD_HI(x) (x >> 32)
-# define DWORD_LO(x) ((x) & 0xffffffff)
-#else
-# define DWORD_HI(x) (0)
-# define DWORD_LO(x) (x)
-#endif
-
-/* define mmap flags */
-#define PROT_READ     0x1
-#define PROT_WRITE    0x2
-#define MAP_SHARED    0x01
-#define MAP_PRIVATE   0x02
-#define MAP_ANONYMOUS 0x20
-#define MAP_ANON      MAP_ANONYMOUS
-#define MAP_FAILED    ((void *) -1)
-/* This flag is only available in WinXP+ */
-#ifdef FILE_MAP_EXECUTE
-#define PROT_EXEC     0x4
-#else
-#define PROT_EXEC        0x0
-#define FILE_MAP_EXECUTE 0
-#endif
-
-static void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
-{
-    DWORD flProtect;
-    HANDLE mmap_fd, h;
-    DWORD dwDesiredAccess;
-    off_t end;
-    void *ret;
-
-    if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
-        return MAP_FAILED;
-    if (fd == -1) {
-        if (!(flags & MAP_ANON) || offset)
-            return MAP_FAILED;
-    } else if (flags & MAP_ANON)
-        return MAP_FAILED;
-
-    if (prot & PROT_WRITE) {
-        if (prot & PROT_EXEC)
-            flProtect = PAGE_EXECUTE_READWRITE;
-        else
-            flProtect = PAGE_READWRITE;
-    } else if (prot & PROT_EXEC) {
-        if (prot & PROT_READ)
-            flProtect = PAGE_EXECUTE_READ;
-        else if (prot & PROT_EXEC)
-            flProtect = PAGE_EXECUTE;
-    } else
-        flProtect = PAGE_READONLY;
-
-    end = length + offset;
-    if (fd == -1)
-        mmap_fd = INVALID_HANDLE_VALUE;
-    else
-        mmap_fd = (HANDLE)_get_osfhandle(fd);
-    h = CreateFileMapping(mmap_fd, NULL, flProtect, DWORD_HI(end), DWORD_LO(end), NULL);
-    if (h == NULL)
-        return MAP_FAILED;
-
-    if (prot & PROT_WRITE)
-        dwDesiredAccess = FILE_MAP_WRITE;
-    else
-        dwDesiredAccess = FILE_MAP_READ;
-    if (prot & PROT_EXEC)
-        dwDesiredAccess |= FILE_MAP_EXECUTE;
-    if (flags & MAP_PRIVATE)
-        dwDesiredAccess |= FILE_MAP_COPY;
-    ret = MapViewOfFile(h, dwDesiredAccess, DWORD_HI(offset), DWORD_LO(offset), length);
-    if (ret == NULL) {
-        CloseHandle(h);
-        ret = MAP_FAILED;
-    }
-    return ret;
-}
-
-/* ////////////////////////////////////////////////////////////////////////// */
 static int
 segment_create(opal_shmem_ds_t *ds_buf,
                const char *file_name,
@@ -277,13 +196,13 @@ segment_create(opal_shmem_ds_t *ds_buf,
      */
     temp1 = strdup(file_name);
     temp2 = temp1;
+
     while (NULL != (temp2 = strchr(temp2, OPAL_PATH_SEP[0])) ) {
         *temp2 = '/';
     }
+
     /* update path change in ds_buf */
     memcpy(ds_buf->seg_name, file_name, OPAL_PATH_MAX);
-    /* relase the temporary file name */
-    free(temp1);  /* relase the temporary file name */
 
                                    /* use paging file */
     hMapObject = CreateFileMapping(INVALID_HANDLE_VALUE,
@@ -297,6 +216,10 @@ segment_create(opal_shmem_ds_t *ds_buf,
                                    (DWORD)real_size,
                                    /* name of map object */
                                    temp1);
+
+    /* relase the temporary file name */
+    free(temp1);
+
     if (NULL == hMapObject) {
         rc = GetLastError();
         goto out;
@@ -352,23 +275,6 @@ segment_create(opal_shmem_ds_t *ds_buf,
     }
 
 out:
-    /* in this component, the id is the file descriptor returned by open.  this
-     * check is here to see if it is safe to call close on the file descriptor.
-     * that is, we are making sure that our call to open was successful and
-     * we are not not in an error path.
-     */
-    if (-1 != ds_buf->seg_id) {
-        if (0 != close(ds_buf->seg_id)) {
-            int err = errno;
-            char hn[MAXHOSTNAMELEN];
-            gethostname(hn, MAXHOSTNAMELEN - 1);
-            hn[MAXHOSTNAMELEN - 1] = '\0';
-            opal_show_help("help-opal-shmem-windows.txt", "sys call fail", 1, hn,
-                           "close(2)", "", strerror(err), err);
-            rc = OPAL_ERROR;
-         }
-     }
-
     /* an error occured, so invalidate the shmem object and munmap if needed */
     if (OPAL_SUCCESS != rc) {
         if (MAP_FAILED != seg_hdrp) {
@@ -387,48 +293,52 @@ static void *
 segment_attach(opal_shmem_ds_t *ds_buf)
 {
     pid_t my_pid = getpid();
-
+    char *temp1 = NULL, *temp2 = NULL;
+    
+    /* i did not create the segment - so i have to do all the hard work :-( */
     if (my_pid != ds_buf->seg_cpid) {
-        if (-1 == (ds_buf->seg_id = open(ds_buf->seg_name, O_CREAT | O_RDWR,
-                                         0600))) {
-            int err = errno;
-            char hn[MAXHOSTNAMELEN];
-            gethostname(hn, MAXHOSTNAMELEN - 1);
-            hn[MAXHOSTNAMELEN - 1] = '\0';
-            opal_show_help("help-opal-shmem-windows.txt", "sys call fail", 1, hn,
-                           "open(2)", "", strerror(err), err);
-            return NULL;
+        temp1 = strdup(ds_buf->seg_name);
+        temp2 = temp1;
+
+        while (NULL != (temp2 = strchr(temp2, OPAL_PATH_SEP[0])) ) {
+            *temp2 = '/';
         }
-        else if (MAP_FAILED == (ds_buf->seg_base_addr =
-                                mmap(NULL, ds_buf->seg_size,
-                                     PROT_READ | PROT_WRITE, MAP_SHARED,
-                                     ds_buf->seg_id, 0))) {
-            int err = errno;
-            char hn[MAXHOSTNAMELEN];
-            gethostname(hn, MAXHOSTNAMELEN - 1);
-            hn[MAXHOSTNAMELEN - 1] = '\0';
-            opal_show_help("help-opal-shmem-windows.txt", "sys call fail", 1, hn,
-                           "mmap(2)", "", strerror(err), err);
-            /* windows module failed, so close the file and return NULL - no error check
-             * here because we are already in an error path...
-             */
-            close(ds_buf->seg_id);
-            return NULL;
+        /* use paging file */
+        hMapObject = CreateFileMapping(INVALID_HANDLE_VALUE,
+                /* no security attributes */
+                NULL,
+                /* read/write access */
+                PAGE_READWRITE,
+                /* size: high 32-bits */
+                0,
+                /* size: low 32-bits */
+                (DWORD)real_size,
+                /* name of map object */
+                temp1);
+
+        /* relase the temporary file name */
+        free(temp1);
+
+        if (NULL == hMapObject) {
+            rc = GetLastError();
+            goto out;
         }
-        /* all is well */
-        else {
-            /* if close fails here, that's okay.  just let the user know and
-             * continue.  if we got this far, open and mmap were successful...
-             */
-            if (0 != close(ds_buf->seg_id)) {
-                int err = errno;
-                char hn[MAXHOSTNAMELEN];
-                gethostname(hn, MAXHOSTNAMELEN - 1);
-                hn[MAXHOSTNAMELEN - 1] = '\0';
-                opal_show_help("help-opal-shmem-windows.txt", "sys call fail", 1,
-                               hn, "close(2)", "", strerror(err), err);
-            }
+        if (ERROR_ALREADY_EXISTS == GetLastError()) {
+            file_previously_opened = true;
         }
+
+        /* Get a pointer to the file-mapped shared memory. */
+        lpvMem = MapViewOfFile(hMapObject,          /* object to map view of */
+                               FILE_MAP_WRITE,      /* read/write access */
+                               0,                   /* high offset:  map from */
+                               0,                   /* low offset:   beginning */
+                               0);                  /* default: map entire file */
+        if (NULL == lpvMem) {
+            rc = GetLastError();
+            goto out;
+        }
+
+        ds_buf->seg_base_addr = (opal_shmem_seg_hdr_t *)lpvMem;
     }
     /* else i was the segment creator.  nothing to do here because all the hard
      * work was done in segment_create :-).
