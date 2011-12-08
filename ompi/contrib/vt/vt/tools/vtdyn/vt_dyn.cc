@@ -14,7 +14,6 @@
 #include "vt_dyn.h"
 
 #include <fstream>
-#include <assert.h>
 #include <ctype.h>
 #include <inttypes.h>
 #include <signal.h>

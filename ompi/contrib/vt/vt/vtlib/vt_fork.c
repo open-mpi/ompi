@@ -58,7 +58,7 @@ static int get_new_trcid()
   char tmp[10] = "";
   uint8_t do_unlock = 1;
 
-  vt_assert(trcid_filename[0] != '\0');
+  vt_libassert(trcid_filename[0] != '\0');
 
   VT_SUSPEND_IO_TRACING(VT_CURRENT_THREAD);
 
@@ -131,7 +131,7 @@ void vt_fork_finalize()
 
 void vt_fork(pid_t pid)
 {
-  vt_assert(pid != -1);
+  vt_libassert(pid != -1);
 
   fork_performed = 1;
 
@@ -195,7 +195,7 @@ uint32_t vt_fork_get_num_childs_tot()
     int fd;
     char tmp[16] = "";
 
-    vt_assert(trcid_filename[0] != '\0');
+    vt_libassert(trcid_filename[0] != '\0');
 
     VT_SUSPEND_IO_TRACING(VT_CURRENT_THREAD);
 
@@ -207,9 +207,9 @@ uint32_t vt_fork_get_num_childs_tot()
     if ( read(fd, tmp, 16) == -1 )
       vt_error_msg("Cannot read file %s: %s", trcid_filename, strerror(errno));
 
-    vt_assert(tmp[0] != '\0');
+    vt_libassert(tmp[0] != '\0');
     nchilds_tot = atoi(tmp);
-    vt_assert(nchilds_tot > 0);
+    vt_libassert(nchilds_tot > 0);
 
     /* close temp. id file */
     close(fd);
@@ -228,7 +228,7 @@ char* vt_fork_get_trcid_filename()
 {
   char* filename;
 
-  vt_assert(trcid_filename[0] != '\0');
+  vt_libassert(trcid_filename[0] != '\0');
 
   filename = strdup(trcid_filename);
   if ( filename == NULL )

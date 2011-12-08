@@ -13,11 +13,11 @@
 #ifndef _VT_UNIFY_HOOKS_H_
 #define _VT_UNIFY_HOOKS_H_
 
+#include "config.h"
+
 #include "vt_inttypes.h"
 
 #include <vector>
-
-#include <assert.h>
 
 // generic hooks' identifier bits
 //

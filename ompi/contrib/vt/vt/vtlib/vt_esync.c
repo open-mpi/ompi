@@ -305,7 +305,7 @@ void vt_esync_app_uctl_data(char** data)
   size_t size;
   uint32_t i;
 
-  vt_assert(*data != NULL);
+  vt_libassert(*data != NULL);
 
   size = strlen(*data);
 

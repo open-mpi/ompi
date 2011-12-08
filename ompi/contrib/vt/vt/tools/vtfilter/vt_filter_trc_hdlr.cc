@@ -15,8 +15,6 @@
 
 #include <iostream>
 
-#include <assert.h>
-
 // Define this macro to avoid writing of events which have relationships to
 // disabled processes.
 // For example: Do not write a send message event where its receive process is

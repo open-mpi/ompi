@@ -13,8 +13,6 @@
 #include "vt_unify.h"
 #include "vt_unify_tkfac.h"
 
-#include <assert.h>
-
 TokenFactoryC * theTokenFactory = 0; // instance of class TokenFactoryC
 
 //////////////////// class TokenFactoryC ////////////////////

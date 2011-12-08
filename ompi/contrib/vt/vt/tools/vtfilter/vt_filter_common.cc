@@ -15,7 +15,6 @@
 
 #include <iostream>
 
-#include <assert.h>
 #include <stdio.h>
 
 

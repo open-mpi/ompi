@@ -14,8 +14,6 @@
 
 #include "vt_inttypes.h"
 
-#include <assert.h>
-
 //////////////////// class HooksBaseC ////////////////////
 
 // public methods

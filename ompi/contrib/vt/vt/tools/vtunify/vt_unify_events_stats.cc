@@ -19,8 +19,6 @@
 
 #include <iostream>
 
-#include <assert.h>
-
 // instances of class EventsAndStatsC
 //
 EventsAndStatsC * theEvents = 0;

@@ -13,6 +13,8 @@
 #ifndef _VT_UNIFY_HOOKS_BASE_H_
 #define _VT_UNIFY_HOOKS_BASE_H_
 
+#include "config.h"
+
 #include "vt_unify_hooks.h"
 
 //

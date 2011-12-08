@@ -23,8 +23,6 @@
 #include <map>
 #include <vector>
 
-#include <assert.h>
-
 //////////////////// class HooksMsgMatchC ////////////////////
 
 // public methods

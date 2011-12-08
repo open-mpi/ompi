@@ -119,7 +119,7 @@ static void register_region(struct profile_gen_struct* d, uint8_t rtype)
         strncpy(stname, "do_while", 8+1);
         break;
       default:
-        vt_assert(0);
+        vt_libassert(0);
         break;
     }
 
