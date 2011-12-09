@@ -396,8 +396,8 @@ DefinitionsC::readLocal()
          if( (error = !readLocal( MyStreamIds[i], loc_defs )) )
             break;
 
-         // abort loop, if next stream isn't a child
-         if( i < MyStreamIds.size() - 1 &&
+         // continue reading if the next stream is a child
+         if( i == MyStreamIds.size() - 1 ||
              StreamId2UnifyCtl[MyStreamIds[i+1]]->pstreamid == 0 )
             break;
       }
@@ -408,21 +408,23 @@ DefinitionsC::readLocal()
       defs_read = loc_defs.size() - defs_read;
 
       // continue, if nothing is read
-      if( ( i >= MyStreamIds.size() - 1 && loc_defs.empty() ) ||
-          ( i < MyStreamIds.size() - 1 && defs_read == 0 ) )
+      if( i < MyStreamIds.size() - 1 && defs_read == 0 )
          continue;
 
-      // pre-sort subset of local definitions
-      //
+      if( defs_read > 0 )
+      {
+         // pre-sort subset of local definitions
+         //
 
-      // get begin iterator of subset
-      //
-      LargeVectorC<DefRec_BaseS*>::iterator sort_begin_it = loc_defs.begin();
-      if( loc_defs.size() != defs_read )
-         sort_begin_it += ( loc_defs.size() - defs_read - 1 );
+         // get begin iterator of subset
+         //
+         LargeVectorC<DefRec_BaseS*>::iterator sort_begin_it = loc_defs.begin();
+         if( loc_defs.size() != defs_read )
+            sort_begin_it += ( loc_defs.size() - defs_read - 1 );
 
-      // pre-sort
-      std::sort( sort_begin_it, loc_defs.end(), DefRec_LocCmp );
+         // pre-sort
+         std::sort( sort_begin_it, loc_defs.end(), DefRec_LocCmp );
+      }
 
       MASTER
       {
@@ -476,17 +478,15 @@ DefinitionsC::readLocal()
          // loc_defs
          //
          for( uint32_t j = 0; j < loc_defs.size(); j++ )
-         {
-            // definition type (loc_defs[j]->dtype)
-            CALL_MPI( MPI_Pack_size( 1, MPI_UNSIGNED, MPI_COMM_WORLD, &size ) );
-            buffer_size += size;
-
-            // loc_defs[j]
             buffer_size += loc_defs[j]->getPackSize();
-         }
+
+         // finished flag
+         //
+         CALL_MPI( MPI_Pack_size( 1, MPI_CHAR, MPI_COMM_WORLD, &size ) );
+         buffer_size += size;
 
          // continue reading, if minimum buffer size isn't reached
-         if( i < MyStreamIds.size() && buffer_size < min_msg_size )
+         if( i < MyStreamIds.size() - 1 && buffer_size < min_msg_size )
             continue;
 
          // allocate memory for the send buffer
@@ -500,6 +500,7 @@ DefinitionsC::readLocal()
          buffer_pos = 0;
 
          // loc_defs.size()
+         //
          uint32_t loc_defs_size = loc_defs.size();
          CALL_MPI( MPI_Pack( &loc_defs_size, 1, MPI_UNSIGNED, buffer,
                              buffer_size, &buffer_pos, MPI_COMM_WORLD ) );
@@ -507,15 +508,13 @@ DefinitionsC::readLocal()
          // loc_defs
          //
          for( uint32_t j = 0; j < loc_defs.size(); j++ )
-         {
-            // definition type (loc_defs[j]->dtype)
-            CALL_MPI( MPI_Pack( &(loc_defs[j]->dtype), 1, MPI_UNSIGNED,
-                                buffer, buffer_size, &buffer_pos,
-                                MPI_COMM_WORLD ) );
-
-            // loc_defs[j]
             loc_defs[j]->pack( buffer, buffer_size, buffer_pos );
-         }
+
+         // finished flag
+         //
+         char finished = ( i == MyStreamIds.size() - 1 );
+         CALL_MPI( MPI_Pack( &finished, 1, MPI_CHAR, buffer, buffer_size,
+                             &buffer_pos, MPI_COMM_WORLD ) );
 
          // send buffer to rank 0
          //
@@ -539,25 +538,30 @@ DefinitionsC::readLocal()
    }
 
 #ifdef VT_MPI
-   SyncError( &error );
 
-   if( !error && NumRanks > 1 )
+   // all ranks are finished reading local definitions at this point
+   //
+
+   if( NumRanks > 1 && !SyncError( &error ) )
    {
       MASTER
       {
          // receive local definitions from all participating ranks
          //
 
-         // number of ranks finished
-         VT_MPI_INT finished_ranks_num = 1; // 1=me
+         // get number of finished ranks
+         //
+         VT_MPI_INT finished_ranks_num = 1; // =rank 0
+         for( VT_MPI_INT i = 1; i < NumRanks; i++ )
+         {
+            if( Rank2StreamIds[i].empty() ) // rank i has nothing to do?
+               finished_ranks_num++;
+         }
 
          // repeat until all ranks are finished reading local definitions
          //
          while( finished_ranks_num < NumRanks )
          {
-            // source rank finished?
-            bool finished = false;
-
             char * buffer;
             VT_MPI_INT buffer_size;
             VT_MPI_INT buffer_pos;
@@ -579,6 +583,9 @@ DefinitionsC::readLocal()
             buffer = new char[buffer_size];
             assert( buffer );
 
+            PVPrint( 3, "  Receiving local definitions from rank %d\n",
+                     rank );
+
             // receive buffer
             CALL_MPI( MPI_Recv( buffer, buffer_size, MPI_PACKED, rank, msg_tag,
                                 MPI_COMM_WORLD, &status ) );
@@ -589,28 +596,23 @@ DefinitionsC::readLocal()
             buffer_pos = 0;
 
             // loc_defs.size()
+            //
             uint32_t loc_defs_size;
             CALL_MPI( MPI_Unpack( buffer, buffer_size, &buffer_pos,
                                   &loc_defs_size, 1, MPI_UNSIGNED,
                                   MPI_COMM_WORLD ) );
 
-            // is source rank finished?
-            if( loc_defs_size == 0 )
-            {
-               finished = true;
-               finished_ranks_num++;
-            }
-            else
-            {
-               PVPrint( 3, "  Receiving local definitions from rank %d\n",
-                        rank );
-            }
-
+            // loc_defs
+            //
             for( uint32_t i = 0; i < loc_defs_size; i++ )
             {
                // definition type
+               // (don't increment current buffer position;
+               //  def. type will be unpacked again by DefRec_*S::unpack())
+               //
                DefRecTypeT def_type;
-               CALL_MPI( MPI_Unpack( buffer, buffer_size, &buffer_pos,
+               VT_MPI_INT tmp_buffer_pos = buffer_pos;
+               CALL_MPI( MPI_Unpack( buffer, buffer_size, &tmp_buffer_pos,
                                      &def_type, 1, MPI_UNSIGNED,
                                      MPI_COMM_WORLD ) );
 
@@ -725,77 +727,65 @@ DefinitionsC::readLocal()
                loc_defs.push_back( new_loc_def );
             }
 
+            // finished flag
+            //
+            char finished;
+            CALL_MPI( MPI_Unpack( buffer, buffer_size, &buffer_pos, &finished,
+                                  1, MPI_CHAR, MPI_COMM_WORLD ) );
+
             // free memory of receive buffer
             delete [] buffer;
 
-            if( !finished )
-            {
-               // add local to global definitions
-               error = !processLocal( loc_defs );
+            // add local to global definitions
+            if( (error = !processLocal( loc_defs )) )
+               break;
 
-               // free vector of local definitions
-               //
-               for( uint32_t i = 0; i < loc_defs.size(); i++ )
-                  delete loc_defs[i];
-               loc_defs.clear();
+            // free vector of local definitions
+            //
+            for( uint32_t i = 0; i < loc_defs.size(); i++ )
+               delete loc_defs[i];
+            loc_defs.clear();
+
+            // is source rank finished reading local definitions?
+            if( finished )
+            {
+               // increment number of finished ranks
+               finished_ranks_num++;
+
+               // send token translations to finished rank
+               if( (error =
+                       !theTokenFactory->distTranslations( rank,
+                          finished_ranks_num == NumRanks )) )
+                  break;
             }
          }
       }
       else // SLAVE
       {
-         // send a notification to rank 0 that my rank is finished reading
-         // local definitions
-         // (empty vector of local definitions)
+         if( !MyStreamIds.empty() )
          {
-            char * buffer;
-            VT_MPI_INT buffer_size;
-            VT_MPI_INT buffer_pos = 0;
+            // complete all sends and remove request handles and send buffers
+            // from list
+            while( send_buffers.size() > 0 )
+            {
+               // get the first request handle and send buffer from list
+               //
+               MPI_Request & request = send_buffers.front().first;
+               char *& buffer = send_buffers.front().second;
 
-            // get size needed for the send buffer
-            CALL_MPI( MPI_Pack_size( 1, MPI_UNSIGNED, MPI_COMM_WORLD,
-                                     &buffer_size ) );
+               // wait until send is completed
+               //
+               MPI_Status status;
+               CALL_MPI( MPI_Wait( &request, &status ) );
 
-            // allocate memory for the send buffer
-            //
-            buffer = new char[buffer_size];
-            assert( buffer );
+               // free memory of send buffer
+               delete [] buffer;
+               // remove request handle and send buffer from list
+               send_buffers.pop_front();
+            }
 
-            // pack send buffer
-            //
-
-            uint32_t finished = 0;
-            CALL_MPI( MPI_Pack( &finished, 1, MPI_UNSIGNED, buffer, buffer_size,
-                                &buffer_pos, MPI_COMM_WORLD ) );
-
-            // send buffer to rank 0
-            //
-
-            MPI_Request request;
-            CALL_MPI( MPI_Isend( buffer, buffer_size, MPI_PACKED, 0, msg_tag,
-                                 MPI_COMM_WORLD, &request ) );
-
-            // add request handle and send buffer to list
-            send_buffers.push_back( std::make_pair( request, buffer ) );
-         }
-
-         // complete all sends and remove request handles and send buffers
-         // from list
-         while( send_buffers.size() > 0 )
-         {
-            // get the first request handle and send buffer from list
-            //
-            MPI_Request & request = send_buffers.front().first;
-            char *& buffer = send_buffers.front().second;
-
-            // wait until send is completed
-            //
-            MPI_Status status;
-            CALL_MPI( MPI_Wait( &request, &status ) );
-
-            // free memory of send buffer
-            delete [] buffer;
-            // remove request handle and send buffer from list
-            send_buffers.pop_front();
+            // receive token translations from rank 0
+            error = !theTokenFactory->distTranslations();
          }
       }
    }

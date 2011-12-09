@@ -27,6 +27,7 @@
 #include "vt_inttypes.h"
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -65,8 +66,8 @@ struct ParamsS
    ParamsS()
       : verbose_level( 0 ), docompress( false ), doclean( true ),
         showusage( false ), showversion( false ), showprogress( false ),
-        bequiet( false ), domsgmatch( false ), droprecvs( false ),
-        prof_sort_flags( 0x22 ), createthumb( false )
+        bequiet( false ), onlystats( false ), domsgmatch( false ),
+        droprecvs( false ), prof_sort_flags( 0x22 ), createthumb( false )
    {
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
       docompress = true;
@@ -90,6 +91,7 @@ struct ParamsS
    bool        showversion;     // flag: show VampirTrace version?
    bool        showprogress;    // flag: show progress?
    bool        bequiet;         // flag: print no messages?
+   bool        onlystats;       // flag: unify only summarized information?
 
    // HooksMsgMatchC's parameters
    //
@@ -212,6 +214,9 @@ extern std::vector<uint32_t> MyStreamIds;
 
    // map stream id <-> processing MPI-rank
    extern std::map<uint32_t, VT_MPI_INT> StreamId2Rank;
+
+   // map MPI-rank <-> stream ids
+   extern std::map<VT_MPI_INT, std::set<uint32_t> > Rank2StreamIds;
 #endif // VT_MPI
 
 #endif // _VT_UNIFY_H_

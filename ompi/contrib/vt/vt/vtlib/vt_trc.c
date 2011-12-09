@@ -839,6 +839,7 @@ static void unify_traces(void)
   }
   argc++;
 
+  if ((vt_env_mode() & VT_MODE_TRACE) == 0) argv[argc++] = strdup("--stats");
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
   if (!vt_env_compression()) argv[argc++] = strdup("--nocompress");
 #endif /* HAVE_ZLIB */
