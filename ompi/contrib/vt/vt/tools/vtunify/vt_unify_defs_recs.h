@@ -13,6 +13,8 @@
 #ifndef _VT_UNIFY_DEFS_RECS_H_
 #define _VT_UNIFY_DEFS_RECS_H_
 
+#include "config.h"
+
 #include "vt_unify.h"
 
 #include "vt_inttypes.h"

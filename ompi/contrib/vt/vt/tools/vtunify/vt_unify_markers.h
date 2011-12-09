@@ -13,6 +13,8 @@
 #ifndef _VT_UNIFY_MARKERS_H_
 #define _VT_UNIFY_MARKERS_H_
 
+#include "config.h"
+
 #include "vt_inttypes.h"
 
 #include "vt_unify.h"

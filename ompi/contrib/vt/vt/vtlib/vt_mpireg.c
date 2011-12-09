@@ -48,7 +48,7 @@ void vt_mpi_register()
 
 void vt_mpi_register_remain()
 {
-  vt_assert( mpi_fid != (uint32_t)-1 );
+  vt_libassert( mpi_fid != (uint32_t)-1 );
 
   /* include generated function registry */
 # include "vt_mpireg.gen.c"

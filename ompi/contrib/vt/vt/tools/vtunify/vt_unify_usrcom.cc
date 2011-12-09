@@ -13,8 +13,6 @@
 #include "vt_unify.h"
 #include "vt_unify_usrcom.h"
 
-#include <assert.h>
-
 UserComC * theUserCom = 0; // instance of class UserComC
 
 //////////////////// class UserComC ////////////////////

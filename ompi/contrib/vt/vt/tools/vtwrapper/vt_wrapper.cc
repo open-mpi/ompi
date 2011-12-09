@@ -13,6 +13,7 @@
 #include "vt_inttypes.h"
 
 #include "util/installdirs.h"
+#include "util/util.h"
 
 #include <iostream>
 #include <fstream>
@@ -21,7 +22,6 @@
 #include <string>
 #include <vector>
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1316,7 +1316,7 @@ doWrap()
       //
       std::string cpp_file = src_file;
       si = cpp_file.rfind( '.' );
-      assert( si != std::string::npos );
+      vt_assert( si != std::string::npos );
       cpp_file.insert( si, ".cpp" );
 
       files_to_remove.push_back( cpp_file );
@@ -1350,7 +1350,7 @@ doWrap()
 
       std::string pomp_file = src_file;
       si = pomp_file.rfind( '.' );
-      assert( si != std::string::npos );
+      vt_assert( si != std::string::npos );
       pomp_file.insert( si, ".pomp" );
 
       // convert Fortran source file suffix to upper case, in order to
@@ -1401,7 +1401,7 @@ doWrap()
       if( si != std::string::npos )
         pdb_file = src_file.substr( si+1 );
       si = pdb_file.rfind( '.' );
-      assert( si != std::string::npos );
+      vt_assert( si != std::string::npos );
       pdb_file.replace( si, 4, ".pdb" );
 
       files_to_remove.push_back( pdb_file );
@@ -1411,7 +1411,7 @@ doWrap()
 
       std::string tau_file = src_file;
       si = tau_file.rfind( '.' );
-      assert( si != std::string::npos );
+      vt_assert( si != std::string::npos );
       tau_file.insert( si, ".tau" );
 
       // convert Fortran source file suffix to upper case, in order to
@@ -1481,7 +1481,7 @@ doWrap()
         obj_file = src_file.substr( si+1 );
 
       si = obj_file.rfind( '.' );
-      assert( si != std::string::npos );
+      vt_assert( si != std::string::npos );
       obj_file = obj_file.substr( 0, si ) + ".o";
 
       obj_files_to_rename[obj_file] = Config.mod_files[i].second;
@@ -2068,14 +2068,14 @@ ConfigS::setCompilerCmd( const std::string& cmd )
 void
 ConfigS::addCompilerArg( const std::string& arg )
 {
-  assert( arg.length() > 0 );
+  vt_assert( arg.length() > 0 );
   addOrSetStringList( Config.comp_args, arg );
 }
 
 void
 ConfigS::addCompilerLib( const std::string& lib )
 {
-  assert( lib.length() > 0 );
+  vt_assert( lib.length() > 0 );
   addOrSetStringList( Config.comp_libs, lib );
 }
 
@@ -2096,7 +2096,7 @@ ConfigS::addModSrcFile( const std::string& file )
   // create object file name of source file
   //
   si = file_base.rfind( '.' );
-  assert( si != std::string::npos );
+  vt_assert( si != std::string::npos );
   file_obj = file_base.substr( 0, si ) + ".o";
 
   // store source/object file name for later processing by OPARI and/or TAU
@@ -2106,7 +2106,7 @@ ConfigS::addModSrcFile( const std::string& file )
   //
 
   si = file.rfind( '.' );
-  assert( si != std::string::npos );
+  vt_assert( si != std::string::npos );
 
   std::string base = file.substr( 0, si );
   std::string suffix = file.substr( si );
@@ -2160,28 +2160,28 @@ ConfigS::setOpariRcFile( const std::string& file )
 void
 ConfigS::addOpariArg( const std::string& arg )
 {
-  assert( arg.length() > 0 );
+  vt_assert( arg.length() > 0 );
   addOrSetStringList( Config.opari_args, arg, arg[0] == '!' );
 }
 
 void
 ConfigS::addTauinstArg( const std::string& arg )
 {
-  assert( arg.length() > 0 );
+  vt_assert( arg.length() > 0 );
   addOrSetStringList( Config.tauinst_args, arg, arg[0] == '!' );
 }
 
 void
 ConfigS::addTauinstParseArg( const std::string& arg )
 {
-  assert( arg.length() > 0 );
+  vt_assert( arg.length() > 0 );
   addOrSetStringList( Config.tauinst_parseargs, arg, arg[0] == '!' );
 }
 
 void
 ConfigS::addPrepFlag( const std::string& flag )
 {
-  assert( flag.length() > 0 );
+  vt_assert( flag.length() > 0 );
   addOrSetStringList( Config.prep_flags, flag, flag[0] == '!' );
 }
 
@@ -2281,7 +2281,7 @@ ConfigS::setInstAvail( const std::string& type )
 bool
 ConfigS::setInstType( const InstTypeT type )
 {
-  assert( inst_avail != 0 );
+  vt_assert( inst_avail != 0 );
 
   // instrumentation available ?
   if( !isInstAvail( type ) )

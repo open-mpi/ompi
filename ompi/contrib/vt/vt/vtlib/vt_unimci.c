@@ -66,12 +66,12 @@ void vt_unimci_check_msg(uint8_t record, uint64_t* time)
 
     /* get first message */
     UNIMCI_pop_msg( &msg );
-    vt_assert( msg );
+    vt_libassert( msg );
 
     /* record marker, if allowed */
     if( record )
     {
-      vt_assert( time );
+      vt_libassert( time );
 
       /* check for message type */
       switch( msg->msgType )

@@ -38,7 +38,7 @@ static void store_vampir_file_id(int fd, uint32_t file_id,
 {
   vampir_file_t *file_ptr;
 
-  vt_assert( (fd < max_open_files) && (fd >= 0) );
+  vt_libassert( (fd < max_open_files) && (fd >= 0) );
   file_ptr = &fd_to_vampirid[fd];
   file_ptr->vampir_file_id = file_id;
   file_ptr->vampir_file_group_id = file_group_id;
@@ -49,7 +49,7 @@ vampir_file_t *get_vampir_file(int fd)
 {
   vampir_file_t *file_ptr;
 
-  vt_assert( (fd < max_open_files) && (fd >= 0) );
+  vt_libassert( (fd < max_open_files) && (fd >= 0) );
   file_ptr = &fd_to_vampirid[fd];
   if( file_ptr->vampir_file_id == 0 ) {
     return &unknown_fd_vampir_file;
@@ -77,7 +77,7 @@ void vt_iofile_open(const char* fname, int fd)
   uint32_t gid;
 
   /* fprintf( stderr, "opening file: %s\n", fname); */
-  vt_assert( (fd < max_open_files) && (fd >= 0) );
+  vt_libassert( (fd < max_open_files) && (fd >= 0) );
   gid=(fd<3) ? file_group_id_stdio : file_group_id_rest;
 #if defined (VT_MT) || defined (VT_HYB) || defined (VT_JAVA)
   VTTHRD_LOCK_IDS();
@@ -92,7 +92,7 @@ void vt_iofile_open(const char* fname, int fd)
 /** Mark the fd as closed */
 void vt_iofile_close(int fd)
 {
-  vt_assert( (fd < max_open_files) && (fd >= 0) );
+  vt_libassert( (fd < max_open_files) && (fd >= 0) );
   fd_to_vampirid[fd].vampir_file_id = 0;
 }
 
@@ -115,7 +115,7 @@ uint32_t vt_iofile_id(const char* fname)
 
 void vt_iofile_dupfd(int oldfd, int newfd)
 {
-  vt_assert( (newfd < max_open_files) && (newfd >=0) &&
+  vt_libassert( (newfd < max_open_files) && (newfd >=0) &&
              (oldfd < max_open_files) && (oldfd >=0) );
   fd_to_vampirid[newfd] = fd_to_vampirid[oldfd];
   fd_to_vampirid[newfd].handle = VTTHRD_IO_NEXT_HANDLE(VTTHRD_MY_VTTHRD);

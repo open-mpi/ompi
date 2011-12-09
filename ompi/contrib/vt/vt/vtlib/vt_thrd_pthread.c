@@ -60,7 +60,7 @@ static uint8_t  masterThreadTerminated = 0;
 
 static uint32_t idle_tid_list_size(uint32_t ptid)
 {
-  vt_assert(ptid < VTThrdMaxNum);
+  vt_libassert(ptid < VTThrdMaxNum);
   return idleThreadIds[ptid].size;
 }
 
@@ -68,7 +68,7 @@ static void idle_tid_list_push_back(uint32_t ptid, uint32_t tid)
 {
   IdleThreadIdListEntryT* idle_tid;
 
-  vt_assert(ptid < VTThrdMaxNum);
+  vt_libassert(ptid < VTThrdMaxNum);
 
   /* create new list entry */
   idle_tid = (IdleThreadIdListEntryT*)calloc(1,
@@ -98,8 +98,8 @@ static uint32_t idle_tid_list_pop_front(uint32_t ptid)
   uint32_t tid;
   IdleThreadIdListEntryT* tmp;
 
-  vt_assert(ptid < VTThrdMaxNum);
-  vt_assert(idleThreadIds[ptid].size > 0);
+  vt_libassert(ptid < VTThrdMaxNum);
+  vt_libassert(idleThreadIds[ptid].size > 0);
 
   /* get thread-ID from the first list entry */
   tid = idleThreadIds[ptid].first->tid;
@@ -289,7 +289,7 @@ uint32_t VTThrd_getThreadId()
   if (tid == NULL && masterThreadTerminated)
     return 0;
   else
-    vt_assert(tid != NULL);
+    vt_libassert(tid != NULL);
 
   return *tid;
 }
@@ -331,7 +331,7 @@ void VTThrd_lock(VTThrdMutex** mutex)
 
 void VTThrd_unlock(VTThrdMutex** mutex)
 {
-  vt_assert(*mutex != NULL);
+  vt_libassert(*mutex != NULL);
 
   pthread_mutex_unlock(&((*mutex)->m));
 }

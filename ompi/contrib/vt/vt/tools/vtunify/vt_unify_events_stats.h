@@ -13,6 +13,8 @@
 #ifndef _VT_UNIFY_EVENTS_STATS_H_
 #define _VT_UNIFY_EVENTS_STATS_H_
 
+#include "config.h"
+
 //
 // EventsAndStatsC class
 //

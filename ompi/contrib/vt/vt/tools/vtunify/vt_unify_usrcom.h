@@ -13,6 +13,8 @@
 #ifndef _VT_UNIFY_USRCOM_H_
 #define _VT_UNIFY_USRCOM_H_
 
+#include "config.h"
+
 #include "vt_inttypes.h"
 
 #include <map>

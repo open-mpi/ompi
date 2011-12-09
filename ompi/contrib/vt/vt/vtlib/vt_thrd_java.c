@@ -124,7 +124,7 @@ uint32_t VTThrd_getThreadId()
   if (tid == NULL && vt_jvmti_agent->vm_is_dead)
     return 0;
   else
-    vt_assert(tid != NULL);
+    vt_libassert(tid != NULL);
 
   return *tid;
 }
@@ -133,7 +133,7 @@ void VTThrd_createMutex(VTThrdMutex** mutex)
 {
   jvmtiError error;
 
-  vt_assert(mutexInitMutex != NULL);
+  vt_libassert(mutexInitMutex != NULL);
 
   error = (*jvmti)->RawMonitorEnter(jvmti, mutexInitMutex);
   vt_java_check_error(jvmti, error, "RawMonitorEnter");
@@ -190,7 +190,7 @@ void VTThrd_unlock(VTThrdMutex** mutex)
 {
   jvmtiError error;
 
-  vt_assert(*mutex != NULL);
+  vt_libassert(*mutex != NULL);
 
   error = (*jvmti)->RawMonitorExit(jvmti, (*mutex)->m);
   vt_java_check_error(jvmti, error, "RawMonitorExit");

@@ -13,6 +13,8 @@
 #ifndef _VT_UNIFY_MPI_H_
 #define _VT_UNIFY_MPI_H_
 
+#include "config.h"
+
 #include "vt_defs.h" /* to get VT_MPI_INT */
 
 /* use MPI's profile interface for the library version of the unifier */

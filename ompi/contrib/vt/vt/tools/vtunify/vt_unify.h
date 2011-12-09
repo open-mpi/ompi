@@ -31,8 +31,6 @@
 #include <string>
 #include <vector>
 
-#include <assert.h>
-
 #if defined(HAVE_OMP) && HAVE_OMP
 #  ifdef VT_LIB
 #     undef HAVE_OMP

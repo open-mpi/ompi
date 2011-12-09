@@ -26,7 +26,7 @@ uint32_t vt_getcpu_cid = 0;
 
 void vt_getcpu_init()
 {
-  vt_assert(vt_misc_cgid != 0);
+  vt_libassert(vt_misc_cgid != 0);
 
   /* write counter definition */
   vt_getcpu_cid = vt_def_counter(VT_CURRENT_THREAD, "CPU_ID", "#",

@@ -13,9 +13,9 @@
 #ifndef _VT_UNIFY_LVECTOR_HH_
 #define _VT_UNIFY_LVECTOR_HH_
 
-#include <vector>
+#include "config.h"
 
-#include <assert.h>
+#include <vector>
 
 //
 // LargeVectorC class

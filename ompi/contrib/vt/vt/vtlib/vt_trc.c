@@ -2196,7 +2196,7 @@ uint32_t vt_def_region(uint32_t tid, const char* rname, uint32_t fid,
 #if !defined(VT_DISABLE_RFG)
   /* get region's filter/group information */
   rinf = RFG_Regions_add(VTTHRD_RFGREGIONS(VTThrdv[0]), rname, rid);
-  vt_assert(rinf != NULL);
+  vt_libassert(rinf != NULL);
 
   /* get region's group name, if specified by VT_GROUPS_SPEC */
   if ( rinf->groupName != NULL )
@@ -2558,7 +2558,7 @@ uint8_t vt_enter(uint32_t tid, uint64_t* time, uint32_t rid)
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
     VTTHRD_UNLOCK_IDS();
 #endif /* VT_MT || VT_HYB || V_JAVA */
-    vt_assert(rinf_master != NULL);
+    vt_libassert(rinf_master != NULL);
 
     rinf = RFG_Regions_add(VTTHRD_RFGREGIONS(VTThrdv[tid]),
                            rinf_master->regionName, rid);
@@ -2571,9 +2571,9 @@ uint8_t vt_enter(uint32_t tid, uint64_t* time, uint32_t rid)
 
     if (!RFG_Regions_stackPush(VTTHRD_RFGREGIONS(VTThrdv[tid]),
                                rid, do_trace, &rinf))
-      vt_assert(0);
+      vt_libassert(0);
 #   else /* VT_MT || VT_HYB || VT_JAVA || VT_GPU */
-    vt_assert(0);
+    vt_libassert(0);
 #   endif /* VT_MT || VT_HYB || VT_JAVA || VT_GPU */
   }
 
@@ -2633,7 +2633,7 @@ void vt_exit(uint32_t tid, uint64_t* time)
   if (!RFG_Regions_stackPop(VTTHRD_RFGREGIONS(VTThrdv[tid]),
                             &rinf, &climitbyenter))
   {
-    vt_assert(0);
+    vt_libassert(0);
   }
 
   if (climitbyenter == 0)

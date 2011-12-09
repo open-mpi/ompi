@@ -20,8 +20,6 @@
 #include <algorithm>
 #include <iostream>
 
-#include <assert.h>
-
 MarkersC * theMarkers = 0; // instance of class MarkersC
 
 //////////////////// class MarkersC ////////////////////

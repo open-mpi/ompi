@@ -475,7 +475,7 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
             ctype = OTF_COLLECTIVE_TYPE_ONE2ALL;
             break;
           default:
-            vt_assert(0);
+            vt_libassert(0);
         }
 
         if (OTF_WStream_writeDefCollectiveOperation(gen->filestream, entry->cid,
@@ -594,7 +594,7 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
             mtype = OTF_MARKER_TYPE_HINT;
             break;
           default:
-            vt_assert(0);
+            vt_libassert(0);
         }
 
         if (OTF_WStream_writeDefMarker(gen->filestream, entry->mid,
@@ -634,7 +634,7 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
             vtype = OTF_DOUBLE;
             break;
           default:
-            vt_assert(0);
+            vt_libassert(0);
         }
 
         if (OTF_WStream_writeDefKeyValue(gen->filestream, entry->kid, vtype,
@@ -792,7 +792,7 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
             kvpair.value.otf_double = entry->kvalue.d;
             break;
           default:
-            vt_assert(0);
+            vt_libassert(0);
         }
 
         if (OTF_WBuffer_writeKeyValuePair_short( filestream_buffer,
@@ -985,7 +985,7 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
       }
       default:
       {
-        vt_assert(0);
+        vt_libassert(0);
       }
     }
 
@@ -1135,25 +1135,25 @@ void VTGen_delete(VTGen* gen)
       OTF_getFilename(gen->fileprefix, gen->tid+1,
                       OTF_FILETYPE_DEF | gen->filecomp,
                       0, NULL);
-    vt_assert(tmp_namev[0]);
+    vt_libassert(tmp_namev[0]);
 
     tmp_namev[1] =
       OTF_getFilename(gen->fileprefix, gen->tid+1,
                       OTF_FILETYPE_EVENT | gen->filecomp,
                       0, NULL);
-    vt_assert(tmp_namev[1]);
+    vt_libassert(tmp_namev[1]);
 
     tmp_namev[2] =
       OTF_getFilename(gen->fileprefix, gen->tid+1,
                       OTF_FILETYPE_STATS | gen->filecomp,
                       0, NULL);
-    vt_assert(tmp_namev[2]);
+    vt_libassert(tmp_namev[2]);
 
     tmp_namev[3] =
       OTF_getFilename(gen->fileprefix, gen->tid+1,
                       OTF_FILETYPE_MARKER | gen->filecomp,
                       0, NULL);
-    vt_assert(tmp_namev[3]);
+    vt_libassert(tmp_namev[3]);
 
     tmp_namev[4] = NULL;
 
@@ -1965,7 +1965,7 @@ void VTGen_write_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype, void* kvalue)
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_KeyValue));
 
     /* No VTGEN_ALLOC_EVENT since space must be guaranteed */
-    vt_assert( (uint64_t)((gen)->buf->pos - (gen)->buf->mem) <=
+    vt_libassert( (uint64_t)((gen)->buf->pos - (gen)->buf->mem) <=
                (uint64_t)((gen)->buf->size - length) );
 
     new_entry = ((VTBuf_Entry_KeyValue*)gen->buf->pos);
@@ -1999,7 +1999,7 @@ void VTGen_write_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype, void* kvalue)
         new_entry->kvalue.d = *((double*)kvalue);
         break;
       default:
-        vt_assert(0);
+        vt_libassert(0);
     }
 
     VTGEN_JUMP(gen, length);
