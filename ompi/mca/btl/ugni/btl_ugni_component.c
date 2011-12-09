@@ -283,9 +283,6 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 
     *num_btl_modules = mca_btl_ugni_component.ugni_num_btls;
 
-    /* XXX TODO remove before release */
-    signal (SIGSEGV, SIG_DFL);
-
     BTL_VERBOSE(("btl/ugni done initializing modules"));
 
     return base_modules;
