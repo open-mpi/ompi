@@ -39,6 +39,9 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif /* HAVE_STRING_H */
+#ifdef HAVE_STDBOOL_H
+#include <stdbool.h>
+#endif /* HAVE_STDBOOL_H */
 
 #include "opal/constants.h"
 #include "opal_stdint.h"
@@ -171,7 +174,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
                const char *file_name,
                size_t size)
 {
-    int rc = OPAL_SUCCESS;
+    int rc = OPAL_SUCCESS, last_error;
     bool file_previously_opened = false;
     pid_t my_pid = getpid();
     char *temp1 = NULL, *temp2 = NULL;
@@ -188,11 +191,11 @@ segment_create(opal_shmem_ds_t *ds_buf,
 
     /* On Windows the shared file will be created by the OS directly on the
      * system ressources. Therefore, no file get involved in the operation.
-     * However, a unique key should be used as name for the shared memory object
-     * in order to allow all processes to access the same unique shared memory
-     * region. The key will be obtained from the original file_name by replacing
-     * all path separator occurences by '/' (as '\' is not allowed on the object
-     * name).
+     * However, a unique key should be used as name for the shared memory
+     * object in order to allow all processes to access the same unique shared
+     * memory region. The key will be obtained from the original file_name by
+     * replacing all path separator occurences by '/' (as '\' is not allowed on
+     * the object name).
      */
     temp1 = strdup(file_name);
     temp2 = temp1;
@@ -200,10 +203,6 @@ segment_create(opal_shmem_ds_t *ds_buf,
     while (NULL != (temp2 = strchr(temp2, OPAL_PATH_SEP[0])) ) {
         *temp2 = '/';
     }
-
-    /* update path change in ds_buf */
-    memcpy(ds_buf->seg_name, file_name, OPAL_PATH_MAX);
-
                                    /* use paging file */
     hMapObject = CreateFileMapping(INVALID_HANDLE_VALUE,
                                    /* no security attributes */
@@ -217,16 +216,16 @@ segment_create(opal_shmem_ds_t *ds_buf,
                                    /* name of map object */
                                    temp1);
 
-    /* relase the temporary file name */
-    free(temp1);
-
     if (NULL == hMapObject) {
-        rc = GetLastError();
+        last_error = GetLastError();
+        rc = OPAL_ERROR;
         goto out;
     }
     if (ERROR_ALREADY_EXISTS == GetLastError()) {
         file_previously_opened = true;
     }
+    /* relase the temporary file name */
+    free(temp1);
 
     /* Get a pointer to the file-mapped shared memory. */
     lpvMem = MapViewOfFile(hMapObject,          /* object to map view of */
@@ -235,44 +234,45 @@ segment_create(opal_shmem_ds_t *ds_buf,
                            0,                   /* low offset:   beginning */
                            0);                  /* default: map entire file */
     if (NULL == lpvMem) {
-        rc = GetLastError();
+        last_error = GetLastError();
+        rc = OPAL_ERROR;
         goto out;
     }
 
     seg_hdrp = (opal_shmem_seg_hdr_t *)lpvMem;
 
-    /* all is well */
-    {
-        /* -- initialize the shared memory segment -- */
-        opal_atomic_rmb();
+    pedObject /* all is well */
+    /* -- initialize the shared memory segment -- */
+    opal_atomic_rmb();
 
-        /* init segment lock */
-        opal_atomic_init(&seg_hdrp->lock, OPAL_ATOMIC_UNLOCKED);
-        /* i was the creator of this segment, so note that fact */
-        seg_hdrp->cpid = my_pid;
+    /* init segment lock */
+    opal_atomic_init(&seg_hdrp->lock, OPAL_ATOMIC_UNLOCKED);
+    /* i was the creator of this segment, so note that fact */
+    seg_hdrp->cpid = my_pid;
 
-        opal_atomic_wmb();
+    opal_atomic_wmb();
 
-        /* -- initialize the contents of opal_shmem_ds_t -- */
-        ds_buf->opid = my_pid;
-        ds_buf->seg_cpid = my_pid;
-        ds_buf->seg_size = real_size;
-        ds_buf->seg_base_addr = (unsigned char *)seg_hdrp;
-        /* ds_buf->seg_name already set above */
+    /* -- initialize the contents of opal_shmem_ds_t -- */
+    ds_buf->opid = my_pid;
+    ds_buf->seg_cpid = my_pid;
+    ds_buf->seg_size = real_size;
+    ds_buf->seg_base_addr = (unsigned char *)seg_hdrp;
+    /* update path change in ds_buf */
+    memcpy(ds_buf->seg_name, temp1, OPAL_PATH_MAX);
+    ds_buf->hMappedObject = hMapObject;
 
-        /* set "valid" bit because setment creation was successful */
-        OPAL_SHMEM_DS_SET_VALID(ds_buf);
+    /* set "valid" bit because setment creation was successful */
+    OPAL_SHMEM_DS_SET_VALID(ds_buf);
 
-        OPAL_OUTPUT_VERBOSE(
-            (70, opal_shmem_base_output,
-             "%s: %s: create successful "
-             "(opid: %lu id: %d, size: %"PRIsize_t", name: %s)\n",
-             mca_shmem_windows_component.super.base_version.mca_type_name,
-             mca_shmem_windows_component.super.base_version.mca_component_name,
-             (unsigned long)ds_buf->opid, ds_buf->seg_id, ds_buf->seg_size,
-             ds_buf->seg_name)
-        );
-    }
+    OPAL_OUTPUT_VERBOSE(
+        (70, opal_shmem_base_output,
+         "%s: %s: create successful "
+         "(opid: %lu id: %d, size: %"PRIsize_t", name: %s)\n",
+         mca_shmem_windows_component.super.base_version.mca_type_name,
+         mca_shmem_windows_component.super.base_version.mca_component_name,
+         (unsigned long)ds_buf->opid, ds_buf->seg_id, ds_buf->seg_size,
+         ds_buf->seg_name)
+    );
 
 out:
     /* an error occured, so invalidate the shmem object and munmap if needed */
@@ -293,46 +293,33 @@ static void *
 segment_attach(opal_shmem_ds_t *ds_buf)
 {
     pid_t my_pid = getpid();
-    char *temp1 = NULL, *temp2 = NULL;
-    
+
     /* i did not create the segment - so i have to do all the hard work :-( */
     if (my_pid != ds_buf->seg_cpid) {
-        temp1 = strdup(ds_buf->seg_name);
-        temp2 = temp1;
-
-        while (NULL != (temp2 = strchr(temp2, OPAL_PATH_SEP[0])) ) {
-            *temp2 = '/';
-        }
-        /* use paging file */
+                /* use paging file */
         hMapObject = CreateFileMapping(INVALID_HANDLE_VALUE,
-                /* no security attributes */
-                NULL,
-                /* read/write access */
-                PAGE_READWRITE,
-                /* size: high 32-bits */
-                0,
-                /* size: low 32-bits */
-                (DWORD)real_size,
-                /* name of map object */
-                temp1);
-
-        /* relase the temporary file name */
-        free(temp1);
+                                       /* no security attributes */
+                                       NULL,
+                                       /* read/write access */
+                                       PAGE_READWRITE,
+                                       /* size: high 32-bits */
+                                       0,
+                                       /* size: low 32-bits */
+                                       (DWORD)real_size,
+                                       /* name of map object */
+                                       ds_buf->seg_name);
 
         if (NULL == hMapObject) {
             rc = GetLastError();
             goto out;
         }
-        if (ERROR_ALREADY_EXISTS == GetLastError()) {
-            file_previously_opened = true;
-        }
 
         /* Get a pointer to the file-mapped shared memory. */
-        lpvMem = MapViewOfFile(hMapObject,          /* object to map view of */
-                               FILE_MAP_WRITE,      /* read/write access */
-                               0,                   /* high offset:  map from */
-                               0,                   /* low offset:   beginning */
-                               0);                  /* default: map entire file */
+        lpvMem = MapViewOfFile(hMapObject,     /* object to map view of */
+                               FILE_MAP_WRITE, /* read/write access */
+                               0,              /* high offset:  map from */
+                               0,              /* low offset:   beginning */
+                               0);             /* default: map entire file */
         if (NULL == lpvMem) {
             rc = GetLastError();
             goto out;
