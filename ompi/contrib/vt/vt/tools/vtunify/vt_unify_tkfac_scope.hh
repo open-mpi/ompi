@@ -34,21 +34,18 @@ TokenFactoryScopeC<T>::~TokenFactoryScopeC()
 
 template <class T>
 uint32_t
-TokenFactoryScopeC<T>::create( const void * localDef )
+TokenFactoryScopeC<T>::create( const void * localDef, uint32_t globalToken )
 {
    const T & local_def = *static_cast<const T*>(localDef);
 
-   uint32_t global_token;
-
    // search for already created global definition
-   typename std::set<T>::const_iterator it =
-      std::find( m_globDefs->begin(), m_globDefs->end(), local_def );
+   typename std::set<T>::const_iterator it = m_globDefs->find( local_def );
 
    // get its global token, if found
    //
    if( it != m_globDefs->end() )
    {
-      global_token = it->deftoken;
+      globalToken = it->deftoken;
    }
    // otherwise, create global definition
    //
@@ -57,16 +54,20 @@ TokenFactoryScopeC<T>::create( const void * localDef )
       T global_def = local_def;
 
       global_def.loccpuid = 0;
-      global_def.deftoken = global_token = getNextToken();
+
+      if( globalToken == 0 )
+         global_def.deftoken = globalToken = getNextToken();
+      else
+         global_def.deftoken = globalToken;
 
       m_globDefs->insert( global_def ).first;
    }
 
    // set token translation for process, if necessary
    if( local_def.loccpuid != 0 && local_def.deftoken != 0 )
-      setTranslation( local_def.loccpuid, local_def.deftoken, global_token );
+      setTranslation( local_def.loccpuid, local_def.deftoken, globalToken );
 
-   return global_token;
+   return globalToken;
 }
 
 template <class T>

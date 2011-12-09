@@ -11,6 +11,7 @@
  **/
 
 #include "vt_unify.h"
+#include "vt_unify_defs.h"
 #include "vt_unify_handlers.h"
 #include "vt_unify_hooks_aevents.h"
 #include "vt_unify_sync.h"
@@ -55,7 +56,7 @@ HooksAsyncEventsC::HandleAsyncEventPre(
    bool ret = false;
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    do
    {
@@ -147,9 +148,26 @@ HooksAsyncEventsC::HandleAsyncCounter( AsyncSourceManagerS::SourceS * source,
    // pre-handle event: get actual time of async. event from key-value list
    if( HandleAsyncEventPre( *source, proc, time, kvs ) )
    {
+      // get global token factory for DefProcessGroup
+      static const TokenFactoryScopeI * tkfac_defprocgrp =
+         theTokenFactory->getScope( DEF_REC_TYPE__DefProcessGroup );
+
       // get global token factory for DefCounter
       static const TokenFactoryScopeI * tkfac_defcntr =
          theTokenFactory->getScope( DEF_REC_TYPE__DefCounter );
+
+      // try to get local process group token (!=0 if it's a group counter)
+      uint32_t procgrp =
+         theDefinitions->groupCounters()->getGroup( proc, counter );
+
+      // translate local process group token, if necessary
+      //
+      uint32_t global_procgrp = procgrp;
+      if( procgrp != 0 )
+      {
+         global_procgrp = tkfac_defprocgrp->translate( proc, procgrp );
+         assert( global_procgrp != 0 );
+      }
 
       // translate local counter token
       //
@@ -159,7 +177,8 @@ HooksAsyncEventsC::HandleAsyncCounter( AsyncSourceManagerS::SourceS * source,
       // create new async. event
       //
       AsyncEventBaseS * new_async_event =
-         new AsyncEventCounterS( time, kvs, global_counter, value );
+         new AsyncEventCounterS( time, kvs, global_procgrp, global_counter,
+            value );
       assert( new_async_event );
 
       // post-handle event: enqueue new async. event
@@ -276,23 +295,14 @@ HooksAsyncEventsC::writeRecHook_DefKeyValue( HooksC::VaArgsT & args )
 }
 
 void
-HooksAsyncEventsC::writeRecHook_Event( HooksC::VaArgsT & args,
-   const uint32_t & timeArgIdx, const uint32_t & streamIdArgIdx,
-   const uint32_t & kvsArgIdx, const uint32_t & doWriteArgIdx )
+HooksAsyncEventsC::writeRecHook_Event( uint64_t * time, uint32_t * streamid,
+   OTF_KeyValueList ** kvs, bool * dowrite )
 {
    bool error = false;
 
    // return, if no async. source defined
    if( m_sourceKeys.empty() )
       return;
-
-   // get hook arguments
-   //
-
-   uint64_t *          time     = (uint64_t*)args[timeArgIdx];
-   uint32_t *          streamid = (uint32_t*)args[streamIdArgIdx];
-   OTF_KeyValueList ** kvs = (OTF_KeyValueList**)args[kvsArgIdx];
-   bool *              do_write = (bool*)args[doWriteArgIdx];
 
    // get async. source manager by stream id
    //
@@ -306,7 +316,7 @@ HooksAsyncEventsC::writeRecHook_Event( HooksC::VaArgsT & args,
       error = !writeAsyncEvents( *manager, *time );
 
       // drop this event record, if it's asynchronous
-      *do_write = !isAsyncEvent( *kvs );
+      *dowrite = !isAsyncEvent( *kvs );
    }
 
    //return !error;
@@ -323,13 +333,13 @@ HooksAsyncEventsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
    if( m_sourceKeys.empty() )
       return;
 
-   if( id == VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_OPEN )
+   if( ( id & VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_OPEN ) != 0 )
    {
       // get hook arguments
       //
-      uint32_t * stream_id = (uint32_t*)args[0];
-      std::string * stream_prefix = (std::string*)args[1];
-      OTF_WStream ** wstream = (OTF_WStream**)args[2];
+      OTF_WStream ** wstream = (OTF_WStream**)args[0];
+      uint32_t * stream_id = (uint32_t*)args[1];
+      std::string * stream_prefix = (std::string*)args[2];
 
       // get async. source manager by stream id
       //
@@ -339,7 +349,7 @@ HooksAsyncEventsC::genericHook( const uint32_t & id, HooksC::VaArgsT & args )
       // open reader streams of async. sources
       error = !openSources( *manager, *stream_id, *stream_prefix, *wstream );
    }
-   else if( id == VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_CLOSE )
+   else if( ( id & VT_UNIFY_HOOKS_AEVENTS_GENID__EVENT_STREAM_CLOSE ) != 0 )
    {
       // get stream id from hook arguments
       uint32_t * stream_id = (uint32_t*)args[0];
@@ -612,15 +622,17 @@ HooksAsyncEventsC::writeAsyncEvents( AsyncSourceManagerS & manager,
                   static_cast<AsyncEventCounterS*>( top );
 
                // trigger write record hook
-               theHooks->triggerWriteRecordHook( HooksC::Record_Counter, 7,
+               theHooks->triggerWriteRecordHook( HooksC::Record_Counter, 8,
                   &(manager.wstream), &(record->time), &(manager.stream_id),
-                  &(record->counter), &(record->value), &(record->kvs),
-                  &do_write );
+                  &(record->procgrp), &(record->counter), &(record->value),
+                  &(record->kvs), &do_write );
 
                // write record
                if( do_write )
                   error = ( OTF_WStream_writeCounterKV( manager.wstream,
-                               record->time, manager.stream_id,
+                               record->time,
+                               record->procgrp ?
+                                  record->procgrp : manager.stream_id,
                                record->counter, record->value,
                                record->kvs ) == 0 );
 

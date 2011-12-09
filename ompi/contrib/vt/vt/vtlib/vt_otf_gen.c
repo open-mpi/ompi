@@ -51,8 +51,8 @@
   }
 
 #define VTGEN_ALIGN_LENGTH(bytes)                                   \
-  ( (bytes) % SIZEOF_VOIDP ) ?                                      \
-    ( (bytes) / SIZEOF_VOIDP + 1 ) * SIZEOF_VOIDP : (bytes)
+  ( ( (bytes) % SIZEOF_VOIDP ) ?                                    \
+    ( (bytes) / SIZEOF_VOIDP + 1 ) * SIZEOF_VOIDP : (bytes) )
 
 #define VTGEN_JUMP(gen, bytes)                                      \
   gen->buf->pos += (bytes)
@@ -99,6 +99,7 @@ struct VTGen_struct
   uint32_t            tid;
   uint32_t            flushcntr;
   uint8_t             isfirstflush;
+  uint8_t             hasdata;
   uint8_t             mode;
   uint8_t             sum_props;
   VTRewindMark        rewindmark;
@@ -150,6 +151,9 @@ VTGen* VTGen_open(const char* tname, const char* tnamesuffix,
 
   /* initialize first flush flag */
   gen->isfirstflush = 1;
+
+  /* initialize has data flag */
+  gen->hasdata = 0;
 
   /* initialize trace mode flags */
   gen->mode = (uint8_t)vt_env_mode();
@@ -205,10 +209,10 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
   buffer_t p;
 
   /* intermediate flush and max. buffer flushes reached? */
-  if(!lastFlush && gen->flushcntr == 0) return;
+  if (!lastFlush && gen->flushcntr == 0) return;
 
   /* reset buffer, if rank is disabled */
-  if(vt_my_trace_is_disabled)
+  if (vt_my_trace_is_disabled)
   {
     gen->buf->pos = gen->buf->mem;
     return;
@@ -218,19 +222,19 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
   VT_SUSPEND_IO_TRACING(gen->tid);
 
   /* mark begin of flush */
-  if(!lastFlush)
+  if (!lastFlush)
     vt_enter_flush(gen->tid, &flushBTime);
 
   /* get process id */
   pid = VT_PROCESS_ID(vt_my_trace, gen->tid);
 
-  if(gen->isfirstflush)
+  if (gen->isfirstflush)
   {
     /* set base name of the temporary files (basename includes local path
        but neither thread identifier nor suffix) */
 
     gen->fileprefix = (char*)calloc(VT_PATH_MAX + 1, sizeof(char));
-    if(gen->fileprefix == NULL)
+    if (gen->fileprefix == NULL)
       vt_error();
 
     snprintf(gen->fileprefix, VT_PATH_MAX, "%s/%s.%lx.%u",
@@ -238,49 +242,83 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
              vt_pform_node_id(), getpid());
 
     /* open file manager for writer stream */
+
     gen->filemanager = OTF_FileManager_open(4);
+    if (gen->filemanager == NULL)
+      vt_error_msg("OTF_FileManager_open failed:\n %s", otf_strerr);
 
     /* open writer stream */
-    gen->filestream = OTF_WStream_open(gen->fileprefix, gen->tid+1,
-                                       gen->filemanager);
 
-    if( gen->filestream == NULL )
-      vt_error_msg("Cannot open OTF writer stream [namestub %s id %x]",
-                   gen->fileprefix, gen->tid+1); 
-    else
-      vt_cntl_msg(2, "Opened OTF writer stream [namestub %s id %x] for "
-                     "generation [buffer %d bytes]", 
-                     gen->fileprefix, gen->tid+1, gen->buf->size);
+    gen->filestream =
+      OTF_WStream_open(gen->fileprefix, gen->tid+1, gen->filemanager);
+    if (gen->filestream == NULL)
+      vt_error_msg("OTF_WStream_open failed:\n %s", otf_strerr);
 
-    /* set file compression */
+    vt_cntl_msg(2, "Opened OTF writer stream [namestub %s id %x] for "
+                "generation [buffer %llu bytes]",
+                gen->fileprefix, gen->tid+1,
+                (unsigned long long)gen->buf->size);
 
-    if( vt_env_compression() &&
-        OTF_WStream_setCompression(gen->filestream,
-                                   OTF_FILECOMPRESSION_COMPRESSED) )
+    /* set writer stream's buffer size */
     {
+      size_t bsize = vt_env_otf_bsize();
+      if (bsize > 0)
+      {
+        OTF_WStream_setBufferSizes(gen->filestream, bsize);
+        /* no return value; check otf_errno for error */
+        if (otf_errno != OTF_NO_ERROR)
+        {
+          vt_error_msg("OTF_WStream_setBufferSizes failed:\n %s",
+                       otf_strerr);
+        }
+      }
+    }
+
+    /* set file compression and buffer size */
+
+    gen->filecomp = OTF_FILECOMPRESSION_UNCOMPRESSED;
+    if (vt_env_compression() &&
+        (OTF_WStream_setCompression(gen->filestream,
+           OTF_FILECOMPRESSION_COMPRESSED) == 1))
+    {
+      size_t bsize = vt_env_compression_bsize();
       gen->filecomp = OTF_FILECOMPRESSION_COMPRESSED;
-    }
-    else
-    {
-      gen->filecomp = OTF_FILECOMPRESSION_UNCOMPRESSED;
+
+      if (bsize > 0)
+      {
+        OTF_WStream_setZBufferSizes(gen->filestream, bsize);
+        /* no return value; check otf_errno for error */
+        if (otf_errno != OTF_NO_ERROR)
+        {
+          vt_error_msg("OTF_WStream_setZBufferSizes failed:\n %s",
+                       otf_strerr);
+        }
+      }
     }
 
-    if( gen->tid == 0 )
+    if (gen->tid == 0)
     {
       char creator[100];
-      uint64_t res = vt_pform_clockres();
+
+      /* write OTF version record */
+
+      if (OTF_WStream_writeOtfVersion(gen->filestream) == 0)
+        vt_error_msg("OTF_WStream_writeOtfVersion failed:\n %s", otf_strerr);
 
       /* write creator record */
 
-      snprintf(creator, sizeof(creator) - 1,
-               "%s", PACKAGE_STRING);
-
-      OTF_WStream_writeOtfVersion( gen->filestream );
-      OTF_WStream_writeDefCreator( gen->filestream, creator );
+      snprintf(creator, sizeof(creator) - 1, "%s", PACKAGE_STRING);
+      if (OTF_WStream_writeDefCreator(gen->filestream, creator) == 0)
+        vt_error_msg("OTF_WStream_writeDefCreator failed:\n %s", otf_strerr);
 
       /* write timer resolution record */
 
-      OTF_WStream_writeDefTimerResolution( gen->filestream, res );
+      if (OTF_WStream_writeDefTimerResolution(gen->filestream,
+            vt_pform_clockres()) == 0)
+      {
+        vt_error_msg("OTF_WStream_writeDefTimerResolution failed:\n %s",
+                     otf_strerr);
+      }
     }
 
     /* write process definition record */
@@ -288,28 +326,25 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
       uint32_t parent_pid = 0;
       char pname[1024];
 
-      if(gen->tid != 0)
+      if (gen->tid != 0)
         parent_pid = VT_PROCESS_ID(vt_my_trace, gen->ptid);
 
       snprintf(pname, sizeof(pname) - 1, "%s %d%s",
                gen->tname, vt_my_trace, gen->tnamesuffix);
 
-      OTF_WStream_writeDefProcess(gen->filestream, pid, pname, parent_pid);
-    }
-
-    /* write process group definition record (node name) */
-    {
-      char pgname[100];
-
-      snprintf(pgname, sizeof(pgname) - 1, VT_UNIFY_STRID_NODE_PROCGRP"%s",
-               vt_pform_node_name());
-
-      OTF_WStream_writeDefProcessGroup(gen->filestream,
-        1 /* id will be given by vtunify */, pgname, 1, &pid);
+      if (OTF_WStream_writeDefProcess(gen->filestream, pid, pname,
+            parent_pid) == 0)
+      {
+        vt_error_msg("OTF_WStream_writeDefProcess failed:\n %s",
+                     otf_strerr);
+      }
     }
 
     gen->isfirstflush = 0;
   }
+
+  /* set has data flag */
+  gen->hasdata = (gen->hasdata || gen->buf->pos > gen->buf->mem);
 
   /* walk through the buffer and write records */
 
@@ -317,550 +352,699 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
 
   while(p < gen->buf->pos)
   {
-     /* update minimum time, if it's a time-bound record */
-     if(gen->timerange.min == (uint64_t)-1 &&
-        ((VTBuf_Entry_Base*)p)->type >= VTBUF_ENTRY_TYPE__Enter)
-     {
-       VTBuf_Entry_EnterLeave* entry = (VTBuf_Entry_EnterLeave*)p;
-       gen->timerange.min = entry->time;
-     }
-
-     /* write record */
-     switch(((VTBuf_Entry_Base*)p)->type)
-     {
-       case VTBUF_ENTRY_TYPE__DefinitionComment:
-       {
-         VTBuf_Entry_DefinitionComment* entry =
-           (VTBuf_Entry_DefinitionComment*)p;
-
-         OTF_WStream_writeDefinitionComment(gen->filestream,
-           entry->comment);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefSclFile:
-       {
-         VTBuf_Entry_DefSclFile* entry =
-           (VTBuf_Entry_DefSclFile*)p;
-
-         OTF_WStream_writeDefSclFile(gen->filestream,
-           entry->fid, entry->fname);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefScl:
-       {
-         VTBuf_Entry_DefScl* entry =
-           (VTBuf_Entry_DefScl*)p; 
-
-         OTF_WStream_writeDefScl(gen->filestream,
-           entry->sid, entry->fid, entry->ln);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefFileGroup:
-       {
-         VTBuf_Entry_DefFileGroup* entry =
-           (VTBuf_Entry_DefFileGroup*)p;
-
-         OTF_WStream_writeDefFileGroup(gen->filestream,
-           entry->gid, entry->gname);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefFile:
-       {
-         VTBuf_Entry_DefFile* entry =
-           (VTBuf_Entry_DefFile*)p;
-
-         OTF_WStream_writeDefFile(gen->filestream,
-           entry->fid, entry->fname, entry->gid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefFunctionGroup:
-       {
-         VTBuf_Entry_DefFunctionGroup* entry =
-           (VTBuf_Entry_DefFunctionGroup*)p;
-
-         OTF_WStream_writeDefFunctionGroup(gen->filestream,
-           entry->rdid, entry->rdesc);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefFunction:
-       {
-         VTBuf_Entry_DefFunction* entry =
-           (VTBuf_Entry_DefFunction*)p;
-
-         OTF_WStream_writeDefFunction(gen->filestream,
-           entry->rid, entry->rname, entry->rdid, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefCollectiveOperation:
-       {
-         VTBuf_Entry_DefCollectiveOperation* entry =
-           (VTBuf_Entry_DefCollectiveOperation*)p;
-
-         uint32_t ctype = OTF_COLLECTIVE_TYPE_UNKNOWN;
-         switch(entry->ctype)
-         {
-           case VT_MPI_COLL_ALL2ALL:
-             ctype = OTF_COLLECTIVE_TYPE_ALL2ALL;
-             break;
-           case VT_MPI_COLL_ALL2ONE:
-             ctype = OTF_COLLECTIVE_TYPE_ALL2ONE;
-             break;
-           case VT_MPI_COLL_BARRIER:
-             ctype = OTF_COLLECTIVE_TYPE_BARRIER;
-             break;
-           case VT_MPI_COLL_ONE2ALL:
-             ctype = OTF_COLLECTIVE_TYPE_ONE2ALL;
-             break;
-           default:
-             break;
-         }
-
-         OTF_WStream_writeDefCollectiveOperation(gen->filestream,
-           entry->cid, entry->cname, ctype);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefCounterGroup:
-       {
-         VTBuf_Entry_DefCounterGroup* entry =
-           (VTBuf_Entry_DefCounterGroup*)p;
-
-         OTF_WStream_writeDefCounterGroup(gen->filestream,
-           entry->gid, entry->gname);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefCounter:
-       {
-         VTBuf_Entry_DefCounter* entry =
-           (VTBuf_Entry_DefCounter*)p;
-
-         uint32_t cprop = 0;
-         if((entry->cprop & VT_CNTR_ACC) != 0)
-           cprop |= OTF_COUNTER_TYPE_ACC;
-         if((entry->cprop & VT_CNTR_ABS) != 0)
-           cprop |= OTF_COUNTER_TYPE_ABS;
-         if((entry->cprop & VT_CNTR_START) != 0)
-           cprop |= OTF_COUNTER_SCOPE_START;
-         if((entry->cprop & VT_CNTR_POINT) != 0)
-           cprop |= OTF_COUNTER_SCOPE_POINT;
-         if((entry->cprop & VT_CNTR_LAST) != 0)
-           cprop |= OTF_COUNTER_SCOPE_LAST;
-         if((entry->cprop & VT_CNTR_NEXT) != 0)
-           cprop |= OTF_COUNTER_SCOPE_NEXT;
-         if((entry->cprop & VT_CNTR_SIGNED) != 0)
-           cprop |= OTF_COUNTER_VARTYPE_SIGNED8;
-         if((entry->cprop & VT_CNTR_UNSIGNED) != 0)
-           cprop |= OTF_COUNTER_VARTYPE_UNSIGNED8;
-         if((entry->cprop & VT_CNTR_FLOAT) != 0)
-           cprop |= OTF_COUNTER_VARTYPE_FLOAT;
-         if((entry->cprop & VT_CNTR_DOUBLE) != 0)
-           cprop |= OTF_COUNTER_VARTYPE_DOUBLE;
-
-         OTF_WStream_writeDefCounter(gen->filestream,
-           entry->cid, entry->cname, cprop, entry->gid, entry->cunit);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefProcessGroup:
-       {
-         VTBuf_Entry_DefProcessGroup* entry =
-           (VTBuf_Entry_DefProcessGroup*)p;
-
-         OTF_WStream_writeDefProcessGroup(gen->filestream,
-           entry->cid, entry->grpn, entry->grpc, entry->grpv);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefMarker:
-       {
-         VTBuf_Entry_DefMarker* entry =
-           (VTBuf_Entry_DefMarker*)p;
-
-         uint32_t mtype = OTF_MARKER_TYPE_UNKNOWN;
-         switch(entry->mtype)
-         {
-           case VT_MARKER_ERROR:
-             mtype = OTF_MARKER_TYPE_ERROR;
-             break;
-           case VT_MARKER_WARNING:
-             mtype = OTF_MARKER_TYPE_WARNING;
-             break;
-           case VT_MARKER_HINT:
-             mtype = OTF_MARKER_TYPE_HINT;
-             break;
-           default:
-             vt_assert(0);
-         }
-
-         OTF_WStream_writeDefMarker(gen->filestream,
-           entry->mid, entry->mname, mtype);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__DefKeyValue:
-       {
-         VTBuf_Entry_DefKeyValue* entry =
-           (VTBuf_Entry_DefKeyValue*)p;
-
-         OTF_Type vtype = OTF_UNKNOWN;
-         switch(entry->vtype)
-         {
-           case VT_KEYVAL_TYPE_CHAR:
-             vtype = OTF_CHAR;
-             break;
-           case VT_KEYVAL_TYPE_INT32:
-             vtype = OTF_INT32;
-             break;
-           case VT_KEYVAL_TYPE_UINT32:
-             vtype = OTF_UINT32;
-             break;
-           case VT_KEYVAL_TYPE_INT64:
-             vtype = OTF_INT64;
-             break;
-           case VT_KEYVAL_TYPE_UINT64:
-             vtype = OTF_UINT64;
-             break;
-           case VT_KEYVAL_TYPE_FLOAT:
-             vtype = OTF_FLOAT;
-             break;
-           case VT_KEYVAL_TYPE_DOUBLE:
-             vtype = OTF_DOUBLE;
-             break;
-           default:
-             vt_assert(0);
-         }
-
-         OTF_WStream_writeDefKeyValue(gen->filestream,
-           entry->kid,
-           vtype,
-           entry->kname,
-           NULL);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__Enter:
-       {
-         VTBuf_Entry_EnterLeave* entry =
-           (VTBuf_Entry_EnterLeave*)p;
-
-         OTF_WStream_writeEnter(gen->filestream,
-           entry->time, entry->rid, pid, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__Leave:
-       {
-         VTBuf_Entry_EnterLeave* entry =
-           (VTBuf_Entry_EnterLeave*)p;
-
-         OTF_WStream_writeLeave(gen->filestream,
-           entry->time, entry->rid, pid, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__FileOperation:
-       {
-         VTBuf_Entry_FileOperation* entry =
-           (VTBuf_Entry_FileOperation*)p;
-
-         OTF_WStream_writeFileOperation(gen->filestream,
-           entry->time, entry->fid, pid, entry->hid, entry->op, entry->bytes,
-           entry->etime - entry->time, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__BeginFileOperation:
-       {
-         VTBuf_Entry_BeginFileOperation* entry =
-           (VTBuf_Entry_BeginFileOperation*)p;
-
-         OTF_WStream_writeBeginFileOperation(gen->filestream,
-           entry->time, pid, entry->mid, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__EndFileOperation:
-       {
-         VTBuf_Entry_EndFileOperation* entry =
-           (VTBuf_Entry_EndFileOperation*)p;
-
-         OTF_WStream_writeEndFileOperation(gen->filestream,
-           entry->time, pid, entry->fid, entry->mid, entry->hid,
-           entry->op, entry->bytes, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__Counter:
-       {
-         VTBuf_Entry_Counter* entry =
-           (VTBuf_Entry_Counter*)p;
-
-         OTF_WStream_writeCounter(gen->filestream,
-           entry->time, pid, entry->cid, entry->cval);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__Comment:
-       {
-         VTBuf_Entry_Comment* entry =
-           (VTBuf_Entry_Comment*)p;
-
-         OTF_WStream_writeEventComment(gen->filestream,
-           entry->time, pid, entry->comment);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__Marker:
-       {
-         VTBuf_Entry_Marker* entry =
-           (VTBuf_Entry_Marker*)p;
-
-         OTF_WStream_writeMarker(gen->filestream,
-           entry->time, pid, entry->mid, entry->mtext);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__KeyValue:
-       {
-         VTBuf_Entry_KeyValue* entry =
-           (VTBuf_Entry_KeyValue*)p;
-
-         OTF_WBuffer* filestream_buffer;
-         OTF_KeyValuePair kvpair;
-
-         filestream_buffer = OTF_WStream_getEventBuffer( gen->filestream );
-         vt_assert(filestream_buffer != NULL);
-
-         kvpair.key = entry->kid;
-
-         switch(entry->vtype)
-         {
-           case VT_KEYVAL_TYPE_CHAR:
-             kvpair.type = OTF_CHAR;
-             kvpair.value.otf_char = entry->kvalue.c;
-             break;
-           case VT_KEYVAL_TYPE_INT32:
-             kvpair.type = OTF_INT32;
-             kvpair.value.otf_int32 = entry->kvalue.i32;
-             break;
-           case VT_KEYVAL_TYPE_UINT32:
-             kvpair.type = OTF_UINT32;
-             kvpair.value.otf_uint32 = entry->kvalue.u32;
-             break;
-           case VT_KEYVAL_TYPE_INT64:
-             kvpair.type = OTF_INT64;
-             kvpair.value.otf_int64 = entry->kvalue.i64;
-             break;
-           case VT_KEYVAL_TYPE_UINT64:
-             kvpair.type = OTF_UINT64;
-             kvpair.value.otf_uint64 = entry->kvalue.u64;
-             break;
-           case VT_KEYVAL_TYPE_FLOAT:
-             kvpair.type = OTF_FLOAT;
-             kvpair.value.otf_float = entry->kvalue.f;
-             break;
-           case VT_KEYVAL_TYPE_DOUBLE:
-             kvpair.type = OTF_DOUBLE;
-             kvpair.value.otf_double = entry->kvalue.d;
-             break;
-           default:
-             vt_assert(0);
-         }
-
-         OTF_WBuffer_writeKeyValuePair_short( filestream_buffer, &kvpair );
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__SendMsg:
-       {
-         VTBuf_Entry_SendRecvMsg* entry =
-           (VTBuf_Entry_SendRecvMsg*)p;
-
-         OTF_WStream_writeSendMsg(gen->filestream,
-           entry->time, pid, entry->pid, entry->cid, entry->tag, entry->len,
-           entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__RecvMsg:
-       {
-         VTBuf_Entry_SendRecvMsg* entry =
-           (VTBuf_Entry_SendRecvMsg*)p;
-
-         OTF_WStream_writeRecvMsg(gen->filestream,
-           entry->time, pid, entry->pid, entry->cid, entry->tag, entry->len,
-           entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__CollectiveOperation:
-       {
-         VTBuf_Entry_CollectiveOperation* entry =
-           (VTBuf_Entry_CollectiveOperation*)p;
-
-         OTF_WStream_writeCollectiveOperation(gen->filestream,
-           entry->time, pid, entry->rid, entry->cid, entry->rpid, entry->sent,
-           entry->recvd, entry->etime - entry->time, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__BeginCollectiveOperation:
-       {
-         VTBuf_Entry_BeginCollectiveOperation* entry =
-           (VTBuf_Entry_BeginCollectiveOperation*)p;
-
-         OTF_WStream_writeBeginCollectiveOperation(gen->filestream,
-           entry->time, pid, entry->rid, entry->mid, entry->cid, entry->rpid,
-           entry->sent, entry->recvd, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__EndCollectiveOperation:
-       {
-         VTBuf_Entry_EndCollectiveOperation* entry =
-           (VTBuf_Entry_EndCollectiveOperation*)p;
-
-         OTF_WStream_writeEndCollectiveOperation(gen->filestream,
-           entry->time, pid, entry->mid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__RMAPut:
-       {
-         VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
-
-         OTF_WStream_writeRMAPut(gen->filestream,
-           entry->time, pid, entry->opid, entry->tpid, entry->cid, entry->tag,
-           entry->len, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__RMAPutRE:
-       {
-         VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
-
-         OTF_WStream_writeRMAPutRemoteEnd(gen->filestream,
-           entry->time, pid, entry->opid, entry->tpid, entry->cid, entry->tag,
-           entry->len, entry->sid);
-
-          break;
-       }
-       case VTBUF_ENTRY_TYPE__RMAGet:
-       {
-         VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
-
-         OTF_WStream_writeRMAGet(gen->filestream,
-           entry->time, pid, entry->opid, entry->tpid, entry->cid, entry->tag,
-           entry->len, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__RMAEnd:
-       {
-         VTBuf_Entry_RMAEnd* entry = (VTBuf_Entry_RMAEnd*)p;
-
-         OTF_WStream_writeRMAEnd(gen->filestream,
-           entry->time, pid, entry->rpid, entry->cid, entry->tag, entry->sid);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__FunctionSummary:
-       {
-         VTBuf_Entry_FunctionSummary* entry =
-           (VTBuf_Entry_FunctionSummary*)p;
-
-         OTF_WStream_writeFunctionSummary(gen->filestream,
-           entry->time, entry->rid, pid, entry->cnt, entry->excl, entry->incl);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__MessageSummary:
-       {
-         VTBuf_Entry_MessageSummary* entry =
-           (VTBuf_Entry_MessageSummary*)p;
-
-         OTF_WStream_writeMessageSummary(gen->filestream,
-           entry->time, pid, entry->peer, entry->cid, entry->tag, entry->scnt,
-           entry->rcnt, entry->sent, entry->recvd);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__CollectiveOperationSummary:
-       {
-         VTBuf_Entry_CollectiveOperationSummary* entry =
-           (VTBuf_Entry_CollectiveOperationSummary*)p;
-
-         OTF_WStream_writeCollopSummary(gen->filestream,
-           entry->time, pid, entry->cid, entry->rid, entry->scnt, entry->rcnt,
-           entry->sent, entry->recvd);
-
-         break;
-       }
-       case VTBUF_ENTRY_TYPE__FileOperationSummary:
-       {
-         VTBuf_Entry_FileOperationSummary* entry =
-           (VTBuf_Entry_FileOperationSummary*)p;
-
-         OTF_WStream_writeFileOperationSummary(gen->filestream,
-           entry->time, entry->fid, pid, entry->nopen, entry->nclose,
-           entry->nread, entry->nwrite, entry->nseek, entry->read,
-           entry->wrote);
-
-         break;
-       }
-       default:
-       {
-         vt_assert(0);
-       }
-     }
-
-     /* last buffer entry and end flush not marked ? */
-     if(!end_flush_marked &&
+    /* time-bound record? */
+    if (((VTBuf_Entry_Base*)p)->type >= VTBUF_ENTRY_TYPE__Enter)
+    {
+      VTBuf_Entry_EnterLeave* entry = (VTBuf_Entry_EnterLeave*)p;
+
+      /* update time range */
+      if (gen->timerange.min == (uint64_t)-1)
+        gen->timerange.min = entry->time;
+      gen->timerange.max = entry->time;
+    }
+
+    /* write record */
+    switch(((VTBuf_Entry_Base*)p)->type)
+    {
+      case VTBUF_ENTRY_TYPE__DefinitionComment:
+      {
+        VTBuf_Entry_DefinitionComment* entry =
+          (VTBuf_Entry_DefinitionComment*)p;
+
+        if (OTF_WStream_writeDefinitionComment(gen->filestream,
+              entry->comment) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefinitionComment failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefSclFile:
+      {
+        VTBuf_Entry_DefSclFile* entry = (VTBuf_Entry_DefSclFile*)p;
+
+        if (OTF_WStream_writeDefSclFile(gen->filestream, entry->fid,
+              entry->fname) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefSclFile failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefScl:
+      {
+        VTBuf_Entry_DefScl* entry = (VTBuf_Entry_DefScl*)p;
+
+        if (OTF_WStream_writeDefScl(gen->filestream, entry->sid, entry->fid,
+              entry->ln) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefScl failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefFileGroup:
+      {
+        VTBuf_Entry_DefFileGroup* entry = (VTBuf_Entry_DefFileGroup*)p;
+
+        if (OTF_WStream_writeDefFileGroup(gen->filestream, entry->gid,
+              entry->gname) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefFileGroup failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefFile:
+      {
+        VTBuf_Entry_DefFile* entry = (VTBuf_Entry_DefFile*)p;
+
+        if (OTF_WStream_writeDefFile(gen->filestream, entry->fid, entry->fname,
+              entry->gid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefFile failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefFunctionGroup:
+      {
+        VTBuf_Entry_DefFunctionGroup* entry = (VTBuf_Entry_DefFunctionGroup*)p;
+
+        if (OTF_WStream_writeDefFunctionGroup(gen->filestream, entry->rdid,
+              entry->rdesc) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefFunctionGroup failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefFunction:
+      {
+        VTBuf_Entry_DefFunction* entry = (VTBuf_Entry_DefFunction*)p;
+
+        if (OTF_WStream_writeDefFunction(gen->filestream, entry->rid,
+              entry->rname, entry->rdid, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefFunction failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefCollectiveOperation:
+      {
+        VTBuf_Entry_DefCollectiveOperation* entry =
+          (VTBuf_Entry_DefCollectiveOperation*)p;
+
+        uint32_t ctype = OTF_COLLECTIVE_TYPE_UNKNOWN;
+        switch(entry->ctype)
+        {
+          case VT_MPI_COLL_ALL2ALL:
+            ctype = OTF_COLLECTIVE_TYPE_ALL2ALL;
+            break;
+          case VT_MPI_COLL_ALL2ONE:
+            ctype = OTF_COLLECTIVE_TYPE_ALL2ONE;
+            break;
+          case VT_MPI_COLL_BARRIER:
+            ctype = OTF_COLLECTIVE_TYPE_BARRIER;
+            break;
+          case VT_MPI_COLL_ONE2ALL:
+            ctype = OTF_COLLECTIVE_TYPE_ONE2ALL;
+            break;
+          default:
+            vt_assert(0);
+        }
+
+        if (OTF_WStream_writeDefCollectiveOperation(gen->filestream, entry->cid,
+              entry->cname, ctype) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefCollectiveOperation failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefCounterGroup:
+      {
+        VTBuf_Entry_DefCounterGroup* entry = (VTBuf_Entry_DefCounterGroup*)p;
+
+        if (OTF_WStream_writeDefCounterGroup(gen->filestream, entry->gid,
+              entry->gname) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefCounterGroup failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefCounter:
+      {
+        VTBuf_Entry_DefCounter* entry = (VTBuf_Entry_DefCounter*)p;
+
+        uint32_t cprop = 0;
+        if ((entry->cprop & VT_CNTR_ACC) != 0)
+          cprop |= OTF_COUNTER_TYPE_ACC;
+        if ((entry->cprop & VT_CNTR_ABS) != 0)
+          cprop |= OTF_COUNTER_TYPE_ABS;
+        if ((entry->cprop & VT_CNTR_START) != 0)
+          cprop |= OTF_COUNTER_SCOPE_START;
+        if ((entry->cprop & VT_CNTR_POINT) != 0)
+          cprop |= OTF_COUNTER_SCOPE_POINT;
+        if ((entry->cprop & VT_CNTR_LAST) != 0)
+          cprop |= OTF_COUNTER_SCOPE_LAST;
+        if ((entry->cprop & VT_CNTR_NEXT) != 0)
+          cprop |= OTF_COUNTER_SCOPE_NEXT;
+        if ((entry->cprop & VT_CNTR_SIGNED) != 0)
+          cprop |= OTF_COUNTER_VARTYPE_SIGNED8;
+        if ((entry->cprop & VT_CNTR_UNSIGNED) != 0)
+          cprop |= OTF_COUNTER_VARTYPE_UNSIGNED8;
+        if ((entry->cprop & VT_CNTR_FLOAT) != 0)
+          cprop |= OTF_COUNTER_VARTYPE_FLOAT;
+        if ((entry->cprop & VT_CNTR_DOUBLE) != 0)
+          cprop |= OTF_COUNTER_VARTYPE_DOUBLE;
+
+        if (OTF_WStream_writeDefCounter(gen->filestream, entry->cid,
+              entry->cname, cprop, entry->gid, entry->cunit) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefCounter failed:\n %s", otf_strerr);
+        }
+
+        if (entry->pgid != 0)
+        {
+          if (OTF_WStream_writeDefCounterAssignments(gen->filestream,
+                entry->cid, 1, &(entry->pgid), NULL) == 0)
+          {
+            vt_error_msg("OTF_WStream_writeDefCounterAssignments failed:\n %s",
+                         otf_strerr);
+          }
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefProcessGroup:
+      {
+        VTBuf_Entry_DefProcessGroup* entry = (VTBuf_Entry_DefProcessGroup*)p;
+
+        if (OTF_WStream_writeDefProcessGroup(gen->filestream, entry->gid,
+              entry->grpn, entry->grpc, entry->grpv) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefProcessGroup failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefProcessGroupAttributes:
+      {
+        VTBuf_Entry_DefProcessGroupAttributes* entry =
+          (VTBuf_Entry_DefProcessGroupAttributes*)p;
+
+        uint32_t gattr = 0;
+        if ((entry->gattr & VT_PROCGRP_ISCOMMUNICATOR) != 0)
+          gattr |= (1<<OTF_ATTR_IsCommunicator);
+        if ((entry->gattr & VT_PROCGRP_HASCOUNTERS) != 0)
+          gattr |= (1<<OTF_ATTR_hasGroupCounters);
+
+        if (OTF_WStream_writeDefProcessOrGroupAttributes(gen->filestream,
+              entry->gid, gattr) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefProcessOrGroupAttributes failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefMarker:
+      {
+        VTBuf_Entry_DefMarker* entry = (VTBuf_Entry_DefMarker*)p;
+
+        uint32_t mtype = OTF_MARKER_TYPE_UNKNOWN;
+        switch(entry->mtype)
+        {
+          case VT_MARKER_ERROR:
+            mtype = OTF_MARKER_TYPE_ERROR;
+            break;
+          case VT_MARKER_WARNING:
+            mtype = OTF_MARKER_TYPE_WARNING;
+            break;
+          case VT_MARKER_HINT:
+            mtype = OTF_MARKER_TYPE_HINT;
+            break;
+          default:
+            vt_assert(0);
+        }
+
+        if (OTF_WStream_writeDefMarker(gen->filestream, entry->mid,
+              entry->mname, mtype) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefMarker failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__DefKeyValue:
+      {
+        VTBuf_Entry_DefKeyValue* entry = (VTBuf_Entry_DefKeyValue*)p;
+
+        OTF_Type vtype = OTF_UNKNOWN;
+        switch(entry->vtype)
+        {
+          case VT_KEYVAL_TYPE_CHAR:
+            vtype = OTF_CHAR;
+            break;
+          case VT_KEYVAL_TYPE_INT32:
+            vtype = OTF_INT32;
+            break;
+          case VT_KEYVAL_TYPE_UINT32:
+            vtype = OTF_UINT32;
+            break;
+          case VT_KEYVAL_TYPE_INT64:
+            vtype = OTF_INT64;
+            break;
+          case VT_KEYVAL_TYPE_UINT64:
+            vtype = OTF_UINT64;
+            break;
+          case VT_KEYVAL_TYPE_FLOAT:
+            vtype = OTF_FLOAT;
+            break;
+          case VT_KEYVAL_TYPE_DOUBLE:
+            vtype = OTF_DOUBLE;
+            break;
+          default:
+            vt_assert(0);
+        }
+
+        if (OTF_WStream_writeDefKeyValue(gen->filestream, entry->kid, vtype,
+              entry->kname, NULL) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeDefKeyValue failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__Enter:
+      {
+        VTBuf_Entry_EnterLeave* entry = (VTBuf_Entry_EnterLeave*)p;
+
+        if (OTF_WStream_writeEnter(gen->filestream, entry->time, entry->rid,
+              pid, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeEnter failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__Leave:
+      {
+        VTBuf_Entry_EnterLeave* entry = (VTBuf_Entry_EnterLeave*)p;
+
+        if (OTF_WStream_writeLeave(gen->filestream, entry->time, entry->rid,
+              pid, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeLeave failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__FileOperation:
+      {
+        VTBuf_Entry_FileOperation* entry = (VTBuf_Entry_FileOperation*)p;
+
+        if (OTF_WStream_writeFileOperation(gen->filestream, entry->time,
+              entry->fid, pid, entry->hid, entry->op, entry->bytes,
+              entry->etime - entry->time, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeFileOperation failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__BeginFileOperation:
+      {
+        VTBuf_Entry_BeginFileOperation* entry =
+          (VTBuf_Entry_BeginFileOperation*)p;
+
+        if (OTF_WStream_writeBeginFileOperation(gen->filestream, entry->time,
+              pid, entry->mid, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeBeginFileOperation failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__EndFileOperation:
+      {
+        VTBuf_Entry_EndFileOperation* entry = (VTBuf_Entry_EndFileOperation*)p;
+
+        if (OTF_WStream_writeEndFileOperation(gen->filestream, entry->time, pid,
+              entry->fid, entry->mid, entry->hid, entry->op, entry->bytes,
+              entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeEndFileOperation failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__Counter:
+      {
+        VTBuf_Entry_Counter* entry = (VTBuf_Entry_Counter*)p;
+
+        if (OTF_WStream_writeCounter(gen->filestream, entry->time, pid,
+               entry->cid, entry->cval) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeCounter failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__Comment:
+      {
+        VTBuf_Entry_Comment* entry = (VTBuf_Entry_Comment*)p;
+
+        if (OTF_WStream_writeEventComment(gen->filestream, entry->time, pid,
+              entry->comment) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeEventComment failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__Marker:
+      {
+        VTBuf_Entry_Marker* entry = (VTBuf_Entry_Marker*)p;
+
+        if (OTF_WStream_writeMarker(gen->filestream, entry->time, pid,
+              entry->mid, entry->mtext) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeMarker failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__KeyValue:
+      {
+        VTBuf_Entry_KeyValue* entry = (VTBuf_Entry_KeyValue*)p;
+
+        OTF_WBuffer* filestream_buffer;
+        OTF_KeyValuePair kvpair;
+
+        filestream_buffer = OTF_WStream_getEventBuffer( gen->filestream );
+        if (filestream_buffer == NULL )
+          vt_error_msg("OTF_WStream_getEventBuffer failed:\n %s", otf_strerr);
+
+        kvpair.key = entry->kid;
+
+        switch(entry->vtype)
+        {
+          case VT_KEYVAL_TYPE_CHAR:
+            kvpair.type = OTF_CHAR;
+            kvpair.value.otf_char = entry->kvalue.c;
+            break;
+          case VT_KEYVAL_TYPE_INT32:
+            kvpair.type = OTF_INT32;
+            kvpair.value.otf_int32 = entry->kvalue.i32;
+            break;
+          case VT_KEYVAL_TYPE_UINT32:
+            kvpair.type = OTF_UINT32;
+            kvpair.value.otf_uint32 = entry->kvalue.u32;
+            break;
+          case VT_KEYVAL_TYPE_INT64:
+            kvpair.type = OTF_INT64;
+            kvpair.value.otf_int64 = entry->kvalue.i64;
+            break;
+          case VT_KEYVAL_TYPE_UINT64:
+            kvpair.type = OTF_UINT64;
+            kvpair.value.otf_uint64 = entry->kvalue.u64;
+            break;
+          case VT_KEYVAL_TYPE_FLOAT:
+            kvpair.type = OTF_FLOAT;
+            kvpair.value.otf_float = entry->kvalue.f;
+            break;
+          case VT_KEYVAL_TYPE_DOUBLE:
+            kvpair.type = OTF_DOUBLE;
+            kvpair.value.otf_double = entry->kvalue.d;
+            break;
+          default:
+            vt_assert(0);
+        }
+
+        if (OTF_WBuffer_writeKeyValuePair_short( filestream_buffer,
+              &kvpair ) == 0)
+        {
+          vt_error_msg("OTF_WBuffer_writeKeyValuePair_short failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__SendMsg:
+      {
+        VTBuf_Entry_SendRecvMsg* entry = (VTBuf_Entry_SendRecvMsg*)p;
+
+        if (OTF_WStream_writeSendMsg(gen->filestream, entry->time, pid,
+              entry->pid, entry->cid, entry->tag, entry->len, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeSendMsg failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__RecvMsg:
+      {
+        VTBuf_Entry_SendRecvMsg* entry = (VTBuf_Entry_SendRecvMsg*)p;
+
+        if (OTF_WStream_writeRecvMsg(gen->filestream, entry->time, pid,
+              entry->pid, entry->cid, entry->tag, entry->len, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeRecvMsg failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__CollectiveOperation:
+      {
+        VTBuf_Entry_CollectiveOperation* entry =
+          (VTBuf_Entry_CollectiveOperation*)p;
+
+        if (OTF_WStream_writeCollectiveOperation(gen->filestream,
+              entry->time, pid, entry->rid, entry->cid, entry->rpid,
+              entry->sent, entry->recvd, entry->etime - entry->time,
+             entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeCollectiveOperation failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__BeginCollectiveOperation:
+      {
+        VTBuf_Entry_BeginCollectiveOperation* entry =
+          (VTBuf_Entry_BeginCollectiveOperation*)p;
+
+        if (OTF_WStream_writeBeginCollectiveOperation(gen->filestream,
+              entry->time, pid, entry->rid, entry->mid, entry->cid,
+              entry->rpid, entry->sent, entry->recvd, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeBeginCollectiveOperation failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__EndCollectiveOperation:
+      {
+        VTBuf_Entry_EndCollectiveOperation* entry =
+          (VTBuf_Entry_EndCollectiveOperation*)p;
+
+        if (OTF_WStream_writeEndCollectiveOperation(gen->filestream,
+              entry->time, pid, entry->mid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeEndCollectiveOperation failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__RMAPut:
+      {
+        VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
+
+        if (OTF_WStream_writeRMAPut(gen->filestream, entry->time, pid,
+              entry->opid, entry->tpid, entry->cid, entry->tag, entry->len,
+              entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeRMAPut failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__RMAPutRE:
+      {
+        VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
+
+        if (OTF_WStream_writeRMAPutRemoteEnd(gen->filestream, entry->time,
+              pid, entry->opid, entry->tpid, entry->cid, entry->tag,
+              entry->len, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeRMAPutRemoteEnd failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__RMAGet:
+      {
+        VTBuf_Entry_RMAPutGet* entry = (VTBuf_Entry_RMAPutGet*)p;
+
+        if (OTF_WStream_writeRMAGet(gen->filestream, entry->time, pid,
+              entry->opid, entry->tpid, entry->cid, entry->tag, entry->len,
+              entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeRMAGet failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__RMAEnd:
+      {
+        VTBuf_Entry_RMAEnd* entry = (VTBuf_Entry_RMAEnd*)p;
+
+        if (OTF_WStream_writeRMAEnd(gen->filestream, entry->time, pid,
+              entry->rpid, entry->cid, entry->tag, entry->sid) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeRMAEnd failed:\n %s", otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__FunctionSummary:
+      {
+        VTBuf_Entry_FunctionSummary* entry = (VTBuf_Entry_FunctionSummary*)p;
+
+        if (OTF_WStream_writeFunctionSummary(gen->filestream, entry->time,
+              entry->rid, pid, entry->cnt, entry->excl, entry->incl) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeFunctionSummary failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__MessageSummary:
+      {
+        VTBuf_Entry_MessageSummary* entry = (VTBuf_Entry_MessageSummary*)p;
+
+        if (OTF_WStream_writeMessageSummary(gen->filestream, entry->time,
+              pid, entry->peer, entry->cid, entry->tag, entry->scnt,
+              entry->rcnt, entry->sent, entry->recvd) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeMessageSummary failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__CollectiveOperationSummary:
+      {
+        VTBuf_Entry_CollectiveOperationSummary* entry =
+          (VTBuf_Entry_CollectiveOperationSummary*)p;
+
+        if (OTF_WStream_writeCollopSummary(gen->filestream, entry->time,
+              pid, entry->cid, entry->rid, entry->scnt, entry->rcnt,
+              entry->sent, entry->recvd) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeCollopSummary failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      case VTBUF_ENTRY_TYPE__FileOperationSummary:
+      {
+        VTBuf_Entry_FileOperationSummary* entry =
+          (VTBuf_Entry_FileOperationSummary*)p;
+
+        if (OTF_WStream_writeFileOperationSummary(gen->filestream,
+              entry->time, entry->fid, pid, entry->nopen, entry->nclose,
+              entry->nread, entry->nwrite, entry->nseek, entry->read,
+              entry->wrote) == 0)
+        {
+          vt_error_msg("OTF_WStream_writeFileOperationSummary failed:\n %s",
+                       otf_strerr);
+        }
+
+        break;
+      }
+      default:
+      {
+        vt_assert(0);
+      }
+    }
+
+    /* last buffer entry and end flush not marked ? */
+    if (!end_flush_marked &&
         p + ((VTBuf_Entry_Base*)p)->length >= gen->buf->pos)
-     {
-       /* mark end of flush, if it's not the last (invisible) flush and
-          max flushes not reached */
-       if(!lastFlush && gen->flushcntr > 1)
-       {
-         uint64_t flush_etime = vt_pform_wtime();
-         vt_exit_flush(gen->tid, &flush_etime);
-         if( flushETime != NULL ) *flushETime = flush_etime;
-       }
+    {
+      /* mark end of flush, if it's not the last (invisible) flush and
+         max flushes not reached */
+      if (!lastFlush && gen->flushcntr > 1)
+      {
+        uint64_t flush_etime = vt_pform_wtime();
+        vt_exit_flush(gen->tid, &flush_etime);
+        if (flushETime != NULL) *flushETime = flush_etime;
+      }
 
-       end_flush_marked = 1;
-     }
+      end_flush_marked = 1;
+    }
 
-     p += ((VTBuf_Entry_Base*)p)->length;
+    p += ((VTBuf_Entry_Base*)p)->length;
   }
 
-  if(lastFlush)
+  if (lastFlush)
   {
-    /* write event/summary comment record, in order that all event/summary
-       files will exist */
+    /* if nothing is recorded, write event/summary comment record in order
+       that all event/summary files will exist */
+    if (!gen->hasdata)
+    {
+      uint64_t time = vt_pform_wtime();
 
-    uint64_t time = vt_pform_wtime();
+      if (VTGEN_IS_TRACE_ON(gen))
+      {
+        if (OTF_WStream_writeEventComment(gen->filestream, time, pid, "") == 0)
+        {
+          vt_error_msg("OTF_WStream_writeEventComment failed:\n %s",
+                       otf_strerr);
+        }
+      }
 
-    if(VTGEN_IS_TRACE_ON(gen))
-      OTF_WStream_writeEventComment(gen->filestream, time, pid, "");
-    else /* VTGEN_IS_SUM_ON(gen) */
-      OTF_WStream_writeSummaryComment(gen->filestream, time, pid, "");
+      if (VTGEN_IS_SUM_ON(gen))
+      {
+        if (OTF_WStream_writeSummaryComment(gen->filestream, time, pid, "") == 0)
+        {
+          vt_error_msg("OTF_WStream_writeSummaryComment failed:\n %s",
+                       otf_strerr);
+        }
+      }
+
+      /* set time range */
+      gen->timerange.min = gen->timerange.max = time;
+    }
 
     /* write time range record */
-
-    if( gen->timerange.min == (uint64_t)-1 )
-      gen->timerange.min = time;
-    gen->timerange.max = time;
-
-    OTF_WStream_writeDefTimeRange(gen->filestream, gen->timerange.min,
-      gen->timerange.max, NULL);
+    if (OTF_WStream_writeDefTimeRange(gen->filestream, gen->timerange.min,
+          gen->timerange.max, NULL) == 0)
+    {
+      vt_error_msg("OTF_WStream_writeDefTimeRange failed:\n %s",
+                   otf_strerr);
+    }
   }
 
   /* reset buffer */
@@ -870,15 +1054,18 @@ void VTGen_flush(VTGen* gen, uint8_t lastFlush,
               gen->fileprefix, gen->tid+1);
 
   /* decrement flush counter */
-  if(gen->flushcntr > 0) gen->flushcntr--;
+  if (gen->flushcntr > 0) gen->flushcntr--;
 
   /* switch tracing off, if number of max flushes reached */
-  if(!lastFlush && gen->flushcntr == 0)
+  if (!lastFlush && gen->flushcntr == 0)
   {
     int max_flushes = vt_env_max_flushes();
+
     vt_cntl_msg(1, "Maximum number of buffer flushes reached "
                 "(VT_MAX_FLUSHES=%d)", max_flushes);
+
     vt_trace_off(gen->tid, 1, 1);
+
     vt_def_comment(gen->tid,
                    VT_UNIFY_STRID_VT_COMMENT"WARNING: This trace is "
                    "incomplete, because the maximum number of "
@@ -903,23 +1090,27 @@ void VTGen_close(VTGen* gen)
   /* flush buffer if necessary */
   VTGen_flush(gen, 1, 0, NULL);
 
-  if(gen->fileprefix)
+  if (gen->fileprefix)
   {
     /* close writer stream */
-    OTF_WStream_close(gen->filestream);
+    if (OTF_WStream_close(gen->filestream) == 0)
+      vt_error_msg("OTF_WStream_close failed:\n %s", otf_strerr);
 
     /* close file manager of writer stream */
     OTF_FileManager_close(gen->filemanager);
+    /* no return value; check otf_errno for error */
+    if (otf_errno != OTF_NO_ERROR)
+      vt_error_msg("OTF_FileManager_close failed:\n %s", otf_strerr);
 
     vt_cntl_msg(2, "Closed OTF writer stream [namestub %s id %x]",
                 gen->fileprefix, gen->tid+1);
   }
 
   /* free buffer memory */
-  free(gen->buf->mem); 
+  free(gen->buf->mem);
 
   /* free buffer record */
-  free(gen->buf); 
+  free(gen->buf);
 }
 
 void VTGen_delete(VTGen* gen)
@@ -939,22 +1130,31 @@ void VTGen_delete(VTGen* gen)
     uint8_t i;
 
     /* determine (local) files for removal */
+
     tmp_namev[0] =
       OTF_getFilename(gen->fileprefix, gen->tid+1,
                       OTF_FILETYPE_DEF | gen->filecomp,
                       0, NULL);
+    vt_assert(tmp_namev[0]);
+
     tmp_namev[1] =
       OTF_getFilename(gen->fileprefix, gen->tid+1,
                       OTF_FILETYPE_EVENT | gen->filecomp,
                       0, NULL);
+    vt_assert(tmp_namev[1]);
+
     tmp_namev[2] =
       OTF_getFilename(gen->fileprefix, gen->tid+1,
                       OTF_FILETYPE_STATS | gen->filecomp,
                       0, NULL);
+    vt_assert(tmp_namev[2]);
+
     tmp_namev[3] =
       OTF_getFilename(gen->fileprefix, gen->tid+1,
                       OTF_FILETYPE_MARKER | gen->filecomp,
                       0, NULL);
+    vt_assert(tmp_namev[3]);
+
     tmp_namev[4] = NULL;
 
     i = 0;
@@ -1077,23 +1277,27 @@ void VTGen_destroy(VTGen* gen)
   if(gen->fileprefix)
   {
     /* close writer stream */
-    OTF_WStream_close(gen->filestream);
+    if (OTF_WStream_close(gen->filestream) == 0)
+      vt_error_msg("OTF_WStream_close failed:\n %s", otf_strerr);
 
     /* close file manager of writer stream */
     OTF_FileManager_close(gen->filemanager);
+    /* no return value; check otf_errno for error */
+    if (otf_errno != OTF_NO_ERROR)
+      vt_error_msg("OTF_FileManager_close failed:\n %s", otf_strerr);
   }
 
   /* destroy sum record */
   if (VTGEN_IS_SUM_ON(gen)) VTSum_destroy(gen->sum);
 
   /* free buffer memory */
-  free(gen->buf->mem); 
+  free(gen->buf->mem);
 
   /* free buffer record */
-  free(gen->buf); 
+  free(gen->buf);
 
   /* free gen record */
-  free(gen); 
+  free(gen);
 }
 
 uint8_t VTGen_get_buflevel(VTGen* gen)
@@ -1164,6 +1368,7 @@ void VTGen_write_DEF_SCL(VTGen* gen, uint32_t sid, uint32_t fid, uint32_t ln)
   VTGEN_ALLOC(gen, length);
 
   new_entry = ((VTBuf_Entry_DefScl*)gen->buf->pos);
+
   new_entry->type   = VTBUF_ENTRY_TYPE__DefScl;
   new_entry->length = length;
   new_entry->sid    = sid;
@@ -1314,7 +1519,8 @@ void VTGen_write_DEF_COUNTER_GROUP(VTGen* gen, uint32_t gid, const char* gname)
 }
 
 void VTGen_write_DEF_COUNTER(VTGen* gen, uint32_t cid, const char* cname,
-                             uint32_t cprop, uint32_t gid, const char* cunit)
+                             const char* cunit, uint32_t cprop, uint32_t gid,
+                             uint32_t pgid)
 {
   VTBuf_Entry_DefCounter* new_entry;
 
@@ -1333,6 +1539,7 @@ void VTGen_write_DEF_COUNTER(VTGen* gen, uint32_t cid, const char* cname,
   new_entry->cid    = cid;
   new_entry->cprop  = cprop;
   new_entry->gid    = gid;
+  new_entry->pgid   = pgid;
   strncpy(new_entry->cunit, cunit, sizeof(new_entry->cunit)-1);
   new_entry->cunit[sizeof(new_entry->cunit)-1] = '\0';
   strcpy(new_entry->cname, cname);
@@ -1340,8 +1547,8 @@ void VTGen_write_DEF_COUNTER(VTGen* gen, uint32_t cid, const char* cname,
   VTGEN_JUMP(gen, length);
 }
 
-void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen, uint32_t cid, const char* grpn,
-                                    uint32_t grpc, uint32_t grpv[])
+void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen, uint32_t gid, const char* grpn,
+                                   uint32_t grpc, uint32_t grpv[])
 {
   VTBuf_Entry_DefProcessGroup* new_entry;
 
@@ -1357,12 +1564,34 @@ void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen, uint32_t cid, const char* grpn,
 
   new_entry->type   = VTBUF_ENTRY_TYPE__DefProcessGroup;
   new_entry->length = length;
-  new_entry->cid    = cid;
+  new_entry->gid    = gid;
   strncpy(new_entry->grpn, grpn, sizeof(new_entry->grpn)-1);
   new_entry->grpn[sizeof(new_entry->grpn)-1] = '\0';
   new_entry->grpc   = grpc;
   if( grpc > 0 )
     memcpy(new_entry->grpv, grpv, grpc * sizeof(uint32_t));
+
+  VTGEN_JUMP(gen, length);
+}
+
+void VTGen_write_DEF_PROCESS_GROUP_ATTRIBUTES(VTGen* gen, uint32_t gid,
+                                              uint32_t gattr)
+{
+  VTBuf_Entry_DefProcessGroupAttributes* new_entry;
+
+  uint32_t length =
+    VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_DefProcessGroupAttributes));
+
+  VTGEN_CHECK(gen);
+
+  VTGEN_ALLOC(gen, length);
+
+  new_entry = ((VTBuf_Entry_DefProcessGroupAttributes*)gen->buf->pos);
+
+  new_entry->type   = VTBUF_ENTRY_TYPE__DefProcessGroupAttributes;
+  new_entry->length = length;
+  new_entry->gid    = gid;
+  new_entry->gattr  = gattr;
 
   VTGEN_JUMP(gen, length);
 }
@@ -2340,7 +2569,9 @@ void VTGen_rewind(VTGen* gen, uint64_t *time)
       case VTBUF_ENTRY_TYPE__DefCounterGroup:
       case VTBUF_ENTRY_TYPE__DefCounter:
       case VTBUF_ENTRY_TYPE__DefProcessGroup:
+      case VTBUF_ENTRY_TYPE__DefProcessGroupAttributes:
       case VTBUF_ENTRY_TYPE__DefMarker:
+      case VTBUF_ENTRY_TYPE__DefKeyValue:
       {
         if(p != gen->rewindmark.pos)
           memmove(gen->rewindmark.pos, p, length);

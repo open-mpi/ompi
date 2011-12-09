@@ -109,11 +109,11 @@ uint64_t vt_pform_clockres() {
 #if TIMER == TIMER_RTC
   return vt_ticks_per_sec;
 #elif TIMER == TIMER_GETTIMEOFDAY
-  return 1e6;
+  return 1000000LL;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_clckrt();
 #elif TIMER == TIMER_PAPI_REAL_USEC
-  return 1e6;
+  return 1000000LL;
 #endif
 }
 
@@ -124,7 +124,7 @@ uint64_t vt_pform_wtime() {
 #elif TIMER == TIMER_GETTIMEOFDAY
   struct timeval tp;
   gettimeofday(&tp, 0);
-  return ((tp.tv_sec - vt_time_base) * 1e6) + tp.tv_usec;
+  return ((tp.tv_sec - vt_time_base) * 1000000LL) + tp.tv_usec;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_real_cyc();
 #elif TIMER == TIMER_PAPI_REAL_USEC

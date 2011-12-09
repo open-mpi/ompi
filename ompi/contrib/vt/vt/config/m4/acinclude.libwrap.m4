@@ -96,7 +96,7 @@ AC_DEFUN([ACVT_LIBWRAP],
 				cuda)
 					ACVT_CONF_SUBTITLE([CUDA])
 					ACVT_CUDAWRAP
-					AS_IF([test x"$have_cudawrap" = "xyes"], [have_libwrap="yes"],
+					AS_IF([test x"$have_cudartwrap" = "xyes"], [have_libwrap="yes"],
 					[
 						AS_IF([test x"$force_cudawrap" = "xyes"],
 						[libwrap_error="yes"; break])

@@ -397,6 +397,8 @@ void POMP_Workshare_exit(struct ompregdescr* r) {
  */
 
 void POMP_Init_lock(omp_lock_t *s) {
+  if ( !pomp_initialized ) POMP_Init();
+
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
@@ -464,6 +466,8 @@ int  POMP_Test_lock(omp_lock_t *s) {
 }
 
 void POMP_Init_nest_lock(omp_nest_lock_t *s) {
+  if ( !pomp_initialized ) POMP_Init();
+
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
@@ -537,6 +541,8 @@ int POMP_Test_nest_lock(omp_nest_lock_t *s) {
  */
 
 VT_DECLDEF(void POMP_Init_lock_f(omp_lock_t *s)) {
+  if ( !pomp_initialized ) POMP_Init();
+
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();
@@ -620,6 +626,8 @@ VT_DECLDEF(int POMP_Test_lock_f(omp_lock_t *s)) {
 
 #ifndef __osf__
 VT_DECLDEF(void POMP_Init_nest_lock_f(omp_nest_lock_t *s)) {
+  if ( !pomp_initialized ) POMP_Init();
+
   if ( IS_POMP_TRACE_ON ) {
     uint64_t time;
     time = vt_pform_wtime();

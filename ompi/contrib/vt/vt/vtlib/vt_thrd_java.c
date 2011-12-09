@@ -68,7 +68,7 @@ void VTThrd_initJava()
     vt_java_get_thread_name(NULL, NULL, tname, sizeof(tname));
 
     /* create thread object for master thread */
-    VTThrd_create(0, 0, tname, 0);
+    VTThrd_create(tname, 0, 0);
     VTThrd_open(0);
   }
 }
@@ -86,23 +86,18 @@ void VTThrd_registerThread(jthread thread, const char* tname)
     /* create new thread-ID */
     tid = (uint32_t*)malloc(sizeof(uint32_t));
     if (tid == NULL) vt_error();
+    *tid = VTThrd_create(tname, 0, 0);
 
-    /* increment number of threads */
-    *tid = VTThrd_createNewThreadId();
-
-    /* put new ID to thread-specific data */
+    /* put new thread-ID to thread-specific data */
     error = (*jvmti)->SetThreadLocalStorage(jvmti, thread, (void*)tid);
     vt_java_check_error(jvmti, error, "SetThreadLocalStorage");
 
-    /* create new thread object */
-    vt_cntl_msg(2, "Dynamic thread creation. Thread #%d (%s)",
-                *tid, tname ? tname : "unnamed");
-    VTThrd_create(*tid, 0, tname, 0);
+    /* open thread associated trace file */
     VTThrd_open(*tid);
   }
 }
 
-uint8_t VTThrd_is_alive()
+uint8_t VTThrd_isAlive()
 {
   jvmtiError error;
   uint32_t *tid;

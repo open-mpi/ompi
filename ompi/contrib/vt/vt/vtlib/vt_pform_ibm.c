@@ -119,11 +119,11 @@ uint64_t vt_pform_clockres() {
   }
   return 1;
 #elif TIMER == TIMER_POWER_REALTIME
-  return 1e9;
+  return 1000000000LL;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_clckrt();
 #elif TIMER == TIMER_PAPI_REAL_USEC
-  return 1e6;
+  return 1000000LL;
 #endif
 }
 
@@ -140,7 +140,7 @@ uint64_t vt_pform_wtime() {
   timebasestruct_t t;
   read_real_time(&t, TIMEBASE_SZ);
   time_base_to_time(&t, TIMEBASE_SZ);
-  return ((t.tb_high - vt_time_base) * 1e9) + t.tb_low;
+  return ((t.tb_high - vt_time_base) * 1000000000LL) + t.tb_low;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_real_cyc();
 #elif TIMER == TIMER_PAPI_REAL_USEC

@@ -117,7 +117,7 @@ char* OTF_stripFilename( const char* filename ) {
 
 	if( NULL == p ) {
 	
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -132,7 +132,7 @@ char* OTF_stripFilename( const char* filename ) {
 
 	/* fail if the resulting filename is empty */
 	if ( '\0' == *ret ) {
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"empty filename base.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 

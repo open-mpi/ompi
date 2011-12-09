@@ -40,28 +40,28 @@
 #define VT__TRC_MARKER_HINT     2
 
 /**
- * Description
+ * TODO: Description
  */
 EXTERN void vt_open(void);
 
 /**
- * Description
+ * TODO: Description
  */
 EXTERN void vt_reset(void);
 /**
- * Description
+ * TODO: Description
  *
  * @param signum  signal number
  */
 EXTERN void vt_close_by_signal(int signum);
 
 /**
- * Description
+ * TODO: Description
  */
 EXTERN void vt_close(void);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param mark  flag: mark trace status as function enter/exit?
@@ -70,7 +70,7 @@ EXTERN void vt_close(void);
 EXTERN void vt_trace_on(uint32_t tid, uint8_t mark);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid        thread id
  * @param mark       flag: mark trace status as function enter/exit?
@@ -82,7 +82,7 @@ EXTERN void vt_trace_on(uint32_t tid, uint8_t mark);
 EXTERN void vt_trace_off(uint32_t tid, uint8_t mark, uint8_t permanent);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid  thread id
  *
@@ -92,7 +92,7 @@ EXTERN void vt_trace_off(uint32_t tid, uint8_t mark, uint8_t permanent);
 EXTERN uint8_t vt_is_trace_on(uint32_t tid);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param size  buffer size to be guaranteed
@@ -100,14 +100,14 @@ EXTERN uint8_t vt_is_trace_on(uint32_t tid);
 EXTERN void vt_guarantee_buffer(uint32_t tid, size_t size);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid  thread id
  */
 EXTERN void vt_buffer_flush(uint32_t tid);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -115,21 +115,21 @@ EXTERN void vt_buffer_flush(uint32_t tid);
 EXTERN void vt_update_counter(uint32_t tid, uint64_t* time);
 
 /**
- * Description
+ * TODO: Description
  * This function have to be called immediately after initializing the
  * communication middle-ware, e.g. atfer MPI_Init().
  */
 EXTERN void vt_mpi_init(void);
 
 /**
- * Description
+ * TODO: Description
  * This function have to be called immediately before finalizing the
  * communication middle-ware, e.g. before MPI_Finalize().
  */
 EXTERN void vt_mpi_finalize(void);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -151,7 +151,7 @@ EXTERN uint32_t vt_get_curid(void);
  */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid  thread id
  * @param fmt  comment as format string like printf
@@ -159,7 +159,7 @@ EXTERN uint32_t vt_get_curid(void);
 EXTERN void vt_def_comment(uint32_t tid, const char* fmt, ...);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param fname  source file name
@@ -169,7 +169,7 @@ EXTERN void vt_def_comment(uint32_t tid, const char* fmt, ...);
 EXTERN uint32_t vt_def_scl_file(uint32_t tid, const char* fname);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param fid    source file id (created by vt_def_scl_file)
@@ -183,7 +183,7 @@ EXTERN uint32_t vt_def_scl(uint32_t tid, uint32_t fid, uint32_t begln,
                            uint32_t endln);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param gname  file group name
@@ -193,7 +193,7 @@ EXTERN uint32_t vt_def_scl(uint32_t tid, uint32_t fid, uint32_t begln,
 EXTERN uint32_t vt_def_file_group(uint32_t tid, const char* gname);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param fname  file name
@@ -204,7 +204,7 @@ EXTERN uint32_t vt_def_file_group(uint32_t tid, const char* gname);
 EXTERN uint32_t vt_def_file(uint32_t tid, const char* fname, uint32_t gid);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param gname  region group name
@@ -214,7 +214,7 @@ EXTERN uint32_t vt_def_file(uint32_t tid, const char* fname, uint32_t gid);
 EXTERN uint32_t vt_def_region_group(uint32_t tid, const char* gname);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid     thread id
  * @param rname   region name
@@ -231,7 +231,7 @@ EXTERN uint32_t vt_def_region(uint32_t tid, const char* rname, uint32_t fid,
                               const char* rdesc, uint8_t rtype);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param gname  counter group name
@@ -241,21 +241,48 @@ EXTERN uint32_t vt_def_region(uint32_t tid, const char* rname, uint32_t fid,
 EXTERN uint32_t vt_def_counter_group(uint32_t tid, const char* gname);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param cname  counter name
- * @param cprop  counter properties
- * @param cgid   counter group id (created by vt_def_counter_group)
  * @param cunit  counter unit
+ * @param cprop  counter properties bitmask
+ * @param cgid   counter group id (created by vt_def_counter_group)
+ * @param pgid   process group id (created by vt_def_procgrp if group counter,
+ *                                 otherwise 0)
  *
  * @return       counter id
  */
-EXTERN uint32_t vt_def_counter(uint32_t tid, const char* cname, uint32_t cprop,
-                               uint32_t gid, const char* cunit);
+EXTERN uint32_t vt_def_counter(uint32_t tid, const char* cname,
+                               const char* cunit, uint32_t cprop, uint32_t gid,
+                               uint32_t pgid);
 
 /**
- * Description
+ * TODO: Description
+ *
+ * @param tid    thread id
+ * @param gname  process group name
+ * @param grpc   number of entries in @grpv array
+ * @param grpv   array of member process/thread ids
+ * @param gid    previous created process group id (if 0, create a new one)
+ *
+ * @return       process group id
+ */
+EXTERN uint32_t vt_def_procgrp(uint32_t tid, const char* gname, uint32_t gattr,
+                               uint32_t grpc, uint32_t grpv[], uint32_t gid);
+
+/**
+ * TODO: Description
+ *
+ * @param tid    thread id
+ * @param gid    process group id (created by vt_def_procgrp)
+ * @param gattr  process group attributes bitmask
+ */
+EXTERN void vt_def_procgrp_attributes(uint32_t tid, uint32_t gid,
+                                      uint32_t gattr);
+
+/**
+ * TODO: Description
  *
  * @param tid    thread id
  * @param mname  marker name
@@ -267,18 +294,7 @@ EXTERN uint32_t vt_def_marker(uint32_t tid, const char* mname,
                               uint32_t mtype);
 
 /**
- * Defines a marker with the given name.
- *
- * @param grpc number of GPU thread ids the array contains
- * @param grpv array of GPU thread ids
- * @param name name of process/thread group to be identified in vt_unify
- * @param cid the communictor id for this process/thread group
- */
-EXTERN void vt_def_gpu_comm(uint32_t grpc, uint32_t grpv[], const char* name,
-                            uint32_t cid);
-
-/**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param ctype  MPI communicator type
@@ -292,7 +308,7 @@ EXTERN uint32_t vt_def_mpi_comm(uint32_t tid, uint8_t ctype, uint32_t grpc,
                                 uint8_t grpv[]);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param cname  communicator name
@@ -302,7 +318,7 @@ EXTERN uint32_t vt_def_mpi_comm(uint32_t tid, uint8_t ctype, uint32_t grpc,
 EXTERN uint32_t vt_def_user_comm(uint32_t tid, const char* cname);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param vtype  value type
@@ -313,7 +329,7 @@ EXTERN uint32_t vt_def_user_comm(uint32_t tid, const char* cname);
 EXTERN uint32_t vt_def_keyval(uint32_t tid, uint8_t vtype, const char* kname);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param sname  unique async. source name
@@ -331,7 +347,7 @@ EXTERN uint32_t vt_def_async_source(uint32_t tid, const char* sname);
 /* -- Region -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -343,7 +359,7 @@ EXTERN uint32_t vt_def_async_source(uint32_t tid, const char* sname);
 EXTERN uint8_t vt_enter(uint32_t tid, uint64_t* time, uint32_t rid);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -354,7 +370,7 @@ EXTERN void vt_exit(uint32_t tid, uint64_t* time);
 
 /**
  * DEPRECATED
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param time   begin timestamp
@@ -368,7 +384,7 @@ EXTERN void vt_ioexit(uint32_t tid, uint64_t* time, uint64_t* etime,
                       uint32_t fid, uint64_t hid, uint32_t op, uint64_t bytes );
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -377,7 +393,7 @@ EXTERN void vt_ioexit(uint32_t tid, uint64_t* time, uint64_t* etime,
 EXTERN void vt_iobegin( uint32_t tid, uint64_t* time, uint64_t mid );
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param time   timestamp
@@ -393,20 +409,19 @@ EXTERN void vt_ioend(uint32_t tid, uint64_t* time, uint32_t fid, uint64_t mid,
 /* -- Counter -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
  * @param hid   counter id (created by vt_def_counter)
  * @param cval  counter value
  */
-EXTERN void vt_count(uint32_t tid, uint64_t* time, uint32_t cid,
-                     uint64_t cval);
+EXTERN void vt_count(uint32_t tid, uint64_t* time, uint32_t cid, uint64_t cval);
 
 /* -- Comment -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -417,7 +432,7 @@ EXTERN void vt_comment(uint32_t tid, uint64_t* time, const char* fmt, ... );
 /* -- Rewind -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -425,7 +440,7 @@ EXTERN void vt_comment(uint32_t tid, uint64_t* time, const char* fmt, ... );
 EXTERN void vt_rewind(uint32_t tid, uint64_t* time);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -435,7 +450,7 @@ EXTERN void vt_set_rewind_mark(uint32_t tid, uint64_t* time);
 /* -- Marker -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -446,7 +461,7 @@ EXTERN void vt_marker(uint32_t tid, uint64_t* time, uint32_t mid,
                       const char* fmt, ...);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -456,7 +471,7 @@ EXTERN void vt_marker_error(uint32_t tid, uint64_t* time,
                             const char* fmt, ...);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -466,7 +481,7 @@ EXTERN void vt_marker_warning(uint32_t tid, uint64_t* time,
                               const char* fmt, ...);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -478,7 +493,7 @@ EXTERN void vt_marker_hint(uint32_t tid, uint64_t* time,
 /* -- Key-Value -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param time   timestamp
@@ -489,7 +504,7 @@ EXTERN void vt_marker_hint(uint32_t tid, uint64_t* time,
 EXTERN void vt_keyval(uint32_t tid, uint32_t kid, uint8_t vtype, void* kvalue);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param kid   async. source key id
@@ -500,7 +515,7 @@ EXTERN void vt_next_async_time(uint32_t tid, uint32_t kid, uint64_t atime);
 /* -- MPI-1 -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -513,7 +528,7 @@ EXTERN void vt_mpi_send(uint32_t tid, uint64_t* time, uint32_t dpid,
                         uint32_t cid, uint32_t tag, uint32_t sent);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param time   timestamp
@@ -528,7 +543,7 @@ EXTERN void vt_mpi_recv(uint32_t tid, uint64_t* time, uint32_t spid,
 
 /**
  * DEPRECATED
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param time   timestamp
@@ -545,7 +560,7 @@ EXTERN void vt_mpi_collexit(uint32_t tid, uint64_t* time, uint64_t* etime,
                             void* comm, uint32_t sent, uint32_t recvd);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param time   timestamp
@@ -561,7 +576,7 @@ EXTERN void vt_mpi_collbegin(uint32_t tid, uint64_t* time, uint32_t rid,
                              uint64_t sent, uint64_t recvd);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param time   timestamp
@@ -569,12 +584,12 @@ EXTERN void vt_mpi_collbegin(uint32_t tid, uint64_t* time, uint32_t rid,
  * @param comm   MPI communicator
  */
 EXTERN void vt_mpi_collend(uint32_t tid, uint64_t* time, uint64_t mid,
-                           void* comm);
+                           void* comm, uint8_t was_recorded);
 
 /* -- MPI2 - 1sided -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -587,7 +602,7 @@ EXTERN void vt_mpi_rma_put(uint32_t tid, uint64_t* time, uint32_t tpid,
                            uint32_t cid, uint32_t tag, uint64_t sent);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -600,7 +615,7 @@ EXTERN void vt_mpi_rma_putre(uint32_t tid, uint64_t* time, uint32_t tpid,
                              uint32_t cid, uint32_t tag, uint64_t sent);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid    thread id
  * @param time   timestamp
@@ -613,7 +628,7 @@ EXTERN void vt_mpi_rma_get(uint32_t tid, uint64_t* time, uint32_t tpid,
                            uint32_t cid, uint32_t tag, uint64_t recvd);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -626,14 +641,14 @@ EXTERN void vt_mpi_rma_end(uint32_t tid, uint64_t* time, uint32_t cid,
 /* -- OpenMP -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid  thread id
  */
 EXTERN void vt_omp_fork(uint32_t tid);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param ptid  parent thread id
@@ -641,21 +656,21 @@ EXTERN void vt_omp_fork(uint32_t tid);
 EXTERN void vt_omp_fork2(uint32_t tid, uint32_t* ptid);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid  thread id
  */
 EXTERN void vt_omp_join(uint32_t tid);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid  thread id
  */
 EXTERN void vt_omp_parallel_begin(uint32_t tid);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param ptid  parent thread id
@@ -663,7 +678,7 @@ EXTERN void vt_omp_parallel_begin(uint32_t tid);
 EXTERN void vt_omp_parallel_begin2(uint32_t tid, uint32_t ptid);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid  thread id
  */
@@ -672,28 +687,26 @@ EXTERN void vt_omp_parallel_end(uint32_t tid);
 /* -- User Point-to-Point Communication -- */
 
 /**
- *  Description
+ * TODO: Description
  *
- *  @param tid   thread id
- *  @param time  timestamp
- *  @param cid   communicator id (created by vt_def_user_comm)
- *  @param tag   message tag (has to be unique per communication pair)
- *  @param sent  sent bytes
- *
+ * @param tid   thread id
+ * @param time  timestamp
+ * @param cid   communicator id (created by vt_def_user_comm)
+ * @param tag   message tag (has to be unique per communication pair)
+ * @param sent  sent bytes
  */
 
 EXTERN void vt_user_send(uint32_t tid, uint64_t* time, uint32_t cid,
                          uint32_t tag, uint32_t sent);
 
 /**
- *  Description
+ * TODO: Description
  *
- *  @param tid   thread id
- *  @param time  timestamp
- *  @param cid   communicator id (created by vt_def_user_comm)
- *  @param tag   message tag (has to be unique per communication pair)
- *  @param sent  received bytes
- *
+ * @param tid   thread id
+ * @param time  timestamp
+ * @param cid   communicator id (created by vt_def_user_comm)
+ * @param tag   message tag (has to be unique per communication pair)
+ * @param sent  received bytes
  */
 
 EXTERN void vt_user_recv(uint32_t tid, uint64_t* time, uint32_t cid,
@@ -702,7 +715,7 @@ EXTERN void vt_user_recv(uint32_t tid, uint64_t* time, uint32_t cid,
 /* -- VampirTrace Internal -- */
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -710,7 +723,7 @@ EXTERN void vt_user_recv(uint32_t tid, uint64_t* time, uint32_t cid,
 EXTERN void vt_enter_user(uint32_t tid, uint64_t* time);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -718,7 +731,7 @@ EXTERN void vt_enter_user(uint32_t tid, uint64_t* time);
 EXTERN void vt_exit_user(uint32_t tid, uint64_t* time);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -726,7 +739,7 @@ EXTERN void vt_exit_user(uint32_t tid, uint64_t* time);
 EXTERN void vt_enter_stat(uint32_t tid, uint64_t* time);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -734,7 +747,7 @@ EXTERN void vt_enter_stat(uint32_t tid, uint64_t* time);
 EXTERN void vt_exit_stat(uint32_t tid, uint64_t* time);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -742,7 +755,7 @@ EXTERN void vt_exit_stat(uint32_t tid, uint64_t* time);
 EXTERN void vt_enter_flush(uint32_t tid, uint64_t* time);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -750,7 +763,7 @@ EXTERN void vt_enter_flush(uint32_t tid, uint64_t* time);
 EXTERN void vt_exit_flush(uint32_t tid, uint64_t* time);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -758,7 +771,7 @@ EXTERN void vt_exit_flush(uint32_t tid, uint64_t* time);
 EXTERN void vt_enter_rewind(uint32_t tid, uint64_t* time);
 
 /**
- * Description
+ * TODO: Description
  *
  * @param tid   thread id
  * @param time  timestamp
@@ -782,8 +795,14 @@ EXTERN int vt_my_funique; /** unique file id */
 /** array of indices for internal regions */
 EXTERN uint32_t vt_trc_regid[VT__TRC_REGID_NUM];
 
-/** array of induces for internal markers (error, warnings, hints) */
+/** array of indices for internal markers (error, warnings, hints) */
 EXTERN uint32_t vt_trc_mid[3];
+
+/** id of process group containing all processes */
+EXTERN uint32_t vt_all_pgid;
+
+/** node process group id */
+EXTERN uint32_t vt_node_pgid;
 
 /** counter group id for miscellaneous counters (e.g. cpu id) */
 EXTERN uint32_t vt_misc_cgid;

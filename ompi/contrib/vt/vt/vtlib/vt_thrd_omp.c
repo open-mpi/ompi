@@ -51,16 +51,15 @@ void VTThrd_registerThread(uint32_t ptid)
 {
   if (!vt_is_alive) return;
 
-  /* check whether an ID is already created for this thread */
-  if (threadId == VT_NO_ID){
-    /* create new thread object */
-    vt_cntl_msg(2, "Dynamic thread creation. Thread #%d", threadId);
-    VTThrd_create(threadId, ptid, NULL, 0);
+  /* create new thread-ID, if necessary */
+  if (threadId == VT_NO_ID)
+  {
+    threadId = VTThrd_create(NULL, ptid, 0);
     VTThrd_open(threadId);
   }
 }
 
-uint8_t VTThrd_is_alive()
+uint8_t VTThrd_isAlive()
 {
   return (threadId != VT_NO_ID);
 }

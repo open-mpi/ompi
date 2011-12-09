@@ -196,8 +196,11 @@ void vt_libcwrap_init(void)
 
 void vt_libcwrap_finalize(void)
 {
+  /* don't close the LIBC library handle at this point; it's still needed
+     if the application is statically linked
   if( libc_handle )
     dlclose( libc_handle );
+  */
 }
 
 

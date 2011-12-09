@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 uint8_t OTF_KeyValueList_getValue(OTF_KeyValueList *list, uint32_t key, OTF_Type otf_type, OTF_Value *otf_value);
 
 OTF_KeyValueList *OTF_KeyValueList_new() {
@@ -17,7 +18,7 @@ OTF_KeyValueList *OTF_KeyValueList_new() {
 
 	if (list == NULL) {
 		/* error: not enough memory left */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		return NULL;
@@ -27,7 +28,7 @@ OTF_KeyValueList *OTF_KeyValueList_new() {
 
 	if (list->kvBegin == NULL) {
 		/* error: not enough memory left */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		free(list);
@@ -46,7 +47,7 @@ OTF_KeyValueList *OTF_KeyValueList_new() {
 
 	if( OTF_KeyValueList_realloc(list, 9) ) {
 		/* an error ocurred while realloc */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -64,7 +65,7 @@ uint8_t OTF_KeyValueList_close(OTF_KeyValueList* list) {
 
 	if (list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		return 1;
@@ -92,7 +93,7 @@ uint8_t OTF_KeyValueList_reset(OTF_KeyValueList* list) {
 
 	if ( list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		return 1;
@@ -137,7 +138,7 @@ uint8_t OTF_KeyValueList_realloc(OTF_KeyValueList* list, uint32_t num) {
 
 	if (list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		return 1;
@@ -176,7 +177,7 @@ uint8_t OTF_KeyValueList_appendPair(OTF_KeyValueList* list, OTF_KeyValuePair pai
 
 	if (list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		return 255;
@@ -201,7 +202,7 @@ uint8_t OTF_KeyValueList_appendPair(OTF_KeyValueList* list, OTF_KeyValuePair pai
 			/* an error ocurred while realloc */
 			if ( (list->size - list->count) < 1 ) {
 				/* if no memory left, return with error */
-				OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+				OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 						"no memory left.\n",
 						__FUNCTION__, __FILE__, __LINE__ );
 
@@ -411,7 +412,7 @@ uint8_t OTF_KeyValueList_appendKeyValueList(OTF_KeyValueList *dest_list, OTF_Key
 	for( i = 0; i < source_list->count; i++ ) {
 
 		if ( 255 == OTF_KeyValueList_appendPair(dest_list, p->kvPair) ) {
-			OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+			OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 					"error while appending OTF_KeyValueList.\n",
 					__FUNCTION__, __FILE__, __LINE__ );
 
@@ -457,7 +458,7 @@ uint8_t OTF_KeyValueList_getValue(OTF_KeyValueList *list, uint32_t key, OTF_Type
 
 	if (list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 		return 255;
@@ -482,258 +483,244 @@ uint8_t OTF_KeyValueList_getValue(OTF_KeyValueList *list, uint32_t key, OTF_Type
 
 	/* no key in list matches the searched key */
 	return 1;
-	
 }
 
 uint8_t OTF_KeyValueList_getChar(OTF_KeyValueList *list, uint32_t key, char *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_CHAR, &otf_value)) ) {
 	  	*value = otf_value.otf_char;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getInt8(OTF_KeyValueList *list, uint32_t key, int8_t *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_INT8, &otf_value)) ) {
 	  	*value = otf_value.otf_int8;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getUint8(OTF_KeyValueList *list, uint32_t key, uint8_t *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_UINT8, &otf_value)) ) {
 	  	*value = otf_value.otf_uint8;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getInt16(OTF_KeyValueList *list, uint32_t key, int16_t *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_INT16, &otf_value)) ) {
 	  	*value = otf_value.otf_int16;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getUint16(OTF_KeyValueList *list, uint32_t key, uint16_t *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_UINT16, &otf_value)) ) {
 	  	*value = otf_value.otf_uint16;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getInt32(OTF_KeyValueList *list, uint32_t key, int32_t *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_INT32, &otf_value)) ) {
 	  	*value = otf_value.otf_int32;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getUint32(OTF_KeyValueList *list, uint32_t key, uint32_t *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_UINT32, &otf_value)) ) {
 	  	*value = otf_value.otf_uint32;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getInt64(OTF_KeyValueList *list, uint32_t key, int64_t *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_INT64, &otf_value)) ) {
 	  	*value = otf_value.otf_int64;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getUint64(OTF_KeyValueList *list, uint32_t key, uint64_t *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_UINT64, &otf_value)) ) {
 	  	*value = otf_value.otf_uint64;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getFloat(OTF_KeyValueList *list, uint32_t key, float *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_FLOAT, &otf_value)) ) {
 	  	*value = otf_value.otf_float;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getDouble(OTF_KeyValueList *list, uint32_t key, double *value) {
 
-  	OTF_Value otf_value;
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_DOUBLE, &otf_value)) ) {
 	  	*value = otf_value.otf_double;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 uint8_t OTF_KeyValueList_getByteArray(OTF_KeyValueList *list, uint32_t key, uint8_t *value, uint32_t *len) {
-    
-    OTF_KeyValuePairList *p;
-    uint32_t i;
-    uint32_t max_len;
-    
-    if (list == NULL) {
-        /* error */
-        OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
-                "no list has been specified.\n",
-                __FUNCTION__, __FILE__, __LINE__ );
-        return 255;
-    }
 
-    p = list->kvBegin;
-    
-    max_len = *len;
-    *len = 0;
+	OTF_KeyValuePairList *p;
+	uint32_t i;
+	uint32_t max_len;
 
-    /* search key */
-    for ( i=0; i<list->count; i++) {
-      
-        if ( p->kvPair.key == key ) {
-          
-            if ( p->kvPair.type == OTF_BYTE_ARRAY) {
-                             
-                if( p->kvPair.value.otf_byte_array.len <= OTF_KEYVALUE_MAX_ARRAY_LEN ) {
-                  
-                    if( ( *len + p->kvPair.value.otf_byte_array.len ) > max_len ) {
-                     
-                        /* allocated memory pointed by "value" is not big enough to store the howle byte array */
-                        /* fill memory until the end and exit with an error-code */                       
-                        memcpy(value, p->kvPair.value.otf_byte_array.array, max_len - *len);
-                        
-                        *len = max_len;
-                        
-                        return 255;
-                      
-                    }
-                  
-                    *len += p->kvPair.value.otf_byte_array.len;
-                                                         
-                    memcpy(value, p->kvPair.value.otf_byte_array.array, p->kvPair.value.otf_byte_array.len);
-                                      
-                    /* end of byte array reached, all right */
-                    return 0;
-                  
-                } else {
-                  
-                    if( ( *len + OTF_KEYVALUE_MAX_ARRAY_LEN ) > max_len ) {
-                     
-                        /* allocated memory pointed by "value" is not big enough to store the howle byte array */
-                        /* fill memory until the end and exit with an error-code */                       
-                        memcpy(value, p->kvPair.value.otf_byte_array.array, max_len - *len);
-                        
-                        *len = max_len;
-                        
-                        return 255;
-                         
-                    }
-                              
-                    *len += OTF_KEYVALUE_MAX_ARRAY_LEN;
-                  
-                    memcpy(value, p->kvPair.value.otf_byte_array.array, OTF_KEYVALUE_MAX_ARRAY_LEN);
-                    
-                    value += OTF_KEYVALUE_MAX_ARRAY_LEN;
-                                      
-                }
-                
-            } else {
-              
-                /* type of found key differs */
-                return 2;
-            }
-            
-        } else {
-         
-            if( *len > 0 ) {
-           
-                /* byte-array not completed */
-                return 255;
-            
-            }
-          
-        }
-        
-        p = p->kvNext;
-        
-    }
-    
-    /* no key in list matches the searched key */
-  	return 1;
-  
+	if (list == NULL) {
+		/* error */
+		OTF_Error(  "ERROR in function %s, file: %s, line: %i:\n "
+				"no list has been specified.\n",
+				__FUNCTION__, __FILE__, __LINE__ );
+		return 255;
+	}
+
+	p = list->kvBegin;
+
+	max_len = *len;
+	*len = 0;
+
+	/* search key */
+	for ( i=0; i<list->count; i++) {
+
+		if ( p->kvPair.key == key ) {
+
+			if ( p->kvPair.type == OTF_BYTE_ARRAY) {
+
+				if( p->kvPair.value.otf_byte_array.len <= OTF_KEYVALUE_MAX_ARRAY_LEN ) {
+
+					if( ( *len + p->kvPair.value.otf_byte_array.len ) > max_len ) {
+
+						/* allocated memory pointed by "value" is not big enough to store the howle byte array */
+						/* fill memory until the end and exit with an error-code */                       
+						memcpy(value, p->kvPair.value.otf_byte_array.array, max_len - *len);
+
+						*len = max_len;
+
+						return 255;
+
+					}
+
+					*len += p->kvPair.value.otf_byte_array.len;
+
+					memcpy(value, p->kvPair.value.otf_byte_array.array, p->kvPair.value.otf_byte_array.len);
+
+					/* end of byte array reached, all right */
+					return 0;
+
+				} else {
+
+					if( ( *len + OTF_KEYVALUE_MAX_ARRAY_LEN ) > max_len ) {
+
+						/* allocated memory pointed by "value" is not big enough to store the howle byte array */
+						/* fill memory until the end and exit with an error-code */                       
+						memcpy(value, p->kvPair.value.otf_byte_array.array, max_len - *len);
+
+						*len = max_len;
+
+						return 255;
+
+					}
+
+					*len += OTF_KEYVALUE_MAX_ARRAY_LEN;
+
+					memcpy(value, p->kvPair.value.otf_byte_array.array, OTF_KEYVALUE_MAX_ARRAY_LEN);
+
+					value += OTF_KEYVALUE_MAX_ARRAY_LEN;
+
+				}
+
+			} else {
+
+				/* type of found key differs */
+				return 2;
+			}
+
+			} else {
+
+				if( *len > 0 ) {
+
+				/* byte-array not completed */
+				return 255;
+
+			}
+
+		}
+
+		p = p->kvNext;
+
+	}
+
+	/* no key in list matches the searched key */
+	return 1;
 }
 
 uint8_t OTF_KeyValueList_getArrayLength(OTF_KeyValueList *list, uint32_t key, uint32_t *len) {
-  
-  	OTF_Value otf_value;
+
+	OTF_Value otf_value;
 	int ret;
 	
 	if( ! (ret = OTF_KeyValueList_getValue(list, key, OTF_BYTE_ARRAY, &otf_value)) ) {
 	  	*len = otf_value.otf_byte_array.len;
 	}
- 	
-  	return ret;
-  
+
+	return ret;
 }
 
 OTF_Type OTF_KeyValueList_getTypeForKey(OTF_KeyValueList *list, uint32_t key) {
@@ -743,7 +730,7 @@ OTF_Type OTF_KeyValueList_getTypeForKey(OTF_KeyValueList *list, uint32_t key) {
 
 	if (list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -771,7 +758,7 @@ uint8_t OTF_KeyValueList_hasKey(OTF_KeyValueList *list, uint32_t key) {
 
 	if (list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -800,7 +787,7 @@ uint8_t OTF_KeyValueList_removeKey(OTF_KeyValueList *list, uint32_t key) {
 
 	if (list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -840,7 +827,7 @@ uint8_t OTF_KeyValueList_getKeyByIndex(OTF_KeyValueList *list, uint32_t index, u
 
 	if (list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -884,7 +871,7 @@ uint8_t OTF_KeyValueList_getPairByIndex(OTF_KeyValueList *list, uint32_t index, 
 
 	if (list == NULL) {
 		/* error */
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no list has been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 

@@ -230,16 +230,16 @@ void VTThrd_registerThread(uint32_t ptid)
       pthread_mutex_unlock(&threadReuseMutex);
     }
 
-    if (!tid_reuse) *tid = VTThrd_createNewThreadId();
+    /* create new thread-ID, if not reusing */
+    if (!tid_reuse)
+      *tid = VTThrd_create(NULL, ptid, 0);
 
-    /* put (new) thread-ID to thread-specific data
-       no IO before this call (fflush calls this function) */
+    /* put (new) thread-ID to thread-specific data */
     pthread_setspecific(pthreadKey, tid);
 
-    /* create new thread object, if new thread-ID was created */
-    if (!tid_reuse){
-      vt_cntl_msg(2, "Dynamic thread creation. Thread #%d", *tid);
-      VTThrd_create(*tid, ptid, NULL, 0);
+    /* open thread associated trace file, if new thread object was created */
+    if (!tid_reuse )
+    {
       VTThrd_open(*tid);
     }
     /* otherwise, re-create metrics for reused thread object */
@@ -259,7 +259,7 @@ void VTThrd_registerThread(uint32_t ptid)
   }
 }
 
-uint8_t VTThrd_is_alive()
+uint8_t VTThrd_isAlive()
 {
   uint32_t *tid;
 

@@ -379,6 +379,12 @@ int main ( int argc, const char** argv ) {
                 &fha,
                 OTF_DEFCOUNTERASSIGNMENTS_RECORD );
 
+        OTF_HandlerArray_setHandler( handlers,
+                (OTF_FunctionPointer*) handleDefProcessSubstitutes,
+                OTF_DEFPROCESSSUBSTITUTES_RECORD );
+        OTF_HandlerArray_setFirstHandlerArg( handlers,
+                &fha,
+                OTF_DEFPROCESSSUBSTITUTES_RECORD );
 
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) handleNoOp,

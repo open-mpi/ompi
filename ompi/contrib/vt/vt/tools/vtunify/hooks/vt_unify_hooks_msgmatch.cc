@@ -50,7 +50,7 @@ HooksMsgMatchC::~HooksMsgMatchC()
 //
 
 int
-HooksMsgMatchC::Handle_EventComment( void * userData,
+HooksMsgMatchC::HandleEventComment( void * userData,
    uint64_t time, uint32_t proc, const char * comment )
 {
 #ifdef VT_ETIMESYNC
@@ -67,7 +67,7 @@ HooksMsgMatchC::Handle_EventComment( void * userData,
 }
 
 int
-HooksMsgMatchC::Handle_RecvMsg( LargeVectorC<RecvMsgS*> * recvMsgs,
+HooksMsgMatchC::HandleRecvMsg( LargeVectorC<RecvMsgS*> * recvMsgs,
    uint64_t time, uint32_t receiver, uint32_t sender, uint32_t comm,
    uint32_t tag, uint32_t length, uint32_t scl )
 {
@@ -383,12 +383,12 @@ HooksMsgMatchC::getRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
 
          // ... OTF_EVENTCOMMENT_RECORD
          OTF_HandlerArray_setHandler( handler_array,
-            (OTF_FunctionPointer*)HooksMsgMatchC::Handle_EventComment,
+            (OTF_FunctionPointer*)HooksMsgMatchC::HandleEventComment,
             OTF_EVENTCOMMENT_RECORD );
 
          // ... OTF_RECEIVE_RECORD
          OTF_HandlerArray_setHandler( handler_array,
-            (OTF_FunctionPointer*)HooksMsgMatchC::Handle_RecvMsg,
+            (OTF_FunctionPointer*)HooksMsgMatchC::HandleRecvMsg,
             OTF_RECEIVE_RECORD );
          OTF_HandlerArray_setFirstHandlerArg( handler_array,
             recv_msgs[threadid], OTF_RECEIVE_RECORD );
@@ -437,7 +437,6 @@ HooksMsgMatchC::getRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
          recv_msgs[i]->clear();
          delete recv_msgs[i];
       }
-      delete [] recv_msgs;
 
 #ifdef VT_MPI
       // distribute receive messages to ranks which processes the corresponding
@@ -450,6 +449,8 @@ HooksMsgMatchC::getRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
       }
 #endif // VT_MPI
    }
+
+   delete [] recv_msgs;
 
    return !error;
 }

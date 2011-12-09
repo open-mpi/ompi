@@ -270,6 +270,14 @@ typedef int (OTF_Handler_DefCounterAssignments) ( void*             userData,
                                                   const uint32_t*   procs_or_groups,
                                                   OTF_KeyValueList* list );
 
+/* # OTF_DEFPROCESSSUBSTITUTES_RECORD */
+typedef int (OTF_Handler_DefProcessSubstitutes) ( void*             userData,
+                                                  uint32_t          stream,
+                                                  uint32_t          representative,
+                                                  uint32_t          numberOfProcs,
+                                                  const uint32_t*   procs,
+                                                  OTF_KeyValueList* list );
+
 /* typedefs for OTF event records ****************************************** */
 
 /* # OTF_NOOP_RECORD */

@@ -358,8 +358,11 @@ void vt_iowrap_finalize()
 {
         if( fd_to_vampirid!=NULL )
                 free(fd_to_vampirid);
+        /* don't close the LIBC library handle at this point; it's still needed
+           if the application is statically linked
         if( iolib_handle!=NULL )
                 dlclose(iolib_handle);
+        */
 }
 
 /*********************************************/

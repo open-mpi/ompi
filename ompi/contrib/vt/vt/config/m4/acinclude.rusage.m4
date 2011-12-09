@@ -22,7 +22,15 @@ AC_DEFUN([ACVT_RUSAGE],
 			AC_CHECK_FUNC([getrusage], [], [rusage_error="yes"])
 		])
 
-		AS_IF([test x"$rusage_error" = "xno"], [have_rusage="yes"])
+		AS_IF([test x"$rusage_error" = "xno"],
+		[
+			sav_CPPFLAGS=$CPPFLAGS
+			CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
+			AC_CHECK_DECLS([RUSAGE_THREAD], [], [], [#include <sys/resource.h>])
+			CPPFLAGS=$sav_CPPFLAGS
+
+			have_rusage="yes"
+		])
 	])
 ])
 

@@ -1,9 +1,77 @@
-5.11.1openmpi
+5.12openmpi
+	- updated version of internal OTF to 1.10openmpi
+	  (see extlib/otf/ChangeLog)
+	- added support for CUDA runtime tracing via CUPTI callbacks
+	- added support for process group counters
+	- extended internal API to:
+		- create process groups
+		- assign attributes to process groups
+		  (e.g. is communicator, has counters)
+	- improved MPI group/communicator handling:
+		- merge groups which have the same members to one group
+		- name groups to "MPI Group X"
+	- added writing of process begin/end records
+	- added support for LIBC [I/O] tracing on Cray XT platforms
+	- added environment variable VT_ONOFF_CHECK_STACK_BALANCE to
+	  enable/disable check for stack level balance when switching tracing
+	  on/off by using the user API
+	- added configure option '--[enable|disable]-fortran' to control
+	  building of Fortran support
+	- install a symbolic link 'vtfiltergen[-mpi]' which is a synonym for
+	  'vtfilter[-mpi] --gen'
+	- if possible, get resource usage counters for the calling thread
+	  instead of the process
+	- disabled unnecessary time synchronization on NEC SX platforms
+	- removed MPI_Address and MPI_Get_address from MPI wrappers
+	- removed limitation of maximum defined MPI handles (groups, comms.,
+	  and windows) in a MPI program
+	- fixed incorrect handling of MPI_IN_PLACE
+	- fixed erroneous handling of MPI_Aint within the Fortran MPI wrappers
+	- fixed incomplete tracking of MPI inter-communicators
+	- fixed error handling on flushing the trace buffer
+	- fixed potential memory corruption when flushing the trace buffer
+	  multiple times (VT_MAX_FLUSHES != 1)
+	- fixed numbering in thread names
+	- vtunify:
+		- fixed parsing of negative time offsets within unify
+		  control data
+	- vtdyn:
+		- detach from application process before continuing its
+		  execution (allows signal trapping (e.g. Ctrl+C) within the
+		  application)
+		- fixed selection of functions to be instrumented
+		- save floating point registers before calling instrumentation
+		  to ensure correct program behavior
+	- compiler wrappers:
+		- added options '-vt:preprocess', '-vt:cpp', and '-vt:cppflags'
+		  to preprocess source files before parsing by OPARI and/or TAU
+		- added options '-vt:opari-rcfile' and '-vt:opari-table' to set
+		  pathnames of the OPARI resource and runtime table file
+		- added option '-vt:nocleanup' to keep intermediate files
+	- vtrun:
+		- do preload Dyninst runtime library (DYNINSTAPI_RT_LIB) when
+		  instrumenting user functions by Dyninst
+	- vtsetup: (see tools/vtsetup/ChangeLog:1.0.1)
+
+5.11.2
+	- updated version of internal OTF to 1.9.2sawfish
+	  (see extlib/otf/ChangeLog)
+	- added options '-vt:showme-<compile|link>' to the compiler wrapper
+	  to show the compiler/linker flags that would be supplied to the
+	  underlying compiler
+	- add path to MPI library when linking with the compiler wrappers
+	- do not build vtrun script on BlueGene; shell scripts doesn't work on
+	  the back-end
+	- fixed segmentation fault in vtunify-mpi which might occur during
+	  gathering local marker definitions/spots to master process
+
+5.11.1
 	- updated version of internal OTF to 1.9.1sawfish
 	  (see extlib/otf/ChangeLog)
 	- process and thread buffer size can be explicitly specified by the user
 	  via the environment variables VT_BUFFER_SIZE and VT_THREAD_BUFFER_SIZE
 	- improved filtering of CUDA kernels
+	- enhanced creating global definitions in vtunify
 	- fixed CUDA kernel launch configuration
 	- fixed unification of local process group definitions
 	- fixed wrapper generation for MPI implementations which don't support

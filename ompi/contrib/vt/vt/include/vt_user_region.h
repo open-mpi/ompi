@@ -39,11 +39,11 @@ __VT_EXTERN_DECL void VT_User_end_id__(unsigned int rid);
   template<> inline VT_Tracer<sizeof(int)>::~VT_Tracer() { VT_User_end__(n); }
 
   template<> struct VT_Tracer<1> {
-    VT_Tracer(unsigned int r, const char* f = 0, int l = 0) __VT_NOINST_ATTR;
+    VT_Tracer(unsigned int r, const char*, int) __VT_NOINST_ATTR;
     ~VT_Tracer() __VT_NOINST_ATTR;
     unsigned int i;
   };
-  inline VT_Tracer<1>::VT_Tracer(unsigned int r, const char* f, int l)
+  inline VT_Tracer<1>::VT_Tracer(unsigned int r, const char*, int)
     : i(r) { VT_User_start_id__(i); }
   inline VT_Tracer<1>::~VT_Tracer() { VT_User_end_id__(i); }
 #endif /* __cplusplus */

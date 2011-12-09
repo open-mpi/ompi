@@ -23,10 +23,8 @@
 
 #include <assert.h>
 
-// key-value list "record handler"
-// translate local key tokens to global tokens
 void
-Handle_KeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
+HandleKeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
 {
    // get number of key-value pairs
    uint32_t keys_num = OTF_KeyValueList_getCount( kvs );
@@ -58,7 +56,7 @@ Handle_KeyValueList( const uint32_t & proc, OTF_KeyValueList * kvs )
 //
 
 int
-Handle_DefComment( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefComment( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, const char * comment )
 {
    // get common string identifiers as std::string's for more convenient use
@@ -142,13 +140,14 @@ Handle_DefComment( std::vector<DefRec_BaseS*> * locDefs,
    }
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefCommentS( streamid, 0, type, _comment ) );
+   fha->loc_defs.push_back( new DefRec_DefCommentS
+                               ( streamid, 0, type, _comment ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefCreator( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefCreator( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, const char * creator )
 {
    std::string _creator(creator);
@@ -158,13 +157,13 @@ Handle_DefCreator( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &_creator );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefCreatorS( _creator ) );
+   fha->loc_defs.push_back( new DefRec_DefCreatorS( _creator ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefTimerResolution( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefTimerResolution( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint64_t ticksPerSecond )
 {
    // trigger read record hook
@@ -172,13 +171,13 @@ Handle_DefTimerResolution( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &ticksPerSecond );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefTimerResolutionS( ticksPerSecond ) );
+   fha->loc_defs.push_back( new DefRec_DefTimerResolutionS( ticksPerSecond ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefTimeRange( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefTimeRange( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint64_t minTime, uint64_t maxTime )
 {
    // trigger read record hook
@@ -186,14 +185,14 @@ Handle_DefTimeRange( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &minTime, &maxTime );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefTimeRangeS
-                          ( streamid, minTime, maxTime ) );
+   fha->loc_defs.push_back( new DefRec_DefTimeRangeS
+                               ( streamid, minTime, maxTime ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefProcess( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefProcess( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t parent )
 {
    std::string _name(name);
@@ -203,18 +202,20 @@ Handle_DefProcess( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &deftoken, &_name, &parent );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefProcessS( deftoken, _name, parent ) );
+   fha->loc_defs.push_back( new DefRec_DefProcessS( deftoken, _name, parent ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefProcessGroup( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefProcessGroup( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t n,
    uint32_t * array )
 {
    // get common string identifiers as std::string's for more convenient use
    //
+   static const std::string all_name =
+     VT_UNIFY_STRID_ALL_PROCGRP;
    static const std::string node_prefix =
       VT_UNIFY_STRID_NODE_PROCGRP;
    static const std::string mpi_comm_world_name =
@@ -223,12 +224,8 @@ Handle_DefProcessGroup( std::vector<DefRec_BaseS*> * locDefs,
       VT_UNIFY_STRID_MPI_COMM_SELF_PROCGRP;
    static const std::string mpi_comm_other_name =
       VT_UNIFY_STRID_MPI_COMM_OTHER_PROCGRP;
-   static const std::string omp_team_name =
-      VT_UNIFY_STRID_OMP_TEAM_PROCGRP;
-   static const std::string gpu_comm_name =
-      VT_UNIFY_STRID_GPU_COMM_PROCGRP;
-   static const std::string gpu_group_name =
-      VT_UNIFY_STRID_GPU_GROUP_PROCGRP;
+   static const std::string mpi_group_name =
+      VT_UNIFY_STRID_MPI_GROUP_PROCGRP;
    static const std::string user_comm_prefix =
       VT_UNIFY_STRID_USER_COMM_PROCGRP;
 
@@ -236,15 +233,20 @@ Handle_DefProcessGroup( std::vector<DefRec_BaseS*> * locDefs,
 
    // trigger read record hook
    theHooks->triggerReadRecordHook( HooksC::Record_DefProcessGroup, 5,
-      &streamid, &deftoken, &_name, &n, array );
+      &streamid, &deftoken, &_name, &n, &array );
 
    // determine process group type
    //
 
    DefRec_DefProcessGroupS::ProcessGroupTypeT type;
 
-   if( _name.length() > node_prefix.length() &&
-       _name.compare( 0, node_prefix.length(), node_prefix ) == 0 )
+   if( _name.compare( all_name ) == 0 )
+   {
+      type = DefRec_DefProcessGroupS::TYPE_ALL;
+      _name = "";
+   }
+   else if( _name.length() > node_prefix.length() &&
+            _name.compare( 0, node_prefix.length(), node_prefix ) == 0 )
    {
       type = DefRec_DefProcessGroupS::TYPE_NODE;
       // cut identifier prefix from node name
@@ -265,19 +267,9 @@ Handle_DefProcessGroup( std::vector<DefRec_BaseS*> * locDefs,
       type = DefRec_DefProcessGroupS::TYPE_MPI_COMM_OTHER;
       _name = "";
    }
-   else if( _name.compare( omp_team_name ) == 0 )
+   else if( _name.compare( mpi_group_name ) == 0 )
    {
-      type = DefRec_DefProcessGroupS::TYPE_OMP_TEAM;
-      _name = "";
-   }
-   else if( _name.compare( gpu_comm_name ) == 0 )
-   {
-      type = DefRec_DefProcessGroupS::TYPE_GPU_COMM;
-      _name = "";
-   }
-   else if( _name.compare( gpu_group_name ) == 0 )
-   {
-      type = DefRec_DefProcessGroupS::TYPE_GPU_GROUP;
+      type = DefRec_DefProcessGroupS::TYPE_MPI_GROUP;
       _name = "";
    }
    else if( _name.length() > user_comm_prefix.length() &&
@@ -294,15 +286,30 @@ Handle_DefProcessGroup( std::vector<DefRec_BaseS*> * locDefs,
    }
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefProcessGroupS
-                          ( streamid, deftoken, type, _name, n,
-                            array ) );
+   fha->loc_defs.push_back( new DefRec_DefProcessGroupS
+                               ( streamid, deftoken, type, _name, n,
+                                 array ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefSclFile( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefProcessGroupAttributes( FirstHandlerArg_DefsS * fha,
+   uint32_t streamid, uint32_t group, uint32_t attributes )
+{
+   // trigger read record hook
+   theHooks->triggerReadRecordHook( HooksC::Record_DefProcessGroupAttributes, 3,
+      &streamid, &group, &attributes );
+
+   // add local definition to vector
+   fha->loc_defs.push_back( new DefRec_DefProcessGroupAttributesS
+                               ( streamid, group, attributes ) );
+
+   return OTF_RETURN_OK;
+}
+
+int
+HandleDefSclFile( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, const char * filename )
 {
    std::string _filename(filename);
@@ -312,14 +319,14 @@ Handle_DefSclFile( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &deftoken, &_filename );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefSclFileS
-                          ( streamid, deftoken, _filename ) );
+   fha->loc_defs.push_back( new DefRec_DefSclFileS
+                               ( streamid, deftoken, _filename ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefScl( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefScl( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, uint32_t sclfile, uint32_t sclline )
 {
    // trigger read record hook
@@ -327,14 +334,14 @@ Handle_DefScl( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &deftoken, &sclfile, &sclline );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefSclS
-                          ( streamid, deftoken, sclfile, sclline ) );
+   fha->loc_defs.push_back( new DefRec_DefSclS
+                               ( streamid, deftoken, sclfile, sclline ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefFileGroup( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefFileGroup( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, const char * name )
 {
    std::string _name(name);
@@ -344,14 +351,14 @@ Handle_DefFileGroup( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &deftoken, &_name );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefFileGroupS
-                          ( streamid, deftoken, _name ) );
+   fha->loc_defs.push_back( new DefRec_DefFileGroupS
+                               ( streamid, deftoken, _name ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefFile( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefFile( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t group )
 {
    std::string _name(name);
@@ -361,14 +368,14 @@ Handle_DefFile( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &deftoken, &_name, &group );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefFileS
-                          ( streamid, deftoken, _name, group ) );
+   fha->loc_defs.push_back( new DefRec_DefFileS
+                               ( streamid, deftoken, _name, group ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefFunctionGroup( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefFunctionGroup( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, const char * name )
 {
    std::string _name(name);
@@ -378,14 +385,14 @@ Handle_DefFunctionGroup( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &deftoken, &_name );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefFunctionGroupS
-                          ( streamid, deftoken, _name ) );
+   fha->loc_defs.push_back( new DefRec_DefFunctionGroupS
+                               ( streamid, deftoken, _name ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefFunction( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefFunction( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t group,
    uint32_t scltoken )
 {
@@ -396,15 +403,15 @@ Handle_DefFunction( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &deftoken, &_name, &group, &scltoken );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefFunctionS
-                          ( streamid, deftoken, _name, group,
-                            scltoken ) );
+   fha->loc_defs.push_back( new DefRec_DefFunctionS
+                               ( streamid, deftoken, _name, group,
+                                 scltoken ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefCollOp( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefCollOp( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t collOp, const char * name, uint32_t type )
 {
    std::string _name(name);
@@ -414,14 +421,14 @@ Handle_DefCollOp( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &collOp, &_name, &type );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefCollOpS
-                          ( streamid, collOp, _name, type ) );
+   fha->loc_defs.push_back( new DefRec_DefCollOpS
+                               ( streamid, collOp, _name, type ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefCounterGroup( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefCounterGroup( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, const char * name )
 {
    std::string _name(name);
@@ -431,14 +438,14 @@ Handle_DefCounterGroup( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &deftoken, &_name );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefCounterGroupS
-                          ( streamid, deftoken, _name ) );
+   fha->loc_defs.push_back( new DefRec_DefCounterGroupS
+                               ( streamid, deftoken, _name ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefCounter( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefCounter( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t deftoken, const char * name, uint32_t properties,
    uint32_t countergroup, const char * unit )
 {
@@ -450,15 +457,38 @@ Handle_DefCounter( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &deftoken, &_name, &properties, &countergroup, &unit );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefCounterS
-                          ( streamid, deftoken, _name, properties,
-                            countergroup, _unit ) );
+   fha->loc_defs.push_back( new DefRec_DefCounterS
+                               ( streamid, deftoken, _name, properties,
+                                 countergroup, _unit ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_DefKeyValue( std::vector<DefRec_BaseS*> * locDefs,
+HandleDefCounterAssignments( FirstHandlerArg_DefsS * fha,
+   uint32_t streamid, uint32_t counter, uint32_t n, uint32_t * array )
+{
+   assert( n == 1 ); // only one process group assignment per counter allowed
+   assert( array );
+
+   uint32_t procgrp = *array;
+
+   // trigger read record hook
+   theHooks->triggerReadRecordHook( HooksC::Record_DefCounterAssignments, 3,
+      &streamid, &counter, &procgrp );
+
+   // register local process group assignment
+   theDefinitions->groupCounters()->setGroup( streamid, counter, procgrp );
+
+   // add local definition to vector
+   fha->loc_defs.push_back( new DefRec_DefCounterAssignmentsS
+                               ( streamid, counter, procgrp ) );
+
+   return OTF_RETURN_OK;
+}
+
+int
+HandleDefKeyValue( FirstHandlerArg_DefsS * fha,
    uint32_t streamid, uint32_t key, OTF_Type type, const char * name,
    const char * description )
 {
@@ -469,7 +499,7 @@ Handle_DefKeyValue( std::vector<DefRec_BaseS*> * locDefs,
       &streamid, &key, &type, &_name );
 
    // add local definition to vector
-   locDefs->push_back( new DefRec_DefKeyValueS
+   fha->loc_defs.push_back( new DefRec_DefKeyValueS
                           ( streamid, key, type, _name ) );
 
    return OTF_RETURN_OK;
@@ -479,9 +509,8 @@ Handle_DefKeyValue( std::vector<DefRec_BaseS*> * locDefs,
 //
 
 int
-Handle_DefMarker( std::vector<DefRec_DefMarkerS*> * locDefs,
-                  uint32_t streamid, uint32_t deftoken, const char * name,
-                  uint32_t type )
+HandleDefMarker( FirstHandlerArg_MarkersS * fha,
+   uint32_t streamid, uint32_t deftoken, const char * name, uint32_t type )
 {
    std::string _name( name );
 
@@ -490,16 +519,15 @@ Handle_DefMarker( std::vector<DefRec_DefMarkerS*> * locDefs,
       &streamid, &deftoken, &_name, &type );
 
    // add local marker definition to vector
-   locDefs->push_back( new DefRec_DefMarkerS
-                          ( streamid, deftoken, type, _name ) );
+   fha->loc_defs.push_back( new DefRec_DefMarkerS
+                               ( streamid, deftoken, type, _name ) );
 
    return OTF_RETURN_OK;
 }
 
 int
-Handle_MarkerSpot( std::vector<MarkersC::MarkerSpotS*> * locSpots,
-                   uint64_t time, uint32_t proc, uint32_t marker,
-                   const char * text )
+HandleMarkerSpot( FirstHandlerArg_MarkersS * fha,
+   uint64_t time, uint32_t proc, uint32_t marker, const char * text )
 {
    std::string _text( text );
 
@@ -508,8 +536,8 @@ Handle_MarkerSpot( std::vector<MarkersC::MarkerSpotS*> * locSpots,
       &time, &proc, &marker, &_text );
 
    // add local marker spot to vector
-   locSpots->push_back( new MarkersC::MarkerSpotS
-                           ( proc, time, marker, _text ) );
+   fha->loc_spots.push_back( new MarkersC::MarkerSpotS
+                                ( proc, time, marker, _text ) );
 
    return OTF_RETURN_OK;
 }
@@ -518,7 +546,7 @@ Handle_MarkerSpot( std::vector<MarkersC::MarkerSpotS*> * locSpots,
 //
 
 int
-Handle_EventComment( OTF_WStream * wstream,
+HandleEventComment( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t proc, const char * comment, OTF_KeyValueList * kvs )
 {
    int ret = OTF_RETURN_OK;
@@ -530,7 +558,7 @@ Handle_EventComment( OTF_WStream * wstream,
       &time, &proc, &_comment, &kvs );
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
 #ifdef VT_ETIMESYNC
    // update time sync. parameters, if necessary
@@ -555,11 +583,11 @@ Handle_EventComment( OTF_WStream * wstream,
 
       // trigger write record hook
       theHooks->triggerWriteRecordHook( HooksC::Record_EventComment, 6,
-         &wstream, &time, &proc, &_comment, &kvs, &do_write );
+         &(fha->wstream), &time, &proc, &_comment, &kvs, &do_write );
 
       // write record
       if( do_write &&
-          OTF_WStream_writeEventCommentKV( wstream, time, proc,
+          OTF_WStream_writeEventCommentKV( fha->wstream, time, proc,
              _comment.c_str(), kvs ) == 0 )
          ret = OTF_RETURN_ABORT;
 
@@ -568,7 +596,7 @@ Handle_EventComment( OTF_WStream * wstream,
 }
 
 int
-Handle_Enter( OTF_WStream * wstream,
+HandleEnter( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t func, uint32_t proc, uint32_t scl,
    OTF_KeyValueList * kvs )
 {
@@ -603,18 +631,19 @@ Handle_Enter( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_Enter, 7,
-      &wstream, &time, &global_func, &proc, &global_scl, &kvs, &do_write );
+      &(fha->wstream), &time, &global_func, &proc, &global_scl, &kvs,
+      &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeEnterKV( wstream, time, global_func, proc,
+       OTF_WStream_writeEnterKV( fha->wstream, time, global_func, proc,
           global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
@@ -622,7 +651,7 @@ Handle_Enter( OTF_WStream * wstream,
 }
 
 int
-Handle_Leave( OTF_WStream * wstream,
+HandleLeave( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t func, uint32_t proc, uint32_t scl,
    OTF_KeyValueList * kvs )
 {
@@ -661,18 +690,19 @@ Handle_Leave( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_Leave, 7,
-      &wstream, &time, &global_func, &proc, &global_scl, &kvs, &do_write );
+      &(fha->wstream), &time, &global_func, &proc, &global_scl, &kvs,
+      &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeLeaveKV( wstream, time, global_func, proc,
+       OTF_WStream_writeLeaveKV( fha->wstream, time, global_func, proc,
           global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
@@ -680,7 +710,7 @@ Handle_Leave( OTF_WStream * wstream,
 }
 
 int
-Handle_Counter( OTF_WStream * wstream,
+HandleCounter( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t proc, uint32_t counter, uint64_t value,
    OTF_KeyValueList * kvs )
 {
@@ -692,9 +722,26 @@ Handle_Counter( OTF_WStream * wstream,
    theHooks->triggerReadRecordHook( HooksC::Record_Counter, 5,
       &time, &proc, &counter, &value, &kvs );
 
+   // get global token factory for DefProcessGroup
+   static const TokenFactoryScopeI * tkfac_defprocgrp =
+      theTokenFactory->getScope( DEF_REC_TYPE__DefProcessGroup );
+
    // get global token factory for DefCounter
    static const TokenFactoryScopeI * tkfac_defcntr =
       theTokenFactory->getScope( DEF_REC_TYPE__DefCounter );
+
+   // try to get local process group token (!=0 if it's a group counter)
+   uint32_t procgrp =
+      theDefinitions->groupCounters()->getGroup( proc, counter );
+
+   // translate local process group token, if necessary
+   //
+   uint32_t global_procgrp = procgrp;
+   if( procgrp != 0 )
+   {
+      global_procgrp = tkfac_defprocgrp->translate( proc, procgrp );
+      assert( global_procgrp != 0 );
+   }
 
    // translate local counter token
    //
@@ -702,26 +749,28 @@ Handle_Counter( OTF_WStream * wstream,
    assert( global_counter != 0 );
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
-   theHooks->triggerWriteRecordHook( HooksC::Record_Counter, 7,
-      &wstream, &time, &proc, &global_counter, &value, &kvs, &do_write );
+   theHooks->triggerWriteRecordHook( HooksC::Record_Counter, 8,
+      &(fha->wstream), &time, &proc, &global_procgrp, &global_counter, &value,
+      &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeCounterKV( wstream, time, proc, global_counter,
-          value, kvs ) == 0 )
+       OTF_WStream_writeCounterKV( fha->wstream, time,
+          global_procgrp ? global_procgrp : proc, global_counter, value,
+          kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
    return ret;
 }
 
 int
-Handle_BeginFileOp( OTF_WStream * wstream,
+HandleBeginFileOp( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t proc, uint64_t matchid, uint32_t scl,
    OTF_KeyValueList * kvs )
 {
@@ -747,18 +796,18 @@ Handle_BeginFileOp( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_BeginFileOp, 7,
-      &wstream, &time, &proc, &matchid, &global_scl, &kvs, &do_write );
+      &(fha->wstream), &time, &proc, &matchid, &global_scl, &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeBeginFileOperationKV( wstream, time, proc, matchid,
+       OTF_WStream_writeBeginFileOperationKV( fha->wstream, time, proc, matchid,
           global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
@@ -766,7 +815,7 @@ Handle_BeginFileOp( OTF_WStream * wstream,
 }
 
 int
-Handle_EndFileOp( OTF_WStream * wstream,
+HandleEndFileOp( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t proc, uint32_t file, uint64_t matchid,
    uint64_t handleid, uint32_t operation, uint64_t bytes, uint32_t scl,
    OTF_KeyValueList * kvs )
@@ -802,27 +851,28 @@ Handle_EndFileOp( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_EndFileOp, 12,
-      &wstream, &time, &proc, &global_file, &matchid, &handleid, &operation,
-      &bytes, &global_scl, &kvs, &do_write );
+      &(fha->wstream), &time, &proc, &global_file, &matchid, &handleid,
+      &operation, &bytes, &global_scl, &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeEndFileOperationKV( wstream, time, proc, global_file,
-          matchid, handleid, operation, bytes, global_scl, kvs ) == 0 )
+       OTF_WStream_writeEndFileOperationKV( fha->wstream, time, proc,
+          global_file, matchid, handleid, operation, bytes, global_scl,
+          kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
    return ret;
 }
 
 int
-Handle_SendMsg( OTF_WStream * wstream,
+HandleSendMsg( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t sender, uint32_t receiver, uint32_t comm,
    uint32_t tag, uint32_t length, uint32_t scl, OTF_KeyValueList * kvs )
 {
@@ -857,7 +907,7 @@ Handle_SendMsg( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( sender, kvs );
+   HandleKeyValueList( sender, kvs );
 
    // correct time
    time = theTimeSync->correctTime( sender, time );
@@ -873,12 +923,12 @@ Handle_SendMsg( OTF_WStream * wstream,
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_SendMsg, 10,
-      &wstream, &time, &sender, &receiver, &global_comm, &tag, &length,
+      &(fha->wstream), &time, &sender, &receiver, &global_comm, &tag, &length,
       &global_scl, &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeSendMsgKV( wstream, time, sender, receiver,
+       OTF_WStream_writeSendMsgKV( fha->wstream, time, sender, receiver,
           global_comm, tag, length, global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
@@ -886,7 +936,7 @@ Handle_SendMsg( OTF_WStream * wstream,
 }
 
 int
-Handle_RecvMsg( OTF_WStream * wstream,
+HandleRecvMsg( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t receiver, uint32_t sender, uint32_t comm,
    uint32_t tag, uint32_t length, uint32_t scl, OTF_KeyValueList * kvs )
 {
@@ -921,7 +971,7 @@ Handle_RecvMsg( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( receiver, kvs );
+   HandleKeyValueList( receiver, kvs );
 
    // correct time
    time = theTimeSync->correctTime( receiver, time );
@@ -937,12 +987,12 @@ Handle_RecvMsg( OTF_WStream * wstream,
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_RecvMsg, 10,
-      &wstream, &time, &receiver, &sender, &global_comm, &tag, &length, &scl,
-      &kvs, &do_write );
+      &(fha->wstream), &time, &receiver, &sender, &global_comm, &tag, &length,
+      &scl, &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeRecvMsgKV( wstream, time, receiver, sender,
+       OTF_WStream_writeRecvMsgKV( fha->wstream, time, receiver, sender,
           global_comm, tag, length, global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
@@ -950,7 +1000,7 @@ Handle_RecvMsg( OTF_WStream * wstream,
 }
 
 int
-Handle_BeginCollOp( OTF_WStream * wstream,
+HandleBeginCollOp( FirstHandlerArg_EventsS * fha,
        uint64_t time, uint32_t proc, uint32_t operation, uint64_t matchid,
        uint32_t comm, uint32_t root, uint64_t sent, uint64_t recvd,
        uint32_t scl, OTF_KeyValueList * kvs )
@@ -996,19 +1046,19 @@ Handle_BeginCollOp( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_BeginCollOp, 12,
-      &wstream, &time, &proc, &global_operation, &matchid, &global_comm, &root,
-      &sent, &recvd, &global_scl, &kvs, &do_write );
+      &(fha->wstream), &time, &proc, &global_operation, &matchid, &global_comm,
+      &root, &sent, &recvd, &global_scl, &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeBeginCollectiveOperationKV( wstream, time, proc,
+       OTF_WStream_writeBeginCollectiveOperationKV( fha->wstream, time, proc,
           global_operation, matchid, global_comm, root, sent, recvd,
           global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
@@ -1017,7 +1067,7 @@ Handle_BeginCollOp( OTF_WStream * wstream,
 }
 
 int
-Handle_EndCollOp( OTF_WStream * wstream,
+HandleEndCollOp( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t proc, uint64_t matchid, OTF_KeyValueList * kvs )
 {
    int ret = OTF_RETURN_OK;
@@ -1029,18 +1079,18 @@ Handle_EndCollOp( OTF_WStream * wstream,
       &time, &proc, &matchid, &kvs );
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_EndCollOp, 6,
-      &wstream, &time, &proc, &matchid, &kvs, &do_write );
+      &(fha->wstream), &time, &proc, &matchid, &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeEndCollectiveOperationKV( wstream, time, proc,
+       OTF_WStream_writeEndCollectiveOperationKV( fha->wstream, time, proc,
           matchid, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
@@ -1048,7 +1098,7 @@ Handle_EndCollOp( OTF_WStream * wstream,
 }
 
 int
-Handle_RMAPut( OTF_WStream * wstream,
+HandleRMAPut( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t proc, uint32_t origin, uint32_t dest, uint32_t comm,
    uint32_t tag, uint64_t bytes, uint32_t scl, OTF_KeyValueList * kvs )
 {
@@ -1083,27 +1133,27 @@ Handle_RMAPut( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_RMAPut, 11,
-      &wstream, &time, &proc, &origin, &dest, &global_comm, &tag, &bytes,
+      &(fha->wstream), &time, &proc, &origin, &dest, &global_comm, &tag, &bytes,
       &global_scl, &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeRMAPutKV( wstream, time, proc, origin, dest, global_comm,
-          tag, bytes, global_scl, kvs ) == 0 )
+       OTF_WStream_writeRMAPutKV( fha->wstream, time, proc, origin, dest,
+          global_comm, tag, bytes, global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
    return ret;
 }
 
 int
-Handle_RMAPutRemoteEnd( OTF_WStream * wstream,
+HandleRMAPutRemoteEnd( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t proc, uint32_t origin, uint32_t dest, uint32_t comm,
    uint32_t tag, uint64_t bytes, uint32_t scl, OTF_KeyValueList * kvs )
 {
@@ -1138,27 +1188,27 @@ Handle_RMAPutRemoteEnd( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_RMAPutRemoteEnd, 11,
-      &wstream, &time, &proc, &origin, &dest, &global_comm, &tag, &bytes,
+      &(fha->wstream), &time, &proc, &origin, &dest, &global_comm, &tag, &bytes,
       &global_scl, &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeRMAPutRemoteEndKV( wstream, time, proc, origin, dest,
-          global_comm, tag, bytes, global_scl, kvs ) == 0 )
+       OTF_WStream_writeRMAPutRemoteEndKV( fha->wstream, time, proc, origin,
+          dest, global_comm, tag, bytes, global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
    return ret;
 }
 
 int
-Handle_RMAGet( OTF_WStream * wstream,
+HandleRMAGet( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t proc, uint32_t origin, uint32_t dest, uint32_t comm,
    uint32_t tag, uint64_t bytes, uint32_t scl, OTF_KeyValueList * kvs )
 {
@@ -1193,27 +1243,27 @@ Handle_RMAGet( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_RMAGet, 11,
-      &wstream, &time, &proc, &origin, &dest, &global_comm, &tag, &bytes,
+      &(fha->wstream), &time, &proc, &origin, &dest, &global_comm, &tag, &bytes,
       &global_scl, &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeRMAGetKV( wstream, time, proc, origin, dest, global_comm,
-          tag, bytes, global_scl, kvs ) == 0 )
+       OTF_WStream_writeRMAGetKV( fha->wstream, time, proc, origin, dest,
+          global_comm, tag, bytes, global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
    return ret;
 }
 
 int
-Handle_RMAEnd( OTF_WStream * wstream,
+HandleRMAEnd( FirstHandlerArg_EventsS * fha,
    uint64_t time, uint32_t proc, uint32_t remote, uint32_t comm, uint32_t tag,
    uint32_t scl, OTF_KeyValueList * kvs )
 {
@@ -1248,19 +1298,19 @@ Handle_RMAEnd( OTF_WStream * wstream,
    }
 
    // translate local key token(s)
-   Handle_KeyValueList( proc, kvs );
+   HandleKeyValueList( proc, kvs );
 
    // correct time
    time = theTimeSync->correctTime( proc, time );
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_RMAEnd, 9,
-      &wstream, &time, &proc, &remote, &global_comm, &tag, &global_scl, &kvs,
-      &do_write );
+      &(fha->wstream), &time, &proc, &remote, &global_comm, &tag, &global_scl,
+      &kvs, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeRMAEndKV( wstream, time, proc, remote, global_comm,
+       OTF_WStream_writeRMAEndKV( fha->wstream, time, proc, remote, global_comm,
           tag, global_scl, kvs ) == 0 )
       ret = OTF_RETURN_ABORT;
 
@@ -1271,7 +1321,7 @@ Handle_RMAEnd( OTF_WStream * wstream,
 //
 
 int
-Handle_FunctionSummary( OTF_WStream * wstream,
+HandleFunctionSummary( FirstHandlerArg_StatsS * fha,
    uint64_t time, uint32_t func, uint32_t proc, uint64_t invocations,
    uint64_t exclTime, uint64_t inclTime )
 {
@@ -1297,12 +1347,12 @@ Handle_FunctionSummary( OTF_WStream * wstream,
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_FunctionSummary, 8,
-      &wstream, &time, &global_func, &proc, &invocations, &exclTime,
+      &(fha->wstream), &time, &global_func, &proc, &invocations, &exclTime,
       &inclTime, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeFunctionSummary( wstream, time, global_func,
+       OTF_WStream_writeFunctionSummary( fha->wstream, time, global_func,
           proc, invocations, exclTime, inclTime ) == 0 )
       ret = OTF_RETURN_ABORT;
 
@@ -1310,7 +1360,7 @@ Handle_FunctionSummary( OTF_WStream * wstream,
 }
 
 int
-Handle_MessageSummary( OTF_WStream * wstream,
+HandleMessageSummary( FirstHandlerArg_StatsS * fha,
    uint64_t time, uint32_t proc, uint32_t peer, uint32_t comm, uint32_t type,
    uint64_t sentNum, uint64_t recvNum, uint64_t sentBytes, uint64_t recvBytes )
 {
@@ -1341,12 +1391,12 @@ Handle_MessageSummary( OTF_WStream * wstream,
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_MessageSummary, 10,
-      &wstream, &time, &proc, &peer, &global_comm, &sentNum, &recvNum,
+      &(fha->wstream), &time, &proc, &peer, &global_comm, &sentNum, &recvNum,
       &sentBytes, &recvBytes, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeMessageSummary( wstream, time, proc, peer,
+       OTF_WStream_writeMessageSummary( fha->wstream, time, proc, peer,
           global_comm, type, sentNum, recvNum, sentBytes, recvBytes ) == 0 )
       ret = OTF_RETURN_ABORT;
 
@@ -1354,7 +1404,7 @@ Handle_MessageSummary( OTF_WStream * wstream,
 }
 
 int
-Handle_CollOpSummary( OTF_WStream * wstream,
+HandleCollOpSummary( FirstHandlerArg_StatsS * fha,
    uint64_t time, uint32_t proc, uint32_t comm, uint32_t collop,
    uint64_t sentNum, uint64_t recvNum, uint64_t sentBytes, uint64_t recvBytes )
 {
@@ -1398,12 +1448,12 @@ Handle_CollOpSummary( OTF_WStream * wstream,
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_CollOpSummary, 10,
-      &wstream, &time, &proc, &global_comm, &global_collop, &sentNum, &recvNum,
-      &sentBytes, &recvBytes, &do_write );
+      &(fha->wstream), &time, &proc, &global_comm, &global_collop, &sentNum,
+      &recvNum, &sentBytes, &recvBytes, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeCollopSummary( wstream, time, proc,
+       OTF_WStream_writeCollopSummary( fha->wstream, time, proc,
           global_comm, global_collop, sentNum, recvNum, sentBytes,
           recvBytes ) == 0 )
       ret = OTF_RETURN_ABORT;
@@ -1412,7 +1462,7 @@ Handle_CollOpSummary( OTF_WStream * wstream,
 }
 
 int
-Handle_FileOpSummary( OTF_WStream * wstream,
+HandleFileOpSummary( FirstHandlerArg_StatsS * fha,
    uint64_t time, uint32_t file, uint32_t proc, uint64_t nopen, uint64_t nclose,
    uint64_t nread, uint64_t nwrite, uint64_t nseek, uint64_t bytesRead,
    uint64_t bytesWrite )
@@ -1440,12 +1490,12 @@ Handle_FileOpSummary( OTF_WStream * wstream,
 
    // trigger write record hook
    theHooks->triggerWriteRecordHook( HooksC::Record_FileOpSummary, 12,
-      &wstream, &time, &global_file, &proc, &nopen,  &nclose, &nread, &nwrite,
-      &nseek, &bytesRead, &bytesWrite, &do_write );
+      &(fha->wstream), &time, &global_file, &proc, &nopen,  &nclose, &nread,
+      &nwrite, &nseek, &bytesRead, &bytesWrite, &do_write );
 
    // write record
    if( do_write &&
-       OTF_WStream_writeFileOperationSummary( wstream, time, global_file,
+       OTF_WStream_writeFileOperationSummary( fha->wstream, time, global_file,
           proc, nopen, nclose, nread, nwrite, nseek, bytesRead,
           bytesWrite ) == 0 )
       ret = OTF_RETURN_ABORT;

@@ -125,11 +125,13 @@ int OTF_Reader_readDefKeyValue( OTF_RBuffer* buffer,
 	OTF_HandlerArray* handlers, uint32_t streamid );
 
 int OTF_Reader_readDefTimeRange( OTF_RBuffer* buffer,
-                                 OTF_HandlerArray* handlers,
-                                 uint32_t streamid );
+	OTF_HandlerArray* handlers, uint32_t streamid );
+
 int OTF_Reader_readDefCounterAssignments( OTF_RBuffer* buffer,
-                                          OTF_HandlerArray* handlers,
-                                          uint32_t streamid );
+	OTF_HandlerArray* handlers, uint32_t streamid );
+
+int OTF_Reader_readDefProcessSubstitutes( OTF_RBuffer* buffer,
+	OTF_HandlerArray* handlers, uint32_t streamid );
 
 /* *** Event records *** ****************************************** */
 
@@ -671,11 +673,11 @@ int OTF_Reader_parseDefRecord( OTF_RBuffer* buffer,
 			return OTF_Reader_readDefCounter( buffer, handlers, streamid );
 		}
 
-        if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_DEFCOUNTERASSIGNMENTS ) ||
-                OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_DEFCOUNTERASSIGNMENTS ) ) {
+		if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_DEFCOUNTERASSIGNMENTS ) ||
+				OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_DEFCOUNTERASSIGNMENTS ) ) {
 
-            return OTF_Reader_readDefCounterAssignments( buffer, handlers, streamid );
-        }
+			return OTF_Reader_readDefCounterAssignments( buffer, handlers, streamid );
+		}
 
 		break;
 
@@ -734,6 +736,14 @@ int OTF_Reader_parseDefRecord( OTF_RBuffer* buffer,
 	case OTF_KEYWORD_F_DEFPROCESSGROUP /* 'P' */ :
 
 		if ( OTF_RBuffer_testKeyword( buffer, 
+				OTF_KEYWORD_S_DEFPROCESSORGROUPATTR ) ||
+				OTF_RBuffer_testKeyword( buffer, 
+				OTF_KEYWORD_L_DEFPROCESSORGROUPATTR ) ) {
+
+			return OTF_Reader_readDefProcessOrGroupAttributes( buffer, handlers, streamid );
+		}
+
+		if ( OTF_RBuffer_testKeyword( buffer, 
 				OTF_KEYWORD_S_DEFPROCESSGROUP ) ||
 				OTF_RBuffer_testKeyword( buffer, 
 				OTF_KEYWORD_L_DEFPROCESSGROUP ) ) {
@@ -748,11 +758,11 @@ int OTF_Reader_parseDefRecord( OTF_RBuffer* buffer,
 		}
 
 		if ( OTF_RBuffer_testKeyword( buffer, 
-				OTF_KEYWORD_S_DEFPROCESSORGROUPATTR ) ||
+				OTF_KEYWORD_S_DEFPROCESSSUBSTITUTES ) ||
 				OTF_RBuffer_testKeyword( buffer, 
-				OTF_KEYWORD_L_DEFPROCESSORGROUPATTR ) ) {
+				OTF_KEYWORD_L_DEFPROCESSSUBSTITUTES ) ) {
 
-			return OTF_Reader_readDefProcessOrGroupAttributes( buffer, handlers, streamid );
+			return OTF_Reader_readDefProcessSubstitutes( buffer, handlers, streamid );
 		}
 
 		break;
@@ -785,11 +795,11 @@ int OTF_Reader_parseDefRecord( OTF_RBuffer* buffer,
 			return OTF_Reader_readDefTimerResolution( buffer, handlers, streamid );
 		}
 
-        if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_DEFTIMERANGE ) ||
-                OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_DEFTIMERANGE ) ) {
+		if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_DEFTIMERANGE ) ||
+				OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_DEFTIMERANGE ) ) {
 
-            return OTF_Reader_readDefTimeRange( buffer, handlers, streamid );
-        }
+			return OTF_Reader_readDefTimeRange( buffer, handlers, streamid );
+		}
 
 		break;
 
@@ -1385,7 +1395,7 @@ int OTF_Reader_readDefProcessOrGroupAttributes( OTF_RBuffer* buffer,
 	uint32_t proc_token;
 	uint32_t attr_token;
 
-	if ( handlers->pointer[OTF_DEFATTRLIST_RECORD] == NULL ) {
+	if ( handlers->pointer[OTF_DEFPROCESSORGROUPATTR_RECORD] == NULL ) {
 
 		return OTF_RBuffer_readNewline( buffer );
 	}
@@ -2235,103 +2245,154 @@ int OTF_Reader_readDefKeyValue( OTF_RBuffer* buffer,
 	}
 }
 
-int OTF_Reader_readDefTimeRange( OTF_RBuffer*      buffer,
-                                 OTF_HandlerArray* handlers,
-                                 uint32_t          streamid ) {
+int OTF_Reader_readDefTimeRange( OTF_RBuffer* buffer,
+		OTF_HandlerArray* handlers, uint32_t streamid ) {
 
-    uint64_t minTime;
-    uint64_t maxTime;
 
-    if ( handlers->pointer[OTF_DEFTIMERANGE_RECORD] == NULL ) {
+	uint64_t minTime;
+	uint64_t maxTime;
 
-        return OTF_RBuffer_readNewline( buffer );
-    }
+	if ( handlers->pointer[OTF_DEFTIMERANGE_RECORD] == NULL ) {
 
-    minTime= OTF_RBuffer_readUint64( buffer );
+		return OTF_RBuffer_readNewline( buffer );
+	}
 
-    if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_TIME ) ||
-            OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_TIME ) ) {
+	minTime= OTF_RBuffer_readUint64( buffer );
 
-        maxTime= OTF_RBuffer_readUint64( buffer );
+	if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_TIME ) ||
+			OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_TIME ) ) {
 
-    } else {
+		maxTime= OTF_RBuffer_readUint64( buffer );
 
-        PARSE_ERROR( buffer );
+	} else {
 
-        return 0;
-    }
+		PARSE_ERROR( buffer );
 
-    if ( OTF_RBuffer_readNewline( buffer ) ) {
+		return 0;
+	}
 
-        /* 0 is considered as the non-error return value of call-back handlers,
-        but the current function returns 0 on errors! */
+	if ( OTF_RBuffer_readNewline( buffer ) ) {
 
-        return ( OTF_RETURN_OK /*0*/ == ( (
-                (OTF_Handler_DefTimeRange*)
-                handlers->pointer[OTF_DEFTIMERANGE_RECORD] )
-                ( handlers->firsthandlerarg[OTF_DEFTIMERANGE_RECORD],
-                        streamid,
-                        minTime,
-                        maxTime,
-                        buffer->list ) ) );
+		/* 0 is considered as the non-error return value of call-back handlers,
+		but the current function returns 0 on errors! */
 
-    } else {
+		return ( OTF_RETURN_OK /*0*/ == ( (
+			(OTF_Handler_DefTimeRange*)
+			handlers->pointer[OTF_DEFTIMERANGE_RECORD] )
+			( handlers->firsthandlerarg[OTF_DEFTIMERANGE_RECORD],
+			streamid,
+			minTime,
+			maxTime,
+			buffer->list ) ) );
 
-        PARSE_ERROR( buffer );
+	} else {
 
-        return 0;
-    }
+		PARSE_ERROR( buffer );
+
+		return 0;
+	}
 }
 
-int OTF_Reader_readDefCounterAssignments( OTF_RBuffer*      buffer,
-                                          OTF_HandlerArray* handlers,
-                                          uint32_t          streamid ) {
+int OTF_Reader_readDefCounterAssignments( OTF_RBuffer* buffer,
+		OTF_HandlerArray* handlers, uint32_t streamid ) {
 
-    uint32_t counter;
-    uint32_t number_of_members;
 
-    if ( handlers->pointer[OTF_DEFCOUNTERASSIGNMENTS_RECORD] == NULL ) {
+	uint32_t counter;
+	uint32_t number_of_members;
 
-        return OTF_RBuffer_readNewline( buffer );
-    }
+	if ( handlers->pointer[OTF_DEFCOUNTERASSIGNMENTS_RECORD] == NULL ) {
 
-    counter= OTF_RBuffer_readUint32( buffer );
+		return OTF_RBuffer_readNewline( buffer );
+	}
 
-    if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_MEMBERS ) ||
-            OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_MEMBERS ) ) {
+	counter= OTF_RBuffer_readUint32( buffer );
 
-        number_of_members= OTF_RBuffer_readArray( buffer,
-                                                  &buffer->array,
-                                                  &buffer->arraysize );
+	if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_MEMBERS ) ||
+			OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_MEMBERS ) ) {
 
-    } else {
+		number_of_members= OTF_RBuffer_readArray( buffer,
+							  &buffer->array,
+							  &buffer->arraysize );
 
-        PARSE_ERROR( buffer );
+	} else {
 
-        return 0;
-    }
+		PARSE_ERROR( buffer );
 
-    if ( OTF_RBuffer_readNewline( buffer ) ) {
+		return 0;
+	}
 
-        /* 0 is considered as the non-error return value of call-back handlers,
-        but the current function returns 0 on errors! */
+	if ( OTF_RBuffer_readNewline( buffer ) ) {
 
-        return ( OTF_RETURN_OK /*0*/ == ( (
-                (OTF_Handler_DefCounterAssignments*)
-                handlers->pointer[OTF_DEFCOUNTERASSIGNMENTS_RECORD] )
-                ( handlers->firsthandlerarg[OTF_DEFCOUNTERASSIGNMENTS_RECORD],
-                        streamid,
-                        counter,
-                        number_of_members,
-                        buffer->array,
-                        buffer->list ) ) );
+		/* 0 is considered as the non-error return value of call-back handlers,
+		but the current function returns 0 on errors! */
 
-    } else {
+		return ( OTF_RETURN_OK /*0*/ == ( (
+			(OTF_Handler_DefCounterAssignments*)
+			handlers->pointer[OTF_DEFCOUNTERASSIGNMENTS_RECORD] )
+			( handlers->firsthandlerarg[OTF_DEFCOUNTERASSIGNMENTS_RECORD],
+			streamid,
+			counter,
+			number_of_members,
+			buffer->array,
+			buffer->list ) ) );
 
-        PARSE_ERROR( buffer );
+	} else {
 
-        return 0;
-    }
+		PARSE_ERROR( buffer );
+
+		return 0;
+	}
+}
+
+int OTF_Reader_readDefProcessSubstitutes( OTF_RBuffer* buffer,
+		OTF_HandlerArray* handlers, uint32_t streamid ) {
+
+
+	uint32_t representative;
+	uint32_t number_of_procs;
+
+	if ( handlers->pointer[OTF_DEFPROCESSSUBSTITUTES_RECORD] == NULL ) {
+
+		return OTF_RBuffer_readNewline( buffer );
+	}
+
+	representative= OTF_RBuffer_readUint32( buffer );
+
+	if ( OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_S_LOCAL_MEMBERS ) ||
+			OTF_RBuffer_testKeyword( buffer, OTF_KEYWORD_L_LOCAL_MEMBERS ) ) {
+
+		number_of_procs= OTF_RBuffer_readArray( buffer,
+							&buffer->array,
+							&buffer->arraysize );
+
+	} else {
+
+		PARSE_ERROR( buffer );
+
+		return 0;
+	}
+
+	if ( OTF_RBuffer_readNewline( buffer ) ) {
+
+		/* 0 is considered as the non-error return value of call-back handlers,
+		but the current function returns 0 on errors! */
+
+		return ( OTF_RETURN_OK /*0*/ == ( (
+			(OTF_Handler_DefProcessSubstitutes*)
+			handlers->pointer[OTF_DEFPROCESSSUBSTITUTES_RECORD] )
+			( handlers->firsthandlerarg[OTF_DEFPROCESSSUBSTITUTES_RECORD],
+			streamid,
+			representative,
+			number_of_procs,
+			buffer->array,
+			buffer->list ) ) );
+
+	} else {
+
+		PARSE_ERROR( buffer );
+
+		return 0;
+	}
 }
 
 /* *** Event records *** ****************************************** */

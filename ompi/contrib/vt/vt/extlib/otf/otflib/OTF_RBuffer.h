@@ -29,7 +29,7 @@
 
 /* *** some macros *** ****************************************** */
 #define PARSE_ERROR( buffer ) \
-	OTF_fprintf( stderr, "parse error in %s() %s:%u : %s\n", \
+	OTF_Error( "Parse error in function %s, file: %s, line: %i:\n %s\n", \
 		__FUNCTION__, __FILE__, __LINE__, OTF_RBuffer_printRecord( buffer ) );
 
 

@@ -19,7 +19,7 @@
 #   define EXTERN extern 
 #endif
 
-#include "jvmti.h"
+#include "vt_jvmti.h"
 
 typedef struct
 {

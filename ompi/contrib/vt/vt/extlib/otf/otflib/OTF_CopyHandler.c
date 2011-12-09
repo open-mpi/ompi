@@ -175,34 +175,32 @@ int OTF_CopyHandler_DefKeyValue( void* userData, uint32_t stream, uint32_t key,
 		type, name, description, list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
 }
 
-int OTF_CopyHandler_DefTimeRange( void*             userData,
-                                  uint32_t          stream,
-                                  uint64_t          minTime,
-                                  uint64_t          maxTime,
-                                  OTF_KeyValueList* list ) {
+int OTF_CopyHandler_DefTimeRange( void* userData, uint32_t stream,
+	uint64_t minTime, uint64_t maxTime, OTF_KeyValueList* list ) {
 
 
-    return ( 0 == OTF_Writer_writeDefTimeRange( (OTF_Writer*)userData,
-            stream,
-            minTime,
-            maxTime,
-            list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+	return ( 0 == OTF_Writer_writeDefTimeRange( (OTF_Writer*)userData,
+		stream, minTime, maxTime, list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
 }
 
-int OTF_CopyHandler_DefCounterAssignments( void*             userData,
-                                           uint32_t          stream,
-                                           uint32_t          counter,
-                                           uint32_t          number_of_members,
-                                           const uint32_t*   procs_or_groups,
-                                           OTF_KeyValueList* list ) {
+int OTF_CopyHandler_DefCounterAssignments( void* userData, uint32_t stream,
+	uint32_t counter, uint32_t number_of_members, const uint32_t* procs_or_groups,
+	OTF_KeyValueList* list ) {
 
 
-    return ( 0 == OTF_Writer_writeDefCounterAssignments( (OTF_Writer*)userData,
-            stream,
-            counter,
-            number_of_members,
-            procs_or_groups,
-            list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+	return ( 0 == OTF_Writer_writeDefCounterAssignments( (OTF_Writer*)userData,
+		stream, counter, number_of_members, procs_or_groups,
+		list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
+}
+
+int OTF_CopyHandler_DefProcessSubstitutes( void* userData, uint32_t stream,
+	uint32_t representative, uint32_t numberOfProcs, const uint32_t* procs,
+	OTF_KeyValueList* list ) {
+
+
+	return ( 0 == OTF_Writer_writeDefProcessSubstitutes( (OTF_Writer*)userData,
+		stream, representative, numberOfProcs, procs,
+		list ) ) ? OTF_RETURN_ABORT : OTF_RETURN_OK;
 }
 
 /* *** Event handlers *** ****************************************** */

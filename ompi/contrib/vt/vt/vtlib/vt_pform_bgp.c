@@ -51,7 +51,7 @@ static _BGP_Personality_t mybgp;
 void vt_pform_init() {
   Kernel_GetPersonality(&mybgp, sizeof(_BGP_Personality_t));
 #if TIMER == TIMER_BGP_GET_TIMEBASE
-  vt_ticks_per_sec = (uint64_t)BGP_Personality_clockMHz(&mybgp) * 1e6;
+  vt_ticks_per_sec = (uint64_t)BGP_Personality_clockMHz(&mybgp) * 1000000LL;
 #elif TIMER == TIMER_PAPI_REAL_USEC
   vt_time_base = vt_metric_real_usec();
 #endif
@@ -84,7 +84,7 @@ uint64_t vt_pform_clockres() {
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_clckrt();
 #elif TIMER == TIMER_PAPI_REAL_USEC
-  return 1e6;
+  return 1000000LL;
 #endif
 }
 

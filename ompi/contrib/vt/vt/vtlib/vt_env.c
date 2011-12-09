@@ -169,6 +169,8 @@ char* vt_env_apppath()
       tmp = getenv("VT_APPPATH");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_APPPATH=%s", tmp);
+
           apppath = replace_vars(tmp);
         }
       else
@@ -191,6 +193,8 @@ char* vt_env_dyn_shlibs()
       tmp = getenv("VT_DYN_SHLIBS");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_DYN_SHLIBS=%s", tmp);
+
           dyn_shlibs = replace_vars(tmp);
         }
     }
@@ -203,18 +207,42 @@ int vt_env_dyn_ignore_nodbg()
   char* tmp;
 
   if (dyn_ignore_nodbg == -1)
-  {
-    tmp = getenv("VT_DYN_IGNORE_NODBG");
-    if (tmp != NULL && strlen(tmp) > 0)
     {
-      dyn_ignore_nodbg = parse_bool(tmp);
+      tmp = getenv("VT_DYN_IGNORE_NODBG");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_DYN_IGNORE_NODBG=%s", tmp);
+
+          dyn_ignore_nodbg = parse_bool(tmp);
+        }
+      else
+        {
+          dyn_ignore_nodbg = 0;
+        }
     }
-    else
-    {
-      dyn_ignore_nodbg = 0;
-    }
-  }
   return dyn_ignore_nodbg;
+}
+
+int vt_env_dyn_detach()
+{
+  static int dyn_detach = -1;
+  char* tmp;
+
+  if (dyn_detach == -1)
+    {
+      tmp = getenv("VT_DYN_DETACH");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_DYN_DETACH=%s", tmp);
+
+          dyn_detach = parse_bool(tmp);
+        }
+      else
+        {
+          dyn_detach = 1;
+        }
+    }
+  return dyn_detach;
 }
 
 char* vt_env_gnu_nm()
@@ -229,6 +257,8 @@ char* vt_env_gnu_nm()
       tmp = getenv("VT_GNU_NM");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_GNU_NM=%s", tmp);
+
           gnu_nm = replace_vars(tmp);
         }
       else
@@ -248,14 +278,16 @@ char* vt_env_gnu_nmfile()
   char* tmp;
 
   if (read)
-  {
-    read = 0;
-    tmp = getenv("VT_GNU_NMFILE");
-    if (tmp != NULL && strlen(tmp) > 0)
-      {
-        gnu_nmfile = replace_vars(tmp);
-      }
-  }
+    {
+      read = 0;
+      tmp = getenv("VT_GNU_NMFILE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_GNU_NMFILE=%s", tmp);
+
+          gnu_nmfile = replace_vars(tmp);
+        }
+    }
   return gnu_nmfile;
 }
 
@@ -269,6 +301,8 @@ char* vt_env_gdir()
       tmp = getenv("VT_PFORM_GDIR");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_PFORM_GDIR=%s", tmp);
+
           gdir = replace_vars(tmp);
         }
       else
@@ -289,6 +323,8 @@ char* vt_env_ldir()
       tmp = getenv("VT_PFORM_LDIR");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_PFORM_LDIR=%s", tmp);
+
           ldir = replace_vars(tmp);
         }
       else
@@ -305,17 +341,19 @@ int vt_env_gdir_check()
   char* tmp;
 
   if (gdir_check == -1)
-  {
-    tmp = getenv("VT_PFORM_GDIR_CHECK");
-    if (tmp != NULL && strlen(tmp) > 0)
     {
-      gdir_check = parse_bool(tmp);
+      tmp = getenv("VT_PFORM_GDIR_CHECK");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_PFORM_GDIR_CHECK=%s", tmp);
+
+          gdir_check = parse_bool(tmp);
+        }
+      else
+        {
+          gdir_check = 1;
+        }
     }
-    else
-    {
-      gdir_check = 1;
-    }
-  }
   return gdir_check;
 }
 
@@ -325,17 +363,19 @@ int vt_env_ldir_check()
   char* tmp;
 
   if (ldir_check == -1)
-  {
-    tmp = getenv("VT_PFORM_LDIR_CHECK");
-    if (tmp != NULL && strlen(tmp) > 0)
     {
-      ldir_check = parse_bool(tmp);
+      tmp = getenv("VT_PFORM_LDIR_CHECK");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_PFORM_LDIR_CHECK=%s", tmp);
+
+          ldir_check = parse_bool(tmp);
+        }
+      else
+        {
+          ldir_check = 1;
+        }
     }
-    else
-    {
-      ldir_check = 1;
-    }
-  }
   return ldir_check;
 }
 
@@ -349,6 +389,8 @@ char* vt_env_fprefix()
       tmp = getenv("VT_FILE_PREFIX");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_FILE_PREFIX=%s", tmp);
+
           fprefix = replace_vars(tmp);
         }
       else
@@ -384,7 +426,11 @@ int vt_env_funique()
       if (tmp != NULL && strlen(tmp) > 0)
         {
           char tmpbuf[128];
-          char* p = tmpbuf;
+          char* p;
+
+          vt_cntl_msg(2, "VT_FILE_UNIQUE=%s", tmp);
+
+          p = tmpbuf;
           strncpy(tmpbuf, tmp, 128);
           tmpbuf[127] = '\0';
           while( *p ) { *p = tolower(*p); p++; }
@@ -421,6 +467,8 @@ size_t vt_env_bsize()
       tmp = getenv("VT_BUFFER_SIZE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_BUFFER_SIZE=%s", tmp);
+
           buffer_size = parse_size(tmp);
           if (buffer_size <= 0)
             {
@@ -452,6 +500,8 @@ size_t vt_env_thread_bsize()
       tmp = getenv("VT_THREAD_BUFFER_SIZE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_THREAD_BUFFER_SIZE=%s", tmp);
+
           buffer_size = parse_size(tmp);
           if (buffer_size <= 0)
             {
@@ -475,23 +525,25 @@ size_t vt_env_thread_bsize()
 
 size_t vt_env_copy_bsize()
 {
-   static size_t buffer_size = 0;
-   char* tmp;
+  static size_t buffer_size = 0;
+  char* tmp;
 
-   if (buffer_size == 0)
-     {
-       tmp = getenv("VT_COPY_BUFFER_SIZE");
-       if (tmp != NULL && strlen(tmp) > 0)
-         {
-           buffer_size = parse_size(tmp);
-           if (buffer_size <= 0)
-             vt_error_msg("VT_COPY_BUFFER_SIZE not properly set");
-         }
-       else
-         {
-           buffer_size = VT_DEFAULT_COPY_BUFFER_SIZE;
-         }
-     }
+  if (buffer_size == 0)
+    {
+      tmp = getenv("VT_COPY_BUFFER_SIZE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_COPY_BUFFER_SIZE=%s", tmp);
+
+          buffer_size = parse_size(tmp);
+          if (buffer_size <= 0)
+            vt_error_msg("VT_COPY_BUFFER_SIZE not properly set");
+        }
+      else
+        {
+          buffer_size = VT_DEFAULT_COPY_BUFFER_SIZE;
+        }
+    }
   return buffer_size;
 }
 
@@ -505,6 +557,8 @@ int vt_env_pthread_reuse()
       tmp = getenv("VT_PTHREAD_REUSE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_PTHREAD_REUSE=%s", tmp);
+
           pthread_reuse = parse_bool(tmp);
         }
       else
@@ -526,10 +580,13 @@ int vt_env_mode()
       if (tmp != NULL && strlen(tmp) > 0)
         {
           char tmpbuf[128];
-          char* p = tmpbuf;
+          char* p;
           char* tk;
           int dc;
 
+          vt_cntl_msg(2, "VT_MODE=%s", tmp);
+
+          p = tmpbuf;
           strncpy(tmpbuf, tmp, 127);
           tmpbuf[127] = '\0';
           while( *p ) { *p = tolower(*p); p++; }
@@ -567,6 +624,8 @@ int vt_env_stat_intv()
       tmp = getenv("VT_STAT_INTV");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_STAT_INTV=%s", tmp);
+
           stat_intv = atoi(tmp);
           if (stat_intv < 0)
             vt_error_msg("VT_STAT_INTV not properly set");
@@ -590,10 +649,13 @@ int vt_env_stat_props()
       if (tmp != NULL && strlen(tmp) > 0)
         {
           char tmpbuf[128];
-          char* p = tmpbuf;
+          char* p;
           char* tk;
           int dc;
 
+          vt_cntl_msg(2, "VT_STAT_PROPS=%s", tmp);
+
+          p = tmpbuf;
           strncpy(tmpbuf, tmp, 127);
           tmpbuf[127] = '\0';
           while( *p ) { *p = tolower(*p); p++; }
@@ -647,10 +709,13 @@ int vt_env_stat_msg_dtls()
       if (tmp != NULL && strlen(tmp) > 0)
         {
           char tmpbuf[128];
-          char* p = tmpbuf;
+          char* p;
           char* tk;
           int dc;
 
+          vt_cntl_msg(2, "VT_STAT_MSG_DTLS=%s", tmp);
+
+          p = tmpbuf;
           strncpy(tmpbuf, tmp, 127);
           tmpbuf[127] = '\0';
           while( *p ) { *p = tolower(*p); p++; }
@@ -692,10 +757,13 @@ int vt_env_stat_collop_dtls()
       if (tmp != NULL && strlen(tmp) > 0)
         {
           char tmpbuf[128];
-          char* p = tmpbuf;
+          char* p;
           char* tk;
           int dc;
 
+          vt_cntl_msg(2, "VT_STAT_COLLOP_DTLS=%s", tmp);
+
+          p = tmpbuf;
           strncpy(tmpbuf, tmp, 127);
           tmpbuf[127] = '\0';
           while( *p ) { *p = tolower(*p); p++; }
@@ -735,6 +803,8 @@ int vt_env_verbose()
         {
           verbose = atoi(tmp);
           if (verbose < 0) verbose = 0;
+
+          vt_cntl_msg(2, "VT_VERBOSE=%s", tmp);
         }
       else
         {
@@ -756,6 +826,8 @@ int vt_env_debug()
         {
           debug = atoi(tmp);
           if (debug < 0) debug = 0;
+
+          vt_cntl_msg(2, "VT_DEBUG=%s", tmp);
         }
       else
         {
@@ -775,6 +847,8 @@ int vt_env_do_unify()
       tmp = getenv("VT_UNIFY");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_UNIFY=%s", tmp);
+
           do_unify = parse_bool(tmp);
         }
       else
@@ -795,6 +869,8 @@ int vt_env_do_clean()
       tmp = getenv("VT_CLEAN");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_CLEAN=%s", tmp);
+
           do_clean = parse_bool(tmp);
         }
       else
@@ -815,6 +891,8 @@ int vt_env_memtrace()
       tmp = getenv("VT_MEMTRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_MEMTRACE=%s", tmp);
+
           memtrace = parse_bool(tmp);
         }
       else
@@ -835,6 +913,8 @@ int vt_env_memtrace_marker()
       tmp = getenv("VT_MEMTRACE_MARKER");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_MEMTRACE_MARKER=%s", tmp);
+
           memtrace_marker = parse_bool(tmp);
         }
       else
@@ -851,17 +931,19 @@ int vt_env_cpuidtrace()
   char* tmp;
 
   if (cpuidtrace == -1)
-  {
-    tmp = getenv("VT_CPUIDTRACE");
-    if (tmp != NULL && strlen(tmp) > 0)
     {
-      cpuidtrace = parse_bool(tmp);
+      tmp = getenv("VT_CPUIDTRACE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CPUIDTRACE=%s", tmp);
+
+          cpuidtrace = parse_bool(tmp);
+        }
+      else
+        {
+          cpuidtrace = 0;
+        }
     }
-    else
-    {
-      cpuidtrace = 0;
-    }
-  }
   return cpuidtrace;
 }
 
@@ -875,6 +957,8 @@ int vt_env_iotrace()
       tmp = getenv("VT_IOTRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_IOTRACE=%s", tmp);
+
           iotrace = parse_bool(tmp);
         }
       else
@@ -895,6 +979,8 @@ char* vt_env_iolibpathname()
       tmp = getenv("VT_IOLIB_PATHNAME");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_IOLIB_PATHNAME=%s", tmp);
+
           pathname = replace_vars(tmp);
         }
       else
@@ -915,6 +1001,8 @@ int vt_env_libctrace()
       tmp = getenv("VT_LIBCTRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_LIBCTRACE=%s", tmp);
+
           libctrace = parse_bool(tmp);
         }
       else
@@ -935,6 +1023,8 @@ int vt_env_omptrace()
       tmp = getenv("VT_OMPTRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_OMPTRACE=%s", tmp);
+
           omptrace = parse_bool(tmp);
         }
       else
@@ -955,6 +1045,8 @@ int vt_env_mpitrace()
       tmp = getenv("VT_MPITRACE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_MPITRACE=%s", tmp);
+
           mpitrace = parse_bool(tmp);
         }
       else
@@ -975,6 +1067,8 @@ int vt_env_mpicheck()
       tmp = getenv("VT_MPICHECK");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_MPICHECK=%s", tmp);
+
           mpicheck = parse_bool(tmp);
         }
       else
@@ -983,50 +1077,6 @@ int vt_env_mpicheck()
         }
     }
   return mpicheck;
-}
-
-int vt_env_max_mpi_comms()
-{
-  static int max_mpi_comms = -1;
-  char* tmp;
-
-  if (max_mpi_comms == -1)
-    {
-      tmp = getenv("VT_MAX_MPI_COMMS");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          max_mpi_comms = atoi(tmp);
-          if (max_mpi_comms < 2)
-            vt_error_msg("VT_MAX_MPI_COMMS not properly set");
-        }
-      else
-        {
-          max_mpi_comms = 100;
-        }
-    }
-  return max_mpi_comms;
-}
-
-int vt_env_max_mpi_wins()
-{
-  static int max_mpi_wins = -1;
-  char* tmp;
-
-  if (max_mpi_wins == -1)
-    {
-      tmp = getenv("VT_MAX_MPI_WINS");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          max_mpi_wins = atoi(tmp);
-          if (max_mpi_wins < 1)
-            vt_error_msg("VT_MAX_MPI_WINS not properly set");
-        }
-      else
-        {
-          max_mpi_wins = 100;
-        }
-    }
-  return max_mpi_wins;
 }
 
 int vt_env_mpicheck_errexit()
@@ -1039,6 +1089,8 @@ int vt_env_mpicheck_errexit()
       tmp = getenv("VT_MPICHECK_ERREXIT");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_MPICHECK_ERREXIT=%s", tmp);
+
           mpicheck_errexit = parse_bool(tmp);
         }
       else
@@ -1053,11 +1105,18 @@ char* vt_env_rusage()
 {
   static int read = 1;
   static char* rusage = NULL;
+  char* tmp;
 
   if (read)
     {
       read = 0;
-      rusage = getenv("VT_RUSAGE");
+      tmp = getenv("VT_RUSAGE");
+      if (tmp && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_RUSAGE=%s", tmp);
+
+          rusage = tmp;
+        }
     }
   return rusage;
 }
@@ -1072,6 +1131,8 @@ int vt_env_rusage_intv()
       tmp = getenv("VT_RUSAGE_INTV");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_RUSAGE_INTV=%s", tmp);
+
           rusage_intv = atoi(tmp);
           if (rusage_intv < 0)
             vt_error_msg("VT_RUSAGE_INTV not properly set");
@@ -1088,13 +1149,18 @@ char* vt_env_metrics()
 {
   static int read = 1;
   static char* metrics = NULL;
+  char* tmp;
 
   if (read)
     {
       read = 0;
-      metrics = getenv("VT_METRICS");
-      if ( metrics != NULL && strlen(metrics) == 0 )
-        metrics = NULL;
+      tmp = getenv("VT_METRICS");
+      if (tmp && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_METRICS=%s", tmp);
+
+          metrics = tmp;
+        }
     }
   return metrics;
 }
@@ -1102,16 +1168,22 @@ char* vt_env_metrics()
 char* vt_env_metrics_sep()
 {
   static char* metrics_sep = NULL;
+  char* tmp;
 
   if (!metrics_sep)
     {
-      metrics_sep = getenv("VT_METRICS_SEP");
-      if (metrics_sep == NULL || strlen(metrics_sep) == 0)
+      tmp = getenv("VT_METRICS_SEP");
+      if (tmp && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_METRICS_SEP=%s", tmp);
+
+          metrics_sep = tmp;
+        }
+      else
         {
           metrics_sep = ":";
         }
     }
-
   return metrics_sep;
 }
 
@@ -1157,6 +1229,8 @@ int vt_env_sync_flush()
       tmp = getenv("VT_SYNC_FLUSH");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_SYNC_FLUSH=%s", tmp);
+
           sync_flush = parse_bool(tmp);
         }
       else
@@ -1165,6 +1239,27 @@ int vt_env_sync_flush()
         }
     }
   return sync_flush;
+}
+
+int vt_env_sync_flush_skip(void)
+{
+  static int skip = -1;
+  if (skip == -1)
+    {
+      char* tmp = getenv("VT_SYNC_FLUSH_SKIP");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_SYNC_FLUSH_SKIP=%s", tmp);
+
+          skip = atoi(tmp);
+          if (skip < 0) skip = 0;
+        }
+      else
+        {
+          skip = 0;
+        }
+    }
+  return skip;
 }
 
 int vt_env_sync_flush_level()
@@ -1177,6 +1272,8 @@ int vt_env_sync_flush_level()
       tmp = getenv("VT_SYNC_FLUSH_LEVEL");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_SYNC_FLUSH_LEVEL=%s", tmp);
+
           sync_flush_level = atoi(tmp);
           if (sync_flush_level < 0 || sync_flush_level > 100)
             vt_error_msg("VT_SYNC_FLUSH_LEVEL not properly set");
@@ -1189,6 +1286,27 @@ int vt_env_sync_flush_level()
   return sync_flush_level;
 }
 
+int vt_env_onoff_check_stack_balance()
+{
+  static int check_stack_balance = -1;
+
+  if (check_stack_balance == -1)
+    {
+      char* tmp = getenv("VT_ONOFF_CHECK_STACK_BALANCE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_ONOFF_CHECK_STACK_BALANCE=%s", tmp);
+
+          check_stack_balance = parse_bool(tmp);
+        }
+      else
+        {
+          check_stack_balance = 1;
+        }
+    }
+  return check_stack_balance;
+}
+
 int vt_env_max_stack_depth()
 {
   static int max_stack_depth = -1;
@@ -1199,6 +1317,8 @@ int vt_env_max_stack_depth()
       tmp = getenv("VT_MAX_STACK_DEPTH");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_MAX_STACK_DEPTH=%s", tmp);
+
           max_stack_depth = atoi(tmp);
           if (max_stack_depth < 0)
             vt_error_msg("VT_MAX_STACK_DEPTH not properly set");
@@ -1221,6 +1341,8 @@ int vt_env_max_flushes()
       tmp = getenv("VT_MAX_FLUSHES");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_MAX_FLUSHES=%s", tmp);
+
           max_flushes = atoi(tmp);
           if (max_flushes < 0)
             vt_error_msg("VT_MAX_FLUSHES not properly set");
@@ -1243,6 +1365,8 @@ int vt_env_max_threads()
       tmp = getenv("VT_MAX_THREADS");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_MAX_THREADS=%s", tmp);
+
           max_threads = atoi(tmp);
           if (max_threads < 1 || max_threads > VT_MAX_THREADS)
             vt_error_msg("VT_MAX_THREADS not properly set");
@@ -1266,6 +1390,8 @@ int vt_env_compression()
       tmp = getenv("VT_COMPRESSION");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_COMPRESSION=%s", tmp);
+
           compression = parse_bool(tmp);
         }
       else
@@ -1279,6 +1405,38 @@ int vt_env_compression()
 #endif /* HAVE_ZLIB */
 }
 
+size_t vt_env_compression_bsize(void)
+{
+  static size_t bsize = 0;
+  if (bsize == 0)
+    {
+      char* tmp = getenv("VT_COMPRESSION_BUFFER_SIZE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_COMPRESSION_BUFFER_SIZE=%s", tmp);
+
+          bsize = parse_size(tmp);
+        }
+    }
+  return bsize;
+}
+
+size_t vt_env_otf_bsize(void)
+{
+  static size_t bsize = 0;
+  if (bsize == 0)
+    {
+      char* tmp = getenv("VT_OTF_BUFFER_SIZE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_OTF_BUFFER_SIZE=%s", tmp);
+
+          bsize = parse_size(tmp);
+        }
+    }
+  return bsize;
+}
+
 int vt_env_java_native()
 {
   static int native = -1;
@@ -1289,6 +1447,8 @@ int vt_env_java_native()
       tmp = getenv("VT_JAVA_NATIVE");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_JAVA_NATIVE=%s", tmp);
+
           native = parse_bool(tmp);
         }
       else
@@ -1309,6 +1469,8 @@ int vt_env_java_synthetic()
       tmp = getenv("VT_JAVA_SYNTHETIC");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_JAVA_SYNTHETIC=%s", tmp);
+
           synthetic = parse_bool(tmp);
         }
       else
@@ -1329,6 +1491,8 @@ int vt_env_java_group_classes()
       tmp = getenv("VT_JAVA_GROUP_CLASSES");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_JAVA_GROUP_CLASSES=%s", tmp);
+
           group_classes = parse_bool(tmp);
         }
       else
@@ -1350,9 +1514,11 @@ char* vt_env_java_filter_spec()
       read = 0;
       tmp = getenv("VT_JAVA_FILTER_SPEC");
       if (tmp != NULL && strlen(tmp) > 0)
-      {
-        spec = replace_vars(tmp);
-      }
+        {
+          vt_cntl_msg(2, "VT_JAVA_FILTER_SPEC=%s", tmp);
+
+          spec = replace_vars(tmp);
+        }
     }
   return spec;
 }
@@ -1369,6 +1535,8 @@ char* vt_env_filter_spec()
       tmp = getenv("VT_FILTER_SPEC");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_FILTER_SPEC=%s", tmp);
+
           spec = replace_vars(tmp);
         }
     }
@@ -1387,6 +1555,8 @@ char* vt_env_groups_spec()
       tmp = getenv("VT_GROUPS_SPEC");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_GROUPS_SPEC=%s", tmp);
+
           spec = replace_vars(tmp);
         }
     }
@@ -1403,6 +1573,8 @@ int vt_env_etimesync()
       tmp = getenv("VT_ETIMESYNC");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_ETIMESYNC=%s", tmp);
+
           etimesync = parse_bool(tmp);
         }
       else
@@ -1423,6 +1595,8 @@ int vt_env_etimesync_intv()
       tmp = getenv("VT_ETIMESYNC_INTV");
       if (tmp != NULL && strlen(tmp) > 0)
         {
+          vt_cntl_msg(2, "VT_ETIMESYNC_INTV=%s", tmp);
+
           etimesync_intv = atoi(tmp);
           if (etimesync_intv < 0)
             vt_error_msg("VT_ETIMESYNC_INTV not properly set");
@@ -1439,43 +1613,58 @@ int vt_env_cudarttrace()
 {
   static int cudarttrace = -1;
 
-  if (cudarttrace == -1){
-    char* tmp = getenv("VT_CUDARTTRACE");
+  if (cudarttrace == -1)
+    {
+      char* tmp = getenv("VT_CUDARTTRACE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUDARTTRACE=%s", tmp);
 
-    if(tmp != NULL && strlen(tmp) > 0){
-      cudarttrace = parse_bool(tmp);
-    }else{
-      cudarttrace = 0;
+          cudarttrace = parse_bool(tmp);
+        }
+      else
+        {
+          cudarttrace = 0;
+        }
     }
-  }
   return cudarttrace;
 }
 
-int vt_env_cudatrace_idle(){
+int vt_env_cudatrace_idle()
+{
   static int cudaidle = -1;
 
-  if (cudaidle == -1){
-    char* tmp = getenv("VT_CUDATRACE_IDLE");
+  if (cudaidle == -1)
+    {
+      char* tmp = getenv("VT_CUDATRACE_IDLE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUDATRACE_IDLE=%s", tmp);
 
-    if(tmp != NULL && strlen(tmp) > 0){
-      cudaidle = parse_bool(tmp);
-    }else{
-      cudaidle = 0;
+          cudaidle = parse_bool(tmp);
+        }
+      else
+        {
+          cudaidle = 0;
+        }
     }
-  }
   return cudaidle;
 }
 
-size_t vt_env_cudatrace_bsize(){
+size_t vt_env_cudatrace_bsize()
+{
   static size_t limit = 0;
 
-  if (limit == 0) {
-    char* tmp = getenv("VT_CUDATRACE_BUFFER_SIZE");
+  if (limit == 0)
+    {
+      char* tmp = getenv("VT_CUDATRACE_BUFFER_SIZE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUDATRACE_BUFFER_SIZE=%s", tmp);
 
-    if(tmp != NULL && strlen(tmp) > 0){
-      limit = parse_size(tmp);
+          limit = parse_size(tmp);
+        }
     }
-  }
   return limit;
 }
 
@@ -1483,15 +1672,20 @@ int vt_env_cudatrace_kernel()
 {
   static int cudakernels = -1;
 
-  if(cudakernels == -1){
-    char* tmp = getenv("VT_CUDATRACE_KERNEL");
+  if (cudakernels == -1)
+    {
+      char* tmp = getenv("VT_CUDATRACE_KERNEL");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUDATRACE_KERNEL=%s", tmp);
 
-    if(tmp != NULL && strlen(tmp) > 0){
-      cudakernels = parse_bool(tmp);
-    }else{
-      cudakernels = 1;
+          cudakernels = parse_bool(tmp);
+        }
+      else
+        {
+          cudakernels = 1;
+        }
     }
-  }
   return cudakernels;
 }
 
@@ -1499,15 +1693,20 @@ int vt_env_cudatrace_memcpyasync()
 {
   static int cudamcpy = -1;
 
-  if(cudamcpy == -1){
-    char* tmp = getenv("VT_CUDATRACE_MEMCPYASYNC");
+  if (cudamcpy == -1)
+    {
+      char* tmp = getenv("VT_CUDATRACE_MEMCPYASYNC");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUDATRACE_MEMCPYASYNC=%s", tmp);
 
-    if(tmp != NULL && strlen(tmp) > 0){
-      cudamcpy = parse_bool(tmp);
-    }else{
-      cudamcpy = 1;
+          cudamcpy = parse_bool(tmp);
+        }
+      else
+        {
+          cudamcpy = 1;
+        }
     }
-  }
   return cudamcpy;
 }
 
@@ -1515,17 +1714,22 @@ int vt_env_cudatrace_sync()
 {
   static int sync = -1;
 
-  if(sync == -1){
-    char* tmp = getenv("VT_CUDATRACE_SYNC");
+  if (sync == -1)
+    {
+      char* tmp = getenv("VT_CUDATRACE_SYNC");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUDATRACE_SYNC=%s", tmp);
 
-    if(tmp != NULL && strlen(tmp) > 0){
-      sync = atoi(tmp);
-      /* perhaps user wrote 'yes' or 'true' */
-      if(sync == 0 && parse_bool(tmp) == 1) sync = 3;
-    }else{
-      sync = 3;
+          sync = atoi(tmp);
+          /* perhaps user wrote 'yes' or 'true' */
+          if(sync == 0 && parse_bool(tmp) == 1) sync = 3;
+        }
+      else
+        {
+          sync = 3;
+        }
     }
-  }
   return sync;
 }
 
@@ -1533,46 +1737,40 @@ int vt_env_cudatrace_gpumem()
 {
   static int cudamem = -1;
 
-  if(cudamem == -1){
-    char* tmp = getenv("VT_CUDATRACE_GPUMEMUSAGE");
+  if (cudamem == -1)
+    {
+      char* tmp = getenv("VT_CUDATRACE_GPUMEMUSAGE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUDATRACE_GPUMEMUSAGE=%s", tmp);
 
-    if(tmp != NULL && strlen(tmp) > 0){
-      cudamem = parse_bool(tmp);
-    }else{
-      cudamem = 0;
+          cudamem = parse_bool(tmp);
+        }
+      else
+        {
+          cudamem = 0;
+        }
     }
-  }
   return cudamem;
-}
-
-int vt_env_cudatrace_error()
-{
-  static int error = -1;
-
-  if(error == -1){
-    char* tmp = getenv("VT_CUDATRACE_ERROR");
-
-    if(tmp != NULL && strlen(tmp) > 0){
-      error = parse_bool(tmp);
-    }else{
-      error = 0;
-    }
-  }
-  return error;
 }
 
 char* vt_env_cupti_metrics()
 {
   static int read = 1;
   static char* metrics = NULL;
+  char* tmp;
 
-  if(read){
-    read = 0;
-    metrics = getenv("VT_CUPTI_METRICS");
-    if(metrics != NULL && strlen(metrics) == 0){
-      metrics = NULL;
+  if (read)
+    {
+      read = 0;
+      tmp = getenv("VT_CUPTI_METRICS");
+      if (tmp && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUPTI_METRICS=%s", tmp);
+
+          metrics = tmp;
+        }
     }
-  }
   return metrics;
 }
 
@@ -1580,32 +1778,84 @@ int vt_env_cupti_sampling()
 {
   static int cuptisampling = -1;
 
-  if (cuptisampling == -1){
-    char* tmp = getenv("VT_CUPTI_SAMPLING");
+  if (cuptisampling == -1)
+    {
+      char* tmp = getenv("VT_CUPTI_SAMPLING");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUPTI_SAMPLING=%s", tmp);
 
-    if(tmp != NULL && strlen(tmp) > 0){
-      cuptisampling = parse_bool(tmp);
-    }else{
-      cuptisampling = 0;
+          cuptisampling = parse_bool(tmp);
+        }
+      else
+        {
+          cuptisampling = 0;
+        }
     }
-  }
   return cuptisampling;
+}
+
+int vt_env_cupti_api_callback()
+{
+  static int cupti_cb = -1;
+
+  if (cupti_cb == -1)
+    {
+      char* tmp = getenv("VT_CUPTI_API_CALLBACK");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUPTI_API_CALLBACK=%s", tmp);
+
+          cupti_cb = parse_bool(tmp);
+        }
+      else
+        {
+          cupti_cb = 0;
+        }
+    }
+  return cupti_cb;
 }
 
 int vt_env_gputrace_debug()
 {
-    static int debug = -1;
+  static int debug = -1;
 
-  if(debug == -1){
-    char* tmp = getenv("VT_GPUTRACE_DEBUG");
+  if (debug == -1)
+    {
+      char* tmp = getenv("VT_GPUTRACE_DEBUG");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_GPUTRACE_DEBUG=%s", tmp);
 
-    if(tmp != NULL && strlen(tmp) > 0){
-      debug = atoi(tmp);
-      /* perhaps user wrote 'yes' or 'true' */
-      if(debug == 0 && parse_bool(tmp) == 1) debug = 1;
-    }else{
-      debug = 0;
+          debug = atoi(tmp);
+          /* perhaps user wrote 'yes' or 'true' */
+          if(debug == 0 && parse_bool(tmp) == 1) debug = 1;
+        }
+      else
+        {
+          debug = 0;
+        }
     }
-  }
   return debug;
+}
+
+int vt_env_gputrace_error()
+{
+  static int error = -1;
+
+  if (error == -1)
+    {
+      char* tmp = getenv("VT_GPUTRACE_ERROR");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_GPUTRACE_ERROR=%s", tmp);
+
+          error = parse_bool(tmp);
+        }
+      else
+        {
+          error = 0;
+        }
+    }
+  return error;
 }

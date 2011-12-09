@@ -63,7 +63,7 @@ OTF_HandlerArray* OTF_HandlerArray_open() {
 	ret = (OTF_HandlerArray*) malloc( sizeof( OTF_HandlerArray ) );
 	if( NULL == ret ) {
 
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -74,7 +74,7 @@ OTF_HandlerArray* OTF_HandlerArray_open() {
 		OTF_NRECORDS * sizeof( OTF_FunctionPointer* ) );
 	if( NULL == ret->pointer ) {
 
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -87,7 +87,7 @@ OTF_HandlerArray* OTF_HandlerArray_open() {
 	ret->firsthandlerarg = (void**) malloc( OTF_NRECORDS * sizeof( void* ) );
 	if( NULL == ret->firsthandlerarg ) {
 
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"no memory left.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -110,7 +110,7 @@ int OTF_HandlerArray_close( OTF_HandlerArray* handlers ) {
 
 	if( NULL == handlers ) {
 
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"handlers have not been specified.\n",
 				__FUNCTION__, __FILE__, __LINE__ );
 
@@ -132,7 +132,7 @@ int OTF_HandlerArray_setHandler( OTF_HandlerArray* handlers,
 
 	if( recordtype >= OTF_NRECORDS ) {
 
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"unknown record type %u.\n",
 				__FUNCTION__, __FILE__, __LINE__, recordtype );
 
@@ -150,7 +150,7 @@ int OTF_HandlerArray_setFirstHandlerArg( OTF_HandlerArray* handlers,
 
 	if( recordtype >= OTF_NRECORDS ) {
 
-		OTF_fprintf( stderr, "ERROR in function %s, file: %s, line: %i:\n "
+		OTF_Error( "ERROR in function %s, file: %s, line: %i:\n "
 				"unknown record type %u.\n",
 				__FUNCTION__, __FILE__, __LINE__, recordtype );
 
@@ -268,18 +268,23 @@ int OTF_HandlerArray_getCopyHandler( OTF_HandlerArray* handlers,
 	OTF_HandlerArray_setFirstHandlerArg( handlers, writer, 
 		OTF_DEFKEYVALUE_RECORD );
 
-    OTF_HandlerArray_setHandler( handlers,
-        (OTF_FunctionPointer*) OTF_CopyHandler_DefTimeRange,
-        OTF_DEFTIMERANGE_RECORD );
-    OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
-        OTF_DEFTIMERANGE_RECORD );
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) OTF_CopyHandler_DefTimeRange,
+		OTF_DEFTIMERANGE_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+		OTF_DEFTIMERANGE_RECORD );
 
-    OTF_HandlerArray_setHandler( handlers,
-        (OTF_FunctionPointer*) OTF_CopyHandler_DefCounterAssignments,
-        OTF_DEFCOUNTERASSIGNMENTS_RECORD );
-    OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
-        OTF_DEFCOUNTERASSIGNMENTS_RECORD );
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) OTF_CopyHandler_DefCounterAssignments,
+		OTF_DEFCOUNTERASSIGNMENTS_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+		OTF_DEFCOUNTERASSIGNMENTS_RECORD );
 
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) OTF_CopyHandler_DefProcessSubstitutes,
+		OTF_DEFPROCESSSUBSTITUTES_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, writer,
+		OTF_DEFPROCESSSUBSTITUTES_RECORD );
 	
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) OTF_CopyHandler_NoOp,
@@ -603,19 +608,24 @@ int OTF_HandlerArray_getCopyHandler_stream( OTF_HandlerArray* handlers,
 	OTF_HandlerArray_setFirstHandlerArg( handlers, wstream, 
 		OTF_DEFKEYVALUE_RECORD );
 
-    OTF_HandlerArray_setHandler( handlers,
-        (OTF_FunctionPointer*) OTF_CopyHandler_stream_DefTimeRange,
-        OTF_DEFTIMERANGE_RECORD );
-    OTF_HandlerArray_setFirstHandlerArg( handlers, wstream,
-        OTF_DEFTIMERANGE_RECORD );
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) OTF_CopyHandler_stream_DefTimeRange,
+		OTF_DEFTIMERANGE_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, wstream,
+		OTF_DEFTIMERANGE_RECORD );
 
-    OTF_HandlerArray_setHandler( handlers,
-        (OTF_FunctionPointer*) OTF_CopyHandler_stream_DefCounterAssignments,
-        OTF_DEFCOUNTERASSIGNMENTS_RECORD );
-    OTF_HandlerArray_setFirstHandlerArg( handlers, wstream,
-        OTF_DEFCOUNTERASSIGNMENTS_RECORD );
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) OTF_CopyHandler_stream_DefCounterAssignments,
+		OTF_DEFCOUNTERASSIGNMENTS_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, wstream,
+		OTF_DEFCOUNTERASSIGNMENTS_RECORD );
 
-	
+	OTF_HandlerArray_setHandler( handlers,
+		(OTF_FunctionPointer*) OTF_CopyHandler_stream_DefProcessSubstitutes,
+		OTF_DEFPROCESSSUBSTITUTES_RECORD );
+	OTF_HandlerArray_setFirstHandlerArg( handlers, wstream,
+		OTF_DEFPROCESSSUBSTITUTES_RECORD );
+
 	OTF_HandlerArray_setHandler( handlers, 
 		(OTF_FunctionPointer*) OTF_CopyHandler_stream_NoOp,
 		OTF_NOOP_RECORD );

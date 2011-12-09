@@ -275,8 +275,6 @@ cat <<End-of-File >$tmp.awk
 # by MPI_Fint.
 # -------------------------------------------------
 function converttype(type) { 
-  gsub("MPI_Aint","MPI_Fint",type)
-
   if (ENVIRON["COMM_CONVERT"] == 1)
     gsub("MPI_Comm","MPI_Fint",type)
 
@@ -326,9 +324,6 @@ function print_convert_function(type,para,decl) {
         if (type == "char*") {
             if (decl) printf"  char* %sC = NULL;\n", para
             else printf"  vt_string_f2c(%s, %s_len, &%sC);\n", para, para, para 
-        } else if (index(type,"MPI_Aint") > 0) {
-            if (decl) printf"  MPI_Aint %sC;\n",para
-            else printf"  %sC = (MPI_Aint)%s%s;\n",para,pointer,para
         } else if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             if (decl) printf"  MPI_Comm %sC;\n", para
             else printf"  %sC = MPI_Comm_f2c(%s%s);\n",para,pointer,para
@@ -380,8 +375,6 @@ function print_convert_function(type,para,decl) {
 
         if (type == "char*") {
             if (decl) printf "  char %sC[1024];\n", para
-        } else if (index(type,"MPI_Aint") > 0) {
-            if (decl) printf"  MPI_Aint %sC;\n",para
         } else if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             if (decl) printf"  MPI_Comm %sC;\n",para
             else printf"  %sC = MPI_COMM_NULL;\n",para
@@ -440,13 +433,7 @@ function print_convert_function(type,para,decl) {
         len_parameter = lentemp[2]
 
         #now we have to handle all the imaginable handles
-        if (index(type,"MPI_Aint") > 0) {
-            if (decl) {
-                printf"  MPI_Aint* %sC;\n",para
-            } else {
-                printf"  %sC = (MPI_Aint*)malloc(sizeof(MPI_Aint)*(*%s));\n",para,len_parameter
-            }
-        } else if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
+        if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             if (decl) {
                 printf"  MPI_Comm* %sC;\n",para
             } else {
@@ -551,12 +538,7 @@ function print_convert_function(type,para,decl) {
         len_parameter = lentemp[2]
 
         #now we have to handle all the imaginable handles
-        if (index(type,"MPI_Aint") > 0) {
-            if (!decl) {
-                printf"  for (i = 0; i < *%s; i++) \n",len_parameter
-                printf"    %sC[i] = (MPI_Aint)%s[i];\n",para,para
-            }
-        } else if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
+        if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             if (!decl) {
                 printf"  for (i = 0; i < *%s; i++) \n",len_parameter
                 printf"    %sC[i] = MPI_Comm_f2c(%s[i]);\n",para,para
@@ -635,9 +617,6 @@ function print_back_convert_function(type,para) {
         if (type == "char*")
             printf"  vt_string_c2f(%sC, %s, %s_len);\n", para, para, para
 
-	if (index(type,"MPI_Aint") > 0)
-            printf"  *%s = (MPI_Fint)%sC;\n",para,para
-
         if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0))
             printf"  *%s = MPI_Comm_c2f(%sC);\n",para,para
 
@@ -686,13 +665,6 @@ function print_back_convert_function(type,para) {
         len_parameter = lentemp[2]
 
         #now we have to handle all the imaginable handles
-        if (index(type,"MPI_Aint") > 0) {
-            printf"  if ( *%s != MPI_UNDEFINED )\n  {\n",len_parameter
-            printf"    for (i = 0; i < *%s; i++) \n",len_parameter
-            printf"      %s[i] = (MPI_Fint)%sC[i];\n",para,para
-            printf"  }\n"
-        }
-
         if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             printf"  if ( *%s != MPI_UNDEFINED )\n  {\n",len_parameter
             printf"    for (i = 0; i < *%s; i++) \n",len_parameter
@@ -768,8 +740,7 @@ function print_back_convert_function(type,para) {
     if ( (index(para,"_CLASS_ARRAY_") != 0) &&
          (index(type,"MPI_Status") == 0) )
     {
-         if ( (index(type,"MPI_Aint") != 0) ||
-              ((index(type,"MPI_Comm") != 0) && (ENVIRON["COMM_CONVERT"] == 1)) ||
+         if ( ((index(type,"MPI_Comm") != 0) && (ENVIRON["COMM_CONVERT"] == 1)) ||
               ((index(type,"MPI_Errhandler") != 0) && (ENVIRON["ERRHANDLER_CONVERT"] == 1)) ||
               ((index(type,"MPI_File") != 0) && (ENVIRON["FILE_CONVERT"] == 1)) ||
               ((index(type,"MPI_Group") != 0) && (ENVIRON["GROUP_CONVERT"] == 1)) ||
@@ -830,17 +801,16 @@ function get_converted_name(para,type) {
         address="&"
 
     #handle conversion
-    if ((index(type,"MPI_Aint") > 0) ||
-        ((ENVIRON["COMM_CONVERT"] == 1)&&(index(type,"MPI_Comm") > 0)) ||
-        ((ENVIRON["ERRH_CONVERT"] == 1)&&(index(type,"MPI_Errhandler") > 0)) ||
-        ((ENVIRON["FILE_CONVERT"] == 1)&&(index(type,"MPI_File") > 0)) ||
-        ((ENVIRON["GROUP_CONVERT"] == 1)&&(index(type,"MPI_Group") > 0)) ||
-        ((ENVIRON["INFO_CONVERT"] == 1)&&(index(type,"MPI_Info") > 0)) ||
-        ((ENVIRON["OP_CONVERT"] == 1)&&(index(type,"MPI_Op") > 0)) ||
-        ((ENVIRON["TYPE_CONVERT"] == 1)&&(index(type,"MPI_Datatype") > 0)) ||
-        ((ENVIRON["WIN_CONVERT"] == 1)&&(index(type,"MPI_Win") > 0)) ||
-        ((ENVIRON["REQUEST_CONVERT"] == 1)&&(index(type,"MPI_Request") > 0)) ||
-        (index(type,"MPI_Status") > 0) )
+    if ( ((ENVIRON["COMM_CONVERT"] == 1)&&(index(type,"MPI_Comm") > 0)) ||
+         ((ENVIRON["ERRH_CONVERT"] == 1)&&(index(type,"MPI_Errhandler") > 0)) ||
+         ((ENVIRON["FILE_CONVERT"] == 1)&&(index(type,"MPI_File") > 0)) ||
+         ((ENVIRON["GROUP_CONVERT"] == 1)&&(index(type,"MPI_Group") > 0)) ||
+         ((ENVIRON["INFO_CONVERT"] == 1)&&(index(type,"MPI_Info") > 0)) ||
+         ((ENVIRON["OP_CONVERT"] == 1)&&(index(type,"MPI_Op") > 0)) ||
+         ((ENVIRON["TYPE_CONVERT"] == 1)&&(index(type,"MPI_Datatype") > 0)) ||
+         ((ENVIRON["WIN_CONVERT"] == 1)&&(index(type,"MPI_Win") > 0)) ||
+         ((ENVIRON["REQUEST_CONVERT"] == 1)&&(index(type,"MPI_Request") > 0)) ||
+         (index(type,"MPI_Status") > 0) )
         return address para "C"
 
     #it is not a handle type so normal handling

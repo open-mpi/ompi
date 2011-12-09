@@ -97,9 +97,9 @@ void vt_memhook_init()
 
   /* define counter */
   memalloc_cid =
-    vt_def_counter(VT_CURRENT_THREAD, "MEM_ALLOC",
+    vt_def_counter(VT_CURRENT_THREAD, "MEM_ALLOC", "Bytes",
                    VT_CNTR_ABS | VT_CNTR_NEXT,
-                   gid, "Bytes");
+                   gid, 0);
 
   vt_memhook_is_initialized = 1;
 }

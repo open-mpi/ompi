@@ -48,7 +48,8 @@ AC_DEFUN([ACVT_MPI],
 
 		MPIINCDIR="-I$top_vt_srcdir/../../../include -I$top_vt_builddir/../../../include"
 		FMPIINCDIR="$MPIINCDIR"
-		MPILIBDIR="-L$top_vt_builddir/../../../.libs"
+		# MPILIBDIR is used in the compiler wrapper configuration files; set LDFLAGS instead
+		LDFLAGS="$LDFLAGS -L$top_vt_builddir/../../../.libs"
 
 		enable_mpi="yes"
 		with_openmpi="yes"
@@ -431,21 +432,24 @@ AC_DEFUN([ACVT_MPI],
 		AC_CHECK_PROGS(MPICC, mpicc hcc mpcc_r mpcc mpxlc_r mpxlc mpixlc_r mpixlc cmpicc mpiicc)
 		AS_IF([test x"$MPICC" != x],
 		[
-			mpicc=`echo $MPICC | cut -d ' ' -f 1`
-			which_mpicc=`which $mpicc 2>/dev/null`
-			AS_IF([test x"$which_mpicc" = x], [AC_MSG_ERROR([$mpicc not found])])
-
-			mpi_bin_dir=`dirname $which_mpicc`
-			AS_IF([test "$mpi_bin_dir" != "/usr/bin" -a "$mpi_bin_dir" != "/SX/usr/bin"],
+			AS_IF([test x"$inside_openmpi" = "xno"],
 			[
-				AS_IF([test x"$MPIDIR" = x],
-				[MPIDIR=`echo $mpi_bin_dir | sed -e 's/bin//'`])
-				AS_IF([test x"$MPIINCDIR" = x],
-				[MPIINCDIR=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`])
-				AS_IF([test x"$FMPIINCDIR" = x],
-				[FMPIINCDIR=$MPIINCDIR])
-				AS_IF([test x"$MPILIBDIR" = x],
-				[MPILIBDIR=-L`echo $mpi_bin_dir | sed -e 's/bin/lib/'`])
+				mpicc=`echo $MPICC | cut -d ' ' -f 1`
+				which_mpicc=`which $mpicc 2>/dev/null`
+				AS_IF([test x"$which_mpicc" = x], [AC_MSG_ERROR([$mpicc not found])])
+
+				mpi_bin_dir=`dirname $which_mpicc`
+				AS_IF([test "$mpi_bin_dir" != "/usr/bin" -a "$mpi_bin_dir" != "/SX/usr/bin"],
+				[
+					AS_IF([test x"$MPIDIR" = x],
+					[MPIDIR=`echo $mpi_bin_dir | sed -e 's/bin//'`])
+					AS_IF([test x"$MPIINCDIR" = x],
+					[MPIINCDIR=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`])
+					AS_IF([test x"$FMPIINCDIR" = x],
+					[FMPIINCDIR=$MPIINCDIR])
+					AS_IF([test x"$MPILIBDIR" = x],
+					[MPILIBDIR=-L`echo $mpi_bin_dir | sed -e 's/bin/lib/'`])
+				])
 			])
 		],
 		[
@@ -612,75 +616,78 @@ dnl		check for PMPILIB
 
 dnl		check for FMPILIB
 
-		AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+		AS_IF([test x"$F77" != x],
 		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lmpi_f77 $MPILIB"
-			AC_MSG_CHECKING([whether linking with -lmpi_f77 works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); FMPILIB=-lmpi_f77],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-
-		AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lmpibinding_f77"
-			AC_MSG_CHECKING([whether linking with -lmpibinding_f77 works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); FMPILIB=-lmpibinding_f77],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-
-		AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lfmpich"
-			AC_MSG_CHECKING([whether linking with -lfmpich works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); FMPILIB=-lfmpich],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-
-		AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -llamf77mpi"
-			AC_MSG_CHECKING([whether linking with -llamf77mpi works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); FMPILIB=-llamf77mpi],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-
-		AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
-		[
-			sav_LIBS=$LIBS
-			LIBS="$LIBS $MPILIBDIR -lfmpi"
-			AC_MSG_CHECKING([whether linking with -lfmpi works])
-			AC_TRY_LINK([],[],
-			[AC_MSG_RESULT([yes]); FMPILIB=-lfmpi],[AC_MSG_RESULT([no])])
-			LIBS=$sav_LIBS
-		])
-
-		AS_IF([test x"$mpi_error" = "xno"],
-		[
-			AS_IF([test x"$FMPILIB" = x],
+			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
 			[
-				AS_IF([test x"$check_fmpiwraplib" = "xyes"],
-				[
-					AC_MSG_WARN([no libmpi_f77, libmpibinding_f77, libfmpich, liblamf77mpi, or libfmpi found; build libvt-fmpi])
-					FMPILIB="-lvt-fmpi"
-				])
-			],
+				sav_LIBS=$LIBS
+				LIBS="$LIBS $MPILIBDIR -lmpi_f77 $MPILIB"
+				AC_MSG_CHECKING([whether linking with -lmpi_f77 works])
+				AC_TRY_LINK([],[],
+				[AC_MSG_RESULT([yes]); FMPILIB=-lmpi_f77],[AC_MSG_RESULT([no])])
+				LIBS=$sav_LIBS
+			])
+
+			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
 			[
-				AS_IF([test x"$FMPILIB" = "x-lvt-fmpi"],
+				sav_LIBS=$LIBS
+				LIBS="$LIBS $MPILIBDIR -lmpibinding_f77"
+				AC_MSG_CHECKING([whether linking with -lmpibinding_f77 works])
+				AC_TRY_LINK([],[],
+				[AC_MSG_RESULT([yes]); FMPILIB=-lmpibinding_f77],[AC_MSG_RESULT([no])])
+				LIBS=$sav_LIBS
+			])
+
+			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+			[
+				sav_LIBS=$LIBS
+				LIBS="$LIBS $MPILIBDIR -lfmpich"
+				AC_MSG_CHECKING([whether linking with -lfmpich works])
+				AC_TRY_LINK([],[],
+				[AC_MSG_RESULT([yes]); FMPILIB=-lfmpich],[AC_MSG_RESULT([no])])
+				LIBS=$sav_LIBS
+			])
+
+			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+			[
+				sav_LIBS=$LIBS
+				LIBS="$LIBS $MPILIBDIR -llamf77mpi"
+				AC_MSG_CHECKING([whether linking with -llamf77mpi works])
+				AC_TRY_LINK([],[],
+				[AC_MSG_RESULT([yes]); FMPILIB=-llamf77mpi],[AC_MSG_RESULT([no])])
+				LIBS=$sav_LIBS
+			])
+
+			AS_IF([test x"$FMPILIB" = x -a x"$mpi_error" = "xno"],
+			[
+				sav_LIBS=$LIBS
+				LIBS="$LIBS $MPILIBDIR -lfmpi"
+				AC_MSG_CHECKING([whether linking with -lfmpi works])
+				AC_TRY_LINK([],[],
+				[AC_MSG_RESULT([yes]); FMPILIB=-lfmpi],[AC_MSG_RESULT([no])])
+				LIBS=$sav_LIBS
+			])
+
+			AS_IF([test x"$mpi_error" = "xno"],
+			[
+				AS_IF([test x"$FMPILIB" = x],
 				[
-					AS_IF([test x"$check_fmpiwraplib" = "xno"],
-					[FMPILIB=])
+					AS_IF([test x"$check_fmpiwraplib" = "xyes"],
+					[
+						AC_MSG_WARN([no libmpi_f77, libmpibinding_f77, libfmpich, liblamf77mpi, or libfmpi found; build libvt-fmpi])
+						FMPILIB="-lvt-fmpi"
+					])
 				],
 				[
-					AS_IF([test x"$force_fmpiwraplib" = "xyes"],
-					[FMPILIB="-lvt-fmpi"], [check_fmpiwraplib="no"])
+					AS_IF([test x"$FMPILIB" = "x-lvt-fmpi"],
+					[
+						AS_IF([test x"$check_fmpiwraplib" = "xno"],
+						[FMPILIB=])
+					],
+					[
+						AS_IF([test x"$force_fmpiwraplib" = "xyes"],
+						[FMPILIB="-lvt-fmpi"], [check_fmpiwraplib="no"])
+					])
 				])
 			])
 		])
@@ -877,16 +884,19 @@ AC_DEFUN([ACVT_FMPIWRAPLIB],
 		AC_CHECK_PROGS(MPIF77, mpif77 hf77 mpxlf_r mpxlf mpf77 cmpifc mpif90 mpxlf95_r mpxlf90_r mpxlf95 mpxlf90 mpf90 cmpif90c)
 		AS_IF([test x"$MPIF77" != x],
 		[
-			mpif77=`echo $MPIF77 | cut -d ' ' -f 1`
-			which_mpif77=`which $mpif77 2>/dev/null`
-			AS_IF([test x"$which_mpif77" = x], [AC_MSG_ERROR([$mpif77 not found])])
-
-			mpi_bin_dir=`dirname $which_mpif77`
-			AS_IF([test "$mpi_bin_dir" != "/usr/bin" -a "$mpi_bin_dir" != "/SX/usr/bin" -a x"$FMPIINCDIR" != x-I"$mpi_inc_dir"],
+			AS_IF([test x"$inside_openmpi" = "xno"],
 			[
-				mpi_inc_dir=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`
-				AS_IF([test x"$FMPIINCDIR" != x"$mpi_inc_dir"],
-				[FMPIINCDIR="$FMPIINCDIR -I`echo $mpi_bin_dir | sed -e 's/bin/include/'`"])
+				mpif77=`echo $MPIF77 | cut -d ' ' -f 1`
+				which_mpif77=`which $mpif77 2>/dev/null`
+				AS_IF([test x"$which_mpif77" = x], [AC_MSG_ERROR([$mpif77 not found])])
+
+				mpi_bin_dir=`dirname $which_mpif77`
+				AS_IF([test "$mpi_bin_dir" != "/usr/bin" -a "$mpi_bin_dir" != "/SX/usr/bin" -a x"$FMPIINCDIR" != x-I"$mpi_inc_dir"],
+				[
+					mpi_inc_dir=-I`echo $mpi_bin_dir | sed -e 's/bin/include/'`
+					AS_IF([test x"$FMPIINCDIR" != x"$mpi_inc_dir"],
+					[FMPIINCDIR="$FMPIINCDIR -I`echo $mpi_bin_dir | sed -e 's/bin/include/'`"])
+				])
 			])
 		],
 		[

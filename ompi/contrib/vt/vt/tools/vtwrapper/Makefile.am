@@ -162,7 +162,6 @@ LIBS = $(LIBS_FOR_BUILD)
 
 @CROSS_PREFIX@vtwrapper_SOURCES = \
 	vt_wrapper.cc \
-	vt_wrapper.h \
 	$(top_srcdir)/util/installdirs.c \
 	$(top_srcdir)/util/util.c
 

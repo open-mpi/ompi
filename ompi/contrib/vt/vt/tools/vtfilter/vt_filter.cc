@@ -46,20 +46,27 @@ inline static bool stringList2Vector( const std::string& str,
                                       std::vector<std::string>& vec,
                                       const std::string& delim = ";" );
 
+// local variables
+//
+
+// enforce gen. mode if called as vtfiltergen[-mpi]
+static bool enforceGenMode = false;
+
 // global variables
 //
 
-#ifdef VT_MPI
-  const std::string ExeName = "vtfilter-mpi";
-#else // VT_MPI
-  const std::string ExeName = "vtfilter";
-#endif // VT_MPI
+// name of program's executable
+std::string ExeName;
 
-ParamsS             Params;
+// program parameters
+ParamsS Params;
 
 #ifdef VT_MPI
-  VT_MPI_INT        NumRanks;
-  VT_MPI_INT        MyRank;
+  // number of MPI-ranks
+  VT_MPI_INT NumRanks;
+
+  // MPI-rank of calling process
+  VT_MPI_INT MyRank;
 #endif // VT_MPI
 
 int
@@ -74,6 +81,21 @@ main( int argc, char ** argv )
   MPI_Comm_size( MPI_COMM_WORLD, &NumRanks );
   MPI_Comm_rank( MPI_COMM_WORLD, &MyRank );
 #endif // VT_MPI
+
+  // get program's executable name
+  //
+  ExeName = argv[0];
+  std::string::size_type si = ExeName.rfind('/');
+  if( si != std::string::npos )
+    ExeName.erase( 0, si+1 );
+
+  // enforce gen. mode if called as vtfiltergen[-mpi]
+  //
+  if( ExeName.substr( 0, 11 ) == "vtfiltergen" )
+  {
+    enforceGenMode = true;
+    Params.mode = MODE_GEN;
+  }
 
   do
   {
@@ -123,7 +145,7 @@ main( int argc, char ** argv )
 
     // either generate a filter file ...
     //
-    if( Params.mode == MODE_GENFILT )
+    if( Params.mode == MODE_GEN )
     {
       // create instance of class FilterGenerator
       FilterGeneratorC* gen = new FilterGeneratorC();
@@ -306,17 +328,19 @@ getParams( int argc, char** argv )
   {
     // --gen, -gen*
     //
-    if( args[i].compare( "--gen" ) == 0 ||
-        args[i].compare( "-gen" ) == 0 )
+    if( !enforceGenMode &&
+        ( args[i].compare( "--gen" ) == 0 ||
+          args[i].compare( "-gen" ) == 0 ) )
     {
-      Params.mode = MODE_GENFILT;
+      Params.mode = MODE_GEN;
     }
     // --filt, -filt*
     //
-    else if( args[i].compare( "--filt" ) == 0 ||
-             args[i].compare( "-filt" ) == 0 )
+    else if( !enforceGenMode &&
+             ( args[i].compare( "--filt" ) == 0 ||
+               args[i].compare( "-filt" ) == 0 ) )
     {
-      Params.mode = MODE_FILTTRC;
+      Params.mode = MODE_FILT;
     }
     // -h, --help
     //
@@ -364,10 +388,11 @@ getParams( int argc, char** argv )
   {
     // already handled options
     //
-    if( args[i].compare( "--gen" ) == 0 ||
-        args[i].compare( "-gen" ) == 0 ||
-        args[i].compare( "--filt" ) == 0 ||
-        args[i].compare( "-filt" ) == 0 ||
+    if( ( !enforceGenMode &&
+          ( args[i].compare( "--gen" ) == 0 ||
+            args[i].compare( "-gen" ) == 0 ||
+            args[i].compare( "--filt" ) == 0 ||
+            args[i].compare( "-filt" ) == 0 ) ) ||
         args[i].compare( "-v" ) == 0 ||
         args[i].compare( "--verbose" ) == 0 ||
 //        args[i].compare( "-q" ) == 0 ||
@@ -381,7 +406,7 @@ getParams( int argc, char** argv )
     {
       // gen-options
       //
-      if( Params.mode == MODE_GENFILT )
+      if( Params.mode == MODE_GEN )
       {
         // -o, --output, -fo*
         //
@@ -691,19 +716,19 @@ getParams( int argc, char** argv )
       opt_error = OPT_ERR_OTHER;
       opt_error_other = ExeName + ": no input trace file specified";
     }
-    else if( Params.mode == MODE_GENFILT &&
+    else if( Params.mode == MODE_GEN &&
              Params.g_output_filtfile.length() == 0 )
     {
       opt_error = OPT_ERR_OTHER;
       opt_error_other = ExeName + ": no output filter file specified";
     }
-    else if( Params.mode == MODE_FILTTRC &&
+    else if( Params.mode == MODE_FILT &&
              Params.f_input_filtfile.length() == 0 )
     {
       opt_error = OPT_ERR_OTHER;
       opt_error_other = ExeName + ": no input filter file specified";
     }
-    else if( Params.mode == MODE_FILTTRC &&
+    else if( Params.mode == MODE_FILT &&
              Params.f_output_trcfile.length() == 0 )
     {
       opt_error = OPT_ERR_OTHER;
@@ -713,84 +738,111 @@ getParams( int argc, char** argv )
 
   // show error message, if necessary
   //
-  if( opt_error != OPT_ERR_OK )
+  MASTER
   {
-    MASTER
+    switch( opt_error )
     {
-      switch( opt_error )
+      case OPT_ERR_OK:
       {
-        case OPT_ERR_ARG_MISSING:
-        {
-          std::cerr << ExeName << ": option '" << args[i]
-                    << "' requires an argument" << std::endl;
-          break;
-        }
-        case OPT_ERR_ARG_INVALID:
-        {
-          std::cerr << ExeName << ": invalid argument `"
-                    << args[i+1] << "' for `" << args[i] << "'" << std::endl;
-          break;
-        }
-        case OPT_ERR_UNRECOGNIZED:
-        {
-          std::cerr << ExeName << ": unrecognized option -- '"
-                    << args[i] << "'" << std::endl;
-          break;
-        }
-        case OPT_ERR_OTHER:
-        {
-          std::cerr << opt_error_other << std::endl;
-          break;
-        }
-        default:
-        {
-          break;
-        }
+        break;
       }
+      case OPT_ERR_ARG_MISSING:
+      {
+        std::cerr << ExeName << ": option '" << args[i]
+                  << "' requires an argument" << std::endl;
+        break;
+      }
+      case OPT_ERR_ARG_INVALID:
+      {
+        std::cerr << ExeName << ": invalid argument `"
+                  << args[i+1] << "' for `" << args[i] << "'" << std::endl;
+        break;
+      }
+      case OPT_ERR_UNRECOGNIZED:
+      {
+        std::cerr << ExeName << ": unrecognized option -- '"
+                  << args[i] << "'" << std::endl;
+        break;
+      }
+      case OPT_ERR_OTHER:
+      {
+        std::cerr << opt_error_other << std::endl;
+        break;
+      }
+    }
 
+    if( opt_error != OPT_ERR_OK )
+    {
       std::cerr << "Try `" << ExeName << " --help' for more information."
                 << std::endl;
     }
-
-    return false;
   }
 
-  return true;
+  return ( opt_error == OPT_ERR_OK );
 }
 
 static void
 showUsage()
 {
-  std::cout << std::endl
-    << " " << ExeName << " - filter generator for VampirTrace." << std::endl
+  if( enforceGenMode )
+  {
+    std::cout
+      << std::endl
+      << " " << ExeName << " - filter generator for VampirTrace." << std::endl
+      << std::endl
+      << " Syntax: " << ExeName << " [options] <input trace file>" << std::endl;
+  }
+  else
+  {
+    std::cout
+      << std::endl
+      << " " << ExeName << " - filter tool for VampirTrace." << std::endl
+      << std::endl
+      << " Syntax: " << std::endl
+      << "   Generate a filter file:" << std::endl
+      << "     " << ExeName << " --gen [gen-options] <input trace file>" << std::endl
+      << std::endl
+      << "   Filter a trace using an already existing filter file:" << std::endl
+      << "     " << ExeName << " [--filt] [filt-options]" << std::endl
+      << "       --filter=<input filter file> <input trace file>" << std::endl;
+  }
+
+  std::cout
     << std::endl
-    << " Syntax: " << std::endl
-    << "   Generate a filter file:" << std::endl
-    << "     " << ExeName << " [gen-options] <input trace file>" << std::endl
-    << std::endl
-    << "   Filter a trace using an already existing filter file:" << std::endl
-    << "     " << ExeName << " --filt [filt-options] <input trace file>" << std::endl
-    << std::endl
-    << "   options:" << std::endl
-    << "     --gen               Generate a filter file. (default)" << std::endl
-    << "                         See 'gen-options' below for valid options." << std::endl
-    << std::endl
-    << "     --filt              Filter a trace using an already existing filter file." << std::endl
-    << "                         See 'filt-options' below for valid options." << std::endl
-    << std::endl
+    << "   options:" << std::endl;
+
+  if( !enforceGenMode )
+  {
+    std::cout
+      << "     --gen               Generate a filter file." << std::endl
+      << "                         See 'gen-options' below for valid options." << std::endl
+      << std::endl
+      << "     --filt              Filter a trace using an already existing" << std::endl
+      << "                         filter file. (default)" << std::endl
+      << "                         See 'filt-options' below for valid options." << std::endl
+      << std::endl;
+  }
+
+  std::cout
     << "     -h, --help          Show this help message." << std::endl
     << std::endl
     << "     -V, --version       Show VampirTrace version." << std::endl
     << std::endl
-    << "     -v, --verbose       Increase output verbosity." << std::endl
-    << "                         (can be used more than once)" << std::endl
-    << std::endl
-//    << "     -q, --quiet         Enable quiet mode." << std::endl
-//    << "                         (only emergency output)" << std::endl
-//    << std::endl
     << "     -p, --progress      Show progress." << std::endl
     << std::endl
-    << "   gen-options:" << std::endl
+    << "     -v, --verbose       Increase output verbosity." << std::endl
+    << "                         (can be used more than once)" << std::endl
+    << std::endl;
+//    << "     -q, --quiet         Enable quiet mode." << std::endl
+//    << "                         (only emergency output)" << std::endl
+//    << std::endl;
+
+  if( !enforceGenMode )
+  {
+    std::cout << "   gen-options:" << std::endl;
+  }
+
+  std::cout
     << "     -o, --output=FILE   Pathname of output filter file." << std::endl
     << std::endl
     << "     -r, --reduce=N      Reduce the trace size to N percent of the original size." << std::endl
@@ -822,35 +874,49 @@ showUsage()
     << std::endl
     << "     --include-callees   Automatically include callees of included functions" << std::endl
     << "                         as well into the filter." << std::endl
-    << std::endl
-    << "   filt-options:" << std::endl
-    << "     -o, --output=FILE   Pathname of output trace file." << std::endl
-    << std::endl
-    << "     -f, --filter=FILE   Pathname of input filter file." << std::endl
-    << std::endl
-    << "     -s, --max-streams=N Maximum number of output streams." << std::endl
-    << "                         Set this to 0 to get the same number of output streams" << std::endl
+    << std::endl;
+
+  if( !enforceGenMode )
+  {
+    std::cout
+      << "   filt-options:" << std::endl
+      << "     -o, --output=FILE   Pathname of output trace file." << std::endl
+      << std::endl
+      << "     -f, --filter=FILE   Pathname of input filter file." << std::endl
+      << std::endl
+      << "     -s, --max-streams=N Maximum number of output streams." << std::endl
+      << "                         Set this to 0 to get the same number of output streams" << std::endl
 #ifndef VT_MPI
-    << "                         as input streams." << std::endl
+      << "                         as input streams." << std::endl
 #else // VT_MPI
-    << "                         as MPI processes used, but at least the number of" << std::endl
-    << "                         input streams." << std::endl
+      << "                         as MPI processes used, but at least the number of" << std::endl
+      << "                         input streams." << std::endl
 #endif // VT_MPI
-    << "                         (default: " << ParamsS::f_default_max_output_streams << ")" << std::endl
-    << std::endl
-    << "     --max-file-handles=N" << std::endl
-    << "                         Maximum number of files that are allowed to be open" << std::endl
-    << "                         simultaneously." << std::endl
-    << "                         (default: " << ParamsS::f_default_max_file_handles << ")" << std::endl
-    << std::endl
-    << "     --nocompress        Don't compress output trace files." << std::endl
-    << std::endl
+      << "                         (default: " << ParamsS::f_default_max_output_streams << ")" << std::endl
+      << std::endl
+      << "     --max-file-handles=N" << std::endl
+      << "                         Maximum number of files that are allowed to be open" << std::endl
+      << "                         simultaneously." << std::endl
+      << "                         (default: " << ParamsS::f_default_max_file_handles << ")" << std::endl
+      << std::endl
+      << "     --nocompress        Don't compress output trace files." << std::endl
+      << std::endl;
+  }
+
+  std::cout
     << "   obsolete options and environment variables:" << std::endl
-    << "   (still available for backward-compatibility)" << std::endl
-    << "     -gen                equivalent to '--gen'" << std::endl
-    << "     -filt               equivalent to '--filt'" << std::endl
-    << std::endl
-    << "   gen-options:" << std::endl
+    << "   (still available for backward-compatibility)" << std::endl;
+
+  if( !enforceGenMode )
+  {
+    std::cout
+      << "     -gen                equivalent to '--gen'" << std::endl
+      << "     -filt               equivalent to '--filt'" << std::endl
+      << std::endl
+      << "   gen-options:" << std::endl;
+  }
+
+  std::cout
     << "     -fo                 equivalent to '-o' or '--output'" << std::endl
     << "     -stats              equivalent to '-s' or '--stats'" << std::endl
     << "     -ex                 equivalent to '-e' or '--exclude'" << std::endl
@@ -862,15 +928,20 @@ showUsage()
     << "                         equivalent to '--exclude-file'" << std::endl
     << "       TRACEFILTER_INCLUDEFILE" << std::endl
     << "                         equivalent to '--include-file'" << std::endl
-    << std::endl
-    << "   filt-options:" << std::endl
-    << "     -to                 equivalent to '-o' or '--output'" << std::endl
-    << "     -fi                 equivalent to '-f' or '--filter'" << std::endl
-    << "     -z LEVEL            Set the compression level. Level reaches from 0 to 9" << std::endl
-    << "                         where 0 is no compression (--nocompress) and 9 is the" << std::endl
-    << "                         highest level." << std::endl
-    << "                         (default: " << Params.f_default_compress_level << ")" << std::endl
     << std::endl;
+
+  if( !enforceGenMode )
+  {
+    std::cout
+      << "   filt-options:" << std::endl
+      << "     -to                 equivalent to '-o' or '--output'" << std::endl
+      << "     -fi                 equivalent to '-f' or '--filter'" << std::endl
+      << "     -z LEVEL            Set the compression level. Level reaches from 0 to 9" << std::endl
+      << "                         where 0 is no compression (--nocompress) and 9 is the" << std::endl
+      << "                         highest level." << std::endl
+      << "                         (default: " << Params.f_default_compress_level << ")" << std::endl
+      << std::endl;
+  }
 }
 
 static bool
@@ -895,8 +966,12 @@ stringList2Vector( const std::string& str, std::vector<std::string>& vec,
 
       // trim list entry
       //
-      entry.erase( 0, entry.find_first_not_of( " " ) );
-      entry.erase( entry.find_last_not_of( " " ) + 1 );
+      std::string::size_type si = entry.find_first_not_of( " " );
+      if( si != std::string::npos )
+        entry.erase( 0, si );
+      si = entry.find_last_not_of( " " );
+      if( si != std::string::npos )
+        entry.erase( si + 1 );
 
       // add list entry to output vector, if it's not empty
       //

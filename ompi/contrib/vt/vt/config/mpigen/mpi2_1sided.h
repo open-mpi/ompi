@@ -42,6 +42,7 @@ VT_MPI_INT MPI_Win_complete(MPI_Win win);
 VT_MPI_INT MPI_Win_create(void* base, MPI_Aint size, VT_MPI_INT disp_unit, MPI_Info info, MPI_Comm comm, MPI_Win* win_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Win_fence(VT_MPI_INT assert, MPI_Win win);
 VT_MPI_INT MPI_Win_free(MPI_Win* win_CLASS_SINGLE_IO);
+VT_MPI_INT MPI_Win_get_group(MPI_Win win, MPI_Group* group_CLASS_SINGLE_OUT);
 VT_MPI_INT MPI_Win_lock(VT_MPI_INT lock_type, VT_MPI_INT rank, VT_MPI_INT assert, MPI_Win win);
 VT_MPI_INT MPI_Win_post(MPI_Group group, VT_MPI_INT assert, MPI_Win win);
 VT_MPI_INT MPI_Win_start(MPI_Group group, VT_MPI_INT assert, MPI_Win win);

@@ -27,19 +27,15 @@
 
 EXTERN void     vt_comm_init(void);
 EXTERN void     vt_comm_finalize(void);
-
-EXTERN void     vt_group_to_bitvector(MPI_Group group);
+EXTERN uint32_t vt_rank_to_pe(VT_MPI_INT rank, MPI_Comm comm);
 
 EXTERN void     vt_group_create(MPI_Group group);
 EXTERN void     vt_group_free(MPI_Group group);
 EXTERN uint32_t vt_group_id(MPI_Group group);
-EXTERN uint32_t vt_group_search(MPI_Group group);
 
 EXTERN void     vt_comm_create(MPI_Comm comm);
 EXTERN void     vt_comm_free(MPI_Comm comm);
 EXTERN uint32_t vt_comm_id(MPI_Comm comm);
-
-EXTERN uint32_t vt_rank_to_pe(VT_MPI_INT rank, MPI_Comm comm);
 
 #if defined(HAVE_MPI2_1SIDED) && HAVE_MPI2_1SIDED
 EXTERN void     vt_win_create(MPI_Win win, MPI_Comm comm);

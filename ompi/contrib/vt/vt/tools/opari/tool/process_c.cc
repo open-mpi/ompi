@@ -31,7 +31,7 @@ namespace {
                         unsigned& pline, string::size_type& ppos) {
     while ( pline < size ) {
       string::size_type wbeg = preStmt[pline].find_first_not_of(" \t", ppos);
-      if ( preStmt[pline][wbeg] == '\\' || wbeg == string::npos ) {
+      if ( wbeg == string::npos || preStmt[pline][wbeg] == '\\' ) {
         ++pline;
         if ( pline < size ) { ppos = 0; } else { return ""; }
       } else {

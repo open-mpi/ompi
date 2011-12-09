@@ -38,11 +38,11 @@
 #include "rfg.h"
 
 #if (defined(VT_MT) || defined(VT_HYB))
-# define VT_MY_THREAD_IS_ALIVE VTThrd_is_alive()
+# define VT_MY_THREAD_IS_ALIVE VTThrd_isAlive()
 # define VT_MY_THREAD          VTThrd_getThreadId()
 # define VT_CHECK_THREAD       VTThrd_registerThread(0)
 #elif defined(VT_JAVA)
-# define VT_MY_THREAD_IS_ALIVE VTThrd_is_alive()
+# define VT_MY_THREAD_IS_ALIVE VTThrd_isAlive()
 # define VT_MY_THREAD          VTThrd_getThreadId()
 # define VT_CHECK_THREAD
 #else
@@ -64,43 +64,44 @@ EXTERN uint32_t VTThrdMaxNum;
  */
 typedef struct
 {
-  VTGen* gen;                     /**< trace file and buffer */
+  VTGen* gen;                       /**< trace file and buffer */
 
-  char  name[512];                /**< thread name */
-  char  name_suffix[128];         /**< suffix of thread name */
+  char  name[512];                  /**< thread name */
+  char  name_suffix[128];           /**< suffix of thread name */
 
-  int stack_level;                /**< current call stack level */
-  int stack_level_at_off;         /**< call stack level at trace off */
-  int stack_level_at_rewind_mark; /**< call stack level at rewind mark */
+  int stack_level;                  /**< current call stack level */
+  int stack_level_at_off;           /**< call stack level at trace off */
+  int stack_level_at_rewind_mark;   /**< call stack level at rewind mark */
 
-  int8_t trace_status;            /**< trace status:
-                                     VT_TRACE_ON,
-                                     VT_TRACE_OFF, or
-                                     VT_TRACE_OFF_PERMANENT */
+  int8_t trace_status;              /**< trace status:
+                                      VT_TRACE_ON,
+                                      VT_TRACE_OFF, or
+                                      VT_TRACE_OFF_PERMANENT */
 
-  uint32_t parent_tid;            /**< parent thread id */
-  uint32_t child_num;             /**< number of child threads */
+  uint32_t parent_tid;              /**< parent thread id */
+  uint32_t child_num;               /**< number of child threads */
 
-
-  uint8_t is_virtual_thread;      /**< flag: virtual thread? */
+  uint8_t is_virtual;               /**< flag: is virtual thread? (e.g. GPU) */
 
 #if !defined(VT_DISABLE_RFG)
 
-  RFG_Regions* rfg_regions;
+  RFG_Regions* rfg_regions;         /**< RFG regions object */
 
 #endif /* VT_DISABLE_RFG */
 
 #if (defined (VT_MPI) || defined (VT_HYB))
 
-  uint64_t mpicoll_next_matchingid;
+  uint64_t mpicoll_next_matchingid; /**< matching id counter for MPI collective
+                                         operations. */
 
 #endif /* VT_MPI || VT_HYB */
 
 #if defined(VT_IOWRAP)
 
-  uint8_t io_tracing_state;       /**< save value of enabled flag during suspend */
-  uint8_t io_tracing_suspend_cnt; /**< save how often suspend was called */
-  uint8_t io_tracing_enabled;     /**< actual mode of I/O tracing operation */
+  uint8_t io_tracing_state;         /**< save value of enabled flag during
+                                         suspend */
+  uint8_t io_tracing_suspend_cnt;   /**< save how often suspend was called */
+  uint8_t io_tracing_enabled;       /**< actual mode of I/O tracing operation */
 
 #endif /* VT_IOWRAP */
 
@@ -113,30 +114,32 @@ typedef struct
 
 #if defined(VT_GETCPU)
 
-  uint32_t cpuid_val;             /**< cpu id counter value */
+  uint32_t cpuid_val;               /**< cpu id counter value */
 
 #endif /* VT_GETCPU */
 
 #if defined(VT_RUSAGE)
 
-  uint64_t          ru_next_read; /**< next timestamp for reading rusage counters */
-  uint64_t*         ru_valv;      /**< vector of rusage values */
-  struct vt_rusage* ru_obj;       /**< rusage object */
+  uint64_t          ru_next_read;   /**< next timestamp for reading rusage
+                                         counters */
+  uint64_t*         ru_valv;        /**< vector of rusage values */
+  struct vt_rusage* ru_obj;         /**< rusage object */
 
 #endif /* VT_RUSAGE */
 
 #if defined(VT_METR)
 
-  uint64_t*       offv;           /**< vector of counter offsets */
-  uint64_t*       valv;           /**< vector of counter values */
-  struct vt_metv* metv;           /**< vector of metric objects (i.e.the event set) */
+  uint64_t*       offv;             /**< vector of counter offsets */
+  uint64_t*       valv;             /**< vector of counter values */
+  struct vt_metv* metv;             /**< vector of metric objects
+                                         (i.e.the event sets) */
 
 #endif /* VT_METR */
 
 
 #if defined(VT_PLUGIN_CNTR)
 
-  void*   plugin_cntr_defines;    /**< plugin cntr handle */
+  void* plugin_cntr_defines;        /**< plugin cntr handle */
 
 #endif /* VT_PLUGIN_CNTR || VT_CUDARTWRAP */
 
@@ -144,108 +147,118 @@ typedef struct
 
 /* Accessor macros */
 
-#define VTTHRD_MY_VTTHRD                 (VTThrdv[VT_MY_THREAD])
+#define VTTHRD_MY_VTTHRD            (VTThrdv[VT_MY_THREAD])
 
 /* flag: is tracing enabled? */
-#define VTTHRD_TRACE_STATUS(thrd)        (thrd->trace_status)
+#define VTTHRD_TRACE_STATUS(thrd)   (thrd->trace_status)
 
 /* trace file and buffer */
-#define VTTHRD_GEN(thrd)                 (thrd->gen)
+#define VTTHRD_GEN(thrd)            (thrd->gen)
 
 /* prefix of thread's name */
-#define VTTHRD_NAME_PREFIX(thrd)         (thrd->name_prefix)
+#define VTTHRD_NAME_PREFIX(thrd)    (thrd->name_prefix)
 
 /* suffix of thread's name */
-#define VTTHRD_NAME_SUFFIX(thrd)         (thrd->name_suffix)
+#define VTTHRD_NAME_SUFFIX(thrd)    (thrd->name_suffix)
 
 /* external name of thread */
-#define VTTHRD_NAME_EXTERNAL(thrd)       (thrd->name_extern)
+#define VTTHRD_NAME_EXTERNAL(thrd)  (thrd->name_extern)
 
 /* parent thread id */
-#define VTTHRD_PARENT_TID(thrd)          (thrd->parent_tid);
+#define VTTHRD_PARENT_TID(thrd)     (thrd->parent_tid);
 
 /* number of child threads */
-#define VTTHRD_CHILD_NUM(thrd)           (thrd->child_num);
+#define VTTHRD_CHILD_NUM(thrd)      (thrd->child_num);
 
 /* current call stack level */
-#define VTTHRD_STACK_LEVEL(thrd)         (thrd->stack_level)
+#define VTTHRD_STACK_LEVEL(thrd)    (thrd->stack_level)
 
 /* call stack level at trace off */
-#define VTTHRD_STACK_LEVEL_AT_OFF(thrd)  (thrd->stack_level_at_off)
+#define VTTHRD_STACK_LEVEL_AT_OFF(thrd) \
+                                    (thrd->stack_level_at_off)
 
 /* call stack level at rewind mark */
 #define VTTHRD_STACK_LEVEL_AT_REWIND_MARK(thrd) \
-                                         (thrd->stack_level_at_rewind_mark)
+                                    (thrd->stack_level_at_rewind_mark)
 
 /* push the call stack */
-#define VTTHRD_STACK_PUSH(thrd)          (thrd->stack_level)++
+#define VTTHRD_STACK_PUSH(thrd)     (thrd->stack_level)++
 
 /* pop the call stack */
-#define VTTHRD_STACK_POP(thrd)           (thrd->stack_level)--
+#define VTTHRD_STACK_POP(thrd)      if(--(thrd->stack_level) < 0) \
+                                      vt_error_msg("Stack underflow");
 
-/* RFG regions */
-#define VTTHRD_RFGREGIONS(thrd)          (thrd->rfg_regions)
+/* RFG regions object */
+#define VTTHRD_RFGREGIONS(thrd)     (thrd->rfg_regions)
 
-/* flag: virtual thread? */
-#define VTTHRD_IS_VIRTUAL_THREAD(thrd)   (thrd->is_virtual_thread)
+/* flag: is virtual thread? */
+#define VTTHRD_IS_VIRTUAL(thrd)     (thrd->is_virtual)
 
 #if (defined (VT_MPI) || defined (VT_HYB))
-#define VTTHRD_MPICOLLOP_NEXT_MATCHINGID(thrd) (thrd->mpicoll_next_matchingid++)
+/* matching id counter for MPI coll. ops. */
+#define VTTHRD_MPICOLLOP_NEXT_MATCHINGID(thrd) \
+                                    (thrd->mpicoll_next_matchingid++)
 #endif /* VT_MPI || VT_HYB */
 
 #if (defined (VT_IOWRAP))
 
 /* save enabled/disabled state of I/O tracing when switching off temporarily */
-#define VTTHRD_IO_TRACING_STATE(thrd)         (thrd->io_tracing_state)
-#define VTTHRD_IO_TRACING_SUSPEND_CNT(thrd)   (thrd->io_tracing_suspend_cnt)
+#define VTTHRD_IO_TRACING_STATE(thrd) \
+                                    (thrd->io_tracing_state)
+#define VTTHRD_IO_TRACING_SUSPEND_CNT(thrd) \
+                                    (thrd->io_tracing_suspend_cnt)
 
 /* flag: is I/O tracing enabled? */
-#define VTTHRD_IO_TRACING_ENABLED(thrd)       (thrd->io_tracing_enabled)
+#define VTTHRD_IO_TRACING_ENABLED(thrd) \
+                                    (thrd->io_tracing_enabled)
 
 #endif /* VT_IOWRAP */
 
 #if (defined (VT_IOWRAP) || (defined(HAVE_MPI2_IO) && HAVE_MPI2_IO))
-#define VTTHRD_IO_NEXT_MATCHINGID(thrd)         (thrd->io_next_matchingid++)
-#define VTTHRD_IO_NEXT_HANDLE(thrd)             (thrd->io_next_handle++)
+#define VTTHRD_IO_NEXT_MATCHINGID(thrd) \
+                                    (thrd->io_next_matchingid++)
+#define VTTHRD_IO_NEXT_HANDLE(thrd) \
+                                    (thrd->io_next_handle++)
 #endif /* VT_IOWRAP || (HAVE_MPI2_IO && HAVE_MPI2_IO) */
 
 #if (defined (VT_GETCPU))
 
 /* cpu id counter value */
-#define VTTHRD_CPUID_VAL(thrd)           (thrd->cpuid_val)
+#define VTTHRD_CPUID_VAL(thrd)      (thrd->cpuid_val)
 
 #endif /* VT_GETCPU */
 
 #if (defined (VT_RUSAGE))
 
 /* next timestamp for reading rusage counters */
-#define VTTHRD_RU_NEXT_READ(thrd)        (thrd->ru_next_read)
+#define VTTHRD_RU_NEXT_READ(thrd)   (thrd->ru_next_read)
 
 /* rusage values */
-#define VTTHRD_RU_VALV(thrd)             (thrd->ru_valv)
+#define VTTHRD_RU_VALV(thrd)        (thrd->ru_valv)
 
 /* rusage object */
-#define VTTHRD_RU_OBJ(thrd)              (thrd->ru_obj)
+#define VTTHRD_RU_OBJ(thrd)         (thrd->ru_obj)
 
 #endif /* VT_RUSAGE */
 
 #if (defined (VT_METR))
 
 /* vector of metric offsets */
-#define VTTHRD_OFFV(thrd)                (thrd->offv)
+#define VTTHRD_OFFV(thrd)           (thrd->offv)
 
 /* vector of metric values */
-#define VTTHRD_VALV(thrd)                (thrd->valv)
+#define VTTHRD_VALV(thrd)           (thrd->valv)
 
 /* vector of metric objects (i.e., event sets) */
-#define VTTHRD_METV(thrd)                (thrd->metv)
+#define VTTHRD_METV(thrd)           (thrd->metv)
 
 #endif /* VT_METR */
 
 #if defined(VT_PLUGIN_CNTR)
 
 /* plugin cntr handle */
-#define VTTHRD_PLUGIN_CNTR_DEFINES(thrd) (thrd->plugin_cntr_defines)
+#define VTTHRD_PLUGIN_CNTR_DEFINES(thrd) \
+                                    (thrd->plugin_cntr_defines)
 
 #endif /* VT_PLUGIN_CNTR */
 
@@ -253,59 +266,54 @@ typedef struct
 /**
  * Initialize thread object management.
  */
-EXTERN void     VTThrd_init( void );
+EXTERN void VTThrd_init( void );
 
 /**
  * Finalize thread object management.
  */
-EXTERN void     VTThrd_finalize( void );
+EXTERN void VTThrd_finalize( void );
 
 /**
- * Increments the global thread counter and returns a new valid thread id.
+ * Creates a new thread object.
  *
- * @return the requested thread id
- */
-EXTERN uint32_t VTThrd_createNewThreadId( void );
-
-/**
- * Creates a thread object.
+ * @param tname       thread name (optional)
+ * @param ptid        the ID of the parent thread/process
+ * @param is_virtual  flag: is the thread a virtual thread? (e.g. GPU)
  *
- * @param tid the thread id
- * @param ptid the id of the parent thread/process
- * @param tname the type of thread (e.g. PThread, OpenMP-Thread, VirtualThread)
- * @param is_virtual flag: is the thread a virtual thread (e.g. CUDA)
+ * @return            thread ID associated with the new thread object
  */
-EXTERN void VTThrd_create(uint32_t tid, uint32_t ptid, const char* tname, uint8_t is_virtual);
+EXTERN uint32_t VTThrd_create(const char* tname, uint32_t ptid,
+                              uint8_t is_virtual);
 
 /**
  * Free thread object.
  *
- * @param thrd pointer to the thread structure
- * @param tid the thread id
+ * @param thrd  thread object
+ * @param tid   thread ID
  */
-EXTERN void     VTThrd_delete( VTThrd* thrd, uint32_t tid );
+EXTERN void VTThrd_delete(VTThrd* thrd, uint32_t tid);
 
 /**
- * Destroys a thread object.
+ * Destroy thread object.
  *
- *  @param thrd pointer to the thread structure
- *  @param tid the thread id
+ * @param thrd  thread object
+ * @param tid   thread ID
  */
-EXTERN void     VTThrd_destroy( VTThrd* thrd, uint32_t tid );
+EXTERN void VTThrd_destroy(VTThrd* thrd, uint32_t tid);
 
 /**
  * Open associated trace file.
  *
- * @param tid the thread id
+ * @param tid  thread ID
  */
-EXTERN void     VTThrd_open( uint32_t tid );
+EXTERN void VTThrd_open(uint32_t tid);
 
 /**
  * Close associated trace file.
  *
- * @param thrd pointer to the thread structure
+ * @param thrd  pointer to the thread structure
  */
-EXTERN void     VTThrd_close( VTThrd* thrd );
+EXTERN void VTThrd_close(VTThrd* thrd);
 
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
 
@@ -319,55 +327,57 @@ typedef struct VTThrdMutex_struct VTThrdMutex;
 
 #if !defined(VT_JAVA)
 # if defined(VT_THRD_PTHREAD)
-    EXTERN void VTThrd_initPthread( void );
+    EXTERN void VTThrd_initPthread(void);
 # elif defined(VT_THRD_OMP)
-    EXTERN void VTThrd_initOmp( void );
+    EXTERN void VTThrd_initOmp(void);
 # endif /* VT_THRD_[PTHREAD|OMP] */
-  EXTERN void   VTThrd_registerThread( uint32_t ptid );
+  EXTERN void VTThrd_registerThread( uint32_t ptid );
 #else /* VT_JAVA */
-  EXTERN void   VTThrd_initJava( void );
-  EXTERN void   VTThrd_registerThread( jthread thread, const char* tname );
+  EXTERN void VTThrd_initJava(void);
+  EXTERN void VTThrd_registerThread(jthread thread, const char* tname);
 #endif /* VT_JAVA */
 
 /**
  * Check whether current thread is alive.
- * @return 1 if alive, otherwise 0
+ *
+ * @return  1 if alive, otherwise 0
  */
-EXTERN uint8_t VTThrd_is_alive( void );
+EXTERN uint8_t VTThrd_isAlive(void);
 
 /**
  * Get ID of current thread.
- * @return a new thread ID
+ *
+ * @return  thread ID
  */
-EXTERN uint32_t VTThrd_getThreadId( void );
+EXTERN uint32_t VTThrd_getThreadId(void);
 
 /**
  * Create a mutex for locking (*mutex must be NULL).
  *
- * @param mutex the generic VampirTrace thread mutex
+ * @param  mutex the generic VampirTrace thread mutex
  */
-EXTERN void     VTThrd_createMutex( VTThrdMutex** mutex );
+EXTERN void VTThrd_createMutex(VTThrdMutex** mutex);
 
 /**
  * Delete a mutex for locking.
  *
- * @param mutex the generic VampirTrace thread mutex
+ * @param  mutex the generic VampirTrace thread mutex
  */
-EXTERN void     VTThrd_deleteMutex( VTThrdMutex** mutex );
+EXTERN void VTThrd_deleteMutex(VTThrdMutex** mutex);
 
 /**
  * Lock a mutex (*mutex will be initialized, if NULL).
  *
- * @param mutex the generic VampirTrace thread mutex
+ * @param  mutex the generic VampirTrace thread mutex
  */
-EXTERN void     VTThrd_lock( VTThrdMutex** mutex );
+EXTERN void VTThrd_lock(VTThrdMutex** mutex);
 
 /**
  * Unlock a mutex.
  *
- * @param mutex the generic VampirTrace thread mutex
+ * @param  mutex the generic VampirTrace thread mutex
  */
-EXTERN void     VTThrd_unlock( VTThrdMutex** mutex );
+EXTERN void VTThrd_unlock(VTThrdMutex** mutex);
 
 /* predefined mutexes for locking ... */
 EXTERN VTThrdMutex* VTThrdMutexEnv;  /* ... VT Thread environment */

@@ -66,7 +66,7 @@ struct ParamsS
       : verbose_level( 0 ), docompress( false ), doclean( true ),
         showusage( false ), showversion( false ), showprogress( false ),
         bequiet( false ), domsgmatch( false ), droprecvs( false ),
-        prof_sort_flags( 0x22 )
+        prof_sort_flags( 0x22 ), createthumb( false )
    {
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
       docompress = true;
@@ -75,6 +75,10 @@ struct ParamsS
 #ifdef VT_UNIFY_HOOKS_MSGMATCH
       domsgmatch = true;
 #endif // VT_UNIFY_HOOKS_MSGMATCH
+
+#ifdef VT_UNIFY_HOOKS_THUMB
+      createthumb = true;
+#endif // VT_UNIFY_HOOKS_THUMB
    }
 
    std::string in_file_prefix;  // input trace file prefix
@@ -96,6 +100,10 @@ struct ParamsS
    //
    std::string prof_out_file;   // profile output file
    int         prof_sort_flags; // profile sort flags
+
+   // HooksThumbC's parameters
+   //
+   bool        createthumb;     // flag: create Vampir thumbnail?
 
 };
 

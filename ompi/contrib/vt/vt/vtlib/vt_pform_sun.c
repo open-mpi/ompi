@@ -113,11 +113,11 @@ char* vt_pform_exec() {
 /* clock resolution */
 uint64_t vt_pform_clockres() {
 #if TIMER == TIMER_GETHRTIME
-  return 1e9;
+  return 1000000000LL;
 #elif TIMER == TIMER_PAPI_REAL_CYC
   return vt_metric_clckrt();
 #elif TIMER == TIMER_PAPI_REAL_USEC
-  return 1e6;
+  return 1000000LL;
 #endif
 }
 

@@ -379,12 +379,13 @@ getUnifyControls()
       // flag which indicates whether any stream is available
       bool any_stream_avail = false;
 
+      char buffer[STRBUFSIZE];
+      uint32_t line_no = 1;
+      uint32_t i;
+
       do
       {
-         char buffer[STRBUFSIZE];
-         uint32_t line_no = 1;
          uint32_t line_no_sec = 1;
-         uint32_t i;
 
          std::vector<uint32_t> streamids;
          std::vector<bool>     streamavs;
@@ -406,10 +407,15 @@ getUnifyControls()
             {
               // if that's the first section, continue reading
               if( line_no == 1 )
+              {
                 continue;
+              }
               // otherwise, leave read loop to finalize previous section
               else
+              {
+                line_no++;
                 break;
+              }
             }
 
             // increment line number and remove new-line
@@ -424,12 +430,13 @@ getUnifyControls()
 
             switch( line_no_sec )
             {
-               // line_no = 1: ids of input streams
+               // line_no_sec = 1: ids of input streams
                //
                case 1:
                {
                   uint32_t stream_id;
                   bool stream_avail = true;
+                  std::istringstream iss;
 
                   // is stream not available?
                   if( buffer[strlen( buffer ) - 1] == '!' )
@@ -443,43 +450,56 @@ getUnifyControls()
                      any_stream_avail = true;
                   }
 
-                  sscanf(buffer, "%x", &stream_id);
-                  if( stream_id == 0 ) { error = true; break; }
+                  iss.str( buffer );
+                  assert( iss );
+                  error = !( iss >> std::hex >> stream_id );
 
-                  streamids.push_back( stream_id );
-                  streamavs.push_back( stream_avail );
+                  if( !error && stream_id > 0 )
+                  {
+                     streamids.push_back( stream_id );
+                     streamavs.push_back( stream_avail );
+                  }
 
                   break;
                }
-               // line_no = 2: read chronological offsets to global time
-               //              and local times
+               // line_no_sec = 2: read chronological offsets to global time
+               //                  and local times
                //
                case 2:
                {
+                  std::istringstream iss( buffer );
+                  assert( iss );
+
                   switch( ++(col_no[line_no_sec-2]) )
                   {
                      case 1:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(ltime[0]));
+                        error = !( iss >> std::hex >> ltime[0] );
                         break;
                      }
                      case 2:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(offset[0]));
+                        // std::stringstream expects unsigned values after
+                        // switching format to std::hex; read unsigned and
+                        // convert to signed afterwards
+                        uint64_t tmp;
+                        if( !( error = !(iss >> std::hex >> tmp ) ) )
+                           offset[0] = tmp;
                         break;
                      }
                      case 3:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(ltime[1]));
+                        error = !( iss >> std::hex >> ltime[1] );
                         break;
                      }
                      case 4:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(offset[1]));
+                        // std::stringstream expects unsigned values after
+                        // switching format to std::hex; read unsigned and
+                        // convert to signed afterwards
+                        uint64_t tmp;
+                        if( !( error = !(iss >> std::hex >> tmp ) ) )
+                           offset[1] = tmp;
                         break;
                      }
                      default:
@@ -491,11 +511,13 @@ getUnifyControls()
                   break;
                }
 #ifdef VT_ETIMESYNC
-               // line_no = 3: read synchronization mapping
-               //              information
+               // line_no_sec = 3: read synchronization mapping information
+               //
                case 3:
                {
                   static ETimeSyncC::SyncPhaseS sync_phase;
+                  std::istringstream iss( buffer );
+                  assert( iss );
 
                   theTimeSync->setSyncMethod( TimeSyncC::METHOD_ENHANCED );
 
@@ -503,23 +525,24 @@ getUnifyControls()
                   {
                      case 1:
                      {
-                        sscanf(buffer, "%x", &(sync_phase.mapid));
+                        error = !( iss >> std::hex >> sync_phase.mapid );
                         break;
                      }
                      case 2:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(sync_phase.time));
+                        error = !( iss >> std::hex >> sync_phase.time );
                         break;
                      }
                      case 3:
                      {
-                        sscanf(buffer, "%llx",
-                               (unsigned long long int*)&(sync_phase.duration));
+                        error = !( iss >> std::hex >> sync_phase.duration );
 
-                        sync_phases.push_back( sync_phase );
+                        if( !error )
+                        {
+                           sync_phases.push_back( sync_phase );
+                           col_no[line_no_sec-2] = 0;
+                        }
 
-                        col_no[line_no_sec-2] = 0;
                         break;
                      }
                      default:
@@ -530,12 +553,15 @@ getUnifyControls()
                   }
                   break;
                }
-               // line_no = 4-n: read synchronization timestamps of each
-               //                synchronization phase (each per line)
+               // line_no_sec = 4-n: read synchronization timestamps of each
+               //                    synchronization phase (each per line)
+               //
                default:
                {
                   static std::pair<uint32_t, uint32_t> sync_pair;
                   static ETimeSyncC::SyncTimeS sync_time;
+                  std::istringstream iss( buffer );
+                  assert( iss );
 
                   if( 4 <= line_no_sec &&
                       line_no_sec <= 4 + sync_phases.size() - 1 )
@@ -544,42 +570,43 @@ getUnifyControls()
                      {
                         case 1:
                         {
-                           sscanf(buffer, "%x", &(sync_pair.first));
+                           error = !( iss >> std::hex >> sync_pair.first );
                            break;
                         }
                         case 2:
                         {
-                           sscanf(buffer, "%x", &(sync_pair.second));
+                           error = !( iss >> std::hex >> sync_pair.second );
                            break;
                         }
                         case 3:
                         {
-                           sscanf(buffer, "%llx",
-                                  (unsigned long long int*)&(sync_time.t[0]));
+                           error = !( iss >> std::hex >> sync_time.t[0] );
                            break;
                         }
                         case 4:
                         {
-                           sscanf(buffer, "%llx",
-                                  (unsigned long long int*)&(sync_time.t[1]));
+                           error = !( iss >> std::hex >> sync_time.t[1] );
                            break;
                         }
                         case 5:
                         {
-                           sscanf(buffer, "%llx",
-                                  (unsigned long long int*)&(sync_time.t[2]));
+                           error = !( iss >> std::hex >> sync_time.t[2] );
                            break;
                         }
                         case 6:
                         {
-                           sscanf(buffer, "%llx",
-                                  (unsigned long long int*)&(sync_time.t[3]));
-                           sync_time.phase_idx = line_no_sec - 4;
+                           error = !( iss >> std::hex >> sync_time.t[3] );
 
-                           sync_pairs.push_back( sync_pair );
-                           sync_times.push_back( sync_time );
+                           if( !error )
+                           {
+                              sync_time.phase_idx = line_no_sec - 4;
 
-                           col_no[line_no_sec-2] = 0;
+                              sync_pairs.push_back( sync_pair );
+                              sync_times.push_back( sync_time );
+
+                              col_no[line_no_sec-2] = 0;
+                           }
+
                            break;
                         }
                         default:
@@ -596,7 +623,7 @@ getUnifyControls()
                   break;
                }
 #else // VT_ETIMESYNC
-               // line_no = 3-n: stuff for enhanced time sync.
+               // line_no_sec = 3-n: stuff for enhanced time sync.
                //
                default:
                {
@@ -708,20 +735,42 @@ getUnifyControls()
       {
          UnifyControlS * uctl = UnifyCtls[i];
 
+         // set stream id/unify control mapping
          StreamId2UnifyCtl[uctl->streamid] = uctl;
+
          if( uctl->stream_avail )
          {
 #ifdef VT_MPI
-            // assign stream id to rank
-            //
-            static VT_MPI_INT rank = 0;
-            StreamId2Rank[uctl->streamid] = rank;
-            if( rank == MyRank )
-               MyStreamIds.push_back( uctl->streamid );
-            rank = ( rank + 1 < NumRanks ) ? rank + 1 : 0;
-#else // VT_MPI
-            MyStreamIds.push_back( uctl->streamid );
+            if( NumRanks > 1 )
+            {
+               // assign stream id to rank, whereas childs will not be
+               // separated from its parent stream id
+               //
+
+               static VT_MPI_INT rank = 0;
+
+               // assign stream id to rank
+               if( rank == MyRank )
+                  MyStreamIds.push_back( uctl->streamid );
+
+               // set stream id/rank mapping
+               StreamId2Rank[uctl->streamid] = rank;
+
+               // get rank for the next stream id
+               //
+               if( i < UnifyCtls.size() - 1 && UnifyCtls[i+1]->pstreamid == 0 )
+               {
+                  if( rank + 1 < NumRanks )
+                     rank++;
+                  else
+                     rank = 0;
+               }
+            }
+            else
 #endif // VT_MPI
+            {
+               MyStreamIds.push_back( uctl->streamid );
+            }
          }
       }
 
@@ -812,6 +861,12 @@ parseCommandLine( int argc, char ** argv )
          Params.droprecvs = true;
       }
 #endif // VT_UNIFY_HOOKS_MSGMATCH
+#ifdef VT_UNIFY_HOOKS_THUMB
+      else if( strcmp( argv[i], "--nothumb" ) == 0 )
+      {
+         Params.createthumb = false;
+      }
+#endif // VT_UNIFY_HOOKS_THUMB
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
       else if( strcmp( argv[i], "--nocompress" ) == 0 )
       {
@@ -886,9 +941,9 @@ writeMasterControl()
    OTF_MasterControl * mc = OTF_MasterControl_new( manager );
    assert( mc );
 
-   // add stream/process mapping to master control
+   // add stream/process[group] mappings to master control
    //
-   for( uint32_t i = 0; i < UnifyCtls.size(); i++ )
+   for( uint32_t i = 0; i < UnifyCtls.size() && !error; i++ )
    {
       // add only available streams/processes
       //
@@ -896,13 +951,41 @@ writeMasterControl()
       {
          const uint32_t & streamid = UnifyCtls[i]->streamid;
 
-         if( OTF_MasterControl_append( mc, streamid, streamid ) == 0 )
+         // get additional process group tokens of stream
+         const std::set<uint32_t> * procgrps =
+            theDefinitions->groupCounters()->getGroupsOfStream( streamid );
+
+         // add mappings
+         //
+         std::set<uint32_t>::const_iterator procgrp_it;
+         if( procgrps ) procgrp_it = procgrps->begin();
+         uint32_t proc_or_group = streamid;
+         while( proc_or_group != 0 )
          {
-            std::cerr << ExeName << ": Error: "
-                      << "Could not append " << streamid << ":" << streamid
-                      << " to OTF master control" << std::endl;
-            error = true;
-            break;
+            if( OTF_MasterControl_append( mc, streamid, proc_or_group ) == 0 )
+            {
+               std::cerr << ExeName << ": Error: "
+                         << "Could not append mapping " << std::hex
+                         << streamid << ":" << proc_or_group << std::dec
+                         << " to OTF master control" << std::endl;
+               error = true;
+               break;
+            }
+
+            VPrint( 3, " Added mapping %x:%x to OTF master control\n",
+                    streamid, proc_or_group );
+
+            // get next process group token to add
+            //
+            if( procgrps && procgrp_it != procgrps->end() )
+            {
+               proc_or_group = *procgrp_it;
+               procgrp_it++;
+            }
+            else
+            {
+               proc_or_group = 0;
+            }
          }
       }
    }
@@ -1051,11 +1134,11 @@ showUsage()
       << std::endl
       << "     -p, --progress      Show progress." << std::endl
       << std::endl
-      << "     -q, --quiet         Enable quiet mode." << std::endl
-      << "                         (only emergency output)" << std::endl
-      << std::endl
       << "     -v, --verbose       Increase output verbosity." << std::endl
       << "                         (can be used more than once)" << std::endl
+      << std::endl
+      << "     -q, --quiet         Enable quiet mode." << std::endl
+      << "                         (only emergency output)" << std::endl
       << std::endl
 #if defined(HAVE_ZLIB) && HAVE_ZLIB
       << "     --nocompress        Don't compress output trace files." << std::endl
@@ -1066,8 +1149,13 @@ showUsage()
       << std::endl
       << "     --droprecvs         Drop message receive events, if msg. matching" << std::endl
       << "                         is enabled." << std::endl
+      << std::endl
 #endif // VT_UNIFY_HOOKS_MSGMATCH
-      << std::endl;
+#ifdef VT_UNIFY_HOOKS_THUMB
+      << "     --nothumb           Don't create Vampir thumbnail." << std::endl
+      << std::endl
+#endif // VT_UNIFY_HOOKS_THUMB
+      ;
 }
 
 #ifdef VT_MPI

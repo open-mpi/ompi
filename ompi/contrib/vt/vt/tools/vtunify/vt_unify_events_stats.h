@@ -37,11 +37,11 @@ public:
 
 private:
 
-  // rewrite events/statistics
-  bool rewrite();
+   // rewrite events/statistics
+   bool rewrite();
 
-  // scope to process by this class (events or statistics)
-  ScopeTypeT m_scope;
+   // scope to process by this class (events or statistics)
+   ScopeTypeT m_scope;
 
 };
 

@@ -80,18 +80,53 @@ AS_IF([test x"$inside_openmpi" = "xyes" -o "$datarootdir" = "\${prefix}/share"],
 AS_IF([test "$docdir" = "\${datarootdir}/doc/\${PACKAGE_TARNAME}"],
 [docdir="\${datarootdir}/doc"])
 
+# Declare additional variables
+AC_ARG_VAR(AR, [archiver command])
+AC_ARG_VAR(NM, [command to list symbols from object files])
+AC_ARG_VAR(JAVA, [Java application launcher command])
+
 ACVT_CONF_TITLE([Compiler, preprocessor, and programs])
 
 # Check for compiler and preprocessor
-AS_IF([test x"$F77" = x -a x"$FC" != x], [F77=$FC])
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CXX
 AC_PROG_CPP
 AC_PROG_CXXCPP
-AC_PROG_F77
-AC_PROG_FC
 AM_PROG_AS
+
+# Do we want to support Fortran
+check_fortran="yes"
+force_fortran="no"
+AC_ARG_ENABLE(fortran,
+	AC_HELP_STRING([--enable-fortran],
+		[enable Fortran support, default: enable if Fortran compiler found by configure]),
+	[
+		AS_IF([test x"$enableval" = "xyes"],
+		[
+			force_fortran="yes"
+		],
+		[
+			check_fortran="no"
+			F77=
+			FC=
+		])
+	])
+
+# Check for Fortran compiler
+AS_IF([test x"$check_fortran" = "xyes"],
+[
+	AS_IF([test x"$F77" = x -a x"$FC" != x], [F77=$FC])
+
+	AC_PROG_F77
+	AS_IF([test x"$F77" = x],
+	[
+		AC_MSG_NOTICE([error: no Fortran 77 compiler found])
+		AS_IF([test x"$force_fortran" = "xyes"], [exit 1])
+	])
+
+	AC_PROG_FC
+])
 
 AC_LANG([C])
 
@@ -112,11 +147,6 @@ AC_ARG_ENABLE(binaries,
 		[build and install binaries, default: enabled]),
 	[enable_binaries="$enableval"], [enable_binaries="yes"])
 AM_CONDITIONAL(AMBUILDBINARIES, test x"$enable_binaries" = "xyes")
-
-# Declare additional variables
-AC_ARG_VAR(AR, [archiver command])
-AC_ARG_VAR(NM, [command to list symbols from object files])
-AC_ARG_VAR(JAVA, [Java application launcher command])
 
 # Check for programs
 #AC_PROG_AR
@@ -351,6 +381,19 @@ AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_getcpu" = "xno"],
 AS_IF([test x"$force_getcpu" = "xyes" -a x"$getcpu_error" = "xyes"], [exit 1])
 AM_CONDITIONAL(AMHAVEGETCPU, test x"$have_getcpu" = "xyes")
 
+#Check for CUDA Toolkit
+ACVT_CONF_TITLE([CUDA Toolkit])
+ACVT_CUDA
+AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_cuda" = "xno"],
+[AC_MSG_NOTICE([disabled via command line switch])])
+AS_IF([test x"$force_cuda" = "xyes" -a x"$cuda_error" = "xyes"], [exit 1])
+AM_CONDITIONAL(AMBUILDCUDA, test x"$have_cuda" = "xyes")
+AM_CONDITIONAL(AMBUILDCUDART, test x"$have_cudart" = "xyes")
+
+# Check for CUPTI support
+ACVT_CUPTI
+AM_CONDITIONAL(AMBUILDCUPTI, test x"$have_cupti" = "xyes")
+
 # Check for library tracing support
 ACVT_CONF_TITLE([Library tracing])
 ACVT_LIBWRAP
@@ -365,8 +408,10 @@ AM_CONDITIONAL(AMHAVEFORK, test x"$have_libcwrap" = "xyes" -a x"$have_fork" = "x
 AM_CONDITIONAL(AMBUILDIOWRAP, test x"$have_iowrap" = "xyes")
 AM_CONDITIONAL(AMBUILDCUDAWRAP, test x"$have_cudawrap" = "xyes")
 AM_CONDITIONAL(AMBUILDCUDARTWRAP, test x"$have_cudartwrap" = "xyes")
-AM_CONDITIONAL(AMBUILDCUPTI, test x"$have_cupti" = "xyes")
 AM_CONDITIONAL(AMBUILDVTNVCC, test x"$have_cudartwrap" = "xyes" -a x"$NVCC" != x)
+
+# Check for GPU support
+AM_CONDITIONAL(AMHAVEGPU, test x"$have_cupti" = "xyes" -o x"$have_cudartwrap" = "xyes")
 
 # Check path for node-local temporary directory
 ACVT_LTMPDIR
@@ -449,6 +494,20 @@ AS_IF([test x"$have_mpi" = "xyes"],
 # Create output files
 ACVT_CONF_TITLE([Final output])
 AC_OUTPUT
+
+# Patch Makefiles which define library targets that depend on other libraries
+# to prevent the following Libtool warning:
+# "libtool: link: warning: `...//*.la' seems to be moved"
+#
+# Libtool is getting confused by the "//" in the library paths, so remove the
+# trailing '/' from the *LIBDIR variables.
+# Actually, this should be done in the *.m4 files where the variables are being
+# set, but it's less elaborate at this point. ;-)
+makefile_to_patch="vtlib/Makefile tools/vtunify/mpi/Makefile"
+for makefile in $makefile_to_patch; do
+	sed -e "s/^\(.*LIBDIR =.*\)\/$/\1/g" $makefile >$makefile.tmp
+	mv $makefile.tmp $makefile
+done
 
 # Generate MPI wrappers
 AS_IF([test x"$have_mpi" = "xyes"],

@@ -17,10 +17,16 @@
 
 #include "vt_inttypes.h"
 
+#include "util/hash.h"
+
 #include "otf.h"
 
+#include <algorithm>
+#include <set>
 #include <string>
 #include <vector>
+
+#include <string.h>
 
 //
 // definition record types
@@ -32,6 +38,7 @@ typedef enum
    DEF_REC_TYPE__DefTimeRange,
    DEF_REC_TYPE__DefProcess,
    DEF_REC_TYPE__DefProcessGroup,
+   DEF_REC_TYPE__DefProcessGroupAttributes,
    DEF_REC_TYPE__DefSclFile,
    DEF_REC_TYPE__DefScl,
    DEF_REC_TYPE__DefFileGroup,
@@ -41,6 +48,7 @@ typedef enum
    DEF_REC_TYPE__DefCollOp,
    DEF_REC_TYPE__DefCounterGroup,
    DEF_REC_TYPE__DefCounter,
+   DEF_REC_TYPE__DefCounterAssignments,
    DEF_REC_TYPE__DefKeyValue,
    DEF_REC_TYPE__DefMarker,
    DEF_REC_TYPE__DefComment,
@@ -52,6 +60,18 @@ typedef enum
 //
 struct DefRec_BaseS
 {
+   //
+   // compare structure for final sort
+   //
+   struct SortS
+   {
+      bool operator()( const DefRec_BaseS * a, const DefRec_BaseS * b ) const
+      {
+         return a->deftoken < b->deftoken;
+      }
+
+   };
+
    DefRec_BaseS( DefRecTypeT _dtype )
       : dtype( _dtype ), loccpuid( 0 ), deftoken( 0 ) {}
    DefRec_BaseS( const DefRecTypeT & _dtype, const uint32_t & _loccpuid,
@@ -67,11 +87,6 @@ struct DefRec_BaseS
                         VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator<( const DefRec_BaseS & a ) const
-   {
-      return deftoken < a.deftoken;
-   }
-
    DefRecTypeT dtype;
    uint32_t    loccpuid;
    uint32_t    deftoken;
@@ -83,14 +98,30 @@ struct DefRec_BaseS
 //
 struct DefRec_DefCommentS : DefRec_BaseS
 {
+   //
+   // compare structure for final sort
+   //
+   struct SortS
+   {
+      bool operator()( const DefRec_DefCommentS * a,
+                       const DefRec_DefCommentS * b ) const
+      {
+         if( a->type == b->type )
+            return a->deftoken < b->deftoken; // order index
+         else
+            return a->type < b->type;
+      }
+
+   };
+
    typedef enum
    {
       TYPE_START_TIME, TYPE_STOP_TIME, TYPE_VT, TYPE_USER,
-      TYPE_USRCOM_SEND, TYPE_USRCOM_RECV
+      TYPE_USRCOM_SEND, TYPE_USRCOM_RECV, TYPE_UNKNOWN
    } CommentTypeT;
 
    DefRec_DefCommentS()
-      : DefRec_BaseS( DEF_REC_TYPE__DefComment ) {}
+      : DefRec_BaseS( DEF_REC_TYPE__DefComment ), type( TYPE_UNKNOWN ) {}
    DefRec_DefCommentS( const uint32_t & _loccpuid, const uint32_t _orderidx,
        const CommentTypeT & _type, const std::string & _comment )
       : DefRec_BaseS( DEF_REC_TYPE__DefComment, _loccpuid, _orderidx ),
@@ -104,16 +135,11 @@ struct DefRec_DefCommentS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefCommentS & a ) const
-   {
-      return ( type == a.type &&
-               comment.compare( a.comment ) == 0 );
-   }
-
+   // operator for searching
    bool operator<( const DefRec_DefCommentS & a ) const
    {
       if( type == a.type )
-         return deftoken < a.deftoken; // order index
+         return comment < a.comment;
       else
          return type < a.type;
    }
@@ -201,6 +227,24 @@ struct DefRec_DefTimeRangeS : DefRec_BaseS
 //
 struct DefRec_DefProcessS : DefRec_BaseS
 {
+   //
+   // compare structure for final sort
+   //
+   struct SortS
+   {
+      bool operator()( const DefRec_DefProcessS * a,
+                       const DefRec_DefProcessS * b ) const
+      {
+         if( ( a->deftoken & VT_TRACEID_BITMASK ) ==
+             ( b->deftoken & VT_TRACEID_BITMASK ) )
+            return a->deftoken < b->deftoken;
+         else
+            return ( a->deftoken & VT_TRACEID_BITMASK ) <
+                   ( b->deftoken & VT_TRACEID_BITMASK );
+      }
+
+   };
+
    DefRec_DefProcessS()
       : DefRec_BaseS( DEF_REC_TYPE__DefProcess ),
         parent( 0 ) {}
@@ -217,14 +261,13 @@ struct DefRec_DefProcessS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
+   // operator for searching
    bool operator<( const DefRec_DefProcessS & a ) const
    {
-      if( ( deftoken & VT_TRACEID_BITMASK ) ==
-          ( a.deftoken & VT_TRACEID_BITMASK ) )
-         return deftoken < a.deftoken;
+      if( parent == a.parent )
+         return name < a.name;
       else
-         return ( deftoken & VT_TRACEID_BITMASK ) <
-                ( a.deftoken & VT_TRACEID_BITMASK );
+         return parent < a.parent;
    }
 
    std::string name;
@@ -239,31 +282,61 @@ struct DefRec_DefProcessGroupS : DefRec_BaseS
 {
    typedef enum
    {
-      TYPE_NODE, TYPE_MPI_COMM_WORLD, TYPE_MPI_COMM_SELF, TYPE_MPI_COMM_OTHER,
-      TYPE_OMP_TEAM, TYPE_GPU_COMM, TYPE_GPU_GROUP, TYPE_USER_COMM, TYPE_OTHER
+      TYPE_ALL, TYPE_NODE, TYPE_MPI_COMM_WORLD, TYPE_MPI_COMM_SELF,
+      TYPE_MPI_COMM_OTHER, TYPE_MPI_GROUP, TYPE_USER_COMM, TYPE_OTHER,
+      TYPE_UNKNOWN
    } ProcessGroupTypeT;
 
    DefRec_DefProcessGroupS()
-      : DefRec_BaseS( DEF_REC_TYPE__DefProcessGroup ) {}
+      : DefRec_BaseS( DEF_REC_TYPE__DefProcessGroup ), type( TYPE_UNKNOWN ),
+        members_hash( 0 ), nmembers( 0 ), members( 0 ) {}
    DefRec_DefProcessGroupS( const uint32_t & _loccpuid,
       const uint32_t & _deftoken, const ProcessGroupTypeT & _type,
       const std::string & _name, const uint32_t & _nmembers,
       const uint32_t * _members )
       : DefRec_BaseS( DEF_REC_TYPE__DefProcessGroup, _loccpuid, _deftoken ),
-        type( _type ), name( _name )
+        type( _type ), name( _name ), members_hash( 0 ), nmembers( 0 ),
+        members( 0 )
    {
-      if( _nmembers > 0 )
+      assignMembers( _nmembers, _members, _members + _nmembers );
+
+      if( nmembers > 0 &&
+          ( type == TYPE_MPI_COMM_WORLD || type == TYPE_MPI_COMM_OTHER ||
+            type == TYPE_MPI_GROUP ) )
       {
-         members.resize( _nmembers );
-         members.assign( _members, _members + _nmembers );
+         members_hash =
+            vt_hash( (unsigned char*)members,
+               nmembers * sizeof( uint32_t ), 0 );
       }
    }
+   DefRec_DefProcessGroupS( const DefRec_DefProcessGroupS & a )
+      : DefRec_BaseS( DEF_REC_TYPE__DefProcessGroup, a.loccpuid, a.deftoken ),
+        type( a.type ), name( a.name ), members_hash( a.members_hash ),
+        nmembers( 0 ), members( 0 )
+   {
+      assignMembers( a.nmembers, a.members, a.members + a.nmembers );
+   }
+   ~DefRec_DefProcessGroupS()
+   {
+      if( nmembers > 0 )
+         delete [] members;
+   }
 
-   DefRec_DefProcessGroupS( const uint32_t & _loccpuid,
-      const uint32_t & _deftoken, const ProcessGroupTypeT & _type,
-      const std::string & _name, const std::vector<uint32_t> & _members )
-      : DefRec_BaseS( DEF_REC_TYPE__DefProcessGroup, _loccpuid, _deftoken ),
-        type( _type ), name( _name ), members( _members ) {}
+   template <class InputIterator>
+   void assignMembers( uint32_t n, InputIterator first, InputIterator last )
+   {
+      if( nmembers > 0 )
+         delete [] members;
+
+      nmembers = n;
+      members = 0;
+      if( nmembers > 0 )
+      {
+         members = new uint32_t[nmembers];
+         assert( members );
+         std::copy( first, last, members );
+      }
+   }
 
 #ifdef VT_MPI
    VT_MPI_INT getPackSize();
@@ -273,24 +346,71 @@ struct DefRec_DefProcessGroupS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefProcessGroupS & a ) const
-   {
-      return ( type == a.type &&
-               members == a.members &&
-               name.compare( a.name ) == 0 );
-   }
-
+   // operator for searching
    bool operator<( const DefRec_DefProcessGroupS & a ) const
    {
       if( type == a.type )
-         return deftoken < a.deftoken;
+      {
+         if( nmembers == a.nmembers )
+         {
+            if( name == a.name )
+            {
+               return
+                  memcmp( members, a.members,
+                     nmembers * sizeof( uint32_t ) ) < 0;
+            }
+            else
+            {
+               return name < a.name;
+            }
+         }
+         else
+         {
+            return nmembers < a.nmembers;
+         }
+      }
       else
+      {
          return type < a.type;
+      }
    }
 
-   ProcessGroupTypeT     type;
-   std::string           name;
-   std::vector<uint32_t> members;
+   ProcessGroupTypeT type;
+   std::string       name;
+   uint32_t          members_hash;
+   uint32_t          nmembers;
+   uint32_t *        members;
+
+};
+
+//
+// DefRec_DefProcessGroupAttributesS
+//
+struct DefRec_DefProcessGroupAttributesS : DefRec_BaseS
+{
+   DefRec_DefProcessGroupAttributesS()
+      : DefRec_BaseS( DEF_REC_TYPE__DefProcessGroupAttributes ),
+        attributes( 0 ) {}
+   DefRec_DefProcessGroupAttributesS( const uint32_t & _loccpuid,
+      const uint32_t & _deftoken, const uint32_t & _attributes )
+      : DefRec_BaseS( DEF_REC_TYPE__DefProcessGroupAttributes, _loccpuid,
+          _deftoken ), attributes( _attributes ) {}
+
+#ifdef VT_MPI
+   VT_MPI_INT getPackSize();
+   void pack( char *& buffer, const VT_MPI_INT & bufferSize,
+              VT_MPI_INT & bufferPos );
+   void unpack( char *& buffer, const VT_MPI_INT & bufferSize,
+                VT_MPI_INT & bufferPos );
+#endif // VT_MPI
+
+   // operator for searching
+   bool operator<( const DefRec_DefProcessGroupAttributesS & a ) const
+   {
+      return attributes < a.attributes;
+   }
+
+   uint32_t attributes;
 
 };
 
@@ -314,9 +434,10 @@ struct DefRec_DefSclFileS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefSclFileS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefSclFileS & a ) const
    {
-      return filename.compare( a.filename ) == 0;
+      return filename < a.filename;
    }
 
    std::string filename;
@@ -344,10 +465,13 @@ struct DefRec_DefSclS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefSclS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefSclS & a ) const
    {
-      return ( sclfile == a.sclfile &&
-               sclline == a.sclline );
+      if( sclfile == a.sclfile )
+         return sclline < a.sclline;
+      else
+         return sclfile < a.sclfile;
    }
 
    uint32_t sclfile;
@@ -375,9 +499,10 @@ struct DefRec_DefFileGroupS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefFileGroupS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefFileGroupS & a ) const
    {
-      return name.compare( a.name ) == 0;
+      return name < a.name;
    }
 
    std::string name;
@@ -405,10 +530,13 @@ struct DefRec_DefFileS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefFileS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefFileS & a ) const
    {
-      return ( group == a.group &&
-               name.compare( a.name ) == 0 );
+      if( group == a.group )
+         return name < a.name;
+      else
+         return group < a.group;
    }
 
    std::string name;
@@ -436,9 +564,10 @@ struct DefRec_DefFunctionGroupS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefFunctionGroupS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefFunctionGroupS & a ) const
    {
-      return name.compare( a.name ) == 0;
+      return name < a.name;
    }
 
    std::string name;
@@ -467,11 +596,24 @@ struct DefRec_DefFunctionS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefFunctionS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefFunctionS & a ) const
    {
-      return ( group == a.group &&
-               scltoken == a.scltoken &&
-               name.compare( a.name ) == 0 );
+      if( group == a.group )
+      {
+         if( scltoken == a.scltoken )
+         {
+            return name < a.name;
+         }
+         else
+         {
+            return scltoken < a.scltoken;
+         }
+      }
+      else
+      {
+         return group < a.group;
+      }
    }
 
    std::string name;
@@ -501,10 +643,13 @@ struct DefRec_DefCollOpS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefCollOpS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefCollOpS & a ) const
    {
-      return ( type == a.type &&
-               name.compare( a.name ) == 0 );
+      if( type == a.type )
+         return name < a.name;
+      else
+         return type < a.type;
    }
 
    std::string name;
@@ -532,9 +677,10 @@ struct DefRec_DefCounterGroupS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefCounterGroupS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefCounterGroupS & a ) const
    {
-      return name.compare( a.name ) == 0;
+      return name < a.name;
    }
 
    std::string name;
@@ -564,18 +710,67 @@ struct DefRec_DefCounterS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefCounterS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefCounterS & a ) const
    {
-      return ( properties == a.properties &&
-               group == a.group &&
-               name.compare( a.name ) == 0 &&
-               unit.compare( a.unit ) == 0 );
+      if( properties == a.properties )
+      {
+         if( group == a.group )
+         {
+            if( name == a.name )
+            {
+               return unit < a.unit;
+            }
+            else
+            {
+               return name < a.name;
+            }
+         }
+         else
+         {
+            return group < a.group;
+         }
+      }
+      else
+      {
+         return properties < a.properties;
+      }
    }
 
    std::string name;
    uint32_t    properties;
    uint32_t    group;
    std::string unit;
+
+};
+
+//
+// DefRec_DefCounterAssignmentsS
+//
+struct DefRec_DefCounterAssignmentsS : DefRec_BaseS
+{
+   DefRec_DefCounterAssignmentsS()
+      : DefRec_BaseS( DEF_REC_TYPE__DefCounterAssignments ) {}
+   DefRec_DefCounterAssignmentsS( const uint32_t & _loccpuid,
+      const uint32_t & _counter, const uint32_t & _group )
+      : DefRec_BaseS( DEF_REC_TYPE__DefCounterAssignments, _loccpuid, _counter )
+   {
+      groups.insert( _group );
+   }
+   DefRec_DefCounterAssignmentsS( const uint32_t & _loccpuid,
+      const uint32_t & _counter, const std::set<uint32_t> & _groups )
+      : DefRec_BaseS( DEF_REC_TYPE__DefCounterAssignments, _loccpuid,
+           _counter ), groups( _groups ) {}
+
+#ifdef VT_MPI
+   VT_MPI_INT getPackSize();
+   void pack( char *& buffer, const VT_MPI_INT & bufferSize,
+              VT_MPI_INT & bufferPos );
+   void unpack( char *& buffer, const VT_MPI_INT & bufferSize,
+                VT_MPI_INT & bufferPos );
+#endif // VT_MPI
+
+   std::set<uint32_t> groups;
 
 };
 
@@ -600,10 +795,13 @@ struct DefRec_DefKeyValueS : DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefKeyValueS & a ) const
+   // operator for searching
+   bool operator<( const DefRec_DefKeyValueS & a ) const
    {
-      return ( type == a.type &&
-               name.compare( a.name ) == 0 );
+      if( type == a.type )
+         return name < a.name;
+      else
+         return type < a.type;
    }
 
    OTF_Type type;
@@ -616,6 +814,22 @@ struct DefRec_DefKeyValueS : DefRec_BaseS
 //
 struct DefRec_DefMarkerS: DefRec_BaseS
 {
+   //
+   // compare structure for final sort
+   //
+   struct SortS
+   {
+      bool operator()( const DefRec_DefMarkerS * a,
+                       const DefRec_DefMarkerS * b ) const
+      {
+         if( a->type == b->type )
+            return a->deftoken < b->deftoken;
+         else
+            return a->type < b->type;
+      }
+
+   };
+
    DefRec_DefMarkerS()
       : DefRec_BaseS( DEF_REC_TYPE__DefMarker ),
         type( 0 ) {}
@@ -632,16 +846,11 @@ struct DefRec_DefMarkerS: DefRec_BaseS
                 VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
-   bool operator==( const DefRec_DefMarkerS & a ) const
-   {
-      return ( type == a.type &&
-               name.compare( a.name ) == 0 );
-   }
-
+   // operator for searching
    bool operator<( const DefRec_DefMarkerS & a ) const
    {
       if( type == a.type )
-         return deftoken < a.deftoken;
+         return name < a.name;
       else
          return type < a.type;
    }

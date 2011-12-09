@@ -57,7 +57,7 @@ static uint32_t max_values_callback;
 
 static uint32_t all_group = INVALID_GROUP_NUMBER;
 static uint32_t host_group = INVALID_GROUP_NUMBER;
-static uint32_t process_group = INVALID_GROUP_NUMBER;
+static uint32_t thread_group = INVALID_GROUP_NUMBER;
 
 /* whether plugins are used or not*/
 uint8_t vt_plugin_cntr_used = 0;
@@ -199,7 +199,7 @@ void vt_plugin_cntr_init() {
   }
   /*go through all plugins:*/
   for (i = 0; i < nr_selected_plugins; i++) {
-    uint32_t tid = VT_CURRENT_THREAD;
+    uint32_t group = 0;
     current_plugin = plugins[i];
     vt_cntl_msg(2, "Loading plugin counter library: lib%s.so", current_plugin);
     /* next one is stored in next_plugin,
@@ -234,35 +234,41 @@ void vt_plugin_cntr_init() {
     /* check the run per type */
 
     if (info.run_per == VT_PLUGIN_CNTR_PER_PROCESS) {
-      if (process_group == 0xFFFFFFFF)
+      if (thread_group == INVALID_GROUP_NUMBER){
         vt_cntl_msg(3, "No process group defined, using master thread for %s",
             current_plugin);
-      else
-        tid = process_group;
+      }
+      else{
+# if (defined(VT_MT) || defined(VT_HYB))
+        /* only called per process */
+        group = vt_get_curid();
+        thread_group = group;
+# else
+        /* not multithreaded -> keep information on local process */
+#endif
+      }
     }
 
     if (info.run_per == VT_PLUGIN_CNTR_PER_HOST) {
       if (!vt_my_trace_is_master)
         continue;
-      else if (host_group == 0xFFFFFFFF)
-        vt_cntl_msg(3,
-            "No host group defined, using first thread on each host for %s",
-            current_plugin);
-      else
-        tid = host_group;
+      else if (host_group == INVALID_GROUP_NUMBER){
+        host_group = vt_node_pgid;
+        vt_def_procgrp_attributes(VT_MY_THREAD ,vt_node_pgid,
+            VT_PROCGRP_HASCOUNTERS);
+      }
+      group = host_group;
     }
 
     if (info.run_per == VT_PLUGIN_CNTR_ONCE) {
-      if (vt_my_trace == 0)
-        if (all_group == 0xFFFFFFFF)
-          vt_cntl_msg(
-            3,
-            "No all group defined, using first thread of first process for %s",
-            current_plugin);
-        else
-          tid = all_group;
-      else
+      if (vt_my_trace != 0)
         continue;
+      else if (all_group == INVALID_GROUP_NUMBER){
+        all_group = vt_all_pgid;
+        vt_def_procgrp_attributes(VT_MY_THREAD ,vt_all_pgid,
+            VT_PROCGRP_HASCOUNTERS);
+      }
+      group = all_group;
     }
 
     if (info.add_counter == NULL) {
@@ -404,7 +410,7 @@ void vt_plugin_cntr_init() {
       continue;
     }
     /* define a counter group for every plugin*/
-    current->counter_group = vt_def_counter_group(tid, current_plugin);
+    current->counter_group = vt_def_counter_group(VT_MY_THREAD, current_plugin);
 
     /* now search for all available events on that plugin */
     next_plugin_metric = env_vt_plugin_metrics;
@@ -485,14 +491,15 @@ void vt_plugin_cntr_init() {
           otf_prop = current_event_info->cntr_property;
           /* define new counter */
           current->vt_counter_ids[current->num_selected_events - 1]
-              = vt_def_counter(tid,
+              = vt_def_counter(VT_MY_THREAD,
                   current->selected_events[current->num_selected_events - 1],
-                  otf_prop, current->counter_group, unit);
+                  unit, otf_prop, current->counter_group, group);
+
           if (current->info.synch != VT_PLUGIN_CNTR_SYNCH) {
             char buffer[512];
             sprintf(buffer, "%s_%s", current_plugin, current_event_info->name);
             current->vt_asynch_keys[current->num_selected_events - 1]
-                = vt_def_async_source(tid, buffer);
+                = vt_def_async_source(VT_MY_THREAD, buffer);
           }
           /* enable plugin counters */
           vt_plugin_cntr_used = 1;
@@ -525,8 +532,9 @@ void vt_plugin_cntr_thread_init(VTThrd * thrd, uint32_t tid) {
 
       /* then enable the counter if this thread has to */
       if (vt_plugin_handles[i][j].info.run_per == VT_PLUGIN_CNTR_ONCE) {
-        if ((vt_my_trace != 0) || (thrd != VTThrdv[0]))
+        if ((vt_my_trace != 0) || (thrd != VTThrdv[0])){
           continue;
+        }
       }
       if (vt_plugin_handles[i][j].info.run_per == VT_PLUGIN_CNTR_PER_HOST)
         if ((!vt_my_trace_is_master) || (thrd != VTThrdv[0]))
@@ -619,11 +627,39 @@ void vt_plugin_cntr_thread_disable_counters(VTThrd * thrd) {
  * This should be called after the last thread exited.
  * It should free all ressources used by vt_plugin
  */
-void vt_plugin_cntr_finalize() {
+void vt_plugin_cntr_finalize(uint32_t tnum) {
   uint32_t i, j;
   int k;
 
   vt_cntl_msg(3, "Process %i exits plugins", vt_my_ptrace);
+
+
+# if (defined(VT_MT) || defined(VT_HYB))
+  if ( thread_group != INVALID_GROUP_NUMBER )
+  /* write thread process group definition */
+  {
+    uint32_t* grpv;
+    char tmp_char[128];
+
+    /* get member array */
+
+    grpv = (uint32_t*)malloc(tnum * sizeof(uint32_t));
+    if ( grpv == NULL )
+      vt_error();
+
+    for (i = 0; i < tnum; i++)
+      grpv[i] = VT_PROCESS_ID(vt_my_trace, i);
+
+    /* prepend thread process group identifier to name */
+    snprintf(tmp_char, sizeof(tmp_char) - 1,
+             "Threads of Process %d",vt_my_trace);
+    fprintf(stderr,"%u,%s,0,%u,...,%u",VT_MASTER_THREAD,tmp_char,tnum,thread_group);
+    /* write thread process group definition */
+    vt_def_procgrp(VT_MASTER_THREAD, tmp_char, 0, tnum, grpv, thread_group);
+
+    free(grpv);
+  }
+#endif
 
   /* free all ressources */
   for (i = 0; i < VT_PLUGIN_CNTR_SYNCH_TYPE_MAX; i++) {
@@ -655,6 +691,7 @@ void vt_plugin_cntr_finalize() {
   free(vt_plugin_handles);
   if (nr_plugins)
     free(nr_plugins);
+
   vt_cntl_msg(3, "Process %i exits plugins done", vt_my_ptrace);
 }
 
@@ -767,11 +804,12 @@ static void add_events(struct vt_plugin current_plugin, VTThrd * thrd) {
         vt_error_msg("Failed to allocate memory for callback buffer\n");
       }
     }
-    current[*current_size].tid = VT_MY_THREAD;
+
+    current[*current_size].tid = VT_MY_THREAD;/*
     switch (current_plugin.info.run_per) {
     case VT_PLUGIN_CNTR_PER_PROCESS:
-      if (process_group != INVALID_GROUP_NUMBER)
-        current[*current_size].tid = process_group;
+      if (thread_group != INVALID_GROUP_NUMBER)
+        current[*current_size].tid = thread_group;
       break;
     case VT_PLUGIN_CNTR_PER_HOST:
       if (current_plugin.info.run_per == VT_PLUGIN_CNTR_PER_HOST)
@@ -783,7 +821,7 @@ static void add_events(struct vt_plugin current_plugin, VTThrd * thrd) {
         if (all_group != INVALID_GROUP_NUMBER)
           current[*current_size].tid = all_group;
       break;
-    }
+    }*/
     /* Next counter */
     (*current_size)++;
   }
@@ -908,12 +946,12 @@ int32_t callback_function(void * ID, vt_plugin_cntr_timevalue tv) {
 #define WRITE_ASYNCH_DATA(thrd, counter, timevalue, dummy_time)    \
 	if (VTTHRD_TRACE_STATUS(thrd) == VT_TRACE_ON){                   \
 	if (timevalue.timestamp > 0){                                    \
-		vt_guarantee_buffer(counter.tid, sizeof(VTBuf_Entry_KeyValue)  \
+		vt_guarantee_buffer(VT_MY_THREAD, sizeof(VTBuf_Entry_KeyValue)  \
                                  +sizeof(VTBuf_Entry_Counter));    \
-		vt_next_async_time(counter.tid,                                \
+		vt_next_async_time(VT_MY_THREAD,                                \
 		    		counter.vt_asynch_key,                                 \
 		    		timevalue.timestamp);                                  \
-	    vt_count( counter.tid,                                       \
+	    vt_count( VT_MY_THREAD,                                       \
 		        &dummy_time,                                           \
 		        counter.vt_counter_id,                                 \
 		        timevalue.value);                                      \
@@ -1056,5 +1094,5 @@ void vt_plugin_cntr_set_host_group(uint32_t group_id) {
   host_group = group_id;
 }
 void vt_plugin_cntr_set_process_group(uint32_t group_id) {
-  process_group = group_id;
+  thread_group = group_id;
 }

@@ -71,7 +71,7 @@ CHECK_SWIG_PYTHON
 if test x"$force_swig_python" = "xyes" -a x"$swig_python_error" = "xyes"; then exit 1; fi
 AM_CONDITIONAL(AMHAVESWIGPYTHON, test x"$have_swig_python" = xyes)
 
-# Checks for pdflatex and PGFPLOTS needed for otfprofile-mpi to convert TeX output to PDF
+# Checks for pdflatex and PGFPLOTS needed for otfprofile to convert TeX output to PDF
 CHECK_PDFLATEX_PGFPLOTS
 
 
@@ -134,9 +134,9 @@ AC_CONFIG_FILES([Makefile
 	tools/otfdump/Makefile
 	tools/otfinfo/Makefile
 	tools/otfmerge/Makefile
-	tools/otfmerge-mpi/Makefile
+	tools/otfmerge/mpi/Makefile
 	tools/otfprofile/Makefile
-	tools/otfprofile-mpi/Makefile
+	tools/otfprofile/mpi/Makefile
 	tools/otfshrink/Makefile
 	tools/otf2vtf/Makefile
 	tools/vtf2otf/Makefile
@@ -146,6 +146,7 @@ AC_CONFIG_FILES([Makefile
 	tests/generic_streams-mpi/Makefile
 	tests/progress/Makefile
 	tests/read_from_buffer/Makefile
+	tests/thumbnail/Makefile
 	docu/Makefile
 ])
 

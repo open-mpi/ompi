@@ -8,6 +8,8 @@ AC_DEFUN([ACVT_CUPTI],
 	CUPTILIBDIR=
 	CUPTILIB=
 
+	AC_REQUIRE([ACVT_CUDA])
+
 	AC_ARG_WITH(cupti-dir,
 		AC_HELP_STRING([--with-cupti-dir=CUPTIDIR],
 		[give the path for CUPTI, default: /usr]),
@@ -31,9 +33,9 @@ AC_DEFUN([ACVT_CUPTI],
 
 	sav_CPPFLAGS=$CPPFLAGS
 	CPPFLAGS="$CPPFLAGS $CUPTIINCDIR $CUDATKINCDIR"
-	AC_CHECK_HEADER([cupti_events.h], [],
+	AC_CHECK_HEADER([cupti.h], [],
 	[
-		AC_MSG_NOTICE([error: no cupti_events.h found; check path for CUPTI package first...])
+		AC_MSG_NOTICE([error: no cupti.h found; check path for CUPTI package first...])
 		cupti_error="yes"
 	])
 	CPPFLAGS=$sav_CPPFLAGS
@@ -54,11 +56,13 @@ AC_DEFUN([ACVT_CUPTI],
 		cupti_error="yes"
 	])
 
-	AC_MSG_CHECKING([whether CUDA runtime version >= 4.0])
+	AS_IF([test x"$cupti_error" = "xno"],
+	[
+		AC_MSG_CHECKING([whether CUDA runtime version >= 4.0])
 
-	sav_CPPFLAGS=$CPPFLAGS
-	CPPFLAGS="$CPPFLAGS $CUDATKINCDIR"
-	AC_TRY_COMPILE([#include "cuda_runtime_api.h"],
+		sav_CPPFLAGS=$CPPFLAGS
+		CPPFLAGS="$CPPFLAGS $CUDATKINCDIR"
+		AC_TRY_COMPILE([#include "cuda_runtime_api.h"],
 [
 #ifndef CUDART_VERSION
 #  error "CUDART_VERSION not defined"
@@ -66,14 +70,15 @@ AC_DEFUN([ACVT_CUPTI],
 #  error "CUDART_VERSION < 4000"
 #endif
 ],
-	[AC_MSG_RESULT([yes])],
-	[
-		AC_MSG_RESULT([no])
-		AC_MSG_NOTICE([error: CUDA runtime version could not be determined and/or is incompatible (< 4.0)
+		[AC_MSG_RESULT([yes])],
+		[
+			AC_MSG_RESULT([no])
+			AC_MSG_NOTICE([error: CUDA runtime version could not be determined and/or is incompatible (< 4.0)
 See \`config.log' for more details.])
-		cupti_error="yes"
+			cupti_error="yes"
+		])
+		CPPFLAGS=$sav_CPPFLAGS
 	])
-	CPPFLAGS=$sav_CPPFLAGS
 
 	AS_IF([test x"$cupti_error" = "xno"], [have_cupti="yes"])
 

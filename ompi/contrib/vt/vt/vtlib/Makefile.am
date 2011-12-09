@@ -164,29 +164,40 @@ IOWRAPSOURCES =
 IOWRAPCFLAGS =
 endif
 
-GPUSOURCES =
+if AMHAVEGPU
+GPUSOURCES = vt_gpu.c
 GPUHEADERS = vt_gpu.h
-GPUCFLAGS =
+GPUCFLAGS = -DVT_GPU
 GPULIBRARY =
+
+if AMBUILDCUDA
+GPUHEADERS += vt_cuda_driver_api.h
+GPUCFLAGS += -DVT_CUDA
+endif
 
 if AMBUILDCUDAWRAP
 #GPUSOURCES += vt_cudawrap.c vt_cuda.c
-GPUHEADERS += vt_cuda_driver_api.h
 GPUCFLAGS += -DVT_CUDAWRAP $(CUDATKINCDIR)
 endif
 
 if AMBUILDCUDARTWRAP
-GPUSOURCES += vt_cudartwrap.c vt_cudart.c vt_gpu.c
+GPUSOURCES += vt_cudartwrap.c vt_cudart.c
 GPUHEADERS += vt_cudartwrap.h vt_cuda_runtime_api.h
 GPUCFLAGS += -DVT_CUDARTWRAP $(CUDATKINCDIR)
+endif
+
 if AMBUILDCUPTI
-if AMBUILDCUDAWRAP
-GPUSOURCES += vt_cudacupti.c
-GPUHEADERS += vt_cudacupti.h vt_cupti_events.h
+GPUSOURCES += vt_cupti_events.c vt_cupti_callback.c
+GPUHEADERS += vt_cupti_events.h vt_cupti_callback.h vt_cupti.h 
 GPULIBRARY += $(CUPTILIBDIR) $(CUPTILIB)
-GPUCFLAGS += -DVT_CUDACUPTI $(CUPTIINCDIR)
+GPUCFLAGS += -DVT_CUPTI $(CUPTIINCDIR)
 endif
-endif
+
+else
+GPUSOURCES = 
+GPUHEADERS = 
+GPUCFLAGS = 
+GPULIBRARY =
 endif
 
 if AMHAVEMEMHOOKS
@@ -296,7 +307,6 @@ VT_COMMON_SOURCES = \
 	vt_fbindings.h \
 	vt_fork.h \
 	vt_getcpu.h \
-	vt_gpu.h \
 	vt_iowrap.h \
 	vt_iowrap_helper.h \
 	vt_java.h \
@@ -367,6 +377,7 @@ VT_HYB_SOURCES = \
 	$(VT_MT_SOURCES)
 
 VT_JAVA_SOURCES = \
+	vt_jvmti.h \
 	vt_java.c \
 	vt_thrd_java.c
 

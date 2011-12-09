@@ -27,6 +27,18 @@
 #include <string.h>
 #include <time.h>
 
+// function for resorting global definitions based on T::SortS
+template <class T>
+static void resortGlobDefs( const std::set<T> & in,
+   std::set<const T*, typename T::SortS> & out )
+{
+   for( typename std::set<T>::const_iterator it =
+        in.begin(); it != in.end(); it++ )
+   {
+      out.insert( &(*it) );
+   }
+}
+
 DefinitionsC * theDefinitions = 0; // instance of class DefinitionsC
 
 //////////////////// class DefinitionsC ////////////////////
@@ -36,16 +48,6 @@ DefinitionsC * theDefinitions = 0; // instance of class DefinitionsC
 
 DefinitionsC::DefinitionsC()
 {
-   // create instance of sub-class CommentsC
-   //
-   m_comments = new CommentsC( *this );
-   assert( m_comments );
-
-   // create instance of sub-class ProcessGroupsC
-   //
-   m_procGrps = new ProcessGroupsC( *this );
-   assert( m_procGrps );
-
    // create token factory scopes for def. record type ...
    //
 
@@ -114,10 +116,28 @@ DefinitionsC::DefinitionsC()
       DEF_REC_TYPE__DefKeyValue,
       new TokenFactoryScopeC<DefRec_DefKeyValueS>
          ( &(m_globDefs.keyVals) ) );
+
+   // create instance of sub-class GroupCountersC
+   //
+   m_groupCntrs = new GroupCountersC( *this );
+   assert( m_groupCntrs );
+
+   // create instance of sub-class CommentsC
+   //
+   m_comments = new CommentsC( *this );
+   assert( m_comments );
+
+   // create instance of sub-class ProcessGroupsC
+   //
+   m_procGrps = new ProcessGroupsC( *this );
+   assert( m_procGrps );
 }
 
 DefinitionsC::~DefinitionsC()
 {
+   // delete instance of sub-class GroupCountersC
+   delete m_groupCntrs;
+
    // delete instance of sub-class CommentsC
    delete m_comments;
 
@@ -181,14 +201,9 @@ DefinitionsC::run()
 
    do
    {
-      // get stream ids to read
-      //
-      std::vector<uint32_t> streamids;
-      getStreamIds( streamids );
-
       // read local definitions
       //
-      error = !readLocal( streamids );
+      error = !readLocal();
       if( SyncError( &error ) )
          break;
 
@@ -255,8 +270,53 @@ DefinitionsC::cleanUp()
    char filename1[STRBUFSIZE];
    char filename2[STRBUFSIZE];
 
+   // remove local definition files, if necessary
+   //
+   if( Params.doclean )
+   {
+      int streams_num = (int)MyStreamIds.size();
+      int i;
+
+#if defined(HAVE_OMP) && HAVE_OMP
+#     pragma omp parallel for private(i, filename1)
+#endif // HAVE_OMP
+      for( i = 0; i < streams_num; i++ )
+      {
+         const uint32_t & streamid = MyStreamIds[i];
+
+         // try to remove file without compression suffix
+         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
+                          OTF_FILETYPE_DEF, STRBUFSIZE, filename1 );
+         if( remove( filename1 ) == 0 )
+            PVPrint( 3, " Removed %s\n", filename1 );
+
+         // try to remove file with compression suffix
+         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
+                          OTF_FILETYPE_DEF | OTF_FILECOMPRESSION_COMPRESSED,
+                          STRBUFSIZE, filename1 );
+         if( remove( filename1 ) == 0 )
+            PVPrint( 3, " Removed %s\n", filename1 );
+      }
+   }
+
    MASTER
    {
+      // remove previous created definition output file
+      //
+
+      // try to remove file without compression suffix
+      OTF_getFilename( Params.out_file_prefix.c_str(), 0,
+                       OTF_FILETYPE_DEF, STRBUFSIZE, filename1 );
+      if( remove( filename1 ) == 0 )
+         VPrint( 3, " Removed %s\n", filename1 );
+
+      // try to remove file with compression suffix
+      OTF_getFilename( Params.out_file_prefix.c_str(), 0,
+                       OTF_FILETYPE_DEF | OTF_FILECOMPRESSION_COMPRESSED,
+                       STRBUFSIZE, filename1 );
+      if( remove( filename1 ) == 0 )
+         VPrint( 3, " Removed %s\n", filename1 );
+
       // rename temporary definition output file
       //
 
@@ -293,95 +353,14 @@ DefinitionsC::cleanUp()
    SyncError( &error );
 #endif // VT_MPI
 
-   // remove local definition files, if necessary
-   //
-   if( !error && Params.doclean )
-   {
-      int streams_num = (int)MyStreamIds.size();
-      int i;
-
-#if defined(HAVE_OMP) && HAVE_OMP
-#     pragma omp parallel for private(i, filename1)
-#endif // HAVE_OMP
-      for( i = 0; i < streams_num; i++ )
-      {
-         const uint32_t & streamid = MyStreamIds[i];
-
-         bool removed = false;
-
-         // get file name without compression suffix
-         OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
-            OTF_FILETYPE_DEF, STRBUFSIZE, filename1 );
-
-         // try to remove file
-         if( !( removed = ( remove( filename1 ) == 0 ) ) )
-         {
-            // if failed, get file name with compression suffix
-            OTF_getFilename( Params.in_file_prefix.c_str(), streamid,
-               OTF_FILETYPE_DEF | OTF_FILECOMPRESSION_COMPRESSED, STRBUFSIZE,
-               filename1 );
-
-            // try to remove file again
-            removed = ( remove( filename1 ) == 0 );
-         }
-
-         if( removed )
-            PVPrint( 3, " Removed %s\n", filename1 );
-      }
-   }
-
    return !error;
 }
 
 // private methods
 //
 
-void
-DefinitionsC::getStreamIds( std::vector<uint32_t> & streamIds )
-{
-#ifdef VT_MPI
-   if( NumRanks > 1 )
-   {
-      // distribute stream ids to ranks, whereas childs will not be
-      // separated from its parent stream id
-      //
-
-      VT_MPI_INT rank = 0;
-      for( uint32_t i = 0; i < UnifyCtls.size(); i++ )
-      {
-         // ignore stream, if it isn't available
-         if( !UnifyCtls[i]->stream_avail )
-            continue;
-
-         // add stream id to vector, if it's for my rank
-         if( rank == MyRank )
-            streamIds.push_back( UnifyCtls[i]->streamid );
-
-         // get rank for the next stream id
-         //
-         if( i < UnifyCtls.size() - 1 && UnifyCtls[i+1]->pstreamid == 0 )
-         {
-            if( rank + 1 < NumRanks )
-            {
-               rank++;
-            }
-            else
-            {
-               rank = 0;
-            }
-         }
-      }
-   }
-   else
-#endif // VT_MPI
-   {
-      // add all available stream ids into vector, if serial
-      streamIds.assign( MyStreamIds.begin(), MyStreamIds.end() );
-   }
-}
-
 bool
-DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
+DefinitionsC::readLocal()
 {
    bool error = false;
 
@@ -395,38 +374,32 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
    const VT_MPI_INT msg_tag = 100;
 
    // minimum message size
-   const VT_MPI_INT min_msg_size = 1024 * 1024;
+   const VT_MPI_INT min_msg_size = 100 * 1024 * 1024;
 #endif // VT_MPI
 
    // read local definitions of each given stream
    //
 
    // vector of local definitions
-   std::vector<DefRec_BaseS*> loc_defs;
+   LargeVectorC<DefRec_BaseS*> loc_defs;
 
-   for( uint32_t i = 0; i < streamIds.size(); i++ )
+   for( uint32_t i = 0; i < MyStreamIds.size(); i++ )
    {
       uint32_t defs_read = loc_defs.size(); // N defs. read in this iteration
-      bool presort = false; // flag: pre-sort subset of local definitions?
 
       // put local definitions of streams which belonging together into
       // one vector
       //
-      for( ; i < streamIds.size(); i++ )
+      for( ; i < MyStreamIds.size(); i++ )
       {
          // read local definitions of stream
-         if( (error = !readLocal( streamIds[i], loc_defs )) )
+         if( (error = !readLocal( MyStreamIds[i], loc_defs )) )
             break;
 
-         if( i < streamIds.size() - 1 )
-         {
-            // abort loop, if next stream isn't a child
-            if( StreamId2UnifyCtl[streamIds[i+1]]->pstreamid == 0 )
-               break;
-            // otherwise, set flag to pre-sort subset of local definitions
-            else
-               presort = true;
-         }
+         // abort loop, if next stream isn't a child
+         if( i < MyStreamIds.size() - 1 &&
+             StreamId2UnifyCtl[MyStreamIds[i+1]]->pstreamid == 0 )
+            break;
       }
       if( error )
          break;
@@ -435,23 +408,21 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
       defs_read = loc_defs.size() - defs_read;
 
       // continue, if nothing is read
-      if( ( i >= streamIds.size() - 1 && loc_defs.empty() ) ||
-          ( i < streamIds.size() - 1 && defs_read == 0 ) )
+      if( ( i >= MyStreamIds.size() - 1 && loc_defs.empty() ) ||
+          ( i < MyStreamIds.size() - 1 && defs_read == 0 ) )
          continue;
 
-      // pre-sort subset of local definitions, if necessary
+      // pre-sort subset of local definitions
       //
-      if( presort )
-      {
-         // get begin iterator of subset
-         //
-         std::vector<DefRec_BaseS*>::iterator sort_begin_it = loc_defs.begin();
-         if( loc_defs.size() != defs_read )
-            sort_begin_it += ( loc_defs.size() - defs_read - 1 );
 
-         // pre-sort
-         std::sort( sort_begin_it, loc_defs.end(), DefRec_LocCmp );
-      }
+      // get begin iterator of subset
+      //
+      LargeVectorC<DefRec_BaseS*>::iterator sort_begin_it = loc_defs.begin();
+      if( loc_defs.size() != defs_read )
+         sort_begin_it += ( loc_defs.size() - defs_read - 1 );
+
+      // pre-sort
+      std::sort( sort_begin_it, loc_defs.end(), DefRec_LocCmp );
 
       MASTER
       {
@@ -515,7 +486,7 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
          }
 
          // continue reading, if minimum buffer size isn't reached
-         if( i < streamIds.size() && buffer_size < min_msg_size )
+         if( i < MyStreamIds.size() && buffer_size < min_msg_size )
             continue;
 
          // allocate memory for the send buffer
@@ -646,7 +617,7 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
                // create instance for local definition relating to its type
                //
 
-               DefRec_BaseS * new_loc_def;
+               DefRec_BaseS * new_loc_def = 0;
 
                switch( def_type )
                {
@@ -678,6 +649,11 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
                   case DEF_REC_TYPE__DefProcessGroup:
                   {
                      new_loc_def = new DefRec_DefProcessGroupS();
+                     break;
+                  }
+                  case DEF_REC_TYPE__DefProcessGroupAttributes:
+                  {
+                     new_loc_def = new DefRec_DefProcessGroupAttributesS();
                      break;
                   }
                   case DEF_REC_TYPE__DefSclFile:
@@ -723,6 +699,11 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
                   case DEF_REC_TYPE__DefCounter:
                   {
                      new_loc_def = new DefRec_DefCounterS();
+                     break;
+                  }
+                  case DEF_REC_TYPE__DefCounterAssignments:
+                  {
+                     new_loc_def = new DefRec_DefCounterAssignmentsS();
                      break;
                   }
                   case DEF_REC_TYPE__DefKeyValue:
@@ -825,7 +806,7 @@ DefinitionsC::readLocal( const std::vector<uint32_t> & streamIds )
 
 bool
 DefinitionsC::readLocal( const uint32_t & streamId,
-                         std::vector<DefRec_BaseS*> & locDefs )
+                         LargeVectorC<DefRec_BaseS*> & locDefs )
 {
    bool error = false;
 
@@ -857,140 +838,142 @@ DefinitionsC::readLocal( const uint32_t & streamId,
       // close definitions buffer
       OTF_RStream_closeDefBuffer( rstream );
 
-      // create record handler and set the local definition
-      // vector as first handler argument for ...
+      // create record handler array
       //
-
       OTF_HandlerArray * handler_array = OTF_HandlerArray_open();
       assert( handler_array );
 
+      // create first handler argument
+      FirstHandlerArg_DefsS fha( locDefs );
+
+      // set record handler and its first argument for ...
+      //
+
       // ... OTF_DEFINITIONCOMMENT_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefComment,
+         (OTF_FunctionPointer*)HandleDefComment,
          OTF_DEFINITIONCOMMENT_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFINITIONCOMMENT_RECORD );
+         &fha, OTF_DEFINITIONCOMMENT_RECORD );
 
       // ... OTF_DEFCREATOR_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefCreator,
+         (OTF_FunctionPointer*)HandleDefCreator,
          OTF_DEFCREATOR_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFCREATOR_RECORD );
+         &fha, OTF_DEFCREATOR_RECORD );
 
       // ... OTF_DEFTIMERRESOLUTION_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefTimerResolution,
+         (OTF_FunctionPointer*)HandleDefTimerResolution,
          OTF_DEFTIMERRESOLUTION_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFTIMERRESOLUTION_RECORD );
+         &fha, OTF_DEFTIMERRESOLUTION_RECORD );
 
       // ... OTF_DEFTIMERANGE_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefTimeRange,
+         (OTF_FunctionPointer*)HandleDefTimeRange,
          OTF_DEFTIMERANGE_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFTIMERANGE_RECORD );
+         &fha, OTF_DEFTIMERANGE_RECORD );
 
       // ... OTF_DEFPROCESSGROUP_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefProcessGroup,
+         (OTF_FunctionPointer*)HandleDefProcessGroup,
          OTF_DEFPROCESSGROUP_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFPROCESSGROUP_RECORD );
+         &fha, OTF_DEFPROCESSGROUP_RECORD );
+
+      // ... OTF_DEFPROCESSORGROUPATTR_RECORD
+      OTF_HandlerArray_setHandler( handler_array,
+         (OTF_FunctionPointer*)HandleDefProcessGroupAttributes,
+         OTF_DEFPROCESSORGROUPATTR_RECORD );
+      OTF_HandlerArray_setFirstHandlerArg( handler_array,
+         &fha, OTF_DEFPROCESSORGROUPATTR_RECORD );
 
       // ... OTF_DEFPROCESS_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefProcess,
+         (OTF_FunctionPointer*)HandleDefProcess,
          OTF_DEFPROCESS_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFPROCESS_RECORD );
+         &fha, OTF_DEFPROCESS_RECORD );
 
       // ... OTF_DEFSCLFILE_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefSclFile,
+         (OTF_FunctionPointer*)HandleDefSclFile,
          OTF_DEFSCLFILE_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFSCLFILE_RECORD );
+         &fha, OTF_DEFSCLFILE_RECORD );
 
       // ... OTF_DEFSCL_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefScl,
+         (OTF_FunctionPointer*)HandleDefScl,
          OTF_DEFSCL_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFSCL_RECORD );
+         &fha, OTF_DEFSCL_RECORD );
 
       // ... OTF_DEFFILEGROUP_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefFileGroup,
+         (OTF_FunctionPointer*)HandleDefFileGroup,
          OTF_DEFFILEGROUP_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFFILEGROUP_RECORD );
+         &fha, OTF_DEFFILEGROUP_RECORD );
 
       // ... OTF_DEFFILE_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefFile,
+         (OTF_FunctionPointer*)HandleDefFile,
          OTF_DEFFILE_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFFILE_RECORD );
+         &fha, OTF_DEFFILE_RECORD );
 
       // ... OTF_DEFFUNCTIONGROUP_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefFunctionGroup,
+         (OTF_FunctionPointer*)HandleDefFunctionGroup,
          OTF_DEFFUNCTIONGROUP_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFFUNCTIONGROUP_RECORD );
+         &fha, OTF_DEFFUNCTIONGROUP_RECORD );
 
       // ... OTF_DEFFUNCTION_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefFunction,
+         (OTF_FunctionPointer*)HandleDefFunction,
          OTF_DEFFUNCTION_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFFUNCTION_RECORD );
+         &fha, OTF_DEFFUNCTION_RECORD );
 
       // ... OTF_DEFCOLLOP_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefCollOp,
+         (OTF_FunctionPointer*)HandleDefCollOp,
          OTF_DEFCOLLOP_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFCOLLOP_RECORD );
+         &fha, OTF_DEFCOLLOP_RECORD );
 
       // ... OTF_DEFCOUNTERGROUP_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefCounterGroup,
+         (OTF_FunctionPointer*)HandleDefCounterGroup,
          OTF_DEFCOUNTERGROUP_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFCOUNTERGROUP_RECORD );
+         &fha, OTF_DEFCOUNTERGROUP_RECORD );
 
       // ... OTF_DEFCOUNTER_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefCounter,
+         (OTF_FunctionPointer*)HandleDefCounter,
          OTF_DEFCOUNTER_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFCOUNTER_RECORD );
+         &fha, OTF_DEFCOUNTER_RECORD );
+
+      // ... OTF_DEFCOUNTERASSIGNMENTS_RECORD
+      OTF_HandlerArray_setHandler( handler_array,
+         (OTF_FunctionPointer*)HandleDefCounterAssignments,
+         OTF_DEFCOUNTERASSIGNMENTS_RECORD );
+      OTF_HandlerArray_setFirstHandlerArg( handler_array,
+         &fha, OTF_DEFCOUNTERASSIGNMENTS_RECORD );
 
       // ... OTF_DEFKEYVALUE_RECORD
       OTF_HandlerArray_setHandler( handler_array,
-         (OTF_FunctionPointer*)Handle_DefKeyValue,
+         (OTF_FunctionPointer*)HandleDefKeyValue,
          OTF_DEFKEYVALUE_RECORD );
       OTF_HandlerArray_setFirstHandlerArg( handler_array,
-         &locDefs,
-         OTF_DEFKEYVALUE_RECORD );
+         &fha, OTF_DEFKEYVALUE_RECORD );
 
       // read local definitions
       //
@@ -1022,7 +1005,7 @@ DefinitionsC::readLocal( const uint32_t & streamId,
 }
 
 bool
-DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
+DefinitionsC::processLocal( const LargeVectorC<DefRec_BaseS*> & locDefs )
 {
    bool error = false;
 
@@ -1034,7 +1017,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
       {
          case DEF_REC_TYPE__DefComment:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefCommentS * loc_def_entry =
                static_cast<DefRec_DefCommentS*>( locDefs[i] );
 
@@ -1045,7 +1028,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefCreator:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefCreatorS * loc_def_entry =
                static_cast<DefRec_DefCreatorS*>( locDefs[i] );
 
@@ -1062,7 +1045,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefTimerResolution:
          {
-            // get reference to local definitions entry
+            // get local definitions entry
             const DefRec_DefTimerResolutionS * loc_def_entry =
                static_cast<DefRec_DefTimerResolutionS*>( locDefs[i] );
 
@@ -1079,7 +1062,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefTimeRange:
          {
-            // get reference to local definitions entry
+            // get local definitions entry
             const DefRec_DefTimeRangeS * loc_def_entry =
                static_cast<DefRec_DefTimeRangeS*>( locDefs[i] );
 
@@ -1091,7 +1074,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefProcess:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefProcessS * loc_def_entry =
                static_cast<DefRec_DefProcessS*>( locDefs[i] );
 
@@ -1103,7 +1086,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefProcessGroup:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefProcessGroupS * loc_def_entry =
                static_cast<DefRec_DefProcessGroupS*>( locDefs[i] );
 
@@ -1112,9 +1095,48 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
 
             break;
          }
+         case DEF_REC_TYPE__DefProcessGroupAttributes:
+         {
+            // get local definition entry
+            DefRec_DefProcessGroupAttributesS * loc_def_entry =
+               static_cast<DefRec_DefProcessGroupAttributesS*>( locDefs[i] );
+
+            // get global token factory for DefProcessGroup
+            static TokenFactoryScopeI * tkfac_defprocgrp =
+               theTokenFactory->getScope( DEF_REC_TYPE__DefProcessGroup );
+
+            // get global token for DefProcessGroup
+            //
+            uint32_t global_procgrp =
+               tkfac_defprocgrp->translate( loc_def_entry->loccpuid,
+                  loc_def_entry->deftoken );
+            assert( global_procgrp != 0 );
+
+            // search for global attributes by process group token
+            std::map<uint32_t, DefRec_DefProcessGroupAttributesS>::iterator
+               procgrp_attrs_it =
+                  m_globDefs.procGrpAttrs.find( global_procgrp );
+
+            // add global process group attributes, if not found
+            //
+            if( procgrp_attrs_it == m_globDefs.procGrpAttrs.end() )
+            {
+               procgrp_attrs_it =
+                  m_globDefs.procGrpAttrs.insert(
+                     std::make_pair( global_procgrp,
+                        DefRec_DefProcessGroupAttributesS() ) ).first;
+
+               procgrp_attrs_it->second.deftoken = global_procgrp;
+            }
+
+            // add attributes to global process group attributes
+            procgrp_attrs_it->second.attributes |= loc_def_entry->attributes;
+
+            break;
+         }
          case DEF_REC_TYPE__DefSclFile:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefSclFileS * loc_def_entry =
                static_cast<DefRec_DefSclFileS*>( locDefs[i] );
 
@@ -1129,7 +1151,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefScl:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefSclS * loc_def_entry =
                static_cast<DefRec_DefSclS*>( locDefs[i] );
 
@@ -1156,7 +1178,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefFileGroup:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefFileGroupS * loc_def_entry =
                static_cast<DefRec_DefFileGroupS*>( locDefs[i] );
 
@@ -1171,7 +1193,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefFile:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefFileS * loc_def_entry =
                static_cast<DefRec_DefFileS*>( locDefs[i] );
 
@@ -1198,7 +1220,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefFunctionGroup:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefFunctionGroupS * loc_def_entry =
                static_cast<DefRec_DefFunctionGroupS*>( locDefs[i] );
 
@@ -1213,7 +1235,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefFunction:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefFunctionS * loc_def_entry =
                static_cast<DefRec_DefFunctionS*>( locDefs[i] );
 
@@ -1255,7 +1277,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefCollOp:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefCollOpS * loc_def_entry =
                static_cast<DefRec_DefCollOpS*>( locDefs[i] );
 
@@ -1270,7 +1292,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefCounterGroup:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefCounterGroupS * loc_def_entry =
                static_cast<DefRec_DefCounterGroupS*>( locDefs[i] );
 
@@ -1285,7 +1307,7 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
          }
          case DEF_REC_TYPE__DefCounter:
          {
-            // get reference to local definition entry
+            // get local definition entry
             DefRec_DefCounterS * loc_def_entry =
                static_cast<DefRec_DefCounterS*>( locDefs[i] );
 
@@ -1310,9 +1332,62 @@ DefinitionsC::processLocal( const std::vector<DefRec_BaseS*> & locDefs )
 
             break;
          }
+         case DEF_REC_TYPE__DefCounterAssignments:
+         {
+            // get local definition entry
+            DefRec_DefCounterAssignmentsS * loc_def_entry =
+               static_cast<DefRec_DefCounterAssignmentsS*>( locDefs[i] );
+
+            // get global token factory for DefCounter
+            static TokenFactoryScopeI * tkfac_defcntr =
+               theTokenFactory->getScope( DEF_REC_TYPE__DefCounter );
+
+            // get global token factory for DefProcessGroup
+            static TokenFactoryScopeI * tkfac_defprocgrp =
+               theTokenFactory->getScope( DEF_REC_TYPE__DefProcessGroup );
+
+            // get global token for DefCounter
+            //
+            uint32_t global_cntr =
+               tkfac_defcntr->translate(
+                  loc_def_entry->loccpuid, loc_def_entry->deftoken );
+            assert( global_cntr != 0 );
+
+            // search for global counter assignments by counter token
+            std::map<uint32_t, DefRec_DefCounterAssignmentsS>::iterator
+               cntr_assigns_it =
+                  m_globDefs.cntrAssigns.find( global_cntr );
+
+            // add global counter assignments, if not found
+            //
+            if( cntr_assigns_it == m_globDefs.cntrAssigns.end() )
+            {
+               cntr_assigns_it =
+                  m_globDefs.cntrAssigns.insert( std::make_pair( global_cntr,
+                     DefRec_DefCounterAssignmentsS() ) ).first;
+
+               cntr_assigns_it->second.deftoken = global_cntr;
+            }
+
+            // get global token for DefProcessGroup
+            //
+            uint32_t global_procgrp =
+               tkfac_defprocgrp->translate( loc_def_entry->loccpuid,
+                  *(loc_def_entry->groups.begin()) );
+            assert( global_procgrp != 0 );
+
+            // add process group token to global counter assignments
+            cntr_assigns_it->second.groups.insert( global_procgrp );
+
+            // add process group token to stream
+            m_groupCntrs->addGroupToStream( loc_def_entry->loccpuid,
+               global_procgrp );
+
+            break;
+         }
          case DEF_REC_TYPE__DefKeyValue:
          {
-            // get reference to local definition entry
+            // get local definition entry
             const DefRec_DefKeyValueS * loc_def_entry =
                static_cast<DefRec_DefKeyValueS*>( locDefs[i] );
 
@@ -1381,18 +1456,21 @@ DefinitionsC::writeGlobal()
             {
                bool do_write = true;
 
-               // get copy of definition record in order that hook(s) can
-               // modify it
-               DefRec_DefCreatorS record = m_globDefs.creator;
+               // get reference to definition record for more convenient access
+               DefRec_DefCreatorS & record = m_globDefs.creator;
 
                // trigger write record hook
                theHooks->triggerWriteRecordHook( HooksC::Record_DefCreator, 3,
                   &wstream, &(record.creator), &do_write );
 
                // write record
+               //
                if( do_write )
-                  error = ( OTF_WStream_writeDefCreator( wstream,
-                               record.creator.c_str() ) == 0 );
+               {
+                  error =
+                     ( OTF_WStream_writeDefCreator( wstream,
+                          record.creator.c_str() ) == 0 );
+               }
 
                break;
             }
@@ -1400,9 +1478,8 @@ DefinitionsC::writeGlobal()
             {
                bool do_write = true;
 
-               // get copy of definition record in order that hook(s) can
-               // modify it
-               DefRec_DefTimerResolutionS record = m_globDefs.timeres;
+               // get reference to definition record for more convenient access
+               DefRec_DefTimerResolutionS & record = m_globDefs.timeres;
 
                // trigger write record hook
                theHooks->triggerWriteRecordHook(
@@ -1410,9 +1487,13 @@ DefinitionsC::writeGlobal()
                   &(record.ticksPerSecond), &do_write );
 
                // write record
+               //
                if( do_write )
-                  error = ( OTF_WStream_writeDefTimerResolution( wstream,
-                               record.ticksPerSecond ) == 0 );
+               {
+                  error =
+                     ( OTF_WStream_writeDefTimerResolution( wstream,
+                          record.ticksPerSecond ) == 0 );
+               }
 
                break;
             }
@@ -1420,9 +1501,8 @@ DefinitionsC::writeGlobal()
             {
                bool do_write = true;
 
-               // get copy of definition record in order that hook(s) can
-               // modify it
-               DefRec_DefTimeRangeS record = m_globDefs.timerange;
+               // get reference to definition record for more convenient access
+               DefRec_DefTimeRangeS & record = m_globDefs.timerange;
 
                // trigger write record hook
                theHooks->triggerWriteRecordHook(
@@ -1430,24 +1510,40 @@ DefinitionsC::writeGlobal()
                   &(record.minTime), &(record.maxTime), &do_write );
 
                // write record
+               //
                if( do_write )
-                  error = ( OTF_WStream_writeDefTimeRange( wstream,
-                               record.minTime, record.maxTime, 0 ) == 0 );
+               {
+                  error =
+                     ( OTF_WStream_writeDefTimeRange( wstream, record.minTime,
+                          record.maxTime, 0 ) == 0 );
+               }
 
                break;
             }
             case DEF_REC_TYPE__DefComment:
             {
+               // resort definition comments
+               //
+
+               typedef
+                  std::set<const DefRec_DefCommentS*,
+                     DefRec_DefCommentS::SortS> resorted_comments_t;
+
+               resorted_comments_t resorted_comments;
+
+               resortGlobDefs<DefRec_DefCommentS>(
+                  m_globDefs.comments, resorted_comments );
+
                // iterate over all definition comments
-               for( std::set<DefRec_DefCommentS>::const_iterator it =
-                    m_globDefs.comments.begin();
-                    it != m_globDefs.comments.end() && !error; it++ )
+               for( resorted_comments_t::const_iterator it =
+                    resorted_comments.begin(); it != resorted_comments.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefCommentS record = *it;
+                  DefRec_DefCommentS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook(
@@ -1455,25 +1551,40 @@ DefinitionsC::writeGlobal()
                      &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefinitionComment(
-                                  wstream, record.comment.c_str() ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefinitionComment( wstream,
+                             record.comment.c_str() ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefProcess:
             {
+               // resort process definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefProcessS*,
+                     DefRec_DefProcessS::SortS> resorted_procs_t;
+
+               resorted_procs_t resorted_procs;
+
+               resortGlobDefs<DefRec_DefProcessS>(
+                  m_globDefs.procs, resorted_procs );
+
                // iterate over all process definitions
-               for( std::set<DefRec_DefProcessS>::const_iterator it =
-                    m_globDefs.procs.begin();
-                    it != m_globDefs.procs.end() && !error; it++ )
+               for( resorted_procs_t::const_iterator it =
+                    resorted_procs.begin(); it != resorted_procs.end(); it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefProcessS record = *it;
+                  DefRec_DefProcessS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefProcess,
@@ -1481,53 +1592,173 @@ DefinitionsC::writeGlobal()
                      &(record.parent), &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefProcess( wstream,
-                                  record.deftoken, record.name.c_str(),
-                                  record.parent ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefProcess( wstream, record.deftoken,
+                             record.name.c_str(), record.parent ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefProcessGroup:
             {
+               // resort process group definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefProcessGroupS*,
+                     DefRec_DefProcessGroupS::SortS> resorted_proc_grps_t;
+
+               resorted_proc_grps_t resorted_proc_grps;
+
+               resortGlobDefs<DefRec_DefProcessGroupS>(
+                  m_globDefs.procGrps, resorted_proc_grps );
+
                // iterate over all process group definitions
-               for( std::set<DefRec_DefProcessGroupS>::const_iterator it =
-                    m_globDefs.procGrps.begin();
-                    it != m_globDefs.procGrps.end() && !error; it++ )
+               for( resorted_proc_grps_t::const_iterator it =
+                    resorted_proc_grps.begin(); it != resorted_proc_grps.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefProcessGroupS record = *it;
+                  DefRec_DefProcessGroupS record = **it;
 
                   // inflate group members
-                  m_procGrps->inflateMembers( record.members );
+                  m_procGrps->inflateMembers( record );
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook(
-                     HooksC::Record_DefProcessGroup, 5, &wstream,
-                     &(record.deftoken), &(record.name), &(record.members),
-                     &do_write );
+                     HooksC::Record_DefProcessGroup, 6, &wstream,
+                     &(record.deftoken), &(record.name), &(record.nmembers),
+                     &(record.members), &do_write );
 
+                  // write record
+                  //
                   if( do_write )
                   {
-                     // convert std::vector to C-array
-                     //
-                     uint32_t n = record.members.size();
-                     uint32_t * array = new uint32_t[n];
-                     assert( array );
-                     for( uint32_t i = 0; i < n; i++ )
-                        array[i] = record.members[i];
-
-                     // write record
                      error =
                         ( OTF_WStream_writeDefProcessGroup( wstream,
-                             record.deftoken, record.name.c_str(), n,
-                             array ) == 0 );
+                             record.deftoken, record.name.c_str(),
+                             record.nmembers, record.members ) == 0 );
+                  }
+               }
 
-                     delete[] array;
+               break;
+            }
+            case DEF_REC_TYPE__DefProcessGroupAttributes:
+            {
+               if( !m_globDefs.procGrpAttrs.empty() )
+               {
+                  typedef DefRec_DefProcessGroupAttributesS
+                     attrs_list_t;
+
+                  // storage of global attributes list definitions
+                  std::set<attrs_list_t> global_attrs_lists;
+
+                  // create global attributes list definitions
+                  //
+                  {
+                     // create global token factory scope for attributes list
+                     // definitions
+                     //
+                     TokenFactoryScopeC<attrs_list_t> * tkfac_attrs_list =
+                        new TokenFactoryScopeC<attrs_list_t>
+                           ( &global_attrs_lists );
+                     assert( tkfac_attrs_list );
+
+                     // iterate over all process group attr. definitions
+                     for( std::map<uint32_t,
+                          DefRec_DefProcessGroupAttributesS>::iterator
+                          procgrp_attrs_it = m_globDefs.procGrpAttrs.begin();
+                          procgrp_attrs_it != m_globDefs.procGrpAttrs.end();
+                          procgrp_attrs_it++ )
+                     {
+                        bool do_write = true;
+
+                        DefRec_DefProcessGroupAttributesS & procgrp_attrs =
+                           procgrp_attrs_it->second;
+
+                        // trigger write record hook
+                        theHooks->triggerWriteRecordHook(
+                           HooksC::Record_DefProcessGroupAttributes, 4,
+                           &wstream, &(procgrp_attrs.deftoken),
+                           &(procgrp_attrs.attributes), &do_write );
+
+                        if( do_write )
+                        {
+                           // create global attributes list definition
+                           //
+
+                           attrs_list_t attrs_list =
+                              attrs_list_t( 0, 0, procgrp_attrs.attributes );
+
+                           procgrp_attrs.attributes =
+                              tkfac_attrs_list->create( &attrs_list );
+                        }
+                        else
+                        {
+                           procgrp_attrs.attributes = 0;
+                        }
+                     }
+
+                     // delete global token factory scope for attributes list
+                     // definitions
+                     delete tkfac_attrs_list;
+                  }
+
+                  // write global attributes list definitions
+                  //
+                  {
+                     // iterate over all attributes list definitions
+                     for( std::set<attrs_list_t>::const_iterator attrs_list_it =
+                          global_attrs_lists.begin(); attrs_list_it !=
+                          global_attrs_lists.end() && !error; attrs_list_it++ )
+                     {
+                        // convert bitmask to array
+                        //
+                        uint32_t n = 0;
+                        OTF_ATTR_TYPE array[32];
+                        for( uint32_t i = 0; i < 32; i++ )
+                        {
+                           if( attrs_list_it->attributes & (1<<i) )
+                              array[n++] = static_cast<OTF_ATTR_TYPE>( i );
+                        }
+
+                        // write record
+                        error =
+                           ( OTF_WStream_writeDefAttributeList( wstream,
+                                attrs_list_it->deftoken, n, array ) == 0 );
+                     }
+                  }
+
+                  // write global process group attr. definitions
+                  //
+                  {
+                     // iterate over all process group attr. definitions
+                     for( std::map<uint32_t,
+                          DefRec_DefProcessGroupAttributesS>::const_iterator
+                          procgrp_attrs_it = m_globDefs.procGrpAttrs.begin();
+                          procgrp_attrs_it != m_globDefs.procGrpAttrs.end() &&
+                          !error; procgrp_attrs_it++ )
+                     {
+                        const DefRec_DefProcessGroupAttributesS & procgrp_attrs
+                           = procgrp_attrs_it->second;
+
+                        // write record, if global attributes token is present
+                        //
+                        if( procgrp_attrs.attributes != 0 )
+                        {
+                           error =
+                              ( OTF_WStream_writeDefProcessOrGroupAttributes(
+                                   wstream, procgrp_attrs.deftoken,
+                                   procgrp_attrs.attributes ) == 0 );
+                        }
+                     }
                   }
                }
 
@@ -1535,16 +1766,28 @@ DefinitionsC::writeGlobal()
             }
             case DEF_REC_TYPE__DefSclFile:
             {
+               // resort scl file definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefSclFileS*,
+                     DefRec_DefSclFileS::SortS> resorted_scl_files_t;
+
+               resorted_scl_files_t resorted_scl_files;
+
+               resortGlobDefs<DefRec_DefSclFileS>(
+                  m_globDefs.sclFiles, resorted_scl_files );
+
                // iterate over all scl file definitions
-               for( std::set<DefRec_DefSclFileS>::const_iterator it =
-                    m_globDefs.sclFiles.begin();
-                    it != m_globDefs.sclFiles.end() && !error; it++ )
+               for( resorted_scl_files_t::const_iterator it =
+                    resorted_scl_files.begin(); it != resorted_scl_files.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefSclFileS record = *it;
+                  DefRec_DefSclFileS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefSclFile,
@@ -1552,26 +1795,41 @@ DefinitionsC::writeGlobal()
                      &do_write );
 
                   // write record
+                  //
                   if( do_write )
+                  {
                      error =
-                        ( OTF_WStream_writeDefSclFile( wstream,
-                             record.deftoken, record.filename.c_str() ) == 0 );
+                        ( OTF_WStream_writeDefSclFile( wstream, record.deftoken,
+                             record.filename.c_str() ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefScl:
             {
+               // resort scl definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefSclS*, DefRec_DefSclS::SortS>
+                     resorted_scls_t;
+
+               resorted_scls_t resorted_scls;
+
+               resortGlobDefs<DefRec_DefSclS>(
+                  m_globDefs.scls, resorted_scls );
+
                // iterate over all scl definitions
-               for( std::set<DefRec_DefSclS>::const_iterator it =
-                    m_globDefs.scls.begin();
-                    it != m_globDefs.scls.end() && !error; it++ )
+               for( resorted_scls_t::const_iterator it =
+                    resorted_scls.begin(); it != resorted_scls.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefSclS record = *it;
+                  DefRec_DefSclS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefScl, 5,
@@ -1579,26 +1837,41 @@ DefinitionsC::writeGlobal()
                      &(record.sclline), &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefScl( wstream,
-                                  record.deftoken, record.sclfile,
-                                  record.sclline ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefScl( wstream, record.deftoken,
+                             record.sclfile, record.sclline ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefFileGroup:
             {
+               // resort file group definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefFileGroupS*,
+                     DefRec_DefFileGroupS::SortS> resorted_file_grps_t;
+
+               resorted_file_grps_t resorted_file_grps;
+
+               resortGlobDefs<DefRec_DefFileGroupS>(
+                  m_globDefs.fileGrps, resorted_file_grps );
+
                // iterate over all file group definitions
-               for( std::set<DefRec_DefFileGroupS>::const_iterator it =
-                    m_globDefs.fileGrps.begin();
-                    it != m_globDefs.fileGrps.end() && !error; it++ )
+               for( resorted_file_grps_t::const_iterator it =
+                    resorted_file_grps.begin(); it != resorted_file_grps.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefFileGroupS record = *it;
+                  DefRec_DefFileGroupS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefFileGroup,
@@ -1606,25 +1879,39 @@ DefinitionsC::writeGlobal()
                      &do_write );
 
                   // write record
+                  //
                   if( do_write )
+                  {
                      error = ( OTF_WStream_writeDefFileGroup( wstream,
                                   record.deftoken, record.name.c_str() ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefFile:
             {
+               // resort file definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefFileS*, DefRec_DefFileS::SortS>
+                     resorted_files_t;
+
+               resorted_files_t resorted_files;
+
+               resortGlobDefs<DefRec_DefFileS>(
+                  m_globDefs.files, resorted_files );
+
                // iterate over all file definitions
-               for( std::set<DefRec_DefFileS>::const_iterator it =
-                    m_globDefs.files.begin();
-                    it != m_globDefs.files.end() && !error; it++ )
+               for( resorted_files_t::const_iterator it =
+                    resorted_files.begin(); it != resorted_files.end(); it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefFileS record = *it;
+                  DefRec_DefFileS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefFile, 5,
@@ -1632,26 +1919,41 @@ DefinitionsC::writeGlobal()
                      &(record.group), &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefFile( wstream,
-                                  record.deftoken, record.name.c_str(),
-                                  record.group ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefFile( wstream, record.deftoken,
+                             record.name.c_str(), record.group ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefFunctionGroup:
             {
+               // resort function group definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefFunctionGroupS*,
+                     DefRec_DefFunctionGroupS::SortS> resorted_func_grps_t;
+
+               resorted_func_grps_t resorted_func_grps;
+
+               resortGlobDefs<DefRec_DefFunctionGroupS>(
+                  m_globDefs.funcGrps, resorted_func_grps );
+
                // iterate over all function group definitions
-               for( std::set<DefRec_DefFunctionGroupS>::const_iterator
-                    it = m_globDefs.funcGrps.begin();
-                    it != m_globDefs.funcGrps.end() && !error; it++ )
+               for( resorted_func_grps_t::const_iterator it =
+                    resorted_func_grps.begin(); it != resorted_func_grps.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefFunctionGroupS record = *it;
+                  DefRec_DefFunctionGroupS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook(
@@ -1659,25 +1961,41 @@ DefinitionsC::writeGlobal()
                      &(record.deftoken), &(record.name), &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefFunctionGroup( wstream,
-                                  record.deftoken, record.name.c_str() ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefFunctionGroup( wstream,
+                             record.deftoken, record.name.c_str() ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefFunction:
             {
+               // resort function definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefFunctionS*,
+                     DefRec_DefFunctionS::SortS> resorted_funcs_t;
+
+               resorted_funcs_t resorted_funcs;
+
+               resortGlobDefs<DefRec_DefFunctionS>(
+                  m_globDefs.funcs, resorted_funcs );
+
                // iterate over all function definitions
-               for( std::set<DefRec_DefFunctionS>::const_iterator it =
-                    m_globDefs.funcs.begin();
-                    it != m_globDefs.funcs.end() && !error; it++ )
+               for( resorted_funcs_t::const_iterator it =
+                    resorted_funcs.begin(); it != resorted_funcs.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefFunctionS record = *it;
+                  DefRec_DefFunctionS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefFunction,
@@ -1685,26 +2003,42 @@ DefinitionsC::writeGlobal()
                      &(record.group), &(record.scltoken), &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefFunction( wstream,
-                                  record.deftoken, record.name.c_str(),
-                                  record.group, record.scltoken ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefFunction( wstream,
+                             record.deftoken, record.name.c_str(),
+                             record.group, record.scltoken ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefCollOp:
             {
+               // resort collop. definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefCollOpS*, DefRec_DefCollOpS::SortS>
+                     resorted_collops_t;
+
+               resorted_collops_t resorted_collops;
+
+               resortGlobDefs<DefRec_DefCollOpS>(
+                  m_globDefs.collops, resorted_collops );
+
                // iterate over all collop. definitions
-               for( std::set<DefRec_DefCollOpS>::const_iterator
-                    it = m_globDefs.collops.begin();
-                    it != m_globDefs.collops.end() && !error; it++ )
+               for( resorted_collops_t::const_iterator it =
+                    resorted_collops.begin(); it != resorted_collops.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefCollOpS record = *it;
+                  DefRec_DefCollOpS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefCollOp, 5,
@@ -1712,26 +2046,42 @@ DefinitionsC::writeGlobal()
                      &(record.type), &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefCollectiveOperation( wstream,
-                                  record.deftoken, record.name.c_str(),
-                                  record.type ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefCollectiveOperation( wstream,
+                             record.deftoken, record.name.c_str(),
+                             record.type ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefCounterGroup:
             {
+               // resort counter group definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefCounterGroupS*,
+                     DefRec_DefCounterGroupS::SortS> resorted_cntr_grps_t;
+
+               resorted_cntr_grps_t resorted_cntr_grps;
+
+               resortGlobDefs<DefRec_DefCounterGroupS>(
+                  m_globDefs.cntrGrps, resorted_cntr_grps );
+
                // iterate over all counter group definitions
-               for( std::set<DefRec_DefCounterGroupS>::const_iterator
-                    it = m_globDefs.cntrGrps.begin();
-                    it != m_globDefs.cntrGrps.end() && !error; it++ )
+               for( resorted_cntr_grps_t::const_iterator it =
+                    resorted_cntr_grps.begin(); it != resorted_cntr_grps.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefCounterGroupS record = *it;
+                  DefRec_DefCounterGroupS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook(
@@ -1739,25 +2089,41 @@ DefinitionsC::writeGlobal()
                      &(record.deftoken), &(record.name), &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefCounterGroup( wstream,
-                                  record.deftoken, record.name.c_str() ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefCounterGroup( wstream,
+                             record.deftoken, record.name.c_str() ) == 0 );
+                  }
                }
 
                break;
             }
             case DEF_REC_TYPE__DefCounter:
             {
+               // resort counter definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefCounterS*, DefRec_DefCounterS::SortS>
+                     resorted_cntrs_t;
+
+               resorted_cntrs_t resorted_cntrs;
+
+               resortGlobDefs<DefRec_DefCounterS>(
+                  m_globDefs.cntrs, resorted_cntrs );
+
                // iterate over all counter definitions
-               for( std::set<DefRec_DefCounterS>::const_iterator it =
-                    m_globDefs.cntrs.begin();
-                    it != m_globDefs.cntrs.end() && !error; it++ )
+               for( resorted_cntrs_t::const_iterator it =
+                    resorted_cntrs.begin(); it != resorted_cntrs.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefCounterS record = *it;
+                  DefRec_DefCounterS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefCounter,
@@ -1766,27 +2132,89 @@ DefinitionsC::writeGlobal()
                      &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefCounter( wstream,
-                                  record.deftoken, record.name.c_str(),
-                                  record.properties, record.group,
-                                  record.unit.c_str() ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefCounter( wstream,
+                             record.deftoken, record.name.c_str(),
+                             record.properties, record.group,
+                             record.unit.c_str() ) == 0 );
+                  }
                }
 
                break;
             }
+            case DEF_REC_TYPE__DefCounterAssignments:
+            {
+              // iterate over all counter assignment definitions
+              for( std::map<uint32_t, DefRec_DefCounterAssignmentsS>::iterator
+                   cntr_assigns_it = m_globDefs.cntrAssigns.begin();
+                   cntr_assigns_it != m_globDefs.cntrAssigns.end();
+                   cntr_assigns_it++ )
+              {
+                 bool do_write = true;
+
+                 DefRec_DefCounterAssignmentsS & record =
+                    cntr_assigns_it->second;
+
+                 // trigger write record hook
+                 theHooks->triggerWriteRecordHook(
+                    HooksC::Record_DefCounterAssignments, 4,
+                    &wstream, &(record.deftoken), &(record.groups), &do_write );
+
+                 // write record
+                 //
+                 if( do_write )
+                 {
+                    // convert std::set to C-array
+                    //
+                    uint32_t n = record.groups.size();
+                    uint32_t * array = new uint32_t[n];
+                    assert( array );
+                    uint32_t i = 0;
+                    for( std::set<uint32_t>::const_iterator it =
+                         record.groups.begin(); it != record.groups.end();
+                         it++, i++ )
+                    {
+                       array[i] = *it;
+                    }
+
+                    // write record
+                    error =
+                       ( OTF_WStream_writeDefCounterAssignments( wstream,
+                            record.deftoken, n, array, 0 ) == 0 );
+
+                    delete [] array;
+                 }
+              }
+
+              break;
+            }
             case DEF_REC_TYPE__DefKeyValue:
             {
-               // iterate over all function definitions
-               for( std::set<DefRec_DefKeyValueS>::const_iterator it =
-                    m_globDefs.keyVals.begin();
-                    it != m_globDefs.keyVals.end() && !error; it++ )
+               // resort key-value definitions
+               //
+
+               typedef
+                  std::set<const DefRec_DefKeyValueS*,
+                     DefRec_DefKeyValueS::SortS> resorted_keyvals_t;
+
+               resorted_keyvals_t resorted_keyvals;
+
+               resortGlobDefs<DefRec_DefKeyValueS>(
+                  m_globDefs.keyVals, resorted_keyvals );
+
+               // iterate over all key-value definitions
+               for( resorted_keyvals_t::const_iterator it =
+                    resorted_keyvals.begin(); it != resorted_keyvals.end();
+                    it++ )
                {
                   bool do_write = true;
 
                   // get copy of definition record in order that hook(s) can
                   // modify it
-                  DefRec_DefKeyValueS record = *it;
+                  DefRec_DefKeyValueS record = **it;
 
                   // trigger write record hook
                   theHooks->triggerWriteRecordHook( HooksC::Record_DefKeyValue,
@@ -1794,11 +2222,15 @@ DefinitionsC::writeGlobal()
                      &(record.name), &do_write );
 
                   // write record
+                  //
                   if( do_write )
-                     error = ( OTF_WStream_writeDefKeyValue( wstream,
-                                  record.deftoken, record.type,
-                                  record.name.c_str(),
-                                  "" /* description */ ) == 0 );
+                  {
+                     error =
+                        ( OTF_WStream_writeDefKeyValue( wstream,
+                             record.deftoken, record.type,
+                             record.name.c_str(),
+                             "" /* description */ ) == 0 );
+                  }
                }
 
                break;
@@ -1834,25 +2266,16 @@ DefinitionsC::writeGlobal()
 
 //////////////////// sub-class DefinitionsC::CommentsC ////////////////////
 
-// private methods
+// public methods
 //
 
-DefinitionsC::CommentsC::CommentsC( DefinitionsC & _defs )
-   : m_defs( _defs ), m_seqOrderIdx( 0 )
-{
-   // Empty
-}
-
-DefinitionsC::CommentsC::~CommentsC()
-{
-   // Empty
-}
-
 bool
-DefinitionsC::CommentsC::processLocal(
-   const DefRec_DefCommentS & locComment )
+DefinitionsC::CommentsC::processLocal( const DefRec_DefCommentS & locComment )
 {
    bool error = false;
+
+   std::istringstream iss( locComment.comment );
+   assert( iss );
 
    switch( locComment.type )
    {
@@ -1861,12 +2284,12 @@ DefinitionsC::CommentsC::processLocal(
          // get minimum start time from comment
          //
          uint64_t starttime;
-         sscanf( locComment.comment.c_str(), "%llu",
-                 (unsigned long long int*)&starttime );
+         iss >> starttime;
+         assert( iss );
 
          // update minimum start time, if necessary
-         if( starttime < m_traceTimes.minStartTimeEpoch )
-           m_traceTimes.minStartTimeEpoch = starttime;
+         if( starttime < m_minStartTimeEpoch )
+           m_minStartTimeEpoch = starttime;
 
          break;
       }
@@ -1875,13 +2298,12 @@ DefinitionsC::CommentsC::processLocal(
          // get maximum stop time from comment
          //
          uint64_t stoptime;
-         sscanf( locComment.comment.c_str(), "%llu",
-                 (unsigned long long int*)&stoptime );
+         iss >> stoptime;
+         assert( iss );
 
          // update maximum stop time, if necessary
-         //
-         if( stoptime > m_traceTimes.maxStopTimeEpoch )
-           m_traceTimes.maxStopTimeEpoch = stoptime;
+         if( stoptime > m_maxStopTimeEpoch )
+           m_maxStopTimeEpoch = stoptime;
 
          break;
       }
@@ -1890,20 +2312,72 @@ DefinitionsC::CommentsC::processLocal(
       {
          // get peer process id, local communicator token, and tag from comment
          //
+
          uint32_t peer = locComment.loccpuid;
          uint32_t comm;
          uint32_t tag;
-         sscanf( locComment.comment.c_str(), "C%xT%x", &comm, &tag );
+         char delim;
 
-         // temporary store user communication id and peer
-         m_userCom.comIdsAndPeers.push_back(
-            UserComS::ComIdPeerS( UserComC::ComIdS( comm, tag ), peer,
-               ( locComment.type == DefRec_DefCommentS::TYPE_USRCOM_SEND ) ) );
+         for( uint8_t i = 0; i < 4; i++ )
+         {
+            switch( i )
+            {
+               case 0: // 'C'
+               {
+                  iss >> delim;
+                  assert( iss );
+                  assert( delim == 'C' );
+                  break;
+               }
+               case 1: // communicator token
+               {
+                  iss >> std::hex >> comm;
+                  assert( iss );
+                  break;
+               }
+               case 2: // 'T'
+               {
+                  iss >> delim;
+                  assert( iss );
+                  assert( delim == 'T' );
+                  break;
+               }
+               case 3: // tag
+               default:
+               {
+                  iss >> std::hex >> tag;
+                  assert( iss );
+                  break;
+               }
+            }
+         }
 
-         // add process id to certain user communicator
-         m_defs.m_procGrps->m_userCom.addCommMember(
-            locComment.loccpuid & VT_TRACEID_BITMASK, comm,
+         // get global token factory for DefProcessGroup
+         TokenFactoryScopeI * tkfac_defprocgrp =
+            theTokenFactory->getScope( DEF_REC_TYPE__DefProcessGroup );
+
+         // translate local comm. token
+         //
+         uint32_t global_comm =
+            tkfac_defprocgrp->translate( locComment.loccpuid, comm );
+         assert( global_comm != 0 );
+
+         // add process id to members of user communicator
+         m_defs.m_procGrps->m_userCom.addCommMember( global_comm,
             locComment.loccpuid );
+
+         // register communication id and its peer
+         //
+         if( locComment.type == DefRec_DefCommentS::TYPE_USRCOM_SEND )
+         {
+            theUserCom->addSender( UserComC::ComIdS( global_comm, tag ),
+               peer );
+         }
+         else // locComment.type == DefRec_DefCommentS::TYPE_USRCOM_RECV
+         {
+            theUserCom->addReceiver( UserComC::ComIdS( global_comm, tag ),
+               peer );
+         }
 
          break;
       }
@@ -1940,14 +2414,17 @@ DefinitionsC::CommentsC::processLocal(
 
          // search for already created global definition comment
          std::set<DefRec_DefCommentS>::const_iterator it =
-            std::find( glob_comments.begin(), glob_comments.end(),
-                       new_comment );
+            glob_comments.find( new_comment );
 
          // add global definition comment to set, if not found
          if( it == glob_comments.end() )
             glob_comments.insert( new_comment );
 
          break;
+      }
+      default: // DefRec_DefCommentS::TYPE_UNKNOWN
+      {
+         assert( 0 );
       }
    }
 
@@ -1961,13 +2438,13 @@ DefinitionsC::CommentsC::finish( void )
 
    // add time comments to global definitions, if present
    //
-   if( m_traceTimes.minStartTimeEpoch != (uint64_t)-1 &&
-       m_traceTimes.maxStopTimeEpoch != 0 )
+   if( m_minStartTimeEpoch != (uint64_t)-1 && m_maxStopTimeEpoch != 0 )
    {
 #ifdef VT_UNIFY_HOOKS_TDB
       // trigger HooksTdbC's generic hook to set trace times
-      theHooks->triggerGenericHook( VT_UNIFY_HOOKS_TDB_GENID__STARTSTOPTIME_EPOCH,
-         2, &m_traceTimes.minStartTimeEpoch, &m_traceTimes.maxStopTimeEpoch );
+      theHooks->triggerGenericHook(
+         VT_UNIFY_HOOKS_TDB_GENID__STARTSTOPTIME_EPOCH,
+         2, &m_minStartTimeEpoch, &m_maxStopTimeEpoch );
 #endif // VT_UNIFY_HOOKS_TDB
 
       // get reference to global definition comments
@@ -2003,15 +2480,15 @@ DefinitionsC::CommentsC::finish( void )
 
                if( i == 1 )
                {
-                  tt = (time_t)(m_traceTimes.minStartTimeEpoch / 1e6);
+                  tt = (time_t)(m_minStartTimeEpoch / 1e6);
                   ss << " Start: " << asctime(localtime(&tt)) << "("
-                     << m_traceTimes.minStartTimeEpoch << ")";
+                     << m_minStartTimeEpoch << ")";
                }
                else // i == 2
                {
-                  tt = (time_t)(m_traceTimes.maxStopTimeEpoch / 1e6);
+                  tt = (time_t)(m_maxStopTimeEpoch / 1e6);
                   ss << " Stop: " << asctime(localtime(&tt)) << "("
-                     << m_traceTimes.maxStopTimeEpoch << ")";
+                     << m_maxStopTimeEpoch << ")";
                }
 
                new_comment.comment = ss.str();
@@ -2026,8 +2503,7 @@ DefinitionsC::CommentsC::finish( void )
                std::ostringstream ss;
 
                tt =
-                  (time_t)((m_traceTimes.maxStopTimeEpoch -
-                     m_traceTimes.minStartTimeEpoch) / 1e6);
+                  (time_t)((m_maxStopTimeEpoch - m_minStartTimeEpoch) / 1e6);
                gmtime_r(&tt, &elapsed_tm);
                ss << " Elapsed: "
                   << (elapsed_tm.tm_hour < 10 ? "0" : "")
@@ -2036,8 +2512,7 @@ DefinitionsC::CommentsC::finish( void )
                   << elapsed_tm.tm_min << ":"
                   << (elapsed_tm.tm_sec  < 10 ? "0" : "")
                   << elapsed_tm.tm_sec
-                  << " (" << m_traceTimes.maxStopTimeEpoch -
-                     m_traceTimes.minStartTimeEpoch << ")";
+                  << " (" << m_maxStopTimeEpoch - m_minStartTimeEpoch << ")";
 
                new_comment.comment = ss.str();
                ss.str(""); ss.clear();
@@ -2051,56 +2526,13 @@ DefinitionsC::CommentsC::finish( void )
       }
    }
 
-   // register user communication ids and peers
-   //
-   if( !m_userCom.comIdsAndPeers.empty() )
-   {
-      // get global token factory for DefProcessGroup
-      TokenFactoryScopeI * tkfac_defprocgrp =
-         theTokenFactory->getScope( DEF_REC_TYPE__DefProcessGroup );
-
-      while( !m_userCom.comIdsAndPeers.empty() )
-      {
-         // get first list element
-         std::list<UserComS::ComIdPeerS>::iterator it =
-            m_userCom.comIdsAndPeers.begin();
-
-         // translate local comm. token
-         //
-         it->comid.comm =
-            tkfac_defprocgrp->translate( it->peer, it->comid.comm );
-         assert( it->comid.comm != 0 );
-
-         // register communication id and its peer
-         //
-         if( it->is_sender )
-            theUserCom->addSender( it->comid, it->peer );
-         else
-            theUserCom->addReceiver( it->comid, it->peer );
-
-         // erase first list element
-         m_userCom.comIdsAndPeers.pop_front();
-      }
-   }
-
    return !error;
 }
 
 //////////////////// sub-class DefinitionsC::ProcessGroupsC ////////////////////
 
-// private methods
+// public methods
 //
-
-DefinitionsC::ProcessGroupsC::ProcessGroupsC( DefinitionsC & _defs )
-   : m_defs( _defs )
-{
-   // Empty
-}
-
-DefinitionsC::ProcessGroupsC::~ProcessGroupsC()
-{
-   // Empty
-}
 
 bool
 DefinitionsC::ProcessGroupsC::processLocal(
@@ -2116,138 +2548,102 @@ DefinitionsC::ProcessGroupsC::processLocal(
    //
    switch( locProcGrp.type )
    {
-      case DefRec_DefProcessGroupS::TYPE_NODE:
+      case DefRec_DefProcessGroupS::TYPE_MPI_COMM_WORLD:
       {
-         // add process id to node group members
-         m_node.name2Procs[locProcGrp.name].insert( locProcGrp.members[0] );
+         // create global process group token, if not already done
+         if( m_mpi.worldComm.global_token == 0 )
+            m_mpi.worldComm.global_token = tkfac_defprocgrp->getNextToken();
 
-         break;
-      }
-      case DefRec_DefProcessGroupS::TYPE_GPU_GROUP:
-      {
-         // add process ids to GPU group members
-         m_gpu.procs.insert( locProcGrp.members.begin(),
-                             locProcGrp.members.end() );
-
-         break;
-      }
-      case DefRec_DefProcessGroupS::TYPE_GPU_COMM:
-      {
-         // add process ids to comm. group members
-         m_gpu.commMembers.insert( locProcGrp.members.begin(),
-                                   locProcGrp.members.end() );
-
-         // add local token for translation
-         m_gpu.proc2LocCommTk[locProcGrp.loccpuid] = locProcGrp.deftoken;
-
-         break;
-      }
-      case DefRec_DefProcessGroupS::TYPE_OMP_TEAM:
-      {
-         static uint32_t omp_thread_team_no = 0;
-
-         // get reference to global process group definitions
-         std::set<DefRec_DefProcessGroupS> & glob_proc_grps =
-            m_defs.m_globDefs.procGrps;
-
-         // deflate comm. group members
-         deflateMembers( locProcGrp.members );
-
-         std::set<DefRec_DefProcessGroupS>::const_iterator it =
-            glob_proc_grps.end();
-
-         // not the first OMP thread team comm.?
-         if( omp_thread_team_no > 0 )
-         {
-            // search global definition by comm. group members
-            // (content m_globDefs is sorted by type; abort searching
-            //  after last TYPE_OMP_TEAM)
-            //
-            for( it = glob_proc_grps.begin(); it != glob_proc_grps.end(); it++ )
-            {
-               static bool abort_search = false;
-               if( it->type == DefRec_DefProcessGroupS::TYPE_OMP_TEAM )
-               {
-                  abort_search = true;
-
-                  if( it->members == locProcGrp.members )
-                     break;
-               }
-               else if( abort_search )
-               {
-                  break;
-               }
-            }
-         }
-
-         // create global definition, if not found
+         // create global process group definition, only if members are present
+         // (only the first available (not disabled) process contains a
+         // filled process group for MPI_COMM_WORLD)
          //
-         if( it == glob_proc_grps.end() )
+         if( locProcGrp.nmembers > 0 )
          {
-            // compose comm. group name
-            //
-            std::ostringstream new_name;
-            new_name << m_omp.commName() << " " << omp_thread_team_no++;
-            locProcGrp.name = new_name.str();
+            // deflate process group members
+            deflateMembers( locProcGrp );
 
-            // create global definition
-            tkfac_defprocgrp->create( &locProcGrp );
+            // set process group name
+            locProcGrp.name = MpiS::WorldCommS::NAME();
+
+            // create global process group definition with previous created
+            // global token
+            tkfac_defprocgrp->create( &locProcGrp,
+               m_mpi.worldComm.global_token );
          }
          // otherwise, set token translation for process
          //
          else
          {
             tkfac_defprocgrp->setTranslation( locProcGrp.loccpuid,
-               locProcGrp.deftoken, it->deftoken );
+               locProcGrp.deftoken, m_mpi.worldComm.global_token );
          }
 
          break;
       }
-      case DefRec_DefProcessGroupS::TYPE_MPI_COMM_WORLD:
+      case DefRec_DefProcessGroupS::TYPE_MPI_COMM_SELF:
       {
-         // global token of process group definition
-         static uint32_t global_token = 0;
+         // process group member = id of defining process
+         const uint32_t member = locProcGrp.loccpuid & VT_TRACEID_BITMASK;
 
-         // temporary storage of local tokens to translate
-         static std::vector<
-            std::pair<uint32_t /* process id */,
-                      uint32_t /* local token */> > local_tokens;
+         // compose and set process group name
+         //
+         std::ostringstream name;
+         name << MpiS::SelfCommsS::NAME() << " " << member - 1;
+         locProcGrp.name = name.str();
 
-         // create global token, if necessary
+         // set process group member
+         locProcGrp.assignMembers( 1, &member, &member + 1 );
+
+         // create global process group definition
+         tkfac_defprocgrp->create( &locProcGrp );
+
+         break;
+      }
+      case DefRec_DefProcessGroupS::TYPE_MPI_COMM_OTHER:
+      case DefRec_DefProcessGroupS::TYPE_MPI_GROUP:
+      {
+	 const bool is_mpi_group =
+	    ( locProcGrp.type == DefRec_DefProcessGroupS::TYPE_MPI_GROUP );
+
+         // process group must have members
+         assert( locProcGrp.nmembers > 0 );
+
+         // deflate process group members and get its unique id
+         //
+         deflateMembers( locProcGrp );
+         const uint32_t membersid = locProcGrp.members[1];
+
+         // get count by process and members (0 if it's a group)
+         const uint32_t count =
+	    is_mpi_group ? 0 : ++(m_mpi.commsAndGroups.counts
+               [ std::make_pair( locProcGrp.loccpuid, membersid ) ]);
+
+         // get global token by members and count
+         uint32_t & global_token = m_mpi.commsAndGroups.global_tokens
+            [ std::make_pair( membersid, count ) ];
+
+         // create global process group definition, if not already done
          //
          if( global_token == 0 )
          {
-            // create global process group definition, if members are present
-            // (only the first available (not disabled) process contains a
-            // filled process group for MPI_COMM_WORLD)
+            // compose and set process group name
             //
-            if( !locProcGrp.members.empty() )
-            {
-               // deflate comm. group members
-               deflateMembers( locProcGrp.members );
-
-               // set group name
-               locProcGrp.name = m_mpi.worldCommName();
-
-               // create global definition and get its token
-               global_token = tkfac_defprocgrp->create( &locProcGrp );
-
-               // set translations for temporary stored local tokens
-               //
-               for( uint32_t i = 0; i < local_tokens.size(); i++ )
-               {
-                  tkfac_defprocgrp->setTranslation( local_tokens[i].first,
-                     local_tokens[i].second, global_token );
-               }
-               local_tokens.clear();
+            std::ostringstream name;
+	    if( is_mpi_group )
+	    {
+	       name << MpiS::CommsAndGroupsS::GROUP_NAME() << " "
+	            << m_mpi.commsAndGroups.group_seqno++;
             }
-            // otherwise, temporary store local token
-            //
-            else
-            {
-               local_tokens.push_back(
-                  std::make_pair( locProcGrp.loccpuid, locProcGrp.deftoken ) );
-            }
+	    else
+	    {
+	       name << MpiS::CommsAndGroupsS::COMM_NAME() << " "
+	            << m_mpi.commsAndGroups.comm_seqno++;
+	    }
+            locProcGrp.name = name.str();
+
+            // create global process group definition and store its token
+            global_token = tkfac_defprocgrp->create( &locProcGrp );
          }
          // otherwise, set token translation for process
          //
@@ -2259,77 +2655,89 @@ DefinitionsC::ProcessGroupsC::processLocal(
 
          break;
       }
-      case DefRec_DefProcessGroupS::TYPE_MPI_COMM_SELF:
-      {
-         // add communicator
-         m_mpi.selfComms.insert(
-            MpiS::SelfCommS( locProcGrp.deftoken, locProcGrp.loccpuid ) );
-
-         break;
-      }
-      case DefRec_DefProcessGroupS::TYPE_MPI_COMM_OTHER:
-      {
-         // comm. group must have members
-         assert( !locProcGrp.members.empty() );
-
-         // deflate comm. group members
-         //
-         deflateMembers( locProcGrp.members );
-         uint32_t membersid = locProcGrp.members[1];
-
-         // search for communicator by its defining process and members
-         // (search reversed in order to get an increasing index)
-         std::list<MpiS::OtherCommS>::reverse_iterator it =
-            std::find( m_mpi.proc2OtherComms[locProcGrp.loccpuid].rbegin(),
-               m_mpi.proc2OtherComms[locProcGrp.loccpuid].rend(),
-               MpiS::OtherCommS( membersid ) );
-
-         // get new local communicator index
-         //
-         uint32_t index = 0;
-         if( it != m_mpi.proc2OtherComms[locProcGrp.loccpuid].rend() )
-            index = it->index + 1;
-
-         // add communicator
-         m_mpi.proc2OtherComms[locProcGrp.loccpuid].push_back(
-            MpiS::OtherCommS( locProcGrp.deftoken, membersid, index ) );
-
-         break;
-      }
       case DefRec_DefProcessGroupS::TYPE_USER_COMM:
       {
          // search for communicator by its name
-         std::list<UserComS::CommS>::iterator it =
-            std::find( m_userCom.comms.begin(), m_userCom.comms.end(),
-               UserComS::CommS( locProcGrp.name ) );
+         std::map<std::string, UserComS::CommS*>::iterator it =
+            m_userCom.name2Comm.find( locProcGrp.name );
 
          // add communicator, if not found
          //
-         if( it == m_userCom.comms.end() )
+         if( it == m_userCom.name2Comm.end() )
          {
-            m_userCom.comms.push_back( UserComS::CommS( locProcGrp.name ) );
-            it = m_userCom.comms.end(); it--;
+            // create global communicator token
+            uint32_t global_token = tkfac_defprocgrp->getNextToken();
+
+            it =
+               m_userCom.name2Comm.insert( std::make_pair( locProcGrp.name,
+                  new UserComS::CommS() ) ).first;
+            assert( it->second );
+
+            it->second->global_token = global_token;
+
+            m_userCom.globTk2Comm[global_token] = it->second;
+
+            // register global communicator token
+            theUserCom->addUserComm( global_token );
          }
 
-         // add local token for translation
-         it->proc2LocCommTk[locProcGrp.loccpuid] = locProcGrp.deftoken;
-
-         // add iterator of user comm. for fast access
-         m_userCom.proc2LocCommTk2CommIt
-            [locProcGrp.loccpuid & VT_TRACEID_BITMASK][locProcGrp.deftoken] =
-               it;
+         // set token translation for process
+         tkfac_defprocgrp->setTranslation( locProcGrp.loccpuid,
+            locProcGrp.deftoken, it->second->global_token );
 
          break;
       }
-      default:
+      case DefRec_DefProcessGroupS::TYPE_ALL:
+      case DefRec_DefProcessGroupS::TYPE_NODE:
+      case DefRec_DefProcessGroupS::TYPE_OTHER:
       {
-         // deflate group members
-         deflateMembers( locProcGrp.members );
+         if( locProcGrp.type == DefRec_DefProcessGroupS::TYPE_ALL )
+         {
+            // set process group name
+            locProcGrp.name = OtherS::ALL_NAME();
+         }
+         else if( locProcGrp.type == DefRec_DefProcessGroupS::TYPE_NODE )
+         {
+            // add member process ids to the "All" process group
+            m_other.name2Group[OtherS::ALL_NAME()].members.insert(
+               locProcGrp.members, locProcGrp.members + locProcGrp.nmembers );
+         }
 
-         // create global definition
-         tkfac_defprocgrp->create( &locProcGrp );
+         // get reference to process group by name
+         OtherS::GroupS & group = m_other.name2Group[locProcGrp.name];
+
+         // create global process group token, if not already done
+         if( group.global_token == 0 )
+            group.global_token = tkfac_defprocgrp->getNextToken();
+
+         // set token translation for process
+         tkfac_defprocgrp->setTranslation( locProcGrp.loccpuid,
+            locProcGrp.deftoken, group.global_token );
+
+         // add member process ids
+         // (the members of the "All" process group will be collected from the
+         //  node process groups)
+         //
+         if( locProcGrp.type != DefRec_DefProcessGroupS::TYPE_ALL )
+         {
+            // add id of defining process, if no members are present
+            //
+            if( locProcGrp.nmembers == 0 )
+            {
+               group.members.insert( locProcGrp.loccpuid );
+            }
+            else
+            {
+               group.members.insert( locProcGrp.members,
+                  locProcGrp.members + locProcGrp.nmembers );
+            }
+         }
 
          break;
+      }
+      default: // DefRec_DefProcessGroupS::TYPE_UNKNOWN
+      {
+         assert( 0 );
       }
    }
 
@@ -2345,290 +2753,145 @@ DefinitionsC::ProcessGroupsC::finish( void )
    TokenFactoryScopeI * tkfac_defprocgrp =
       theTokenFactory->getScope( DEF_REC_TYPE__DefProcessGroup );
 
-   // get reference to global process group definitions
-   std::set<DefRec_DefProcessGroupS> & glob_proc_grps =
-      m_defs.m_globDefs.procGrps;
-
-   // add node process groups to global definitions
-   //
-   if( !m_node.name2Procs.empty() )
-   {
-      // initialize common stuff of new process groups
-      //
-      DefRec_DefProcessGroupS new_proc_grp;
-      new_proc_grp.loccpuid = 0;
-      new_proc_grp.type = DefRec_DefProcessGroupS::TYPE_NODE;
-
-      // iterate over all node groups
-      for( std::map<std::string, std::set<uint32_t, ProcCmpS> >::iterator
-           it = m_node.name2Procs.begin(); it != m_node.name2Procs.end(); it++ )
-      {
-         // set global token, name, and members
-         //
-         new_proc_grp.deftoken = tkfac_defprocgrp->getNextToken();
-         new_proc_grp.name = it->first;
-         new_proc_grp.members.assign( it->second.begin(), it->second.end() );
-         it->second.clear();
-
-         // add node process group to global definitions
-         glob_proc_grps.insert( new_proc_grp );
-      }
-
-      // not needed anymore; free some memory
-      m_node.name2Procs.clear();
-   }
-
-   // add GPU process group to global definitions
-   //
-   if( !m_gpu.procs.empty() )
-   {
-      // initialize new process group
-      //
-      DefRec_DefProcessGroupS new_proc_grp;
-      new_proc_grp.loccpuid = 0;
-      new_proc_grp.deftoken = tkfac_defprocgrp->getNextToken();
-      new_proc_grp.type = DefRec_DefProcessGroupS::TYPE_GPU_GROUP;
-      new_proc_grp.name = m_gpu.groupName();
-      new_proc_grp.members.assign( m_gpu.procs.begin(), m_gpu.procs.end() );
-      m_gpu.procs.clear();
-
-      // add GPU process group to global definitions
-      glob_proc_grps.insert( new_proc_grp );
-   }
-
-   // add GPU communicator group to global definitions
-   //
-   if( !m_gpu.commMembers.empty() && !m_gpu.proc2LocCommTk.empty() )
-   {
-      // initialize new process group
-      //
-      DefRec_DefProcessGroupS new_proc_grp;
-      new_proc_grp.type = DefRec_DefProcessGroupS::TYPE_GPU_COMM;
-      new_proc_grp.name = m_gpu.commName();
-      new_proc_grp.members.assign( m_gpu.commMembers.begin(),
-                                   m_gpu.commMembers.end() );
-      m_gpu.commMembers.clear();
-
-      // iterate over all local tokens
-      for( std::map<uint32_t, uint32_t>::const_iterator it =
-           m_gpu.proc2LocCommTk.begin(); it != m_gpu.proc2LocCommTk.end();
-           it++ )
-      {
-         static uint32_t global_token = 0;
-
-         // create global definition, if necessary
-         //
-         if( global_token == 0 )
-         {
-            new_proc_grp.loccpuid = it->first;
-            new_proc_grp.deftoken = it->second;
-            global_token = tkfac_defprocgrp->create( &new_proc_grp );
-         }
-         // otherwise, set token translation for process
-         //
-         else
-         {
-            tkfac_defprocgrp->setTranslation( it->first, it->second,
-               global_token );
-         }
-      }
-
-      // not needed anymore; free some memory
-      m_gpu.proc2LocCommTk.clear();
-   }
-
-   // add MPI_COMM_SELF groups to global definitions
-   //
-   if( !m_mpi.selfComms.empty() )
-   {
-      // initialize new process group
-      //
-      DefRec_DefProcessGroupS new_proc_grp;
-      new_proc_grp.type = DefRec_DefProcessGroupS::TYPE_MPI_COMM_SELF;
-      new_proc_grp.members.resize( 1 );
-
-      uint32_t i = 0;
-      for( std::set<MpiS::SelfCommS>::const_iterator it =
-           m_mpi.selfComms.begin(); it != m_mpi.selfComms.end(); it++, i++ )
-      {
-         // set defining process, members, and local token
-         //
-         new_proc_grp.loccpuid = new_proc_grp.members[0] = it->member;
-         new_proc_grp.deftoken = it->loctk;
-
-         // compose and set name
-         //
-         std::ostringstream name;
-         name << m_mpi.selfCommName() << " " << i;
-         new_proc_grp.name = name.str();
-
-         // create global definition
-         tkfac_defprocgrp->create( &new_proc_grp );
-      }
-
-      // not needed anymore; free some memory
-      m_mpi.selfComms.clear();
-   }
-
-   // add user created MPI communicator groups to global definitions
-   //
-   if( !m_mpi.proc2OtherComms.empty() )
-   {
-      // map comm. members/index <-> global token
-      std::map<std::pair<uint32_t, uint32_t>, uint32_t> global_tokens;
-
-      // global comm. index (=name suffix)
-      uint32_t global_index = 0;
-
-      for( std::map<uint32_t, std::list<MpiS::OtherCommS> >::const_iterator
-           proc_it = m_mpi.proc2OtherComms.begin();
-           proc_it != m_mpi.proc2OtherComms.end(); proc_it++ )
-      {
-         while( !m_mpi.proc2OtherComms[proc_it->first].empty() )
-         {
-            // get first list element
-            std::list<MpiS::OtherCommS>::const_iterator comm_it =
-               m_mpi.proc2OtherComms[proc_it->first].begin();
-
-            // get global token of comm. members/index
-            uint32_t & global_token =
-               global_tokens[std::make_pair(comm_it->membersid,
-                                            comm_it->index)];
-
-            // create global definition, if necessary
-            //
-            if( global_token == 0 )
-            {
-               // initialize new process group
-               //
-               DefRec_DefProcessGroupS new_proc_grp;
-               new_proc_grp.type = DefRec_DefProcessGroupS::TYPE_MPI_COMM_OTHER;
-               new_proc_grp.loccpuid = proc_it->first;
-               new_proc_grp.deftoken = comm_it->deftoken;
-
-               // set members
-               //
-               new_proc_grp.members.resize( 2 );
-               new_proc_grp.members[0] = DEFLATED_MEMBERS_TAG;
-               new_proc_grp.members[1] = comm_it->membersid;
-
-               // compose and set name
-               //
-               std::ostringstream name;
-               name << m_mpi.otherCommName() << " " << global_index++;
-               new_proc_grp.name = name.str();
-
-               // create global definition
-               global_token = tkfac_defprocgrp->create( &new_proc_grp );
-            }
-            // otherwise, set token translation for process
-            //
-            else
-            {
-               tkfac_defprocgrp->setTranslation( proc_it->first,
-                  comm_it->deftoken, global_token );
-            }
-
-            // erase first list element
-            m_mpi.proc2OtherComms[proc_it->first].pop_front();
-         }
-      }
-   }
-
    // add user communicator groups to global definitions
    //
-   while( !m_userCom.comms.empty() )
+   if( !m_userCom.name2Comm.empty() )
    {
-      // get first list element
-      std::list<UserComS::CommS>::const_iterator comm_it =
-         m_userCom.comms.begin();
-
-      // initialize new process group
+      // initialize new process group definition
       //
       DefRec_DefProcessGroupS new_proc_grp;
       new_proc_grp.type = DefRec_DefProcessGroupS::TYPE_USER_COMM;
-      new_proc_grp.name = comm_it->name;
-      new_proc_grp.members.assign( comm_it->members.begin(),
-         comm_it->members.end() );
 
-      // create global definition
-      uint32_t global_token = tkfac_defprocgrp->create( &new_proc_grp );
-
-      // set token translations for processes
-      //
-      for( std::map<uint32_t, uint32_t>::const_iterator it =
-           comm_it->proc2LocCommTk.begin();
-           it != comm_it->proc2LocCommTk.end(); it++ )
+      for( std::map<std::string, UserComS::CommS*>::iterator comm_it =
+           m_userCom.name2Comm.begin(); comm_it != m_userCom.name2Comm.end();
+           comm_it++ )
       {
-         tkfac_defprocgrp->setTranslation( it->first, it->second,
-            global_token );
+         assert( comm_it->second->global_token != 0 );
+
+         new_proc_grp.name = comm_it->first;
+         new_proc_grp.assignMembers( comm_it->second->members.size(),
+            comm_it->second->members.begin(), comm_it->second->members.end() );
+
+         // create global definition with previous created global token
+         tkfac_defprocgrp->create( &new_proc_grp,
+            comm_it->second->global_token );
+
+         delete comm_it->second;
       }
 
-      // register global user communicator token
-      theUserCom->addUserComm( global_token );
+      m_userCom.name2Comm.clear();
+      m_userCom.globTk2Comm.clear();
+   }
 
-      // erase first list element
-      m_userCom.comms.pop_front();
+   // add other process groups to global definitions
+   //
+   if( !m_other.name2Group.empty() )
+   {
+      // initialize new process group definition
+      //
+      DefRec_DefProcessGroupS new_proc_grp;
+      new_proc_grp.type = DefRec_DefProcessGroupS::TYPE_OTHER;
+
+      for( std::map<std::string, OtherS::GroupS>::const_iterator group_it =
+           m_other.name2Group.begin();
+           group_it != m_other.name2Group.end(); group_it++ )
+      {
+         assert( group_it->second.global_token != 0 );
+
+         new_proc_grp.name = group_it->first;
+         new_proc_grp.assignMembers( group_it->second.members.size(),
+            group_it->second.members.begin(), group_it->second.members.end() );
+
+         // create global definition with previous created global token
+         tkfac_defprocgrp->create( &new_proc_grp,
+            group_it->second.global_token );
+      }
+
+      m_other.name2Group.clear();
    }
 
    return !error;
 }
 
 void
-DefinitionsC::ProcessGroupsC::deflateMembers( std::vector<uint32_t> & members )
+DefinitionsC::ProcessGroupsC::deflateMembers(
+   DefRec_DefProcessGroupS & procGrp )
 {
-   // return, if vector is empty or already deflated
-   if( members.empty() || members[0] == DEFLATED_MEMBERS_TAG )
+   // return, if input group member array is empty or already deflated
+   if( procGrp.nmembers == 0 || procGrp.members[0] == DEFLATED_MEMBERS_TAG )
       return;
 
-   // search for already known members
+   // search for already deflated group member array and get its unique id
    //
-   std::map<uint32_t, std::vector<uint32_t> >::const_iterator it;
-   for( it = m_id2Members.begin(); it != m_id2Members.end(); it++ )
+
+   std::pair<std::multimap<uint32_t, UniqueMembersS*>::const_iterator,
+      std::multimap<uint32_t, UniqueMembersS*>::const_iterator> range =
+         m_hash2UniqueMembers.equal_range( procGrp.members_hash );
+
+   uint32_t id = (uint32_t)-1;
+
+   for( std::multimap<uint32_t, UniqueMembersS*>::const_iterator it =
+        range.first; it != range.second; it++ )
    {
-      if( it->second == members )
+      if( it->second->nmembers != procGrp.nmembers )
+         continue;
+
+      if( memcmp( it->second->members, procGrp.members,
+          procGrp.nmembers * sizeof( uint32_t ) ) == 0 )
+      {
+         id = it->second->id;
          break;
+      }
    }
 
-   uint32_t id;
-
-   // get its unique id, if found
+   // if not found, create new unique id and assign input group member
+   // array to it
    //
-   if( it != m_id2Members.end() )
+   if( id == (uint32_t)-1 )
    {
-      id = it->first;
-   }
-   // otherwise, create new unique id and assign members to it
-   //
-   else
-   {
-      id = m_id2Members.size();
-      m_id2Members[id] = members;
+      id = m_uniqueMembers.size();
+
+      UniqueMembersS * new_unique_members =
+         new UniqueMembersS( id, procGrp.nmembers, procGrp.members );
+      assert( new_unique_members );
+
+      m_uniqueMembers.push_back( new_unique_members );
+      m_hash2UniqueMembers.insert(
+         std::make_pair( procGrp.members_hash, new_unique_members ) );
    }
 
-   // do actual deflating
+   // deflate input group member array
    //
-   members.resize( 2 );
-   members[0] = DEFLATED_MEMBERS_TAG; // deflated-identifier
-   members[1] = id;                   // unique id
+   delete [] procGrp.members;
+   procGrp.nmembers = 2;
+   procGrp.members = new uint32_t[2];
+   assert( procGrp.members );
+   procGrp.members[0] = DEFLATED_MEMBERS_TAG;
+   procGrp.members[1] = id;
 }
 
 void
-DefinitionsC::ProcessGroupsC::inflateMembers( std::vector<uint32_t> & members )
+DefinitionsC::ProcessGroupsC::inflateMembers(
+   DefRec_DefProcessGroupS & procGrp )
 {
-   // return, if vector is empty or not deflated
-   if( members.empty() || members[0] != DEFLATED_MEMBERS_TAG )
+   // return, if input group member array is empty or not deflated
+   if( procGrp.nmembers == 0 || procGrp.members[0] != DEFLATED_MEMBERS_TAG )
       return;
 
-   assert( members.size() == 2 );
+   assert( procGrp.nmembers == 2 );
 
-   // search for members by unique id
+   // get unique id of deflated input group member array
    //
-   std::map<uint32_t, std::vector<uint32_t> >::const_iterator it =
-      m_id2Members.find( members[1] );
-   assert( it != m_id2Members.end() );
+   uint32_t id = procGrp.members[1];
+   assert( id < m_uniqueMembers.size() );
 
-   // set vector
-   members = it->second;
+   // inflate input group member array
+   //
+   delete [] procGrp.members;
+   procGrp.nmembers = m_uniqueMembers[id]->nmembers;
+   procGrp.members = new uint32_t[procGrp.nmembers];
+   assert( procGrp.members );
+   memcpy( procGrp.members, m_uniqueMembers[id]->members,
+      procGrp.nmembers * sizeof( uint32_t ) );
 }
 

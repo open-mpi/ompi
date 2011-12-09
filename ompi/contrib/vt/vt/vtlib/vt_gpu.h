@@ -19,8 +19,6 @@
 # define EXTERN extern
 #endif
 
-/*#if (defined(VT_CUDARTWRAP) || defined(VT_CUDAWRAP) || defined(VT_OPENCLWRAP))*/
-
 #include "vt_inttypes.h"    /* VampirTrace integer types */
 #include "vt_thrd.h"        /* thread creation for GPU kernels */
 #include "vt_trc.h"         /* VampirTrace events */
@@ -33,7 +31,7 @@
 #define VTGPU_DEFAULT_BSIZE 8192
 #define VTGPU_MAX_BSIZE     2097152 /* 8192^8 bytes */
 
-/* defines for GPU GROUP and GPU COMM */
+/* defines for GPU GROUP and GPU COMM (8 bit only!!!) */
 #define VTGPU_NO_GPU   0x00 /* thread is no gpu and does no gpu communication */
 #define VTGPU_GPU      0x01 /* thread is a GPU thread */
 #define VTGPU_GPU_COMM 0x02 /* thread does gpu communication (CPU or GPU) */
@@ -41,14 +39,42 @@
 /* performance counter available? */
 #define VTGPU_NO_PC    0x04 /* no performance counter for this thread available */
 
-/*** some specials for the CUDA driver API ***/
-#if (defined(VT_CUDAWRAP))
+/* device/host communication directions (8 bit only!!!) */
+#define VTGPU_DEV2HOST  0x00 /* device to host copy */
+#define VTGPU_HOST2DEV  0x01 /* host to device copy */
+#define VTGPU_DEV2DEV   0x02 /* device to device copy */
+#define VTGPU_HOST2HOST 0x04 /* host to host copy */
+
+/****************** common for CUDA driver API and CUPTI **********************/
+#if (defined(VT_CUDAWRAP) || defined(VT_CUPTI))
+
 #include "vt_cuda_driver_api.h"
 
-#define CHECK_CU_ERROR(err, cufunc) \
-  if(err != CUDA_SUCCESS){ \
-    vt_error_msg("Error %d for CUDA Driver API function '%s'.", err, cufunc); \
+# define CHECK_CU_ERROR(_err, _msg) \
+  if(_err != CUDA_SUCCESS){ \
+    vt_gpu_handleCuError(_err, _msg, __FILE__,__LINE__); \
   }
+
+/*
+ * Handles errors returned from CUDA driver API calls.
+ * 
+ * @param ecode the CUDA driver API error code
+ * @param msg a message to get more detailed information about the error
+ * @param the corresponding file
+ * @param the line the error occurred
+ */
+EXTERN void vt_gpu_handleCuError(CUresult ecode, const char* msg,
+                                 const char *file, const int line);
+
+#else
+
+# define CHECK_CU_ERROR(_err, _msg)
+
+#endif
+/******************************************************************************/
+
+/****************************** CUDA driver API *******************************/
+#if (defined(VT_CUDAWRAP))
 
 /* is CUDA driver API tracing suspended? */
 # define VTGPU_CUDA_SUSPENDED 0x08
@@ -59,13 +85,12 @@
     ((vt_gpu_prop[_tid] & VTGPU_CUDA_SUSPENDED) == VTGPU_CUDA_SUSPENDED)
 #else
 
-#define CHECK_CU_ERROR(err, cufunc)
-
 # define VT_SUSPEND_CUDA_TRACING(tid)
 # define VT_RESUME_CUDA_TRACING(tid)
 # define VT_CUDA_IS_SUSPENDED(tid)
 
 #endif
+/******************************************************************************/
 
 /* 
  * gobal communicator id for all GPU threads
@@ -88,8 +113,13 @@ EXTERN uint8_t *vt_gpu_prop;
  */
 EXTERN uint8_t vt_gpu_debug;
 
+/* 
+ * flag: abort program on GPU error, if enabled 
+ */
+EXTERN uint8_t vt_gpu_error;
+
 /*
- * Initializion for all GPU API wrappers.
+ * Initialization for all GPU API wrappers.
  * VampirTrace IDS have to be locked, before calling this function.
  */
 EXTERN void vt_gpu_init(void);
@@ -104,12 +134,10 @@ EXTERN void vt_gpu_finalize(void);
  * Uses VampirTrace Thread API to create a GPU thread
  *
  * @param tname the name of the thread to be registered
- * @param the parent thread id
+ * @param ptid the parent thread id
  * @param vt_tid pointer to the thread id of the thread to be registered
  */
 EXTERN void vt_gpu_registerThread(const char* tname, uint32_t ptid,
-                                uint32_t *vt_tid);
-
-/*#endif  VT_CUDARTWRAP || VT_CUDAWRAP || VT_OPENCLWRAP */
+                                  uint32_t *vt_tid);
 
 #endif /* _VT_GPU_H_ */
