@@ -9,6 +9,7 @@
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -31,9 +32,16 @@ AC_DEFUN([MCA_crs_blcr_CONFIG],[
     check_crs_blcr_good="no"
 
     # If we do not want FT, don't compile this component
+    #
+    # If we wanted BLCR, but did not specify the FT option,
+    # error out with a warning for the user
     AS_IF([test "$ompi_want_ft_cr" = "0"],
           [$2
-           check_crs_blcr_good="no"],
+           check_crs_blcr_good="no"
+           AS_IF([test ! -z "$with_blcr" -a "$with_blcr" != "no"],
+                 [AC_MSG_WARN([BLCR support requested, but FT support not requested. You need to specify the --with-ft=cr configure option.])
+                  AC_MSG_ERROR([Aborting.])])
+          ],
           [check_crs_blcr_good="yes"])
 
     # If we do not want BLCR, then do not compile it

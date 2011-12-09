@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -271,7 +272,9 @@ main(int argc, char *argv[])
 
     if (OPAL_SUCCESS != ret) {
         opal_show_help("help-opal-restart.txt", "restart_cmd_failure", true,
-                       opal_restart_globals.filename, ret);
+                       opal_restart_globals.filename,
+                       ret,
+                       opal_crs_base_selected_component.base_version.mca_component_name);
         exit_status = ret;
         goto cleanup;
     }
@@ -364,11 +367,21 @@ static int initialize(int argc, char *argv[])
 
 static int finalize(void)
 {
+#if 0
     int ret;
 
+    /*
+     * JJH: Comment this out for now. It should only be called
+     * when exec fails, and opal-restart is shutting down.
+     * Currently BLCR is calling opal_even_fini() in the restart
+     * functionality, so calling it twice is causing a segv.
+     * Since we do not really need to do this, just comment it out
+     * for now.
+     */
     if (OPAL_SUCCESS != (ret = opal_finalize())) {
         return ret;
     }
+#endif
 
     return OPAL_SUCCESS;
 }

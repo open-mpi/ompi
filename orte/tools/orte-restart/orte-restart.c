@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -96,6 +97,8 @@ typedef struct {
     int  output;
     bool info_only;
     bool app_only;
+    bool showme;
+    char *mpirun_opts;
 } orte_restart_globals_t;
 
 orte_restart_globals_t orte_restart_globals;
@@ -156,6 +159,18 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       0,
       &orte_restart_globals.app_only, OPAL_CMD_LINE_TYPE_BOOL,
       "Only create the app context file, do not restart from it" },
+
+    { NULL, NULL, NULL, 
+      '\0', NULL, "showme", 
+      0,
+      &orte_restart_globals.showme, OPAL_CMD_LINE_TYPE_BOOL,
+      "Display the full command line that would have been exec'ed." },
+
+    { NULL, NULL, NULL, 
+      '\0', "mpirun_opts", "mpirun_opts", 
+      1,
+      &orte_restart_globals.mpirun_opts, OPAL_CMD_LINE_TYPE_STRING,
+      "Command line options to pass directly to mpirun (be sure to quote long strings, and escape internal quotes)" },
 
     /* End of list */
     { NULL, NULL, NULL, 
@@ -359,7 +374,9 @@ static int parse_args(int argc, char *argv[])
                                    NULL,  /* hostfile */
                                    -1,    /* output*/
                                    false, /* info only */
-                                   false };/* app only */
+                                   false, /* app only */
+                                   false, /* showme */
+                                   NULL}; /* mpirun_opts */
 
     orte_restart_globals = tmp;
 
@@ -558,6 +575,7 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
     char **argv = NULL;
     int argc = 0;
     int status;
+    int i;
 
     if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "mpirun")) ) {
         exit_status = ret;
@@ -581,6 +599,12 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
             goto cleanup;
         }
     }
+    if( orte_restart_globals.mpirun_opts ) {
+        if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, orte_restart_globals.mpirun_opts)) ) {
+            exit_status = ret;
+            goto cleanup;
+        }
+    }
     if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, "--app")) ) {
         exit_status = ret;
         goto cleanup;
@@ -588,6 +612,15 @@ static int spawn_children(orte_snapc_base_global_snapshot_t *snapshot, pid_t *ch
     if( ORTE_SUCCESS != (ret = opal_argv_append(&argc, &argv, orte_restart_globals.appfile)) ) {
         exit_status = ret;
         goto cleanup;
+    }
+
+    if( orte_restart_globals.showme ) {
+        for(i = 0; i < argc; ++i ) {
+            /*printf("%2d: (%s)\n", i, argv[i]);*/
+            printf("%s ", argv[i]);
+        }
+        printf("\n");
+        return ORTE_SUCCESS;
     }
 
     /* To fork off a child */

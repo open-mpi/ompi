@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -28,3 +29,11 @@ Open MPI developer):
 
   %s failed
   --> Returned value %d instead of OPAL_SUCCESS
+[opal_cr_init:no-crs]
+It looks like opal_cr_init failed. This usually means that the CRS component
+could not be activated on this machine. Check the installation of your
+checkpointer, MCA parameters, and configuration. If all of that seems
+correct, then copy this error message with the additional information below
+to the Open MPI users list.
+ Function:     %s
+ Return value: %d

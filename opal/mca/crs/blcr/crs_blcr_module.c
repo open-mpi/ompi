@@ -8,6 +8,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -28,6 +29,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/constants.h"
@@ -452,6 +454,7 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     opal_crs_blcr_snapshot_t *snapshot = OBJ_NEW(opal_crs_blcr_snapshot_t);
     char **cr_argv = NULL;
     char *cr_cmd = NULL;
+    char *cr_full_cmd = NULL;
     int ret;
     int exit_status = OPAL_SUCCESS;
     int status;
@@ -498,10 +501,10 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
     opal_event_fini();
 
     if (!spawn_child) {
+        cr_full_cmd = opal_argv_join(cr_argv, ' ');
         opal_output_verbose(10, mca_crs_blcr_component.super.output_handle,
                             "crs:blcr: blcr_restart: SELF: exec :(%s, %s):", 
-                            strdup(blcr_restart_cmd),
-                            opal_argv_join(cr_argv, ' '));
+                            blcr_restart_cmd, cr_full_cmd);
 
         status = execvp(strdup(blcr_restart_cmd), cr_argv);
 
@@ -509,8 +512,10 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
             opal_output(mca_crs_blcr_component.super.output_handle,
                         "crs:blcr: blcr_restart: SELF: Child failed to execute :(%d):", status);
         }
-        opal_output(mca_crs_blcr_component.super.output_handle,
-                    "crs:blcr: blcr_restart: SELF: execvp returned %d", status);
+        opal_show_help("help-opal-crs-blcr.txt", "blcr:restart_failed_exec", true,
+                       status,
+                       blcr_restart_cmd,
+                       cr_full_cmd);
 
         exit_status = status;
         goto cleanup;
@@ -555,7 +560,9 @@ int opal_crs_blcr_restart(opal_crs_base_snapshot_t *base_snapshot, bool spawn_ch
         free(cr_cmd);
     if(NULL != cr_argv)
         opal_argv_free(cr_argv);
-    
+    if(NULL != cr_full_cmd)
+        free(cr_full_cmd);
+
     return exit_status;
 }
     
