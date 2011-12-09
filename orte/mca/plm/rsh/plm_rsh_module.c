@@ -62,12 +62,6 @@
 #ifdef HAVE_PWD_H
 #include <pwd.h>
 #endif
-#if HAVE_LIMITS_H
-#include <limits.h>
-#endif
-#if HAVE_SYS_SYSLIMITS_H
-#include <sys/syslimits.h>
-#endif
 
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/mca/base/mca_base_param.h"
