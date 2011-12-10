@@ -413,8 +413,8 @@ mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
 
             break;
         default:
+            BTL_ERROR(("unknown tag %d\n", tag));
             break;
-/*             BTL_ERROR(("unknown tag %d\n", tag)); */
         }
 
         rc = GNI_SmsgRelease (ep->common->ep_handle);
@@ -577,9 +577,7 @@ mca_btl_ugni_progress_smsg (mca_btl_ugni_module_t *btl)
 static inline int
 mca_btl_ugni_progress_bte (mca_btl_ugni_module_t *btl)
 {
-    (void) ompi_common_ugni_process_completed_post (btl->device, btl->bte_local_cq);
- 
-    return 1;
+    return ompi_common_ugni_process_completed_post (btl->device, btl->bte_local_cq);
 }
 
 static int
@@ -589,7 +587,6 @@ mca_btl_ugni_retry_failed (mca_btl_ugni_module_t *btl)
     opal_list_item_t *item;
 
     while (count-- && NULL != (item = opal_list_remove_first (&btl->failed_frags))) {
-        fprintf (stderr, "retrying frag %p\n", (void *) item);
         mca_btl_ugni_post_frag_complete ((void *) item, OMPI_SUCCESS);
     }
 
@@ -600,7 +597,7 @@ static int
 mca_btl_ugni_component_progress (void)
 {
     mca_btl_ugni_module_t *btl;
-    unsigned int i, j, k;
+    unsigned int i;
     int count;
 
     count = ompi_common_ugni_progress ();
@@ -611,13 +608,8 @@ mca_btl_ugni_component_progress (void)
         mca_btl_ugni_retry_failed (btl);
 
         count += mca_btl_ugni_progress_datagram (btl);
-        for (j = 0 ; j < 2 ; ++j) {
-            for (k = 0 ; k < 5 ; ++k) {
-                count += mca_btl_ugni_progress_smsg (btl);
-            }
-
-            count += mca_btl_ugni_progress_bte (btl);
-        }
+        count += mca_btl_ugni_progress_smsg (btl);
+        count += mca_btl_ugni_progress_bte (btl);
     }
 
     return count;

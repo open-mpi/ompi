@@ -77,10 +77,9 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
 
     header_size += sizeof (frag->hdr[0]);
 
-    /* check endpoint state */
+    /* send message */
     rc = GNI_SmsgSendWTag (endpoint->common->ep_handle, frag->hdr, header_size,
-                           data_ptr, payload_size, msg_id,
-                           MCA_BTL_UGNI_TAG_SEND);
+                           data_ptr, payload_size, msg_id, MCA_BTL_UGNI_TAG_SEND);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         BTL_VERBOSE(("GNI_SmsgSendWTag failed with rc = %d", rc));
         MCA_BTL_UGNI_FRAG_RETURN (frag);
