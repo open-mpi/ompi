@@ -182,16 +182,8 @@ mca_btl_ugni_module_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     mbox_increment = nprocs;
 
     if (nprocs * mca_btl_ugni_smsg_mbox_size > 2 * 1024 * 1024) {
-        /* allocate at most 2 MB at a time */
+        /* allocate at most 2 MB at a time (TODO: make this a mca param?) */
         mbox_increment = (int) (2.0 * 1024.0 * 1024.0 / (float)mca_btl_ugni_smsg_mbox_size);
-    }
-
-    if (nprocs < 1024) {
-        mbox_increment = nprocs / 2;
-    } else if (nprocs < 16384) {
-        mbox_increment = nprocs / 10;
-    } else {
-        mbox_increment = nprocs / 40;
     }
 
     rc = ompi_free_list_init_new (&ugni_module->smsg_mboxes,
