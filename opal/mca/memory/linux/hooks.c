@@ -791,7 +791,8 @@ static void opal_memory_linux_malloc_init_hook(void)
         0 == stat("/dev/myri7", &st) ||
         0 == stat("/dev/myri8", &st) ||
         0 == stat("/dev/myri9", &st) ||
-        0 == stat("/dev/ipath", &st)) {
+        0 == stat("/dev/ipath", &st) ||
+        0 == stat("/dev/kgni0", &st)) {
         found_driver = true;
     }
     
