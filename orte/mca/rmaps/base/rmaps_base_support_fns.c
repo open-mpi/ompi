@@ -144,8 +144,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 while (node->daemon->name.vpid < nd->daemon->name.vpid) {
                     if (opal_list_get_begin(allocated_nodes) == opal_list_get_prev(&nd->super)) {
                         /* insert at beginning */
-                        opal_list_prepend(allocated_nodes, &node->super);
-                        continue;
+                        break;
                     }
                     nd = (orte_node_t*)opal_list_get_prev(&nd->super);
                 }
