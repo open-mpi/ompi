@@ -204,8 +204,8 @@ mem2chunk_check(mem) Void_t* mem;
     int contig = contiguous(&main_arena);
     sz = chunksize(p);
     if((contig &&
-	((char*)p<mp_.sbrk_base ||
-	 ((char*)p + sz)>=(mp_.sbrk_base+main_arena.system_mem) )) ||
+        ((char*)p<mp_.sbrk_base ||
+         ((char*)p + sz)>=(mp_.sbrk_base+main_arena.system_mem) )) ||
        sz<MINSIZE || sz&MALLOC_ALIGN_MASK || !inuse(p) ||
        ( !prev_inuse(p) && (p->prev_size&MALLOC_ALIGN_MASK ||
                             (contig && (char*)prev_chunk(p)<mp_.sbrk_base) ||
@@ -261,7 +261,7 @@ top_check()
        chunksize(t)>=MINSIZE &&
        prev_inuse(t) &&
        (!contiguous(&main_arena) ||
-	(char*)t + chunksize(t) == mp_.sbrk_base + main_arena.system_mem)))
+        (char*)t + chunksize(t) == mp_.sbrk_base + main_arena.system_mem)))
     return 0;
 
   if(check_action & 1)
@@ -377,11 +377,11 @@ realloc_check(oldmem, bytes, caller)
     {
       /* Note the extra SIZE_SZ overhead. */
       if(oldsize - SIZE_SZ >= nb)
-	newmem = oldmem; /* do nothing */
+        newmem = oldmem; /* do nothing */
       else {
         /* Must alloc, copy, free. */
         if (top_check() >= 0)
-	  newmem = _int_malloc(&main_arena, bytes+1);
+          newmem = _int_malloc(&main_arena, bytes+1);
         if (newmem) {
           MALLOC_COPY(BOUNDED_N(newmem, bytes+1), oldmem, oldsize - 2*SIZE_SZ);
           munmap_chunk(oldp);
@@ -401,7 +401,7 @@ realloc_check(oldmem, bytes, caller)
              oldsize - (2*sizeof(mbinptr)+2*SIZE_SZ+1));
     } else if(nb > oldsize+SIZE_SZ) {
       memset((char*)BOUNDED_N(chunk2mem(newp), bytes) + oldsize,
-	     0, nb - (oldsize+SIZE_SZ));
+             0, nb - (oldsize+SIZE_SZ));
     }
 #endif
 #if HAVE_MMAP
@@ -609,23 +609,23 @@ public_sET_STATe(Void_t* msptr)
       first(b) = last(b) = b;
     } else {
       if(i<(int)NSMALLBINS || ((int)largebin_index(chunksize(ms->av[2*i+2]))==i &&
-			  (int)largebin_index(chunksize(ms->av[2*i+3]))==i)) {
-	first(b) = ms->av[2*i+2];
-	last(b) = ms->av[2*i+3];
-	/* Make sure the links to the bins within the heap are correct.  */
-	first(b)->bk = b;
-	last(b)->fd = b;
-	/* Set bit in binblocks.  */
-	mark_bin(&main_arena, i);
+                          (int)largebin_index(chunksize(ms->av[2*i+3]))==i)) {
+        first(b) = ms->av[2*i+2];
+        last(b) = ms->av[2*i+3];
+        /* Make sure the links to the bins within the heap are correct.  */
+        first(b)->bk = b;
+        last(b)->fd = b;
+        /* Set bit in binblocks.  */
+        mark_bin(&main_arena, i);
       } else {
-	/* Oops, index computation from chunksize must have changed.
+        /* Oops, index computation from chunksize must have changed.
            Link the whole list into unsorted_chunks.  */
-	first(b) = last(b) = b;
-	b = unsorted_chunks(&main_arena);
-	ms->av[2*i+2]->bk = b;
-	ms->av[2*i+3]->fd = b->fd;
-	b->fd->bk = ms->av[2*i+3];
-	b->fd = ms->av[2*i+2];
+        first(b) = last(b) = b;
+        b = unsorted_chunks(&main_arena);
+        ms->av[2*i+2]->bk = b;
+        ms->av[2*i+3]->fd = b->fd;
+        b->fd->bk = ms->av[2*i+3];
+        b->fd = ms->av[2*i+2];
       }
     }
   }
