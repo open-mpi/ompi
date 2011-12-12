@@ -39,9 +39,6 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif /* HAVE_STRING_H */
-#ifdef HAVE_STDBOOL_H
-#include <stdbool.h>
-#endif /* HAVE_STDBOOL_H */
 
 #include "opal/constants.h"
 #include "opal_stdint.h"
@@ -174,15 +171,15 @@ segment_create(opal_shmem_ds_t *ds_buf,
                const char *file_name,
                size_t size)
 {
-    int rc = OPAL_SUCCESS, last_error;
-    bool file_previously_opened = false;
+    int rc = OPAL_SUCCESS;
     pid_t my_pid = getpid();
     char *temp1 = NULL, *temp2 = NULL;
+
     /* the real size of the shared memory segment.  this includes enough space
      * to store our segment header.
      */
     size_t real_size = size + sizeof(opal_shmem_seg_hdr_t);
-    opal_shmem_seg_hdr_t *seg_hdrp = MAP_FAILED;
+    opal_shmem_seg_hdr_t *seg_hdrp = NULL;
     HANDLE hMapObject = INVALID_HANDLE_VALUE;
     LPVOID lpvMem = NULL;
 
@@ -191,15 +188,18 @@ segment_create(opal_shmem_ds_t *ds_buf,
 
     /* On Windows the shared file will be created by the OS directly on the
      * system ressources. Therefore, no file get involved in the operation.
-     * However, a unique key should be used as name for the shared memory
-     * object in order to allow all processes to access the same unique shared
-     * memory region. The key will be obtained from the original file_name by
-     * replacing all path separator occurences by '/' (as '\' is not allowed on
-     * the object name).
+     * However, a unique key should be used as name for the shared memory object
+     * in order to allow all processes to access the same unique shared memory
+     * region. The key will be obtained from the original file_name by replacing
+     * all path separator occurences by '/' (as '\' is not allowed on the object
+     * name).
      */
     temp1 = strdup(file_name);
-    temp2 = temp1;
+    if (NULL == temp1) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
 
+    temp2 = temp1;
     while (NULL != (temp2 = strchr(temp2, OPAL_PATH_SEP[0])) ) {
         *temp2 = '/';
     }
@@ -215,18 +215,10 @@ segment_create(opal_shmem_ds_t *ds_buf,
                                    (DWORD)real_size,
                                    /* name of map object */
                                    temp1);
-
     if (NULL == hMapObject) {
-        last_error = GetLastError();
         rc = OPAL_ERROR;
         goto out;
     }
-    if (ERROR_ALREADY_EXISTS == GetLastError()) {
-        file_previously_opened = true;
-    }
-    /* relase the temporary file name */
-    free(temp1);
-
     /* Get a pointer to the file-mapped shared memory. */
     lpvMem = MapViewOfFile(hMapObject,          /* object to map view of */
                            FILE_MAP_WRITE,      /* read/write access */
@@ -234,14 +226,13 @@ segment_create(opal_shmem_ds_t *ds_buf,
                            0,                   /* low offset:   beginning */
                            0);                  /* default: map entire file */
     if (NULL == lpvMem) {
-        last_error = GetLastError();
         rc = OPAL_ERROR;
         goto out;
     }
 
     seg_hdrp = (opal_shmem_seg_hdr_t *)lpvMem;
 
-    pedObject /* all is well */
+    /* all is well */
     /* -- initialize the shared memory segment -- */
     opal_atomic_rmb();
 
@@ -259,7 +250,8 @@ segment_create(opal_shmem_ds_t *ds_buf,
     ds_buf->seg_base_addr = (unsigned char *)seg_hdrp;
     /* update path change in ds_buf */
     memcpy(ds_buf->seg_name, temp1, OPAL_PATH_MAX);
-    ds_buf->hMappedObject = hMapObject;
+    /* relase the temporary file name */
+    free(temp1);
 
     /* set "valid" bit because setment creation was successful */
     OPAL_SHMEM_DS_SET_VALID(ds_buf);
@@ -277,8 +269,8 @@ segment_create(opal_shmem_ds_t *ds_buf,
 out:
     /* an error occured, so invalidate the shmem object and munmap if needed */
     if (OPAL_SUCCESS != rc) {
-        if (MAP_FAILED != seg_hdrp) {
-            UnmapViewOfFile(seg_hdrp);
+        if (NULL != seg_hdrp) {
+            UnmapViewOfFile((LPVOID)seg_hdrp);
         }
         shmem_ds_reset(ds_buf);
     }
@@ -293,10 +285,12 @@ static void *
 segment_attach(opal_shmem_ds_t *ds_buf)
 {
     pid_t my_pid = getpid();
+    HANDLE hMapObject = INVALID_HANDLE_VALUE;
+    LPVOID lpvMem = NULL;
 
-    /* i did not create the segment - so i have to do all the hard work :-( */
+    /* i was not the creator of the segment */
     if (my_pid != ds_buf->seg_cpid) {
-                /* use paging file */
+                                       /* use paging file */
         hMapObject = CreateFileMapping(INVALID_HANDLE_VALUE,
                                        /* no security attributes */
                                        NULL,
@@ -305,27 +299,22 @@ segment_attach(opal_shmem_ds_t *ds_buf)
                                        /* size: high 32-bits */
                                        0,
                                        /* size: low 32-bits */
-                                       (DWORD)real_size,
+                                       (DWORD)ds_buf->seg_size,
                                        /* name of map object */
                                        ds_buf->seg_name);
-
         if (NULL == hMapObject) {
-            rc = GetLastError();
-            goto out;
+            return NULL;
         }
-
         /* Get a pointer to the file-mapped shared memory. */
-        lpvMem = MapViewOfFile(hMapObject,     /* object to map view of */
-                               FILE_MAP_WRITE, /* read/write access */
-                               0,              /* high offset:  map from */
-                               0,              /* low offset:   beginning */
-                               0);             /* default: map entire file */
+        lpvMem = MapViewOfFile(hMapObject,       /* object to map view of */
+                               FILE_MAP_WRITE,   /* read/write access */
+                               0,                /* high offset:  map from */
+                               0,                /* low offset: beginning */
+                               0);               /* default: map entire file */
         if (NULL == lpvMem) {
-            rc = GetLastError();
-            goto out;
+            return NULL;
         }
-
-        ds_buf->seg_base_addr = (opal_shmem_seg_hdr_t *)lpvMem;
+        ds_buf->seg_base_addr = (unsigned char *)lpvMem;
     }
     /* else i was the segment creator.  nothing to do here because all the hard
      * work was done in segment_create :-).
@@ -361,13 +350,13 @@ segment_detach(opal_shmem_ds_t *ds_buf)
          ds_buf->seg_name)
     );
 
-    if (0 != UnmapViewOfFile(ds_buf->seg_base_addr)) {
+    if (0 == UnmapViewOfFile((LPVOID)ds_buf->seg_base_addr)) {
         int err = errno;
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
         opal_show_help("help-opal-shmem-windows.txt", "sys call fail", 1, hn,
-                       "munmap(2)", "", strerror(err), err);
+                       "UnmapViewOfFile", "", strerror(err), err);
         rc = OPAL_ERROR;
     }
     /* reset the contents of the opal_shmem_ds_t associated with this
@@ -396,10 +385,7 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
      * across unlinks. other information stored in flags will remain untouched.
      */
     ds_buf->seg_id = OPAL_SHMEM_DS_ID_INVALID;
-    /* note: this is only chaning the valid bit to 0.  this is not the same
-     * as calling invalidate(ds_buf).
-     */
+    /* note: this is only chaning the valid bit to 0. */
     OPAL_SHMEM_DS_INVALIDATE(ds_buf);
     return OPAL_SUCCESS;
 }
-

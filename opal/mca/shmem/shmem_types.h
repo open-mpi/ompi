@@ -127,9 +127,6 @@ struct opal_shmem_ds_t {
     char seg_name[OPAL_PATH_MAX];
     /* base address of shared memory segment */
     unsigned char *seg_base_addr;
-#if defined(__WINDOWS__)
-    HANDLE hMappedObject;
-#endif
 };
 typedef struct opal_shmem_ds_t opal_shmem_ds_t;
 
