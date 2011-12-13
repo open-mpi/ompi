@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Los Alamos National Security, LLC.
 #                         All rights reserved.
 #
@@ -34,7 +34,7 @@ node.  Possible sources of the location of this temporary directory
 include the $TEMPDIR, $TEMP, and $TMP environment variables.
 
 Note, too, that system administrators can set a list of filesystems
-where Open MPI is disallowed from creating temporary files by settings
+where Open MPI is disallowed from creating temporary files by setting
 the MCA parameter "orte_no_session_dir".
 
   Local host: %s
