@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,7 +49,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
@@ -262,13 +264,11 @@ int mca_btl_sm_component_close(void)
     /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags_max);*/
 
     /* unmap the shared memory control structure */
-    if(mca_btl_sm_component.mmap_file != NULL) {
-        return_value = mca_common_sm_mmap_fini( mca_btl_sm_component.mmap_file );
+    if(mca_btl_sm_component.sm_seg != NULL) {
+        return_value = mca_common_sm_fini( mca_btl_sm_component.sm_seg );
         if( OMPI_SUCCESS != return_value ) {
             return_value=OMPI_ERROR;
-            opal_output(0," munmap failed :: file - %s :: errno - %d \n",
-                    mca_btl_sm_component.mmap_file->map_addr,
-                    errno);
+            opal_output(0," mca_common_sm_fini failed\n");
             goto CLEANUP;
         }
 
@@ -282,12 +282,12 @@ int mca_btl_sm_component_close(void)
          */
         if(OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
            OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
-            unlink(mca_btl_sm_component.mmap_file->map_path);
+            unlink(mca_btl_sm_component.sm_seg->shmem_ds.seg_name);
         }
 #else
-        unlink(mca_btl_sm_component.mmap_file->map_path);
+        unlink(mca_btl_sm_component.sm_seg->shmem_ds.seg_name);
 #endif
-        OBJ_RELEASE(mca_btl_sm_component.mmap_file);
+        OBJ_RELEASE(mca_btl_sm_component.sm_seg);
     }
 
 #if OPAL_ENABLE_PROGRESS_THREADS == 1

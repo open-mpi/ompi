@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -40,7 +42,7 @@
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/common/sm/common_sm.h"
 #include "ompi/mca/mpool/sm/mpool_sm.h"
 
 #if OMPI_BTL_SM_HAVE_KNEM
@@ -270,13 +272,13 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
 
     /* Pass in a data segment alignment of 0 to get no data
        segment (only the shared control structure) */
-    size = sizeof(mca_common_sm_file_header_t) +
+    size = sizeof(mca_common_sm_seg_header_t) +
         n * (sizeof(sm_fifo_t*) + sizeof(char *) + sizeof(uint16_t)) + opal_cache_line_size;
     procs = ompi_proc_world(&num_procs);
-    if (!(mca_btl_sm_component.mmap_file =
-          mca_common_sm_mmap_init(procs, num_procs, size, sm_ctl_file,
-                                  sizeof(mca_common_sm_file_header_t),
-                                  opal_cache_line_size))) {
+    if (!(mca_btl_sm_component.sm_seg =
+          mca_common_sm_init(procs, num_procs, size, sm_ctl_file,
+                             sizeof(mca_common_sm_seg_header_t),
+                             opal_cache_line_size))) {
         opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory "
                     "BTL coordinating strucure :: size %lu \n",
                     (unsigned long)size);
@@ -287,11 +289,6 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     free(procs);
     free(sm_ctl_file);
 
-    /* set the pointer to the shared memory control structure */
-    mca_btl_sm_component.sm_ctl_header =
-        (mca_common_sm_file_header_t*)mca_btl_sm_component.mmap_file->map_seg;
-
-
     /* check to make sure number of local procs is within the
      * specified limits */
     if(mca_btl_sm_component.sm_max_procs > 0 &&
@@ -300,7 +297,7 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
         return OMPI_ERROR;
     }
 
-    mca_btl_sm_component.shm_fifo = (volatile sm_fifo_t **)mca_btl_sm_component.mmap_file->data_addr;
+    mca_btl_sm_component.shm_fifo = (volatile sm_fifo_t **)mca_btl_sm_component.sm_seg->module_data_addr;
     mca_btl_sm_component.shm_bases = (char**)(mca_btl_sm_component.shm_fifo + n);
     mca_btl_sm_component.shm_mem_nodes = (uint16_t*)(mca_btl_sm_component.shm_bases + n);
 
@@ -538,9 +535,9 @@ int mca_btl_sm_add_procs(
     /* Sync with other local procs. Force the FIFO initialization to always
      * happens before the readers access it.
      */
-    opal_atomic_add_32( &mca_btl_sm_component.mmap_file->map_seg->seg_inited, 1);
+    opal_atomic_add_32( &mca_btl_sm_component.sm_seg->module_seg->seg_inited, 1);
     while( n_local_procs >
-           mca_btl_sm_component.mmap_file->map_seg->seg_inited) {
+           mca_btl_sm_component.sm_seg->module_seg->seg_inited) {
         opal_progress();
         opal_atomic_rmb();
     }

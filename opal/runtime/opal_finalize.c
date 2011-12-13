@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +46,7 @@
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/carto/base/base.h"
+#include "opal/mca/shmem/base/base.h"
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
@@ -134,6 +137,9 @@ opal_finalize(void)
 
     /* close the carto framework */
     opal_carto_base_close();
+
+    /* close the shmem framework */
+    opal_shmem_base_close();
     
     /* close the hwloc framework */
     opal_hwloc_base_close();

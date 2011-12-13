@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +69,7 @@
 #include "ompi/mca/btl/base/base.h"
 
 #include "ompi/mca/mpool/mpool.h"
-#include "ompi/mca/common/sm/common_sm_mmap.h"
+#include "ompi/mca/common/sm/common_sm.h"
 
 BEGIN_C_DECLS
 
@@ -162,9 +164,7 @@ struct mca_btl_sm_component_t {
     size_t eager_limit;                /**< first fragment size */
     size_t max_frag_size;              /**< maximum (second and beyone) fragment size */
     opal_mutex_t sm_lock;
-    mca_common_sm_mmap_t *mmap_file;   /**< description of mmap'ed file */
-    mca_common_sm_file_header_t *sm_ctl_header;  /* control header in
-                                                    shared memory */
+    mca_common_sm_module_t *sm_seg;   /**< description of shared memory segment */
     volatile sm_fifo_t **shm_fifo;     /**< pointer to fifo 2D array in shared memory */
     char **shm_bases;                  /**< pointer to base pointers in shared memory */
     uint16_t *shm_mem_nodes;           /**< pointer to mem noded in shared memory */

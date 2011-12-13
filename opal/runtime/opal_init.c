@@ -12,6 +12,8 @@
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,6 +43,7 @@
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/carto/base/base.h"
+#include "opal/mca/shmem/base/base.h"
 
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/crs/base/base.h"
@@ -401,6 +404,17 @@ opal_init(int* pargc, char*** pargv)
     }
     /* we want to tick the event library whenever possible */
     opal_progress_event_users_increment();
+
+    /* setup the shmem framework */
+    if (OPAL_SUCCESS != (ret = opal_shmem_base_open())) {
+        error = "opal_shmem_base_open";
+        goto return_error;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_shmem_base_select())) {
+        error = "opal_shmem_base_select";
+        goto return_error;
+    }
 
     /*
      * Initalize the checkpoint/restart functionality
