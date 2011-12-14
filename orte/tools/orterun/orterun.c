@@ -845,16 +845,8 @@ int orterun(int argc, char *argv[])
      */
     ljob = ORTE_LOCAL_JOBID(jdata->jobid);
     opal_pointer_array_set_item(orte_job_data, ljob, jdata);
-        
-    /* run the allocator on the application job - this allows us to
-     * pickup any host or hostfile arguments so we get the full
-     * array of nodes in our allocation
-     */
-    if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
-        goto DONE;
-    }
-
-    /* Spawn the job */
+    
+    /* spawn the job and its daemons */
     rc = orte_plm.spawn(jdata);
     
     /* now wait until the termination event fires */

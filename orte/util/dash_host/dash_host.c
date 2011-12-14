@@ -231,7 +231,8 @@ cleanup:
 }
 
 int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
-                                     char** host_argv)
+                                     char** host_argv,
+                                     bool remove)
 {
     opal_list_item_t* item;
     bool found;
@@ -260,11 +261,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
         return ORTE_SUCCESS;
     }
     
-    /* we found some info - filter what is on the list...
-     * i.e., go through the list and remove any nodes that
-     * were -not- included on the -host list.
-     *
-     * NOTE: The following logic is based on knowing that
+    /* NOTE: The following logic is based on knowing that
      * any node can only be included on the incoming
      * nodes list ONCE.
      */
@@ -308,10 +305,15 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                             goto skipnode;
                         }
                     }
-                    /* remove item from list */
-                    opal_list_remove_item(nodes, item);
-                    /* xfer to keep list */
-                    opal_list_append(&keep, item);
+                    if (remove) {
+                        /* remove item from list */
+                        opal_list_remove_item(nodes, item);
+                        /* xfer to keep list */
+                        opal_list_append(&keep, item);
+                    } else {
+                        /* mark the node as found */
+                        node->mapped = true;
+                    }
                     --num_empty;
                 }
             skipnode:
@@ -334,10 +336,15 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                 if ((0 == strcmp(node->name, mapped_nodes[i]) ||
                     (0 == strcmp(node->name, orte_process_info.nodename) &&
                     (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i]))))) {
-                    /* remove item from list */
-                    opal_list_remove_item(nodes, item);
-                    /* xfer to keep list */
-                    opal_list_append(&keep, item);
+                    if (remove) {
+                        /* remove item from list */
+                        opal_list_remove_item(nodes, item);
+                        /* xfer to keep list */
+                        opal_list_append(&keep, item);
+                    } else {
+                        /* mark the node as found */
+                        node->mapped = true;
+                    }
                     break;
                 }
                 item = next;
@@ -358,6 +365,12 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
         }
     }
     
+    if (!remove) {
+        /* all done */
+        rc = ORTE_SUCCESS;
+        goto cleanup;
+    }
+
     /* clear the rest of the nodes list */
     while (NULL != (item = opal_list_remove_first(nodes))) {
         OBJ_RELEASE(item);

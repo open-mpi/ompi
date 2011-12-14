@@ -57,7 +57,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
                         ORTE_JOBID_PRINT(jdata->jobid), (int)num_slots, (unsigned long)num_procs);
 
     /* check to see if we can map all the procs */
-    if (num_slots < (int)(jdata->num_procs + app->num_procs)) {
+    if (num_slots < (int)app->num_procs) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -85,7 +85,7 @@ int orte_rmaps_rr_byslot(orte_job_t *jdata,
             obj = hwloc_get_root_obj(node->topology);
         }
 #endif
-        if (node->slots_alloc == node->slots_inuse) {
+        if (node->slots_alloc <= node->slots_inuse) {
             opal_output_verbose(2, orte_rmaps_base.rmaps_output,
                                 "mca:rmaps:rr:slot working node %s is full - skipping",
                                 node->name);
@@ -223,7 +223,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
                         (int)num_slots, (unsigned long)num_procs);
 
     /* quick check to see if we can map all the procs */
-    if (num_slots < (int)(jdata->num_procs + app->num_procs)) {
+    if (num_slots < (int)app->num_procs) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -308,7 +308,7 @@ int orte_rmaps_rr_bynode(orte_job_t *jdata,
              * have to track how many procs to "shift" elsewhere
              * to make up the difference
              */
-            if (node->slots_alloc == node->slots_inuse) {
+            if (node->slots_alloc <= node->slots_inuse) {
                 /* if there are no extras to take, then we can
                  * ignore this node
                  */
@@ -428,7 +428,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
      * do more because we don't know how many total objects exist
      * across all the nodes
      */
-    if (num_slots < (int)(jdata->num_procs + app->num_procs)) {
+    if (num_slots < (int)app->num_procs) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -486,7 +486,7 @@ int orte_rmaps_rr_byobj(orte_job_t *jdata,
                 --nxtra_nodes;
             }
         }
-        if (node->slots_alloc == node->slots_inuse) {
+        if (node->slots_alloc <= node->slots_inuse) {
             /* everybody takes at least the extras */
             num_procs_to_assign = extra_procs_to_assign;
         } else {
@@ -576,7 +576,7 @@ static int byobj_span(orte_job_t *jdata,
      * do more because we don't know how many total objects exist
      * across all the nodes
      */
-    if (num_slots < (int)(jdata->num_procs + app->num_procs)) {
+    if (num_slots < (int)app->num_procs) {
         if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
             orte_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:alloc-error",
                            true, app->num_procs, app->app);
@@ -661,7 +661,7 @@ static int byobj_span(orte_job_t *jdata,
              * have to track how many procs to "shift" elsewhere
              * to make up the difference
              */
-            if (0 == (node->slots_alloc - node->slots_inuse)) {
+            if (node->slots_alloc <= node->slots_inuse) {
                 /* if there are no extras to take, then we can
                  * safely remove this node as we don't need it
                  */

@@ -177,7 +177,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
 
     /* start by launching the virtual machine */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(daemons))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(jdata))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
