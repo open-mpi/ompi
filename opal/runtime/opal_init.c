@@ -72,7 +72,6 @@ const char opal_version_string[] = OPAL_IDENT_STRING;
 int opal_initialized = 0;
 int opal_util_initialized = 0;
 int opal_cache_line_size;
-bool opal_mmap_on_nfs_warning;
 
 static int
 opal_err2str(int errnum, const char **errmsg)

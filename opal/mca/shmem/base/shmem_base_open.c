@@ -42,6 +42,7 @@
 OPAL_DECLSPEC int opal_shmem_base_output = -1;
 bool opal_shmem_base_components_opened_valid = false;
 opal_list_t opal_shmem_base_components_opened;
+bool opal_mmap_on_nfs_warning;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /**
@@ -73,6 +74,23 @@ opal_shmem_base_register_params(void)
     else {
         opal_shmem_base_output = -1;
     }
+
+    /*
+     * Do we want the "warning: your mmap file is on NFS!" message?  Per a
+     * thread on the OMPI devel list
+     * (http://www.open-mpi.org/community/lists/devel/2011/12/10054.php),
+     * on some systems, it doesn't seem to matter.  But per older threads,
+     * it definitely does matter on some systems.  Perhaps newer kernels
+     * are smarter about this kind of stuff...?  Regardless, we should
+     * provide the ability to turn off this message for systems where the
+     * effect doesn't matter.
+     */
+    mca_base_param_reg_int_name("opal",
+                                "enable_shmem_on_nfs_warning", 
+                                "Enable the warning emitted when Open MPI detects that its shared memory backing file is located on a network filesystem (1 = enabled, 0 = disabled).",
+                                false, false,
+                                (int)true, &value);
+    opal_mmap_on_nfs_warning = OPAL_INT_TO_BOOL(value);
 
     return OPAL_SUCCESS;
 }

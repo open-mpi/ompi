@@ -195,6 +195,8 @@ OPAL_DECLSPEC extern opal_list_t opal_shmem_base_components_opened;
  */
 OPAL_DECLSPEC extern int opal_shmem_base_output;
 
+OPAL_DECLSPEC extern bool opal_mmap_on_nfs_warning;
+
 END_C_DECLS
 
 #endif /* OPAL_BASE_SHMEM_H */
