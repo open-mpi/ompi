@@ -79,18 +79,18 @@ date="Unreleased developer copy"
 # Version numbers are described in the Libtool current:revision:age
 # format.
 
-libmpi_so_version=1:2:0
+libmpi_so_version=1:3:0
 libmpi_cxx_so_version=1:1:0
 libmpi_f77_so_version=1:2:0
 libmpi_f90_so_version=2:0:1
-libopen_rte_so_version=3:0:0
-libopen_pal_so_version=3:0:0
+libopen_rte_so_version=4:0:0
+libopen_pal_so_version=4:0:0
 
 # "Common" components install standalone libraries that are run-time
 # linked by one or more components.  So they need to be versioned as
 # well.  Yuck; this somewhat breaks the
 # components-don't-affect-the-build-system abstraction.
 
-libmca_common_sm_so_version=2:0:0
+libmca_common_sm_so_version=3:0:0
 libmca_common_mx_so_version=1:0:0
 libmca_common_portals_so_version=1:0:0
