@@ -1501,6 +1501,10 @@ btl       - MPI point-to-point Byte Transfer Layer, used for MPI
 coll      - MPI collective algorithms
 crcp      - Checkpoint/restart coordination protocol
 dpm       - MPI-2 dynamic process management
+fbtl      - <Edgar to fill in>
+fcache    - <Edgar to fill in>
+fcoll     - <Edgar to fill in>
+fs        - <Edgar to fill in>
 io        - MPI-2 I/O
 mpool     - Memory pooling
 mtl       - Matching transport layer, used for MPI point-to-point
@@ -1510,11 +1514,14 @@ osc       - MPI-2 one-sided communications
 pml       - MPI point-to-point management layer
 pubsub    - MPI-2 publish/subscribe management
 rcache    - Memory registration cache
+sharedfp  - <Edgar to fill in>
 topo      - MPI topology routines
+vprotocol - Protocols for the "v" PML
 
 Back-end run-time environment (RTE) component frameworks:
 ---------------------------------------------------------
 
+debugger  - Parallel debugger support
 errmgr    - RTE error manager
 ess       - RTE environment-specfic services
 filem     - Remote file management
@@ -1528,14 +1535,20 @@ ras       - Resource allocation system
 rmaps     - Resource mapping system
 rml       - RTE message layer
 routed    - Routing table for the RML
+sensor    - 
 snapc     - Snapshot coordination
+sstore    - 
 
 Miscellaneous frameworks:
 -------------------------
 
 backtrace   - Debugging call stack backtrace support
 carto       - Cartography (host/network mapping) support
+compress    - Compression algorithms
 crs         - Checkpoint and restart service
+event       - Event library (libevent) versioning support
+hwloc       - Hardware locality (hwloc) versioning support
+if          - OS IP interface support
 installdirs - Installation directory relocation services
 maffinity   - Memory affinity
 memchecker  - Run-time memory checking
@@ -1543,7 +1556,7 @@ memcpy      - Memopy copy support
 memory      - Memory management hooks
 paffinity   - Processor affinity
 pstat       - Process status
-sysinfo     - Basic system information
+shmem       - Shared memory support
 timer       - High-resolution timers
 
 ---------------------------------------------------------------------------
