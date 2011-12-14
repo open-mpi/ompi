@@ -47,6 +47,7 @@
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/routed.h"
@@ -66,6 +67,7 @@
 #include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/regex.h"
+#include "orte/util/hostfile/hostfile.h"
 
 #include "orte/mca/odls/odls_types.h"
 
@@ -965,16 +967,25 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     return ORTE_SUCCESS;
 }
 
-int orte_plm_base_setup_virtual_machine(orte_job_t *daemons)
+int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
 {
     orte_node_t *node;
     orte_proc_t *proc;
     orte_job_map_t *map=NULL;
     int rc, i;
+    orte_job_t *daemons;
+    opal_list_t nodes;
+    opal_list_item_t *item, *next;
+    orte_app_context_t *app;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:setup_vm",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return ORTE_ERR_NOT_FOUND;
+    }
 
     if (NULL == daemons->map) {
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
@@ -994,6 +1005,85 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *daemons)
     }
     map = daemons->map;
     
+    /* run the allocator on the application job - this allows us to
+     * pickup any host or hostfile arguments so we get the full
+     * array of nodes in our allocation
+     */
+    if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* construct a list of available nodes - don't need ours as
+     * we already exist
+     */
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
+    for (i=1; i < orte_node_pool->size; i++) {
+        if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+            /* ignore nodes that are marked as do-not-use for this mapping */
+            if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
+                /* reset the state so it can be used another time */
+                node->state = ORTE_NODE_STATE_UP;
+                continue;
+            }
+            if (ORTE_NODE_STATE_DOWN == node->state) {
+                continue;
+            }
+            if (ORTE_NODE_STATE_NOT_INCLUDED == node->state) {
+                /* not to be used */
+                continue;
+            }
+            /* retain a copy for our use in case the item gets
+             * destructed along the way
+             */
+            OBJ_RETAIN(node);
+            opal_list_append(&nodes, &node->super);
+            /* by default, mark these as not to be included
+             * so the filtering logic works correctly
+             */
+            node->mapped = false;
+        }
+    }
+
+    /* is there a default hostfile? */
+    if (NULL != orte_default_hostfile) {
+        /* yes - filter the node list through the file, marking
+         * any nodes not in the file -or- excluded via ^
+         */
+        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(&nodes, orte_default_hostfile, false))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+ 
+    /* filter across the union of all app_context specs */
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_filter_nodes(app, &nodes, false)) &&
+            rc != ORTE_ERR_TAKE_NEXT_OPTION) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+
+    if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
+        /* at least one filtering option was executed, so
+         * remove all nodes that were not mapped
+         */
+        item = opal_list_get_first(&nodes);
+        while (item != opal_list_get_end(&nodes)) {
+            next = opal_list_get_next(item);
+            node = (orte_node_t*)item;
+            if (!node->mapped) {
+                opal_list_remove_item(&nodes, item);
+                OBJ_RELEASE(item);
+            }
+            item = next;
+        }
+    }
+
     /* zero-out the number of new daemons as we will compute this
      * each time we are called
      */
@@ -1003,19 +1093,16 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *daemons)
      * have a daemon on them - no need to include our own as we are
      * obviously already here!
      */
-    for (i=1; i < orte_node_pool->size; i++) {
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
-            continue;
-        }
+    while (NULL != (item = opal_list_remove_first(&nodes))) {
+        node = (orte_node_t*)item;
         /* if this node is already in the map, skip it */
         if (NULL != node->daemon) {
+            OBJ_RELEASE(node);
             continue;
         }
         /* add the node to the map */
         opal_pointer_array_add(map->nodes, (void*)node);
         ++(map->num_nodes);
-        /* maintain accounting */
-        OBJ_RETAIN(node);
         /* create a new daemon object for this node */
         proc = OBJ_NEW(orte_proc_t);
         if (NULL == proc) {

@@ -535,7 +535,8 @@ cleanup:
  * are not found in the hostfile
  */
 int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
-                                    char *hostfile)
+                                    char *hostfile,
+                                    bool remove)
 {
     opal_list_t newnodes, exclude;
     opal_list_item_t *item1, *item2, *next, *item3;
@@ -577,7 +578,7 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
         OBJ_RELEASE(item1);
     }
     
-    /* now check our nodes and keep those that match. We can
+    /* now check our nodes and keep or mark those that match. We can
      * destruct our hostfile list as we go since this won't be needed
      */
     OBJ_CONSTRUCT(&keep, opal_list_t);
@@ -623,10 +624,15 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                                 goto skipnode;
                             }
                         }
-                        /* remove item from list */
-                        opal_list_remove_item(nodes, item1);
-                        /* xfer to keep list */
-                        opal_list_append(&keep, item1);
+                        if (remove) {
+                            /* remove item from list */
+                            opal_list_remove_item(nodes, item1);
+                            /* xfer to keep list */
+                            opal_list_append(&keep, item1);
+                        } else {
+                            /* mark as included */
+                            node_from_list->mapped = true;
+                        }
                         --num_empty;
                     }
                 skipnode:
@@ -658,10 +664,15 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                      item1 = opal_list_get_next(nodes)) {
                     node_from_list = (orte_node_t*)item1;
                     if (0 == strcmp(node_from_list->name, node_from_pool->name)) {
-                        /* match - remove item from list */
-                        opal_list_remove_item(nodes, item1);
-                        /* xfer to keep list */
-                        opal_list_append(&keep, item1);
+                        if (remove) {
+                            /* match - remove item from list */
+                            opal_list_remove_item(nodes, item1);
+                            /* xfer to keep list */
+                            opal_list_append(&keep, item1);
+                        } else {
+                            /* mark as included */
+                            node_from_list->mapped = true;
+                        }
                         break;
                     }
                 }
@@ -696,10 +707,15 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
                     if (node_from_file->slots < node_from_list->slots) {
                         node_from_list->slots_alloc = node_from_file->slots;
                     }
-                    /* remove the node from the list */
-                    opal_list_remove_item(nodes, item1);
-                    /* xfer it to keep list */
-                    opal_list_append(&keep, item1);
+                    if (remove) {
+                        /* remove the node from the list */
+                        opal_list_remove_item(nodes, item1);
+                        /* xfer it to keep list */
+                        opal_list_append(&keep, item1);
+                    } else {
+                        /* mark as included */
+                        node_from_list->mapped = true;
+                    }
                     break;
                 }
             }
@@ -720,6 +736,12 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
         }
         OBJ_DESTRUCT(&newnodes);
         return ORTE_ERR_SILENT;
+    }
+
+    if (!remove) {
+        /* all done */
+        OBJ_DESTRUCT(&newnodes);
+        return ORTE_SUCCESS;
     }
 
     /* clear the rest of the nodes list */

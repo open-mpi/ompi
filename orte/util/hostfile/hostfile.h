@@ -34,7 +34,8 @@ ORTE_DECLSPEC int orte_util_add_hostfile_nodes(opal_list_t *nodes,
                                                char *hostfile);
     
 ORTE_DECLSPEC int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
-                                                  char *hostfile);
+                                                  char *hostfile,
+                                                  bool remove);
 
 ORTE_DECLSPEC int orte_util_get_ordered_host_list(opal_list_t *nodes,
                                                   char *hostfile);

@@ -112,6 +112,10 @@ ORTE_DECLSPEC int orte_rmaps_base_close(void);
 ORTE_DECLSPEC int orte_rmaps_base_prep_topology(hwloc_topology_t topo);
 #endif
 
+ORTE_DECLSPEC int orte_rmaps_base_filter_nodes(orte_app_context_t *app,
+                                               opal_list_t *nodes,
+                                               bool remove);
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
