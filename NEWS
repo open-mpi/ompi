@@ -50,15 +50,35 @@ included in the vX.Y.Z section and be denoted as:
 1.5.5
 -----
 
+- Various shared memory infrastructure fixes.
+- Various checkpoint/restart fixes.
+- Fix MPI_IN_PLACE (and other MPI sentinel values) on OS X.  Thanks to
+  Dave Goodell for providing the magic OS X gcc linker flags necessary.
+- Updated wrapper compiler man pages to list the various --showme
+  options that are available.
+- Add PMI direct-launch support (e.g., "srun mpi_application" under
+  SLURM).
+- Fix MPI obscure corner case handling in packing MPI datatypes.
+  Thanks to Fujitsu for providing the patch.
 - Workaround an Intel compiler v12.1.0 2011.6.233 vector optimization
   bug.
 - Output the MPI API in ompi_info output.
-- Various VT fixes and updates (5.12).
+- Major VT update to 5.12.1.3.
 - Upgrade embedded Hardware Locality (hwloc) v1.2.2 with some OMPI
-  customizations.
+  customizations.  All processor and memory binding is now done
+  through hwloc.  Woo hoo!
 - New MCA parameters to control process-wide memory binding policy:
   hwloc_base_mem_alloc_policy, hwloc_base_mem_bind_failure_action (see
   ompi_info --param hwloc base).
+- Removed direct support for libnuma.  Libnuma support may now be
+  picked up through hwloc.
+- Removed not-production-quality ofud BTL.
+- Added MPI_IN_PLACE support to MPI_EXSCAN.
+- Various fixes for building on Windows, including MinGW support.
+- Removed support for the OpenFabrics IBCM connection manager.
+- Updated Chelsio T4 and Intel NE OpenFabrics default buffer settings.
+- Increased the default RDMA CM timeout to 30 seconds.
+- Various fixes to the MXM transport.
 
 
 1.5.4
