@@ -155,20 +155,15 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     /* add everything in the node pool that can be used - add them
      * in daemon order, which may be different than the order in the
-     * node pool
+     * node pool. Since an empty list is passed into us, the list at
+     * this point either has the HNP node or nothing, and the HNP
+     * node obviously has a daemon on it (us!)
      */
     if (0 == opal_list_get_size(allocated_nodes)) {
         /* the list is empty */
         nd = NULL;
     } else {
         nd = (orte_node_t*)opal_list_get_last(allocated_nodes);
-        /* sanity check */
-        if (NULL == nd->daemon) {
-            orte_show_help("help-orte-rmaps-base.txt",
-                           "orte-rmaps-base:missing-daemon",
-                           true, nd->name);
-            return ORTE_ERR_SILENT;
-        }
     }
     for (i=1; i < orte_node_pool->size; i++) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
@@ -214,6 +209,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                     nd = (orte_node_t*)opal_list_get_prev(&nd->super);
                 }
                 opal_list_insert_pos(allocated_nodes, &nd->super, &node->super);
+                /* reset us back to the end for the next node */
+                nd = (orte_node_t*)opal_list_get_last(allocated_nodes);
             }
         }
     }
