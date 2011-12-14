@@ -1068,7 +1068,8 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         }
     }
 
-    if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
+    if (NULL != orte_default_hostfile ||
+        ORTE_ERR_TAKE_NEXT_OPTION != rc) {
         /* at least one filtering option was executed, so
          * remove all nodes that were not mapped
          */
