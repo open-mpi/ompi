@@ -1430,6 +1430,7 @@ topo      - MPI topology routines
 Back-end run-time environment (RTE) component frameworks:
 ---------------------------------------------------------
 
+debugger  - Parallel debugger support
 errmgr    - RTE error manager
 ess       - RTE environment-specfic services
 filem     - Remote file management
@@ -1459,6 +1460,7 @@ memcpy      - Memopy copy support
 memory      - Memory management hooks
 paffinity   - Processor affinity
 pstat       - Process status
+shmem       - Shared memory support
 sysinfo     - Basic system information
 timer       - High-resolution timers
 
