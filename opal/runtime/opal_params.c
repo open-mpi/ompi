@@ -115,23 +115,6 @@ int opal_register_params(void)
         return ret;
     }
 
-    /*
-     * Do we want the "warning: your mmap file is on NFS!" message?  Per a
-     * thread on the OMPI devel list
-     * (http://www.open-mpi.org/community/lists/devel/2011/12/10054.php),
-     * on some systems, it doesn't seem to matter.  But per older threads,
-     * it definitely does matter on some systems.  Perhaps newer kernels
-     * are smarter about this kind of stuff...?  Regardless, we should
-     * provide the ability to turn off this message for systems where the
-     * effect doesn't matter.
-     */
-    mca_base_param_reg_int_name("opal",
-                                "enable_shmem_on_nfs_warning", 
-                                "Enable the warning emitted when Open MPI detects that its shared memory backing file is located on a network filesystem (1 = enabled, 0 = disabled).",
-                                false, false,
-                                (int)true, &value);
-    opal_mmap_on_nfs_warning = OPAL_INT_TO_BOOL(value);
-
     /* Paffinity base also has some parameters */
     return opal_paffinity_base_register_params();
 }

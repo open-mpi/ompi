@@ -50,7 +50,6 @@
 #endif /* HAVE_SYS_STAT_H */
 
 #include "opal/constants.h"
-#include "opal/runtime/opal.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
