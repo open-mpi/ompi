@@ -1,3 +1,9 @@
+1.10.1openmpi
+	- fixed build issues in otfprofile[-mpi]:
+		- added missing header includes for WEXITSTATUS
+		- moved 'using namespace std' under the header includes to solve
+		  compile error with PGI compiler
+
 1.10openmpi
 	- added process substitute record
 	- added process group attribute 'OTF_ATTR_IsCommunicator'
