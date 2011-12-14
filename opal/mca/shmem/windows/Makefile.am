@@ -19,6 +19,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST = .windows
+
 sources = \
         shmem_windows.h \
         shmem_windows_component.c \
