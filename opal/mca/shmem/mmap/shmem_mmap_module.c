@@ -50,6 +50,7 @@
 #endif /* HAVE_SYS_STAT_H */
 
 #include "opal/constants.h"
+#include "opal/runtime/opal.h"
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
@@ -306,7 +307,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
      * this is an important check because if the backing store is located on
      * a network filesystem, the user will see a shared memory performance hit.
      */
-    if (opal_path_nfs(real_file_name)) {
+    if (opal_mmap_on_nfs_warning && opal_path_nfs(real_file_name)) {
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';

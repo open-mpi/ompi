@@ -30,6 +30,8 @@ BEGIN_C_DECLS
 /** version string of opal */
 OPAL_DECLSPEC extern const char opal_version_string[];
 
+OPAL_DECLSPEC extern bool opal_mmap_on_nfs_warning;
+
 /* Size of a cache line.  To be replaced with real hwloc info (in
    trunk/v1.5 and beyond, only), but for the moment, just move it here
    so that we can remove opal/include/sys/cache.h whose only purpose
