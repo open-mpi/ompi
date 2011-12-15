@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -39,10 +39,12 @@ const char *opal_shmem_mmap_component_version_string =
 
 int opal_shmem_mmap_relocate_backing_file = 0;
 char *opal_shmem_mmap_backing_file_base_dir = NULL;
+bool opal_shmem_mmap_nfs_warning = true;
 
 /**
  * local functions
  */
+static int mmap_register(void);
 static int mmap_open(void);
 static int mmap_close(void);
 static int mmap_query(mca_base_module_t **module, int *priority);
@@ -76,7 +78,9 @@ opal_shmem_mmap_component_t mca_shmem_mmap_component = {
             /* component close */
             mmap_close,
             /* component query */
-            mmap_query
+            mmap_query,
+            /* component register */
+            mmap_register,
         },
         /* MCA v2.0.0 component meta data */
         {
@@ -102,6 +106,31 @@ mmap_runtime_query(mca_base_module_t **module,
     /* no run-time query needed for mmap, so this is easy */
     *priority = mca_shmem_mmap_component.priority;
     *module = (mca_base_module_t *)&opal_shmem_mmap_module.super;
+    return OPAL_SUCCESS;
+}
+
+static int mmap_register(void)
+{
+    int value;
+
+    /*
+     * Do we want the "warning: your mmap file is on NFS!" message?  Per a
+     * thread on the OMPI devel list
+     * (http://www.open-mpi.org/community/lists/devel/2011/12/10054.php),
+     * on some systems, it doesn't seem to matter.  But per older threads,
+     * it definitely does matter on some systems.  Perhaps newer kernels
+     * are smarter about this kind of stuff...?  Regardless, we should
+     * provide the ability to turn off this message for systems where the
+     * effect doesn't matter.
+     */
+    mca_base_param_reg_int(&mca_shmem_mmap_component.super.base_version,
+                           "enable_nfs_warning", 
+                           "Enable the warning emitted when Open MPI detects that its shared memory backing file is located on a network filesystem (1 = enabled, 0 = disabled).",
+                           false, false,
+                           (int) true, &value);
+
+    opal_shmem_mmap_nfs_warning = OPAL_INT_TO_BOOL(value);
+
     return OPAL_SUCCESS;
 }
 

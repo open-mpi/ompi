@@ -39,3 +39,6 @@ the MCA parameter "orte_no_session_dir".
 
   Local host: %s
   Fileame:    %s
+
+You can set the MCA paramter shmem_mmap_enable_nfs_warning to 0 to
+disable this message.

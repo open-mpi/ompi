@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -31,6 +31,7 @@ BEGIN_C_DECLS
 
 extern int opal_shmem_mmap_relocate_backing_file;
 extern char *opal_shmem_mmap_backing_file_base_dir;
+extern bool opal_shmem_mmap_nfs_warning;
 
 /**
  * globally exported variable to hold the mmap component.
