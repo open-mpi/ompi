@@ -45,11 +45,10 @@ opal_list_t opal_shmem_base_components_opened;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /**
- * Function for finding and opening either all MCA components, or the one
- * that was specifically requested via a MCA parameter.
+ * Register some shmem-wide MCA params 
  */
 int
-opal_shmem_base_open(void)
+opal_shmem_base_register_params(void)
 {
     int value;
 
@@ -74,7 +73,19 @@ opal_shmem_base_open(void)
     else {
         opal_shmem_base_output = -1;
     }
+    
+    return OPAL_SUCCESS;
+}
 
+
+/* ////////////////////////////////////////////////////////////////////////// */ 
+/** 
+ * Function for finding and opening either all MCA components, or the one 
+ * that was specifically requested via a MCA parameter. 
+ */
+int
+opal_shmem_base_open(void) 
+{
     opal_shmem_base_components_opened_valid = false;
 
     /* open up all available components */

@@ -56,6 +56,17 @@ opal_shmem_unlink(opal_shmem_ds_t *ds_buf);
  * Global functions for MCA overall shmem open and close
  */
 
+/** 
+ * Register MCA params for the shmem base. 
+ *
+ * @retval OPAL_SUCCESS Upon success 
+ *
+ * This function is invoked by opal_shmem_base_register_params().  It registers 
+ * some shmem-wide MCA parameters. 
+ */
+OPAL_DECLSPEC int 
+opal_shmem_base_register_params(void); 
+
 /**
  * Performs a run-time query across all available shmem components.  Similar to
  * mca_base_select, but take into consideration environment hints provided by
