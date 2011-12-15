@@ -70,6 +70,10 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         /* a map has not been defined yet for this job, so set one
          * up here
          */
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps: creating new map for job %s",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+
         /* create a map object where we will store the results */
         map = OBJ_NEW(orte_job_map_t);
         if (NULL == map) {
@@ -90,6 +94,10 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
         /* assign the map object to this job */
         jdata->map = map;
     } else {
+        opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                            "mca:rmaps: setting mapping policies for job %s",
+                            ORTE_JOBID_PRINT(jdata->jobid));
+
         if (!jdata->map->display_map) {
             jdata->map->display_map = orte_rmaps_base.display_map;
         }

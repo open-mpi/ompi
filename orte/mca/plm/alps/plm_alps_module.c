@@ -391,6 +391,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     /* setup the job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
         ORTE_ERROR_LOG(rc);
+        failed_job = jdata->jobid;
         goto cleanup;
     }
     failed_job = jdata->jobid;
@@ -435,9 +436,15 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_errmgr.update_state(failed_job, job_state,
-                                 NULL, ORTE_PROC_STATE_UNDEF,
-                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        if (ORTE_ERR_SILENT == rc) {
+            orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_SILENT_ABORT,
+                                     NULL, ORTE_PROC_STATE_UNDEF,
+                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        } else {
+            orte_errmgr.update_state(failed_job, job_state,
+                                     NULL, ORTE_PROC_STATE_UNDEF,
+                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        }
     }
     
     return rc;

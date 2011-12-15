@@ -134,7 +134,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     *total_num_slots = 0;
     
     /* if the hnp was allocated, include it unless flagged not to */
-    if (orte_hnp_is_allocated && !(policy & ORTE_MAPPING_NO_USE_LOCAL)) {
+    if (orte_hnp_is_allocated && !(ORTE_GET_MAPPING_DIRECTIVE(policy) & ORTE_MAPPING_NO_USE_LOCAL)) {
         if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
             if (ORTE_NODE_STATE_DO_NOT_USE == node->state) {
                 /* clear this for future use, but don't include it */
@@ -264,12 +264,18 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         if (0 != node->slots_max && node->slots_inuse > node->slots_max) {
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
-        } else { /** otherwise, add the slots for our job to the total */
-            if (0 == node->slots_alloc) {
+        } else if (node->slots_alloc <= node->slots_inuse &&
+                   (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
+            /* remove the node as fully used */
+            opal_list_remove_item(allocated_nodes, item);
+            OBJ_RELEASE(item);  /* "un-retain" it */
+        } else {
+            if (node->slots_alloc > node->slots_inuse) {
+                /* add the available slots */
+                num_slots += node->slots_alloc - node->slots_inuse;
+            } else {
                 /* always allocate at least one */
                 num_slots++;
-            } else if (node->slots_alloc > node->slots_inuse) {
-                num_slots += node->slots_alloc - node->slots_inuse;
             }
         }
 

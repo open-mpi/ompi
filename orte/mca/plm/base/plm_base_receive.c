@@ -255,7 +255,8 @@ static void process_msg(int fd, short event, void *data)
             OPAL_RELEASE_THREAD(&lock, &cond, &processing);
             if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
                 ORTE_ERROR_LOG(rc);
-                goto ANSWER_LAUNCH;
+                OPAL_ACQUIRE_THREAD(&lock, &cond, &processing);
+                goto DEPART;
             }
             OPAL_ACQUIRE_THREAD(&lock, &cond, &processing);
 
