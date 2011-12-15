@@ -95,7 +95,7 @@ orte_job_t *orte_debugger_daemon=NULL;
 /* exit flags */
 int orte_exit_status = 0;
 bool orte_abnormal_term_ordered = false;
-bool orte_routing_is_enabled = false;
+bool orte_routing_is_enabled = true;
 bool orte_job_term_ordered = false;
 bool orte_orteds_term_ordered = false;
 
