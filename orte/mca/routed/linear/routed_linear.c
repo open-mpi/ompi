@@ -306,6 +306,11 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     orte_routed_jobfam_t *jfam;
     uint16_t jfamily;
 
+    if (!orte_routing_is_enabled) {
+        ret = target;
+        goto found;
+    }
+
 #if ORTE_ENABLE_EPOCH
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID ||
