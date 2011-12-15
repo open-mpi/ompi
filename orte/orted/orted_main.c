@@ -577,6 +577,13 @@ int orte_daemon(int argc, char *argv[])
             ORTE_ERROR_LOG(ret);
             goto DONE;
         }
+        /* set the lifeline to point to our parent so that we
+         * can handle the situation if that lifeline goes away
+         */
+        if (ORTE_SUCCESS != (ret = orte_routed.set_lifeline(&parent))) {
+            ORTE_ERROR_LOG(ret);
+            goto DONE;
+        }
     }
 
     /* if we are not the HNP...the only time we will be an HNP
