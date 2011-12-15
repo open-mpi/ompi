@@ -494,7 +494,6 @@ int orterun(int argc, char *argv[])
     int rc;
     opal_cmd_line_t cmd_line;
     char * tmp_env_var = NULL;
-    orte_debugger_breakpoint_fn_t foo;
     orte_job_t *daemons;
     int32_t ljob;
     orte_app_context_t *app, *dapp;
@@ -588,7 +587,6 @@ int orterun(int argc, char *argv[])
     }
     MPIR_force_to_main = 0;
     memset(MPIR_attach_fifo, 0, MPIR_MAX_PATH_LENGTH);
-    foo = MPIR_Breakpoint;
 
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
