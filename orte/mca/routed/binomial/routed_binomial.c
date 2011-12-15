@@ -325,6 +325,11 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     orte_routed_jobfam_t *jfam;
     uint16_t jfamily;
 
+    if (!orte_routing_is_enabled) {
+        ret = target;
+        goto found;
+    }
+
     /* initialize */
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
     daemon.vpid = ORTE_PROC_MY_DAEMON->vpid;
