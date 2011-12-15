@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -55,17 +55,6 @@ opal_shmem_unlink(opal_shmem_ds_t *ds_buf);
 /*
  * Global functions for MCA overall shmem open and close
  */
-
-/**
- * Register MCA params for the shmem base.
- *
- * @retval OPAL_SUCCESS Upon success
- *
- * This function is invoked by opal_shmem_base_register_params().  It registers
- * some shmem-wide MCA parameters.
- */
-OPAL_DECLSPEC int
-opal_shmem_base_register_params(void);
 
 /**
  * Performs a run-time query across all available shmem components.  Similar to
@@ -194,8 +183,6 @@ OPAL_DECLSPEC extern opal_list_t opal_shmem_base_components_opened;
  * Debugging output stream
  */
 OPAL_DECLSPEC extern int opal_shmem_base_output;
-
-OPAL_DECLSPEC extern bool opal_mmap_on_nfs_warning;
 
 END_C_DECLS
 

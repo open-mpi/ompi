@@ -21,21 +21,3 @@ experience performance degradation.
   System call: %s %s
   Error:       %s (errno %d)
 #
-[mmap on nfs]
-WARNING: Open MPI will create a shared memory backing file in a
-directory that appears to be mounted on a network filesystem.
-Creating the shared memory backup file on a network file system, such
-as NFS or Lustre is not recommended -- it may cause excessive network
-traffic to your file servers and/or cause shared memory traffic in
-Open MPI to be much slower than expected.
-
-You may want to check what the typical temporary directory is on your
-node.  Possible sources of the location of this temporary directory
-include the $TEMPDIR, $TEMP, and $TMP environment variables.
-
-Note, too, that system administrators can set a list of filesystems
-where Open MPI is disallowed from creating temporary files by setting
-the MCA parameter "orte_no_session_dir".
-
-  Local host: %s
-  Fileame:    %s

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -306,7 +306,7 @@ segment_create(opal_shmem_ds_t *ds_buf,
      * this is an important check because if the backing store is located on
      * a network filesystem, the user will see a shared memory performance hit.
      */
-    if (opal_mmap_on_nfs_warning && opal_path_nfs(real_file_name)) {
+    if (opal_shmem_mmap_nfs_warning && opal_path_nfs(real_file_name)) {
         char hn[MAXHOSTNAMELEN];
         gethostname(hn, MAXHOSTNAMELEN - 1);
         hn[MAXHOSTNAMELEN - 1] = '\0';
