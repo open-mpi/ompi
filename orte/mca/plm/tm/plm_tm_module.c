@@ -413,6 +413,7 @@ launch_apps:
      /* setup the job */
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
         ORTE_ERROR_LOG(rc);
+        failed_job = jdata->jobid;
         goto cleanup;
     }
    /* since the daemons have launched, any failures now will be for the
@@ -458,9 +459,15 @@ launch_apps:
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_FAILED_TO_START,
-                                 NULL, ORTE_PROC_STATE_UNDEF,
-                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        if (ORTE_ERR_SILENT == rc) {
+            orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_SILENT_ABORT,
+                                     NULL, ORTE_PROC_STATE_UNDEF,
+                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        } else {
+            orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_FAILED_TO_START,
+                                     NULL, ORTE_PROC_STATE_UNDEF,
+                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
+        }
     }
         
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
