@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,7 +44,7 @@ extern void ompi_debugger_notify_abort(char *string);
 /**
  * Breakpoint function for parallel debuggers.
  */
-ORTE_DECLSPEC extern void MPIR_Breakpoint(void);
+OMPI_DECLSPEC extern void MPIR_Breakpoint(void);
 
 END_C_DECLS
 

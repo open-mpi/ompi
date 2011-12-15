@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -126,8 +126,8 @@ OMPI_DECLSPEC opal_datatype_t* opal_datatype_t_type_force_inclusion = NULL;
 OMPI_DECLSPEC ompi_datatype_t* ompi_datatype_t_type_force_inclusion = NULL;
 
 OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
-ORTE_DECLSPEC extern volatile int MPIR_being_debugged;
-ORTE_DECLSPEC extern volatile int MPIR_debug_state;
+OMPI_DECLSPEC extern volatile int MPIR_being_debugged;
+OMPI_DECLSPEC extern volatile int MPIR_debug_state;
 OMPI_DECLSPEC char *MPIR_debug_abort_string = "";
 
 /* Check for a file in few direct ways for portability */
