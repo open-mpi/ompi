@@ -74,6 +74,8 @@ typedef void (*orte_debugger_breakpoint_fn_t)(void);
 
 ORTE_DECLSPEC void MPIR_Breakpoint(void);
 
+ORTE_DECLSPEC void orte_debugger_base_pull_mpir_breakpoint(void);
+
 /* --- end MPICH/TotalView std debugger interface definitions */
 
 END_C_DECLS

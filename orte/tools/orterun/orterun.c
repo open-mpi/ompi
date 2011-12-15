@@ -587,6 +587,10 @@ int orterun(int argc, char *argv[])
     }
     MPIR_force_to_main = 0;
     memset(MPIR_attach_fifo, 0, MPIR_MAX_PATH_LENGTH);
+    /* This function call simply ensures that all the symbols --
+       including MPIR_Breakpoint -- are pulled in via the linker from
+       orte/mca/debugger/base/debugger_base_fns.c. */
+    orte_debugger_base_pull_mpir_breakpoint();
 
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);

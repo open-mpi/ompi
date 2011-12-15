@@ -184,6 +184,15 @@ void orte_debugger_base_init_after_spawn(orte_job_t *jdata)
 #endif
 
 /*
+ * Dummy function so that the linker can pull in all the symbols from
+ * this file.
+ */
+void orte_debugger_base_pull_mpir_breakpoint(void)
+{
+    return;
+}
+
+/*
  * Breakpoint function for parallel debuggers
  */
 void MPIR_Breakpoint(void)
