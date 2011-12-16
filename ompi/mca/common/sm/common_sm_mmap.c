@@ -44,6 +44,7 @@
 #include <sys/mman.h>
 #endif
 
+#include "opal/runtime/opal.h"
 #include "opal/util/basename.h"
 #include "orte/util/show_help.h"
 #include "opal/util/path.h"
@@ -228,7 +229,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(ompi_proc_t **procs,
                                            ORTE_PROC_MY_NAME,
                                            &(procs[0]->proc_name))) {
         /* Check, whether the specified filename is on a network file system */ 
-        if (opal_path_nfs(file_name)) { 
+        if (opal_mmap_on_nfs_warning && opal_path_nfs(file_name)) { 
             orte_show_help("help-mpi-common-sm.txt", "mmap on nfs", 1, 
                            orte_process_info.nodename, file_name); 
         } 

@@ -36,6 +36,8 @@
 
 int opal_register_params(void)
 {
+    int value;
+
     /*
      * This string is going to be used in opal/util/stacktrace.c
      */
@@ -82,7 +84,6 @@ int opal_register_params(void)
                                 false, false, 0, NULL);
 
     {
-        int value;
         mca_base_param_reg_int_name("opal", "debug_locks",
                                     "Debug mutex usage within Open MPI.  On a "
                                     "non-threaded build, this enables integer counters and "
@@ -91,6 +92,32 @@ int opal_register_params(void)
         if (value) opal_mutex_check_locks = true;
     }
 #endif
+
+    /*
+     * Do we want the "warning: your mmap file is on NFS!" message?  Per a
+     * thread on the OMPI devel list
+     * (http://www.open-mpi.org/community/lists/devel/2011/12/10054.php),
+     * on some systems, it doesn't seem to matter.  But per older threads,
+     * it definitely does matter on some systems.  Perhaps newer kernels
+     * are smarter about this kind of stuff...?  Regardless, we should
+     * provide the ability to turn off this message for systems where the
+     * effect doesn't matter.
+     *
+     * v1.4.x-specific note: the MCA param name is "shmem_mmap_...",
+     * where "shmem" is not a framework that exists in the v1.4
+     * series.  This parameter was added right before 1.4.5, and at a
+     * similar time as 1.5.5 (where the "shmem" framework *does*
+     * exist).  The idea was to have a consistent MCA param name
+     * starting with v1.4.5.  Hence, we put a slightly non-sensiscal
+     * name here in v1.4.x so that we'd have a correct/good name
+     * moving forward.
+     */
+    mca_base_param_reg_int_name("shmem",
+                                "mmap_enable_nfs_warning", 
+                                "Enable the warning emitted when Open MPI detects that its shared memory backing file is located on a network filesystem (1 = enabled, 0 = disabled).",
+                                false, false,
+                                (int)true, &value);
+    opal_mmap_on_nfs_warning = OPAL_INT_TO_BOOL(value);
 
     /* Paffinity base also has some parameters */
     return opal_paffinity_base_register_params();

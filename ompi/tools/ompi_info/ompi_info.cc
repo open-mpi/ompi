@@ -233,6 +233,7 @@ int main(int argc, char *argv[])
     ompi_info::mca_types.push_back("errmgr");
     ompi_info::mca_types.push_back("ess");
     ompi_info::mca_types.push_back("grpcomm");
+    ompi_info::mca_types.push_back("shmem");
     
   // Execute the desired action(s)
 
