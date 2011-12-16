@@ -110,14 +110,12 @@ shmem_ds_reset(opal_shmem_ds_t *ds_buf)
     OPAL_OUTPUT_VERBOSE(
         (70, opal_shmem_base_output,
          "%s: %s: shmem_ds_resetting "
-         "(opid: %lu id: %d, size: %"PRIsize_t", name: %s)\n",
+         "(id: %d, size: %"PRIsize_t", name: %s)\n",
          mca_shmem_windows_component.super.base_version.mca_type_name,
          mca_shmem_windows_component.super.base_version.mca_component_name,
-         (unsigned long)ds_buf->opid, ds_buf->seg_id, ds_buf->seg_size,
-         ds_buf->seg_name)
+         ds_buf->seg_id, ds_buf->seg_size, ds_buf->seg_name)
     );
 
-    ds_buf->opid = 0;
     ds_buf->seg_cpid = 0;
     OPAL_SHMEM_DS_RESET_FLAGS(ds_buf);
     ds_buf->seg_id = OPAL_SHMEM_DS_ID_INVALID;
@@ -151,14 +149,13 @@ ds_copy(const opal_shmem_ds_t *from,
     OPAL_OUTPUT_VERBOSE(
         (70, opal_shmem_base_output,
          "%s: %s: ds_copy complete "
-         "from: (opid: %lu, id: %d, size: %"PRIsize_t", "
+         "from: (id: %d, size: %"PRIsize_t", "
          "name: %s flags: 0x%02x) "
-         "to: (opid: %lu, id: %d, size: %"PRIsize_t", "
+         "to: (id: %d, size: %"PRIsize_t", "
          "name: %s flags: 0x%02x)\n",
          mca_shmem_windows_component.super.base_version.mca_type_name,
          mca_shmem_windows_component.super.base_version.mca_component_name,
-         (unsigned long)from->opid, from->seg_id, from->seg_size,
-         from->seg_name, from->flags, (unsigned long)to->opid, to->seg_id,
+         from->seg_id, from->seg_size, from->seg_name, from->flags, to->seg_id,
          to->seg_size, to->seg_name, to->flags)
     );
 
@@ -244,7 +241,6 @@ segment_create(opal_shmem_ds_t *ds_buf,
     opal_atomic_wmb();
 
     /* -- initialize the contents of opal_shmem_ds_t -- */
-    ds_buf->opid = my_pid;
     ds_buf->seg_cpid = my_pid;
     ds_buf->seg_size = real_size;
     ds_buf->seg_base_addr = (unsigned char *)seg_hdrp;
@@ -259,11 +255,10 @@ segment_create(opal_shmem_ds_t *ds_buf,
     OPAL_OUTPUT_VERBOSE(
         (70, opal_shmem_base_output,
          "%s: %s: create successful "
-         "(opid: %lu id: %d, size: %"PRIsize_t", name: %s)\n",
+         "(id: %d, size: %"PRIsize_t", name: %s)\n",
          mca_shmem_windows_component.super.base_version.mca_type_name,
          mca_shmem_windows_component.super.base_version.mca_component_name,
-         (unsigned long)ds_buf->opid, ds_buf->seg_id, ds_buf->seg_size,
-         ds_buf->seg_name)
+         ds_buf->seg_id, ds_buf->seg_size, ds_buf->seg_name)
     );
 
 out:
@@ -323,11 +318,10 @@ segment_attach(opal_shmem_ds_t *ds_buf)
     OPAL_OUTPUT_VERBOSE(
         (70, opal_shmem_base_output,
          "%s: %s: attach successful "
-         "(opid: %lu id: %d, size: %"PRIsize_t", name: %s)\n",
+         "(id: %d, size: %"PRIsize_t", name: %s)\n",
          mca_shmem_windows_component.super.base_version.mca_type_name,
          mca_shmem_windows_component.super.base_version.mca_component_name,
-         (unsigned long)ds_buf->opid, ds_buf->seg_id, ds_buf->seg_size,
-         ds_buf->seg_name)
+         ds_buf->seg_id, ds_buf->seg_size, ds_buf->seg_name)
     );
 
     /* update returned base pointer with an offset that hides our stuff */
@@ -343,11 +337,10 @@ segment_detach(opal_shmem_ds_t *ds_buf)
     OPAL_OUTPUT_VERBOSE(
         (70, opal_shmem_base_output,
          "%s: %s: detaching "
-         "(opid: %lu id: %d, size: %"PRIsize_t", name: %s)\n",
+         "(id: %d, size: %"PRIsize_t", name: %s)\n",
          mca_shmem_windows_component.super.base_version.mca_type_name,
          mca_shmem_windows_component.super.base_version.mca_component_name,
-         (unsigned long)ds_buf->opid, ds_buf->seg_id, ds_buf->seg_size,
-         ds_buf->seg_name)
+         ds_buf->seg_id, ds_buf->seg_size, ds_buf->seg_name)
     );
 
     if (0 == UnmapViewOfFile((LPVOID)ds_buf->seg_base_addr)) {
@@ -373,11 +366,10 @@ segment_unlink(opal_shmem_ds_t *ds_buf)
     OPAL_OUTPUT_VERBOSE(
         (70, opal_shmem_base_output,
          "%s: %s: unlinking "
-         "(opid: %lu id: %d, size: %"PRIsize_t", name: %s)\n",
+         "(id: %d, size: %"PRIsize_t", name: %s)\n",
          mca_shmem_windows_component.super.base_version.mca_type_name,
          mca_shmem_windows_component.super.base_version.mca_component_name,
-         (unsigned long)ds_buf->opid, ds_buf->seg_id, ds_buf->seg_size,
-         ds_buf->seg_name)
+         ds_buf->seg_id, ds_buf->seg_size, ds_buf->seg_name)
     );
 
     /* don't completely reset the opal_shmem_ds_t.  in particular, only reset

@@ -77,11 +77,6 @@ do {                                                                           \
     (ds_buf)->flags |= OPAL_SHMEM_DS_FLAGS_VALID;                              \
 } while (0)
 
-#define OPAL_SHMEM_DS_SET_CREATOR(ds_buf)                                      \
-do {                                                                           \
-    (ds_buf)->flags |= OPAL_SHMEM_DS_FLAGS_CREATOR;                            \
-} while (0)
-
 /**
  * sets valid bit in flags to 0
  */
@@ -97,9 +92,6 @@ do {                                                                           \
 #define OPAL_SHMEM_DS_IS_VALID(ds_buf)                                         \
     ( (ds_buf)->flags & OPAL_SHMEM_DS_FLAGS_VALID )
 
-#define OPAL_SHMEM_DS_IS_CREATOR(ds_buf)                                       \
-    ( (ds_buf)->flags & OPAL_SHMEM_DS_FLAGS_CREATOR )
-
 /* ////////////////////////////////////////////////////////////////////////// */
 typedef uint8_t opal_shmem_ds_flag_t;
 
@@ -113,12 +105,10 @@ struct opal_shmem_seg_hdr_t {
 typedef struct opal_shmem_seg_hdr_t opal_shmem_seg_hdr_t;
 
 struct opal_shmem_ds_t {
-    /* owner pid of the opal_shmem_ds_t */
-    pid_t opid;
-    /* state flags */
-    opal_shmem_ds_flag_t flags;
     /* pid of the shared memory segment creator */
     pid_t seg_cpid;
+    /* state flags */
+    opal_shmem_ds_flag_t flags;
     /* ds id */
     int seg_id;
     /* size of shared memory segment */
