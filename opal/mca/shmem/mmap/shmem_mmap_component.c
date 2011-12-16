@@ -109,7 +109,8 @@ mmap_runtime_query(mca_base_module_t **module,
     return OPAL_SUCCESS;
 }
 
-static int mmap_register(void)
+static int
+mmap_register(void)
 {
     int value;
 
@@ -124,10 +125,12 @@ static int mmap_register(void)
      * effect doesn't matter.
      */
     mca_base_param_reg_int(&mca_shmem_mmap_component.super.base_version,
-                           "enable_nfs_warning", 
-                           "Enable the warning emitted when Open MPI detects that its shared memory backing file is located on a network filesystem (1 = enabled, 0 = disabled).",
+                           "enable_nfs_warning",
+                           "Enable the warning emitted when Open MPI detects "
+                           "that its shared memory backing file is located on "
+                           "a network filesystem (1 = enabled, 0 = disabled).",
                            false, false,
-                           (int) true, &value);
+                           (int)true, &value);
 
     opal_shmem_mmap_nfs_warning = OPAL_INT_TO_BOOL(value);
 

@@ -53,7 +53,7 @@
 
 OBJ_CLASS_INSTANCE(
     mca_common_sm_module_t,
-    opal_object_t,
+    opal_list_item_t,
     NULL,
     NULL
 );
@@ -71,10 +71,6 @@ static bool pending_rml_msgs_init = false;
 static opal_mutex_t mutex;
 /* shared memory information used for initialization and setup. */
 static opal_shmem_ds_t shmem_ds;
-/* number of local processes */
-static size_t num_local_procs = 0;
-/* indicates whether or not i'm the lowest named process */
-static bool lowest_local_proc = false;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 /* static utility functions */
@@ -82,8 +78,7 @@ static bool lowest_local_proc = false;
 
 /* ////////////////////////////////////////////////////////////////////////// */
 static mca_common_sm_module_t *
-attach_and_init(const char *file_name,
-                size_t size_ctl_structure,
+attach_and_init(size_t size_ctl_structure,
                 size_t data_seg_alignment)
 {
     mca_common_sm_module_t *map = NULL;
@@ -153,15 +148,13 @@ mca_common_sm_init(ompi_proc_t **procs,
                    size_t size_ctl_structure,
                    size_t data_seg_alignment)
 {
+    /* indicates whether or not i'm the lowest named process */
+    bool lowest_local_proc = false;
     mca_common_sm_module_t *map = NULL;
+    ompi_proc_t *temp_proc = NULL;
     bool found_lowest = false;
-    size_t p;
-    size_t mem_offset;
-    ompi_proc_t *temp_proc;
-
-    num_local_procs = 0;
-    lowest_local_proc = false;
-
+    size_t num_local_procs = 0, p = 0;
+    
     /* o reorder procs array to have all the local procs at the beginning.
      * o look for the local proc with the lowest name.
      * o determine the number of local procs.
@@ -180,9 +173,10 @@ mca_common_sm_init(ompi_proc_t **procs,
                 /* if we have a new lowest, swap it with position 0
                  * so that procs[0] is always the lowest named proc
                  */
-                if (orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                                                  &(procs[p]->proc_name),
-                                                  &(procs[0]->proc_name)) < 0) {
+                if (OPAL_VALUE2_GREATER == orte_util_compare_name_fields(
+                                               ORTE_NS_CMP_ALL,
+                                               &(procs[p]->proc_name),
+                                               &(procs[0]->proc_name))) {
                     temp_proc = procs[0];
                     procs[0] = procs[p];
                     procs[num_local_procs] = temp_proc;
@@ -222,11 +216,10 @@ mca_common_sm_init(ompi_proc_t **procs,
     if (lowest_local_proc) {
         if (OPAL_SUCCESS == opal_shmem_segment_create(&shmem_ds, file_name,
                                                       size)) {
-            map = attach_and_init(file_name, size_ctl_structure,
-                                  data_seg_alignment);
+            map = attach_and_init(size_ctl_structure, data_seg_alignment);
             if (NULL != map) {
-                mem_offset = map->module_data_addr -
-                             (unsigned char *)map->module_seg;
+                size_t mem_offset = map->module_data_addr -
+                                        (unsigned char *)map->module_seg;
                 map->module_seg->seg_offset = mem_offset;
                 map->module_seg->seg_size = size - mem_offset;
                 opal_atomic_init(&map->module_seg->seg_lock,
@@ -259,8 +252,7 @@ mca_common_sm_init(ompi_proc_t **procs,
      */
     if (OPAL_SHMEM_DS_IS_VALID(&shmem_ds)) {
         if (!lowest_local_proc) {
-            map = attach_and_init(file_name, size_ctl_structure,
-                                  data_seg_alignment);
+            map = attach_and_init(size_ctl_structure, data_seg_alignment);
         }
         else {
             /* wait until every other participating process has attached to the

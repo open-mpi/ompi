@@ -59,7 +59,7 @@ typedef struct mca_common_sm_seg_header_t {
 
 typedef struct mca_common_sm_module_t {
     /* double link list element */
-    opal_list_item_t module_item;
+    opal_list_item_t super;
     /* pointer to header embedded in the shared memory segment */
     mca_common_sm_seg_header_t *module_seg;
     /* base address of the segment */
