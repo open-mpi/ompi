@@ -37,7 +37,7 @@ const opal_carto_base_module_1_0_0_t *opal_carto_base_module = NULL;
 
 int opal_carto_base_select(void)
 {
-    int ret, exit_status = OPAL_SUCCESS;
+    int exit_status = OPAL_SUCCESS;
     opal_carto_base_component_2_0_0_t *best_component = NULL;
     opal_carto_base_module_1_0_0_t *best_module = NULL;
 
