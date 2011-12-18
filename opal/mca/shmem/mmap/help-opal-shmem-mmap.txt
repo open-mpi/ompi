@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Los Alamos National Security, LLC.
 #                         All rights reserved.
 #
@@ -39,3 +39,6 @@ the MCA parameter "orte_no_session_dir".
 
   Local host: %s
   Fileame:    %s
+
+You can set the MCA paramter shmem_mmap_enable_nfs_warning to 0 to
+disable this message.
