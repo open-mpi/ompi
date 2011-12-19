@@ -916,7 +916,7 @@ ETimeSyncC::distStartTimes()
       //
       for( std::map<uint32_t, uint64_t>::const_iterator iter_starttime =
            m_streamId2StartTime.begin();
-           iter_starttime != m_streamId2StartTime.end(); iter_starttime++ )
+           iter_starttime != m_streamId2StartTime.end(); ++iter_starttime )
       {
          // m_streamId2StartTime.first
          //

@@ -32,7 +32,7 @@ static void resortGlobDefs( const std::set<T> & in,
    std::set<const T*, typename T::SortS> & out )
 {
    for( typename std::set<T>::const_iterator it =
-        in.begin(); it != in.end(); it++ )
+        in.begin(); it != in.end(); ++it )
    {
       out.insert( &(*it) );
    }
@@ -1526,7 +1526,7 @@ DefinitionsC::writeGlobal()
                // iterate over all definition comments
                for( resorted_comments_t::const_iterator it =
                     resorted_comments.begin(); it != resorted_comments.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -1567,7 +1567,7 @@ DefinitionsC::writeGlobal()
 
                // iterate over all process definitions
                for( resorted_procs_t::const_iterator it =
-                    resorted_procs.begin(); it != resorted_procs.end(); it++ )
+                    resorted_procs.begin(); it != resorted_procs.end(); ++it )
                {
                   bool do_write = true;
 
@@ -1609,7 +1609,7 @@ DefinitionsC::writeGlobal()
                // iterate over all process group definitions
                for( resorted_proc_grps_t::const_iterator it =
                     resorted_proc_grps.begin(); it != resorted_proc_grps.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -1665,7 +1665,7 @@ DefinitionsC::writeGlobal()
                           DefRec_DefProcessGroupAttributesS>::iterator
                           procgrp_attrs_it = m_globDefs.procGrpAttrs.begin();
                           procgrp_attrs_it != m_globDefs.procGrpAttrs.end();
-                          procgrp_attrs_it++ )
+                          ++procgrp_attrs_it )
                      {
                         bool do_write = true;
 
@@ -1706,7 +1706,7 @@ DefinitionsC::writeGlobal()
                      // iterate over all attributes list definitions
                      for( std::set<attrs_list_t>::const_iterator attrs_list_it =
                           global_attrs_lists.begin(); attrs_list_it !=
-                          global_attrs_lists.end() && !error; attrs_list_it++ )
+                          global_attrs_lists.end() && !error; ++attrs_list_it )
                      {
                         // convert bitmask to array
                         //
@@ -1733,7 +1733,7 @@ DefinitionsC::writeGlobal()
                           DefRec_DefProcessGroupAttributesS>::const_iterator
                           procgrp_attrs_it = m_globDefs.procGrpAttrs.begin();
                           procgrp_attrs_it != m_globDefs.procGrpAttrs.end() &&
-                          !error; procgrp_attrs_it++ )
+                          !error; ++procgrp_attrs_it )
                      {
                         const DefRec_DefProcessGroupAttributesS & procgrp_attrs
                            = procgrp_attrs_it->second;
@@ -1770,7 +1770,7 @@ DefinitionsC::writeGlobal()
                // iterate over all scl file definitions
                for( resorted_scl_files_t::const_iterator it =
                     resorted_scl_files.begin(); it != resorted_scl_files.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -1812,7 +1812,7 @@ DefinitionsC::writeGlobal()
                // iterate over all scl definitions
                for( resorted_scls_t::const_iterator it =
                     resorted_scls.begin(); it != resorted_scls.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -1854,7 +1854,7 @@ DefinitionsC::writeGlobal()
                // iterate over all file group definitions
                for( resorted_file_grps_t::const_iterator it =
                     resorted_file_grps.begin(); it != resorted_file_grps.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -1894,7 +1894,7 @@ DefinitionsC::writeGlobal()
 
                // iterate over all file definitions
                for( resorted_files_t::const_iterator it =
-                    resorted_files.begin(); it != resorted_files.end(); it++ )
+                    resorted_files.begin(); it != resorted_files.end(); ++it )
                {
                   bool do_write = true;
 
@@ -1936,7 +1936,7 @@ DefinitionsC::writeGlobal()
                // iterate over all function group definitions
                for( resorted_func_grps_t::const_iterator it =
                     resorted_func_grps.begin(); it != resorted_func_grps.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -1978,7 +1978,7 @@ DefinitionsC::writeGlobal()
                // iterate over all function definitions
                for( resorted_funcs_t::const_iterator it =
                     resorted_funcs.begin(); it != resorted_funcs.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -2021,7 +2021,7 @@ DefinitionsC::writeGlobal()
                // iterate over all collop. definitions
                for( resorted_collops_t::const_iterator it =
                     resorted_collops.begin(); it != resorted_collops.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -2064,7 +2064,7 @@ DefinitionsC::writeGlobal()
                // iterate over all counter group definitions
                for( resorted_cntr_grps_t::const_iterator it =
                     resorted_cntr_grps.begin(); it != resorted_cntr_grps.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -2106,7 +2106,7 @@ DefinitionsC::writeGlobal()
                // iterate over all counter definitions
                for( resorted_cntrs_t::const_iterator it =
                     resorted_cntrs.begin(); it != resorted_cntrs.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -2140,7 +2140,7 @@ DefinitionsC::writeGlobal()
               for( std::map<uint32_t, DefRec_DefCounterAssignmentsS>::iterator
                    cntr_assigns_it = m_globDefs.cntrAssigns.begin();
                    cntr_assigns_it != m_globDefs.cntrAssigns.end();
-                   cntr_assigns_it++ )
+                   ++cntr_assigns_it )
               {
                  bool do_write = true;
 
@@ -2164,7 +2164,7 @@ DefinitionsC::writeGlobal()
                     uint32_t i = 0;
                     for( std::set<uint32_t>::const_iterator it =
                          record.groups.begin(); it != record.groups.end();
-                         it++, i++ )
+                         ++it, i++ )
                     {
                        array[i] = *it;
                     }
@@ -2197,7 +2197,7 @@ DefinitionsC::writeGlobal()
                // iterate over all key-value definitions
                for( resorted_keyvals_t::const_iterator it =
                     resorted_keyvals.begin(); it != resorted_keyvals.end();
-                    it++ )
+                    ++it )
                {
                   bool do_write = true;
 
@@ -2753,7 +2753,7 @@ DefinitionsC::ProcessGroupsC::finish( void )
 
       for( std::map<std::string, UserComS::CommS*>::iterator comm_it =
            m_userCom.name2Comm.begin(); comm_it != m_userCom.name2Comm.end();
-           comm_it++ )
+           ++comm_it )
       {
          assert( comm_it->second->global_token != 0 );
 
@@ -2783,7 +2783,7 @@ DefinitionsC::ProcessGroupsC::finish( void )
 
       for( std::map<std::string, OtherS::GroupS>::const_iterator group_it =
            m_other.name2Group.begin();
-           group_it != m_other.name2Group.end(); group_it++ )
+           group_it != m_other.name2Group.end(); ++group_it )
       {
          assert( group_it->second.global_token != 0 );
 
@@ -2820,7 +2820,7 @@ DefinitionsC::ProcessGroupsC::deflateMembers(
    uint32_t id = (uint32_t)-1;
 
    for( std::multimap<uint32_t, UniqueMembersS*>::const_iterator it =
-        range.first; it != range.second; it++ )
+        range.first; it != range.second; ++it )
    {
       if( it->second->nmembers != procGrp.nmembers )
          continue;

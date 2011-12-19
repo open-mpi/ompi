@@ -223,7 +223,7 @@ HooksProfC::getFuncProf( std::vector<HooksProfC::FuncProfS> & funcProfs,
    // iterate over all process function profiles
    for( std::map<uint32_t, std::map<uint32_t, FuncProfS> >::const_iterator
         proc_it = m_procId2FuncProf.begin();
-        proc_it != m_procId2FuncProf.end(); proc_it++ )
+        proc_it != m_procId2FuncProf.end(); ++proc_it )
    {
       // continue, if process function profile of interest?
       if( procId != 0 && proc_it->first != procId )
@@ -231,7 +231,7 @@ HooksProfC::getFuncProf( std::vector<HooksProfC::FuncProfS> & funcProfs,
 
       for( std::map<uint32_t, FuncProfS>::const_iterator loc_prof_it =
            proc_it->second.begin(); loc_prof_it != proc_it->second.end();
-           loc_prof_it++ )
+           ++loc_prof_it )
       {
          const FuncProfS & loc_prof = loc_prof_it->second;
 
@@ -376,7 +376,7 @@ HooksProfC::haveFuncProf( const uint32_t & procId )
    {
       // iterate over all process function profiles
       for( proc_it = m_procId2FuncProf.begin();
-           proc_it != m_procId2FuncProf.end(); proc_it++ )
+           proc_it != m_procId2FuncProf.end(); ++proc_it )
       {
          if( !proc_it->second.empty() )
          {
@@ -480,7 +480,7 @@ HooksProfC::gatherFuncProfs()
       //
       for( std::map<uint32_t, std::map<uint32_t, FuncProfS> >::iterator
            proc_it = m_procId2FuncProf.begin();
-           proc_it != m_procId2FuncProf.end(); proc_it++ )
+           proc_it != m_procId2FuncProf.end(); ++proc_it )
       {
          // m_procId2FuncProf.first
          //
@@ -496,7 +496,7 @@ HooksProfC::gatherFuncProfs()
          //
          for( std::map<uint32_t, FuncProfS>::iterator
               prof_it = proc_it->second.begin();
-              prof_it != proc_it->second.end(); prof_it++ )
+              prof_it != proc_it->second.end(); ++prof_it )
          {
             send_buffer_size += prof_it->second.getPackSize();
          }
@@ -525,7 +525,7 @@ HooksProfC::gatherFuncProfs()
       //
       for( std::map<uint32_t, std::map<uint32_t, FuncProfS> >::iterator
            proc_it = m_procId2FuncProf.begin();
-           proc_it != m_procId2FuncProf.end(); proc_it++ )
+           proc_it != m_procId2FuncProf.end(); ++proc_it )
       {
          // m_procId2FuncProf.first
          //
@@ -545,7 +545,7 @@ HooksProfC::gatherFuncProfs()
          //
          for( std::map<uint32_t, FuncProfS>::iterator
               prof_it = proc_it->second.begin();
-              prof_it != proc_it->second.end(); prof_it++ )
+              prof_it != proc_it->second.end(); ++prof_it )
          {
             prof_it->second.pack( send_buffer, send_buffer_size,
                                   send_buffer_pos );

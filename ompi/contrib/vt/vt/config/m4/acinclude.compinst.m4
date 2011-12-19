@@ -50,7 +50,7 @@ AC_DEFUN([ACVT_COMPINST],
 
 	AC_ARG_ENABLE(compinst,
 		AC_HELP_STRING([--enable-compinst=TYPE],
-			[enable support for compiler instrumentation (gnu,intel,pathscale,pgi,pgi9,sun,xl,necsx,openuh), default: automatically by configure]),
+			[enable support for compiler instrumentation (gnu,intel,pathscale,pgi,pgi9,sun,xl,necsx,open64,openuh), default: automatically by configure]),
 	[AS_IF([test x"$enableval" = "xno"], [check_compinst="no"], [enable_compinst="$enableval"])])
 
 	AS_IF([test x"$check_compinst" = "xyes"],
@@ -65,7 +65,7 @@ AC_DEFUN([ACVT_COMPINST],
 			AC_MSG_RESULT([skipped (--enable-compinst=$enable_compinst)])
 
 			case $enable_compinst in
-				gnu | intel | pathscale)
+				gnu | intel | pathscale | open64)
 					compinst_type="gnu"
 					;;
 				pgi)
@@ -190,19 +190,26 @@ AC_DEFUN([ACVT_COMPINST],
 						])
 					])
 					;;
-				uhcc* | opencc*)
-					compver=`$CC -dumpversion`
-					compver_major=`echo $compver | cut -d '.' -f 1`
-					AS_IF([test $compver_major -ge 4],
-					[
-						compinst_type="openuh"
-						AC_MSG_RESULT([openuh])
-					],
-					[
-						AC_MSG_RESULT([unknown])
-						AC_MSG_NOTICE([error: the version of the OpenUH compiler ($compver) doesn't support instrumentation])
-						compinst_error="yes"
-					])
+				opencc* | uhcc*)
+					case `$CC --version 2>&1` in
+						OpenUH*)
+							compver=`$CC -dumpversion 2>&1`
+							compver_major=`echo $compver | cut -d '.' -f 1`
+							AS_IF([test $compver_major -ge 4],
+							[
+								compinst_type="openuh"
+								AC_MSG_RESULT([openuh])
+							],
+							[
+								compinst_type="gnu"
+								AC_MSG_RESULT([gnu (open64)])
+							])
+							;;
+						*)
+							compinst_type="gnu"
+							AC_MSG_RESULT([gnu (open64)])
+							;;
+					esac
 					;;
 				sxcc*)
 					compinst_type="necsx"

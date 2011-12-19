@@ -453,7 +453,7 @@ MarkersC::writeGlobal()
       resorted_markers_t resorted_markers;
 
       for( std::set<DefRec_DefMarkerS>::const_iterator it =
-           m_globDefs.begin(); it != m_globDefs.end(); it++ )
+           m_globDefs.begin(); it != m_globDefs.end(); ++it )
       {
          resorted_markers.insert( &(*it) );
       }
@@ -463,7 +463,7 @@ MarkersC::writeGlobal()
 
       // iterate over all marker definitions
       for( resorted_markers_t::const_iterator it = resorted_markers.begin();
-           it != resorted_markers.end(); it++ )
+           it != resorted_markers.end(); ++it )
       {
          bool do_write = true;
 
