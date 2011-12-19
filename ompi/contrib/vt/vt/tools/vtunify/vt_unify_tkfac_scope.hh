@@ -186,7 +186,7 @@ TokenFactoryScopeC<T>::pack( const uint32_t & process,
    {
       for( std::map<uint32_t, uint32_t>::const_iterator token_pair_it =
            token_map_it->second.begin();
-           token_pair_it != token_map_it->second.end(); token_pair_it++ )
+           token_pair_it != token_map_it->second.end(); ++token_pair_it )
       {
          uint32_t token_pair[2] =
             { token_pair_it->first, token_pair_it->second };

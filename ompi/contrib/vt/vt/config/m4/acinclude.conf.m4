@@ -321,7 +321,8 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 
 		AS_IF([test x"$compinst_type" = "xgnu"],
 		[
-			echo "   *The instrumentation type 'gnu' also works for Intel and PathScale compilers."
+			echo "   *The instrumentation type 'gnu' also works for Intel, PathScale,"
+			echo "    and Open64 compilers."
 		])
 
 		AS_IF([test x"$have_dyninst" = "xyes"],
