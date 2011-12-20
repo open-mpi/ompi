@@ -60,15 +60,20 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *ds_buf,
 {
     int rc = OMPI_SUCCESS;
     struct iovec iov[MCA_COMMON_SM_RML_MSG_LEN];
+    char *msg_id_str_to_tx = NULL;
     int iovrc;
     size_t p;
-    char msg_id_str_to_tx[OPAL_PATH_MAX];
 
-    strncpy(msg_id_str_to_tx, msg_id_str, sizeof(msg_id_str_to_tx) - 1);
+    if (NULL == (msg_id_str_to_tx = (char *)calloc(OPAL_PATH_MAX,
+                                                   sizeof(char)))) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    strncpy(msg_id_str_to_tx, msg_id_str, OPAL_PATH_MAX - 1);
 
     /* let the first item be the queueing id name */
     iov[0].iov_base = (ompi_iov_base_ptr_t)msg_id_str_to_tx;
-    iov[0].iov_len = sizeof(msg_id_str_to_tx);
+    iov[0].iov_len = (size_t)OPAL_PATH_MAX;
     iov[1].iov_base = (ompi_iov_base_ptr_t)ds_buf;
     iov[1].iov_len = sizeof(opal_shmem_ds_t);
 
@@ -149,6 +154,10 @@ mca_common_sm_rml_info_bcast(opal_shmem_ds_t *ds_buf,
     }
 
 out:
+    if (NULL != msg_id_str_to_tx) {
+        free(msg_id_str_to_tx);
+        msg_id_str_to_tx = NULL;
+    }
     return rc;
 }
 
