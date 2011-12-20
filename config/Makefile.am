@@ -28,7 +28,8 @@ EXTRA_DIST = \
 	ltmain_otool.diff \
 	lt-sun-fortran.diff \
 	ltmain_pgi_tp.diff \
-	libtool-ibm-xlf.diff
+	libtool-ibm-xlf.diff \
+        modify-configure-for-sun-fortran.pl
 
 maintainer-clean-local:
 	rm -f ompi_get_version.sh
