@@ -25,24 +25,45 @@
 
 #include "opal/align.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/datatype/opal_convertor.h"
+#include "opal/datatype/opal_datatype_cuda.h"
 #include "opal/util/output.h"
 #include "orte/util/show_help.h"
 #include "common_cuda.h"
 
-static bool initialized = false;
+static bool common_cuda_initialized = false;
+static bool common_cuda_init_function_added = false;
 static int mca_common_cuda_verbose;
 static int mca_common_cuda_output = 0;
 static bool mca_common_cuda_enabled = false;
 static bool mca_common_cuda_register_memory = true;
 static bool mca_common_cuda_warning = true;
+static opal_list_t common_cuda_memory_registrations;
 
-void mca_common_cuda_init(void)
+/* Structure to hold memory registrations that are delayed until first
+ * call to send or receive a GPU pointer */
+struct common_cuda_mem_regs_t {
+    opal_list_item_t super;
+    void *ptr;
+    size_t amount;
+    char *msg;
+};
+typedef struct common_cuda_mem_regs_t common_cuda_mem_regs_t;
+OBJ_CLASS_DECLARATION(common_cuda_mem_regs_t);
+OBJ_CLASS_INSTANCE( common_cuda_mem_regs_t,
+                    opal_list_item_t,
+                    NULL,
+                    NULL );
+
+
+static void mca_common_cuda_init(void)
 {
-    int id, value;
+    int id, value, i, s;
     CUresult res;
     CUcontext cuContext;
+    common_cuda_mem_regs_t *mem_reg;
 
-    if (initialized) {
+    if (common_cuda_initialized) {
         return;
     }
 
@@ -96,16 +117,38 @@ void mca_common_cuda_init(void)
         mca_common_cuda_register_memory = false;
     } else {
         /* All is good.  mca_common_cuda_register_memory will retain its original
-		 * value.  Normally, that is 1, but the user can override it to disable
-		 * registration of the internal buffers. */
+         * value.  Normally, that is 1, but the user can override it to disable
+         * registration of the internal buffers. */
         mca_common_cuda_enabled = true;
         opal_output_verbose(20, mca_common_cuda_output,
                             "CUDA: cuCtxGetCurrent succeeded");
     }
 
+    s = opal_list_get_size(&common_cuda_memory_registrations);
+    for(i = 0; i < s; i++) {
+        mem_reg = (common_cuda_mem_regs_t *)
+            opal_list_remove_first(&common_cuda_memory_registrations);
+        if (mca_common_cuda_enabled && mca_common_cuda_register_memory) {
+            res = cuMemHostRegister(mem_reg->ptr, mem_reg->amount, 0);
+            if (res != CUDA_SUCCESS) {
+                /* If registering the memory fails, print a message and continue.
+                 * This is not a fatal error. */
+                orte_show_help("help-mpi-common-cuda.txt", "cuMemHostRegister failed",
+                               true, mem_reg->ptr, mem_reg->amount, res, mem_reg->msg);
+            } else {
+                opal_output_verbose(20, mca_common_cuda_output,
+                                    "CUDA: cuMemHostRegister OK on mpool %s: "
+                                    "address=%p, bufsize=%d",
+                                    mem_reg->msg, mem_reg->ptr, (int)mem_reg->amount);
+            }
+        }
+        free(mem_reg->msg);
+        OBJ_RELEASE(mem_reg);
+    }
+
     opal_output_verbose(30, mca_common_cuda_output,
                         "CUDA: initialized");
-    initialized = true;
+    common_cuda_initialized = true;
 }
 
 
@@ -116,8 +159,20 @@ void mca_common_cuda_init(void)
 void mca_common_cuda_register(void *ptr, size_t amount, char *msg) {
     int res;
 
-    if (!initialized) {
-        mca_common_cuda_init();
+    if (!common_cuda_initialized) {
+        common_cuda_mem_regs_t *regptr;
+        if (!common_cuda_init_function_added) {
+            opal_cuda_add_initialization_function(&mca_common_cuda_init);
+            OBJ_CONSTRUCT(&common_cuda_memory_registrations, opal_list_t);
+            common_cuda_init_function_added = true;
+        }
+        regptr = OBJ_NEW(common_cuda_mem_regs_t);
+        regptr->ptr = ptr;
+        regptr->amount = amount;
+        regptr->msg = strdup(msg);
+        opal_list_append(&common_cuda_memory_registrations,
+                         (opal_list_item_t*)regptr);
+        return;
     }
 
     if (mca_common_cuda_enabled && mca_common_cuda_register_memory) {
@@ -143,9 +198,7 @@ void mca_common_cuda_register(void *ptr, size_t amount, char *msg) {
 void mca_common_cuda_unregister(void *ptr, char *msg) {
     int res;
 
-    if (!initialized) {
-        mca_common_cuda_init();
-    }
+    assert(true == common_cuda_initialized);
 
     if (mca_common_cuda_enabled && mca_common_cuda_register_memory) {
         res = cuMemHostUnregister(ptr);
