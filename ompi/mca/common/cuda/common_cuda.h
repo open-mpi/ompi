@@ -20,8 +20,6 @@
 #ifndef OMPI_MCA_COMMON_CUDA_H
 #define OMPI_MCA_COMMON_CUDA_H
 
-OMPI_DECLSPEC void mca_common_cuda_init(void);
-
 OMPI_DECLSPEC void mca_common_cuda_register(void *ptr, size_t amount, char *msg);
 
 OMPI_DECLSPEC void mca_common_cuda_unregister(void *ptr, char *msg);

@@ -24,16 +24,22 @@ static bool initialized = false;
 static int opal_cuda_verbose;
 static int opal_cuda_output = 0;
 static void opal_cuda_support_init(void);
+static void (*common_cuda_initialization_function)(void) = NULL;
+
+/* This function allows the common cuda code to register an
+ * initialization function that gets called the first time an attempt
+ * is made to send or receive a GPU pointer.  This allows us to delay
+ * some CUDA initialization until after MPI_Init().
+ */
+void opal_cuda_add_initialization_function(void (*fptr)(void)) {
+    common_cuda_initialization_function = fptr;
+}
 
 void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
 {   
     int res;
     CUmemorytype memType;
     CUdeviceptr dbuf = (CUdeviceptr)pUserBuf;
-
-    if (!initialized) {
-        opal_cuda_support_init();
-    }
 
     res = cuPointerGetAttribute(&memType,
                                 CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dbuf);
@@ -47,6 +53,11 @@ void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf)
     }
     /* Must be a device pointer */
     assert(memType == CU_MEMORYTYPE_DEVICE);
+
+    /* Only do the initialization on the first GPU access */
+    if (!initialized) {
+        opal_cuda_support_init();
+    }
 
     convertor->cbmemcpy = (memcpy_fct_t)&opal_cuda_memcpy;
     convertor->flags |= CONVERTOR_CUDA;
@@ -130,6 +141,12 @@ static void opal_cuda_support_init(void)
 
     if (initialized) {
         return;
+    }
+
+    /* Callback into the common cuda initialization routine. This is only
+     * set if some work had been done already in the common cuda code.*/
+    if (NULL != common_cuda_initialization_function) {
+        common_cuda_initialization_function();
     }
 
     /* Set different levels of verbosity in the cuda related code. */
