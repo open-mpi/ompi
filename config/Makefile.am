@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affilitates.  All rights 
 #                         reserved.
 # $COPYRIGHT$
@@ -28,7 +28,8 @@ EXTRA_DIST = \
 	lt21a-pathCC.diff \
 	ltmain_pgi_tp.diff \
 	ltmain_otool.diff \
-	libtool-ibm-xlf.diff
+	libtool-ibm-xlf.diff \
+	modify-configure-for-sun-fortran.pl
 
 maintainer-clean-local:
 	rm -f ompi_get_version.sh
