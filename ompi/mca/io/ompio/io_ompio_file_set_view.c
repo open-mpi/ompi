@@ -37,6 +37,44 @@
 
 OMPI_MPI_OFFSET_TYPE get_contiguous_chunk_size (mca_io_ompio_file_t *);
 
+
+int mca_io_ompio_set_view_internal(mca_io_ompio_file_t *fh,
+				   OMPI_MPI_OFFSET_TYPE disp,
+				   ompi_datatype_t *etype,
+				   ompi_datatype_t *filetype,
+				   char *datarep,
+				   ompi_info_t *info)
+{
+
+
+    size_t max_data = 0;
+    MPI_Aint lb,ub;    
+
+    fh->f_iov_count = 0;
+    fh->f_disp = disp;
+    fh->f_offset += disp;
+    
+    
+    ompi_io_ompio_decode_datatype (fh, 
+                                   filetype, 
+                                   1, 
+                                   NULL, 
+                                   &max_data,
+                                   &fh->f_decoded_iov, 
+                                   &fh->f_iov_count);
+
+    opal_datatype_get_extent(&filetype->super, &lb, &fh->f_view_extent);
+    opal_datatype_type_ub   (&filetype->super, &ub);
+    opal_datatype_type_size (&etype->super, &fh->f_etype_size);
+    opal_datatype_type_size (&filetype->super, &fh->f_view_size);
+    ompi_datatype_duplicate (etype, &fh->f_etype);
+    ompi_datatype_duplicate (filetype, &fh->f_filetype);
+    
+    fh->f_cc_size = get_contiguous_chunk_size (fh);
+    
+    return OMPI_SUCCESS;
+}
+
 int mca_io_ompio_file_set_view (ompi_file_t *fp,
                                 OMPI_MPI_OFFSET_TYPE disp,
                                 ompi_datatype_t *etype,
@@ -46,8 +84,8 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
 {
     mca_io_ompio_data_t *data;
     mca_io_ompio_file_t *fh;
-    size_t max_data = 0;
-    MPI_Aint lb,ub;
+
+
 
     data = (mca_io_ompio_data_t *) fp->f_io_selected_data;
     fh = &data->ompio_fh;
@@ -63,11 +101,7 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
     }
 
     fh->f_flags |= OMPIO_FILE_VIEW_IS_SET;
-    fh->f_disp = disp;
-    fh->f_offset += disp;
     fh->f_datarep = strdup (datarep);
-
-    fh->f_iov_count = 0;
 
     if (opal_datatype_is_contiguous_memory_layout(&etype->super,1)) {
         if (opal_datatype_is_contiguous_memory_layout(&filetype->super,1)) {
@@ -75,83 +109,20 @@ int mca_io_ompio_file_set_view (ompi_file_t *fp,
         }
     }
 
-    ompi_io_ompio_decode_datatype (fh, 
-                                   filetype, 
-                                   1, 
-                                   NULL, 
-                                   &max_data,
-                                   &fh->f_decoded_iov, 
-                                   &fh->f_iov_count);
-    /*
-    if (0 == fh->f_rank) {
-        int i;
-        printf ("%d Entries: \n",fh->f_iov_count);
-        for (i=0 ; i<fh->f_iov_count ; i++) {
-            printf ("\t{%p, %lld}\n", 
-                    fh->f_decoded_iov[i].iov_base, 
-                    fh->f_decoded_iov[i].iov_len);
-        }
-    }
-    */
-    /* 
-     * Create a derived datatype for the created iovec 
-      
-    types[0] = &ompi_mpi_long.dt;
-    types[1] = &ompi_mpi_long.dt;
-    MPI_Address( fh->f_decoded_iov, d); 
-    MPI_Address( &fh->f_decoded_iov[0].iov_len, d+1);
-    base = d[0];
-    for (i=0 ; i<2 ; i++) {
-        d[i] -= base;
-    }
-    ompi_datatype_create_struct (2,
-                                 blocklen,
-                                 d,
-                                 types,
-                                 &fh->f_iov_type);
-    ompi_datatype_commit (&fh->f_iov_type);
-    */
-    opal_datatype_get_extent(&filetype->super, &lb, &fh->f_view_extent);
-    opal_datatype_type_ub   (&filetype->super, &ub);
-    opal_datatype_type_size (&etype->super, &fh->f_etype_size);
-    opal_datatype_type_size (&filetype->super, &fh->f_view_size);
-    ompi_datatype_duplicate (etype, &fh->f_etype);
-    ompi_datatype_duplicate (filetype, &fh->f_filetype);
-    
-    fh->f_cc_size = get_contiguous_chunk_size (fh);
-    /*
-    mca_fcoll_base_param = mca_base_param_find("fcoll", NULL, NULL);
-    mca_base_param_lookup_string (mca_fcoll_base_param, &names);
 
-    if (NULL == names) {        
-        if ((int)cc_size >= mca_io_ompio_bytes_per_agg && 
-            cc_size >= fh->f_stripe_size) {
-            mca_base_param_set_string(mca_fcoll_base_param, "individual");
-        }
-        if ((int)cc_size < mca_io_ompio_bytes_per_agg && 
-            cc_size >= fh->f_stripe_size) {
-            mca_base_param_set_string(mca_fcoll_base_param, "dynamic");
-        }
-        else if ((int)cc_size < mca_io_ompio_bytes_per_agg && 
-                 cc_size < fh->f_stripe_size) {
-            mca_base_param_set_string(mca_fcoll_base_param, "two_phase");
-        }
-    }
-    */
+    mca_io_ompio_set_view_internal (fh,
+				    disp,
+				    etype,
+				    filetype,
+				    datarep,
+				    info);
+    
+
     if (OMPI_SUCCESS != mca_fcoll_base_file_select (&data->ompio_fh,
                                                     NULL)) {
         opal_output(1, "mca_fcoll_base_file_select() failed\n");
         return OMPI_ERROR;
     }
-    /*
-    printf ("%d: LB=%d  UB=%d  Extent=%d  Size=%d\n",
-            fh->f_rank,lb,ub,fh->f_view_extent,fh->f_view_size);
-    */
-    /*
-    ompi_ddt_type_extent (fh->f_etype, &fh->f_etype_extent);
-    ompi_ddt_type_extent (fh->f_filetype, &fh->f_filetype_extent);
-    */
-
     return OMPI_SUCCESS;
 }
 

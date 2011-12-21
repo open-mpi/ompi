@@ -73,11 +73,19 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
     data = (mca_io_ompio_data_t *) fh->f_io_selected_data;
 
     data->ompio_fh.f_iov_type = MPI_DATATYPE_NULL;
-    ompi_io_ompio_set_file_defaults (&data->ompio_fh);
-
-    ompi_comm_dup (comm, &data->ompio_fh.f_comm);
     data->ompio_fh.f_rank = ompi_comm_rank (fh->f_comm);
     data->ompio_fh.f_size = ompi_comm_size (fh->f_comm);
+    remote_arch = opal_local_arch;
+    data->ompio_fh.f_convertor = opal_convertor_create (remote_arch, 0);
+
+    ompi_comm_dup (comm, &data->ompio_fh.f_comm);
+
+    data->ompio_fh.f_fstype = NONE;
+    data->ompio_fh.f_amode = amode;
+    data->ompio_fh.f_info = fh->f_info;
+    data->ompio_fh.f_atomicity = 0;
+
+    ompi_io_ompio_set_file_defaults (&data->ompio_fh);
 
     data->ompio_fh.f_filename = fh->f_filename;
     if (NULL == data->ompio_fh.f_filename) {
@@ -85,9 +93,6 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
         goto fn_fail;
     }
 
-    data->ompio_fh.f_amode = amode;
-    data->ompio_fh.f_info = fh->f_info;
-    data->ompio_fh.f_atomicity = 0;
     /*
     if (MPI_INFO_NULL != info)
     {
@@ -98,10 +103,8 @@ mca_io_ompio_file_open (ompi_communicator_t *comm,
         goto fn_fail;
     }
     */
-    remote_arch = opal_local_arch;
-    data->ompio_fh.f_convertor = opal_convertor_create (remote_arch, 0);
 
-    data->ompio_fh.f_fstype = NONE;
+
 
     if (OMPI_SUCCESS != (ret = mca_fs_base_file_select (&data->ompio_fh, 
                                                         NULL))) {

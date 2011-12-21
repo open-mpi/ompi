@@ -483,6 +483,12 @@ int mca_io_ompio_file_set_view (struct ompi_file_t *fh,
                                 struct ompi_datatype_t *filetype, 
                                 char *datarep,
                                 struct ompi_info_t *info);
+int mca_io_ompio_set_view_internal (struct mca_io_ompio_file_t *fh, 
+				    OMPI_MPI_OFFSET_TYPE disp, 
+				    struct ompi_datatype_t *etype,
+				    struct ompi_datatype_t *filetype, 
+				    char *datarep,
+				    struct ompi_info_t *info);
 int mca_io_ompio_file_get_view (struct ompi_file_t *fh, 
                                 OMPI_MPI_OFFSET_TYPE *disp,
                                 struct ompi_datatype_t **etype, 
