@@ -58,66 +58,58 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
         OPAL_PTRDIFF_TYPE d[2], base;
         int i;
 
-        fh->f_info = MPI_INFO_NULL;
-        fh->f_comm = MPI_COMM_NULL;
-        fh->f_rank = -1;
-        fh->f_size = 0;
         fh->f_io_array = NULL;
         fh->f_perm = OMPIO_PERM_NULL;
         fh->f_flags = 0;
         fh->f_bytes_per_agg = mca_io_ompio_bytes_per_agg;
         fh->f_datarep = strdup ("native");
-
         fh->f_offset = 0;
         fh->f_disp = 0;
         fh->f_position_in_file_view = 0;
         fh->f_index_in_file_view = 0;
         fh->f_total_bytes = 0;
-
         fh->f_procs_in_group = NULL;
         fh->f_procs_per_group = -1;
 
 	ompi_datatype_create_contiguous(1048576, &ompi_mpi_byte.dt, &default_file_view);
+	ompi_datatype_commit (&default_file_view);
 		
-	fh->f_etype = default_file_view;
+	fh->f_etype = &ompi_mpi_byte.dt;
 	fh->f_filetype =  default_file_view;
-
+	
+	
         /* Default file View */
         fh->f_iov_type = MPI_DATATYPE_NULL;
-        fh->f_iov_count = 1;
-        fh->f_decoded_iov = (struct iovec*)malloc(fh->f_iov_count *
-						  sizeof(struct iovec));
-        if (NULL == fh->f_decoded_iov) {
-            opal_output (1, "OUT OF MEMORY\n");
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
-        fh->f_cc_size = 1;
         fh->f_stripe_size = mca_io_ompio_bytes_per_agg;
-        fh->f_decoded_iov[0].iov_len = 1048576;
-        fh->f_decoded_iov[0].iov_base = 0;
+	/*Decoded iovec of the file-view*/
+	fh->f_decoded_iov = NULL;
+       
+	mca_io_ompio_set_view_internal(fh,
+				       0,
+				       &ompi_mpi_byte.dt,
+				       default_file_view,
+				       "native",
+				       fh->f_info);
+    
 
-        
 	/*Create a derived datatype for the created iovec */
-         
         types[0] = &ompi_mpi_long.dt;
         types[1] = &ompi_mpi_long.dt;
+
         MPI_Address( fh->f_decoded_iov, d); 
         MPI_Address( &fh->f_decoded_iov[0].iov_len, d+1);
+
         base = d[0];
         for (i=0 ; i<2 ; i++) {
             d[i] -= base;
         }
+
         ompi_datatype_create_struct (2,
                                      blocklen,
                                      d,
                                      types,
                                      &fh->f_iov_type);
         ompi_datatype_commit (&fh->f_iov_type);
-
-	fh->f_view_extent = 1048576;
-        fh->f_view_size = 1048576;
-        fh->f_etype_size = 1;
 
         return OMPI_SUCCESS;
     }
@@ -132,9 +124,6 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
                                               int *iov_count)
 {
 
-
-
-
     struct iovec *iov = NULL;
     size_t bytes_to_write;
     size_t sum_previous_counts = 0;
@@ -147,10 +136,6 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     struct iovec *merged_iov = NULL;
     size_t merge_length = 0;
     IOVBASE_TYPE * merge_offset = 0;
-
-
-
-
 
 
     /* allocate an initial iovec, will grow if needed */
@@ -280,7 +265,6 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
 int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
                                        OMPI_MPI_OFFSET_TYPE offset)
 {
-
 
     size_t i = 0;
     size_t k = 0;
