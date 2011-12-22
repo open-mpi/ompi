@@ -53,6 +53,9 @@ extern int mca_io_ompio_bytes_per_agg;
 #define OMPIO_CONTIGUOUS_FVIEW  0x00000010
 #define OMPIO_AGGREGATOR_IS_SET 0x00000020
 
+#define OMPIO_MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define OMPIO_MAX(a, b) (((a) < (b)) ? (b) : (a))
+
 /*
  * General values
  */
@@ -97,10 +100,20 @@ OMPI_DECLSPEC extern mca_io_base_component_2_0_0_t mca_io_ompio_component;
 
 typedef struct mca_io_ompio_io_array_t {
     void                 *memory_address;
-    void                 *offset; /* we need that of type OMPI_MPI_OFFSET_TYPE */
-    size_t                length;
+    /* we need that of type OMPI_MPI_OFFSET_TYPE */
+    void                 *offset;
+    size_t               length;
     /*mca_io_ompio_server_t io_server;*/
 } mca_io_ompio_io_array_t;
+
+
+typedef struct mca_io_ompio_access_array_t{
+    OMPI_MPI_OFFSET_TYPE *offsets;
+    int *lens;
+    MPI_Aint *mem_ptrs;
+    int count;
+} mca_io_ompio_access_array_t;
+
 
 /**
  * Back-end structure for MPI_File
@@ -217,6 +230,45 @@ OMPI_DECLSPEC int ompi_io_ompio_generate_groups (mca_io_ompio_file_t *fh,
 OMPI_DECLSPEC int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
                                                       int num_aggregators,
                                                       size_t bytes_per_proc);
+
+
+OMPI_DECLSPEC int ompi_io_ompio_calc_aggregator  (mca_io_ompio_file_t *fh,
+						  OMPI_MPI_OFFSET_TYPE off, 
+						  OMPI_MPI_OFFSET_TYPE min_off,
+						  OMPI_MPI_OFFSET_TYPE *len,
+						  OMPI_MPI_OFFSET_TYPE fd_size,
+						  OMPI_MPI_OFFSET_TYPE *fd_start,
+						  OMPI_MPI_OFFSET_TYPE *fd_end,
+						  int striping_unit,
+						  int num_aggregators,
+						  int *aggregator_list);
+
+
+OMPI_DECLSPEC int ompi_io_ompio_calc_my_requests (mca_io_ompio_file_t *fh,
+						  struct iovec *offset_len,
+						  int contig_access_count,
+						  OMPI_MPI_OFFSET_TYPE min_st_offset,
+						  OMPI_MPI_OFFSET_TYPE *fd_start,
+						  OMPI_MPI_OFFSET_TYPE *fd_end,
+						  OMPI_MPI_OFFSET_TYPE fd_size,
+						  int *count_my_req_procs_ptr,
+						  int **count_my_req_per_proc_ptr,
+						  mca_io_ompio_access_array_t **my_reqs,
+						  int **buf_indices,
+						  int striping_unit,
+						  int num_aggregators,
+						  int *aggregator_list);
+    
+
+
+
+OMPI_DECLSPEC int ompi_io_ompio_calc_others_requests ( mca_io_ompio_file_t *fh,
+						       int count_my_req_procs,
+						       int *count_my_req_per_proc,
+						       mca_io_ompio_access_array_t *my_req,
+						       int *count_othres_req_procs_ptr,
+						       mca_io_ompio_access_array_t **others_req_ptr);
+    
 
 OMPI_DECLSPEC int ompi_io_ompio_break_file_view (mca_io_ompio_file_t *fh,
                                                  struct iovec *iov,
@@ -415,6 +467,19 @@ OMPI_DECLSPEC int ompi_io_ompio_bcast_array (void *buff,
                                              int procs_per_group,
                                              ompi_communicator_t *comm);
 
+OMPI_DECLSPEC int ompi_io_ompio_domain_partition (mca_io_ompio_file_t *fh,
+						  OMPI_MPI_OFFSET_TYPE *start_offsets,
+						  OMPI_MPI_OFFSET_TYPE *end_offsets,
+						  OMPI_MPI_OFFSET_TYPE *min_st_offset_ptr,
+						  OMPI_MPI_OFFSET_TYPE **fd_st_ptr,
+						  OMPI_MPI_OFFSET_TYPE **fd_end_ptr,
+						  int min_fd_size,
+						  OMPI_MPI_OFFSET_TYPE *fd_size_ptr,
+						  int striping_unit,
+						  int nprocs);
+
+
+
 /* Function declaration for get and utility method to use with libNBC 
    implementation in io_ompio_nbc.c */
 OMPI_DECLSPEC int mca_io_ompio_get_fcoll_dynamic_num_io_procs (int *num_procs);
@@ -483,12 +548,14 @@ int mca_io_ompio_file_set_view (struct ompi_file_t *fh,
                                 struct ompi_datatype_t *filetype, 
                                 char *datarep,
                                 struct ompi_info_t *info);
+
 int mca_io_ompio_set_view_internal (struct mca_io_ompio_file_t *fh, 
 				    OMPI_MPI_OFFSET_TYPE disp, 
 				    struct ompi_datatype_t *etype,
 				    struct ompi_datatype_t *filetype, 
 				    char *datarep,
 				    struct ompi_info_t *info);
+
 int mca_io_ompio_file_get_view (struct ompi_file_t *fh, 
                                 OMPI_MPI_OFFSET_TYPE *disp,
                                 struct ompi_datatype_t **etype, 
