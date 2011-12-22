@@ -37,6 +37,12 @@ struct mca_io_ompio_file_t;
         "fcoll", 2, 0, 0
 
 /*
+ * This framework provides the abstraction for the collective file
+ * read and write operations of MPI I/O. The interfaces include
+ * blocking collective operations using the individual file pointer,
+ * blocking collective operations using explicit offsets and 
+ * the split collective operations defined in MPI/O for the same.
+ * 
  * These are the component function prototypes. These function pointers
  * go into the component structure. These functions (query() and finalize()
  * are called during fcoll_base_select(). Each component is query() ied

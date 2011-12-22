@@ -41,6 +41,16 @@ struct mca_io_ompio_file_t;
         "fbtl", 2, 0, 0
 
 /*
+ * The file byte transfer layer (fbtl) framework provides the abstraction
+ * for individual blocking and non-blocking read and write operations. 
+ * The functionality provided by the interfaces in this module 
+ * can be used to implement the corresponding operations in MPI I/O.
+ * Note however, that the interfaces are not a one-to-one mapping 
+ * of the MPI individual read and write operations, since the fbtl framework
+ * avoids using derived MPI datatypes. The step mapping/unrolling the MPI
+ * derived data types into a vector of (offset into file, memory address, length)
+ * is done in the OMPIO module of the IO framework.
+ * 
  * These are the component function prototypes. These function pointers
  * go into the component structure. These functions (query() and finalize()
  * are called during fbtl_base_select(). Each component is query() ied
