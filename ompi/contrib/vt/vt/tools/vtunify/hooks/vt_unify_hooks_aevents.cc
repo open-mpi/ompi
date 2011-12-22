@@ -242,7 +242,7 @@ HooksAsyncEventsC::phaseHook_UnifyEvents_pre()
 
          // iterate over all async. sources
          for( std::set<uint32_t>::const_iterator it = m_sourceKeys.begin();
-              it != m_sourceKeys.end(); it++ )
+              it != m_sourceKeys.end(); ++it )
          {
             const uint32_t & key = *it;
 
@@ -383,7 +383,7 @@ HooksAsyncEventsC::openSources( AsyncSourceManagerS & manager,
    // open reader streams of each async. source
    //
    for( std::map<uint32_t, AsyncSourceManagerS::SourceS>::iterator it =
-        manager.sources.begin(); it != manager.sources.end(); it++ )
+        manager.sources.begin(); it != manager.sources.end(); ++it )
    {
       AsyncSourceManagerS::SourceS & source = it->second;
 
@@ -448,7 +448,7 @@ HooksAsyncEventsC::closeSources( AsyncSourceManagerS & manager )
       // close reader streams of each async. source
       //
       for( std::map<uint32_t, AsyncSourceManagerS::SourceS>::iterator it =
-           manager.sources.begin(); it != manager.sources.end(); it++ )
+           manager.sources.begin(); it != manager.sources.end(); ++it )
       {
          AsyncSourceManagerS::SourceS & source = it->second;
 
@@ -486,7 +486,7 @@ HooksAsyncEventsC::readAhead( AsyncSourceManagerS & manager,
       // call myself for each async. source key
       //
       for( std::map<uint32_t, AsyncSourceManagerS::SourceS>::const_iterator it =
-           manager.sources.begin(); it != manager.sources.end(); it++ )
+           manager.sources.begin(); it != manager.sources.end(); ++it )
       {
          const uint32_t & source_key = it->first;
 
@@ -574,7 +574,7 @@ HooksAsyncEventsC::writeAsyncEvents( AsyncSourceManagerS & manager,
 
       // iterate over all async. sources
       for( std::map<uint32_t, AsyncSourceManagerS::SourceS>::iterator it =
-           manager.sources.begin(); it != manager.sources.end(); it++ )
+           manager.sources.begin(); it != manager.sources.end(); ++it )
       {
          AsyncSourceManagerS::SourceS & source = it->second;
 
@@ -696,7 +696,7 @@ HooksAsyncEventsC::isAsyncEvent( OTF_KeyValueList *& kvs,
    if( sourceKey == 0 )
    {
       for( std::set<uint32_t>::const_iterator it = m_sourceKeys.begin();
-           it != m_sourceKeys.end() && !ret; it++ )
+           it != m_sourceKeys.end() && !ret; ++it )
       {
          ret = ( OTF_KeyValueList_hasKey( kvs, *it ) == 0 );
       }
@@ -751,7 +751,7 @@ HooksAsyncEventsC::shareSourceKeys()
          //
          uint32_t i = 0;
          for( std::set<uint32_t>::const_iterator it = m_sourceKeys.begin();
-              it != m_sourceKeys.end(); it++, i++ )
+              it != m_sourceKeys.end(); ++it, i++ )
          {
             keys[i] = *it;
          }

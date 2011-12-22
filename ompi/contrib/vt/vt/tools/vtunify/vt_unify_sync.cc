@@ -67,7 +67,7 @@ TimeSyncC::initialize()
             // set start times of input streams
             //
             for( std::map<uint32_t, TimeRangeT>::const_iterator it =
-                 m_proc2TimeRange.begin(); it != m_proc2TimeRange.end(); it++ )
+                 m_proc2TimeRange.begin(); it != m_proc2TimeRange.end(); ++it )
             {
                const uint32_t & streamid = it->first;
                const uint64_t & mintime = it->second.first;
@@ -90,7 +90,7 @@ TimeSyncC::initialize()
          //
          uint64_t global_mintime = (uint64_t)-1;
          for( std::map<uint32_t, TimeRangeT>::const_iterator it =
-              m_proc2TimeRange.begin(); it != m_proc2TimeRange.end(); it++ )
+              m_proc2TimeRange.begin(); it != m_proc2TimeRange.end(); ++it )
          {
             const uint32_t & proc = it->first;
             const uint64_t mintime = correctTime( proc, it->second.first );
@@ -105,7 +105,7 @@ TimeSyncC::initialize()
          //
          uint64_t global_maxtime = 0;
          for( std::map<uint32_t, TimeRangeT>::const_iterator it =
-              m_proc2TimeRange.begin(); it != m_proc2TimeRange.end(); it++ )
+              m_proc2TimeRange.begin(); it != m_proc2TimeRange.end(); ++it )
          {
             const uint32_t & proc = it->first;
             const uint64_t maxtime = correctTime( proc, it->second.second );

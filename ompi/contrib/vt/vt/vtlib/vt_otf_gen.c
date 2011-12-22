@@ -1317,7 +1317,7 @@ void VTGen_write_DEFINITION_COMMENT(VTGen* gen, const char* comment)
 {
   VTBuf_Entry_DefinitionComment* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefinitionComment) +
                         (strlen(comment) * sizeof(char))));
 
@@ -1338,7 +1338,7 @@ void VTGen_write_DEF_SCL_FILE(VTGen* gen, uint32_t fid, const char* fname)
 {
   VTBuf_Entry_DefSclFile* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefSclFile) +
                         (strlen(fname) * sizeof(char))));
 
@@ -1360,7 +1360,7 @@ void VTGen_write_DEF_SCL(VTGen* gen, uint32_t sid, uint32_t fid, uint32_t ln)
 {
   VTBuf_Entry_DefScl* new_entry;
 
-  uint32_t length =
+  static const uint32_t length =
     VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_DefScl));
 
   VTGEN_CHECK(gen);
@@ -1382,7 +1382,7 @@ void VTGen_write_DEF_FILE_GROUP(VTGen* gen, uint32_t gid, const char* gname)
 {
   VTBuf_Entry_DefFileGroup* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefFileGroup) +
                         (strlen(gname) * sizeof(char))));
 
@@ -1405,7 +1405,7 @@ void VTGen_write_DEF_FILE(VTGen* gen, uint32_t fid, const char* fname,
 {
   VTBuf_Entry_DefFile* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefFile) +
                         (strlen(fname) * sizeof(char))));
 
@@ -1429,7 +1429,7 @@ void VTGen_write_DEF_FUNCTION_GROUP(VTGen* gen, uint32_t rdid,
 {
   VTBuf_Entry_DefFunctionGroup* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefFunctionGroup) +
                         (strlen(rdesc) * sizeof(char))));
 
@@ -1452,7 +1452,7 @@ void VTGen_write_DEF_FUNCTION(VTGen* gen, uint32_t rid, const char* rname,
 {
   VTBuf_Entry_DefFunction* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefFunction) +
                         (strlen(rname) * sizeof(char))));
 
@@ -1477,7 +1477,7 @@ void VTGen_write_DEF_COLLECTIVE_OPERATION(VTGen* gen, uint32_t cid,
 {
   VTBuf_Entry_DefCollectiveOperation* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefCollectiveOperation) +
                         (strlen(cname) * sizeof(char))));
 
@@ -1500,7 +1500,7 @@ void VTGen_write_DEF_COUNTER_GROUP(VTGen* gen, uint32_t gid, const char* gname)
 {
   VTBuf_Entry_DefCounterGroup* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefCounterGroup) +
                         (strlen(gname) * sizeof(char))));
 
@@ -1524,7 +1524,7 @@ void VTGen_write_DEF_COUNTER(VTGen* gen, uint32_t cid, const char* cname,
 {
   VTBuf_Entry_DefCounter* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefCounter) +
                         (strlen(cname) * sizeof(char))));
 
@@ -1552,7 +1552,7 @@ void VTGen_write_DEF_PROCESS_GROUP(VTGen* gen, uint32_t gid, const char* grpn,
 {
   VTBuf_Entry_DefProcessGroup* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefProcessGroup) +
                         (grpc > 0 ? (grpc - 1) * sizeof(uint32_t) : 0 )));
 
@@ -1579,7 +1579,7 @@ void VTGen_write_DEF_PROCESS_GROUP_ATTRIBUTES(VTGen* gen, uint32_t gid,
 {
   VTBuf_Entry_DefProcessGroupAttributes* new_entry;
 
-  uint32_t length =
+  static const uint32_t length =
     VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_DefProcessGroupAttributes));
 
   VTGEN_CHECK(gen);
@@ -1601,7 +1601,7 @@ void VTGen_write_DEF_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype,
 {
   VTBuf_Entry_DefKeyValue* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefKeyValue) +
                         (strlen(kname) * sizeof(char))));
 
@@ -1627,7 +1627,7 @@ void VTGen_write_DEF_MARKER(VTGen* gen, uint32_t mid, const char* mname,
 {
   VTBuf_Entry_DefMarker* new_entry;
 
-  uint32_t length =
+  const uint32_t length =
     VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_DefMarker) +
                         (strlen(mname) * sizeof(char))));
 
@@ -1660,7 +1660,7 @@ void VTGen_write_ENTER(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid)
   {
     VTBuf_Entry_EnterLeave* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -1688,7 +1688,7 @@ void VTGen_write_LEAVE(VTGen* gen, uint64_t* time, uint32_t rid, uint32_t sid)
   {
     VTBuf_Entry_EnterLeave* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -1720,7 +1720,7 @@ void VTGen_write_FILE_OPERATION(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_FileOperation* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_FileOperation));
 
     *etime -= *time;
@@ -1784,7 +1784,7 @@ void VTGen_write_BEGIN_FILE_OPERATION(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_BeginFileOperation* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_BeginFileOperation));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -1811,7 +1811,7 @@ void VTGen_write_END_FILE_OPERATION(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_EndFileOperation* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EndFileOperation));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -1878,7 +1878,7 @@ void VTGen_write_COUNTER(VTGen* gen, uint64_t* time, uint32_t cid,
   {
     VTBuf_Entry_Counter* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_Counter));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -1905,7 +1905,7 @@ void VTGen_write_COMMENT(VTGen* gen, uint64_t* time, const char* comment)
   {
     VTBuf_Entry_Comment* new_entry;
 
-    uint32_t length =
+    const uint32_t length =
       VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_Comment) +
                           (strlen(comment) * sizeof(char))));
 
@@ -1933,7 +1933,7 @@ void VTGen_write_MARKER(VTGen* gen, uint64_t* time, uint32_t mid,
   {
     VTBuf_Entry_Marker* new_entry;
 
-    uint32_t length =
+    const uint32_t length =
       VTGEN_ALIGN_LENGTH((sizeof(VTBuf_Entry_Marker) +
                           (strlen(mtext) * sizeof(char))));
 
@@ -1961,7 +1961,7 @@ void VTGen_write_KEYVAL(VTGen* gen, uint32_t kid, uint8_t vtype, void* kvalue)
   {
     VTBuf_Entry_KeyValue* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_KeyValue));
 
     /* No VTGEN_ALLOC_EVENT since space must be guaranteed */
@@ -2018,7 +2018,7 @@ void VTGen_write_SEND_MSG(VTGen* gen, uint64_t* time, uint32_t pid,
   {
     VTBuf_Entry_SendRecvMsg* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_SendRecvMsg));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2051,7 +2051,7 @@ void VTGen_write_RECV_MSG(VTGen* gen, uint64_t* time, uint32_t pid,
   {
     VTBuf_Entry_SendRecvMsg* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_SendRecvMsg));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2086,7 +2086,7 @@ void VTGen_write_COLLECTIVE_OPERATION(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_CollectiveOperation* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_CollectiveOperation));
 
     *etime -= *time;
@@ -2125,7 +2125,7 @@ void VTGen_write_BEGIN_COLLECTIVE_OPERATION(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_BeginCollectiveOperation* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_BeginCollectiveOperation));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2159,7 +2159,7 @@ void VTGen_write_END_COLLECTIVE_OPERATION(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_EndCollectiveOperation* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EndCollectiveOperation));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2187,7 +2187,7 @@ void VTGen_write_RMA_PUT(VTGen* gen, uint64_t* time, uint32_t opid,
   {
     VTBuf_Entry_RMAPutGet* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_RMAPutGet));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2218,7 +2218,7 @@ void VTGen_write_RMA_PUTRE(VTGen* gen, uint64_t* time, uint32_t opid,
   {
     VTBuf_Entry_RMAPutGet* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_RMAPutGet));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2249,7 +2249,7 @@ void VTGen_write_RMA_GET(VTGen* gen, uint64_t* time, uint32_t opid,
   {
     VTBuf_Entry_RMAPutGet* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_RMAPutGet));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2279,7 +2279,7 @@ void VTGen_write_RMA_END(VTGen* gen, uint64_t* time, uint32_t rpid,
   {
     VTBuf_Entry_RMAEnd* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_RMAEnd));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2308,7 +2308,7 @@ void VTGen_write_ENTER_FLUSH(VTGen* gen, uint64_t* time)
   {
     VTBuf_Entry_EnterLeave* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
 
     /* No VTGEN_ALLOC_EVENT since space reserved at buffer creation */
@@ -2333,7 +2333,7 @@ void VTGen_write_LEAVE_FLUSH(VTGen* gen, uint64_t* time)
   {
     VTBuf_Entry_EnterLeave* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
 
     /* No VTGEN_ALLOC_EVENT since space reserved at buffer creation */
@@ -2358,7 +2358,7 @@ void VTGen_write_ENTER_STAT(VTGen* gen, uint64_t* time)
   {
     VTBuf_Entry_EnterLeave* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave)); 
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2383,7 +2383,7 @@ void VTGen_write_LEAVE_STAT(VTGen* gen, uint64_t* time)
   {
     VTBuf_Entry_EnterLeave* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_EnterLeave));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2414,7 +2414,7 @@ void VTGen_write_FUNCTION_SUMMARY(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_FunctionSummary* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_FunctionSummary));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2444,7 +2444,7 @@ void VTGen_write_MESSAGE_SUMMARY(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_MessageSummary* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_MessageSummary));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2477,7 +2477,7 @@ void VTGen_write_COLLECTIVE_OPERATION_SUMMARY(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_CollectiveOperationSummary* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_CollectiveOperationSummary));
 
     VTGEN_ALLOC_EVENT(gen, length, time);
@@ -2510,7 +2510,7 @@ void VTGen_write_FILE_OPERATION_SUMMARY(VTGen* gen, uint64_t* time,
   {
     VTBuf_Entry_FileOperationSummary* new_entry;
 
-    uint32_t length =
+    static const uint32_t length =
       VTGEN_ALIGN_LENGTH(sizeof(VTBuf_Entry_FileOperationSummary));
 
     VTGEN_ALLOC_EVENT(gen, length, time);

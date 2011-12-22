@@ -985,7 +985,7 @@ writeMasterControl()
             if( procgrps && procgrp_it != procgrps->end() )
             {
                proc_or_group = *procgrp_it;
-               procgrp_it++;
+               ++procgrp_it;
             }
             else
             {

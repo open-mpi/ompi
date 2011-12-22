@@ -113,7 +113,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
       //
       std::set<uint32_t> mprocess_ids;
       for( std::set<uint32_t>::const_iterator stream_it = stream_ids.begin();
-           stream_it != stream_ids.end(); stream_it++ )
+           stream_it != stream_ids.end(); ++stream_it )
          mprocess_ids.insert( *stream_it & VT_TRACEID_BITMASK );
 
       // get size needed for the send buffer
@@ -124,7 +124,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
       buffer_size = 0;
 
       for( std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator scope_it =
-           m_def2scope.begin(); scope_it != m_def2scope.end(); scope_it++ )
+           m_def2scope.begin(); scope_it != m_def2scope.end(); ++scope_it )
       {
          // get scope
          TokenFactoryScopeC<DefRec_BaseS> * scope =
@@ -140,7 +140,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
          // send buffer
          //
          for( std::set<uint32_t>::const_iterator proc_it = mprocess_ids.begin();
-              proc_it != mprocess_ids.end(); proc_it++ )
+              proc_it != mprocess_ids.end(); ++proc_it )
             buffer_size += scope->getPackSize( *proc_it );
       }
 
@@ -166,7 +166,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
       buffer_pos = 0;
 
       for( std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator scope_it =
-           m_def2scope.begin(); scope_it != m_def2scope.end(); scope_it++ )
+           m_def2scope.begin(); scope_it != m_def2scope.end(); ++scope_it )
       {
          // get scope
          TokenFactoryScopeC<DefRec_BaseS> * scope =
@@ -181,7 +181,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
          // pack token translation tables into the send buffer
          //
          for( std::set<uint32_t>::const_iterator proc_it = mprocess_ids.begin();
-              proc_it != mprocess_ids.end(); proc_it++ )
+              proc_it != mprocess_ids.end(); ++proc_it )
             scope->pack( *proc_it, buffer, buffer_size, buffer_pos );
       }
 
@@ -229,7 +229,7 @@ TokenFactoryC::distTranslations( const VT_MPI_INT & destRank,
       buffer_pos = 0;
 
       for( std::map<DefRecTypeT, TokenFactoryScopeI*>::const_iterator scope_it =
-           m_def2scope.begin(); scope_it != m_def2scope.end(); scope_it++ )
+           m_def2scope.begin(); scope_it != m_def2scope.end(); ++scope_it )
       {
          // get scope
          TokenFactoryScopeC<DefRec_BaseS> * scope =

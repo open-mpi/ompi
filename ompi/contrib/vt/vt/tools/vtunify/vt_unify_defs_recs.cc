@@ -1195,7 +1195,7 @@ DefRec_DefCounterAssignmentsS::pack( char *& buffer,
    // groups
    //
    for( std::set<uint32_t>::const_iterator it = groups.begin();
-        it != groups.end(); it++ )
+        it != groups.end(); ++it )
    {
       uint32_t group = *it;
       CALL_MPI( MPI_Pack( &group, 1, MPI_UNSIGNED, buffer, bufferSize,

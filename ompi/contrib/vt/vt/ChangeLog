@@ -1,7 +1,9 @@
 5.12.1openmpi
 	- updated version of internal OTF to 1.10.1openmpi
 	  (see extlib/otf/ChangeLog)
+	- fixed detection of Open64 compilers for automatic instrumentation
 	- fixed build issues on MacOS using GCC v4.2
+	- fixed non-increasing timestamps when flushing the trace buffer
 	- fixed a bug in the MPI wrapper functions MPI_Gatherv and MPI_Scatterv
 	  which occurred due to illegal access to insignificant parameters on
 	  non-root ranks

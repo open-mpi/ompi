@@ -2643,6 +2643,7 @@ void vt_exit(uint32_t tid, uint64_t* time)
   if (do_trace)
   {
     vt_update_counter(tid, time);
+    if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
     VTGen_write_LEAVE(VTTHRD_GEN(VTThrdv[tid]),
                       time,
@@ -3226,6 +3227,7 @@ void vt_exit_stat(uint32_t tid, uint64_t* time)
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
   vt_update_counter(tid, time);
+  if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
   VTGen_write_LEAVE(VTTHRD_GEN(VTThrdv[tid]), time, 0, 0);
 }
@@ -3265,6 +3267,7 @@ void vt_exit_rewind(uint32_t tid, uint64_t* time)
   if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
   vt_update_counter(tid, time);
+  if (VTTHRD_TRACE_STATUS(VTThrdv[tid]) != VT_TRACE_ON) return;
 
   VTGen_write_LEAVE(VTTHRD_GEN(VTThrdv[tid]), time, 0, 0);
 }

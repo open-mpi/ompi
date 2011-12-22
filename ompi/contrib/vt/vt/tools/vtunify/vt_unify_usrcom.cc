@@ -179,7 +179,7 @@ UserComC::share()
       // m_userComms
       //
       for( std::set<uint32_t>::const_iterator it = m_userComms.begin();
-           it != m_userComms.end(); it++ )
+           it != m_userComms.end(); ++it )
       {
          uint32_t comm = *it;
          CALL_MPI( MPI_Pack( &comm, 1, MPI_UNSIGNED, buffer, buffer_size,
@@ -195,7 +195,7 @@ UserComC::share()
       // m_comId2ComPair
       //
       for( std::map<ComIdS, ComPairS>::const_iterator it =
-           m_comId2ComPair.begin(); it != m_comId2ComPair.end(); it++ )
+           m_comId2ComPair.begin(); it != m_comId2ComPair.end(); ++it )
       {
          // m_comId2ComPair.first
          //
