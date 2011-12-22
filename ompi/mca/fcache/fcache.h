@@ -37,6 +37,13 @@ struct mca_io_ompio_io_servers;
         "fcache", 2, 0, 0
 
 /*
+ * This framework provides the functionality required to cache information
+ * about the layout of a file on the parallel file system. It does not provide
+ * the implementation of any actual MPI level functions, but can be used 
+ * by the fcoll modules or the fbtl modules to retrieve information such as
+ * stripe size, stripe depth and first I/O server without requiring any OS
+ * level operation.
+ *
  * These are the component function prototypes. These function pointers
  * go into the component structure. These functions (query() and finalize()
  * are called during fcache_base_select(). Each component is query() ied

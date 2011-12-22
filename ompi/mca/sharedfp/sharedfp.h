@@ -37,6 +37,10 @@ struct mca_io_ompio_file_t;
         "sharedfp", 2, 0, 0
 
 /*
+ * This framework abstracts out operations of the shared filepointer
+ * in MPI I/O. It is initialized by the OMPIO module whenever a file is
+ * opened.
+ *
  * These are the component function prototypes. These function pointers
  * go into the component structure. These functions (query() and finalize()
  * are called during sharedfp_base_select(). Each component is query() ied
@@ -51,6 +55,9 @@ struct mca_io_ompio_file_t;
  * 3. query() - called to select a particular component
  * 4. finalize() - called when actions taken during query have
  *                 to be undone
+ * In addition, two functions, namely updating the value of a shared
+ * file pointer and moving the shared file pointer (seek) have to be provided
+ * by every module.
  */
 
 /*

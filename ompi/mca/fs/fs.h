@@ -37,6 +37,10 @@ struct mca_io_ompio_file_t;
         "fs", 2, 0, 0
 
 /*
+ * This framework provides the abstraction for file management operations
+ * of the MPI I/O chapter in MPI-2. The operations defined by this
+ * framework are mostly collective in nature. 
+ * 
  * These are the component function prototypes. These function pointers
  * go into the component structure. These functions (query() and finalize()
  * are called during fs_base_select(). Each component is query() ied
