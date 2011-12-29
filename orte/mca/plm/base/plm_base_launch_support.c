@@ -754,6 +754,9 @@ int orte_plm_base_setup_orted_cmd(int *argc, char ***argv)
 }
 
 
+/* pass all options as MCA params so anything we pickup
+ * from the environment can be checked for duplicates
+ */
 int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
                                           char *ess,
                                           int *proc_vpid_index,
@@ -771,22 +774,29 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     
     /* check for debug flags */
     if (orte_debug_flag) {
-        opal_argv_append(argc, argv, "--debug");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_debug");
+        opal_argv_append(argc, argv, "1");
     }
     if (orte_debug_daemons_flag) {
-        opal_argv_append(argc, argv, "--debug-daemons");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_debug_daemons");
     }
     if (orte_debug_daemons_file_flag) {
-        opal_argv_append(argc, argv, "--debug-daemons-file");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_debug_daemons_file");
     }
     if (orted_spin_flag) {
-        opal_argv_append(argc, argv, "--spin");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_daemon_spin");
     }
 #if OPAL_HAVE_HWLOC
     if (opal_hwloc_report_bindings) {
+        opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "--report-bindings");
     }
     if (orte_hetero_nodes) {
+        opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "--hetero-nodes");
     }
 #endif
@@ -845,14 +855,16 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         rml_uri = orte_rml.get_contact_info();
     } else {
         asprintf(&param, "\"%s\"", orte_rml.get_contact_info() );
-        opal_argv_append(argc, argv, "--parent-uri");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_parent_uri");
         opal_argv_append(argc, argv, param);
         free(param);
     
         rml_uri = orte_process_info.my_hnp_uri;
     }
     asprintf(&param, "\"%s\"", rml_uri);
-    opal_argv_append(argc, argv, "--hnp-uri");
+    opal_argv_append(argc, argv, "-mca");
+    opal_argv_append(argc, argv, "orte_hnp_uri");
     opal_argv_append(argc, argv, param);
     free(param);
 
@@ -863,7 +875,8 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        opal_argv_append(argc, argv, "--nodes");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_node_regex");
         opal_argv_append(argc, argv, param);
         free(param);
     }
@@ -904,13 +917,15 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
 
     /* if output-filename was specified, pass that along */
     if (NULL != orte_output_filename) {
-        opal_argv_append(argc, argv, "--output-filename");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_output_filename");
         opal_argv_append(argc, argv, orte_output_filename);
     }
     
     /* if --xterm was specified, pass that along */
     if (NULL != orte_xterm) {
-        opal_argv_append(argc, argv, "--xterm");
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_xterm");
         opal_argv_append(argc, argv, orte_xterm);
     }
     
