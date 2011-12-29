@@ -24,14 +24,14 @@ static bool initialized = false;
 static int opal_cuda_verbose;
 static int opal_cuda_output = 0;
 static void opal_cuda_support_init(void);
-static void (*common_cuda_initialization_function)(void) = NULL;
+static int (*common_cuda_initialization_function)(void) = NULL;
 
 /* This function allows the common cuda code to register an
  * initialization function that gets called the first time an attempt
  * is made to send or receive a GPU pointer.  This allows us to delay
  * some CUDA initialization until after MPI_Init().
  */
-void opal_cuda_add_initialization_function(void (*fptr)(void)) {
+void opal_cuda_add_initialization_function(int (*fptr)(void)) {
     common_cuda_initialization_function = fptr;
 }
 

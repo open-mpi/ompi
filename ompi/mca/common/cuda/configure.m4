@@ -25,6 +25,11 @@ AC_DEFUN([MCA_ompi_common_cuda_CONFIG],[
           [$1],
           [$2])
 
+    # Check to see if we have features of CUDA 4.1 available as well.
+    AM_CONDITIONAL([MCA_ompi_cuda_support_41], [test "x$CUDA_SUPPORT_41" = "x1"])
+    AC_DEFINE_UNQUOTED([OMPI_CUDA_SUPPORT_41],$CUDA_SUPPORT_41,
+                       [Whether we want support CUDA 4.1 features])
+ 
     # Copy over the includes and libs needed to build CUDA
     common_cuda_CPPFLAGS=$opal_datatype_CPPFLAGS
     common_cuda_LIBS=$opal_datatype_LIBS
