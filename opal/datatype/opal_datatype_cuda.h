@@ -14,6 +14,6 @@ void mca_cuda_convertor_init(opal_convertor_t* convertor, const void *pUserBuf);
 bool opal_cuda_check_bufs(char *dest, char *src);
 void* opal_cuda_memcpy(void * dest, void * src, size_t size);
 void* opal_cuda_memmove(void * dest, void * src, size_t size);
-void opal_cuda_add_initialization_function(void (*fptr)(void));
+void opal_cuda_add_initialization_function(int (*fptr)(void));
 
 #endif

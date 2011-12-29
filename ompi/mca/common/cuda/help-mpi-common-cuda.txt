@@ -46,3 +46,90 @@ The call to cuMemHostUnregister(%p) failed.
   cuMemHostUnregister return value:   %d
   Memory Pool: %s
 #
+[cuIpcGetMemHandle failed]
+The call to cuIpcGetMemHandle failed. This means the GPU RDMA protocol
+cannot be used.
+  cuIpcGetMemHandle return value:   %d
+  address: %p
+Check the cuda.h file for what the return value means. Perhaps a reboot
+of the node will clear the problem.
+#
+[cuMemGetAddressRange failed]
+The call to cuMemGetAddressRange failed. This means the GPU RDMA protocol
+cannot be used.
+  cuMemGetAddressRange return value:   %d
+  address: %p
+Check the cuda.h file for what the return value means. Perhaps a reboot
+of the node will clear the problem.
+#
+[Out of cuEvent handles]
+The library has exceeded its number of outstanding event handles.
+For better performance, this number should be increased.
+  Current maximum handles:   %4d
+  Suggested new maximum:     %4d
+Rerun with --mca mpi_common_cuda_event_max %d
+#
+[cuIpcOpenMemHandle failed]
+The call to cuIpcOpenMemHandle failed. This is an unrecoverable error
+and will cause the program to abort.
+  cuIpcOpenMemHandle return value:   %d
+  address: %p
+Check the cuda.h file for what the return value means. Perhaps a reboot
+of the node will clear the problem.
+#
+[cuIpcCloseMemHandle failed]
+The call to cuIpcCloseMemHandle failed. This is a warning and the program 
+will continue to run.
+  cuIpcOpenMemHandle return value:   %d
+  address: %p
+Check the cuda.h file for what the return value means. Perhaps a reboot
+of the node will clear the problem.
+#
+[cuMemcpyAsync failed]
+The call to cuMemcpyAsync failed. This is a unrecoverable error and will
+cause the program to abort.
+  cuMemcpyAsync(%p, %p, %d) returned value %d
+Check the cuda.h file for what the return value means.
+#
+[cuEventCreate failed]
+The call to cuEventCreate failed. This is a unrecoverable error and will
+cause the program to abort.
+  cuEventCreate return value:   %d
+Check the cuda.h file for what the return value means.
+#
+[cuEventRecord failed]
+The call to cuEventRecord failed. This is a unrecoverable error and will
+cause the program to abort.
+  cuEventRecord return value:   %d
+Check the cuda.h file for what the return value means.
+#
+[cuEventQuery failed]
+The call to cuEventQuery failed. This is a unrecoverable error and will
+cause the program to abort.
+  cuEventQuery return value:   %d
+Check the cuda.h file for what the return value means.
+#
+[cuIpcGetEventHandle failed]
+The call to cuIpcGetEventHandle failed. This is a unrecoverable error and will
+cause the program to abort.
+  cuIpcGetEventHandle return value:   %d
+Check the cuda.h file for what the return value means.
+#
+[cuIpcOpenEventHandle failed]
+The call to cuIpcOpenEventHandle failed. This is a unrecoverable error and will
+cause the program to abort.
+  cuIpcOpenEventHandle return value:   %d
+Check the cuda.h file for what the return value means.
+#
+[cuStreamWaitEvent failed]
+The call to cuStreamWaitEvent failed. This is a unrecoverable error and will
+cause the program to abort.
+  cuStreamWaitEvent return value:   %d
+Check the cuda.h file for what the return value means.
+#
+[cuEventDestroy failed]
+The call to cuEventDestory failed. This is a unrecoverable error and will
+cause the program to abort.
+  cuEventDestory return value:   %d
+Check the cuda.h file for what the return value means.
+#
