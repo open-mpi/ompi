@@ -781,26 +781,32 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (orte_debug_daemons_flag) {
         opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "orte_debug_daemons");
+        opal_argv_append(argc, argv, "1");
     }
     if (orte_debug_daemons_file_flag) {
         opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "orte_debug_daemons_file");
+        opal_argv_append(argc, argv, "1");
     }
     if (orted_spin_flag) {
         opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "orte_daemon_spin");
+        opal_argv_append(argc, argv, "1");
     }
 #if OPAL_HAVE_HWLOC
     if (opal_hwloc_report_bindings) {
         opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "--report-bindings");
+        opal_argv_append(argc, argv, "orte_report_bindings");
+        opal_argv_append(argc, argv, "1");
     }
     if (orte_hetero_nodes) {
         opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "--hetero-nodes");
+        opal_argv_append(argc, argv, "orte_hetero_nodes");
+        opal_argv_append(argc, argv, "1");
     }
 #endif
 
+    /* the following two are not mca params */
     if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
         opal_argv_append(argc, argv, "--debug-failure");
         asprintf(&param, "%d", orted_debug_failure);
