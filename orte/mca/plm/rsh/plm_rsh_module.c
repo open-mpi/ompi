@@ -558,7 +558,17 @@ static int setup_launch(int *argcptr, char ***argvptr,
                     /* add it */
                     opal_argv_append(&argc, &argv, "-mca");
                     opal_argv_append(&argc, &argv, param);
-                    opal_argv_append(&argc, &argv, value);
+                    /* if the value has a special character in it,
+                     * then protect it with quotes
+                     */
+                    if (NULL != strchr(value, ';')) {
+                        char *p2;
+                        asprintf(&p2, "\"%s\"", value);
+                        opal_argv_append(&argc, &argv, p2);
+                        free(p2);
+                    } else {
+                        opal_argv_append(&argc, &argv, value);
+                    }
                 }
                 free(param);
             }
