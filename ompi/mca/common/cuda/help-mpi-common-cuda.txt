@@ -38,13 +38,15 @@ NOTE: You can turn off this warning by setting the MCA parameter
 #
 [cuMemHostRegister failed]
 The call to cuMemHostRegister(%p, %d, 0) failed.
-  cuMemHostRegister return value:   %d
-  Memory Pool: %s
+  Host:  %s
+  cuMemHostRegister return value:  %d
+  Memory Pool:  %s
 #
 [cuMemHostUnregister failed]
 The call to cuMemHostUnregister(%p) failed.
-  cuMemHostUnregister return value:   %d
-  Memory Pool: %s
+  Host:  %s
+  cuMemHostUnregister return value:  %d
+  Memory Pool:  %s
 #
 [cuIpcGetMemHandle failed]
 The call to cuIpcGetMemHandle failed. This means the GPU RDMA protocol

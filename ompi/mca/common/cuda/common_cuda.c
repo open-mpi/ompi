@@ -36,6 +36,7 @@
 #include "opal/util/output.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
 #include "common_cuda.h"
 
 static bool common_cuda_initialized = false;
@@ -240,7 +241,8 @@ static int mca_common_cuda_init(void)
                 /* If registering the memory fails, print a message and continue.
                  * This is not a fatal error. */
                 orte_show_help("help-mpi-common-cuda.txt", "cuMemHostRegister failed",
-                               true, mem_reg->ptr, mem_reg->amount, res, mem_reg->msg);
+                               true, mem_reg->ptr, mem_reg->amount,
+                               orte_process_info.nodename, res, mem_reg->msg);
             } else {
                 opal_output_verbose(20, mca_common_cuda_output,
                                     "CUDA: cuMemHostRegister OK on mpool %s: "
@@ -287,7 +289,8 @@ void mca_common_cuda_register(void *ptr, size_t amount, char *msg) {
             /* If registering the memory fails, print a message and continue.
              * This is not a fatal error. */
             orte_show_help("help-mpi-common-cuda.txt", "cuMemHostRegister failed",
-                           true, ptr, amount, res, msg);
+                           true, ptr, amount, 
+                           orte_process_info.nodename, res, msg);
         } else {
             opal_output_verbose(20, mca_common_cuda_output,
                                 "CUDA: cuMemHostRegister OK on mpool %s: "
@@ -305,27 +308,28 @@ void mca_common_cuda_unregister(void *ptr, char *msg) {
     int res, i, s;
     common_cuda_mem_regs_t *mem_reg;
 
-	/* This can happen if memory was queued up to be registered, but
-	 * no CUDA operations happened, so it never was registered.
-	 * Therefore, just release any of the resources. */
+    /* This can happen if memory was queued up to be registered, but
+     * no CUDA operations happened, so it never was registered.
+     * Therefore, just release any of the resources. */
     if (false == common_cuda_initialized) {
-		s = opal_list_get_size(&common_cuda_memory_registrations);
-		for(i = 0; i < s; i++) {
-			mem_reg = (common_cuda_mem_regs_t *)
-				opal_list_remove_first(&common_cuda_memory_registrations);
-			free(mem_reg->msg);
-			OBJ_RELEASE(mem_reg);
-		}
-		return;
-	}
+        s = opal_list_get_size(&common_cuda_memory_registrations);
+        for(i = 0; i < s; i++) {
+            mem_reg = (common_cuda_mem_regs_t *)
+                opal_list_remove_first(&common_cuda_memory_registrations);
+            free(mem_reg->msg);
+            OBJ_RELEASE(mem_reg);
+        }
+        return;
+    }
 
-	if (mca_common_cuda_enabled && mca_common_cuda_register_memory) {
+    if (mca_common_cuda_enabled && mca_common_cuda_register_memory) {
         res = cuMemHostUnregister(ptr);
         if (res != CUDA_SUCCESS) {
             /* If unregistering the memory fails, print a message and continue.
              * This is not a fatal error. */
             orte_show_help("help-mpi-common-cuda.txt", "cuMemHostUnregister failed",
-                           true, ptr, res, msg);
+                           true, ptr,
+                           orte_process_info.nodename, res, msg);
         } else {
             opal_output_verbose(20, mca_common_cuda_output,
                                 "CUDA: cuMemHostUnregister OK on mpool %s: "
@@ -432,7 +436,7 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
     CUipcMemHandle memHandle;
     mca_mpool_rcuda_reg_t *cuda_newreg = (mca_mpool_rcuda_reg_t*)newreg;
 
-	/* Need to copy into memory handle for call into CUDA library. */
+    /* Need to copy into memory handle for call into CUDA library. */
     memcpy(&memHandle, cuda_newreg->memHandle, sizeof(memHandle));
     CUDA_DUMP_MEMHANDLE((100, &memHandle, "Before call to cuIpcOpenMemHandle"));
 
