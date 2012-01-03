@@ -14,6 +14,7 @@ Copyright (c) 2006-2010 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
 Copyright (c) 2008      IBM Corporation.  All rights reserved.
 Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
+Copyright (c) 2011	University of Houston. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -1501,8 +1502,10 @@ btl       - MPI point-to-point Byte Transfer Layer, used for MPI
 coll      - MPI collective algorithms
 crcp      - Checkpoint/restart coordination protocol
 dpm       - MPI-2 dynamic process management
-fbtl      - <Edgar to fill in>
-fcache    - <Edgar to fill in>
+fbtl      - file byte transfer layer: abstraction for individual 
+            read/write operations for OMPIO
+fcache    - framework to store description about a file system
+            for OMPIO
 fcoll     - collective read and write operations for MPI I/O
 fs        - file system functions for MPI I/O
 io        - MPI-2 I/O
