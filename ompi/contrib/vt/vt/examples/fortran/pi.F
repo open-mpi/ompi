@@ -62,8 +62,8 @@ c     Node 0 prints the answer.
 
       if (rank .eq. 0) then
          write(6, 97) iter, pi, abs(pi - PI25DT)
- 97      format(i3, ' points: pi is approximately: ', F18.16,
-     +          ' error is: ', F18.16)
+ 97      format(i3, ' points: pi is approximately: ', F19.16,
+     +          ' error is: ', F19.16)
       endif
 
 #ifdef MANUAL
