@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -20,11 +20,25 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+/* ASSUMING local process homogeneity with respect to all utilized shared memory
+ * facilities. that is, if one local process deems a particular shared memory
+ * facility acceptable, then ALL local processes should be able to utilize that
+ * facility. as it stands, this is an important point because one process
+ * dictates to all other local processes which common sm component will be
+ * selected based on its own, local run-time test.
+ */
 
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
+/* RML Messaging in common sm and Our Assumptions
+ * o MPI_Init is single threaded
+ * o this routine will not be called after MPI_Init.
+ *
+ * if these assumptions ever change, then we may need to add some support code
+ * that queues  up RML messages that have arrived, but have not yet been
+ * consumed by the thread who is looking to complete its component
+ * initialization.
+ */
+
+#include "ompi_config.h"
 
 #include "opal/align.h"
 #include "opal/util/argv.h"
@@ -32,6 +46,7 @@
 #include "opal/runtime/opal_cr.h"
 #endif
 
+#include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_globals.h"
@@ -43,14 +58,6 @@
 
 #include "common_sm_rml.h"
 
-/* ASSUMING local process homogeneity with respect to all utilized shared memory
- * facilities. that is, if one local process deems a particular shared memory
- * facility acceptable, then ALL local processes should be able to utilize that
- * facility. as it stands, this is an important point because one process
- * dictates to all other local processes which common sm component will be
- * selected based on its own, local run-time test.
- */
-
 OBJ_CLASS_INSTANCE(
     mca_common_sm_module_t,
     opal_list_item_t,
@@ -58,17 +65,6 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
-/* list of RML messages that have arrived that have not yet been
- * consumed by the thread who is looking to complete its component
- * initialization based on the contents of the RML message.
- */
-static opal_list_t pending_rml_msgs;
-/* flag indicating whether or not pending_rml_msgs has been initialized */
-static bool pending_rml_msgs_init = false;
-/* lock to protect multiple instances of mca_common_sm_init() from being
- * invoked simultaneously (because of RML usage).
- */
-static opal_mutex_t mutex;
 /* shared memory information used for initialization and setup. */
 static opal_shmem_ds_t shmem_ds;
 
@@ -154,7 +150,7 @@ mca_common_sm_init(ompi_proc_t **procs,
     ompi_proc_t *temp_proc = NULL;
     bool found_lowest = false;
     size_t num_local_procs = 0, p = 0;
-    
+
     /* o reorder procs array to have all the local procs at the beginning.
      * o look for the local proc with the lowest name.
      * o determine the number of local procs.
@@ -200,16 +196,6 @@ mca_common_sm_init(ompi_proc_t **procs,
                                   ORTE_PROC_MY_NAME,
                                   &(procs[0]->proc_name)));
 
-    /* lock here to prevent multiple threads from invoking this
-     * function simultaneously.  the critical section we're protecting
-     * is usage of the RML in this block.
-     */
-    opal_mutex_lock(&mutex);
-
-    if (!pending_rml_msgs_init) {
-        OBJ_CONSTRUCT(&(pending_rml_msgs), opal_list_t);
-        pending_rml_msgs_init = true;
-    }
     /* figure out if i am the lowest rank in the group.
      * if so, i will create the shared memory backing store
      */
@@ -239,11 +225,10 @@ mca_common_sm_init(ompi_proc_t **procs,
     }
 
     /* send shmem info to the rest of the local procs. */
-    if (OMPI_SUCCESS != mca_common_sm_rml_info_bcast(
-                            &shmem_ds, procs, num_local_procs,
-                            OMPI_RML_TAG_SM_BACK_FILE_CREATED,
-                            lowest_local_proc, file_name,
-                            &(pending_rml_msgs))) {
+    if (OMPI_SUCCESS !=
+        mca_common_sm_rml_info_bcast(&shmem_ds, procs, num_local_procs,
+                                     OMPI_RML_TAG_SM_BACK_FILE_CREATED,
+                                     lowest_local_proc, file_name)) {
         goto out;
     }
 
@@ -266,7 +251,6 @@ mca_common_sm_init(ompi_proc_t **procs,
     }
 
 out:
-    opal_mutex_unlock(&mutex);
     return map;
 }
 
