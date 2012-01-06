@@ -30,14 +30,9 @@ static void ompi_mtl_mxm_recv_completion_cb(void *context)
     ompi_req->req_status.MPI_ERROR  = ompi_mtl_mxm_to_mpi_status(mxm_recv_req->base.error);
     ompi_req->req_status._ucount    = mxm_recv_req->completion.actual_len;
 
-    /* Copy data */
+    /* Copy data and free the buffer */
     ompi_mtl_datatype_unpack(req->convertor, req->buf,
                              mxm_recv_req->completion.actual_len);
-
-    if (req->free_after) {
-        free(req->buf);
-    }
-
     req->super.completion_callback(&req->super);
 }
 
@@ -62,6 +57,7 @@ int ompi_mtl_mxm_irecv(struct mca_mtl_base_module_t* mtl,
     if (OMPI_SUCCESS != ret) {
         return ret;
     }
+
 
     /* prepare a receive request embedded in the MTL request */
     mxm_recv_req = &mtl_mxm_request->mxm.recv;
