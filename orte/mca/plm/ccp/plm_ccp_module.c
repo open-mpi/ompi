@@ -338,7 +338,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
     if(NULL != mca_plm_ccp_component.job_name){
         pJob->put_Name(_bstr_t(mca_plm_ccp_component.job_name));
     } else {
-        pJob->put_Name(_bstr_t((*(*apps)).app));
+        pJob->put_Name(_bstr_t((*app).app));
     }
 
     pJob->put_MinimumNumberOfProcessors(num_processors);
@@ -387,7 +387,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
                              node->name));
         
         /* setup process name */
-        rc = orte_util_convert_vpid_to_string(&vpid_string, nodes[i]->daemon->name.vpid);
+        rc = orte_util_convert_vpid_to_string(&vpid_string, node->daemon->name.vpid);
         if (ORTE_SUCCESS != rc) {
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "plm:ccp: unable to get daemon vpid as string"));
@@ -447,7 +447,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
         }
         
         /* Prepare the command line a little bit. */
-        command_line = plm_ccp_commandline(apps[0]->prefix_dir, node->name, argc, argv);
+        command_line = plm_ccp_commandline(app->prefix_dir, node->name, argc, argv);
 
         hr = pTask->put_CommandLine(_bstr_t(command_line));
         if (FAILED(hr)) {
@@ -714,7 +714,7 @@ static int plm_ccp_disconnect(void)
 static char *plm_ccp_commandline(char *prefix, char *node_name, int argc, char **argv)
 {
     char *commandline;
-    int i, len = 0;
+    size_t i, len = 0;
 
     for( i = 0; i < argc; i++ ) {
         len += strlen(argv[i]) + 1;
