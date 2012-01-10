@@ -15,6 +15,7 @@
 #include "btl_ugni_frag.h"
 #include "btl_ugni_rdma.h"
 
+#include "opal/include/opal/align.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/memoryhooks/memory.h"
 #include "ompi/runtime/params.h"
@@ -199,7 +200,9 @@ static int mca_btl_ugni_smsg_setup (void) {
         return ompi_common_rc_ugni_to_ompi (rc);
     }
 
-    mca_btl_ugni_smsg_mbox_size = ((mbox_size + opal_cache_line_size - 1)/opal_cache_line_size) * opal_cache_line_size;
+    /* NTH: increase the mbox size to a multiple of 4096. ugni examples increase to a multiple of 
+       64 bytes but we see hangs with anything less than 4096. */
+    mca_btl_ugni_smsg_mbox_size = OPAL_ALIGN(mbox_size, 4096, unsigned int);
 
     return OMPI_SUCCESS;
 }
