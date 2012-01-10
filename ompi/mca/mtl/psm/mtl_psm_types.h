@@ -53,7 +53,12 @@ struct mca_mtl_psm_module_t {
     int32_t      ib_port;
     int32_t      ib_service_level;
     uint64_t     ib_pkey;
-  
+
+#if PSM_VERNO >= 0x010d
+    uint64_t     ib_service_id;
+    psm_path_res_t path_res_type;
+#endif
+
     psm_ep_t	 ep;
     psm_mq_t	 mq;
     psm_epid_t	 epid;

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +34,7 @@
 #include "psm.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>.
+#include <unistd.h>
 
 static int ompi_mtl_psm_component_open(void);
 static int ompi_mtl_psm_component_close(void);
@@ -72,6 +74,9 @@ mca_mtl_psm_component_t mca_mtl_psm_component = {
 static int
 ompi_mtl_psm_component_register(void)
 {
+    int value;
+    char *service_id = NULL;
+    char *path_res = NULL;
     
     mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
 			   "connect_timeout",
@@ -82,7 +87,8 @@ ompi_mtl_psm_component_register(void)
 			   "debug",
 			   "PSM debug level",
 			   false, false, 1, 
-			   &ompi_mtl_psm.debug_level);
+			   &value);
+    ompi_mtl_psm.debug_level = value;
   
     mca_base_param_reg_int(&mca_mtl_psm_component.super.mtl_version, 
 			   "ib_unit",
@@ -107,7 +113,37 @@ ompi_mtl_psm_component_register(void)
 			   "ib_pkey",
 			   "Infiniband partition key",
 			   false, false, 0x7fffUL, 
-			   &ompi_mtl_psm.ib_pkey);
+			   &value);
+    ompi_mtl_psm.ib_pkey = value;
+
+#if PSM_VERNO >= 0x010d
+    mca_base_param_reg_string(&mca_mtl_psm_component.super.mtl_version,
+			      "ib_service_id",
+			      "Infiniband service ID to use for application (default is 0)",
+			      false, false, "0x1000117500000000",
+			      &service_id);
+     ompi_mtl_psm.ib_service_id = (uint64_t) strtoull(service_id, NULL, 0);
+
+     mca_base_param_reg_string(&mca_mtl_psm_component.super.mtl_version,
+                              "path_query",
+                              "Path record query mechanisms (valid values: opp, none)",
+                              false, false, NULL, &path_res);
+     if ((NULL != path_res) && strcasecmp(path_res, "none")) {
+       if (!strcasecmp(path_res, "opp"))
+        ompi_mtl_psm.path_res_type = PSM_PATH_RES_OPP;
+       else {
+        orte_show_help("help-mtl-psm.txt",
+                       "path query mechanism unknown", true,
+                       path_res, "OfedPlus (opp) | Static Routes (none)");
+        return OMPI_ERR_NOT_FOUND;
+       }
+     }
+     else {
+       /* Default is "static/none" path record queries */
+       ompi_mtl_psm.path_res_type = PSM_PATH_RES_NONE;
+     }
+#endif
+
   
     if (ompi_mtl_psm.ib_service_level < 0)  {
       ompi_mtl_psm.ib_service_level = 0;
@@ -149,8 +185,8 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
     int	verno_major = PSM_VERNO_MAJOR;
     int verno_minor = PSM_VERNO_MINOR;
     ompi_proc_t *my_proc, **procs;
-    size_t num_total_procs;
-    int local_rank = -1, num_local_procs = 0, proc;
+    size_t num_total_procs, proc;
+    int local_rank = -1, num_local_procs = 0;
     
     /* Compute the total number of processes on this host and our local rank
      * on that node. We need to provide PSM with these values so it can 

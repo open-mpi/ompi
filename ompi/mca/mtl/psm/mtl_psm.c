@@ -136,6 +136,11 @@ int ompi_mtl_psm_module_init(int local_rank, int num_local_procs) {
     ep_opt.outsl = ompi_mtl_psm.ib_service_level;
 #endif
 
+#if PSM_VERNO >= 0x010d
+    ep_opt.service_id = ompi_mtl_psm.ib_service_id;
+    ep_opt.path_res_type = ompi_mtl_psm.path_res_type;
+#endif
+
     /* Open PSM endpoint */
     err = psm_ep_open(unique_job_key, &ep_opt, &ep, &epid);
     if (err) {
@@ -234,6 +239,10 @@ ompi_mtl_psm_connect_error_msg(psm_error_t err)
 #  define min(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
+#ifndef max
+#  define max(a,b) ((a) > (b) ? (a) : (b))
+#endif
+
 int
 ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
                       size_t nprocs,
@@ -277,10 +286,7 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 	epids_in[i] = *epid;
     }
 
-    timeout_in_secs = min(180, 0.5 * nprocs);
-    if (ompi_mtl_psm.connect_timeout  < timeout_in_secs)  {
-	timeout_in_secs = ompi_mtl_psm.connect_timeout;
-    }
+    timeout_in_secs = max(ompi_mtl_psm.connect_timeout, 0.5 * nprocs);
 
     psm_error_register_handler(ompi_mtl_psm.ep, PSM_ERRHANDLER_NOP);
 
