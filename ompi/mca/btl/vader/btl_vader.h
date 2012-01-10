@@ -45,6 +45,7 @@
 /* xpmem is required by vader atm */
 #include <xpmem.h>
 
+#include "opal/include/opal/align.h"
 #include "opal/class/opal_free_list.h"
 #include "opal/sys/atomic.h"
 #include "ompi/mca/btl/btl.h"
@@ -63,7 +64,7 @@ BEGIN_C_DECLS
 #define min(a,b) ((a) < (b) ? (a) : (b))
 
 extern int mca_btl_vader_memcpy_limit;
-extern int mca_btl_vader_segment_multiple;
+extern int mca_btl_vader_log_align;
 extern int mca_btl_vader_max_inline_send;
 
 #define VADER_FIFO_FREE  (void *) (-2)
@@ -147,17 +148,6 @@ OMPI_MODULE_DECLSPEC extern mca_btl_vader_t mca_btl_vader;
 #define VIRTUAL2RELATIVE(VADDR ) ((long)(VADDR)  - (long)mca_btl_vader_component.shm_bases[mca_btl_vader_component.my_smp_rank])
 #define RELATIVE2VIRTUAL(OFFSET) ((long)(OFFSET) + (long)mca_btl_vader_component.shm_bases[mca_btl_vader_component.my_smp_rank])
 
-static inline uintptr_t get_mask (uintptr_t x)
-{
-    x |= (x >> 1);
-    x |= (x >> 2);
-    x |= (x >> 4);
-    x |= (x >> 8);
-    x |= (x >> 16);
-    x |= (x >> 32);
-    return (x >> 1);
-}
-
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
 static inline mca_mpool_base_registration_t *vader_get_registation (int peer_smp_rank, void *rem_ptr,
@@ -166,18 +156,19 @@ static inline mca_mpool_base_registration_t *vader_get_registation (int peer_smp
     struct mca_rcache_base_module_t *rcache = mca_btl_vader_component.xpmem_rcaches[peer_smp_rank];
     mca_mpool_base_registration_t *regs[10], *reg = NULL;
     struct xpmem_addr xpmem_addr;
-    uintptr_t base, bound, mask;
+    uintptr_t base, bound;
     int rc, i;
 
     if (OPAL_UNLIKELY(peer_smp_rank == mca_btl_vader_component.my_smp_rank)) {
         return rem_ptr;
     }
 
-    mask = get_mask (mca_btl_vader_segment_multiple);
-
-    base = (uintptr_t) down_align_addr(rem_ptr, mca_mpool_base_page_size_log);
+    base = (uintptr_t) down_align_addr(rem_ptr, mca_btl_vader_log_align);
     bound = (uintptr_t) up_align_addr((void *)((uintptr_t) rem_ptr + size - 1),
-                                      mca_mpool_base_page_size_log) + 1;
+                                      mca_btl_vader_log_align) + 1;
+    if (OPAL_UNLIKELY(bound > VADER_MAX_ADDRESS)) {
+        bound = VADER_MAX_ADDRESS;
+    }
 
     /* several segments may match the base pointer */
     rc = rcache->rcache_find_all (rcache, (void *) base, bound - base, regs, 10);
@@ -213,16 +204,8 @@ static inline mca_mpool_base_registration_t *vader_get_registation (int peer_smp
         break;
     }
 
-    if ((ptrdiff_t) (bound - base) & mask) {
-        bound = base + ((bound - base) & ~mask) + mca_btl_vader_segment_multiple;
-    }
-
-    if (OPAL_UNLIKELY(bound > VADER_MAX_ADDRESS)) {
-        bound = VADER_MAX_ADDRESS;
-    }
-
     reg = OBJ_NEW(mca_mpool_base_registration_t);
-    if (OPAL_UNLIKELY(NULL != reg)) {
+    if (OPAL_LIKELY(NULL != reg)) {
         /* stick around for awhile */
         reg->ref_count = 2;
         reg->base  = (unsigned char *) base;

@@ -47,7 +47,7 @@ static mca_btl_base_module_t** mca_btl_vader_component_init(int *num_btls,
 
 /* limit where we should switch from bcopy to memcpy */
 int mca_btl_vader_memcpy_limit     = 524288;
-int mca_btl_vader_segment_multiple = 4194304;
+int mca_btl_vader_log_align        = 21; /* 2 MiB */
 /* maximum size for using copy-in-copy out semantics for contiguous sends */
 int mca_btl_vader_max_inline_send = 256;
 
@@ -105,16 +105,6 @@ static inline int mca_btl_vader_param_register_int(const char *param_name,
     return value;
 }
 
-static int msb (int x)
-{
-    x |= (x >> 1);
-    x |= (x >> 2);
-    x |= (x >> 4);
-    x |= (x >> 8);
-    x |= (x >> 16);
-    return (x & ~(x >> 1));
-}
-
 static int mca_btl_vader_component_register (void)
 {
     /* register VADER component parameters */
@@ -128,8 +118,16 @@ static int mca_btl_vader_component_register (void)
         mca_btl_vader_param_register_string("mpool", "sm");
     mca_btl_vader_memcpy_limit =
         mca_btl_vader_param_register_int("memcpy_limit", mca_btl_vader_memcpy_limit);
-    mca_btl_vader_segment_multiple =
-        msb(mca_btl_vader_param_register_int("segment_multiple", mca_btl_vader_segment_multiple));
+    mca_btl_vader_log_align =
+        mca_btl_vader_param_register_int("log_align", mca_btl_vader_log_align);
+
+    /* limit segment alignment to be between 4k and 16M */
+    if (mca_btl_vader_log_align < 12) {
+        mca_btl_vader_log_align = 12;
+    } else if (mca_btl_vader_log_align > 25) {
+        mca_btl_vader_log_align = 25;
+    }
+
     mca_btl_vader_max_inline_send =
         mca_btl_vader_param_register_int("max_inline_send", mca_btl_vader_max_inline_send);
 
