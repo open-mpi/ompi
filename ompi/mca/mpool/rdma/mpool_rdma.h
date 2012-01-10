@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -56,7 +58,7 @@ struct mca_mpool_rdma_module_t {
     mca_mpool_base_module_t super;
     struct mca_mpool_base_resources_t resources;
     ompi_free_list_t reg_list;
-    opal_list_t mru_list;
+    opal_list_t lru_list;
     opal_list_t gc_list;
     uint32_t stat_cache_hit;
     uint32_t stat_cache_miss;

@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -14,6 +14,8 @@
  * Copyright (c) 2006      Voltaire. All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  *
  * $COPYRIGHT$
  *
@@ -66,7 +68,7 @@ void mca_mpool_rdma_module_init(mca_mpool_rdma_module_t* mpool)
             OBJ_CLASS(mca_mpool_base_registration_t), 
             0,CACHE_LINE_SIZE,
             0, -1, 32, NULL);
-    OBJ_CONSTRUCT(&mpool->mru_list, opal_list_t);
+    OBJ_CONSTRUCT(&mpool->lru_list, opal_list_t);
     OBJ_CONSTRUCT(&mpool->gc_list, opal_list_t);
     mpool->stat_cache_hit = mpool->stat_cache_miss = mpool->stat_evicted = 0;
     mpool->stat_cache_found = mpool->stat_cache_notfound = 0;
@@ -182,6 +184,40 @@ static int register_cache_bypass(mca_mpool_base_module_t *mpool,
     return OMPI_SUCCESS;
 }
 
+static inline bool mca_mpool_rdma_deregister_lru (mca_mpool_base_module_t *mpool) {
+    mca_mpool_rdma_module_t *mpool_rdma = (mca_mpool_rdma_module_t *) mpool;
+    mca_mpool_base_registration_t *old_reg;
+    int rc;
+
+    /* Remove the registration from the cache and list before
+       deregistering the memory */
+    old_reg = (mca_mpool_base_registration_t*)
+        opal_list_remove_first (&mpool_rdma->lru_list);
+    if (NULL == old_reg) {
+        return false;
+    }
+
+    mpool->rcache->rcache_delete(mpool->rcache, old_reg);
+
+    /* Drop the rcache lock while we deregister the memory */
+    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
+    rc = dereg_mem(mpool, old_reg);
+    OPAL_THREAD_LOCK(&mpool->rcache->lock);
+
+    /* This introduces a potential leak of registrations if
+       the deregistration fails to occur as we no longer have
+       a reference to it. Is this possible? */
+    if (OMPI_SUCCESS != rc) {
+        return false;
+    }
+
+    OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
+                          (ompi_free_list_item_t*)old_reg);
+    mpool_rdma->stat_evicted++;
+
+    return true;
+}
+
 /*
  * register memory
  */
@@ -218,7 +254,7 @@ int mca_mpool_rdma_register(mca_mpool_base_module_t *mpool, void *addr,
                  ((*reg)->base == base && (*reg)->bound == bound))) {
             if(0 == (*reg)->ref_count &&
                     mca_mpool_rdma_component.leave_pinned) {
-                opal_list_remove_item(&mpool_rdma->mru_list,
+                opal_list_remove_item(&mpool_rdma->lru_list,
                         (opal_list_item_t*)(*reg));
             }
             mpool_rdma->stat_cache_hit++;
@@ -259,35 +295,10 @@ int mca_mpool_rdma_register(mca_mpool_base_module_t *mpool, void *addr,
     while((rc = mpool->rcache->rcache_insert(mpool->rcache, rdma_reg,
              mca_mpool_rdma_component.rcache_size_limit)) ==
             OMPI_ERR_TEMP_OUT_OF_RESOURCE) {
-        mca_mpool_base_registration_t *old_reg;
         /* try to remove one unused reg and retry */
-        old_reg = (mca_mpool_base_registration_t*)
-            opal_list_get_last(&mpool_rdma->mru_list);
-        if(opal_list_get_end(&mpool_rdma->mru_list) !=
-                (opal_list_item_t*)old_reg) {
- 
- 	    /* Remove the registration from the cache and list before
-	       deregistering the memory */
- 	    mpool->rcache->rcache_delete(mpool->rcache, old_reg);
- 	    opal_list_remove_item(&mpool_rdma->mru_list,
- 				  (opal_list_item_t*)old_reg);
- 
- 	    /* Drop the rcache lock while we deregister the memory */
- 	    OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
-            rc = dereg_mem(mpool, old_reg);
- 	    OPAL_THREAD_LOCK(&mpool->rcache->lock);
- 
- 	    /* This introduces a potential leak of registrations if
- 	       the deregistration fails to occur as we no longer have
- 	       a reference to it. Is this possible? */
-            if(MPI_SUCCESS == rc) {
-                OMPI_FREE_LIST_RETURN(&mpool_rdma->reg_list,
-                        (ompi_free_list_item_t*)old_reg);
-                mpool_rdma->stat_evicted++;
-            } else
-                break;
-        } else
+        if (!mca_mpool_rdma_deregister_lru (mpool)) {
             break;
+        }        
     }
 
     if(rc != OMPI_SUCCESS) {
@@ -296,8 +307,14 @@ int mca_mpool_rdma_register(mca_mpool_base_module_t *mpool, void *addr,
         return rc;
     }
 
-    rc = mpool_rdma->resources.register_mem(mpool_rdma->resources.reg_data,
-            base, bound - base + 1, rdma_reg);
+    while (OMPI_ERR_OUT_OF_RESOURCE ==
+           (rc = mpool_rdma->resources.register_mem(mpool_rdma->resources.reg_data,
+                                                    base, bound - base + 1, rdma_reg))) {
+        /* try to remove one unused reg and retry */
+        if (!mca_mpool_rdma_deregister_lru (mpool)) {
+            break;
+        }        
+    }
 
     if(rc != OMPI_SUCCESS) {
         mpool->rcache->rcache_delete(mpool->rcache, rdma_reg);
@@ -361,7 +378,7 @@ int mca_mpool_rdma_find(struct mca_mpool_base_module_t *mpool, void *addr,
         assert(((void*)(*reg)->bound) >= addr);
         if(0 == (*reg)->ref_count &&
                 mca_mpool_rdma_component.leave_pinned) {
-            opal_list_remove_item(&mpool_rdma->mru_list,
+            opal_list_remove_item(&mpool_rdma->lru_list,
                     (opal_list_item_t*)(*reg));
         }
         mpool_rdma->stat_cache_found++;
@@ -398,8 +415,8 @@ int mca_mpool_rdma_deregister(struct mca_mpool_base_module_t *mpool,
     if(mca_mpool_rdma_component.leave_pinned && registration_is_cachebale(reg))
     {
         /* if leave_pinned is set don't deregister memory, but put it
-         * on MRU list for future use */
-        opal_list_prepend(&mpool_rdma->mru_list, (opal_list_item_t*)reg);
+         * on LRU list for future use */
+        opal_list_append(&mpool_rdma->lru_list, (opal_list_item_t*)reg);
     } else {
 	/* Remove from rcache first */
 	if(!(reg->flags & MCA_MPOOL_FLAGS_CACHE_BYPASS))
@@ -452,7 +469,7 @@ int mca_mpool_rdma_release_memory(struct mca_mpool_base_module_t *mpool,
                 continue;
             }
 
-            opal_list_remove_item(&mpool_rdma->mru_list,(opal_list_item_t*)reg);
+            opal_list_remove_item(&mpool_rdma->lru_list,(opal_list_item_t*)reg);
             opal_list_append(&mpool_rdma->gc_list, (opal_list_item_t*)reg);
         }
     } while(reg_cnt == RDMA_MPOOL_NREGS);
@@ -493,7 +510,7 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
             if(reg->ref_count) {
                 reg->ref_count = 0; /* otherway dereg will fail on assert */
             } else if (mca_mpool_rdma_component.leave_pinned) {
-                opal_list_remove_item(&mpool_rdma->mru_list,
+                opal_list_remove_item(&mpool_rdma->lru_list,
                         (opal_list_item_t*)reg);
             }
 
@@ -516,7 +533,7 @@ void mca_mpool_rdma_finalize(struct mca_mpool_base_module_t *mpool)
         }
     } while(reg_cnt == RDMA_MPOOL_NREGS);
 
-    OBJ_DESTRUCT(&mpool_rdma->mru_list);
+    OBJ_DESTRUCT(&mpool_rdma->lru_list);
     OBJ_DESTRUCT(&mpool_rdma->gc_list);
     OBJ_DESTRUCT(&mpool_rdma->reg_list);
     OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
