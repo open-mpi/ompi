@@ -24,6 +24,7 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/mca/topo/topo.h"
 #include "opal/datatype/opal_convertor.h"
 #include "opal/datatype/opal_datatype.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -98,12 +99,11 @@ int ompi_io_ompio_set_file_defaults (mca_io_ompio_file_t *fh)
     
 
 	/*Create a derived datatype for the created iovec */
-         
-        types[0] = &ompi_mpi_long.dt;
+	types[0] = &ompi_mpi_long.dt;
         types[1] = &ompi_mpi_long.dt;
 
-        MPI_Address( fh->f_decoded_iov, d); 
-        MPI_Address( &fh->f_decoded_iov[0].iov_len, d+1);
+        d[0] = (OPAL_PTRDIFF_TYPE) fh->f_decoded_iov; 
+        d[1] = (OPAL_PTRDIFF_TYPE) &fh->f_decoded_iov[0].iov_len;	
 
         base = d[0];
         for (i=0 ; i<2 ; i++) {
@@ -656,7 +656,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
     if (-1 == num_aggregators) {
         /* Determine Topology Information */
         if (fh->f_comm->c_flags & OMPI_COMM_CART) {
-            MPI_Cartdim_get(fh->f_comm, &ndims);
+            fh->f_comm->c_topo->topo_cartdim_get(fh->f_comm, &ndims);
 
             dims = (int*)malloc (ndims * sizeof(int));
             if (NULL == dims) {
@@ -682,7 +682,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
-            MPI_Cart_get(fh->f_comm, ndims, dims, periods, coords);
+            fh->f_comm->c_topo->topo_cart_get(fh->f_comm, ndims, dims, periods, coords);
 
             /*
               printf ("NDIMS = %d\n", ndims);
@@ -745,7 +745,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
             }
 
             for (j=0 ; j<fh->f_size ; j++) {
-                MPI_Cart_coords (fh->f_comm, j, ndims, coords_tmp);
+                fh->f_comm->c_topo->topo_cart_coords (fh->f_comm, j, ndims, coords_tmp);
                 if (coords_tmp[0]/i == coords[0]/i) {
                     if ((coords_tmp[1]/root_offset)*root_offset == 
                         (coords[1]/root_offset)*root_offset) {
@@ -1123,30 +1123,34 @@ int ompi_io_ompio_calc_others_requests(mca_io_ompio_file_t *fh,
 {
     
 
-    int *count_others_req_per_proc, count_others_req_procs;
-    int i,j ;
-    MPI_Request *requests;
-    MPI_Status *statuses;
-    mca_io_ompio_access_array_t *others_req;
+    int *count_others_req_per_proc=NULL, count_others_req_procs;
+    int i,j, ret=OMPI_SUCCESS;
+    MPI_Request *requests=NULL;
+    mca_io_ompio_access_array_t *others_req=NULL;
     
     count_others_req_per_proc = (int *)malloc(fh->f_size*sizeof(int));
+    if ( NULL == count_others_req_per_proc ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     
     /* Change it to the ompio specific alltoall in coll module : VVN*/
-    MPI_Alltoall (count_my_req_per_proc,
-		  1,
-		  MPI_INT,
-		  count_others_req_per_proc, 
-		  1,
-		  MPI_INT,
-		  fh->f_comm);
+    fh->f_comm->c_coll.coll_alltoall (
+	count_my_req_per_proc,
+	1,
+	MPI_INT,
+	count_others_req_per_proc, 
+	1,
+	MPI_INT,
+	fh->f_comm, 
+	fh->f_comm->c_coll.coll_alltoall_module);
     
-    #if 0
+#if 0
     for( i = 0; i< fh->f_size; i++){
 	printf("my: %d, others: %d\n",count_my_req_per_proc[i],
 	       count_others_req_per_proc[i]);
 
     }
-    #endif
+#endif
 
     *others_req_ptr = (mca_io_ompio_access_array_t  *) malloc 
 	(fh->f_size*sizeof(mca_io_ompio_access_array_t)); 
@@ -1172,29 +1176,38 @@ int ompi_io_ompio_calc_others_requests(mca_io_ompio_file_t *fh,
     requests = (MPI_Request *)
 	malloc(1+2*(count_my_req_procs+count_others_req_procs)*
 	       sizeof(MPI_Request)); 
+    if ( NULL == requests ) {
+	ret = OMPI_ERR_OUT_OF_RESOURCE;
+	goto exit;
+    }
     
     j = 0;
     for (i=0; i<fh->f_size; i++){
 	if (others_req[i].count){
-	    
-	    MPI_Irecv(others_req[i].offsets,
-		      others_req[i].count, 
-                      MPI_OFFSET,
-		      i,
-		      i+fh->f_rank,
-		      fh->f_comm,
-		      &requests[j]);
-
+            ret = MCA_PML_CALL(irecv(others_req[i].offsets,
+				     others_req[i].count,
+				     MPI_OFFSET,
+				     i,
+				     i+fh->f_rank,
+				     fh->f_comm,
+				     &requests[j]));
+	    if ( OMPI_SUCCESS != ret  ) {
+		goto exit;
+	    }
+	    	    
 	    j++;
 
-	    MPI_Irecv(others_req[i].lens,
-		      others_req[i].count, 
-                      MPI_INT,
-		      i,
-		      i+fh->f_rank+1,
-		      fh->f_comm,
-		      &requests[j]);
-
+	    ret = MCA_PML_CALL(irecv(others_req[i].lens,
+				     others_req[i].count,
+				     MPI_INT,
+				     i,
+				     i+fh->f_rank+1,
+				     fh->f_comm,
+				     &requests[j]));
+	    if ( OMPI_SUCCESS != ret  ) {
+		goto exit;
+	    }
+		       
 	    j++;
 	}
     }
@@ -1202,31 +1215,54 @@ int ompi_io_ompio_calc_others_requests(mca_io_ompio_file_t *fh,
 
     for (i=0; i < fh->f_size; i++) {
 	if (my_req[i].count) {
-	    MPI_Isend(my_req[i].offsets, my_req[i].count, 
-                      MPI_OFFSET, i, i+fh->f_rank, fh->f_comm, &requests[j]);
+	    ret = MCA_PML_CALL(isend(my_req[i].offsets,
+				     my_req[i].count,
+				     MPI_OFFSET,
+				     i,
+				     i+fh->f_rank,
+				     MCA_PML_BASE_SEND_STANDARD, 
+				     fh->f_comm,
+				     &requests[j]));	
+	    if ( OMPI_SUCCESS != ret  ) {
+		goto exit;
+	    }
+
 	    j++;
-	    MPI_Isend(my_req[i].lens, my_req[i].count, 
-                      MPI_INT, i, i+fh->f_rank+1, fh->f_comm, &requests[j]);
+	    ret = MCA_PML_CALL(isend(my_req[i].lens,
+				     my_req[i].count,
+				     MPI_INT,
+				     i,
+				     i+fh->f_rank+1,
+				     MCA_PML_BASE_SEND_STANDARD, 
+				     fh->f_comm,
+				     &requests[j]));	
+	    if ( OMPI_SUCCESS != ret  ) {
+		goto exit;
+	    }
+    
 	    j++;
 	}
     }
     
     if (j) {
-	
-	statuses = (MPI_Status *) malloc(j * sizeof(MPI_Status));
-	MPI_Waitall(j, requests, statuses);
-	free(statuses);
+	ret = ompi_request_wait_all ( j, requests, MPI_STATUS_IGNORE );
+	if ( OMPI_SUCCESS != ret  ) {
+	    return ret;
+	}
     }
-
-    free(requests);
-    free(count_others_req_per_proc);
 
     *count_others_req_procs_ptr = count_others_req_procs;
 
-    
-    return  OMPI_SUCCESS;
-    
+exit:
+    if ( NULL != requests ) {
+	free(requests);
+    }
+    if ( NULL != count_others_req_per_proc ) {
+	free(count_others_req_per_proc);
+    }
 
+
+    return ret;
 }
 
 
