@@ -80,7 +80,6 @@
 #include "orte/util/nidmap.h"
 #include "orte/util/proc_info.h"
 
-#include "orte/mca/debugger/debugger.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/ess/ess.h"

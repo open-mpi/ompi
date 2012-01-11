@@ -41,7 +41,6 @@
 #include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/util/show_help.h"
-#include "orte/mca/debugger/debugger.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/iof/iof.h"
@@ -230,8 +229,6 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
             rc = ORTE_ERR_BAD_PARAM;
             goto WAKEUP;
         }
-        /* setup for debugging */
-        orte_debugger.init_before_spawn(jdata);
     }
 
     /* setup the buffer */
@@ -310,10 +307,7 @@ int orte_plm_base_launch_apps(orte_jobid_t job)
         ORTE_ERROR_LOG(rc);
         goto WAKEUP;
     }
-    
-    /* complete debugger interface */
-    orte_debugger.init_after_spawn(jdata);
-    
+        
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:launch completed for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),

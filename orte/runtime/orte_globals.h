@@ -78,8 +78,6 @@ ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in
 /* define the name of my daemon */
 #define ORTE_PROC_MY_DAEMON     (&orte_process_info.my_daemon)
 
-/* See comment in orte/tools/orterun/debuggers.c about this MCA
-   param */
 ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
 
 /* error manager callback function */
@@ -559,6 +557,11 @@ ORTE_DECLSPEC extern char **orte_fork_agent;
 
 /* debugger job */
 ORTE_DECLSPEC extern orte_job_t *orte_debugger_daemon;
+ORTE_DECLSPEC extern bool orte_debugger_dump_proctable;
+ORTE_DECLSPEC extern char *orte_debugger_test_daemon;
+ORTE_DECLSPEC extern bool orte_debugger_test_attach;
+ORTE_DECLSPEC extern bool orte_debugger_enable_fifo_attach;
+ORTE_DECLSPEC extern int orte_debugger_check_rate;
 
 /* exit flags */
 ORTE_DECLSPEC extern bool orte_abnormal_term_ordered;
