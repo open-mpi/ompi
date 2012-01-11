@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -79,7 +81,13 @@ static int bind_upwards(orte_job_t *jdata,
         }
         /* check if topology supports cpubind - if not, then we cannot bind */
         support = (struct hwloc_topology_support*)hwloc_topology_get_support(node->topology);
-        if (!support->cpubind->set_thisproc_cpubind) {
+        /* check if topology supports cpubind - have to be careful here
+         * as Linux doesn't currently support thread-level binding. This
+         * may change in the future, though, and it isn't clear how hwloc
+         * interprets the current behavior. So check both flags to be sure.
+         */
+        if (!support->cpubind->set_thisproc_cpubind &&
+            !support->cpubind->set_thisthread_cpubind) {
             if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
                 /* we are not required to bind, so ignore this */
                 continue;
@@ -90,8 +98,15 @@ static int bind_upwards(orte_job_t *jdata,
             }
             return ORTE_ERR_SILENT;
         }
-        /* check if topology supports membind */
-        if (!support->membind->set_thisproc_membind) {
+        /* check if topology supports membind - have to be careful here
+         * as hwloc treats this differently than I (at least) would have
+         * expected. Per hwloc, Linux memory binding is at the thread,
+         * and not process, level. Thus, hwloc sets the "thisproc" flag
+         * to "false" on all Linux systems, and uses the "thisthread" flag
+         * to indicate binding capability
+         */
+        if (!support->membind->set_thisproc_membind &&
+            !support->membind->set_thisthread_membind) {
             if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
                 membind_warned = true;
