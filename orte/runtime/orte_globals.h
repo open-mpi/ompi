@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c)      2011 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -560,7 +562,6 @@ ORTE_DECLSPEC extern orte_job_t *orte_debugger_daemon;
 ORTE_DECLSPEC extern bool orte_debugger_dump_proctable;
 ORTE_DECLSPEC extern char *orte_debugger_test_daemon;
 ORTE_DECLSPEC extern bool orte_debugger_test_attach;
-ORTE_DECLSPEC extern bool orte_debugger_enable_fifo_attach;
 ORTE_DECLSPEC extern int orte_debugger_check_rate;
 
 /* exit flags */
