@@ -181,12 +181,6 @@ void *opal_realloc(void *ptr, size_t size, const char *file, int line)
  */
 void opal_free(void *addr, const char *file, int line)
 {
-#if OMPI_ENABLE_DEBUG
-    if (opal_malloc_debug_level > 1 && NULL == addr) {
-        opal_output(opal_malloc_output, "Invalid free (%s, %d)", file, line);
-        return;
-    }
-#endif  /* OMPI_ENABLE_DEBUG */
     free(addr);
 }
 
