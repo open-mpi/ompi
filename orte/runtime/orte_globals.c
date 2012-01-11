@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c)      2011 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -94,7 +96,6 @@ orte_job_t *orte_debugger_daemon=NULL;
 bool orte_debugger_dump_proctable;
 char *orte_debugger_test_daemon;
 bool orte_debugger_test_attach;
-bool orte_debugger_enable_fifo_attach;
 int orte_debugger_check_rate;
 
 /* exit flags */

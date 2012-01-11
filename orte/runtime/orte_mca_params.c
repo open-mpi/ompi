@@ -145,7 +145,7 @@ int orte_register_params(void)
                                 false, false, (int)false, &value);
     orte_leave_session_attached = OPAL_INT_TO_BOOL(value);
     
-    /* See comment in orte/tools/orterun/debuggers.c about this MCA
+    /* See comment in orte/tools/orterun/orterun.c about this MCA
        param (this param is internal) */
     mca_base_param_reg_int_name("orte",
                                 "in_parallel_debugger",
@@ -169,12 +169,6 @@ int orte_register_params(void)
                                 "Test debugger colaunch after debugger attachment",
                                 false, false, 0, &value);
     orte_debugger_test_attach = OPAL_INT_TO_BOOL(value);
-
-    mca_base_param_reg_int_name("orte",
-                                "debugger_fifo_attach",
-                                "Create a fifo to support debugger attachment",
-                                false, false, 0, &value);
-    orte_debugger_enable_fifo_attach = OPAL_INT_TO_BOOL(value);
 
     mca_base_param_reg_int_name("orte",
                                 "debugger_check_rate",
