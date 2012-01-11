@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -28,6 +28,12 @@
 #include <string.h>
 #endif
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif  /* HAVE_STDLIB_H */
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif  /* HAVE_STRINGS_H */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -46,6 +52,10 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
+#include <fcntl.h>
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/installdirs/installdirs.h"
@@ -75,7 +85,6 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/hnp_contact.h"
 
-#include "orte/mca/debugger/base/base.h"
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
@@ -98,6 +107,37 @@
 #include "orte/orted/orted.h"
 
 #include "orterun.h"
+
+/* instance the standard MPIR interfaces */
+#define MPIR_MAX_PATH_LENGTH 512
+#define MPIR_MAX_ARG_LENGTH 1024
+struct MPIR_PROCDESC *MPIR_proctable = NULL;
+int MPIR_proctable_size = 0;
+volatile int MPIR_being_debugged = 0;
+volatile int MPIR_debug_state = 0;
+int MPIR_i_am_starter = 0;
+int MPIR_partial_attach_ok = 1;
+char MPIR_executable_path[MPIR_MAX_PATH_LENGTH];
+char MPIR_server_arguments[MPIR_MAX_ARG_LENGTH];
+volatile int MPIR_forward_output = 0;
+volatile int MPIR_forward_comm = 0;
+char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH];
+int MPIR_force_to_main = 0;
+static void orte_debugger_dump(void);
+static void orte_debugger_init_before_spawn(orte_job_t *jdata);
+static void orte_debugger_init_after_spawn(orte_job_t *jdata);
+static void attach_debugger(int fd, short event, void *arg);
+static void build_debugger_args(orte_app_context_t *debugger);
+static void open_fifo (void);
+ORTE_DECLSPEC void* MPIR_Breakpoint(void);
+
+/*
+ * Breakpoint function for parallel debuggers
+ */
+void* MPIR_Breakpoint(void)
+{
+    return NULL;
+}
 
 /*
  * Globals
@@ -549,49 +589,6 @@ int orterun(int argc, char *argv[])
                        true);
     }
 
-    /* force the debugger symbols to be included in orterun.
-     * this is required since the symbols are instantiated in
-     * the orte library, yet they need to be accessed
-     * prior to orte_init when a debugger wants to launch
-     * us
-     */
-    if (NULL == MPIR_proctable) {
-        rc = ORTE_SUCCESS;
-    }
-    if (0 == MPIR_proctable_size) {
-        rc = ORTE_SUCCESS;
-    }
-    if (0 == MPIR_being_debugged) {
-        rc = ORTE_SUCCESS;
-    }
-    if (0 == MPIR_debug_state) {
-        rc = ORTE_SUCCESS;
-    }
-    if (0 == MPIR_i_am_starter) {
-        rc = ORTE_SUCCESS;
-    }
-    if (1 == MPIR_partial_attach_ok) {
-        rc = ORTE_SUCCESS;
-    }
-    if (NULL == MPIR_executable_path) {
-        rc = ORTE_SUCCESS;
-    }
-    if (NULL == MPIR_server_arguments) {
-        rc = ORTE_SUCCESS;
-    }
-    if (0 == MPIR_forward_output) {
-        rc = ORTE_SUCCESS;
-    }
-    if (0 == MPIR_forward_comm) {
-        rc = ORTE_SUCCESS;
-    }
-    MPIR_force_to_main = 0;
-    memset(MPIR_attach_fifo, 0, MPIR_MAX_PATH_LENGTH);
-    /* This function call simply ensures that all the symbols --
-       including MPIR_Breakpoint -- are pulled in via the linker from
-       orte/mca/debugger/base/debugger_base_fns.c. */
-    orte_debugger_base_pull_mpir_breakpoint();
-
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);
     OBJ_DESTRUCT(&cmd_line);
@@ -848,9 +845,15 @@ int orterun(int argc, char *argv[])
     ljob = ORTE_LOCAL_JOBID(jdata->jobid);
     opal_pointer_array_set_item(orte_job_data, ljob, jdata);
     
+    /* setup for debugging */
+    orte_debugger_init_before_spawn(jdata);
+
     /* spawn the job and its daemons */
     rc = orte_plm.spawn(jdata);
     
+    /* complete debugger interface */
+    orte_debugger_init_after_spawn(jdata);
+
     /* now wait until the termination event fires */
     opal_event_dispatch(opal_event_base);
     
@@ -2109,4 +2112,489 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
     free(value);
     opal_argv_free(new_argv);
     exit(1);
+}
+
+/****    DEBUGGER CODE ****/
+/*
+ * Debugger support for orterun
+ *
+ * We interpret the MPICH debugger interface as follows:
+ *
+ * a) The launcher
+ *      - spawns the other processes,
+ *      - fills in the table MPIR_proctable, and sets MPIR_proctable_size
+ *      - sets MPIR_debug_state to MPIR_DEBUG_SPAWNED ( = 1)
+ *      - calls MPIR_Breakpoint() which the debugger will have a
+ *	  breakpoint on.
+ *
+ *  b) Applications start and then spin until MPIR_debug_gate is set
+ *     non-zero by the debugger.
+ *
+ * This file implements (a).
+ *
+ **************************************************************************
+ *
+ * Note that we have presently tested both TotalView and DDT parallel
+ * debuggers.  They both nominally subscribe to the Etnus attaching
+ * interface, but there are differences between the two.
+ *
+ * TotalView: user launches "totalview mpirun -a ...<mpirun args>...".
+ * TV launches mpirun.  mpirun launches the application and then calls
+ * MPIR_Breakpoint().  This is the signal to TV that it's a parallel
+ * MPI job.  TV then reads the proctable in mpirun and attaches itself
+ * to all the processes (it takes care of launching itself on the
+ * remote nodes).  Upon attaching to all the MPI processes, the
+ * variable MPIR_being_debugged is set to 1.  When it has finished
+ * attaching itself to all the MPI processes that it wants to,
+ * MPIR_Breakpoint() returns.
+ *
+ * DDT: user launches "ddt bin -np X <mpi app name>".  DDT fork/exec's
+ * mpirun to launch ddt-debugger on the back-end nodes via "mpirun -np
+ * X ddt-debugger" (not the lack of other arguments -- we can't pass
+ * anything to mpirun).  This app will eventually fork/exec the MPI
+ * app.  DDT does not current set MPIR_being_debugged in the MPI app.
+ *
+ **************************************************************************
+ *
+ * We support two ways of waiting for attaching debuggers.  The
+ * implementation spans this file and ompi/debuggers/ompi_debuggers.c.
+ *
+ * 1. If using orterun: MPI processes will have the
+ * orte_in_parallel_debugger MCA param set to true (because not all
+ * debuggers consistently set MPIR_being_debugged in both the launcher
+ * and in the MPI procs).  The HNP will call MPIR_Breakpoint() and
+ * then RML send a message to VPID 0 (MCW rank 0) when it returns
+ * (MPIR_Breakpoint() doesn't return until the debugger has attached
+ * to all relevant processes).  Meanwhile, VPID 0 blocks waiting for
+ * the RML message.  All other VPIDs immediately call the grpcomm
+ * barrier (and therefore block until the debugger attaches).  Once
+ * VPID 0 receives the RML message, we know that the debugger has
+ * attached to all processes that it cares about, and VPID 0 then
+ * joins the grpcomm barrier, allowing the job to continue.  This
+ * scheme has the side effect of nicely supporting partial attaches by
+ * parallel debuggers (i.e., attaching to only some of the MPI
+ * processes; not necessarily all of them).
+ *
+ * 2. If not using orterun: in this case, ORTE_DISABLE_FULL_SUPPORT
+ * will be true, and we know that there will not be an RML message
+ * sent to VPID 0.  So we have to look for a magic environment
+ * variable from the launcher to know if the jobs will be attached by
+ * a debugger (e.g., set by yod, srun, ...etc.), and if so, spin on
+ * MPIR_debug_gate.  These environment variable names must be
+ * hard-coded in the OMPI layer (see ompi/debuggers/ompi_debuggers.c).
+ */
+
+/* local globals and functions */
+static void attach_debugger(int fd, short event, void *arg);
+static void build_debugger_args(orte_app_context_t *debugger);
+static void open_fifo(void);
+static opal_event_t attach;
+static int attach_fd = -1;
+static bool fifo_active=false;
+#define DUMP_INT(X) fprintf(stderr, "  %s = %d\n", # X, X);
+#define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
+
+struct MPIR_PROCDESC {
+    char *host_name;        /* something that can be passed to inet_addr */
+    char *executable_name;  /* name of binary */
+    int pid;                /* process pid */
+};
+
+
+static void orte_debugger_dump(void)
+{
+    int i;
+
+    DUMP_INT(MPIR_being_debugged);
+    DUMP_INT(MPIR_debug_state);
+    DUMP_INT(MPIR_partial_attach_ok);
+    DUMP_INT(MPIR_i_am_starter);
+    DUMP_INT(MPIR_forward_output);
+    DUMP_INT(MPIR_proctable_size);
+    fprintf(stderr, "  MPIR_proctable:\n");
+    for (i = 0; i < MPIR_proctable_size; i++) {
+        fprintf(stderr,
+                "    (i, host, exe, pid) = (%d, %s, %s, %d)\n",
+                i,
+                MPIR_proctable[i].host_name,
+                MPIR_proctable[i].executable_name,
+                MPIR_proctable[i].pid);
+    }
+    fprintf(stderr, "MPIR_executable_path: %s\n",
+            ('\0' == MPIR_executable_path[0]) ?
+            "NULL" : (char*) MPIR_executable_path);
+    fprintf(stderr, "MPIR_server_arguments: %s\n",
+            ('\0' == MPIR_server_arguments[0]) ?
+            "NULL" : (char*) MPIR_server_arguments);
+}
+
+/**
+ * Initialization of data structures for running under a debugger
+ * using the MPICH/TotalView parallel debugger interface.  Before the
+ * spawn we need to check if we are being run under a TotalView-like
+ * debugger; if so then inform applications via an MCA parameter.
+ */
+static void orte_debugger_init_before_spawn(orte_job_t *jdata)
+{
+    char *env_name;
+    orte_app_context_t *app;
+    int i;
+    int32_t ljob;
+    char *attach_fifo;
+
+    if (!MPIR_being_debugged && !orte_in_parallel_debugger) {
+        /* if we were given a test debugger, then we still want to
+         * colaunch it
+         */
+        if (NULL != orte_debugger_test_daemon) {
+            opal_output_verbose(2, orte_debug_output,
+                                "%s No debugger test daemon specified",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+            goto launchit;
+        }
+        /* if we were given an auto-detect rate, then we want to setup
+         * an event so we periodically do the check
+         */
+        if (0 < orte_debugger_check_rate) {
+            opal_output_verbose(2, orte_debug_output,
+                                "%s Setting debugger attach check rate for %d seconds",
+                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                orte_debugger_check_rate);
+            ORTE_TIMER_EVENT(orte_debugger_check_rate, 0, attach_debugger);
+        } else if (orte_debugger_enable_fifo_attach) {
+            /* create the attachment FIFO and put it into MPIR, setup readevent */
+            /* create a FIFO name in the session dir */
+            attach_fifo = opal_os_path(false, orte_process_info.job_session_dir, "debugger_attach_fifo", NULL);
+            if ((mkfifo(attach_fifo, FILE_MODE) < 0) && errno != EEXIST) {
+                opal_output(0, "CANNOT CREATE FIFO %s: errno %d", attach_fifo, errno);
+                free(attach_fifo);
+                return;
+            }
+            strncpy(MPIR_attach_fifo, attach_fifo, MPIR_MAX_PATH_LENGTH - 1);
+	    free(attach_fifo);
+	    open_fifo();
+        }
+        return;
+    }
+    
+ launchit:
+    opal_output_verbose(1, orte_debug_output, "Info: Spawned by a debugger");
+
+    /* tell the procs they are being debugged */
+    env_name = mca_base_param_environ_variable("orte", 
+                                               "in_parallel_debugger", NULL);
+    
+    for (i=0; i < jdata->apps->size; i++) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+            continue;
+        }
+        opal_setenv(env_name, "1", true, &app->env);
+    }
+    free(env_name);
+
+    /* check if we need to co-spawn the debugger daemons */
+    if ('\0' != MPIR_executable_path[0] || NULL != orte_debugger_test_daemon) {
+        /* can only have one debugger */
+        if (NULL != orte_debugger_daemon) {
+            opal_output(0, "-------------------------------------------\n"
+                        "Only one debugger can be used on a job.\n"
+                        "-------------------------------------------\n");
+            ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            return;
+        }
+        opal_output_verbose(2, orte_debug_output,
+                            "%s Cospawning debugger daemons %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (NULL == orte_debugger_test_daemon) ?
+                            MPIR_executable_path : orte_debugger_test_daemon);
+        /* add debugger info to launch message */
+        orte_debugger_daemon = OBJ_NEW(orte_job_t);
+        /* create a jobid for these daemons - this is done solely
+         * to avoid confusing the rest of the system's bookkeeping
+         */
+        orte_plm_base_create_jobid(orte_debugger_daemon);
+        /* flag the job as being debugger daemons */
+        orte_debugger_daemon->controls |= ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
+        /* unless directed, we do not forward output */
+        if (!MPIR_forward_output) {
+            orte_debugger_daemon->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+        }
+        /* add it to the global job pool */
+        ljob = ORTE_LOCAL_JOBID(orte_debugger_daemon->jobid);
+        opal_pointer_array_set_item(orte_job_data, ljob, orte_debugger_daemon);
+        /* create an app_context for the debugger daemon */
+        app = OBJ_NEW(orte_app_context_t);
+        if (NULL != orte_debugger_test_daemon) {
+            app->app = strdup(orte_debugger_test_daemon);
+        } else {
+            app->app = strdup((char*)MPIR_executable_path);
+        }
+        opal_argv_append_nosize(&app->argv, app->app);
+        build_debugger_args(app);
+        opal_pointer_array_add(orte_debugger_daemon->apps, app);
+        orte_debugger_daemon->num_apps = 1;
+    }
+}
+
+
+/*
+ * Initialization of data structures for running under a debugger
+ * using the MPICH/TotalView parallel debugger interface. This stage
+ * of initialization must occur after spawn
+ * 
+ * NOTE: We -always- perform this step to ensure that any debugger
+ * that attaches to us post-launch of the application can get a
+ * completed proctable
+ */
+static void orte_debugger_init_after_spawn(orte_job_t *jdata)
+{
+    orte_proc_t *proc;
+    orte_app_context_t *appctx;
+    orte_vpid_t i, j;
+    opal_buffer_t buf;
+    orte_process_name_t rank0;
+    int rc;
+
+    /* if we couldn't get thru the mapper stage, we might
+     * enter here with no procs. Avoid the "zero byte malloc"
+     * message by checking here
+     */
+    if (MPIR_proctable || 0 == jdata->num_procs) {
+        /* already initialized */
+        opal_output_verbose(5, orte_debug_output,
+                            "%s: debugger already initialized or zero procs",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        return;
+    }
+
+    /* fill in the proc table for the application processes */
+    
+    opal_output_verbose(5, orte_debug_output,
+                        "%s: Setting up debugger process table for applications",
+                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    
+    MPIR_debug_state = 1;
+    
+    /* set the total number of processes in the job */
+    MPIR_proctable_size = jdata->num_procs;
+    
+    /* allocate MPIR_proctable */
+    MPIR_proctable = (struct MPIR_PROCDESC *)malloc(sizeof(struct MPIR_PROCDESC) *
+                                                    MPIR_proctable_size);
+    if (MPIR_proctable == NULL) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return;
+    }
+    
+    if (orte_debugger_dump_proctable) {
+        opal_output(orte_clean_output, "MPIR Proctable for job %s", ORTE_JOBID_PRINT(jdata->jobid));
+    }
+
+    /* initialize MPIR_proctable */
+    for (j=0; j < jdata->num_procs; j++) {
+        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
+            continue;
+        }
+        /* store this data in the location whose index
+         * corresponds to the proc's rank
+         */
+        i = proc->name.vpid;
+        if (NULL == (appctx = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, proc->app_idx))) {
+            continue;
+        }
+        
+        MPIR_proctable[i].host_name = strdup(proc->node->name);
+        if ( 0 == strncmp(appctx->app, OPAL_PATH_SEP, 1 )) { 
+            MPIR_proctable[i].executable_name = 
+            opal_os_path( false, appctx->app, NULL ); 
+        } else {
+            MPIR_proctable[i].executable_name =
+            opal_os_path( false, appctx->cwd, appctx->app, NULL ); 
+        } 
+        MPIR_proctable[i].pid = proc->pid;
+        if (orte_debugger_dump_proctable) {
+            opal_output(orte_clean_output, "%s: Host %s Exe %s Pid %d",
+                        ORTE_VPID_PRINT(i), MPIR_proctable[i].host_name,
+                        MPIR_proctable[i].executable_name, MPIR_proctable[i].pid);
+        }
+    }
+
+    if (0 < opal_output_get_verbosity(orte_debug_output)) {
+        orte_debugger_dump();
+    }
+
+    /* if we are being launched under a debugger, then we must wait
+     * for it to be ready to go and do some things to start the job
+     */
+    if (MPIR_being_debugged) {
+        /* wait for all procs to have reported their contact info - this
+         * ensures that (a) they are all into mpi_init, and (b) the system
+         * has the contact info to successfully send a message to rank=0
+         */
+        ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
+        
+        MPIR_Breakpoint();
+        
+        /* send a message to rank=0 to release it */
+        OBJ_CONSTRUCT(&buf, opal_buffer_t); /* don't need anything in this */
+        rank0.jobid = jdata->jobid;
+        rank0.vpid = 0;
+        if (0 > (rc = orte_rml.send_buffer(&rank0, &buf, ORTE_RML_TAG_DEBUGGER_RELEASE, 0))) {
+            opal_output(0, "Error: could not send debugger release to MPI procs - error %s", ORTE_ERROR_NAME(rc));
+        }
+        OBJ_DESTRUCT(&buf);
+    }
+}
+
+static void open_fifo (void)
+{
+    if (attach_fd > 0) {
+	close(attach_fd);
+    }
+
+    attach_fd = open(MPIR_attach_fifo, O_RDONLY | O_NONBLOCK, 0);
+    if (attach_fd < 0) {
+	opal_output(0, "%s unable to open debugger attach fifo",
+		    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+	return;
+    }
+    opal_output_verbose(2, orte_debug_output,
+			"%s Monitoring debugger attach fifo %s",
+			ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+			MPIR_attach_fifo);
+    opal_event_set(opal_event_base, &attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
+
+    fifo_active = true;
+    opal_event_add(&attach, 0);
+}
+
+static void attach_debugger(int fd, short event, void *arg)
+{
+    orte_app_context_t *app;
+    unsigned char fifo_cmd;
+    int rc;
+    int32_t ljob;
+    orte_job_t *jdata;
+
+    /* read the file descriptor to clear that event, if necessary */
+    if (fifo_active) {
+	opal_event_del(&attach);
+	fifo_active = false;
+
+        rc = read(attach_fd, &fifo_cmd, sizeof(fifo_cmd));
+	if (!rc) {
+	    /* reopen device to clear hangup */
+	    open_fifo();
+	    return;
+	}
+        if (1 != fifo_cmd) {
+            /* ignore the cmd */
+            goto RELEASE;
+        }
+    }
+
+    if (!MPIR_being_debugged && !orte_debugger_test_attach) {
+        /* false alarm */
+        goto RELEASE;
+    }
+
+    opal_output_verbose(1, orte_debug_output,
+                        "%s Attaching debugger %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                        (NULL == orte_debugger_test_daemon) ? MPIR_executable_path : orte_debugger_test_daemon);
+
+    /* a debugger has attached! All the MPIR_Proctable
+     * data is already available, so we only need to
+     * check to see if we should spawn any daemons
+     */
+    if ('\0' != MPIR_executable_path[0] || NULL != orte_debugger_test_daemon) {
+        /* can only have one debugger */
+        if (NULL != orte_debugger_daemon) {
+            opal_output(0, "-------------------------------------------\n"
+                        "Only one debugger can be used on a job.\n"
+                        "-------------------------------------------\n");
+            goto RELEASE;
+        }
+        opal_output_verbose(2, orte_debug_output,
+                            "%s Spawning debugger daemons %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            (NULL == orte_debugger_test_daemon) ?
+                            MPIR_executable_path : orte_debugger_test_daemon);
+        /* this will be launched just like a regular job,
+         * so we do not use the global orte_debugger_daemon
+         * as this is reserved for co-location upon startup
+         */
+        jdata = OBJ_NEW(orte_job_t);
+        /* create a jobid for these daemons - this is done solely
+         * to avoid confusing the rest of the system's bookkeeping
+         */
+        orte_plm_base_create_jobid(jdata);
+        /* flag the job as being debugger daemons */
+        jdata->controls |= ORTE_JOB_CONTROL_DEBUGGER_DAEMON;
+        /* unless directed, we do not forward output */
+        if (!MPIR_forward_output) {
+            jdata->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
+        }
+        /* add it to the global job pool */
+        ljob = ORTE_LOCAL_JOBID(jdata->jobid);
+        opal_pointer_array_set_item(orte_job_data, ljob, jdata);
+        /* create an app_context for the debugger daemon */
+        app = OBJ_NEW(orte_app_context_t);
+        if (NULL != orte_debugger_test_daemon) {
+            app->app = strdup(orte_debugger_test_daemon);
+        } else {
+            app->app = strdup((char*)MPIR_executable_path);
+        }
+
+	jdata->state = ORTE_JOB_STATE_INIT;
+
+        opal_argv_append_nosize(&app->argv, app->app);
+        build_debugger_args(app);
+        opal_pointer_array_add(jdata->apps, app);
+        jdata->num_apps = 1;
+        /* setup the mapping policy to pernode so we get one
+         * daemon on each node
+         */
+        jdata->map = OBJ_NEW(orte_job_map_t);
+        jdata->map->mapping = ORTE_MAPPING_PPR;
+	jdata->map->ppr = strdup("1:n");
+        /* now go ahead and spawn this job */
+        if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
+        
+ RELEASE:
+    /* reset the read or timer event */
+    if (0 == orte_debugger_check_rate) {
+        fifo_active = true;
+        opal_event_add(&attach, 0);
+    } else if (!MPIR_being_debugged) {
+	ORTE_TIMER_EVENT(orte_debugger_check_rate, 0, attach_debugger);
+    }
+
+    /* notify the debugger that all is ready */
+    MPIR_Breakpoint();
+}
+
+static void build_debugger_args(orte_app_context_t *debugger)
+{
+    int i, j;
+    char mpir_arg[MPIR_MAX_ARG_LENGTH];
+
+    if ('\0' != MPIR_server_arguments[0]) {
+        j=0;
+        memset(mpir_arg, 0, MPIR_MAX_ARG_LENGTH);
+        for (i=0; i < MPIR_MAX_ARG_LENGTH; i++) {
+            if (MPIR_server_arguments[i] == '\0') {
+                if (0 < j) {
+                    opal_argv_append_nosize(&debugger->argv, mpir_arg);
+                    memset(mpir_arg, 0, MPIR_MAX_ARG_LENGTH);
+                    j=0;
+                }
+            } else {
+                mpir_arg[j] = MPIR_server_arguments[i];
+                j++;
+            }
+        }
+    }
 }

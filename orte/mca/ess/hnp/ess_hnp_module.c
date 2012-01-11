@@ -58,8 +58,6 @@
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/sensor/sensor.h"
-#include "orte/mca/debugger/base/base.h"
-#include "orte/mca/debugger/debugger.h"
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
@@ -622,18 +620,6 @@ static int rte_init(void)
     /* start the local sensors */
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
     
-    /* start the debuggers */
-    if (ORTE_SUCCESS != (ret = orte_debugger_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_debugger_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_debugger_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_debugger_select";
-        goto error;
-    }
-
     /* if a tool has launched us and is requesting event reports,
      * then set its contact info into the comm system
      */
@@ -700,9 +686,6 @@ static int rte_finalize(void)
 #endif  /* __WINDOWS__ */
         signals_set = false;
     }
-
-    /* stop the debuggers */
-    orte_debugger_base_close();
 
     /* stop the local sensors */
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
@@ -1003,9 +986,6 @@ static void abort_exit_callback(int fd, short ign, void *arg)
      * to terminate!
      */
     if (!orte_never_launched) {
-        /* if the debuggers were run, clean up */
-        orte_debugger.finalize();
-
         /*
          * Turn off the process recovery functionality, if it was enabled.
          * This keeps the errmgr from trying to recover from the shutdown

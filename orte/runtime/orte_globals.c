@@ -91,6 +91,11 @@ char **orte_fork_agent=NULL;
 
 /* debugger job */
 orte_job_t *orte_debugger_daemon=NULL;
+bool orte_debugger_dump_proctable;
+char *orte_debugger_test_daemon;
+bool orte_debugger_test_attach;
+bool orte_debugger_enable_fifo_attach;
+int orte_debugger_check_rate;
 
 /* exit flags */
 int orte_exit_status = 0;

@@ -49,7 +49,6 @@
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/debugger/debugger.h"
 #include "orte/mca/routed/routed.h"
 
 #include "orte/util/session_dir.h"
@@ -128,9 +127,6 @@ void orte_jobs_complete(void)
         }
     }
     
-    /* if the debuggers were run, clean up */
-    orte_debugger.finalize();
-
     if (0 < orte_routed.num_routes()) {
         orte_plm.terminate_orteds();
     }
