@@ -75,7 +75,8 @@ static opal_shmem_ds_t shmem_ds;
 /* ////////////////////////////////////////////////////////////////////////// */
 static mca_common_sm_module_t *
 attach_and_init(size_t size_ctl_structure,
-                size_t data_seg_alignment)
+                size_t data_seg_alignment,
+                bool first_call)
 {
     mca_common_sm_module_t *map = NULL;
     mca_common_sm_seg_header_t *seg = NULL;
@@ -129,6 +130,12 @@ attach_and_init(size_t size_ctl_structure,
      * seg_num_procs_attached_and_inited. this value is used by
      * opal_shmem_unlink.
      */
+    if (first_call) {
+        /* make sure that the first call to this function initializes
+         * seg_num_procs_inited to zero */
+        map->module_seg->seg_num_procs_inited = 0;
+        opal_atomic_wmb();
+    }
     (void)opal_atomic_add_size_t(&map->module_seg->seg_num_procs_inited, 1);
     opal_atomic_wmb();
 
@@ -202,7 +209,7 @@ mca_common_sm_init(ompi_proc_t **procs,
     if (lowest_local_proc) {
         if (OPAL_SUCCESS == opal_shmem_segment_create(&shmem_ds, file_name,
                                                       size)) {
-            map = attach_and_init(size_ctl_structure, data_seg_alignment);
+            map = attach_and_init(size_ctl_structure, data_seg_alignment, true);
             if (NULL != map) {
                 size_t mem_offset = map->module_data_addr -
                                         (unsigned char *)map->module_seg;
@@ -237,7 +244,8 @@ mca_common_sm_init(ompi_proc_t **procs,
      */
     if (OPAL_SHMEM_DS_IS_VALID(&shmem_ds)) {
         if (!lowest_local_proc) {
-            map = attach_and_init(size_ctl_structure, data_seg_alignment);
+            map = attach_and_init(size_ctl_structure, data_seg_alignment,
+                                  false);
         }
         else {
             /* wait until every other participating process has attached to the
