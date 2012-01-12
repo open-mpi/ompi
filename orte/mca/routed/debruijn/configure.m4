@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2011-2012 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
