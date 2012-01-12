@@ -917,9 +917,6 @@ static int update_routing_tree(orte_jobid_t jobid)
                 child = OBJ_NEW(orte_routed_tree_t);
                 child->vpid = next;
                 opal_list_append (&my_children, &child->super);
-
-                fprintf (stderr, "New tree route %s -> %d\n", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         next);
             }
         }
     }
