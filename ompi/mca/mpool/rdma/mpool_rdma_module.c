@@ -99,6 +99,13 @@ void* mca_mpool_rdma_alloc(mca_mpool_base_module_t *mpool, size_t size,
     if(0 == align)
         align = mca_mpool_base_page_size;
 
+#if OMPI_CUDA_SUPPORT
+    /* CUDA cannot handle registering overlapping regions, so make
+     * sure each region is page sized and page aligned. */
+    align = mca_mpool_base_page_size;
+    size = OPAL_ALIGN(size, mca_mpool_base_page_size, size_t);
+#endif
+
 #ifdef HAVE_POSIX_MEMALIGN
     if((errno = posix_memalign(&base_addr, align, size)) != 0)
         return NULL;
