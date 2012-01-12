@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c)      2011 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,7 +41,6 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 #include "orte/util/proc_info.h"
-#include "orte/mca/debugger/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -255,7 +256,7 @@ static void process_msg(int fd, short event, void *data)
                     job = jdata->jobid;
 
 		    /* output debugger proctable, if requested */
-		    if (orte_debugger_base.dump_proctable) {
+		    if (orte_debugger_dump_proctable) {
 		      char *output;
 		      opal_dss.print(&output, NULL, jdata->map, ORTE_JOB_MAP);
 		      if (orte_xml_output) {

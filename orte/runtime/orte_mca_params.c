@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c)      2011 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -113,7 +115,7 @@ int orte_register_params(void)
                                 false, false, (int)false, &value);
     orte_leave_session_attached = OPAL_INT_TO_BOOL(value);
     
-    /* See comment in mca/debugger/mpir/mpir.c about this MCA
+    /* See comment in orte/tools/orterun/orterun.c about this MCA
        param (this param is internal) */
     mca_base_param_reg_int_name("orte",
                                 "in_parallel_debugger",
@@ -122,6 +124,27 @@ int orte_register_params(void)
                                 true, false, 0, &value);
     orte_in_parallel_debugger = OPAL_INT_TO_BOOL(value);
     
+    mca_base_param_reg_int_name("orte",
+                                "output_debugger_proctable",
+                                "Whether or not to output the debugger proctable after launch (default: false)",
+                                false, false, 0, &value);
+    orte_debugger_dump_proctable = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_string_name("orte", "debugger_test_daemon",
+                                   "Name of the executable to be used to simulate a debugger colaunch (relative or absolute path)",
+                                   false, false, NULL, &orte_debugger_test_daemon);
+
+    mca_base_param_reg_int_name("orte",
+                                "debugger_test_attach",
+                                "Test debugger colaunch after debugger attachment",
+                                false, false, 0, &value);
+    orte_debugger_test_attach = OPAL_INT_TO_BOOL(value);
+
+    mca_base_param_reg_int_name("orte",
+                                "debugger_check_rate",
+                                "Set rate (in secs) for auto-detect of debugger attachment (0 => do not check)",
+                                false, false, 0, &orte_debugger_check_rate);
+
     mca_base_param_reg_int_name("orte", "do_not_launch",
                                 "Perform all necessary operations to prepare to launch the application, but do not actually launch it",
                                 false, false, (int)false, &value);

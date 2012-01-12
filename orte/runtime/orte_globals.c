@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c)      2011 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -83,6 +85,11 @@ char **orted_cmd_line=NULL;
 
 /* debugger job */
 orte_job_t *orte_debugger_daemon=NULL;
+bool orte_debugger_dump_proctable;
+char *orte_debugger_test_daemon;
+bool orte_debugger_test_attach;
+bool orte_debugger_enable_fifo_attach;
+int orte_debugger_check_rate;
 
 /* exit triggers and flags */ 
 orte_trigger_event_t orte_exit, orteds_exit;
@@ -174,7 +181,7 @@ bool orte_xml_output = false;
 FILE *orte_xml_fp = NULL;
 char *orte_job_ident = NULL;
 
-/* See comment in orte/mca/debugger/mpir/mpir.c about this MCA
+/* See comment in orte/tools/orterun/orterun.c about this MCA
    param */
 bool orte_in_parallel_debugger = false;
 

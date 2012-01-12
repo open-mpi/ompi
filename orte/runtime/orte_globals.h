@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c)      2011 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,7 +69,7 @@ ORTE_DECLSPEC extern orte_process_name_t orte_name_invalid;  /** instantiated in
 /* define the name of my daemon */
 #define ORTE_PROC_MY_DAEMON     (&orte_process_info.my_daemon)
 
-/* See comment in orte/tools/orterun/debuggers.c about this MCA
+/* See comment in orte/tools/orterun.c about this MCA
    param */
 ORTE_DECLSPEC extern bool orte_in_parallel_debugger;
 
@@ -559,6 +561,11 @@ ORTE_DECLSPEC extern char **orted_cmd_line;
 
 /* debugger job */
 ORTE_DECLSPEC extern orte_job_t *orte_debugger_daemon;
+ORTE_DECLSPEC extern bool orte_debugger_dump_proctable;
+ORTE_DECLSPEC extern char *orte_debugger_test_daemon;
+ORTE_DECLSPEC extern bool orte_debugger_test_attach;
+ORTE_DECLSPEC extern bool orte_debugger_enable_fifo_attach;
+ORTE_DECLSPEC extern int orte_debugger_check_rate;
 
 /* exit triggers and flags */
 ORTE_DECLSPEC extern orte_trigger_event_t orte_exit;

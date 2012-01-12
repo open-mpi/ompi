@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Oracle and/or its affiliates.  All rights reserved. * $COPYRIGHT$
+ * Copyright (c)      2011 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * 
  * Additional copyrights may follow
  * 
@@ -56,7 +58,6 @@
 #if ORTE_ENABLE_MULTICAST
 #include "orte/mca/rmcast/base/base.h"
 #endif
-#include "orte/mca/debugger/base/base.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #if OPAL_ENABLE_FT_CR == 1
@@ -524,18 +525,6 @@ static int rte_init(void)
         ORTE_ERROR_LOG(ret);
         error = "orte_notifer_select";
         goto error;
-    }
-
-    /* start the debuggers */ 
-    if (ORTE_SUCCESS != (ret = orte_debugger_base_open())) {
-      ORTE_ERROR_LOG(ret);
-      error = "orte_debugger_open";
-      goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_debugger_base_select())) {
-      ORTE_ERROR_LOG(ret);
-      error = "orte_debugger_select";
-      goto error;
     }
 
     /* if a tool has launched us and is requesting event reports,
