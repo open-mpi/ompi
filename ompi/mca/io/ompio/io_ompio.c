@@ -958,6 +958,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
 
 
 /*Based on ROMIO's domain partitioning implementaion 
+Series of functions implementations for two-phase implementation
 Functions to support Domain partitioning and aggregator
 selection for two_phase .
 This is commom to both two_phase_read and write. */
@@ -977,7 +978,7 @@ int ompi_io_ompio_domain_partition (mca_io_ompio_file_t *fh,
    
 
     
-    OMPI_MPI_OFFSET_TYPE min_st_offset, max_end_offset, *fd_start, *fd_end, fd_size;
+    OMPI_MPI_OFFSET_TYPE min_st_offset, max_end_offset, *fd_start=NULL, *fd_end=NULL, fd_size;
     int i;
 
 
@@ -1000,8 +1001,17 @@ int ompi_io_ompio_domain_partition (mca_io_ompio_file_t *fh,
     
     *fd_st_ptr = (OMPI_MPI_OFFSET_TYPE *)
 	malloc(nprocs_for_coll*sizeof(OMPI_MPI_OFFSET_TYPE)); 
+
+    if ( NULL == *fd_st_ptr ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     *fd_end_ptr = (OMPI_MPI_OFFSET_TYPE *)
 	malloc(nprocs_for_coll*sizeof(OMPI_MPI_OFFSET_TYPE)); 
+
+    if ( NULL == *fd_end_ptr ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     
     fd_start = *fd_st_ptr;
@@ -1010,7 +1020,7 @@ int ompi_io_ompio_domain_partition (mca_io_ompio_file_t *fh,
     
     if (striping_unit > 0){
 	
-	/*Wei-keng Liao's  implementation for field domain alignment to nearest lock boundary. */
+	/* Lock Boundary based domain partitioning */
 	int rem_front, rem_back;
 	OMPI_MPI_OFFSET_TYPE end_off;
 	
@@ -1025,7 +1035,7 @@ int ompi_io_ompio_domain_partition (mca_io_ompio_file_t *fh,
 		end_off += rem_back;
         fd_end[0] = end_off - 1;
     
-	      /* align fd_end[i] to the nearest file lock boundary */
+	/* align fd_end[i] to the nearest file lock boundary */
         for (i=1; i<nprocs_for_coll; i++) {
             fd_start[i] = fd_end[i-1] + 1;
             end_off     = min_st_offset + fd_size * (i+1);
@@ -1129,26 +1139,29 @@ int ompi_io_ompio_calc_others_requests(mca_io_ompio_file_t *fh,
     mca_io_ompio_access_array_t *others_req=NULL;
     
     count_others_req_per_proc = (int *)malloc(fh->f_size*sizeof(int));
+
     if ( NULL == count_others_req_per_proc ) {
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
     /* Change it to the ompio specific alltoall in coll module : VVN*/
-    fh->f_comm->c_coll.coll_alltoall (
-	count_my_req_per_proc,
-	1,
-	MPI_INT,
-	count_others_req_per_proc, 
-	1,
-	MPI_INT,
-	fh->f_comm, 
-	fh->f_comm->c_coll.coll_alltoall_module);
+    ret =  fh->f_comm->c_coll.coll_alltoall (count_my_req_per_proc,
+					     1,
+					     MPI_INT,
+					     count_others_req_per_proc, 
+					     1,
+					     MPI_INT,
+					     fh->f_comm, 
+					     fh->f_comm->c_coll.coll_alltoall_module);
+    if ( OMPI_SUCCESS != ret ) {
+	return ret;
+    }
     
 #if 0
     for( i = 0; i< fh->f_size; i++){
 	printf("my: %d, others: %d\n",count_my_req_per_proc[i],
 	       count_others_req_per_proc[i]);
-
+	
     }
 #endif
 
@@ -1176,6 +1189,7 @@ int ompi_io_ompio_calc_others_requests(mca_io_ompio_file_t *fh,
     requests = (MPI_Request *)
 	malloc(1+2*(count_my_req_procs+count_others_req_procs)*
 	       sizeof(MPI_Request)); 
+
     if ( NULL == requests ) {
 	ret = OMPI_ERR_OUT_OF_RESOURCE;
 	goto exit;
@@ -1186,7 +1200,7 @@ int ompi_io_ompio_calc_others_requests(mca_io_ompio_file_t *fh,
 	if (others_req[i].count){
             ret = MCA_PML_CALL(irecv(others_req[i].offsets,
 				     others_req[i].count,
-				     MPI_OFFSET,
+				     MPI_LONG,
 				     i,
 				     i+fh->f_rank,
 				     fh->f_comm,
@@ -1217,7 +1231,7 @@ int ompi_io_ompio_calc_others_requests(mca_io_ompio_file_t *fh,
 	if (my_req[i].count) {
 	    ret = MCA_PML_CALL(isend(my_req[i].offsets,
 				     my_req[i].count,
-				     MPI_OFFSET,
+				     MPI_LONG,
 				     i,
 				     i+fh->f_rank,
 				     MCA_PML_BASE_SEND_STANDARD, 
@@ -1290,15 +1304,23 @@ int ompi_io_ompio_calc_my_requests (mca_io_ompio_file_t *fh,
     
     
     *count_my_req_per_proc_ptr = (int*)malloc(fh->f_size*sizeof(int)); 
+    
+    if ( NULL == count_my_req_per_proc_ptr ){
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     count_my_req_per_proc = *count_my_req_per_proc_ptr;
     
     for (i=0;i<fh->f_size;i++){
 	count_my_req_per_proc[i] = 0;
     }
-    
-    
-    
+        
     buf_idx = (int *) malloc (fh->f_size * sizeof(int));
+    
+    if ( NULL == buf_idx ){ 
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    
     for (i=0; i < fh->f_size; i++) buf_idx[i] = -1;
     
     for (i=0;i<contig_access_count; i++){
@@ -1308,8 +1330,7 @@ int ompi_io_ompio_calc_my_requests (mca_io_ompio_file_t *fh,
 	off = (OMPI_MPI_OFFSET_TYPE)offset_len[i].iov_base;
 	fd_len = (OMPI_MPI_OFFSET_TYPE)offset_len[i].iov_len;
 	proc = ompi_io_ompio_calc_aggregator(fh, off, min_st_offset, &fd_len, fd_size, 
-					     fd_start, fd_end, striping_unit, num_aggregators,
-					     aggregator_list);
+					     fd_start, fd_end, striping_unit, num_aggregators,aggregator_list);
 	count_my_req_per_proc[proc]++;
 	rem_len = offset_len[i].iov_len - fd_len;
 	
@@ -1329,6 +1350,9 @@ int ompi_io_ompio_calc_my_requests (mca_io_ompio_file_t *fh,
 /*    printf("%d: fh->f_size : %d\n", fh->f_rank,fh->f_size);*/
     *my_req_ptr =  (mca_io_ompio_access_array_t *)
 	malloc (fh->f_size * sizeof(mca_io_ompio_access_array_t));
+    if ( NULL == *my_req_ptr ) {
+	return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     my_req = *my_req_ptr;
     
     count_my_req_procs = 0;
@@ -1336,8 +1360,17 @@ int ompi_io_ompio_calc_my_requests (mca_io_ompio_file_t *fh,
 	if(count_my_req_per_proc[i]) {
 	    my_req[i].offsets = (OMPI_MPI_OFFSET_TYPE *)
 		malloc(count_my_req_per_proc[i] * sizeof(OMPI_MPI_OFFSET_TYPE));
+	    
+	    if ( NULL == my_req[i].offsets ) {
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
+
 	    my_req[i].lens = (int *)
 		malloc(count_my_req_per_proc[i] * sizeof(int));
+
+	    if ( NULL == my_req[i].lens ) {
+		return OMPI_ERR_OUT_OF_RESOURCE;
+	    }
 	    count_my_req_procs++;
 	}
 	my_req[i].count = 0; 
@@ -1404,7 +1437,7 @@ int ompi_io_ompio_calc_my_requests (mca_io_ompio_file_t *fh,
     
     *count_my_req_procs_ptr = count_my_req_procs;
     *buf_indices = buf_idx;
-
+    
     return OMPI_SUCCESS;
 }
 /*Two-phase support functions ends here!*/				    
