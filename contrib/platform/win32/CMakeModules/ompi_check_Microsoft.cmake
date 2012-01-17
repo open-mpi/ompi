@@ -151,11 +151,15 @@ IF(NOT MICROSOFT_CHECK_DONE)
     # exported by kernel32.dll. If we force the usage of TRY_RUN
     # here we will check for both in same time: compilation and run.
 
-    IF(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
-      SET(FUNCTION_LIST Exchange ExchangeAcquire ExchangeRelease Exchange64)
-    ELSE(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
+	IF(OMPI_WANT_XP_COMPATIBLE)
       SET(FUNCTION_LIST Exchange ExchangeAcquire ExchangeRelease)
-    ENDIF(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
+	ELSE(OMPI_WANT_XP_COMPATIBLE)
+      IF(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
+        SET(FUNCTION_LIST Exchange ExchangeAcquire ExchangeRelease Exchange64)
+      ELSE(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
+        SET(FUNCTION_LIST Exchange ExchangeAcquire ExchangeRelease)
+      ENDIF(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
+	ENDIF((OMPI_WANT_XP_COMPATIBLE))
 
     FOREACH(FUNCTION ${FUNCTION_LIST})
       MESSAGE( STATUS "Checking for InterlockedCompare${FUNCTION}...")

@@ -253,6 +253,8 @@ OMPI_DEF_OPT(OPAL_EVENT_HAVE_THREAD_SUPPORT "Whether we want to enable event lib
 
 OMPI_DEF_OPT(OMPI_RELEASE_BUILD "Whether it is a build for binary release (this will skip the path settings in mca_installdirs_config)." OFF)
 
+OMPI_DEF_OPT(OMPI_WANT_XP_COMPATIBLE "Whether we want to build with Windows XP compatible functions (with InterlockedCompareExchange64 suooprt)." ON)
+
 IF (NOT MSVC)
 
 ###################################################################
