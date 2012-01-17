@@ -466,7 +466,7 @@ int orte_register_params(void)
 
     mca_base_param_reg_int_name("orte", "preload_binaries",
                                 "Preload the binaries on remote machines before starting remote proceses",
-                                false, false, 1, &value);
+                                false, false, (int)false, &value);
     orte_preload_binaries = OPAL_INT_TO_BOOL(value);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
