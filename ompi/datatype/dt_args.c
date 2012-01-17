@@ -452,6 +452,9 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
     memcpy( next_packed, args->i, sizeof(int) * args->ci );
     next_packed += args->ci * sizeof(int);
 
+    /* description of next datatype should be 64 bits aligned */
+    OMPI_DDT_ALIGN_PTR(next_packed, char*);
+
     /* copy the rest of the data */
     for( i = 0; i < args->cd; i++ ) {
         ompi_datatype_t* temp_data = args->d[i];
