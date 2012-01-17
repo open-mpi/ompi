@@ -469,6 +469,8 @@ static inline int __ompi_datatype_pack_description( ompi_datatype_t* datatype,
     position = (int*)next_packed;
     next_packed += sizeof(int) * args->cd;
 
+    /* description of next datatype should be 64 bits aligned */
+    OMPI_DATATYPE_ALIGN_PTR(next_packed, char*);
     /* copy the aray of counts (32 bits aligned) */
     memcpy( next_packed, args->i, sizeof(int) * args->ci );
     next_packed += args->ci * sizeof(int);
