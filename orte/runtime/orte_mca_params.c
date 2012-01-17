@@ -463,6 +463,12 @@ int orte_register_params(void)
                                    "Comma-delimited environmental variables to forward, can include value to set",
                                    false, false, NULL, &orte_forward_envars);
 
+
+    mca_base_param_reg_int_name("orte", "preload_binaries",
+                                "Preload the binaries on remote machines before starting remote proceses",
+                                false, false, 1, &value);
+    orte_preload_binaries = OPAL_INT_TO_BOOL(value);
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;

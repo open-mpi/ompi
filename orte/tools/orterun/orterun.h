@@ -46,7 +46,6 @@ struct orterun_globals_t {
     char *appfile;
     char *wdir;
     char *path;
-    bool preload_binary;
     char *preload_files;
     char *preload_files_dest_dir;
     opal_mutex_t lock;
