@@ -16,6 +16,7 @@
 static inline void mca_btl_ugni_frag_constructor (mca_btl_ugni_base_frag_t *frag)
 {
     /* send memory does not need to be registered so we do not need a mpool */
+    memset ((char *) frag + sizeof (frag->base), 0, sizeof (*frag) - sizeof (frag->base));
     frag->hdr = (mca_btl_ugni_frag_hdr_t *) calloc (1, sizeof (mca_btl_ugni_frag_hdr_t) + mca_btl_ugni_component.eager_limit);
     frag->segments[0].seg_addr.pval = (void *) (frag->hdr + 1);
 }
@@ -30,8 +31,7 @@ static inline void mca_btl_ugni_frag_destructor (mca_btl_ugni_base_frag_t *frag)
 static inline void mca_btl_ugni_rdma_frag_constructor (mca_btl_ugni_base_frag_t *frag)
 {
     /* we don't need any buffer memory for rdma frags */
-    frag->hdr = NULL;
-    frag->segments[0].seg_addr.pval = NULL;
+    memset ((char *) frag + sizeof (frag->base), 0, sizeof (*frag) - sizeof (frag->base));
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_ugni_base_frag_t, mca_btl_base_descriptor_t,
