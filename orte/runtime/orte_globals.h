@@ -657,6 +657,9 @@ ORTE_DECLSPEC extern int orte_stat_history_size;
 /* envars to forward */
 ORTE_DECLSPEC extern char *orte_forward_envars;
 
+/* preload binaries */
+ORTE_DECLSPEC extern bool orte_preload_binaries;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

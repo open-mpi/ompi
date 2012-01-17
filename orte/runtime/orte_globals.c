@@ -185,6 +185,9 @@ int orte_stat_history_size;
 /* envars to forward */
 char *orte_forward_envars = NULL;
 
+/* preload binaries */
+bool orte_preload_binaries = false;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;

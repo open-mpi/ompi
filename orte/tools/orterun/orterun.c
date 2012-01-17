@@ -220,8 +220,8 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       "Command used to start processes on remote nodes (default: orted)" },
     
     /* Preload the binary on the remote machine */
-    { NULL, NULL, NULL, 's', NULL, "preload-binary", 0,
-      &orterun_globals.preload_binary, OPAL_CMD_LINE_TYPE_BOOL,
+    { "orte", "preload", "binaries", 's', NULL, "preload-binary", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Preload the binary on the remote machine before starting the remote process." },
 
     /* Preload files on the remote machine */
@@ -911,7 +911,6 @@ static int init_globals(void)
         free( orterun_globals.path );
     orterun_globals.path =        NULL;
 
-    orterun_globals.preload_binary = false;
     orterun_globals.preload_files  = NULL;
     orterun_globals.preload_files_dest_dir = NULL;
 
@@ -1677,7 +1676,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     total_num_apps++;
 
     /* Preserve if we are to preload the binary */
-    app->preload_binary = orterun_globals.preload_binary;
+    app->preload_binary = orte_preload_binaries;
     if( NULL != orterun_globals.preload_files)
         app->preload_files  = strdup(orterun_globals.preload_files);
     else 
