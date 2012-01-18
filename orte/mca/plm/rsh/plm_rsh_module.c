@@ -877,6 +877,30 @@ static int rsh_launch(orte_job_t *jdata)
     orte_plm_globals.spawn_status = ORTE_ERR_FATAL;
     OPAL_THREAD_UNLOCK(&orte_plm_globals.spawn_lock);
     
+    /* if we are launching debugger daemons, then just go
+     * do it - no new daemons will be launched
+     */
+    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jdata->controls) {
+        failed_job = jdata->jobid;
+        if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
+            ORTE_ERROR_LOG(rc);
+            failed_launch = true;
+            goto cleanup;
+        }
+        /* wait for the launch to complete */
+        OPAL_THREAD_LOCK(&orte_plm_globals.spawn_lock);
+        while (!orte_plm_globals.spawn_complete) {
+            opal_condition_wait(&orte_plm_globals.spawn_cond, &orte_plm_globals.spawn_lock);
+        }
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "completed spawn for job %s", ORTE_JOBID_PRINT(jdata->jobid)));
+        orte_plm_globals.spawn_in_progress = false;
+        opal_condition_broadcast(&orte_plm_globals.spawn_in_progress_cond);
+        OPAL_THREAD_UNLOCK(&orte_plm_globals.spawn_lock);
+        failed_launch = false;
+        goto cleanup;
+    }
+
     /* default to declaring the daemon launch as having failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
