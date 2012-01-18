@@ -79,6 +79,7 @@
 #define mpi_comm_spawn_f pmpi_comm_spawn_f
 #define mpi_comm_spawn_multiple_f pmpi_comm_spawn_multiple_f
 #define mpi_comm_split_f pmpi_comm_split_f
+#define mpi_comm_split_type_f pmpi_comm_split_type_f
 #define mpi_comm_test_inter_f pmpi_comm_test_inter_f
 #define mpi_dims_create_f pmpi_dims_create_f
 #define mpi_errhandler_create_f pmpi_errhandler_create_f

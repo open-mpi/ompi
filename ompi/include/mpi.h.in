@@ -614,6 +614,15 @@ enum {
   MPI_COMBINER_RESIZED
 };
 
+/* 
+ * Communicator split type constants.
+ * Do not change the order of these without also modifying mpif.h.in.
+ */
+enum {
+  MPI_COMM_TYPE_SHARED
+};
+
+
 /*
  * NULL handles
  */
@@ -1118,6 +1127,7 @@ OMPI_DECLSPEC  int MPI_Comm_spawn_multiple(int count, char **array_of_commands, 
                                            int root, MPI_Comm comm, MPI_Comm *intercomm,
                                            int *array_of_errcodes);
 OMPI_DECLSPEC  int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
+OMPI_DECLSPEC  int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int MPI_Comm_test_inter(MPI_Comm comm, int *flag);
 OMPI_DECLSPEC  int MPI_Dims_create(int nnodes, int ndims, int *dims);
 OMPI_DECLSPEC  MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler);
@@ -1644,6 +1654,7 @@ OMPI_DECLSPEC  int PMPI_Comm_spawn_multiple(int count, char **array_of_commands,
                                             int root, MPI_Comm comm, MPI_Comm *intercomm,
                                             int *array_of_errcodes);
 OMPI_DECLSPEC  int PMPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm);
+OMPI_DECLSPEC  int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm *newcomm);
 OMPI_DECLSPEC  int PMPI_Comm_test_inter(MPI_Comm comm, int *flag);
 OMPI_DECLSPEC  int PMPI_Dims_create(int nnodes, int ndims, int *dims);
 OMPI_DECLSPEC  MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);

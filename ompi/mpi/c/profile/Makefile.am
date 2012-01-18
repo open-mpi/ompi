@@ -101,6 +101,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pcomm_spawn.c \
         pcomm_spawn_multiple.c \
         pcomm_split.c \
+        pcomm_split_type.c \
         pcomm_test_inter.c \
         pdims_create.c \
         perrhandler_c2f.c \

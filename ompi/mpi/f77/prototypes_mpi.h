@@ -124,6 +124,7 @@ PN(void, mpi_comm_size, MPI_COMM_SIZE, (MPI_Fint *comm, MPI_Fint *size, MPI_Fint
 PN(void, mpi_comm_spawn, MPI_COMM_SPAWN, (char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int command_len, int argv_len));
 PN(void, mpi_comm_spawn_multiple, MPI_COMM_SPAWN_MULTIPLE, (MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr, int cmd_len, int argv_len));
 PN(void, mpi_comm_split, MPI_COMM_SPLIT, (MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr));
+PN(void, mpi_comm_split_type, MPI_COMM_SPLIT_TYPE, (MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key, MPI_Fint *info, MPI_Fint *newcomm, MPI_Fint *ierr));
 PN(void, mpi_comm_test_inter, MPI_COMM_TEST_INTER, (MPI_Fint *comm, ompi_fortran_logical_t *flag, MPI_Fint *ierr));
 PN(void, mpi_dims_create, MPI_DIMS_CREATE, (MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr));
 PN(void, mpi_errhandler_create, MPI_ERRHANDLER_CREATE, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));

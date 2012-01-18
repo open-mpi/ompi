@@ -12,6 +12,7 @@
 !                         All rights reserved.
 ! Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 ! Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+! Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
 ! $COPYRIGHT$
 !
 ! Additional copyrights may follow
@@ -385,6 +386,13 @@
       parameter (MPI_COMBINER_F90_COMPLEX=15)
       parameter (MPI_COMBINER_F90_INTEGER=16)
       parameter (MPI_COMBINER_RESIZED=17)
+
+!
+!     Communicator split type constants
+!
+      integer MPI_COMM_TYPE_SHARED
+      parameter (MPI_COMM_TYPE_SHARED=0)
+
 !
 !     lookup table indices
 !
