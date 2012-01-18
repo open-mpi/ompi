@@ -73,7 +73,6 @@ static int rte_init(void)
 {
     int ret;
     char *error = NULL;
-    char **hosts = NULL;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -88,19 +87,11 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
-        if (NULL != orte_node_regex) {
-            /* extract the nodes */
-            if (ORTE_SUCCESS != (ret = orte_regex_extract_node_names(orte_node_regex, &hosts))) {
-                error = "orte_regex_extract_node_names";
-                goto error;
-            }
-        }
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
+        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;
         }
-        opal_argv_free(hosts);
         return ORTE_SUCCESS;
     }
     
@@ -116,23 +107,10 @@ static int rte_init(void)
         
     }
     
-    /* otherwise, I must be an application process - use
-     * the default procedure to finish my setup
-     */
-    if (ORTE_SUCCESS != (ret = orte_ess_base_app_setup())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_ess_base_app_setup";
-        goto error;
-    }
-    /* setup the nidmap arrays */
-    if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_util_nidmap_init";
-        goto error;
-    }
+    /* no other options are supported! */
+    error = "ess_error";
+    ret = ORTE_ERROR;
 
-    return ORTE_SUCCESS;
-    
 error:
     if (ORTE_ERR_SILENT != ret && !orte_report_silent_errors) {
         orte_show_help("help-orte-runtime.txt",

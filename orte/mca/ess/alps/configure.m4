@@ -26,7 +26,7 @@
 # than the CNOS component to ensure we don't get both
 # since the ALPS component will -only- build if specifically
 # ordered to do so - which means we don't want the CNOS one
-AC_DEFUN([MCA_orte_ess_alps_PRIORITY], [10])
+AC_DEFUN([MCA_orte_ess_alps_PRIORITY], [15])
 
 # MCA_ess_alps_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
@@ -52,10 +52,6 @@ AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
     ORTE_CHECK_ALPS([ess_alps],
         [orte_mca_ess_alps_happy="yes"],
         [orte_mca_ess_alps_happy="no"])
-
-    AC_DEFINE_UNQUOTED([ORTE_MCA_ESS_ALPS_HAVE_CNOS],
-                       [$orte_mca_ess_alps_have_cnos],
-                       [Whether we have CNOS support in alps ess or not])
 
     AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_without_full_support" = 0],
           [$1],

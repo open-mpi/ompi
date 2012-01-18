@@ -63,7 +63,6 @@
 #include "orte/types.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
-#include "orte/util/regex.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_quit.h"
@@ -328,7 +327,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     
     /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                          "slurm", &proc_vpid_index,
+                                          NULL, &proc_vpid_index,
                                           nodelist_flat);
     free(nodelist_flat);
 

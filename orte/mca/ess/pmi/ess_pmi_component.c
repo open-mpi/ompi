@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * $COPYRIGHT$
  * 
@@ -103,12 +103,10 @@ static bool pmi_startup(void)
 
 static int pmi_component_query(mca_base_module_t **module, int *priority)
 {
-    /* for now, only use PMI when direct launched */
-    if (!ORTE_PROC_IS_HNP &&
-        NULL == orte_process_info.my_hnp_uri &&
-        pmi_startup()) {
+    /* we are available anywhere PMI is available, but not for HNP itself */
+    if (!ORTE_PROC_IS_HNP && pmi_startup()) {
         /* if PMI is available, use it */
-        *priority = 100;
+        *priority = 40;
         *module = (mca_base_module_t *)&orte_ess_pmi_module;
         return ORTE_SUCCESS;
     }
