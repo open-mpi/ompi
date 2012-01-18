@@ -72,7 +72,7 @@ int orte_ess_slurm_component_query(mca_base_module_t **module, int *priority)
     /* Are we running under a SLURM job? Were
      * we given a path back to the HNP? If the
      * answer to both is "yes", then we were launched
-     * by mpirun in a slurm world
+     * by mpirun in a slurm world, so make ourselves available
      */
     
     if (NULL != getenv("SLURM_JOBID") &&

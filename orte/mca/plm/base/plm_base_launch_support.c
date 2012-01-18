@@ -815,9 +815,11 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     }
     
     /* tell the orted what ESS component to use */
-    opal_argv_append(argc, argv, "-mca");
-    opal_argv_append(argc, argv, "ess");
-    opal_argv_append(argc, argv, ess);
+    if (NULL != ess) {
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "ess");
+        opal_argv_append(argc, argv, ess);
+    }
     
     /* pass the daemon jobid */
     opal_argv_append(argc, argv, "-mca");

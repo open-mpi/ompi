@@ -310,7 +310,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     
     /* Add basic orted command line options, including debug flags */
     orte_plm_base_orted_append_basic_args(&argc, &argv,
-                                          "alps",
+                                          NULL,
                                           &proc_vpid_index,
                                           nodelist_flat);
     free(nodelist_flat);
