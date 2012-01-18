@@ -119,6 +119,7 @@ libmpi_c_mpi_la_SOURCES = \
         comm_spawn.c \
         comm_spawn_multiple.c \
         comm_split.c \
+        comm_split_type.c \
         comm_test_inter.c \
         dims_create.c \
         errhandler_c2f.c \

@@ -631,6 +631,260 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     *newcomm = newcomp;
     return ( rc );
 }
+
+
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
+int
+ompi_comm_split_type(ompi_communicator_t *comm, 
+                     int split_type, int key,
+                     ompi_info_t *info,
+                     ompi_communicator_t** newcomm)
+{
+    int myinfo[2];
+    int size, my_size;
+    int my_rsize;
+    int mode;
+    int rsize;
+    int i, loc;
+    int inter;
+    int *results=NULL, *sorted=NULL; 
+    int *rresults=NULL, *rsorted=NULL; 
+    int rc=OMPI_SUCCESS;
+    ompi_communicator_t *newcomp = NULL;
+    int *lranks=NULL, *rranks=NULL;
+    
+    ompi_comm_allgatherfct *allgatherfct=NULL;
+
+    /* Step 1: determine all the information for the local group */
+    /* --------------------------------------------------------- */
+
+    /* sort according to participation and rank. Gather information from everyone */
+    myinfo[0] = (split_type == MPI_COMM_TYPE_SHARED) ? 1 : 0;
+    myinfo[1] = key;
+
+    size     = ompi_comm_size ( comm );
+    inter    = OMPI_COMM_IS_INTER(comm);
+    if ( inter ) {
+        allgatherfct = (ompi_comm_allgatherfct *)ompi_comm_allgather_emulate_intra;
+    } else {
+        allgatherfct = (ompi_comm_allgatherfct *)comm->c_coll.coll_allgather;
+    }
+
+    results  = (int*) malloc ( 2 * size * sizeof(int));
+    if ( NULL == results ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    rc = allgatherfct( myinfo, 2, MPI_INT, results, 2, MPI_INT, comm, comm->c_coll.coll_allgather_module );
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;
+    }
+        
+    /* how many are participating and on my node? */
+    for ( my_size = 0, i=0; i < size; i++) {
+        if ( results[(2*i)+0] == 1) {
+            if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_local_group, i)->proc_flags)) {
+                my_size++;
+            }
+        }
+    }
+
+    sorted = (int *) malloc ( sizeof( int ) * my_size * 2);
+    if ( NULL == sorted) {
+        rc =  OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
+    }
+    
+    /* ok we can now fill this info */
+    for( loc = 0, i = 0; i < size; i++ ) {
+        if ( results[(2*i)+0] == 1) {
+            if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_local_group, i)->proc_flags)) {
+                sorted[(2*loc)+0] = i;                 /* copy org rank */
+                sorted[(2*loc)+1] = results[(2*i)+1];  /* copy key */
+                loc++;
+            }
+        }
+    }
+    
+    /* the new array needs to be sorted so that it is in 'key' order */
+    /* if two keys are equal then it is sorted in original rank order! */
+    if(my_size>1){
+        qsort ((int*)sorted, my_size, sizeof(int)*2, rankkeycompare);
+    }
+
+    /* put group elements in a list */
+    lranks = (int *) malloc ( my_size * sizeof(int));
+    if ( NULL == lranks ) {
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        goto exit;
+    }
+    for (i = 0; i < my_size; i++) {
+        lranks[i] = sorted[i*2];
+    }  
+            
+    /* Step 2: determine all the information for the remote group */
+    /* --------------------------------------------------------- */
+    if ( inter ) {
+        rsize    = comm->c_remote_group->grp_proc_count;
+        rresults = (int *) malloc ( rsize * 2 * sizeof(int));
+        if ( NULL == rresults ) {
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
+        }
+
+        /* this is an allgather on an inter-communicator */
+        rc = comm->c_coll.coll_allgather( myinfo, 2, MPI_INT, rresults, 2, 
+                                          MPI_INT, comm,
+                                          comm->c_coll.coll_allgather_module);
+        if ( OMPI_SUCCESS != rc ) {
+            goto exit;
+        }
+
+        /* how many are participating and on my node? */
+        for ( my_rsize = 0, i=0; i < rsize; i++) {
+            if ( rresults[(2*i)+0] == 1) {
+                if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_remote_group, i)->proc_flags)) {
+                    my_rsize++;
+                }
+            }
+        }
+        rsorted = (int *) malloc ( sizeof( int ) * my_rsize * 2);
+        if ( NULL == rsorted) {
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
+        }
+        
+        /* ok we can now fill this info */
+        for( loc = 0, i = 0; i < rsize; i++ ) {
+            if ( rresults[(2*i)+0] == 1) {
+                if (OPAL_PROC_ON_LOCAL_NODE(ompi_group_peer_lookup(comm->c_remote_group, i)->proc_flags)) {
+                    rsorted[(2*loc)+0] = i;                  /* org rank */
+                    rsorted[(2*loc)+1] = rresults[(2*i)+1];  /* key */
+                    loc++;
+                }
+            }
+        }
+        
+        /* the new array needs to be sorted so that it is in 'key' order */
+        /* if two keys are equal then it is sorted in original rank order! */
+        if(my_rsize>1) {
+            qsort ((int*)rsorted, my_rsize, sizeof(int)*2, rankkeycompare);
+        }
+
+        /* put group elements in a list */
+        rranks = (int *) malloc ( my_rsize * sizeof(int));
+        if ( NULL ==  rranks) {
+            rc = OMPI_ERR_OUT_OF_RESOURCE;
+            goto exit;
+        }
+ 
+        for (i = 0; i < my_rsize; i++) {
+            rranks[i] = rsorted[i*2];
+        }  
+        mode = OMPI_COMM_CID_INTER;
+    } else {
+        my_rsize  = 0;
+        rranks = NULL;
+        mode      = OMPI_COMM_CID_INTRA;
+    }
+    
+    
+    /* Step 3: set up the communicator                           */
+    /* --------------------------------------------------------- */
+    /* Create the communicator finally */
+
+    rc = ompi_comm_set ( &newcomp,           /* new comm */
+                         comm,               /* old comm */
+                         my_size,            /* local_size */
+                         lranks,             /* local_ranks */
+                         my_rsize,           /* remote_size */
+                         rranks,             /* remote_ranks */
+                         NULL,               /* attrs */
+                         comm->error_handler,/* error handler */
+                         NULL,               /* topo component */
+                         NULL,               /* local group */
+                         NULL                /* remote group */
+                         );
+
+    if ( NULL == newcomm ) {
+        rc =  MPI_ERR_INTERN;
+        goto exit;
+    }
+    if ( OMPI_SUCCESS != rc  ) {
+        goto exit;
+    }
+
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid ( newcomp,  /* new communicator */ 
+                             comm,     /* old comm */
+                             NULL,     /* bridge comm */
+                             NULL,     /* local leader */
+                             NULL,     /* remote_leader */
+                             mode,     /* mode */
+                             -1 );     /* send first, doesn't matter */
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;
+    }
+
+    /* Set name for debugging purposes */
+    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d SPLIT_TYPE FROM %d", 
+             newcomp->c_contextid, comm->c_contextid );
+
+    /* set the rank to MPI_UNDEFINED. This prevents in comm_activate
+     * the collective module selection for a communicator that will
+     * be freed anyway.
+     */
+    if ( MPI_UNDEFINED == split_type ) {
+        newcomp->c_local_group->grp_my_rank = MPI_UNDEFINED;
+    }
+
+
+    /* Activate the communicator and init coll-component */
+    rc = ompi_comm_activate( &newcomp, /* new communicator */ 
+                             comm, 
+                             NULL,
+                             NULL, 
+                             NULL, 
+                             mode, 
+                             -1 );  
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;
+    }
+
+ exit:
+    if ( NULL != results ) {
+        free ( results );
+    }
+    if ( NULL != sorted  ) {
+        free ( sorted );
+    }
+    if ( NULL != rresults) {
+        free ( rresults );
+    }
+    if ( NULL != rsorted ) {
+        free ( rsorted );
+    }
+    if ( NULL != lranks   ) {
+        free ( lranks );
+    }
+    if ( NULL != rranks  ) {
+        free ( rranks );
+    }
+
+    /* Step 4: if we are not part of the comm, free the struct   */
+    /* --------------------------------------------------------- */
+    if ( NULL != newcomp && MPI_UNDEFINED == split_type ) {
+        ompi_comm_free ( &newcomp );
+    }
+
+    *newcomm = newcomp;
+    return ( rc );
+}
+
+
+
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/

@@ -87,6 +87,7 @@
 #define MPI_Comm_spawn PMPI_Comm_spawn
 #define MPI_Comm_spawn_multiple PMPI_Comm_spawn_multiple
 #define MPI_Comm_split PMPI_Comm_split
+#define MPI_Comm_split_type PMPI_Comm_split_type
 #define MPI_Comm_test_inter PMPI_Comm_test_inter
 #define MPI_Dims_create PMPI_Dims_create
 #define MPI_Errhandler_c2f PMPI_Errhandler_c2f

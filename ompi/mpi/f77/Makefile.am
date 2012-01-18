@@ -137,6 +137,7 @@ libmpi_f77_la_SOURCES += \
         comm_spawn_f.c \
         comm_spawn_multiple_f.c \
         comm_split_f.c \
+        comm_split_type_f.c \
         comm_test_inter_f.c \
         dims_create_f.c \
         errhandler_create_f.c \

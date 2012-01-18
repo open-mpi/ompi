@@ -102,6 +102,7 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pcomm_spawn_f.c \
         pcomm_spawn_multiple_f.c \
         pcomm_split_f.c \
+        pcomm_split_type_f.c \
         pcomm_test_inter_f.c \
         pdims_create_f.c \
         perrhandler_create_f.c \
