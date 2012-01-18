@@ -159,6 +159,20 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     char* vpid_string;
     orte_job_t *daemons;
 
+    /* if we are launching debugger daemons, then just go
+     * do it - no new daemons will be launched
+     */
+    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jdata->controls) {
+        failed_job = jdata->jobid;
+        if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
+            ORTE_ERROR_LOG(rc);
+            failed_launch = true;
+        } else {
+            failed_launch = false;
+        }
+        goto cleanup;
+    }
+
     /* if we are timing, record the start time */
     if (orte_timing) {
         gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
