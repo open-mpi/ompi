@@ -31,13 +31,13 @@ ugni_SOURCES = common_ugni.c \
 
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_common_ugni_la_SOURCES = $(ugni_SOURCES)
+mca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
 nodist_mca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
 mca_common_ugni_la_LIBADD = $(common_ugni_LIBS) 
 mca_common_ugni_la_LDFLAGS = -module -avoid-version $(common_ugni_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_common_ugni_la_SOURCES = $(ugni_SOURCES)
+libmca_common_ugni_la_SOURCES = $(headers) $(ugni_SOURCES)
 nodist_libmca_common_ugni_la_SOURCES = $(ugni_nodist_SOURCES)
 libmca_common_ugni_la_LIBADD = $(common_ugni_LIBS)
 libmca_common_ugni_la_LDFLAGS = -module -avoid-version $(common_ugni_LDFLAGS)
