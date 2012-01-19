@@ -53,7 +53,8 @@ AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
         [orte_mca_ess_alps_happy="yes"],
         [orte_mca_ess_alps_happy="no"])
 
-    AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_without_full_support" = 0],
+    AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_without_full_support" = 0 -a
+	   "orte_mca_ess_alps_have_cnos" = 1],
           [$1],
           [$2])
 ])dnl
