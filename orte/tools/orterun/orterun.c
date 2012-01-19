@@ -2607,7 +2607,9 @@ static void attach_debugger(int fd, short event, void *arg)
             OBJ_RETAIN(node);  /* maintain accounting on object */    
             proc->node = node;
             proc->nodename = node->name;
+            /* add the proc to the job */
             opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
+            jdata->num_procs++;
 
             /* add the proc to the node's array */
             OBJ_RETAIN(proc);
