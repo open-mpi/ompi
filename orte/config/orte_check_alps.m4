@@ -21,6 +21,7 @@
 # ORTE_CHECK_ALPS(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([ORTE_CHECK_ALPS],[
+    if test -z "$orte_check_alps_happy"; then
         # require that we check for pmi support request first so
         # we can get the static library ordering correct
         AC_REQUIRE([ORTE_CHECK_PMI])
@@ -30,15 +31,34 @@ AC_DEFUN([ORTE_CHECK_ALPS],[
 		    [Build ALPS scheduler component (default: no)])])
 	if test "$with_alps" = "yes" ; then
 	    orte_check_alps_happy="yes"
-            # if pmi support is requested, then ORTE_CHECK_PMI will
-            # have added the -lpmi flag to LIBS. We then need to
-            # add a couple of alps libs to support static builds
-            if test "$orte_enable_pmi" = 1 ; then
-                LDFLAGS="$LDFLAGS -L/usr/lib/alps"
-                LIBS="$LIBS -lalpslli -lalpsutil"
-            fi
+           # Only need to do these tests once (this macro is invoked
+           # from multiple different components' configure.m4 scripts
+           if test -z "$orte_check_alps_pmi_happy"; then
+               # if pmi support is requested, then ORTE_CHECK_PMI
+               # will have added the -lpmi flag to LIBS. We then need
+               # to add a couple of alps libs to support static
+               # builds
+               orte_check_alps_pmi_happy=no
+               if test "$orte_enable_pmi" = 1 ; then
+                   AC_MSG_CHECKING([for /usr/lib/alps])
+                   AS_IF([test -d /usr/lib/alps],
+                         [AC_MSG_RESULT([found])
+                          orte_check_alps_pmi_happy=yes],
+                         [AC_MSG_RESULT([not found])])
+
+                   AS_IF([test "$orte_check_alps_pmi_happy" == "yes"],
+                         [WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS -L/usr/lib/alps"
+                          WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lalpslli -lalpsutil"],
+                         [AC_MSG_WARN([PMI support for Alps requested but not found])
+                          AC_MSG_ERROR([Cannot continue])])
+               fi
+           fi
+        else
+            orte_check_alps_happy="no"
 	fi
-	AS_IF([test "$orte_check_alps_happy" = "yes"], 
-	    [$2], 
-	    [$3])
-	])
+    fi
+
+    AS_IF([test "$orte_check_alps_happy" = "yes"], 
+          [$2], 
+          [$3])
+])
