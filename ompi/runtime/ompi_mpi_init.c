@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
@@ -441,6 +441,124 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 #endif
 
+    /* initialize datatypes. This step should be done early as it will
+     * create the local convertor and local arch used in the proc
+     * init.
+     */
+    if (OMPI_SUCCESS != (ret = ompi_datatype_init())) {
+        error = "ompi_datatype_init() failed";
+        goto error;
+    }
+
+    /* Initialize OMPI procs */
+    if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
+        error = "mca_proc_init() failed";
+        goto error;
+    }
+
+    /* Initialize the op framework. This has to be done *after*
+       ddt_init, but befor mca_coll_base_open, since some collective
+       modules (e.g., the hierarchical coll component) may need ops in
+       their query function. */
+    if (OMPI_SUCCESS != (ret = ompi_op_base_open())) {
+        error = "ompi_op_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != 
+        (ret = ompi_op_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
+                                           OMPI_ENABLE_THREAD_MULTIPLE))) {
+        error = "ompi_op_base_find_available() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = ompi_op_init())) {
+        error = "ompi_op_init() failed";
+        goto error;
+    }
+
+    /* Open up MPI-related MCA components */
+
+    if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
+        error = "mca_allocator_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = mca_rcache_base_open())) {
+        error = "mca_rcache_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = mca_mpool_base_open())) {
+        error = "mca_mpool_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = mca_pml_base_open())) {
+        error = "mca_pml_base_open() failed";
+        goto error;
+    }
+    if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
+        error = "mca_coll_base_open() failed";
+        goto error;
+    }
+
+    if (OMPI_SUCCESS != (ret = ompi_osc_base_open())) {
+        error = "ompi_osc_base_open() failed";
+        goto error;
+    }
+
+#if OPAL_ENABLE_FT_CR == 1
+    if (OMPI_SUCCESS != (ret = ompi_crcp_base_open())) {
+        error = "ompi_crcp_base_open() failed";
+        goto error;
+    }
+#endif
+
+    /* In order to reduce the common case for MPI apps (where they
+       don't use MPI-2 IO or MPI-1 topology functions), the io and
+       topo frameworks are initialized lazily, at the first use of
+       relevant functions (e.g., MPI_FILE_*, MPI_CART_*, MPI_GRAPH_*),
+       so they are not opened here. */
+
+    /* Select which MPI components to use */
+
+    if (OMPI_SUCCESS != 
+        (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
+                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
+        error = "mca_mpool_base_init() failed";
+        goto error;
+    }
+
+    if (OMPI_SUCCESS != 
+        (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
+                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
+        error = "mca_pml_base_select() failed";
+        goto error;
+    }
+
+    /* check for timing request - get stop time and report elapsed time if so */
+    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+        gettimeofday(&ompistop, NULL);
+        opal_output(0, "ompi_mpi_init[%ld]: time from completion of orte_init to modex %ld usec",
+                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
+                               (ompistop.tv_usec - ompistart.tv_usec)));
+        gettimeofday(&ompistart, NULL);
+    }
+    
+    /* exchange connection info - this function also acts as a barrier
+     * as it will not return until the exchange is complete
+     */
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
+        error = "orte_grpcomm_modex failed";
+        goto error;
+    }
+
+    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
+        gettimeofday(&ompistop, NULL);
+        opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
+                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
+                               (ompistop.tv_usec - ompistart.tv_usec)));
+        gettimeofday(&ompistart, NULL);
+    }
+    
 #if OPAL_HAVE_HWLOC
     {
         hwloc_obj_t node, obj;
@@ -652,97 +770,6 @@ MOVEON:
     }
 #endif
 
-    /* initialize datatypes. This step should be done early as it will
-     * create the local convertor and local arch used in the proc
-     * init.
-     */
-    if (OMPI_SUCCESS != (ret = ompi_datatype_init())) {
-        error = "ompi_datatype_init() failed";
-        goto error;
-    }
-
-    /* Initialize OMPI procs */
-    if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
-        error = "mca_proc_init() failed";
-        goto error;
-    }
-
-    /* Initialize the op framework. This has to be done *after*
-       ddt_init, but befor mca_coll_base_open, since some collective
-       modules (e.g., the hierarchical coll component) may need ops in
-       their query function. */
-    if (OMPI_SUCCESS != (ret = ompi_op_base_open())) {
-        error = "ompi_op_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != 
-        (ret = ompi_op_base_find_available(OMPI_ENABLE_PROGRESS_THREADS,
-                                           OMPI_ENABLE_THREAD_MULTIPLE))) {
-        error = "ompi_op_base_find_available() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = ompi_op_init())) {
-        error = "ompi_op_init() failed";
-        goto error;
-    }
-
-    /* Open up MPI-related MCA components */
-
-    if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
-        error = "mca_allocator_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_rcache_base_open())) {
-        error = "mca_rcache_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_mpool_base_open())) {
-        error = "mca_mpool_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_pml_base_open())) {
-        error = "mca_pml_base_open() failed";
-        goto error;
-    }
-    if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
-        error = "mca_coll_base_open() failed";
-        goto error;
-    }
-
-    if (OMPI_SUCCESS != (ret = ompi_osc_base_open())) {
-        error = "ompi_osc_base_open() failed";
-        goto error;
-    }
-
-#if OPAL_ENABLE_FT_CR == 1
-    if (OMPI_SUCCESS != (ret = ompi_crcp_base_open())) {
-        error = "ompi_crcp_base_open() failed";
-        goto error;
-    }
-#endif
-
-    /* In order to reduce the common case for MPI apps (where they
-       don't use MPI-2 IO or MPI-1 topology functions), the io and
-       topo frameworks are initialized lazily, at the first use of
-       relevant functions (e.g., MPI_FILE_*, MPI_CART_*, MPI_GRAPH_*),
-       so they are not opened here. */
-
-    /* Select which MPI components to use */
-
-    if (OMPI_SUCCESS != 
-        (ret = mca_mpool_base_init(OMPI_ENABLE_PROGRESS_THREADS,
-                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
-        error = "mca_mpool_base_init() failed";
-        goto error;
-    }
-
-    if (OMPI_SUCCESS != 
-        (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
-                                   OMPI_ENABLE_THREAD_MULTIPLE))) {
-        error = "mca_pml_base_select() failed";
-        goto error;
-    }
-
     /* select buffered send allocator component to be used */
     ret=mca_pml_base_bsend_init(OMPI_ENABLE_THREAD_MULTIPLE);
     if( OMPI_SUCCESS != ret ) {
@@ -835,33 +862,6 @@ MOVEON:
         goto error;
     }
 
-    /* check for timing request - get stop time and report elapsed time if so */
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time from completion of orte_init to modex %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-        gettimeofday(&ompistart, NULL);
-    }
-    
-    /* exchange connection info - this function also acts as a barrier
-     * as it will not return until the exchange is complete
-     */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
-        error = "orte_grpcomm_modex failed";
-        goto error;
-    }
-
-    if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
-        gettimeofday(&ompistop, NULL);
-        opal_output(0, "ompi_mpi_init[%ld]: time to execute modex %ld usec",
-                    (long)ORTE_PROC_MY_NAME->vpid,
-                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
-                               (ompistop.tv_usec - ompistart.tv_usec)));
-        gettimeofday(&ompistart, NULL);
-    }
-    
     /* identify the architectures of remote procs and setup
      * their datatype convertors, if required
      */
