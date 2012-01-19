@@ -48,8 +48,6 @@
 static int alps_set_name(void);
 static int rte_init(void);
 static int rte_finalize(void);
-static int get_vpid(orte_vpid_t *outvp,
-                    orte_vpid_t start_vpid);
 
 orte_ess_base_module_t orte_ess_alps_module = {
     rte_init,
