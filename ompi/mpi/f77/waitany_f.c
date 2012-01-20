@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,8 +35,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WAITANY,
                            pmpi_waitany_,
                            pmpi_waitany__,
                            pmpi_waitany_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *status, MPI_Fint *ierr),
-                           (count, array_of_requests, index, status, ierr) )
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, MPI_Fint *status, MPI_Fint *ierr),
+                           (count, array_of_requests, indx, status, ierr) )
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,8 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAITANY,
                            mpi_waitany_,
                            mpi_waitany__,
                            mpi_waitany_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *status, MPI_Fint *ierr),
-                           (count, array_of_requests, index, status, ierr) )
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, MPI_Fint *status, MPI_Fint *ierr),
+                           (count, array_of_requests, indx, status, ierr) )
 #endif
 
 
@@ -64,12 +65,12 @@ static const char FUNC_NAME[] = "MPI_WAITANY";
 
 
 void mpi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
-		   MPI_Fint *index, MPI_Fint *status, MPI_Fint *ierr)
+		   MPI_Fint *indx, MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status c_status;
     int i, c_err;
-    OMPI_SINGLE_NAME_DECL(index);
+    OMPI_SINGLE_NAME_DECL(indx);
 
     c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
     if (NULL == c_req) {
@@ -84,18 +85,18 @@ void mpi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
     }
 
     *ierr = OMPI_INT_2_FINT(MPI_Waitany(OMPI_FINT_2_INT(*count), c_req, 
-					OMPI_SINGLE_NAME_CONVERT(index),
+					OMPI_SINGLE_NAME_CONVERT(indx),
                                         &c_status));
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
 
-        /* Increment index by one for fortran conventions */
+        /* Increment indx by one for fortran conventions */
 
-        OMPI_SINGLE_INT_2_FINT(index);
-        if (MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(index))) {
-            array_of_requests[OMPI_INT_2_FINT(*index)] =
-                c_req[OMPI_INT_2_FINT(*index)]->req_f_to_c_index;
-            ++(*index);
+        OMPI_SINGLE_INT_2_FINT(indx);
+        if (MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(indx))) {
+            array_of_requests[OMPI_INT_2_FINT(*indx)] =
+                c_req[OMPI_INT_2_FINT(*indx)]->req_f_to_c_indx;
+            ++(*indx);
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
             MPI_Status_c2f(&c_status, status); 

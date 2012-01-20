@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,8 +32,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_GET,
                            pmpi_graph_get_,
                            pmpi_graph_get__,
                            pmpi_graph_get_f,
-                           (MPI_Fint *comm, MPI_Fint *maxindex, MPI_Fint *maxedges, MPI_Fint *index, MPI_Fint *edges, MPI_Fint *ierr),
-                           (comm, maxindex, maxedges, index, edges, ierr) )
+                           (MPI_Fint *comm, MPI_Fint *maxidx, MPI_Fint *maxedges, MPI_Fint *idx, MPI_Fint *edges, MPI_Fint *ierr),
+                           (comm, maxidx, maxedges, idx, edges, ierr) )
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -49,8 +49,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_GET,
                            mpi_graph_get_,
                            mpi_graph_get__,
                            mpi_graph_get_f,
-                           (MPI_Fint *comm, MPI_Fint *maxindex, MPI_Fint *maxedges, MPI_Fint *index, MPI_Fint *edges, MPI_Fint *ierr),
-                           (comm, maxindex, maxedges, index, edges, ierr) )
+                           (MPI_Fint *comm, MPI_Fint *maxidx, MPI_Fint *maxedges, MPI_Fint *idx, MPI_Fint *edges, MPI_Fint *ierr),
+                           (comm, maxidx, maxedges, idx, edges, ierr) )
 #endif
 
 
@@ -58,28 +58,28 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_GET,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex, 
-		     MPI_Fint *maxedges, MPI_Fint *index, 
+void mpi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxidx, 
+		     MPI_Fint *maxedges, MPI_Fint *idx, 
 		     MPI_Fint *edges, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
-    OMPI_ARRAY_NAME_DECL(index);
+    OMPI_ARRAY_NAME_DECL(idx);
     OMPI_ARRAY_NAME_DECL(edges);
 
     c_comm = MPI_Comm_f2c(*comm);
-    OMPI_ARRAY_FINT_2_INT_ALLOC(index, *maxindex);
+    OMPI_ARRAY_FINT_2_INT_ALLOC(idx, *maxidx);
     OMPI_ARRAY_FINT_2_INT_ALLOC(edges, *maxedges);
 
     *ierr = OMPI_INT_2_FINT(MPI_Graph_get(c_comm, 
-					  OMPI_FINT_2_INT(*maxindex),
+					  OMPI_FINT_2_INT(*maxidx),
 					  OMPI_FINT_2_INT(*maxedges),
-					  OMPI_ARRAY_NAME_CONVERT(index),
+					  OMPI_ARRAY_NAME_CONVERT(idx),
 					  OMPI_ARRAY_NAME_CONVERT(edges)));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        OMPI_ARRAY_INT_2_FINT(index, *maxindex);
+        OMPI_ARRAY_INT_2_FINT(idx, *maxidx);
         OMPI_ARRAY_INT_2_FINT(edges, *maxedges);
     } else {
-        OMPI_ARRAY_FINT_2_INT_CLEANUP(index);
+        OMPI_ARRAY_FINT_2_INT_CLEANUP(idx);
         OMPI_ARRAY_FINT_2_INT_CLEANUP(edges);
     }
 }
