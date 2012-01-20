@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,7 +40,7 @@ static const char FUNC_NAME[] = "MPI_Group_range_excl";
 int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
                          MPI_Group *new_group) 
 {
-    int err, i, group_size, index;
+    int err, i, group_size, indx;
     int * elements_int_list;
     
     /* can't act on NULL group */
@@ -78,32 +78,32 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
                     goto error_rank;
                 }
                 /* positive stride */
-                for (index = ranges[i][0]; index <= ranges[i][1]; index += ranges[i][2]) {
+                for (indx = ranges[i][0]; indx <= ranges[i][1]; indx += ranges[i][2]) {
                     /* make sure rank has not already been selected */
-                    if (elements_int_list[index] != -1) {
+                    if (elements_int_list[indx] != -1) {
                         goto error_rank;
                     }
-                    elements_int_list[index] = i;
+                    elements_int_list[indx] = i;
                 }
             } else if (ranges[i][0] > ranges[i][1]) { 
                 if (ranges[i][2] > 0) {
                     goto error_rank;
                 }
                 /* negative stride */
-                for (index = ranges[i][0]; index >= ranges[i][1]; index += ranges[i][2]) {
+                for (indx = ranges[i][0]; indx >= ranges[i][1]; indx += ranges[i][2]) {
                     /* make sure rank has not already been selected */
-                    if (elements_int_list[index] != -1) {
+                    if (elements_int_list[indx] != -1) {
                         goto error_rank;
                     }
-                    elements_int_list[index] = i;
+                    elements_int_list[indx] = i;
                 }
             } else {
                 /* first_rank == last_rank */
-                index = ranges[i][0];
-                if (elements_int_list[index] != -1) {
+                indx = ranges[i][0];
+                if (elements_int_list[indx] != -1) {
                     goto error_rank;
                 }
-                elements_int_list[index] = i;
+                elements_int_list[indx] = i;
             }
         }
 	

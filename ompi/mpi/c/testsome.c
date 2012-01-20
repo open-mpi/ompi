@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -49,13 +49,13 @@ int MPI_Testsome(int incount, MPI_Request *requests,
     );
 
     if ( MPI_PARAM_CHECK ) {
-        int index, rc = MPI_SUCCESS;
+        int indx, rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if ((NULL == requests) && (0 != incount)) {
             rc = MPI_ERR_REQUEST;
         } else {
-            for (index = 0; index < incount; ++index) {
-                if (NULL == requests[index]) {
+            for (indx = 0; indx < incount; ++indx) {
+                if (NULL == requests[indx]) {
                     rc = MPI_ERR_REQUEST;
                     break;
                 }
