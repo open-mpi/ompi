@@ -89,13 +89,13 @@ OMPI_DEF(OMPI_BUILD_HOST $ENV{COMPUTERNAME} "Host on which the package has been 
 #detect the compiler bit
 OMPI_CHECK_TYPES("void *" VOID_P none c)
 IF(${SIZEOF_VOID_P} EQUAL 4)
-  SET(OMPI_COMPILER_BIT "86 bit")
+  SET(OMPI_COMPILER_BIT "32")
   SET(IS_32_BIT TRUE CACHE INTERNAL "32 bit compiler")
 ELSE(${SIZEOF_VOID_P} EQUAL 4)
-  SET(OMPI_COMPILER_BIT "64 bit")
+  SET(OMPI_COMPILER_BIT "64")
   SET(IS_64_BIT TRUE CACHE INTERNAL "64 bit compiler")
 ENDIF(${SIZEOF_VOID_P} EQUAL 4)
-OMPI_DEF(OPAL_ARCH "${CMAKE_SYSTEM} ${OMPI_COMPILER_BIT}" "OMPI architecture string" 1 1)
+OMPI_DEF(OPAL_ARCH "${CMAKE_SYSTEM} ${OMPI_COMPILER_BIT} bit" "OMPI architecture string" 1 1)
 
 IF(WINDOWS_VS)
   INCLUDE(ompi_check_Microsoft)
@@ -252,8 +252,6 @@ OMPI_DEF_OPT(OPAL_ENABLE_CRDEBUG "Whether we want checkpoint/restart enabled deb
 OMPI_DEF_OPT(OPAL_EVENT_HAVE_THREAD_SUPPORT "Whether we want to enable event library internal thread support." OFF)
 
 OMPI_DEF_OPT(OMPI_RELEASE_BUILD "Whether it is a build for binary release (this will skip the path settings in mca_installdirs_config)." OFF)
-
-OMPI_DEF_OPT(OMPI_WANT_XP_COMPATIBLE "Whether we want to build with Windows XP compatible functions (with InterlockedCompareExchange64 suooprt)." ON)
 
 IF (NOT MSVC)
 
