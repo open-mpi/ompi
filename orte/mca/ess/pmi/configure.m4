@@ -22,8 +22,11 @@ AC_DEFUN([MCA_orte_ess_pmi_CONFIG],[
     # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$ess_pmi_good" = "1" -a "$orte_without_full_support" = 0],
-          [ess_pmi_WRAPPER_EXTRA_LDFLAGS="$ess_pmi_LDFLAGS"
-           ess_pmi_WRAPPER_EXTRA_LIBS="$ess_pmi_LIBS"
+          [if test -z "$orte_pmi_wrapper_flags_added"; then
+              orte_pmi_wrapper_flags_added=yes
+              WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $ess_pmi_LDFLAGS"
+              WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $ess_pmi_LIBS"
+           fi
            $1],
           [$2])
 
