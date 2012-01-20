@@ -98,7 +98,7 @@ void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx,
         if (*flag &&
             MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(indx))) {
             array_of_requests[OMPI_INT_2_FINT(*indx)] =
-                c_req[OMPI_INT_2_FINT(*indx)]->req_f_to_c_indx;
+                c_req[OMPI_INT_2_FINT(*indx)]->req_f_to_c_index;
             ++(*indx);
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
