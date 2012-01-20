@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2012      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,12 +29,12 @@
 #pragma weak pmpi_comm_split_type__ = mpi_comm_split_type_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPLIT_TYPE,
-                           pmpi_comm_split_type,
-                           pmpi_comm_split_type_,
-                           pmpi_comm_split_type__,
-                           pmpi_comm_split_type_f,
-                           (MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr),
-                           (comm, color, key, newcomm, ierr) )
+                            pmpi_comm_split_type,
+                            pmpi_comm_split_type_,
+                            pmpi_comm_split_type__,
+                            pmpi_comm_split_type_f,
+                            (MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key, MPI_Fint *info, MPI_Fint *newcomm, MPI_Fint *ierr),
+                            (comm, split_type, key, info, newcomm, ierr) )
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -45,12 +46,12 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SPLIT_TYPE,
 
 #if ! OPAL_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPLIT_TYPE,
-                           mpi_comm_split_type,
-                           mpi_comm_split_type_,
-                           mpi_comm_split_type__,
-                           mpi_comm_split_type_f,
-                           (MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr),
-                           (comm, color, key, newcomm, ierr) )
+                            mpi_comm_split_type,
+                            mpi_comm_split_type_,
+                            mpi_comm_split_type__,
+                            mpi_comm_split_type_f,
+                            (MPI_Fint *comm, MPI_Fint *split_type, MPI_Fint *key, MPI_Fint *info, MPI_Fint *newcomm, MPI_Fint *ierr),
+                            (comm, split_type, key, info, newcomm, ierr) )
 #endif
 
 
