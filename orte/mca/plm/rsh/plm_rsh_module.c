@@ -417,7 +417,11 @@ static int setup_launch(int *argcptr, char ***argvptr,
              */
             asprintf (&final_cmd,
                       "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
+#if defined(__APPLE__)
+                      "DYLD_LIBRARY_PATH=%s/%s:$DYLD_LIBRARY_PATH ; export DYLD_LIBRARY_PATH ; "
+#else
                       "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
+#endif
                       "%s %s",
                       (opal_prefix != NULL ? "OPAL_PREFIX=" : " "),
                       (opal_prefix != NULL ? opal_prefix : " "),
@@ -442,12 +446,21 @@ static int setup_launch(int *argcptr, char ***argvptr,
              */
             asprintf (&final_cmd,
                       "%s%s%s set path = ( %s/%s $path ) ; "
+#if defined(__APPLE__)
+                      "if ( $?DYLD_LIBRARY_PATH == 1 ) "
+                      "set OMPI_have_llp ; "
+                      "if ( $?DYLD_LIBRARY_PATH == 0 ) "
+                      "setenv DYLD_LIBRARY_PATH %s/%s ; "
+                      "if ( $?OMPI_have_llp == 1 ) "
+                      "setenv DYLD_LIBRARY_PATH %s/%s:$DYLD_LIBRARY_PATH ; "
+#else
                       "if ( $?LD_LIBRARY_PATH == 1 ) "
                       "set OMPI_have_llp ; "
                       "if ( $?LD_LIBRARY_PATH == 0 ) "
                       "setenv LD_LIBRARY_PATH %s/%s ; "
                       "if ( $?OMPI_have_llp == 1 ) "
                       "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
+#endif
                       "%s %s",
                       (opal_prefix != NULL ? "setenv OPAL_PREFIX " : " "),
                       (opal_prefix != NULL ? opal_prefix : " "),
