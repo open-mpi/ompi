@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,8 +32,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_CREATE,
                            pmpi_graph_create_,
                            pmpi_graph_create__,
                            pmpi_graph_create_f,
-                           (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *index, MPI_Fint *edges, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
-                           (comm_old, nnodes, index, edges, reorder, comm_graph, ierr) )
+                           (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *idx, MPI_Fint *edges, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
+                           (comm_old, nnodes, idx, edges, reorder, comm_graph, ierr) )
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -48,8 +49,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_CREATE,
                            mpi_graph_create_,
                            mpi_graph_create__,
                            mpi_graph_create_f,
-                           (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *index, MPI_Fint *edges, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
-                           (comm_old, nnodes, index, edges, reorder, comm_graph, ierr) )
+                           (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *idx, MPI_Fint *edges, ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr),
+                           (comm_old, nnodes, idx, edges, reorder, comm_graph, ierr) )
 #endif
 
 
@@ -58,24 +59,24 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_CREATE,
 #endif
 
 void mpi_graph_create_f(MPI_Fint *comm_old, MPI_Fint *nnodes,
-                        MPI_Fint *index, MPI_Fint *edges,
+                        MPI_Fint *idx, MPI_Fint *edges,
                         ompi_fortran_logical_t *reorder, MPI_Fint *comm_graph,
                         MPI_Fint *ierr)
 {
     MPI_Comm c_comm_old, c_comm_graph;
-    OMPI_ARRAY_NAME_DECL(index);
+    OMPI_ARRAY_NAME_DECL(idx);
     OMPI_ARRAY_NAME_DECL(edges);
 
     c_comm_old = MPI_Comm_f2c(*comm_old);
 
-    OMPI_ARRAY_FINT_2_INT(index, *nnodes);
+    OMPI_ARRAY_FINT_2_INT(idx, *nnodes);
 
-    /* Number of edges is equal to the last entry in the index array */
-    OMPI_ARRAY_FINT_2_INT(edges, index[*nnodes - 1]);
+    /* Number of edges is equal to the last entry in the idx array */
+    OMPI_ARRAY_FINT_2_INT(edges, idx[*nnodes - 1]);
 
     *ierr = OMPI_INT_2_FINT(MPI_Graph_create(c_comm_old, 
                                              OMPI_FINT_2_INT(*nnodes),
-                                             OMPI_ARRAY_NAME_CONVERT(index),
+                                             OMPI_ARRAY_NAME_CONVERT(idx),
                                              OMPI_ARRAY_NAME_CONVERT(edges),
                                              OMPI_LOGICAL_2_INT(*reorder),
                                              &c_comm_graph));
@@ -83,6 +84,6 @@ void mpi_graph_create_f(MPI_Fint *comm_old, MPI_Fint *nnodes,
         *comm_graph = MPI_Comm_c2f(c_comm_graph);
     }
 
-    OMPI_ARRAY_FINT_2_INT_CLEANUP(index);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(idx);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(edges);
 }

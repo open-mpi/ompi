@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,8 +35,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TESTANY,
                            pmpi_testany_,
                            pmpi_testany__,
                            pmpi_testany_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
-                           (count, array_of_requests, index, flag, status, ierr) )
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (count, array_of_requests, indx, flag, status, ierr) )
 #endif
 
 #if OPAL_HAVE_WEAK_SYMBOLS
@@ -51,8 +52,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTANY,
                            mpi_testany_,
                            mpi_testany__,
                            mpi_testany_f,
-                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
-                           (count, array_of_requests, index, flag, status, ierr) )
+                           (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr),
+                           (count, array_of_requests, indx, flag, status, ierr) )
 #endif
 
 
@@ -63,13 +64,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTANY,
 static const char FUNC_NAME[] = "MPI_TESTANY";
 
 
-void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr)
+void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *indx, ompi_fortran_logical_t *flag, MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status c_status;
     int i;
     OMPI_LOGICAL_NAME_DECL(flag);
-    OMPI_SINGLE_NAME_DECL(index);
+    OMPI_SINGLE_NAME_DECL(indx);
 
     c_req = (MPI_Request *) malloc(OMPI_FINT_2_INT(*count) * sizeof(MPI_Request));
     if (c_req == NULL) {
@@ -84,21 +85,21 @@ void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index
     }
 
     *ierr = OMPI_INT_2_FINT(MPI_Testany(OMPI_FINT_2_INT(*count), c_req,
-                                        OMPI_SINGLE_NAME_CONVERT(index),
+                                        OMPI_SINGLE_NAME_CONVERT(indx),
                                         OMPI_LOGICAL_SINGLE_NAME_CONVERT(flag),
                                         &c_status));
 
     OMPI_SINGLE_INT_2_LOGICAL(flag);
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
 
-        /* Increment index by one for fortran conventions */
+        /* Increment indx by one for fortran conventions */
 
-        OMPI_SINGLE_INT_2_FINT(index);
+        OMPI_SINGLE_INT_2_FINT(indx);
         if (*flag &&
-            MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(index))) {
-            array_of_requests[OMPI_INT_2_FINT(*index)] =
-                c_req[OMPI_INT_2_FINT(*index)]->req_f_to_c_index;
-            ++(*index);
+            MPI_UNDEFINED != *(OMPI_SINGLE_NAME_CONVERT(indx))) {
+            array_of_requests[OMPI_INT_2_FINT(*indx)] =
+                c_req[OMPI_INT_2_FINT(*indx)]->req_f_to_c_indx;
+            ++(*indx);
         }
         if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
             MPI_Status_c2f(&c_status, status); 
