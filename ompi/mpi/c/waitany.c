@@ -1,5 +1,3 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
-
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -39,7 +37,7 @@
 static const char FUNC_NAME[] = "MPI_Waitany";
 
 
-int MPI_Waitany(int count, MPI_Request *requests, int *index, MPI_Status *status) 
+int MPI_Waitany(int count, MPI_Request *requests, int *indx, MPI_Status *status) 
 {
     MEMCHECKER(
         int j;
@@ -61,7 +59,7 @@ int MPI_Waitany(int count, MPI_Request *requests, int *index, MPI_Status *status
                 }
             }
         }
-        if ((NULL == index) || (0 > count)) {
+        if ((NULL == indx) || (0 > count)) {
             rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
@@ -69,7 +67,7 @@ int MPI_Waitany(int count, MPI_Request *requests, int *index, MPI_Status *status
 
     OPAL_CR_ENTER_LIBRARY();
 
-    if (OMPI_SUCCESS == ompi_request_wait_any(count, requests, index, status)) {
+    if (OMPI_SUCCESS == ompi_request_wait_any(count, requests, indx, status)) {
         OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }

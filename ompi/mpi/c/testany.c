@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +37,7 @@
 static const char FUNC_NAME[] = "MPI_Testany";
 
 
-int MPI_Testany(int count, MPI_Request requests[], int *index, int *completed, MPI_Status *status) 
+int MPI_Testany(int count, MPI_Request requests[], int *indx, int *completed, MPI_Status *status) 
 {
     MEMCHECKER(
         int j;
@@ -59,7 +59,7 @@ int MPI_Testany(int count, MPI_Request requests[], int *index, int *completed, M
                 }
             }
         }
-        if ((NULL == index) || (NULL == completed) || (0 > count)) {
+        if ((NULL == indx) || (NULL == completed) || (0 > count)) {
             rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
@@ -68,7 +68,7 @@ int MPI_Testany(int count, MPI_Request requests[], int *index, int *completed, M
     OPAL_CR_ENTER_LIBRARY();
 
     if (OMPI_SUCCESS == ompi_request_test_any(count, requests, 
-                                              index, completed, status)) {
+                                              indx, completed, status)) {
         OPAL_CR_EXIT_LIBRARY();
         return MPI_SUCCESS;
     }

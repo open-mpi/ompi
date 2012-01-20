@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +37,7 @@
 static const char FUNC_NAME[] = "MPI_Graph_create";
 
 
-int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
+int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *indx,
                      int *edges, int reorder, MPI_Comm *comm_graph) 
 {
 
@@ -62,7 +62,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
         if (nnodes < 0) {
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                            FUNC_NAME);
-        } else if (nnodes >= 1 && ((NULL == index) || (NULL == edges))) {
+        } else if (nnodes >= 1 && ((NULL == indx) || (NULL == edges))) {
             return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                            FUNC_NAME);
         }
@@ -109,7 +109,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
 
     err = ompi_topo_create ((struct ompi_communicator_t *)old_comm,
                             nnodes,
-                            index,
+                            indx,
                             edges,
                             re_order,
                             (struct ompi_communicator_t **)comm_graph,
