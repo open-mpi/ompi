@@ -12,7 +12,6 @@
 #
 # Priority
 #
-# JMS Temporarily make this higher than hwlo121
 AC_DEFUN([MCA_opal_hwloc_hwloc131_PRIORITY], [65])
 
 #
@@ -118,8 +117,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc131_CONFIG],[
                  [opal_hwloc_hwloc131_ADD_CPPFLAGS="$opal_hwloc_hwloc131_ADD_CPPFLAGS -I$OMPI_TOP_BUILDDIR/$opal_hwloc_hwloc131_file/include"])
            if test "$with_devel_headers" = "yes" ; then
                opal_hwloc_hwloc131_ADD_WRAPPER_EXTRA_CPPFLAGS='-I${includedir}/openmpi/'"$opal_hwloc_hwloc131_basedir/hwloc/include"
-               opal_hwloc_hwloc131_ADD_WRAPPER_EXTRA_LIBS=$HWLOC_EMBEDDED_LIBS
            fi
+
+           opal_hwloc_hwloc131_ADD_WRAPPER_EXTRA_LIBS=$HWLOC_EMBEDDED_LIBS
 
            $1],
           [$2])
