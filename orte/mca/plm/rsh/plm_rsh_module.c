@@ -434,13 +434,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
              */
             asprintf (&final_cmd,
                       "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
-                      "%s=%s/%s:$%s ; export DYLD_LIBRARY_PATH ; "
+                      "%s=%s/%s:$%s ; export %s ; "
                       "%s %s",
                       (opal_prefix != NULL ? "OPAL_PREFIX=" : " "),
                       (opal_prefix != NULL ? opal_prefix : " "),
                       (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : " "),
                       prefix_dir, bin_base,
-                      lib_path, prefix_dir, lib_base, lib_path,
+                      lib_path, prefix_dir, lib_base, lib_path, lib_path,
                       (orted_prefix != NULL ? orted_prefix : " "),
                       (full_orted_cmd != NULL ? full_orted_cmd : " "));
         } else if (ORTE_PLM_RSH_SHELL_TCSH == remote_shell ||
