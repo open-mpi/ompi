@@ -105,10 +105,11 @@ libhwloc_la_SOURCES = $(sources)
 libhwloc_la_LDFLAGS = $(ldflags) -version-number $(libhwloc_so_version) $(HWLOC_LIBXML2_LIBS) $(HWLOC_LINUX_LIBNUMA_LIBS) $(HWLOC_PCI_LIBS)
 
 # Embedded library (note the lack of a .so version number -- that
-# intentionally only appears in the installable library)
+# intentionally only appears in the installable library).  Also note
+# the lack of _LDFLAGS -- all libs are added by the upper layer (via
+# HWLOC_EMBEDDED_LIBS).
 
 libhwloc_embedded_la_SOURCES = $(sources)
-libhwloc_embedded_la_LDFLAGS = $(ldflags) $(HWLOC_LIBXML2_LIBS) $(HWLOC_LINUX_LIBNUMA_LIBS) $(HWLOC_PCI_LIBS)
 
 # XML data (only install if we're building in standalone mode)
 

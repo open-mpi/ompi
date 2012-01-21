@@ -515,6 +515,7 @@ EOF])
     fi
     AC_SUBST(HWLOC_LINUX_LIBNUMA_LIBS)
     # If we asked for Linux libnuma support but couldn't deliver, fail
+    HWLOC_LIBS="$HWLOC_LIBS $HWLOC_LINUX_LIBNUMA_LIBS"
     AS_IF([test "$enable_libnuma" = "yes" -a "$hwloc_linux_libnuma_happy" = "no"],
           [AC_MSG_WARN([Specified --enable-libnuma switch, but could not])
            AC_MSG_WARN([find appropriate support])
@@ -659,14 +660,21 @@ EOF])
 
     # Set these values explicitly for embedded builds.  Exporting
     # these values through *_EMBEDDED_* values gives us the freedom to
-    # do something different someday if we ever need to.
-    HWLOC_EMBEDDED_CFLAGS=$HWLOC_CFLAGS
+    # do something different someday if we ever need to.  There's no
+    # need to fill these values in unless we're in embedded mode.
+    # Indeed, if we're building in embedded mode, we want HWLOC_LIBS
+    # to be empty so that nothing is linked into libhwloc_embedded.la
+    # itself -- only the upper-layer will link in anything required.
+
+    AS_IF([test "$hwloc_mode" = "embedded"],
+          [HWLOC_EMBEDDED_CFLAGS=$HWLOC_CFLAGS
+           HWLOC_EMBEDDED_CPPFLAGS=$HWLOC_CPPFLAGS
+           HWLOC_EMBEDDED_LDADD='$(HWLOC_top_builddir)/src/libhwloc_embedded.la'
+           HWLOC_EMBEDDED_LIBS=$HWLOC_LIBS
+           HWLOC_LIBS=])
     AC_SUBST(HWLOC_EMBEDDED_CFLAGS)
-    HWLOC_EMBEDDED_CPPFLAGS=$HWLOC_CPPFLAGS
     AC_SUBST(HWLOC_EMBEDDED_CPPFLAGS)
-    HWLOC_EMBEDDED_LDADD='$(HWLOC_top_builddir)/src/libhwloc_embedded.la'
     AC_SUBST(HWLOC_EMBEDDED_LDADD)
-    HWLOC_EMBEDDED_LIBS=$HWLOC_LIBS
     AC_SUBST(HWLOC_EMBEDDED_LIBS)
 
     # Try to compile the cpuid inlines
