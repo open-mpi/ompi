@@ -431,7 +431,6 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                                                                   data_ptr, *size, 0,
                                                                   &registration);
                 if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-                    BTL_ERROR(("btl/ugni error registering source memory"));
                     MCA_BTL_UGNI_FRAG_RETURN(frag);
                     return NULL;
                 }
