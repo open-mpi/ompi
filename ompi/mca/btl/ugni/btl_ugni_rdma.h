@@ -115,7 +115,6 @@ static inline int mca_btl_ugni_start_reverse_get (struct mca_btl_base_module_t *
                            sizeof (segments), &post_desc_ptr, sizeof (void *),
                            msg_id, MCA_BTL_UGNI_TAG_PUT_INIT);
     if (OPAL_UNLIKELY(rc == GNI_RC_NOT_DONE)) {
-        BTL_ERROR(("GNI_SmsgSendWTag failed with rc = %d", rc));
         /* send this smsg packet later */
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
