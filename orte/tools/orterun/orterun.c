@@ -116,11 +116,13 @@ volatile int MPIR_forward_comm = 0;
 char MPIR_attach_fifo[MPIR_MAX_PATH_LENGTH];
 int MPIR_force_to_main = 0;
 static void orte_debugger_dump(void);
+#if !defined(__WINDOWS__)
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
 static void orte_debugger_init_after_spawn(orte_job_t *jdata);
 static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
 static void open_fifo (void);
+#endif
 ORTE_DECLSPEC void* MPIR_Breakpoint(void);
 
 /*
@@ -823,14 +825,18 @@ int orterun(int argc, char *argv[])
         }
     }
     
+#if !defined(__WINDOWS__)
     /* setup for debugging */
     orte_debugger_init_before_spawn(jdata);
+#endif
 
     /* Spawn the job */
     rc = orte_plm.spawn(jdata);
     
+#if !defined(__WINDOWS__)
     /* complete debugger interface */
     orte_debugger_init_after_spawn(jdata);
+#endif
     
     /* now wait until the termination event fires */
     opal_event_dispatch();
@@ -2600,6 +2606,8 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
  * hard-coded in the OMPI layer (see ompi/debuggers/ompi_debuggers.c).
  */
 
+#if !defined(__WINDOWS__)
+
 /* local globals and functions */
 static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
@@ -3014,3 +3022,4 @@ static void build_debugger_args(orte_app_context_t *debugger)
         }
     }
 }
+#endif /* !defined(__WINDOWS__) */

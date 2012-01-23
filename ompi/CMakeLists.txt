@@ -44,12 +44,6 @@ FOREACH(OMPI_SUBDIR ${OMPI_SUBDIRS})
   
 ENDFOREACH(OMPI_SUBDIR ${OMPI_SUBDIRS})
 
-# Special care should be taken for the debugger directory
-SET(OMPI_DEBUGGER_FILES "debuggers/ompi_debuggers.c" "debuggers/debuggers.h")
-SOURCE_GROUP("debuggers" FILES ${OMPI_DEBUGGER_FILES})
-SET(OMPI_SOURCE_FILES ${OMPI_SOURCE_FILES} ${OMPI_DEBUGGER_FILES})
-SET_SOURCE_FILES_PROPERTIES("debuggers/ompi_debuggers.c"
-                            PROPERTIES COMPILE_DEFINITIONS "OMPI_MSGQ_DLL=\"\$(pkglibdir)/libompi_dbg_msgq.dll\";OMPI_MSGQ_DLL_PREFIX=\"libompi_dbg_msgq\";OMPI_MPIHANDLES_DLL_PREFIX=\"libompi_dbg_mpihandles\"")
 
 # Add MPI C files
 FILE(GLOB OMPI_MPI_C_FILES "mpi/c/*.h" "mpi/c/*.c")

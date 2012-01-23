@@ -326,4 +326,11 @@ typedef unsigned int uint;
 #define bzero(p, l) memset(p, 0, l)
 #define bcopy(s, t, l) memmove(t, s, l)
 
+/*
+ * OMPI functions that need to be redefined.
+ */
+#define ompi_debugger_notify_abort(x)
+#define ompi_wait_for_debugger(x)
+
+
 #endif /* compat */

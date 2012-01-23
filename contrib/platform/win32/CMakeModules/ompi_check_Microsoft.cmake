@@ -151,11 +151,7 @@ IF(NOT MICROSOFT_CHECK_DONE)
     # exported by kernel32.dll. If we force the usage of TRY_RUN
     # here we will check for both in same time: compilation and run.
 
-    IF(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
-      SET(FUNCTION_LIST Exchange ExchangeAcquire ExchangeRelease Exchange64)
-    ELSE(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
-      SET(FUNCTION_LIST Exchange ExchangeAcquire ExchangeRelease)
-    ENDIF(${CMAKE_SYSTEM_VERSION} GREATER 5.1)
+    SET(FUNCTION_LIST Exchange ExchangeAcquire ExchangeRelease Exchange64)
 
     FOREACH(FUNCTION ${FUNCTION_LIST})
       MESSAGE( STATUS "Checking for InterlockedCompare${FUNCTION}...")
@@ -198,7 +194,9 @@ IF(NOT MICROSOFT_CHECK_DONE)
 ENDIF(NOT MICROSOFT_CHECK_DONE)
 
 OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGE "Whether we support 32 bits atomic operations on Windows" 0 0)
-OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGE64 "Whether we support 64 bits atomic operations on Windows" 0 0)
+IF(${OMPI_COMPILER_BIT} STREQUAL "64")
+  OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGE64 "Whether we support 64 bits atomic operations on Windows" 0 0)
+ENDIF(${OMPI_COMPILER_BIT} STREQUAL "64")
 OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGEACQUIRE "Whether we support 32 bits atomic operations on Windows" 0 0)
 OMPI_DEF_VAR(HAVE_INTERLOCKEDCOMPAREEXCHANGERELEASE "Whether we support 32 bits atomic operations on Windows" 0 0)
 
