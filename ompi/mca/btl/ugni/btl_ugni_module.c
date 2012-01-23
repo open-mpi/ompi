@@ -395,7 +395,7 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
             uint32_t iov_count = 1;
             struct iovec iov;
 
-            iov.iov_len = mca_btl_ugni_component.eager_limit - reserve;
+            iov.iov_len = *size;
             iov.iov_base =
                 (IOVBASE_TYPE *)(((uintptr_t)(frag->segments[0].seg_addr.pval)) +
                                  reserve);
