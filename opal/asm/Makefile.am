@@ -28,7 +28,11 @@
 #
 ######################################################################
 generated/@OMPI_ASM_FILE@: base/@OPAL_ASSEMBLY_ARCH@.asm
-	$(PERL) '$(top_srcdir)/opal/asm/generate-asm.pl' '@OPAL_ASSEMBLY_ARCH@' '@OPAL_ASSEMBLY_FORMAT@' '$(top_srcdir)/opal/asm/base' '$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@'
+	@ if test ! -f "$(top_srcdir)/opal/asm/$@" ; then \
+	    cmd="$(PERL) '$(top_srcdir)/opal/asm/generate-asm.pl' '@OPAL_ASSEMBLY_ARCH@' '@OPAL_ASSEMBLY_FORMAT@' '$(top_srcdir)/opal/asm/base' '$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@'" ; \
+	    echo "$$cmd" ; \
+	    eval $$cmd ; \
+	fi
 
 atomic-asm.S: generated/@OMPI_ASM_FILE@
 	rm -f atomic-asm.S
