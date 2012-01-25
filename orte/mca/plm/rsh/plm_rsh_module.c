@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
@@ -143,11 +143,9 @@ static void ssh_child(int argc, char **argv,
                       orte_vpid_t vpid, int proc_vpid_index)
                       __opal_attribute_noreturn__;
 static int rsh_probe(char *nodename, 
-                     orte_plm_rsh_shell_t *shell,
-                     bool *remote_darwin);
+                     orte_plm_rsh_shell_t *shell);
 static int setup_shell(orte_plm_rsh_shell_t *rshell,
                        orte_plm_rsh_shell_t *lshell,
-                       bool *remote_darwin,
                        char *nodename, int *argc, char ***argv);
 
 /* local global storage of timing variables */
@@ -298,8 +296,6 @@ static int setup_launch(int *argcptr, char ***argvptr,
     int rc;
     int cnt, i, j;
     bool found;
-    bool remote_darwin;
-    char *lib_path;
 
     /* Figure out the basenames for the libdir and bindir.  This
        requires some explanation:
@@ -341,24 +337,11 @@ static int setup_launch(int *argcptr, char ***argvptr,
     
     /* setup the correct shell info */
     if (ORTE_SUCCESS != (rc = setup_shell(&remote_shell, &local_shell,
-                                          &remote_darwin,
                                           nodename, &argc, &argv))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    if (remote_darwin) {
-        /* the remote machine is a Mac, so the lib_path we need
-         * to set is actually DYLD_LIBRARY_PATH
-         */
-        lib_path = "DYLD_LIBRARY_PATH";
-    } else {
-        /* the remote machine is Linux, or at least not a Mac, so
-         * the lib_path we need to set is LD_LIBRARY_PATH
-         */
-        lib_path = "LD_LIBRARY_PATH";
-    }
-
     /* now get the orted cmd - as specified by user - into our tmp array.
      * The function returns the location where the actual orted command is
      * located - usually in the final spot, but someone could
@@ -434,13 +417,15 @@ static int setup_launch(int *argcptr, char ***argvptr,
              */
             asprintf (&final_cmd,
                       "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
-                      "%s=%s/%s:$%s ; export %s ; "
+                      "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
+                      "DYLD_LIBRARY_PATH=%s/%s:$DYLD_LIBRARY_PATH ; export DYLD_LIBRARY_PATH ; "
                       "%s %s",
                       (opal_prefix != NULL ? "OPAL_PREFIX=" : " "),
                       (opal_prefix != NULL ? opal_prefix : " "),
                       (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : " "),
                       prefix_dir, bin_base,
-                      lib_path, prefix_dir, lib_base, lib_path, lib_path,
+                      prefix_dir, lib_base,
+                      prefix_dir, lib_base,
                       (orted_prefix != NULL ? orted_prefix : " "),
                       (full_orted_cmd != NULL ? full_orted_cmd : " "));
         } else if (ORTE_PLM_RSH_SHELL_TCSH == remote_shell ||
@@ -459,20 +444,25 @@ static int setup_launch(int *argcptr, char ***argvptr,
              */
             asprintf (&final_cmd,
                       "%s%s%s set path = ( %s/%s $path ) ; "
-                      "if ( $?%s == 1 ) "
+                      "if ( $?LD_LIBRARY_PATH == 1 ) "
                       "set OMPI_have_llp ; "
-                      "if ( $?%s == 0 ) "
-                      "setenv %s %s/%s ; "
+                      "if ( $?LD_LIBRARY_PATH == 0 ) "
+                      "setenv LD_LIBRARY_PATH %s/%s ; "
                       "if ( $?OMPI_have_llp == 1 ) "
-                      "setenv %s %s/%s:$%s ; "
+                      "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
+                      "if ( $?DYLD_LIBRARY_PATH == 1 ) "
+                      "set OMPI_have_dllp ; "
+                      "if ( $?DYLD_LIBRARY_PATH == 0 ) "
+                      "setenv DYLD_LIBRARY_PATH %s/%s ; "
+                      "if ( $?OMPI_have_dllp == 1 ) "
+                      "setenv DYLD_LIBRARY_PATH %s/%s:$DYLD_LIBRARY_PATH ; "
                       "%s %s",
                       (opal_prefix != NULL ? "setenv OPAL_PREFIX " : " "),
                       (opal_prefix != NULL ? opal_prefix : " "),
                       (opal_prefix != NULL ? " ;" : " "),
                       prefix_dir, bin_base,
-                      lib_path, lib_path, lib_path,
-                      prefix_dir, lib_base, lib_path,
-                      prefix_dir, lib_base, lib_path,
+                      prefix_dir, lib_base,
+                      prefix_dir, lib_base,
                       (orted_prefix != NULL ? orted_prefix : " "),
                       (full_orted_cmd != NULL ? full_orted_cmd : " "));
         } else {
@@ -1422,8 +1412,7 @@ static int launch_agent_setup(const char *agent, char *path)
  * Check the Shell variable and system type on the specified node
  */
 static int rsh_probe(char *nodename, 
-                     orte_plm_rsh_shell_t *shell,
-                     bool *remote_darwin)
+                     orte_plm_rsh_shell_t *shell)
 {
     char ** argv;
     int argc, rc = ORTE_SUCCESS, i;
@@ -1463,7 +1452,7 @@ static int rsh_probe(char *nodename,
         argv = opal_argv_copy(rsh_agent_argv);
         argc = opal_argv_count(rsh_agent_argv);
         opal_argv_append(&argc, &argv, nodename);
-        opal_argv_append(&argc, &argv, "echo $SHELL; uname");
+        opal_argv_append(&argc, &argv, "echo $SHELL");
 
         execvp(argv[0], argv);
         exit(errno);
@@ -1517,26 +1506,17 @@ static int rsh_probe(char *nodename,
         }
     }
 
-    /* check the system type */
-    if (NULL != strstr(outbuf, "Darwin")) {
-        *remote_darwin = true;
-    } else {
-        *remote_darwin = false;
-    }
-
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:rsh: node %s has SHELL: %s machine type: %s",
+                         "%s plm:rsh: node %s has SHELL: %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          nodename,
-                         (ORTE_PLM_RSH_SHELL_UNKNOWN == *shell) ? "UNHANDLED" : (char*)orte_plm_rsh_shell_name[*shell],
-                         (*remote_darwin) ? "Mac" : "Linux"));
+                         (ORTE_PLM_RSH_SHELL_UNKNOWN == *shell) ? "UNHANDLED" : (char*)orte_plm_rsh_shell_name[*shell]));
 
     return rc;
 }
 
 static int setup_shell(orte_plm_rsh_shell_t *rshell,
                        orte_plm_rsh_shell_t *lshell,
-                       bool *remote_darwin,
                        char *nodename, int *argc, char ***argv)
 {
     orte_plm_rsh_shell_t remote_shell, local_shell;
@@ -1583,7 +1563,7 @@ static int setup_shell(orte_plm_rsh_shell_t *rshell,
                              "%s plm:rsh: assuming same remote shell as local shell",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     } else {
-        rc = rsh_probe(nodename, &remote_shell, remote_darwin);
+        rc = rsh_probe(nodename, &remote_shell);
         
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
