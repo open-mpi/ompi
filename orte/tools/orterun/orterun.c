@@ -2600,6 +2600,12 @@ static void attach_debugger(int fd, short event, void *arg)
             proc->name.jobid = jdata->jobid;
             proc->name.vpid = vpid++;
             ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
+	    /* set the local/node ranks - we don't actually care
+	     * what these are, but the odls needs them
+	     */
+	    proc->local_rank = 0;
+	    proc->node_rank = 0;
+	    proc->app_rank = proc->name.vpid;
             /* flag the proc as ready for launch */
             proc->state = ORTE_PROC_STATE_INIT;
             proc->app_idx = 0;
