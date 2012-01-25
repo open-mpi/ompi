@@ -148,6 +148,7 @@ static int btl_wv_component_register(void)
 static int btl_wv_component_open(void)
 {
     /* initialize state */
+    int ret = OMPI_SUCCESS;
     mca_btl_wv_component.ib_num_btls = 0;
     mca_btl_wv_component.wv_btls = NULL;
     OBJ_CONSTRUCT(&mca_btl_wv_component.devices, opal_pointer_array_t);
