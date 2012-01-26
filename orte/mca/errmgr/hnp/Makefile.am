@@ -7,8 +7,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 dist_pkgdata_DATA = help-orte-errmgr-hnp.txt
 
 sources = \
