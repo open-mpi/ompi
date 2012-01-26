@@ -463,6 +463,8 @@ static int setup_launch(int *argcptr, char ***argvptr,
                       prefix_dir, bin_base,
                       prefix_dir, lib_base,
                       prefix_dir, lib_base,
+                      prefix_dir, lib_base,
+                      prefix_dir, lib_base,
                       (orted_prefix != NULL ? orted_prefix : " "),
                       (full_orted_cmd != NULL ? full_orted_cmd : " "));
         } else {
