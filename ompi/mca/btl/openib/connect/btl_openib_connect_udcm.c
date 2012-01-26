@@ -137,6 +137,7 @@ typedef struct udcm_module {
     size_t msg_length;
 
     /* timeout thread */
+    bool            cm_timeout_thread_started;
     pthread_t       cm_timeout_thread;
     pthread_cond_t  cm_timeout_cond;
     pthread_mutex_t cm_timeout_lock;
@@ -512,6 +513,18 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
     BTL_VERBOSE(("created cpc module %p for btl %p",
 		 (void*)m, (void*)btl));
 
+    m->cm_exiting = false;
+    m->cm_timeout_thread_started = false;
+
+    OBJ_CONSTRUCT(&m->cm_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&m->cm_send_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&m->cm_recv_msg_queue, opal_list_t);
+    OBJ_CONSTRUCT(&m->cm_recv_msg_queue_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&m->flying_messages, opal_list_t);
+
+    pthread_mutex_init (&m->cm_timeout_lock, NULL);
+    pthread_cond_init (&m->cm_timeout_cond, NULL);
+
     m->btl = btl;
 
     /* Create completion channel */
@@ -586,23 +599,11 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
 
     m->cpc.cbm_uses_cts = false;
 
-    m->cm_exiting = false;
-
     /* Monitor the fd associated with the completion channel */
     ompi_btl_openib_fd_monitor(m->cm_channel->fd, OPAL_EV_READ,
 			       udcm_cq_event_dispatch, m);
 
-    OBJ_CONSTRUCT(&m->cm_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&m->cm_send_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&m->cm_recv_msg_queue, opal_list_t);
-    OBJ_CONSTRUCT(&m->cm_recv_msg_queue_lock, opal_mutex_t);
-
-    OBJ_CONSTRUCT(&m->flying_messages, opal_list_t);
-
-    pthread_mutex_init (&m->cm_timeout_lock, NULL);
-
     /* start timeout thread */
-    pthread_cond_init (&m->cm_timeout_cond, NULL);
     if (0 != (rc = udcm_module_start_timeout_thread (m))) {
 	return rc;
     }
@@ -623,7 +624,6 @@ static int udcm_module_init (udcm_module_t *m, mca_btl_openib_module_t *btl)
 	BTL_VERBOSE(("error requesting sync completions"));
 	return OMPI_ERROR;
     }
-
     /* Ready to use */
 
     return OMPI_SUCCESS;
@@ -683,46 +683,35 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
 	return OMPI_SUCCESS;
     }
 
-    m->cm_exiting = true;
-
     opal_mutex_lock (&m->cm_lock);
 
-    opal_mutex_lock (&m->cm_recv_msg_queue_lock);
+    m->cm_exiting = true;
 
-    /* clear message queue */
-    while ((item = opal_list_remove_first(&m->cm_recv_msg_queue))) {
-	OBJ_RELEASE(item);
+    /* stop timeout thread */
+    if (m->cm_timeout_thread_started) {
+	pthread_mutex_lock (&m->cm_timeout_lock);
+	pthread_cond_signal (&m->cm_timeout_cond);
+	pthread_mutex_unlock (&m->cm_timeout_lock);
+
+	pthread_join (m->cm_timeout_thread, NULL);
+	m->cm_timeout_thread_started = false;
     }
 
-    opal_mutex_unlock (&m->cm_recv_msg_queue_lock);
+    pthread_mutex_destroy (&m->cm_timeout_lock);
+    pthread_cond_destroy (&m->cm_timeout_cond);
 
-    OBJ_DESTRUCT(&m->cm_recv_msg_queue);
-
-    pthread_mutex_lock (&m->cm_timeout_lock);
-    while ((item = opal_list_remove_first(&m->flying_messages))) {
-	OBJ_RELEASE(item);
+    /* stop monitoring the channel's fd */
+    if (NULL != m->cm_channel) {
+	ompi_btl_openib_fd_unmonitor(m->cm_channel->fd, NULL, NULL);
     }
-
-    /* wake up timeout thread */
-    pthread_cond_signal (&m->cm_timeout_cond);
-
-    pthread_mutex_unlock (&m->cm_timeout_lock);
-
-    pthread_join (m->cm_timeout_thread, NULL);
-
-    OBJ_DESTRUCT(&m->flying_messages);
-
-    BTL_VERBOSE(("destroying listing thread"));
 
     /* destroy the listen queue pair. this will cause ibv_get_cq_event to
        return. */
     udcm_module_destroy_listen_qp (m);
 
-    /* stop monitoring the channel's fd */
-    ompi_btl_openib_fd_unmonitor(m->cm_channel->fd, NULL, NULL);
-
     udcm_module_destroy_buffers (m);
 
+    /* destroy completion queues */
     if (m->cm_sync_cq) {
 	if (0 != ibv_destroy_cq (m->cm_sync_cq)) {
 	    BTL_VERBOSE(("failed to destroy sync CQ. errno = %d",
@@ -744,6 +733,7 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
 	}
     }
 
+    /* destroy completion channel */
     if (m->cm_channel) {
 	if (0 != ibv_destroy_comp_channel (m->cm_channel)) {
 	    BTL_VERBOSE(("failed to completion channel. errno = %d",
@@ -753,13 +743,24 @@ static int udcm_module_finalize(mca_btl_openib_module_t *btl,
 	m->cm_channel = NULL;
     }
 
+    /* clear message queue */
+    opal_mutex_lock (&m->cm_recv_msg_queue_lock);
+    while ((item = opal_list_remove_first(&m->cm_recv_msg_queue))) {
+	OBJ_RELEASE(item);
+    }
+    opal_mutex_unlock (&m->cm_recv_msg_queue_lock);
+    OBJ_DESTRUCT(&m->cm_recv_msg_queue);
+
+    while ((item = opal_list_remove_first(&m->flying_messages))) {
+	OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&m->flying_messages);
+
     opal_mutex_unlock (&m->cm_lock);
+
     OBJ_DESTRUCT(&m->cm_send_lock);
     OBJ_DESTRUCT(&m->cm_lock);
     OBJ_DESTRUCT(&m->cm_recv_msg_queue_lock);
-
-    pthread_mutex_destroy (&m->cm_timeout_lock);
-    pthread_cond_destroy (&m->cm_timeout_cond);
 
     return OMPI_SUCCESS;
 }
@@ -2271,6 +2272,8 @@ static int udcm_module_start_timeout_thread (udcm_module_t *m)
 	BTL_VERBOSE(("error creating ud timeout thread"));
 	return OMPI_ERROR;
     }
+
+    m->cm_timeout_thread_started = true;
 
     return OMPI_SUCCESS;
 }
