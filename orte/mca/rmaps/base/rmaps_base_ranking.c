@@ -511,6 +511,9 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
                     continue;
                 }
                 if (ORTE_VPID_INVALID == proc->name.vpid) {
+                    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                                        "mca:rmaps:base: assigning rank %s to node %s",
+                                        ORTE_VPID_PRINT(vpid), node->name);
                     proc->name.vpid = vpid++;
                     ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
                     ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));

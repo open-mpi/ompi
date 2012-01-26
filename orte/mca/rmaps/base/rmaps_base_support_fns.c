@@ -292,6 +292,17 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     *total_num_slots = num_slots;
     
+    if (4 < opal_output_get_verbosity(orte_rmaps_base.rmaps_output)) {
+        opal_output(0, "AVAILABLE NODES FOR MAPPING:");
+        for (item = opal_list_get_first(allocated_nodes);
+             item != opal_list_get_end(allocated_nodes);
+             item = opal_list_get_next(item)) {
+            node = (orte_node_t*)item;
+            opal_output(0, "    node: %s daemon: %s", node->name,
+                        (NULL == node->daemon) ? "NULL" : ORTE_VPID_PRINT(node->daemon->name.vpid));
+        }
+    }
+
     return ORTE_SUCCESS;
 }
 
