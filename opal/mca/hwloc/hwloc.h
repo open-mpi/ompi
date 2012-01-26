@@ -70,7 +70,7 @@ END_C_DECLS
  * treating caches as a single type of
  * entity - must always be available
  */
-typedef enum uint8_t {
+typedef enum {
     OPAL_HWLOC_NODE_LEVEL=0,
     OPAL_HWLOC_NUMA_LEVEL,
     OPAL_HWLOC_SOCKET_LEVEL,
@@ -80,7 +80,7 @@ typedef enum uint8_t {
     OPAL_HWLOC_CORE_LEVEL,
     OPAL_HWLOC_HWTHREAD_LEVEL
 } opal_hwloc_level_t;
-#define OPAL_HWLOC_LEVEL_T OPAL_UINT8
+#define OPAL_HWLOC_LEVEL_T OPAL_INT
 
 /* include implementation to call */
 #if OPAL_HAVE_HWLOC
