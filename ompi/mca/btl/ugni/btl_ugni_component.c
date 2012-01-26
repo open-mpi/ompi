@@ -354,17 +354,17 @@ mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
     mca_btl_base_segment_t *segments;
     mca_btl_ugni_frag_hdr_t *hdr;
     uintptr_t data_ptr;
-    int tries = 3;
     int count = 0;
     int rc;
 
+    /* loop until the mailbox is empty */
     do {
         uint8_t tag = GNI_SMSG_ANY_TAG;
 
         rc = GNI_SmsgGetNextWTag (ep->common->ep_handle, (void **) &data_ptr, &tag);
         if (GNI_RC_SUCCESS != rc) {
             BTL_VERBOSE(("no smsg message waiting. rc = %d", rc));
-            continue;
+            break;
         }
 
         if (OPAL_UNLIKELY(0 == data_ptr)) {
@@ -425,7 +425,7 @@ mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
             BTL_ERROR(("Smsg release failed!"));
             return OMPI_ERROR;
         }
-    } while (tries--);
+    } while (1);
 
     /* finished processing events */
     return count;
