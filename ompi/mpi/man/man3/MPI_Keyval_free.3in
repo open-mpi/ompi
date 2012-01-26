@@ -39,7 +39,7 @@ Note that use of this routine is \fIdeprecated\fP as of MPI-2. Please use MPI_Co
 .sp
 This deprecated routine is not available in C++. 
 .sp
-Frees an extant attribute key. This function sets the value of keyval to  MPI_KEYVAL_INVALID. Note that it is not erroneous to free an attribute key that is in use, because the actual free does not transpire until after all references (in other communicators on the process) to the key have been freed. These references need to be explictly freed by the program, either via calls to MPI_Attr_delete that free one attribute instance, or by calls to MPI_Comm_free that free all attribute instances associated with the freed communicator. 
+Frees an extant attribute key. This function sets the value of keyval to  MPI_KEYVAL_INVALID. Note that it is not erroneous to free an attribute key that is in use, because the actual free does not transpire until after all references (in other communicators on the process) to the key have been freed. These references need to be explicitly freed by the program, either via calls to MPI_Attr_delete that free one attribute instance, or by calls to MPI_Comm_free that free all attribute instances associated with the freed communicator. 
 
 .SH NOTE
 .ft R

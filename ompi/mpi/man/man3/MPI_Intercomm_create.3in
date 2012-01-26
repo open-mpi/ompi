@@ -3,7 +3,7 @@
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Intercomm_create 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Intercomm_create\fP \- Creates an intercommuncator from two intracommunicators.
+\fBMPI_Intercomm_create\fP \- Creates an intercommunicator from two intracommunicators.
 
 .SH SYNTAX
 .ft R
@@ -71,7 +71,7 @@ If multiple MPI_Intercomm_creates are being made, they should use different tags
 We recommend using a dedicated peer communicator, such as a duplicate of MPI_COMM_WORLD, to avoid trouble with peer communicators.
 .sp
 The MPI 1.1 Standard contains two mutually exclusive comments on the
-input intracommunicators.  One says that their repective groups must be
+input intracommunicators.  One says that their respective groups must be
 disjoint; the other that the leaders can be the same process.  After
 some discussion by the MPI Forum, it has been decided that the groups must
 be disjoint.  Note that the 
