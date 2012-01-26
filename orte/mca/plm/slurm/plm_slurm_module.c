@@ -257,6 +257,9 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     /* add the srun command */
     opal_argv_append(&argc, &argv, "srun");
 
+    /* ensure we only launch one daemon/node */
+    opal_argv_append(&argc, &argv, "--ntasks-per-node=1");
+
     /* alert us if any orteds die during startup */
     opal_argv_append(&argc, &argv, "--kill-on-bad-exit");
 
