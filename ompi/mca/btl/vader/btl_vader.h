@@ -115,8 +115,8 @@ struct mca_btl_vader_component_t {
 
     opal_list_t active_sends;               /**< list of outstanding fragments */
 
-    char **vader_fboxes_in;                 /**< incomming fast boxes (memory belongs to this process) */
-    char **vader_fboxes_out;                /**< outgoing fast boxes (memory belongs to remote peers) */
+    unsigned char **vader_fboxes_in;        /**< incomming fast boxes (memory belongs to this process) */
+    unsigned char **vader_fboxes_out;       /**< outgoing fast boxes (memory belongs to remote peers) */
 
     unsigned char *vader_next_fbox_in;      /**< indices of fast boxes to poll */
     unsigned char *vader_next_fbox_out;     /**< indices of fast boxes to write */
@@ -249,7 +249,7 @@ static inline void *vader_reg_to_ptr (mca_mpool_base_registration_t *reg, void *
    pointers are aliased (TODO -- readd alias check) */
 static inline void vader_memmove (void *dst, void *src, size_t size)
 {
-    if (size >= mca_btl_vader_memcpy_limit) {
+    if (size >= (size_t) mca_btl_vader_memcpy_limit) {
         memcpy (dst, src, size);
     } else {
         memmove (dst, src, size);

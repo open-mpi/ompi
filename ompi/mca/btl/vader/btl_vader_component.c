@@ -295,7 +295,6 @@ static int mca_btl_vader_component_progress (void)
     mca_btl_vader_hdr_t *hdr;
     mca_btl_base_segment_t segments[2];
     mca_mpool_base_registration_t *xpmem_reg = NULL;
-    bool single_copy;
 
     /* check for messages in fast boxes */
     mca_btl_vader_check_fboxes ();

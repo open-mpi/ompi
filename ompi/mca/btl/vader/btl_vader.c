@@ -298,11 +298,11 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     if (NULL == component->xpmem_rcaches)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
-    component->vader_fboxes_in = (char **) calloc (n, sizeof (char *));
+    component->vader_fboxes_in = (unsigned char **) calloc (n, sizeof (char *));
     if (NULL == component->vader_fboxes_in)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
-    component->vader_fboxes_out = (char **) calloc (n, sizeof (char *));
+    component->vader_fboxes_out = (unsigned char **) calloc (n, sizeof (char *));
     if (NULL == component->vader_fboxes_out)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
@@ -503,9 +503,9 @@ static int vader_add_procs (struct mca_btl_base_module_t* btl,
                                                          MCA_MPOOL_FLAGS_PERSIST), rem_ptr);
 
             /* fast boxes are allocated at the same time as the fifos */
-            component->vader_fboxes_in[peer_smp_rank] = (char *) component->fifo[my_smp_rank] +
+            component->vader_fboxes_in[peer_smp_rank] = (unsigned char *) component->fifo[my_smp_rank] +
                 (peer_smp_rank + 1) * getpagesize ();
-            component->vader_fboxes_out[peer_smp_rank] = (char *) component->fifo[peer_smp_rank] +
+            component->vader_fboxes_out[peer_smp_rank] = (unsigned char *) component->fifo[peer_smp_rank] +
                 (my_smp_rank + 1) * getpagesize ();
 
             component->vader_next_fbox_in[peer_smp_rank] = 0;
@@ -591,7 +591,7 @@ mca_btl_base_descriptor_t *mca_btl_vader_alloc(struct mca_btl_base_module_t *btl
     mca_btl_vader_frag_t *frag = NULL;
     int rc;
 
-    if (size <= mca_btl_vader_max_inline_send) {
+    if (size <= (size_t) mca_btl_vader_max_inline_send) {
         MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
     } else if (size <= mca_btl_vader_component.eager_limit) {
         MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, rc);
@@ -685,7 +685,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
                 return NULL;
             }
 
-            iov.iov_len = mca_btl_vader_component.eager_limit - reserve;
+            iov.iov_len = *size;
             iov.iov_base =
                 (IOVBASE_TYPE *)(((uintptr_t)(frag->segment.seg_addr.pval)) +
                                  reserve);
@@ -703,7 +703,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
                 return NULL;
             }
 
-            if ((*size + reserve) > mca_btl_vader_max_inline_send) {
+            if ((*size + reserve) > (size_t) mca_btl_vader_max_inline_send) {
                 /* single copy send */
                 /* pack the iovec after the reserved memory */
                 lcl_mem = (struct iovec *) ((uintptr_t)frag->segment.seg_addr.pval + reserve);
