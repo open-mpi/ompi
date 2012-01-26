@@ -2,7 +2,7 @@
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_Type_get_envelope 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .SH NAME
-\fBMPI_Type_get_envelope\fP \- Returns informaion about input arguments associated with a data type. 
+\fBMPI_Type_get_envelope\fP \- Returns information about input arguments associated with a data type. 
 
 .SH SYNTAX
 .ft R
@@ -56,7 +56,7 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-For the given data type, MPI_Type_get_envelope returns information on the number and type of input arguments used in teh call that created the data type. The number-of-arguments values returned can be used to provide sufficiently large arrays in the decoding routine MPI_Type_get_contents. This call and the meaning of the returned values is described below. The combiner reflects the MPI data type constructor call that was used in creating \fIdatatype\fP. 
+For the given data type, MPI_Type_get_envelope returns information on the number and type of input arguments used in the call that created the data type. The number-of-arguments values returned can be used to provide sufficiently large arrays in the decoding routine MPI_Type_get_contents. This call and the meaning of the returned values is described below. The combiner reflects the MPI data type constructor call that was used in creating \fIdatatype\fP. 
 
 .SH NOTES
 .ft R

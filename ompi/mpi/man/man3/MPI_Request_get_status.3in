@@ -15,7 +15,7 @@ int MPI_Request_get_status(MPI_Request \fIrequest\fP, int \fI*flag\fP, MPI_Statu
 .SH Fortran Syntax
 .nf
 INCLUDE 'mpif.h'
-MPI_REQUEST_FREE(\fIREQUEST\fP, \fIFLAG\fP, \fISTATUS\fP, \fIIERROR\fP)
+MPI_REQUEST_GET_STATUS(\fIREQUEST\fP, \fIFLAG\fP, \fISTATUS\fP, \fIIERROR\fP)
 	INTEGER	REQUEST, STATUS(MPI_STATUS_SIZE), IERROR 
 	LOGICAL	FLAG
 

@@ -62,6 +62,6 @@ void mpi_file_seek_shared_f(MPI_Fint *fh, MPI_Offset *offset,
 {    
     MPI_File c_fh = MPI_File_f2c(*fh);
 
-    *ierr = OMPI_INT_2_FINT(MPI_File_seek(c_fh, (MPI_Offset) *offset,
+    *ierr = OMPI_INT_2_FINT(MPI_File_seek_shared(c_fh, (MPI_Offset) *offset,
 					  OMPI_FINT_2_INT(*whence)));
 }

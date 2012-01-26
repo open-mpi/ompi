@@ -31,7 +31,7 @@
 #include "ompi/mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Add_error_code";
+static const char FUNC_NAME[] = "MPI_Add_error_string";
 
 
 int MPI_Add_error_string(int errorcode, char *string)
