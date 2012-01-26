@@ -230,6 +230,12 @@ Compiler Notes
   -m32 and -m64 for producing 32 and 64 bit targets, respectively,
   are now preferred by the Solaris Studio compilers.
 
+- It has been noticed that if one uses CXX=sunCC, in which sunCC
+  is a link in the Solaris Studio compiler release, that the OMPI 
+  build system has issue with sunCC and does not build libmpi_cxx.so.
+  Therefore  the make install fails.  So we suggest that one should
+  use CXX=CC, which works, instead of CXX=sunCC.
+
 - At least some versions of the Intel 8.1 compiler seg fault while
   compiling certain Open MPI source code files.  As such, it is not
   supported.
