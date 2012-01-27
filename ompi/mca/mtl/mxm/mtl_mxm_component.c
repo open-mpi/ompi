@@ -58,6 +58,11 @@ mca_mtl_mxm_component_t mca_mtl_mxm_component = {
 }
 };
 
+static void ompi_mtl_mxm_progress_cb(void *user_data)
+{
+    opal_progress();
+}
+
 static int ompi_mtl_mxm_component_register(void)
 {
 
@@ -72,7 +77,6 @@ static int ompi_mtl_mxm_component_register(void)
 
 static int ompi_mtl_mxm_component_open(void)
 {
-
     mxm_error_t err;
 
     mca_mtl_mxm_output = opal_output_open(NULL);
@@ -89,6 +93,8 @@ static int ompi_mtl_mxm_component_open(void)
         }
         return OPAL_ERR_NOT_AVAILABLE;
     }
+
+    mxm_set_progress_cb(ompi_mtl_mxm.mxm_context, ompi_mtl_mxm_progress_cb, NULL);
     return OMPI_SUCCESS;
 }
 
