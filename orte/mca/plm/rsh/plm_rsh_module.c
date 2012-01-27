@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
@@ -618,11 +618,13 @@ static int setup_launch(int *argcptr, char ***argvptr,
             asprintf (&final_cmd,
                       "%s%s%s PATH=%s/%s:$PATH ; export PATH ; "
                       "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
+                      "DYLD_LIBRARY_PATH=%s/%s:$DYLD_LIBRARY_PATH ; export DYLD_LIBRARY_PATH ; "
                       "%s %s",
                       (opal_prefix != NULL ? "OPAL_PREFIX=" : " "),
                       (opal_prefix != NULL ? opal_prefix : " "),
                       (opal_prefix != NULL ? " ; export OPAL_PREFIX;" : " "),
                       prefix_dir, bin_base,
+                      prefix_dir, lib_base,
                       prefix_dir, lib_base,
                       (orted_prefix != NULL ? orted_prefix : " "),
                       (full_orted_cmd != NULL ? full_orted_cmd : " "));
@@ -648,11 +650,19 @@ static int setup_launch(int *argcptr, char ***argvptr,
                       "setenv LD_LIBRARY_PATH %s/%s ; "
                       "if ( $?OMPI_have_llp == 1 ) "
                       "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
+                      "if ( $?DYLD_LIBRARY_PATH == 1 ) "
+                      "set OMPI_have_dllp ; "
+                      "if ( $?DYLD_LIBRARY_PATH == 0 ) "
+                      "setenv DYLD_LIBRARY_PATH %s/%s ; "
+                      "if ( $?OMPI_have_dllp == 1 ) "
+                      "setenv DYLD_LIBRARY_PATH %s/%s:$DYLD_LIBRARY_PATH ; "
                       "%s %s",
                       (opal_prefix != NULL ? "setenv OPAL_PREFIX " : " "),
                       (opal_prefix != NULL ? opal_prefix : " "),
                       (opal_prefix != NULL ? " ;" : " "),
                       prefix_dir, bin_base,
+                      prefix_dir, lib_base,
+                      prefix_dir, lib_base,
                       prefix_dir, lib_base,
                       prefix_dir, lib_base,
                       (orted_prefix != NULL ? orted_prefix : " "),
