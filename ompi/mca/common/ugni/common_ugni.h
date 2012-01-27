@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -121,6 +121,8 @@ int ompi_common_ugni_init (void);
  */
 int ompi_common_ugni_fini (void);
 
+extern void mca_btl_ugni_local_smsg_complete (void *, uint32_t, int);
+
 static inline int
 ompi_common_ugni_process_completed_post (ompi_common_ugni_device_t *dev,
                                          gni_cq_handle_t cq_handle) {
@@ -130,8 +132,7 @@ ompi_common_ugni_process_completed_post (ompi_common_ugni_device_t *dev,
     uint32_t recoverable = 1;
 
     rc = GNI_CqGetEvent (cq_handle, &event_data);
-    if (GNI_RC_NOT_DONE == rc || GNI_CQ_GET_TYPE(event_data) != GNI_CQ_EVENT_TYPE_POST) {
-        /* ignore smsg completion */
+    if (GNI_RC_NOT_DONE == rc) {
         return 0;
     }
 
@@ -139,8 +140,25 @@ ompi_common_ugni_process_completed_post (ompi_common_ugni_device_t *dev,
         /* TODO -- need to handle overrun -- how do we do this without an event?
            will the event eventually come back? Ask Cray */
         OPAL_OUTPUT((-1, "post error! cq overrun = %d", (int)GNI_CQ_OVERRUN(event_data)));
-        assert (GNI_RC_SUCCESS == rc);
+        assert (0);
         return ompi_common_rc_ugni_to_ompi (rc);
+    }
+
+    /* local SMS completion */
+    if (GNI_CQ_GET_TYPE(event_data) == GNI_CQ_EVENT_TYPE_SMSG) {
+        uint32_t msg_id = GNI_CQ_GET_MSG_ID(event_data);
+        uint32_t ep_id  = 0x00ffffff & msg_id;
+
+        if ((uint32_t)-1 == msg_id) {
+            /* nothing to do */
+            return 1;
+        }
+
+        /* inform the btl of local smsg completion */
+        mca_btl_ugni_local_smsg_complete (dev->dev_eps[ep_id]->btl_ctx, msg_id,
+                                          GNI_CQ_STATUS_OK(event_data) ? OMPI_SUCCESS : OMPI_ERROR);
+
+        return 1;
     }
 
     rc = GNI_GetCompleted (cq_handle, event_data, (gni_post_descriptor_t **) &desc);
@@ -183,7 +201,7 @@ static inline int ompi_common_ugni_progress (void) {
 
     for (i = 0, count = 0 ; i < ompi_common_ugni_module.device_count ; ++i) {
         dev = ompi_common_ugni_module.devices + i;
-        /* progress fma transactions (ignore local smsg) */
+        /* progress fma/local smsg completions */
         count += ompi_common_ugni_process_completed_post (dev, dev->dev_local_cq);
     }
 

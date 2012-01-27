@@ -23,7 +23,6 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
                         mca_btl_base_descriptor_t **descriptor)
 {
     size_t length = header_size + payload_size;
-    uint32_t msg_id = ORTE_PROC_MY_NAME->vpid;
     mca_btl_ugni_base_frag_t *frag;
     uint32_t iov_count = 1;
     void *data_ptr = NULL;
@@ -70,16 +69,17 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
         assert (max_data == payload_size);
 
         header_size += payload_size;
-        payload_size = 0;
     } else if (payload_size) {
         opal_convertor_get_current_pointer (convertor, &data_ptr);
+        memmove ((uintptr_t)frag->segments[0].seg_addr.pval + header_size, data_ptr, payload_size);
     }
 
-    header_size += sizeof (frag->hdr[0]);
+    frag->base.des_cbfunc = NULL;
+    frag->msg_id = endpoint->common->ep_rem_id & 0x00ffffff;
 
     /* send message */
-    rc = GNI_SmsgSendWTag (endpoint->common->ep_handle, frag->hdr, header_size,
-                           data_ptr, payload_size, msg_id, MCA_BTL_UGNI_TAG_SEND);
+    rc = GNI_SmsgSendWTag (endpoint->common->ep_handle, frag->hdr, sizeof (frag->hdr[0]),
+                           frag->segments[0].seg_addr.pval, length, frag->msg_id, MCA_BTL_UGNI_TAG_SEND);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         BTL_VERBOSE(("GNI_SmsgSendWTag failed with rc = %d", rc));
         MCA_BTL_UGNI_FRAG_RETURN (frag);
@@ -88,7 +88,7 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    MCA_BTL_UGNI_FRAG_RETURN (frag);
+    opal_list_append (&endpoint->pending_smsg_sends, (opal_list_item_t *) frag);
 
     return OMPI_SUCCESS;
 }

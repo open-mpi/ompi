@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -23,12 +23,14 @@ OBJ_CLASS_INSTANCE(mca_btl_base_endpoint_t, opal_object_t,
 static void mca_btl_ugni_ep_construct (mca_btl_base_endpoint_t *ep)
 {
     OBJ_CONSTRUCT(&ep->pending_list, opal_list_t);
+    OBJ_CONSTRUCT(&ep->pending_smsg_sends, opal_list_t);
     ep->smsgs_waiting = false;
 }
 
 static void mca_btl_ugni_ep_destruct (mca_btl_base_endpoint_t *ep)
 {
     OBJ_DESTRUCT(&ep->pending_list);
+    OBJ_DESTRUCT(&ep->pending_smsg_sends);
 }
 
 static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {

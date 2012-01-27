@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -298,13 +298,12 @@ static inline void mca_btl_ugni_callback_reverse_get (mca_btl_base_module_t *btl
 {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
     mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) des;
-    uint32_t msg_id = ORTE_PROC_MY_NAME->vpid;
 
     BTL_VERBOSE(("reverse get (put) for rem_ctx %p complete", des->des_cbdata));
 
     /* tell peer the put is complete */
     rc = GNI_SmsgSendWTag (frag->endpoint->common->ep_handle, &des->des_cbdata, sizeof (void *),
-                           NULL, 0, msg_id, MCA_BTL_UGNI_TAG_PUT_COMPLETE);
+                           NULL, 0, -1, MCA_BTL_UGNI_TAG_PUT_COMPLETE);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         /* turn off btl ownership for now */
         des->des_flags &= ~MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
@@ -357,14 +356,20 @@ mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
     int count = 0;
     int rc;
 
-    /* loop until the mailbox is empty */
+    /* per uGNI documentation we loop until the mailbox is empty */
     do {
         uint8_t tag = GNI_SMSG_ANY_TAG;
 
         rc = GNI_SmsgGetNextWTag (ep->common->ep_handle, (void **) &data_ptr, &tag);
-        if (GNI_RC_SUCCESS != rc) {
+        if (GNI_RC_NOT_DONE == rc) {
             BTL_VERBOSE(("no smsg message waiting. rc = %d", rc));
             break;
+        }
+
+        if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
+            fprintf (stderr, "Unhandled Smsg error: %d\n", rc);
+            assert (0);
+            return OMPI_ERROR;
         }
 
         if (OPAL_UNLIKELY(0 == data_ptr)) {
