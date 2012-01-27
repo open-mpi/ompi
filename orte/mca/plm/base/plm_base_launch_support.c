@@ -79,7 +79,11 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     int rc;
     int32_t ljob;
     int i;
-    
+    orte_node_t *node;
+#if OPAL_HAVE_HWLOC
+    hwloc_topology_t t0;
+#endif
+
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:setup_job for job %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -123,6 +127,25 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+#if OPAL_HAVE_HWLOC
+    /* if we are not going to launch, then we need to set any
+     * undefined topologies to match our own so the mapper
+     * can operate
+     */
+    if (orte_do_not_launch) {
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        t0 = node->topology;
+        for (i=1; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            if (NULL == node->topology) {
+                node->topology = t0;
+            }
+        }
+    }
+#endif
 
     /* map the job */
     if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(jdata))) {

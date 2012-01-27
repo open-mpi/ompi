@@ -512,6 +512,11 @@ static int bind_in_place(orte_job_t *jdata,
 
 int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
 {
+    if (OPAL_BIND_TO_CPUSET == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+        /* user specified binding by rankfile - nothing for us to do */
+        return ORTE_SUCCESS;
+    }
+
     if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding) ||
         OPAL_BIND_TO_NONE == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
         /* no binding requested */
