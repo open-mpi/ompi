@@ -2272,9 +2272,10 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 orte_debugger_check_rate);
             ORTE_TIMER_EVENT(orte_debugger_check_rate, 0, attach_debugger);
-        } else {
-            /* create the attachment FIFO and setup readevent */
-            /* create a FIFO name in the session dir */
+        } else if (orte_create_session_dirs) {
+            /* create the attachment FIFO and setup readevent - cannot be
+             * done if no session dirs exist!
+             */
             attach_fifo = opal_os_path(false, orte_process_info.job_session_dir, "debugger_attach_fifo", NULL);
             if ((mkfifo(attach_fifo, FILE_MODE) < 0) && errno != EEXIST) {
                 opal_output(0, "CANNOT CREATE FIFO %s: errno %d", attach_fifo, errno);
