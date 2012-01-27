@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -80,7 +80,7 @@ mca_btl_ugni_module_t mca_btl_ugni_module = {
         mca_btl_ugni_prepare_src,
         mca_btl_ugni_prepare_dst,
         mca_btl_ugni_send,
-        mca_btl_ugni_sendi,
+        NULL, /* sendi */
         mca_btl_ugni_put,
         mca_btl_ugni_get,
         NULL, /* mca_btl_base_dump, */

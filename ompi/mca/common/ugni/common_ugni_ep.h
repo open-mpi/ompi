@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -31,6 +31,7 @@ struct ompi_common_ugni_endpoint_t {
     struct ompi_common_ugni_device_t *dev;   /**< device this endpoint is using */
     opal_mutex_t lock;
     int bind_count;                          /**< bind reference count */
+    void *btl_ctx;                           /**< btl context for this endpoint */
 };
 typedef struct ompi_common_ugni_endpoint_t ompi_common_ugni_endpoint_t;
 

@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -104,7 +104,6 @@ static inline int mca_btl_ugni_start_reverse_get (struct mca_btl_base_module_t *
                                                   mca_btl_ugni_base_frag_t *frag) {
     /* off alignment/off size. switch to put */
     mca_btl_base_segment_t segments[2];
-    uint32_t msg_id = ORTE_PROC_MY_NAME->vpid;
     void *post_desc_ptr = &(frag->post_desc);
     int rc;
 
@@ -113,7 +112,7 @@ static inline int mca_btl_ugni_start_reverse_get (struct mca_btl_base_module_t *
 
     rc = GNI_SmsgSendWTag (frag->endpoint->common->ep_handle, segments,
                            sizeof (segments), &post_desc_ptr, sizeof (void *),
-                           msg_id, MCA_BTL_UGNI_TAG_PUT_INIT);
+                           -1, MCA_BTL_UGNI_TAG_PUT_INIT);
     if (OPAL_UNLIKELY(rc == GNI_RC_NOT_DONE)) {
         /* send this smsg packet later */
         return OMPI_ERR_OUT_OF_RESOURCE;

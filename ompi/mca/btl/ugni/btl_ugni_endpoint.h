@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -37,6 +37,7 @@ struct mca_btl_base_endpoint_t {
     mca_btl_ugni_smsg_mbox_t *mailbox;
 
     opal_list_t pending_list;
+    opal_list_t pending_smsg_sends;
 
     /* true if a frag was received before the connection was complete */
     bool smsgs_waiting;
@@ -66,6 +67,7 @@ static inline int mca_btl_ugni_init_ep (mca_btl_base_endpoint_t **ep,
     }
 
     endpoint->btl = btl;
+    endpoint->common->btl_ctx = (void *) endpoint;
 
     *ep = endpoint;
 
