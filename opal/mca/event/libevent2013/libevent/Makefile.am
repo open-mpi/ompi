@@ -73,9 +73,10 @@ ACLOCAL_AMFLAGS = -I m4
 # is user-visible, and so we can pretty much guarantee that release
 # series won't be binary-compatible.
 
-if INSTALL_LIBEVENT
-dist_bin_SCRIPTS = event_rpcgen.py
-endif
+# Open MPI: Don't install this, ever
+# if INSTALL_LIBEVENT
+# dist_bin_SCRIPTS = event_rpcgen.py
+# endif
 
 # Open MPI: disable pkg-config stuff (left commented for reference)
 # pkgconfigdir=$(libdir)/pkgconfig
