@@ -9,7 +9,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -248,7 +248,7 @@ elif test "$enable_ft_thread" = "undef" -a "$enable_opal_progress_threads" = "no
 else
     # Default: Enable
     # Make sure we have OPAL Threads enabled 
-    if "$enable_opal_multi_threads" = "no"; then
+    if test "$enable_opal_multi_threads" = "no"; then
         AC_MSG_RESULT([Must enable OPALbasic thread support to use this option])
         AC_MSG_ERROR([Cannot continue])
     else
