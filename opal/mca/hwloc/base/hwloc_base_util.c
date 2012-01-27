@@ -847,7 +847,7 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                 opal_argv_free(range);
             }
         } else {
-            /* we don't support other levels yet */
+            /* unrecognized option */
             rc = OPAL_ERR_NOT_SUPPORTED;
             break;
         }
@@ -863,7 +863,12 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
 {
     char **item;
     int rc, i;
-    
+    hwloc_obj_t pu;
+    hwloc_cpuset_t pucpus;
+    char **range;
+    size_t range_cnt;
+    int core_id, lower_range, upper_range;
+
     /* bozo checks */
     if (NULL == opal_hwloc_topology) {
         return OPAL_ERR_NOT_SUPPORTED;
@@ -904,9 +909,49 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
                 }
             }
         } else {
-            /* we don't support other things yet */
-            opal_argv_free(item);
-            return OPAL_ERR_NOT_SUPPORTED;
+            /* just a core specification - see if one or a range was given */
+            range = opal_argv_split(item[i], '-');
+            range_cnt = opal_argv_count(range);
+            hwloc_bitmap_zero(cpumask);
+            /* see if a range was set or not */
+            switch (range_cnt) {
+            case 1:  /* only one core specified */
+                core_id = atoi(range[0]);
+                /* find the specified logical available cpu */
+                if (NULL == (pu = get_pu(topo, core_id))) {
+                    opal_argv_free(range);
+                    opal_argv_free(item);
+                    return OPAL_ERROR;
+                }
+                /* get the available cpus for that object */
+                pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
+                 /* set that in the mask */
+                hwloc_bitmap_copy(cpumask, pucpus);
+                break;
+                    
+            case 2:  /* range of core id's was given */
+                lower_range = atoi(range[0]);
+                upper_range = atoi(range[1]);
+                hwloc_bitmap_zero(cpumask);
+                for (core_id=lower_range; core_id <= upper_range; core_id++) {
+                    /* find the specified logical available cpu */
+                    if (NULL == (pu = get_pu(topo, core_id))) {
+                        opal_argv_free(range);
+                        opal_argv_free(item);
+                        return OPAL_ERROR;
+                    }
+                    /* get the available cpus for that object */
+                    pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
+                    /* set that in the mask */
+                    hwloc_bitmap_or(cpumask, cpumask, pucpus);
+                }
+                break;
+                
+            default:
+                opal_argv_free(range);
+                opal_argv_free(item);
+                return OPAL_ERROR;
+            }
         }
     }
     opal_argv_free(item);

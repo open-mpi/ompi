@@ -107,6 +107,8 @@ static int orte_rmaps_rank_file_open(void)
         }
         ORTE_SET_MAPPING_POLICY(orte_rmaps_base.mapping, ORTE_MAPPING_BYUSER);
         ORTE_SET_MAPPING_DIRECTIVE(orte_rmaps_base.mapping, ORTE_MAPPING_GIVEN);
+        /* we are going to bind to cpuset since the user is specifying the cpus */
+        OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
         /* make us first */
         my_priority = 10000;
     }

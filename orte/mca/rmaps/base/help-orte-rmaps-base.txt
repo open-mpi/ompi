@@ -131,15 +131,14 @@ You can override this protection by adding the "overload-allowed"
 option to your binding directive.
 #
 [rmaps:no-topology]
-A request was made for nperxxx that requires knowledge of
+A mapping directive was given that requires knowledge of
 a remote node's topology. However, no topology info is
 available for the following node:
 
   Node: %s
 
 The job cannot be executed under this condition. Please either
-remove the nperxxx directive and specify the number of processes
-to use, or investigate the lack of topology info.
+remove the directive or investigate the lack of topology info.
 #
 [rmaps:no-available-cpus]
 While computing bindings, we found no available cpus on
