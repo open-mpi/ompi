@@ -79,6 +79,10 @@ AC_DEFUN([ORTE_CHECK_PMI],[
                   $1_LDFLAGS="$orte_check_pmi_$1_LDFLAGS"
                   $1_CPPFLAGS="$orte_check_pmi_$1_CPPFLAGS"
                   $1_LIBS="-lpmi"
+                  AS_IF([test -z "$orte_pmi_wrapper_flags_added"],
+                        [orte_pmi_wrapper_flags_added=yes
+                         WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $orte_check_pmi_$1_LDFLAGS"
+                         WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lpmi"])
                   $2],
                  [AC_MSG_RESULT([no])
                   AC_MSG_WARN([PMI support requested (via --with-pmi) but not found.])

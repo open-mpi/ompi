@@ -18,15 +18,9 @@ AC_DEFUN([MCA_orte_grpcomm_pmi_CONFIG], [
          
     ORTE_CHECK_PMI([grpcomm_pmi], [grpcomm_pmi_good=1], [grpcomm_pmi_good=0])
          
-    # if check worked, set wrapper flags if so.  
     # Evaluate succeed / fail
     AS_IF([test "$grpcomm_pmi_good" = 1 -a "$orte_without_full_support" = 0],
-          [if test -z "$orte_pmi_wrapper_flags_added"; then
-              orte_pmi_wrapper_flags_added=yes
-              WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $grpcomm_pmi_LDFLAGS"
-              WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $grpcomm_pmi_LIBS"
-           fi
-           $1],
+          [$1],
           [$2])
 
     # set build flags to use in makefile
