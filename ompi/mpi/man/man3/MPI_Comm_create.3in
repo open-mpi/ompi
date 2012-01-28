@@ -49,8 +49,19 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-This function creates a new communicator newcomm with communication group
-defined by group and a new context. The function sets \fInewcomm\fR to a new communicator that spans all the processes that are in the group.   It sets \fInewcomm\fR to MPI_COMM_NULL for processes that are not in the group.   The call is erroneous if not all group arguments have the same value, or if group is not a subset of the group associated with comm. Note that the call must be executed by all processes in comm, even if they do not belong to the new group. 
+This function creates a new communicator newcomm with communication
+group defined by group and a new context. The function sets
+\fInewcomm\fR to a new communicator that spans all the processes that
+are in the group.  It sets \fInewcomm\fR to MPI_COMM_NULL for
+processes that are not in the group.  
+
+Each process must call with a \fIgroup\fR argument that is a subgroup
+of the group associated with \fIcomm\fR; this could be
+MPI_GROUP_EMPTY. The processes may specify different values for the
+\fIgroup\fR argument. If a process calls with a non-empty \fIgroup\fR,
+then all processes in that group must call the function with the same
+\fIgroup\fR as argument, that is: the same processes in the same
+order. Otherwise the call is erroneous.
 .sp
 .LP
 
