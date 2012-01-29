@@ -19,6 +19,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST = base/.windows
+
 headers += \
         base/base.h
 
