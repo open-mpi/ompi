@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -52,6 +52,22 @@ included in the vX.Y.Z section and be denoted as:
 1.4.5
 -----
 
+- Fixed the --disable-memory-manager configure switch.
+  (** also to appear in 1.5.5)
+- Fix typos in code and man pages.  Thanks to Fujitsu for these fixes.
+  (** also to appear in 1.5.5)
+- Improve management of the registration cache; when full, try freeing
+  old entries and attempt to re-register.
+- Fixed a data packing pointer alignment issue.  Thanks to Fujitsu
+  for the patch.
+  (** also to appear in 1.5.5)
+- Add ability to turn off warning about having the shared memory backing
+  store over a networked filesystem.  Thanks to Chris Samuel for this
+  suggestion.
+  (** also to appear in 1.5.5)
+- Removed an unnecessary memmove() and plugged a couple of small memory leaks
+  in the openib OOB connection setup code.
+- Fixed some QLogic bugs. Thanks to Mark Debbage from QLogic for the patches. 
 - Fixed problem with MPI_IN_PLACE and other sentinel Fortran constants
   on OS X.
   (** also to appear in 1.5.5)
@@ -66,11 +82,12 @@ included in the vX.Y.Z section and be denoted as:
 - Workaround an Intel compiler v12.1.0 2011.6.233 vector optimization
   bug.
 - Fix issues on Solaris with the openib BTL.
-- Fix Fortran compile issues with Oracle Studio 12.2 compilers.
+- Fixes for the Oracle Studio 12.2 Fortran compiler.
 - Update iWARP parameters for the Intel NICs.
   (** also to appear in 1.5.5)
 - Fix obscure cases where MPI_ALLGATHER could crash.  Thanks to Andrew
   Senin for reporting the problem.
+  (** also to appear in 1.5.5)
 
 
 1.4.4
