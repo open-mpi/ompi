@@ -72,12 +72,6 @@ static int ompi_mtl_mxm_component_register(void)
                            0,
                            &ompi_mtl_mxm.verbose);
 
-    mca_base_param_reg_int(&mca_mtl_mxm_component.super.mtl_version, "enable",
-                           "Enable/Disable MXM component",
-                           false, false,
-                           1,
-                           &ompi_mtl_mxm.enabled);
-
     return OMPI_SUCCESS;
 }
 
@@ -87,11 +81,6 @@ static int ompi_mtl_mxm_component_open(void)
 
     mca_mtl_mxm_output = opal_output_open(NULL);
     opal_output_set_verbosity(mca_mtl_mxm_output, ompi_mtl_mxm.verbose);
-
-    if (0 == ompi_mtl_mxm.enabled) {
-        MXM_VERBOSE(1, "MTL/MXM was disabled on user request");
-        return OPAL_ERR_NOT_AVAILABLE;
-    }
 
     mxm_fill_context_opts(&ompi_mtl_mxm.mxm_opts);
     err = mxm_init(&ompi_mtl_mxm.mxm_opts, &ompi_mtl_mxm.mxm_context);
