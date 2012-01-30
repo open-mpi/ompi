@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -57,7 +57,7 @@ Much, much more information is also available in the Open MPI FAQ:
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (5 October 2010):
+base as of this writing (30 January 2012):
 
 General notes
 -------------
@@ -103,8 +103,8 @@ General notes
     Solaris Studio 12
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
     Intel, Portland, and Oracle Solaris Studio 12 compilers (*)
-  - OS X (10.5, 10.6), 32 and 64 bit (x86_64), with gcc and Absoft
-    compilers (*)
+  - OS X (10.5, 10.6, 10.7), 32 and 64 bit (x86_64), with gcc and
+    Absoft compilers (*)
   - Oracle Solaris 10, 32 and 64 bit (SPARC, i386, x86_64), with
     Oracle Solaris Studio 12
 
