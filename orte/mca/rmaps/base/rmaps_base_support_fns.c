@@ -204,11 +204,20 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
                 while (node->daemon->name.vpid < nd->daemon->name.vpid) {
                     if (opal_list_get_begin(allocated_nodes) == opal_list_get_prev(&nd->super)) {
                         /* insert at beginning */
-                        break;
+                        opal_list_prepend(allocated_nodes, &node->super);
+                        goto moveon;
                     }
                     nd = (orte_node_t*)opal_list_get_prev(&nd->super);
                 }
-                opal_list_insert_pos(allocated_nodes, &nd->super, &node->super);
+                item = opal_list_get_next(&nd->super);
+                if (item == opal_list_get_end(allocated_nodes)) {
+                    /* we are at the end - just append */
+                    opal_list_append(allocated_nodes, &node->super);
+                } else {
+                    nd = (orte_node_t*)item;
+                    opal_list_insert_pos(allocated_nodes, item, &node->super);
+                }
+            moveon:
                 /* reset us back to the end for the next node */
                 nd = (orte_node_t*)opal_list_get_last(allocated_nodes);
             }
