@@ -201,8 +201,8 @@ General notes
   - Linux (various flavors/distros), 32 bit, with gcc, and Sun Studio 12
   - Linux (various flavors/distros), 64 bit (x86), with gcc, Absoft,
     Intel, Portland, Pathscale, and Sun Studio 12 compilers (*)
-  - OS X (10.4), 32 and 64 bit (i386, PPC, PPC64, x86_64), with gcc
-    and Absoft compilers (*)
+  - OS X (10.5, 10.6, 10.7), 32 and 64 bit (x86_64), with gcc
+    and Absoft compilers (*).
   - Solaris 10 update 2, 3 and 4, 32 and 64 bit (SPARC, i386, x86_64),
     with Sun Studio 10, 11 and 12
 
