@@ -358,14 +358,15 @@ Trunk (not on release branches yet)
 1.4.5
 -----
 
+- Fixed the --disable-memory-manager configure switch.
+  (** also to appear in 1.5.5)
 - Fix typos in code and man pages.  Thanks to Fujitsu for these fixes.
+  (** also to appear in 1.5.5)
 - Improve management of the registration cache; when full, try freeing
   old entries and attempt to re-register.
 - Fixed a data packing pointer alignment issue.  Thanks to Fujitsu
   for the patch.
   (** also to appear in 1.5.5)
-- Modified the behavior of opal_free() to conform to that of free()
-  and allow calls w/a NULL pointer to be silently ignored.
 - Add ability to turn off warning about having the shared memory backing
   store over a networked filesystem.  Thanks to Chris Samuel for this
   suggestion.
