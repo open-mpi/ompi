@@ -121,6 +121,13 @@ AC_DEFUN([_OMPI_CONTRIB_CONFIGURE],[
             AC_MSG_RESULT([yes])
         else
             AC_MSG_RESULT([no])
+
+            # If this component was requested via command line switch, then abort.
+            if test "x$enable_$1" = xyes ; then
+                AC_MSG_WARN([Contributed component "$1" failed to configure properly])
+                AC_MSG_WARN([This component was requested via command line switch])
+                AC_MSG_ERROR([Cannot continue])
+            fi
         fi
     else
         AC_MSG_NOTICE([disabled via command line switch])
