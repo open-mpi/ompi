@@ -52,9 +52,13 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
             AC_WARN([*** Please re-configure Open MPI to use the STLport4])
             AC_WARN([*** by adding the compiler flag -library=stlport4])
             AC_WARN([*** to CXXFLAGS.])
-            AC_WARN([*** Pausing to give you time to read this message...])
+            if test "x$enable_vt" != xyes; then
+                AC_WARN([*** Pausing to give you time to read this message...])
+            fi
             AC_WARN([***********************************************************])
-            sleep 10
+            if test "x$enable_vt" != xyes; then
+                sleep 10
+            fi
             contrib_vt_happy=0
         ])
         AC_LANG_POP(C++)
