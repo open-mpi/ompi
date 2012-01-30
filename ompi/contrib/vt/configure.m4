@@ -23,6 +23,12 @@
 # ------------------------------------------------
 AC_DEFUN([OMPI_contrib_vt_CONFIG],[
 
+    AC_ARG_WITH([contrib-vt-flags],
+                [AC_HELP_STRING([--with-contrib-vt-flags=FLAGS],
+                                [Pass FLAGS to the VampirTrace distribution configuration script])])
+    AS_IF([test "$with_contrib_vt_flags" = "yes" -o "$with_contrib_vt_flags" = "no"],
+          [with_contrib_vt_flags=""])
+
     contrib_vt_happy=1
 
     # In case of using the Oracle C++ compiler check whether its C++ STL
@@ -30,37 +36,32 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
     if test "x$ompi_cv_cxx_compiler_vendor" = "xsun"; then
         AC_MSG_CHECKING([whether C++ STL is suitable for vt])
         AC_LANG_PUSH(C++)
-        AC_TRY_COMPILE([#include <map>],
-        [
-            std::map<int, int> map;
-            // The following assignment implicitly converts an "iterator"
-            // to a "const_interator". Although this is allowed by the C++
-            // standard, using the default C++ STL (libCstd) will cause a
-            // compile error.
-            // Seen with Oracle Studio version 12.3 and Express 6/10.
-            std::pair<std::map<int, int>::const_iterator, bool> ret=
-                map.insert(std::pair<int, int>(123, 456));
-        ],
-        [
-            AC_MSG_RESULT([yes])
-        ],
-        [
-            AC_MSG_RESULT([no])
-            AC_WARN([***********************************************************])
-            AC_WARN([*** VampirTrace cannot be built due to an unsuitable])
-            AC_WARN([*** C++ STL from Oracle Studio compiler.])
-            AC_WARN([*** Please re-configure Open MPI to use the STLport4])
-            AC_WARN([*** by adding the compiler flag -library=stlport4])
-            AC_WARN([*** to CXXFLAGS.])
-            if test "x$enable_vt" != xyes; then
-                AC_WARN([*** Pausing to give you time to read this message...])
-            fi
-            AC_WARN([***********************************************************])
-            if test "x$enable_vt" != xyes; then
-                sleep 10
-            fi
-            contrib_vt_happy=0
-        ])
+        AC_COMPILE_IFELSE(
+            [AC_LANG_PROGRAM([[#include <map>]],
+                             [[std::map<int, int> map;
+                               // The following assignment implicitly converts an "iterator"
+                               // to a "const_interator". Although this is allowed by the C++
+                               // standard, using the default C++ STL (libCstd) will cause a
+                               // compile error.
+                               // Seen with Oracle Studio version 12.3 and Express 6/10.
+                               std::pair<std::map<int, int>::const_iterator, bool> ret=
+                               map.insert(std::pair<int, int>(123, 456));]])],
+            [AC_MSG_RESULT([yes])],
+            [AC_MSG_RESULT([no])
+             AC_WARN([***********************************************************])
+             AC_WARN([*** VampirTrace cannot be built due to an unsuitable])
+             AC_WARN([*** C++ STL from Oracle Studio compiler.])
+             AC_WARN([*** Please re-configure Open MPI to use the STLport4])
+             AC_WARN([*** by adding the compiler flag -library=stlport4])
+             AC_WARN([*** to CXXFLAGS.])
+             if test -z $enable_vt; then
+                 AC_WARN([*** Pausing to give you time to read this message...])
+             fi
+             AC_WARN([***********************************************************])
+             if test -z $enable_vt; then
+                 sleep 10
+             fi
+             contrib_vt_happy=0])
         AC_LANG_POP(C++)
     fi
 
@@ -95,11 +96,7 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
             fi
         done
 
-        AC_ARG_WITH([contrib-vt-flags],
-                    [AC_HELP_STRING([--with-contrib-vt-flags=FLAGS],
-                                    [Pass FLAGS to the VampirTrace distribution configuration script])])
-        AS_IF([test "$with_contrib_vt_flags" != "yes" -a "$with_contrib_vt_flags" != "no"],
-              [contrib_vt_args="$contrib_vt_args $with_contrib_vt_flags"])
+        contrib_vt_args="$contrib_vt_args $with_contrib_vt_flags"
 
         # Run VampirTrace's configure and see if it succeeded
         OMPI_CONFIG_SUBDIR([ompi/contrib/vt/vt],
