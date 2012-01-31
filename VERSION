@@ -98,7 +98,7 @@ date="Unreleased"
 
 libmpi_so_version=0:4:0
 libmpi_cxx_so_version=0:1:0
-libmpi_f77_so_version=0:2:0
+libmpi_f77_so_version=0:3:0
 libmpi_f90_so_version=1:0:1
 libopen_rte_so_version=0:0:0
 libopen_pal_so_version=0:0:0
