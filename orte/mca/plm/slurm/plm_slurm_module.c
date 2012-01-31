@@ -170,6 +170,12 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
 	goto launch_apps;
     }
 
+    if (jdata->controls & ORTE_JOB_CONTROL_DEBUGGER_DAEMON) {
+        /* debugger daemons */
+        active_job = jdata->jobid;
+        goto launch_apps;
+    }
+
     if (jdata->controls & ORTE_JOB_CONTROL_LOCAL_SLAVE) {
         /* if this is a request to launch a local slave,
          * then we will not be launching an orted - we will

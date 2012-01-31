@@ -2899,6 +2899,10 @@ static void attach_debugger(int fd, short event, void *arg)
     int rc;
     int32_t ljob;
     orte_job_t *jdata;
+    int i;
+    orte_node_t *node;
+    orte_proc_t *proc;
+    orte_vpid_t vpid=0;
 
     /* read the file descriptor to clear that event, if necessary */
     if (fifo_active) {
@@ -2958,6 +2962,8 @@ static void attach_debugger(int fd, short event, void *arg)
         if (!MPIR_forward_output) {
             jdata->controls &= ~ORTE_JOB_CONTROL_FORWARD_OUTPUT;
         }
+       /* dont push stdin */
+        jdata->stdin_target = ORTE_VPID_INVALID;
         /* add it to the global job pool */
         ljob = ORTE_LOCAL_JOBID(jdata->jobid);
         opal_pointer_array_set_item(orte_job_data, ljob, jdata);
@@ -2975,12 +2981,60 @@ static void attach_debugger(int fd, short event, void *arg)
         build_debugger_args(app);
         opal_pointer_array_add(jdata->apps, app);
         jdata->num_apps = 1;
-        /* setup the mapping policy to pernode so we get one
-         * daemon on each node
-         */
+
+        /* create a job map */
         jdata->map = OBJ_NEW(orte_job_map_t);
-        jdata->map->npernode = 1;
-        jdata->map->policy = ORTE_MAPPING_NPERXXX;
+        /* in building the map, we want to launch one debugger daemon
+         * on each node that *already has an application process on it*.
+         * We cannot just launch one debugger daemon on EVERY node because
+         * the original job may not have placed procs on every node. So
+         * we construct the map here by cycling across all nodes, adding
+         * only those nodes where num_procs > 0.
+         */
+        for (i=0; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            /* if this node isn't already occupied, ignore it */
+            if (NULL == node->daemon) {
+                continue;
+            }
+            /* if the node doesn't have any app procs on it, ignore it */
+            if (node->num_procs < 1) {
+                continue;
+            }
+            /* this node has at least one proc, so add it to our map */
+            OBJ_RETAIN(node);
+            opal_pointer_array_add(jdata->map->nodes, node);
+            jdata->map->num_nodes++;
+            /* add a debugger daemon to the node - note that the
+             * debugger daemon does NOT count against our subscribed slots
+             */
+            proc = OBJ_NEW(orte_proc_t);
+            proc->name.jobid = jdata->jobid;
+            proc->name.vpid = vpid++;
+	    /* set the local/node ranks - we don't actually care
+	     * what these are, but the odls needs them
+	     */
+	    proc->local_rank = 0;
+	    proc->node_rank = 0;
+            /* flag the proc as ready for launch */
+            proc->state = ORTE_PROC_STATE_INIT;
+            proc->app_idx = 0;
+
+            OBJ_RETAIN(node);  /* maintain accounting on object */    
+            proc->node = node;
+            proc->nodename = node->name;
+            /* add the proc to the job */
+            opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
+            jdata->num_procs++;
+
+            /* add the proc to the node's array */
+            OBJ_RETAIN(proc);
+            opal_pointer_array_add(node->procs, (void*)proc);
+            node->num_procs++;
+        }
+
         /* now go ahead and spawn this job */
         if (ORTE_SUCCESS != (rc = orte_plm.spawn(jdata))) {
             ORTE_ERROR_LOG(rc);

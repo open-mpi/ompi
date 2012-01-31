@@ -154,6 +154,12 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     orte_jobid_t failed_job;
     orte_job_state_t job_state = ORTE_JOB_NEVER_LAUNCHED;
 
+    if (jdata->controls & ORTE_JOB_CONTROL_DEBUGGER_DAEMON) {
+        /* debugger daemons */
+        failed_job = jdata->jobid;
+        goto launch_apps;
+    }
+
     /* default to declaring the daemon launch failed */
     failed_job = ORTE_PROC_MY_NAME->jobid;
     
