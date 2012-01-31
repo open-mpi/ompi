@@ -69,7 +69,7 @@ ompi_info_SOURCES = \
 ompi_info_LDADD = $(top_builddir)/ompi/libmpi.la
 
 clean-local:
-	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
+	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || rm -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
 
 distclean-local:
 	rm -f $(man_pages)
