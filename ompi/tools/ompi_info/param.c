@@ -516,6 +516,7 @@ void ompi_info_do_config(bool want_all)
     char *symbol_visibility;
     char *ft_support;
     char *topology_support;
+    char *vt_support;
     /* Do a little preprocessor trickery here to figure ompi_info_out the
      * tri-state of MPI_PARAM_CHECK (which will be either 0, 1, or
      * ompi_mpi_param_check).  The preprocessor will only allow
@@ -560,6 +561,7 @@ void ompi_info_do_config(bool want_all)
     wtime_support = OPAL_TIMER_USEC_NATIVE ? "native" : "gettimeofday";
     symbol_visibility = OPAL_C_HAVE_VISIBILITY ? "yes" : "no";
     topology_support = OPAL_HAVE_HWLOC ? "yes" : "no";
+    vt_support = OMPI_ENABLE_CONTRIB_vt ? "yes" : "no";
     
     /* setup strings that require allocation */
     if (OMPI_WANT_F77_BINDINGS) {
@@ -836,6 +838,8 @@ void ompi_info_do_config(bool want_all)
     ompi_info_out("FT Checkpoint support", "options:ft_support", ft_support);
     free(ft_support);
     
+    ompi_info_out("VampirTrace support", "options:vt", vt_support);
+
     ompi_info_out_int("MPI_MAX_PROCESSOR_NAME", "options:mpi-max-processor-name", 
                   MPI_MAX_PROCESSOR_NAME);
     ompi_info_out_int("MPI_MAX_ERROR_STRING",   "options:mpi-max-error-string",   
