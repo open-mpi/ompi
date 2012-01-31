@@ -31,39 +31,41 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
 
     contrib_vt_happy=1
 
-    # In case of using the Oracle C++ compiler check whether its C++ STL
-    # can be used to build VampirTrace.
-    if test "x$ompi_cv_cxx_compiler_vendor" = "xsun"; then
-        AC_MSG_CHECKING([whether C++ STL is suitable for vt])
-        AC_LANG_PUSH(C++)
-        AC_COMPILE_IFELSE(
-            [AC_LANG_PROGRAM([[#include <map>]],
-                             [[std::map<int, int> map;
-                               // The following assignment implicitly converts an "iterator"
-                               // to a "const_interator". Although this is allowed by the C++
-                               // standard, using the default C++ STL (libCstd) will cause a
-                               // compile error.
-                               // Seen with Oracle Studio version 12.3 and Express 6/10.
-                               std::pair<std::map<int, int>::const_iterator, bool> ret=
-                               map.insert(std::pair<int, int>(123, 456));]])],
-            [AC_MSG_RESULT([yes])],
-            [AC_MSG_RESULT([no])
-             AC_WARN([***********************************************************])
-             AC_WARN([*** VampirTrace cannot be built due to an unsuitable])
-             AC_WARN([*** C++ STL from Oracle Studio compiler.])
-             AC_WARN([*** Please re-configure Open MPI to use the STLport4])
-             AC_WARN([*** by adding the compiler flag -library=stlport4])
+    # Check whether the used C++ STL is suitable to build VampirTrace.
+    # For example, in case of using the Oracle C++ compiler, some of the needed
+    # language features are missing in the default STL (libCstd). It's recommended
+    # to use the STLport4 instead, which is much more conform to the C++ standard.
+    AC_MSG_CHECKING([whether C++ STL is suitable for vt])
+    AC_LANG_PUSH(C++)
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([[#include <map>]],
+                         [[std::map<int, int> map;
+                           // The following assignment implicitly converts an "iterator"
+                           // to a "const_interator". Although this is allowed by the C++
+                           // standard, using Oracle's default STL (libCstd) will cause a
+                           // compile error.
+                           // Seen with Oracle Studio version 12.3 and Express 6/10.
+                           std::pair<std::map<int, int>::const_iterator, bool> ret=
+                           map.insert(std::pair<int, int>(123, 456));]])],
+        [AC_MSG_RESULT([yes])],
+        [AC_MSG_RESULT([no])
+         AC_WARN([**************************************************************])
+         AC_WARN([*** VampirTrace cannot be built due to your STL appears to])
+         AC_WARN([*** be broken.])
+         if test "x$ompi_cv_cxx_compiler_vendor" = "xsun"; then
+             AC_WARN([*** Please try again re-configuring Open MPI with using])
+             AC_WARN([*** the STLport4 by adding the compiler flag -library=stlport4])
              AC_WARN([*** to CXXFLAGS.])
-             if test -z $enable_vt; then
-                 AC_WARN([*** Pausing to give you time to read this message...])
-             fi
-             AC_WARN([***********************************************************])
-             if test -z $enable_vt; then
-                 sleep 10
-             fi
-             contrib_vt_happy=0])
-        AC_LANG_POP(C++)
-    fi
+         fi
+         if test -z "$enable_vt"; then
+             AC_WARN([*** Pausing to give you time to read this message...])
+         fi
+         AC_WARN([**************************************************************])
+         if test -z "$enable_vt"; then
+             sleep 10
+         fi
+         contrib_vt_happy=0])
+    AC_LANG_POP(C++)
 
     if test "$contrib_vt_happy" = "1"; then
         contrib_vt_args="--disable-option-checking --with-openmpi-inside"
