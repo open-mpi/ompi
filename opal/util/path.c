@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -434,9 +434,7 @@ char* opal_find_absolute_path( char* app_name )
 #define GPFS_SUPER_MAGIC  0x47504653    /* Thats GPFS in ASCII */
 #endif
 
-#define MASK1          0xff
 #define MASK2        0xffff
-#define MASK3      0xffffff
 #define MASK4    0xffffffff
 
 bool opal_path_nfs(char *fname)
@@ -476,7 +474,7 @@ again:
     do {
 #if defined(__SVR4) && defined(__sun)
         rc = statvfs (file, &buf);
-#elif defined(linux) || defined (__BSD) || (defined(__APPLE__) && defined(__MACH__))
+#elif defined(linux) || defined(__linux) || defined(__linux__) || defined (__BSD) || (defined(__APPLE__) && defined(__MACH__))
         rc = statfs (file, &buf);
 #endif
     } while (-1 == rc && ESTALE == errno && (0 < --trials));
