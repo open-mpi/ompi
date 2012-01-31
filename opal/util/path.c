@@ -446,7 +446,7 @@ bool opal_path_nfs(char *fname)
     char * file = strdup (fname);
 #if defined(__SVR4) && defined(__sun)
     struct statvfs buf;
-#elif defined(linux) || defined (__BSD) || (defined(__APPLE__) && defined(__MACH__))
+#elif defined(__linux__) || defined (__BSD) || (defined(__APPLE__) && defined(__MACH__))
     struct statfs buf;
 #endif
     /*
@@ -474,7 +474,7 @@ again:
     do {
 #if defined(__SVR4) && defined(__sun)
         rc = statvfs (file, &buf);
-#elif defined(linux) || defined(__linux) || defined(__linux__) || defined (__BSD) || (defined(__APPLE__) && defined(__MACH__))
+#elif defined(__linux__) || defined (__BSD) || (defined(__APPLE__) && defined(__MACH__))
         rc = statfs (file, &buf);
 #endif
     } while (-1 == rc && ESTALE == errno && (0 < --trials));
@@ -511,7 +511,7 @@ again:
     for (i = 0; i < FS_TYPES_NUM; i++)
         if (0 == strncasecmp (fs_types[i].f_fsname, buf.f_fstypename, MFSNAMELEN))
             goto found;
-#elif defined(linux)
+#elif defined(__linux__)
     for (i = 0; i < FS_TYPES_NUM; i++)
         if (fs_types[i].f_fsid == (buf.f_type & fs_types[i].f_mask))
             goto found;
