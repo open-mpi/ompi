@@ -12,7 +12,7 @@ Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2007 Voltaire, Inc. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
-Copyright (c) 2011      IBM Corporation.  All rights reserved.
+Copyright (c) 2011-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
 
 $COPYRIGHT$
@@ -163,7 +163,7 @@ Known issues
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (28 Apri 2011):
+base as of this writing (31 January 2012):
 
 General notes
 -------------
@@ -244,6 +244,20 @@ Compiler Notes
   Therefore  the make install fails.  So we suggest that one should
   use CXX=CC, which works, instead of CXX=sunCC.
 
+- icc-9.1 and icc-10.0 fail to build atomics on IA64.  However,
+  gcc is fine on IA64.  So, these older versions of icc are no
+  longer supported on IA64.
+
+- There are various issues with older versions of xlc (which are
+  no longer supported):
+  - The atomic_spinlock test fails on linux/ppc64/xlc-9.0.  However,
+    ppc32 and ppc64 with xlc-8.0 and xlc-11.1 pass.
+  - linux/xlc-7 does not build atomics correctly.
+
+- Depending on the compiler and/or machine, linux/mips64 hangs in
+  either the atomic_spinlock or the atomic_spinlock_noinline test.
+  Thus, this configuration is no longer supported.
+
 - At least some versions of the Intel 8.1 compiler seg fault while
   compiling certain Open MPI source code files.  As such, it is not
   supported.
@@ -268,8 +282,8 @@ Compiler Notes
   configure script:
 
   shell$ ./configure CFLAGS=-Msignextend CXXFLAGS=-Msignextend \
-	--with-wrapper-cflags=-Msignextend \
-	--with-wrapper-cxxflags=-Msignextend ...
+        --with-wrapper-cflags=-Msignextend \
+        --with-wrapper-cxxflags=-Msignextend ...
 
   This will both compile Open MPI with the proper compile flags and
   also automatically add "-Msignextend" when the C and C++ MPI wrapper
