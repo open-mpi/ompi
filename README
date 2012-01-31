@@ -328,6 +328,9 @@ MPI Functionality and Features
   portable C datatype can be found that matches the Fortran type
   REAL*16, both in size and bit representation.
 
+- ROMIO is not supported on OpenBSD.  You will need to specify the
+  --disable-io-romio flag to configure when building on OpenBSD.
+
 
 Collectives
 -----------
