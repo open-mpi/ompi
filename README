@@ -441,6 +441,9 @@ MPI Functionality and Features
   that support MPI_THREAD_MULTIPLE, but is only very lightly tested
   (and may not provide very much performance benefit).
 
+- ROMIO is not supported on OpenBSD.  You will need to specify the
+  --disable-io-romio flag to configure when building on OpenBSD.
+
 
 Collectives
 -----------
