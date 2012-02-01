@@ -131,29 +131,72 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
 
     
 
-    int i, j,interleave_count=0, striping_unit=0;
-    size_t max_data = 0, total_bytes = 0; 
-    int domain_size=0, *count_my_req_per_proc=NULL, count_my_req_procs;
-    int count_other_req_procs, *buf_indices, ret=OMPI_SUCCESS;
-    int local_count = 0, local_size=0,*aggregator_list = NULL;
-    struct iovec *iov = NULL;
+  int i, j,interleave_count=0, striping_unit=0;
+  uint32_t iov_count=0,ti;
+  struct iovec *decoded_iov=NULL, *temp_iov=NULL;
+  size_t max_data = 0, total_bytes = 0; 
+  int domain_size=0, *count_my_req_per_proc=NULL, count_my_req_procs;
+  int count_other_req_procs, *buf_indices, ret=OMPI_SUCCESS;
+  int local_count = 0, local_size=0,*aggregator_list = NULL;
+  struct iovec *iov = NULL;
+  
+  OMPI_MPI_OFFSET_TYPE start_offset, end_offset, fd_size;
+  OMPI_MPI_OFFSET_TYPE *start_offsets=NULL, *end_offsets=NULL;
+  OMPI_MPI_OFFSET_TYPE *fd_start=NULL, *fd_end=NULL, min_st_offset;
+  Flatlist_node *flat_buf=NULL;
+  mca_io_ompio_access_array_t *my_req=NULL, *others_req=NULL;
+  MPI_Aint send_buf_addr;
+  
+  
+  if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
+    fh->f_flags = fh->f_flags |  OMPIO_CONTIGUOUS_MEMORY;
+  }
+  
+  
 
-    OMPI_MPI_OFFSET_TYPE start_offset, end_offset, fd_size;
-    OMPI_MPI_OFFSET_TYPE *start_offsets=NULL, *end_offsets=NULL;
-    OMPI_MPI_OFFSET_TYPE *fd_start=NULL, *fd_end=NULL, min_st_offset;
-    Flatlist_node *flat_buf=NULL;
-    mca_io_ompio_access_array_t *my_req=NULL, *others_req=NULL;
-
-
-    if (opal_datatype_is_contiguous_memory_layout(&datatype->super,1)) {
-        fh->f_flags = fh->f_flags |  OMPIO_CONTIGUOUS_MEMORY;
+  
+  
+  if (! (fh->f_flags & OMPIO_CONTIGUOUS_MEMORY)) {
+    
+    ret =   ompi_io_ompio_decode_datatype (fh,
+					   datatype,
+					   count,
+					   buf,
+					   &max_data,
+					   &temp_iov,
+					   &iov_count);
+    if (OMPI_SUCCESS != ret ){
+      goto exit;
     }
+    send_buf_addr = (OPAL_PTRDIFF_TYPE)buf;
+    decoded_iov = (struct iovec *)malloc 
+      (iov_count * sizeof(struct iovec));
 
-
+    for (ti = 0; ti < iov_count; ti ++){
+      decoded_iov[ti].iov_base = (IOVBASE_TYPE *)(
+	(OPAL_PTRDIFF_TYPE)temp_iov[ti].iov_base - 
+	send_buf_addr);
+      decoded_iov[ti].iov_len = 
+	temp_iov[ti].iov_len ;
+      #if DEBUG_ON
+      printf("d_offset[%d]: %ld, d_len[%d]: %ld\n",
+	     ti, (OPAL_PTRDIFF_TYPE)decoded_iov[ti].iov_base,
+	     ti, decoded_iov[ti].iov_len);
+      #endif
+    }
+    
+  }
+  else{
     max_data = count * datatype->super.size;
+  }
+    
+      
 
     
-    
+
+  
+  
+  
     if(-1 == mca_fcoll_two_phase_num_io_procs){
       ret = ompi_io_ompio_set_aggregator_props (fh, 
 						mca_fcoll_two_phase_num_io_procs,
@@ -227,12 +270,13 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
       flat_buf->count = 0;
        
        if(iov[0].iov_base == 0 ||
-	  (OMPI_MPI_OFFSET_TYPE)iov[local_count-1].iov_base +
-	  (OMPI_MPI_OFFSET_TYPE)iov[local_count-1].iov_len == (OMPI_MPI_OFFSET_TYPE)total_bytes){
-	 local_size = local_count/count + 1;
+	  (OMPI_MPI_OFFSET_TYPE)decoded_iov[iov_count-1].iov_base +
+	  (OMPI_MPI_OFFSET_TYPE)decoded_iov[iov_count-1].iov_len 
+	  == (OMPI_MPI_OFFSET_TYPE)total_bytes){
+	 local_size = iov_count/count + 1;
        }
        else
-	local_size = local_count/count + 2;
+	local_size = iov_count/count + 2;
        flat_buf->indices = 
 	 (OMPI_MPI_OFFSET_TYPE *)malloc(local_size * 
 					sizeof(OMPI_MPI_OFFSET_TYPE));
@@ -255,29 +299,30 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
        flat_buf->count = local_size;
        i=0;j=0;
        while(j < local_size){
-	 if (0 == j && (OMPI_MPI_OFFSET_TYPE)iov[i].iov_base > 0){
+	 if (0 == j && (OMPI_MPI_OFFSET_TYPE)decoded_iov[i].iov_base > 0){
 	   flat_buf->indices[j] = 0;
 	   flat_buf->blocklens[j] = 0;
 	   j+=1;
-	   flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)iov[i].iov_base;
-	   flat_buf->blocklens[j] = iov[i].iov_len;
+	   flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)decoded_iov[i].iov_base;
+	   flat_buf->blocklens[j] = decoded_iov[i].iov_len;
 	 }
 	 else if ((local_size - 1  == j) && 
-		  (OMPI_MPI_OFFSET_TYPE)iov[local_count-1].iov_base +
-		  (OMPI_MPI_OFFSET_TYPE)iov[local_count-1].iov_len != (OMPI_MPI_OFFSET_TYPE)total_bytes){
+		  (OMPI_MPI_OFFSET_TYPE)decoded_iov[iov_count-1].iov_base +
+		  (OMPI_MPI_OFFSET_TYPE)decoded_iov[iov_count-1].iov_len != (OMPI_MPI_OFFSET_TYPE)total_bytes){
 	   flat_buf->indices[j] = total_bytes;
 	   flat_buf->blocklens[j] = 0;
 	 }
 	 else {
-	   flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)iov[i].iov_base;
-	   flat_buf->blocklens[j] = iov[i].iov_len;
+	   flat_buf->indices[j] = (OMPI_MPI_OFFSET_TYPE)decoded_iov[i].iov_base;
+	   flat_buf->blocklens[j] = decoded_iov[i].iov_len;
 	 }
-	 if(i < local_count)
+	 if(i < (int)iov_count)
 	   i+=1;
 	 j+=1;
        }
        
 #if DEBUG_ON
+       printf("flat_buf_count : %d\n", flat_buf->count);
        for(i=0;i<flat_buf->count;i++){
 	 printf("%d: blocklen[%d] : %lld, indices[%d]: %lld \n",
 		fh->f_rank, i, flat_buf->blocklens[i], i ,flat_buf->indices[i]);
@@ -287,7 +332,7 @@ mca_fcoll_two_phase_file_write_all (mca_io_ompio_file_t *fh,
      }
 
 #if DEBUG_ON
-    printf("%d: fcoll:two_phase:write_all->total_bytes:%ld, local_count: %ld\n",
+    printf("%d: fcoll:two_phase:write_all->total_bytes:%ld, local_count: %d\n",
 	   fh->f_rank,total_bytes, local_count);
     for (i=0 ; i<local_count ; i++) {
 	printf("%d: fcoll:two_phase:write_all:OFFSET:%ld,LENGTH:%ld\n",
