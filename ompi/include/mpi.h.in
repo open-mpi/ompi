@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -409,6 +409,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_MAX_PROCESSOR_NAME OPAL_MAX_PROCESSOR_NAME /* max proc. name length */
 #define MPI_MAX_ERROR_STRING   OPAL_MAX_ERROR_STRING   /* max error message length */
 #define MPI_MAX_OBJECT_NAME    OPAL_MAX_OBJECT_NAME    /* max object name length */
+#define MPI_MAX_LIBRARY_VERSION_STRING 256             /* max length of library version string */
 #define MPI_UNDEFINED          -32766                  /* undefined stuff */
 #define MPI_CART               1                       /* cartesian topology */
 #define MPI_GRAPH              2                       /* graph topology */
@@ -1250,6 +1251,7 @@ OMPI_DECLSPEC  int MPI_Get(void *origin_addr, int origin_count,
                            MPI_Datatype origin_datatype, int target_rank,
                            MPI_Aint target_disp, int target_count,
                            MPI_Datatype target_datatype, MPI_Win win);
+OMPI_DECLSPEC  int MPI_Get_library_version(char *version, int *resultlen);
 OMPI_DECLSPEC  int MPI_Get_processor_name(char *name, int *resultlen);
 OMPI_DECLSPEC  int MPI_Get_version(int *version, int *subversion);
 OMPI_DECLSPEC  int MPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index,
@@ -1778,6 +1780,7 @@ OMPI_DECLSPEC  int PMPI_Get(void *origin_addr, int origin_count,
                             MPI_Datatype origin_datatype, int target_rank,
                             MPI_Aint target_disp, int target_count,
                             MPI_Datatype target_datatype, MPI_Win win);
+OMPI_DECLSPEC  int PMPI_Get_library_version(char *version, int *resultlen);
 OMPI_DECLSPEC  int PMPI_Get_processor_name(char *name, int *resultlen);
 OMPI_DECLSPEC  int PMPI_Get_version(int *version, int *subversion);
 OMPI_DECLSPEC  int PMPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index,
