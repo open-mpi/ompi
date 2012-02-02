@@ -5,7 +5,7 @@
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -9553,3 +9553,27 @@ start MPI_Comm_spawn_multiple small
 output_284 MPI_Comm_spawn_multipleA "character(len=*), dimension(count,*)"
 output_284 MPI_Comm_spawn_multipleN "double precision"
 end MPI_Comm_spawn_multiple
+
+#------------------------------------------------------------------------
+
+output_285() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(version, resultlen, ierr)
+  character(len=*), intent(out) :: version
+  integer, intent(out) :: resultlen
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Get_library_version small
+output_285 MPI_Get_library_version
+end MPI_Get_library_version
+

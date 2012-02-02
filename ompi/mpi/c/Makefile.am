@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -139,6 +139,7 @@ libmpi_c_mpi_la_SOURCES = \
         get_address.c \
         get_count.c \
         get_elements.c \
+        get_library_version.c \
         get_processor_name.c \
         get_version.c \
         graph_create.c \

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -165,6 +165,7 @@
 #define MPI_Get_count PMPI_Get_count
 #define MPI_Get_elements PMPI_Get_elements
 #define MPI_Get PMPI_Get
+#define MPI_Get_library_version PMPI_Get_library_version
 #define MPI_Get_processor_name PMPI_Get_processor_name
 #define MPI_Get_version PMPI_Get_version
 #define MPI_Graph_create PMPI_Graph_create

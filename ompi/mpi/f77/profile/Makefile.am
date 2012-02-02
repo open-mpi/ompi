@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -120,6 +120,7 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pget_address_f.c \
         pget_count_f.c \
         pget_elements_f.c \
+        pget_library_version_f.c \
         pget_processor_name_f.c \
         pget_version_f.c \
         pgraph_create_f.c \

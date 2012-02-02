@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -155,6 +155,7 @@ libmpi_f77_la_SOURCES += \
         get_address_f.c \
         get_count_f.c \
         get_elements_f.c \
+        get_library_version_f.c \
         get_processor_name_f.c \
         get_version_f.c \
         graph_create_f.c \
