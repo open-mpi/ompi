@@ -64,9 +64,16 @@ static uint32_t ompi_mtl_mxm_get_job_id(void)
         return 0;
     }
 
-    job_key  = ((jkp[2] ^ jkp[3]) >> 8) | ((jkp[0] ^ jkp[1]) << 8);
-    job_key ^= ((jkp[6] ^ jkp[7]) >> 8) | ((jkp[4] ^ jkp[5]) << 8);
-    job_key &= ~0xff;
+    /* 
+     * decode OMPI_MCA_orte_precondition_transports that looks as
+     * 000003ca00000000-0000000100000000
+     * jobfam-stepid
+     * to get jobid coded with ORTE_CONSTRUCT_LOCAL_JOBID()
+     */
+    #define GET_LOCAL_JOBID(local, job) \
+        ( ((local) & 0xffff0000) | ((job) & 0x0000ffff) )
+    job_key = GET_LOCAL_JOBID((uu[0]>>(8 * sizeof(int))) << 16, uu[1]>>(8 * sizeof(int)));
+
     return job_key;
 }
 
@@ -118,25 +125,6 @@ int ompi_mtl_mxm_module_init(void)
     	return OMPI_ERROR;
     }
 
-    /* Setup the endpoint options and local addresses to bind to. */
-    mxm_fill_ep_opts(&ep_opt);
-
-    sa_bind_self.sa_family = AF_MXM_LOCAL_PROC;
-    sa_bind_self.context_id = jobid;
-    sa_bind_self.process_id = mp->proc_name.vpid;
-
-    sa_bind_rdma.sa_family = AF_MXM_IB_LOCAL;
-    sa_bind_rdma.lid = 0;
-    sa_bind_rdma.pkey = 0;
-    sa_bind_rdma.qp_num = 0;
-    sa_bind_rdma.sl = 0;
-
-    sa_bind_shm.sa_family = AF_MXM_SHM_PROC;
-    sa_bind_shm.process_id = 0;
-    sa_bind_shm.num_procs = 0;
-    sa_bind_shm.context_id = 0;
-    sa_bind_shm.jobid = jobid;
-
     if ((rc = ompi_proc_refresh()) != OMPI_SUCCESS) {
         MXM_ERROR("Unable to refresh processes");
         return OMPI_ERROR;
@@ -160,6 +148,21 @@ int ompi_mtl_mxm_module_init(void)
         }
     }
 
+    /* Setup the endpoint options and local addresses to bind to. */
+    mxm_fill_ep_opts(&ep_opt);
+
+    sa_bind_self.sa_family = AF_MXM_LOCAL_PROC;
+    sa_bind_self.context_id = lr;
+    sa_bind_self.process_id = mp->proc_name.vpid;
+
+    sa_bind_rdma.sa_family = AF_MXM_IB_LOCAL;
+    sa_bind_rdma.lid = 0;
+    sa_bind_rdma.pkey = 0;
+    sa_bind_rdma.qp_num = 0;
+    sa_bind_rdma.sl = 0;
+
+    sa_bind_shm.sa_family = AF_MXM_SHM_PROC;
+    sa_bind_shm.jobid = jobid;
     sa_bind_shm.process_id = lr;
     sa_bind_shm.context_id = mxlr;
     sa_bind_shm.num_procs = nlps;
@@ -196,10 +199,37 @@ int ompi_mtl_mxm_module_init(void)
             OMPI_SUCCESS != ompi_mtl_mxm_get_ep_address(&ep_info, MXM_PTL_SHM)) {
             return OMPI_ERROR;
     }
-    if (OMPI_SUCCESS != ompi_modex_send(&mca_mtl_mxm_component.super.mtl_version,
-                                        &ep_info, sizeof(ep_info))) {
+     
+    /* 
+     * send information using modex (in some case there is limitation on data size for example ess/pmi)
+     * set size of data sent for once
+     */
+    {
+        size_t modex_max_size = 0x60;
+        unsigned char *modex_buf_ptr = (unsigned char *)&ep_info;
+        size_t modex_buf_size = sizeof(ep_info);
+        size_t modex_cur_size = (modex_buf_size < modex_max_size ? modex_buf_size : modex_max_size);
+        char *modex_component_name = mca_base_component_to_string(&mca_mtl_mxm_component.super.mtl_version);
+        char *modex_name = malloc(strlen(modex_component_name) + 5);
+        int modex_name_id = 0;
+
+        while (modex_buf_size) {
+            /* modex name looks as mtl.mxm.1.5-18 where mtl.mxm.1.5 is the component and 18 is portion index */
+            sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);     
+      
+            if (OMPI_SUCCESS != ompi_modex_send_string((const char *)modex_name, modex_buf_ptr, modex_cur_size)) {
         MXM_ERROR("Open MPI couldn't distribute EP connection details");
+                free(modex_component_name);
+                free(modex_name);
         return OMPI_ERROR;
+            }
+            modex_name_id++;
+            modex_buf_ptr += modex_cur_size;
+            modex_buf_size -= modex_cur_size;
+            modex_cur_size = (modex_buf_size < modex_max_size ? modex_buf_size : modex_max_size);
+        }
+        free(modex_component_name);
+        free(modex_name);
     }
 
     /* Register the MXM progress function */
@@ -218,18 +248,19 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
                            struct ompi_proc_t** procs, /*const*/
                            struct mca_mtl_base_endpoint_t **mtl_peer_data)
 {
-    ompi_mtl_mxm_ep_conn_info_t **ep_info;
+    ompi_mtl_mxm_ep_conn_info_t *ep_info;
     mxm_conn_req_t *conn_reqs;
     mxm_error_t err;
-    size_t size;
     size_t i;
     int rc;
 
     assert(mtl == &ompi_mtl_mxm.super);
 
     /* Allocate connection requests */
-    conn_reqs = malloc(nprocs * sizeof *conn_reqs);
-    ep_info = malloc(nprocs * sizeof *ep_info);
+    conn_reqs = malloc(nprocs * sizeof(mxm_conn_req_t));
+    ep_info = malloc(nprocs * sizeof(ompi_mtl_mxm_ep_conn_info_t));
+    memset(conn_reqs, 0x0, sizeof(mxm_conn_req_t));
+    memset(ep_info, 0x0, sizeof(ompi_mtl_mxm_ep_conn_info_t));
     if (NULL == conn_reqs || NULL == ep_info) {
         rc = OMPI_ERR_OUT_OF_RESOURCE;
         goto bail;
@@ -237,15 +268,48 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 
     /* Get the EP connection requests for all the processes from modex */
     for (i = 0; i < nprocs; ++i) {
-        rc = ompi_modex_recv(&mca_mtl_mxm_component.super.mtl_version, procs[i],
-                             (void**)&ep_info[i], &size);
-        if (rc != OMPI_SUCCESS || size != sizeof(ompi_mtl_mxm_ep_conn_info_t)) {
+        /* 
+         * recieve information using modex
+         */
+        {
+            unsigned char *ep_info_ptr = (unsigned char*)(ep_info + i);
+            unsigned char *modex_buf_ptr = NULL;
+            size_t modex_buf_size = sizeof(ompi_mtl_mxm_ep_conn_info_t);
+            size_t modex_cur_size = 0;
+            char *modex_component_name = mca_base_component_to_string(&mca_mtl_mxm_component.super.mtl_version);
+            char *modex_name = malloc(strlen(modex_component_name) + 5);
+            int modex_name_id = 0;
+
+            while (modex_buf_size > 0) {
+               /* modex name looks as mtl.mxm.1.5-18 where mtl.mxm.1.5 is the component and 18 is portion index */
+               sprintf(modex_name, "%s-%d", modex_component_name, modex_name_id);           
+
+                if (OMPI_SUCCESS != ompi_modex_recv_string((const char *)modex_name, procs[i], (void**)&modex_buf_ptr, &modex_cur_size)) {
+                    MXM_ERROR("Open MPI couldn't distribute EP connection details");
+                    free(modex_name);
             goto bail;
         }
+                /* fill in ep_info[i] with recieved data */
+                memcpy((void*)ep_info_ptr, modex_buf_ptr, modex_cur_size);
 
-        conn_reqs[i].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&ep_info[i]->ptl_addr[MXM_PTL_SELF];
-        conn_reqs[i].ptl_addr[MXM_PTL_SHM] = (struct sockaddr *)&ep_info[i]->ptl_addr[MXM_PTL_SHM];
-        conn_reqs[i].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&ep_info[i]->ptl_addr[MXM_PTL_RDMA];
+                if (modex_cur_size > modex_buf_size) {
+                    MXM_ERROR("Open MPI couldn't distribute EP connection details: incorrect size of message");
+                    free(modex_component_name);
+                    free(modex_name);
+                    goto bail;
+                }
+                modex_name_id++;
+                ep_info_ptr += modex_cur_size;
+                modex_buf_size -= modex_cur_size;
+                modex_cur_size = 0;
+            }
+            free(modex_component_name);
+            free(modex_name);
+        }
+
+        conn_reqs[i].ptl_addr[MXM_PTL_SELF] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SELF]);
+        conn_reqs[i].ptl_addr[MXM_PTL_SHM] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_SHM]);
+        conn_reqs[i].ptl_addr[MXM_PTL_RDMA] = (struct sockaddr *)&(ep_info[i].ptl_addr[MXM_PTL_RDMA]);
     }
 
     /* Connect to remote peers */
