@@ -55,10 +55,10 @@ AC_DEFUN([OPAL_SAVE_VERSION], [
         [Complete release number of ]$2)
     AC_DEFINE_UNQUOTED($1[_RELEASE_DATE], ["$]$1[_RELEASE_DATE"],
         [Release date of ]$2)
-    AC_DEFINE_UNQUOTED($1[_WANT_REPO_REV], ["$]$1[_WANT_REPO_REV"],
-        [Release date of ]$2)
+    AC_DEFINE_UNQUOTED($1[_WANT_REPO_REV], [$]$1[_WANT_REPO_REV],
+        [Whether we want to include the repository version or not ]$2)
     AC_DEFINE_UNQUOTED($1[_REPO_REV], ["$]$1[_REPO_REV"],
-        [Release date of ]$2)
+        [The repository version ]$2)
 
     AC_CONFIG_FILES([$4])
 ])dnl
