@@ -153,6 +153,7 @@
 #define mpi_get_count_f pmpi_get_count_f
 #define mpi_get_elements_f pmpi_get_elements_f
 #define mpi_get_f pmpi_get_f
+#define mpi_get_library_version_f pmpi_get_library_version_f
 #define mpi_get_processor_name_f pmpi_get_processor_name_f
 #define mpi_get_version_f pmpi_get_version_f
 #define mpi_graph_create_f pmpi_graph_create_f
