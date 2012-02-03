@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007-2010 High Performance Computing Center Stuttgart, 
+# Copyright (c) 2007-2012 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -88,9 +88,9 @@ ELSE("${WANT_REPO_REV}" STREQUAL "1")
     SET(SVN_VERSION ${REPO_REV})
 ENDIF("${WANT_REPO_REV}" STREQUAL "1")
 
-# Set opal versions
-SET(OPAL_WANT_REPO_REV ${WANT_REPO_REV})
-SET(OPAL_REPO_REV ${REPO_REV})
+# Set OPAL versions
+OMPI_DEF(OPAL_WANT_REPO_REV ${WANT_REPO_REV} "SVN verstion of OPAL" 1 1)
+OMPI_DEF(OPAL_REPO_REV "${SVN_VERSION}" "SVN verstion of OPAL" 1 1)
 OMPI_DEF(OPAL_GREEK_VERSION "${GREEK_VERSION}" "Greek - alpha, beta, etc - release number of Open Portable Access Layer." 1 1)
 OMPI_DEF(OPAL_MAJOR_VERSION ${MAJOR_VERSION} "Major release number of Open Portable Access Layer." 0 1)
 OMPI_DEF(OPAL_MINOR_VERSION ${MINOR_VERSION} "Minor release number of Open Portable Access Layer." 0 1)
@@ -99,8 +99,8 @@ OMPI_DEF(OPAL_VERSION ${VERSION_STRING} "Complete release number of Open Portabl
 OMPI_DEF(OPAL_IDENT_STRING ${VERSION_STRING} "ident string for Open MPI." 1 1)
 
 # Set OMPI versions
-SET(OMPI_WANT_REPO_REV ${WANT_REPO_REV})
-SET(OMPI_REPO_REV ${REPO_REV})
+OMPI_DEF(OMPI_WANT_REPO_REV ${WANT_REPO_REV} "SVN verstion of OMPI" 1 1)
+OMPI_DEF(OMPI_REPO_REV "${SVN_VERSION}" "SVN verstion of OMPI" 1 1)
 OMPI_DEF(OMPI_GREEK_VERSION "${GREEK_VERSION}" "Greek - alpha, beta, etc - release number of Open Portable Access Layer." 1 1)
 OMPI_DEF(OMPI_MAJOR_VERSION ${MAJOR_VERSION} "Major release number of Open MPI." 0 1)
 OMPI_DEF(OMPI_MINOR_VERSION ${MINOR_VERSION} "Minor release number of Open MPI." 0 1)
@@ -108,8 +108,8 @@ OMPI_DEF(OMPI_RELEASE_VERSION ${RELEASE_VERSION} "Release number of Open MPI." 0
 OMPI_DEF(OMPI_VERSION ${VERSION_STRING} "Complete release number of Open MPI." 1 1)
 
 # Set ORTE versions
-SET(ORTE_WANT_REPO_REV ${WANT_REPO_REV})
-SET(ORTE_REPO_REV ${REPO_REV})
+OMPI_DEF(ORTE_WANT_REPO_REV ${WANT_REPO_REV} "SVN verstion of ORTE" 1 1)
+OMPI_DEF(ORTE_REPO_REV "${SVN_VERSION}" "SVN verstion of ORTE" 1 1)
 OMPI_DEF(ORTE_GREEK_VERSION "${GREEK_VERSION}" "Greek - alpha, beta, etc - release number of Open Run-Time Environment." 1 1)
 OMPI_DEF(ORTE_MAJOR_VERSION ${MAJOR_VERSION} "Major release number of Open Run-Time Environment." 0 1)
 OMPI_DEF(ORTE_MINOR_VERSION ${MINOR_VERSION} "Minor release number of Open Run-Time Environment." 0 1)
