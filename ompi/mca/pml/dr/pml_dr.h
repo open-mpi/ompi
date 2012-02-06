@@ -131,6 +131,19 @@ extern int mca_pml_dr_probe(
     ompi_status_public_t* status
 );
 
+extern int mca_pml_dr_improbe(int dst,
+                              int tag,
+                              struct ompi_communicator_t* comm,
+                              int *matched,
+                              struct ompi_message_t **message,
+                              ompi_status_public_t* status);
+
+extern int mca_pml_dr_mprobe(int dst,
+                             int tag,
+                             struct ompi_communicator_t* comm,
+                             struct ompi_message_t **message,
+                             ompi_status_public_t* status);
+
 extern int mca_pml_dr_isend_init(
     void *buf,
     size_t count,
@@ -192,6 +205,18 @@ extern int mca_pml_dr_recv(
     struct ompi_communicator_t* comm,
     ompi_status_public_t* status
 );
+
+extern int mca_pml_dr_imrecv(void *buf,
+                             size_t count,
+                             ompi_datatype_t *datatype,
+                             struct ompi_message_t **message,
+                             struct ompi_request_t **request);
+
+extern int mca_pml_dr_mrecv(void *buf,
+                            size_t count,
+                            ompi_datatype_t *datatype,
+                            struct ompi_message_t **message,
+                            ompi_status_public_t* status);
 
 extern int mca_pml_dr_dump(
     struct ompi_communicator_t* comm,

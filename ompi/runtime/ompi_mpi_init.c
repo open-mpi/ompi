@@ -14,6 +14,7 @@
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -70,6 +71,7 @@
 #include "ompi/errhandler/errcode.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/request/request.h"
+#include "ompi/message/message.h"
 #include "ompi/op/op.h"
 #include "ompi/mca/op/op.h"
 #include "ompi/mca/op/base/base.h"
@@ -805,6 +807,11 @@ MOVEON:
     /* initialize requests */
     if (OMPI_SUCCESS != (ret = ompi_request_init())) {
         error = "ompi_request_init() failed";
+        goto error;
+    }
+
+    if (OMPI_SUCCESS != (ret = ompi_message_init())) {
+        error = "ompi_message_init() failed";
         goto error;
     }
 

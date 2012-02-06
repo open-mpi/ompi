@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -672,6 +673,7 @@ void mca_pml_ob1_recv_request_matched_probe( mca_pml_ob1_recv_request_t* recvreq
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_match.hdr_src;
     recvreq->req_bytes_received = bytes_packed;
     recvreq->req_bytes_expected = bytes_packed;
+
     recv_request_pml_complete(recvreq);
 }
 
@@ -826,12 +828,18 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
 
 #define IS_PROB_REQ(R) \
     ((MCA_PML_REQUEST_IPROBE == (R)->req_recv.req_base.req_type) || \
-     (MCA_PML_REQUEST_PROBE == (R)->req_recv.req_base.req_type))
+     (MCA_PML_REQUEST_PROBE == (R)->req_recv.req_base.req_type) || \
+     (MCA_PML_REQUEST_IMPROBE == (R)->req_recv.req_base.req_type) || \
+     (MCA_PML_REQUEST_MPROBE == (R)->req_recv.req_base.req_type))
+#define IS_MPROB_REQ(R) \
+    ((MCA_PML_REQUEST_IMPROBE == (R)->req_recv.req_base.req_type) || \
+     (MCA_PML_REQUEST_MPROBE == (R)->req_recv.req_base.req_type))
 
 static inline void append_recv_req_to_queue(opal_list_t *queue,
         mca_pml_ob1_recv_request_t *req)
 {
-    if(OPAL_UNLIKELY(req->req_recv.req_base.req_type == MCA_PML_REQUEST_IPROBE))
+    if(OPAL_UNLIKELY(req->req_recv.req_base.req_type == MCA_PML_REQUEST_IPROBE ||
+                     req->req_recv.req_base.req_type == MCA_PML_REQUEST_IMPROBE))
         return;
 
     opal_list_append(queue, (opal_list_item_t*)req);
@@ -841,7 +849,8 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
      * the compiler will optimize out the empty if loop in the case where PERUSE
      * support is not required by the user.
      */
-    if(req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
+    if(req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE ||
+       req->req_recv.req_base.req_type != MCA_PML_REQUEST_MPROBE) {
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
                                 &(req->req_recv.req_base), PERUSE_RECV);
     }
@@ -1036,6 +1045,21 @@ void mca_pml_ob1_recv_req_start(mca_pml_ob1_recv_request_t *req)
             }
             
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
+
+        } else if (OPAL_UNLIKELY(IS_MPROB_REQ(req))) {
+            /* Remove the fragment from the match list, as it's now
+               matched.  Stash it somewhere in the request (which,
+               yes, is a complete hack), where it will be plucked out
+               during the end of mprobe.  The request will then be
+               "recreated" as a receive request, and the frag will be
+               restarted with this request during mrecv */
+            opal_list_remove_item(&proc->unexpected_frags,
+                                  (opal_list_item_t*)frag);
+            OPAL_THREAD_UNLOCK(&comm->matching_lock);
+
+            req->req_recv.req_base.req_addr = frag;
+            mca_pml_ob1_recv_request_matched_probe(req, frag->btl,
+                                                   frag->segments, frag->num_segments);
 
         } else {
             OPAL_THREAD_UNLOCK(&comm->matching_lock);

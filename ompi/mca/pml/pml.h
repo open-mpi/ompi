@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -261,6 +262,13 @@ typedef int (*mca_pml_base_module_irecv_fn_t)(
     struct ompi_communicator_t* comm,
     struct ompi_request_t **request
 );
+typedef int (*mca_pml_base_module_imrecv_fn_t)(
+    void *buf,
+    size_t count,
+    struct ompi_datatype_t *datatype,
+    struct ompi_message_t **message,
+    struct ompi_request_t **request
+);
 
 /**
  *  Post a receive and wait for completion. 
@@ -281,6 +289,13 @@ typedef int (*mca_pml_base_module_recv_fn_t)(
     int src,
     int tag,
     struct ompi_communicator_t* comm,
+    ompi_status_public_t* status
+);
+typedef int (*mca_pml_base_module_mrecv_fn_t)(
+    void *buf,
+    size_t count,
+    struct ompi_datatype_t *datatype,
+    struct ompi_message_t **message,
     ompi_status_public_t* status
 );
 
@@ -387,6 +402,15 @@ typedef int (*mca_pml_base_module_iprobe_fn_t)(
     ompi_status_public_t *status
 );
 
+typedef int (*mca_pml_base_module_improbe_fn_t)(
+    int src,
+    int tag,
+    struct ompi_communicator_t* comm,
+    int *matched,
+    struct ompi_message_t **message,
+    ompi_status_public_t *status
+);
+
 /**
  * Blocking probe to wait for pending recv.
  *
@@ -401,6 +425,14 @@ typedef int (*mca_pml_base_module_probe_fn_t)(
     int src,
     int tag,
     struct ompi_communicator_t* comm,
+    ompi_status_public_t *status
+);
+
+typedef int (*mca_pml_base_module_mprobe_fn_t)(
+    int src,
+    int tag,
+    struct ompi_communicator_t* comm,
+    struct ompi_message_t **message,
     ompi_status_public_t *status
 );
 
@@ -497,6 +529,10 @@ struct mca_pml_base_module_1_0_0_t {
     mca_pml_base_module_iprobe_fn_t       pml_iprobe;
     mca_pml_base_module_probe_fn_t        pml_probe;
     mca_pml_base_module_start_fn_t        pml_start;
+    mca_pml_base_module_improbe_fn_t      pml_improbe;
+    mca_pml_base_module_mprobe_fn_t       pml_mprobe;
+    mca_pml_base_module_imrecv_fn_t       pml_imrecv;
+    mca_pml_base_module_mrecv_fn_t        pml_mrecv;
 
     /* diagnostics */
     mca_pml_base_module_dump_fn_t         pml_dump;

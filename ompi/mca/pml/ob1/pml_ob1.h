@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -121,6 +122,19 @@ extern int mca_pml_ob1_probe( int dst,
                               struct ompi_communicator_t* comm,
                               ompi_status_public_t* status );
 
+extern int mca_pml_ob1_improbe( int dst,
+                               int tag,
+                               struct ompi_communicator_t* comm,
+                               int *matched,
+                               struct ompi_message_t **message,
+                               ompi_status_public_t* status );
+
+extern int mca_pml_ob1_mprobe( int dst,
+                              int tag,
+                              struct ompi_communicator_t* comm,
+                              struct ompi_message_t **message,
+                              ompi_status_public_t* status );
+
 extern int mca_pml_ob1_isend_init( void *buf,
                                    size_t count,
                                    ompi_datatype_t *datatype,
@@ -170,6 +184,18 @@ extern int mca_pml_ob1_recv( void *buf,
                              int tag,
                              struct ompi_communicator_t* comm,
                              ompi_status_public_t* status );
+
+extern int mca_pml_ob1_imrecv( void *buf,
+                               size_t count,
+                               ompi_datatype_t *datatype,
+                               struct ompi_message_t **message,
+                               struct ompi_request_t **request );
+
+extern int mca_pml_ob1_mrecv( void *buf,
+                              size_t count,
+                              ompi_datatype_t *datatype,
+                              struct ompi_message_t **message,
+                              ompi_status_public_t* status );
 
 extern int mca_pml_ob1_dump( struct ompi_communicator_t* comm,
                              int verbose );

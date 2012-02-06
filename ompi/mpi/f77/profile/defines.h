@@ -177,6 +177,8 @@
 #define mpi_group_translate_ranks_f pmpi_group_translate_ranks_f
 #define mpi_group_union_f pmpi_group_union_f
 #define mpi_ibsend_f pmpi_ibsend_f
+#define mpi_improbe_f pmpi_improbe_f
+#define mpi_imrecv_f pmpi_imrecv_f
 #define mpi_info_create_f pmpi_info_create_f
 #define mpi_info_delete_f pmpi_info_delete_f
 #define mpi_info_dup_f pmpi_info_dup_f
@@ -200,6 +202,8 @@
 #define mpi_keyval_create_f pmpi_keyval_create_f
 #define mpi_keyval_free_f pmpi_keyval_free_f
 #define mpi_lookup_name_f pmpi_lookup_name_f
+#define mpi_mprobe_f pmpi_mprobe_f
+#define mpi_mrecv_f pmpi_mrecv_f
 #define mpi_op_commutative_f pmpi_op_commutative_f
 #define mpi_op_create_f pmpi_op_create_f
 #define mpi_open_port_f pmpi_open_port_f

@@ -7,6 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,6 +43,10 @@ ompi_pml_cm_t ompi_pml_cm = {
         mca_pml_cm_iprobe,
         mca_pml_cm_probe,
         mca_pml_cm_start,
+        mca_pml_cm_improbe,
+        mca_pml_cm_mprobe,
+        mca_pml_cm_imrecv,
+        mca_pml_cm_mrecv,
         mca_pml_cm_dump,
         NULL,
         0,

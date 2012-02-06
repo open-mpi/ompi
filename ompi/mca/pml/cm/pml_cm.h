@@ -115,6 +115,31 @@ OMPI_DECLSPEC extern int mca_pml_cm_probe(int dst,
                                           struct ompi_communicator_t* comm,
                                           ompi_status_public_t* status);
 
+OMPI_DECLSPEC extern int mca_pml_cm_improbe(int dst,
+                                            int tag,
+                                            struct ompi_communicator_t* comm,
+                                            int *matched,
+                                            struct ompi_message_t **message,
+                                            ompi_status_public_t* status);
+
+OMPI_DECLSPEC extern int mca_pml_cm_mprobe(int dst,
+                                           int tag,
+                                           struct ompi_communicator_t* comm,
+                                           struct ompi_message_t **message,
+                                           ompi_status_public_t* status);
+
+OMPI_DECLSPEC extern int mca_pml_cm_imrecv(void *buf,
+                                           size_t count,
+                                           ompi_datatype_t *datatype,
+                                           struct ompi_message_t **message,
+                                           struct ompi_request_t **request);
+
+OMPI_DECLSPEC extern int mca_pml_cm_mrecv(void *buf,
+                                          size_t count,
+                                          ompi_datatype_t *datatype,
+                                          struct ompi_message_t **message,
+                                          ompi_status_public_t* status);
+
 OMPI_DECLSPEC extern int mca_pml_cm_start(size_t count, ompi_request_t** requests);
 
 

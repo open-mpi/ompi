@@ -175,6 +175,8 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Group_translate_ranks.3 \
         mpi/man/man3/MPI_Group_union.3 \
         mpi/man/man3/MPI_Ibsend.3 \
+        mpi/man/man3/MPI_Improbe.3 \
+        mpi/man/man3/MPI_Imrecv.3 \
         mpi/man/man3/MPI_Info_c2f.3 \
         mpi/man/man3/MPI_Info_create.3 \
         mpi/man/man3/MPI_Info_delete.3 \
@@ -200,6 +202,8 @@ mpi_api_man_pages = \
         mpi/man/man3/MPI_Keyval_create.3 \
         mpi/man/man3/MPI_Keyval_free.3 \
         mpi/man/man3/MPI_Lookup_name.3 \
+        mpi/man/man3/MPI_Mprobe.3 \
+        mpi/man/man3/MPI_Mrecv.3 \
         mpi/man/man3/MPI_Op_c2f.3 \
         mpi/man/man3/MPI_Op_create.3 \
         mpi/man/man3/MPI_Open_port.3 \

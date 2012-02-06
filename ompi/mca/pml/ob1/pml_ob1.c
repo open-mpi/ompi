@@ -13,6 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,6 +67,10 @@ mca_pml_ob1_t mca_pml_ob1 = {
         mca_pml_ob1_iprobe,
         mca_pml_ob1_probe,
         mca_pml_ob1_start,
+        mca_pml_ob1_improbe,
+        mca_pml_ob1_mprobe,
+        mca_pml_ob1_imrecv,
+        mca_pml_ob1_mrecv,
         mca_pml_ob1_dump,
         mca_pml_ob1_ft_event,
         65535,

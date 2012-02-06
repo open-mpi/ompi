@@ -5,6 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +36,10 @@ mca_pml_example_t mca_pml_example = {
         mca_pml_example_iprobe,
         mca_pml_example_probe,
         mca_pml_example_start,
+        mca_pml_example_improbe,
+        mca_pml_example_mprobe,
+        mca_pml_example_imrecv,
+        mca_pml_example_mrecv,
         mca_pml_example_ft_event,
 
         32768,

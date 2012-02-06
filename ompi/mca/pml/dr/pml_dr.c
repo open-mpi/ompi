@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -58,6 +59,10 @@ mca_pml_dr_t mca_pml_dr = {
     mca_pml_dr_iprobe,
     mca_pml_dr_probe,
     mca_pml_dr_start,
+    mca_pml_dr_improbe,
+    mca_pml_dr_mprobe,
+    mca_pml_dr_imrecv,
+    mca_pml_dr_mrecv,
     mca_pml_dr_dump,
     NULL,
     65535,

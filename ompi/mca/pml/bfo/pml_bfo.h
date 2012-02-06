@@ -121,6 +121,19 @@ extern int mca_pml_bfo_probe( int dst,
                               struct ompi_communicator_t* comm,
                               ompi_status_public_t* status );
 
+extern int mca_pml_bfo_improbe( int dst,
+                               int tag,
+                               struct ompi_communicator_t* comm,
+                               int *matched,
+                               struct ompi_message_t **message,
+                               ompi_status_public_t* status );
+
+extern int mca_pml_bfo_mprobe( int dst,
+                              int tag,
+                              struct ompi_communicator_t* comm,
+                              struct ompi_message_t **message,
+                              ompi_status_public_t* status );
+
 extern int mca_pml_bfo_isend_init( void *buf,
                                    size_t count,
                                    ompi_datatype_t *datatype,
@@ -170,6 +183,18 @@ extern int mca_pml_bfo_recv( void *buf,
                              int tag,
                              struct ompi_communicator_t* comm,
                              ompi_status_public_t* status );
+
+extern int mca_pml_bfo_imrecv( void *buf,
+                               size_t count,
+                               ompi_datatype_t *datatype,
+                               struct ompi_message_t **message,
+                               struct ompi_request_t **request );
+
+extern int mca_pml_bfo_mrecv( void *buf,
+                              size_t count,
+                              ompi_datatype_t *datatype,
+                              struct ompi_message_t **message,
+                              ompi_status_public_t* status );
 
 extern int mca_pml_bfo_dump( struct ompi_communicator_t* comm,
                              int verbose );

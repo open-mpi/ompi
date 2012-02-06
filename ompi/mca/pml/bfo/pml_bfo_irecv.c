@@ -111,3 +111,25 @@ int mca_pml_bfo_recv(void *addr,
     ompi_request_free( (ompi_request_t**)&recvreq );
     return rc;
 }
+
+
+int
+mca_pml_bfo_imrecv(void *buf,
+                  size_t count,
+                  ompi_datatype_t *datatype,
+                  struct ompi_message_t **message,
+                  struct ompi_request_t **request)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+
+int
+mca_pml_bfo_mrecv(void *buf,
+                 size_t count,
+                 ompi_datatype_t *datatype,
+                 struct ompi_message_t **message,
+                 ompi_status_public_t* status)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}

@@ -15,6 +15,7 @@
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -58,6 +59,7 @@
 #include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/ompi_datatype.h"
+#include "ompi/message/message.h"
 #include "ompi/op/op.h"
 #include "ompi/file/file.h"
 #include "ompi/info/info.h"
@@ -295,6 +297,10 @@ int ompi_mpi_finalize(void)
 
     /* free requests */
     if (OMPI_SUCCESS != (ret = ompi_request_finalize())) {
+        return ret;
+    }
+
+    if (OMPI_SUCCESS != (ret = ompi_message_finalize())) {
         return ret;
     }
 

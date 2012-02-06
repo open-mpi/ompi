@@ -179,6 +179,8 @@ libmpi_f77_la_SOURCES += \
         group_translate_ranks_f.c \
         group_union_f.c \
         ibsend_f.c \
+	improbe_f.c \
+	imrecv_f.c \
         info_create_f.c \
         info_delete_f.c \
         info_dup_f.c \
@@ -202,6 +204,8 @@ libmpi_f77_la_SOURCES += \
         keyval_create_f.c \
         keyval_free_f.c \
         lookup_name_f.c \
+	mprobe_f.c \
+	mrecv_f.c \
         op_commutative_f.c \
         op_create_f.c \
         open_port_f.c \

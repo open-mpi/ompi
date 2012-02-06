@@ -13,6 +13,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -69,6 +70,10 @@ mca_pml_bfo_t mca_pml_bfo = {
         mca_pml_bfo_iprobe,
         mca_pml_bfo_probe,
         mca_pml_bfo_start,
+        mca_pml_bfo_improbe,
+        mca_pml_bfo_mprobe,
+        mca_pml_bfo_imrecv,
+        mca_pml_bfo_mrecv,
         mca_pml_bfo_dump,
         mca_pml_bfo_ft_event,
         65535,

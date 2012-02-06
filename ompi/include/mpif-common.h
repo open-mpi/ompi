@@ -198,7 +198,7 @@
 !
       integer MPI_GROUP_NULL, MPI_COMM_NULL, MPI_DATATYPE_NULL
       integer MPI_REQUEST_NULL, MPI_OP_NULL, MPI_ERRHANDLER_NULL
-      integer MPI_INFO_NULL, MPI_WIN_NULL
+      integer MPI_INFO_NULL, MPI_WIN_NULL, MPI_MESSAGE_NULL
 
       parameter (MPI_GROUP_NULL=0)
       parameter (MPI_COMM_NULL=2)
@@ -208,6 +208,7 @@
       parameter (MPI_ERRHANDLER_NULL=0)
       parameter (MPI_INFO_NULL=0)
       parameter (MPI_WIN_NULL=0)
+      parameter (MPI_MESSAGE_NULL=0)
 !
 !     MPI_Init_thread constants
 !

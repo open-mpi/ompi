@@ -468,6 +468,7 @@ match_one(mca_btl_base_module_t *btl,
 {
     mca_pml_ob1_recv_request_t *match;
     mca_pml_ob1_comm_t *comm = (mca_pml_ob1_comm_t *)comm_ptr->c_pml_comm;
+    int rc;
 
     do {
         match = match_incomming(hdr, comm, proc);
@@ -482,6 +483,24 @@ match_one(mca_btl_base_module_t *btl,
                                                        num_segments);
                 /* attempt to match actual request */
                 continue;
+            } else if (MCA_PML_REQUEST_MPROBE == match->req_recv.req_base.req_type) {
+                /* create a receive frag and associate it with the
+                   request, which is then completed so that it can be
+                   restarted later during mrecv */
+                mca_pml_ob1_recv_frag_t *tmp;
+                if(NULL == frag) {
+                    MCA_PML_OB1_RECV_FRAG_ALLOC(tmp, rc);
+                    MCA_PML_OB1_RECV_FRAG_INIT(tmp, hdr, segments, num_segments, btl);
+                } else {
+                    tmp = frag;
+                }
+
+                match->req_recv.req_base.req_addr = tmp;
+                mca_pml_ob1_recv_request_matched_probe(match, btl, segments,
+                                                       num_segments);
+                /* this frag is already processed, so we want to break out
+                   of the loop and not end up back on the unexpected queue. */
+                return NULL;
             }
 
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,

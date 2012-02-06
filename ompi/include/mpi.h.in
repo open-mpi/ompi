@@ -12,6 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -325,6 +326,7 @@ typedef struct ompi_group_t *MPI_Group;
 typedef struct ompi_info_t *MPI_Info;
 typedef struct ompi_op_t *MPI_Op;
 typedef struct ompi_request_t *MPI_Request;
+typedef struct ompi_message_t *MPI_Message;
 typedef struct ompi_status_public_t MPI_Status;
 typedef struct ompi_win_t *MPI_Win;
 
@@ -630,6 +632,7 @@ enum {
 #define MPI_GROUP_NULL OMPI_PREDEFINED_GLOBAL(MPI_Group, ompi_mpi_group_null)
 #define MPI_COMM_NULL OMPI_PREDEFINED_GLOBAL(MPI_Comm, ompi_mpi_comm_null)
 #define MPI_REQUEST_NULL OMPI_PREDEFINED_GLOBAL(MPI_Request, ompi_request_null)
+#define MPI_MESSAGE_NULL OMPI_PREDEFINED_GLOBAL(MPI_Message, ompi_message_null)
 #define MPI_OP_NULL OMPI_PREDEFINED_GLOBAL(MPI_Op, ompi_mpi_op_null)
 #define MPI_ERRHANDLER_NULL OMPI_PREDEFINED_GLOBAL(MPI_Errhandler, ompi_mpi_errhandler_null)
 #define MPI_INFO_NULL OMPI_PREDEFINED_GLOBAL(MPI_Info, ompi_mpi_info_null)
@@ -762,6 +765,7 @@ OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_empty;
 OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_null;
 
 OMPI_DECLSPEC extern struct ompi_predefined_request_t ompi_request_null;
+OMPI_DECLSPEC extern struct ompi_predefined_message_t ompi_message_null;
 
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_null;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_min;
@@ -1293,6 +1297,11 @@ OMPI_DECLSPEC  int MPI_Group_union(MPI_Group group1, MPI_Group group2,
                                    MPI_Group *newgroup);
 OMPI_DECLSPEC  int MPI_Ibsend(void *buf, int count, MPI_Datatype datatype, int dest,
                               int tag, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int MPI_Improbe(int source, int tag, MPI_Comm comm,
+                               int *flag, MPI_Message *message,
+                               MPI_Status *status);
+OMPI_DECLSPEC  int MPI_Imrecv(void *buf, int count, MPI_Datatype type,
+                              MPI_Message *message, MPI_Request *request);
 OMPI_DECLSPEC  MPI_Fint MPI_Info_c2f(MPI_Info info);
 OMPI_DECLSPEC  int MPI_Info_create(MPI_Info *info);
 OMPI_DECLSPEC  int MPI_Info_delete(MPI_Info info, char *key);
@@ -1333,7 +1342,14 @@ OMPI_DECLSPEC  int MPI_Keyval_create(MPI_Copy_function *copy_fn,
 OMPI_DECLSPEC  int MPI_Keyval_free(int *keyval)
                                    __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_free_keyval in MPI-2.0");
 OMPI_DECLSPEC  int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
-OMPI_DECLSPEC  MPI_Fint MPI_Op_c2f(MPI_Op op);
+OMPI_DECLSPEC  MPI_Fint MPI_Message_c2f(MPI_Message message);
+OMPI_DECLSPEC  MPI_Message MPI_Message_f2c(MPI_Fint message);
+OMPI_DECLSPEC  int MPI_Mprobe(int source, int tag, MPI_Comm comm,
+                               MPI_Message *message,
+                               MPI_Status *status);
+OMPI_DECLSPEC  int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
+                             MPI_Message *message, MPI_Status *status);
+OMPI_DECLSPEC  MPI_Fint MPI_Op_c2f(MPI_Op op); 
 OMPI_DECLSPEC  int MPI_Op_commutative(MPI_Op op, int *commute);
 OMPI_DECLSPEC  int MPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op);
 OMPI_DECLSPEC  int MPI_Open_port(MPI_Info info, char *port_name);
@@ -1822,6 +1838,11 @@ OMPI_DECLSPEC  int PMPI_Group_union(MPI_Group group1, MPI_Group group2,
                                     MPI_Group *newgroup);
 OMPI_DECLSPEC  int PMPI_Ibsend(void *buf, int count, MPI_Datatype datatype, int dest,
                                int tag, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Improbe(int source, int tag, MPI_Comm comm,
+                                int *flag, MPI_Message *message,
+                                MPI_Status *status);
+OMPI_DECLSPEC  int PMPI_Imrecv(void *buf, int count, MPI_Datatype type,
+                               MPI_Message *message, MPI_Request *request);
 OMPI_DECLSPEC  MPI_Fint PMPI_Info_c2f(MPI_Info info);
 OMPI_DECLSPEC  int PMPI_Info_create(MPI_Info *info);
 OMPI_DECLSPEC  int PMPI_Info_delete(MPI_Info info, char *key);
@@ -1862,6 +1883,13 @@ OMPI_DECLSPEC  int PMPI_Keyval_create(MPI_Copy_function *copy_fn,
 OMPI_DECLSPEC  int PMPI_Keyval_free(int *keyval)
                                     __mpi_interface_deprecated__("MPI_Keyval_free is superseded by MPI_Comm_free_keyval in MPI-2.0");
 OMPI_DECLSPEC  int PMPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
+OMPI_DECLSPEC  MPI_Fint PMPI_Message_c2f(MPI_Message message);
+OMPI_DECLSPEC  MPI_Message PMPI_Message_f2c(MPI_Fint message);
+OMPI_DECLSPEC  int PMPI_Mprobe(int source, int tag, MPI_Comm comm,
+                               MPI_Message *message,
+                               MPI_Status *status);
+OMPI_DECLSPEC  int PMPI_Mrecv(void *buf, int count, MPI_Datatype type,
+                              MPI_Message *message, MPI_Status *status);
 OMPI_DECLSPEC  MPI_Fint PMPI_Op_c2f(MPI_Op op);
 OMPI_DECLSPEC  int PMPI_Op_commutative(MPI_Op op, int *commute);
 OMPI_DECLSPEC  int PMPI_Op_create(MPI_User_function *function, int commute, MPI_Op *op);

@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # $COPYRIGHT$
@@ -198,10 +198,12 @@ medium_sources = \
      mpi_file_write_shared_f90.f90 \
      mpi_get_f90.f90 \
      mpi_ibsend_f90.f90 \
+     mpi_imrecv_f90.f90 \
      mpi_irecv_f90.f90 \
      mpi_irsend_f90.f90 \
      mpi_isend_f90.f90 \
      mpi_issend_f90.f90 \
+     mpi_mrecv_f90.f90 \
      mpi_put_f90.f90 \
      mpi_recv_f90.f90 \
      mpi_recv_init_f90.f90 \

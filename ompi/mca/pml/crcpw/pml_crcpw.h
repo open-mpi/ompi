@@ -91,6 +91,20 @@ BEGIN_C_DECLS
     int mca_pml_crcpw_iprobe(int dst, int tag, struct ompi_communicator_t* comm, int *matched, ompi_status_public_t* status );
 
     int mca_pml_crcpw_probe( int dst, int tag, struct ompi_communicator_t* comm, ompi_status_public_t* status );
+
+
+    int mca_pml_crcpw_improbe( int dst,
+                             int tag,
+                             struct ompi_communicator_t* comm,
+                             int *matched,
+                             struct ompi_message_t **message,
+                             ompi_status_public_t* status );
+
+    int mca_pml_crcpw_mprobe( int dst,
+                            int tag,
+                            struct ompi_communicator_t* comm,
+                            struct ompi_message_t **message,
+                            ompi_status_public_t* status );
     
     int mca_pml_crcpw_isend_init( void *buf, size_t count, ompi_datatype_t *datatype, int dst, int tag, 
                                   mca_pml_base_send_mode_t mode, struct ompi_communicator_t* comm, struct ompi_request_t **request );
@@ -109,6 +123,18 @@ BEGIN_C_DECLS
     
     int mca_pml_crcpw_recv(  void *buf, size_t count, ompi_datatype_t *datatype, int src, int tag,
                              struct ompi_communicator_t* comm,  ompi_status_public_t* status);
+
+    int mca_pml_crcpw_imrecv( void *buf,
+                               size_t count,
+                               ompi_datatype_t *datatype,
+                               struct ompi_message_t **message,
+                               struct ompi_request_t **request );
+
+    int mca_pml_crcpw_mrecv( void *buf,
+                              size_t count,
+                              ompi_datatype_t *datatype,
+                              struct ompi_message_t **message,
+                              ompi_status_public_t* status );
     
     int mca_pml_crcpw_dump( struct ompi_communicator_t* comm, int verbose );
     
