@@ -73,3 +73,26 @@ int mca_pml_csum_probe(int src,
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
     return OMPI_SUCCESS;
 }
+
+
+int
+mca_pml_csum_improbe(int dst,
+                     int tag,
+                     struct ompi_communicator_t* comm,
+                     int *matched,
+                     struct ompi_message_t **message,
+                     ompi_status_public_t* status)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+
+int
+mca_pml_csum_mprobe(int dst,
+                    int tag,
+                    struct ompi_communicator_t* comm,
+                    struct ompi_message_t **message,
+                    ompi_status_public_t* status)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}

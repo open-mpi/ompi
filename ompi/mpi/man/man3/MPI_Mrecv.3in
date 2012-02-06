@@ -1,0 +1,89 @@
+.\" Copyright 2012 Cisco Systems, Inc.  All rights reserved.
+.\" Copyright 2006-2008 Sun Microsystems, Inc.
+.\" Copyright (c) 1996 Thinking Machines Corporation
+.TH MPI_Mrecv 3 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.SH NAME
+\fBMPI_Mrecv\fP \- Blocking receive for a matched message
+
+.SH SYNTAX
+.ft R
+.SH C Syntax
+.nf
+#include <mpi.h>
+int MPI_Mrecv(void \fI*buf\fP, int\fI count\fP, MPI_Datatype\fI type\fP, 
+	MPI_Message\fI *message\fP, MPI_Status\fI *status\fP)
+
+.fi
+.SH Fortran Syntax
+.nf
+INCLUDE 'mpif.h'
+MPI_MRECV(\fIBUF, COUNT, DATATYPE, MESSAGE, STATUS, IERROR\fP)
+	<type>	\fIBUF(*)\fP
+	INTEGER	\fCOUNT, DATATYPE, MESSAGE\fP
+	INTEGER	\fISTATUS(MPI_STATUS_SIZE), IERROR\fP 
+
+.fi
+.SH C++ Syntax
+.nf
+There is no C++ binding for this function.
+
+.fi
+.SH INPUT PARAMETERS
+.ft R
+.TP 1i
+count
+Number of elements to receive (nonnegative integer).
+.TP 1i
+datatype
+Datatype of each send buffer element (handle).
+.TP 1i
+message
+Message (handle).
+
+.SH OUTPUT PARAMETERS
+.ft R
+.TP 1i
+buf
+Initial address of receive buffer (choice).
+.TP 1i
+status
+Status object (status).
+.TP 1i
+IERROR
+Fortran only: Error status (integer). 
+
+.SH DESCRIPTION
+.ft R
+The functions MPI_Mrecv and MPI_Imrecv receive messages that have been
+previously matched by a matching probe.
+.sp
+If MPI_Mrecv is called with MPI_MESSAGE_NULL as the message argument,
+the call returns immediately with the \fIstatus\fP object set to
+\fIsource\fP = MPI_PROC_NULL, \fItag\fP = MPI_ANY_TAG, and \fIcount\fP
+= 0, as if a receive from MPI_PROC_NULL was issued.
+
+.SH NOTE
+This is an MPI-3 function and has no C++ binding.
+
+.SH ERRORS
+Almost all MPI routines return an error value; C routines as the value
+of the function and Fortran routines in the last argument. C++
+functions do not return errors. 
+.sp
+Before the error value is returned, the current MPI error handler is
+called. By default, this error handler aborts the MPI job, except for
+I/O function errors. The error handler may be changed with
+MPI_Comm_set_errhandler; the predefined error handler
+MPI_ERRORS_RETURN may be used to cause error values to be
+returned. Note that MPI does not guarantee that an MPI program can
+continue past an error.
+
+.SH SEE ALSO
+.ft R
+.nf
+MPI_Mprobe
+MPI_Improbe
+MPI_Probe
+MPI_Iprobe
+MPI_Imrecv
+MPI_Cancel

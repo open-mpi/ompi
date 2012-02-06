@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -69,10 +69,12 @@ noinst_SCRIPTS = \
      mpi_gatherv_f90.f90.sh \
      mpi_get_f90.f90.sh \
      mpi_ibsend_f90.f90.sh \
+     mpi_imrecv_f90.f90.sh \
      mpi_irecv_f90.f90.sh \
      mpi_irsend_f90.f90.sh \
      mpi_isend_f90.f90.sh \
      mpi_issend_f90.f90.sh \
+     mpi_mrecv_f90.f90.sh \
      mpi_pack_external_f90.f90.sh \
      mpi_pack_f90.f90.sh \
      mpi_put_f90.f90.sh \

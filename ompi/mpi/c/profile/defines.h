@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -192,6 +193,10 @@
 #define MPI_Group_union PMPI_Group_union 
 #define MPI_Free_mem PMPI_Free_mem
 #define MPI_Ibsend PMPI_Ibsend
+#define MPI_Message_c2f PMPI_Message_c2f
+#define MPI_Message_f2c PMPI_Message_f2c
+#define MPI_Improbe PMPI_Improbe
+#define MPI_Imrecv PMPI_Imrecv
 #define MPI_Info_c2f PMPI_Info_c2f
 #define MPI_Info_create PMPI_Info_create
 #define MPI_Info_delete PMPI_Info_delete
@@ -217,6 +222,9 @@
 #define MPI_Keyval_create PMPI_Keyval_create 
 #define MPI_Keyval_free PMPI_Keyval_free 
 #define MPI_Lookup_name PMPI_Lookup_name
+#define MPI_Mprobe PMPI_Mprobe
+#define MPI_Mrecv PMPI_Mrecv
+#define MPI_Message_cancel PMPI_Message_cancel
 #define MPI_Op_c2f PMPI_Op_c2f 
 #define MPI_Op_commutative PMPI_Op_commutative 
 #define MPI_Op_create PMPI_Op_create 

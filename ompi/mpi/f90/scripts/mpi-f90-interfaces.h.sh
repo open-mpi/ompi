@@ -9564,6 +9564,173 @@ output_285() {
     procedure=$1
     cat <<EOF
 
+subroutine ${procedure}(source, tag, comm, message, status, ierr)
+  include 'mpif-config.h'
+  integer, intent(in) :: source
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  integer, intent(out) :: message
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Mprobe small
+output_285 MPI_Mprobe
+end MPI_Mprobe
+
+#------------------------------------------------------------------------
+
+output_286() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(source, tag, comm, flag, message, status, ierr)
+  include 'mpif-config.h'
+  integer, intent(in) :: source
+  integer, intent(in) :: tag
+  integer, intent(in) :: comm
+  logical, intent(out) :: flag
+  integer, intent(out) :: message
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Improbe small
+output_286 MPI_Improbe
+end MPI_Improbe
+
+#------------------------------------------------------------------------
+
+output_287() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(buf, count, datatype, message, status, ierr)
+  include 'mpif-config.h'
+  ${type}, intent(out) :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(inout) :: message
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Mrecv medium
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_287 MPI_Mrecv ${rank} CH "character${dim}"
+  output_287 MPI_Mrecv ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_287 MPI_Mrecv ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_287 MPI_Mrecv ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_287 MPI_Mrecv ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Mrecv
+
+#------------------------------------------------------------------------
+
+output_288() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(buf, count, datatype, message, request, ierr)
+  include 'mpif-config.h'
+  ${type}, intent(out) :: buf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(inout) :: message
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Imrecv medium
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_288 MPI_Imrecv ${rank} CH "character${dim}"
+  output_288 MPI_Imrecv ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_288 MPI_Imrecv ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_288 MPI_Imrecv ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_288 MPI_Imrecv ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Imrecv
+
+#------------------------------------------------------------------------
+
+output_289() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
 subroutine ${procedure}(version, resultlen, ierr)
   character(len=*), intent(out) :: version
   integer, intent(out) :: resultlen
@@ -9574,6 +9741,6 @@ EOF
 }
 
 start MPI_Get_library_version small
-output_285 MPI_Get_library_version
+output_289 MPI_Get_library_version
 end MPI_Get_library_version
 

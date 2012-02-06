@@ -11,7 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2010      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -139,6 +139,7 @@ include errhandler/Makefile.am
 include file/Makefile.am
 include group/Makefile.am
 include info/Makefile.am
+include message/Makefile.am
 include op/Makefile.am
 include peruse/Makefile.am
 include proc/Makefile.am

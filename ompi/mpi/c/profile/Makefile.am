@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -147,6 +148,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pgroup_translate_ranks.c \
         pgroup_union.c \
         pibsend.c \
+	pimprobe.c \
+	pimrecv.c \
         pinfo_c2f.c \
         pinfo_create.c \
         pinfo_delete.c \
@@ -172,6 +175,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pkeyval_create.c \
         pkeyval_free.c \
         plookup_name.c \
+	pmprobe.c \
+	pmrecv.c \
         pop_c2f.c \
         pop_create.c \
         pop_commutative.c \

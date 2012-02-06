@@ -44,3 +44,26 @@ mca_pml_cm_probe(int src, int tag,
 
     return ret;
 }
+
+
+int
+mca_pml_cm_improbe(int dst,
+                   int tag,
+                   struct ompi_communicator_t* comm,
+                   int *matched,
+                   struct ompi_message_t **message,
+                   ompi_status_public_t* status)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+
+int
+mca_pml_cm_mprobe(int dst,
+                  int tag,
+                  struct ompi_communicator_t* comm,
+                  struct ompi_message_t **message,
+                  ompi_status_public_t* status)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}

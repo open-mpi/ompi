@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,6 +46,10 @@ mca_pml_crcpw_module_t mca_pml_crcpw_module = {
         mca_pml_crcpw_iprobe,
         mca_pml_crcpw_probe,
         mca_pml_crcpw_start,
+        mca_pml_crcpw_improbe,
+        mca_pml_crcpw_mprobe,
+        mca_pml_crcpw_imrecv,
+        mca_pml_crcpw_mrecv,
         mca_pml_crcpw_dump,
         mca_pml_crcpw_ft_event,
 
@@ -748,6 +753,52 @@ int mca_pml_crcpw_start( size_t count, ompi_request_t** requests )
 
     return OMPI_SUCCESS;
 }
+
+
+int
+mca_pml_crcpw_improbe(int dst,
+                      int tag,
+                      struct ompi_communicator_t* comm,
+                      int *matched,
+                      struct ompi_message_t **message,
+                      ompi_status_public_t* status)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+
+int
+mca_pml_crcpw_mprobe(int dst,
+                     int tag,
+                     struct ompi_communicator_t* comm,
+                     struct ompi_message_t **message,
+                     ompi_status_public_t* status)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+
+int
+mca_pml_crcpw_imrecv(void *buf,
+                     size_t count,
+                     ompi_datatype_t *datatype,
+                     struct ompi_message_t **message,
+                     struct ompi_request_t **request)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
+
+int
+mca_pml_crcpw_mrecv(void *buf,
+                    size_t count,
+                    ompi_datatype_t *datatype,
+                    struct ompi_message_t **message,
+                    ompi_status_public_t* status)
+{
+    return OMPI_ERR_NOT_SUPPORTED;
+}
+
 
 int mca_pml_crcpw_ft_event(int state)
 {
