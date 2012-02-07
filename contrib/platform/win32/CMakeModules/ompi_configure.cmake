@@ -243,6 +243,8 @@ OMPI_DEF_OPT(OMPI_WANT_OFED "Whether we want to enable OFED support." ON)
 
 OMPI_DEF_OPT(OMPI_RELEASE_BUILD "Whether it is a build for binary release (this will skip the path settings in mca_installdirs_config)." OFF)
 
+OMPI_DEF(OMPI_ENABLE_CONTRIB_vt 0 "Whether we want to enable VampirTrace support." 0 1) 
+
 IF (NOT MSVC)
 
 ###################################################################
