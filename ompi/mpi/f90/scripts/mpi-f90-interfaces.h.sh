@@ -9744,3 +9744,29 @@ start MPI_Get_library_version small
 output_289 MPI_Get_library_version
 end MPI_Get_library_version
 
+#------------------------------------------------------------------------
+
+output_290() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm, split_type, key, info, newcomm, ierr)
+  integer, intent(in) :: comm
+  integer, intent(in) :: split_type
+  integer, intent(in) :: key
+  integer, intent(in) :: info
+  integer, intent(out) :: newcomm
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Comm_split_type small
+output_290 MPI_Comm_split_type
+end MPI_Comm_split_type
+
