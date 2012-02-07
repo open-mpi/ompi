@@ -175,8 +175,10 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pkeyval_create.c \
         pkeyval_free.c \
         plookup_name.c \
-	pmprobe.c \
-	pmrecv.c \
+        message_f2c.c \
+        message_c2f.c \
+        pmprobe.c \
+        pmrecv.c \
         pop_c2f.c \
         pop_create.c \
         pop_commutative.c \
