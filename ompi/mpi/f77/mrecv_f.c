@@ -88,7 +88,7 @@ void mpi_mrecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 
    /* Call the C function */
    *ierr = OMPI_INT_2_FINT(MPI_Mrecv(OMPI_F2C_BOTTOM(buf), OMPI_FINT_2_INT(*count),
-                                     c_type, c_message,
+                                     c_type, &c_message,
                                      c_status));
    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
 #if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
