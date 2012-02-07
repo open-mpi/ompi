@@ -144,6 +144,8 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pgroup_translate_ranks_f.c \
         pgroup_union_f.c \
         pibsend_f.c \
+        pimprobe_f.c \
+        pimrecv_f.c \
         pinfo_create_f.c \
         pinfo_delete_f.c \
         pinfo_dup_f.c \
@@ -167,6 +169,8 @@ nodist_libmpi_f77_pmpi_la_SOURCES = \
         pkeyval_create_f.c \
         pkeyval_free_f.c \
         plookup_name_f.c \
+        pmprobe_f.c \
+        pmrecv_f.c \
         pop_create_f.c \
         popen_port_f.c \
         pop_free_f.c \
