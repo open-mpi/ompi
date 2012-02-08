@@ -198,8 +198,8 @@ if test "x$haveepoll" = "xyes" -a "$cross_compiling" != "yes" ; then
 
         haveepoll=no
         AC_MSG_CHECKING([for working epoll library interface])
-        AC_RUN_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT[
 #include <sys/epoll.h>]],
 [[
     struct epoll_event epevin;
@@ -229,7 +229,7 @@ AC_INCLUDES_DEFAULT
         }
     }
     /* SUCCESS */
-]]),
+]])],
         [haveepoll=yes
         AC_DEFINE(HAVE_EPOLL, 1,
                  [Define if your system supports the epoll interface])
@@ -244,8 +244,8 @@ if test "x$ac_cv_header_sys_epoll_h" = "xyes" -a "x$haveepoll" = "xno" -a "$cros
         # OMPI: See comment above.  This test uses the epoll system call
         # interface instead of the library interface.
         AC_MSG_CHECKING(for working epoll system call)
-        AC_RUN_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT
+        AC_RUN_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT[
 #include <sys/syscall.h>
 #include <sys/epoll.h>]],
 [[  
@@ -277,7 +277,7 @@ AC_INCLUDES_DEFAULT
         }
     }
     /* SUCCESS */
-]]),
+]])],
         [haveepollsyscall=yes
         AC_DEFINE(HAVE_EPOLL, 1,
                  [Define if your system supports the epoll interface])

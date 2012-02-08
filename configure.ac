@@ -403,9 +403,9 @@ OMPI_C_GET_ALIGNMENT(void *, OPAL_ALIGNMENT_VOID_P)
 #
 
 AC_MSG_CHECKING(for C bool type)
-AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT]],
-[[bool bar, foo = true; bar = foo;]]),
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT],
+[[bool bar, foo = true; bar = foo;]])],
 [OPAL_NEED_C_BOOL=0 MSG=yes],[OPAL_NEED_C_BOOL=1 MSG=no])
 AC_DEFINE_UNQUOTED(OPAL_NEED_C_BOOL, $OPAL_NEED_C_BOOL,
     [Whether the C compiler supports "bool" without any other help (such as <stdbool.h>)])
@@ -583,12 +583,12 @@ AC_CHECK_HEADERS([net/if.h], [], [],
 AC_CHECK_HEADERS([stdbool.h], [have_stdbool_h=1], [have_stdbool_h=0])
 AC_MSG_CHECKING([if <stdbool.h> works])
 if test "$have_stdbool_h" = "1"; then
-    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[
-AC_INCLUDES_DEFAULT
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT[
 #if HAVE_STDBOOL_H
 #include <stdbool.h>
 #endif]],
-[[bool bar, foo = true; bar = foo;]]),
+[[bool bar, foo = true; bar = foo;]])],
 [OPAL_USE_STDBOOL_H=1 MSG=yes],[OPAL_USE_STDBOOL_H=0 MSG=no])
 else
     OPAL_USE_STDBOOL_H=0

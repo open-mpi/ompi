@@ -697,8 +697,11 @@ EOF
     cp configure.patched configure
     rm -f configure.patched
 
-    echo "  ++ Modifying configure for Sun Studio Fortran compilers"
-    config/modify-configure-for-sun-fortran.pl
+    # This only needs to happen in the top-level directory
+    if test -x config/modify-configure-for-sun-fortran.pl; then
+        echo "  ++ Modifying configure for Sun Studio Fortran compilers"
+        config/modify-configure-for-sun-fortran.pl
+    fi
 }
 
 

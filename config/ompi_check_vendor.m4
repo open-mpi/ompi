@@ -57,6 +57,9 @@ AC_DEFUN([OMPI_CXX_COMPILER_VENDOR], [
     $1="$ompi_cv_c_compiler_vendor"
 ])
 
+# workaround to avoid syntax error with Autoconf < 2.68:
+m4_ifndef([AC_LANG_DEFINES_PROVIDED],
+	  [m4_define([AC_LANG_DEFINES_PROVIDED])])
 
 # OMPI_IFDEF_IFELSE(symbol, [action-if-defined], 
 #                   [action-if-not-defined])
@@ -64,7 +67,8 @@ AC_DEFUN([OMPI_CXX_COMPILER_VENDOR], [
 # Run compiler to determine if preprocessor symbol "symbol" is
 # defined by the compiler.
 AC_DEFUN([OMPI_IFDEF_IFELSE], [
-    AC_COMPILE_IFELSE([#ifndef $1
+    AC_COMPILE_IFELSE([AC_LANG_DEFINES_PROVIDED
+#ifndef $1
 #error "symbol $1 not defined"
 choke me
 #endif], [$2], [$3])])
@@ -76,7 +80,8 @@ choke me
 # Run compiler to determine if preprocessor symbol "symbol" is
 # defined by the compiler.
 AC_DEFUN([OMPI_IF_IFELSE], [
-    AC_COMPILE_IFELSE([#if !( $1 )
+    AC_COMPILE_IFELSE([AC_LANG_DEFINES_PROVIDED
+#if !( $1 )
 #error "condition $1 not met"
 choke me
 #endif], [$2], [$3])])

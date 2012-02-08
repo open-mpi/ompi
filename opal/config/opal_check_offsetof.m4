@@ -21,13 +21,13 @@ AC_DEFUN([OPAL_CHECK_OFFSETOF],[
     OMPI_VAR_SCOPE_PUSH([have_offsetof_msg])
 
     AC_MSG_CHECKING(for functional offsetof macro)
-    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#include<stddef.h>]],
-                                      [[struct foo {int a, b;}; size_t offset = offsetof(struct foo, b); ]]),
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include<stddef.h>]],
+                                      [[struct foo {int a, b;}; size_t offset = offsetof(struct foo, b); ]])],
                       [have_offsetof_msg="yes"], [have_offsetof_msg="no"])
     if test "$have_offsetof_msg" = "no"; then
         CPPFLAGS="$CPPFLAGS -DNO_PGI_OFFSET"
-        AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#include<stddef.h>]],
-                                          [[struct foo {int a, b;}; size_t offset = offsetof(struct foo, b); ]]),
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include<stddef.h>]],
+                                          [[struct foo {int a, b;}; size_t offset = offsetof(struct foo, b); ]])],
                           [have_offsetof_msg="yes"], [have_offsetof_msg="no"])
 
         if test "$have_offsetof_msg" = "no"; then
