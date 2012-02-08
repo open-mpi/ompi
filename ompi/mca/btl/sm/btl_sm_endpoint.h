@@ -37,6 +37,10 @@ struct mca_btl_base_endpoint_t {
     int fifo_fd;        /**< pipe/fifo used to signal endpoint that data is queued */
 #endif
     opal_list_t pending_sends; /**< pending data to send */
+
+    /** lock for concurrent access to endpoint state */
+    opal_mutex_t                endpoint_lock;
+
 };
 
 void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep);

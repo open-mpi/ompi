@@ -22,10 +22,12 @@ add_pending(struct mca_btl_base_endpoint_t *ep, void *data, bool resend)
 
     /* if data was on pending send list then prepend it to the list to
      * minimize reordering */
-    if(resend)
+    OPAL_THREAD_LOCK(&ep->endpoint_lock);
+    if (resend)
         opal_list_prepend(&ep->pending_sends, (opal_list_item_t*)si);
     else
         opal_list_append(&ep->pending_sends, (opal_list_item_t*)si);
+    OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 }
 
 /*

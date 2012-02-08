@@ -558,16 +558,22 @@ void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
     int rc; 
 
     while ( 0 < opal_list_get_size(&ep->pending_sends) ) {
-
+        /* Note that we access the size of ep->pending_sends unlocked
+           as it doesn't really matter if the result is wrong as 
+           opal_list_remove_first is called with a lock and we handle it
+           not finding an item to process */
+        OPAL_THREAD_LOCK(&ep->endpoint_lock);
         si = (btl_sm_pending_send_item_t*)opal_list_remove_first(&ep->pending_sends); 
-        if(NULL == si) return;  /* ??? WHAT DOES THIS CONDITION MEAN? */
-    
-        OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
+        OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
 
+        if(NULL == si) return; /* Another thread got in before us. Thats ok. */
+    
         OPAL_THREAD_ADD32(&mca_btl_sm_component.num_pending_sends, -1);
 
         MCA_BTL_SM_FIFO_WRITE(ep, ep->my_smp_rank, ep->peer_smp_rank, si->data,
                           true, false, rc);
+
+        OPAL_FREE_LIST_RETURN(&mca_btl_sm_component.pending_send_fl, (opal_list_item_t*)si);
 
         if ( OMPI_SUCCESS != rc )
             return;
