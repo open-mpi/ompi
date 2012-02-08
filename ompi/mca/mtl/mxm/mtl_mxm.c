@@ -332,6 +332,7 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
         mtl_peer_data[i]->mtl_mxm_module = &ompi_mtl_mxm;
         mtl_peer_data[i]->mxm_conn = conn_reqs[i].conn;
     }
+	rc = OMPI_SUCCESS;
 
 bail:
     free(conn_reqs);
