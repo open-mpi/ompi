@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -13,14 +14,24 @@
 #include "ompi/message/message.h"
 #include "ompi/constants.h"
 
+static void ompi_message_constructor(ompi_message_t *msg);
+
 OBJ_CLASS_INSTANCE(ompi_message_t,
                    opal_free_list_item_t,
-                   NULL, NULL);
+                   ompi_message_constructor, NULL);
 
 opal_free_list_t ompi_message_free_list;
 opal_pointer_array_t  ompi_message_f_to_c_table;
 
 ompi_predefined_message_t ompi_message_null;
+
+static void ompi_message_constructor(ompi_message_t *msg)
+{
+    msg->comm = NULL;
+    msg->req_ptr = NULL;
+    msg->m_f_to_c_index = MPI_UNDEFINED;
+    msg->count = 0;
+}
 
 int
 ompi_message_init(void)
