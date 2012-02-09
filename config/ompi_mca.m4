@@ -549,17 +549,15 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
 
     # try to configure the component.  pay no attention to
     # --enable-dist, since we'll always have makefiles.
-    AS_IF([test "$should_build" = "1"],
-          [m4_ifdef([MCA_]$2[_]$3[_CONFIG],
-                    [MCA_$2_$3_CONFIG([should_build=1], 
-                                      [should_build=0])],
-                    # If they forgot to define an MCA_<fw>_<comp>_CONFIG 
-                    # macro, print a friendly warning and abort.
-                    [AC_MSG_WARN([*** The $2:$3 did not define an])
-                     AC_MSG_WARN([*** MCA_$2_$3_CONFIG macro in the])
-                     AC_MSG_WARN([*** $1/$2/$3/configure.m4 file])
-                     AC_MSG_ERROR([Cannot continue])])
-          ])
+    m4_ifdef([MCA_]$2[_]$3[_CONFIG],
+             [MCA_$2_$3_CONFIG([should_build=$should_build], 
+                               [should_build=0])],
+              # If they forgot to define an MCA_<fw>_<comp>_CONFIG 
+              # macro, print a friendly warning and abort.
+             [AC_MSG_WARN([*** The $2:$3 did not define an])
+              AC_MSG_WARN([*** MCA_$2_$3_CONFIG macro in the])
+              AC_MSG_WARN([*** $1/$2/$3/configure.m4 file])
+              AC_MSG_ERROR([Cannot continue])])
 
     AS_IF([test "$should_build" = "1"],
           [MCA_PROCESS_COMPONENT($1, $2, $3, $4, $5, $6, $7, $compile_mode)],
