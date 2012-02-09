@@ -173,6 +173,9 @@ int opal_hwloc_base_get_topology(void)
                          "hwloc:base:get_topology"));
 
     if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
+        0 != hwloc_topology_set_flags(opal_hwloc_topology, 
+                                      (HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM |
+                                       HWLOC_TOPOLOGY_FLAG_WHOLE_IO)) ||
         0 != hwloc_topology_load(opal_hwloc_topology)) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
