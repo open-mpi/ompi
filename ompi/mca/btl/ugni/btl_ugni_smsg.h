@@ -25,13 +25,6 @@ typedef enum {
     MCA_BTL_UGNI_TAG_GET_COMPLETE
 } mca_btl_ugni_smsg_tag_t;
 
-typedef struct mca_btl_ugni_smsg_mbox_t {
-    ompi_free_list_item_t super;
-    gni_smsg_attr_t  smsg_attrib;
-} mca_btl_ugni_smsg_mbox_t;
-
-OBJ_CLASS_DECLARATION(mca_btl_ugni_smsg_mbox_t);
-
 static inline int ompi_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
                                                const bool ignore_local_comp,
                                                void *hdr, size_t hdr_len,
