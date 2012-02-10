@@ -18,7 +18,7 @@ SUBDIRS = hwloc
 
 # Headers and sources
 headers = hwloc131.h
-sources = hwloc131_component.c hwloc131_module.c
+sources = hwloc131_component.c
 
 # We only ever build this component statically
 noinst_LTLIBRARIES = libmca_hwloc_hwloc131.la

@@ -27,11 +27,6 @@ const char *opal_hwloc_hwloc131_component_version_string =
     "OPAL hwloc131 hwloc MCA component version " OPAL_VERSION;
 
 /*
- * Local function
- */
-static int hwloc131_open(void);
-
-/*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
@@ -51,7 +46,7 @@ const opal_hwloc_component_t mca_hwloc_hwloc131_component = {
         OPAL_RELEASE_VERSION,
 
         /* Component open and close functions */
-        hwloc131_open,
+        NULL,
         NULL
     },
     {
@@ -59,10 +54,3 @@ const opal_hwloc_component_t mca_hwloc_hwloc131_component = {
         MCA_BASE_METADATA_PARAM_CHECKPOINT
     }
 };
-
-
-static int hwloc131_open(void)
-{    
-    return OPAL_SUCCESS;
-}
-
