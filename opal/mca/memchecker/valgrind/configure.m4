@@ -46,7 +46,7 @@ AC_DEFUN([MCA_memchecker_valgrind_CONFIG],[
                      [AC_MSG_RESULT([yes])
                       opal_memchecker_valgrind_happy=yes],
                      [AC_MSG_RESULT([no])
-                      AC_MSG_ERROR([Need Valgrind version 3.2.0 or later. Can not build component.])]
+                      AC_MSG_WARN([Need Valgrind version 3.2.0 or later. Can not build component.])]
                      [AC_MSG_RESULT([cross-compiling; assume yes...?])
                       AC_MSG_WARN([OMPI will fail to compile if you do not have Valgrind version 3.2.0 or later])
                       opal_memchecker_valgrind_happy=yes]),
