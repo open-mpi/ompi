@@ -244,6 +244,18 @@ Compiler Notes
   Therefore  the make install fails.  So we suggest that one should
   use CXX=CC, which works, instead of CXX=sunCC.
 
+- If one tries to build OMPI on Ubuntu with Solaris Studio using the C++
+  compiler and the -m32 option, you might see a warning:
+
+    CC: Warning: failed to detect system linker version, falling back to
+     custom linker usage
+
+  Then the build will fail.  One can overcome this error by either 
+  setting LD_LIBRARY_PATH to the location of the 32 bit libraries (most
+  likely /lib32), or giving LDFLAGS="-L/lib32 -R/lib32" to the configure
+  command.  Officially, Solaris Studio is not supported on Ubuntu Linux
+  distributions, so additional problems might be incurred.
+
 - icc-9.1 and icc-10.0 fail to build atomics on IA64.  However,
   gcc is fine on IA64.  So, these older versions of icc are no
   longer supported on IA64.
