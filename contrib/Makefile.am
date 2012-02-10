@@ -10,6 +10,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2012      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -72,6 +74,14 @@ EXTRA_DIST = \
         platform/lanl/tlcc/optimized-panasas \
         platform/lanl/tlcc/optimized-nopanasas.conf \
         platform/lanl/tlcc/optimized-panasas.conf \
+        platform/lanl/tlcc2/debug-nopanasas \
+        platform/lanl/tlcc2/debug-panasas \
+        platform/lanl/tlcc2/debug-nopanasas.conf \
+        platform/lanl/tlcc2/debug-panasas.conf \
+        platform/lanl/tlcc2/optimized-nopanasas \
+        platform/lanl/tlcc2/optimized-panasas \
+        platform/lanl/tlcc2/optimized-nopanasas.conf \
+        platform/lanl/tlcc2/optimized-panasas.conf \
         platform/win32/CMakeModules/c_check_bool.cmake \
         platform/win32/CMakeModules/check_c_inline.cmake \
         platform/win32/CMakeModules/check_c_type_exists.cmake \
