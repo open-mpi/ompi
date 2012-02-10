@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -66,6 +66,14 @@
  * The component has one function: query().  It simply returns a
  * priority (for the unlikely event where there are multiple
  * components available on a given platform).
+ *
+ * Note that the only real paffinity module that matters these days is
+ * hwloc.  Its module functions will return OPAL_ERR_NOT_INITIALIZED
+ * if the underlying hwloc system has not yet been initialized (which
+ * may not have occured yet since we tend to only initialize hwloc
+ * if/when necessary -- it's not nice to have N processes on a server
+ * all initialize hwloc simultaneously, because they might all
+ * simultaneously bang on /proc and /syst, etc.).
  *
  * The module has the following functions:
  *
