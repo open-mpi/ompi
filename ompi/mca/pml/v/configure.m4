@@ -9,11 +9,6 @@
 #
 
 AC_DEFUN([MCA_pml_v_CONFIG],[
-    # This unmatched fi allows for recursing in the vprotocols, even if 
-    # pml v is disabled by configure
-        eval
-    fi
-    
     # We are going to make recursive call in shell, nothing is impossible
     # Still, we need to be extra careful
     (
@@ -69,6 +64,7 @@ EOF
     AC_SUBST(MCA_vprotocol_DSO_SUBDIRS)
     
     # This unmatched if is intended to match the fi of the if we disabled
-    if test "$should_build" = "1"; then 
-        $1
-])
+    AS_IF( [test "$should_build" = "1"],
+           [$1],
+           [$2])
+])dnl
