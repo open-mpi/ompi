@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -173,7 +173,7 @@ static int module_set(opal_paffinity_base_cpu_set_t mask)
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
@@ -202,7 +202,7 @@ static int module_get(opal_paffinity_base_cpu_set_t *mask)
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
@@ -248,7 +248,7 @@ static int module_map_to_processor_id(int socket, int core, int *processor_id)
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
@@ -305,7 +305,7 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core)
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
@@ -363,7 +363,7 @@ static int module_get_processor_info(int *num_processors)
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
@@ -396,7 +396,7 @@ static int module_get_socket_info(int *num_sockets)
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
@@ -430,7 +430,7 @@ static int module_get_core_info(int socket, int *num_cores)
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
@@ -469,7 +469,7 @@ static int module_get_physical_processor_id(int logical_processor_id,
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
@@ -521,7 +521,7 @@ static int module_get_physical_socket_id(int logical_socket_id,
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
@@ -547,7 +547,7 @@ static int module_get_physical_core_id(int physical_socket_id,
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
+        return OPAL_ERR_NOT_INITIALIZED;
     }
     t = &opal_hwloc_topology;
 
