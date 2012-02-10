@@ -34,3 +34,5 @@ with_slurm=no
 with_io_romio_flags=--with-file-system=ufs+nfs
 with_memory_manager=ptmalloc2
 with_valgrind=no
+with_wrapper_cflags="-march=amdfam10"
+CFLAGS=-march=amdfam10
