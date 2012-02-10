@@ -13,6 +13,7 @@
 #include "btl_ugni.h"
 #include "btl_ugni_endpoint.h"
 #include "btl_ugni_frag.h"
+#include "btl_ugni_smsg.h"
 
 static void mca_btl_ugni_ep_construct (mca_btl_base_endpoint_t *ep);
 static void mca_btl_ugni_ep_destruct (mca_btl_base_endpoint_t *ep);
@@ -24,7 +25,6 @@ static void mca_btl_ugni_ep_construct (mca_btl_base_endpoint_t *ep)
 {
     OBJ_CONSTRUCT(&ep->pending_list, opal_list_t);
     OBJ_CONSTRUCT(&ep->pending_smsg_sends, opal_list_t);
-    ep->smsgs_waiting = false;
 }
 
 static void mca_btl_ugni_ep_destruct (mca_btl_base_endpoint_t *ep)
@@ -37,16 +37,13 @@ static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
     struct mca_btl_ugni_reg_t *reg =
         (struct mca_btl_ugni_reg_t *) mbox->super.registration;
 
-    mbox->buffer = mbox->super.ptr;
-
     /* initialize mailbox attributes */
     mbox->smsg_attrib.msg_type       = GNI_SMSG_TYPE_MBOX_AUTO_RETRANSMIT;
-    mbox->smsg_attrib.msg_maxsize    = mca_btl_ugni_component.eager_limit +
-        sizeof (mca_btl_ugni_frag_hdr_t);
-    mbox->smsg_attrib.mbox_maxcredit = mca_btl_ugni_smsg_max_credits;
-    mbox->smsg_attrib.mbox_offset    = 0; /* autoselect */
-    mbox->smsg_attrib.msg_buffer     = mbox->buffer;
-    mbox->smsg_attrib.buff_size      = mca_btl_ugni_smsg_mbox_size;
+    mbox->smsg_attrib.msg_maxsize    = mca_btl_ugni_component.ugni_smsg_limit;
+    mbox->smsg_attrib.mbox_maxcredit = mca_btl_ugni_component.smsg_max_credits;
+    mbox->smsg_attrib.mbox_offset    = (uintptr_t) mbox->super.ptr - (uintptr_t) reg->base.alloc_base;
+    mbox->smsg_attrib.msg_buffer     = reg->base.alloc_base;
+    mbox->smsg_attrib.buff_size      = mca_btl_ugni_component.smsg_mbox_size;
     mbox->smsg_attrib.mem_hndl       = reg->memory_hdl;
 }
 
@@ -66,13 +63,12 @@ static inline int mca_btl_ugni_ep_smsg_get_mbox (mca_btl_base_endpoint_t *ep) {
     ep->mailbox = (mca_btl_ugni_smsg_mbox_t *) mbox;
 
     /* per ugni spec we need to zero mailbox data before connecting */
-    memset (ep->mailbox->buffer, 0, mca_btl_ugni_smsg_mbox_size);
+    memset ((char *)ep->mailbox->smsg_attrib.msg_buffer + ep->mailbox->smsg_attrib.mbox_offset, 0,
+            ep->mailbox->smsg_attrib.buff_size);
     return rc;
 }
 
 int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnect) {
-    uint32_t msg_id = ORTE_PROC_MY_NAME->vpid;
-    char msg;
     int rc;
 
     OPAL_THREAD_LOCK(&ep->common->lock);
@@ -84,7 +80,7 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
         }
 
         if (OMPI_COMMON_UGNI_CONNECTED == MCA_BTL_UGNI_EP_STATE(ep) && send_disconnect) {
-            rc = GNI_SmsgSendWTag (ep->common->ep_handle, &msg, 1, NULL, 0, msg_id,
+            rc = GNI_SmsgSendWTag (ep->common->ep_handle, NULL, 0, NULL, 0, -1,
                                    MCA_BTL_UGNI_TAG_DISCONNECT);
             if (GNI_RC_SUCCESS != rc) {
                 BTL_VERBOSE(("btl/ugni could not send close message"));
@@ -173,7 +169,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
     while (NULL != (item = opal_list_remove_first (&ep->pending_list))) {
         mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) item;
 
-        (void) mca_btl_ugni_send (&ep->btl->super, ep, &frag->base, frag->tag);
+        (void) mca_btl_ugni_send (&ep->btl->super, ep, &frag->base, frag->hdr.send.tag);
     }
 
     return OMPI_SUCCESS;

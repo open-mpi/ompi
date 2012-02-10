@@ -47,19 +47,8 @@
 #define MCA_BTL_UGNI_CONNECT_DIRECTED_ID 0x6b61686e00000000ull
 #define MCA_BTL_UGNI_DATAGRAM_MASK       0xffffffff00000000ull
 
-typedef enum {
-    MCA_BTL_UGNI_TAG_SEND,
-    MCA_BTL_UGNI_TAG_DISCONNECT,
-    MCA_BTL_UGNI_TAG_PUT_INIT,
-    MCA_BTL_UGNI_TAG_PUT_COMPLETE
-} mca_btl_ugni_smsg_tag_t;
-
-/* Maximum number of outstanding eager messages */
-extern int mca_btl_ugni_smsg_max_credits;
-extern int mca_btl_ugni_smsg_mbox_size;
-
-struct mca_btl_ugni_module_t {
-    mca_btl_base_module_t  super;
+typedef struct mca_btl_ugni_module_t {
+    mca_btl_base_module_t super;
 
     ompi_common_ugni_device_t *device;
 
@@ -76,8 +65,6 @@ struct mca_btl_ugni_module_t {
 
     gni_cq_handle_t bte_local_cq;
     gni_cq_handle_t smsg_remote_cq;
-};
-typedef struct mca_btl_ugni_module_t mca_btl_ugni_module_t;
 
 struct mca_btl_ugni_component_t {
     /* base BTL component */
@@ -93,31 +80,38 @@ struct mca_btl_ugni_component_t {
     /* ugni modules */
     mca_btl_ugni_module_t *modules;
 
-    /* eager send limit in bytes */
-    /* used as the threshold for switching from SMSG */
-    size_t eager_limit;
+    size_t smsg_max_data;
 
     /* After this message size switch to BTE protocols */
-    size_t btl_fma_limit;
+    size_t ugni_fma_limit;
     /* Switch to put when trying to GET at or above this size */
-    size_t btl_get_limit;
+    size_t ugni_get_limit;
+    /* Switch to get when sending above this size */
+    size_t ugni_smsg_limit;
 
-    /* eager fragment list */
-    ompi_free_list_t ugni_frags_eager;
+    /* SMSG fragment list (unregistered) */
+    ompi_free_list_t ugni_frags_smsg;
     /* RDMA fragment list */
     ompi_free_list_t ugni_frags_rdma;
 
-    /* initial free list size */
+    /* RDMA/SMSG free list settings */
     int ugni_free_list_num;
-    /* maximum free list size */
     int ugni_free_list_max;
-    /* free list increment */
     int ugni_free_list_inc;
+
+    /* eager free list settings */
+    int ugni_eager_num;
+    int ugni_eager_max;
+    int ugni_eager_inc;
 
     /* number of times to retry a post */
     int rdma_max_retries;
-};
-typedef struct mca_btl_ugni_component_t mca_btl_ugni_component_t;
+
+    /* Maximum number of outstanding eager messages */
+    int smsg_max_credits;
+    /* mailbox size (computed) */
+    int smsg_mbox_size;
+} mca_btl_ugni_component_t;
 
 int mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
                               ompi_common_ugni_device_t *device);
@@ -232,13 +226,10 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
                    struct mca_btl_base_endpoint_t *endpoint,
                    uint8_t order, size_t size, uint32_t flags);
 
-struct mca_btl_ugni_reg_t {
+typedef struct mca_btl_ugni_reg_t {
     mca_mpool_base_registration_t   base;
     gni_mem_handle_t                memory_hdl;
-    void                           *buffer;
-    size_t                          size;
-};
-typedef struct mca_btl_ugni_reg_t mca_btl_ugni_reg_t;
+} mca_btl_ugni_reg_t;
 
 /* Global structures */ 
 

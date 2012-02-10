@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -11,6 +11,20 @@
  */
 
 #include "btl_ugni_rdma.h"
+#include "btl_ugni_smsg.h"
+
+static inline int mca_btl_ugni_init_reverse_get (struct mca_btl_base_module_t *btl,
+                                                  mca_btl_ugni_base_frag_t *frag) {
+    /* off alignment/off size. switch to put */
+    frag->hdr.rdma.src_seg = frag->base.des_src[0];
+    frag->hdr.rdma.dst_seg = frag->base.des_dst[0];
+    frag->hdr.rdma.ctx     = (void *) &frag->post_desc;
+
+    /* send the fragment header using smsg. ignore local completion */
+    return ompi_mca_btl_ugni_smsg_send (frag, true, &frag->hdr.rdma,
+                                        sizeof (frag->hdr.rdma), NULL, 0,
+                                        MCA_BTL_UGNI_TAG_PUT_INIT);
+}
 
 /**
  * Initiate a get operation.
@@ -23,43 +37,29 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
                       struct mca_btl_base_endpoint_t *endpoint,
                       struct mca_btl_base_descriptor_t *des) {
     mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) des;
-    gni_mem_handle_t lcl_hdl, rem_hdl;
-    void *lcl_buffer, *rem_buffer;
-    size_t size;
+    size_t size = des->des_src->seg_len;
+    bool check;
     int rc;
 
-    BTL_VERBOSE(("Using RDMA Get"));
+    BTL_VERBOSE(("Using RDMA/FMA Get"));
 
     /* Check if endpoint is connected */
     rc = mca_btl_ugni_check_endpoint_state(endpoint);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc))
-        /* we should already be connected by this point (we got a smsg send) */
+        /* Ack! we should already be connected by this point (we got a smsg msg) */
         return rc;
 
-    /* Get remote memory handle */
-    rem_buffer = (void *)(des->des_src->seg_addr.pval);
-    size  = des->des_src->seg_len;
-    memcpy (&rem_hdl, (void *) des->des_src->seg_key.key64, sizeof (rem_hdl));
+    /* Check if the get is aligned/sized on a multiple of 4 */
+    check = !!((des->des_src->seg_addr.lval | des->des_dst->seg_addr.lval | size) & 3);
 
-    /* Get local memory handle */
-    lcl_buffer = (void *)(des->des_dst->seg_addr.pval);
-    memcpy (&lcl_hdl, (void *) des->des_dst->seg_key.key64, sizeof (lcl_hdl));
-
-    if (OPAL_UNLIKELY(((uintptr_t)rem_buffer & 0x3) || ((uintptr_t)lcl_buffer & 0x3) ||
-                      size & 0x3 || size > mca_btl_ugni_component.btl_get_limit)) {
+    if (OPAL_UNLIKELY(check || size > mca_btl_ugni_component.ugni_get_limit)) {
         /* switch to put */
-        return mca_btl_ugni_start_reverse_get (btl, frag);
+        return mca_btl_ugni_init_reverse_get (btl, frag);
     }
 
-    frag->tries = 0;
-
-    if (size < mca_btl_ugni_component.btl_fma_limit) {
-        rc = post_fma_descriptor (frag, GNI_POST_FMA_GET, endpoint, size,
-                                  lcl_buffer, lcl_hdl, rem_buffer, rem_hdl);
-    } else {
-        rc = post_bte_descriptor (frag, GNI_POST_RDMA_GET, endpoint, size,
-                                  lcl_buffer, lcl_hdl, rem_buffer, rem_hdl);
+    if (size <= mca_btl_ugni_component.ugni_fma_limit) {
+        return mca_btl_ugni_post_fma (frag, GNI_POST_FMA_GET, des->des_dst, des->des_src);
     }
 
-    return rc;
+    return mca_btl_ugni_post_bte (frag, GNI_POST_RDMA_GET, des->des_dst, des->des_src);
 }

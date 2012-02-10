@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -12,7 +12,7 @@
 
 #include "btl_ugni.h"
 #include "btl_ugni_frag.h"
-#include "btl_ugni_endpoint.h"
+#include "btl_ugni_smsg.h"
 
 int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
                         struct mca_btl_base_endpoint_t *endpoint,
@@ -24,14 +24,11 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
 {
     size_t length = header_size + payload_size;
     mca_btl_ugni_base_frag_t *frag;
-    uint32_t iov_count = 1;
     void *data_ptr = NULL;
-    struct iovec iov;
     size_t max_data;
     int rc;
 
-    assert (length < mca_btl_ugni_component.eager_limit);
-    assert (0 == (flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK));
+    assert (length <= btl->btl_eager_limit && !(flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK));
 
     if (OPAL_UNLIKELY(OMPI_SUCCESS != mca_btl_ugni_check_endpoint_state (endpoint))) {
         /* can't complete inline send if the endpoint is not already connected */
@@ -41,7 +38,12 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
         return OMPI_ERR_RESOURCE_BUSY;
     }
 
-    MCA_BTL_UGNI_FRAG_ALLOC_EAGER((mca_btl_ugni_module_t *) btl, frag, rc);
+    if (length <= mca_btl_ugni_component.smsg_max_data) {
+        rc = MCA_BTL_UGNI_FRAG_ALLOC_SMSG(endpoint, frag);
+    } else {
+        rc = MCA_BTL_UGNI_FRAG_ALLOC_EAGER_SEND(endpoint, frag);
+    }
+
     if (OPAL_UNLIKELY(NULL == frag)) {
         *descriptor = NULL;
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -50,45 +52,47 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
     BTL_VERBOSE(("btl/ugni sending inline descriptor %p from %d -> %d. length = %u", (void *) frag,
                  ORTE_PROC_MY_NAME->vpid, endpoint->common->ep_rem_id, (unsigned int) length));
 
+    frag->base.des_cbfunc = NULL;
+    frag->base.des_flags  = flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+
+    frag->segments[0].seg_len = length;
+
+    frag->hdr.send.tag = tag;
+    frag->hdr.send.len = length;
+
     /* write match header (with MPI comm/tag/etc. info) */
     memcpy (frag->segments[0].seg_addr.pval, header, header_size);
-
-    frag->hdr->tag = tag;
-    frag->hdr->len = length;
 
     /*
       We can add MEMCHECKER calls before and after the packing.
     */
-    if (OPAL_UNLIKELY(payload_size && opal_convertor_need_buffers (convertor))) {
-        /* pack the data into the supplied buffer */
-        iov.iov_base = (IOVBASE_TYPE *)((uintptr_t)frag->segments[0].seg_addr.pval + header_size);
-        iov.iov_len  = max_data = payload_size;
+    if (payload_size) {
+        if (OPAL_UNLIKELY(opal_convertor_need_buffers (convertor))) {
+            uint32_t iov_count = 1;
+            struct iovec iov;
 
-        (void) opal_convertor_pack (convertor, &iov, &iov_count, &max_data);
+            /* pack the data into the supplied buffer */
+            iov.iov_base = (IOVBASE_TYPE *)((uintptr_t)frag->segments[0].seg_addr.pval + header_size);
+            iov.iov_len  = max_data = payload_size;
 
-        assert (max_data == payload_size);
+            (void) opal_convertor_pack (convertor, &iov, &iov_count, &max_data);
 
-        header_size += payload_size;
-    } else if (payload_size) {
-        opal_convertor_get_current_pointer (convertor, &data_ptr);
-        memmove ((uintptr_t)frag->segments[0].seg_addr.pval + header_size, data_ptr, payload_size);
+            assert (max_data == payload_size);
+        } else {
+            opal_convertor_get_current_pointer (convertor, &data_ptr);
+            memmove ((void *)((uintptr_t)frag->segments[0].seg_addr.pval + header_size), data_ptr, payload_size);
+        }
     }
-
-    frag->base.des_cbfunc = NULL;
-    frag->msg_id = endpoint->common->ep_rem_id & 0x00ffffff;
 
     /* send message */
-    rc = GNI_SmsgSendWTag (endpoint->common->ep_handle, frag->hdr, sizeof (frag->hdr[0]),
-                           frag->segments[0].seg_addr.pval, length, frag->msg_id, MCA_BTL_UGNI_TAG_SEND);
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
-        BTL_VERBOSE(("GNI_SmsgSendWTag failed with rc = %d", rc));
-        MCA_BTL_UGNI_FRAG_RETURN (frag);
-        *descriptor = NULL;
+    if (length <= mca_btl_ugni_component.smsg_max_data) {
+        return ompi_mca_btl_ugni_smsg_send (frag, false, &frag->hdr.send, sizeof (frag->hdr.send),
+                                            frag->segments[0].seg_addr.pval, length, MCA_BTL_UGNI_TAG_SEND);
+    } else {
+        frag->hdr.eager.src_seg = frag->segments[0];
+        frag->hdr.eager.ctx     = (void *) &frag->post_desc;
 
-        return OMPI_ERR_OUT_OF_RESOURCE;
+        return ompi_mca_btl_ugni_smsg_send (frag, true, &frag->hdr.eager, sizeof (frag->hdr.eager),
+                                            NULL, 0, MCA_BTL_UGNI_TAG_GET_INIT);
     }
-
-    opal_list_append (&endpoint->pending_smsg_sends, (opal_list_item_t *) frag);
-
-    return OMPI_SUCCESS;
 }
