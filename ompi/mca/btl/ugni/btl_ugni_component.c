@@ -118,8 +118,7 @@ btl_ugni_component_register(void)
 
     mca_btl_ugni_module.super.btl_flags = MCA_BTL_FLAGS_SEND |
                                           MCA_BTL_FLAGS_RDMA |
-                                          MCA_BTL_FLAGS_RDMA_MATCHED |
-                                          MCA_BTL_FLAGS_SEND_INPLACE;
+                                          MCA_BTL_FLAGS_RDMA_MATCHED;
 
     mca_btl_ugni_module.super.btl_bandwidth = 40000; /* Mbs */
     mca_btl_ugni_module.super.btl_latency   = 2;     /* Microsecs */
