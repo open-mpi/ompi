@@ -15,6 +15,13 @@
 
 #include "btl_ugni.h"
 
+typedef struct mca_btl_ugni_smsg_mbox_t {
+    ompi_free_list_item_t super;
+    gni_smsg_attr_t  smsg_attrib;
+} mca_btl_ugni_smsg_mbox_t;
+
+OBJ_CLASS_DECLARATION(mca_btl_ugni_smsg_mbox_t);
+
 typedef struct mca_btl_base_endpoint_t {
     opal_object_t super;
 
