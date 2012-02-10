@@ -15,17 +15,7 @@
 
 #include "btl_ugni.h"
 
-struct mca_btl_ugni_smsg_mbox_t {
-    ompi_free_list_item_t super;
-
-    void            *buffer;
-    gni_smsg_attr_t  smsg_attrib;
-};
-typedef struct mca_btl_ugni_smsg_mbox_t mca_btl_ugni_smsg_mbox_t;
-
-OBJ_CLASS_DECLARATION(mca_btl_ugni_smsg_mbox_t);
-
-struct mca_btl_base_endpoint_t {
+typedef struct mca_btl_base_endpoint_t {
     opal_object_t super;
 
     ompi_common_ugni_endpoint_t *common;
@@ -38,15 +28,12 @@ struct mca_btl_base_endpoint_t {
 
     opal_list_t pending_list;
     opal_list_t pending_smsg_sends;
+} mca_btl_base_endpoint_t;
 
-    /* true if a frag was received before the connection was complete */
-    bool smsgs_waiting;
-};
-typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
+OBJ_CLASS_DECLARATION(mca_btl_base_endpoint_t);
 
 #define MCA_BTL_UGNI_EP_STATE(ep) ((ep)->common->state)
 
-OBJ_CLASS_DECLARATION(mca_btl_base_endpoint_t);
 
 int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep);
 int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnect);
