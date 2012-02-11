@@ -198,6 +198,9 @@ Compiler Notes
   still using GCC 3.x).  Contact Pathscale support if you continue to
   have problems with Open MPI's C++ bindings.
 
+- There is currently a known issue with the PGI compilers on OS X
+  Lion.  See https://svn.open-mpi.org/trac/ompi/ticket/3011.
+
 - Using the Absoft compiler to build the MPI Fortran bindings on Suse
   9.3 is known to fail due to a Libtool compatibility issue.
 
