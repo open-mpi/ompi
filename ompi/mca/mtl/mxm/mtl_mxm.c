@@ -125,10 +125,12 @@ int ompi_mtl_mxm_module_init(void)
     	return OMPI_ERROR;
     }
 
+#if 0 /* https://svn.open-mpi.org/trac/ompi/ticket/2971 */
     if ((rc = ompi_proc_refresh()) != OMPI_SUCCESS) {
         MXM_ERROR("Unable to refresh processes");
         return OMPI_ERROR;
     }
+#endif
 
     if (NULL == (procs = ompi_proc_world(&totps))) {
         MXM_ERROR("Unable to obtain process list");
@@ -335,8 +337,10 @@ int ompi_mtl_mxm_add_procs(struct mca_mtl_base_module_t *mtl, size_t nprocs,
 	rc = OMPI_SUCCESS;
 
 bail:
-    free(conn_reqs);
-    free(ep_info);
+    if (conn_reqs)
+    	free(conn_reqs);
+    if (ep_info)
+    	free(ep_info);
     return rc;
 }
 
