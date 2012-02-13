@@ -444,6 +444,10 @@ MPI Functionality and Features
   it to printf for other MPI functions.  Patches and/or suggestions
   would be greatfully appreciated on the Open MPI developer's list.
 
+- ROMIO is not supported on OpenBSD.  You will need to specify the
+  --disable-io-romio flag to configure when building on OpenBSD.
+
+
 Collectives
 -----------
 
