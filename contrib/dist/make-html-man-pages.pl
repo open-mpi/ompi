@@ -28,6 +28,10 @@ my $outdir_base = ".";
 
 sub absoluteize {
     my ($dir) = shift;
+
+    mkdir_p($dir)
+        if (! -d $dir);
+
     my $start = cwd();
     chdir($dir);
     $dir = cwd();
@@ -99,7 +103,7 @@ foreach my $file (@files) {
     my $section = $2;
 
     my $outdir = "$outdir_base/man$section";
-    my $outfile = "$outdir/man$section/$b.php";
+    my $outfile = "$outdir/$b.php";
     $dirs{$outdir} = "";
     push(@{$outfiles->{$section}}, {
         name => $name,
