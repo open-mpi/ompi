@@ -36,6 +36,14 @@ sub absoluteize {
     return $dir;
 }
 
+sub mkdir_p {
+    my ($dir) = @_;
+    if (!mkdir($dir)) {
+        mkdir_p(dirname($dir));
+        mkdir($dir) || die "Can't make directory $dir";
+    }
+}
+
 # Read command line arguments
 while (@ARGV) {
     my $a = $ARGV[0];
@@ -90,16 +98,15 @@ foreach my $file (@files) {
     my $name = $1;
     my $section = $2;
 
-    my $outfile = "$pwd/man$section/$b.php";
-#    my $outdir = dirname($outfile);
     my $outdir = "$outdir_base/man$section";
+    my $outfile = "$outdir/man$section/$b.php";
     $dirs{$outdir} = "";
     push(@{$outfiles->{$section}}, {
         name => $name,
         file => "man$section/$b.php",
          });
 
-    mkdir($outdir)
+    mkdir_p($outdir)
         if (! -d $outdir);
 
     print "*** Generating: $name ($section)\n";
