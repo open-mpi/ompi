@@ -704,7 +704,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                             }
                         } else {
                             /* compute the logical socket, compensating for the number of cpus_per_rank */
-                            logical_skt = lrank / (orte_default_num_cores_per_socket / jobdat->cpus_per_rank);
+                            logical_skt = lrank / (orte_odls_globals.num_cores_per_socket / jobdat->cpus_per_rank);
                             /* wrap that around the number of sockets so we round-robin */
                             logical_skt = logical_skt % orte_odls_globals.num_sockets;
                             /* now get the target physical socket */
@@ -726,7 +726,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 
                 OPAL_PAFFINITY_CPU_ZERO(mask);
                 
-                for (n=0; n < orte_default_num_cores_per_socket; n++) {
+                for (n=0; n < orte_odls_globals.num_cores_per_socket; n++) {
                     /* get the physical core within this target socket */
                     phys_core = opal_paffinity_base_get_physical_core_id(target_socket, n);
                     if (0 > phys_core) {
@@ -760,7 +760,8 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 OPAL_PAFFINITY_PROCESS_IS_BOUND(mask, &bound);
                 if (!bound) {
                     orte_show_help("help-odls-default.txt",
-                                   "odls-default:could-not-bind-to-socket", true);
+                                   "odls-default:could-not-bind-to-socket", true,
+                                   target_socket, orte_process_info.nodename);
                     ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                 }
                 if (orte_report_bindings) {

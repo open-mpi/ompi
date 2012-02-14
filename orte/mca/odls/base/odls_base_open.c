@@ -37,6 +37,7 @@
 #include "opal/util/argv.h"
 
 #include "orte/mca/plm/plm_types.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
@@ -175,7 +176,7 @@ orte_odls_globals_t orte_odls_globals;
 int orte_odls_base_open(void)
 {
     char **ranks=NULL, *tmp;
-    int i, rank, sock, core;
+    int i, rank, sock, core, rc;
     orte_namelist_t *nm;
     bool xterm_hold;
     
@@ -197,18 +198,42 @@ int orte_odls_base_open(void)
     orte_odls_globals.debugger_launched = false;
     OBJ_CONSTRUCT(&orte_odls_globals.sysinfo, opal_list_t);
 
-    /* get any external processor bindings */
+#if OPAL_HAVE_HWLOC
+    /* ensure we have the local topology */
+    if (NULL == opal_hwloc_topology) {
+        if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
+            0 != hwloc_topology_load(opal_hwloc_topology)) {
+            return ORTE_ERR_NOT_SUPPORTED;
+        }
+    }
+#endif
+    
+    /* init globals */
     OPAL_PAFFINITY_CPU_ZERO(orte_odls_globals.my_cores);
     orte_odls_globals.bound = false;
     orte_odls_globals.num_processors = 0;
+    orte_odls_globals.num_sockets = orte_default_num_sockets_per_board;
+    orte_odls_globals.num_cores_per_socket = orte_default_num_cores_per_socket;
     OBJ_CONSTRUCT(&orte_odls_globals.sockets, opal_bitmap_t);
     opal_bitmap_init(&orte_odls_globals.sockets, 16);
-    /* default the number of sockets to those found during startup */
-    orte_odls_globals.num_sockets = orte_default_num_sockets_per_board;
+    
     /* see if paffinity is supported */
-    if (ORTE_SUCCESS == opal_paffinity_base_get(&orte_odls_globals.my_cores)) {
+    if (ORTE_SUCCESS == (rc = opal_paffinity_base_get(&orte_odls_globals.my_cores))) {
+        /* get the number of local sockets unless we were given a number */
+        if (0 == orte_default_num_sockets_per_board) {
+            opal_paffinity_base_get_socket_info(&orte_odls_globals.num_sockets);
+        }
         /* get the number of local processors */
         opal_paffinity_base_get_processor_info(&orte_odls_globals.num_processors);
+        /* compute the base number of cores/socket, if not given */
+        if (0 == orte_default_num_cores_per_socket) {
+            orte_odls_globals.num_cores_per_socket = orte_odls_globals.num_processors / orte_odls_globals.num_sockets;
+        }
+        OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+                             "%s FOUND %d SOCKETS WITH %d CORES-PER-SOCKET",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orte_odls_globals.num_sockets,
+                             orte_odls_globals.num_cores_per_socket));
         /* determine if we are bound */
         OPAL_PAFFINITY_PROCESS_IS_BOUND(orte_odls_globals.my_cores, &orte_odls_globals.bound);
         /* if we are bound, determine the number of sockets - and which ones - that are available to us */
@@ -231,6 +256,11 @@ int orte_odls_base_open(void)
                             orte_odls_globals.my_cores.bitmask[0]);
             }
         }
+    } else {
+        OPAL_OUTPUT_VERBOSE((1, orte_odls_globals.output,
+                             "%s AFFINITY NOT SUPPORTED: %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_ERROR_NAME(rc)));
     }
     
     /* check if the user requested that we display output in xterms */
@@ -309,16 +339,6 @@ int orte_odls_base_open(void)
             }
         }
     }
-
-#if OPAL_HAVE_HWLOC
-    /* ensure we have the local topology */
-    if (NULL == opal_hwloc_topology) {
-        if (0 != hwloc_topology_init(&opal_hwloc_topology) ||
-            0 != hwloc_topology_load(opal_hwloc_topology)) {
-            return ORTE_ERR_NOT_SUPPORTED;
-        }
-    }
-#endif
 
     /* Open up all available components */
 

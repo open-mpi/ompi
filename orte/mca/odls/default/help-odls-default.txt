@@ -130,3 +130,6 @@ binding action:
   Application name:  %s
 
 Please revise the request and try again.
+#
+[odls-default:could-not-bind-to-socket]
+Unable to bind to socket %d on node %s.

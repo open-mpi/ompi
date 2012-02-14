@@ -453,7 +453,7 @@ static void process_orted_launch_report(int fd, short event, void *data)
     long secs, usecs;
     int64_t setupsec, setupusec;
     int64_t startsec, startusec;
-    orte_proc_t *daemon;
+    orte_proc_t *daemon=NULL;
     
     /* see if we need to timestamp this receipt */
     if (orte_timing) {
@@ -580,7 +580,8 @@ CLEANUP:
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          orted_failed_launch ? "failed" : "completed",
                          ORTE_NAME_PRINT(&peer),
-                         ORTE_NAME_PRINT(&mev->sender), daemon->rml_uri));
+                         ORTE_NAME_PRINT(&mev->sender),
+                         (NULL == daemon) ? "NULL" : daemon->rml_uri));
 
     /* release the message */
     OBJ_RELEASE(mev);

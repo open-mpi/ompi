@@ -79,6 +79,8 @@ typedef struct {
     opal_bitmap_t sockets;
     /* number of sockets available to us */
     int num_sockets;
+    /* number of cores/socket - assumes homogeneity */
+    int num_cores_per_socket;
     /* system capabilities */
     opal_list_t sysinfo;
 } orte_odls_globals_t;
