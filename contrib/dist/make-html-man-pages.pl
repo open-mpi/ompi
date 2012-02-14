@@ -26,12 +26,34 @@ my $mandir;
 my $version;
 my $outdir_base = ".";
 
+sub absoluteize {
+    my ($dir) = shift;
+
+    mkdir_p($dir)
+        if (! -d $dir);
+
+    my $start = cwd();
+    chdir($dir);
+    $dir = cwd();
+    chdir($start);
+
+    return $dir;
+}
+
+sub mkdir_p {
+    my ($dir) = @_;
+    if (!mkdir($dir)) {
+        mkdir_p(dirname($dir));
+        mkdir($dir) || die "Can't make directory $dir";
+    }
+}
+
 # Read command line arguments
 while (@ARGV) {
     my $a = $ARGV[0];
     if ($a eq "--mandir" && $#ARGV >= 1) {
         shift @ARGV;
-        $mandir = $ARGV[0];
+        $mandir = absoluteize($ARGV[0]);
         print "Found mandir: $mandir\n";
     }
 
@@ -43,7 +65,7 @@ while (@ARGV) {
 
     elsif ($a eq "--outdir" && $#ARGV >= 1) {
         shift @ARGV;
-        $outdir_base = $ARGV[0];
+        $outdir_base = absoluteize($ARGV[0]);
         print "Found outdir: $outdir_base\n";
     }
     shift @ARGV;
@@ -80,16 +102,15 @@ foreach my $file (@files) {
     my $name = $1;
     my $section = $2;
 
-    my $outfile = "$pwd/man$section/$b.php";
-#    my $outdir = dirname($outfile);
     my $outdir = "$outdir_base/man$section";
+    my $outfile = "$outdir/$b.php";
     $dirs{$outdir} = "";
     push(@{$outfiles->{$section}}, {
         name => $name,
         file => "man$section/$b.php",
          });
 
-    mkdir($outdir)
+    mkdir_p($outdir)
         if (! -d $outdir);
 
     print "*** Generating: $name ($section)\n";
