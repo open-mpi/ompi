@@ -92,6 +92,10 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.11 tar-ustar])
 # (even though they're supposed to be identical).  Shrug.
 AM_SILENT_RULES([yes])
 
+# Per some discussion on the list, regard the "MAKE" variable as
+# precious.
+AC_ARG_VAR([MAKE], [The "make" command])
+
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 
