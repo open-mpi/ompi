@@ -1109,9 +1109,6 @@ Open MPI will add "/remote/node/directory/bin" to the \fIPATH\fR
 and "/remote/node/directory/lib64" to the \fLD_LIBRARY_PATH\fR on the
 remote node before attempting to execute anything.
 .PP
-Note that \fI--prefix\fR can be set on a per-context basis, allowing
-for different values for different nodes.
-.PP
 The \fI--prefix\fR option is not sufficient if the installation paths
 on the remote node are different than the local node (e.g., if "/lib"
 is used on the local node, but "/lib64" is used on the remote node),
