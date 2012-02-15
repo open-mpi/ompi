@@ -17,7 +17,7 @@ otf_generic_streams_mpi_CPPFLAGS = $(AM_CPPFLAGS) \
 	$(MPI_INCLUDE_LINE)
 
 clean-local:
-	rm *.otf *.def *.events *.marker *.otf.z *.def.z *.events.z *.marker.z
+	rm -f *.otf *.def *.events *.marker *.otf.z *.def.z *.events.z *.marker.z
 
 endif
 endif
