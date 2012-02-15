@@ -28,7 +28,7 @@ int mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
     mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) des;
     int rc;
 
-    BTL_VERBOSE(("Using RDMA/FMA Put", ));
+    BTL_VERBOSE(("Using RDMA/FMA Put"));
 
     /* Check if endpoint is connected */
     rc = mca_btl_ugni_check_endpoint_state(endpoint);
@@ -38,7 +38,7 @@ int mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
     }
 
     if (frag->base.des_src->seg_len <= mca_btl_ugni_component.ugni_fma_limit) {
-        rc = mca_btl_ugni_post_fma (frag, GNI_POST_FMA_PUT, des->des_src, des->des_dst);
+        return mca_btl_ugni_post_fma (frag, GNI_POST_FMA_PUT, des->des_src, des->des_dst);
     }
 
     return mca_btl_ugni_post_bte (frag, GNI_POST_RDMA_PUT, des->des_src, des->des_dst);
