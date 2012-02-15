@@ -9,4 +9,4 @@ otf_hello_CPPFLAGS = $(AM_CPPFLAGS) \
 	-I$(top_srcdir)/otflib
 
 clean-local:
-	rm *.otf *.def *.events *.marker *.otf.z *.def.z *.events.z *.marker.z
+	rm -f *.otf *.def *.events *.marker *.otf.z *.def.z *.events.z *.marker.z
