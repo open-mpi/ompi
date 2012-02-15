@@ -1017,6 +1017,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     opal_list_t nodes;
     opal_list_item_t *item, *next;
     orte_app_context_t *app;
+    bool one_filter = false;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:setup_vm",
@@ -1090,9 +1091,14 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         /* yes - filter the node list through the file, marking
          * any nodes not in the file -or- excluded via ^
          */
-        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(&nodes, orte_default_hostfile, false))) {
+        if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(&nodes, orte_default_hostfile, false)) &&
+            ORTE_ERR_TAKE_NEXT_OPTION != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
+        }
+        if (ORTE_SUCCESS == rc) {
+            /* we filtered something */
+            one_filter = true;
         }
     }
  
@@ -1106,10 +1112,13 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        if (ORTE_SUCCESS == rc) {
+            /* we filtered something */
+            one_filter = true;
+        }
     }
 
-    if (NULL != orte_default_hostfile ||
-        ORTE_ERR_TAKE_NEXT_OPTION != rc) {
+    if (one_filter) {
         /* at least one filtering option was executed, so
          * remove all nodes that were not mapped
          */

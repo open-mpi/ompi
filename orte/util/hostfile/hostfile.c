@@ -564,7 +564,8 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
     if (0 == opal_list_get_size(&newnodes)) {
         OBJ_DESTRUCT(&newnodes);
         OBJ_DESTRUCT(&exclude);
-        return ORTE_SUCCESS;
+        /* indicate that the hostfile was empty */
+        return ORTE_ERR_TAKE_NEXT_OPTION;
     }
 
     /* remove from the list of newnodes those that are in the exclude list
