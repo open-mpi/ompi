@@ -150,6 +150,7 @@ bool orte_report_launch_progress = false;
 
 /* allocation specification */
 char *orte_default_hostfile = NULL;
+bool orte_default_hostfile_given = false;
 char *orte_rankfile = NULL;
 #ifdef __WINDOWS__
 char *orte_ccp_headnode;

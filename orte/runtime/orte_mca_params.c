@@ -251,15 +251,23 @@ int orte_register_params(void)
                                 false, false, 1000, &orte_timeout_usec_per_proc);
     
     /* default hostfile */
-    asprintf(&orte_default_hostfile, "%s/etc/openmpi-default-hostfile", opal_install_dirs.prefix);
     mca_base_param_reg_string_name("orte", "default_hostfile",
                                    "Name of the default hostfile (relative or absolute path, \"none\" to ignore environmental or default MCA param setting)",
-                                   false, false, orte_default_hostfile, &orte_default_hostfile);
-    if (0 == strcmp(orte_default_hostfile, "none")) {
-        free(orte_default_hostfile);
+                                   false, false, NULL, &strval);
+    if (NULL == strval) {
+        /* nothing was given, so define the default */
+        asprintf(&orte_default_hostfile, "%s/etc/openmpi-default-hostfile", opal_install_dirs.prefix);
+        /* flag that nothing was given */
+        orte_default_hostfile_given = false;
+    } else if (0 == strcmp(orte_default_hostfile, "none")) {
         orte_default_hostfile = NULL;
+        /* flag that it was given */
+        orte_default_hostfile_given = true;
+    } else {
+        orte_default_hostfile = strval;
+        /* flag that it was given */
+        orte_default_hostfile_given = true;
     }
-
     
 #ifdef __WINDOWS__
     mca_base_param_reg_string_name("orte", "ccp_headnode",
