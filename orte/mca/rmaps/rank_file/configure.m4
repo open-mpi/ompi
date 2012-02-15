@@ -13,7 +13,7 @@
 AC_DEFUN([MCA_orte_rmaps_rank_file_CONFIG], [
     AC_CONFIG_FILES([orte/mca/rmaps/rank_file/Makefile])
 
-    AS_IF([test "$orte_without_full_support" = 0],
+    AS_IF([test "$orte_without_full_support" = 0 -a "$OPAL_HAVE_HWLOC" = 1],
           [$1],
           [$2])
 ])

@@ -340,6 +340,7 @@ static int write_help_msg(int fd, pipe_err_msg_t *msg, const char *file,
 
 /* Called from the child to send a warning show_help message up the
    pipe to the waiting parent. */
+#if OPAL_HAVE_HWLOC
 static int send_warn_show_help(int fd, const char *file, 
                                const char *topic, ...)
 {
@@ -357,7 +358,7 @@ static int send_warn_show_help(int fd, const char *file,
 
     return ret;
 }
-
+#endif
 
 /* Called from the child to send an error message up the pipe to the
    waiting parent. */
