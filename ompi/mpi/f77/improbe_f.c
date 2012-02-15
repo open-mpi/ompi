@@ -98,11 +98,13 @@ void mpi_improbe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_SINGLE_INT_2_LOGICAL(flag);
+        if (OMPI_FORTRAN_VALUE_TRUE == *flag) {
 #if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-        if (MPI_STATUS_IGNORE != c_status) {
-            MPI_Status_c2f(c_status, status);
-        }
+            if (MPI_STATUS_IGNORE != c_status) {
+                MPI_Status_c2f(c_status, status);
+            }
 #endif
-        *message = MPI_Message_c2f(c_message);
+            *message = MPI_Message_c2f(c_message);
+        } 
     }
 }
