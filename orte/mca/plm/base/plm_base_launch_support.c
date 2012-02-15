@@ -79,8 +79,8 @@ int orte_plm_base_setup_job(orte_job_t *jdata)
     int rc;
     int32_t ljob;
     int i;
-    orte_node_t *node;
 #if OPAL_HAVE_HWLOC
+    orte_node_t *node;
     hwloc_topology_t t0;
 #endif
 
