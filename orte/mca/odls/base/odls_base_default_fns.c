@@ -853,13 +853,13 @@ static int odls_base_default_setup_fork(orte_app_context_t *context,
         char *htmp;
         if (NULL != opal_hwloc_topology) {
             obj = hwloc_get_root_obj(opal_hwloc_topology);
-            if (NULL != (htmp = hwloc_obj_get_info_by_name(obj, "CPUType")) ||
+            if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUType")) ||
                 NULL != (htmp = orte_local_cpu_type)) {
                 param = mca_base_param_environ_variable("orte","cpu","type");
                 opal_setenv(param, htmp, true, environ_copy);
                 free(param);
             }
-            if (NULL != (htmp = hwloc_obj_get_info_by_name(obj, "CPUModel")) ||
+            if (NULL != (htmp = (char*)hwloc_obj_get_info_by_name(obj, "CPUModel")) ||
                 NULL != (htmp = orte_local_cpu_model)) {
                 param = mca_base_param_environ_variable("orte","cpu","model");
                 opal_setenv(param, htmp, true, environ_copy);
