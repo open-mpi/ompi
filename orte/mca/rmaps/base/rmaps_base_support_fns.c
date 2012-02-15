@@ -224,6 +224,11 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         }
     }
 
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                         "%s Starting with %d nodes in list",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (int)opal_list_get_size(allocated_nodes)));
+
     /** check that anything is here */
     if (0 == opal_list_get_size(allocated_nodes)) {
         orte_show_help("help-orte-rmaps-base.txt",
@@ -234,15 +239,25 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     
     /* is there a default hostfile? */
     if (NULL != orte_default_hostfile) {
+        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                             "%s Filtering thru default hostfile",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
         /* yes - filter the node list through the file, removing
          * any nodes not in the file -or- excluded via ^
          */
         if (ORTE_SUCCESS != (rc = orte_util_filter_hostfile_nodes(allocated_nodes,
                                                                   orte_default_hostfile,
-                                                                  true))) {
+                                                                  true)) &&
+            ORTE_ERR_TAKE_NEXT_OPTION != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                             "%s Resulted in %d nodes in list",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (int)opal_list_get_size(allocated_nodes)));
+
         /** check that anything is here */
         if (0 == opal_list_get_size(allocated_nodes)) {
             orte_show_help("help-orte-rmaps-base.txt",
@@ -253,11 +268,20 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
     }
  
     /* filter the nodes thru any hostfile and dash-host options */
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                         "%s Filtering thru apps",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_filter_nodes(app, allocated_nodes, true))
         && ORTE_ERR_TAKE_NEXT_OPTION != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                         "%s Retained %d nodes in list",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (int)opal_list_get_size(allocated_nodes)));
+
     
     /* remove all nodes that are already at max usage, and
      * compute the total number of allocated slots while
@@ -271,11 +295,19 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_std_cntr
         /** check to see if this node is fully used - remove if so */
         node = (orte_node_t*)item;
         if (0 != node->slots_max && node->slots_inuse > node->slots_max) {
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s Removing node %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 node->name));
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
         } else if (node->slots_alloc <= node->slots_inuse &&
                    (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(policy))) {
             /* remove the node as fully used */
+            OPAL_OUTPUT_VERBOSE((5, orte_rmaps_base.rmaps_output,
+                                 "%s Removing node %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 node->name));
             opal_list_remove_item(allocated_nodes, item);
             OBJ_RELEASE(item);  /* "un-retain" it */
         } else {
