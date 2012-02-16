@@ -43,7 +43,7 @@ static bool passed_thru = false;
 int orte_register_params(void)
 {
     int value;
-    char *strval;
+    char *strval, *strval1, *strval2;
 
     /* only go thru this once - mpirun calls it twice, which causes
      * any error messages to show up twice
@@ -73,23 +73,65 @@ int orte_register_params(void)
                                 (int) true, &value);
     orte_help_want_aggregate = OPAL_INT_TO_BOOL(value);
     
+    /* LOOK FOR A TMP DIRECTORY BASE */
+    /* Several options are provided to cover a range of possibilities:
+     *
+     * (a) all processes need to use a specified location as the base
+     *     for tmp directories
+     * (b) daemons on remote nodes need to use a specified location, but
+     *     one different from that used by mpirun
+     * (c) mpirun needs to use a specified location, but one different
+     *     from that used on remote nodes
+     */
     mca_base_param_reg_string_name("orte", "tmpdir_base",
-                                   "Base of the session directory tree",
-                                   false, false, NULL,  &(orte_process_info.tmpdir_base));
+                                   "Base of the session directory tree to be used by all processes",
+                                   false, false, NULL,  &strval);
    
+    mca_base_param_reg_string_name("orte", "local_tmpdir_base",
+                                   "Base of the session directory tree to be used by orterun/mpirun",
+                                   false, false, NULL,  &strval1);
+
     mca_base_param_reg_string_name("orte", "remote_tmpdir_base",
                                    "Base of the session directory tree on remote nodes, if required to be different from head node",
-                                   false, false, NULL,  &strval);
-    /* orterun will pickup the value and forward it along, but must not
-     * use it in its own work. So only a daemon needs to get it, and the
-     * daemon will pass it down to its application procs. Note that orterun
-     * will pass -its- value to any procs local to it
+                                   false, false, NULL,  &strval2);
+
+    /* if a global tmpdir was specified, then we do not allow specification
+     * of the local or remote values to avoid confusion
      */
-    if (ORTE_PROC_IS_DAEMON && NULL != strval) {
+    if (NULL != strval &&
+        (NULL != strval1 || NULL != strval2)) {
+            opal_output(orte_clean_output,
+                        "------------------------------------------------------------------\n"
+                        "The MCA param orte_tmpdir_base was specified, which sets the base\n"
+                        "of the temporary directory tree for all procs. However, values for\n"
+                        "the local and/or remote tmpdir base were also given. This can lead\n"
+                        "to confusion and is therefore not allowed. Please specify either a\n"
+                        "global tmpdir base OR a local/remote tmpdir base value\n"
+                        "------------------------------------------------------------------");
+            exit(1);
+    }
+     
+    if (NULL != strval) {
         if (NULL != orte_process_info.tmpdir_base) {
             free(orte_process_info.tmpdir_base);
         }
         orte_process_info.tmpdir_base = strval;
+    } else if (ORTE_PROC_IS_HNP && NULL != strval1) {
+        /* orterun will pickup the value for its own use */
+        if (NULL != orte_process_info.tmpdir_base) {
+            free(orte_process_info.tmpdir_base);
+        }
+        orte_process_info.tmpdir_base = strval1;
+    } else if (ORTE_PROC_IS_DAEMON && NULL != strval2) {
+        /* orterun will pickup the value and forward it along, but must not
+         * use it in its own work. So only a daemon needs to get it, and the
+         * daemon will pass it down to its application procs. Note that orterun
+         * will pass -its- value to any procs local to it
+         */
+        if (NULL != orte_process_info.tmpdir_base) {
+            free(orte_process_info.tmpdir_base);
+        }
+        orte_process_info.tmpdir_base = strval2;
     }
 
     mca_base_param_reg_string_name("orte", "no_session_dirs",
