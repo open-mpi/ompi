@@ -462,10 +462,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
 
-    { NULL, NULL, NULL, '\0', "tmpdir", "tmpdir", 1,
-      &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
-      "Set the root for the session directory tree for orterun ONLY" },
-
     { "orte", "do_not", "launch", '\0', "do-not-launch", "do-not-launch", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Perform all necessary operations to prepare to launch the application, but do not actually launch it" },

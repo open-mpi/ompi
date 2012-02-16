@@ -291,9 +291,6 @@ orte_session_dir_get_name(char **fulldirpath,
     else if (NULL != orte_process_info.tmpdir_base) { /* stored value */
         prefix = strdup(orte_process_info.tmpdir_base);
     }
-    else if( NULL != getenv("OMPI_PREFIX_ENV") ) { /* OMPI Environment var */
-        prefix = strdup(getenv("OMPI_PREFIX_ENV"));
-    }
     else { /* General Environment var */
         prefix = strdup(opal_tmp_directory());
     }
