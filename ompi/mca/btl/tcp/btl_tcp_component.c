@@ -188,9 +188,9 @@ static int mca_btl_tcp_component_register(void)
     mca_btl_tcp_component.tcp_num_links =
         mca_btl_tcp_param_register_int("links", NULL, 1);
     mca_btl_tcp_component.tcp_if_include =
-        mca_btl_tcp_param_register_string("if_include", "Comma-delimited list of devices or CIDR notation of networks to use for MPI communication (e.g., \"eth0,eth1\" or \"192.168.0.0/16,10.1.4.0/24\").  Mutually exclusive with btl_tcp_if_exclude.", "");
+        mca_btl_tcp_param_register_string("if_include", "Comma-delimited list of devices and/or CIDR notation of networks to use for MPI communication (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with btl_tcp_if_exclude.", "");
     mca_btl_tcp_component.tcp_if_exclude =
-        mca_btl_tcp_param_register_string("if_exclude", "Comma-delimited list of devices or CIDR notation of networks to NOT use for MPI communication -- all devices not matching these specifications will be used (e.g., \"eth0,eth1\" or \"192.168.0.0/16,10.1.4.0/24\").  Mutually exclusive with btl_tcp_if_include.", "lo,sppp");
+        mca_btl_tcp_param_register_string("if_exclude", "Comma-delimited list of devices and/or CIDR notation of networks to NOT use for MPI communication -- all devices not matching these specifications will be used (e.g., \"eth0,192.168.0.0/16\").  If set to a non-default value, it is mutually exclusive with btl_tcp_if_include.", "lo,sppp");
 
     mca_btl_tcp_component.tcp_free_list_num =
         mca_btl_tcp_param_register_int ("free_list_num", NULL, 8);
