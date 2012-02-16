@@ -4,7 +4,16 @@
  */
 #include "opal_config.h"
 #include "opal/constants.h"
-#include "config.h"
+
+/* protect common defines */
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
+
+#include "libevent/config.h"
+
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
