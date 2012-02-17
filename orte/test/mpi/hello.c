@@ -6,13 +6,13 @@
  */
 
 #include <stdio.h>
+#include "opal/mca/hwloc/hwloc.h"
 #include "mpi.h"
 
-#include "opal/mca/hwloc/hwloc.h"
 
 int main(int argc, char* argv[])
 {
-    int rank, size;
+    int rank, size, rc;
     hwloc_cpuset_t cpus;
     char *bindings;
 
@@ -21,10 +21,11 @@ int main(int argc, char* argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
     cpus = hwloc_bitmap_alloc();
-    hwloc_get_cpubind(opal_hwloc_topology, cpus, HWLOC_CPUBIND_PROCESS);
+    rc = hwloc_get_cpubind(opal_hwloc_topology, cpus, HWLOC_CPUBIND_PROCESS);
     hwloc_bitmap_list_asprintf(&bindings, cpus);
 
-    printf("Hello, World, I am %d of %d: bitmap %s\n", rank, size, bindings);
+    printf("Hello, World, I am %d of %d: rc %d bitmap %s\n", rank, size, rc,
+           (NULL == bindings) ? "NULL" : bindings);
 
     MPI_Finalize();
     return 0;

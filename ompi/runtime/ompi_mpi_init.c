@@ -578,18 +578,26 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                 support = (struct hwloc_topology_support*)hwloc_topology_get_support(opal_hwloc_topology);
                 /* get our node object */
                 node = hwloc_get_root_obj(opal_hwloc_topology);
-                nodeset = hwloc_bitmap_alloc();
-                hwloc_bitmap_and(nodeset, node->online_cpuset, node->allowed_cpuset);
-                /* get our cpuset */
+                nodeset = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, node);
+                /* get our bindings */
                 cpus = hwloc_bitmap_alloc();
-                hwloc_get_cpubind(opal_hwloc_topology, cpus, HWLOC_CPUBIND_PROCESS);
-                /* we are bound if the two cpusets are not equal */
-                if (0 != hwloc_bitmap_compare(cpus, nodeset)) {
+                if (hwloc_get_cpubind(opal_hwloc_topology, cpus, HWLOC_CPUBIND_PROCESS) < 0) {
+                    /* we are NOT bound if get_cpubind fails, nor can we be bound - the
+                     * environment does not support it
+                     */
+                    hwloc_bitmap_free(cpus);
+                    goto MOVEON;
+                }
+                /* we are bound if the two cpusets are not equal,
+                 * or if there is only ONE cpu available to us
+                 */
+                if (0 != hwloc_bitmap_compare(cpus, nodeset) ||
+                    opal_hwloc_base_single_cpu(nodeset) ||
+                    opal_hwloc_base_single_cpu(cpus)) {
                     /* someone external set it - indicate it is set
                      * so that we know
                      */
                     paffinity_enabled = true;
-                    hwloc_bitmap_free(nodeset);
                     hwloc_bitmap_free(cpus);
                 } else if (support->cpubind->set_thisproc_cpubind &&
                            OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
@@ -602,25 +610,21 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                         if (ORTE_SUCCESS != (ret = opal_hwloc_base_slot_list_parse(opal_hwloc_base_slot_list,
                                                                                    opal_hwloc_topology, cpus))) {
                             error = "Setting processor affinity failed";
-                            hwloc_bitmap_free(nodeset);
                             hwloc_bitmap_free(cpus);
                             goto error;
                         }
                         if (0 > hwloc_set_cpubind(opal_hwloc_topology, cpus, 0)) {
                             error = "Setting processor affinity failed";
-                            hwloc_bitmap_free(nodeset);
                             hwloc_bitmap_free(cpus);
                             goto error;
                         }
                         /* try to find a level and index for this location */
                         opal_hwloc_base_get_level_and_index(cpus, &orte_process_info.bind_level, &orte_process_info.bind_idx);
                         /* cleanup */
-                        hwloc_bitmap_free(nodeset);
                         hwloc_bitmap_free(cpus);
                         paffinity_enabled = true;
                     } else {
                         /* cleanup */
-                        hwloc_bitmap_free(nodeset);
                         hwloc_bitmap_free(cpus);
                         /* get the node rank */
                         if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME))) {
@@ -640,15 +644,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                 error = "Getting hwthread object";
                                 goto error;
                             }
-                            cpus = hwloc_bitmap_alloc();
-                            hwloc_bitmap_and(cpus, obj->online_cpuset, obj->allowed_cpuset);
+                            cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
                             if (0 > hwloc_set_cpubind(opal_hwloc_topology, cpus, 0)) {
                                 ret = OMPI_ERROR;
                                 error = "Setting processor affinity failed";
-                                hwloc_bitmap_free(cpus);
                                 goto error;
                             }
-                            hwloc_bitmap_free(cpus);
                             orte_process_info.bind_level = OPAL_HWLOC_L1CACHE_LEVEL;
                             orte_process_info.bind_idx = nrank;
                         } else if (OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
@@ -661,15 +662,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                 error = "Getting core object";
                                 goto error;
                             }
-                            cpus = hwloc_bitmap_alloc();
-                            hwloc_bitmap_and(cpus, obj->online_cpuset, obj->allowed_cpuset);
+                            cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
                             if (0 > hwloc_set_cpubind(opal_hwloc_topology, cpus, 0)) {
                                 error = "Setting processor affinity failed";
-                                hwloc_bitmap_free(cpus);
                                 ret = OMPI_ERROR;
                                 goto error;
                             }
-                            hwloc_bitmap_free(cpus);
                             orte_process_info.bind_level = OPAL_HWLOC_CORE_LEVEL;
                             orte_process_info.bind_idx = nrank;
                         } else {
@@ -711,15 +709,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                         continue;
                                     }
                                     /* this is the place! */
-                                    cpus = hwloc_bitmap_alloc();
-                                    hwloc_bitmap_and(cpus, obj->online_cpuset, obj->allowed_cpuset);
+                                    cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, obj);
                                     if (0 > hwloc_set_cpubind(opal_hwloc_topology, cpus, 0)) {
                                         ret = OMPI_ERROR;
                                         error = "Setting processor affinity failed";
-                                        hwloc_bitmap_free(cpus);
                                         goto error;
                                     }
-                                    hwloc_bitmap_free(cpus);
                                     orte_process_info.bind_idx = opal_hwloc_base_get_obj_idx(opal_hwloc_topology,
                                                                                              obj, OPAL_HWLOC_LOGICAL);
                                     paffinity_enabled = true;
@@ -760,6 +755,7 @@ MOVEON:
         /* get the root object for this node */
         root = hwloc_get_root_obj(opal_hwloc_topology);
         cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
+        /* we are not bound if this equals our cpuset */
         if (0 == hwloc_bitmap_compare(cpus, opal_hwloc_my_cpuset)) {
             opal_output(0, "%s is not bound",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));

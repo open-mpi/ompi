@@ -154,6 +154,7 @@ OPAL_DECLSPEC unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
 OPAL_DECLSPEC char* opal_hwloc_base_print_binding(opal_binding_policy_t binding);
 OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_paffinity_locality_t locality);
 OPAL_DECLSPEC char* opal_hwloc_base_print_level(opal_hwloc_level_t level);
+OPAL_DECLSPEC bool opal_hwloc_base_single_cpu(hwloc_cpuset_t cpuset);
 
 /**
  * Provide a utility to parse a slot list against the local

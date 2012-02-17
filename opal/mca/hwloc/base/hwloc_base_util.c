@@ -226,20 +226,18 @@ void opal_hwloc_base_free_topology(hwloc_topology_t topo)
 void opal_hwloc_base_get_local_cpuset(void)
 {
     hwloc_obj_t root;
+    hwloc_cpuset_t base_cpus;
 
     if (NULL != opal_hwloc_topology) {
         if (NULL == opal_hwloc_my_cpuset) {
             opal_hwloc_my_cpuset = hwloc_bitmap_alloc();
         }
         /* get the cpus we are bound to */
-        hwloc_get_cpubind(opal_hwloc_topology, opal_hwloc_my_cpuset, HWLOC_CPUBIND_PROCESS);
-        /* if the cpuset is empty, then we are not bound */
-        if (hwloc_bitmap_iszero(opal_hwloc_my_cpuset)) {
-            OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
-                                 "hwloc:base:get_local_cpuset MY LOCAL CPUSET WAS ZERO - NOT BOUND"));
-            /* just insert the cpuset for the root object as we are unbound */
+        if (0 > hwloc_get_cpubind(opal_hwloc_topology, opal_hwloc_my_cpuset, HWLOC_CPUBIND_PROCESS)) {
+            /* we are not bound - use the root's available cpuset */
             root = hwloc_get_root_obj(opal_hwloc_topology);
-            hwloc_bitmap_copy(opal_hwloc_my_cpuset, root->cpuset);
+            base_cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
+            hwloc_bitmap_copy(opal_hwloc_my_cpuset, base_cpus);
         }
     }
 }
@@ -343,6 +341,34 @@ static void df_search_cores(hwloc_obj_t obj, unsigned int *cnt)
         df_search_cores(obj->children[k], cnt);
     }
     return;
+}
+
+/* determine if there is a single cpu in a bitmap */
+bool opal_hwloc_base_single_cpu(hwloc_cpuset_t cpuset)
+{
+    int i;
+    bool one=false;
+
+    /* count the number of bits that are set - there is
+     * one bit for each available pu. We could just
+     * subtract the first and last indices, but there
+     * may be "holes" in the bitmap corresponding to
+     * offline or unallowed cpus - so we have to
+     * search for them. Return false if we anything
+     * other than one
+     */
+    for (i=hwloc_bitmap_first(cpuset);
+         i <= hwloc_bitmap_last(cpuset);
+         i++) {
+        if (hwloc_bitmap_isset(cpuset, i)) {
+            if (one) {
+                return false;
+            }
+            one = true;
+        }
+    }
+
+    return one;
 }
 
 /* get the number of pu's under a given hwloc object */
