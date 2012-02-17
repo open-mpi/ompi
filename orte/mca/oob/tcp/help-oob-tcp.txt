@@ -59,3 +59,12 @@ Please revise the specification and try again.
 [no-interfaces-avail]
 No network interfaces were found for out-of-band communications. We require
 at least one available network for TCP-based messaging.
+#
+[invalid if_inexclude]
+WARNING: An invalid value was given for oob_tcp_if_%s.  This
+value will be ignored.
+
+  Local host: %s
+  Value:      %s
+  Message:    %s
+#
