@@ -23,6 +23,7 @@ sources = hwloc132_component.c
 # We only ever build this component statically
 noinst_LTLIBRARIES = libmca_hwloc_hwloc132.la
 libmca_hwloc_hwloc132_la_SOURCES = $(headers) $(sources)
+nodist_libmca_hwloc_hwloc132_la_SOURCES = $(nodist_headers)
 libmca_hwloc_hwloc132_la_LDFLAGS = -module -avoid-version $(opal_hwloc_hwloc132_LDFLAGS)
 libmca_hwloc_hwloc132_la_LIBADD = $(opal_hwloc_hwloc132_LIBS)
 libmca_hwloc_hwloc132_la_DEPENDENCIES = \
@@ -43,11 +44,11 @@ headers += \
         hwloc/include/hwloc/cuda.h \
         hwloc/include/hwloc/cudart.h \
         hwloc/include/hwloc/rename.h \
-        hwloc/include/hwloc/autogen/config.h \
         hwloc/include/private/private.h \
         hwloc/include/private/debug.h \
         hwloc/include/private/misc.h \
         hwloc/include/private/cpuid.h
+nodist_headers = hwloc/include/hwloc/autogen/config.h
 
 if HWLOC_HAVE_LINUX
 headers += \
@@ -63,4 +64,5 @@ endif HWLOC_HAVE_SCHED_SETAFFINITY
 if WANT_INSTALL_HEADERS
 opaldir = $(includedir)/openmpi/$(subdir)
 nobase_opal_HEADERS = $(headers)
+nobase_nodist_opal_HEADERS = $(nodist_headers)
 endif
