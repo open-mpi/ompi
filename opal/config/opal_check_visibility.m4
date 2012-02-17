@@ -44,27 +44,27 @@ AC_DEFUN([OPAL_CHECK_VISIBILITY],[
         sun)
             # Check using Sun Studio -xldscope=hidden flag
             opal_add=-xldscope=hidden
-            CFLAGS="$CFLAGS_orig $opal_add"
+            CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $opal_add -errwarn=%all"
             ;;
 
         *)
             # Check using -fvisibility=hidden
             opal_add=-fvisibility=hidden
-            CFLAGS="$CFLAGS_orig $opal_add"
+            CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $opal_add -Werror"
             ;;
         esac
 
         AC_MSG_CHECKING([if $CC supports $opal_add])
         AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+            #include <stdio.h>
             __attribute__((visibility("default"))) int foo;
             ]],[[fprintf(stderr, "Hello, world\n");]])],
-            [],
             [AS_IF([test -s conftest.err],
                    [$GREP -iq visibility conftest.err
                     # If we find "visibility" in the stderr, then
                     # assume it doesn't work
                     AS_IF([test "$?" = "0"], [opal_add=])])
-            ])
+            ], [opal_add=])
         AS_IF([test "$opal_add" = ""],
               [AC_MSG_RESULT([no])],
               [AC_MSG_RESULT([yes])])
