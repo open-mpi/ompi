@@ -45,6 +45,7 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+#include <ctype.h>
 
 #include "opal/util/show_help.h"
 #include "opal/util/error.h"
@@ -202,7 +203,7 @@ static int mca_oob_tcp_component_register(void)
 
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "if_include",
-                              "Comma-delimited list of TCP interfaces to use",
+                              "Comma-delimited list of devices and/or CIDR notation of networks to use for Open MPI bootstrap communication (e.g., \"eth0,192.168.0.0/16\").  Mutually exclusive with oob_tcp_if_exclude.",
                               false, false, NULL, 
                               &mca_oob_tcp_component.tcp_include);
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
@@ -220,7 +221,7 @@ static int mca_oob_tcp_component_register(void)
 
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "if_exclude",
-                              "Comma-delimited list of TCP interfaces to exclude",
+                              "Comma-delimited list of devices and/or CIDR notation of networks to NOT use for Open MPI bootstrap communication -- all devices not matching these specifications will be used (e.g., \"eth0,192.168.0.0/16\").  If set to a non-default value, it is mutually exclusive with oob_tcp_if_include.",
                               false, false, NULL, 
                               &mca_oob_tcp_component.tcp_exclude);
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
@@ -1302,6 +1303,113 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
 
 
 /*
+ * Go through a list of argv; if there are any subnet specifications
+ * (a.b.c.d/e), resolve them to an interface name (Currently only
+ * supporting IPv4).  If unresolvable, warn and remove.
+ */
+static char **split_and_resolve(char **orig_str, char *name)
+{
+    int i, ret, save, if_index;
+    char **argv, *str, *tmp;
+    char if_name[IF_NAMESIZE];
+    struct sockaddr_storage argv_inaddr, if_inaddr;
+    uint32_t argv_prefix;
+
+    /* Sanity check */
+    if (NULL == orig_str || NULL == *orig_str) {
+        return NULL;
+    }
+
+    argv = opal_argv_split(*orig_str, ',');
+    if (NULL == argv) {
+        return NULL;
+    }
+    for (save = i = 0; NULL != argv[i]; ++i) {
+        if (isalpha(argv[i][0])) {
+            argv[save++] = argv[i];
+            continue;
+        }
+
+        /* Found a subnet notation.  Convert it to an IP
+           address/netmask.  Get the prefix first. */
+        argv_prefix = 0;
+        tmp = strdup(argv[i]);
+        str = strchr(argv[i], '/');
+        if (NULL == str) {
+            orte_show_help("help-oob-tcp.txt", "invalid if_inexclude",
+                           true, name, orte_process_info.nodename, 
+                           tmp, "Invalid specification (missing \"/\")");
+            free(argv[i]);
+            free(tmp);
+            continue;
+        }
+        *str = '\0';
+        argv_prefix = atoi(str + 1);
+
+        /* Now convert the IPv4 address */
+        ((struct sockaddr*) &argv_inaddr)->sa_family = AF_INET;
+        ret = inet_pton(AF_INET, argv[i], 
+                        &((struct sockaddr_in*) &argv_inaddr)->sin_addr);
+        free(argv[i]);
+
+        if (1 != ret) {
+            orte_show_help("help-oob-tcp.txt", "invalid if_inexclude",
+                           true, name, orte_process_info.nodename, tmp,
+                           "Invalid specification (inet_pton() failed)");
+            free(tmp);
+            continue;
+        }
+        opal_output_verbose(20, mca_oob_tcp_output_handle,
+                            "%s oob:tcp: Searching for %s address+prefix: %s / %u",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            name,
+                            opal_net_get_hostname((struct sockaddr*) &argv_inaddr),
+                            argv_prefix);
+            
+        /* Go through all interfaces and see if we can find a match */
+        for (if_index = opal_ifbegin(); if_index >= 0; 
+             if_index = opal_ifnext(if_index)) {
+            opal_ifindextoaddr(if_index, 
+                               (struct sockaddr*) &if_inaddr,
+                               sizeof(if_inaddr));
+            if (opal_net_samenetwork((struct sockaddr*) &argv_inaddr,
+                                     (struct sockaddr*) &if_inaddr,
+                                     argv_prefix)) {
+                break;
+            }
+        }
+        
+        /* If we didn't find a match, keep trying */
+        if (if_index < 0) {
+            orte_show_help("help-oob-tcp.txt", "invalid if_inexclude",
+                           true, name, orte_process_info.nodename, tmp,
+                           "Did not find interface matching this subnet");
+            free(tmp);
+            continue;
+        }
+
+        /* We found a match; get the name and replace it in the
+           argv */
+        opal_ifindextoname(if_index, if_name, sizeof(if_name));
+        opal_output_verbose(20, mca_oob_tcp_output_handle,
+                            "%s oob:tcp: Found match: %s (%s)",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                            opal_net_get_hostname((struct sockaddr*) &if_inaddr),
+                            if_name);
+        argv[save++] = strdup(if_name);
+        free(tmp);
+    }
+
+    /* The list may have been compressed if there were invalid
+       entries, so ensure we end it with a NULL entry */
+    argv[save] = NULL;
+    free(*orig_str);
+    *orig_str = opal_argv_join(argv, ',');
+    return argv;
+}
+
+
+/*
  * Component initialization - create a module and initialize the
  * static resources associated with that module.
  *
@@ -1343,11 +1451,13 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
      * subnet+mask
      */
     if (NULL != mca_oob_tcp_component.tcp_include) {
-        interfaces = opal_argv_split(mca_oob_tcp_component.tcp_include, ',');
+        interfaces = split_and_resolve(&mca_oob_tcp_component.tcp_include,
+                                       "include");
         including = true;
         excluding = false;
     } else if (NULL != mca_oob_tcp_component.tcp_exclude) {
-        interfaces = opal_argv_split(mca_oob_tcp_component.tcp_exclude, ',');
+        interfaces = split_and_resolve(&mca_oob_tcp_component.tcp_exclude,
+                                       "exclude");
         including = false;
         excluding = true;
     }
@@ -1373,17 +1483,17 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
             /* if we are including, then ignore this if not present */
             if (including) {
                 if (OPAL_SUCCESS != rc) {
-                    OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
-                                         "%s oob:tcp:init rejecting interface %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
+                    opal_output_verbose(20, mca_oob_tcp_output_handle,
+                                        "%s oob:tcp:init rejecting interface %s (not in include list)",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name);
                     continue;
                 }
             } else {
                 /* we are excluding, so ignore if present */
                 if (OPAL_SUCCESS == rc) {
-                    OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
-                                         "%s oob:tcp:init rejecting interface %s",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
+                    opal_output_verbose(20, mca_oob_tcp_output_handle,
+                                        "%s oob:tcp:init rejecting interface %s (in exclude list)",
+                                        ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name);
                     continue;
                 }
             }
@@ -1392,9 +1502,9 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
         dev = OBJ_NEW(mca_oob_tcp_device_t);
         dev->if_index = i;
 
-        OPAL_OUTPUT_VERBOSE((1, mca_oob_tcp_output_handle,
-                             "%s oob:tcp:init setting up interface %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name));
+        opal_output_verbose(20, mca_oob_tcp_output_handle,
+                            "%s oob:tcp:init setting up interface %s",
+                            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), name);
         
         opal_ifindextoaddr(i, (struct sockaddr*) &dev->if_addr, sizeof(struct sockaddr_storage));
         if(opal_net_islocalhost((struct sockaddr*) &dev->if_addr)) {
