@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,6 +28,10 @@
 #define OPAL_DSS_TYPES_H_
 
 #include "opal_config.h"
+
+#ifdef OPAL_HAVE_SYS_TIME_H
+#include <sys/time.h> /* for struct timeval */
+#endif
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
