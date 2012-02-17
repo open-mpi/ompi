@@ -12,6 +12,7 @@
 //                         All rights reserved.
 // Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -148,6 +149,14 @@ public:
 
   virtual int Pack_size(int incount, const Comm& comm) const;
 
+  virtual void Pack_external(const char* datarep, const void* inbuf, int incount,
+              void* outbuf, Aint outsize, Aint& position) const;
+
+  virtual Aint Pack_external_size(const char* datarep, int incount) const;
+
+  virtual void Unpack_external(const char* datarep, const void* inbuf,
+              Aint insize, Aint& position, void* outbuf, int outcount) const;
+
   //
   // Miscellany
   //
@@ -155,6 +164,20 @@ public:
 				   const int array_of_subsizes[], 
 				   const int array_of_starts[], int order) 
     const;   
+
+  virtual Datatype Create_darray(int size, int rank, int ndims,
+                   const int array_of_gsizes[], const int array_of_distribs[],
+                   const int array_of_dargs[],  const int array_of_psizes[],
+                   int order) const;
+
+  // Language Binding
+  static Datatype Create_f90_complex(int p, int r);
+
+  static Datatype Create_f90_integer(int r);
+
+  static Datatype Create_f90_real(int p, int r);
+
+  static Datatype Match_size(int typeclass, int size);
 
   //
   // External Interfaces

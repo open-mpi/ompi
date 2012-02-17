@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -51,7 +52,7 @@ MPI::Intercomm::Get_remote_group() const
 }
 
 inline MPI::Intracomm
-MPI::Intercomm::Merge(bool high)
+MPI::Intercomm::Merge(bool high) const
 {
   MPI_Comm newcomm;
   (void)MPI_Intercomm_merge(mpi_comm, (int)high, &newcomm);

@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -99,7 +100,7 @@ MPI::Cartcomm::Shift(int direction, int disp,
 }
 
 inline MPI::Cartcomm
-MPI::Cartcomm::Sub(const bool remain_dims[]) 
+MPI::Cartcomm::Sub(const bool remain_dims[]) const
 {
   int ndims;
   MPI_Cartdim_get(mpi_comm, &ndims);

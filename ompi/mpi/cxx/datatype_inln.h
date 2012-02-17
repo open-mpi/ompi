@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 
 // $COPYRIGHT$
 // 
@@ -163,6 +164,29 @@ MPI::Datatype::Pack_size(int incount, const MPI::Comm& comm) const
   return size;
 }
 
+inline void
+MPI::Datatype::Pack_external(const char* datarep, const void* inbuf, int incount,
+            void* outbuf, MPI::Aint outsize, MPI::Aint& position) const
+{
+    (void)MPI_Pack_external(const_cast<char *>(datarep), const_cast<void *>(inbuf),
+                             incount, mpi_datatype, outbuf, outsize, &position);
+}
+
+inline MPI::Aint
+MPI::Datatype::Pack_external_size(const char* datarep, int incount) const
+{
+    MPI_Aint addr;
+    (void)MPI_Pack_external_size(const_cast<char *>(datarep), incount, mpi_datatype, &addr);
+    return addr;
+}
+
+inline void
+MPI::Datatype::Unpack_external(const char* datarep, const void* inbuf,
+            MPI::Aint insize, MPI::Aint& position, void* outbuf, int outcount) const
+{
+    (void)MPI_Unpack_external(const_cast<char *>(datarep), const_cast<void *>(inbuf),
+                               insize, &position, outbuf, outcount, mpi_datatype);
+}
 
 //
 // Miscellany
@@ -182,6 +206,53 @@ MPI::Datatype::Create_subarray(int ndims, const int array_of_sizes[],
   return type;
 }
 
+inline MPI::Datatype
+MPI::Datatype::Create_darray(int size, int rank, int ndims,
+                   const int array_of_gsizes[], const int array_of_distribs[],
+                   const int array_of_dargs[],  const int array_of_psizes[],
+                   int order) const
+{
+    MPI_Datatype type;
+    (void) MPI_Type_create_darray(size, rank, ndims,
+                   const_cast<int *>(array_of_gsizes),
+                   const_cast<int *>(array_of_distribs),
+                   const_cast<int *>(array_of_dargs),
+                   const_cast<int *>(array_of_psizes),
+                   order, mpi_datatype, &type);
+    return type;
+}
+
+inline MPI::Datatype
+MPI::Datatype::Create_f90_complex(int p, int r)
+{
+    MPI_Datatype type;
+    (void) MPI_Type_create_f90_complex(p, r, &type);
+    return type;
+}
+
+inline MPI::Datatype
+MPI::Datatype::Create_f90_integer(int r)
+{
+    MPI_Datatype type;
+    (void) MPI_Type_create_f90_integer(r, &type);
+    return type;
+}
+
+inline MPI::Datatype
+MPI::Datatype::Create_f90_real(int p, int r)
+{
+    MPI_Datatype type;
+    (void) MPI_Type_create_f90_real(p, r, &type);
+    return type;
+}
+
+inline MPI::Datatype
+MPI::Datatype::Match_size(int typeclass, int size)
+{
+    MPI_Datatype type;
+    (void) MPI_Type_match_size(typeclass, size, &type);
+    return type;
+}
 
 //
 // External Interfaces

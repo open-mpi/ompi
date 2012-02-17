@@ -12,6 +12,7 @@
 //                         All rights reserved.
 // Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -102,11 +103,13 @@ const Datatype REAL8((MPI_Datatype)&(ompi_mpi_double));
 // optional datatype (C / C++)
 const Datatype UNSIGNED_LONG_LONG(MPI_UNSIGNED_LONG_LONG);
 const Datatype LONG_LONG(MPI_LONG_LONG);
+const Datatype LONG_LONG_INT(MPI_LONG_LONG_INT);
 
 // c++ types
 const Datatype BOOL((MPI_Datatype)&(ompi_mpi_cxx_bool));
 const Datatype COMPLEX((MPI_Datatype)&(ompi_mpi_cxx_cplex));
 const Datatype DOUBLE_COMPLEX((MPI_Datatype)&(ompi_mpi_cxx_dblcplex));
+const Datatype F_DOUBLE_COMPLEX((MPI_Datatype)&(ompi_mpi_cxx_dblcplex));
 const Datatype LONG_DOUBLE_COMPLEX((MPI_Datatype)&(ompi_mpi_cxx_ldblcplex));
 
 // reserved communicators
