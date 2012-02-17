@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -80,7 +81,7 @@ public:
   virtual void Shift(int direction, int disp,
 		     int &rank_source, int &rank_dest) const;
   
-  virtual Cartcomm Sub(const bool remain_dims[]);
+  virtual Cartcomm Sub(const bool remain_dims[]) const;
 
   virtual int Map(int ndims, const int dims[], const bool periods[]) const;
 

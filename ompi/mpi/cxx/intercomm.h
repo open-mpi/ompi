@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -77,7 +78,7 @@ public:
 
   virtual Group Get_remote_group() const;
 
-  virtual Intracomm Merge(bool high);
+  virtual Intracomm Merge(bool high) const;
 
   virtual Intercomm Create(const Group& group) const;
 

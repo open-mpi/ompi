@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -52,6 +53,28 @@ MPI::Compute_dims(int nnodes, int ndims, int dims[])
 //
 // Environmental Inquiry
 //
+
+inline int
+MPI::Add_error_class()
+{
+    int errcls;
+    (void)MPI_Add_error_class(&errcls);
+    return errcls;
+}
+
+inline int
+MPI::Add_error_code(int errorclass)
+{
+    int errcode;
+    (void)MPI_Add_error_code(errorclass, &errcode);
+    return errcode;
+}
+
+inline void
+MPI::Add_error_string(int errorcode, const char* string)
+{
+    (void)MPI_Add_error_string(errorcode, const_cast<char *>(string));
+}
 
 inline void 
 MPI::Get_processor_name(char* name, int& resultlen)

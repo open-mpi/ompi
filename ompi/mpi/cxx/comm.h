@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -384,7 +385,7 @@ public:
 
   static Errhandler Create_errhandler(Comm::Errhandler_function* function);
 
-  virtual void Set_errhandler(const Errhandler& errhandler) const;
+  virtual void Set_errhandler(const Errhandler& errhandler);
 
   virtual Errhandler Get_errhandler() const;
 
