@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -46,10 +46,6 @@
 #
 #############################################################################
 
-# Help for OSCAR RPMs
-
-%{!?oscar: %define oscar 0}
-
 # Help for OFED RPMs
 
 %{!?ofed: %define ofed 0}
@@ -72,7 +68,7 @@
 # type: bool (0/1)
 %{!?install_modulefile: %define install_modulefile 0}
 # type: string (root path to install modulefiles)
-%{!?modulefile_path: %define modulefile_path /etc/modulefiles}
+%{!?modulefile_path: %define modulefile_path /usr/share/Modules/modulefiles}
 # type: string (subdir to install modulefile)
 %{!?modulefile_subdir: %define modulefile_subdir %{name}}
 # type: string (name of modulefile)
@@ -80,7 +76,7 @@
 
 # The name of the modules RPM.  Can vary from system to system.
 # type: string (name of modules RPM)
-%{!?modules_rpm_name: %define modules_rpm_name modules}
+%{!?modules_rpm_name: %define modules_rpm_name environment-modules}
 
 # Should we use the mpi-selector functionality?
 # type: bool (0/1)
@@ -146,22 +142,6 @@
 # it out, even if you're using GCC.
 # type: bool (0/1)
 %{!?allow_fortify_source: %define allow_fortify_source 1}
-
-#############################################################################
-#
-# OSCAR-specific defaults
-#
-#############################################################################
-
-%if %{oscar}
-%define install_in_opt 1
-%define install_modulefile 1
-%define modulefile_path /opt/modules/modulefiles
-%define modulefile_subdir openmpi
-%define modulefile_name %{name}-%{version}
-%define modules_rpm_name modules-oscar
-%endif
-
 
 #############################################################################
 #
@@ -231,6 +211,10 @@
 
 %if !%{use_default_rpm_opt_flags}
 %define optflags ""
+%endif
+
+%if %{use_mpi_selector}
+%define install_shell_scripts 1
 %endif
 
 #############################################################################
@@ -479,7 +463,7 @@ proc ModulesHelp { } {
    puts stderr "This module adds Open MPI v%{version} to various paths"
 }
 
-module-whatis   "Sets up Open MPI v%{version}  in your enviornment"
+module-whatis   "Sets up Open MPI v%{version} in your enviornment"
 
 prepend-path PATH "%{_prefix}/bin/"
 prepend-path LD_LIBRARY_PATH %{_libdir}
@@ -740,6 +724,12 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Fri Feb 17 2012 Jeff Squyres <jsquyres@cisco.com>
+- Removed OSCAR define; that project is long gone.
+- If use_mpi_selector==1, then also set install_shell_scripts to 1.
+- Change modules default RPM name and modulefiles path to the defaults
+  on RHEL6.
+
 * Mon Dec 14 2009 Jeff Squyres <jsquyres@cisco.com>
 - Add missing executables to specfile (ompi-server, etc.)
 - Fix: pull in VT files when building multiple RPMs (reported by Jim
