@@ -19,7 +19,7 @@ my $good = 0;
 $good = 1
     if (-d ".hg");
 $good = 1
-    if (-d ".svn" && -f "README.WINDOWS" && -f "VERSION");
+    if (-d ".svn" && -f "README.WINDOWS.txt" && -f "VERSION");
 die "Must be in root of OMPI tree"
     if (!$good);
 
