@@ -1,4 +1,4 @@
-# Copyright (c) 2010      High Performance Computing Center Stuttgart, 
+# Copyright (c) 2010-2012 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -29,16 +29,16 @@ ELSE(${IN_USE} STREQUAL "0")
     "${CURRENT_PATH}/libevent/WIN32-Code/"
     "${CURRENT_PATH}/libevent/include/"
     "${CURRENT_PATH}/libevent"
-    "${PROJECT_BINARY_DIR}/mca/event/${libevent_dir}/libevent/include/")
+    "${PROJECT_BINARY_DIR}/mca/event/${libevent_dir}")
 
-  SET(LIBEVENT_INCLUDE_DIRS ${CURRENT_PATH}/libevent/compat;${CURRENT_PATH}/libevent/WIN32-Code/;${CURRENT_PATH}/libevent/include/;${CURRENT_PATH}/libevent;${PROJECT_BINARY_DIR}/mca/event/${libevent_dir}/libevent/include/
+  SET(LIBEVENT_INCLUDE_DIRS ${CURRENT_PATH}/libevent/compat;${CURRENT_PATH}/libevent/WIN32-Code/;${CURRENT_PATH}/libevent/include/;${CURRENT_PATH}/libevent;${PROJECT_BINARY_DIR}/mca/event/${libevent_dir}/
   CACHE INTERNAL "the libevent dirs that have to be included on the top level.")
 
   IF(WIN32)
 
     # generating config.h
     # windows doesn't need this file, just make an empty one
-    FILE(WRITE ${PROJECT_BINARY_DIR}/mca/event/${libevent_dir}/libevent/include/config.h
+    FILE(WRITE ${PROJECT_BINARY_DIR}/mca/event/${libevent_dir}/libevent/config.h
       " /* config.h.  Generated automatically by CMake. */ ")
 
     SET(RESULT_COMPONENT_FILES
