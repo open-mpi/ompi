@@ -23,6 +23,8 @@
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_ompi_fbtl_posix_CONFIG],[
+    AC_CONFIG_FILES([ompi/mca/fbtl/posix/Makefile])
+
     AC_CHECK_HEADER([aio.h],
                     [fbtl_posix_happy="yes"],
                     [fbtl_posix_happy="no"])
