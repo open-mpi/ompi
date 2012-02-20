@@ -64,6 +64,8 @@ Trunk (not on release branches yet)
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
 - Added MPI-3 function: MPI_GET_LIBRARY_VERSION.
+- Enabled compile-time warning of deprecated MPI functions by default
+  (in supported compilers).
 
 
 1.5.5

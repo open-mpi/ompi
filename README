@@ -444,6 +444,20 @@ MPI Functionality and Features
   it to printf for other MPI functions.  Patches and/or suggestions
   would be greatfully appreciated on the Open MPI developer's list.
 
+- When using MPI deprecated functions, some compilers will emit
+  warnings.  For example:
+
+  $ cat my_mpi_func.c
+  #include <mpi.h>
+  void foo(void) {
+      MPI_Datatype type;
+      MPI_Type_struct(1, NULL, NULL, NULL, &type);
+  }
+  $ mpicc -c my_mpi_func.c
+  my_mpi_func.c: In function 'foo':
+  my_mpi_func.c:4: warning: 'MPI_Type_struct' is deprecated (declared at /opt/openmpi/include/mpi.h:1522)
+
+
 Collectives
 -----------
 
