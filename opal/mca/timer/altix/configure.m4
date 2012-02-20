@@ -17,7 +17,7 @@
 # 
 # $HEADER$
 #
-AC_DEFUN([MCA_opal_timer_altix_PRIORITY], [30])
+AC_DEFUN([MCA_opal_timer_altix_PRIORITY], [100])
 
 AC_DEFUN([MCA_opal_timer_altix_COMPILE_MODE], [
     AC_MSG_CHECKING([for MCA component $2:$3 compile mode])
