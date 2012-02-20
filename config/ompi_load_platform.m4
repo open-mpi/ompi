@@ -27,7 +27,7 @@ AC_DEFUN([OMPI_LOAD_PLATFORM], [
                          command line and in FILE are replaced by what is
                          in FILE.])])
     m4_ifval([autogen_platform_file], [
-        if test "$with_platform" == "" ; then
+        if test "$with_platform" = "" ; then
             with_platform=autogen_platform_file
         fi])
     if test "$with_platform" = "yes" ; then
