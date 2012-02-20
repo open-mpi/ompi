@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
@@ -53,7 +53,7 @@ AC_DEFUN([MCA_orte_ess_alps_CONFIG],[
         [orte_mca_ess_alps_happy="yes"],
         [orte_mca_ess_alps_happy="no"])
 
-    AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_without_full_support" = 0 -a
+    AS_IF([test "$orte_mca_ess_alps_happy" = "yes" -a "$orte_without_full_support" = 0 -a \
            "$orte_mca_ess_alps_have_cnos" = 1],
           [$1],
           [$2])
