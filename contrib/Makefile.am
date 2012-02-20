@@ -43,8 +43,7 @@ EXTRA_DIST = \
         platform/ornl/ornl_configure.pgi \
         platform/ornl/ornl_configure_self_contained \
         platform/lanl/macosx-dynamic \
-        platform/lanl/macosx-dynamic-optimized \
-        platform/lanl/macosx-static-leopard \
+        platform/lanl/macosx-dynamic.conf \
         platform/lanl/cray_xe6/debug-nopanasas \
         platform/lanl/cray_xe6/debug-nopanasas.conf \
         platform/lanl/cray_xe6/optimized-nopanasas \
