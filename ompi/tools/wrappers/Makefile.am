@@ -20,6 +20,8 @@
 
 man_pages = mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1 mpijavac.1
 
+EXTRA_DIST = mpijavac.1
+
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
 bin_SCRIPTS = ompi_wrapper_script
