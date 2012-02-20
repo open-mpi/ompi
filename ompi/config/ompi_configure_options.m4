@@ -28,17 +28,18 @@ AC_DEFUN([OMPI_CONFIGURE_OPTIONS],[
 ompi_show_subtitle "OMPI Configuration options"
 
 #
-# Do we want to enable MPI interface warnings (e.g. deprecated functionality and others)?
+# Do we want to enable MPI interface warnings (e.g. deprecated
+# functionality and others)?
 #
-# XXX This __disabled__ by default for 1.5, but will be __enabled__ for 1.7 by default
-# Users should be notified about this proposed change.
+# This was disabled by default in v1.5, but will be enabled by default
+# in 1.7 and beyond.
 #
 
 AC_MSG_CHECKING([if want compile-time warnings inside of mpi.h])
 AC_ARG_ENABLE(mpi-interface-warning,
     AC_HELP_STRING([--enable-mpi-interface-warning],
                    [enable warnings in wrong (e.g. deprecated) usage in user-level code (default: disabled)]))
-if test "$enable_mpi_interface_warning" = "yes"; then
+if test "$enable_mpi_interface_warning" != "no"; then
     AC_MSG_RESULT([yes])
     OMPI_WANT_MPI_INTERFACE_WARNING=1
 else
@@ -46,7 +47,7 @@ else
     OMPI_WANT_MPI_INTERFACE_WARNING=0
 fi
 AC_DEFINE_UNQUOTED([OMPI_WANT_MPI_INTERFACE_WARNING], [$OMPI_WANT_MPI_INTERFACE_WARNING],
-    [Enable warnings in wrong usage (e.g. deprecated) in user-level code])
+    [Enable warnings when using deprecated MPI functions])
 
 #
 # Sparse Groups
