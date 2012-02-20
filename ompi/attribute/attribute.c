@@ -946,19 +946,21 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
            so that no comparison is done for prdefined at all and it
            just falls off the error checking loop in attr_set  */
 
-        if (1 == flag) {
-            if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77)) {
-                if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77_MPI1)) {
-                    new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI1;
-                } else {
-                    new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI2;
-                }
+        if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77) &&
+            OMPI_FORTRAN_VALUE_TRUE == flag) {
+            if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77_MPI1)) {
+                new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI1;
             } else {
-                new_attr->av_set_from = OMPI_ATTRIBUTE_C;
+                new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI2;
             }
+            flag = 1;
+        } else if (1 == flag) {
+            new_attr->av_set_from = OMPI_ATTRIBUTE_C;
+        }
+
+        if (1 == flag) {
             set_value(type, new_object, &newattr_hash, key, 
                       new_attr, true);
-
         } else {
             OBJ_RELEASE(new_attr);
         }
