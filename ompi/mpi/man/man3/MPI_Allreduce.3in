@@ -31,14 +31,28 @@ void MPI::Comm::Allreduce(const void* \fIsendbuf\fP, void* \fIrecvbuf\fP,
 	MPI::Op& \fIop\fP) const=0
 
 .fi
+.SH Java Syntax
+.nf
+import mpi.*;
+void MPI.COMM_WORLD.Allreduce(Object \fIsendbuf\fP, int \fIsendoffset\fP,
+                              Object \fIrecvbuf\fP, int \fIrecvoffset\fP,
+                              int \fIcount\fP, MPI.Datatype \fIsendtype\fP,
+                              MPI.Op \fIop\fP)
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
 sendbuf
 Starting address of send buffer (choice).
 .TP 1i
+sendoffset    
+Number of elements to skip at beginning of buffer (integer, Java-only).
+.TP 1i
 count
 Number of elements in send buffer (integer).
+.TP 1i
+recvoffset    
+Number of elements to skip at beginning of buffer (integer, Java-only).
 .TP 1i
 datatype
 Datatype of elements of send buffer (handle).

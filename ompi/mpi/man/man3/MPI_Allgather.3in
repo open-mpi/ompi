@@ -33,17 +33,33 @@ void MPI::Comm::Allgather(const void* \fIsendbuf\fP, int \fIsendcount\fP, const
 	const MPI::Datatype& \fIrecvtype\fP) const = 0
 
 .fi
+.SH Java Syntax
+.nf
+import mpi.*;
+void MPI.COMM_WORLD.Allgather(Object \fIsendbuf\fP, int \fIsendoffset\fP, int \fIsendcount\fP, MPI.Datatype \fIsendtype\fP,
+                              Object \fIrecvbuf\fP, int \fIrecvoffset\fP, int \fIrecvcount\fP, Datatype \fIrecvtype\fP)
+
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
 sendbuf    
 Starting address of send buffer (choice).
 .TP 1i
+sendoffset    
+Number of elements to skip at beginning of buffer (integer, Java-only).
+.TP 1i
 sendcount    
 Number of elements in send buffer (integer).
 .TP 1i
 sendtype    
 Datatype of send buffer elements (handle).
+.TP 1i
+recvbuf    
+Starting address of recv buffer (choice).
+.TP 1i
+recvoffset    
+Number of elements to skip at beginning of buffer (integer, Java-only).
 .TP 1i
 recvcount    
 Number of elements received from any process (integer).

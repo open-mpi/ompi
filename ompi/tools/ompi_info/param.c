@@ -496,6 +496,7 @@ void ompi_info_do_config(bool want_all)
     char *f77;
     char *f90;
     char *f90_size;
+    char *java;
     char *heterogeneous;
     char *memprofile;
     char *memdebug;
@@ -545,6 +546,7 @@ void ompi_info_do_config(bool want_all)
     cxx = OMPI_WANT_CXX_BINDINGS ? "yes" : "no";
     f90 = OMPI_WANT_F90_BINDINGS ? "yes" : "no";
     f90_size = OMPI_F90_BUILD_SIZE;
+    java = OMPI_WANT_JAVA_BINDINGS ? "yes" : "no";
     heterogeneous = OPAL_ENABLE_HETEROGENEOUS_SUPPORT ? "yes" : "no";
     memprofile = OPAL_ENABLE_MEM_PROFILE ? "yes" : "no";
     memdebug = OPAL_ENABLE_MEM_DEBUG ? "yes" : "no";
@@ -607,7 +609,8 @@ void ompi_info_do_config(bool want_all)
     ompi_info_out("Fortran90 bindings", "bindings:f90", f90);
     ompi_info_out("Fortran90 bindings size", "bindings:f90:size", 
                   OMPI_WANT_F90_BINDINGS ? f90_size : "na");
-    
+    ompi_info_out("Java bindings", "bindings:java", java);
+
     ompi_info_out("C compiler", "compiler:c:command", OPAL_CC);
     ompi_info_out("C compiler absolute", "compiler:c:absolute", OPAL_CC_ABSOLUTE);
     ompi_info_out("C compiler family name", "compiler:c:familyname", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));

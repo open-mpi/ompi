@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -1383,7 +1383,8 @@ static int create_app(int argc, char* argv[],
     char *param, *value, *value2;
     orte_app_context_t *app = NULL;
     bool cmd_line_made = false;
-
+    bool found = false;
+    
     *made_app = false;
 
     /* Pre-process the command line if we are going to parse an appfile later.
@@ -1707,6 +1708,105 @@ static int create_app(int argc, char* argv[],
         goto cleanup;
     }
 
+    /* if this is a Java application, we have a bit more work to do. Such
+     * applications actually need to be run under the Java virtual machine
+     * and the "java" command will start the "executable". So we need to ensure
+     * that all the proper java-specific paths are provided
+     */
+    if (0 == strcmp(app->app, "java")) {
+        /* see if we were given a library path */
+        found = false;
+        for (i=0; NULL != app->argv[i]; i++) {
+            if (NULL != strstr(app->argv[i], "java.library.path")) {
+                /* yep - but does it include the path to the mpi libs? */
+                found = true;
+                if (NULL == strstr(app->argv[i], opal_install_dirs.libdir)) {
+                    /* doesn't appear to - add it to be safe */
+                    if (':' == app->argv[i][strlen(app->argv[i]-1)]) {
+                        asprintf(&value, "-Djava.library.path=%s%s", app->argv[i], opal_install_dirs.libdir);
+                    } else {
+                        asprintf(&value, "-Djava.library.path=%s:%s", app->argv[i], opal_install_dirs.libdir);
+                    }
+                    free(app->argv[i]);
+                    app->argv[i] = value;
+                }
+            }
+        }
+        if (!found) {
+            /* need to add it right after the java command */
+            asprintf(&value, "-Djava.library.path=%s", opal_install_dirs.libdir);
+            opal_argv_insert_element(&app->argv, 1, value);
+            free(value);
+        }
+        
+        /* see if we were given a class path */
+        found = false;
+        for (i=0; NULL != app->argv[i]; i++) {
+            if (NULL != strstr(app->argv[i], "cp") ||
+                NULL != strstr(app->argv[i], "classpath")) {
+                /* yep - but does it include the path to the mpi libs? */
+                found = true;
+                if (NULL == strstr(app->argv[i+1], "mpi.jar")) {
+                    /* nope - need to add it */
+                    if (':' == app->argv[i+1][strlen(app->argv[i+1]-1)]) {
+                        asprintf(&value, "%s%s/mpi.jar", app->argv[i+1], opal_install_dirs.libdir);
+                    } else {
+                        asprintf(&value, "%s:%s/mpi.jar", app->argv[i+1], opal_install_dirs.libdir);
+                    }
+                    free(app->argv[i+1]);
+                    app->argv[i+1] = value;
+                }
+                break;
+            }
+        }
+        if (!found) {
+            /* check to see if CLASSPATH is in the environment */
+            for (i=0; NULL != environ[i]; i++) {
+                if (0 == strncmp(environ[i], "CLASSPATH", strlen("CLASSPATH"))) {
+                    /* check if mpi.jar is present */
+                    if (NULL != strstr(environ[i], "mpi.jar")) {
+                        /* yes - just add the envar to the argv in the
+                         * right format
+                         */
+                        value = strchr(environ[i], '=');
+                        ++value; /* step over the = */
+                        opal_argv_insert_element(&app->argv, 1, value);
+                        opal_argv_insert_element(&app->argv, 1, "-cp");
+                    } else {
+                        /* need to add it */
+                        value = strchr(environ[i], '=');
+                        ++value; /* step over the = */
+                        if (':' == value[strlen(value-1)]) {
+                            asprintf(&param, "%s%s/mpi.jar", value, opal_install_dirs.libdir);
+                        } else {
+                            asprintf(&param, "%s:%s/mpi.jar", value, opal_install_dirs.libdir);
+                        }
+                        opal_argv_insert_element(&app->argv, 1, param);
+                        opal_argv_insert_element(&app->argv, 1, "-cp");
+                        free(param);
+                    }
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                /* need to add it right after the java command - have
+                 * to include the current directory and trust that
+                 * the user set cwd if necessary
+                 */
+                asprintf(&value, ".:%s/mpi.jar", opal_install_dirs.libdir);
+                opal_argv_insert_element(&app->argv, 1, value);
+                free(value);
+                opal_argv_insert_element(&app->argv, 1, "-cp");
+            }
+        }
+    }
+    if (orterun_globals.verbose) {
+        value = opal_argv_join(app->argv, ' ');
+        opal_output(0, "DONE PARSING APP: %s", value);
+        free(value);
+    }
+    
     *app_ptr = app;
     app = NULL;
     *made_app = true;

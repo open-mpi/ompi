@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2007      Voltaire. All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -269,6 +270,29 @@ OPAL_DECLSPEC  int opal_argv_delete(int *argc, char ***argv,
      * target).
      */
 OPAL_DECLSPEC  int opal_argv_insert(char ***target, int start, char **source);
+
+/**
+ * Insert one argv element in front of a specific position in an array
+ *
+ * @param target The argv to insert tokens into
+ * @param location Index where the token will be placed in target
+ * @param source The token to be inserted
+ *
+ * @retval OPAL_SUCCESS upon success
+ * @retval OPAL_BAD_PARAM if any parameters are non-sensical
+ *
+ * This function takes one arg and inserts it in the middle of
+ * another.  The token will be inserted at the specified index
+ * in the target argv; all other tokens will be shifted down.
+ * Similar to opal_argv_append(), the target may be realloc()'ed
+ * to accomodate the new storage requirements.
+ *
+ * The source token is left unaffected -- its contents are copied
+ * by value over to the target array (i.e., the string that
+ * source points to is strdup'ed into the new location in
+ * target).
+ */
+OPAL_DECLSPEC  int opal_argv_insert_element(char ***target, int location, char *source);
 
 END_C_DECLS
 

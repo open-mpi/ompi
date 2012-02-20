@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -26,6 +27,7 @@ CXX = mpic++
 CCC = mpic++
 F77 = mpif77
 FC = mpif90
+JAVAC = mpijavac
 
 # Using -g is not necessary, but it is helpful for example programs,
 # especially if users want to examine them with debuggers.  Note that
@@ -40,8 +42,8 @@ FCFLAGS = -g
 
 # Example programs to build
 
-EXAMPLES = hello_c hello_cxx hello_f77 hello_f90 \
-           ring_c ring_cxx ring_f77 ring_f90 connectivity_c
+EXAMPLES = hello_c hello_cxx hello_f77 hello_f90 Hello.class \
+           ring_c ring_cxx ring_f77 ring_f90 connectivity_c Ring.class
 
 # Default target.  Always build the C example.  Only build the others
 # if Open MPI was build with the relevant language bindings.
@@ -56,6 +58,12 @@ all: hello_c ring_c connectivity_c
 	@ if test "`ompi_info --parsable | grep bindings:f90:yes`" != ""; then \
 	    $(MAKE) hello_f90 ring_f90; \
 	fi
+	@ if test "`ompi_info --parsable | grep bindings:java:yes`" != ""; then \
+	    $(MAKE) Hello.class; \
+	fi
+	@ if test "`ompi_info --parsable | grep bindings:java:yes`" != ""; then \
+	    $(MAKE) Ring.class; \
+	fi
 
 
 # The usual "clean" target
@@ -63,7 +71,7 @@ all: hello_c ring_c connectivity_c
 clean:
 	rm -f $(EXAMPLES) *~ *.o
 
-# Don't rely on default rules for the fortran examples
+# Don't rely on default rules for the fortran and Java examples
 
 hello_f77: hello_f77.f
 	$(F77) $(F77FLAGS) $^ -o $@
@@ -74,4 +82,11 @@ hello_f90: hello_f90.f90
 	$(FC) $(FCFLAGS) $^ -o $@
 ring_f90: ring_f90.f90
 	$(FC) $(FCFLAGS) $^ -o $@
+
+Hello.class: Hello.java
+	$(JAVAC) Hello.java
+
+Ring.class: Ring.java
+	$(JAVAC) Ring.java
+
 
