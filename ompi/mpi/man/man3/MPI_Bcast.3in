@@ -29,11 +29,21 @@ void MPI::Comm::Bcast(void* \fIbuffer\fP, int \fIcount\fP,
 	const MPI::Datatype& \fIdatatype\fP, int \fIroot\fP) const = 0
 
 .fi
+.SH Java Syntax
+.nf
+import mpi.*;
+void MPI.COMM_WORLD.Bcast(Object \fIbuffer\fP, int \fIoffset\fP, int \fIcount\fP,
+			  MPI.Datatype \fIdatatype\fP, int \fIroot\fP)
+
+.fi
 .SH INPUT/OUTPUT PARAMETERS
 .ft R
 .TP 1i
 buffer
 Starting address of buffer (choice).
+.TP 1i
+offset
+Offset of starting point in buffer (Java-only)
 .TP 1i
 count
 Number of entries in buffer (integer).

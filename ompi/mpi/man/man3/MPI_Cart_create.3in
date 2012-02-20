@@ -26,8 +26,14 @@ MPI_CART_CREATE(\fICOMM_OLD\fP,\fI NDIMS\fP,\fI DIMS\fP,\fI PERIODS\fP,\fI REORD
 .SH C++ Syntax
 .nf
 #include <mpi.h>
-Cartcomm Intracomm::Create_cart(int \fIndims\fP, const int \fIdims\fP[], 
+Cartcomm Intracomm.Create_cart(int[] \fIndims\fP, int[] \fIdims\fP[], 
 	const bool \fIperiods\fP[], bool \fIreorder\fP) const
+
+.fi
+.SH Java Syntax
+.nf
+import mpi.*;
+Cartcomm Intracomm.Create_cart(int \fIdims\fP[], const bool \fIperiods\fP[], bool \fIreorder\fP)
 
 .fi
 .SH INPUT PARAMETERS

@@ -40,11 +40,22 @@ void MPI::Comm::Alltoallv(const void* \fIsendbuf\fP,
 	const MPI::Datatype& \fIrecvtype\fP)
 
 .fi
+.SH Java Syntax
+.nf
+import mpi.*;
+void MPI.COMM_WORLD.Alltoallv(Object \fIsendbuf\fP, int \fIsendoffset\fP, int \fIsendcount\fP[],
+                              int \fIsdispls\fP[], MPI.Datatype \fIsendtype\fP,
+                              Object \fIrecvbuf\fP, int \fIrecvoffset\fP, int \fIrecvcount\fP[],
+                              int \fIrdispls\fP[], MPI.Datatype \fIrecvtype\fP)
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1.2i
 sendbuf
 Starting address of send buffer.
+.TP 1.2i
+sendoffset    
+Initial number of elements to skip at beginning of buffer (integer, Java-only).
 .TP 1.2i
 sendcounts
 Integer array, where entry i specifies the number of elements to send
@@ -57,6 +68,9 @@ rank i.
 .TP 1.2i
 sendtype
 Datatype of send buffer elements.
+.TP 1.2i
+recvoffset    
+Initial number of elements to skip at beginning of buffer (integer, Java-only).
 .TP 1.2i
 recvcounts
 Integer array, where entry j specifies the number of elements to

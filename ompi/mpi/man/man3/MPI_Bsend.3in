@@ -29,11 +29,21 @@ void Comm::Bsend(const void* \fIbuf\fP, int \fIcount\fP, const
 	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const
 
 .fi
+.SH Java Syntax
+.nf
+import mpi.*;
+void MPI.COMM_WORLD.Bsend(Object \fIbuf\fP, int \fIoffset\fP, int \fIcount\fP,
+	                  MPI.Datatype \fIdatatype\fP, int \fIdest\fP, int \fItag\fP)
+
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
 buf
 Initial address of send buffer (choice).
+.TP 1i
+offset
+Offset of starting point in buffer (Java-only).
 .TP 1i
 count
 Number of entries in send buffer (nonnegative integer).

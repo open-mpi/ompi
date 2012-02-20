@@ -128,15 +128,13 @@ EXTRA_DIST = \
 	platform/cisco/macosx-dynamic.conf \
 	platform/cisco/linux \
 	platform/cisco/linux.conf \
-	platform/cisco/ebuild/hlfr \
-	platform/cisco/ebuild/hlfr.conf \
-	platform/cisco/ebuild/ludd \
-	platform/cisco/ebuild/ludd.conf \
-	platform/cisco/ebuild/native \
-	platform/cisco/ebuild/native.conf \
 	platform/ibm/debug-ppc32-gcc \
 	platform/ibm/debug-ppc64-gcc \
 	platform/ibm/optimized-ppc32-gcc \
-	platform/ibm/optimized-ppc64-gcc
+	platform/ibm/optimized-ppc64-gcc \
+    platform/hadoop/linux \
+    platform/hadoop/linux.conf \
+    platform/hadoop/mac \
+    platform/hadoop/mac.conf
 
 dist_pkgdata_DATA = openmpi-valgrind.supp

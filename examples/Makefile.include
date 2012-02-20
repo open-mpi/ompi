@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -39,4 +40,6 @@ EXTRA_DIST += \
         examples/ring_cxx.cc \
         examples/ring_f77.f \
         examples/ring_f90.f90 \
-        examples/connectivity_c.c
+        examples/connectivity_c.c \
+	examples/Hello.java \
+	examples/Ring.java

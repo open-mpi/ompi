@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,7 +18,7 @@
 # $HEADER$
 #
 
-man_pages = mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1
+man_pages = mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1 mpijavac.1
 
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 
@@ -26,17 +27,22 @@ CLEANFILES += $(bin_SCRIPTS)
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	(cp mpijavac.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); rm -f mpicc; $(LN_S) ompi_wrapper_script mpicc)
 	(cd $(DESTDIR)$(bindir); rm -f mpic++; $(LN_S) ompi_wrapper_script mpic++)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx; $(LN_S) ompi_wrapper_script mpicxx)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77; $(LN_S) ompi_wrapper_script mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90; $(LN_S) ompi_wrapper_script mpif90)
+	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
+
 uninstall-local-always:
 	rm -f $(DESTDIR)$(bindir)/mpicc \
 	$(DESTDIR)$(bindir)/mpic++ \
 	$(DESTDIR)$(bindir)/mpicxx \
 	$(DESTDIR)$(bindir)/mpif77 \
-	$(DESTDIR)$(bindir)/mpif90
+	$(DESTDIR)$(bindir)/mpif90 \
+	$(DESTDIR)$(bindir)/mpijavac
+    
 if CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always
 	(cd $(DESTDIR)$(bindir); rm -f mpiCC; $(LN_S) ompi_wrapper_script mpiCC)
@@ -64,11 +70,13 @@ dist_pkgdata_DATA = \
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	(cp mpijavac.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper mpicc)
 	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper mpic++)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper mpicxx)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) opal_wrapper mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) opal_wrapper mpif90)
+	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
 
 install-data-hook-always:
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
@@ -79,6 +87,7 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpicxx$(EXEEXT) \
 	$(DESTDIR)$(bindir)/mpif77$(EXEEXT) \
 	$(DESTDIR)$(bindir)/mpif90$(EXEEXT) \
+    $(DESTDIR)$(bindir)/mpijavac \
 	$(DESTDIR)$(pkgdatadir)/mpicxx-wrapper-data.txt
 
 if CASE_SENSITIVE_FS

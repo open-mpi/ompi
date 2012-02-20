@@ -27,6 +27,12 @@ MPI_ABORT(\fICOMM\fP, \fIERRORCODE\fP, \fIIERROR\fP)
 void Comm::Abort(int \fIerrorcode\fP)
 
 .fi
+.SH Java Syntax
+.nf
+import mpi.*;
+void MPI.Abort(int \fIerrorcode\fP)
+
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1i
@@ -50,12 +56,12 @@ action with the error code. However, a UNIX or POSIX
 environment should handle this as a return errorcode from the main program
 or an abort (errorcode).
 .sp
-The Open MPI implementation terminates all processes in all tasks that contain a process in \fIcomm\fP, and the error code is not returned to the invoking environment.
+The long-term goal of the Open MPI implementation is to terminate all processes in all tasks that contain a process in \fIcomm\fP, and the error code is not returned to the invoking environment. At the moment, this isn't fully implemented and MPI_Abort will terminate the entire job. The Java implementation currently does not allow specification of a communicator and aborts the entire job - this will be updated to support the long-term implementation at a later date.
 .sp
 Note: All associated processes are sent a SIGTERM.
 
 .SH ERRORS
-Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object.
+Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ and Java functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI::Exception object - similar behavior is followed by Java.
 .sp
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler

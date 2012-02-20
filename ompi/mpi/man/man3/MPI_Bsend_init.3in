@@ -26,9 +26,16 @@ MPI_BSEND_INIT(\fIBUF\fP,\fI COUNT\fP, \fIDATATYPE\fP,\fI DEST\fP,\fI TAG\fP,\fI
 .fi
 .SH C++ Syntax
 .nf
-#include <mpi.h>
-Prequest Comm::Bsend_init(const void* \fIbuf\fP, int \fIcount\fP, const 
+import mpi.*;
+Prequest MPI.COMM_WORLD.Bsend_init(const void* \fIbuf\fP, int \fIcount\fP, const 
 	Datatype& \fIdatatype\fP, int \fIdest\fP, int \fItag\fP) const 
+
+.fi
+.SH Java Syntax
+.nf
+#include <mpi.h>
+Prequest Comm::Bsend_init(Object \fIbuf\fP, int \fIoffset\fP, int \fIcount\fP,
+	                  MPI.Datatype \fIdatatype\fP, int \fIdest\fP, int \fItag\fP)
 
 .fi
 .SH INPUT PARAMETERS
@@ -36,6 +43,9 @@ Prequest Comm::Bsend_init(const void* \fIbuf\fP, int \fIcount\fP, const
 .TP 1i
 buf
 Initial address of send buffer (choice).
+.TP 1i
+offset
+Offset of starting point in buffer (Java-only).
 .TP 1i
 count
 Number of elements sent (integer).

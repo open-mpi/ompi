@@ -36,17 +36,29 @@ void MPI::Comm::Alltoall(const void* \fIsendbuf\fP, int \fIsendcount\fP,
 	int \fIrecvcount\fP, const MPI::Datatype& \fIrecvtype\fP)
 
 .fi
+.SH Java Syntax
+.nf
+import mpi.*;
+void MPI.COMM_WORLD.Alltoall(Object \fIsendbuf\fP, int \fIsendoffset\fP, int \fIsendcount\fP, MPI.Datatype \fIsendtype\fP,
+                             Object \fIrecvbuf\fP, int \fIrecvoffset\fP, int \fIrecvcount\fP, MPI.Datatype \fIrecvtype\fP)
+.fi
 .SH INPUT PARAMETERS
 .ft R
 .TP 1.2i
 sendbuf
 Starting address of send buffer (choice).
 .TP 1.2i
+sendoffset    
+Number of elements to skip at beginning of buffer (integer, Java-only).
+.TP 1.2i
 sendcount
 Number of elements to send to each process (integer).
 .TP 1.2i
 sendtype
 Datatype of send buffer elements (handle).
+.TP 1.2i
+recvoffset    
+Number of elements to skip at beginning of buffer (integer, Java-only).
 .TP 1.2i
 recvcount
 Number of elements to receive from each process (integer).
