@@ -89,6 +89,14 @@ struct DefRec_BaseS
                         VT_MPI_INT & bufferPos );
 #endif // VT_MPI
 
+   // NOTE: this operator is actually not used but necessary to work around
+   // a build error with the Clang++ compiler
+   // (see http://www.open-mpi.org/community/lists/devel/2012/02/10419.php)
+   bool operator<( const DefRec_BaseS & a ) const
+   {
+      return dtype < a.dtype;
+   }
+
    DefRecTypeT dtype;
    uint32_t    loccpuid;
    uint32_t    deftoken;

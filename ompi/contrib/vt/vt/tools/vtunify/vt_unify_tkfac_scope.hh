@@ -60,7 +60,7 @@ TokenFactoryScopeC<T>::create( const void * localDef, uint32_t globalToken )
       else
          global_def.deftoken = globalToken;
 
-      m_globDefs->insert( global_def ).first;
+      m_globDefs->insert( global_def );
    }
 
    // set token translation for process, if necessary
