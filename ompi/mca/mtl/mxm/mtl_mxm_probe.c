@@ -33,7 +33,7 @@ int ompi_mtl_mxm_iprobe(struct mca_mtl_base_module_t* mtl,
             status->MPI_SOURCE = req.completion.sender_imm;
             status->MPI_TAG    = req.completion.sender_tag;
             status->MPI_ERROR  = ompi_mtl_mxm_to_mpi_status(err);
-            status->_ucount    = req.completion.actual_len;
+            status->_ucount    = req.completion.sender_len;
         }
         return OMPI_SUCCESS;
     } else if (MXM_ERR_NO_MESSAGE == err) {
