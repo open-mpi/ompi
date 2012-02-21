@@ -13,7 +13,7 @@
 # and renamed/modified for hwloc:
 # Copyright (c) 2009 inria.  All rights reserved.
 # Copyright (c) 2009-2010 Université Bordeaux 1
-# Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright © 2010-2012 Cisco Systems, Inc.  All rights reserved.
 # See COPYING in top-level directory.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -86,40 +86,29 @@ AC_DEFUN([_HWLOC_CHECK_VISIBILITY],[
             # Check using Sun Studio -xldscope=hidden flag
             hwloc_add=-xldscope=hidden
             CFLAGS="$CFLAGS_orig $hwloc_add -errwarn=%all"
-
-            AC_MSG_CHECKING([if $CC supports -xldscope])
-            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-                __attribute__((visibility("default"))) int foo;
-                ]],[[fprintf(stderr, "Hello, world\n");]])],
-                [],
-                [hwloc_add=])
-            AS_IF([test "$hwloc_add" = ""],
-                  [AC_MSG_RESULT([no])],
-                  [AC_MSG_RESULT([yes])])
             ;;
 
         *)
             # Check using -fvisibility=hidden
             hwloc_add=-fvisibility=hidden
-	    CFLAGS="$CFLAGS_orig $hwloc_add -Werror"
-
-            AC_MSG_CHECKING([if $CC supports -fvisibility])
-            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-                __attribute__((visibility("default"))) int foo;
-                ]],[[fprintf(stderr, "Hello, world\n");]])],
-                [],
-                [AS_IF([test -s conftest.err],
-                       [$GREP -iq visibility conftest.err
-                        # If we find "visibility" in the stderr, then
-                        # assume it doesn't work
-                        AS_IF([test "$?" = "0"], [hwloc_add=])])
-                ])
-            AS_IF([test "$hwloc_add" = ""],
-                  [AC_MSG_RESULT([no])],
-                  [AC_MSG_RESULT([yes])])
+            CFLAGS="$CFLAGS_orig $hwloc_add -Werror"
             ;;
-
         esac
+
+        AC_MSG_CHECKING([if $CC supports $hwloc_add])
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+            #include <stdio.h>
+            __attribute__((visibility("default"))) int foo;
+            ]],[[fprintf(stderr, "Hello, world\n");]])],
+            [AS_IF([test -s conftest.err],
+                   [$GREP -iq visibility conftest.err
+                    # If we find "visibility" in the stderr, then
+                    # assume it doesn't work
+                    AS_IF([test "$?" = "0"], [hwloc_add=])])
+            ], [hwloc_add=])
+        AS_IF([test "$hwloc_add" = ""],
+              [AC_MSG_RESULT([no])],
+              [AC_MSG_RESULT([yes])])
 
         CFLAGS=$CFLAGS_orig
         HWLOC_VISIBILITY_CFLAGS=$hwloc_add

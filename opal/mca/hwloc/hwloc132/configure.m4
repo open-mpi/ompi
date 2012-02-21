@@ -35,7 +35,7 @@ AC_DEFUN([MCA_hwloc_hwloc132_POST_CONFIG],[
 # MCA_hwloc_hwloc132_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([MCA_hwloc_hwloc132_CONFIG],[
-    OMPI_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc132_save_CPPFLAGS opal_hwloc_hwloc132_save_LDFLAGS opal_hwloc_hwloc132_save_LIBS opal_hwloc_hwloc132_save_cairo opal_hwloc_hwloc132_save_xml opal_hwloc_hwloc132_basedir opal_hwloc_hwloc132_file opal_hwloc_hwloc132_save_enable_pci])
+    OMPI_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc132_save_CPPFLAGS opal_hwloc_hwloc132_save_LDFLAGS opal_hwloc_hwloc132_save_LIBS opal_hwloc_hwloc132_save_cairo opal_hwloc_hwloc132_save_xml opal_hwloc_hwloc132_basedir opal_hwloc_hwloc132_file opal_hwloc_hwloc132_save_enable_pci opal_hwloc_hwloc132_save_cflags])
 
     # default to this component not providing support
     opal_hwloc_hwloc132_basedir=opal/mca/hwloc/hwloc132
@@ -69,6 +69,10 @@ AC_DEFUN([MCA_hwloc_hwloc132_CONFIG],[
         enable_libxml2=no
         enable_xml=yes
 
+        # hwloc checks for compiler visibility, and its needs to do
+        # this without "picky" flags.
+        opal_hwloc_hwloc132_save_cflags=$CFLAGS
+        CFLAGS=$OMPI_CFLAGS_BEFORE_PICKY
         HWLOC_SETUP_CORE([opal/mca/hwloc/hwloc132/hwloc], 
                   [AC_MSG_CHECKING([whether hwloc configure succeeded])
                    AC_MSG_RESULT([yes])
@@ -81,6 +85,7 @@ AC_DEFUN([MCA_hwloc_hwloc132_CONFIG],[
                   [AC_MSG_CHECKING([whether hwloc configure succeeded])
                    AC_MSG_RESULT([no])
                    opal_hwloc_hwloc132_support=no])
+        CFLAGS=$opal_hwloc_hwloc132_save_cflags
 
         # Restore some env variables, if necessary
         AS_IF([test -n "$opal_hwloc_hwloc132_save_cairo"],

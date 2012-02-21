@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -44,47 +44,31 @@ AC_DEFUN([OMPI_CHECK_VISIBILITY],[
         case "$ompi_c_vendor" in
         sun)
             # Check using Sun Studio -xldscope=hidden flag
-            opal_add="-xldscope=hidden"
-            CFLAGS="$CFLAGS_orig $opal_add"
-
-            AC_MSG_CHECKING([if $CC supports -xldscope])
-            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-                __attribute__((visibility("default"))) int foo;
-                ]],[[int i;]])],
-                [],
-                [AS_IF([test -s conftest.err],
-                       [$GREP -iq visibility conftest.err
-                        # If we find "visibility" in the stderr, then
-                        # assume it doesn't work
-                        AS_IF([test "$?" = "0"], [opal_add=])])
-                ])
-            AS_IF([test "$opal_add" = ""],
-                  [AC_MSG_RESULT([no])],
-                  [AC_MSG_RESULT([yes])])
+            opal_add=-xldscope=hidden
+            CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $opal_add -errwarn=%all"
             ;;
 
         *)
             # Check using -fvisibility=hidden
             opal_add=-fvisibility=hidden
-            CFLAGS="$CFLAGS_orig $opal_add"
-
-            AC_MSG_CHECKING([if $CC supports -fvisibility])
-            AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-                __attribute__((visibility("default"))) int foo;
-                ]],[[int i;]])],
-                [],
-                [AS_IF([test -s conftest.err],
-                       [$GREP -iq visibility conftest.err
-                        # If we find "visibility" in the stderr, then
-                        # assume it doesn't work
-                        AS_IF([test "$?" = "0"], [opal_add=])])
-                ])
-            AS_IF([test "$opal_add" = ""],
-                  [AC_MSG_RESULT([no])],
-                  [AC_MSG_RESULT([yes])])
+            CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY $opal_add -Werror"
             ;;
-
         esac
+
+        AC_MSG_CHECKING([if $CC supports $opal_add])
+        AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+            #include <stdio.h>
+            __attribute__((visibility("default"))) int foo;
+            ]],[[fprintf(stderr, "Hello, world\n");]])],
+            [AS_IF([test -s conftest.err],
+                   [$GREP -iq visibility conftest.err
+                    # If we find "visibility" in the stderr, then
+                    # assume it doesn't work
+                    AS_IF([test "$?" = "0"], [opal_add=])])
+            ], [opal_add=])
+        AS_IF([test "$opal_add" = ""],
+              [AC_MSG_RESULT([no])],
+              [AC_MSG_RESULT([yes])])
 
         CFLAGS=$CFLAGS_orig
         OPAL_VISIBILITY_CFLAGS=$opal_add

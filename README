@@ -965,6 +965,18 @@ shell$ ./configure CC=mycc CXX=myc++ F77=myf77 F90=myf90 ...
    variables and values in the config.log file, which makes
    post-mortem analysis easier when problems occur.
 
+Note that if you intend to compile Open MPI with a "make" other than
+the default one in your PATH, then you must either set the $MAKE
+environment variable before invoking Open MPI's configure script, or
+pass "MAKE=your_make_prog" to configure.  For example:
+
+shell$ ./configure MAKE=/path/to/my/make ...
+
+This could be the case, for instance, if you have a shell alias for
+"make", or you always type "gmake" out of habit.  Failure to tell
+configure which non-default "make" you will use to compile Open MPI
+can result in undefined behavior (meaning: don't do that).
+
 Note that you may also want to ensure that the value of
 LD_LIBRARY_PATH is set appropriately (or not at all) for your build
 (or whatever environment variable is relevant for your operating
