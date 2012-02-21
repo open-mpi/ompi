@@ -38,7 +38,7 @@
 #  if defined(__GNUC__) && __GNUC__ >= 2
 #   define OPAL_SOS_FUNCTION __FUNCTION__
 #  else
-#   define OPAL_SOS_FUNCION "<unknown>"
+#   define OPAL_SOS_FUNCTION "<unknown>"
 #  endif
 # else
 #  define OPAL_SOS_FUNCTION __func__
