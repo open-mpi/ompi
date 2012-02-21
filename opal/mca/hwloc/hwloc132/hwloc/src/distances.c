@@ -358,10 +358,14 @@ hwloc_setup_distances_from_os_matrix(struct hwloc_topology *topology,
   for(i=0; i<nbobjs; i++)
     hwloc_bitmap_or(set, set, objs[i]->cpuset);
   root = hwloc_get_obj_covering_cpuset(topology, set);
-  assert(root);
-  if (!hwloc_bitmap_isequal(set, root->cpuset)) {
-    /* partial distance matrix not including all the children of a single object */
-    /* TODO insert an intermediate object (group?) covering only these children ? */
+  if (!root || !hwloc_bitmap_isequal(set, root->cpuset)) {
+    /* When cgroups are involved, some objects may disappear.
+     * ignore_keep_structure can also remove some objects with non-empty cpusets.
+     * "set" can get smaller than expected, and the distance matrix
+     * would not include all children of root.
+     * If "set" is empty, root is NULL.
+     * Ignore the distance matrix in both cases, we can't insert it properly.
+     */
     hwloc_bitmap_free(set);
     return;
   }
