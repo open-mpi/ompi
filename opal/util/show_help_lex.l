@@ -62,7 +62,7 @@ CHAR        [A-Za-z0-9_\-\.]
 
 #.*\n               ; /* comment line */
 
-^\[.+\]/.*\n { BEGIN(CHOMP); return OPAL_SHOW_HELP_PARSE_TOPIC; }
+^\[.+\]/[^\]\n]*\n { BEGIN(CHOMP); return OPAL_SHOW_HELP_PARSE_TOPIC; }
 
 <CHOMP>.*\n { BEGIN(INITIAL); }
 
