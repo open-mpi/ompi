@@ -139,7 +139,7 @@ CLEANFILES += -rf mpi/* $(JAVA_H)
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS
 ompihdir = $(includedir)/openmpi/$(subdir)
-nobase_ompih_HEADERS = $(JAVA_H)
+nobase_nodist_ompih_HEADERS = $(JAVA_H)
 endif
 
 endif
