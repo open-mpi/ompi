@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,6 +24,9 @@ AC_DEFUN([MCA_timer_catamount_COMPILE_MODE], [
     AC_MSG_RESULT([$$4])
 ])
 
+AC_DEFUN([MCA_timer_catamount_POST_CONFIG],[
+    AS_IF([test "$1" = "1"], [timer_base_include="catamount/timer_catamount.h"])
+])dnl
 
 # MCA_timer_catamount_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
@@ -62,7 +66,6 @@ unsigned int a = __cpu_mhz;
          [AC_MSG_ERROR([Catamount timer requested but not available.  Aborting.])])
 
     AS_IF([test "$timer_catamount_happy" = "yes"], 
-          [timer_base_include="catamount/timer_catamount.h"
-           $1], 
+          [$1], 
           [$2])
 ])

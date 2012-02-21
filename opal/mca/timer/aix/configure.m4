@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,6 +23,10 @@ AC_DEFUN([MCA_timer_aix_COMPILE_MODE], [
     $4="static"
     AC_MSG_RESULT([$$4])
 ])
+
+AC_DEFUN([MCA_timer_aix_POST_CONFIG],[
+    AS_IF([test "$1" = "1"], [timer_base_include="aix/timer_aix.h"])
+])dnl
 
 
 # MCA_timer_aix_CONFIG(action-if-can-compile, 
@@ -69,7 +74,6 @@ AC_DEFUN([MCA_timer_aix_CONFIG],[
 
     AS_IF([test "$timer_aix_happy" = "yes"], 
           [timer_aix_WRAPPER_EXTRA_LIBS="$timer_aix_LIBS"
-           timer_base_include="aix/timer_aix.h"
            $1], 
           [$2])
 ])

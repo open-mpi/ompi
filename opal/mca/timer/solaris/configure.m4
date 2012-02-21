@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,6 +24,9 @@ AC_DEFUN([MCA_timer_solaris_COMPILE_MODE], [
     AC_MSG_RESULT([$$4])
 ])
 
+AC_DEFUN([MCA_timer_solaris_POST_CONFIG],[
+    AS_IF([test "$1" = "1"], [timer_base_include="solaris/timer_solaris.h"])
+])dnl
 
 # MCA_timer_solaris_CONFIG(action-if-can-compile, 
 #                        [action-if-cant-compile])
@@ -50,7 +54,6 @@ AC_DEFUN([MCA_timer_solaris_CONFIG],[
          [AC_MSG_ERROR([Solaris timer requested but not available.  Aborting.])])
 
     AS_IF([test "$timer_solaris_happy" = "yes"], 
-          [timer_base_include="solaris/timer_solaris.h"
-           $1], 
+          [$1], 
           [$2])
 ])
