@@ -90,6 +90,7 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpif77$(EXEEXT) \
 	$(DESTDIR)$(bindir)/mpif90$(EXEEXT) \
     $(DESTDIR)$(bindir)/mpijavac \
+    $(DESTDIR)$(bindir)/mpijavac.pl \
 	$(DESTDIR)$(pkgdatadir)/mpicxx-wrapper-data.txt
 
 if CASE_SENSITIVE_FS
