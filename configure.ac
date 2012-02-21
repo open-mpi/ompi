@@ -290,11 +290,17 @@ m4_ifdef([project_ompi], [OMPI_SETUP_WRAPPER_INIT])
 # panics because of bad implementations of pty's.  See
 # https://svn.open-mpi.org/trac/ompi/ticket/1637 for details.
 
-# We do not support OS X before version 10.4 (Tiger)
+#   OS X name         OS X Version    $host_os value
+# OS X Tiger             10.4.x           darwin8.x
+# OS X Leopard           10.5.x           darwin9.x
+# OS X Snow Leopard      10.6.x           darwin10.x
+# OS X Lion              10.7.x           darwin11.x
+
+# We do not support OS X before version 10.5 (Leopard)
 case $host_os in
-# Corresponds to OS X 10.0 - 10.3 (additional [] quoting for m4)
-darwin[[4567]]*)
-    AC_MSG_WARN([Open MPI does not support OS X prior to version 10.4 (Tiger)])
+# Corresponds to OS X 10.0 - 10.4 (additional [] quoting for m4)
+darwin[[45678]]*)
+    AC_MSG_WARN([Open MPI does not support OS X prior to version 10.5 (Leopard)])
     AC_MSG_ERROR([Cannot continue])
 esac
 
