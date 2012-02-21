@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -618,27 +618,27 @@ MPI::Comm::Create_keyval(MPI_Comm_copy_attr_function* comm_copy_attr_fn,
 inline void
 MPI::Comm::Free_keyval(int& comm_keyval)
 {
-    (void) MPI_Keyval_free(&comm_keyval);
+    (void) MPI_Comm_free_keyval(&comm_keyval);
 }
 
 inline void
 MPI::Comm::Set_attr(int comm_keyval, const void* attribute_val) const
 {
-    (void)MPI_Attr_put(mpi_comm, comm_keyval, const_cast<void*>(attribute_val));
+    (void)MPI_Comm_set_attr(mpi_comm, comm_keyval, const_cast<void*>(attribute_val));
 }
 
 inline bool
 MPI::Comm::Get_attr(int comm_keyval, void* attribute_val) const
 {
   int flag;
-  (void)MPI_Attr_get(mpi_comm, comm_keyval, attribute_val, &flag);
+  (void)MPI_Comm_get_attr(mpi_comm, comm_keyval, attribute_val, &flag);
   return OPAL_INT_TO_BOOL(flag);
 }
 
 inline void
 MPI::Comm::Delete_attr(int comm_keyval)
 {
-  (void)MPI_Attr_delete(mpi_comm, comm_keyval);
+  (void)MPI_Comm_delete_attr(mpi_comm, comm_keyval);
 }
 
 // Comment out the unused parameters so that compilers don't warn
@@ -664,13 +664,14 @@ MPI::Comm::DUP_FN(const MPI::Comm& oldcomm, int comm_keyval,
     if (sizeof(bool) != sizeof(int)) {
         int f = (int)flag;
         int ret;
-        ret = MPI_DUP_FN(oldcomm, comm_keyval, extra_state, attribute_val_in,
-                         attribute_val_out, &f);
+        ret = MPI_COMM_DUP_FN(oldcomm, comm_keyval, extra_state, 
+                              attribute_val_in, attribute_val_out, &f);
         flag = OPAL_INT_TO_BOOL(f);
         return ret;
     } else {
-        return MPI_DUP_FN(oldcomm, comm_keyval, extra_state, attribute_val_in,
-                          attribute_val_out, (int*)&flag);
+        return MPI_COMM_DUP_FN(oldcomm, comm_keyval, extra_state, 
+                               attribute_val_in, attribute_val_out,
+                               (int*)&flag);
     }
 }
 
