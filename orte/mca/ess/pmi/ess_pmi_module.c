@@ -266,9 +266,6 @@ static int rte_init(void)
             goto error;
         }
 
-        /* get my pidmap entry */
-        pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid);
-
         /* get our local proc info to find our local rank */
         if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&i))) {
             ORTE_PMI_ERROR(ret, "PMI_Get_clique_size");
@@ -281,13 +278,19 @@ static int rte_init(void)
             error = "could not get clique ranks";
             goto error;
         }
-        /* cycle thru the array until we find our rank */
+        /* The clique ranks are returned in rank order, so
+         * cycle thru the array and update the local/node
+         * rank info
+         */
         for (j=0; j < i; j++) {
-            if (ranks[j] == (int)ORTE_PROC_MY_NAME->vpid) {
-                pmap->local_rank = j;
-                pmap->node_rank = j;
-                break;
+            if (NULL == (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, ranks[j]))) {
+                /* need to create this entry */
+                pmap = OBJ_NEW(orte_pmap_t);
+                pmap->node = nid->index;
+                opal_pointer_array_set_item(&jmap->pmap, ranks[j], pmap);
             }
+            pmap->local_rank = j;
+            pmap->node_rank = j;
         }
         free(ranks);
 
