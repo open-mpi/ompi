@@ -143,7 +143,7 @@ static void sm_module_finalize(mca_mpool_base_module_t* module)
                time. */
             if (OPAL_CR_STATUS_RESTART_PRE  != opal_cr_checkpointing_state &&
                 OPAL_CR_STATUS_RESTART_POST != opal_cr_checkpointing_state ) {
-                unlink(sm_module->sm_common_mmap->map_path);
+                unlink(sm_module->sm_common_module->shmem_ds.seg_name);
             }
 #else
             unlink(sm_module->sm_common_module->shmem_ds.seg_name);
@@ -180,8 +180,8 @@ int mca_mpool_sm_ft_event(int state) {
             self_sm_module = (mca_mpool_sm_module_t*) self_module;
 
             /* Mark the old sm file for eventual removal via CRS */
-            if (NULL != self_sm_module->sm_common_mmap) {
-                opal_crs_base_cleanup_append(self_sm_module->sm_common_mmap->map_path, false);
+            if (NULL != self_sm_module->sm_common_module) {
+                opal_crs_base_cleanup_append(self_sm_module->sm_common_module->shmem_ds.seg_name, false);
             }
 
             /* Remove self from the list of all modules */
@@ -195,8 +195,8 @@ int mca_mpool_sm_ft_event(int state) {
         self_sm_module = (mca_mpool_sm_module_t*) self_module;
 
         /* Mark the old sm file for eventual removal via CRS */
-        if (NULL != self_sm_module->sm_common_mmap) {
-            opal_crs_base_cleanup_append(self_sm_module->sm_common_mmap->map_path, false);
+        if (NULL != self_sm_module->sm_common_module) {
+            opal_crs_base_cleanup_append(self_sm_module->sm_common_module->shmem_ds.seg_name, false);
         }
 
         /* Remove self from the list of all modules */
