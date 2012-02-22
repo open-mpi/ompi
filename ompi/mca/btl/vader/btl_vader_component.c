@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -241,6 +241,14 @@ static mca_btl_base_module_t **mca_btl_vader_component_init (int *num_btls,
         return NULL;
     }
 
+    /* create an xpmem segment for the entire memory space */
+    component->my_seg_id = xpmem_make (0, 0xffffffffffffffffll, XPMEM_PERMIT_MODE,
+                                       (void *)0666);
+    if (-1 == component->my_seg_id) {
+        free (btls);
+        return NULL;
+    }
+
     *num_btls = 1;
 
     /* get pointer to the btls */
@@ -303,14 +311,10 @@ static int mca_btl_vader_component_progress (void)
     mca_btl_vader_progress_sends ();
 
     /* poll the fifo once */
-    hdr = (mca_btl_vader_hdr_t *) vader_fifo_read (fifo);
-    if (VADER_FIFO_FREE == hdr) {
+    hdr = vader_fifo_read (fifo);
+    if (NULL == hdr) {
         return 0;
     }
-
-    /* change the address from address relative to the shared
-     * memory address, to a true virtual address */
-    hdr = (mca_btl_vader_hdr_t *) RELATIVE2VIRTUAL(hdr);
 
     reg = mca_btl_base_active_message_trigger + hdr->tag;
     frag.base.des_dst     = segments;

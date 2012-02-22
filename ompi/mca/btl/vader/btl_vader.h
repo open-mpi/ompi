@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -67,7 +67,6 @@ extern int mca_btl_vader_memcpy_limit;
 extern int mca_btl_vader_log_align;
 extern int mca_btl_vader_max_inline_send;
 
-#define VADER_FIFO_FREE  (void *) (-2)
 /* We can't use opal_cache_line_size here because we need a
    compile-time constant for padding the struct.  We can't really have
    a compile-time constant that is portable, either (e.g., compile on
@@ -102,6 +101,7 @@ struct mca_btl_vader_component_t {
                                              * shared memory */
     char **shm_bases;                       /**< pointer to base pointers in
                                              * shared memory */
+    xpmem_segid_t my_seg_id;                /* this rank's xpmem segment id */
     xpmem_segid_t *shm_seg_ids;             /* xpmem segment ids */
     struct vader_fifo_t **fifo;             /**< cached copy of the pointer to
                                              * the 2D fifo array. */
@@ -145,8 +145,8 @@ OMPI_MODULE_DECLSPEC extern mca_btl_vader_t mca_btl_vader;
  * we define macros to translate between relative addresses and
  * virtual addresses.
  */
-#define VIRTUAL2RELATIVE(VADDR ) ((long)(VADDR)  - (long)mca_btl_vader_component.shm_bases[mca_btl_vader_component.my_smp_rank])
-#define RELATIVE2VIRTUAL(OFFSET) ((long)(OFFSET) + (long)mca_btl_vader_component.shm_bases[mca_btl_vader_component.my_smp_rank])
+#define VIRTUAL2RELATIVE(VADDR ) ((intptr_t)(VADDR)  - (intptr_t)mca_btl_vader_component.shm_bases[mca_btl_vader_component.my_smp_rank])
+#define RELATIVE2VIRTUAL(OFFSET) ((intptr_t)(OFFSET) + (intptr_t)mca_btl_vader_component.shm_bases[mca_btl_vader_component.my_smp_rank])
 
 /* look up the remote pointer in the peer rcache and attach if
  * necessary */
