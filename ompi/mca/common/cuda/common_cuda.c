@@ -355,7 +355,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
     CUdeviceptr pbase;
     size_t psize;
 
-    mca_mpool_rcuda_reg_t *cuda_reg = (mca_mpool_rcuda_reg_t*)newreg;
+    mca_mpool_common_cuda_reg_t *cuda_reg = (mca_mpool_common_cuda_reg_t*)newreg;
 
     /* We should only be there if this is a CUDA device pointer */
     result = cuPointerGetAttribute(&memType,
@@ -416,7 +416,7 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
  */
 int cuda_ungetmemhandle(void *reg_data, mca_mpool_base_registration_t *reg) 
 {
-    CUDA_DUMP_EVTHANDLE((10, ((mca_mpool_rcuda_reg_t *)reg)->evtHandle, "cuda_ungetmemhandle"));
+    CUDA_DUMP_EVTHANDLE((10, ((mca_mpool_common_cuda_reg_t *)reg)->evtHandle, "cuda_ungetmemhandle"));
     opal_output_verbose(5, mca_common_cuda_output,
                         "CUDA: cuda_ungetmemhandle: base=%p",
                         reg_data);
@@ -434,7 +434,7 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
 {
     CUresult result;
     CUipcMemHandle memHandle;
-    mca_mpool_rcuda_reg_t *cuda_newreg = (mca_mpool_rcuda_reg_t*)newreg;
+    mca_mpool_common_cuda_reg_t *cuda_newreg = (mca_mpool_common_cuda_reg_t*)newreg;
 
     /* Need to copy into memory handle for call into CUDA library. */
     memcpy(&memHandle, cuda_newreg->memHandle, sizeof(memHandle));
@@ -473,7 +473,7 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
 int cuda_closememhandle(void *reg_data, mca_mpool_base_registration_t *reg)
 {
     CUresult result;
-    mca_mpool_rcuda_reg_t *cuda_reg = (mca_mpool_rcuda_reg_t*)reg;
+    mca_mpool_common_cuda_reg_t *cuda_reg = (mca_mpool_common_cuda_reg_t*)reg;
 
     result = cuIpcCloseMemHandle((CUdeviceptr)cuda_reg->base.alloc_base);
     if (CUDA_SUCCESS != result) {
@@ -526,7 +526,7 @@ void mca_common_cuda_destruct_event(uint64_t *event)
  * Put remote event on stream to ensure that the the start of the
  * copy does not start until the completion of the event.
  */
-void mca_common_wait_stream_synchronize(mca_mpool_rcuda_reg_t *rget_reg)
+void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_t *rget_reg)
 {
     CUipcEventHandle evtHandle;
     CUevent event;
@@ -724,8 +724,8 @@ int progress_one_cuda_event(struct mca_btl_base_descriptor_t **frag) {
  * Need to make sure the handle we are retrieving from the cache is still
  * valid.  Compare the cached handle to the one received. 
  */
-int mca_common_cuda_memhandle_matches(mca_mpool_rcuda_reg_t *new_reg, 
-                                      mca_mpool_rcuda_reg_t *old_reg)
+int mca_common_cuda_memhandle_matches(mca_mpool_common_cuda_reg_t *new_reg, 
+                                      mca_mpool_common_cuda_reg_t *old_reg)
 {
 
     if (0 == memcmp(new_reg->memHandle, old_reg->memHandle, sizeof(new_reg->memHandle))) {
