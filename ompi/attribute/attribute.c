@@ -942,10 +942,11 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
         /* Hang this off the object's hash */
             
-        /* The "predefined" parameter to ompi_attr_set() is set to 1,
-           so that no comparison is done for prdefined at all and it
-           just falls off the error checking loop in attr_set  */
-
+        /* The OMPI_KEYVAL_F77 will be set if we called either an
+           MPI-1 style Fortran callback, or an MPI-2 style Fortran
+           callback.  If the callback set flag to .TRUE., then set
+           which style of Fortran callback was used on the new
+           attribute. */
         if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77) &&
             OMPI_FORTRAN_VALUE_TRUE == flag) {
             if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77_MPI1)) {
@@ -953,11 +954,29 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
             } else {
                 new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI2;
             }
+            /* For convenience, set flag to 1 (instead of the
+               FORTRAN_VALUE_TRUE), so that we can just do a single
+               test, below. */
             flag = 1;
-        } else if (1 == flag) {
+        } 
+
+        /* Otherwise, if this is not a Fortran-created keyval (i.e.,
+           it's a C-based keyval -- see the comments at the beginning
+           of this file that explain OMPI_KEYVAL_* values), and it set
+           the flag to 1, then set that the new attribute was set via
+           C. */
+        else if (0 == (hash_value->attr_flag & OMPI_KEYVAL_F77) &&
+                 1 == flag) {
             new_attr->av_set_from = OMPI_ATTRIBUTE_C;
+        } 
+
+        /* Otherwise, just guarantee that flag is not 1 */
+        else {
+            flag = 0;
         }
 
+        /* If anything above set the new attribute value, then
+           actually set it on the new attribute hash. */
         if (1 == flag) {
             set_value(type, new_object, &newattr_hash, key, 
                       new_attr, true);
