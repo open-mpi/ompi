@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -103,8 +103,7 @@ int mca_btl_vader_sendi (struct mca_btl_base_module_t *btl,
     opal_list_append (&mca_btl_vader_component.active_sends, (opal_list_item_t *) frag);
 
     /* write the fragment pointer to peer's the FIFO */
-    vader_fifo_write ((void *) VIRTUAL2RELATIVE(frag->hdr),
-                      mca_btl_vader_component.fifo[endpoint->peer_smp_rank]);
+    vader_fifo_write (frag->hdr, endpoint->peer_smp_rank);
 
     /* the progress function will return the fragment */
 

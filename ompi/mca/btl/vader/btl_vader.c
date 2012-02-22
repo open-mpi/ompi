@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.  
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -217,15 +217,7 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
     vader_fifo_t *my_fifos;
     ompi_proc_t **procs;
     size_t num_procs;
-    xpmem_segid_t my_segid;
     int i, rc;
-
-    /* make the entire memory space of this process accessible */
-    my_segid = xpmem_make (0, 0xffffffffffffffffll, XPMEM_PERMIT_MODE,
-                           (void *)0666);
-    if (-1 == my_segid) {
-        return OMPI_ERROR;
-    }
 
     rc = vader_init_mpool (vader_btl, n);
     if (OMPI_SUCCESS != rc) {
@@ -273,7 +265,7 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 
     /* set the base of the shared memory segment */
     component->shm_bases[component->my_smp_rank] = (char *)component->vader_mpool_base;
-    component->shm_seg_ids[component->my_smp_rank] = my_segid;
+    component->shm_seg_ids[component->my_smp_rank] = component->my_seg_id;
 
     /* initialize the fifo and fast boxes "owned" by this process */
     posix_memalign ((void **)&my_fifos, getpagesize (), (n + 1) * getpagesize ());

@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -31,7 +31,7 @@
 #define MCA_BTL_VADER_FLAG_FBOX        2
 
 struct mca_btl_vader_hdr_t {
-    volatile void *next;    /* next item in fifo. many peers may touch this */
+    volatile uintptr_t next;    /* next item in fifo. many peers may touch this */
     volatile bool complete; /* fragment completion (usually 1 byte) */
     mca_btl_base_tag_t tag; /* tag associated with this fragment (used to lookup callback) */
     char pad[2];
@@ -48,8 +48,7 @@ struct mca_btl_vader_frag_t {
     mca_btl_base_descriptor_t base;
     mca_btl_base_segment_t segment;
     struct mca_btl_base_endpoint_t *endpoint;
-    /* pointer written to the FIFO, this is the base of the shared memory region */
-    mca_btl_vader_hdr_t *hdr;
+    mca_btl_vader_hdr_t *hdr; /* in the shared memory region */
     ompi_free_list_t *my_list;
 };
 
