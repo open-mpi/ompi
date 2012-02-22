@@ -184,10 +184,16 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
    # Are we happy?
     AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1" -a "$ompi_java_happy" = "no"],
           [AC_MSG_WARN([Java MPI bindings requested, but unable to find proper support])
-           AC_MSG_ERROR([Cannot continue])],
-          [AC_MSG_WARN([Java MPI bindings are provided on a provisional basis - i.e., they are not])
-           AC_MSG_WARN([part of the current or proposed MPI standard. Continued inclusion of the])
-           AC_MSG_WARN([Java bindings is contingent upon user interest and developer support])])
+           AC_MSG_ERROR([Cannot continue])])
+    AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1"],
+          [AC_MSG_WARN([******************************************************])
+           AC_MSG_WARN([*** Java MPI bindings are provided on a provisional])
+           AC_MSG_WARN([*** basis.  They are NOT part of the current or])
+           AC_MSG_WARN([*** proposed MPI standard.  Continued inclusion of])
+           AC_MSG_WARN([*** the Java MPI bindings in Open MPI is contingent])
+           AC_MSG_WARN([*** upon user interest and developer support.])
+           AC_MSG_WARN([******************************************************])
+          ])
 
     AC_CONFIG_FILES([
         ompi/mpi/java/Makefile
