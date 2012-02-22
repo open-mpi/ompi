@@ -96,21 +96,25 @@ JNIEXPORT jboolean JNICALL Java_mpi_MPI_loadGlobalLibraries(JNIEnv *env, jclass 
     lt_dladvise advise;
 
     if (lt_dlinit() != 0) {
+        opal_output(0, "LT_DLINIT FAILED - CANNOT LOAD LIBOMPI");
         return JNI_FALSE;
     }
 
 #if OPAL_HAVE_LTDL_ADVISE
     /* open the library into the global namespace */
     if (lt_dladvise_init(&advise)) {
+        opal_output(0, "LT_DLADVISE INIT FAILED - CANNOT LOAD LIBOMPI");
         return JNI_FALSE;
     }
 
     if (lt_dladvise_ext(&advise)) {
+        opal_output(0, "LT_DLADVISE EXT FAILED - CANNOT LOAD LIBOMPI");
         lt_dladvise_destroy(&advise);
         return JNI_FALSE;
     }
 
     if (lt_dladvise_global(&advise)) {
+        opal_output(0, "LT_DLADVISE GLOBAL FAILED - CANNOT LOAD LIBOMPI");
         lt_dladvise_destroy(&advise);
         return JNI_FALSE;
     }
@@ -125,6 +129,7 @@ JNIEXPORT jboolean JNICALL Java_mpi_MPI_loadGlobalLibraries(JNIEnv *env, jclass 
 
     return JNI_TRUE;
 #endif
+    opal_output(0, "NO LT_DLADVISE - CANNOT LOAD LIBOMPI");
     /* need to balance the ltdl inits */
     lt_dlexit();
     /* if we don't have advise, then we are hosed */
