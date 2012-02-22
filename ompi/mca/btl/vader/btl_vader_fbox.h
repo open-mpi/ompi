@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC.  
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  *
@@ -34,15 +34,14 @@ static inline unsigned char *mca_btl_vader_reserve_fbox (int peer_smp_rank, size
     int next_fbox = mca_btl_vader_component.vader_next_fbox_out[peer_smp_rank];
     unsigned char *fbox = MCA_BTL_VADER_FBOX_OUT_PTR(peer_smp_rank, next_fbox);  
 
-    /* todo -- need thread locks here for the multi-threaded case */
+    /* todo -- need thread locks/atomics here for the multi-threaded case */
 
-    if (size > MAX_MSG || fbox[0] != MCA_BTL_VADER_FBOX_FREE) {
+    if (OPAL_UNLIKELY(size > MAX_MSG || fbox[0] != MCA_BTL_VADER_FBOX_FREE)) {
         /* fall back on fifo */
         return NULL;
     }
 
-    mca_btl_vader_component.vader_next_fbox_out[peer_smp_rank] =
-        next_fbox == LAST_FBOX ? 0 : next_fbox + 1;
+    mca_btl_vader_component.vader_next_fbox_out[peer_smp_rank] = (next_fbox + 1) & LAST_FBOX;
 
     /* mark this fast box as in use */
     fbox[0] = MCA_BTL_VADER_FBOX_RESERVED;
@@ -67,7 +66,7 @@ static inline int mca_btl_vader_fbox_sendi (struct mca_btl_base_endpoint_t *endp
     unsigned char *fbox;
 
     fbox = mca_btl_vader_reserve_fbox(endpoint->peer_smp_rank, header_size + payload_size);
-    if (NULL == fbox) {
+    if (OPALL_UNLIKELY(NULL == fbox)) {
         return 0;
     }
 
