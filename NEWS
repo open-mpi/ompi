@@ -50,23 +50,47 @@ included in the vX.Y.Z section and be denoted as:
 1.5.5
 -----
 
-- Various shared memory infrastructure fixes.
+- Many, many portability configure/build fixes courtesy of Paul
+  Hargrove.  Thanks, Paul!
+- Fixed shared memory fault tolerance support compiler errors.
+- Removed not-production-quality rshd and tmd PLM launchers.
+- Minor updates to the Open MPI SRPM spec file.
+- Fixed mpirun's --bind-to-socket option.
+- A few MPI_THREAD_MULTIPLE fixes in the shared memory BTL.
+- Upgrade the GNU Autotools used to bootstrap the 1.5/1.6 series to
+  all the latest versions at the time of this release.
+- Categorically state in the README that if you're having a problem
+  with Open MPI with the Linux Intel 12.1 compilers, *upgrade your
+  Intel Compiler Suite to the latest patch version*, and the problems
+  will go away. :-)
+- Fix the --without-memory-manager configure option.
+- Fixes for Totalview/DDT MPI-capable debuggers.
+- Update rsh/ssh support to properly handle the Mac OS X library path
+  (i.e., DYLD_LIBRARY_PATH).
+- Make warning about shared memory backing files on a networked file
+  system be optional (i.e., can be disabled via MCA parameter).
+- Several fixes to processor and memory affinity.
+- Various shared memory infrastructure improvements.
 - Various checkpoint/restart fixes.
 - Fix MPI_IN_PLACE (and other MPI sentinel values) on OS X.  Thanks to
   Dave Goodell for providing the magic OS X gcc linker flags necessary.
+- Various man page corrections and typo fixes.  Thanks to Fujitsu for
+  the patch.
 - Updated wrapper compiler man pages to list the various --showme
   options that are available.
 - Add PMI direct-launch support (e.g., "srun mpi_application" under
   SLURM).
+- Correctly compute the aligned address when packing the
+  datatype description. Thanks to Fujitsu for the patch.
 - Fix MPI obscure corner case handling in packing MPI datatypes.
   Thanks to Fujitsu for providing the patch.
 - Workaround an Intel compiler v12.1.0 2011.6.233 vector optimization
   bug.
 - Output the MPI API in ompi_info output.
-- Major VT update to 5.12.1.3.
-- Upgrade embedded Hardware Locality (hwloc) v1.2.2 with some OMPI
-  customizations.  All processor and memory binding is now done
-  through hwloc.  Woo hoo!
+- Major VT update to 5.12.1.4.
+- Upgrade embedded Hardware Locality (hwloc) v1.3.2, plus some
+  post-1.3.2-release bug fixes.  All processor and memory binding is
+  now done through hwloc.  Woo hoo!
 - New MCA parameters to control process-wide memory binding policy:
   hwloc_base_mem_alloc_policy, hwloc_base_mem_bind_failure_action (see
   ompi_info --param hwloc base).
@@ -78,7 +102,9 @@ included in the vX.Y.Z section and be denoted as:
 - Removed support for the OpenFabrics IBCM connection manager.
 - Updated Chelsio T4 and Intel NE OpenFabrics default buffer settings.
 - Increased the default RDMA CM timeout to 30 seconds.
-- Various fixes to the MXM transport.
+- Issue a warning if both btl_tcp_if_include and btl_tcp_if_exclude
+  are specified.
+- Many fixes to the Mellanox MXM transport.
 
 
 1.5.4
