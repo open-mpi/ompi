@@ -821,7 +821,6 @@ RUN-TIME SYSTEM SUPPORT
   cannot be found, configure will abort.
 
 --with-sge
-
   Specify to build support for the Oracle Grid Engine (OGE) resource
   manager and/or the open Grid Engine.  OGE support is disabled by
   default; this option must be specified to build OMPI's OGE support.
@@ -857,7 +856,6 @@ MISCELLANEOUS SUPPORT LIBRARIES
   configurations.
 
 --with-esmtp=<directory>
-
   Specify the directory where the libESMTP libraries and header files are
   located.  This option is generally only necessary of the libESMTP
   headers and libraries are not included in the default
