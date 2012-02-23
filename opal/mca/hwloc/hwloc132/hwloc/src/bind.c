@@ -327,6 +327,7 @@ hwloc_get_membind(hwloc_topology_t topology, hwloc_cpuset_t set, hwloc_membind_p
   if (!ret)
     hwloc_cpuset_from_nodeset(topology, set, nodeset);
 
+  hwloc_bitmap_free(nodeset);
   return ret;
 }
 
@@ -382,6 +383,7 @@ hwloc_get_proc_membind(hwloc_topology_t topology, hwloc_pid_t pid, hwloc_cpuset_
   if (!ret)
     hwloc_cpuset_from_nodeset(topology, set, nodeset);
 
+  hwloc_bitmap_free(nodeset);
   return ret;
 }
 
@@ -436,6 +438,7 @@ hwloc_get_area_membind(hwloc_topology_t topology, const void *addr, size_t len, 
   if (!ret)
     hwloc_cpuset_from_nodeset(topology, set, nodeset);
 
+  hwloc_bitmap_free(nodeset);
   return ret;
 }
 
