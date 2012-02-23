@@ -18,7 +18,8 @@
 # $HEADER$
 #
 
-man_pages = mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1 mpijavac.1
+generated_man_pages = mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1
+man_pages = $(generated_man_pages) mpijavac.1
 
 EXTRA_DIST = mpijavac.1
 
@@ -44,7 +45,7 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpif77 \
 	$(DESTDIR)$(bindir)/mpif90 \
 	$(DESTDIR)$(bindir)/mpijavac
-    
+
 if CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always
 	(cd $(DESTDIR)$(bindir); rm -f mpiCC; $(LN_S) ompi_wrapper_script mpiCC)
@@ -124,7 +125,7 @@ endif # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 #
 ########################################################
 distclean-local:
-	rm -f $(man_pages)
+	rm -f $(generated_man_pages)
 
 $(top_builddir)/opal/tools/wrappers/generic_wrapper.1:
 	(cd $(top_builddir)/opal/tools/wrappers && $(MAKE) $(AM_MAKEFLAGS) generic_wrapper.1)
