@@ -1422,6 +1422,9 @@ int fscanf(FILE *stream, const char *format, ...)
 
 
 #if defined(HAVE___FPRINTF_CHK) && HAVE___FPRINTF_CHK
+#if !(defined(HAVE_DECL___VFPRINTF_CHK) && HAVE_DECL___VFPRINTF_CHK)
+extern int __vfprintf_chk(FILE *stream, int flag, const char *format, va_list ap);
+#endif /* HAVE_DECL___VFPRINTF_CHK */
 int __fprintf_chk(FILE *stream, int flag, const char *format, ...)
 #else /* HAVE___FPRINTF_CHK */
 int fprintf(FILE *stream, const char *format, ...)
