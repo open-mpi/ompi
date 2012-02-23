@@ -1,7 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2009      Cisco Systems, Inc
-dnl                         All rights reserved. 
+dnl Copyright (c) 2009      Cisco Systems, Inc. All rights reserved. 
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
