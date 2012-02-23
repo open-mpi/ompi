@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
- * Copyright (c) 2011      Los Alamos National Security, LLC. All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
  * Copyright (c) 2011      UT-Battelle, LLC. All rights reserved.
  * $COPYRIGHT$
@@ -71,7 +71,7 @@ typedef struct mca_btl_ugni_module_t {
     ompi_free_list_t eager_frags_recv;
 } mca_btl_ugni_module_t;
 
-struct mca_btl_ugni_component_t {
+typedef struct mca_btl_ugni_component_t {
     /* base BTL component */
     mca_btl_base_component_2_0_0_t super;
 
