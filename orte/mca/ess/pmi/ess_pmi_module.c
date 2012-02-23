@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -220,9 +222,6 @@ static int rte_init(void)
         goto error;
     }
 
-    /* get my pidmap entry */
-    pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid);
-
     /* get our local proc info to find our local rank */
     if (PMI_SUCCESS != (ret = PMI_Get_clique_size(&i))) {
         ORTE_PMI_ERROR(ret, "PMI_Get_clique_size");
@@ -237,11 +236,14 @@ static int rte_init(void)
     }
     /* cycle thru the array until we find our rank */
     for (j=0; j < i; j++) {
-        if (ranks[j] == (int)ORTE_PROC_MY_NAME->vpid) {
-            pmap->local_rank = j;
-            pmap->node_rank = j;
-            break;
+        if (NULL == (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, ranks[j]))) {
+            /* need to create this entry */
+            pmap = OBJ_NEW(orte_pmap_t);
+            pmap->node = nid->index;
+            opal_pointer_array_set_item(&jmap->pmap, ranks[j], pmap);
         }
+        pmap->local_rank = j;
+        pmap->node_rank = j;
     }
     free(ranks);
 
@@ -305,7 +307,6 @@ static uint8_t proc_get_locality(orte_process_name_t *proc)
     orte_nid_t *nid;
     
     if (NULL == (nid = orte_util_lookup_nid(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return OPAL_PROC_NON_LOCAL;
     }
     

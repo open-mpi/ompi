@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 QLogic Corporation. All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +25,7 @@
 #include "opal/event/event.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/ess/ess.h"
 #include "ompi/proc/proc.h"
 
 #include "mtl_psm.h"
@@ -179,37 +182,33 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
     psm_error_t	err;
-    int rc;
     int	verno_major = PSM_VERNO_MAJOR;
     int verno_minor = PSM_VERNO_MINOR;
     ompi_proc_t *my_proc, **procs;
     size_t num_total_procs, proc;
-    int local_rank = -1, num_local_procs = 0;
-    
-    /* Compute the total number of processes on this host and our local rank
-     * on that node. We need to provide PSM with these values so it can 
-     * allocate hardware contexts appropriately across processes.
-     */
-    if ((rc = ompi_proc_refresh()) != OMPI_SUCCESS) {
-      return NULL;
-    }
+    orte_node_rank_t orte_node_rank;
+    int local_rank = 0, num_local_procs = 0;
     
     my_proc = ompi_proc_local();
+
     if (NULL == (procs = ompi_proc_world(&num_total_procs))) {
-      return NULL;
+        return NULL;
     }
-    
+    if (ORTE_NODE_RANK_INVALID ==
+        (orte_node_rank = orte_ess.get_node_rank(&my_proc->proc_name))) {
+        /* the active ess component doesn't support this type of thing */
+        free(procs);
+        return NULL;
+    }
+    local_rank = (int)orte_node_rank;
+
     for (proc = 0; proc < num_total_procs; proc++) {
-      if (my_proc == procs[proc]) {
-	local_rank = num_local_procs++;
-	continue;
-      }
-      
-      if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
-	num_local_procs++;
-      }
+        if (OPAL_PROC_ON_LOCAL_NODE(
+                orte_ess.proc_get_locality(&procs[proc]->proc_name))) {
+            num_local_procs++;
+        }
     }
-    
+
     assert(local_rank >= 0 && num_local_procs > 0);
     free(procs);
     
