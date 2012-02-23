@@ -105,8 +105,8 @@ General notes
     Intel, Portland, and Oracle Solaris Studio 12 compilers (*)
   - OS X (10.5, 10.6, 10.7), 32 and 64 bit (x86_64), with gcc and
     Absoft compilers (*)
-  - Oracle Solaris 10, 32 and 64 bit (SPARC, i386, x86_64), with
-    Oracle Solaris Studio 12
+  - Oracle Solaris 10 and 11, 32 and 64 bit (SPARC, i386, x86_64),
+    with Oracle Solaris Studio 12.2 and 12.3
 
   (*) Be sure to read the Compiler Notes, below.
 
