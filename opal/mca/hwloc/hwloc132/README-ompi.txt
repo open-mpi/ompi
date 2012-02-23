@@ -5,3 +5,4 @@ https://svn.open-mpi.org/trac/hwloc/changeset/4306
 https://svn.open-mpi.org/trac/hwloc/changeset/4309
 https://svn.open-mpi.org/trac/hwloc/changeset/4314
 https://svn.open-mpi.org/trac/hwloc/changeset/4319
+https://svn.open-mpi.org/trac/hwloc/changeset/4340
