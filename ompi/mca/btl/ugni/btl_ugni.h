@@ -66,6 +66,11 @@ typedef struct mca_btl_ugni_module_t {
     gni_cq_handle_t bte_local_cq;
     gni_cq_handle_t smsg_remote_cq;
 
+    /* eager (registered) fragment list */
+    ompi_free_list_t eager_frags_send;
+    ompi_free_list_t eager_frags_recv;
+} mca_btl_ugni_module_t;
+
 struct mca_btl_ugni_component_t {
     /* base BTL component */
     mca_btl_base_component_2_0_0_t super;
