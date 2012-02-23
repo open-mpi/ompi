@@ -66,7 +66,7 @@ static inline int mca_btl_vader_fbox_sendi (struct mca_btl_base_endpoint_t *endp
     unsigned char *fbox;
 
     fbox = mca_btl_vader_reserve_fbox(endpoint->peer_smp_rank, header_size + payload_size);
-    if (OPALL_UNLIKELY(NULL == fbox)) {
+    if (OPAL_UNLIKELY(NULL == fbox)) {
         return 0;
     }
 
