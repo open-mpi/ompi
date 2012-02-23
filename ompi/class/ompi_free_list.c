@@ -1,4 +1,4 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -13,6 +13,8 @@
  * Copyright (c) 2006-2007 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -70,23 +72,19 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
     }
 #endif
 
-    if( NULL != fl->fl_mpool ) {
-        while(NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
-            fl_mem = (ompi_free_list_memory_t*)item;
+    while(NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
+        fl_mem = (ompi_free_list_memory_t*)item;
 
+        if( NULL != fl->fl_mpool ) {
             fl->fl_mpool->mpool_free(fl->fl_mpool, fl_mem->ptr,
                                      fl_mem->registration);
+        } else if (fl_mem->ptr) {
+            free (fl_mem->ptr);
+        }
 
-            /* destruct the item (we constructed it), then free the memory chunk */
-            OBJ_DESTRUCT(item);
-            free(item);
-        }
-    } else {
-        while(NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
-            /* destruct the item (we constructed it), then free the memory chunk */
-            OBJ_DESTRUCT(item);
-            free(item);
-        }
+        /* destruct the item (we constructed it), then free the memory chunk */
+        OBJ_DESTRUCT(item);
+        free(item);
     }
 
     OBJ_DESTRUCT(&fl->fl_allocations);
@@ -169,9 +167,10 @@ int ompi_free_list_init_ex_new(
         return ompi_free_list_grow(flist, num_elements_to_alloc);
     return OMPI_SUCCESS;
 }
+
 int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 {
-    unsigned char *ptr, *mpool_alloc_ptr = NULL;
+    unsigned char *ptr, *mpool_alloc_ptr = NULL, *payload_ptr;
     ompi_free_list_memory_t *alloc_ptr;
     size_t i, alloc_size, head_size, elem_size = 0;
     mca_mpool_base_registration_t *reg = NULL;
@@ -196,18 +195,38 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     if(NULL == alloc_ptr)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
-    /* allocate the rest from the mpool */
-    if(flist->fl_mpool != NULL) {
+    if (0 != flist->fl_payload_buffer_size) {
         elem_size = OPAL_ALIGN(flist->fl_payload_buffer_size, 
-                flist->fl_payload_buffer_alignment, size_t);
-        if(elem_size != 0) {
-            mpool_alloc_ptr = (unsigned char *) flist->fl_mpool->mpool_alloc(flist->fl_mpool,
-                   num_elements * elem_size, flist->fl_payload_buffer_alignment,
-                   MCA_MPOOL_FLAGS_CACHE_BYPASS | MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM, &reg);
-            if(NULL == mpool_alloc_ptr) {
-                free(alloc_ptr);
-                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-            }
+                               flist->fl_payload_buffer_alignment, size_t);
+
+        /* elem_size should not be 0 here */
+        assert (elem_size > 0);
+
+        /* allocate the rest from the mpool (or use memalign/malloc) */
+        if(flist->fl_mpool != NULL) {
+            payload_ptr = mpool_alloc_ptr =
+                (unsigned char *) flist->fl_mpool->mpool_alloc(flist->fl_mpool,
+                                                               num_elements * elem_size, 
+                                                               flist->fl_payload_buffer_alignment,
+                                                               MCA_MPOOL_FLAGS_CACHE_BYPASS |
+                                                               MCA_MPOOL_FLAGS_CUDA_REGISTER_MEM, &reg);
+        } else {
+#ifdef HAVE_POSIX_MEMALIGN
+            posix_memalign ((void **) &mpool_alloc_ptr, flist->fl_payload_buffer_alignment,
+                            num_elements * elem_size);
+            payload_ptr = mpool_alloc_ptr;
+#else
+            mpool_alloc_ptr = malloc (num_elements * elem_size +
+                                      flist->fl_payload_buffer_alignment);
+            payload_ptr = (void*)OPAL_ALIGN((uintptr_t)mpool_alloc_ptr, 
+                                            flist->fl_payload_buffer_alignment,
+                                            uintptr_t);
+#endif
+        }
+
+        if(NULL == mpool_alloc_ptr) {
+            free(alloc_ptr);
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         }
     }
 
@@ -225,7 +244,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     for(i=0; i<num_elements; i++) {
         ompi_free_list_item_t* item = (ompi_free_list_item_t*)ptr;
         item->registration = reg;
-        item->ptr = mpool_alloc_ptr;
+        item->ptr = payload_ptr;
 
         OBJ_CONSTRUCT_INTERNAL(item, flist->fl_frag_class);
         
@@ -236,7 +255,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 
         opal_atomic_lifo_push(&(flist->super), &(item->super));
         ptr += head_size;
-        mpool_alloc_ptr += elem_size;
+        payload_ptr += elem_size;
         
     }
     flist->fl_num_allocated += num_elements;

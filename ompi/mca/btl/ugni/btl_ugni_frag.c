@@ -17,14 +17,11 @@ static inline void mca_btl_ugni_smsg_frag_constructor (mca_btl_ugni_base_frag_t 
 {
     /* send memory does not need to be registered so we do not need a mpool */
     memset ((char *) frag + sizeof (frag->base), 0, sizeof (*frag) - sizeof (frag->base));
-    frag->buffer = frag->segments[0].seg_addr.pval = calloc (1, mca_btl_ugni_component.smsg_max_data);
+    frag->segments[0].seg_addr.pval = frag->base.super.ptr;
 }
 
 static inline void mca_btl_ugni_frag_destructor (mca_btl_ugni_base_frag_t *frag)
 {
-    if (NULL != frag->buffer) {
-        free (frag->buffer);
-    }
 }
 
 static inline void mca_btl_ugni_rdma_frag_constructor (mca_btl_ugni_base_frag_t *frag)

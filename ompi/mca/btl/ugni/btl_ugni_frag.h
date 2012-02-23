@@ -48,7 +48,6 @@ typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_base_endpoint_t *endpoint;
     mca_btl_ugni_reg_t *registration;
     ompi_free_list_t *my_list;
-    void *buffer;
     uint32_t msg_id;
 } mca_btl_ugni_base_frag_t;
 
