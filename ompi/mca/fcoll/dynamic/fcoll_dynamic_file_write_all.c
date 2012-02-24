@@ -82,7 +82,7 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
     int current_index = 0, temp_index=0;
 
     char *global_buf = NULL;
-    MPI_Aint global_count = 0, *memlocs=NULL;
+    MPI_Aint global_count = 0;
     
     
     /* array that contains the sorted indices of the global_iov */
@@ -349,13 +349,6 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 
 	displs_per_process = (MPI_Aint **)malloc (fh->f_procs_per_group * sizeof (MPI_Aint*));
 	if (NULL == displs_per_process) {
-            opal_output (1, "OUT OF MEMORY\n");
-            ret = OMPI_ERR_OUT_OF_RESOURCE;
-	    goto exit;
-        }
-
-	memlocs = (MPI_Aint *) malloc (fh->f_procs_per_group * sizeof(MPI_Aint));
-        if (NULL == memlocs) {
             opal_output (1, "OUT OF MEMORY\n");
             ret = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
