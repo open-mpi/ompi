@@ -23,6 +23,12 @@
 
 #ifdef OTFMERGE_MPI
 #   include "mpi.h"
+#   if defined(INSIDE_OPENMPI) || (defined(HAVE_MPI_GET_ADDRESS) && HAVE_MPI_GET_ADDRESS)
+#       define MPI_Address MPI_Get_address
+#   endif /* HAVE_MPI_GET_ADDRESS */
+#   if defined(INSIDE_OPENMPI) || defined(HAVE_MPI_TYPE_CREATE_STRUCT) && HAVE_MPI_TYPE_CREATE_STRUCT
+#       define MPI_Type_struct MPI_Type_create_struct
+#   endif /* HAVE_MPI_TYPE_CREATE_STRUCT */
 #endif /* OTFMERGE_MPI */
 
 #include "otf.h"
