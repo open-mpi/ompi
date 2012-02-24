@@ -37,21 +37,19 @@
 # --with-ugni=/opt/cray/ugni/default --with-ugni-includedir=/opt/cray/gni-headers/default/include
 
 AC_DEFUN([OMPI_CHECK_UGNI], [
-    AC_ARG_WITH([ugni], [
-        AC_HELP_STRING([--with-ugni(=DIR)],
+    AC_ARG_WITH([ugni], [AC_HELP_STRING([--with-ugni(=DIR)],
         [Build GNI (Cray Gemini) support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
 
     dnl does the path exist?
     OMPI_CHECK_WITHDIR([ugni], [$with_ugni], [.])
 
-    AC_ARG_WITH([ugni-libdir], [
-        AC_HELP_STRING([--with-ugni-libdir=DIR], [
-            Search for GNI (Cray Gemini) libraries in DIR])])
+    AC_ARG_WITH([ugni-libdir], [AC_HELP_STRING([--with-ugni-libdir=DIR],
+         [Search for GNI (Cray Gemini) libraries in DIR])])
     OMPI_CHECK_WITHDIR([ugni-libdir], [$with_ugni_libdir], [libugni.*])
 
-    AC_ARG_WITH([ugni-includedir], [
-        AC_HELP_STRING([--with-ugni-includedir=DIR], [
-            Search for GNI (Cray Gemini) headers in DIR])])
+    AC_ARG_WITH([ugni-includedir], 
+         [AC_HELP_STRING([--with-ugni-includedir=DIR],
+         [Search for GNI (Cray Gemini) headers in DIR])])
     OMPI_CHECK_WITHDIR([ugni-includedir], [$with_ugni_includedir], [gni_pub.h])
 
     AS_IF([test "$with_ugni_includedir" != "" -a "$with_ugni_includedir" != "yes" -a "$with_ugni_includedir" != "no"],
