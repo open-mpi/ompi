@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -195,6 +196,10 @@ typedef uint8_t mca_btl_base_tag_t;
 /* btl can support failover if enabled */
 #define MCA_BTL_FLAGS_FAILOVER_SUPPORT 0x0200
 
+#define MCA_BTL_FLAGS_CUDA_PUT        0x0400
+#define MCA_BTL_FLAGS_CUDA_GET        0x0800
+#define MCA_BTL_FLAGS_CUDA_RDMA (MCA_BTL_FLAGS_CUDA_GET|MCA_BTL_FLAGS_CUDA_PUT)
+
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     (64*1024) /* internal loopback */
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
@@ -241,7 +246,16 @@ struct mca_btl_base_segment_t {
         uint32_t  key32[4];
         uint64_t  key64[2];
         uint8_t   key8[16];
+#if OMPI_CUDA_SUPPORT
+        uint8_t cudakey[128]; /* 64 bytes for CUDA mem handle, 64 bytes for CUDA event handle */
+#endif /* OMPI_CUDA_SUPPORT */
     } seg_key;
+#if OMPI_CUDA_SUPPORT
+    /** Address of the entire memory handle */
+    ompi_ptr_t memh_seg_addr;        
+     /** Length in bytes of entire memory handle */
+    uint32_t   memh_seg_len;           
+#endif /* OMPI_CUDA_SUPPORT */
 };
 typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
 

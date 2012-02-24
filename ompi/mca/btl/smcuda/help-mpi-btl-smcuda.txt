@@ -1,0 +1,20 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2009 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English help file for Open MPI's shared memory support.
+#
+[CUDA RDMA requested but not supported]
+WARNING: CUDA RDMA support was requested for the shared memory
+(sm) BTL, but it is not supported.  Continuing without it.
+
+  Local host: %s

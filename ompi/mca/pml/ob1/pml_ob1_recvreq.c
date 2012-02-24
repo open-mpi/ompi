@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,6 +34,11 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/util/arch.h"
 #include "ompi/memchecker.h"
+
+#if OMPI_CUDA_SUPPORT
+int mca_pml_ob1_cuda_need_buffers(mca_pml_ob1_recv_request_t* recvreq,
+                                  mca_btl_base_module_t* btl);
+#endif /* OMPI_CUDA_SUPPORT */
 
 void mca_pml_ob1_recv_request_process_pending(void)
 {
@@ -485,8 +491,15 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
      * sender side is already registered. We need to be smarter here, perhaps
      * do couple of RDMA reads */
     if(opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
+#if OMPI_CUDA_SUPPORT
+        if (mca_pml_ob1_cuda_need_buffers(recvreq, btl)) {
+            mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
+            return;
+        }
+#else /* OMPI_CUDA_SUPPORT */
         mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
         return;
+#endif /* OMPI_CUDA_SUPPORT */
     }
     
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc);
@@ -513,10 +526,29 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
         }
     }
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
+#if OMPI_CUDA_SUPPORT
+    if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
+        if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) {
+            /* Check to see if this is a CUDA get */
+            if (btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET) {
+                frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
+            }
+            if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
+                opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
+                orte_errmgr.abort(-1, NULL);
+            }
+        } else {
+            /* Just default back to send and receive.  Must be mix of GPU and HOST memory. */
+            mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
+            return;
+        }
+    }
+#else /* OMPI_CUDA_SUPPORT */
     if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
         opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
         orte_errmgr.abort(-1, NULL);
     }
+#endif /* OMPI_CUDA_SUPPORT */
     frag->rdma_hdr.hdr_rget = *hdr;
     frag->rdma_req = recvreq;
     frag->rdma_ep = bml_endpoint;

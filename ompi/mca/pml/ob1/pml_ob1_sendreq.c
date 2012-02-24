@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -637,7 +638,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     int rc;
 
     bml_btl = sendreq->req_rdma[0].bml_btl;
-    if((sendreq->req_rdma_cnt == 1) && (bml_btl->btl_flags & MCA_BTL_FLAGS_GET)) {
+    if((sendreq->req_rdma_cnt == 1) && (bml_btl->btl_flags & (MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_CUDA_GET))) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[0].btl_reg;
         mca_btl_base_descriptor_t* src;
         size_t i;
@@ -706,8 +707,15 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
         for( i = 0; i < src->des_src_cnt; i++ ) {
             hdr->hdr_rget.hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(src->des_src[i].seg_addr.pval);
             hdr->hdr_rget.hdr_segs[i].seg_len       = src->des_src[i].seg_len;
+#if OMPI_CUDA_SUPPORT_41
+            memcpy(hdr->hdr_rget.hdr_segs[i].seg_key.cudakey, src->des_src[i].seg_key.cudakey,
+                   sizeof(src->des_src[i].seg_key.cudakey));
+            hdr->hdr_rget.hdr_segs[i].memh_seg_addr.lval = ompi_ptr_ptol(src->des_src[i].memh_seg_addr.pval);
+            hdr->hdr_rget.hdr_segs[i].memh_seg_len       = src->des_src[i].memh_seg_len;
+#else /* OMPI_CUDA_SUPPORT_41 */
             hdr->hdr_rget.hdr_segs[i].seg_key.key64[0] = src->des_src[i].seg_key.key64[0];
             hdr->hdr_rget.hdr_segs[i].seg_key.key64[1] = src->des_src[i].seg_key.key64[1];
+#endif /* OMPI_CUDA_SUPPORT_41 */
         }
 
         des->des_cbfunc = mca_pml_ob1_send_ctl_completion;
