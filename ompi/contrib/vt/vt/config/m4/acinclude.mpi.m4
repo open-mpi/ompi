@@ -290,10 +290,12 @@ AC_DEFUN([ACVT_MPI],
 			ac_cv_func_MPI_Add_error_class="yes"
 			ac_cv_func_MPI_Add_error_code="yes"
 			ac_cv_func_MPI_Add_error_string="yes"
+			ac_cv_func_MPI_Get_address="yes"
 			ac_cv_func_MPI_Finalized="yes"
 			ac_cv_func_MPI_Type_create_f90_complex="yes"
 			ac_cv_func_MPI_Type_create_f90_integer="yes"
 			ac_cv_func_MPI_Type_create_f90_real="yes"
+			ac_cv_func_MPI_Type_create_struct="yes"
 			ac_cv_func_MPI_Type_match_size="yes"
 			ac_cv_func_PMPI_Win_test="yes"
 			ac_cv_func_PMPI_Win_lock="yes"
@@ -710,10 +712,12 @@ dnl			check for MPI-2 functions
 			AC_CHECK_FUNCS([MPI_Add_error_class \
                                         MPI_Add_error_code \
                                         MPI_Add_error_string \
+                                        MPI_Get_address \
                                         MPI_Finalized \
                                         MPI_Type_create_f90_complex \
                                         MPI_Type_create_f90_integer \
                                         MPI_Type_create_f90_real \
+                                        MPI_Type_create_struct \
                                         MPI_Type_match_size])
 			
 dnl			check for MPI-2 Thread support

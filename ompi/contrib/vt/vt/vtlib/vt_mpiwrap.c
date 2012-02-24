@@ -10,6 +10,13 @@
  * See the file COPYING in the package base directory for details
  **/
 
+/* if compiling inside Open MPI, suppress warnings about usage of
+   deprecated MPI functions (e.g. MPI_Address) */
+#ifdef INSIDE_OPENMPI
+# undef OMPI_WANT_MPI_INTERFACE_WARNING
+# define OMPI_WANT_MPI_INTERFACE_WARNING 0
+#endif /* INSIDE_OPENMPI */
+
 #include "config.h"
 
 #include <stdio.h>
