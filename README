@@ -90,7 +90,7 @@ General notes
 - The run-time systems that are currently supported are:
   - rsh / ssh
   - LoadLeveler
-  - PBS Pro, Open PBS, Torque
+  - PBS Pro, Torque
   - Platform LSF (v7.0.2 and later)
   - SLURM
   - Cray XT-3, XT-4, and XT-5
@@ -161,7 +161,10 @@ Compiler Notes
   later version of the Solaris Studio compilers (e.g., 12.3 does not
   have this problem), or disable building VampirTrace.
 
-- At least some versions of the Intel 8.1 compiler seg fault while
+- Open MPI does not support the gccfss compiler (GCC For SPARC
+  Systems; a now-defunct compiler project from Sun).
+
+- suite least some versions of the Intel 8.1 compiler seg fault while
   compiling certain Open MPI source code files.  As such, it is not
   supported.
 
