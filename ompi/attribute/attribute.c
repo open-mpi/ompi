@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -320,7 +320,7 @@
                 return OMPI_FINT_2_INT(f_err); \
             } \
             out_attr->av_value = (void *) out; \
-            flag = OMPI_FINT_2_INT(f_flag); \
+            flag = OMPI_LOGICAL_2_INT(f_flag); \
         } \
     } \
     /* C style */ \
@@ -942,42 +942,20 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
         /* Hang this off the object's hash */
             
-        /* The OMPI_KEYVAL_F77 will be set if we called either an
-           MPI-1 style Fortran callback, or an MPI-2 style Fortran
-           callback.  If the callback set flag to .TRUE., then set
-           which style of Fortran callback was used on the new
-           attribute. */
-        if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77) &&
-            OMPI_FORTRAN_VALUE_TRUE == flag) {
-            if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77_MPI1)) {
-                new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI1;
-            } else {
-                new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI2;
-            }
-            /* For convenience, set flag to 1 (instead of the
-               FORTRAN_VALUE_TRUE), so that we can just do a single
-               test, below. */
-            flag = 1;
-        } 
-
-        /* Otherwise, if this is not a Fortran-created keyval (i.e.,
-           it's a C-based keyval -- see the comments at the beginning
-           of this file that explain OMPI_KEYVAL_* values), and it set
-           the flag to 1, then set that the new attribute was set via
-           C. */
-        else if (0 == (hash_value->attr_flag & OMPI_KEYVAL_F77) &&
-                 1 == flag) {
-            new_attr->av_set_from = OMPI_ATTRIBUTE_C;
-        } 
-
-        /* Otherwise, just guarantee that flag is not 1 */
-        else {
-            flag = 0;
-        }
-
-        /* If anything above set the new attribute value, then
-           actually set it on the new attribute hash. */
+        /* The COPY_ATTR_CALLBACKS macro will have converted the
+           _flag_ callback output value from Fortran's .TRUE. value to
+           0/1 (if necessary).  So we only need to check for 0/1 here
+           -- not .TRUE. */
         if (1 == flag) {
+            if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77)) {
+                if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77_MPI1)) {
+                    new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI1;
+                } else {
+                    new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI2;
+                }
+            } else {
+                new_attr->av_set_from = OMPI_ATTRIBUTE_C;
+            }
             set_value(type, new_object, &newattr_hash, key, 
                       new_attr, true);
         } else {
