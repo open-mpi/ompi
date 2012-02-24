@@ -91,7 +91,7 @@ AC_DEFUN([ACVT_OTF],
 		esac
 
 		otf_conf_cmd="$otf_srcdir/configure"
-		otf_conf_args="--enable-static=$enable_static --enable-shared=$enable_shared"
+		otf_conf_args="--with-openmpi-inside=$inside_openmpi --enable-static=$enable_static --enable-shared=$enable_shared"
 
 		sav_CPPFLAGS=$CPPFLAGS
 
