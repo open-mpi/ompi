@@ -14,6 +14,17 @@ AM_CONFIG_HEADER(config.h)
 # If Automake supports silent rules, enable them.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+# Check whether we are inside Open MPI package
+inside_openmpi="no"
+AC_ARG_WITH(openmpi-inside, [],
+[
+	AS_IF([test x"$withval" != "xno"],
+	[
+		inside_openmpi="yes"
+		CPPFLAGS="-DINSIDE_OPENMPI $CPPFLAGS"
+	])
+])
+
 # Get library version
 OTF_VERSION_LIBRARY=m4_normalize(esyscmd([config/otf_get_version.sh VERSION --library]))
 AC_SUBST([OTF_VERSION_LIBRARY])
