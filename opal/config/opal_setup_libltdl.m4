@@ -169,16 +169,16 @@ AC_DEFUN([_OPAL_SETUP_LIBLTDL_INTERNAL],[
         CPPFLAGS_save="$CPPFLAGS"
         CPPFLAGS="-I."
         # Must specifically mention $srcdir here for VPATH builds
+        # (this file is in the src tree).
         AC_EGREP_HEADER([lt_dladvise_init], [$srcdir/opal/libltdl/ltdl.h],
                         [OPAL_HAVE_LTDL_ADVISE=1])
         CPPFLAGS="$CPPFLAGS_save"
 
-        # Arrgh.  This is gross.  But I can't think of any other
-        # way to do it.  :-(
-        # Must specifically mention $srcdir here for VPATH builds
-        flags=`$EGREP ^LIBADD_DL $srcdir/opal/libltdl/Makefile | cut -d= -f2-`
-        # Must specifically mention $srcdir here for VPATH builds
-        OMPI_CHECK_LINKER_FLAGS([$srcdir/opal/libltdl/libtool], 
+        # Arrgh.  This is gross.  But I can't think of any other way
+        # to do it.  :-( These files are in the build tree; don't list
+        # $srcdir here.
+        flags=`$EGREP ^LIBADD_DL opal/libltdl/Makefile | cut -d= -f2-`
+        OMPI_CHECK_LINKER_FLAGS([opal/libltdl/libtool], 
                                 [-export-dynamic $flags])
 
         WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
