@@ -71,6 +71,20 @@ AC_DEFUN([CHECK_MPI],
 
         CPPFLAGS=$sav_CPPFLAGS
         LDFLAGS=$sav_LDFLAGS
+
+        if test "$mpi_error" = "no" -a "$inside_openmpi" = "no"; then
+
+            sav_CC=$CC
+            sav_LIBS=$LIBS
+            CC=$MPICC
+            LIBS="$LIBS $MPILIBS"
+
+            AC_CHECK_FUNCS([MPI_Get_address])
+            AC_CHECK_FUNCS([MPI_Type_create_struct])
+
+            CC=$sav_CC
+            LIBC=$sav_LIBS
+        fi
     fi
 
     MPI_LIB_DIR=$mpi_lib_dir
