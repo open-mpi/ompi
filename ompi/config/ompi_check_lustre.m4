@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2008-2012 University of Houston. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -55,15 +55,15 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
 
     temp_with_lustre="$with_lustre"
     AS_IF([test -z "$with_lustre"],
-          [with_lustre="/usr/local"])
+          [with_lustre="/usr/"])
 
     temp_with_lustre_libs="$with_lustre_libs"
     AS_IF([test -z "$with_lustre_libs"],
 	[with_lustre_libs="lustre lustreapi"])
     
     # Add correct -I and -L flags
-    AS_IF([test -d "$with_lustre/include"],
-        [check_lustre_CPPFLAGS="-I$with_lustre/include"
+    AS_IF([test -d "$with_lustre/include/lustre/"],
+        [check_lustre_CPPFLAGS="-I$with_lustre/include/lustre/"
             $1_CPPFLAGS="$check_lustre_CPPFLAGS"
             $1_CPPFLAGS="$check_lustre_CPPFLAGS"
             CFLAGS="$CFLAGS $check_lustre_CPPFLAGS"	    
@@ -73,8 +73,8 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
 	[ompi_check_lustre_happy="no"])
     
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
-	[AS_IF([test -d "$with_lustre/lib"],
-		[check_lustre_LDFLAGS="-L$with_lustre/lib"
+	[AS_IF([test -d "$with_lustre/lib64"],
+		[check_lustre_LDFLAGS="-L$with_lustre/lib64"
 		    $1_LDFLAGS="$check_lustre_LDFLAGS"
 		    LDFLAGS="$LDFLAGS $check_lustre_LDFLAGS"
 		    WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $check_lustre_LDFLAGS"],
@@ -93,10 +93,12 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
 	    WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $check_lustre_LIBS"
 
             # check for lustre
-	    AC_CHECK_HEADERS([lustre.h],
+	    AC_CHECK_HEADERS([liblustreapi.h],
 		[AC_MSG_CHECKING([if possible to link LUSTRE])
-		    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <lustre.h>], 
-				[int i;])],
+		    AC_LINK_IFELSE([AC_LANG_PROGRAM(
+				[[#include <stdio.h>
+                                  #include <liblustreapi.h>]], 
+				[[llapi_file_create(NULL,0,-1,0, 0);]])],
 			[AC_MSG_RESULT([yes])
 			    ompi_check_lustre_happy="yes"],
 			[AC_MSG_RESULT([no])
