@@ -222,6 +222,13 @@ int orte_odls_base_open(void)
         /* get the number of local sockets unless we were given a number */
         if (0 == orte_default_num_sockets_per_board) {
             opal_paffinity_base_get_socket_info(&orte_odls_globals.num_sockets);
+            /* on some really old kernels or unusual systems, we may not
+             * see any sockets - so default to a value of 1 to avoid
+             * the segfault
+             */
+            if (orte_odls_globals.num_sockets <= 0) {
+                orte_odls_globals.num_sockets = 1;
+            }
         }
         /* get the number of local processors */
         opal_paffinity_base_get_processor_info(&orte_odls_globals.num_processors);
