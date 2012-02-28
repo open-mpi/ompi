@@ -216,9 +216,9 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
                             num_elements * elem_size);
             payload_ptr = mpool_alloc_ptr;
 #else
-            mpool_alloc_ptr = malloc (num_elements * elem_size +
+            mpool_alloc_ptr = (unsigned char *) malloc (num_elements * elem_size +
                                       flist->fl_payload_buffer_alignment);
-            payload_ptr = (void*)OPAL_ALIGN((uintptr_t)mpool_alloc_ptr, 
+            payload_ptr = (unsigned char *) OPAL_ALIGN((uintptr_t)mpool_alloc_ptr, 
                                             flist->fl_payload_buffer_alignment,
                                             uintptr_t);
 #endif
