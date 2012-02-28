@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,6 +32,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
+
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/constants.h"
 
@@ -131,7 +134,7 @@ static int split_shorts(opal_cmd_line_t *cmd,
                         int *num_args_used, bool ignore_unknown);
 static cmd_line_option_t *find_option(opal_cmd_line_t *cmd, 
                                       const char *option_name) __opal_attribute_nonnull__(1) __opal_attribute_nonnull__(2);
-static void set_dest(cmd_line_option_t *option, char *sval);
+static int set_dest(cmd_line_option_t *option, char *sval);
 static void fill(const cmd_line_option_t *a, char result[3][BUFSIZ]);
 static int qsort_callback(const void *a, const void *b);
 
@@ -440,7 +443,10 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                             if (0 == j &&
                                 (NULL != option->clo_mca_param_env_var ||
                                  NULL != option->clo_variable_dest)) {
-                                set_dest(option, cmd->lcl_argv[i]);
+                                if (OPAL_SUCCESS != (ret = set_dest(option, cmd->lcl_argv[i]))) {
+                                    opal_mutex_unlock(&cmd->lcl_mutex);
+                                    return ret;
+                                }
                             }
                         }
                     }
@@ -450,7 +456,10 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                    need to set a boolean value to "true". */
 
                 if (0 == option->clo_num_params) {
-                    set_dest(option, "1");
+                    if (OPAL_SUCCESS != (ret = set_dest(option, "1"))) {
+                        opal_mutex_unlock(&cmd->lcl_mutex);
+                        return ret;
+                    }
                 }
 
                 /* If we succeeded in all that, save the param to the
@@ -1132,11 +1141,12 @@ static cmd_line_option_t *find_option(opal_cmd_line_t *cmd,
 }
 
 
-static void set_dest(cmd_line_option_t *option, char *sval)
+static int set_dest(cmd_line_option_t *option, char *sval)
 {
-    int ival = atoi(sval);
-    long lval = strtol(sval, NULL, 10);
+    int ival = atol(sval);
+    long lval = strtoul(sval, NULL, 10);
     char *str = NULL;
+    size_t i;
 
     /* Set MCA param.  We do this in the environment because the MCA
        parameter may not have been registered yet -- and if it isn't
@@ -1174,9 +1184,55 @@ static void set_dest(cmd_line_option_t *option, char *sval)
             *((char**) option->clo_variable_dest) = strdup(sval);
             break;
         case OPAL_CMD_LINE_TYPE_INT:
+            /* check to see that the value given to us truly is an int */
+            for (i=0; i < strlen(sval); i++) {
+                if (!isdigit(sval[i]) && '-' != sval[i]) {
+                    /* show help isn't going to be available yet, so just
+                     * print the msg
+                     */
+                    fprintf(stderr, "-----------------------------------------------------------\n");
+                    fprintf(stderr, "Open MPI has detected that a parameter given to a cmd line\n");
+                    fprintf(stderr, "option does not match the expected format:\n\n");
+                    if (NULL != option->clo_long_name) {
+                        fprintf(stderr, "  Option: %s\n", option->clo_long_name);
+                    } else if ('\0' != option->clo_short_name) {
+                        fprintf(stderr, "  Option: %c\n", option->clo_short_name);
+                    } else {
+                        fprintf(stderr, "  Option: <unknown>\n");
+                    }
+                    fprintf(stderr, "  Param:  %s\n\n", sval);
+                    fprintf(stderr, "This is frequently caused by omitting to provide the parameter\n");
+                    fprintf(stderr, "to an option that requires one. Please check the cmd line and try again.\n");
+                    fprintf(stderr, "-----------------------------------------------------------\n\n");
+                    return OPAL_ERR_SILENT;
+                }
+            }
             *((int*) option->clo_variable_dest) = ival;
             break;
         case OPAL_CMD_LINE_TYPE_SIZE_T:
+            /* check to see that the value given to us truly is a size_t */
+            for (i=0; i < strlen(sval); i++) {
+                if (!isdigit(sval[i]) && '-' != sval[i]) {
+                    /* show help isn't going to be available yet, so just
+                     * print the msg
+                     */
+                    fprintf(stderr, "-----------------------------------------------------------\n");
+                    fprintf(stderr, "Open MPI has detected that a parameter given to a cmd line\n");
+                    fprintf(stderr, "option does not match the expected format:\n\n");
+                    if (NULL != option->clo_long_name) {
+                        fprintf(stderr, "  Option: %s\n", option->clo_long_name);
+                    } else if ('\0' != option->clo_short_name) {
+                        fprintf(stderr, "  Option: %c\n", option->clo_short_name);
+                    } else {
+                        fprintf(stderr, "  Option: <unknown>\n");
+                    }
+                    fprintf(stderr, "  Param:  %s\n\n", sval);
+                    fprintf(stderr, "This is frequently caused by omitting to provide the parameter\n");
+                    fprintf(stderr, "to an option that requires one. Please check the cmd line and try again.\n");
+                    fprintf(stderr, "-----------------------------------------------------------\n\n");
+                    return OPAL_ERR_SILENT;
+                }
+            }
             *((size_t*) option->clo_variable_dest) = lval;
             break;
         case OPAL_CMD_LINE_TYPE_BOOL:
@@ -1186,6 +1242,7 @@ static void set_dest(cmd_line_option_t *option, char *sval)
             break;
         }
     }
+    return OPAL_SUCCESS;
 }
 
 
