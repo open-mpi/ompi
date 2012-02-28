@@ -41,9 +41,9 @@ typedef struct local_io_array{
 
 
 
-int local_heap_sort (local_io_array *io_array,
-		     int num_entries,
-		     int *sorted);
+static int local_heap_sort (local_io_array *io_array,
+			    int num_entries,
+			    int *sorted);
 
 
 int
@@ -1105,9 +1105,9 @@ mca_fcoll_dynamic_file_write_all (mca_io_ompio_file_t *fh,
 }
 
 
-int local_heap_sort (local_io_array *io_array,
-		     int num_entries,
-		     int *sorted)
+static int local_heap_sort (local_io_array *io_array,
+			    int num_entries,
+			    int *sorted)
 {
     int i = 0;
     int j = 0;
