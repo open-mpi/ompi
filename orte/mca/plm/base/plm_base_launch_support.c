@@ -1046,6 +1046,11 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     }
     map = daemons->map;
     
+    /* zero-out the number of new daemons as we will compute this
+     * each time we are called
+     */
+    map->num_new_daemons = 0;
+
     /* run the allocator on the application job - this allows us to
      * pickup any host or hostfile arguments so we get the full
      * array of nodes in our allocation
@@ -1084,6 +1089,18 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
              */
             node->mapped = false;
         }
+    }
+
+    /* if we didn't get anything, then we are the only node in the
+     * allocation - so there is nothing else to do as no other
+     * daemons are to be launched
+     */
+    if (0 == opal_list_get_size(&nodes)) {
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s plm:base:setup_vm only HNP in allocation",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        OBJ_DESTRUCT(&nodes);
+        return ORTE_SUCCESS;
     }
 
     /* is there a default hostfile? */
@@ -1134,10 +1151,17 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         }
     }
 
-    /* zero-out the number of new daemons as we will compute this
-     * each time we are called
+    /* if we didn't get anything, then we are the only node in the
+     * allocation - so there is nothing else to do as no other
+     * daemons are to be launched
      */
-    map->num_new_daemons = 0;
+    if (0 == opal_list_get_size(&nodes)) {
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s plm:base:setup_vm only HNP left",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        OBJ_DESTRUCT(&nodes);
+        return ORTE_SUCCESS;
+    }
 
     /* cycle thru all available nodes and find those that do not already
      * have a daemon on them - no need to include our own as we are
