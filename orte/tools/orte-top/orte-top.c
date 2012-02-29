@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -39,9 +39,10 @@
 
 #include "opal/util/cmd_line.h"
 #include "opal/util/argv.h"
+#include "opal/util/show_help.h"
+#include "opal/util/opal_environ.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/opal_environ.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/event/event.h"
 
@@ -240,17 +241,30 @@ main(int argc, char *argv[])
     
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
-    ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
+    ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
+    if (OPAL_SUCCESS != ret) {
+        if (OPAL_ERR_SILENT != ret) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(ret));
+        }
+        return 1;
+    }
     
     /**
      * Now start parsing our specific arguments
      */
-    if (OPAL_SUCCESS != ret || help) {
-        char *args = NULL;
+    if (help) {
+        char *str, *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        orte_show_help("help-orte-top.txt", "orte-top:usage", true, "orte-top", args);
+        str = opal_show_help_string("help-orte-top.txt", "orte-top:usage", 
+                                    true, "orte-top", args);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
         free(args);
-        return ORTE_ERROR;
+        /* If we show the help message, that should be all we do */
+        return 0;
     }
     
     /***************************

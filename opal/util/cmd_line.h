@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -349,6 +350,9 @@ BEGIN_C_DECLS
      * @param argv Array of strings from the command line.
      *
      * @retval OPAL_SUCCESS Upon success.
+     * @retval OPAL_ERR_SILENT If an error message was printed.  This
+     * value will only be returned if the command line was not
+     * successfully parsed.
      *
      * Parse a series of command line tokens according to the option
      * descriptions from a OPAL command line handle.  The OPAL command line
@@ -361,15 +365,25 @@ BEGIN_C_DECLS
      * is displayed.  If ignore_unknown is true, the error message is
      * not displayed.
      *
+     * Error messages are always displayed (to stderr, and
+     * OPAL_ERR_SILENT is returned) if a token was encountered that
+     * required N parameters, but <N parameters were found (e.g., "cmd
+     * --param foo", but --param was registered to require 2 option
+     * tokens).
+     *
      * The contents of argc and argv are not changed during parsing.
      * argv[0] is assumed to be the executable name, and is ignored during
-     * parsing.  It can later be retrieved with
+     * parsing, except when printing error messages.
      *
      * Parsing will stop in the following conditions:
      *
      * - all argv tokens are processed
      * - the token "--" is found
      * - an unrecognized token is found
+     * - a parameter registered with an integer type option finds a
+     *   non-integer option token
+     * - a parameted registered N option tokens, but finds less then
+     *   <N tokens available
      *
      * Upon any of these conditions, any remaining tokens will be placed
      * in the "tail" (and therefore not examined by the parser),

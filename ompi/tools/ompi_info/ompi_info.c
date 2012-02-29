@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copryight (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -42,7 +42,9 @@
 #include "opal/runtime/opal_cr.h"
 #endif
 #include "opal/util/cmd_line.h"
+#include "opal/util/error.h"
 #include "opal/util/argv.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/base.h"
 
 #include "orte/util/show_help.h"
@@ -145,18 +147,33 @@ int main(int argc, char *argv[])
     
     /* Do the parsing */
     
-    if (OMPI_SUCCESS != opal_cmd_line_parse(ompi_info_cmd_line, false, argc, argv)) {
+    ret = opal_cmd_line_parse(ompi_info_cmd_line, false, argc, argv);
+    if (OMPI_SUCCESS != ret) {
         cmd_error = true;
+        if (OPAL_ERR_SILENT != ret) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(ret));
+        }
     }
     if (!cmd_error && 
         (opal_cmd_line_is_taken(ompi_info_cmd_line, "help") || 
          opal_cmd_line_is_taken(ompi_info_cmd_line, "h"))) {
+        char *str, *usage;
+
         want_help = true;
-    }
-    if (cmd_error || want_help) {
-        char *usage = opal_cmd_line_get_usage_msg(ompi_info_cmd_line);
-        orte_show_help("help-ompi_info.txt", "usage", true, usage);
+        usage = opal_cmd_line_get_usage_msg(ompi_info_cmd_line);
+        str = opal_show_help_string("help-ompi_info.txt", "usage", 
+                                    true, usage);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
         free(usage);
+    }
+
+    /* If we had a cmd line parse error, or we showed the help
+       message, it's time to exit. */
+    if (cmd_error || want_help) {
         mca_base_close();
         OBJ_RELEASE(ompi_info_cmd_line);
         opal_finalize_util();

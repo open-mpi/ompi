@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -29,12 +30,10 @@ Usage: %s [OPTIONS]
 We could not find an mpirun matching the provided pid on this machine.
 
 Pid provided: %d
-
 #
 [orte-top:no-contact-given]
 This tool requires that you specify contact info for the mpirun executing
 the specified rank(s). Please use the --help option for more information.
-
 #
 [orte-top:hnp-filename-bad]
 We are unable to parse the filename where contact info for the

@@ -13,7 +13,7 @@
  *                         reserved. 
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
- *
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,6 +62,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/error.h"
 #include "opal/util/basename.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -514,7 +515,27 @@ static int parse_args(int argc, char *argv[])
     
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
-    ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
+    ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
+    if (OPAL_SUCCESS != ret) {
+        if (OPAL_ERR_SILENT != ret) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(ret));
+        }
+        return 1;
+    }
+    if (opal_restart_globals.help ) {
+        char *str, *args = NULL;
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        str = opal_show_help_string("help-opal-restart.txt", "usage", true,
+                                    args);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+        /* If we show the help message, that should be all we do */
+        exit(0);
+    }
     
     /** 
      * Put all of the MCA arguments in the environment 
@@ -534,23 +555,13 @@ static int parse_args(int argc, char *argv[])
     /**
      * Now start parsing our specific arguments
      */
-    if (OPAL_SUCCESS != ret || 
-        opal_restart_globals.help ) {
-        char *args = NULL;
-        args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-opal-restart.txt", "usage", true,
-                       args);
-        free(args);
-        return OPAL_ERROR;
-    }
-
     /* get the remaining bits */
     opal_cmd_line_get_tail(&cmd_line, &argc, &argv);
 
     if ( NULL == opal_restart_globals.snapshot_ref || 
          0 >= strlen(opal_restart_globals.snapshot_ref) ) {
         opal_show_help("help-opal-restart.txt", "invalid_filename", true,
-                       opal_restart_globals.snapshot_ref);
+                       "<none provided>");
         return OPAL_ERROR;
     }
 
@@ -590,9 +601,6 @@ static int check_file(void)
                         path_to_check);
 
     if (0 >  (ret = access(path_to_check, F_OK)) ) {
-        opal_output(opal_restart_globals.output,
-                    "Error: Unable to access the path [%s]!",
-                    path_to_check);
         exit_status = OPAL_ERROR;
         goto cleanup;
     }

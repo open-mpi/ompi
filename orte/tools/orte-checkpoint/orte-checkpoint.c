@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -345,6 +346,7 @@ static int parse_args(int argc, char *argv[]) {
     opal_cmd_line_t cmd_line;
     char **app_env = NULL, **global_env = NULL;
     char * tmp_env_var = NULL;
+    char *argv0 = NULL;
 
     /* Init structure */
     memset(&orte_checkpoint_globals, 0, sizeof(orte_checkpoint_globals_t));
@@ -370,12 +372,52 @@ static int parse_args(int argc, char *argv[]) {
     orte_checkpoint_globals.detach_debugger = false;
 #endif
 
+#if OPAL_ENABLE_FT_CR == 0
+    /* Warn and exit if not configured with Checkpoint/Restart */
+    {
+        char *str, *args = NULL;
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        str = opal_show_help_string("help-orte-checkpoint.txt", "usage-no-cr",
+                                    true, args);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
+#endif
+    
     /* Parse the command line options */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
-    ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
-    
+    ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
+
+    if (OPAL_SUCCESS != ret) {
+        if (OPAL_ERR_SILENT != ret) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(ret));
+        }
+        exit_status = 1;
+        goto cleanup;
+    }
+
+    if (orte_checkpoint_globals.help) {
+        char *str, *args = NULL;
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        str = opal_show_help_string("help-orte-checkpoint.txt", "usage", true,
+                                    args);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+        /* If we show the help message, that should be all we do */
+        exit(0);
+    }
+
     /** 
      * Put all of the MCA arguments in the environment 
      */
@@ -402,6 +444,7 @@ static int parse_args(int argc, char *argv[]) {
      * Now start parsing our specific arguments
      */
     /* get the remaining bits */
+    argv0 = strdup(argv[0]);
     opal_cmd_line_get_tail(&cmd_line, &argc, &argv);
 
     if(orte_checkpoint_globals.list_only ) {
@@ -409,28 +452,10 @@ static int parse_args(int argc, char *argv[]) {
         goto cleanup;
     }
 
-#if OPAL_ENABLE_FT_CR == 0
-    /* Warn and exit if not configured with Checkpoint/Restart */
-    {
-        char *args = NULL;
-        args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-checkpoint.txt", "usage-no-cr",
-                       true, args);
-        free(args);
-        exit_status = ORTE_ERROR;
-        goto cleanup;
-    }
-#endif
-    
-    if (OPAL_SUCCESS != ret || 
-        orte_checkpoint_globals.help ||
-        (0 >= argc && ORTE_JOBID_INVALID == orte_checkpoint_globals.req_hnp)) {
-        char *args = NULL;
-        args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-checkpoint.txt", "usage", true,
-                       args);
-        free(args);
-        exit_status = ORTE_ERROR;
+    if (0 >= argc && ORTE_JOBID_INVALID == orte_checkpoint_globals.req_hnp) {
+        fprintf(stderr, "%s: Nothing to do\n", argv0);
+        fprintf(stderr, "Type '%s --help' for usage.\n", argv0);
+        exit_status = 1;
         goto cleanup;
     }
 
@@ -482,6 +507,10 @@ static int parse_args(int argc, char *argv[]) {
     }
 
  cleanup:
+    if (NULL != argv0) {
+        free(argv0);
+    }
+
     return exit_status;
 }
 

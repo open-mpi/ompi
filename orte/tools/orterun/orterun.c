@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -67,7 +67,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/opal_getcwd.h"
-#include "orte/util/show_help.h"
+#include "opal/util/show_help.h"
 #include "opal/sys/atomic.h"
 #if OPAL_ENABLE_FT_CR == 1
 #include "opal/runtime/opal_cr.h"
@@ -84,6 +84,7 @@
 #include "orte/util/pre_condition_transports.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/hnp_contact.h"
+#include "orte/util/show_help.h"
 
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/plm/plm.h"
@@ -546,8 +547,12 @@ int orterun(int argc, char *argv[])
     init_globals();
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
-    if (ORTE_SUCCESS != (rc = opal_cmd_line_parse(&cmd_line, true,
+    if (OPAL_SUCCESS != (rc = opal_cmd_line_parse(&cmd_line, true,
                                                   argc, argv)) ) {
+        if (OPAL_ERR_SILENT != rc) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(rc));
+        }
         return rc;
     }
 
@@ -926,24 +931,27 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
 {
     /* print version if requested.  Do this before check for help so
        that --version --help works as one might expect. */
-    if (orterun_globals.version && 
-        !(1 == argc || orterun_globals.help)) {
-        char *project_name = NULL;
+    if (orterun_globals.version) {
+        char *str, *project_name = NULL;
         if (0 == strcmp(orte_basename, "mpirun")) {
             project_name = "Open MPI";
         } else {
             project_name = "OpenRTE";
         }
-        orte_show_help("help-orterun.txt", "orterun:version", false,
-                       orte_basename, project_name, OPAL_VERSION,
-                       PACKAGE_BUGREPORT);
-        /* if we were the only argument, exit */
-        if (2 == argc) exit(0);
+        str = opal_show_help_string("help-orterun.txt", "orterun:version", 
+                                    false,
+                                    orte_basename, project_name, OPAL_VERSION,
+                                    PACKAGE_BUGREPORT);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        exit(0);
     }
 
     /* Check for help request */
-    if (1 == argc || orterun_globals.help) {
-        char *args = NULL;
+    if (orterun_globals.help) {
+        char *str, *args = NULL;
         char *project_name = NULL;
         if (0 == strcmp(orte_basename, "mpirun")) {
             project_name = "Open MPI";
@@ -951,10 +959,14 @@ static int parse_globals(int argc, char* argv[], opal_cmd_line_t *cmd_line)
             project_name = "OpenRTE";
         }
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        orte_show_help("help-orterun.txt", "orterun:usage", false,
-                       orte_basename, project_name, OPAL_VERSION,
-                       orte_basename, args,
-                       PACKAGE_BUGREPORT);
+        str = opal_show_help_string("help-orterun.txt", "orterun:usage", false,
+                                    orte_basename, project_name, OPAL_VERSION,
+                                    orte_basename, args,
+                                    PACKAGE_BUGREPORT);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
         free(args);
 
         /* If someone asks for help, that should be all we do */
