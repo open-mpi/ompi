@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -47,7 +47,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_sos.h"
-#include "orte/util/show_help.h"
+#include "opal/util/show_help.h"
 #include "opal/util/daemon_init.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
@@ -123,22 +123,27 @@ int main(int argc, char *argv[])
     mca_base_cmd_line_setup(cmd_line);
     if (OPAL_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
                                                    argc, argv))) {
-        char *args = NULL;
-        args = opal_cmd_line_get_usage_msg(cmd_line);
-        orte_show_help("help-ompi-server.txt", "ompiserver:usage", false,
-                       argv[0], args);
-        free(args);
-        return ret;
+        if (OPAL_ERR_SILENT != ret) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(ret));
+        }
+        return 1;
     }
     
     /* check for help request */
     if (help) {
-        char *args = NULL;
+        char *str, *args = NULL;
         args = opal_cmd_line_get_usage_msg(cmd_line);
-        orte_show_help("help-ompi-server.txt", "ompiserver:usage", false,
-                       argv[0], args);
+        str = opal_show_help_string("help-ompi-server.txt", 
+                                    "ompiserver:usage", false,
+                                    argv[0], args);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
         free(args);
-        return 1;
+        /* If we show the help message, that should be all we do */
+        return 0;
     }
 
     /*

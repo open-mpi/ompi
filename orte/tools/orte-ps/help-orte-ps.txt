@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,14 +24,18 @@ ompi-ps [OPTIONS]
   Open MPI Job and Process Status Tool
 
 %s
-
+#
 [vpid-usage]
 Error: You specified a vpid (%d) without also specifying a jobid.
        Use the '-j' option to specify a jobid.
-
+#
+[need-vpid]
+Error: You specified a jobid (%d) without also specifying a vpid.
+       Use the '-p' option to specify a vpid.
+#
 [invalid-vpid]
 Error: The specified vpid (%d) is not valid for job %d.
-
+#
 [stale-hnp]
 An attempt was made to obtain ps information from a non-responsive
 HNP:

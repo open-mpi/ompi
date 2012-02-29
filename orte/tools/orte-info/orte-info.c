@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copryight (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -40,9 +40,12 @@
 #include "opal/class/opal_pointer_array.h"
 #include "opal/runtime/opal.h"
 #include "opal/util/cmd_line.h"
+#include "opal/util/error.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/show_help.h"
 
+#include "orte/constants.h"
 #include "orte/util/show_help.h"
 #include "orte/runtime/orte_locks.h"
 
@@ -142,18 +145,30 @@ int main(int argc, char *argv[])
     
     /* Do the parsing */
     
-    if (ORTE_SUCCESS != opal_cmd_line_parse(orte_info_cmd_line, false, argc, argv)) {
+    ret = opal_cmd_line_parse(orte_info_cmd_line, false, argc, argv);
+    if (OPAL_SUCCESS != ret) {
+        if (OPAL_ERR_SILENT != ret) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(ret));
+        }
         cmd_error = true;
     }
     if (!cmd_error && 
         (opal_cmd_line_is_taken(orte_info_cmd_line, "help") || 
          opal_cmd_line_is_taken(orte_info_cmd_line, "h"))) {
+        char *str, *usage;
+
         want_help = true;
+        usage = opal_cmd_line_get_usage_msg(orte_info_cmd_line);
+        str = opal_show_help_string("help-orte-info.txt", "usage", true, 
+                                    usage);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(usage);
     }
     if (cmd_error || want_help) {
-        char *usage = opal_cmd_line_get_usage_msg(orte_info_cmd_line);
-        orte_show_help("help-orte-info.txt", "usage", true, usage);
-        free(usage);
         mca_base_close();
         OBJ_RELEASE(orte_info_cmd_line);
         opal_finalize_util();

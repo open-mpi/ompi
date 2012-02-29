@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -58,6 +58,7 @@
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal.h"
@@ -327,29 +328,38 @@ static int parse_args(int argc, char *argv[]) {
     
     mca_base_open();
     mca_base_cmd_line_setup(&cmd_line);
-    ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
+    ret = opal_cmd_line_parse(&cmd_line, false, argc, argv);
     
+    if (OPAL_SUCCESS != ret) {
+        if (OPAL_ERR_SILENT != ret) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(ret));
+        }
+        return ret;
+    }
+
     /**
      * Now start parsing our specific arguments
      */
-    if (OPAL_SUCCESS != ret || 
-        orte_ps_globals.help) {
-        char *args = NULL;
+    if (orte_ps_globals.help) {
+        char *str, *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        orte_show_help("help-orte-ps.txt", "usage", true,
-                       args);
+        str = opal_show_help_string("help-orte-ps.txt", "usage", true,
+                                    args);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
         free(args);
-        return ORTE_ERROR;
+        /* If we show the help message, that should be all we do */
+        exit(0);
     }
 
     /* if the jobid is given, then we need a pid */
     if (ORTE_JOBID_WILDCARD != orte_ps_globals.jobid &&
         0 == orte_ps_globals.pid) {
-        char *args = NULL;
-        args = opal_cmd_line_get_usage_msg(&cmd_line);
-        orte_show_help("help-orte-ps.txt", "usage", true,
-                       args);
-        free(args);
+        orte_show_help("help-orte-ps.txt", "need-vpid", true,
+                       orte_ps_globals.jobid);
         return ORTE_ERROR;
     }
 

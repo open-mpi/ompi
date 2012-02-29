@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. 
  *                         All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -272,6 +273,8 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
     char **shortsv;
     int shortsc;
     int num_args_used;
+    bool have_help_option = false;
+    bool printed_error = false;
 
     /* Bozo check */
 
@@ -291,6 +294,13 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
 
     cmd->lcl_argc = argc;
     cmd->lcl_argv = opal_argv_copy(argv);
+
+    /* Check up front: do we have a --help option? */
+
+    option = find_option(cmd, "help");
+    if (NULL != option) {
+        have_help_option = true;
+    }
 
     /* Now traverse the easy-to-parse sequence of tokens.  Note that
        incrementing i must happen elsehwere; it can't be the third
@@ -407,25 +417,36 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
                     /* If we run out of parameters, error */
 
                     if (i >= cmd->lcl_argc) {
-                        opal_output(0, "Error: option \"%s\" did not have "
-                                    "enough parameters (%d)",
-                                    cmd->lcl_argv[orig],
-                                    option->clo_num_params);
+                        fprintf(stderr, "%s: Error: option \"%s\" did not "
+                                "have enough parameters (%d)\n",
+                                cmd->lcl_argv[0],
+                                cmd->lcl_argv[orig],
+                                option->clo_num_params);
+                        if (have_help_option) {
+                            fprintf(stderr, "Type '%s --help' for usage.\n",
+                                    cmd->lcl_argv[0]);
+                        }
                         OBJ_RELEASE(param);
-                        i = cmd->lcl_argc;
-                        break;
+                        printed_error = true;
+                        goto error;
                     } else {
                         if (0 == strcmp(cmd->lcl_argv[i], 
                                         special_empty_token)) {
-                            opal_output(0, "Error: option \"%s\" did not have "
-                                        "enough parameters (%d)",
-                                        cmd->lcl_argv[orig],
-                                        option->clo_num_params);
-                            if (NULL != param->clp_argv)
+                            fprintf(stderr, "%s: Error: option \"%s\" did not "
+                                    "have enough parameters (%d)\n",
+                                    cmd->lcl_argv[0],
+                                    cmd->lcl_argv[orig],
+                                    option->clo_num_params);
+                            if (have_help_option) {
+                                fprintf(stderr, "Type '%s --help' for usage.\n",
+                                        cmd->lcl_argv[0]);
+                            }
+                            if (NULL != param->clp_argv) {
                                 opal_argv_free(param->clp_argv);
+                            }
                             OBJ_RELEASE(param);
-                            i = cmd->lcl_argc;
-                            break;
+                            printed_error = true;
+                            goto error;
                         } 
 
                         /* Otherwise, save this parameter */
@@ -474,20 +495,26 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
         /* If we figured out above that this was an unknown option,
            handle it.  Copy everything (including the current token)
            into the tail.  If we're not ignoring unknowns, then print
-           an error and return. 
-        */
-
+           an error and return. */
         if (is_unknown) {
             has_unknowns = true;
             if (!ignore_unknown) {
-                opal_output(0, "Error: unknown option \"%s\"", 
-                            cmd->lcl_argv[i]);
+                fprintf(stderr, "%s: Error: unknown option \"%s\"\n", 
+                        cmd->lcl_argv[0], cmd->lcl_argv[i]);
+                printed_error = true;
+                if (have_help_option) {
+                    fprintf(stderr, "Type '%s --help' for usage.\n",
+                            cmd->lcl_argv[0]);
+                }
             }
+        error:
             while (i < cmd->lcl_argc) {
                 opal_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
                                  cmd->lcl_argv[i]);
                 ++i;
             }
+
+            /* Because i has advanced, we'll fall out of the loop */
         }
     }
 
@@ -496,8 +523,8 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
     opal_mutex_unlock(&cmd->lcl_mutex);
 
     /* All done */
-    if(has_unknowns && !ignore_unknown) {
-        return OPAL_ERR_BAD_PARAM;
+    if (printed_error) {
+        return OPAL_ERR_SILENT;
     }
 
     return OPAL_SUCCESS;
@@ -1190,8 +1217,8 @@ static int set_dest(cmd_line_option_t *option, char *sval)
                     /* show help isn't going to be available yet, so just
                      * print the msg
                      */
-                    fprintf(stderr, "-----------------------------------------------------------\n");
-                    fprintf(stderr, "Open MPI has detected that a parameter given to a cmd line\n");
+                    fprintf(stderr, "----------------------------------------------------------------------------\n");
+                    fprintf(stderr, "Open MPI has detected that a parameter given to a command line\n");
                     fprintf(stderr, "option does not match the expected format:\n\n");
                     if (NULL != option->clo_long_name) {
                         fprintf(stderr, "  Option: %s\n", option->clo_long_name);
@@ -1202,8 +1229,8 @@ static int set_dest(cmd_line_option_t *option, char *sval)
                     }
                     fprintf(stderr, "  Param:  %s\n\n", sval);
                     fprintf(stderr, "This is frequently caused by omitting to provide the parameter\n");
-                    fprintf(stderr, "to an option that requires one. Please check the cmd line and try again.\n");
-                    fprintf(stderr, "-----------------------------------------------------------\n\n");
+                    fprintf(stderr, "to an option that requires one. Please check the command line and try again.\n");
+                    fprintf(stderr, "----------------------------------------------------------------------------\n");
                     return OPAL_ERR_SILENT;
                 }
             }
@@ -1216,8 +1243,8 @@ static int set_dest(cmd_line_option_t *option, char *sval)
                     /* show help isn't going to be available yet, so just
                      * print the msg
                      */
-                    fprintf(stderr, "-----------------------------------------------------------\n");
-                    fprintf(stderr, "Open MPI has detected that a parameter given to a cmd line\n");
+                    fprintf(stderr, "----------------------------------------------------------------------------\n");
+                    fprintf(stderr, "Open MPI has detected that a parameter given to a command line\n");
                     fprintf(stderr, "option does not match the expected format:\n\n");
                     if (NULL != option->clo_long_name) {
                         fprintf(stderr, "  Option: %s\n", option->clo_long_name);
@@ -1228,8 +1255,8 @@ static int set_dest(cmd_line_option_t *option, char *sval)
                     }
                     fprintf(stderr, "  Param:  %s\n\n", sval);
                     fprintf(stderr, "This is frequently caused by omitting to provide the parameter\n");
-                    fprintf(stderr, "to an option that requires one. Please check the cmd line and try again.\n");
-                    fprintf(stderr, "-----------------------------------------------------------\n\n");
+                    fprintf(stderr, "to an option that requires one. Please check the command line and try again.\n");
+                    fprintf(stderr, "----------------------------------------------------------------------------\n");
                     return OPAL_ERR_SILENT;
                 }
             }

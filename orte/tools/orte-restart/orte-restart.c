@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,6 +56,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
+#include "opal/util/error.h"
 #include "opal/util/path.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -398,6 +400,7 @@ static int parse_args(int argc, char *argv[])
     opal_cmd_line_t cmd_line;
     char **app_env = NULL, **global_env = NULL;
     char * tmp_env_var = NULL;
+    char *argv0 = NULL;
     orte_restart_globals_t tmp = { false, /* help */
                                    NULL,  /* filename */
                                    NULL,  /* appfile */
@@ -416,6 +419,22 @@ static int parse_args(int argc, char *argv[])
     orte_restart_globals.enable_crdebug = false;
 #endif
 
+#if OPAL_ENABLE_FT_CR == 0
+    /* Warn and exit if not configured with Checkpoint/Restart */
+    {
+        char *str, *args = NULL;
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        str = opal_show_help_string("help-orte-restart.txt", "usage-no-cr",
+                                    true, args);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+        return ORTE_ERROR;
+    }
+#endif
+
     /* Parse the command line options */    
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     
@@ -423,6 +442,28 @@ static int parse_args(int argc, char *argv[])
     mca_base_cmd_line_setup(&cmd_line);
     ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
     
+    if (OPAL_SUCCESS != ret) {
+        if (OPAL_ERR_SILENT != ret) {
+            fprintf(stderr, "%s: command line error (%s)\n", argv[0],
+                    opal_strerror(ret));
+        }
+        return 1;
+    }
+
+    if (orte_restart_globals.help) {
+        char *str, *args = NULL;
+        args = opal_cmd_line_get_usage_msg(&cmd_line);
+        str = opal_show_help_string("help-orte-restart.txt", "usage", true,
+                                    args);
+        if (NULL != str) {
+            printf("%s", str);
+            free(str);
+        }
+        free(args);
+        /* If we show the help message, that should be all we do */
+        exit(0);
+    }
+
     /** 
      * Put all of the MCA arguments in the environment 
      */
@@ -449,45 +490,22 @@ static int parse_args(int argc, char *argv[])
      * Now start parsing our specific arguments
      */
 
-#if OPAL_ENABLE_FT_CR == 0
-    /* Warn and exit if not configured with Checkpoint/Restart */
-    {
-        char *args = NULL;
-        args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-restart.txt", "usage-no-cr",
-                       true, args);
-        free(args);
-        return ORTE_ERROR;
-    }
-#endif
-
-    if (OPAL_SUCCESS != ret || 
-        orte_restart_globals.help ||
-        1 >= argc) {
-        char *args = NULL;
-        args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-restart.txt", "usage", true,
-                       args);
-        free(args);
-        return ORTE_ERROR;
-    }
-
     /* get the remaining bits */
+    argv0 = strdup(argv[0]);
     opal_cmd_line_get_tail(&cmd_line, &argc, &argv);
-    if ( 1 > argc ) {
-        char *args = NULL;
-        args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-restart.txt", "usage", true,
-                       args);
-        free(args);
+    if (0 == argc) {
+        fprintf(stderr, "%s: Nothing to do\n", argv0);
+        fprintf(stderr, "Type '%s --help' for usge.\n", argv0);
+        free(argv0);
         return ORTE_ERROR;
     }
+    free(argv0);
 
     orte_restart_globals.snapshot_ref = strdup(argv[0]);
     if ( NULL == orte_restart_globals.snapshot_ref || 
          0 >= strlen(orte_restart_globals.snapshot_ref) ) {
         opal_show_help("help-orte-restart.txt", "invalid_filename", true,
-                       orte_restart_globals.snapshot_ref);
+                       "<none provided>");
         return ORTE_ERROR;
     }
 

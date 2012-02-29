@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -23,7 +24,7 @@ ompi-checkpoint PID_OF_MPIRUN
   Open MPI Checkpoint Tool
 
 %s
-
+#
 [usage-no-cr]
 This build of Open MPI does *not* include Checkpoint/Restart functionality.
 If you require this functionality re-configure Open MPI with the proper
@@ -33,16 +34,16 @@ ompi-checkpoint PID_OF_MPIRUN
   Open MPI Checkpoint Tool
 
 %s
-
+#
 [invalid_pid]
 Error: The PID (%d) is invalid because either you have not provided a PID 
        or provided an invalid PID.
        Please see --help for usage.
-
+#
 [ckpt_failure]
 Error: The application (PID = %d) failed to checkpoint properly.
        Returned %d.
-
+#
 [pid_does_not_exist]
 Error: The process with PID %d is not checkpointable.
        This could be due to one of the following:
@@ -51,7 +52,7 @@ Error: The process with PID %d is not checkpointable.
         - The application with this PID isn't an Open MPI application.
        We were looking for the named file:
          %s
-
+#
 [no_hnps]
 Error: Unable to find a list of active MPIRUN processes on this machine.
        This could be due to one of the following:
@@ -64,7 +65,7 @@ Error: Unable to find a list of active MPIRUN processes on this machine.
        process is running.
 
        Return Code: %d (%s)
-
+#
 [no_universe]
 Error: Unable to find the requested, active MPIRUN process on this machine.
        This could be due to one of the following:
@@ -77,7 +78,7 @@ Error: Unable to find the requested, active MPIRUN process on this machine.
 
        ompi-checkpoint attempted to use the session directory:
          %s/%s
-
+#
 [unable_to_connect]
 Error: Unable to connect to the Head Node Process to initiate the 
        checkpoint of the application.
@@ -87,7 +88,7 @@ Error: Unable to connect to the Head Node Process to initiate the
         - The PID is not that of an active MPIRUN.
         - The application with this PID isn't checkpointable
         - The application with this PID isn't an Open MPI application.
-
+#
 [non-ckptable]
 Error: The job with pid %d is not checkpointable.
        This could be caused by one of the following:
@@ -96,6 +97,7 @@ Error: The job with pid %d is not checkpointable.
 To enable checkpointing in an application use the following AMCA parameter
 argument to mpirun:
        -am ft-enable-cr
+#
 [not_impl]
 The following feature was requested, but is not currently implemented.
      %s
@@ -106,6 +108,6 @@ Error: The process with PID %d is not checkpointable.
        This could be due to one of the following:
         - An application with this PID doesn't currently exist
         - The application with this PID isn't an Open MPI application.
-
+#
 [hnp_not_found]
 Error: The jobid specified by the '--hnp-jobid' option does not exist.
