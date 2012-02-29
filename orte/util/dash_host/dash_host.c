@@ -240,7 +240,7 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
     orte_std_cntr_t i, j, len_mapped_node=0;
     int rc;
     char **mapped_nodes = NULL;
-    orte_node_t *node;
+    orte_node_t *node, *hnp_node;
     int num_empty=0;
     opal_list_t keep;
     bool want_all_empty=false;
@@ -265,7 +265,10 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
      * any node can only be included on the incoming
      * nodes list ONCE.
      */
-    
+
+    /* get the hnp node's info */
+    hnp_node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        
     len_mapped_node = opal_argv_count(mapped_nodes);
     /* setup a working list so we can put the final list
      * of nodes in order. This way, if the user specifies a
@@ -333,9 +336,9 @@ int orte_util_filter_dash_host_nodes(opal_list_t *nodes,
                 node = (orte_node_t*)item;
                 /* search -host list to see if this one is found */
                 found = false;
-                if ((0 == strcmp(node->name, mapped_nodes[i]) ||
-                    (0 == strcmp(node->name, orte_process_info.nodename) &&
-                    (0 == strcmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i]))))) {
+                if (0 == strcmp(node->name, mapped_nodes[i]) ||
+                    (0 == strcmp(node->name, hnp_node->name) &&
+                    (0 == strcasecmp(mapped_nodes[i], "localhost") || opal_ifislocal(mapped_nodes[i])))) {
                     if (remove) {
                         /* remove item from list */
                         opal_list_remove_item(nodes, item);
