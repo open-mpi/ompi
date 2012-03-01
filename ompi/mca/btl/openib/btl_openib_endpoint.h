@@ -14,7 +14,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2007-2009 Mellanox Technologies.  All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -493,18 +493,18 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
         BTL_OPENIB_HEADER_HTON(*frag->hdr);
 
     if(rdma) {
-        int32_t head;
+        int32_t head;   
         mca_btl_openib_footer_t* ftr =
-            (mca_btl_openib_footer_t*)(((char*)frag->hdr) + sg->length -
-                    sizeof(mca_btl_openib_footer_t));
+            (mca_btl_openib_footer_t*)(((char*)frag->hdr) + sg->length +
+                    BTL_OPENIB_FTR_PADDING(sg->length) - sizeof(mca_btl_openib_footer_t));
         sr_desc->opcode = IBV_WR_RDMA_WRITE;
         MCA_BTL_OPENIB_RDMA_FRAG_SET_SIZE(ftr, sg->length);
         MCA_BTL_OPENIB_RDMA_MAKE_LOCAL(ftr);
 #if OPAL_ENABLE_DEBUG
-	do {
-	  ftr->seq = ep->eager_rdma_remote.seq;
-	} while (!OPAL_ATOMIC_CMPSET_32((int32_t*) &ep->eager_rdma_remote.seq,
-					(int32_t) ftr->seq,
+        do {
+          ftr->seq = ep->eager_rdma_remote.seq;
+        } while (!OPAL_ATOMIC_CMPSET_32((int32_t*) &ep->eager_rdma_remote.seq,
+                                        (int32_t) ftr->seq,
                                         (int32_t) (ftr->seq+1)));
 #endif
         if(ep->nbo)
@@ -525,7 +525,7 @@ static inline int post_send(mca_btl_openib_endpoint_t *ep,
             sizeof(mca_btl_openib_header_t) +
             mca_btl_openib_component.eager_limit +
             sizeof(mca_btl_openib_footer_t);
-        sr_desc->wr.rdma.remote_addr -= sg->length;
+        sr_desc->wr.rdma.remote_addr -= sg->length + BTL_OPENIB_FTR_PADDING(sg->length);
     } else {
         if(BTL_OPENIB_QP_TYPE_PP(qp)) {
             sr_desc->opcode = IBV_WR_SEND;
