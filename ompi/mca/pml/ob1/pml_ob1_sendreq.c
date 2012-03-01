@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -12,6 +13,8 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -546,15 +549,14 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         }
         return OMPI_SUCCESS;
     }
-    switch(OPAL_SOS_GET_ERROR_CODE(rc)) {
-        case OMPI_ERR_RESOURCE_BUSY:
-            /* No more resources. Allow the upper level to queue the send */
-            rc = OMPI_ERR_OUT_OF_RESOURCE;
-            break;
-        default:
-            mca_bml_base_free(bml_btl, des);
-            break;
+
+    if (OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        /* No more resources. Allow the upper level to queue the send */
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    mca_bml_base_free (bml_btl, des);
+
     return rc;
 }
 
@@ -631,7 +633,7 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
      * operation is achieved.
      */
 
-    mca_btl_base_descriptor_t* des;
+    mca_btl_base_descriptor_t *des, *src = NULL;
     mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
     bool need_local_cb = false;
@@ -640,7 +642,6 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
     bml_btl = sendreq->req_rdma[0].bml_btl;
     if((sendreq->req_rdma_cnt == 1) && (bml_btl->btl_flags & (MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_CUDA_GET))) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[0].btl_reg;
-        mca_btl_base_descriptor_t* src;
         size_t i;
         size_t old_position = sendreq->req_send.req_base.req_convertor.bConverted;
 
@@ -781,6 +782,10 @@ int mca_pml_ob1_send_request_start_rdma( mca_pml_ob1_send_request_t* sendreq,
         return OMPI_SUCCESS;
     }
     mca_bml_base_free(bml_btl, des);
+    if (NULL != src) {
+        mca_bml_base_free (bml_btl, src);
+    }
+
     return rc;
 }
 
@@ -1144,7 +1149,7 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
                               0,
                               &frag->rdma_length,
                               MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
-			      MCA_BTL_DES_FLAGS_PUT,
+                              MCA_BTL_DES_FLAGS_PUT,
                               &des );
     
     if( OPAL_UNLIKELY(NULL == des) ) {
