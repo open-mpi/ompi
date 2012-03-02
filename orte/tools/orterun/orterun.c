@@ -605,13 +605,14 @@ int orterun(int argc, char *argv[])
             param = strdup(opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0));
             if (0 != strcmp(param, orterun_globals.path_to_mpirun)) {
                 orte_show_help("help-orterun.txt", "orterun:double-prefix",
-                               true, orte_basename,
-                               param, orterun_globals.path_to_mpirun);
-                /* let the path-to-mpirun take precedence since we
-                 * know that one is being  used
+                               true, orte_basename, param,
+                               orterun_globals.path_to_mpirun, orte_basename);
+                /* use the prefix over the path-to-mpirun so that
+                 * people can specify the backend prefix as different
+                 * from the local one
                  */
-                free(param);
-                param = orterun_globals.path_to_mpirun;
+                free(orterun_globals.path_to_mpirun);
+                orterun_globals.path_to_mpirun = NULL;
             } else {
                 /* since they match, just use param */
                 free(orterun_globals.path_to_mpirun);
@@ -1885,7 +1886,6 @@ static int create_app(int argc, char* argv[],
     }
     if (orterun_globals.verbose) {
         value = opal_argv_join(app->argv, ' ');
-        opal_output(0, "DONE PARSING APP: %s", value);
         free(value);
     }
     
