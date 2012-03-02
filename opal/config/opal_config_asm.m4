@@ -643,27 +643,33 @@ AC_DEFUN([OMPI_CHECK_INLINE_CXX_GCC],[
     AC_LANG_PUSH([C++])
     AC_MSG_CHECKING([if $CXX supports GCC inline assembly])
 
-    if test ! "$assembly" = "" ; then
-            AC_RUN_IFELSE([AC_LANG_PROGRAM([
-AC_INCLUDES_DEFAULT],
-[[int ret = 1;
-int negone = -1;
-__asm__ __volatile__ ($assembly);
-return ret;]])],
-            [asm_result="yes"], [asm_result="no"], 
-            [asm_result="unknown"])
+    if test "$ompi_cv_c_compiler_vendor" = "portland group" ; then
+        # PGI seems to have some issues with our inline assembly.
+        # Disable for now.
+        asm_result="no (Portland Group)"
     else
-        assembly="test skipped - assuming no"
-    fi
-    # if we're cross compiling, just try to compile and figure good enough
-    if test "$asm_result" = "unknown" ; then
-        AC_LINK_IFELSE([AC_LANG_PROGRAM([
+        if test ! "$assembly" = "" ; then
+                AC_RUN_IFELSE([AC_LANG_PROGRAM([
 AC_INCLUDES_DEFAULT],
 [[int ret = 1;
 int negone = -1;
 __asm__ __volatile__ ($assembly);
 return ret;]])],
-            [asm_result="yes"], [asm_result="no"])
+                [asm_result="yes"], [asm_result="no"], 
+                [asm_result="unknown"])
+        else
+            assembly="test skipped - assuming no"
+        fi
+        # if we're cross compiling, just try to compile and figure good enough
+        if test "$asm_result" = "unknown" ; then
+            AC_LINK_IFELSE([AC_LANG_PROGRAM([
+AC_INCLUDES_DEFAULT],
+[[int ret = 1;
+int negone = -1;
+__asm__ __volatile__ ($assembly);
+return ret;]])],
+                [asm_result="yes"], [asm_result="no"])
+        fi
     fi
 
     AC_MSG_RESULT([$asm_result])
