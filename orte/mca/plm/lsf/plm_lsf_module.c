@@ -271,7 +271,7 @@ static int plm_lsf_launch_job(orte_job_t *jdata)
     cur_prefix = NULL;
     for (i=0; i < jdata->apps->size; i++) {
         char *app_prefix_dir;
-        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
             continue;
         }
         app_prefix_dir = app->prefix_dir;
