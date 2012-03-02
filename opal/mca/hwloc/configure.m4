@@ -125,6 +125,31 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
         _MCA_opal_hwloc_base_flags([wrapper CPPFLAGS], [WRAPPER_EXTRA_CPPFLAGS])
         _MCA_opal_hwloc_base_flags([wrapper LDFLAGS], [WRAPPER_EXTRA_LDFLAGS])
         _MCA_opal_hwloc_base_flags([wrapper LIBS], [WRAPPER_EXTRA_LIBS])
+
+        # If we added any -L flags to ADD_LDFLAGS, then we (might)
+        # need to add those directories to LD_LIBRARY_PATH and
+        # DYLD_LIBRARY_PATH.  Otherwise, if we try to AC RUN_IFELSE
+        # anything here in configure, it might die because it can't
+        # find the libraries we just linked against.
+        found_l=0
+        eval "tmp=\$opal_hwloc_${opal_hwloc_winner}_ADD_LIBS"
+        for token in $tmp; do
+            case $token in
+            -l*) found_l=1 ;;
+            esac
+        done
+        AS_IF([test $found_l -eq 1],
+              [eval "tmp=\$opal_hwloc_${opal_hwloc_winner}_ADD_LDFLAGS"
+               for token in $tmp; do
+                   case $token in
+                   -L*)
+                       dir=`echo $token | cut -c3-`
+                       export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$dir
+                       export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$dir
+                       AC_MSG_WARN([Adding to (DY)LD_LIBRARY_PATH: $dir])
+                       ;;
+                   esac
+               done])
     ])
 
     AM_CONDITIONAL(OPAL_HAVE_HWLOC, test $OPAL_HAVE_HWLOC -eq 1)
