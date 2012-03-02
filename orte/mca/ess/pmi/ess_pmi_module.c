@@ -133,11 +133,6 @@ static int rte_init(void)
         }
         free(tmp);
         ORTE_PROC_MY_NAME->jobid = jobid;
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ess_base_orted_setup";
-            goto error;
-        }
         /* get our rank from PMI */
         if (PMI_SUCCESS != (ret = PMI_Get_rank(&i))) {
             ORTE_PMI_ERROR(ret, "PMI_Get_rank");
@@ -154,6 +149,12 @@ static int rte_init(void)
         }
         orte_process_info.num_procs = i + 1;  /* compensate for orterun */
 
+        /* complete setup */
+        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_ess_base_orted_setup";
+            goto error;
+        }
     } else {  /* we are a direct-launched MPI process */
         /* get our PMI id length */
         if (PMI_SUCCESS != (ret = PMI_Get_id_length_max(&pmi_maxlen))) {
