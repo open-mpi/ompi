@@ -716,8 +716,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        /* track my node */
-        my_node = nodes[ORTE_PROC_MY_NAME->vpid];
 
         /* allocate memory for local ranks */
         local_rank = (orte_local_rank_t*)malloc(num_procs*sizeof(orte_local_rank_t));
@@ -791,29 +789,37 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
+        if (ORTE_PROC_IS_APP) {
+            /* track my node */
+            my_node = nodes[ORTE_PROC_MY_NAME->vpid];
+        }
         /* xfer the data */
         for (i=0; i < num_procs; i++) {
             pmap = OBJ_NEW(orte_pmap_t);
             pmap->node = nodes[i];
             pmap->local_rank = local_rank[i];
             pmap->node_rank = node_rank[i];
-            /* set locality */
-            if (ORTE_PROC_MY_NAME->vpid == i) {
-                /* this is me */
-                pmap->locality = OPAL_PROC_ALL_LOCAL;
-            } else if (pmap->node == my_node) {
+            /* if I am an app, record the locality of this proc
+             * relative to me - daemons don't need this info
+             */
+            if (ORTE_PROC_IS_APP) {
+                if (ORTE_PROC_MY_NAME->vpid == i) {
+                    /* this is me */
+                    pmap->locality = OPAL_PROC_ALL_LOCAL;
+                } else if (pmap->node == my_node) {
 #if OPAL_HAVE_HWLOC
-                /* we share a node - see what else we share */
-                pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                       orte_process_info.bind_level,
-                                                                       orte_process_info.bind_idx,
-                                                                       jmap->bind_level,
-                                                                       bind_idx[i]);
+                    /* we share a node - see what else we share */
+                    pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                           orte_process_info.bind_level,
+                                                                           orte_process_info.bind_idx,
+                                                                           jmap->bind_level,
+                                                                           bind_idx[i]);
 #else
-                pmap->locality = OPAL_PROC_ON_NODE;
+                    pmap->locality = OPAL_PROC_ON_NODE;
 #endif
-            } else {
-                pmap->locality = OPAL_PROC_NON_LOCAL;
+                } else {
+                    pmap->locality = OPAL_PROC_NON_LOCAL;
+                }
             }
             /* add the pidmap entry at the specific site corresponding
              * to the proc's vpid
