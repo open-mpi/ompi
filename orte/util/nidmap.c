@@ -744,8 +744,10 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        /* set mine */
-        orte_process_info.bind_idx = bind_idx[ORTE_PROC_MY_NAME->vpid];
+        if (ORTE_PROC_IS_APP) {
+            /* set mine */
+            orte_process_info.bind_idx = bind_idx[ORTE_PROC_MY_NAME->vpid];
+        }
 #endif
 
         /* if we already know about this job, we need to check the data to see
