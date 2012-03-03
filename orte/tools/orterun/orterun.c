@@ -563,6 +563,23 @@ int orterun(int argc, char *argv[])
      */
     mca_base_cmd_line_process_args(&cmd_line, &environ, &environ);
     
+    /* Ensure that enough of OPAL is setup for us to be able to run */
+    /*
+     * NOTE: (JJH)
+     *  We need to allow 'mca_base_cmd_line_process_args()' to process command
+     *  line arguments *before* calling opal_init_util() since the command
+     *  line could contain MCA parameters that affect the way opal_init_util()
+     *  functions. AMCA parameters are one such option normally received on the
+     *  command line that affect the way opal_init_util() behaves.
+     *  It is "safe" to call mca_base_cmd_line_process_args() before 
+     *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
+     *  depend upon opal_init_util() functionality.
+     */
+    /* Need to initialize OPAL so that install_dirs are filled in */
+    if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
+        exit(1);
+    }
+    
     /* may look strange, but the way we handle prefix is a little weird
      * and probably needs to be addressed more fully at some future point.
      * For now, we have a conflict between app_files and cmd line usage.
@@ -646,23 +663,6 @@ int orterun(int argc, char *argv[])
         want_prefix_by_default = true;
     }
 
-    /* Ensure that enough of OPAL is setup for us to be able to run */
-    /*
-     * NOTE: (JJH)
-     *  We need to allow 'mca_base_cmd_line_process_args()' to process command
-     *  line arguments *before* calling opal_init_util() since the command
-     *  line could contain MCA parameters that affect the way opal_init_util()
-     *  functions. AMCA parameters are one such option normally received on the
-     *  command line that affect the way opal_init_util() behaves.
-     *  It is "safe" to call mca_base_cmd_line_process_args() before 
-     *  opal_init_util() since mca_base_cmd_line_process_args() does *not*
-     *  depend upon opal_init_util() functionality.
-     */
-    /* Need to initialize OPAL so that install_dirs are filled in */
-    if (OPAL_SUCCESS != opal_init_util(&argc, &argv)) {
-        exit(1);
-    }
-    
     /* flag that I am the HNP - needs to be done prior to
      * registering params
      */
