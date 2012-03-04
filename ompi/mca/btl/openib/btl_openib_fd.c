@@ -682,13 +682,24 @@ int ompi_btl_openib_fd_finalize(void)
             /* For the threaded version, send a command down the pipe */
             cmd_t cmd;
             OPAL_OUTPUT((-1, "shutting down openib fd"));
-            opal_event_del(&main_thread_event);
-            memset(&cmd, 0, cmd_size);
-            cmd.pc_cmd = CMD_TIME_TO_QUIT;
-            opal_fd_write(pipe_to_service_thread[1], cmd_size, &cmd);
+            /* Check if the thread exists before asking it to quit */ 
+            if (ESRCH != pthread_kill(thread, 0)) {
+                memset(&cmd, 0, cmd_size);
+                cmd.pc_cmd = CMD_TIME_TO_QUIT;
+                if (OPAL_SUCCESS != opal_fd_write(pipe_to_service_thread[1],
+                                                  cmd_size, &cmd)) {
+                    /* We cancel the thread if there's an error
+                     * sending the "quit" cmd. This only ever happens on
+                     * a "restart" which could result in dangling
+                     * fds. OMPI must not rely on the checkpointer to
+                     * save/restore any fds or connections
+                     */
+                    pthread_cancel(thread);
+                }
 
-            pthread_join(thread, NULL);
-            opal_atomic_rmb();
+                pthread_join(thread, NULL);
+                opal_atomic_rmb();
+            }
 
             opal_event_del(&main_thread_event);
 
