@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -84,7 +84,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 	    }
 	} else {
 	    /* root is not on 0, allocate temp buffer for send */
-	    tempbuf = (char *) malloc(strue_extent + (scount*size - 1) * sextent);
+	    tempbuf = (char *) malloc(strue_extent + ((ptrdiff_t)scount * (ptrdiff_t)size - 1) * sextent);
 	    if (NULL == tempbuf) {
 		err = OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
 	    }
@@ -92,13 +92,13 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 	    ptmp = tempbuf - slb;
 
 	    /* and rotate data so they will eventually in the right place */
-	    err = ompi_datatype_copy_content_same_ddt(sdtype, scount*(size - root),
-						 ptmp, (char *) sbuf + sextent*root*scount);
+	    err = ompi_datatype_copy_content_same_ddt(sdtype, (ptrdiff_t)scount * (ptrdiff_t)(size - root),
+						 ptmp, (char *) sbuf + sextent * (ptrdiff_t)root * (ptrdiff_t)scount);
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
 
-	    err = ompi_datatype_copy_content_same_ddt(sdtype, scount*root,
-						 ptmp + sextent*scount*(size - root), (char *) sbuf);
+	    err = ompi_datatype_copy_content_same_ddt(sdtype, (ptrdiff_t)scount * (ptrdiff_t)root,
+						 ptmp + sextent * (ptrdiff_t)scount * (ptrdiff_t)(size - root), (char *)sbuf);
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
 	    if (rbuf != MPI_IN_PLACE) {
@@ -112,7 +112,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     } else if (!(vrank % 2)) {
 	/* non-root, non-leaf nodes, allocte temp buffer for recv
 	 * the most we need is rcount*size/2 */
-	tempbuf = (char *) malloc(rtrue_extent + (rcount*size - 1) * rextent);
+	tempbuf = (char *) malloc(rtrue_extent + ((ptrdiff_t)rcount * (ptrdiff_t)size - 1) * rextent);
 	if (NULL == tempbuf) {
 	    err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
 	}
@@ -131,7 +131,7 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
     if (!(vrank % 2)) {
 	if (rank != root) {
 	    /* recv from parent on non-root */
-	    err = MCA_PML_CALL(recv(ptmp, rcount*size, rdtype, bmtree->tree_prev,
+	    err = MCA_PML_CALL(recv(ptmp, (ptrdiff_t)rcount * (ptrdiff_t)size, rdtype, bmtree->tree_prev,
 				    MCA_COLL_BASE_TAG_SCATTER, comm, &status));
 	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 	    /* local copy to rbuf */
@@ -141,15 +141,16 @@ ompi_coll_tuned_scatter_intra_binomial(void *sbuf, int scount,
 	}
 	/* send to children on all non-leaf */
 	for (i = 0; i < bmtree->tree_nextsize; i++) {
-	    int mycount = 0, vkid;
+	    size_t mycount = 0;
+            int vkid;
 	    /* figure out how much data I have to send to this child */
 	    vkid = (bmtree->tree_next[i] - root + size) % size;
 	    mycount = vkid - vrank;
-	    if (mycount > (size - vkid))
+	    if( (int)mycount > (size - vkid) )
 		mycount = size - vkid;
 	    mycount *= scount;
 
-	    err = MCA_PML_CALL(send(ptmp + total_send*sextent, mycount, sdtype,
+	    err = MCA_PML_CALL(send(ptmp + (ptrdiff_t)total_send * sextent, mycount, sdtype,
 				    bmtree->tree_next[i],
 				    MCA_COLL_BASE_TAG_SCATTER,
 				    MCA_PML_BASE_SEND_STANDARD, comm));

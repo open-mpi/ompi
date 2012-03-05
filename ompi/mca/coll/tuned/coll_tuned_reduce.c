@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -63,14 +63,16 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
     ompi_datatype_get_extent( datatype, &lower_bound, &extent );
     ompi_datatype_type_size( datatype, &typelng );
     num_segments = (original_count + count_by_segment - 1) / count_by_segment;
-    segment_increment = count_by_segment * extent;
+    segment_increment = (ptrdiff_t)count_by_segment * extent;
 
     sendtmpbuf = (char*) sendbuf; 
     if( sendbuf == MPI_IN_PLACE ) { 
         sendtmpbuf = (char *)recvbuf; 
     }
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_generic count %d, msg size %ld, segsize %ld, max_requests %d", original_count, (unsigned long)(num_segments * segment_increment), (unsigned long)segment_increment, max_outstanding_reqs));
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_generic count %d, msg size %ld, segsize %ld, max_requests %d",
+                 original_count, (unsigned long)((ptrdiff_t)num_segments * (ptrdiff_t)segment_increment),
+                 (unsigned long)segment_increment, max_outstanding_reqs));
 
     rank = ompi_comm_rank(comm);
 
@@ -87,7 +89,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
         if( (NULL == accumbuf) || (root != rank) ) {
             /* Allocate temporary accumulator buffer. */
             accumbuf_free = (char*)malloc(true_extent + 
-                                          (original_count - 1) * extent);
+                                          (ptrdiff_t)(original_count - 1) * extent);
             if (accumbuf_free == NULL) { 
                 line = __LINE__; ret = -1; goto error_hndl; 
             }
@@ -102,7 +104,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
                                                 (char*)sendtmpbuf);
         }
         /* Allocate two buffers for incoming segments */
-        real_segment_size = true_extent + (count_by_segment - 1) * extent;
+        real_segment_size = true_extent + (ptrdiff_t)(count_by_segment - 1) * extent;
         inbuf_free[0] = (char*) malloc(real_segment_size);
         if( inbuf_free[0] == NULL ) { 
             line = __LINE__; ret = -1; goto error_hndl; 
@@ -127,7 +129,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
             /* recvcount - number of elements in current segment */
             recvcount = count_by_segment;
             if( segindex == (num_segments-1) )
-                recvcount = original_count - count_by_segment * segindex;
+                recvcount = original_count - (ptrdiff_t)count_by_segment * (ptrdiff_t)segindex;
 
             /* for each child */
             for( i = 0; i < tree->tree_nextsize; i++ ) {
@@ -151,7 +153,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
                          */
                         if( (ompi_op_is_commute(op)) &&
                             !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
-                            local_recvbuf = accumbuf + segindex * segment_increment;
+                            local_recvbuf = accumbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment;
                         }
                     }
 
@@ -178,19 +180,19 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
                     if( 1 == i ) {
                         if( (ompi_op_is_commute(op)) && 
                             !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
-                            local_op_buffer = sendtmpbuf + segindex * segment_increment;
+                            local_op_buffer = sendtmpbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment;
                         }
                     }
                     /* apply operation */
                     ompi_op_reduce(op, local_op_buffer, 
-                                   accumbuf + segindex * segment_increment, 
+                                   accumbuf + (ptrdiff_t)segindex * (ptrdiff_t)segment_increment, 
                                    recvcount, datatype );
                 } else if ( segindex > 0 ) {
-                    void* accumulator = accumbuf + (segindex-1) * segment_increment;
+                    void* accumulator = accumbuf + (ptrdiff_t)(segindex-1) * (ptrdiff_t)segment_increment;
                     if( tree->tree_nextsize <= 1 ) {
                         if( (ompi_op_is_commute(op)) &&
                             !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
-                            local_op_buffer = sendtmpbuf + (segindex-1) * segment_increment;
+                            local_op_buffer = sendtmpbuf + (ptrdiff_t)(segindex-1) * (ptrdiff_t)segment_increment;
                         }
                     }
                     ompi_op_reduce(op, local_op_buffer, accumulator, prevcount, 
@@ -251,7 +253,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
                     count_by_segment = original_count;
                 }
                 ret = MCA_PML_CALL( send((char*)sendbuf + 
-                                         segindex * segment_increment,
+                                         (ptrdiff_t)segindex * (ptrdiff_t)segment_increment,
                                          count_by_segment, datatype,
                                          tree->tree_prev, 
                                          MCA_COLL_BASE_TAG_REDUCE,
@@ -281,7 +283,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
             /* post first group of requests */
             for (segindex = 0; segindex < max_outstanding_reqs; segindex++) {
                 ret = MCA_PML_CALL( isend((char*)sendbuf +
-                                          segindex * segment_increment,
+                                          (ptrdiff_t)segindex * (ptrdiff_t)segment_increment,
                                           count_by_segment, datatype,
                                           tree->tree_prev, 
                                           MCA_COLL_BASE_TAG_REDUCE,
@@ -302,7 +304,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
                     count_by_segment = original_count;
                 }
                 ret = MCA_PML_CALL( isend((char*)sendbuf + 
-                                          segindex * segment_increment, 
+                                          (ptrdiff_t)segindex * (ptrdiff_t)segment_increment, 
                                           count_by_segment, datatype, 
                                           tree->tree_prev, 
                                           MCA_COLL_BASE_TAG_REDUCE, 
@@ -521,7 +523,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
         ompi_datatype_get_true_extent(datatype, &tlb, &text);
 
         if ((root == rank) && (MPI_IN_PLACE == sendbuf)) {
-            tmpbuf = (char *) malloc(text + (count - 1) * ext);
+            tmpbuf = (char *) malloc(text + (ptrdiff_t)(count - 1) * ext);
             if (NULL == tmpbuf) {
                 return MPI_ERR_INTERN;
             }
@@ -530,7 +532,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
                                                 (char*)recvbuf);
             use_this_sendbuf = tmpbuf;
         } else if (io_root == rank) {
-            tmpbuf = (char *) malloc(text + (count - 1) * ext);
+            tmpbuf = (char *) malloc(text + (ptrdiff_t)(count - 1) * ext);
             if (NULL == tmpbuf) {
                 return MPI_ERR_INTERN;
             }
@@ -631,7 +633,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
     if (MPI_IN_PLACE == sbuf) {
         sbuf = rbuf;
-        inplace_temp = (char*)malloc(true_extent + (count - 1) * extent);
+        inplace_temp = (char*)malloc(true_extent + (ptrdiff_t)(count - 1) * extent);
         if (NULL == inplace_temp) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -639,7 +641,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     }
 
     if (size > 1) {
-        free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
+        free_buffer = (char*)malloc(true_extent + (ptrdiff_t)(count - 1) * extent);
         if (NULL == free_buffer) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
