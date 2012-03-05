@@ -178,17 +178,14 @@ error:
     /* set array of errorcodes */
     if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
         if (NULL != newcomp) {
-            for ( i=0; i < newcomp->c_remote_group->grp_proc_count; i++ ) {
-                array_of_errcodes[i]=rc;
-            }
+            size = newcomp->c_remote_group->grp_proc_count;
         } else {
             for ( i=0; i < count; i++) {
                 size = size + array_of_maxprocs[i];
             }
-
-            for ( i=0; i < size; i++) {
-                array_of_errcodes[i]=rc;
-            }
+        }
+        for ( i=0; i < size; i++ ) {
+            array_of_errcodes[i]=rc;
         }
     }
 
