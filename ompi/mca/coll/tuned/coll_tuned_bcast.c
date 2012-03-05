@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -61,14 +61,14 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
     ompi_datatype_get_extent (datatype, &lb, &extent);
     ompi_datatype_type_size( datatype, &type_size );
     num_segments = (original_count + count_by_segment - 1) / count_by_segment;
-    realsegsize = count_by_segment * extent;
+    realsegsize = (ptrdiff_t)count_by_segment * extent;
     
     /* Set the buffer pointers */
     tmpbuf = (char *) buffer;
 
 #if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
     if( tree->tree_nextsize != 0 ) {
-        send_reqs = (ompi_request_t**)malloc( tree->tree_nextsize * 
+        send_reqs = (ompi_request_t**)malloc( (ptrdiff_t)tree->tree_nextsize * 
                                               sizeof(ompi_request_t*) );
     }
 #endif
@@ -180,7 +180,7 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
         /* Process the last segment */
         err = ompi_request_wait( &recv_reqs[req_index], MPI_STATUSES_IGNORE );
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-        sendcount = original_count - (num_segments - 1) * count_by_segment;
+        sendcount = original_count - (ptrdiff_t)(num_segments - 1) * count_by_segment;
         for( i = 0; i < tree->tree_nextsize; i++ ) {
 #if defined(COLL_TUNED_BCAST_USE_BLOCKING)
             err = MCA_PML_CALL(send(tmpbuf, sendcount, datatype,
@@ -433,8 +433,8 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
 
     /* if the message is too small to be split into segments */
     if( (counts[0] == 0 || counts[1] == 0) ||
-        (segsize > counts[0] * type_size) ||
-        (segsize > counts[1] * type_size) ) {
+        (segsize > ((ptrdiff_t)counts[0] * type_size)) ||
+        (segsize > ((ptrdiff_t)counts[1] * type_size)) ) {
         /* call linear version here ! */
         return (ompi_coll_tuned_bcast_intra_chain ( buffer, count, datatype, 
                                                     root, comm, module,
@@ -444,12 +444,12 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     err = ompi_datatype_get_extent (datatype, &lb, &type_extent);
     
     /* Determine real segment size */
-    realsegsize[0] = segcount[0] * type_extent;
-    realsegsize[1] = segcount[1] * type_extent;
+    realsegsize[0] = (ptrdiff_t)segcount[0] * type_extent;
+    realsegsize[1] = (ptrdiff_t)segcount[1] * type_extent;
   
     /* set the buffer pointers */
     tmpbuf[0] = (char *) buffer;
-    tmpbuf[1] = (char *) buffer+counts[0] * type_extent;
+    tmpbuf[1] = (char *) buffer + (ptrdiff_t)counts[0] * type_extent;
 
     /* Step 1:
        Root splits the buffer in 2 and sends segmented message down the branches.
@@ -508,7 +508,7 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
         for( segindex = 1; segindex < num_segments[lr]; segindex++ ) {
             /* determine how many elements to expect in this round */
             if( segindex == (num_segments[lr] - 1)) 
-                sendcount[lr] = counts[lr] - segindex*segcount[lr];
+                sendcount[lr] = counts[lr] - (ptrdiff_t)segindex * (ptrdiff_t)segcount[lr];
             /* post new irecv */
             MCA_PML_CALL(irecv( tmpbuf[lr] + realsegsize[lr], sendcount[lr],
                                 datatype, tree->tree_prev, MCA_COLL_BASE_TAG_BCAST, 
@@ -546,7 +546,8 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
         sendcount[lr] = segcount[lr];
         for (segindex = 0; segindex < num_segments[lr]; segindex++) {
             /* determine how many elements to expect in this round */
-            if (segindex == (num_segments[lr] - 1)) sendcount[lr] = counts[lr] - segindex*segcount[lr];
+            if (segindex == (num_segments[lr] - 1))
+                sendcount[lr] = counts[lr] - (ptrdiff_t)segindex * (ptrdiff_t)segcount[lr];
             /* receive segments */
             MCA_PML_CALL(recv(tmpbuf[lr], sendcount[lr], datatype,
                               tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
@@ -559,7 +560,7 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
 
     /* reset the buffer pointers */
     tmpbuf[0] = (char *) buffer;
-    tmpbuf[1] = (char *) buffer+counts[0] * type_extent;
+    tmpbuf[1] = (char *) buffer + (ptrdiff_t)counts[0] * type_extent;
 
     /* Step 2:
        Find your immediate pair (identical node in opposite subtree) and SendRecv 

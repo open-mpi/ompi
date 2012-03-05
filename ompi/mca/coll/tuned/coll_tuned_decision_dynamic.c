@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -120,7 +120,7 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
 
         ompi_datatype_type_size (sdtype, &dsize);
         comsize = ompi_comm_size(comm);
-        dsize *= comsize * scount;
+        dsize *= (ptrdiff_t)comsize * (ptrdiff_t)scount;
 
         alg = ompi_coll_tuned_get_target_method_params (data->com_rules[ALLTOALL], 
                                                         dsize, &faninout, &segsize, &max_requests);
@@ -414,7 +414,7 @@ int ompi_coll_tuned_allgather_intra_dec_dynamic(void *sbuf, int scount,
       
         ompi_datatype_type_size (sdtype, &dsize);
         comsize = ompi_comm_size(comm);
-        dsize *= comsize * scount;
+        dsize *= (ptrdiff_t)comsize * (ptrdiff_t)scount;
       
         alg = ompi_coll_tuned_get_target_method_params (data->com_rules[ALLGATHER], 
                                                         dsize, &faninout, &segsize, &ignoreme);

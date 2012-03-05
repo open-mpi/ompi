@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -53,8 +53,8 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
     ompi_datatype_type_extent(sdtype, &sext);
     ompi_datatype_type_extent(rdtype, &rext);
 
-    psnd = ((char *) sbuf) + (sdisps[rank] * sext);
-    prcv = ((char *) rbuf) + (rdisps[rank] * rext);
+    psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[rank] * sext;
+    prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[rank] * rext;
 
     if (0 != scounts[rank]) {
         err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
@@ -77,8 +77,8 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
         recvfrom = (rank + size - step) % size;
 
         /* Determine sending and receiving locations */
-        psnd = (char*)sbuf + sdisps[sendto] * sext;
-        prcv = (char*)rbuf + rdisps[recvfrom] * rext;
+        psnd = (char*)sbuf + (ptrdiff_t)sdisps[sendto] * sext;
+        prcv = (char*)rbuf + (ptrdiff_t)rdisps[recvfrom] * rext;
 
         /* send and receive */
         err = ompi_coll_tuned_sendrecv( psnd, scounts[sendto], sdtype, sendto, 
@@ -133,8 +133,8 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
     ompi_datatype_type_extent(rdtype, &rext);
 
     /* Simple optimization - handle send to self first */
-    psnd = ((char *) sbuf) + (sdisps[rank] * sext);
-    prcv = ((char *) rbuf) + (rdisps[rank] * rext);
+    psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[rank] * sext;
+    prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[rank] * rext;
     if (0 != scounts[rank]) {
         err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
                               prcv, rcounts[rank], rdtype);
@@ -158,7 +158,7 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
             continue;
         }
 
-        prcv = ((char *) rbuf) + (rdisps[i] * rext);
+        prcv = ((char *) rbuf) + (ptrdiff_t)rdisps[i] * rext;
         err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtype,
                                       i, MCA_COLL_BASE_TAG_ALLTOALLV, comm,
                                       preq++));
@@ -175,7 +175,7 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
             continue;
         }
 
-        psnd = ((char *) sbuf) + (sdisps[i] * sext);
+        psnd = ((char *) sbuf) + (ptrdiff_t)sdisps[i] * sext;
         err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtype,
                                       i, MCA_COLL_BASE_TAG_ALLTOALLV,
                                       MCA_PML_BASE_SEND_STANDARD, comm,

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -81,7 +81,7 @@ int ompi_coll_tuned_reduce_scatter_intra_nonoverlapping(void *sbuf, void *rbuf,
 	    ompi_datatype_get_extent(dtype, &lb, &extent);
 	    ompi_datatype_get_true_extent(dtype, &tlb, &textent);
 
-	    tmprbuf_free = (char*) malloc(textent + (total_count - 1)*extent);
+	    tmprbuf_free = (char*) malloc(textent + (ptrdiff_t)(total_count - 1) * extent);
 	    tmprbuf = tmprbuf_free - lb;
 	} 
 	err = comm->c_coll.coll_reduce (sbuf, tmprbuf, total_count,
@@ -164,7 +164,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
     /* get datatype information */
     ompi_datatype_get_extent(dtype, &lb, &extent);
     ompi_datatype_get_true_extent(dtype, &true_lb, &true_extent);
-    buf_size = true_extent + (count - 1) * extent;
+    buf_size = true_extent + (ptrdiff_t)(count - 1) * extent;
 
     /* Handle MPI_IN_PLACE */
     if (MPI_IN_PLACE == sbuf) {
@@ -296,7 +296,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
 	    /* actual data transfer.  Send from result_buf,
 	       receive into recv_buf */
 	    if (send_count > 0 && recv_count != 0) {
-		err = MCA_PML_CALL(irecv(recv_buf + tmp_disps[recv_index] * extent,
+		err = MCA_PML_CALL(irecv(recv_buf + (ptrdiff_t)tmp_disps[recv_index] * extent,
 					 recv_count, dtype, peer,
 					 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
 					 comm, &request));
@@ -307,7 +307,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
 		}                                             
 	    }
 	    if (recv_count > 0 && send_count != 0) {
-		err = MCA_PML_CALL(send(result_buf + tmp_disps[send_index] * extent,
+		err = MCA_PML_CALL(send(result_buf + (ptrdiff_t)tmp_disps[send_index] * extent,
 					send_count, dtype, peer, 
 					MCA_COLL_BASE_TAG_REDUCE_SCATTER,
 					MCA_PML_BASE_SEND_STANDARD,
@@ -331,8 +331,8 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
 	       the results buffer */
 	    if (recv_count > 0) {
 		ompi_op_reduce(op, 
-			       recv_buf + tmp_disps[recv_index] * extent, 
-			       result_buf + tmp_disps[recv_index] * extent,
+			       recv_buf + (ptrdiff_t)tmp_disps[recv_index] * extent, 
+			       result_buf + (ptrdiff_t)tmp_disps[recv_index] * extent,
 			       recv_count, dtype);
 	    }
 
@@ -360,7 +360,7 @@ ompi_coll_tuned_reduce_scatter_intra_basic_recursivehalving(void *sbuf,
 
     /* Now fix up the non-power of two case, by having the odd
        procs send the even procs the proper results */
-    if (rank < 2 * remain) {
+    if (rank < (2 * remain)) {
 	if ((rank & 1) == 0) {
 	    if (rcounts[rank]) {
 		err = MCA_PML_CALL(recv(rbuf, rcounts[rank], dtype, rank + 1,
@@ -514,9 +514,9 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
     ret = ompi_datatype_type_size( dtype, &typelng);
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
 
-    max_real_segsize = true_extent + (max_block_count - 1) * extent;
+    max_real_segsize = true_extent + (ptrdiff_t)(max_block_count - 1) * extent;
 
-    accumbuf_free = (char*)malloc(true_extent + (total_count - 1) * extent);
+    accumbuf_free = (char*)malloc(true_extent + (ptrdiff_t)(total_count - 1) * extent);
     if (NULL == accumbuf_free) { ret = -1; line = __LINE__; goto error_hndl; }
     accumbuf = accumbuf_free - lb;
 
@@ -564,7 +564,7 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
 			     MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm, 
 			     &reqs[inbi]));
     if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-    tmpsend = accumbuf + displs[recv_from] * extent;
+    tmpsend = accumbuf + (ptrdiff_t)displs[recv_from] * extent;
     ret = MCA_PML_CALL(send(tmpsend, rcounts[recv_from], dtype, send_to,
 			    MCA_COLL_BASE_TAG_REDUCE_SCATTER,
 			    MCA_PML_BASE_SEND_STANDARD, comm));
@@ -588,7 +588,7 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
 	/* Apply operation on previous block: result goes to rbuf
 	   rbuf[prevblock] = inbuf[inbi ^ 0x1] (op) rbuf[prevblock]
 	*/
-	tmprecv = accumbuf + displs[prevblock] * extent;
+	tmprecv = accumbuf + (ptrdiff_t)displs[prevblock] * extent;
 	ompi_op_reduce(op, inbuf[inbi ^ 0x1], tmprecv, rcounts[prevblock], dtype);
       
 	/* send previous block to send_to */
@@ -604,11 +604,11 @@ ompi_coll_tuned_reduce_scatter_intra_ring(void *sbuf, void *rbuf, int *rcounts,
 
     /* Apply operation on the last block (my block)
        rbuf[rank] = inbuf[inbi] (op) rbuf[rank] */
-    tmprecv = accumbuf + displs[rank] * extent;
+    tmprecv = accumbuf + (ptrdiff_t)displs[rank] * extent;
     ompi_op_reduce(op, inbuf[inbi], tmprecv, rcounts[rank], dtype);
    
     /* Copy result from tmprecv to rbuf */
-    ret = ompi_datatype_copy_content_same_ddt(dtype, rcounts[rank], (char *) rbuf, tmprecv);
+    ret = ompi_datatype_copy_content_same_ddt(dtype, rcounts[rank], (char *)rbuf, tmprecv);
     if (ret < 0) { line = __LINE__; goto error_hndl; }
 
     if (NULL != displs) free(displs);

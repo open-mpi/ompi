@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -117,7 +117,7 @@ int ompi_coll_tuned_allgatherv_intra_bruck(void *sbuf, int scount,
       - if send buffer is not MPI_IN_PLACE, copy send buffer to block rank of 
         the receive buffer.
    */
-   tmprecv = (char*) rbuf + rdispls[rank] * rext;
+   tmprecv = (char*) rbuf + (ptrdiff_t)rdispls[rank] * rext;
    if (MPI_IN_PLACE != sbuf) {
       tmpsend = (char*) sbuf;
       err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, 
@@ -246,7 +246,7 @@ int ompi_coll_tuned_allgatherv_intra_ring(void *sbuf, int scount,
        - if send buffer is not MPI_IN_PLACE, copy send buffer to 
        the appropriate block of receive buffer
     */
-    tmprecv = (char*) rbuf + rdisps[rank] * rext;
+    tmprecv = (char*) rbuf + (ptrdiff_t)rdisps[rank] * rext;
     if (MPI_IN_PLACE != sbuf) {
         tmpsend = (char*) sbuf;
         err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, 
@@ -392,7 +392,7 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
        - if send buffer is not MPI_IN_PLACE, copy send buffer to 
        the appropriate block of receive buffer
     */
-    tmprecv = (char*) rbuf + rdispls[rank] * rext;
+    tmprecv = (char*) rbuf + (ptrdiff_t)rdispls[rank] * rext;
     if (MPI_IN_PLACE != sbuf) {
         tmpsend = (char*) sbuf;
         err = ompi_datatype_sndrcv(tmpsend, scount, sdtype, 
@@ -427,8 +427,8 @@ ompi_coll_tuned_allgatherv_intra_neighborexchange(void *sbuf, int scount,
        Note, we need to create indexed datatype to send and receive these
        blocks properly.
     */
-    tmprecv = (char*)rbuf + rdispls[neighbor[0]] * rext;
-    tmpsend = (char*)rbuf + rdispls[rank] * rext;
+    tmprecv = (char*)rbuf + (ptrdiff_t)rdispls[neighbor[0]] * rext;
+    tmpsend = (char*)rbuf + (ptrdiff_t)rdispls[rank] * rext;
     err = ompi_coll_tuned_sendrecv(tmpsend, rcounts[rank], rdtype, 
                                    neighbor[0], MCA_COLL_BASE_TAG_ALLGATHERV,
                                    tmprecv, rcounts[neighbor[0]], rdtype, 
@@ -532,11 +532,11 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
 
     tmpsend = (char*)sbuf;
     if (MPI_IN_PLACE == sbuf) {
-        tmpsend = (char*)rbuf + rdispls[rank] * rext;
+        tmpsend = (char*)rbuf + (ptrdiff_t)rdispls[rank] * rext;
         scount = rcounts[rank];
         sdtype = rdtype;
     }
-    tmprecv = (char*)rbuf + rdispls[remote] * rext;
+    tmprecv = (char*)rbuf + (ptrdiff_t)rdispls[remote] * rext;
 
     err = ompi_coll_tuned_sendrecv(tmpsend, scount, sdtype, remote,
                                    MCA_COLL_BASE_TAG_ALLGATHERV,
@@ -548,7 +548,7 @@ int ompi_coll_tuned_allgatherv_intra_two_procs(void *sbuf, int scount,
     /* Place your data in correct location if necessary */
     if (MPI_IN_PLACE != sbuf) {
         err = ompi_datatype_sndrcv((char*)sbuf, scount, sdtype, 
-                              (char*)rbuf + rdispls[rank] * rext, 
+                              (char*)rbuf + (ptrdiff_t)rdispls[rank] * rext, 
                               rcounts[rank], rdtype); 
         if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl;  }
     }
@@ -616,7 +616,7 @@ ompi_coll_tuned_allgatherv_intra_basic_default(void *sbuf, int scount,
         send_type = rdtype;
         send_buf = (char*)rbuf;
         for (i = 0; i < rank; ++i) {
-            send_buf += (rcounts[i] * extent);
+            send_buf += ((ptrdiff_t)rcounts[i] * extent);
         }
     } else {
         send_buf = (char*)sbuf;
