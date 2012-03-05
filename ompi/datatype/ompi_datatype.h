@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
- * Copyright (c) 2009-2010 The University of Tennessee and The University
+ * Copyright (c) 2009-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
@@ -278,10 +278,18 @@ ompi_datatype_set_element_count( const ompi_datatype_t* type, uint32_t count, si
 }
 
 static inline int32_t
-ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, int32_t count,
+ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
                                      char* pDestBuf, char* pSrcBuf )
 {
-    return opal_datatype_copy_content_same_ddt( &type->super, count, pDestBuf, pSrcBuf );
+    int32_t length, rc;
+
+    while( 0 != count ) {
+        length = INT_MAX;
+        if( ((size_t)length) > count ) length = (int32_t)count;
+        rc = opal_datatype_copy_content_same_ddt( &type->super, count, pDestBuf, pSrcBuf );
+        if( 0 != rc ) return rc;
+        count -= (size_t)length;
+    }
 }
 
 OMPI_DECLSPEC const ompi_datatype_t* ompi_datatype_match_size( int size, uint16_t datakind, uint16_t datalang );

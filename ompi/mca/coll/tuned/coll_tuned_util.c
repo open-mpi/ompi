@@ -27,10 +27,10 @@
 #include "ompi/mca/pml/pml.h"
 #include "coll_tuned_util.h"
 
-int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, 
+int ompi_coll_tuned_sendrecv_actual( void* sendbuf, size_t scount, 
                                      ompi_datatype_t* sdatatype,
                                      int dest, int stag,
-                                     void* recvbuf, int rcount, 
+                                     void* recvbuf, size_t rcount, 
                                      ompi_datatype_t* rdatatype,
                                      int source, int rtag,
                                      struct ompi_communicator_t* comm,
@@ -96,10 +96,10 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount,
  * version when available
  */
 
-int ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, int scount, 
+int ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, size_t scount, 
                                                     ompi_datatype_t* sdatatype, 
                                                     int dest, int stag,
-                                                    void* recvbuf, int rcount, 
+                                                    void* recvbuf, size_t rcount, 
                                                     ompi_datatype_t* rdatatype, 
                                                     int source, int rtag, 
                                                     struct ompi_communicator_t* comm, 
