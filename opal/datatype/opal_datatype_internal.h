@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2010 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -568,9 +568,9 @@ do { \
             ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1);                \
         if( ((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound) ) { \
             opal_datatype_safeguard_pointer_debug_breakpoint( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) ); \
-            opal_output( 0, "%s:%d\n\tPointer %p size %lu is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
+            opal_output( 0, "%s:%d\n\tPointer %p size %lu is outside [%p,%p] for\n\tbase ptr %p count %lu and data \n", \
                          __FILE__, __LINE__, (ACTPTR), (unsigned long)(LENGTH), __lower_bound, __upper_bound, \
-                         (INITPTR), (COUNT) );                          \
+                         (INITPTR), (unsigned long)(COUNT) );                          \
             opal_datatype_dump( (PDATA) );                                   \
         }                                                               \
     }
