@@ -569,6 +569,8 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     openib_reg->mr = ibv_reg_mr(device->ib_pd, base, size, access_flag);
 
     if (NULL == openib_reg->mr) {
+        BTL_ERROR(("%s: error pinning openib memory errno says %s",
+                       __func__, strerror(errno)));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
