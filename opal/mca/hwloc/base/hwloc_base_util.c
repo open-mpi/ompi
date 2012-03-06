@@ -1449,6 +1449,17 @@ char* opal_hwloc_base_print_locality(opal_paffinity_locality_t locality)
     }
     if (0 < idx) {
         ptr->buffers[ptr->cntr][idx-1] = '\0';
+    } else if (OPAL_PROC_NON_LOCAL & locality) {
+        ptr->buffers[ptr->cntr][idx++] = 'N';
+        ptr->buffers[ptr->cntr][idx++] = 'O';
+        ptr->buffers[ptr->cntr][idx++] = 'N';
+        ptr->buffers[ptr->cntr][idx++] = '\0';
+    } else {
+        /* must be an unknown locality */
+        ptr->buffers[ptr->cntr][idx++] = 'U';
+        ptr->buffers[ptr->cntr][idx++] = 'N';
+        ptr->buffers[ptr->cntr][idx++] = 'K';
+        ptr->buffers[ptr->cntr][idx++] = '\0';
     }
     return ptr->buffers[ptr->cntr];
 }
