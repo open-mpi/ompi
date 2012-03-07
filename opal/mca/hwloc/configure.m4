@@ -1,6 +1,6 @@
 dnl -*- shell-script -*-
 dnl
-dnl Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved. 
+dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -127,10 +127,10 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
         _MCA_opal_hwloc_base_flags([wrapper LIBS], [WRAPPER_EXTRA_LIBS])
 
         # If we added any -L flags to ADD_LDFLAGS, then we (might)
-        # need to add those directories to LD_LIBRARY_PATH and
-        # DYLD_LIBRARY_PATH.  Otherwise, if we try to AC RUN_IFELSE
-        # anything here in configure, it might die because it can't
-        # find the libraries we just linked against.
+        # need to add those directories to LD_LIBRARY_PATH.
+        # Otherwise, if we try to AC RUN_IFELSE anything here in
+        # configure, it might die because it can't find the libraries
+        # we just linked against.
         found_l=0
         eval "tmp=\$opal_hwloc_${opal_hwloc_winner}_ADD_LIBS"
         for token in $tmp; do
@@ -145,7 +145,6 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
                    -L*)
                        dir=`echo $token | cut -c3-`
                        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$dir
-                       export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$dir
                        AC_MSG_WARN([Adding to (DY)LD_LIBRARY_PATH: $dir])
                        ;;
                    esac
