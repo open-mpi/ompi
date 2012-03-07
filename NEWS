@@ -111,7 +111,9 @@ Trunk (not on release branches yet)
 - Major VT update to 5.12.1.4.
 - Upgrade embedded Hardware Locality (hwloc) v1.3.2, plus some
   post-1.3.2-release bug fixes.  All processor and memory binding is
-  now done through hwloc.  Woo hoo!
+  now done through hwloc.  Woo hoo!  Note that this fixes core binding
+  on AMD Opteron 6200 and 4200 series-based systems (sometimes known
+  as Interlagos, Valencia, or other Bulldozer-based chips).
 - New MCA parameters to control process-wide memory binding policy:
   hwloc_base_mem_alloc_policy, hwloc_base_mem_bind_failure_action (see
   ompi_info --param hwloc base).
