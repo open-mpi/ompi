@@ -64,6 +64,7 @@ int MPI_Improbe(int source, int tag, MPI_Comm comm, int *flag,
             );
             *message = &ompi_message_no_proc.message;
         }
+        *flag = 1;
         return MPI_SUCCESS;
     }
 

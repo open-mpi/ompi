@@ -59,6 +59,7 @@ int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
 
     if (&ompi_message_no_proc.message == *message) {
         *status = ompi_request_empty.req_status;
+        *message = MPI_MESSAGE_NULL;
         return MPI_SUCCESS;
      }
 
