@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,12 +57,16 @@ int MPI_Mrecv(void *buf, int count, MPI_Datatype type,
         comm = (*message)->comm;
     }
 
+    if (&ompi_message_no_proc.message == *message) {
+        *status = ompi_request_empty.req_status;
+        return MPI_SUCCESS;
+     }
+
     OPAL_CR_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(mrecv(buf, count, type, message, status));
-    /*
-     * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
-     */
+    /* Per MPI-1, the MPI_ERROR field is not defined for
+       single-completion calls */
     MEMCHECKER(
         opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
     );

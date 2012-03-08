@@ -765,7 +765,9 @@ OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_empty;
 OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_null;
 
 OMPI_DECLSPEC extern struct ompi_predefined_request_t ompi_request_null;
+
 OMPI_DECLSPEC extern struct ompi_predefined_message_t ompi_message_null;
+OMPI_DECLSPEC extern struct ompi_predefined_message_t ompi_message_no_proc;
 
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_null;
 OMPI_DECLSPEC extern struct ompi_predefined_op_t ompi_mpi_op_min;
@@ -893,6 +895,8 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_COMM_SELF OMPI_PREDEFINED_GLOBAL(MPI_Comm, ompi_mpi_comm_self)
 
 #define MPI_GROUP_EMPTY OMPI_PREDEFINED_GLOBAL(MPI_Group, ompi_mpi_group_empty)
+
+#define MPI_MESSAGE_NO_PROC OMPI_PREDEFINED_GLOBAL(MPI_Message, ompi_message_no_proc)
 
 #define MPI_MAX OMPI_PREDEFINED_GLOBAL(MPI_Op, ompi_mpi_op_max)
 #define MPI_MIN OMPI_PREDEFINED_GLOBAL(MPI_Op, ompi_mpi_op_min)

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,12 +57,12 @@ int MPI_Improbe(int source, int tag, MPI_Comm comm, int *flag,
     if (MPI_PROC_NULL == source) {
         if (MPI_STATUS_IGNORE != status) {
             *status = ompi_request_empty.req_status;
-            /*
-             * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
-             */
+            /* Per MPI-1, the MPI_ERROR field is not defined for
+               single-completion calls */
             MEMCHECKER(
                 opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
             );
+            *message = &ompi_message_no_proc.message;
         }
         return MPI_SUCCESS;
     }
@@ -69,9 +70,8 @@ int MPI_Improbe(int source, int tag, MPI_Comm comm, int *flag,
     OPAL_CR_ENTER_LIBRARY();
 
     rc = MCA_PML_CALL(improbe(source, tag, comm, flag, message, status));
-    /*
-     * Per MPI-1, the MPI_ERROR field is not defined for single-completion calls
-     */
+    /* Per MPI-1, the MPI_ERROR field is not defined for
+       single-completion calls */
     MEMCHECKER(
         opal_memchecker_base_mem_undefined(&status->MPI_ERROR, sizeof(int));
     );

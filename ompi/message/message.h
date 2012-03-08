@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,6 +52,7 @@ int ompi_message_finalize(void);
 
 OMPI_DECLSPEC extern opal_free_list_t ompi_message_free_list;
 OMPI_DECLSPEC extern opal_pointer_array_t  ompi_message_f_to_c_table;
+OMPI_DECLSPEC extern ompi_predefined_message_t  ompi_message_no_proc;
 
 static inline
 ompi_message_t*

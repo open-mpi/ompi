@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,6 +56,11 @@ int MPI_Imrecv(void *buf, int count, MPI_Datatype type,
     } else {
         comm = (*message)->comm;
     }
+
+    if (&ompi_message_no_proc.message == *message) {
+        *request = &ompi_request_empty;
+        return MPI_SUCCESS;
+     }
 
     OPAL_CR_ENTER_LIBRARY();
 
