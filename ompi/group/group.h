@@ -13,6 +13,7 @@
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -233,6 +234,12 @@ OMPI_DECLSPEC int ompi_group_translate_ranks ( ompi_group_t *group1,
                                  ompi_group_t *group2, 
                                  int *ranks2);
 
+/**
+ * Abstracting MPI_Group_compare to an ompi function for internal use
+ */
+OMPI_DECLSPEC int ompi_group_compare(ompi_group_t *group1,
+                                     ompi_group_t *group2,
+                                     int *result);
 
 /** 
  * Abstracting MPI_Group_free, since it is required by some internal functions...
