@@ -15,3 +15,4 @@ enable_cpuidtrace="no"
 with_cross_prefix="bg"
 with_mpibgp="yes"
 with_cxxrtlib="-L/opt/ibmcmp/lib/bg/bglib -L/opt/ibmcmp/lib/bg/9.0/bglib -libmc++ -lstdc++"
+with_shlibc=/lib/libc.so.6

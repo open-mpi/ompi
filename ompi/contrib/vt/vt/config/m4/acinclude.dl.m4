@@ -40,7 +40,13 @@ AC_DEFUN([ACVT_DL],
 	])
 	AS_IF([test "$PLATFORM" = "bgp"],
 	[
+dnl		RTLD_NEXT available but not working on BG/P platforms
 		ac_cv_have_decl_RTLD_NEXT="no"
+	])
+	AS_IF([test "$PLATFORM" = "crayxt" -o "$PLATFORM" = "crayxe"],
+	[
+dnl		RTLD_DEFAULT available but not working on CrayX? platforms
+		ac_cv_have_decl_RTLD_DEFAULT="no"
 	])
 
 	AS_IF([test x"$dl_error" = "xno"],

@@ -1,3 +1,6 @@
+22. Fixed Fortran parsing
+    for detecting end of block DO loops
+
 21. Fixed processing of Fortran line-continuation
     appearing after a complete OpenMP directive
 

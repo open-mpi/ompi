@@ -172,25 +172,40 @@ GPULIBRARY =
 
 if AMBUILDCUDA
 GPUHEADERS += vt_cuda_driver_api.h
-GPUCFLAGS += -DVT_CUDA
+GPUCFLAGS += -DVT_CUDA $(CUDATKINCDIR)
 endif
 
-if AMBUILDCUDAWRAP
-#GPUSOURCES += vt_cudawrap.c vt_cuda.c
-GPUCFLAGS += -DVT_CUDAWRAP $(CUDATKINCDIR)
-endif
-
+if AMBUILDLIBWRAP
 if AMBUILDCUDARTWRAP
 GPUSOURCES += vt_cudartwrap.c vt_cudart.c
 GPUHEADERS += vt_cudartwrap.h vt_cuda_runtime_api.h
-GPUCFLAGS += -DVT_CUDARTWRAP $(CUDATKINCDIR)
+GPUCFLAGS += -DVT_CUDARTWRAP
+if !AMBUILDCUDA
+GPUCFLAGS += $(CUDATKINCDIR)
+endif
+endif
 endif
 
 if AMBUILDCUPTI
-GPUSOURCES += vt_cupti_events.c vt_cupti_callback.c
-GPUHEADERS += vt_cupti_events.h vt_cupti_callback.h vt_cupti.h 
+GPUSOURCES += vt_cupti.c
+GPUHEADERS += vt_cupti.h
 GPULIBRARY += $(CUPTILIBDIR) $(CUPTILIB)
 GPUCFLAGS += -DVT_CUPTI $(CUPTIINCDIR)
+if AMHAVECUPTIEVENTS
+GPUSOURCES += vt_cupti_events.c
+GPUHEADERS += vt_cupti_events.h
+GPUCFLAGS += -DVT_CUPTI_EVENTS
+endif
+if AMHAVECUPTICALLBACKS
+GPUSOURCES += vt_cupti_callback.c
+GPUHEADERS += vt_cupti_callback.h
+GPUCFLAGS += -DVT_CUPTI_CALLBACKS
+endif
+if AMHAVECUPTIACTIVITY
+GPUSOURCES += vt_cupti_activity.c
+GPUHEADERS += vt_cupti_activity.h
+GPUCFLAGS += -DVT_CUPTI_ACTIVITY
+endif
 endif
 
 else
@@ -330,15 +345,15 @@ VT_COMMON_SOURCES = \
 	vt_unimci.h \
 	$(COMPINSTSOURCES) \
 	$(DYNINSTSOURCES) \
+	$(GETCPUSOURCES) \
+	$(GPUSOURCES) \
+	$(IOWRAPSOURCES) \
 	$(LIBWRAPSOURCES) \
 	$(LIBCWRAPSOURCES) \
-	$(IOWRAPSOURCES) \
-	$(GPUSOURCES) \
 	$(MEMHOOKSOURCES) \
-	$(GETCPUSOURCES) \
+	$(METRSOURCES) \
 	$(PLUGINCNTRSOURCES) \
 	$(RUSAGESOURCES) \
-	$(METRSOURCES) \
 	vt_env.c \
 	vt_error.c \
 	vt_fbindings.c \

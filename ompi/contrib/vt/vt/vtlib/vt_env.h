@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -79,16 +79,17 @@ EXTERN char*  vt_env_filter_spec(void);
 EXTERN char*  vt_env_groups_spec(void);
 EXTERN int    vt_env_etimesync(void);
 EXTERN int    vt_env_etimesync_intv(void);
+EXTERN int    vt_env_cudatrace(void);
 EXTERN int    vt_env_cudarttrace(void);
-EXTERN int    vt_env_cudatrace_idle(void);
 EXTERN size_t vt_env_cudatrace_bsize(void);
-EXTERN int    vt_env_cudatrace_kernel(void);
-EXTERN int    vt_env_cudatrace_memcpyasync(void);
+EXTERN int    vt_env_cudatrace_memcpy(void);
 EXTERN int    vt_env_cudatrace_sync(void);
-EXTERN int    vt_env_cudatrace_gpumem(void);
-EXTERN char*  vt_env_cupti_metrics(void);
+EXTERN int    vt_env_cudatrace_cupti(void);
+EXTERN char*  vt_env_cupti_events(void);
 EXTERN int    vt_env_cupti_sampling(void);
-EXTERN int    vt_env_cupti_api_callback(void);
+EXTERN int    vt_env_gputrace_kernel(void);
+EXTERN int    vt_env_gputrace_idle(void);
+EXTERN int    vt_env_gputrace_memusage(void);
 EXTERN int    vt_env_gputrace_debug(void);
 EXTERN int    vt_env_gputrace_error(void);
 

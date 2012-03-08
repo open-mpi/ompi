@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -25,6 +25,8 @@
 #include "vt_pomp.h"
 #include "vt_ompreg.h"
 #include "vt_trc.h"
+#define VT_MT /* necessary to have VTThrd_registerThread() declared */
+#include "vt_thrd.h"
 
 /*
  * Global variables
@@ -56,6 +58,14 @@ void POMP_Init() {
 
     vt_open();
     atexit(POMP_Finalize);
+
+    /* register all threads in sequential order to make the VT thread ids equal
+       to the OpenMP thread ids */
+#   pragma omp parallel for ordered private(i)
+    for(i = 0; i < omp_get_max_threads(); i++) {
+#     pragma omp ordered
+      VT_CHECK_THREAD;
+    }
 
     /* register wrapper functions for OpenMP API */
     vt_omp_register();

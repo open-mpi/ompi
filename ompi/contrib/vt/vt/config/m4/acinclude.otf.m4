@@ -30,7 +30,7 @@ AC_DEFUN([ACVT_OTF],
 	[AS_IF([test x"$OTFDIR" != x], [OTFLIBDIR="-L$OTFDIR"lib/])])
 
 	AC_ARG_WITH(otf-lib,
-		AC_HELP_STRING([--with-otf-lib=OTFLIB], [use given otf lib, default: -lotf -lz]),
+		AC_HELP_STRING([--with-otf-lib=OTFLIB], [use given otf lib, default: -lotf ZLIBLIBDIR ZLIBLIB]),
 	[OTFLIB="$withval"])
 
 	AC_ARG_WITH(otf-flags,
@@ -122,7 +122,7 @@ dnl				[otf_conf_args="$otf_conf_args --with-mpi-inc-dir=`echo $MPIINCDIR | sed 
 				AS_IF([test x"$MPILIBDIR" != x],
 				[otf_conf_args="$otf_conf_args --with-mpi-lib-dir=`echo $MPILIBDIR | sed s/-L//`"])
 				AS_IF([test x"$MPILIB" != x],
-				[otf_conf_args="$otf_conf_args --with-mpi-lib=$MPILIB"])
+				[otf_conf_args="$otf_conf_args --with-mpi-lib=\"$MPILIB\""])
 			])
 		],
 		[
@@ -139,7 +139,7 @@ dnl				[otf_conf_args="$otf_conf_args --with-mpi-inc-dir=`echo $MPIINCDIR | sed 
 			AS_IF([test x"$ZLIBLIBDIR" != x],
 			[otf_conf_args="$otf_conf_args --with-zlib-lib-dir=`echo $ZLIBLIBDIR | sed s/-L//`"])
 			AS_IF([test x"$ZLIBLIB" != x],
-			[otf_conf_args="$otf_conf_args --with-zlib-lib=$ZLIBLIB"])
+			[otf_conf_args="$otf_conf_args --with-zlib-lib=\"$ZLIBLIB\""])
 		],
 		[
 			otf_conf_args="$otf_conf_args --without-zlib"

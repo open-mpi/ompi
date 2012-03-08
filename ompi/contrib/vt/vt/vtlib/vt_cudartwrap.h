@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -36,17 +36,6 @@ EXTERN VTLibwrapAttr vt_cudart_lw_attr;
 EXTERN void vt_cudartwrap_lw_attr_init(VTLibwrapAttr* attr);
 EXTERN void vt_cudartwrap_init(void);
 
-/*
- * number of CUDA capable devices on local node.
- */
-EXTERN int vt_cuda_deviceCount; 
-
-/*
- * As it is allowed to use both, CUDA Runtime and Driver API together, they
- * have to be aware of each other in case of context destroy or thread exit
- */
-EXTERN uint8_t vt_cudartwrap_used;
-
 /* flag: tracing of CUDA API enabled? */
 EXTERN uint8_t vt_cudart_trace_enabled;
 
@@ -54,8 +43,6 @@ EXTERN uint8_t vt_cudart_trace_enabled;
 EXTERN uint8_t vt_cudart_initialized;
 
 EXTERN void vt_cudartwrap_finalize(void);
-
-EXTERN void vt_cudartwrap_cleanThread(uint32_t ptid);
 
 /* Mutex for locking the CUDA runtime wrap environment */
 #if (defined(VT_MT) || defined(VT_HYB))
@@ -78,7 +65,6 @@ EXTERN VTThrdMutex* VTThrdMutexCudart;
     CUDARTWRAP_LOCK();                                                        \
     if(!vt_cudart_initialized){                                               \
       vt_cudartwrap_init();                                                   \
-      vt_cudart_initialized = 1;                                              \
     }                                                                         \
     CUDARTWRAP_UNLOCK();                                                      \
   }

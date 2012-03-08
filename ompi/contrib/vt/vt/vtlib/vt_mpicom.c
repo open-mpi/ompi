@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -530,7 +530,11 @@ void vt_win_create( MPI_Win win, MPI_Comm comm )
       VTTHRD_UNLOCK_IDS();
 #endif /* VT_MT || VT_HYB */
 
-      PMPI_Win_get_group(win, &group); 
+      /* ask for group of win and register them */
+
+      PMPI_Win_get_group(win, &group);
+      vt_libassert(group != MPI_GROUP_NULL);
+      vt_group_create(group);
 
       /* enter win in wins[] array */
 

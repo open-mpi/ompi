@@ -210,7 +210,7 @@ AC_SUBST(SHREXT)
 # to linker flags on BlueGene/P platforms to lead libtool to believe that
 # dynamic linking is the default behaviour of the linker.
 AS_IF([test "$PLATFORM" = "bgp" -a x"$enable_shared" = "xyes"],
-[export LDFLAGS="$LDFLAGS -Wl,-dy"])
+[export LDFLAGS="$LDFLAGS $lt_prog_compiler_wl-dy"])
 
 # Check for BSD compatible symbol lister command
 #AC_PROG_NM # already been checked by AC_PROG_LIBTOOL
@@ -381,8 +381,11 @@ AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_getcpu" = "xno"],
 AS_IF([test x"$force_getcpu" = "xyes" -a x"$getcpu_error" = "xyes"], [exit 1])
 AM_CONDITIONAL(AMHAVEGETCPU, test x"$have_getcpu" = "xyes")
 
+#Check for NVIDIA CUDA support
+ACVT_CONF_TITLE([NVIDIA CUDA])
+
 #Check for CUDA Toolkit
-ACVT_CONF_TITLE([CUDA Toolkit])
+ACVT_CONF_SUBTITLE([CUDA Toolkit])
 ACVT_CUDA
 AS_IF([test x"$enable_config_titles" = "xyes" -a x"$check_cuda" = "xno"],
 [AC_MSG_NOTICE([disabled via command line switch])])
@@ -390,9 +393,14 @@ AS_IF([test x"$force_cuda" = "xyes" -a x"$cuda_error" = "xyes"], [exit 1])
 AM_CONDITIONAL(AMBUILDCUDA, test x"$have_cuda" = "xyes")
 AM_CONDITIONAL(AMBUILDCUDART, test x"$have_cudart" = "xyes")
 
-# Check for CUPTI support
+# Check for CUDA Tools SDK support
+ACVT_CONF_SUBTITLE([CUDA Tools])
+# Check for CUPTI
 ACVT_CUPTI
 AM_CONDITIONAL(AMBUILDCUPTI, test x"$have_cupti" = "xyes")
+AM_CONDITIONAL(AMHAVECUPTIEVENTS, test x"$have_cupti_events" = "xyes")
+AM_CONDITIONAL(AMHAVECUPTICALLBACKS, test x"$have_cupti_callbacks" = "xyes")
+AM_CONDITIONAL(AMHAVECUPTIACTIVITY, test x"$have_cupti_activity" = "xyes")
 
 # Check for library tracing support
 ACVT_CONF_TITLE([Library tracing])
@@ -406,12 +414,16 @@ AM_CONDITIONAL(AMHAVEDL, test x"$have_dl" = "xyes")
 AM_CONDITIONAL(AMBUILDLIBCWRAP, test x"$have_libcwrap" = "xyes")
 AM_CONDITIONAL(AMHAVEFORK, test x"$have_libcwrap" = "xyes" -a x"$have_fork" = "xyes")
 AM_CONDITIONAL(AMBUILDIOWRAP, test x"$have_iowrap" = "xyes")
-AM_CONDITIONAL(AMBUILDCUDAWRAP, test x"$have_cudawrap" = "xyes")
 AM_CONDITIONAL(AMBUILDCUDARTWRAP, test x"$have_cudartwrap" = "xyes")
-AM_CONDITIONAL(AMBUILDVTNVCC, test x"$have_cudartwrap" = "xyes" -a x"$NVCC" != x)
+
+cond_cuda=0
+if test x"$have_cudartwrap" = "xyes" -o x"$have_cupti_callbacks" = "xyes"; then
+cond_cuda=1
+fi
+AM_CONDITIONAL(AMBUILDVTNVCC, test $cond_cuda -eq 1 -a x"$NVCC" != x)
 
 # Check for GPU support
-AM_CONDITIONAL(AMHAVEGPU, test x"$have_cupti" = "xyes" -o x"$have_cudartwrap" = "xyes")
+AM_CONDITIONAL(AMHAVEGPU, test x"$have_cupti_callbacks" = "xyes" -o x"$have_cudartwrap" = "xyes")
 
 # Check path for node-local temporary directory
 ACVT_LTMPDIR
@@ -465,6 +477,7 @@ AC_CONFIG_FILES([Makefile
 	tools/vtrun/vtrun
 	tools/vtsetup/Makefile
 	tools/vtsetup/vtsetup
+	tools/vtsetup/vtsetup-config.xml
 	tools/vtsetup/vtsetup-data.xml
 	tools/vtsetup/doc/Makefile
 	tools/vtunify/Makefile
@@ -479,7 +492,6 @@ AC_CONFIG_FILES([Makefile
 	include/vt_inttypes.h
 	doc/Makefile
 	etc/Makefile
-	etc/vt-setup-config.xml
 ])
 
 # Add MPI wrapper generator scripts to output files
