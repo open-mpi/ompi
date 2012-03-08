@@ -11,6 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2007-2010 Cisco Systems, Inc. All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -588,6 +589,7 @@ Please check your boundaries and try again.
 [orterun:proc-comm-failed]
 A critical communication path was lost to:
 
+  My name:      %s
   Process name: %s
   Node:         %s
 #
