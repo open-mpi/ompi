@@ -59,6 +59,7 @@ int MPI_Imrecv(void *buf, int count, MPI_Datatype type,
 
     if (&ompi_message_no_proc.message == *message) {
         *request = &ompi_request_empty;
+        *message = MPI_MESSAGE_NULL;
         return MPI_SUCCESS;
      }
 
