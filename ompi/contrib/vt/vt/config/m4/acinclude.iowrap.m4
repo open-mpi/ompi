@@ -3,8 +3,11 @@ AC_DEFUN([ACVT_IOWRAP],
 	iowrap_error="no"
 	have_iowrap="no"
 
-	AS_IF([test x"$libc_error" = x], [ACVT_LIBC])
-	AS_IF([test x"$libc_pathname" = x], [iowrap_error="yes"])
+	AS_IF([test x"$shlibc_pathname" = x],
+	[
+		AC_MSG_NOTICE([error: pathname of shared LIBC required for LIBC-I/O tracing; please specify it by --with-shlibc])
+		iowrap_error="yes"
+	])
 
 	AS_IF([test x"$iowrap_error" = "xno"],
 	[

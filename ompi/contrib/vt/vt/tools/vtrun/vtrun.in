@@ -3,7 +3,7 @@
 # VampirTrace
 # http://www.tu-dresden.de/zih/vampirtrace
 #
-# Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+# Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
 #
 # Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
 #                          Centre, Federal Republic of Germany
@@ -104,16 +104,28 @@ show_version()
 }
 
 #
-# subroutine verbose_echo() - show message if verbose mode is enabled
+# subroutine verbose_msg() - shows a message if verbose mode is enabled
 #
-verbose_echo()
+verbose_msg()
 {
   if test $verbose -ge $1; then
     if test $mpi -eq 1; then
-      echo "$EXENAME: [$PID]: $2"
+      echo -e "$EXENAME: [$PID]: $2"
     else
-      echo "$EXENAME: $2"
+      echo -e "$EXENAME: $2"
     fi
+  fi
+}
+
+#
+# subroutine error_msg() - shows an error message on stderr
+#
+error_msg()
+{
+  if test $mpi -eq 1; then
+    echo -e "$EXENAME: [$PID]: $*" >&2
+  else
+    echo -e "$EXENAME: $*" >&2
   fi
 }
 
@@ -145,9 +157,9 @@ exe=
 exe_args=
 
 if test $# -eq 0; then
-   show_helptext
+  show_helptext
 else
-  arg_error=0
+  arg_error_msg=
   while test $# -ne 0; do
     # handle quotes and spaces within argument
     arg=`echo "x$1" | sed -e 's/^x//' -e 's/"/\\\"/g' -e s,\',%@%\',g -e 's/%@%/\\\/g' -e 's/ /\\\ /g'`
@@ -208,16 +220,14 @@ else
         --extra-libs=*)
           myarg=`echo $arg | sed 's/--extra-libs=//'`
           if test x"$myarg" = x; then
-            echo "$EXENAME: option '--extra-libs' requires an argument"
-            arg_error=1
+            arg_error_msg="option '--extra-libs' requires an argument"
             break
           fi
           extra_libs=$myarg
           shift
           ;;
         -*)
-          echo "$EXENAME: unrecognized option -- '$arg'"
-          arg_error=1
+          arg_error_msg="unrecognized option -- '$arg'"
           break
           ;;
         *)
@@ -227,8 +237,8 @@ else
       esac
     fi
   done
-  if test $arg_error -eq 1; then
-    echo "Try \`$EXENAME --help' for more information."
+  if test x"$arg_error_msg" != x; then
+    error_msg "$arg_error_msg\nTry \`$EXENAME --help' for more information."
     exit 1
   elif test x"$exe" = x; then
     show_helptext
@@ -282,7 +292,7 @@ if test $par_type_enforced -eq 0 -a x"$NM" != x; then
     fi
   fi
 
-  verbose_echo 2 "Detected parallelization type: $par_type"
+  verbose_msg 2 "Detected parallelization type: $par_type"
 fi
 
 # set suitable VampirTrace library
@@ -306,25 +316,25 @@ fi
 #
 
 if test $mpi -eq 1 -a $HAVE_MPI -eq 0; then
-  echo "$EXENAME: Error: This installation of VampirTrace was not compiled" \
+  error_msg "Error: This installation of VampirTrace was not compiled "\
 "with MPI support. Aborting."
   exit 1
 fi
 
 if test $mpi -eq 1 -a $fortran -eq 1 -a $HAVE_FMPI -eq 0; then
-  echo "$EXENAME: Error: This installation of VampirTrace was not compiled" \
+  error_msg "Error: This installation of VampirTrace was not compiled "\
 "with MPI Fortran support. Aborting."
   exit 1
 fi
 
 if test $mt -eq 1 -a $HAVE_THREADS -eq 0; then
-  echo "$EXENAME: Error: This installation of VampirTrace was not compiled" \
+  error_msg "Error: This installation of VampirTrace was not compiled "\
 "with Multithreading support. Aborting."
   exit 1
 fi
 
 if test $dyninst -eq 1 -a $HAVE_DYNINST -eq 0; then
-  echo "$EXENAME: Error: This installation of VampirTrace was not compiled" \
+  error_msg "Error: This installation of VampirTrace was not compiled "\
 "with Dyninst support. Aborting."
   exit 1
 fi
@@ -340,7 +350,7 @@ fi
 
 if test $dyninst -eq 1; then
   if test x"$DYNINSTAPI_RT_LIB" = x; then
-    echo "$EXENAME: Error: Environment variable DYNINSTAPI_RT_LIB is not" \
+    error_msg "Error: Environment variable DYNINSTAPI_RT_LIB is not "\
 "defined. Aborting."
     exit 1
   fi
@@ -355,16 +365,16 @@ fi
 # set environment variables
 #
 if test $MACOS -eq 1; then
-  verbose_echo 2 "Prepending $libdir to DYLD_LIBRARY_PATH"
+  verbose_msg 2 "Prepending $libdir to DYLD_LIBRARY_PATH"
   export DYLD_LIBRARY_PATH=$libdir:$DYLD_LIBRARY_PATH
-  verbose_echo 2 "Setting DYLD_INSERT_LIBRARIES to $ld_preload"
+  verbose_msg 2 "Setting DYLD_INSERT_LIBRARIES to $ld_preload"
   export DYLD_INSERT_LIBRARIES=$ld_preload
-  verbose_echo 2 "Setting DYLD_FORCE_FLAT_NAMESPACE"
+  verbose_msg 2 "Setting DYLD_FORCE_FLAT_NAMESPACE"
   export DYLD_FORCE_FLAT_NAMESPACE=""
 else
-  verbose_echo 2 "Prepending $libdir to LD_LIBRARY_PATH"
+  verbose_msg 2 "Prepending $libdir to LD_LIBRARY_PATH"
   export LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH
-  verbose_echo 2 "Setting LD_PRELOAD to $ld_preload"
+  verbose_msg 2 "Setting LD_PRELOAD to $ld_preload"
   export LD_PRELOAD=$ld_preload
 fi
 
@@ -376,7 +386,7 @@ fi
 
 # run application
 #
-verbose_echo 2 "Executing: $exe $exe_args"
+verbose_msg 2 "Executing: $exe $exe_args"
 $exe $exe_args
 exit $?
 

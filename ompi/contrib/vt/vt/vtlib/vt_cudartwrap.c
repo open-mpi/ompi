@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -1375,6 +1375,7 @@ cudaError_t  cudaHostUnregister(void *ptr)
 }
 
 /* -- cuda_runtime_api.h:cudaPointerGetAttributes -- */
+#if (defined(CUDART_VERSION) && (CUDART_VERSION < 4010))
 cudaError_t  cudaPointerGetAttributes(struct cudaPointerAttributes *attributes, void *ptr)
 {
   cudaError_t  ret;
@@ -1390,6 +1391,23 @@ cudaError_t  cudaPointerGetAttributes(struct cudaPointerAttributes *attributes, 
 
   return ret;
 }
+#else
+cudaError_t  cudaPointerGetAttributes(struct cudaPointerAttributes *attributes, const void *ptr)
+{
+  cudaError_t  ret;
+
+  CUDARTWRAP_FUNC_INIT(vt_cudart_lw, vt_cudart_lw_attr, "cudaPointerGetAttributes",
+    cudaError_t , (struct cudaPointerAttributes *, const void *), NULL, 0);
+
+  CUDARTWRAP_FUNC_START(vt_cudart_lw);
+
+  ret = VT_LIBWRAP_FUNC_CALL(vt_cudart_lw, (attributes, ptr));
+
+  CUDARTWRAP_FUNC_END(vt_cudart_lw);
+
+  return ret;
+}
+#endif
 
 /* -- cuda_runtime_api.h:cudaDeviceCanAccessPeer -- */
 cudaError_t  cudaDeviceCanAccessPeer(int *canAccessPeer, int device, int peerDevice)

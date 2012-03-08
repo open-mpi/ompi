@@ -66,30 +66,6 @@ AC_DEFUN([ACVT_CUDA],
 		cuda_error="yes"
 	])
 
-	AS_IF([test x"$cuda_error" = "xno"],
-	[
-		AC_MSG_CHECKING([whether CUDA driver version >= 3.0])
-
-		sav_CPPFLAGS=$CPPFLAGS
-		CPPFLAGS="$CPPFLAGS $CUDATKINCDIR"
-		AC_TRY_COMPILE([#include "cuda.h"],
-		[
-#ifndef CUDA_VERSION
-#  error "CUDA_VERSION not defined"
-#elif CUDA_VERSION < 3000
-#  error "CUDA_VERSION < 3000"
-#endif
-		],
-		[AC_MSG_RESULT([yes])],
-		[
-			AC_MSG_RESULT([no])
-			AC_MSG_NOTICE([error: CUDA driver version could not be determined and/or is incompatible (< 3.0)
- See \`config.log' for more details.])
-			cuda_error="yes"
-                ])
-                CPPFLAGS=$sav_CPPFLAGS
-	])
-
 	AS_IF([test x"$cudart_error" = "xno"],
 	[
 		sav_CPPFLAGS=$CPPFLAGS
@@ -155,5 +131,4 @@ See \`config.log' for more details.])
 
 	AC_SUBST(CUDATKINCDIR)
 	AC_SUBST(CUDATKLIBDIR)
-	AC_SUBST(CUDATKLIB)
 ])

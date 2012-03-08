@@ -63,7 +63,7 @@ cat <<End-of-File >$tmp.c
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -93,6 +93,15 @@ cat <<End-of-File >$tmp.awk
   if (!generate) {
     printf "/* -- %s -- not generated */\n\n", mpicall
     next
+  }
+
+  aint_convert=1
+
+  if (index(mpicall,"MPI_Type_create_hindexed") != 0 ||
+      index(mpicall,"MPI_Type_create_hvector") != 0 ||
+      index(mpicall,"MPI_Type_create_struct") != 0)
+  {
+      aint_convert=0
   }
 
   optional=0
@@ -275,6 +284,9 @@ cat <<End-of-File >$tmp.awk
 # by MPI_Fint.
 # -------------------------------------------------
 function converttype(type) { 
+  if (aint_convert)
+    gsub("MPI_Aint","MPI_Fint",type)
+
   if (ENVIRON["COMM_CONVERT"] == 1)
     gsub("MPI_Comm","MPI_Fint",type)
 
@@ -324,6 +336,9 @@ function print_convert_function(type,para,decl) {
         if (type == "char*") {
             if (decl) printf"  char* %sC = NULL;\n", para
             else printf"  vt_string_f2c(%s, %s_len, &%sC);\n", para, para, para 
+        } else if (aint_convert && (index(type,"MPI_Aint")) > 0) {
+            if (decl) printf"  MPI_Aint %sC;\n",para
+            else printf"  %sC = (MPI_Aint)%s%s;\n",para,pointer,para
         } else if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             if (decl) printf"  MPI_Comm %sC;\n", para
             else printf"  %sC = MPI_Comm_f2c(%s%s);\n",para,pointer,para
@@ -375,6 +390,8 @@ function print_convert_function(type,para,decl) {
 
         if (type == "char*") {
             if (decl) printf "  char %sC[1024];\n", para
+        } else if (aint_convert && (index(type,"MPI_Aint") > 0)) {
+            if (decl) printf"  MPI_Aint %sC;\n",para
         } else if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             if (decl) printf"  MPI_Comm %sC;\n",para
             else printf"  %sC = MPI_COMM_NULL;\n",para
@@ -433,7 +450,13 @@ function print_convert_function(type,para,decl) {
         len_parameter = lentemp[2]
 
         #now we have to handle all the imaginable handles
-        if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
+        if (aint_convert && (index(type,"MPI_Aint") > 0)) {
+            if (decl) {
+                printf"  MPI_Aint* %sC;\n",para
+            } else {
+                printf"  %sC = (MPI_Aint*)malloc(sizeof(MPI_Aint)*(*%s));\n",para,len_parameter
+            }
+        } else if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             if (decl) {
                 printf"  MPI_Comm* %sC;\n",para
             } else {
@@ -538,7 +561,12 @@ function print_convert_function(type,para,decl) {
         len_parameter = lentemp[2]
 
         #now we have to handle all the imaginable handles
-        if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
+        if (aint_convert && (index(type,"MPI_Aint") > 0)) {
+            if (!decl) {
+                printf"  for (i = 0; i < *%s; i++) \n",len_parameter
+                printf"    %sC[i] = (MPI_Aint)%s[i];\n",para,para
+            }
+        } else if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             if (!decl) {
                 printf"  for (i = 0; i < *%s; i++) \n",len_parameter
                 printf"    %sC[i] = MPI_Comm_f2c(%s[i]);\n",para,para
@@ -617,6 +645,9 @@ function print_back_convert_function(type,para) {
         if (type == "char*")
             printf"  vt_string_c2f(%sC, %s, %s_len);\n", para, para, para
 
+	if (aint_convert && (index(type,"MPI_Aint") > 0))
+            printf"  *%s = (MPI_Fint)%sC;\n",para,para
+
         if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0))
             printf"  *%s = MPI_Comm_c2f(%sC);\n",para,para
 
@@ -665,6 +696,13 @@ function print_back_convert_function(type,para) {
         len_parameter = lentemp[2]
 
         #now we have to handle all the imaginable handles
+        if (aint_convert && (index(type,"MPI_Aint") > 0)) {
+            printf"  if ( *%s != MPI_UNDEFINED )\n  {\n",len_parameter
+            printf"    for (i = 0; i < *%s; i++) \n",len_parameter
+            printf"      %s[i] = (MPI_Fint)%sC[i];\n",para,para
+            printf"  }\n"
+        }
+
         if ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) {
             printf"  if ( *%s != MPI_UNDEFINED )\n  {\n",len_parameter
             printf"    for (i = 0; i < *%s; i++) \n",len_parameter
@@ -740,17 +778,18 @@ function print_back_convert_function(type,para) {
     if ( (index(para,"_CLASS_ARRAY_") != 0) &&
          (index(type,"MPI_Status") == 0) )
     {
-         if ( ((index(type,"MPI_Comm") != 0) && (ENVIRON["COMM_CONVERT"] == 1)) ||
-              ((index(type,"MPI_Errhandler") != 0) && (ENVIRON["ERRHANDLER_CONVERT"] == 1)) ||
-              ((index(type,"MPI_File") != 0) && (ENVIRON["FILE_CONVERT"] == 1)) ||
-              ((index(type,"MPI_Group") != 0) && (ENVIRON["GROUP_CONVERT"] == 1)) ||
-              ((index(type,"MPI_Info") != 0) && (ENVIRON["INFO_CONVERT"] == 1)) ||
-              ((index(type,"MPI_Op") != 0) && (ENVIRON["OP_CONVERT"] == 1)) ||
-              ((index(type,"MPI_Datatype") != 0) && (ENVIRON["TYPE_CONVERT"] == 1)) ||
-              ((index(type,"MPI_Win") != 0) && (ENVIRON["WIN_CONVERT"] == 1)) )
-         {
-             printf "  free(%sC);\n",para
-         }
+        if ((aint_convert && (index(type,"MPI_Aint") > 0)) ||
+           ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) ||
+           ((ENVIRON["ERRH_CONVERT"] == 1) && (index(type,"MPI_Errhandler") > 0)) ||
+           ((ENVIRON["FILE_CONVERT"] == 1) && (index(type,"MPI_File") > 0)) ||
+           ((ENVIRON["GROUP_CONVERT"] == 1) && (index(type,"MPI_Group") > 0)) ||
+           ((ENVIRON["INFO_CONVERT"] == 1) && (index(type,"MPI_Info") > 0)) ||
+           ((ENVIRON["OP_CONVERT"] == 1) && (index(type,"MPI_Op") > 0)) ||
+           ((ENVIRON["TYPE_CONVERT"] == 1) && (index(type,"MPI_Datatype") > 0)) ||
+           ((ENVIRON["WIN_CONVERT"] == 1) && (index(type,"MPI_Win") > 0)) )
+        {
+            printf "  free(%sC);\n",para
+        }
     }
 
     #free the array memory for statuses
@@ -767,8 +806,8 @@ function print_back_convert_function(type,para) {
          (index(type,"MPI_Status") != 0) &&
          (ENVIRON["STATUS_CONVERT"] == 1) )
     {
-      printf "  if ( (%s != VT_MPI_F_STATUS_IGNORE) && (%s != VT_MPI_F_STATUSES_IGNORE) )\n",para,para
-      printf "    free(%sC);\n",para
+        printf "  if ( (%s != VT_MPI_F_STATUS_IGNORE) && (%s != VT_MPI_F_STATUSES_IGNORE) )\n",para,para
+        printf "    free(%sC);\n",para
     }
 
     #free string memory
@@ -801,17 +840,20 @@ function get_converted_name(para,type) {
         address="&"
 
     #handle conversion
-    if ( ((ENVIRON["COMM_CONVERT"] == 1)&&(index(type,"MPI_Comm") > 0)) ||
-         ((ENVIRON["ERRH_CONVERT"] == 1)&&(index(type,"MPI_Errhandler") > 0)) ||
-         ((ENVIRON["FILE_CONVERT"] == 1)&&(index(type,"MPI_File") > 0)) ||
-         ((ENVIRON["GROUP_CONVERT"] == 1)&&(index(type,"MPI_Group") > 0)) ||
-         ((ENVIRON["INFO_CONVERT"] == 1)&&(index(type,"MPI_Info") > 0)) ||
-         ((ENVIRON["OP_CONVERT"] == 1)&&(index(type,"MPI_Op") > 0)) ||
-         ((ENVIRON["TYPE_CONVERT"] == 1)&&(index(type,"MPI_Datatype") > 0)) ||
-         ((ENVIRON["WIN_CONVERT"] == 1)&&(index(type,"MPI_Win") > 0)) ||
-         ((ENVIRON["REQUEST_CONVERT"] == 1)&&(index(type,"MPI_Request") > 0)) ||
-         (index(type,"MPI_Status") > 0) )
+    if ((aint_convert && (index(type,"MPI_Aint") > 0)) ||
+        ((ENVIRON["COMM_CONVERT"] == 1) && (index(type,"MPI_Comm") > 0)) ||
+        ((ENVIRON["ERRH_CONVERT"] == 1) && (index(type,"MPI_Errhandler") > 0)) ||
+        ((ENVIRON["FILE_CONVERT"] == 1) && (index(type,"MPI_File") > 0)) ||
+        ((ENVIRON["GROUP_CONVERT"] == 1) && (index(type,"MPI_Group") > 0)) ||
+        ((ENVIRON["INFO_CONVERT"] == 1) && (index(type,"MPI_Info") > 0)) ||
+        ((ENVIRON["OP_CONVERT"] == 1) && (index(type,"MPI_Op") > 0)) ||
+        ((ENVIRON["TYPE_CONVERT"] == 1) && (index(type,"MPI_Datatype") > 0)) ||
+        ((ENVIRON["WIN_CONVERT"] == 1) && (index(type,"MPI_Win") > 0)) ||
+        ((ENVIRON["REQUEST_CONVERT"] == 1) && (index(type,"MPI_Request") > 0)) ||
+        (index(type,"MPI_Status") > 0) )
+    {
         return address para "C"
+    }
 
     #it is not a handle type so normal handling
     return pointer para

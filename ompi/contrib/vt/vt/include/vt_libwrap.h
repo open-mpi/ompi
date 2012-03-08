@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -120,9 +120,19 @@ struct VTLibwrapAttr_struct
   VTLibwrapAttrInitFunc init_func;
 };
 
-/* these two functions will be used inside VampirTrace for init/finalization */
+/* VampirTrace internal functions */
+
+/* initialize library wrapper interface */
 void vt_libwrap_init(void);
+/* finalize library wrapper interface */
 void vt_libwrap_finalize(void);
+
+/* load external LIBC and get its handle */
+void* vt_libwrap_get_libc_handle(void);
+/* set errno of external LIBC to given value */
+void vt_libwrap_set_libc_errno(const int value);
+/* get errno of external LIBC */
+int vt_libwrap_get_libc_errno(void);
 
 /* create a library wrapper object
    arguments:

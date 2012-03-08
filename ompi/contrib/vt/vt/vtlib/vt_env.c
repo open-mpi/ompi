@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -271,6 +271,7 @@ char* vt_env_gnu_nm()
 
   return gnu_nm;
 }
+
 char* vt_env_gnu_nmfile()
 {
   static int read = 1;
@@ -444,7 +445,8 @@ int vt_env_funique()
           else
             {
               funique = atoi(tmp);
-              if (funique == 0) funique = -1;
+              if (funique == 0)
+                funique = -1;
               else if (funique < 0)
                 vt_error_msg("VT_FILE_UNIQUE not properly set");
             }
@@ -1609,6 +1611,29 @@ int vt_env_etimesync_intv()
   return etimesync_intv;
 }
 
+int vt_env_cudatrace()
+{
+  static int cudatrace = -1;
+  
+  if (cudatrace == -1)
+    {
+      char* tmp = getenv("VT_CUDATRACE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUDATRACE=%s", tmp);
+
+          cudatrace = atoi(tmp);
+          /* if user wrote 'yes' or 'true' */
+          if(cudatrace == 0 && parse_bool(tmp) == 1) cudatrace = 1;
+        }
+      else
+        {
+          cudatrace = 0;
+        }
+    }
+  return cudatrace;
+}
+
 int vt_env_cudarttrace()
 {
   static int cudarttrace = -1;
@@ -1630,27 +1655,6 @@ int vt_env_cudarttrace()
   return cudarttrace;
 }
 
-int vt_env_cudatrace_idle()
-{
-  static int cudaidle = -1;
-
-  if (cudaidle == -1)
-    {
-      char* tmp = getenv("VT_CUDATRACE_IDLE");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_CUDATRACE_IDLE=%s", tmp);
-
-          cudaidle = parse_bool(tmp);
-        }
-      else
-        {
-          cudaidle = 0;
-        }
-    }
-  return cudaidle;
-}
-
 size_t vt_env_cudatrace_bsize()
 {
   static size_t limit = 0;
@@ -1668,37 +1672,16 @@ size_t vt_env_cudatrace_bsize()
   return limit;
 }
 
-int vt_env_cudatrace_kernel()
-{
-  static int cudakernels = -1;
-
-  if (cudakernels == -1)
-    {
-      char* tmp = getenv("VT_CUDATRACE_KERNEL");
-      if (tmp != NULL && strlen(tmp) > 0)
-        {
-          vt_cntl_msg(2, "VT_CUDATRACE_KERNEL=%s", tmp);
-
-          cudakernels = parse_bool(tmp);
-        }
-      else
-        {
-          cudakernels = 1;
-        }
-    }
-  return cudakernels;
-}
-
-int vt_env_cudatrace_memcpyasync()
+int vt_env_cudatrace_memcpy()
 {
   static int cudamcpy = -1;
 
   if (cudamcpy == -1)
     {
-      char* tmp = getenv("VT_CUDATRACE_MEMCPYASYNC");
+      char* tmp = getenv("VT_CUDATRACE_MEMCPY");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          vt_cntl_msg(2, "VT_CUDATRACE_MEMCPYASYNC=%s", tmp);
+          vt_cntl_msg(2, "VT_CUDATRACE_MEMCPY=%s", tmp);
 
           cudamcpy = parse_bool(tmp);
         }
@@ -1733,31 +1716,31 @@ int vt_env_cudatrace_sync()
   return sync;
 }
 
-int vt_env_cudatrace_gpumem()
+int vt_env_cudatrace_cupti()
 {
-  static int cudamem = -1;
+  static int cupti_cb = -1;
 
-  if (cudamem == -1)
+  if (cupti_cb == -1)
     {
-      char* tmp = getenv("VT_CUDATRACE_GPUMEMUSAGE");
+      char* tmp = getenv("VT_CUDATRACE_CUPTI");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          vt_cntl_msg(2, "VT_CUDATRACE_GPUMEMUSAGE=%s", tmp);
+          vt_cntl_msg(2, "VT_CUDATRACE_CUPTI=%s", tmp);
 
-          cudamem = parse_bool(tmp);
+          cupti_cb = parse_bool(tmp);
         }
       else
         {
-          cudamem = 0;
+          cupti_cb = 0;
         }
     }
-  return cudamem;
+  return cupti_cb;
 }
 
-char* vt_env_cupti_metrics()
+char* vt_env_cupti_events()
 {
   static int read = 1;
-  static char* metrics = NULL;
+  static char* events = NULL;
   char* tmp;
 
   if (read)
@@ -1768,10 +1751,10 @@ char* vt_env_cupti_metrics()
         {
           vt_cntl_msg(2, "VT_CUPTI_METRICS=%s", tmp);
 
-          metrics = tmp;
+          events = tmp;
         }
     }
-  return metrics;
+  return events;
 }
 
 int vt_env_cupti_sampling()
@@ -1795,25 +1778,71 @@ int vt_env_cupti_sampling()
   return cuptisampling;
 }
 
-int vt_env_cupti_api_callback()
+int vt_env_gputrace_kernel()
 {
-  static int cupti_cb = -1;
+  static int cudakernel = -1;
 
-  if (cupti_cb == -1)
+  if (cudakernel == -1)
     {
-      char* tmp = getenv("VT_CUPTI_API_CALLBACK");
+      char* tmp = getenv("VT_CUDATRACE_KERNEL");
       if (tmp != NULL && strlen(tmp) > 0)
         {
-          vt_cntl_msg(2, "VT_CUPTI_API_CALLBACK=%s", tmp);
+          vt_cntl_msg(2, "VT_CUDATRACE_KERNEL=%s", tmp);
 
-          cupti_cb = parse_bool(tmp);
+          cudakernel = atoi(tmp);
+          /* perhaps user wrote 'yes' or 'true' */
+          if(cudakernel == 0 && parse_bool(tmp) == 1) cudakernel = 1;
         }
       else
         {
-          cupti_cb = 0;
+          cudakernel = 1;
         }
     }
-  return cupti_cb;
+  return cudakernel;
+}
+
+int vt_env_gputrace_idle()
+{
+  static int gpuidle = -1;
+
+  if (gpuidle == -1)
+    {
+      char* tmp = getenv("VT_CUDATRACE_IDLE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_CUDATRACE_IDLE=%s", tmp);
+
+          gpuidle = parse_bool(tmp);
+        }
+      else
+        {
+          gpuidle = 0;
+        }
+    }
+  return gpuidle;
+}
+
+int vt_env_gputrace_memusage()
+{
+  static int gpumem = -1;
+  
+  if (gpumem == -1)
+    {
+      char* tmp = getenv("VT_GPUTRACE_MEMUSAGE");
+      if (tmp != NULL && strlen(tmp) > 0)
+        {
+          vt_cntl_msg(2, "VT_GPUTRACE_MEMUSAGE=%s", tmp);
+
+          gpumem = atoi(tmp);
+          /* if user wrote 'yes' or 'true' */
+          if(gpumem == 0 && parse_bool(tmp) == 1) gpumem = 1;
+        }
+      else
+        {
+          gpumem = 0;
+        }
+    }
+  return gpumem;
 }
 
 int vt_env_gputrace_debug()

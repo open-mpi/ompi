@@ -25,7 +25,8 @@
   <group identifier="libtrace" descname="Additional Event Sources" priority="000">
     <desc>Options for tracing of IO, lib-C, ... events.</desc>
     <parentid>optFeat</parentid>
-  </group><group identifier="synFl" priority="200" descname="Synchronized Flush">
+  </group>
+  <group identifier="synFl" priority="200" descname="Synchronized Flush">
     <desc>synchronizing buffer flushes</desc>
     <parentid>optFeat</parentid>
   </group>
@@ -93,7 +94,7 @@
     <available>1</available>
   </env><env isdeprecated="0" priority="300" descname="Enable I/O tracing" isadvanced="0" group="libtrace"
     envname="VT_IOTRACE">
-    <desc>Enabled and disable the recording of I/O functions like fopen.</desc>
+    <desc>Enable / disable the recording of I/O functions like fopen.</desc>
     <valuedesc>
       <value type="bool">
         <default>0</default>
@@ -347,7 +348,6 @@
       <value type="enumselection">
         <default>TRACE</default>
         <enumid>vtmodeenum</enumid>
-        
       </value>
     </valuedesc>
     <since major="5" minor="0" patch="0" ></since>
@@ -685,4 +685,5 @@
     <entry>ru_nsignals</entry>
     <entry>ru_nvcsw</entry>
     <entry>ru_nivcsw</entry>
-  </enumselection></vtenv>
+  </enumselection>
+  </vtenv>

@@ -35,9 +35,12 @@ AC_DEFUN([ACVT_CXXRTLIB],
                                -lC \
                                -lstd;-lC \
                                -lstd;-lC;-lzceh \
+                               -lstdz;-lCz;-lzceh \
+                               -lstdz;-lCz;-lzceh;-lgcc_eh \
                                -lstdc++;-lm;-lc \
                                -limf;-lm;-lipgo;-lstdc++;-lirc;-lipr;-lirc;-lc;-lirc_s;-ldl;-lc \
-                               -lC++"
+                               -lC++ \
+                               -lcray-c++-rts;-lcraystdc++"
 
 		AS_IF([test x"$cxxrtlib_error" = "xno"],
 		[
@@ -59,6 +62,6 @@ AC_DEFUN([ACVT_CXXRTLIB],
 	])
 
 	AS_IF([test x"$cxxrtlib_error" = "xno"],
-	[AC_MSG_RESULT([$cxxrtlib])], [AC_MSG_RESULT([failed])])
+	[AC_MSG_RESULT([$cxxrtlib])], [AC_MSG_RESULT([unknown])])
 ])
 

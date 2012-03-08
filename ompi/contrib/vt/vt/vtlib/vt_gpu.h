@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -39,14 +39,21 @@
 /* performance counter available? */
 #define VTGPU_NO_PC    0x04 /* no performance counter for this thread available */
 
-/* device/host communication directions (8 bit only!!!) */
-#define VTGPU_DEV2HOST  0x00 /* device to host copy */
-#define VTGPU_HOST2DEV  0x01 /* host to device copy */
-#define VTGPU_DEV2DEV   0x02 /* device to device copy */
-#define VTGPU_HOST2HOST 0x04 /* host to host copy */
 
-/****************** common for CUDA driver API and CUPTI **********************/
-#if (defined(VT_CUDAWRAP) || defined(VT_CUPTI))
+#if (defined(VT_CUDARTWRAP) || defined(VT_CUPTI))
+/*
+ * Parse the device function name:
+ * "_Z<kernel_length><kernel_name><templates>..." (no name space)
+ * "_ZN<ns_length><ns_name>...<ns_length><ns_name><kernel_length>..." (with name space)
+ *
+ * @param kname the extracted kernel name
+ * @param devFunc the CUDA internal kernel function name
+ */
+EXTERN void vt_cuda_symbolToKernel(char *kname, const char* devFunc);
+#endif /* defined(VT_CUDARTWRAP) || defined(VT_CUPTI) */
+
+
+#if (defined(VT_CUDA) && defined(VT_CUPTI))
 
 #include "vt_cuda_driver_api.h"
 
@@ -66,34 +73,24 @@
 EXTERN void vt_gpu_handleCuError(CUresult ecode, const char* msg,
                                  const char *file, const int line);
 
-#else
+#else /* defined(VT_CUDA) && defined(VT_CUPTI) */
 
 # define CHECK_CU_ERROR(_err, _msg)
 
-#endif
-/******************************************************************************/
+#endif /* defined(VT_CUDA) && defined(VT_CUPTI) */
 
-/****************************** CUDA driver API *******************************/
-#if (defined(VT_CUDAWRAP))
 
-/* is CUDA driver API tracing suspended? */
-# define VTGPU_CUDA_SUSPENDED 0x08
-
-# define VT_SUSPEND_CUDA_TRACING(_tid) vt_gpu_prop[_tid] |= VTGPU_CUDA_SUSPENDED
-# define VT_RESUME_CUDA_TRACING(_tid)  vt_gpu_prop[_tid] &= ~VTGPU_CUDA_SUSPENDED
-# define VT_CUDA_IS_SUSPENDED(_tid) \
-    ((vt_gpu_prop[_tid] & VTGPU_CUDA_SUSPENDED) == VTGPU_CUDA_SUSPENDED)
-#else
-
-# define VT_SUSPEND_CUDA_TRACING(tid)
-# define VT_RESUME_CUDA_TRACING(tid)
-# define VT_CUDA_IS_SUSPENDED(tid)
-
-#endif
-/******************************************************************************/
+/* device/host communication directions */
+typedef enum {
+  VT_GPU_DEV2HOST  = 0x00, /* device to host copy */
+  VT_GPU_HOST2DEV  = 0x01, /* host to device copy */
+  VT_GPU_DEV2DEV   = 0x02, /* device to device copy */
+  VT_GPU_HOST2HOST = 0x04,  /* host to host copy */
+  VT_GPU_COPYDIRECTION_UNKNOWN = 0x08  /* unknown */
+} vt_gpu_copy_kind_t;
 
 /* 
- * gobal communicator id for all GPU threads
+ * global communicator id for all GPU threads
  */
 EXTERN uint32_t vt_gpu_groupCID;
 
@@ -103,10 +100,15 @@ EXTERN uint32_t vt_gpu_groupCID;
 EXTERN uint32_t vt_gpu_commCID;
 
 /*
- * Process/Thread IDs, which participate in gpu communication.
+ * Process/Thread IDs, which participate in GPU communication.
  * Index of the list is the thread ID (VTThrd...)
  */
 EXTERN uint8_t *vt_gpu_prop;
+
+/*
+ * flag: write GPU idle time as region into first GPU stream/queue?
+ */
+EXTERN uint8_t vt_gpu_trace_idle;
 
 /*
  * flag: Is debugging on? (yes: do not call CUDA functions in finalize)
@@ -117,6 +119,11 @@ EXTERN uint8_t vt_gpu_debug;
  * flag: abort program on GPU error, if enabled 
  */
 EXTERN uint8_t vt_gpu_error;
+
+/* 
+ * VampirTrace region ID for GPU idle time 
+ */
+EXTERN uint32_t vt_gpu_rid_idle;
 
 /*
  * Initialization for all GPU API wrappers.
@@ -139,5 +146,39 @@ EXTERN void vt_gpu_finalize(void);
  */
 EXTERN void vt_gpu_registerThread(const char* tname, uint32_t ptid,
                                   uint32_t *vt_tid);
+
+/***************************** hashing of strings *****************************/
+
+/* The key of the hash node is a string and the value an unsigned 32bit integer. 
+   It is used to store region names with its corresponding region IDs. */
+typedef struct vt_gpu_hnString_st {
+  char                      *sname; /**< name of the symbol */
+  uint32_t                  rid;    /**< associated region group identifier */
+  struct vt_gpu_hnString_st *next;  /**< bucket for collision */
+} vt_gpu_hn_string_t;
+
+/*
+ * Stores a hash value in the hash table.
+ * 
+ * @param n pointer to a char (string) - the hash nodes key
+ * @param rid integer - the hash nodes value
+ * 
+ * @return pointer to the hash node
+ */
+EXTERN void* vt_gpu_stringHashPut(const char* n, uint32_t rid);
+
+/*
+ * Retrieves the hash node for a given key.
+ * 
+ * @param n pointer to a char (string) - the hash nodes key
+ * 
+ * @return pointer to the hash node
+ */
+EXTERN void* vt_gpu_stringHashGet(const char* n);
+
+/*
+ * Clears the hash table. Frees all allocated hash nodes.
+ */
+EXTERN void vt_gpu_stringhashClear(void);
 
 #endif /* _VT_GPU_H_ */

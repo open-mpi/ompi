@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -359,14 +359,13 @@ VT_MPI_INT MPI_Finalize( void )
 {
   VT_MPI_INT result;
   uint64_t time;
-  uint8_t was_recorded;
 
   if (IS_MPI_TRACE_ON)
     {
       MPI_TRACE_OFF();
 
       time = vt_pform_wtime();
-      was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_FINALIZE]);
+      vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_FINALIZE]);
 
       /* finalize communicator, request, and file management */
       vt_comm_finalize();
@@ -652,7 +651,7 @@ VT_MPI_INT MPI_Group_union( MPI_Group group1,
       CALL_PMPI_3(MPI_Group_union, group1, group2, newgroup,
                   result, was_recorded, &time);
 
-      if ( *newgroup != MPI_GROUP_NULL)
+      if ( *newgroup != MPI_GROUP_NULL && *newgroup != MPI_GROUP_EMPTY)
         vt_group_create(*newgroup);
 
       time = vt_pform_wtime();
@@ -688,7 +687,7 @@ VT_MPI_INT MPI_Group_intersection( MPI_Group group1,
       CALL_PMPI_3(MPI_Group_intersection, group1, group2, newgroup,
                   result, was_recorded, &time);
 
-      if ( *newgroup != MPI_GROUP_NULL)
+      if ( *newgroup != MPI_GROUP_NULL && *newgroup != MPI_GROUP_EMPTY)
         vt_group_create(*newgroup);
 
       time = vt_pform_wtime();
@@ -724,7 +723,7 @@ VT_MPI_INT MPI_Group_difference( MPI_Group group1,
       CALL_PMPI_3(MPI_Group_difference, group1, group2, newgroup,
                   result, was_recorded, &time);
 
-      if ( *newgroup != MPI_GROUP_NULL)
+      if ( *newgroup != MPI_GROUP_NULL && *newgroup != MPI_GROUP_EMPTY)
         vt_group_create(*newgroup);
 
       time = vt_pform_wtime();
@@ -798,7 +797,7 @@ VT_MPI_INT MPI_Group_excl( MPI_Group group,
       CALL_PMPI_4(MPI_Group_excl, group, n, ranks, newgroup,
                   result, was_recorded, &time);
 
-      if ( *newgroup != MPI_GROUP_NULL)
+      if ( *newgroup != MPI_GROUP_NULL && *newgroup != MPI_GROUP_EMPTY)
         vt_group_create(*newgroup);
 
       time = vt_pform_wtime();
@@ -872,7 +871,7 @@ VT_MPI_INT MPI_Group_range_excl( MPI_Group group,
       CALL_PMPI_4(MPI_Group_range_excl, group, n, ranges, newgroup,
                   result, was_recorded, &time);
 
-      if ( *newgroup != MPI_GROUP_NULL)
+      if ( *newgroup != MPI_GROUP_NULL && *newgroup != MPI_GROUP_EMPTY)
         vt_group_create(*newgroup);
 
       time = vt_pform_wtime();
@@ -1014,14 +1013,14 @@ VT_MPI_INT MPI_Win_get_group( MPI_Win win, MPI_Group* group )
 {
   VT_MPI_INT result;
   uint64_t time;
-  uint8_t was_recorded;
+  /*uint8_t was_recorded;*/
 
   if (IS_MPI_TRACE_ON)
     {
       MPI_TRACE_OFF();
 
       time = vt_pform_wtime();
-      was_recorded = vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_WIN_GET_GROUP]);
+      /*was_recorded =*/ vt_enter(VT_CURRENT_THREAD, &time, vt_mpi_regid[VT__MPI_WIN_GET_GROUP]);
 
       /* UNIMCI_check_<pre|post>__MPI_Win_get_group not yet available;
          call PMPI function directly */

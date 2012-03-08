@@ -4,6 +4,7 @@
 
 #include "vt_inttypes.h"
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -275,11 +276,43 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
       int a = -1;
       int b = -1;
       char* q;
+      uint8_t is_rank_off_rule = 0;
 
-      /* stop reading file at first @ line, if no specific rank given */
+      /* check whether selected ranks shall be disabled */
+      if( ( p = strstr( line, "--" ) ) )
+      {
+        /* cut "-- OFF" from line */
+        *p = '\0';
 
+        p += 2;
+        while( *p == ' ' || *p == '\t' ) p++;
+        q = p;
+        while( *q != '\0' ) { *q = tolower( *q ); q++; }
+
+        if( strcmp( p, "off" ) == 0 )
+        {
+          is_rank_off_rule = 1;
+        }
+        else
+        {
+          parse_err = 1;
+          break;
+        }
+      }
+
+      /* no specific rank given? */
       if( rank == -1 )
-        break;
+      {
+        /* continue reading, if selected ranks shall be disabled
+           (non-rank-specific filter rules can follow) */
+        if( is_rank_off_rule )
+          continue;
+        /* otherwise, stop reading
+           (all the following filter rules are rank-specific which will be
+            read later) */
+        else
+          break;
+      }
 
       /* parse rank selection
          If current rank is included, then read the following filter rules.
@@ -304,30 +337,6 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
             break;
           }
         }
-        else if( *p == '-' && *(p+1) == '-' && a != -1 )
-        {
-          if( a == rank || (a < rank && rank <= b ) )
-            includes_current_rank = 1;
-
-          p += 2;
-          while( *p == ' ' || *p == '\t' ) p++;
-
-          /* must be equal to 'OFF' */
-          if ( *p == 'O' && *(p+1) == 'F' && *(p+2) == 'F' )
-          {
-            if ( includes_current_rank )
-              l_rank_off = 1; /* deactivate this rank completely */
-
-            /* otherwise or in any case do go on normaly with next line */
-            break;
-
-          }
-          else
-          {
-            parse_err = 1;
-            break;
-          }
-        }
         else if( *p == '-' && *(p+1) != '\0' && a != -1 )
         {
           p++;
@@ -346,14 +355,33 @@ int RFG_Filter_readDefFile( RFG_Filter* filter, int rank, uint8_t* rank_off )
           p++;
 
           if( a == rank || (a < rank && rank <= b ) )
+          {
             includes_current_rank = 1;
+            if( is_rank_off_rule )
+            {
+              l_rank_off = 1; /* deactivate this rank completely */
+              break;
+            }
+          }
+          else if( is_rank_off_rule )
+          {
+            includes_current_rank = 1;
+          }
 
           a = b = -1;
         }
         else if( *p == '\0' && a != -1 )
         {
           if( a == rank || (a < rank && rank <= b ) )
+          {
             includes_current_rank = 1;
+            if( is_rank_off_rule )
+              l_rank_off = 1; /* deactivate this rank completely */
+          }
+          else if( is_rank_off_rule )
+          {
+            includes_current_rank = 1;
+          }
 
           break;
         }

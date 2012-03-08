@@ -171,12 +171,18 @@ namespace {
 
     } else {
       // search for block Do loop
-      pos = lowline.find("end",pos);
+      if(lowline.compare(pos, 3, "end") != 0)
+        return false;
+
+      pos = lowline.find_first_not_of(" \t", pos+3);
       if(pos==string::npos) return false;
 
-      pos = lowline.find("do",pos+3);
-      if(pos==string::npos) return false;
-      
+      if(lowline.compare(pos, 2, "do") != 0)
+        return false;
+
+      if(!(lowline[pos+2] == ' ' || lowline[pos+2] == '\t' || lowline[pos+2] == '\0'))
+        return false;
+
       // search for label
       if(toplabel.size()) {
 	
@@ -206,7 +212,7 @@ namespace {
     pragma->find_name();
     pragma->pline=save_pline;               // reset parse position
     pragma->ppos=save_ppos;
-    if(pragma->name.find("do ")!=string::npos) {
+    if(pragma->name.find("do")!=string::npos) {
       linetype=PRAGMA_LOOPSTART;
       if(pragma->name == "enddo")              linetype=PRAGMA_LOOPEND;
       else if(pragma->name == "paralleldo")    linetype=PRAGMA_PARLOOPSTART;

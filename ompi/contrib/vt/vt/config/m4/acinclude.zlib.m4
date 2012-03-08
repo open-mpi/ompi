@@ -21,7 +21,7 @@ AC_DEFUN([ACVT_ZLIB],
 
 	AC_ARG_WITH(zlib-inc-dir,
 		AC_HELP_STRING([--with-zlib-inc-dir=ZLIBINCDIR],
-		[give the path for ZLIB-include files, default: ZLIB/include]),
+		[give the path for ZLIB-include files, default: ZLIBDIR/include]),
 	[ZLIBINCDIR="-I$withval/"],
 	[AS_IF([test x"$ZLIBDIR" != x], [ZLIBINCDIR="-I$ZLIBDIR"include/])])
 

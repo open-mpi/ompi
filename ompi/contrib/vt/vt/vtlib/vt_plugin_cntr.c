@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -653,7 +653,6 @@ void vt_plugin_cntr_finalize(uint32_t tnum) {
     /* prepend thread process group identifier to name */
     snprintf(tmp_char, sizeof(tmp_char) - 1,
              "Threads of Process %d",vt_my_trace);
-    fprintf(stderr,"%u,%s,0,%u,...,%u",VT_MASTER_THREAD,tmp_char,tnum,thread_group);
     /* write thread process group definition */
     vt_def_procgrp(VT_MASTER_THREAD, tmp_char, 0, tnum, grpv, thread_group);
 
@@ -784,12 +783,6 @@ static void add_events(struct vt_plugin current_plugin, VTThrd * thrd) {
       VTThrd_createMutex(
           (VTThrdMutex **) &(current[*current_size].callback_mutex)
       );
-#else
-      vt_error_msg(
-          "callback events need thread support, you might use"
-          " -vt:mt or -vt:hyb\n");
-      continue;
-#endif  /* VT_MT || VT_HYB || VT_JAVA */
       /* try to set callback function */
       if (current_plugin.info.set_callback_function(&current[*current_size],
           current[*current_size].from_plugin_id, callback_function)) {
@@ -803,6 +796,12 @@ static void add_events(struct vt_plugin current_plugin, VTThrd * thrd) {
       if (current[*current_size].callback_values == NULL) {
         vt_error_msg("Failed to allocate memory for callback buffer\n");
       }
+#else
+      vt_error_msg(
+          "callback events need thread support, you might use"
+          " -vt:mt or -vt:hyb\n");
+      continue;
+#endif  /* VT_MT || VT_HYB || VT_JAVA */
     }
 
     current[*current_size].tid = VT_MY_THREAD;/*
@@ -943,15 +942,15 @@ int32_t callback_function(void * ID, vt_plugin_cntr_timevalue tv) {
  * dummy_time could be the current wtime
  */
 
-#define WRITE_ASYNCH_DATA(thrd, counter, timevalue, dummy_time)    \
+#define WRITE_ASYNCH_DATA(thrd, tid, counter, timevalue, dummy_time)    \
 	if (VTTHRD_TRACE_STATUS(thrd) == VT_TRACE_ON){                   \
 	if (timevalue.timestamp > 0){                                    \
-		vt_guarantee_buffer(VT_MY_THREAD, sizeof(VTBuf_Entry_KeyValue)  \
+		vt_guarantee_buffer(tid, sizeof(VTBuf_Entry_KeyValue)  \
                                  +sizeof(VTBuf_Entry_Counter));    \
-		vt_next_async_time(VT_MY_THREAD,                                \
+		vt_next_async_time(tid,                                \
 		    		counter.vt_asynch_key,                                 \
 		    		timevalue.timestamp);                                  \
-	    vt_count( VT_MY_THREAD,                                       \
+	    vt_count( tid,                                       \
 		        &dummy_time,                                           \
 		        counter.vt_counter_id,                                 \
 		        timevalue.value);                                      \
@@ -983,7 +982,7 @@ void vt_plugin_cntr_write_callback_data(uint64_t time, uint32_t tid) {
 #endif  /* VT_MT || VT_HYB || VT_JAVA */
     values = current_counter->callback_values;
     for (k = 0; k < current_counter->current_callback_write_position; k++) {
-      WRITE_ASYNCH_DATA(VTThrdv[tid],(*current_counter), values[k], time);
+      WRITE_ASYNCH_DATA(VTThrdv[tid], tid, (*current_counter), values[k], time);
     }
     current_counter->current_callback_write_position = 0;
 #if (defined(VT_MT) || defined (VT_HYB) || defined(VT_JAVA))
@@ -1024,8 +1023,8 @@ void vt_plugin_cntr_write_asynch_event_data(uint64_t time, uint32_t tid) {
         current_counter.from_plugin_id, &time_values);
     if (time_values == NULL)
       return;
-    for (i = 0; i <= number_of_values; i++) {
-      WRITE_ASYNCH_DATA(VTThrdv[tid],current_counter, time_values[i], time);
+    for (i = 0; i < number_of_values; i++) {
+      WRITE_ASYNCH_DATA(VTThrdv[tid], tid, current_counter, time_values[i], time);
     }
   }
 }
@@ -1038,6 +1037,7 @@ void vt_plugin_cntr_write_post_mortem(VTThrd * thrd) {
   uint64_t number_of_values = 0;
   uint64_t i;
   uint64_t dummy_time;
+  uint32_t tid;
   struct vt_plugin_single_counter current_counter;
   struct vt_plugin_cntr_defines * plugin_cntr_defines =
       (struct vt_plugin_cntr_defines *) thrd->plugin_cntr_defines;
@@ -1049,6 +1049,13 @@ void vt_plugin_cntr_write_post_mortem(VTThrd * thrd) {
     return;
   if (VTTHRD_TRACE_STATUS(thrd) != VT_TRACE_ON)
     return;
+  for (tid=0;tid<VTThrdn;tid++)
+    if ( VTThrdv[tid] == thrd )
+      break;
+  if ( tid == VTThrdn ){
+    vt_warning("Can not determine internal TID when gathering post-mortem counters");
+    return;
+  }
   /* for all post_mortem counters */
   number_of_counters
     = plugin_cntr_defines->size_of_counters[VT_PLUGIN_CNTR_ASYNCH_POST_MORTEM];
@@ -1067,8 +1074,8 @@ void vt_plugin_cntr_write_post_mortem(VTThrd * thrd) {
         current_counter.from_plugin_id, &time_values);
     if (time_values == NULL)
       return;
-    for (i = 0; i <= number_of_values; i++) {
-      WRITE_ASYNCH_DATA(thrd,current_counter, time_values[i], dummy_time);
+    for (i = 0; i < number_of_values; i++) {
+      WRITE_ASYNCH_DATA(thrd, tid, current_counter, time_values[i], dummy_time);
     }
     free(time_values);
   }

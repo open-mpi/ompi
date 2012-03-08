@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -48,9 +48,9 @@
 # include "vt_cudartwrap.h"
 #endif /* VT_CUDARTWRAP */
 
-#if defined(VT_CUPTI)
+#if defined(VT_CUPTI_CALLBACKS)
 # include "vt_cupti_callback.h"
-#endif /* VT_CUPTI */
+#endif /* VT_CUPTI_CALLBACKS */
 
 #if ((defined(VT_MT) || defined(VT_HYB)) && defined(VT_PTHREAD))
 # include "vt_pthreadreg.h"
@@ -552,13 +552,28 @@ static void write_def_header(void)
                  vt_env_iotrace() ? "yes" : "no");
 #endif /* VT_IOWRAP */
 
-#if (defined(VT_CUDARTWRAP) || defined(VT_CUPTI))
+#if defined (VT_CUDARTWRAP)
   /* VT_CUDARTTRACE */
   vt_def_comment(VT_MASTER_THREAD,
                  VT_UNIFY_STRID_VT_COMMENT" VT_CUDARTTRACE: %s",
                  vt_env_cudarttrace() ? "yes" : "no");
+#endif /* VT_CUDARTWRAP */
 
-  if( vt_env_cudarttrace() )
+# if defined(VT_CUPTI_CALLBACKS)
+    /* VT_CUDATRACE_CUPTI */
+    vt_def_comment(VT_MASTER_THREAD,
+                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_CUPTI: %s",
+                   vt_env_cudatrace_cupti() ? "yes" : "no");
+# endif /* VT_CUPTI_CALLBACKS */
+
+#if (defined(VT_CUDARTWRAP) || defined(VT_CUPTI_CALLBACKS))
+    
+  /* VT_CUDATRACE */
+  vt_def_comment(VT_MASTER_THREAD,
+                 VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE: %i",
+                 vt_env_cudatrace());
+
+  if( vt_env_cudarttrace() || vt_env_cudatrace() || vt_env_cudatrace_cupti())
   {
     /* VT_CUDATRACE_BUFFER_SIZE */
     tmp_uint64 = (uint64_t)vt_env_cudatrace_bsize();
@@ -584,36 +599,55 @@ static void write_def_header(void)
     vt_def_comment(VT_MASTER_THREAD,
                    VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_BUFFER_SIZE: %s",
                    tmp_char);
-  }
-  
-  if( vt_env_cudarttrace() || vt_env_cupti_api_callback())
-  {
-    /* VT_CUDATRACE_IDLE */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_IDLE: %s",
-                   vt_env_cudatrace_idle() ? "yes" : "no");
 
-    /* VT_CUDATRACE_KERNEL */
+    /* VT_CUDATRACE_MEMCPY */
     vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_KERNEL: %s",
-                   vt_env_cudatrace_kernel() ? "yes" : "no");
+                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_MEMCPY: %s",
+                   vt_env_cudatrace_memcpy() ? "yes" : "no");
 
-    /* VT_CUDATRACE_MEMCPYASYNC */
+    /* VT_GPUTRACE_MEMUSAGE */
     vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_MEMCPYASYNC: %s",
-                   vt_env_cudatrace_memcpyasync() ? "yes" : "no");
-
-    /* VT_CUDATRACE_GPUMEMUSAGE */
-    vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_GPUMEMUSAGE: %s",
-                   vt_env_cudatrace_gpumem() ? "yes" : "no");
+                   VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE_MEMUSAGE: %s",
+                   vt_env_gputrace_memusage() ? "yes" : "no");
 
     /* VT_CUDATRACE_SYNC */
     vt_def_comment(VT_MASTER_THREAD,
-                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_SYNC: %s",
-                   vt_env_cudatrace_sync() ? "yes" : "no");
+                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_SYNC: %i",
+                   vt_env_cudatrace_sync());
+
+# if defined(VT_CUPTI_EVENTS)
+    /* VT_CUPTI_EVENTS */
+    vt_def_comment(VT_MASTER_THREAD,
+                   VT_UNIFY_STRID_VT_COMMENT" VT_CUPTI_METRICS: %s",
+                   vt_env_cupti_events() ? "yes" : "no");
+# endif /* VT_CUPTI_EVENTS */
+
+    /* VT_GPUTRACE_ERROR */
+    vt_def_comment(VT_MASTER_THREAD,
+                   VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE_ERROR: %s",
+                   vt_env_gputrace_error() ? "yes" : "no");
+
+    /* VT_GPUTRACE_DEBUG */
+    vt_def_comment(VT_MASTER_THREAD,
+                   VT_UNIFY_STRID_VT_COMMENT" VT_GPUTRACE_DEBUG: %s",
+                   vt_env_gputrace_debug() ? "yes" : "no");
   }
-#endif /* VT_CUDARTWRAP || VT_CUPTI */
+#endif /* VT_CUDARTWRAP || VT_CUPTI_CALLBACKS */
+
+#if (defined(VT_CUDARTWRAP) || defined(VT_CUPTI_CALLBACKS))
+  if( vt_env_cudarttrace() || vt_env_cudatrace() > 0)
+  {
+    /* VT_GPUTRACE_KERNEL */
+    vt_def_comment(VT_MASTER_THREAD,
+                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_KERNEL: %s",
+                   vt_env_gputrace_kernel() ? "yes" : "no");
+    
+    /* VT_CUDATRACE_IDLE */
+    vt_def_comment(VT_MASTER_THREAD,
+                   VT_UNIFY_STRID_VT_COMMENT" VT_CUDATRACE_IDLE: %s",
+                   vt_env_gputrace_idle() ? "yes" : "no");
+  }
+#endif /* VT_CUDARTWRAP || VT_CUPTI_CALLBACKS */
 
 #if (defined (VT_ETIMESYNC) && TIMER_IS_GLOBAL == 0)
   /* VT_ETIMESYNC */
@@ -660,6 +694,7 @@ static void write_uctl_file(void)
 #endif /* !VT_MPI && VT_HYB */
 
   /* calculate size needed for uctl data */
+
   uctl_data_size =
     2 +                     /* "*:" */
     VTThrdn * (8 + 1 + 1) + 1 + /* stream ids[!]: + '\n' */
@@ -865,24 +900,21 @@ static void unify_traces(void)
   {
     /* ...or by calling unify command */
 
-    char* cmd;
-    int len;
+    char cmd[1024];
+    char* exe;
     int rc;
 
-    cmd = vt_installdirs_expand("${bindir}/vtunify");
-    if (cmd == NULL) vt_error();
+    exe = vt_installdirs_expand("${bindir}/vtunify");
+    if (exe == NULL) vt_error();
 
-    len = strlen(cmd);
-    for (i=1;i<argc;i++)
-      len += 1 + strlen(argv[i]);
-
-    cmd = (char*)realloc(cmd, (len + 1) * sizeof(char));
-    if (cmd == NULL) vt_error();
+    strncpy(cmd, exe, sizeof(cmd)-1);
+    cmd[sizeof(cmd)-1] = '\0';
+    free(exe);
 
     for (i=1;i<argc;i++)
     {
-      strcat(cmd, " ");
-      strcat(cmd, argv[i]);
+      strncat(cmd, " ", sizeof(cmd)-1-strlen(cmd));
+      strncat(cmd, argv[i], sizeof(cmd)-1-strlen(cmd));
     }
 
     vt_cntl_msg(2, "Executing %s", cmd);
@@ -891,8 +923,6 @@ static void unify_traces(void)
       vt_error_msg("Failed to execute %s", cmd);
     else if (!WIFEXITED(rc) || WEXITSTATUS(rc) != 0)
       error = 1;
-
-    free(cmd);
   }
 #endif /* VT_MPIUNIFYLIB */
 
@@ -945,7 +975,7 @@ void vt_open()
   /* initialize resource usage counters */
   num_rusage = vt_rusage_open();
 
-#endif
+#endif /* VT_RUSAGE */
 
 #if defined(VT_METR)
 
@@ -1206,10 +1236,16 @@ void vt_open()
 #endif /* !VT_MPI && !VT_HYB */
 #endif /* VT_PLUGIN_CNTR */
   
-#if defined(VT_CUPTI)
-  if(vt_env_cupti_api_callback())
+#if defined(VT_CUPTI_CALLBACKS)
+#if defined(VT_CUDARTWRAP)
+  /* VT_CUDATRACE>1 is only available for CUPTI -> call cupti callback init */
+  if(vt_env_cudatrace() > 1 || vt_env_cudatrace_cupti())
+    vt_cupti_callback_init();
+#else
+  if(vt_env_cudatrace())
     vt_cupti_callback_init();
 #endif
+#endif /* VT_CUPTI_CALLBACKS */
 
   vt_is_alive = 1;
 
@@ -1357,7 +1393,7 @@ void vt_close_by_signal(int signum)
 
 void vt_close()
 {
-  int tnum = (int)VTThrdn;
+  int tnum;
   int i;
 
   /* catch vt_close called from child processes through atexit */
@@ -1387,6 +1423,28 @@ void vt_close()
 #endif /* VT_MPI || VT_HYB */
 
   vt_close_called = 1;
+  
+  /* threads might be created even now in CUPTI callback finalize */
+#if defined(VT_CUPTI_CALLBACKS)
+  /* finalize CUPTI API callback if enabled */
+#if defined(VT_CUDARTWRAP)
+  if(vt_env_cudatrace() > 1 || vt_env_cudatrace_cupti())
+    vt_cupti_callback_finalize();
+#else
+  if(vt_env_cudatrace())
+    vt_cupti_callback_finalize();
+#endif
+#endif /* VT_CUPTI_CALLBACKS */
+
+#if defined(VT_CUDARTWRAP)
+
+  /* finalize CUDA runtime wrapping if enabled */
+  if (vt_env_cudarttrace())
+    vt_cudartwrap_finalize();
+
+#endif /* VT_CUDARTWRAP */
+  
+  tnum = (int)VTThrdn;
 
   /* write node process group definition */
   {
@@ -1413,22 +1471,6 @@ void vt_close()
   }
 
   vt_is_alive = 0;
-
-#if defined(VT_CUDARTWRAP)
-
-  /* finalize CUDA runtime wrapping if enabled */
-  if (vt_env_cudarttrace())
-    vt_cudartwrap_finalize();
-
-#endif /* VT_CUDARTWRAP */
-  
-#if defined(VT_CUPTI)
-
-  /* finalize CUPTI API callback if enabled */
-  if (vt_env_cupti_api_callback())
-    vt_cupti_callback_finalize();
-
-#endif /* VT_CUPTI */
 
 #if defined(VT_MEMHOOK)
 
@@ -1490,7 +1532,7 @@ void vt_close()
     vt_def_comment(VT_MASTER_THREAD, VT_UNIFY_STRID_STOPTIME_COMMENT"%llu",
                    (unsigned long long)stop_time_epoch);
   }
-
+    
   /* close trace files */
   for (i = 0; i < tnum; i++)
     VTThrd_close(VTThrdv[i]);

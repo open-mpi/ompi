@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -76,7 +76,8 @@ EXTERN uint8_t vt_unimci_is_initialized;
 
 # define VT_UNIMCI_SET_BINDING_LANGUAGE_C()
 # define VT_UNIMCI_SET_BINDING_LANGUAGE_FORTRAN()
-# define VT_UNIMCI_CHECK_PRE(_call, _args, _record, _time)
+# define VT_UNIMCI_CHECK_PRE(_call, _args, _record, _time)                    \
+  (void)(_record) /* needed to avoid compiler warnings (unused but set) */
 # define VT_UNIMCI_CHECK_POST(_call, _args, _record, _time)
 
 #endif /* VT_UNIMCI */

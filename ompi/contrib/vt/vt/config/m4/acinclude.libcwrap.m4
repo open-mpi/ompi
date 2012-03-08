@@ -4,8 +4,11 @@ AC_DEFUN([ACVT_LIBCWRAP],
 	have_libcwrap="no"
 	have_fork="no"
 
-	AS_IF([test x"$libc_error" = x], [ACVT_LIBC])
-	AS_IF([test x"$libc_pathname" = x], [libcwrap_error="yes"])
+	AS_IF([test x"$shlibc_pathname" = x],
+	[
+		AC_MSG_NOTICE([error: pathname of shared LIBC required for LIBC tracing; please specify it by --with-shlibc])
+		libcwrap_error="yes"
+	])
 
 	AS_IF([test x"$libcwrap_error" = "xno"],
 	[
