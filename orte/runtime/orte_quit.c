@@ -14,6 +14,7 @@
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -386,6 +387,7 @@ static void dump_aborted_procs(void)
                 }
             } else if (ORTE_JOB_STATE_COMM_FAILED == job->state) {
                 orte_show_help("help-orterun.txt", "orterun:proc-comm-failed", true,
+                               ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                ORTE_NAME_PRINT(&proc->name), node->name);
             } else if (ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED == job->state) {
                 switch (proc->exit_code) {
