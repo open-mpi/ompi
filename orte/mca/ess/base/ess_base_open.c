@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,10 +52,19 @@ orte_ess_base_module_t orte_ess = {
     NULL   /* ft_event */
 };
 int orte_ess_base_output;
+int orte_ess_base_std_buffering = -1;
 
 int
 orte_ess_base_open(void)
 {
+    mca_base_param_reg_int_name("ess_base",
+                                "stream_buffering",
+                                "Adjust buffering for stdout/stderr "
+                                "[-1 system default] [0 unbuffered] [1 line buffered] [2 fully buffered] "
+                                "(Default: -1)",
+                                false, false,
+                                -1, &orte_ess_base_std_buffering);
+
     orte_ess_base_output = opal_output_open(NULL);
     
     OBJ_CONSTRUCT(&orte_ess_base_components_available, opal_list_t);

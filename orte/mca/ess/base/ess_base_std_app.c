@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,6 +64,26 @@ int orte_ess_base_app_setup(void)
 {
     int ret;
     char *error = NULL;
+
+    /*
+     * stdout/stderr buffering
+     * If the user requested to override the default setting then do
+     * as they wish.
+     */
+    if( orte_ess_base_std_buffering > -1 ) {
+        if( 0 == orte_ess_base_std_buffering ) {
+            setvbuf(stdout, NULL, _IONBF, 0);
+            setvbuf(stderr, NULL, _IONBF, 0);
+        }
+        else if( 1 == orte_ess_base_std_buffering ) {
+            setvbuf(stdout, NULL, _IOLBF, 0);
+            setvbuf(stderr, NULL, _IOLBF, 0);
+        }
+        else if( 2 == orte_ess_base_std_buffering ) {
+            setvbuf(stdout, NULL, _IOFBF, 0);
+            setvbuf(stderr, NULL, _IOFBF, 0);
+        }
+    }
 
     /* open the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
