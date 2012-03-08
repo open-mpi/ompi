@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,6 +56,11 @@ ORTE_DECLSPEC int orte_ess_base_close(void);
  * The verbose channel for debug output
  */
 ORTE_DECLSPEC extern int orte_ess_base_output;
+
+/*
+ * stdout/stderr buffering control parameter
+ */
+ORTE_DECLSPEC extern int orte_ess_base_std_buffering;
 
 ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
 
