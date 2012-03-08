@@ -10,6 +10,8 @@
 
 #include "ompi_config.h"
 
+#include "ompi/constants.h"
+
 #include "opal/class/opal_object.h"
 #include "ompi/message/message.h"
 #include "ompi/constants.h"
@@ -24,6 +26,7 @@ opal_free_list_t ompi_message_free_list;
 opal_pointer_array_t  ompi_message_f_to_c_table;
 
 ompi_predefined_message_t ompi_message_null;
+ompi_predefined_message_t ompi_message_no_proc;
 
 static void ompi_message_constructor(ompi_message_t *msg)
 {
@@ -51,12 +54,21 @@ ompi_message_init(void)
     ompi_message_null.message.m_f_to_c_index = 
         opal_pointer_array_add(&ompi_message_f_to_c_table, &ompi_message_null);
 
+    OBJ_CONSTRUCT(&ompi_message_no_proc, ompi_message_t);
+    ompi_message_no_proc.message.m_f_to_c_index =
+        opal_pointer_array_add(&ompi_message_f_to_c_table, 
+                               &ompi_message_no_proc);
+    if (1 != ompi_message_no_proc.message.m_f_to_c_index) {
+        return OMPI_ERR_NOT_FOUND;
+    }
+
     return rc;
 }
 
 int
 ompi_message_finalize(void)
 {
+    OBJ_DESTRUCT(&ompi_message_no_proc);
     OBJ_DESTRUCT(&ompi_message_free_list);
     OBJ_DESTRUCT(&ompi_message_f_to_c_table);
 
