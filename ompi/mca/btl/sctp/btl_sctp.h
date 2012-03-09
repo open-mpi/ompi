@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -134,16 +134,6 @@ extern mca_btl_base_module_t** mca_btl_sctp_component_init(
     bool have_hidden_threads
 );
 
-
-
-/**
- * SCTP component control.
- */
-int mca_btl_sctp_component_control(
-    int param, 
-    void* value, 
-    size_t size
-);
 
 
 /**

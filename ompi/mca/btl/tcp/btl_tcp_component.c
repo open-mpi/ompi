@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2009 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -1077,15 +1077,6 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
     memcpy(btls, mca_btl_tcp_component.tcp_btls, mca_btl_tcp_component.tcp_num_btls*sizeof(mca_btl_tcp_module_t*));
     *num_btl_modules = mca_btl_tcp_component.tcp_num_btls;
     return btls;
-}
-
-/*
- *  TCP module control
- */
-
-int mca_btl_tcp_component_control(int param, void* value, size_t size)
-{
-    return OMPI_SUCCESS;
 }
 
 

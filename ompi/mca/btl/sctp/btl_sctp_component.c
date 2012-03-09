@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -865,15 +865,6 @@ mca_btl_base_module_t** mca_btl_sctp_component_init(int *num_btl_modules,
         *num_btl_modules = mca_btl_sctp_component.sctp_num_btls;
         return btls;
     }
-}
-
-/*
- *  SCTP module control
- */
-
-int mca_btl_sctp_component_control(int param, void* value, size_t size)
-{
-    return OMPI_SUCCESS;
 }
 
 
