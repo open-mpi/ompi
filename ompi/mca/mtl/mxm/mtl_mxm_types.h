@@ -68,6 +68,22 @@ static inline int ompi_mtl_mxm_to_mpi_status(mxm_error_t status) {
     }
 }
 
+static inline void ompi_mtl_mxm_set_recv_envelope(mxm_recv_req_t *req,
+                                                  struct ompi_communicator_t *comm,
+                                                  int src, int tag) {
+    req->base.mq    = (mxm_mq_h)comm->c_pml_comm;
+    req->base.conn  = (src == MPI_ANY_SOURCE)
+                           ? NULL
+                           : ompi_mtl_mxm_conn_lookup(comm, src);
+    if (tag == MPI_ANY_TAG) {
+        req->tag      = 0;
+        req->tag_mask = 0x80000000U; /* MPI_ANY_TAG should not match against negative tags */
+    } else {
+        req->tag      = tag;
+        req->tag_mask = 0xffffffffU;
+    }
+}
+
 END_C_DECLS
 
 #endif
