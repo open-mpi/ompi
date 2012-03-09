@@ -259,7 +259,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     if (*reg != NULL) {
         mpool_rgpusm->stat_cache_hit++;
         opal_output_verbose(10, mca_mpool_rgpusm_component.output,
-                            "Found addr=%p, size=%d (base=%p,size=%d)in cache",
+                            "RGPUSM: Found addr=%p,size=%d (base=%p,size=%d) in cache",
                             addr, (int)size, (*reg)->base,
                             (int)((*reg)->bound - (*reg)->base));
 
@@ -269,8 +269,11 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
         } else {
             /* This is an old registration.  Need to boot it. */
             opal_output_verbose(10, mca_mpool_rgpusm_component.output,
-                                "Mismatched Handle: Evicting addr=%p, size=%d in cache",
-                                addr, (int)size);
+                                "RGPUSM: Mismatched Handle: Evicting/unregistering "
+                                "addr=%p,size=%d (base=%p,size=%d) from cache",
+                                addr, (int)size, (*reg)->base,
+                                (int)((*reg)->bound - (*reg)->base));
+
             /* The ref_count has to be zero as this memory cannot possibly
              * be in use.  Assert on that just to make sure. */
             assert(0 == (*reg)->ref_count);
@@ -295,13 +298,13 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     /* If we have a registration here, then we know it is valid. */
     if (*reg != NULL) {
         opal_output_verbose(10, mca_mpool_rgpusm_component.output,
-                            "CACHE HIT is good: ep=%d, addr=%p, size=%d in cache",
+                            "RGPUSM: CACHE HIT is good: ep=%d, addr=%p, size=%d in cache",
                             mypeer, addr, (int)size);
 
         /* When using leave pinned, we keep an LRU list. */
         if ((0 == (*reg)->ref_count) && mca_mpool_rgpusm_component.leave_pinned) {
             opal_output_verbose(20, mca_mpool_rgpusm_component.output,
-                                "POP OFF LRU: ep=%d, addr=%p, size=%d in cache",
+                                "RGPUSM: POP OFF LRU: ep=%d, addr=%p, size=%d in cache",
                                 mypeer, addr, (int)size);
             opal_list_remove_item(&mpool_rgpusm->lru_list,
                                   (opal_list_item_t*)(*reg));
@@ -310,7 +313,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         opal_output(-1, "reg->ref_count=%d", (int)(*reg)->ref_count);
         opal_output_verbose(80, mca_mpool_rgpusm_component.output,
-                           "Found entry in cache addr=%p, size=%d", addr, (int)size);
+                           "RGPUSM: Found entry in cache addr=%p, size=%d", addr, (int)size);
         return OMPI_SUCCESS;
     }
 
@@ -318,7 +321,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
      * so this is a new one, and we are going to use the cache. */
     assert(NULL == *reg);
     opal_output_verbose(10, mca_mpool_rgpusm_component.output,
-                        "New registration ep=%d, addr=%p, size=%d in cache",
+                        "RGPUSM: New registration ep=%d, addr=%p, size=%d. Need to register and insert in cache",
                          mypeer, addr, (int)size);
 
     OMPI_FREE_LIST_GET(&mpool_rgpusm->reg_list, item, rc);
@@ -362,24 +365,43 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
          * ensure we get the hit in the cache. */
         mpool->rcache->rcache_find(mpool->rcache, addr, 4, &oldreg);
         RESTORE_PAGE_ALIGNMENT();
-        /* The ref_count has to be zero as this memory cannot possibly
-         * be in use.  Assert on that just to make sure. */
-        assert(0 == oldreg->ref_count);
-        if (mca_mpool_rgpusm_component.leave_pinned) {
-            opal_list_remove_item(&mpool_rgpusm->lru_list,
-                                  (opal_list_item_t*)oldreg);
+
+        /* For most cases, we will find a registration that overlaps.
+         * Removal of it should allow the registration we are
+         * attempting to succeed. */
+        if (NULL != oldreg) {
+            /* The ref_count has to be zero as this memory cannot
+             * possibly be in use.  Assert on that just to make sure. */
+            assert(0 == oldreg->ref_count);
+            if (mca_mpool_rgpusm_component.leave_pinned) {
+                opal_list_remove_item(&mpool_rgpusm->lru_list,
+                                      (opal_list_item_t*)oldreg);
+            }
+
+            /* Bump the reference count to keep things copacetic in deregister */
+            oldreg->ref_count++;
+            /* Invalidate the registration so it will get booted out. */
+            oldreg->flags |= MCA_MPOOL_FLAGS_INVALID;
+            mca_mpool_rgpusm_deregister(mpool, oldreg);
+            mpool_rgpusm->stat_evicted++;
+
+            /* And try again.  This one usually works. */
+            rc = mpool_rgpusm->resources.register_mem(addr, size, (mca_mpool_base_registration_t *)rgpusm_reg,
+                                                      (mca_mpool_base_registration_t *)rget_reg);
         }
 
-        /* Bump the reference count to keep things copacetic in deregister */
-        oldreg->ref_count++;
-        /* Invalidate the registration so it will get booted out. */
-        oldreg->flags |= MCA_MPOOL_FLAGS_INVALID;
-        mca_mpool_rgpusm_deregister(mpool, oldreg);
-        mpool_rgpusm->stat_evicted++;
-
-        /* And try again.  This only needs to be attempted one other time. */
-        rc = mpool_rgpusm->resources.register_mem(addr, size, (mca_mpool_base_registration_t *)rgpusm_reg,
-                                                 (mca_mpool_base_registration_t *)rget_reg);
+        /* There is a chance that another registration is blocking our
+         * ability to register.  Check the rc to see if we still need
+         * to try and clear out registrations. */
+        while (OMPI_SUCCESS != rc) {
+            if (true != mca_mpool_rgpusm_deregister_lru(mpool)) {
+                rc = OMPI_ERROR;
+                break;
+            }
+            /* Clear out one registration. */
+            rc = mpool_rgpusm->resources.register_mem(addr, size, (mca_mpool_base_registration_t *)rgpusm_reg,
+                                                      (mca_mpool_base_registration_t *)rget_reg);
+        }
     }
 
     if(rc != OMPI_SUCCESS) {
@@ -389,7 +411,7 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     }
 
     opal_output_verbose(80, mca_mpool_rgpusm_component.output,
-                        "About to insert in rgpusm cache addr=%p, size=%d", addr, (int)size);
+                        "RGPUSM: About to insert in rgpusm cache addr=%p, size=%d", addr, (int)size);
     SET_PAGE_ALIGNMENT_TO_ZERO();
     while((rc = mpool->rcache->rcache_insert(mpool->rcache, (mca_mpool_base_registration_t *)rgpusm_reg,
              mca_mpool_rgpusm_component.rcache_size_limit)) ==
@@ -404,10 +426,11 @@ int mca_mpool_rgpusm_register(mca_mpool_base_module_t *mpool, void *addr,
     if(rc != OMPI_SUCCESS) {
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         OMPI_FREE_LIST_RETURN(&mpool_rgpusm->reg_list, item);
-        /* We cannot recover from this.  We can be here if the size of the cache
-         * is smaller than the amount of memory we are trying to register in a single
-         * transfer.  In that case, rc is MPI_ERR_OUT_OF_RESOURCES, but everything is
-         * stuck at that point.  Therefore, just error out completely.
+        /* We cannot recover from this.  We can be here if the size of
+         * the cache is smaller than the amount of memory we are
+         * trying to register in a single transfer.  In that case, rc
+         * is MPI_ERR_OUT_OF_RESOURCES, but everything is stuck at
+         * that point.  Therefore, just error out completely.
          */
         return OMPI_ERROR;
     }
