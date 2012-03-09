@@ -471,7 +471,7 @@ static int modex(opal_list_t *procs)
             orte_process_info.num_nodes++;
         }
         /* see if this proc is already in the pidmap */
-        if (NULL == opal_pointer_array_get_item(&jmap->pmap, v)) {
+        if (NULL == (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, v))) {
             /* nope - add it */
             pmap = OBJ_NEW(orte_pmap_t);
             pmap->node = loc->index;
