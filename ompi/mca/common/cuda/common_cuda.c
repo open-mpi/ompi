@@ -373,8 +373,8 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
         return OMPI_ERROR;
     } else {
         opal_output_verbose(20, mca_common_cuda_output,
-                            "CUDA: cuIpcGetMemHandle passed: base=%p",
-                            base);
+                            "CUDA: cuIpcGetMemHandle passed: base=%p size=%d",
+                            base, (int)size);
     }
 
     /* Need to get the real base and size of the memory handle.  This is
@@ -416,10 +416,10 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
  */
 int cuda_ungetmemhandle(void *reg_data, mca_mpool_base_registration_t *reg) 
 {
-    CUDA_DUMP_EVTHANDLE((10, ((mca_mpool_common_cuda_reg_t *)reg)->evtHandle, "cuda_ungetmemhandle"));
-    opal_output_verbose(5, mca_common_cuda_output,
-                        "CUDA: cuda_ungetmemhandle: base=%p",
-                        reg_data);
+    CUDA_DUMP_EVTHANDLE((100, ((mca_mpool_common_cuda_reg_t *)reg)->evtHandle, "cuda_ungetmemhandle"));
+    opal_output_verbose(10, mca_common_cuda_output,
+                        "CUDA: cuda_ungetmemhandle (no-op): base=%p", reg->base);
+
     return OMPI_SUCCESS;
 }
 
@@ -449,7 +449,8 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
      * to clear them out. */
     if (CUDA_ERROR_ALREADY_MAPPED == result) {
         opal_output_verbose(10, mca_common_cuda_output,
-                            "Failed to get handle for p=%p, signal upper layer\n", base);
+                            "CUDA: cuIpcOpenMemHandle returned CUDA_ERROR_ALREADY_MAPPED for "
+                            "p=%p,size=%d: notify memory pool\n", base, (int)size);
         return OMPI_ERR_WOULD_BLOCK;
     }
     if (CUDA_SUCCESS != result) {
@@ -459,8 +460,8 @@ int cuda_openmemhandle(void *base, size_t size, mca_mpool_base_registration_t *n
         return OMPI_ERROR;
     } else {
         opal_output_verbose(10, mca_common_cuda_output,
-                            "CUDA: cuIpcOpenMemHandle passed: base=%p",
-                            newreg->alloc_base);
+                            "CUDA: cuIpcOpenMemHandle passed: base=%p (remote base=%p,size=%d)",
+                            newreg->alloc_base, base, (int)size);
         CUDA_DUMP_MEMHANDLE((200, &memHandle, "cuIpcOpenMemHandle"));
     }
 
@@ -484,7 +485,7 @@ int cuda_closememhandle(void *reg_data, mca_mpool_base_registration_t *reg)
         opal_output_verbose(10, mca_common_cuda_output,
                             "CUDA: cuIpcCloseMemHandle passed: base=%p",
                             cuda_reg->base.alloc_base);
-        CUDA_DUMP_MEMHANDLE((10, cuda_reg->memHandle, "cuIpcCloseMemHandle"));
+        CUDA_DUMP_MEMHANDLE((100, cuda_reg->memHandle, "cuIpcCloseMemHandle"));
     }
 
     return OMPI_SUCCESS;
@@ -533,7 +534,7 @@ void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_t *rget_reg)
     CUresult result;
 
     memcpy(&evtHandle, rget_reg->evtHandle, sizeof(evtHandle));
-    CUDA_DUMP_EVTHANDLE((2, &evtHandle, "stream_synchronize"));
+    CUDA_DUMP_EVTHANDLE((100, &evtHandle, "stream_synchronize"));
 
     result = cuIpcOpenEventHandle(&event, evtHandle);
     if (CUDA_SUCCESS != result){
@@ -705,7 +706,7 @@ int progress_one_cuda_event(struct mca_btl_base_descriptor_t **frag) {
         }
 
         *frag = cuda_event_frag_array[cuda_event_status_first_used];
-        opal_output_verbose(5, mca_common_cuda_output,
+        opal_output_verbose(10, mca_common_cuda_output,
                             "CUDA: cuEventQuery returned %d", result);
 
         /* Bump counters, loop around the circular buffer if necessary */
@@ -788,7 +789,7 @@ static void cuda_dump_evthandle(int verbose, void *evtHandle, char *str) {
     }
     memcpy(&evtH, evtHandle, sizeof(evtH));
     opal_output_verbose(verbose, mca_common_cuda_output,
-                        "%s:ctxId=%d, pid=%d, index=%d",
+                        "CUDA: %s:ctxId=%d, pid=%d, index=%d",
                         str, (int)evtH.ctxId, evtH.pid, (int)evtH.index);
 }
 
