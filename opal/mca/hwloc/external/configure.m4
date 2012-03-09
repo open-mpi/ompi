@@ -105,14 +105,14 @@ AC_DEFUN([MCA_hwloc_external_CONFIG],[
            # Must set this variable so that the framework m4 knows
            # what file to include in opal/mca/hwloc/hwloc.h
            opal_hwloc_external_include="$opal_hwloc_dir/include/hwloc.h"
-           opal_hwloc_external_cppflags=$opal_hwloc_external_CPPFLAGS
-           opal_hwloc_external_ldflags=$opal_hwloc_external_LDFLAGS
-           opal_hwloc_external_libs=$opal_hwloc_external_LIBS
+           opal_hwloc_external_ADD_CPPFLAGS=$opal_hwloc_external_CPPFLAGS
+           opal_hwloc_external_ADD_LDFLAGS=$opal_hwloc_external_LDFLAGS
+           opal_hwloc_external_ADD_LIBS=$opal_hwloc_external_LIBS
 
            # These flags need to get passed to the wrapper compilers
            # (this is unnecessary for the internal/embedded hwloc)
-           WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $opal_hwloc_external_LDFLAGS"
-           WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $opal_hwloc_external_LIBS"
+           opal_hwloc_external_ADD_WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $opal_hwloc_external_LDFLAGS"
+           opal_hwloc_external_ADD_WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $opal_hwloc_external_LIBS"
            $1],
           [$2])
 
