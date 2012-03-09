@@ -63,9 +63,8 @@ int ompi_mtl_mxm_irecv(struct mca_mtl_base_module_t* mtl,
     mxm_recv_req = &mtl_mxm_request->mxm.recv;
 
     mxm_recv_req->base.state               = MXM_REQ_NEW;
-    mxm_recv_req->base.mq                  = ompi_mtl_mxm_mq_lookup(comm);
-    mxm_recv_req->base.conn                = (src == MPI_ANY_SOURCE) ? NULL :
-                                             ompi_mtl_mxm_conn_lookup(comm, src);
+    ompi_mtl_mxm_set_recv_envelope(mxm_recv_req, comm, src, tag);
+
     mxm_recv_req->base.flags               = 0;
     mxm_recv_req->base.data_type           = MXM_REQ_DATA_BUFFER;
     mxm_recv_req->base.data.buffer.ptr     = mtl_mxm_request->buf;
@@ -73,8 +72,6 @@ int ompi_mtl_mxm_irecv(struct mca_mtl_base_module_t* mtl,
     mxm_recv_req->base.data.buffer.mkey    = MXM_MKEY_NONE;
     mxm_recv_req->base.context             = mtl_mxm_request;
     mxm_recv_req->base.completed_cb        = ompi_mtl_mxm_recv_completion_cb;
-    mxm_recv_req->tag                      = tag;
-    mxm_recv_req->tag_mask                 = (tag == MPI_ANY_TAG) ? 0 : 0xffffffffU;
 
     /* post-recv */
     err = mxm_req_recv(mxm_recv_req);
