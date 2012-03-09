@@ -962,15 +962,10 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
 int ompi_comm_compare(ompi_communicator_t *comm1, ompi_communicator_t *comm2, int *result) {
     /* local variables */
     ompi_communicator_t *comp1, *comp2;
-    ompi_group_t *group1, *group2;
     int size1, size2, rsize1, rsize2;
     int lresult, rresult=MPI_CONGRUENT;
-    int sameranks=1;
-    int sameorder=1;
-    int i, j;
-    int found = 0;
-    ompi_proc_t * proc1, * proc2;
-    
+    int cmp_result;
+
     comp1 = (ompi_communicator_t *) comm1;
     comp2 = (ompi_communicator_t *) comm2;
 
@@ -996,83 +991,35 @@ int ompi_comm_compare(ompi_communicator_t *comm1, ompi_communicator_t *comm2, in
     }
         
     /* Compare local groups */
-    /* we need to check whether the communicators contain
-       the same processes and in the same order */
-    group1 = (ompi_group_t *)comp1->c_local_group;
-    group2 = (ompi_group_t *)comp2->c_local_group;
-    for ( i = 0; i < size1; i++ ) {
-        proc1 = ompi_group_peer_lookup(group1,i);
-        proc2 = ompi_group_peer_lookup(group2,i);
-        if ( proc1 != proc2) {
-            sameorder = 0;
-            break;
-        }
-    }
-    
-    for ( i = 0; i < size1; i++ ) {
-        found = 0;
-        for ( j = 0; j < size2; j++ ) {
-            proc1 = ompi_group_peer_lookup(group1,i);
-            proc2 = ompi_group_peer_lookup(group2,j);
-            if ( proc1 == proc2) {
-                found = 1;
-                break;
-            }
-        }
-        if ( !found  ) {
-            sameranks = 0;
-            break;
-        }
-    }
-    
-    if ( sameranks && sameorder ) {
+    ompi_group_compare((ompi_group_t *)comp1->c_local_group,
+                       (ompi_group_t *)comp2->c_local_group,
+                       &cmp_result);
+
+    /* MPI_IDENT resulting from the group comparison is
+     * MPI_CONGRUENT for communicators.
+     * All others results are the same.
+     */
+    if( MPI_IDENT == cmp_result ) {
         lresult = MPI_CONGRUENT;
-    } else if ( sameranks && !sameorder ) {
-        lresult = MPI_SIMILAR;
     } else {
-        lresult = MPI_UNEQUAL;
+        lresult = cmp_result;
     }
 
 
     if ( rsize1 > 0 ) {        
         /* Compare remote groups for inter-communicators */
-        /* we need to check whether the communicators contain
-           the same processes and in the same order */
-        sameranks = sameorder = 1;
+        ompi_group_compare((ompi_group_t *)comp1->c_remote_group,
+                           (ompi_group_t *)comp2->c_remote_group,
+                           &cmp_result);
 
-        group1 = (ompi_group_t *)comp1->c_remote_group;
-        group2 = (ompi_group_t *)comp2->c_remote_group;
-        for ( i = 0; i < rsize1; i++ ) {
-            proc1 = ompi_group_peer_lookup(group1,i);
-            proc2 = ompi_group_peer_lookup(group2,i);
-            if ( proc1 != proc2) {
-                sameorder = 0;
-                break;
-            }
-        }
-
-        for ( i = 0; i < rsize1; i++ ) {
-            found = 0;
-            for ( j = 0; j < rsize2; j++ ) {
-                proc1 = ompi_group_peer_lookup(group1,i);
-                proc2 = ompi_group_peer_lookup(group2,j);
-                if ( proc1 == proc2) {
-                    found = 1;
-                    break;
-                }
-            }
-            if ( !found  ) {
-                sameranks = 0;
-                break;
-            }
-        }
-        
-        if ( sameranks && sameorder ) {
+        /* MPI_IDENT resulting from the group comparison is
+         * MPI_CONGRUENT for communicators.
+         * All others results are the same.
+         */
+        if( MPI_IDENT == cmp_result ) {
             rresult = MPI_CONGRUENT;
-        } else if ( sameranks && !sameorder ) {
-            rresult = MPI_SIMILAR;
         } else {
-            rresult = MPI_UNEQUAL;
+            rresult = cmp_result;
         }
     }
 
