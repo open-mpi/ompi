@@ -30,12 +30,18 @@ static void ompi_mtl_mxm_send_completion_cb(void *context)
     mtl_mxm_request->super.completion_callback(&mtl_mxm_request->super);
 }
 
+static void ompi_mtl_mxm_send_progress_cb(void *user_data)
+{
+    opal_progress();
+}
+
 int ompi_mtl_mxm_send(struct mca_mtl_base_module_t* mtl,
                       struct ompi_communicator_t* comm, int dest, int tag,
                       struct opal_convertor_t *convertor,
                       mca_pml_base_send_mode_t mode)
 {
     mxm_send_req_t mxm_send_req;
+    mxm_wait_t wait;
     bool free_after;
     mxm_error_t err;
     int ret;
@@ -44,7 +50,7 @@ int ompi_mtl_mxm_send(struct mca_mtl_base_module_t* mtl,
     mxm_send_req.base.state         = MXM_REQ_NEW;
     mxm_send_req.base.mq            = ompi_mtl_mxm_mq_lookup(comm);
     mxm_send_req.base.conn          = ompi_mtl_mxm_conn_lookup(comm, dest);
-    mxm_send_req.base.flags         = MXM_REQ_FLAG_WAIT;
+    mxm_send_req.base.flags         = MXM_REQ_FLAG_BLOCKING;
     mxm_send_req.base.data_type     = MXM_REQ_DATA_BUFFER;
     ret = ompi_mtl_datatype_pack(convertor, &mxm_send_req.base.data.buffer.ptr,
                                  &mxm_send_req.base.data.buffer.length,
@@ -73,7 +79,11 @@ int ompi_mtl_mxm_send(struct mca_mtl_base_module_t* mtl,
     }
 
     /* wait for request completion */
-    mxm_req_wait(&mxm_send_req.base);
+    wait.req          = &mxm_send_req.base;
+    wait.state        = MXM_REQ_COMPLETED;
+    wait.progress_cb  = ompi_mtl_mxm_send_progress_cb;
+    wait.progress_arg = NULL;
+    mxm_wait(&wait);
 
     return OMPI_SUCCESS;
 }
