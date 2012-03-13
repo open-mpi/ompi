@@ -64,6 +64,12 @@ struct orterun_globals_t {
     bool wait_for_server;
     int server_wait_timeout;
     char *stdin_target;
+    char *prefix;
+    char *path_to_mpirun;
+#if OPAL_ENABLE_FT_CR == 1
+    char *sstore_load;
+#endif
+    bool disable_recovery;
 };
 
 /**

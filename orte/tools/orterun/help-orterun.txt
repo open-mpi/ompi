@@ -151,7 +151,19 @@ given:
 
 Only one should be specified to avoid potential version
 confusion. Operation will continue, but the -prefix option will be
-ignored.
+used. This is done to allow you to select a different prefix for
+the backend computation nodes than used on the frontend for %s.
+#
+[orterun:app-prefix-conflict]
+Both a prefix or absolute path was given for %s, and a different
+prefix provided for the first app_context:
+
+  Mpirun prefix: %s
+  App prefix:    %s
+
+Only one should be specified to avoid potential version
+confusion. Operation will continue, but the applicaton's prefix
+option will be ignored.
 #
 [orterun:empty-prefix]
 A prefix was supplied to %s that only contained slashes.  
