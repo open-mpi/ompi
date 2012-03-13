@@ -12,7 +12,7 @@ dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
-dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
+dnl Copyright (c) 2007-2012 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -129,6 +129,11 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
                                 [with_jdk_bindir=`dirname $with_jdk_bindir`],
                                 [with_jdk_headers=])])])
 
+              # Solaris
+              dir=/usr/java
+              AS_IF([test -d $dir], [with_jdk_headers=$dir/include
+                                     with_jdk_bindir=$dir/bin])
+
             # If we think we found them, announce
             AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_bindir"],
                   [AC_MSG_NOTICE([guessing that JDK headers are in $with_jdk_headers])
@@ -167,6 +172,12 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
                   # too.  Ugh.
                   AS_IF([test -d "$with_jdk_headers/linux"],
                         [OMPI_JDK_CPPFLAGS="$OMPI_JDK_CPPFLAGS -I$with_jdk_headers/linux"])
+                  # Solaris JDK also require -I<blah>/solaris.
+                  # See if that's there, and if so, add a -I for that,
+                  # too.  Ugh.
+                  AS_IF([test -d "$with_jdk_headers/solaris"],
+                        [OMPI_JDK_CPPFLAGS="$OMPI_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
+
                   CPPFLAGS="$CPPFLAGS $OMPI_JDK_CPPFLAGS"])
            AC_CHECK_HEADER([jni.h], [], 
                            [ompi_java_happy=no])
