@@ -557,6 +557,10 @@ static int openib_reg_mr(void *reg_data, void *base, size_t size,
     openib_reg->mr = ibv_reg_mr(device->ib_pd, base, size, access_flag);
  
     if (NULL == openib_reg->mr) {
+        orte_show_help("help-mpi-btl-openib.txt", "mem-reg-fail",
+                        orte_process_info.nodename,
+                        ibv_get_device_name(device->ib_dev),
+                        __func__, strerror(errno));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
