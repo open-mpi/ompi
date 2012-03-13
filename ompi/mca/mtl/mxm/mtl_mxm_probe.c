@@ -20,11 +20,8 @@ int ompi_mtl_mxm_iprobe(struct mca_mtl_base_module_t* mtl,
     mxm_error_t err;
     mxm_recv_req_t req;
 
-    req.base.state      = MXM_REQ_NEW;
-    req.base.mq         = (mxm_mq_h)comm->c_pml_comm;
-    req.tag        		= tag;
-    req.tag_mask   		= (tag == MPI_ANY_TAG) ? 0 : 0xffffffffU;
-    req.base.conn       = (src == MPI_ANY_SOURCE) ? NULL : ompi_mtl_mxm_conn_lookup(comm, src);
+    req.base.state = MXM_REQ_NEW;
+    ompi_mtl_mxm_set_recv_envelope(&req, comm, src, tag);
 
     err = mxm_req_probe(&req);
     if (MXM_OK == err) {
