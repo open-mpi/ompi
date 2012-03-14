@@ -60,10 +60,14 @@ int MPI_Testall(int count, MPI_Request requests[], int *flag,
                 }
             }
         }
-        if ((NULL == flag) || (0 > count)) {
+        if ((NULL == flag) || (count < 0)) {
             rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
+
+    if (OPAL_UNLIKELY(0 == count)) {
+        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();

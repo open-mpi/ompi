@@ -59,10 +59,15 @@ int MPI_Waitany(int count, MPI_Request *requests, int *indx, MPI_Status *status)
                 }
             }
         }
-        if ((NULL == indx) || (0 > count)) {
+        if ((NULL == indx && count > 0) ||
+            count < 0) {
             rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
+
+    if (OPAL_UNLIKELY(0 == count)) {
+        return MPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();
