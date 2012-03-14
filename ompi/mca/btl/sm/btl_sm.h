@@ -13,6 +13,7 @@
  * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
+ * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -197,6 +198,10 @@ struct mca_btl_sm_component_t {
     /** If we want DMA and DMA is supported, this will be loaded with
         KNEM_FLAG_DMA.  Otherwise, it'll be 0. */
     int knem_dma_flag;
+
+    /** MCA: should we be using CMA or not?
+        0 = no, 1 = yes */
+    int use_cma;
 };
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
 OMPI_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
@@ -492,18 +497,11 @@ extern int mca_btl_sm_send(
     mca_btl_base_tag_t tag
 );
 
-#if OMPI_BTL_SM_HAVE_KNEM
+#if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
 /*
- * Synchronous knem get
+ * Synchronous knem/cma get
  */
 extern int mca_btl_sm_get_sync(
-		struct mca_btl_base_module_t* btl,
-		struct mca_btl_base_endpoint_t* endpoint,
-		struct mca_btl_base_descriptor_t* des );
-/*
- * Asynchronous knem get
- */
-extern int mca_btl_sm_get_async(
 		struct mca_btl_base_module_t* btl,
 		struct mca_btl_base_endpoint_t* endpoint,
 		struct mca_btl_base_descriptor_t* des );
@@ -517,6 +515,17 @@ extern struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
 		size_t reserve,
 		size_t* size,
 		uint32_t flags);
+#endif
+
+#if OMPI_BTL_SM_HAVE_KNEM
+/*
+ * Asynchronous knem get
+ */
+extern int mca_btl_sm_get_async(
+                struct mca_btl_base_module_t* btl,
+                struct mca_btl_base_endpoint_t* endpoint,
+                struct mca_btl_base_descriptor_t* des );
+
 #endif
 
 /**
