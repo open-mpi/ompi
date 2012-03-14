@@ -61,10 +61,15 @@ int MPI_Testsome(int incount, MPI_Request *requests,
                 }
             }
         }
-        if ((NULL == outcount) || (NULL == indices) || (0 > incount)) {
-            rc = MPI_ERR_ARG;
+        if (((NULL == outcount || NULL == indices) && incount > 0) ||
+            incount < 0) {
+            return MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
+
+    if (OPAL_UNLIKELY(0 == incount)) {
+        return OMPI_SUCCESS;
     }
 
     OPAL_CR_ENTER_LIBRARY();
