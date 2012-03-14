@@ -343,14 +343,17 @@ How to install and configure VampirTrace
       * Maybe you also need to set additional commands and flags for the back-end
         (e.g. RANLIB, AR, MPICC, CXXFLAGS).
 
-    For example, this configure command line works for an NEC SX6 system with an X86_64
-    based front-end:
+    Examples:
+      BlueGene/P:
+        % ./configure --host=powerpc64-ibm-linux-gnu
 
-      ./configure CC=sxcc CXX=sxc++ F77=sxf90 FC=sxf90 MPICC=sxmpicc
-          AR=sxar RANLIB="sxar st" CC_FOR_BUILD=cc CXX_FOR_BUILD=c++
-          --host=sx6-nec-superux14.1
-           --with-cross-prefix=sx
-           --with-otf-lib=-lotf
+      Cray XK6:
+        % ./configure --host=x86_64-cray-linux-gnu
+                      CC_FOR_BUILD=craycc
+                      CXX_FOR_BUILD=crayc++
+
+      NEC SX6:
+        % ./configure --host=sx6-nec-superux14.1
 
 
   Set up the Environment

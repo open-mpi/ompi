@@ -113,7 +113,7 @@ static uint8_t vt_cuptiact_finalized = 0;
 static uint8_t *vt_cuptiact_global_buffer = NULL;*/
 
 /* size of the activity buffer */
-static size_t vt_cuptiact_bufSize = VTGPU_DEFAULT_BSIZE;
+static size_t vt_cuptiact_bufSize = VT_CUPTI_ACT_DEFAULT_BSIZE;
 
 /* cupti activity specific kernel counter IDs */
 static uint32_t vt_cuptiact_cid_knStaticSharedMem = VT_NO_ID;
@@ -224,9 +224,9 @@ void vt_cupti_activity_init()
 
 void vt_cupti_activity_finalize()
 {
-  if(!vt_cuptiact_finalized){
+  if(!vt_cuptiact_finalized && vt_cuptiact_initialized){
     VT_CUPTI_ACT_LOCK();
-    if(!vt_cuptiact_finalized){      
+    if(!vt_cuptiact_finalized && vt_cuptiact_initialized){      
       vt_cntl_msg(2, "[CUPTI Activity] Finalizing ... ");
       
       vt_cuptiact_finalized = 1;
@@ -476,7 +476,8 @@ static vt_cuptiact_ctx_t* vt_cuptiact_getCtx(CUcontext cuCtx)
 }
 
 /*
- * Destroy a VampirTrace CUPTI Activity context.
+ * Check for a VampirTrace activity stream by stream ID. If it does not exist,
+ * create it.
  * 
  * @param vtCtx VampirTrace CUPTI Activity context
  * @param strmID the CUDA stream ID provided by CUPTI callback API
@@ -682,19 +683,19 @@ static void vt_cuptiact_writeKernelRecord(CUpti_ActivityKernel *kernel,
     
     /* if current activity's start time is before last written timestamp */
     if(start < vtStrm->vtLastTime){
-      vt_warning("[CUPTI Activity] Kernel start time < last written timestamp!");
+      vt_warning("[CUPTI Activity] Kernel: start time < last written timestamp!");
       return;
     }
     
     /* check if time between start and stop is increasing */
     if(stop < start){
-      vt_warning("[CUPTI Activity] Kernel start time > kernel stop time!");
+      vt_warning("[CUPTI Activity] Kernel: start time > stop time!");
       return;
     }
     
     /* check if synchronization stop time is before kernel stop time */
     if(vtCtx->sync.hostStop < stop){
-      vt_warning("[CUPTI Activity] Sync stop time < kernel stop time!");
+      vt_warning("[CUPTI Activity] Kernel: sync stop time < stop time!");
       return;
     }
     
@@ -805,19 +806,19 @@ static void vt_cuptiact_writeMemcpyRecord(CUpti_ActivityMemcpy *mcpy,
   
     /* if current activity's start time is before last written timestamp */
   if(start < vtStrm->vtLastTime){
-    vt_cntl_msg(1, "[CUPTI Activity] Memcpy start time < last written timestamp!");
+    vt_cntl_msg(1, "[CUPTI Activity] Memcpy: start time < last written timestamp!");
     return;
   }
   
   /* check if time between start and stop is increasing */
   if(stop < start){
-    vt_warning("[CUPTI Activity] Memcpy start time > kernel stop time!");
+    vt_warning("[CUPTI Activity] Memcpy: start time > stop time!");
     return;
   }
 
   /* check if synchronization stop time is before kernel stop time */
   if(vtCtx->sync.hostStop < stop){
-    vt_warning("[CUPTI Activity] Synchronization stop time < kernel stop time!");
+    vt_warning("[CUPTI Activity] Memcpy: sync stop time < stop time!");
     return;
   }
   
@@ -848,13 +849,13 @@ static void vt_cuptiact_writeMemcpyRecord(CUpti_ActivityMemcpy *mcpy,
   vt_warning("MCPYexit: %llu (%d)", stop, vtThrdID);
   */
   if(kind == VT_GPU_HOST2DEV){
-    vt_mpi_rma_get(vtThrdID, &start, vtCtx->ptid * 65536 + vt_my_trace,
+    vt_mpi_rma_get(vtThrdID, &start, VT_GPU_RANK_ID(vtCtx->ptid),
                    vt_gpu_commCID, 0, mcpy->bytes);
   }else if(kind == VT_GPU_DEV2HOST){
-    vt_mpi_rma_put(vtThrdID, &start, vtCtx->ptid * 65536 + vt_my_trace,
+    vt_mpi_rma_put(vtThrdID, &start, VT_GPU_RANK_ID(vtCtx->ptid),
                    vt_gpu_commCID, 0, mcpy->bytes);
   }else if(kind == VT_GPU_DEV2DEV){
-    vt_mpi_rma_get(vtThrdID, &start, vtThrdID * 65536 + vt_my_trace,
+    vt_mpi_rma_get(vtThrdID, &start, VT_GPU_RANK_ID(vtThrdID),
                    vt_gpu_commCID, 0, mcpy->bytes);
   }
   

@@ -488,6 +488,9 @@ static void write_def_header(void)
   /* VT_METRICS */
   vt_def_comment(VT_MASTER_THREAD, VT_UNIFY_STRID_VT_COMMENT" VT_METRICS: %s",
                  vt_env_metrics() ? vt_env_metrics() : "<not set>");
+  /* VT_METRICS_SEP */
+  vt_def_comment(VT_MASTER_THREAD, VT_UNIFY_STRID_VT_COMMENT" VT_METRICS_SEP: %s",
+                 vt_env_metrics_sep());
 #endif /* VT_METR */
 
 #if defined(VT_RUSAGE)

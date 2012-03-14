@@ -611,7 +611,7 @@ int main ( int argc, const char** argv ) {
             
 		read = OTF_Reader_readDefinitions( reader, handlers );
 		if( read == OTF_READ_ERROR ) {
-			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			fprintf(stderr,"An error occurred while reading definitions. The tracefile seems to be damaged. Abort.\n");
 			return 1;
 		}
 	}
@@ -624,8 +624,7 @@ int main ( int argc, const char** argv ) {
         
 		read = OTF_Reader_readEvents( reader, handlers );
 		if( read == OTF_READ_ERROR ) {
-			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
-			return 1;
+			fprintf(stderr,"An error occurred while reading events. Maybe the tracefile has no events or it is damaged. Continue.\n");
 		}
 	}
 
@@ -637,7 +636,7 @@ int main ( int argc, const char** argv ) {
         
 		read = OTF_Reader_readStatistics( reader, handlers );
 		if( read == OTF_READ_ERROR ) {
-			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			fprintf(stderr,"An error occurred while reading statistics. The tracefile seems to be damaged. Abort.\n");
 			return 1;
 		}
 	}
@@ -649,7 +648,7 @@ int main ( int argc, const char** argv ) {
         }
 		read = OTF_Reader_readSnapshots( reader, handlers );
 		if( read == OTF_READ_ERROR ) {
-			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			fprintf(stderr,"An error occurred while reading snapshots. The tracefile seems to be damaged. Abort.\n");
 			return 1;
 		}
 	}
@@ -661,7 +660,7 @@ int main ( int argc, const char** argv ) {
         }
 		read = OTF_Reader_readMarkers( reader, handlers );
 		if( read == OTF_READ_ERROR ) {
-			fprintf(stderr,"An error occurred while reading the tracefile. It seems to be damaged. Abort.\n");
+			fprintf(stderr,"An error occurred while reading markers. The tracefile seems to be damaged. Abort.\n");
 			return 1;
 		}
 	}

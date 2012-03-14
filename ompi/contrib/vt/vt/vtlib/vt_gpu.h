@@ -19,6 +19,7 @@
 # define EXTERN extern
 #endif
 
+#include "vt_defs.h"
 #include "vt_inttypes.h"    /* VampirTrace integer types */
 #include "vt_thrd.h"        /* thread creation for GPU kernels */
 #include "vt_trc.h"         /* VampirTrace events */
@@ -39,6 +40,12 @@
 /* performance counter available? */
 #define VTGPU_NO_PC    0x04 /* no performance counter for this thread available */
 
+/* 
+ * Get the rank ID for a given VampirTrace thread ID.
+ * The MPI RMA functions take the rank ID instead of the VampirTrace process ID!
+ */
+#define VT_GPU_RANK_ID(thread_id) \
+  (VT_PROCESS_ID(vt_my_trace, thread_id)-1)
 
 #if (defined(VT_CUDARTWRAP) || defined(VT_CUPTI))
 /*
