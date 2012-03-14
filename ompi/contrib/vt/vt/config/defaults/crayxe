@@ -12,5 +12,9 @@ if test x"$XTPE_COMPILE_TARGET" != x; then
   FFLAGS="$FFLAGS -target=$XTPE_COMPILE_TARGET"
   FCFLAGS="$FCFLAGS -target=$XTPE_COMPILE_TARGET"
 fi
+CC_FOR_BUILD="gcc"
+CXX_FOR_BUILD="g++"
+CFLAGS_FOR_BUILD="-O3"
+CXXFLAGS_FOR_BUILD="-O3"
 enable_shared="no"
 with_mpich2="yes"

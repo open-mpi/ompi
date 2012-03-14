@@ -1464,13 +1464,13 @@ static void vt_cupticb_handle_cudart_memcpy(
 
     /*time = vt_pform_wtime();*/
     if(kind == cudaMemcpyHostToDevice){
-      vt_mpi_rma_put(ptid, &time, strmID * 65536 + vt_my_trace,
+      vt_mpi_rma_put(ptid, &time, VT_GPU_RANK_ID(strmID),
                      vt_gpu_commCID, 0, bytes);
     }else if(kind == cudaMemcpyDeviceToHost){
-      vt_mpi_rma_get(ptid, &time, strmID * 65536 + vt_my_trace,
+      vt_mpi_rma_get(ptid, &time, VT_GPU_RANK_ID(strmID),
                      vt_gpu_commCID, 0, bytes);
     }else if(kind == cudaMemcpyDeviceToDevice){
-      vt_mpi_rma_get(strmID, &time, strmID * 65536 + vt_my_trace,
+      vt_mpi_rma_get(strmID, &time, VT_GPU_RANK_ID(strmID),
                      vt_gpu_commCID, 0, bytes);
     }
   }
@@ -1528,13 +1528,13 @@ static void vt_cupticb_handle_cudart_mcpyAsync(const CUpti_CallbackData *cbInfo,
 
     time = vt_pform_wtime();
     if(kind == cudaMemcpyHostToDevice){
-      vt_mpi_rma_put(ptid, &time, strmID * 65536 + vt_my_trace,
+      vt_mpi_rma_put(ptid, &time, VT_GPU_RANK_ID(strmID),
                      vt_gpu_commCID, 0, bytes);
     }else if(kind == cudaMemcpyDeviceToHost){
-      vt_mpi_rma_get(ptid, &time, strmID * 65536 + vt_my_trace,
+      vt_mpi_rma_get(ptid, &time, VT_GPU_RANK_ID(strmID),
                      vt_gpu_commCID, 0, bytes);
     }else if(kind == cudaMemcpyDeviceToDevice){
-      vt_mpi_rma_get(strmID, &time, strmID * 65536 + vt_my_trace,
+      vt_mpi_rma_get(strmID, &time, VT_GPU_RANK_ID(strmID),
                      vt_gpu_commCID, 0, bytes);
     }
   }
@@ -1692,12 +1692,14 @@ void vt_cupti_callback_init()
   #endif
 
         /* set callback for CUDA runtime API functions */
-  #if (defined(CUPTI_API_VERSION) && (CUPTI_API_VERSION >= 2))
+#if defined(VT_CUPTI_ACTIVITY)  
         if(vt_cupti_trace_kernels > 0 || vt_cupti_trace_mcpy  || 
            vt_cupti_trace_gpu_mem > 0){
           vt_cupti_set_callback(vt_cupticb_all_ptr, 
                                 CUPTI_CB_DOMAIN_RESOURCE,
                                 CUPTI_RUNTIME_TRACE_CBID_INVALID);
+       
+          vt_cupti_activity_init();
         }
         
         if(vt_cupti_trace_kernels > 0 || vt_cupti_trace_mcpy){
@@ -1725,25 +1727,17 @@ void vt_cupti_callback_init()
                               CUPTI_CB_DOMAIN_DRIVER_API,
                               CUPTI_DRIVER_TRACE_CBID_cuCtxCreate);
         */
-  #else
+#else
         if(vt_cupticb_trace_runtimeAPI){
           vt_cupti_set_callback(vt_cupticb_cudart_ptr, 
                                 CUPTI_CB_DOMAIN_RUNTIME_API,
                                 CUPTI_RUNTIME_TRACE_CBID_INVALID);
         }
-  #endif
+#endif
 
         /* reset the hash table for CUDA API functions */
         memset(vt_cupticb_cudaApiFuncTab, VT_NO_ID, 
                VT_CUPTICB_CUDA_API_FUNC_MAX * sizeof(uint32_t));
-
-        /* use CUPTI activity for kernel and memcpy tracing, if it is available */
-#if defined(VT_CUPTI_ACTIVITY)
-        if(vt_cupti_trace_kernels > 0 || vt_cupti_trace_mcpy  || 
-           vt_cupti_trace_gpu_mem > 0){
-          vt_cupti_activity_init();
-        }
-#endif
 
         /* register the finalize function of VampirTrace CUPTI to be called before
          * the program exits */
@@ -1769,7 +1763,10 @@ void vt_cupti_callback_finalize()
       vt_cntl_msg(2, "[CUPTI Callbacks] Finalizing ... ");
       
 #if defined(VT_CUPTI_ACTIVITY)
-      vt_cupti_activity_finalize();
+      if(vt_cupti_trace_kernels > 0 || vt_cupti_trace_mcpy  || 
+           vt_cupti_trace_gpu_mem > 0){
+        vt_cupti_activity_finalize();
+      }
 #endif
   
       VT_CUPTI_CALL(cuptiUnsubscribe(vt_cupticb_subscriber), 

@@ -88,8 +88,8 @@ static struct metric* metricv[VT_METRIC_MAXNUM];
 static int    nmetrics = 0;
 
 static metricmap_t* metricmap_append(metricmap_t* map,
-				     metmap_t type,
-				     char* event, char* alias)
+                                     metmap_t type,
+                                     char* event, char* alias)
 {
   /*printf("Def 0x%X %s = <%s>\n", type, event, alias);*/
 
@@ -115,7 +115,7 @@ static metricmap_t* metricmap_append(metricmap_t* map,
   map->event_name = strdup(event);
   map->alias_name = strdup(alias);
   map->next = NULL;
-    
+
   return map;
 }
 
@@ -170,10 +170,10 @@ static metricmap_t* vt_metricmap_init(metmap_t match)
 
   if (!specfile) return NULL;
 
-  fp = fopen(specfile, "r"); 
+  fp = fopen(specfile, "r");
   if (fp == NULL) {
     vt_cntl_msg(2, "Failed to open metric specification %s: %s",
-		specfile, strerror(errno));
+                specfile, strerror(errno));
     return NULL;
   }
 
@@ -186,7 +186,7 @@ static metricmap_t* vt_metricmap_init(metmap_t match)
     while (len && ((line[len-1] == ' ') || (line[len-1] == '\t'))) len--;
     line[len] = '\0'; /* chop comment and return */
     lineno++;
-    if (len <= 1) continue; 
+    if (len <= 1) continue;
     defs++;
     if      (!strncmp("measure", line, 7)) type=METMAP_MEASURE;
     else if (!strncmp("compose", line, 7)) type=METMAP_COMPOSE;
@@ -208,16 +208,16 @@ static metricmap_t* vt_metricmap_init(metmap_t match)
     /*printf("Def %2d:<%s> %s <%s>\n", defs, def_name, line, def_args);*/
     len = strlen(def_args); /* length of definition arguments */
     if (((type == METMAP_MEASURE) && (match & METMAP_MEASURE)) ||
-	((type == METMAP_AGGROUP) && (match & METMAP_AGGROUP))) {
+        ((type == METMAP_AGGROUP) && (match & METMAP_AGGROUP))) {
       if (((int)strcspn(def_args, "=+") != len) ||
-	  (((int)strcspn(def_args, "=+-*/ \t") != len)
-	   && (type == METMAP_MEASURE))) {
-	type = METMAP_INVALID;
-	invalid_defs++;
-	vt_cntl_msg(2, "XXXX Def %d:%s <%s> invalid!", lineno, line, def_name);
+          (((int)strcspn(def_args, "=+-*/ \t") != len)
+           && (type == METMAP_MEASURE))) {
+        type = METMAP_INVALID;
+        invalid_defs++;
+        vt_cntl_msg(2, "XXXX Def %d:%s <%s> invalid!", lineno, line, def_name);
       } else {
-	map = metricmap_append(map, type, def_name, def_args);
-	measure_defs++;
+        map = metricmap_append(map, type, def_name, def_args);
+        measure_defs++;
       }
     } else if ((type == METMAP_COMPOSE) && (match & METMAP_COMPOSE)) {
        map = metricmap_append(map, type, def_name, def_args);
@@ -229,26 +229,26 @@ static metricmap_t* vt_metricmap_init(metmap_t match)
     if (mapv == NULL) mapv = map; /* initialise head of vector */
   }
   vt_cntl_msg(2, "Mapped %d/%d defs from \"%s\"",
-	      measure_defs+aggroup_defs+compose_defs+compute_defs, defs, specfile);
+              measure_defs+aggroup_defs+compose_defs+compute_defs, defs, specfile);
 #if 0
-  printf("measure %d aggroup %d compose %d compute %d unknown %d invalid %d\n", 
-	 measure_defs, aggroup_defs, compose_defs, compute_defs,
-	 unknown_defs, invalid_defs);
+  printf("measure %d aggroup %d compose %d compute %d unknown %d invalid %d\n",
+         measure_defs, aggroup_defs, compose_defs, compute_defs,
+         unknown_defs, invalid_defs);
 #endif
   fclose(fp);
   return mapv;
 }
 
-static void metricv_add(char* name, int code)
+static void metricv_add(char* name, int code, uint32_t props)
 {
   if (nmetrics >= VT_METRIC_MAXNUM) {
     vt_error_msg("Number of counters exceeds VampirTrace allowed maximum "
-		 "of %d", VT_METRIC_MAXNUM);
+                 "of %d", VT_METRIC_MAXNUM);
   } else {
     metricv[nmetrics] = (struct metric*)malloc(sizeof(struct metric));
     metricv[nmetrics]->name = strdup(name);
     metricv[nmetrics]->descr[0] = '\0';
-    metricv[nmetrics]->props = VT_CNTR_ACC;
+    metricv[nmetrics]->props = props;
     metricv[nmetrics]->papi_code = code;
     nmetrics++;
   }
@@ -296,14 +296,14 @@ static void metric_descriptions(void)
 
     if (strcmp(info.long_descr, metricv[i]->name) != 0) {
       strncpy(metricv[i]->descr, info.long_descr, sizeof(metricv[i]->descr));
-              
+
       /* tidy description if necessary */
       j=strlen(metricv[i]->descr)-1;
       if (metricv[i]->descr[j] == '\n') metricv[i]->descr[j]='\0';
       j=strlen(metricv[i]->descr)-1;
       if (metricv[i]->descr[j] != '.')
-	strncat(metricv[i]->descr, ".",
-	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
+        strncat(metricv[i]->descr, ".",
+                sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
     }
 
     if (metricv[i]->papi_code & PAPI_PRESET_MASK) { /* PAPI preset */
@@ -314,21 +314,21 @@ static void metric_descriptions(void)
       strncat(metricv[i]->descr, info.name[0],
               sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
       for (k=1; k<(int)info.count; k++) {
-	char op[4];
-	postfix_chp = postfix_chp?strpbrk(++postfix_chp, "+-*/"):NULL;
-	sprintf(op, " %c ", (postfix_chp?*postfix_chp:derive_ch));
-	strncat(metricv[i]->descr, op,
-	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
-	strncat(metricv[i]->descr, info.name[k],
-	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
+        char op[4];
+        postfix_chp = postfix_chp?strpbrk(++postfix_chp, "+-*/"):NULL;
+        sprintf(op, " %c ", (postfix_chp?*postfix_chp:derive_ch));
+        strncat(metricv[i]->descr, op,
+                sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
+        strncat(metricv[i]->descr, info.name[k],
+                sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
       }
       strncat(metricv[i]->descr, " ]",
               sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
       if (strcmp(info.symbol, metricv[i]->name) != 0) { /* add preset name */
-	strncat(metricv[i]->descr, " = ",
-	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
-	strncat(metricv[i]->descr, info.symbol,
-	        sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
+        strncat(metricv[i]->descr, " = ",
+                sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
+        strncat(metricv[i]->descr, info.symbol,
+                sizeof(metricv[i]->descr)-strlen(metricv[i]->descr));
       }
     }
 
@@ -341,7 +341,7 @@ static void metric_test(void)
 {
   int i, j;
   int retval;
-  
+
   int component;
   struct eventmap_t * EventSet[VT_METRIC_MAXNUM];
   for (i=0; i<VT_METRIC_MAXNUM; i++)
@@ -382,7 +382,7 @@ static void metric_test(void)
     retval = PAPI_cleanup_eventset(EventSet[i]->EventId);
     if ( retval != PAPI_OK )
       metric_error(retval, "PAPI_cleanup_eventset");
-  
+
     retval = PAPI_destroy_eventset(&(EventSet[i]->EventId));
     if ( retval != PAPI_OK )
       metric_error(retval, "PAPI_destroy_eventset");
@@ -399,12 +399,12 @@ int vt_metric_open()
   char* env_sep;
   char* var;
   char* token;
-  int forceprop;
+  char* saveptr;
   PAPI_event_info_t info;
   metricmap_t* mapv = NULL;
   metricmap_t* map;
 
-  /* read environment variable "VT_METRICS". Return if 
+  /* read environment variable "VT_METRICS". Return if
      uset and no PAPI timer used. */
   env = vt_env_metrics();
   if( env == NULL )
@@ -431,56 +431,60 @@ int vt_metric_open()
 
   var = strdup(env);
   vt_cntl_msg(2, "VT_METRICS=%s", var);
-        
+
   /* read metrics from specification string */
-  token = strtok(var, env_sep);
+  token = strtok_r(var, env_sep, &saveptr);
   while ( token && (nmetrics < VT_METRIC_MAXNUM) ) {
+    /* set counter properties */
+    uint32_t props;
     if (token[0]=='!')
     {
-      forceprop=1;
+      props = VT_CNTR_ABS | VT_CNTR_NEXT;
       token++;
     }
     else
-      forceprop=0;
+    {
+      props = VT_CNTR_ACC;
+    }
     /* search metricmap for a suitable definition */
     map = mapv;
     /*printf("Token%d: <%s>\n", nmetrics, token);*/
     while (map != NULL) {
       if ( strcmp(map->event_name, token) == 0 ) {
-	/*printf("Definition %s = <%s>\n", token, map->alias_name);*/
-	/* expand definition and set components */
-	char* c_token = map->alias_name;
-	int len = strcspn(c_token, " \t"); /* first token */
-	int got_valid_match = 1; /* to be verified */
-	int k = 0;
-	do { /* verify each component of definition is available */
-	  char component[64];
-	  int code = -1;
-	  strncpy(component, c_token, len);
-	  component[len] = '\0';
-	  /*printf("Comp[%d] <%s>\n", k, component);*/
-	  c_token += len + strspn(c_token+len, " \t");
-	  len = strcspn(c_token, " \t"); /* next token */
+        /*printf("Definition %s = <%s>\n", token, map->alias_name);*/
+        /* expand definition and set components */
+        char* c_token = map->alias_name;
+        int len = strcspn(c_token, " \t"); /* first token */
+        int got_valid_match = 1; /* to be verified */
+        int k = 0;
+        do { /* verify each component of definition is available */
+          char component[64];
+          int code = -1;
+          strncpy(component, c_token, len);
+          component[len] = '\0';
+          /*printf("Comp[%d] <%s>\n", k, component);*/
+          c_token += len + strspn(c_token+len, " \t");
+          len = strcspn(c_token, " \t"); /* next token */
 
-	  PAPI_event_name_to_code(component, &code);
-	  memset(&info, 0, sizeof(PAPI_event_info_t));
-	  retval = PAPI_get_event_info(code, &info);
-	  /*printf("v[%d] %s [0x%X] %d\n", k, component, code, info.count);*/
-       
-	  if (info.count == 0) {
-	    /*printf("Event %s *N/A*\n", component);*/
-	    got_valid_match = 0;
-	  } else if ((k==0) && (len==0)) { /* use provided event name */
-	    metricv_add(token, code);
-	  } else { /* use alias component name */
-	    metricv_add(component, code);
-	  }
-	  k++;
-	} while (got_valid_match && (len > 0));
-	if (got_valid_match) {
-	  /*printf("Definition %s = <%s> OK\n", map->event_name, map->alias_name);*/
-	  break; /* accept this event definition */
-	}
+          PAPI_event_name_to_code(component, &code);
+          memset(&info, 0, sizeof(PAPI_event_info_t));
+          retval = PAPI_get_event_info(code, &info);
+          /*printf("v[%d] %s [0x%X] %d\n", k, component, code, info.count);*/
+
+          if (info.count == 0) {
+            /*printf("Event %s *N/A*\n", component);*/
+            got_valid_match = 0;
+          } else if ((k==0) && (len==0)) { /* use provided event name */
+            metricv_add(token, code, props);
+          } else { /* use alias component name */
+            metricv_add(component, code, props);
+          }
+          k++;
+        } while (got_valid_match && (len > 0));
+        if (got_valid_match) {
+          /*printf("Definition %s = <%s> OK\n", map->event_name, map->alias_name);*/
+          break; /* accept this event definition */
+        }
       }
       map = map->next;
     }
@@ -491,20 +495,18 @@ int vt_metric_open()
       /*printf("Comp[X] <%s>\n", component);*/
       retval = PAPI_event_name_to_code(component, &code);
       if (retval != PAPI_OK || code == -1)
-	vt_error_msg("Metric <%s> not supported\n", component);
+        vt_error_msg("Metric <%s> not supported\n", component);
 
       memset(&info, 0, sizeof(PAPI_event_info_t));
       retval = PAPI_get_event_info(code, &info);
       /*printf("v[%d] %s [0x%X] %d\n", nmetrics, component, code, info.count);*/
       if (retval != PAPI_OK)
-	vt_error_msg("Metric <%s> not available\n", component);
+        vt_error_msg("Metric <%s> not available\n", component);
 
-      metricv_add(component, code);
+      metricv_add(component, code, props);
     }
 
-    if (forceprop)
-      metricv[nmetrics-1]->props = VT_CNTR_ABS | VT_CNTR_NEXT;
-    token = strtok(NULL, env_sep);
+    token = strtok_r(NULL, env_sep, &saveptr);
   }
 
   /*printf("nmetrics=%d\n", nmetrics);*/
@@ -526,7 +528,7 @@ int vt_metric_open()
 void vt_metric_close()
 {
   int i;
-  
+
   for ( i = 0; i < nmetrics; i++ ) {
     free (metricv[i]->name);
     free(metricv[i]);
@@ -628,7 +630,7 @@ void vt_metric_free(struct vt_metv* metv, uint32_t tid)
   }
 
   VT_RESUME_IO_TRACING(tid);
-  
+
   free(metv);
 }
 
@@ -639,7 +641,7 @@ void vt_metric_thread_init(long (*id_fn)(void))
   if ( nmetrics == 0 )
     return;
 
-  retval = PAPI_thread_init((unsigned long (*)(void))(id_fn)); 
+  retval = PAPI_thread_init((unsigned long (*)(void))(id_fn));
   if ( retval != PAPI_OK)
     metric_error(retval, "PAPI_thread_init");
   vt_cntl_msg(2, "PAPI thread support initialized");
@@ -718,12 +720,12 @@ uint64_t vt_metric_clckrt(void)
 
   if (!PAPI_is_initialized()) {
     /* initialize PAPI, since it hasn't already been initialized */
-    int retval = PAPI_library_init(PAPI_VER_CURRENT);  
+    int retval = PAPI_library_init(PAPI_VER_CURRENT);
     if ( retval != PAPI_VER_CURRENT )
       metric_error(retval, "PAPI_library_init");
   }
 
-  hwinfo = PAPI_get_hardware_info(); 
+  hwinfo = PAPI_get_hardware_info();
   if ( hwinfo == NULL)
     vt_error_msg("Failed to access PAPI hardware info\n");
   vt_cntl_msg(2, "Clock rate: %f MHz", hwinfo->mhz);
