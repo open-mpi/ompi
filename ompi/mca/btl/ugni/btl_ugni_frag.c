@@ -48,3 +48,8 @@ OBJ_CLASS_INSTANCE(mca_btl_ugni_rdma_frag_t, mca_btl_base_descriptor_t,
 
 OBJ_CLASS_INSTANCE(mca_btl_ugni_eager_frag_t, mca_btl_base_descriptor_t,
                    mca_btl_ugni_eager_frag_constructor, mca_btl_ugni_frag_destructor);
+
+void mca_btl_ugni_frag_init (mca_btl_ugni_base_frag_t *frag, mca_btl_ugni_module_t *ugni_module)
+{
+    frag->msg_id = opal_atomic_add_32 (&ugni_module->next_frag_id, 1);
+}

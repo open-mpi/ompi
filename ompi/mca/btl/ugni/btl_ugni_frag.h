@@ -62,6 +62,8 @@ OBJ_CLASS_DECLARATION(mca_btl_ugni_smsg_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_ugni_rdma_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_ugni_eager_frag_t);
 
+void mca_btl_ugni_frag_init (mca_btl_ugni_base_frag_t *frag, mca_btl_ugni_module_t *ugni_module);
+
 static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
                                            ompi_free_list_t *list,
                                            mca_btl_ugni_base_frag_t **frag)
@@ -91,9 +93,11 @@ static inline void mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 }
 
 #define MCA_BTL_UGNI_FRAG_ALLOC_SMSG(ep, frag) \
-    mca_btl_ugni_frag_alloc((ep), &mca_btl_ugni_component.ugni_frags_smsg, &(frag))
+    mca_btl_ugni_frag_alloc((ep), &(ep)->btl->smsg_frags, &(frag))
 #define MCA_BTL_UGNI_FRAG_ALLOC_RDMA(ep, frag) \
-    mca_btl_ugni_frag_alloc((ep), &mca_btl_ugni_component.ugni_frags_rdma, &(frag))
+    mca_btl_ugni_frag_alloc((ep), &(ep)->btl->rdma_frags, &(frag))
+#define MCA_BTL_UGNI_FRAG_ALLOC_RDMA_INT(ep, frag) \
+    mca_btl_ugni_frag_alloc((ep), &(ep)->btl->rdma_int_frags, &(frag))
 #define MCA_BTL_UGNI_FRAG_ALLOC_EAGER_SEND(ep, frag) \
     mca_btl_ugni_frag_alloc((ep), &(ep)->btl->eager_frags_send, &(frag))
 #define MCA_BTL_UGNI_FRAG_ALLOC_EAGER_RECV(ep, frag) \

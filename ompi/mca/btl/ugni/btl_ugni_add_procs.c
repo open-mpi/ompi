@@ -113,18 +113,15 @@ int mca_btl_ugni_del_procs (struct mca_btl_base_module_t *btl,
     return OMPI_SUCCESS;
 }
 
-static int ugni_reg_mem (void *reg_data, void *base, size_t size,
-                         mca_mpool_base_registration_t *reg)
+static inline int ugni_reg_mem (mca_btl_ugni_module_t *btl, void *base,
+                                size_t size, mca_mpool_base_registration_t *reg,
+                                gni_cq_handle_t cq, uint32_t flags)
 {
-    mca_btl_ugni_module_t *btl = (mca_btl_ugni_module_t *) reg_data;
     mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
-    int rc;
-
+    gni_return_t rc;
+    
     rc = GNI_MemRegister (btl->device->dev_handle, (uint64_t) base,
-                          size, NULL, GNI_MEM_READWRITE |
-                          GNI_MEM_RELAXED_PI_ORDERING, -1,
-                          &(ugni_reg->memory_hdl));
-
+                          size, cq, flags, -1, &(ugni_reg->memory_hdl));
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -132,22 +129,21 @@ static int ugni_reg_mem (void *reg_data, void *base, size_t size,
     return OMPI_SUCCESS;
 }
 
+static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
+                              mca_mpool_base_registration_t *reg)
+{
+    return ugni_reg_mem ((mca_btl_ugni_module_t *) reg_data, base, size, reg,
+                         NULL, GNI_MEM_READWRITE | GNI_MEM_RELAXED_PI_ORDERING);
+}
+
+
 static int ugni_reg_smsg_mem (void *reg_data, void *base, size_t size,
                               mca_mpool_base_registration_t *reg)
 {
     mca_btl_ugni_module_t *btl = (mca_btl_ugni_module_t *) reg_data;
-    mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
-    int rc;
 
-    rc = GNI_MemRegister (btl->device->dev_handle, (uint64_t)base,
-                          size, btl->smsg_remote_cq, GNI_MEM_READWRITE,
-                          -1, &(ugni_reg->memory_hdl));
-
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    return OMPI_SUCCESS;
+    return ugni_reg_mem (btl, base, size, reg, btl->smsg_remote_cq,
+                         GNI_MEM_READWRITE);
 }
 
 static int
@@ -155,7 +151,7 @@ ugni_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
 {
     mca_btl_ugni_module_t *btl = (mca_btl_ugni_module_t *) reg_data;
     mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *)reg;
-    int rc;
+    gni_return_t rc;
 
     rc = GNI_MemDeregister (btl->device->dev_handle, &ugni_reg->memory_hdl);
     if (GNI_RC_SUCCESS != rc) {
@@ -172,42 +168,60 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     int mbox_increment, rc;
     size_t nprocs;
 
+    rc = opal_hash_table_init (&ugni_module->pending_smsg_frags, 1024);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
     (void) ompi_proc_world (&nprocs);
 
-    rc = ompi_free_list_init_new (&mca_btl_ugni_component.ugni_frags_smsg,
-                                  sizeof (mca_btl_ugni_smsg_frag_t),
-                                  opal_cache_line_size, OBJ_CLASS(mca_btl_ugni_smsg_frag_t),
-                                  mca_btl_ugni_component.ugni_smsg_limit,
-                                  opal_cache_line_size,
-                                  mca_btl_ugni_component.ugni_free_list_num,
-                                  mca_btl_ugni_component.ugni_free_list_max,
-                                  mca_btl_ugni_component.ugni_free_list_inc,
-                                  NULL);
+    rc = ompi_free_list_init_ex_new (&ugni_module->smsg_frags,
+                                     sizeof (mca_btl_ugni_smsg_frag_t),
+                                     opal_cache_line_size, OBJ_CLASS(mca_btl_ugni_smsg_frag_t),
+                                     mca_btl_ugni_component.ugni_smsg_limit,
+                                     opal_cache_line_size,
+                                     mca_btl_ugni_component.ugni_free_list_num,
+                                     mca_btl_ugni_component.ugni_free_list_max,
+                                     mca_btl_ugni_component.ugni_free_list_inc,
+                                     NULL, (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                                     (void *) ugni_module);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        BTL_ERROR(("error creating smsg fragment free list"));
+        return rc;
+    }
+
+    rc = ompi_free_list_init_ex_new (&ugni_module->rdma_frags,
+                                     sizeof (mca_btl_ugni_rdma_frag_t), 8,
+                                     OBJ_CLASS(mca_btl_ugni_rdma_frag_t),
+                                     0, opal_cache_line_size,
+                                     mca_btl_ugni_component.ugni_free_list_num,
+                                     mca_btl_ugni_component.ugni_free_list_max,
+                                     mca_btl_ugni_component.ugni_free_list_inc,
+                                     NULL, (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                                     (void *) ugni_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
     }
 
-    rc = ompi_free_list_init_new (&mca_btl_ugni_component.ugni_frags_rdma,
-                                  sizeof (mca_btl_ugni_rdma_frag_t), 8,
-                                  OBJ_CLASS(mca_btl_ugni_rdma_frag_t),
-                                  0, opal_cache_line_size,
-                                  mca_btl_ugni_component.ugni_free_list_num,
-                                  mca_btl_ugni_component.ugni_free_list_max,
-                                  mca_btl_ugni_component.ugni_free_list_inc,
-                                  NULL);
+    rc = ompi_free_list_init_ex_new (&ugni_module->rdma_int_frags,
+                                     sizeof (mca_btl_ugni_rdma_frag_t), 8,
+                                     OBJ_CLASS(mca_btl_ugni_rdma_frag_t),
+                                     0, opal_cache_line_size, 0, -1, 64,
+                                     NULL, (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                                     (void *) ugni_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
     }
 
     mpool_resources.reg_data       = (void *) ugni_module;
     mpool_resources.sizeof_reg     = sizeof (mca_btl_ugni_reg_t);
-    mpool_resources.register_mem   = ugni_reg_mem;
+    mpool_resources.register_mem   = ugni_reg_rdma_mem;
     mpool_resources.deregister_mem = ugni_dereg_mem;
     ugni_module->super.btl_mpool =
         mca_mpool_base_module_create("rdma", ugni_module->device,
                                      &mpool_resources);
     if (NULL == ugni_module->super.btl_mpool) {
-        BTL_ERROR(("error creating mpool"));
+        BTL_ERROR(("error creating rdma mpool"));
         return OMPI_ERROR;
     }
 
@@ -217,31 +231,33 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
         mca_mpool_base_module_create("rdma", ugni_module->device,
                                      &mpool_resources);
 
-    OBJ_CONSTRUCT(&ugni_module->eager_frags_send, ompi_free_list_t);
-
-    rc = ompi_free_list_init_new (&ugni_module->eager_frags_send,
-                                  sizeof (mca_btl_ugni_eager_frag_t), 8,
-                                  OBJ_CLASS(mca_btl_ugni_eager_frag_t),
-                                  ugni_module->super.btl_eager_limit, 64,
-                                  mca_btl_ugni_component.ugni_eager_num,
-                                  mca_btl_ugni_component.ugni_eager_max,
-                                  mca_btl_ugni_component.ugni_eager_inc,
-                                  ugni_module->super.btl_mpool);
+    rc = ompi_free_list_init_ex_new (&ugni_module->eager_frags_send,
+                                     sizeof (mca_btl_ugni_eager_frag_t), 8,
+                                     OBJ_CLASS(mca_btl_ugni_eager_frag_t),
+                                     ugni_module->super.btl_eager_limit, 64,
+                                     mca_btl_ugni_component.ugni_eager_num,
+                                     mca_btl_ugni_component.ugni_eager_max,
+                                     mca_btl_ugni_component.ugni_eager_inc,
+                                     ugni_module->super.btl_mpool,
+                                     (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                                     (void *) ugni_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        BTL_ERROR(("error creating eager send fragment free list"));
         return rc;
     }
 
-    OBJ_CONSTRUCT(&ugni_module->eager_frags_recv, ompi_free_list_t);
-
-    rc = ompi_free_list_init_new (&ugni_module->eager_frags_recv,
-                                  sizeof (mca_btl_ugni_eager_frag_t), 8,
-                                  OBJ_CLASS(mca_btl_ugni_eager_frag_t),
-                                  ugni_module->super.btl_eager_limit, 64,
-                                  mca_btl_ugni_component.ugni_eager_num,
-                                  mca_btl_ugni_component.ugni_eager_max,
-                                  mca_btl_ugni_component.ugni_eager_inc,
-                                  ugni_module->super.btl_mpool);
+    rc = ompi_free_list_init_ex_new (&ugni_module->eager_frags_recv,
+                                     sizeof (mca_btl_ugni_eager_frag_t), 8,
+                                     OBJ_CLASS(mca_btl_ugni_eager_frag_t),
+                                     ugni_module->super.btl_eager_limit, 64,
+                                     mca_btl_ugni_component.ugni_eager_num,
+                                     mca_btl_ugni_component.ugni_eager_max,
+                                     mca_btl_ugni_component.ugni_eager_inc,
+                                     ugni_module->super.btl_mpool,
+                                     (ompi_free_list_item_init_fn_t) mca_btl_ugni_frag_init,
+                                     (void *) ugni_module);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        BTL_ERROR(("error creating eager receive fragment free list"));
         return rc;
     }
 

@@ -134,9 +134,6 @@ btl_ugni_component_open(void)
     mca_btl_ugni_component.ugni_num_btls = 0;
     mca_btl_ugni_component.modules = NULL;
 
-    OBJ_CONSTRUCT(&mca_btl_ugni_component.ugni_frags_smsg, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_btl_ugni_component.ugni_frags_rdma, ompi_free_list_t);
-
     return OMPI_SUCCESS;
 }
 
@@ -147,9 +144,6 @@ static int
 btl_ugni_component_close(void)
 {
     ompi_common_ugni_fini ();
-
-    OBJ_DESTRUCT(&mca_btl_ugni_component.ugni_frags_smsg);
-    OBJ_DESTRUCT(&mca_btl_ugni_component.ugni_frags_rdma);
 
     return OMPI_SUCCESS;
 }
@@ -303,16 +297,18 @@ mca_btl_ugni_component_init (int *num_btl_modules,
     return base_modules;
 }
 
-static void mca_btl_ugni_callback_reverse_get (ompi_common_ugni_post_desc_t *desc, int rc)
+static void mca_btl_ugni_callback_rdma_complete (ompi_common_ugni_post_desc_t *desc, int rc)
 {
     mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
 
-    BTL_VERBOSE(("reverse get (put) for rem_ctx %p complete", frag->hdr.rdma.ctx));
+    BTL_VERBOSE(("rdma operation for rem_ctx %p complete", frag->hdr.rdma.ctx));
 
     /* tell peer the put is complete */
     rc = ompi_mca_btl_ugni_smsg_send (frag, false, &frag->hdr.rdma, sizeof (frag->hdr.rdma),
-                                      NULL, 0, MCA_BTL_UGNI_TAG_PUT_COMPLETE);
+                                      NULL, 0, MCA_BTL_UGNI_TAG_RDMA_COMPLETE);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        /* call this callback again later */
+        frag->post_desc.cbfunc = mca_btl_ugni_callback_rdma_complete;
         opal_list_append (&frag->endpoint->btl->failed_frags, (opal_list_item_t *) frag);
     }
 }
@@ -329,26 +325,38 @@ static void mca_btl_ugni_callback_eager_get (ompi_common_ugni_post_desc_t *desc,
     reg = mca_btl_base_active_message_trigger + frag->hdr.eager.tag;
     reg->cbfunc(&frag->endpoint->btl->super, frag->hdr.eager.tag, &(frag->base), reg->cbdata);
 
-    /* tell peer the get is complete */
-    rc = ompi_mca_btl_ugni_smsg_send (frag, false, &frag->hdr.eager, sizeof (frag->hdr.eager),
-                                      NULL, 0, MCA_BTL_UGNI_TAG_GET_COMPLETE);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        opal_list_append (&frag->endpoint->btl->failed_frags, (opal_list_item_t *) frag);
-    }
+    frag->hdr.rdma.ctx = frag->hdr.eager.ctx;
+
+    /* tell the remote peer the operation is complete */
+    mca_btl_ugni_callback_rdma_complete (desc, rc);
 }
 
 static inline int mca_btl_ugni_start_reverse_get (mca_btl_base_endpoint_t *ep,
-                                                  mca_btl_ugni_rdma_frag_hdr_t hdr)
+                                                  mca_btl_ugni_rdma_frag_hdr_t hdr,
+                                                  mca_btl_ugni_base_frag_t *frag);
+
+static void mca_btl_ugni_callback_reverse_get_retry (ompi_common_ugni_post_desc_t *desc, int rc)
 {
-    mca_btl_ugni_base_frag_t *frag;
+    mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
+
+    (void) mca_btl_ugni_start_reverse_get(frag->endpoint, frag->hdr.rdma, frag);
+}
+
+static inline int mca_btl_ugni_start_reverse_get (mca_btl_base_endpoint_t *ep,
+                                                  mca_btl_ugni_rdma_frag_hdr_t hdr,
+                                                  mca_btl_ugni_base_frag_t *frag)
+{
     int rc;
 
     BTL_VERBOSE(("starting reverse get (put) for remote ctx: %p", hdr.ctx));
 
-    rc = MCA_BTL_UGNI_FRAG_ALLOC_RDMA(ep, frag);
-    if (OPAL_UNLIKELY(NULL == frag)) {
-        BTL_ERROR(("error allocating rdma frag for reverse get"));
-        return rc;
+    if (NULL == frag) {
+        rc = MCA_BTL_UGNI_FRAG_ALLOC_RDMA_INT(ep, frag);
+        if (OPAL_UNLIKELY(NULL == frag)) {
+            BTL_ERROR(("error allocating rdma frag for reverse get. rc = %d. fl_num_allocated = %d", rc,
+                       ep->btl->rdma_int_frags.fl_num_allocated));
+            return rc;
+        }
     }
 
     frag->hdr.rdma = hdr;
@@ -365,70 +373,82 @@ static inline int mca_btl_ugni_start_reverse_get (mca_btl_base_endpoint_t *ep,
     frag->base.des_dst_cnt = 1;
 
     rc = mca_btl_ugni_put (&ep->btl->super, ep, &frag->base);
-    assert (OMPI_SUCCESS == rc);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        frag->post_desc.cbfunc = mca_btl_ugni_callback_reverse_get_retry;
+        opal_list_append (&ep->btl->failed_frags, (opal_list_item_t *) frag);
+        return rc;
+    }
 
-    frag->post_desc.cbfunc = mca_btl_ugni_callback_reverse_get;
+    frag->post_desc.cbfunc = mca_btl_ugni_callback_rdma_complete;
 
-    return rc;
+    return OMPI_SUCCESS;
 }
 
 static inline int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
-                                                mca_btl_ugni_eager_frag_hdr_t hdr);
+                                                mca_btl_ugni_eager_frag_hdr_t hdr,
+                                                mca_btl_ugni_base_frag_t *frag);
 
 static void mca_btl_ugni_callback_eager_get_retry (ompi_common_ugni_post_desc_t *desc, int rc)
 {
     mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
 
-    (void) mca_btl_ugni_start_eager_get(frag->endpoint, frag->hdr.eager);
-
-    mca_btl_ugni_frag_return (frag);
+    (void) mca_btl_ugni_start_eager_get(frag->endpoint, frag->hdr.eager, frag);
 }
 
 
 static inline int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
-                                                mca_btl_ugni_eager_frag_hdr_t hdr)
+                                                mca_btl_ugni_eager_frag_hdr_t hdr,
+                                                mca_btl_ugni_base_frag_t *frag)
 {
-    mca_btl_ugni_base_frag_t *frag;
     int rc;
+
+    if (OPAL_UNLIKELY(frag && frag->my_list == &ep->btl->rdma_int_frags)) {
+        mca_btl_ugni_frag_return (frag);
+        frag = NULL;
+    }
 
     BTL_VERBOSE(("starting eager get for remote ctx: %p", hdr.ctx));
 
-    rc = MCA_BTL_UGNI_FRAG_ALLOC_EAGER_RECV(ep, frag);
-    if (OPAL_UNLIKELY(NULL == frag)) {
-        (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA(ep, frag);
-        assert (NULL != frag);
+    do {
+        if (NULL == frag) {
+            rc = MCA_BTL_UGNI_FRAG_ALLOC_EAGER_RECV(ep, frag);
+            if (OPAL_UNLIKELY(NULL == frag)) {
+                (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA_INT(ep, frag);
+                assert (NULL != frag);
+                frag->hdr.eager = hdr;
+                break;
+            }
+        }
 
         frag->hdr.eager = hdr;
-        frag->post_desc.cbfunc = mca_btl_ugni_callback_eager_get_retry;
 
-        opal_list_append (&ep->btl->failed_frags, (opal_list_item_t *) frag);
-        return rc;
-    }
+        frag->base.des_cbfunc = NULL;
+        frag->base.des_flags  = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
 
-    frag->hdr.eager = hdr;
+        frag->base.des_dst = frag->segments;
+        frag->base.des_dst_cnt = 1;
 
-    frag->base.des_cbfunc = NULL;
-    frag->base.des_flags  = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+        frag->segments[1] = hdr.src_seg;
+        frag->base.des_src = frag->segments + 1;
+        frag->base.des_src_cnt = 1;
 
-    frag->base.des_dst = frag->segments;
-    frag->base.des_dst_cnt = 1;
+        /* increase size to a multiple of 4 bytes (required for get) */
+        frag->segments[0].seg_len = (hdr.len + 3) & ~3;
+        frag->segments[1].seg_len = (hdr.len + 3) & ~3;
 
-    frag->segments[1] = hdr.src_seg;
-    frag->base.des_src = frag->segments + 1;
-    frag->base.des_src_cnt = 1;
-
-    /* increase size to a multiple of 4 bytes (required for get) */
-    frag->segments[0].seg_len = (hdr.len + 3) & ~3;
-    frag->segments[1].seg_len = (hdr.len + 3) & ~3;
-
-    if (frag->segments[0].seg_len <= mca_btl_ugni_component.ugni_fma_limit) {
         rc = mca_btl_ugni_post_fma (frag, GNI_POST_FMA_GET, frag->base.des_dst, frag->base.des_src);
-    } else {
-        rc = mca_btl_ugni_post_bte (frag, GNI_POST_RDMA_GET, frag->base.des_dst, frag->base.des_src);
-    }
-    assert (OMPI_SUCCESS == rc);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            break;
+        }
 
-    frag->post_desc.cbfunc = mca_btl_ugni_callback_eager_get;
+        frag->post_desc.cbfunc = mca_btl_ugni_callback_eager_get;
+
+        return OMPI_SUCCESS;
+    } while (0);
+
+    frag->post_desc.cbfunc = mca_btl_ugni_callback_eager_get_retry;
+
+    opal_list_append (&ep->btl->failed_frags, (opal_list_item_t *) frag);
 
     return rc;
 }
@@ -484,28 +504,25 @@ mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
             frag.segments[0].seg_addr.pval = (void *)((uintptr_t)data_ptr + sizeof (mca_btl_ugni_send_frag_hdr_t));
             frag.segments[0].seg_len       = frag.hdr.send.len;
 
+            assert (NULL != reg->cbfunc);
+
             reg->cbfunc(&ep->btl->super, frag.hdr.send.tag, &(frag.base), reg->cbdata);
 
             break;
         case MCA_BTL_UGNI_TAG_PUT_INIT:
             frag.hdr.rdma = ((mca_btl_ugni_rdma_frag_hdr_t *) data_ptr)[0];
 
-            mca_btl_ugni_start_reverse_get (ep, frag.hdr.rdma);
-            break;
-        case MCA_BTL_UGNI_TAG_PUT_COMPLETE:
-            frag.hdr.rdma = ((mca_btl_ugni_rdma_frag_hdr_t *) data_ptr)[0];
-
-            mca_btl_ugni_post_frag_complete (frag.hdr.rdma.ctx, OMPI_SUCCESS);
+            mca_btl_ugni_start_reverse_get (ep, frag.hdr.rdma, NULL);
             break;
         case MCA_BTL_UGNI_TAG_GET_INIT:
             frag.hdr.eager = ((mca_btl_ugni_eager_frag_hdr_t *) data_ptr)[0];
 
-            mca_btl_ugni_start_eager_get (ep, frag.hdr.eager);
+            mca_btl_ugni_start_eager_get (ep, frag.hdr.eager, NULL);
             break;
-        case MCA_BTL_UGNI_TAG_GET_COMPLETE:
-            frag.hdr.eager = ((mca_btl_ugni_eager_frag_hdr_t *) data_ptr)[0];
+        case MCA_BTL_UGNI_TAG_RDMA_COMPLETE:
+            frag.hdr.rdma = ((mca_btl_ugni_rdma_frag_hdr_t *) data_ptr)[0];
 
-            mca_btl_ugni_post_frag_complete (frag.hdr.eager.ctx, OMPI_SUCCESS);
+            mca_btl_ugni_post_frag_complete (frag.hdr.rdma.ctx, OMPI_SUCCESS);
             break;
         case MCA_BTL_UGNI_TAG_DISCONNECT:
             /* remote endpoint has disconnected */
