@@ -86,13 +86,20 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
 
     /* send message */
     if (length <= mca_btl_ugni_component.smsg_max_data) {
-        return ompi_mca_btl_ugni_smsg_send (frag, false, &frag->hdr.send, sizeof (frag->hdr.send),
-                                            frag->segments[0].seg_addr.pval, length, MCA_BTL_UGNI_TAG_SEND);
+        rc = ompi_mca_btl_ugni_smsg_send (frag, false, &frag->hdr.send, sizeof (frag->hdr.send),
+                                          frag->segments[0].seg_addr.pval, length, MCA_BTL_UGNI_TAG_SEND);
     } else {
         frag->hdr.eager.src_seg = frag->segments[0];
         frag->hdr.eager.ctx     = (void *) &frag->post_desc;
 
-        return ompi_mca_btl_ugni_smsg_send (frag, true, &frag->hdr.eager, sizeof (frag->hdr.eager),
-                                            NULL, 0, MCA_BTL_UGNI_TAG_GET_INIT);
+        rc = ompi_mca_btl_ugni_smsg_send (frag, true, &frag->hdr.eager, sizeof (frag->hdr.eager),
+                                          NULL, 0, MCA_BTL_UGNI_TAG_GET_INIT);
     }
+
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        /* return this frag */
+        mca_btl_ugni_frag_return (frag);
+    }
+
+    return rc;
 }
