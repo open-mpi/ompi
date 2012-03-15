@@ -54,6 +54,7 @@ struct ompi_common_ugni_device_t {
 
     size_t                      dev_ep_count;
     ompi_common_ugni_endpoint_t **dev_eps;
+    void *btl_ctx;
 };
 typedef struct ompi_common_ugni_device_t ompi_common_ugni_device_t;
 
@@ -147,7 +148,8 @@ ompi_common_ugni_process_completed_post (ompi_common_ugni_device_t *dev,
     /* local SMS completion */
     if (GNI_CQ_GET_TYPE(event_data) == GNI_CQ_EVENT_TYPE_SMSG) {
         uint32_t msg_id = GNI_CQ_GET_MSG_ID(event_data);
-        uint32_t ep_id  = 0x00ffffff & msg_id;
+
+        assert (GNI_CQ_STATUS_OK(event_data));
 
         if ((uint32_t)-1 == msg_id) {
             /* nothing to do */
@@ -155,7 +157,7 @@ ompi_common_ugni_process_completed_post (ompi_common_ugni_device_t *dev,
         }
 
         /* inform the btl of local smsg completion */
-        mca_btl_ugni_local_smsg_complete (dev->dev_eps[ep_id]->btl_ctx, msg_id,
+        mca_btl_ugni_local_smsg_complete (dev->btl_ctx, msg_id,
                                           GNI_CQ_STATUS_OK(event_data) ? OMPI_SUCCESS : OMPI_ERROR);
 
         return 1;
