@@ -66,7 +66,7 @@ btl_ugni_component_register(void)
     mca_btl_ugni_component.ugni_free_list_num =
         mca_btl_ugni_param_register_int("free_list_num", NULL, 8);
     mca_btl_ugni_component.ugni_free_list_max =
-        mca_btl_ugni_param_register_int("free_list_max", NULL, -1);
+        mca_btl_ugni_param_register_int("free_list_max", NULL, 16384);
     mca_btl_ugni_component.ugni_free_list_inc =
         mca_btl_ugni_param_register_int("free_list_inc", NULL, 64);
 
@@ -99,7 +99,7 @@ btl_ugni_component_register(void)
                                         4 * 1024 - 1);
 
     mca_btl_ugni_component.ugni_get_limit =
-        mca_btl_ugni_param_register_int("get_limit", NULL, 8 * 1024);
+        mca_btl_ugni_param_register_int("get_limit", NULL, 512 * 1024);
 
     mca_btl_ugni_component.rdma_max_retries =
         mca_btl_ugni_param_register_int("rdma_max_retries", NULL, 8);
@@ -117,8 +117,7 @@ btl_ugni_component_register(void)
     mca_btl_ugni_module.super.btl_min_rdma_pipeline_size    = 8 * 1024;
 
     mca_btl_ugni_module.super.btl_flags = MCA_BTL_FLAGS_SEND |
-                                          MCA_BTL_FLAGS_RDMA |
-                                          MCA_BTL_FLAGS_RDMA_MATCHED;
+        MCA_BTL_FLAGS_RDMA;
 
     mca_btl_ugni_module.super.btl_bandwidth = 40000; /* Mbs */
     mca_btl_ugni_module.super.btl_latency   = 2;     /* Microsecs */
@@ -225,8 +224,6 @@ mca_btl_ugni_component_init (int *num_btl_modules,
     size_t nprocs;
     int rc;
 
-    signal (SIGSEGV, SIG_DFL);
-
     /* Initialize ugni library and create communication domain */
     rc = ompi_common_ugni_init();
     if (OMPI_SUCCESS != rc) {
@@ -278,7 +275,6 @@ mca_btl_ugni_component_init (int *num_btl_modules,
         sizeof (mca_btl_ugni_send_frag_hdr_t);
 
     /* module settings */
-    mca_btl_ugni_module.super.btl_max_send_size = mca_btl_ugni_module.super.btl_eager_limit;
     mca_btl_ugni_module.super.btl_rdma_pipeline_send_length = mca_btl_ugni_module.super.btl_eager_limit;
 
     rc = mca_btl_ugni_smsg_setup ();

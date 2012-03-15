@@ -227,7 +227,6 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
         frag->base.des_src_cnt = 1;
         frag->base.des_dst = frag->segments;
         frag->base.des_dst_cnt = 1;
-        frag->endpoint = endpoint;
 
         frag->segments[0].seg_len = size;
     }
@@ -252,7 +251,6 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                           uint8_t order, size_t reserve, size_t *size,
                           uint32_t flags)
 {
-    mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
     mca_btl_ugni_base_frag_t *frag = NULL;
     void *data_ptr;
     int rc;
@@ -292,12 +290,9 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                 mca_btl_ugni_frag_return (frag);
                 return NULL;
             }
-
-            frag->segments[0].seg_len = reserve + *size;
         } else {
             memmove ((void *)((uintptr_t)frag->segments[0].seg_addr.pval + reserve),
                      data_ptr, *size);
-            frag->segments[0].seg_len = reserve + *size;
         }
     } else {
         (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA(endpoint, frag);
@@ -320,7 +315,7 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                     return NULL;
                 }
 
-                frag->registration = (mca_btl_ugni_reg_t*)registration;
+                frag->registration = (mca_btl_ugni_reg_t *) registration;
             }
 
             memcpy ((void *) frag->segments[0].seg_key.key64,
@@ -331,9 +326,10 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                     sizeof (frag->segments[0].seg_key.key64));
         }
 
-        frag->segments[0].seg_len       = *size;
         frag->segments[0].seg_addr.pval = data_ptr;
     }
+
+    frag->segments[0].seg_len = reserve + *size;
 
     frag->base.des_src     = frag->segments;
     frag->base.des_src_cnt = 1;
@@ -350,7 +346,6 @@ mca_btl_ugni_prepare_dst (mca_btl_base_module_t *btl,
                           opal_convertor_t *convertor, uint8_t order,
                           size_t reserve, size_t *size, uint32_t flags)
 {
-    mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
     mca_btl_ugni_base_frag_t *frag;
     void *data_ptr;
     int rc;

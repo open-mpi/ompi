@@ -69,7 +69,7 @@ static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_pos
 
     rc = GNI_PostFma (frag->endpoint->common->ep_handle, &frag->post_desc.base);
     if (GNI_RC_SUCCESS != rc) {
-        BTL_ERROR(("GNI_PostFma failed with rc = %d", rc));
+/*         BTL_ERROR(("GNI_PostFma failed with rc = %d", rc)); */
         assert(rc < 4);
         rc = OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -90,7 +90,6 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
 
     rc = GNI_PostRdma (frag->endpoint->common->ep_handle, &frag->post_desc.base);
     if (GNI_RC_SUCCESS != rc) {
-        assert(rc < 4);
         rc = ompi_common_rc_ugni_to_ompi (rc);
         BTL_ERROR(("GNI_PostRdma failed with rc = %d", rc));
     }
