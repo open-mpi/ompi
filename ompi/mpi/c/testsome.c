@@ -69,6 +69,7 @@ int MPI_Testsome(int incount, MPI_Request *requests,
     }
 
     if (OPAL_UNLIKELY(0 == incount)) {
+        *outcount = MPI_UNDEFINED;
         return OMPI_SUCCESS;
     }
 
