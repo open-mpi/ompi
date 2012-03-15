@@ -278,15 +278,7 @@ static inline void mca_btl_vader_progress_sends (void)
         if (OPAL_LIKELY(frag->hdr->complete)) {
             opal_list_remove_item (&mca_btl_vader_component.active_sends, item);
 
-            if (OPAL_UNLIKELY(MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-                /* completion callback */
-                frag->base.des_cbfunc(&mca_btl_vader.super, frag->endpoint,
-                                      &frag->base, OMPI_SUCCESS);
-            }
-
-            if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-                MCA_BTL_VADER_FRAG_RETURN(frag);
-            }
+            mca_btl_vader_frag_complete (frag);
         }
 
         item = next;

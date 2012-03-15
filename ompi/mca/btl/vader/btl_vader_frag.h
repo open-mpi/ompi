@@ -56,30 +56,39 @@ typedef struct mca_btl_vader_frag_t mca_btl_vader_frag_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_vader_frag_t);
 
-#define MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, rc)                        \
-    do {                                                                \
-        ompi_free_list_item_t *item;                                        \
-        OMPI_FREE_LIST_GET(&mca_btl_vader_component.vader_frags_eager, item, rc); \
-        frag = (mca_btl_vader_frag_t *) item;                                \
-        frag->hdr->complete = false;                                        \
-        frag->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;                        \
-        frag->segment.seg_addr.pval = (char *)(frag->hdr + 1);                \
-        frag->my_list = &mca_btl_vader_component.vader_frags_eager;        \
-    } while (0)
+static inline int mca_btl_vader_frag_alloc (mca_btl_vader_frag_t **frag, ompi_free_list_t *list) {
+    ompi_free_list_item_t *item;
+    int rc;
 
-#define MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc)                                \
-    do {                                                                \
-        ompi_free_list_item_t *item;                                        \
-        OMPI_FREE_LIST_GET(&mca_btl_vader_component.vader_frags_user, item, rc); \
-        frag = (mca_btl_vader_frag_t *) item;                                \
-        frag->hdr->complete = false;                                        \
-        frag->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;                        \
-        frag->segment.seg_addr.pval = (char *)(frag->hdr + 1);                \
-        frag->my_list = &mca_btl_vader_component.vader_frags_user;        \
-    } while (0)
+    OMPI_FREE_LIST_GET(list, item, rc);
+    *frag = (mca_btl_vader_frag_t *) item;
+    if (OPAL_LIKELY(NULL != item)) {
+        (*frag)->hdr->complete = false;
+        (*frag)->hdr->flags = MCA_BTL_VADER_FLAG_INLINE;
+        (*frag)->segment.seg_addr.pval = (char *)((*frag)->hdr + 1);
+        (*frag)->my_list = list;
+    }
 
+    return rc;
+}
 
-#define MCA_BTL_VADER_FRAG_RETURN(frag)                                        \
-        OMPI_FREE_LIST_RETURN((frag)->my_list, (ompi_free_list_item_t *)(frag))
+#define MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag)                            \
+    mca_btl_vader_frag_alloc (&(frag), &mca_btl_vader_component.vader_frags_eager)
+#define MCA_BTL_VADER_FRAG_ALLOC_USER(frag)                             \
+    mca_btl_vader_frag_alloc (&(frag), &mca_btl_vader_component.vader_frags_user)
+#define MCA_BTL_VADER_FRAG_RETURN(frag)                                 \
+    OMPI_FREE_LIST_RETURN((frag)->my_list, (ompi_free_list_item_t *)(frag))
+
+static inline void mca_btl_vader_frag_complete (mca_btl_vader_frag_t *frag) {
+    if (OPAL_UNLIKELY(MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
+        /* completion callback */
+        frag->base.des_cbfunc(&mca_btl_vader.super, frag->endpoint,
+                              &frag->base, OMPI_SUCCESS);
+    }
+
+    if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+        MCA_BTL_VADER_FRAG_RETURN(frag);
+    }
+}
 
 #endif /* MCA_BTL_VADER_SEND_FRAG_H */

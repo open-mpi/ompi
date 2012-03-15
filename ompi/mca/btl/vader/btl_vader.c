@@ -581,12 +581,11 @@ mca_btl_base_descriptor_t *mca_btl_vader_alloc(struct mca_btl_base_module_t *btl
                                                uint8_t order, size_t size, uint32_t flags)
 {
     mca_btl_vader_frag_t *frag = NULL;
-    int rc;
 
     if (size <= (size_t) mca_btl_vader_max_inline_send) {
-        MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
+        (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag);
     } else if (size <= mca_btl_vader_component.eager_limit) {
-        MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag, rc);
+        (void) MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag);
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
@@ -626,9 +625,8 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
 {
     mca_btl_vader_frag_t *frag;
     void *data_ptr;
-    int rc;
 
-    MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
+    (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag);
     if (OPAL_UNLIKELY(NULL == frag)) {
         return NULL;
     }
@@ -672,7 +670,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
         /* in place send fragment */
         if (OPAL_UNLIKELY(opal_convertor_need_buffers(convertor))) {
             /* non-contiguous data requires the convertor */
-            MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag,rc);
+            (void) MCA_BTL_VADER_FRAG_ALLOC_EAGER(frag);
             if (OPAL_UNLIKELY(NULL == frag)) {
                 return NULL;
             }
@@ -690,7 +688,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
 
             frag->segment.seg_len = reserve + *size;
         } else {
-            MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
+            (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag);
             if (OPAL_UNLIKELY(NULL == frag)) {
                 return NULL;
             }
@@ -725,7 +723,7 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
         }
     } else {
         /* put/get fragment */
-        MCA_BTL_VADER_FRAG_ALLOC_USER(frag, rc);
+        (void) MCA_BTL_VADER_FRAG_ALLOC_USER(frag);
         if (OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }

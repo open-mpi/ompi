@@ -46,14 +46,7 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
 
     vader_return_registration (reg, endpoint->peer_smp_rank);
 
-    if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {
-        frag->base.des_cbfunc(&mca_btl_vader.super, frag->endpoint,
-                              &frag->base, OMPI_SUCCESS);
-    }
-
-    if (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
-        MCA_BTL_VADER_FRAG_RETURN(frag);
-    }
+    mca_btl_vader_frag_complete (frag);
 
     return OMPI_SUCCESS;
 }
