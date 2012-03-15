@@ -46,15 +46,10 @@ int mca_btl_vader_put (struct mca_btl_base_module_t *btl,
 
     vader_return_registration (reg, endpoint->peer_smp_rank);
 
-    /* always call the callback function (if it exists) */
-    if (OPAL_LIKELY(NULL != frag->base.des_cbfunc)) {
-        frag->base.des_cbfunc(&mca_btl_vader.super, frag->endpoint,
-                              &frag->base, OMPI_SUCCESS);
-    }
+    /* always call the callback function */
+    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
-    if (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
-        MCA_BTL_VADER_FRAG_RETURN(frag);
-    }
+    mca_btl_vader_frag_complete (frag);
 
     return OMPI_SUCCESS;
 }

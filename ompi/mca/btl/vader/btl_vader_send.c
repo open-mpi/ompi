@@ -44,9 +44,7 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     if (frag->hdr->flags & MCA_BTL_VADER_FLAG_FBOX) {
         mca_btl_vader_fbox_send (frag->segment.seg_addr.pval, tag, frag->segment.seg_len);
 
-        if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-            MCA_BTL_VADER_FRAG_RETURN(frag);
-        }
+        mca_btl_vader_frag_complete (frag);
 
         return 1;
     }
@@ -61,11 +59,14 @@ int mca_btl_vader_send (struct mca_btl_base_module_t *btl,
     /* post the relative address of the descriptor into the peer's fifo */
     vader_fifo_write (frag->hdr, endpoint->peer_smp_rank);
 
-    if (frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY) {
+    if (frag->hdr->flags & MCA_BTL_VADER_FLAG_SINGLE_COPY ||
+        !(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+
         return 0;
     }
 
-    /* data is gone */
+    /* data is gone (from the pml's perspective). frag callback/release will
+       happen later */
     return 1;
 }
