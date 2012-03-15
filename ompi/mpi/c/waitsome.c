@@ -69,6 +69,7 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
     }
 
     if (OPAL_UNLIKELY(0 == incount)) {
+        *outcount = MPI_UNDEFINED;
         return MPI_SUCCESS;
     }
 

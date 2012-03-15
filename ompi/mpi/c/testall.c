@@ -67,6 +67,7 @@ int MPI_Testall(int count, MPI_Request requests[], int *flag,
     }
 
     if (OPAL_UNLIKELY(0 == count)) {
+        *flag = true;
         return MPI_SUCCESS;
     }
 
