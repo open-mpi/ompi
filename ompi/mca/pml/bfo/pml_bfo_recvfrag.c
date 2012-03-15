@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
- * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -115,6 +115,8 @@ void mca_pml_bfo_recv_frag_callback_match(mca_btl_base_module_t* btl,
     size_t num_segments = des->des_dst_cnt;
     size_t bytes_received = 0;
     
+    assert(num_segments <= MCA_BTL_DES_MAX_SEGMENTS);
+
     if( OPAL_UNLIKELY(segments->seg_len < OMPI_PML_BFO_MATCH_HDR_LEN) ) {
         return;
     }
@@ -196,7 +198,7 @@ void mca_pml_bfo_recv_frag_callback_match(mca_btl_base_module_t* btl,
         
         MCA_PML_BFO_RECV_REQUEST_MATCHED(match, hdr);
         if(match->req_bytes_expected > 0) { 
-            struct iovec iov[2];
+            struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];
             uint32_t iov_count = 1;
             
             /*
@@ -488,6 +490,7 @@ match_one(mca_btl_base_module_t *btl,
 {
     mca_pml_bfo_recv_request_t *match;
     mca_pml_bfo_comm_t *comm = (mca_pml_bfo_comm_t *)comm_ptr->c_pml_comm;
+    int rc;
 
     do {
         match = match_incomming(hdr, comm, proc);
@@ -502,6 +505,24 @@ match_one(mca_btl_base_module_t *btl,
                                                        num_segments);
                 /* attempt to match actual request */
                 continue;
+            } else if (MCA_PML_REQUEST_MPROBE == match->req_recv.req_base.req_type) {
+                /* create a receive frag and associate it with the
+                   request, which is then completed so that it can be
+                   restarted later during mrecv */
+                mca_pml_bfo_recv_frag_t *tmp;
+                if(NULL == frag) {
+                    MCA_PML_BFO_RECV_FRAG_ALLOC(tmp, rc);
+                    MCA_PML_BFO_RECV_FRAG_INIT(tmp, hdr, segments, num_segments, btl);
+                } else {
+                    tmp = frag;
+                }
+ 
+                match->req_recv.req_base.req_addr = tmp;
+                mca_pml_bfo_recv_request_matched_probe(match, btl, segments,
+                                                       num_segments);
+                /* this frag is already processed, so we want to break out
+                   of the loop and not end up back on the unexpected queue. */
+                return NULL;
             }
 
             PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_MSG_MATCH_POSTED_REQ,

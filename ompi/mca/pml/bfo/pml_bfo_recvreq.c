@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,6 +33,11 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/util/arch.h"
 #include "ompi/memchecker.h"
+
+#if OMPI_CUDA_SUPPORT
+int mca_pml_bfo_cuda_need_buffers(mca_pml_bfo_recv_request_t* recvreq,
+                                  mca_btl_base_module_t* btl);
+#endif /* OMPI_CUDA_SUPPORT */
 #if PML_BFO
 #include "pml_bfo_failover.h"
 #endif /* PML_BFO */
@@ -406,7 +411,7 @@ int mca_pml_bfo_recv_request_get_frag( mca_pml_bfo_rdma_frag_t* frag )
                               0,
                               &frag->rdma_length,
                               MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK |
-			      MCA_BTL_DES_FLAGS_GET,
+                              MCA_BTL_DES_FLAGS_GET,
                               &descriptor );
     if( OPAL_UNLIKELY(NULL == descriptor) ) {
         frag->rdma_length = save_size;
@@ -537,8 +542,15 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
      * sender side is already registered. We need to be smarter here, perhaps
      * do couple of RDMA reads */
     if(opal_convertor_need_buffers(&recvreq->req_recv.req_base.req_convertor) == true) {
+#if OMPI_CUDA_SUPPORT
+        if (mca_pml_bfo_cuda_need_buffers(recvreq, btl)) {
+            mca_pml_bfo_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
+            return;
+        }
+#else /* OMPI_CUDA_SUPPORT */
         mca_pml_bfo_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
         return;
+#endif /* OMPI_CUDA_SUPPORT */
     }
     
     MCA_PML_BFO_RDMA_FRAG_ALLOC(frag,rc);
@@ -568,10 +580,29 @@ void mca_pml_bfo_recv_request_progress_rget( mca_pml_bfo_recv_request_t* recvreq
     frag->rdma_btl = btl;
 #endif /* PML_BFO */
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
+#if OMPI_CUDA_SUPPORT
+    if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
+        if (recvreq->req_recv.req_base.req_convertor.flags & CONVERTOR_CUDA) {
+            /* Check to see if this is a CUDA get */
+            if (btl->btl_flags & MCA_BTL_FLAGS_CUDA_GET) {
+                frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_send, btl);
+            }
+            if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
+                opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
+                orte_errmgr.abort(-1, NULL);
+            }
+        } else {
+            /* Just default back to send and receive.  Must be mix of GPU and HOST memory. */
+            mca_pml_bfo_recv_request_ack(recvreq, &hdr->hdr_rndv, 0);
+            return;
+        }
+    }
+#else /* OMPI_CUDA_SUPPORT */
     if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
         opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
         orte_errmgr.abort(-1, NULL);
     }
+#endif /* OMPI_CUDA_SUPPORT */
     frag->rdma_hdr.hdr_rget = *hdr;
     frag->rdma_req = recvreq;
     frag->rdma_ep = bml_endpoint;
@@ -728,6 +759,7 @@ void mca_pml_bfo_recv_request_matched_probe( mca_pml_bfo_recv_request_t* recvreq
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_match.hdr_src;
     recvreq->req_bytes_received = bytes_packed;
     recvreq->req_bytes_expected = bytes_packed;
+
     recv_request_pml_complete(recvreq);
 }
 
@@ -812,7 +844,7 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
         mca_bml_base_prepare_dst(bml_btl, reg, 
                                  &recvreq->req_recv.req_base.req_convertor,
                                  MCA_BTL_NO_ORDER, 0, &size, MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
-				 MCA_BTL_DES_FLAGS_PUT, &dst);
+                                 MCA_BTL_DES_FLAGS_PUT, &dst);
         OPAL_THREAD_UNLOCK(&recvreq->lock);
 
         if(OPAL_UNLIKELY(dst == NULL)) {
@@ -894,12 +926,18 @@ int mca_pml_bfo_recv_request_schedule_once( mca_pml_bfo_recv_request_t* recvreq,
 
 #define IS_PROB_REQ(R) \
     ((MCA_PML_REQUEST_IPROBE == (R)->req_recv.req_base.req_type) || \
-     (MCA_PML_REQUEST_PROBE == (R)->req_recv.req_base.req_type))
+     (MCA_PML_REQUEST_PROBE == (R)->req_recv.req_base.req_type) || \
+     (MCA_PML_REQUEST_IMPROBE == (R)->req_recv.req_base.req_type) || \
+     (MCA_PML_REQUEST_MPROBE == (R)->req_recv.req_base.req_type))
+#define IS_MPROB_REQ(R) \
+    ((MCA_PML_REQUEST_IMPROBE == (R)->req_recv.req_base.req_type) || \
+     (MCA_PML_REQUEST_MPROBE == (R)->req_recv.req_base.req_type))
 
 static inline void append_recv_req_to_queue(opal_list_t *queue,
         mca_pml_bfo_recv_request_t *req)
 {
-    if(OPAL_UNLIKELY(req->req_recv.req_base.req_type == MCA_PML_REQUEST_IPROBE))
+    if(OPAL_UNLIKELY(req->req_recv.req_base.req_type == MCA_PML_REQUEST_IPROBE ||
+                     req->req_recv.req_base.req_type == MCA_PML_REQUEST_IMPROBE))
         return;
 
     opal_list_append(queue, (opal_list_item_t*)req);
@@ -909,7 +947,8 @@ static inline void append_recv_req_to_queue(opal_list_t *queue,
      * the compiler will optimize out the empty if loop in the case where PERUSE
      * support is not required by the user.
      */
-    if(req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
+    if(req->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE ||
+       req->req_recv.req_base.req_type != MCA_PML_REQUEST_MPROBE) {
         PERUSE_TRACE_COMM_EVENT(PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
                                 &(req->req_recv.req_base), PERUSE_RECV);
     }
@@ -964,20 +1003,35 @@ recv_req_match_wild( mca_pml_bfo_recv_request_t* req,
 {
     mca_pml_bfo_comm_t* comm = req->req_recv.req_base.req_comm->c_pml_comm;
     mca_pml_bfo_comm_proc_t* proc = comm->procs;
-    size_t proc_count = comm->num_procs, i;
+    size_t i;
 
     /*
      * Loop over all the outstanding messages to find one that matches.
      * There is an outer loop over lists of messages from each
      * process, then an inner loop over the messages from the
      * process.
+     *
+     * In order to avoid starvation do this in a round-robin fashion.
      */
-    for (i = 0; i < proc_count; i++) {
+    for (i = comm->last_probed + 1; i < comm->num_procs; i++) {
         mca_pml_bfo_recv_frag_t* frag;
 
         /* loop over messages from the current proc */
         if((frag = recv_req_match_specific_proc(req, &proc[i]))) {
             *p = &proc[i];
+            comm->last_probed = i;
+            req->req_recv.req_base.req_proc = proc[i].ompi_proc;
+            prepare_recv_req_converter(req);
+            return frag; /* match found */
+        }
+    }
+    for (i = 0; i <= comm->last_probed; i++) {
+        mca_pml_bfo_recv_frag_t* frag;
+  
+        /* loop over messages from the current proc */
+        if((frag = recv_req_match_specific_proc(req, &proc[i]))) {
+            *p = &proc[i];
+            comm->last_probed = i;
             req->req_recv.req_base.req_proc = proc[i].ompi_proc;
             prepare_recv_req_converter(req);
             return frag; /* match found */
@@ -1095,6 +1149,21 @@ void mca_pml_bfo_recv_req_start(mca_pml_bfo_recv_request_t *req)
             }
             
             MCA_PML_BFO_RECV_FRAG_RETURN(frag);
+
+        } else if (OPAL_UNLIKELY(IS_MPROB_REQ(req))) {
+            /* Remove the fragment from the match list, as it's now
+               matched.  Stash it somewhere in the request (which,
+               yes, is a complete hack), where it will be plucked out
+               during the end of mprobe.  The request will then be
+               "recreated" as a receive request, and the frag will be
+               restarted with this request during mrecv */
+            opal_list_remove_item(&proc->unexpected_frags,
+                                  (opal_list_item_t*)frag);
+            OPAL_THREAD_UNLOCK(&comm->matching_lock);
+
+            req->req_recv.req_base.req_addr = frag;
+            mca_pml_bfo_recv_request_matched_probe(req, frag->btl,
+                                                   frag->segments, frag->num_segments);
 
         } else {
             OPAL_THREAD_UNLOCK(&comm->matching_lock);

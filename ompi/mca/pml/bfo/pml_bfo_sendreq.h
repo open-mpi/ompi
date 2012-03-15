@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -319,6 +319,13 @@ mca_pml_bfo_send_request_schedule(mca_pml_bfo_send_request_t* sendreq)
     mca_pml_bfo_send_request_schedule_exclusive(sendreq);
 }
 
+#if OMPI_CUDA_SUPPORT
+int mca_pml_bfo_send_request_start_cuda(
+    mca_pml_bfo_send_request_t* sendreq, 
+    mca_bml_base_btl_t* bml_btl,
+    size_t size);
+#endif /* OMPI_CUDA_SUPPORT */
+
 /**
  *  Start the specified request
  */
@@ -403,6 +410,11 @@ mca_pml_bfo_send_request_start_btl( mca_pml_bfo_send_request_t* sendreq,
                                                          MCA_PML_BFO_HDR_FLAGS_CONTIG);
             }
         } else {
+#if OMPI_CUDA_SUPPORT
+            if (sendreq->req_send.req_base.req_convertor.flags & CONVERTOR_CUDA) {
+                return mca_pml_bfo_send_request_start_cuda(sendreq, bml_btl, size);
+            }
+#endif /* OMPI_CUDA_SUPPORT */
             rc = mca_pml_bfo_send_request_start_rndv(sendreq, bml_btl, size, 0);
         }
     }
