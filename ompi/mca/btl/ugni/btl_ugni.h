@@ -27,6 +27,7 @@
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "opal/util/output.h"
 #include "opal_stdint.h"
+#include "opal/class/opal_hash_table.h"
 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -69,6 +70,17 @@ typedef struct mca_btl_ugni_module_t {
     /* eager (registered) fragment list */
     ompi_free_list_t eager_frags_send;
     ompi_free_list_t eager_frags_recv;
+
+    /* SMSG fragment list (unregistered) */
+    ompi_free_list_t smsg_frags;
+
+    /* RDMA fragment list */
+    ompi_free_list_t rdma_frags;
+    ompi_free_list_t rdma_int_frags;
+
+    /* fragment buffer (for message if lookup) */
+    opal_hash_table_t pending_smsg_frags;
+    int32_t next_frag_id;
 } mca_btl_ugni_module_t;
 
 typedef struct mca_btl_ugni_component_t {
@@ -93,11 +105,6 @@ typedef struct mca_btl_ugni_component_t {
     size_t ugni_get_limit;
     /* Switch to get when sending above this size */
     size_t ugni_smsg_limit;
-
-    /* SMSG fragment list (unregistered) */
-    ompi_free_list_t ugni_frags_smsg;
-    /* RDMA fragment list */
-    ompi_free_list_t ugni_frags_rdma;
 
     /* RDMA/SMSG free list settings */
     int ugni_free_list_num;

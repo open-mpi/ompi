@@ -104,9 +104,16 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     memmove (ugni_module, &mca_btl_ugni_module, sizeof (mca_btl_ugni_module));
 
     OBJ_CONSTRUCT(&ugni_module->failed_frags, opal_list_t);
+    OBJ_CONSTRUCT(&ugni_module->eager_frags_send, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->eager_frags_recv, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->smsg_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->rdma_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->rdma_int_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ugni_module->pending_smsg_frags, opal_hash_table_t);
 
     ugni_module->device = dev;
     ugni_module->endpoints = NULL;
+    dev->btl_ctx = (void *) ugni_module;
 
     /* create wildcard endpoint to listen for connections.
      * there is no need to bind this endpoint. */
@@ -138,6 +145,8 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
         return ompi_common_rc_ugni_to_ompi (rc);
     }
 
+    ugni_module->next_frag_id = 0;
+
     return OMPI_SUCCESS;
 }
 
@@ -150,6 +159,10 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
 
     OBJ_DESTRUCT(&ugni_module->eager_frags_send);
     OBJ_DESTRUCT(&ugni_module->eager_frags_recv);
+    OBJ_DESTRUCT(&ugni_module->smsg_frags);
+    OBJ_DESTRUCT(&ugni_module->rdma_frags);
+    OBJ_DESTRUCT(&ugni_module->rdma_int_frags);
+    OBJ_DESTRUCT(&ugni_module->pending_smsg_frags);
 
     /* close all open connections and release endpoints */
     if (NULL != ugni_module->endpoints) {

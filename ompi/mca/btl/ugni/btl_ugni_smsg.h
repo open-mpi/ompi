@@ -20,9 +20,8 @@ typedef enum {
     MCA_BTL_UGNI_TAG_SEND,
     MCA_BTL_UGNI_TAG_DISCONNECT,
     MCA_BTL_UGNI_TAG_PUT_INIT,
-    MCA_BTL_UGNI_TAG_PUT_COMPLETE,
     MCA_BTL_UGNI_TAG_GET_INIT,
-    MCA_BTL_UGNI_TAG_GET_COMPLETE
+    MCA_BTL_UGNI_TAG_RDMA_COMPLETE
 } mca_btl_ugni_smsg_tag_t;
 
 static inline int ompi_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
@@ -30,28 +29,32 @@ static inline int ompi_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
                                                void *hdr, size_t hdr_len,
                                                void *payload, size_t payload_len,
                                                mca_btl_ugni_smsg_tag_t tag) {
-    static uint8_t msg_num = 0;
-    gni_return_t rc;
+    gni_return_t grc;
+    int rc;
 
-    frag->msg_id = ignore_local_comp ? (uint32_t) -1 :
-        (frag->endpoint->common->ep_rem_id & 0x00ffffff) | ((uint32_t)msg_num++ << 24);
+    if (!ignore_local_comp) {
+        rc = opal_hash_table_set_value_uint32 (&frag->endpoint->btl->pending_smsg_frags,
+                                               frag->msg_id, (void *) frag);
+        if (OPAL_UNLIKELY(OPAL_SUCCESS != rc)) {
+            return rc;
+        }
+    }
 
-    rc = GNI_SmsgSendWTag (frag->endpoint->common->ep_handle, hdr, hdr_len, payload, payload_len,
-                           frag->msg_id, tag);
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
+    grc = GNI_SmsgSendWTag (frag->endpoint->common->ep_handle, hdr, hdr_len, payload, payload_len,
+                           ignore_local_comp ? (uint32_t)-1 : frag->msg_id, tag);
+    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
         BTL_VERBOSE(("GNI_SmsgSendWTag failed with rc = %d", rc));
 
-        if (OPAL_LIKELY(GNI_RC_NOT_DONE == rc)) {
+        opal_hash_table_remove_value_uint32 (&frag->endpoint->btl->pending_smsg_frags,
+                                             frag->msg_id);
+
+        if (OPAL_LIKELY(GNI_RC_NOT_DONE == grc)) {
             BTL_VERBOSE(("out of credits"));
 
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         return OMPI_ERROR;
-    }
-
-    if (false == ignore_local_comp) {
-        opal_list_append (&frag->endpoint->pending_smsg_sends, (opal_list_item_t *) frag);
     }
 
     return OMPI_SUCCESS;

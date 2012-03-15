@@ -16,28 +16,24 @@
 
 void mca_btl_ugni_local_smsg_complete (void *btl_ctx, uint32_t msg_id, int rc)
 {
-    mca_btl_base_endpoint_t *btl_peer = (mca_btl_base_endpoint_t *) btl_ctx;
+    mca_btl_ugni_module_t *btl = (mca_btl_ugni_module_t *) btl_ctx;
     mca_btl_ugni_base_frag_t *frag;
-    opal_list_item_t *item;
+    int lrc;
 
-    for (item = opal_list_get_first (&btl_peer->pending_smsg_sends) ;
-         item != opal_list_get_end (&btl_peer->pending_smsg_sends) ;
-         item = opal_list_get_next (item)) {
-        frag = (mca_btl_ugni_base_frag_t *) item;
-        if (frag->msg_id == msg_id) {
-            opal_list_remove_item (&btl_peer->pending_smsg_sends, item);
-            break;
-        }
-        frag = NULL;
-    }
-
-    if (!frag) {
+    lrc = opal_hash_table_get_value_uint32 (&btl->pending_smsg_frags,
+                                           msg_id, (void **) &frag);
+    if (OPAL_UNLIKELY(OPAL_SUCCESS != lrc)) {
         return;
     }
 
+    opal_hash_table_remove_value_uint32 (&btl->pending_smsg_frags,
+                                         msg_id);
+
+    assert (NULL != frag);
+
     /* completion callback */
     if (NULL != frag->base.des_cbfunc) {
-        frag->base.des_cbfunc(&btl_peer->btl->super, btl_peer, &frag->base, rc);
+        frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, rc);
     }
 
     if (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
