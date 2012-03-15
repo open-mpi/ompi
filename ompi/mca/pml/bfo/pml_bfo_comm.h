@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,6 +59,7 @@ struct mca_pml_comm_t {
     opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
     mca_pml_bfo_comm_proc_t* procs;
     size_t num_procs;
+    size_t last_probed;
 };
 typedef struct mca_pml_comm_t mca_pml_bfo_comm_t;
 

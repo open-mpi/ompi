@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,6 +19,7 @@
 
 #include "ompi_config.h"
 #include "ompi/request/request.h"
+#include "ompi/message/message.h"
 #include "pml_bfo_recvreq.h"
 
 
@@ -41,6 +42,7 @@ int mca_pml_bfo_iprobe(int src,
         if( NULL != status ) {
             OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
         }
+        rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
         *matched = 1;
     } else {
         *matched = 0;
@@ -56,6 +58,7 @@ int mca_pml_bfo_probe(int src,
                       struct ompi_communicator_t *comm,
                       ompi_status_public_t * status)
 {
+    int rc = OMPI_SUCCESS;
     mca_pml_bfo_recv_request_t recvreq;
 
     OBJ_CONSTRUCT( &recvreq, mca_pml_bfo_recv_request_t );
@@ -66,33 +69,94 @@ int mca_pml_bfo_probe(int src,
     MCA_PML_BFO_RECV_REQUEST_START(&recvreq);
 
     ompi_request_wait_completion(&recvreq.req_recv.req_base.req_ompi);
-
+    rc = recvreq.req_recv.req_base.req_ompi.req_status.MPI_ERROR;
     if (NULL != status) {
         OMPI_STATUS_SET(status, &recvreq.req_recv.req_base.req_ompi.req_status);
     }
+
     MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
-    return OMPI_SUCCESS;
+    return rc;
 }
 
 
 int
-mca_pml_bfo_improbe(int dst,
+mca_pml_bfo_improbe(int src,
+                    int tag,
+                    struct ompi_communicator_t *comm,
+                    int *matched, 
+                    struct ompi_message_t **message,
+                    ompi_status_public_t * status)
+{
+    int rc = OMPI_SUCCESS;
+    mca_pml_bfo_recv_request_t *recvreq;
+
+    MCA_PML_BFO_RECV_REQUEST_ALLOC(recvreq, rc);
+    if (NULL == recvreq)
+        return rc;
+    recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_IMPROBE;
+
+    /* initialize the request enough to probe and get the status */
+    MCA_PML_BFO_RECV_REQUEST_INIT(recvreq, NULL, 0, &ompi_mpi_char.dt, 
+                                  src, tag, comm, false);
+    MCA_PML_BFO_RECV_REQUEST_START(recvreq);
+
+    if( recvreq->req_recv.req_base.req_ompi.req_complete == true ) {
+        if( NULL != status ) {
+            *status = recvreq->req_recv.req_base.req_ompi.req_status;
+        }
+        *matched = 1;
+
+        *message = ompi_message_alloc();
+        (*message)->comm = comm;
+        (*message)->req_ptr = recvreq;
+        (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
+
+        rc = OMPI_SUCCESS;
+    } else {
+        *matched = 0;
+
+        /* we only free if we didn't match, because we're going to
+           translate the request into a receive request later on if it
+           was matched */
+        ompi_request_free((ompi_request_t**)&recvreq);
+        
+        opal_progress();
+    }
+
+    return rc;
+}
+
+
+int
+mca_pml_bfo_mprobe(int src,
                    int tag,
-                   struct ompi_communicator_t* comm,
-                   int *matched,
+                   struct ompi_communicator_t *comm,
                    struct ompi_message_t **message,
-                   ompi_status_public_t* status)
+                   ompi_status_public_t * status)
 {
-    return OMPI_ERR_NOT_SUPPORTED;
-}
+    int rc = OMPI_SUCCESS;
+    mca_pml_bfo_recv_request_t *recvreq;
 
+    MCA_PML_BFO_RECV_REQUEST_ALLOC(recvreq, rc);
+    if (NULL == recvreq)
+        return rc;
+    recvreq->req_recv.req_base.req_type = MCA_PML_REQUEST_MPROBE;
 
-int
-mca_pml_bfo_mprobe(int dst,
-                  int tag,
-                  struct ompi_communicator_t* comm,
-                  struct ompi_message_t **message,
-                  ompi_status_public_t* status)
-{
-    return OMPI_ERR_NOT_SUPPORTED;
+    /* initialize the request enough to probe and get the status */
+    MCA_PML_BFO_RECV_REQUEST_INIT(recvreq, NULL, 0, &ompi_mpi_char.dt, 
+                                  src, tag, comm, false);
+    MCA_PML_BFO_RECV_REQUEST_START(recvreq);
+
+    ompi_request_wait_completion(&recvreq->req_recv.req_base.req_ompi);
+
+    if( NULL != status ) {
+        *status = recvreq->req_recv.req_base.req_ompi.req_status;
+    }
+
+    *message = ompi_message_alloc();
+    (*message)->comm = comm;
+    (*message)->req_ptr = recvreq;
+    (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
+
+    return OMPI_SUCCESS;
 }

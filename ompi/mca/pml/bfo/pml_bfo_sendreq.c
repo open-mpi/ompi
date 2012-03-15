@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
- * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -618,15 +618,14 @@ int mca_pml_bfo_send_request_start_copy( mca_pml_bfo_send_request_t* sendreq,
         }
         return OMPI_SUCCESS;
     }
-    switch(OPAL_SOS_GET_ERROR_CODE(rc)) {
-        case OMPI_ERR_RESOURCE_BUSY:
-            /* No more resources. Allow the upper level to queue the send */
-            rc = OMPI_ERR_OUT_OF_RESOURCE;
-            break;
-        default:
-            mca_bml_base_free(bml_btl, des);
-            break;
+
+    if (OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        /* No more resources. Allow the upper level to queue the send */
+        rc = OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    mca_bml_base_free (bml_btl, des);
+
     return rc;
 }
 
@@ -703,16 +702,15 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
      * operation is achieved.
      */
 
-    mca_btl_base_descriptor_t* des;
+    mca_btl_base_descriptor_t* des, *src = NULL;
     mca_btl_base_segment_t* segment;
     mca_pml_bfo_hdr_t* hdr;
     bool need_local_cb = false;
     int rc;
 
     bml_btl = sendreq->req_rdma[0].bml_btl;
-    if((sendreq->req_rdma_cnt == 1) && (bml_btl->btl_flags & MCA_BTL_FLAGS_GET)) {
+    if((sendreq->req_rdma_cnt == 1) && (bml_btl->btl_flags & (MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_CUDA_GET))) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[0].btl_reg;
-        mca_btl_base_descriptor_t* src;
         size_t i;
         size_t old_position = sendreq->req_send.req_base.req_convertor.bConverted;
 
@@ -782,8 +780,15 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
         for( i = 0; i < src->des_src_cnt; i++ ) {
             hdr->hdr_rget.hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(src->des_src[i].seg_addr.pval);
             hdr->hdr_rget.hdr_segs[i].seg_len       = src->des_src[i].seg_len;
+#if OMPI_CUDA_SUPPORT_41
+            memcpy(hdr->hdr_rget.hdr_segs[i].seg_key.cudakey, src->des_src[i].seg_key.cudakey,
+                   sizeof(src->des_src[i].seg_key.cudakey));
+            hdr->hdr_rget.hdr_segs[i].memh_seg_addr.lval = ompi_ptr_ptol(src->des_src[i].memh_seg_addr.pval);
+            hdr->hdr_rget.hdr_segs[i].memh_seg_len       = src->des_src[i].memh_seg_len;
+#else /* OMPI_CUDA_SUPPORT_41 */
             hdr->hdr_rget.hdr_segs[i].seg_key.key64[0] = src->des_src[i].seg_key.key64[0];
             hdr->hdr_rget.hdr_segs[i].seg_key.key64[1] = src->des_src[i].seg_key.key64[1];
+#endif /* OMPI_CUDA_SUPPORT_41 */
         }
 
         des->des_cbfunc = mca_pml_bfo_send_ctl_completion;
@@ -853,12 +858,16 @@ int mca_pml_bfo_send_request_start_rdma( mca_pml_bfo_send_request_t* sendreq,
         if (MCA_PML_BFO_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type) {
             if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
                 sendreq->req_events++;
-	    }
+            }
         }
 #endif /* PML_BFO */
         return OMPI_SUCCESS;
     }
     mca_bml_base_free(bml_btl, des);
+    if (NULL != src) {
+        mca_bml_base_free (bml_btl, src);
+    }    
+
     return rc;
 }
 
@@ -1061,7 +1070,7 @@ mca_pml_bfo_send_request_schedule_once(mca_pml_bfo_send_request_t* sendreq)
 
         assert(range->range_send_length != 0);
 #if PML_BFO
-	MCA_PML_BFO_CHECK_FOR_REMOVED_BTL(sendreq, range);
+        MCA_PML_BFO_CHECK_FOR_REMOVED_BTL(sendreq, range);
 #endif /* PML_BFO */
 
         if(prev_bytes_remaining == range->range_send_length)
@@ -1253,7 +1262,7 @@ int mca_pml_bfo_send_request_put_frag( mca_pml_bfo_rdma_frag_t* frag )
                               0,
                               &frag->rdma_length,
                               MCA_BTL_DES_FLAGS_BTL_OWNERSHIP |
-			      MCA_BTL_DES_FLAGS_PUT,
+                              MCA_BTL_DES_FLAGS_PUT,
                               &des );
     
     if( OPAL_UNLIKELY(NULL == des) ) {
@@ -1315,7 +1324,7 @@ int mca_pml_bfo_send_request_put_frag( mca_pml_bfo_rdma_frag_t* frag )
     }
 #if PML_BFO
     if (des->des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
-	((mca_pml_bfo_send_request_t*)frag->rdma_req)->req_events++;
+        ((mca_pml_bfo_send_request_t*)frag->rdma_req)->req_events++;
     }
 #endif /* PML_BFO */
     return OMPI_SUCCESS;
