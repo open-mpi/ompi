@@ -38,7 +38,6 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
     size_t i;
     int rc;
 
-
     if (NULL == ugni_module->endpoints) {
         (void) ompi_proc_world (&ntotal_procs);
 
@@ -50,6 +49,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
 
         rc = mca_btl_ugni_setup_mpools (ugni_module);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            BTL_ERROR(("btl/ugni error setting up mpools/free lists"));
             return rc;
         }
     }
@@ -261,6 +261,7 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
                                   0, nprocs, mbox_increment,
                                   ugni_module->smsg_mpool);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        BTL_ERROR(("error creating smsg mailbox free list"));
         return rc;
     }
 

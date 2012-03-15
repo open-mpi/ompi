@@ -232,7 +232,7 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
                    uint8_t order, size_t size, uint32_t flags);
 
 typedef struct mca_btl_ugni_reg_t {
-    mca_mpool_base_registration_t   base;
+    mca_mpool_base_registration_t  base;
     gni_mem_handle_t                memory_hdl;
 } mca_btl_ugni_reg_t;
 
