@@ -25,7 +25,10 @@
 	  rules appearing after a rank selection for disabling
 	- fixed handling of 'errno' in LIBC[-I/O] wrappers for statically linked
 	  applications
+	- fixed parsing of PAPI native events in VT_METRICS
 	- vtunify[-mpi]:
+		- fixed possibly uninitialized global token for the predefined
+		  Node and "All" process groups
 		- fixed potential memory corruption during enqueuing recv.
 		  messages for p2p message matching
 	- vtunify-mpi:
