@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
 #
 # Script to see if ob1 directory has moved ahead.
 #
@@ -17,7 +17,7 @@ use strict;
 # After the changes are ported, one can bump up the $revision variable in
 # in this file to whatever the ob1 directory is at.
 #
-my $revision = "-r24138";
+my $revision = "-r26145";
 my $cmd;
 my $cmd_output;
 my $pmlsdir = "../ompi/mca/pml";
