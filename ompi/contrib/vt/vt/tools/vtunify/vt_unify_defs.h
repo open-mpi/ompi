@@ -401,6 +401,8 @@ private:
       //
       struct CommS
       {
+         CommS() : global_token( 0 ) {}
+
          uint32_t global_token;                // global comm. token
          std::set<uint32_t, ProcCmpS> members; // member process ids
 
@@ -437,6 +439,8 @@ private:
       //
       struct GroupS
       {
+         GroupS() : global_token( 0 ) {}
+
          uint32_t global_token;                // global process group token
          std::set<uint32_t, ProcCmpS> members; // member process ids
 
