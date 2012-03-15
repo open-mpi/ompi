@@ -35,7 +35,6 @@ static inline unsigned char *mca_btl_vader_reserve_fbox (int peer_smp_rank, size
     unsigned char *fbox = MCA_BTL_VADER_FBOX_OUT_PTR(peer_smp_rank, next_fbox);  
 
     /* todo -- need thread locks/atomics here for the multi-threaded case */
-
     if (OPAL_UNLIKELY(size > MAX_MSG || fbox[0] != MCA_BTL_VADER_FBOX_FREE)) {
         /* fall back on fifo */
         return NULL;

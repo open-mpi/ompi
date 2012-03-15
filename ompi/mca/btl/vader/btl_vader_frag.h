@@ -31,7 +31,7 @@
 #define MCA_BTL_VADER_FLAG_FBOX        2
 
 struct mca_btl_vader_hdr_t {
-    volatile uintptr_t next;    /* next item in fifo. many peers may touch this */
+    volatile intptr_t next; /* next item in fifo. many peers may touch this */
     volatile bool complete; /* fragment completion (usually 1 byte) */
     mca_btl_base_tag_t tag; /* tag associated with this fragment (used to lookup callback) */
     char pad[2];
