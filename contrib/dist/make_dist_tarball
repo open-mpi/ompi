@@ -306,6 +306,8 @@ fi
 if test -d .svn; then
     echo "*** Removing old VERSION file..."
     rm -f VERSION
+    echo "*** Restoring pristine VERSION file..."
+    svn revert VERSION
     echo "*** Running svn up..."
     svn up
     if test ! "$?" = "0"; then
@@ -317,15 +319,24 @@ if test -d .svn; then
 elif test -d .hg; then
     echo "*** Removing old VERSION file..."
     rm -f VERSION
-    echo "*** Running hg up..."
+    echo "*** Restoring pristine VERSION file..."
     hg revert VERSION
+    echo "*** Running hg up..."
     hg up
     if test ! "$?" = "0"; then
         echo "HG update failed.  Aborting"
         exit 1
     fi
     echo "*** Getting hg version number..."
-    svn_r="r`svnversion .`"
+    svn_r=hg`hg tip | grep ^changeset: | head -n 1 | cut -d: -f3`
+fi
+echo "    Repo rev number: $svn_r"
+if test "$svn_r" = ""; then
+    echo "Somehow the repo rev number is empty.  Abort!"
+    exit 1
+elif test "`echo $svn_r | grep ' '`" != ""; then
+    echo "Somehow the repo rev number has a space in it -- bad!"
+    exit 1
 fi
 
 #
