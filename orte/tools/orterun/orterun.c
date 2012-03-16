@@ -490,6 +490,7 @@ int orterun(int argc, char *argv[])
     opal_cmd_line_t cmd_line;
     char *tmp_env_var = NULL;
     char *param;
+    orte_app_context_t *app;
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
@@ -804,14 +805,15 @@ int orterun(int argc, char *argv[])
         Since there always MUST be at least one app_context, we are safe in
         doing this.
     */
-    if (NULL != ((orte_app_context_t*)jdata->apps->addr[0])->prefix_dir) {
+    app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, 0);
+    if (NULL != app->prefix_dir) {
         char *oldenv, *newenv, *lib_base, *bin_base;
         
         lib_base = opal_basename(opal_install_dirs.libdir);
         bin_base = opal_basename(opal_install_dirs.bindir);
 
         /* Reset PATH */
-        newenv = opal_os_path( false, ((orte_app_context_t*)jdata->apps->addr[0])->prefix_dir, bin_base, NULL );
+        newenv = opal_os_path( false, app->prefix_dir, bin_base, NULL );
         oldenv = getenv("PATH");
         if (NULL != oldenv) {
             char *temp;
@@ -827,7 +829,7 @@ int orterun(int argc, char *argv[])
         free(bin_base);
         
         /* Reset LD_LIBRARY_PATH */
-        newenv = opal_os_path( false, ((orte_app_context_t*)jdata->apps->addr[0])->prefix_dir, lib_base, NULL );
+        newenv = opal_os_path( false, app->prefix_dir, lib_base, NULL );
         oldenv = getenv("LD_LIBRARY_PATH");
         if (NULL != oldenv) {
             char* temp;
@@ -2090,10 +2092,9 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                                        true, orterun_basename, orterun_basename);
                         return ORTE_ERR_FATAL;
                     }
-
-                    app->prefix_dir = strdup(param);
-                    free(param);
                 }
+                app->prefix_dir = strdup(param);
+                free(param);
             }
         }
     }
