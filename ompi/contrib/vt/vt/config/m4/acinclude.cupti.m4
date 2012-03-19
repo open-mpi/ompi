@@ -33,9 +33,9 @@ AC_DEFUN([ACVT_CUPTI],
 
 	AC_ARG_WITH(cupti-lib-dir,
 		AC_HELP_STRING([--with-cupti-lib-dir=CUPTILIBDIR],
-		[give the path for CUPTI-libraries, default: CUPTIDIR/lib]),
+		[give the path for CUPTI-libraries, default: CUPTIDIR/lib64]),
 	[CUPTILIBDIR="-L$withval/"],
-	[AS_IF([test x"$CUPTIDIR" != x], [CUPTILIBDIR="-L$CUPTIDIR"lib/])])
+	[AS_IF([test x"$CUPTIDIR" != x], [CUPTILIBDIR="-L$CUPTIDIR"lib64/])])
 
 	AC_ARG_WITH(cupti-lib,
 		AC_HELP_STRING([--with-cupti-lib=CUPTILIB], [use given cupti lib, default: -lcupti CUDALIB]),
