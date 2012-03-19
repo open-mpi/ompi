@@ -88,6 +88,7 @@ included in the vX.Y.Z section and be denoted as:
   bug.
 - Output the MPI API in ompi_info output.
 - Major VT update to 5.12.1.4.
+- Rankfile 'P'hysical mapping is no longer available.
 - Upgrade embedded Hardware Locality (hwloc) v1.3.2, plus some
   post-1.3.2-release bug fixes.  All processor and memory binding is
   now done through hwloc.  Woo hoo!  Note that this fixes core binding

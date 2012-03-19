@@ -733,6 +733,13 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
                     ORTE_ERROR_LOG(rc);
                     goto unlock;
                 }
+                /* we no longer support physical mappings */
+                if ('P' == value[0] || 'p' == value[0]) {
+                    orte_show_help("help-rmaps_rank_file.txt", "not-supported", true, rankfile);
+                    rc = ORTE_ERR_SILENT;
+                    ORTE_ERROR_LOG(rc);
+                    goto unlock;
+                }
                 for (i=0; i < 64 && '\0' != value[i]; i++) {
                     rfmap->slot_list[i] = value[i];
                 }

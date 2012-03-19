@@ -9,13 +9,35 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
  * $HEADER$
+ */
+
+/*
+ * 13 Mar 2012
+ *
+ * Per discussion on https://svn.open-mpi.org/trac/ompi/ticket/3051,
+ * we're converting the hwloc paffinity module to have logical and
+ * physical be equivalent.  Specifically, use the hwloc logical
+ * mapping for all "logical" results.  And when asked to convert
+ * paffinity logical to physical, just return the unity conversion
+ * (i.e., physical 6 == logical 6).
+ *
+ * As a consequence, note that the logical/physical core IDs that
+ * we're returning are NOT relative to the socket that they're on.
+ * They are unique across all cores, which makes looking them up a
+ * little easier (i.e., you don't have to find the socket first, then
+ * look up the core -- you can just look up the core from the set of
+ * all cores).
+ *
+ * This really only has relevance for the v1.5/v1.6 branch, as the
+ * trunk/v1.7 has been revamped w.r.t. paffinity, and we use hwloc
+ * objects for everything.
  */
 
 #include "opal_config.h"
@@ -72,28 +94,6 @@ static const opal_paffinity_base_module_1_1_0_t loc_module = {
     module_get_physical_core_id,
     NULL
 };
-
-/*
- * Trivial DFS traversal recursion function
- */
-static hwloc_obj_t dfs_find_os_index(hwloc_obj_t root, hwloc_obj_type_t type, 
-                                     unsigned os_index)
-{
-    unsigned i;
-    hwloc_obj_t ret;
-
-    if (root->type == type && root->os_index == os_index) {
-        return root;
-    }
-    for (i = 0; i < root->arity; ++i) {
-        ret = dfs_find_os_index(root->children[i], type, os_index);
-        if (NULL != ret) {
-            return ret;
-        }
-    }
-
-    return NULL;
-}
 
 /*
  * Trivial DFS traversal recursion function
@@ -175,6 +175,9 @@ static int module_set(opal_paffinity_base_cpu_set_t mask)
     t = &opal_hwloc_topology;
 
     set = hwloc_bitmap_alloc();
+    if (NULL == set) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     hwloc_bitmap_zero(set);
     for (i = 0; ((unsigned int) i) < OPAL_PAFFINITY_BITMASK_CPU_MAX; ++i) {
         if (OPAL_PAFFINITY_CPU_ISSET(i, mask)) {
@@ -208,6 +211,9 @@ static int module_get(opal_paffinity_base_cpu_set_t *mask)
     }
 
     set = hwloc_bitmap_alloc();
+    if (NULL == set) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
     if (0 != hwloc_get_cpubind(*t, set, 0)) {
         ret = OPAL_ERR_IN_ERRNO;
     } else {
@@ -233,53 +239,49 @@ static int module_get(opal_paffinity_base_cpu_set_t *mask)
 static int module_map_to_processor_id(int socket, int core, int *processor_id)
 {
     hwloc_topology_t *t;
-    hwloc_obj_t obj;
+    hwloc_obj_t core_obj;
+    hwloc_bitmap_t good;
 
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_map_to_processor_id: IN: socket=%d, core=%d", socket, core);
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
     t = &opal_hwloc_topology;
 
-    /* Traverse all sockets, looking for the right physical ID number.
-       Once we find it, traverse all that socket's cores looking for
-       the right physial ID number.  Once we find it, return the
-       physical processor ID number. */
-    for (obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_SOCKET, NULL);
-         NULL != obj; 
-         obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_SOCKET, obj)) {
-        if (obj->os_index == (unsigned int) socket) {
-            /* Ok, we found the right socket.  Browse its descendants
-               looking for the core with the right os_index (don't
-               assume all cores are at the same level). */
-
-            obj = dfs_find_os_index(obj, HWLOC_OBJ_CORE, core);
-            if (NULL != obj) {
-                /* Ok, we found the right core.  Get the cpuset and
-                   return the first PU (because hwloc understands
-                   hardware threads, of which there might be multiple
-                   on this core). */
-
-                hwloc_bitmap_t good;
-                good = hwloc_bitmap_alloc();
-                if (NULL == good) {
-                    return OPAL_ERR_OUT_OF_RESOURCE;
-                }
-                hwloc_bitmap_and(good, obj->online_cpuset,
-                                 obj->allowed_cpuset);
-                *processor_id = hwloc_bitmap_first(good);
-                hwloc_bitmap_free(good);
-                return OPAL_SUCCESS;
-            }
-
-            /* If we found the right socket but not the right core, we
-               didn't find it. */
-            return OPAL_ERR_NOT_FOUND;
-        }
+    /* The physical core IDs that we're returning from
+       module_map_to_socket_core() and module_get_physical_core_id()
+       correspond to hwloc's logical core ordering, which is unique
+       across all sockets.  Since we know that value is unique across
+       all sockets, we can just look up that core ID directly. */
+    core_obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_CORE, core);
+    if (NULL == core_obj) {
+        opal_output_verbose(10, opal_paffinity_base_output,
+                            "hwloc_module_map_to_processor_id: OUT: Didn't find core %d", core);
+        return OPAL_ERR_NOT_FOUND;
     }
 
-    /* If we didn't even find the right socket, we didn't find it. */
-    return OPAL_ERR_NOT_FOUND;
+    /* Ok, we found the right core.  Get the cpuset and return the
+       first PU (because hwloc understands hardware threads, of which
+       there might be multiple on this core). */
+    good = hwloc_bitmap_alloc();
+    if (NULL == good) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    hwloc_bitmap_and(good, core_obj->online_cpuset,
+                     core_obj->allowed_cpuset);
+    {
+        char str[1024];
+        hwloc_bitmap_snprintf(str, sizeof(str), good);
+        opal_output_verbose(10, opal_paffinity_base_output,
+                            "hwloc_module_map_to_processor_id: OUT: map_to_processor_id: bitmap %s", str);
+    }
+    *processor_id = hwloc_bitmap_first(good);
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_map_to_processor_id: OUT: socket=%d, core=%d, processor_id=%d", socket, core, *processor_id);
+    hwloc_bitmap_free(good);
+    return OPAL_SUCCESS;
 }
 
 /*
@@ -287,10 +289,13 @@ static int module_map_to_processor_id(int socket, int core, int *processor_id)
  */
 static int module_map_to_socket_core(int processor_id, int *socket, int *core)
 {
-    int ret = OPAL_ERR_NOT_FOUND;
-    hwloc_obj_t obj;
+    int ret;
+    hwloc_obj_t obj, prev;
     hwloc_topology_t *t;
-    hwloc_bitmap_t good;
+    hwloc_bitmap_t desired = NULL, good = NULL;
+
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_map_to_socket_core: IN: proc_id = %d", processor_id);
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
@@ -298,46 +303,86 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core)
     }
     t = &opal_hwloc_topology;
 
+    /* Create a bitmap with the desired processor ID */
+    desired = hwloc_bitmap_alloc();
+    if (NULL == desired) {
+        ret = OPAL_ERR_OUT_OF_RESOURCE;
+        goto out;
+    }
+    hwloc_bitmap_set(desired, processor_id);
+
     good = hwloc_bitmap_alloc();
     if (NULL == good) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
+        ret = OPAL_ERR_OUT_OF_RESOURCE;
+        goto out;
     }
 
-    /* Iterate through every core and find one that contains the
-       processor_id.  Then find the corresponding socket. */
-    for (obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_CORE, NULL);
-         NULL != obj; 
-         obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_CORE, obj)) {
-        hwloc_bitmap_and(good, obj->online_cpuset, 
-                         obj->allowed_cpuset);
-
-        /* Does this core contain the processor_id in question? */
-        if (hwloc_bitmap_isset(good, processor_id)) {
-            *core = obj->os_index;
-
-            /* Go upward from the core object until we find its parent
-               socket. */
-            while (HWLOC_OBJ_SOCKET != obj->type) {
-                if (NULL == obj->parent) {
-                    /* If we get to the root without finding a socket,
-                       er..  Hmm.  Error! */
-                    ret = OPAL_ERR_NOT_FOUND;
-                    goto out;
-                }
-                obj = obj->parent;
-            }
-            *socket = obj->os_index;
-            ret = OPAL_SUCCESS;
+    /* Find the PU with that bitmap */
+    prev = NULL;
+    while (1) {
+        obj = hwloc_get_next_obj_covering_cpuset_by_type(*t, desired, 
+                                                         HWLOC_OBJ_PU, prev);
+        if (NULL == obj) {
+            ret = OPAL_ERR_NOT_FOUND;
             goto out;
+        }
+        prev = obj;
+
+        /* Double check that the PU we found has that processor ID
+           online and allowed */
+        hwloc_bitmap_and(good, obj->online_cpuset, obj->allowed_cpuset);
+        if (hwloc_bitmap_isset(good, processor_id)) {
+            /* If it's good, break out of the loop to find the
+               core/socket parents */
+            break;
         }
     }
 
-    /* If we didn't even find the right core, we didn't find it.  Fall
-       through. */
-    ret = OPAL_ERR_NOT_FOUND;
+    /* If we get here, then we found a good PU.  Now find its core and
+       socket parents */
+
+    while (1) {
+        obj = obj->parent;
+        if (NULL == obj) {
+            ret = OPAL_ERR_NOT_FOUND;
+            goto out;
+        }
+
+        *core = -1;
+        switch (obj->type) {
+        case HWLOC_OBJ_CORE:
+            *core = obj->logical_index;
+            break;
+
+        case HWLOC_OBJ_SOCKET:
+            *socket = obj->logical_index;
+            if (-1 != *core) {
+                ret = OPAL_SUCCESS;
+            } else {
+                ret = OPAL_ERR_NOT_FOUND;
+            }
+            opal_output_verbose(10, opal_paffinity_base_output,
+                                "hwloc_module_map_to_socket_core: OUT: FOUND proc_id = %d, socket=%d, core=%d", processor_id, *socket, *core);
+            goto out;
+
+        default:
+            /* Silence compiler warning */
+            break;
+        }
+    }
+
+    /* Will never get here */
 
  out:
-    hwloc_bitmap_free(good);
+    if (NULL != desired) {
+        hwloc_bitmap_free(desired);
+    }
+    if (NULL != good) {
+        hwloc_bitmap_free(good);
+    }
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_map_to_socket_core: OUT: FAIL");
+
     return ret;
 }
 
@@ -349,6 +394,9 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core)
 static int module_get_processor_info(int *num_processors)
 {
     hwloc_topology_t *t;
+
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_get_processor_info: IN");
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
@@ -373,6 +421,8 @@ static int module_get_processor_info(int *num_processors)
         }
     }
 
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_get_processor_info: OUT: returning %d processors (cores)", *num_processors);
     return OPAL_SUCCESS;
 }
 
@@ -382,6 +432,9 @@ static int module_get_processor_info(int *num_processors)
 static int module_get_socket_info(int *num_sockets)
 {
     hwloc_topology_t *t;
+
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_get_socket_info: IN");
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
@@ -406,6 +459,8 @@ static int module_get_socket_info(int *num_sockets)
         }
     }
 
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_get_socket_info: OUT: returning %d sockets", *num_sockets);
     return OPAL_SUCCESS;
 }
 
@@ -417,27 +472,27 @@ static int module_get_core_info(int socket, int *num_cores)
     hwloc_obj_t obj;
     hwloc_topology_t *t;
 
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_get_core_info: IN: socket=%d", socket);
+
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
     t = &opal_hwloc_topology;
 
-    /* Traverse all sockets, looking for the right physical ID
-       number. */
-    for (obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_SOCKET, NULL);
-         NULL != obj; 
-         obj = hwloc_get_next_obj_by_type(*t, HWLOC_OBJ_SOCKET, obj)) {
-        if (obj->os_index == (unsigned int) socket) {
-            /* Ok, we found the right socket.  Browse its descendants
-               looking for all cores. */
-            *num_cores = dfs_count_type(obj, HWLOC_OBJ_CORE);
-            return OPAL_SUCCESS;
-        }
+    /* Find the socket */
+    obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_SOCKET, socket);
+    if (NULL == obj) {
+        return OPAL_ERR_NOT_FOUND;
     }
 
-    /* If we didn't even find the right socket, we didn't find it. */
-    return OPAL_ERR_NOT_FOUND;
+    /* Ok, we found the right socket.  Browse its descendants looking
+       for all cores. */
+    *num_cores = dfs_count_type(obj, HWLOC_OBJ_CORE);
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_get_core_info: OUT: socket=%d, num_cores=%d", socket, *num_cores);
+    return OPAL_SUCCESS;
 }
 
 /*
@@ -450,52 +505,9 @@ static int module_get_core_info(int socket, int *num_cores)
  */
 static int module_get_physical_processor_id(int logical_processor_id)
 {
-    int obj_type = HWLOC_OBJ_CORE;
-    hwloc_obj_t obj;
-    hwloc_bitmap_t good;
-    hwloc_topology_t *t = &opal_hwloc_topology;
-    int physical_processor_id;
-
-     /* bozo check */
-     if (NULL == opal_hwloc_topology) {
-         return OPAL_ERR_NOT_SUPPORTED;
-     }
-     t = &opal_hwloc_topology;
- 
-    /* hwloc isn't able to find cores on all platforms.  Example:
-       PPC64 running RHEL 5.4 (linux kernel 2.6.18) only reports NUMA
-       nodes and PU's.  Fine.  
-
-       However, note that hwloc_get_obj_by_type() will return NULL in
-       2 (effectively) different cases:
-
-       - no objects of the requested type were found
-       - the Nth object of the requested type was not found
-
-       So first we have to see if we can find *any* cores by looking
-       for the 0th core.  If we find it, then try to find the Nth
-       core.  Otherwise, try to find the Nth PU. */
-    if (NULL == hwloc_get_obj_by_type(*t, HWLOC_OBJ_CORE, 0)) {
-        obj_type = HWLOC_OBJ_PU;
-    }
-
-    /* Now do the actual lookup. */
-    obj = hwloc_get_obj_by_type(*t, obj_type, logical_processor_id);
-    if (NULL == obj) {
-        return OPAL_ERR_NOT_FOUND;
-    }
-
-    /* Found the right core (or PU).  Now find the processor ID of the
-       first PU available in that core. */
-    good = hwloc_bitmap_alloc();
-    if (NULL == good) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-    hwloc_bitmap_and(good, obj->online_cpuset, 
-                     obj->allowed_cpuset);
-    physical_processor_id = hwloc_bitmap_first(good);
-    hwloc_bitmap_free(good);
-    return physical_processor_id;
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_get_physical_processor_id: INOUT: logical proc %d (unity)", logical_processor_id);
+    return logical_processor_id;
 }
 
 /*
@@ -504,20 +516,9 @@ static int module_get_physical_processor_id(int logical_processor_id)
  */
 static int module_get_physical_socket_id(int logical_socket_id)
 {
-    hwloc_obj_t obj;
-    hwloc_topology_t *t;
-
-    /* bozo check */
-    if (NULL == opal_hwloc_topology) {
-        return OPAL_ERR_NOT_SUPPORTED;
-    }
-    t = &opal_hwloc_topology;
-
-    obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_SOCKET, logical_socket_id);
-    if (NULL == obj) {
-        return OPAL_ERR_NOT_FOUND;
-    }
-    return obj->os_index;
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_get_physical_processor_id: INOUT: logical socket %d (unity)", logical_socket_id);
+    return logical_socket_id;
 }
 
 /*
@@ -531,17 +532,16 @@ static int module_get_physical_core_id(int physical_socket_id,
     hwloc_obj_t obj;
     hwloc_topology_t *t;
 
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_get_physical_core_id: IN: phys socket=%d, logical core=%d",
+                        physical_socket_id, logical_core_id);
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
     t = &opal_hwloc_topology;
 
-    obj = hwloc_get_root_obj(*t);
-    if (NULL == obj) {
-        return OPAL_ERR_NOT_FOUND;
-    }
-    obj = dfs_find_os_index(obj, HWLOC_OBJ_SOCKET, physical_socket_id);
+    obj = hwloc_get_obj_by_type(*t, HWLOC_OBJ_SOCKET, physical_socket_id);
     if (NULL == obj) {
         return OPAL_ERR_NOT_FOUND;
     }
@@ -553,6 +553,9 @@ static int module_get_physical_core_id(int physical_socket_id,
     if (NULL == obj) {
         return OPAL_ERR_NOT_FOUND;
     }
-    return obj->os_index;
+    opal_output_verbose(10, opal_paffinity_base_output,
+                        "hwloc_module_get_physical_core_id: OUT: phys socket=%d, logical core=%d: return %d",
+                        physical_socket_id, logical_core_id, obj->logical_index);
+    return obj->logical_index;
 }
 

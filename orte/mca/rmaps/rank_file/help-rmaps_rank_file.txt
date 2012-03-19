@@ -110,3 +110,8 @@ request to launch on a %d process-per-node basis - only %d slots/node were
 available.
 
 Either request fewer processes/node, or obtain a larger allocation.
+#
+[not-supported]
+The rank_file mapper no longer supports mapping to physical processor ids.
+Please express the mapping in terms of logical processors by removing all
+'P' or 'p' modifiers.
