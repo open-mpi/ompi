@@ -22,6 +22,16 @@ MPI_Comm_create_keyval
 MPI_Type_create_keyval
 MPI_Win_create_keyval
 
+# TODO: Fortran/C conversion of attribute value parameter
+MPI_Attr_get
+MPI_Attr_put
+MPI_Comm_get_attr
+MPI_Comm_set_attr
+MPI_Type_get_attr
+MPI_Type_set_attr
+MPI_Win_get_attr
+MPI_Win_set_attr
+
 MPI_Comm_spawn
 MPI_Comm_spawn_multiple
 

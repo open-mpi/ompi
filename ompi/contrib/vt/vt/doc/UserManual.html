@@ -314,20 +314,20 @@ OpenMP events, and performance counters.
 <P>
 After a successful tracing run, VampirTrace writes all collected data to a  
 trace file in the Open Trace Format (OTF)<A NAME="tex2html1"
-  HREF="#foot1530"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1533"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 As a result, the information is available for post-mortem analysis and 
 visualization by various tools. 
 Most notably, VampirTrace provides the input data for the Vampir analysis  
 and visualization tool<A NAME="tex2html2"
-  HREF="#foot1531"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1534"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later versions.
 If not disabled explicitly, VampirTrace is built automatically when installing
 OpenMPI<A NAME="tex2html3"
-  HREF="#foot1532"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1535"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 
 <P>
@@ -1143,7 +1143,7 @@ in a single file, that
   The names in between may contain wildcards as ``?'', ``*', and ``#'', each entry gets a new line.
   The lists end with <TT>END[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>. For further information on selective 
   profiling have a look at the TAU documentation<A NAME="tex2html4"
-  HREF="#foot1556"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1559"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
   To announce the file through the compiler wrapper use the option <TT>-vt:tau</TT>:
 <PRE>
@@ -1160,7 +1160,7 @@ Binary Instrumentation Using Dyninst
 The option <TT>-vt:inst dyninst</TT> is used with the compiler wrapper to 
 instrument the application during runtime (binary instrumentation), by using 
 Dyninst<A NAME="tex2html5"
-  HREF="#foot1557"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1560"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 Recompiling is not necessary for this kind of instrumentation,
 but relinking:
@@ -1311,7 +1311,7 @@ Tracing Calls to 3rd-Party Libraries
   VampirTrace is also capable to trace calls to third party libraries, which come with
   at least one C header file even without the library's source code. If VampirTrace was
   built with support for library tracing (the CTool library<A NAME="tex2html6"
-  HREF="#foot1558"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1561"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>  is required), the tool <TT>vtlibwrapgen</TT> can be used to
   generate a wrapper library to intercept each call to the actual library functions.
   This wrapper library can be linked to the application or used in combination with the
@@ -1903,7 +1903,7 @@ for the enhanced timer synchronization:
 
 <UL>
 <LI>CLAPACK <A NAME="tex2html7"
-  HREF="#foot1568"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1571"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>
 </LI>
 <LI>AMD ACML
@@ -2165,18 +2165,20 @@ NVIDIA CUDA
   When tracing CUDA applications, only user events and functions are recorded,
   which are automatically or manually instrumented. CUDA API functions
   will not be traced by default.
-  To enable tracing of CUDA runtime and driver API functions and asynchronous 
-  CUDA device activities (like kernel execution and asynchronous memory copies) build 
-  VampirTrace with CUDA support and set the following environment variable: 
+  To enable tracing of CUDA runtime and driver API functions and CUDA device 
+  activities (like kernel execution and memory copies) build VampirTrace with 
+  CUDA support and set the following environment variable: 
 <P></P>
 
 <P>
 <DIV ALIGN="CENTER">
 <TT>export VT_CUDATRACE=[yes|1|2|3|4|no]</TT>
 <BR></DIV>
-<P>
+<P><P>
 <BR>
-<DIV ALIGN="CENTER">  <TABLE CELLPADDING=3 BORDER="1">
+<DIV ALIGN="CENTER"></DIV>
+<P>
+<DIV ALIGN="CENTER"><TABLE CELLPADDING=3 BORDER="1">
 <TR><TD ALIGN="RIGHT">Option</TD>
 <TD ALIGN="CENTER">CUDA API</TD>
 <TD ALIGN="CENTER">GPU Activity</TD>
@@ -2215,9 +2217,10 @@ NVIDIA CUDA
 <P>
 Since CUDA Toolkit 4.1 the <SPAN  CLASS="textbf">CUDA</SPAN> <SPAN  CLASS="textbf">P</SPAN>rofiling and <SPAN  CLASS="textbf">T</SPAN>ool <SPAN  CLASS="textbf">I</SPAN>nterface 
   (CUPTI) allows capturing of CUDA device activities. Therewith new tracing 
-  abilities (see table above) are available. VampirTrace trace has currently 
+  abilities (see option 2, 3 and 4 in the table above) are available. VampirTrace trace has currently 
   two methods to trace the CUDA runtime API and corresponding GPU activities: 
-  traditional library wrapping with CUDA events or CUPTI. Several features are 
+  traditional library wrapping with CUDA events for GPU activity measurement and 
+  tracing via the CUPTI interface. Several features are 
   just implemented in the library wrapping approach, whereas the CUPTI 
   measurement brings new possibilities and occasionally more accuracy. 
 <P><P>
@@ -2245,8 +2248,9 @@ Tracing of CUDA kernels is enabled/disabled. With '<TT>2</TT>' additional
 </DD>
 <DT></DT>
 <DD><TT>VT_CUDATRACE_IDLE=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT> 
+	  <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
 <BR>
-Show the GPU compute idle time on first used CUDA stream, if set to <TT>yes</TT>.
+Show the GPU compute idle time on CUDA stream zero (default stream), if set to <TT>yes</TT>.
 
 <P>
 </DD>
@@ -2274,7 +2278,7 @@ Controls how VampirTrace handles synchronizing CUDA API calls, especially
       significantly and will not be shown in the trace.
       At level 2 the additional synchronization will be exposed to the user. 
       This allows a better view on the application execution, showing how much 
-      time is actually spent waiting for a kernel to complete during synchronization.
+      time is actually spent waiting for the GPU to complete. 
       Level 3 will further use the synchronization to flush the internal task 
       buffer and perform a timer synchronization between GPU and host. This 
       introduces a minimal overhead but increases timer precision and prevents 
@@ -2314,8 +2318,8 @@ Record GPU memory usage as counter ``gpu_mem_usage``, if set to <TT>yes</TT>.
 	    <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
 <BR>
 Print out an error message and exit the program, if a function call to a 
-      GPU library does not return successfully. The default is just a warning message 
-      without program exit.
+      GPU library does not return successfully. The default is just a warning 
+      message.
 
 <P>
 </DD>
@@ -2324,7 +2328,7 @@ Print out an error message and exit the program, if a function call to a
 	    <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
 <BR>
 Do not cleanup all GPU resources (profiling events, contexts, event groups), 
-      as they might have been already implicitly cleaned up by the GPU runtime.
+      as they might have already been implicitly cleaned up by the GPU runtime.
 
 <P>
 </DD>
@@ -2375,7 +2379,7 @@ Several new region groups have been introduced:
 <TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA synchronization</TD>
 </TR>
 <TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDA_KERNEL</SPAN></TH>
-<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA kernels/functions can only appear on 
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA kernels (device functions) can only appear on 
 			      ``CUDA-Threads''</TD>
 </TR>
 <TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDA_IDLE</SPAN></TH>
@@ -2419,9 +2423,9 @@ CUDA Runtime API Wrapper Particularities</A>
 </H3>
   To ensure measurement of correct data rates for synchronous CUDA 
   memory copies, the VampirTrace CUDA runtime library wrapper inserts a CUDA 
-  synchronization before. 
-  Otherwise the CUDA memory copy call would do the synchronization and it was 
-  not possible to get correct transfer rates.
+  synchronization before the memory copy call. 
+  Otherwise the implicit synchronization of the CUDA memory copy call could not 
+  be exposed and it was not possible to get correct transfer rates.
 <P></P>
 
 <P>
@@ -2441,7 +2445,7 @@ Counter via CUDA API</A>
   <SPAN  CLASS="textit">cudaMalloc</SPAN> and <SPAN  CLASS="textit">cudaFree</SPAN> functions will be tracked to write 
   the GPU memory usage counter <TT>gpu_mem_usage</TT>. 
   This counter does not need space in the CUDA buffer. The counter values 
-  will be directly written to the default CUDA stream '1'. This stream will be 
+  will be written directly to the default CUDA stream '1'. This stream will be 
   created, if it does not exist and does not have to contain any other CUDA 
   device activities. If the environment variable is set to <TT>2</TT>, missing 
   <SPAN  CLASS="textit">cudaFree()</SPAN> calls will be printed to stderr.
@@ -2547,8 +2551,7 @@ Tracing the NVIDIA CUDA SDK 3.x and 4.x</A>
   Use the compiler switches for MPI, multi-threaded 
   and hybrid programs, if necessary (e.g. the CUDA SDK example 
   <TT>simpleMultiGPU</TT> is a multi-threaded program, which needs to be linked 
-  with a multi-threaded VampirTrace library - uncomment the compiler switch 
-  in the linker command to use the multi-threaded VampirTrace library). 
+  with a multi-threaded VampirTrace library). 
   
 <P><P>
 <BR>
@@ -2567,21 +2570,22 @@ Multi-threaded CUDA applications</A>
 
 <BR>
 <P>
-<SPAN  CLASS="textbf">Note:</SPAN>
+<SPAN  CLASS="textbf">Notes:</SPAN>
 <BR>
 For 32-bit systems VampirTrace has to be configured with the 32-bit 
-  version of CUDA runtime library. If the link test fails, use the 
+  version of the CUDA runtime library. If the link test fails, use the 
   following configure option :
   <PRE>
   --with-cuda-lib-dir=$CUDA_INSTALL_PATH/lib
 </PRE>
 
 <P>
-Since CUDA toolkit version 4.1 the 64-bit CUPTI library is located in the 
-  lib64 directory of CUPTI. If the link test fails, use the 
+To build CUPTI support on 32-bit systems (or for CUPTI 1.0), 
+  VampirTrace has to be configured with the 32-bit version of the CUPTI library. 
+  If the link test fails, use the 
   following configure option :
   <PRE>
-  --with-cupti-lib-dir=$CUDA_INSTALL_PATH/extras/CUPTI/lib64
+  --with-cupti-lib-dir=$CUPTI_INSTALL_PATH/lib
 </PRE>
 
 <P>
@@ -3441,7 +3445,7 @@ default: automatically by configure.
 enable support for Dyninst instrumentation,
                               default: enable if found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires Dyninst<A NAME="tex2html8"
-  HREF="#foot1596"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1599"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> version 6.1 or higher!
 
 <P>
@@ -3463,9 +3467,9 @@ enable support for automatic source code
                               instrumentation by using TAU, default: enable if
                               found by configure.
                               <SPAN  CLASS="textbf">Note:</SPAN> Requires PDToolkit<A NAME="tex2html9"
-  HREF="#foot1597"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1600"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> or TAU<A NAME="tex2html10"
-  HREF="#foot1598"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1601"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>!
 
 <P>
@@ -4034,7 +4038,7 @@ give the path for JVMTI-include files, default:
 
 <P>
 To enable support for generating wrapper for 3th-Party libraries the C code parser CTool<A NAME="tex2html11"
-  HREF="#foot1599"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  HREF="#foot1602"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> is needed:
 
 <P>
@@ -4129,7 +4133,7 @@ give the path for CUPTI-include files, default:
 <DD>&nbsp;
 <BR>
 give the path for CUPTI-libraries, default:                                              
-                          CUPTIDIR/lib                                                                             
+                          CUPTIDIR/lib64                                                                             
 </DD>
 <DT><STRONG><TT>-with-cupti-lib=CUPTILIB</TT></STRONG></DT>
 <DD>&nbsp;
@@ -5244,69 +5248,69 @@ If you provide us with your additions afterwards we will consider merging them
 into the official VampirTrace package.
 <BR><HR><H4>Footnotes</H4>
 <DL>
-<DT><A NAME="foot1530">... (OTF)</A><A
+<DT><A NAME="foot1533">... (OTF)</A><A
  HREF="#tex2html1"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.tu-dresden.de/zih/otf
 
 </DD>
-<DT><A NAME="foot1531">... tool </A><A
+<DT><A NAME="foot1534">... tool </A><A
  HREF="#tex2html2"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.vampir.eu
 
 </DD>
-<DT><A NAME="foot1532">...
+<DT><A NAME="foot1535">...
 Open MPI </A><A
  HREF="#tex2html3"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.open-mpi.org/faq/?category=vampirtrace
 
 </DD>
-<DT><A NAME="foot1556">... documentation </A><A
+<DT><A NAME="foot1559">... documentation </A><A
  HREF="#tex2html4"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/Research/tau/docs/newguide/bk05ch02.html#d0e3770
 
 </DD>
-<DT><A NAME="foot1557">...
+<DT><A NAME="foot1560">...
 Dyninst </A><A
  HREF="#tex2html5"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1558">... library </A><A
+<DT><A NAME="foot1561">... library </A><A
  HREF="#tex2html6"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool
 
 </DD>
-<DT><A NAME="foot1568">... CLAPACK</A><A
+<DT><A NAME="foot1571">... CLAPACK</A><A
  HREF="#tex2html7"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>www.netlib.org/clapack
 
 </DD>
-<DT><A NAME="foot1596">... Dyninst </A><A
+<DT><A NAME="foot1599">... Dyninst </A><A
  HREF="#tex2html8"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1597">... PDToolkit </A><A
+<DT><A NAME="foot1600">... PDToolkit </A><A
  HREF="#tex2html9"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.cs.uoregon.edu/research/pdt/home.php
 
 </DD>
-<DT><A NAME="foot1598">... TAU </A><A
+<DT><A NAME="foot1601">... TAU </A><A
  HREF="#tex2html10"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://tau.uoregon.edu
 
 </DD>
-<DT><A NAME="foot1599">... CTool </A><A
+<DT><A NAME="foot1602">... CTool </A><A
  HREF="#tex2html11"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://sourceforge.net/projects/ctool

@@ -61,7 +61,7 @@ VTThrdMutex* VTThrdMutexCudart = NULL;
  * @param _bytes the number of bytes to be transfered
  * @param _call the function call of the CUDA Runtime API function
  */
-#define CUDA_SEND_RECV(_ptid, _kind, _bytes, _call){                                  \
+#define CUDA_SEND_RECV(_ptid, _kind, _bytes, _call){                           \
   uint64_t time = 0;                                                           \
   uint8_t do_traceE = 0; /* is call limit reached */                           \
   VTCUDADevice* vtDev = NULL;                                                  \
@@ -344,8 +344,10 @@ static uint8_t trace_gpumem = 0;
 /* flag: trace NVIDIA CUPTI events/counters */
 static uint8_t trace_cupti_events = 0;
 
+#if defined(VT_CUPTI_EVENTS)
 /* flag: sampling for CUPTI counter values enabled? */
 static uint8_t cupti_event_sampling = 0;
+#endif
 
 /* flag: event based tracing (kernels, memcpyAsync) enabled? */
 static uint8_t trace_events = 1;

@@ -97,7 +97,8 @@ cat <<End-of-File >$tmp.awk
 
   aint_convert=1
 
-  if (index(mpicall,"MPI_Type_create_hindexed") != 0 ||
+  if (index(mpicall,"MPI_Get_address") != 0 ||
+      index(mpicall,"MPI_Type_create_hindexed") != 0 ||
       index(mpicall,"MPI_Type_create_hvector") != 0 ||
       index(mpicall,"MPI_Type_create_struct") != 0)
   {
