@@ -84,10 +84,15 @@ An invalid local rank was obtained - this is probably something
 that should be reported to the OMPI developers.
 #
 [odls-default:invalid-phys-cpu]
-An invalid physical processor id was returned when attempting to
-set processor affinity - please check to ensure that your system
-supports such functionality. If so, then this is probably something
-that should be reported to the OMPI developers.
+An invalid physical processor ID was returned when attempting to bind
+an MPI process to a unique processor.
+
+This usually means that you requested binding to more processors than
+exist (e.g., trying to bind N MPI processes to M processors, where N >
+M).  Double check that you have enough unique processors for all the
+MPI processes that you are launching on this host.
+
+You job will now abort.
 #
 [odls-default:failed-set-paff]
 An attempt to set processor affinity has failed - please check to

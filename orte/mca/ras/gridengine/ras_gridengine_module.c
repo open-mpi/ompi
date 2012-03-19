@@ -64,6 +64,8 @@ static int orte_ras_gridengine_allocate(opal_list_t *nodelist)
     int rc;
     FILE *fp;
     orte_node_t *node;
+    opal_list_item_t *item;
+    bool found;
 
     /* show the Grid Engine's JOB_ID */
     if (mca_ras_gridengine_component.show_jobid ||
@@ -92,22 +94,36 @@ static int orte_ras_gridengine_allocate(opal_list_t *nodelist)
         queue = strtok_r(NULL, " \n", &tok);
         arch = strtok_r(NULL, " \n", &tok);
 
-        /* create a new node entry */
-        node = OBJ_NEW(orte_node_t);
-        if (NULL == node) {
-            fclose(fp);
-            return ORTE_ERR_OUT_OF_RESOURCE;
+        /* see if we already have this node */
+        found = false;
+        for (item = opal_list_get_first(nodelist);
+             item != opal_list_get_end(nodelist);
+             item = opal_list_get_next(item)) {
+            node = (orte_node_t*)item;
+            if (0 == strcmp(ptr, node->name)) {
+                /* just add the slots */
+                node->slots += (int)strtol(num, (char **)NULL, 10);
+                found = true;
+                break;
+            }
         }
-        node->name = strdup(ptr);
-        node->state = ORTE_NODE_STATE_UP;
-        node->slots_inuse = 0;
-        node->slots_max = 0;
-        node->slots = (int)strtol(num, (char **)NULL, 10);
-        opal_output(mca_ras_gridengine_component.verbose,
-            "ras:gridengine: %s: PE_HOSTFILE shows slots=%d",
-            node->name, node->slots);
-        opal_list_append(nodelist, &node->super);
-
+        if (!found) {
+            /* create a new node entry */
+            node = OBJ_NEW(orte_node_t);
+            if (NULL == node) {
+                fclose(fp);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            node->name = strdup(ptr);
+            node->state = ORTE_NODE_STATE_UP;
+            node->slots_inuse = 0;
+            node->slots_max = 0;
+            node->slots = (int)strtol(num, (char **)NULL, 10);
+            opal_output(mca_ras_gridengine_component.verbose,
+                        "ras:gridengine: %s: PE_HOSTFILE shows slots=%d",
+                        node->name, node->slots);
+            opal_list_append(nodelist, &node->super);
+        }
     } /* finished reading the $PE_HOSTFILE */
 
 cleanup:

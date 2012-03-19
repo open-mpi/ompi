@@ -256,7 +256,7 @@ int ompi_coll_tuned_alltoall_intra_linear_sync(void *sbuf, int scount,
 					       mca_coll_base_module_t *module,
                                                int max_outstanding_reqs)
 {
-    int line, error;
+    int line = -1, error;
     int ri, si;
     int rank;
     int size;

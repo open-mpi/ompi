@@ -584,7 +584,7 @@ int mca_btl_tcp_proc_insert( mca_btl_tcp_proc_t* btl_proc,
        }
     } else {
 	enum mca_btl_tcp_connection_quality max;
-	int i_max, j_max;
+	int i_max = 0, j_max = 0;
 	/* Find the best connection that is not in use.  Save away
 	 * the indices of the best location. */
 	max = CQ_NO_CONNECTION;
