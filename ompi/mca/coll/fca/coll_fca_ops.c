@@ -189,7 +189,7 @@ int mca_coll_fca_bcast(void *buff, int count, struct ompi_datatype_t *datatype,
     /* Setup exchange buffer */
     spec.root = root;
     if (mca_coll_fca_array_size(datatype, count, &gap, &size)) {
-        spec.buf = buff + gap;
+        spec.buf = (char*)buff + gap;
     } else {
         mca_coll_fca_convertor_create(&conv, datatype, count, buff,
                                       (root == fca_module->rank)
@@ -336,7 +336,7 @@ static size_t __setup_gather_sendbuf(void *sbuf, void *inplace_sbuf, int scount,
     size_t gap, ssize;
 
     if (mca_coll_fca_array_size(sdtype, scount, &gap, &ssize)) {
-        *real_sendbuf = ((MPI_IN_PLACE == sbuf) ? inplace_sbuf : sbuf) + gap;
+        *real_sendbuf = (char*)((MPI_IN_PLACE == sbuf) ? inplace_sbuf : sbuf) + gap;
     } else {
         FCA_VERBOSE(5, "Packing send buffer");
         if (MPI_IN_PLACE == sbuf) {
