@@ -128,7 +128,8 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
 {
     struct fca_init_spec *spec;
     int ret;
-    unsigned long fca_ver;
+    unsigned long fca_ver, major, minor, detected_ver;
+    char x[3];
 
     if (mca_coll_fca_component.fca_lib_handle)
         return OMPI_SUCCESS;
@@ -145,12 +146,19 @@ int mca_coll_fca_get_fca_lib(struct ompi_communicator_t *comm)
     GET_FCA_SYM(get_version);
     GET_FCA_SYM(get_version_string);
 
+
     fca_ver = FCA_API_CLEAR_MICRO(mca_coll_fca_component.fca_ops.get_version());
-    if (fca_ver != FCA_API_VER(FCA_API_ABI_MAJOR,FCA_API_ABI_MINOR)) {
-        FCA_ERROR("Unsupported FCA version: %s, please update FCA to v%d.%d",
+    major = (fca_ver>>FCA_MAJOR_BIT);
+    minor = (fca_ver>>FCA_MINOR_BIT) & 0xf;
+    sprintf(x, "%ld%ld", major, minor);
+    detected_ver = atol(x);
+
+    FCA_VERBOSE(1, "FCA ABI version: %ld supported: %d", detected_ver, OMPI_FCA_VERSION);
+
+    if (detected_ver != OMPI_FCA_VERSION) {
+        FCA_ERROR("Unsupported FCA version: %s, please update FCA to v%d, now v%ld",
                   mca_coll_fca_component.fca_ops.get_version_string(),
-                  FCA_API_ABI_MAJOR,
-                  FCA_API_ABI_MINOR);
+                  OMPI_FCA_VERSION, fca_ver);
         return OMPI_ERROR;
     }
 
@@ -296,7 +304,7 @@ static int fca_register(void)
     mca_base_param_reg_int(c, "enable_allgatherv",
                            "[1|0|] Enable/Disable FCA Allgatherv support",
                            false, false,
-                           OMPI_FCA_ALLGATHER,
+                           OMPI_FCA_ALLGATHERV,
                            &mca_coll_fca_component.fca_enable_allgatherv);
 
     mca_base_param_reg_int(c, "enable_gather",
