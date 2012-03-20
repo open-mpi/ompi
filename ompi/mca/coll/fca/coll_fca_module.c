@@ -122,8 +122,8 @@ static int __fca_comm_new(mca_coll_fca_module_t *fca_module)
 
     /* Allocate buffer for gathering rank information on rank0 */
     if (fca_module->rank == 0) {
-        FCA_MODULE_VERBOSE(fca_module, 1, "Total rank_info size: %d", all_info_size);
         all_info_size = 0;
+        FCA_MODULE_VERBOSE(fca_module, 1, "Total rank_info size: %d", all_info_size);
         disps = calloc(ompi_comm_size(comm), sizeof *disps);
         for (i = 0; i < ompi_comm_size(comm); ++i) {
             disps[i] = all_info_size;
