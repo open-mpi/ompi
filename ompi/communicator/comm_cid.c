@@ -442,7 +442,7 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm,
     ret = (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
                        local_leader, remote_leader, send_first );
     if( OMPI_SUCCESS != ret ) {
-        return ret;
+        goto bail_on_error;
     }
 
 
