@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +35,16 @@ int ompi_request_default_wait(
     ompi_status_public_t * status)
 {
     ompi_request_t *req = *req_ptr;
+
+    /*
+     * Reset the error code of a previously pending request.
+     */
+    if( MPI_ERR_PENDING == req->req_status.MPI_ERROR ) {
+        req->req_status.MPI_ERROR = MPI_SUCCESS;
+        if( MPI_STATUS_IGNORE != status ) {
+            status->MPI_ERROR = MPI_SUCCESS;
+        }
+    }
 
     ompi_request_wait_completion(req);
 
@@ -145,6 +156,12 @@ int ompi_request_default_wait_any(
                 continue;
             }
             if (request->req_complete == true) {
+                /*
+                 * Reset the error code of a previously pending request.
+                 */
+                if( MPI_ERR_PENDING == request->req_status.MPI_ERROR ) {
+                    request->req_status.MPI_ERROR = MPI_SUCCESS;
+                }
                 completed = i;
                 break;
             }
@@ -214,7 +231,7 @@ int ompi_request_default_wait_all( size_t count,
                                    ompi_request_t ** requests,
                                    ompi_status_public_t * statuses )
 {
-    size_t completed = 0, i;
+    size_t completed = 0, i, failed = 0;
     ompi_request_t **rptr;
     ompi_request_t *request;
     int mpi_error = OMPI_SUCCESS;
@@ -222,9 +239,23 @@ int ompi_request_default_wait_all( size_t count,
     rptr = requests;
     for (i = 0; i < count; i++) {
         request = *rptr++;
+
         if (request->req_complete == true) {
+            /*
+             * Reset the error code of a previously pending request.
+             */
+            if( MPI_ERR_PENDING == request->req_status.MPI_ERROR ) {
+                request->req_status.MPI_ERROR = MPI_SUCCESS;
+            }
+            else if( MPI_SUCCESS != request->req_status.MPI_ERROR ) {
+                failed++;
+            }
             completed++;
         }
+    }
+
+    if( failed > 0 ) {
+        goto finish;
     }
 
     /* if all requests have not completed -- defer acquiring lock
@@ -248,27 +279,50 @@ int ompi_request_default_wait_all( size_t count,
         for( completed = i = 0; i < count; i++ ) {
             request = *rptr++;
             if (request->req_complete == true) {
+                if( MPI_SUCCESS != request->req_status.MPI_ERROR ) {
+                    failed++;
+                }
                 completed++;
             }
+        }
+        if( failed > 0 ) {
+            ompi_request_waiting--;
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+            goto finish;
         }
 #endif  /* OPAL_ENABLE_MULTI_THREADS */
         while( completed != count ) {
             /* check number of pending requests */
             size_t start = ompi_request_completed;
             size_t pending = count - completed;
+            size_t start_failed = ompi_request_failed;
             /*
              * wait until at least pending requests complete
              */
             while (pending > ompi_request_completed - start) {
                 opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
+                /*
+                 * Check for failed requests. If one request fails, then
+                 * this operation completes in error marking the remaining
+                 * requests as PENDING.
+                 */
+                if( 0 < (ompi_request_failed - start_failed) ) {
+                    failed += (ompi_request_failed - start_failed);
+                    ompi_request_waiting--;
+                    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+                    goto finish;
+                }
             }
             /*
              * confirm that all pending operations have completed.
              */
             rptr = requests;
-            for( completed = i = 0; i < count; i++ ) {
+            for( failed = completed = i = 0; i < count; i++ ) {
                 request = *rptr++;
                 if (request->req_complete == true) {
+                    if( MPI_SUCCESS != request->req_status.MPI_ERROR ) {
+                        failed++;
+                    }
                     completed++;
                 }
             }
@@ -289,12 +343,27 @@ int ompi_request_default_wait_all( size_t count,
     }
 #endif
 
+ finish:
     rptr = requests;
     if (MPI_STATUSES_IGNORE != statuses) {
         /* fill out status and free request if required */
         for( i = 0; i < count; i++, rptr++ ) {
             request = *rptr;
-            assert( true == request->req_complete );
+
+            /*
+             * Per MPI 2.2 p 60:
+             * Allows requests to be marked as MPI_ERR_PENDING if they are
+             * "neither failed nor completed." Which can only happen if
+             * there was an error in one of the other requests.
+             */
+            if( 0 < failed ) {
+                if( !request->req_complete ) {
+                    request->req_status.MPI_ERROR = MPI_ERR_PENDING;
+                }
+            } else {
+                assert( true == request->req_complete );
+            }
+
             if (OMPI_REQUEST_GEN == request->req_type) {
                 ompi_grequest_invoke_query(request, &request->req_status);
             }
@@ -310,7 +379,7 @@ int ompi_request_default_wait_all( size_t count,
                        assume that the request is still there.
                        Otherwise, Bad Things will happen later! */
                     int tmp = ompi_request_free(rptr);
-                    if (OMPI_SUCCESS != tmp) {
+                    if (OMPI_SUCCESS == mpi_error && OMPI_SUCCESS != tmp) {
                         mpi_error = tmp;
                     }
                 }
@@ -325,7 +394,21 @@ int ompi_request_default_wait_all( size_t count,
             int rc;
             request = *rptr;
 
-            assert( true == request->req_complete );
+            /*
+             * Per MPI 2.2 p 60:
+             * Some requests are allowed to be pending if there was an error.
+             * However, without a status argument, it is difficult to tell
+             * the user. For completeness mark the status appropriately,
+             * even though it is not exposed to the user.
+             */
+            if( 0 < failed ) {
+                if( !request->req_complete ) {
+                    request->req_status.MPI_ERROR = MPI_ERR_PENDING;
+                }
+            } else {
+                assert( true == request->req_complete );
+            }
+
             /* Per note above, we have to call gen request query_fn
                even if STATUSES_IGNORE was provided */
             if (OMPI_REQUEST_GEN == request->req_type) {
@@ -341,12 +424,19 @@ int ompi_request_default_wait_all( size_t count,
             } else if (MPI_SUCCESS == rc) {
                 /* Only free the request if there is no error on it */
                 int tmp = ompi_request_free(rptr);
-                if (OMPI_SUCCESS != tmp) {
+                if (OMPI_SUCCESS == mpi_error && OMPI_SUCCESS != tmp) {
                     mpi_error = tmp;
                 }
             }
-            if( rc != OMPI_SUCCESS) {
-                mpi_error = rc;
+            /*
+             * Per MPI 2.2 p34:
+             * "It is possible for an MPI function to return MPI_ERR_IN_STATUS
+             *  even when MPI_STATUS_IGNORE or MPI_STATUSES_IGNORE has been
+             *  passed to that function."
+             * So we should do so here as well.
+             */
+            if( OMPI_SUCCESS == mpi_error && rc != OMPI_SUCCESS) {
+                mpi_error = MPI_ERR_IN_STATUS;
             }
         }
     }
@@ -392,6 +482,13 @@ int ompi_request_default_wait_some(
                 continue;
             }
             if (true == request->req_complete) {
+                /*
+                 * Reset the error code of a previously pending request.
+                 */
+                if( MPI_ERR_PENDING == request->req_status.MPI_ERROR ) {
+                    request->req_status.MPI_ERROR = MPI_SUCCESS;
+                }
+
                 indices[i] = 1;
                 num_requests_done++;
             }
@@ -427,6 +524,13 @@ int ompi_request_default_wait_some(
                 continue;
             }
             if (request->req_complete == true) {
+                /*
+                 * Reset the error code of a previously pending request.
+                 */
+                if( MPI_ERR_PENDING == request->req_status.MPI_ERROR ) {
+                    request->req_status.MPI_ERROR = MPI_SUCCESS;
+                }
+
                 indices[i] = 1;
                 num_requests_done++;
             }

@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,6 +31,7 @@
 opal_pointer_array_t             ompi_request_f_to_c_table;
 size_t                           ompi_request_waiting = 0;
 size_t                           ompi_request_completed = 0;
+size_t                           ompi_request_failed = 0;
 opal_mutex_t                     ompi_request_lock;
 opal_condition_t                 ompi_request_cond;
 ompi_predefined_request_t        ompi_request_null;
