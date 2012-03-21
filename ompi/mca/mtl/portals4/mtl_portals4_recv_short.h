@@ -22,25 +22,21 @@
 
 struct ompi_mtl_portals4_recv_short_block_t {
     opal_list_item_t base;
-    mca_mtl_portals4_module_t *mtl;
     void *start;
     ptl_handle_me_t me_h;
     struct ompi_mtl_portals4_recv_short_request_t request;
+    bool release_on_free;
 };
 typedef struct ompi_mtl_portals4_recv_short_block_t ompi_mtl_portals4_recv_short_block_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_portals4_recv_short_block_t);
 
-extern int
-ompi_mtl_portals4_recv_short_init(mca_mtl_portals4_module_t *mtl);
+/* initialize and post short receive blocks */
+extern int ompi_mtl_portals4_recv_short_init(void);
 
-extern int
-ompi_mtl_portals4_recv_short_fini(mca_mtl_portals4_module_t *mtl);
+/* clean up all short receive blocks */
+extern int ompi_mtl_portals4_recv_short_fini(void);
 
-extern int
-ompi_mtl_portals4_recv_short_block_repost(ptl_event_t *ev);
-
-extern int
-ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
-                                ompi_mtl_portals4_base_request_t* ptl_request);
+/* ensure that there's at least N short receive blocks linked */
+extern int ompi_mtl_portals4_recv_short_link(int count);
 
 #endif /* OMPI_MTL_PORTALS_RECV_SHORT_H */

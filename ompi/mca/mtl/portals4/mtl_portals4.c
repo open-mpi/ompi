@@ -134,18 +134,20 @@ ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
     opal_progress_unregister(ompi_mtl_portals4_progress);
     while (0 != ompi_mtl_portals4_progress()) { }
 
-    ompi_mtl_portals4_recv_short_fini(&ompi_mtl_portals4);
+    ompi_mtl_portals4_recv_short_fini();
 
     PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
     PtlMDRelease(ompi_mtl_portals4.zero_md_h);
     PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
     PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.send_idx);
-    PtlEQFree(ompi_mtl_portals4.eq_h);
+    PtlEQFree(ompi_mtl_portals4.send_eq_h);
+    PtlEQFree(ompi_mtl_portals4.recv_eq_h);
     PtlNIFini(ompi_mtl_portals4.ni_h);
     PtlFini();
 
     return OMPI_SUCCESS;
 }
+
 
 int
 ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,
@@ -153,66 +155,4 @@ ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,
                          int flag)
 {
     return OMPI_SUCCESS;
-}
-
-
-int
-ompi_mtl_portals4_progress(void)
-{
-    int count = 0, ret;
-    ptl_event_t ev;
-    ompi_mtl_portals4_base_request_t *ptl_request;
-
-    while (true) {
-	ret = PtlEQGet(ompi_mtl_portals4.eq_h, &ev);
-        if (PTL_OK == ret) {
-            OPAL_OUTPUT_VERBOSE((60, ompi_mtl_base_output,
-                                 "Found event of type %d\n", ev.type));
-            switch (ev.type) {
-            case PTL_EVENT_GET:
-            case PTL_EVENT_PUT:
-            case PTL_EVENT_PUT_OVERFLOW:
-            case PTL_EVENT_ATOMIC:
-            case PTL_EVENT_ATOMIC_OVERFLOW:
-            case PTL_EVENT_REPLY:
-            case PTL_EVENT_SEND:
-            case PTL_EVENT_ACK:
-            case PTL_EVENT_AUTO_FREE:
-            case PTL_EVENT_SEARCH:
-                if (NULL != ev.user_ptr) {
-                    ptl_request = ev.user_ptr;
-                    ret = ptl_request->event_callback(&ev, ptl_request);
-                    if (OMPI_SUCCESS != ret) {
-                        opal_output(ompi_mtl_base_output,
-                                    "Error returned from target event callback: %d", ret);
-                        abort();
-                    }
-                }
-                break;
-            case PTL_EVENT_PT_DISABLED:
-                /* BWB: FIX ME: do stuff - flow control */
-                opal_output(ompi_mtl_base_output, "Unhandled send flow control event.");
-                abort();
-                break;
-            case PTL_EVENT_AUTO_UNLINK:
-                opal_output_verbose(1, ompi_mtl_base_output,
-                                    "Unexpected auto unlink event");
-                break;
-            case PTL_EVENT_LINK:
-            case PTL_EVENT_GET_OVERFLOW:
-            case PTL_EVENT_FETCH_ATOMIC:
-            case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:
-                opal_output_verbose(1, ompi_mtl_base_output,
-                                    "Unexpected event of type %d", ev.type);
-            }
-        } else if (PTL_EQ_EMPTY == ret) {
-            break;
-        } else {
-            opal_output(ompi_mtl_base_output,
-                        "Error returned from PtlEQGet: %d", ret);
-            abort();
-        }
-    }
-
-    return count;
 }

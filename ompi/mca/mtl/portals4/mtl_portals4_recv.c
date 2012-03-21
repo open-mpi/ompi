@@ -33,7 +33,7 @@
 #include "mtl_portals4_recv_short.h"
 
 /* called when a receive should be progressed */
-int
+static int
 ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                 ompi_mtl_portals4_base_request_t* ptl_base_request)
 {
@@ -76,7 +76,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             md.length = ((msg_length > ptl_request->delivery_len) ?
                          ptl_request->delivery_len : msg_length) - ompi_mtl_portals4.eager_limit;
             md.options = 0;
-            md.eq_handle = ompi_mtl_portals4.eq_h;
+            md.eq_handle = ompi_mtl_portals4.recv_eq_h;
             md.ct_handle = PTL_CT_NONE;
 
             ret = PtlMDBind(ompi_mtl_portals4.ni_h,
@@ -253,7 +253,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             md.length = ((msg_length > ptl_request->delivery_len) ?
                          ptl_request->delivery_len : msg_length) - ev->mlength;
             md.options = 0;
-            md.eq_handle = ompi_mtl_portals4.eq_h;
+            md.eq_handle = ompi_mtl_portals4.recv_eq_h;
             md.ct_handle = PTL_CT_NONE;
 
             ret = PtlMDBind(ompi_mtl_portals4.ni_h,
