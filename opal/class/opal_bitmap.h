@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -227,6 +227,24 @@ OPAL_DECLSPEC bool opal_bitmap_are_different(opal_bitmap_t *left, opal_bitmap_t 
  * @return Pointer to the string (caller must free if not NULL)
  */
 OPAL_DECLSPEC char * opal_bitmap_get_string(opal_bitmap_t *bitmap);
+
+/**
+ * Return the number of 'unset' bits, upto the specified length
+ *
+ * @param bitmap Pointer to the bitmap
+ * @param len Number of bits to check
+ * @return Integer
+ */
+OPAL_DECLSPEC int opal_bitmap_num_unset_bits(opal_bitmap_t *bm, int len);
+
+/**
+ * Return the number of 'set' bits, upto the specified length
+ *
+ * @param bitmap Pointer to the bitmap
+ * @param len Number of bits to check
+ * @return Integer
+ */
+OPAL_DECLSPEC int opal_bitmap_num_set_bits(opal_bitmap_t *bm, int len);
 
 END_C_DECLS
 

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -411,4 +411,32 @@ char * opal_bitmap_get_string(opal_bitmap_t *bitmap)
     }
 
     return bitmap_str;
+}
+
+int opal_bitmap_num_unset_bits(opal_bitmap_t *bm, int len)
+{
+    return (len - opal_bitmap_num_set_bits(bm, len));
+}
+
+int opal_bitmap_num_set_bits(opal_bitmap_t *bm, int len)
+{
+    int i, cnt = 0;
+    int index, offset;
+
+#if OPAL_ENABLE_DEBUG
+    if ((len < 0) || NULL == bm || (len >= (bm->array_size * SIZE_OF_CHAR))) {
+        return 0;
+    }
+#endif
+
+    for(i = 0; i < len; ++i) {
+        index = i / SIZE_OF_CHAR; 
+        offset = i % SIZE_OF_CHAR;
+
+        if(0 != (bm->bitmap[index] & (1 << offset))) {
+            ++cnt;
+        }
+    }
+
+    return cnt;
 }
