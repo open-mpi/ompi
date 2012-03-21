@@ -108,7 +108,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
     md.start = start;
     md.length = length;
     md.options = 0;
-    md.eq_handle = ompi_mtl_portals4.eq_h;
+    md.eq_handle = ompi_mtl_portals4.send_eq_h;
     md.ct_handle = PTL_CT_NONE;
     
     ret = PtlMDBind(ompi_mtl_portals4.ni_h,
@@ -169,7 +169,7 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int tag,
     md.start = start;
     md.length = length;
     md.options = 0;
-    md.eq_handle = ompi_mtl_portals4.eq_h;
+    md.eq_handle = ompi_mtl_portals4.send_eq_h;
     md.ct_handle = PTL_CT_NONE;
 
     ret = PtlMDBind(ompi_mtl_portals4.ni_h,
@@ -259,7 +259,7 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
     md.start = start;
     md.length = length;
     md.options = 0;
-    md.eq_handle = ompi_mtl_portals4.eq_h;
+    md.eq_handle = ompi_mtl_portals4.send_eq_h;
     md.ct_handle = PTL_CT_NONE;
 
     ret = PtlMDBind(ompi_mtl_portals4.ni_h,

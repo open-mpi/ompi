@@ -33,6 +33,8 @@
 
 BEGIN_C_DECLS
 
+struct mca_mtl_portals4_send_request_t;
+
 struct mca_mtl_portals4_module_t {
     mca_mtl_base_module_t base;
 
@@ -47,15 +49,15 @@ struct mca_mtl_portals4_module_t {
 
     /* global handles */
     ptl_handle_ni_t ni_h;
-    ptl_handle_eq_t eq_h;
+    ptl_handle_eq_t eqs_h[2];
 
     /* for zero-length sends and acks */
     ptl_handle_md_t zero_md_h;
     /* long message receive overflow */
     ptl_handle_me_t long_overflow_me_h;
-    ompi_mtl_portals4_request_t long_overflow_request;
 
-    opal_list_t recv_short_blocks;
+    opal_list_t active_recv_short_blocks;
+    opal_list_t waiting_recv_short_blocks;
 
     /* number of operations started */
     uint32_t opcount;
@@ -67,10 +69,14 @@ struct mca_mtl_portals4_module_t {
 };
 typedef struct mca_mtl_portals4_module_t mca_mtl_portals4_module_t;
 
+#define send_eq_h eqs_h[0]
+#define recv_eq_h eqs_h[1]
+
 extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 
-#define REQ_SEND_TABLE_ID 2
-#define REQ_READ_TABLE_ID 3
+#define REQ_SEND_TABLE_ID    2
+#define REQ_READ_TABLE_ID    3
+#define REQ_FLOWCTL_TABLE_ID 4
 
 
 /* match/ignore bit manipulation
