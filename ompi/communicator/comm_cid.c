@@ -14,6 +14,7 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -166,6 +167,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
                         void* remote_leader,
                         int mode, int send_first )
 {
+    int ret;
     int nextcid;
     bool flag;
     int nextlocal_cid;
@@ -231,8 +233,11 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             }
         }
 
-        (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
-                     local_leader, remote_leader, send_first );
+        ret = (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
+                           local_leader, remote_leader, send_first );
+        if( OMPI_SUCCESS != ret ) {
+            return ret;
+        }
         if (nextcid == nextlocal_cid) {
             response = 1; /* fine with me */
         }
@@ -250,8 +255,11 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             }
         }
 
-        (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
-                     local_leader, remote_leader, send_first );
+        ret = (allredfnct)(&response, &glresponse, 1, MPI_MIN, comm, bridgecomm,
+                           local_leader, remote_leader, send_first );
+        if( OMPI_SUCCESS != ret ) {
+            return ret;
+        }
         if (1 == glresponse) {
             done = 1;             /* we are done */
             break;
@@ -431,8 +439,11 @@ int ompi_comm_activate ( ompi_communicator_t** newcomm,
     }
 
 
-    (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
-                 local_leader, remote_leader, send_first );
+    ret = (allredfnct)(&ok, &gok, 1, MPI_MIN, comm, bridgecomm,
+                       local_leader, remote_leader, send_first );
+    if( OMPI_SUCCESS != ret ) {
+        return ret;
+    }
 
 
 
