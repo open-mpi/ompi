@@ -327,10 +327,10 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     return &ompi_mtl_portals4.base;
 
  error:
-    if (!PtlHandleIsEqual(ompi_mtl_portals4.long_overflow_me_h, PTL_INVALID_HANDLE)) {
+    if (PTL_OK != PtlHandleIsEqual(ompi_mtl_portals4.long_overflow_me_h, PTL_INVALID_HANDLE)) {
         PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
     }
-    if (!PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
+    if (PTL_OK != PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
         PtlMDRelease(ompi_mtl_portals4.zero_md_h);
     }
     if (ompi_mtl_portals4.read_idx != (ptl_pt_index_t) ~0UL) {
@@ -339,10 +339,10 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     if (ompi_mtl_portals4.send_idx != (ptl_pt_index_t) ~0UL) {
         PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.send_idx);
     }
-    if (!PtlHandleIsEqual(ompi_mtl_portals4.send_eq_h, PTL_INVALID_HANDLE)) {
+    if (PTL_OK != PtlHandleIsEqual(ompi_mtl_portals4.send_eq_h, PTL_INVALID_HANDLE)) {
         PtlEQFree(ompi_mtl_portals4.send_eq_h);
     }
-    if (!PtlHandleIsEqual(ompi_mtl_portals4.recv_eq_h, PTL_INVALID_HANDLE)) {
+    if (PTL_OK != PtlHandleIsEqual(ompi_mtl_portals4.recv_eq_h, PTL_INVALID_HANDLE)) {
         PtlEQFree(ompi_mtl_portals4.recv_eq_h);
     }
     return NULL;
