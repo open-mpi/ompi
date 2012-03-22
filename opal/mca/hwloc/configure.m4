@@ -94,8 +94,8 @@ AC_DEFUN([MCA_opal_hwloc_CONFIG_REQUIRE],[
                   AS_IF([test "$hwloc_base_pci" != "" -a "$ac_cv_sizeof_void_p" = "8"],
                         [AC_MSG_RESULT([no (SuSE 10/64 bit)])
                          enable_pci=no],
-                        [AC_MSG_RESULT([yes (default)])
-                         enable_pci=yes])
+                        [AC_MSG_RESULT([defer (default)])
+                         enable_pci=])
                  ])
           ])
 
