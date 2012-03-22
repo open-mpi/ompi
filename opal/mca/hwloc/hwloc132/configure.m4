@@ -42,7 +42,7 @@ AC_DEFUN([MCA_opal_hwloc_hwloc132_POST_CONFIG],[
 AC_DEFUN([MCA_opal_hwloc_hwloc132_CONFIG],[
     AC_CONFIG_FILES([opal/mca/hwloc/hwloc132/Makefile])
 
-    OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc132_save_CPPFLAGS opal_hwloc_hwloc132_save_LDFLAGS opal_hwloc_hwloc132_save_LIBS opal_hwloc_hwloc132_save_cairo opal_hwloc_hwloc132_save_xml opal_hwloc_hwloc132_basedir opal_hwloc_hwloc132_file opal_hwloc_hwloc132_save_enable_pci opal_hwloc_hwloc132_save_cflags])
+    OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc132_save_CPPFLAGS opal_hwloc_hwloc132_save_LDFLAGS opal_hwloc_hwloc132_save_LIBS opal_hwloc_hwloc132_save_cairo opal_hwloc_hwloc132_save_xml opal_hwloc_hwloc132_basedir opal_hwloc_hwloc132_file opal_hwloc_hwloc132_save_cflags])
 
     # default to this component not providing support
     opal_hwloc_hwloc132_basedir=opal/mca/hwloc/hwloc132
@@ -52,13 +52,6 @@ AC_DEFUN([MCA_opal_hwloc_hwloc132_CONFIG],[
         opal_hwloc_hwloc132_save_CPPFLAGS=$CPPFLAGS
         opal_hwloc_hwloc132_save_LDFLAGS=$LDFLAGS
         opal_hwloc_hwloc132_save_LIBS=$LIBS
-
-        # Disable PCI support for now, until we can get a proper fix
-        # for Oralce's builds on older SuSE machines that only have
-        # libpci.a (and support Oracle's weird dual-bitness build
-        # mojo).
-        opal_hwloc_hwloc132_save_enable_pci=$enable_pci
-        enable_pci=no
 
         # Run the hwloc configuration - set the prefix to minimize
         # the chance that someone will use the internal symbols
@@ -100,7 +93,6 @@ AC_DEFUN([MCA_opal_hwloc_hwloc132_CONFIG],[
         AS_IF([test -n "$opal_hwloc_hwloc132_save_xml"],
               [enable_xml=$opal_hwloc_hwloc132_save_xml])
        
-        enable_pci=$opal_hwloc_hwloc132_save_enable_pci
         CPPFLAGS=$opal_hwloc_hwloc132_save_CPPFLAGS
         LDFLAGS=$opal_hwloc_hwloc132_save_LDFLAGS
         LIBS=$opal_hwloc_hwloc132_save_LIBS
