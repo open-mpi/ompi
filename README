@@ -894,11 +894,29 @@ MISCELLANEOUS SUPPORT LIBRARIES
   affinity information for NUMA platforms.
 
 --with-hwloc-libdir=<directory>
-
   Look in directory for the hwloc libraries.  This option is only
   usable when building Open MPI against an external hwloc
   installation.  Just like other --with-FOO-libdir configure options,
   this option is only needed for special configurations.
+
+--disable-hwloc-pci
+  Disable building hwloc's PCI device-sensing capabilities.  On some
+  platforms (e.g., SusE 10 SP1, x86-64), the libpci support library is
+  broken.  Open MPI's configure script should usually detect when
+  libpci is not usable due to such brokenness and turn off PCI
+  support, but there may be cases when configure mistakenly enables
+  PCI support in the presence of a broken libpci.  These cases may
+  result in "make" failing with warnings about relocation symbols in
+  libpci.  The --disable-hwloc-pci switch can be used to force Open
+  MPI to not build hwloc's PCI device-sensing capabilities in these
+  cases.
+
+  Similarly, if Open MPI incorrectly decides that libpci is broken,
+  you can force Open MPI to build hwloc's PCI device-sensing
+  capabilities by using --enable-hwloc-pci.
+
+  hwloc can discover PCI devices and locality, which can be useful for
+  Open MPI in assigning message passing resources to MPI processes.
 
 --with-libltdl[=VALUE]
   This option specifies where to find the GNU Libtool libltdl support
