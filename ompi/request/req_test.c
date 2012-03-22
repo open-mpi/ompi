@@ -47,13 +47,6 @@ int ompi_request_default_test( ompi_request_t ** rptr,
     }
 
     if (request->req_complete) {
-        /*
-         * Reset the error code of a previously pending request.
-         */
-        if( MPI_ERR_PENDING == request->req_status.MPI_ERROR ) {
-            request->req_status.MPI_ERROR = MPI_SUCCESS;
-        }
-
         OMPI_CRCP_REQUEST_COMPLETE(request);
 
         *completed = true;
@@ -125,13 +118,6 @@ int ompi_request_default_test_any(
         }
 
         if( request->req_complete ) {
-            /*
-             * Reset the error code of a previously pending request.
-             */
-            if( MPI_ERR_PENDING == request->req_status.MPI_ERROR ) {
-                request->req_status.MPI_ERROR = MPI_SUCCESS;
-            }
-
             OMPI_CRCP_REQUEST_COMPLETE(request);
 
             *index = i;
@@ -208,13 +194,6 @@ int ompi_request_default_test_all(
 
         if( request->req_state == OMPI_REQUEST_INACTIVE ||
             request->req_complete) {
-            /*
-             * Reset the error code of a previously pending request.
-             */
-            if( MPI_ERR_PENDING == request->req_status.MPI_ERROR ) {
-                request->req_status.MPI_ERROR = MPI_SUCCESS;
-            }
-
             OMPI_CRCP_REQUEST_COMPLETE(request);
             num_completed++;
         }
@@ -320,13 +299,6 @@ int ompi_request_default_test_some(
             continue;
         }
         if (true == request->req_complete) {
-            /*
-             * Reset the error code of a previously pending request.
-             */
-            if( MPI_ERR_PENDING == request->req_status.MPI_ERROR ) {
-                request->req_status.MPI_ERROR = MPI_SUCCESS;
-            }
-
             OMPI_CRCP_REQUEST_COMPLETE(request);
             indices[num_requests_done++] = i;
         }

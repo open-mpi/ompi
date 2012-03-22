@@ -142,14 +142,10 @@ int ompi_errhandler_request_invoke(int count,
     /* Since errors on requests cause them to not be freed (until we
        can examine them here), go through and free all requests with
        errors.  We only invoke the exception on the *first* request
-       that had an error.
-       Make sure we do not free the reqeust if it is marked as pending
-       since the user will need to wait on it again for completion.
-    */
+       that had an error. */
     for (; i < count; ++i) {
         if (MPI_REQUEST_NULL != requests[i] &&
-            MPI_SUCCESS != requests[i]->req_status.MPI_ERROR &&
-            MPI_ERR_PENDING != requests[i]->req_status.MPI_ERROR ) {
+            MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
             /* Ignore the error -- what are we going to do?  We're
                already going to invoke an exception */
             ompi_request_free(&(requests[i])); 
