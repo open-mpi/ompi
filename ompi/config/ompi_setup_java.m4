@@ -107,8 +107,10 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
           -a -z "$with_jdk_dir" -a -z "$with_jdk_bindir"],
           [ # OS X Snow Leopard and Lion (10.6 and 10.7 -- did not
             # check prior versions)
+           found=0
            dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
-           AS_IF([test -d $dir], [with_jdk_headers=$dir 
+           AS_IF([test -d $dir], [found=1
+                                  with_jdk_headers=$dir 
                                   with_jdk_bindir=/usr/bin])
 
             # Various Linux
@@ -118,7 +120,8 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
                   [with_jdk_headers=`dirname $jnih`
                    OPAL_WHICH([javac], [with_jdk_bindir])
                    AS_IF([test -n "$with_jdk_bindir"],
-                         [with_jdk_bindir=`dirname $with_jdk_bindir`],
+                         [found=1
+                          with_jdk_bindir=`dirname $with_jdk_bindir`],
                          [with_jdk_headers=])],
                   [dir='/usr/lib/jvm/default-java/include/'
                    jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
@@ -126,13 +129,15 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
                          [with_jdk_headers=`dirname $jnih`
                           OPAL_WHICH([javac], [with_jdk_bindir])
                           AS_IF([test -n "$with_jdk_bindir"],
-                                [with_jdk_bindir=`dirname $with_jdk_bindir`],
+                                [found=1
+                                 with_jdk_bindir=`dirname $with_jdk_bindir`],
                                 [with_jdk_headers=])])])
 
-              # Solaris
-              dir=/usr/java
-              AS_IF([test -d $dir], [with_jdk_headers=$dir/include
-                                     with_jdk_bindir=$dir/bin])
+            # Solaris
+            dir=/usr/java
+            AS_IF([test "$found" -eq 0 -a -d $dir], 
+                  [with_jdk_headers=$dir/include
+                   with_jdk_bindir=$dir/bin])
 
             # If we think we found them, announce
             AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_bindir"],
