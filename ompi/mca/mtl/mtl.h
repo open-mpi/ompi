@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -333,6 +334,19 @@ typedef int (*mca_mtl_base_module_iprobe_fn_t)(
                           struct ompi_status_public_t *status);
 
 
+typedef int (*mca_mtl_base_module_imrecv_fn_t)(struct mca_mtl_base_module_t* mtl,
+                                               struct opal_convertor_t *convertor,
+                                               struct ompi_message_t **message,
+                                               struct mca_mtl_request_t *mtl_request);
+
+typedef int (*mca_mtl_base_module_improbe_fn_t)(struct mca_mtl_base_module_t *mtl,
+                                                struct ompi_communicator_t *comm,
+                                                int src,
+                                                int tag,
+                                                int *matched,
+                                                struct ompi_message_t **message,
+                                                struct ompi_status_public_t *status);
+
 /**
  * Cancel an existing request
  *
@@ -401,6 +415,8 @@ struct mca_mtl_base_module_t {
     mca_mtl_base_module_isend_fn_t       mtl_isend;
     mca_mtl_base_module_irecv_fn_t       mtl_irecv;
     mca_mtl_base_module_iprobe_fn_t      mtl_iprobe;
+    mca_mtl_base_module_imrecv_fn_t      mtl_imrecv;
+    mca_mtl_base_module_improbe_fn_t     mtl_improbe;
 
     /* Optional MTL functions */
     mca_mtl_base_module_cancel_fn_t      mtl_cancel;

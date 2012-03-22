@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +27,7 @@
 #include "mtl_portals4.h"
 #include "mtl_portals4_request.h"
 #include "mtl_portals4_recv_short.h"
-
+#include "mtl_portals4_message.h"
 
 static int ompi_mtl_portals4_component_open(void);
 static int ompi_mtl_portals4_component_close(void);
@@ -135,6 +135,13 @@ ompi_mtl_portals4_component_open(void)
                         (ompi_mtl_portals4.protocol == rndv) ? "Rendezvous" :
                          "Other");
 
+    OBJ_CONSTRUCT(&ompi_mtl_portals4.fl_message, opal_free_list_t);
+    opal_free_list_init(&ompi_mtl_portals4.fl_message,
+                        sizeof(ompi_mtl_portals4_message_t) + 
+                        ompi_mtl_portals4.eager_limit,
+                        OBJ_CLASS(ompi_mtl_portals4_message_t),
+                        1, -1, 1);
+
     ompi_mtl_portals4.ni_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.send_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_eq_h = PTL_INVALID_HANDLE;
@@ -150,6 +157,8 @@ ompi_mtl_portals4_component_open(void)
 static int
 ompi_mtl_portals4_component_close(void)
 {
+    OBJ_DESTRUCT(&ompi_mtl_portals4.fl_message);
+
     return OMPI_SUCCESS;
 }
 

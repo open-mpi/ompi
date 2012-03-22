@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,14 +20,12 @@ BEGIN_C_DECLS
 struct ompi_communicator_t;
 
 struct ompi_message_t {
-    opal_free_list_item_t super;                /**< Base type */
-
-    int m_f_to_c_index; /** Fortran handle for this message */
-
-    struct ompi_communicator_t *comm;                  /**< communicator used in probe */
-    void* req_ptr;                              /**< PML data */
-    size_t count;                               /**< same value as
-                                                   status._count */
+    opal_free_list_item_t super;        /**< Base type */
+    int m_f_to_c_index;                 /**< Fortran handle for this message */
+    struct ompi_communicator_t *comm;   /**< communicator used in probe */
+    void* req_ptr;                      /**< PML data */
+    int peer;                           /**< peer, same as status.MPI_SOURCE */
+    size_t count;                       /**< same value as status._ucount */
 };
 typedef struct ompi_message_t ompi_message_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_message_t);

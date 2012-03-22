@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -49,10 +49,12 @@ mca_mtl_portals4_module_t ompi_mtl_portals4 = {
         ompi_mtl_portals4_isend,
         ompi_mtl_portals4_irecv,
         ompi_mtl_portals4_iprobe,
+        ompi_mtl_portals4_imrecv,
+        ompi_mtl_portals4_improbe,
 
         ompi_mtl_portals4_cancel,
-        NULL,       /* add_comm */
-        NULL        /* del_comm */
+        ompi_mtl_portals4_add_comm,
+        ompi_mtl_portals4_del_comm
     }
 };
 
@@ -153,6 +155,22 @@ int
 ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,
                          mca_mtl_request_t *mtl_request,
                          int flag)
+{
+    return OMPI_SUCCESS;
+}
+
+
+
+int
+ompi_mtl_portals4_add_comm(struct mca_mtl_base_module_t *mtl,
+                           struct ompi_communicator_t *comm)
+{
+    return OMPI_SUCCESS;
+}
+
+int
+ompi_mtl_portals4_del_comm(struct mca_mtl_base_module_t *mtl,
+                           struct ompi_communicator_t *comm)
 {
     return OMPI_SUCCESS;
 }

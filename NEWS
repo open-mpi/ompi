@@ -16,6 +16,7 @@ Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
                         reserved.
 Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
 Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -64,7 +65,8 @@ Trunk (not on release branches yet)
   OPAL levels - intended for use when configuring without MPI support
 - Modified paffinity system to provide warning when bindings result in
   being "bound to all", which is equivalent to "not bound"
-- Added MPI-3 function: MPI_GET_LIBRARY_VERSION.
+- Added MPI-3 function: MPI_GET_LIBRARY_VERSION
+- Added MPI-3 matched probe interface.
 - Enabled compile-time warning of deprecated MPI functions by default
   (in supported compilers).
 - Added a new MCA parameter (ess_base_stream_buffering) that allows the user

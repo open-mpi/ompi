@@ -2,6 +2,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -60,8 +61,6 @@ mca_pml_cm_cancel(struct ompi_request_t *ompi_req, int flag)
         break;
 
     default:
-        abort();
-
         ret = OMPI_ERROR;
     }
 

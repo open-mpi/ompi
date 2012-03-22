@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2011-2012 Sandia National Laboratories. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -110,6 +110,7 @@ mca_pml_ob1_improbe(int src,
         *message = ompi_message_alloc();
         (*message)->comm = comm;
         (*message)->req_ptr = recvreq;
+        (*message)->peer = recvreq->req_recv.req_base.req_ompi.req_status.MPI_STATUS;
         (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
 
         rc = OMPI_SUCCESS;

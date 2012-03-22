@@ -36,6 +36,8 @@ mca_mtl_mxm_module_t ompi_mtl_mxm = {
        ompi_mtl_mxm_isend,
        ompi_mtl_mxm_irecv,
        ompi_mtl_mxm_iprobe,
+       NULL, /* imrecv */
+       NULL, /* improbe */
        ompi_mtl_mxm_cancel,
        ompi_mtl_mxm_add_comm,
        ompi_mtl_mxm_del_comm
