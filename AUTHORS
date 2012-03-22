@@ -17,6 +17,7 @@ bbenton     Brad Benton                 IBM
 bosilca     George Bosilca              UTK
 bouteill    Aurelien Bouteiller         UTK
 brbarret    Brian Barrett               IU, LANL, SNL
+bricka      Alex Brick                  NU
 casswell    Laura Casswell              LANL
 coti        Camille Coti                UTK, INRIA
 csbell      Christian Bell              QLogic
@@ -99,6 +100,7 @@ LANL = Los Alamos National Laboratory
 LBNL = Lawrence Berkeley National Laboratory
 Mellanox = Mellanox
 Myricom = Myricom, Inc.
+NU = Northeastern University
 Oracle = Oracle
 ORNL = Oak Ridge National Laboratory
 OSU = The Ohio State University

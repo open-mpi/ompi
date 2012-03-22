@@ -863,6 +863,21 @@ MISCELLANEOUS SUPPORT LIBRARIES
   covers most cases.  This option is only needed for special
   configurations.
 
+--with-dmtcp=<directory>
+  Specify the directory where the Distributed MultiThreaded
+  Checkpointing (DMTCP) libraries and header files are located.  This
+  option is generally only necessary if the DMTCP headers and
+  libraries are not in default compiler/linker search paths.
+
+  This option is only meaningful if the --with-ft option is also used
+  to active Open MPI's fault tolerance behavior.
+
+--with-dmtcp-libdir=<directory>
+  Look in directory for the DMTCP libraries.  By default, Open MPI
+  will look in <dmtcp directory>/lib and <dmtcp directory>/lib64,
+  which covers most cases.  This option is only needed for special
+  configurations.
+
 --with-esmtp=<directory>
   Specify the directory where the libESMTP libraries and header files are
   located.  This option is generally only necessary of the libESMTP
