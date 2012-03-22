@@ -402,7 +402,7 @@ static inline int ompi_request_complete(ompi_request_t* request, bool with_signa
     }
     ompi_request_completed++;
     request->req_complete = true;
-    if( MPI_SUCCESS != request->req_status.MPI_ERROR ) {
+    if( OPAL_UNLIKELY(MPI_SUCCESS != request->req_status.MPI_ERROR) ) {
         ompi_request_failed++;
     }
     if(with_signal && ompi_request_waiting) {
