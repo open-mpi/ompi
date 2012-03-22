@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
@@ -38,7 +38,7 @@ ompi_show_subtitle "OMPI Configuration options"
 AC_MSG_CHECKING([if want compile-time warnings inside of mpi.h])
 AC_ARG_ENABLE(mpi-interface-warning,
     AC_HELP_STRING([--enable-mpi-interface-warning],
-                   [enable warnings in wrong (e.g. deprecated) usage in user-level code (default: disabled)]))
+                   [enable compile-time warnings when deprecated MPI functions are used (default: enabled)]))
 if test "$enable_mpi_interface_warning" != "no"; then
     AC_MSG_RESULT([yes])
     OMPI_WANT_MPI_INTERFACE_WARNING=1
