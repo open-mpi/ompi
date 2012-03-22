@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -28,6 +28,7 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 #include "opal/datatype/opal_convertor.h"
+#include "opal/class/opal_free_list.h"
 
 #include "mtl_portals4_request.h"
 
@@ -43,6 +44,8 @@ struct mca_mtl_portals4_module_t {
     size_t recv_short_size;
     int recv_short_num;
     int queue_size;
+
+    opal_free_list_t fl_message;
 
     ptl_pt_index_t send_idx;
     ptl_pt_index_t read_idx;
@@ -200,9 +203,28 @@ extern int ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
                                     int *flag,
                                     struct ompi_status_public_t *status);
 
+extern int ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
+                                    struct opal_convertor_t *convertor,
+                                    struct ompi_message_t **message,
+                                    struct mca_mtl_request_t *mtl_request);
+
+extern int ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
+                                     struct ompi_communicator_t *comm,
+                                     int src,
+                                     int tag,
+                                     int *matched,
+                                     struct ompi_message_t **message,
+                                     struct ompi_status_public_t *status);
+
 extern int ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,
                                     mca_mtl_request_t *mtl_request,
                                     int flag);
+
+extern int ompi_mtl_portals4_add_comm(struct mca_mtl_base_module_t *mtl,
+                                      struct ompi_communicator_t *comm);
+
+extern int ompi_mtl_portals4_del_comm(struct mca_mtl_base_module_t *mtl,
+                                      struct ompi_communicator_t *comm);
 
 extern int ompi_mtl_portals4_progress(void);
 

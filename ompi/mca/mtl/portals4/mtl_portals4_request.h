@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,6 +23,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/mtl.h"
 
+struct ompi_mtl_portals4_message_t;
 
 struct ompi_mtl_portals4_base_request_t {
     struct mca_mtl_request_t super;
@@ -63,6 +64,7 @@ struct ompi_mtl_portals4_probe_request_t {
     volatile int req_complete;
     int found_match;
     struct ompi_status_public_t status;
+    struct ompi_mtl_portals4_message_t *message;
 };
 typedef struct ompi_mtl_portals4_probe_request_t ompi_mtl_portals4_probe_request_t;
 

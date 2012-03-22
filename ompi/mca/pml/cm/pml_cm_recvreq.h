@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Sandia National Laboratories.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -80,14 +81,12 @@ do {                                                                           \
  * @param count (IN)         Number of elements of indicated datatype.
  * @param datatype (IN)      User defined datatype.
  * @param src (IN)           Source rank w/in the communicator.
- * @param tag (IN)           User defined tag.
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
 #define MCA_PML_CM_THIN_RECV_REQUEST_INIT( request,                     \
                                            ompi_proc,                   \
                                            comm,                        \
-                                           tag,                         \
                                            src,                         \
                                            datatype,                    \
                                            addr,                        \
@@ -180,6 +179,26 @@ do {                                                                    \
                               tag,                                      \
                               &recvreq->req_base.req_convertor,         \
                               &recvreq->req_mtl));                      \
+} while (0)
+
+#define MCA_PML_CM_THIN_RECV_REQUEST_MATCHED_START(request, message, ret) \
+do {                                                                    \
+    /* init/re-init the request */                                      \
+    request->req_base.req_pml_complete = false;                         \
+    request->req_base.req_ompi.req_complete = false;                    \
+    request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;         \
+                                                                        \
+    /* always set the req_status.MPI_TAG to ANY_TAG before starting the \
+     * request. This field is used if cancelled to find out if the request \
+     * has been matched or not.                                         \
+     */                                                                 \
+    request->req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;       \
+    request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
+    request->req_base.req_ompi.req_status._cancelled = 0;               \
+    ret = OMPI_MTL_CALL(imrecv(ompi_mtl,                                \
+                               &recvreq->req_base.req_convertor,        \
+                               message,                                 \
+                               &recvreq->req_mtl));                     \
 } while (0)
 
 
