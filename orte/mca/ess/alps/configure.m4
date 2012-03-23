@@ -26,7 +26,7 @@
 # than the CNOS component to ensure we don't get both
 # since the ALPS component will -only- build if specifically
 # ordered to do so - which means we don't want the CNOS one
-AC_DEFUN([MCA_orte_ess_alps_PRIORITY], [15])
+AC_DEFUN([MCA_orte_ess_alps_PRIORITY], [10]
 
 # MCA_ess_alps_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
