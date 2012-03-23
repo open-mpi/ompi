@@ -256,6 +256,16 @@ int opal_hwloc_base_open(void)
         mca_base_param_reg_string_name("hwloc", "base_cpu_set",
                                        "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]",
                                        false, false, NULL, &opal_hwloc_base_cpu_set);
+        if (NULL != opal_hwloc_base_cpu_set) {
+            if (!OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy)) {
+                /* it is okay if a binding policy was already given - just ensure that
+                 * we do bind to the given cpus if provided, otherwise this would be
+                 * ignored if someone didn't also specify a binding policy
+                 */
+                OPAL_SET_BINDING_POLICY(opal_hwloc_binding_policy, OPAL_BIND_TO_CPUSET);
+                opal_hwloc_binding_policy |= OPAL_BIND_GIVEN;
+            }
+        }
 
         /* to support tools such as ompi_info, add the components
          * to a list
