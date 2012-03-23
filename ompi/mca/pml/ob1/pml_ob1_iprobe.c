@@ -110,7 +110,7 @@ mca_pml_ob1_improbe(int src,
         *message = ompi_message_alloc();
         (*message)->comm = comm;
         (*message)->req_ptr = recvreq;
-        (*message)->peer = recvreq->req_recv.req_base.req_ompi.req_status.MPI_STATUS;
+        (*message)->peer = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
         (*message)->count = recvreq->req_recv.req_base.req_ompi.req_status._ucount;
 
         rc = OMPI_SUCCESS;
