@@ -79,42 +79,47 @@ static int bind_upwards(orte_job_t *jdata,
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
             continue;
         }
-        support = (struct hwloc_topology_support*)hwloc_topology_get_support(node->topology);
-        /* check if topology supports cpubind - have to be careful here
-         * as Linux doesn't currently support thread-level binding. This
-         * may change in the future, though, and it isn't clear how hwloc
-         * interprets the current behavior. So check both flags to be sure.
-         */
-        if (!support->cpubind->set_thisproc_cpubind &&
-            !support->cpubind->set_thisthread_cpubind) {
-            if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
-                /* we are not required to bind, so ignore this */
-                continue;
-            }
-            orte_show_help("help-orte-rmaps-base.txt", "rmaps:cpubind-not-supported", true, node->name);
-            if (NULL != nbound) {
-                free(nbound);
-            }
-            return ORTE_ERR_SILENT;
-        }
-        /* check if topology supports membind - have to be careful here
-         * as hwloc treats this differently than I (at least) would have
-         * expected. Per hwloc, Linux memory binding is at the thread,
-         * and not process, level. Thus, hwloc sets the "thisproc" flag
-         * to "false" on all Linux systems, and uses the "thisthread" flag
-         * to indicate binding capability
-         */
-        if (!support->membind->set_thisproc_membind &&
-            !support->membind->set_thisthread_membind) {
-            if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
-                orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
-                membind_warned = true;
-            } else if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
-                orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported-fatal", true, node->name);
+        if (!orte_do_not_launch) {
+            /* if we don't want to launch, then we are just testing the system,
+             * so ignore questions about support capabilities
+             */
+            support = (struct hwloc_topology_support*)hwloc_topology_get_support(node->topology);
+            /* check if topology supports cpubind - have to be careful here
+             * as Linux doesn't currently support thread-level binding. This
+             * may change in the future, though, and it isn't clear how hwloc
+             * interprets the current behavior. So check both flags to be sure.
+             */
+            if (!support->cpubind->set_thisproc_cpubind &&
+                !support->cpubind->set_thisthread_cpubind) {
+                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
+                    /* we are not required to bind, so ignore this */
+                    continue;
+                }
+                orte_show_help("help-orte-rmaps-base.txt", "rmaps:cpubind-not-supported", true, node->name);
                 if (NULL != nbound) {
                     free(nbound);
                 }
                 return ORTE_ERR_SILENT;
+            }
+            /* check if topology supports membind - have to be careful here
+             * as hwloc treats this differently than I (at least) would have
+             * expected. Per hwloc, Linux memory binding is at the thread,
+             * and not process, level. Thus, hwloc sets the "thisproc" flag
+             * to "false" on all Linux systems, and uses the "thisthread" flag
+             * to indicate binding capability
+             */
+            if (!support->membind->set_thisproc_membind &&
+                !support->membind->set_thisthread_membind) {
+                if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
+                    membind_warned = true;
+                } else if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported-fatal", true, node->name);
+                    if (NULL != nbound) {
+                        free(nbound);
+                    }
+                    return ORTE_ERR_SILENT;
+                }
             }
         }
 
@@ -246,42 +251,47 @@ static int bind_downwards(orte_job_t *jdata,
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
             continue;
         }
-        support = (struct hwloc_topology_support*)hwloc_topology_get_support(node->topology);
-        /* check if topology supports cpubind - have to be careful here
-         * as Linux doesn't currently support thread-level binding. This
-         * may change in the future, though, and it isn't clear how hwloc
-         * interprets the current behavior. So check both flags to be sure.
-         */
-        if (!support->cpubind->set_thisproc_cpubind &&
-            !support->cpubind->set_thisthread_cpubind) {
-            if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
-                /* we are not required to bind, so ignore this */
-                continue;
-            }
-            orte_show_help("help-orte-rmaps-base.txt", "rmaps:cpubind-not-supported", true, node->name);
-            if (NULL != nbound) {
-                free(nbound);
-            }
-            return ORTE_ERR_SILENT;
-        }
-        /* check if topology supports membind - have to be careful here
-         * as hwloc treats this differently than I (at least) would have
-         * expected. Per hwloc, Linux memory binding is at the thread,
-         * and not process, level. Thus, hwloc sets the "thisproc" flag
-         * to "false" on all Linux systems, and uses the "thisthread" flag
-         * to indicate binding capability
-         */
-        if (!support->membind->set_thisproc_membind &&
-            !support->membind->set_thisthread_membind) {
-            if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
-                orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
-                membind_warned = true;
-            } else if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
-                orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported-fatal", true, node->name);
+        if (!orte_do_not_launch) {
+            /* if we don't want to launch, then we are just testing the system,
+             * so ignore questions about support capabilities
+             */
+            support = (struct hwloc_topology_support*)hwloc_topology_get_support(node->topology);
+            /* check if topology supports cpubind - have to be careful here
+             * as Linux doesn't currently support thread-level binding. This
+             * may change in the future, though, and it isn't clear how hwloc
+             * interprets the current behavior. So check both flags to be sure.
+             */
+            if (!support->cpubind->set_thisproc_cpubind &&
+                !support->cpubind->set_thisthread_cpubind) {
+                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
+                    /* we are not required to bind, so ignore this */
+                    continue;
+                }
+                orte_show_help("help-orte-rmaps-base.txt", "rmaps:cpubind-not-supported", true, node->name);
                 if (NULL != nbound) {
                     free(nbound);
                 }
                 return ORTE_ERR_SILENT;
+            }
+            /* check if topology supports membind - have to be careful here
+             * as hwloc treats this differently than I (at least) would have
+             * expected. Per hwloc, Linux memory binding is at the thread,
+             * and not process, level. Thus, hwloc sets the "thisproc" flag
+             * to "false" on all Linux systems, and uses the "thisthread" flag
+             * to indicate binding capability
+             */
+            if (!support->membind->set_thisproc_membind &&
+                !support->membind->set_thisthread_membind) {
+                if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
+                    membind_warned = true;
+                } else if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported-fatal", true, node->name);
+                    if (NULL != nbound) {
+                        free(nbound);
+                    }
+                    return ORTE_ERR_SILENT;
+                }
             }
         }
 
@@ -394,42 +404,47 @@ static int bind_in_place(orte_job_t *jdata,
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
             continue;
         }
-        support = (struct hwloc_topology_support*)hwloc_topology_get_support(node->topology);
-        /* check if topology supports cpubind - have to be careful here
-         * as Linux doesn't currently support thread-level binding. This
-         * may change in the future, though, and it isn't clear how hwloc
-         * interprets the current behavior. So check both flags to be sure.
-         */
-        if (!support->cpubind->set_thisproc_cpubind &&
-            !support->cpubind->set_thisthread_cpubind) {
-            if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
-                /* we are not required to bind, so ignore this */
-                continue;
-            }
-            orte_show_help("help-orte-rmaps-base.txt", "rmaps:cpubind-not-supported", true, node->name);
-            if (NULL != nbound) {
-                free(nbound);
-            }
-            return ORTE_ERR_SILENT;
-        }
-        /* check if topology supports membind - have to be careful here
-         * as hwloc treats this differently than I (at least) would have
-         * expected. Per hwloc, Linux memory binding is at the thread,
-         * and not process, level. Thus, hwloc sets the "thisproc" flag
-         * to "false" on all Linux systems, and uses the "thisthread" flag
-         * to indicate binding capability
-         */
-        if (!support->membind->set_thisproc_membind &&
-            !support->membind->set_thisthread_membind) {
-            if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
-                orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
-                membind_warned = true;
-            } else if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
-                orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported-fatal", true, node->name);
+        if (!orte_do_not_launch) {
+            /* if we don't want to launch, then we are just testing the system,
+             * so ignore questions about support capabilities
+             */
+            support = (struct hwloc_topology_support*)hwloc_topology_get_support(node->topology);
+            /* check if topology supports cpubind - have to be careful here
+             * as Linux doesn't currently support thread-level binding. This
+             * may change in the future, though, and it isn't clear how hwloc
+             * interprets the current behavior. So check both flags to be sure.
+             */
+            if (!support->cpubind->set_thisproc_cpubind &&
+                !support->cpubind->set_thisthread_cpubind) {
+                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
+                    /* we are not required to bind, so ignore this */
+                    continue;
+                }
+                orte_show_help("help-orte-rmaps-base.txt", "rmaps:cpubind-not-supported", true, node->name);
                 if (NULL != nbound) {
                     free(nbound);
                 }
                 return ORTE_ERR_SILENT;
+            }
+            /* check if topology supports membind - have to be careful here
+             * as hwloc treats this differently than I (at least) would have
+             * expected. Per hwloc, Linux memory binding is at the thread,
+             * and not process, level. Thus, hwloc sets the "thisproc" flag
+             * to "false" on all Linux systems, and uses the "thisthread" flag
+             * to indicate binding capability
+             */
+            if (!support->membind->set_thisproc_membind &&
+                !support->membind->set_thisthread_membind) {
+                if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
+                    membind_warned = true;
+                } else if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported-fatal", true, node->name);
+                    if (NULL != nbound) {
+                        free(nbound);
+                    }
+                    return ORTE_ERR_SILENT;
+                }
             }
         }
 
@@ -510,11 +525,111 @@ static int bind_in_place(orte_job_t *jdata,
     return ORTE_SUCCESS;
 }
 
+static int bind_to_cpuset(orte_job_t *jdata)
+{
+    /* bind each process to opal_hwloc_base_cpu_set */
+    int i, j;
+    orte_job_map_t *map;
+    orte_node_t *node;
+    orte_proc_t *proc;
+    struct hwloc_topology_support *support;
+    opal_hwloc_topo_data_t *sum;
+    hwloc_obj_t root;
+
+    opal_output_verbose(5, orte_rmaps_base.rmaps_output,
+                        "mca:rmaps: bind job %s to cpuset %s",
+                        ORTE_JOBID_PRINT(jdata->jobid),
+                        opal_hwloc_base_cpu_set);
+    /* initialize */
+    map = jdata->map;
+
+    for (i=0; i < map->nodes->size; i++) {
+        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(map->nodes, i))) {
+            continue;
+        }
+        if (!orte_do_not_launch) {
+            /* if we don't want to launch, then we are just testing the system,
+             * so ignore questions about support capabilities
+             */
+            support = (struct hwloc_topology_support*)hwloc_topology_get_support(node->topology);
+            /* check if topology supports cpubind - have to be careful here
+             * as Linux doesn't currently support thread-level binding. This
+             * may change in the future, though, and it isn't clear how hwloc
+             * interprets the current behavior. So check both flags to be sure.
+             */
+            if (!support->cpubind->set_thisproc_cpubind &&
+                !support->cpubind->set_thisthread_cpubind) {
+                if (!OPAL_BINDING_REQUIRED(opal_hwloc_binding_policy)) {
+                    /* we are not required to bind, so ignore this */
+                    continue;
+                }
+                orte_show_help("help-orte-rmaps-base.txt", "rmaps:cpubind-not-supported", true, node->name);
+                return ORTE_ERR_SILENT;
+            }
+            /* check if topology supports membind - have to be careful here
+             * as hwloc treats this differently than I (at least) would have
+             * expected. Per hwloc, Linux memory binding is at the thread,
+             * and not process, level. Thus, hwloc sets the "thisproc" flag
+             * to "false" on all Linux systems, and uses the "thisthread" flag
+             * to indicate binding capability
+             */
+            if (!support->membind->set_thisproc_membind &&
+                !support->membind->set_thisthread_membind) {
+                if (OPAL_HWLOC_BASE_MBFA_WARN == opal_hwloc_base_mbfa && !membind_warned) {
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported", true, node->name);
+                    membind_warned = true;
+                } else if (OPAL_HWLOC_BASE_MBFA_ERROR == opal_hwloc_base_mbfa) {
+                    orte_show_help("help-orte-rmaps-base.txt", "rmaps:membind-not-supported-fatal", true, node->name);
+                    return ORTE_ERR_SILENT;
+                }
+            }
+        }
+        root = hwloc_get_root_obj(node->topology);
+        if (NULL == root->userdata) {
+            /* something went wrong */
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        sum = (opal_hwloc_topo_data_t*)root->userdata;
+        if (NULL == sum->available) {
+            /* another error */
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        for (j=0; j < node->procs->size; j++) {
+            if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, j))) {
+                continue;
+            }
+            /* ignore procs from other jobs */
+            if (proc->name.jobid != jdata->jobid) {
+                continue;
+            }
+            /* ignore procs that have already been bound - should
+             * never happen, but safer
+             */
+            if (NULL != proc->cpu_bitmap) {
+                continue;
+            }
+            hwloc_bitmap_list_asprintf(&proc->cpu_bitmap, sum->available);
+        }
+    }
+    return ORTE_SUCCESS;
+}
+
 int orte_rmaps_base_compute_bindings(orte_job_t *jdata)
 {
-    if (OPAL_BIND_TO_CPUSET == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+    if (ORTE_MAPPING_BYUSER == ORTE_GET_MAPPING_POLICY(orte_rmaps_base.mapping)) {
         /* user specified binding by rankfile - nothing for us to do */
         return ORTE_SUCCESS;
+    }
+
+    if (OPAL_BIND_TO_CPUSET == OPAL_GET_BINDING_POLICY(jdata->map->binding)) {
+        int rc;
+        /* cpuset was given - setup the bindings */
+        if (ORTE_SUCCESS != (rc = bind_to_cpuset(jdata))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
     }
 
     if (!OPAL_BINDING_POLICY_IS_SET(jdata->map->binding) ||
