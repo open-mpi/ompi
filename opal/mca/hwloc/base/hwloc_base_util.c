@@ -127,7 +127,8 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                     opal_argv_free(range);
                     return OPAL_ERROR;
                 }
-                avail = opal_hwloc_base_get_available_cpus(topo, pu);
+                avail = hwloc_bitmap_alloc();
+                hwloc_bitmap_and(avail, pu->online_cpuset, pu->allowed_cpuset);
                 break;
             case 2:
                 /* range given */
@@ -136,6 +137,7 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                 avail = hwloc_bitmap_alloc();
                 hwloc_bitmap_zero(avail);
                 res = hwloc_bitmap_alloc();
+                pucpus = hwloc_bitmap_alloc();
                 for (cpu=start; cpu <= end; cpu++) {
                     if (NULL == (pu = get_pu(topo, cpu))) {
                         opal_argv_free(ranges);
@@ -143,11 +145,12 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                         hwloc_bitmap_free(avail);
                         return OPAL_ERROR;
                     }
-                    pucpus = opal_hwloc_base_get_available_cpus(topo, pu);
+                    hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
                     hwloc_bitmap_or(res, avail, pucpus);
                     hwloc_bitmap_copy(avail, res);
                 }
                 hwloc_bitmap_free(res);
+                hwloc_bitmap_free(pucpus);
                 break;
             default:
                 return OPAL_ERR_BAD_PARAM;
