@@ -116,6 +116,10 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                              "hwloc:base: filtering cpuset"));
         /* find the specified logical cpus */
         ranges = opal_argv_split(opal_hwloc_base_cpu_set, ',');
+        avail = hwloc_bitmap_alloc();
+        hwloc_bitmap_zero(avail);
+        res = hwloc_bitmap_alloc();
+        pucpus = hwloc_bitmap_alloc();
         for (idx=0; idx < opal_argv_count(ranges); idx++) {
             range = opal_argv_split(ranges[idx], '-');
             switch (opal_argv_count(range)) {
@@ -127,17 +131,14 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                     opal_argv_free(range);
                     return OPAL_ERROR;
                 }
-                avail = hwloc_bitmap_alloc();
-                hwloc_bitmap_and(avail, pu->online_cpuset, pu->allowed_cpuset);
+                hwloc_bitmap_and(pucpus, pu->online_cpuset, pu->allowed_cpuset);
+                hwloc_bitmap_or(res, avail, pucpus);
+                hwloc_bitmap_copy(avail, res);
                 break;
             case 2:
                 /* range given */
                 start = strtoul(range[0], NULL, 10);
                 end = strtoul(range[1], NULL, 10);
-                avail = hwloc_bitmap_alloc();
-                hwloc_bitmap_zero(avail);
-                res = hwloc_bitmap_alloc();
-                pucpus = hwloc_bitmap_alloc();
                 for (cpu=start; cpu <= end; cpu++) {
                     if (NULL == (pu = get_pu(topo, cpu))) {
                         opal_argv_free(ranges);
@@ -149,8 +150,6 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
                     hwloc_bitmap_or(res, avail, pucpus);
                     hwloc_bitmap_copy(avail, res);
                 }
-                hwloc_bitmap_free(res);
-                hwloc_bitmap_free(pucpus);
                 break;
             default:
                 return OPAL_ERR_BAD_PARAM;
@@ -160,6 +159,8 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
         if (NULL != ranges) {
             opal_argv_free(ranges);
         }
+        hwloc_bitmap_free(res);
+        hwloc_bitmap_free(pucpus);
     }
 
     /* cache this info */
@@ -506,7 +507,8 @@ unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
  * the search to avoid those objects that don't have any cpus
  * we can use :-((
  */
-static hwloc_obj_t df_search(hwloc_obj_t start,
+static hwloc_obj_t df_search(hwloc_topology_t topo,
+                             hwloc_obj_t start,
                              hwloc_obj_type_t target,
                              unsigned cache_level,
                              unsigned int nobj,
@@ -516,7 +518,6 @@ static hwloc_obj_t df_search(hwloc_obj_t start,
 {
     unsigned k;
     hwloc_obj_t obj;
-    hwloc_bitmap_t res;
     opal_hwloc_obj_data_t *data;
 
     if (target == start->type) {
@@ -576,27 +577,18 @@ static hwloc_obj_t df_search(hwloc_obj_t start,
             }
             /* see if we already know our available cpuset */
             if (NULL == data->available) {
-                /* if we want only the available objects, then check the
-                 * cpusets to see if we have something we can use here
-                 */
-                res = hwloc_bitmap_alloc();
-                hwloc_bitmap_and(res, start->online_cpuset, start->allowed_cpuset);
-                if (hwloc_bitmap_iszero(res)) {
-                    /* this object has no available cpus */
-                    hwloc_bitmap_free(res);
-                    goto notfound;
+                data->available = opal_hwloc_base_get_available_cpus(topo, start);
+            }
+            if (!hwloc_bitmap_iszero(data->available)) {
+                if (NULL != num_objs) {
+                    *num_objs += 1;
+                } else if (*idx == nobj) {
+                    /* cache the location */
+                    data->idx = *idx;
+                    return start;
                 }
-                /* cache the info */
-                data->available = res;
+                *idx += 1;
             }
-            if (NULL != num_objs) {
-                *num_objs += 1;
-            } else if (*idx == nobj) {
-                /* cache the location */
-                data->idx = *idx;
-                return start;
-            }
-            *idx += 1;
             return NULL;
         }
         /* if it wasn't one of the above, then we are lost */
@@ -605,7 +597,7 @@ static hwloc_obj_t df_search(hwloc_obj_t start,
 
  notfound:
     for (k=0; k < start->arity; k++) {
-        obj = df_search(start->children[k], target, cache_level, nobj, rtype, idx, num_objs);
+        obj = df_search(topo, start->children[k], target, cache_level, nobj, rtype, idx, num_objs);
         if (NULL != obj) {
             return obj;
         }
@@ -674,7 +666,7 @@ unsigned int opal_hwloc_base_get_nbobjs_by_type(hwloc_topology_t topo,
     }
 
     /* don't already know it - go get it */
-    df_search(obj, target, cache_level, 0, rtype, &idx, &num_objs);
+    df_search(topo, obj, target, cache_level, 0, rtype, &idx, &num_objs);
 
     /* cache the results for later */
     sum = OBJ_NEW(opal_hwloc_summary_t);
@@ -720,7 +712,7 @@ hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
     num_objs = 0;
     idx = 0;
     obj = hwloc_get_root_obj(topo);
-    return df_search(obj, target, cache_level, instance, rtype, &idx, NULL);
+    return df_search(topo, obj, target, cache_level, instance, rtype, &idx, NULL);
 }
 
 /* The current slot_list notation only goes to the core level - i.e., the location
@@ -843,7 +835,7 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                 core_id = atoi(range[0]);
                 /* get that object */
                 idx = 0;
-                if (NULL == (core = df_search(socket, obj_type, 0,
+                if (NULL == (core = df_search(topo, socket, obj_type, 0,
                                               core_id, OPAL_HWLOC_AVAILABLE,
                                               &idx, NULL))) {
                     return OPAL_ERR_NOT_FOUND;
@@ -861,7 +853,7 @@ static int socket_core_to_cpu_set(char *socket_core_list,
                 for (core_id=lower_range; core_id <= upper_range; core_id++) {
                     /* get that object */
                     idx = 0;
-                    if (NULL == (core = df_search(socket, obj_type, 0,
+                    if (NULL == (core = df_search(topo, socket, obj_type, 0,
                                                   core_id, OPAL_HWLOC_AVAILABLE,
                                                   &idx, NULL))) {
                         return OPAL_ERR_NOT_FOUND;

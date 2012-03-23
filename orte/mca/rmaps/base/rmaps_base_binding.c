@@ -343,7 +343,7 @@ static int bind_downwards(orte_job_t *jdata,
             /* get the number of cpus under this location */
             obj = opal_hwloc_base_get_obj_by_type(node->topology, target, cache_level,
                                                   idx, OPAL_HWLOC_AVAILABLE);
-            if (0 == (ncpus = opal_hwloc_base_get_npus(node->topology, obj))) {
+            if (NULL == obj || 0 == (ncpus = opal_hwloc_base_get_npus(node->topology, obj))) {
                 orte_show_help("help-orte-rmaps-base.txt", "rmaps:no-available-cpus", true, node->name);
                 free(nbound);
                 return ORTE_ERR_SILENT;
