@@ -231,121 +231,124 @@ static void dump_aborted_procs(void)
                     return;
                 }
                 switch (proc->exit_code) {
-                    case ORTE_ERR_SYS_LIMITS_PIPES:
-                        orte_show_help("help-orterun.txt", "orterun:sys-limit-pipe", true,
-                                       orte_basename, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                        case ORTE_ERR_PIPE_SETUP_FAILURE:
-                        orte_show_help("help-orterun.txt", "orterun:pipe-setup-failure", true,
-                                       orte_basename, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_SYS_LIMITS_CHILDREN:
-                        orte_show_help("help-orterun.txt", "orterun:sys-limit-children", true,
-                                       orte_basename, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_FAILED_GET_TERM_ATTRS:
-                        orte_show_help("help-orterun.txt", "orterun:failed-term-attrs", true,
-                                       orte_basename, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_WDIR_NOT_FOUND:
-                        orte_show_help("help-orterun.txt", "orterun:wdir-not-found", true,
-                                       orte_basename, approc->cwd,
-                                       proc->node->name, (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_EXE_NOT_FOUND:
-                        orte_show_help("help-orterun.txt", "orterun:exe-not-found", true,
-                                       orte_basename, 
-                                       (unsigned long)proc->name.vpid,
-                                       orte_basename, 
-                                       orte_basename, 
-                                       proc->node->name, 
-                                       approc->app);
-                        break;
-                    case ORTE_ERR_EXE_NOT_ACCESSIBLE:
-                        orte_show_help("help-orterun.txt", "orterun:exe-not-accessible", true,
-                                       orte_basename, approc->app, proc->node->name,
-                                       (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_MULTIPLE_AFFINITIES:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:multiple-paffinity-schemes", true, NULL);
-                        break;
-                    case ORTE_ERR_TOPO_SLOT_LIST_NOT_SUPPORTED:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:topo-not-supported", 
-                                       true, orte_process_info.nodename, "rankfile containing a slot_list of ", 
-                                       NULL, approc->app);
-                        break;
-                    case ORTE_ERR_INVALID_NODE_RANK:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:invalid-node-rank", true);
-                        break;
-                    case ORTE_ERR_INVALID_LOCAL_RANK:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:invalid-local-rank", true);
-                        break;
-                    case ORTE_ERR_NOT_ENOUGH_CORES:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:not-enough-resources", true,
-                                       "sockets", node->name,
-                                       "bind-to-core", approc->app);
-                        break;
-                    case ORTE_ERR_TOPO_CORE_NOT_SUPPORTED:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:topo-not-supported", 
-                                       true, node->name, "bind-to-core", "",
-                                       approc->app);
-                        break;
-                    case ORTE_ERR_INVALID_PHYS_CPU:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:invalid-phys-cpu", true);
-                        break;
-                    case ORTE_ERR_NOT_ENOUGH_SOCKETS:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:not-enough-resources", true,
-                                       "sockets", node->name,
-                                       "bind-to-socket", approc->app);
-                        break;
-                    case ORTE_ERR_TOPO_SOCKET_NOT_SUPPORTED:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:topo-not-supported", 
-                                       true, node->name, "bind-to-socket", "",
-                                       approc->app);
-                        break;
-                    case ORTE_ERR_MODULE_NOT_FOUND:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:paffinity-missing-module", 
-                                       true, node->name);
-                        break;
-                    case ORTE_ERR_SLOT_LIST_RANGE:
-                        orte_show_help("help-orterun.txt",
-                                       "orterun:invalid-slot-list-range", 
-                                       true, node->name, NULL);
-                        break;
-                    case ORTE_ERR_PIPE_READ_FAILURE:
-                        orte_show_help("help-orterun.txt", "orterun:pipe-read-failure", true,
-                                       orte_basename, node->name, (unsigned long)proc->name.vpid);
-                        break;
-                    case ORTE_ERR_SOCKET_NOT_AVAILABLE:
-                        orte_show_help("help-orterun.txt", "orterun:proc-socket-not-avail", true,
+                case ORTE_ERR_SILENT:
+                    /* say nothing - it was already reported */
+                    break;
+                case ORTE_ERR_SYS_LIMITS_PIPES:
+                    orte_show_help("help-orterun.txt", "orterun:sys-limit-pipe", true,
+                                   orte_basename, proc->node->name,
+                                   (unsigned long)proc->name.vpid);
+                    break;
+                case ORTE_ERR_PIPE_SETUP_FAILURE:
+                    orte_show_help("help-orterun.txt", "orterun:pipe-setup-failure", true,
+                                   orte_basename, proc->node->name,
+                                   (unsigned long)proc->name.vpid);
+                    break;
+                case ORTE_ERR_SYS_LIMITS_CHILDREN:
+                    orte_show_help("help-orterun.txt", "orterun:sys-limit-children", true,
+                                   orte_basename, proc->node->name,
+                                   (unsigned long)proc->name.vpid);
+                    break;
+                case ORTE_ERR_FAILED_GET_TERM_ATTRS:
+                    orte_show_help("help-orterun.txt", "orterun:failed-term-attrs", true,
+                                   orte_basename, proc->node->name,
+                                   (unsigned long)proc->name.vpid);
+                    break;
+                case ORTE_ERR_WDIR_NOT_FOUND:
+                    orte_show_help("help-orterun.txt", "orterun:wdir-not-found", true,
+                                   orte_basename, approc->cwd,
+                                   proc->node->name, (unsigned long)proc->name.vpid);
+                    break;
+                case ORTE_ERR_EXE_NOT_FOUND:
+                    orte_show_help("help-orterun.txt", "orterun:exe-not-found", true,
+                                   orte_basename, 
+                                   (unsigned long)proc->name.vpid,
+                                   orte_basename, 
+                                   orte_basename, 
+                                   proc->node->name, 
+                                   approc->app);
+                    break;
+                case ORTE_ERR_EXE_NOT_ACCESSIBLE:
+                    orte_show_help("help-orterun.txt", "orterun:exe-not-accessible", true,
+                                   orte_basename, approc->app, proc->node->name,
+                                   (unsigned long)proc->name.vpid);
+                    break;
+                case ORTE_ERR_MULTIPLE_AFFINITIES:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:multiple-paffinity-schemes", true, NULL);
+                    break;
+                case ORTE_ERR_TOPO_SLOT_LIST_NOT_SUPPORTED:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:topo-not-supported", 
+                                   true, orte_process_info.nodename, "rankfile containing a slot_list of ", 
+                                   NULL, approc->app);
+                    break;
+                case ORTE_ERR_INVALID_NODE_RANK:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:invalid-node-rank", true);
+                    break;
+                case ORTE_ERR_INVALID_LOCAL_RANK:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:invalid-local-rank", true);
+                    break;
+                case ORTE_ERR_NOT_ENOUGH_CORES:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:not-enough-resources", true,
+                                   "sockets", node->name,
+                                   "bind-to-core", approc->app);
+                    break;
+                case ORTE_ERR_TOPO_CORE_NOT_SUPPORTED:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:topo-not-supported", 
+                                   true, node->name, "bind-to-core", "",
+                                   approc->app);
+                    break;
+                case ORTE_ERR_INVALID_PHYS_CPU:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:invalid-phys-cpu", true);
+                    break;
+                case ORTE_ERR_NOT_ENOUGH_SOCKETS:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:not-enough-resources", true,
+                                   "sockets", node->name,
+                                   "bind-to-socket", approc->app);
+                    break;
+                case ORTE_ERR_TOPO_SOCKET_NOT_SUPPORTED:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:topo-not-supported", 
+                                   true, node->name, "bind-to-socket", "",
+                                   approc->app);
+                    break;
+                case ORTE_ERR_MODULE_NOT_FOUND:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:paffinity-missing-module", 
+                                   true, node->name);
+                    break;
+                case ORTE_ERR_SLOT_LIST_RANGE:
+                    orte_show_help("help-orterun.txt",
+                                   "orterun:invalid-slot-list-range", 
+                                   true, node->name, NULL);
+                    break;
+                case ORTE_ERR_PIPE_READ_FAILURE:
+                    orte_show_help("help-orterun.txt", "orterun:pipe-read-failure", true,
+                                   orte_basename, node->name, (unsigned long)proc->name.vpid);
+                    break;
+                case ORTE_ERR_SOCKET_NOT_AVAILABLE:
+                    orte_show_help("help-orterun.txt", "orterun:proc-socket-not-avail", true,
+                                   orte_basename, ORTE_ERROR_NAME(proc->exit_code), node->name,
+                                   (unsigned long)proc->name.vpid);
+                    break;
+
+                default:
+                    if (0 != proc->exit_code) {
+                        orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start", true,
                                        orte_basename, ORTE_ERROR_NAME(proc->exit_code), node->name,
                                        (unsigned long)proc->name.vpid);
-                        break;
-
-                    default:
-                        if (0 != proc->exit_code) {
-                            orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start", true,
-                                           orte_basename, ORTE_ERROR_NAME(proc->exit_code), node->name,
-                                           (unsigned long)proc->name.vpid);
-                        } else {
-                            orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start-no-status", true,
-                                           orte_basename, node->name);
-                        }
-                        break;
+                    } else {
+                        orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start-no-status", true,
+                                       orte_basename, node->name);
+                    }
+                    break;
                 }
             } else if (ORTE_JOB_STATE_ABORTED == job->state) {
                 if (NULL == proc) {
@@ -391,17 +394,17 @@ static void dump_aborted_procs(void)
                                ORTE_NAME_PRINT(&proc->name), node->name);
             } else if (ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED == job->state) {
                 switch (proc->exit_code) {
-                    case ORTE_ERR_MEM_LIMIT_EXCEEDED:
-                        orte_show_help("help-orterun.txt", "orterun:proc-mem-exceeded", true,
-                                       ORTE_NAME_PRINT(&proc->name), node->name);
-                        break;
-                    case ORTE_ERR_PROC_STALLED:
-                        orte_show_help("help-orterun.txt", "orterun:proc-stalled", true);
-                        break;
+                case ORTE_ERR_MEM_LIMIT_EXCEEDED:
+                    orte_show_help("help-orterun.txt", "orterun:proc-mem-exceeded", true,
+                                   ORTE_NAME_PRINT(&proc->name), node->name);
+                    break;
+                case ORTE_ERR_PROC_STALLED:
+                    orte_show_help("help-orterun.txt", "orterun:proc-stalled", true);
+                    break;
 
-                    default:
-                        orte_show_help("help-orterun.txt", "orterun:proc-sensor-exceeded", true);
-                        break;
+                default:
+                    orte_show_help("help-orterun.txt", "orterun:proc-sensor-exceeded", true);
+                    break;
                 }
             } else if (ORTE_JOB_STATE_CALLED_ABORT == job->state) {
                 orte_show_help("help-orterun.txt", "orterun:proc-called-abort", true,
