@@ -73,3 +73,11 @@ This is an error; your job will now abort.
   Local host:        %s
   Application name:  %s
   Action requested:  %s %s
+#
+[orte-odls-base:fork-agent-not-found]
+The specified fork agent was not found:
+
+  Node:        %s
+  Fork agent:  %s
+
+The application cannot be launched.

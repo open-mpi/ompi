@@ -1529,6 +1529,7 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                                        "orte-odls-base:xterm-rank-out-of-bounds",
                                        true, nm->name.vpid, jobdat->num_procs);
                         rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+                        child->exit_code = ORTE_ERR_SILENT;
                         goto CLEANUP;
                     }
                     
@@ -1551,8 +1552,11 @@ int orte_odls_base_default_launch_local(orte_jobid_t job,
                 free(app->app);
                 app->app = opal_path_findv(orte_fork_agent[0], X_OK, orte_launch_environ, NULL);
                 if (NULL == app->app) {
-                    opal_output(0, "%s CANNOT FIND FORK AGENT %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), orte_fork_agent[0]);
-                    rc = ORTE_ERR_NOT_FOUND;
+                    orte_show_help("help-orte-odls-base.txt",
+                                   "orte-odls-base:fork-agent-not-found",
+                                   true, orte_process_info.nodename, orte_fork_agent[0]);
+                    rc = ORTE_ERR_SILENT;
+                    child->exit_code = ORTE_ERR_SILENT;
                     goto CLEANUP;
                 }
             }
