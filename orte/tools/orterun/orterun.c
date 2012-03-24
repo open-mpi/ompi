@@ -1480,7 +1480,8 @@ static int create_app(int argc, char* argv[],
     orte_app_context_t *app = NULL;
     bool cmd_line_made = false;
     bool found = false;
-    
+    char *appname;
+
     *made_app = false;
 
     /* Pre-process the command line if we are going to parse an appfile later.
@@ -1796,7 +1797,8 @@ static int create_app(int argc, char* argv[],
      * and the "java" command will start the "executable". So we need to ensure
      * that all the proper java-specific paths are provided
      */
-    if (0 == strcmp(app->app, "java")) {
+    appname = opal_basename(app->app);
+    if (0 == strcmp(appname, "java")) {
         /* see if we were given a library path */
         found = false;
         for (i=0; NULL != app->argv[i]; i++) {
@@ -1884,6 +1886,7 @@ static int create_app(int argc, char* argv[],
             }
         }
     }
+    free(appname);
     if (orterun_globals.verbose) {
         value = opal_argv_join(app->argv, ' ');
         free(value);
