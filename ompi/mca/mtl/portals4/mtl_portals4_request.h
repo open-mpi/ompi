@@ -68,6 +68,7 @@ struct ompi_mtl_portals4_recv_request_t {
     struct opal_convertor_t *convertor;
     void *delivery_ptr;
     size_t delivery_len;
+    volatile bool req_started;
 #if OPAL_ENABLE_DEBUG
     int opcount;
     ptl_hdr_data_t hdr_data;

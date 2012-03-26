@@ -471,6 +471,7 @@ ompi_mtl_portals4_progress(void)
             case PTL_EVENT_AUTO_FREE:
             case PTL_EVENT_AUTO_UNLINK:
             case PTL_EVENT_SEARCH:
+            case PTL_EVENT_LINK:
                 if (NULL != ev.user_ptr) {
                     ptl_request = ev.user_ptr;
                     ret = ptl_request->event_callback(&ev, ptl_request);
@@ -497,14 +498,13 @@ ompi_mtl_portals4_progress(void)
 #endif
                 break;
 
-            case PTL_EVENT_LINK:
             case PTL_EVENT_GET_OVERFLOW:
             case PTL_EVENT_FETCH_ATOMIC:
             case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:
             case PTL_EVENT_ATOMIC:
             case PTL_EVENT_ATOMIC_OVERFLOW:
-                opal_output_verbose(1, ompi_mtl_base_output,
-                                    "Unexpected event of type %d", ev.type);
+                opal_output(ompi_mtl_base_output,
+                            "Unexpected event of type %d", ev.type);
             }
         } else if (PTL_EQ_EMPTY == ret) {
             break;
