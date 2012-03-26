@@ -65,13 +65,17 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                             struct ompi_proc_t** procs, 
                             struct mca_mtl_base_endpoint_t **mtl_peer_data)
 {
-    int ret;
+    int ret, me;
     size_t i;
 
     /* Get the list of ptl_process_id_t from the runtime and copy into structure */
     for (i = 0 ; i < nprocs ; ++i) {
         ptl_process_t *id;
         size_t size;
+
+        if( procs[i] == ompi_proc_local_proc ) {
+            me = i;
+        }
 
         if (procs[i]->proc_arch != ompi_proc_local()->proc_arch) {
             opal_output_verbose(1, ompi_mtl_base_output,
@@ -104,9 +108,19 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                                 __FILE__, __LINE__, ret);
             return OMPI_ERR_BAD_PARAM;
         }
-
+ 
         mtl_peer_data[i]->ptl_proc = *id;
     }
+
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    ret = ompi_mtl_portals4_flowctl_add_procs(me, nprocs, mtl_peer_data);
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d: flowctl_add_procs failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return ret;
+    }
+#endif
 
     return OMPI_SUCCESS;
 }
@@ -136,6 +150,9 @@ ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
     opal_progress_unregister(ompi_mtl_portals4_progress);
     while (0 != ompi_mtl_portals4_progress()) { }
 
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    ompi_mtl_portals4_flowctl_fini();
+#endif
     ompi_mtl_portals4_recv_short_fini();
 
     PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);

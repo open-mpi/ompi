@@ -87,7 +87,8 @@ ompi_mtl_portals4_component_open(void)
                            false,
                            false,
                            32,
-                           &ompi_mtl_portals4.recv_short_num);
+                           &tmp);
+    ompi_mtl_portals4.recv_short_num = tmp;
 
     mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
                            "short_recv_size",
@@ -99,15 +100,16 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.recv_short_size = tmp;
 
     mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
-                           "queue_size",
+                           "event_queue_size",
                            "Size of the event queue in entries",
                            false,
                            false,
                            1024,
-                           &ompi_mtl_portals4.queue_size);
+                           &tmp);
+    ompi_mtl_portals4.queue_size = tmp;
 
     mca_base_param_reg_string(&mca_mtl_portals4_component.mtl_version,
-                              "long_proto",
+                              "long_protocol",
                               "Protocol to use for long messages.  Valid entries are eager and rndv",
                               false,
                               false,
@@ -124,9 +126,11 @@ ompi_mtl_portals4_component_open(void)
     }
 
     opal_output_verbose(1, ompi_mtl_base_output,
-                        "Eager limit: %d", (int) ompi_mtl_portals4.eager_limit);
+                        "Eager limit: %d", (int) 
+                        ompi_mtl_portals4.eager_limit);
     opal_output_verbose(1, ompi_mtl_base_output, 
-                        "Short receive blocks: %d", ompi_mtl_portals4.recv_short_num);
+                        "Short receive blocks: %d", 
+                        ompi_mtl_portals4.recv_short_num);
     opal_output_verbose(1, ompi_mtl_base_output, 
                         "Queue size: %d", ompi_mtl_portals4.queue_size);
     opal_output_verbose(1, ompi_mtl_base_output, 
@@ -240,7 +244,11 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
                      PTL_PT_ONLY_USE_ONCE | 
                      PTL_PT_ONLY_TRUNCATE | 
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
                      PTL_PT_FLOWCTRL,
+#else
+                     0,
+#endif
                      ompi_mtl_portals4.recv_eq_h,
                      REQ_SEND_TABLE_ID,
                      &ompi_mtl_portals4.send_idx);
@@ -324,6 +332,29 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     ompi_mtl_portals4.recv_opcount = 0;
 #endif
 
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    ompi_mtl_portals4.send_queue_slots = ompi_mtl_portals4.queue_size - 4;
+
+    OBJ_CONSTRUCT(&ompi_mtl_portals4.active_sends, opal_list_t);
+    OBJ_CONSTRUCT(&ompi_mtl_portals4.pending_sends, opal_list_t);
+
+    ret = ompi_mtl_portals4_flowctl_init();
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d: ompi_mtl_portals4_flowctl_init failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    ret = ompi_mtl_portals4_flowctl_setup_comm();
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d: ompi_mtl_portals4_flowctl_setup_trees failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+#endif
+    
     /* activate progress callback */
     ret = opal_progress_register(ompi_mtl_portals4_progress);
     if (OMPI_SUCCESS != ret) {
@@ -452,30 +483,18 @@ ompi_mtl_portals4_progress(void)
                 break;
 
             case PTL_EVENT_PT_DISABLED:
-                /* catch up by draining rest of the queue */
-                ompi_mtl_portals4_progress();
-
-                /* get restarted */
-                if (ompi_mtl_portals4.send_idx == ev.pt_index) {
-                    /* make sure we have at least one active short receive block */
-                    ret = ompi_mtl_portals4_recv_short_link(1);
-                    if (OMPI_SUCCESS != ret) {
-                        opal_output(ompi_mtl_base_output,
-                                    "Unable to post short receive block after flow control.");
-                        abort();
-                    }
-                    ret = PtlPTEnable(ompi_mtl_portals4.ni_h,
-                                      ompi_mtl_portals4.send_idx);
-                    if (PTL_OK != ret) {
-                        opal_output_verbose(1, ompi_mtl_base_output,
-                                            "%s:%d: PtlPTEnable failed: %d\n",
-                                            __FILE__, __LINE__, ret);
-                        abort();
-                    }
-                } else {
-                    opal_output(ompi_mtl_base_output, "Unhandled send flow control event.");
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+                ret = ompi_mtl_portals4_flowctl_start_recover();
+                if (OMPI_SUCCESS != ret) {
+                    opal_output_verbose(1, ompi_mtl_base_output,
+                                        "%s:%d: PtlPTEnable failed: %d\n",
+                                        __FILE__, __LINE__, ret);
                     abort();
                 }
+#else
+                opal_output(ompi_mtl_base_output, "Unhandled flow control event.");
+                abort();
+#endif
                 break;
 
             case PTL_EVENT_LINK:
