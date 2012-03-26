@@ -197,9 +197,7 @@ typedef int (*mca_mtl_base_module_del_procs_fn_t)(
  * \note Open MPI is built around non-blocking operations.  This
  * function is provided for networks where progressing events outside
  * of point-to-point (for example, collectives, I/O, one-sided) can
- * occur without a progress function regularily being triggered.  If
- * this is not the case for the given network, this function pointer
- * should be set to NULL and non-blocking sends be used.
+ * occur without a progress function regularily being triggered.
  *
  * \note While MPI does not allow users to specify negative tags, they
  * are used internally in Open MPI to provide a unique channel for
@@ -239,9 +237,8 @@ typedef int (*mca_mtl_base_module_send_fn_t)(
  * @param mode (IN)      Mode for send operation (see pml.h)
  * @param blocking (IN)  True if the call originated from a blocking 
  *                       call, but the PML decided to use a 
- *                       non-blocking operation.  This is either for
- *                       internal performance decisions or because the
- *                       blocking send function is NULL.  This is an
+ *                       non-blocking operation, likely for
+ *                       internal performance decisions This is an
  *                       optimization flag and is not needed for
  *                       correctness.
  * @param mtl_request (IN) Pointer to mtl_request.  The ompi_req field

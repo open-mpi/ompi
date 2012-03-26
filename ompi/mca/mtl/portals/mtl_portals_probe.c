@@ -56,3 +56,16 @@ ompi_mtl_portals_iprobe(struct mca_mtl_base_module_t* mtl,
 
     return OMPI_SUCCESS;
 }
+
+
+int
+ompi_mtl_portals_improbe(struct mca_mtl_base_module_t *mtl,
+                         struct ompi_communicator_t *comm,
+                         int src,
+                         int tag,
+                         int *matched,
+                         struct ompi_message_t **message,
+                         struct ompi_status_public_t *status)
+{
+    return OMPI_ERR_NOT_IMPLEMENTED;
+}

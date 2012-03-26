@@ -218,9 +218,28 @@ extern int ompi_mtl_portals_iprobe(struct mca_mtl_base_module_t* mtl,
                           int *flag,
                           struct ompi_status_public_t *status);
 
+extern int ompi_mtl_portals_imrecv(struct mca_mtl_base_module_t* mtl,
+                                   struct opal_convertor_t *convertor,
+                                   struct ompi_message_t **message,
+                                   struct mca_mtl_request_t *mtl_request);
+
+extern int ompi_mtl_portals_improbe(struct mca_mtl_base_module_t *mtl,
+                                    struct ompi_communicator_t *comm,
+                                    int src,
+                                    int tag,
+                                    int *matched,
+                                    struct ompi_message_t **message,
+                                    struct ompi_status_public_t *status);
+
 extern int ompi_mtl_portals_cancel(struct mca_mtl_base_module_t* mtl,
-                          mca_mtl_request_t *mtl_request,
-                          int flag);
+                                   mca_mtl_request_t *mtl_request,
+                                   int flag);
+
+extern int ompi_mtl_portals_add_comm(struct mca_mtl_base_module_t *mtl,
+                                     struct ompi_communicator_t *comm);
+
+extern int ompi_mtl_portals_del_comm(struct mca_mtl_base_module_t *mtl,
+                                     struct ompi_communicator_t *comm);
 
 extern int ompi_mtl_portals_progress(void);
 

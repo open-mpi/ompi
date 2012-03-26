@@ -40,3 +40,15 @@ int ompi_mtl_mxm_iprobe(struct mca_mtl_base_module_t* mtl,
         return OMPI_ERROR;
     }
 }
+
+
+int ompi_mtl_mxm_improbe(struct mca_mtl_base_module_t *mtl,
+                         struct ompi_communicator_t *comm,
+                         int src,
+                         int tag,
+                         int *matched,
+                         struct ompi_message_t **message,
+                         struct ompi_status_public_t *status)
+{
+    return OMPI_ERR_NOT_IMPLEMENTED;
+}

@@ -58,6 +58,19 @@ extern int ompi_mtl_mx_iprobe(struct mca_mtl_base_module_t* mtl,
                               int *flag,
                               struct ompi_status_public_t *status);
 
+extern int ompi_mtl_mx_imrecv(struct mca_mtl_base_module_t* mtl,
+                              struct opal_convertor_t *convertor,
+                              struct ompi_message_t **message,
+                              struct mca_mtl_request_t *mtl_request);
+
+extern int ompi_mtl_mx_improbe(struct mca_mtl_base_module_t *mtl,
+                               struct ompi_communicator_t *comm,
+                               int src,
+                               int tag,
+                               int *matched,
+                               struct ompi_message_t **message,
+                               struct ompi_status_public_t *status);
+
 extern int ompi_mtl_mx_cancel(struct mca_mtl_base_module_t* mtl,
                               struct mca_mtl_request_t *mtl_request, 
                               int flag);

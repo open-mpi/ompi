@@ -178,8 +178,8 @@ mca_pml_cm_component_init(int* priority,
 static int
 mca_pml_cm_component_fini(void)
 {
-    if (NULL != ompi_mtl && NULL != ompi_mtl->mtl_finalize) {
-        return ompi_mtl->mtl_finalize(ompi_mtl);
+    if (NULL != ompi_mtl) {
+        return OMPI_MTL_CALL(finalize(ompi_mtl));
     }
 
     return OMPI_SUCCESS;

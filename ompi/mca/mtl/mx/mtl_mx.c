@@ -41,6 +41,14 @@ ompi_mtl_mx_del_procs(struct mca_mtl_base_module_t *mtl,
                       struct ompi_proc_t** procs, 
                       struct mca_mtl_base_endpoint_t **mtl_peer_data);
 
+static int
+ompi_mtl_mx_add_comm(struct mca_mtl_base_module_t *mtl,
+                     struct ompi_communicator_t *comm);
+
+static int
+ompi_mtl_mx_del_comm(struct mca_mtl_base_module_t *mtl,
+                     struct ompi_communicator_t *comm);
+
 mca_mtl_mx_module_t ompi_mtl_mx = {
     {
         8191,        /* max cid - 2^13 - 1 */
@@ -58,12 +66,12 @@ mca_mtl_mx_module_t ompi_mtl_mx = {
         
         ompi_mtl_mx_irecv,
         ompi_mtl_mx_iprobe,
-        NULL, /* imrecv */
-        NULL, /* improbe */
+        ompi_mtl_mx_imrecv,
+        ompi_mtl_mx_improbe,
         
         ompi_mtl_mx_cancel,
-        NULL, /* add_comm */
-        NULL  /* del_comm */ 
+        ompi_mtl_mx_add_comm,
+        ompi_mtl_mx_del_comm
     }    
 };
 
@@ -189,6 +197,20 @@ ompi_mtl_mx_del_procs(struct mca_mtl_base_module_t *mtl,
     return OMPI_SUCCESS;
 }
 
+
+int
+ompi_mtl_mx_add_comm(struct mca_mtl_base_module_t *mtl,
+                     struct ompi_communicator_t *comm)
+{
+    return OMPI_SUCCESS;
+}
+
+int
+ompi_mtl_mx_del_comm(struct mca_mtl_base_module_t *mtl,
+                     struct ompi_communicator_t *comm)
+{
+    return OMPI_SUCCESS;
+}
 
 
 int ompi_mtl_mx_progress( void ) { 
