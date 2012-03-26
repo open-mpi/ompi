@@ -25,8 +25,17 @@
 
 struct ompi_mtl_portals4_message_t;
 
+typedef enum { portals4_req_isend,
+               portals4_req_send,
+               portals4_req_recv,
+               portals4_req_probe,
+               portals4_req_recv_short
+} ompi_mtl_portals4_request_type_t;
+
+
 struct ompi_mtl_portals4_base_request_t {
     struct mca_mtl_request_t super;
+    ompi_mtl_portals4_request_type_t type;
     int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals4_base_request_t*);
 };
 typedef struct ompi_mtl_portals4_base_request_t ompi_mtl_portals4_base_request_t;
@@ -41,6 +50,7 @@ struct ompi_mtl_portals4_isend_request_t {
     int opcount;
 };
 typedef struct ompi_mtl_portals4_isend_request_t ompi_mtl_portals4_isend_request_t;
+
 
 struct ompi_mtl_portals4_send_request_t {
     ompi_mtl_portals4_isend_request_t super;
@@ -66,6 +76,13 @@ struct ompi_mtl_portals4_recv_request_t {
 typedef struct ompi_mtl_portals4_recv_request_t ompi_mtl_portals4_recv_request_t;
 
 
+struct ompi_mtl_portals4_recv_short_request_t {
+    ompi_mtl_portals4_base_request_t super;
+    struct ompi_mtl_portals4_recv_short_block_t *block;
+};
+typedef struct ompi_mtl_portals4_recv_short_request_t ompi_mtl_portals4_recv_short_request_t;
+
+
 struct ompi_mtl_portals4_probe_request_t {
     ompi_mtl_portals4_base_request_t super;
     volatile int req_complete;
@@ -75,18 +92,14 @@ struct ompi_mtl_portals4_probe_request_t {
 };
 typedef struct ompi_mtl_portals4_probe_request_t ompi_mtl_portals4_probe_request_t;
 
-struct ompi_mtl_portals4_recv_short_request_t {
-    ompi_mtl_portals4_base_request_t super;
-    struct ompi_mtl_portals4_recv_short_block_t *block;
-};
-typedef struct ompi_mtl_portals4_recv_short_request_t ompi_mtl_portals4_recv_short_request_t;
 
 struct ompi_mtl_portals4_request_t {
     union {
+        ompi_mtl_portals4_isend_request_t isend;
         ompi_mtl_portals4_send_request_t send;
         ompi_mtl_portals4_recv_request_t recv;
-        ompi_mtl_portals4_probe_request_t probe;
         ompi_mtl_portals4_recv_short_request_t recv_short;
+        ompi_mtl_portals4_probe_request_t probe;
     } u;
 };
 typedef struct ompi_mtl_portals4_request_t ompi_mtl_portals4_request_t;

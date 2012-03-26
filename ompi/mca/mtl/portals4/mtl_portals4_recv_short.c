@@ -75,6 +75,7 @@ ompi_mtl_portals4_recv_short_block_alloc(bool release_on_free)
 
     block->me_h = PTL_INVALID_HANDLE;
     block->request.block = block;
+    block->request.super.type = portals4_req_recv_short;
     block->request.super.event_callback = ompi_mtl_portals4_recv_block_progress;
     block->release_on_free = release_on_free;
 

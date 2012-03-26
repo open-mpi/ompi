@@ -486,6 +486,7 @@ ompi_mtl_portals4_start_send(struct mca_mtl_base_module_t* mtl,
     return OMPI_SUCCESS;
 }
 
+
 int
 ompi_mtl_portals4_send(struct mca_mtl_base_module_t* mtl,
                        struct ompi_communicator_t* comm,
@@ -499,6 +500,7 @@ ompi_mtl_portals4_send(struct mca_mtl_base_module_t* mtl,
 
     ptl_request.complete = false;
     ptl_request.retval = OMPI_SUCCESS;
+    ptl_request.super.super.type = portals4_req_send;
     ptl_request.super.super.event_callback = ompi_mtl_portals4_send_callback;
 
     ret = ompi_mtl_portals4_start_send(mtl, comm, dest, tag,
@@ -519,7 +521,6 @@ ompi_mtl_portals4_send(struct mca_mtl_base_module_t* mtl,
 }
 
 
-
 int
 ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
                         struct ompi_communicator_t* comm,
@@ -533,6 +534,7 @@ ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
     int ret = OMPI_SUCCESS;
     ompi_mtl_portals4_isend_request_t *ptl_request = (ompi_mtl_portals4_isend_request_t*)mtl_request;
 
+    ptl_request->super.type = portals4_req_isend;
     ptl_request->super.event_callback = ompi_mtl_portals4_isend_callback;
 
     ret = ompi_mtl_portals4_start_send(mtl, comm, dest, tag,
