@@ -52,12 +52,11 @@ mca_mtl_portals_module_t ompi_mtl_portals = {
         ompi_mtl_portals_isend,
         ompi_mtl_portals_irecv,
         ompi_mtl_portals_iprobe,
-        NULL, /* imrecv */
-        NULL, /* improbe */
-
-        NULL,       /* cancel */
-        NULL,       /* add_comm */
-        NULL        /* del_comm */
+        ompi_mtl_portals_imrecv,
+        ompi_mtl_portals_improbe,
+        ompi_mtl_portals_cancel,
+        ompi_mtl_portals_add_comm,
+        ompi_mtl_portals_del_comm
     }
 };
 
@@ -337,6 +336,32 @@ ompi_mtl_portals_finalize(struct mca_mtl_base_module_t *mtl)
     ompi_common_portals_ni_finalize();
     ompi_common_portals_finalize();
 
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_mtl_portals_cancel(struct mca_mtl_base_module_t* mtl,
+                        mca_mtl_request_t *mtl_request,
+                        int flag)
+{
+    return OMPI_SUCCESS;
+}
+
+
+
+int
+ompi_mtl_portals_add_comm(struct mca_mtl_base_module_t *mtl,
+                          struct ompi_communicator_t *comm)
+{
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_mtl_portals_del_comm(struct mca_mtl_base_module_t *mtl,
+                          struct ompi_communicator_t *comm)
+{
     return OMPI_SUCCESS;
 }
 

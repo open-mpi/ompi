@@ -137,8 +137,6 @@ mca_pml_cm_imrecv(void *buf,
     ompi_communicator_t *comm = (*message)->comm;
     int peer = (*message)->peer;
 
-    if (NULL == ompi_mtl->mtl_imrecv) return OMPI_ERR_NOT_IMPLEMENTED;
-    
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, ret);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) return ret;
     
@@ -171,8 +169,6 @@ mca_pml_cm_mrecv(void *buf,
     ompi_communicator_t *comm = (*message)->comm;
     int peer = (*message)->peer;
 
-    if (NULL == ompi_mtl->mtl_imrecv) return OMPI_ERR_NOT_IMPLEMENTED;
-    
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, ret);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) return ret;
 

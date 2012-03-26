@@ -55,8 +55,6 @@ mca_pml_cm_improbe(int src,
                    struct ompi_message_t **message,
                    ompi_status_public_t* status)
 {
-    if (NULL == ompi_mtl->mtl_improbe) return OMPI_ERR_NOT_IMPLEMENTED;
-
     return OMPI_MTL_CALL(improbe(ompi_mtl,
                                  comm, src, tag,
                                  matched, message,
@@ -72,8 +70,6 @@ mca_pml_cm_mprobe(int src,
                   ompi_status_public_t* status)
 {
     int ret, matched = 0;
-
-    if (NULL == ompi_mtl->mtl_improbe) return OMPI_ERR_NOT_IMPLEMENTED;
 
     while (true) {
         ret = OMPI_MTL_CALL(improbe(ompi_mtl,

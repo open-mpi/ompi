@@ -84,3 +84,11 @@ int ompi_mtl_mxm_irecv(struct mca_mtl_base_module_t* mtl,
     return OMPI_SUCCESS;
 }
 
+
+int ompi_mtl_mxm_imrecv(struct mca_mtl_base_module_t* mtl,
+                        struct opal_convertor_t *convertor,
+                        struct ompi_message_t **message,
+                        struct mca_mtl_request_t *mtl_request)
+{
+    return OMPI_ERR_NOT_IMPLEMENTED;
+}
