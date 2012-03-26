@@ -56,6 +56,8 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             goto callback_error;
         }
 
+        ptl_request->me_h = PTL_INVALID_HANDLE;
+
         msg_length = MTL_PORTALS4_GET_LENGTH(ev->hdr_data);
         ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
             MTL_PORTALS4_GET_SOURCE(ev->match_bits);
@@ -178,6 +180,8 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                                 __FILE__, __LINE__, ev->ni_fail_type);
             goto callback_error;
         }
+
+        ptl_request->me_h = PTL_INVALID_HANDLE;
 
         msg_length = MTL_PORTALS4_GET_LENGTH(ev->hdr_data);
         ptl_request->super.super.ompi_req->req_status.MPI_SOURCE =
