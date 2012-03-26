@@ -44,6 +44,10 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         (ompi_mtl_portals4_recv_request_t*) ptl_base_request;
     size_t msg_length = 0;
 
+    /* as soon as we've seen any event associated with a request, it's
+       started */
+    ptl_request->req_started = true;
+
     switch (ev->type) {
     case PTL_EVENT_PUT:
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) got put event",
@@ -295,6 +299,9 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
 
         break;
 
+    case PTL_EVENT_LINK:
+        break;
+
     default:
         opal_output_verbose(1, ompi_mtl_base_output,
                             "Unhandled receive callback with event type %d",
@@ -358,6 +365,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->convertor = convertor;
     ptl_request->delivery_ptr = start;
     ptl_request->delivery_len = length;
+    ptl_request->req_started = false;
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
@@ -374,8 +382,10 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     me.options = 
         PTL_ME_OP_PUT | 
         PTL_ME_USE_ONCE | 
-        PTL_ME_EVENT_LINK_DISABLE | /* BWB: FIX ME */
         PTL_ME_EVENT_UNLINK_DISABLE;
+    if (length <= ompi_mtl_portals4.eager_limit) {
+        me.options |= PTL_ME_EVENT_LINK_DISABLE;
+    }
     me.match_id = remote_proc;
     me.match_bits = match_bits;
     me.ignore_bits = ignore_bits;
@@ -392,6 +402,16 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
                             "%s:%d: PtlMEAppend failed: %d",
                             __FILE__, __LINE__, ret);
         return ompi_mtl_portals4_get_error(ret);
+    }
+
+    /* if a long message, spin until we either have a comm event or a
+       link event, guaranteeing progress for long unexpected
+       messages. */
+    if (length > ompi_mtl_portals4.eager_limit) {
+        while (true != ptl_request->req_started) {
+            ompi_mtl_portals4_progress();
+            opal_atomic_rmb();
+        }
     }
 
     return OMPI_SUCCESS; 
