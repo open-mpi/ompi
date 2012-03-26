@@ -91,6 +91,7 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
     me.match_bits = match_bits;
     me.ignore_bits = ignore_bits;
 
+    request.super.type = portals4_req_probe;
     request.super.event_callback = completion_fn;
     request.req_complete = 0;
     request.found_match = 0;
@@ -164,6 +165,7 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
     me.match_bits = match_bits;
     me.ignore_bits = ignore_bits;
 
+    request.super.type = portals4_req_probe;
     request.super.event_callback = completion_fn;
     request.req_complete = 0;
     request.found_match = 0;

@@ -29,7 +29,6 @@
 
 #include "mtl_portals4.h"
 #include "mtl_portals4_endpoint.h"
-#include "mtl_portals4_request.h"
 #include "mtl_portals4_recv_short.h"
 
 extern mca_mtl_base_component_2_0_0_t mca_mtl_portals4_component;
@@ -166,16 +165,6 @@ ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
 
     return OMPI_SUCCESS;
 }
-
-
-int
-ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,
-                         mca_mtl_request_t *mtl_request,
-                         int flag)
-{
-    return OMPI_SUCCESS;
-}
-
 
 
 int

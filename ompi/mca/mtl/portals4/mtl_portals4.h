@@ -28,7 +28,6 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 
-#include "mtl_portals4_request.h"
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
 #include "mtl_portals4_flowctl.h"
 #endif

@@ -344,11 +344,12 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
         return ret;
     }
 
+    ptl_request->super.type = portals4_req_recv;
+    ptl_request->super.event_callback = ompi_mtl_portals4_recv_progress;
 #if OPAL_ENABLE_DEBUG
     ptl_request->opcount = ++ompi_mtl_portals4.recv_opcount;
     ptl_request->hdr_data = 0;
 #endif
-    ptl_request->super.event_callback = ompi_mtl_portals4_recv_progress;
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
     ptl_request->convertor = convertor;
     ptl_request->delivery_ptr = start;
@@ -417,6 +418,7 @@ ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->opcount = ++ompi_mtl_portals4.recv_opcount;
     ptl_request->hdr_data = 0;
 #endif
+    ptl_request->super.type = portals4_req_recv;
     ptl_request->super.event_callback = ompi_mtl_portals4_recv_progress;
     ptl_request->buffer_ptr = (free_after) ? start : NULL;
     ptl_request->convertor = convertor;
