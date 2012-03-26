@@ -39,6 +39,23 @@ AC_DEFUN([MCA_ompi_mtl_portals4_CONFIG],[
     AS_IF([test "$DIRECT_mtl" = "portals4"],
           [CPPFLAGS="$CPPFLAGS $mtl_portals4_CPPFLAGS"])
 
+    AC_ARG_ENABLE([mtl-portals4-flow-control],
+       [AC_HELP_STRING([--enable-mtl-portals4-flow-control],
+           [enable flow control for Portals 4 MTL (default: disabled)])])
+    AC_MSG_CHECKING([whether to enable flow control])
+    if test "$enable_mtl_portals4_flow_control" = "yes"; then
+        AC_MSG_RESULT([yes])
+        mtl_portals4_flow_control_enabled=1
+    else
+        AC_MSG_RESULT([no])
+        mtl_portals4_flow_control_enabled=0
+    fi
+    AC_DEFINE_UNQUOTED([OMPI_MTL_PORTALS4_FLOW_CONTROL],
+        [$mtl_portals4_flow_control_enabled],
+        [Enable flow control for Portals4 MTL])
+    AM_CONDITIONAL([OMPI_MTL_PORTALS4_FLOW_CONTROL],
+        [test "$mtl_portals4_flow_control_enabled" = "1"])
+
     # substitute in the things needed to build portals4
     AC_SUBST([mtl_portals4_CPPFLAGS])
     AC_SUBST([mtl_portals4_LDFLAGS])

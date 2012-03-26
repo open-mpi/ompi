@@ -46,6 +46,12 @@ local_sources = \
 	mtl_portals4_request.h \
 	mtl_portals4_send.c
 
+if OMPI_MTL_PORTALS4_FLOW_CONTROL
+local_sources += \
+	mtl_portals4_flowctl.h \
+	mtl_portals4_flowctl.c
+endif
+
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_mtl_portals4_la_SOURCES = $(local_sources)

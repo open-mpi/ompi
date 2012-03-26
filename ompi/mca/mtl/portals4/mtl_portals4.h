@@ -22,15 +22,16 @@
 
 #include <portals4.h>
 
-#include "ompi_config.h"
+#include "opal/class/opal_free_list.h"
 #include "opal/class/opal_list.h"
-#include "ompi/class/ompi_free_list.h"
+#include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "opal/datatype/opal_convertor.h"
-#include "opal/class/opal_free_list.h"
 
 #include "mtl_portals4_request.h"
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+#include "mtl_portals4_flowctl.h"
+#endif
 
 BEGIN_C_DECLS
 
@@ -39,36 +40,80 @@ struct mca_mtl_portals4_send_request_t;
 struct mca_mtl_portals4_module_t {
     mca_mtl_base_module_t base;
 
-    /* configuration */
+    /** Eager limit; messages greater than this use a rendezvous protocol */
     size_t eager_limit;
+    /** Size of short message blocks */
     size_t recv_short_size;
+    /** Number of short message blocks which should be created during startup */
     int recv_short_num;
+    /** Length of both the receive and send event queues */
     int queue_size;
+    /** Protocol for long message transfer */
+    enum { eager, rndv } protocol;
 
+    /* free list of message for matched probe */
     opal_free_list_t fl_message;
 
-    ptl_pt_index_t send_idx;
-    ptl_pt_index_t read_idx;
-
-    /* global handles */
+    /** Network interface handle for matched interface */
     ptl_handle_ni_t ni_h;
+
+    /** portals index for message matching */
+    ptl_pt_index_t send_idx;
+    /** portals index for long message rendezvous */
+    ptl_pt_index_t read_idx;
+    /** portals index for flow control recovery */
+    ptl_pt_index_t flowctl_idx;
+    /** portals index for flow control recovery operatings which
+        generate full events */
+    ptl_pt_index_t flowctl_event_idx;
+
+    /** Event queue handles.  See send_eq_h and recv_eq_h defines for
+        usage.  Array for PtlEQPoll */
     ptl_handle_eq_t eqs_h[2];
 
-    /* for zero-length sends and acks */
+    /** MD for zero-length sends and acks.  Optimization, can be
+        reused anywhere a 0-byte ping is necessary */
     ptl_handle_md_t zero_md_h;
-    /* long message receive overflow */
+
+    /** long message receive overflow ME.  Persistent ME, first in
+        overflow list on the send_idx portal table. */
     ptl_handle_me_t long_overflow_me_h;
 
+    /** List of active short receive blocks.  Active means that the ME
+        was posted to the overflow list and the UNLINK event has not
+        yet been received. */
     opal_list_t active_recv_short_blocks;
+
+    /** List of short receive blocks waiting for FREE event.  Blocks
+        are added to this list when the UNLINK event has been
+        received and removed when the FREE event is received. */
     opal_list_t waiting_recv_short_blocks;
 
-    /* number of operations started */
+    /** number of send-side operations started */
     uint32_t opcount;
-#if OPAL_ENABLE_DEBUG
-    uint32_t recv_opcount;
+
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    /** Number of event slots available for send side operations.
+        Note that this is slightly smaller than the event queue size
+        to allow space for flow control related events. */
+    uint32_t send_queue_slots;
+
+    /** free list of send items */
+    opal_free_list_t send_fl;
+    /** list of sends which are pending (either due to needing to
+       retransmit or because we're in flow control recovery */
+    opal_list_t pending_sends;
+    /** list of sends which are currently active */
+    opal_list_t active_sends;
+
+    ompi_mtl_portals4_flowctl_t flowctl;
 #endif
 
-    enum { eager, rndv } protocol;
+#if OPAL_ENABLE_DEBUG
+    /** number of receive-side operations started.  Used only for
+        debugging */
+    uint32_t recv_opcount;
+#endif
 };
 typedef struct mca_mtl_portals4_module_t mca_mtl_portals4_module_t;
 
@@ -81,6 +126,12 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 #define REQ_READ_TABLE_ID    3
 #define REQ_FLOWCTL_TABLE_ID 4
 
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+#define MTL_PORTALS4_FLOWCTL_TRIGGER 0x01
+#define MTL_PORTALS4_FLOWCTL_ALERT   0x02
+#define MTL_PORTALS4_FLOWCTL_FANIN   0x03
+#define MTL_PORTALS4_FLOWCTL_FANOUT  0x04
+#endif
 
 /* match/ignore bit manipulation
  *
