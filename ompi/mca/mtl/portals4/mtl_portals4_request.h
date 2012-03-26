@@ -32,13 +32,20 @@ struct ompi_mtl_portals4_base_request_t {
 typedef struct ompi_mtl_portals4_base_request_t ompi_mtl_portals4_base_request_t;
 
 
-struct ompi_mtl_portals4_send_request_t {
+struct ompi_mtl_portals4_isend_request_t {
     ompi_mtl_portals4_base_request_t super;
     void *buffer_ptr;
     ptl_handle_md_t md_h;
     ptl_handle_me_t me_h;
     volatile int event_count;
     int opcount;
+};
+typedef struct ompi_mtl_portals4_isend_request_t ompi_mtl_portals4_isend_request_t;
+
+struct ompi_mtl_portals4_send_request_t {
+    ompi_mtl_portals4_isend_request_t super;
+    int retval;
+    volatile int complete;
 };
 typedef struct ompi_mtl_portals4_send_request_t ompi_mtl_portals4_send_request_t;
 

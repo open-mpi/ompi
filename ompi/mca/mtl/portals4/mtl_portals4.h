@@ -231,6 +231,13 @@ extern int ompi_mtl_portals4_del_procs(struct mca_mtl_base_module_t* mtl,
                                        struct ompi_proc_t** procs, 
                                        struct mca_mtl_base_endpoint_t **mtl_peer_data);
 
+extern int ompi_mtl_portals4_send(struct mca_mtl_base_module_t* mtl,
+                                  struct ompi_communicator_t* comm,
+                                  int dest,
+                                  int tag,
+                                  struct opal_convertor_t *convertor,
+                                  mca_pml_base_send_mode_t mode);
+
 extern int ompi_mtl_portals4_isend(struct mca_mtl_base_module_t* mtl,
                                    struct ompi_communicator_t* comm,
                                    int dest,

@@ -45,7 +45,7 @@ mca_mtl_portals4_module_t ompi_mtl_portals4 = {
         ompi_mtl_portals4_del_procs,
         ompi_mtl_portals4_finalize,
 
-        NULL, /* send */
+        ompi_mtl_portals4_send,
         ompi_mtl_portals4_isend,
         ompi_mtl_portals4_irecv,
         ompi_mtl_portals4_iprobe,
