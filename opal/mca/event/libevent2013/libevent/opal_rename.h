@@ -3,6 +3,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c)      2012 UT-Battelle, LLC. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -369,6 +371,15 @@ extern "C" {
 #define evsig_dealloc                                        opal_libevent2013_evsig_dealloc
 #define evsig_init                                           opal_libevent2013_evsig_init
 #define evsig_process                                        opal_libevent2013_evsig_process
+
+/* eventop */
+#define evportops                                            opal_libevent2013_evportops
+#define selectops                                            opal_libevent2013_selectops
+#define pollops                                              opal_libevent2013_pollops
+#define epollops                                             opal_libevent2013_epollops
+#define kqops                                                opal_libevent2013_kqops
+#define devpollops                                           opal_libevent2013_devpollops
+#define win32ops                                             opal_libevent2013_win32ops
 
 #ifdef __cplusplus
 }
