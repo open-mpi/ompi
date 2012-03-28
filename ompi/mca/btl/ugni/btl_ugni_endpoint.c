@@ -137,6 +137,16 @@ static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
     return OMPI_SUCCESS;
 }
 
+static void mca_btl_ugni_retry_send (ompi_common_ugni_post_desc_t *desc, int rc)
+{
+    mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
+
+    rc = mca_btl_ugni_send (&frag->endpoint->btl->super, frag->endpoint, &frag->base, frag->hdr.send.tag);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        opal_list_append (&frag->endpoint->btl->failed_frags, (opal_list_item_t *) frag);
+    }
+}
+
 static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
     opal_list_item_t *item;
     int rc;
@@ -168,8 +178,11 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
     /* post pending sends */
     while (NULL != (item = opal_list_remove_first (&ep->pending_list))) {
         mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) item;
-
-        (void) mca_btl_ugni_send (&ep->btl->super, ep, &frag->base, frag->hdr.send.tag);
+        rc = mca_btl_ugni_send (&ep->btl->super, ep, &frag->base, frag->hdr.send.tag);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            frag->post_desc.cbfunc = mca_btl_ugni_retry_send;
+            opal_list_append (&ep->btl->failed_frags, (opal_list_item_t *) frag);
+        }
     }
 
     return OMPI_SUCCESS;
