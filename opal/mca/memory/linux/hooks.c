@@ -744,7 +744,7 @@ static void opal_memory_linux_malloc_init_hook(void)
        check for the environment markers that we're in a FAKEROOT.
        And if so, return immediately. */
     if (getenv("FAKEROOTKEY") != NULL ||
-        getenv("FAKE_ROOT_MODE") != NULL) {
+        getenv("FAKED_MODE") != NULL) {
         return;
     }
 
