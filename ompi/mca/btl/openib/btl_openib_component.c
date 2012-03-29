@@ -98,7 +98,6 @@ const char *ibv_get_sysfs_path(void);
 #include "btl_openib_ip.h"
 #include "ompi/runtime/params.h"
 
-#include "opal/mca/memory/linux/malloc.h"
 /*
  * Local functions
  */
@@ -107,12 +106,11 @@ static int btl_openib_component_open(void);
 static int btl_openib_component_close(void);
 static mca_btl_base_module_t **btl_openib_component_init(int*, bool, bool);
 static int btl_openib_component_progress(void);
+
 /*
  * Local variables
  */
 static mca_btl_openib_device_t *receive_queues_device = NULL;
-static int btl_openib_use_memalign;
-void *__previous_malloc_hook;
 
 mca_btl_openib_component_t mca_btl_openib_component = {
     {
@@ -170,30 +168,6 @@ static int btl_openib_component_register(void)
     return OMPI_SUCCESS;
 }
 
-
-/*This is a memory allocator hook from ptmalloc. The purpose of this is to make
- * every malloc aligned since this speeds up IB HCA work.
- * */
-
-static void *btl_openib_malloc_hook(size_t sz,  const __malloc_ptr_t caller)
-{
-    return opal_memory_linux_memalign_hook(btl_openib_use_memalign,sz,caller);
-}
-
-/*Set the malloc hook and save the previous malloc
- * */
-static void set_openib_malloc_hook()
-{
-    __previous_malloc_hook = __malloc_hook;
-    __malloc_hook = btl_openib_malloc_hook;
-}
-/*Restore the initial malloc hook
- * */
-static void unset_openib_malloc_hook()
-{
-    __malloc_hook = __previous_malloc_hook;
-}
-
 /*
  *  Called by MCA framework to open the component
  */
@@ -207,18 +181,6 @@ static int btl_openib_component_open(void)
     OBJ_CONSTRUCT(lock, opal_mutex_t);
     OBJ_CONSTRUCT(srq_addr_table, opal_hash_table_t);
 #endif
-    mca_base_param_reg_int(&mca_btl_openib_component.super.btl_version,
-            "memalign", "[64 | 32 | 0] - Enable (64bit or 32bit)/Disable(0) memory alignment for all malloc calls if btl openib is used (default 32)",
-            false, false, 32, &btl_openib_use_memalign);
-
-    if (btl_openib_use_memalign == 32 || btl_openib_use_memalign == 64){
-        set_openib_malloc_hook();
-    }
-    else if (btl_openib_use_memalign != 0){
-        BTL_ERROR(("Wrong btl_openib_memalign parameter value: %i. Allowed values: 64, 32, 0. Default value (32) is used.", btl_openib_use_memalign));
-        btl_openib_use_memalign = 32;
-        set_openib_malloc_hook();
-    }
 
     /* initialize state */
     mca_btl_openib_component.ib_num_btls = 0;
