@@ -693,7 +693,7 @@ static void *opal_memory_linux_realloc_hook(Void_t* ptr, size_t sz,
     return public_rEALLOc(ptr, sz);
 }
 
-void *opal_memory_linux_memalign_hook(size_t alignment, size_t sz, 
+static void *opal_memory_linux_memalign_hook(size_t alignment, size_t sz, 
                                              const __malloc_ptr_t caller)
 {
     return public_mEMALIGn(alignment, sz);
