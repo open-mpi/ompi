@@ -121,16 +121,17 @@ lib_sources = $(sources)
 component =
 component_sources =
 endif
-
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component)
 mca_btl_openib_la_SOURCES = $(component_sources)
-mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS)
+mca_btl_openib_la_LDFLAGS = -module -avoid-version $(btl_openib_LDFLAGS) -lmca_memory_linux -L$(top_ompi_builddir)/opal/mca/memory/linux
 mca_btl_openib_la_LIBADD = $(btl_openib_LIBS)
+
 if MCA_ompi_cuda_support
 mca_btl_openib_la_LIBADD += \
     $(top_ompi_builddir)/ompi/mca/common/cuda/libmca_common_cuda.la
 endif
+
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_openib_la_SOURCES = $(lib_sources)

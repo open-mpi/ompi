@@ -167,6 +167,10 @@ OPAL_DECLSPEC extern __malloc_ptr_t (*__morecore) __MALLOC_PMT ((ptrdiff_t __siz
 OPAL_DECLSPEC extern __malloc_ptr_t __default_morecore __MALLOC_P ((ptrdiff_t __size))
        __attribute_malloc__;
 
+
+
+OPAL_DECLSPEC extern void *opal_memory_linux_memalign_hook(size_t alignment, size_t sz, 
+                                                     const __malloc_ptr_t caller);
 /* SVID2/XPG mallinfo structure */
 
 struct mallinfo {
