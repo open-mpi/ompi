@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -126,6 +127,10 @@ static void recv_constructor(mca_btl_openib_recv_frag_t *frag)
 static void send_control_constructor(mca_btl_openib_send_control_frag_t *frag)
 {
     to_base_frag(frag)->type = MCA_BTL_OPENIB_FRAG_CONTROL;
+    /* adjusting headers because there is no coalesce header in control messages */
+    frag->hdr = frag->chdr;
+    to_base_frag(frag)->segment.seg_addr.pval = frag->hdr + 1;
+    to_com_frag(frag)->sg_entry.addr = (uint64_t)(uintptr_t)frag->hdr;
 }
 
 static void put_constructor(mca_btl_openib_put_frag_t *frag)

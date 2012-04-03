@@ -15,7 +15,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -478,29 +478,36 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
        ep->eager_rdma_remote.tokens=mca_btl_openib_component.eager_rdma_num - 1;
        break;
     case MCA_BTL_OPENIB_CONTROL_COALESCED:
-        while(len > 0) {
-            size_t skip;
-            mca_btl_base_descriptor_t tmp_des;
-            mca_btl_base_segment_t tmp_seg;
+        {
+            size_t pad = 0;
+            while(len > 0) {
+                size_t skip;
+                mca_btl_openib_header_coalesced_t* unalign_hdr = 0;
+                mca_btl_base_descriptor_t tmp_des;
+                mca_btl_base_segment_t tmp_seg;
 
-            assert(len >= sizeof(*clsc_hdr));
+                assert(len >= sizeof(*clsc_hdr));
 
-            if(ep->nbo)
-                BTL_OPENIB_HEADER_COALESCED_NTOH(*clsc_hdr);
+                if(ep->nbo)
+                    BTL_OPENIB_HEADER_COALESCED_NTOH(*clsc_hdr);
 
-            skip = (sizeof(*clsc_hdr) + clsc_hdr->alloc_size);
+                skip = (sizeof(*clsc_hdr) + clsc_hdr->alloc_size - pad);
 
-            tmp_des.des_dst = &tmp_seg;
-            tmp_des.des_dst_cnt = 1;
-            tmp_seg.seg_addr.pval = clsc_hdr + 1;
-            tmp_seg.seg_len = clsc_hdr->size;
+                tmp_des.des_dst = &tmp_seg;
+                tmp_des.des_dst_cnt = 1;
+                tmp_seg.seg_addr.pval = clsc_hdr + 1;
+                tmp_seg.seg_len = clsc_hdr->size;
 
-            /* call registered callback */
-            reg = mca_btl_base_active_message_trigger + clsc_hdr->tag;
-            reg->cbfunc( &obtl->super, clsc_hdr->tag, &tmp_des, reg->cbdata );
-            len -= skip;
-            clsc_hdr = (mca_btl_openib_header_coalesced_t*)
-                (((unsigned char*)clsc_hdr) + skip);
+                /* call registered callback */
+                reg = mca_btl_base_active_message_trigger + clsc_hdr->tag;
+                reg->cbfunc( &obtl->super, clsc_hdr->tag, &tmp_des, reg->cbdata );
+                len -= (skip + pad);
+                unalign_hdr = (mca_btl_openib_header_coalesced_t*)
+                    ((unsigned char*)clsc_hdr + skip);
+                pad = (size_t)BTL_OPENIB_COALESCE_HDR_PADDING(unalign_hdr);
+                clsc_hdr = (mca_btl_openib_header_coalesced_t*)((unsigned char*)unalign_hdr +
+                                                                pad);
+            }
         }
        break;
     case MCA_BTL_OPENIB_CONTROL_CTS:
@@ -530,8 +537,8 @@ static void btl_openib_control(mca_btl_base_module_t* btl,
 #if BTL_OPENIB_FAILOVER_ENABLED
     case MCA_BTL_OPENIB_CONTROL_EP_BROKEN:
     case MCA_BTL_OPENIB_CONTROL_EP_EAGER_RDMA_ERROR:
-	btl_openib_handle_failover_control_messages(ctl_hdr, ep);
-	break;
+        btl_openib_handle_failover_control_messages(ctl_hdr, ep);
+        break;
 #endif
     default:
         BTL_ERROR(("Unknown message type received by BTL"));
@@ -1839,7 +1846,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             break;
         }
         if(IBV_PORT_ACTIVE == ib_port_attr.state) {
-	    /* Select the lower of the HCA and port active speed. With QLogic
+            /* Select the lower of the HCA and port active speed. With QLogic
                HCAs that are capable of 4K MTU we had an issue when connected
                to switches with 2K MTU. This fix is valid for other IB vendors
                as well. */
@@ -3378,7 +3385,7 @@ error:
                            cq_name[cq],
                            btl_openib_component_status_to_string(wc->status),
                            wc->status, wc->wr_id, 
-			     wc->opcode, wc->vendor_err, qp);
+                             wc->opcode, wc->vendor_err, qp);
     }
 
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
@@ -3547,7 +3554,7 @@ static int progress_one_device(mca_btl_openib_device_t *device)
 
             OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
             frag->hdr = (mca_btl_openib_header_t*)(((char*)frag->ftr) -
-                    size + sizeof(mca_btl_openib_footer_t));
+                size - BTL_OPENIB_FTR_PADDING(size) + sizeof(mca_btl_openib_footer_t));
             to_base_frag(frag)->segment.seg_addr.pval =
                 ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);
 

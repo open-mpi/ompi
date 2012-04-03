@@ -15,7 +15,7 @@
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
@@ -928,6 +928,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     if(mca_btl_openib_component.use_message_coalescing &&
        (flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
         int prio = !(flags & MCA_BTL_DES_FLAGS_PRIORITY);
+
         sfrag = check_coalescing(&ep->qps[qp].no_wqe_pending_frags[prio],
                 &ep->endpoint_lock, ep, size);
 
@@ -972,9 +973,10 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
         to_com_frag(sfrag)->sg_entry.addr = (uint64_t)(uintptr_t)sfrag->hdr;
     }
 
-    cfrag->hdr = (mca_btl_openib_header_coalesced_t*)
-        (((unsigned char*)(sfrag->hdr + 1)) + sfrag->coalesced_length +
-        to_base_frag(sfrag)->segment.seg_len);
+    cfrag->hdr = (mca_btl_openib_header_coalesced_t*)((unsigned char*)(sfrag->hdr + 1) + 
+                  sfrag->coalesced_length +
+                  to_base_frag(sfrag)->segment.seg_len);
+    cfrag->hdr = (mca_btl_openib_header_coalesced_t*)(unsigned char*)(BTL_OPENIB_ALIGN_COALESCE_HDR((unsigned char*)(cfrag->hdr)));
     cfrag->hdr->alloc_size = size;
 
     /* point coalesced frag pointer into a data buffer */
