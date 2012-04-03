@@ -14,7 +14,7 @@
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
-# Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
+# Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -53,9 +53,26 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     if test "$enable_openib_control_hdr_padding" = "yes"; then
         AC_MSG_RESULT([yes])
         ompi_openib_pad_hdr=1
-    else
+    elif test "$enable_openib_control_hdr_padding" = "no"; then
         AC_MSG_RESULT([no])
         ompi_openib_pad_hdr=0
+    else
+        #
+        # Enable padding for SPARC platforms by default  because the
+        # btl will segv otherwise.  Keep padding disabled for other 
+        # platforms since there are some performance implications with
+        #  padding on for those plaforms.
+        #
+        case "${host}" in
+        sparc*)
+            AC_MSG_RESULT([yes (enabled by default on SPARC)])
+            ompi_openib_pad_hdr=1
+            ;;
+        *)
+            AC_MSG_RESULT([no])
+            ompi_openib_pad_hdr=0
+            ;;
+        esac
     fi
     AC_DEFINE_UNQUOTED([OMPI_OPENIB_PAD_HDR], [$ompi_openib_pad_hdr],
                        [Add padding bytes to the openib control header])
@@ -184,10 +201,10 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                AC_CHECK_FUNCS([ibv_create_xrc_rcv_qp], [$1_have_xrc=1])
            fi
 
-	   # is udcm enabled
-	   if test "$enable_openib_udcm" = "yes"; then
-	       $1_have_udcm=1
-	   fi
+           # is udcm enabled
+           if test "$enable_openib_udcm" = "yes"; then
+               $1_have_udcm=1
+           fi
 
            if test "no" != "$enable_openib_dynamic_sl"; then
                # We need ib_types.h file, which is installed with opensm-devel
@@ -284,11 +301,11 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
     fi
 
     AC_DEFINE_UNQUOTED([OMPI_HAVE_UDCM], [$$1_have_udcm],
-	[Whether UD CM is available or not])
+        [Whether UD CM is available or not])
     if test "1" = "$$1_have_udcm"; then
-	AC_MSG_RESULT([yes])
+        AC_MSG_RESULT([yes])
     else
-	AC_MSG_RESULT([no])
+        AC_MSG_RESULT([no])
     fi
 
     AC_MSG_CHECKING([if OpenFabrics RDMACM support is enabled])
