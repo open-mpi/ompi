@@ -24,8 +24,8 @@
 CC = mpicc
 CXX = mpic++
 CCC = mpic++
+F90 = mpif90
 F77 = mpif77
-FC = mpif90
 
 # Using -g is not necessary, but it is helpful for example programs,
 # especially if users want to examine them with debuggers.  Note that
@@ -36,7 +36,7 @@ CFLAGS = -g
 CXXFLAGS = -g
 CCFLAGS = -g
 F77FLAGS = -g
-FCFLAGS = -g
+F90FLAGS = -g
 
 # Example programs to build
 
@@ -47,13 +47,13 @@ EXAMPLES = hello_c hello_cxx hello_f77 hello_f90 \
 # if Open MPI was build with the relevant language bindings.
 
 all: hello_c ring_c connectivity_c
-	@ if test "`ompi_info --parsable | grep bindings:cxx:yes`" != ""; then \
+	@ if ompi_info --parsable | grep bindings:cxx:yes >/dev/null; then \
 	    $(MAKE) hello_cxx ring_cxx; \
 	fi
-	@ if test "`ompi_info --parsable | grep bindings:f77:yes`" != ""; then \
+	@ if ompi_info --parsable | grep bindings:f77:yes >/dev/null; then \
 	    $(MAKE) hello_f77 ring_f77; \
 	fi
-	@ if test "`ompi_info --parsable | grep bindings:f90:yes`" != ""; then \
+	@ if ompi_info --parsable | grep bindings:f90:yes >/dev/null; then \
 	    $(MAKE) hello_f90 ring_f90; \
 	fi
 
@@ -71,7 +71,7 @@ ring_f77: ring_f77.f
 	$(F77) $(F77FLAGS) $^ -o $@
 
 hello_f90: hello_f90.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(F90) $(F90FLAGS) $^ -o $@
 ring_f90: ring_f90.f90
-	$(FC) $(FCFLAGS) $^ -o $@
+	$(F90) $(F90FLAGS) $^ -o $@
 
