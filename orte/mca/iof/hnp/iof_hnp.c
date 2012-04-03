@@ -219,7 +219,9 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         ORTE_IOF_SINK_DEFINE(&sink, dst_name, -1, ORTE_IOF_STDIN,
                              stdin_write_handler,
                              &mca_iof_hnp_component.sinks);
-    } else {
+        sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+        sink->daemon.vpid = ORTE_VPID_WILDCARD;
+     } else {
         /* no - lookup the proc's daemon and set that into sink */
         if (NULL == (jdata = orte_get_job_data_object(dst_name->jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
