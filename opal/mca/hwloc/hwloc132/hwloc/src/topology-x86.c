@@ -208,11 +208,12 @@ static void look_proc(struct procinfo *infos, unsigned highest_cpuid, unsigned h
 
       cache->linesize = linesize = (ebx & 0xfff) + 1;
       cache->linepart = linepart = ((ebx >> 12) & 0x3ff) + 1;
+      ways = ((ebx >> 22) & 0x3ff) + 1;
       if (eax & (1 << 9))
         /* Fully associative */
         cache->ways = -1;
       else
-        cache->ways = ways = ((ebx >> 22) & 0x3ff) + 1;
+        cache->ways = ways;
       cache->sets = sets = ecx + 1;
       cache->size = linesize * linepart * ways * sets;
 
