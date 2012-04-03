@@ -10,8 +10,8 @@
 # <major>.<minor>.<release>.  If release is zero, then it is omitted.
 
 major=1
-minor=5
-release=6
+minor=6
+release=0
 
 # greek is used for alpha or beta release tags.  If it is non-empty,
 # it will be appended to the version number.  It does not have to be
