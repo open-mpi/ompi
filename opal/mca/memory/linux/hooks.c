@@ -738,7 +738,17 @@ static void opal_memory_linux_malloc_init_hook(void)
     check_result_t r1, r2, lp, lpp;
     bool want_rcache = false, found_driver = false;
 
-    /* First, check if ummunotify is present on the system. If it is,
+    /* First, check for a FAKEROOT environment.  If we're in a
+       fakeroot, then stat() (and likely others) have been replaced
+       and are not safe to call here in this pre-main environment.  So
+       check for the environment markers that we're in a FAKEROOT.
+       And if so, return immediately. */
+    if (getenv("FAKEROOTKEY") != NULL ||
+        getenv("FAKED_MODE") != NULL) {
+        return;
+    }
+
+    /* Next, check if ummunotify is present on the system. If it is,
        then we don't need to do the following ptmalloc2 hacks.
        open/mmap on the device may fail during init, but if /dev/ummunotify
        exists, we assume that the user/administrator *wants* to use
