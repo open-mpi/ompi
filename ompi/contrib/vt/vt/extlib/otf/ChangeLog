@@ -1,3 +1,13 @@
+1.10.2openmpi
+	- otfdump:
+		- don't abort when reading events fails - the input tracefile
+		  might only have statistics
+	- otfprofile:
+		- removed leading '=' from CSV lines to make it loadable into
+		  spreadsheets (e.g. Open Office) 
+		- fixed process naming in CSV output of collective operation
+		  statistics
+
 1.10.1openmpi
 	- fixed build issues in otfprofile[-mpi]:
 		- added missing header includes for WEXITSTATUS

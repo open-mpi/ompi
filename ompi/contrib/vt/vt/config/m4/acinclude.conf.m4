@@ -298,13 +298,32 @@ AC_DEFUN([ACVT_CONF_SUMMARY],
 				[AS_IF([test x"$answer" != x],
 				 [answer="$answer, LIBC-I/O"],
 				 [answer="LIBC-I/O"])])
-				AS_IF([test x"$have_cudawrap" = "xyes"],
+				AS_IF([test x"$have_cudartwrap" = "xyes"],
 				[AS_IF([test x"$answer" != x],
 				 [answer="$answer, CUDA"],
 				 [answer="CUDA"])])
 			answer="yes ($answer)"
 		], [answer="no"])
 		echo "  Build Library trace support:               $answer"
+
+		AS_IF([test x"$have_cupti" = "xyes"],
+		[
+			answer=
+				AS_IF([test x"$have_cupti_callbacks" = "xyes"],
+				[AS_IF([test x"$answer" != x],
+				 [answer="$answer, Callbacks"],
+				 [answer="Callbacks"])])
+				AS_IF([test x"$have_cupti_activity" = "xyes"],
+				[AS_IF([test x"$answer" != x],
+				 [answer="$answer, Activitiy"],
+				 [answer="Activitiy"])])
+				AS_IF([test x"$have_cupti_events" = "xyes"],
+				[AS_IF([test x"$answer" != x],
+				 [answer="$answer, Events"],
+				 [answer="Events"])])
+			answer="yes ($answer)"
+			echo "  Build CUPTI support:                       $answer"
+		])
 
 		AS_IF([test x"$have_libwrap" = "xyes"],
 		[

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -371,8 +371,6 @@ int main( int argc, char** argv ) {
 
 		uint64_t minbytes = 0, curbytes = 0, maxbytes = 0;
 
-		uint64_t pminbytestmp, pcurbytestmp, pmaxbytestmp;
-
 		/* *** Read the trace once without handling records -> get the min and maxbytes.
 		       Read the definitions
 		       Add all processes to the process2filter mapping *** */
@@ -406,6 +404,8 @@ int main( int argc, char** argv ) {
 			&fha, OTF_DEFFUNCTION_RECORD );
 
 #ifndef VT_MPI
+		uint64_t pminbytestmp, pcurbytestmp, pmaxbytestmp;
+
 		/* progress stuff */
 		OTF_Reader_setRecordLimit( preader, 0 );
 
@@ -418,9 +418,6 @@ int main( int argc, char** argv ) {
 		OTF_Reader_eventBytesProgress( preader, &pminbytestmp, &pcurbytestmp, &pmaxbytestmp );
 		minbytes += pminbytestmp;
 		maxbytes += pmaxbytestmp;
-#else // VT_MPI
-		/* needed to avoid compiler warnings */
-		pminbytestmp = pcurbytestmp = pmaxbytestmp = 0;
 #endif // VT_MPI
 		
 		/* defs */

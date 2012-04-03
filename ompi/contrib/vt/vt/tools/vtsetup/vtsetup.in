@@ -3,7 +3,7 @@
 # VampirTrace
 # http://www.tu-dresden.de/zih/vampirtrace
 #
-# Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+# Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
 #
 # Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
 #                          Centre, Federal Republic of Germany
@@ -75,7 +75,7 @@ fi
 #
 @JAVA@ -jar $bindir/vtsetup.jar \
   $datarootdir/vtsetup-data.xml \
-  $sysconfdir/vt-setup-config.xml \
+  $sysconfdir/vtsetup-config.xml \
   $docdir/UserManual.html \
   $args
 java_rc=$?

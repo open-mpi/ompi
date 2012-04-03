@@ -9,7 +9,9 @@ AC_DEFUN([ACVT_LIBWRAP],
 	build_libwrapgen="no"
 	force_libcwrap="no"
 	force_iowrap="no"
-	force_cudawrap="no"
+	force_cudartwrap="no"
+
+	shlibc_pathname=
 
 	AC_REQUIRE([ACVT_PLATFORM])
 
@@ -35,7 +37,7 @@ AC_DEFUN([ACVT_LIBWRAP],
 						force_iowrap="yes"
 						;;
 					cuda)
-						force_cudawrap="yes"
+						force_cudartwrap="yes"
 						;;
 					*)
 						AC_MSG_ERROR([value of '--enable-libtrace' not properly set])
@@ -44,6 +46,15 @@ AC_DEFUN([ACVT_LIBWRAP],
 			done
 			force_libwrap="yes"
 		])
+	])
+
+	AC_ARG_WITH(shlibc,
+		AC_HELP_STRING([--with-shlibc=SHLIBC],
+		[give the pathname for shared LIBC, default: automatically by configure]),
+	[
+		AS_IF([test x"$withval" = "xyes" -o x"$withval" = "xno"],
+		[AC_MSG_ERROR([value of '--with-shlibc' not properly set])])
+		shlibc_pathname=$withval
 	])
 
 	AS_IF([test x"$check_libwrap" != "xno"],
@@ -62,6 +73,36 @@ AC_DEFUN([ACVT_LIBWRAP],
 
 		AS_IF([test x"$libwrap_error" = "xno"],
 		[
+			AC_MSG_CHECKING([for shared LIBC's pathname])
+
+			AS_IF([test x"$shlibc_pathname" = x],
+			[
+				rm -f conftest
+				AC_TRY_LINK([], [],
+				[
+					AS_IF([test -r "conftest"],
+					[
+						shlibc_pathname=`ldd conftest 2>/dev/null | grep "libc\." | \
+							         sed -e "s/.*=>//"                          \
+							             -e "s/[ [\(].*[\)]]//"                 \
+							             -e "s/[[[:space:]]]//g"              | \
+							         head -n1`
+					])
+				])
+			])
+
+			AS_IF([test x"$shlibc_pathname" != x],
+			[
+				AC_MSG_RESULT([$shlibc_pathname])
+				AC_DEFINE_UNQUOTED([SHLIBC_PATHNAME],
+				["$shlibc_pathname"], [pathname of shared LIBC])
+
+				AC_CHECK_DECLS([__errno_location], [], [], [#include <errno.h>])
+			],
+			[
+				AC_MSG_RESULT([unknown])
+			])
+
 			for lw in $check_libwrap
 			do
 				case $lw in
@@ -94,11 +135,11 @@ AC_DEFUN([ACVT_LIBWRAP],
 					])
 					;;
 				cuda)
-					ACVT_CONF_SUBTITLE([CUDA])
+					ACVT_CONF_SUBTITLE([CUDAWRAP])
 					ACVT_CUDAWRAP
 					AS_IF([test x"$have_cudartwrap" = "xyes"], [have_libwrap="yes"],
 					[
-						AS_IF([test x"$force_cudawrap" = "xyes"],
+						AS_IF([test x"$force_cudartwrap" = "xyes"],
 						[libwrap_error="yes"; break])
 					])
 					;;

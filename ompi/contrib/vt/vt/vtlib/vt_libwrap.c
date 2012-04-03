@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -53,10 +53,61 @@ static uint32_t   lwn = 0;     /* number of library wrapper objects */
 /* default library wrapper attributes */
 static VTLibwrapAttr default_attr = VT_LIBWRAP_ATTR_DEFAULT;
 
-/* mutex for locking creation of library wrapper objects */
+/* mutexes for locking ... */
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+/* ... creation of library wrapper objects */
 static VTThrdMutex* lw_create_mutex = NULL;
+/* ... getting LIBC handle */
+static VTThrdMutex* lw_libc_mutex = NULL;
 #endif /* VT_MT || VT_HYB || VT_JAVA */
+
+/* get pointer to errno of external LIBC */
+static int* get_libc_errno_ptr(void)
+{
+  /* NOTE: in case of using GNU 'errno' is defined as a macro which calls the
+     function '__errno_location()' to get a per-thread value of errno */
+#if defined(HAVE_DECL___ERRNO_LOCATION) && HAVE_DECL___ERRNO_LOCATION
+  static int* (*libc_errno)(void) = NULL;
+  const char* libc_errno_sym = "__errno_location";
+#else /* HAVE_DECL___ERRNO_LOCATION */
+  static int* libc_errno = NULL;
+  const char* libc_errno_sym = "errno";
+#endif /* HAVE_DECL___ERRNO_LOCATION */
+
+  static void* libc_handle = NULL;
+
+  /* get LIBC handle, if necessary */
+  if( libc_handle == NULL )
+    libc_handle = vt_libwrap_get_libc_handle();
+
+  if( libc_errno == NULL )
+  {
+    (void)dlerror();
+#ifdef HAVE_DECL___ERRNO_LOCATION
+    *(void**)(&libc_errno) = dlsym(libc_handle, libc_errno_sym);
+#else /* HAVE_DECL___ERRNO_LOCATION */
+    libc_errno = (int*)dlsym(libc_handle, libc_errno_sym);
+#endif /* HAVE_DECL___ERRNO_LOCATION */
+    if( libc_errno == NULL )
+    {
+#ifdef VT_IOWRAP
+      /* do not use vt_error_msg() here to prevent possible recursive calls to
+         this function */
+      printf("VampirTrace: FATAL: dlsym(\"%s\") failed: %s\n",
+             libc_errno_sym, dlerror());
+      exit(EXIT_FAILURE);
+#else /* VT_IOWRAP */
+      vt_error_msg("dlsym(\"%s\") failed: %s\n", libc_errno_sym, dlerror());
+#endif /* VT_IOWRAP */
+    }
+  }
+
+#ifdef HAVE_DECL___ERRNO_LOCATION
+  return libc_errno();
+#else /* HAVE_DECL___ERRNO_LOCATION */
+  return libc_errno;
+#endif /* HAVE_DECL___ERRNO_LOCATION */
+}
 
 void vt_libwrap_init()
 {
@@ -64,12 +115,72 @@ void vt_libwrap_init()
 
 void vt_libwrap_finalize()
 {
-  /* destroy mutex for locking creation of library wrapper objects,
-     if necessary */
+  /* destroy mutexes, if necessary */
 #if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
   if( lw_create_mutex != NULL )
     VTThrd_deleteMutex(&lw_create_mutex);
+  if( lw_libc_mutex != NULL )
+    VTThrd_deleteMutex(&lw_libc_mutex);
 #endif /* VT_MT || VT_HYB || VT_JAVA */
+}
+
+void* vt_libwrap_get_libc_handle()
+{
+  static void* libc_handle = NULL;
+
+#ifndef SHLIBC_PATHNAME
+  vt_error_msg("VampirTrace is not properly configured, SHLIBC_PATHNAME is not "
+               "set! Please report this incident to "PACKAGE_BUGREPORT);
+#else /* SHLIBC_PATHNAME */
+  if( libc_handle == NULL )
+  {
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+    VTThrd_lock(&lw_libc_mutex);
+    if( libc_handle == NULL )
+    {
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+
+    (void)dlerror();
+    libc_handle = dlopen(SHLIBC_PATHNAME,
+                         RTLD_LAZY | RTLD_LOCAL
+#ifdef _AIX
+                         | RTLD_MEMBER
+#endif /* _AIX */
+                        );
+    if( libc_handle == NULL )
+    {
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+      VTThrd_unlock(&lw_libc_mutex);
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+#ifdef VT_IOWRAP
+      /* do not use vt_error_msg() here to prevent possible recursive calls to
+         this function */
+      printf("VampirTrace: FATAL: dlopen(\""SHLIBC_PATHNAME"\") failed: %s\n",
+             dlerror());
+      exit(EXIT_FAILURE);
+#else /* VT_IOWRAP */
+      vt_error_msg("dlopen(\""SHLIBC_PATHNAME"\") failed: %s\n", dlerror());
+#endif /* VT_IOWRAP */
+    }
+
+#if (defined(VT_MT) || defined(VT_HYB) || defined(VT_JAVA))
+    }
+    VTThrd_unlock(&lw_libc_mutex);
+#endif /* VT_MT || VT_HYB || VT_JAVA */
+  }
+#endif /* SHLIBC_PATHNAME */
+
+  return libc_handle;
+}
+
+void vt_libwrap_set_libc_errno(const int value)
+{
+  *get_libc_errno_ptr() = value;
+}
+
+int vt_libwrap_get_libc_errno()
+{
+  return *get_libc_errno_ptr();
 }
 
 void VTLibwrap_create(VTLibwrap** lw, VTLibwrapAttr* lwattr)

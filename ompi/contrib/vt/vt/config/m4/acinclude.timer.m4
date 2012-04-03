@@ -84,32 +84,31 @@ AC_DEFUN([ACVT_TIMER],
 		AC_DEFINE([TIMER_RTC], [2], [RTC (DOES NOT WORK YET WITH FORTRAN CODES)])
 		timer=TIMER_GETTIMEOFDAY
 		;;
-	crayxt)
+	crayxt | crayxe)
 		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])
 		AC_DEFINE([TIMER_CYCLE_COUNTER], [2], [Cycle counter (e.g. TSC)])
 		AC_DEFINE([TIMER_GETTIMEOFDAY], [3], [Use `gettimeofday' function])
 		timer=TIMER_CYCLE_COUNTER
-		AS_IF([test x`basename $CC` = "xcraycc"],
-		[timer=TIMER_GETTIMEOFDAY])
 
-		AC_TRY_COMPILE([],
+		case `$CC -V 2>&1` in
+			*Cray*)	timer=TIMER_GETTIMEOFDAY ;;
+		esac
+
+		AS_IF([test $PLATFORM = "crayxt"],
+		[
+			AC_TRY_COMPILE([],
 [
 #ifndef __LIBCATAMOUNT__
 #  error "__LIBCATAMOUNT__ not defined"
 #endif
 ],
-		[AC_CHECK_HEADERS([catamount/dclock.h],
-		[AC_CHECK_HEADERS([catamount/data.h],
-		[
-			AC_DEFINE([TIMER_DCLOCK], [4], [Use `dclock' function])
-			timer=TIMER_DCLOCK
-		])])])
-		;;
-	crayxe)
-		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])
-		AC_DEFINE([TIMER_CYCLE_COUNTER], [2], [Cycle counter (e.g. TSC)])
-		AC_DEFINE([TIMER_GETTIMEOFDAY], [3], [Use `gettimeofday' function])
-		timer=TIMER_CYCLE_COUNTER
+			[AC_CHECK_HEADERS([catamount/dclock.h],
+			[AC_CHECK_HEADERS([catamount/data.h],
+			[
+				AC_DEFINE([TIMER_DCLOCK], [4], [Use `dclock' function])
+				timer=TIMER_DCLOCK
+			])])])
+		])
 		;;
 	origin)
 		AC_DEFINE([TIMER_CLOCK_GETTIME], [1], [Use `clock_gettime' function])

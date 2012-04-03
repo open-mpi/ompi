@@ -47,6 +47,7 @@ TD.eqno			{ }	/* equation-number cells */
 
 
 /* document-specific styles come next */
+DIV.scriptsize		{   }
 PRE.preform		{   }
 DIV.footnotesize		{   }
 DIV.small		{   }
@@ -66,7 +67,7 @@ BODY			{ font-family: sans-serif; }
 <P>
 
 <P>
-<B><BIG CLASS="XHUGE">VampirTrace 5.12.1&nbsp;User Manual</BIG></B>
+<B><BIG CLASS="XHUGE">VampirTrace 5.12.2&nbsp;User Manual</BIG></B>
 <BR>
 <BR>
 <BR>
@@ -86,8 +87,8 @@ http://www.tu-dresden.de/zih
 http://www.tu-dresden.de/zih/vampirtrace
 <BR>
 <BR>
-Contact: mailto:vampirsupport@zih.tu-dresden.devampirsupport@zih.tu-dresden.de
-
+<P>
+Contact: vampirsupport@zih.tu-dresden.de
 <P>
 <BR>
 
@@ -97,164 +98,186 @@ Contents</A>
 <!--Table of Contents-->
 
 <UL CLASS="TofC">
-<LI><A NAME="tex2html94"
+<LI><A NAME="tex2html104"
   HREF="#SECTION00200000000000000000">Introduction</A>
-<LI><A NAME="tex2html95"
+<LI><A NAME="tex2html105"
   HREF="#SECTION00300000000000000000">Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html96"
+<LI><A NAME="tex2html106"
   HREF="#SECTION00310000000000000000">Compiler Wrappers</A>
-<LI><A NAME="tex2html97"
+<LI><A NAME="tex2html107"
   HREF="#SECTION00320000000000000000">Instrumentation Types</A>
-<LI><A NAME="tex2html98"
+<LI><A NAME="tex2html108"
   HREF="#SECTION00330000000000000000">Automatic Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html99"
+<LI><A NAME="tex2html109"
   HREF="#SECTION00331000000000000000">Supported Compilers</A>
-<LI><A NAME="tex2html100"
+<LI><A NAME="tex2html110"
   HREF="#SECTION00332000000000000000">Notes for Using the GNU, Intel, PathScale, or Open64 Compiler</A>
-<LI><A NAME="tex2html101"
+<LI><A NAME="tex2html111"
   HREF="#SECTION00333000000000000000">Notes on Instrumentation of Inline Functions</A>
-<LI><A NAME="tex2html102"
+<LI><A NAME="tex2html112"
   HREF="#SECTION00334000000000000000">Instrumentation of Loops with OpenUH Compiler</A>
 </UL>
-<LI><A NAME="tex2html103"
+<LI><A NAME="tex2html113"
   HREF="#SECTION00340000000000000000">Manual Instrumentation</A>
 <UL>
-<LI><A NAME="tex2html104"
+<LI><A NAME="tex2html114"
   HREF="#SECTION00341000000000000000">Using the VampirTrace API</A>
-<LI><A NAME="tex2html105"
+<LI><A NAME="tex2html115"
   HREF="#SECTION00342000000000000000">Measurement Controls</A>
 </UL>
-<LI><A NAME="tex2html106"
+<LI><A NAME="tex2html116"
   HREF="#SECTION00350000000000000000">Source Instrumentation Using PDT/TAU</A>
-<LI><A NAME="tex2html107"
+<LI><A NAME="tex2html117"
   HREF="#SECTION00360000000000000000">Binary Instrumentation Using Dyninst</A>
 <UL>
-<LI><A NAME="tex2html108"
+<LI><A NAME="tex2html118"
   HREF="#SECTION00361000000000000000">Static Binary Instrumentation</A>
 </UL>
-<LI><A NAME="tex2html109"
+<LI><A NAME="tex2html119"
   HREF="#SECTION00370000000000000000">Runtime Instrumentation Using VTRun</A>
-<LI><A NAME="tex2html110"
+<LI><A NAME="tex2html120"
   HREF="#SECTION00380000000000000000">Tracing Java Applications Using JVMTI</A>
-<LI><A NAME="tex2html111"
+<LI><A NAME="tex2html121"
   HREF="#SECTION00390000000000000000">Tracing Calls to 3rd-Party Libraries</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html112"
+<LI><A NAME="tex2html122"
   HREF="#SECTION00400000000000000000">Runtime Measurement</A>
 <UL>
-<LI><A NAME="tex2html113"
+<LI><A NAME="tex2html123"
   HREF="#SECTION00410000000000000000">Trace File Name and Location</A>
-<LI><A NAME="tex2html114"
+<LI><A NAME="tex2html124"
   HREF="#SECTION00420000000000000000">Environment Variables</A>
-<LI><A NAME="tex2html115"
+<LI><A NAME="tex2html125"
   HREF="#SECTION00430000000000000000">Influencing Trace Buffer Size</A>
-<LI><A NAME="tex2html116"
+<LI><A NAME="tex2html126"
   HREF="#SECTION00440000000000000000">Profiling an Application</A>
-<LI><A NAME="tex2html117"
+<LI><A NAME="tex2html127"
   HREF="#SECTION00450000000000000000">Unification of Local Traces</A>
-<LI><A NAME="tex2html118"
+<LI><A NAME="tex2html128"
   HREF="#SECTION00460000000000000000">Synchronized Buffer Flush</A>
-<LI><A NAME="tex2html119"
+<LI><A NAME="tex2html129"
   HREF="#SECTION00470000000000000000">Enhanced Timer Synchronization</A>
-<LI><A NAME="tex2html120"
+<LI><A NAME="tex2html130"
   HREF="#SECTION00480000000000000000">Environment Configuration Using VTSetup</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html121"
+<LI><A NAME="tex2html131"
   HREF="#SECTION00500000000000000000">Recording Additional Events and Counters</A>
 <UL>
-<LI><A NAME="tex2html122"
-  HREF="#SECTION00510000000000000000">Hardware Performance Counters</A>
-<LI><A NAME="tex2html123"
-  HREF="#SECTION00520000000000000000">Resource Usage Counters</A>
-<LI><A NAME="tex2html124"
-  HREF="#SECTION00530000000000000000">Memory Allocation Counter</A>
-<LI><A NAME="tex2html125"
-  HREF="#SECTION00540000000000000000">CPU ID Counter</A>
-<LI><A NAME="tex2html126"
-  HREF="#SECTION00550000000000000000">NVIDIA CUDA Runtime API and Kernels</A>
-<LI><A NAME="tex2html127"
-  HREF="#SECTION00560000000000000000">Pthread API Calls</A>
-<LI><A NAME="tex2html128"
-  HREF="#SECTION00570000000000000000">Plugin Counter Metrics</A>
-<LI><A NAME="tex2html129"
-  HREF="#SECTION00580000000000000000">I/O Calls</A>
-<LI><A NAME="tex2html130"
-  HREF="#SECTION00590000000000000000">fork/system/exec Calls</A>
-<LI><A NAME="tex2html131"
-  HREF="#SECTION005100000000000000000">MPI Correctness Checking Using UniMCI</A>
 <LI><A NAME="tex2html132"
-  HREF="#SECTION005110000000000000000">User-defined Counters</A>
+  HREF="#SECTION00510000000000000000">Hardware Performance Counters</A>
 <LI><A NAME="tex2html133"
-  HREF="#SECTION005120000000000000000">User-defined Markers</A>
+  HREF="#SECTION00520000000000000000">Resource Usage Counters</A>
 <LI><A NAME="tex2html134"
+  HREF="#SECTION00530000000000000000">Memory Allocation Counter</A>
+<LI><A NAME="tex2html135"
+  HREF="#SECTION00540000000000000000">CPU ID Counter</A>
+<LI><A NAME="tex2html136"
+  HREF="#SECTION00550000000000000000">NVIDIA CUDA</A>
+<LI><A NAME="tex2html137"
+  HREF="#SECTION00560000000000000000">Pthread API Calls</A>
+<LI><A NAME="tex2html138"
+  HREF="#SECTION00570000000000000000">Plugin Counter Metrics</A>
+<LI><A NAME="tex2html139"
+  HREF="#SECTION00580000000000000000">I/O Calls</A>
+<LI><A NAME="tex2html140"
+  HREF="#SECTION00590000000000000000">fork/system/exec Calls</A>
+<LI><A NAME="tex2html141"
+  HREF="#SECTION005100000000000000000">MPI Correctness Checking Using UniMCI</A>
+<LI><A NAME="tex2html142"
+  HREF="#SECTION005110000000000000000">User-defined Counters</A>
+<LI><A NAME="tex2html143"
+  HREF="#SECTION005120000000000000000">User-defined Markers</A>
+<LI><A NAME="tex2html144"
   HREF="#SECTION005130000000000000000">User-defined Communcation</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html135"
+<LI><A NAME="tex2html145"
   HREF="#SECTION00600000000000000000">Filtering &amp; Grouping</A>
 <UL>
-<LI><A NAME="tex2html136"
-  HREF="#SECTION00610000000000000000">Function Filtering</A>
-<LI><A NAME="tex2html137"
-  HREF="#SECTION00620000000000000000">Java Specific Filtering</A>
-<LI><A NAME="tex2html138"
-  HREF="#SECTION00630000000000000000">Function Grouping</A>
-<LI><A NAME="tex2html139"
-  HREF="#SECTION00640000000000000000">Configure Options</A>
-<LI><A NAME="tex2html140"
-  HREF="#SECTION00650000000000000000">Cross Compilation</A>
-<LI><A NAME="tex2html141"
-  HREF="#SECTION00660000000000000000">Environment Set-Up</A>
-<LI><A NAME="tex2html142"
-  HREF="#SECTION00670000000000000000">Notes for Developers</A>
-</UL>
-<BR>
-<LI><A NAME="tex2html143"
-  HREF="#SECTION00700000000000000000">Command Reference</A>
-<UL>
-<LI><A NAME="tex2html144"
-  HREF="#SECTION00710000000000000000">Compiler Wrappers (vtcc,vtcxx,vtf77,vtf90)</A>
-<LI><A NAME="tex2html145"
-  HREF="#SECTION00720000000000000000">Local Trace Unifier (vtunify)</A>
 <LI><A NAME="tex2html146"
-  HREF="#SECTION00730000000000000000">Binary Instrumentor (vtdyn)</A>
+  HREF="#SECTION00610000000000000000">Function Filtering</A>
 <LI><A NAME="tex2html147"
-  HREF="#SECTION00740000000000000000">Trace Filter Tool (vtfilter)</A>
+  HREF="#SECTION00620000000000000000">Java Specific Filtering</A>
 <LI><A NAME="tex2html148"
-  HREF="#SECTION00750000000000000000">Library Wrapper Generator (vtlibwrapgen)</A>
-<LI><A NAME="tex2html149"
-  HREF="#SECTION00760000000000000000">Application Execution Wrapper (vtrun)</A>
+  HREF="#SECTION00630000000000000000">Function Grouping</A>
 </UL>
 <BR>
-<LI><A NAME="tex2html150"
-  HREF="#SECTION00800000000000000000">Counter Specifications</A>
+<LI><A NAME="tex2html149"
+  HREF="#SECTION00700000000000000000">VampirTrace Installation</A>
 <UL>
+<LI><A NAME="tex2html150"
+  HREF="#SECTION00710000000000000000">Basics</A>
 <LI><A NAME="tex2html151"
-  HREF="#SECTION00810000000000000000">PAPI</A>
+  HREF="#SECTION00720000000000000000">Configure Options</A>
 <LI><A NAME="tex2html152"
-  HREF="#SECTION00820000000000000000">CPC</A>
+  HREF="#SECTION00730000000000000000">Cross Compilation</A>
 <LI><A NAME="tex2html153"
-  HREF="#SECTION00830000000000000000">NEC SX Hardware Performance Counter</A>
+  HREF="#SECTION00740000000000000000">Environment Set-Up</A>
 <LI><A NAME="tex2html154"
-  HREF="#SECTION00840000000000000000">Resource Usage</A>
+  HREF="#SECTION00750000000000000000">Notes for Developers</A>
+</UL>
+<BR>
 <LI><A NAME="tex2html155"
-  HREF="#SECTION00850000000000000000">What limitations are associated with "on/off" and buffer rewind?</A>
+  HREF="#SECTION00800000000000000000">Command Reference</A>
+<UL>
 <LI><A NAME="tex2html156"
-  HREF="#SECTION00860000000000000000">VampirTrace warns that it ``cannot lock file a.lock'', what's wrong?</A>
+  HREF="#SECTION00810000000000000000">Compiler Wrappers (vtcc,vtcxx,vtf77,vtf90)</A>
 <LI><A NAME="tex2html157"
-  HREF="#SECTION00870000000000000000">Can I relocate my VampirTrace installation without rebuilding from source?</A>
+  HREF="#SECTION00820000000000000000">Local Trace Unifier (vtunify)</A>
 <LI><A NAME="tex2html158"
-  HREF="#SECTION00880000000000000000">What are the byte counts in collective communication records?</A>
+  HREF="#SECTION00830000000000000000">Binary Instrumentor (vtdyn)</A>
 <LI><A NAME="tex2html159"
-  HREF="#SECTION00890000000000000000">I get ``error: unknown asm constraint letter''</A>
+  HREF="#SECTION00840000000000000000">Trace Filter Tool (vtfilter)</A>
 <LI><A NAME="tex2html160"
-  HREF="#SECTION008100000000000000000">I have a question that is not answered in this document!</A>
+  HREF="#SECTION00850000000000000000">Library Wrapper Generator (vtlibwrapgen)</A>
 <LI><A NAME="tex2html161"
-  HREF="#SECTION008110000000000000000">I need support for additional features so I can trace application xyz.</A>
+  HREF="#SECTION00860000000000000000">Application Execution Wrapper (vtrun)</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html162"
+  HREF="#SECTION00900000000000000000">Counter Specifications</A>
+<UL>
+<LI><A NAME="tex2html163"
+  HREF="#SECTION00910000000000000000">PAPI</A>
+<LI><A NAME="tex2html164"
+  HREF="#SECTION00920000000000000000">CPC</A>
+<LI><A NAME="tex2html165"
+  HREF="#SECTION00930000000000000000">NEC SX Hardware Performance Counter</A>
+<LI><A NAME="tex2html166"
+  HREF="#SECTION00940000000000000000">Resource Usage</A>
+</UL>
+<BR>
+<LI><A NAME="tex2html167"
+  HREF="#SECTION001000000000000000000">FAQ</A>
+<UL>
+<LI><A NAME="tex2html168"
+  HREF="#SECTION001010000000000000000">Can I use different compilers for VampirTrace and my application?</A>
+<LI><A NAME="tex2html169"
+  HREF="#SECTION001020000000000000000">Why does my application need such a long time for starting?</A>
+<LI><A NAME="tex2html170"
+  HREF="#SECTION001030000000000000000">Why do I see multiple
+I/O operations for a single (un)formatted file read/write from my Fortran
+application?</A>
+<LI><A NAME="tex2html171"
+  HREF="#SECTION001040000000000000000">The application has run to completion, but there is no *.otf file. What can I do?</A>
+<LI><A NAME="tex2html172"
+  HREF="#SECTION001050000000000000000">What limitations are associated with "on/off" and buffer rewind?</A>
+<LI><A NAME="tex2html173"
+  HREF="#SECTION001060000000000000000">VampirTrace warns that it ``cannot lock file a.lock'', what's wrong?</A>
+<LI><A NAME="tex2html174"
+  HREF="#SECTION001070000000000000000">Can I relocate my VampirTrace installation without rebuilding from source?</A>
+<LI><A NAME="tex2html175"
+  HREF="#SECTION001080000000000000000">What are the byte counts in collective communication records?</A>
+<LI><A NAME="tex2html176"
+  HREF="#SECTION001090000000000000000">I get ``error: unknown asm constraint letter''</A>
+<LI><A NAME="tex2html177"
+  HREF="#SECTION0010100000000000000000">I have a question that is not answered in this document!</A>
+<LI><A NAME="tex2html178"
+  HREF="#SECTION0010110000000000000000">I need support for additional features so I can trace application xyz.</A>
 </UL></UL>
 <!--End of Table of Contents-->
 <P>
@@ -289,19 +312,22 @@ This includes function enter and leave events, MPI communication,
 OpenMP events, and performance counters.
 
 <P>
-After a successful tracing run, VampirTrace writes all collected data to a   (OTF)<A NAME="tex2html1"
-  HREF="#foot70"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+After a successful tracing run, VampirTrace writes all collected data to a  
+trace file in the Open Trace Format (OTF)<A NAME="tex2html1"
+  HREF="#foot1530"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 As a result, the information is available for post-mortem analysis and 
 visualization by various tools. 
-Most notably, VampirTrace provides the input data for the Vampir analysis   tool<A NAME="tex2html2"
-  HREF="#foot71"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+Most notably, VampirTrace provides the input data for the Vampir analysis  
+and visualization tool<A NAME="tex2html2"
+  HREF="#foot1531"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>. 
 
 <P>
 VampirTrace is included in OpenMPI&nbsp;1.3 and later versions.
-If not disabled explicitly, VampirTrace is built automatically when installing OpenMPI<A NAME="tex2html3"
-  HREF="#foot72"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+If not disabled explicitly, VampirTrace is built automatically when installing
+OpenMPI<A NAME="tex2html3"
+  HREF="#foot1532"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 
 <P>
@@ -747,7 +773,9 @@ To determine which instrumentation type will be used by default and which instru
 types are available on your system have a look at the entry <TT>inst_avail</TT> in the
 wrapper's configuration file (e.g.&nbsp;<TT>share/vampirtrace/vtcc-wrapper-data.txt</TT> in the
 installation directory of VampirTrace for the C compiler wrapper).
- Type <TT>vtcc -vt:help</TT> for otheroptions that can be passed to VampirTrace's compiler wrapper.
+
+<P>
+Type <TT>vtcc -vt:help</TT> for otheroptions that can be passed to VampirTrace's compiler wrapper.
 
 <P>
 
@@ -806,9 +834,8 @@ Notes for Using the GNU, Intel, PathScale, or Open64 Compiler
 </H2>
 For these compilers the command <TT>nm</TT> is required to get symbol information
 of the running application executable. For example on Linux systems, this program is a
-part of the <SPAN  CLASS="textit">GNU Binutils</SPAN>, which is downloadable from http://www.gnu.org/software/binutils.
-
-<P>
+part of the <SPAN  CLASS="textit">GNU Binutils</SPAN>, which is downloadable from
+http://www.gnu.org/software/binutils.
 To get the application executable for <TT>nm</TT> during runtime, VampirTrace uses the
 <TT>/proc</TT> file system. As <TT>/proc</TT> is not present on all operating systems,
 automatic symbol information might not be available. In this case, it is necessary to set
@@ -1092,12 +1119,15 @@ Source Instrumentation Using PDT/TAU
 <code>   % vtcc -vt:inst tauinst hello.c -o hello</code>
 <BR>
 <BR>
- 
+
+<P>
+
 <H4><A NAME="SECTION00350010000000000000">
 Requirements for TAU instrumentation:</A>
 </H4>
   To work with TAU instrumenation you need the Program Database Toolkit.
-  You have to make sure, to have <TT>cparse</TT> and <TT>tau_instrumentor</TT> in your <TT>$PATH</TT>.  http://www.cs.uoregon.edu/research/pdt/home.php.
+  You have to make sure, to have <TT>cparse</TT> and <TT>tau_instrumentor</TT> in your <TT>$PATH</TT>. 
+  The PDToolkit can be downloaded from http://www.cs.uoregon.edu/research/pdt/home.php.
 
 <H4><A NAME="SECTION00350020000000000000">
 Include/Exclude Lists:</A>
@@ -1111,8 +1141,9 @@ in a single file, that
   This file contains up to four lists which begin with
 <BR><TT>BEGIN[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>.
   The names in between may contain wildcards as ``?'', ``*', and ``#'', each entry gets a new line.
-  The lists end with <TT>END[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>. For further information on selective  TAU documentation<A NAME="tex2html4"
-  HREF="#foot337"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+  The lists end with <TT>END[_FILE]_&lt;INCLUDE|EXCLUDE&gt;_LIST</TT>. For further information on selective 
+  profiling have a look at the TAU documentation<A NAME="tex2html4"
+  HREF="#foot1556"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
   To announce the file through the compiler wrapper use the option <TT>-vt:tau</TT>:
 <PRE>
@@ -1127,8 +1158,9 @@ Binary Instrumentation Using Dyninst
 
 <P>
 The option <TT>-vt:inst dyninst</TT> is used with the compiler wrapper to 
-instrument the application during runtime (binary instrumentation), by using  Dyninst<A NAME="tex2html5"
-  HREF="#foot344"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+instrument the application during runtime (binary instrumentation), by using 
+Dyninst<A NAME="tex2html5"
+  HREF="#foot1557"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>.
 Recompiling is not necessary for this kind of instrumentation,
 but relinking:
@@ -1278,8 +1310,9 @@ Tracing Calls to 3rd-Party Libraries
 </H1>
   VampirTrace is also capable to trace calls to third party libraries, which come with
   at least one C header file even without the library's source code. If VampirTrace was
-  built with support for library tracing (the CTool library is required), 
-  the tool <TT>vtlibwrapgen</TT> can be used to
+  built with support for library tracing (the CTool library<A NAME="tex2html6"
+  HREF="#foot1558"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>  is required), the tool <TT>vtlibwrapgen</TT> can be used to
   generate a wrapper library to intercept each call to the actual library functions.
   This wrapper library can be linked to the application or used in combination with the
   <TT>LD_PRELOAD</TT> mechanism provided by Linux.
@@ -1331,7 +1364,9 @@ This builds the shared library <TT>libSDLwrap.so</TT> which can be linked to the
   <code>  % LD_PRELOAD=$PWD/libSDLwrap.so &lt;executable&gt;</code>
   <BR>
 <BR>
- 
+
+<P>
+
 <H1><A NAME="SECTION00400000000000000000"></A>
 <A NAME="chap:runtime_measurement"></A>
 <BR>
@@ -1866,10 +1901,11 @@ adjusted with <TT>VT_ETIMESYNC_INTV</TT>.
 The following LAPACK libraries provide a C-LAPACK API that can be used by VampirTrace
 for the enhanced timer synchronization:
 
- CLAPACK<A NAME="tex2html6"
-  HREF="#foot652"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
- SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>
 <UL>
+<LI>CLAPACK <A NAME="tex2html7"
+  HREF="#foot1568"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>
+</LI>
 <LI>AMD ACML
 </LI>
 <LI>IBM ESSL
@@ -2124,103 +2160,107 @@ Note:</A>
 <H1><A NAME="SECTION00550000000000000000"></A>
 <A NAME="sec:cuda"></A>
 <BR>
-NVIDIA CUDA Runtime API and Kernels
+NVIDIA CUDA
 </H1>
   When tracing CUDA applications, only user events and functions are recorded,
-  which are automatically or manually instrumented. CUDA-Runtime API functions
+  which are automatically or manually instrumented. CUDA API functions
   will not be traced by default.
-  To enable tracing of CUDA runtime API functions and asynchronous CUDA tasks 
-  (like kernel execution and asynchronous memory copies), build VampirTrace 
-  with CUDA support and set the environment variable
-  <TT>VT_CUDARTTRACE</TT> to <TT>yes</TT>.
+  To enable tracing of CUDA runtime and driver API functions and asynchronous 
+  CUDA device activities (like kernel execution and asynchronous memory copies) build 
+  VampirTrace with CUDA support and set the following environment variable: 
 <P></P>
 
 <P>
-Every CUDA stream, which is executed on a cuda-capable device and 
-  used during program execution, creates an own thread. ``CUDA-Threads'' can 
-  contain communication and kernel events and have the following notation:
-<P></P>
-
+<DIV ALIGN="CENTER">
+<TT>export VT_CUDATRACE=[yes|1|2|3|4|no]</TT>
+<BR></DIV>
 <P>
-<TT>CUDA[device] process:thread</TT>
-<P></P>
-
-<P>
-To ensure measurement of correct data rates for synchronous CUDA 
-  memory copies, VampirTrace inserts a CUDA synchronization before. 
-  Otherwise the CUDA memory copy call would do the synchronization and it was 
-  not possible to get correct transfer rates.
-<P></P>
-
-<P>
-As kernel execution and asynchronous memory copies are not executed 
-  directly, they will be buffered until a synchronizing CUDA Runtime API 
-  function call or the programs exit. The buffer size can be specified in bytes 
-  (default: 8192) with the environment variable 
-  <TT>VT_CUDATRACE_BUFFER_SIZE</TT>.
-<P></P>
-
-<P>
-Several new region groups have been introduced:
-  <DIV ALIGN="CENTER">
-
-    <TABLE CELLPADDING=3>
-<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDART_API</SPAN></TH>
-<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA runtime API calls</TD>
+<BR>
+<DIV ALIGN="CENTER">  <TABLE CELLPADDING=3 BORDER="1">
+<TR><TD ALIGN="RIGHT">Option</TD>
+<TD ALIGN="CENTER">CUDA API</TD>
+<TD ALIGN="CENTER">GPU Activity</TD>
+<TD ALIGN="CENTER">CUDA Version <SPAN CLASS="MATH"><IMG
+ ALIGN="MIDDLE" BORDER="0" SRC="img3.png"
+ ALT="$ \geqq$"></SPAN></TD>
 </TR>
-<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDA_SYNC</SPAN></TH>
-<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA synchronization</TD>
+<TR><TD ALIGN="RIGHT"><TT>yes, 1</TT></TD>
+<TD ALIGN="CENTER">runtime</TD>
+<TD ALIGN="CENTER">&check#checkmark;</TD>
+<TD ALIGN="CENTER">2.3</TD>
 </TR>
-<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDA_KERNEL</SPAN></TH>
-<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA kernels/functions can only appear on 
-			      ``CUDA-Threads''</TD>
+<TR><TD ALIGN="RIGHT"><TT>2</TT></TD>
+<TD ALIGN="CENTER">driver</TD>
+<TD ALIGN="CENTER">&check#checkmark;</TD>
+<TD ALIGN="CENTER">4.1</TD>
 </TR>
-<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDA_IDLE</SPAN></TH>
-<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>GPU idle time - the CUDA device does not run any 
-			      kernel currently (can only appear in one stream of 
-                              the device)</TD>
+<TR><TD ALIGN="RIGHT"><TT>3</TT></TD>
+<TD ALIGN="CENTER">runtime &amp; driver</TD>
+<TD ALIGN="CENTER">&check#checkmark;</TD>
+<TD ALIGN="CENTER">4.1</TD>
 </TR>
-<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">VT_CUDA</SPAN></TH>
-<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>VampirTrace overhead (write CUDA events, 
-			      check current device, etc.)</TD>
+<TR><TD ALIGN="RIGHT"><TT>4</TT></TD>
+<TD ALIGN="CENTER">-</TD>
+<TD ALIGN="CENTER">&check#checkmark;</TD>
+<TD ALIGN="CENTER">4.1</TD>
+</TR>
+<TR><TD ALIGN="RIGHT"><TT>no, 0</TT></TD>
+<TD ALIGN="CENTER">-</TD>
+<TD ALIGN="CENTER">-</TD>
+<TD ALIGN="CENTER">-</TD>
 </TR>
 </TABLE>
 </DIV>
 
 <P>
-Additional feature switches (environment variables) to customize
-  CUDA runtime tracing:
+Since CUDA Toolkit 4.1 the <SPAN  CLASS="textbf">CUDA</SPAN> <SPAN  CLASS="textbf">P</SPAN>rofiling and <SPAN  CLASS="textbf">T</SPAN>ool <SPAN  CLASS="textbf">I</SPAN>nterface 
+  (CUPTI) allows capturing of CUDA device activities. Therewith new tracing 
+  abilities (see table above) are available. VampirTrace trace has currently 
+  two methods to trace the CUDA runtime API and corresponding GPU activities: 
+  traditional library wrapping with CUDA events or CUPTI. Several features are 
+  just implemented in the library wrapping approach, whereas the CUPTI 
+  measurement brings new possibilities and occasionally more accuracy. 
+<P><P>
+<BR>
+
+<P>
+There are additional feature switches implemented as environment 
+  variables to customize CUDA tracing (<TT>yes=1</TT>, <TT>no=0</TT>, the 
+  default is <TT><SPAN  CLASS="textbf">bold</SPAN></TT>):
   <DL>
 <DT></DT>
-<DD><TT>VT_CUDATRACE_KERNEL</TT> (default: <TT>yes</TT>)
+<DD><TT>VT_CUDATRACE_CUPTI=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT> 
 <BR>
-Tracing of CUDA kernels is enabled/disabled.
+Use CUPTI for CUDA tracing instead of CUDA runtime API wrapper.
 
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_CUDATRACE_MEMCPYASYNC</TT> (default: <TT>yes</TT>)
+<DD><TT>VT_CUDATRACE_KERNEL=[<SPAN  CLASS="textbf">yes</SPAN>|no|2]</TT>
 <BR>
-Tracing of asynchronous CUDA memory copies is enabled/disabled.
+Tracing of CUDA kernels is enabled/disabled. With '<TT>2</TT>' additional 
+      kernel counters are captured. (CUPTI tracing only)
 
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_CUDATRACE_IDLE</TT> (default: <TT>no</TT>)
+<DD><TT>VT_CUDATRACE_IDLE=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT> 
 <BR>
-Show the GPU idle time on a CUDA stream, if set to <TT>yes</TT>.
+Show the GPU compute idle time on first used CUDA stream, if set to <TT>yes</TT>.
 
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_CUDATRACE_GPUMEMUSAGE</TT> (default: <TT>no</TT>)
+<DD><TT>VT_CUDATRACE_MEMCPY=[<SPAN  CLASS="textbf">yes</SPAN>|no]</TT>
 <BR>
-Visualize GPU memory usage as counter ``gpu_mem_usage``, if set to <TT>yes</TT>.
+Tracing of CUDA memory copies is enabled/disabled. For CUDA tracing via
+      library wrapper this will only have effect on asynchronous memory copies. 
 
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_CUDATRACE_SYNC</TT> (default: <TT>yes</TT> or <TT>3</TT>)
+<DD><TT>VT_CUDATRACE_SYNC=[0|1|2|<SPAN  CLASS="textbf">3</SPAN>]</TT>
+         <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
 <BR>
 Controls how VampirTrace handles synchronizing CUDA API calls, especially 
       <SPAN  CLASS="textit">cudaMemcpy</SPAN> and <SPAN  CLASS="textit">cudaThreadSynchronize</SPAN>.
@@ -2236,14 +2276,15 @@ Controls how VampirTrace handles synchronizing CUDA API calls, especially
       This allows a better view on the application execution, showing how much 
       time is actually spent waiting for a kernel to complete during synchronization.
       Level 3 will further use the synchronization to flush the internal task 
-      buffer and perform a timer synchronization between GPU und and host. This 
+      buffer and perform a timer synchronization between GPU and host. This 
       introduces a minimal overhead but increases timer precision and prevents 
       flushes elsewhere in the trace.
 
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_CUPTI_METRICS</TT> (default: <TT>""</TT>)
+<DD><TT>VT_CUPTI_METRICS</TT>
+            <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
 <BR>
 Capture CUDA CUPTI counters. Metrics are separated by default with '':`` 
       or user specified by <TT>VT_METRICS_SEP</TT>.
@@ -2253,32 +2294,36 @@ Example: <TT>VT_CUPTI_METRICS=local_store:local_load</TT>
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_CUPTI_SAMPLING</TT> (default: <TT>no</TT>)
+<DD><TT>VT_CUPTI_SAMPLING=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT> 
+	    <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
 <BR>
 Poll for CUPTI counter values during kernel execution, if set to <TT>yes</TT>.
 
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_CUPTI_API_CALLBACK</TT> (default: <TT>no</TT>)
+<DD><TT>VT_GPUTRACE_MEMUSAGE=[yes|<SPAN  CLASS="textbf">no</SPAN>|2]</TT>
 <BR>
-Use CUPTI callback API to intercept CUDA runtime calls.
+Record GPU memory usage as counter ``gpu_mem_usage``, if set to <TT>yes</TT>.
+      Print missing <SPAN  CLASS="textit">cudaFree()</SPAN> calls to stderr, if set to '<TT>2</TT>'.
 
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_GPUTRACE_ERROR</TT> (default: <TT>no</TT>)
+<DD><TT>VT_GPUTRACE_ERROR=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT>
+	    <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
 <BR>
 Print out an error message and exit the program, if a function call to a 
-      GPU library does not return succesfully. The default is just a warning message 
+      GPU library does not return successfully. The default is just a warning message 
       without program exit.
 
 <P>
 </DD>
 <DT></DT>
-<DD><TT>VT_GPUTRACE_DEBUG</TT> (default: <TT>no</TT>)
+<DD><TT>VT_GPUTRACE_DEBUG=[yes|<SPAN  CLASS="textbf">no</SPAN>]</TT>
+	    <SMALL CLASS="SCRIPTSIZE">(CUDA runtime API wrapper only) </SMALL>
 <BR>
-Do not cleanup all GPU ressources (profiling events, contexts, event groups), 
+Do not cleanup all GPU resources (profiling events, contexts, event groups), 
       as they might have been already implicitly cleaned up by the GPU runtime.
 
 <P>
@@ -2286,70 +2331,151 @@ Do not cleanup all GPU ressources (profiling events, contexts, event groups),
 </DL>
 
 <P>
-Until CUDA Runtime Version 4.0 and CUDA Driver for Linux 270.41.19 
+Every CUDA stream, which is executed on a cuda-capable device and 
+  used during program execution, creates an own thread. ``CUDA-Threads'' can 
+  contain communication and kernel events and have the following notation:
+
+<P>
+<DIV ALIGN="CENTER">
+<TT>CUDA[device:stream] process:thread</TT>
+  
+</DIV>
+
+<P>
+Due to an issue with CUPTI, the device is not always properly 
+  shown. The CUDA stream number is increasing, beginning with the default 
+  stream '1'. The stream number provided by CUPTI might not be evenly increasing. 
+  Only streams with traceable information will be written. 
+<P></P>
+
+<P>
+As kernels and asynchronous memory copies are executed asynchronously 
+  on the CUDA device, information about these activities will be buffered until 
+  a synchronizing CUDA API function call or the program exits. 
+  Every used CUDA device and its corresponding host thread has an own buffer 
+  (8192 bytes by default), when CUDA tracing is done via the CUDA runtime API wrapper. 
+  When using CUDA tracing via CUPTI every CUDA context creation initiates the 
+  allocation of an own buffer (65536 bytes by default). 
+  The buffer size can be specified in bytes with the environment variable 
+  <TT>VT_CUDATRACE_BUFFER_SIZE</TT>. 
+<P></P>
+
+<P>
+Several new region groups have been introduced:
+  <DIV ALIGN="CENTER">
+
+    <TABLE CELLPADDING=3>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDART_API</SPAN></TH>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA runtime API calls</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDRV_API</SPAN></TH>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA driver API calls</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDA_SYNC</SPAN></TH>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA synchronization</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDA_KERNEL</SPAN></TH>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>CUDA kernels/functions can only appear on 
+			      ``CUDA-Threads''</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">CUDA_IDLE</SPAN></TH>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>GPU compute idle time - the CUDA device does not run any 
+			      kernel currently (shown in first used stream of 
+                              the device)</TD>
+</TR>
+<TR><TH ALIGN="LEFT"><SPAN  CLASS="textbf">VT_CUDA</SPAN></TH>
+<TD ALIGN="LEFT" VALIGN="TOP" WIDTH=269>Measurement overhead (write CUDA events, 
+			      check current device, etc.)</TD>
+</TR>
+</TABLE>
+</DIV>
+
+<P>
+
+<H3><A NAME="SECTION00550100000000000000">
+Tracing CUDA Runtime API via CUPTI</A>
+</H3>
+  Using CUPTI to trace the CUDA runtime API and GPU activities needs the 
+  environment variable <TT>VT_CUDATRACE_CUPTI</TT> to be set to <TT>yes</TT>.
+  By default, the library wrapper will be used. If both tracing methods are 
+  configured during the VampirTrace build process, the CUDA runtime library 
+  should be preloaded to reduce tracing overhead (<TT>LD_PRELOAD=libcudart.so</TT>).
+  Otherwise the library wrapper intercepts every CUDA runtime API call and makes 
+  a short but unnecessary check, whether it is enabled. 
+<P></P>
+
+<P>
+CUPTI prior to version 1.0 (CUDA 4.0) has no native support for tracing of 
+  GPU activities, which therefore will be synchronized directly after their 
+  asynchronous call to retrieve their runtime. 
+  Filtered kernels will not be recorded and their execution time not marked as 
+  idle, if GPU idle time tracing is enabled. 
+  The CUPTI tracing method does not support peer-to-peer memory copies. 
+
+<P>
+
+<H3><A NAME="SECTION00550200000000000000">
+CUDA Runtime API Wrapper Particularities</A>
+</H3>
+  To ensure measurement of correct data rates for synchronous CUDA 
+  memory copies, the VampirTrace CUDA runtime library wrapper inserts a CUDA 
+  synchronization before. 
+  Otherwise the CUDA memory copy call would do the synchronization and it was 
+  not possible to get correct transfer rates.
+<P></P>
+
+<P>
+Until CUDA Toolkit 4.1 and Developer Drivers for Linux 285.05.32 
   the usage of CUDA events between asynchronous tasks serializes their on-device 
   execution. This seems to be a bug, which has already been reported to NVIDIA. 
   As VampirTrace uses CUDA events for time measurement and asynchronous tasks 
   may overlap (depends on the CUDA device capability), there might be a sensible 
   impact on the program flow. 
-  The current workaround is to disable tracing of kernels and/or asynchronous 
-  memory copies via the given environment variables.
 
 <P>
 
-<H3><A NAME="SECTION00550100000000000000">
-CUDA runtime API Counter</A>
+<H3><A NAME="SECTION00550300000000000000">
+Counter via CUDA API</A>
 </H3>
-  If <TT>VT_CUDATRACE_GPUMEMUSAGE</TT> is enabled, 
+  If <TT>VT_GPUTRACE_MEMUSAGE</TT> is enabled, 
   <SPAN  CLASS="textit">cudaMalloc</SPAN> and <SPAN  CLASS="textit">cudaFree</SPAN> functions will be tracked to write 
   the GPU memory usage counter <TT>gpu_mem_usage</TT>. 
+  This counter does not need space in the CUDA buffer. The counter values 
+  will be directly written to the default CUDA stream '1'. This stream will be 
+  created, if it does not exist and does not have to contain any other CUDA 
+  device activities. If the environment variable is set to <TT>2</TT>, missing 
+  <SPAN  CLASS="textit">cudaFree()</SPAN> calls will be printed to stderr.
+<P></P>
 
 <P>
-There are three counters, which provide some information about the kernel 
-  grid, block and thread compostion (<TT>blocks_per_grid</TT>, 
-  <TT>threads_per_block</TT>, <TT>threads_per_kernel</TT>).
+With kernel tracing enabled there are three counters, which provide 
+  information about the kernel's grid, block and thread composition: 
+  <TT>blocks_per_grid</TT>, <TT>threads_per_block</TT>, <TT>threads_per_kernel</TT>.
+  With CUPTI tracing additional kernel counters are available: static and 
+  dynamic shared memory, total local memory and registers per thread 
+  (<TT>VT_CUDATRACE_KERNEL=2</TT>).
 
 <P>
 
-<H3><A NAME="SECTION00550200000000000000">
-CUDA Performance Counters - CUPTI Events</A>
+<H3><A NAME="SECTION00550400000000000000">
+CUDA Performance Counters via CUPTI Events 
+<BR>    <SMALL CLASS="FOOTNOTESIZE">(CUDA runtime API wrapper only!)</SMALL></A>
 </H3>
-  To capture performance counters in CUDA applications, CUPTI metrics can be 
-  specified with the environment variable <TT>VT_CUPTI_METRICS</TT>. Metrics 
+  To capture performance counters in CUDA applications, CUPTI events can be 
+  specified with the environment variable <TT>VT_CUPTI_METRICS</TT>. Counters 
   are separated by default with '':`` or user specified by 
-  <TT>VT_METRICS_SEP</TT>. The <SPAN  CLASS="textit">CUPTI User's Guide</SPAN> provides 
-  information about the available counters. Alternatively set 
+  <TT>VT_METRICS_SEP</TT>. The <SPAN  CLASS="textit">CUPTI User's Guide - Event Reference</SPAN> 
+  provides information about the available counters. Alternatively set 
   <TT>VT_CUPTI_METRICS=help</TT> to show a list of available counters 
   (<TT>help_long</TT> to print the counter description as well).
 
 <P>
 
-<H3><A NAME="SECTION00550300000000000000">
-Tracing CUDA runtime API via CUPTI Callbacks</A>
-</H3>
-  As there are systems, that does not support dynamic libraries, the CUDA 
-  runtime API can be traced via the CUPTI callback interface, implemented in 
-  VampirTrace.
-
-<P>
-If tracing via CUPTI callbacks is enabled (<TT>VT_CUPTI_API_CALLBACK=yes</TT>) 
-  and the CUDA runtime wrapper has been configured into the VampirTrace 
-  libraries, the CUDA runtime library should be preloaded to reduce tracing 
-  overhead (<TT>LD_PRELOAD=libcudart.so</TT>).
-
-<P>
-Currently CUPTI does not support tracing of asynchronous tasks. If tracing of 
-  kernels or asynchronous memory copies is enabled, they will be synchronized 
-  directly after the call to retrieve their runtime. This may be improved in 
-  future releases.
-
-<P>
-
-<H3><A NAME="SECTION00550400000000000000">
+<H3><A NAME="SECTION00550500000000000000">
 Compile and Link CUDA applications</A>
 </H3>
   Use the VampirTrace compiler wrapper <TT>vtnvcc</TT> instead of <TT>nvcc</TT> 
-  to compile the CUDA application, which does automatic source code instrumenation.
+  to compile the CUDA application, which does automatic source code instrumentation.
 <P></P>
 
 <BR>
@@ -2385,7 +2511,8 @@ This uses automatic compiler instrumentation (<TT>-finstrument-functions</TT>)
   and the standard VampirTrace library. Replace the <TT>-lvt</TT> with 
   <TT>-lvt-mt</TT> for multithreaded, <TT>-lvt-mpi</TT> for MPI and 
   <TT>-lvt-hyb</TT> for multithreaded MPI applications. In this case the CUDA 
-  runtime library is linked before the <TT>zlib</TT>.
+  runtime library is linked before the <TT>zlib</TT>. 
+<P></P>
 
 <P>
 If the application is linked with <TT>gcc/g++</TT>, the linking command has to ensure, 
@@ -2393,6 +2520,7 @@ If the application is linked with <TT>gcc/g++</TT>, the linking command has to e
   library <TT>libcudart.so</TT> (check e.g. with ``ldd <SPAN  CLASS="textit">executable</SPAN>''). 
   Using the VampirTrace compiler wrappers (<TT>vtcc/vtc++</TT>) for linking is 
   the easiest way to ensure correct linking of the VampirTrace library.
+<P></P>
 
 <P>
 With the library tracing mechanism described in section <A HREF="#sec:3rd-party">2.9</A>, 
@@ -2402,8 +2530,8 @@ With the library tracing mechanism described in section <A HREF="#sec:3rd-party"
 
 <P>
 
-<H3><A NAME="SECTION00550500000000000000">
-Tracing the NVIDIA CUDA SDK 3.x and 4.0</A>
+<H3><A NAME="SECTION00550600000000000000">
+Tracing the NVIDIA CUDA SDK 3.x and 4.x</A>
 </H3>
   To get some example traces, replace the compiler commands in the common 
   Makefile include file (<TT>common/common.mk</TT>) with the corresponding 
@@ -2416,11 +2544,11 @@ Tracing the NVIDIA CUDA SDK 3.x and 4.0</A>
   CC   := vtcc
   LINK := vtc++ #-vt:mt
 </PRE>
-  Use the compiler switches for MPI, multithreaded 
+  Use the compiler switches for MPI, multi-threaded 
   and hybrid programs, if necessary (e.g. the CUDA SDK example 
-  <TT>simpleMultiGPU</TT> is a multithreaded program, which needs to be linked 
-  with a multithreaded VampirTrace library - uncomment the compiler switch 
-  in the linker command to use the multithreaded VampirTrace library). 
+  <TT>simpleMultiGPU</TT> is a multi-threaded program, which needs to be linked 
+  with a multi-threaded VampirTrace library - uncomment the compiler switch 
+  in the linker command to use the multi-threaded VampirTrace library). 
   
 <P><P>
 <BR>
@@ -2428,8 +2556,8 @@ Tracing the NVIDIA CUDA SDK 3.x and 4.0</A>
 <BR>
 <P>
 
-<H3><A NAME="SECTION00550600000000000000">
-Multithreaded CUDA applications</A>
+<H3><A NAME="SECTION00550700000000000000">
+Multi-threaded CUDA applications</A>
 </H3>
   If threads are used to invoke asynchronous CUDA tasks, make sure to call a 
   synchronizing CUDA function to get the tasks flushed before the thread exits. 
@@ -2439,34 +2567,26 @@ Multithreaded CUDA applications</A>
 
 <BR>
 <P>
-
-<H3><A NAME="SECTION00550700000000000000">
-Mixed Use of CUDA runtime and driver API</A>
-</H3>
-  As CUDA runtime API may implicitly create and destroy CUDA contexts, there 
-  might occur problems during CUDA event flushing. To workaround such an issue 
-  use only one API for interaction (memory copies, kernel execution) with the 
-  CUDA device. If you have to mix both APIs, make a clean exit for the API, 
-  which used the asynchronous tasks, before the other API closes its thread or 
-  context - cudaThreadExit() for runtime API and cuCtxDestroy() for driver API. 
-  Otherwise not yet flushed, asynchronous tasks will be missing in the final trace.
-  
-<P><P>
-<BR>
-
-<BR>
-<P>
 <SPAN  CLASS="textbf">Note:</SPAN>
 <BR>
 For 32-bit systems VampirTrace has to be configured with the 32-bit 
-  version of cuda runtime library. If the link test fails, use the  :
+  version of CUDA runtime library. If the link test fails, use the 
+  following configure option :
   <PRE>
   --with-cuda-lib-dir=$CUDA_INSTALL_PATH/lib
 </PRE>
 
 <P>
-VampirTrace CUDA has been succesfully tested with the CUDA runtime 
-  version 3.x and 4.0. 
+Since CUDA toolkit version 4.1 the 64-bit CUPTI library is located in the 
+  lib64 directory of CUPTI. If the link test fails, use the 
+  following configure option :
+  <PRE>
+  --with-cupti-lib-dir=$CUDA_INSTALL_PATH/extras/CUPTI/lib64
+</PRE>
+
+<P>
+VampirTrace CUDA support has been successfully tested with CUDA 
+  toolkit version 3.x, 4.0 and 4.1.
 
 <P>
 
@@ -2633,7 +2753,9 @@ If you'd like to experiment with some other I/O library, set the environment var
 <BR>
 fork/system/exec Calls
 </H1>
- ,
+
+<P>
+If VampirTrace has been built with LIBC trace support ,
   it is capable of tracing programs which call functions from the LIBC <TT>exec</TT> family
   (<TT>execl</TT>, <TT>execlp</TT>, <TT>execle</TT>, <TT>execv</TT>, <TT>execvp</TT>, <TT>execve</TT>),
   <TT>system</TT>, and <TT>fork</TT>.
@@ -2679,13 +2801,14 @@ To install VampirTrace with correctness checking support it is necessary to have
   
 <OL>
 <LI>Marmot
-<BR>(see http://www.hlrs.de/organization/av/amt/research/marmot)
+<BR>    (see http://www.hlrs.de/organization/av/amt/research/marmot)
 </LI>
 <LI>UniMCI
-<BR>(see http://www.tu-dresden.de/zih/unimci)
+<BR>    (see http://www.tu-dresden.de/zih/unimci)
 </LI>
 <LI>VampirTrace
-<BR>(see http://www.tu-dresden.de/zih/vampirtrace)
+<BR>    (see http://www.tu-dresden.de/zih/vampirtrace)
+  
 </LI>
 </OL>
 
@@ -2959,7 +3082,8 @@ Messages with duplicated tags will not be visible in the final trace.
 
 <P>
 For all three languages the instrumented sources have to be compiled 
-with <TT>-DVTRACE</TT>. Otherwise the <TT>VT_*</TT> calls are ignored. Optionally, if the sources contain further VampirTrace API calls and only the
+with <TT>-DVTRACE</TT>. Otherwise the <TT>VT_*</TT> calls are ignored.
+Optionally, if the sources contain further VampirTrace API calls and only the
 calls for user-defined markers shall be disabled, then the sources have to be
 compiled with <TT>-DVTRACE_NO_MSG</TT> in addition to <TT>-DVTRACE</TT>.
 
@@ -2984,52 +3108,77 @@ By default, all calls of instrumented functions will be traced, so that the
   resulting trace files can easily become very large. In order to decrease the
   size of a trace, VampirTrace allows the specification of filter directives
   before running an instrumented application.
-  The user can decide on how often an instrumented function/region shall be
+  The user can decide on how often an instrumented function(group) shall be
   recorded to a trace file.
   To use a filter, the environment variable <TT>VT_FILTER_SPEC</TT> needs to be 
-  defined. It should contain the path and name of a file with filter directives.
+  defined. It should contain the path and name of a file with filter directives
+  specified as follows:
+<BR>
+<P>
+<TT>&lt;function&gt; - &lt;limit&gt; [R]</TT> or <TT>&lt;groups&gt; - &lt;limit&gt; [R] G</TT>
+<BR>
+<P>
+<BR>
+<TABLE CELLPADDING=3>
+<TR><TD ALIGN="LEFT"><TT>functions, groups</TT></TD>
+<TD ALIGN="LEFT">semicolon-separated list of functions/groups</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">(can contain wildcards)</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>limit</TT></TD>
+<TD ALIGN="LEFT">assigned call limit</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">0 = don't record functions/groups</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">-1 = unlimited</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>G</TT></TD>
+<TD ALIGN="LEFT">attribute for filtering function groups</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>R</TT></TD>
+<TD ALIGN="LEFT">attribute for recursive filtering; don't record callees</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">if function's call limit is reached</TD>
+</TR>
+</TABLE>
+<BR>
 
 <P>
-Here is an example of a file containing filter directives:
+Example:
 
 <P>
 <PRE>
-  #    VampirTrace region filter specification
-  #   
-  #    call limit definitions and region assignments
-  #   
-  #    syntax: &lt;regions&gt; -- &lt;limit&gt;
-  #   
-  #      regions    semicolon-separated list of regions
-  #                 (can be wildcards)
-  #      limit      assigned call limit
-  #                  0 = region(s) denied
-  #                 -1 = unlimited
-  #   
   add;sub;mul;div -- 1000
-  * -- 3000000
-</PRE> 
+  MATH            -- 500 G
+  *               -- 3000000
+</PRE>
 
 <P>
-These region filter directives cause that the functions <TT>add</TT>, 
-<TT>sub</TT>, <TT>mul</TT> and <TT>div</TT> be recorded at most 1000 times. 
-The remaining functions <TT>*</TT> will be recorded at most 3000000 times.
+These filter directives cause that the functions <TT>add</TT>, <TT>sub</TT>,
+  <TT>mul</TT>, and <TT>div</TT> will be recorded at most 1000 times. All the functions
+  of the group <TT>MATH</TT> at most 500 and the remaining functions (*) at most 3000000
+  times.
 
 <P>
 Besides creating filter files manually, you can also use the <TT>vtfilter</TT>
-tool to generate them automatically. This tool reads a provided trace
-and decides whether a function should be filtered or not, based on the evaluation of 
+  tool to generate them automatically. This tool reads a provided trace
+  and decides whether a function should be filtered or not, based on the evaluation of 
 <H2><A NAME="SECTION00611000000000000000">
 Rank Specific Filtering</A>
 </H2>
 
 <P>
 An experimental extension allows rank specific filtering. Use <TT>@</TT> clauses to
-restrict all following filters to the given ranks. The rank selection must be given
-as a list of <TT>&lt;from&gt; - &lt;to&gt;</TT> pairs or single values. 
-Note that all rank specific rules are only effective after MPI_Init because the ranks
-is unknown before. 
-The optional argument <TT>- OFF</TT> disables the given ranks completely, regardless of following filter rules. 
+  restrict all following filters to the given ranks. The rank selection must be given
+  as a list of <TT>&lt;from&gt; - &lt;to&gt;</TT> pairs or single values. 
+  Note that all rank specific rules are only effective after MPI_Init because the ranks
+  are unknown before. 
+  The optional argument <TT>- OFF</TT> disables the given ranks completely, regardless of
+  following filter rules. 
 
 <P>
 <PRE>
@@ -3040,16 +3189,17 @@ The optional argument <TT>- OFF</TT> disables the given ranks completely, regard
 </PRE>
 
 <P>
-The example defines two limits for the ranks 4 - 10, 20 - 29, and 34. The first line disables the ranks 35 - 42 completely.
+The example defines two limits for the ranks 4 - 10, 20 - 29, and 34. The first line
+  disables the ranks 35 - 42 completely.
 
 <P>
 
 <H4><A NAME="SECTION00611010000000000000">
 Attention:</A>
 </H4>
-The rank specific rules are activated later than usual at MPI_Init, because
-the ranks are not available earlier. The special MPI routines MPI_Init, MPI_Init_thread,
-and MPI_Initialized cannot be filtered in this way.
+  The rank specific rules are activated later than usual at MPI_Init, because
+  the ranks are not available earlier. The special MPI routines MPI_Init, MPI_Init_thread,
+  and MPI_Initialized cannot be filtered in this way.
 
 <P>
 
@@ -3138,43 +3288,100 @@ Additionally, you can create your own groups, e.g.,&nbsp;to better distinguish
   different phases of an application.
   To use function/region grouping set the environment variable
   <TT>VT_GROUPS_SPEC</TT> to the path of a file which contains the group
-  assignments. 
-  Below, there is an example of how to use group assignments:
+  assignments specified as follows:
 
 <P>
 <PRE>
-  #    VampirTrace region groups specification
-  #
-  #    group definitions and region assignments
-  #
-  #    syntax: &lt;group&gt;=&lt;regions&gt;
-  #
-  #      group      group name 
-  #      regions    semicolon-separated list of regions
-  #                 (can be wildcards)
-  #
-  CALC=add;sub;mul;div
+ &lt;group&gt;=&lt;functions&gt;
+</PRE>
+
+<P>
+<BR>
+<TABLE CELLPADDING=3>
+<TR><TD ALIGN="LEFT"><TT>group</TT></TD>
+<TD ALIGN="LEFT">group name</TD>
+</TR>
+<TR><TD ALIGN="LEFT"><TT>functions</TT></TD>
+<TD ALIGN="LEFT">semicolon-seperated list of functions</TD>
+</TR>
+<TR><TD ALIGN="LEFT">&nbsp;</TD>
+<TD ALIGN="LEFT">(can contain wildcards)</TD>
+</TR>
+</TABLE>
+<BR>
+
+<P>
+Example:
+
+<P>
+<PRE>
+  MATH=add;sub;mul;div
   USER=app_*
 </PRE> 
 
 <P>
 These group assignments associate the functions <TT>add</TT>, <TT>sub</TT>, 
-<TT>mul</TT> and <TT>div</TT> with group ``CALC'', and all functions 
-with the prefix <TT>app_</TT> are associated with group ``USER''.
+  <TT>mul</TT>, and <TT>div</TT> with group ``MATH'', and all functions 
+  with the prefix <TT>app_</TT> are associated with group ``USER''.
 
 <P>
 
-.
+<P>
+
+<H1><A NAME="SECTION00700000000000000000"></A>
+<A NAME="chap:install"></A>
+<BR>
+VampirTrace Installation
+</H1>
 
 <P>
 
-<H1><A NAME="SECTION00640000000000000000"></A>
+<H1><A NAME="SECTION00710000000000000000">
+Basics</A>
+</H1>
+
+<P>
+Building VampirTrace is typically a combination of running <TT>configure</TT>
+    and <TT>make</TT>.  Execute the following commands to install VampirTrace from
+    the directory at the top of the tree:
+
+<P>
+<PRE>
+% ./configure --prefix=/where/to/install
+[...lots of output...]
+% make all install
+</PRE> 
+
+<P>
+If you need special access for installing, you can execute
+    <TT>make all</TT> as a user with write permissions in the build tree and a
+    separate <TT>make install</TT> as a user with write permissions to the
+    install tree.
+
+<P>
+However, for more details, also read the following instructions. Sometimes
+    it might be necessary to provide <TT>./configure</TT> with options, e.g.,&nbsp;
+    specifications of paths or compilers.
+
+<P>
+VampirTrace comes with example programs written in C, C++, and Fortran.
+    They can be used to test different instrumentation types of the
+    VampirTrace installation.
+    You can find them in the directory <TT>examples</TT> of the VampirTrace package.
+
+<P>
+Note that you should compile VampirTrace with the same compiler you use for the
+    application to trace.
+
+<P>
+
+<H1><A NAME="SECTION00720000000000000000"></A>
 <A NAME="sec:configure"></A>
 <BR>
 Configure Options
 </H1>
 
-<H2><A NAME="SECTION00641000000000000000">
+<H2><A NAME="SECTION00721000000000000000">
 Compilers and Options</A>
 </H2>
 
@@ -3195,7 +3402,7 @@ You can pass initial values for configuration parameters to <TT>configure</TT>
 
 <P>
 
-<H2><A NAME="SECTION00642000000000000000">
+<H2><A NAME="SECTION00722000000000000000">
 Installation Names</A>
 </H2>
 
@@ -3207,7 +3414,7 @@ By default, <TT>make install</TT> will install the package's files in
 
 <P>
 
-<H2><A NAME="SECTION00643000000000000000">
+<H2><A NAME="SECTION00723000000000000000">
 Optional Features</A>
 </H2>
 
@@ -3232,9 +3439,10 @@ default: automatically by configure.
 <DD>&nbsp;
 <BR>
 enable support for Dyninst instrumentation,
-                              default: enable if found by configure. Dyninst<A NAME="tex2html7"
-  HREF="#foot1107"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
- SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>version 6.1 or higher!
+                              default: enable if found by configure.
+                              <SPAN  CLASS="textbf">Note:</SPAN> Requires Dyninst<A NAME="tex2html8"
+  HREF="#foot1596"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> version 6.1 or higher!
 
 <P>
 </DD>
@@ -3253,8 +3461,11 @@ build shared library which attaches Dyninst to
 <BR>
 enable support for automatic source code
                               instrumentation by using TAU, default: enable if
-                              found by configure. TAU<A NAME="tex2html8"
-  HREF="#foot1110"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+                              found by configure.
+                              <SPAN  CLASS="textbf">Note:</SPAN> Requires PDToolkit<A NAME="tex2html9"
+  HREF="#foot1597"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> or TAU<A NAME="tex2html10"
+  HREF="#foot1598"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A>!
 
 <P>
@@ -3399,11 +3610,27 @@ enable Java support, default: enable if JVMTI
 
 <P>
 </DD>
+<DT><STRONG><TT>-enable-cupti</TT></STRONG></DT>
+<DD>&nbsp;
+<BR>
+enable support for tracing CUDA via CUPTI, 
+                              default: enable if found by configure
+
+<P>
+</DD>
+<DT><STRONG><TT>-enable-cudawrap</TT></STRONG></DT>
+<DD>&nbsp;
+<BR>
+enable support for tracing CUDA via library
+                              wrapping, default: enable if found by configure
+
+<P>
+</DD>
 </DL>
 
 <P>
 
-<H2><A NAME="SECTION00644000000000000000">
+<H2><A NAME="SECTION00724000000000000000">
 Important Optional Packages</A>
 </H2>
 
@@ -3806,7 +4033,9 @@ give the path for JVMTI-include files, default:
 </DL>
 
 <P>
-To enable support for generating wrapper for 3th-Party libraries the C code parser CTool is needed:
+To enable support for generating wrapper for 3th-Party libraries the C code parser CTool<A NAME="tex2html11"
+  HREF="#foot1599"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A> is needed:
 
 <P>
 <DL>
@@ -3843,7 +4072,7 @@ use given CTool lib, default: automatically by configure
 </DL>
 
 <P>
-To enable support for CUDA runtime API wrapping, the CUDA-Toolkit 
+To enable support for CUDA API wrapping, the CUDA-Toolkit 
 install path is needed:
 
 <P>
@@ -3881,8 +4110,7 @@ give the pathname for the shared CUDA runtime library, default:
 </DL>
 
 <P>
-To enable support for CUPTI counter capturing during CUDA runtime 
-tracing, the CUPTI install path is needed:
+To enable support for CUPTI features, the CUPTI install path is needed:
 
 <P>
 <DL>
@@ -3914,7 +4142,7 @@ use given cupti lib, default: -lcupti
 
 <P>
 
-<H1><A NAME="SECTION00650000000000000000">
+<H1><A NAME="SECTION00730000000000000000">
 Cross Compilation</A>
 </H1>
 
@@ -3937,20 +4165,37 @@ are shown below:
 <LI>Maybe you also need to set additional commands and flags for the back-end (e.g.&nbsp;<TT>RANLIB</TT>, <TT>AR</TT>, <TT>MPICC</TT>, <TT>CXXFLAGS</TT>).
 </LI>
 </UL>
-For example, this <TT>configure</TT> command line works for an NEC SX6 system with an X86_64 based front-end:
+Examples:
+
+<P>
+BlueGene/P:
 
 <P>
 <PRE>
-% ./configure CC=sxcc CXX=sxc++ F77=sxf90 FC=sxf90 MPICC=sxmpicc
-              AR=sxar RANLIB="sxar st" CC_FOR_BUILD=cc CXX_FOR_BUILD=c++
-              --host=sx6-nec-superux14.1
-              --with-cross-prefix=sx
-              --with-otf-lib=-lotf
-</PRE> 
+% ./configure --host=powerpc64-ibm-linux-gnu
+</PRE>
+
+<P>
+Cray XK6:
+
+<P>
+<PRE>
+% ./configure --host=x86_64-cray-linux-gnu
+              CC_FOR_BUILD=craycc
+              CXX_FOR_BUILD=crayc++
+</PRE>
+
+<P>
+NEC SX6:
+
+<P>
+<PRE>
+% ./configure --host=sx6-nec-superux14.1
+</PRE>
 
 <P>
 
-<H1><A NAME="SECTION00660000000000000000">
+<H1><A NAME="SECTION00740000000000000000">
 Environment Set-Up</A>
 </H1>
 
@@ -3975,13 +4220,13 @@ for csh and tcsh:
 
 <P>
 
-<H1><A NAME="SECTION00670000000000000000">
+<H1><A NAME="SECTION00750000000000000000">
 Notes for Developers</A>
 </H1>
 
 <P>
 
-<H2><A NAME="SECTION00671000000000000000">
+<H2><A NAME="SECTION00751000000000000000">
 Build from SVN</A>
 </H2>
 
@@ -3995,14 +4240,15 @@ If you have checked out a <SPAN  CLASS="textit">developer's copy</SPAN> of Vampi
               [--version &lt;version&gt;]
 </PRE>
 Note that GNU Autoconf &#8805;2.60 and GNU Automake &#8805;1.9.6 are required.
-You can download them from http://www.gnu.org/software/autoconf
-and http://www.gnu.org/software/automake.
+You can download them from http://www.gnu.org/software/autoconfand http://www.gnu.org/software/automake.
 
-<H1><A NAME="SECTION00700000000000000000">
+<P>
+
+<H1><A NAME="SECTION00800000000000000000">
 Command Reference</A>
 </H1>
 
-<H1><A NAME="SECTION00710000000000000000"></A>
+<H1><A NAME="SECTION00810000000000000000"></A>
 <A NAME="sec:comm_wrappers"></A>
 <BR>
 Compiler Wrappers (vtcc,vtcxx,vtf77,vtf90)
@@ -4118,7 +4364,7 @@ Examples:
 
 <P>
 
-<H1><A NAME="SECTION00720000000000000000"></A>
+<H1><A NAME="SECTION00820000000000000000"></A>
 <A NAME="sec:VTUNIFY"></A>
 <BR>
 Local Trace Unifier (vtunify)
@@ -4162,7 +4408,7 @@ options:
 
 <P>
 
-<H1><A NAME="SECTION00730000000000000000"></A>
+<H1><A NAME="SECTION00830000000000000000"></A>
 <A NAME="sec:VTDYN"></A>
 <BR>
 Binary Instrumentor (vtdyn)
@@ -4199,7 +4445,7 @@ options:
 
 <P>
 
-<H1><A NAME="SECTION00740000000000000000"></A>
+<H1><A NAME="SECTION00840000000000000000"></A>
 <A NAME="sec:VTFILTER"></A>
 <BR>
 Trace Filter Tool (vtfilter)
@@ -4293,7 +4539,7 @@ filt-options:
 
 <P>
 
-<H1><A NAME="SECTION00750000000000000000"></A>
+<H1><A NAME="SECTION00850000000000000000"></A>
 <A NAME="sec:VTLIBWRAPGEN"></A>
 <BR>
 Library Wrapper Generator (vtlibwrapgen)
@@ -4413,7 +4659,7 @@ examples:
 
 <P>
 
-<H1><A NAME="SECTION00760000000000000000"></A>
+<H1><A NAME="SECTION00860000000000000000"></A>
 <A NAME="sec:VTRUN"></A>
 <BR>
 Application Execution Wrapper (vtrun)
@@ -4463,13 +4709,13 @@ Application Execution Wrapper (vtrun)
 
 <P>
 
-<H1><A NAME="SECTION00800000000000000000">
+<H1><A NAME="SECTION00900000000000000000">
 Counter Specifications</A>
 </H1>
 
 <P>
 
-<H1><A NAME="SECTION00810000000000000000"></A>
+<H1><A NAME="SECTION00910000000000000000"></A>
 <A NAME="sec:papi"></A>
 <BR>
 PAPI
@@ -4558,7 +4804,7 @@ PAPI_HW_INT   Hardware interrupts
 
 <P>
 
-<H1><A NAME="SECTION00820000000000000000"></A>
+<H1><A NAME="SECTION00920000000000000000"></A>
 <A NAME="sec:cpc"></A>
 <BR>
 CPC
@@ -4624,7 +4870,7 @@ http://www.sun.com/processors/manuals
 
 <P>
 
-<H1><A NAME="SECTION00830000000000000000"></A>
+<H1><A NAME="SECTION00930000000000000000"></A>
 <A NAME="sec:necsx_pc"></A>
 <BR>
 NEC SX Hardware Performance Counter
@@ -4654,7 +4900,7 @@ SX_CTR_BPFC   Branch prediction failure counter
 
 <P>
 
-<H1><A NAME="SECTION00840000000000000000"></A>
+<H1><A NAME="SECTION00940000000000000000"></A>
 <A NAME="sec:rusage_list"></A>
 <BR>
 Resource Usage
@@ -4760,10 +5006,100 @@ by the Linux 2.6 kernel are shown in the table.
 <P>
 
 <P>
-to learn more about using <TT>vtunify</TT>.
+
+<H1><A NAME="SECTION001000000000000000000">
+FAQ</A>
+</H1>
+
 <P>
 
-<H1><A NAME="SECTION00850000000000000000"></A>
+<H1><A NAME="SECTION001010000000000000000"></A>
+<A NAME="sec:faq_compiler"></A>
+<BR>
+Can I use different compilers for VampirTrace and my application?
+</H1>
+
+<P>
+There are several limitations which make this generally a bad idea:
+
+<UL>
+<LI>Using different compilers when tracing OpenMP applications does not work.
+</LI>
+<LI>Both compilers should have the same naming style for Fortran symbols
+       (i.e. uppercase/lowercase, appending underscores) when tracing Fortran MPI
+       applications.
+</LI>
+<LI>VampirTrace must be built to support the instrumentation type of the
+       compiler you use for the application.
+</LI>
+</UL>
+For example, the combination of a GCC compiled VampirTrace with an Intel compiled
+application will work except for OpenMP. But to avoid any trouble it is advisable
+to compile both VampirTrace and the application with the same compiler.
+
+<P>
+
+<H1><A NAME="SECTION001020000000000000000"></A>
+<A NAME="sec:gnu_getsrc"></A>
+<BR>
+Why does my application need such a long time for starting?
+</H1>
+
+<P>
+If subroutines have been instrumented with automatic instrumentation by GNU, Intel,
+PathScale, or Open64 compilers, VampirTrace needs to look-up the function names and
+their source code line before program start. In certain cases, this may take very long.
+To accelerate this process prepare a file with symbol information using the command <TT>nm</TT>
+as explained in Section&nbsp;<A HREF="#sec:compinst">2.3</A> and set <TT>VT_GNU_NMFILE</TT>
+to the pathname of this file. This method prevents VampirTrace from getting the
+function names from the binary.
+
+<P>
+
+<H1><A NAME="SECTION001030000000000000000"></A>
+<A NAME="sec:faq_fortranio"></A>
+<BR>
+Why do I see multiple
+I/O operations for a single (un)formatted file read/write from my Fortran
+application?
+</H1>
+
+<P>
+VampirTrace does not implement any tracing at the Fortran language level.
+Therefore it is unaware of any I/O function calls done by Fortran applications.
+
+<P>
+However, if you enable I/O tracing using <TT>VT_IOTRACE</TT>, VampirTrace
+records all calls to LIBC's I/O functions. As Fortran uses the LIBC interface
+for executing its I/O operations, these function calls will be part of the
+trace. Depending on your Fortran compiler, a single Fortran file read/write
+operation may be split into several LIBC read calls which you will then see in
+your trace.
+
+<P>
+Beware that this may lead you to the (wrong) conclusion that your application
+spends time between the LIBC I/O calls inside the user function that contains
+the Fortran I/O call, especially when doing formatted I/O .
+It is rather the Fortran I/O subsystem which does
+all the formatting of the data that is eating your cpu cycles. But as this layer
+is unknown to VampirTrace, it cannot be shown and the time is accounted to the
+next higher function in the call stack - the user function.
+
+<P>
+
+<H1><A NAME="SECTION001040000000000000000">
+The application has run to completion, but there is no *.otf file. What can I do?</A>
+</H1>
+
+<P>
+The absence of an <TT>*.otf</TT> file usually means that the trace was not unified. This
+is the case on certain platforms, e.g.&nbsp;when using DYNINST or when the local traces
+are not available when the application ends and VampirTrace performs trace unification.
+
+<P>
+In those cases, a <TT>*.uctl</TT> file can be found in the directory of the trace file and the
+user needs to perform trace unification manually. 
+<H1><A NAME="SECTION001050000000000000000"></A>
 <A NAME="sec:faq_onoff"></A>
 <BR>
 What limitations are associated with "on/off" and buffer rewind?
@@ -4795,7 +5131,7 @@ be recorded in the trace. This can cause problems when analyzing the OTF trace a
 
 <P>
 
-<H1><A NAME="SECTION00860000000000000000"></A>
+<H1><A NAME="SECTION001060000000000000000"></A>
 <A NAME="sec:faq_filelock"></A>
 <BR>
 VampirTrace warns that it ``cannot lock file a.lock'', what's wrong?
@@ -4813,7 +5149,7 @@ Alternatively, you can manually control the unique file naming by setting
 
 <P>
 
-<H1><A NAME="SECTION00870000000000000000"></A>
+<H1><A NAME="SECTION001070000000000000000"></A>
 <A NAME="sec:faq_relocate"></A>
 <BR>
 Can I relocate my VampirTrace installation without rebuilding from source?
@@ -4837,7 +5173,7 @@ export VT_PREFIX=$HOME/vampirtrace
 
 <P>
 
-<H1><A NAME="SECTION00880000000000000000"></A>
+<H1><A NAME="SECTION001080000000000000000"></A>
 <A NAME="sec:faq_collective_bytes"></A>
 <BR>
 What are the byte counts in collective communication records?
@@ -4865,7 +5201,7 @@ Thanks to Eugene Loh for pointing this out!
 
 <P>
 
-<H1><A NAME="SECTION00890000000000000000"></A>
+<H1><A NAME="SECTION001090000000000000000"></A>
 <A NAME="sec:faq_asm_error"></A>
 <BR>
 I get ``error: unknown asm constraint letter''
@@ -4878,7 +5214,7 @@ compiler instrumenation (&#8658;&nbsp;Section&nbsp;<A HREF="#sec:compinst">2.3</
 
 <P>
 
-<H1><A NAME="SECTION008100000000000000000"></A>
+<H1><A NAME="SECTION0010100000000000000000"></A>
 <A NAME="sec:faq_unanswered"></A>
 <BR>
 I have a question that is not answered in this document!
@@ -4890,14 +5226,14 @@ for support on installing and using VampirTrace.
 
 <P>
 
-<H1><A NAME="SECTION008110000000000000000"></A>
+<H1><A NAME="SECTION0010110000000000000000"></A>
 <A NAME="sec:faq_morefeatures"></A>
 <BR>
 I need support for additional features so I can trace application xyz.
 </H1>
 
 <P>
-Suggestions are always welcome (contact: mailto:vampirsupport@zih.tu-dresden.devampirsupport@zih.tu-dresden.de)
+Suggestions are always welcome (contact: vampirsupport@zih.tu-dresden.de)
 but there is a chance that we can not implement all your wishes as our resources
 are limited.
 
@@ -4905,54 +5241,75 @@ are limited.
 Anyways, the source code of VampirTrace is open to everybody so you may
 implement support for new stuff yourself.
 If you provide us with your additions afterwards we will consider merging them
-into the official VampirTrace package. <BR><HR><H4>Footnotes</H4>
+into the official VampirTrace package.
+<BR><HR><H4>Footnotes</H4>
 <DL>
-<DT><A NAME="foot70">... (OTF)</A><A
+<DT><A NAME="foot1530">... (OTF)</A><A
  HREF="#tex2html1"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.tu-dresden.de/zih/otf
 
 </DD>
-<DT><A NAME="foot71">... tool </A><A
+<DT><A NAME="foot1531">... tool </A><A
  HREF="#tex2html2"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.vampir.eu
 
 </DD>
-<DT><A NAME="foot72">... Open MPI </A><A
+<DT><A NAME="foot1532">...
+Open MPI </A><A
  HREF="#tex2html3"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.open-mpi.org/faq/?category=vampirtrace
 
 </DD>
-<DT><A NAME="foot337">... documentation </A><A
+<DT><A NAME="foot1556">... documentation </A><A
  HREF="#tex2html4"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
-<DD>http://www.cs.uoregon.edu/research/tau/docs/newguide/ch03s03.html#ManualSelectiveProfiling
+<DD>http://www.cs.uoregon.edu/Research/tau/docs/newguide/bk05ch02.html#d0e3770
 
 </DD>
-<DT><A NAME="foot344">... Dyninst </A><A
+<DT><A NAME="foot1557">...
+Dyninst </A><A
  HREF="#tex2html5"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot652">... CLAPACK</A><A
+<DT><A NAME="foot1558">... library </A><A
  HREF="#tex2html6"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
+<DD>http://sourceforge.net/projects/ctool
+
+</DD>
+<DT><A NAME="foot1568">... CLAPACK</A><A
+ HREF="#tex2html7"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>www.netlib.org/clapack
 
 </DD>
-<DT><A NAME="foot1107">... Dyninst </A><A
- HREF="#tex2html7"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+<DT><A NAME="foot1596">... Dyninst </A><A
+ HREF="#tex2html8"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://www.dyninst.org
 
 </DD>
-<DT><A NAME="foot1110">... TAU </A><A
- HREF="#tex2html8"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+<DT><A NAME="foot1597">... PDToolkit </A><A
+ HREF="#tex2html9"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
+<DD>http://www.cs.uoregon.edu/research/pdt/home.php
+
+</DD>
+<DT><A NAME="foot1598">... TAU </A><A
+ HREF="#tex2html10"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
  SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
 <DD>http://tau.uoregon.edu
+
+</DD>
+<DT><A NAME="foot1599">... CTool </A><A
+ HREF="#tex2html11"><SUP><IMG  ALIGN="BOTTOM" BORDER="1" ALT="[*]"
+ SRC="/usr/share/latex2html/icons/footnote.png"></SUP></A></DT>
+<DD>http://sourceforge.net/projects/ctool
 
 </DD>
 </DL>

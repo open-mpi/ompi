@@ -1,5 +1,5 @@
 /*
- This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2011.
+ This is part of the OTF library. Copyright by ZIH, TU Dresden 2005-2012.
  Authors: Andreas Knuepfer, Robert Dietrich, Matthias Jurenz
 */
 
@@ -94,7 +94,7 @@ static void write_func_data( AllData& alldata, ofstream& csvFile,
                   " appending function data to file: %s\n",
                   csvFileName.c_str() );
 
-    static const string LINE_PREFIX= "==FUNCTION==";
+    static const string LINE_PREFIX= "FUNCTION";
 
     if ( 0 == alldata.myRank ) {
 
@@ -145,7 +145,7 @@ static void write_counter_data( AllData& alldata, ofstream& csvFile,
                   " appending counter data to file: %s\n",
                   csvFileName.c_str() );
 
-    static const string LINE_PREFIX= "==COUNTER==";
+    static const string LINE_PREFIX= "COUNTER";
 
     if ( 0 == alldata.myRank ) {
 
@@ -218,7 +218,7 @@ static void write_p2p_data( AllData& alldata, ofstream& csvFile,
                   " appending P2P message data to file: %s\n",
                   csvFileName.c_str() );
 
-    static const string LINE_PREFIX= "==P2P==";
+    static const string LINE_PREFIX= "P2P";
 
     if ( 0 == alldata.myRank ) {
 
@@ -270,7 +270,7 @@ static void write_collop_data( AllData& alldata, ofstream& csvFile,
                   " appending collective op. data to file: %s\n",
                   csvFileName.c_str() );
 
-    static const string LINE_PREFIX= "==COLLOP==";
+    static const string LINE_PREFIX= "COLLOP";
 
     static map< uint64_t, string > op_class_names;
     if ( op_class_names.empty() ) {
@@ -306,14 +306,14 @@ static void write_collop_data( AllData& alldata, ofstream& csvFile,
         const uint64_t& bytes_recv= it->second.bytes_recv.sum;
         const double duration= it->second.duration_send.sum / alldata.timerResolution;
 
-                const string& proc_name= alldata.processIdNameMap[ proc_id ];
+        const string& proc_name= alldata.processIdNameMap[ proc_id ];
         assert( 0 != proc_name.length() );
 
         const string& op_class_name= op_class_names[ op_class ];
         assert( 0 != op_class_name.length() );
 
         csvFile << LINE_PREFIX << ';'
-                << proc_id << ';'
+                << proc_name << ';'
                 << op_class_name << ';'
                 << count_send << ';'
                 << count_recv << ';'

@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -18,7 +18,14 @@
 
 #include <string.h>
 
-/* Mutex for locking the CUPTI environment */
+#define PRINT_CUPTI_ERROR(err, _msg){                    \
+    const char *errstr;                                  \
+    cuptiGetResultString(err, &errstr);                  \
+    vt_warning("[CUPTI EVENTS] %s:%d:%s:'%s'",           \
+                 __FILE__, __LINE__, _msg, errstr);      \
+  }
+
+/* mutexes for locking the CUPTI environment */
 #if (defined(VT_MT) || defined(VT_HYB))
 static VTThrdMutex* VTThrdMutexCupti = NULL;
 # define VT_CUPTIEVT_LOCK() VTThrd_lock(&VTThrdMutexCupti)
@@ -27,19 +34,6 @@ static VTThrdMutex* VTThrdMutexCupti = NULL;
 # define VT_CUPTIEVT_LOCK()
 # define VT_CUPTIEVT_UNLOCK()
 #endif /* VT_MT || VT_HYB */
-
-/* check return values for CUPTI calls */
-#define PRINT_CUPTI_ERROR(err, _msg){                    \
-    const char *errstr;                                  \
-    cuptiGetResultString(err, &errstr);                  \
-    vt_warning("[CUPTI EVENTS] %s:%d:%s:'%s'",           \
-                 __FILE__, __LINE__, _msg, errstr);      \
-  }
-
-#define VT_CUPTI_CALL(_err, _msg)                        \
-  if(_err != CUPTI_SUCCESS){                             \
-    vt_cupti_handleError(_err, _msg,__FILE__, __LINE__); \
-  }
 
 /* some of CUPTI API functions have changed */
 #if (defined(CUPTI_API_VERSION) && (CUPTI_API_VERSION >= 2))
@@ -207,30 +201,6 @@ static void vt_cuptievt_enumEvents(CUdevice cuDev, CUpti_EventDomainID domainId)
 
 /* ----------------------- internally used functions ----------------------- */
 
-/*
- * Handles errors returned from CUPTI function calls.
- * 
- * @param ecode the CUDA driver API error code
- * @param msg a message to get more detailed information about the error
- * @param the corresponding file
- * @param the line the error occurred
- */
-static void vt_cupti_handleError(CUptiResult err, const char* msg,
-                                        const char *file, const int line)
-{
-  const char *errstr;
-  
-  if(msg != NULL) vt_cntl_msg(1, msg);
-  
-  cuptiGetResultString(err, &errstr);
-  
-  if(vt_gpu_error){
-    vt_error_msg("[CUPTI EVENTS] %s:%d:'%s'", file, line, errstr);
-  }else{
-    vt_warning("[CUPTI EVENTS] %s:%d:'%s'", file, line, errstr);
-  }
-}
-
 static vt_cuptievt_grp_t* vt_cuptievt_createEvtGrp(vt_cuptievt_ctx_t *vtcuptiCtx)
 {
   CUptiResult cuptiErr = CUPTI_SUCCESS;
@@ -325,9 +295,6 @@ static vt_cuptievt_ctx_t* vt_cuptievt_initCtx(uint32_t ptid, CUcontext cuCtx)
   time = vt_pform_wtime();
   vt_enter(ptid, &time, vt_cuptievt_rid_init);
 
-  /* do not trace CUDA functions invoked here */
-  VT_SUSPEND_CUDA_TRACING(ptid);
-
   /* initialize CUDA driver API, if necessary and get context handle */
   if(cuCtx == NULL){
 #if (defined(CUDA_VERSION) && (CUDA_VERSION < 4000))
@@ -369,12 +336,9 @@ static vt_cuptievt_ctx_t* vt_cuptievt_initCtx(uint32_t ptid, CUcontext cuCtx)
     }else{
       time = vt_pform_wtime();
       vt_exit(ptid, &time);
-      VT_RESUME_CUDA_TRACING(ptid);
       return NULL;
     }
   }
-
-  VT_RESUME_CUDA_TRACING(ptid);
 
   /* create and add the VampirTrace CUPTI groups to the context */
   vt_cupti_addEvtGrpsToCtx(vtcuptiCtx);
@@ -471,7 +435,7 @@ static vt_cuptievt_ctx_t* vt_cuptievt_getCtx(CUcontext cuCtx, uint32_t ptid)
  */
 static void vt_cupti_fillMetricList(vt_cuptievt_dev_t *capList)
 {
-  char *metricString = vt_env_cupti_metrics();
+  char *metricString = vt_env_cupti_events();
   char *metric_sep = vt_env_metrics_sep();
   char *metric, *metric_cap;
 
@@ -548,13 +512,13 @@ static void vt_cupti_fillMetricList(vt_cuptievt_dev_t *capList)
 #if (defined(VT_MT) || defined(VT_HYB))
       VTTHRD_LOCK_IDS();
 #endif
-            cid_metric = vt_def_counter(VT_MASTER_THREAD, metric, "#",
-           VT_CNTR_ABS | VT_CNTR_LAST | VT_CNTR_UNSIGNED, vt_cuptievt_cgid, 0);
+      cid_metric = vt_def_counter(VT_MASTER_THREAD, metric, "#", 
+            VT_CNTR_ABS | VT_CNTR_LAST | VT_CNTR_UNSIGNED, vt_cuptievt_cgid, 0);
 #if (defined(VT_MT) || defined(VT_HYB))
       VTTHRD_UNLOCK_IDS();
 #endif
           }
-        
+          
           cuptiDev->evtNum++;
           vtcuptiEvt->vtCID = cid_metric;
           vtcuptiEvt->next = cuptiDev->vtcuptiEvtList;
@@ -606,10 +570,10 @@ static vt_cuptievt_dev_t* vt_cuptievt_setupMetricList(void)
   CUresult err;
   int deviceCount, id;
   vt_cuptievt_dev_t *capList = NULL;
-
+  
   /* CUDA initialization */
 	CHECK_CU_ERROR(cuInit(0), "cuInit");
-
+  
   /* How many GPGPU devices do we have? */
 	err = cuDeviceGetCount( &deviceCount );
 	CHECK_CU_ERROR(err, "cuDeviceGetCount");
@@ -688,7 +652,7 @@ static void vt_cuptievt_enumEvents(CUdevice cuDev, CUpti_EventDomainID domainId)
   uint32_t i = 0;
   size_t size = 0;
   uint8_t desc_on = 0;
-  char *help = vt_env_cupti_metrics();
+  char *help = vt_env_cupti_events();
   
   if(!strncmp(&help[4], "_l", 2)) desc_on = 1;
   
@@ -1061,16 +1025,12 @@ vt_cuptievt_ctx_t* vt_cuptievt_getCurrentContext(uint32_t ptid)
   
   if(!vt_cuptievt_initialized) vt_cupti_events_init();
 
-  VT_SUSPEND_CUDA_TRACING(ptid);
-
 # if (defined(CUDA_VERSION) && (CUDA_VERSION < 4000))
   CHECK_CU_ERROR(cuCtxPopCurrent(&cuCtx), "cuCtxPopCurrent");
   CHECK_CU_ERROR(cuCtxPushCurrent(cuCtx), "cuCtxPushCurrent");
 # else
   CHECK_CU_ERROR(cuCtxGetCurrent(&cuCtx), "cuCtxGetCurrent");
 # endif
-
-  VT_RESUME_CUDA_TRACING(ptid);
   
   if(cuCtx == NULL){
     vt_cntl_msg(2, "[CUPTI EVENTS] No context is bound to the calling CPU thread!");
@@ -1197,8 +1157,6 @@ void vt_cuptievt_finalize_device(uint32_t ptid, uint8_t cleanExit){
 
   {
     CUcontext cuCtx;
-
-    VT_SUSPEND_CUDA_TRACING(ptid);
     
 #if (defined(CUDA_VERSION) && (CUDA_VERSION < 4000))
     CHECK_CU_ERROR(cuCtxPopCurrent(&cuCtx), "cuCtxPopCurrent");
@@ -1206,8 +1164,6 @@ void vt_cuptievt_finalize_device(uint32_t ptid, uint8_t cleanExit){
 #else
     CHECK_CU_ERROR(cuCtxGetCurrent(&cuCtx), "cuCtxGetCurrent");
 #endif
-    
-    VT_RESUME_CUDA_TRACING(ptid);
 
     vtcuptiCtx = vt_cupti_takeCtxFromList(&cuCtx);
     if(vtcuptiCtx == NULL) return;

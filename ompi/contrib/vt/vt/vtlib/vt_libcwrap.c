@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -19,6 +19,7 @@
 #include "vt_inttypes.h"
 #include "vt_iowrap.h"
 #include "vt_libcwrap.h"
+#include "vt_libwrap.h"
 #include "vt_memhook.h"
 #include "vt_pform.h"
 #include "vt_trc.h"
@@ -77,7 +78,7 @@
 /* macro: gets (real) function pointer */
 #define GET_REAL_FUNC(fname)                                         \
   if( !libc_funcs[FUNCIDX(fname)].fptr.p ) {                         \
-    get_libc_handle();                                               \
+    libc_handle = vt_libwrap_get_libc_handle();                      \
     (void)dlerror(); /* clear any existing error */                  \
     libc_funcs[FUNCIDX(fname)].fptr.p = dlsym(libc_handle, #fname);  \
     if( !libc_funcs[FUNCIDX(fname)].fptr.p ) {                       \
@@ -90,7 +91,9 @@
 /* macro: calls (real) function */
 #define CALL_FUNC(fname, fret, fargs)                                \
   GET_REAL_FUNC(fname);                                              \
-  fret = (FUNCDEF(fname)(libc_funcs[FUNCIDX(fname)].fptr.f))fargs
+  vt_libwrap_set_libc_errno(errno);                                  \
+  fret = (FUNCDEF(fname)(libc_funcs[FUNCIDX(fname)].fptr.f))fargs;   \
+  errno = vt_libwrap_get_libc_errno()
 
 /* macro: checks if we shall trace right now 
  * Tracing can be disabled globally via vt_libc_tracing_enabled = 0
@@ -120,29 +123,6 @@ int vt_libc_tracing_state = 0;
 static uint32_t libc_fid = VT_NO_ID;
 static struct libc_func libc_funcs[LIBC_FUNC_NUM];
 static void *libc_handle = NULL;
-
-static void get_libc_handle(void)
-{
-  if( !libc_handle ) {
-#ifndef DEFAULT_LIBC_PATHNAME
-#error VampirTrace is not properly configured, DEFAULT_LIBC_PATHNAME is not set! Please report this incident to vampirsupport@zih.tu-dresden.de
-#endif
-    const char *libc_pathname = DEFAULT_LIBC_PATHNAME;
-
-    (void)dlerror();
-    libc_handle = dlopen( libc_pathname,
-                          RTLD_LAZY | RTLD_LOCAL
-#ifdef _AIX
-                          | RTLD_MEMBER
-#endif /* _AIX */
-                        );
-
-    if( !libc_handle ) {
-      printf("VampirTrace: FATAL: dlopen(\"%s\") error: %s\n", libc_pathname, dlerror());
-      exit(EXIT_FAILURE);
-    }
-  }
-}
 
 void vt_libcwrap_init(void)
 {
@@ -196,11 +176,6 @@ void vt_libcwrap_init(void)
 
 void vt_libcwrap_finalize(void)
 {
-  /* don't close the LIBC library handle at this point; it's still needed
-     if the application is statically linked
-  if( libc_handle )
-    dlclose( libc_handle );
-  */
 }
 
 
@@ -419,6 +394,7 @@ int execvp(const char* path, char* const argv[])
 pid_t fork(void)
 {
   pid_t rc;
+  int preserve_errno;
   uint64_t time;
 
   VT_MEMHOOKS_OFF();
@@ -432,6 +408,7 @@ pid_t fork(void)
 
   /* call (real) function */
   CALL_FUNC(fork, rc, ());
+  preserve_errno = errno;
 
   if ( DO_TRACE(fork) )
   {
@@ -449,6 +426,7 @@ pid_t fork(void)
 
   VT_MEMHOOKS_ON();
 
+  errno = preserve_errno;
   return rc;
 }
 #endif /* HAVE_FORK */
@@ -461,6 +439,7 @@ pid_t fork(void)
 int system(const char* string)
 {
   int rc;
+  int preserve_errno;
   uint64_t time;
 
   VT_MEMHOOKS_OFF();
@@ -474,6 +453,7 @@ int system(const char* string)
 
   /* call (real) function */
   CALL_FUNC(system, rc, (string));
+  preserve_errno = errno;
 
   if ( DO_TRACE(system) )
   {
@@ -484,6 +464,7 @@ int system(const char* string)
 
   VT_MEMHOOKS_ON();
 
+  errno = preserve_errno;
   return rc;
 }
 #endif /* HAVE_SYSTEM */
@@ -494,6 +475,7 @@ int system(const char* string)
 pid_t wait(WAIT_STATUS_TYPE status)
 {
   pid_t rc;
+  int preserve_errno;
   uint64_t time;
 
   VT_MEMHOOKS_OFF();
@@ -507,6 +489,7 @@ pid_t wait(WAIT_STATUS_TYPE status)
 
   /* call (real) function */
   CALL_FUNC(wait, rc, (status));
+  preserve_errno = errno;
 
   if ( DO_TRACE(wait) )
   {
@@ -517,6 +500,7 @@ pid_t wait(WAIT_STATUS_TYPE status)
 
   VT_MEMHOOKS_ON();
 
+  errno = preserve_errno;
   return rc;
 }
 #endif /* HAVE_WAIT */
@@ -527,6 +511,7 @@ pid_t wait(WAIT_STATUS_TYPE status)
 pid_t waitpid(pid_t pid, int* status, int options)
 {
   pid_t rc;
+  int preserve_errno;
   uint64_t time;
 
   VT_MEMHOOKS_OFF();
@@ -540,6 +525,7 @@ pid_t waitpid(pid_t pid, int* status, int options)
 
   /* call (real) function */
   CALL_FUNC(waitpid, rc, (pid, status, options));
+  preserve_errno = errno;
 
   if ( DO_TRACE(waitpid) )
   {
@@ -550,6 +536,7 @@ pid_t waitpid(pid_t pid, int* status, int options)
 
   VT_MEMHOOKS_ON();
 
+  errno = preserve_errno;
   return rc;
 }
 #endif /* HAVE_WAITPID */

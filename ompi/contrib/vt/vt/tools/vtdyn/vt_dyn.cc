@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -510,6 +510,21 @@ MutatorC::initialize()
             }
 
             break;
+         }
+      }
+      if( error )
+         break;
+
+      // load user-specified shared libraries into mutatee
+      //
+      for( uint32_t i = 0; i < Params.shlibs.size() && !error; i++ )
+      {
+         if( !m_appAddrSpace->loadLibrary( Params.shlibs[i].c_str() ) )
+         {
+            std::cerr << ExeName << ": [" << ExePid << "]: "
+                      << "Error: Could not load shared library "
+                      << Params.shlibs[i] << ". Aborting." << std::endl;
+            error = true;
          }
       }
       if( error )

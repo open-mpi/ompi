@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -1239,18 +1239,25 @@ parseCommandLine( int argc, char** argv )
       Config.outfile_given = true;
       Config.addCompilerArg( arg );
     }
-    // -lcuda[rt]
+    // CUDA (runtime) library
     //
-    else if( arg.compare( "-lcuda" ) == 0 || arg.compare( "-lcudart" ) == 0 )
+    else if( arg.compare( "-lcuda" ) == 0 ||
+             arg.compare( "-lcudart" ) == 0 ||
+             arg.find( "libcuda" ) != std::string::npos ||
+             arg.find( "libcudart" ) != std::string::npos )
     {
       Config.addCompilerLib( arg );
     }
-    // -l<mpilib>
+    // MPI library
     //
     else if( arg.compare( 0, 5, "-lmpi" ) == 0 ||
              arg.compare( 0, 7, "-lmtmpi" ) == 0 ||
              arg.compare( 0, 7, "-lhpmpi" ) == 0 ||
-             arg.compare( 0, 7, "-lscmpi" ) == 0 )
+             arg.compare( 0, 7, "-lscmpi" ) == 0 ||
+             arg.find( "libmpi" ) != std::string::npos ||
+             arg.find( "libmtmpi" ) != std::string::npos ||
+             arg.find( "libhpmpi" ) != std::string::npos ||
+             arg.find( "libscmpi" ) != std::string::npos )
     {
       Config.setUsesMpi( true );
       Config.addCompilerLib( arg );

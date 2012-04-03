@@ -703,6 +703,12 @@ dnl		check for MPI-2
 			CPPFLAGS="$CPPFLAGS $MPICFLAGS $MPIINCDIR"
 			LIBS="$LIBS $MPILIBDIR $MPILIB $PMPILIB"
 
+dnl			check for MPI-2 constants
+
+			ACVT_CONF_SUBTITLE([MPI-2 constants])
+
+			AC_CHECK_DECLS([MPI_IN_PLACE], [], [], [#include "mpi.h"])
+
 dnl			check for MPI-2 functions
 
 			ACVT_CONF_SUBTITLE([MPI-2 functions])

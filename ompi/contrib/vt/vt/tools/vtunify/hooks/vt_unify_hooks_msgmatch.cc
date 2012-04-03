@@ -2,7 +2,7 @@
  * VampirTrace
  * http://www.tu-dresden.de/zih/vampirtrace
  *
- * Copyright (c) 2005-2011, ZIH, TU Dresden, Federal Republic of Germany
+ * Copyright (c) 2005-2012, ZIH, TU Dresden, Federal Republic of Germany
  *
  * Copyright (c) 1998-2005, Forschungszentrum Juelich, Juelich Supercomputing
  *                          Centre, Federal Republic of Germany
@@ -21,6 +21,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <set>
 #include <vector>
 
 //////////////////// class HooksMsgMatchC ////////////////////
@@ -104,12 +105,15 @@ HooksMsgMatchC::HandleRecvMsg( LargeVectorC<RecvMsgS*> * recvMsgs,
          return OTF_RETURN_OK;
    }
 
-   // add receive message to vector
+   // add receive message to vector, if sender stream is available
    //
-   recvMsgs->push_back(
-      new RecvMsgS( time, sender, receiver, global_comm, tag
-         /*, length, global_scl*/ ) );
-   assert( recvMsgs->back() );
+   if( StreamId2UnifyCtl[sender]->stream_avail )
+   {
+      recvMsgs->push_back(
+         new RecvMsgS( time, sender, receiver, global_comm, tag
+            /*, length, global_scl*/ ) );
+      assert( recvMsgs->back() );
+   }
 
    return OTF_RETURN_OK;
 }
@@ -646,10 +650,10 @@ HooksMsgMatchC::enqueueRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
 
          // get streams of interest for my thread
          //
-         std::vector<bool> streams_of_interest( streams_num, false );
+         std::set<uint32_t> streams_of_interest;
 #        pragma omp for schedule(static) nowait
          for( i = 0; i < streams_num; i++ )
-            streams_of_interest[MyStreamIds[i] - 1] = true;
+            streams_of_interest.insert( MyStreamIds[i] );
 
          // iterate over all receive messages to enqueue
          for( uint32_t j = 0; j < recvMsgs.size(); j++ )
@@ -658,7 +662,8 @@ HooksMsgMatchC::enqueueRecvMsgs( LargeVectorC<RecvMsgS*> & recvMsgs )
 
             // enqueue receive message, if it's of interest for my thread
             //
-            if( streams_of_interest[recv_msg->sender-1] )
+            if( streams_of_interest.find( recv_msg->sender ) !=
+                streams_of_interest.end() )
             {
                m_matchContexts[threadid].enqueueRecv( recv_msg->time,
                   recv_msg->sender, recv_msg->receiver,
