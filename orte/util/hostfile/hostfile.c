@@ -604,9 +604,17 @@ int orte_util_filter_hostfile_nodes(opal_list_t *nodes,
     OBJ_CONSTRUCT(&exclude, opal_list_t);
     if (ORTE_SUCCESS != (rc = hostfile_parse(hostfile, &newnodes, &exclude, false))) {
         OBJ_DESTRUCT(&newnodes);
+        OBJ_DESTRUCT(&exclude);
         return rc;
     }
     
+    /* if the hostfile was empty, then treat it as a no-op filter */
+    if (0 == opal_list_get_size(&newnodes)) {
+        OBJ_DESTRUCT(&newnodes);
+        OBJ_DESTRUCT(&exclude);
+        return ORTE_SUCCESS;
+    }
+
     /* remove from the list of newnodes those that are in the exclude list
      * since we could have added duplicate names above due to the */
     while (NULL != (item1 = opal_list_remove_first(&exclude))) {

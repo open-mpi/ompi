@@ -31,6 +31,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 
@@ -224,9 +225,15 @@ int orte_register_params(void)
                                 false, false, 1000, &orte_timeout_usec_per_proc);
     
     /* default hostfile */
+    asprintf(&orte_default_hostfile, "%s/etc/openmpi-default-hostfile", opal_install_dirs.prefix);
     mca_base_param_reg_string_name("orte", "default_hostfile",
-                                   "Name of the default hostfile (relative or absolute path)",
-                                   false, false, NULL, &orte_default_hostfile);
+                                   "Name of the default hostfile (relative or absolute path, \"none\" to ignore environmental or default MCA param setting)",
+                                   false, false, orte_default_hostfile, &orte_default_hostfile);
+    if (0 == strcmp(orte_default_hostfile, "none")) {
+        free(orte_default_hostfile);
+        orte_default_hostfile = NULL;
+    }
+
     /* rankfile */
     tmp = mca_base_param_reg_string_name("orte", "rankfile",
                                          "Name of the rankfile to be used for mapping processes (relative or absolute path)",
