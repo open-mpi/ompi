@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -318,7 +318,7 @@
                 return OMPI_FINT_2_INT(f_err); \
             } \
             out_attr->av_value = (void *) out; \
-            flag = OMPI_FINT_2_INT(f_flag); \
+            flag = OMPI_LOGICAL_2_INT(f_flag); \
         } \
     } \
     /* C style */ \
@@ -940,10 +940,10 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
         /* Hang this off the object's hash */
             
-        /* The "predefined" parameter to ompi_attr_set() is set to 1,
-           so that no comparison is done for prdefined at all and it
-           just falls off the error checking loop in attr_set  */
-
+        /* The COPY_ATTR_CALLBACKS macro will have converted the
+           _flag_ callback output value from Fortran's .TRUE. value to
+           0/1 (if necessary).  So we only need to check for 0/1 here
+           -- not .TRUE. */
         if (1 == flag) {
             if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77)) {
                 if (0 != (hash_value->attr_flag & OMPI_KEYVAL_F77_MPI1)) {
@@ -956,7 +956,6 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
             }
             set_value(type, new_object, &newattr_hash, key, 
                       new_attr, true);
-
         } else {
             OBJ_RELEASE(new_attr);
         }
