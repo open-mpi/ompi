@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -38,6 +39,15 @@ Compute_dims(int nnodes, int ndims, int dims[]);
 //
 // Environmental Inquiry
 //
+
+int
+Add_error_class();
+
+int
+Add_error_code(int errorclass);
+
+void
+Add_error_string(int errorcode, const char* string);
 
 void 
 Get_processor_name(char* name, int& resultlen);

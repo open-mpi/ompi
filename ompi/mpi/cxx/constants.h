@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -39,19 +40,41 @@ static const int ERR_OTHER = MPI_ERR_OTHER;
 static const int ERR_INTERN = MPI_ERR_INTERN;
 static const int ERR_PENDING = MPI_ERR_PENDING;
 static const int ERR_IN_STATUS = MPI_ERR_IN_STATUS;
-static const int ERR_LASTCODE = MPI_ERR_LASTCODE;
-
+static const int ERR_ACCESS = MPI_ERR_ACCESS;
+static const int ERR_AMODE = MPI_ERR_AMODE;
+static const int ERR_ASSERT = MPI_ERR_ASSERT;
+static const int ERR_BAD_FILE = MPI_ERR_BAD_FILE;
 static const int ERR_BASE = MPI_ERR_BASE;
-static const int ERR_INFO_VALUE = MPI_ERR_INFO_VALUE;
-static const int ERR_INFO_KEY = MPI_ERR_INFO_KEY;
+static const int ERR_CONVERSION = MPI_ERR_CONVERSION;
+static const int ERR_DISP = MPI_ERR_DISP;
+static const int ERR_DUP_DATAREP = MPI_ERR_DUP_DATAREP;
+static const int ERR_FILE_EXISTS = MPI_ERR_FILE_EXISTS;
+static const int ERR_FILE_IN_USE = MPI_ERR_FILE_IN_USE;
+static const int ERR_FILE = MPI_ERR_FILE;
+static const int ERR_INFO_KEY = MPI_ERR_INFO_KEY;;
 static const int ERR_INFO_NOKEY = MPI_ERR_INFO_NOKEY;
+static const int ERR_INFO_VALUE = MPI_ERR_INFO_VALUE;
+static const int ERR_INFO = MPI_ERR_INFO;
+static const int ERR_IO = MPI_ERR_IO;
 static const int ERR_KEYVAL = MPI_ERR_KEYVAL;
+static const int ERR_LOCKTYPE = MPI_ERR_LOCKTYPE;
 static const int ERR_NAME = MPI_ERR_NAME;
 static const int ERR_NO_MEM = MPI_ERR_NO_MEM;
+static const int ERR_NOT_SAME = MPI_ERR_NOT_SAME;
+static const int ERR_NO_SPACE = MPI_ERR_NO_SPACE;
+static const int ERR_NO_SUCH_FILE = MPI_ERR_NO_SUCH_FILE;
+static const int ERR_PORT = MPI_ERR_PORT;
+static const int ERR_QUOTA = MPI_ERR_QUOTA;
+static const int ERR_READ_ONLY = MPI_ERR_READ_ONLY;
+static const int ERR_RMA_CONFLICT = MPI_ERR_RMA_CONFLICT;
+static const int ERR_RMA_SYNC = MPI_ERR_RMA_SYNC;
 static const int ERR_SERVICE = MPI_ERR_SERVICE;
+static const int ERR_SIZE = MPI_ERR_SIZE;
 static const int ERR_SPAWN = MPI_ERR_SPAWN;
+static const int ERR_UNSUPPORTED_DATAREP = MPI_ERR_UNSUPPORTED_DATAREP;
+static const int ERR_UNSUPPORTED_OPERATION = MPI_ERR_UNSUPPORTED_OPERATION;
 static const int ERR_WIN = MPI_ERR_WIN;
-
+static const int ERR_LASTCODE = MPI_ERR_LASTCODE;
 
 // assorted constants
 OMPI_DECLSPEC extern void* const BOTTOM;
@@ -136,12 +159,14 @@ OMPI_DECLSPEC extern const Datatype REAL8;
 
 // optional datatype (C / C++)
 OMPI_DECLSPEC extern const Datatype LONG_LONG;
+OMPI_DECLSPEC extern const Datatype LONG_LONG_INT;
 OMPI_DECLSPEC extern const Datatype UNSIGNED_LONG_LONG;
 
 // c++ types
 OMPI_DECLSPEC extern const Datatype BOOL;
 OMPI_DECLSPEC extern const Datatype COMPLEX;
 OMPI_DECLSPEC extern const Datatype DOUBLE_COMPLEX;
+OMPI_DECLSPEC extern const Datatype F_DOUBLE_COMPLEX;
 OMPI_DECLSPEC extern const Datatype LONG_DOUBLE_COMPLEX;
 
 // special datatypes for contstruction of derived datatypes

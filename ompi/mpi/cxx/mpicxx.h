@@ -12,6 +12,7 @@
 //                         All rights reserved.
 // Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -192,6 +193,7 @@ namespace MPI {
 #endif
 
   typedef MPI_Aint Aint;
+  typedef MPI_Fint Fint;
   typedef MPI_Offset Offset;
 
 #ifdef OMPI_BUILDING_CXX_BINDINGS_LIBRARY
