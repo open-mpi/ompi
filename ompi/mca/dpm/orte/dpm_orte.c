@@ -945,8 +945,7 @@ cleanup:
 
 static int close_port(char *port_name)
 {
-    /* the port name is a pointer to an array - DO NOT FREE IT! */
-    memset(port_name, 0, MPI_MAX_PORT_NAME);
+    /* nothing to do here - user is responsible for the memory */
     return OMPI_SUCCESS;
 }
 
