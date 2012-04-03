@@ -1175,6 +1175,50 @@ To find the available component types under the MCA architecture, or to find the
 available parameters for a specific component, use the \fIompi_info\fP command.
 See the \fIompi_info(1)\fP man page for detailed information on the command.
 .
+.SS Exit status
+.
+There is no standard definition for what \fImpirun\fP should return as an exit
+status. After considerable discussion, we settled on the following method for
+assigning the \fImpirun\fP exit status (note: in the following description,
+the "primary" job is the initial application started by mpirun - all jobs that
+are spawned by that job are designated "secondary" jobs):
+.
+.IP \[bu] 2
+if all processes in the primary job normally terminate with exit status 0, we return 0
+.IP \[bu]
+if one or more processes in the primary job normally terminate with non-zero exit status, 
+we return the exit status of the lowest rank to have a non-zero status
+.IP \[bu]
+if all processes in the primary job normally terminate with exit status 0, and one or more
+processes in a secondary job normally terminate with non-zero exit status, we (a) return
+the exit status of the lowest rank in the lowest jobid to have a non-zero status, and (b)
+output a message summarizing the exit status of the primary and all secondary jobs.
+.IP \[bu]
+if the cmd line option --report-child-jobs-separately is set, we will return -only- the
+exit status of the primary job. Any non-zero exit status in secondary jobs will be
+reported solely in a summary print statement.
+.
+.PP
+By default, OMPI records and notes that MPI processes exited with non-zero termination status.
+This is generally not considered an "abnormal termination" - i.e., OMPI will not abort an MPI
+job if one or more processes return a non-zero status. Instead, the default behavior simply
+reports the number of processes terminating with non-zero status upon completion of the job.
+.PP
+However, in some cases it can be desirable to have the job abort when any process terminates
+with non-zero status. For example, a non-MPI job might detect a bad result from a calculation
+and want to abort, but doesn't want to generate a core file. Or an MPI job might continue past
+a call to MPI_Finalize, but indicate that all processes should abort due to some post-MPI result.
+.PP
+It is not anticipated that this situation will occur frequently. However, in the interest of
+serving the broader community, OMPI now has a means for allowing users to direct that jobs be
+aborted upon any process exiting with non-zero status. Setting the MCA parameter
+"orte_abort_on_non_zero_status" to 1 will cause OMPI to abort all processes once any process
+ exits with non-zero status.
+.PP
+Terminations caused in this manner will be reported on the console as an "abnormal termination",
+with the first process to so exit identified along with its exit status.
+.PP
+.
 .\" **************************
 .\"    Examples Section
 .\" **************************
