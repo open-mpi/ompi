@@ -524,6 +524,16 @@ ompi_osc_rdma_module_lock(int lock_type,
 
     module->m_eager_send_active = false;
 
+    if (ompi_comm_rank(module->m_comm) == target) {
+        /* If we're trying to lock locally, have to wait to actually
+           acquire the lock */
+        OPAL_THREAD_LOCK(&module->m_lock);
+        while (module->m_lock_received_ack == 0) {
+            opal_condition_wait(&module->m_cond, &module->m_lock);
+        }
+        OPAL_THREAD_UNLOCK(&module->m_lock);
+    }
+
     /* return */
     return OMPI_SUCCESS;
 }

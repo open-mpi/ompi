@@ -427,6 +427,16 @@ ompi_osc_pt2pt_module_lock(int lock_type,
                                 ompi_comm_rank(module->p2p_comm),
                                 lock_type);
 
+    if (ompi_comm_rank(module->p2p_comm) == target) {
+        /* If we're trying to lock locally, have to wait to actually
+           acquire the lock */
+        OPAL_THREAD_LOCK(&module->p2p_lock);
+        while (module->p2p_lock_received_ack == 0) {
+            opal_condition_wait(&module->p2p_cond, &module->p2p_lock);
+        }
+        OPAL_THREAD_UNLOCK(&module->p2p_lock);
+    }
+
     /* return */
     return OMPI_SUCCESS;
 }
