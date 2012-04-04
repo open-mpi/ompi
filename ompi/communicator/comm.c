@@ -918,7 +918,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm )
                           /* topo component */
                           comp->c_local_group,                    /* local group */
                           comp ->c_remote_group );                /* remote group */
-    if ( NULL == newcomm ) {
+    if ( NULL == newcomp ) {
         rc =  MPI_ERR_INTERN;
         return rc;
     }
