@@ -41,7 +41,9 @@
 int opal_register_params(void)
 {
     int ret;
+#if OPAL_ENABLE_DEBUG
     int value;
+#endif /* OPAL_ENABLE_DEBUG */
 
     /*
      * This string is going to be used in opal/util/stacktrace.c
