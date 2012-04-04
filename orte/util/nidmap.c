@@ -647,7 +647,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     orte_jobid_t jobid;
     orte_vpid_t i, num_procs;
     orte_pmap_t *pmap;
-    int32_t *nodes=NULL, my_node;
+    int32_t *nodes=NULL, my_node = 0;
     orte_local_rank_t *local_rank=NULL;
     orte_node_rank_t *node_rank=NULL;
 #if OPAL_HAVE_HWLOC

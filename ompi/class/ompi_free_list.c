@@ -170,7 +170,7 @@ int ompi_free_list_init_ex_new(
 
 int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 {
-    unsigned char *ptr, *mpool_alloc_ptr = NULL, *payload_ptr;
+    unsigned char *ptr, *mpool_alloc_ptr = NULL, *payload_ptr = NULL;
     ompi_free_list_memory_t *alloc_ptr;
     size_t i, alloc_size, head_size, elem_size = 0;
     mca_mpool_base_registration_t *reg = NULL;
