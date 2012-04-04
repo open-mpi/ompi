@@ -4,7 +4,7 @@ dnl Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
-dnl Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2011-2012 Oak Ridge National Labs.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -394,6 +394,19 @@ AC_DEFUN([EXT_PROCESS_COMPONENT],[
 #include "openmpi/ompi/mpiext/$component/$component_header"
 
 EOF
+        #
+        # Profiling interface
+        #
+        test_header="${srcdir}/ompi/mpiext/$component/c/profile/defines.h"
+        AC_MSG_CHECKING([if MPI Extension $component has C   bindings for profiling])
+        if test -e "$test_header" ; then
+            AC_MSG_RESULT([yes])
+
+            # Save the list of headers and convenience libraries that this component will output
+            $3="mpiext/${component}/c/profile/libext_pmpiext_c_${component}.la $$3"
+        else 
+            AC_MSG_RESULT([no])
+        fi
     else 
         # There *must* be C bindings
         AC_MSG_RESULT([no])
@@ -427,6 +440,10 @@ EOF
 #include "openmpi/ompi/mpiext/$component/$component_header"
 
 EOF
+        #
+        # Profiling interface
+        # TODO: When needed, we should add similar profiling code to C/F77
+        #
     else
         AC_MSG_RESULT([no])
 
@@ -471,6 +488,19 @@ EOF
       include 'openmpi/ompi/mpiext/$component/$component_header'
 
 EOF
+        #
+        # Profiling interface
+        #
+        test_header="${srcdir}/ompi/mpiext/$component/f77/profile/defines.h"
+        AC_MSG_CHECKING([if MPI Extension $component has F77 bindings for profiling])
+        if test -e "$test_header" ; then
+            AC_MSG_RESULT([yes])
+
+            # Save the list of headers and convenience libraries that this component will output
+            $3="mpiext/${component}/f77/profile/libext_pmpiext_f77_${component}.la $$3"
+        else 
+            AC_MSG_RESULT([no])
+        fi
     else
         AC_MSG_RESULT([no])
 
