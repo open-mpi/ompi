@@ -72,11 +72,9 @@ AC_DEFUN([OMPI_EXT],[
     EXT_CONFIGURE()
 
     AC_SUBST(EXT_C_HEADERS)
-    AC_SUBST(EXT_CXX_HEADERS)
     AC_SUBST(EXT_F77_HEADERS)
     AC_SUBST(EXT_F90_HEADERS)
     AC_SUBST(EXT_C_LIBS)
-    AC_SUBST(EXT_CXX_LIBS)
     AC_SUBST(EXT_F77_LIBS)
     AC_SUBST(EXT_F90_LIBS)
 ])
@@ -127,27 +125,6 @@ extern "C" {
 
 EOF
 
-
-    ###############
-    # C++ Bindings
-    ###############
-
-    # remove any previously generated #include files
-    mpicxx_ext_h=$outdir/mpicxx-ext.h
-    rm -f $mpicxx_ext_h
-
-    # Create the final mpi-ext.h file.
-    cat > $mpicxx_ext_h <<EOF
-/*
- * \$HEADER\$
- */
-
-#ifndef OMPI_MPI_EXT_H
-#define OMPI_MPI_EXT_H 1
-
-#define OMPI_HAVE_MPI_EXT 1
-
-EOF
 
     ###############
     # F77 Bindings
@@ -218,16 +195,6 @@ EOF
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-
-#endif /* OMPI_MPI_EXT_H */
-
-EOF
-
-    ###############
-    # C++ Bindings
-    ###############
-    # Create the final mpicxx-ext.h file.
-    cat >> $mpicxx_ext_h <<EOF
 
 #endif /* OMPI_MPI_EXT_H */
 
@@ -355,7 +322,6 @@ AC_DEFUN([EXT_CONFIGURE_M4_CONFIG_COMPONENT],[
 #   Need to build a list of .la for each lang. to pull into final library
 # List ext_c_headers, ext_c_libs {same for other lang.}
 # C:   framework_component_c{.h, .la} 
-# CXX: framework_component_cxx{.h, .la} 
 # F77: framework_component_f77{.h, .la} 
 # F90: framework_component_f90{.h, .la} ??? 
 ######################################################################
@@ -412,48 +378,6 @@ EOF
         AC_MSG_RESULT([no])
         AC_MSG_WARN([C Bindings are required])
         AC_MSG_ERROR([Cannot continue])
-    fi
-
-    ###############
-    # C++ Bindings
-    ###############
-    #
-    # Test if this extension has cxx bindings
-    # If not, skip this step.
-    #
-    test_header="${srcdir}/ompi/mpiext/$component/mpiext_${component}_cxx.h"
-
-    AC_MSG_CHECKING([if MPI Extension $component has CXX bindings])
-
-    if test -e "$test_header" ; then
-        AC_MSG_RESULT([yes])
-
-        EXT_CXX_HEADERS="$EXT_CXX_HEADERS mpiext/$component/mpiext_${component}_cxx.h"
-        EXT_CXX_LIBS="$EXT_CXX_LIBS mpiext/$component/libext_mpiext_${component}_cxx.la"
-        $3="$$3 mpiext/${component}/libext_mpiext_${component}_cxx.la"
-
-        component_header="mpiext_${component}_cxx.h"
-
-        cat >> $mpicxx_ext_h <<EOF
-/* Enabled Extension: $component */
-#define $component_define 1
-#include "openmpi/ompi/mpiext/$component/$component_header"
-
-EOF
-        #
-        # Profiling interface
-        # TODO: When needed, we should add similar profiling code to C/F77
-        #
-    else
-        AC_MSG_RESULT([no])
-
-        cat >> $mpicxx_ext_h <<EOF
-/* Enabled Extension: $component
- * No CXX Bindings available
- */
-#define $component_define 0
-
-EOF
     fi
 
     ###############
