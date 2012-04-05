@@ -44,7 +44,6 @@ endif
 nodist_include_HEADERS = \
         mpi.h \
         mpi-ext.h \
-        mpicxx-ext.h \
         mpif-ext.h
 
 if OMPI_WANT_F77_BINDINGS
@@ -99,5 +98,5 @@ endif
 # Remove the auto-generated mpi-ext.h file
 # Since there is no mpi-ext.h.in, autogen does not know to cleanup this file.
 distclean-local:
-	rm -f mpi-ext.h mpicxx-ext.h mpif-ext.h mpif90-ext.f90
+	rm -f mpi-ext.h mpif-ext.h mpif90-ext.f90
 
