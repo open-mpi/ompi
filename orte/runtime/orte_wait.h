@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,14 +48,6 @@
 #include "opal/runtime/opal_progress.h"
 
 BEGIN_C_DECLS
-
-typedef struct {
-    opal_object_t super;
-    char *name;
-    int channel;
-    opal_atomic_lock_t lock;
-} orte_trigger_event_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_trigger_event_t);
 
 /** typedef for callback function used in \c ompi_rte_wait_cb */
 typedef void (*orte_wait_fn_t)(pid_t wpid, int status, void *data);
@@ -104,170 +98,14 @@ ORTE_DECLSPEC int orte_wait_cb_disable(void);
 
 ORTE_DECLSPEC int orte_wait_cb_enable(void);
 
-/**
- * Setup to wait for an event
- *
- * This function is used to setup a trigger event that can be used elsewhere
- * in the code base where we want to wait for some event to
- * happen. For example, orterun uses this function to setup an event
- * that is used to notify orterun of abnormal and normal termination
- * so it can wakeup and exit cleanly.
- *
- * The event will be defined so that firing the provided trigger
- * will cause the event to trigger and callback to the provided
- * function
- */
-ORTE_DECLSPEC int orte_wait_event(opal_event_t **event,
-                                  orte_trigger_event_t *trig,
-                                  char *trigger_name,
-                                  void (*cbfunc)(int, short, void*));
-
-/**
- * In a number of places in the code, we need to wait for something
- * to complete - for example, waiting for all launched procs to
- * report into the HNP. In such cases, we want to just call progress
- * so that any messages get processed, but otherwise "hold" the
- * program at this spot until the counter achieves the specified
- * value. We also want to provide a boolean flag, though, so that
- * we break out of the loop should something go wrong.
- */
-#define ORTE_PROGRESSED_WAIT(failed, counter, limit)      \
-    do {                                                  \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,        \
-                            "progressed_wait: %s %d",     \
-                             __FILE__, __LINE__));        \
-        while (!(failed) && (counter) < (limit)) {        \
-            opal_progress();                              \
-        }                                                 \
-    } while(0);                                           \
-
-
-/**
- * Trigger a defined event
- *
- * This function will trigger a previously-defined event - as setup
- * by orte_wait_event - by firing the provided trigger
- */
-ORTE_DECLSPEC void orte_trigger_event(orte_trigger_event_t *trig);
-
-/**
- * Setup an event to process a message
- *
- * If we are in an OOB recv callback, we frequently cannot process
- * the received message until after we return from the callback to
- * avoid a potential loopback situation - i.e., where processing
- * the message can result in a message being sent somewhere that
- * subsequently causes the recv we are in to get called again.
- * This is typically the problem facing the daemons and HNP.
- *
- * To resolve this problem, we place the message to be processed on
- * a list, and create a zero-time event that calls the function
- * that will process the received message. The event library kindly
- * does not trigger this event until after we return from the recv
- * since the recv itself is considered an "event"! Thus, we will
- * always execute the specified event cb function -after- leaving
- * the recv.
- */
+/* define an object for timer events */
 typedef struct {
     opal_object_t super;
+    struct timeval tv;
     opal_event_t *ev;
-    orte_process_name_t sender;
-    opal_buffer_t *buffer;
-    orte_rml_tag_t tag;
-#if OPAL_ENABLE_DEBUG
-    char *file;
-    int line;
-#endif
-} orte_message_event_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_message_event_t);
-
-#define ORTE_MESSAGE_EVENT_DELAY(delay, mev)                        \
-    do {                                                            \
-        struct timeval now;                                         \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                  \
-                            "defining message event delay: %s %d",  \
-                            __FILE__, __LINE__));                   \
-        now.tv_sec = delay/1000000;                                 \
-        now.tv_usec = delay%1000000;                                \
-        opal_event_evtimer_add(mev->ev, &now);                      \
-    } while(0);
-
-#if OPAL_ENABLE_DEBUG
-
-#define ORTE_MESSAGE_EVENT(sndr, buf, tg, cbfunc)               \
-    do {                                                        \
-        orte_message_event_t *mev;                              \
-        struct timeval now;                                     \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
-                            "defining message event: %s %d",    \
-                            __FILE__, __LINE__));               \
-        mev = OBJ_NEW(orte_message_event_t);                    \
-        mev->sender.jobid = (sndr)->jobid;                      \
-        mev->sender.vpid = (sndr)->vpid;                        \
-        ORTE_EPOCH_SET(mev->sender.epoch,(sndr)->epoch);        \
-        opal_dss.copy_payload(mev->buffer, (buf));              \
-        mev->tag = (tg);                                        \
-        mev->file = strdup((buf)->parent.cls_init_file_name);   \
-        mev->line = (buf)->parent.cls_init_lineno;              \
-        opal_event_evtimer_set(opal_event_base,                 \
-                               mev->ev, (cbfunc), mev);         \
-        now.tv_sec = 0;                                         \
-        now.tv_usec = 0;                                        \
-        opal_event_evtimer_add(mev->ev, &now);                  \
-    } while(0);
-
-#else
-
-#define ORTE_MESSAGE_EVENT(sndr, buf, tg, cbfunc)               \
-    do {                                                        \
-        orte_message_event_t *mev;                              \
-        struct timeval now;                                     \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
-                            "defining message event: %s %d",    \
-                            __FILE__, __LINE__));               \
-        mev = OBJ_NEW(orte_message_event_t);                    \
-        mev->sender.jobid = (sndr)->jobid;                      \
-        mev->sender.vpid = (sndr)->vpid;                        \
-        ORTE_EPOCH_SET(mev->sender.epoch,(sndr)->epoch);        \
-        opal_dss.copy_payload(mev->buffer, (buf));              \
-        mev->tag = (tg);                                        \
-        opal_event_evtimer_set(opal_event_base,                 \
-                               mev->ev, (cbfunc), mev);         \
-        now.tv_sec = 0;                                         \
-        now.tv_usec = 0;                                        \
-        opal_event_evtimer_add(mev->ev, &now);                  \
-    } while(0);
-
-#endif
-    
-/* Sometimes, we just need to get out of the event library so 
- * we can progress - and we need to pass a little info. For those 
- * cases, we define a zero-time event that passes info to a cbfunc 
- */ 
-typedef struct { 
-    opal_object_t super; 
-    opal_event_t *ev; 
-    orte_process_name_t proc; 
-} orte_notify_event_t; 
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t); 
-
-#define ORTE_NOTIFY_EVENT(cbfunc, data)                         \
-    do {                                                        \
-        struct timeval now;                                     \
-        orte_notify_event_t *tmp;                               \
-        tmp = OBJ_NEW(orte_notify_event_t);                     \
-        tmp->proc.jobid = (data)->jobid;                        \
-        tmp->proc.vpid = (data)->vpid;                          \
-        ORTE_EPOCH_SET(tmp->proc.epoch,(data)->epoch);          \
-        opal_event.evtimer_set(opal_event_base,                 \
-                               tmp->ev, (cbfunc), tmp);         \
-        now.tv_sec = 0;                                         \
-        now.tv_usec = 0;                                        \
-        OPAL_OUTPUT_VERBOSE((1, orte_debug_output,              \
-                            "defining notify event at %s:%d",   \
-                            __FILE__, __LINE__));               \
-        opal_event_evtimer_add(tmp->ev, &now);                  \
-    } while(0);                                                 \
+    void *payload;
+} orte_timer_t;
+OBJ_CLASS_DECLARATION(orte_timer_t);
 
 /**
  * In a number of places within the code, we want to setup a timer
@@ -284,27 +122,30 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
  * less than 1M since some systems care about that, and to ensure
  * that the computed wait time doesn't exceed the desired max
  * wait
+ *
+ * NOTE: the callback function is responsible for releasing the timer
+ * event back to the event pool!
  */
-#define ORTE_DETECT_TIMEOUT(event, n, deltat, maxwait, cbfunc)              \
+#define ORTE_DETECT_TIMEOUT(n, deltat, maxwait, cbfunc, cbd)                \
     do {                                                                    \
-        struct timeval now;                                                 \
-        opal_event_t *tmp;                                                  \
+        orte_timer_t *tmp;                                                  \
         int timeout;                                                        \
-        tmp =  (opal_event_t *) malloc(sizeof(opal_event_t));               \
-        opal_event_evtimer_set(opal_event_base,                             \
-                               tmp, (cbfunc), tmp);                         \
+        tmp =  OBJ_NEW(orte_timer_t);                                       \
+        tmp->payload = (cbd);                                               \
+        opal_event_evtimer_set(orte_event_base,                             \
+                               tmp->ev, (cbfunc), tmp);                     \
+        opal_event_set_priority(tmp->ev, ORTE_ERROR_PRI);                   \
         timeout = (deltat) * (n);                                           \
         if ((maxwait) > 0 && timeout > (maxwait)) {                         \
             timeout = (maxwait);                                            \
         }                                                                   \
-        now.tv_sec = timeout/1000000;                                       \
-        now.tv_usec = timeout%1000000;                                      \
+        tmp->tv.tv_sec = timeout/1000000;                                   \
+        tmp->tv.tv_usec = timeout%1000000;                                  \
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                          \
                              "defining timeout: %ld sec %ld usec at %s:%d", \
-                            (long)now.tv_sec, (long)now.tv_usec,            \
+                            (long)tmp->tv.tv_sec, (long)tmp->tv.tv_usec,    \
                             __FILE__, __LINE__));                           \
-        opal_event_evtimer_add(tmp, &now);                                  \
-        *(event) = tmp;                                                     \
+        opal_event_evtimer_add(tmp->ev, &tmp->tv);                          \
     }while(0);                                                              \
 
 
@@ -312,21 +153,25 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_notify_event_t);
  * There are places in the code where we just want to periodically
  * wakeup to do something, and then go back to sleep again. Setting
  * a timer allows us to do this
+ *
+ * NOTE: the callback function is responsible for releasing the timer
+ * event back to the event pool when done! Otherwise, the finalize
+ * function will take care of it.
  */
-#define ORTE_TIMER_EVENT(sec, usec, cbfunc)                                     \
+#define ORTE_TIMER_EVENT(sec, usec, cbfunc, pri)                                \
     do {                                                                        \
-        struct timeval now;                                                     \
-        opal_event_t *tmp;                                                      \
-        tmp =  (opal_event_t *) malloc(sizeof(opal_event_t));                   \
-        opal_event_evtimer_set(opal_event_base,                                 \
-                               tmp, (cbfunc), tmp);                             \
-        now.tv_sec = (sec);                                                     \
-        now.tv_usec = (usec);                                                   \
+        orte_timer_t *tm;                                                       \
+        tm = OBJ_NEW(orte_timer_t);                                             \
+        opal_event_evtimer_set(orte_event_base,                                 \
+                               tm->ev, (cbfunc), tm);                           \
+        opal_event_set_priority(tm->ev, (pri));                                 \
+        tm->tv.tv_sec = (sec) + (usec)/1000000;                                 \
+        tm->tv.tv_usec = (usec) % 1000000;                                      \
         OPAL_OUTPUT_VERBOSE((1, orte_debug_output,                              \
-                            "defining timer event: %ld sec %ld usec at %s:%d",  \
-                            (long)now.tv_sec, (long)now.tv_usec,                \
-                            __FILE__, __LINE__));                               \
-        opal_event_evtimer_add(tmp, &now);                                      \
+                             "defining timer event: %ld sec %ld usec at %s:%d", \
+                             (long)tm->tv.tv_sec, (long)tm->tv.tv_usec,         \
+                             __FILE__, __LINE__));                              \
+        opal_event_evtimer_add(tm->ev, &tm->tv);                                \
     }while(0);                                                                  \
 
 

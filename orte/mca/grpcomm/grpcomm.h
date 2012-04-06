@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -63,13 +65,10 @@ typedef int (*orte_grpcomm_base_module_xcast_fn_t)(orte_jobid_t job,
                                                    orte_rml_tag_t tag);
 
 /* allgather - gather data from all procs */
-typedef int (*orte_grpcomm_base_module_allgather_fn_t)(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
-
-typedef int (*orte_grpcomm_base_module_allgather_list_fn_t)(opal_list_t *names,
-                                                            opal_buffer_t *sbuf, opal_buffer_t *rbuf);
+typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_grpcomm_collective_t *coll);
 
 /* barrier function */
-typedef int (*orte_grpcomm_base_module_barrier_fn_t)(void);
+typedef int (*orte_grpcomm_base_module_barrier_fn_t)(orte_grpcomm_collective_t *coll);
 
     
 /** DATA EXCHANGE FUNCTIONS - SEE ompi/runtime/ompi_module_exchange.h FOR A DESCRIPTION
@@ -86,11 +85,10 @@ typedef int (*orte_grpcomm_base_module_modex_get_proc_attr_fn_t)(const orte_proc
                                                                  void **buffer, size_t *size);
 
 /* perform a modex operation */
-typedef int (*orte_grpcomm_base_module_modex_fn_t)(opal_list_t *procs);
+typedef int (*orte_grpcomm_base_module_modex_fn_t)(orte_grpcomm_collective_t *coll);
 
 /* purge the internal attr table */
 typedef int (*orte_grpcomm_base_module_purge_proc_attrs_fn_t)(void);
-
 
 /*
  * Ver 2.0
@@ -101,7 +99,6 @@ struct orte_grpcomm_base_module_2_0_0_t {
     /* collective operations */
     orte_grpcomm_base_module_xcast_fn_t                 xcast;
     orte_grpcomm_base_module_allgather_fn_t             allgather;
-    orte_grpcomm_base_module_allgather_list_fn_t        allgather_list;
     orte_grpcomm_base_module_barrier_fn_t               barrier;
     /* modex functions */
     orte_grpcomm_base_module_modex_set_proc_attr_fn_t   set_proc_attr;

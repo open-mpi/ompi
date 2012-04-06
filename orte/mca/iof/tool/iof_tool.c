@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -73,7 +75,7 @@ static int init(void)
      from the HNP IOF component */
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_IOF_PROXY,
-                                                      ORTE_RML_NON_PERSISTENT,
+                                                      ORTE_RML_PERSISTENT,
                                                       orte_iof_tool_recv,
                                                       NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -216,9 +218,6 @@ static int tool_close(const orte_process_name_t* src_name,
     ORTE_HNP_NAME_FROM_JOB(&hnp, src_name->jobid);
     orte_rml.send_buffer_nb(&hnp, buf, ORTE_RML_TAG_IOF_HNP,
                             0, send_cb, NULL);
-    
-    /* wait right here until the close is confirmed */
-    ORTE_PROGRESSED_WAIT(mca_iof_tool_component.closed, 0, 1);
     
     return ORTE_SUCCESS;
 }

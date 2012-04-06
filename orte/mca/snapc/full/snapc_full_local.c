@@ -1471,7 +1471,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
                                      s_time/usleep_time, max_wait_time/usleep_time));
             }
             usleep(usleep_time);
-            opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
+            opal_event_loop(orte_event_base, OPAL_EVLOOP_NONBLOCK);
             continue;
         }
         else if( 0 > (ret = access(vpid_snapshot->comm_pipe_w, F_OK) )) {
@@ -1483,7 +1483,7 @@ static int snapc_full_local_start_ckpt_open_comm(orte_snapc_full_app_snapshot_t 
                                      s_time/usleep_time, max_wait_time/usleep_time));
             }
             usleep(usleep_time);
-            opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
+            opal_event_loop(orte_event_base, OPAL_EVLOOP_NONBLOCK);
             continue;
         }
         else {
@@ -1712,7 +1712,7 @@ static int snapc_full_local_start_ckpt_handshake(orte_snapc_full_app_snapshot_t 
         goto cleanup;
     }
 
-    opal_event_set(opal_event_base, &(vpid_snapshot->comm_pipe_r_eh),
+    opal_event_set(orte_event_base, &(vpid_snapshot->comm_pipe_r_eh),
                    vpid_snapshot->comm_pipe_r_fd,
                    OPAL_EV_READ|OPAL_EV_PERSIST,
                    snapc_full_local_comm_read_event,
@@ -2033,7 +2033,6 @@ static int snapc_full_local_get_vpids(void)
             vpid_snapshot->process_pid              = child->pid;
             vpid_snapshot->super.process_name.jobid = child->name->jobid;
             vpid_snapshot->super.process_name.vpid  = child->name->vpid;
-            ORTE_EPOCH_SET(vpid_snapshot->super.process_name.epoch,child->name->epoch);
         }
     }
 
@@ -2095,7 +2094,6 @@ static int snapc_full_local_refresh_vpids(void)
             vpid_snapshot->process_pid              = child->pid;
             vpid_snapshot->super.process_name.jobid = child->name->jobid;
             vpid_snapshot->super.process_name.vpid  = child->name->vpid;
-            ORTE_EPOCH_SET(vpid_snapshot->super.process_name.epoch,child->name->epoch);
             /*vpid_snapshot->migrating = true;*/
 
             opal_list_append(&(local_global_snapshot.local_snapshots), &(vpid_snapshot->super.super));
@@ -2111,7 +2109,6 @@ static int snapc_full_local_refresh_vpids(void)
             vpid_snapshot->process_pid              = child->pid;
             vpid_snapshot->super.process_name.jobid = child->name->jobid;
             vpid_snapshot->super.process_name.vpid  = child->name->vpid;
-            ORTE_EPOCH_SET(vpid_snapshot->super.process_name.epoch,child->name->epoch);
         }
     }
 

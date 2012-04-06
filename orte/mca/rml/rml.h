@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,6 +55,14 @@ struct opal_buffer_t;
 struct orte_process_name_t;
 struct orte_rml_module_t;
 
+
+/* Provide a generic callback function to release buffers
+ * following a non-blocking send as this happens all over
+ * the code base
+ */
+ORTE_DECLSPEC void orte_rml_send_callback(int status, orte_process_name_t* sender,
+                                          opal_buffer_t* buffer, orte_rml_tag_t tag,
+                                          void* cbdata);
 
 /* ******************************************************************** */
 

@@ -1456,5 +1456,6 @@ char* opal_hwloc_base_print_locality(opal_paffinity_locality_t locality)
         ptr->buffers[ptr->cntr][idx++] = 'K';
         ptr->buffers[ptr->cntr][idx++] = '\0';
     }
+        
     return ptr->buffers[ptr->cntr];
 }

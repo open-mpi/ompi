@@ -1216,7 +1216,6 @@ static int orte_sstore_central_extract_global_metadata(orte_sstore_central_globa
 
         vpid_snapshot->process_name.jobid  = handle_info->jobid;
         vpid_snapshot->process_name.vpid   = i;
-        ORTE_EPOCH_SET(vpid_snapshot->process_name.epoch,orte_ess.proc_get_epoch(&vpid_snapshot->process_name));
 
         vpid_snapshot->crs_comp     = NULL;
         global_snapshot->start_time = NULL;

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -161,6 +163,7 @@
 #include "orte/types.h"
 
 #include "opal/mca/mca.h"
+#include "opal/mca/event/event.h"
 #include "opal/class/opal_list.h"
 
 #include "orte/runtime/orte_globals.h"
@@ -169,16 +172,10 @@
 
 BEGIN_C_DECLS
 
-/* define the API functions */
-typedef int (*orte_ras_base_API_allocate_fn_t)(orte_job_t *jdata);
-
-/* global structure for accessing RAS API's */
-typedef struct {
-    orte_ras_base_API_allocate_fn_t     allocate;
-} orte_ras_t;
-
-ORTE_DECLSPEC extern orte_ras_t orte_ras;
-    
+/* allocation event - the event one activates to schedule resource
+ * allocation for pending jobs
+ */
+ORTE_DECLSPEC extern opal_event_t orte_allocate_event;
 
 /*
  * ras module functions - these are not accessible to the outside world,

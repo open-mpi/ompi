@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,7 +26,6 @@
 #include "mpi.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/threads/mutex.h"
-#include "opal/util/opal_sos.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/base/base.h"
 
@@ -122,7 +123,7 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
 
             ret = ompi_osc_pt2pt_sendreq_send(module, req);
 
-            if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(ret) ) {
+            if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
                 opal_output_verbose(5, ompi_osc_base_output,
                                     "complete: failure in starting sendreq (%d).  Will try later.",
                                     ret);
@@ -267,7 +268,7 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
 
         ret = ompi_osc_pt2pt_sendreq_send(module, req);
 
-        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(ret) ) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
             opal_output_verbose(5, ompi_osc_base_output,
                                 "complete: failure in starting sendreq (%d).  Will try later.",
                                 ret);
@@ -490,7 +491,7 @@ ompi_osc_pt2pt_module_unlock(int target,
 
         ret = ompi_osc_pt2pt_sendreq_send(module, req);
 
-        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(ret) ) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
             opal_output_verbose(5, ompi_osc_base_output,
                                 "complete: failure in starting sendreq (%d).  Will try later.",
                                 ret);

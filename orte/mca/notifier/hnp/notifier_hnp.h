@@ -33,10 +33,6 @@ BEGIN_C_DECLS
 void orte_notifier_hnp_recv_cb(int status, orte_process_name_t* sender,
                                opal_buffer_t* buffer, orte_rml_tag_t tag,
                                void* cbdata);
-#if OPAL_ENABLE_DEBUG
-void orte_notifier_hnp_exception_cb(const orte_process_name_t* peer, 
-                                    orte_rml_exception_t reason);
-#endif
 
 /*
 extern opal_pointer_array_t orte_notifier_hnp_tables;

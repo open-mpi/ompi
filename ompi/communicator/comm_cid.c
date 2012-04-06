@@ -14,6 +14,8 @@
  * Copyright (c) 2007      Voltaire All rights reserved.
  * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -32,7 +34,6 @@
 #include "ompi/constants.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_list.h"
-#include "opal/util/opal_sos.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/coll/base/base.h"
 #include "ompi/request/request.h"
@@ -145,7 +146,7 @@ int ompi_comm_cid_init (void)
                 ompi_comm_world_thread_level_mult = 1;
                 break;
             }
-        } else if (OMPI_ERR_NOT_IMPLEMENTED == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
             if (ompi_mpi_thread_multiple) {
                 ompi_comm_world_thread_level_mult = 1;
             }

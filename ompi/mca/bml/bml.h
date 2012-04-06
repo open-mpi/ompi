@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +33,6 @@
 #include "opal/datatype/opal_convertor.h"
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
-#include "opal/util/opal_sos.h"
 
 #include "ompi/mca/btl/btl.h"
 
@@ -273,7 +274,7 @@ static inline int mca_bml_base_send( mca_bml_base_btl_t* bml_btl,
 
     des->des_context = (void*) bml_btl;
     rc = btl->btl_send(btl, bml_btl->btl_endpoint, des, tag);
-    if(OPAL_SOS_GET_ERROR_CODE(rc) == OMPI_ERR_RESOURCE_BUSY)
+    if (rc == OMPI_ERR_RESOURCE_BUSY)
         rc = OMPI_SUCCESS;
 
     return rc;

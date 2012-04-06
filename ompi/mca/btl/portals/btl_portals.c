@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +31,6 @@
 #include "ompi/constants.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/datatype/opal_convertor.h"
-#include "opal/util/opal_sos.h"
 
 #include "btl_portals.h"
 #include "btl_portals_endpoint.h"

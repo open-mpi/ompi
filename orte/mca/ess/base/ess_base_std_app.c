@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,6 +37,7 @@
 #include "opal/util/output.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
+#include "opal/runtime/opal_progress.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
@@ -48,6 +51,7 @@
 #if OPAL_ENABLE_FT_CR == 1
 #include "orte/mca/snapc/base/base.h"
 #endif
+#include "orte/mca/state/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/name_fns.h"
@@ -83,6 +87,18 @@ int orte_ess_base_app_setup(void)
             setvbuf(stdout, NULL, _IOFBF, 0);
             setvbuf(stderr, NULL, _IOFBF, 0);
         }
+    }
+
+    /* open and setup the state machine */
+    if (ORTE_SUCCESS != (ret = orte_state_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_state_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_base_select";
+        goto error;
     }
 
     /* open the errmgr */
@@ -248,11 +264,18 @@ int orte_ess_base_app_setup(void)
      * in the job won't be executing this step, so we would hang
      */
     if (ORTE_PROC_IS_NON_MPI && !orte_do_not_barrier) {
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+        orte_grpcomm_collective_t coll;
+        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+        coll.id = orte_process_info.peer_init_barrier;
+        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
             ORTE_ERROR_LOG(ret);
             error = "orte barrier";
             goto error;
         }
+        while (coll.active) {
+            opal_progress();  /* block in progress pending events */
+        }
+        OBJ_DESTRUCT(&coll);
     }
     
     return ORTE_SUCCESS;
@@ -324,12 +347,18 @@ static void report_sync(int status, orte_process_name_t* sender,
 {
     /* flag as complete */
     sync_recvd = true;
+
+    /* (not really necessary, but good practice) */
+    orte_proc_info_finalize();
+    
+    /* Now Exit */
+    exit(status);
 }
 
 void orte_ess_base_app_abort(int status, bool report)
 {
     orte_daemon_cmd_flag_t cmd=ORTE_DAEMON_ABORT_CALLED;
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     
     /* Exit - do NOT do a normal finalize as this will very likely
      * hang the process. We are aborting due to an abnormal condition
@@ -345,10 +374,9 @@ void orte_ess_base_app_abort(int status, bool report)
     
     /* If we were asked to report this termination, do so */
     if (report) {
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        opal_dss.pack(&buf, &cmd, 1, ORTE_DAEMON_CMD);
-        orte_rml.send_buffer(ORTE_PROC_MY_DAEMON, &buf, ORTE_RML_TAG_DAEMON, 0);
-        OBJ_DESTRUCT(&buf);
+        buf = OBJ_NEW(opal_buffer_t);
+        opal_dss.pack(buf, &cmd, 1, ORTE_DAEMON_CMD);
+        orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_DAEMON, 0, orte_rml_send_callback, NULL);
         OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
                              "%s orte_ess_app_abort: sent abort msg to %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -360,7 +388,7 @@ void orte_ess_base_app_abort(int status, bool report)
         sync_recvd = false;
         if (ORTE_SUCCESS == orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ABORT,
                                      ORTE_RML_NON_PERSISTENT, report_sync, NULL)) {
-            ORTE_PROGRESSED_WAIT(sync_recvd, 0, 1);
+            return;
         }
     }
     

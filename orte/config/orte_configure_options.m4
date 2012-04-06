@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
 dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
-dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+dnl Copyright (c) 2009-2012 Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
 dnl
@@ -114,25 +114,22 @@ AC_DEFINE_UNQUOTED([ORTE_ENABLE_HEARTBEAT],
                    [Whether we want daemon heartbeat monitoring enabled])
 
 #
-# Compile in resilient runtime code
-#
-AC_MSG_CHECKING([if want resilient runtime code enabled])
-AC_ARG_ENABLE(resilient-orte,
-    [AC_HELP_STRING([--enable-resilient-orte], [Enable the resilient runtime code.])])
-if test "$enable_resilient_orte" = "yes"; then
+# Do we want a separate orte progress thread?
+AC_MSG_CHECKING([if want orte progress thread])
+AC_ARG_ENABLE([orte-progress-thread],
+              [AC_HELP_STRING([--enable-orte-progress-thread],
+              [Enable orte progress thread - for experiment by developers only! (default: disabled)])])
+if test "$enable_orte_progress_thread" = "yes"; then
     AC_MSG_RESULT([yes])
-    orte_enable_resilient_code=1
+    orte_enable_progress_thread=1
+    AC_DEFINE_UNQUOTED(OPAL_EVENT_HAVE_THREAD_SUPPORT, 1,
+                      [Thread support must be configured into the event library])
 else
     AC_MSG_RESULT([no])
-    orte_enable_resilient_code=0
+    orte_enable_progress_thread=0
 fi
-AM_CONDITIONAL(ORTE_RESIL_ORTE, [test "$enable_resilient_orte" = "yes"])
-AC_DEFINE_UNQUOTED([ORTE_RESIL_ORTE], [$orte_enable_resilient_code],
-     [Compile a resilient version of Open MPI])
-
-AM_CONDITIONAL(ORTE_ENABLE_EPOCH, [test "$enable_resilient_orte" = "yes"])
-AC_DEFINE_UNQUOTED([ORTE_ENABLE_EPOCH], [$orte_enable_resilient_code],
-     [Support for epoch in the ORTE process name enabled or not])
-
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_PROGRESS_THREAD],
+                   [$orte_enable_progress_thread],
+                   [Whether we want an orte progress thread enabled])
 
 ])dnl

@@ -25,6 +25,8 @@
 #include <stdarg.h>
 #endif
 
+#include "opal/class/opal_pointer_array.h"
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
@@ -38,6 +40,17 @@ typedef unsigned char u_char;
 typedef unsigned short u_short;
 #endif
 
+/* set the number of event priority levels */
+#define OPAL_EVENT_NUM_PRI   8
+
+#define OPAL_EV_ERROR_PRI         0
+#define OPAL_EV_MSG_HI_PRI        1
+#define OPAL_EV_SYS_HI_PRI        2
+#define OPAL_EV_MSG_LO_PRI        3
+#define OPAL_EV_SYS_LO_PRI        4
+#define OPAL_EV_INFO_HI_PRI       5
+#define OPAL_EV_INFO_LO_PRI       6
+#define OPAL_EV_LOWEST_PRI        7
 
 #define OPAL_EVENT_SIGNAL(ev)	opal_event_get_signal(ev)
 

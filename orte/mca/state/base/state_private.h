@@ -1,0 +1,84 @@
+/*
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+/** @file:
+ */
+
+#ifndef ORTE_MCA_STATE_PRIVATE_H
+#define ORTE_MCA_STATE_PRIVATE_H
+
+/*
+ * includes
+ */
+#include "orte_config.h"
+#include "orte/constants.h"
+#include "orte/types.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
+
+#include "orte/mca/plm/plm_types.h"
+#include "orte/runtime/orte_globals.h"
+
+#include "orte/mca/state/state.h"
+
+/*
+ * Functions for use solely within the ERRMGR framework
+ */
+BEGIN_C_DECLS
+
+/* define a struct to hold framework-global values */
+typedef struct {
+    bool initialized;
+} orte_state_base_t;
+
+ORTE_DECLSPEC extern orte_state_base_t orte_state_base;
+
+/*
+ * Base functions
+ */
+ORTE_DECLSPEC void orte_state_base_activate_job_state(orte_job_t *jdata,
+                                                      orte_job_state_t state);
+
+ORTE_DECLSPEC int orte_state_base_add_job_state(orte_job_state_t state,
+                                                orte_state_cbfunc_t cbfunc,
+                                                int priority);
+
+ORTE_DECLSPEC int orte_state_base_set_job_state_callback(orte_job_state_t state,
+                                                         orte_state_cbfunc_t cbfunc);
+
+ORTE_DECLSPEC int orte_state_base_set_job_state_priority(orte_job_state_t state,
+                                                         int priority);
+
+ORTE_DECLSPEC int orte_state_base_remove_job_state(orte_job_state_t state);
+
+ORTE_DECLSPEC void orte_util_print_job_state_machine(void);
+
+
+ORTE_DECLSPEC void orte_state_base_activate_proc_state(orte_process_name_t *proc,
+                                                       orte_proc_state_t state);
+
+ORTE_DECLSPEC int orte_state_base_add_proc_state(orte_proc_state_t state,
+                                                 orte_state_cbfunc_t cbfunc,
+                                                 int priority);
+
+ORTE_DECLSPEC int orte_state_base_set_proc_state_callback(orte_proc_state_t state,
+                                                          orte_state_cbfunc_t cbfunc);
+
+ORTE_DECLSPEC int orte_state_base_set_proc_state_priority(orte_proc_state_t state,
+                                                          int priority);
+
+ORTE_DECLSPEC int orte_state_base_remove_proc_state(orte_proc_state_t state);
+
+ORTE_DECLSPEC void orte_util_print_proc_state_machine(void);
+
+
+END_C_DECLS
+#endif

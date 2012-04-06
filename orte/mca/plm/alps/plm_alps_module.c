@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -67,6 +67,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
@@ -107,6 +108,7 @@ orte_plm_base_module_t orte_plm_alps_module = {
  */
 static pid_t alps_pid = 0;
 static bool failed_launch;
+static void launch_daemons(int fd, short args, void *cbdata);
 
 
 /**
@@ -118,6 +120,7 @@ static int plm_alps_init(void)
     
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
     if (orte_do_not_launch) {
@@ -133,6 +136,13 @@ static int plm_alps_init(void)
         orte_plm_globals.daemon_nodes_assigned_at_launch = false;
     }
 
+    /* point to our launch command */
+    if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_LAUNCH_DAEMONS,
+                                                       launch_daemons, ORTE_SYS_PRI))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     return rc;
 }
 
@@ -142,6 +152,18 @@ static int plm_alps_init(void)
  * the job can cleanly terminate
  */
 static int plm_alps_launch_job(orte_job_t *jdata)
+{
+    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+        /* this is a restart situation - skip to the mapping stage */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
+    } else {
+        /* new job - set it up */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_INIT);
+    }
+    return ORTE_SUCCESS;
+}
+
+static void launch_daemons(int fd, short args, void *cbdata)
 {
     orte_job_map_t *map;
     char *jobid_string = NULL;
@@ -158,60 +180,44 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     char **custom_strings;
     int num_args, i;
     char *cur_prefix;
-    struct timeval joblaunchstart, launchstart, launchstop;
     int proc_vpid_index;
     orte_app_context_t *app;
     orte_node_t *node;
     orte_std_cntr_t nnode;
-    orte_jobid_t failed_job;
-    orte_job_state_t job_state =  ORTE_JOB_STATE_NEVER_LAUNCHED;
     orte_job_t *daemons;
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
      */
-    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jdata->controls) {
-        failed_job = jdata->jobid;
-        if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-            ORTE_ERROR_LOG(rc);
-            failed_launch = true;
-        } else {
-            failed_launch = false;
-        }
-        goto cleanup;
+    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & state->jdata->controls) {
+        ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
     }
 
-    /* default to declaring the daemon launch failed */
-    failed_job = ORTE_PROC_MY_NAME->jobid;
-    
-    if (mca_plm_alps_component.timing) {
-        if (0 != gettimeofday(&joblaunchstart, NULL)) {
-            opal_output(0, "plm_alps: could not obtain job start time");
-        }        
-    }
-    
-    /* indicate the state of the launch */
-    failed_launch = true;
-    
     /* start by setting up the virtual machine */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(jdata))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(state->jdata))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
-    /* if we don't want to launch, then don't attempt to
+   /* if we don't want to launch, then don't attempt to
      * launch the daemons - the user really wants to just
      * look at the proposed process map
      */
     if (orte_do_not_launch) {
-        goto launch_apps;
+        /* set the state to indicate the daemons reported - this
+         * will trigger the daemons_reported event and cause the
+         * job to move to the following step
+         */
+        state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:alps: launching vm",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
     /* Get the map for this job */
     if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -220,11 +226,17 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     }
 
     if (0 == map->num_new_daemons) {
-        /* have all the daemons we need - launch app */
+        /* set the state to indicate the daemons reported - this
+         * will trigger the daemons_reported event and cause the
+         * job to move to the following step
+         */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:alps: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        goto launch_apps;
+        state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
     }
     
     /* need integer value for command line parameter */
@@ -344,9 +356,9 @@ static int plm_alps_launch_job(orte_job_t *jdata)
        don't support different --prefix'es for different nodes in
        the ALPS plm) */
     cur_prefix = NULL;
-    for (i=0; i < jdata->apps->size; i++) {
+    for (i=0; i < state->jdata->apps->size; i++) {
         char *app_prefix_dir;
-        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, i))) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(state->jdata->apps, i))) {
             continue;
         }
         app_prefix_dir = app->prefix_dir;
@@ -357,7 +369,7 @@ static int plm_alps_launch_job(orte_job_t *jdata)
                 0 != strcmp (cur_prefix, app_prefix_dir)) {
                 orte_show_help("help-plm-alps.txt", "multiple-prefixes",
                                true, cur_prefix, app_prefix_dir);
-                return ORTE_ERR_FATAL;
+                goto cleanup;
             }
 
             /* If not yet set, copy it; iff set, then it's the
@@ -375,66 +387,26 @@ static int plm_alps_launch_job(orte_job_t *jdata)
     /* setup environment */
     env = opal_argv_copy(orte_launch_environ);
     
-    if (mca_plm_alps_component.timing) {
-        if (0 != gettimeofday(&launchstart, NULL)) {
-            opal_output(0, "plm_alps: could not obtain start time");
-        }        
+    if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+        param = opal_argv_join(argv, ' ');
+        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                             "%s plm:alps: final top-level argv:\n\t%s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             (NULL == param) ? "NULL" : param));
+        if (NULL != param) free(param);
     }
-    
-    /* set the job state to indicate we attempted to launch */
-    job_state = ORTE_JOB_STATE_FAILED_TO_START;
-
+        
     /* exec the daemon(s) */
     if (ORTE_SUCCESS != (rc = plm_alps_start_proc(argc, argv, env, cur_prefix))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     
-    /* do NOT wait for alps to complete. Alps only completes when the processes
-     * it starts - in this case, the orteds - complete. Instead, we'll catch
-     * any alps failures and deal with them elsewhere
-     */
-    
-    /* wait for daemons to callback */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
- launch_apps:
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        failed_job = jdata->jobid;
-        goto cleanup;
-    }
-    failed_job = jdata->jobid;
+    /* indicate that the daemons for this job were launched */
+    state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
 
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    /* declare the launch a success */
+    /* flag that launch was successful, so far as we currently know */
     failed_launch = false;
-    
-    if (mca_plm_alps_component.timing) {
-        if (0 != gettimeofday(&launchstop, NULL)) {
-            opal_output(0, "plm_alps: could not obtain stop time");
-        } else {
-            opal_output(0, "plm_alps: daemon block launch time is %ld usec",
-                        (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
-                        (launchstop.tv_usec - launchstart.tv_usec));
-            opal_output(0, "plm_alps: total job launch time is %ld usec",
-                        (launchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
-                        (launchstop.tv_usec - joblaunchstart.tv_usec));
-        }
-    }
-
-    if (ORTE_SUCCESS != rc) {
-        opal_output(0, "plm:alps: start_procs returned error %d", rc);
-        goto cleanup;
-    }
 
  cleanup:
     if (NULL != argv) {
@@ -448,20 +420,13 @@ static int plm_alps_launch_job(orte_job_t *jdata)
         free(jobid_string);
     }
     
+    /* cleanup the caddy */
+    OBJ_RELEASE(state);
+
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        if (ORTE_ERR_SILENT == rc) {
-            orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_SILENT_ABORT,
-                                     NULL, ORTE_PROC_STATE_UNDEF,
-                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
-        } else {
-            orte_errmgr.update_state(failed_job, job_state,
-                                     NULL, ORTE_PROC_STATE_UNDEF,
-                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
-        }
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
-    
-    return rc;
 }
 
 
@@ -528,6 +493,8 @@ static int plm_alps_finalize(void)
 
 
 static void alps_wait_cb(pid_t pid, int status, void* cbdata){
+    orte_job_t *jdata;
+
     /* According to the ALPS folks, alps always returns the highest exit
        code of our remote processes. Thus, a non-zero exit status doesn't
        necessarily mean that alps failed - it could be that an orted returned
@@ -543,6 +510,7 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
        alps failed. Report the error and make sure that orterun
        wakes up - otherwise, do nothing!
     */
+    jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     
     if (0 != status) {
         if (failed_launch) {
@@ -556,15 +524,12 @@ static void alps_wait_cb(pid_t pid, int status, void* cbdata){
             /* report that the daemon has failed so we break out of the daemon
              * callback receive and exit
              */
-            orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
-                                     NULL, ORTE_PROC_STATE_UNDEF, 0, status);
-            
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);            
         } else {
             /* an orted must have died unexpectedly after launch - report
              * that the daemon has failed so we exit
              */
-            orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_ABORTED,
-                                     NULL, ORTE_PROC_STATE_UNDEF, 0, status);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ABORTED);
         }
     }
     

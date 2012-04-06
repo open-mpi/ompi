@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -404,7 +404,7 @@ static int mca_bml_r2_add_procs( size_t nprocs,
     }
 
     if (mca_bml_r2.show_unreach_errors && 
-        OMPI_ERR_UNREACH == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        OMPI_ERR_UNREACH == ret) {
         orte_show_help("help-mca-bml-r2.txt",
                        "unreachable proc",
                        true, 

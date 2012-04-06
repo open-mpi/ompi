@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -369,7 +371,7 @@ static inline int mca_pml_bfo_recv_request_schedule_exclusive(
 
     do {
         rc = mca_pml_bfo_recv_request_schedule_once(req, start_bml_btl);
-        if(OPAL_SOS_GET_ERROR_CODE(rc) == OMPI_ERR_OUT_OF_RESOURCE)
+        if(rc == OMPI_ERR_OUT_OF_RESOURCE)
             break;
     } while(!unlock_recv_request(req));
 

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -180,23 +180,8 @@ static void send_cmd(int fd, short dummy, void *arg)
     num_recvd = 0;
     if (0 > (ret = orte_rml.send_buffer(&(target_hnp->name), &cmdbuf, ORTE_RML_TAG_DAEMON, 0))) {
         ORTE_ERROR_LOG(ret);
-        orte_quit();
+        orte_quit(0,0,NULL);
         return;
-    }
-    
-    ORTE_PROGRESSED_WAIT(all_recvd, 0, 1);
-    
-    /* flag that field sizes are set */
-    fields_set = true;
-    
-    /* pretty-print what we got */
-    pretty_print();
-
-    /* see if we want to do it again */
-    if (0 < update_rate) {
-        ORTE_TIMER_EVENT(update_rate, 0, send_cmd);
-    } else {
-        orte_quit();
     }
 }
 
@@ -282,10 +267,10 @@ main(int argc, char *argv[])
      * forward, we need to abort in a manner that allows us
      * to cleanup
      */
-    opal_event_signal_set(opal_event_base, &term_handler, SIGTERM,
+    opal_event_signal_set(orte_event_base, &term_handler, SIGTERM,
                           abort_exit_callback, &term_handler);
     opal_event_signal_add(&term_handler, NULL);
-    opal_event_signal_set(opal_event_base, &int_handler, SIGINT,
+    opal_event_signal_set(orte_event_base, &int_handler, SIGINT,
                           abort_exit_callback, &int_handler);
     opal_event_signal_add(&int_handler, NULL);
     
@@ -484,7 +469,6 @@ main(int argc, char *argv[])
     if (NULL == ranks) {
         /* take all ranks */
         proc.vpid = ORTE_VPID_WILDCARD;
-        ORTE_EPOCH_SET(proc.epoch,ORTE_EPOCH_WILDCARD);
         if (ORTE_SUCCESS != (ret = opal_dss.pack(&cmdbuf, &proc, 1, ORTE_NAME))) {
             ORTE_ERROR_LOG(ret);
             goto cleanup;
@@ -534,7 +518,9 @@ SEND:
     send_cmd(0, 0, NULL);
 
     /* now wait until the termination event fires */
-    opal_event_dispatch(opal_event_base);
+    while (orte_event_base_active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
 
     /***************
      * Cleanup
@@ -576,14 +562,13 @@ static void abort_exit_callback(int fd, short ign, void *arg)
         fclose(fp);
     }
     ORTE_UPDATE_EXIT_STATUS(1);
-    orte_quit();
+    orte_quit(0,0,NULL);
 }
 
-static void process_stats(int fd, short event, void *data)
+static void recv_stats(int status, orte_process_name_t* sender,
+                       opal_buffer_t *buffer, orte_rml_tag_t tag,
+                       void* cbdata)
 {
-    orte_message_event_t *mev = (orte_message_event_t*)data;
-    opal_buffer_t *buffer = mev->buffer;
-    orte_process_name_t *sender = &(mev->sender);
     int32_t n;
     opal_pstats_t *stats;
     orte_process_name_t proc;
@@ -704,14 +689,24 @@ static void process_stats(int fd, short event, void *data)
         /* add it to the list */
         opal_list_append(&recvd_stats, &stats->super);
     }
-    
-cleanup:
-    OBJ_RELEASE(mev);
-    
+
+ cleanup:    
     /* check for completion */
     num_recvd++;
     if (num_replies <= num_recvd) {
-        all_recvd = true;
+        /* flag that field sizes are set */
+        fields_set = true;
+    
+        /* pretty-print what we got */
+        pretty_print();
+
+        /* see if we want to do it again */
+        if (0 < update_rate) {
+            ORTE_TIMER_EVENT(update_rate, 0, send_cmd, ORTE_SYS_PRI);
+        } else {
+            orte_finalize();
+            exit(0);
+        }
     }
 
     /* repost the receive */
@@ -720,26 +715,6 @@ cleanup:
     if (ret != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(ret);
     }
-}
-
-static void recv_stats(int status, orte_process_name_t* sender,
-                       opal_buffer_t *buffer, orte_rml_tag_t tag,
-                       void* cbdata)
-{
-    /* don't process this right away - we need to get out of the recv before
-     * we process the message as it may ask us to do something that involves
-     * more messaging! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release when processed - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_stats);
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                         "%s recv_stats: reissued recv",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 }
 
 /* static values needed for printing */

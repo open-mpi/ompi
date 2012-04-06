@@ -9,6 +9,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -32,8 +34,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
 check_PROGRAMS = \
 	opal_bit_ops \
-	opal_path_nfs \
-	opal_sos
+	opal_path_nfs
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -79,12 +80,6 @@ opal_path_nfs_LDADD = \
         $(top_builddir)/opal/libopen-pal.la \
         $(top_builddir)/test/support/libsupport.a
 opal_path_nfs_DEPENDENCIES = $(opal_path_nfs_LDADD)
-
-opal_sos_SOURCES = opal_sos.c
-opal_sos_LDADD = \
-        $(top_builddir)/opal/libopen-pal.la \
-        $(top_builddir)/test/support/libsupport.a 
-opal_sos_DEPENDENCIES = $(opal_error_LDADD)
 
 #opal_os_path_SOURCES = opal_os_path.c
 #opal_os_path_LDADD = \

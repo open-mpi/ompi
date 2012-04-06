@@ -101,6 +101,7 @@
 #include "ompi/runtime/ompi_cr.h"
 
 #include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 
 /* This is required for the boundaries of the hash tables used to store
  * the F90 types returned by the MPI_Type_create_f90_XXX functions.
@@ -290,6 +291,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     struct timeval ompistart, ompistop;
     char *event_val = NULL;
     bool orte_setup = false;
+    orte_grpcomm_collective_t *coll;
 
     /* bitflag of the thread level support provided. To be used
      * for the modex in order to work in heterogeneous environments. */
@@ -547,10 +549,20 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* exchange connection info - this function also acts as a barrier
      * as it will not return until the exchange is complete
      */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
+    coll = OBJ_NEW(orte_grpcomm_collective_t);
+    coll->id = orte_process_info.peer_modex;
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.modex(coll))) {
         error = "orte_grpcomm_modex failed";
         goto error;
     }
+    /* wait for modex to complete - this may be moved anywhere in mpi_init
+     * so long as it occurs prior to calling a function that needs
+     * the modex info!
+     */
+    while (coll->active) {
+        opal_progress();  /* block in progress pending events */
+    }
+    OBJ_RELEASE(coll);
 
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {
         gettimeofday(&ompistop, NULL);
@@ -897,7 +909,7 @@ MOVEON:
     /* If we got "unreachable", then print a specific error message.
        Otherwise, if we got some other failure, fall through to print
        a generic message. */
-    if (OMPI_ERR_UNREACH == OPAL_SOS_GET_ERROR_CODE(ret)) {
+    if (OMPI_ERR_UNREACH == ret) {
         orte_show_help("help-mpi-runtime",
                        "mpi_init:startup:pml-add-procs-fail", true);
         error = NULL;
@@ -934,11 +946,18 @@ MOVEON:
     }
     
     /* wait for everyone to reach this point */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+    coll = OBJ_NEW(orte_grpcomm_collective_t);
+    coll->id = orte_process_info.peer_init_barrier;
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll))) {
         error = "orte_grpcomm_barrier failed";
         goto error;
     }
-    
+    /* wait for barrier to complete */
+    while (coll->active) {
+        opal_progress();  /* block in progress pending events */
+    }
+    OBJ_RELEASE(coll);
+
     /* check for timing request - get stop time and report elapsed
        time if so, then start the clock again */
     if (timing && 0 == ORTE_PROC_MY_NAME->vpid) {

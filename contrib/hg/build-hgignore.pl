@@ -32,6 +32,8 @@ my @globals = qw/.libs
 *.orig
 *.rej
 *.class
+*.xcscheme
+*.plist
 .git*
 .DS_Store
 stamp-h[1-9]

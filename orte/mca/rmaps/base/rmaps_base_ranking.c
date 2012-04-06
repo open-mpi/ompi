@@ -145,13 +145,7 @@ static int rank_span(orte_job_t *jdata,
                                         "mca:rmaps:rank_span: assigning vpid %s", ORTE_VPID_PRINT(vpid));
                     proc->name.vpid = vpid++;
                     cnt++;
-                    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
-                    ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
                         
-                    /* If there is an invalid epoch here, it's because it doesn't exist yet. */
-                    if (0 == ORTE_EPOCH_CMP(ORTE_EPOCH_INVALID,proc->name.epoch)) {
-                        ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
-                    }
                     if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                         ORTE_ERROR_LOG(rc);
                         return rc;
@@ -257,13 +251,7 @@ static int rank_fill(orte_job_t *jdata,
                                     "mca:rmaps:rank_fill: assigning vpid %s", ORTE_VPID_PRINT(vpid));
                 proc->name.vpid = vpid++;
                 cnt++;
-                ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
-                ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
                         
-                /* If there is an invalid epoch here, it's because it doesn't exist yet. */
-                if (0 == ORTE_EPOCH_CMP(ORTE_EPOCH_INVALID,proc->name.epoch)) {
-                    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
-                }
                 if (ORTE_SUCCESS != (rc = opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
@@ -388,14 +376,8 @@ static int rank_by(orte_job_t *jdata,
                     cnt++;
                     opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                                         "mca:rmaps:rank_by: assigned rank %s", ORTE_VPID_PRINT(proc->name.vpid));
-                    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
-                    ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
-                    
-                    /* If there is an invalid epoch here, it's because it doesn't exist yet. */
-                    if (0 == ORTE_EPOCH_CMP(ORTE_EPOCH_INVALID,proc->name.epoch)) {
-                        ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
-                    }
-                    /* flag that one was mapped */
+
+                   /* flag that one was mapped */
                     all_done = false;
                     /* track where the highest vpid landed - this is our
                      * new bookmark
@@ -465,8 +447,6 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
                         continue;
                     }
                     proc->name.vpid = vpid++;
-                    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
-                    ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
                     /* insert the proc into the jdata->procs array - can't already
                      * be there as the only way to this point in the code is for the
                      * vpid to have been INVALID
@@ -515,14 +495,7 @@ int orte_rmaps_base_compute_vpids(orte_job_t *jdata,
                                         "mca:rmaps:base: assigning rank %s to node %s",
                                         ORTE_VPID_PRINT(vpid), node->name);
                     proc->name.vpid = vpid++;
-                    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_INVALID);
-                    ORTE_EPOCH_SET(proc->name.epoch,orte_ess.proc_get_epoch(&proc->name));
-                    
-                    /* If there is an invalid epoch here, it's because it doesn't exist yet. */
-                    if (0 == ORTE_EPOCH_CMP(ORTE_EPOCH_INVALID,proc->name.epoch)) {
-                        ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
-                    }
-                    /* track where the highest vpid landed - this is our
+                   /* track where the highest vpid landed - this is our
                      * new bookmark
                      */
                     jdata->bookmark = node;

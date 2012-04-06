@@ -2,6 +2,8 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,28 +64,6 @@ orte_rml_component_t *orte_rml_component = NULL;
 static bool       component_open_called = false;
 static bool       opened = false;
 static bool       selected = false;
-
-/* instantiate the msg_pkt object */
-static void msg_pkt_constructor(orte_msg_packet_t *pkt)
-{
-    pkt->sender.jobid = ORTE_JOBID_INVALID;
-    pkt->sender.vpid = ORTE_VPID_INVALID;
-    ORTE_EPOCH_SET(pkt->sender.epoch,ORTE_EPOCH_MIN);
-    pkt->buffer = NULL;
-}
-static void msg_pkt_destructor(orte_msg_packet_t *pkt)
-{
-    pkt->sender.jobid = ORTE_JOBID_INVALID;
-    pkt->sender.vpid = ORTE_VPID_INVALID;
-    ORTE_EPOCH_SET(pkt->sender.epoch,ORTE_EPOCH_INVALID);
-    if (NULL != pkt->buffer) {
-        OBJ_RELEASE(pkt->buffer);
-    }
-}
-OBJ_CLASS_INSTANCE(orte_msg_packet_t,
-                   opal_list_item_t,
-                   msg_pkt_constructor,
-                   msg_pkt_destructor);
 
 int
 orte_rml_base_open(void)
@@ -275,4 +255,12 @@ orte_rml_base_close(void)
     OBJ_DESTRUCT(&orte_rml_base_subscriptions);
 
     return ORTE_SUCCESS;
+}
+
+void orte_rml_send_callback(int status, orte_process_name_t* sender,
+                            opal_buffer_t* buffer, orte_rml_tag_t tag,
+                            void* cbdata)
+
+{
+    OBJ_RELEASE(buffer);
 }

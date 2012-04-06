@@ -79,7 +79,12 @@ int opal_event_base_open(void)
 
     /* get our event base */
     if (NULL == (opal_event_base = opal_event_base_create())) {
-        rc = OPAL_ERROR;
+        return OPAL_ERROR;
+    }
+
+    /* set the number of priorities */
+    if (0 < OPAL_EVENT_NUM_PRI) {
+        opal_event_base_priority_init(opal_event_base, OPAL_EVENT_NUM_PRI);
     }
 
     return rc;

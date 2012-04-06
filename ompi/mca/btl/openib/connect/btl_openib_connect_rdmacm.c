@@ -4,6 +4,8 @@
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  *
  * $COPYRIGHT$
  *
@@ -46,7 +48,6 @@
 
 #include "opal/util/output.h"
 #include "opal/util/error.h"
-#include "opal/util/opal_sos.h"
 #include "orte/util/show_help.h"
 
 #include "btl_openib_fd.h"
@@ -1932,7 +1933,7 @@ out3:
 out1:
     free(*cpc);
 out:
-    if (OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
+    if (OMPI_ERR_NOT_SUPPORTED == rc) {
         opal_output_verbose(5, mca_btl_base_output,
                             "openib BTL: rdmacm CPC unavailable for use on %s:%d; skipped",
                             ibv_get_device_name(openib_btl->device->ib_dev),

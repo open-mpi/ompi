@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
@@ -33,7 +33,6 @@
 
 #include "opal_stdint.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/util/show_help.h"
 
@@ -617,7 +616,7 @@ int mca_btl_wv_endpoint_send(mca_btl_base_endpoint_t* ep,
         rc = mca_btl_wv_endpoint_post_send(ep, frag);
     }
     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-    if (OPAL_UNLIKELY(OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc))) {
+    if (OPAL_UNLIKELY(OMPI_ERR_RESOURCE_BUSY == rc)) {
         rc = OMPI_SUCCESS;
     }
 
@@ -801,7 +800,7 @@ static int mca_btl_wv_endpoint_send_eager_rdma(
                      ));
     }
     rc = mca_btl_wv_endpoint_send(endpoint, frag);
-    if (OMPI_SUCCESS == rc || OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc))
+    if (OMPI_SUCCESS == rc || OMPI_ERR_RESOURCE_BUSY == rc)
         return OMPI_SUCCESS;
 
     MCA_BTL_IB_FRAG_RETURN(frag);

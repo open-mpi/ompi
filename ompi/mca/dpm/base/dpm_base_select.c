@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,7 +20,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "opal/util/opal_sos.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/mca/base/mca_base_component_repository.h"
@@ -41,7 +42,7 @@ int ompi_dpm_base_select(void)
                                         (mca_base_module_t **) &best_module,
                                         (mca_base_component_t **) &best_component))) {
         /* it is okay not to find any executable components */
-        if (OMPI_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        if (OMPI_ERR_NOT_FOUND == ret) {
             ret = OPAL_SUCCESS;
         }
         goto cleanup;

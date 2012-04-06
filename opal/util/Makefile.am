@@ -19,7 +19,7 @@
 
 SUBDIRS = keyval
 
-dist_pkgdata_DATA = help-opal-util.txt opal_sos_reporter.txt
+dist_pkgdata_DATA = help-opal-util.txt
 
 AM_LFLAGS = -Popal_show_help_yy
 LEX_OUTPUT_ROOT = lex.opal_show_help_yy
@@ -49,7 +49,6 @@ headers = \
         opal_environ.h \
         opal_getcwd.h \
         opal_pty.h \
-        opal_sos.h \
         os_dirpath.h \
         os_path.h \
         output.h \
@@ -82,7 +81,6 @@ libopalutil_la_SOURCES = \
         opal_environ.c \
         opal_getcwd.c \
         opal_pty.c \
-        opal_sos.c \
         os_dirpath.c \
         os_path.c \
         output.c \

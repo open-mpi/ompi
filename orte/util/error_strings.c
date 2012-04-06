@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,6 +33,7 @@
 #endif
 #endif
 
+#include "orte/mca/plm/plm_types.h"
 #include "orte/util/error_strings.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -196,171 +199,135 @@ int orte_err2str(int errnum, const char **errmsg)
 const char *orte_job_state_to_str(orte_job_state_t state)
 {
     switch(state) {
-        case ORTE_JOB_STATE_UNDEF:
-            return "UNDEFINED";
-        case ORTE_JOB_STATE_INIT:
-            return "INITIALIZED";
-        case ORTE_JOB_STATE_RESTART:
-            return "RESTARTING";
-        case ORTE_JOB_STATE_LAUNCHED:
-            return "LAUNCHED";
-        case ORTE_JOB_STATE_RUNNING:
-            return "RUNNING";
-        case ORTE_JOB_STATE_SUSPENDED:
-            return "SUSPENDED";
-        case ORTE_JOB_STATE_REGISTERED:
-            return "SYNC REGISTERED";
-        case ORTE_JOB_STATE_UNTERMINATED:
-            return "UNTERMINATED";
-        case ORTE_JOB_STATE_TERMINATED:
-            return "NORMALLY TERMINATED";
-        case ORTE_JOB_STATE_ABORTED:
-            return "ABORTED";
-        case ORTE_JOB_STATE_FAILED_TO_START:
-            return "FAILED TO START";
-        case ORTE_JOB_STATE_ABORTED_BY_SIG:
-            return "ABORTED BY SIGNAL";
-        case ORTE_JOB_STATE_ABORTED_WO_SYNC:
-            return "TERMINATED WITHOUT SYNC";
-        case ORTE_JOB_STATE_KILLED_BY_CMD:
-            return "KILLED BY INTERNAL COMMAND";
-        case ORTE_JOB_STATE_COMM_FAILED:
-            return "COMMUNICATION FAILURE";
-        case ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED:
-            return "SENSOR BOUND EXCEEDED";
-            break;
-        case ORTE_JOB_STATE_NEVER_LAUNCHED:
-            return "NEVER LAUNCHED";
-        case ORTE_JOB_STATE_ABORT_ORDERED:
-            return "ABORT IN PROGRESS";
-        case ORTE_JOB_STATE_HEARTBEAT_FAILED:
-            return "HEARTBEAT FAILED";
-        case ORTE_JOB_STATE_PROCS_MIGRATING:
-            return "PROCS MIGRATING";
-        case ORTE_JOB_STATE_NON_ZERO_TERM:
-            return "AT LEAST ONE PROCESS EXITED WITH NON-ZERO STATUS";
-        case ORTE_JOB_STATE_SILENT_ABORT:
-            return "ERROR REPORTED ELSEWHERE";
-        default:
-            return "UNKNOWN STATE!";
+    case ORTE_JOB_STATE_UNDEF:
+        return "UNDEFINED";
+    case ORTE_JOB_STATE_INIT:
+        return "PENDING INIT";
+    case ORTE_JOB_STATE_ALLOCATE:
+        return "PENDING ALLOCATION";
+    case ORTE_JOB_STATE_MAP:
+        return "PENDING MAPPING";
+    case ORTE_JOB_STATE_SYSTEM_PREP:
+        return "PENDING FINAL SYSTEM PREP";
+    case ORTE_JOB_STATE_LAUNCH_DAEMONS:
+        return "PENDING DAEMON LAUNCH";
+    case ORTE_JOB_STATE_DAEMONS_LAUNCHED:
+        return "DAEMONS LAUNCHED";
+    case ORTE_JOB_STATE_DAEMONS_REPORTED:
+        return "ALL DAEMONS REPORTED";
+    case ORTE_JOB_STATE_LAUNCH_APPS:
+        return "PENDING APP LAUNCH";
+    case ORTE_JOB_STATE_RUNNING:
+        return "RUNNING";
+    case ORTE_JOB_STATE_SUSPENDED:
+        return "SUSPENDED";
+    case ORTE_JOB_STATE_REGISTERED:
+        return "SYNC REGISTERED";
+    case ORTE_JOB_STATE_READY_FOR_DEBUGGERS:
+        return "READY FOR DEBUGGERS";
+    case ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE:
+        return "LOCAL LAUNCH COMPLETE";
+    case ORTE_JOB_STATE_UNTERMINATED:
+        return "UNTERMINATED";
+    case ORTE_JOB_STATE_TERMINATED:
+        return "NORMALLY TERMINATED";
+    case ORTE_JOB_STATE_ALL_JOBS_COMPLETE:
+        return "ALL JOBS COMPLETE";
+    case ORTE_JOB_STATE_ERROR:
+        return "ARTIFICIAL BOUNDARY - ERROR";
+    case ORTE_JOB_STATE_KILLED_BY_CMD:
+        return "KILLED BY INTERNAL COMMAND";
+    case ORTE_JOB_STATE_ABORTED:
+        return "ABORTED";
+    case ORTE_JOB_STATE_FAILED_TO_START:
+        return "FAILED TO START";
+    case ORTE_JOB_STATE_ABORTED_BY_SIG:
+        return "ABORTED BY SIGNAL";
+    case ORTE_JOB_STATE_ABORTED_WO_SYNC:
+        return "TERMINATED WITHOUT SYNC";
+    case ORTE_JOB_STATE_COMM_FAILED:
+        return "COMMUNICATION FAILURE";
+    case ORTE_JOB_STATE_SENSOR_BOUND_EXCEEDED:
+        return "SENSOR BOUND EXCEEDED";
+    case ORTE_JOB_STATE_CALLED_ABORT:
+        return "PROC CALLED ABORT";
+    case ORTE_JOB_STATE_HEARTBEAT_FAILED:
+        return "HEARTBEAT FAILED";
+    case ORTE_JOB_STATE_NEVER_LAUNCHED:
+        return "NEVER LAUNCHED";
+    case ORTE_JOB_STATE_ABORT_ORDERED:
+        return "ABORT IN PROGRESS";
+    case ORTE_JOB_STATE_NON_ZERO_TERM:
+        return "AT LEAST ONE PROCESS EXITED WITH NON-ZERO STATUS";
+    case ORTE_JOB_STATE_FAILED_TO_LAUNCH:
+        return "FAILED TO LAUNCH";
+    case ORTE_JOB_STATE_FORCED_EXIT:
+        return "FORCED EXIT";
+    case ORTE_JOB_STATE_DAEMONS_TERMINATED:
+        return "DAEMONS TERMINATED";
+    case ORTE_JOB_STATE_SILENT_ABORT:
+        return "ERROR REPORTED ELSEWHERE";
+    case ORTE_JOB_STATE_ANY:
+        return "ANY";
+    default:
+        return "UNKNOWN STATE!";
     }
 }
 
 const char *orte_proc_state_to_str(orte_proc_state_t state)
 {
     switch(state) {
-        case ORTE_PROC_STATE_UNDEF:
-            return "UNDEFINED";
-        case ORTE_PROC_STATE_INIT:
-            return "INITIALIZED";
-        case ORTE_PROC_STATE_RESTART:
-            return "RESTARTING";
-        case ORTE_PROC_STATE_LAUNCHED:
-            return "LAUNCHED";
-        case ORTE_PROC_STATE_RUNNING:
-            return "RUNNING";
-        case ORTE_PROC_STATE_REGISTERED:
-            return "SYNC REGISTERED";
-        case ORTE_PROC_STATE_UNTERMINATED:
-            return "UNTERMINATED";
-        case ORTE_PROC_STATE_TERMINATED:
-            return "NORMALLY TERMINATED";
-        case ORTE_PROC_STATE_ABORTED:
-            return "ABORTED";
-        case ORTE_PROC_STATE_FAILED_TO_START:
-            return "FAILED TO START";
-        case ORTE_PROC_STATE_ABORTED_BY_SIG:
-            return "ABORTED BY SIGNAL";
-        case ORTE_PROC_STATE_TERM_WO_SYNC:
-            return "TERMINATED WITHOUT SYNC";
-        case ORTE_PROC_STATE_KILLED_BY_CMD:
-            return "KILLED BY INTERNAL COMMAND";
-        case ORTE_PROC_STATE_COMM_FAILED:
-            return "COMMUNICATION FAILURE";
-        case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-            return "SENSOR BOUND EXCEEDED";
-            break;
-        case ORTE_PROC_STATE_HEARTBEAT_FAILED:
-            return "HEARTBEAT FAILED";
-            break;
-        case ORTE_PROC_STATE_MIGRATING:
-            return "MIGRATING";
-        case ORTE_PROC_STATE_CANNOT_RESTART:
-            return "CANNOT BE RESTARTED";
-        case ORTE_PROC_STATE_TERM_NON_ZERO:
-            return "EXITED WITH NON-ZERO STATUS";
-        case ORTE_PROC_STATE_RESTARTED:
-            return "RESTART DETECTED";
-        default:
-            return "UNKNOWN STATE!";
-    }
-}
-
-const char *orte_proc_exit_code_to_signal(int exit_code)
-{
-    int signal;
-
-    signal = exit_code - 128;
-
-    switch(signal) {
-    case SIGHUP:
-        return "SIGHUP";
-    case SIGINT:
-        return "SIGINT";
-    case SIGQUIT:
-        return "SIGQUIT";
-    case SIGILL:
-        return "SIGILL";
-    case SIGTRAP:
-        return "SIGTRAP";
-    case SIGABRT:
-        return "SIGABRT";
-    case SIGFPE:
-        return "SIGFPE";
-    case SIGKILL:
-        return "SIGKILL";
-    case SIGBUS:
-        return "SIGBUS";
-    case SIGSEGV:
-        return "SIGSEGV";
-    case SIGPIPE:
-        return "SIGPIPE";
-    case SIGALRM:
-        return "SIGALRM";
-    case SIGTERM:
-        return "SIGTERM";
-    case SIGURG:
-        return "SIGURG";
-    case SIGSTOP:
-        return "SIGSTOP";
-    case SIGTSTP:
-        return "SIGTSTP";
-    case SIGCONT:
-        return "SIGCONT";
-    case SIGCHLD:
-        return "SIGCHLD";
-    case SIGTTIN:
-        return "SIGTTIN";
-    case SIGTTOU:
-        return "SIGTTOU";
-    case SIGIO:
-        return "SIGIO";
-    case SIGXCPU:
-        return "SIGXCPU";
-    case SIGXFSZ:
-        return "SIGXFSZ";
-    case SIGVTALRM:
-        return "SIGVTALRM";
-    case SIGPROF:
-        return "SIGPROF";
-    case SIGWINCH:
-        return "SIGWINCH";
-    case SIGUSR1:
-        return "SIGUSR1";
-    case SIGUSR2:
-        return "SIGUSR2";
+    case ORTE_PROC_STATE_UNDEF:
+        return "UNDEFINED";
+    case ORTE_PROC_STATE_INIT:
+        return "INITIALIZED";
+    case ORTE_PROC_STATE_RESTART:
+        return "RESTARTING";
+    case ORTE_PROC_STATE_TERMINATE:
+        return "MARKED FOR TERMINATION";
+    case ORTE_PROC_STATE_RUNNING:
+        return "RUNNING";
+    case ORTE_PROC_STATE_REGISTERED:
+        return "SYNC REGISTERED";
+    case ORTE_PROC_STATE_IOF_COMPLETE:
+        return "IOF COMPLETE";
+    case ORTE_PROC_STATE_WAITPID_FIRED:
+        return "WAITPID FIRED";
+    case ORTE_PROC_STATE_UNTERMINATED:
+        return "UNTERMINATED";
+    case ORTE_PROC_STATE_TERMINATED:
+        return "NORMALLY TERMINATED";
+    case ORTE_PROC_STATE_ERROR:
+        return "ARTIFICIAL BOUNDARY - ERROR";
+    case ORTE_PROC_STATE_KILLED_BY_CMD:
+        return "KILLED BY INTERNAL COMMAND";
+    case ORTE_PROC_STATE_ABORTED:
+        return "ABORTED";
+    case ORTE_PROC_STATE_FAILED_TO_START:
+        return "FAILED TO START";
+    case ORTE_PROC_STATE_ABORTED_BY_SIG:
+        return "ABORTED BY SIGNAL";
+    case ORTE_PROC_STATE_TERM_WO_SYNC:
+        return "TERMINATED WITHOUT SYNC";
+    case ORTE_PROC_STATE_COMM_FAILED:
+        return "COMMUNICATION FAILURE";
+    case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
+        return "SENSOR BOUND EXCEEDED";
+    case ORTE_PROC_STATE_CALLED_ABORT:
+        return "CALLED ABORT";
+    case ORTE_PROC_STATE_HEARTBEAT_FAILED:
+        return "HEARTBEAT FAILED";
+    case ORTE_PROC_STATE_MIGRATING:
+        return "MIGRATING";
+    case ORTE_PROC_STATE_CANNOT_RESTART:
+        return "CANNOT BE RESTARTED";
+    case ORTE_PROC_STATE_TERM_NON_ZERO:
+        return "EXITED WITH NON-ZERO STATUS";
+    case ORTE_PROC_STATE_FAILED_TO_LAUNCH:
+        return "FAILED TO LAUNCH";
+    case ORTE_PROC_STATE_ANY:
+        return "ANY";
     default:
-        return "UNRECOGNIZED";
+        return "UNKNOWN STATE!";
     }
 }
-

@@ -268,7 +268,6 @@ int orte_util_build_daemon_nidmap(char **nodes)
          */
         /* construct the URI */
         proc.vpid = node->daemon;
-        ORTE_EPOCH_SET(proc.epoch,ORTE_EPOCH_MIN);
 
         orte_util_convert_process_name_to_string(&proc_name, &proc);
         asprintf(&uri, "%s;tcp://%s:%d", proc_name, addr, (int)orte_process_info.my_port);
@@ -402,7 +401,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
     int rc;
     uint8_t *oversub;
 
-    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s decode:nidmap decoding nodemap",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
@@ -432,7 +431,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
         return rc;
     }
  
-    OPAL_OUTPUT_VERBOSE((2, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
                          "%s decode:nidmap decoding %d nodes",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_nodes));
     
@@ -510,7 +509,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
             if (NULL == (nd = (orte_nid_t*)opal_pointer_array_get_item(&orte_nidmap, i))) {
                 continue;
             }
-            opal_output(0, "%s node[%d].name %s daemon %s",
+            opal_output(5, "%s node[%d].name %s daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
                         (NULL == nd->name) ? "NULL" : nd->name,
                         ORTE_VPID_PRINT(nd->daemon));
@@ -947,7 +946,7 @@ orte_nid_t* orte_util_lookup_nid(orte_process_name_t *proc)
 {
     orte_pmap_t *pmap;
     
-    OPAL_OUTPUT_VERBOSE((5, orte_debug_output,
+    OPAL_OUTPUT_VERBOSE((10, orte_debug_output,
                          "%s lookup:nid: looking for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          ORTE_NAME_PRINT(proc)));
@@ -1018,208 +1017,3 @@ void orte_jobmap_dump(void)
     }
     opal_output(orte_clean_output, "\n\n");
 }
-
-#if 0
-/* Useful for debugging. Not used otherwise. */
-void print_orte_job_data() {
-    orte_job_t *jdata;
-    orte_proc_t *pdata;
-    int i, j;
-
-    if (NULL == orte_job_data) {
-        opal_output(0, "ORTE_JOB_DATA == NULL");
-        return;
-    }
-
-    for (i = 0; i < orte_job_data->size; i++) {
-        if (NULL == (jdata = (orte_job_t *) opal_pointer_array_get_item(orte_job_data, i))) {
-            continue;
-        }
-        opal_output(0, "JOB: %s", ORTE_JOBID_PRINT(jdata->jobid));
-
-        for (j = 0; j < jdata->num_procs; j++) {
-            if (NULL == (pdata = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, j))) {
-                continue;
-            }
-            opal_output(0, "    PROC: %s", ORTE_NAME_PRINT(&(pdata->name)));
-        }
-    }
-}
-#endif
-
-#if ORTE_ENABLE_EPOCH
-/* Look up the current epoch value that we have stored locally.
- *
- * Note that this will not ping the HNP to get the most up to date epoch stored
- * there, but it assumes that when it needs to know that the epoch has changed,
- * someone will tell it.  If you need the most up to date epoch, you should
- * tell ask the hnp to refresh our information.
- */
-orte_epoch_t orte_util_lookup_epoch(orte_process_name_t *proc)
-{
-    return get_epoch_from_orte_job_data(proc, ORTE_EPOCH_INVALID);
-}
-
-/* Set the current epoch value that we have stored locally.
- *
- * This will update the currently stored local value for the epoch.
- */
-orte_epoch_t orte_util_set_epoch(orte_process_name_t *proc, orte_epoch_t epoch)
-{
-    orte_epoch_t e = get_epoch_from_orte_job_data(proc, epoch);
-    /*print_orte_job_data();*/
-    return e;
-}
-#endif
-
-#if ORTE_RESIL_ORTE
-bool orte_util_proc_is_running(orte_process_name_t *proc) {
-    int i;
-    unsigned int j;
-    orte_job_t *jdata;
-    orte_proc_t *pdata;
-
-    if (NULL == orte_job_data) {
-        return false;
-    }
-
-    for (i = 0; i < orte_job_data->size; i++) {
-        if (NULL == (jdata = (orte_job_t *) opal_pointer_array_get_item(orte_job_data, i))) {
-            continue;
-        } else if (proc->jobid == jdata->jobid) {
-            for (j = 0; j < jdata->num_procs; j++) {
-                if (NULL == (pdata = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, j))) {
-                    continue;
-                } else if (proc->vpid == pdata->name.vpid) {
-                    return ORTE_PROC_STATE_TERMINATED > pdata->state;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-int orte_util_set_proc_state(orte_process_name_t *proc, orte_proc_state_t state) {
-    int i;
-    unsigned int j;
-    orte_job_t *jdata;
-    orte_proc_t *pdata;
-
-    if (NULL == orte_job_data) {
-        return ORTE_ERROR;
-    }
-
-    for (i = 0; i < orte_job_data->size; i++) {
-        if (NULL == (jdata = (orte_job_t *) opal_pointer_array_get_item(orte_job_data, i))) {
-            continue;
-        } else if (proc->jobid == jdata->jobid) {
-            for (j = 0; j < jdata->num_procs; j++) {
-                if (NULL == (pdata = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, j))) {
-                    continue;
-                } else if (proc->vpid == pdata->name.vpid) {
-                    pdata->state = state;
-                    return ORTE_SUCCESS;
-                }
-            }
-        }
-    }
-
-    return ORTE_ERROR;
-}
-#endif
-
-#if ORTE_ENABLE_EPOCH
-/*
- * This function performs both the get and set operations on the epoch for a
- * sepcific process name. If the epoch passed into the function is
- * ORTE_EPOCH_INVALID, then we are performing a get operation. If the epoch is
- * anything else, we are performing a set operation.
- */
-orte_epoch_t get_epoch_from_orte_job_data(orte_process_name_t *proc, orte_epoch_t epoch) {
-    int ret, i;
-    unsigned int j;
-    orte_job_t *jdata;
-    orte_proc_t *pdata;
-
-    if (ORTE_JOBID_INVALID == proc->jobid || 
-        ORTE_VPID_INVALID  == proc->vpid) {
-        return ORTE_EPOCH_INVALID;
-    }
-
-    /* Sanity check just to make sure we don't overwrite our existing
-     * orte_job_data.
-     */
-    if (NULL == orte_job_data) {
-        orte_job_data = OBJ_NEW(opal_pointer_array_t);
-        if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                        1,
-                                        ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                        1))) {
-            ORTE_ERROR_LOG(ret);
-            return ORTE_EPOCH_INVALID;
-        }
-    }
-
-    /* Look to see if the job is in the orte_job_data. */
-    for (i = 0; i < orte_job_data->size; i++) {
-        if (NULL == (jdata = (orte_job_t *) opal_pointer_array_get_item(orte_job_data, i))) {
-            continue;
-        } else if (proc->jobid == jdata->jobid) {
-            /* Found the right job, now look for the process. */
-            for (j = 0; j < jdata->num_procs; j++) {
-                if (NULL == (pdata = (orte_proc_t *) opal_pointer_array_get_item(jdata->procs, j))) {
-                    continue;
-                } else if (proc->vpid == pdata->name.vpid) {
-                    if (ORTE_EPOCH_INVALID != epoch) {
-                        pdata->name.epoch = epoch;
-                    }
-                    return pdata->name.epoch;
-                }
-            }
-
-            /* Found the right job but didn't find the process in it. Create the
-             * process if necessary.
-             */
-            if (ORTE_EPOCH_INVALID != epoch) {
-                pdata = OBJ_NEW(orte_proc_t);
-                pdata->name.jobid = proc->jobid;
-                pdata->name.vpid = proc->vpid;
-                pdata->name.epoch = epoch;
-
-                pdata->state = ORTE_PROC_STATE_TERMINATED;
-
-                opal_pointer_array_add(jdata->procs, pdata);
-                jdata->num_procs++;
-
-                return pdata->name.epoch;
-            } else {
-                return ORTE_EPOCH_MIN;
-            }
-        }
-    }
-
-    /* Didn't find the right job, add a new job structure and a new process. */
-    if (ORTE_EPOCH_INVALID != epoch) {
-        jdata = OBJ_NEW(orte_job_t);
-        jdata->jobid = proc->jobid;
-
-        pdata = OBJ_NEW(orte_proc_t);
-        pdata->name.jobid = proc->jobid;
-        pdata->name.vpid = proc->vpid;
-        pdata->name.epoch = epoch;
-
-        pdata->state = ORTE_PROC_STATE_TERMINATED;
-
-        opal_pointer_array_add(jdata->procs, pdata);
-        jdata->num_procs++;
-
-        opal_pointer_array_add(orte_job_data, jdata);
-
-        return pdata->name.epoch;
-    } else {
-        return ORTE_EPOCH_MIN;
-    }
-}
-#endif
-

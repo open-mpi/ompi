@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -83,9 +85,10 @@ void orte_iof_orted_send_xonxoff(orte_iof_tag_t tag)
  *
  * (b) flow control messages
  */
-static void process_msg(int fd, short event, void *cbdata)
+void orte_iof_orted_recv(int status, orte_process_name_t* sender,
+                         opal_buffer_t* buffer, orte_rml_tag_t tag,
+                         void* cbdata)
 {
-    orte_message_event_t *mev = (orte_message_event_t*)cbdata;
     unsigned char data[ORTE_IOF_BASE_MSG_MAX];
     orte_iof_tag_t stream;
     int32_t count, numbytes;
@@ -95,7 +98,7 @@ static void process_msg(int fd, short event, void *cbdata)
     
     /* see what stream generated this data */
     count = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &stream, &count, ORTE_IOF_TAG))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &stream, &count, ORTE_IOF_TAG))) {
         ORTE_ERROR_LOG(rc);
         goto CLEAN_RETURN;
     }
@@ -108,14 +111,14 @@ static void process_msg(int fd, short event, void *cbdata)
     
     /* unpack the intended target */
     count = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &target, &count, ORTE_NAME))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &target, &count, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         goto CLEAN_RETURN;
     }
 
     /* unpack the data */
     numbytes=ORTE_IOF_BASE_MSG_MAX;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, data, &numbytes, OPAL_BYTE))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, data, &numbytes, OPAL_BYTE))) {
         ORTE_ERROR_LOG(rc);
         goto CLEAN_RETURN;
     }
@@ -163,31 +166,5 @@ static void process_msg(int fd, short event, void *cbdata)
     }
 
 CLEAN_RETURN:
-    /* release the message event */
-    OBJ_RELEASE(mev);
-    return;
-}
-
-
-void orte_iof_orted_recv(int status, orte_process_name_t* sender,
-                         opal_buffer_t* buffer, orte_rml_tag_t tag,
-                         void* cbdata)
-{
-    OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                         "%s iof:orted:receive got message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
-    
-    /* don't process this right away - we need to get out of the recv before
-     * we process the message to avoid performing the rest of the job while
-     * inside this receive! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release above - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_msg);
-
     return;
 }

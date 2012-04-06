@@ -3,6 +3,8 @@
  * Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -71,7 +73,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
     mca_base_component_t *c = &mca_rmaps_resilient_component.super.base_version;
     bool found;
 
-    if (ORTE_JOB_STATE_INIT == jdata->state) {
+    if (!(ORTE_JOB_CONTROL_RESTART & jdata->controls)) {
         if (NULL != jdata->map->req_mapper &&
             0 != strcasecmp(jdata->map->req_mapper, c->mca_component_name)) {
             /* a mapper has been specified, and it isn't me */
@@ -86,8 +88,7 @@ static int orte_rmaps_resilient_map(orte_job_t *jdata)
                                 ORTE_JOBID_PRINT(jdata->jobid));
             return ORTE_ERR_TAKE_NEXT_OPTION;
         }
-    } else if (ORTE_JOB_STATE_RESTART != jdata->state &&
-               ORTE_JOB_STATE_PROCS_MIGRATING != jdata->state) {
+    } else if (!(ORTE_JOB_CONTROL_PROCS_MIGRATING & jdata->controls)) {
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps:resilient: cannot map job %s - not in restart or migrating",
                             ORTE_JOBID_PRINT(jdata->jobid));

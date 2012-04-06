@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -76,20 +78,6 @@ int orte_dt_compare_name(orte_process_name_t *value1,
         }
     }
 
-#if ORTE_ENABLE_EPOCH
-    /** check the epochs - if one of them is WILDCARD, then ignore
-    * this field since anything is okay
-    */
-    if (value1->epoch!= ORTE_EPOCH_WILDCARD &&
-        value2->epoch!= ORTE_EPOCH_WILDCARD) {
-        if (value1->epoch < value2->epoch) {
-            return OPAL_VALUE2_GREATER;
-        } else if (value1->epoch > value2->epoch) {
-            return OPAL_VALUE1_GREATER;
-        }
-    }
-#endif
-    
     /** only way to get here is if all fields are equal or WILDCARD */
     return OPAL_EQUAL;
 }
@@ -123,23 +111,6 @@ int orte_dt_compare_jobid(orte_jobid_t *value1,
     
     return OPAL_EQUAL;
 }
-
-#if ORTE_ENABLE_EPOCH
-int orte_dt_compare_epoch(orte_epoch_t *value1,
-                          orte_epoch_t *value2,
-                          opal_data_type_t type)
-{
-    /** if either value is WILDCARD, then return equal */
-    if (*value1 == ORTE_EPOCH_WILDCARD ||
-        *value2 == ORTE_EPOCH_WILDCARD) return OPAL_EQUAL;
-    
-    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
-    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
-    return OPAL_EQUAL;
-}
-#endif
 
 #if !ORTE_DISABLE_FULL_SUPPORT
 /**
@@ -273,16 +244,6 @@ int orte_dt_compare_tags(orte_rml_tag_t *value1, orte_rml_tag_t *value2, opal_da
 
 /* ORTE_DAEMON_CMD */
 int orte_dt_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, opal_data_type_t type)
-{
-    if (*value1 > *value2) return OPAL_VALUE1_GREATER;
-    
-    if (*value2 > *value1) return OPAL_VALUE2_GREATER;
-    
-    return OPAL_EQUAL;
-}
-
-/* ORTE_GRPCOMM_MODE */
-int orte_dt_compare_grpcomm_mode(orte_grpcomm_mode_t *value1, orte_grpcomm_mode_t *value2, opal_data_type_t type)
 {
     if (*value1 > *value2) return OPAL_VALUE1_GREATER;
     

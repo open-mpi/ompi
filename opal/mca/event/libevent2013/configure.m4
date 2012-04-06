@@ -87,8 +87,8 @@ AC_DEFUN([MCA_opal_event_libevent2013_CONFIG],[
 
     AC_ARG_ENABLE(event-debug,
                   AC_HELP_STRING([--enable-event-debug], [enable event library debug output]))
-    if test "$enable_event_debug" = "no"; then
-        event_args="$event_args --disable-debug-mode"
+    if test "$enable_event_debug" = "yes"; then
+        event_args="$event_args --enable-debug-mode"
     fi
 
     AC_ARG_ENABLE(event-thread-support,

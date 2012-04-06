@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. 
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -87,7 +89,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     struct timeval tv;
     struct iovec iov;
 #ifndef __WINDOWS__
-    opal_event_t sigpipe_handler;
+    opal_event_t *sigpipe_handler;
 #endif
     socklen_t addrlen;
 
@@ -187,9 +189,10 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
 #ifndef __WINDOWS__
     /* Ignore SIGPIPE in the write -- determine success or failure in
        the ping by looking at the return code from write() */
-    opal_event_signal_set(opal_event_base, &sigpipe_handler, SIGPIPE,
-                          noop, &sigpipe_handler);
-    opal_event_signal_add(&sigpipe_handler, NULL);
+    sigpipe_handler = opal_event_alloc();
+    opal_event_signal_set(orte_event_base, sigpipe_handler, SIGPIPE,
+                          noop, sigpipe_handler);
+    opal_event_signal_add(sigpipe_handler, NULL);
 #endif
     /* Do the write and see what happens. Use the writev version just to
      * make Windows happy as there the write function is limitted to
@@ -200,7 +203,7 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
     rc = writev(sd, &iov, 1 );
 #ifndef __WINDOWS__
     /* Now de-register the handler */
-    opal_event_signal_del(&sigpipe_handler);
+    opal_event_free(sigpipe_handler);
 #endif
     if (rc != sizeof(hdr)) {
         CLOSE_THE_SOCKET(sd);
@@ -231,5 +234,8 @@ mca_oob_tcp_ping(const orte_process_name_t* name,
 
 static void noop(int fd, short event, void *arg)
 {
-    /* Nothing */
+    opal_event_t *ev = (opal_event_t*)arg;
+
+    /* return the event */
+    opal_event_free(ev);
 }

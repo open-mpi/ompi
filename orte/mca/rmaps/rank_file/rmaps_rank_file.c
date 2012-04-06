@@ -10,7 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- *
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * Copyright (c) 2008      Voltaire. All rights reserved
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  *  
@@ -82,9 +83,9 @@ static int orte_rmaps_rf_map(orte_job_t *jdata)
     bool initial_map=true;
 
     /* only handle initial launch of rf job */
-    if (ORTE_JOB_STATE_INIT != jdata->state) {
+    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "mca:rmaps:rf: job %s not in initial state - rank_file cannot map",
+                            "mca:rmaps:rf: job %s being restarted - rank_file cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }

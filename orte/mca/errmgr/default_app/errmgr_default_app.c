@@ -7,7 +7,8 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- *    
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,6 +35,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/odls/odls_types.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
@@ -44,13 +46,6 @@
  */
 static int init(void);
 static int finalize(void);
-
-static int update_state(orte_jobid_t job,
-                        orte_job_state_t jobstate,
-                        orte_process_name_t *proc_name,
-                        orte_proc_state_t state,
-                        pid_t pid,
-                        orte_exit_code_t exit_code);
 
 static int abort_peers(orte_process_name_t *procs,
                        orte_std_cntr_t num_procs);
@@ -64,7 +59,6 @@ orte_errmgr_base_module_t orte_errmgr_default_app_module = {
     orte_errmgr_base_log,
     orte_errmgr_base_abort,
     abort_peers,
-    update_state,
     NULL,
     NULL,
     NULL,
@@ -72,11 +66,16 @@ orte_errmgr_base_module_t orte_errmgr_default_app_module = {
     NULL
 };
 
+static void proc_errors(int fd, short args, void *cbdata);
+
 /************************
  * API Definitions
  ************************/
 static int init(void)
 {
+    /* setup state machine to trap proc errors */
+    orte_state.add_proc_state(ORTE_PROC_STATE_ERROR, proc_errors, ORTE_ERROR_PRI);
+
     return ORTE_SUCCESS;
 }
 
@@ -85,43 +84,43 @@ static int finalize(void)
     return ORTE_SUCCESS;
 }
 
-static int update_state(orte_jobid_t job,
-                        orte_job_state_t jobstate,
-                        orte_process_name_t *proc,
-                        orte_proc_state_t state,
-                        pid_t pid,
-                        orte_exit_code_t exit_code)
+static void proc_errors(int fd, short args, void *cbdata)
 {
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
     orte_ns_cmp_bitmask_t mask;
 
     OPAL_OUTPUT_VERBOSE((1, orte_errmgr_base.output,
-                         "%s errmgr:default_app: job %s reported state %s"
-                         " for proc %s state %s exit_code %d",
+                         "%s errmgr:default_app: proc %s state %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_JOBID_PRINT(job),
-                         orte_job_state_to_str(jobstate),
-                         (NULL == proc) ? "NULL" : ORTE_NAME_PRINT(proc),
-                         orte_proc_state_to_str(state), exit_code));
+                         ORTE_NAME_PRINT(&caddy->name),
+                         orte_proc_state_to_str(caddy->proc_state)));
     
     /*
      * if orte is trying to shutdown, just let it
      */
     if (orte_finalizing) {
-        return ORTE_SUCCESS;
+        OBJ_RELEASE(caddy);
+        return;
     }
 
-    if (ORTE_PROC_STATE_COMM_FAILED == state) {
+    if (ORTE_PROC_STATE_COMM_FAILED == caddy->proc_state) {
         mask = ORTE_NS_CMP_ALL;
         /* if it is our own connection, ignore it */
-        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, ORTE_PROC_MY_NAME, proc)) {
-            return ORTE_SUCCESS;
+        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, ORTE_PROC_MY_NAME, &caddy->name)) {
+            OBJ_RELEASE(caddy);
+            return;
         }
         /* see is this was a lifeline */
-        if (ORTE_SUCCESS != orte_routed.route_lost(proc)) {
-            return ORTE_ERR_UNRECOVERABLE;
+        if (ORTE_SUCCESS != orte_routed.route_lost(&caddy->name)) {
+            /* order an exit */
+            ORTE_ERROR_LOG(ORTE_ERR_UNRECOVERABLE);
+            OBJ_RELEASE(caddy);
+            exit(1);
         }
     }
-    return ORTE_SUCCESS;
+
+    /* cleanup */
+    OBJ_RELEASE(caddy);
 }
 
 static int abort_peers(orte_process_name_t *procs, orte_std_cntr_t num_procs)

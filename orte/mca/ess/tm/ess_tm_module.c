@@ -62,7 +62,6 @@ orte_ess_base_module_t orte_ess_tm_module = {
     orte_ess_base_proc_get_hostname,
     orte_ess_base_proc_get_local_rank,
     orte_ess_base_proc_get_node_rank,
-    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     orte_ess_base_update_pidmap,
     orte_ess_base_update_nidmap,
     NULL /* ft_event */
@@ -217,7 +216,6 @@ static int tm_set_name(void)
 
     ORTE_PROC_MY_NAME->jobid = jobid;
     ORTE_PROC_MY_NAME->vpid = vpid;
-    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME));
 
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "ess:tm set name to %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));

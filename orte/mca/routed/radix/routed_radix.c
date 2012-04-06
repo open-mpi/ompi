@@ -4,6 +4,8 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -16,10 +18,10 @@
 
 #include <stddef.h>
 
-#include "opal/threads/condition.h"
 #include "opal/dss/dss.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_bitmap.h"
+#include "opal/runtime/opal_progress.h"
 #include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
@@ -47,8 +49,9 @@ static orte_process_name_t get_route(orte_process_name_t *target);
 static int init_routes(orte_jobid_t job, opal_buffer_t *ndat);
 static int route_lost(const orte_process_name_t *route);
 static bool route_is_defined(const orte_process_name_t *target);
-static int update_routing_tree(orte_jobid_t jobid);
-static orte_vpid_t get_routing_tree(opal_list_t *children);
+static void update_routing_plan(void);
+static void get_routing_list(orte_grpcomm_coll_t type,
+                             orte_grpcomm_collective_t *coll);
 static int get_wireup_info(opal_buffer_t *buf);
 static int set_lifeline(orte_process_name_t *proc);
 static size_t num_routes(void);
@@ -67,8 +70,8 @@ orte_routed_module_t orte_routed_radix_module = {
     route_lost,
     route_is_defined,
     set_lifeline,
-    update_routing_tree,
-    get_routing_tree,
+    update_routing_plan,
+    get_routing_list,
     get_wireup_info,
     num_routes,
 #if OPAL_ENABLE_FT_CR == 1
@@ -79,8 +82,6 @@ orte_routed_module_t orte_routed_radix_module = {
 };
 
 /* local globals */
-static opal_condition_t         cond;
-static opal_mutex_t             lock;
 static orte_process_name_t      *lifeline=NULL;
 static orte_process_name_t      local_lifeline;
 static int                      num_children;
@@ -90,10 +91,6 @@ static bool                     hnp_direct=true;
 
 static int init(void)
 {
-    /* setup the global condition and lock */
-    OBJ_CONSTRUCT(&cond, opal_condition_t);
-    OBJ_CONSTRUCT(&lock, opal_mutex_t);
-
     lifeline = NULL;
     
     /* setup the list of children */
@@ -121,10 +118,6 @@ static int finalize(void)
         }
     }
     
-    /* destruct the global condition and lock */
-    OBJ_DESTRUCT(&cond);
-    OBJ_DESTRUCT(&lock);
-
     lifeline = NULL;
 
     /* deconstruct the list of children */
@@ -143,14 +136,8 @@ static int delete_route(orte_process_name_t *proc)
     orte_routed_jobfam_t *jfam;
     uint16_t jfamily;
 
-#if ORTE_ENABLE_EPOCH
-    if (proc->jobid == ORTE_JOBID_INVALID ||
-        proc->vpid == ORTE_VPID_INVALID ||
-        0 == ORTE_EPOCH_CMP(proc->epoch,ORTE_EPOCH_INVALID)) {
-#else
     if (proc->jobid == ORTE_JOBID_INVALID ||
         proc->vpid == ORTE_VPID_INVALID) {
-#endif
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -217,14 +204,8 @@ static int update_route(orte_process_name_t *target,
     orte_routed_jobfam_t *jfam;
     uint16_t jfamily;
     
-#if ORTE_ENABLE_EPOCH
-    if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID ||
-        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
-#else
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID) {
-#endif
         return ORTE_ERR_BAD_PARAM;
     }
 
@@ -285,7 +266,6 @@ static int update_route(orte_process_name_t *target,
                                      ORTE_NAME_PRINT(route)));
                 jfam->route.jobid = route->jobid;
                 jfam->route.vpid = route->vpid;
-                ORTE_EPOCH_SET(jfam->route.epoch,orte_ess.proc_get_epoch(&jfam->route));
                 return ORTE_SUCCESS;
             }
         }
@@ -299,7 +279,6 @@ static int update_route(orte_process_name_t *target,
         jfam->job_family = jfamily;
         jfam->route.jobid = route->jobid;
         jfam->route.vpid = route->vpid;
-        ORTE_EPOCH_SET(jfam->route.epoch,orte_ess.proc_get_epoch(&jfam->route));
         opal_pointer_array_add(&orte_routed_jobfams, jfam);
         return ORTE_SUCCESS;
     }
@@ -329,21 +308,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     /* initialize */
     daemon.jobid = ORTE_PROC_MY_DAEMON->jobid;
     daemon.vpid = ORTE_PROC_MY_DAEMON->vpid;
-    ORTE_EPOCH_SET(daemon.epoch,ORTE_PROC_MY_DAEMON->epoch);
 
-#if ORTE_ENABLE_EPOCH
-    if (target->jobid == ORTE_JOBID_INVALID ||
-        target->vpid == ORTE_VPID_INVALID ||
-        0 == ORTE_EPOCH_CMP(target->epoch,ORTE_EPOCH_INVALID)) {
-#else
     if (target->jobid == ORTE_JOBID_INVALID ||
         target->vpid == ORTE_VPID_INVALID) {
-#endif
-        ret = ORTE_NAME_INVALID;
-        goto found;
-    }
-
-    if (0 > ORTE_EPOCH_CMP(target->epoch, orte_ess.proc_get_epoch(target))) {
         ret = ORTE_NAME_INVALID;
         goto found;
     }
@@ -452,7 +419,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
             if (opal_bitmap_is_set_bit(&child->relatives, daemon.vpid)) {
                 /* yep - we need to step through this child */
                 daemon.vpid = child->vpid;
-                ORTE_EPOCH_SET(daemon.epoch,orte_ess.proc_get_epoch(&daemon));
                 ret = &daemon;
                 goto found;
             }
@@ -463,7 +429,6 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      * any of our children, so we have to step up through our parent
      */
     daemon.vpid = ORTE_PROC_MY_PARENT->vpid;
-    ORTE_EPOCH_SET(daemon.epoch,orte_ess.proc_get_epoch(&daemon));
     
     ret = &daemon;
     
@@ -477,28 +442,11 @@ found:
     return *ret;
 }
 
-/* HANDLE ACK MESSAGES FROM AN HNP */
-static void release_ack(int fd, short event, void *data)
-{
-    orte_message_event_t *mev = (orte_message_event_t*)data;
-    ack_recvd = true;
-    OBJ_RELEASE(mev);
-}
-
 static void recv_ack(int status, orte_process_name_t* sender,
                      opal_buffer_t* buffer, orte_rml_tag_t tag,
                      void* cbdata)
 {
-    /* don't process this right away - we need to get out of the recv before
-     * we process the message as it may ask us to do something that involves
-     * more messaging! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release above - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, release_ack);    
+    ack_recvd = true;
 }
 
 
@@ -668,8 +616,10 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
                                              ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
                 
-                ORTE_PROGRESSED_WAIT(ack_recvd, 0, 1);
-                
+                while (!ack_recvd) {
+                    opal_progress();
+                }
+
                 OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                      "%s routed_radix_init_routes: ack recvd",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -800,9 +750,10 @@ static int route_lost(const orte_process_name_t *route)
     if (!orte_finalizing &&
         NULL != lifeline &&
         OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, route, lifeline)) {
-        opal_output(0, "%s routed:radix: Connection to lifeline %s lost",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    ORTE_NAME_PRINT(lifeline));
+        OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
+                             "%s routed:radix: Connection to lifeline %s lost",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(lifeline)));
         return ORTE_ERR_FATAL;
     }
 
@@ -872,7 +823,6 @@ static int set_lifeline(orte_process_name_t *proc)
      */
     local_lifeline.jobid = proc->jobid;
     local_lifeline.vpid = proc->vpid;
-    ORTE_EPOCH_SET(local_lifeline.epoch,proc->epoch);
     lifeline = &local_lifeline;
     
     return ORTE_SUCCESS;
@@ -923,7 +873,7 @@ static void radix_tree(int rank, int *num_children,
     }
 }
 
-static int update_routing_tree(orte_jobid_t jobid)
+static void update_routing_plan(void)
 {
     orte_routed_tree_t *child;
     int j;
@@ -935,7 +885,7 @@ static int update_routing_tree(orte_jobid_t jobid)
      * is a meaningless command as I am not allowed to route
      */
     if (!ORTE_PROC_IS_DAEMON && !ORTE_PROC_IS_HNP) {
-        return ORTE_ERR_NOT_SUPPORTED;
+        return;
     }
     
     /* clear the list of children if any are already present */
@@ -965,7 +915,6 @@ static int update_routing_tree(orte_jobid_t jobid)
         ORTE_PROC_MY_PARENT->vpid = (Ii-Sum) % NInPrevLevel;
         ORTE_PROC_MY_PARENT->vpid += (Sum - NInPrevLevel);
     }
-    ORTE_EPOCH_SET(ORTE_PROC_MY_PARENT->epoch,orte_ess.proc_get_epoch(ORTE_PROC_MY_PARENT));
     
     /* compute my direct children and the bitmap that shows which vpids
      * lie underneath their branch
@@ -986,39 +935,27 @@ static int update_routing_tree(orte_jobid_t jobid)
             }
         }
     }
-
-    return ORTE_SUCCESS;
 }
 
-static orte_vpid_t get_routing_tree(opal_list_t *children)
+static void get_routing_list(orte_grpcomm_coll_t type,
+                             orte_grpcomm_collective_t *coll)
 {
-    opal_list_item_t *item;
-    orte_routed_tree_t *child;
-    orte_routed_tree_t *nm;
-    
     /* if I am anything other than a daemon or the HNP, this
      * is a meaningless command as I am not allowed to route
      */
     if (!ORTE_PROC_IS_DAEMON && !ORTE_PROC_IS_HNP) {
-        return ORTE_VPID_INVALID;
+        return;
     }
     
-    /* the radix routing tree always goes to our children,
-     * for any job
-     */
-    if (NULL != children) {
-        for (item = opal_list_get_first(&my_children);
-             item != opal_list_get_end(&my_children);
-             item = opal_list_get_next(item)) {
-            child = (orte_routed_tree_t*)item;
-            nm = OBJ_NEW(orte_routed_tree_t);
-            nm->vpid = child->vpid;
-            opal_bitmap_copy(&nm->relatives, &child->relatives); 
-            opal_list_append(children, &nm->super);
-        }
+    if (ORTE_GRPCOMM_XCAST == type) {
+        orte_routed_base_xcast_routing(coll, &my_children);
+    } else if (ORTE_GRPCOMM_COLL_RELAY == type) {
+        orte_routed_base_coll_relay_routing(coll);
+    } else if (ORTE_GRPCOMM_COLL_COMPLETE == type) {
+        orte_routed_base_coll_complete_routing(coll);
+    } else if (ORTE_GRPCOMM_COLL_PEERS == type) {
+        orte_routed_base_coll_peers(coll, &my_children);
     }
-    /* return my parent's vpid */
-    return ORTE_PROC_MY_PARENT->vpid;
 }
 
 static int get_wireup_info(opal_buffer_t *buf)

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -56,9 +58,6 @@ int orte_dt_unpack_name(opal_buffer_t *buffer, void *dest,
     orte_process_name_t* proc;
     orte_jobid_t *jobid;
     orte_vpid_t *vpid;
-#if ORTE_ENABLE_EPOCH
-    orte_epoch_t *epoch;
-#endif
     
     num = *num_vals;
     
@@ -96,39 +95,15 @@ int orte_dt_unpack_name(opal_buffer_t *buffer, void *dest,
         return rc;
     }
     
-#if ORTE_ENABLE_EPOCH
-    /* collect all the epochs in a contiguous array */
-    epoch= (orte_epoch_t*)malloc(num * sizeof(orte_epoch_t));
-    if (NULL == epoch) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        *num_vals = 0;
-        free(jobid);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    /* now unpack them in one shot */
-    if (ORTE_SUCCESS != (rc =
-                         orte_dt_unpack_epoch(buffer, epoch, num_vals, ORTE_EPOCH))) {
-        ORTE_ERROR_LOG(rc);
-        *num_vals = 0;
-        free(epoch);
-        free(jobid);
-        return rc;
-    }
-#endif
-    
-    /* build the names from the jobid/vpid/epoch arrays */
+    /* build the names from the jobid/vpid arrays */
     proc = (orte_process_name_t*)dest;
     for (i=0; i < num; i++) {
         proc->jobid = jobid[i];
         proc->vpid = vpid[i];
-        ORTE_EPOCH_SET(proc->epoch,epoch[i]);
         proc++;
     }
     
     /* cleanup */
-#if ORTE_ENABLE_EPOCH
-    free(epoch);
-#endif
     free(vpid);
     free(jobid);
     
@@ -167,24 +142,6 @@ int orte_dt_unpack_vpid(opal_buffer_t *buffer, void *dest,
     return ret;
 }
 
-#if ORTE_ENABLE_EPOCH
-/*
- * EPOCH 
- */
-int orte_dt_unpack_epoch(opal_buffer_t *buffer, void *dest,
-                             int32_t *num_vals, opal_data_type_t type)
-{
-    int ret;
-    
-    /* Turn around and unpack the real type */
-    if (ORTE_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, dest, num_vals, ORTE_EPOCH_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
-    
-    return ret;
-}
-#endif
-
 #if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * JOB
@@ -211,22 +168,6 @@ int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
         if (NULL == jobs[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-
-        /* unpack the name of this job - may be null */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                &(jobs[i]->name), &n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* unpack the instance name of this job - may be null */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                                &(jobs[i]->instance), &n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
         }
 
         /* unpack the jobid */
@@ -1044,20 +985,6 @@ int orte_dt_unpack_daemon_cmd(opal_buffer_t *buffer, void *dest, int32_t *num_va
     
     /* turn around and unpack the real type */
     ret = opal_dss_unpack_buffer(buffer, dest, num_vals, ORTE_DAEMON_CMD_T);
-    
-    return ret;
-}
-
-/*
- * ORTE_GRPCOMM_MODE
- */
-int orte_dt_unpack_grpcomm_mode(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
-                                opal_data_type_t type)
-{
-    int ret;
-    
-    /* turn around and unpack the real type */
-    ret = opal_dss_unpack_buffer(buffer, dest, num_vals, ORTE_GRPCOMM_MODE_T);
     
     return ret;
 }

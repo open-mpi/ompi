@@ -86,7 +86,6 @@ orte_ess_base_module_t orte_ess_generic_module = {
     orte_ess_base_proc_get_hostname,
     orte_ess_base_proc_get_local_rank,
     orte_ess_base_proc_get_node_rank,
-    orte_ess_base_proc_get_epoch,
     orte_ess_base_update_pidmap,
     orte_ess_base_update_nidmap,
     NULL
@@ -145,7 +144,6 @@ static int rte_init(void)
         goto error;
     }
     ORTE_PROC_MY_NAME->vpid = strtol(envar, NULL, 10);
-    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_MIN);
 
     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                          "%s completed name definition",
@@ -263,7 +261,6 @@ static int rte_init(void)
                 if (vpid == ORTE_PROC_MY_NAME->vpid) {
                     ORTE_PROC_MY_DAEMON->jobid = 0;
                     ORTE_PROC_MY_DAEMON->vpid = i;
-                    ORTE_EPOCH_SET(ORTE_PROC_MY_DAEMON->epoch,ORTE_PROC_MY_NAME->epoch);
                 }
                 OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                                      "%s node %d name %s rank %s",
@@ -294,7 +291,6 @@ static int rte_init(void)
                     if (vpid == ORTE_PROC_MY_NAME->vpid) {
                         ORTE_PROC_MY_DAEMON->jobid = 0;
                         ORTE_PROC_MY_DAEMON->vpid = i;
-                        ORTE_EPOCH_SET(ORTE_PROC_MY_DAEMON->epoch,ORTE_PROC_MY_NAME->epoch);
                     }
                     OPAL_OUTPUT_VERBOSE((1, orte_ess_base_output,
                                          "%s node %d name %s rank %d",

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC. 
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -27,6 +27,7 @@
 #include "opal/util/output.h"
 #include "opal/threads/tsd.h"
 #include "opal/mca/event/event.h"
+#include "opal/runtime/opal_progress.h"
 
 #include "opal/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -50,8 +51,9 @@ static int error_exit;
 
 static void quicktime_cb(int fd, short event, void *cbdata)
 {
+    /* release the timer */
     if (NULL != quicktime) {
-	free(quicktime);
+	opal_event_free(quicktime);
 	quicktime = NULL;
     }
     error_exit = ORTE_ERR_SILENT;
@@ -65,12 +67,13 @@ static void send_cbfunc(int status, orte_process_name_t* sender,
 {
     /* cancel the timer */
     if (NULL != quicktime) {
-        opal_event_evtimer_del(quicktime);
-	free(quicktime);
+        opal_event_free(quicktime);
 	quicktime = NULL;
     }
     /* declare the work done */
     timer_fired = true;
+    /* release the message */
+    OBJ_RELEASE(buffer);
 }
 
 static void recv_info(int status, orte_process_name_t* sender,
@@ -81,8 +84,7 @@ static void recv_info(int status, orte_process_name_t* sender,
     
     /* cancel the timer */
     if (NULL != quicktime) {
-        opal_event_evtimer_del(quicktime);
-	free (quicktime);
+        opal_event_free (quicktime);
 	quicktime = NULL;
     }
     /* xfer the answer */
@@ -132,18 +134,19 @@ static bool step=false;
 int orte_util_comm_report_event(orte_comm_event_t ev)
 {
     int rc, i;
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     orte_node_t *node;
-    
+    struct timeval tv;
+
     /* if nothing is connected, ignore this */
     if (!tool_connected) {
         return ORTE_SUCCESS;
     }
     
     /* init a buffer for the data */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    buf = OBJ_NEW(opal_buffer_t);
     /* flag the type of event */
-    opal_dss.pack(&buf, &ev, 1, ORTE_COMM_EVENT);
+    opal_dss.pack(buf, &ev, 1, ORTE_COMM_EVENT);
 
     switch (ev) {
         case ORTE_COMM_EVENT_ALLOCATE:
@@ -152,7 +155,7 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                     continue;
                 }
-                opal_dss.pack(&buf, &node->name, 1, OPAL_STRING);
+                opal_dss.pack(buf, &node->name, 1, OPAL_STRING);
             }
             break;
         
@@ -164,16 +167,34 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
         
         default:
             ORTE_ERROR_LOG(ORTE_ERROR);
-            OBJ_DESTRUCT(&buf);
+            OBJ_RELEASE(buf);
             return ORTE_ERROR;
             break;
     }
     
+   /* define a max time to wait for send to complete */
+    timer_fired = false;
+    error_exit = ORTE_SUCCESS;
+    quicktime = opal_event_alloc();
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    opal_event_evtimer_set(orte_event_base, quicktime, quicktime_cb, NULL);
+    opal_event_set_priority(quicktime, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(quicktime, &tv);
+
     /* do the send */
-    if (0 > (rc = orte_rml.send_buffer(&tool, &buf, ORTE_RML_TAG_TOOL, 0))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(&tool, buf, ORTE_RML_TAG_TOOL, 0, send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&buf);
+        OBJ_RELEASE(buf);
         return rc;
+    }
+    
+    while (!timer_fired) {
+        opal_progress();
+    }
+
+    if (ORTE_SUCCESS != error_exit) {
+        return error_exit;
     }
     
     if (step) {
@@ -183,7 +204,6 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
         OBJ_CONSTRUCT(&answer, opal_buffer_t);
         timer_fired = false;
         error_exit = ORTE_SUCCESS;
-        ORTE_DETECT_TIMEOUT(&quicktime, 100, 1000, 100000, quicktime_cb);
         
         /* get the answer */
         if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
@@ -191,18 +211,21 @@ int orte_util_comm_report_event(orte_comm_event_t ev)
                                                            ORTE_RML_NON_PERSISTENT,
                                                            recv_info,
                                                            NULL))) {
-            /* cancel the timer */
-            if (NULL != quicktime) {
-                opal_event_evtimer_del(quicktime);
-		free(quicktime);
-		quicktime = NULL;
-            }
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&answer);
             return rc;
         }
+        /* set a timer for getting the answer */
+        quicktime = opal_event_alloc();
+        tv.tv_sec = 0;
+        tv.tv_usec = 100000;
+        opal_event_evtimer_set(orte_event_base, quicktime, quicktime_cb, NULL);
+        opal_event_set_priority(quicktime, ORTE_ERROR_PRI);
+        opal_event_evtimer_add(quicktime, &tv);
         
-        ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+        while (!timer_fired) {
+            opal_progress();
+        }
         
         /* cleanup */
         OBJ_DESTRUCT(&answer);
@@ -224,6 +247,7 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     opal_buffer_t *cmd;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_JOB_INFO_CMD;
     orte_job_t **job_info;
+    struct timeval tv;
 
     /* set default response */
     *num_jobs = 0;
@@ -241,28 +265,26 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
         OBJ_RELEASE(cmd);
         return ret;
     }
-    /* define a max time to wait for send to complete */
+    
+   /* define a max time to wait for send to complete */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;
-    ORTE_DETECT_TIMEOUT(&quicktime, 100, 1000, 100000, quicktime_cb);
-    
+    quicktime = opal_event_alloc();
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    opal_event_evtimer_set(orte_event_base, quicktime, quicktime_cb, NULL);
+    opal_event_set_priority(quicktime, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(quicktime, &tv);
+
     /* do the send */
-    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0,
-                                           send_cbfunc, NULL))) {
+    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0, send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
         return ret;
     }
     
-    /* wait for send to complete */
-    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
-
-    /* release the buffer */
-    OBJ_RELEASE(cmd);
-    
-    /* did it succeed? */
-    if (ORTE_SUCCESS != error_exit) {
-        return error_exit;
+    while (!timer_fired) {
+        opal_progress();
     }
     
     /* setup for answer */
@@ -271,7 +293,6 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
     /* define a max time to wait for an answer */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;
-    ORTE_DETECT_TIMEOUT(&quicktime, 100, 1000, 100000, quicktime_cb);
     
     /* get the answer */
     if (ORTE_SUCCESS != (ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
@@ -279,18 +300,21 @@ int orte_util_comm_query_job_info(const orte_process_name_t *hnp, orte_jobid_t j
                                                       ORTE_RML_NON_PERSISTENT,
                                                       recv_info,
                                                       NULL))) {
-        /* cancel the timer */
-        if (NULL != quicktime) {
-            opal_event_evtimer_del(quicktime);
-	    free(quicktime);
-	    quicktime = NULL;
-        }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
         return ret;
     }
+    /* set a timer for getting the answer */
+    quicktime = opal_event_alloc();
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    opal_event_evtimer_set(orte_event_base, quicktime, quicktime_cb, NULL);
+    opal_event_set_priority(quicktime, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(quicktime, &tv);
     
-    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+    while (!timer_fired) {
+        opal_progress();
+    }
 
     if (ORTE_SUCCESS != error_exit) {
         OBJ_DESTRUCT(&answer);
@@ -333,7 +357,8 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     opal_buffer_t *cmd;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_NODE_INFO_CMD;
     orte_node_t **node_info;
-    
+    struct timeval tv;
+
     /* set default response */
     *num_nodes = 0;
     *node_info_array = NULL;
@@ -350,24 +375,27 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
         OBJ_RELEASE(cmd);
         return ret;
     }
-    /* define a max time to wait for send to complete */
+    
+   /* define a max time to wait for send to complete */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;
-    ORTE_DETECT_TIMEOUT(&quicktime, 100, 1000, 100000, quicktime_cb);
-    
+    quicktime = opal_event_alloc();
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    opal_event_evtimer_set(orte_event_base, quicktime, quicktime_cb, NULL);
+    opal_event_set_priority(quicktime, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(quicktime, &tv);
+
     /* do the send */
-    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0,
-                                           send_cbfunc, NULL))) {
+    if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0, send_cbfunc, NULL))) {
         ORTE_ERROR_LOG(ret);
         OBJ_RELEASE(cmd);
         return ret;
     }
     
-    /* wait for send to complete */
-    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
-    
-    /* release the buffer */
-    OBJ_RELEASE(cmd);
+    while (!timer_fired) {
+        opal_progress();
+    }
     
     /* did it succeed? */
     if (ORTE_SUCCESS != error_exit) {
@@ -377,7 +405,6 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     /* define a max time to wait for an answer */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;
-    ORTE_DETECT_TIMEOUT(&quicktime, 10, 1000, 10000, quicktime_cb);
     
     /* get the answer */
     OBJ_CONSTRUCT(&answer, opal_buffer_t);
@@ -386,18 +413,21 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
                                                       ORTE_RML_NON_PERSISTENT,
                                                       recv_info,
                                                       NULL))) {
-        /* cancel the timer */
-        if (NULL != quicktime) {
-            opal_event_evtimer_del(quicktime);
-	    free (quicktime);
-	    quicktime = NULL;
-        }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
         return ret;
     }
+    /* set a timer for getting the answer */
+    quicktime = opal_event_alloc();
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    opal_event_evtimer_set(orte_event_base, quicktime, quicktime_cb, NULL);
+    opal_event_set_priority(quicktime, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(quicktime, &tv);
     
-    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+    while (!timer_fired) {
+        opal_progress();
+    }
     
     if (ORTE_SUCCESS != error_exit) {
         OBJ_DESTRUCT(&answer);
@@ -432,19 +462,15 @@ int orte_util_comm_query_node_info(const orte_process_name_t *hnp, char *node,
     return ORTE_SUCCESS;
 }
 
-#if ORTE_ENABLE_EPOCH
-int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t job, orte_vpid_t vpid,
-                                   orte_epoch_t epoch, int *num_procs, orte_proc_t ***proc_info_array)
-#else
 int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t job, orte_vpid_t vpid,
                                    int *num_procs, orte_proc_t ***proc_info_array)
-#endif
 {
     int ret;
     int32_t cnt, cnt_procs, n;
     opal_buffer_t *cmd;
     orte_daemon_cmd_flag_t command = ORTE_DAEMON_REPORT_PROC_INFO_CMD;
     orte_proc_t **proc_info;
+    struct timeval tv;
 
     /* set default response */
     *num_procs = 0;
@@ -467,17 +493,16 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
         OBJ_RELEASE(cmd);
         return ret;
     }
-#if ORTE_ENABLE_EPOCH
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(cmd, &epoch, 1, ORTE_EPOCH))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(cmd);
-        return ret;
-    }
-#endif
+
     /* define a max time to wait for send to complete */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;
-    ORTE_DETECT_TIMEOUT(&quicktime, 100, 1000, 100000, quicktime_cb);
+    quicktime = opal_event_alloc();
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    opal_event_evtimer_set(orte_event_base, quicktime, quicktime_cb, NULL);
+    opal_event_set_priority(quicktime, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(quicktime, &tv);
     
     /* do the send */
     if (0 > (ret = orte_rml.send_buffer_nb((orte_process_name_t*)hnp, cmd, ORTE_RML_TAG_DAEMON, 0,
@@ -487,11 +512,9 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
         return ret;
     }
     
-    /* wait for send to complete */
-    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
-    
-    /* release the buffer */
-    OBJ_RELEASE(cmd);
+    while (!timer_fired) {
+        opal_progress();
+    }
     
     /* did it succeed? */
     if (ORTE_SUCCESS != error_exit) {
@@ -501,7 +524,6 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
     /* define a max time to wait for an answer */
     timer_fired = false;
     error_exit = ORTE_SUCCESS;
-    ORTE_DETECT_TIMEOUT(&quicktime, 10, 1000, 10000, quicktime_cb);
     
     /* get the answer */
     OBJ_CONSTRUCT(&answer, opal_buffer_t);
@@ -510,18 +532,21 @@ int orte_util_comm_query_proc_info(const orte_process_name_t *hnp, orte_jobid_t 
                                                       ORTE_RML_NON_PERSISTENT,
                                                       recv_info,
                                                       NULL))) {
-        /* cancel the timer */
-        if (NULL != quicktime) {
-            opal_event_evtimer_del(quicktime);
-	    free(quicktime);
-	    quicktime = NULL;
-        }
         ORTE_ERROR_LOG(ret);
         OBJ_DESTRUCT(&answer);
         return ret;
     }
+    /* set a timer for getting the answer */
+    quicktime = opal_event_alloc();
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    opal_event_evtimer_set(orte_event_base, quicktime, quicktime_cb, NULL);
+    opal_event_set_priority(quicktime, ORTE_ERROR_PRI);
+    opal_event_evtimer_add(quicktime, &tv);
     
-    ORTE_PROGRESSED_WAIT(timer_fired, 0, 1);
+    while (!timer_fired) {
+        opal_progress();
+    }
     
     if (ORTE_SUCCESS != error_exit) {
         OBJ_DESTRUCT(&answer);

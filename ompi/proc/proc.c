@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +28,6 @@
 #include "opal/threads/mutex.h"
 #include "opal/dss/dss.h"
 #include "opal/util/arch.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
@@ -108,7 +109,6 @@ int ompi_proc_init(void)
 
         proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
         proc->proc_name.vpid = i;
-        ORTE_EPOCH_SET(proc->proc_name.epoch,ORTE_EPOCH_MIN);
 
         if (i == ORTE_PROC_MY_NAME->vpid) {
             ompi_proc_local_proc = proc;
@@ -170,7 +170,7 @@ int ompi_proc_complete_init(void)
                     break;
 #endif
                 }
-            } else if (OMPI_ERR_NOT_IMPLEMENTED == OPAL_SOS_GET_ERROR_CODE(ret)) {
+            } else if (OMPI_ERR_NOT_IMPLEMENTED == ret) {
                 proc->proc_arch = opal_local_arch;
             } else {
                 errcode = ret;
@@ -362,7 +362,6 @@ int ompi_proc_refresh(void) {
 
         /* Does not change: proc->proc_name.vpid */
         proc->proc_name.jobid = ORTE_PROC_MY_NAME->jobid;
-        ORTE_EPOCH_SET(proc->proc_name.epoch,orte_ess.proc_get_epoch(&proc->proc_name));
 
         /* Make sure to clear the local flag before we set it below */
         proc->proc_flags = 0;

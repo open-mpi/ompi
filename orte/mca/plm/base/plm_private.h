@@ -36,7 +36,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss_types.h"
-#include "opal/threads/condition.h"
 
 #include "opal/dss/dss_types.h"
 #include "orte/mca/plm/plm_types.h"
@@ -51,26 +50,10 @@ BEGIN_C_DECLS
 typedef struct {
     /** Verbose/debug output stream */
     int output;
-    /* orted cmd comm lock */
-    opal_mutex_t orted_cmd_lock;
-    /* orted cmd cond */
-    opal_condition_t orted_cmd_cond;
     /* next jobid */
     uint16_t next_jobid;
     /* time when daemons started launch */
     struct timeval daemonlaunchstart;
-    /* spawn lock */
-    opal_mutex_t spawn_lock;
-    /* spawn cond */
-    opal_condition_t spawn_cond;
-    /* spawn status */
-    int spawn_status;
-    /* completion flag */
-    bool spawn_complete;
-    /* spawn in progress cond */
-    opal_condition_t spawn_in_progress_cond;
-    /* flag */
-    bool spawn_in_progress;
     /* tree spawn cmd */
     opal_buffer_t tree_spawn_cmd;
     /* daemon nodes assigned at launch */
@@ -92,18 +75,14 @@ ORTE_DECLSPEC int orte_plm_base_set_progress_sched(int sched);
 /*
  * Launch support
  */
-ORTE_DECLSPEC int orte_plm_base_setup_job(orte_job_t *jdata);
-ORTE_DECLSPEC int orte_plm_base_launch_apps(orte_jobid_t job);
-
-ORTE_DECLSPEC int orte_plm_base_daemon_callback(orte_std_cntr_t num_daemons);
-
-ORTE_DECLSPEC int orte_plm_base_set_hnp_name(void);
-
+ORTE_DECLSPEC void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
+                                                 opal_buffer_t *buffer,
+                                                 orte_rml_tag_t tag, void *cbdata);
 ORTE_DECLSPEC int orte_plm_base_create_jobid(orte_job_t *jdata);
-
+ORTE_DECLSPEC int orte_plm_base_set_hnp_name(void);
 ORTE_DECLSPEC void orte_plm_base_reset_job(orte_job_t *jdata);
-
 ORTE_DECLSPEC int orte_plm_base_setup_orted_cmd(int *argc, char ***argv);
+ORTE_DECLSPEC void orte_plm_base_check_all_complete(int fd, short args, void *cbdata);
 ORTE_DECLSPEC int orte_plm_base_setup_virtual_machine(orte_job_t *jdata);
 
 /**

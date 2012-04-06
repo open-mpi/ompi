@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,8 +29,6 @@
 #include "btl_openib_endpoint.h"
 #include "btl_openib_proc.h"
 #include "btl_openib_failover.h"
-
-#include "opal/util/opal_sos.h"
 
 static void error_out_all_pending_frags(mca_btl_base_endpoint_t *ep,
                                         struct mca_btl_base_module_t* module,
@@ -691,7 +691,7 @@ static void mca_btl_openib_endpoint_notify(mca_btl_base_endpoint_t* endpoint, ui
         BTL_OPENIB_BROKEN_CONNECTION_HEADER_HTON((*bc_hdr));
     }
     rc = mca_btl_openib_endpoint_send(newep, frag);
-    if (OMPI_SUCCESS == rc || OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc)) {
+    if (OMPI_SUCCESS == rc || OMPI_ERR_RESOURCE_BUSY == rc) {
         return;
     }
 

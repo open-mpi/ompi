@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,14 +67,6 @@ int orte_rmaps_base_open(void)
  * Global variables
  */
 orte_rmaps_base_t orte_rmaps_base;
-
-/*
- * Declare the RMAPS module to hold the API function pointers
- */
-orte_rmaps_t orte_rmaps = {
-    orte_rmaps_base_map_job,
-};
-
 
 /**
  * Function for finding and opening either all MCA components, or the one

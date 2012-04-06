@@ -96,6 +96,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/errmgr_private.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
@@ -127,7 +128,7 @@ int MPIR_force_to_main = 0;
 #if !defined(__WINDOWS__)
 static void orte_debugger_dump(void);
 static void orte_debugger_init_before_spawn(orte_job_t *jdata);
-static void orte_debugger_init_after_spawn(orte_job_t *jdata);
+static void orte_debugger_init_after_spawn(int fd, short event, void *arg);
 static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
 static void open_fifo (void);
@@ -536,7 +537,6 @@ int orterun(int argc, char *argv[])
     char *tmp_env_var = NULL;
     char *param;
     orte_job_t *daemons;
-    int32_t ljob;
     orte_app_context_t *app, *dapp;
     orte_job_t *jdata=NULL;
 
@@ -746,13 +746,13 @@ int orterun(int argc, char *argv[])
         /* cannot call ORTE_ERROR_LOG as it could be the errmgr
          * never got loaded!
          */
-        fprintf(stderr, "FAILED ORTE INIT\n");
         return rc;
     }
     /* finalize the OPAL utils. As they are opened again from orte_init->opal_init
      * we continue to have a reference count on them. So we have to finalize them twice...
      */
     opal_finalize_util();
+
 
     /* get the daemon job object */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
@@ -868,7 +868,7 @@ int orterun(int argc, char *argv[])
      * to receive it too
      */
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
-                                 ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+                                 ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
     if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(rc);
         ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
@@ -918,46 +918,33 @@ int orterun(int argc, char *argv[])
         }
     }
     
-    /* we may need to look at the apps for the user's job
-     * to get our full list of nodes, so prep the job for
-     * launch - start by getting a jobid for it */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_create_jobid(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        goto DONE;
-    }
-
-    /* store it on the global job data pool - this is the key
-     * step required before we launch the daemons. It allows
-     * the orte_rmaps_base_setup_virtual_machine routine to
-     * search all apps for any hosts to be used by the vm
-     */
-    ljob = ORTE_LOCAL_JOBID(jdata->jobid);
-    opal_pointer_array_set_item(orte_job_data, ljob, jdata);
-
 #if !defined(__WINDOWS__)
     /* setup for debugging */
     orte_debugger_init_before_spawn(jdata);
+    orte_state.add_job_state(ORTE_JOB_STATE_READY_FOR_DEBUGGERS,
+                             orte_debugger_init_after_spawn,
+                             ORTE_SYS_PRI);
 #endif
 
     /* spawn the job and its daemons */
     rc = orte_plm.spawn(jdata);
 
-#if !defined(__WINDOWS__)
-    /* complete debugger interface */
-    orte_debugger_init_after_spawn(jdata);
-#endif
+    /* loop the event lib until an exit event is detected */
+    while (orte_event_base_active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
 
-    /* now wait until the termination event fires */
-    opal_event_dispatch(opal_event_base);
-    
-    /* we only reach this point by jumping there due
-     * to an error - so just cleanup and leave
-     */
  DONE:
+    /* update the exit status, in case it wasn't done */
     ORTE_UPDATE_EXIT_STATUS(orte_exit_status);
-    orte_quit();
 
-    return orte_exit_status;
+    /* cleanup and leave */
+    orte_finalize();
+
+    if (orte_debug_flag) {
+        fprintf(stderr, "exiting with status %d\n", orte_exit_status);
+    }
+    exit(orte_exit_status);
 }
 
 static int init_globals(void)
@@ -2380,7 +2367,6 @@ static void run_debugger(char *basename, opal_cmd_line_t *cmd_line,
 static void attach_debugger(int fd, short event, void *arg);
 static void build_debugger_args(orte_app_context_t *debugger);
 static void open_fifo(void);
-static opal_event_t attach;
 static int attach_fd = -1;
 static bool fifo_active=false;
 #define DUMP_INT(X) fprintf(stderr, "  %s = %d\n", # X, X);
@@ -2452,7 +2438,7 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
                                 "%s Setting debugger attach check rate for %d seconds",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                 orte_debugger_check_rate);
-            ORTE_TIMER_EVENT(orte_debugger_check_rate, 0, attach_debugger);
+            ORTE_TIMER_EVENT(orte_debugger_check_rate, 0, attach_debugger, ORTE_SYS_PRI);
         } else if (orte_create_session_dirs) {
             /* create the attachment FIFO and setup readevent - cannot be
              * done if no session dirs exist!
@@ -2539,8 +2525,10 @@ static void orte_debugger_init_before_spawn(orte_job_t *jdata)
  * that attaches to us post-launch of the application can get a
  * completed proctable
  */
-static void orte_debugger_init_after_spawn(orte_job_t *jdata)
+void orte_debugger_init_after_spawn(int fd, short event, void *cbdata)
 {
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = caddy->jdata;
     orte_proc_t *proc;
     orte_app_context_t *appctx;
     orte_vpid_t i, j;
@@ -2557,6 +2545,7 @@ static void orte_debugger_init_after_spawn(orte_job_t *jdata)
         opal_output_verbose(5, orte_debug_output,
                             "%s: debugger already initialized or zero procs",
                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        OBJ_RELEASE(caddy);
         return;
     }
 
@@ -2576,6 +2565,7 @@ static void orte_debugger_init_after_spawn(orte_job_t *jdata)
                                                     MPIR_proctable_size);
     if (MPIR_proctable == NULL) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_RELEASE(caddy);
         return;
     }
     
@@ -2623,9 +2613,10 @@ static void orte_debugger_init_after_spawn(orte_job_t *jdata)
         /* wait for all procs to have reported their contact info - this
          * ensures that (a) they are all into mpi_init, and (b) the system
          * has the contact info to successfully send a message to rank=0
-         */
+         *
         ORTE_PROGRESSED_WAIT(false, jdata->num_reported, jdata->num_procs);
-        
+        */
+
         MPIR_Breakpoint();
         
         /* send a message to rank=0 to release it */
@@ -2637,10 +2628,14 @@ static void orte_debugger_init_after_spawn(orte_job_t *jdata)
         }
         OBJ_DESTRUCT(&buf);
     }
+
+    OBJ_RELEASE(caddy);
 }
 
 static void open_fifo (void)
 {
+    opal_event_t *attach;
+
     if (attach_fd > 0) {
 	close(attach_fd);
     }
@@ -2655,10 +2650,11 @@ static void open_fifo (void)
 			"%s Monitoring debugger attach fifo %s",
 			ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
 			MPIR_attach_fifo);
-    opal_event_set(opal_event_base, &attach, attach_fd, OPAL_EV_READ, attach_debugger, NULL);
+    attach = (opal_event_t*)malloc(sizeof(opal_event_t));
+    opal_event_set(orte_event_base, attach, attach_fd, OPAL_EV_READ, attach_debugger, attach);
 
     fifo_active = true;
-    opal_event_add(&attach, 0);
+    opal_event_add(attach, 0);
 }
 
 static void attach_debugger(int fd, short event, void *arg)
@@ -2672,27 +2668,40 @@ static void attach_debugger(int fd, short event, void *arg)
     orte_node_t *node;
     orte_proc_t *proc;
     orte_vpid_t vpid=0;
+    orte_timer_t *tm;
+    opal_event_t *attach;
 
-    /* read the file descriptor to clear that event, if necessary */
     if (fifo_active) {
-	opal_event_del(&attach);
+        attach = (opal_event_t*)arg;
 	fifo_active = false;
 
         rc = read(attach_fd, &fifo_cmd, sizeof(fifo_cmd));
 	if (!rc) {
+            /* release the current event */
+            opal_event_free(attach);
 	    /* reopen device to clear hangup */
 	    open_fifo();
 	    return;
 	}
         if (1 != fifo_cmd) {
             /* ignore the cmd */
-            goto RELEASE;
+            fifo_active = true;
+            opal_event_add(attach, 0);
+            return;
         }
     }
 
     if (!MPIR_being_debugged && !orte_debugger_test_attach) {
-        /* false alarm */
-        goto RELEASE;
+        /* false alarm - reset the read or timer event */
+        if (0 == orte_debugger_check_rate) {
+            fifo_active = true;
+            opal_event_add(attach, 0);
+        } else if (!MPIR_being_debugged) {
+            tm = (orte_timer_t*)arg;
+            /* re-add the event */
+            opal_event_evtimer_add(tm->ev, &tm->tv);
+        }
+        return;
     }
 
     opal_output_verbose(1, orte_debug_output,
@@ -2781,7 +2790,6 @@ static void attach_debugger(int fd, short event, void *arg)
             proc = OBJ_NEW(orte_proc_t);
             proc->name.jobid = jdata->jobid;
             proc->name.vpid = vpid++;
-            ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
 	    /* set the local/node ranks - we don't actually care
 	     * what these are, but the odls needs them
 	     */
@@ -2814,9 +2822,11 @@ static void attach_debugger(int fd, short event, void *arg)
     /* reset the read or timer event */
     if (0 == orte_debugger_check_rate) {
         fifo_active = true;
-        opal_event_add(&attach, 0);
+        opal_event_add(attach, 0);
     } else if (!MPIR_being_debugged) {
-	ORTE_TIMER_EVENT(orte_debugger_check_rate, 0, attach_debugger);
+        tm = (orte_timer_t*)arg;
+        /* re-add the event */
+        opal_event_evtimer_add(tm->ev, &tm->tv);
     }
 
     /* notify the debugger that all is ready */

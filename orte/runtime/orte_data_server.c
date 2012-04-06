@@ -96,7 +96,7 @@ int orte_data_server_init(void)
     if (!recv_issued) {
         if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                           ORTE_RML_TAG_DATA_SERVER,
-                                                          ORTE_RML_NON_PERSISTENT,
+                                                          ORTE_RML_PERSISTENT,
                                                           orte_data_server,
                                                           NULL))) {
             ORTE_ERROR_LOG(rc);
@@ -147,25 +147,36 @@ static orte_data_object_t *lookup(char *service)
     return NULL;
 }
 
-static void process_message(int fd, short event, void *evdat)
+static void rml_cbfunc(int status, orte_process_name_t* sender,
+                       opal_buffer_t* buffer, orte_rml_tag_t tag,
+                       void* cbdata)
 {
-    orte_message_event_t *mev = (orte_message_event_t*)evdat;
-    orte_process_name_t *sender = &mev->sender;
-    opal_buffer_t *buffer = mev->buffer;
+    OBJ_RELEASE(buffer);
+}
+
+void orte_data_server(int status, orte_process_name_t* sender,
+                      opal_buffer_t* buffer, orte_rml_tag_t tag,
+                      void* cbdata)
+{
     orte_data_server_cmd_t command;
     orte_std_cntr_t count;
     char *service_name, *port_name;
     orte_data_object_t *data;
-    opal_buffer_t answer;
+    opal_buffer_t *answer;
     int rc, ret;
     count = 1;
+     
+    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
+                         "%s data server got message from %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         ORTE_NAME_PRINT(sender)));
     
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &command, &count, ORTE_DATA_SERVER_CMD))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
     
-    OBJ_CONSTRUCT(&answer, opal_buffer_t);
+    answer = OBJ_NEW(opal_buffer_t);
     
     switch(command) {
         case ORTE_DATA_SERVER_PUBLISH:
@@ -200,7 +211,7 @@ static void process_message(int fd, short event, void *evdat)
                                      service_name, port_name));
                 
                 ret = ORTE_EXISTS;
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&answer, &ret, 1, OPAL_INT))) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
                     ORTE_ERROR_LOG(rc);
                     /* if we can't pack it, we probably can't pack the
                      * rc value either, so just send whatever is there
@@ -219,7 +230,6 @@ static void process_message(int fd, short event, void *evdat)
             data->port = port_name;
             data->owner.jobid = sender->jobid;
             data->owner.vpid = sender->vpid;
-            ORTE_EPOCH_SET(data->owner.epoch,sender->epoch);
             
             /* store the data */
             data->index = opal_pointer_array_add(orte_data_server_store, data);
@@ -231,7 +241,7 @@ static void process_message(int fd, short event, void *evdat)
             
             /* tell the user it was wonderful... */
             ret = ORTE_SUCCESS;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&answer, &ret, 1, OPAL_INT))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
                 ORTE_ERROR_LOG(rc);
                 /* if we can't pack it, we probably can't pack the
                  * rc value either, so just send whatever is there
@@ -263,7 +273,7 @@ static void process_message(int fd, short event, void *evdat)
                 
                 /* return ORTE_ERR_NOT_FOUND error code */
                 ret = ORTE_ERR_NOT_FOUND;
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&answer, &ret, 1, OPAL_INT))) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
                     ORTE_ERROR_LOG(rc);
                     /* if we can't pack it, we probably can't pack the
                      * rc value either, so just send whatever is there
@@ -281,7 +291,7 @@ static void process_message(int fd, short event, void *evdat)
              * always unpack an int first
              */
             ret = ORTE_SUCCESS;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&answer, &ret, 1, OPAL_INT))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
                 ORTE_ERROR_LOG(rc);
                 /* if we can't pack it, we probably can't pack the
                  * rc value either, so just send whatever is there
@@ -290,7 +300,7 @@ static void process_message(int fd, short event, void *evdat)
             }
                 
             /* pack the returned port */
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&answer, &data->port, 1, OPAL_STRING))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &data->port, 1, OPAL_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 /* if we can't pack it, we probably can't pack the
                  * rc value either, so just send whatever is there
@@ -322,7 +332,7 @@ static void process_message(int fd, short event, void *evdat)
                 
                 /* return ORTE_ERR_NOT_FOUND error code */
                 ret = ORTE_ERR_NOT_FOUND;
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&answer, &ret, 1, OPAL_INT))) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
                     ORTE_ERROR_LOG(rc);
                     /* if we can't pack it, we probably can't pack the
                      * rc value either, so just send whatever is there
@@ -342,7 +352,7 @@ static void process_message(int fd, short event, void *evdat)
                 
                 /* nope - return ORTE_ERR_PERM error code */
                 ret = ORTE_ERR_PERM;
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&answer, &ret, 1, OPAL_INT))) {
+                if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
                     ORTE_ERROR_LOG(rc);
                     /* if we can't pack it, we probably can't pack the
                      * rc value either, so just send whatever is there
@@ -362,7 +372,7 @@ static void process_message(int fd, short event, void *evdat)
     
             /* tell the sender this succeeded */
             ret = ORTE_SUCCESS;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(&answer, &ret, 1, OPAL_INT))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(answer, &ret, 1, OPAL_INT))) {
                 ORTE_ERROR_LOG(rc);
                 /* if we can't pack it, we probably can't pack the
                  * rc value either, so just send whatever is there
@@ -379,49 +389,15 @@ static void process_message(int fd, short event, void *evdat)
 
 SEND_ERROR:
     /* pack the error code */
-    if (ORTE_SUCCESS != (ret = opal_dss.pack(&answer, &rc, 1, OPAL_INT))) {
+    if (ORTE_SUCCESS != (ret = opal_dss.pack(answer, &rc, 1, OPAL_INT))) {
         ORTE_ERROR_LOG(ret);
     }
     
 SEND_ANSWER:
-    if (0 > (rc = orte_rml.send_buffer(sender, &answer, ORTE_RML_TAG_DATA_CLIENT, 0))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(sender, answer, ORTE_RML_TAG_DATA_CLIENT, 0, rml_cbfunc, NULL))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
     }
-    OBJ_DESTRUCT(&answer);
-
-    OBJ_RELEASE(mev);
 }
 
-void orte_data_server(int status, orte_process_name_t* sender,
-                      opal_buffer_t* buffer, orte_rml_tag_t tag,
-                      void* cbdata)
-{
-    int rc;
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_debug_output,
-                         "%s data server got message from %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
-    
-    /* don't process this right away - we need to get out of the recv before
-     * we process the message as it may ask us to do something that involves
-     * more messaging! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release above - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_message);
-
-    /* reissue the recv */
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_DATA_SERVER,
-                                                      ORTE_RML_NON_PERSISTENT,
-                                                      orte_data_server,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
-}
 

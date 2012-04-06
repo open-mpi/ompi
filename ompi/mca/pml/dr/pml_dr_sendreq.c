@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Mellanox Technologies. 
  *                         All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -102,7 +104,7 @@ static void mca_pml_dr_error_completion(
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*)descriptor->des_cbdata;
     mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
 
-    switch(OPAL_SOS_GET_ERROR_CODE(status)) {
+    switch(status) {
         case OMPI_ERR_UNREACH:
             /**
              * peer is no longer reachable through this btl

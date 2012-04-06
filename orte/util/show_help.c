@@ -482,7 +482,7 @@ static int show_help(const char *filename, const char *topic,
         if (now > show_help_time_last_displayed + 5 && !show_help_timer_set) {
             show_accumulated_duplicates(0, 0, NULL);
         } else if (!show_help_timer_set) {
-            opal_event_evtimer_set(opal_event_base, &show_help_timer_event,
+            opal_event_evtimer_set(orte_event_base, &show_help_timer_event,
                                    show_accumulated_duplicates, NULL);
             opal_event_evtimer_add(&show_help_timer_event, &show_help_interval);
             show_help_timer_set = true;
@@ -519,7 +519,7 @@ static int show_help(const char *filename, const char *topic,
             return rc;
         }
         pnli->name = *sender;
-        opal_list_append(&(tli->tli_processes), &(pnli->item));
+        opal_list_append(&(tli->tli_processes), &(pnli->super));
     }
     return ORTE_SUCCESS;
 }
@@ -583,13 +583,7 @@ cleanup:
     if (NULL != topic) {
         free(topic);
     }
-    /* reissue the recv */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
-                                 ORTE_RML_NON_PERSISTENT, orte_show_help_recv, NULL);
-    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
-        ORTE_ERROR_LOG(rc);
-    }
-}
+ }
 
 int orte_show_help_init(void)
 {

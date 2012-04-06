@@ -9,7 +9,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,9 +34,8 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/dss/dss_types.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
 #include "opal/mca/hwloc/hwloc.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/grpcomm/grpcomm_types.h"
@@ -72,10 +73,6 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 #define ORTE_DAEMON_TERMINATE_JOB_CMD       (orte_daemon_cmd_flag_t) 18
 #define ORTE_DAEMON_HALT_VM_CMD             (orte_daemon_cmd_flag_t) 19
 
-/* proc termination sync cmds */
-#define ORTE_DAEMON_WAITPID_FIRED           (orte_daemon_cmd_flag_t) 20
-#define ORTE_DAEMON_IOF_COMPLETE            (orte_daemon_cmd_flag_t) 21
-
 /* request proc resource usage */
 #define ORTE_DAEMON_TOP_CMD                 (orte_daemon_cmd_flag_t) 22
 
@@ -92,76 +89,6 @@ typedef uint8_t orte_daemon_cmd_flag_t;
 /* process called "errmgr.abort_procs" */
 #define ORTE_DAEMON_ABORT_PROCS_CALLED      (orte_daemon_cmd_flag_t) 28
 
-/*
- * List object to locally store the process names and pids of
- * our children. This can subsequently be used to order termination
- * or pass signals without looking the info up again.
- */
-typedef struct {
-    opal_list_item_t super;      /* required to place this on a list */
-    orte_process_name_t *name;   /* the OmpiRTE name of the proc */
-    int32_t restarts;            /* number of times this proc has been restarted */
-    pid_t pid;                   /* local pid of the proc */
-    orte_app_idx_t app_idx;      /* index of the app_context for this proc */
-    bool alive;                  /* is this proc alive? */
-    bool coll_recvd;             /* collective operation recvd */
-    orte_proc_state_t state;     /* the state of the process */
-    orte_exit_code_t exit_code;  /* process exit code */
-    bool init_recvd;             /* process called orte_init */
-    bool fini_recvd;             /* process called orte_finalize */
-    char *rml_uri;               /* contact info for this child */
-#if OPAL_HAVE_HWLOC
-    char *cpu_bitmap;            /* binding pattern for this child */
-#endif
-    bool waitpid_recvd;          /* waitpid has detected proc termination */
-    bool iof_complete;           /* IOF has noted proc terminating all channels */
-    struct timeval starttime;    /* when the proc was started - for timing purposes only */
-    bool do_not_barrier;         /* the proc should not barrier in orte_init */
-    bool notified;               /* notification of termination has been sent */
-    opal_ring_buffer_t stats;
-} orte_odls_child_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_child_t);
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-
-/*
- * List object to locally store job related info
- */
-typedef struct orte_odls_job_t {
-    opal_list_item_t        super;                  /* required to place this on a list */
-    opal_mutex_t            lock;
-    opal_condition_t        cond;
-    orte_job_state_t        state;                  /* state of the job */
-    orte_jobid_t            jobid;                  /* jobid for this data */
-    char                    *instance;              /* keep handy for scheduler restart */
-    char                    *name;                  /* keep handy for scheduler restart */
-    bool                    launch_msg_processed;   /* launch msg has been fully processed */
-    opal_pointer_array_t    apps;                   /* app_contexts for this job */
-    orte_app_idx_t          num_apps;               /* number of app_contexts */
-#if OPAL_HAVE_HWLOC
-    opal_binding_policy_t   binding;                /* binding policy */
-#endif
-    int16_t                 cpus_per_rank;          /* number of cpus/rank */
-    int16_t                 stride;                 /* step size between cores of multi-core/rank procs */
-    orte_job_controls_t     controls;               /* control flags for job */
-    orte_vpid_t             stdin_target;           /* where stdin is to go */
-    orte_std_cntr_t         total_slots_alloc;
-    orte_std_cntr_t         num_nodes;              /* number of nodes involved in the job */
-    orte_vpid_t             num_procs;
-    int32_t                 num_local_procs;
-    opal_byte_object_t      *pmap;                  /* local copy of pidmap byte object */
-    opal_buffer_t           collection_bucket;
-    opal_buffer_t           local_collection;
-    orte_grpcomm_coll_t     collective_type;
-    int32_t                 num_contributors;
-    int                     num_participating;
-    int                     num_collected;
-    struct timeval          launch_msg_recvd;       /* when the launch msg for this job was recvd - for timing purposes only */
-    bool                    enable_recovery;        /* enable recovery of failed processes */
-} orte_odls_job_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_odls_job_t);
-
-#endif
 
 END_C_DECLS
 

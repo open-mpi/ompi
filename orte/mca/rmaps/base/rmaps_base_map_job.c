@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +33,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/show_help.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_private.h"
@@ -40,13 +43,19 @@
  * Function for selecting one component from all those that are
  * available.
  */
-int orte_rmaps_base_map_job(orte_job_t *jdata)
+void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
 {
+    orte_job_t *jdata;
     orte_job_map_t *map;
     int rc;
     bool did_map;
     opal_list_item_t *item;
     orte_rmaps_base_selected_module_t *mod;
+    orte_job_t *parent;
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    /* convenience */
+    jdata = caddy->jdata;
 
     /* NOTE: NO PROXY COMPONENT REQUIRED - REMOTE PROCS ARE NOT
      * ALLOWED TO CALL RMAPS INDEPENDENTLY. ONLY THE PLM CAN
@@ -64,21 +73,18 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
      * NULL MAP FIELD
      * LONE EXCEPTION - WE COPY DISPLAY MAP ACROSS IF THEY
      * DIDN'T SET IT
-     */
-    
+     */        
     if (NULL == jdata->map) {
-        /* a map has not been defined yet for this job, so set one
-         * up here
-         */
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
                             "mca:rmaps: creating new map for job %s",
                             ORTE_JOBID_PRINT(jdata->jobid));
-
         /* create a map object where we will store the results */
         map = OBJ_NEW(orte_job_map_t);
         if (NULL == map) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
+            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
         }
         /* load it with the system defaults */
         map->mapping = orte_rmaps_base.mapping;
@@ -119,6 +125,28 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
 #endif
     }
 
+#if OPAL_HAVE_HWLOC
+    /* if we are not going to launch, then we need to set any
+     * undefined topologies to match our own so the mapper
+     * can operate
+     */
+    if (orte_do_not_launch) {
+        orte_node_t *node;
+        hwloc_topology_t t0;
+        int i;
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        t0 = node->topology;
+        for (i=1; i < orte_node_pool->size; i++) {
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
+                continue;
+            }
+            if (NULL == node->topology) {
+                node->topology = t0;
+            }
+        }
+    }
+#endif
+
     /* cycle thru the available mappers until one agrees to map
      * the job
      */
@@ -136,7 +164,9 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
          */
         if (ORTE_ERR_TAKE_NEXT_OPTION != rc) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+            OBJ_RELEASE(caddy);
+            return;
         }
     }
     /* if we get here without doing the map, or with zero procs in
@@ -144,23 +174,36 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
      */
     if (!did_map || 0 == jdata->num_procs) {
         orte_show_help("help-orte-rmaps-base.txt", "failed-map", true);
-        return ORTE_ERR_FAILED_TO_MAP;
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
     }
 
     /* compute and save local ranks */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_local_ranks(jdata))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
     }
     
 #if OPAL_HAVE_HWLOC
     /* compute and save bindings */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_compute_bindings(jdata))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+        OBJ_RELEASE(caddy);
+        return;
     }
 #endif
     
+    /* if it is a dynamic spawn, save the bookmark on the parent's job too */
+    if (ORTE_JOBID_INVALID != jdata->originator.jobid) {
+        if (NULL != (parent = orte_get_job_data_object(jdata->originator.jobid))) {
+            parent->bookmark = jdata->bookmark;
+        }
+    }
+
     /* if we wanted to display the map, now is the time to do it - ignore
      * daemon job
      */
@@ -258,6 +301,9 @@ int orte_rmaps_base_map_job(orte_job_t *jdata)
             free(output);
         }
     }
-    
-    return ORTE_SUCCESS;
+    /* set the job state to the next position */
+    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_SYSTEM_PREP);
+
+    /* cleanup */
+    OBJ_RELEASE(caddy);
 }

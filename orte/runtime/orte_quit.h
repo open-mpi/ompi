@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  *
  * $COPYRIGHT$
  * 
@@ -20,9 +22,7 @@
 
 BEGIN_C_DECLS
 
-ORTE_DECLSPEC void orte_jobs_complete(void);
-
-ORTE_DECLSPEC void orte_quit(void);
+ORTE_DECLSPEC void orte_quit(int fd, short args, void *cbdata);
 
 END_C_DECLS
 

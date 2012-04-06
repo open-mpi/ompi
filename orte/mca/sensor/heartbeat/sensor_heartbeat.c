@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
- *
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+  *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,13 +29,12 @@
 #include "opal/mca/pstat/pstat.h"
 #include "opal/mca/event/event.h"
 
-#include "orte/threads/threads.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/base/odls_private.h"
-#include "orte/mca/rmcast/rmcast.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -59,27 +60,14 @@ orte_sensor_base_module_t orte_sensor_heartbeat_module = {
 static void read_stats(int fd, short event, void *arg);
 static void check_heartbeat(int fd, short event, void *arg);
 static void send_heartbeat(int fd, short event, void *arg);
-static void recv_beats(int status,
-                       orte_rmcast_channel_t channel,
-                       orte_rmcast_seq_t seq_num,
-                       orte_rmcast_tag_t tag,
-                       orte_process_name_t *sender,
-                       opal_buffer_t *buf, void* cbdata);
-static void cbfunc(int status,
-                   orte_rmcast_channel_t channel,
-                   orte_rmcast_seq_t seq_num,
-                   orte_rmcast_tag_t tag,
-                   orte_process_name_t *sender,
-                   opal_buffer_t *buf, void* cbdata)
-{
-    OBJ_RELEASE(buf);
-}
+static void recv_beats(int status, orte_process_name_t* sender,
+                       opal_buffer_t *buffer,
+                       orte_rml_tag_t tag, void *cbdata);
 
 /* local globals */
 static opal_event_t *send_ev = NULL, *check_ev = NULL;
 static struct timeval send_time, check_time;
 static orte_job_t *daemons=NULL;
-static orte_thread_ctl_t ctl;
 static bool already_started=false;
 static bool use_collected=false;
 
@@ -91,7 +79,6 @@ static int init(void)
                          "%s initializing heartbeat recvs",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
-    OBJ_CONSTRUCT(&ctl, orte_thread_ctl_t);
     already_started = false;
 
     /* check if resource usage is being sampled elsewhere */
@@ -116,19 +103,18 @@ static int init(void)
             if (NULL == (orte_sensor_base.my_node = orte_sensor_base.my_proc->node)) {
                 return ORTE_ERR_NOT_FOUND;
             }
-            /* protect the objects */
-            OBJ_RETAIN(orte_sensor_base.my_proc);
-            OBJ_RETAIN(orte_sensor_base.my_node);
         }
     }
+    /* protect the objects */
+    OBJ_RETAIN(orte_sensor_base.my_proc);
+    OBJ_RETAIN(orte_sensor_base.my_node);
 
     /* setup to receive heartbeats */
     if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_SCHEDULER) {
-        if (ORTE_SUCCESS != (rc = orte_rmcast.recv_buffer_nb(ORTE_RMCAST_HEARTBEAT_CHANNEL,
-                                                             ORTE_RMCAST_TAG_HEARTBEAT,
-                                                             ORTE_RMCAST_PERSISTENT,
-                                                             recv_beats,
-                                                             NULL))) {
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                          ORTE_RML_TAG_HEARTBEAT,
+                                                          ORTE_RML_PERSISTENT,
+                                                          recv_beats, NULL))) {
             ORTE_ERROR_LOG(rc);
         }
     }
@@ -149,7 +135,7 @@ static void finalize(void)
         check_ev = NULL;
     }
     
-    orte_rmcast.cancel_recv(ORTE_RMCAST_HEARTBEAT_CHANNEL, ORTE_RMCAST_TAG_HEARTBEAT);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_HEARTBEAT);
 
     OBJ_RELEASE(orte_sensor_base.my_proc);
     OBJ_RELEASE(orte_sensor_base.my_node);
@@ -208,7 +194,7 @@ static void start(orte_jobid_t jobid)
         }
         /* setup the send */
         send_ev = (opal_event_t*)malloc(sizeof(opal_event_t));
-        opal_event_evtimer_set(opal_event_base, send_ev, send_heartbeat, send_ev);
+        opal_event_evtimer_set(orte_event_base, send_ev, send_heartbeat, send_ev);
         opal_event_evtimer_add(send_ev, &send_time);
 
     } else if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_SCHEDULER) {
@@ -220,7 +206,7 @@ static void start(orte_jobid_t jobid)
 
         /* setup the check */
         check_ev = (opal_event_t*)malloc(sizeof(opal_event_t));
-        opal_event_evtimer_set(opal_event_base, check_ev, check_heartbeat, check_ev);
+        opal_event_evtimer_set(orte_event_base, check_ev, check_heartbeat, check_ev);
         opal_event_evtimer_add(check_ev, &check_time);
 
         /* if we want stats, then we'll setup our own timer
@@ -235,7 +221,7 @@ static void start(orte_jobid_t jobid)
                 return;
             }
             send_ev = (opal_event_t*)malloc(sizeof(opal_event_t));
-            opal_event_evtimer_set(opal_event_base, send_ev, read_stats, send_ev);
+            opal_event_evtimer_set(orte_event_base, send_ev, read_stats, send_ev);
             opal_event_evtimer_add(send_ev, &send_time);
         }
     }
@@ -266,8 +252,6 @@ static void read_stats(int fd, short event, void *arg)
     opal_pstats_t *stats, *st;
     opal_node_stats_t *nstats, *ndstats;
 
-    ORTE_ACQUIRE_THREAD(&ctl);
-
     if (use_collected) {
         /* nothing for us to do - already have the data */
         goto reset;
@@ -295,7 +279,6 @@ static void read_stats(int fd, short event, void *arg)
     }
 
  reset:
-    ORTE_RELEASE_THREAD(&ctl);
 
     /* reset the timer */
     opal_event_evtimer_add(tmp, &send_time);
@@ -305,9 +288,8 @@ static void send_heartbeat(int fd, short event, void *arg)
 {
     opal_buffer_t *buf;
     opal_event_t *tmp = (opal_event_t*)arg;
-    int rc;
-    opal_list_item_t *item;
-    orte_odls_child_t *child;
+    int rc, i;
+    orte_proc_t *child;
     opal_pstats_t *st;
     opal_node_stats_t *nst;
 
@@ -315,8 +297,6 @@ static void send_heartbeat(int fd, short event, void *arg)
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
         return;
     }
-
-    ORTE_ACQUIRE_THREAD(&ctl);
 
     /* if my HNP hasn't been defined yet, ignore - nobody listening yet */
     if (ORTE_JOBID_INVALID == ORTE_PROC_MY_HNP->jobid ||
@@ -377,11 +357,10 @@ static void send_heartbeat(int fd, short event, void *arg)
         OBJ_RELEASE(st);
         OBJ_RELEASE(nst);
         /* add data for my children */
-        OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-        for (item = opal_list_get_first(&orte_local_children);
-             item != opal_list_get_end(&orte_local_children);
-             item = opal_list_get_next(item)) {
-            child = (orte_odls_child_t*)item;
+        for (i=0; i < orte_local_children->size; i++) {
+            if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                continue;
+            }
             if (!child->alive) {
                 continue;
             }
@@ -406,9 +385,9 @@ static void send_heartbeat(int fd, short event, void *arg)
                  * in here
                  */
                 strncpy(st->node, orte_process_info.nodename, OPAL_PSTAT_MAX_STRING_LEN);
-                st->rank = child->name->vpid;
+                st->rank = child->name.vpid;
             }
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, child->name, 1, ORTE_NAME))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &child->name, 1, ORTE_NAME))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(st);
                 continue;
@@ -420,22 +399,18 @@ static void send_heartbeat(int fd, short event, void *arg)
             }
             OBJ_RELEASE(st);
         }
-        opal_condition_signal(&orte_odls_globals.cond);
-        OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
     }
 
  BEAT:
     /* send heartbeat */
-    if (0 > (rc = orte_rmcast.send_buffer_nb(ORTE_RMCAST_HEARTBEAT_CHANNEL,
-                                             ORTE_RMCAST_TAG_HEARTBEAT, buf,
-                                             cbfunc, NULL))) {
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf,
+                                          ORTE_RML_TAG_HEARTBEAT, 0,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(buf);
     }
     
  reset:
-    ORTE_RELEASE_THREAD(&ctl);
-
     /* reset the timer */
     opal_event_evtimer_add(tmp, &send_time);
 }
@@ -449,8 +424,6 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     int v;
     orte_proc_t *proc;
     opal_event_t *tmp = (opal_event_t*)arg;
-
-    ORTE_ACQUIRE_THREAD(&ctl);
 
     OPAL_OUTPUT_VERBOSE((3, orte_sensor_base.output,
                          "%s sensor:check_heartbeat",
@@ -489,9 +462,7 @@ static void check_heartbeat(int fd, short dummy, void *arg)
                                  "%s sensor:check_heartbeat FAILED for daemon %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
-            orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_HEARTBEAT_FAILED,
-                                     &proc->name, ORTE_PROC_STATE_HEARTBEAT_FAILED,
-                                     0, ORTE_ERR_HEARTBEAT_LOST);
+            orte_errmgr.update_proc_state(&proc->name, ORTE_PROC_STATE_HEARTBEAT_FAILED);
         } else {
             OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                                  "%s HEARTBEAT DETECTED FOR %s: NUM BEATS %d",
@@ -503,18 +474,13 @@ static void check_heartbeat(int fd, short dummy, void *arg)
     }
 
  reset:
-    ORTE_RELEASE_THREAD(&ctl);
-
     /* reset the timer */
     opal_event_evtimer_add(tmp, &check_time);
 }
 
-static void recv_beats(int status,
-                       orte_rmcast_channel_t channel,
-                       orte_rmcast_seq_t seq_num,
-                       orte_rmcast_tag_t tag,
-                       orte_process_name_t *sender,
-                       opal_buffer_t *buf, void* cbdata)
+static void recv_beats(int status, orte_process_name_t* sender,
+                       opal_buffer_t *buffer,
+                       orte_rml_tag_t tag, void *cbdata)
 {
     orte_job_t *jdata;
     orte_proc_t *proc;
@@ -527,8 +493,6 @@ static void recv_beats(int status,
     if (orte_abnormal_term_ordered || orte_finalizing || !orte_initialized) {
         return;
     }
-
-    ORTE_ACQUIRE_THREAD(&ctl);
 
     /* get this daemon's object */
     if (NULL != (proc = (orte_proc_t*)opal_pointer_array_get_item(daemons->procs, sender->vpid))) {
@@ -550,7 +514,7 @@ static void recv_beats(int status,
             ORTE_ERROR_LOG(rc);
             /* turn off the stats */
             mca_sensor_heartbeat_component.include_stats = false;
-            goto DEPART;
+            return;
         }
         /* store the node stats */
         if (NULL != proc->node) {
@@ -566,7 +530,7 @@ static void recv_beats(int status,
             ORTE_ERROR_LOG(rc);
             /* turn off the stats */
             mca_sensor_heartbeat_component.include_stats = false;
-            goto DEPART;
+            return;
         }
         /* store this data */
         if (NULL != (st = (opal_pstats_t*)opal_ring_buffer_push(&proc->stats, stats))) {
@@ -601,7 +565,4 @@ static void recv_beats(int status,
             ORTE_ERROR_LOG(rc);
         }
     }
-
- DEPART:
-    ORTE_RELEASE_THREAD(&ctl);
 }

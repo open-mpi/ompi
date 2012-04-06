@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,7 +66,6 @@ orte_errmgr_base_module_t orte_errmgr_default_fns = {
     orte_errmgr_base_log,
     orte_errmgr_base_abort,
     orte_errmgr_base_abort_peers,
-    orte_errmgr_base_update_state,
     NULL, /* predicted_fault     */
     NULL, /* suggest_map_targets */
     NULL, /* ft_event            */
@@ -79,8 +80,6 @@ orte_errmgr_base_module_t orte_errmgr = {
     NULL,
     NULL,
     orte_errmgr_base_log,
-    NULL,
-    NULL,
     NULL,
     NULL,
     NULL,

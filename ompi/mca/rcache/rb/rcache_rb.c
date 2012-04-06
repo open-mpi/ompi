@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -121,7 +123,7 @@ int mca_rcache_rb_insert (
     if(flags & MCA_MPOOL_FLAGS_CACHE) { 
         rc = mca_rcache_rb_mru_insert( (mca_rcache_rb_module_t*) rcache, reg); 
         if(OMPI_SUCCESS != rc) { 
-            if(OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
+            if(OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
                 /*
                  * If the registration is too big for the rcache, 
                  * don't cache it and reset the flags so the upper level 

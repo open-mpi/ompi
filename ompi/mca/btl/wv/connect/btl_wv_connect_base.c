@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007 Mellanox Technologies, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  *
  * $COPYRIGHT$
  * 
@@ -19,7 +21,6 @@
 #include "orte/util/show_help.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 
 /*
  * Array of all possible connection functions
@@ -183,7 +184,7 @@ int ompi_btl_wv_connect_base_init(void)
             opal_output(-1, "found available cpc (SUCCESS init): %s",
                         all[i]->cbc_name);
             continue;
-        } else if (OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        } else if (OMPI_ERR_NOT_SUPPORTED == rc) {
             continue;
         } else {
             return rc;
@@ -229,8 +230,8 @@ int ompi_btl_wv_connect_base_select_for_local_port(mca_btl_wv_module_t *btl)
         strcat(msg, available[i]->cbc_name);
 
         rc = available[i]->cbc_query(btl, &cpcs[cpc_index]);
-        if (OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(rc) ||
-	    OMPI_ERR_UNREACH == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        if (OMPI_ERR_NOT_SUPPORTED == rc ||
+	    OMPI_ERR_UNREACH == rc) {
             continue;
         } else if (OMPI_SUCCESS != rc) {
             free(cpcs);

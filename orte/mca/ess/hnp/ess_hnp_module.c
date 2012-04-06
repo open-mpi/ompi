@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,6 +65,8 @@
 #include "orte/mca/snapc/base/base.h"
 #endif
 #include "orte/mca/filem/base/base.h"
+#include "orte/mca/state/base/base.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
@@ -105,7 +109,6 @@ orte_ess_base_module_t orte_ess_hnp_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
-    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     update_pidmap,
     update_nidmap,
     NULL /* ft_event */
@@ -113,6 +116,7 @@ orte_ess_base_module_t orte_ess_hnp_module = {
 
 /* local globals */
 static bool signals_set=false;
+static bool forcibly_die=false;
 static opal_event_t term_handler;
 static opal_event_t int_handler;
 static opal_event_t epipe_handler;
@@ -124,9 +128,16 @@ static opal_event_t sigcont_handler;
 #endif  /* __WINDOWS__ */
 
 static void abort_signal_callback(int fd, short flags, void *arg);
-static void abort_exit_callback(int fd, short event, void *arg);
 static void epipe_signal_callback(int fd, short flags, void *arg);
 static void signal_forward_callback(int fd, short event, void *arg);
+
+static void setup_sighandler(int signal, opal_event_t *ev,
+                             opal_event_cbfunc_t cbfunc)
+{
+    opal_event_signal_set(orte_event_base, ev, signal, cbfunc, ev);
+    opal_event_set_priority(ev, ORTE_ERROR_PRI);
+    opal_event_signal_add(ev, NULL);
+}
 
 static int rte_init(void)
 {
@@ -138,47 +149,31 @@ static int rte_init(void)
     orte_proc_t *proc;
     orte_app_context_t *app;
 
+
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
         error = "orte_ess_base_std_prolog";
         goto error;
     }
-    
+
 #ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
-    opal_event_signal_set(opal_event_base, &epipe_handler, SIGPIPE,
-                          epipe_signal_callback, &epipe_handler);
-    opal_event_signal_add(&epipe_handler, NULL);
+    setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);
     /** setup callbacks for abort signals - from this point
      * forward, we need to abort in a manner that allows us
      * to cleanup
      */
-    opal_event_signal_set(opal_event_base, &term_handler, SIGTERM,
-                          abort_signal_callback, &term_handler);
-    opal_event_signal_add(&term_handler, NULL);
-    opal_event_signal_set(opal_event_base, &int_handler, SIGINT,
-                          abort_signal_callback, &int_handler);
-    opal_event_signal_add(&int_handler, NULL);
+    setup_sighandler(SIGTERM, &term_handler, abort_signal_callback);
+    setup_sighandler(SIGINT, &int_handler, abort_signal_callback);
 
     /** setup callbacks for signals we should foward */
-    opal_event_signal_set(opal_event_base, &sigusr1_handler, SIGUSR1,
-                          signal_forward_callback, &sigusr1_handler);
-    opal_event_signal_add(&sigusr1_handler, NULL);
-    opal_event_signal_set(opal_event_base, &sigusr2_handler, SIGUSR2,
-                          signal_forward_callback, &sigusr2_handler);
-    opal_event_signal_add(&sigusr2_handler, NULL);
-    if (orte_forward_job_control) {
-        opal_event_signal_set(opal_event_base, &sigtstp_handler, SIGTSTP,
-                              signal_forward_callback, &sigtstp_handler);
-        opal_event_signal_add(&sigtstp_handler, NULL);
-        opal_event_signal_set(opal_event_base, &sigcont_handler, SIGCONT,
-                              signal_forward_callback, &sigcont_handler);
-        opal_event_signal_add(&sigcont_handler, NULL);
-    }
+    setup_sighandler(SIGUSR1, &sigusr1_handler, signal_forward_callback);
+    setup_sighandler(SIGUSR2, &sigusr2_handler, signal_forward_callback);
+    setup_sighandler(SIGTSTP, &sigtstp_handler, signal_forward_callback);
+    setup_sighandler(SIGCONT, &sigcont_handler, signal_forward_callback);
 #endif  /* __WINDOWS__ */
-    
     signals_set = true;
-    
+
 #if OPAL_HAVE_HWLOC
     {
         hwloc_obj_t obj;
@@ -240,10 +235,22 @@ static int rte_init(void)
     }
     if (ORTE_SUCCESS != (ret = opal_pstat_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_pstat_base_select";
+        error = "opal_pstat_base_select";
         goto error;
     }
-    
+  
+    /* open and setup the state machine */
+    if (ORTE_SUCCESS != (ret = orte_state_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_state_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_base_select";
+        goto error;
+    }
+
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
         error = "orte_errmgr_base_open";
         goto error;
@@ -270,7 +277,7 @@ static int rte_init(void)
         error = "orte_plm_set_hnp_name";
         goto error;
     }
-    
+
     /* Setup the communication infrastructure */
     
     /*
@@ -381,9 +388,6 @@ static int rte_init(void)
         goto error;
     }
 
-    /* set the communication function */
-    orte_comm = orte_global_comm;
-
     /* we are an hnp, so update the contact info field for later use */
     orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
     
@@ -393,7 +397,7 @@ static int rte_init(void)
 #if !ORTE_DISABLE_FULL_SUPPORT
     /* setup the orte_show_help system to recv remote output */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SHOW_HELP,
-                                 ORTE_RML_NON_PERSISTENT, orte_show_help_recv, NULL);
+                                 ORTE_RML_PERSISTENT, orte_show_help_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         error = "setup receive for orte_show_help";
@@ -476,6 +480,7 @@ static int rte_init(void)
         error = "setup node topologies array";
         goto error;
     }
+
     /* Setup the job data object for the daemons */        
     /* create and store the job data object */
     jdata = OBJ_NEW(orte_job_t);
@@ -502,7 +507,6 @@ static int rte_init(void)
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
     proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
-    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
     
     proc->pid = orte_process_info.pid;
     proc->rml_uri = orte_rml.get_contact_info();
@@ -526,7 +530,9 @@ static int rte_init(void)
     /* record that the daemon job is running */
     jdata->num_procs = 1;
     jdata->state = ORTE_JOB_STATE_RUNNING;
-    
+    /* obviously, we have "reported" */
+    jdata->num_reported = 1;
+
     /* setup the routed info - the selected routed component
      * will know what to do. 
      */
@@ -649,7 +655,7 @@ static int rte_init(void)
      problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
      require OOB messages for wireup, etc.). */
     opal_progress_set_yield_when_idle(false);
-    
+
     return ORTE_SUCCESS;
 
 error:
@@ -665,9 +671,6 @@ error:
 static int rte_finalize(void)
 {
     char *contact_path;
-    orte_node_t *node;
-    orte_job_t *job;
-    int i;
 
     if (signals_set) {
         /* Remove the epipe handler */
@@ -696,68 +699,11 @@ static int rte_finalize(void)
     unlink(contact_path);
     free(contact_path);
     
-    orte_sensor_base_close();
-    orte_notifier_base_close();
-    
-    orte_cr_finalize();
-    
-#if OPAL_ENABLE_FT_CR == 1
-    orte_snapc_base_close();
-#endif
-    orte_filem_base_close();
-    
-    orte_odls_base_close();
-    
-    orte_wait_finalize();
+    /* output any lingering stdout/err data */
     orte_iof_base_close();
-    
-    /* finalize selected modules so they can de-register
-     * any receives
-     */
-    orte_ras_base_close();
-    orte_rmaps_base_close();
-    orte_plm_base_close();
-    orte_errmgr_base_close();
-    orte_grpcomm_base_close();
-
-    /* now can close the rml */
-    orte_routed_base_close();
-    orte_rml_base_close();
-
-    /* if we were doing timing studies, close the timing file */
-    if (orte_timing) {
-        if (stdout != orte_timing_output &&
-            stderr != orte_timing_output) {
-            fclose(orte_timing_output);
-        }
-    }
-    
-    /* cleanup the job and node info arrays */
-    if (NULL != orte_node_pool) {
-        for (i=0; i < orte_node_pool->size; i++) {
-            if (NULL != (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool,i))) {
-                OBJ_RELEASE(node);
-            }
-        }
-        OBJ_RELEASE(orte_node_pool);
-    }
-    if (NULL != orte_job_data) {
-        for (i=0; i < orte_job_data->size; i++) {
-            if (NULL != (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data,i))) {
-                OBJ_RELEASE(job);
-            }
-        }
-        OBJ_RELEASE(orte_job_data);
-    }
 
     /* finalize the session directory tree */
     orte_session_dir_finalize(ORTE_PROC_MY_NAME);
-    
-    /* clean out the global structures */
-    orte_proc_info_finalize();
-    if (NULL != orte_job_ident) {
-        free(orte_job_ident);
-    }
     
     /* close the xml output file, if open */
     if (orte_xml_output) {
@@ -767,16 +713,6 @@ static int rte_finalize(void)
             fclose(orte_xml_fp);
         }
     }
-    
-    /* handle the orted-specific OPAL stuff */
-    opal_pstat_base_close();
-#if OPAL_HAVE_HWLOC
-    /* destroy the topology, if required */
-    if (NULL != opal_hwloc_topology) {
-        opal_hwloc_base_free_topology(opal_hwloc_topology);
-        opal_hwloc_topology = NULL;
-    }
-#endif
 
     return ORTE_SUCCESS;    
 }
@@ -962,51 +898,6 @@ static int update_nidmap(opal_byte_object_t *bo)
     return ORTE_SUCCESS;
 }
 
-static bool forcibly_die=false;
-
-static void abort_exit_callback(int fd, short ign, void *arg)
-{
-    int ret;
-
-    fprintf(stderr, "%s: killing job...\n\n", orte_basename);
-    
-    /* since we are being terminated by a user's signal, be
-     * sure to exit with a non-zero exit code - but don't
-     * overwrite any error code from a proc that might have
-     * failed, in case that is why the user ordered us
-     * to terminate
-     */
-    ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-
-    /* terminate the job - this will also wakeup orterun so
-     * it can report to the user and kill all the orteds.
-     * Check the jobid, though, just in case the user
-     * hit ctrl-c before we had a chance to setup the
-     * job in the system - in which case there is nothing
-     * to terminate!
-     */
-    if (!orte_never_launched) {
-        /*
-         * Turn off the process recovery functionality, if it was enabled.
-         * This keeps the errmgr from trying to recover from the shutdown
-         * procedure.
-         */
-        orte_enable_recovery             = false;
-        
-        /* terminate the orteds - they will automatically kill
-         * their local procs
-         */
-        ret = orte_plm.terminate_orteds();
-       
-    } else {
-        /* if the jobid is invalid or we never launched,
-         * there is nothing to do but just clean ourselves
-         * up and exit
-         */
-        orte_quit();
-    }
-}
-
 /*
  * Attempt to terminate the job and wait for callback indicating
  * the job has been aborted.
@@ -1047,12 +938,17 @@ static void abort_signal_callback(int fd, short flags, void *arg)
      */
     orte_execute_quiet = true;
     
+    if (!orte_never_launched) {
+        /* cleanup our data server */
+        orte_data_server_finalize();
+    }
+
     /* We are in an event handler; the job completed procedure
        will delete the signal handler that is currently running
        (which is a Bad Thing), so we can't call it directly.
        Instead, we have to exit this handler and setup to call
        job_completed() after this. */
-    ORTE_TIMER_EVENT(0, 0, abort_exit_callback);
+    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
 }
 
 /**
@@ -1066,7 +962,7 @@ static void epipe_signal_callback(int fd, short flags, void *arg)
     if (10 < sigpipe_error_count) {
         /* time to abort */
         opal_output(0, "%s: SIGPIPE detected on fd %d - aborting", orte_basename, fd);
-        abort_exit_callback(0, 0, 0);
+        abort_signal_callback(0, 0, NULL);
     }
 
     return;

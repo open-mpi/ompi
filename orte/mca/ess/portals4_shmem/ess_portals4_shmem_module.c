@@ -56,7 +56,6 @@ orte_ess_base_module_t orte_ess_portals4_shmem_module = {
     proc_get_hostname,
     proc_get_local_rank,
     proc_get_node_rank,
-    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     NULL,   /* add_pidmap is only used in ORTE */
     NULL,   /* update_nidmap is only used in ORTE */
     NULL /* ft_event */

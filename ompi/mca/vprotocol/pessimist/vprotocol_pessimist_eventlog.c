@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 2004-2011 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -10,7 +12,6 @@
 
 #include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/base/rml_contact.h"

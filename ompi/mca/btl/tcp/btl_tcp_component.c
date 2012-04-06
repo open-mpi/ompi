@@ -12,6 +12,8 @@
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Laboratory
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,7 +55,6 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/net.h"
-#include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/types.h"
@@ -1055,7 +1056,7 @@ mca_btl_base_module_t** mca_btl_tcp_component_init(int *num_btl_modules,
     }
 #if OPAL_WANT_IPV6
     if((ret = mca_btl_tcp_component_create_listen(AF_INET6)) != OMPI_SUCCESS) {
-        if (!(OMPI_ERR_IN_ERRNO == OPAL_SOS_GET_ERROR_CODE(ret) &&
+        if (!(OMPI_ERR_IN_ERRNO == ret &&
               EAFNOSUPPORT == opal_socket_errno)) {
             opal_output (0, "mca_btl_tcp_component: IPv6 listening socket failed\n");
             return 0;

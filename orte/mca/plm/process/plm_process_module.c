@@ -89,6 +89,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras_types.h"
 #include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/base.h"
@@ -142,8 +143,38 @@ static const char * orte_plm_process_shell_name[] = {
     "unknown"
 }; 
 
+typedef struct {
+    opal_list_item_t super;
+    int argc;
+    char **argv;
+    orte_proc_t *daemon;
+} orte_plm_process_caddy_t;
+static void caddy_const(orte_plm_process_caddy_t *ptr)
+{
+    ptr->argv = NULL;
+    ptr->daemon = NULL;
+}
+static void caddy_dest(orte_plm_process_caddy_t *ptr)
+{
+    if (NULL != ptr->argv) {
+        opal_argv_free(ptr->argv);
+    }
+    if (NULL != ptr->daemon) {
+        OBJ_RELEASE(ptr->daemon);
+    }
+}
+OBJ_CLASS_INSTANCE(orte_plm_process_caddy_t,
+                   opal_list_item_t,
+                   caddy_const, caddy_dest);
+
 /* local global storage of timing variables */
 static struct timeval joblaunchstart, joblaunchstop;
+static int num_in_progress=0;
+static opal_list_t launch_list;
+static opal_event_t launch_event;
+
+static void launch_daemons(int fd, short args, void *cbdata);
+static void process_launch_list(int fd, short args, void *cbdata);
 
 #ifdef _MSC_VER
 /*
@@ -153,7 +184,6 @@ static char *generate_commandline(char *prefix, int argc, char **argv);
 static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **argv);
 static int get_credential(char *node_name);
 static char *read_remote_registry(uint32_t root, char *sub_key, char *key, char *remote_node, char *ntlm_auth);
-
 
 /* local global storage of user credential */
 static char user_name[CREDUI_MAX_USERNAME_LENGTH+1];
@@ -446,10 +476,11 @@ cleanup:
 /**
  * Remote spawn process using WMI.
  */
-static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **argv)
+static int wmi_launch_child(char *remote_node, int argc, char **argv)
 {
     char *command_line = NULL;
     int len = 0, pid = -1;
+	char *prefix;
     
     HRESULT hres;
     IWbemClassObject* pClass_cimv2 = NULL;
@@ -509,28 +540,23 @@ static int wmi_launch_child(char *prefix, char *remote_node, int argc, char **ar
        or Open MPI was configured without ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT), 
        let's first check the OPENMPI_HOME in user environment variables,
        and then the OPAL_PREFIX registry value. */
-    if( NULL == prefix ) {
-        if( mca_plm_process_component.remote_env_prefix ) {
-            char *path = "Environment";
-            char *key = "OPENMPI_HOME";
-            /* read registry at HKEY_CURRENT_USER
-               please note: this MUST be the same user as for WMI authorization. */
-            char *reg_prefix = read_remote_registry(0x80000001, path, key, remote_node, ntlm_auth);
-            if( NULL != reg_prefix) {
-                command_line = generate_commandline(reg_prefix, argc, argv);
-            }
+    if( mca_plm_process_component.remote_env_prefix ) {
+        char *path = "Environment";
+        char *key = "OPENMPI_HOME";
+        /* read registry at HKEY_CURRENT_USER
+            please note: this MUST be the same user as for WMI authorization. */
+        char *reg_prefix = read_remote_registry(0x80000001, path, key, remote_node, ntlm_auth);
+        if( NULL != reg_prefix) {
+            command_line = generate_commandline(reg_prefix, argc, argv);
         }
-        if( NULL == command_line && mca_plm_process_component.remote_reg_prefix ) {
-            char *path = "Software\\Open MPI\\";
-            char *key = "OPAL_PREFIX";
-            char *reg_prefix = read_remote_registry(0x80000002, path, key, remote_node, ntlm_auth);
-            if( NULL != reg_prefix) {
-                command_line = generate_commandline(reg_prefix, argc, argv);
-            }
+    }
+    if( NULL == command_line && mca_plm_process_component.remote_reg_prefix ) {
+        char *path = "Software\\Open MPI\\";
+        char *key = "OPAL_PREFIX";
+        char *reg_prefix = read_remote_registry(0x80000002, path, key, remote_node, ntlm_auth);
+        if( NULL != reg_prefix) {
+            command_line = generate_commandline(reg_prefix, argc, argv);
         }
-    } else {
-        /* use user specified/default prefix */
-        command_line = generate_commandline(prefix, argc, argv);
     }
 
     if ( NULL == command_line ) {
@@ -624,6 +650,18 @@ int orte_plm_process_init(void)
         ORTE_ERROR_LOG(rc);
     }
 
+    /* point to our launch command */
+    if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_LAUNCH_DAEMONS,
+                                                       launch_daemons, ORTE_SYS_PRI))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* setup the event for metering the launch */
+    OBJ_CONSTRUCT(&launch_list, opal_list_t);
+    opal_event_set(orte_event_base, &launch_event, -1, 0, process_launch_list, NULL);
+    opal_event_set_priority(&launch_event, ORTE_SYS_PRI);
+    
     /* we assign daemon nodes at launch */
     orte_plm_globals.daemon_nodes_assigned_at_launch = true;
 
@@ -894,6 +932,9 @@ static int orte_plm_process_fill_exec_path( char ** exec_path )
 
 static void orte_plm_process_wait_daemon(pid_t pid, int status, void* cbdata)
 {
+    orte_job_t *jdata;
+    orte_plm_process_caddy_t *caddy=(orte_plm_process_caddy_t*)cbdata;
+    orte_proc_t *daemon=caddy->daemon;
     unsigned long deltat;
 
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
@@ -919,34 +960,24 @@ static void orte_plm_process_wait_daemon(pid_t pid, int status, void* cbdata)
         } else {
             opal_output(0, "No extra status information is available: %d.", status);
         }
-        /* report that the daemon has failed so we break out of the daemon
-         * callback receive and can exit
-         */
-        orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
-                                 NULL, ORTE_PROC_STATE_UNDEF,
-                                 0, status);
+        jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+            
+        /* note that this daemon failed */
+        daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
+        /* increment the #daemons terminated so we will exit properly */
+        jdata->num_terminated++;
+        /* report that the daemon has failed so we can exit */
+        ORTE_ACTIVATE_PROC_STATE(&daemon->name, ORTE_PROC_STATE_FAILED_TO_START);
     } /* if abnormal exit */
 
-    /* release any waiting threads */
-    OPAL_THREAD_LOCK(&mca_plm_process_component.lock);
-
-    if (mca_plm_process_component.num_children-- >=
-        mca_plm_process_component.num_concurrent ||
-        mca_plm_process_component.num_children == 0) {
-        opal_condition_signal(&mca_plm_process_component.cond);
+    /* release any delay */
+    --num_in_progress;
+    if (num_in_progress < mca_plm_process_component.num_concurrent) {
+        /* trigger continuation of the launch */
+        opal_event_active(&launch_event, EV_WRITE, 1);
     }
-
-    if (mca_plm_process_component.timing && mca_plm_process_component.num_children == 0) {
-        if (0 != gettimeofday(&joblaunchstop, NULL)) {
-            opal_output(0, "plm_process: could not obtain job launch stop time");
-        } else {
-            deltat = (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 +
-                     (joblaunchstop.tv_usec - joblaunchstart.tv_usec);
-            opal_output(0, "plm_process: total time to launch job is %lu usec", deltat);
-        }
-    }
-    
-    OPAL_THREAD_UNLOCK(&mca_plm_process_component.lock);
+    /* cleanup */
+    OBJ_RELEASE(caddy);
 
 }
 
@@ -961,6 +992,80 @@ static void orte_plm_process_wait_daemon(pid_t pid, int status, void* cbdata)
  */
 static int orte_plm_process_launch(orte_job_t *jdata)
 {
+    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+        /* this is a restart situation - skip to the mapping stage */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
+    } else {
+        /* new job - set it up */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_INIT);
+    }
+    return ORTE_SUCCESS;
+}
+
+static void process_launch_list(int fd, short args, void *cbdata)
+{
+    opal_list_item_t *item;
+    pid_t pid;
+    orte_plm_process_caddy_t *caddy;
+	char **env;
+    char *param;
+    
+    while (num_in_progress < mca_plm_process_component.num_concurrent) {
+        item = opal_list_remove_first(&launch_list);
+        if (NULL == item) {
+            /* we are done */
+            break;
+        }
+        caddy = (orte_plm_process_caddy_t*)item;
+        
+        /* Set signal handlers back to the default.  Do this close
+           to the execve() because the event library may (and likely
+           will) reset them.  If we don't do this, the event
+           library may have left some set that, at least on some
+           OS's, don't get reset via fork() or exec().  Hence, the
+           orted could be unkillable (for example). */
+            
+        set_handler_default(SIGTERM);
+        set_handler_default(SIGINT);
+        set_handler_default(SIGCHLD);
+            
+        /* setup environment */
+        env = opal_argv_copy(orte_launch_environ);
+            
+        /* exec the daemon */
+        if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
+            param = opal_argv_join(caddy->argv, ' ');
+            OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                                 "%s plm:process: executing:\n\t%s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 (NULL == param) ? "NULL" : param));
+            if (NULL != param) free(param);
+        }
+
+#ifdef _MSC_VER
+        /* launch remote process */
+		pid = wmi_launch_child(caddy->daemon->nodename, caddy->argc, caddy->argv);
+#else
+        pid = _spawnve( _P_NOWAIT, caddy->daemon->name, caddy->argv, env);
+#endif
+
+        if (pid < 0) {
+            /* note that this daemon failed */
+            caddy->daemon->state = ORTE_PROC_STATE_FAILED_TO_START;
+            /* report that the daemon has failed so we can exit */
+            ORTE_ACTIVATE_PROC_STATE(&(caddy->daemon->name), ORTE_PROC_STATE_FAILED_TO_START);
+            continue;
+        }
+        /* setup callback on sigchild - wait until setup above is complete
+         * as the callback can occur in the call to orte_wait_cb
+         */
+        orte_wait_cb(pid, orte_plm_process_wait_daemon, (void*)caddy);
+        num_in_progress++;
+    }
+}
+
+static void launch_daemons(int fd, short args, void *cbdata)
+{
     orte_job_map_t *map = NULL;
     int proc_vpid_index;
     int local_exec_index;
@@ -971,12 +1076,13 @@ static int orte_plm_process_launch(orte_job_t *jdata)
     int argc = 0;
     int rc;
     char *lib_base = NULL, *bin_base = NULL;
-    bool failed_launch = true;
     orte_app_context_t *app;
     orte_node_t *node;
     orte_std_cntr_t nnode;
-    orte_job_state_t job_state = ORTE_JOB_STATE_NEVER_LAUNCHED;
     orte_job_t *daemons;
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = state->jdata;
+    orte_plm_process_caddy_t *caddy;
 
     if (orte_timing) {
         if (0 != gettimeofday(&joblaunchstart, NULL)) {
@@ -986,25 +1092,28 @@ static int orte_plm_process_launch(orte_job_t *jdata)
         }        
     }
     
-    /* if we don't want to launch, then don't attempt to
-     * launch the daemons - the user really wants to just
-     * look at the proposed process map
-     */
-    if (orte_do_not_launch) {
-        goto launch_apps;
-    }
-
-    /* start by launching the virtual machine */
+    /* setup the virtual machine */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(jdata))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:process: launching vm",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+    /* if we don't want to launch, then don't attempt to
+     * launch the daemons - the user really wants to just
+     * look at the proposed process map
+     */
+    if (orte_do_not_launch) {
+        /* set the state to indicate the daemons reported - this
+         * will trigger the daemons_reported event and cause the
+         * job to move to the following step
+         */
+        state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
+    }
+
     /* Get the map for this job */
     if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -1013,13 +1122,20 @@ static int orte_plm_process_launch(orte_job_t *jdata)
     }
         
      if (0 == map->num_new_daemons) {
-        /* have all the daemons we need - launch app */
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:process: no new daemons to launch",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        goto launch_apps;
+        /* set the state to indicate the daemons reported - this
+         * will trigger the daemons_reported event and cause the
+         * job to move to the following step
+         */
+        state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
     }
 
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:process: launching vm",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    
     if (orte_debug_daemons_flag &&
         mca_plm_process_component.num_concurrent < map->num_new_daemons) {
         /**
@@ -1121,9 +1237,6 @@ static int orte_plm_process_launch(orte_job_t *jdata)
     lib_base = opal_basename(opal_install_dirs.libdir);
     bin_base = opal_basename(opal_install_dirs.bindir);
 
-    /* set the job state to indicate we attempted to launch */
-    job_state = ORTE_JOB_STATE_FAILED_TO_START;
-    
     /*
      * Iterate through each of the nodes
      */
@@ -1151,7 +1264,7 @@ static int orte_plm_process_launch(orte_job_t *jdata)
                                  "%s plm:process:launch daemon failed to be defined on node %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  node->name));
-            return ORTE_ERR_FATAL;
+            continue;
         }
         
         if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
@@ -1195,7 +1308,7 @@ static int orte_plm_process_launch(orte_job_t *jdata)
                     if( NULL == exec_path ) {
                         rc = orte_plm_process_fill_exec_path (&exec_path);
                         if (ORTE_SUCCESS != rc) {
-                            return rc;
+                            goto cleanup;
                         }
                     }
                 }
@@ -1280,95 +1393,47 @@ static int orte_plm_process_launch(orte_job_t *jdata)
             argv[proc_vpid_index] = strdup(vpid_string);
             free(vpid_string);
             
-            /* Set signal handlers back to the default.  Do this close
-               to the execve() because the event library may (and likely
-               will) reset them.  If we don't do this, the event
-               library may have left some set that, at least on some
-               OS's, don't get reset via fork() or exec().  Hence, the
-               orted could be unkillable (for example). */
-            
-            set_handler_default(SIGTERM);
-            set_handler_default(SIGINT);
-            set_handler_default(SIGCHLD);
-            
-            /* setup environment */
-            env = opal_argv_copy(orte_launch_environ);
-            
-            /* exec the daemon */
-            if (0 < opal_output_get_verbosity(orte_plm_globals.output)) {
-                param = opal_argv_join(exec_argv, ' ');
-                OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                                     "%s plm:process: executing:\n\t%s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     (NULL == param) ? "NULL" : param));
-                if (NULL != param) free(param);
-            }
-            
-#ifdef _MSC_VER
-            /* launch remote process */
-            pid = wmi_launch_child(prefix_dir, node->name, argc, exec_argv);
-#else
-            pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env);
-#endif
-
-            if (pid < 0) {
-                failed_launch = true;
-                rc = ORTE_ERROR;
-                goto cleanup;
-            }
-            /* indicate this daemon has been launched in case anyone is sitting on that trigger */
-            node->daemon->state = ORTE_PROC_STATE_LAUNCHED;
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                                 "%s plm:process: daemon launched (pid %d on %s)\n",
+                                 "%s plm:process: adding node %s to launch list",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 pid, nodes[nnode]->name));
-        
-            OPAL_THREAD_LOCK(&mca_plm_process_component.lock);
-            /* This situation can lead to a deadlock if '--debug-daemons' is set.
-             * However, the deadlock condition is tested at the begining of this
-             * function, so we're quite confident it should not happens here.
-             */
-            if (mca_plm_process_component.num_children++ >=
-                mca_plm_process_component.num_concurrent) {
-                opal_condition_wait(&mca_plm_process_component.cond, &mca_plm_process_component.lock);
-            }
-            OPAL_THREAD_UNLOCK(&mca_plm_process_component.lock);
-
-            /* if required - add delay to avoid problems w/ X11 authentication */
-            if (0 < opal_output_get_verbosity(orte_plm_globals.output)
-                && mca_plm_process_component.delay) {
-                sleep(mca_plm_process_component.delay);
-            }
+                                 node->name));
+            
+            /* we are in an event, so no need to protect the list */
+            caddy = OBJ_NEW(orte_plm_process_caddy_t);
+            caddy->argc = argc;
+            caddy->argv = opal_argv_copy(argv);
+            caddy->daemon = node->daemon;
+            OBJ_RETAIN(caddy->daemon);
+            opal_list_append(&launch_list, &caddy->super);
         }
     }
 
-    /* wait for daemons to callback */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:process: daemon launch failed on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_ERROR_NAME(rc)));
-        goto cleanup;
-    }
+    /* set the job state to indicate the daemons are launched */
+    state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
     
-launch_apps:
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:process: launch of apps failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
-        goto cleanup;
-    }
+    /* trigger the event to start processing the launch list */
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:process: activating launch event",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    opal_event_active(&launch_event, EV_WRITE, 1);
     
-    /* get here if launch went okay */
-    failed_launch = false;
+    if (NULL != lib_base) {
+        free(lib_base);
+    }
+    if (NULL != bin_base) {
+        free(bin_base);
+    }
+
+    if (NULL != argv) {
+        opal_argv_free(argv);
+    }
+    /* now that we've launched the daemons, let the daemon callback
+     * function determine they are all alive and trigger the next stage
+     */
+    OBJ_RELEASE(state);
+    return;
     
- cleanup:
+cleanup:
     if (NULL != lib_base) {
         free(lib_base);
     }
@@ -1380,14 +1445,8 @@ launch_apps:
         opal_argv_free(argv);
     }
 
-    /* check for failed launch - if so, force terminate */
-    if( failed_launch ) {
-        orte_errmgr.update_state(jdata->jobid, job_state,
-                                 NULL, ORTE_PROC_STATE_UNDEF,
-                                 0, ORTE_ERROR_DEFAULT_EXIT_CODE);
-    }
-
-    return rc;
+    OBJ_RELEASE(state);
+    ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
 }
 
 

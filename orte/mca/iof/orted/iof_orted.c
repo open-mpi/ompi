@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -124,7 +126,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     orte_iof_sink_t *sink;
     char *outfile;
     int fdout;
-    orte_odls_job_t *jobdat=NULL;
+    orte_job_t *jobdat=NULL;
     int np, numdigs;
     orte_ns_cmp_bitmask_t mask;
 
@@ -161,20 +163,11 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     proct = OBJ_NEW(orte_iof_proc_t);
     proct->name.jobid = dst_name->jobid;
     proct->name.vpid = dst_name->vpid;
-    ORTE_EPOCH_SET(proct->name.epoch,dst_name->epoch);
     opal_list_append(&mca_iof_orted_component.procs, &proct->super);
     /* see if we are to output to a file */
     if (NULL != orte_output_filename) {
         /* get the local jobdata for this proc */
-        for (item = opal_list_get_first(&orte_local_jobdata);
-             item != opal_list_get_end(&orte_local_jobdata);
-             item = opal_list_get_next(item)) {
-            jobdat = (orte_odls_job_t*)item;
-            if (jobdat->jobid == proct->name.jobid) {
-                break;
-            }
-        }
-        if (NULL == jobdat) {
+        if (NULL == (jobdat = orte_get_job_data_object(proct->name.jobid))) {
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
@@ -222,11 +215,11 @@ SETUP:
      */
     if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
         proct->revstdout->active = true;
-        opal_event_add(&(proct->revstdout->ev), 0);
+        opal_event_add(proct->revstdout->ev, 0);
         proct->revstderr->active = true;
-        opal_event_add(&(proct->revstderr->ev), 0);
+        opal_event_add(proct->revstderr->ev, 0);
         proct->revstddiag->active = true;
-        opal_event_add(&(proct->revstddiag->ev), 0);
+        opal_event_add(proct->revstddiag->ev, 0);
     }
     return ORTE_SUCCESS;
 }
@@ -389,7 +382,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                  * when the fd is ready.
                  */
                 wev->pending = true;
-                opal_event_add(&wev->ev, 0);
+                opal_event_add(wev->ev, 0);
                 goto CHECK;
             }            
             /* otherwise, something bad happened so all we can do is declare an
@@ -419,7 +412,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
              * when the fd is ready. 
              */
             wev->pending = true;
-            opal_event_add(&wev->ev, 0);
+            opal_event_add(wev->ev, 0);
             goto CHECK;
         }
         OBJ_RELEASE(output);

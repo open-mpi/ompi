@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -24,8 +26,6 @@
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/info/info.h"
 #include "ompi/mca/pubsub/pubsub.h"
-
-#include "opal/util/opal_sos.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Unpublish_name = PMPI_Unpublish_name
@@ -68,13 +68,13 @@ int MPI_Unpublish_name(char *service_name, MPI_Info info,
      */
     rc = ompi_pubsub.unpublish(service_name, info);
     if ( OMPI_SUCCESS != rc ) {
-        if (OMPI_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        if (OMPI_ERR_NOT_FOUND == rc) {
             /* service couldn't be found */
             OPAL_CR_EXIT_LIBRARY();
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_SERVICE,
                                           FUNC_NAME);
         }
-        if (OMPI_ERR_PERM == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        if (OMPI_ERR_PERM == rc) {
             /* this process didn't own the specified service */
             OPAL_CR_EXIT_LIBRARY();
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ACCESS,

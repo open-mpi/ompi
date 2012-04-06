@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,6 +42,8 @@
 
 #include "opal/dss/dss_types.h"
 #include "opal/mca/hwloc/hwloc.h"
+
+#include "orte/mca/grpcomm/grpcomm_types.h"
 
 BEGIN_C_DECLS
 
@@ -117,11 +121,10 @@ struct orte_proc_info_t {
     opal_hwloc_level_t bind_level;
     unsigned int bind_idx;
 #endif
-    /* name/instance info for debug support */
-    char *job_name;
-    char *job_instance;
-    char *executable;
     int32_t app_rank;
+    orte_grpcomm_coll_id_t peer_modex;   /**< modex collective id */
+    orte_grpcomm_coll_id_t peer_init_barrier;   /**< barrier id during init */
+    orte_grpcomm_coll_id_t peer_fini_barrier;   /**< barrier id during finalize */
 };
 typedef struct orte_proc_info_t orte_proc_info_t;
 

@@ -8,6 +8,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -45,12 +47,6 @@ int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type)
             *size = sizeof(orte_std_cntr_t);
             break;
 
-#if ORTE_ENABLE_EPOCH
-        case ORTE_EPOCH:
-            *size = sizeof(orte_epoch_t);
-            break;
-#endif
-            
         case ORTE_VPID:
             *size = sizeof(orte_vpid_t);
             break;
@@ -88,10 +84,6 @@ int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type)
             *size = sizeof(orte_rml_tag_t);
             break;
 
-        case ORTE_GRPCOMM_MODE:
-            *size = sizeof(orte_grpcomm_mode_t);
-            break;
-            
         case ORTE_IOF_TAG:
             *size = sizeof(orte_iof_tag_t);
             break;

@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -285,7 +287,7 @@ mca_pml_ob1_send_request_schedule_exclusive(mca_pml_ob1_send_request_t* sendreq)
     int rc;
     do {
         rc = mca_pml_ob1_send_request_schedule_once(sendreq);
-        if(OPAL_SOS_GET_ERROR_CODE(rc) == OMPI_ERR_OUT_OF_RESOURCE)
+        if(rc == OMPI_ERR_OUT_OF_RESOURCE)
             break;
     } while(!unlock_send_request(sendreq));
 
@@ -444,7 +446,7 @@ mca_pml_ob1_send_request_start( mca_pml_ob1_send_request_t* sendreq )
         /* select a btl */
         bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
         rc = mca_pml_ob1_send_request_start_btl(sendreq, bml_btl);
-        if( OPAL_LIKELY(OMPI_ERR_OUT_OF_RESOURCE != OPAL_SOS_GET_ERROR_CODE(rc)) )
+        if( OPAL_LIKELY(OMPI_ERR_OUT_OF_RESOURCE != rc) )
             return rc;
     }
     add_request_to_send_pending(sendreq, MCA_PML_OB1_SEND_PENDING_START, true);

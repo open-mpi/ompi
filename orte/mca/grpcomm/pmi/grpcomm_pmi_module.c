@@ -3,7 +3,7 @@
  * Copyright (c) 2007      The Trustees of Indiana University.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC. All
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All
  *                         rights reserved.
  * $COPYRIGHT$
  *
@@ -40,16 +40,14 @@ static void finalize(void);
 static int xcast(orte_jobid_t job,
                  opal_buffer_t *buffer,
                  orte_rml_tag_t tag);
-static int pmi_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
-static int pmi_allgather_list(opal_list_t *names,
-                              opal_buffer_t *sbuf, opal_buffer_t *rbuf);
-static int pmi_barrier(void);
+static int pmi_allgather(orte_grpcomm_collective_t *coll);
+static int pmi_barrier(orte_grpcomm_collective_t *coll);
 static int pmi_set_proc_attr(const char* attr_name, 
                              const void *buffer, size_t size);
 static int pmi_get_proc_attr(const orte_process_name_t name,
                              const char* attr_name,
                              void **buffer, size_t *size);
-static int modex(opal_list_t *procs);
+static int modex(orte_grpcomm_collective_t *coll);
 static int purge_proc_attrs(void);
 
 /* Module def */
@@ -58,7 +56,6 @@ orte_grpcomm_base_module_t orte_grpcomm_pmi_module = {
     finalize,
     xcast,
     pmi_allgather,
-    pmi_allgather_list,
     pmi_barrier,
     pmi_set_proc_attr,
     pmi_get_proc_attr,
@@ -165,7 +162,7 @@ static int xcast(orte_jobid_t job,
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
-static int pmi_barrier(void)
+static int pmi_barrier(orte_grpcomm_collective_t *coll)
 {
     int rc;
     
@@ -173,11 +170,15 @@ static int pmi_barrier(void)
                          "%s grpcomm:pmi entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* if I am alone, just return */
+    /* if I am alone, just execute the callback */
     if (1 == orte_process_info.num_procs) {
         OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                              "%s grpcomm:pmi:barrier only one proc",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        coll->active = false;
+        if (NULL != coll->cbfunc) {
+            coll->cbfunc(NULL, coll->cbdata);
+        }
         return ORTE_SUCCESS;
     }
     
@@ -198,22 +199,18 @@ static int pmi_barrier(void)
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                          "%s grpcomm:pmi barrier complete",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+    /* execute the callback */
+    coll->active = false;
+    if (NULL != coll->cbfunc) {
+        coll->cbfunc(NULL, coll->cbdata);
+    }
 
     return ORTE_SUCCESS;
 }
 
-static int pmi_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
+static int pmi_allgather(orte_grpcomm_collective_t *coll)
 {
     /* not used in this implementation */
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-static int pmi_allgather_list(opal_list_t *names,
-                              opal_buffer_t *sbuf, opal_buffer_t *rbuf)
-{
-    /* no idea how to do this - only occurs for comm_spawn,
-     * which this module doesn't support
-     */
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
@@ -285,7 +282,7 @@ static int pmi_get_proc_attr(const orte_process_name_t name,
 }
 
 /***   MODEX SECTION ***/
-static int modex(opal_list_t *procs)
+static int modex(orte_grpcomm_collective_t *coll)
 {
     int rc, i;
     size_t len;
@@ -520,28 +517,17 @@ static int modex(opal_list_t *procs)
             rc = kvs_get(pmi_kvs_key, pmi_attr_val, pmi_vallen_max);
             /* don't error out here - if not found, that's okay */
             if (PMI_SUCCESS == rc) {
-                if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &name, ORTE_PROC_MY_NAME)) {
+                if (name.jobid == ORTE_PROC_MY_NAME->jobid &&
+                    name.vpid == ORTE_PROC_MY_NAME->vpid) {
                     /* if this data is from myself, then set locality to all */
-                    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                         "%s grpcomm:pmi setting proc %s locale ALL",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&name)));
-                    pmap->locality = OPAL_PROC_ALL_LOCAL;
+                     pmap->locality = OPAL_PROC_ALL_LOCAL;
                 } else if (loc->daemon != ORTE_PROC_MY_DAEMON->vpid) {
                     /* this is on a different node, then mark as non-local */
-                    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                         "%s grpcomm:pmi setting proc %s locale NONLOCAL",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&name)));
                     pmap->locality = OPAL_PROC_NON_LOCAL;
                 } else if (0 == strlen(pmi_attr_val)){
                     /* if we share a node, but we don't know anything more, then
                      * mark us as on the node as this is all we know
                      */
-                    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                         "%s grpcomm:pmi setting proc %s locale NODE",
-                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                         ORTE_NAME_PRINT(&name)));
                     pmap->locality = OPAL_PROC_ON_NODE;
                 } else {
                     bind_level = strtol(pmi_attr_val, NULL, 10);
@@ -560,13 +546,13 @@ static int modex(opal_list_t *procs)
                                                                                orte_process_info.bind_level,
                                                                                orte_process_info.bind_idx,
                                                                                bind_level, bind_idx);
-                        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                                             "%s grpcommpmi setting proc %s locale %s",
-                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                             ORTE_NAME_PRINT(&name),
-                                             opal_hwloc_base_print_locality(pmap->locality)));
                     }
                 }
+                OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
+                                     "%s grpcomm:pmi setting proc %s locale %s",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                     ORTE_NAME_PRINT(&name),
+                                     opal_hwloc_base_print_locality(pmap->locality)));
             }
         }
 #endif
@@ -575,7 +561,12 @@ static int modex(opal_list_t *procs)
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:pmi: modex completed",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
+
+    /* execute the callback */
+    coll->active = false;
+    if (NULL != coll->cbfunc) {
+        coll->cbfunc(NULL, coll->cbdata);
+    }
     return rc;
 }
 

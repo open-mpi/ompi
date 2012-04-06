@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,15 +39,6 @@ BEGIN_C_DECLS
 /*
  * Base API functions
  */
-
-/*
- * Map a job
- * All calls to rmaps.map_job are routed through this function. This allows callers to
- * the RMAPS framework to specify the particular mapper they wish to use.
- */
-ORTE_DECLSPEC int orte_rmaps_base_map_job(orte_job_t *jdata);
-ORTE_DECLSPEC orte_job_map_t* orte_rmaps_base_get_job_map(orte_jobid_t job);
-
 
 /* LOCAL FUNCTIONS for use by RMAPS components */
 

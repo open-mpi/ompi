@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,12 +33,11 @@
 #include "opal/dss/dss.h"
 
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/util/name_fns.h"
+#include "orte/mca/state/state.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/orted/orted.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
@@ -65,7 +66,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     opal_list_item_t *item;
     orte_iof_proc_t *proct;
     orte_ns_cmp_bitmask_t mask;
-    
+
     OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
     
     /* read up to the fragment size */
@@ -90,7 +91,7 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
             /* either we have a connection error or it was a non-blocking read */
             if (EAGAIN == errno || EINTR == errno) {
                 /* non-blocking, retry */
-                opal_event_add(&rev->ev, 0);
+                opal_event_add(rev->ev, 0);
                 OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
                 return;
             } 
@@ -164,14 +165,14 @@ void orte_iof_orted_read_handler(int fd, short event, void *cbdata)
     orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_IOF_HNP,
                             0, send_cb, NULL);
     
-RESTART:
+ RESTART:
     /* re-add the event */
-    opal_event_add(&rev->ev, 0);
+    opal_event_add(rev->ev, 0);
 
     OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
     return;
    
-CLEAN_RETURN:
+ CLEAN_RETURN:
     /* must be an error, or zero bytes were read indicating that the
      * proc terminated this IOF channel - either way, find this proc
      * on our list and clean up
@@ -202,24 +203,9 @@ CLEAN_RETURN:
             if (NULL == proct->revstdout &&
                 NULL == proct->revstderr &&
                 NULL == proct->revstddiag) {
-                opal_buffer_t cmdbuf;
-                orte_daemon_cmd_flag_t command;
                 /* this proc's iof is complete */
                 opal_list_remove_item(&mca_iof_orted_component.procs, item);
-                /* setup a cmd to notify that the iof is complete */
-                OBJ_CONSTRUCT(&cmdbuf, opal_buffer_t);
-                command = ORTE_DAEMON_IOF_COMPLETE;
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &command, 1, ORTE_DAEMON_CMD))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
-                }
-                if (ORTE_SUCCESS != (rc = opal_dss.pack(&cmdbuf, &proct->name, 1, ORTE_NAME))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
-                }
-                ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &cmdbuf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
-            CLEANUP:
-                OBJ_DESTRUCT(&cmdbuf);
+                ORTE_ACTIVATE_PROC_STATE(&proct->name, ORTE_PROC_STATE_IOF_COMPLETE);
                 OBJ_RELEASE(proct);
             }
             break;

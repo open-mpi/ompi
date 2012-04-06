@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2012 Oracle and/or its affiliates.  All rights reserved.
@@ -1125,8 +1125,8 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
     if (OMPI_SUCCESS != rc) {
         /* If we're "out of memory", this usually means that we ran
            out of registered memory, so show that error message */
-        if (OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc) ||
-            OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        if (OMPI_ERR_OUT_OF_RESOURCE == rc ||
+            OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
             errno = ENOMEM;
             mca_btl_openib_show_init_error(__FILE__, __LINE__,
                                            "ompi_free_list_init_ex_new",
@@ -1161,8 +1161,8 @@ static int prepare_device_for_use(mca_btl_openib_device_t *device)
             /* If we're "out of memory", this usually means that we
                ran out of registered memory, so show that error
                message */
-            if (OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc) ||
-                OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
+            if (OMPI_ERR_OUT_OF_RESOURCE == rc ||
+                OMPI_ERR_TEMP_OUT_OF_RESOURCE == rc) {
                 errno = ENOMEM;
                 mca_btl_openib_show_init_error(__FILE__, __LINE__,
                                                "ompi_free_list_init_ex_new",
@@ -1658,11 +1658,11 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                                     device->ib_dev_attr.vendor_part_id,
                                     &values);
     if (OMPI_SUCCESS != ret &&
-        OMPI_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret)) {
+        OMPI_ERR_NOT_FOUND != ret) {
         /* If we get a serious error, propagate it upwards */
         goto error;
     }
-    if (OMPI_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret)) {
+    if (OMPI_ERR_NOT_FOUND == ret) {
         /* If we didn't find a matching device in the INI files, output a
            warning that we're using default values (unless overridden
            that we don't want to see these warnings) */
@@ -1679,7 +1679,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
        be set indicating that it does not have good values */
     ret = ompi_btl_openib_ini_query(0, 0, &default_values);
     if (OMPI_SUCCESS != ret &&
-        OMPI_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret)) {
+        OMPI_ERR_NOT_FOUND != ret) {
         /* If we get a serious error, propagate it upwards */
         goto error;
     }
@@ -1841,7 +1841,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
                 device, &mpool_resources);
     if(NULL == device->mpool){
         /* Don't print an error message here -- we'll get one from
-           mpool_create anyway (OPAL_SOS would be good here...) */
+           mpool_create anyway */
          goto error;
     }
 
@@ -1899,7 +1899,7 @@ static int init_one_device(opal_list_t *btl_list, struct ibv_device* ib_dev)
             if (OMPI_SUCCESS != ret) {
                 /* Out of bounds error indicates that we hit max btl number
                  * don't propagate the error to the caller */
-                if (OMPI_ERR_VALUE_OUT_OF_BOUNDS == OPAL_SOS_GET_ERROR_CODE(ret)) {
+                if (OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret) {
                     ret = OMPI_SUCCESS;
                 }
                 break;
@@ -2830,7 +2830,7 @@ btl_openib_component_init(int *num_btl_modules,
         /* If we get NOT_SUPPORTED, then no CPC was found for this
            port.  But that's not a fatal error -- just keep going;
            let's see if we find any usable openib modules or not. */
-        if (OMPI_ERR_NOT_SUPPORTED == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        if (OMPI_ERR_NOT_SUPPORTED == ret) {
             continue;
         } else if (OMPI_SUCCESS != ret) {
             /* All others *are* fatal.  Note that we already did a
@@ -2994,7 +2994,7 @@ static int progress_no_credits_pending_frags(mca_btl_base_endpoint_t *ep)
                    error upward. */
                 rc = mca_btl_openib_endpoint_post_send(ep, to_send_frag(frag));
                 if (OPAL_UNLIKELY(OMPI_SUCCESS != rc &&
-                                  OMPI_ERR_RESOURCE_BUSY != OPAL_SOS_GET_ERROR_CODE(rc))) {
+                                  OMPI_ERR_RESOURCE_BUSY != rc)) {
                     OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
                     return rc;
                 }
@@ -3023,7 +3023,7 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
             break;
         rc = mca_btl_openib_get((mca_btl_base_module_t *)openib_btl, ep,
                                 &to_base_frag(frag)->base);
-        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc))
+        if(OMPI_ERR_OUT_OF_RESOURCE == rc)
             break;
     }
 
@@ -3036,7 +3036,7 @@ void mca_btl_openib_frag_progress_pending_put_get(mca_btl_base_endpoint_t *ep,
             break;
         rc = mca_btl_openib_put((mca_btl_base_module_t*)openib_btl, ep,
                                 &to_base_frag(frag)->base);
-        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc))
+        if(OMPI_ERR_OUT_OF_RESOURCE == rc)
             break;
     }
 }

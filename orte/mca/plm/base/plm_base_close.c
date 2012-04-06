@@ -59,14 +59,6 @@ int orte_plm_base_close(void)
         orte_plm.finalize();
     }
     
-    /* clearout the orted cmd locks */
-    OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_lock);
-    OBJ_DESTRUCT(&orte_plm_globals.orted_cmd_cond);
-    
-    /* clearout the spawn locks */
-    OBJ_DESTRUCT(&orte_plm_globals.spawn_lock);
-    OBJ_DESTRUCT(&orte_plm_globals.spawn_cond);
-    
     /* Close all open components */
     mca_base_components_close(orte_plm_globals.output, 
                               &orte_plm_base.available_components, NULL);

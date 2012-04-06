@@ -8,6 +8,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -28,7 +30,6 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 
 #include "opal/mca/crs/base/static-components.h"
 
@@ -95,7 +96,7 @@ int opal_crs_base_open(void)
                                                         mca_crs_base_static_components,
                                                         &opal_crs_base_components_available,
                                                         true)) ) {
-        if( OPAL_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret) &&
+        if( OPAL_ERR_NOT_FOUND == ret &&
             NULL != str_value &&
             0 == strncmp(str_value, "none", strlen("none")) ) {
             exit_status = OPAL_SUCCESS;

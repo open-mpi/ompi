@@ -66,6 +66,8 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
+#include "orte/mca/state/state.h"
+#include "orte/mca/state/base/base.h"
 #if !ORTE_DISABLE_FULL_SUPPORT
 #include "orte/mca/notifier/notifier.h"
 #include "orte/mca/notifier/base/base.h"
@@ -239,9 +241,7 @@ void orte_info_open_components(void)
     map->components = &opal_memory_base_components_opened;
     opal_pointer_array_add(&component_map, map);
     
-    if (OPAL_SUCCESS != opal_event_base_open()) {
-        goto error;
-    }
+    /* the event framework is already open - just get its components */
     map = OBJ_NEW(orte_info_component_map_t);
     map->type = strdup("event");
     map->components = &opal_event_components;
@@ -338,6 +338,14 @@ void orte_info_open_components(void)
      */
     orte_process_info.proc_type = ORTE_PROC_HNP;
     
+    if (ORTE_SUCCESS != orte_state_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(orte_info_component_map_t);
+    map->type = strdup("state");
+    map->components = &orte_state_base_components_available;
+    opal_pointer_array_add(&component_map, map);
+
     if (ORTE_SUCCESS != orte_errmgr_base_open()) {
         goto error;
     }
@@ -527,7 +535,8 @@ void orte_info_close_components()
         (void) mca_oob_base_close();
 #endif
         (void) orte_errmgr_base_close();
-        
+        (void) orte_state_base_close();
+
         (void) opal_backtrace_base_close();
         (void) opal_memory_base_close();
         (void) opal_memchecker_base_close();

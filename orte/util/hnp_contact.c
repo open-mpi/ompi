@@ -54,7 +54,6 @@ static void orte_hnp_contact_construct(orte_hnp_contact_t *ptr)
 {
     ptr->name.jobid = ORTE_JOBID_INVALID;
     ptr->name.vpid = ORTE_VPID_INVALID;
-    ORTE_EPOCH_SET(ptr->name.epoch,ORTE_EPOCH_MIN);
 
     ptr->rml_uri = NULL;
 }

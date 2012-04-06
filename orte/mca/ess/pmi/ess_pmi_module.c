@@ -63,7 +63,7 @@
 
 static int rte_init(void);
 static int rte_finalize(void);
-static void rte_abort(int error_code, bool report) __opal_attribute_noreturn__;
+static void rte_abort(int error_code, bool report);
 
 orte_ess_base_module_t orte_ess_pmi_module = {
     rte_init,
@@ -74,7 +74,6 @@ orte_ess_base_module_t orte_ess_pmi_module = {
     orte_ess_base_proc_get_hostname,
     orte_ess_base_proc_get_local_rank,
     orte_ess_base_proc_get_node_rank,
-    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     orte_ess_base_update_pidmap,
     orte_ess_base_update_nidmap,
     NULL /* ft_event */
@@ -223,13 +222,10 @@ static int rte_init(void)
         free(cs_env);
         free(string_key);
 
-        /* get our app_context number */
-        if (PMI_SUCCESS != (ret = PMI_Get_appnum(&i))) {
-            ORTE_PMI_ERROR(ret, "PMI_Get_appnum");
-            error = "could not get PMI appnum";
-            goto error;
-        }
-        orte_process_info.app_num = i;
+        /* our app_context number can only be 0 as we don't support
+         * dynamic spawns
+         */
+        orte_process_info.app_num = 0;
 
         /* setup the nidmap arrays - they will be filled by the modex */
         if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
@@ -306,9 +302,6 @@ static int rte_init(void)
             goto error;
         }
     }
-
-    /* complete definition of process name */
-    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_MIN);
 
     /* set max procs */
     if (orte_process_info.max_procs < orte_process_info.num_procs) {

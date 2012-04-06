@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,7 +59,7 @@ void mca_pml_bfo_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
         switch(pending_type) {
         case MCA_PML_BFO_SEND_PENDING_SCHEDULE:
             rc = mca_pml_bfo_send_request_schedule_exclusive(sendreq);
-            if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
+            if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
                 return;
             }
             break;
@@ -70,7 +72,7 @@ void mca_pml_bfo_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
                         MCA_PML_BFO_SEND_PENDING_START, true);
             } else {
                 rc = mca_pml_bfo_send_request_start_btl(sendreq, send_dst);
-                if (OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
+                if (OMPI_ERR_OUT_OF_RESOURCE == rc) {
                     /* No more resources on this btl so prepend to the pending
                      * list to minimize reordering and give up for now. */
                     add_request_to_send_pending(sendreq,
@@ -618,8 +620,7 @@ int mca_pml_bfo_send_request_start_copy( mca_pml_bfo_send_request_t* sendreq,
         }
         return OMPI_SUCCESS;
     }
-
-    if (OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc)) {
+    if (OMPI_ERR_RESOURCE_BUSY == rc) {
         /* No more resources. Allow the upper level to queue the send */
         rc = OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -1311,7 +1312,7 @@ int mca_pml_bfo_send_request_put_frag( mca_pml_bfo_rdma_frag_t* frag )
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, des);
         frag->rdma_length = save_size;
-        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
             OPAL_THREAD_LOCK(&mca_pml_bfo.lock);
             opal_list_append(&mca_pml_bfo.rdma_pending, (opal_list_item_t*)frag);
             OPAL_THREAD_UNLOCK(&mca_pml_bfo.lock);

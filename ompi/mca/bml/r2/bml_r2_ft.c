@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -25,12 +25,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opal/runtime/opal_progress.h"
+
+#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/util/proc_info.h"
+
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/bml/base/bml_base_btl.h" 
 #include "ompi/mca/pml/base/base.h"
-#include "orte/mca/grpcomm/grpcomm.h"
 #include "ompi/proc/proc.h"
 
 #include "bml_r2.h"
@@ -47,6 +51,7 @@ int mca_bml_r2_ft_event(int state)
     int loc_state;
     int param_type = -1;
     char *param_list = NULL;
+    orte_grpcomm_collective_t coll;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Do nothing for now */
@@ -153,9 +158,14 @@ int mca_bml_r2_ft_event(int state)
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.
              */
-            if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+            coll.id = orte_process_info.peer_init_barrier;
+            if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
                 opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
                 return ret;
+            }
+            while (coll.active) {
+                opal_progress();
             }
 
             /*
@@ -226,9 +236,14 @@ int mca_bml_r2_ft_event(int state)
          * Barrier to make all processes have been successfully restarted before
          * we try to remove some restart only files.
          */
-        if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
+        coll.id = orte_process_info.peer_init_barrier;
+        if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
             opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
             return ret;
+        }
+        while (coll.active) {
+            opal_progress();
         }
 
         /*

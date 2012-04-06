@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +31,6 @@
 #include "ompi/constants.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_pointer_array.h"
-#include "opal/util/opal_sos.h"
 
 #define OMPI_MAX_ERROR_STRING 64
 
@@ -51,17 +52,12 @@ OMPI_DECLSPEC extern opal_pointer_array_t ompi_errcodes_intern;
 OMPI_DECLSPEC extern int ompi_errcode_intern_lastused;
 
 /** 
- * Return the MPI errcode for a given internal error code.  This
- * function guarantees to return a non-OPAL_SOS-encoded error code.
- */
+ * Return the MPI errcode for a given internal error code. */
 static inline int ompi_errcode_get_mpi_code(int errcode)
 {
     int ret = MPI_ERR_UNKNOWN;
     int i;
     ompi_errcode_intern_t *errc;
-
-    /* Transmogrify, if necessary */
-    errcode = OPAL_SOS_GET_ERROR_CODE(errcode);
 
     /* If the errcode is >= 0, then it's already an MPI error code, so
        just return it. */

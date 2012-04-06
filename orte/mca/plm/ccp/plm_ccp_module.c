@@ -483,7 +483,7 @@ static int plm_ccp_launch_job(orte_job_t *jdata)
 
         
         /* Allow some progress to occur */
-        opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_NONBLOCK);
         
         launched++;
 

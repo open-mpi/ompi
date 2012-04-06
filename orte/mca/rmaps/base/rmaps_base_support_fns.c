@@ -357,11 +357,6 @@ orte_proc_t* orte_rmaps_base_setup_proc(orte_job_t *jdata,
     proc = OBJ_NEW(orte_proc_t);
     /* set the jobid */
     proc->name.jobid = jdata->jobid;
-    /* we do not set the vpid here - this will be done
-     * during a second phase, but we do set the epoch here
-     * since they all start with the same value.
-     */
-    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
     /* flag the proc as ready for launch */
     proc->state = ORTE_PROC_STATE_INIT;
     proc->app_idx = idx;
