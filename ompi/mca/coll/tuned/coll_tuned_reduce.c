@@ -483,9 +483,7 @@ int ompi_coll_tuned_reduce_intra_in_order_binary( void *sendbuf, void *recvbuf,
                                                   uint32_t segsize,
                                                   int max_outstanding_reqs  )
 {
-    int ret;
-    int rank, size, io_root;
-    int segcount = count;
+    int ret, rank, size, io_root, segcount = count;
     void *use_this_sendbuf = NULL, *use_this_recvbuf = NULL;
     size_t typelng;
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
@@ -603,10 +601,8 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 {
     int i, rank, err, size;
     ptrdiff_t true_lb, true_extent, lb, extent;
-    char *free_buffer = NULL;
-    char *pml_buffer = NULL;
-    char *inplace_temp = NULL;
-    char *inbuf;
+    char *free_buffer = NULL, *pml_buffer = NULL;
+    char *inplace_temp = NULL, *inbuf;
 
     /* Initialize */
 

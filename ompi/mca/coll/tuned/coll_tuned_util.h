@@ -52,7 +52,7 @@ ompi_coll_tuned_sendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdataty
 {
     if ((dest == myid) && (source == myid)) {
         return (int) ompi_datatype_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
-                                     recvbuf, (int32_t) rcount, rdatatype);
+                                          recvbuf, (int32_t) rcount, rdatatype);
     }
     return ompi_coll_tuned_sendrecv_actual (sendbuf, scount, sdatatype, 
                                             dest, stag, 
@@ -85,7 +85,7 @@ ompi_coll_tuned_sendrecv_localcompleted( void* sendbuf, size_t scount,
 {
     if ((dest == myid) && (source == myid)) {
         return (int) ompi_datatype_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
-                                     recvbuf, (int32_t) rcount, rdatatype);
+                                          recvbuf, (int32_t) rcount, rdatatype);
     }
     return ompi_coll_tuned_sendrecv_actual_localcompleted (sendbuf, scount, 
                                                            sdatatype, dest, 
@@ -103,20 +103,20 @@ ompi_coll_tuned_isendrecv( void* sendbuf, size_t scount, ompi_datatype_t* sdtype
                            void* recvbuf, size_t rcount, ompi_datatype_t* rdtype,
                            int source, int rtag, ompi_request_t** rreq,
                            struct ompi_communicator_t* comm ) {
-   int ret, line;
+    int ret, line;
    
-   ret = MCA_PML_CALL(irecv(recvbuf, rcount, rdtype, source, rtag, comm, rreq));
-   if (MPI_SUCCESS != ret) { line = __LINE__; goto error_handler; }
+    ret = MCA_PML_CALL(irecv(recvbuf, rcount, rdtype, source, rtag, comm, rreq));
+    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_handler; }
 
-   ret = MCA_PML_CALL(isend(sendbuf, scount, sdtype, dest, stag, 
-                            MCA_PML_BASE_SEND_STANDARD, comm, sreq));
-   if (MPI_SUCCESS != ret) { line = __LINE__; goto error_handler; }
+    ret = MCA_PML_CALL(isend(sendbuf, scount, sdtype, dest, stag, 
+                             MCA_PML_BASE_SEND_STANDARD, comm, sreq));
+    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_handler; }
    
-   return MPI_SUCCESS;
+    return MPI_SUCCESS;
  error_handler:
-   OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%d\tError occurred %d\n",
-                __FILE__, line, ret));
-   return ret;
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "%s:%d\tError occurred %d\n",
+                 __FILE__, line, ret));
+    return ret;
 }
 
 END_C_DECLS

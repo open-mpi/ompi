@@ -79,7 +79,7 @@ ompi_coll_msg_rule_t* ompi_coll_tuned_mk_msg_rules (int n_msg_rules, int alg_rul
     msg_rules = (ompi_coll_msg_rule_t *) calloc (n_msg_rules, sizeof (ompi_coll_msg_rule_t));
     if (!msg_rules) return (msg_rules);
 
-    for (i=0;i<n_msg_rules;i++) {
+    for( i = 0; i < n_msg_rules; i++ ) {
         msg_rules[i].mpi_comsize = mpi_comsize;
         msg_rules[i].alg_rule_id = alg_rule_id;
         msg_rules[i].com_rule_id = com_rule_id;
@@ -98,8 +98,6 @@ ompi_coll_msg_rule_t* ompi_coll_tuned_mk_msg_rules (int n_msg_rules, int alg_rul
  * Debug / IO routines 
  *
  */ 
-
-
 int ompi_coll_tuned_dump_msg_rule (ompi_coll_msg_rule_t* msg_p)
 {
     if (!msg_p) {
@@ -193,8 +191,6 @@ int ompi_coll_tuned_dump_all_rules (ompi_coll_alg_rule_t* alg_p, int n_rules)
  * Memory free routines
  *
  */
-
-
 int ompi_coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p)
 {
     int rc=0;
@@ -224,7 +220,6 @@ int ompi_coll_tuned_free_msg_rules_in_com_rule (ompi_coll_com_rule_t* com_p)
 }
 
 
-
 int ompi_coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
 {
     int rc=0;
@@ -242,10 +237,9 @@ int ompi_coll_tuned_free_coms_in_alg_rule (ompi_coll_alg_rule_t* alg_p)
 
         if (!com_p) {
             OPAL_OUTPUT((ompi_coll_tuned_stream,"attempt to free NULL com_rules when com count was %d\n", alg_p->n_com_sizes));
-        }
-        else {
+        } else {
             /* ok, memory exists for the com rules so free their message rules first */
-            for (i=0;i<alg_p->n_com_sizes;i++) {
+            for( i = 0; i < alg_p->n_com_sizes; i++ ) {
                 com_p = &(alg_p->com_rules[i]);
                 ompi_coll_tuned_free_msg_rules_in_com_rule (com_p);
             }
@@ -265,7 +259,7 @@ int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs)
     int i;
     int rc = 0;
 
-    for(i=0;i<n_algs;i++) {
+    for( i = 0; i < n_algs; i++ ) {
         rc += ompi_coll_tuned_free_coms_in_alg_rule (&(alg_p[i]));
     }
 
@@ -273,8 +267,6 @@ int ompi_coll_tuned_free_all_rules (ompi_coll_alg_rule_t* alg_p, int n_algs)
 
     return (rc);
 }
-
-
 
 /* 
  * query functions

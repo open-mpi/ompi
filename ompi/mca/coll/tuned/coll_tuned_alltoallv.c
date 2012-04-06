@@ -38,9 +38,7 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
                                          struct ompi_communicator_t *comm,
                                          mca_coll_base_module_t *module)
 {
-    int line = -1, err = 0;
-    int rank, size, step;
-    int sendto, recvfrom;
+    int line = -1, err = 0, rank, size, step, sendto, recvfrom;
     void *psnd, *prcv;
     ptrdiff_t sext, rext;
 
@@ -58,7 +56,7 @@ ompi_coll_tuned_alltoallv_intra_pairwise(void *sbuf, int *scounts, int *sdisps,
 
     if (0 != scounts[rank]) {
         err = ompi_datatype_sndrcv(psnd, scounts[rank], sdtype,
-                              prcv, rcounts[rank], rdtype);
+                                   prcv, rcounts[rank], rdtype);
         if (MPI_SUCCESS != err) {
             return err;
         }
@@ -115,9 +113,8 @@ ompi_coll_tuned_alltoallv_intra_basic_linear(void *sbuf, int *scounts, int *sdis
                                             struct ompi_communicator_t *comm,
                                             mca_coll_base_module_t *module)
 {
-    int i, size, rank, err;
+    int i, size, rank, err, nreqs;
     char *psnd, *prcv;
-    int nreqs;
     ptrdiff_t sext, rext;
     MPI_Request *preq;
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
@@ -305,16 +302,16 @@ int ompi_coll_tuned_alltoallv_intra_do_this(void *sbuf, int *scounts, int *sdisp
     switch (algorithm) {
     case (0):
         return ompi_coll_tuned_alltoallv_intra_dec_fixed(sbuf, scounts, sdisps, sdtype,
-                                                        rbuf, rcounts, rdisps, rdtype,
-                                                        comm, module);
+                                                         rbuf, rcounts, rdisps, rdtype,
+                                                         comm, module);
     case (1):
         return ompi_coll_tuned_alltoallv_intra_basic_linear(sbuf, scounts, sdisps, sdtype,
-                                                           rbuf, rcounts, rdisps, rdtype,
-                                                           comm, module);
+                                                            rbuf, rcounts, rdisps, rdtype,
+                                                            comm, module);
     case (2):
         return ompi_coll_tuned_alltoallv_intra_pairwise(sbuf, scounts, sdisps, sdtype,
-                                                       rbuf, rcounts, rdisps, rdtype,
-                                                       comm, module);
+                                                        rbuf, rcounts, rdisps, rdtype,
+                                                        comm, module);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,
                      "coll:tuned:alltoall_intra_do_this attempt to select "

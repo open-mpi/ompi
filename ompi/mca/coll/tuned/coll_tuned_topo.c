@@ -77,13 +77,10 @@ ompi_coll_tuned_topo_build_tree( int fanout,
                                  struct ompi_communicator_t* comm,
                                  int root )
 {
-    int rank, size;
-    int schild, sparent;
+    int rank, size, schild, sparent, shiftedrank, i;
     int level; /* location of my rank in the tree structure of size */
     int delta; /* number of nodes on my level */
     int slimit; /* total number of nodes on levels above me */ 
-    int shiftedrank;
-    int i;
     ompi_coll_tree_t* tree;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:topo_build_tree Building fo %d rt %d", fanout, root));
@@ -192,9 +189,7 @@ ompi_coll_tuned_topo_build_tree( int fanout,
 ompi_coll_tree_t*
 ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
 {
-    int rank, size;
-    int myrank, rightsize, delta;
-    int parent, lchild, rchild;
+    int rank, size, myrank, rightsize, delta, parent, lchild, rchild;
     ompi_coll_tree_t* tree;
 
     /* 
@@ -329,14 +324,8 @@ ompi_coll_tree_t*
 ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
                                    int root )
 {
-    int childs = 0;
-    int rank;
-    int size;
-    int mask = 1;
-    int index;
-    int remote;
+    int childs = 0, rank, size, mask = 1, index, remote, i;
     ompi_coll_tree_t *bmtree;
-    int i;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_bmtree rt %d", root));
 
@@ -358,7 +347,7 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
 
     bmtree->tree_root     = MPI_UNDEFINED;
     bmtree->tree_nextsize = MPI_UNDEFINED;
-    for(i=0;i<MAXTREEFANOUT;i++) {
+    for( i = 0;i < MAXTREEFANOUT; i++ ) {
         bmtree->tree_next[i] = -1;
     }
 
@@ -409,15 +398,10 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
  */
 ompi_coll_tree_t*
 ompi_coll_tuned_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
-					    int root )
+                                            int root )
 {
-    int childs = 0;
-    int rank, vrank;
-    int size;
-    int mask = 1;
-    int remote;
+    int childs = 0, rank, vrank, size, mask = 1, remote, i;
     ompi_coll_tree_t *bmtree;
-    int i;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_in_order_bmtree rt %d", root));
 
@@ -443,25 +427,25 @@ ompi_coll_tuned_topo_build_in_order_bmtree( struct ompi_communicator_t* comm,
     }
 
     if (root == rank) {
-	bmtree->tree_prev = root;
+        bmtree->tree_prev = root;
     }
 
     while (mask < size) {
-	remote = vrank ^ mask;
-	if (remote < vrank) {
-	    bmtree->tree_prev = (remote + root) % size;
-	    break;
-	} else if (remote < size) {
-	    bmtree->tree_next[childs] = (remote + root) % size;
-	    childs++;
-	    if (childs==MAXTREEFANOUT) {
-		OPAL_OUTPUT((ompi_coll_tuned_stream,
-			     "coll:tuned:topo:build_bmtree max fanout incorrect %d needed %d",
-			     MAXTREEFANOUT, childs));
-		return NULL;
-	    }
-	}
-	mask <<= 1;
+        remote = vrank ^ mask;
+        if (remote < vrank) {
+            bmtree->tree_prev = (remote + root) % size;
+            break;
+        } else if (remote < size) {
+            bmtree->tree_next[childs] = (remote + root) % size;
+            childs++;
+            if (childs==MAXTREEFANOUT) {
+                OPAL_OUTPUT((ompi_coll_tuned_stream,
+                             "coll:tuned:topo:build_bmtree max fanout incorrect %d needed %d",
+                             MAXTREEFANOUT, childs));
+                return NULL;
+            }
+        }
+        mask <<= 1;
     }
     bmtree->tree_nextsize = childs;
     bmtree->tree_root     = root;
@@ -475,10 +459,7 @@ ompi_coll_tuned_topo_build_chain( int fanout,
                                   struct ompi_communicator_t* comm,
                                   int root )
 {
-    int rank, size;
-    int srank; /* shifted rank */
-    int i,maxchainlen;
-    int mark,head,len;
+    int i, maxchainlen, mark, head, len, rank, size, srank /* shifted rank */;
     ompi_coll_tree_t *chain;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:build_chain fo %d rt %d", fanout, root));

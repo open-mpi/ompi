@@ -34,22 +34,15 @@
  * gather_intra_pipeline, segmentation? */
 int
 ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
-				      struct ompi_datatype_t *sdtype,
-				      void *rbuf, int rcount,
-				      struct ompi_datatype_t *rdtype,
-				      int root,
-				      struct ompi_communicator_t *comm,
-				      mca_coll_base_module_t *module)
+                                      struct ompi_datatype_t *sdtype,
+                                      void *rbuf, int rcount,
+                                      struct ompi_datatype_t *rdtype,
+                                      int root,
+                                      struct ompi_communicator_t *comm,
+                                      mca_coll_base_module_t *module)
 {
-    int line = -1;
-    int i;
-    int rank;
-    int vrank;
-    int size;
-    int total_recv = 0;
-    char *ptmp     = NULL;
-    char *tempbuf  = NULL;
-    int err;
+    int line = -1, i, rank, vrank, size, total_recv = 0, err;
+    char *ptmp     = NULL, *tempbuf  = NULL;
     ompi_coll_tree_t* bmtree;
     MPI_Status status;
     MPI_Aint sextent, slb, strue_lb, strue_extent; 
@@ -61,7 +54,7 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,
-		 "ompi_coll_tuned_gather_intra_binomial rank %d", rank));
+                 "ompi_coll_tuned_gather_intra_binomial rank %d", rank));
 
     /* create the binomial tree */
     COLL_TUNED_UPDATE_IN_ORDER_BMTREE( comm, tuned_module, root );
@@ -75,127 +68,127 @@ ompi_coll_tuned_gather_intra_binomial(void *sbuf, int scount,
     if (rank == root) {
         ompi_datatype_get_extent(rdtype, &rlb, &rextent);
         ompi_datatype_get_true_extent(rdtype, &rtrue_lb, &rtrue_extent);
-	if (0 == root){
-	    /* root on 0, just use the recv buffer */
-	    ptmp = (char *) rbuf;
-	    if (sbuf != MPI_IN_PLACE) {
-		err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
-				      ptmp, rcount, rdtype);
-		if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-	    }
-	} else {
-	    /* root is not on 0, allocate temp buffer for recv,
-	     * rotate data at the end */
-	    tempbuf = (char *) malloc(rtrue_extent + ((ptrdiff_t)rcount * (ptrdiff_t)size - 1) * rextent);
-	    if (NULL == tempbuf) {
-		err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
-	    }
+        if (0 == root){
+            /* root on 0, just use the recv buffer */
+            ptmp = (char *) rbuf;
+            if (sbuf != MPI_IN_PLACE) {
+                err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
+                                           ptmp, rcount, rdtype);
+                if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+            }
+        } else {
+            /* root is not on 0, allocate temp buffer for recv,
+             * rotate data at the end */
+            tempbuf = (char *) malloc(rtrue_extent + ((ptrdiff_t)rcount * (ptrdiff_t)size - 1) * rextent);
+            if (NULL == tempbuf) {
+                err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
+            }
 
-	    ptmp = tempbuf - rlb;
-	    if (sbuf != MPI_IN_PLACE) {
-		/* copy from sbuf to temp buffer */
-		err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
-				      ptmp, rcount, rdtype);
-		if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-	    } else {
-		/* copy from rbuf to temp buffer  */
-		err = ompi_datatype_copy_content_same_ddt(rdtype, rcount, ptmp, 
-						     (char *)rbuf + (ptrdiff_t)rank * rextent * (ptrdiff_t)rcount);
-		if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-	    }
-	}
-	total_recv = rcount;
+            ptmp = tempbuf - rlb;
+            if (sbuf != MPI_IN_PLACE) {
+                /* copy from sbuf to temp buffer */
+                err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
+                                           ptmp, rcount, rdtype);
+                if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+            } else {
+                /* copy from rbuf to temp buffer  */
+                err = ompi_datatype_copy_content_same_ddt(rdtype, rcount, ptmp, 
+                                                          (char *)rbuf + (ptrdiff_t)rank * rextent * (ptrdiff_t)rcount);
+                if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+            }
+        }
+        total_recv = rcount;
     } else if (!(vrank % 2)) {
-	/* other non-leaf nodes, allocate temp buffer for data received from
-	 * children, the most we need is half of the total data elements due
-	 * to the property of binimoal tree */
-	tempbuf = (char *) malloc(strue_extent + ((ptrdiff_t)scount * (ptrdiff_t)size - 1) * sextent);
-	if (NULL == tempbuf) {
-	    err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
-	}
+        /* other non-leaf nodes, allocate temp buffer for data received from
+         * children, the most we need is half of the total data elements due
+         * to the property of binimoal tree */
+        tempbuf = (char *) malloc(strue_extent + ((ptrdiff_t)scount * (ptrdiff_t)size - 1) * sextent);
+        if (NULL == tempbuf) {
+            err= OMPI_ERR_OUT_OF_RESOURCE; line = __LINE__; goto err_hndl;
+        }
 
-	ptmp = tempbuf - slb;
-	/* local copy to tempbuf */
-	err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
+        ptmp = tempbuf - slb;
+        /* local copy to tempbuf */
+        err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
                                    ptmp, scount, sdtype);
-	if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-	/* use sdtype,scount as rdtype,rdcount since they are ignored on
-	 * non-root procs */
-	rdtype = sdtype;
-	rcount = scount;
-	rextent = sextent;
-	total_recv = rcount;
+        /* use sdtype,scount as rdtype,rdcount since they are ignored on
+         * non-root procs */
+        rdtype = sdtype;
+        rcount = scount;
+        rextent = sextent;
+        total_recv = rcount;
     } else {
-	/* leaf nodes, no temp buffer needed, use sdtype,scount as
-	 * rdtype,rdcount since they are ignored on non-root procs */
-	ptmp = (char *) sbuf;
-	total_recv = scount;
+        /* leaf nodes, no temp buffer needed, use sdtype,scount as
+         * rdtype,rdcount since they are ignored on non-root procs */
+        ptmp = (char *) sbuf;
+        total_recv = scount;
     }
 
     if (!(vrank % 2)) {
-	/* all non-leaf nodes recv from children */
-	for (i = 0; i < bmtree->tree_nextsize; i++) {
-	    int mycount = 0, vkid;
-	    /* figure out how much data I have to send to this child */
-	    vkid = (bmtree->tree_next[i] - root + size) % size;
-	    mycount = vkid - vrank;
-	    if (mycount > (size - vkid))
-		mycount = size - vkid;
-	    mycount *= rcount;
+        /* all non-leaf nodes recv from children */
+        for (i = 0; i < bmtree->tree_nextsize; i++) {
+            int mycount = 0, vkid;
+            /* figure out how much data I have to send to this child */
+            vkid = (bmtree->tree_next[i] - root + size) % size;
+            mycount = vkid - vrank;
+            if (mycount > (size - vkid))
+                mycount = size - vkid;
+            mycount *= rcount;
 
-	    OPAL_OUTPUT((ompi_coll_tuned_stream,
-			 "ompi_coll_tuned_gather_intra_binomial rank %d recv %d mycount = %d",
-			 rank, bmtree->tree_next[i], mycount));
+            OPAL_OUTPUT((ompi_coll_tuned_stream,
+                         "ompi_coll_tuned_gather_intra_binomial rank %d recv %d mycount = %d",
+                         rank, bmtree->tree_next[i], mycount));
 
-	    err = MCA_PML_CALL(recv(ptmp + total_recv*rextent, (ptrdiff_t)rcount * size - total_recv, rdtype,
-				    bmtree->tree_next[i], MCA_COLL_BASE_TAG_GATHER,
-				    comm, &status));
-	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+            err = MCA_PML_CALL(recv(ptmp + total_recv*rextent, (ptrdiff_t)rcount * size - total_recv, rdtype,
+                                    bmtree->tree_next[i], MCA_COLL_BASE_TAG_GATHER,
+                                    comm, &status));
+            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-	    total_recv += mycount;
-	}
+            total_recv += mycount;
+        }
     }
 
     if (rank != root) {
-	/* all nodes except root send to parents */
-	OPAL_OUTPUT((ompi_coll_tuned_stream,
-		     "ompi_coll_tuned_gather_intra_binomial rank %d send %d count %d\n",
-		     rank, bmtree->tree_prev, total_recv));
+        /* all nodes except root send to parents */
+        OPAL_OUTPUT((ompi_coll_tuned_stream,
+                     "ompi_coll_tuned_gather_intra_binomial rank %d send %d count %d\n",
+                     rank, bmtree->tree_prev, total_recv));
 
-	err = MCA_PML_CALL(send(ptmp, total_recv, sdtype,
-				bmtree->tree_prev,
-				MCA_COLL_BASE_TAG_GATHER,
-				MCA_PML_BASE_SEND_STANDARD, comm));
-	if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+        err = MCA_PML_CALL(send(ptmp, total_recv, sdtype,
+                                bmtree->tree_prev,
+                                MCA_COLL_BASE_TAG_GATHER,
+                                MCA_PML_BASE_SEND_STANDARD, comm));
+        if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
     }
 
     if (rank == root) {
-	if (root != 0) {
-	    /* rotate received data on root if root != 0 */
-	    err = ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t)rcount * (ptrdiff_t)(size - root),
-						 (char *)rbuf + rextent * (ptrdiff_t)root * (ptrdiff_t)rcount, ptmp);
-	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+        if (root != 0) {
+            /* rotate received data on root if root != 0 */
+            err = ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t)rcount * (ptrdiff_t)(size - root),
+                                                      (char *)rbuf + rextent * (ptrdiff_t)root * (ptrdiff_t)rcount, ptmp);
+            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
 
-	    err = ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t)rcount * (ptrdiff_t)root,
-						 (char *) rbuf, ptmp + rextent * (ptrdiff_t)rcount * (ptrdiff_t)(size-root));
-	    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
+            err = ompi_datatype_copy_content_same_ddt(rdtype, (ptrdiff_t)rcount * (ptrdiff_t)root,
+                                                      (char *) rbuf, ptmp + rextent * (ptrdiff_t)rcount * (ptrdiff_t)(size-root));
+            if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
-	    free(tempbuf);
-	}
+            free(tempbuf);
+        }
     } else if (!(vrank % 2)) {
-	/* other non-leaf nodes */
-	free(tempbuf);
+        /* other non-leaf nodes */
+        free(tempbuf);
     }
     return MPI_SUCCESS;
 
  err_hndl:
     if (NULL != tempbuf)
-	free(tempbuf);
+        free(tempbuf);
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,  "%s:%4d\tError occurred %d, rank %2d",
-		 __FILE__, line, err, rank));
+                 __FILE__, line, err, rank));
     return err;
 }
 
@@ -213,23 +206,18 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
                                          struct ompi_datatype_t *rdtype,
                                          int root, 
                                          struct ompi_communicator_t *comm,
-					 mca_coll_base_module_t *module,
+                                         mca_coll_base_module_t *module,
                                          int first_segment_size)
 {
-    int i;
-    int ret, line;
-    int rank, size;
-    int first_segment_count;
+    int i, ret, line, rank, size, first_segment_count;
+    MPI_Aint extent, lb;
     size_t typelng;
-    MPI_Aint extent;
-    MPI_Aint lb;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
-
     OPAL_OUTPUT((ompi_coll_tuned_stream,
-		 "ompi_coll_tuned_gather_intra_linear_sync rank %d, segment %d", rank, first_segment_size));
+                 "ompi_coll_tuned_gather_intra_linear_sync rank %d, segment %d", rank, first_segment_size));
 
     if (rank != root) {
         /* Non-root processes:
@@ -259,18 +247,18 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
                                 root, MCA_COLL_BASE_TAG_GATHER,
                                 MCA_PML_BASE_SEND_STANDARD, comm));
         if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
-    }
 
-    else {
+    } else {
+
         /* Root process, 
            - For every non-root node:
-	   - post irecv for the first segment of the message
-	   - send zero byte message to signal node to send the message
-	   - post irecv for the second segment of the message
-	   - wait for the first segment to complete
+           - post irecv for the first segment of the message
+           - send zero byte message to signal node to send the message
+           - post irecv for the second segment of the message
+           - wait for the first segment to complete
            - Copy local data if necessary
            - Waitall for all the second segments to complete.
-	*/
+        */
         char *ptmp;
         ompi_request_t **reqs = NULL, *first_segment_req;
         reqs = (ompi_request_t**) calloc(size, sizeof(ompi_request_t*));
@@ -318,8 +306,8 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
         /* copy local data if necessary */
         if (MPI_IN_PLACE != sbuf) {
             ret = ompi_datatype_sndrcv(sbuf, scount, sdtype,
-                                  (char*)rbuf + (ptrdiff_t)rank * (ptrdiff_t)rcount * extent, 
-                                  rcount, rdtype);
+                                       (char*)rbuf + (ptrdiff_t)rank * (ptrdiff_t)rcount * extent, 
+                                       rcount, rdtype);
             if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         }
         
@@ -362,28 +350,23 @@ ompi_coll_tuned_gather_intra_linear_sync(void *sbuf, int scount,
  */
 int
 ompi_coll_tuned_gather_intra_basic_linear(void *sbuf, int scount,
-					  struct ompi_datatype_t *sdtype,
-					  void *rbuf, int rcount,
-					  struct ompi_datatype_t *rdtype,
-					  int root,
-					  struct ompi_communicator_t *comm,
-					  mca_coll_base_module_t *module)
+                                          struct ompi_datatype_t *sdtype,
+                                          void *rbuf, int rcount,
+                                          struct ompi_datatype_t *rdtype,
+                                          int root,
+                                          struct ompi_communicator_t *comm,
+                                          mca_coll_base_module_t *module)
 {
-    int i;
-    int err;
-    int rank;
-    int size;
+    int i, err, rank, size;
     char *ptmp;
-    MPI_Aint incr;
-    MPI_Aint extent;
-    MPI_Aint lb;
+    MPI_Aint incr, extent, lb;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* Everyone but root sends data and returns. */
     OPAL_OUTPUT((ompi_coll_tuned_stream,
-		 "ompi_coll_tuned_gather_intra_basic_linear rank %d", rank));
+                 "ompi_coll_tuned_gather_intra_basic_linear rank %d", rank));
 
     if (rank != root) {
         return MCA_PML_CALL(send(sbuf, scount, sdtype, root,
@@ -399,7 +382,7 @@ ompi_coll_tuned_gather_intra_basic_linear(void *sbuf, int scount,
         if (i == rank) {
             if (MPI_IN_PLACE != sbuf) {
                 err = ompi_datatype_sndrcv(sbuf, scount, sdtype,
-                                      ptmp, rcount, rdtype);
+                                           ptmp, rcount, rdtype);
             } else {
                 err = MPI_SUCCESS;
             }
@@ -489,88 +472,85 @@ ompi_coll_tuned_gather_intra_check_forced_init(coll_tuned_force_algorithm_mca_pa
 
 int
 ompi_coll_tuned_gather_intra_do_forced(void *sbuf, int scount,
-				       struct ompi_datatype_t *sdtype,
-				       void* rbuf, int rcount,
-				       struct ompi_datatype_t *rdtype,
-				       int root,
-				       struct ompi_communicator_t *comm,
-				       mca_coll_base_module_t *module)
+                                       struct ompi_datatype_t *sdtype,
+                                       void* rbuf, int rcount,
+                                       struct ompi_datatype_t *rdtype,
+                                       int root,
+                                       struct ompi_communicator_t *comm,
+                                       mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,
-		 "coll:tuned:gather_intra_do_forced selected algorithm %d",
-		 data->user_forced[GATHER].algorithm));
+                 "coll:tuned:gather_intra_do_forced selected algorithm %d",
+                 data->user_forced[GATHER].algorithm));
 
     switch (data->user_forced[GATHER].algorithm) {
     case (0):
-	return ompi_coll_tuned_gather_intra_dec_fixed (sbuf, scount, sdtype, 
-						       rbuf, rcount, rdtype, 
-						       root, comm, module);
+        return ompi_coll_tuned_gather_intra_dec_fixed (sbuf, scount, sdtype, 
+                                                       rbuf, rcount, rdtype, 
+                                                       root, comm, module);
     case (1):
-	return ompi_coll_tuned_gather_intra_basic_linear (sbuf, scount, sdtype,
-							  rbuf, rcount, rdtype,
-							  root, comm, module);
+        return ompi_coll_tuned_gather_intra_basic_linear (sbuf, scount, sdtype,
+                                                          rbuf, rcount, rdtype,
+                                                          root, comm, module);
     case (2):
         return ompi_coll_tuned_gather_intra_binomial(sbuf, scount, sdtype,
                                                      rbuf, rcount, rdtype,
                                                      root, comm, module);
     case (3):
-        {
-            const int first_segment_size = data->user_forced[GATHER].segsize;
             return ompi_coll_tuned_gather_intra_linear_sync (sbuf, scount, sdtype,
                                                              rbuf, rcount, rdtype,
                                                              root, comm, module,
-                                                             first_segment_size);
-        }
+                                                             data->user_forced[GATHER].segsize);
     default:
-	OPAL_OUTPUT((ompi_coll_tuned_stream,
-		     "coll:tuned:gather_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
-		     data->user_forced[GATHER].algorithm,
-		     ompi_coll_tuned_forced_max_algorithms[GATHER]));
-	return (MPI_ERR_ARG);
+        OPAL_OUTPUT((ompi_coll_tuned_stream,
+                     "coll:tuned:gather_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
+                     data->user_forced[GATHER].algorithm,
+                     ompi_coll_tuned_forced_max_algorithms[GATHER]));
+        return (MPI_ERR_ARG);
     } /* switch */
 }
 
 int
 ompi_coll_tuned_gather_intra_do_this(void *sbuf, int scount,
-				     struct ompi_datatype_t *sdtype,
-				     void* rbuf, int rcount,
-				     struct ompi_datatype_t *rdtype,
-				     int root,
-				     struct ompi_communicator_t *comm,
-				     mca_coll_base_module_t *module,
-				     int algorithm, int faninout, int segsize)
+                                     struct ompi_datatype_t *sdtype,
+                                     void* rbuf, int rcount,
+                                     struct ompi_datatype_t *rdtype,
+                                     int root,
+                                     struct ompi_communicator_t *comm,
+                                     mca_coll_base_module_t *module,
+                                     int algorithm, int faninout, int segsize)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,
-		 "coll:tuned:gather_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
-		 algorithm, faninout, segsize));
+                 "coll:tuned:gather_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
+                 algorithm, faninout, segsize));
    
     switch (algorithm) {
     case (0):
-	return ompi_coll_tuned_gather_intra_dec_fixed (sbuf, scount, sdtype, 
-						       rbuf, rcount, rdtype, 
-						       root, comm, module);
+        return ompi_coll_tuned_gather_intra_dec_fixed (sbuf, scount, sdtype, 
+                                                       rbuf, rcount, rdtype, 
+                                                       root, comm, module);
     case (1):
-	return ompi_coll_tuned_gather_intra_basic_linear (sbuf, scount, sdtype,
-							  rbuf, rcount, rdtype,
-							  root, comm, module);
+        return ompi_coll_tuned_gather_intra_basic_linear (sbuf, scount, sdtype,
+                                                          rbuf, rcount, rdtype,
+                                                          root, comm, module);
     case (2):  
-	return ompi_coll_tuned_gather_intra_binomial(sbuf, scount, sdtype,
-						     rbuf, rcount, rdtype,
-						     root, comm, module);
+        return ompi_coll_tuned_gather_intra_binomial(sbuf, scount, sdtype,
+                                                     rbuf, rcount, rdtype,
+                                                     root, comm, module);
     case (3):
-	return ompi_coll_tuned_gather_intra_linear_sync (sbuf, scount, sdtype,
+        return ompi_coll_tuned_gather_intra_linear_sync (sbuf, scount, sdtype,
                                                          rbuf, rcount, rdtype,
                                                          root, comm, module,
-							 segsize);
+                                                         segsize);
 
     default:
-	OPAL_OUTPUT((ompi_coll_tuned_stream,
-		     "coll:tuned:gather_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
-		     algorithm, 
-		     ompi_coll_tuned_forced_max_algorithms[GATHER]));
-	return (MPI_ERR_ARG);
+        OPAL_OUTPUT((ompi_coll_tuned_stream,
+                     "coll:tuned:gather_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
+                     algorithm, 
+                     ompi_coll_tuned_forced_max_algorithms[GATHER]));
+        return (MPI_ERR_ARG);
     } /* switch */
 }
