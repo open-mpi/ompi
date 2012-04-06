@@ -42,8 +42,6 @@ static int tuned_module_enable(mca_coll_base_module_t *module,
 int ompi_coll_tuned_init_query(bool enable_progress_threads,
                                bool enable_mpi_threads)
 {
-    /* Nothing to do */
-  
     return OMPI_SUCCESS;
 }
 

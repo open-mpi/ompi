@@ -50,12 +50,9 @@
  *
  */
 int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm,
-					     mca_coll_base_module_t *module)
+                                             mca_coll_base_module_t *module)
 {
-    int rank, size;
-    int err=0, line=0;
-    int left, right;
-
+    int rank, size, err = 0, line = 0, left, right;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
@@ -122,11 +119,9 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm,
  */
 
 int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *comm,
-						    mca_coll_base_module_t *module)
+                                                    mca_coll_base_module_t *module)
 {
-    int rank, size, adjsize;
-    int err, line;
-    int mask, remote;
+    int rank, size, adjsize, err, line, mask, remote;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
@@ -206,11 +201,9 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
  */
 
 int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm,
-					mca_coll_base_module_t *module)
+                                        mca_coll_base_module_t *module)
 {
-    int rank, size;
-    int distance, to, from;
-    int err, line = 0;
+    int rank, size, distance, to, from, err, line = 0;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
@@ -245,7 +238,7 @@ int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm,
  */
 /* special case for two processes */
 int ompi_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm,
-					    mca_coll_base_module_t *module)
+                                            mca_coll_base_module_t *module)
 {
     int remote, err;
 
@@ -278,14 +271,14 @@ int ompi_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm,
 /* copied function (with appropriate renaming) starts here */
 
 static int ompi_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t *comm,
-						      mca_coll_base_module_t *module)
+                                                      mca_coll_base_module_t *module)
 {
-    int i, err;
-    int size = ompi_comm_size(comm);
-    int rank = ompi_comm_rank(comm);
+    int i, err, rank, size;
+
+    rank = ompi_comm_rank(comm);
+    size = ompi_comm_size(comm);
 
     /* All non-root send & receive zero-length message. */
-
     if (rank > 0) {
         err = MCA_PML_CALL(send (NULL, 0, MPI_BYTE, 0, 
                                  MCA_COLL_BASE_TAG_BARRIER,
@@ -345,8 +338,7 @@ static int ompi_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t
 int ompi_coll_tuned_barrier_intra_tree(struct ompi_communicator_t *comm,
                                        mca_coll_base_module_t *module)
 {
-    int rank, size, depth;
-    int err, jump, partner;
+    int rank, size, depth, err, jump, partner;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
@@ -376,7 +368,7 @@ int ompi_coll_tuned_barrier_intra_tree(struct ompi_communicator_t *comm,
         }
     }
     
-    depth>>=1;
+    depth >>= 1;
     for (jump = depth; jump>0; jump>>=1) {
         partner = rank ^ jump;
         if (!(partner & (jump-1)) && partner < size) {
@@ -423,10 +415,10 @@ int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_
                             false, true, max_alg, NULL);
 
     mca_param_indices->algorithm_param_index = 
-       mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                              "barrier_algorithm",
-                              "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only, 6: tree",
-                              false, false, 0, NULL);
+        mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                               "barrier_algorithm",
+                               "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only, 6: tree",
+                               false, false, 0, NULL);
     if (mca_param_indices->algorithm_param_index < 0) {
         return mca_param_indices->algorithm_param_index;
     }

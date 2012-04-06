@@ -35,24 +35,20 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
                                      struct ompi_datatype_t* datatype, 
                                      int root,
                                      struct ompi_communicator_t* comm,
-				     mca_coll_base_module_t *module,
+                                     mca_coll_base_module_t *module,
                                      uint32_t count_by_segment,
                                      ompi_coll_tree_t* tree )
 {
-    int err = 0, line, i;
-    int rank, size;
-    int segindex;
+    int err = 0, line, i, rank, size, segindex, req_index;
     int num_segments; /* Number of segments */
     int sendcount;    /* number of elements sent in this segment */ 
-    size_t realsegsize;
+    size_t realsegsize, type_size;
     char *tmpbuf;
-    size_t type_size;
     ptrdiff_t extent, lb;
     ompi_request_t *recv_reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
 #if !defined(COLL_TUNED_BCAST_USE_BLOCKING)
     ompi_request_t **send_reqs = NULL;
 #endif
-    int req_index;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -78,7 +74,7 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
         /* 
            For each segment:
            - send segment to all children.
-             The last segment may have less elements than other segments.
+           The last segment may have less elements than other segments.
         */
         sendcount = count_by_segment;
         for( segindex = 0; segindex < num_segments; segindex++ ) {
@@ -120,13 +116,13 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
            Create the pipeline. 
            1) Post the first receive
            2) For segments 1 .. num_segments
-              - post new receive
-              - wait on the previous receive to complete
-              - send this data to children
+           - post new receive
+           - wait on the previous receive to complete
+           - send this data to children
            3) Wait on the last segment
            4) Compute number of elements in last segment.
            5) Send the last segment to children
-         */
+        */
         req_index = 0;
         MCA_PML_CALL(irecv(tmpbuf, count_by_segment, datatype,
                            tree->tree_prev, MCA_COLL_BASE_TAG_BCAST,
@@ -210,8 +206,8 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
            Receive all segments from parent in a loop:
            1) post irecv for the first segment
            2) for segments 1 .. num_segments
-              - post irecv for the next segment
-              - wait on the previous segment to arrive
+           - post irecv for the next segment
+           - wait on the previous segment to arrive
            3) wait for the last segment
         */
         req_index = 0;
@@ -259,7 +255,7 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
                                       struct ompi_datatype_t* datatype, 
                                       int root,
                                       struct ompi_communicator_t* comm,
-				      mca_coll_base_module_t *module,
+                                      mca_coll_base_module_t *module,
                                       uint32_t segsize )
 {
     int segcount = count;
@@ -288,7 +284,7 @@ ompi_coll_tuned_bcast_intra_pipeline( void* buffer,
                                       struct ompi_datatype_t* datatype, 
                                       int root,
                                       struct ompi_communicator_t* comm,
-				      mca_coll_base_module_t *module,
+                                      mca_coll_base_module_t *module,
                                       uint32_t segsize )
 {
     int segcount = count;
@@ -317,7 +313,7 @@ ompi_coll_tuned_bcast_intra_chain( void* buffer,
                                    struct ompi_datatype_t* datatype, 
                                    int root,
                                    struct ompi_communicator_t* comm,
-				   mca_coll_base_module_t *module,
+                                   mca_coll_base_module_t *module,
                                    uint32_t segsize, int32_t chains )
 {
     int segcount = count;
@@ -346,7 +342,7 @@ ompi_coll_tuned_bcast_intra_binomial( void* buffer,
                                       struct ompi_datatype_t* datatype, 
                                       int root,
                                       struct ompi_communicator_t* comm,
-				      mca_coll_base_module_t *module,
+                                      mca_coll_base_module_t *module,
                                       uint32_t segsize )
 {
     int segcount = count;
@@ -375,19 +371,16 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
                                             struct ompi_datatype_t* datatype, 
                                             int root,
                                             struct ompi_communicator_t* comm,
-					    mca_coll_base_module_t *module,
+                                            mca_coll_base_module_t *module,
                                             uint32_t segsize )
 {
-    int err=0, line;
-    int rank, size;
-    int segindex, i, lr, pair;
-    int segcount[2];       /* Number of elements sent with each segment */
+    int err=0, line, rank, size, segindex, i, lr, pair;
     uint32_t counts[2];
+    int segcount[2];       /* Number of elements sent with each segment */
     int num_segments[2];   /* Number of segmenets */
     int sendcount[2];      /* the same like segcount, except for the last segment */ 
-    size_t realsegsize[2];
+    size_t realsegsize[2], type_size;
     char *tmpbuf[2];
-    size_t type_size;
     ptrdiff_t type_extent, lb;
     ompi_request_t *base_req, *new_req;
     ompi_coll_tree_t *tree;
@@ -438,7 +431,7 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
         /* call linear version here ! */
         return (ompi_coll_tuned_bcast_intra_chain ( buffer, count, datatype, 
                                                     root, comm, module,
-						    segsize, 1 ));
+                                                    segsize, 1 ));
     }
 
     err = ompi_datatype_get_extent (datatype, &lb, &type_extent);
@@ -644,16 +637,12 @@ int
 ompi_coll_tuned_bcast_intra_basic_linear (void *buff, int count,
                                           struct ompi_datatype_t *datatype, int root,
                                           struct ompi_communicator_t *comm,
-					  mca_coll_base_module_t *module)
+                                          mca_coll_base_module_t *module)
 {
-    int i;
-    int size;
-    int rank;
-    int err;
+    int i, size, rank, err;
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
-    ompi_request_t **preq;
-    ompi_request_t **reqs = data->mcct_reqs;
+    ompi_request_t **preq, **reqs = data->mcct_reqs;
 
 
     size = ompi_comm_size(comm);
@@ -779,7 +768,7 @@ int ompi_coll_tuned_bcast_intra_do_forced(void *buf, int count,
                                           struct ompi_datatype_t *dtype,
                                           int root,
                                           struct ompi_communicator_t *comm,
-					  mca_coll_base_module_t *module)
+                                          mca_coll_base_module_t *module)
 {
     mca_coll_tuned_module_t *tuned_module = (mca_coll_tuned_module_t*) module;
     mca_coll_tuned_comm_t *data = tuned_module->tuned_data;
@@ -813,7 +802,7 @@ int ompi_coll_tuned_bcast_intra_do_this(void *buf, int count,
                                         struct ompi_datatype_t *dtype,
                                         int root,
                                         struct ompi_communicator_t *comm,
-					mca_coll_base_module_t *module,
+                                        mca_coll_base_module_t *module,
                                         int algorithm, int faninout, int segsize)
 
 {
