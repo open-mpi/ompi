@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 #
 # $COPYRIGHT$
@@ -21,6 +21,9 @@ use Getopt::Long;
 #
 # Global variables
 #
+
+# Sentinel file to remove if we fail
+my $sentinel;
 
 # The m4 file we'll write at the end
 my $m4_output_file = "config/autogen_found_items.m4";
@@ -81,6 +84,21 @@ $hostname =~ s/^([\w\-]+)\..+/\1/;
 
 ##############################################################################
 
+sub my_die {
+    unlink($sentinel)
+        if ($sentinel);
+    die @_;
+}
+
+sub my_exit {
+    my ($ret) = @_;
+    unlink($sentinel)
+        if ($sentinel && $ret != 0);
+    exit($ret);
+}
+
+##############################################################################
+
 sub verbose {
     print @_
         if (!$quiet_arg);
@@ -104,7 +122,7 @@ sub read_config_params {
 
     my $dir = dirname($filename);
     open(FILE, $filename) ||
-        die "Can't open $filename";
+        my_die "Can't open $filename";
     my $file;
     $file .= $_
         while(<FILE>);
@@ -161,11 +179,11 @@ sub process_subdir {
         print "--- Patching autotools output... :-(\n";
         patch_autotools_output($start);
     } else {
-        die "Found subdir, but no autogen.sh or configure.in|ac to do anything";
+        my_die "Found subdir, but no autogen.sh or configure.in|ac to do anything";
     }
 
     # Ensure that we got a good configure executable.
-    die "Did not generate a \"configure\" executable in $dir.\n"
+    my_die "Did not generate a \"configure\" executable in $dir.\n"
         if (! -x "configure");
 
     # Chdir back to where we came from
@@ -179,7 +197,7 @@ sub process_autogen_subdirs {
 
     my $file = "$dir/autogen.subdirs";
     if (-f $file) {
-        open(FILE, $file) || die "Can't open $file";
+        open(FILE, $file) || my_die "Can't open $file";
         while (<FILE>) {
             chomp;
             $_ =~ s/#.*$//;
@@ -248,7 +266,7 @@ sub ignored {
     }
     if (-f "$dir/.ompi_unignore") {
         open(UNIGNORE, "$dir/.ompi_unignore") ||
-            die "Can't open $dir/.ompi_unignore file";
+            my_die "Can't open $dir/.ompi_unignore file";
         my $unignore;
         $unignore .= $_
             while (<UNIGNORE>);
@@ -287,7 +305,7 @@ sub mca_process_framework {
         if (-d $dir) {
             $mca_found->{$pname}->{$framework}->{found} = 1;
             opendir(DIR, $dir) || 
-                die "Can't open $dir directory";
+                my_die "Can't open $dir directory";
             foreach my $d (readdir(DIR)) {
                 # Skip any non-directory, "base", or any dir that
                 # begins with "."
@@ -360,7 +378,7 @@ sub mca_process_project {
     my $dir = "$topdir/$pdir/mca";
     if (-d $dir) {
         opendir(DIR, $dir) || 
-            die "Can't open $dir directory";
+            my_die "Can't open $dir directory";
         my @my_dirs = readdir(DIR);
         @my_dirs = sort(@my_dirs);
 
@@ -449,7 +467,7 @@ dnl MCA information\n";
 
                 # This framework does have a Makefile.am (or at least,
                 # it should!)
-                die "Missing $pdir/mca/$f/Makefile.am"
+                my_die "Missing $pdir/mca/$f/Makefile.am"
                     if (! -f "$pdir/mca/$f/Makefile.am");
             }
             $frameworks_comma =~ s/^, //;
@@ -532,7 +550,7 @@ sub mpiext_run_global {
 
     my $dir = "$topdir/$ext_prefix";
     opendir(DIR, $dir) || 
-        die "Can't open $dir directory";
+        my_die "Can't open $dir directory";
     foreach my $d (readdir(DIR)) {
         # Skip any non-directory, "base", or any dir that begins with "."
         next
@@ -619,7 +637,7 @@ sub mpicontrib_run_global {
 
     my $dir = "$topdir/$contrib_prefix";
     opendir(DIR, $dir) || 
-        die "Can't open $dir directory";
+        my_die "Can't open $dir directory";
     foreach my $d (readdir(DIR)) {
         # Skip any non-directory, "base", or any dir that begins with "."
         next
@@ -780,7 +798,7 @@ GNU tools:
     GNU Automake: $ompi_automake_version
     GNU Libtool: $ompi_libtool_version
 =================================================================\n";
-    exit(1);
+    my_exit(1);
 }
 
 ##############################################################################
@@ -790,7 +808,7 @@ sub safe_system {
     $ret >>= 8;
     if (0 != $ret) {
         print "Command failed: @_\n";
-        exit($ret);
+        my_exit($ret);
     }
     $ret;
 }
@@ -820,7 +838,7 @@ sub patch_autotools_output {
 
     # Total ugh.  We have to patch the configure script itself.  See below
     # for explainations why.
-    open(IN, "configure") || die "Can't open configure";
+    open(IN, "configure") || my_die "Can't open configure";
     my $c;
     $c .= $_
         while(<IN>);
@@ -888,7 +906,7 @@ sub patch_autotools_output {
     verbose "$indent_str"."Patching configure for IBM xlf libtool bug\n";
     $c =~ s/(\$LD -shared \$libobjs \$deplibs \$)compiler_flags( -soname \$soname)/$1linker_flags$2/g;
 
-    open(OUT, ">configure.patched") || die "Can't open configure.patched";
+    open(OUT, ">configure.patched") || my_die "Can't open configure.patched";
     print OUT $c;
     close(OUT);
     # Use cp so that we preserve permissions on configure
@@ -931,7 +949,7 @@ if (!$ok || $help_arg) {
                                 to build
   --exclude | -e                Comma-separated list of framework or framework-component
                                 to be excluded from the build\n";
-    exit($ok ? 0 : 1);
+    my_exit($ok ? 0 : 1);
 }
 
 #---------------------------------------------------------------------------
@@ -976,6 +994,17 @@ $dnl_line\n\n";
 
 #---------------------------------------------------------------------------
 
+# Verify that we're in the OMPI root directorty by checking for a token file.
+
+my_die "Not at the root directory of an OMPI source tree"
+    if (! -f "config/ompi_try_assemble.m4");
+
+# Now that we've verified that we're in the top-level OMPI directory,
+# set the sentinel file to remove if we abort.
+$sentinel = Cwd::cwd() . "/configure";
+
+#---------------------------------------------------------------------------
+
 my $step = 1;
 verbose "Open MPI autogen (buckle up!)
 
@@ -994,7 +1023,7 @@ $m4 .= "dnl Platform file\n";
 # Process platform arg, if provided
 if ($platform_arg) {
     $m4 .= "m4_define([autogen_platform_file], [$platform_arg])\n\n";
-    open(IN, $platform_arg) || die "Can't open $platform_arg";
+    open(IN, $platform_arg) || my_die "Can't open $platform_arg";
     # Read all lines from the file
     while (<IN>) {
         my $line = $_;
@@ -1005,7 +1034,7 @@ if ($platform_arg) {
 enable_mca_no_build line. However, your command line
 also contains an exclude specification. Only one of
 these directives can be given.\n";
-                exit(1);
+                my_exit(1);
             }
             $exclude_arg = $fields[1];
         } elsif ($fields[0] eq "enable_mca_only_build") {
@@ -1014,7 +1043,7 @@ these directives can be given.\n";
 enable_mca_only_build line. However, your command line
 also contains an include specification. Only one of
 these directives can be given.\n";
-                exit(1);
+                my_exit(1);
             }
             $include_arg = $fields[1];
         }
@@ -1059,25 +1088,6 @@ if ($include_arg) {
 
 #---------------------------------------------------------------------------
 
-##########################################################################
-# Temporary: while we're transitioning from autogen.sh, remove some of
-# the old generated .m4 files, just so that we don't automatically
-# pick them up (because they'll cause problems / conflicts with
-# the autogen.pl-generated .m4 file).
-##########################################################################
-++$step;
-verbose "\n$step. Remove autogen.sh-generated files (this is a temporary step!)\n\n";
-
-unlink("config/mca_m4_config_include.m4");
-unlink("config/mca_no_configure_components.m4");
-unlink("config/ext_no_configure_components.m4");
-unlink("config/ext_m4_config_include.m4");
-unlink("config/project_list.m4");
-
-##########################################################################
-
-#---------------------------------------------------------------------------
-
 # Find projects, frameworks, components
 ++$step;
 verbose "\n$step. Searching for projects, MCA frameworks, and MCA components\n";
@@ -1087,7 +1097,7 @@ my $ret;
 # Figure out if we're at the top level of the OMPI tree or not.
 if (! (-f "VERSION" && -f "configure.ac" && -f $topdir_file)) {
     print("\n\nYou must run this script from the top-level directory of the Open MPI tree.\n\n");
-    exit(1);
+    my_exit(1);
 }
 
 # Top-level projects to examine
@@ -1161,7 +1171,7 @@ system("rm -rf opal/libltdl");
 verbose "==> Writing m4 file with autogen.pl results\n";
 unlink($m4_output_file);
 open(M4, ">$m4_output_file") || 
-    die "Can't open $m4_output_file";
+    my_die "Can't open $m4_output_file";
 print M4 $m4;
 close(M4);
 
@@ -1207,4 +1217,4 @@ Open MPI autogen: completed successfully.  w00t!
 ================================================\n\n";
 
 # Done!
-exit($ret);
+exit(0);
