@@ -289,8 +289,11 @@ ompi_datatype_copy_content_same_ddt( const ompi_datatype_t* type, size_t count,
     while( 0 != count ) {
         length = INT_MAX;
         if( ((size_t)length) > count ) length = (int32_t)count;
-        rc = opal_datatype_copy_content_same_ddt( &type->super, count, pDestBuf, pSrcBuf );
+        rc = opal_datatype_copy_content_same_ddt( &type->super, length,
+                                                  pDestBuf, pSrcBuf );
         if( 0 != rc ) return rc;
+        pDestBuf += (ptrdiff_t)length;
+        pSrcBuf  += (ptrdiff_t)length;
         count -= (size_t)length;
     }
     return 0;
