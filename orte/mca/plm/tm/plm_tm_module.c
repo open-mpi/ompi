@@ -110,7 +110,6 @@ orte_plm_base_module_t orte_plm_tm_module = {
 
 /* Local functions */
 static int plm_tm_connect(void);
-static int plm_tm_disconnect(void);
 static void failed_start(int fd, short event, void *arg);
 static void launch_daemons(int fd, short args, void *cbdata);
 static void poll_spawns(int fd, short args, void *cbdata);
