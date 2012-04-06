@@ -59,6 +59,15 @@ int orte_finalize(void)
     /* close the orte_show_help system */
     orte_show_help_finalize();
 
+#if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREAD
+    if (ORTE_PROC_IS_APP) {
+        /* stop the progress thread */
+        orte_event_base_active = false;
+        opal_thread_join(&orte_progress_thread, NULL);
+        OBJ_DESTRUCT(&orte_progress_thread);
+    }
+#endif
+
     /* call the finalize function for this environment */
     orte_ess.finalize();
     

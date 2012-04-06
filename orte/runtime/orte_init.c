@@ -133,6 +133,8 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
 #if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREAD
         /* get a separate orte event base */
         orte_event_base = opal_event_base_create();
+        /* construct the thread object */
+        OBJ_CONSTRUCT(&orte_progress_thread, opal_thread_t);
         /* fork off a thread to progress it */
         orte_progress_thread.t_run = orte_progress_thread_engine;
         if (OPAL_SUCCESS != (ret = opal_thread_start(&orte_progress_thread))) {
@@ -172,7 +174,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
 #if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREAD
 static void* orte_progress_thread_engine(opal_object_t *obj)
 {
-    while (orte_event_base->active) {
+    while (orte_event_base_active) {
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
     return OPAL_THREAD_CANCELLED;
