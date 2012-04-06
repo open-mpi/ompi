@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008      Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,7 +31,6 @@
 #endif
 
 #include "orte/util/show_help.h"
-#include "opal/util/opal_sos.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "btl_openib.h"
@@ -133,13 +134,13 @@ int ompi_btl_openib_ini_init(void)
             /* Note that NOT_FOUND and SUCCESS are not fatal errors
                and we keep going.  Other errors are treated as
                fatal */
-            if (OMPI_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret) && OMPI_SUCCESS != ret) {
+            if (OMPI_ERR_NOT_FOUND != ret && OMPI_SUCCESS != ret) {
                 break;
             }
             str = colon + 1;
         }
         /* Parse the last file if we didn't have a fatal error above */
-        if (OMPI_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret) && OMPI_SUCCESS != ret) {
+        if (OMPI_ERR_NOT_FOUND != ret && OMPI_SUCCESS != ret) {
             ret = parse_file(str);
         }
 
@@ -150,7 +151,7 @@ int ompi_btl_openib_ini_init(void)
     /* Return SUCCESS unless we got a fatal error */
 
     initialized = true;
-    return (OMPI_SUCCESS == ret || OMPI_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret)) ?
+    return (OMPI_SUCCESS == ret || OMPI_ERR_NOT_FOUND == ret) ?
         OMPI_SUCCESS : ret;
 }
 

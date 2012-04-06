@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -347,7 +349,7 @@ static inline int mca_pml_ob1_recv_request_schedule_exclusive(
 
     do {
         rc = mca_pml_ob1_recv_request_schedule_once(req, start_bml_btl);
-        if(OPAL_SOS_GET_ERROR_CODE(rc) == OMPI_ERR_OUT_OF_RESOURCE)
+        if(rc == OMPI_ERR_OUT_OF_RESOURCE)
             break;
     } while(!unlock_recv_request(req));
 

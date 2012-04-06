@@ -17,5 +17,5 @@ libmca_routed_la_SOURCES += \
 if !ORTE_DISABLE_FULL_SUPPORT
 
 libmca_routed_la_SOURCES += \
-	base/routed_base_register_sync.c
+	base/routed_base_fns.c
 endif

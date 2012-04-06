@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,7 +55,7 @@ BEGIN_C_DECLS
 typedef int (*orte_plm_base_module_init_fn_t)(void);
 
 /*
- * Spawn a job
+ * Spawn a job - this is a non-blocking function!
  */
 typedef int (*orte_plm_base_module_spawn_fn_t)(orte_job_t *jdata);
 

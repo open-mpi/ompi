@@ -60,7 +60,6 @@ orte_ess_base_module_t orte_ess_lsf_module = {
     orte_ess_base_proc_get_hostname,
     orte_ess_base_proc_get_local_rank,
     orte_ess_base_proc_get_node_rank,
-    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     orte_ess_base_update_pidmap,
     orte_ess_base_update_nidmap,
     NULL /* ft_event */
@@ -215,8 +214,6 @@ static int lsf_set_name(void)
     lsf_nodeid = atoi(getenv("LSF_PM_TASKID"));
     ORTE_PROC_MY_NAME->vpid = vpid + lsf_nodeid;
 
-    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,orte_ess.proc_get_epoch(ORTE_PROC_MY_NAME));
-    
     /* get the non-name common environmental variables */
     if (ORTE_SUCCESS != (rc = orte_ess_env_get())) {
         ORTE_ERROR_LOG(rc);

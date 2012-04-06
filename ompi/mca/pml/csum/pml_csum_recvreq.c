@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2009-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -83,7 +83,7 @@ void mca_pml_csum_recv_request_process_pending(void)
             break;
         recvreq->req_pending = false;
         rc = mca_pml_csum_recv_request_schedule_exclusive(recvreq, NULL);
-        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc))
+        if(OMPI_ERR_OUT_OF_RESOURCE == rc)
             break;
     }
 }
@@ -425,7 +425,7 @@ int mca_pml_csum_recv_request_get_frag( mca_pml_csum_rdma_frag_t* frag )
     /* queue up get request */
     rc = mca_bml_base_get(bml_btl,descriptor);
     if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
-        if(OMPI_ERR_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(rc)) {
+        if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
             mca_bml_base_free(bml_btl, descriptor);
             OPAL_THREAD_LOCK(&mca_pml_csum.lock);
             opal_list_append(&mca_pml_csum.rdma_pending,

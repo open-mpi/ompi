@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -89,7 +91,7 @@ static void start(orte_jobid_t jobid)
     if (NULL == sample_ev) {
         /* startup a timer to wake us up periodically */
         sample_ev =  (opal_event_t *) malloc(sizeof(opal_event_t));
-        opal_event_evtimer_set(opal_event_base, sample_ev, sample, sample_ev);
+        opal_event_evtimer_set(orte_event_base, sample_ev, sample, sample_ev);
         sample_time.tv_sec = mca_sensor_ft_tester_component.fail_rate;
         sample_time.tv_usec = 0;
         opal_event_evtimer_add(sample_ev, &sample_time);
@@ -111,8 +113,8 @@ static void stop(orte_jobid_t jobid)
 static void sample(int fd, short event, void *arg)
 {
     float prob;
-    opal_list_item_t *item;
-    orte_odls_child_t *child;
+    orte_proc_t *child;
+    int i;
 
     /* if we are not sampling any more, then just return */
     if (NULL == sample_ev) {
@@ -141,17 +143,16 @@ static void sample(int fd, short event, void *arg)
     }
 
     /* see if we should kill a child */
-    OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
-    for (item = opal_list_get_first(&orte_local_children);
-         item != opal_list_get_end(&orte_local_children);
-         item = opal_list_get_next(item)) {
-        child = (orte_odls_child_t*)item;
+    for (i=0; i < orte_local_children->size; i++) {
+        if (NULL == (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+            continue;
+        }
         if (!child->alive || 0 == child->pid ||
             ORTE_PROC_STATE_UNTERMINATED < child->state) {
             OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                                  "%s sample:ft_tester ignoring child: %s alive %s pid %lu state %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name),
+                                 ORTE_NAME_PRINT(&child->name),
                                  child->alive ? "TRUE" : "FALSE",
                                  (unsigned long)child->pid, orte_proc_state_to_str(child->state)));
             continue;
@@ -161,26 +162,21 @@ static void sample(int fd, short event, void *arg)
         OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                              "%s sample:ft_tester child: %s dice: %f prob %f",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(child->name),
+                             ORTE_NAME_PRINT(&child->name),
                              prob, mca_sensor_ft_tester_component.fail_prob));
         if (prob < mca_sensor_ft_tester_component.fail_prob) {
             /* you shall die... */
             OPAL_OUTPUT_VERBOSE((1, orte_sensor_base.output,
                                  "%s sample:ft_tester killing %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(child->name)));
-            opal_condition_signal(&orte_odls_globals.cond);
-            OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
+                                 ORTE_NAME_PRINT(&child->name)));
             kill(child->pid, SIGTERM);
-            OPAL_THREAD_LOCK(&orte_odls_globals.mutex);
             /* are we allowing multiple deaths */
             if (!mca_sensor_ft_tester_component.multi_fail) {
                 break;
             }
         }
     }
-    opal_condition_signal(&orte_odls_globals.cond);
-    OPAL_THREAD_UNLOCK(&orte_odls_globals.mutex);
 
     /* restart the timer */
     if (NULL != sample_ev) {

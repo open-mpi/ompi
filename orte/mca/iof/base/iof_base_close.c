@@ -42,9 +42,6 @@ int orte_iof_base_close(void)
     }
     OBJ_DESTRUCT(&orte_iof_base.iof_components_opened);
 
-    OBJ_DESTRUCT(&orte_iof_base.iof_write_output_lock);
-
-
     return ORTE_SUCCESS;
 }
 

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,8 +61,7 @@ typedef int (*orte_ess_base_module_finalize_fn_t)(void);
  * function should create an appropriate file to alert the local
  * orted that termination was abnormal.
  */
-typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report)
-    __opal_attribute_noreturn_funcptr__;
+typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report);
 
 /**
  * Get the locality flag of the specified process
@@ -106,19 +107,6 @@ typedef orte_local_rank_t (*orte_ess_base_module_proc_get_local_rank_fn_t)(orte_
 typedef orte_node_rank_t (*orte_ess_base_module_proc_get_node_rank_fn_t)(orte_process_name_t *proc);
 
 /**
- * Update the epoch
- *
- * The epochs of the processes are stored in the process_name struct, but this
- * will get the most up to date version stored within the orte_proc_t struct.
- * Obviously the epoch of the proc that is passed in will be ignored.
- */
-#if ORTE_ENABLE_EPOCH
-typedef orte_epoch_t (*orte_ess_base_module_proc_get_epoch_fn_t)(orte_process_name_t *proc);
-#else
-typedef int (*orte_ess_base_module_proc_get_epoch_fn_t)(orte_process_name_t *proc);
-#endif
-
-/**
  * Update the pidmap
  *
  * When a job is dynamically launched via comm_spawn, the pre-existing daemons need to
@@ -159,7 +147,6 @@ struct orte_ess_base_module_1_0_0_t {
     orte_ess_base_module_proc_get_hostname_fn_t     proc_get_hostname;
     orte_ess_base_module_proc_get_local_rank_fn_t   get_local_rank;
     orte_ess_base_module_proc_get_node_rank_fn_t    get_node_rank;
-    orte_ess_base_module_proc_get_epoch_fn_t        proc_get_epoch;
     orte_ess_base_module_update_pidmap_fn_t         update_pidmap;
     orte_ess_base_module_update_nidmap_fn_t         update_nidmap;
     orte_ess_base_module_ft_event_fn_t              ft_event;

@@ -109,83 +109,16 @@ static const struct eventop *eventops[] = {
 
 static struct event_config *config=NULL;
 
-static void update_event(int fd, short flags, void* arg)
-{
-    opal_event_update_t up;
-
-    /* read the event */
-    opal_fd_read(fd, sizeof(opal_event_update_t), &up);
-    if (NULL == up.ev) {
-        return;
-    }
-    if (OPAL_EVENT_ADD == up.op) {
-        event_add(up.ev, 0);
-    } else if (OPAL_EVENT_DEL == up.op) {
-        event_del(up.ev);
-    }
-    return;
-}
-
-/* Public function -- not part of the module */
-/* This includes (hopefully) a temporary change
- * to deal with cross-base sync. Specifically,
- * when an event in one base needs to release
- * a condition_wait in another base, we need
- * to "wakeup" the event base in the second base
- * so the condition_wait can be checked
- */
 opal_event_base_t* opal_event_base_create(void)
 {
-    struct event_base *base;
-    opal_event_base_t *evbase;
+    opal_event_base_t *base;
 
     base = event_base_new_with_config(config);
     if (NULL == base) {
         /* there is no backend method that does what we want */
         opal_output(0, "No event method available");
-        return NULL;
     }
-    evbase = (opal_event_base_t*)malloc(sizeof(opal_event_base_t));
-    evbase->base = base;
-#ifndef __WINDOWS__
-    if (pipe(evbase->update_pipe) < 0) {
-        opal_output(0, "Unable to open update pipe");
-        free(evbase);
-        event_base_free(base);
-        return NULL;
-    }
-#else
-    if (create_socketpair(AF_UNIX, SOCK_STREAM, 0, evbase->update_pipe) == -1) {
-        opal_output(0, "Unable to open update socket");
-        free(evbase);
-        event_base_free(base);
-        return NULL;
-    }
-#endif
-    event_assign(&evbase->update_event, base,
-                 evbase->update_pipe[0], EV_READ | EV_PERSIST,
-                 update_event, NULL);
-    event_add(&evbase->update_event, 0);
-    return evbase;
-}
-
-void opal_event_base_finalize(opal_event_base_t *evbase)
-{
-    /* delete the wakeup event */
-    event_del(&evbase->update_event);
-#ifndef __WINDOWS__
-    /* close the pipe */
-    close(evbase->update_pipe[0]);
-    close(evbase->update_pipe[1]);
-#else
-    /* close the socket */
-    closesocket(evbase->update_pipe[0]);
-    closesocket(evbase->update_pipe[1]);
-#endif
-    /* release the base */
-    event_base_free(evbase->base);
-    /* free the storage */
-    free(evbase);
+    return base;
 }
 
 int opal_event_init(void)
@@ -304,14 +237,10 @@ int opal_event_init(void)
     return OPAL_SUCCESS;
 }
 
-int opal_event_reinit(opal_event_base_t *evbase)
+opal_event_t* opal_event_alloc(void)
 {
-    return event_reinit(evbase->base);
-}
+    opal_event_t *ev;
 
-struct timeval *opal_event_base_init_common_timeout (opal_event_base_t *evbase,
-						     struct timeval *tv_in)
-{
-    return (struct timeval*)event_base_init_common_timeout (evbase->base, tv_in);
+    ev = (opal_event_t*)malloc(sizeof(opal_event_t));
+    return ev;
 }
-

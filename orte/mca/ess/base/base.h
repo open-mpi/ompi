@@ -64,12 +64,6 @@ ORTE_DECLSPEC extern int orte_ess_base_std_buffering;
 
 ORTE_DECLSPEC extern opal_list_t orte_ess_base_components_available;
 
-#if ORTE_ENABLE_EPOCH
-ORTE_DECLSPEC orte_epoch_t orte_ess_base_proc_get_epoch(orte_process_name_t *proc);
-#else
-ORTE_DECLSPEC int orte_ess_base_proc_get_epoch(orte_process_name_t *proc);
-#endif
-
 #if !ORTE_DISABLE_FULL_SUPPORT
 
 /*
@@ -81,7 +75,7 @@ ORTE_DECLSPEC int orte_ess_base_std_prolog(void);
 
 ORTE_DECLSPEC int orte_ess_base_app_setup(void);
 ORTE_DECLSPEC int orte_ess_base_app_finalize(void);
-ORTE_DECLSPEC void orte_ess_base_app_abort(int status, bool report) __opal_attribute_noreturn__;
+ORTE_DECLSPEC void orte_ess_base_app_abort(int status, bool report);
 
 ORTE_DECLSPEC int orte_ess_base_tool_setup(void);
 ORTE_DECLSPEC int orte_ess_base_tool_finalize(void);

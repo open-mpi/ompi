@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -41,28 +43,79 @@
 
 BEGIN_C_DECLS
 
-/*
- * Define routing modes
+/* Define a collective callback function - this will
+ * be called upon completion of collective ops such
+ * as modex and barrier.
  */
-typedef uint8_t orte_grpcomm_mode_t;
-#define ORTE_GRPCOMM_MODE_T     OPAL_UINT8
+typedef void (*orte_grpcomm_collective_cbfunc_t)(opal_buffer_t *data, void *cbdata);
 
-/* daemon N relays message to daemon N+1 */
-#define ORTE_GRPCOMM_CHAIN      (orte_grpcomm_mode_t) 1
-/* binomial tree */
-#define ORTE_GRPCOMM_BINOMIAL   (orte_grpcomm_mode_t) 2
-/* linear - HNP sends direct to all daemons */
-#define ORTE_GRPCOMM_LINEAR     (orte_grpcomm_mode_t) 3
+/* forward define the struct */
+struct orte_grpcomm_collective_t;
 
-/*
- * Define collective types
- */
-typedef uint8_t orte_grpcomm_coll_t;
-#define ORTE_GRPCOMM_COLL_T     OPAL_UINT8
+typedef int32_t orte_grpcomm_coll_id_t;
+#define ORTE_GRPCOMM_COLL_ID_T   OPAL_INT32
+#define ORTE_GRPCOMM_COLL_ID_REQ  -1
 
-#define ORTE_GRPCOMM_COLL_NONE  0x00
-#define ORTE_GRPCOMM_BARRIER    0x01
-#define ORTE_GRPCOMM_ALLGATHER  0x02
+typedef int8_t orte_grpcomm_coll_t;
+#define ORTE_GRPCOMM_XCAST         1
+#define ORTE_GRPCOMM_COLL_RELAY    2
+#define ORTE_GRPCOMM_COLL_COMPLETE 3
+#define ORTE_GRPCOMM_COLL_PEERS    4
+
+typedef enum {
+    ORTE_GRPCOMM_INTERNAL_STG_LOCAL,
+    ORTE_GRPCOMM_INTERNAL_STG_GLOBAL,
+    ORTE_GRPCOMM_INTERNAL_STG_APP
+} orte_grpcomm_internal_stage_t;
+
+/* structure for tracking collective operations */
+struct orte_grpcomm_collective_t {
+    opal_list_item_t super;
+    orte_grpcomm_coll_id_t id;
+    /* flag that user can poll on to know when collective 
+     * has completed - set to false just prior to
+     * calling user callback function, if non-NULL
+     */
+    bool active;
+    /* number of local contributors */
+    orte_vpid_t num_local_recvd;
+    /* bucket to collect local contributions */
+    opal_buffer_t local_bucket;
+    /* number of buckets collected from peers */
+    orte_vpid_t num_peer_buckets;
+    /* total number of contributors */
+    orte_vpid_t num_global_recvd;
+    /* flag to mark that the collective is locally complete - i.e.,
+     * all local contributions have been recvd and the local
+     * data has been entered into the global collective
+     */
+    bool locally_complete;
+    /* list of names of those participating in the collective - an
+     * entry with vpid=WILDCARD implies that all members of that
+     * job must participate in the collective
+     */
+    opal_list_t participants;
+    /* user callback function to be executed when collective
+     * is completed
+     */
+    orte_grpcomm_collective_cbfunc_t cbfunc;
+    void *cbdata;
+    /* buffer collecting data to be delivered to user */
+    opal_buffer_t buffer;
+    /* list of names of procs to receive the next step
+     * in executing the collective - this is obtained from
+     * the routed framework to minimize hops
+     */
+    opal_list_t targets;
+    /* some collectives wrap around and call internal
+     * steps before completing - e.g., modex. This
+     * points the collective to the next step in the procedure
+     */
+    orte_grpcomm_collective_cbfunc_t next_cb;
+    void *next_cbdata;
+};
+typedef struct orte_grpcomm_collective_t orte_grpcomm_collective_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_grpcomm_collective_t);
 
 END_C_DECLS
 

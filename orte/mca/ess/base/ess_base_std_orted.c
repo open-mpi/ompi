@@ -12,6 +12,8 @@
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,6 +64,8 @@
 #include "orte/mca/notifier/base/base.h"
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/sensor/sensor.h"
+#include "orte/mca/state/base/base.h"
+#include "orte/mca/state/state.h"
 #include "orte/runtime/orte_cr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/orte_globals.h"
@@ -84,6 +88,15 @@ static void shutdown_signal(int fd, short flags, void *arg);
 static void signal_callback(int fd, short flags, void *arg);
 static void epipe_signal_callback(int fd, short flags, void *arg);
 
+static void setup_sighandler(int signal, opal_event_t *ev,
+                             opal_event_cbfunc_t cbfunc)
+{
+    opal_event_signal_set(orte_event_base, ev, signal, cbfunc, ev);
+    opal_event_set_priority(ev, ORTE_ERROR_PRI);
+    opal_event_signal_add(ev, NULL);
+}
+
+
 int orte_ess_base_orted_setup(char **hosts)
 {
     int ret = ORTE_ERROR;
@@ -92,42 +105,32 @@ int orte_ess_base_orted_setup(char **hosts)
     char *jobidstring;
     char *error = NULL;
     char *plm_to_use;
+    orte_job_t *jdata;
+    orte_proc_t *proc;
+    orte_app_context_t *app;
 
 #ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
-    opal_event_signal_set(opal_event_base, &epipe_handler, SIGPIPE,
-                          epipe_signal_callback, &epipe_handler);
-    opal_event_signal_add(&epipe_handler, NULL);
+    setup_sighandler(SIGPIPE, &epipe_handler, epipe_signal_callback);
     /* Set signal handlers to catch kill signals so we can properly clean up
      * after ourselves. 
      */
-    opal_event_set(opal_event_base, &term_handler, SIGTERM, OPAL_EV_SIGNAL,
-                   shutdown_signal, NULL);
-    opal_event_add(&term_handler, NULL);
-    opal_event_set(opal_event_base, &int_handler, SIGINT, OPAL_EV_SIGNAL,
-                   shutdown_signal, NULL);
-    opal_event_add(&int_handler, NULL);
-
-    /** setup callbacks for signals we should ignore */
-    opal_event_signal_set(opal_event_base, &sigusr1_handler, SIGUSR1,
-                          signal_callback, &sigusr1_handler);
-    opal_event_signal_add(&sigusr1_handler, NULL);
-    opal_event_signal_set(opal_event_base, &sigusr2_handler, SIGUSR2,
-                          signal_callback, &sigusr2_handler);
-    opal_event_signal_add(&sigusr2_handler, NULL);
-#endif  /* __WINDOWS__ */
-
-    signals_set = true;
+    setup_sighandler(SIGTERM, &term_handler, shutdown_signal);
+    setup_sighandler(SIGINT, &int_handler, shutdown_signal);
     
-    /* initialize the global list of local children and job data */
-    OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
-    OBJ_CONSTRUCT(&orte_local_jobdata, opal_list_t);
+    /** setup callbacks for signals we should ignore */
+    setup_sighandler(SIGUSR1, &sigusr1_handler, signal_callback);
+    setup_sighandler(SIGUSR2, &sigusr2_handler, signal_callback);
+    setup_sighandler(SIGTERM, &term_handler, shutdown_signal);
+#endif  /* __WINDOWS__ */
+    
+    signals_set = true;
     
 #if OPAL_HAVE_HWLOC
     {
         hwloc_obj_t obj;
         unsigned i, j;
-
+        
         /* get the local topology */
         if (NULL == opal_hwloc_topology) {
             if (OPAL_SUCCESS != opal_hwloc_base_get_topology()) {
@@ -135,7 +138,7 @@ int orte_ess_base_orted_setup(char **hosts)
                 goto error;
             }
         }
-
+        
         /* remove the hostname from the topology. Unfortunately, hwloc
          * decided to add the source hostname to the "topology", thus
          * rendering it unusable as a pure topological description. So
@@ -160,14 +163,14 @@ int orte_ess_base_orted_setup(char **hosts)
                 break;
             }
         }
-
+        
         if (4 < opal_output_get_verbosity(orte_ess_base_output)) {
             opal_output(0, "%s Topology Info:", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
             opal_dss.dump(0, opal_hwloc_topology, OPAL_HWLOC_TOPO);
         }
     }
 #endif
-
+    
     /* open and setup the opal_pstat framework so we can provide
      * process stats if requested
      */
@@ -178,7 +181,19 @@ int orte_ess_base_orted_setup(char **hosts)
     }
     if (ORTE_SUCCESS != (ret = opal_pstat_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_pstat_base_select";
+        error = "opal_pstat_base_select";
+        goto error;
+    }
+    
+    /* open and setup the state machine */
+    if (ORTE_SUCCESS != (ret = orte_state_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_state_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_state_base_select";
         goto error;
     }
     
@@ -188,9 +203,9 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_errmgr_base_open";
         goto error;
     }
-
+    
     /* some environments allow remote launches - e.g., ssh - so
-     * open the PLM and select something -only- if we are given
+     * open and select something -only- if we are given
      * a specific module to use
      */
     mca_base_param_reg_string_name("plm", NULL,
@@ -215,7 +230,7 @@ int orte_ess_base_orted_setup(char **hosts)
             goto error;
         }
     }
-
+    
     /* Setup the communication infrastructure */
     
     /* Runtime Messaging Layer - this opens/selects the OOB as well */
@@ -229,14 +244,14 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_rml_base_select";
         goto error;
     }
-
+    
     /* select the errmgr */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_errmgr_base_select";
         goto error;
     }
-
+    
     /* Routed system */
     if (ORTE_SUCCESS != (ret = orte_routed_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -248,7 +263,7 @@ int orte_ess_base_orted_setup(char **hosts)
         error = "orte_routed_base_select";
         goto error;
     }
-
+    
     /*
      * Group communications
      */
@@ -282,9 +297,6 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
     
-    /* set the communication function */
-    orte_comm = orte_global_comm;
-    
     /* initialize the nidmaps */
     if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -316,12 +328,8 @@ int orte_ess_base_orted_setup(char **hosts)
      * to mpirun goes through the tree if static ports were enabled - still
      * need to do it anyway just to initialize things
      */
-    if (ORTE_SUCCESS != (ret = orte_routed.update_routing_tree(ORTE_PROC_MY_NAME->jobid))) {
-        ORTE_ERROR_LOG(ret);
-        error = "failed to update routing tree";
-        goto error;
-    }
-
+    orte_routed.update_routing_plan();
+    
     /* Now provide a chance for the PLM
      * to perform any module-specific init functions. This
      * needs to occur AFTER the communications are setup
@@ -354,17 +362,17 @@ int orte_ess_base_orted_setup(char **hosts)
             goto error;
         }
         /* Once the session directory location has been established, set
-           the opal_output env file location to be in the
-           proc-specific session directory. */
+         the opal_output env file location to be in the
+         proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
-
+        
         /* setup stdout/stderr */
         if (orte_debug_daemons_file_flag) {
             /* if we are debugging to a file, then send stdout/stderr to
              * the orted log file
              */
-
+            
             /* get my jobid */
             if (ORTE_SUCCESS != (ret = orte_util_convert_jobid_to_string(&jobidstring,
                                                                          ORTE_PROC_MY_NAME->jobid))) {
@@ -372,7 +380,7 @@ int orte_ess_base_orted_setup(char **hosts)
                 error = "convert_jobid";
                 goto error;
             }
-
+            
             /* define a log file name in the session directory */
             snprintf(log_file, PATH_MAX, "output-orted-%s-%s.log",
                      jobidstring, orte_process_info.nodename);
@@ -381,7 +389,7 @@ int orte_ess_base_orted_setup(char **hosts)
                                     orte_process_info.top_session_dir,
                                     log_file,
                                     NULL);
-
+            
             fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0640);
             if (fd < 0) {
                 /* couldn't open the file for some reason, so
@@ -397,6 +405,44 @@ int orte_ess_base_orted_setup(char **hosts)
             }
         }
     }
+    
+    /* setup the global job array */
+    orte_job_data = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
+                                                       1,
+                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                       1))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup job array";
+        goto error;
+    }
+    
+    /* Setup the job data object for the daemons */        
+    /* create and store the job data object */
+    jdata = OBJ_NEW(orte_job_t);
+    jdata->jobid = ORTE_PROC_MY_NAME->jobid;
+    opal_pointer_array_set_item(orte_job_data, 0, jdata);
+    
+    /* every job requires at least one app */
+    app = OBJ_NEW(orte_app_context_t);
+    opal_pointer_array_set_item(jdata->apps, 0, app);
+    jdata->num_apps++;
+    
+    /* create and store a proc object for us */
+    proc = OBJ_NEW(orte_proc_t);
+    proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
+    proc->name.vpid = ORTE_PROC_MY_NAME->vpid;
+    
+    proc->pid = orte_process_info.pid;
+    proc->rml_uri = orte_rml.get_contact_info();
+    proc->state = ORTE_PROC_STATE_RUNNING;
+    opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
+    
+    /* record that the daemon job is running */
+    jdata->num_procs = 1;
+    jdata->state = ORTE_JOB_STATE_RUNNING;
+    /* obviously, we have "reported" */
+    jdata->num_reported = 1;
     
     /* setup the routed info - the selected routed component
      * will know what to do. 
@@ -485,15 +531,15 @@ int orte_ess_base_orted_setup(char **hosts)
     }
     if (ORTE_SUCCESS != (ret = orte_sensor_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "ortesensor_select";
+        error = "orte_sensor_select";
         goto error;
     }
     /* start the local sensors */
     orte_sensor.start(ORTE_PROC_MY_NAME->jobid);
-
+    
     return ORTE_SUCCESS;
     
- error:
+error:
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);
@@ -505,7 +551,7 @@ int orte_ess_base_orted_finalize(void)
 {
     /* stop the local sensors */
     orte_sensor.stop(ORTE_PROC_MY_NAME->jobid);
-
+    
     if (signals_set) {
         /* Release all local signal handlers */
         opal_event_del(&epipe_handler);
@@ -516,7 +562,7 @@ int orte_ess_base_orted_finalize(void)
         opal_event_signal_del(&sigusr2_handler);
 #endif  /* __WINDOWS__ */
     }
-
+    
     /* cleanup */
     if (NULL != log_path) {
         unlink(log_path);
@@ -525,49 +571,9 @@ int orte_ess_base_orted_finalize(void)
     /* make sure our local procs are dead */
     orte_odls.kill_local_procs(NULL);
     
-    /* whack any lingering session directory files from our jobs */
-    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
-    orte_sensor_base_close();
-    orte_notifier_base_close();
-    
-    orte_cr_finalize();
-    
-#if OPAL_ENABLE_FT_CR == 1
-    orte_snapc_base_close();
-#endif
-    orte_filem_base_close();
-    
-    orte_odls_base_close();
-    
-    orte_wait_finalize();
-    orte_iof_base_close();
-
-    /* finalize selected modules */
-    if (plm_in_use) {
-        orte_plm_base_close();
-    }
-    
-    orte_errmgr_base_close();
-
-    /* now can close the rml and its friendly group comm */
-    orte_grpcomm_base_close();
-    orte_routed_base_close();
-    orte_rml_base_close();
-
     /* cleanup any lingering session directories */
     orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-    
-    /* handle the orted-specific OPAL stuff */
-    opal_pstat_base_close();
-#if OPAL_HAVE_HWLOC
-    /* destroy the topology, if required */
-    if (NULL != opal_hwloc_topology) {
-        opal_hwloc_base_free_topology(opal_hwloc_topology);
-        opal_hwloc_topology = NULL;
-    }
-#endif
-
+     
     return ORTE_SUCCESS;    
 }
 
@@ -578,7 +584,7 @@ static void shutdown_signal(int fd, short flags, void *arg)
      * check the one-time lock
      */
     ORTE_UPDATE_EXIT_STATUS(ORTE_ERROR_DEFAULT_EXIT_CODE);
-    orte_quit();
+    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FORCED_EXIT);
 }
 
 /**

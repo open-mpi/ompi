@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc. All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -51,6 +51,7 @@
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/util/session_dir.h"
 #include "orte/util/show_help.h"
@@ -68,102 +69,75 @@
 static int num_aborted = 0;
 static int num_killed = 0;
 static int num_failed_start = 0;
+static bool errors_reported = false;
 
 static void dump_aborted_procs(void);
 #endif
 
-void orte_jobs_complete(void)
+void orte_quit(int fd, short args, void *cbdata)
 {
-#if !ORTE_DISABLE_FULL_SUPPORT
-    /* check one-time lock to protect against multiple calls */
-    if (opal_atomic_trylock(&orte_jobs_complete_lock)) { /* returns 1 if already locked */
-        return;
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    /* cleanup */
+    if (NULL != caddy) {
+        OBJ_RELEASE(caddy);
     }
 
-    /* if we never launched, just skip this part to avoid
-     * meaningless error messages
-     */
-    if (orte_never_launched) {
-        ORTE_UPDATE_EXIT_STATUS(orte_exit_status);
-        orte_quit();
-    }
-    
-    if (0 != orte_exit_status && !orte_execute_quiet) {
-        /* abnormal termination of some kind */
-        dump_aborted_procs();
-        /* If we showed more abort messages than were allowed,
-           show a followup message here */
-        if (num_failed_start > 1) {
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "<stderr>");
-            }
-            fprintf(orte_xml_fp, "%d total process%s failed to start",
-                    num_failed_start, ((num_failed_start > 1) ? "es" : ""));
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "&#010;</stderr>");
-            }
-            fprintf(orte_xml_fp, "\n");
-        }
-        if (num_aborted > 1) {
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "<stderr>");
-            }
-            fprintf(orte_xml_fp, "%d total process%s aborted",
-                    num_aborted, ((num_aborted > 1) ? "es" : ""));
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "&#010;</stderr>");
-            }
-            fprintf(orte_xml_fp, "\n");
-        }
-        if (num_killed > 1) {
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "<stderr>");
-            }
-            fprintf(orte_xml_fp, "%d total process%s killed (some possibly by %s during cleanup)",
-                    num_killed, ((num_killed > 1) ? "es" : ""), orte_basename);
-            if (orte_xml_output) {
-                fprintf(orte_xml_fp, "&#010;</stderr>");
-            }
-            fprintf(orte_xml_fp, "\n");
-        }
-    }
-    
-    if (0 < orte_routed.num_routes()) {
-        orte_plm.terminate_orteds();
-    }
-#endif
-}
-
-void orte_quit(void)
-{
     /* check one-time lock to protect against "bounce" */
     if (opal_atomic_trylock(&orte_quit_lock)) { /* returns 1 if already locked */
         return;
     }
 
-    /* whack any lingering session directory files from our jobs */
-    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-
-#if !ORTE_DISABLE_FULL_SUPPORT    
-    /* cleanup our data server */
-    orte_data_server_finalize();
-#endif    
-
-    /* cleanup and leave */
-    orte_finalize();
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-        if (NULL != orte_basename) {
-        free(orte_basename);
+    /* if we are the hnp and haven't already reported it, then
+     * report any errors
+     */
+    if (ORTE_PROC_IS_HNP && !errors_reported) {
+        if (0 != orte_exit_status && !orte_execute_quiet) {
+            errors_reported = true;
+            /* abnormal termination of some kind */
+            dump_aborted_procs();
+            /* If we showed more abort messages than were allowed,
+               show a followup message here */
+            if (num_failed_start > 1) {
+                if (orte_xml_output) {
+                    fprintf(orte_xml_fp, "<stderr>");
+                }
+                fprintf(orte_xml_fp, "%d total process%s failed to start",
+                        num_failed_start, ((num_failed_start > 1) ? "es" : ""));
+                if (orte_xml_output) {
+                    fprintf(orte_xml_fp, "&#010;</stderr>");
+                }
+                fprintf(orte_xml_fp, "\n");
+            }
+            if (num_aborted > 1) {
+                if (orte_xml_output) {
+                    fprintf(orte_xml_fp, "<stderr>");
+                }
+                fprintf(orte_xml_fp, "%d total process%s aborted",
+                        num_aborted, ((num_aborted > 1) ? "es" : ""));
+                if (orte_xml_output) {
+                    fprintf(orte_xml_fp, "&#010;</stderr>");
+                }
+                fprintf(orte_xml_fp, "\n");
+            }
+            if (num_killed > 1) {
+                if (orte_xml_output) {
+                    fprintf(orte_xml_fp, "<stderr>");
+                }
+                fprintf(orte_xml_fp, "%d total process%s killed (some possibly by %s during cleanup)",
+                        num_killed, ((num_killed > 1) ? "es" : ""), orte_basename);
+                if (orte_xml_output) {
+                    fprintf(orte_xml_fp, "&#010;</stderr>");
+                }
+                fprintf(orte_xml_fp, "\n");
+            }
+        }
     }
-        
-    if (orte_debug_flag) {
-        fprintf(stderr, "orterun: exiting with status %d\n", orte_exit_status);
-    }
-    exit(orte_exit_status);
-#else
-    exit(0);
-#endif
+
+    /* flag that the event lib should no longer be looped
+     * so we will exit
+     */
+    orte_event_base_active = false;
 }
 
 
@@ -193,7 +167,6 @@ static void dump_aborted_procs(void)
         }
         if (ORTE_JOB_STATE_UNDEF != job->state &&
             ORTE_JOB_STATE_INIT != job->state &&
-            ORTE_JOB_STATE_LAUNCHED != job->state &&
             ORTE_JOB_STATE_RUNNING != job->state &&
             ORTE_JOB_STATE_TERMINATED != job->state &&
             ORTE_JOB_STATE_ABORT_ORDERED != job->state) {
@@ -207,7 +180,8 @@ static void dump_aborted_procs(void)
                     /* array is left-justfied - we are done */
                     continue;
                 }
-                if (ORTE_PROC_STATE_FAILED_TO_START == pptr->state) {
+                if (ORTE_PROC_STATE_FAILED_TO_START == pptr->state ||
+                    ORTE_PROC_STATE_FAILED_TO_LAUNCH == pptr->state) {
                     ++num_failed_start;
                 } else if (ORTE_PROC_STATE_ABORTED == pptr->state) {
                     ++num_aborted;
@@ -224,7 +198,8 @@ static void dump_aborted_procs(void)
 
             approc = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, proc->app_idx);
             node = proc->node;
-            if (ORTE_JOB_STATE_FAILED_TO_START == job->state) {
+            if (ORTE_JOB_STATE_FAILED_TO_START == job->state ||
+                ORTE_JOB_STATE_FAILED_TO_LAUNCH == job->state) {
                 if (NULL == proc) {
                     orte_show_help("help-orterun.txt", "orterun:proc-failed-to-start-no-status-no-node", true,
                                    orte_basename);

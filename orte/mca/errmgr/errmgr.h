@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -205,27 +207,6 @@ typedef int (*orte_errmgr_base_module_abort_peers_fn_t)(orte_process_name_t *pro
                                                         orte_std_cntr_t num_procs);
 
 /**
- * Alert - process aborted
- * This function is called by the PLM when a remote process aborts during execution. Actions taken
- * in response to the abnormal termination of a remote application process will vary across
- * the various errmgr components.
- *
- * NOTE: Local process errors should always be reported through the error_detected interface and
- * NOT here.
- *
- * @param *name Pointer to the name of the proc that aborted
- *
- * @retval ORTE_SUCCESS Whatever action that was taken was successful
- * @retval ORTE_ERROR Appropriate error code
- */
-typedef int (*orte_errmgr_base_module_update_state_fn_t)(orte_jobid_t job,
-                                                         orte_job_state_t jobstate,
-                                                         orte_process_name_t *proc_name,
-                                                         orte_proc_state_t state,
-                                                         pid_t pid,
-                                                         orte_exit_code_t exit_code);
-
-/**
  * Predicted process/node failure notification
  *
  * @param[in] proc_list List of processes (or NULL if none)
@@ -294,8 +275,6 @@ struct orte_errmgr_base_module_2_3_0_t {
     orte_errmgr_base_module_abort_fn_t                  abort;
     orte_errmgr_base_module_abort_peers_fn_t            abort_peers;
 
-    /** Actual process failure notification */
-    orte_errmgr_base_module_update_state_fn_t           update_state;
     /** Predicted process/node failure notification */
     orte_errmgr_base_module_predicted_fault_fn_t        predicted_fault;
     /** Suggest a node to map a restarting process onto */

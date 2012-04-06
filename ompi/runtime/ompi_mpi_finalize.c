@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
@@ -87,6 +87,7 @@
 #endif
 #include "ompi/runtime/ompi_cr.h"
 
+
 int ompi_mpi_finalize(void)
 {
     int ret, value;
@@ -94,6 +95,7 @@ int ompi_mpi_finalize(void)
     opal_list_item_t *item;
     struct timeval ompistart, ompistop;
     bool timing = false;
+    orte_grpcomm_collective_t *coll;
 
     /* Be a bit social if an erroneous program calls MPI_FINALIZE in
        two different threads, otherwise we may deadlock in
@@ -229,10 +231,18 @@ int ompi_mpi_finalize(void)
        MPI barrier doesn't ensure that all messages have been transmitted
        before exiting, so the possibility of a stranded message exists.
     */
-    if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier())) {
+    coll = OBJ_NEW(orte_grpcomm_collective_t);
+    coll->id = orte_process_info.peer_fini_barrier;
+    if (ORTE_SUCCESS != (ret = orte_grpcomm.barrier(coll))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
+
+    /* wait for barrier to complete */
+    while (coll->active) {
+        opal_progress();  /* block in progress pending events */
+    }
+    OBJ_RELEASE(coll);
 
     /* check for timing request - get stop time and report elapsed
      time if so */

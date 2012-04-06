@@ -36,11 +36,7 @@
 
 #include "orte/util/proc_info.h"
 
-#if ORTE_ENABLE_EPOCH
-#define ORTE_NAME_INVALID {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_MIN}
-#else
 #define ORTE_NAME_INVALID {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}
-#endif
 
 ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   ORTE_NAME_INVALID,
@@ -73,10 +69,10 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .bind_level =           */   OPAL_HWLOC_NODE_LEVEL,
     /*  .bind_idx =             */   0,
 #endif
-    /*  .job_name =             */   NULL,
-    /*  .job_instance =         */   NULL,
-    /*  .executable =           */   NULL,
-    /*  .app_rank =             */   -1
+    /*  .app_rank =             */   -1,
+    /*  .peer_modex =           */   -1,
+    /*  .peer_init_barrier =    */   -1,
+    /*  .peer_fini_barrier =    */   -1
 };
 
 static bool init=false;
@@ -157,18 +153,6 @@ int orte_proc_info(void)
                                 true, false, 0, &tmp);
     orte_process_info.num_restarts = tmp;
     
-    mca_base_param_reg_string_name("orte", "job_name",
-                                   "Job name",
-                                   true, false, NULL,  &orte_process_info.job_name);
-
-    mca_base_param_reg_string_name("orte", "job_instance",
-                                   "Job instance",
-                                   true, false, NULL,  &orte_process_info.job_instance);
-
-    mca_base_param_reg_string_name("orte", "executable",
-                                   "Executable",
-                                   true, false, NULL,  &orte_process_info.executable);
-
     mca_base_param_reg_int_name("orte", "app_rank",
                                 "Rank of this proc within its app_context",
                                 true, false, 0, &tmp);
@@ -184,6 +168,19 @@ int orte_proc_info(void)
     /* setup the sync buffer */
     orte_process_info.sync_buf = OBJ_NEW(opal_buffer_t);
     
+    /* get the collective id info */
+    mca_base_param_reg_int_name("orte", "peer_modex_id", "Peer modex collective id",
+                                true, false, -1, &tmp);
+    orte_process_info.peer_modex = (orte_grpcomm_coll_id_t)tmp;
+
+    mca_base_param_reg_int_name("orte", "peer_init_barrier_id", "Peer init barrier collective id",
+                                true, false, -1, &tmp);
+    orte_process_info.peer_init_barrier = (orte_grpcomm_coll_id_t)tmp;
+
+    mca_base_param_reg_int_name("orte", "peer_fini_barrier_id", "Peer finalize barrier collective id",
+                                true, false, -1, &tmp);
+    orte_process_info.peer_fini_barrier = (orte_grpcomm_coll_id_t)tmp;
+
     return ORTE_SUCCESS;
 }
 

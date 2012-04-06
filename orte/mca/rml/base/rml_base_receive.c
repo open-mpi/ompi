@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -60,7 +60,7 @@ int orte_rml_base_comm_start(void)
     
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_RML_INFO_UPDATE,
-                                                      ORTE_RML_NON_PERSISTENT,
+                                                      ORTE_RML_PERSISTENT,
                                                       orte_rml_base_recv,
                                                       NULL))) {
         ORTE_ERROR_LOG(rc);
@@ -87,29 +87,35 @@ int orte_rml_base_comm_stop(void)
     return rc;
 }
 
-static void process_message(int fd, short event, void *data)
+/* handle message from proxies
+ * NOTE: The incoming buffer "buffer" is OBJ_RELEASED by the calling program.
+ * DO NOT RELEASE THIS BUFFER IN THIS CODE
+ */
+static void
+orte_rml_base_recv(int status, orte_process_name_t* sender,
+                   opal_buffer_t* buffer, orte_rml_tag_t tag,
+                   void* cbdata)
 {
-    orte_message_event_t *mev = (orte_message_event_t*)data;
     orte_rml_cmd_flag_t command;
     orte_std_cntr_t count;
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     int rc;
     
 
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
                          "%s rml:base:recv: processing message from %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&mev->sender)));
+                         ORTE_NAME_PRINT(sender)));
     
     count = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(mev->buffer, &command, &count, ORTE_RML_CMD))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &command, &count, ORTE_RML_CMD))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
     
     switch (command) {
         case ORTE_RML_UPDATE_CMD:
-            if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(mev->buffer))) {
+            if (ORTE_SUCCESS != (rc = orte_rml_base_update_contact_info(buffer))) {
                 ORTE_ERROR_LOG(rc);
                 return;
             }
@@ -129,47 +135,13 @@ static void process_message(int fd, short event, void *data)
     OPAL_OUTPUT_VERBOSE((5, orte_rml_base_output,
                          "%s rml:base:recv: sending ack to %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&mev->sender)));
+                         ORTE_NAME_PRINT(sender)));
 
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    if (0 > (rc = orte_rml.send_buffer(&mev->sender, &buf, ORTE_RML_TAG_UPDATE_ROUTE_ACK, 0))) {
+    buf = OBJ_NEW(opal_buffer_t);
+    if (0 > (rc = orte_rml.send_buffer_nb(sender, buf, ORTE_RML_TAG_UPDATE_ROUTE_ACK, 0,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
     }
-    OBJ_DESTRUCT(&buf);
-    
-    OBJ_RELEASE(mev);
+    OBJ_RELEASE(buf);
 }
-
-/*
- * handle message from proxies
- * NOTE: The incoming buffer "buffer" is OBJ_RELEASED by the calling program.
- * DO NOT RELEASE THIS BUFFER IN THIS CODE
- */
-
-static void
-orte_rml_base_recv(int status, orte_process_name_t* sender,
-                   opal_buffer_t* buffer, orte_rml_tag_t tag,
-                   void* cbdata)
-{
-    int rc;
-    
-    /* don't process this right away - we need to get out of the recv before
-     * we process the message as it may ask us to do something that involves
-     * more messaging! Instead, setup an event so that the message gets processed
-     * as soon as we leave the recv.
-     *
-     * The macro makes a copy of the buffer, which we release above - the incoming
-     * buffer, however, is NOT released here, although its payload IS transferred
-     * to the message buffer for later processing
-     */
-    ORTE_MESSAGE_EVENT(sender, buffer, tag, process_message);
-   
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                      ORTE_RML_TAG_RML_INFO_UPDATE,
-                                                      ORTE_RML_NON_PERSISTENT,
-                                                      orte_rml_base_recv,
-                                                      NULL))) {
-        ORTE_ERROR_LOG(rc);
-    }
-}
-

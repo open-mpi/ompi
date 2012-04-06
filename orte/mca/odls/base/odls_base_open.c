@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,8 +37,8 @@
 #include "opal/util/output.h"
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
-#include "opal/threads/threads.h"
 
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -89,7 +91,7 @@ orte_odls_globals_t orte_odls_globals;
 int orte_odls_base_open(void)
 {
     char **ranks=NULL, *tmp;
-    int i, rank;
+    int rc, i, rank;
     orte_namelist_t *nm;
     bool xterm_hold;
     
@@ -101,17 +103,17 @@ int orte_odls_base_open(void)
                                 "Time to wait for a process to die after issuing a kill signal to it",
                                 false, false, 1, &orte_odls_globals.timeout_before_sigkill);
 
-    /* initialize the global list of local children and job data */
-    OBJ_CONSTRUCT(&orte_local_children, opal_list_t);
-    OBJ_CONSTRUCT(&orte_local_children_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_local_children_cond, opal_condition_t);
-    OBJ_CONSTRUCT(&orte_local_jobdata, opal_list_t);
-    OBJ_CONSTRUCT(&orte_local_jobdata_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_local_jobdata_cond, opal_condition_t);
+    /* initialize the global array of local children */
+    orte_local_children = OBJ_NEW(opal_pointer_array_t);
+    if (OPAL_SUCCESS != (rc = opal_pointer_array_init(orte_local_children,
+                                                      1,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      1))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     /* initialize ODLS globals */
-    OBJ_CONSTRUCT(&orte_odls_globals.mutex, opal_mutex_t);
-    OBJ_CONSTRUCT(&orte_odls_globals.cond, opal_condition_t);
     OBJ_CONSTRUCT(&orte_odls_globals.xterm_ranks, opal_list_t);
     orte_odls_globals.xtermcmd = NULL;
     orte_odls_globals.dmap = NULL;
@@ -133,7 +135,6 @@ int orte_odls_base_open(void)
             if (-1 == rank) {
                 /* wildcard */
                 nm->name.vpid = ORTE_VPID_WILDCARD;
-                ORTE_EPOCH_SET(nm->name.epoch,ORTE_EPOCH_WILDCARD);
             } else if (rank < 0) {
                 /* error out on bozo case */
                 orte_show_help("help-odls-base.txt",
@@ -146,9 +147,8 @@ int orte_odls_base_open(void)
                  * will be in the job - we'll check later
                  */
                 nm->name.vpid = rank;
-                ORTE_EPOCH_SET(nm->name.epoch,orte_ess.proc_get_epoch(&nm->name));
             }
-            opal_list_append(&orte_odls_globals.xterm_ranks, &nm->item);
+            opal_list_append(&orte_odls_globals.xterm_ranks, &nm->super);
         }
         opal_argv_free(ranks);
         /* construct the xtermcmd */
@@ -188,117 +188,20 @@ int orte_odls_base_open(void)
     return ORTE_SUCCESS;
 }
 
-/* instance the child list object */
-static void orte_odls_child_constructor(orte_odls_child_t *ptr)
+static void launch_local_const(orte_odls_launch_local_t *ptr)
 {
-    ptr->name = NULL;
-    ptr->restarts = 0;
-    ptr->pid = 0;
-    ptr->app_idx = 0;
-    ptr->alive = false;
-    ptr->coll_recvd = false;
-    /* set the default state to "failed to start" so
-     * we can correctly report should something
-     * go wrong during launch
-     */
-    ptr->state = ORTE_PROC_STATE_FAILED_TO_START;
-    ptr->exit_code = 0;
-    ptr->init_recvd = false;
-    ptr->fini_recvd = false;
-    ptr->rml_uri = NULL;
-    ptr->waitpid_recvd = false;
-    ptr->iof_complete = false;
-    ptr->do_not_barrier = false;
-    ptr->notified = false;
-    OBJ_CONSTRUCT(&ptr->stats, opal_ring_buffer_t);
-    opal_ring_buffer_init(&ptr->stats, orte_stat_history_size);
-#if OPAL_HAVE_HWLOC
-    ptr->cpu_bitmap = NULL;
-#endif
+    ptr->ev = opal_event_alloc();
+    ptr->job = ORTE_JOBID_INVALID;
+    ptr->fork_local = NULL;
+    ptr->retries = 0;
 }
-static void orte_odls_child_destructor(orte_odls_child_t *ptr)
+static void launch_local_dest(orte_odls_launch_local_t *ptr)
 {
-    opal_pstats_t *st;
-
-    if (NULL != ptr->name) free(ptr->name);
-    if (NULL != ptr->rml_uri) free(ptr->rml_uri);
-
-    while (NULL != (st = (opal_pstats_t*)opal_ring_buffer_pop(&ptr->stats))) {
-        OBJ_RELEASE(st);
-    }
-    OBJ_DESTRUCT(&ptr->stats);
-#if OPAL_HAVE_HWLOC
-    if (NULL != ptr->cpu_bitmap) {
-        free(ptr->cpu_bitmap);
-    }
-#endif
+    opal_event_free(ptr->ev);
 }
-OBJ_CLASS_INSTANCE(orte_odls_child_t,
-                   opal_list_item_t,
-                   orte_odls_child_constructor,
-                   orte_odls_child_destructor);
-
-static void orte_odls_job_constructor(orte_odls_job_t *ptr)
-{
-    OBJ_CONSTRUCT(&ptr->lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&ptr->cond, opal_condition_t);
-    ptr->jobid = ORTE_JOBID_INVALID;
-    ptr->instance = NULL;
-    ptr->name = NULL;
-    ptr->state = ORTE_JOB_STATE_UNDEF;
-    ptr->launch_msg_processed = false;
-    OBJ_CONSTRUCT(&ptr->apps, opal_pointer_array_t);
-    opal_pointer_array_init(&ptr->apps, 2, INT_MAX, 2);
-    ptr->num_apps = 0;
-#if OPAL_HAVE_HWLOC
-    ptr->binding = 0;
-#endif
-    ptr->cpus_per_rank = 1;
-    ptr->stride = 1;
-    ptr->controls = 0;
-    ptr->stdin_target = ORTE_VPID_INVALID;
-    ptr->total_slots_alloc = 0;
-    ptr->num_procs = 0;
-    ptr->num_local_procs = 0;
-    ptr->pmap = NULL;
-    OBJ_CONSTRUCT(&ptr->collection_bucket, opal_buffer_t);
-    OBJ_CONSTRUCT(&ptr->local_collection, opal_buffer_t);
-    ptr->collective_type = ORTE_GRPCOMM_COLL_NONE;
-    ptr->num_contributors = 0;
-    ptr->num_participating = -1;
-    ptr->num_collected = 0;
-    ptr->enable_recovery = false;
-}
-static void orte_odls_job_destructor(orte_odls_job_t *ptr)
-{
-    int i;
-    orte_app_context_t *app;
-
-    OBJ_DESTRUCT(&ptr->lock);
-    OBJ_DESTRUCT(&ptr->cond);
-    if (NULL != ptr->instance) {
-        free(ptr->instance);
-    }
-    if (NULL != ptr->name) {
-        free(ptr->name);
-    }
-    for (i=0; i < ptr->apps.size; i++) {
-        if (NULL != (app = (orte_app_context_t*)opal_pointer_array_get_item(&ptr->apps, i))) {
-            OBJ_RELEASE(app);
-        }
-        OBJ_DESTRUCT(&ptr->apps);
-    }
-    if (NULL != ptr->pmap && NULL != ptr->pmap->bytes) {
-        free(ptr->pmap->bytes);
-        free(ptr->pmap);
-    }
-    
-    OBJ_DESTRUCT(&ptr->collection_bucket);
-    OBJ_DESTRUCT(&ptr->local_collection);
-}
-OBJ_CLASS_INSTANCE(orte_odls_job_t,
-                   opal_list_item_t,
-                   orte_odls_job_constructor,
-                   orte_odls_job_destructor);
+OBJ_CLASS_INSTANCE(orte_odls_launch_local_t,
+                   opal_object_t,
+                   launch_local_const,
+                   launch_local_dest);
 
 #endif

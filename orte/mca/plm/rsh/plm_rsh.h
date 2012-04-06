@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -56,9 +58,7 @@ struct orte_plm_rsh_component_t {
     struct timespec delay;
     int priority;
     bool tree_spawn;
-    size_t num_concurrent;
-    opal_mutex_t lock;
-    opal_condition_t cond;
+    int num_concurrent;
     char *agent;
     bool assume_same_shell;
     bool pass_environ_mca_params;

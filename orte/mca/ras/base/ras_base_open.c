@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,6 +27,7 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 
@@ -61,12 +64,7 @@ int orte_ras_base_open(void)
 /*
  * Global variables
  */
-orte_ras_t orte_ras = {
-    orte_ras_base_allocate
-};
-
 orte_ras_base_t orte_ras_base;
-
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -80,7 +78,8 @@ int orte_ras_base_open(void)
     /* set default flags */
     orte_ras_base.active_module = NULL;
     orte_ras_base.allocation_read = false;
-    
+    orte_ras_base.total_slots_alloc = 0;
+
     /* should we display the allocation after determining it? */
     mca_base_param_reg_int_name("ras", "base_display_alloc",
                                 "Whether to display the allocation after it is determined",

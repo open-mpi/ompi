@@ -7,7 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -140,7 +140,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
                     opal_list_remove_first(&(module->m_copy_pending_sendreqs));
 
                 ret = ompi_osc_rdma_sendreq_send(module, req);
-                if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(ret)) {
+                if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
                     opal_list_append(&(module->m_copy_pending_sendreqs), (opal_list_item_t*)req);
                 } else if (OMPI_SUCCESS != ret) {
                     return ret;
@@ -355,7 +355,7 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
             (ompi_osc_rdma_sendreq_t*) item;
 
         ret = ompi_osc_rdma_sendreq_send(module, req);
-        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
             opal_list_append(&(module->m_copy_pending_sendreqs), item);
             break;
         } else if (OMPI_SUCCESS != ret) {
@@ -589,7 +589,7 @@ ompi_osc_rdma_module_unlock(int target,
             (ompi_osc_rdma_sendreq_t*) item;
 
         ret = ompi_osc_rdma_sendreq_send(module, req);
-        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
             opal_list_append(&(module->m_copy_pending_sendreqs), item);
             break;
         } else if (OMPI_SUCCESS != ret) {

@@ -13,7 +13,6 @@
 #include "opal/include/opal_stdint.h"
 
 #include "btl_ugni_rdma.h"
-#include "opal/util/opal_sos.h"
 
 /**
  * Initiate a put operation.

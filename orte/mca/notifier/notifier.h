@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All Rights Reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,9 +40,14 @@
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
 #endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+#ifdef HAVE_SYSLOG_H
+#include <syslog.h>
+#endif
 
 #include "opal/mca/mca.h"
-#include "opal/util/opal_sos.h"
 
 #include "orte/constants.h"
 #include "orte/types.h"
@@ -56,16 +63,16 @@ BEGIN_C_DECLS
  */
 #define ORTE_NOTIFIER_MAX_BUF	512
 
-/* Severities, based on OPAL SOS */
+/* Severities */
 typedef enum {
-    ORTE_NOTIFIER_EMERG = OPAL_SOS_SEVERITY_EMERG,
-    ORTE_NOTIFIER_ALERT = OPAL_SOS_SEVERITY_ALERT,
-    ORTE_NOTIFIER_CRIT = OPAL_SOS_SEVERITY_CRIT,
-    ORTE_NOTIFIER_ERROR = OPAL_SOS_SEVERITY_ERROR,
-    ORTE_NOTIFIER_WARN = OPAL_SOS_SEVERITY_WARN,
-    ORTE_NOTIFIER_NOTICE = OPAL_SOS_SEVERITY_NOTICE,
-    ORTE_NOTIFIER_INFO = OPAL_SOS_SEVERITY_INFO,
-    ORTE_NOTIFIER_DEBUG = OPAL_SOS_SEVERITY_DEBUG
+    ORTE_NOTIFIER_EMERG = LOG_EMERG,
+    ORTE_NOTIFIER_ALERT = LOG_ALERT,
+    ORTE_NOTIFIER_CRIT = LOG_CRIT,
+    ORTE_NOTIFIER_ERROR = LOG_ERR,
+    ORTE_NOTIFIER_WARN = LOG_WARNING,
+    ORTE_NOTIFIER_NOTICE = LOG_NOTICE,
+    ORTE_NOTIFIER_INFO = LOG_INFO,
+    ORTE_NOTIFIER_DEBUG = LOG_DEBUG
 } orte_notifier_base_severity_t;
 
 /*

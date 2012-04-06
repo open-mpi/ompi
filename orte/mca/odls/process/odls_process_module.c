@@ -50,7 +50,7 @@
 static void set_handler_default(int sig);
 
 
-static bool odls_process_child_died( orte_odls_child_t *child )
+static bool odls_process_child_died( orte_proc_t *child )
 {
     int error;
     HANDLE handle = OpenProcess( PROCESS_TERMINATE | SYNCHRONIZE, FALSE,
@@ -92,9 +92,9 @@ static int odls_process_kill_local_procs(opal_pointer_array_t *procs)
  */
 
 static int odls_process_fork_local_proc(orte_app_context_t* context,
-                                        orte_odls_child_t *child,
+                                        orte_proc_t *child,
                                         char **environ_copy,
-                                        orte_odls_job_t *jobdat)
+                                        orte_job_t *jobdat)
 {
     pid_t pid;
     orte_iof_base_io_conf_t opts;
@@ -108,7 +108,7 @@ static int odls_process_fork_local_proc(orte_app_context_t* context,
      */
     if (opal_sys_limits.initialized) {
         if (0 < opal_sys_limits.num_procs &&
-            opal_sys_limits.num_procs <= (int)opal_list_get_size(&orte_local_children)) {
+            opal_sys_limits.num_procs <= *(&orte_local_children->size)) {
             /* at the system limit - abort */
             ORTE_ERROR_LOG(ORTE_ERR_SYS_LIMITS_CHILDREN);
             child->state = ORTE_PROC_STATE_FAILED_TO_START;
@@ -122,7 +122,7 @@ static int odls_process_fork_local_proc(orte_app_context_t* context,
     opts.usepty = OPAL_ENABLE_PTY_SUPPORT;
 
     /* do we want to setup stdin? */
-    if (jobdat->stdin_target == ORTE_VPID_WILDCARD || child->name->vpid == jobdat->stdin_target) {
+    if (jobdat->stdin_target == ORTE_VPID_WILDCARD || child->name.vpid == jobdat->stdin_target) {
         opts.connect_stdin = true;
     } else {
         opts.connect_stdin = false;
@@ -161,16 +161,10 @@ static int odls_process_fork_local_proc(orte_app_context_t* context,
     }
 
     /* set the proc state to LAUNCHED and save the pid */
-    child->state = ORTE_PROC_STATE_LAUNCHED;
+    child->state = ORTE_PROC_STATE_RUNNING;
     child->pid = pid;
     child->alive = true;
-        
-    /* Windows automatically forwards IO, so we don't need to do so here. However,
-     * we need to flag that IO termination conditions are met so that the daemon
-     * knows the proc is done
-     */
-    orte_odls_base_notify_iof_complete(child->name);
-    
+            
     return ORTE_SUCCESS;
 }
 
@@ -193,12 +187,7 @@ static int odls_process_launch_local_procs(opal_buffer_t *data)
     }
     
     /* launch the local procs */
-    if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, odls_process_fork_local_proc))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                             "%s odls:process:launch:local failed to launch on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
-        goto CLEANUP;
-    }
+    ORTE_ACTIVATE_LOCAL_LAUNCH(job, odls_process_fork_local_proc);
     
 CLEANUP:
 
@@ -220,7 +209,7 @@ static int odls_process_signal_local_proc(const orte_process_name_t *proc, int32
 	return rc;
 }
 
-static int orte_odls_process_restart_proc(orte_odls_child_t *child)
+static int orte_odls_process_restart_proc(orte_proc_t *child)
 {
     int rc;
     

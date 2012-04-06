@@ -519,9 +519,7 @@ int opal_util_register_stackhandlers (void)
           if (!showed_help && complain) {
               /* JMS This is icky; there is no error message
                  aggregation here so this message may be repeated for
-                 every single MPI process...  This should be replaced
-                 with OPAL_SOS when that is done so that it can be
-                 properly aggregated. */
+                 every single MPI process... */
               opal_show_help("help-opal-util.txt",
                              "stacktrace signal override",
                              true, sig, sig, sig, string_value);

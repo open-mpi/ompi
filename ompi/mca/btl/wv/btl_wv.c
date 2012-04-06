@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved.
@@ -32,7 +32,6 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
-#include "opal/util/opal_sos.h"
 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -309,7 +308,7 @@ static int mca_btl_wv_tune_endpoint(mca_btl_wv_module_t* wv_btl,
                           endpoint->rem_info.rem_vendor_part_id, &values);
 
     if (OMPI_SUCCESS != ret &&
-        OMPI_ERR_NOT_FOUND != OPAL_SOS_GET_ERROR_CODE(ret)) {
+        OMPI_ERR_NOT_FOUND != ret) {
         orte_show_help("help-mpi-btl-wv.txt",
                        "error in device init", true,
                        orte_process_info.nodename,
@@ -1347,7 +1346,7 @@ int mca_btl_wv_put(mca_btl_base_module_t* btl,
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         rc = check_endpoint_state(ep, descriptor, &ep->pending_put_frags);
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc))
+        if(OMPI_ERR_RESOURCE_BUSY == rc)
             return OMPI_SUCCESS;
         if(OMPI_SUCCESS != rc)
             return rc;
@@ -1406,7 +1405,7 @@ int mca_btl_wv_get(mca_btl_base_module_t* btl,
         OPAL_THREAD_LOCK(&ep->endpoint_lock);
         rc = check_endpoint_state(ep, descriptor, &ep->pending_get_frags);
         OPAL_THREAD_UNLOCK(&ep->endpoint_lock);
-        if(OMPI_ERR_RESOURCE_BUSY == OPAL_SOS_GET_ERROR_CODE(rc))
+        if(OMPI_ERR_RESOURCE_BUSY == rc)
             return OMPI_SUCCESS;
         if(OMPI_SUCCESS != rc)
             return rc;

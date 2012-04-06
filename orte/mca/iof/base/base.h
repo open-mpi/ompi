@@ -64,7 +64,7 @@ ORTE_DECLSPEC int orte_iof_base_open(void);
 typedef struct {
     opal_list_item_t super;
     bool pending;
-    opal_event_t ev;
+    opal_event_t *ev;
     int fd;
     opal_list_t outputs;
 } orte_iof_write_event_t;
@@ -86,7 +86,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_sink_t);
 typedef struct {
     opal_object_t super;
     orte_process_name_t name;
-    opal_event_t ev;
+    opal_event_t *ev;
     int fd;
     orte_iof_tag_t tag;
     bool active;
@@ -135,12 +135,11 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         ep = OBJ_NEW(orte_iof_sink_t);                              \
         ep->name.jobid = (nm)->jobid;                               \
         ep->name.vpid = (nm)->vpid;                                 \
-        ORTE_EPOCH_SET(ep->name.epoch,(nm)->epoch);                 \
         ep->tag = (tg);                                             \
         if (0 <= (fid)) {                                           \
             ep->wev->fd = (fid);                                    \
-            opal_event_set(opal_event_base,                         \
-                           &(ep->wev->ev), ep->wev->fd,             \
+            opal_event_set(orte_event_base,                         \
+                           ep->wev->ev, ep->wev->fd,                \
                            OPAL_EV_WRITE,                           \
                            wrthndlr, ep);                           \
         }                                                           \
@@ -169,19 +168,18 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
-        ORTE_EPOCH_SET(rev->name.epoch,(nm)->epoch);                \
         rev->tag = (tg);                                            \
         rev->fd = (fid);                                            \
         *(rv) = rev;                                                \
         rev->file = strdup(__FILE__);                               \
         rev->line = __LINE__;                                       \
-        opal_event_set(opal_event_base,                             \
-                       &rev->ev, (fid),                             \
+        opal_event_set(orte_event_base,                             \
+                       rev->ev, (fid),                              \
                        OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \
         if ((actv)) {                                               \
             rev->active = true;                                     \
-            opal_event_add(&rev->ev, 0);                            \
+            opal_event_add(rev->ev, 0);                             \
         }                                                           \
     } while(0);
 
@@ -194,12 +192,11 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         ep = OBJ_NEW(orte_iof_sink_t);                              \
         ep->name.jobid = (nm)->jobid;                               \
         ep->name.vpid = (nm)->vpid;                                 \
-        ORTE_EPOCH_SET(ep->name.epoch,(nm)->epoch);                 \
         ep->tag = (tg);                                             \
         if (0 <= (fid)) {                                           \
             ep->wev->fd = (fid);                                    \
-            opal_event_set(opal_event_base,                         \
-                           &(ep->wev->ev), ep->wev->fd,             \
+            opal_event_set(orte_event_base,                         \
+                           ep->wev->ev, ep->wev->fd,                \
                            OPAL_EV_WRITE,                           \
                            wrthndlr, ep);                           \
         }                                                           \
@@ -215,17 +212,16 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev = OBJ_NEW(orte_iof_read_event_t);                       \
         rev->name.jobid = (nm)->jobid;                              \
         rev->name.vpid = (nm)->vpid;                                \
-        ORTE_EPOCH_SET(rev->name.epoch,(nm)->epoch);                \
         rev->tag = (tg);                                            \
         rev->fd = (fid);                                            \
         *(rv) = rev;                                                \
-        opal_event_set(opal_event_base,                             \
-                       &rev->ev, (fid),                             \
+        opal_event_set(orte_event_base,                             \
+                       rev->ev, (fid),                              \
                        OPAL_EV_READ,                                \
                        (cbfunc), rev);                              \
         if ((actv)) {                                               \
             rev->active = true;                                     \
-            opal_event_add(&rev->ev, 0);                            \
+            opal_event_add(rev->ev, 0);                             \
         }                                                           \
     } while(0);
 

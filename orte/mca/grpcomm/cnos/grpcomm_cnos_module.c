@@ -32,6 +32,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml_types.h"
 
+#include "orte/mca/grpcomm/grpcomm_types.h"
 #include "grpcomm_cnos.h"
 
 #if OMPI_GRPCOMM_CNOS_HAVE_BARRIER
@@ -50,11 +51,9 @@ static int xcast(orte_jobid_t job,
                  opal_buffer_t *buffer,
                  orte_rml_tag_t tag);
 
-static int orte_grpcomm_cnos_barrier(void);
+static int orte_grpcomm_cnos_barrier(orte_grpcomm_collective_t *coll);
 
-static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
-
-static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t *rbuf);
+static int allgather(orte_grpcomm_collective_t *coll);
 
 static int set_proc_attr(const char *attr_name,
                          const void *data,
@@ -64,7 +63,7 @@ static int get_proc_attr(const orte_process_name_t proc,
                          const char * attribute_name, void **val, 
                          size_t *size);
 
-static int modex(opal_list_t *procs);
+static int modex(orte_grpcomm_collective_t *coll);
 
 static int purge_proc_attrs(void);
 
@@ -73,7 +72,6 @@ orte_grpcomm_base_module_t orte_grpcomm_cnos_module = {
     finalize,
     xcast,
     allgather,
-    allgather_list,
     orte_grpcomm_cnos_barrier,
     set_proc_attr,
     get_proc_attr,
@@ -113,37 +111,35 @@ static int xcast(orte_jobid_t job,
 }
 
 static int
-orte_grpcomm_cnos_barrier(void)
+orte_grpcomm_cnos_barrier(orte_grpcomm_collective_t *coll)
 {
 #if OMPI_GRPCOMM_CNOS_HAVE_BARRIER
     cnos_barrier();
 #endif
-
+    coll->active = false;
+    if (NULL != coll->cbfunc) {
+        coll->cbfunc(NULL, coll->cbdata);
+    }
     return ORTE_SUCCESS;
 }
 
-static int allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
+static int allgather(orte_grpcomm_collective_t *coll)
 {
     int rc;
     orte_std_cntr_t zero=0;
-    
-    /* seed the outgoing buffer with num_procs=0 so it won't be unpacked */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(rbuf, &zero, 1, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    return rc;
-}
+    opal_buffer_t rbuf;
 
-static int allgather_list(opal_list_t *names, opal_buffer_t *sbuf, opal_buffer_t *rbuf)
-{
-    int rc;
-    orte_std_cntr_t zero=0;
-    
-    /* seed the outgoing buffer with num_procs=0 so it won't be unpacked */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(rbuf, &zero, 1, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    coll->active = false;
+    if (NULL != coll->cbfunc) {
+        /* seed the outgoing buffer with num_procs=0 so it won't be unpacked */
+        OBJ_CONSTRUCT(&rbuf, opal_buffer_t);
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&rbuf, &zero, 1, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&rbuf);
+            return rc;
+        }
+        coll->cbfunc(&rbuf, coll->cbdata);
+        OBJ_DESTRUCT(&rbuf);
     }
     return rc;
 }
@@ -164,8 +160,12 @@ static int get_proc_attr(const orte_process_name_t proc,
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static int modex(opal_list_t *procs)
+static int modex(orte_grpcomm_collective_t *coll)
 {
+    modex->active = false;
+    if (NULL != coll->cbfunc) {
+        coll->cbfunc(NULL, coll->cbdata);
+    }
     return ORTE_SUCCESS;
 }
 

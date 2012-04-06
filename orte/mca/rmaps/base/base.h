@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -89,6 +91,11 @@ typedef struct {
 OBJ_CLASS_DECLARATION(orte_rmaps_base_selected_module_t);
 
 ORTE_DECLSPEC int orte_rmaps_base_select(void);
+
+/*
+ * Map a job
+ */
+ORTE_DECLSPEC void orte_rmaps_base_map_job(int fd, short args, void *cbdata);
 
 /**
  * Utility routines to get/set vpid mapping for the job

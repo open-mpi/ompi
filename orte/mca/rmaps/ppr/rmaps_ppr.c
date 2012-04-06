@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -72,9 +74,9 @@ static int ppr_mapper(orte_job_t *jdata)
     /* only handle initial launch of loadbalanced
      * or NPERxxx jobs - allow restarting of failed apps
      */
-    if (ORTE_JOB_STATE_INIT != jdata->state) {
+    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "mca:rmaps:ppr: job %s not in initial state - ppr cannot map",
+                            "mca:rmaps:ppr: job %s being restarted - ppr cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -61,9 +63,6 @@ int orte_dt_pack_name(opal_buffer_t *buffer, const void *src,
     orte_process_name_t* proc;
     orte_jobid_t *jobid;
     orte_vpid_t *vpid;
-#if ORTE_ENABLE_EPOCH
-    orte_epoch_t *epoch;
-#endif
     
     /* collect all the jobids in a contiguous array */
     jobid = (orte_jobid_t*)malloc(num_vals * sizeof(orte_jobid_t));
@@ -105,27 +104,6 @@ int orte_dt_pack_name(opal_buffer_t *buffer, const void *src,
     }
     free(vpid);
 
-#if ORTE_ENABLE_EPOCH
-    /* Collect all the epochs in a contiguous array */
-    epoch = (orte_epoch_t *) malloc(num_vals * sizeof(orte_epoch_t));
-    if (NULL == epoch) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    proc = (orte_process_name_t *) src;
-    for (i = 0; i < num_vals; i++) {
-        epoch[i] = proc->epoch;
-        proc++;
-    }
-    /* Now pack them in one shot. */
-    if (ORTE_SUCCESS != (rc = orte_dt_pack_epoch(buffer, epoch, num_vals, ORTE_EPOCH))) {
-        ORTE_ERROR_LOG(rc);
-        free(epoch);
-        return rc;
-    }
-    free(epoch);
-#endif
-    
     return ORTE_SUCCESS;
 }
 
@@ -163,24 +141,6 @@ int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
     return ret;
 }
 
-#if ORTE_ENABLE_EPOCH
-/*
- * EPOCH
- */
-int orte_dt_pack_epoch(opal_buffer_t *buffer, const void *src,
-                            int32_t num_vals, opal_data_type_t type)
-{
-    int ret;
-
-    /* Turn around pack the real type */
-    if (ORTE_SUCCESS != (ret = opal_dss_pack_buffer(buffer, src, num_vals, ORTE_EPOCH_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
-
-    return ret;
-}
-#endif
-
 #if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * JOB
@@ -201,20 +161,6 @@ int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
     jobs = (orte_job_t**) src;
 
     for (i=0; i < num_vals; i++) {
-        /* pack the name of this job - may be null */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(jobs[i]->name)), 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* pack the name of the instance of the job - may be null */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                         (void*)(&(jobs[i]->instance)), 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
         /* pack the jobid */
         if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
                         (void*)(&(jobs[i]->jobid)), 1, ORTE_JOBID))) {
@@ -951,22 +897,6 @@ int orte_dt_pack_daemon_cmd(opal_buffer_t *buffer, const void *src, int32_t num_
     
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (ret = opal_dss_pack_buffer(buffer, src, num_vals, ORTE_DAEMON_CMD_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
-    
-    return ret;
-}
-
-/*
- * ORTE_GRPCOMM_MODE
- */
-int orte_dt_pack_grpcomm_mode(opal_buffer_t *buffer, const void *src, int32_t num_vals,
-                            opal_data_type_t type)
-{
-    int ret;
-    
-    /* Turn around and pack the real type */
-    if (ORTE_SUCCESS != (ret = opal_dss_pack_buffer(buffer, src, num_vals, ORTE_GRPCOMM_MODE_T))) {
         ORTE_ERROR_LOG(ret);
     }
     

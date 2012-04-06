@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,6 +45,10 @@ opal_paffinity_locality_t orte_ess_base_proc_get_locality(orte_process_name_t *p
 
     if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                             "%s LOOKING FOR PROC %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
         return OPAL_PROC_NON_LOCAL;
     }
     
@@ -76,6 +82,10 @@ char* orte_ess_base_proc_get_hostname(orte_process_name_t *proc)
         
     if (NULL == (nid = orte_util_lookup_nid(proc))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                             "%s LOOKING FOR PROC %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
         return NULL;
     }
     

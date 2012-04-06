@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,13 +102,11 @@ void orte_errmgr_predicted_proc_construct(orte_errmgr_predicted_proc_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
     item->proc_name.jobid = ORTE_JOBID_INVALID;
-    ORTE_EPOCH_SET(item->proc_name.epoch,ORTE_EPOCH_MIN);
 }
 
 void orte_errmgr_predicted_proc_destruct( orte_errmgr_predicted_proc_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
-    ORTE_EPOCH_SET(item->proc_name.epoch,ORTE_EPOCH_INVALID);
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 }
 
@@ -142,13 +142,11 @@ OBJ_CLASS_INSTANCE(orte_errmgr_predicted_map_t,
 void orte_errmgr_predicted_map_construct(orte_errmgr_predicted_map_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
-    ORTE_EPOCH_SET(item->proc_name.epoch,ORTE_EPOCH_MIN);
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 
     item->node_name = NULL;
 
     item->map_proc_name.vpid  = ORTE_VPID_INVALID;
-    ORTE_EPOCH_SET(item->map_proc_name.epoch,ORTE_EPOCH_MIN);
     item->map_proc_name.jobid = ORTE_JOBID_INVALID;
 
     item->map_node_name = NULL;
@@ -159,7 +157,6 @@ void orte_errmgr_predicted_map_construct(orte_errmgr_predicted_map_t *item)
 void orte_errmgr_predicted_map_destruct( orte_errmgr_predicted_map_t *item)
 {
     item->proc_name.vpid  = ORTE_VPID_INVALID;
-    ORTE_EPOCH_SET(item->proc_name.epoch,ORTE_EPOCH_INVALID);
     item->proc_name.jobid = ORTE_JOBID_INVALID;
 
     if( NULL != item->node_name ) {
@@ -168,7 +165,6 @@ void orte_errmgr_predicted_map_destruct( orte_errmgr_predicted_map_t *item)
     }
 
     item->map_proc_name.vpid  = ORTE_VPID_INVALID;
-    ORTE_EPOCH_SET(item->map_proc_name.epoch,ORTE_EPOCH_INVALID);
     item->map_proc_name.jobid = ORTE_JOBID_INVALID;
 
     if( NULL != item->map_node_name ) {
@@ -200,17 +196,9 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
         return;
     }
     
-    if (NULL != orte_process_info.job_name) {
-        opal_output(0, "[[%s][%s][%s][%d]] ORTE_ERROR_LOG: %s in file %s at line %d",
-                    orte_process_info.job_name,
-                    (NULL == orte_process_info.job_instance) ? "NULL" : orte_process_info.job_instance,
-                    (NULL == orte_process_info.executable) ? "NULL" : orte_process_info.executable,
-                    orte_process_info.app_rank, errstring, filename, line);
-    } else {
-        opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                    errstring, filename, line);
-    }
+    opal_output(0, "%s ORTE_ERROR_LOG: %s in file %s at line %d",
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                errstring, filename, line);
 }
 
 #if WANT_PMI_SUPPORT
@@ -290,19 +278,6 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
     /* No way to reach here */
 }
 
-int orte_errmgr_base_update_state(orte_jobid_t job,
-                                  orte_job_state_t jobstate,
-                                  orte_process_name_t *proc_name,
-                                  orte_proc_state_t state,
-                                  pid_t pid,
-                                  orte_exit_code_t exit_code)
-{
-    /*
-     * This is a stub function that is only meant to be called by tools,
-     * so it will always return success.
-     */
-    return ORTE_SUCCESS;
-}
 void orte_errmgr_base_register_migration_warning(struct timeval *tv)
 {
     /* stub function - ignore */

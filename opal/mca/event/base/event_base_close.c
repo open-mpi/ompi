@@ -21,9 +21,6 @@ int opal_event_base_close(void)
 
     opal_event_base_inited--;
 
-    /* release the event base */
-    opal_event_base_finalize(opal_event_base);
-
     /* no need to close the component as it was statically opened */
 
     /* for support of tools such as ompi_info */

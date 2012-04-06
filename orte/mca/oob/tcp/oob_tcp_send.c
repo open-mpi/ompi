@@ -26,6 +26,29 @@
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
 
+typedef struct {
+    opal_event_t *ev;
+    mca_oob_tcp_peer_t *peer;
+    mca_oob_tcp_msg_t *msg;
+} orte_self_send_xfer_t;
+
+static void mca_oob_tcp_send_snd_exe(int fd, short args, void* data)
+{
+    orte_self_send_xfer_t *xfer = (orte_self_send_xfer_t*)data;
+    mca_oob_tcp_peer_t *peer = xfer->peer;
+    mca_oob_tcp_msg_t *msg = xfer->msg;
+
+    /* release the event for re-use */
+    opal_event_free(xfer->ev);
+
+    /*
+     * Attempt to match against posted receive
+     */
+    mca_oob_tcp_msg_recv_complete(msg, peer);
+
+    free(xfer);
+}
+
 static int mca_oob_tcp_send_self(
     mca_oob_tcp_peer_t* peer,
     mca_oob_tcp_msg_t* msg,
@@ -35,6 +58,7 @@ static int mca_oob_tcp_send_self(
     unsigned char *ptr;
     int size = 0;
     int rc;
+    orte_self_send_xfer_t *xfer;
 
     for(rc = 0; rc < count; rc++) {
         size += iov[rc].iov_len;
@@ -70,10 +94,14 @@ static int mca_oob_tcp_send_self(
     }
     opal_mutex_unlock(&msg->msg_lock);
 
-    /*
-     * Attempt to match against posted receive
-     */
-    mca_oob_tcp_msg_recv_complete(msg, peer);
+    xfer = (orte_self_send_xfer_t*)malloc(sizeof(orte_self_send_xfer_t));
+    xfer->ev = opal_event_alloc();
+    xfer->peer = peer;
+    xfer->msg = msg;
+    opal_event_set(orte_event_base, xfer->ev, -1, OPAL_EV_WRITE, mca_oob_tcp_send_snd_exe, xfer);
+    opal_event_set_priority(xfer->ev, ORTE_MSG_PRI);
+    opal_event_active(xfer->ev, OPAL_EV_WRITE, 1);
+
     return size;
 }
 

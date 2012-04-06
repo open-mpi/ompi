@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -195,7 +197,6 @@
 #include "ompi/attribute/attribute.h"
 #include "opal/class/opal_bitmap.h"
 #include "opal/threads/mutex.h"
-#include "opal/util/opal_sos.h"
 
 #include "ompi/constants.h"
 #include "ompi/datatype/ompi_datatype.h"
@@ -1151,7 +1152,7 @@ static int get_value(opal_hash_table_t *attr_hash, int key,
                                            (void**) &keyval);
     OPAL_THREAD_UNLOCK(&keyval_hash_lock);
 
-    if (OMPI_ERR_NOT_FOUND == OPAL_SOS_GET_ERROR_CODE(ret)) {
+    if (OMPI_ERR_NOT_FOUND == ret) {
         return MPI_KEYVAL_INVALID;
     }
 

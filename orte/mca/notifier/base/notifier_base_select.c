@@ -26,7 +26,6 @@
 
 #include "opal/mca/mca.h"
 #include "opal/util/argv.h"
-#include "opal/util/opal_sos.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 
@@ -44,7 +43,6 @@ bool orte_notifier_base_help_selected = false;
 bool orte_notifier_base_log_peer_selected = false;
 bool orte_notifier_base_log_event_selected = false;
 
-static opal_sos_reporter_callback_fn_t prev_reporter_callback;
 static inline char **orte_notifier_get_include_list(const char *,
                                                     const char *,
                                                     char **);
@@ -207,8 +205,8 @@ int orte_notifier_base_select(void)
         if (NULL != nmodule->init) {
             /* If the module doesn't want to be used, skip it */
             if (ORTE_SUCCESS != (ret = nmodule->init()) ) {
-                if (ORTE_ERR_NOT_SUPPORTED != OPAL_SOS_GET_ERROR_CODE(ret) &&
-                    ORTE_ERR_NOT_IMPLEMENTED != OPAL_SOS_GET_ERROR_CODE(ret)) {
+                if (ORTE_ERR_NOT_SUPPORTED != ret &&
+                    ORTE_ERR_NOT_IMPLEMENTED != ret) {
                     exit_status = ret;
                     goto cleanup;
                 }
@@ -292,11 +290,6 @@ int orte_notifier_base_select(void)
          */
         orte_notifier_base_events_init();
     }
-
-    /* Register a callback with OPAL SOS so that we can intercept
-     * error messages */
-    opal_sos_reg_reporter_callback((opal_sos_reporter_callback_fn_t) orte_notifier_log,
-                                   &prev_reporter_callback);
 
  cleanup:
     return exit_status;

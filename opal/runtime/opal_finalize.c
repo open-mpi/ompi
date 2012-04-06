@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -31,7 +31,6 @@
 #include "opal/util/net.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/show_help.h"
-#include "opal/util/opal_sos.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
@@ -86,9 +85,6 @@ opal_finalize_util(void)
 
     /* finalize the trace system */
     opal_trace_finalize();
-
-    /* finalize the OPAL SOS system */
-    opal_sos_finalize();
 
     /* finalize the show_help system */
     opal_show_help_finalize();

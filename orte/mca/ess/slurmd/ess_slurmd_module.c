@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,7 +61,7 @@
 
 static int rte_init(void);
 static int rte_finalize(void);
-static void rte_abort(int error_code, bool report) __opal_attribute_noreturn__;
+static void rte_abort(int error_code, bool report);
 
 orte_ess_base_module_t orte_ess_slurmd_module = {
     rte_init,
@@ -70,7 +72,6 @@ orte_ess_base_module_t orte_ess_slurmd_module = {
     orte_ess_base_proc_get_hostname,
     orte_ess_base_proc_get_local_rank,
     orte_ess_base_proc_get_node_rank,
-    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     orte_ess_base_update_pidmap,
     orte_ess_base_update_nidmap,
     NULL /* ft_event */
@@ -185,7 +186,6 @@ static int rte_init(void)
     nodeid = strtol(envar, NULL, 10);
     ORTE_PROC_MY_DAEMON->jobid = 0;
     ORTE_PROC_MY_DAEMON->vpid = nodeid;
-    ORTE_EPOCH_SET(ORTE_PROC_MY_DAEMON->epoch,ORTE_PROC_MY_NAME->epoch);
     
     /* get the node list */
     if (NULL == (regexp = getenv("SLURM_STEP_NODELIST"))) {
@@ -369,9 +369,6 @@ static int rte_init(void)
     /* ensure we pick the correct critical components */
     putenv("OMPI_MCA_grpcomm=hier");
     putenv("OMPI_MCA_routed=direct");
-
-    /* complete definition of process name */
-    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_MIN);
 
     /* get our local rank */
     if (NULL == (envar = getenv("SLURM_LOCALID"))) {

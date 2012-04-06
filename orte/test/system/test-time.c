@@ -70,13 +70,13 @@ int main(int argc, char **argv)
     for (i = 0; i < NEVENT; i++) {
         /* Initalize one event */
         ev[i] = (opal_event_t*)malloc(sizeof(opal_event_t));
-        opal_event_evtimer_set(opal_event_base, ev[i], time_cb, ev[i]);
+        opal_event_evtimer_set(orte_event_base, ev[i], time_cb, ev[i]);
         tv.tv_sec = 0;
         tv.tv_usec = rand_int(50000);
         opal_event_evtimer_add(ev[i], &tv);
     }
 
-    opal_event_dispatch(opal_event_base);
+    opal_event_dispatch(orte_event_base);
 
     opal_finalize();
     return (called < NEVENT);

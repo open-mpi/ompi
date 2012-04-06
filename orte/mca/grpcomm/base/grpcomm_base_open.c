@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -53,12 +55,9 @@ int orte_grpcomm_base_open(void)
        verbose set by the mca open system... */
     orte_grpcomm_base.output = opal_output_open(NULL);
     
-    /* define the default daemon collective fn */
-#if ORTE_DISABLE_FULL_SUPPORT
-    orte_grpcomm_base.daemon_coll = NULL;
-#else
-    orte_grpcomm_base.daemon_coll = orte_grpcomm_base_daemon_collective;
-#endif
+    /* init globals */
+    OBJ_CONSTRUCT(&orte_grpcomm_base.active_colls, opal_list_t);
+    orte_grpcomm_base.coll_id = 0;
     
 #if OPAL_HAVE_HWLOC
     orte_grpcomm_base.working_cpuset = NULL;
@@ -78,21 +77,64 @@ int orte_grpcomm_base_open(void)
     return ORTE_SUCCESS;
 }
 
+orte_grpcomm_collective_t* orte_grpcomm_base_setup_collective(orte_grpcomm_coll_id_t id)
+{
+    opal_list_item_t *item;
+    orte_grpcomm_collective_t *cptr, *coll;
+
+    coll = NULL;
+    for (item = opal_list_get_first(&orte_grpcomm_base.active_colls);
+         item != opal_list_get_end(&orte_grpcomm_base.active_colls);
+         item = opal_list_get_next(item)) {
+        cptr = (orte_grpcomm_collective_t*)item;
+        if (id == cptr->id) {
+            coll = cptr;
+            break;
+        }
+    }
+    if (NULL == coll) {
+        coll = OBJ_NEW(orte_grpcomm_collective_t);
+        coll->id = id;
+        opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
+    }
+
+    return coll;
+}
+
 /* local objects */
 static void collective_constructor(orte_grpcomm_collective_t *ptr)
 {
-    OBJ_CONSTRUCT(&ptr->lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&ptr->cond, opal_condition_t);
-    OBJ_CONSTRUCT(&ptr->results, opal_buffer_t);
-    ptr->recvd = 0;
+    ptr->id = -1;
+    ptr->active = false;
+    ptr->num_local_recvd = 0;
+    OBJ_CONSTRUCT(&ptr->local_bucket, opal_buffer_t);
+    ptr->num_peer_buckets = 0;
+    ptr->num_global_recvd = 0;
+    ptr->locally_complete = false;
+    OBJ_CONSTRUCT(&ptr->participants, opal_list_t);
+    ptr->cbfunc = NULL;
+    ptr->cbdata = NULL;
+    OBJ_CONSTRUCT(&ptr->buffer, opal_buffer_t);
+    OBJ_CONSTRUCT(&ptr->targets, opal_list_t);
+    ptr->next_cb = NULL;
+    ptr->next_cbdata = NULL;
 }
 static void collective_destructor(orte_grpcomm_collective_t *ptr)
 {
-    OBJ_DESTRUCT(&ptr->lock);
-    OBJ_DESTRUCT(&ptr->cond);
-    OBJ_DESTRUCT(&ptr->results);
+    opal_list_item_t *item;
+
+    OBJ_DESTRUCT(&ptr->local_bucket);
+    while (NULL != (item = opal_list_remove_first(&ptr->participants))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&ptr->participants);
+    OBJ_DESTRUCT(&ptr->buffer);
+    while (NULL != (item = opal_list_remove_first(&ptr->targets))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&ptr->targets);
 }
 OBJ_CLASS_INSTANCE(orte_grpcomm_collective_t,
-                   opal_object_t,
+                   opal_list_item_t,
                    collective_constructor,
                    collective_destructor);

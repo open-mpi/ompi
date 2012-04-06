@@ -11,7 +11,9 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * $COPYRIGHT$
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+  * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
@@ -33,7 +35,6 @@
 #endif
 
 #include "opal/util/show_help.h"
-#include "opal/util/opal_sos.h"
 #include "opal/dss/dss.h"
 #include "opal/dss/dss_types.h"
 
@@ -111,134 +112,6 @@ static int send_command(orte_notifier_base_severity_t severity, int errcode,
     return ORTE_SUCCESS;
 }
 
-#if 0
-/** 
- * Function to pack a single SOS error entry.
- *
- * @return OPAL_SUCCESS Upon success
- */
-static int opal_dss_pack_sos_error(opal_buffer_t *buf, opal_sos_error_t *error)
-{
-    int rc;
-    if (NULL == error) {
-        return ORTE_ERROR;
-    }
-
-    /* Pack errnum */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &error->errnum, 1, OPAL_INT))) {
-        return rc;
-    }
-
-    /* Pack the file name in which the error occurred */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, error->file, 1, OPAL_STRING))) {
-        return rc;
-    }
-
-    /* Pack the line number on which the error was encountered */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &error->line, 1, OPAL_INT))) {
-        return rc;
-    }
-
-    /* Pack the function name (if any) */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, error->func, 1, OPAL_STRING))) {
-            return rc;
-        }
-
-    /* Pack the error message */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, error->msg, 1, OPAL_STRING))) {
-            return rc;
-        }
-
-    /* Pack the pointer to the previous opal sos error object in the
-       opal sos table */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &error->prev, 1, OPAL_INT))) {
-        return rc;
-    }
-
-    /* Pack the pointer to the next error */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &error->next, 1, OPAL_INT))) {
-        return rc;
-    }
-
-    return ORTE_SUCCESS;
-}
-
-/** 
- * Function to pack all the entries in the SOS table and send it
- * over to the HNP.
- *
- * @return OPAL_SUCCESS Upon success
- * @return OPAL_FAILURE Upon failure
- *
- * ADK: Presently, we simply rely on orte_show_help to do the aggregation on
- * a per-error basis.
- */
-static int opal_sos_send_table(void)
-{
-    opal_sos_error_t *opal_error;
-    opal_buffer_t *buf;
-    uint32_t key;
-    int rc;
-    size_t table_size;
-    void *prev_error, *next_error;
-    next_error = NULL;
-
-    buf = OBJ_NEW(opal_buffer_t);
-    if (NULL == buf) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    OPAL_THREAD_LOCK(&opal_sos_table_lock);
-    table_size = opal_hash_table_get_size(&opal_sos_table);
-
-    /* Pack the size of the SOS error table */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(buf, &table_size, 1, OPAL_SIZE))) {
-        ORTE_ERROR_LOG(rc);
-        goto error;
-    }
-
-    if (OPAL_SUCCESS != opal_hash_table_get_first_key_uint32(&opal_sos_table,
-                                                             &key, (void**)&opal_error,
-                                                             &prev_error)) {
-        rc = ORTE_ERROR;
-        goto error;
-    }
-
-    /* Pack the sos error object */
-    if (ORTE_SUCCESS != (rc = opal_dss_pack_sos_error(buf, opal_error))) {
-        ORTE_ERROR_LOG(rc);
-        goto error;
-    }
-
-    while (OPAL_SUCCESS == opal_hash_table_get_next_key_uint32(&opal_sos_table,
-                                                               &key, (void**)&opal_error,
-                                                               &prev_error, &next_error))
-    {
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_sos_error(buf, opal_error))) {
-            ORTE_ERROR_LOG(rc);
-            goto error;
-        }
-    }
-    OPAL_THREAD_UNLOCK(&opal_sos_table_lock);
-
-    /* Now send the buffer (rc = number of bytes sent) */
-    rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, buf,
-                              ORTE_RML_TAG_NOTIFIER_HNP, 0);
-    if (rc <= 0) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(buf);
-        return rc;
-    }
-
-    return ORTE_SUCCESS;
-
-error:
-    OPAL_THREAD_UNLOCK(&opal_sos_table_lock);
-    OBJ_RELEASE(buf);
-    return rc;
-}
-#endif
-
 static int init(void)
 {
     int rc;
@@ -248,23 +121,12 @@ static int init(void)
         if (ORTE_SUCCESS !=
             (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                           ORTE_RML_TAG_NOTIFIER_HNP,
-                                          ORTE_RML_NON_PERSISTENT,
+                                          ORTE_RML_PERSISTENT,
                                           orte_notifier_hnp_recv_cb,
                                           NULL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-
-#if OPAL_ENABLE_DEBUG
-        /* If we're debugging, also add an exception handler -- just to
-           watch for problems in the RML */
-        if (ORTE_SUCCESS !=
-            (rc = orte_rml.add_exception_handler(orte_notifier_hnp_exception_cb))) {
-            ORTE_ERROR_LOG(rc);
-            orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_NOTIFIER_HNP);
-            return rc;
-        }
-#endif
     }
 
     return ORTE_SUCCESS;
@@ -289,7 +151,7 @@ static void mylog(orte_notifier_base_severity_t severity, int errcode,
     if (NULL != output) {
         if (ORTE_PROC_IS_HNP) {
             /* output it locally */
-            orte_show_help("opal_sos_reporter.txt", "notifier message", false, output);
+            orte_show_help("orte_notifier_hnp.txt", "notifier message", false, output);
         } else {
             send_command(severity, errcode, output);
         }
@@ -307,7 +169,7 @@ static void myhelplog(orte_notifier_base_severity_t severity, int errcode,
     if (NULL != output) {
         if (ORTE_PROC_IS_HNP) {
             /* output it locally */
-            orte_show_help("opal_sos_reporter.txt", "notifier message", false, output);
+            orte_show_help("orte_notifier_hnp.txt", "notifier message", false, output);
          } else {
             send_command(severity, errcode, output);
         }
@@ -324,7 +186,7 @@ static void mypeerlog(orte_notifier_base_severity_t severity, int errcode,
     if (NULL != buf) {
         if (ORTE_PROC_IS_HNP) {
             /* output it locally */
-            orte_show_help("opal_sos_reporter.txt", "notifier message", false, buf);
+            orte_show_help("orte_notifier_hnp.txt", "notifier message", false, buf);
         } else {
             send_command(severity, errcode, buf);
         }
@@ -336,7 +198,7 @@ static void myeventlog(const char *msg)
 {
     if (ORTE_PROC_IS_HNP) {
         /* output it locally */
-        orte_show_help("opal_sos_reporter.txt", "notifier message", false, (char*)msg);
+        orte_show_help("orte_notifier_hnp.txt", "notifier message", false, (char*)msg);
     } else {
         send_command(ORTE_NOTIFIER_NOTICE, ORTE_SUCCESS, (char *)msg);
     }

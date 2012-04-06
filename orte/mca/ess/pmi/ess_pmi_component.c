@@ -106,7 +106,7 @@ static int pmi_component_query(mca_base_module_t **module, int *priority)
     /* we are available anywhere PMI is available, but not for HNP itself */
     if (!ORTE_PROC_IS_HNP && pmi_startup()) {
         /* if PMI is available, use it */
-        *priority = 40;
+        *priority = 35;
         *module = (mca_base_module_t *)&orte_ess_pmi_module;
         return ORTE_SUCCESS;
     }

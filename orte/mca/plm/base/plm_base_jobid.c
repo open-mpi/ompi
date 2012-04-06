@@ -62,12 +62,10 @@ int orte_plm_base_set_hnp_name(void)
     /* set the name */
     ORTE_PROC_MY_NAME->jobid = 0xffff0000 & ((uint32_t)jobfam << 16);
     ORTE_PROC_MY_NAME->vpid = 0;
-    ORTE_EPOCH_SET(ORTE_PROC_MY_NAME->epoch,ORTE_EPOCH_MIN);
     
     /* copy it to the HNP field */
     ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
     ORTE_PROC_MY_HNP->vpid = ORTE_PROC_MY_NAME->vpid;
-    ORTE_EPOCH_SET(ORTE_PROC_MY_HNP->epoch,ORTE_PROC_MY_NAME->epoch);
     
     /* done */
     return ORTE_SUCCESS;
@@ -99,7 +97,7 @@ int orte_plm_base_create_jobid(orte_job_t *jdata)
     }
 #endif
 
-    if (ORTE_JOB_STATE_RESTART == jdata->state) {
+    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
         /* this job is being restarted - do not assign it
          * a new jobid
          */

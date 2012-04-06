@@ -40,6 +40,8 @@
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
 
+#include "orte/mca/grpcomm/grpcomm_types.h"
+
 #include "orte/mca/routed/routed_types.h"
 
 BEGIN_C_DECLS
@@ -188,29 +190,23 @@ typedef bool (*orte_routed_module_route_is_defined_fn_t)(const orte_process_name
 typedef int (*orte_routed_module_get_wireup_info_fn_t)(opal_buffer_t *buf);
 
 /*
- * Update the module's routing tree for this process
+ * Update the module's routing plan
  *
- * Called only by a daemon and the HNP, this function creates a list
- * of "leaves" for this process and identifies the vpid of the parent
- * sitting above this process in the tree.
- *
- * @param [in] jobid The jobid of the routing tree that needs to be updated.
- *
- * @retval ORTE_SUCCESS The operation completed successfully
- * @retval ORTE_ERROR_xxx   The specifed error occurred
+ * Called only by a daemon and the HNP, this function creates a plan
+ * for routing messages within ORTE, especially for routing collectives
+ * used during wireup
  */
-typedef int (*orte_routed_module_update_routing_tree_fn_t)(orte_jobid_t jobid);
+typedef void (*orte_routed_module_update_routing_plan_fn_t)(void);
 
 /*
- * Get the routing tree for this process
+ * Get the routing list for the specified collective
  *
- * Fills the provided list with the direct children of this process
- * in the routing tree, and returns the vpid of the parent. Only valid
- * when called by a daemon or the HNP. Passing a NULL pointer will result
- * in only the parent vpid being returned. The returned list will be filled
- * with orte_routed_tree_t items.
+ * Fills the target list with names for the given collective so that
+ * the grpcomm framework will know who to send the collective to
+ * next
  */
-typedef orte_vpid_t (*orte_routed_module_get_routing_tree_fn_t)(opal_list_t *children);
+typedef void (*orte_routed_module_get_routing_list_fn_t)(orte_grpcomm_coll_t type,
+                                                         orte_grpcomm_collective_t *coll);
 
 /*
  * Set lifeline process
@@ -261,8 +257,8 @@ struct orte_routed_module_t {
     orte_routed_module_route_is_defined_fn_t        route_is_defined;
     orte_routed_module_set_lifeline_fn_t            set_lifeline;
     /* fns for daemons */
-    orte_routed_module_update_routing_tree_fn_t     update_routing_tree;
-    orte_routed_module_get_routing_tree_fn_t        get_routing_tree;
+    orte_routed_module_update_routing_plan_fn_t     update_routing_plan;
+    orte_routed_module_get_routing_list_fn_t        get_routing_list;
     orte_routed_module_get_wireup_info_fn_t         get_wireup_info;
     orte_routed_module_num_routes_fn_t              num_routes;
     /* FT Notification */

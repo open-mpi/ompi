@@ -13,6 +13,8 @@
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  *
  * $COPYRIGHT$
  *
@@ -155,7 +157,7 @@ typedef struct {
 static int orte_odls_default_launch_local_procs(opal_buffer_t *data);
 static int orte_odls_default_kill_local_procs(opal_pointer_array_t *procs);
 static int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_t signal);
-static int orte_odls_default_restart_proc(orte_odls_child_t *child);
+static int orte_odls_default_restart_proc(orte_proc_t *child);
 
 /*
  * Explicitly declared functions so that we can get the noreturn
@@ -165,9 +167,9 @@ static void send_error_show_help(int fd, int exit_status,
                                  const char *file, const char *topic, ...)
     __opal_attribute_noreturn__;
 static int do_child(orte_app_context_t* context,
-                    orte_odls_child_t *child,
+                    orte_proc_t *child,
                     char **environ_copy,
-                    orte_odls_job_t *jobdat, int write_fd,
+                    orte_job_t *jobdat, int write_fd,
                     orte_iof_base_io_conf_t opts)
     __opal_attribute_noreturn__;
 
@@ -186,7 +188,7 @@ orte_odls_base_module_t orte_odls_default_module = {
 };
 
 
-static bool odls_default_child_died(orte_odls_child_t *child)
+static bool odls_default_child_died(orte_proc_t *child)
 {
     time_t end;
     pid_t ret;
@@ -381,9 +383,9 @@ static void send_error_show_help(int fd, int exit_status,
 }
 
 static int do_child(orte_app_context_t* context,
-                    orte_odls_child_t *child,
+                    orte_proc_t *child,
                     char **environ_copy,
-                    orte_odls_job_t *jobdat, int write_fd,
+                    orte_job_t *jobdat, int write_fd,
                     orte_iof_base_io_conf_t opts)
 {
     int i;
@@ -443,7 +445,7 @@ static int do_child(orte_app_context_t* context,
                     if (NULL == msg) {
                         msg = "failed to convert bitmap list to hwloc bitmap";
                     }
-                    if (OPAL_BINDING_REQUIRED(jobdat->binding)) {
+                    if (OPAL_BINDING_REQUIRED(jobdat->map->binding)) {
                         /* If binding is required, send an error up the pipe (which exits
                            -- it doesn't return). */
                         send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
@@ -463,7 +465,7 @@ static int do_child(orte_app_context_t* context,
                 if (opal_hwloc_report_bindings) {
                     opal_output(0, "%s odls:default binding child %s to cpus %s",
                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(child->name), child->cpu_bitmap);
+                                ORTE_NAME_PRINT(&child->name), child->cpu_bitmap);
                 }
                 rc = hwloc_set_cpubind(opal_hwloc_topology, cpuset, 0);
                 if (rc < 0) {
@@ -476,7 +478,7 @@ static int do_child(orte_app_context_t* context,
                         asprintf(&msg, "hwloc_set_cpubind returned \"%s\" for bitmap \"%s\"",
                                  opal_strerror(rc), child->cpu_bitmap);
                     }
-                    if (OPAL_BINDING_REQUIRED(jobdat->binding)) {
+                    if (OPAL_BINDING_REQUIRED(jobdat->map->binding)) {
                         /* If binding is required, send an error up the pipe (which exits
                            -- it doesn't return). */
                         send_error_show_help(write_fd, 1, "help-orte-odls-default.txt",
@@ -615,9 +617,9 @@ static int do_child(orte_app_context_t* context,
 
 
 static int do_parent(orte_app_context_t* context,
-                     orte_odls_child_t *child,
+                     orte_proc_t *child,
                      char **environ_copy,
-                     orte_odls_job_t *jobdat, int read_fd,
+                     orte_job_t *jobdat, int read_fd,
                      orte_iof_base_io_conf_t opts)
 {
     int rc;
@@ -626,7 +628,7 @@ static int do_parent(orte_app_context_t* context,
 
     if (NULL != child && (ORTE_JOB_CONTROL_FORWARD_OUTPUT & jobdat->controls)) {
         /* connect endpoints IOF */
-        rc = orte_iof_base_setup_parent(child->name, &opts);
+        rc = orte_iof_base_setup_parent(&child->name, &opts);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             close(read_fd);
@@ -637,7 +639,7 @@ static int do_parent(orte_app_context_t* context,
             return rc;
         }
     }
-    
+
     /* Block reading a message from the pipe */
     while (1) {
         rc = opal_fd_read(read_fd, sizeof(msg), &msg);
@@ -734,7 +736,7 @@ static int do_parent(orte_app_context_t* context,
        indication of a fatal error, meaning that the child process
        launched successfully. */
     if (NULL != child) {
-        child->state = ORTE_PROC_STATE_LAUNCHED;
+        child->state = ORTE_PROC_STATE_RUNNING;
         child->alive = true;
     }
     close(read_fd);
@@ -747,9 +749,9 @@ static int do_parent(orte_app_context_t* context,
  *  Fork/exec the specified processes
  */
 static int odls_default_fork_local_proc(orte_app_context_t* context,
-                                        orte_odls_child_t *child,
+                                        orte_proc_t *child,
                                         char **environ_copy,
-                                        orte_odls_job_t *jobdat)
+                                        orte_job_t *jobdat)
 {
     orte_iof_base_io_conf_t opts;
     int rc, p[2];
@@ -762,7 +764,8 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
         
         /* do we want to setup stdin? */
         if (NULL != child &&
-            (jobdat->stdin_target == ORTE_VPID_WILDCARD || child->name->vpid == jobdat->stdin_target)) {
+            (jobdat->stdin_target == ORTE_VPID_WILDCARD ||
+             child->name.vpid == jobdat->stdin_target)) {
             opts.connect_stdin = true;
         } else {
             opts.connect_stdin = false;
@@ -777,7 +780,7 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
             return rc;
         }
     }
-    
+
     /* A pipe is used to communicate between the parent and child to
        indicate whether the exec ultimately succeeded or failed.  The
        child sets the pipe to be close-on-exec; the child only ever
@@ -829,49 +832,24 @@ int orte_odls_default_launch_local_procs(opal_buffer_t *data)
 {
     int rc;
     orte_jobid_t job;
-    orte_job_t *jdata;
 
     /* construct the list of children we are to launch */
     if (ORTE_SUCCESS != (rc = orte_odls_base_default_construct_child_list(data, &job))) {
         OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
                              "%s odls:default:launch:local failed to construct child list on error %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
-        goto CLEANUP;
+        return rc;
     }
     
     /* launch the local procs */
-    if (ORTE_SUCCESS != (rc = orte_odls_base_default_launch_local(job, odls_default_fork_local_proc))) {
-        OPAL_OUTPUT_VERBOSE((2, orte_odls_globals.output,
-                             "%s odls:default:launch:local failed to launch on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_ERROR_NAME(rc)));
-        goto CLEANUP;
-    }
+    ORTE_ACTIVATE_LOCAL_LAUNCH(job, odls_default_fork_local_proc);
     
-    /* look up job data object */
-    if (NULL != (jdata = orte_get_job_data_object(job))) {
-        if (jdata->state & ORTE_JOB_STATE_SUSPENDED) {
-            if (ORTE_PROC_IS_HNP) {
-		/* Have the plm send the signal to all the nodes.
-		   If the signal arrived before the orteds started,
-		   then they won't know to suspend their procs.
-		   The plm also arranges for any local procs to
-		   be signaled.
-		 */
-                orte_plm.signal_job(jdata->jobid, SIGTSTP);
-            } else {
-                orte_odls_default_signal_local_procs(NULL, SIGTSTP);
-            }
-        }
-    }
-
-CLEANUP:
-   
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 
 /**
- * Send a sigal to a pid.  Note that if we get an error, we set the
+ * Send a signal to a pid.  Note that if we get an error, we set the
  * return value and let the upper layer print out the message.  
  */
 static int send_signal(pid_t pid, int signal)
@@ -922,7 +900,7 @@ static int orte_odls_default_signal_local_procs(const orte_process_name_t *proc,
     return ORTE_SUCCESS;
 }
 
-static int orte_odls_default_restart_proc(orte_odls_child_t *child)
+static int orte_odls_default_restart_proc(orte_proc_t *child)
 {
     int rc;
     

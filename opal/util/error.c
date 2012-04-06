@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC. 
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC. 
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -30,7 +30,6 @@
 #endif
 
 #include "opal/util/error.h"
-#include "opal/util/opal_sos.h"
 #include "opal/constants.h"
 
 #define MAX_CONVERTERS 5
@@ -99,12 +98,12 @@ opal_perror(int errnum, const char *msg)
     const char* errmsg;
     ret = opal_strerror_int(errnum, &errmsg);
 
-    if (NULL != msg && OPAL_SOS_GET_ERROR_CODE(errnum) != OPAL_ERR_IN_ERRNO) {
+    if (NULL != msg && errnum != OPAL_ERR_IN_ERRNO) {
         fprintf(stderr, "%s: ", msg);
     }
 
     if (OPAL_SUCCESS != ret) {
-        if (OPAL_SOS_GET_ERROR_CODE(errnum) == OPAL_ERR_IN_ERRNO) {
+        if (errnum == OPAL_ERR_IN_ERRNO) {
             perror(msg);
         } else {
             char *ue_msg;
@@ -129,7 +128,7 @@ opal_strerror(int errnum)
     int ret;
     const char* errmsg;
 
-    if (OPAL_SOS_GET_ERROR_CODE(errnum) == OPAL_ERR_IN_ERRNO) {
+    if (errnum == OPAL_ERR_IN_ERRNO) {
         return strerror(errno);
     }
 
@@ -156,7 +155,7 @@ opal_strerror_r(int errnum, char *strerrbuf, size_t buflen)
 
     ret = opal_strerror_int(errnum, &errmsg);
     if (OPAL_SUCCESS != ret) {
-        if (OPAL_SOS_GET_ERROR_CODE(errnum) == OPAL_ERR_IN_ERRNO) {
+        if (errnum == OPAL_ERR_IN_ERRNO) {
             char *tmp = strerror(errno);
             strncpy(strerrbuf, tmp, buflen);
             return OPAL_SUCCESS;

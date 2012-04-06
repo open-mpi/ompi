@@ -46,7 +46,6 @@ orte_ess_base_module_t orte_ess = {
     NULL,  /* proc_get_hostname */
     NULL,  /* get_local_rank */
     NULL,  /* get_node_rank */
-    NULL,  /* proc_get_epoch */
     NULL,  /* update_pidmap */
     NULL,  /* update_nidmap */
     NULL   /* ft_event */

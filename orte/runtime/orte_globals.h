@@ -11,8 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c)      2011 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,6 +40,7 @@
 #include "opal/class/opal_value_array.h"
 #include "opal/class/opal_ring_buffer.h"
 #include "opal/threads/threads.h"
+#include "opal/mca/event/event.h"
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/paffinity/paffinity.h"
 
@@ -47,6 +48,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/error_strings.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
 
@@ -62,6 +64,8 @@ ORTE_DECLSPEC extern char *orte_job_ident;  /* instantiated in orte/runtime/orte
 ORTE_DECLSPEC extern bool orte_create_session_dirs;  /* instantiated in orte/runtime/orte_init.c */
 ORTE_DECLSPEC extern bool orte_execute_quiet;  /* instantiated in orte/runtime/orte_globals.c */
 ORTE_DECLSPEC extern bool orte_report_silent_errors;  /* instantiated in orte/runtime/orte_globals.c */
+ORTE_DECLSPEC extern opal_event_base_t *orte_event_base;  /* instantiated in orte/runtime/orte_init.c */
+ORTE_DECLSPEC extern bool orte_event_base_active;
 
 /* Shortcut for some commonly used names */
 #define ORTE_NAME_WILDCARD      (&orte_name_wildcard)
@@ -104,6 +108,23 @@ typedef struct orte_node_t orte_node_t;
 typedef struct orte_app_context_t orte_app_context_t;
 
 #else
+
+#if ORTE_ENABLE_PROGRESS_THREAD
+ORTE_DECLSPEC extern opal_thread_t orte_progress_thread;
+#endif
+
+/* ORTE event priorities - we define these
+ * at levels that permit higher layers such as
+ * OMPI to handle their events at higher priority,
+ * with the exception of errors. Errors generally
+ * require exception handling (e.g., ctrl-c termination)
+ * that overrides the need to process MPI messages
+ */
+#define ORTE_ERROR_PRI  OPAL_EV_ERROR_PRI
+#define ORTE_MSG_PRI    OPAL_EV_MSG_LO_PRI
+#define ORTE_SYS_PRI    OPAL_EV_SYS_LO_PRI
+#define ORTE_INFO_PRI   OPAL_EV_INFO_LO_PRI
+
 
 #define ORTE_GLOBAL_ARRAY_BLOCK_SIZE    64
 #define ORTE_GLOBAL_ARRAY_MAX_SIZE      INT_MAX
@@ -179,7 +200,9 @@ typedef uint16_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_CONTINUOUS_OP      0x0040
 #define ORTE_JOB_CONTROL_RECOVERABLE        0x0080
 #define ORTE_JOB_CONTROL_SPIN_FOR_DEBUG     0x0100
-
+#define ORTE_JOB_CONTROL_RESTART            0x0200
+#define ORTE_JOB_CONTROL_PROCS_MIGRATING    0x0400
+ 
 /* global type definitions used by RTE - instanced in orte_globals.c */
 
 /************
@@ -316,10 +339,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_node_t);
 typedef struct {
     /** Base object so this can be put on a list */
     opal_list_item_t super;
-    /* a name for this job */
-    char *name;
-    /* a name for this instance of the job */
-    char *instance;
     /* jobid for this job */
     orte_jobid_t jobid;
     /* app_context array for this job */
@@ -348,6 +367,8 @@ typedef struct {
     orte_node_t *bookmark;
     /* state of the overall job */
     orte_job_state_t state;
+    /* some procs in this job are being restarted */
+    bool restart;
     /* number of procs launched */
     orte_vpid_t num_launched;
     /* number of procs reporting contact info */
@@ -356,10 +377,10 @@ typedef struct {
     orte_vpid_t num_terminated;
     /* number of daemons reported launched so we can track progress */
     orte_vpid_t num_daemons_reported;
-    /* lock/cond/flag for tracking when all procs reported on dynamic spawn */
-    opal_mutex_t dyn_spawn_lock;
-    opal_condition_t dyn_spawn_cond;
-    bool dyn_spawn_active;
+    /* number of procs with non-zero exit codes */
+    int32_t num_non_zero_exit;
+    /* originator of a dynamic spawn */
+    orte_process_name_t originator;
     /* did this job abort? */
     bool abort;
     /* proc that caused that to happen */
@@ -370,8 +391,13 @@ typedef struct {
     bool enable_recovery;
     /* time launch message was sent */
     struct timeval launch_msg_sent;
+    /* time launch message was recvd */
+    struct timeval launch_msg_recvd;
     /* max time for launch msg to be received */
     struct timeval max_launch_msg_recvd;
+    orte_vpid_t num_local_procs;
+    /* pidmap for delivery to procs */
+    opal_byte_object_t *pmap;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -412,6 +438,10 @@ struct orte_proc_t {
     orte_proc_state_t last_errmgr_state;
     /* process state */
     orte_proc_state_t state;
+    /* shortcut for determinng proc has been launched
+     * and has not yet terminated
+     */
+    bool alive;
     /* exit code */
     orte_exit_code_t exit_code;
     /* the app_context that generated this proc */
@@ -426,6 +456,12 @@ struct orte_proc_t {
 #endif
     /* pointer to the node where this proc is executing */
     orte_node_t *node;
+    /* indicate that this proc is local */
+    bool local_proc;
+    /* indicate that this proc should not barrier - used
+     * for restarting processes
+     */
+    bool do_not_barrier;
     /* pointer to the node where this proc last executed */
     orte_node_t *prior_node;
     /* name of the node where this proc is executing - this
@@ -447,6 +483,11 @@ struct orte_proc_t {
     int beat;
     /* history of resource usage - sized by sensor framework */
     opal_ring_buffer_t stats;
+    /* track finalization */
+    bool registered;
+    bool deregistered;
+    bool iof_complete;
+    bool waitpid_recvd;
 #if OPAL_ENABLE_FT_CR == 1
     /* ckpt state */
     size_t ckpt_state;
@@ -581,6 +622,7 @@ ORTE_DECLSPEC extern opal_buffer_t *orte_tree_launch_cmd;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_topologies;
+ORTE_DECLSPEC extern opal_pointer_array_t *orte_local_children;
 
 /* a clean output channel without prefix */
 ORTE_DECLSPEC extern int orte_clean_output;
@@ -588,17 +630,6 @@ ORTE_DECLSPEC extern int orte_clean_output;
 /* Nidmap and job maps */
 ORTE_DECLSPEC extern opal_pointer_array_t orte_nidmap;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_jobmap;
-ORTE_DECLSPEC extern char *orted_launch_cmd;
-
-/* list of local children on a daemon */
-ORTE_DECLSPEC extern opal_list_t orte_local_children;
-ORTE_DECLSPEC extern opal_mutex_t orte_local_children_lock;
-ORTE_DECLSPEC extern opal_condition_t orte_local_children_cond;
-
-/* list of job data for local children on a daemon */
-ORTE_DECLSPEC extern opal_list_t orte_local_jobdata;
-ORTE_DECLSPEC extern opal_mutex_t orte_local_jobdata_lock;
-ORTE_DECLSPEC extern opal_condition_t orte_local_jobdata_cond;
 
 /* whether or not to forward SIGTSTP and SIGCONT signals */
 ORTE_DECLSPEC extern bool orte_forward_job_control;
@@ -627,12 +658,11 @@ ORTE_DECLSPEC extern char *orte_node_regex;
 ORTE_DECLSPEC extern bool orte_report_events;
 ORTE_DECLSPEC extern char *orte_report_events_uri;
 
-/* barrier control */
-ORTE_DECLSPEC extern bool orte_do_not_barrier;
-
 /* process recovery */
 ORTE_DECLSPEC extern bool orte_enable_recovery;
 ORTE_DECLSPEC extern int32_t orte_max_restarts;
+/* barrier control */
+ORTE_DECLSPEC extern bool orte_do_not_barrier;
 
 /* comm interface */
 typedef void (*orte_default_cbfunc_t)(int fd, short event, void *data);
@@ -641,16 +671,15 @@ typedef int (*orte_default_comm_fn_t)(orte_process_name_t *recipient,
                                       opal_buffer_t *buf,
                                       orte_rml_tag_t tag,
                                       orte_default_cbfunc_t cbfunc);
-/* comm fn for updating state */
-ORTE_DECLSPEC extern orte_default_comm_fn_t orte_comm;
-ORTE_DECLSPEC int orte_global_comm(orte_process_name_t *recipient,
-                                   opal_buffer_t *buf, orte_rml_tag_t tag,
-                                   orte_default_cbfunc_t cbfunc);
 
 /* exit status reporting */
 ORTE_DECLSPEC extern bool orte_report_child_jobs_separately;
 ORTE_DECLSPEC extern struct timeval orte_child_time_to_exit;
 ORTE_DECLSPEC extern bool orte_abort_non_zero_exit;
+
+/* State Machine lists */
+ORTE_DECLSPEC extern opal_list_t orte_job_states;
+ORTE_DECLSPEC extern opal_list_t orte_proc_states;
 
 /* length of stat history to keep */
 ORTE_DECLSPEC extern int orte_stat_history_size;

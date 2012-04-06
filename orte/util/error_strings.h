@@ -39,7 +39,5 @@ ORTE_DECLSPEC const char *orte_job_state_to_str(orte_job_state_t state);
 
 ORTE_DECLSPEC const char *orte_proc_state_to_str(orte_proc_state_t state);
 
-ORTE_DECLSPEC const char *orte_proc_exit_code_to_signal(int exit_code);
-
 END_C_DECLS
 #endif

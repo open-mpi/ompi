@@ -55,7 +55,6 @@ orte_ess_base_module_t orte_ess_tool_module = {
     NULL, /* don't need a proc_get_hostname fn */
     NULL, /* don't need a proc_get_local_rank fn */
     NULL, /* don't need a proc_get_node_rank fn */
-    orte_ess_base_proc_get_epoch,  /* proc_get_epoch */
     NULL,   /* don't need to update_pidmap */
     NULL,   /* don't need to update_nidmap */
     NULL /* ft_event */

@@ -5,6 +5,8 @@
  * Copyright (c) 2010-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  *
  * $COPYRIGHT$
  *
@@ -21,7 +23,6 @@
 #include "opal/util/output.h"
 #include "orte/util/show_help.h"
 #include "orte/util/name_fns.h"
-#include "opal/util/opal_sos.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -698,10 +699,8 @@ static mca_btl_openib_endpoint_t* xoob_find_endpoint(orte_process_name_t* proces
 
     BTL_VERBOSE(("Searching for ep and proc with follow parameters:"
                 "jobid %d, vpid %d, "
-                "epoch %d, "
                 "sid %" PRIx64 ", lid %d",
                 process_name->jobid, process_name->vpid,
-                ORTE_EPOCH_GET(process_name),
                 subnet_id, lid));
 
 

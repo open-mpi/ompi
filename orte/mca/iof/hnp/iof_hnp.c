@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -144,9 +146,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
     int flags;
     char *outfile;
     int fdout;
-    orte_odls_job_t *jobdat=NULL;
     int np, numdigs;
-    int rc;
     orte_ns_cmp_bitmask_t mask;
 
     /* don't do this if the dst vpid is invalid or the fd is negative! */
@@ -185,24 +185,15 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
         proct = OBJ_NEW(orte_iof_proc_t);
         proct->name.jobid = dst_name->jobid;
         proct->name.vpid = dst_name->vpid;
-        ORTE_EPOCH_SET(proct->name.epoch,dst_name->epoch);
         opal_list_append(&mca_iof_hnp_component.procs, &proct->super);
         /* see if we are to output to a file */
         if (NULL != orte_output_filename) {
-            /* get the local jobdata for this proc */
-            for (item = opal_list_get_first(&orte_local_jobdata);
-                 item != opal_list_get_end(&orte_local_jobdata);
-                 item = opal_list_get_next(item)) {
-                jobdat = (orte_odls_job_t*)item;
-                if (jobdat->jobid == proct->name.jobid) {
-                    break;
-                }
-            }
-            if (NULL == jobdat) {
+            /* get the jobdata for this proc */
+            if (NULL == (jdata = orte_get_job_data_object(dst_name->jobid))) {
                 ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                 return ORTE_ERR_NOT_FOUND;
             }
-            np = jobdat->num_procs / 10;
+            np = jdata->num_procs / 10;
             /* determine the number of digits required for max vpid */
             numdigs = 1;
             while (np > 0) {
@@ -246,11 +237,11 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
          */
         if (NULL != proct->revstdout && NULL != proct->revstderr && NULL != proct->revstddiag) {
             proct->revstdout->active = true;
-            opal_event_add(&(proct->revstdout->ev), 0);
+            opal_event_add(proct->revstdout->ev, 0);
             proct->revstderr->active = true;
-            opal_event_add(&(proct->revstderr->ev), 0);
+            opal_event_add(proct->revstderr->ev, 0);
             proct->revstddiag->active = true;
-            opal_event_add(&(proct->revstddiag->ev), 0);
+            opal_event_add(proct->revstddiag->ev, 0);
         }
         return ORTE_SUCCESS;
     }
@@ -282,7 +273,6 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
                                  &mca_iof_hnp_component.sinks);
             sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
             sink->daemon.vpid = proc->node->daemon->name.vpid;
-            ORTE_EPOCH_SET(sink->daemon.epoch,orte_ess.proc_get_epoch(&sink->daemon));
         }
     }
     
@@ -315,7 +305,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              * filedescriptor is not a tty, don't worry about it
              * and always stay connected.
              */
-            opal_event_signal_set(opal_event_base, &mca_iof_hnp_component.stdinsig,
+            opal_event_signal_set(orte_event_base, &mca_iof_hnp_component.stdinsig,
                                   SIGCONT, orte_iof_hnp_stdin_cb,
                                   NULL);
             
@@ -334,9 +324,7 @@ static int hnp_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag,
              */
             if (!(src_tag & ORTE_IOF_STDIN) || orte_iof_hnp_stdin_check(fd)) {
                 mca_iof_hnp_component.stdinev->active = true;
-                if (OPAL_SUCCESS != (rc = opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0))) {
-                    ORTE_ERROR_LOG(rc);
-                }
+                opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
             }
         } else {
             /* if we are not looking at a tty, just setup a read event
@@ -389,7 +377,6 @@ static int hnp_pull(const orte_process_name_t* dst_name,
                          &mca_iof_hnp_component.sinks);
     sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
     sink->daemon.vpid = ORTE_PROC_MY_NAME->vpid;
-    ORTE_EPOCH_SET(sink->daemon.epoch,ORTE_PROC_MY_NAME->epoch);
 
     return ORTE_SUCCESS;
 }
@@ -436,9 +423,6 @@ static int finalize(void)
     int num_written;
     bool dump;
     
-    OPAL_THREAD_LOCK(&mca_iof_hnp_component.lock);
-
-    OPAL_THREAD_LOCK(&orte_iof_base.iof_write_output_lock);
     /* check if anything is still trying to be written out */
     wev = orte_iof_base.iof_write_stdout->wev;
     if (!opal_list_is_empty(&wev->outputs)) {
@@ -456,7 +440,6 @@ static int finalize(void)
             OBJ_RELEASE(output);
         }
     }
-    OBJ_RELEASE(orte_iof_base.iof_write_stdout);
     if (!orte_xml_output) {
         /* we only opened stderr channel if we are NOT doing xml output */
         wev = orte_iof_base.iof_write_stderr->wev;
@@ -475,31 +458,10 @@ static int finalize(void)
                 OBJ_RELEASE(output);
             }
         }
-        OBJ_RELEASE(orte_iof_base.iof_write_stderr);
     }
-    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_write_output_lock);
     
-    /* if the stdin event is active, delete it */
-    if (NULL != mca_iof_hnp_component.stdinev) {
-        OBJ_RELEASE(mca_iof_hnp_component.stdinev);
-        opal_event_signal_del(&mca_iof_hnp_component.stdinsig);
-    }
-    /* cleanout all registered sinks */
-    while ((item = opal_list_remove_first(&mca_iof_hnp_component.sinks)) != NULL) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&mca_iof_hnp_component.sinks);
-    /* cleanout all pending proc objects holding receive events */
-    while ((item = opal_list_remove_first(&mca_iof_hnp_component.procs)) != NULL) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&mca_iof_hnp_component.procs);
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_HNP);
 
-    /* release and cleanup the lock */
-    OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
-    OBJ_DESTRUCT(&mca_iof_hnp_component.lock);    
-    
     return ORTE_SUCCESS;
 }
 
@@ -564,7 +526,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                  * when the fd is ready.
                  */
                 wev->pending = true;
-                opal_event_add(&wev->ev, 0);
+                opal_event_add(wev->ev, 0);
                 goto CHECK;
             }            
             /* otherwise, something bad happened so all we can do is declare an
@@ -589,7 +551,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
              * when the fd is ready. 
              */
             wev->pending = true;
-            opal_event_add(&wev->ev, 0);
+            opal_event_add(wev->ev, 0);
             goto CHECK;
         }
         OBJ_RELEASE(output);
@@ -616,7 +578,7 @@ CHECK:
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
                                  "restarting read event"));
             mca_iof_hnp_component.stdinev->active = true;
-            opal_event_add(&(mca_iof_hnp_component.stdinev->ev), 0);
+            opal_event_add(mca_iof_hnp_component.stdinev->ev, 0);
         }
     }
 

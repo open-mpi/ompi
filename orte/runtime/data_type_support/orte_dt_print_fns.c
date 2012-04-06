@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -125,11 +127,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
             orte_dt_quick_print(output, "ORTE_STD_CNTR", prefix, src, ORTE_STD_CNTR_T);
             break;
 
-#if ORTE_ENABLE_EPOCH
-        case ORTE_EPOCH:
-            orte_dt_quick_print(output, "ORTE_EPOCH", prefix, src, ORTE_EPOCH_T);
-#endif
-
         case ORTE_VPID:
             orte_dt_quick_print(output, "ORTE_VPID", prefix, src, ORTE_VPID_T);
             break;
@@ -165,10 +162,6 @@ int orte_dt_std_print(char **output, char *prefix, void *src, opal_data_type_t t
             orte_dt_quick_print(output, "ORTE_DAEMON_CMD", prefix, src, ORTE_DAEMON_CMD_T);
             break;
 
-        case ORTE_GRPCOMM_MODE:
-            orte_dt_quick_print(output, "ORTE_GRPCOMM_MODE", prefix, src, ORTE_GRPCOMM_MODE_T);
-            break;
-            
         case ORTE_IOF_TAG:
             orte_dt_quick_print(output, "ORTE_IOF_TAG", prefix, src, ORTE_IOF_TAG_T);
             break;
@@ -224,10 +217,8 @@ int orte_dt_print_job(char **output, char *prefix, orte_job_t *src, opal_data_ty
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "\n%sData for job: %s\tName: %s\tInstance: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
+    asprintf(&tmp, "\n%sData for job: %s\tRecovery: %s(%s)\n%s\tNum apps: %ld\tControls: %0x\tStdin target: %s\tState: %s\tAbort: %s", pfx2,
              ORTE_JOBID_PRINT(src->jobid),
-             (NULL != src->name) ? src->name : "NULL",
-             (NULL != src->instance) ? src->instance : "NULL",
              (src->enable_recovery) ? "ENABLED" : "DISABLED",
              (src->recovery_defined) ? "DEFINED" : "DEFAULT",
              pfx2,
@@ -471,21 +462,11 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     if (orte_xml_output) {
         /* need to create the output in XML format */
         if (0 == src->pid) {
-#if ORTE_ENABLE_EPOCH
-            asprintf(output, "%s<process rank=\"%s\" status=\"%s\" epoch=\"%s\"/>\n", pfx2,
-                     ORTE_VPID_PRINT(src->name.vpid), orte_proc_state_to_str(src->state), ORTE_EPOCH_PRINT(src->name.epoch));
-#else
             asprintf(output, "%s<process rank=\"%s\" status=\"%s\"/>\n", pfx2,
                      ORTE_VPID_PRINT(src->name.vpid), orte_proc_state_to_str(src->state));
-#endif
         } else {
-#if ORTE_ENABLE_EPOCH
-            asprintf(output, "%s<process rank=\"%s\" pid=\"%d\" status=\"%s\" epoch=\"%s\"/>\n", pfx2,
-                     ORTE_VPID_PRINT(src->name.vpid), (int)src->pid, orte_proc_state_to_str(src->state), ORTE_EPOCH_PRINT(src->name.epoch));
-#else
             asprintf(output, "%s<process rank=\"%s\" pid=\"%d\" status=\"%s\"/>\n", pfx2,
                      ORTE_VPID_PRINT(src->name.vpid), (int)src->pid, orte_proc_state_to_str(src->state));
-#endif
         }
         free(pfx2);
         return ORTE_SUCCESS;
@@ -493,16 +474,9 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
     
     if (!orte_devel_level_output) {
         /* just print a very simple output for users */
-#if ORTE_ENABLE_EPOCH
-        asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s Epoch: %s", pfx2,
-                 ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
-                 ORTE_VPID_PRINT(src->name.vpid),
-                 ORTE_EPOCH_PRINT(src->name.epoch));
-#else
         asprintf(&tmp, "\n%sProcess OMPI jobid: %s App: %ld Process rank: %s", pfx2,
                  ORTE_JOBID_PRINT(src->name.jobid), (long)src->app_idx,
                  ORTE_VPID_PRINT(src->name.vpid));
-#endif
         
         /* set the return */
         *output = tmp;

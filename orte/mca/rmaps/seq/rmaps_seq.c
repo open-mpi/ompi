@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -82,9 +84,9 @@ static int orte_rmaps_seq_map(orte_job_t *jdata)
      * when seq mapping is desired - allow
      * restarting of failed apps
      */
-    if (ORTE_JOB_STATE_INIT != jdata->state) {
+    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
         opal_output_verbose(5, orte_rmaps_base.rmaps_output,
-                            "mca:rmaps:seq: job %s not in initial state - seq cannot map",
+                            "mca:rmaps:seq: job %s is being restarted - seq cannot map",
                             ORTE_JOBID_PRINT(jdata->jobid));
         return ORTE_ERR_TAKE_NEXT_OPTION;
     }

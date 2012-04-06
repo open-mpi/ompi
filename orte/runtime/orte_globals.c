@@ -11,8 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c)      2011 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -116,6 +116,7 @@ opal_buffer_t *orte_tree_launch_cmd = NULL;
 opal_pointer_array_t *orte_job_data;
 opal_pointer_array_t *orte_node_pool;
 opal_pointer_array_t *orte_node_topologies;
+opal_pointer_array_t *orte_local_children;
 
 /* a clean output channel without prefix */
 int orte_clean_output = -1;
@@ -123,17 +124,6 @@ int orte_clean_output = -1;
 /* Nidmap and job maps */
 opal_pointer_array_t orte_nidmap;
 opal_pointer_array_t orte_jobmap;
-char *orted_launch_cmd = NULL;
-
-/* list of local children on a daemon */
-opal_list_t orte_local_children;
-opal_mutex_t orte_local_children_lock;
-opal_condition_t orte_local_children_cond;
-
-/* list of job data for local children on a daemon */
-opal_list_t orte_local_jobdata;
-opal_mutex_t orte_local_jobdata_lock;
-opal_condition_t orte_local_jobdata_cond;
 
 /* IOF controls */
 bool orte_tag_output;
@@ -180,6 +170,10 @@ bool orte_report_child_jobs_separately;
 struct timeval orte_child_time_to_exit;
 bool orte_abort_non_zero_exit;
 
+/* State Machine */
+opal_list_t orte_job_states;
+opal_list_t orte_proc_states;
+
 /* length of stat history to keep */
 int orte_stat_history_size;
 
@@ -188,6 +182,11 @@ char *orte_forward_envars = NULL;
 
 /* preload binaries */
 bool orte_preload_binaries = false;
+
+/* progress thread */
+#if ORTE_ENABLE_PROGRESS_THREAD
+opal_thread_t orte_progress_thread;
+#endif
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
@@ -277,22 +276,6 @@ int orte_dt_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
-#if ORTE_ENABLE_EPOCH
-    tmp = ORTE_EPOCH;
-    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_epoch,
-                                                     orte_dt_unpack_epoch,
-                                                     (opal_dss_copy_fn_t)orte_dt_copy_epoch,
-                                                     (opal_dss_compare_fn_t)orte_dt_compare_epoch,
-                                                     (opal_dss_size_fn_t)orte_dt_std_size,
-                                                     (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
-                                                     OPAL_DSS_UNSTRUCTURED,
-                                                     "ORTE_EPOCH", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-#endif
 
 #if !ORTE_DISABLE_FULL_SUPPORT
     tmp = ORTE_JOB;
@@ -449,20 +432,6 @@ int orte_dt_init(void)
         return rc;
     }
 
-    tmp = ORTE_GRPCOMM_MODE;
-    if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_grpcomm_mode,
-                                                     orte_dt_unpack_grpcomm_mode,
-                                                     (opal_dss_copy_fn_t)orte_dt_copy_grpcomm_mode,
-                                                     (opal_dss_compare_fn_t)orte_dt_compare_grpcomm_mode,
-                                                     (opal_dss_size_fn_t)orte_dt_std_size,
-                                                     (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
-                                                     OPAL_DSS_UNSTRUCTURED,
-                                                     "ORTE_GRPCOMM_MODE", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
     tmp = ORTE_IOF_TAG;
     if (ORTE_SUCCESS != (rc = opal_dss.register_type(orte_dt_pack_iof_tag,
                                                      orte_dt_unpack_iof_tag,
@@ -533,31 +502,6 @@ orte_vpid_t orte_get_lowest_vpid_alive(orte_jobid_t job)
     }
     /* only get here if no live proc found */
     return ORTE_VPID_INVALID;
-}
-
-int orte_global_comm(orte_process_name_t *recipient,
-                     opal_buffer_t *buf, orte_rml_tag_t tag,
-                     orte_default_cbfunc_t cbfunc)
-{
-    int ret;
-    orte_ns_cmp_bitmask_t mask;
-
-    mask = ORTE_NS_CMP_ALL;
-    
-    if (OPAL_EQUAL == orte_util_compare_name_fields(mask, recipient, ORTE_PROC_MY_NAME) &&
-        NULL != cbfunc) {
-        /* if I am the recipient and a direct fn is provided, use a message event */
-        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, buf, tag, cbfunc);
-        ret = ORTE_SUCCESS;
-    } else {
-        /* go ahead and send it */
-        if (0 > (ret = orte_rml.send_buffer(recipient, buf, tag, 0))) {
-            ORTE_ERROR_LOG(ret);
-        } else {
-            ret = ORTE_SUCCESS;
-        }
-    }
-    return ret;
 }
 
 /*
@@ -681,8 +625,6 @@ OBJ_CLASS_INSTANCE(orte_app_context_t,
 
 static void orte_job_construct(orte_job_t* job)
 {
-    job->name = NULL;
-    job->instance = NULL;
     job->jobid = ORTE_JOBID_INVALID;
     job->apps = OBJ_NEW(opal_pointer_array_t);
     opal_pointer_array_init(job->apps,
@@ -703,26 +645,25 @@ static void orte_job_construct(orte_job_t* job)
     job->map = NULL;
     job->bookmark = NULL;
     job->state = ORTE_JOB_STATE_UNDEF;
+    job->restart = false;
 
     job->num_launched = 0;
     job->num_reported = 0;
     job->num_terminated = 0;
     job->num_daemons_reported = 0;
+    job->num_non_zero_exit = 0;
     job->abort = false;
     job->aborted_proc = NULL;
     
-    OBJ_CONSTRUCT(&job->dyn_spawn_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&job->dyn_spawn_cond, opal_condition_t);
-    job->dyn_spawn_active = false;
-    
+    job->originator.jobid = ORTE_JOBID_INVALID;
+    job->originator.vpid = ORTE_VPID_INVALID;
+
     job->recovery_defined = false;
     job->enable_recovery = false;
-    
-    job->launch_msg_sent.tv_sec = 0;
-    job->launch_msg_sent.tv_usec = 0;
-    job->max_launch_msg_recvd.tv_sec = 0;
-    job->max_launch_msg_recvd.tv_usec = 0;
-    
+    job->num_local_procs = 0;
+
+    job->pmap = NULL;
+
 #if OPAL_ENABLE_FT_CR == 1
     job->ckpt_state = 0;
     job->ckpt_snapshot_ref = NULL;
@@ -736,7 +677,7 @@ static void orte_job_destruct(orte_job_t* job)
     orte_app_context_t *app;
     orte_job_t *jdata;
     int n;
-    
+
     if (NULL == job) {
         /* probably just a race condition - just return */
         return;
@@ -747,14 +688,6 @@ static void orte_job_destruct(orte_job_t* job)
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(job->jobid));
     }
     
-    if (NULL != job->name) {
-        free(job->name);
-    }
-
-    if (NULL != job->instance) {
-        free(job->instance);
-    }
-
     for (n=0; n < job->apps->size; n++) {
         if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(job->apps, n))) {
             continue;
@@ -776,9 +709,13 @@ static void orte_job_destruct(orte_job_t* job)
     }
     OBJ_RELEASE(job->procs);
     
-    OBJ_DESTRUCT(&job->dyn_spawn_lock);
-    OBJ_DESTRUCT(&job->dyn_spawn_cond);
-    
+    if (NULL != job->pmap) {
+        if (NULL != job->pmap->bytes) {
+            free(job->pmap->bytes);
+        }
+        free(job->pmap);
+    }
+
 #if OPAL_ENABLE_FT_CR == 1
     if (NULL != job->ckpt_snapshot_ref) {
         free(job->ckpt_snapshot_ref);
@@ -907,6 +844,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->app_rank = -1;
     proc->last_errmgr_state = ORTE_PROC_STATE_UNDEF;
     proc->state = ORTE_PROC_STATE_UNDEF;
+    proc->alive = false;
     proc->app_idx = 0;
 #if OPAL_HAVE_HWLOC
     proc->locale = NULL;
@@ -914,6 +852,8 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->cpu_bitmap = NULL;
 #endif
     proc->node = NULL;
+    proc->local_proc = false;
+    proc->do_not_barrier = false;
     proc->prior_node = NULL;
     proc->nodename = NULL;
     proc->exit_code = 0;      /* Assume we won't fail unless otherwise notified */
@@ -926,7 +866,10 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->beat = 0;
     OBJ_CONSTRUCT(&proc->stats, opal_ring_buffer_t);
     opal_ring_buffer_init(&proc->stats, orte_stat_history_size);
-    ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
+    proc->registered = false;
+    proc->deregistered = false;
+    proc->iof_complete = false;
+    proc->waitpid_recvd = false;
 #if OPAL_ENABLE_FT_CR == 1
     proc->ckpt_state = 0;
     proc->ckpt_snapshot_ref = NULL;

@@ -429,7 +429,6 @@ int global_coord_start_ckpt(orte_snapc_base_quiesce_t *datum)
             new_proc = OBJ_NEW(orte_proc_t);
             new_proc->name.jobid = proc->name.jobid;
             new_proc->name.vpid  = proc->name.vpid;
-            ORTE_EPOCH_SET(new_proc->name.epoch,proc->name.epoch);
             new_proc->node = OBJ_NEW(orte_node_t);
             new_proc->node->name = proc->node->name;
             opal_list_append(migrating_procs, &new_proc->super);
@@ -648,7 +647,6 @@ static int global_init_job_structs(void)
 
         orted_snapshot->process_name.jobid  = cur_node->daemon->name.jobid;
         orted_snapshot->process_name.vpid   = cur_node->daemon->name.vpid;
-        ORTE_EPOCH_SET(orted_snapshot->process_name.epoch,cur_node->daemon->name.epoch);
 
         mask = ORTE_NS_CMP_JOBID;
 
@@ -666,7 +664,6 @@ static int global_init_job_structs(void)
 
             app_snapshot->process_name.jobid = procs[p]->name.jobid;
             app_snapshot->process_name.vpid = procs[p]->name.vpid;
-            ORTE_EPOCH_SET(app_snapshot->process_name.epoch,procs[p]->name.epoch);
 
             opal_list_append(&(orted_snapshot->super.local_snapshots), &(app_snapshot->super));
         }
@@ -830,7 +827,6 @@ static int global_refresh_job_structs(void)
 
                 app_snapshot->process_name.jobid = procs[p]->name.jobid;
                 app_snapshot->process_name.vpid = procs[p]->name.vpid;
-                ORTE_EPOCH_SET(app_snapshot->process_name.epoch,procs[p]->name.epoch);
 
                 opal_list_append(&(orted_snapshot->super.local_snapshots), &(app_snapshot->super));
             }
@@ -846,7 +842,6 @@ static int global_refresh_job_structs(void)
 
         orted_snapshot->process_name.jobid  = cur_node->daemon->name.jobid;
         orted_snapshot->process_name.vpid   = cur_node->daemon->name.vpid;
-        ORTE_EPOCH_SET(orted_snapshot->process_name.epoch,cur_node->daemon->name.epoch);
 
         mask = ORTE_NS_CMP_ALL;
 
@@ -867,7 +862,6 @@ static int global_refresh_job_structs(void)
 
             app_snapshot->process_name.jobid = procs[p]->name.jobid;
             app_snapshot->process_name.vpid = procs[p]->name.vpid;
-            ORTE_EPOCH_SET(app_snapshot->process_name.epoch,procs[p]->name.epoch);
 
             opal_list_append(&(orted_snapshot->super.local_snapshots), &(app_snapshot->super));
         }

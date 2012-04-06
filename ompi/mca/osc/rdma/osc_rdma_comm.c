@@ -7,7 +7,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -137,7 +137,7 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
 
         ret  = ompi_osc_rdma_sendreq_send(module, sendreq);
 
-        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
             OPAL_THREAD_LOCK(&module->m_lock);
             sendreq->req_module->m_num_pending_out -= 1;
             opal_list_append(&(module->m_pending_sendreqs),
@@ -209,7 +209,7 @@ ompi_osc_rdma_module_get(void *origin_addr,
 
         ret  = ompi_osc_rdma_sendreq_send(module, sendreq);
 
-        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
             OPAL_THREAD_LOCK(&module->m_lock);
             sendreq->req_module->m_num_pending_out -= 1;
             opal_list_append(&(module->m_pending_sendreqs),
@@ -278,7 +278,7 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
 
         ret  = ompi_osc_rdma_sendreq_send(module, sendreq);
 
-        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == OPAL_SOS_GET_ERROR_CODE(ret)) {
+        if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret) {
             OPAL_THREAD_LOCK(&module->m_lock);
             sendreq->req_module->m_num_pending_out -= 1;
             opal_list_append(&(module->m_pending_sendreqs),

@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -11,6 +13,8 @@
 #define OPAL_EVENT_BASE_H
 
 #include "opal_config.h"
+
+#include "opal/class/opal_pointer_array.h"
 
 #include "opal/mca/event/event.h"
 
@@ -94,7 +98,6 @@ OPAL_DECLSPEC int opal_event_base_close(void);
  */
 OPAL_DECLSPEC extern int opal_event_base_output;
 OPAL_DECLSPEC extern opal_list_t opal_event_components;
-
 
 END_C_DECLS
 

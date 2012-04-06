@@ -12,6 +12,8 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,76 +48,98 @@
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 
-/***************  MODEX SECTION **************/
-int orte_grpcomm_base_full_modex(opal_list_t *procs)
+orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(void)
 {
-    opal_buffer_t buf, rbuf;
-    int32_t i, n, num_procs;
-    orte_std_cntr_t cnt;
-    orte_process_name_t proc_name;
-    int rc=ORTE_SUCCESS;
-    orte_nid_t *nid;
+    orte_grpcomm_coll_id_t id;
+
+    /* assign the next collective id */
+    id = orte_grpcomm_base.coll_id;
+    /* rotate to the next value */
+    orte_grpcomm_base.coll_id++;
+    return id;
+}
+
+
+/***************  MODEX SECTION **************/
+int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
+{
+    int rc;
     orte_local_rank_t local_rank;
     orte_node_rank_t node_rank;
-    orte_jmap_t *jmap;
-    orte_pmap_t *pmap;
-    orte_vpid_t daemon;
-    char *hostname;
+    orte_namelist_t *nm;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:base:full:modex: performing modex",
+                         "%s grpcomm:base:modex: performing modex",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* setup the buffer that will actually be sent */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
-    OBJ_CONSTRUCT(&rbuf, opal_buffer_t);
-    
+    /* record the collective */
+    modex->active = true;
+    modex->next_cbdata = modex;
+    opal_list_append(&orte_grpcomm_base.active_colls, &modex->super);
+
     /* put our process name in the buffer so it can be unpacked later */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     
-    /* pack our hostname */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.nodename, 1, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
+    if (0 == opal_list_get_size(&modex->participants)) {
+        /* add a wildcard name to the participants so the daemon knows
+         * that everyone in my job must participate
+         */
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&modex->participants, &nm->super);
+        modex->next_cb = orte_grpcomm_base_store_modex;
+    } else {
+        /* this is not amongst our peers, but rather between a select
+         * group of processes - e.g., during a connect/accept operation.
+         * Thus, this requires we send additional info
+         */
+        modex->next_cb = orte_grpcomm_base_store_peer_modex;
+
+        /* pack our hostname */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &orte_process_info.nodename, 1, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     
-    /* pack our daemon's vpid */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &ORTE_PROC_MY_DAEMON->vpid, 1, ORTE_VPID))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
+        /* pack our daemon's vpid */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &ORTE_PROC_MY_DAEMON->vpid, 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     
-    /* pack our node rank */
-    node_rank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME);
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &node_rank, 1, ORTE_NODE_RANK))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
+        /* pack our node rank */
+        node_rank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME);
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &node_rank, 1, ORTE_NODE_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     
-    /* pack our local rank */
-    local_rank = orte_ess.get_local_rank(ORTE_PROC_MY_NAME);
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &local_rank, 1, ORTE_LOCAL_RANK))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
+        /* pack our local rank */
+        local_rank = orte_ess.get_local_rank(ORTE_PROC_MY_NAME);
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &local_rank, 1, ORTE_LOCAL_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
     
 #if OPAL_HAVE_HWLOC
-    /* pack our binding info so other procs can determine our locality */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.bind_level, 1, OPAL_HWLOC_LEVEL_T))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, &orte_process_info.bind_idx, 1, OPAL_UINT))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
+        /* pack our binding info so other procs can determine our locality */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &orte_process_info.bind_level, 1, OPAL_HWLOC_LEVEL_T))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &orte_process_info.bind_idx, 1, OPAL_UINT))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
 #endif
+    }
 
     /* pack the entries we have received */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&modex->buffer))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -124,76 +148,67 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
                          "%s grpcomm:base:full:modex: executing allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    if (NULL == procs) {
-        /* exchange the buffer with my peers */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(&buf, &rbuf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    } else {
-        /* exchange the buffer with the list of peers */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather_list(procs, &buf, &rbuf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    }
-
-    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                         "%s grpcomm:base:full:modex: processing modex info",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-
-
-    /* extract the number of procs that put data in the buffer */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &num_procs, &cnt, OPAL_INT32))) {
+    /* execute the allgather */
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.allgather(modex))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
+
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                         "%s grpcomm:base:modex: modex posted",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:base:full:modex: received %ld data bytes from %d procs",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)(rbuf.pack_ptr - rbuf.unpack_ptr), num_procs));
-    
-    /* if the buffer doesn't have any more data, ignore it */
-    if (0 >= (rbuf.pack_ptr - rbuf.unpack_ptr)) {
-        goto cleanup;
-    }
-    
-    /* otherwise, process it */
-    for (i=0; i < num_procs; i++) {
-        /* unpack the process name */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &proc_name, &cnt, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
+    return ORTE_SUCCESS;
+
+ cleanup:
+    OBJ_RELEASE(modex);
+    return rc;
+}
+
+void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
+{
+    int rc, n, cnt;
+    orte_process_name_t proc_name;
+    char *hostname;
+    orte_vpid_t daemon;
+    orte_node_rank_t node_rank;
+    orte_local_rank_t local_rank;
+    orte_nid_t *nid;
+    orte_jmap_t *jmap;
+    orte_pmap_t *pmap;
+    orte_grpcomm_collective_t *modex = (orte_grpcomm_collective_t*)cbdata;
+
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                         "%s STORING PEER MODEX DATA",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* unpack the process name */
+    cnt=1;
+    while (ORTE_SUCCESS == (rc = opal_dss.unpack(rbuf, &proc_name, &cnt, ORTE_NAME))) {
         /* unpack the hostname */
         cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &hostname, &cnt, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &hostname, &cnt, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
         
         /* unpack the daemon vpid */
         cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &daemon, &cnt, ORTE_VPID))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &daemon, &cnt, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
         
         /* unpack the node rank */
         cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &node_rank, &cnt, ORTE_NODE_RANK))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &node_rank, &cnt, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
         
         /* unpack the local rank */
         cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &local_rank, &cnt, ORTE_LOCAL_RANK))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &local_rank, &cnt, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -272,12 +287,12 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
 
             /* unpack the locality info */
             cnt = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &bind_level, &cnt, OPAL_HWLOC_LEVEL_T))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &bind_level, &cnt, OPAL_HWLOC_LEVEL_T))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
             cnt = 1;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(&rbuf, &bind_idx, &cnt, OPAL_UINT))) {
+            if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &bind_idx, &cnt, OPAL_UINT))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -348,72 +363,43 @@ int orte_grpcomm_base_full_modex(opal_list_t *procs)
                              ORTE_NAME_PRINT(&proc_name)));
         
         /* update the modex database */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, &rbuf))) {
+        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_update_modex_entries(&proc_name, rbuf))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }            
-    }
-    
+    }    
+
  cleanup:
-    OBJ_DESTRUCT(&buf);
-    OBJ_DESTRUCT(&rbuf);
-    return rc;
+    /* flag the collective as complete */
+    modex->active = false;
+    /* cleanup */
+    opal_list_remove_item(&orte_grpcomm_base.active_colls, &modex->super);
+    /* notify that the modex is complete */
+    if (NULL != modex->cbfunc) {
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                             "%s CALLING MODEX RELEASE",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        modex->cbfunc(NULL, modex->cbdata);
+    }
 }
 
-int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
+void orte_grpcomm_base_store_modex(opal_buffer_t *rbuf, void *cbdata)
 {
-    int32_t i, num_procs;
     orte_std_cntr_t cnt;
     orte_process_name_t proc_name;
     int rc=ORTE_SUCCESS;
-    orte_vpid_t daemon;
-    orte_pmap_t *pmap;
+    orte_grpcomm_collective_t *modex = (orte_grpcomm_collective_t*)cbdata;
 
-    /* process the results */
-    /* extract the number of procs that put data in the buffer */
-    cnt = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &num_procs, &cnt, OPAL_INT32))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:base:modex:unpack: received %ld data bytes from %d procs",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         (long)(rbuf->pack_ptr - rbuf->unpack_ptr), num_procs));
-    
-    /* if the buffer doesn't have any more data, ignore it */
-    if (0 >= (rbuf->pack_ptr - rbuf->unpack_ptr)) {
-        goto cleanup;
-    }
-    
-    /* otherwise, process it */
-    for (i = 0; i < num_procs; i++) {
-        /* unpack the process name */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &proc_name, &cnt, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
+    OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                         "%s STORING MODEX DATA",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+
+    /* unpack the process name */
+    cnt=1;
+    while (ORTE_SUCCESS == (rc = opal_dss.unpack(rbuf, &proc_name, &cnt, ORTE_NAME))) {
         
-        /* SINCE THIS IS AMONGST PEERS, THERE IS NO NEED TO UPDATE THE NIDMAP/PIDMAP */
-        
-        if (ORTE_VPID_INVALID == (daemon = orte_ess.proc_get_daemon(&proc_name))) {
-            /* clear problem */
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            rc = ORTE_ERR_NOT_FOUND;
-            goto cleanup;
-        }
-
-        if (NULL == (pmap = orte_util_lookup_pmap(&proc_name))) {
-            /* clear problem */
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            rc = ORTE_ERR_NOT_FOUND;
-            goto cleanup;
-        }
-
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                             "%s grpcomm:base:modex:unpack: adding modex entry for proc %s",
+                             "%s grpcomm:base:store_modex adding modex entry for proc %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              ORTE_NAME_PRINT(&proc_name)));
         
@@ -423,9 +409,22 @@ int orte_grpcomm_base_modex_unpack( opal_buffer_t* rbuf)
             goto cleanup;
         }
     }
+    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
 
  cleanup:
-    return rc;
+    /* flag the modex as complete */
+    modex->active = false;
+    /* cleanup */
+    opal_list_remove_item(&orte_grpcomm_base.active_colls, &modex->super);
+    /* execute user callback, if requested */
+    if (NULL != modex->cbfunc) {
+        OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
+                             "%s CALLING MODEX RELEASE",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
+        modex->cbfunc(NULL, modex->cbdata);
+    }
 }
 
 /**

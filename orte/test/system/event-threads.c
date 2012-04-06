@@ -15,7 +15,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/mca/event/event.h"
 
-static opal_event_base_t *my_base=NULL;
+static orte_event_base_t *my_base=NULL;
 static opal_thread_t progress_thread;
 static bool progress_thread_stop=false;
 static int progress_thread_pipe[2];
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     opal_event_use_threads();
 
     /* create a new base */
-    my_base = opal_event_base_create();
+    my_base = orte_event_base_create();
 
     /* launch a progress thread on that base*/
     pipe(progress_thread_pipe);
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     progress_thread.t_run = progress_engine;
     if (OPAL_SUCCESS != opal_thread_start(&progress_thread)) {
         fprintf(stderr, "Unable to start progress thread\n");
-        opal_event_base_finalize(my_base);
+        orte_event_base_finalize(my_base);
         exit(1);
     }
 

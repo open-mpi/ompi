@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009      Institut National de Recherche en Informatique
  *                         et Automatique. All rights reserved.
@@ -70,6 +70,7 @@
 #include "orte/mca/rml/base/rml_contact.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ess/ess.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
@@ -79,6 +80,7 @@
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/mca/rmaps/rmaps_types.h"
+#include "orte/mca/state/state.h"
 
 /* need access to the create_jobid fn used by plm components
 * so we can set singleton name, if necessary
@@ -95,8 +97,9 @@
 /*
  * Globals
  */
-static opal_event_t pipe_handler;
+static opal_event_t *pipe_handler;
 static void shutdown_callback(int fd, short flags, void *arg);
+static void pipe_closed(int fd, short flags, void *arg);
 
 static struct {
     bool debug;
@@ -224,10 +227,6 @@ int orte_daemon(int argc, char *argv[])
     opal_buffer_t *buffer;
     char hostname[100];
     char *tmp_env_var = NULL;
-    struct timeval starttime, setuptime;
-    
-    /* get our time for first executable */
-    gettimeofday(&starttime, NULL);
     
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals));
@@ -364,7 +363,7 @@ int orte_daemon(int argc, char *argv[])
              * and have it kill us
              */
             if (0 < orted_globals.fail_delay) {
-                ORTE_TIMER_EVENT(orted_globals.fail_delay, 0, shutdown_callback);
+                ORTE_TIMER_EVENT(orted_globals.fail_delay, 0, shutdown_callback, ORTE_SYS_PRI);
                 
             } else {
                 opal_output(0, "%s is executing clean %s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -403,19 +402,17 @@ int orte_daemon(int argc, char *argv[])
     orte_process_info.my_daemon_uri = orte_rml.get_contact_info();
     ORTE_PROC_MY_DAEMON->jobid = ORTE_PROC_MY_NAME->jobid;
     ORTE_PROC_MY_DAEMON->vpid = ORTE_PROC_MY_NAME->vpid;
-    ORTE_EPOCH_SET(ORTE_PROC_MY_DAEMON->epoch,ORTE_EPOCH_MIN);
     
     /* if I am also the hnp, then update that contact info field too */
     if (ORTE_PROC_IS_HNP) {
         orte_process_info.my_hnp_uri = orte_rml.get_contact_info();
         ORTE_PROC_MY_HNP->jobid = ORTE_PROC_MY_NAME->jobid;
         ORTE_PROC_MY_HNP->vpid = ORTE_PROC_MY_NAME->vpid;
-        ORTE_EPOCH_SET(ORTE_PROC_MY_HNP->epoch,ORTE_EPOCH_MIN);
     }
     
     /* setup the primary daemon command receive function */
     ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON,
-                                  ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+                                  ORTE_RML_PERSISTENT, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         goto DONE;
@@ -464,11 +461,14 @@ int orte_daemon(int argc, char *argv[])
     if (orted_globals.uri_pipe > 0) {
         orte_job_t *jdata;
         orte_proc_t *proc;
-        orte_node_t **nodes;
+        orte_node_t *node;
         orte_app_context_t *app;
         char *tmp, *nptr, *sysinfo;
-        int rc;
-        int32_t ljob;
+        int32_t ljob, one32;
+        orte_vpid_t vpid1;
+        orte_local_rank_t lrank;
+        orte_node_rank_t nrank;
+        opal_byte_object_t *bo;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
@@ -489,18 +489,18 @@ int orte_daemon(int argc, char *argv[])
         app->num_procs = 1;
         opal_pointer_array_add(jdata->apps, app);
         
+#if 0
         /* run our local allocator to read the available
          * allocation in case this singleton decides to
          * comm_spawn other procs
          */
-        if (ORTE_SUCCESS != (rc = orte_ras.allocate(jdata))) {
-            ORTE_ERROR_LOG(rc);
+        if (ORTE_SUCCESS != (ret = orte_ras.allocate(jdata))) {
+            ORTE_ERROR_LOG(ret);
             /* don't quit as this would cause the singleton
              * to hang!
              */
         }
-        
-        nodes = (orte_node_t**)orte_node_pool->addr;
+#endif
         
         /* setup a proc object for the singleton - since we
          * -must- be the HNP, and therefore we stored our
@@ -510,15 +510,73 @@ int orte_daemon(int argc, char *argv[])
         proc = OBJ_NEW(orte_proc_t);
         proc->name.jobid = jdata->jobid;
         proc->name.vpid = 0;
-        ORTE_EPOCH_SET(proc->name.epoch,ORTE_EPOCH_MIN);
 
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
-        proc->node = nodes[0]; /* hnp node must be there */
-        OBJ_RETAIN(nodes[0]);  /* keep accounting straight */
+        /* obviously, they are on my node */
+        node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
+        proc->node = node;
+        OBJ_RETAIN(node);  /* keep accounting straight */
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
+        jdata->num_local_procs = 1;
         
+        /* need to setup a pidmap for it */
+        buffer = OBJ_NEW(opal_buffer_t);
+        opal_dss.pack(buffer, &jdata->jobid, 1, ORTE_JOBID); /* jobid */
+        vpid1 = 1;
+        opal_dss.pack(buffer, &vpid1, 1, ORTE_VPID); /* num_procs */
+#if OPAL_HAVE_HWLOC
+        {
+            opal_hwloc_level_t bind_level;
+            bind_level = OPAL_HWLOC_NODE_LEVEL;
+            opal_dss.pack(buffer, &bind_level, 1, OPAL_HWLOC_LEVEL_T); /* num_procs */
+        }
+#endif
+        one32 = 0;
+        opal_dss.pack(buffer, &one32, 1, OPAL_INT32); /* node index */
+        lrank = 0;
+        opal_dss.pack(buffer, &lrank, 1, ORTE_LOCAL_RANK);  /* local rank */
+        nrank = 0;
+        opal_dss.pack(buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
+#if OPAL_HAVE_HWLOC
+        {
+            uint bind_idx;
+            bind_idx = 0;
+            opal_dss.pack(buffer, &bind_idx, 1, OPAL_UINT);
+        }
+#endif
+        /* setup a byte object and unload the packed data to it */
+        bo = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
+        opal_dss.unload(buffer, (void**)&bo->bytes, &bo->size);
+        OBJ_RELEASE(buffer);
+        /* save a copy to send back to the proc */
+        opal_dss.copy((void**)&jdata->pmap, bo, OPAL_BYTE_OBJECT);
+        /* update our ess data - this will release the byte object's data */
+        if (ORTE_SUCCESS != (ret = orte_ess.update_pidmap(bo))) {
+            ORTE_ERROR_LOG(ret);
+        }
+        free(bo);
+    
+        /* if we don't yet have a daemon map, then we have to generate one
+         * to pass back to it
+         */
+        if (NULL == orte_odls_globals.dmap) {
+            orte_odls_globals.dmap = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
+            /* construct a nodemap */
+            if (ORTE_SUCCESS != (ret = orte_util_encode_nodemap(orte_odls_globals.dmap))) {
+                ORTE_ERROR_LOG(ret);
+            }
+            /* we also need to update our local nidmap - copy the dmap
+             * as this will release the byte object's data. The copy function
+             * will automatically malloc the bo itself, so we don't need to do so here
+             */
+            opal_dss.copy((void**)&bo, orte_odls_globals.dmap, OPAL_BYTE_OBJECT);
+            if (ORTE_SUCCESS != (ret = orte_ess.update_nidmap(bo))) {
+                ORTE_ERROR_LOG(ret);
+            }
+        }
+
         /* create a string that contains our uri + the singleton's name + sysinfo */
         orte_util_convert_process_name_to_string(&nptr, &proc->name);
         orte_util_convert_sysinfo_to_string(&sysinfo, orte_local_cpu_type, orte_local_cpu_model);
@@ -540,12 +598,13 @@ int orte_daemon(int argc, char *argv[])
     /* if we were given a pipe to monitor for singleton termination, set that up */
     if (orted_globals.singleton_died_pipe > 0) {
         /* register shutdown handler */
-        opal_event_set(opal_event_base, &pipe_handler,
+        pipe_handler = (opal_event_t*)malloc(sizeof(opal_event_t));
+        opal_event_set(orte_event_base, pipe_handler,
                        orted_globals.singleton_died_pipe,
-                       OPAL_EV_READ|OPAL_EV_PERSIST,
-                       shutdown_callback,
+                       OPAL_EV_READ,
+                       pipe_closed,
                        &orted_globals.singleton_died_pipe);
-        opal_event_add(&pipe_handler, NULL);
+        opal_event_add(pipe_handler, NULL);
     }
 
     /* If I have a parent, then save his contact info so
@@ -608,60 +667,10 @@ int orte_daemon(int argc, char *argv[])
             OBJ_RELEASE(buffer);
             goto DONE;
         }
-        if (orte_timing) {
-            int64_t secs, usecs;
-            /* add our start time */
-            secs = starttime.tv_sec;
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &secs, 1, OPAL_INT64))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-            usecs = starttime.tv_usec;
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &usecs, 1, OPAL_INT64))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-            /* get and send our setup time */
-            gettimeofday(&setuptime, NULL);
-            secs = setuptime.tv_sec - starttime.tv_sec;
-            if (starttime.tv_usec <= setuptime.tv_usec) {
-                usecs = setuptime.tv_usec - starttime.tv_usec;
-            } else {
-                secs--;
-                usecs = 1000000 - starttime.tv_usec + setuptime.tv_usec;
-            }
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &secs, 1, OPAL_INT64))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &usecs, 1, OPAL_INT64))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-            /* include the actual timestamp so the HNP can figure out how
-             * long it took for this message to arrive
-             */
-            secs = setuptime.tv_sec;
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &secs, 1, OPAL_INT64))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-            usecs = setuptime.tv_usec;
-            if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, &usecs, 1, OPAL_INT64))) {
-                ORTE_ERROR_LOG(ret);
-                OBJ_RELEASE(buffer);
-                goto DONE;
-            }
-        }
 
         /* include our node name */
         opal_dss.pack(buffer, &orte_process_info.nodename, 1, OPAL_STRING);
-
+        
 #if OPAL_HAVE_HWLOC
         /* add the local topology */
         if (NULL != opal_hwloc_topology &&
@@ -688,25 +697,40 @@ int orte_daemon(int argc, char *argv[])
         opal_output(0, "%s orted: up and running - waiting for commands!", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }
 
-    /* wait to hear we are done */
-    opal_event_dispatch(opal_event_base);
+    /* loop the event lib until an exit event is detected */
+    while (orte_event_base_active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
 
-    /* should never get here, but if we do... */
  DONE:
-    /* Finalize and clean up ourselves */
-    orte_quit();
-    return ret;
+    /* update the exit status, in case it wasn't done */
+    ORTE_UPDATE_EXIT_STATUS(orte_exit_status);
+
+    /* cleanup and leave */
+    orte_finalize();
+
+    if (orte_debug_flag) {
+        fprintf(stderr, "exiting with status %d\n", orte_exit_status);
+    }
+    exit(orte_exit_status);
+}
+
+static void pipe_closed(int fd, short flags, void *arg)
+{
+    opal_event_t *ev = (opal_event_t*)arg;
+
+    /* no error here - we just want to terminate */
+    opal_event_free(ev);
+    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_DAEMONS_TERMINATED);
 }
 
 static void shutdown_callback(int fd, short flags, void *arg)
 {
-    if (NULL != arg) {
-        /* it's the singleton pipe...  remove that handler */
-        opal_event_del(&pipe_handler);
-    }
-    
-    if (orte_debug_daemons_flag) {
-        opal_output(0, "%s orted: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    orte_timer_t *tm = (orte_timer_t*)arg;
+
+    if (NULL != tm) {
+        /* release the timer */
+        OBJ_RELEASE(tm);
     }
     
     /* if we were ordered to abort, do so */
@@ -719,16 +743,13 @@ static void shutdown_callback(int fd, short flags, void *arg)
         orte_odls.kill_local_procs(NULL);
         orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
         abort();
-    } else if ((int)ORTE_PROC_MY_NAME->vpid == orted_globals.fail) {
-        opal_output(0, "%s is executing clean abnormal termination", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
-        /* do -not- call finalize as this will send a message to the HNP
-         * indicating clean termination! Instead, just forcibly cleanup
-         * the local session_dir tree and exit
-         */
-        orte_odls.kill_local_procs(NULL);
-        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
-        exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
-
-    orte_quit();
+    opal_output(0, "%s is executing clean abnormal termination", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+    /* do -not- call finalize as this will send a message to the HNP
+     * indicating clean termination! Instead, just forcibly cleanup
+     * the local session_dir tree and exit
+     */
+    orte_odls.kill_local_procs(NULL);
+    orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    exit(ORTE_ERROR_DEFAULT_EXIT_CODE);
 }

@@ -11,23 +11,27 @@
 #endif
 #include <errno.h>
 
-#include <pthread.h>
+#include "opal/threads/threads.h"
+#include "opal/runtime/opal.h"
+#include "opal/mca/event/event.h"
 
-#include <event2/util.h>
-#include <event2/thread.h>
-#include <event2/event.h>
-#include <event2/event_struct.h>
-
-static struct event_base *my_base=NULL;
-static pthread_t progress_thread;
+static orte_event_base_t *my_base=NULL;
+static opal_thread_t progress_thread;
 static bool progress_thread_stop=false;
 static int progress_thread_pipe[2];
-static pthread_mutex_t lock;
-static struct event write_event;
-static int my_fd;
+static opal_mutex_t lock;
+static opal_condition_t cond;
+static bool active=false;
+typedef struct {
+    opal_object_t super;
+    opal_event_t write_event;
+} foo_caddy_t;
+OBJ_CLASS_INSTANCE(foo_caddy_t,
+                   opal_object_t,
+                   NULL, NULL);
 static bool fd_written=false;
 
-static void* progress_engine(void *obj);
+static void* progress_engine(opal_object_t *obj);
 static void send_handler(int sd, short flags, void *arg);
 
 int main(int argc, char **argv)
@@ -35,29 +39,28 @@ int main(int argc, char **argv)
     char byte='a';
     struct timespec tp={0, 100};
     int count=0;
+    foo_caddy_t *foo;
+
+   /* Initialize the event library */
+    opal_init(&argc, &argv);
 
     /* setup for threads */
-    evthread_use_pthreads();
+    opal_event_use_threads();
 
     /* create a new base */
-    my_base = event_base_new();
+    my_base = orte_event_base_create();
 
-    /* launch a progress thread on that base*/
+   /* launch a progress thread on that base*/
     pipe(progress_thread_pipe);
-
-    if (pthread_mutex_init(&lock, NULL)) {
-     fprintf(stderr, "pthread_mutex_init failed\n");
-      exit(1);
+    OBJ_CONSTRUCT(&lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&cond, opal_condition_t);
+    OBJ_CONSTRUCT(&progress_thread, opal_thread_t);
+    progress_thread.t_run = progress_engine;
+    if (OPAL_SUCCESS != opal_thread_start(&progress_thread)) {
+        fprintf(stderr, "Unable to start progress thread\n");
+        orte_event_base_finalize(my_base);
+        exit(1);
     }
-    if (pthread_create(&progress_thread, NULL, progress_engine,
-                       NULL)) {
-     fprintf(stderr, "pthread_create failed\n");
-      exit(1);
-    }
-    /*
-      pthread starts the thread running itself; no need to do anything to
-      launch it.
-    */
 
     /* wait a little while - reflects reality in an async system */
     while (count < 100) {
@@ -66,39 +69,17 @@ int main(int argc, char **argv)
     }
     count=0;
 
-#ifdef WAKE_WITH_EVENT
     /* make a dummy event */
     fprintf(stderr, "activating the write_event");
-    event_assign(&write_event,
-                 my_base,
-                 -1,
-                 0,
-                 send_handler,
-                 NULL);
+    foo = OBJ_NEW(foo_caddy_t);
+    opal_event_set(my_base,
+                   &foo->write_event,
+                   -1,
+                   0,
+                   send_handler,
+                   foo);
     /* activate it. */
-    event_active(&write_event, EV_WRITE, 1);
-#else
-    fprintf(stderr, "opening the file");
-    /* define a file descriptor event - looks like an incoming socket
-     * connection being created, if we're lucky.
-     */
-    my_fd = open("foo", O_CREAT | O_TRUNC | O_RDWR, 0644);
-    if (my_fd <0) {
-      perror("open");
-      exit(1);
-    }
-    event_assign(&write_event,
-                 my_base,
-                 my_fd,
-                 EV_WRITE|EV_PERSIST,
-                 send_handler,
-                 NULL);
-    event_add(&write_event, NULL);
-    if (write(progress_thread_pipe[1], &byte, 1) < 0) {
-      perror("write");
-      exit(1);
-    }
-#endif
+    opal_event_active(&foo->write_event, EV_WRITE, 1);
 
     /* wait for it to trigger */
     while (!fd_written && count < 1000) {
@@ -110,13 +91,16 @@ int main(int argc, char **argv)
     }
 
     /* stop the thread */
-    pthread_mutex_lock(&lock);
+    OPAL_ACQUIRE_THREAD(&lock, &cond, &active);
     progress_thread_stop = true;
-    pthread_mutex_unlock(&lock);
+    OPAL_RELEASE_THREAD(&lock, &cond, &active);
+    opal_fd_write(progress_thread_pipe[1], 1, &byte);
+    opal_thread_join(&progress_thread, NULL);
 
-    write(progress_thread_pipe[1], &byte, 1);
-    pthread_join(progress_thread, NULL);
-
+    /* release the base */
+    fprintf(stderr, "Cleaning up\n");
+    opal_finalize();
+    fprintf(stderr, "Cleanup completed\n");
     return 0;
 }
 
@@ -124,56 +108,47 @@ static struct event stop_event;
 static void stop_handler(int sd, short flags, void* cbdata)
 {
     char byte;
-    int n;
-    if ((n = read(progress_thread_pipe[0], &byte, 1)) <= 0) {
-      if (n == 0)
-        fprintf(stderr, "got a close\n");
-      else
-        perror("read");
-    }
 
+    opal_fd_read(progress_thread_pipe[0], 1, &byte);
+    fprintf(stderr, "Stop handler called\n");
     /* reset the event */
-    event_add(&stop_event, NULL);
+    opal_event_add(&stop_event, 0);
     return;
 }
 
-static void* progress_engine(void *obj)
+static void* progress_engine(opal_object_t *obj)
 {
     /* define an event that will be used to kick us out of a blocking
      * situation when we want to exit
      */
-    event_assign(&stop_event, my_base,
-                 progress_thread_pipe[0], EV_READ, stop_handler, NULL);
-    event_add(&stop_event, NULL);
+    /* define an event that will be used to kick us out of a blocking
+     * situation when we want to exit
+     */
+    opal_event_set(my_base, &stop_event,
+                   progress_thread_pipe[0], OPAL_EV_READ, stop_handler, NULL);
+    opal_event_add(&stop_event, 0);
 
     while (1) {
-        pthread_mutex_lock(&lock);
+        OPAL_ACQUIRE_THREAD(&lock, &cond, &active);
         if (progress_thread_stop) {
             fprintf(stderr, "Thread stopping\n");
-            pthread_mutex_unlock(&lock); /* moved this */
-            event_del(&stop_event);
-            return (void*)1;
+            OPAL_RELEASE_THREAD(&lock, &cond, &active);
+            opal_event_del(&stop_event);
+            return OPAL_THREAD_CANCELLED;
         }
-        pthread_mutex_unlock(&lock);
+        OPAL_RELEASE_THREAD(&lock, &cond, &active);
         fprintf(stderr, "Looping...\n");
-        event_base_loop(my_base, EVLOOP_ONCE);
+        opal_event_loop(my_base, OPAL_EVLOOP_ONCE);
     }
 }
 
 static void send_handler(int sd, short flags, void *arg)
 {
-#ifdef WAKE_WITH_EVENT
+    foo_caddy_t *foo = (foo_caddy_t*)arg;
+    fprintf(stderr, "Deleting event\n");
+    opal_event_del(&foo->write_event);
+    OBJ_RELEASE(foo);
     fprintf(stderr, "Write event fired\n");
-#else
-    char *bytes="This is an output string\n";
-
-    fprintf(stderr, "Write event fired\n");
-    if (write(my_fd, bytes, strlen(bytes)) < 0) {
-      perror("write");
-      exit(1);
-    }
-    event_del(&write_event);
-#endif
     fd_written = true; /* This needs a lock around it if you are reading it
                         * in the main thread and changing it here XXX */
 }

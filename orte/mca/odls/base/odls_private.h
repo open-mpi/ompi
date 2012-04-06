@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,8 +33,6 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/class/opal_bitmap.h"
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
 #include "opal/dss/dss_types.h"
 
 #include "orte/mca/grpcomm/grpcomm_types.h"
@@ -52,14 +52,10 @@ typedef struct {
     int output;
     /** Time to allow process to forcibly die */
     int timeout_before_sigkill;
-    /* mutex */
-    opal_mutex_t mutex;
-    /* condition variable */
-    opal_condition_t cond;
     /* byte object to store daemon map for later xmit to procs */
     opal_byte_object_t *dmap;
     /* any co-spawned debugger daemon */
-    orte_odls_job_t *debugger;
+    orte_job_t *debugger;
     /* debugger launched */
     bool debugger_launched;
     /* list of ranks to be displayed on separate xterms */
@@ -81,21 +77,38 @@ orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
                                           orte_jobid_t job);
 
 ORTE_DECLSPEC int
-orte_odls_base_default_update_daemon_info(opal_buffer_t *data);
-
-ORTE_DECLSPEC int
 orte_odls_base_default_construct_child_list(opal_buffer_t *data,
                                             orte_jobid_t *job);
 
 /* define a function that will fork a local proc */
 typedef int (*orte_odls_base_fork_local_proc_fn_t)(orte_app_context_t *context,
-                                                   orte_odls_child_t *child,
+                                                   orte_proc_t *child,
                                                    char **environ_copy,
-                                                   orte_odls_job_t *jobdat);
+                                                   orte_job_t *jdata);
 
-ORTE_DECLSPEC int
-orte_odls_base_default_launch_local(orte_jobid_t job,
-                                    orte_odls_base_fork_local_proc_fn_t fork_local);
+/* define an object for starting local launch */
+typedef struct {
+    opal_object_t object;
+    opal_event_t *ev;
+    orte_jobid_t job;
+    orte_odls_base_fork_local_proc_fn_t fork_local;
+    int retries;
+} orte_odls_launch_local_t;
+OBJ_CLASS_DECLARATION(orte_odls_launch_local_t);
+
+#define ORTE_ACTIVATE_LOCAL_LAUNCH(j, f)                                \
+    do {                                                                \
+        orte_odls_launch_local_t *ll;                                   \
+        ll = OBJ_NEW(orte_odls_launch_local_t);                         \
+        ll->job = (j);                                                  \
+        ll->fork_local = (f);                                           \
+        opal_event_set(orte_event_base, ll->ev, -1, OPAL_EV_WRITE,      \
+                       orte_odls_base_default_launch_local, ll);        \
+        opal_event_set_priority(ll->ev, ORTE_SYS_PRI);                  \
+        opal_event_active(ll->ev, OPAL_EV_WRITE, 1);                    \
+    } while(0);
+
+ORTE_DECLSPEC void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata);
 
 ORTE_DECLSPEC int
 orte_odls_base_default_deliver_message(orte_jobid_t job, opal_buffer_t *buffer, orte_rml_tag_t tag);
@@ -115,7 +128,7 @@ orte_odls_base_default_signal_local_procs(const orte_process_name_t *proc, int32
 typedef int (*orte_odls_base_kill_local_fn_t)(pid_t pid, int signum);
 
 /* define a function type to detect that a child died */
-typedef bool (*orte_odls_base_child_died_fn_t)(orte_odls_child_t *child);
+typedef bool (*orte_odls_base_child_died_fn_t)(orte_proc_t *child);
 
 ORTE_DECLSPEC int
 orte_odls_base_default_kill_local_procs(opal_pointer_array_t *procs,
@@ -126,7 +139,7 @@ ORTE_DECLSPEC int orte_odls_base_default_require_sync(orte_process_name_t *proc,
                                                       opal_buffer_t *buffer,
                                                       bool drop_nidmap);
 
-ORTE_DECLSPEC int orte_odls_base_default_restart_proc(orte_odls_child_t *child,
+ORTE_DECLSPEC int orte_odls_base_default_restart_proc(orte_proc_t *child,
                                                       orte_odls_base_fork_local_proc_fn_t fork_local);
 
 /*

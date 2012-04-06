@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -68,6 +68,7 @@
 #include "orte/runtime/orte_quit.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/orted/orted.h"
 
@@ -110,6 +111,7 @@ orte_plm_base_module_1_0_0_t orte_plm_slurm_module = {
 static pid_t primary_srun_pid = 0;
 static bool primary_pid_set = false;
 static bool launching_daemons;
+static void launch_daemons(int fd, short args, void *cbdata);
 
 /**
 * Init the module
@@ -120,6 +122,7 @@ static int plm_slurm_init(void)
     
     if (ORTE_SUCCESS != (rc = orte_plm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
+        return rc;
     }
     
     /* if we don't want to launch (e.g., someone just wants
@@ -138,6 +141,13 @@ static int plm_slurm_init(void)
         orte_plm_globals.daemon_nodes_assigned_at_launch = false;
     }
 
+    /* point to our launch command */
+    if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_LAUNCH_DAEMONS,
+                                                       launch_daemons, ORTE_SYS_PRI))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     return rc;
 }
 
@@ -146,6 +156,18 @@ static int plm_slurm_init(void)
  * the job can cleanly terminate
  */
 static int plm_slurm_launch_job(orte_job_t *jdata)
+{
+    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+        /* this is a restart situation - skip to the mapping stage */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
+    } else {
+        /* new job - set it up */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_INIT);
+    }
+    return ORTE_SUCCESS;
+}
+
+static void launch_daemons(int fd, short args, void *cbdata)
 {
     orte_app_context_t *app;
     orte_node_t *node;
@@ -164,68 +186,46 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     char **custom_strings;
     int num_args, i;
     char *cur_prefix;
-    struct timeval launchstart, launchstop;
     int proc_vpid_index;
-    orte_jobid_t failed_job;
     bool failed_launch=true;
     orte_job_t *daemons;
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:slurm: LAUNCH DAEMONS CALLED",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
      */
-    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jdata->controls) {
-        failed_job = jdata->jobid;
-        if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-            ORTE_ERROR_LOG(rc);
-            failed_launch = true;
-        } else {
-            failed_launch = false;
-        }
-        goto cleanup;
-    }
-
-    /* if we are timing, record the start time */
-    if (orte_timing) {
-        gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
-    }
-    
-     /* flag the daemons as failing by default */
-    failed_job = ORTE_PROC_MY_NAME->jobid;
-    
-    if (orte_timing) {
-        if (0 != gettimeofday(&launchstart, NULL)) {
-            opal_output(0, "plm_slurm: could not obtain job start time");
-            launchstart.tv_sec = 0;
-            launchstart.tv_usec = 0;
-        }        
-    }
-    
-    /* if we don't want to launch, then don't attempt to
-     * launch the daemons - the user really wants to just
-     * look at the proposed process map
-     */
-    if (orte_do_not_launch) {
-        goto launch_apps;
+    if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & state->jdata->controls) {
+        ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
     }
 
     /* start by setting up the virtual machine */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(jdata))) {
+    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(state->jdata))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
-    /* indicate the state of the launch */
-    launching_daemons = true;
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:slurm: launching vm",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    
-    /* set the active jobid */
-    failed_job = daemons->jobid;
-    
+   /* if we don't want to launch, then don't attempt to
+     * launch the daemons - the user really wants to just
+     * look at the proposed process map
+     */
+    if (orte_do_not_launch) {
+        /* set the state to indicate the daemons reported - this
+         * will trigger the daemons_reported event and cause the
+         * job to move to the following step
+         */
+        state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
+    }
+
     /* Get the map for this job */
     if (NULL == (map = daemons->map)) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -234,11 +234,17 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
     }
         
     if (0 == map->num_new_daemons) {
-        /* no new daemons required - just launch apps */
+        /* set the state to indicate the daemons reported - this
+         * will trigger the daemons_reported event and cause the
+         * job to move to the following step
+         */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        goto launch_apps;
+        state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
     }
 
     /* need integer value for command line parameter */
@@ -352,9 +358,9 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
        don't support different --prefix'es for different nodes in
        the SLURM plm) */
     cur_prefix = NULL;
-    for (n=0; n < jdata->apps->size; n++) {
+    for (n=0; n < state->jdata->apps->size; n++) {
         char * app_prefix_dir;
-        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(jdata->apps, n))) {
+        if (NULL == (app = (orte_app_context_t*)opal_pointer_array_get_item(state->jdata->apps, n))) {
             continue;
         }
         app_prefix_dir = app->prefix_dir;
@@ -365,7 +371,7 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
                 0 != strcmp (cur_prefix, app_prefix_dir)) {
                 orte_show_help("help-plm-slurm.txt", "multiple-prefixes",
                                true, cur_prefix, app_prefix_dir);
-                return ORTE_ERR_FATAL;
+                goto cleanup;
             }
 
             /* If not yet set, copy it; iff set, then it's the
@@ -399,56 +405,11 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         goto cleanup;
     }
     
-    /* do NOT wait for srun to complete. Srun only completes when the processes
-     * it starts - in this case, the orteds - complete. Instead, we'll catch
-     * any srun failures and deal with them elsewhere
-     */
-    
-    /* wait for daemons to callback */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:slurm: daemon launch failed on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_ERROR_NAME(rc)));
-        goto cleanup;
-    }
-    
- launch_apps:
-    /* get here if daemons launch okay - any failures now by apps */
-    launching_daemons = false;
-    /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        failed_job = jdata->jobid;
-        goto cleanup;
-    }
-    failed_job = jdata->jobid;
+    /* indicate that the daemons for this job were launched */
+    state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
 
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:slurm: launch of apps failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
-        goto cleanup;
-    }
-
-    /* declare the launch a success */
+    /* flag that launch was successful, so far as we currently know */
     failed_launch = false;
-    
-    if (orte_timing) {
-        if (0 != gettimeofday(&launchstop, NULL)) {
-            opal_output(0, "plm_slurm: could not obtain stop time");
-        } else {
-            opal_output(0, "plm_slurm: total job launch time is %ld usec",
-                        (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
-                        (launchstop.tv_usec - launchstart.tv_usec));
-        }
-    }
-
-    if (ORTE_SUCCESS != rc) {
-        opal_output(0, "plm:slurm: start_procs returned error %d", rc);
-        goto cleanup;
-    }
 
  cleanup:
     if (NULL != argv) {
@@ -462,20 +423,13 @@ static int plm_slurm_launch_job(orte_job_t *jdata)
         free(jobid_string);
     }
     
+    /* cleanup the caddy */
+    OBJ_RELEASE(state);
+
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        if (ORTE_ERR_SILENT == rc) {
-            orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_SILENT_ABORT,
-                                     NULL, ORTE_PROC_STATE_UNDEF,
-                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
-        } else {
-            orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_FAILED_TO_START,
-                                     NULL, ORTE_PROC_STATE_UNDEF,
-                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
-        }
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
-    
-    return rc;
 }
 
 
@@ -486,28 +440,27 @@ static int plm_slurm_terminate_orteds(void)
 {
     int rc;
     orte_job_t *jdata;
-    
-    /* tell them to die without sending a reply - we will rely on the
-     * waitpid to tell us when they have exited!
-     */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_HALT_VM_CMD))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    
+        
     /* check to see if the primary pid is set. If not, this indicates
      * that we never launched any additional daemons, so we cannot
      * not wait for a waitpid to fire and tell us it's okay to
      * exit. Instead, we simply trigger an exit for ourselves
      */
-    if (!primary_pid_set) {
+    if (primary_pid_set) {
+        /* tell them to die without sending a reply - we will rely on the
+         * waitpid to tell us when they have exited!
+         */
+        if (ORTE_SUCCESS != (rc = orte_plm_base_orted_exit(ORTE_DAEMON_HALT_VM_CMD))) {
+            ORTE_ERROR_LOG(rc);
+        }
+    } else {
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: primary daemons complete!",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-        jdata->state = ORTE_JOB_STATE_TERMINATED;
         /* need to set the #terminated value to avoid an incorrect error msg */
         jdata->num_terminated = jdata->num_procs;
-        orte_quit();
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_TERMINATED);
     }
     
     return rc;
@@ -566,14 +519,15 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
      pid so nobody thinks this is real
      */
     
+    jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
+
     /* if we are in the launch phase, then any termination is bad */
     if (launching_daemons) {
         /* report that one or more daemons failed to launch so we can exit */
         OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                              "%s plm:slurm: daemon failed during launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
-                                 NULL, ORTE_PROC_STATE_UNDEF, 0, status);
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
     } else {
         /* if this is after launch, then we need to abort only if the status
          * returned is non-zero - i.e., if the orteds exited with an error
@@ -585,8 +539,7 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:slurm: daemon failed while running",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_ABORTED,
-                                     NULL, ORTE_PROC_STATE_UNDEF, 0, status);
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_ABORTED);
         }
         /* otherwise, check to see if this is the primary pid */
         if (primary_srun_pid == pid) {
@@ -596,11 +549,9 @@ static void srun_wait_cb(pid_t pid, int status, void* cbdata){
             OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                                  "%s plm:slurm: primary daemons complete!",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-            jdata = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
-            jdata->state = ORTE_JOB_STATE_TERMINATED;
             /* need to set the #terminated value to avoid an incorrect error msg */
             jdata->num_terminated = jdata->num_procs;
-            orte_quit();
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_TERMINATED);
         }
     }
 }

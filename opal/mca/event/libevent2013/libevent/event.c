@@ -1519,9 +1519,6 @@ event_base_loop(struct event_base *base, int flags)
 	 * as we invoke user callbacks. */
 	EVBASE_ACQUIRE_LOCK(base, th_base_lock);
 
-	/****    OMPI CHANGE    ****/
-	/* Disable reentrant check */
-#if 0
 	if (base->running_loop) {
 		event_warnx("%s: reentrant invocation.  Only one event_base_loop"
 		    " can run on each event_base at once.", __func__);
@@ -1530,8 +1527,6 @@ event_base_loop(struct event_base *base, int flags)
 	}
 
 	base->running_loop = 1;
-#endif
-	/****  END OMPI CHANGE  ****/
 
 	clear_time_cache(base);
 
@@ -2148,14 +2143,8 @@ event_del(struct event *ev)
 	int res;
 
 	if (EVUTIL_FAILURE_CHECK(!ev->ev_base)) {
-		/****    OMPI CHANGE    ****/
-		/* Disable warning and return 0 */
-	        return 0;
-#if 0
 		event_warnx("%s: event has no event_base set.", __func__);
 		return -1;
-#endif
-		/****  END OMPI CHANGE  ****/
 	}
 
 	EVBASE_ACQUIRE_LOCK(ev->ev_base, th_base_lock);

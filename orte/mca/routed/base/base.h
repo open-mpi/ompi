@@ -42,6 +42,13 @@ ORTE_DECLSPEC extern opal_condition_t orte_routed_base_cond;
 ORTE_DECLSPEC extern bool orte_routed_base_wait_sync;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_routed_jobfams;
 
+ORTE_DECLSPEC void orte_routed_base_xcast_routing(orte_grpcomm_collective_t *coll,
+                                                  opal_list_t *my_children);
+ORTE_DECLSPEC void orte_routed_base_coll_relay_routing(orte_grpcomm_collective_t *coll);
+ORTE_DECLSPEC void orte_routed_base_coll_complete_routing(orte_grpcomm_collective_t *coll);
+ORTE_DECLSPEC void orte_routed_base_coll_peers(orte_grpcomm_collective_t *coll,
+                                               opal_list_t *my_children);
+
 ORTE_DECLSPEC int orte_routed_base_register_sync(bool setup);
 ORTE_DECLSPEC int orte_routed_base_process_callback(orte_jobid_t job,
                                                     opal_buffer_t *buffer);

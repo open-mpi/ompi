@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
         }
         orte_grpcomm.barrier();  /* ensure the public recv is ready */
     }
-    opal_event_dispatch(opal_event_base);
+    opal_event_dispatch(orte_event_base);
     
 blast:    
     orte_finalize();

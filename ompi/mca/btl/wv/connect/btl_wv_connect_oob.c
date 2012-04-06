@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008-2009 Mellanox Technologies.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
@@ -28,7 +28,6 @@
 #include "orte/util/show_help.h"
 #include "opal/util/error.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/errmgr/errmgr.h"

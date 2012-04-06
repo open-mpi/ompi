@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
@@ -34,6 +34,7 @@
 #include "opal/util/error.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal.h"
+#include "opal/threads/threads.h"
 
 #include "orte/util/show_help.h"
 #include "orte/mca/ess/base/base.h"
@@ -55,19 +56,16 @@ bool orte_debug_flag = false;
 int orte_debug_verbosity;
 char *orte_prohibited_session_dirs = NULL;
 bool orte_create_session_dirs = true;
+opal_event_base_t *orte_event_base;
+bool orte_event_base_active = true;
 
-#if ORTE_ENABLE_EPOCH
-orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD, ORTE_EPOCH_WILDCARD};
-#else
 orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
-#endif
 
-#if ORTE_ENABLE_EPOCH
-orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID, ORTE_EPOCH_INVALID}; 
-#else
 orte_process_name_t orte_name_invalid = {ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
-#endif
 
+#if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREAD
+static void* orte_progress_thread_engine(opal_object_t *obj);
+#endif
 
 #if OPAL_CC_USE_PRAGMA_IDENT
 #pragma ident ORTE_IDENT_STRING
@@ -130,7 +128,26 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
         error = "orte_ess_base_select";
         goto error;
     }
-    
+
+    if (ORTE_PROC_IS_APP) {
+#if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREAD
+        /* get a separate orte event base */
+        orte_event_base = opal_event_base_create();
+        /* fork off a thread to progress it */
+        orte_progress_thread.t_run = orte_progress_thread_engine;
+        if (OPAL_SUCCESS != (ret = opal_thread_start(&orte_progress_thread))) {
+            error = "orte progress thread start";
+            goto error;
+        }
+#else
+        /* set the event base to the opal one */
+        orte_event_base = opal_event_base;
+#endif
+    } else {
+        /* set the event base to the opal one */
+        orte_event_base = opal_event_base;
+    }
+
     /* initialize the RTE for this environment */
     if (ORTE_SUCCESS != (ret = orte_ess.init())) {
         error = "orte_ess_init";
@@ -141,7 +158,7 @@ int orte_init(int* pargc, char*** pargv, orte_proc_type_t flags)
     orte_initialized = true;
     return ORTE_SUCCESS;
     
-error:
+ error:
     if (ORTE_ERR_SILENT != ret) {
         orte_show_help("help-orte-runtime",
                        "orte_init:startup:internal-failure",
@@ -151,3 +168,13 @@ error:
     return ret;
 }
 
+
+#if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREAD
+static void* orte_progress_thread_engine(opal_object_t *obj)
+{
+    while (orte_event_base->active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
+    return OPAL_THREAD_CANCELLED;
+}
+#endif

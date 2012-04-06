@@ -32,6 +32,9 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
 
 #include "ompi/constants.h"
 #include "opal/class/opal_pointer_array.h"

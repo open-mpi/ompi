@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  *
@@ -46,7 +46,6 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/output.h"
-#include "opal/util/opal_sos.h"
 #include "opal/util/show_help.h"
 #include "opal/util/daemon_init.h"
 #include "opal/runtime/opal.h"
@@ -287,7 +286,9 @@ int main(int argc, char *argv[])
     }
 
     /* wait to hear we are done */
-    opal_event_dispatch(opal_event_base);
+    while (orte_event_base_active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
 
     /* should never get here, but if we do... */
     

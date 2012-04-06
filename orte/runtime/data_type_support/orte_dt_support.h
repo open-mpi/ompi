@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -29,7 +31,6 @@
 #include "orte/types.h"
 
 #include "opal/dss/dss_types.h"
-#include "orte/mca/grpcomm/grpcomm_types.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rmaps/rmaps_types.h"
@@ -52,14 +53,7 @@ int orte_dt_compare_jobid(orte_jobid_t *value1,
 int orte_dt_compare_vpid(orte_vpid_t *value1,
                          orte_vpid_t *value2,
                          opal_data_type_t type);
-#if ORTE_ENABLE_EPOCH
-int orte_dt_compare_epoch(orte_epoch_t *value1,
-                          orte_epoch_t *value2,
-                          opal_data_type_t type);
-#define ORTE_EPOCH_CMP(n,m) ( (m) - (n) )
-#else
-#define ORTE_EPOCH_CMP(n,m) ( 0 )
-#endif
+
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_compare_job(orte_job_t *value1, orte_job_t *value2, opal_data_type_t type);
 int orte_dt_compare_node(orte_node_t *value1, orte_node_t *value2, opal_data_type_t type);
@@ -82,7 +76,6 @@ int orte_dt_compare_tags(orte_rml_tag_t *value1,
                          orte_rml_tag_t *value2, 
                          opal_data_type_t type);
 int orte_dt_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, opal_data_type_t type);
-int orte_dt_compare_grpcomm_mode(orte_grpcomm_mode_t *value1, orte_grpcomm_mode_t *value2, opal_data_type_t type);
 int orte_dt_compare_iof_tag(orte_iof_tag_t *value1, orte_iof_tag_t *value2, opal_data_type_t type);
 #endif
 
@@ -91,9 +84,7 @@ int orte_dt_copy_std_cntr(orte_std_cntr_t **dest, orte_std_cntr_t *src, opal_dat
 int orte_dt_copy_name(orte_process_name_t **dest, orte_process_name_t *src, opal_data_type_t type);
 int orte_dt_copy_jobid(orte_jobid_t **dest, orte_jobid_t *src, opal_data_type_t type);
 int orte_dt_copy_vpid(orte_vpid_t **dest, orte_vpid_t *src, opal_data_type_t type);
-#if ORTE_ENABLE_EPOCH
-int orte_dt_copy_epoch(orte_epoch_t **dest, orte_epoch_t *src, opal_data_type_t type);
-#endif
+
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_copy_job(orte_job_t **dest, orte_job_t *src, opal_data_type_t type);
 int orte_dt_copy_node(orte_node_t **dest, orte_node_t *src, opal_data_type_t type);
@@ -108,7 +99,6 @@ int orte_dt_copy_tag(orte_rml_tag_t **dest,
                            orte_rml_tag_t *src, 
                            opal_data_type_t type);
 int orte_dt_copy_daemon_cmd(orte_daemon_cmd_flag_t **dest, orte_daemon_cmd_flag_t *src, opal_data_type_t type);
-int orte_dt_copy_grpcomm_mode(orte_grpcomm_mode_t **dest, orte_grpcomm_mode_t *src, opal_data_type_t type);
 int orte_dt_copy_iof_tag(orte_iof_tag_t **dest, orte_iof_tag_t *src, opal_data_type_t type);
 #endif
 
@@ -123,10 +113,7 @@ int orte_dt_pack_jobid(opal_buffer_t *buffer, const void *src,
                        int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_vpid(opal_buffer_t *buffer, const void *src,
                       int32_t num_vals, opal_data_type_t type);
-#if ORTE_ENABLE_EPOCH
-int orte_dt_pack_epoch(opal_buffer_t *buffer, const void *src,
-                      int32_t num_vals, opal_data_type_t type);
-#endif
+
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_pack_job(opal_buffer_t *buffer, const void *src,
                      int32_t num_vals, opal_data_type_t type);
@@ -152,8 +139,6 @@ int orte_dt_pack_tag(opal_buffer_t *buffer,
                            opal_data_type_t type);
 int orte_dt_pack_daemon_cmd(opal_buffer_t *buffer, const void *src,
                           int32_t num_vals, opal_data_type_t type);
-int orte_dt_pack_grpcomm_mode(opal_buffer_t *buffer, const void *src,
-                              int32_t num_vals, opal_data_type_t type);
 int orte_dt_pack_iof_tag(opal_buffer_t *buffer, const void *src, int32_t num_vals,
                          opal_data_type_t type);
 #endif
@@ -192,10 +177,7 @@ int orte_dt_unpack_jobid(opal_buffer_t *buffer, void *dest,
                          int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_vpid(opal_buffer_t *buffer, void *dest,
                         int32_t *num_vals, opal_data_type_t type);
-#if ORTE_ENABLE_EPOCH
-int orte_dt_unpack_epoch(opal_buffer_t *buffer, void *dest,
-                        int32_t *num_vals, opal_data_type_t type);
-#endif
+
 #if !ORTE_DISABLE_FULL_SUPPORT
 int orte_dt_unpack_job(opal_buffer_t *buffer, void *dest,
                        int32_t *num_vals, opal_data_type_t type);
@@ -221,8 +203,6 @@ int orte_dt_unpack_tag(opal_buffer_t *buffer,
                              opal_data_type_t type);
 int orte_dt_unpack_daemon_cmd(opal_buffer_t *buffer, void *dest,
                             int32_t *num_vals, opal_data_type_t type);
-int orte_dt_unpack_grpcomm_mode(opal_buffer_t *buffer, void *dest,
-                              int32_t *num_vals, opal_data_type_t type);
 int orte_dt_unpack_iof_tag(opal_buffer_t *buffer, void *dest, int32_t *num_vals,
                            opal_data_type_t type);
 #endif

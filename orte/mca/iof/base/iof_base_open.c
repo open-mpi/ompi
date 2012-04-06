@@ -91,7 +91,6 @@ static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
 {
     ptr->daemon.jobid = ORTE_JOBID_INVALID;
     ptr->daemon.vpid = ORTE_VPID_INVALID;
-    ORTE_EPOCH_SET(ptr->daemon.epoch,ORTE_EPOCH_MIN);
     ptr->wev = OBJ_NEW(orte_iof_write_event_t);
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
@@ -114,10 +113,11 @@ static void orte_iof_base_read_event_construct(orte_iof_read_event_t* rev)
 {
     rev->fd = -1;
     rev->active = false;
+    rev->ev = opal_event_alloc();
 }
 static void orte_iof_base_read_event_destruct(orte_iof_read_event_t* rev)
 {
-    opal_event_del(&rev->ev);
+    opal_event_free(rev->ev);
     if (0 <= rev->fd) {
         OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
                              "%s iof: closing fd %d for process %s",
@@ -137,12 +137,11 @@ static void orte_iof_base_write_event_construct(orte_iof_write_event_t* wev)
     wev->pending = false;
     wev->fd = -1;
     OBJ_CONSTRUCT(&wev->outputs, opal_list_t);
+    wev->ev = opal_event_alloc();
 }
 static void orte_iof_base_write_event_destruct(orte_iof_write_event_t* wev)
 {
-    if (wev->pending) {
-        opal_event_del(&wev->ev);
-    }
+    opal_event_free(wev->ev);
     if (ORTE_PROC_IS_HNP) {
         int xmlfd = fileno(orte_xml_fp);
         if (xmlfd == wev->fd) {

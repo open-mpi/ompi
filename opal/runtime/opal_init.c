@@ -12,7 +12,7 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -60,7 +60,6 @@
 #include "opal/util/stacktrace.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/sys_limits.h"
-#include "opal/util/opal_sos.h"
 
 #if OPAL_CC_USE_PRAGMA_IDENT
 #pragma ident OPAL_IDENT_STRING
@@ -78,7 +77,7 @@ opal_err2str(int errnum, const char **errmsg)
 {
     const char *retval;
 
-    switch (OPAL_SOS_GET_ERROR_CODE(errnum)) {
+    switch (errnum) {
     case OPAL_SUCCESS:
         retval = "Success";
         break;
@@ -254,9 +253,6 @@ opal_init_util(int* pargc, char*** pargv)
     
     /* initialize the help system */
     opal_show_help_init();
-
-    /* initialize the OPAL SOS system */
-    opal_sos_init();
 
     /* register handler for errnum -> string converstion */
     if (OPAL_SUCCESS != 

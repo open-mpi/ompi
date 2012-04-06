@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -70,6 +70,7 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/state/state.h"
 
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/plm/base/plm_private.h"
@@ -78,7 +79,7 @@
 
 
 /*
- * Local functions
+ * API functions
  */
 static int plm_tm_init(void);
 static int plm_tm_launch_job(orte_job_t *jdata);
@@ -86,14 +87,11 @@ static int plm_tm_terminate_orteds(void);
 static int plm_tm_signal_job(orte_jobid_t jobid, int32_t signal);
 static int plm_tm_finalize(void);
 
-static int plm_tm_connect(void);
-static int plm_tm_disconnect(void);
-static void failed_start(int fd, short event, void *arg);
-
 /*
  * Local "global" variables
  */
-static opal_event_t *ev=NULL;
+static orte_std_cntr_t launched = 0;
+static bool connected = false;
 
 /*
  * Global variable
@@ -110,6 +108,14 @@ orte_plm_base_module_t orte_plm_tm_module = {
     plm_tm_finalize
 };
 
+/* Local functions */
+static int plm_tm_connect(void);
+static int plm_tm_disconnect(void);
+static void failed_start(int fd, short event, void *arg);
+static void launch_daemons(int fd, short args, void *cbdata);
+static void poll_spawns(int fd, short args, void *cbdata);
+
+
 /**
 * Init the module
  */
@@ -124,15 +130,43 @@ static int plm_tm_init(void)
     /* we assign daemon nodes at launch */
     orte_plm_globals.daemon_nodes_assigned_at_launch = true;
 
+    /* point to our launch command */
+    if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_LAUNCH_DAEMONS,
+                                                       launch_daemons, ORTE_SYS_PRI))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* overwrite the daemons_launched state to point to
+     * our own local function
+     */
+    if (ORTE_SUCCESS != (rc = orte_state.set_job_state_callback(ORTE_JOB_STATE_DAEMONS_LAUNCHED,
+                                                                poll_spawns))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     return rc;
 }
 
+
+static int plm_tm_launch_job(orte_job_t *jdata)
+{
+    if (ORTE_JOB_CONTROL_RESTART & jdata->controls) {
+        /* this is a restart situation - skip to the mapping stage */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
+    } else {
+        /* new job - set it up */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_INIT);
+    }
+    return ORTE_SUCCESS;
+}
 
 /* When working in this function, ALWAYS jump to "cleanup" if
  * you encounter an error so that orterun will be woken up and
  * the job can cleanly terminate
  */
-static int plm_tm_launch_job(orte_job_t *jdata)
+static void launch_daemons(int fd, short args, void *cbdata)
 {
     orte_job_map_t *map = NULL;
     orte_app_context_t *app;
@@ -145,43 +179,29 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     char **nodeargv;
     int argc = 0;
     int rc;
-    bool connected = false;
-    orte_std_cntr_t launched = 0, i; 
+    orte_std_cntr_t i; 
     char *bin_base = NULL, *lib_base = NULL;
     tm_event_t *tm_events = NULL;
     tm_task_id *tm_task_ids = NULL;
-    int local_err;
-    tm_event_t event;
     bool failed_launch = true;
     mode_t current_umask;
-    orte_jobid_t failed_job;
     char *nodelist;
     char* vpid_string;
-    orte_job_t *daemons;
+    orte_job_t *daemons, *jdata;
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+
+    jdata = state->jdata;
 
     /* if we are launching debugger daemons, then just go
      * do it - no new daemons will be launched
      */
     if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & jdata->controls) {
-        failed_job = jdata->jobid;
-        if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-            ORTE_ERROR_LOG(rc);
-            failed_launch = true;
-        } else {
-            failed_launch = false;
-        }
-        goto cleanup;
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
     }
 
-    /* if we are timing, record the start time */
-    if (orte_timing) {
-        gettimeofday(&orte_plm_globals.daemonlaunchstart, NULL);
-    }
-    
-    /* default to declaring the daemons as failed */
-    failed_job = ORTE_PROC_MY_NAME->jobid;
-    
-    /* start by launching the virtual machine */
+    /* setup the virtual machine */
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     if (ORTE_SUCCESS != (rc = orte_plm_base_setup_virtual_machine(jdata))) {
         ORTE_ERROR_LOG(rc);
@@ -193,12 +213,15 @@ static int plm_tm_launch_job(orte_job_t *jdata)
      * look at the proposed process map
      */
     if (orte_do_not_launch) {
-        goto launch_apps;
+        /* set the state to indicate the daemons reported - this
+         * will trigger the daemons_reported event and cause the
+         * job to move to the following step
+         */
+        jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
     }
-
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:tm: launching vm",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* Get the map for this job */
     if (NULL == (map = daemons->map)) {
@@ -208,9 +231,19 @@ static int plm_tm_launch_job(orte_job_t *jdata)
     }
 
     if (0 == map->num_new_daemons) {
-        /* have all the daemons we need - launch app */
-        goto launch_apps;
+        /* set the state to indicate the daemons reported - this
+         * will trigger the daemons_reported event and cause the
+         * job to move to the following step
+         */
+        jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        OBJ_RELEASE(state);
+        return;
     }
+    
+    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
+                         "%s plm:tm: launching vm",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     /* Allocate a bunch of TM events to use for tm_spawn()ing */
     tm_events = malloc(sizeof(tm_event_t) * map->num_new_daemons);
@@ -372,30 +405,51 @@ static int plm_tm_launch_job(orte_job_t *jdata)
         }
         
         launched++;
-
-        /* Allow some progress to occur */
-        opal_event_loop(opal_event_base, OPAL_EVLOOP_NONBLOCK);
     }
+
+    /* indicate that the daemons for this job were launched */
+    state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+
+    /* flag that launch was successful, so far as we currently know */
+    failed_launch = false;
 
     OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
                          "%s plm:tm:launch: finished spawning orteds",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
+ cleanup:
+    /* cleanup */
+    OBJ_RELEASE(state);
+
+    /* check for failed launch - if so, force terminate */
+    if (failed_launch) {
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
+    }
+}
+
+static void poll_spawns(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+    int i, rc;
+    bool failed_launch = true;
+    int local_err;
+    tm_event_t event;
+
     /* TM poll for all the spawns */
     for (i = 0; i < launched; ++i) {
         rc = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
         if (TM_SUCCESS != rc) {
-            errno = local_err;
             opal_output(0, "plm:tm: failed to poll for a spawned daemon, return status = %d", rc);
             goto cleanup;
         }
         if (TM_SUCCESS != local_err) {
-            errno = local_err;
-            opal_output(0, "plm:tm: failed to spawn daemon, error code = %d", errno );
+            opal_output(0, "plm:tm: failed to spawn daemon, error code = %d", local_err );
             goto cleanup;
         }
     }
-    
+    failed_launch = false;
+
+#if 0
     /* set a timer to tell us if one or more daemon's fails to start - use the
      * millisec/daemon timeout provided by the user to compute time
      */
@@ -404,91 +458,20 @@ static int plm_tm_launch_job(orte_job_t *jdata)
                              "%s plm:tm: setting startup timer for %d milliseconds",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              orte_startup_timeout));
-        ORTE_DETECT_TIMEOUT(&ev, map->num_new_daemons,
+        ORTE_DETECT_TIMEOUT(map->num_new_daemons,
                             orte_startup_timeout*1000,
-                            -1, failed_start);
+                            -1, failed_start, state->jdata);
     }
-    
-    /* wait for daemons to callback */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_daemon_callback(map->num_new_daemons))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:tm: daemon launch failed on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_ERROR_NAME(rc)));
-        goto cleanup;
-    }
-    
-    /* if issued, cancel the failed-to-start timer */
-    if (NULL != ev) {
-        opal_event_del(ev);
-    }
-    
-launch_apps:
-     /* setup the job */
-    if (ORTE_SUCCESS != (rc = orte_plm_base_setup_job(jdata))) {
-        ORTE_ERROR_LOG(rc);
-        failed_job = jdata->jobid;
-        goto cleanup;
-    }
-   /* since the daemons have launched, any failures now will be for the
-     * application job
-     */
-    failed_job = jdata->jobid;
-    if (ORTE_SUCCESS != (rc = orte_plm_base_launch_apps(jdata->jobid))) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:tm: launch of apps failed for job %s on error %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_JOBID_PRINT(jdata->jobid), ORTE_ERROR_NAME(rc)));
-        goto cleanup;
-    }
-    
-    /* if we get here, then everything launched okay - record that fact */
-    failed_launch = false;
-    
+#endif
     
  cleanup:
-    if (NULL != argv) {
-        opal_argv_free(argv);
-    }
-    if (NULL != env) {
-        opal_argv_free(env);
-    }
-    
-    if (connected) {
-        plm_tm_disconnect();
-    }
-    if (NULL != tm_events) {
-        free(tm_events);
-    }
-    if (NULL != tm_task_ids) {
-        free(tm_task_ids);
-    }
-    
-    if (NULL != lib_base) {
-        free(lib_base);
-    }
-    if (NULL != bin_base) {
-        free(bin_base);
-    }
+    /* cleanup */
+    OBJ_RELEASE(state);
 
     /* check for failed launch - if so, force terminate */
     if (failed_launch) {
-        if (ORTE_ERR_SILENT == rc) {
-            orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_SILENT_ABORT,
-                                     NULL, ORTE_PROC_STATE_UNDEF,
-                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
-        } else {
-            orte_errmgr.update_state(failed_job, ORTE_JOB_STATE_FAILED_TO_START,
-                                     NULL, ORTE_PROC_STATE_UNDEF,
-                                     0, ORTE_ERROR_DEFAULT_EXIT_CODE);
-        }
+        ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
     }
-        
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:tm:launch: finished",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-
-    return rc;
 }
 
 
@@ -545,6 +528,11 @@ static int plm_tm_finalize(void)
         ORTE_ERROR_LOG(rc);
     }
 
+    if (connected) {
+        tm_finalize();
+        connected = false;
+    }
+
     return ORTE_SUCCESS;
 }
 
@@ -572,34 +560,4 @@ static int plm_tm_connect(void)
     }
 
     return ORTE_ERR_RESOURCE_BUSY;
-}
-
-
-static int plm_tm_disconnect(void)
-{
-    tm_finalize();
-
-    return ORTE_SUCCESS;
-}
-
-/* call this function if the timer fires indicating that one
- * or more daemons failed to start
- */
-static void failed_start(int fd, short dummy, void *arg)
-{
-    OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                         "%s plm:tm:failed_start",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* if we are aborting, ignore this */
-    if (orte_abnormal_term_ordered) {
-        OPAL_OUTPUT_VERBOSE((1, orte_plm_globals.output,
-                             "%s plm:tm:failed_start - abnormal term in progress",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        return;
-    }
-    
-    orte_errmgr.update_state(ORTE_PROC_MY_NAME->jobid, ORTE_JOB_STATE_FAILED_TO_START,
-                             NULL, ORTE_PROC_STATE_UNDEF,
-                             0, ORTE_ERROR_DEFAULT_EXIT_CODE);
 }

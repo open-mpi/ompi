@@ -10,6 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -34,6 +36,8 @@
 
 #include "opal/dss/dss_types.h"
 #include "orte/mca/rml/rml_types.h"
+#include "orte/runtime/orte_globals.h"
+
 #include "orte/mca/odls/odls_types.h"
 
 BEGIN_C_DECLS
@@ -85,7 +89,7 @@ typedef int (*orte_odls_base_module_require_sync_fn_t)(orte_process_name_t *proc
 /**
  * Restart a local process
  */
-typedef int (*orte_odls_base_module_restart_proc_fn_t)(orte_odls_child_t *child);
+typedef int (*orte_odls_base_module_restart_proc_fn_t)(orte_proc_t *child);
 
 /**
  * pls module version
@@ -94,7 +98,7 @@ struct orte_odls_base_module_1_3_0_t {
     orte_odls_base_module_get_add_procs_data_fn_t           get_add_procs_data;
     orte_odls_base_module_launch_local_processes_fn_t       launch_local_procs;
     orte_odls_base_module_kill_local_processes_fn_t         kill_local_procs;
-    orte_odls_base_module_signal_local_process_fn_t   		signal_local_procs;
+    orte_odls_base_module_signal_local_process_fn_t         signal_local_procs;
     orte_odls_base_module_deliver_message_fn_t              deliver_message;
     orte_odls_base_module_require_sync_fn_t                 require_sync;
     orte_odls_base_module_restart_proc_fn_t                 restart_proc;

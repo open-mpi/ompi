@@ -105,8 +105,6 @@ static int rsh_component_open(void)
     char *ctmp, **cargv;
 
     /* initialize globals */
-    OBJ_CONSTRUCT(&mca_plm_rsh_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_plm_rsh_component.cond, opal_condition_t);
     mca_plm_rsh_component.using_qrsh = false;
     mca_plm_rsh_component.using_llspawn = false;
 
@@ -263,10 +261,6 @@ success:
 
 static int rsh_component_close(void)
 {
-    /* cleanup state */
-    OBJ_DESTRUCT(&mca_plm_rsh_component.lock);
-    OBJ_DESTRUCT(&mca_plm_rsh_component.cond);
-
     return ORTE_SUCCESS;
 }
 

@@ -52,7 +52,7 @@ orterun_SOURCES = \
         main.c \
         orterun.c \
         orterun.h
- 
+
 orterun_LDADD = $(top_builddir)/orte/libopen-rte.la
 
 endif # !ORTE_DISABLE_FULL_SUPPORT

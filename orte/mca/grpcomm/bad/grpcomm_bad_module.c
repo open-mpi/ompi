@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,9 +52,8 @@ static void finalize(void);
 static int xcast(orte_jobid_t job,
                  opal_buffer_t *buffer,
                  orte_rml_tag_t tag);
-static int bad_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf);
-static int bad_barrier(void);
-static int modex(opal_list_t *procs);
+static int bad_allgather(orte_grpcomm_collective_t *coll);
+static int bad_barrier(orte_grpcomm_collective_t *coll);
 
 /* Module def */
 orte_grpcomm_base_module_t orte_grpcomm_bad_module = {
@@ -60,16 +61,12 @@ orte_grpcomm_base_module_t orte_grpcomm_bad_module = {
     finalize,
     xcast,
     bad_allgather,
-    orte_grpcomm_base_allgather_list,
     bad_barrier,
     orte_grpcomm_base_set_proc_attr,
     orte_grpcomm_base_get_proc_attr,
-    modex,
+    orte_grpcomm_base_modex,
     orte_grpcomm_base_purge_proc_attrs
 };
-
-/* Local variables */
-static orte_grpcomm_collective_t barrier, allgather;
 
 /**
  * Initialize the module
@@ -83,21 +80,9 @@ static int init(void)
         return rc;
     }
     
-    /* setup global variables */
-    OBJ_CONSTRUCT(&barrier, orte_grpcomm_collective_t);
-    OBJ_CONSTRUCT(&allgather, orte_grpcomm_collective_t);
-
-    /* if we are a daemon or the hnp, we need to post a
-     * recv to catch any collective operations
-     */
-    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
-                                                          ORTE_RML_TAG_DAEMON_COLLECTIVE,
-                                                          ORTE_RML_NON_PERSISTENT,
-                                                          orte_grpcomm_base_daemon_coll_recv,
-                                                          NULL))) {
-            ORTE_ERROR_LOG(rc);
-        }
+    /* setup recvs */
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_comm_start())) {
+        ORTE_ERROR_LOG(rc);
     }
     
     return rc;
@@ -110,16 +95,8 @@ static void finalize(void)
 {
     orte_grpcomm_base_modex_finalize();
 
-    /* destruct the globals */
-    OBJ_DESTRUCT(&barrier);
-    OBJ_DESTRUCT(&allgather);
-
-    /* if we are a daemon or the hnp, we need to cancel the
-     * recv we posted
-     */
-    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
-        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON_COLLECTIVE);
-    }
+    /* cancel recv */
+    orte_grpcomm_base_comm_stop();
 }
 
 /**
@@ -133,7 +110,7 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag)
 {
     int rc = ORTE_SUCCESS;
-    opal_buffer_t buf;
+    opal_buffer_t *buf;
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:bad:xcast sent to job %s tag %ld",
@@ -146,204 +123,129 @@ static int xcast(orte_jobid_t job,
     }
     
     /* prep the output buffer */
-    OBJ_CONSTRUCT(&buf, opal_buffer_t);
+    buf = OBJ_NEW(opal_buffer_t);
     
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_app_pack_xcast(ORTE_DAEMON_PROCESS_AND_RELAY_CMD,
-                                                               job, &buf, buffer, tag))) {
+    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_xcast(job, buf, buffer, tag))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
     
-    /* if I am the HNP, just set things up so the cmd processor gets called.
-     * We don't want to message ourselves as this can create circular logic
-     * in the RML. Instead, this macro will set a zero-time event which will
-     * cause the buffer to be processed by the cmd processor - probably will
-     * fire right away, but that's okay
-     * The macro makes a copy of the buffer, so it's okay to release it here
-     */
-    if (ORTE_PROC_IS_HNP) {
-        ORTE_MESSAGE_EVENT(ORTE_PROC_MY_NAME, &buf, ORTE_RML_TAG_DAEMON, orte_daemon_cmd_processor);
-    } else {
-        /* otherwise, send it to the HNP for relay */
-        if (0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &buf, ORTE_RML_TAG_DAEMON, 0))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        rc = ORTE_SUCCESS;
+    /* send it to the HNP (could be myself) for relay */
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buf, ORTE_RML_TAG_XCAST,
+                                          0, orte_rml_send_callback, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        goto CLEANUP;
     }
+    rc = ORTE_SUCCESS;
     
 CLEANUP:
-    OBJ_DESTRUCT(&buf);
     return rc;
 }
 
 
-static void barrier_recv(int status, orte_process_name_t* sender,
-                         opal_buffer_t *buffer,
-                         orte_rml_tag_t tag, void *cbdata)
-{
-    orte_grpcomm_collective_t *coll = (orte_grpcomm_collective_t*)cbdata;
-    
-    OPAL_THREAD_LOCK(&coll->lock);
-    /* flag as recvd */
-    coll->recvd = 1;
-    opal_condition_broadcast(&coll->cond);
-    OPAL_THREAD_UNLOCK(&coll->lock);
-}
-
-static int bad_barrier(void)
+static int bad_barrier(orte_grpcomm_collective_t *coll)
 {
     int rc;
-    
+    opal_buffer_t *buf;
+    orte_namelist_t *nm;
+
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:bad entering barrier",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* if I am alone, just return */
+    /* if I am alone, just execute the callback */
     if (1 == orte_process_info.num_procs) {
+        coll->active = false;
+        if (NULL != coll->cbfunc) {
+            coll->cbfunc(NULL, coll->cbdata);
+        }
         return ORTE_SUCCESS;
     }
     
-    /* setup the recv to get the response */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_BARRIER,
-                                 ORTE_RML_NON_PERSISTENT, barrier_recv, &barrier);
-    if (rc != ORTE_SUCCESS) {
+    /* mark the collective as active */
+    coll->active = true;
+
+    /* setup the collective */
+    opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
+
+    if (0 == opal_list_get_size(&coll->participants)) {
+        /* add a wildcard name to the participants so the daemon knows
+         * that everyone in my job must participate
+         */
+        nm = OBJ_NEW(orte_namelist_t);
+        nm->name.jobid = ORTE_PROC_MY_NAME->jobid;
+        nm->name.vpid = ORTE_VPID_WILDCARD;
+        opal_list_append(&coll->participants, &nm->super);
+    }
+
+    /* pack the collective - no data should be involved, but we need
+     * to ensure we get the header info correct so it can be
+     * unpacked without error
+     */
+    buf = OBJ_NEW(opal_buffer_t);
+    orte_grpcomm_base_pack_collective(buf, coll, ORTE_GRPCOMM_INTERNAL_STG_APP);
+
+    /* send the buffer to my daemon */
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf, ORTE_RML_TAG_COLLECTIVE,
+                                          0, orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        opal_list_remove_item(&orte_grpcomm_base.active_colls, &coll->super);
         return rc;
     }
-
-    /* send it and wait for the response */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_app_barrier(ORTE_PROC_MY_DAEMON, &barrier))) {
-        ORTE_ERROR_LOG(rc);
-    }
-
-    /* don't need to cancel the recv as it only fires once */
     
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
-                         "%s grpcomm:bad received barrier release",
+                         "%s grpcomm:bad barrier underway",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
 
     return rc;
 }
 
-static void allgather_recv(int status, orte_process_name_t* sender,
-                            opal_buffer_t *buffer,
-                            orte_rml_tag_t tag, void *cbdata)
+static int bad_allgather(orte_grpcomm_collective_t *gather)
 {
-    orte_grpcomm_collective_t *coll = (orte_grpcomm_collective_t*)cbdata;
     int rc;
-    
-    OPAL_THREAD_LOCK(&coll->lock);
-    /* xfer the data */
-    if (ORTE_SUCCESS != (rc = opal_dss.copy_payload(&coll->results, buffer))) {
-        ORTE_ERROR_LOG(rc);
-    }
-    /* the daemon returns ALL of our recipients in a single message */
-    coll->recvd = orte_process_info.num_procs;
-    opal_condition_broadcast(&coll->cond);
-    OPAL_THREAD_UNLOCK(&coll->lock);
-}
+    opal_buffer_t *buf;
 
-static int bad_allgather(opal_buffer_t *sbuf, opal_buffer_t *rbuf)
-{
-    int rc;
-    
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
                          "%s grpcomm:bad entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* setup to receive results */
-    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ALLGATHER,
-                                 ORTE_RML_NON_PERSISTENT, allgather_recv, &allgather);
-    if (rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    /* if I am alone, just fire callback */
+    if (1 == orte_process_info.num_procs) {
+        gather->active = false;
+        if (NULL != gather->cbfunc) {
+            gather->cbfunc(&gather->buffer, gather->cbdata);
+        }
+        return ORTE_SUCCESS;
     }
     
-    /* everyone sends data to their local daemon */
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_app_allgather(ORTE_PROC_MY_DAEMON,
-                                                              &allgather, sbuf, rbuf))) {
+    /* mark the collective as active */
+    gather->active = true;
+
+    /* if this is an original request, then record the collective */
+    if (NULL == gather->next_cb) {
+        opal_list_append(&orte_grpcomm_base.active_colls, &gather->super);
+    }
+
+    /* start the allgather op by sending the data to our daemon - the
+     * user will have put the data in the "buffer" field
+     */
+    buf = OBJ_NEW(opal_buffer_t);
+    orte_grpcomm_base_pack_collective(buf, gather, ORTE_GRPCOMM_INTERNAL_STG_APP);
+    /* send to our daemon */
+    if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_DAEMON, buf,
+                                          ORTE_RML_TAG_COLLECTIVE, 0,
+                                          orte_rml_send_callback, NULL))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(buf);
+        opal_list_remove_item(&orte_grpcomm_base.active_colls, &gather->super);
         return rc;
     }
-    
-    /* don't need to cancel the recv as it only fires once */
     
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:bad allgather completed",
+                         "%s grpcomm:bad allgather underway",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
     return ORTE_SUCCESS;
-}
-
-/***   MODEX SECTION ***/
-static int modex(opal_list_t *procs)
-{
-    int rc;
-    opal_buffer_t buf, rbuf;
-
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:bad: modex entered",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    if (NULL == procs) {
-        /* This is a modex across our peers at startup. The modex will be realized in the
-         * background by the daemons. The processes will
-         * only be informed when all data has been collected from all processes. The get_attr
-         * will realize the blocking, it will not return until the data has been received.
-         */
-        
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                             "%s grpcomm:bad:peer:modex: performing modex",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        
-        /* setup the buffers */
-        OBJ_CONSTRUCT(&buf, opal_buffer_t);
-        OBJ_CONSTRUCT(&rbuf, opal_buffer_t);
-        
-        /* put our process name in the buffer so it can be unpacked later */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&buf, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* pack the entries we have received */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_pack_modex_entries(&buf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        
-        /* perform the allgather */
-        if (ORTE_SUCCESS != (rc = bad_allgather(&buf, &rbuf))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        /* store the results */
-        if( ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_unpack(&rbuf)) ) {
-            ORTE_ERROR_LOG(rc);
-        }
-        
-        OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                             "%s grpcomm:bad: modex posted",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    cleanup:
-        OBJ_DESTRUCT(&buf);
-        OBJ_DESTRUCT(&rbuf);
-
-        return rc;
-    } else {
-        /* this is a modex across a specified list of procs, usually during
-         * a connect/accept.
-         */
-        if (ORTE_SUCCESS != (rc = orte_grpcomm_base_full_modex(procs))) {
-            ORTE_ERROR_LOG(rc);
-        }        
-    }
-    
-    OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
-                         "%s grpcomm:bad: modex completed",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    return rc;
 }
