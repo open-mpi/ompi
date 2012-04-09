@@ -211,8 +211,11 @@ static int bad_allgather(orte_grpcomm_collective_t *gather)
                          "%s grpcomm:bad entering allgather",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-    /* if I am alone, just fire callback */
-    if (1 == orte_process_info.num_procs) {
+    /* if I am alone and nobody else is participating, then
+     * nothing really to do
+     */
+    if (1 == orte_process_info.num_procs &&
+        0 == opal_list_get_size(&gather->participants)) {
         gather->active = false;
         if (NULL != gather->cbfunc) {
             gather->cbfunc(&gather->buffer, gather->cbdata);
