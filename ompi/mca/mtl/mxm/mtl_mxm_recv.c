@@ -25,9 +25,9 @@ static void ompi_mtl_mxm_recv_completion_cb(void *context)
     mxm_recv_req_t *mxm_recv_req = &req->mxm.recv;
 
     /* Set completion status and envelope */
+    ompi_mtl_mxm_to_mpi_status(mxm_recv_req->base.error, &ompi_req->req_status);
     ompi_req->req_status.MPI_TAG    = mxm_recv_req->completion.sender_tag;
     ompi_req->req_status.MPI_SOURCE = mxm_recv_req->completion.sender_imm;
-    ompi_req->req_status.MPI_ERROR  = ompi_mtl_mxm_to_mpi_status(mxm_recv_req->base.error);
     ompi_req->req_status._ucount    = mxm_recv_req->completion.actual_len;
 
     /* Copy data and free the buffer */

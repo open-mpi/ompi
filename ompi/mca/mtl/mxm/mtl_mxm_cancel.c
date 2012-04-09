@@ -14,23 +14,13 @@
 int ompi_mtl_mxm_cancel(struct mca_mtl_base_module_t* mtl,
                         struct mca_mtl_request_t *mtl_request, int flag)
 {
-
-    mxm_error_t err;
     mca_mtl_mxm_request_t *mtl_mxm_request = (mca_mtl_mxm_request_t*) mtl_request;
+    mxm_error_t err;
 
     err = mxm_req_cancel(&mtl_mxm_request->mxm.base);
-    if (MXM_OK == err) {
-        err = mxm_req_test(&mtl_mxm_request->mxm.base);
-        if (MXM_OK == err) {
-            mtl_request->ompi_req->req_status._cancelled = true;
-            mtl_mxm_request->super.completion_callback(&mtl_mxm_request->super);
-            return OMPI_SUCCESS;
-        } else {
-            return OMPI_ERROR;
-        }
-    } else if (MXM_ERR_NO_MESSAGE == err) {
-        return OMPI_SUCCESS;
+    if ((err != MXM_OK) && (err != MXM_ERR_NO_PROGRESS)) {
+        return OMPI_ERROR;
     }
 
-    return OMPI_ERROR;
+    return OMPI_SUCCESS;
 }
