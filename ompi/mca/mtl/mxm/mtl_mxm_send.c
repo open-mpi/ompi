@@ -19,14 +19,14 @@
 
 static void ompi_mtl_mxm_send_completion_cb(void *context)
 {
-	mca_mtl_mxm_request_t *mtl_mxm_request = context;
+    mca_mtl_mxm_request_t *mtl_mxm_request = context;
 
     if (mtl_mxm_request->free_after) {
         free(mtl_mxm_request->buf);
     }
 
-    mtl_mxm_request->super.ompi_req->req_status.MPI_ERROR  = ompi_mtl_mxm_to_mpi_status(mtl_mxm_request->mxm.base.error);
-
+    ompi_mtl_mxm_to_mpi_status(mtl_mxm_request->mxm.base.error,
+                               &mtl_mxm_request->super.ompi_req->req_status);
     mtl_mxm_request->super.completion_callback(&mtl_mxm_request->super);
 }
 
