@@ -161,7 +161,6 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
     return ORTE_SUCCESS;
 
  cleanup:
-    OBJ_RELEASE(modex);
     return rc;
 }
 
@@ -372,7 +371,9 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
  cleanup:
     /* flag the collective as complete */
     modex->active = false;
-    /* cleanup */
+    /* cleanup the list, but don't release the
+     * collective object as it was passed into us
+     */
     opal_list_remove_item(&orte_grpcomm_base.active_colls, &modex->super);
     /* notify that the modex is complete */
     if (NULL != modex->cbfunc) {
