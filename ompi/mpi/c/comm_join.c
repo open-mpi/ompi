@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +33,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
+
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
@@ -56,8 +61,10 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
 {
     int rc;
     uint32_t len, rlen, llen, lrlen;
-    int send_first=1;
+    int send_first=0;
     char *rport;
+    char *my_name, *remote_name;
+    orte_process_name_t rname;
 
     ompi_communicator_t *newcomp;
     char port_name[MPI_MAX_PORT_NAME];
@@ -79,6 +86,53 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
         return rc;
     }
     
+    /* send my process name */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_process_name_to_string(&my_name, ORTE_PROC_MY_NAME))) {
+        *intercomm = MPI_COMM_NULL;
+        OPAL_CR_EXIT_LIBRARY();
+        return MPI_ERR_INTERN;
+    }
+    llen = (uint32_t)(strlen(my_name) + 1);
+    len = htonl(llen);
+    ompi_socket_send( fd, (char *) &len, sizeof(uint32_t));
+    ompi_socket_send( fd, my_name, llen);
+    free(my_name);
+
+    /* recv the remote name */
+    ompi_socket_recv(fd, (char *) &rlen, sizeof(uint32_t));
+    lrlen = ntohl(rlen);
+    remote_name = (char *)malloc(lrlen);
+    if (NULL == remote_name ) {
+        *intercomm = MPI_COMM_NULL;
+        OPAL_CR_EXIT_LIBRARY();
+        return MPI_ERR_INTERN;
+    }
+    ompi_socket_recv(fd, remote_name, lrlen);
+    /* convert the remote name */
+    if (ORTE_SUCCESS != (rc = orte_util_convert_string_to_process_name(&rname, remote_name))) {
+        free(remote_name);
+        *intercomm = MPI_COMM_NULL;
+        OPAL_CR_EXIT_LIBRARY();
+        return MPI_ERR_INTERN;
+    }
+    free(remote_name);
+
+    /* compare the two to get send_first */
+    if (ORTE_PROC_MY_NAME->jobid == rname.jobid) {
+        if (ORTE_PROC_MY_NAME->vpid < rname.vpid) {
+            send_first = true;
+        } else if (ORTE_PROC_MY_NAME->vpid == rname.vpid) {
+            /* joining to myself is not allowed */
+            *intercomm = MPI_COMM_NULL;
+            OPAL_CR_EXIT_LIBRARY();
+            return MPI_ERR_INTERN;
+        } else {
+            send_first = false;
+        }
+    } else if (ORTE_PROC_MY_NAME->jobid < rname.jobid) {
+        send_first = true;
+    }
+
     /* sendrecv port-name through the socket connection.
        Need to determine somehow how to avoid a potential deadlock
        here. */
