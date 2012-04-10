@@ -76,10 +76,6 @@ orte_grpcomm_base_module_t orte_grpcomm_portals4_shmem_module = {
     purge_proc_attrs
 };
 
-static int nprocs;
-static struct runtime_proc_t *map;
-static int is_logical;
-
 /**
  * Init the module
  */

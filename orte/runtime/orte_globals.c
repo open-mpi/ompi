@@ -49,6 +49,13 @@
 /* need the data type support functions here */
 #include "orte/runtime/data_type_support/orte_dt_support.h"
 
+/* State Machine */
+opal_list_t orte_job_states;
+opal_list_t orte_proc_states;
+
+/* a clean output channel without prefix */
+int orte_clean_output = -1;
+
 #if !ORTE_DISABLE_FULL_SUPPORT
 
 /* globals used by RTE */
@@ -118,9 +125,6 @@ opal_pointer_array_t *orte_node_pool;
 opal_pointer_array_t *orte_node_topologies;
 opal_pointer_array_t *orte_local_children;
 
-/* a clean output channel without prefix */
-int orte_clean_output = -1;
-
 /* Nidmap and job maps */
 opal_pointer_array_t orte_nidmap;
 opal_pointer_array_t orte_jobmap;
@@ -169,10 +173,6 @@ orte_default_comm_fn_t orte_comm;
 bool orte_report_child_jobs_separately;
 struct timeval orte_child_time_to_exit;
 bool orte_abort_non_zero_exit;
-
-/* State Machine */
-opal_list_t orte_job_states;
-opal_list_t orte_proc_states;
 
 /* length of stat history to keep */
 int orte_stat_history_size;

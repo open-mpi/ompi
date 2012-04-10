@@ -91,6 +91,25 @@ typedef void (*orte_err_cb_fn_t)(orte_process_name_t *proc, orte_proc_state_t st
 
 ORTE_DECLSPEC extern int orte_exit_status;
 
+/* ORTE event priorities - we define these
+ * at levels that permit higher layers such as
+ * OMPI to handle their events at higher priority,
+ * with the exception of errors. Errors generally
+ * require exception handling (e.g., ctrl-c termination)
+ * that overrides the need to process MPI messages
+ */
+#define ORTE_ERROR_PRI  OPAL_EV_ERROR_PRI
+#define ORTE_MSG_PRI    OPAL_EV_MSG_LO_PRI
+#define ORTE_SYS_PRI    OPAL_EV_SYS_LO_PRI
+#define ORTE_INFO_PRI   OPAL_EV_INFO_LO_PRI
+
+/* State Machine lists */
+ORTE_DECLSPEC extern opal_list_t orte_job_states;
+ORTE_DECLSPEC extern opal_list_t orte_proc_states;
+
+/* a clean output channel without prefix */
+ORTE_DECLSPEC extern int orte_clean_output;
+
 #if ORTE_DISABLE_FULL_SUPPORT
 
 /* These types are used in interface functions that should never be
@@ -112,19 +131,6 @@ typedef struct orte_app_context_t orte_app_context_t;
 #if ORTE_ENABLE_PROGRESS_THREAD
 ORTE_DECLSPEC extern opal_thread_t orte_progress_thread;
 #endif
-
-/* ORTE event priorities - we define these
- * at levels that permit higher layers such as
- * OMPI to handle their events at higher priority,
- * with the exception of errors. Errors generally
- * require exception handling (e.g., ctrl-c termination)
- * that overrides the need to process MPI messages
- */
-#define ORTE_ERROR_PRI  OPAL_EV_ERROR_PRI
-#define ORTE_MSG_PRI    OPAL_EV_MSG_LO_PRI
-#define ORTE_SYS_PRI    OPAL_EV_SYS_LO_PRI
-#define ORTE_INFO_PRI   OPAL_EV_INFO_LO_PRI
-
 
 #define ORTE_GLOBAL_ARRAY_BLOCK_SIZE    64
 #define ORTE_GLOBAL_ARRAY_MAX_SIZE      INT_MAX
@@ -626,9 +632,6 @@ ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_topologies;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_local_children;
 
-/* a clean output channel without prefix */
-ORTE_DECLSPEC extern int orte_clean_output;
-
 /* Nidmap and job maps */
 ORTE_DECLSPEC extern opal_pointer_array_t orte_nidmap;
 ORTE_DECLSPEC extern opal_pointer_array_t orte_jobmap;
@@ -678,10 +681,6 @@ typedef int (*orte_default_comm_fn_t)(orte_process_name_t *recipient,
 ORTE_DECLSPEC extern bool orte_report_child_jobs_separately;
 ORTE_DECLSPEC extern struct timeval orte_child_time_to_exit;
 ORTE_DECLSPEC extern bool orte_abort_non_zero_exit;
-
-/* State Machine lists */
-ORTE_DECLSPEC extern opal_list_t orte_job_states;
-ORTE_DECLSPEC extern opal_list_t orte_proc_states;
 
 /* length of stat history to keep */
 ORTE_DECLSPEC extern int orte_stat_history_size;
