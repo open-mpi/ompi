@@ -244,7 +244,7 @@ static void track_procs(int fd, short argc, void *cbdata)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
-            /* pack all the local child vpids and epochs */
+            /* pack all the local child vpids */
             for (i=0; i < orte_local_children->size; i++) {
                 if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
                     continue;
@@ -268,7 +268,9 @@ static void track_procs(int fd, short argc, void *cbdata)
                 goto cleanup;
             }
             /* send it */
-            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert, ORTE_RML_TAG_PLM, 0, orte_rml_send_callback, NULL))) {
+            if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
+                                                  ORTE_RML_TAG_PLM, 0,
+                                                  orte_rml_send_callback, NULL))) {
                 ORTE_ERROR_LOG(rc);
             } else {
                 rc = ORTE_SUCCESS;
