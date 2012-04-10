@@ -390,6 +390,10 @@ void orte_ess_base_app_abort(int status, bool report)
                                      ORTE_RML_NON_PERSISTENT, report_sync, NULL)) {
             return;
         }
+        while (!sync_recvd) {
+            opal_progress();
+        }
+        return;
     }
     
     /* - Clean out the global structures 

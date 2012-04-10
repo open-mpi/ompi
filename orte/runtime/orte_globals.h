@@ -442,6 +442,8 @@ struct orte_proc_t {
      * and has not yet terminated
      */
     bool alive;
+    /* flag if it called abort */
+    bool aborted;
     /* exit code */
     orte_exit_code_t exit_code;
     /* the app_context that generated this proc */

@@ -1889,7 +1889,11 @@ void orte_odls_base_default_report_abort(orte_process_name_t *proc)
     orte_proc_t *child;
     opal_buffer_t *buffer;
     int rc, i;
-    orte_ns_cmp_bitmask_t mask;
+
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s GOT ABORT REPORT FOR %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(proc)));
 
     /* find this child */
     for (i=0; i < orte_local_children->size; i++) {
@@ -1897,11 +1901,9 @@ void orte_odls_base_default_report_abort(orte_process_name_t *proc)
             continue;
         }
 
-        mask = ORTE_NS_CMP_ALL;
-        
-        if (OPAL_EQUAL ==
-                orte_util_compare_name_fields(mask, proc, &child->name)) { /* found it */
-            child->state = ORTE_PROC_STATE_CALLED_ABORT;
+        if (proc->jobid == child->name.jobid &&
+            proc->vpid == child->name.vpid) { /* found it */
+            child->aborted = true;
             /* send ack */
             buffer = OBJ_NEW(opal_buffer_t);
             if (0 > (rc = orte_rml.send_buffer_nb(proc, buffer,
@@ -1993,7 +1995,7 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
         /* set the exit status appropriately */
         proc->exit_code = WEXITSTATUS(status);
 
-        if (ORTE_PROC_STATE_CALLED_ABORT == proc->state) {
+        if (proc->aborted) {
             /* even though the process exited "normally", it happened
              * via an orte_abort call, so we need to indicate this was
              * an "abnormal" termination.

@@ -935,9 +935,6 @@ int orterun(int argc, char *argv[])
     }
 
  DONE:
-    /* update the exit status, in case it wasn't done */
-    ORTE_UPDATE_EXIT_STATUS(orte_exit_status);
-
     /* cleanup and leave */
     orte_finalize();
 

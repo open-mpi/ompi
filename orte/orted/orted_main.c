@@ -72,6 +72,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/odls/odls.h"
@@ -510,7 +511,7 @@ int orte_daemon(int argc, char *argv[])
         proc = OBJ_NEW(orte_proc_t);
         proc->name.jobid = jdata->jobid;
         proc->name.vpid = 0;
-
+        proc->alive = true;
         proc->state = ORTE_PROC_STATE_RUNNING;
         proc->app_idx = 0;
         /* obviously, they are on my node */
@@ -519,8 +520,16 @@ int orte_daemon(int argc, char *argv[])
         OBJ_RETAIN(node);  /* keep accounting straight */
         opal_pointer_array_add(jdata->procs, proc);
         jdata->num_procs = 1;
+        /* and obviously they are one of my local procs */
+        OBJ_RETAIN(proc);
+        opal_pointer_array_add(orte_local_children, proc);
         jdata->num_local_procs = 1;
         
+        /* the singleton will use the first three collectives
+         * for its modex/barriers
+         */
+        orte_grpcomm_base.coll_id += 3;
+
         /* need to setup a pidmap for it */
         buffer = OBJ_NEW(opal_buffer_t);
         opal_dss.pack(buffer, &jdata->jobid, 1, ORTE_JOBID); /* jobid */
@@ -603,7 +612,7 @@ int orte_daemon(int argc, char *argv[])
                        orted_globals.singleton_died_pipe,
                        OPAL_EV_READ,
                        pipe_closed,
-                       &orted_globals.singleton_died_pipe);
+                       pipe_handler);
         opal_event_add(pipe_handler, NULL);
     }
 
