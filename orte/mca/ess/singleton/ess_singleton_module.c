@@ -242,7 +242,12 @@ static int rte_init(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-        
+    
+    /* set the collective ids */
+    orte_process_info.peer_modex = 0;
+    orte_process_info.peer_init_barrier = 1;
+    orte_process_info.peer_fini_barrier = 2;
+
     return ORTE_SUCCESS;
 }
 

@@ -845,6 +845,7 @@ static void orte_proc_construct(orte_proc_t* proc)
     proc->last_errmgr_state = ORTE_PROC_STATE_UNDEF;
     proc->state = ORTE_PROC_STATE_UNDEF;
     proc->alive = false;
+    proc->aborted = false;
     proc->app_idx = 0;
 #if OPAL_HAVE_HWLOC
     proc->locale = NULL;
