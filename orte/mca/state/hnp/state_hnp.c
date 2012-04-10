@@ -183,6 +183,30 @@ static int finalize(void)
     return ORTE_SUCCESS;
 }
 
+static void cleanup_node(orte_proc_t *proc)
+{
+    orte_node_t *node;
+    orte_proc_t *p;
+    int i;
+
+    if (NULL == (node = proc->node)) {
+        return;
+    }
+    node->num_procs--;
+    node->slots_inuse--;
+    for (i=0; i < node->procs->size; i++) {
+        if (NULL == (p = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
+            continue;
+        }
+        if (p->name.jobid == proc->name.jobid &&
+            p->name.vpid == proc->name.vpid) {
+            opal_pointer_array_set_item(node->procs, i, NULL);
+            OBJ_RELEASE(p);
+            break;
+        }
+    }
+}
+
 static void track_procs(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
@@ -234,6 +258,8 @@ static void track_procs(int fd, short argc, void *cbdata)
             /* the proc has terminated */
             pdata->alive = false;
             pdata->state = ORTE_PROC_STATE_TERMINATED;
+            /* return the allocated slot for reuse */
+            cleanup_node(pdata);
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.
@@ -253,6 +279,8 @@ static void track_procs(int fd, short argc, void *cbdata)
             /* the proc has terminated */
             pdata->alive = false;
             pdata->state = ORTE_PROC_STATE_TERMINATED;
+            /* return the allocated slot for reuse */
+            cleanup_node(pdata);
             /* Clean up the session directory as if we were the process
              * itself.  This covers the case where the process died abnormally
              * and didn't cleanup its own session directory.
@@ -274,6 +302,8 @@ static void track_procs(int fd, short argc, void *cbdata)
              */
             orte_session_dir_finalize(proc);
 	}
+        /* return the allocated slot for reuse */
+        cleanup_node(pdata);
 	/* track job status */
 	jdata->num_terminated++;
 	if (jdata->num_terminated == jdata->num_procs) {
