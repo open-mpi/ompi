@@ -81,7 +81,7 @@ mca_btl_ugni_module_t mca_btl_ugni_module = {
         mca_btl_ugni_prepare_src,
         mca_btl_ugni_prepare_dst,
         mca_btl_ugni_send,
-        mca_btl_ugni_sendi,
+        NULL, /* sendi */
         mca_btl_ugni_put,
         mca_btl_ugni_get,
         NULL, /* mca_btl_base_dump, */

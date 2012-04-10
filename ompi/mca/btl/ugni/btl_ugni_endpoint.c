@@ -142,7 +142,7 @@ static void mca_btl_ugni_retry_send (ompi_common_ugni_post_desc_t *desc, int rc)
     mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
 
     rc = mca_btl_ugni_send (&frag->endpoint->btl->super, frag->endpoint, &frag->base, frag->hdr.send.tag);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+    if (OPAL_UNLIKELY(0 > rc)) {
         opal_list_append (&frag->endpoint->btl->failed_frags, (opal_list_item_t *) frag);
     }
 }
@@ -166,7 +166,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
                  ep->mailbox->smsg_attrib.mbox_maxcredit, ep->mailbox->smsg_attrib.msg_maxsize));
 
     rc = GNI_SmsgInit (ep->common->ep_handle, &ep->mailbox->smsg_attrib, &ep->remote_smsg_attrib);
-    if (GNI_RC_SUCCESS != rc) {
+    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         BTL_ERROR(("error initializing SMSG protocol. rc = %d", rc));
         return ompi_common_rc_ugni_to_ompi (rc);
     }
@@ -179,7 +179,7 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
     while (NULL != (item = opal_list_remove_first (&ep->pending_list))) {
         mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) item;
         rc = mca_btl_ugni_send (&ep->btl->super, ep, &frag->base, frag->hdr.send.tag);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        if (OPAL_UNLIKELY(0 > rc)) {
             frag->post_desc.cbfunc = mca_btl_ugni_retry_send;
             opal_list_append (&ep->btl->failed_frags, (opal_list_item_t *) frag);
         }

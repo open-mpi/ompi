@@ -73,10 +73,9 @@ btl_ugni_component_register(void)
     mca_btl_ugni_component.ugni_eager_num =
         mca_btl_ugni_param_register_int("eager_num", NULL, 16);
     mca_btl_ugni_component.ugni_eager_max =
-        mca_btl_ugni_param_register_int("eager_max", NULL, 64);
+        mca_btl_ugni_param_register_int("eager_max", NULL, 128);
     mca_btl_ugni_component.ugni_eager_inc =
         mca_btl_ugni_param_register_int("eager_inc", NULL, 16);
-    
 
     mca_btl_ugni_component.cq_size =
         mca_btl_ugni_param_register_int("cq_size", NULL, 25000);
@@ -85,7 +84,10 @@ btl_ugni_component_register(void)
     mca_btl_ugni_component.ugni_smsg_limit =
         mca_btl_ugni_param_register_int("smsg_limit", "Maximum size message that "
                                         "will be sent using the SMSG/MSGQ protocol "
-                                        "(0 - autoselect(default))", 0);
+                                        "(0 - autoselect(default), 16k max)", 0);
+    if (mca_btl_ugni_component.ugni_smsg_limit > 16384) {
+        mca_btl_ugni_component.ugni_smsg_limit = 16384;
+    }
 
     mca_btl_ugni_component.smsg_max_credits =
         mca_btl_ugni_param_register_int("smsg_max_credits", "Maximum number of "
@@ -95,11 +97,13 @@ btl_ugni_component_register(void)
     mca_btl_ugni_component.ugni_fma_limit =
         mca_btl_ugni_param_register_int("fma_limit", "Maximum size message that "
                                         "will be sent using the FMA (Fast Memory "
-                                        "Access) protocol (default 4095)",
-                                        4 * 1024 - 1);
+                                        "Access) protocol (default 1024)",
+                                        1024);
 
     mca_btl_ugni_component.ugni_get_limit =
-        mca_btl_ugni_param_register_int("get_limit", NULL, 512 * 1024);
+        mca_btl_ugni_param_register_int("get_limit", "Maximum size message that "
+                                        "will be sent using the get protocol "
+                                        "(default 512k)", 512 * 1024);
 
     mca_btl_ugni_component.rdma_max_retries =
         mca_btl_ugni_param_register_int("rdma_max_retries", NULL, 8);
@@ -109,7 +113,7 @@ btl_ugni_component_register(void)
     /* smsg threshold */
     mca_btl_ugni_module.super.btl_eager_limit               = 8 * 1024;
     mca_btl_ugni_module.super.btl_rndv_eager_limit          = 8 * 1024;
-    mca_btl_ugni_module.super.btl_rdma_pipeline_frag_size   = 2 * 1024 * 1024;
+    mca_btl_ugni_module.super.btl_rdma_pipeline_frag_size   = 4 * 1024 * 1024;
     mca_btl_ugni_module.super.btl_max_send_size             = 8 * 1024;
     mca_btl_ugni_module.super.btl_rdma_pipeline_send_length = 8 * 1024;
 
@@ -256,7 +260,9 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 
     if (0 == mca_btl_ugni_component.ugni_smsg_limit) {
         /* auto-set the smsg limit based on the number of ranks */
-        if (nprocs <= 1024) {
+        if (nprocs <= 256) {
+            mca_btl_ugni_component.ugni_smsg_limit = 8192;
+        } else if (nprocs <= 1024) {
             mca_btl_ugni_component.ugni_smsg_limit = 1024;
         } else if (nprocs <= 16384) {
             mca_btl_ugni_component.ugni_smsg_limit = 512;

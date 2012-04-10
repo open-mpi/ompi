@@ -33,7 +33,6 @@ ugni_SOURCES = \
         btl_ugni_frag.h \
         btl_ugni_rdma.h \
         btl_ugni_send.c \
-        btl_ugni_sendi.c \
         btl_ugni_put.c \
         btl_ugni_get.c \
         btl_ugni.h \
