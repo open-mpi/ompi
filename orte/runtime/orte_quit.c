@@ -72,7 +72,6 @@ static int num_failed_start = 0;
 static bool errors_reported = false;
 
 static void dump_aborted_procs(void);
-#endif
 
 void orte_quit(int fd, short args, void *cbdata)
 {
@@ -140,9 +139,6 @@ void orte_quit(int fd, short args, void *cbdata)
     orte_event_base_active = false;
 }
 
-
-
-#if !ORTE_DISABLE_FULL_SUPPORT
 /*
  * On abnormal termination - dump the
  * exit status of the aborted procs.

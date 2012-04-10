@@ -59,6 +59,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     orte_process_name_t *abort_procs;
     orte_std_cntr_t nabort_procs;
 
+    opal_output(0, "MPI_ABORT");
     /* Protection for recursive invocation */
     if (have_been_invoked) {
         return OMPI_SUCCESS;

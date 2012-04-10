@@ -96,7 +96,7 @@ int orte_show_help(const char *filename, const char *topic,
         return ORTE_SUCCESS;
     }
     
-    opal_output(0, output);
+    opal_output(0, "%s", output);
     return ORTE_SUCCESS;
 }
 
