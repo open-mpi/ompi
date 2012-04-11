@@ -1995,6 +1995,11 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
         /* set the exit status appropriately */
         proc->exit_code = WEXITSTATUS(status);
 
+        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
+                             "%s odls:waitpid_fired child %s exit code %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name), proc->exit_code));
+
         if (proc->aborted) {
             /* even though the process exited "normally", it happened
              * via an orte_abort call, so we need to indicate this was
@@ -2016,7 +2021,7 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
                  * felt it was non-normal
                  */
                 if (0 != proc->exit_code) {
-                    proc->state = ORTE_PROC_STATE_TERM_NON_ZERO;
+                    state = ORTE_PROC_STATE_TERM_NON_ZERO;
                     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                                          "%s odls:waitpid_fired child process %s terminated normally "
                                          "but with a non-zero exit status - it "
