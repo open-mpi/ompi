@@ -347,12 +347,6 @@ static void report_sync(int status, orte_process_name_t* sender,
 {
     /* flag as complete */
     sync_recvd = true;
-
-    /* (not really necessary, but good practice) */
-    orte_proc_info_finalize();
-    
-    /* Now Exit */
-    exit(status);
 }
 
 void orte_ess_base_app_abort(int status, bool report)
@@ -386,14 +380,13 @@ void orte_ess_base_app_abort(int status, bool report)
          * process exiting
          */
         sync_recvd = false;
-        if (ORTE_SUCCESS == orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ABORT,
-                                     ORTE_RML_NON_PERSISTENT, report_sync, NULL)) {
-            return;
+        if (ORTE_SUCCESS != orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ABORT,
+                                                    ORTE_RML_NON_PERSISTENT, report_sync, NULL)) {
+            exit(status);
         }
         while (!sync_recvd) {
             opal_progress();
         }
-        return;
     }
     
     /* - Clean out the global structures 

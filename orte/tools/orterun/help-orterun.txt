@@ -607,10 +607,6 @@ failed to show the required activity.
 One or more processes have exceeded a specified sensor limit, but
 no further info is available.
 #
-[orterun:proc-called-abort]
-%s detected that one or more processes called %s_abort, thus causing
-the job to be terminated.
-#
 [orterun:proc-heartbeat-failed]
 %s failed to receive scheduled heartbeat communications from a remote
 process:
