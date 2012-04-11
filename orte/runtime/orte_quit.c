@@ -377,10 +377,6 @@ static void dump_aborted_procs(void)
                     orte_show_help("help-orterun.txt", "orterun:proc-sensor-exceeded", true);
                     break;
                 }
-            } else if (ORTE_JOB_STATE_CALLED_ABORT == job->state) {
-                orte_show_help("help-orterun.txt", "orterun:proc-called-abort", true,
-                               orte_basename,
-                               (0 == strncmp("orte", orte_basename, 4)) ? "orte" : "MPI");
             } else if (ORTE_JOB_STATE_HEARTBEAT_FAILED == job->state) {
                 orte_show_help("help-orterun.txt", "orterun:proc-heartbeat-failed", true,
                                orte_basename, ORTE_NAME_PRINT(&proc->name), node->name);
