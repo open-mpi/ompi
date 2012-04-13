@@ -348,6 +348,50 @@ static void proc_errors(int fd, short args, void *cbdata)
             /* treat this as normal termination */
             goto REPORT_STATE;
         }
+        /* report this as abnormal termination to the HNP */
+        alert = OBJ_NEW(opal_buffer_t);
+        /* pack update state command */
+        cmd = ORTE_PLM_UPDATE_PROC_STATE;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &cmd, 1, ORTE_PLM_CMD))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* pack only the data for this proc - have to start with the jobid
+         * so the receiver can unpack it correctly
+         */
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(alert, &proc->jobid, 1, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+
+        child->state = state;
+        /* now pack the child's info */
+        if (ORTE_SUCCESS != (rc = pack_state_for_proc(alert, child))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* remove the child from our local array as it is no longer alive */
+        opal_pointer_array_set_item(orte_local_children, i, NULL);
+        /* Decrement the number of local procs */
+        jdata->num_local_procs--;
+
+        OPAL_OUTPUT_VERBOSE((5, orte_errmgr_base.output,
+                             "%s errmgr:default_orted reporting proc %s abnormally terminated with non-zero status (local procs = %d)",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&child->name),
+                             jdata->num_local_procs));
+        
+        /* release the child object */
+        OBJ_RELEASE(child);
+
+        /* send it */
+        if (0 > (rc = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, alert,
+                                              ORTE_RML_TAG_PLM, 0,
+                                              orte_rml_send_callback, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(alert);
+        }
+        return;
     }
 
     if (ORTE_PROC_STATE_FAILED_TO_START == state ||
