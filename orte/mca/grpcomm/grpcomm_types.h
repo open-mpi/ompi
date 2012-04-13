@@ -69,7 +69,7 @@ typedef enum {
 } orte_grpcomm_internal_stage_t;
 
 /* structure for tracking collective operations */
-struct orte_grpcomm_collective_t {
+typedef struct {
     opal_list_item_t super;
     orte_grpcomm_coll_id_t id;
     /* flag that user can poll on to know when collective 
@@ -113,8 +113,7 @@ struct orte_grpcomm_collective_t {
      */
     orte_grpcomm_collective_cbfunc_t next_cb;
     void *next_cbdata;
-};
-typedef struct orte_grpcomm_collective_t orte_grpcomm_collective_t;
+} orte_grpcomm_collective_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_grpcomm_collective_t);
 
 END_C_DECLS
