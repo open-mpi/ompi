@@ -656,17 +656,20 @@ static void daemon_coll_recv(int status, orte_process_name_t* sender,
         return;
     }
 
-    /* find out where, if anywhere, to send the results */
-    orte_routed.get_routing_list(ORTE_GRPCOMM_COLL_COMPLETE, coll);
-
-    /* pass the result */
-    while (NULL != (item = opal_list_remove_first(&coll->targets))) {
+    /* since we discovered that the collective is complete, we
+     * need to send it to all the participants
+     */
+    for (item = opal_list_get_first(&coll->participants);
+         item != opal_list_get_end(&coll->participants);
+         item = opal_list_get_next(item)) {
         nm = (orte_namelist_t*)item;
         relay = OBJ_NEW(opal_buffer_t);
         opal_dss.pack(relay, &coll->id, 1, ORTE_GRPCOMM_COLL_ID_T);
         opal_dss.copy_payload(relay, &coll->buffer);
-       if (ORTE_VPID_WILDCARD == nm->name.vpid) {
-            /* all procs from this job get it */
+        /* if the vpid is wildcard, then this goes to
+         * all daemons for relay
+         */
+        if (ORTE_VPID_WILDCARD == nm->name.vpid) {
             orte_grpcomm.xcast(nm->name.jobid, relay, ORTE_RML_TAG_COLLECTIVE);
             OBJ_RELEASE(relay);
         } else {
@@ -677,7 +680,6 @@ static void daemon_coll_recv(int status, orte_process_name_t* sender,
                 OBJ_RELEASE(relay);
             }
         }
-        OBJ_RELEASE(nm);
     }
 
     /* remove this collective */
