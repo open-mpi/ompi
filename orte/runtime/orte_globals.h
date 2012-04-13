@@ -359,6 +359,10 @@ typedef struct {
      * (wildcard), or none (invalid)
      */
     orte_vpid_t stdin_target;
+    /* collective ids */
+    orte_grpcomm_coll_id_t peer_modex;
+    orte_grpcomm_coll_id_t peer_init_barrier;
+    orte_grpcomm_coll_id_t peer_fini_barrier;
     /* total slots allocated to this job */
     orte_std_cntr_t total_slots_alloc;
     /* number of procs in this job */

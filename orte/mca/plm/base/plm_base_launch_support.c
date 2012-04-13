@@ -144,7 +144,6 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     int i;
     orte_app_context_t *app;
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    orte_grpcomm_coll_id_t modex, bar1, bar2;
     char *modx_par, *modx_val;
     char *bar1_par, *bar1_val;
     char *bar2_par, *bar2_val;
@@ -183,15 +182,15 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     }
 
     /* get collective ids for the std MPI operations */
-    modex = orte_grpcomm_base_get_coll_id();
+    caddy->jdata->peer_modex = orte_grpcomm_base_get_coll_id();
     modx_par = mca_base_param_environ_variable("orte", NULL, "peer_modex_id");
-    asprintf(&modx_val, "%d", modex);
-    bar1 = orte_grpcomm_base_get_coll_id();
+    asprintf(&modx_val, "%d", caddy->jdata->peer_modex);
+    caddy->jdata->peer_init_barrier = orte_grpcomm_base_get_coll_id();
     bar1_par = mca_base_param_environ_variable("orte", NULL, "peer_init_barrier_id");
-    asprintf(&bar1_val, "%d", bar1);
-    bar2 = orte_grpcomm_base_get_coll_id();
+    asprintf(&bar1_val, "%d", caddy->jdata->peer_init_barrier);
+    caddy->jdata->peer_fini_barrier = orte_grpcomm_base_get_coll_id();
     bar2_par = mca_base_param_environ_variable("orte", NULL, "peer_fini_barrier_id");
-    asprintf(&bar2_val, "%d", bar2);
+    asprintf(&bar2_val, "%d", caddy->jdata->peer_fini_barrier);
 
     /* if app recovery is not defined, set apps to defaults */
     for (i=0; i < caddy->jdata->apps->size; i++) {
