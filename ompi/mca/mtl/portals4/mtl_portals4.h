@@ -62,9 +62,6 @@ struct mca_mtl_portals4_module_t {
     ptl_pt_index_t read_idx;
     /** portals index for flow control recovery */
     ptl_pt_index_t flowctl_idx;
-    /** portals index for flow control recovery operatings which
-        generate full events */
-    ptl_pt_index_t flowctl_event_idx;
 
     /** Event queue handles.  See send_eq_h and recv_eq_h defines for
         usage.  Array for PtlEQPoll */
@@ -153,7 +150,6 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 
 #define MTL_PORTALS4_SHORT_MSG      0x1000000000000000ULL
 #define MTL_PORTALS4_LONG_MSG       0x2000000000000000ULL
-#define MTL_PORTALS4_READY_MSG      0x4000000000000000ULL
 
 /* send posting */
 #define MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, source, tag, type) \

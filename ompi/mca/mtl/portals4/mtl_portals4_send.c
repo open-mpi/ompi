@@ -29,77 +29,20 @@
 #include "mtl_portals4_endpoint.h"
 
 
-static int
-ompi_mtl_portals4_send_callback(ptl_event_t *ev, struct ompi_mtl_portals4_base_request_t* ptl_base_request)
+static inline int
+ompi_mtl_portals4_callback(ptl_event_t *ev, 
+                           ompi_mtl_portals4_base_request_t* ptl_base_request,
+                           bool *complete)
 {
-    int ret;
-    ompi_mtl_portals4_send_request_t* ptl_request = 
-        (ompi_mtl_portals4_send_request_t*) ptl_base_request;
-
-    if (ev->ni_fail_type != PTL_NI_OK) {
-        opal_output_verbose(1, ompi_mtl_base_output,
-                            "%s:%d: send callback ni_fail_type: %d",
-                            __FILE__, __LINE__, ev->ni_fail_type);
-        ptl_request->retval = OMPI_ERROR;
-        opal_atomic_wmb();
-        ptl_request->complete = true;
-        return OMPI_SUCCESS;
-    }
-
-    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "send %d got event of type %d",
-                         ptl_request->super.opcount, ev->type));
-
-    /* we only receive an ack if the message was received into an
-       expected message.  Otherwise, we don't get an ack, but mark
-       completion when the message was pulled (long message).  A short
-       message starts at count 1, so the send event completes it. */
-    if ( ++(ptl_request->super.event_count) == 2 ) {
-        if (NULL != ptl_request->super.buffer_ptr) {
-            free(ptl_request->super.buffer_ptr);
-        }
-        ret = PtlMDRelease(ptl_request->super.md_h);
-        if (PTL_OK != ret) {
-            opal_output_verbose(1, ompi_mtl_base_output,
-                                "%s:%d: send callback PtlMDRelease returned %d",
-                                __FILE__, __LINE__, ret);
-            ptl_request->retval = OMPI_ERROR;
-        }
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "send %d completed",
-                             ptl_request->super.opcount));
-        opal_atomic_wmb();
-        ptl_request->complete = true;
-    }
-
-    /* received an ack - unlink the me */
-    if (ev->type == PTL_EVENT_ACK) {
-        ret = PtlMEUnlink(ptl_request->super.me_h);
-        if (PTL_OK != ret) {
-            opal_output_verbose(1, ompi_mtl_base_output,
-                                "%s:%d: send callback PtlMDUnlink returned %d",
-                                __FILE__, __LINE__, ret);
-        }
-    }
-    
-    return OMPI_SUCCESS;
-}
-
-
-static int
-ompi_mtl_portals4_isend_callback(ptl_event_t *ev, struct ompi_mtl_portals4_base_request_t* ptl_base_request)
-{
-    int ret;
+    int retval = OMPI_SUCCESS, ret, val, add = 1;
     ompi_mtl_portals4_isend_request_t* ptl_request = 
         (ompi_mtl_portals4_isend_request_t*) ptl_base_request;
-
-    assert(NULL != ptl_request->super.super.ompi_req);
 
     if (ev->ni_fail_type != PTL_NI_OK) {
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: isend callback ni_fail_type: %d",
                             __FILE__, __LINE__, ev->ni_fail_type);
-        ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
-        ptl_request->super.super.completion_callback(&ptl_request->super.super);
+        *complete = true;
         return OMPI_ERROR;
     }
 
@@ -107,11 +50,24 @@ ompi_mtl_portals4_isend_callback(ptl_event_t *ev, struct ompi_mtl_portals4_base_
                          "isend %d got event of type %d",
                          ptl_request->opcount, ev->type));
 
-    /* we only receive an ack if the message was received into an
-       expected message.  Otherwise, we don't get an ack, but mark
-       completion when the message was pulled (long message).  A short
-       message starts at count 1, so the send event completes it. */
-    if ( ++(ptl_request->event_count) == 2 ) {
+    /* If we received an ack in the priority list, that's worth two
+       messages.  If it hit the overflow list, that's only one.  Since
+       we start eager messages at one count, have to compare >=
+       instead of just == */
+    if (ev->type == PTL_EVENT_ACK && 
+        ev->ptl_list == PTL_PRIORITY_LIST) {
+        /* ack on the priority list, so will never see an event on the me */
+        ret = PtlMEUnlink(ptl_request->me_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: isend callback PtlMDUnlink returned %d",
+                                __FILE__, __LINE__, ret);
+        }
+        add++;
+    }
+    val = opal_atomic_add_32(&ptl_request->event_count, add);
+
+    if (val >= 3) {
         if (NULL != ptl_request->buffer_ptr) {
             free(ptl_request->buffer_ptr);
         }
@@ -120,23 +76,52 @@ ompi_mtl_portals4_isend_callback(ptl_event_t *ev, struct ompi_mtl_portals4_base_
             opal_output_verbose(1, ompi_mtl_base_output,
                                 "%s:%d: isend callback PtlMDRelease returned %d",
                                 __FILE__, __LINE__, ret);
-            ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_ERROR;
+            retval = OMPI_ERROR;
         }
         OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "isend %d completed",
                              ptl_request->opcount));
+        *complete = true;
+    }
+    
+    return retval;
+}
+
+
+static int
+ompi_mtl_portals4_send_callback(ptl_event_t *ev,
+                                ompi_mtl_portals4_base_request_t* ptl_base_request)
+{
+    bool complete = false;
+    int ret;
+    ompi_mtl_portals4_send_request_t* ptl_request = 
+        (ompi_mtl_portals4_send_request_t*) ptl_base_request;
+
+    ret = ompi_mtl_portals4_callback(ev, ptl_base_request, &complete);
+    if (complete) {
+        ptl_request->retval = ret;
+        opal_atomic_wmb();
+        ptl_request->complete = true;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+static int
+ompi_mtl_portals4_isend_callback(ptl_event_t *ev,
+                                 ompi_mtl_portals4_base_request_t* ptl_base_request)
+{
+    bool complete = false;
+    int ret;
+    ompi_mtl_portals4_isend_request_t* ptl_request = 
+        (ompi_mtl_portals4_isend_request_t*) ptl_base_request;
+
+    ret = ompi_mtl_portals4_callback(ev, ptl_base_request, &complete);
+    if (complete) {
+        ptl_request->super.super.ompi_req->req_status.MPI_ERROR = ret;
         ptl_request->super.super.completion_callback(&ptl_request->super.super);
     }
 
-    /* received an ack - unlink the me */
-    if (ev->type == PTL_EVENT_ACK) {
-        ret = PtlMEUnlink(ptl_request->me_h);
-        if (PTL_OK != ret) {
-            opal_output_verbose(1, ompi_mtl_base_output,
-                                "%s:%d: isend callback PtlMDUnlink returned %d",
-                                __FILE__, __LINE__, ret);
-        }
-    }
-    
     return OMPI_SUCCESS;
 }
 
@@ -149,14 +134,14 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
                               ompi_mtl_portals4_isend_request_t *ptl_request)
 {
     int ret;
-    ptl_match_bits_t mode_bits, match_bits;
+    ptl_match_bits_t match_bits;
     ptl_hdr_data_t hdr_data;
     ptl_md_t md;
 
     ptl_request->event_count = 1;
 
-    mode_bits = (MCA_PML_BASE_SEND_READY != mode) ? MTL_PORTALS4_SHORT_MSG : MTL_PORTALS4_READY_MSG;
-    MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag, mode_bits); 
+    MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag, 
+                               MTL_PORTALS4_SHORT_MSG);
 
     MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length, 0);
     
@@ -183,7 +168,7 @@ ompi_mtl_portals4_short_isend(mca_pml_base_send_mode_t mode,
     ret = PtlPut(ptl_request->md_h,
                  0,
                  length,
-		 PTL_NO_ACK_REQ,
+		 PTL_ACK_REQ,
 		 endpoint->ptl_proc,
 		 ompi_mtl_portals4.send_idx,
 		 match_bits,
@@ -287,7 +272,6 @@ ompi_mtl_portals4_sync_isend(void *start, int length, int contextid, int tag,
     }
 
     return OMPI_SUCCESS;
-    
 }
 
 
@@ -302,8 +286,10 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
     ptl_md_t md;
     ptl_me_t me;
     ptl_hdr_data_t hdr_data;
+    ptl_size_t put_length;
 
-    MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag, MTL_PORTALS4_LONG_MSG);
+    MTL_PORTALS4_SET_SEND_BITS(match_bits, contextid, localrank, tag, 
+                               MTL_PORTALS4_LONG_MSG);
 
     MTL_PORTALS4_SET_HDR_DATA(hdr_data, ptl_request->opcount, length, 0);
 
@@ -355,29 +341,18 @@ ompi_mtl_portals4_long_isend(void *start, int length, int contextid, int tag,
                          "Send %d long send with hdr_data 0x%lx (0x%lx)",
                          ptl_request->opcount, hdr_data, match_bits));
 
-    if (ompi_mtl_portals4.protocol == rndv) {
-        ret = PtlPut(ptl_request->md_h,
-                     0,
-                     ompi_mtl_portals4.eager_limit,
-                     PTL_NO_ACK_REQ,
-                     endpoint->ptl_proc,
-                     ompi_mtl_portals4.send_idx,
-                     match_bits,
-                     0,
-                     ptl_request,
-                     hdr_data);
-    } else {
-        ret = PtlPut(ptl_request->md_h,
-                     0,
-                     length,
-                     PTL_ACK_REQ,
-                     endpoint->ptl_proc,
-                     ompi_mtl_portals4.send_idx,
-                     match_bits,
-                     0,
-                     ptl_request,
-                     hdr_data);
-    }
+    put_length = (rndv == ompi_mtl_portals4.protocol) ? 
+        (ptl_size_t) ompi_mtl_portals4.eager_limit : (ptl_size_t) length;
+    ret = PtlPut(ptl_request->md_h,
+                 0,
+                 put_length,
+                 PTL_ACK_REQ,
+                 endpoint->ptl_proc,
+                 ompi_mtl_portals4.send_idx,
+                 match_bits,
+                 0,
+                 ptl_request,
+                 hdr_data);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlPut failed: %d",
@@ -418,47 +393,12 @@ ompi_mtl_portals4_start_send(struct mca_mtl_base_module_t* mtl,
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
                          "Send %d to %x,%x of length %d\n",
                          ptl_request->opcount,
-                         endpoint->ptl_proc.phys.nid, endpoint->ptl_proc.phys.pid, 
+                         endpoint->ptl_proc.phys.nid, 
+                         endpoint->ptl_proc.phys.pid, 
                          (int)length));
 
-    switch (mode) {
-    case MCA_PML_BASE_SEND_READY:
-        ret = ompi_mtl_portals4_short_isend(mode,
-                                            start,
-                                            length,
-                                            comm->c_contextid,
-                                            tag,
-                                            comm->c_my_rank,
-                                            endpoint,
-                                            ptl_request);
-        break;
-
-    case MCA_PML_BASE_SEND_STANDARD:
-    case MCA_PML_BASE_SEND_BUFFERED:
-    case MCA_PML_BASE_SEND_COMPLETE:
-        if (length <= ompi_mtl_portals4.eager_limit) {
-            ret = ompi_mtl_portals4_short_isend(mode,
-                                                start,
-                                                length,
-                                                comm->c_contextid,
-                                                tag,
-                                                comm->c_my_rank,
-                                                endpoint,
-                                                ptl_request);
-        } else {
-            ret = ompi_mtl_portals4_long_isend(start,
-                                               length,
-                                               comm->c_contextid,
-                                               tag,
-                                               comm->c_my_rank,
-                                               dest,
-                                               endpoint,
-                                               ptl_request);
-        }
-        break;
-
-    case MCA_PML_BASE_SEND_SYNCHRONOUS:
-        if (length <= ompi_mtl_portals4.eager_limit) {
+    if (length <= ompi_mtl_portals4.eager_limit) {
+        if (MCA_PML_BASE_SEND_SYNCHRONOUS == mode) {
             ret = ompi_mtl_portals4_sync_isend(start,
                                                length,
                                                comm->c_contextid,
@@ -467,20 +407,24 @@ ompi_mtl_portals4_start_send(struct mca_mtl_base_module_t* mtl,
                                                endpoint,
                                                ptl_request);
         } else {
-            ret = ompi_mtl_portals4_long_isend(start,
-                                               length,
-                                               comm->c_contextid,
-                                               tag,
-                                               comm->c_my_rank,
-                                               dest,
-                                               endpoint,
-                                               ptl_request);
+            ret = ompi_mtl_portals4_short_isend(mode,
+                                                start,
+                                                length,
+                                                comm->c_contextid,
+                                                tag,
+                                                comm->c_my_rank,
+                                                endpoint,
+                                                ptl_request);
         }
-        break;
-
-    case MCA_PML_BASE_SEND_SIZE:
-        return OMPI_ERR_NOT_SUPPORTED;
-        break;
+    } else {
+        ret = ompi_mtl_portals4_long_isend(start,
+                                           length,
+                                           comm->c_contextid,
+                                           tag,
+                                           comm->c_my_rank,
+                                           dest,
+                                           endpoint,
+                                           ptl_request);
     }
     
     return OMPI_SUCCESS;

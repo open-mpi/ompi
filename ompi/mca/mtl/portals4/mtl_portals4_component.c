@@ -244,11 +244,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
                      PTL_PT_ONLY_USE_ONCE | 
                      PTL_PT_ONLY_TRUNCATE | 
-#if OMPI_MTL_PORTALS4_FLOW_CONTROL
                      PTL_PT_FLOWCTRL,
-#else
-                     0,
-#endif
                      ompi_mtl_portals4.recv_eq_h,
                      REQ_SEND_TABLE_ID,
                      &ompi_mtl_portals4.send_idx);
@@ -295,7 +291,6 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     me.min_free = 0;
     me.uid = PTL_UID_ANY;
     me.options = PTL_ME_OP_PUT | 
-        PTL_ME_ACK_DISABLE | 
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_COMM_DISABLE | 
         PTL_ME_EVENT_UNLINK_DISABLE;

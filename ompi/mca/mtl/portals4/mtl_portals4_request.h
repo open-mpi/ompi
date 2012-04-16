@@ -46,8 +46,8 @@ struct ompi_mtl_portals4_isend_request_t {
     void *buffer_ptr;
     ptl_handle_md_t md_h;
     ptl_handle_me_t me_h;
-    volatile int event_count;
-    int opcount;
+    int32_t event_count;
+    int32_t opcount;
 };
 typedef struct ompi_mtl_portals4_isend_request_t ompi_mtl_portals4_isend_request_t;
 
@@ -70,7 +70,7 @@ struct ompi_mtl_portals4_recv_request_t {
     size_t delivery_len;
     volatile bool req_started;
 #if OPAL_ENABLE_DEBUG
-    int opcount;
+    int32_t opcount;
     ptl_hdr_data_t hdr_data;
 #endif
 };
