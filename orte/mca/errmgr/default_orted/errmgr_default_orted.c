@@ -345,6 +345,22 @@ static void proc_errors(int fd, short args, void *cbdata)
 
     if (ORTE_PROC_STATE_TERM_NON_ZERO == state) {
         if (!orte_abort_non_zero_exit) {
+            /* leave the child in orte_local_children so we can
+             * later send the state info after full job termination
+             */
+            child->state = state;
+            child->waitpid_recvd = true;
+            if (child->iof_complete) {
+                /* the proc has terminated */
+                child->alive = false;
+                /* Clean up the session directory as if we were the process
+                 * itself.  This covers the case where the process died abnormally
+                 * and didn't cleanup its own session directory.
+                 */
+                orte_session_dir_finalize(&child->name);
+                /* track job status */
+                jdata->num_terminated++;
+            }
             /* treat this as normal termination */
             goto REPORT_STATE;
         }
