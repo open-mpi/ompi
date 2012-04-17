@@ -45,6 +45,10 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
         ptl_request->pending;
 
     if (ev->ni_fail_type == PTL_NI_FLOW_CTRL) {
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "send %lu hit flow control",
+                             ptl_request->opcount));
+
         ompi_mtl_portals4_flowctl_start_recover();
         opal_list_remove_item(&ompi_mtl_portals4.flowctl.active_sends, 
                               &pending->super.super);
@@ -501,6 +505,7 @@ ompi_mtl_portals4_send(struct mca_mtl_base_module_t* mtl,
         opal_atomic_mb();
         ompi_mtl_portals4_progress();
     }
+    ret = ptl_request.retval;
 
  cleanup:
     if (NULL != ptl_request.super.buffer_ptr) {

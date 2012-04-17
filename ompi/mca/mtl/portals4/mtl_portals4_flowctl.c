@@ -524,6 +524,9 @@ ompi_mtl_portals4_flowctl_start_recover(void)
         ompi_mtl_portals4.flowctl.flowctl_active = true;
     }
 
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                         "entering flowctl_start_recover"));
+
     ret = ompi_mtl_portals4_flowctl_setup_comm();
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_output,
