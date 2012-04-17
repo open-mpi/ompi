@@ -24,12 +24,15 @@
 #include "ompi/mca/mtl/mtl.h"
 
 struct ompi_mtl_portals4_message_t;
+struct ompi_mtl_portals4_pending_request_t;
+
 
 typedef enum { portals4_req_isend,
                portals4_req_send,
                portals4_req_recv,
                portals4_req_probe,
-               portals4_req_recv_short
+               portals4_req_recv_short,
+               portals4_req_flowctl
 } ompi_mtl_portals4_request_type_t;
 
 
@@ -46,8 +49,11 @@ struct ompi_mtl_portals4_isend_request_t {
     void *buffer_ptr;
     ptl_handle_md_t md_h;
     ptl_handle_me_t me_h;
-    int32_t event_count;
-    int32_t opcount;
+    uint64_t opcount;
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    struct ompi_mtl_portals4_pending_request_t *pending;
+#endif
+    uint32_t event_count;
 };
 typedef struct ompi_mtl_portals4_isend_request_t ompi_mtl_portals4_isend_request_t;
 
@@ -70,7 +76,7 @@ struct ompi_mtl_portals4_recv_request_t {
     size_t delivery_len;
     volatile bool req_started;
 #if OPAL_ENABLE_DEBUG
-    int32_t opcount;
+    uint64_t opcount;
     ptl_hdr_data_t hdr_data;
 #endif
 };

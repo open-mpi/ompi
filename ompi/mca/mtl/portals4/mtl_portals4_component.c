@@ -126,6 +126,14 @@ ompi_mtl_portals4_component_open(void)
     }
 
     opal_output_verbose(1, ompi_mtl_base_output,
+                        "Flow control: "
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+                        "yes"
+#else
+                        "no"
+#endif
+                        );
+    opal_output_verbose(1, ompi_mtl_base_output,
                         "Eager limit: %d", (int) 
                         ompi_mtl_portals4.eager_limit);
     opal_output_verbose(1, ompi_mtl_base_output, 
@@ -220,7 +228,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                          "My nid,pid = %x,%x",
                          id.phys.nid, id.phys.pid));
 
-    /* create event queue */
+    /* create event queues */
     ret = PtlEQAlloc(ompi_mtl_portals4.ni_h,
                      ompi_mtl_portals4.queue_size,
                      &ompi_mtl_portals4.send_eq_h);
@@ -240,7 +248,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 
-    /* Create portal table entries */
+    /* Create send and long message (read) portal table entries */
     ret = PtlPTAlloc(ompi_mtl_portals4.ni_h,
                      PTL_PT_ONLY_USE_ONCE | 
                      PTL_PT_ONLY_TRUNCATE | 
@@ -328,11 +336,6 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 #endif
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    ompi_mtl_portals4.send_queue_slots = ompi_mtl_portals4.queue_size - 4;
-
-    OBJ_CONSTRUCT(&ompi_mtl_portals4.active_sends, opal_list_t);
-    OBJ_CONSTRUCT(&ompi_mtl_portals4.pending_sends, opal_list_t);
-
     ret = ompi_mtl_portals4_flowctl_init();
     if (OMPI_SUCCESS != ret) {
         opal_output_verbose(1, ompi_mtl_base_output,
@@ -349,7 +352,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
 #endif
-    
+
     /* activate progress callback */
     ret = opal_progress_register(ompi_mtl_portals4_progress);
     if (OMPI_SUCCESS != ret) {
@@ -483,12 +486,13 @@ ompi_mtl_portals4_progress(void)
                 ret = ompi_mtl_portals4_flowctl_start_recover();
                 if (OMPI_SUCCESS != ret) {
                     opal_output_verbose(1, ompi_mtl_base_output,
-                                        "%s:%d: PtlPTEnable failed: %d\n",
+                                        "%s:%d: flowctl_start_recover failed: %d\n",
                                         __FILE__, __LINE__, ret);
                     abort();
                 }
 #else
-                opal_output(ompi_mtl_base_output, "Unhandled flow control event.");
+                opal_output(ompi_mtl_base_output,
+                            "Flow control situation without recovery");
                 abort();
 #endif
                 break;
@@ -503,10 +507,14 @@ ompi_mtl_portals4_progress(void)
             }
         } else if (PTL_EQ_EMPTY == ret) {
             break;
+        } else if (PTL_EQ_DROPPED == ret) {
+            opal_output(ompi_mtl_base_output,
+                        "Flow control situation without recovery");
+            abort();
         } else {
             opal_output(ompi_mtl_base_output,
                         "Error returned from PtlEQGet: %d", ret);
-            abort();
+            break;
         }
     }
 
