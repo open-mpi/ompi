@@ -492,7 +492,7 @@ ompi_mtl_portals4_progress(void)
                 }
 #else
                 opal_output(ompi_mtl_base_output,
-                            "Flow control situation without recovery");
+                            "Flow control situation without recovery (PT_DISABLED)");
                 abort();
 #endif
                 break;
@@ -509,7 +509,8 @@ ompi_mtl_portals4_progress(void)
             break;
         } else if (PTL_EQ_DROPPED == ret) {
             opal_output(ompi_mtl_base_output,
-                        "Flow control situation without recovery");
+                        "Flow control situation without recovery (EQ_DROPPED): %d",
+                        which);
             abort();
         } else {
             opal_output(ompi_mtl_base_output,
