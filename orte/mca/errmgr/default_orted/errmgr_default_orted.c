@@ -223,7 +223,7 @@ static void proc_errors(int fd, short args, void *cbdata)
     int rc=ORTE_SUCCESS;
     orte_vpid_t null=ORTE_VPID_INVALID;
     orte_ns_cmp_bitmask_t mask=ORTE_NS_CMP_ALL;
-    int i, nchildren;
+    int i;
 
     /*
      * if orte is trying to shutdown, just let it
@@ -290,9 +290,9 @@ static void proc_errors(int fd, short args, void *cbdata)
             ORTE_TERMINATE(ORTE_ERROR_DEFAULT_EXIT_CODE);
         } else {
             OPAL_OUTPUT_VERBOSE((2, orte_errmgr_base.output,
-                                 "%s errmgr:default:orted not exiting, num_routes() == %d, num_children == %d",
+                                 "%s errmgr:default:orted not exiting, num_routes() == %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 (int)orte_routed.num_routes(), nchildren));
+                                 (int)orte_routed.num_routes()));
         }
         /* if not, then we can continue */
         goto cleanup;
