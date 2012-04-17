@@ -28,9 +28,7 @@
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/mca/mtl/base/base.h"
 
-#if OMPI_MTL_PORTALS4_FLOW_CONTROL
 #include "mtl_portals4_flowctl.h"
-#endif
 
 BEGIN_C_DECLS
 
@@ -86,29 +84,16 @@ struct mca_mtl_portals4_module_t {
     opal_list_t waiting_recv_short_blocks;
 
     /** number of send-side operations started */
-    uint32_t opcount;
-
-#if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    /** Number of event slots available for send side operations.
-        Note that this is slightly smaller than the event queue size
-        to allow space for flow control related events. */
-    uint32_t send_queue_slots;
-
-    /** free list of send items */
-    opal_free_list_t send_fl;
-    /** list of sends which are pending (either due to needing to
-       retransmit or because we're in flow control recovery */
-    opal_list_t pending_sends;
-    /** list of sends which are currently active */
-    opal_list_t active_sends;
-
-    ompi_mtl_portals4_flowctl_t flowctl;
-#endif
+    uint64_t opcount;
 
 #if OPAL_ENABLE_DEBUG
     /** number of receive-side operations started.  Used only for
         debugging */
-    uint32_t recv_opcount;
+    uint64_t recv_opcount;
+#endif
+
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    ompi_mtl_portals4_flowctl_t flowctl;
 #endif
 };
 typedef struct mca_mtl_portals4_module_t mca_mtl_portals4_module_t;
@@ -122,12 +107,10 @@ extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 #define REQ_READ_TABLE_ID    3
 #define REQ_FLOWCTL_TABLE_ID 4
 
-#if OMPI_MTL_PORTALS4_FLOW_CONTROL
 #define MTL_PORTALS4_FLOWCTL_TRIGGER 0x01
 #define MTL_PORTALS4_FLOWCTL_ALERT   0x02
 #define MTL_PORTALS4_FLOWCTL_FANIN   0x03
 #define MTL_PORTALS4_FLOWCTL_FANOUT  0x04
-#endif
 
 /* match/ignore bit manipulation
  *

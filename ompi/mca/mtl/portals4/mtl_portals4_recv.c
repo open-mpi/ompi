@@ -50,7 +50,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
 
     switch (ev->type) {
     case PTL_EVENT_PUT:
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) got put event",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) got put event",
                              ptl_request->opcount, ev->hdr_data));
 
         if (ev->ni_fail_type != PTL_NI_OK) {
@@ -128,14 +128,14 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             }
             ptl_request->super.super.ompi_req->req_status._ucount = ev->mlength;
 
-            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) completed, expected",
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) completed, expected",
                                  ptl_request->opcount, ptl_request->hdr_data));
             ptl_request->super.super.completion_callback(&ptl_request->super.super);
         }
         break;
 
     case PTL_EVENT_REPLY:
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) got reply event",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) got reply event",
                              ptl_request->opcount, ptl_request->hdr_data));
 
         if (ev->ni_fail_type != PTL_NI_OK) {
@@ -169,13 +169,13 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
         }
         PtlMDRelease(ptl_request->md_h);
 
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) completed, reply",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) completed, reply",
                              ptl_request->opcount, ptl_request->hdr_data));
         ptl_request->super.super.completion_callback(&ptl_request->super.super);
         break;
 
     case PTL_EVENT_PUT_OVERFLOW:
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) got put_overflow event",
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) got put_overflow event",
                              ptl_request->opcount, ev->hdr_data));
 
         if (ev->ni_fail_type != PTL_NI_OK) {
@@ -227,7 +227,8 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
             }
             /* if it's a sync, send the ack */
             if (MTL_PORTALS4_IS_SYNC_MSG(ev->hdr_data)) {
-                OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) sending sync ack",
+                OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, 
+                                     "Recv %lu (0x%lx) sending sync ack",
                                      ptl_request->opcount, ptl_request->hdr_data));
                 ret = PtlPut(ompi_mtl_portals4.zero_md_h,
                              0,
@@ -247,7 +248,8 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                 }
             }
 
-            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) completed, unexpected short (0x%lx)",
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, 
+                                 "Recv %lu (0x%lx) completed, unexpected short (0x%lx)",
                                  ptl_request->opcount, ptl_request->hdr_data, (long) ev->start));
             ptl_request->super.super.completion_callback(&ptl_request->super.super);
 
@@ -277,7 +279,7 @@ ompi_mtl_portals4_recv_progress(ptl_event_t *ev,
                 goto callback_error;
             }
 
-            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %d (0x%lx) getting long data",
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output, "Recv %lu (0x%lx) getting long data",
                                  ptl_request->opcount, ptl_request->hdr_data));
             ret = PtlGet(ptl_request->md_h,
                          0,
@@ -369,7 +371,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "Recv %d from %x,%x of length %d (0x%lx, 0x%lx, 0x%lx)\n",
+                         "Recv %lu from %x,%x of length %d (0x%lx, 0x%lx, 0x%lx)\n",
                          ptl_request->opcount,
                          remote_proc.phys.nid, remote_proc.phys.pid, 
                          (int)length, match_bits, ignore_bits, (unsigned long) ptl_request));
@@ -439,7 +441,7 @@ ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
     }
 
 #if OPAL_ENABLE_DEBUG
-    ptl_request->opcount = ++ompi_mtl_portals4.recv_opcount;
+    ptl_request->opcount = opal_atomic_add_64((int64_t*) &ompi_mtl_portals4.recv_opcount, 1);
     ptl_request->hdr_data = 0;
 #endif
     ptl_request->super.type = portals4_req_recv;
@@ -451,7 +453,7 @@ ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
     ptl_request->super.super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "Mrecv %d of length %d (0x%lx)\n",
+                         "Mrecv %lu of length %d (0x%lx)\n",
                          ptl_request->opcount,
                          (int)length, (unsigned long) ptl_request));
 

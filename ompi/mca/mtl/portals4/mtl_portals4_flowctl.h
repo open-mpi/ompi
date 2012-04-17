@@ -10,31 +10,68 @@
 #ifndef MTL_PORTALS_FLOWCTL_H
 #define MTL_PORTALS_FLOWCTL_H
 
+#include "opal/class/opal_free_list.h"
+
+#include "mtl_portals4_request.h"
+
+struct mca_mtl_base_endpoint_t;
+struct ompi_mtl_portals4_isend_request_t;
+
+struct ompi_mtl_portals4_pending_request_t {
+    opal_free_list_item_t super;
+    mca_pml_base_send_mode_t mode;
+    void *start;
+    size_t length;
+    int contextid;
+    int tag;
+    int my_rank;
+    struct mca_mtl_base_endpoint_t *endpoint;
+    struct ompi_mtl_portals4_isend_request_t *ptl_request;
+};
+typedef struct ompi_mtl_portals4_pending_request_t ompi_mtl_portals4_pending_request_t;
+OBJ_CLASS_DECLARATION(ompi_mtl_portals4_pending_request_t);
+
+
 struct ompi_mtl_portals4_flowctl_t {
+    bool flowctl_active;
+
+    opal_list_t active_sends;
+    opal_list_t pending_sends;
+    opal_free_list_t pending_fl;
+    opal_mutex_t mutex;
+    int32_t slots;
+
+    ompi_mtl_portals4_base_request_t alert_req;
+    ompi_mtl_portals4_base_request_t fanout_req;
+
     /** Flow control epoch counter.  Triggered events should be
         based on epoch counter. */
     uint32_t epoch_counter;
+
+    /** Flow control trigger CT.  Only has meaning at root. */
+    ptl_handle_ct_t trigger_ct_h;
     /** Flow control trigger ME.  Only has meaning at root.  When an
         event is received on this ME, it triggers the flow control
         alert broadcast.*/
     ptl_handle_me_t trigger_me_h;
-    /** Flow control trigger CT.  Only has meaning at root. */
-    ptl_handle_ct_t trigger_ct_h;
-    /** Flow control alert tree broadcast ME. */
-    ptl_handle_me_t alert_me_h;
+
     /** Flow control alert tree broadcast CT. */
     ptl_handle_ct_t alert_ct_h;
+    /** Flow control alert tree broadcast ME. */
+    ptl_handle_me_t alert_me_h;
     /** Flow control alert tree broadcast ME for a local put to
         generate an event */
     ptl_handle_me_t alert_event_me_h;
-    /** Flow control restart fan-in ME. */
-    ptl_handle_me_t fanin_me_h;
+
     /** Flow control restart fan-in CT. */
     ptl_handle_ct_t fanin_ct_h;
-    /** Flow control restart fan-out ME. */
-    ptl_handle_me_t fanout_me_h;
+    /** Flow control restart fan-in ME. */
+    ptl_handle_me_t fanin_me_h;
+
     /** Flow control restart fan-out CT. */
     ptl_handle_ct_t fanout_ct_h;
+    /** Flow control restart fan-out ME. */
+    ptl_handle_me_t fanout_me_h;
     /** Flow control restart fan-out ME for a local put to generate an
         event */
     ptl_handle_me_t fanout_event_me_h;
@@ -63,5 +100,8 @@ int ompi_mtl_portals4_flowctl_add_procs(size_t me,
                                         struct mca_mtl_base_endpoint_t **peers);
 int ompi_mtl_portals4_flowctl_setup_comm(void);
 int ompi_mtl_portals4_flowctl_start_recover(void);
+
+
+void ompi_mtl_portals4_pending_list_progress(void);
 
 #endif
