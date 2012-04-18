@@ -70,10 +70,11 @@ AC_DEFUN([OMPI_FORTRAN_GET_KIND_VALUE],[
 AC_DEFUN([_OMPI_FORTRAN_SELECTED_INT_KIND],[
     AS_VAR_PUSHDEF([type_var], [ompi_cv_fortran_int_kind_$1])
 
-    if test "$OMPI_WANT_F90_BINDINGS" -eq 1 -a $ompi_fortran_happy -eq 1; then
+    if test $OMPI_WANT_FORTRAN_BINDINGS -eq 1 -a $ompi_fortran_happy -eq 1; then
         AC_CACHE_CHECK([Fortran value of selected_int_kind($1)], 
             type_var,
             [AC_LANG_PUSH([Fortran])
+             value=
              AC_RUN_IFELSE(AC_LANG_PROGRAM(, [[
         open(8, file="conftest.out")
         write(8, fmt="(I5)") selected_int_kind($1)
@@ -85,9 +86,9 @@ AC_DEFUN([_OMPI_FORTRAN_SELECTED_INT_KIND],[
         # All analysis of $value is done in the upper-level / calling
         # macro
 
-        AS_VAR_COPY([$3], [type_var])
+        AS_VAR_COPY([$2], [type_var])
     else
-        $3=skipped
+        $2=skipped
     fi
     AS_VAR_POPDEF([type_var])dnl
 ])
