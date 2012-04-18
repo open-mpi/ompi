@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -27,7 +27,7 @@ EXTRA_DIST = CMakeLists.txt
 # code.
 AM_CPPFLAGS = -DOMPI_BUILDING_CXX_BINDINGS_LIBRARY=1 -DOMPI_SKIP_MPICXX=1
 
-if WANT_MPI_CXX_BINDINGS
+if BUILD_MPI_CXX_BINDINGS
 
 mpi_lib = libmpi_cxx.la
 

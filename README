@@ -8,7 +8,7 @@ Copyright (c) 2004-2008 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2007 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006-2011 Mellanox Technologies. All rights reserved.
 Copyright (c) 2006-2012 Oracle and/or its affiliates.  All rights reserved.
 Copyright (c) 2007      Myricom, Inc.  All rights reserved.
@@ -120,7 +120,7 @@ Compiler Notes
 --------------
 
 - Mixing compilers from different vendors when building Open MPI
-  (e.g., using the C/C++ compiler from one vendor and the F77/F90
+  (e.g., using the C/C++ compiler from one vendor and the Fortran
   compiler from a different vendor) has been successfully employed by
   some Open MPI users (discussed on the Open MPI user's mailing list),
   but such configurations are not tested and not documented.  For
@@ -225,72 +225,85 @@ Compiler Notes
 - Using the Absoft compiler to build the MPI Fortran bindings on Suse
   9.3 is known to fail due to a Libtool compatibility issue.
 
-- While it is possible -- on some platforms -- to configure and build
-  Open MPI with one Fortran compiler and then build MPI applications
-  with a different Fortran compiler, this is not recommended.  Subtle
-  problems can arise at run time, even if the MPI application
-  compiled and linked successfully.
+- MPI Fortran API support has been completely overhauled since the
+  Open MPI v1.5/v1.6 series.  
 
-  Specifically, the following two cases may not be portable between
-  different Fortran compilers:
+  ********************************************************************
+  ********************************************************************
+  *** There is now only a single Fortran MPI wrapper compiler:
+  *** mpifort.  mpif77 and mpif90 still exist, but they are symbolic
+  *** links to mpifort.
+  ********************************************************************
+  *** Similarly, Open MPI's configure script only recongizes the FC
+  *** and FCFLAGS environment variables (to specify the Fortran
+  *** compiler and compiler flags, respectively).  The F77 and FFLAGS
+  *** environment variables are IGNORED.
+  ********************************************************************
+  ********************************************************************
 
-  1. The C constants MPI_F_STATUS_IGNORE and MPI_F_STATUSES_IGNORE
-     will only compare properly to Fortran applications that were
-     created with Fortran compilers that that use the same
-     name-mangling scheme as the Fortran compiler with which Open MPI
-     was configured.
+  You can use ompi_info to see with which Fortran compiler Open MPI
+  was configured and compiled.
 
-  2. Fortran compilers may have different values for the logical
-     .TRUE. constant.  As such, any MPI function that uses the Fortran
-     LOGICAL type may only get .TRUE. values back that correspond to
-     the the .TRUE. value of the Fortran compiler with which Open MPI
-     was configured.  Note that some Fortran compilers allow forcing
-     .TRUE. to be 1 and .FALSE. to be 0.  For example, the Portland
-     Group compilers provide the "-Munixlogical" option, and Intel
-     compilers (version >= 8.) provide the "-fpscomp logicals" option.
+  There are up to three sets of Fortran MPI bindings that may be
+  provided (depending on your Fortran compiler):
 
-  You can use the ompi_info command to see the Fortran compiler with
-  which Open MPI was configured.
+  - mpif.h: This is the first MPI Fortran interface that was defined
+    in MPI-1.  It is a file that is included in Fortran source code.
+    Open MPI's mpif.h does not declare any MPI subroutines; they are
+    all implicit.
 
-- The Fortran 90 MPI bindings can now be built in one of three sizes
-  using --with-mpi-f90-size=SIZE (see description below).  These sizes
-  reflect the number of MPI functions included in the "mpi" Fortran 90
-  module and therefore which functions will be subject to strict type
-  checking.  All functions not included in the Fortran 90 module can
-  still be invoked from F90 applications, but will fall back to
-  Fortran-77 style checking (i.e., little/none).
+  - mpi module: The mpi module file was added in MPI-2.  It provides
+    strong compile-time parameter type checking for MPI subroutines.
 
-  - trivial: Only includes F90-specific functions from MPI-2.  This
-    means overloaded versions of MPI_SIZEOF for all the MPI-supported
-    F90 intrinsic types.
+  - mpi_f08 module: The mpi_f08 module was added in MPI-3.  It
+    provides many advantages over the mpif.h file and mpi module.  For
+    example, MPI handles have distinct types (vs. all being integers).
+    See the MPI-3 document for more details.
 
-  - small (default): All the functions in "trivial" plus all MPI
-    functions that take no choice buffers (meaning buffers that are
-    specified by the user and are of type (void*) in the C bindings --
-    generally buffers specified for message passing).  Hence,
-    functions like MPI_COMM_RANK are included, but functions like
-    MPI_SEND are not.
+    *** The mpi_f08 module is STRONGLY is recommended for all new MPI
+        Fortran subroutines and applications.  Note that the mpi_f08
+        module can be used in conjunction with the other two Fortran
+        MPI bindings in the same application (only one binding can be
+        used per subroutine/function, however).  Full interoperability
+        between mpif.h/mpi module and mpi_f08 module MPI handle types
+        is provided, allowing mpi_f08 to be used in new subroutines in
+        legacy MPI applications.
 
-  - medium: All the functions in "small" plus all MPI functions that
-    take one choice buffer (e.g., MPI_SEND, MPI_RECV, ...).  All
-    one-choice-buffer functions have overloaded variants for each of
-    the MPI-supported Fortran intrinsic types up to the number of
-    dimensions specified by --with-f90-max-array-dim (default value is
-    4).
+  The following notes apply to the above-listed Fortran bindings:
 
-  Increasing the size of the F90 module (in order from trivial, small,
-  and medium) will generally increase the length of time required to
-  compile user MPI applications.  Specifically, "trivial"- and
-  "small"-sized F90 modules generally allow user MPI applications to
-  be compiled fairly quickly but lose type safety for all MPI
-  functions with choice buffers.  "medium"-sized F90 modules generally
-  take longer to compile user applications but provide greater type
-  safety for MPI functions.
+  - The mpi_f08 module is new and has been tested with the Intel
+    Fortran compiler.  Other modern Fortran compilers may also work
+    (but are, as yet, currently untested).  It is expected that this
+    support will mature over time.
 
-  Note that MPI functions with two choice buffers (e.g., MPI_GATHER)
-  are not currently included in Open MPI's F90 interface.  Calls to
-  these functions will automatically fall through to Open MPI's F77
-  interface.  
+    The gfortran compiler is *not* supported with the mpi_f08 module
+    (gfortran lacks some necessary modern Fortran features, sorry).
+
+  - All Fortran compilers support the mpif.h-based bindings.
+
+  - If Open MPI is built with a non-GNU Fortran compiler, all MPI
+    subroutines will be prototyped in the mpi module, meaning that all
+    calls to MPI subroutines will have their parameter types checked
+    at compile time.
+
+  - If Open MPI is built with a GNU Fortran compiler (gfortran), it
+    will compile a limited "mpi" module -- not all MPI subroutines
+    will be prototyped due to both poor design of the mpi module in
+    the MPI-2 specification and a lack of features in gfortran.
+
+    Specifically, all MPI subroutines with no "choice" buffers are
+    prototyped and will receive strong parameter type checking at
+    run-time (e.g., MPI_INIT, MPI_COMM_RANK, etc.).
+
+    MPI subroutines with one choice buffer (e.g., MPI_SEND) are
+    prototyped for all intrinsic Fortran types for scalars and ranks 1
+    through 4 (the --with-gfortran-max-array-dim configure switch can
+    be used to increase the max array rank supported to up to 7).
+
+    MPI subroutines with two choice buffers (e.g., MPI_GATHER) are
+    *not* prototyped.  These subroutines can still be called in MPI
+    applications; they just will not receive strong parameter type
+    checking.
 
 
 General Run-Time Support Notes
@@ -1006,26 +1019,8 @@ MPI FUNCTIONALITY
   disable the C++ checks during configure; some of Open MPI's tools
   are written in C++ and therefore require a C++ compiler to be built.
 
---disable-mpi-f77
-  Disable building the Fortran 77 MPI bindings.
-
---disable-mpi-f90
-  Disable building the Fortran 90 MPI bindings.  Also related to the
-  --with-f90-max-array-dim and --with-mpi-f90-size options.
-
---with-mpi-f90-size=<SIZE>
-  Three sizes of the MPI F90 module can be built: trivial (only a
-  handful of MPI-2 F90-specific functions are included in the F90
-  module), small (trivial + all MPI functions that take no choice
-  buffers), and medium (small + all MPI functions that take 1 choice
-  buffer).  This parameter is only used if the F90 bindings are
-  enabled.
-
---with-f90-max-array-dim=<DIM>
-  The F90 MPI bindings are strictly typed, even including the number of
-  dimensions for arrays for MPI choice buffer parameters.  Open MPI
-  generates these bindings at compile time with a maximum number of
-  dimensions as specified by this parameter.  The default value is 4.
+--disable-mpi-fortran
+  Disable building the Fortran MPI bindings.
 
 --enable-mpi-ext(=<list>)
   Enable Open MPI's non-portable API extensions.  If no <list> is
@@ -1085,8 +1080,7 @@ MPI FUNCTIONALITY
 
   <cflags>: Flags passed by the mpicc wrapper to the C compiler
   <cxxflags>: Flags passed by the mpic++ wrapper to the C++ compiler
-  <fflags>: Flags passed by the mpif77 wrapper to the F77 compiler
-  <fcflags>: Flags passed by the mpif90 wrapper to the F90 compiler
+  <fcflags>: Flags passed by the mpifort wrapper to the Fortran compiler
   <ldflags>: Flags passed by all the wrappers to the linker
   <libs>: Flags passed by all the wrappers to the linker
 
@@ -1108,11 +1102,8 @@ CXX         - C++ compiler to use
 CXXFLAGS    - Compile flags to pass to the C++ compiler
 CXXCPPFLAGS - Preprocessor flags to pass to the C++ compiler
 
-F77         - Fortran 77 compiler to use
-FFLAGS      - Compile flags to pass to the Fortran 77 compiler
-
-FC          - Fortran 90 compiler to use
-FCFLAGS     - Compile flags to pass to the Fortran 90 compiler
+FC          - Fortran compiler to use
+FCFLAGS     - Compile flags to pass to the Fortran compiler
 
 LDFLAGS     - Linker flags to pass to all compilers
 LIBS        - Libraries to pass to all compilers (it is rarely
@@ -1122,7 +1113,7 @@ PKG_CONFIG  - Path to the pkg-config utility
 
 For example:
 
-  shell$ ./configure CC=mycc CXX=myc++ F77=myf77 F90=myf90 ...
+  shell$ ./configure CC=mycc CXX=myc++ FC=myfortran ...
 
 ***Note: We generally suggest using the above command line form for
    setting different compilers (vs. setting environment variables and
@@ -1146,11 +1137,11 @@ Note that you may also want to ensure that the value of
 LD_LIBRARY_PATH is set appropriately (or not at all) for your build
 (or whatever environment variable is relevant for your operating
 system).  For example, some users have been tripped up by setting to
-use non-default Fortran compilers via FC / F77, but then failing to
-set LD_LIBRARY_PATH to include the directory containing that
-non-default Fortran compiler's support libraries.  This causes Open
-MPI's configure script to fail when it tries to compile / link / run
-simple Fortran programs.
+use a non-default Fortran compiler via FC, but then failing to set
+LD_LIBRARY_PATH to include the directory containing that non-default
+Fortran compiler's support libraries.  This causes Open MPI's
+configure script to fail when it tries to compile / link / run simple
+Fortran programs.
 
 It is required that the compilers specified be compile and link
 compatible, meaning that object files created by one compiler must be
@@ -1335,8 +1326,10 @@ Here's how we apply those rules specifically to Open MPI:
     applications.
 
     * libmpi
-    * libmpi_f77
-    * libmpi_f90
+    * libmpi_mpifh
+    * libmpi_usempi_tkr
+    * libmpi_usempi_ignore_tkr
+    * libmpi_usempif08
     * libmpi_cxx
 
  4. Note, however, that libmpi.so can have its "revision" number
@@ -1532,8 +1525,7 @@ compiling MPI applications:
 
 C:          mpicc
 C++:        mpiCC (or mpic++ if your filesystem is case-insensitive)
-Fortran 77: mpif77
-Fortran 90: mpif90
+Fortran:    mpifort
 
 For example:
 
@@ -1568,9 +1560,7 @@ ompi       Synonym for "ompi-c"; Open MPI applications using the C
            MPI bindings
 ompi-c     Open MPI applications using the C MPI bindings
 ompi-cxx   Open MPI applications using the C or C++ MPI bindings
-ompi-f77   Open MPI applications using the C or "mpif.h" MPI bindings
-ompi-f90   Open MPI applications using the C, "mpif.h" or "use mpi" MPI
-           bindings
+ompi-fort  Open MPI applications using the Fortran MPI bindings
 ------------------------------------------------------------------------
 
 The following pkg-config(1) configuration files *may* be installed,

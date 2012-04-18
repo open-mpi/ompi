@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,7 +60,7 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
      */
 
     if      (r > 38) *newtype = &ompi_mpi_datatype_null.dt;
-#if OMPI_HAVE_F90_INTEGER16
+#if OMPI_HAVE_FORTRAN_INTEGER16
     else if (r > 18) *newtype = &ompi_mpi_long_long_int.dt;
 #else
     else if (r > 18) *newtype = &ompi_mpi_datatype_null.dt;

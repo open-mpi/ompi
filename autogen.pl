@@ -804,6 +804,7 @@ GNU tools:
 ##############################################################################
 
 sub safe_system {
+    print "Running: " . join(/ /, @_) . "\n";
     my $ret = system(@_);
     $ret >>= 8;
     if (0 != $ret) {
@@ -1084,6 +1085,27 @@ if ($include_arg) {
         # NOTE: it makes no sense to include all as that is the default
         # so ignore that scenario here, if given
     }
+}
+
+#---------------------------------------------------------------------------
+
+++$step;
+verbose "\n$step. Running template-generating scripts\n\n";
+
+# These scripts generate files that are used by configure (i.e., we
+# generate one .h.in file from another .h.in file so that humans don't
+# have to maintain two copies).
+
+my @scripts;
+push(@scripts, "ompi/include/mpif-common.pl");
+
+foreach my $s (@scripts) {
+    verbose "=== $s\n";
+    if (! -x $s) {
+        print "Cannot find executable $s!\nAborting.\n";
+        my_exit(1);
+    }
+    system($s);
 }
 
 #---------------------------------------------------------------------------

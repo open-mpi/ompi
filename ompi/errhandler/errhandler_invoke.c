@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -25,7 +25,7 @@
 #include "ompi/file/file.h"
 #include "ompi/request/request.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/f77/fint_2_int.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
 
 
 int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 

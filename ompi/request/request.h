@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -312,6 +312,7 @@ OMPI_DECLSPEC extern int32_t               ompi_request_poll;
 OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
 OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
 OMPI_DECLSPEC extern ompi_predefined_request_t        ompi_request_null;
+OMPI_DECLSPEC extern ompi_predefined_request_t        *ompi_request_null_addr;
 OMPI_DECLSPEC extern ompi_request_t        ompi_request_empty;
 OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
 OMPI_DECLSPEC extern ompi_request_fns_t    ompi_request_functions;

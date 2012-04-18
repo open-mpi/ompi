@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -35,6 +35,7 @@ size_t                           ompi_request_failed = 0;
 opal_mutex_t                     ompi_request_lock;
 opal_condition_t                 ompi_request_cond;
 ompi_predefined_request_t        ompi_request_null;
+ompi_predefined_request_t        *ompi_request_null_addr = &ompi_request_null;
 ompi_request_t                   ompi_request_empty;
 ompi_status_public_t             ompi_status_empty;
 ompi_request_fns_t               ompi_request_functions = {

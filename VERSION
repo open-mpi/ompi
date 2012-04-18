@@ -21,7 +21,7 @@ release=0
 # only requirement is that it must be entirely printable ASCII 
 # characters and have no white space.
 
-greek=a1
+greek=mpif08-6
 
 # If want_repo_rev=1, then the repo revision number will be included
 # in the overall Open MPI version number in some form.
@@ -90,8 +90,9 @@ date="Unreleased developer copy"
 
 libmpi_so_version=0:0:0
 libmpi_cxx_so_version=0:0:0
-libmpi_f77_so_version=0:0:0
-libmpi_f90_so_version=0:0:0
+libmpi_mpifh_so_version=0:0:0
+libmpi_usempi_tkr_so_version=0:0:0
+libmpi_usempi_ignore_tkr_so_version=0:0:0
 libopen_rte_so_version=0:0:0
 libopen_pal_so_version=0:0:0
 libmpi_java_so_version=0:0:0

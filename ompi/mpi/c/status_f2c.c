@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,8 +22,8 @@
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
-#include "ompi/mpi/f77/fint_2_int.h"
-#include "ompi/mpi/f77/constants.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
+#include "ompi/mpi/fortran/base/constants.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Status_f2c = PMPI_Status_f2c
@@ -49,7 +49,7 @@ int MPI_Status_f2c(MPI_Fint *f_status, MPI_Status *c_status)
            MPI_STATUS[ES]_IGNORE, it's erroneous */
         
         if (NULL == f_status || 
-#if OMPI_WANT_F77_BINDINGS || OMPI_WANT_F90_BINDINGS
+#if OMPI_BUILD_FORTRAN_BINDINGS
             /* This section is #if'ed out if we are not building the
                fortran bindings because these macros check values
                against constants that only exist if the fortran

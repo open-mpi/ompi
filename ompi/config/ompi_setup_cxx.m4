@@ -13,7 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
-dnl Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -57,8 +57,8 @@ AC_DEFUN([OMPI_SETUP_CXX],[
 
     _OMPI_CXX_CHECK_2D_CONST_CAST
 
-    AM_CONDITIONAL(WANT_MPI_CXX_BINDINGS, [test "$WANT_MPI_CXX_SUPPORT" = 1])
-    AC_DEFINE_UNQUOTED(OMPI_WANT_CXX_BINDINGS, $WANT_MPI_CXX_SUPPORT,
+    AM_CONDITIONAL(BUILD_MPI_CXX_BINDINGS, [test "$WANT_MPI_CXX_SUPPORT" = 1])
+    AC_DEFINE_UNQUOTED(OMPI_BUILD_CXX_BINDINGS, $WANT_MPI_CXX_SUPPORT,
         [Whether we want MPI C++ support or not])
 ])
 
@@ -345,7 +345,6 @@ AC_DEFUN([_OMPI_CXX_CHECK_EXCEPTIONS_BACKEND],[
             LDFLAGS="$LDFLAGS $OMPI_CXX_EXCEPTIONS_LDFLAGS"
 
             WRAPPER_EXTRA_CFLAGS="$OMPI_CXX_EXCEPTIONS_CXXFLAGS ${WRAPPER_EXTRA_CFLAGS}"
-            WRAPPER_EXTRA_FFLAGS="$OMPI_CXX_EXCEPTIONS_CXXFLAGS ${WRAPPER_EXTRA_FFLAGS}"
             WRAPPER_EXTRA_FCFLAGS="$OMPI_CXX_EXCEPTIONS_CXXFLAGS ${WRAPPER_EXTRA_FCFLAGS}"
             WRAPPER_EXTRA_CXXFLAGS="$OMPI_CXX_EXCEPTIONS_CXXFLAGS ${WRAPPER_EXTRA_CXXFLAGS}"
         fi

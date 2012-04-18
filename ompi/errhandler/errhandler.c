@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -52,10 +52,21 @@ OBJ_CLASS_INSTANCE(ompi_errhandler_t, opal_object_t, ompi_errhandler_construct,
                    ompi_errhandler_destruct);
 
 
+/*
+ * _addr flavors are for F03 bindings
+ */
 ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
+ompi_predefined_errhandler_t *ompi_mpi_errhandler_null_addr = 
+    &ompi_mpi_errhandler_null;
 ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
+ompi_predefined_errhandler_t *ompi_mpi_errors_are_fatal_addr = 
+    &ompi_mpi_errors_are_fatal;
 ompi_predefined_errhandler_t ompi_mpi_errors_return;
+ompi_predefined_errhandler_t *ompi_mpi_errors_return_addr = 
+    &ompi_mpi_errors_return;
 ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
+ompi_predefined_errhandler_t *ompi_mpi_errors_throw_exceptions_addr = 
+    &ompi_mpi_errors_throw_exceptions;
 
 /*
  * Local state to know when the three intrinsics have been freed; see

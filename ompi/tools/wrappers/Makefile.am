@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -18,7 +18,7 @@
 # $HEADER$
 #
 
-generated_man_pages = mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1
+generated_man_pages = mpicc.1 mpic++.1 mpicxx.1 mpifort.1 mpif77.1 mpif90.1
 man_pages = $(generated_man_pages) mpijavac.1
 
 EXTRA_DIST = mpijavac.1
@@ -36,6 +36,7 @@ install-exec-hook-always:
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx; $(LN_S) ompi_wrapper_script mpicxx)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77; $(LN_S) ompi_wrapper_script mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90; $(LN_S) ompi_wrapper_script mpif90)
+	(cd $(DESTDIR)$(bindir); rm -f mpifort; $(LN_S) ompi_wrapper_script mpifort)
 	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
 
 uninstall-local-always:
@@ -44,7 +45,8 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpicxx \
 	$(DESTDIR)$(bindir)/mpif77 \
 	$(DESTDIR)$(bindir)/mpif90 \
-	$(DESTDIR)$(bindir)/mpijavac
+	$(DESTDIR)$(bindir)/mpijavac \
+	$(DESTDIR)$(bindir)/mpifort
 
 if CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always
@@ -61,15 +63,14 @@ else # OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 if OMPI_INSTALL_BINARIES
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ompi.pc ompi-c.pc ompi-cxx.pc ompi-f77.pc ompi-f90.pc
+pkgconfig_DATA = ompi.pc ompi-c.pc ompi-cxx.pc ompi-fort.pc
 
 man_MANS = $(man_pages)
 
 dist_pkgdata_DATA = \
         mpicc-wrapper-data.txt \
 	mpic++-wrapper-data.txt \
-	mpif77-wrapper-data.txt \
-	mpif90-wrapper-data.txt
+	mpifort-wrapper-data.txt
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
@@ -79,10 +80,15 @@ install-exec-hook-always:
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper mpicxx)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) opal_wrapper mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) opal_wrapper mpif90)
+	(cd $(DESTDIR)$(bindir); rm -f mpifort$(EXEEXT); $(LN_S) opal_wrapper mpifort)
 	(cd $(DESTDIR)$(bindir); chmod +x mpijavac.pl; rm -f mpijavac; $(LN_S) mpijavac.pl mpijavac)
 
 install-data-hook-always:
 	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpif77-wrapper-data.txt; $(LN_S) mpifort-wrapper-data.txt mpif77-wrapper-data.txt)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpif90-wrapper-data.txt; $(LN_S) mpifort-wrapper-data.txt mpif90-wrapper-data.txt)
+	(cd $(DESTDIR)$(pkgconfigdir); rm -f ompi-f77.pc; $(LN_S) ompi-fort.pc ompi-f77.pc)
+	(cd $(DESTDIR)$(pkgconfigdir); rm -f ompi-f90.pc; $(LN_S) ompi-fort.pc ompi-f90.pc)
 
 uninstall-local-always:
 	rm -f $(DESTDIR)$(bindir)/mpicc$(EXEEXT) \
@@ -90,9 +96,15 @@ uninstall-local-always:
 	$(DESTDIR)$(bindir)/mpicxx$(EXEEXT) \
 	$(DESTDIR)$(bindir)/mpif77$(EXEEXT) \
 	$(DESTDIR)$(bindir)/mpif90$(EXEEXT) \
-    $(DESTDIR)$(bindir)/mpijavac \
-    $(DESTDIR)$(bindir)/mpijavac.pl \
-	$(DESTDIR)$(pkgdatadir)/mpicxx-wrapper-data.txt
+	$(DESTDIR)$(bindir)/mpifort$(EXEEXT) \
+	$(DESTDIR)$(pkgdatadir)/mpicxx-wrapper-data.txt \
+	$(DESTDIR)$(pkgdatadir)/mpif77-wrapper-data.txt \
+	$(DESTDIR)$(pkgdatadir)/mpif90-wrapper-data.txt \
+	$(DESTDIR)$(pkgconfigdir)/ompi-f77.pc \
+	$(DESTDIR)$(pkgconfigdir)/ompi-f90.pc \
+	$(DESTDIR)$(pkgconfigdir)/ompi-fort.pc \
+	$(DESTDIR)$(bindir)/mpijavac \
+	$(DESTDIR)$(bindir)/mpijavac.pl
 
 if CASE_SENSITIVE_FS
 install-exec-hook: install-exec-hook-always
@@ -142,10 +154,18 @@ mpicxx.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpicxx.1
 	sed -e 's/#COMMAND#/mpicxx/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/C++/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpicxx.1
 
+# Intentionally set the COMMAND to be mpifort, because we want to push
+# everyone to use mpifort instead of the deprecated mpif77 wrapper name.
 mpif77.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpif77.1
-	sed -e 's/#COMMAND#/mpif77/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/Fortran 77/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpif77.1
+	sed -e 's/#COMMAND#/mpifort/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpif77.1
 
+# Intentionally set the COMMAND to be mpifort, because we want to push
+# everyone to use mpifort instead of the deprecated mpif90 wrapper name.
 mpif90.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
 	rm -f mpif90.1
-	sed -e 's/#COMMAND#/mpif90/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/Fortran 90/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpif90.1
+	sed -e 's/#COMMAND#/mpifort/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpif90.1
+
+mpifort.1: $(top_builddir)/opal/tools/wrappers/generic_wrapper.1
+	rm -f mpifort.1
+	sed -e 's/#COMMAND#/mpifort/g' -e 's/#PROJECT#/Open MPI/g' -e 's/#PROJECT_SHORT#/OMPI/g' -e 's/#LANGUAGE#/Fortran/g' < $(top_builddir)/opal/tools/wrappers/generic_wrapper.1 > mpifort.1

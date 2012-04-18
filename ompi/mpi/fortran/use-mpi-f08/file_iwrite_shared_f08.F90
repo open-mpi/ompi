@@ -1,0 +1,26 @@
+! -*- f90 -*-
+!
+! Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+! Copyright (c) 2009-2012 Los Alamos National Security, LLC.
+!               All Rights reserved.
+! $COPYRIGHT$
+
+#include "ompi/mpi/fortran/configure-fortran-output.h"
+
+subroutine MPI_File_iwrite_shared_f08(fh,buf,count,datatype,request,ierror)
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
+   use :: mpi_f08, only : ompi_file_iwrite_shared_f
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buf
+   TYPE(MPI_File), INTENT(IN) :: fh
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+   integer :: c_ierror
+
+   call ompi_file_iwrite_shared_f(fh%MPI_VAL,buf,count,&
+                                  datatype%MPI_VAL,request%MPI_VAL,c_ierror)
+   if (present(ierror)) ierror = c_ierror
+
+end subroutine MPI_File_iwrite_shared_f08

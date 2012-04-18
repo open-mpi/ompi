@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      UT-Battelle, LLC
- * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -37,7 +37,7 @@
 #include "opal/class/opal_object.h"
 
 #include "ompi/datatype/ompi_datatype.h"
-#include "ompi/mpi/f77/fint_2_int.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
 #include "ompi/mca/op/op.h"
 
 BEGIN_C_DECLS
@@ -192,74 +192,88 @@ typedef struct ompi_predefined_op_t ompi_predefined_op_t;
 OMPI_DECLSPEC extern int ompi_op_ddt_map[OMPI_DATATYPE_MAX_PREDEFINED];
 
 /**
- * Global variable for MPI_OP_NULL
+ * Global variable for MPI_OP_NULL (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_null;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_null_addr;
 
 /**
- * Global variable for MPI_MAX
+ * Global variable for MPI_MAX (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_max;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_max_addr;
 
 /**
- * Global variable for MPI_MIN
+ * Global variable for MPI_MIN (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_min;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_min_addr;
 
 /**
- * Global variable for MPI_SUM
+ * Global variable for MPI_SUM (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_sum;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_sum_addr;
 
 /**
- * Global variable for MPI_PROD
+ * Global variable for MPI_PROD (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_prod;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_prod_addr;
 
 /**
- * Global variable for MPI_LAND
+ * Global variable for MPI_LAND (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_land;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_land_addr;
 
 /**
- * Global variable for MPI_BAND
+ * Global variable for MPI_BAND (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_band;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_band_addr;
 
 /**
- * Global variable for MPI_LOR
+ * Global variable for MPI_LOR (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_lor;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_lor_addr;
 
 /**
- * Global variable for MPI_BOR
+ * Global variable for MPI_BOR (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_bor;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_bor_addr;
 
 /**
- * Global variable for MPI_LXOR
+ * Global variable for MPI_LXOR (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_lxor;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_lxor_addr;
 
 /**
- * Global variable for MPI_BXOR
+ * Global variable for MPI_BXOR (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_bxor;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_bxor_addr;
 
 /**
- * Global variable for MPI_MAXLOC
+ * Global variable for MPI_MAXLOC (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_maxloc;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_maxloc_addr;
 
 /**
- * Global variable for MPI_MINLOC
+ * Global variable for MPI_MINLOC (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_minloc;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_minloc_addr;
 
 /**
- * Global variable for MPI_REPLACE
+ * Global variable for MPI_REPLACE (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_op_t ompi_mpi_op_replace;
+OMPI_DECLSPEC extern ompi_predefined_op_t *ompi_mpi_op_replace_addr;
 
 
 /**

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -97,6 +97,11 @@ extern opal_pointer_array_t ompi_info_f_to_c_table;
  * Global instance for MPI_INFO_NULL
  */
 OMPI_DECLSPEC extern ompi_predefined_info_t ompi_mpi_info_null;
+
+/**
+ * Symbol for Fortran 03 bindings to bind to
+ */
+OMPI_DECLSPEC extern ompi_predefined_info_t *ompi_mpi_info_null_addr;
 
 /**
  * \internal
