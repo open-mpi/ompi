@@ -84,13 +84,16 @@ endif # AMHAVECSFS
 if AMMACOS
 install-data-hook-2:
 	cp $(srcdir)/TAUINST_MACOS.SPEC $(DESTDIR)$(datadir)/TAUINST.SPEC
+uninstall-local-data-2:
+	rm -f $(DESTDIR)$(datadir)/TAUINST.SPEC
 else # AMMACOS
 install-data-hook-2:
+uninstall-local-data-2:
 endif # AMMACOS
 
 install-exec-hook: install-exec-hook-always
 install-data-hook: install-data-hook-always install-data-hook-1 install-data-hook-2
-uninstall-local: uninstall-local-exec-always uninstall-local-data-always uninstall-local-data-1
+uninstall-local: uninstall-local-exec-always uninstall-local-data-always uninstall-local-data-1 uninstall-local-data-2
 
 if AMHAVEF77
 HAVEF77CXXFLAGS = -DHAVE_F77
