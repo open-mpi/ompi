@@ -99,7 +99,7 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
     opal_atomic_wmb();
 
     ret = PtlMESearch(ompi_mtl_portals4.ni_h,
-                      ompi_mtl_portals4.send_idx,
+                      ompi_mtl_portals4.recv_idx,
                       &me,
                       PTL_SEARCH_ONLY,
                       &request);
@@ -173,7 +173,7 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
     opal_atomic_wmb();
 
     ret = PtlMESearch(ompi_mtl_portals4.ni_h,
-                      ompi_mtl_portals4.send_idx,
+                      ompi_mtl_portals4.recv_idx,
                       &me,
                       PTL_SEARCH_DELETE,
                       &request);
