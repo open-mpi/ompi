@@ -75,6 +75,7 @@
 %{!?modulefile_name: %define modulefile_name %{version}}
 
 # The name of the modules RPM.  Can vary from system to system.
+# RHEL6 calls it "environment-modules".
 # type: string (name of modules RPM)
 %{!?modules_rpm_name: %define modules_rpm_name environment-modules}
 
