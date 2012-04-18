@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (c) 2010-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 
@@ -102,7 +102,9 @@ while (<CMD>) {
         my $filename = $tokens[1];
         $filename = $tokens[2]
             if ($tokens[1] =~ /\+/);
-        push(@files, $filename);
+        # Don't bother saving directory names
+        push(@files, $filename)
+            if (-f $filename);
     }
 }
 close(CMD);
