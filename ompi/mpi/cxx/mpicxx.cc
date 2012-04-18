@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2011      FUJITSU LIMITED.  All rights reserved.
 // $COPYRIGHT$
@@ -76,7 +76,7 @@ const Datatype TWOINT(MPI_2INT);
 const Datatype SHORT_INT(MPI_SHORT_INT);
 const Datatype LONG_DOUBLE_INT(MPI_LONG_DOUBLE);
 
-#if OMPI_WANT_F77_BINDINGS
+#if OMPI_BUILD_FORTRAN_BINDINGS
 // elementary datatype (Fortran)
 const Datatype REAL((MPI_Datatype)&(ompi_mpi_real));
 const Datatype INTEGER((MPI_Datatype)&(ompi_mpi_integer));
