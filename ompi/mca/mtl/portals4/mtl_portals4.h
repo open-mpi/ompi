@@ -55,7 +55,7 @@ struct mca_mtl_portals4_module_t {
     ptl_handle_ni_t ni_h;
 
     /** portals index for message matching */
-    ptl_pt_index_t send_idx;
+    ptl_pt_index_t recv_idx;
     /** portals index for long message rendezvous */
     ptl_pt_index_t read_idx;
     /** portals index for flow control recovery */
@@ -70,7 +70,7 @@ struct mca_mtl_portals4_module_t {
     ptl_handle_md_t zero_md_h;
 
     /** long message receive overflow ME.  Persistent ME, first in
-        overflow list on the send_idx portal table. */
+        overflow list on the recv_idx portal table. */
     ptl_handle_me_t long_overflow_me_h;
 
     /** List of active short receive blocks.  Active means that the ME
@@ -103,9 +103,9 @@ typedef struct mca_mtl_portals4_module_t mca_mtl_portals4_module_t;
 
 extern mca_mtl_portals4_module_t ompi_mtl_portals4;
 
-#define REQ_SEND_TABLE_ID    2
-#define REQ_READ_TABLE_ID    3
-#define REQ_FLOWCTL_TABLE_ID 4
+#define REQ_RECV_TABLE_ID    12
+#define REQ_READ_TABLE_ID    13
+#define REQ_FLOWCTL_TABLE_ID 14
 
 #define MTL_PORTALS4_FLOWCTL_TRIGGER 0x01
 #define MTL_PORTALS4_FLOWCTL_ALERT   0x02

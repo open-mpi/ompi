@@ -393,7 +393,7 @@ ompi_mtl_portals4_irecv(struct mca_mtl_base_module_t* mtl,
     me.ignore_bits = ignore_bits;
 
     ret = PtlMEAppend(ompi_mtl_portals4.ni_h,
-                      ompi_mtl_portals4.send_idx,
+                      ompi_mtl_portals4.recv_idx,
                       &me,
                       PTL_PRIORITY_LIST,
                       ptl_request,
