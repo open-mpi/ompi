@@ -52,7 +52,6 @@ AC_DEFUN([OMPI_INTL_PTHREAD_TRY_LINK_FORTRAN], [
 #
 # Make sure that we can run a small application in Fortran, with
 # pthreads living in a C object file
-OMPI_FORTRAN_MAKE_C_FUNCTION([ompi_ac_thread_fn], [pthreadtest])
 
 # Fortran module
 cat > conftestf.f <<EOF
@@ -76,7 +75,7 @@ $ompi_conftest_h
 #ifdef __cplusplus
 extern "C" {
 #endif
-void $ompi_ac_thread_fn()
+void pthreadtest_f(void)
 {
   pthread_t th;
   pthread_create(&th, NULL, NULL, NULL);
@@ -86,6 +85,19 @@ void $ompi_ac_thread_fn()
   pthread_create(0,0,0,0);
   pthread_cleanup_pop(0); 
 }
+
+void pthreadtest(void)
+{ return pthreadtest_f(); }
+
+void pthreadtest_(void)
+{ return pthreadtest_f(); }
+
+void pthreadtest__(void)
+{ return pthreadtest_f(); }
+
+void PTHREADTEST(void)
+{ return pthreadtest_f(); }
+
 #ifdef __cplusplus
 }
 #endif
@@ -225,7 +237,7 @@ AC_DEFUN([OMPI_INTL_POSIX_THREADS_PLAIN_FC], [
 #
 # Fortran compiler
 #
-if test "$ompi_pthread_fortran_success" = "0" -a "$OMPI_WANT_FORTRAN_BINDINGS" = "1"; then
+if test "$ompi_pthread_fortran_success" = "0" -a "$OMPI_WANT_FORTRAN_BINDINGS" = "1" -a $ompi_fortran_happy -eq 1; then
   AC_MSG_CHECKING([if Fortran compiler and POSIX threads work as is])
   if test "$HAVE_POSIX_THREADS" = "1" ; then
     run_this_test=1

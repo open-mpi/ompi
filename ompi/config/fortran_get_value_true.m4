@@ -31,11 +31,9 @@ AC_DEFUN([OMPI_FORTRAN_GET_VALUE_TRUE],[
 
     AC_CACHE_CHECK([Fortran value for .TRUE. logical type],
         fortran_true_var,
-        [if test "$1" = "none" -o $OMPI_WANT_FORTRAN_BINDINGS -eq 0 ; then
+        [if test "$1" = "none" -o $OMPI_WANT_FORTRAN_BINDINGS -eq 0 -o $ompi_fortran_happy -eq 0 ; then
              value=77
          else
-             OMPI_FORTRAN_MAKE_C_FUNCTION([ompi_print_logical_fn], [print])
-
              #
              # C module
              # We really need the confdefs.h Header file for
@@ -57,9 +55,7 @@ AC_DEFUN([OMPI_FORTRAN_GET_VALUE_TRUE],[
 extern "C" {
 #endif
 
-void $ompi_print_logical_fn(ompi_fortran_logical_t * logical);
-
-void $ompi_print_logical_fn(ompi_fortran_logical_t * logical)
+void ompi_print_f(ompi_fortran_logical_t * logical)
 {
     FILE *f=fopen("conftestval", "w");
     if (!f) exit(1);
@@ -77,16 +73,27 @@ void $ompi_print_logical_fn(ompi_fortran_logical_t * logical)
     }
 }
 
+void ompi_print(ompi_fortran_logical_t *logical)
+{ ompi_print_f(logical); }
+
+void ompi_print_(ompi_fortran_logical_t *logical)
+{ ompi_print_f(logical); }
+
+void ompi_print__(ompi_fortran_logical_t *logical)
+{ ompi_print_f(logical); }
+
+void OMPI_PRINT(ompi_fortran_logical_t *logical)
+{ ompi_print_f(logical); }
+
 #ifdef __cplusplus
 }
 #endif
 EOF
-
              cat > conftestf.f <<EOF
       program main
       logical value
       value=.TRUE.
-      CALL print(value)
+      CALL ompi_print(value)
       end
 EOF
 
@@ -98,9 +105,9 @@ EOF
                       [happy=1], [happy=0])],
                  [happy=0])
 
-             if test "$happy" = "0" ; then
-                 AC_MSG_ERROR([Could not determine value of Fortran .TRUE..  Aborting.])
-             fi
+             AS_IF([test $happy -eq 0 -a $ompi_fortran_happy -eq 1],
+                          [AC_MSG_ERROR([Could not compile Fortran .TRUE. test.  Aborting.])
+                          ])
 
              AS_IF([test "$cross_compiling" = "yes"],
                  [AC_MSG_ERROR([Can not determine value of .TRUE. when cross-compiling])],
