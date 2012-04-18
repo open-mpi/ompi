@@ -15,5 +15,4 @@ with_gm=no
 with_mx=no
 enable_binaries=no
 enable_script_wrapper_compilers=yes
-enable_mpi_f77=no
-enable_mpi_f90=no
+enable_mpi_fortran=no
