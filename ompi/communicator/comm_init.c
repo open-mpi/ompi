@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2010 University of Houston. All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  * 
@@ -47,6 +47,13 @@ ompi_predefined_communicator_t  ompi_mpi_comm_world;
 ompi_predefined_communicator_t  ompi_mpi_comm_self;
 ompi_predefined_communicator_t  ompi_mpi_comm_null;
 ompi_communicator_t  *ompi_mpi_comm_parent;
+
+ompi_predefined_communicator_t *ompi_mpi_comm_world_addr = 
+    &ompi_mpi_comm_world;
+ompi_predefined_communicator_t *ompi_mpi_comm_self_addr =
+    &ompi_mpi_comm_self;
+ompi_predefined_communicator_t *ompi_mpi_comm_null_addr =
+    &ompi_mpi_comm_null;
 
 static void ompi_comm_construct(ompi_communicator_t* comm);
 static void ompi_comm_destruct(ompi_communicator_t* comm);

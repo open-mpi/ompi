@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -56,22 +56,36 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 
 
 /*
- * Intrinsic MPI_Op objects
+ * Intrinsic MPI_Op objects (_addr flavors are for F03 bindings)
  */
 ompi_predefined_op_t ompi_mpi_op_null;
+ompi_predefined_op_t *ompi_mpi_op_null_addr = &ompi_mpi_op_null;
 ompi_predefined_op_t ompi_mpi_op_max;
+ompi_predefined_op_t *ompi_mpi_op_max_addr = &ompi_mpi_op_max;
 ompi_predefined_op_t ompi_mpi_op_min;
+ompi_predefined_op_t *ompi_mpi_op_min_addr = &ompi_mpi_op_min;
 ompi_predefined_op_t ompi_mpi_op_sum;
+ompi_predefined_op_t *ompi_mpi_op_sum_addr = &ompi_mpi_op_sum;
 ompi_predefined_op_t ompi_mpi_op_prod;
+ompi_predefined_op_t *ompi_mpi_op_prod_addr = &ompi_mpi_op_prod;
 ompi_predefined_op_t ompi_mpi_op_land;
+ompi_predefined_op_t *ompi_mpi_op_land_addr = &ompi_mpi_op_land;
 ompi_predefined_op_t ompi_mpi_op_band;
+ompi_predefined_op_t *ompi_mpi_op_band_addr = &ompi_mpi_op_band;
 ompi_predefined_op_t ompi_mpi_op_lor;
+ompi_predefined_op_t *ompi_mpi_op_lor_addr = &ompi_mpi_op_lor;
 ompi_predefined_op_t ompi_mpi_op_bor;
+ompi_predefined_op_t *ompi_mpi_op_bor_addr = &ompi_mpi_op_bor;
 ompi_predefined_op_t ompi_mpi_op_lxor;
+ompi_predefined_op_t *ompi_mpi_op_lxor_addr = &ompi_mpi_op_lxor;
 ompi_predefined_op_t ompi_mpi_op_bxor;
+ompi_predefined_op_t *ompi_mpi_op_bxor_addr = &ompi_mpi_op_bxor;
 ompi_predefined_op_t ompi_mpi_op_maxloc;
+ompi_predefined_op_t *ompi_mpi_op_maxloc_addr = &ompi_mpi_op_maxloc;
 ompi_predefined_op_t ompi_mpi_op_minloc;
+ompi_predefined_op_t *ompi_mpi_op_minloc_addr = &ompi_mpi_op_minloc;
 ompi_predefined_op_t ompi_mpi_op_replace;
+ompi_predefined_op_t *ompi_mpi_op_replace_addr = &ompi_mpi_op_replace;
 
 /*
  * Map from ddt->id to position in op function pointer array

@@ -148,7 +148,7 @@
 #undef OPAL_PTRDIFF_TYPE
 
 /* Whether we want MPI cxx support or not */
-#undef OMPI_WANT_CXX_BINDINGS
+#undef OMPI_BUILD_CXX_BINDINGS
 
 /* do we want to try to work around C++ bindings SEEK_* issue? */
 #undef OMPI_WANT_MPI_CXX_SEEK
@@ -595,6 +595,7 @@ enum {
 /*
  * Datatype combiners.
  * Do not change the order of these without also modifying mpif.h.in.
+ * (see also mpif-common.h.fin).
  */
 enum {
   MPI_COMBINER_NAMED,
@@ -619,7 +620,8 @@ enum {
 
 /* 
  * Communicator split type constants.
- * Do not change the order of these without also modifying mpif.h.in.
+ * Do not change the order of these without also modifying mpif.h.in
+ * (see also mpif-common.h.fin).
  */
 enum {
   MPI_COMM_TYPE_SHARED
@@ -2127,7 +2129,7 @@ OMPI_DECLSPEC  double PMPI_Wtime(void);
  *   - We are not building OMPI itself
  *   - We are using a C++ compiler
  */
-#if !defined(OMPI_SKIP_MPICXX) && OMPI_WANT_CXX_BINDINGS && !OMPI_BUILDING
+#if !defined(OMPI_SKIP_MPICXX) && OMPI_BUILD_CXX_BINDINGS && !OMPI_BUILDING
 #if defined(c_plusplus) || defined(__cplusplus)
 #include "openmpi/ompi/mpi/cxx/mpicxx.h"
 #endif

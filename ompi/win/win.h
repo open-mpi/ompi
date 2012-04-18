@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -106,6 +106,7 @@ struct ompi_predefined_win_t {
 typedef struct ompi_predefined_win_t ompi_predefined_win_t;
 
 OMPI_DECLSPEC extern ompi_predefined_win_t ompi_mpi_win_null;
+OMPI_DECLSPEC extern ompi_predefined_win_t *ompi_mpi_win_null_addr;
 
 int ompi_win_init(void);
 int ompi_win_finalize(void);

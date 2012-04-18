@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
@@ -121,8 +121,9 @@ OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
 m4_ifdef([project_ompi],
          [AC_SUBST(libmpi_so_version)
           AC_SUBST(libmpi_cxx_so_version)
-          AC_SUBST(libmpi_f77_so_version)
-          AC_SUBST(libmpi_f90_so_version)
+          AC_SUBST(libmpi_mpifh_so_version)
+          AC_SUBST(libmpi_usempi_tkr_so_version)
+          AC_SUBST(libmpi_usempi_ignore_tkr_so_version)
           AC_SUBST(libmpi_java_so_version)
           # It's icky that we have to hard-code the names of the
           # common components here.  :-( This could probably be done
@@ -347,6 +348,7 @@ AC_CHECK_TYPES(__float128)
 AC_CHECK_TYPES(long double)
 # We only need these types if we're building the OMPI project, but
 # OPAL currently doesn't protect for their lack of presence well.
+AC_CHECK_HEADERS(complex.h)
 AC_CHECK_TYPES(float _Complex)
 AC_CHECK_TYPES(double _Complex)
 AC_CHECK_TYPES(long double _Complex)
@@ -927,7 +929,6 @@ LIBS="$LIBS $THREAD_LIBS"
 WRAPPER_EXTRA_CFLAGS="$WRAPPER_EXTRA_CFLAGS $THREAD_CFLAGS"
 m4_ifdef([project_ompi],
          [WRAPPER_EXTRA_CXXFLAGS="$WRAPPER_EXTRA_CXXFLAGS $THREAD_CXXFLAGS"
-          WRAPPER_EXTRA_FFLAGS="$WRAPPER_EXTRA_FFLAGS $THREAD_FFLAGS"
           WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $THREAD_FFLAGS"])
 WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $THREAD_LDFLAGS"
 # no need to update WRAPPER_EXTRA_LIBS - we'll get it from LT later

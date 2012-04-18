@@ -4,7 +4,7 @@
 # Note that we use an interpreter value ("PERL") from configure
 # because even "#!/usr/bin/env perl" to all systems (e.g., NetBSD).
 #
-# Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 #
@@ -39,8 +39,8 @@ my $extra_cflags = "@OMPI_WRAPPER_EXTRA_CFLAGS@";
 my $extra_cflags_prefix = "@ORTE_WRAPPER_EXTRA_CFLAGS_PREFIX@";
 my $extra_cxxflags = "@OMPI_WRAPPER_EXTRA_CXXFLAGS@";
 my $extra_cxxflags_prefix = "@ORTE_WRAPPER_EXTRA_CXXFLAGS_PREFIX@";
-my $extra_fflags = "@OMPI_WRAPPER_EXTRA_FFLAGS@";
-my $extra_fflags_prefix = "@OMPI_WRAPPER_EXTRA_FFLAGS_PREFIX@";
+my $extra_fclags = "@OMPI_WRAPPER_EXTRA_FCFLAGS@";
+my $extra_fclags_prefix = "@OMPI_WRAPPER_EXTRA_FCFLAGS_PREFIX@";
 my $extra_ldflags = "@OMPI_WRAPPER_EXTRA_LDFLAGS@";
 my $extra_libs = "@OMPI_WRAPPER_EXTRA_LIBS@";
 my $cxx_lib = "@OMPI_WRAPPER_CXX_LIB@";
@@ -99,19 +99,16 @@ if (basename($0) eq "mpicc") {
     $comp_flags = $extra_cxxflags;
     $comp_flags_prefix = $extra_cxxflags_prefix;
     $libs = $cxx_lib . " " . $libs;
-} elsif (basename($0) eq "mpif77") {
-    $lang = "F77";
-    $comp = check_env("F77", $F77);
-    # no extra includes for F77.
+} 
+# mpifort is now preferred; mpif77/mpif90 are legacy names
+elsif (basename($0) eq "mpifort" ||
+         basename($0) eq "mpif77" || basename($0) eq "mpif90") {
+    $lang = "Fortran";
+    $comp = check_env("FC", $FC);
+    # no extra includes for Fortran.
     $comp_flags = $extra_fflags;
     $comp_flags_prefix = $extra_fflags_prefix;
-    $libs = "-lmpi_f77 " . $libs;
-} elsif (basename($0) eq "mpif90") {
-    $lang = "F90";
-    $comp = check_env("FC", $FC);
-    # no extra includes for F77.
-    $comp_flags = $fc_module_flag . $libdir . " " . $extra_fflags;
-    $libs = "-lmpi_f90 -lmpi_f77 " . $libs;
+    $libs = "-lmpi_mpifh " . $libs;
 }
 
 if ($lang eq "none") {

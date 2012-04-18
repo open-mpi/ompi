@@ -11,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 University of Houston. All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -136,6 +136,7 @@ typedef struct ompi_predefined_group_t ompi_predefined_group_t;
  */
 OMPI_DECLSPEC extern struct opal_pointer_array_t ompi_group_f_to_c_table;
 OMPI_DECLSPEC extern struct ompi_predefined_group_t ompi_mpi_group_null;
+OMPI_DECLSPEC extern struct ompi_predefined_group_t *ompi_mpi_group_null_addr;
 
 
 /*

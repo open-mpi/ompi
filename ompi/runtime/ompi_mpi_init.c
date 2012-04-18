@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2009 University of Houston. All rights reserved.
@@ -62,7 +62,7 @@
 #include "orte/mca/notifier/notifier.h"
 
 #include "ompi/constants.h"
-#include "ompi/mpi/f77/constants.h"
+#include "ompi/mpi/fortran/base/constants.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 #include "ompi/runtime/ompi_module_exchange.h"
@@ -133,6 +133,43 @@ bool ompi_mpi_maffinity_setup = false;
 
 bool ompi_warn_on_fork;
 
+/*
+ * These variables are for the MPI F08 bindings (F08 must bind Fortran
+ * varaiables to symbols; it cannot bind Fortran variables to the
+ * address of a C variable).
+ */
+
+ompi_predefined_datatype_t *ompi_mpi_character_addr = &ompi_mpi_character;
+ompi_predefined_datatype_t *ompi_mpi_logical_addr   = &ompi_mpi_logical;
+ompi_predefined_datatype_t *ompi_mpi_logical1_addr  = &ompi_mpi_logical1;
+ompi_predefined_datatype_t *ompi_mpi_logical2_addr  = &ompi_mpi_logical2;
+ompi_predefined_datatype_t *ompi_mpi_logical4_addr  = &ompi_mpi_logical4;
+ompi_predefined_datatype_t *ompi_mpi_logical8_addr  = &ompi_mpi_logical8;
+ompi_predefined_datatype_t *ompi_mpi_integer_addr   = &ompi_mpi_integer;
+ompi_predefined_datatype_t *ompi_mpi_integer1_addr  = &ompi_mpi_integer1;
+ompi_predefined_datatype_t *ompi_mpi_integer2_addr  = &ompi_mpi_integer2;
+ompi_predefined_datatype_t *ompi_mpi_integer4_addr  = &ompi_mpi_integer4;
+ompi_predefined_datatype_t *ompi_mpi_integer8_addr  = &ompi_mpi_integer8;
+ompi_predefined_datatype_t *ompi_mpi_integer16_addr = &ompi_mpi_integer16;
+ompi_predefined_datatype_t *ompi_mpi_real_addr      = &ompi_mpi_real;
+ompi_predefined_datatype_t *ompi_mpi_real4_addr     = &ompi_mpi_real4;
+ompi_predefined_datatype_t *ompi_mpi_real8_addr     = &ompi_mpi_real8;
+ompi_predefined_datatype_t *ompi_mpi_real16_addr    = &ompi_mpi_real16;
+ompi_predefined_datatype_t *ompi_mpi_dblprec_addr   = &ompi_mpi_dblprec;
+ompi_predefined_datatype_t *ompi_mpi_cplex_addr     = &ompi_mpi_cplex;
+ompi_predefined_datatype_t *ompi_mpi_complex8_addr  = &ompi_mpi_complex8;
+ompi_predefined_datatype_t *ompi_mpi_complex16_addr = &ompi_mpi_complex16;
+ompi_predefined_datatype_t *ompi_mpi_complex32_addr = &ompi_mpi_complex32;
+ompi_predefined_datatype_t *ompi_mpi_dblcplex_addr  = &ompi_mpi_dblcplex;
+ompi_predefined_datatype_t *ompi_mpi_2real_addr     = &ompi_mpi_2real;
+ompi_predefined_datatype_t *ompi_mpi_2dblprec_addr  = &ompi_mpi_2dblprec;
+ompi_predefined_datatype_t *ompi_mpi_2integer_addr  = &ompi_mpi_2integer;
+
+struct ompi_status_public_t *ompi_mpi_status_ignore_addr =
+    (ompi_status_public_t *) 0;
+struct ompi_status_public_t *ompi_mpi_statuses_ignore_addr =
+    (ompi_status_public_t *) 0;
+
 #if OPAL_HAVE_POSIX_THREADS
 static bool fork_warning_issued = false;
 static bool atfork_called = false;
@@ -177,16 +214,16 @@ void ompi_warn_fork(void)
  * does not call ompi_mpi_init()), would not be able to be found by
  * the OSX linker.
  *
- * NOTE: See the big comment in ompi/mpi/f77/constants.h about why we
- * have four symbols for each of the common blocks (e.g., the Fortran
- * equivalent(s) of MPI_STATUS_IGNORE).  Here, we can only have *one*
- * value (not four).  So the only thing we can do is make it equal to
- * the fortran compiler convention that was selected at configure
- * time.  Note that this is also true for the value of .TRUE. from the
- * Fortran compiler, so even though Open MPI supports all four Fortran
- * symbol conventions, it can only support one convention for the two
- * C constants (MPI_FORTRAN_STATUS[ES]_IGNORE) and only support one
- * compiler for the value of .TRUE.  Ugh!!
+ * NOTE: See the big comment in ompi/mpi/fortran/base/constants.h
+ * about why we have four symbols for each of the common blocks (e.g.,
+ * the Fortran equivalent(s) of MPI_STATUS_IGNORE).  Here, we can only
+ * have *one* value (not four).  So the only thing we can do is make
+ * it equal to the fortran compiler convention that was selected at
+ * configure time.  Note that this is also true for the value of
+ * .TRUE. from the Fortran compiler, so even though Open MPI supports
+ * all four Fortran symbol conventions, it can only support one
+ * convention for the two C constants (MPI_FORTRAN_STATUS[ES]_IGNORE)
+ * and only support one compiler for the value of .TRUE.  Ugh!!
  *
  * Note that the casts here are ok -- we're *only* comparing pointer
  * values (i.e., they'll never be de-referenced).  The global symbols
@@ -195,31 +232,31 @@ void ompi_warn_fork(void)
  * (MPI_Fint*).  Hence, we have to cast to make compilers not
  * complain.
  */
-#if OMPI_WANT_F77_BINDINGS
-#  if OMPI_F77_CAPS
+#if OMPI_BUILD_FORTRAN_BINDINGS
+#  if OMPI_FORTRAN_CAPS
 MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUS_IGNORE;
 MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &MPI_FORTRAN_STATUSES_IGNORE;
-#  elif OMPI_F77_PLAIN
+#  elif OMPI_FORTRAN_PLAIN
 MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore;
 MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore;
-#  elif OMPI_F77_SINGLE_UNDERSCORE
+#  elif OMPI_FORTRAN_SINGLE_UNDERSCORE
 MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore_;
 MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore_;
-#  elif OMPI_F77_DOUBLE_UNDERSCORE
+#  elif OMPI_FORTRAN_DOUBLE_UNDERSCORE
 MPI_Fint *MPI_F_STATUS_IGNORE = (MPI_Fint*) &mpi_fortran_status_ignore__;
 MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore__;
 #  else
-#    error Unrecognized Fortran 77 name mangling scheme
+#    error Unrecognized Fortran name mangling scheme
 #  endif
 #else
 MPI_Fint *MPI_F_STATUS_IGNORE = NULL;
 MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
-#endif  /* OMPI_WANT_F77_BINDINGS */
+#endif  /* OMPI_BUILD_FORTRAN_BINDINGS */
 
 
 /* Constants for the Fortran layer.  These values are referred to via
    common blocks in the Fortran equivalents.  See
-   ompi/mpi/f77/constants.h for a more detailed explanation.
+   ompi/mpi/fortran/base/constants.h for a more detailed explanation.
 
    The values are *NOT* initialized.  We do not use the values of
    these constants; only their addresses (because they're always
@@ -238,7 +275,7 @@ MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
 
    Note that the rationale for the types of each of these variables is
    discussed in ompi/include/mpif-common.h.  Do not change the types
-   without also modifying ompi/mpi/f77/constants.h and
+   without also modifying ompi/mpi/fortran/base/constants.h and
    ompi/include/mpif-common.h.
  */
 

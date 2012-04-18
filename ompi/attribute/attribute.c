@@ -202,7 +202,7 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/communicator/communicator.h"  /* ompi_communicator_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
 #include "ompi/win/win.h"                    /* ompi_win_t generated in [COPY|DELETE]_ATTR_CALLBACKS */
-#include "ompi/mpi/f77/fint_2_int.h"
+#include "ompi/mpi/fortran/base/fint_2_int.h"
 
 /*
  * Macros
@@ -959,6 +959,7 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
             }
             set_value(type, new_object, &newattr_hash, key, 
                       new_attr, true);
+
         } else {
             OBJ_RELEASE(new_attr);
         }

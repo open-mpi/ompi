@@ -89,81 +89,31 @@ AC_DEFINE_UNQUOTED([OMPI_WANT_PERUSE],
 AM_CONDITIONAL(WANT_PERUSE, test "$WANT_PERUSE" = "1")
 
 #
-# Fortran 77
+# Fortran MPI bindings
 #
-
-AC_MSG_CHECKING([if want Fortran 77 bindings])
-AC_ARG_ENABLE(mpi-f77,
-    AC_HELP_STRING([--enable-mpi-f77],
-                   [enable f77 MPI bindings (default: enabled)]))
-if test "$enable_mpi_f77" != "no"; then
+# JMS Add more here for granulatiry of specifically which bindings to build
+#
+AC_MSG_CHECKING([if want Fortran MPI bindings])
+AC_ARG_ENABLE(mpi-fortran,
+    AC_HELP_STRING([--enable-mpi-fortran],
+                   [enable Fortran MPI bindings (default: enabled if Fortran compiler found)]))
+if test "$enable_mpi_fortran" != "no"; then
     AC_MSG_RESULT([yes])
-    OMPI_WANT_F77_BINDINGS=1
+    OMPI_WANT_FORTRAN_MPIFH_BINDINGS=1
+    OMPI_WANT_FORTRAN_USEMPI_BINDINGS=1
+    OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS=1
 else
     AC_MSG_RESULT([no])
-    OMPI_WANT_F77_BINDINGS=0
+    OMPI_WANT_FORTRAN_MPIFH_BINDINGS=0
+    OMPI_WANT_FORTRAN_USEMPI_BINDINGS=0
+    OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS=0
 fi
+AS_IF([test $OMPI_WANT_FORTRAN_MPIFH_BINDINGS -eq 1 -o \
+            $OMPI_WANT_FORTRAN_USEMPI_BINDINGS -eq 1 -o \
+            $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 1],
+      [OMPI_WANT_FORTRAN_BINDINGS=1],
+      [OMPI_WANT_FORTRAN_BINDINGS=0])
 
-#
-# Fortran 90
-#
-
-AC_MSG_CHECKING([if want Fortran 90 bindings])
-AC_ARG_ENABLE(mpi-f90,
-    AC_HELP_STRING([--enable-mpi-f90],
-                   [enable f90 MPI bindings (default: enabled)]))
-if test "$enable_mpi_f90" != "no"; then
-    AC_MSG_RESULT([yes])
-    OMPI_WANT_F90_BINDINGS=1
-else
-    AC_MSG_RESULT([no])
-    OMPI_WANT_F90_BINDINGS=0
-fi
-
-AC_MSG_CHECKING([Fortran 90 bindings "size"])
-AC_ARG_WITH(mpi-f90-size,
-    AC_HELP_STRING([--with-mpi-f90-size=SIZE],
-                   [specify the types of functions in the Fortran 90 MPI module, where SIZE is one of: trivial (MPI-2 F90-specific functions only), small (trivial + all MPI functions without choice buffers), medium (small + all MPI functions with one choice buffer), large (medium + all MPI functions with 2 choice buffers, but only when both buffers are the same type).  Default SIZE is "small".]))
-
-if test "$OMPI_WANT_F90_BINDINGS" = "0"; then
-    AC_MSG_RESULT([disabled (Fortran 90 bindings disabled)])
-elif test "$with_mpi_f90_size" = "no"; then
-    OMPI_WANT_F90_BINDINGS=0
-    AC_MSG_RESULT([disabling F90 MPI module (used specified)])
-else
-    # Default value
-    if test "$with_mpi_f90_size" = ""; then
-        with_mpi_f90_size=small
-    fi
-
-    # Check for each of the sizes
-    if test "$with_mpi_f90_size" = "trivial"; then
-        OMPI_F90_BUILD_SIZE=trivial
-    elif test "$with_mpi_f90_size" = "small"; then
-        OMPI_F90_BUILD_SIZE=small
-    elif test "$with_mpi_f90_size" = "medium"; then
-        OMPI_F90_BUILD_SIZE=medium
-    elif test "$with_mpi_f90_size" = "large"; then
-        OMPI_F90_BUILD_SIZE=large
-    else
-        AC_MSG_RESULT([Unrecognized size: $with_mpi_f90_size])
-        AC_MSG_ERROR([Cannot continue])
-    fi
-fi
-
-AM_CONDITIONAL([OMPI_WANT_BUILD_F90_TRIVIAL],
-               [test "$OMPI_F90_BUILD_SIZE" = "trivial"])
-AM_CONDITIONAL([OMPI_WANT_BUILD_F90_SMALL],
-               [test "$OMPI_F90_BUILD_SIZE" = "small"])
-AM_CONDITIONAL([OMPI_WANT_BUILD_F90_MEDIUM],
-               [test "$OMPI_F90_BUILD_SIZE" = "medium"])
-AM_CONDITIONAL([OMPI_WANT_BUILD_F90_LARGE],
-               [test "$OMPI_F90_BUILD_SIZE" = "large"])
-
-AC_SUBST(OMPI_F90_BUILD_SIZE)
-if test "$OMPI_WANT_F90_BINDINGS" != "0"; then
-    AC_MSG_RESULT([$OMPI_F90_BUILD_SIZE])
-fi
 
 #
 # MPI profiling
@@ -247,14 +197,39 @@ AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
 
 
 #
-# What is the max array rank that we want to support in the f90 bindings?
+# Do we want the prototype "use mpi_f08" implementation that uses
+# Fortran descriptors?
+#
+
+AC_MSG_CHECKING([which 'use mpi_f08' implementation to use])
+AC_ARG_ENABLE(mpi-f08-subarray-prototype,
+    AC_HELP_STRING([--enable-mpi-f08-subarray-prototype],
+                   [Use the PROTOTYPE and SEVERLY FUNCTIONALITY-LIMITED Fortran 08 'use mpi_f08' implementation that supports subarrrays (via Fortran descriptors).  This option will disable the normal 'use mpi_f08' implementation and *only* build the prototype implementation.]))
+OMPI_BUILD_FORTRAN_F08_SUBARRAYS=0
+AS_IF([test $OMPI_WANT_FORTRAN_USEMPIF08_BINDINGS -eq 0],
+      [AC_MSG_RESULT([none (use mpi_f08 disabled)])],
+      [AS_IF([test "$enable_mpi_f08_subarray_prototype" = "yes"],
+             [OMPI_BUILD_FORTRAN_F08_SUBARRAYS=1
+              AC_MSG_RESULT([extra crispy (subarray prototype)])],
+             [AC_MSG_RESULT([regular (no subarray support)])])
+      ])
+AC_DEFINE_UNQUOTED([OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
+                   [$OMPI_BUILD_FORTRAN_F08_SUBARRAYS],
+                   [Whether we built the 'use mpi_f08' prototype subarray-based implementation or not (i.e., whether to build the use-mpi-f08-desc prototype or the regular use-mpi-f08 implementation)])
+
+#
+# What is the max array rank that we want to support in the f90
+# bindings?  Now only relevant for the ompi/mpi/fortran/use-mpi dir,
+# which is now gfortran-only (because all other Fortran compilers will
+# compile ompi/mpi/fortran/use-mpi-ignore-tkr).
 #
 
 OMPI_FORTRAN_MAX_ARRAY_RANK=4
-AC_MSG_CHECKING([max supported array dimension in F90 MPI bindings])
-AC_ARG_WITH(f90-max-array-dim,
-    AC_HELP_STRING([--with-f90-max-array-dim=<DIM>],
-                   [The maximum array dimension supported in the F90 MPI bindings (default: $OMPI_FORTRAN_MAX_ARRAY_RANK).]))
+AC_MSG_CHECKING([max supported gfortran array dimension in the "use mpi" Fortran module])
+AC_ARG_WITH(gfortran-max-array-dim,
+    AC_HELP_STRING([--with-gfortran-max-array-dim=<DIM>],
+                   [The maximum array dimension supported in the gfortran-only "use mpi" module (default: $OMPI_FORTRAN_MAX_ARRAY_RANK).  This option is ignored when using other Fortran compilers]))
+with_f90_max_array_dim=$gfortran_max_array_dim
 if test ! -z "$with_f90_max_array_dim" -a "$with_f90_max_array_dim" != "no"; then
     # Ensure it's a number (hopefully an integer!), and >=1 and <=7
     happy=1

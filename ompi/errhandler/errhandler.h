@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -147,23 +147,26 @@ typedef struct ompi_predefined_errhandler_t ompi_predefined_errhandler_t;
 
 
 /**
- * Global variable for MPI_ERRHANDLER_NULL
+ * Global variable for MPI_ERRHANDLER_NULL (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errhandler_null;
+OMPI_DECLSPEC extern ompi_predefined_errhandler_t *ompi_mpi_errhandler_null_addr;
 
 /**
- * Global variable for MPI_ERRORS_ARE_FATAL
+ * Global variable for MPI_ERRORS_ARE_FATAL (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_are_fatal;
+OMPI_DECLSPEC extern ompi_predefined_errhandler_t *ompi_mpi_errors_are_fatal_addr;
 
 /**
- * Global variable for MPI_ERRORS_RETURN
+ * Global variable for MPI_ERRORS_RETURN (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_return;
+OMPI_DECLSPEC extern ompi_predefined_errhandler_t *ompi_mpi_errors_return_addr;
 
 /**
  * Global variable for MPI::ERRORS_THROW_EXCEPTIONS.  Will abort if
- * MPI_INIT wasn't called as MPI::INIT
+ * MPI_INIT wasn't called as MPI::INIT (_addr flavor is for F03 bindings)
  */
 OMPI_DECLSPEC extern ompi_predefined_errhandler_t ompi_mpi_errors_throw_exceptions;
 

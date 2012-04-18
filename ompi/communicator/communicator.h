@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2010 University of Houston.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
@@ -239,6 +239,14 @@ OMPI_DECLSPEC extern ompi_predefined_communicator_t ompi_mpi_comm_world;
 OMPI_DECLSPEC extern ompi_predefined_communicator_t ompi_mpi_comm_self;
 OMPI_DECLSPEC extern ompi_predefined_communicator_t ompi_mpi_comm_null;
 
+/*
+ * These variables are for the MPI F03 bindings (F03 must bind Fortran
+ * varaiables to symbols; it cannot bind Fortran variables to the
+ * address of a C variable).
+ */
+OMPI_DECLSPEC extern ompi_predefined_communicator_t *ompi_mpi_comm_world_addr;
+OMPI_DECLSPEC extern ompi_predefined_communicator_t *ompi_mpi_comm_self_addr;
+OMPI_DECLSPEC extern ompi_predefined_communicator_t *ompi_mpi_comm_null_addr;
 
 
 /**

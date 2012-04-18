@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -155,10 +155,9 @@ mca_pml_cm_component_init(int* priority,
     if (OMPI_SUCCESS != ret) { 
         *priority = -1;
         return NULL;
-    } else if((strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm") == 0) ||
-              (strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "mxm") == 0)) {
+    } else if(strcmp(ompi_mtl_base_selected_component->mtl_version.mca_component_name, "psm") == 0) {
         /*
-         * If MTL is PSM or MXM then up our priority
+         * If MTL is PSM then up our priority
          * For every other communication layer having MTLs and BTLs, the user/admin
          * may still select PML/ob1 (BTLs) or PML/cm (MTLs) if preferable for the app/site.
          */

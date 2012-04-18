@@ -4,7 +4,7 @@
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -418,7 +418,7 @@ extern const ompi_datatype_t* ompi_datatype_basicDatatypes[OMPI_DATATYPE_MPI_MAX
     OMPI_DATATYPE_INIT_UNAVAILABLE(NAME, FLAGS)
 
 
-#if OMPI_WANT_F77_BINDINGS
+#if OMPI_BUILD_FORTRAN_BINDINGS
 /*
  * For Fortran, we need to pass information, such as ALIGNMENT and SIZE as well
  * Therefore, for initialization at compile-time, pass this data as well.

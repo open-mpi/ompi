@@ -5,7 +5,7 @@ dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
-dnl Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -47,7 +47,7 @@ AC_DEFUN([OMPI_CHECK_COMPILER_WORKS],
 * but a problem with the local compiler installation.  More
 * information (including exactly what command was given to the 
 * compiler and what error resulted when the command was executed) is
-* available in the config.log file in this directory.
+* available in the config.log file in the Open MPI build directory.
 **********************************************************************
 EOF
            $5], [$4])

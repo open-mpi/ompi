@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
@@ -38,10 +38,10 @@ AC_DEFUN([OMPI_SETUP_MPI_PROFILING],[
     # need to be built or NOT
     #
     
-    AM_CONDITIONAL(WANT_MPI_BINDINGS_LAYER,
+    AM_CONDITIONAL(BUILD_MPI_BINDINGS_LAYER,
         test "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
     
-    AM_CONDITIONAL(WANT_PMPI_BINDINGS_LAYER,
+    AM_CONDITIONAL(BUILD_PMPI_BINDINGS_LAYER,
         test "$WANT_MPI_PROFILING" = 1)
     AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY,
         test "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)

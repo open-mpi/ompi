@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -71,6 +71,8 @@ const char *ompi_info_path_localstatedir = "localstatedir";
 const char *ompi_info_path_infodir = "infodir";
 const char *ompi_info_path_pkgdatadir = "pkgdatadir";
 const char *ompi_info_path_pkgincludedir = "pkgincludedir";
+
+const char *ompi_info_deprecated_value = "deprecated-ompi-info-value";
 
 /*
  * External variables
@@ -478,6 +480,24 @@ void ompi_info_do_hostname()
 }
 
 
+static void append(char *dest, size_t max, int *first, char *src)
+{
+    size_t len;
+
+    if (NULL == src) {
+        return;
+    }
+
+    len = max - strlen(dest);
+    if (!(*first)) {
+        strncat(dest, ", ", len);
+        len = max - strlen(dest);
+    }
+    strncat(dest, src, len);
+    *first = 0;
+}
+
+
 /*
  * do_config
  * Accepts:
@@ -493,9 +513,20 @@ void ompi_info_do_hostname()
 void ompi_info_do_config(bool want_all)
 {
     char *cxx;
-    char *f77;
-    char *f90;
-    char *f90_size;
+    char *fortran_mpifh;
+    char *fortran_usempi;
+    char *fortran_usempif08;
+    char *fortran_usempif08_compliance;
+    char *fortran_have_ignore_tkr;
+    char *fortran_have_f08_assumed_shape;
+    char *fortran_build_f08_subarrays;
+    char *fortran_have_optional_args;
+    char *fortran_have_bind_c;
+    char *fortran_have_private;
+    char *fortran_have_abstract;
+    char *fortran_have_asynchronous;
+    char *fortran_have_procedure;
+    char *fortran_08_using_wrappers_for_choice_buffer_functions;
     char *java;
     char *heterogeneous;
     char *memprofile;
@@ -505,8 +536,9 @@ void ompi_info_do_config(bool want_all)
     char *mpi_interface_warning;
     char *cprofiling;
     char *cxxprofiling;
-    char *f77profiling;
-    char *f90profiling;
+    char *fortran_mpifh_profiling;
+    char *fortran_usempi_profiling;
+    char *fortran_usempif08_profiling;
     char *cxxexceptions;
     char *threads;
     char *want_libltdl;
@@ -519,18 +551,20 @@ void ompi_info_do_config(bool want_all)
     char *crdebug_support;
     char *topology_support;
     char *vt_support;
+
     /* Do a little preprocessor trickery here to figure ompi_info_out the
      * tri-state of MPI_PARAM_CHECK (which will be either 0, 1, or
      * ompi_mpi_param_check).  The preprocessor will only allow
      * comparisons against constants, so you'll get a warning if you
      * check MPI_PARAM_CHECK against 0 or 1, but its real value is the
      * char *ompi_mpi_param_check.  So define ompi_mpi_param_check to
-     * be a constant, and then all the preprocessor comparisons work ompi_info_out
-     * ok.  Note that we chose the preprocessor comparison rompi_info_oute because
-     * it is not sufficient to simply set the variable
-     * ompi_mpi_param_check to a non-0/non-1 value.  This is because the
-     * compiler will generate a warning that that C variable is unused
-     * when MPI_PARAM_CHECK is hard-coded to 0 or 1.
+     * be a constant, and then all the preprocessor comparisons work
+     * ompi_info_out ok.  Note that we chose the preprocessor
+     * comparison rompi_info_oute because it is not sufficient to
+     * simply set the variable ompi_mpi_param_check to a non-0/non-1
+     * value.  This is because the compiler will generate a warning
+     * that that C variable is unused when MPI_PARAM_CHECK is
+     * hard-coded to 0 or 1.
      */
     char *paramcheck;
 #define ompi_mpi_param_check 999
@@ -543,9 +577,73 @@ void ompi_info_do_config(bool want_all)
 #endif
     
     /* setup the strings that don't require allocations*/
-    cxx = OMPI_WANT_CXX_BINDINGS ? "yes" : "no";
-    f90 = OMPI_WANT_F90_BINDINGS ? "yes" : "no";
-    f90_size = OMPI_F90_BUILD_SIZE;
+    cxx = OMPI_BUILD_CXX_BINDINGS ? "yes" : "no";
+    if (OMPI_BUILD_FORTRAN_USEMPI_BINDINGS) {
+        if (OMPI_FORTRAN_HAVE_IGNORE_TKR) {
+            fortran_usempi = "yes (full: ignore TKR)";
+        } else {
+            fortran_usempi = "yes (limited: overloading)"; 
+        }
+    } else {
+        fortran_usempi = "no";
+    }
+    fortran_usempif08 = OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS ? "yes" : "no";
+    fortran_have_f08_assumed_shape = OMPI_FORTRAN_HAVE_F08_ASSUMED_SHAPE ?
+        "yes" : "no";
+    fortran_build_f08_subarrays = OMPI_BUILD_FORTRAN_F08_SUBARRAYS ? 
+        "yes" : "no";
+    fortran_have_optional_args = OMPI_FORTRAN_HAVE_OPTIONAL_ARGS ?
+        "yes" : "no";
+    fortran_have_bind_c = OMPI_FORTRAN_HAVE_BIND_C ? "yes" : "no";
+    fortran_have_private = OMPI_FORTRAN_HAVE_PRIVATE ? "yes" : "no";
+    fortran_have_abstract = OMPI_FORTRAN_HAVE_ABSTRACT ? "yes" : "no";
+    fortran_have_asynchronous = OMPI_FORTRAN_HAVE_ASYNCHRONOUS ? "yes" : "no";
+    fortran_have_procedure = OMPI_FORTRAN_HAVE_PROCEDURE ? "yes" : "no";
+    fortran_08_using_wrappers_for_choice_buffer_functions = 
+        OMPI_FORTRAN_NEED_WRAPPER_ROUTINES ? "yes" : "no";
+
+    /* Build a string describing what level of compliance the mpi_f08
+       module has */
+    if (OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS) {
+
+        /* Do we have everything? */
+        if (OMPI_BUILD_FORTRAN_F08_SUBARRAYS &&
+            OMPI_FORTRAN_HAVE_PRIVATE &&
+            OMPI_FORTRAN_HAVE_ABSTRACT &&
+            OMPI_FORTRAN_HAVE_ASYNCHRONOUS &&
+            OMPI_FORTRAN_HAVE_PROCEDURE &&
+            OMPI_FORTRAN_NEED_WRAPPER_ROUTINES) {
+            fortran_usempif08_compliance = strdup("The mpi_f08 module is available, and is fully compliant.  w00t!");
+        } else {
+            char f08[1024];
+            int first = 1;
+            snprintf(f08, sizeof(f08),
+                     "The mpi_f08 module is available, but due to limitations in the %s compiler, does not support the following: ", 
+                     OMPI_FC);
+            if (!OMPI_BUILD_FORTRAN_F08_SUBARRAYS) {
+                append(f08, sizeof(f08), &first, "array subsections");
+            }
+            if (!OMPI_FORTRAN_HAVE_PRIVATE) {
+                append(f08, sizeof(f08), &first, "private MPI_Status members");
+            }
+            if (!OMPI_FORTRAN_HAVE_ABSTRACT) {
+                append(f08, sizeof(f08), &first, "ABSTRACT INTERFACE function pointers");
+            }
+            if (!OMPI_FORTRAN_HAVE_ASYNCHRONOUS) {
+                append(f08, sizeof(f08), &first, "Fortran '08-specified ASYNCHRONOUS behavior");
+            }
+            if (!OMPI_FORTRAN_HAVE_PROCEDURE) {
+                append(f08, sizeof(f08), &first, "PROCEDUREs");
+            }
+            if (OMPI_FORTRAN_NEED_WRAPPER_ROUTINES) {
+                append(f08, sizeof(f08), &first, "direct passthru (where possible) to underlying Open MPI's C functionality");
+            }
+            fortran_usempif08_compliance = strdup(f08);
+        }
+    } else {
+        fortran_usempif08_compliance = strdup("The mpi_f08 module was not built");
+    }
+
     java = OMPI_WANT_JAVA_BINDINGS ? "yes" : "no";
     heterogeneous = OPAL_ENABLE_HETEROGENEOUS_SUPPORT ? "yes" : "no";
     memprofile = OPAL_ENABLE_MEM_PROFILE ? "yes" : "no";
@@ -554,10 +652,11 @@ void ompi_info_do_config(bool want_all)
     log_event = ORTE_WANT_NOTIFIER_LOG_EVENT ? "yes" : "no";
     mpi_interface_warning = OMPI_WANT_MPI_INTERFACE_WARNING ? "yes" : "no";
     cprofiling = OMPI_ENABLE_MPI_PROFILING ? "yes" : "no";
-    cxxprofiling = (OMPI_WANT_CXX_BINDINGS && OMPI_ENABLE_MPI_PROFILING) ? "yes" : "no";
-    cxxexceptions = (OMPI_WANT_CXX_BINDINGS && OMPI_HAVE_CXX_EXCEPTION_SUPPORT) ? "yes" : "no";
-    f77profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_WANT_F77_BINDINGS) ? "yes" : "no";
-    f90profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_WANT_F90_BINDINGS) ? "yes" : "no";
+    cxxprofiling = (OMPI_BUILD_CXX_BINDINGS && OMPI_ENABLE_MPI_PROFILING) ? "yes" : "no";
+    cxxexceptions = (OMPI_BUILD_CXX_BINDINGS && OMPI_HAVE_CXX_EXCEPTION_SUPPORT) ? "yes" : "no";
+    fortran_mpifh_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_MPIFH_BINDINGS) ? "yes" : "no";
+    fortran_usempi_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPI_BINDINGS) ? "yes" : "no";
+    fortran_usempif08_profiling = (OMPI_ENABLE_MPI_PROFILING && OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS) ? "yes" : "no";
     want_libltdl = OPAL_WANT_LIBLTDL ? "yes" : "no";
     mpirun_prefix_by_default = ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ? "yes" : "no";
     sparse_groups = OMPI_GROUP_SPARSE ? "yes" : "no";
@@ -568,16 +667,27 @@ void ompi_info_do_config(bool want_all)
     vt_support = OMPI_ENABLE_CONTRIB_vt ? "yes" : "no";
     
     /* setup strings that require allocation */
-    if (OMPI_WANT_F77_BINDINGS) {
-        asprintf(&f77, "yes (%s)",
+    if (OMPI_BUILD_FORTRAN_MPIFH_BINDINGS) {
+        asprintf(&fortran_mpifh, "yes (%s)",
                  (OPAL_HAVE_WEAK_SYMBOLS ? "all" :
-                  (OMPI_F77_CAPS ? "caps" :
-                   (OMPI_F77_PLAIN ? "lower case" :
-                    (OMPI_F77_SINGLE_UNDERSCORE ? "single underscore" : "double underscore")))));
+                  (OMPI_FORTRAN_CAPS ? "caps" :
+                   (OMPI_FORTRAN_PLAIN ? "lower case" :
+                    (OMPI_FORTRAN_SINGLE_UNDERSCORE ? "single underscore" : "double underscore")))));
     } else {
-        f77 = strdup("no");
+        fortran_mpifh = strdup("no");
     }
-    
+
+    if (OMPI_FORTRAN_HAVE_IGNORE_TKR) {
+        /* OMPI_FORTRAN_IGNORE_TKR_PREDECL is already in quotes; it
+           didn't work consistently to put it in _STRINGIFY because
+           sometimes the compiler would actually interpret the pragma
+           in there before stringify-ing it. */
+        asprintf(&fortran_have_ignore_tkr, "yes (%s)",
+                 OMPI_FORTRAN_IGNORE_TKR_PREDECL);
+    } else {
+        fortran_have_ignore_tkr = strdup("no");
+    }
+
     if (OPAL_HAVE_SOLARIS_THREADS || OPAL_HAVE_POSIX_THREADS) {        /* should just test OPAL_HAVE_THREADS */
         asprintf(&threads, "%s (MPI_THREAD_MULTIPLE: %s, progress: %s)", OPAL_HAVE_SOLARIS_THREADS ? "solaris" :
                  (OPAL_HAVE_POSIX_THREADS ? "posix" : "type unknown"), /* "type unknown" can presumably never happen */
@@ -604,17 +714,30 @@ void ompi_info_do_config(bool want_all)
     
     ompi_info_out("C bindings", "bindings:c", "yes");
     ompi_info_out("C++ bindings", "bindings:cxx", cxx);
-    ompi_info_out("Fortran77 bindings", "bindings:f77", f77);
-    free(f77);
-    ompi_info_out("Fortran90 bindings", "bindings:f90", f90);
-    ompi_info_out("Fortran90 bindings size", "bindings:f90:size", 
-                  OMPI_WANT_F90_BINDINGS ? f90_size : "na");
+    ompi_info_out("Fort mpif.h", "bindings:mpif.h", fortran_mpifh);
+    free(fortran_mpifh);
+    ompi_info_out("Fort use mpi", "bindings:use_mpi", 
+                  fortran_usempi);
+    ompi_info_out("Fort use mpi size", "bindings:use_mpi:size", 
+                  ompi_info_deprecated_value);
+    ompi_info_out("Fort use mpi_f08", "bindings:use_mpi_f08", 
+                  fortran_usempif08);
+    ompi_info_out("Fort mpi_f08 compliance", "bindings:use_mpi_f08:compliance", 
+                  fortran_usempif08_compliance);
+    if (NULL != fortran_usempif08_compliance) {
+        free(fortran_usempif08_compliance);
+    }
+    ompi_info_out("Fort mpi_f08 subarrays", "bindings:use_mpi_f08:subarrays-supported", 
+                  fortran_build_f08_subarrays);
     ompi_info_out("Java bindings", "bindings:java", java);
 
     ompi_info_out("C compiler", "compiler:c:command", OPAL_CC);
-    ompi_info_out("C compiler absolute", "compiler:c:absolute", OPAL_CC_ABSOLUTE);
-    ompi_info_out("C compiler family name", "compiler:c:familyname", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
-    ompi_info_out("C compiler version", "compiler:c:version", _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR));
+    ompi_info_out("C compiler absolute", "compiler:c:absolute", 
+                  OPAL_CC_ABSOLUTE);
+    ompi_info_out("C compiler family name", "compiler:c:familyname", 
+                  _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_FAMILYNAME));
+    ompi_info_out("C compiler version", "compiler:c:version", 
+                  _STRINGIFY(OPAL_BUILD_PLATFORM_COMPILER_VERSION_STR));
     
     if (want_all) {
         ompi_info_out_int("C char size", "compiler:c:sizeof:char", sizeof(char));
@@ -633,7 +756,7 @@ void ompi_info_do_config(bool want_all)
         ompi_info_out_int("C double size", "compiler:c:sizeof:double", sizeof(double));
         ompi_info_out_int("C pointer size", "compiler:c:sizeof:pointer", sizeof(void *));
         ompi_info_out_int("C char align", "compiler:c:align:char", OPAL_ALIGNMENT_CHAR);
-#if OMPI_WANT_CXX_BINDINGS
+#if OMPI_BUILD_CXX_BINDINGS
         /* JMS: See above for note about C++ bool size.  We don't have
            the bool alignment the way configure currently runs -- need
            to clean this up when we update for MPI-2.2. */
@@ -648,12 +771,36 @@ void ompi_info_do_config(bool want_all)
 
     ompi_info_out("C++ compiler", "compiler:cxx:command", OMPI_CXX);
     ompi_info_out("C++ compiler absolute", "compiler:cxx:absolute", OMPI_CXX_ABSOLUTE);
-    ompi_info_out("Fortran77 compiler", "compiler:f77:command", OMPI_F77);
-    ompi_info_out("Fortran77 compiler abs", "compiler:f77:absolute", 
-                  OMPI_F77_ABSOLUTE);
-    ompi_info_out("Fortran90 compiler", "compiler:f90:command", OMPI_F90);
-    ompi_info_out("Fortran90 compiler abs", "compiler:f90:absolute", 
-                  OMPI_F90_ABSOLUTE);
+    ompi_info_out("Fort compiler", "compiler:fortran:command", OMPI_FC);
+    ompi_info_out("Fort compiler abs", "compiler:fortran:absolute", 
+                  OMPI_FC_ABSOLUTE);
+    ompi_info_out("Fort ignore TKR", "compiler:fortran:ignore_tkr",
+                  fortran_have_ignore_tkr);
+    free(fortran_have_ignore_tkr);
+    ompi_info_out("Fort 08 assumed shape", 
+                  "compiler:fortran:f08_assumed_shape",
+                  fortran_have_f08_assumed_shape);
+    ompi_info_out("Fort optional args", 
+                  "compiler:fortran:optional_arguments",
+                  fortran_have_optional_args);
+    ompi_info_out("Fort BIND(C)", 
+                  "compiler:fortran:bind_c",
+                  fortran_have_bind_c);
+    ompi_info_out("Fort PRIVATE", 
+                  "compiler:fortran:private",
+                  fortran_have_private);
+    ompi_info_out("Fort ABSTRACT", 
+                  "compiler:fortran:abstract",
+                  fortran_have_abstract);
+    ompi_info_out("Fort ASYNCHRONOUS", 
+                  "compiler:fortran:asynchronous",
+                  fortran_have_asynchronous);
+    ompi_info_out("Fort PROCEDURE", 
+                  "compiler:fortran:procedure",
+                  fortran_have_procedure);
+    ompi_info_out("Fort f08 using wrappers", 
+                  "compiler:fortran:08_wrappers",
+                  fortran_08_using_wrappers_for_choice_buffer_functions);
     
     if (want_all) {
         
@@ -670,7 +817,9 @@ void ompi_info_do_config(bool want_all)
         
         /* May or may not have the other Fortran sizes */
         
-        if (OMPI_WANT_F77_BINDINGS || OMPI_WANT_F90_BINDINGS) {
+        if (OMPI_BUILD_FORTRAN_MPIFH_BINDINGS ||
+            OMPI_BUILD_FORTRAN_USEMPI_BINDINGS ||
+            OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS) {
             ompi_info_out("Fort have integer1", "compiler:fortran:have:integer1", 
                           OMPI_HAVE_FORTRAN_INTEGER1 ? "yes" : "no");
             ompi_info_out("Fort have integer2", "compiler:fortran:have:integer2", 
@@ -790,8 +939,13 @@ void ompi_info_do_config(bool want_all)
     
     ompi_info_out("C profiling", "option:profiling:c", cprofiling);
     ompi_info_out("C++ profiling", "option:profiling:cxx", cxxprofiling);
-    ompi_info_out("Fortran77 profiling", "option:profiling:f77", f77profiling);
-    ompi_info_out("Fortran90 profiling", "option:profiling:f90", f90profiling);
+    ompi_info_out("Fort mpif.h profiling", "option:profiling:mpif.h",
+                  fortran_mpifh_profiling);
+    ompi_info_out("Fort use mpi profiling", "option:profiling:use_mpi",
+                  fortran_usempi_profiling);
+    ompi_info_out("Fort use mpi_f08 prof", 
+                  "option:profiling:use_mpi_f08",
+                  fortran_usempif08_profiling);
     
     ompi_info_out("C++ exceptions", "option:cxx_exceptions", cxxexceptions);
     ompi_info_out("Thread support", "option:threads", threads);
@@ -807,7 +961,6 @@ void ompi_info_do_config(bool want_all)
         
         ompi_info_out("Build CFLAGS", "option:build:cflags", OMPI_BUILD_CFLAGS);
         ompi_info_out("Build CXXFLAGS", "option:build:cxxflags", OMPI_BUILD_CXXFLAGS);
-        ompi_info_out("Build FFLAGS", "option:build:fflags", OMPI_BUILD_FFLAGS);
         ompi_info_out("Build FCFLAGS", "option:build:fcflags", OMPI_BUILD_FCFLAGS);
         ompi_info_out("Build LDFLAGS", "option:build:ldflags", OMPI_BUILD_LDFLAGS);
         ompi_info_out("Build LIBS", "option:build:libs", OMPI_BUILD_LIBS);
@@ -816,8 +969,6 @@ void ompi_info_do_config(bool want_all)
                       WRAPPER_EXTRA_CFLAGS);
         ompi_info_out("Wrapper extra CXXFLAGS", "option:wrapper:extra_cxxflags", 
                       WRAPPER_EXTRA_CXXFLAGS);
-        ompi_info_out("Wrapper extra FFLAGS", "option:wrapper:extra_fflags", 
-                      WRAPPER_EXTRA_FFLAGS);
         ompi_info_out("Wrapper extra FCFLAGS", "option:wrapper:extra_fcflags", 
                       WRAPPER_EXTRA_FCFLAGS);
         ompi_info_out("Wrapper extra LDFLAGS", "option:wrapper:extra_ldflags", 
