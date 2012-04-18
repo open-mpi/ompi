@@ -22,19 +22,17 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_LOGICAL_ARRAY],[
 
     AC_CACHE_CHECK([for correct handling of Fortran logical arrays],
         logical_array_var,
-        [if test "$1" = "none" -o $OMPI_WANT_FORTRAN_BINDINGS -eq 0; then
+        [if test "$1" = "none" -o $OMPI_WANT_FORTRAN_BINDINGS -eq 0 -o $ompi_fortran_happy -eq 0; then
              value=skipped
          else
-             OMPI_FORTRAN_MAKE_C_FUNCTION([ompi_check_logical_fn], [check])
-
              # Fortran module
              cat > conftestf.f <<EOF
         program check_logical_array
-        external check
+        external ompi_check
         logical l(2)
         l(1)=.FALSE.
         l(2)=.TRUE.
-        CALL check(l)
+        CALL ompi_check(l)
         end
 EOF
 
@@ -56,9 +54,7 @@ EOF
 #ifdef __cplusplus
   extern "C" {
 #endif
-void $ompi_check_logical_fn(ompi_fortran_logical_t * logical);
-
-void $ompi_check_logical_fn(ompi_fortran_logical_t * logical)
+void ompi_check_f(ompi_fortran_logical_t * logical)
 {
     int result = 0;
     FILE *f=fopen("conftestval", "w");
@@ -69,6 +65,19 @@ void $ompi_check_logical_fn(ompi_fortran_logical_t * logical)
       result = 1;
     fprintf(f, "%d\n", result);
 }
+
+void ompi_check(ompi_fortran_logical_t * logical)
+{ ompi_check_f(logical); }
+
+void ompi_check_(ompi_fortran_logical_t * logical)
+{ ompi_check_f(logical); }
+
+void ompi_check__(ompi_fortran_logical_t * logical)
+{ ompi_check_f(logical); }
+
+void OMPI_CHECK(ompi_fortran_logical_t * logical)
+{ ompi_check_f(logical); }
+
 #ifdef __cplusplus
 }
 #endif

@@ -238,9 +238,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # the Fortran/C interop C_INTxx_T KIND values).  So figure out
     # those KIND values here and just substitue them in via
     # AC_DEFINE's.  Kinda gross, but there you are.  :-\
-    OMPI_FORTRAN_GET_KIND_VALUE([C_INT16_T], [OMPI_FORTRAN_C_INT16_T_KIND])
-    OMPI_FORTRAN_GET_KIND_VALUE([C_INT32_T], [OMPI_FORTRAN_C_INT32_T_KIND])
-    OMPI_FORTRAN_GET_KIND_VALUE([C_INT64_T], [OMPI_FORTRAN_C_INT64_T_KIND])
+    OMPI_FORTRAN_GET_KIND_VALUE([C_INT16_T], 9, [OMPI_FORTRAN_C_INT16_T_KIND])
+    OMPI_FORTRAN_GET_KIND_VALUE([C_INT32_T], 18, [OMPI_FORTRAN_C_INT32_T_KIND])
+    OMPI_FORTRAN_GET_KIND_VALUE([C_INT64_T], 19, [OMPI_FORTRAN_C_INT64_T_KIND])
 
     # Get the kind value for Fortran MPI_INTEGER_KIND (corresponding
     # to whatever is the same size as a F77 INTEGER -- for the
