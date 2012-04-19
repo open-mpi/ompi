@@ -16,19 +16,16 @@
 #include "btl_ugni.h"
 #include "btl_ugni_frag.h"
 
-static inline void
-mca_btl_ugni_post_frag_complete (ompi_common_ugni_post_desc_t *desc, int rc) {
-    mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
+/* mca_btl_ugni_start_put: get operation could not be completed. start put instead */
+int mca_btl_ugni_start_put (mca_btl_base_endpoint_t *ep,
+                            mca_btl_ugni_rdma_frag_hdr_t hdr,
+                            mca_btl_ugni_base_frag_t *frag);
 
-    /* always call put/get callback (if one is set) */
-    if (NULL != frag->base.des_cbfunc) {
-        frag->base.des_cbfunc(&frag->endpoint->btl->super, frag->endpoint, &frag->base, rc);
-    }
+int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
+                                  mca_btl_ugni_eager_ex_frag_hdr_t hdr,
+                                  mca_btl_ugni_base_frag_t *frag);
 
-    if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-        mca_btl_ugni_frag_return (frag);
-    }
-}
+void mca_btl_ugni_callback_rdma_complete (mca_btl_ugni_base_frag_t *frag, int rc);
 
 static inline int init_gni_post_desc(mca_btl_ugni_base_frag_t *frag,
                                      gni_post_type_t op_type,
@@ -49,7 +46,7 @@ static inline int init_gni_post_desc(mca_btl_ugni_base_frag_t *frag,
     frag->post_desc.base.rdma_mode       = 0;
     frag->post_desc.base.src_cq_hndl     = cq_hndl;
 
-    frag->post_desc.cbfunc   = mca_btl_ugni_post_frag_complete;
+    frag->cbfunc   = mca_btl_ugni_frag_complete;
     frag->post_desc.endpoint = frag->endpoint->common;
     frag->post_desc.tries    = 0;
 
@@ -65,11 +62,10 @@ static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_pos
     init_gni_post_desc (frag, op_type, lcl_seg->seg_addr.lval,
                         (gni_mem_handle_t *)&lcl_seg->seg_key.key64,
                         rem_seg->seg_addr.lval, (gni_mem_handle_t *)&rem_seg->seg_key.key64,
-                        lcl_seg->seg_len, 0);
+                        lcl_seg->seg_len, 0); /* CQ is ignored for FMA transactions */
 
-    rc = GNI_PostFma (frag->endpoint->common->ep_handle, &frag->post_desc.base);
+    rc = GNI_PostFma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
     if (GNI_RC_SUCCESS != rc) {
-/*         BTL_ERROR(("GNI_PostFma failed with rc = %d", rc)); */
         assert(rc < 4);
         rc = OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -86,9 +82,9 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
     init_gni_post_desc (frag, op_type, lcl_seg->seg_addr.lval,
                         (gni_mem_handle_t *)&lcl_seg->seg_key.key64,
                         rem_seg->seg_addr.lval, (gni_mem_handle_t *)&rem_seg->seg_key.key64,
-                        lcl_seg->seg_len, frag->endpoint->btl->bte_local_cq);
+                        lcl_seg->seg_len, frag->endpoint->btl->rdma_local_cq);
 
-    rc = GNI_PostRdma (frag->endpoint->common->ep_handle, &frag->post_desc.base);
+    rc = GNI_PostRdma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
     if (GNI_RC_SUCCESS != rc) {
         rc = ompi_common_rc_ugni_to_ompi (rc);
         BTL_ERROR(("GNI_PostRdma failed with rc = %d", rc));

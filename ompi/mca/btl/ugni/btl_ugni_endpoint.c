@@ -23,14 +23,17 @@ OBJ_CLASS_INSTANCE(mca_btl_base_endpoint_t, opal_object_t,
 
 static void mca_btl_ugni_ep_construct (mca_btl_base_endpoint_t *ep)
 {
+    memset ((char *) ep + sizeof(ep->super), 0, sizeof (*ep) - sizeof (ep->super));
     OBJ_CONSTRUCT(&ep->pending_list, opal_list_t);
     OBJ_CONSTRUCT(&ep->pending_smsg_sends, opal_list_t);
+    OBJ_CONSTRUCT(&ep->lock, opal_mutex_t);
 }
 
 static void mca_btl_ugni_ep_destruct (mca_btl_base_endpoint_t *ep)
 {
     OBJ_DESTRUCT(&ep->pending_list);
     OBJ_DESTRUCT(&ep->pending_smsg_sends);
+    OBJ_DESTRUCT(&ep->lock);
 }
 
 static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
@@ -74,13 +77,13 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
     OPAL_THREAD_LOCK(&ep->common->lock);
 
     do {
-        if (OMPI_COMMON_UGNI_INIT == MCA_BTL_UGNI_EP_STATE(ep)) {
+        if (MCA_BTL_UGNI_EP_STATE_INIT == ep->state) {
             /* nothing to do */
             break;
         }
 
-        if (OMPI_COMMON_UGNI_CONNECTED == MCA_BTL_UGNI_EP_STATE(ep) && send_disconnect) {
-            rc = GNI_SmsgSendWTag (ep->common->ep_handle, NULL, 0, NULL, 0, -1,
+        if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state && send_disconnect) {
+            rc = GNI_SmsgSendWTag (ep->smsg_ep_handle, NULL, 0, NULL, 0, -1,
                                    MCA_BTL_UGNI_TAG_DISCONNECT);
             if (GNI_RC_SUCCESS != rc) {
                 BTL_VERBOSE(("btl/ugni could not send close message"));
@@ -89,15 +92,10 @@ int mca_btl_ugni_ep_disconnect (mca_btl_base_endpoint_t *ep, bool send_disconnec
             /* we might want to wait for local completion here (do we even care) */
         }
 
-        ep->common->state = OMPI_COMMON_UGNI_BOUND;
+        (void) ompi_common_ugni_ep_destroy (&ep->smsg_ep_handle);
+        (void) ompi_common_ugni_ep_destroy (&ep->rdma_ep_handle);
 
-        /* drop the lock before we unbind */
-        OPAL_THREAD_UNLOCK(&ep->common->lock); 
-        rc = ompi_common_ugni_endpoint_unbind (ep->common);
-        OPAL_THREAD_LOCK(&ep->common->lock);
-        if (OMPI_SUCCESS != rc) {
-            BTL_VERBOSE(("btl/ugni error unbinding ugni endpoint"));
-        }
+        ep->state = MCA_BTL_UGNI_EP_STATE_INIT;
 
         OMPI_FREE_LIST_RETURN(&ep->btl->smsg_mboxes, ((ompi_free_list_item_t *) ep->mailbox));
         ep->mailbox = NULL;
@@ -115,20 +113,23 @@ static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
                  ep->common->ep_rem_addr, ep->common->ep_rem_id));
 
     /* bind endpoint to remote address */
-    OPAL_THREAD_UNLOCK(&ep->common->lock); 
-    rc = ompi_common_ugni_endpoint_bind (ep->common);
-    OPAL_THREAD_LOCK(&ep->common->lock); 
+    rc = ompi_common_ugni_ep_create (ep->common, ep->btl->smsg_local_cq, &ep->smsg_ep_handle);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
     }
 
-    MCA_BTL_UGNI_EP_STATE(ep) = OMPI_COMMON_UGNI_CONNECTING;
+    rc = ompi_common_ugni_ep_create (ep->common, ep->btl->rdma_local_cq, &ep->rdma_ep_handle);
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        return rc;
+    }
 
     /* build connection data */
     rc = mca_btl_ugni_ep_smsg_get_mbox (ep);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         return rc;
     }
+
+    ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTING;
 
     memset (&ep->remote_smsg_attrib, 0, sizeof (ep->remote_smsg_attrib));
 
@@ -137,11 +138,9 @@ static inline int mca_btl_ugni_ep_connect_start (mca_btl_base_endpoint_t *ep) {
     return OMPI_SUCCESS;
 }
 
-static void mca_btl_ugni_retry_send (ompi_common_ugni_post_desc_t *desc, int rc)
+static void mca_btl_ugni_retry_send (mca_btl_ugni_base_frag_t *frag, int rc)
 {
-    mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
-
-    rc = mca_btl_ugni_send (&frag->endpoint->btl->super, frag->endpoint, &frag->base, frag->hdr.send.tag);
+    rc = mca_btl_ugni_send (&frag->endpoint->btl->super, frag->endpoint, &frag->base, frag->hdr.send.lag >> 24);
     if (OPAL_UNLIKELY(0 > rc)) {
         opal_list_append (&frag->endpoint->btl->failed_frags, (opal_list_item_t *) frag);
     }
@@ -165,22 +164,23 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
                  ep->mailbox->smsg_attrib.mem_hndl.qword2, ep->mailbox->smsg_attrib.mbox_offset,
                  ep->mailbox->smsg_attrib.mbox_maxcredit, ep->mailbox->smsg_attrib.msg_maxsize));
 
-    rc = GNI_SmsgInit (ep->common->ep_handle, &ep->mailbox->smsg_attrib, &ep->remote_smsg_attrib);
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
+    rc = GNI_SmsgInit (ep->smsg_ep_handle, &ep->mailbox->smsg_attrib, &ep->remote_smsg_attrib);
+    if (GNI_RC_SUCCESS != rc) {
         BTL_ERROR(("error initializing SMSG protocol. rc = %d", rc));
+
         return ompi_common_rc_ugni_to_ompi (rc);
     }
 
     BTL_VERBOSE(("endpoint connected. posting %u sends", (unsigned int) opal_list_get_size (&ep->pending_list)));
 
-    MCA_BTL_UGNI_EP_STATE(ep) = OMPI_COMMON_UGNI_CONNECTED;
+    ep->state = MCA_BTL_UGNI_EP_STATE_CONNECTED;
 
     /* post pending sends */
     while (NULL != (item = opal_list_remove_first (&ep->pending_list))) {
         mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) item;
-        rc = mca_btl_ugni_send (&ep->btl->super, ep, &frag->base, frag->hdr.send.tag);
+        rc = mca_btl_ugni_send (&ep->btl->super, ep, &frag->base, frag->hdr.send.lag >> 24);
         if (OPAL_UNLIKELY(0 > rc)) {
-            frag->post_desc.cbfunc = mca_btl_ugni_retry_send;
+            frag->cbfunc = mca_btl_ugni_retry_send;
             opal_list_append (&ep->btl->failed_frags, (opal_list_item_t *) frag);
         }
     }
@@ -191,11 +191,11 @@ static inline int mca_btl_ugni_ep_connect_finish (mca_btl_base_endpoint_t *ep) {
 int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
     int rc;
 
-    if (OMPI_COMMON_UGNI_CONNECTED == MCA_BTL_UGNI_EP_STATE(ep)) {
+    if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state) {
         return OMPI_SUCCESS;
     }
 
-    if (OMPI_COMMON_UGNI_CONNECTING > ep->common->state) {
+    if (MCA_BTL_UGNI_EP_STATE_INIT == ep->state) {
         rc = mca_btl_ugni_ep_connect_start (ep);
         if (OMPI_SUCCESS != rc) {
             return rc;
@@ -203,8 +203,11 @@ int mca_btl_ugni_ep_connect_progress (mca_btl_base_endpoint_t *ep) {
     }
 
     if (GNI_SMSG_TYPE_INVALID == ep->remote_smsg_attrib.msg_type) {
-        (void) mca_btl_ugni_directed_ep_post (ep);
-        return OMPI_ERR_RESOURCE_BUSY;
+        rc = mca_btl_ugni_directed_ep_post (ep);
+        if (OMPI_SUCCESS == rc) {
+            rc = OMPI_ERR_RESOURCE_BUSY;
+        }
+        return rc;
     }
 
     return mca_btl_ugni_ep_connect_finish (ep);
