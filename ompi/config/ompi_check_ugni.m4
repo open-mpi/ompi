@@ -1,4 +1,4 @@
-# -*- shell-script -*-
+# -*- Mode: Shell ; indent-tabs-mode:nil -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -12,7 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2006      QLogic Corp. All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC.
+# Copyright (c) 2011-2012 Los Alamos National Security, LLC.
 #                         All rights reserved.
 # $COPYRIGHT$
 #
@@ -75,6 +75,12 @@ AC_DEFUN([OMPI_CHECK_UGNI], [
             [ompi_check_ugni_happy="yes"],
             [ompi_check_ugni_happy="no"])],
           [ompi_check_ugni_happy="no"])
+
+    LIBS="$LIBS $$1_LIBS"
+    LDFLAGS="$LDFLAGS $$1_LDFLAGS"
+
+    AS_IF([test "$ompi_check_ugni_happy" = "yes"],
+          [AC_CHECK_FUNCS([GNI_GetJobResInfo])])
 
     CPPFLAGS="$ompi_check_ugni_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_ugni_$1_save_LDFLAGS"
