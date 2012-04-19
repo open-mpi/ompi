@@ -30,8 +30,15 @@
    back-end function is public so that it can be callable from the
    mpi_f08_ext library. */
 
+/* Prototype everything so that the compiler doesn't complain */
+OMPI_DECLSPEC void OMPI_Progress_f(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr);
+OMPI_DECLSPEC void OMPI_PROGRESS(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr);
+OMPI_DECLSPEC void ompi_progress(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr);
+OMPI_DECLSPEC void ompi_progress_(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr);
+OMPI_DECLSPEC void ompi_progress__(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr);
+
 /* Back-end function */
-OMPI_DECLSPEC void OMPI_Progress_f(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr)
+void OMPI_Progress_f(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr)
 {
     int c_err;
     MPI_Comm c_comm = MPI_Comm_f2c(*comm);
@@ -42,16 +49,19 @@ OMPI_DECLSPEC void OMPI_Progress_f(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ie
 }
 
 /* Front-end functions */
-OMPI_DECLSPEC void OMPI_PROGRESS(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
+void OMPI_PROGRESS(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
     OMPI_Progress_f(count, comm, ierr);
 }
-OMPI_DECLSPEC void ompi_progress(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
+
+void ompi_progress(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
     OMPI_Progress_f(count, comm, ierr);
 }
-OMPI_DECLSPEC void ompi_progress_(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
+
+void ompi_progress_(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
     OMPI_Progress_f(count, comm, ierr);
 }
-OMPI_DECLSPEC void ompi_progress__(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
+
+void ompi_progress__(MPI_Fint *count, MPI_Fint *comm, MPI_Fint *ierr) {
     OMPI_Progress_f(count, comm, ierr);
 }
 
