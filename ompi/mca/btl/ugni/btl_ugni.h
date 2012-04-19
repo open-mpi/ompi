@@ -27,7 +27,6 @@
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "opal/util/output.h"
 #include "opal_stdint.h"
-#include "opal/class/opal_hash_table.h"
 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -64,8 +63,9 @@ typedef struct mca_btl_ugni_module_t {
     gni_ep_handle_t wildcard_ep;
     gni_smsg_attr_t wc_remote_attr, wc_local_attr;
 
-    gni_cq_handle_t bte_local_cq;
+    gni_cq_handle_t rdma_local_cq;
     gni_cq_handle_t smsg_remote_cq;
+    gni_cq_handle_t smsg_local_cq;
 
     /* eager (registered) fragment list */
     ompi_free_list_t eager_frags_send;
@@ -78,8 +78,8 @@ typedef struct mca_btl_ugni_module_t {
     ompi_free_list_t rdma_frags;
     ompi_free_list_t rdma_int_frags;
 
-    /* fragment buffer (for message if lookup) */
-    opal_hash_table_t pending_smsg_frags;
+    /* fragment id bounce buffer (smsg msg ids are only 32 bits) */
+    opal_pointer_array_t pending_smsg_frags_bb;
     int32_t next_frag_id;
 
     uint32_t reg_max;

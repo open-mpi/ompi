@@ -12,22 +12,13 @@
 
 #include "common_ugni.h"
 
-static void ompi_common_ugni_ep_construct (ompi_common_ugni_endpoint_t *ep)
-{
-    OBJ_CONSTRUCT(&ep->lock, opal_mutex_t);
-    ep->state = OMPI_COMMON_UGNI_INIT;
-    ep->bind_count = 0;
-}
-
 static void ompi_common_ugni_ep_destruct (ompi_common_ugni_endpoint_t *ep)
 {
-    OBJ_DESTRUCT(&ep->lock);
-    ompi_common_ugni_endpoint_unbind (ep);
     ep->dev->dev_eps[ep->ep_rem_id] = NULL;
 }
 
 OBJ_CLASS_INSTANCE(ompi_common_ugni_endpoint_t, opal_object_t,
-                   ompi_common_ugni_ep_construct, ompi_common_ugni_ep_destruct);
+                   NULL, ompi_common_ugni_ep_destruct);
 
 int ompi_common_ugni_endpoint_for_proc (ompi_common_ugni_device_t *dev, ompi_proc_t *peer_proc,
                                         ompi_common_ugni_endpoint_t **ep)
@@ -82,65 +73,48 @@ void ompi_common_ugni_endpoint_return (ompi_common_ugni_endpoint_t *ep)
     OBJ_RELEASE(ep);
 }
 
-int ompi_common_ugni_endpoint_bind (ompi_common_ugni_endpoint_t *ep)
+int ompi_common_ugni_ep_create (ompi_common_ugni_endpoint_t *cep, gni_cq_handle_t cq, gni_ep_handle_t *ep_handle)
 {
-    int rc;
+    gni_return_t grc;
 
-    assert (NULL != ep);
-    if (OPAL_UNLIKELY(NULL == ep)) {
+    if (OPAL_UNLIKELY(NULL == cep)) {
+        assert (0);
         return OPAL_ERR_BAD_PARAM;
     }
 
-    do {
-        if (OPAL_LIKELY(OMPI_COMMON_UGNI_BOUND <= ep->state)) {
-            return OMPI_SUCCESS;
-        }
+    /* create a uGNI endpoint handle and bind it to the remote peer */
+    grc = GNI_EpCreate (cep->dev->dev_handle, cq, ep_handle);
+    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
+        return ompi_common_rc_ugni_to_ompi (grc);
+    }
 
-        OPAL_THREAD_LOCK(&ep->lock);
-        /* create a uGNI endpoint handle and bind it to the remote peer */
-        rc = GNI_EpCreate (ep->dev->dev_handle, ep->dev->dev_local_cq,
-                           &ep->ep_handle);
-        if (GNI_RC_SUCCESS != rc) {
-            rc = ompi_common_rc_ugni_to_ompi (rc);
-            break;
-        }
+    grc = GNI_EpBind (*ep_handle, cep->ep_rem_addr, cep->ep_rem_id);
+    if (GNI_RC_SUCCESS != grc) {
+        return ompi_common_rc_ugni_to_ompi (grc);
+    }
 
-        rc = GNI_EpBind (ep->ep_handle, ep->ep_rem_addr, ep->ep_rem_id);
-        if (GNI_RC_SUCCESS != rc) {
-            rc = ompi_common_rc_ugni_to_ompi (rc);
-            break;
-        }
-
-        ep->state = OMPI_COMMON_UGNI_BOUND;
-    } while (0);
-
-    OPAL_THREAD_UNLOCK(&ep->lock);
-
-    return rc;
+    return OMPI_SUCCESS;
 }
 
-int ompi_common_ugni_endpoint_unbind  (ompi_common_ugni_endpoint_t *ep)
+int ompi_common_ugni_ep_destroy  (gni_ep_handle_t *ep)
 {
     int rc;
 
-    if (0 == ep->bind_count) {
+    if (NULL == ep || 0 == *ep) {
         return OMPI_SUCCESS;
     }
 
-    assert (OMPI_COMMON_UGNI_BOUND == ep->state);
-
-    rc = GNI_EpUnbind (ep->ep_handle);
+    rc = GNI_EpUnbind (*ep);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         /* should warn */
     }
 
-    GNI_EpDestroy (ep->ep_handle);
+    GNI_EpDestroy (*ep);
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         /* should warn */
     }
 
-    ep->state = OMPI_COMMON_UGNI_INIT;
-    ep->bind_count--;
+    *ep = 0;
 
     return OMPI_SUCCESS;
 }

@@ -132,7 +132,7 @@ btl_ugni_component_register(void)
     mca_btl_ugni_module.super.btl_min_rdma_pipeline_size    = 8 * 1024;
 
     mca_btl_ugni_module.super.btl_flags = MCA_BTL_FLAGS_SEND |
-        MCA_BTL_FLAGS_RDMA;
+        MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE;
 
     mca_btl_ugni_module.super.btl_bandwidth = 40000; /* Mbs */
     mca_btl_ugni_module.super.btl_latency   = 2;     /* Microsecs */
@@ -318,255 +318,6 @@ mca_btl_ugni_component_init (int *num_btl_modules,
     return base_modules;
 }
 
-static void mca_btl_ugni_callback_rdma_complete (ompi_common_ugni_post_desc_t *desc, int rc)
-{
-    mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
-
-    BTL_VERBOSE(("rdma operation for rem_ctx %p complete", frag->hdr.rdma.ctx));
-
-    /* tell peer the put is complete */
-    rc = ompi_mca_btl_ugni_smsg_send (frag, false, &frag->hdr.rdma, sizeof (frag->hdr.rdma),
-                                      NULL, 0, MCA_BTL_UGNI_TAG_RDMA_COMPLETE);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        /* call this callback again later */
-        frag->post_desc.cbfunc = mca_btl_ugni_callback_rdma_complete;
-        opal_list_append (&frag->endpoint->btl->failed_frags, (opal_list_item_t *) frag);
-    }
-}
-
-static void mca_btl_ugni_callback_eager_get (ompi_common_ugni_post_desc_t *desc, int rc)
-{
-    mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
-    mca_btl_active_message_callback_t *reg;
-
-    BTL_VERBOSE(("eager get for rem_ctx %p complete", frag->hdr.eager.ctx));
-
-    /* the frag is already set up for the send callback */
-    frag->segments[0].seg_len = frag->hdr.eager.len;
-    reg = mca_btl_base_active_message_trigger + frag->hdr.eager.tag;
-    reg->cbfunc(&frag->endpoint->btl->super, frag->hdr.eager.tag, &(frag->base), reg->cbdata);
-
-    frag->hdr.rdma.ctx = frag->hdr.eager.ctx;
-
-    /* tell the remote peer the operation is complete */
-    mca_btl_ugni_callback_rdma_complete (desc, rc);
-}
-
-static inline int mca_btl_ugni_start_reverse_get (mca_btl_base_endpoint_t *ep,
-                                                  mca_btl_ugni_rdma_frag_hdr_t hdr,
-                                                  mca_btl_ugni_base_frag_t *frag);
-
-static void mca_btl_ugni_callback_reverse_get_retry (ompi_common_ugni_post_desc_t *desc, int rc)
-{
-    mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
-
-    (void) mca_btl_ugni_start_reverse_get(frag->endpoint, frag->hdr.rdma, frag);
-}
-
-static inline int mca_btl_ugni_start_reverse_get (mca_btl_base_endpoint_t *ep,
-                                                  mca_btl_ugni_rdma_frag_hdr_t hdr,
-                                                  mca_btl_ugni_base_frag_t *frag)
-{
-    int rc;
-
-    BTL_VERBOSE(("starting reverse get (put) for remote ctx: %p", hdr.ctx));
-
-    if (NULL == frag) {
-        rc = MCA_BTL_UGNI_FRAG_ALLOC_RDMA_INT(ep, frag);
-        if (OPAL_UNLIKELY(NULL == frag)) {
-            BTL_ERROR(("error allocating rdma frag for reverse get. rc = %d. fl_num_allocated = %d", rc,
-                       ep->btl->rdma_int_frags.fl_num_allocated));
-            return rc;
-        }
-    }
-
-    frag->hdr.rdma = hdr;
-
-    frag->base.des_cbfunc = NULL;
-    frag->base.des_flags  = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
-
-    frag->segments[0] = hdr.src_seg;
-    frag->base.des_src = frag->segments;
-    frag->base.des_src_cnt = 1;
-
-    frag->segments[1] = hdr.dst_seg;
-    frag->base.des_dst = frag->segments + 1;
-    frag->base.des_dst_cnt = 1;
-
-    rc = mca_btl_ugni_put (&ep->btl->super, ep, &frag->base);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        frag->post_desc.cbfunc = mca_btl_ugni_callback_reverse_get_retry;
-        opal_list_append (&ep->btl->failed_frags, (opal_list_item_t *) frag);
-        return rc;
-    }
-
-    frag->post_desc.cbfunc = mca_btl_ugni_callback_rdma_complete;
-
-    return OMPI_SUCCESS;
-}
-
-static inline int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
-                                                mca_btl_ugni_eager_frag_hdr_t hdr,
-                                                mca_btl_ugni_base_frag_t *frag);
-
-static void mca_btl_ugni_callback_eager_get_retry (ompi_common_ugni_post_desc_t *desc, int rc)
-{
-    mca_btl_ugni_base_frag_t *frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
-
-    (void) mca_btl_ugni_start_eager_get(frag->endpoint, frag->hdr.eager, frag);
-}
-
-
-static inline int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
-                                                mca_btl_ugni_eager_frag_hdr_t hdr,
-                                                mca_btl_ugni_base_frag_t *frag)
-{
-    int rc;
-
-    if (OPAL_UNLIKELY(frag && frag->my_list == &ep->btl->rdma_int_frags)) {
-        mca_btl_ugni_frag_return (frag);
-        frag = NULL;
-    }
-
-    BTL_VERBOSE(("starting eager get for remote ctx: %p", hdr.ctx));
-
-    do {
-        if (NULL == frag) {
-            rc = MCA_BTL_UGNI_FRAG_ALLOC_EAGER_RECV(ep, frag);
-            if (OPAL_UNLIKELY(NULL == frag)) {
-                (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA_INT(ep, frag);
-                assert (NULL != frag);
-                frag->hdr.eager = hdr;
-                break;
-            }
-        }
-
-        frag->hdr.eager = hdr;
-
-        frag->base.des_cbfunc = NULL;
-        frag->base.des_flags  = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
-
-        frag->base.des_dst = frag->segments;
-        frag->base.des_dst_cnt = 1;
-
-        frag->segments[1] = hdr.src_seg;
-        frag->base.des_src = frag->segments + 1;
-        frag->base.des_src_cnt = 1;
-
-        /* increase size to a multiple of 4 bytes (required for get) */
-        frag->segments[0].seg_len = (hdr.len + 3) & ~3;
-        frag->segments[1].seg_len = (hdr.len + 3) & ~3;
-
-        rc = mca_btl_ugni_post_fma (frag, GNI_POST_FMA_GET, frag->base.des_dst, frag->base.des_src);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-            break;
-        }
-
-        frag->post_desc.cbfunc = mca_btl_ugni_callback_eager_get;
-
-        return OMPI_SUCCESS;
-    } while (0);
-
-    frag->post_desc.cbfunc = mca_btl_ugni_callback_eager_get_retry;
-
-    opal_list_append (&ep->btl->failed_frags, (opal_list_item_t *) frag);
-
-    return rc;
-}
-
-static inline int
-mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
-{
-    mca_btl_active_message_callback_t *reg;
-    mca_btl_ugni_base_frag_t frag;
-    bool disconnect = false;
-    uintptr_t data_ptr;
-    gni_return_t rc;
-    int count = 0;
-
-    /* per uGNI documentation we loop until the mailbox is empty */
-    do {
-        uint8_t tag = GNI_SMSG_ANY_TAG;
-
-        rc = GNI_SmsgGetNextWTag (ep->common->ep_handle, (void **) &data_ptr, &tag);
-        if (GNI_RC_NOT_DONE == rc) {
-            BTL_VERBOSE(("no smsg message waiting. rc = %d", rc));
-
-            return count;
-        }
-
-        if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
-            fprintf (stderr, "Unhandled Smsg error: %d\n", rc);
-            assert (0);
-            return OMPI_ERROR;
-        }
-
-        if (OPAL_UNLIKELY(0 == data_ptr)) {
-            BTL_ERROR(("null data ptr!"));
-            assert (0);
-            return OMPI_ERROR;
-        }
-
-        count++;
-
-        BTL_VERBOSE(("got smsg fragment. tag = %d\n", tag));
-
-        switch (tag) {
-        case MCA_BTL_UGNI_TAG_SEND:
-            frag.hdr.send = ((mca_btl_ugni_send_frag_hdr_t *) data_ptr)[0];
-
-            BTL_VERBOSE(("received smsg fragment. hdr = {len = %u, tag = %d}",
-                         (unsigned int) frag.hdr.send.len, frag.hdr.send.tag));
-
-            reg = mca_btl_base_active_message_trigger + frag.hdr.send.tag;
-            frag.base.des_dst     = frag.segments;
-            frag.base.des_dst_cnt = 1;
-
-            frag.segments[0].seg_addr.pval = (void *)((uintptr_t)data_ptr + sizeof (mca_btl_ugni_send_frag_hdr_t));
-            frag.segments[0].seg_len       = frag.hdr.send.len;
-
-            assert (NULL != reg->cbfunc);
-
-            reg->cbfunc(&ep->btl->super, frag.hdr.send.tag, &(frag.base), reg->cbdata);
-
-            break;
-        case MCA_BTL_UGNI_TAG_PUT_INIT:
-            frag.hdr.rdma = ((mca_btl_ugni_rdma_frag_hdr_t *) data_ptr)[0];
-
-            mca_btl_ugni_start_reverse_get (ep, frag.hdr.rdma, NULL);
-            break;
-        case MCA_BTL_UGNI_TAG_GET_INIT:
-            frag.hdr.eager = ((mca_btl_ugni_eager_frag_hdr_t *) data_ptr)[0];
-
-            mca_btl_ugni_start_eager_get (ep, frag.hdr.eager, NULL);
-            break;
-        case MCA_BTL_UGNI_TAG_RDMA_COMPLETE:
-            frag.hdr.rdma = ((mca_btl_ugni_rdma_frag_hdr_t *) data_ptr)[0];
-
-            mca_btl_ugni_post_frag_complete (frag.hdr.rdma.ctx, OMPI_SUCCESS);
-            break;
-        case MCA_BTL_UGNI_TAG_DISCONNECT:
-            /* remote endpoint has disconnected */
-            disconnect = true;
-            break;
-        default:
-            BTL_ERROR(("unknown tag %d\n", tag));
-            break;
-        }
-
-        rc = GNI_SmsgRelease (ep->common->ep_handle);
-        if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
-            BTL_ERROR(("Smsg release failed!"));
-            return OMPI_ERROR;
-        }
-    } while (!disconnect);
-
-    /* disconnect if we get here */
-    mca_btl_ugni_ep_disconnect (ep, false);
-
-    return count;
-}
-
 static inline int
 mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *btl)
 {
@@ -589,12 +340,12 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *btl)
         handle = btl->wildcard_ep;
     } else {
         handle =
-            btl->endpoints[(uint32_t)(datagram_id & 0xffffffffull)]->common->ep_handle;
+            btl->endpoints[(uint32_t)(datagram_id & 0xffffffffull)]->smsg_ep_handle;
     }
 
     /* wait for the incoming datagram to complete (in case it isn't) */
     grc = GNI_EpPostDataWaitById (handle, datagram_id, -1, &post_state,
-                                 &remote_addr, &remote_id);
+                                  &remote_addr, &remote_id);
     if (GNI_RC_SUCCESS != grc) {
         BTL_ERROR(("GNI_EpPostDataWaitById failed with rc = %d", grc));
         return ompi_common_rc_ugni_to_ompi (grc);
@@ -610,7 +361,7 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *btl)
     /* NTH: TODO -- error handling */
     (void) mca_btl_ugni_ep_connect_progress (ep);
 
-    if (OMPI_COMMON_UGNI_CONNECTED == MCA_BTL_UGNI_EP_STATE(ep)) {
+    if (MCA_BTL_UGNI_EP_STATE_CONNECTED == ep->state) {
         /*  process messages waiting in the endpoint's smsg mailbox */
         count = mca_btl_ugni_smsg_process (ep);
     }
@@ -626,92 +377,61 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *btl)
 }
 
 static inline int
-mca_btl_ugni_handle_smsg_overrun (mca_btl_ugni_module_t *btl)
+mca_btl_ugni_progress_rdma (mca_btl_ugni_module_t *btl)
 {
-    gni_cq_entry_t event_data;
-    unsigned int ep_index;
-    int count, rc;
+    ompi_common_ugni_post_desc_t *desc;
+    gni_return_t rc = GNI_RC_NOT_DONE;
+    mca_btl_ugni_base_frag_t *frag;
+    gni_cq_entry_t event_data = 0;
+    uint32_t recoverable = 1;
 
-    BTL_VERBOSE(("btl/ugni_component detect SMSG CQ overrun. "
-                 "processing message backlog..."));
-
-    /* we don't know which endpoint lost an smsg completion. clear the
-       smsg remote cq and check all mailboxes */
-
-    /* clear out remote cq */
-    do {
-        rc = GNI_CqGetEvent (btl->smsg_remote_cq, &event_data);
-    } while (GNI_RC_SUCCESS == rc);
-
-    count = 0;
-
-    for (ep_index = 0 ; ep_index < btl->endpoint_count ; ++ep_index) {
-        mca_btl_base_endpoint_t *ep = btl->endpoints[ep_index];
-
-        if (NULL == ep || OMPI_COMMON_UGNI_CONNECTED != MCA_BTL_UGNI_EP_STATE(ep)) {
-            continue;
-        }
-
-        do {
-            /* clear out smsg mailbox */
-            rc = mca_btl_ugni_smsg_process (ep);
-            if (rc > 0)
-                count += rc;
-        } while (rc > 0);
-    }
-
-    return count;
-}
-
-static inline int
-mca_btl_ugni_progress_smsg (mca_btl_ugni_module_t *btl)
-{
-    mca_btl_base_endpoint_t *ep;
-    gni_cq_entry_t event_data;
-    int rc;
-
-    rc = GNI_CqGetEvent (btl->smsg_remote_cq, &event_data);
+    rc = GNI_CqGetEvent (btl->rdma_local_cq, &event_data);
     if (GNI_RC_NOT_DONE == rc) {
         return 0;
     }
 
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc || !GNI_CQ_STATUS_OK(event_data) ||
-                      GNI_CQ_OVERRUN(event_data))) {
-        if (GNI_RC_ERROR_RESOURCE == rc ||
-            (GNI_RC_SUCCESS == rc && GNI_CQ_OVERRUN(event_data))) {
-            /* recover from smsg cq overrun */
-            return mca_btl_ugni_handle_smsg_overrun (btl);
+    if (OPAL_UNLIKELY((GNI_RC_SUCCESS != rc && !event_data) || GNI_CQ_OVERRUN(event_data))) {
+        /* TODO -- need to handle overrun -- how do we do this without an event?
+           will the event eventually come back? Ask Cray */
+        BTL_ERROR(("post error! cq overrun = %d", (int)GNI_CQ_OVERRUN(event_data)));
+        assert (0);
+        return ompi_common_rc_ugni_to_ompi (rc);
+    }
+
+    rc = GNI_GetCompleted (btl->rdma_local_cq, event_data, (gni_post_descriptor_t **) &desc);
+    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc && GNI_RC_TRANSACTION_ERROR != rc)) {
+        BTL_ERROR(("Error in GNI_GetComplete %s", gni_err_str[rc]));
+        return ompi_common_rc_ugni_to_ompi (rc);
+    }
+
+    frag = MCA_BTL_UGNI_DESC_TO_FRAG(desc);
+
+    if (OPAL_UNLIKELY(!GNI_CQ_STATUS_OK(event_data))) {
+        (void) GNI_CqErrorRecoverable (event_data, &recoverable);
+
+        if (OPAL_UNLIKELY(++desc->tries >= mca_btl_ugni_component.rdma_max_retries ||
+                          !recoverable)) {
+            /* give up */
+            BTL_ERROR(("giving up on frag %p", (void *) frag))
+            frag->cbfunc (frag, OMPI_ERROR);
+
+            return OMPI_ERROR;
         }
 
-        BTL_ERROR(("unhandled error in GNI_CqGetEvent"));
+        /* repost transaction */
+        if (GNI_POST_RDMA_PUT == desc->base.type ||
+            GNI_POST_RDMA_GET == desc->base.type) {
+            rc = GNI_PostRdma (frag->endpoint->rdma_ep_handle, &desc->base);
+        } else {
+            rc = GNI_PostFma (frag->endpoint->rdma_ep_handle, &desc->base);
+        }
 
-        /* unhandled error: crash */
-        assert (0);
-        return OMPI_ERROR;
+        return ompi_common_rc_ugni_to_ompi (rc);
     }
 
-    BTL_VERBOSE(("REMOTE CQ: Got event 0x%" PRIx64 ". msg id = %" PRIu64
-                 ". ok = %d, type = %" PRIu64 "\n", (uint64_t) event_data,
-                 GNI_CQ_GET_MSG_ID(event_data), GNI_CQ_STATUS_OK(event_data),
-                 GNI_CQ_GET_TYPE(event_data)));
+    frag->cbfunc (frag, OMPI_SUCCESS);
 
-    /* we could check the message type here but it seems to always be a POST */
-
-    ep = btl->endpoints[GNI_CQ_GET_MSG_ID(event_data)];
-    if (OPAL_UNLIKELY(OMPI_COMMON_UGNI_CONNECTED != MCA_BTL_UGNI_EP_STATE(ep))) {
-        /* due to the nature of datagrams we may get a smsg completion before
-           we get mailbox info from the peer */
-        BTL_VERBOSE(("event occurred on an unconnected endpoint! ep state = %d", MCA_BTL_UGNI_EP_STATE(ep)));
-        return 0;
-    }
-
-    return mca_btl_ugni_smsg_process (ep);
-}
-
-static inline int
-mca_btl_ugni_progress_bte (mca_btl_ugni_module_t *btl)
-{
-    return ompi_common_ugni_process_completed_post (btl->device, btl->bte_local_cq);
+    return 1;
 }
 
 static int
@@ -723,20 +443,17 @@ mca_btl_ugni_retry_failed (mca_btl_ugni_module_t *btl)
     while (count-- && NULL != (item = opal_list_remove_first (&btl->failed_frags))) {
         mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) item;
 
-        frag->post_desc.cbfunc (&frag->post_desc, OMPI_SUCCESS);
+        frag->cbfunc (frag, OMPI_SUCCESS);
     }
 
     return 0;
 }
 
-static int
-mca_btl_ugni_component_progress (void)
+static int mca_btl_ugni_component_progress (void)
 {
     mca_btl_ugni_module_t *btl;
     unsigned int i;
-    int count;
-
-    count = ompi_common_ugni_progress ();
+    int count = 0;
 
     for (i = 0 ; i < mca_btl_ugni_component.ugni_num_btls ; ++i) {
         btl = mca_btl_ugni_component.modules + i;
@@ -744,8 +461,9 @@ mca_btl_ugni_component_progress (void)
         mca_btl_ugni_retry_failed (btl);
 
         count += mca_btl_ugni_progress_datagram (btl);
-        count += mca_btl_ugni_progress_smsg (btl);
-        count += mca_btl_ugni_progress_bte (btl);
+        count += mca_btl_ugni_progress_local_smsg (btl);
+        count += mca_btl_ugni_progress_remote_smsg (btl);
+        count += mca_btl_ugni_progress_rdma (btl);
     }
 
     return count;
