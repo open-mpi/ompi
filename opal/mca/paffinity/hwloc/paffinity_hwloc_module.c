@@ -164,9 +164,10 @@ static int module_init(void)
 
 static int module_set(opal_paffinity_base_cpu_set_t mask)
 {
-    int i, ret = OPAL_SUCCESS;
+    int ret = OPAL_SUCCESS;
     hwloc_bitmap_t set;
     hwloc_topology_t *t;
+    hwloc_obj_t pu;
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
@@ -178,10 +179,11 @@ static int module_set(opal_paffinity_base_cpu_set_t mask)
     if (NULL == set) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    hwloc_bitmap_zero(set);
-    for (i = 0; ((unsigned int) i) < OPAL_PAFFINITY_BITMASK_CPU_MAX; ++i) {
-        if (OPAL_PAFFINITY_CPU_ISSET(i, mask)) {
-            hwloc_bitmap_set(set, i);
+    for (pu = hwloc_get_obj_by_type(*t, HWLOC_OBJ_PU, 0);
+         pu && pu->logical_index < OPAL_PAFFINITY_BITMASK_CPU_MAX;
+         pu = pu->next_cousin) {
+        if (OPAL_PAFFINITY_CPU_ISSET(pu->logical_index, mask)) {
+            hwloc_bitmap_set(set, pu->os_index);
         }
     }
 
@@ -196,9 +198,10 @@ static int module_set(opal_paffinity_base_cpu_set_t mask)
 
 static int module_get(opal_paffinity_base_cpu_set_t *mask)
 {
-    int i, ret = OPAL_SUCCESS;
+    int ret = OPAL_SUCCESS;
     hwloc_bitmap_t set;
     hwloc_topology_t *t;
+    hwloc_obj_t pu;
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
@@ -218,9 +221,11 @@ static int module_get(opal_paffinity_base_cpu_set_t *mask)
         ret = OPAL_ERR_IN_ERRNO;
     } else {
         OPAL_PAFFINITY_CPU_ZERO(*mask);
-        for (i = 0; ((unsigned int) i) < 8 * sizeof(*mask); i++) {
-            if (hwloc_bitmap_isset(set, i)) {
-                OPAL_PAFFINITY_CPU_SET(i, *mask);
+        for (pu = hwloc_get_obj_by_type(*t, HWLOC_OBJ_PU, 0);
+             pu && pu->logical_index < 8 * sizeof(*mask);
+             pu = pu->next_cousin) {
+            if (hwloc_bitmap_isset(set, pu->os_index)) {
+                OPAL_PAFFINITY_CPU_SET(pu->logical_index, *mask);
             }
         }
     }
