@@ -58,13 +58,20 @@ static inline mxm_mq_h ompi_mtl_mxm_mq_lookup(struct ompi_communicator_t* comm) 
     return (mxm_mq_h)comm->c_pml_comm;
 }
 
-static inline int ompi_mtl_mxm_to_mpi_status(mxm_error_t status) {
-    if (MXM_OK == status) {
-        return OMPI_SUCCESS;
-    } else if (MXM_ERR_MESSAGE_TRUNCATED == status) {
-        return MPI_ERR_TRUNCATE;
-    } else {
-        return MPI_ERR_INTERN;
+static inline void ompi_mtl_mxm_to_mpi_status(mxm_error_t status, ompi_status_public_t *ompi_status) {
+    switch (status) {
+    case MXM_OK:
+        ompi_status->MPI_ERROR = OMPI_SUCCESS;
+        break;
+    case MXM_ERR_CANCELED:
+        ompi_status->_cancelled = true;
+        break;
+    case MXM_ERR_MESSAGE_TRUNCATED:
+        ompi_status->MPI_ERROR = MPI_ERR_TRUNCATE;
+        break;
+    default:
+        ompi_status->MPI_ERROR = MPI_ERR_INTERN;
+        break;
     }
 }
 
