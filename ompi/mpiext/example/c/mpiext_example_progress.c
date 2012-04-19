@@ -30,7 +30,7 @@ static const char FUNC_NAME[] = "OMPI_Progress";
 /*
  * Global variable from this extension
  */
-extern int OMPI_Example_global = 42;
+int OMPI_Example_global = 42;
 
 /*
  * Just to make the extension "interesting", we pass in an integer and
