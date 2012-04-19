@@ -32,6 +32,7 @@ AC_DEFUN_ONCE([_OMPI_SETUP_FC_BANNER],[
 
 # This is REQUIREd, below.
 AC_DEFUN_ONCE([_OMPI_SETUP_FC_COMPILER],[
+    OPAL_VAR_SCOPE_PUSH([ompi_fcflags_save])
     ompi_fcflags_save="$FCFLAGS"
     # Note that AC_PROG_FC will look for *any* fortran compiler, and
     # we don't want it to find an F77-only compiler.  The AC docs
@@ -42,13 +43,14 @@ AC_DEFUN_ONCE([_OMPI_SETUP_FC_COMPILER],[
     # reason we have an OMPI-ized version of the PROG_FC macro.
     AC_PROG_FC([gfortran f95 fort xlf95 ifort ifc efc pgfortran pgf95 lf95 f90 xlf90 pgf90 epcf90])
     FCFLAGS="$ompi_fcflags_save"
+    OPAL_VAR_SCOPE_POP
 ])
 
 #############################################################################
 
 # General Fortran compiler setup
 AC_DEFUN([OMPI_SETUP_FC],[
-    OPAL_VAR_SCOPE_PUSH([ompi_fcflags_save ompi_fc_happy])
+    OPAL_VAR_SCOPE_PUSH([ompi_fc_happy])
 
     # Force the intro banner to be displayed first
     AC_REQUIRE([_OMPI_SETUP_FC_BANNER])
