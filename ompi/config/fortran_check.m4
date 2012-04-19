@@ -138,8 +138,10 @@ AC_DEFUN([OMPI_FORTRAN_CHECK], [
                   [AC_MSG_RESULT([<skipped>])])
 
             # See if the value is -1.  If so, then just say we don't
-            # have a match.
-            OMPI_FORTRAN_GET_KIND_VALUE([$ofc_type_kind], [ofc_type_kind_value])
+            # have a match.  If the compiler doesn't support
+            # ISO_C_BINDING, then we'll just fall back to a default
+            # kind and hope for the best.  :-\
+            OMPI_FORTRAN_GET_KIND_VALUE([$ofc_type_kind], 4, [ofc_type_kind_value])
             AS_IF([test $ofc_type_kind_value -le 0],
                   [ofc_have_type=0
                    AC_MSG_WARN([Compiler $1 and $ofc_c_type mismatch; MPI datatype unsupported])])

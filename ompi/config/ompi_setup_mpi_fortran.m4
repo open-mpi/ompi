@@ -238,9 +238,9 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
     # the Fortran/C interop C_INTxx_T KIND values).  So figure out
     # those KIND values here and just substitue them in via
     # AC_DEFINE's.  Kinda gross, but there you are.  :-\
-    OMPI_FORTRAN_GET_KIND_VALUE([C_INT16_T], 9, [OMPI_FORTRAN_C_INT16_T_KIND])
-    OMPI_FORTRAN_GET_KIND_VALUE([C_INT32_T], 18, [OMPI_FORTRAN_C_INT32_T_KIND])
-    OMPI_FORTRAN_GET_KIND_VALUE([C_INT64_T], 19, [OMPI_FORTRAN_C_INT64_T_KIND])
+    OMPI_FORTRAN_GET_KIND_VALUE([C_INT16_T], 4, [OMPI_FORTRAN_C_INT16_T_KIND])
+    OMPI_FORTRAN_GET_KIND_VALUE([C_INT32_T], 9, [OMPI_FORTRAN_C_INT32_T_KIND])
+    OMPI_FORTRAN_GET_KIND_VALUE([C_INT64_T], 18, [OMPI_FORTRAN_C_INT64_T_KIND])
 
     # Get the kind value for Fortran MPI_INTEGER_KIND (corresponding
     # to whatever is the same size as a F77 INTEGER -- for the
@@ -318,7 +318,6 @@ AC_DEFUN([OMPI_SETUP_MPI_FORTRAN],[
                 # We now know that we can now build the mpi module
                 # with at least ignore TKR functionality
                 OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS=1
-                OMPI_FORTRAN_USEMPIF08_LIB=-lmpi_usempif08
                 OMPI_FORTRAN_F08_PREDECL=$OMPI_FORTRAN_IGNORE_TKR_PREDECL
                 OMPI_FORTRAN_F08_TYPE=$OMPI_FORTRAN_IGNORE_TKR_TYPE])
           ])
@@ -446,7 +445,8 @@ end type test_mpi_handle],
           ])
     AC_MSG_CHECKING([if building Fortran 'use mpi_f08' bindings])
     AS_IF([test $OMPI_BUILD_FORTRAN_USEMPIF08_BINDINGS -eq 1],
-          [AC_MSG_RESULT([yes])],
+          [OMPI_FORTRAN_USEMPIF08_LIB=-lmpi_usempif08
+           AC_MSG_RESULT([yes])],
           [AC_MSG_RESULT([no])])
 
     # -------------------
