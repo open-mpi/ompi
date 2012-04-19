@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Los Alamos National Security, LLC. 
  *                         All rights reserved.
- * Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -112,8 +112,8 @@ OBJ_CLASS_INSTANCE(
 
 OBJ_CLASS_INSTANCE(mca_oob_tcp_device_t, opal_list_item_t, NULL, NULL);
 
-int mca_oob_tcp_output_handle = 0;
-
+int mca_oob_tcp_output_handle = -1;
+static int verbose_value = 0;
 
 /*
  * Struct of function pointers and all that to let us be initialized
@@ -159,7 +159,7 @@ mca_oob_t mca_oob_tcp = {
 
 static int mca_oob_tcp_component_register(void)
 {
-    int tmp, value = 0;
+    int tmp;
     char *listen_type, *str = NULL;
 
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
@@ -167,8 +167,7 @@ static int mca_oob_tcp_component_register(void)
                            "Verbose level for the OOB tcp component",
                            false, false,
                            0,
-                           &value);
-    opal_output_set_verbosity(mca_oob_tcp_output_handle, value);
+                           &verbose_value);
 
     /* register oob module parameters */
     mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
@@ -394,6 +393,7 @@ static int mca_oob_tcp_component_open(void)
 #endif
 
     mca_oob_tcp_output_handle = opal_output_open(NULL);
+    opal_output_set_verbosity(mca_oob_tcp_output_handle, verbose_value);
 
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,         opal_hash_table_t);
