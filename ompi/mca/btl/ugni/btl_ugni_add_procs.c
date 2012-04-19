@@ -10,23 +10,15 @@
  * $HEADER$
  */
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <errno.h>
-
-#include "ompi/constants.h"
-#include "ompi/communicator/communicator.h"
-
 #include "ompi_config.h"
 
 #include "btl_ugni.h"
 #include "btl_ugni_frag.h"
-#include "btl_ugni_smsg.h"
 
 static int
 mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module);
+static void
+mca_btl_ugni_module_set_max_reg (mca_btl_ugni_module_t *ugni_module, int nlocal_procs);
 
 int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                            size_t nprocs,
@@ -34,33 +26,30 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
                            struct mca_btl_base_endpoint_t **peers,
                            opal_bitmap_t *reachable) {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
-    size_t ntotal_procs;
-    size_t i;
+    size_t ntotal_procs, nlocal_procs, i;
+    bool first_time_init = (NULL == ugni_module->endpoints);
     int rc;
 
     if (NULL == ugni_module->endpoints) {
         (void) ompi_proc_world (&ntotal_procs);
 
         ugni_module->endpoints = calloc (ntotal_procs, sizeof (mca_btl_base_endpoint_t *));
-
         if (OPAL_UNLIKELY(NULL == ugni_module->endpoints)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-
-        rc = mca_btl_ugni_setup_mpools (ugni_module);
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-            BTL_ERROR(("btl/ugni error setting up mpools/free lists"));
-            return rc;
-        }
     }
 
-    for (i = 0 ; i < nprocs ; ++i) {
+    for (i = 0, nlocal_procs = 0 ; i < nprocs ; ++i) {
         struct ompi_proc_t *ompi_proc = procs[i];
         uint32_t rem_rank = ompi_proc->proc_name.vpid;
 
         if (OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
-            /* ignore local procs */
-            peers[i] = NULL;
+            nlocal_procs++;
+        }
+
+        if (OPAL_EQUAL == orte_util_compare_name_fields
+            (ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &ompi_proc->proc_name)) {
+            /* ignore self */
             continue;
         }
 
@@ -76,6 +65,16 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
 
         /* Store a reference to this peer */
         ugni_module->endpoints[rem_rank] = peers[i];
+    }
+
+    if (first_time_init) {
+        mca_btl_ugni_module_set_max_reg (ugni_module, nlocal_procs);
+
+        rc = mca_btl_ugni_setup_mpools (ugni_module);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            BTL_ERROR(("btl/ugni error setting up mpools/free lists"));
+            return rc;
+        }
     }
 
     ugni_module->endpoint_count += nprocs;
@@ -113,18 +112,24 @@ int mca_btl_ugni_del_procs (struct mca_btl_base_module_t *btl,
     return OMPI_SUCCESS;
 }
 
-static inline int ugni_reg_mem (mca_btl_ugni_module_t *btl, void *base,
+static inline int ugni_reg_mem (mca_btl_ugni_module_t *ugni_module, void *base,
                                 size_t size, mca_mpool_base_registration_t *reg,
                                 gni_cq_handle_t cq, uint32_t flags)
 {
     mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
     gni_return_t rc;
+
+    if (ugni_module->reg_count >= ugni_module->reg_max) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
     
-    rc = GNI_MemRegister (btl->device->dev_handle, (uint64_t) base,
+    rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
                           size, cq, flags, -1, &(ugni_reg->memory_hdl));
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    ugni_module->reg_count++;
 
     return OMPI_SUCCESS;
 }
@@ -149,14 +154,16 @@ static int ugni_reg_smsg_mem (void *reg_data, void *base, size_t size,
 static int
 ugni_dereg_mem (void *reg_data, mca_mpool_base_registration_t *reg)
 {
-    mca_btl_ugni_module_t *btl = (mca_btl_ugni_module_t *) reg_data;
+    mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) reg_data;
     mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *)reg;
     gni_return_t rc;
 
-    rc = GNI_MemDeregister (btl->device->dev_handle, &ugni_reg->memory_hdl);
+    rc = GNI_MemDeregister (ugni_module->device->dev_handle, &ugni_reg->memory_hdl);
     if (GNI_RC_SUCCESS != rc) {
         return OMPI_ERROR;
     }
+
+    ugni_module->reg_count--;
 
     return OMPI_SUCCESS;
 }
@@ -282,5 +289,31 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     }
 
     return OMPI_SUCCESS;
+}
+
+static void
+mca_btl_ugni_module_set_max_reg (mca_btl_ugni_module_t *ugni_module, int nlocal_procs)
+{
+    if (0 == mca_btl_ugni_component.max_mem_reg) {
+#if defined(HAVE_GNI_GETJOBRESINFO)
+        gni_job_res_desc_t res_des;
+        gni_return_t grc;
+
+        grc = GNI_GetJobResInfo (ugni_module->device->dev_id, ompi_common_ugni_module.ptag,
+                                 GNI_JOB_RES_MDD, &res_des);
+        if (GNI_RC_SUCCESS == grc) {
+            ugni_module->reg_max = (res_des.limit - res_des.used) / nlocal_procs;
+        }
+#else
+        /* no way to determine the maximum registration count */
+        ugni_module->reg_max = 1200 / nlocal_procs;
+#endif
+    } else if (-1 == mca_btl_ugni_component.max_mem_reg) {
+        ugni_module->reg_max = INT_MAX;
+    } else {
+        ugni_module->reg_max = mca_btl_ugni_component.max_mem_reg;
+    }
+
+    ugni_module->reg_count = 0;
 }
 

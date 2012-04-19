@@ -81,6 +81,9 @@ typedef struct mca_btl_ugni_module_t {
     /* fragment buffer (for message if lookup) */
     opal_hash_table_t pending_smsg_frags;
     int32_t next_frag_id;
+
+    uint32_t reg_max;
+    uint32_t reg_count;
 } mca_btl_ugni_module_t;
 
 typedef struct mca_btl_ugni_component_t {
@@ -123,6 +126,9 @@ typedef struct mca_btl_ugni_component_t {
     int smsg_max_credits;
     /* mailbox size (computed) */
     int smsg_mbox_size;
+
+    /* Maximum number of memory registrations per process */
+    int max_mem_reg;
 } mca_btl_ugni_component_t;
 
 int mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
