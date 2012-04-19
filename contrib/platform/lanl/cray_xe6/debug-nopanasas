@@ -16,8 +16,7 @@ enable_cxx_exceptions=yes
 enable_ft_thread=no
 enable_per_user_config_files=no
 enable_pty_support=no
-# TODO LANL: add btl-tcp back to list
-enable_mca_no_build=carto,crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos
+enable_mca_no_build=carto,crs,filem,routed-linear,snapc,pml-dr,pml-crcp2,pml-crcpw,pml-v,pml-example,crcp,pml-cm,ess-cnos,grpcomm-cnos,plm-rsh,btl-tcp
 enable_contrib_no_build=libnbc,vt
 with_openib=no
 with_devel_headers=yes
