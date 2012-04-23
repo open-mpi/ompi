@@ -113,6 +113,10 @@ btl_ugni_component_register(void)
     mca_btl_ugni_component.rdma_max_retries =
         mca_btl_ugni_param_register_int("rdma_max_retries", NULL, 16);
 
+
+    mca_btl_ugni_component.smsg_max_retries =
+        mca_btl_ugni_param_register_int("smsg_max_retries", NULL, 16);
+
     mca_btl_ugni_component.max_mem_reg =
         mca_btl_ugni_param_register_int("max_mem_reg", "Maximum number of "
                                         "memory registrations a process can "
