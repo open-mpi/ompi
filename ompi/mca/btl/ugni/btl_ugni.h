@@ -119,6 +119,7 @@ typedef struct mca_btl_ugni_component_t {
     int ugni_eager_max;
     int ugni_eager_inc;
 
+    int smsg_max_retries;
     /* number of times to retry a post */
     int rdma_max_retries;
 

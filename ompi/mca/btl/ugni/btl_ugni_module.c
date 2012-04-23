@@ -153,6 +153,13 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
         return ompi_common_rc_ugni_to_ompi (rc);
     }
 
+    rc = GNI_SmsgSetMaxRetrans (ugni_module->device->dev_handle,
+                                mca_btl_ugni_component.smsg_max_retries);
+    if (GNI_RC_SUCCESS != rc) {
+        BTL_ERROR(("error setting maximum SMSG retries"));
+        return ompi_common_rc_ugni_to_ompi (rc);
+    }
+
     ugni_module->next_frag_id = 0;
 
     return OMPI_SUCCESS;
