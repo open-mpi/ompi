@@ -50,8 +50,6 @@ struct ompi_common_ugni_device_t {
     uint32_t         dev_addr;
     uint32_t         dev_cpu_id;
 
-    gni_cq_handle_t  dev_local_cq;
-
     size_t                      dev_ep_count;
     ompi_common_ugni_endpoint_t **dev_eps;
     void *btl_ctx;
@@ -71,8 +69,6 @@ struct ompi_common_ugni_module_t {
     /* device count. to be used if we have more than 1 common per ugni device */
     int device_count;
     ompi_common_ugni_device_t *devices;
-
-    int local_cq_size;
 
     int rdma_max_retries;
 };
