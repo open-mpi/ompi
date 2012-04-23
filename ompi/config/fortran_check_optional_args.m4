@@ -10,7 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
-dnl Copyright (c) 2010-2011 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -84,16 +84,23 @@ EOF
 
         OPAL_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
             [OPAL_LOG_COMMAND([$FC $FCFLAGS conftestf.f90 conftest.o -o conftest $LDFLAGS $LIBS],
-                [happy="yes"], [happy="no"])], [happy="no"])
+                [happy="yes"], [happy="no"])], 
+            [happy="c_fail"])
 
-        if test "$happy" = "no" ; then
-            AC_MSG_RESULT([Error!])
-            AC_MSG_ERROR([Could not determine if Fortran compiler supports optional arguments])
-        fi
+        AS_IF([test "$happy" = "c_fail"],
+              [AC_MSG_RESULT([error])
+               AC_MSG_ERROR([This error should not happen -- contact the Open MPI developers])
+              ])
+
+        AS_IF([test "$happy" = "no"],
+              [AC_MSG_RESULT([unknown])
+               AC_MSG_WARN([Cannot determine if Fortran compiler supports optional arguments])
+               AC_MSG_WARN([Assuming: no])
+              ])
 
         AS_IF([test "$cross_compiling" = "yes"],
-            [AC_MSG_RESULT([Error!])
-             AC_MSG_ERROR([Can not determine if Fortran compiler supports optional arguments when cross-compiling])],
+            [AC_MSG_RESULT([cross-compiling])
+             AC_MSG_ERROR([Cannot determine if Fortran compiler supports optional arguments when cross-compiling])],
             [OPAL_LOG_COMMAND([./conftest],
                 [ompi_cv_fortran_optional_args=yes])
             ])
