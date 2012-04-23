@@ -41,4 +41,4 @@ libmpiext_affinity_c_la_LDFLAGS = -module -avoid-version
 nodist_man_MANS = OMPI_Affinity_str.3
 
 # Man page sources
-EXTRA_DIST = $(man_pages:.3=.3in)
+EXTRA_DIST = $(nodist_man_MANS:.3=.3in)
