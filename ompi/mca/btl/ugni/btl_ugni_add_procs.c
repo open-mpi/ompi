@@ -44,12 +44,8 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
         uint32_t rem_rank = ompi_proc->proc_name.vpid;
 
         if (OPAL_PROC_ON_LOCAL_NODE(ompi_proc->proc_flags)) {
+            /* don't use uGNI to communicate with local procs */
             nlocal_procs++;
-        }
-
-        if (OPAL_EQUAL == orte_util_compare_name_fields
-            (ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &ompi_proc->proc_name)) {
-            /* ignore self */
             continue;
         }
 
