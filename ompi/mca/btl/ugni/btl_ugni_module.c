@@ -26,6 +26,7 @@
 #include "btl_ugni_frag.h"
 #include "btl_ugni_endpoint.h"
 #include "btl_ugni_smsg.h"
+#include "btl_ugni_prepare.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -274,101 +275,6 @@ mca_btl_ugni_free (struct mca_btl_base_module_t *btl,
     return mca_btl_ugni_frag_return ((mca_btl_ugni_base_frag_t *) des);
 }
 
-static inline struct mca_btl_base_descriptor_t *
-mca_btl_ugni_prepare_src_send (struct mca_btl_base_module_t *btl,
-                          mca_btl_base_endpoint_t *endpoint,
-                          struct opal_convertor_t *convertor,
-                          uint8_t order, size_t reserve, size_t *size,
-                          uint32_t flags)
-{
-    bool use_eager_get = (*size + reserve) > mca_btl_ugni_component.smsg_max_data;
-    mca_mpool_base_registration_t *registration = NULL;
-    mca_btl_ugni_base_frag_t *frag = NULL;
-    bool send_in_place;
-    void *data_ptr;
-    int rc;
-
-    opal_convertor_get_current_pointer (convertor, &data_ptr);
-
-    send_in_place = !(opal_convertor_need_buffers(convertor) ||
-                      (use_eager_get && ((uintptr_t)data_ptr & 3)));
-
-    if (OPAL_UNLIKELY(*size > btl->btl_eager_limit)) {
-        *size = btl->btl_eager_limit;
-    }
-
-    if (OPAL_LIKELY(send_in_place)) {
-        (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA(endpoint, frag);
-
-        if (OPAL_UNLIKELY(NULL == frag)) {
-            return NULL;
-        }
-
-        BTL_VERBOSE(("preparing src for send fragment. size = %u",
-                     (unsigned int)(*size + reserve)));
-
-        if (OPAL_UNLIKELY(true == use_eager_get)) {
-            rc = btl->btl_mpool->mpool_register(btl->btl_mpool, data_ptr,
-                                                *size, 0, &registration);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-                mca_btl_ugni_frag_return (frag);
-                return NULL;
-            }
-
-            frag->registration = (mca_btl_ugni_reg_t *) registration;
-            memcpy ((void *) frag->segments[1].seg_key.key64,
-                    (void *)&((mca_btl_ugni_reg_t *)registration)->memory_hdl,
-                    sizeof (((mca_btl_ugni_reg_t *)registration)->memory_hdl));        
-        }
-    } else {
-        uint32_t iov_count = 1;
-        struct iovec iov;
-
-        /* buffer the user's data */
-        if (OPAL_LIKELY(!use_eager_get)) {
-            (void) MCA_BTL_UGNI_FRAG_ALLOC_SMSG(endpoint, frag);
-        } else {
-            (void) MCA_BTL_UGNI_FRAG_ALLOC_EAGER_SEND(endpoint, frag);
-        }
-
-        if (OPAL_UNLIKELY(NULL == frag)) {
-            return NULL;
-        }
-
-        data_ptr = frag->base.super.ptr;
-
-        iov.iov_len  = *size;
-        iov.iov_base = (IOVBASE_TYPE *) data_ptr;
-
-        rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
-        if (OPAL_UNLIKELY(rc < 0)) {
-            mca_btl_ugni_frag_return (frag);
-            return NULL;
-        }
-
-        if (true == use_eager_get) {
-            registration = frag->base.super.registration;
-            memcpy ((void *) frag->segments[1].seg_key.key64,
-                    (void *)&((mca_btl_ugni_reg_t *)registration)->memory_hdl,
-                    sizeof (((mca_btl_ugni_reg_t *)registration)->memory_hdl));        
-        }
-    }
-
-    frag->hdr_size = reserve + (use_eager_get ? sizeof (frag->hdr.eager) : sizeof (frag->hdr.send));
-    frag->segments[0].seg_addr.pval = use_eager_get ? frag->hdr.eager_ex.pml_header : frag->hdr.send_ex.pml_header;
-    frag->segments[0].seg_len       = reserve;
-
-    frag->segments[1].seg_addr.pval = data_ptr;
-    frag->segments[1].seg_len       = *size;
-
-    frag->base.des_src     = frag->segments;
-    frag->base.des_src_cnt = 2;
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
-
-    return &frag->base;
-}
-
 static struct mca_btl_base_descriptor_t *
 mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                           mca_btl_base_endpoint_t *endpoint,
@@ -384,50 +290,10 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
     if (OPAL_LIKELY(reserve)) {
         return mca_btl_ugni_prepare_src_send (btl, endpoint, convertor,
                                               order, reserve, size, flags);
-    }
-
-    opal_convertor_get_current_pointer (convertor, &data_ptr);
-
-    (void) MCA_BTL_UGNI_FRAG_ALLOC_RDMA(endpoint, frag);
-    if (OPAL_UNLIKELY(NULL == frag)) {
-        return NULL;
-    }
-
-    /*
-     * For medium message use FMA protocols and for large message
-     * use BTE protocols
-     */
-    /* No need to register while using FMA Put (registration is
-     * non-null in get-- is this always true?) */
-    if (*size >= mca_btl_ugni_component.ugni_fma_limit || (flags & MCA_BTL_DES_FLAGS_GET)) {
-        if (NULL == registration) {
-            rc = btl->btl_mpool->mpool_register(btl->btl_mpool, data_ptr,
-                                                *size, 0, &registration);
-            if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-                mca_btl_ugni_frag_return (frag);
-                return NULL;
-            }
-
-            frag->registration = (mca_btl_ugni_reg_t *) registration;
-        }
-
-        memcpy ((void *) frag->segments[0].seg_key.key64,
-                (void *)&((mca_btl_ugni_reg_t *)registration)->memory_hdl,
-                sizeof (((mca_btl_ugni_reg_t *)registration)->memory_hdl));
     } else {
-        memset ((void *) frag->segments[0].seg_key.key64, 0,
-                sizeof (frag->segments[0].seg_key.key64));
+        return mca_btl_ugni_prepare_src_rdma (btl, endpoint, registration,
+                                              convertor, order, size, flags);
     }
-
-    frag->segments[0].seg_addr.pval = data_ptr;
-    frag->segments[0].seg_len = reserve + *size;
-
-    frag->base.des_src     = frag->segments;
-    frag->base.des_src_cnt = 1;
-    frag->base.order       = order;
-    frag->base.des_flags   = flags;
-
-    return &frag->base;
 }
 
 static mca_btl_base_descriptor_t *

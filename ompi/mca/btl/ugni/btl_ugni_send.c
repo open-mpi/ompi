@@ -35,7 +35,10 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
         frag->hdr.eager.ctx     = (void *) frag;
     }
 
-    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+    if (false == frag->is_buffered && (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+        frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+    }
+
     frag->endpoint = btl_peer;
 
     rc = mca_btl_ugni_check_endpoint_state (btl_peer);
@@ -51,7 +54,9 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
         return rc;
     }
 
-    (void) mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) btl);
+    if (frag->is_buffered && (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+        return 1;
+    }
 
     return OMPI_SUCCESS;
 }
