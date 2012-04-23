@@ -87,16 +87,16 @@ void pthreadtest_f(void)
 }
 
 void pthreadtest(void)
-{ return pthreadtest_f(); }
+{ pthreadtest_f(); }
 
 void pthreadtest_(void)
-{ return pthreadtest_f(); }
+{ pthreadtest_f(); }
 
 void pthreadtest__(void)
-{ return pthreadtest_f(); }
+{ pthreadtest_f(); }
 
 void PTHREADTEST(void)
-{ return pthreadtest_f(); }
+{ pthreadtest_f(); }
 
 #ifdef __cplusplus
 }
@@ -359,18 +359,18 @@ AC_DEFUN([OMPI_INTL_POSIX_THREADS_SPECIAL_FLAGS_FC], [
 if test "$ompi_pthread_fortran_success" = "0" -a "$OMPI_WANT_FORTRAN_BINDINGS" = "1"; then
   for pf in $pflags; do
     AC_MSG_CHECKING([if Fortran compiler and POSIX threads work with $pf])
-    FFLAGS="$orig_FFLAGS $pf"
+    FCFLAGS="$orig_FCFLAGS $pf"
     AC_LANG_PUSH(C)
     OMPI_INTL_PTHREAD_TRY_LINK_FORTRAN(ompi_pthread_fortran_success=1, 
                                        ompi_pthread_fortran_success=0)
     AC_LANG_POP(C)
     if test "$ompi_pthread_fortran_success" = "1"; then
-      PTHREAD_FFLAGS="$pf"
+      PTHREAD_FCFLAGS="$pf"
       AC_MSG_RESULT([yes])
       break
     else
-      PTHREAD_FFLAGS=
-      FFLAGS="$orig_FFLAGS"
+      PTHREAD_FCFLAGS=
+      FCFLAGS="$orig_FCFLAGS"
       AC_MSG_RESULT([no])
     fi
   done
@@ -621,7 +621,7 @@ ompi_pthread_fortran_success=0
 ompi_pthread_cxx_success=0
 
 orig_CFLAGS="$CFLAGS"
-orig_FFLAGS="$FFLAGS"
+orig_FCFLAGS="$FCFLAGS"
 orig_CXXFLAGS="$CXXFLAGS"
 orig_CPPFLAGS="$CPPFLAGS"
 orig_CXXCPPFLAGS="$CXXCPPFLAGS"
@@ -629,7 +629,7 @@ orig_LDFLAGS="$LDFLAGS"
 orig_LIBS="$LIBS"
 
 PTHREAD_CFLAGS=
-PTHREAD_FFLAGS=
+PTHREAD_FCFLAGS=
 PTHREAD_CXXFLAGS=
 PTHREAD_CPPFLAGS=
 PTHREAD_CXXCPPFLAGS=
@@ -673,7 +673,7 @@ AC_DEFINE_UNQUOTED([OMPI_HAVE_PTHREAD_MUTEX_ERRORCHECK], [$defval],
             [If PTHREADS implementation supports PTHREAD_MUTEX_ERRORCHECK])
 
 CFLAGS="$orig_CFLAGS"
-FFLAGS="$orig_FFLAGS"
+FCFLAGS="$orig_FCFLAGS"
 CXXFLAGS="$orig_CXXFLAGS"
 CPPFLAGS="$orig_CPPFLAGS"
 CXXCPPFLAGS="$orig_CXXCPPFLAGS"
