@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -137,6 +137,10 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
     
     /* is this read from our stdin? */
     if (ORTE_IOF_STDIN & rev->tag) {
+        /* The event has fired, so it's no longer active until we
+           re-add it */
+        mca_iof_hnp_component.stdinev->active = false;
+    
         /* if job termination has been ordered, just ignore the
          * data and delete the read event
          */
@@ -171,11 +175,9 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 if (NULL != sink->wev) {
                     if (ORTE_IOF_MAX_INPUT_BUFFERS < orte_iof_base_write_output(&rev->name, rev->tag, data, numbytes, sink->wev)) {
                         /* getting too backed up - stop the read event for now if it is still active */
-                        if (mca_iof_hnp_component.stdinev->active) {
-                            OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                                                 "buffer backed up - holding"));
-                            mca_iof_hnp_component.stdinev->active = false;
-                        }
+
+                        OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
+                                             "buffer backed up - holding"));
                         OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
                         return;
                     }
