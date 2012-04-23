@@ -101,6 +101,7 @@
       integer MPI_MODE_NOSTORE, MPI_MODE_NOSUCCEED
       integer MPI_LOCK_EXCLUSIVE, MPI_LOCK_SHARED
       integer MPI_WIN_BASE, MPI_WIN_SIZE, MPI_WIN_DISP_UNIT
+      integer MPI_MESSAGE_NO_PROC
 
       parameter (MPI_ANY_SOURCE=-1)
       parameter (MPI_ANY_TAG=-1)
@@ -145,6 +146,7 @@
       parameter (MPI_MODE_NOSUCCEED=16)
       parameter (MPI_LOCK_EXCLUSIVE=1)
       parameter (MPI_LOCK_SHARED=2)
+      parameter (MPI_MESSAGE_NO_PROC=1)
 
 !
 !     MPI sentinel values
