@@ -141,14 +141,6 @@ static int ompi_common_ugni_device_init (ompi_common_ugni_device_t *device,
         return ompi_common_rc_ugni_to_ompi (rc);
     }
 
-    /* Create a completion queue to attach to endpoints */
-    rc = GNI_CqCreate (device->dev_handle, ompi_common_ugni_module.local_cq_size,
-                       0, GNI_CQ_NOBLOCK, NULL, NULL, &device->dev_local_cq);
-    if (GNI_RC_SUCCESS != rc) {
-        OPAL_OUTPUT((0, "Error creating SMSG local CQ. rc = %d", rc));
-        return ompi_common_rc_ugni_to_ompi (rc);
-    }
-
     device->dev_eps = calloc (comm_world_size, sizeof (ompi_common_ugni_endpoint_t *));
     if (NULL == device->dev_eps) {
         OPAL_OUTPUT((0, "Error allocating space for endpoint pointers"));
@@ -167,11 +159,6 @@ static int ompi_common_ugni_device_fini (ompi_common_ugni_device_t *dev)
         dev->dev_eps = NULL;
     }
     
-    rc = GNI_CqDestroy (dev->dev_local_cq);
-    if (GNI_RC_SUCCESS != rc) {
-        OPAL_OUTPUT((-1, "btl/ugni error destroying cq. rc = %d", rc));
-    }
-
     return OMPI_SUCCESS;
 }
 
@@ -267,8 +254,6 @@ int ompi_common_ugni_init (void)
     /* pull settings from ugni btl */
     ompi_common_ugni_module.rdma_max_retries =
         mca_btl_ugni_component.rdma_max_retries;
-    ompi_common_ugni_module.local_cq_size =
-        mca_btl_ugni_component.cq_size;
 
     (void) ompi_proc_world (&comm_world_size);
 
