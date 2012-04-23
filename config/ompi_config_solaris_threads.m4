@@ -9,6 +9,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -38,8 +39,8 @@ AC_DEFUN([OMPI_INTL_SOLARIS_TRY_LINK], [
 ])dnl
 
 
-AC_DEFUN([OMPI_INTL_SOLARIS_TRY_LINK_F77], [
-# BEGIN: OMPI_INTL_SOLARIS_TRY_LINK_F77
+AC_DEFUN([OMPI_INTL_SOLARIS_TRY_LINK_FC], [
+# BEGIN: OMPI_INTL_SOLARIS_TRY_LINK_FC
 #
 # Make sure that we can run a small application in Fortran, with
 # pthreads living in a C object file
@@ -82,7 +83,7 @@ EOF
 OPAL_LOG_COMMAND(
     [$CC $CFLAGS -I. -c conftest.c],
     OPAL_LOG_COMMAND(
-        [$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
+        [$FC $FCFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
         [HAPPY=1],
 	[HAPPY=0]),
     [HAPPY=0])
@@ -103,7 +104,7 @@ fi
 
 unset HAPPY ompi_conftest_h
 rm -rf conftest*
-# END: OMPI_INTL_SOLARIS_TRY_LINK_F77
+# END: OMPI_INTL_SOLARIS_TRY_LINK_FC
 ])dnl
 
 
@@ -163,42 +164,42 @@ fi
 
 
 AC_DEFUN([OMPI_CONFIG_SOLARIS_THREADS_FC], [
-if test "$OMPI_WANT_F77_BINDINGS" = "1"; then
+if test "$OMPI_WANT_FC_BINDINGS" = "1"; then
     if test "$BASEFC" = "f77"; then
-        STHREAD_FFLAGS="-mt"
+        STHREAD_FCFLAGS="-mt"
         style="Workshop/Forte"
     else
         STHREAD_LIBS="-lthread"
         style="-lthread"
     fi
-    FFLAGS="$STHREAD_FFLAGS $FFLAGS_orig"
+    FCFLAGS="$STHREAD_FCFLAGS $FCFLAGS_orig"
     CFLAGS="$STHREAD_CFLAGS $CFLAGS_orig"
     CPPFLAGS="$STHREAD_CPPFLAGS $CPPFLAGS_orig"
     LDFLAGS="$STHREAD_LDFLAGS $LDFLAGS_orig"
     LIBS="$STHREAD_LIBS $LIBS_orig"
-    AC_MSG_CHECKING([if F77 compiler and Solaris threads work])
+    AC_MSG_CHECKING([if FC compiler and Solaris threads work])
     AC_LANG_PUSH(C)
-    OMPI_INTL_SOLARIS_TRY_LINK_F77(ompi_sthread_f77_success=1, 
-                                  ompi_sthread_f77_success=0)
+    OMPI_INTL_SOLARIS_TRY_LINK_FC(ompi_sthread_fc_success=1, 
+                                  ompi_sthread_fc_success=0)
     AC_LANG_POP(C)
-    if test "$ompi_sthread_f77_success" = "1"; then
+    if test "$ompi_sthread_fc_success" = "1"; then
         AC_MSG_RESULT([yes - $style])
      else
         AC_MSG_RESULT([no])
      fi
 else
-  ompi_sthread_f77_success=1
+  ompi_sthread_fc_success=1
 fi
 ])dnl
 
 
 AC_DEFUN([OMPI_CONFIG_SOLARIS_THREADS],[
 ompi_sthread_c_success=0
-ompi_sthread_f77_success=0
+ompi_sthread_fc_success=0
 ompi_sthread_cxx_success=0
 
 orig_CFLAGS="$CFLAGS"
-orig_FFLAGS="$FFLAGS"
+orig_FCFLAGS="$FCFLAGS"
 orig_CXXFLAGS="$CXXFLAGS"
 orig_CPPFLAGS="$CPPFLAGS"
 orig_CXXCPPFLAGS="$CXXCPPFLAGS"
@@ -206,7 +207,7 @@ orig_LDFLAGS="$LDFLAGS"
 orig_LIBS="$LIBS"
 
 STHREAD_CFLAGS=
-STHREAD_FFLAGS=
+STHREAD_FCFLAGS=
 STHREAD_CXXFLAGS=
 STHREAD_CPPFLAGS=
 STHREAD_CXXCPPFLAGS=
@@ -222,12 +223,12 @@ AC_PROVIDE_IFELSE([AC_PROG_CXX],
                   [OMPI_CONFIG_SOLARIS_THREADS_CXX],
                   [ompi_sthread_cxx_success=1])
 
-AC_PROVIDE_IFELSE([AC_PROG_F77], 
+AC_PROVIDE_IFELSE([AC_PROG_FC], 
                   [OMPI_CONFIG_SOLARIS_THREADS_FC],
-                  [ompi_sthread_f77_success=1])
+                  [ompi_sthread_fc_success=1])
 
 CFLAGS="$orig_CFLAGS"
-FFLAGS="$orig_FFLAGS"
+FCFLAGS="$orig_FCFLAGS"
 CXXFLAGS="$orig_CXXFLAGS"
 CPPFLAGS="$orig_CPPFLAGS"
 CXXCPPFLAGS="$orig_CXXCPPFLAGS"
@@ -236,7 +237,7 @@ LIBS="$orig_LIBS"
 
 if test "$ompi_sthread_c_success" = "1" -a \
         "$ompi_sthread_cxx_success" = "1" -a \
-       "$ompi_sthread_f77_success" = "1"; then
+       "$ompi_sthread_fc_success" = "1"; then
   internal_useless=1
   $1
 else
@@ -244,7 +245,7 @@ else
   $2
 fi
 
-unset ompi_sthread_c_success ompi_sthread_f77_success ompi_sthread_cxx_success
+unset ompi_sthread_c_success ompi_sthread_fc_success ompi_sthread_cxx_success
 unset internal_useless
 ])dnl
 

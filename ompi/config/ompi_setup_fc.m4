@@ -126,7 +126,6 @@ AC_DEFUN([OMPI_SETUP_FC],[
   integer :: i
 end program]])],
                               [OMPI_FORTRAN_WRAPPER_FLAGS="-Wl,-commons,use_dylibs"
-                              WRAPPER_EXTRA_FFLAGS="$WRAPPER_EXTRA_FFLAGS $OMPI_FORTRAN_WRAPPER_FLAGS"
                                WRAPPER_EXTRA_FCFLAGS="$WRAPPER_EXTRA_FCFLAGS $OMPI_FORTRAN_WRAPPER_FLAGS"],
                               [OMPI_FORTRAN_WRAPPER_FLAGS=none])
                AC_LANG_POP([Fortran])
@@ -176,7 +175,7 @@ EOF
           [AC_MSG_CHECKING([to see if Fortran compiler likes the C++ exception flags])
            AS_IF([test "$OMPI_CXX_EXCEPTIONS_CXXFLAGS" = ""],
                  [AC_MSG_RESULT([skipped (no C++ exceptions flags)])],
-                 [FCFLAGS="$FFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
+                 [FCFLAGS="$FCFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
                   AC_LANG_PUSH([Fortran])
                   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([], [[ 
 INTEGER I
