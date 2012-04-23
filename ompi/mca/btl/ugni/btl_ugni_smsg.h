@@ -87,9 +87,12 @@ static inline int ompi_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
 
     grc = GNI_SmsgSendWTag (frag->endpoint->smsg_ep_handle, hdr, hdr_len, payload, payload_len,
                            ignore_local_comp ? (uint32_t) -1 : frag->msg_id, tag);
+
+    (void) mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
+
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
         /* see if we can free up some credits */
-        mca_btl_ugni_progress_remote_smsg (frag->endpoint->btl);
+        (void) mca_btl_ugni_progress_remote_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
 
         if (OPAL_LIKELY(GNI_RC_NOT_DONE == grc)) {
             BTL_VERBOSE(("out of credits"));
