@@ -380,5 +380,28 @@ static inline int memchecker_datatype(MPI_Datatype type)
 #define memchecker_datatype(type)
 #endif /* OMPI_WANT_MEMCHECKER_MPI_OBJECTS */
 
+/*
+ * Check every member of the message, whether their memory areas are defined.
+ */
+#ifdef OMPI_WANT_MEMCHECKER_MPI_OBJECTS
+static inline int memchecker_message(MPI_Message *message)
+{
+    if (!opal_memchecker_base_runindebugger()) {
+        return OMPI_SUCCESS;
+    }
+
+    opal_memchecker_base_isdefined (&message->m_f_to_c_index, sizeof(int));
+    opal_memchecker_base_isdefined (&message->comm, sizeof(ompi_communicator_t *));
+    opal_memchecker_base_isdefined (&message->req_ptr, sizeof(void *));
+    opal_memchecker_base_isdefined (&message->peer, sizeof(int));
+    opal_memchecker_base_isdefined (&message->count, sizeof(sizeof_t));
+
+    return OMPI_SUCCESS;
+}
+#else
+#define memchecker_message(message)
+#endif /* OMPI_WANT_MEMCHECKER_MPI_OBJECTS */
+
+
 #endif /* OMPI_MEMCHECKER_H */
 
