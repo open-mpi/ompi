@@ -356,15 +356,15 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         mca_btl_base_selected_module_t *sm = 
             (mca_btl_base_selected_module_t*) item;
         if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
-	    orte_show_help("help-mpi-pml-ob1.txt", "eager_limit_too_small",
-			   true, 
-			   sm->btl_component->btl_version.mca_component_name,
-			   orte_process_info.nodename,
-			   sm->btl_component->btl_version.mca_component_name,
-			   sm->btl_module->btl_eager_limit,
-			   sm->btl_component->btl_version.mca_component_name,
-			   sizeof(mca_pml_ob1_hdr_t),
-			   sm->btl_component->btl_version.mca_component_name);
+            orte_show_help("help-mpi-pml-ob1.txt", "eager_limit_too_small",
+                           true, 
+                           sm->btl_component->btl_version.mca_component_name,
+                           orte_process_info.nodename,
+                           sm->btl_component->btl_version.mca_component_name,
+                           sm->btl_module->btl_eager_limit,
+                           sm->btl_component->btl_version.mca_component_name,
+                           sizeof(mca_pml_ob1_hdr_t),
+                           sm->btl_component->btl_version.mca_component_name);
             rc = OMPI_ERR_BAD_PARAM;
             goto cleanup_and_return;
         }
