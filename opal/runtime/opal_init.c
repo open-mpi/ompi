@@ -70,7 +70,10 @@ const char opal_version_string[] = OPAL_IDENT_STRING;
 
 int opal_initialized = 0;
 int opal_util_initialized = 0;
-int opal_cache_line_size;
+/* We have to put a guess in here in case hwloc is not available.  If
+   hwloc is available, this value will be overwritten when the
+   hwloc data is loaded. */
+int opal_cache_line_size = 128;
 
 static int
 opal_err2str(int errnum, const char **errmsg)
@@ -231,12 +234,6 @@ opal_init_util(int* pargc, char*** pargv)
         }
         return OPAL_SUCCESS;
     }
-
-    /* JMS See note in runtime/opal.h -- this is temporary; to be
-       replaced with real hwloc information soon (in trunk/v1.5 and
-       beyond, only).  This *used* to be a #define, so it's important
-       to define it very early.  */
-    opal_cache_line_size = 128;
 
     /* initialize the memory allocator */
     opal_malloc_init();

@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008	   Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010	   Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,11 +30,11 @@ BEGIN_C_DECLS
 /** version string of opal */
 OPAL_DECLSPEC extern const char opal_version_string[];
 
-/* Size of a cache line.  To be replaced with real hwloc info (in
-   trunk/v1.5 and beyond, only), but for the moment, just move it here
-   so that we can remove opal/include/sys/cache.h whose only purpose
-   is life is to #define CACHE_LINE_SIZE (and has a conflict on
-   NetBSD). */
+/* Size of a cache line.  Initialized to a fixed value (see
+   opal_init.c) until hwloc data is available, at which time it is
+   filled with the smallest size of the lowest cache line (e.g., the
+   smallest line size from all L1 caches found on the current
+   system). */
 OPAL_DECLSPEC extern int opal_cache_line_size;
 
 /**

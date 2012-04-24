@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,6 +27,7 @@
 #include <unistd.h>
 #endif
 
+#include "opal/runtime/opal.h"
 #include "opal/constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -169,6 +170,39 @@ int opal_hwloc_base_filter_cpus(hwloc_topology_t topo)
     return OPAL_SUCCESS;
 }
 
+static void fill_cache_line_size(void)
+{
+    int i = 0;
+    unsigned size;
+    hwloc_obj_t obj;
+    bool found = false;
+
+    /* Look for the smallest L2 cache size */
+    size = 4096;
+    while (1) {
+        obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology,
+                                              HWLOC_OBJ_CACHE, 2,
+                                              i, OPAL_HWLOC_LOGICAL);
+        if (NULL == obj) {
+            break;
+        } else { 
+            found = true;
+            if (NULL != obj->attr &&
+                size > obj->attr->cache.linesize) {
+                size = obj->attr->cache.linesize;
+            }
+        }
+        ++i;
+    }
+
+    /* If we found an L2 cache size in the hwloc data, save it in
+       opal_cache_line_size.  Otherwise, we'll leave whatever default
+       was set in opal_init.c */
+    if (found) {
+        opal_cache_line_size = (int) size;
+    }
+}
+
 int opal_hwloc_base_get_topology(void)
 {
     int rc;
@@ -186,6 +220,13 @@ int opal_hwloc_base_get_topology(void)
 
     /* filter the cpus thru any default cpu set */
     rc = opal_hwloc_base_filter_cpus(opal_hwloc_topology);
+    if (OPAL_SUCCESS != rc) {
+        return rc;
+    }
+
+    /* fill opal_cache_line_size global with the smallest L1 cache
+       line size */
+    fill_cache_line_size();
     return rc;
 }
 
