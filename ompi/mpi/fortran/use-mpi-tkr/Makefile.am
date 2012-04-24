@@ -208,12 +208,12 @@ nodist_libmpi_usempi_la_SOURCES = \
      mpi_file_write_shared_f90.f90 \
      mpi_get_f90.f90 \
      mpi_ibsend_f90.f90 \
-     mpi_improbe_f90.90 \
+     mpi_imrecv_f90.f90 \
      mpi_irecv_f90.f90 \
      mpi_irsend_f90.f90 \
      mpi_isend_f90.f90 \
      mpi_issend_f90.f90 \
-     mpi_mprobe_f90.90 \
+     mpi_mrecv_f90.f90 \
      mpi_put_f90.f90 \
      mpi_recv_f90.f90 \
      mpi_recv_init_f90.f90 \
