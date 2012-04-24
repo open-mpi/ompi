@@ -54,7 +54,7 @@ endif
 
 include ompi/Makefile.include
 
-EXTRA_DIST = $(headers)
+EXTRA_DIST = $(headers) mpif-common.pl
 
 if WANT_INSTALL_HEADERS 
 ompidir = $(includedir)/openmpi
