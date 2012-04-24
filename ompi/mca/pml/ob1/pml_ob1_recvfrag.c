@@ -294,15 +294,22 @@ void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) ) {
          return;
     }
-    
+
     ob1_hdr_ntoh(hdr, MCA_PML_OB1_HDR_TYPE_ACK);
     sendreq = (mca_pml_ob1_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
     sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
-    
+
     /* if the request should be delivered entirely by copy in/out
      * then throttle sends */
-    if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA)
+    if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NORDMA) {
+        if (NULL != sendreq->src_des) {
+            /* release registered memory */
+            mca_bml_base_free (sendreq->req_rdma[0].bml_btl, sendreq->src_des);
+            sendreq->src_des = NULL;
+        }
+
         sendreq->req_throttle_sends = true;
+    }
     
     mca_pml_ob1_send_request_copy_in_out(sendreq,
                                          hdr->hdr_ack.hdr_send_offset,
@@ -324,7 +331,7 @@ void mca_pml_ob1_recv_frag_callback_ack(mca_btl_base_module_t* btl,
 
     if(send_request_pml_complete_check(sendreq) == false)
         mca_pml_ob1_send_request_schedule(sendreq);
-    
+
     return;
 }
 

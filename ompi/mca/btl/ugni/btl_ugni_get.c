@@ -13,19 +13,6 @@
 #include "btl_ugni_rdma.h"
 #include "btl_ugni_smsg.h"
 
-static int mca_btl_ugni_init_put (struct mca_btl_base_module_t *btl,
-                                  mca_btl_ugni_base_frag_t *frag) {
-    /* off alignment/off size. switch to put */
-    frag->hdr.rdma.src_seg = frag->base.des_src[0];
-    frag->hdr.rdma.dst_seg = frag->base.des_dst[0];
-    frag->hdr.rdma.ctx     = (void *) frag;
-
-    /* send the fragment header using smsg. ignore local completion */
-    return ompi_mca_btl_ugni_smsg_send (frag, true, &frag->hdr.rdma,
-                                        sizeof (frag->hdr.rdma), NULL, 0,
-                                        MCA_BTL_UGNI_TAG_PUT_INIT);
-}
-
 /**
  * Initiate a get operation.
  *
@@ -54,7 +41,7 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
 
     if (OPAL_UNLIKELY(check || size > mca_btl_ugni_component.ugni_get_limit)) {
         /* switch to put */
-        return mca_btl_ugni_init_put (btl, frag);
+        return OMPI_ERR_NOT_AVAILABLE;
     }
 
     if (NULL != frag->base.des_cbfunc) {
@@ -68,7 +55,7 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
     return mca_btl_ugni_post_bte (frag, GNI_POST_RDMA_GET, des->des_dst, des->des_src);
 }
 
-void mca_btl_ugni_callback_rdma_complete (mca_btl_ugni_base_frag_t *frag, int rc)
+static void mca_btl_ugni_callback_rdma_complete (mca_btl_ugni_base_frag_t *frag, int rc)
 {
     BTL_VERBOSE(("rdma operation for rem_ctx %p complete", frag->hdr.rdma.ctx));
 
