@@ -152,8 +152,6 @@ static int ompi_common_ugni_device_init (ompi_common_ugni_device_t *device,
 
 static int ompi_common_ugni_device_fini (ompi_common_ugni_device_t *dev)
 {
-    int rc;
-
     if (dev->dev_eps) {
         free (dev->dev_eps);
         dev->dev_eps = NULL;

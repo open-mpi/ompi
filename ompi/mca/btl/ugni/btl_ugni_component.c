@@ -360,8 +360,6 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *btl)
 
     ep = btl->endpoints[remote_id];
 
-    OPAL_THREAD_LOCK(&ep->common->lock);
-
     /* NTH: TODO -- error handling */
     (void) mca_btl_ugni_ep_connect_progress (ep);
 
@@ -369,8 +367,6 @@ mca_btl_ugni_progress_datagram (mca_btl_ugni_module_t *btl)
         /*  process messages waiting in the endpoint's smsg mailbox */
         count = mca_btl_ugni_smsg_process (ep);
     }
-
-    OPAL_THREAD_UNLOCK(&ep->common->lock);
 
     if ((datagram_id & MCA_BTL_UGNI_DATAGRAM_MASK) ==
         MCA_BTL_UGNI_CONNECT_WILDCARD_ID) {

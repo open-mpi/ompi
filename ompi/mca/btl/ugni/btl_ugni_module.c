@@ -169,7 +169,8 @@ static int
 mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
 {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *)btl;
-    int rc, i;
+    unsigned int i;
+    int rc;
 
     OBJ_DESTRUCT(&ugni_module->eager_frags_send);
     OBJ_DESTRUCT(&ugni_module->eager_frags_recv);
@@ -290,10 +291,6 @@ mca_btl_ugni_prepare_src (struct mca_btl_base_module_t *btl,
                           uint8_t order, size_t reserve, size_t *size,
                           uint32_t flags)
 {
-    mca_btl_ugni_base_frag_t *frag = NULL;
-    void *data_ptr;
-    int rc;
-
     if (OPAL_LIKELY(reserve)) {
         return mca_btl_ugni_prepare_src_send (btl, endpoint, convertor,
                                               order, reserve, size, flags);

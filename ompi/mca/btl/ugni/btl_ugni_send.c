@@ -65,7 +65,7 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     }
 
     if (frag->is_buffered && (flags_save & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-        /* fast(ish) path: btl own frag and it is buffered. report frag as complete */
+        /* fast(ish) path: btl owned buffered frag. report send as complete */
         frag->base.des_flags = flags_save & ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
         if (OPAL_LIKELY(flags_save & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {

@@ -82,7 +82,6 @@ static inline int ompi_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
                                                void *payload, size_t payload_len,
                                                mca_btl_ugni_smsg_tag_t tag) {
     gni_return_t grc;
-    int rc;
 
     grc = GNI_SmsgSendWTag (frag->endpoint->smsg_ep_handle, hdr, hdr_len, payload, payload_len,
                            ignore_local_comp ? (uint32_t) -1 : frag->msg_id, tag);
@@ -100,7 +99,7 @@ static inline int ompi_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
         }
 
         BTL_ERROR(("GNI_SmsgSendWTag failed with rc = %d. handle = %d, hdr_len = %d, payload_len = %d",
-                   grc, frag->endpoint->smsg_ep_handle, hdr_len, payload_len));
+                   grc, (int) frag->endpoint->smsg_ep_handle, (int) hdr_len, (int) payload_len));
 
         return OMPI_ERROR;
     }
