@@ -14,8 +14,8 @@
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
- *                         All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
