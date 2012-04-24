@@ -103,72 +103,12 @@ mca_btl_vader_t mca_btl_vader = {
     }
 };
 
-static void vader_init_maffinity (int *my_mem_node)
-{
-    opal_paffinity_base_cpu_set_t cpus;
-    opal_carto_base_node_t *slot_node;
-    opal_carto_node_distance_t *dist;
-    opal_carto_graph_t *topo;
-    opal_value_array_t dists;
-    int i, num_core, socket;
-    char *myslot = NULL;
-
-    *my_mem_node = -1;
-
-    if (OMPI_SUCCESS != opal_carto_base_get_host_graph (&topo, "Memory")) {
-        return;
-    }
-
-    OBJ_CONSTRUCT(&dists, opal_value_array_t);
-    opal_value_array_init(&dists, sizeof(opal_carto_node_distance_t));
-
-    if (OMPI_SUCCESS != opal_paffinity_base_get_processor_info(&num_core))  {
-        num_core = 100;  /* set something large */
-    }
-
-    OPAL_PAFFINITY_CPU_ZERO(cpus);
-    opal_paffinity_base_get(&cpus);
-
-    /* find core we are running on */
-    for (i = 0; i < num_core; ++i) {
-        if (OPAL_PAFFINITY_CPU_ISSET(i, cpus)) {
-            break;
-        }
-    }
-
-    if (OMPI_SUCCESS != opal_paffinity_base_get_map_to_socket_core(i, &socket, &i)) {
-        /* no topology info available */
-        goto out;
-    }
-
-    asprintf(&myslot, "slot%d", socket);
-
-    slot_node = opal_carto_base_find_node(topo, myslot);
-
-    if (NULL == slot_node) {
-        goto out;
-    }
-
-    opal_carto_base_get_nodes_distance(topo, slot_node, "Memory", &dists);
-    if (opal_value_array_get_size(&dists) > 1) {
-        dist = (opal_carto_node_distance_t *) opal_value_array_get_item(&dists, 0);
-        opal_maffinity_base_node_name_to_id(dist->node->node_name, my_mem_node);
-    }
- out:
-    if (myslot) {
-        free(myslot);
-    }
-
-    OBJ_DESTRUCT(&dists);
-    opal_carto_base_free_graph(topo);
-}
-
 static inline int vader_init_mpool (mca_btl_vader_t *vader_btl, int n)
 {
     mca_btl_vader_component_t *component = &mca_btl_vader_component;
     mca_mpool_base_resources_t res;
 
-    vader_init_maffinity (&res.mem_node);
+    res.mem_node = -1;
 
     /* determine how much memory to create */
     /*
