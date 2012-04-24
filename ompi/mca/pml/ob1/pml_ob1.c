@@ -147,6 +147,7 @@ int mca_pml_ob1_enable(bool enable)
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.pckt_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.rdma_pending, opal_list_t);
+
     /* missing communicator pending list */
     OBJ_CONSTRUCT(&mca_pml_ob1.non_existing_communicator_pending, opal_list_t);
 
@@ -599,8 +600,10 @@ void mca_pml_ob1_process_pending_rdma(void)
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
         if(NULL == frag)
             break;
+
+        frag->retries++;
+
         if(frag->rdma_state == MCA_PML_OB1_RDMA_PUT) {
-            frag->retries++;
             rc = mca_pml_ob1_send_request_put_frag(frag);
         } else {
             rc = mca_pml_ob1_recv_request_get_frag(frag);

@@ -54,6 +54,7 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_ob1_send_pending_t req_pending;
     opal_mutex_t req_send_range_lock; 
     opal_list_t req_send_ranges;
+    mca_btl_base_descriptor_t *src_des;
     mca_pml_ob1_com_btl_t req_rdma[1]; 
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
@@ -129,6 +130,7 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
             OMPI_FREE_LIST_WAIT(&mca_pml_base_send_requests, item, rc); \
             sendreq = (mca_pml_ob1_send_request_t*)item;                \
             sendreq->req_send.req_base.req_proc = proc;                 \
+            sendreq->src_des = NULL;                                    \
         }                                                               \
     }
 

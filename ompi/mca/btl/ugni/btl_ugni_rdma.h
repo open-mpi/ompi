@@ -16,16 +16,9 @@
 #include "btl_ugni.h"
 #include "btl_ugni_frag.h"
 
-/* mca_btl_ugni_start_put: get operation could not be completed. start put instead */
-int mca_btl_ugni_start_put (mca_btl_base_endpoint_t *ep,
-                            mca_btl_ugni_rdma_frag_hdr_t hdr,
-                            mca_btl_ugni_base_frag_t *frag);
-
 int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
                                   mca_btl_ugni_eager_ex_frag_hdr_t hdr,
                                   mca_btl_ugni_base_frag_t *frag);
-
-void mca_btl_ugni_callback_rdma_complete (mca_btl_ugni_base_frag_t *frag, int rc);
 
 static inline int init_gni_post_desc(mca_btl_ugni_base_frag_t *frag,
                                      gni_post_type_t op_type,

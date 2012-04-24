@@ -78,11 +78,6 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
             reg->cbfunc(&ep->btl->super, tag, &(frag.base), reg->cbdata);
 
             break;
-        case MCA_BTL_UGNI_TAG_PUT_INIT:
-            frag.hdr.rdma = ((mca_btl_ugni_rdma_frag_hdr_t *) data_ptr)[0];
-
-            mca_btl_ugni_start_put (ep, frag.hdr.rdma, NULL);
-            break;
         case MCA_BTL_UGNI_TAG_GET_INIT:
             frag.hdr.eager_ex = ((mca_btl_ugni_eager_ex_frag_hdr_t *) data_ptr)[0];
 

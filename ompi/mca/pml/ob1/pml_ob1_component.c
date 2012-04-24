@@ -112,8 +112,8 @@ static int mca_pml_ob1_component_open(void)
         mca_pml_ob1_param_register_int("send_pipeline_depth", 3);
     mca_pml_ob1.recv_pipeline_depth =
         mca_pml_ob1_param_register_int("recv_pipeline_depth", 4);
-    mca_pml_ob1.rdma_put_retries_limit =
-        mca_pml_ob1_param_register_int("rdma_put_retries_limit", 5);
+    mca_pml_ob1.rdma_retries_limit =
+        mca_pml_ob1_param_register_int("rdma_retries_limit", 5);
     mca_pml_ob1.max_rdma_per_request =
         mca_pml_ob1_param_register_int("max_rdma_per_request", 4);
     mca_pml_ob1.max_send_per_range =

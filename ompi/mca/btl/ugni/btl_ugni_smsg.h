@@ -21,7 +21,6 @@
 typedef enum {
     MCA_BTL_UGNI_TAG_SEND,
     MCA_BTL_UGNI_TAG_DISCONNECT,
-    MCA_BTL_UGNI_TAG_PUT_INIT,
     MCA_BTL_UGNI_TAG_GET_INIT,
     MCA_BTL_UGNI_TAG_RDMA_COMPLETE
 } mca_btl_ugni_smsg_tag_t;
