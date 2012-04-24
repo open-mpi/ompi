@@ -22,6 +22,7 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
     mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) descriptor;
     size_t size = frag->segments[0].seg_len + frag->segments[1].seg_len;
     bool use_eager_get = size > mca_btl_ugni_component.smsg_max_data;
+    int flags_save = frag->base.des_flags;
     int rc;
 
     BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %d", (void *)descriptor,
@@ -35,17 +36,18 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
         frag->hdr.eager.ctx     = (void *) frag;
     }
 
-    if (false == frag->is_buffered && (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
-        frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-    }
-
     frag->endpoint = btl_peer;
 
     rc = mca_btl_ugni_check_endpoint_state (btl_peer);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+        frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
         opal_list_append (&btl_peer->pending_list, (opal_list_item_t *) frag);
         return OMPI_SUCCESS;
     }
+
+    /* temporarily disable ownership and callback flags so we can reliably check the complete flag */
+    frag->base.des_flags &= ~(MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
+    frag->complete = false;
 
     rc = ompi_mca_btl_ugni_smsg_send (frag, use_eager_get, &frag->hdr.send, frag->hdr_size,
                                       frag->segments[1].seg_addr.pval, use_eager_get ? 0 : frag->segments[1].seg_len,
@@ -54,9 +56,28 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
         return rc;
     }
 
-    if (frag->is_buffered && (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+    if (OPAL_LIKELY(frag->complete)) {
+        /* fast path: remote side has received the frag */
+        frag->base.des_flags = flags_save;
+        mca_btl_ugni_frag_complete (frag, OMPI_SUCCESS);
+
         return 1;
     }
+
+    if (frag->is_buffered && (flags_save & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+        /* fast(ish) path: btl own frag and it is buffered. report frag as complete */
+        frag->base.des_flags = flags_save & ~MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+
+        if (OPAL_LIKELY(flags_save & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {
+            frag->base.des_cbfunc(&frag->endpoint->btl->super, frag->endpoint, &frag->base, rc);
+        }
+
+        return 1;
+    }
+
+    /* slow(ish) path: remote side hasn't received the frag. call the frag's callback when
+       we get the local smsg/msgq completion */
+    frag->base.des_flags = flags_save | MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
     return OMPI_SUCCESS;
 }

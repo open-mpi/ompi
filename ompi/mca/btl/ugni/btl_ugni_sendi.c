@@ -75,7 +75,7 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
                                           NULL, 0, MCA_BTL_UGNI_TAG_GET_INIT);
     }
 
-    if (OPAL_UNLIKELY(0 > rc)) {
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         /* return this frag */
         mca_btl_ugni_frag_return (frag);
     }

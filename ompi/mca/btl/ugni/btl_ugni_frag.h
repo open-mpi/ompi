@@ -61,6 +61,7 @@ typedef struct mca_btl_ugni_base_frag_t {
     ompi_free_list_t *my_list;
     uint32_t msg_id;
     bool is_buffered;
+    bool complete;
     void (*cbfunc) (struct mca_btl_ugni_base_frag_t*, int);
 } mca_btl_ugni_base_frag_t;
 
@@ -109,11 +110,13 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 
 static inline void mca_btl_ugni_frag_complete (mca_btl_ugni_base_frag_t *frag, int rc) {
     /* call callback if specified */
-    if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK)) {
+    frag->complete = true;
+
+    if (frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
         frag->base.des_cbfunc(&frag->endpoint->btl->super, frag->endpoint, &frag->base, rc);
     }
 
-    if (OPAL_LIKELY(frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP)) {
+    if (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP) {
         mca_btl_ugni_frag_return (frag);
     }
 }
