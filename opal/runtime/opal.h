@@ -33,8 +33,9 @@ OPAL_DECLSPEC extern const char opal_version_string[];
 /* Size of a cache line.  Initialized to a fixed value (see
    opal_init.c) until hwloc data is available, at which time it is
    filled with the smallest size of the lowest cache line (e.g., the
-   smallest line size from all L1 caches found on the current
-   system). */
+   smallest line size from all L2 caches found on the current system).
+   If the hwloc data is available, opal_cache_line_size will be set to
+   its final value by the end of orte_init(). */
 OPAL_DECLSPEC extern int opal_cache_line_size;
 
 /**
