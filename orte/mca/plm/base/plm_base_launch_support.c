@@ -306,12 +306,15 @@ void orte_plm_base_complete_setup(int fd, short args, void *cbdata)
 static void timer_cb(int fd, short event, void *cbdata)
 {
     orte_timer_t *tm = (orte_timer_t*)cbdata;
+    orte_job_t *jdata = (orte_job_t*)tm->payload;
+
+    if (NULL == jdata || jdata->state < ORTE_JOB_STATE_RUNNING) {
+        /* declare launch failed */
+        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_FAILED_TO_START);
+    }
 
     /* free event */
     OBJ_RELEASE(tm);
-
-    /* declare launch failed */
-    ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FAILED_TO_START);
 }
 
 void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
@@ -373,7 +376,7 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
      * defined time, then we know things have failed
      */
     if (0 < orte_startup_timeout) {
-        ORTE_DETECT_TIMEOUT(orte_startup_timeout, 1000, 10000000, timer_cb, NULL);
+        ORTE_DETECT_TIMEOUT(orte_startup_timeout, 1000, 10000000, timer_cb, jdata);
     }
 
     /* cleanup */
