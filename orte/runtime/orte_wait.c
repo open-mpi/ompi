@@ -78,7 +78,6 @@ static void timer_const(orte_timer_t *tm)
 static void timer_dest(orte_timer_t *tm)
 {
     opal_event_free(tm->ev);
-    free(tm->ev);
 }
 OBJ_CLASS_INSTANCE(orte_timer_t,
                    opal_object_t,
