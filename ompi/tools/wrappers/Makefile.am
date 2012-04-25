@@ -67,7 +67,7 @@ pkgconfig_DATA = ompi.pc ompi-c.pc ompi-cxx.pc ompi-fort.pc
 
 man_MANS = $(man_pages)
 
-dist_pkgdata_DATA = \
+nodist_pkgdata_DATA = \
         mpicc-wrapper-data.txt \
 	mpic++-wrapper-data.txt \
 	mpifort-wrapper-data.txt
