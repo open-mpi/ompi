@@ -71,6 +71,7 @@ noinst_SCRIPTS = \
      mpi_gatherv_f90.f90.sh \
      mpi_get_f90.f90.sh \
      mpi_ibsend_f90.f90.sh \
+     mpi_imrecv_f90.f90.sh \
      mpi_irecv_f90.f90.sh \
      mpi_irsend_f90.f90.sh \
      mpi_isend_f90.f90.sh \
