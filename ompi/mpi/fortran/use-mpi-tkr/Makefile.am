@@ -176,6 +176,28 @@ nodist_libmpi_usempi_la_SOURCES = \
      mpi_bsend_init_f90.f90 \
      mpi_buffer_attach_f90.f90 \
      mpi_buffer_detach_f90.f90 \
+     mpi_get_f90.f90 \
+     mpi_ibsend_f90.f90 \
+     mpi_imrecv_f90.f90 \
+     mpi_irecv_f90.f90 \
+     mpi_irsend_f90.f90 \
+     mpi_isend_f90.f90 \
+     mpi_issend_f90.f90 \
+     mpi_mrecv_f90.f90 \
+     mpi_put_f90.f90 \
+     mpi_recv_f90.f90 \
+     mpi_recv_init_f90.f90 \
+     mpi_rsend_f90.f90 \
+     mpi_rsend_init_f90.f90 \
+     mpi_send_f90.f90 \
+     mpi_send_init_f90.f90 \
+     mpi_sendrecv_replace_f90.f90 \
+     mpi_ssend_f90.f90 \
+     mpi_ssend_init_f90.f90 \
+     mpi_win_create_f90.f90
+
+if OMPI_PROVIDE_MPI_FILE_INTERFACE
+nodist_libmpi_usempi_la_SOURCES += \
      mpi_file_iread_f90.f90 \
      mpi_file_iread_at_f90.f90 \
      mpi_file_iread_shared_f90.f90 \
@@ -205,26 +227,8 @@ nodist_libmpi_usempi_la_SOURCES = \
      mpi_file_write_ordered_f90.f90 \
      mpi_file_write_ordered_begin_f90.f90 \
      mpi_file_write_ordered_end_f90.f90 \
-     mpi_file_write_shared_f90.f90 \
-     mpi_get_f90.f90 \
-     mpi_ibsend_f90.f90 \
-     mpi_imrecv_f90.f90 \
-     mpi_irecv_f90.f90 \
-     mpi_irsend_f90.f90 \
-     mpi_isend_f90.f90 \
-     mpi_issend_f90.f90 \
-     mpi_mrecv_f90.f90 \
-     mpi_put_f90.f90 \
-     mpi_recv_f90.f90 \
-     mpi_recv_init_f90.f90 \
-     mpi_rsend_f90.f90 \
-     mpi_rsend_init_f90.f90 \
-     mpi_send_f90.f90 \
-     mpi_send_init_f90.f90 \
-     mpi_sendrecv_replace_f90.f90 \
-     mpi_ssend_f90.f90 \
-     mpi_ssend_init_f90.f90 \
-     mpi_win_create_f90.f90
+     mpi_file_write_shared_f90.f90
+endif
 
 # Set the library version
 libmpi_usempi_la_LDFLAGS = \
