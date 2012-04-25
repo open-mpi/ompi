@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -26,10 +26,9 @@ if !ORTE_DISABLE_FULL_SUPPORT
 bin_SCRIPTS = orte_wrapper_script
 CLEANFILES += $(bin_SCRIPTS)
 
-dist_pkgdata_DATA = \
+nodist_pkgdata_DATA = \
 	ortecc-wrapper-data.txt \
 	ortec++-wrapper-data.txt
-
 
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 install-exec-hook-always:
