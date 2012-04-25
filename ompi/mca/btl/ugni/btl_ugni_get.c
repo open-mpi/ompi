@@ -115,7 +115,7 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
         frag = NULL;
     }
 
-    BTL_VERBOSE(("starting eager get for remote ctx: %p", hdr.ctx));
+    BTL_VERBOSE(("starting eager get for remote ctx: %p", hdr.eager.ctx));
 
     do {
         if (NULL == frag) {
