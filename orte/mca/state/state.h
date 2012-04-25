@@ -65,8 +65,7 @@ ORTE_DECLSPEC extern int orte_state_base_output;
 #define ORTE_TERMINATE(x)                                               \
     do {                                                                \
         ORTE_UPDATE_EXIT_STATUS(x);                                     \
-        orte_state.activate_job_state(NULL,                             \
-                                      ORTE_JOB_STATE_FORCED_EXIT);      \
+        ORTE_ACTIVATE_JOB_STATE(NULL, ORTE_JOB_STATE_FORCED_EXIT);      \
     } while(0);
 
 #define ORTE_ACTIVATE_JOB_STATE(j, s)                                   \
