@@ -372,6 +372,11 @@ void orte_plm_base_launch_apps(int fd, short args, void *cbdata)
         return;
     }
 
+    /* track that we automatically are considered to have reported - used
+     * only to report out launch progress
+     */
+    caddy->jdata->num_daemons_reported++;
+
     /* setup a timer - if we don't launch within the
      * defined time, then we know things have failed
      */

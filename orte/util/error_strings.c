@@ -267,6 +267,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "DAEMONS TERMINATED";
     case ORTE_JOB_STATE_SILENT_ABORT:
         return "ERROR REPORTED ELSEWHERE";
+    case ORTE_JOB_STATE_REPORT_PROGRESS:
+        return "REPORT PROGRESS";
     case ORTE_JOB_STATE_ANY:
         return "ANY";
     default:

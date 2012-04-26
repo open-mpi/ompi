@@ -304,9 +304,7 @@ void orte_plm_base_recv(int status, orte_process_name_t* sender,
                 if (orte_report_launch_progress) {
                     if (0 == jdata->num_daemons_reported % 100 ||
                         jdata->num_daemons_reported == orte_process_info.num_procs) {
-                        opal_output(orte_clean_output, "App launch reported: %d (out of %d) daemons - %d (out of %d) procs",
-                                    (int)jdata->num_daemons_reported, (int)orte_process_info.num_procs,
-                                    (int)jdata->num_launched, (int)jdata->num_procs);
+                        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_REPORT_PROGRESS);
                     }
                 }
             }

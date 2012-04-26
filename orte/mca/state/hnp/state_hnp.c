@@ -63,14 +63,23 @@ orte_state_base_module_t orte_state_hnp_module = {
     orte_state_base_remove_proc_state
 };
 
-static void ignore_cbfunc(int fd, short argc, void *cbdata)
+static void local_launch_complete(int fd, short argc, void *cbdata)
 {
     orte_state_caddy_t *state = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = state->jdata;
+
+    if (orte_report_launch_progress) {
+        if (0 == jdata->num_daemons_reported % 100 ||
+            jdata->num_daemons_reported == orte_process_info.num_procs) {
+            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_REPORT_PROGRESS);
+        }
+    }
     OBJ_RELEASE(state);
 }
 
 static void track_procs(int fd, short argc, void *cbdata);
 static void check_all_complete(int fd, short argc, void *cbdata);
+static void report_progress(int fd, short argc, void *cbdata);
 
 /* defined default state machine sequence - individual
  * plm's must add a state for launching daemons
@@ -99,7 +108,7 @@ static orte_state_cbfunc_t launch_callbacks[] = {
     orte_rmaps_base_map_job,
     orte_plm_base_complete_setup,
     orte_plm_base_launch_apps,
-    ignore_cbfunc,  /* HNP doesn't need to process local_launch_complete */
+    local_launch_complete,
     orte_plm_base_post_launch,
     orte_plm_base_registered,
     check_all_complete,
@@ -146,6 +155,11 @@ static int init(void)
     /* add a default error response */
     if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_FORCED_EXIT,
                                                        orte_quit, ORTE_ERROR_PRI))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    /* add callback to report progress, if requested */
+    if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_REPORT_PROGRESS,
+                                                       report_progress, ORTE_INFO_PRI))) {
         ORTE_ERROR_LOG(rc);
     }
     if (5 < opal_output_get_verbosity(orte_state_base_output)) {
@@ -205,6 +219,17 @@ static void cleanup_node(orte_proc_t *proc)
             break;
         }
     }
+}
+
+static void report_progress(int fd, short argc, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+    orte_job_t *jdata = caddy->jdata;
+
+    opal_output(orte_clean_output, "App launch reported: %d (out of %d) daemons - %d (out of %d) procs",
+                (int)jdata->num_daemons_reported, (int)orte_process_info.num_procs,
+                (int)jdata->num_launched, (int)jdata->num_procs);
+    OBJ_RELEASE(caddy);
 }
 
 static void track_procs(int fd, short argc, void *cbdata)
