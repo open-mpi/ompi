@@ -159,7 +159,7 @@ static int init(void)
     }
     /* add callback to report progress, if requested */
     if (ORTE_SUCCESS != (rc = orte_state.add_job_state(ORTE_JOB_STATE_REPORT_PROGRESS,
-                                                       report_progress, ORTE_INFO_PRI))) {
+                                                       report_progress, ORTE_ERROR_PRI))) {
         ORTE_ERROR_LOG(rc);
     }
     if (5 < opal_output_get_verbosity(orte_state_base_output)) {
