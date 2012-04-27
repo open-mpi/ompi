@@ -31,7 +31,6 @@ if (exists($ENV{'OPAL_DESTDIR'})
 
 my $CC = "@CC@";
 my $CXX = "@CXX@";
-my $F77 = "@F77@";
 my $FC = "@FC@";
 my $extra_includes = "@OMPI_WRAPPER_EXTRA_INCLUDES@";
 my $extra_cppflags = "@OMPI_WRAPPER_EXTRA_CPPFLAGS@";
