@@ -18,6 +18,8 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#include <math.h>
+#include <infiniband/verbs.h>
 
 #include "opal/types.h"
 #include "orte/types.h"
@@ -37,10 +39,6 @@
 #include "orte/util/name_fns.h"
 
 #include "orte/runtime/orte_globals.h"
-
-#include "math.h"
-
-#include <infiniband/verbs.h>
 
 #include "oob_ud_qp.h"
 #include "oob_ud_peer.h"
