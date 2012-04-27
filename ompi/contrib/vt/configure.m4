@@ -153,8 +153,7 @@ AC_DEFUN([OMPI_contrib_vt_CONFIG],[
                ompi/contrib/vt/wrappers/Makefile
                ompi/contrib/vt/wrappers/mpicc-vt-wrapper-data.txt
                ompi/contrib/vt/wrappers/mpic++-vt-wrapper-data.txt
-               ompi/contrib/vt/wrappers/mpif77-vt-wrapper-data.txt
-               ompi/contrib/vt/wrappers/mpif90-vt-wrapper-data.txt
+               ompi/contrib/vt/wrappers/mpifort-vt-wrapper-data.txt
            ])],
           [$2])
 ])dnl
