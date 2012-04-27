@@ -17,6 +17,8 @@
 # $HEADER$
 #
 
+AM_CPPFLAGS = $(orte_oob_ud_CPPFLAGS)
+
 dist_pkgdata_DATA = help-oob-ud.txt
 
 sources = \
@@ -49,9 +51,11 @@ endif
 mcacomponentdir = $(pkglibdir)
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_oob_ud_la_SOURCES = $(sources)
-mca_oob_ud_la_LDFLAGS = -module -avoid-version -libverbs
+mca_oob_ud_la_LDFLAGS = -module -avoid-version $(orte_oob_ud_LDFLAGS)
+mca_oob_ud_la_LIBADD = $(orte_oob_ud_LIBS)
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_oob_ud_la_SOURCES = $(sources)
-libmca_oob_ud_la_LDFLAGS = -module -avoid-version
+libmca_oob_ud_la_LDFLAGS = -module -avoid-version $(orte_oob_ud_LDFLAGS)
+libmca_oob_ud_la_LIBADD = $(orte_oob_ud_LIBS)
 

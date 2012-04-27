@@ -22,6 +22,34 @@
 AC_DEFUN([MCA_orte_oob_ud_CONFIG],[
     AC_CONFIG_FILES([orte/mca/oob/ud/Makefile])
 
-    AC_CHECK_HEADER([infiniband/verbs.h])
-    AC_CHECK_LIB([ibverbs], [ibv_create_qp])
+    # JMS Still have problems with AC_ARG ENABLE not yet having been
+    # called or CHECK_WITHDIR'ed.
+
+    orte_oob_ud_check_save_CPPFLAGS=$CPPFLAGS
+    orte_oob_ud_check_save_LDFLAGS=$LDFLAGS
+    orte_oob_ud_check_save_LIBS=$LIBS
+
+    OMPI_CHECK_PACKAGE([orte_oob_ud],
+                       [infiniband/verbs.h],
+                       [ibverbs],
+                       [ibv_open_device],
+                       [],
+                       [$ompi_check_openib_dir],
+                       [$ompi_check_openib_libdir],
+                       [orte_oob_ud_check_happy=yes],
+                       [orte_oob_ud_check_happy=no])])
+
+    CPPFLAGS=$orte_oob_ud_check_save_CPPFLAGS
+    LDFLAGS=$orte_oob_ud_check_save_LDFLAGS
+    LIBS=$orte_oob_ud_check_save_LIBS
+
+    AS_IF([test "$orte_oob_ud_check_happy" = "yes"],
+          [$1],
+          [$2])
+
+    # substitute in the things needed to build this component
+    AC_SUBST([orte_oob_ud_CFLAGS])
+    AC_SUBST([orte_oob_ud_CPPFLAGS])
+    AC_SUBST([orte_oob_ud_LDFLAGS])
+    AC_SUBST([orte_oob_ud_LIBS])
 ])dnl
