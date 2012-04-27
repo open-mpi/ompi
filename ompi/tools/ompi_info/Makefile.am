@@ -34,10 +34,7 @@ AM_CFLAGS = \
             -DOMPI_BUILD_LDFLAGS="\"@LDFLAGS@\"" \
             -DOMPI_BUILD_LIBS="\"@LIBS@\"" \
             -DOPAL_CC_ABSOLUTE="\"@OPAL_CC_ABSOLUTE@\"" \
-            -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\"" \
-            -DOMPI_F77_ABSOLUTE="\"@OMPI_F77_ABSOLUTE@\"" \
-            -DOMPI_F90_ABSOLUTE="\"@OMPI_F90_ABSOLUTE@\"" \
-            -DOMPI_F90_BUILD_SIZE="\"@OMPI_F90_BUILD_SIZE@\""
+            -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\""
 
 include $(top_srcdir)/Makefile.man-page-rules
 
