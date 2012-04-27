@@ -44,16 +44,28 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
     ompi_mtl_portals4_pending_request_t *pending = 
         ptl_request->pending;
 
-    if (ev->ni_fail_type == PTL_NI_FLOW_CTRL) {
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+    if (ev->ni_fail_type == PTL_NI_PT_DISABLED) {
+        OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
                              "send %lu hit flow control",
                              ptl_request->opcount));
 
-        ompi_mtl_portals4_flowctl_start_recover();
+        PtlMDRelease(ptl_request->md_h);
+        if (PTL_OK != PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
+            ret = PtlMEUnlink(ptl_request->me_h);
+            if (PTL_OK != ret) {
+                opal_output_verbose(1, ompi_mtl_base_output,
+                                    "%s:%d: send callback PtlMDUnlink returned %d",
+                                    __FILE__, __LINE__, ret);
+            }
+        }
+
         opal_list_remove_item(&ompi_mtl_portals4.flowctl.active_sends, 
                               &pending->super.super);
         opal_list_append(&ompi_mtl_portals4.flowctl.pending_sends, 
                          &pending->super.super);
+        opal_atomic_add_32(&ompi_mtl_portals4.flowctl.slots, 1);
+        ompi_mtl_portals4_flowctl_trigger();
+
         return OMPI_SUCCESS;
     }
 #endif
@@ -359,7 +371,8 @@ ompi_mtl_portals4_pending_list_progress()
     opal_list_item_t *item;
     ompi_mtl_portals4_pending_request_t *pending;
 
-    while (!ompi_mtl_portals4.flowctl.flowctl_active) {
+    while ((!ompi_mtl_portals4.flowctl.flowctl_active) &&
+           (0 != opal_list_get_size(&ompi_mtl_portals4.flowctl.pending_sends))) {
         val = opal_atomic_add_32(&ompi_mtl_portals4.flowctl.slots, -1);
         if (val <= 0) {
             opal_atomic_add_32(&ompi_mtl_portals4.flowctl.slots, 1);
@@ -394,6 +407,8 @@ ompi_mtl_portals4_pending_list_progress()
                                                pending->ptl_request);
         }
         if (OMPI_SUCCESS != ret) {
+            opal_list_remove_item(&ompi_mtl_portals4.flowctl.active_sends,
+                                  &pending->super.super);
             opal_list_prepend(&ompi_mtl_portals4.flowctl.pending_sends,
                               &pending->super.super);
         }

@@ -343,14 +343,6 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
                             __FILE__, __LINE__, ret);
         goto error;
     }
-
-    ret = ompi_mtl_portals4_flowctl_setup_comm();
-    if (OMPI_SUCCESS != ret) {
-        opal_output_verbose(1, ompi_mtl_base_output,
-                            "%s:%d: ompi_mtl_portals4_flowctl_setup_trees failed: %d\n",
-                            __FILE__, __LINE__, ret);
-        goto error;
-    }
 #endif
 
     /* activate progress callback */
@@ -459,6 +451,7 @@ ompi_mtl_portals4_progress(void)
         if (PTL_OK == ret) {
             OPAL_OUTPUT_VERBOSE((60, ompi_mtl_base_output,
                                  "Found event of type %d\n", ev.type));
+            count++;
             switch (ev.type) {
             case PTL_EVENT_GET:
             case PTL_EVENT_PUT:
@@ -483,7 +476,10 @@ ompi_mtl_portals4_progress(void)
 
             case PTL_EVENT_PT_DISABLED:
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-                ret = ompi_mtl_portals4_flowctl_start_recover();
+                OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
+                                     "Received PT_DISABLED event on pt %d\n",
+                                     (int) ev.pt_index));
+                ret = ompi_mtl_portals4_flowctl_trigger();
                 if (OMPI_SUCCESS != ret) {
                     opal_output_verbose(1, ompi_mtl_base_output,
                                         "%s:%d: flowctl_start_recover failed: %d\n",
@@ -518,6 +514,12 @@ ompi_mtl_portals4_progress(void)
             break;
         }
     }
+
+#if OMPI_MTL_PORTALS4_FLOW_CONTROL
+    if (0 == count) {
+        ompi_mtl_portals4_pending_list_progress();
+    }
+#endif
 
     return count;
 }
