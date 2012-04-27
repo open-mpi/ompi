@@ -186,12 +186,14 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts, char ***env)
         close(opts->p_stderr[1]);
     }
 
-    /* Set an environment variable that the new child process can use
-       to get the fd of the pipe connected to the INTERNAL IOF tag. */
-    asprintf(&str, "%d", opts->p_internal[1]);
-    if (NULL != str) {
-        opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
-        free(str);
+    if (!orte_map_stddiag_to_stderr) {
+        /* Set an environment variable that the new child process can use
+           to get the fd of the pipe connected to the INTERNAL IOF tag. */
+        asprintf(&str, "%d", opts->p_internal[1]);
+        if (NULL != str) {
+            opal_setenv("OPAL_OUTPUT_STDERR_FD", str, true, env);
+            free(str);
+        }
     }
 
     return ORTE_SUCCESS;

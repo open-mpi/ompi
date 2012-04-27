@@ -183,6 +183,9 @@ char *orte_forward_envars = NULL;
 /* preload binaries */
 bool orte_preload_binaries = false;
 
+/* map stddiag output to stderr so it isn't forwarded to mpirun */
+bool orte_map_stddiag_to_stderr = false;
+
 /* progress thread */
 #if ORTE_ENABLE_PROGRESS_THREAD
 opal_thread_t orte_progress_thread;

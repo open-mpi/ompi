@@ -695,6 +695,9 @@ ORTE_DECLSPEC extern char *orte_forward_envars;
 /* preload binaries */
 ORTE_DECLSPEC extern bool orte_preload_binaries;
 
+/* map stddiag output to stderr so it isn't forwarded to mpirun */
+ORTE_DECLSPEC extern bool orte_map_stddiag_to_stderr;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS
