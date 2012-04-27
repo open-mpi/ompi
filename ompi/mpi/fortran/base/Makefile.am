@@ -32,7 +32,7 @@ noinst_LTLIBRARIES += libmpi_fortran_base.la
 # unfortunately can't just suck the sources into the larger libmpi.la.
 
 libmpi_fortran_base_la_CPPFLAGS = \
-        -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
+        -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 libmpi_fortran_base_la_SOURCES = \
         constants.h \
         datarep.h \

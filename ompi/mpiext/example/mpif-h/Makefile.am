@@ -16,7 +16,7 @@
 
 # We must set these #defines so that the inner OMPI MPI prototype
 # header files do the Right Thing.
-AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
+AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 
 # Note that the mpif.h-based bindings are optional -- they can only be
 # built if OMPI is also building the Fortran-based bindings.  So we

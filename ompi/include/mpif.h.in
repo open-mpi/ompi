@@ -27,16 +27,16 @@
 ! tells the compiler where to find .h files (specifically, this one).  For
 ! example:
 !
-!      shell$ mpif77 foo.f -o foo -I$OMPI_HOME/include
+!      shell$ mpifort foo.f -o foo -I$OMPI_HOME/include
 !
 ! will probably do the trick (assuming that you have set OMPI_HOME
 ! properly).
 !
-! That being said, OMPI's "mpif77" wrapper compiler should
+! That being said, OMPI's "mpifort" wrapper compiler should
 ! automatically include the -I option for you.  The following command
 ! should be equivalent to the command listed above:
 !
-!      shell$ mpif77 foo.f -o foo
+!      shell$ mpifort foo.f -o foo
 !
 ! You should not copy this file to your local directory because it is
 ! possible that this file will be changed between versions of Open MPI.
@@ -45,7 +45,7 @@
 ! of MPI, or with other versions of Open MPI will result in undefined
 ! behavior (to include incorrect results, segmentation faults,
 ! unexplainable "hanging" in your application, etc.).  Always use the
-! -I command line option instead (or let mpif77 do it for you).
+! -I command line option instead (or let mpifort do it for you).
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
@@ -59,9 +59,9 @@
       include 'mpif-common.h'
 
 !
-!     These "external" statements are specific to the MPI F77 interface
+!     These "external" statements are specific to the MPI mpif.h interface
 !     (and are toxic to the MPI F90 interface), and are therefore in the
-!     MPI F77-specific header file (i.e., this one).
+!     MPI Fortran-specific header file (i.e., this one).
 !
       external MPI_NULL_COPY_FN, MPI_NULL_DELETE_FN
       external MPI_COMM_NULL_COPY_FN, MPI_COMM_NULL_DELETE_FN
