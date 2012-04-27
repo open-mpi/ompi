@@ -156,11 +156,8 @@
 /* Whether a const_cast on a 2-d array will work with the C++ compiler */
 #undef OMPI_CXX_SUPPORTS_2D_CONST_CAST
 
-/* Whether we want the MPI f77 bindings or not */
-#undef OMPI_WANT_F77_BINDINGS
-
-/* Whether we want the MPI f90 bindings or not */
-#undef OMPI_WANT_F90_BINDINGS
+/* Whether OMPI was built with parameter checking or not */
+#undef OMPI_PARAM_CHECK
 
 /* Enable warnings in wrong usage (e.g. deprecated) in user-level code */
 /* XXX This __disabled__ by default for Open MPI-1.5, but will be __enabled__ for Open MPI-1.7 by default */
@@ -662,7 +659,7 @@ enum {
    compiled as MPI_TYPE_NULL_DELETE_FN).  So add some #if kinds of
    protection for this case. */
 
-#if !defined(OMPI_COMPILING_F77_WRAPPERS)
+#if !defined(OMPI_COMPILING_FORTRAN_WRAPPERS)
 #define MPI_NULL_DELETE_FN OMPI_C_MPI_NULL_DELETE_FN
 #define MPI_NULL_COPY_FN OMPI_C_MPI_NULL_COPY_FN
 #define MPI_DUP_FN OMPI_C_MPI_DUP_FN

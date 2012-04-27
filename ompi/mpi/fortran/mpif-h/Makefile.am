@@ -29,7 +29,7 @@ SUBDIRS = profile
 # we need it to be 0
 #
 
-AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
+AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
 
 # The top directory only builds MPI_* bindings and some support
 # glue. The bottom directory only builds PMPI_* bindings.  Each

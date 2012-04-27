@@ -178,13 +178,16 @@ mpi_param_check=ompi_mpi_param_check
 if test "$with_mpi_param_check" = "no" -o \
     "$with_mpi_param_check" = "never"; then
     mpi_param_check=0
+    ompi_param_check=0
     AC_MSG_RESULT([never])
 elif test "$with_mpi_param_check" = "yes" -o \
     "$with_mpi_param_check" = "always"; then
     mpi_param_check=1
+    ompi_param_check=1
     AC_MSG_RESULT([always])
 elif test "$with_mpi_param_check" = "runtime" -o \
     -z "$with_mpi_params_check"; then
+    ompi_param_check=1
     AC_MSG_RESULT([runtime])
 else
     AC_MSG_RESULT([unknown])
@@ -194,7 +197,8 @@ else
 fi
 AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
     [Whether we want to check MPI parameters always, never, or decide at run-time])
-
+AC_DEFINE_UNQUOTED(OMPI_PARAM_CHECK, $ompi_param_check,
+    [Whether we want to check MPI parameters never or possible (an integer constant)])
 
 #
 # Do we want the prototype "use mpi_f08" implementation that uses
