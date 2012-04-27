@@ -34,6 +34,8 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals4_pending_request_t);
 
 struct ompi_mtl_portals4_flowctl_t {
     bool flowctl_active;
+    bool send_trigger;
+    bool send_alert;
 
     opal_list_t active_sends;
     opal_list_t pending_sends;
@@ -41,7 +43,11 @@ struct ompi_mtl_portals4_flowctl_t {
     opal_mutex_t mutex;
     int32_t slots;
 
+    size_t fanin_count;
+
+    ompi_mtl_portals4_base_request_t trigger_req;
     ompi_mtl_portals4_base_request_t alert_req;
+    ompi_mtl_portals4_base_request_t fanin_req;
     ompi_mtl_portals4_base_request_t fanout_req;
 
     /** Flow control epoch counter.  Triggered events should be
@@ -59,9 +65,6 @@ struct ompi_mtl_portals4_flowctl_t {
     ptl_handle_ct_t alert_ct_h;
     /** Flow control alert tree broadcast ME. */
     ptl_handle_me_t alert_me_h;
-    /** Flow control alert tree broadcast ME for a local put to
-        generate an event */
-    ptl_handle_me_t alert_event_me_h;
 
     /** Flow control restart fan-in CT. */
     ptl_handle_ct_t fanin_ct_h;
@@ -72,25 +75,18 @@ struct ompi_mtl_portals4_flowctl_t {
     ptl_handle_ct_t fanout_ct_h;
     /** Flow control restart fan-out ME. */
     ptl_handle_me_t fanout_me_h;
-    /** Flow control restart fan-out ME for a local put to generate an
-        event */
-    ptl_handle_me_t fanout_event_me_h;
 
     size_t num_procs;
     size_t num_children;
     ptl_process_t children[2];
     ptl_process_t parent;
     ptl_process_t me;
-    int i_am_root;
+    ptl_process_t root;
+    bool i_am_root;
 };
 typedef struct ompi_mtl_portals4_flowctl_t ompi_mtl_portals4_flowctl_t;
 
-/**
- * Initialize flow control code
- *
- * Initialize flow control code.  This includes initializing epoch
- * counter and creating necessary MEs and CTs.
- */
+
 int ompi_mtl_portals4_flowctl_init(void);
 
 int ompi_mtl_portals4_flowctl_fini(void);
@@ -98,9 +94,8 @@ int ompi_mtl_portals4_flowctl_fini(void);
 int ompi_mtl_portals4_flowctl_add_procs(size_t me,
                                         size_t npeers,
                                         struct mca_mtl_base_endpoint_t **peers);
-int ompi_mtl_portals4_flowctl_setup_comm(void);
-int ompi_mtl_portals4_flowctl_start_recover(void);
 
+int ompi_mtl_portals4_flowctl_trigger(void);
 
 void ompi_mtl_portals4_pending_list_progress(void);
 
