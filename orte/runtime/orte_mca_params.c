@@ -421,7 +421,19 @@ int orte_register_params(void)
          * back to the controlling terminal
          */
         orte_leave_session_attached = true;
+        /* also want to redirect stddiag output from opal_output
+         * to stderr from the process so those messages show
+         * up in the xterm window instead of being forwarded to mpirun
+         */
+        orte_map_stddiag_to_stderr = true;
     }
+
+    /* whether or not to map stddiag to stderr */
+    mca_base_param_reg_int_name("orte", "map_stddiag_to_stderr",
+                                "Map output from opal_output to stderr of the local process [default: no]",
+                                false, false,
+                                (int) false, &value);
+    orte_map_stddiag_to_stderr = OPAL_INT_TO_BOOL(value);
 
     /* whether or not to forward SIGTSTP and SIGCONT signals */
     mca_base_param_reg_int_name("orte", "forward_job_control",
