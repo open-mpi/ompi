@@ -37,7 +37,7 @@ AC_DEFUN([MCA_orte_oob_ud_CONFIG],[
                        [$ompi_check_openib_dir],
                        [$ompi_check_openib_libdir],
                        [orte_oob_ud_check_happy=yes],
-                       [orte_oob_ud_check_happy=no])])
+                       [orte_oob_ud_check_happy=no])
 
     CPPFLAGS=$orte_oob_ud_check_save_CPPFLAGS
     LDFLAGS=$orte_oob_ud_check_save_LDFLAGS
