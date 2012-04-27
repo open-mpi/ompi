@@ -1,0 +1,48 @@
+.\" Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+.\" Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+.TH "mpif77,mpif90" 1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "Open MPI"
+.
+.SH NAME
+mpif77, mpif90 -- Deprecated Open MPI Fortran wrapper compilers
+.
+.SH SYNTAX
+mpif90 ...
+.
+.\" **************************
+.\"    Description Section
+.\" **************************
+.
+.SH DESCRIPTION
+.PP
+The
+.I mpif77
+and
+.I mpif90
+wrapper compiler names are deprecated, and will disappear in a future
+version of Open MPI.  You should use the
+.I mpifort
+wrapper compiler, instead.  While they are deprecated,
+.I mpif77
+and
+.I mpif90
+accept all the same parameters as
+.IR mpifort ,
+and behaves the same as
+.IR mpifort .
+.
+.PP
+With
+.IR mpifort ,
+you can compile any Fortran program that uses the "mpif.h", "use mpi",
+and/or "use mpi_f08" MPI Fortran interfaces.
+.
+.PP
+See mpifort(1) for more details.
+.
+.\" **************************
+.\"    See Also Section
+.\" **************************
+.
+.SH SEE ALSO
+mpifort(1)
+.
