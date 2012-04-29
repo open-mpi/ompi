@@ -188,6 +188,11 @@ int orte_register_params(void)
                                 false, false, (int)false, &value);
     orte_leave_session_attached = OPAL_INT_TO_BOOL(value);
     
+    /* if any debug level is set, ensure we output debug level dumps */
+    if (orte_debug_flag || orte_debug_daemons_flag || orte_leave_session_attached) {
+        orte_devel_level_output = true;
+    }
+
     /* See comment in orte/tools/orterun/orterun.c about this MCA
        param (this param is internal) */
     mca_base_param_reg_int_name("orte",
