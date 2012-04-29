@@ -108,6 +108,7 @@ int orte_ess_base_orted_setup(char **hosts)
     orte_job_t *jdata;
     orte_proc_t *proc;
     orte_app_context_t *app;
+    orte_node_t *node;
 
 #ifndef __WINDOWS__
     /* setup callback for SIGPIPE */
@@ -406,17 +407,36 @@ int orte_ess_base_orted_setup(char **hosts)
         }
     }
     
-    /* setup the global job array */
+    /* setup the global job and node arrays */
     orte_job_data = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                                       1,
-                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                       1))) {
+                                                      1,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      1))) {
         ORTE_ERROR_LOG(ret);
         error = "setup job array";
         goto error;
     }
     
+    orte_node_pool = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node array";
+        goto error;
+    }
+    orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
+    if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+        ORTE_ERROR_LOG(ret);
+        error = "setup node topologies array";
+        goto error;
+    }
+
     /* Setup the job data object for the daemons */        
     /* create and store the job data object */
     jdata = OBJ_NEW(orte_job_t);
@@ -428,6 +448,15 @@ int orte_ess_base_orted_setup(char **hosts)
     opal_pointer_array_set_item(jdata->apps, 0, app);
     jdata->num_apps++;
     
+    /* create and store a node object where we are */
+    node = OBJ_NEW(orte_node_t);
+    node->name = strdup(orte_process_info.nodename);
+    node->index = opal_pointer_array_set_item(orte_node_pool, ORTE_PROC_MY_NAME->vpid, node);
+#if OPAL_HAVE_HWLOC
+    /* point our topology to the one detected locally */
+    node->topology = opal_hwloc_topology;
+#endif
+
     /* create and store a proc object for us */
     proc = OBJ_NEW(orte_proc_t);
     proc->name.jobid = ORTE_PROC_MY_NAME->jobid;
@@ -437,6 +466,17 @@ int orte_ess_base_orted_setup(char **hosts)
     proc->rml_uri = orte_rml.get_contact_info();
     proc->state = ORTE_PROC_STATE_RUNNING;
     opal_pointer_array_set_item(jdata->procs, proc->name.vpid, proc);
+    
+    /* record that the daemon (i.e., us) is on this node 
+     * NOTE: we do not add the proc object to the node's
+     * proc array because we are not an application proc.
+     * Instead, we record it in the daemon field of the
+     * node object
+     */
+    OBJ_RETAIN(proc);   /* keep accounting straight */
+    node->daemon = proc;
+    node->daemon_launched = true;
+    node->state = ORTE_NODE_STATE_UP;
     
     /* record that the daemon job is running */
     jdata->num_procs = 1;

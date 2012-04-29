@@ -96,7 +96,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
 {
     int rc;
     orte_job_t *jdata=NULL;
-    orte_proc_t *proc;
     orte_job_map_t *map=NULL;
     opal_buffer_t *wireup;
     opal_byte_object_t bo, *boptr;
@@ -322,17 +321,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
 
-    /* pack the procs for this job */
-    for (j=0; j < jdata->procs->size; j++) {
-        if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, j))) {
-            continue;
-        }
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &proc, 1, ORTE_PROC))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-
     return ORTE_SUCCESS;
 }
 
@@ -400,7 +388,7 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_jobid_t debugger;
     int32_t n;
     orte_app_context_t *app;
-    orte_proc_t *pptr, *p2;
+    orte_proc_t *pptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:constructing child list",
@@ -653,25 +641,14 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         return rc;
     }
 
-    /* unpack the procs */
-    for (j=0; j < jdata->num_procs; j++) {
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &pptr, &cnt, ORTE_PROC))) {
-            ORTE_ERROR_LOG(rc);
-            goto REPORT_ERROR;
+    /* check the procs */
+    for (n=0; n < jdata->procs->size; n++) {
+        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, n))) {
+            continue;
         }
-        /* add it to our global jdata object since
-         * many parts of the system will look for it there
-         */
-        if (NULL != (p2 = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, pptr->name.vpid))) {
-            OBJ_RELEASE(p2);
-        }
-        opal_pointer_array_set_item(jdata->procs, pptr->name.vpid, pptr);
-
         /* see if it belongs to us */
         if (ORTE_SUCCESS != (rc = check_local_proc(jdata, pptr))) {
             ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(pptr);
             goto REPORT_ERROR;
         }
     }

@@ -83,8 +83,6 @@ ORTE_DECLSPEC int orte_ess_base_tool_finalize(void);
 ORTE_DECLSPEC int orte_ess_base_orted_setup(char **hosts);
 ORTE_DECLSPEC int orte_ess_base_orted_finalize(void);
 
-ORTE_DECLSPEC int orte_ess_base_query_sys_info(char *node, char **keys, opal_list_t *values);
-
 ORTE_DECLSPEC opal_paffinity_locality_t orte_ess_base_proc_get_locality(orte_process_name_t *proc);
 ORTE_DECLSPEC orte_vpid_t orte_ess_base_proc_get_daemon(orte_process_name_t *proc);
 ORTE_DECLSPEC char* orte_ess_base_proc_get_hostname(orte_process_name_t *proc);

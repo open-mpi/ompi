@@ -92,11 +92,6 @@
 static int rte_init(void);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
-static opal_paffinity_locality_t proc_get_locality(orte_process_name_t *proc);
-static orte_vpid_t proc_get_daemon(orte_process_name_t *proc);
-static char* proc_get_hostname(orte_process_name_t *proc);
-static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
-static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
 static int update_pidmap(opal_byte_object_t *bo);
 static int update_nidmap(opal_byte_object_t *bo);
 
@@ -104,11 +99,11 @@ orte_ess_base_module_t orte_ess_hnp_module = {
     rte_init,
     rte_finalize,
     rte_abort,
-    proc_get_locality,
-    proc_get_daemon,
-    proc_get_hostname,
-    proc_get_local_rank,
-    proc_get_node_rank,
+    NULL,
+    orte_ess_base_proc_get_daemon,
+    orte_ess_base_proc_get_hostname,
+    orte_ess_base_proc_get_local_rank,
+    orte_ess_base_proc_get_node_rank,
     update_pidmap,
     update_nidmap,
     NULL /* ft_event */
@@ -738,138 +733,6 @@ static void rte_abort(int status, bool report)
     
     /* just exit */
     exit(status);
-}
-
-static opal_paffinity_locality_t proc_get_locality(orte_process_name_t *proc)
-{
-    orte_node_t *node;
-    orte_proc_t *myproc;
-    int i;
-    orte_ns_cmp_bitmask_t mask;
-    
-    /* the HNP is always on node=0 of the node array */
-    node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0);
-    
-    /* cycle through the array of local procs */
-    for (i=0; i < node->procs->size; i++) {
-        if (NULL == (myproc = (orte_proc_t*)opal_pointer_array_get_item(node->procs, i))) {
-            continue;
-        }
-
-        mask = ORTE_NS_CMP_ALL;
-
-        if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &myproc->name, proc)) {
-            OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                                 "%s ess:hnp: proc %s is LOCAL",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(proc)));
-            return (OPAL_PROC_ON_NODE | OPAL_PROC_ON_CU | OPAL_PROC_ON_CLUSTER);
-        }
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:hnp: proc %s is REMOTE",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc)));
-    
-    return OPAL_PROC_NON_LOCAL;
-    
-}
-
-static orte_proc_t* find_proc(orte_process_name_t *proc)
-{
-    orte_job_t *jdata;
-    
-    if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
-        return NULL;
-    }
-
-    return (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
-}
-
-
-static orte_vpid_t proc_get_daemon(orte_process_name_t *proc)
-{
-    orte_proc_t *pdata;
-
-    if( NULL == proc ) {
-        return ORTE_VPID_INVALID;
-    }
-
-    if( ORTE_JOBID_IS_DAEMON(proc->jobid) ) {
-        return proc->vpid;
-    }
-
-    /* get the job data */
-    if (NULL == (pdata = find_proc(proc))) {
-        return ORTE_VPID_INVALID;
-    }
-
-    if( NULL == pdata->node || NULL == pdata->node->daemon ) {
-        return ORTE_VPID_INVALID;
-    }
-
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:hnp: proc %s is hosted by daemon %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         ORTE_VPID_PRINT(pdata->node->daemon->name.vpid)));
-
-    return pdata->node->daemon->name.vpid;
-}
-
-static char* proc_get_hostname(orte_process_name_t *proc)
-{
-    orte_proc_t *pdata;
-    
-    if (NULL == (pdata = find_proc(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return NULL;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:hnp: proc %s is on host %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         pdata->node->name));
-    
-    return pdata->node->name;
-}
-
-static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc)
-{
-    orte_proc_t *pdata;
-    
-    if (NULL == (pdata = find_proc(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_LOCAL_RANK_INVALID;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:hnp: proc %s has local rank %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         (int)pdata->local_rank));
-    
-    return pdata->local_rank;
-}
-
-static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc)
-{
-    orte_proc_t *pdata;
-    
-    if (NULL == (pdata = find_proc(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return ORTE_NODE_RANK_INVALID;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:hnp: proc %s has node rank %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         (int)pdata->node_rank));
-    
-    return pdata->node_rank;
 }
 
 static int update_pidmap(opal_byte_object_t *bo)
