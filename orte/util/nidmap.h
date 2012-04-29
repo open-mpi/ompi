@@ -52,9 +52,11 @@ ORTE_DECLSPEC int orte_util_set_proc_state(orte_process_name_t *proc, orte_proc_
 
 ORTE_DECLSPEC int orte_util_encode_nodemap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_nodemap(opal_byte_object_t *boptr);
+ORTE_DECLSPEC int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo);
 
 ORTE_DECLSPEC int orte_util_encode_pidmap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_pidmap(opal_byte_object_t *boptr);
+ORTE_DECLSPEC int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo);
 
 ORTE_DECLSPEC int orte_util_build_daemon_nidmap(char **nodes);
 
