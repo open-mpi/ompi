@@ -17,8 +17,6 @@
 OBJ_CLASS_INSTANCE(ompi_mtl_portals4_pending_request_t, opal_free_list_item_t,
                    NULL, NULL);
 
-static int flowctl_trigger_callback(ptl_event_t *ev,
-                                    ompi_mtl_portals4_base_request_t *ptl_base_request);
 static int flowctl_alert_callback(ptl_event_t *ev,
                                   ompi_mtl_portals4_base_request_t *ptl_base_request);
 static int flowctl_fanin_callback(ptl_event_t *ev,
@@ -26,8 +24,8 @@ static int flowctl_fanin_callback(ptl_event_t *ev,
 static int flowctl_fanout_callback(ptl_event_t *ev,
                                    ompi_mtl_portals4_base_request_t *ptl_base_request);
 
-static int ompi_mtl_portals4_flowctl_start_recover(void);
-
+static int start_recover(void);
+static int setup_alarm(uint32_t epoch);
 
 int
 ompi_mtl_portals4_flowctl_init(void)
@@ -51,9 +49,6 @@ ompi_mtl_portals4_flowctl_init(void)
     OBJ_CONSTRUCT(&ompi_mtl_portals4.flowctl.mutex, opal_mutex_t);
 
     ompi_mtl_portals4.flowctl.slots = (ompi_mtl_portals4.queue_size - 3) / 3;
-
-    ompi_mtl_portals4.flowctl.trigger_req.type = portals4_req_flowctl;
-    ompi_mtl_portals4.flowctl.trigger_req.event_callback = flowctl_trigger_callback;
 
     ompi_mtl_portals4.flowctl.alert_req.type = portals4_req_flowctl;
     ompi_mtl_portals4.flowctl.alert_req.event_callback = flowctl_alert_callback;
@@ -101,6 +96,7 @@ ompi_mtl_portals4_flowctl_init(void)
         PTL_ME_ACK_DISABLE | 
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_EVENT_UNLINK_DISABLE |
+        PTL_ME_EVENT_COMM_DISABLE |
         PTL_ME_EVENT_CT_COMM;
     me.ct_handle = ompi_mtl_portals4.flowctl.trigger_ct_h;
     me.match_bits = MTL_PORTALS4_FLOWCTL_TRIGGER;
@@ -108,7 +104,7 @@ ompi_mtl_portals4_flowctl_init(void)
                       ompi_mtl_portals4.flowctl_idx,
                       &me,
                       PTL_PRIORITY_LIST,
-                      &ompi_mtl_portals4.flowctl.trigger_req,
+                      NULL,
                       &ompi_mtl_portals4.flowctl.trigger_me_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_mtl_base_output,
@@ -228,7 +224,7 @@ ompi_mtl_portals4_flowctl_add_procs(size_t me,
                                     size_t npeers,
                                     struct mca_mtl_base_endpoint_t **peers)
 {
-    int i, ret;
+    int i;
 
     /* if epoch isn't 0, that means setup trees has been called, which
        means that this add_procs is a dynamic process, which we don't
@@ -256,7 +252,7 @@ ompi_mtl_portals4_flowctl_add_procs(size_t me,
         }
     }
 
-    return ret;
+    return setup_alarm(ompi_mtl_portals4.flowctl.epoch_counter);
 }
 
 
@@ -297,7 +293,7 @@ ompi_mtl_portals4_flowctl_trigger(void)
 
 
 static int
-ompi_mtl_portals4_flowctl_start_recover(void)
+start_recover(void)
 {
     int ret;
 
@@ -306,6 +302,15 @@ ompi_mtl_portals4_flowctl_start_recover(void)
     OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
                          "Entering flowctl_start_recover %d",
                          ompi_mtl_portals4.flowctl.epoch_counter));
+
+    /* re-arm trigger/alarm for next time */
+    ret = setup_alarm(ompi_mtl_portals4.flowctl.epoch_counter + 1);
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d setup_alarm failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return ret;
+    }
 
     OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
                          "flowctl_start_recover %d: draining active sends",
@@ -362,10 +367,8 @@ ompi_mtl_portals4_flowctl_start_recover(void)
 
     /* recovery complete when fan-out event arrives, async event, so
        we're done now */
-    ret = PtlPTEnable(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
-    if (PTL_OK != ret) abort();
-    
     ret = OMPI_SUCCESS;
+
  error:
     OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
                          "Exiting flowctl_start_recover %d",
@@ -375,70 +378,26 @@ ompi_mtl_portals4_flowctl_start_recover(void)
 }
 
 
-
 static int
-flowctl_trigger_callback(ptl_event_t *ev,
-                         ompi_mtl_portals4_base_request_t *ptl_base_request)
-{
-    int ret;
-
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "-----> trigger_alert_callback (%d) [%ld %ld] <-----",
-                         ompi_mtl_portals4.flowctl.send_alert ? 1 : 0,
-                         (unsigned long) ev->initiator.phys.nid, 
-                         (unsigned long) ev->initiator.phys.pid));
-
-    if (ompi_mtl_portals4.flowctl.send_alert) {
-        /* setup the trigger to start the alert broadcast */
-        if (!ompi_mtl_portals4.flowctl.i_am_root) {
-            opal_output(ompi_mtl_base_output, "***** NON-ROOT GOT TRIGGER *****");
-        }
-
-        ret = PtlPut(ompi_mtl_portals4.zero_md_h,
-                     0,
-                     0,
-                     PTL_NO_ACK_REQ,
-                     ompi_mtl_portals4.flowctl.me,
-                     ompi_mtl_portals4.flowctl_idx,
-                     MTL_PORTALS4_FLOWCTL_ALERT,
-                     0,
-                     NULL,
-                     0);
-        if (PTL_OK != ret) {
-            opal_output_verbose(1, ompi_mtl_base_output,
-                                "%s:%d: PtlTriggeredPut failed: %d\n",
-                                __FILE__, __LINE__, ret);
-            return ret;
-        }
-        ompi_mtl_portals4.flowctl.send_alert = false;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-static int
-flowctl_alert_callback(ptl_event_t *ev,
-                       ompi_mtl_portals4_base_request_t *ptl_base_request)
+setup_alarm(uint32_t epoch)
 {
     int ret = OMPI_SUCCESS;
     size_t i;
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "-----> flowctl_alert_callback <-----"));
-
-    /* setup the alert broadcast tree */
-    for (i = 0 ; i < ompi_mtl_portals4.flowctl.num_children ; ++i) {
-        ret = PtlPut(ompi_mtl_portals4.zero_md_h,
-                     0,
-                     0,
-                     PTL_NO_ACK_REQ,
-                     ompi_mtl_portals4.flowctl.children[i],
-                     ompi_mtl_portals4.flowctl_idx,
-                     MTL_PORTALS4_FLOWCTL_ALERT,
-                     0,
-                     NULL,
-                     0);
+    /* setup trigger */
+    if (ompi_mtl_portals4.flowctl.i_am_root) {
+        ret = PtlTriggeredPut(ompi_mtl_portals4.zero_md_h,
+                              0,
+                              0,
+                              PTL_NO_ACK_REQ,
+                              ompi_mtl_portals4.flowctl.me,
+                              ompi_mtl_portals4.flowctl_idx,
+                              MTL_PORTALS4_FLOWCTL_ALERT,
+                              0,
+                              NULL,
+                              0,
+                              ompi_mtl_portals4.flowctl.trigger_ct_h,
+                              (epoch * ompi_mtl_portals4.flowctl.num_procs) + 1);
         if (PTL_OK != ret) {
             opal_output_verbose(1, ompi_mtl_base_output,
                                 "%s:%d: PtlTriggeredPut failed: %d\n",
@@ -447,9 +406,44 @@ flowctl_alert_callback(ptl_event_t *ev,
         }
     }
 
-    ret = ompi_mtl_portals4_flowctl_start_recover();
-
+    /* setup the alert broadcast tree */
+    for (i = 0 ; i < ompi_mtl_portals4.flowctl.num_children ; ++i) {
+        ret = PtlTriggeredPut(ompi_mtl_portals4.zero_md_h,
+                              0,
+                              0,
+                              PTL_NO_ACK_REQ,
+                              ompi_mtl_portals4.flowctl.children[i],
+                              ompi_mtl_portals4.flowctl_idx,
+                              MTL_PORTALS4_FLOWCTL_ALERT,
+                              0,
+                              NULL,
+                              0,
+                              ompi_mtl_portals4.flowctl.alert_ct_h,
+                              epoch + 1);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: PtlTriggeredPut failed: %d\n",
+                                __FILE__, __LINE__, ret);
+            goto cleanup;
+        }
+    }
+    
  cleanup:
+    return ret;
+}
+
+
+static int
+flowctl_alert_callback(ptl_event_t *ev,
+                       ompi_mtl_portals4_base_request_t *ptl_base_request)
+{
+    int ret = OMPI_SUCCESS;
+
+    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
+                         "-----> flowctl_alert_callback <-----"));
+
+    ret = start_recover();
+
     return ret;
 }
 
@@ -530,6 +524,7 @@ flowctl_fanout_callback(ptl_event_t *ev,
     int ret;
     int tmp = ompi_mtl_portals4.flowctl.epoch_counter;
     size_t i;
+    ptl_ct_event_t ct;
 
     OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
                          "Enter flowctl_fanout_callback: %d", tmp));
@@ -555,7 +550,15 @@ flowctl_fanout_callback(ptl_event_t *ev,
     }
 
     /* woo, we're recovered! */
+    ompi_mtl_portals4.flowctl.epoch_counter++;
     ompi_mtl_portals4.flowctl.flowctl_active = false;
+    if (ompi_mtl_portals4.flowctl.i_am_root) {
+        ct.success = ompi_mtl_portals4.flowctl.epoch_counter *
+                       ompi_mtl_portals4.flowctl.num_procs;
+        ct.failure = 0;
+        ret = PtlCTSet(ompi_mtl_portals4.flowctl.trigger_ct_h, ct);
+        if (PTL_OK != ret) abort();
+    }
     ret = PtlPTEnable(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
     if (PTL_OK != ret) abort();
     ompi_mtl_portals4_pending_list_progress();
