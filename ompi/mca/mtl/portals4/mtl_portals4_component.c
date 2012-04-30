@@ -482,7 +482,7 @@ ompi_mtl_portals4_progress(void)
                 ret = ompi_mtl_portals4_flowctl_trigger();
                 if (OMPI_SUCCESS != ret) {
                     opal_output_verbose(1, ompi_mtl_base_output,
-                                        "%s:%d: flowctl_start_recover failed: %d\n",
+                                        "%s:%d: flowctl_trigger() failed: %d\n",
                                         __FILE__, __LINE__, ret);
                     abort();
                 }

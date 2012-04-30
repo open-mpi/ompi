@@ -34,8 +34,6 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals4_pending_request_t);
 
 struct ompi_mtl_portals4_flowctl_t {
     bool flowctl_active;
-    bool send_trigger;
-    bool send_alert;
 
     opal_list_t active_sends;
     opal_list_t pending_sends;
@@ -43,10 +41,7 @@ struct ompi_mtl_portals4_flowctl_t {
     opal_mutex_t mutex;
     int32_t slots;
 
-    size_t fanin_count;
-
     ompi_mtl_portals4_base_request_t alert_req;
-    ompi_mtl_portals4_base_request_t fanin_req;
     ompi_mtl_portals4_base_request_t fanout_req;
 
     /** Flow control epoch counter.  Triggered events should be
