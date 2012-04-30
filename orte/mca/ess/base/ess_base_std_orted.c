@@ -122,7 +122,6 @@ int orte_ess_base_orted_setup(char **hosts)
     /** setup callbacks for signals we should ignore */
     setup_sighandler(SIGUSR1, &sigusr1_handler, signal_callback);
     setup_sighandler(SIGUSR2, &sigusr2_handler, signal_callback);
-    setup_sighandler(SIGTERM, &term_handler, shutdown_signal);
 #endif  /* __WINDOWS__ */
     
     signals_set = true;
