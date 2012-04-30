@@ -45,7 +45,6 @@ struct ompi_mtl_portals4_flowctl_t {
 
     size_t fanin_count;
 
-    ompi_mtl_portals4_base_request_t trigger_req;
     ompi_mtl_portals4_base_request_t alert_req;
     ompi_mtl_portals4_base_request_t fanin_req;
     ompi_mtl_portals4_base_request_t fanout_req;
