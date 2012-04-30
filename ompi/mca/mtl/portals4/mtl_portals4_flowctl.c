@@ -284,6 +284,23 @@ ompi_mtl_portals4_flowctl_trigger(void)
 
 
 static int
+seqnum_compare(opal_list_item_t **ap, opal_list_item_t **bp)
+{
+    ompi_mtl_portals4_pending_request_t *a = 
+        (ompi_mtl_portals4_pending_request_t*) *ap;
+    ompi_mtl_portals4_pending_request_t *b = 
+        (ompi_mtl_portals4_pending_request_t*) *bp;
+
+    if (a->ptl_request->opcount > b->ptl_request->opcount) {
+        return 1;
+    } else if (a->ptl_request->opcount == b->ptl_request->opcount) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int
 start_recover(void)
 {
     int ret;
@@ -329,7 +346,16 @@ start_recover(void)
                             __FILE__, __LINE__, ret);
     }
 
-    /* drain event queue */
+    /* reorder the pending sends by operation count */
+    ret = opal_list_sort(&ompi_mtl_portals4.flowctl.pending_sends, seqnum_compare);
+    if (OMPI_SUCCESS != ret) {
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d opal_list_sort failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return ret;
+    }
+
+    /* drain event queue again, just to make sure */
     while (0 != ompi_mtl_portals4_progress()) { ; }
 
     /* send barrier entry message */
