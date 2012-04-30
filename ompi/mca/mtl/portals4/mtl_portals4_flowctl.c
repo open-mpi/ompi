@@ -257,15 +257,10 @@ ompi_mtl_portals4_flowctl_trigger(void)
 {
     int ret;
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "Enter flowctl_trigger"));
-
     if (false == ompi_mtl_portals4.flowctl.flowctl_active) {
         ompi_mtl_portals4.flowctl.flowctl_active = true;
 
         /* send trigger to root */
-        OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                             "Sending flow control trigger"));
         ret = PtlPut(ompi_mtl_portals4.zero_md_h,
                      0,
                      0,
@@ -296,7 +291,7 @@ start_recover(void)
     ompi_mtl_portals4.flowctl.flowctl_active = true;
     ompi_mtl_portals4.flowctl.epoch_counter++;
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
                          "Entering flowctl_start_recover %d",
                          ompi_mtl_portals4.flowctl.epoch_counter));
 
@@ -318,25 +313,13 @@ start_recover(void)
         return ret;
     }
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "flowctl_start_recover %d: draining active sends",
-                         ompi_mtl_portals4.flowctl.epoch_counter));
-
     /* drain all pending sends */
     while (0 != opal_list_get_size(&ompi_mtl_portals4.flowctl.active_sends)) {
         opal_progress();
     }
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "flowctl_start_recover %d: draining event queue",
-                         ompi_mtl_portals4.flowctl.epoch_counter));
-
     /* drain event queue */
     while (0 != ompi_mtl_portals4_progress()) { ; }
-
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "flowctl_start_recover %d: checking short blocks",
-                         ompi_mtl_portals4.flowctl.epoch_counter));
 
     /* check short block active count */
     ret = ompi_mtl_portals4_recv_short_link(1);
@@ -348,10 +331,6 @@ start_recover(void)
 
     /* drain event queue */
     while (0 != ompi_mtl_portals4_progress()) { ; }
-
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "flowctl_start_recover %d: starting barrier.  Async time!",
-                         ompi_mtl_portals4.flowctl.epoch_counter));
 
     /* send barrier entry message */
     ret = PtlPut(ompi_mtl_portals4.zero_md_h,
@@ -376,7 +355,7 @@ start_recover(void)
     ret = OMPI_SUCCESS;
 
  error:
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
                          "Exiting flowctl_start_recover %d",
                          ompi_mtl_portals4.flowctl.epoch_counter));
 
@@ -530,14 +509,7 @@ static int
 flowctl_alert_callback(ptl_event_t *ev,
                        ompi_mtl_portals4_base_request_t *ptl_base_request)
 {
-    int ret = OMPI_SUCCESS;
-
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "-----> flowctl_alert_callback <-----"));
-
-    ret = start_recover();
-
-    return ret;
+    return start_recover();
 }
 
 
@@ -547,17 +519,19 @@ flowctl_fanout_callback(ptl_event_t *ev,
 {
     int ret;
 
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "Enter flowctl_fanout_callback: %d",
-                         ompi_mtl_portals4.flowctl.epoch_counter));
-
-    /* woo, we're recovered! */
     ompi_mtl_portals4.flowctl.flowctl_active = false;
     ret = PtlPTEnable(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
-    if (PTL_OK != ret) abort();
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d: PtlPTEnabled failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        return ret;
+    }
+
     ompi_mtl_portals4_pending_list_progress();
-    OPAL_OUTPUT_VERBOSE((10, ompi_mtl_base_output,
-                         "Exit flowctl_fanout_callback: %d",
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                         "Exiting flowctl_fanout_callback %d",
                          ompi_mtl_portals4.flowctl.epoch_counter));
 
     return OMPI_SUCCESS;
