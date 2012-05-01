@@ -38,7 +38,6 @@ struct ompi_mtl_portals4_flowctl_t {
     opal_list_t active_sends;
     opal_list_t pending_sends;
     opal_free_list_t pending_fl;
-    opal_mutex_t mutex;
     int32_t slots;
 
     ompi_mtl_portals4_base_request_t alert_req;
@@ -69,6 +68,10 @@ struct ompi_mtl_portals4_flowctl_t {
     ptl_handle_ct_t fanout_ct_h;
     /** Flow control restart fan-out ME. */
     ptl_handle_me_t fanout_me_h;
+
+    /** last restart time */
+    struct timeval tv;
+    int backoff_count;
 
     size_t num_procs;
     size_t num_children;

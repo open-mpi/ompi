@@ -44,8 +44,6 @@ ompi_mtl_portals4_flowctl_init(void)
                         OBJ_CLASS(ompi_mtl_portals4_pending_request_t),
                         1, -1, 1);
 
-    OBJ_CONSTRUCT(&ompi_mtl_portals4.flowctl.mutex, opal_mutex_t);
-
     ompi_mtl_portals4.flowctl.slots = (ompi_mtl_portals4.queue_size - 3) / 3;
 
     ompi_mtl_portals4.flowctl.alert_req.type = portals4_req_flowctl;
@@ -199,6 +197,9 @@ ompi_mtl_portals4_flowctl_init(void)
     }
 
     ompi_mtl_portals4.flowctl.num_children = 0;
+
+    gettimeofday(&ompi_mtl_portals4.flowctl.tv, NULL);
+    ompi_mtl_portals4.flowctl.backoff_count = 0;
 
     ret = OMPI_SUCCESS;
 
@@ -544,6 +545,7 @@ flowctl_fanout_callback(ptl_event_t *ev,
                         ompi_mtl_portals4_base_request_t *ptl_base_request)
 {
     int ret;
+    struct timeval tv;
 
     ompi_mtl_portals4.flowctl.flowctl_active = false;
     ret = PtlPTEnable(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
@@ -554,6 +556,16 @@ flowctl_fanout_callback(ptl_event_t *ev,
         return ret;
     }
 
+    gettimeofday(&tv, NULL);
+    if (((tv.tv_sec * 1000000 + tv.tv_usec) - 
+         (ompi_mtl_portals4.flowctl.tv.tv_sec * 1000000 + ompi_mtl_portals4.flowctl.tv.tv_usec)) 
+        < 1000000 * ompi_mtl_portals4.flowctl.backoff_count) {
+        usleep(++ompi_mtl_portals4.flowctl.backoff_count);
+    } else {
+        ompi_mtl_portals4.flowctl.backoff_count = 0;
+    }
+    ompi_mtl_portals4.flowctl.tv = tv;
+         
     ompi_mtl_portals4_pending_list_progress();
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
