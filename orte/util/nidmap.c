@@ -1103,9 +1103,9 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
 #endif
     orte_std_cntr_t n;
     opal_buffer_t buf;
-    int rc;
+    int rc, j;
     orte_job_t *jdata;
-    orte_proc_t *proc;
+    orte_proc_t *proc, *pptr;
     orte_node_t *node;
     orte_proc_state_t *states=NULL;
     orte_app_idx_t *app_idx=NULL;
@@ -1220,14 +1220,35 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
                 opal_pointer_array_set_item(jdata->procs, i, proc);
             }
             if (NULL != proc->node) {
+                if (node != proc->node) {
+                    /* proc has moved - cleanup the prior node proc array */
+                    for (j=0; j < proc->node->procs->size; j++) {
+                        if (NULL == (pptr = (orte_proc_t*)opal_pointer_array_get_item(proc->node->procs, j))) {
+                            continue;
+                        }
+                        if (pptr == proc) {
+                            /* maintain accounting */
+                            OBJ_RELEASE(pptr);
+                            opal_pointer_array_set_item(proc->node->procs, j, NULL);
+                            proc->node->num_procs--;
+                            break;
+                        }
+                    }
+                }
                 OBJ_RELEASE(proc->node);
             }
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nodes[i]))) {
+                /* this should never happen, but protect ourselves anyway */
                 node = OBJ_NEW(orte_node_t);
                 opal_pointer_array_set_item(orte_node_pool, nodes[i], node);
             }
+            /* add the node to the proc */
             OBJ_RETAIN(node);
             proc->node = node;
+            /* add the proc to the node */
+            OBJ_RETAIN(proc);
+            opal_pointer_array_add(node->procs, proc);
+            /* update proc values */
             proc->local_rank = local_rank[i];
             proc->node_rank = node_rank[i];
             proc->app_idx = app_idx[i];
