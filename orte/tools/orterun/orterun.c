@@ -346,6 +346,9 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "rmaps", "ppr", "n_pernode", '\0', "npernode", "npernode", 1,
         NULL, OPAL_CMD_LINE_TYPE_INT,
         "Launch n processes per node on all allocated nodes" },
+    { "rmaps", "ppr", "n_pernode", '\0', "N", NULL, 1,
+        NULL, OPAL_CMD_LINE_TYPE_INT,
+        "Launch n processes per node on all allocated nodes (synonym for npernode)" },
 
 #if OPAL_HAVE_HWLOC
     /* declare hardware threads as independent cpus */
