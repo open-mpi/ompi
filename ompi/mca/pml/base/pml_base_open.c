@@ -144,7 +144,7 @@ int mca_pml_base_open(void)
 
 #if MCA_ompi_pml_DIRECT_CALL
     opal_pointer_array_add(&mca_pml_base_pml,
-                           stringify(MCA_ompi_pml_DIRECT_CALL_COMPONENT));
+                           strdup(stringify(MCA_ompi_pml_DIRECT_CALL_COMPONENT)));
 #else
     {
         char* default_pml = NULL;
