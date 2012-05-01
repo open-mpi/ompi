@@ -52,8 +52,6 @@ cbfunc1(evutil_socket_t fd, short what, void *arg)
         die("event_assign_2");
     if (event_priority_set(&ev2, 4) < 0)
         die("event_priority_set2");
-    if (event_add(&ev2, NULL) < 0)
-        die("event_add2");
     event_active(&ev2, EV_WRITE, 1);
     fprintf(stderr, "CB1: FIRST EVENT DEFINED\n");
     fflush(stderr);
@@ -62,8 +60,6 @@ cbfunc1(evutil_socket_t fd, short what, void *arg)
         die("event_assign_3");
     if (event_priority_set(&ev3, 0) < 0)
         die("event_priority_set3");
-    if (event_add(&ev3, NULL) < 0)
-        die("event_add3");
     event_active(&ev3, EV_WRITE, 1);
     fprintf(stderr, "CB2: SECOND EVENT DEFINED\n");
     fflush(stderr);
@@ -88,8 +84,6 @@ main(int argc, char **argv)
         die("event_assign_1");
     if (event_priority_set(&ev1, 4) < 0)
         die("event_priority_set");
-    if (event_add(&ev1, NULL) < 0)
-        die("event_add");
     event_active(&ev1, EV_WRITE, 1);
     fprintf(stderr, "FIRST EVENT DEFINED\n");
     fflush(stderr);
