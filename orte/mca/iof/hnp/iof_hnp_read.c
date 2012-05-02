@@ -181,6 +181,10 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                         OPAL_THREAD_UNLOCK(&mca_iof_hnp_component.lock);
                         return;
                     }
+                    if (0 < numbytes && numbytes < (int)sizeof(data)) {
+                        /* need to write a 0-byte event to clear the stream and close it */
+                        orte_iof_base_write_output(&rev->name, ORTE_IOF_STDIN, data, 0, sink->wev);
+                    }
                 }
             } else {
                 OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
@@ -207,8 +211,8 @@ void orte_iof_hnp_read_local_handler(int fd, short event, void *cbdata)
                 }
             }
         }
-        /* if num_bytes was zero, then we need to terminate the event */
-        if (0 == numbytes) {
+        /* if num_bytes was zero, or we read the last piece of the file, then we need to terminate the event */
+        if (0 == numbytes || numbytes < (int)sizeof(data)) {
             /* this will also close our stdin file descriptor */
             OBJ_RELEASE(mca_iof_hnp_component.stdinev);
         } else {

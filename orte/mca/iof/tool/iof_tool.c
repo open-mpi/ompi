@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -62,6 +62,7 @@ orte_iof_base_module_t orte_iof_tool_module = {
     tool_push,
     tool_pull,
     tool_close,
+    NULL,
     finalize,
     tool_ft_event
 };

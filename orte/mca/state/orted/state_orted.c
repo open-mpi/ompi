@@ -160,6 +160,8 @@ static void track_jobs(int fd, short argc, void *cbdata)
     int rc;
 
     if (ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE == caddy->job_state) {
+opal_output(0, "%s state:orted:track_jobs sending local launch complete for job %s",
+ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(caddy->jdata->jobid));
         /* update the HNP with all proc states for this job */
         alert = OBJ_NEW(opal_buffer_t);
         /* pack update state command */
@@ -281,14 +283,6 @@ static void track_procs(int fd, short argc, void *cbdata)
          * while we are still trying to notify the HNP of
          * successful launch for short-lived procs
          */
-        /* Release only the stdin IOF file descriptor for this child, if one
-         * was defined. File descriptors for the other IOF channels - stdout,
-         * stderr, and stddiag - were released when their associated pipes
-         * were cleared and closed due to termination of the process
-         */
-        if (NULL != orte_iof.close) {
-            orte_iof.close(proc, ORTE_IOF_STDIN);
-        }
         pdata->iof_complete = true;
         if (pdata->waitpid_recvd) {
             /* the proc has terminated */
@@ -324,6 +318,16 @@ static void track_procs(int fd, short argc, void *cbdata)
                     ORTE_ERROR_LOG(rc);
                 }
             }
+        }
+        /* Release the stdin IOF file descriptor for this child, if one
+         * was defined. File descriptors for the other IOF channels - stdout,
+         * stderr, and stddiag - were released when their associated pipes
+         * were cleared and closed due to termination of the process
+         * Do this after we handle termination in case the IOF needs
+         * to check to see if all procs from the job are actually terminated
+         */
+        if (NULL != orte_iof.close) {
+            orte_iof.close(proc, ORTE_IOF_STDIN);
         }
     } else if (ORTE_PROC_STATE_WAITPID_FIRED == state) {
         /* do NOT update the proc state as this can hit

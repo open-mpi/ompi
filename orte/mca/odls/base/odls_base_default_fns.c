@@ -229,12 +229,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return rc;
     }
     
-    /* pack the number of nodes involved in this job */
-    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &map->num_nodes, 1, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     /* pack the number of procs in this launch */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->num_procs, 1, ORTE_VPID))) {
         ORTE_ERROR_LOG(rc);
@@ -263,6 +257,12 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     
     /* pack the stdin target  */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->stdin_target, 1, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* pack the stdout target  */
+    if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &jdata->stdout_target, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -538,15 +538,10 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         goto REPORT_ERROR;
     }
     
-    /* unpack the number of nodes involved in this job */
+    /* ensure the map object is present */
     if (NULL == jdata->map) {
         jdata->map = OBJ_NEW(orte_job_map_t);
     }
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jdata->map->num_nodes, &cnt, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }    
     /* unpack the number of procs in this launch */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jdata->num_procs, &cnt, ORTE_VPID))) {
@@ -576,6 +571,12 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     /* unpack the stdin target for the job */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jdata->stdin_target, &cnt, ORTE_VPID))) {
+        ORTE_ERROR_LOG(rc);
+        goto REPORT_ERROR;
+    }
+    /* unpack the stdout target for the job */
+    cnt=1;
+    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &jdata->stdout_target, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
     }
@@ -1114,7 +1115,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     char **argvsav=NULL;
     int inm, j, idx;
     int total_num_local_procs = 0;
-    orte_nid_t *nid;
     orte_node_t *node;
     orte_odls_launch_local_t *caddy = (orte_odls_launch_local_t*)cbdata;
     orte_job_t *jobdat;
@@ -1145,25 +1145,13 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
     
     /* see if the mapper thinks we are oversubscribed */
     oversubscribed = false;
-    if (ORTE_PROC_IS_HNP) {
-        /* just fake it - we don't keep a local nidmap */
-        if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            ORTE_ACTIVATE_JOB_STATE(jobdat, ORTE_JOB_STATE_FAILED_TO_LAUNCH);
-            goto ERROR_OUT;
-        }
-        if (node->oversubscribed) {
-            oversubscribed = true;
-        }
-    } else {
-        /* RHC: the nidmap will eventually disappear, so for now just
-         * make this a non-fatal error
-         */
-        if (NULL != (nid = orte_util_lookup_nid(ORTE_PROC_MY_NAME))) {
-            if (nid->oversubscribed) {
-                oversubscribed = true;
-            }
-        }
+    if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, 0))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        ORTE_ACTIVATE_JOB_STATE(jobdat, ORTE_JOB_STATE_FAILED_TO_LAUNCH);
+        goto ERROR_OUT;
+    }
+    if (node->oversubscribed) {
+        oversubscribed = true;
     }
 
 #if OPAL_ENABLE_FT_CR == 1
@@ -1745,7 +1733,7 @@ void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid)
     opal_dss.pack(&buffer, &vpid1, 1, ORTE_VPID); /* num_procs */
 #if OPAL_HAVE_HWLOC
     bind_level = OPAL_HWLOC_NODE_LEVEL;
-    opal_dss.pack(&buffer, &bind_level, 1, OPAL_HWLOC_LEVEL_T); /* num_procs */
+    opal_dss.pack(&buffer, &bind_level, 1, OPAL_HWLOC_LEVEL_T); /* binding level */
 #endif
     one32 = 0;
     opal_dss.pack(&buffer, &one32, 1, OPAL_INT32); /* node index */
@@ -2093,6 +2081,9 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
             /* has any child in this job already registered? */
             for (i=0; i < orte_local_children->size; i++) {
                 if (NULL == (cptr = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, i))) {
+                    continue;
+                }
+                if (cptr->name.jobid != proc->name.jobid) {
                     continue;
                 }
                 if (cptr->registered) {

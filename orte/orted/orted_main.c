@@ -116,6 +116,7 @@ static struct {
     int fail;
     int fail_delay;
     bool abort;
+    bool mapreduce;
 } orted_globals;
 
 /*
@@ -204,6 +205,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes in cluster may differ in topology, so send the topology back from each node [Default = false]" },
 #endif
+
+    { NULL, NULL, NULL, '\0', "mapreduce", "mapreduce", 0,
+      &orted_globals.mapreduce, OPAL_CMD_LINE_TYPE_BOOL,
+      "Whether to report process bindings to stderr" },
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
@@ -326,6 +331,11 @@ int orte_daemon(int argc, char *argv[])
     free(tmp_env_var);
 #endif
     tmp_env_var = NULL; /* Silence compiler warning */
+
+    /* if mapreduce set, flag it */
+    if (orted_globals.mapreduce) {
+        orte_map_reduce = true;
+    }
 
     /* Set the flag telling OpenRTE that I am NOT a
      * singleton, but am "infrastructure" - prevents setting

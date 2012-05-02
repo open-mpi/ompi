@@ -124,6 +124,7 @@ opal_pointer_array_t *orte_job_data;
 opal_pointer_array_t *orte_node_pool;
 opal_pointer_array_t *orte_node_topologies;
 opal_pointer_array_t *orte_local_children;
+uint16_t orte_num_jobs = 0;
 
 /* Nidmap and job maps */
 opal_pointer_array_t orte_nidmap;
@@ -166,9 +167,6 @@ bool orte_do_not_barrier = false;
 bool orte_enable_recovery;
 int32_t orte_max_restarts;
 
-/* comm fn for updating state */
-orte_default_comm_fn_t orte_comm;
-
 /* exit status reporting */
 bool orte_report_child_jobs_separately;
 struct timeval orte_child_time_to_exit;
@@ -182,6 +180,9 @@ char *orte_forward_envars = NULL;
 
 /* preload binaries */
 bool orte_preload_binaries = false;
+
+/* map-reduce mode */
+bool orte_map_reduce = false;
 
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 bool orte_map_stddiag_to_stderr = false;
@@ -637,6 +638,7 @@ static void orte_job_construct(orte_job_t* job)
     job->num_apps = 0;
     job->controls = ORTE_JOB_CONTROL_FORWARD_OUTPUT;
     job->stdin_target = ORTE_VPID_INVALID;
+    job->stdout_target = ORTE_JOBID_INVALID;
     job->total_slots_alloc = 0;
     job->num_procs = 0;
     job->procs = OBJ_NEW(opal_pointer_array_t);
@@ -758,6 +760,7 @@ static void orte_node_construct(orte_node_t* node)
     node->index = -1;
     node->daemon = NULL;
     node->daemon_launched = false;
+    node->location_verified = false;
     node->launch_id = -1;
 
     node->num_procs = 0;

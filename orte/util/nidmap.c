@@ -9,6 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -1103,13 +1106,15 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
 #endif
     orte_std_cntr_t n;
     opal_buffer_t buf;
-    int rc, j;
+    int rc, j, k;
     orte_job_t *jdata;
     orte_proc_t *proc, *pptr;
-    orte_node_t *node;
+    orte_node_t *node, *nptr;
     orte_proc_state_t *states=NULL;
     orte_app_idx_t *app_idx=NULL;
     int32_t *restarts=NULL;
+    orte_job_map_t *map;
+    bool found;
 
     /* xfer the byte object to a buffer for unpacking */
     OBJ_CONSTRUCT(&buf, opal_buffer_t);
@@ -1212,6 +1217,11 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
         }
         
         /* xfer the data */
+        map = jdata->map;
+        if (NULL == map) {
+            jdata->map = OBJ_NEW(orte_job_map_t);
+            map = jdata->map;
+        }
         for (i=0; i < num_procs; i++) {
             if (NULL == (proc = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, i))) {
                 proc = OBJ_NEW(orte_proc_t);
@@ -1231,6 +1241,21 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
                             OBJ_RELEASE(pptr);
                             opal_pointer_array_set_item(proc->node->procs, j, NULL);
                             proc->node->num_procs--;
+                            if (0 == proc->node->num_procs) {
+                                /* remove node from the map */
+                                for (k=0; k < map->nodes->size; k++) {
+                                    if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(map->nodes, k))) {
+                                        continue;
+                                    }
+                                    if (nptr == proc->node) {
+                                        /* maintain accounting */
+                                        OBJ_RELEASE(nptr);
+                                        opal_pointer_array_set_item(map->nodes, k, NULL);
+                                        map->num_nodes--;
+                                        break;
+                                    }
+                                }
+                            }
                             break;
                         }
                     }
@@ -1241,6 +1266,21 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
                 /* this should never happen, but protect ourselves anyway */
                 node = OBJ_NEW(orte_node_t);
                 opal_pointer_array_set_item(orte_node_pool, nodes[i], node);
+            }
+            /* see if this node is already in the map */
+            found = false;
+            for (j=0; j < map->nodes->size; j++) {
+                if (NULL == (nptr = (orte_node_t*)opal_pointer_array_get_item(map->nodes, j))) {
+                    continue;
+                }
+                if (nptr == node) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                opal_pointer_array_add(map->nodes, node);
+                map->num_nodes++;
             }
             /* add the node to the proc */
             OBJ_RETAIN(node);

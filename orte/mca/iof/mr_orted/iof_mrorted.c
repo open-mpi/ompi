@@ -1,17 +1,7 @@
 /*
- * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2011 The University of Tennessee and The University
- *                         of Tennessee Research Foundation.  All rights
- *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
- *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
- *                         reserved. 
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,7 +38,7 @@
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 
-#include "iof_orted.h"
+#include "iof_mrorted.h"
 
 
 /* LOCAL FUNCTIONS */
@@ -58,18 +48,20 @@ static void stdin_write_handler(int fd, short event, void *cbdata);
 /* API FUNCTIONS */
 static int init(void);
 
-static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd);
+static int mrorted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd);
 
-static int orted_pull(const orte_process_name_t* src_name,
+static int mrorted_pull(const orte_process_name_t* src_name,
                       orte_iof_tag_t src_tag,
                       int fd);
 
-static int orted_close(const orte_process_name_t* peer,
+static int mrorted_close(const orte_process_name_t* peer,
                        orte_iof_tag_t source_tag);
+
+static void mrorted_complete(const orte_job_t *jdata);
 
 static int finalize(void);
 
-static int orted_ft_event(int state);
+static int mrorted_ft_event(int state);
 
 /* The API's in this module are solely used to support LOCAL
  * procs - i.e., procs that are co-located to the daemon. Output
@@ -79,14 +71,14 @@ static int orted_ft_event(int state);
  * have to do anything here.
  */
 
-orte_iof_base_module_t orte_iof_orted_module = {
+orte_iof_base_module_t orte_iof_mrorted_module = {
     init,
-    orted_push,
-    orted_pull,
-    orted_close,
-    NULL,
+    mrorted_push,
+    mrorted_pull,
+    mrorted_close,
+    mrorted_complete,
     finalize,
-    orted_ft_event
+    mrorted_ft_event
 };
 
 static int init(void)
@@ -98,7 +90,7 @@ static int init(void)
     if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_IOF_PROXY,
                                                       ORTE_RML_PERSISTENT,
-                                                      orte_iof_orted_recv,
+                                                      orte_iof_mrorted_recv,
                                                       NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -106,10 +98,8 @@ static int init(void)
     }
     
     /* setup the local global variables */
-    OBJ_CONSTRUCT(&mca_iof_orted_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_iof_orted_component.sinks, opal_list_t);
-    OBJ_CONSTRUCT(&mca_iof_orted_component.procs, opal_list_t);
-    mca_iof_orted_component.xoff = false;
+    OBJ_CONSTRUCT(&mca_iof_mr_orted_component.sinks, opal_list_t);
+    OBJ_CONSTRUCT(&mca_iof_mr_orted_component.procs, opal_list_t);
     
     return ORTE_SUCCESS;
 }
@@ -119,7 +109,7 @@ static int init(void)
  * to the HNP
  */
 
-static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd)
+static int mrorted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_tag, int fd)
 {
     int flags;
     opal_list_item_t *item;
@@ -132,14 +122,14 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     orte_ns_cmp_bitmask_t mask;
 
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                         "%s iof:orted pushing fd %d for process %s",
+                         "%s iof:mrorted pushing fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
     
     /* set the file descriptor to non-blocking - do this before we setup
      * and activate the read event in case it fires right away
      */
-    if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
+    if ((flags = fcntl(fd, F_GETFL, 0)) < 0) {
         opal_output(orte_iof_base.iof_output, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
                     __FILE__, __LINE__, errno);
     } else {
@@ -148,13 +138,11 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     }
 
     /* do we already have this process in our list? */
-    for (item = opal_list_get_first(&mca_iof_orted_component.procs);
-         item != opal_list_get_end(&mca_iof_orted_component.procs);
+    for (item = opal_list_get_first(&mca_iof_mr_orted_component.procs);
+         item != opal_list_get_end(&mca_iof_mr_orted_component.procs);
          item = opal_list_get_next(item)) {
         proct = (orte_iof_proc_t*)item;
-        
         mask = ORTE_NS_CMP_ALL;
-
         if (OPAL_EQUAL == orte_util_compare_name_fields(mask, &proct->name, dst_name)) {
             /* found it */
             goto SETUP;
@@ -164,7 +152,7 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
     proct = OBJ_NEW(orte_iof_proc_t);
     proct->name.jobid = dst_name->jobid;
     proct->name.vpid = dst_name->vpid;
-    opal_list_append(&mca_iof_orted_component.procs, &proct->super);
+    opal_list_append(&mca_iof_mr_orted_component.procs, &proct->super);
     /* see if we are to output to a file */
     if (NULL != orte_output_filename) {
         /* get the local jobdata for this proc */
@@ -194,20 +182,20 @@ static int orted_push(const orte_process_name_t* dst_name, orte_iof_tag_t src_ta
         /* define a sink to that file descriptor */
         ORTE_IOF_SINK_DEFINE(&sink, dst_name, fdout, ORTE_IOF_STDOUTALL,
                              orte_iof_base_write_handler,
-                             &mca_iof_orted_component.sinks);
+                             &mca_iof_mr_orted_component.sinks);
     }
     
 SETUP:
-    /* define a read event and activate it */
+    /* define a read event but don't activate it */
     if (src_tag & ORTE_IOF_STDOUT) {
         ORTE_IOF_READ_EVENT(&proct->revstdout, dst_name, fd, ORTE_IOF_STDOUT,
-                            orte_iof_orted_read_handler, false);
+                            orte_iof_mrorted_read_handler, false);
     } else if (src_tag & ORTE_IOF_STDERR) {
         ORTE_IOF_READ_EVENT(&proct->revstderr, dst_name, fd, ORTE_IOF_STDERR,
-                            orte_iof_orted_read_handler, false);
+                            orte_iof_mrorted_read_handler, false);
     } else if (src_tag & ORTE_IOF_STDDIAG) {
         ORTE_IOF_READ_EVENT(&proct->revstddiag, dst_name, fd, ORTE_IOF_STDDIAG,
-                            orte_iof_orted_read_handler, false);
+                            orte_iof_mrorted_read_handler, false);
     }
     /* if -all- of the readevents for this proc have been defined, then
      * activate them. Otherwise, we can think that the proc is complete
@@ -228,27 +216,29 @@ SETUP:
 
 /**
  * Pull for a daemon tells
- * us that any info we receive from the HNP that is targeted
+ * us that any info we receive from someone that is targeted
  * for stdin of the specified process should be fed down the
  * indicated file descriptor. Thus, all we need to do here
  * is define a local endpoint so we know where to feed anything
  * that comes to us
  */
 
-static int orted_pull(const orte_process_name_t* dst_name,
-                      orte_iof_tag_t src_tag,
-                      int fd)
+static int mrorted_pull(const orte_process_name_t* dst_name,
+                        orte_iof_tag_t src_tag,
+                        int fd)
 {
     orte_iof_sink_t *sink;
     int flags;
-    
+    orte_iof_proc_t *proct, *ptr;
+    opal_list_item_t *item;
+
     /* this is a local call - only stdin is supported */
     if (ORTE_IOF_STDIN != src_tag) {
         return ORTE_ERR_NOT_SUPPORTED;
     }
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                         "%s iof:orted pulling fd %d for process %s",
+                         "%s iof:mrorted pulling fd %d for process %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          fd, ORTE_NAME_PRINT(dst_name)));
     
@@ -264,9 +254,32 @@ static int orted_pull(const orte_process_name_t* dst_name,
     }
 
     ORTE_IOF_SINK_DEFINE(&sink, dst_name, fd, ORTE_IOF_STDIN,
-                         stdin_write_handler,
-                         &mca_iof_orted_component.sinks);
+                         stdin_write_handler, NULL);
     
+    sink->daemon.jobid = ORTE_PROC_MY_NAME->jobid;
+    sink->daemon.vpid = ORTE_PROC_MY_NAME->vpid;
+
+    /* find the proct for this proc */
+    proct = NULL;
+    for (item = opal_list_get_first(&mca_iof_mr_orted_component.procs);
+         item != opal_list_get_end(&mca_iof_mr_orted_component.procs);
+         item = opal_list_get_next(item)) {
+        ptr = (orte_iof_proc_t*)item;
+        if (ptr->name.jobid == dst_name->jobid &&
+            ptr->name.vpid == dst_name->vpid) {
+            proct = ptr;
+            break;
+        }
+    }
+    if (NULL == proct) {
+        /* we don't yet have this proc in our list */
+        proct = OBJ_NEW(orte_iof_proc_t);
+        proct->name.jobid = dst_name->jobid;
+        proct->name.vpid = dst_name->vpid;
+        opal_list_append(&mca_iof_mr_orted_component.procs, &proct->super);
+    }
+    proct->sink = sink;
+
     return ORTE_SUCCESS;
 }
 
@@ -276,17 +289,15 @@ static int orted_pull(const orte_process_name_t* dst_name,
  * stream(s), thus terminating any potential io to/from it.
  * For the orted, this just means closing the local fd
  */
-static int orted_close(const orte_process_name_t* peer,
+static int mrorted_close(const orte_process_name_t* peer,
                        orte_iof_tag_t source_tag)
 {
     opal_list_item_t *item, *next_item;
     orte_iof_sink_t* sink;
     orte_ns_cmp_bitmask_t mask;
 
-    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
-    
-    for(item = opal_list_get_first(&mca_iof_orted_component.sinks);
-        item != opal_list_get_end(&mca_iof_orted_component.sinks);
+    for(item = opal_list_get_first(&mca_iof_mr_orted_component.sinks);
+        item != opal_list_get_end(&mca_iof_mr_orted_component.sinks);
         item = next_item ) {
         sink = (orte_iof_sink_t*)item;
         next_item = opal_list_get_next(item);
@@ -300,34 +311,57 @@ static int orted_close(const orte_process_name_t* peer,
              * descriptor - the destructor will automatically
              * do it for us.
              */
-            opal_list_remove_item(&mca_iof_orted_component.sinks, item);
+            opal_list_remove_item(&mca_iof_mr_orted_component.sinks, item);
             OBJ_RELEASE(item);
             break;
         }
     }
-    OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
 
     return ORTE_SUCCESS;
 }
+
+static void mrorted_complete(const orte_job_t *jdata)
+{
+    orte_iof_proc_t *proct;
+    unsigned char data[1];
+    opal_list_item_t *item;
+
+    /* the job is complete - close out the stdin
+     * of any procs it was feeding
+     */
+    for (item = opal_list_get_first(&mca_iof_mr_orted_component.procs);
+         item != opal_list_get_end(&mca_iof_mr_orted_component.procs);
+         item = opal_list_get_next(item)) {
+        proct = (orte_iof_proc_t*)item;
+        if (proct->name.jobid == jdata->stdout_target) {
+            if (NULL == proct->sink) {
+                opal_output(0, "NULL SINK FOR PROC %s", ORTE_NAME_PRINT(&proct->name));
+                continue;
+            } else {
+                /* need to write a 0-byte event to clear the stream and close it */
+                orte_iof_base_write_output(&proct->name, ORTE_IOF_STDIN, data, 0, proct->sink->wev);
+                proct->sink = NULL;
+            }
+        }
+    }
+}
+
 
 static int finalize(void)
 {
     int rc;
     opal_list_item_t *item;
     
-    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
-    while ((item = opal_list_remove_first(&mca_iof_orted_component.sinks)) != NULL) {
+    while ((item = opal_list_remove_first(&mca_iof_mr_orted_component.sinks)) != NULL) {
         OBJ_RELEASE(item);
     }
-    OBJ_DESTRUCT(&mca_iof_orted_component.sinks);
-    while ((item = opal_list_remove_first(&mca_iof_orted_component.procs)) != NULL) {
+    OBJ_DESTRUCT(&mca_iof_mr_orted_component.sinks);
+    while ((item = opal_list_remove_first(&mca_iof_mr_orted_component.procs)) != NULL) {
         OBJ_RELEASE(item);
     }
-    OBJ_DESTRUCT(&mca_iof_orted_component.procs);
+    OBJ_DESTRUCT(&mca_iof_mr_orted_component.procs);
     /* Cancel the RML receive */
     rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_PROXY);
-    OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
-    OBJ_DESTRUCT(&mca_iof_orted_component.lock);
     return rc;
 }
 
@@ -335,7 +369,7 @@ static int finalize(void)
  * FT event
  */
 
-static int orted_ft_event(int state)
+static int mrorted_ft_event(int state)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -349,12 +383,10 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     int num_written;
     
     OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                         "%s orted:stdin:write:handler writing data to %d",
+                         "%s mrorted:stdin:write:handler writing data to %d",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          wev->fd));
     
-    /* lock us up to protect global operations */
-    OPAL_THREAD_LOCK(&mca_iof_orted_component.lock);
     wev->pending = false;
     
     while (NULL != (item = opal_list_remove_first(&wev->outputs))) {
@@ -364,15 +396,15 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
              * nothing to write
              */
             OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
-                                 "%s iof:orted closing fd %d on write event due to zero bytes output",
+                                 "%s iof:mrorted closing fd %d on write event due to zero bytes output",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
             sink->wev = NULL;
-            goto DEPART;
+            return;
         }
         num_written = write(wev->fd, output->data, output->numbytes);
         OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                             "%s orted:stdin:write:handler wrote %d bytes",
+                             "%s mrorted:stdin:write:handler wrote %d bytes",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                              num_written));
         if (num_written < 0) {
@@ -386,24 +418,17 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
                 opal_event_add(wev->ev, 0);
                 goto CHECK;
             }            
-            /* otherwise, something bad happened so all we can do is declare an
-             * error and abort
-             */
+            /* otherwise, something bad happened so all we can do is declare an error */
             OBJ_RELEASE(output);
             OPAL_OUTPUT_VERBOSE((20, orte_iof_base.iof_output,
-                                 "%s iof:orted closing fd %d on write event due to negative bytes written",
+                                 "%s iof:mrorted closing fd %d on write event due to negative bytes written",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), wev->fd));
             OBJ_RELEASE(wev);
             sink->wev = NULL;
-            /* tell the HNP to stop sending us stuff */
-            if (!mca_iof_orted_component.xoff) {
-                mca_iof_orted_component.xoff = true;
-                orte_iof_orted_send_xonxoff(ORTE_IOF_XOFF);
-            }
-            goto DEPART;
+            return;
         } else if (num_written < output->numbytes) {
             OPAL_OUTPUT_VERBOSE((1, orte_iof_base.iof_output,
-                                 "%s orted:stdin:write:handler incomplete write %d - adjusting data",
+                                 "%s mrorted:stdin:write:handler incomplete write %d - adjusting data",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), num_written));
             /* incomplete write - adjust data to avoid duplicate output */
             memmove(output->data, &output->data[num_written], output->numbytes - num_written);
@@ -420,7 +445,7 @@ static void stdin_write_handler(int fd, short event, void *cbdata)
     }
     
 CHECK:
-    if (mca_iof_orted_component.xoff) {
+    if (sink->xoff) {
         /* if we have told the HNP to stop reading stdin, see if
          * the proc has absorbed enough to justify restart
          *
@@ -432,12 +457,8 @@ CHECK:
          */
         if (opal_list_get_size(&wev->outputs) < ORTE_IOF_MAX_INPUT_BUFFERS) {
             /* restart the read */
-            mca_iof_orted_component.xoff = false;
-            orte_iof_orted_send_xonxoff(ORTE_IOF_XON);
+            sink->xoff = false;
+            orte_iof_mrorted_send_xonxoff(&sink->name, ORTE_IOF_XON);
         }
     }
-    
-DEPART:
-    /* unlock and go */
-    OPAL_THREAD_UNLOCK(&mca_iof_orted_component.lock);
 }

@@ -57,8 +57,11 @@
 
 #include "opal/util/opal_pty.h"
 #include "opal/util/opal_environ.h"
+#include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_setup.h"
