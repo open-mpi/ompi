@@ -192,7 +192,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
          * job to move to the following step
          */
         state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
-        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
         OBJ_RELEASE(state);
         return;
     }
@@ -219,7 +219,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
                              "%s plm:lsf: no new daemons to launch",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
-        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        if (ORTE_JOB_STATE_DAEMONS_REPORTED == daemons->state) {
+            ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        }
         OBJ_RELEASE(state);
         return;
     }
@@ -349,6 +351,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
     
     /* indicate that the daemons for this job were launched */
     state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
+    daemons->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
 
     /* flag that launch was successful, so far as we currently know */
     failed_launch = false;

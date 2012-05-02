@@ -86,6 +86,7 @@ static void report_progress(int fd, short argc, void *cbdata);
  */
 static orte_job_state_t launch_states[] = {
     ORTE_JOB_STATE_INIT,
+    ORTE_JOB_STATE_INIT_COMPLETE,
     ORTE_JOB_STATE_ALLOCATE,
     ORTE_JOB_STATE_DAEMONS_LAUNCHED,
     ORTE_JOB_STATE_DAEMONS_REPORTED,
@@ -102,6 +103,7 @@ static orte_job_state_t launch_states[] = {
 };
 static orte_state_cbfunc_t launch_callbacks[] = {
     orte_plm_base_setup_job,
+    orte_plm_base_setup_job_complete,
     orte_ras_base_allocate,
     orte_plm_base_daemons_launched,
     orte_plm_base_daemons_reported,
@@ -371,6 +373,11 @@ static void check_all_complete(int fd, short args, void *cbdata)
 
     /* turn off any sensor monitors on this job */
     orte_sensor.stop(jdata->jobid);
+
+    /* tell the IOF that the job is complete */
+    if (NULL != orte_iof.complete) {
+        orte_iof.complete(jdata);
+    }
 
     if (0 < jdata->num_non_zero_exit && !orte_abort_non_zero_exit) {
         if (!orte_report_child_jobs_separately || 1 == ORTE_LOCAL_JOBID(jdata->jobid)) {

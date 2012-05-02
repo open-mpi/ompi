@@ -83,6 +83,7 @@ ORTE_DECLSPEC void orte_plm_base_app_report_launch(int fd, short event, void *da
 ORTE_DECLSPEC void orte_plm_base_receive_process_msg(int fd, short event, void *data);
 
 ORTE_DECLSPEC void orte_plm_base_setup_job(int fd, short args, void *cbdata);
+ORTE_DECLSPEC void orte_plm_base_setup_job_complete(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_complete_setup(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_daemons_reported(int fd, short args, void *cbdata);
 ORTE_DECLSPEC void orte_plm_base_daemons_launched(int fd, short args, void *cbdata);

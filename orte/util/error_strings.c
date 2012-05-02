@@ -203,6 +203,8 @@ const char *orte_job_state_to_str(orte_job_state_t state)
         return "UNDEFINED";
     case ORTE_JOB_STATE_INIT:
         return "PENDING INIT";
+    case ORTE_JOB_STATE_INIT_COMPLETE:
+        return "INIT_COMPLETE";
     case ORTE_JOB_STATE_ALLOCATE:
         return "PENDING ALLOCATION";
     case ORTE_JOB_STATE_MAP:

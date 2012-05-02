@@ -35,7 +35,8 @@ SUBDIRS += \
 	tools/wrappers \
         tools/orte-top \
         tools/orte-info \
-        tools/orte-migrate
+        tools/orte-migrate \
+	tools/mapreduce
 
 DIST_SUBDIRS += \
 	tools/orte-checkpoint \
@@ -47,5 +48,6 @@ DIST_SUBDIRS += \
 	tools/wrappers \
         tools/orte-top \
         tools/orte-info \
-        tools/orte-migrate
+        tools/orte-migrate \
+	tools/mapreduce
 

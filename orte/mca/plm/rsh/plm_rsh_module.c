@@ -957,6 +957,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
      * do it - no new daemons will be launched
      */
     if (ORTE_JOB_CONTROL_DEBUGGER_DAEMON & state->jdata->controls) {
+        state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
         ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
         OBJ_RELEASE(state);
         return;
@@ -979,7 +980,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
          * job to move to the following step
          */
         state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
-        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
         OBJ_RELEASE(state);
         return;
     }
@@ -997,7 +998,9 @@ static void launch_daemons(int fd, short args, void *cbdata)
          * job to move to the following step
          */
         state->jdata->state = ORTE_JOB_STATE_DAEMONS_LAUNCHED;
-        ORTE_ACTIVATE_JOB_STATE(daemons, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        if (ORTE_JOB_STATE_DAEMONS_REPORTED == daemons->state) {
+            ORTE_ACTIVATE_JOB_STATE(state->jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        }
         OBJ_RELEASE(state);
         return;
     }

@@ -208,7 +208,10 @@ typedef uint16_t orte_job_controls_t;
 #define ORTE_JOB_CONTROL_SPIN_FOR_DEBUG     0x0100
 #define ORTE_JOB_CONTROL_RESTART            0x0200
 #define ORTE_JOB_CONTROL_PROCS_MIGRATING    0x0400
- 
+#define ORTE_JOB_CONTROL_MAPPER             0x0800
+#define ORTE_JOB_CONTROL_REDUCER            0x1000
+#define ORTE_JOB_CONTROL_COMBINER           0x2000
+
 /* global type definitions used by RTE - instanced in orte_globals.c */
 
 /************
@@ -293,6 +296,11 @@ typedef struct {
     struct orte_proc_t *daemon;
     /* whether or not this daemon has been launched */
     bool daemon_launched;
+    /* whether or not the location has been verified - used
+     * for environments where the daemon's final destination
+     * is uncertain
+     */
+    bool location_verified;
     /** Launch id - needed by some systems to launch a proc on this node */
     int32_t launch_id;
     /** number of procs on this node */
@@ -359,6 +367,8 @@ typedef struct {
      * (wildcard), or none (invalid)
      */
     orte_vpid_t stdin_target;
+    /* job that is to receive the stdout (on its stdin) from this one */
+    orte_jobid_t stdout_target;
     /* collective ids */
     orte_grpcomm_coll_id_t peer_modex;
     orte_grpcomm_coll_id_t peer_init_barrier;
@@ -635,6 +645,7 @@ ORTE_DECLSPEC extern opal_pointer_array_t *orte_job_data;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_topologies;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_local_children;
+ORTE_DECLSPEC extern uint16_t orte_num_jobs;
 
 /* Nidmap and job maps */
 ORTE_DECLSPEC extern opal_pointer_array_t orte_nidmap;
@@ -673,14 +684,6 @@ ORTE_DECLSPEC extern int32_t orte_max_restarts;
 /* barrier control */
 ORTE_DECLSPEC extern bool orte_do_not_barrier;
 
-/* comm interface */
-typedef void (*orte_default_cbfunc_t)(int fd, short event, void *data);
-
-typedef int (*orte_default_comm_fn_t)(orte_process_name_t *recipient,
-                                      opal_buffer_t *buf,
-                                      orte_rml_tag_t tag,
-                                      orte_default_cbfunc_t cbfunc);
-
 /* exit status reporting */
 ORTE_DECLSPEC extern bool orte_report_child_jobs_separately;
 ORTE_DECLSPEC extern struct timeval orte_child_time_to_exit;
@@ -694,6 +697,9 @@ ORTE_DECLSPEC extern char *orte_forward_envars;
 
 /* preload binaries */
 ORTE_DECLSPEC extern bool orte_preload_binaries;
+
+/* map-reduce mode */
+ORTE_DECLSPEC extern bool orte_map_reduce;
 
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 ORTE_DECLSPEC extern bool orte_map_stddiag_to_stderr;

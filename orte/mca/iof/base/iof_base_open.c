@@ -63,11 +63,29 @@ int orte_iof_base_open(void)
 #else
 
 /* class instances */
+static void orte_iof_job_construct(orte_iof_job_t *ptr)
+{
+    ptr->jdata = NULL;
+    OBJ_CONSTRUCT(&ptr->xoff, opal_bitmap_t);
+}
+static void orte_iof_job_destruct(orte_iof_job_t *ptr)
+{
+    if (NULL != ptr->jdata) {
+        OBJ_RELEASE(ptr->jdata);
+    }
+    OBJ_DESTRUCT(&ptr->xoff);
+}
+OBJ_CLASS_INSTANCE(orte_iof_job_t,
+                   opal_object_t,
+                   orte_iof_job_construct,
+                   orte_iof_job_destruct);
+
 static void orte_iof_base_proc_construct(orte_iof_proc_t* ptr)
 {
     ptr->revstdout = NULL;
     ptr->revstderr = NULL;
     ptr->revstddiag = NULL;
+    ptr->sink = NULL;
 }
 static void orte_iof_base_proc_destruct(orte_iof_proc_t* ptr)
 {
@@ -92,6 +110,7 @@ static void orte_iof_base_sink_construct(orte_iof_sink_t* ptr)
     ptr->daemon.jobid = ORTE_JOBID_INVALID;
     ptr->daemon.vpid = ORTE_VPID_INVALID;
     ptr->wev = OBJ_NEW(orte_iof_write_event_t);
+    ptr->xoff = false;
 }
 static void orte_iof_base_sink_destruct(orte_iof_sink_t* ptr)
 {
@@ -205,6 +224,11 @@ int orte_iof_base_open(void)
         }
     }
     
+    /* check for files to be sent to stdin of procs */
+    mca_base_param_reg_string_name("iof", "base_input_files",
+                                   "Comma-separated list of input files to be read and sent to stdin of procs (default: NULL)",
+                                   false, false, NULL, &orte_iof_base.input_files);
+
     /* daemons do not need to do this as they do not write out stdout/err */
     if (!ORTE_PROC_IS_DAEMON ||
         (ORTE_PROC_IS_DAEMON && ORTE_PROC_IS_CM)) {

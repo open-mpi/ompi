@@ -86,7 +86,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
          * knows what to do - it will also free the bytes in the bo
          */
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                             "%s grpcomm:base:xcast updating nidmap",
+                             "%s grpcomm:base:xcast updating daemon nidmap",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
         if (ORTE_SUCCESS != (ret = orte_ess.update_nidmap(bo))) {

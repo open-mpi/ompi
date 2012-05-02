@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,7 +44,10 @@
 #include <signal.h>
 #endif
 
+#include "opal/class/opal_list.h"
+#include "opal/class/opal_bitmap.h"
 #include "opal/mca/mca.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/mca/iof/iof.h"
 #include "orte/runtime/orte_globals.h"
@@ -52,6 +57,14 @@ BEGIN_C_DECLS
 ORTE_DECLSPEC int orte_iof_base_open(void);
 
 #if !ORTE_DISABLE_FULL_SUPPORT
+
+/* track xon/xoff of processes */
+typedef struct {
+    opal_object_t super;
+    orte_job_t *jdata;
+    opal_bitmap_t xoff;
+} orte_iof_job_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_job_t);
 
 /*
  * Maximum size of single msg 
@@ -76,10 +89,7 @@ typedef struct {
     orte_process_name_t daemon;
     orte_iof_tag_t tag;
     orte_iof_write_event_t *wev;
-#if OPAL_ENABLE_DEBUG
-    char *file;
-    int line;
-#endif
+    bool xoff;
 } orte_iof_sink_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_sink_t);
 
@@ -90,10 +100,6 @@ typedef struct {
     int fd;
     orte_iof_tag_t tag;
     bool active;
-#if OPAL_ENABLE_DEBUG
-    char *file;
-    int line;
-#endif
 } orte_iof_read_event_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_read_event_t);
 
@@ -103,6 +109,7 @@ typedef struct {
     orte_iof_read_event_t *revstdout;
     orte_iof_read_event_t *revstderr;
     orte_iof_read_event_t *revstddiag;
+    orte_iof_sink_t *sink;
 } orte_iof_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_proc_t);
 
@@ -116,6 +123,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_write_output_t);
 /* the iof globals struct */
 struct orte_iof_base_t {
     int                     iof_output;
+    char                    *input_files;
     opal_list_t             iof_components_opened;
     opal_mutex_t            iof_write_output_lock;
     orte_iof_sink_t         *iof_write_stdout;
@@ -123,8 +131,6 @@ struct orte_iof_base_t {
 };
 typedef struct orte_iof_base_t orte_iof_base_t;
 
-
-#if OPAL_ENABLE_DEBUG
 
 #define ORTE_IOF_SINK_DEFINE(snk, nm, fid, tg, wrthndlr, eplist)    \
     do {                                                            \
@@ -147,8 +153,6 @@ typedef struct orte_iof_base_t orte_iof_base_t;
             opal_list_append((eplist), &ep->super);                 \
         }                                                           \
         *(snk) = ep;                                                \
-        ep->file = strdup(__FILE__);                                \
-        ep->line = __LINE__;                                        \
     } while(0);
 
 /* add list of structs that has name of proc + orte_iof_tag_t - when
@@ -171,8 +175,6 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         rev->tag = (tg);                                            \
         rev->fd = (fid);                                            \
         *(rv) = rev;                                                \
-        rev->file = strdup(__FILE__);                               \
-        rev->line = __LINE__;                                       \
         opal_event_set(orte_event_base,                             \
                        rev->ev, (fid),                              \
                        OPAL_EV_READ,                                \
@@ -183,49 +185,6 @@ typedef struct orte_iof_base_t orte_iof_base_t;
         }                                                           \
     } while(0);
 
-
-#else
-
-#define ORTE_IOF_SINK_DEFINE(snk, nm, fid, tg, wrthndlr, eplist)    \
-    do {                                                            \
-        orte_iof_sink_t *ep;                                        \
-        ep = OBJ_NEW(orte_iof_sink_t);                              \
-        ep->name.jobid = (nm)->jobid;                               \
-        ep->name.vpid = (nm)->vpid;                                 \
-        ep->tag = (tg);                                             \
-        if (0 <= (fid)) {                                           \
-            ep->wev->fd = (fid);                                    \
-            opal_event_set(orte_event_base,                         \
-                           ep->wev->ev, ep->wev->fd,                \
-                           OPAL_EV_WRITE,                           \
-                           wrthndlr, ep);                           \
-        }                                                           \
-        if (NULL != (eplist)) {                                     \
-            opal_list_append((eplist), &ep->super);                 \
-        }                                                           \
-        *(snk) = ep;                                                \
-    } while(0);
-
-#define ORTE_IOF_READ_EVENT(rv, nm, fid, tg, cbfunc, actv)          \
-    do {                                                            \
-        orte_iof_read_event_t *rev;                                 \
-        rev = OBJ_NEW(orte_iof_read_event_t);                       \
-        rev->name.jobid = (nm)->jobid;                              \
-        rev->name.vpid = (nm)->vpid;                                \
-        rev->tag = (tg);                                            \
-        rev->fd = (fid);                                            \
-        *(rv) = rev;                                                \
-        opal_event_set(orte_event_base,                             \
-                       rev->ev, (fid),                              \
-                       OPAL_EV_READ,                                \
-                       (cbfunc), rev);                              \
-        if ((actv)) {                                               \
-            rev->active = true;                                     \
-            opal_event_add(rev->ev, 0);                             \
-        }                                                           \
-    } while(0);
-
-#endif
 
 ORTE_DECLSPEC int orte_iof_base_close(void);
 ORTE_DECLSPEC int orte_iof_base_select(void);

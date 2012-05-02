@@ -43,10 +43,10 @@ void orte_state_base_activate_job_state(orte_job_t *jdata,
         }
         if (s->job_state == state) {
             OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
-                                 "%s ACTIVATING JOB %s STATE %s",
+                                 "%s ACTIVATING JOB %s STATE %s PRI %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid),
-                                 orte_job_state_to_str(state)));
+                                 orte_job_state_to_str(state), s->priority));
             if (NULL == s->cbfunc) {
                 OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
                                      "%s NULL CBFUNC FOR JOB %s STATE %s",
@@ -90,6 +90,11 @@ void orte_state_base_activate_job_state(orte_job_t *jdata,
         caddy->job_state = state;
         OBJ_RETAIN(jdata);
     }
+            OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+                                 "%s ACTIVATING JOB %s STATE %s PRI %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 (NULL == jdata) ? "NULL" : ORTE_JOBID_PRINT(jdata->jobid),
+                                 orte_job_state_to_str(state), s->priority));
     opal_event_set(orte_event_base, &caddy->ev, -1, OPAL_EV_WRITE, s->cbfunc, caddy);
     opal_event_set_priority(&caddy->ev, s->priority);
     opal_event_active(&caddy->ev, OPAL_EV_WRITE, 1);
@@ -217,10 +222,10 @@ void orte_state_base_activate_proc_state(orte_process_name_t *proc,
         }
         if (s->proc_state == state) {
             OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
-                                 "%s ACTIVATING PROC %s STATE %s",
+                                 "%s ACTIVATING PROC %s STATE %s PRI %d",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(proc),
-                                 orte_proc_state_to_str(state)));
+                                 orte_proc_state_to_str(state), s->priority));
             if (NULL == s->cbfunc) {
                 OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
                                      "%s NULL CBFUNC FOR PROC %s STATE %s",
@@ -258,6 +263,11 @@ void orte_state_base_activate_proc_state(orte_process_name_t *proc,
     caddy = OBJ_NEW(orte_state_caddy_t);
     caddy->name = *proc;
     caddy->proc_state = state;
+            OPAL_OUTPUT_VERBOSE((1, orte_state_base_output,
+                                 "%s ACTIVATING PROC %s STATE %s PRI %d",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(proc),
+                                 orte_proc_state_to_str(state), s->priority));
     opal_event_set(orte_event_base, &caddy->ev, -1, OPAL_EV_WRITE, s->cbfunc, caddy);
     opal_event_set_priority(&caddy->ev, s->priority);
     opal_event_active(&caddy->ev, OPAL_EV_WRITE, 1);

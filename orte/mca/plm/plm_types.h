@@ -97,18 +97,19 @@ typedef int32_t orte_job_state_t;
 
 #define ORTE_JOB_STATE_UNDEF                     0
 #define ORTE_JOB_STATE_INIT                      1  /* ready to be assigned id */
-#define ORTE_JOB_STATE_ALLOCATE                  2  /* ready to be allocated */
-#define ORTE_JOB_STATE_MAP                       3  /* ready to be mapped */
-#define ORTE_JOB_STATE_SYSTEM_PREP               4  /* ready for final sanity check and system values updated */
-#define ORTE_JOB_STATE_LAUNCH_DAEMONS            5  /* ready to launch daemons */
-#define ORTE_JOB_STATE_DAEMONS_LAUNCHED          6  /* daemons for this job have been launched */
-#define ORTE_JOB_STATE_DAEMONS_REPORTED          7  /* all launched daemons have reported */
-#define ORTE_JOB_STATE_LAUNCH_APPS               8  /* ready to launch apps */
-#define ORTE_JOB_STATE_RUNNING                   9  /* all procs have been fork'd */
-#define ORTE_JOB_STATE_SUSPENDED                10  /* job has been suspended */
-#define ORTE_JOB_STATE_REGISTERED               11  /* all procs registered for sync */
-#define ORTE_JOB_STATE_READY_FOR_DEBUGGERS      12  /* job ready for debugger init after spawn */
-#define ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE    13  /* all local procs have attempted launch */
+#define ORTE_JOB_STATE_INIT_COMPLETE             2  /* jobid assigned and setup */
+#define ORTE_JOB_STATE_ALLOCATE                  3  /* ready to be allocated */
+#define ORTE_JOB_STATE_MAP                       4  /* ready to be mapped */
+#define ORTE_JOB_STATE_SYSTEM_PREP               5  /* ready for final sanity check and system values updated */
+#define ORTE_JOB_STATE_LAUNCH_DAEMONS            6  /* ready to launch daemons */
+#define ORTE_JOB_STATE_DAEMONS_LAUNCHED          7  /* daemons for this job have been launched */
+#define ORTE_JOB_STATE_DAEMONS_REPORTED          8  /* all launched daemons have reported */
+#define ORTE_JOB_STATE_LAUNCH_APPS               9  /* ready to launch apps */
+#define ORTE_JOB_STATE_RUNNING                  10  /* all procs have been fork'd */
+#define ORTE_JOB_STATE_SUSPENDED                11  /* job has been suspended */
+#define ORTE_JOB_STATE_REGISTERED               12  /* all procs registered for sync */
+#define ORTE_JOB_STATE_READY_FOR_DEBUGGERS      13  /* job ready for debugger init after spawn */
+#define ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE    14  /* all local procs have attempted launch */
 
 /*
  * Define a "boundary" so we can easily and quickly determine

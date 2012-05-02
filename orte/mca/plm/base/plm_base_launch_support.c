@@ -80,8 +80,6 @@
 void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
 {
     orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
-    int i;
-    orte_job_t *jdata;
     
 #if OPAL_HAVE_HWLOC
     {
@@ -106,21 +104,17 @@ void orte_plm_base_daemons_reported(int fd, short args, void *cbdata)
                 if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
                     continue;
                 }
-                node->topology = t;
+                if (NULL == node->topology) {
+                    node->topology = t;
+                }
             }
         }
     }
 #endif
 
-    /* progress all jobs whose daemons have launched */
-    for (i=1; i < orte_job_data->size; i++) {
-        if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, i))) {
-            continue;
-        }
-        if (ORTE_JOB_STATE_DAEMONS_LAUNCHED == jdata->state) {
-            ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_MAP);
-        }
-    }
+    /* progress the job */
+    caddy->jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_MAP);
 
     /* cleanup */
     OBJ_RELEASE(caddy);
@@ -213,9 +207,18 @@ void orte_plm_base_setup_job(int fd, short args, void *cbdata)
     free(bar2_val);
 
     /* set the job state to the next position */
-    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_ALLOCATE);
+    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_INIT_COMPLETE);
 
     /* cleanup */
+    OBJ_RELEASE(caddy);
+}
+
+void orte_plm_base_setup_job_complete(int fd, short args, void *cbdata)
+{
+    orte_state_caddy_t *caddy = (orte_state_caddy_t*)cbdata;
+
+    /* nothing to do here but move along */
+    ORTE_ACTIVATE_JOB_STATE(caddy->jdata, ORTE_JOB_STATE_ALLOCATE);
     OBJ_RELEASE(caddy);
 }
 
@@ -510,12 +513,12 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                                    opal_buffer_t *buffer,
                                    orte_rml_tag_t tag, void *cbdata)
 {
-    orte_process_name_t peer;
     char *rml_uri = NULL, *ptr;
     int rc, idx;
     orte_proc_t *daemon=NULL;
     char *nodename;
     orte_node_t *node;
+    orte_job_t *jdata;
 
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
@@ -562,7 +565,7 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:orted_report_launch from daemon %s on node %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(&peer), nodename));
+                         ORTE_NAME_PRINT(sender), nodename));
 
     /* look this node up, if necessary */
     if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
@@ -593,16 +596,29 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
         OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                              "%s plm:base:orted_report_launch attempting to assign daemon %s to node %s",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(&peer), nodename));
+                             ORTE_NAME_PRINT(sender), nodename));
         for (idx=0; idx < orte_node_pool->size; idx++) {
             if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, idx))) {
                 continue;
             }
-            if (NULL != node->daemon) {
+            if (node->location_verified) {
                 /* already assigned */
                 continue;
             }
             if (0 == strcmp(nodename, node->name)) {
+                /* flag that we verified the location */
+                node->location_verified = true;
+                if (node == daemon->node) {
+                    /* it wound up right where it should */
+                    break;
+                }
+                /* remove the prior association */
+                if (NULL != daemon->node) {
+                    OBJ_RELEASE(daemon->node);
+                }
+                if (NULL != node->daemon) {
+                    OBJ_RELEASE(node->daemon);
+                }
                 /* associate this daemon with the node */
                 node->daemon = daemon;
                 OBJ_RETAIN(daemon);
@@ -687,8 +703,18 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     } else {
         jdatorted->num_reported++;
         if (jdatorted->num_procs == jdatorted->num_reported) {
-            /* activate the daemons_reported state */
-            ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_DAEMONS_REPORTED);
+            jdatorted->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+            /* activate the daemons_reported state for all jobs
+             * whose daemons were launched
+             */
+            for (idx=1; idx < orte_job_data->size; idx++) {
+                if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, idx))) {
+                    continue;
+                }
+                if (ORTE_JOB_STATE_DAEMONS_LAUNCHED == jdata->state) {
+                    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
+                }
+            }
         }
     }
 
@@ -776,6 +802,9 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         opal_argv_append(argc, argv, "1");
     }
 #endif
+    if (orte_map_reduce) {
+        opal_argv_append(argc, argv, "--mapreduce");
+    }
 
     /* the following two are not mca params */
     if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
@@ -1116,7 +1145,6 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
         node = (orte_node_t*)item;
         /* if this node is already in the map, skip it */
         if (NULL != node->daemon) {
-            OBJ_RELEASE(node);
             continue;
         }
         /* add the node to the map */
@@ -1146,19 +1174,22 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
             return rc;
         }
         ++daemons->num_procs;
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s plm:base:setup_vm assigning new daemon %s to node %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&proc->name),
+                             node->name));
+        /* point the node to the daemon */
+        node->daemon = proc;
+        OBJ_RETAIN(proc);  /* maintain accounting */
+        /* point the proc to the node and maintain accounting */
+        proc->node = node;
+        proc->nodename = node->name;
+        OBJ_RETAIN(node);
         if (orte_plm_globals.daemon_nodes_assigned_at_launch) {
-            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                 "%s plm:base:setup_vm assigning new daemon %s to node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(&proc->name),
-                                 node->name));
-            /* point the node to the daemon */
-            node->daemon = proc;
-            OBJ_RETAIN(proc);  /* maintain accounting */
-            /* point the proc to the node and maintain accounting */
-            proc->node = node;
-            proc->nodename = node->name;
-            OBJ_RETAIN(node);
+            node->location_verified = true;
+        } else {
+            node->location_verified = false;
         }
         /* track number of daemons to be launched */
         ++map->num_new_daemons;
