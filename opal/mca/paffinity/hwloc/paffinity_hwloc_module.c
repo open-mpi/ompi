@@ -165,46 +165,89 @@ static int module_init(void)
 }
 
 
+/*
+ * Per comment in the beginning of this file, the input mask to this
+ * function will be a set of logical core IDs.  We need to convert it
+ * to a bitmap of physical PU IDs.  Specifically, for any (logical)
+ * core ID in the output mask, set all physical PU IDs in are in that
+ * core in the mask that we use to bind.
+ */
 static int module_set(opal_paffinity_base_cpu_set_t mask)
 {
     int ret = OPAL_SUCCESS;
-    hwloc_bitmap_t set;
-    hwloc_topology_t *t;
-    hwloc_obj_t pu;
+    hwloc_bitmap_t set = NULL, tmp = NULL, tmp2 = NULL;
+    hwloc_obj_t core;
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
         return OPAL_ERR_NOT_SUPPORTED;
     }
-    t = &opal_hwloc_topology;
 
     set = hwloc_bitmap_alloc();
     if (NULL == set) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
-    for (pu = hwloc_get_obj_by_type(*t, HWLOC_OBJ_PU, 0);
-         pu && pu->logical_index < OPAL_PAFFINITY_BITMASK_CPU_MAX;
-         pu = pu->next_cousin) {
-        if (OPAL_PAFFINITY_CPU_ISSET(pu->logical_index, mask)) {
-            hwloc_bitmap_set(set, pu->os_index);
+    hwloc_bitmap_zero(set);
+
+    tmp = hwloc_bitmap_alloc();
+    if (NULL == tmp) {
+        ret = OPAL_ERR_OUT_OF_RESOURCE;
+        goto out;
+    }
+    tmp2 = hwloc_bitmap_alloc();
+    if (NULL == tmp2) {
+        ret = OPAL_ERR_OUT_OF_RESOURCE;
+        goto out;
+    }
+
+    /* Iterate through the cores */
+    for (core = hwloc_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE, 0);
+         core && core->logical_index < OPAL_PAFFINITY_BITMASK_CPU_MAX;
+         core = core->next_cousin) {
+        if (OPAL_PAFFINITY_CPU_ISSET(core->logical_index, mask)) {
+            /* This is a core that's in the input mask.  Yay!  Get the
+               actually-available PUs (i.e., (online & allowed)) */
+            hwloc_bitmap_and(tmp, core->online_cpuset, core->allowed_cpuset);
+            /* OR those PUs with the set of PUs that we already have */
+            hwloc_bitmap_or(tmp2, set, tmp);
+            /* Now copy that bitmap from the temp output back to the main set */
+            hwloc_bitmap_copy(set, tmp2);
         }
     }
 
-    if (0 != hwloc_set_cpubind(*t, set, 0)) {
+    if (0 != hwloc_set_cpubind(opal_hwloc_topology, set, 0)) {
         ret = OPAL_ERR_IN_ERRNO;
     }
-    hwloc_bitmap_free(set);
+
+ out:
+    if (NULL != set) {
+        hwloc_bitmap_free(set);
+    }
+    if (NULL != tmp) {
+        hwloc_bitmap_free(tmp);
+    }
+    if (NULL != tmp2) {
+        hwloc_bitmap_free(tmp2);
+    }
 
     return ret;
 }
 
 
+/*
+ * Per the comment at the top of this file, we need to return a bitmap
+ * of *logical* *core* IDs.  So we have to get the binding from hwloc
+ * (which returns a bitmap of *physical* PU IDs) and then convert it
+ * to a bitmap of *logical* core IDs.
+ *
+ * Also see https://svn.open-mpi.org/trac/ompi/ticket/3085.
+ */
 static int module_get(opal_paffinity_base_cpu_set_t *mask)
 {
     int ret = OPAL_SUCCESS;
-    hwloc_bitmap_t set;
+    hwloc_bitmap_t set = NULL;
     hwloc_topology_t *t;
-    hwloc_obj_t pu;
+    hwloc_obj_t pu, core;
 
     /* bozo check */
     if (NULL == opal_hwloc_topology) {
@@ -220,19 +263,45 @@ static int module_get(opal_paffinity_base_cpu_set_t *mask)
     if (NULL == set) {
         return OPAL_ERR_OUT_OF_RESOURCE;
     }
+
+    /* Get the physical bitmap representing the binding */
     if (0 != hwloc_get_cpubind(*t, set, 0)) {
         ret = OPAL_ERR_IN_ERRNO;
-    } else {
-        OPAL_PAFFINITY_CPU_ZERO(*mask);
-        for (pu = hwloc_get_obj_by_type(*t, HWLOC_OBJ_PU, 0);
-             pu && pu->logical_index < 8 * sizeof(*mask);
-             pu = pu->next_cousin) {
-            if (hwloc_bitmap_isset(set, pu->os_index)) {
-                OPAL_PAFFINITY_CPU_SET(pu->logical_index, *mask);
+        goto out;
+    } 
+
+    /* Now convert that bitmap of physical PU IDs:
+       - to *logical* core IDs
+       - to only include the first PU in any given core */
+    OPAL_PAFFINITY_CPU_ZERO(*mask);
+    for (pu = hwloc_get_obj_by_type(*t, HWLOC_OBJ_PU, 0);
+         pu && pu->logical_index < 8 * sizeof(*mask);
+         pu = pu->next_cousin) {
+        if (hwloc_bitmap_isset(set, pu->os_index)) {
+            /* This PU is set.  Let's see if it was the *first* PU
+               to be set in this core. */
+            core = pu->parent;
+            while (NULL != core && HWLOC_OBJ_CORE != core->type) {
+                core = core->parent;
+            }
+            
+            if (NULL == core) {
+                /* If hwloc didn't report the parent core, then give
+                   up */
+                ret = OPAL_ERR_NOT_FOUND;
+                goto out;
+            } else {
+                /* Otherwise, save this core's logical index in the
+                   output mask */
+                OPAL_PAFFINITY_CPU_SET(core->logical_index, *mask);
             }
         }
     }
-    hwloc_bitmap_free(set);
+
+ out:
+    if (NULL != set) {
+        hwloc_bitmap_free(set);
+    }
 
     return ret;
 }
@@ -566,4 +635,3 @@ static int module_get_physical_core_id(int physical_socket_id,
                         physical_socket_id, logical_core_id, obj->logical_index);
     return obj->logical_index;
 }
-
