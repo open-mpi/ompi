@@ -5,6 +5,8 @@
  * The most basic of MPI applications
  */
 
+#include "opal_config.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include "mpi.h"

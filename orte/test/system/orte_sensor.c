@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "opal/util/output.h"
+#include "opal/mca/event/event.h"
 
 #include "orte/runtime/orte_globals.h"
 #include "orte/runtime/runtime.h"
@@ -40,7 +41,9 @@ int main(int argc, char* argv[])
     orte_sensor.start(ORTE_JOBID_INVALID);
 
     /* just sit here, letting the sensors run */
-    opal_event_dispatch(orte_event_base);
+    while (orte_event_base_active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
     
     orte_finalize();
     return 0;

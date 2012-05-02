@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
         while (NULL != fgets(line, sizeof(line), stdin)) {
-            fprintf(stderr, line);
-            fprintf(file, line);
+            fprintf(stderr, "%s", line);
+            fprintf(file, "%s", line);
             bytes += strlen(line) + 1;
         }
         fclose(file);
