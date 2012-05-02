@@ -470,6 +470,8 @@ int orte_daemon(int argc, char *argv[])
         orte_local_rank_t lrank;
         orte_node_rank_t nrank;
         opal_byte_object_t *bo;
+        orte_proc_state_t state;
+        orte_app_idx_t app_idx;
 
         /* setup the singleton's job */
         jdata = OBJ_NEW(orte_job_t);
@@ -552,9 +554,15 @@ int orte_daemon(int argc, char *argv[])
         {
             uint bind_idx;
             bind_idx = 0;
-            opal_dss.pack(buffer, &bind_idx, 1, OPAL_UINT);
+            opal_dss.pack(buffer, &bind_idx, 1, OPAL_UINT);  /* bind index */
         }
 #endif
+        state = ORTE_PROC_STATE_RUNNING;
+        opal_dss.pack(buffer, &state, 1, ORTE_PROC_STATE);  /* proc state */
+        app_idx = 0;
+        opal_dss.pack(buffer, &app_idx, 1, ORTE_APP_IDX);  /* app index */
+        one32 = 0;
+        opal_dss.pack(buffer, &one32, 1, OPAL_INT32);  /* restarts */
         /* setup a byte object and unload the packed data to it */
         bo = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
         opal_dss.unload(buffer, (void**)&bo->bytes, &bo->size);

@@ -1722,6 +1722,8 @@ void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid)
     int32_t one32;
     orte_local_rank_t lrank;
     orte_node_rank_t nrank;
+    orte_proc_state_t state;
+    orte_app_idx_t app_idx;
     opal_buffer_t buffer;
     opal_byte_object_t *bo;
     int rc;
@@ -1753,8 +1755,14 @@ void orte_odls_base_setup_singleton_jobdat(orte_jobid_t jobid)
     opal_dss.pack(&buffer, &nrank, 1, ORTE_NODE_RANK);  /* node rank */
 #if OPAL_HAVE_HWLOC
     bind_idx = 0;
-    opal_dss.pack(&buffer, &bind_idx, 1, OPAL_UINT);
+    opal_dss.pack(&buffer, &bind_idx, 1, OPAL_UINT);  /* bind index */
 #endif
+    state = ORTE_PROC_STATE_RUNNING;
+    opal_dss.pack(&buffer, &state, 1, ORTE_PROC_STATE);  /* proc state */
+    app_idx = 0;
+    opal_dss.pack(&buffer, &app_idx, 1, ORTE_APP_IDX);  /* app index */
+    one32 = 0;
+    opal_dss.pack(&buffer, &one32, 1, OPAL_INT32);  /* restarts */
     /* setup a byte object and unload the packed data to it */
     bo = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
     opal_dss.unload(&buffer, (void**)&bo->bytes, &bo->size);
