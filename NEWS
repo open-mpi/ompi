@@ -47,6 +47,41 @@ included in the vX.Y.Z section and be denoted as:
    (** also appeared: A.B.C)  -- indicating that this item was previously
                                  included in release version vA.B.C.
 
+1.6
+---
+
+- Fix some process affinity issues.  When binding a process, Open MPI
+  will now bind to all available hyperthreads in a core (or socket,
+  depending on the binding options specified).
+- Add support for ARM5 and ARM6 (in addition to the existing ARM7
+  support).  Thanks to Evan Clinton for the patch.
+- Minor Mellanox MXM fixes.
+- Minor fixes to the mpirun(1) and MPI_Comm_create(3) man pages.
+- Prevent segv if COMM_SPAWN_MULTIPLE fails.  Thanks to Fujitsu for
+  the patch.
+- Disable interposed memory management in fakeroot environments.  This
+  fixes a problem in some build environments.
+- Minor hwloc updates.
+- Array versions of MPI_TEST and MPI_WAIT with a count==0 will now
+  return immediately with MPI_SUCCESS.  Thanks to Jeremiah Willcock
+  for the suggestion.
+- Update VampirTrace to v5.12.2.
+- Properly handle forwarding stdin to all processes when "mpirun
+  --stdin all" is used.
+- Workaround XLC assembly bug.
+- OS X Tiger (10.3) has not been supported for a while, so forcibly
+  abort configure if we detect it.
+- Fix segv in the openib BTL when running on SPARC 64 systems.
+- Fix some include file ordering issues on some BSD-based platforms.
+  Thanks to Paul Hargove for this (and many, many other) fixes.
+- Properly handle .FALSE. return parameter value to attribute copy
+  callback functions.
+- Fix a bunch of minor C++ API issues; thanks to Fujitsu for the patch.
+- Fixed the default hostfile MCA parameter behavior.
+- Per the MPI spec, ensure not to touch the port_name parameter to
+  MPI_CLOSE_PORT (it's an IN parameter).
+
+
 1.5.5
 -----
 
