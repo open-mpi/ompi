@@ -903,6 +903,28 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
         armv7*)
             ompi_cv_asm_arch="ARM"
             OPAL_ASM_SUPPORT_64BIT=1
+            OPAL_ASM_ARM_VERSION=7
+            AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
+                               [What ARM assembly version to use])
+            OMPI_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
+            ;;
+
+        armv6*)
+            ompi_cv_asm_arch="ARM"
+            OPAL_ASM_SUPPORT_64BIT=0
+            OPAL_ASM_ARM_VERSION=6
+            AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
+                               [What ARM assembly version to use])
+            OMPI_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
+            ;;
+
+        armv5*linux*|armv4*linux*)
+            # uses Linux kernel helpers for some atomic operations
+            ompi_cv_asm_arch="ARM"
+            OPAL_ASM_SUPPORT_64BIT=0
+            OPAL_ASM_ARM_VERSION=5
+            AC_DEFINE_UNQUOTED([OPAL_ASM_ARM_VERSION], [$OPAL_ASM_ARM_VERSION],
+                               [What ARM assembly version to use])
             OMPI_GCC_INLINE_ASSIGN='"mov %0, #0" : "=&r"(ret)'
             ;;
 
