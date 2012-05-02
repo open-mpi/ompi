@@ -17,6 +17,8 @@
 #include "opal/runtime/opal.h"
 #include "opal/mca/event/event.h"
 
+#include "orte/runtime/orte_globals.h"
+
 int called = 0;
 
 #define NEVENT	2000
@@ -76,7 +78,9 @@ int main(int argc, char **argv)
         opal_event_evtimer_add(ev[i], &tv);
     }
 
-    opal_event_dispatch(orte_event_base);
+    while (orte_event_base_active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
 
     opal_finalize();
     return (called < NEVENT);

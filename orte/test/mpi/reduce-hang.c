@@ -28,7 +28,7 @@ pi = 3.14159 * 18.0 / 35.3;
             MPI_Barrier(MPI_COMM_WORLD);
         }
         if (0 == (++count % 10000)) {
-            fprintf(stderr, "%ld still going at %d\n", self, count);
+            fprintf(stderr, "%d still going at %ld\n", self, count);
         }
     }
     MPI_Finalize();

@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
  if (mpierr != MPI_SUCCESS)
    {
     fprintf(stderr,"MPI Error %d (MPI_Get_processor_name) [%d]\n", mpierr, rank);
-    sprintf(process_name, rr_empty);
+    sprintf(process_name, "%s", rr_empty);
    }
  else
    {

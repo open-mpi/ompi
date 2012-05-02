@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 
+#include "opal/mca/event/event.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/runtime.h"
@@ -22,7 +23,9 @@ int main(int argc, char* argv[])
     }
     opal_output(0, "%s RUNNING", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
 
-    opal_event_dispatch(orte_event_base);
+    while (orte_event_base_active) {
+        opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
+    }
 
     orte_finalize();
 
