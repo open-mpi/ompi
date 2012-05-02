@@ -54,6 +54,10 @@ static-components.h
 project_list.m4
 orte_wrapper_script
 ompi_wrapper_script
+make.out
+config.out
+auto.out
+diff.out
 *~
 *\\\#/;
 
