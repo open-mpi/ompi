@@ -481,6 +481,11 @@ static int rte_init(void)
     jdata = OBJ_NEW(orte_job_t);
     jdata->jobid = ORTE_PROC_MY_NAME->jobid;
     opal_pointer_array_set_item(orte_job_data, 0, jdata);
+    /* mark that the daemons have reported as we are the
+     * only ones in the system right now, and we definitely
+     * are running!
+     */
+    jdata->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
    
     /* every job requires at least one app */
     app = OBJ_NEW(orte_app_context_t);
