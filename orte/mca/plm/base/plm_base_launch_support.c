@@ -805,6 +805,11 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (orte_map_reduce) {
         opal_argv_append(argc, argv, "--mapreduce");
     }
+    if (orte_map_stddiag_to_stderr) {
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_map_stddiag_to_stderr");
+        opal_argv_append(argc, argv, "1");
+    }
 
     /* the following two are not mca params */
     if ((int)ORTE_VPID_INVALID != orted_debug_failure) {
