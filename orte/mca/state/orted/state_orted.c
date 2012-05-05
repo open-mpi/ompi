@@ -160,8 +160,10 @@ static void track_jobs(int fd, short argc, void *cbdata)
     int rc;
 
     if (ORTE_JOB_STATE_LOCAL_LAUNCH_COMPLETE == caddy->job_state) {
-opal_output(0, "%s state:orted:track_jobs sending local launch complete for job %s",
-ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), ORTE_JOBID_PRINT(caddy->jdata->jobid));
+        OPAL_OUTPUT_VERBOSE((5, orte_state_base_output,
+                             "%s state:orted:track_jobs sending local launch complete for job %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_JOBID_PRINT(caddy->jdata->jobid)));
         /* update the HNP with all proc states for this job */
         alert = OBJ_NEW(opal_buffer_t);
         /* pack update state command */
