@@ -841,6 +841,10 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
                     /* 10.0Gbps * 0.8, in megabits */
                     openib_btl->super.btl_bandwidth = 8000;
                     break;
+                case 8:
+                    /* 40.0Gbps * 0.8, in megabits */
+                    openib_btl->super.btl_bandwidth = 32000;
+                    break;
                 default:
                     /* Who knows?  Declare this port unreachable (do
                        *not* return ERR_VALUE_OF_OUT_OF_BOUNDS; that
