@@ -132,27 +132,6 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
         return rc;
     }
 
-    rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.cq_size,
-                       0, GNI_CQ_NOBLOCK, NULL, NULL, &ugni_module->rdma_local_cq);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_ERROR(("error creating local BTE/FMA CQ"));
-        return ompi_common_rc_ugni_to_ompi (rc);
-    }
-
-    rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.cq_size,
-                       0, GNI_CQ_NOBLOCK, NULL, NULL, &ugni_module->smsg_local_cq);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_ERROR(("error creating local SMSG CQ"));
-        return ompi_common_rc_ugni_to_ompi (rc);
-    }
-
-    rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.cq_size,
-                       0, GNI_CQ_NOBLOCK, NULL, NULL, &ugni_module->smsg_remote_cq);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_ERROR(("error creating remote SMSG CQ"));
-        return ompi_common_rc_ugni_to_ompi (rc);
-    }
-
     rc = GNI_SmsgSetMaxRetrans (ugni_module->device->dev_handle,
                                 mca_btl_ugni_component.smsg_max_retries);
     if (GNI_RC_SUCCESS != rc) {
