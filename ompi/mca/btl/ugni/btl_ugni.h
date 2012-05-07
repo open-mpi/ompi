@@ -93,6 +93,7 @@ typedef struct mca_btl_ugni_component_t {
     uint32_t ugni_max_btls;
     /* Maximum number of entries a completion queue can hold */
     uint32_t cq_size;
+    uint32_t local_cq_size;
 
     /* number of ugni modules */
     uint32_t ugni_num_btls;
