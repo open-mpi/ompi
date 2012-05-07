@@ -80,7 +80,6 @@ typedef struct mca_btl_ugni_module_t {
 
     /* fragment id bounce buffer (smsg msg ids are only 32 bits) */
     opal_pointer_array_t pending_smsg_frags_bb;
-    int32_t next_frag_id;
 
     uint32_t reg_max;
     uint32_t reg_count;
