@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  
+ * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -28,9 +28,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "opal/mca/maffinity/maffinity.h"
-#include "opal/mca/maffinity/maffinity_types.h"
-#include "opal/mca/maffinity/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "orte/util/proc_info.h"
 
 #if OPAL_ENABLE_FT_CR    == 1
@@ -87,14 +85,14 @@ void* mca_mpool_sm_alloc(
     mca_mpool_base_registration_t** registration)
 {
     mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool;
-    opal_maffinity_base_segment_t mseg;
+    opal_hwloc_base_memory_segment_t mseg;
 
     mseg.mbs_start_addr =
         mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, align, registration);
 
     if(mpool_sm->mem_node >= 0) {
         mseg.mbs_len = size;
-        opal_maffinity_base_bind(&mseg, 1, mpool_sm->mem_node);
+        opal_hwloc_base_membind(&mseg, 1, mpool_sm->mem_node);
     }
 
 #if OPAL_CUDA_SUPPORT
@@ -117,14 +115,14 @@ void* mca_mpool_sm_realloc(
     mca_mpool_base_registration_t** registration)
 {
     mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool;
-    opal_maffinity_base_segment_t mseg;
+    opal_hwloc_base_memory_segment_t mseg;
 
     mseg.mbs_start_addr =
         mpool_sm->sm_allocator->alc_realloc(mpool_sm->sm_allocator, addr, size,
                                             registration);
     if(mpool_sm->mem_node >= 0) {
         mseg.mbs_len = size;
-        opal_maffinity_base_bind(&mseg, 1, mpool_sm->mem_node);
+        opal_hwloc_base_membind(&mseg, 1, mpool_sm->mem_node);
     }
 
     return mseg.mbs_start_addr;

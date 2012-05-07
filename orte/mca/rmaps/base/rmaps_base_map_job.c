@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -261,7 +261,7 @@ void orte_rmaps_base_map_job(int fd, short args, void *cbdata)
             }
 #if OPAL_HAVE_HWLOC
             {
-                opal_paffinity_locality_t locality;
+                opal_hwloc_locality_t locality;
                 orte_proc_t *p0;
 
                 /* test locality - for the first node, print the locality of each proc relative to the first one */

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,7 +44,7 @@
 static int rte_init(void);
 static int rte_finalize(void);
 static void rte_abort(int status, bool report) __opal_attribute_noreturn__;
-static opal_paffinity_locality_t proc_get_locality(orte_process_name_t *proc);
+static opal_hwloc_locality_t proc_get_locality(orte_process_name_t *proc);
 static char* proc_get_hostname(orte_process_name_t *proc);
 static orte_local_rank_t proc_get_local_rank(orte_process_name_t *proc);
 static orte_node_rank_t proc_get_node_rank(orte_process_name_t *proc);
@@ -130,7 +130,7 @@ static void rte_abort(int status, bool report)
     exit(status);
 }
 
-static opal_paffinity_locality_t proc_get_locality(orte_process_name_t *proc)
+static opal_hwloc_locality_t proc_get_locality(orte_process_name_t *proc)
 {
     if (map[ORTE_PROC_MY_NAME->vpid].nid ==
         map[proc->vpid].nid) {

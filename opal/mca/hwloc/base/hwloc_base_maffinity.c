@@ -1,16 +1,5 @@
 /*
- * Copyright (c) 2004-2008 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
- *                         of Tennessee Research Foundation.  All rights
- *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
- *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
- *
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,71 +7,74 @@
  * $HEADER$
  */
 
+
 #include "opal_config.h"
 
-/* This component will only be compiled on Hwloc, where we are
-   guaranteed to have <unistd.h> and friends */
-#include <stdio.h>
-
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
 #include "opal/constants.h"
-#include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/maffinity/maffinity.h"
-#include "opal/mca/maffinity/base/base.h"
-#include "opal/mca/hwloc/base/base.h"
-#include "maffinity_hwloc.h"
+
+#include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
 
-/*
- * Local functions
- */
-static int hwloc_module_init(void);
-static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
-                              size_t num_segments);
-static int hwloc_module_node_name_to_id(char *, int *);
-static int hwloc_module_bind(opal_maffinity_base_segment_t *, size_t, int);
 
 /*
- * Hwloc maffinity module
+ * Don't use show_help() here (or print any error message at all).
+ * Let the upper layer output a relevant message, because doing so may
+ * be complicated (e.g., this might be called from the ORTE ODLS,
+ * which has to do some extra steps to get error messages to be
+ * displayed).
  */
-static const opal_maffinity_base_module_1_0_0_t local_module = {
-    /* Initialization function */
-    hwloc_module_init,
-
-    /* Module function pointers */
-    hwloc_module_set,
-    hwloc_module_node_name_to_id,
-    hwloc_module_bind
-};
-
-int opal_maffinity_hwloc_component_query(mca_base_module_t **module, 
-                                         int *priority)
+int opal_hwloc_base_set_process_membind_policy(void)
 {
+    int rc = 0, flags;
+    hwloc_membind_policy_t policy;
+    hwloc_cpuset_t cpuset;
+
+    /* Make sure opal_hwloc_topology has been set by the time we've
+       been called */
     if (NULL == opal_hwloc_topology) {
-        return OPAL_ERROR;
+        return OPAL_ERR_BAD_PARAM;
     }
 
-    *priority = mca_maffinity_hwloc_component.priority;
-    *module = (mca_base_module_t *) &local_module;
+    /* Set the default memory allocation policy according to MCA
+       param */
+    switch (opal_hwloc_base_map) {
+    case OPAL_HWLOC_BASE_MAP_LOCAL_ONLY:
+        policy = HWLOC_MEMBIND_BIND;
+        flags = HWLOC_MEMBIND_STRICT;
+        break;
+        
+    case OPAL_HWLOC_BASE_MAP_NONE:
+    default:
+        policy = HWLOC_MEMBIND_DEFAULT;
+        flags = 0;
+        break;
+    }
+    
+    cpuset = hwloc_bitmap_alloc();
+    if (NULL == cpuset) {
+        rc = OPAL_ERR_OUT_OF_RESOURCE;
+    } else {
+        int e;
+        hwloc_get_cpubind(opal_hwloc_topology, cpuset, 0);
+        rc = hwloc_set_membind(opal_hwloc_topology, 
+                               cpuset, policy, flags);
+        e = errno;
+        hwloc_bitmap_free(cpuset);
 
-    return OPAL_SUCCESS;
+        /* See if hwloc was able to do it.  If hwloc failed due to
+           ENOSYS, but the base_map == NONE, then it's not really an
+           error. */
+        if (0 != rc && ENOSYS == e &&
+            OPAL_HWLOC_BASE_MAP_NONE == opal_hwloc_base_map) {
+            rc = 0;
+        }
+    }
+    
+    return (0 == rc) ? OPAL_SUCCESS : OPAL_ERROR;
 }
 
-
-static int hwloc_module_init(void)
-{
-    /* Nothing to do! */
-
-    return OPAL_SUCCESS;
-}
-
-
-static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
-                              size_t num_segments)
+int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments,
+                               size_t num_segments)
 {
     int rc = OPAL_SUCCESS;
     char *msg = NULL;
@@ -128,7 +120,7 @@ static int hwloc_module_set(opal_maffinity_base_segment_t *segments,
     return OPAL_SUCCESS;
 }
 
-static int hwloc_module_node_name_to_id(char *node_name, int *id)
+int opal_hwloc_base_node_name_to_id(char *node_name, int *id)
 {
     /* GLB: fix me */
     *id = atoi(node_name + 3);
@@ -136,8 +128,8 @@ static int hwloc_module_node_name_to_id(char *node_name, int *id)
     return OPAL_SUCCESS;
 }
 
-static int hwloc_module_bind(opal_maffinity_base_segment_t *segs,
-                             size_t count, int node_id)
+int opal_hwloc_base_membind(opal_hwloc_base_memory_segment_t *segs,
+                            size_t count, int node_id)
 {
     size_t i;
     int rc = OPAL_SUCCESS;

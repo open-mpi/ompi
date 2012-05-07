@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011      University of Houston. All rights reserved.
  * $COPYRIGHT$
@@ -35,14 +35,8 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/backtrace/backtrace.h"
 #include "opal/mca/backtrace/base/base.h"
-#include "opal/mca/paffinity/paffinity.h"
-#include "opal/mca/paffinity/base/base.h"
-#include "opal/mca/carto/carto.h"
-#include "opal/mca/carto/base/base.h"
 #include "opal/mca/shmem/shmem.h"
 #include "opal/mca/shmem/base/base.h"
-#include "opal/mca/maffinity/maffinity.h"
-#include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/memchecker/memchecker.h"
@@ -308,36 +302,12 @@ void ompi_info_open_components(void)
     map->components = &opal_memchecker_base_components_opened;
     opal_pointer_array_add(&component_map, map);
     
-    if (OPAL_SUCCESS != opal_paffinity_base_open()) {
-        goto error;
-    }
-    map = OBJ_NEW(ompi_info_component_map_t);
-    map->type = strdup("paffinity");
-    map->components = &opal_paffinity_base_components_opened;
-    opal_pointer_array_add(&component_map, map);
-    
-    if (OPAL_SUCCESS != opal_carto_base_open()) {
-        goto error;
-    }
-    map = OBJ_NEW(ompi_info_component_map_t);
-    map->type = strdup("carto");
-    map->components = &opal_carto_base_components_opened;
-    opal_pointer_array_add(&component_map, map);
-
     if (OPAL_SUCCESS != opal_shmem_base_open()) {
         goto error;
     }
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("shmem");
     map->components = &opal_shmem_base_components_opened;
-    opal_pointer_array_add(&component_map, map);
-    
-    if (OPAL_SUCCESS != opal_maffinity_base_open()) {
-        goto error;
-    }
-    map = OBJ_NEW(ompi_info_component_map_t);
-    map->type = strdup("maffinity");
-    map->components = &opal_maffinity_base_components_opened;
     opal_pointer_array_add(&component_map, map);
     
 #if OPAL_HAVE_HWLOC
@@ -804,9 +774,6 @@ void ompi_info_close_components()
         (void) opal_backtrace_base_close();
         (void) opal_memory_base_close();
         (void) opal_memchecker_base_close();
-        (void) opal_paffinity_base_close();
-        (void) opal_carto_base_close();
-        (void) opal_maffinity_base_close();
         (void) opal_timer_base_close();
 #if OPAL_HAVE_HWLOC
         (void) opal_hwloc_base_close();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -13,7 +13,6 @@
 #include "opal_config.h"
 
 #include "opal/dss/dss_types.h"
-#include "opal/mca/paffinity/paffinity.h"
 
 #include "opal/mca/hwloc/hwloc.h"
 
@@ -22,6 +21,8 @@
  */
 
 BEGIN_C_DECLS
+
+/* ******************************************************************** */
 
 /**
  * Initialize the hwloc MCA framework
@@ -81,22 +82,19 @@ OPAL_DECLSPEC extern char *opal_hwloc_base_slot_list;
 OPAL_DECLSPEC extern char *opal_hwloc_base_cpu_set;
 OPAL_DECLSPEC extern hwloc_cpuset_t opal_hwloc_base_given_cpus;
 
-/**
- * Report a bind failure using the normal mechanisms if a component
- * fails to bind memory -- according to the value of the
- * hwloc_base_bind_failure_action MCA parameter.
- */
-OPAL_DECLSPEC int opal_hwloc_base_report_bind_failure(const char *file,
-                                                      int line,
-                                                      const char *msg, 
-                                                      int rc);
-
-OPAL_DECLSPEC opal_paffinity_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
+OPAL_DECLSPEC opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
                                                                               opal_hwloc_level_t level1,
                                                                               unsigned int peer1,
                                                                               opal_hwloc_level_t level2,
                                                                               unsigned int peer2);
 
+/**
+ * Loads opal_hwloc_my_cpuset (global variable in
+ * opal/mca/hwloc/hwloc.h) for this process.  opal_hwloc_my_cpuset
+ * will be loaded with this process' binding, or, if the process is
+ * not bound, use the hwloc root object's (available and online)
+ * cpuset.
+ */
 OPAL_DECLSPEC void opal_hwloc_base_get_local_cpuset(void);
 
 /**
@@ -130,7 +128,16 @@ OPAL_DECLSPEC extern opal_hwloc_base_mbfa_t opal_hwloc_base_mbfa;
 
 /* some critical helper functions */
 OPAL_DECLSPEC int opal_hwloc_base_filter_cpus(hwloc_topology_t topo);
+
+/**
+ * Discover / load the hwloc topology (i.e., call hwloc_topology_init() and
+ * hwloc_topology_load()).
+ */
 OPAL_DECLSPEC int opal_hwloc_base_get_topology(void);
+
+/**
+ * Free the hwloc topology.
+ */
 OPAL_DECLSPEC void opal_hwloc_base_free_topology(hwloc_topology_t topo);
 OPAL_DECLSPEC hwloc_cpuset_t opal_hwloc_base_get_available_cpus(hwloc_topology_t topo,
                                                                 hwloc_obj_t obj);
@@ -146,14 +153,25 @@ OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_obj_by_type(hwloc_topology_t topo,
 OPAL_DECLSPEC unsigned int opal_hwloc_base_get_obj_idx(hwloc_topology_t topo,
                                                        hwloc_obj_t obj,
                                                        opal_hwloc_resource_type_t rtype);
-OPAL_DECLSPEC void opal_hwloc_base_get_level_and_index(hwloc_cpuset_t cpus,
-                                                       opal_hwloc_level_t *bind_level,
-                                                       unsigned int *bind_idx);
+OPAL_DECLSPEC hwloc_obj_t opal_hwloc_base_get_level_and_index(hwloc_cpuset_t cpus,
+                                                              opal_hwloc_level_t *bind_level,
+                                                              unsigned int *bind_idx);
+OPAL_DECLSPEC int opal_hwloc_base_get_local_index(hwloc_obj_type_t type,
+                                                  unsigned cache_level,
+                                                  unsigned int *idx);
+
+/**
+ * Get the number of pu's under a given hwloc object.
+ */
 OPAL_DECLSPEC unsigned int opal_hwloc_base_get_npus(hwloc_topology_t topo,
                                                     hwloc_obj_t target);
 OPAL_DECLSPEC char* opal_hwloc_base_print_binding(opal_binding_policy_t binding);
-OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_paffinity_locality_t locality);
+OPAL_DECLSPEC char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality);
 OPAL_DECLSPEC char* opal_hwloc_base_print_level(opal_hwloc_level_t level);
+
+/**
+ * Determine if there is a single cpu in a bitmap.
+ */
 OPAL_DECLSPEC bool opal_hwloc_base_single_cpu(hwloc_cpuset_t cpuset);
 
 /**
@@ -183,6 +201,14 @@ OPAL_DECLSPEC int opal_hwloc_base_report_bind_failure(const char *file,
  * invoke this function after opal_hwloc_topology has been loaded.
  */
 OPAL_DECLSPEC int opal_hwloc_base_set_process_membind_policy(void);
+
+OPAL_DECLSPEC int opal_hwloc_base_membind(opal_hwloc_base_memory_segment_t *segs,
+                                          size_t count, int node_id);
+
+OPAL_DECLSPEC int opal_hwloc_base_node_name_to_id(char *node_name, int *id);
+
+OPAL_DECLSPEC int opal_hwloc_base_memory_set(opal_hwloc_base_memory_segment_t *segments,
+                                             size_t num_segments);
 
 /* datatype support */
 OPAL_DECLSPEC int opal_hwloc_pack(opal_buffer_t *buffer, const void *src,

@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
@@ -41,9 +41,7 @@
 #include "opal/util/argv.h"
 #include "opal/memoryhooks/memory.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/carto/carto.h"
-#include "opal/mca/carto/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal_stdint.h"
 
@@ -1926,62 +1924,148 @@ static void wv_free_device_list_compat(struct wv_device **ib_devs)
     free(ib_devs);
 }
 
-static opal_carto_graph_t *host_topo;
-
-static int get_ib_dev_distance(struct wv_device *dev)
-{
-    opal_paffinity_base_cpu_set_t cpus;
-    opal_carto_base_node_t *device_node;
-    int min_distance = -1, i, num_processors;
-    const char *device = dev->name;
-
-    if(opal_paffinity_base_get_processor_info(&num_processors) != OMPI_SUCCESS) {
-        num_processors = 100; /* Choose something big enough */
-    }
-
-    device_node = opal_carto_base_find_node(host_topo, device);
-
-    /* no topology info for device found. Assume that it is close */
-    if(NULL == device_node)
-        return 0;
-
-    OPAL_PAFFINITY_CPU_ZERO(cpus);
-    opal_paffinity_base_get(&cpus);
-
-    for (i = 0; i < num_processors; i++) {
-        opal_carto_base_node_t *slot_node;
-        int distance, socket, core;
-        char *slot;
-
-        if(!OPAL_PAFFINITY_CPU_ISSET(i, cpus))
-            continue;
-
-        opal_paffinity_base_get_map_to_socket_core(i, &socket, &core);
-        asprintf(&slot, "slot%d", socket);
-
-        slot_node = opal_carto_base_find_node(host_topo, slot);
-
-        free(slot);
-
-        if(NULL == slot_node)
-            return 0;
-
-        distance = opal_carto_base_spf(host_topo, slot_node, device_node);
-
-        if(distance < 0)
-            return 0;
-
-        if(min_distance < 0 || min_distance > distance)
-            min_distance = distance;
-    }
-
-    return min_distance;
-}
-
 struct dev_distance {
     struct wv_device *ib_dev;
     int distance;
 };
+
+static int get_ib_dev_distance(struct ibv_device *dev)
+{
+    /* If we don't have hwloc, we'll default to a distance of 0,
+       because we have no way of measuring. */
+    int distance = 0;
+
+#if OPAL_HAVE_HWLOC
+    int a, b, i;
+    hwloc_cpuset_t my_cpuset = NULL, ibv_cpuset = NULL;
+    hwloc_obj_t my_obj, ibv_obj, node_obj;
+
+    /* Note that this struct is owned by hwloc; there's no need to
+       free it at the end of time */
+    static const struct hwloc_distances_s *hwloc_distances = NULL;
+
+    if (NULL == hwloc_distances) {
+        hwloc_distances = 
+            hwloc_get_whole_distance_matrix_by_type(opal_hwloc_topology, 
+                                                    HWLOC_OBJ_NODE);
+    }
+
+    /* If we got no info, just return 0 */
+    if (NULL == hwloc_distances || NULL == hwloc_distances->latency) {
+        goto out;
+    }
+
+    /* Next, find the NUMA node where this IBV device is located */
+    ibv_cpuset = hwloc_bitmap_alloc();
+    if (NULL == ibv_cpuset) {
+        goto out;
+    }
+    if (0 != hwloc_ibv_get_device_cpuset(opal_hwloc_topology, dev, ibv_cpuset)) {
+        goto out;
+    }
+    ibv_obj = hwloc_get_obj_covering_cpuset(opal_hwloc_topology, ibv_cpuset);
+    if (NULL == ibv_obj) {
+        goto out;
+    }
+
+    /* If ibv_obj is a NUMA node or below, we're good. */
+    switch (ibv_obj->type) {
+    case HWLOC_OBJ_NODE:
+    case HWLOC_OBJ_SOCKET:
+    case HWLOC_OBJ_CACHE:
+    case HWLOC_OBJ_CORE:
+    case HWLOC_OBJ_PU:
+        while (NULL != ibv_obj && ibv_obj->type != HWLOC_OBJ_NODE) {
+            ibv_obj = ibv_obj->parent;
+        }
+        break;
+
+    default: 
+        /* If it's above a NUMA node, then I don't know how to compute
+           the distance... */
+        ibv_obj = NULL;
+        break;
+    }
+
+    /* If we don't have an object for this ibv device, give up */
+    if (NULL == ibv_obj) {
+        goto out;
+    }
+
+    /* This function is only called if the process is bound, so let's
+       find out where we are bound to.  For the moment, we only care
+       about the NUMA node to which we are bound. */
+    my_cpuset = hwloc_bitmap_alloc();
+    if (NULL == my_cpuset) {
+        goto out;
+    }
+    if (0 != hwloc_get_cpubind(opal_hwloc_topology, my_cpuset, 0)) {
+        hwloc_bitmap_free(my_cpuset);
+        goto out;
+    }
+    my_obj = hwloc_get_obj_covering_cpuset(opal_hwloc_topology, my_cpuset);
+    if (NULL == my_obj) {
+        goto out;
+    }
+
+    /* If my_obj is a NUMA node or below, we're good. */
+    switch (my_obj->type) {
+    case HWLOC_OBJ_NODE:
+    case HWLOC_OBJ_SOCKET:
+    case HWLOC_OBJ_CACHE:
+    case HWLOC_OBJ_CORE:
+    case HWLOC_OBJ_PU:
+        while (NULL != my_obj && my_obj->type != HWLOC_OBJ_NODE) {
+            my_obj = my_obj->parent;
+        }
+        if (NULL != my_obj) {
+            /* Distance may be asymetrical, so calculate both of them
+               and take the max */
+            a = hwloc_distances->latency[my_obj->logical_index *
+                                         (ibv_obj->logical_index * 
+                                          hwloc_distances->nbobjs)];
+            b = hwloc_distances->latency[ibv_obj->logical_index *
+                                         (my_obj->logical_index * 
+                                          hwloc_distances->nbobjs)];
+            distance = (a > b) ? a : b;
+        }
+        break;
+
+    default: 
+        /* If the obj is above a NUMA node, then we're bound to more than
+           one NUMA node.  Find the max distance. */
+        i = 0;
+        for (node_obj = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+                                                            ibv_obj->cpuset, 
+                                                            HWLOC_OBJ_NODE, i);
+             NULL != node_obj; 
+             node_obj = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
+                                                            ibv_obj->cpuset, 
+                                                            HWLOC_OBJ_NODE, ++i)) {
+
+            a = hwloc_distances->latency[node_obj->logical_index *
+                                         (ibv_obj->logical_index * 
+                                          hwloc_distances->nbobjs)];
+            b = hwloc_distances->latency[ibv_obj->logical_index *
+                                         (node_obj->logical_index * 
+                                          hwloc_distances->nbobjs)];
+            a = (a > b) ? a : b;
+            distance = (a > distance) ? a : distance;
+        }
+        break;
+    }
+
+ out:
+    if (NULL != ibv_cpuset) {
+        hwloc_bitmap_free(ibv_cpuset);
+    }
+    if (NULL != my_cpuset) {
+        hwloc_bitmap_free(my_cpuset);
+    }
+#endif
+
+    return distance;
+}
 
 static int compare_distance(const void *p1, const void *p2)
 {
@@ -2001,17 +2085,24 @@ sort_devs_by_distance(struct wv_device **ib_devs, int count)
      * if we have found more than one device, search for the shortest path.
      * otherwise, just use the one we got
      */
-    if( count == 1) {
+    if (1 == count) {
         devs[0].ib_dev = ib_devs[0];
         devs[0].distance = 0;
 
         return devs;
     }
-    opal_carto_base_get_host_graph(&host_topo, "Infiniband");
 
     for (i = 0; i < count; i++) {
         devs[i].ib_dev = ib_devs[i];
-        devs[i].distance = get_ib_dev_distance(ib_devs[i]);
+        if (orte_proc_is_bound) {
+            /* If this process is bound to one or more PUs, we can get
+               an accurate distance. */
+            devs[i].distance = get_ib_dev_distance(ib_devs[i]);
+        } else {
+            /* Since we're not bound, just assume that the device is
+               close. */
+            devs[i].distance = 0;
+        }
     }
 
     qsort(devs, count, sizeof(struct dev_distance), compare_distance);

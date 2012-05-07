@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -42,10 +42,8 @@
 #include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/event/base/base.h"
 #include "opal/runtime/opal_progress.h"
-#include "opal/mca/carto/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/compress/base/base.h"
@@ -141,17 +139,11 @@ opal_finalize(void)
     /* finalize the memory manager / tracker */
     opal_mem_hooks_finalize();
 
-    /* close the carto framework */
-    opal_carto_base_close();
-
     /* close the shmem framework */
     opal_shmem_base_close();
     
     /* close the hwloc framework */
     opal_hwloc_base_close();
-
-    /* close the processor affinity base */
-    opal_paffinity_base_close();
 
     /* close the memcpy base */
     opal_memcpy_base_close();

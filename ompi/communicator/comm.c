@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2011 University of Houston. All rights reserved.
- * Copyright (c) 2007-2008 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
@@ -25,6 +25,7 @@
 #include <stdio.h>
 
 #include "ompi/constants.h"
+#include "opal/mca/hwloc/base/base.h"
 
 #include "opal/dss/dss.h"
 #include "orte/util/name_fns.h"

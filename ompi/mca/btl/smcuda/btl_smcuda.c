@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire. All rights reserved.
- * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010      Los Alamos National Security, LLC.  
+ * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
@@ -37,10 +37,7 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
-#include "opal/mca/carto/carto.h"
-#include "opal/mca/carto/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
-#include "opal/mca/maffinity/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "orte/util/proc_info.h"
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/class/ompi_free_list.h"
@@ -127,68 +124,6 @@ static void *mpool_calloc(size_t nmemb, size_t size)
     return buf;
 }
 
-static void init_maffinity(int *my_mem_node, int *max_mem_node)
-{
-    opal_carto_graph_t *topo;
-    opal_value_array_t dists;
-    int i, num_core, socket;
-    opal_paffinity_base_cpu_set_t cpus;
-    char *myslot = NULL;
-    opal_carto_node_distance_t *dist;
-    opal_carto_base_node_t *slot_node;
-
-    *my_mem_node = 0;
-    *max_mem_node = 1;
-
-    if (OMPI_SUCCESS != opal_carto_base_get_host_graph(&topo, "Memory")) {
-        return;
-    }
-
-     OBJ_CONSTRUCT(&dists, opal_value_array_t);
-     opal_value_array_init(&dists, sizeof(opal_carto_node_distance_t));
-
-    if (OMPI_SUCCESS != opal_paffinity_base_get_processor_info(&num_core))  {
-        num_core = 100;  /* set something large */
-    }
-
-     OPAL_PAFFINITY_CPU_ZERO(cpus);
-     opal_paffinity_base_get(&cpus);
-
-     /* find core we are running on */
-     for (i = 0; i < num_core; i++) {
-         if (OPAL_PAFFINITY_CPU_ISSET(i, cpus)) {
-             break;
-         }
-     }
-
-    if (OMPI_SUCCESS != opal_paffinity_base_get_map_to_socket_core(i, &socket, &i)) {
-        /* no topology info available */
-        goto out;
-    }
-    
-     asprintf(&myslot, "slot%d", socket);
-
-     slot_node = opal_carto_base_find_node(topo, myslot);
-
-     if(NULL == slot_node) {
-         goto out;
-     }
-
-     opal_carto_base_get_nodes_distance(topo, slot_node, "Memory", &dists);
-     if((*max_mem_node = opal_value_array_get_size(&dists)) < 2) {
-         goto out;
-     }
-
-     dist = (opal_carto_node_distance_t *) opal_value_array_get_item(&dists, 0);
-     opal_maffinity_base_node_name_to_id(dist->node->node_name, my_mem_node);
-out:
-     if (myslot) {
-         free(myslot);
-     }
-     OBJ_DESTRUCT(&dists);
-     opal_carto_base_free_graph(topo);
-}
-
 static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
 {
     size_t size, length, length_payload;
@@ -197,61 +132,111 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
     int my_mem_node=-1, num_mem_nodes=-1, i;
     ompi_proc_t **procs;
     size_t num_procs;
+    mca_mpool_base_resources_t res;
+    mca_btl_smcuda_component_t* m = &mca_btl_smcuda_component;
 
-    init_maffinity(&my_mem_node, &num_mem_nodes);
-    mca_btl_smcuda_component.mem_node = my_mem_node;
-    mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes;
+    /* Assume we don't have hwloc support and fill in dummy info */
+    mca_btl_sm_component.mem_node = my_mem_node = 0;
+    mca_btl_sm_component.num_mem_nodes = num_mem_nodes = 1;
+
+#if OPAL_HAVE_HWLOC
+    /* If we have hwloc support, then get accurate information */
+    if (NULL != opal_hwloc_topology) {
+        i = opal_hwloc_base_get_nbobjs_by_type(opal_hwloc_topology,
+                                               HWLOC_OBJ_NODE, 0,
+                                               OPAL_HWLOC_AVAILABLE);
+
+        /* If we find >0 NUMA nodes, then investigate further */
+        if (i > 0) {
+            opal_hwloc_level_t bind_level;
+            unsigned int bind_index;
+
+            /* JMS This tells me how many numa nodes are *available*,
+               but it's not how many are being used *by this job*.
+               Note that this is the value we've previously used (from
+               the previous carto-based implementation), but it really
+               should be improved to be how many NUMA nodes are being
+               used *in this job*. */
+            mca_btl_sm_component.num_mem_nodes = num_mem_nodes = i;
+
+            /* Fill opal_hwloc_my_cpuset and find out to what level
+               this process is bound (if at all) */
+            opal_hwloc_base_get_local_cpuset();
+            opal_hwloc_base_get_level_and_index(opal_hwloc_my_cpuset,
+                                                &bind_level, &bind_index);
+            if (OPAL_HWLOC_NODE_LEVEL != bind_level) {
+                /* We are bound to *something* (i.e., our binding
+                   level is less than "node", meaning the entire
+                   machine), so discover which NUMA node this process
+                   is bound */
+                if (OPAL_HWLOC_NUMA_LEVEL == bind_level) {
+                    mca_btl_sm_component.mem_node = my_mem_node = (int) bind_index;
+                } else {
+                    if (OPAL_SUCCESS == 
+                        opal_hwloc_base_get_local_index(HWLOC_OBJ_NODE, 0, &bind_index)) {
+                        mca_btl_sm_component.mem_node = my_mem_node = (int) bind_index;
+                    } else {
+                        /* Weird.  We can't figure out what NUMA node
+                           we're on. :-( */
+                        mca_btl_sm_component.mem_node = my_mem_node = -1;
+                    }
+                }
+            }
+        }
+    }
+#endif
 
     /* lookup shared memory pool */
     mca_btl_smcuda_component.sm_mpools = (mca_mpool_base_module_t **) calloc(num_mem_nodes,
                                             sizeof(mca_mpool_base_module_t*));
 
-    /* create mpool for each memory node */
-    for(i = 0; i < num_mem_nodes; i++) {
-        mca_mpool_base_resources_t res;
-        mca_btl_smcuda_component_t* m = &mca_btl_smcuda_component;
+    /* Create one mpool.  Per discussion with George and a UTK Euro
+       MPI 2010 paper, it may be beneficial to create multiple mpools.
+       Leaving that for a future optimization, however. */
+    /* Disable memory binding, because each MPI process will claim
+       pages in the mpool for their local NUMA node */
+    res.mem_node = -1;
 
-        /* disable memory binding if there is only one memory node */
-        res.mem_node = (num_mem_nodes == 1) ? -1 : i;
+    /* determine how much memory to create */
+    /*
+     * This heuristic formula mostly says that we request memory for:
+     * - nfifos FIFOs, each comprising:
+     *   . a sm_fifo_t structure
+     *   . many pointers (fifo_size of them per FIFO)
+     * - eager fragments (2*n of them, allocated in sm_free_list_inc chunks)
+     * - max fragments (sm_free_list_num of them)
+     *
+     * On top of all that, we sprinkle in some number of "opal_cache_line_size"
+     * additions to account for some padding and edge effects that may lie
+     * in the allocator.
+     */
+    res.size =
+        FIFO_MAP_NUM(n) * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * opal_cache_line_size )
+        + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + 2 * opal_cache_line_size )
+        +           m->sm_free_list_num   * ( m->max_frag_size + 2 * opal_cache_line_size );
 
-        /* determine how much memory to create */
-        /*
-         * This heuristic formula mostly says that we request memory for:
-         * - nfifos FIFOs, each comprising:
-         *   . a sm_fifo_t structure
-         *   . many pointers (fifo_size of them per FIFO)
-         * - eager fragments (2*n of them, allocated in sm_free_list_inc chunks)
-         * - max fragments (sm_free_list_num of them)
-         *
-         * On top of all that, we sprinkle in some number of "opal_cache_line_size"
-         * additions to account for some padding and edge effects that may lie
-         * in the allocator.
-         */
-        res.size =
-            FIFO_MAP_NUM(n) * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * opal_cache_line_size )
-            + ( 2 * n + m->sm_free_list_inc ) * ( m->eager_limit   + 2 * opal_cache_line_size )
-            +           m->sm_free_list_num   * ( m->max_frag_size + 2 * opal_cache_line_size );
+    /* before we multiply by n, make sure the result won't overflow */
+    /* Stick that little pad in, particularly since we'll eventually
+     * need a little extra space.  E.g., in mca_mpool_sm_init() in
+     * mpool_sm_component.c when sizeof(mca_common_sm_module_t) is
+     * added.
+     */
+    if ( ((double) res.size) * n > LONG_MAX - 4096 ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    res.size *= n;
 
-        /* before we multiply by n, make sure the result won't overflow */
-        /* Stick that little pad in, particularly since we'll eventually
-         * need a little extra space.  E.g., in mca_mpool_sm_init() in
-         * mpool_sm_component.c when sizeof(mca_common_sm_module_t) is
-         * added.
-         */
-        if ( ((double) res.size) * n > LONG_MAX - 4096 )
+    /* now, create it */
+    mca_btl_smcuda_component.sm_mpools[0] =
+        mca_mpool_base_module_create(mca_btl_smcuda_component.sm_mpool_name,
+                                     smcuda_btl, &res);
+    /* Sanity check to ensure that we found it */
+    if (NULL == mca_btl_smcuda_component.sm_mpools[0]) {
             return OMPI_ERR_OUT_OF_RESOURCE;
-        res.size *= n;
+    }
 
-        /* now, create it */
-        mca_btl_smcuda_component.sm_mpools[i] =
-            mca_mpool_base_module_create(mca_btl_smcuda_component.sm_mpool_name,
-                                         smcuda_btl, &res);
-        /* Sanity check to ensure that we found it */
-        if(NULL == mca_btl_smcuda_component.sm_mpools[i])
-            return OMPI_ERR_OUT_OF_RESOURCE;
+    mca_btl_smcuda_component.sm_mpool = mca_btl_smcuda_component.sm_mpools[0];
 
-        if(i == my_mem_node)
-            mca_btl_smcuda_component.sm_mpool = mca_btl_smcuda_component.sm_mpools[i];
 #if OMPI_CUDA_SUPPORT
         /* Create a local memory pool that sends handles to the remote
          * side.  Note that the res argument is not really used, but

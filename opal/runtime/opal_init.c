@@ -38,11 +38,9 @@
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/memchecker/base/base.h"
 #include "opal/dss/dss.h"
-#include "opal/mca/carto/base/base.h"
 #include "opal/mca/shmem/base/base.h"
 #if OPAL_ENABLE_FT_CR    == 1
 #include "opal/mca/compress/base/base.h"
@@ -213,9 +211,12 @@ opal_err2str(int errnum, const char **errmsg)
     case OPAL_ERR_NOT_INITIALIZED:
         retval = "Not initialized";
         break;
+    case OPAL_ERR_NOT_BOUND:
+        retval = "Not bound";
+        break;
     default:
         retval = NULL;
-}
+    }
 
     *errmsg = retval;
     return OPAL_SUCCESS;
@@ -350,16 +351,6 @@ opal_init(int* pargc, char*** pargv)
         goto return_error;
     }
 
-    /* open the processor affinity base */
-    if (OPAL_SUCCESS != (ret = opal_paffinity_base_open())) {
-        error = "opal_paffinity_base_open";
-        goto return_error;
-    }
-    if (OPAL_SUCCESS != (ret = opal_paffinity_base_select())) {
-        error = "opal_paffinity_base_select";
-        goto return_error;
-    }
-
     /* the memcpy component should be one of the first who get
      * loaded in order to make sure we ddo have all the available
      * versions of memcpy correctly configured.
@@ -406,17 +397,6 @@ opal_init(int* pargc, char*** pargv)
         goto return_error;
     }
 
-    /* setup the carto framework */
-    if (OPAL_SUCCESS != (ret = opal_carto_base_open())) {
-        error = "opal_carto_base_open";
-        goto return_error;
-    }
-
-    if (OPAL_SUCCESS != (ret = opal_carto_base_select())) {
-        error = "opal_carto_base_select";
-        goto return_error;
-    }
-    
     /*
      * Need to start the event and progress engines if noone else is.
      * opal_cr_init uses the progress engine, so it is lumped together

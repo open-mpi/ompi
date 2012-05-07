@@ -1,5 +1,6 @@
 /**
   Copyright (c) 2011 Mellanox Technologies. All rights reserved.
+  Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
   $COPYRIGHT$
 
   Additional copyrights may follow
@@ -7,7 +8,6 @@
   $HEADER$
  */
 #include "coll_fca.h"
-#include "opal/mca/paffinity/paffinity.h"
 
 /*
  * Initial query function that is invoked during MPI_INIT, allowing

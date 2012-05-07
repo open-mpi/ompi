@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +31,7 @@
 #include "orte/types.h"
 
 #include "opal/mca/mca.h"
-#include "opal/mca/paffinity/paffinity.h"
+#include "opal/mca/hwloc/base/base.h"
 
 #include "orte/util/proc_info.h"
 
@@ -70,7 +71,7 @@ typedef void (*orte_ess_base_module_abort_fn_t)(int status, bool report);
  * board, node, computing unit, or cluster. This function provides
  * a means for an MPI proc to query the locality of another proc.
  */
-typedef opal_paffinity_locality_t (*orte_ess_base_module_get_proc_locality_fn_t)(orte_process_name_t *proc);
+typedef opal_hwloc_locality_t (*orte_ess_base_module_get_proc_locality_fn_t)(orte_process_name_t *proc);
 
 /**
  * Get the vpid of the daemon who hosts the specified proc

@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved. 
+# Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 #
 # $COPYRIGHT$
 # 
@@ -108,6 +108,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc132_CONFIG],[
           [AC_DEFINE_UNQUOTED([HWLOC_HWLOC132_HWLOC_VERSION], 
                               ["$HWLOC_VERSION"], 
                               [Version of hwloc])
+
+           # Do we have verbs support?
+           AC_CHECK_HEADERS([infiniband/verbs.h])
 
            # Set these variables so that the framework m4 knows
            # what file to include in opal/mca/hwloc/hwloc.h
