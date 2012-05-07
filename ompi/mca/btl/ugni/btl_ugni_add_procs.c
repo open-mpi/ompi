@@ -66,6 +66,27 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
     if (first_time_init) {
         mca_btl_ugni_module_set_max_reg (ugni_module, nlocal_procs);
 
+        rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.local_cq_size,
+                           0, GNI_CQ_NOBLOCK, NULL, NULL, &ugni_module->rdma_local_cq);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_ERROR(("error creating local BTE/FMA CQ"));
+            return ompi_common_rc_ugni_to_ompi (rc);
+        }
+
+        rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.local_cq_size,
+                           0, GNI_CQ_NOBLOCK, NULL, NULL, &ugni_module->smsg_local_cq);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_ERROR(("error creating local SMSG CQ"));
+            return ompi_common_rc_ugni_to_ompi (rc);
+        }
+
+        rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.cq_size,
+                           0, GNI_CQ_NOBLOCK, NULL, NULL, &ugni_module->smsg_remote_cq);
+        if (GNI_RC_SUCCESS != rc) {
+            BTL_ERROR(("error creating remote SMSG CQ"));
+            return ompi_common_rc_ugni_to_ompi (rc);
+        }
+
         rc = mca_btl_ugni_setup_mpools (ugni_module);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             BTL_ERROR(("btl/ugni error setting up mpools/free lists"));
