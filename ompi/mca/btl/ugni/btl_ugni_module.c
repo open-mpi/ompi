@@ -139,8 +139,6 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
         return ompi_common_rc_ugni_to_ompi (rc);
     }
 
-    ugni_module->next_frag_id = 0;
-
     return OMPI_SUCCESS;
 }
 
@@ -244,13 +242,26 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
     frag->base.des_dst = frag->segments + 1;
     frag->base.des_dst_cnt = 1;
 
-    frag->hdr_size = (size <= mca_btl_ugni_component.smsg_max_data) ? sizeof (frag->hdr.send) :
-        sizeof (frag->hdr.eager);
-
     frag->segments[0].seg_addr.pval = NULL;
     frag->segments[0].seg_len       = 0;
     frag->segments[1].seg_addr.pval = frag->base.super.ptr;
     frag->segments[1].seg_len       = size;
+
+    frag->flags = MCA_BTL_UGNI_FRAG_BUFFERED;
+    if (size > mca_btl_ugni_component.smsg_max_data) {
+        mca_btl_ugni_reg_t *registration;
+
+        frag->hdr_size = sizeof (frag->hdr.eager);
+        frag->flags    |= MCA_BTL_UGNI_FRAG_EAGER;
+
+        registration = (mca_btl_ugni_reg_t *) frag->base.super.registration;
+
+        memcpy ((void *) frag->segments[1].seg_key.key64,
+                (void *)&registration->memory_hdl,
+                sizeof (registration->memory_hdl));
+    } else {
+        frag->hdr_size = sizeof (frag->hdr.send);
+    }
 
     return &frag->base;
 }

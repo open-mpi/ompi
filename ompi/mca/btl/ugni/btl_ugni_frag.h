@@ -50,6 +50,12 @@ typedef union mca_btl_ugni_frag_hdr_t {
     mca_btl_ugni_eager_ex_frag_hdr_t eager_ex;
 } mca_btl_ugni_frag_hdr_t;
 
+enum {
+    MCA_BTL_UGNI_FRAG_BUFFERED = 1,
+    MCA_BTL_UGNI_FRAG_COMPLETE = 2,
+    MCA_BTL_UGNI_FRAG_EAGER    = 4
+};
+
 typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_base_descriptor_t base;
     mca_btl_base_segment_t segments[2];
@@ -60,8 +66,7 @@ typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_ugni_reg_t *registration;
     ompi_free_list_t *my_list;
     uint32_t msg_id;
-    bool is_buffered;
-    bool complete;
+    uint32_t flags;
     void (*cbfunc) (struct mca_btl_ugni_base_frag_t*, int);
 } mca_btl_ugni_base_frag_t;
 
@@ -90,6 +95,7 @@ static inline int mca_btl_ugni_frag_alloc (mca_btl_base_endpoint_t *ep,
     if (OPAL_LIKELY(NULL != item)) {
         (*frag)->my_list  = list;
         (*frag)->endpoint = ep;
+        (*frag)->flags    = 0;
     }
 
     return rc;
@@ -110,7 +116,7 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 
 static inline void mca_btl_ugni_frag_complete (mca_btl_ugni_base_frag_t *frag, int rc) {
     /* call callback if specified */
-    frag->complete = true;
+    frag->flags |= MCA_BTL_UGNI_FRAG_COMPLETE;
 
     if (frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
         frag->base.des_cbfunc(&frag->endpoint->btl->super, frag->endpoint, &frag->base, rc);

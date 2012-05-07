@@ -49,7 +49,7 @@ typedef struct mca_btl_base_endpoint_t {
     opal_list_t pending_list;
     opal_list_t pending_smsg_sends;
 
-    uint32_t smsg_progressing;
+    int32_t smsg_progressing;
 } mca_btl_base_endpoint_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_base_endpoint_t);

@@ -87,13 +87,19 @@ static void mca_btl_ugni_callback_eager_get (mca_btl_ugni_base_frag_t *frag, int
     BTL_VERBOSE(("eager get for rem_ctx %p complete", frag->hdr.eager.ctx));
 
     tmp.base.des_dst = tmp.segments;
-    tmp.base.des_dst_cnt = 2;
+    if (hdr_len) {
+        tmp.base.des_dst_cnt = 2;
 
-    tmp.segments[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
-    tmp.segments[0].seg_len       = hdr_len;
+        tmp.segments[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
+        tmp.segments[0].seg_len       = hdr_len;
+        tmp.segments[1].seg_addr.pval = frag->segments[0].seg_addr.pval;
+        tmp.segments[1].seg_len       = payload_len;
+    } else {
+        tmp.base.des_dst_cnt = 1;
 
-    tmp.segments[1].seg_addr.pval = frag->segments[0].seg_addr.pval;
-    tmp.segments[1].seg_len       = payload_len;
+        tmp.segments[0].seg_addr.pval = frag->segments[0].seg_addr.pval;
+        tmp.segments[0].seg_len       = payload_len;
+    }
 
     reg = mca_btl_base_active_message_trigger + tag;
     reg->cbfunc(&frag->endpoint->btl->super, tag, &(tmp.base), reg->cbdata);
@@ -108,6 +114,7 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
                                   mca_btl_ugni_eager_ex_frag_hdr_t hdr,
                                   mca_btl_ugni_base_frag_t *frag)
 {
+    mca_btl_ugni_reg_t *registration;
     int rc;
 
     if (OPAL_UNLIKELY(frag && frag->my_list == &ep->btl->rdma_int_frags)) {

@@ -39,8 +39,6 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
         return NULL;
     }
 
-    frag->is_buffered = false;
-
     BTL_VERBOSE(("preparing src for send fragment. size = %u",
                  (unsigned int)(*size + reserve)));
 
@@ -51,6 +49,8 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
             mca_btl_ugni_frag_return (frag);
             return NULL;
         }
+
+        frag->flags = MCA_BTL_UGNI_FRAG_EAGER;
 
         frag->registration = registration;
         memcpy ((void *) frag->segments[1].seg_key.key64,
@@ -89,23 +89,19 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
     mca_btl_ugni_base_frag_t *frag = NULL;
     uint32_t iov_count = 1;
     struct iovec iov;
+    size_t max_size = *size;
     int rc;
 
-    /* buffer user data */
-    if (OPAL_LIKELY(!use_eager_get)) {
-        (void) MCA_BTL_UGNI_FRAG_ALLOC_SMSG(endpoint, frag);
-    } else {
-        (void) MCA_BTL_UGNI_FRAG_ALLOC_EAGER_SEND(endpoint, frag);
-    }
-
-    if (OPAL_UNLIKELY(NULL == frag)) {
-        return NULL;
-    }
-
-    frag->is_buffered = true;
-
     if (OPAL_UNLIKELY(true == use_eager_get)) {
+        (void) MCA_BTL_UGNI_FRAG_ALLOC_EAGER_SEND(endpoint, frag);
+        if (OPAL_UNLIKELY(NULL == frag)) {
+            return NULL;
+        }
+
+        frag->flags = MCA_BTL_UGNI_FRAG_EAGER;
+
         registration = (mca_btl_ugni_reg_t *) frag->base.super.registration;
+
         memcpy ((void *) frag->segments[1].seg_key.key64,
                 (void *)&registration->memory_hdl,
                 sizeof (registration->memory_hdl));
@@ -113,24 +109,35 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
         frag->hdr_size = reserve + sizeof (frag->hdr.eager);
         frag->segments[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
     } else {
+        (void) MCA_BTL_UGNI_FRAG_ALLOC_SMSG(endpoint, frag);
+        if (OPAL_UNLIKELY(NULL == frag)) {
+            return NULL;
+        }
+
         frag->hdr_size = reserve + sizeof (frag->hdr.send);
         frag->segments[0].seg_addr.pval = frag->hdr.send_ex.pml_header;
     }
 
-    if (*size) {
-        iov.iov_len  = *size;
-        iov.iov_base = (IOVBASE_TYPE *) frag->base.super.ptr;
+    frag->flags |= MCA_BTL_UGNI_FRAG_BUFFERED;
+ 
+    iov.iov_len  = *size;
+    iov.iov_base = (IOVBASE_TYPE *) frag->base.super.ptr;
 
-        rc = opal_convertor_pack (convertor, &iov, &iov_count, size);
-        if (OPAL_UNLIKELY(rc < 0)) {
-            mca_btl_ugni_frag_return (frag);
-            return NULL;
-        }
+    rc = opal_convertor_pack (convertor, &iov, &iov_count, &max_size);
+    if (OPAL_UNLIKELY(rc < 0)) {
+        mca_btl_ugni_frag_return (frag);
+        return NULL;
+    }
+
+    if (max_size != *size) {
+        fprintf (stderr, "**** max_size = %d. iov.iov_len = %d\n", max_size,
+                 iov.iov_len);
+        abort();
     }
 
     frag->segments[0].seg_len       = reserve;
 
-    frag->segments[1].seg_addr.pval = *size ? frag->base.super.ptr : NULL;
+    frag->segments[1].seg_addr.pval = frag->base.super.ptr;
     frag->segments[1].seg_len       = *size;
 
     frag->base.des_src     = frag->segments;

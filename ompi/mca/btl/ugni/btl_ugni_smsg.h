@@ -28,13 +28,12 @@ typedef enum {
 int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep);
 int mca_btl_ugni_progress_remote_smsg (mca_btl_ugni_module_t *btl);
 
-static inline int mca_btl_ugni_smsg_next_local_completion (mca_btl_ugni_module_t *ugni_module, mca_btl_ugni_base_frag_t **frag)
+static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_module)
 {
+    mca_btl_ugni_base_frag_t *frag;
     gni_cq_entry_t event_data;
     gni_return_t rc;
     uint32_t msg_id;
-
-    *frag = NULL;
 
     rc = GNI_CqGetEvent (ugni_module->smsg_local_cq, &event_data);
     if (GNI_RC_NOT_DONE == rc) {
@@ -57,21 +56,14 @@ static inline int mca_btl_ugni_smsg_next_local_completion (mca_btl_ugni_module_t
         return OMPI_SUCCESS;
     }
 
-    *frag = (mca_btl_ugni_base_frag_t *) opal_pointer_array_get_item (&ugni_module->pending_smsg_frags_bb, msg_id);
-    assert (NULL != *frag);
-
-    return GNI_CQ_STATUS_OK(event_data) ? OMPI_SUCCESS : OMPI_ERROR;
-}
-
-static inline int mca_btl_ugni_progress_local_smsg (mca_btl_ugni_module_t *ugni_module)
-{
-    mca_btl_ugni_base_frag_t *frag;
-    int rc;
-
-    rc = mca_btl_ugni_smsg_next_local_completion (ugni_module, &frag);
-    if (NULL != frag) {
-        mca_btl_ugni_frag_complete (frag, rc);
+    frag = (mca_btl_ugni_base_frag_t *) opal_pointer_array_get_item (&ugni_module->pending_smsg_frags_bb,
+                                                                     msg_id);
+    assert (NULL != frag);
+    if (OPAL_UNLIKELY(NULL == frag)) {
+        return OMPI_ERROR;
     }
+
+    mca_btl_ugni_frag_complete (frag, rc);
 
     return 1;
 }
@@ -88,23 +80,23 @@ static inline int ompi_mca_btl_ugni_smsg_send (mca_btl_ugni_base_frag_t *frag,
 
     (void) mca_btl_ugni_progress_local_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
 
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
-        /* see if we can free up some credits */
-        (void) mca_btl_ugni_progress_remote_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
-
-        if (OPAL_LIKELY(GNI_RC_NOT_DONE == grc)) {
-            BTL_VERBOSE(("out of credits"));
-
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-
-        BTL_ERROR(("GNI_SmsgSendWTag failed with rc = %d. handle = %d, hdr_len = %d, payload_len = %d",
-                   grc, (int) frag->endpoint->smsg_ep_handle, (int) hdr_len, (int) payload_len));
-
-        return OMPI_ERROR;
+    if (OPAL_LIKELY(GNI_RC_SUCCESS == grc)) {
+        return OMPI_SUCCESS;
     }
 
-    return OMPI_SUCCESS;
+    /* see if we can free up some credits */
+    (void) mca_btl_ugni_progress_remote_smsg ((mca_btl_ugni_module_t *) frag->endpoint->btl);
+
+    if (OPAL_LIKELY(GNI_RC_NOT_DONE == grc)) {
+        BTL_VERBOSE(("out of credits"));
+
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    BTL_ERROR(("GNI_SmsgSendWTag failed with rc = %d. handle = %lu, hdr_len = %d, payload_len = %d",
+               grc, (uintptr_t) frag->endpoint->smsg_ep_handle, (int) hdr_len, (int) payload_len));
+
+    return OMPI_ERROR;
 }
 
 #endif /* MCA_BTL_UGNI_SMSG_H */
