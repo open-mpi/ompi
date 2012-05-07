@@ -13,6 +13,10 @@
 # This file builds the C bindings for MPI extensions.  It must be
 # present in all MPI extensions.
 
+# Example program
+example: example.c
+	mpicc example.c -o example -g
+
 # We must set these #defines so that the inner OMPI MPI prototype
 # header files do the Right Thing.
 AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
@@ -41,4 +45,4 @@ libmpiext_affinity_c_la_LDFLAGS = -module -avoid-version
 nodist_man_MANS = OMPI_Affinity_str.3
 
 # Man page sources
-EXTRA_DIST = $(nodist_man_MANS:.3=.3in)
+EXTRA_DIST = $(nodist_man_MANS:.3=.3in) example.c
