@@ -80,6 +80,9 @@ btl_ugni_component_register(void)
     mca_btl_ugni_component.cq_size =
         mca_btl_ugni_param_register_int("cq_size", NULL, 40000);
 
+    mca_btl_ugni_component.local_cq_size =
+        mca_btl_ugni_param_register_int("local_cq_size", NULL, 8192);
+
     /* SMSG limit. 0 - autoselect */
     mca_btl_ugni_component.ugni_smsg_limit =
         mca_btl_ugni_param_register_int("smsg_limit", "Maximum size message that "
@@ -276,9 +279,11 @@ mca_btl_ugni_component_init (int *num_btl_modules,
 
     if (0 == mca_btl_ugni_component.ugni_smsg_limit) {
         /* auto-set the smsg limit based on the number of ranks */
-        if (nprocs <= 256) {
+        if (nprocs <= 512) {
             mca_btl_ugni_component.ugni_smsg_limit = 8192;
         } else if (nprocs <= 1024) {
+            mca_btl_ugni_component.ugni_smsg_limit = 2048;
+        } else if (nprocs <= 8192) {
             mca_btl_ugni_component.ugni_smsg_limit = 1024;
         } else if (nprocs <= 16384) {
             mca_btl_ugni_component.ugni_smsg_limit = 512;
