@@ -1689,18 +1689,15 @@ Miscellaneous frameworks:
 -------------------------
 
 backtrace   - Debugging call stack backtrace support
-carto       - Cartography (host/network mapping) support
 compress    - Compression algorithms
 crs         - Checkpoint and restart service
 event       - Event library (libevent) versioning support
 hwloc       - Hardware locality (hwloc) versioning support
 if          - OS IP interface support
 installdirs - Installation directory relocation services
-maffinity   - Memory affinity
 memchecker  - Run-time memory checking
 memcpy      - Memopy copy support
 memory      - Memory management hooks
-paffinity   - Processor affinity
 pstat       - Process status
 shmem       - Shared memory support
 timer       - High-resolution timers
