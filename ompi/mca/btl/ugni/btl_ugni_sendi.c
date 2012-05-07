@@ -25,8 +25,6 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
 {
     const size_t length = header_size + payload_size;
     mca_btl_ugni_base_frag_t *frag;
-    uint32_t iov_count = 1;
-    struct iovec iov;
     size_t max_data;
     int rc;
 
@@ -63,7 +61,7 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
     memmove (frag->base.des_src[0].seg_addr.pval, header, header_size);
 
     /* send message */
-    if (OPAL_LIKELY(length <= mca_btl_ugni_component.smsg_max_data)) { 
+    if (OPAL_LIKELY(!(frag->flags & MCA_BTL_UGNI_FRAG_EAGER))) {
         rc = ompi_mca_btl_ugni_smsg_send (frag, false, &frag->hdr.send_ex, frag->hdr_size,
                                           frag->segments[1].seg_addr.pval, frag->segments[1].seg_len,
                                           MCA_BTL_UGNI_TAG_SEND);

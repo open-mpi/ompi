@@ -49,7 +49,7 @@ static inline int init_gni_post_desc(mca_btl_ugni_base_frag_t *frag,
 static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_post_type_t op_type,
                                          mca_btl_base_segment_t *lcl_seg, mca_btl_base_segment_t *rem_seg)
 {
-    int rc;
+    gni_return_t rc;
 
     /* Post descriptor */
     init_gni_post_desc (frag, op_type, lcl_seg->seg_addr.lval,
@@ -59,17 +59,17 @@ static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_pos
 
     rc = GNI_PostFma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
     if (GNI_RC_SUCCESS != rc) {
-        assert(rc < 4);
-        rc = OMPI_ERR_OUT_OF_RESOURCE;
+        BTL_VERBOSE(("GNI_PostFma failed with gni rc: %d", rc));
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    return rc;
+    return OMPI_SUCCESS;
 }
 
 static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_post_type_t op_type,
                                          mca_btl_base_segment_t *lcl_seg, mca_btl_base_segment_t *rem_seg)
 {
-    int rc;
+    gni_return_t rc;
 
     /* Post descriptor */
     init_gni_post_desc (frag, op_type, lcl_seg->seg_addr.lval,
@@ -79,11 +79,11 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
 
     rc = GNI_PostRdma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
     if (GNI_RC_SUCCESS != rc) {
-        rc = ompi_common_rc_ugni_to_ompi (rc);
-        BTL_ERROR(("GNI_PostRdma failed with rc = %d", rc));
+        BTL_VERBOSE(("GNI_PostRdma failed with gni rc: %d", rc));
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    return rc;
+    return OMPI_SUCCESS;
 }
 
 #endif /* MCA_BTL_UGNI_RDMA_H */
