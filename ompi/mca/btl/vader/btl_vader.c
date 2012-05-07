@@ -23,10 +23,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/mca/carto/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
-#include "opal/mca/maffinity/base/base.h"
-
 #include "btl_vader.h"
 #include "btl_vader_endpoint.h"
 #include "btl_vader_fifo.h"
