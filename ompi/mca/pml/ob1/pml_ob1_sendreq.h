@@ -159,6 +159,13 @@ get_request_from_send_pending(mca_pml_ob1_send_pending_t *type)
         (sendreq)->req_recv.pval = NULL;                                \
     }
 
+#define MCA_PML_OB1_SEND_REQUEST_RESET(sendreq)                             \
+{                                                                           \
+    size_t _position = 0;                                                   \
+    opal_convertor_set_position(&sendreq->req_send.req_base.req_convertor,  \
+                                &_position);                                \
+    assert( 0 == _position );                                               \
+}
 
 static inline void mca_pml_ob1_free_rdma_resources(mca_pml_ob1_send_request_t* sendreq)
 {
