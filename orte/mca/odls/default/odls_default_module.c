@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
@@ -109,7 +109,6 @@
 
 #include "opal/mca/hwloc/hwloc.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "opal/mca/maffinity/base/base.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
@@ -525,16 +524,15 @@ static int do_child(orte_app_context_t* context,
                         goto PROCEED;
                     }
                 }
-                opal_maffinity_setup = true;
                 /* Set an info MCA param that tells
                    the launched processes that it was bound by us (e.g., so that
                    MPI_INIT doesn't try to bind itself) */
-                param = mca_base_param_environ_variable("opal","bound","at_launch");
+                param = mca_base_param_environ_variable("orte","bound","at_launch");
                 opal_setenv(param, "1", true, &environ_copy);
                 free(param);
                 /* ...and provide a nice string representation of what we
                    bound to */
-                param = mca_base_param_environ_variable("opal","base","applied_binding");
+                param = mca_base_param_environ_variable("orte","base","applied_binding");
                 opal_setenv(param, child->cpu_bitmap, true, &environ_copy);
             }
         }

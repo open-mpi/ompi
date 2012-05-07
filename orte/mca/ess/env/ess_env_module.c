@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -164,6 +164,12 @@ static int rte_init(void)
         goto error;
     }
     
+    /* setup process binding */
+    if (ORTE_SUCCESS != (ret = orte_ess_base_proc_binding())) {
+        error = "proc_binding";
+        goto error;
+    }
+
     return ORTE_SUCCESS;
 
 error:

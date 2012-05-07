@@ -70,7 +70,8 @@ enum {
     OPAL_ERR_SLOT_LIST_RANGE                = (OPAL_ERR_BASE - 41),
     OPAL_ERR_NETWORK_NOT_PARSEABLE          = (OPAL_ERR_BASE - 42),
     OPAL_ERR_SILENT                         = (OPAL_ERR_BASE - 43),
-    OPAL_ERR_NOT_INITIALIZED                = (OPAL_ERR_BASE - 44)
+    OPAL_ERR_NOT_INITIALIZED                = (OPAL_ERR_BASE - 44),
+    OPAL_ERR_NOT_BOUND                      = (OPAL_ERR_BASE - 45)
 };
 
 #define OPAL_ERR_MAX                (OPAL_ERR_BASE - 100)

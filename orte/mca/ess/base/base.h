@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -83,13 +83,18 @@ ORTE_DECLSPEC int orte_ess_base_tool_finalize(void);
 ORTE_DECLSPEC int orte_ess_base_orted_setup(char **hosts);
 ORTE_DECLSPEC int orte_ess_base_orted_finalize(void);
 
-ORTE_DECLSPEC opal_paffinity_locality_t orte_ess_base_proc_get_locality(orte_process_name_t *proc);
+ORTE_DECLSPEC opal_hwloc_locality_t orte_ess_base_proc_get_locality(orte_process_name_t *proc);
 ORTE_DECLSPEC orte_vpid_t orte_ess_base_proc_get_daemon(orte_process_name_t *proc);
 ORTE_DECLSPEC char* orte_ess_base_proc_get_hostname(orte_process_name_t *proc);
 ORTE_DECLSPEC orte_local_rank_t orte_ess_base_proc_get_local_rank(orte_process_name_t *proc);
 ORTE_DECLSPEC orte_node_rank_t orte_ess_base_proc_get_node_rank(orte_process_name_t *proc);
 ORTE_DECLSPEC int orte_ess_base_update_pidmap(opal_byte_object_t *bo);
 ORTE_DECLSPEC int orte_ess_base_update_nidmap(opal_byte_object_t *bo);
+
+/* Detect whether or not this proc is bound - if not, 
+ * see if it should bind itself
+ */
+ORTE_DECLSPEC int orte_ess_base_proc_binding(void);
 
 /*
  * Put functions

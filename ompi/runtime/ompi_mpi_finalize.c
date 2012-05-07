@@ -10,8 +10,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
@@ -42,7 +42,6 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/output.h"
 #include "opal/runtime/opal_progress.h"
-#include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/base/base.h"
 #include "orte/util/show_help.h"
 #include "opal/sys/atomic.h"
@@ -156,11 +155,6 @@ int ompi_mpi_finalize(void)
     /* Redo ORTE calling opal_progress_event_users_increment() during
        MPI lifetime, to get better latency when not using TCP */
     opal_progress_event_users_increment();
-
-    /* If maffinity was setup, tear it down */
-    if (opal_maffinity_setup) {
-        opal_maffinity_base_close();
-    }
 
     /* check to see if we want timing information */
     mca_base_param_reg_int_name("ompi", "timing",

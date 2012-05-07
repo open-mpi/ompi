@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC.
+ *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,7 +34,6 @@
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/mca/paffinity/paffinity.h"
 #include "opal/threads/tsd.h"
 
 #include "opal/mca/hwloc/hwloc.h"
@@ -277,8 +278,11 @@ void opal_hwloc_base_get_local_cpuset(void)
         if (NULL == opal_hwloc_my_cpuset) {
             opal_hwloc_my_cpuset = hwloc_bitmap_alloc();
         }
+
         /* get the cpus we are bound to */
-        if (0 > hwloc_get_cpubind(opal_hwloc_topology, opal_hwloc_my_cpuset, HWLOC_CPUBIND_PROCESS)) {
+        if (hwloc_get_cpubind(opal_hwloc_topology, 
+                              opal_hwloc_my_cpuset, 
+                              HWLOC_CPUBIND_PROCESS) < 0) {
             /* we are not bound - use the root's available cpuset */
             root = hwloc_get_root_obj(opal_hwloc_topology);
             base_cpus = opal_hwloc_base_get_available_cpus(opal_hwloc_topology, root);
@@ -339,6 +343,11 @@ hwloc_cpuset_t opal_hwloc_base_get_available_cpus(hwloc_topology_t topo,
         OPAL_OUTPUT_VERBOSE((5, opal_hwloc_base_output,
                              "hwloc:base:get_available_cpus root object"));
         return rdata->available;
+    }
+
+    /* some hwloc object types don't have cpus */
+    if (NULL == obj->online_cpuset || NULL == obj->allowed_cpuset) {
+        return NULL;
     }
 
     /* see if we already have this info */
@@ -620,7 +629,7 @@ static hwloc_obj_t df_search(hwloc_topology_t topo,
             if (NULL == data->available) {
                 data->available = opal_hwloc_base_get_available_cpus(topo, start);
             }
-            if (!hwloc_bitmap_iszero(data->available)) {
+            if (NULL != data->available && !hwloc_bitmap_iszero(data->available)) {
                 if (NULL != num_objs) {
                     *num_objs += 1;
                 } else if (*idx == nobj) {
@@ -1036,9 +1045,9 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
     return OPAL_SUCCESS;
 }
 
-static opal_paffinity_locality_t get_locality(opal_hwloc_level_t level)
+static opal_hwloc_locality_t get_locality(opal_hwloc_level_t level)
 {
-    opal_paffinity_locality_t lvl;
+    opal_hwloc_locality_t lvl;
 
     switch(level) {
     case OPAL_HWLOC_NODE_LEVEL:
@@ -1070,13 +1079,13 @@ static opal_paffinity_locality_t get_locality(opal_hwloc_level_t level)
     return lvl;
 }
 
-opal_paffinity_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
-                                                                opal_hwloc_level_t level1,
-                                                                unsigned int peer1,
-                                                                opal_hwloc_level_t level2,
-                                                                unsigned int peer2)
+opal_hwloc_locality_t opal_hwloc_base_get_relative_locality(hwloc_topology_t topo,
+                                                            opal_hwloc_level_t level1,
+                                                            unsigned int peer1,
+                                                            opal_hwloc_level_t level2,
+                                                            unsigned int peer2)
 {
-    opal_paffinity_locality_t locality;
+    opal_hwloc_locality_t locality;
     hwloc_obj_t obj1, obj2;
     unsigned cache_level=0;
     opal_hwloc_level_t i, lvl;
@@ -1234,9 +1243,9 @@ static hwloc_obj_t df_search_level(hwloc_obj_t start,
     return NULL;
 }
 
-void opal_hwloc_base_get_level_and_index(hwloc_cpuset_t cpus,
-                                         opal_hwloc_level_t *bind_level,
-                                         unsigned int *bind_idx)
+hwloc_obj_t opal_hwloc_base_get_level_and_index(hwloc_cpuset_t cpus,
+                                                opal_hwloc_level_t *bind_level,
+                                                unsigned int *bind_idx)
 {
     hwloc_obj_t root, obj;
 
@@ -1244,7 +1253,7 @@ void opal_hwloc_base_get_level_and_index(hwloc_cpuset_t cpus,
     if (NULL == opal_hwloc_topology) {
         *bind_level = OPAL_HWLOC_NODE_LEVEL;
         *bind_idx = 0;
-        return;
+        return NULL;
     }
 
     /* start at the node level and do a down-first
@@ -1257,11 +1266,89 @@ void opal_hwloc_base_get_level_and_index(hwloc_cpuset_t cpus,
 
     if (NULL == obj) {
         /* no match found */
-        return;
+        return NULL;
     }
 
     /* get the index */
     *bind_idx = opal_hwloc_base_get_obj_idx(opal_hwloc_topology, obj, OPAL_HWLOC_AVAILABLE);
+    return obj;
+}
+
+int opal_hwloc_base_get_local_index(hwloc_obj_type_t type,
+                                    unsigned cache_level,
+                                    unsigned int *idx)
+{
+    opal_hwloc_level_t bind_level;
+    unsigned int bind_idx;
+    hwloc_obj_t obj;
+
+    /* if we don't have topology info, nothing we can do */
+    if (NULL == opal_hwloc_topology) {
+        return OPAL_ERR_NOT_AVAILABLE;
+    }
+
+    /* ensure we have our local cpuset */
+    opal_hwloc_base_get_local_cpuset();
+
+    /* if we are not bound, then this is meaningless */
+    obj = opal_hwloc_base_get_level_and_index(opal_hwloc_my_cpuset,
+                                              &bind_level, &bind_idx);
+    if (OPAL_HWLOC_NODE_LEVEL == bind_level) {
+        return OPAL_ERR_NOT_BOUND;
+    }
+
+    /* if the type/level match, then we are done */
+    if (type == opal_hwloc_levels[bind_level]) {
+        if (HWLOC_OBJ_CACHE == type) {
+            if ((cache_level == 1 && bind_level == OPAL_HWLOC_L1CACHE_LEVEL) ||
+                (cache_level == 2 && bind_level == OPAL_HWLOC_L2CACHE_LEVEL) ||
+                (cache_level == 3 && bind_level == OPAL_HWLOC_L3CACHE_LEVEL)) {
+                *idx = bind_idx;
+                return OPAL_SUCCESS;
+            }
+        } else {
+            *idx = bind_idx;
+            return OPAL_SUCCESS;
+        }
+    }
+
+    /* if the binding level is below the type, then we cannot
+     * answer the question as we could run on multiple objects
+     * of that type - e.g., if we are bound to NUMA and we are
+     * asked for the idx of the socket we are on, then we can
+     * only answer "unknown"
+     */
+    if (type > opal_hwloc_levels[bind_level]) {
+        return OPAL_ERR_MULTIPLE_AFFINITIES;
+    }
+    if (type == HWLOC_OBJ_CACHE) {
+        if ((cache_level == 1 && OPAL_HWLOC_L1CACHE_LEVEL < bind_level) ||
+            (cache_level == 2 && OPAL_HWLOC_L2CACHE_LEVEL < bind_level) ||
+            (cache_level == 3 && OPAL_HWLOC_L3CACHE_LEVEL < bind_level)) {
+            return OPAL_ERR_MULTIPLE_AFFINITIES;
+        }
+    }
+
+    /* move upward until we find the specified type */
+    while (NULL != obj) {
+        obj = obj->parent;
+        if (obj->type == type) {
+            if (type == HWLOC_OBJ_CACHE) {
+                if (cache_level == obj->attr->cache.depth) {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+    if (NULL == obj) {
+        return OPAL_ERR_NOT_FOUND;
+    }
+
+    /* get the index of this object */
+    *idx = opal_hwloc_base_get_obj_idx(opal_hwloc_topology, obj, OPAL_HWLOC_AVAILABLE);
+    return OPAL_SUCCESS;
 }
 
 #define OPAL_HWLOC_PRINT_MAX_SIZE   50
@@ -1415,7 +1502,7 @@ char* opal_hwloc_base_print_level(opal_hwloc_level_t level)
     return ret;
 }
 
-char* opal_hwloc_base_print_locality(opal_paffinity_locality_t locality)
+char* opal_hwloc_base_print_locality(opal_hwloc_locality_t locality)
 {
     opal_hwloc_print_buffers_t *ptr;
     int idx;

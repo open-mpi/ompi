@@ -12,6 +12,7 @@
  * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -66,8 +67,6 @@
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
-#include "opal/mca/paffinity/base/base.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/threads/threads.h"

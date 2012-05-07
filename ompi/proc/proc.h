@@ -9,8 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -35,7 +35,7 @@
 #include "ompi/types.h"
 #include "opal/class/opal_list.h"
 #include "opal/dss/dss_types.h"
-#include "opal/mca/paffinity/paffinity.h"
+#include "opal/mca/hwloc/hwloc.h"
 
 #include "orte/types.h"
 
@@ -63,7 +63,7 @@ struct ompi_proc_t {
     /** architecture of this process */
     uint32_t                        proc_arch;
     /** flags for this proc */
-    opal_paffinity_locality_t       proc_flags;
+    opal_hwloc_locality_t           proc_flags;
     /** Base convertor for the proc described by this process */
     struct opal_convertor_t*        proc_convertor;
     /** A pointer to the name of this host - data is

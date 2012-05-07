@@ -10,8 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Los Alamos National Security, LLC.  
+ * Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * $COPYRIGHT$
  * 
@@ -48,8 +48,7 @@
 
 #include "mpi.h"
 #include "opal_stdint.h"
-#include "opal/mca/maffinity/maffinity.h"
-#include "opal/mca/maffinity/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/util/os_path.h"
 
 #include "orte/util/proc_info.h"
@@ -257,7 +256,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
     mca_coll_sm_comm_t *data = NULL;
     size_t control_size, frag_size;
     mca_coll_sm_component_t *c = &mca_coll_sm_component;
-    opal_maffinity_base_segment_t *maffinity;
+    opal_hwloc_base_memory_segment_t *maffinity;
     int parent, min_child, max_child, num_children;
     unsigned char *base = NULL;
     const int num_barrier_buffers = 2;
@@ -270,8 +269,8 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 
     /* Get some space to setup memory affinity (just easier to try to
        alloc here to handle the error case) */
-    maffinity = (opal_maffinity_base_segment_t*)
-        malloc(sizeof(opal_maffinity_base_segment_t) * 
+    maffinity = (opal_hwloc_base_memory_segment_t*)
+        malloc(sizeof(opal_hwloc_base_memory_segment_t) * 
                c->sm_comm_num_segments * 3);
     if (NULL == maffinity) {
         opal_output_verbose(10, mca_coll_base_output,
@@ -458,7 +457,7 @@ int ompi_coll_sm_lazy_enable(mca_coll_base_module_t *module,
 
     /* Setup memory affinity so that the pages that belong to this
        process are local to this process */
-    opal_maffinity_base_set(maffinity, j);
+    opal_hwloc_base_memory_set(maffinity, j);
     free(maffinity);
 
     /* Zero out the control structures that belong to this process */

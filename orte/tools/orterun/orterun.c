@@ -59,7 +59,7 @@
 
 #include "opal/mca/event/event.h"
 #include "opal/mca/installdirs/installdirs.h"
-#include "opal/mca/paffinity/base/base.h"
+#include "opal/mca/hwloc/base/base.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -673,13 +673,6 @@ int orterun(int argc, char *argv[])
 
     /* Setup MCA params */
     orte_register_params();
-
-    /***    NOTIFY IF DEPRECATED OPAL_PAFFINITY_ALONE WAS SET   ***/
-    if (opal_paffinity_alone) {
-        orte_show_help("help-opal-runtime.txt",
-                       "opal_paffinity_alone:deprecated",
-                       true);
-    }
 
     /* Check for some "global" command line params */
     parse_globals(argc, argv, &cmd_line);

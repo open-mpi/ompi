@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2010      Los Alamos National Security, LLC.
  *                         All rights reserved.
@@ -35,7 +35,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/threads.h"
-#include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/shmem/base/base.h" 
 
 int opal_register_params(void)
@@ -117,6 +116,5 @@ int opal_register_params(void)
         return ret; 
     }
 
-    /* Paffinity base also has some parameters */
-    return opal_paffinity_base_register_params();
+    return OPAL_SUCCESS;
 }

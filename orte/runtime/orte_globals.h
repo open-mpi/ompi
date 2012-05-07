@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -42,7 +42,7 @@
 #include "opal/threads/threads.h"
 #include "opal/mca/event/event.h"
 #include "opal/mca/hwloc/hwloc.h"
-#include "opal/mca/paffinity/paffinity.h"
+#include "opal/mca/hwloc/base/base.h"
 
 #include "orte/mca/plm/plm_types.h"
 #include "orte/mca/rml/rml_types.h"
@@ -65,7 +65,16 @@ ORTE_DECLSPEC extern bool orte_create_session_dirs;  /* instantiated in orte/run
 ORTE_DECLSPEC extern bool orte_execute_quiet;  /* instantiated in orte/runtime/orte_globals.c */
 ORTE_DECLSPEC extern bool orte_report_silent_errors;  /* instantiated in orte/runtime/orte_globals.c */
 ORTE_DECLSPEC extern opal_event_base_t *orte_event_base;  /* instantiated in orte/runtime/orte_init.c */
-ORTE_DECLSPEC extern bool orte_event_base_active;
+ORTE_DECLSPEC extern bool orte_event_base_active; /* instantiated in orte/runtime/orte_init.c */
+ORTE_DECLSPEC extern bool orte_proc_is_bound;  /* instantiated in orte/runtime/orte_init.c */
+#if OPAL_HAVE_HWLOC
+/**
+ * Global indicating where this process was bound to at launch (will
+ * be NULL if !orte_proc_is_bound)
+ */
+OPAL_DECLSPEC extern hwloc_cpuset_t orte_proc_applied_binding;  /* instantiated in orte/runtime/orte_init.c */
+#endif
+
 
 /* Shortcut for some commonly used names */
 #define ORTE_NAME_WILDCARD      (&orte_name_wildcard)
@@ -546,7 +555,7 @@ typedef struct {
     /* node rank */
     orte_node_rank_t node_rank;
     /* locality */
-    opal_paffinity_locality_t locality;
+    opal_hwloc_locality_t locality;
 } orte_pmap_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_pmap_t);
 

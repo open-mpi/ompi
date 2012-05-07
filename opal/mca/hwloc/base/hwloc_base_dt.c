@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -272,19 +272,27 @@ static void print_hwloc_obj(char **output, char *prefix,
         free(tmp);
         tmp = tmp2;
     }
-    /* print the cpusets */
-    hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->cpuset);
-    asprintf(&tmp2, "%s%sCpuset:  %s", tmp, pfx, string);
-    free(tmp);
-    tmp = tmp2;
-    hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->online_cpuset);
-    asprintf(&tmp2, "%s%sOnline:  %s", tmp, pfx, string);
-    free(tmp);
-    tmp = tmp2;
-    hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->allowed_cpuset);
-    asprintf(&tmp2, "%s%sAllowed: %s", tmp, pfx, string);
-    free(tmp);
-    tmp = tmp2;
+    /* print the cpusets - apparently, some new HWLOC types don't
+     * have cpusets, so protect ourselves here
+     */
+    if (NULL != obj->cpuset) {
+        hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->cpuset);
+        asprintf(&tmp2, "%s%sCpuset:  %s", tmp, pfx, string);
+        free(tmp);
+        tmp = tmp2;
+    }
+    if (NULL != obj->online_cpuset) {
+        hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->online_cpuset);
+        asprintf(&tmp2, "%s%sOnline:  %s", tmp, pfx, string);
+        free(tmp);
+        tmp = tmp2;
+    }
+    if (NULL != obj->allowed_cpuset) {
+        hwloc_bitmap_snprintf(string, OPAL_HWLOC_MAX_STRING, obj->allowed_cpuset);
+        asprintf(&tmp2, "%s%sAllowed: %s", tmp, pfx, string);
+        free(tmp);
+        tmp = tmp2;
+    }
     if (HWLOC_OBJ_MACHINE == obj->type) {
         /* root level object - add support values */
         support = (struct hwloc_topology_support*)hwloc_topology_get_support(topo);

@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2007-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -58,6 +58,10 @@ char *orte_prohibited_session_dirs = NULL;
 bool orte_create_session_dirs = true;
 opal_event_base_t *orte_event_base;
 bool orte_event_base_active = true;
+bool orte_proc_is_bound = false;
+#if OPAL_HAVE_HWLOC
+hwloc_cpuset_t orte_proc_applied_binding = NULL;
+#endif
 
 orte_process_name_t orte_name_wildcard = {ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
 
