@@ -192,8 +192,8 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     int mbox_increment, rc;
     size_t nprocs;
 
-    opal_pointer_array_init (&ugni_module->pending_smsg_frags_bb, 0,
-                             1 << 31, 32768);
+    rc = opal_pointer_array_init (&ugni_module->pending_smsg_frags_bb, 0,
+                                  1 << 30, 32768);
     if (OPAL_SUCCESS != rc) {
         return rc;
     }
