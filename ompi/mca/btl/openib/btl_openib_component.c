@@ -47,6 +47,9 @@ const char *ibv_get_sysfs_path(void);
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stddef.h>
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
+#include <malloc.h>
+#endif
 
 #include "opal/mca/event/event.h"
 #include "opal/align.h"
@@ -136,6 +139,26 @@ mca_btl_openib_component_t mca_btl_openib_component = {
     }
 };
 
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
+/* This is a memory allocator hook. The purpose of this is to make
+ * every malloc aligned since this speeds up IB HCA work.
+ * There two basic cases here:
+ * 1. Memory manager for Open MPI is enabled. Then memalign below will be
+ * overridden by __memalign_hook which is set to opal_memory_linux_memalign_hook.
+ * Thus, _malloc_hook is going to use opal_memory_linux_memalign_hook.
+ * 2. No memory manager support. The memalign below is just regular glibc
+ * memalign which will be called through __malloc_hook instead of malloc.
+ */
+static void *btl_openib_malloc_hook(size_t sz, const void* caller)
+{
+    if (sz < mca_btl_openib_component.memalign_threshold) {
+        return mca_btl_openib_component.previous_malloc_hook(sz, caller);
+    } else {
+        return memalign(mca_btl_openib_component.use_memalign, sz);
+    }
+}
+#endif
+
 static int btl_openib_component_register(void)
 {
     int ret;
@@ -162,6 +185,13 @@ static int btl_openib_component_register(void)
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
+    mca_btl_openib_component.previous_malloc_hook = __malloc_hook;
+    if (mca_btl_openib_component.use_memalign > 0) {
+        __malloc_hook = btl_openib_malloc_hook; 
+    }
+#endif
+
     return OMPI_SUCCESS;
 }
 
@@ -178,6 +208,7 @@ static int btl_openib_component_open(void)
     OBJ_CONSTRUCT(lock, opal_mutex_t);
     OBJ_CONSTRUCT(srq_addr_table, opal_hash_table_t);
 #endif
+
     /* initialize state */
     mca_btl_openib_component.ib_num_btls = 0;
     mca_btl_openib_component.openib_btls = NULL;
@@ -238,6 +269,11 @@ static int btl_openib_component_close(void)
     if (NULL != mca_btl_openib_component.default_recv_qps) {
         free(mca_btl_openib_component.default_recv_qps);
     }
+    
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
+    __malloc_hook = mca_btl_openib_component.previous_malloc_hook;
+#endif
+
     return rc;
 }
 
@@ -3829,3 +3865,4 @@ int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl, const int qp)
     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
     return OMPI_ERROR;
 }
+
