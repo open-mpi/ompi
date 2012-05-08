@@ -297,6 +297,11 @@ struct mca_btl_openib_component_t {
 #if BTL_OPENIB_FAILOVER_ENABLED
     int verbose_failover;
 #endif
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
+    int use_memalign;
+    size_t memalign_threshold;
+    void* (*previous_malloc_hook)(size_t __size, const void*);
+#endif
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
