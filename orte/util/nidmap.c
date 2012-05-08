@@ -615,6 +615,7 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
             dptr = OBJ_NEW(orte_proc_t);
             dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
             dptr->name.vpid = vpids[i];
+            opal_pointer_array_set_item(daemons->procs, vpids[i], dptr);
         }
         if (NULL != node->daemon) {
             OBJ_RELEASE(node->daemon);
