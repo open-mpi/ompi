@@ -17,6 +17,8 @@
 example: example.c
 	mpicc example.c -o example -g
 
+CLEANFILES = example
+
 # We must set these #defines so that the inner OMPI MPI prototype
 # header files do the Right Thing.
 AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_FORTRAN_WRAPPERS=1
