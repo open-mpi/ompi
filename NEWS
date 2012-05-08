@@ -86,6 +86,9 @@ Trunk (not on release branches yet)
 - Fix some process affinity issues.  When binding a process, Open MPI
   will now bind to all available hyperthreads in a core (or socket,
   depending on the binding options specified).
+  --> Note that "mpirun --bind-to-socket ..." does not work on POWER6-
+      and POWER7-based systems with some Linux kernel versions.  See
+      the FAQ on the Open MPI web site for more information.
 - Add support for ARM5 and ARM6 (in addition to the existing ARM7
   support).  Thanks to Evan Clinton for the patch.
 - Minor Mellanox MXM fixes.
