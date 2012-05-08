@@ -300,6 +300,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         AC_MSG_RESULT([no])
     fi
 
+    AC_MSG_CHECKING([if UD CM is enabled])
     AC_DEFINE_UNQUOTED([OMPI_HAVE_UDCM], [$$1_have_udcm],
         [Whether UD CM is available or not])
     if test "1" = "$$1_have_udcm"; then
