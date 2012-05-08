@@ -24,5 +24,6 @@ enable_ipv6=no
 enable_mpi_fortran=no
 enable_mpi_cxx=no
 enable_mpi_cxx_seek=no
+enable_mpi_ext=affinity
 enable_mca_no_build=pml-dr,pml-crcp2,crcp
 enable_io_romio=no
