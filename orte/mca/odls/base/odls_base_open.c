@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -102,6 +102,11 @@ int orte_odls_base_open(void)
     mca_base_param_reg_int_name("odls", "base_sigkill_timeout",
                                 "Time to wait for a process to die after issuing a kill signal to it",
                                 false, false, 1, &orte_odls_globals.timeout_before_sigkill);
+
+    mca_base_param_reg_int_name("odls", "base_exit_status_77_fatal",
+                                "Whether to kill an entire job if any process in that job exits normally with a status of 77 (exit status 77 in the GNU testing standards means \"this test was skipped\", and therefore we wouldn't want to kill the entire job)",
+                                false, false, 1, &i);
+    orte_odls_globals.is_exit_status_77_fatal = OPAL_INT_TO_BOOL(i);
 
     /* initialize the global array of local children */
     orte_local_children = OBJ_NEW(opal_pointer_array_t);

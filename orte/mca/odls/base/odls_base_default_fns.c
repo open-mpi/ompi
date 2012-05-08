@@ -13,7 +13,7 @@
  * Copyright (c) 2011      Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -2071,6 +2071,17 @@ void odls_base_default_wait_local_proc(pid_t pid, int status, void* cbdata)
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc->name)));
             state = ORTE_PROC_STATE_CALLED_ABORT;
+            goto MOVEON;
+        }
+
+        /* If the exit status of this proc was 77 and the
+           odls_base_exit_status_77_fatal MCA param was set to false,
+           then don't kill the whole job.  The rationale is that the
+           GNU testing standards specify that an exit status of 77
+           indicates that a test was skipped -- it should not be
+           treated as a fatal error (to the whole job). */
+        if (!orte_odls_globals.is_exit_status_77_fatal && 77 == proc->exit_code) {
+            state = ORTE_PROC_STATE_WAITPID_FIRED;
             goto MOVEON;
         }
         
