@@ -290,6 +290,9 @@ int orte_ess_base_proc_binding(void)
 
     /* see if we were bound when launched */
     if (!orte_proc_is_bound) {
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                             "%s Not bound at launch",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
         /* we were not bound at launch */
         if (NULL != opal_hwloc_topology) {
             support = (struct hwloc_topology_support*)hwloc_topology_get_support(opal_hwloc_topology);
@@ -303,6 +306,9 @@ int orte_ess_base_proc_binding(void)
                  * environment does not support it
                  */
                 hwloc_bitmap_free(cpus);
+                OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                                     "%s Binding not supported",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 goto MOVEON;
             }
             /* we are bound if the two cpusets are not equal,
@@ -316,6 +322,9 @@ int orte_ess_base_proc_binding(void)
                  */
                 orte_proc_is_bound = true;
                 hwloc_bitmap_free(cpus);
+                OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                                     "%s Process was externally bound",
+                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
             } else if (support->cpubind->set_thisproc_cpubind &&
                        OPAL_BINDING_POLICY_IS_SET(opal_hwloc_binding_policy) &&
                        OPAL_BIND_TO_NONE != OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
@@ -340,6 +349,9 @@ int orte_ess_base_proc_binding(void)
                     /* cleanup */
                     hwloc_bitmap_free(cpus);
                     orte_proc_is_bound = true;
+                    OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                                         "%s Process bound according to slot_list",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                 } else {
                     /* cleanup */
                     hwloc_bitmap_free(cpus);
@@ -349,6 +361,9 @@ int orte_ess_base_proc_binding(void)
                          * direct launched - so just ignore and leave
                          * us unbound
                          */
+                        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                                             "%s Process not bound - no node rank available",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                         goto MOVEON;
                     }
                     /* if the binding policy is hwthread, then we bind to the nrank-th
@@ -367,8 +382,11 @@ int orte_ess_base_proc_binding(void)
                             error = "Setting processor affinity failed";
                             goto error;
                         }
-                        orte_process_info.bind_level = OPAL_HWLOC_L1CACHE_LEVEL;
+                        orte_process_info.bind_level = OPAL_HWLOC_HWTHREAD_LEVEL;
                         orte_process_info.bind_idx = nrank;
+                        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                                             "%s Process bound to hwthread",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     } else if (OPAL_BIND_TO_CORE == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                         /* if the binding policy is core, then we bind to the nrank-th
                          * core on this node
@@ -387,6 +405,9 @@ int orte_ess_base_proc_binding(void)
                         }
                         orte_process_info.bind_level = OPAL_HWLOC_CORE_LEVEL;
                         orte_process_info.bind_idx = nrank;
+                        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                                             "%s Process bound to core",
+                                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
                     } else {
                         /* for all higher binding policies, we bind to the specified
                          * object that the nrank-th core belongs to
@@ -435,6 +456,10 @@ int orte_ess_base_proc_binding(void)
                                 orte_process_info.bind_idx = opal_hwloc_base_get_obj_idx(opal_hwloc_topology,
                                                                                          obj, OPAL_HWLOC_LOGICAL);
                                 orte_proc_is_bound = true;
+                                OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                                                     "%s Process bound to %s",
+                                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                                     opal_hwloc_base_print_level(orte_process_info.bind_level)));
                                 break;
                             }
                         }
@@ -447,6 +472,10 @@ int orte_ess_base_proc_binding(void)
                 }
             }
         }
+    } else {
+        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
+                             "%s Process bound at launch",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     }
 
  MOVEON:
