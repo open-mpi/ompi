@@ -1,3 +1,4 @@
+enable_hadoop=yes
 enable_mem_debug=yes
 enable_mem_profile=no
 enable_debug_symbols=yes

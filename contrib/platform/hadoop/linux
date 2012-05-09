@@ -1,3 +1,4 @@
+enable_hadoop=yes
 enable_opal_multi_threads=no
 enable_ft_thread=no
 enable_mem_debug=no

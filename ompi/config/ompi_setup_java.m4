@@ -22,21 +22,24 @@ dnl $HEADER$
 dnl
 
 # This macro is necessary to get the title to be displayed first.  :-)
-AC_DEFUN([OMPI_SETUP_JAVA_BANNER],[
-    ompi_show_subtitle "Java compiler" 
+AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS_BANNER],[
+    ompi_show_subtitle "Java MPI bindings" 
 ])
 
-# OMPI_SETUP_JAVA()
+# OMPI_SETUP_JAVA_BINDINGS()
 # ----------------
-# Do everything required to setup the Java compiler.  Safe to AC_REQUIRE
+# Do everything required to setup the Java MPI bindings.  Safe to AC_REQUIRE
 # this macro.
-AC_DEFUN([OMPI_SETUP_JAVA],[
-    AC_REQUIRE([OMPI_SETUP_JAVA_BANNER])
+AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
+    # must have Java setup
+    AC_REQUIRE([ORTE_SETUP_JAVA])
+
+    AC_REQUIRE([OMPI_SETUP_JAVA_BINDINGS_BANNER])
 
     AC_MSG_CHECKING([if want Java bindings])
     AC_ARG_ENABLE(mpi-java,
         AC_HELP_STRING([--enable-mpi-java],
-                       [enable Java MPI bindings (default: enabled)]))
+                       [enable Java MPI bindings (default: disabled)]))
 
     # Only build the Java bindings if requested
     if test "$enable_mpi_java" = "yes"; then
@@ -45,12 +48,18 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
         AC_MSG_CHECKING([if shared libraries are enabled])
         AS_IF([test "$enable_shared" != "yes"],
               [AC_MSG_RESULT([no])
-               AS_IF([test "$enable_mpi_java" = "yes"],
-                     [AC_MSG_WARN([Java bindings cannot be built without shared libraries])
-                      AC_MSG_ERROR([Cannot continue])],
-                     [AC_MSG_WARN([Java bindings will not build as they require --enable-shared])
-                      WANT_MPI_JAVA_SUPPORT=0])],
+               AC_MSG_WARN([Java bindings cannot be built without shared libraries])
+               AC_MSG_WARN([Please reconfigure with --enable-shared])
+               AC_MSG_ERROR([Cannot continue])],
               [AC_MSG_RESULT([yes])])
+        # must have Java support
+        AC_MSG_CHECKING([if Java support was found])
+        AS_IF([test "$orte_java_happy" = "yes"],
+              [AC_MSG_RESULT([yes])],
+              [AC_MSG_WARN([Java MPI bindings requested, but Java support was not found])
+               AC_MSG_WARN([Please reconfigure the --with-jdk options to where Java])
+               AC_MSG_WARN([support can be found])
+               AC_MSG_ERROR([Cannot continue])])
     else
         AC_MSG_RESULT([no])
         WANT_MPI_JAVA_SUPPORT=0
@@ -59,148 +68,14 @@ AC_DEFUN([OMPI_SETUP_JAVA],[
                        [do we want java mpi bindings])
     AM_CONDITIONAL(OMPI_WANT_JAVA_BINDINGS, test "$WANT_MPI_JAVA_SUPPORT" = "1")
 
-    AC_ARG_WITH(jdk-dir,
-    AC_HELP_STRING([--with-jdk-dir(=DIR)],
-                   [Location of the JDK header directory.  If you use this option, do not specify --with-jdk-bindir or --with-jdk-headers.]))
-    AC_ARG_WITH(jdk-bindir,
-    AC_HELP_STRING([--with-jdk-bindir(=DIR)],
-                   [Location of the JDK bin directory.  If you use this option, you must also use --with-jdk-headers (and you must NOT use --with-jdk-dir)]))
-    AC_ARG_WITH(jdk-headers,
-    AC_HELP_STRING([--with-jdk-headers(=DIR)],
-                   [Location of the JDK header directory.  If you use this option, you must also use --with-jdk-bindir (and you must NOT use --with-jdk-dir)]))
-
-    # Check for bozo case: ensue a directory was specified
-    AS_IF([test "$with_jdk_dir" = "yes" -o "$with_jdk_dir" = "no"],
-          [AC_MSG_WARN([Must specify a directory name for --with-jdk-dir])
-           AC_MSG_ERROR([Cannot continue])])
-    AS_IF([test "$with_jdk_bindir" = "yes" -o "$with_jdk_bindir" = "no"],
-          [AC_MSG_WARN([Must specify a directory name for --with-jdk-bindir])
-           AC_MSG_ERROR([Cannot continue])])
-    AS_IF([test "$with_jdk_headers" = "yes" -o "$with_jdk_headers" = "no"],
-          [AC_MSG_WARN([Must specify a directory name for --with-jdk-headers])
-           AC_MSG_ERROR([Cannot continue])])
-
-    # Check for bozo case: either specify --with-jdk-dir or
-    # (--with-jdk-bindir, --with-jdk-headers) -- not both.
-    bad=0
-    AS_IF([test -n "$with_jdk_dir" -a -n "$with_jdk_bindir" -o \
-                -n "$with_jdk_dir" -a -n "$with_jdk_headers"],[bad=1])
-    AS_IF([test -z "$with_jdk_bindir" -a -n "$with_jdk_headers" -o \
-                -n "$with_jdk_bindir" -a -z "$with_jdk_headers"],[bad=1])
-    AS_IF([test "$bad" = "1"],
-          [AC_MSG_WARN([Either specify --with-jdk-dir or both of (--with-jdk_bindir, --with-jdk-headers) -- not both.])
-           AC_MSG_ERROR([Cannot continue])])
-
-    AS_IF([test -n "$with_jdk_dir"],
-          [with_jdk_bindir=$with_jdk_dir/bin
-           with_jdk_headers=$with_jdk_dir/include])
-
-    ##################################################################
-    # with_jdk_dir can now be ignored; with_jdk_bindir and
-    # with_jdk_headers will be either empty or have valid values.
-    ##################################################################
-
-    # Some java installations are in obscure places.  So let's
-    # hard-code a few of the common ones so that users don't have to
-    # specify --with-java-<foo>=LONG_ANNOYING_DIRECTORY.
-    AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1" -a -z "$with_jdk_dir" \
-          -a -z "$with_jdk_dir" -a -z "$with_jdk_bindir"],
-          [ # OS X Snow Leopard and Lion (10.6 and 10.7 -- did not
-            # check prior versions)
-           found=0
-           dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
-           AS_IF([test -d $dir], [found=1
-                                  with_jdk_headers=$dir 
-                                  with_jdk_bindir=/usr/bin])
-
-            # Various Linux
-            dir='/usr/lib/jvm/java-*-openjdk-*/include/'
-            jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
-            AS_IF([test -r "$jnih"], 
-                  [with_jdk_headers=`dirname $jnih`
-                   OPAL_WHICH([javac], [with_jdk_bindir])
-                   AS_IF([test -n "$with_jdk_bindir"],
-                         [found=1
-                          with_jdk_bindir=`dirname $with_jdk_bindir`],
-                         [with_jdk_headers=])],
-                  [dir='/usr/lib/jvm/default-java/include/'
-                   jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
-                   AS_IF([test -r "$jnih"], 
-                         [with_jdk_headers=`dirname $jnih`
-                          OPAL_WHICH([javac], [with_jdk_bindir])
-                          AS_IF([test -n "$with_jdk_bindir"],
-                                [found=1
-                                 with_jdk_bindir=`dirname $with_jdk_bindir`],
-                                [with_jdk_headers=])])])
-
-            # Solaris
-            dir=/usr/java
-            AS_IF([test "$found" -eq 0 -a -d $dir], 
-                  [with_jdk_headers=$dir/include
-                   with_jdk_bindir=$dir/bin])
-
-            # If we think we found them, announce
-            AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_bindir"],
-                  [AC_MSG_NOTICE([guessing that JDK headers are in $with_jdk_headers])
-                   AC_MSG_NOTICE([guessing that JDK javac is in $with_jdk_bindir])])
-          ])
-
-   # Find javac and jni.h
-   AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1"],
-         [OMPI_CHECK_WITHDIR([jdk-bindir], [$with_jdk_bindir], [javac])
-          OMPI_CHECK_WITHDIR([jdk-headers], [$with_jdk_headers], [jni.h])])
-
-    # Look for various Java-related programs
-    ompi_java_happy=no
-    AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1"], 
-          [PATH_save=$PATH
-           AS_IF([test -n "$with_jdk_bindir" -a "$with_jdk_bindir" != "yes" -a "$with_jdk_bindir" != "no"], 
-           [PATH="$PATH:$with_jdk_bindir"])
-           AC_PATH_PROG(JAVAC, javac)
-           AC_PATH_PROG(JAVAH, javah)
-           AC_PATH_PROG(JAR, jar)
-           PATH=$PATH_save
-
-           # Check to see if we have all 3 programs.
-           AS_IF([test -z "$JAVAC" -o -z "$JAVAH" -o -z "$JAR"],
-                 [ompi_java_happy=no],
-                 [ompi_java_happy=yes])
-          ])
-
-    # Look for jni.h
-    AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1" -a "$ompi_java_happy" = "yes"],
-          [CPPFLAGS_save=$CPPFLAGS
-           AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_headers" != "yes" -a "$with_jdk_headers" != "no"],
-                 [OMPI_JDK_CPPFLAGS="-I$with_jdk_headers"
-                  # Some flavors of JDK also require -I<blah>/linux.
-                  # See if that's there, and if so, add a -I for that,
-                  # too.  Ugh.
-                  AS_IF([test -d "$with_jdk_headers/linux"],
-                        [OMPI_JDK_CPPFLAGS="$OMPI_JDK_CPPFLAGS -I$with_jdk_headers/linux"])
-                  # Solaris JDK also require -I<blah>/solaris.
-                  # See if that's there, and if so, add a -I for that,
-                  # too.  Ugh.
-                  AS_IF([test -d "$with_jdk_headers/solaris"],
-                        [OMPI_JDK_CPPFLAGS="$OMPI_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
-
-                  CPPFLAGS="$CPPFLAGS $OMPI_JDK_CPPFLAGS"])
-           AC_CHECK_HEADER([jni.h], [], 
-                           [ompi_java_happy=no])
-           CPPFLAGS=$CPPFLAGS_save
-          ])
-    AC_SUBST(OMPI_JDK_CPPFLAGS)
-
    # Check for pinning support
    # Uncomment when ready (or delete if we don't want it)
-    AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1" -a "$ompi_java_happy" = "yes"],
+    AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1"],
           [dnl OMPI_JAVA_CHECK_PINNING
            echo ======we should check for java pinning support here...
           ])
 
    # Are we happy?
-    AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1" -a "$ompi_java_happy" = "no"],
-          [AC_MSG_WARN([Java MPI bindings requested, but unable to find proper support])
-           AC_MSG_ERROR([Cannot continue])])
     AS_IF([test "$WANT_MPI_JAVA_SUPPORT" = "1"],
           [AC_MSG_WARN([******************************************************])
            AC_MSG_WARN([*** Java MPI bindings are provided on a provisional])

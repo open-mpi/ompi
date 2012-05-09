@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006-2008 Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+# Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
 #                         reserved. 
  # $COPYRIGHT$
 # 
@@ -38,6 +38,10 @@ SUBDIRS += \
         tools/orte-migrate \
 	tools/mapreduce
 
+#if ORTE_WANT_HADOOP_SUPPORT
+SUBDIRS += tools/allocators
+#endif
+
 DIST_SUBDIRS += \
 	tools/orte-checkpoint \
 	tools/orte-clean \
@@ -49,5 +53,6 @@ DIST_SUBDIRS += \
         tools/orte-top \
         tools/orte-info \
         tools/orte-migrate \
-	tools/mapreduce
+	tools/mapreduce \
+        tools/allocators
 

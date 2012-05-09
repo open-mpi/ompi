@@ -1,0 +1,139 @@
+#!/usr/bin/env perl
+
+# WARNING: DO NOT EDIT THE hdfsalloc.pl FILE AS IT IS GENERATED!
+#          MAKE ALL CHANGES IN hdfsalloc.pl.in
+
+# Copyright (c) 2012      Los Alamos National Security, Inc.
+#                         All rights reserved.
+
+use strict;
+
+# The main purpose of this wrapper is to add the proper
+# class and execution paths to match the Hamster command
+# to the library built to support it
+
+# Let the build system provide us with some critical values
+my $hadoop_jars;
+if (1 == @ORTE_HAVE_HADOOP_SERIES_1@) {
+    my $hadoop_home = $ENV{'HADOOP_HOME'};
+    $hadoop_jars = ".:$hadoop_home/*:$hadoop_home/lib/*";
+} else {
+    my $conf_dir = $ENV{'HADOOP_CONF_DIR'};
+    my $common_dir = $ENV{'HADOOP_COMMON_HOME'};
+    my $hdfs = $ENV{'HADOOP_HDFS_HOME'};
+    my $mr = $ENV{'HADOOP_MAPRED_HOME'};
+    my $yarn = $ENV{'YARN_HOME'};
+    $hadoop_jars = ".:$conf_dir:$common_dir/share/hadoop/common/*:$common_dir/share/hadoop/common/lib/*:$hdfs/share/hadoop/hdfs/*:$hdfs/share/hadoop/hdfs/lib/*:$mr/share/hadoop/mapreduce/*:$mr/share/hadoop/mapreduce/lib/*:$yarn/share/hadoop/httpfs/tomcat/lib/*:$yarn/share/hadoop/httpfs/tomcat/webapps/webhdfs/WEB-INF/lib/*";
+}
+
+my $hadoop_classpath = "$hadoop_jars:@OMPI_WRAPPER_LIBDIR@/hdfsalloc.jar";
+my $ompi_libpath = "@OMPI_WRAPPER_LIBDIR@";
+
+# globals
+my $showme_arg = 0;
+my $debug = 0;
+my $my_arg;
+my @save_args;
+my $slurm = 0;
+my $shell;
+
+# Cannot use the usual GetOpts library as the user might
+# be passing -options to us! So have to
+# parse the options ourselves to look for help and showme
+foreach $my_arg (@ARGV) {
+    if ($my_arg eq "-h" ||
+        $my_arg eq "--h" ||
+        $my_arg eq "-help" ||
+        $my_arg eq "--help") {
+        print "Options:
+  --showme                      Show the actual command without executing it
+  --debug | -d                  Print debug without performing allocation
+  --slurm                       Use SLURM allocator
+  --help | -h                   This help list\n";
+        exit;
+    } elsif ($my_arg eq "-showme" ||
+               $my_arg eq "--showme") {
+        $showme_arg = 1;
+    } elsif ($my_arg eq "-debug" ||
+             $my_arg eq "-d" ||
+             $my_arg eq "--debug") {
+        $debug = 1;
+    } elsif ($my_arg eq "-slurm" ||
+             $my_arg eq "--slurm") {
+        $slurm = 1;
+    } else {
+        # param to be passed to HDFSFileFinder
+        push(@save_args, $my_arg);
+    }
+}
+
+# update the CLASSPATH environmental variable to include our path
+$ENV{'CLASSPATH'} = "$hadoop_classpath:$ENV{'CLASSPATH'}";
+
+# get our shell
+$shell = $ENV{'SHELL'};
+
+# Create a place to save our argv array so we can edit any
+# provided class path option
+my @arguments = ();
+
+# add the library path
+my $where = "-Djava.library.path=.:" . $ompi_libpath;
+push(@arguments, $where);
+
+# put the hdfsalloc command at the beginning of
+# the user-supplied args
+push(@arguments, "HDFSFileFinder");
+
+# put the verbose flag if requested
+if ($debug) {
+    push(@arguments, "-v");
+}
+
+# push all user-supplied args
+foreach $my_arg (@save_args) {
+        push(@arguments, $my_arg);
+}
+
+# Execute the command
+my @output;
+my $host;
+my $out;
+if ($showme_arg) {
+    print "CLASSPATH= " . $ENV{'CLASSPATH'} . "\n";
+    print "java @arguments\n";
+} else {
+    if ($debug) {
+        print "CLASSPATH= " . $ENV{'CLASSPATH'} . "\n";
+        print "java @arguments\n\n";
+    }
+    open(my $fh, "-|", "java", @arguments)
+      or die "Cannot run program $!\n";
+    while (<$fh>) {
+        push(@output, $_);
+    }
+    close $fh;
+    if ($debug) {
+        for $out (@output) {
+            if (index($out, "DEBUG") != -1) {
+                print $out . "\n";
+            }
+        }
+        if ($slurm) {
+            for $out (@output) {
+                if (index($out, "DEBUG") == -1) {
+                    chomp $out;
+                    print "CMD: salloc --nodelist=$out $shell\n";
+                }
+            }
+        }
+    } else {
+        # execute the allocation request
+        if ($slurm) {
+            for $out (@output) {
+                chomp $out;
+                system("salloc --nodelist=$out $shell");
+            }
+        }
+    }
+}
