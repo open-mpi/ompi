@@ -33,5 +33,7 @@ AC_DEFUN([ORTE_CONFIG_FILES],[
         orte/tools/orte-migrate/Makefile
         orte/tools/orte-info/Makefile
         orte/tools/mapreduce/Makefile
+        orte/tools/allocators/Makefile
+        orte/tools/allocators/hdfsalloc.pl
     ])
 ])

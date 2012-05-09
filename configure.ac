@@ -563,10 +563,21 @@ OPAL_CHECK_COMPILER_VERSION_ID
 ##################################
 # Java compiler characteristics
 ##################################
+# Needed for ORTE - OMPI will AC_REQUIRE where needed
+m4_ifdef([project_orte], [ORTE_SETUP_JAVA])
 
-# We don't need Java unless we're building Open MPI; ORTE and OPAL do
-# not use Java at all
-m4_ifdef([project_ompi], [OMPI_SETUP_JAVA])
+##################################
+# Java MPI Binding request
+##################################
+# Only needed for OMPI
+m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
+
+##################################
+# Hadoop support
+##################################
+
+# We can't use Hadoop support unless we're building ORTE
+m4_ifdef([project_orte], [ORTE_SETUP_HADOOP])
 
 
 ##################################

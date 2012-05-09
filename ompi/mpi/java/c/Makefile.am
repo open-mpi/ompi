@@ -12,7 +12,7 @@
 if OMPI_WANT_JAVA_BINDINGS
 
 # Get the include files that were generated from the .java source files
-AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(OMPI_JDK_CPPFLAGS) $(LTDLINCL)
+AM_CPPFLAGS = -I$(top_builddir)/ompi/mpi/java/java $(ORTE_JDK_CPPFLAGS) $(LTDLINCL)
 
 headers = \
         mpiJava.h

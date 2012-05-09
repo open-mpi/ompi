@@ -1,21 +1,17 @@
 . -*- nroff -*-
-.\" Copyright (c) 2009-2010 Cisco Systems, Inc.  All rights reserved.
-.\" Copyright (c) 2008-2009 Sun Microsystems, Inc.  All rights reserved.
+.\" Copyright (c) 2012      Los Alamos National Security, LLC.  All rights reserved.
 .\"
-.\" Man page for ORTE's orterun command
+.\" Man page for ORTE's mapreduce command
 .\" 
 .\" .TH name     section center-footer   left-footer  center-header
-.TH MPIRUN 1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
+.TH MAPREDUCE 1 "#OMPI_DATE#" "#PACKAGE_VERSION#" "#PACKAGE_NAME#"
 .\" **************************
 .\"    Name Section
 .\" **************************
 .SH NAME
 .
-orterun, mpirun, mpiexec \- Execute serial and parallel jobs in Open MPI.
+mapreduce \- Execute mapreduce jobs in Open MPI.
 
-.B Note:
-\fImpirun\fP, \fImpiexec\fP, and \fIorterun\fP are all synonyms for each
-other.  Using any of the names will produce the same behavior.
 .
 .\" **************************
 .\"    Synopsis Section
@@ -23,40 +19,24 @@ other.  Using any of the names will produce the same behavior.
 .SH SYNOPSIS
 .
 .PP
-Single Process Multiple Data (SPMD) Model:
-
-.B mpirun
+.B mapreduce
 [ options ] 
-.B <program>
+.B <mapper>
+[ <args> : options ]
+.B <reducer>
 [ <args> ]
 .P
 
-Multiple Instruction Multiple Data (MIMD) Model:
-
-.B mpirun
-[ global_options ]
-       [ local_options1 ]
-.B <program1>
-[ <args1> ] :
-       [ local_options2 ]
-.B <program2>
-[ <args2> ] : 
-       ... : 
-       [ local_optionsN ]
-.B <programN>
-[ <argsN> ]
-.P
-
-Note that in both models, invoking \fImpirun\fP via an absolute path
+Note that iinvoking \fImapreduce\fP via an absolute path
 name is equivalent to specifying the \fI--prefix\fP option with a
-\fI<dir>\fR value equivalent to the directory where \fImpirun\fR
+\fI<dir>\fR value equivalent to the directory where \fImapreduce\fR
 resides, minus its last subdirectory.  For example:
 
-    \fB%\fP /usr/local/bin/mpirun ...
+    \fB%\fP /usr/local/bin/mapreduce ...
 
 is equivalent to
 
-    \fB%\fP mpirun --prefix /usr/local
+    \fB%\fP mapreduce --prefix /usr/local
 
 .
 .\" **************************
@@ -82,7 +62,7 @@ CPU slot.  See the rest of this page for more details.
 .\" **************************
 .SH OPTIONS
 .
-.I mpirun
+.I mapreduce
 will send the name of the directory where it was invoked on the local
 node to each of the remote nodes, and attempt to change to that
 directory.  See the "Current Working Directory" section below for further
