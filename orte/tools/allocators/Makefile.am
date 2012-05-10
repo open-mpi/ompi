@@ -53,7 +53,7 @@ bin_PROGRAMS += HDFSFileFinder.class
 # _SOURCES, either, because we haven't configured Automake to handle
 # Java (because current versions of Automake only have GCJ, not other
 # Java compilers).  So set _SOURCES to blank and list the .java file
-# in EXTRA_SOURCES, above.  :-(
+# in EXTRA_DIST, above.  :-(
 HDFSFileFinder_class_SOURCES =
 
 if ORTE_HAVE_HADOOP_SERIES1
