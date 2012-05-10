@@ -33,8 +33,6 @@ nodist_man_MANS = $(man_pages)
 # therefore the release date or version may have changed)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
-
-
 # A little verbosity magic; "make" will show the terse output.  "make
 # V=1" will show the actual commands used (just like the other
 # Automake-generated compilation/linker rules).
@@ -47,6 +45,16 @@ orte__v_JAR_ = $(orte__v_JAR_$(AM_DEFAULT_VERBOSITY))
 orte__v_JAR_0 = @echo "  JAR  " `basename $@`;
 
 bin_PROGRAMS += HDFSFileFinder.class
+
+# It's a little weird to put in a blank _SOURCES line, but if we don't
+# put in a _SOURCES line at all, Automake will default to
+# "HDFSFileFinter_class_SOURCES = HDFSFileFinder.c", which clearly
+# will cause problems.  But we don't want to put the .java file in
+# _SOURCES, either, because we haven't configured Automake to handle
+# Java (because current versions of Automake only have GCJ, not other
+# Java compilers).  So set _SOURCES to blank and list the .java file
+# in EXTRA_SOURCES, above.  :-(
+HDFSFileFinder_class_SOURCES =
 
 if ORTE_HAVE_HADOOP_SERIES1
 hadoop_jars = .:$(HADOOP_HOME)/*:$(HADOOP_HOME)/lib/*
