@@ -136,10 +136,6 @@ static inline int ugni_reg_mem (mca_btl_ugni_module_t *ugni_module, void *base,
     mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
     gni_return_t rc;
 
-    if (ugni_module->reg_count >= ugni_module->reg_max) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    
     rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
                           size, cq, flags, -1, &(ugni_reg->memory_hdl));
     if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
@@ -154,8 +150,14 @@ static inline int ugni_reg_mem (mca_btl_ugni_module_t *ugni_module, void *base,
 static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
                               mca_mpool_base_registration_t *reg)
 {
-    return ugni_reg_mem ((mca_btl_ugni_module_t *) reg_data, base, size, reg,
-                         NULL, GNI_MEM_READWRITE | GNI_MEM_RELAXED_PI_ORDERING);
+    mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) reg_data;
+
+    if (ugni_module->reg_count >= ugni_module->reg_max) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    
+    return ugni_reg_mem (ugni_module, base, size, reg, NULL,
+                         GNI_MEM_READWRITE | GNI_MEM_RELAXED_PI_ORDERING);
 }
 
 
@@ -290,16 +292,24 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
 
     mbox_increment = nprocs;
 
-    /* limit mailbox allocations to at most 2MiB at a time */
+    /* limit mailbox allocations to either 12.5% of available registrations 
+       or 2MiB per allocation */
     if (nprocs * mca_btl_ugni_component.smsg_mbox_size > 2097152) {
         mbox_increment = (int) (2097152.0 / (float)mca_btl_ugni_component.smsg_mbox_size);
     }
+
+    if (nprocs/mbox_increment > ugni_module->reg_max / 8) {
+        mbox_increment = nprocs / (ugni_module->reg_max >> 3);
+    }
+
+    /* reserve registrations for mailboxes */
+    ugni_module->reg_max -= nprocs/mbox_increment + 1;
 
     rc = ompi_free_list_init_new (&ugni_module->smsg_mboxes,
                                   sizeof (mca_btl_ugni_smsg_mbox_t), 8,
                                   OBJ_CLASS(mca_btl_ugni_smsg_mbox_t),
                                   mca_btl_ugni_component.smsg_mbox_size, 64,
-                                  0, nprocs, mbox_increment,
+                                  16, nprocs, mbox_increment,
                                   ugni_module->smsg_mpool);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         BTL_ERROR(("error creating smsg mailbox free list"));
