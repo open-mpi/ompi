@@ -43,8 +43,10 @@ struct mca_mtl_portals4_module_t {
     size_t recv_short_size;
     /** Number of short message blocks which should be created during startup */
     int recv_short_num;
-    /** Length of both the receive and send event queues */
-    int queue_size;
+    /** Length of the send event queues */
+    int send_queue_size;
+    /** Length of the receive event queues */
+    int recv_queue_size;
     /** Protocol for long message transfer */
     enum { eager, rndv } protocol;
 
