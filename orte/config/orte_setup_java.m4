@@ -110,56 +110,61 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
             dir=/usr/java
             AS_IF([test "$found" -eq 0 -a -d $dir], 
                   [with_jdk_headers=$dir/include
-                   with_jdk_bindir=$dir/bin])
+                   with_jdk_bindir=$dir/bin
+                   found=1])
 
             # If we think we found them, announce
-            AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_bindir"],
+            AS_IF([test "$found" -eq 1],
                   [AC_MSG_NOTICE([guessing that JDK headers are in $with_jdk_headers])
                    AC_MSG_NOTICE([guessing that JDK javac is in $with_jdk_bindir])])
           ])
 
-   # Find javac and jni.h
-    OMPI_CHECK_WITHDIR([jdk-bindir], [$with_jdk_bindir], [javac])
-    OMPI_CHECK_WITHDIR([jdk-headers], [$with_jdk_headers], [jni.h])
+    if test "$found" = "1"; then
+        OMPI_CHECK_WITHDIR([jdk-bindir], [$with_jdk_bindir], [javac])
+        OMPI_CHECK_WITHDIR([jdk-headers], [$with_jdk_headers], [jni.h])
 
-    # Look for various Java-related programs
-    orte_java_happy=no
-    PATH_save=$PATH
-    AS_IF([test -n "$with_jdk_bindir" -a "$with_jdk_bindir" != "yes" -a "$with_jdk_bindir" != "no"], 
-        [PATH="$PATH:$with_jdk_bindir"])
-    AC_PATH_PROG(JAVAC, javac)
-    AC_PATH_PROG(JAVAH, javah)
-    AC_PATH_PROG(JAR, jar)
-    PATH=$PATH_save
+        # Look for various Java-related programs
+        orte_java_happy=no
+        PATH_save=$PATH
+        AS_IF([test -n "$with_jdk_bindir" -a "$with_jdk_bindir" != "yes" -a "$with_jdk_bindir" != "no"], 
+              [PATH="$PATH:$with_jdk_bindir"])
+        AC_PATH_PROG(JAVAC, javac)
+        AC_PATH_PROG(JAVAH, javah)
+        AC_PATH_PROG(JAR, jar)
+        PATH=$PATH_save
 
-    # Check to see if we have all 3 programs.
-    AS_IF([test -z "$JAVAC" -o -z "$JAVAH" -o -z "$JAR"],
-          [orte_java_happy=no
-           HAVE_JAVA_SUPPORT=0],
-          [orte_java_happy=yes
-           HAVE_JAVA_SUPPORT=1])
+        # Check to see if we have all 3 programs.
+        AS_IF([test -z "$JAVAC" -o -z "$JAVAH" -o -z "$JAR"],
+              [orte_java_happy=no
+               HAVE_JAVA_SUPPORT=0],
+              [orte_java_happy=yes
+               HAVE_JAVA_SUPPORT=1])
 
-    # Look for jni.h
-    AS_IF([test "$orte_java_happy" = "yes"],
-          [CPPFLAGS_save=$CPPFLAGS
-           AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_headers" != "yes" -a "$with_jdk_headers" != "no"],
-                 [ORTE_JDK_CPPFLAGS="-I$with_jdk_headers"
-                  # Some flavors of JDK also require -I<blah>/linux.
-                  # See if that's there, and if so, add a -I for that,
-                  # too.  Ugh.
-                  AS_IF([test -d "$with_jdk_headers/linux"],
-                        [ORTE_JDK_CPPFLAGS="$ORTE_JDK_CPPFLAGS -I$with_jdk_headers/linux"])
-                  # Solaris JDK also require -I<blah>/solaris.
-                  # See if that's there, and if so, add a -I for that,
-                  # too.  Ugh.
-                  AS_IF([test -d "$with_jdk_headers/solaris"],
-                        [ORTE_JDK_CPPFLAGS="$ORTE_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
+        # Look for jni.h
+        AS_IF([test "$orte_java_happy" = "yes"],
+              [CPPFLAGS_save=$CPPFLAGS
+               AS_IF([test -n "$with_jdk_headers" -a "$with_jdk_headers" != "yes" -a "$with_jdk_headers" != "no"],
+                     [ORTE_JDK_CPPFLAGS="-I$with_jdk_headers"
+                      # Some flavors of JDK also require -I<blah>/linux.
+                      # See if that's there, and if so, add a -I for that,
+                      # too.  Ugh.
+                      AS_IF([test -d "$with_jdk_headers/linux"],
+                            [ORTE_JDK_CPPFLAGS="$ORTE_JDK_CPPFLAGS -I$with_jdk_headers/linux"])
+                      # Solaris JDK also require -I<blah>/solaris.
+                      # See if that's there, and if so, add a -I for that,
+                      # too.  Ugh.
+                      AS_IF([test -d "$with_jdk_headers/solaris"],
+                            [ORTE_JDK_CPPFLAGS="$ORTE_JDK_CPPFLAGS -I$with_jdk_headers/solaris"])
 
-                  CPPFLAGS="$CPPFLAGS $ORTE_JDK_CPPFLAGS"])
-           AC_CHECK_HEADER([jni.h], [], 
-                           [orte_java_happy=no])
-           CPPFLAGS=$CPPFLAGS_save
-          ])
+                      CPPFLAGS="$CPPFLAGS $ORTE_JDK_CPPFLAGS"])
+               AC_CHECK_HEADER([jni.h], [], 
+                               [orte_java_happy=no])
+               CPPFLAGS=$CPPFLAGS_save
+              ])
+    else
+        orte_java_happy=no;
+        HAVE_JAVA_SUPPORT=no;
+    fi
     AC_SUBST(ORTE_JDK_CPPFLAGS)
 
    # Are we happy?
