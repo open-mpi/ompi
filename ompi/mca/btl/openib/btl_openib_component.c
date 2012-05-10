@@ -810,24 +810,34 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
                    we have to look up the values corresponding to
                    port->active_speed and port->active_width.  These
                    are enums corresponding to the IB spec.  Overall
-                   forumula is 80% of the reported speed (to get the
-                   true link speed) times the number of links. */
+                   forumula to get the true link speed is 8/10 or
+                   64/66 of the reported speed (depends on the coding
+                   that is being used for the particular speed) times
+                   the number of links. */
                 switch (ib_port_attr->active_speed) {
                 case 1:
-                    /* 2.5Gbps * 0.8, in megabits */
+                    /* SDR: 2.5 Gbps * 0.8, in megabits */
                     openib_btl->super.btl_bandwidth = 2000;
                     break;
                 case 2:
-                    /* 5.0Gbps * 0.8, in megabits */
+                    /* DDR: 5 Gbps * 0.8, in megabits */
                     openib_btl->super.btl_bandwidth = 4000;
                     break;
                 case 4:
-                    /* 10.0Gbps * 0.8, in megabits */
+                    /* QDR: 10 Gbps * 0.8, in megabits */
                     openib_btl->super.btl_bandwidth = 8000;
                     break;
                 case 8:
-                    /* 40.0Gbps * 0.8, in megabits */
-                    openib_btl->super.btl_bandwidth = 32000;
+                    /* FDR10: 10 Gbps * 64/66, in megabits */
+                    openib_btl->super.btl_bandwidth = 9700;
+                    break;
+                case 16:
+                    /* FDR: 14 Gbps * 64/66, in megabits */
+                    openib_btl->super.btl_bandwidth = 13600;
+                    break;
+                case 32:
+                    /* EDR: 25 Gbps * 64/66, in megabits */
+                    openib_btl->super.btl_bandwidth = 24200;
                     break;
                 default:
                     /* Who knows?  Declare this port unreachable (do
