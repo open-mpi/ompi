@@ -108,7 +108,7 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
 
             # Solaris
             dir=/usr/java
-            AS_IF([test "$found" -eq 0 -a -d $dir], 
+            AS_IF([test "$found" -eq 0 -a -d $dir -a -r "$dir/include/jni.h"], 
                   [with_jdk_headers=$dir/include
                    with_jdk_bindir=$dir/bin
                    found=1])
