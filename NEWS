@@ -92,6 +92,7 @@ Trunk (not on release branches yet)
 - Add support for ARM5 and ARM6 (in addition to the existing ARM7
   support).  Thanks to Evan Clinton for the patch.
 - Minor Mellanox MXM fixes.
+- Properly detect FDR10, FDR, and EDR OpenFabrics devices.
 - Minor fixes to the mpirun(1) and MPI_Comm_create(3) man pages.
 - Prevent segv if COMM_SPAWN_MULTIPLE fails.  Thanks to Fujitsu for
   the patch.
