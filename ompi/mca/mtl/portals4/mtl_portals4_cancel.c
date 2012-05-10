@@ -47,7 +47,7 @@ ompi_mtl_portals4_cancel(struct mca_mtl_base_module_t* mtl,
 
             if (PTL_INVALID_HANDLE != recvreq->me_h) {
                 ret = PtlMEUnlink(recvreq->me_h);
-                if (PTL_OK == ret) {
+                if (OPAL_UNLIKELY(PTL_OK == ret)) {
                     recvreq->super.super.ompi_req->req_status._cancelled = true;
                     recvreq->super.super.completion_callback(&recvreq->super.super);
                 }

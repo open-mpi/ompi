@@ -36,7 +36,7 @@ completion_fn(ptl_event_t *ev, ompi_mtl_portals4_base_request_t *ptl_base_reques
                         "%s:%d: completion_fn: %d %d",
                         __FILE__, __LINE__, ev->type, ev->ni_fail_type);
 
-    if (ev->ni_fail_type == PTL_OK) {
+    if (OPAL_UNLIKELY(ev->ni_fail_type == PTL_OK)) {
         ptl_request->found_match = 1;
         ptl_request->status.MPI_SOURCE = MTL_PORTALS4_GET_SOURCE(ev->match_bits);
         ptl_request->status.MPI_TAG = MTL_PORTALS4_GET_TAG(ev->match_bits);
@@ -103,7 +103,7 @@ ompi_mtl_portals4_iprobe(struct mca_mtl_base_module_t* mtl,
                       &me,
                       PTL_SEARCH_ONLY,
                       &request);
-    if (PTL_OK != ret) {
+    if (OPAL_UNLIKELY(PTL_OK != ret)) {
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMESearch failed: %d",
                             __FILE__, __LINE__, ret);
@@ -177,7 +177,7 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
                       &me,
                       PTL_SEARCH_DELETE,
                       &request);
-    if (PTL_OK != ret) {
+    if (OPAL_UNLIKELY(PTL_OK != ret)) {
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMESearch failed: %d",
                             __FILE__, __LINE__, ret);

@@ -100,13 +100,22 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.recv_short_size = tmp;
 
     mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
-                           "event_queue_size",
-                           "Size of the event queue in entries",
+                           "send_event_queue_size",
+                           "Size of the send event queue in entries",
                            false,
                            false,
                            1024,
                            &tmp);
-    ompi_mtl_portals4.queue_size = tmp;
+    ompi_mtl_portals4.send_queue_size = tmp;
+
+    mca_base_param_reg_int(&mca_mtl_portals4_component.mtl_version,
+                           "recv_event_queue_size",
+                           "Size of the recv event queue in entries",
+                           false,
+                           false,
+                           1024,
+                           &tmp);
+    ompi_mtl_portals4.recv_queue_size = tmp;
 
     mca_base_param_reg_string(&mca_mtl_portals4_component.mtl_version,
                               "long_protocol",
@@ -140,7 +149,9 @@ ompi_mtl_portals4_component_open(void)
                         "Short receive blocks: %d", 
                         ompi_mtl_portals4.recv_short_num);
     opal_output_verbose(1, ompi_mtl_base_output, 
-                        "Queue size: %d", ompi_mtl_portals4.queue_size);
+                        "Send queue size: %d", ompi_mtl_portals4.send_queue_size);
+    opal_output_verbose(1, ompi_mtl_base_output, 
+                        "Recv queue size: %d", ompi_mtl_portals4.recv_queue_size);
     opal_output_verbose(1, ompi_mtl_base_output, 
                         "Long protocol: %s", 
                         (ompi_mtl_portals4.protocol == eager) ? "Eager" :
@@ -230,7 +241,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 
     /* create event queues */
     ret = PtlEQAlloc(ompi_mtl_portals4.ni_h,
-                     ompi_mtl_portals4.queue_size,
+                     ompi_mtl_portals4.send_queue_size,
                      &ompi_mtl_portals4.send_eq_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_mtl_base_output,
@@ -239,7 +250,7 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
         goto error;
     }
     ret = PtlEQAlloc(ompi_mtl_portals4.ni_h,
-                     ompi_mtl_portals4.queue_size,
+                     ompi_mtl_portals4.recv_queue_size,
                      &ompi_mtl_portals4.recv_eq_h);
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_mtl_base_output,
@@ -516,7 +527,8 @@ ompi_mtl_portals4_progress(void)
     }
 
 #if OMPI_MTL_PORTALS4_FLOW_CONTROL
-    if (0 == count) {
+    if (OPAL_UNLIKELY(0 == count && 
+                      0 != opal_list_get_size(&ompi_mtl_portals4.flowctl.pending_sends))) {
         ompi_mtl_portals4_pending_list_progress();
     }
 #endif

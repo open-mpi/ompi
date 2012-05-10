@@ -43,7 +43,7 @@ ompi_mtl_portals4_recv_block_progress(ptl_event_t *ev,
     ompi_mtl_portals4_recv_short_block_t *block = ptl_request->block;
 
     if (PTL_EVENT_AUTO_FREE == ev->type) {
-        if (block->release_on_free) {
+        if (OPAL_UNLIKELY(block->release_on_free)) {
             opal_list_remove_item(&ompi_mtl_portals4.waiting_recv_short_blocks,
                                   &block->base);
             ret = ompi_mtl_portals4_recv_short_block_free(block);
@@ -124,11 +124,6 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
         PTL_ME_EVENT_LINK_DISABLE |
         PTL_ME_MANAGE_LOCAL | 
         PTL_ME_MAY_ALIGN;
-#if 0
-#if !OPAL_ENABLE_DEBUG
-    me.options |= PTL_ME_EVENT_COMM_DISABLE;
-#endif
-#endif
     me.match_id.phys.nid = PTL_NID_ANY;
     me.match_id.phys.pid = PTL_PID_ANY;
     me.match_bits = match_bits;
@@ -140,7 +135,7 @@ ompi_mtl_portals4_activate_block(ompi_mtl_portals4_recv_short_block_t *block)
                       PTL_OVERFLOW_LIST,
                       &block->request,
                       &block->me_h);
-    if (ret == PTL_OK) {
+    if (OPAL_LIKELY(ret == PTL_OK)) {
         ret = OMPI_SUCCESS;
         opal_list_append(&ompi_mtl_portals4.active_recv_short_blocks,
                          &block->base);
@@ -164,7 +159,7 @@ ompi_mtl_portals4_recv_short_init(void)
     for (i = 0 ; i < ompi_mtl_portals4.recv_short_num ; ++i) {
         ompi_mtl_portals4_recv_short_block_t *block = 
             ompi_mtl_portals4_recv_short_block_alloc(false);
-        if (NULL == block) {
+        if (OPAL_UNLIKELY(NULL == block)) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         opal_list_append(&ompi_mtl_portals4.waiting_recv_short_blocks,

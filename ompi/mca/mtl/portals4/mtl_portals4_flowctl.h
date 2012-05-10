@@ -35,10 +35,10 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals4_pending_request_t);
 struct ompi_mtl_portals4_flowctl_t {
     bool flowctl_active;
 
-    opal_list_t active_sends;
+    int32_t send_slots;
+    int32_t max_send_slots;
     opal_list_t pending_sends;
     opal_free_list_t pending_fl;
-    int32_t slots;
 
     ompi_mtl_portals4_base_request_t alert_req;
     ompi_mtl_portals4_base_request_t fanout_req;
