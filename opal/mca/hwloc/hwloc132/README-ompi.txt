@@ -7,3 +7,4 @@ https://svn.open-mpi.org/trac/hwloc/changeset/4314
 https://svn.open-mpi.org/trac/hwloc/changeset/4319
 https://svn.open-mpi.org/trac/hwloc/changeset/4340
 https://svn.open-mpi.org/trac/hwloc/changeset/4345
+https://svn.open-mpi.org/trac/hwloc/changeset/4471
