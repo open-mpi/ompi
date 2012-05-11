@@ -608,7 +608,7 @@ int btl_openib_register_mca_params(void)
                   0, &mca_btl_openib_component.gid_index,
                   REGINT_GE_ZERO));
 
-#if OPENIB_MALLOC_HOOKS_ENABLED
+#if BTL_OPENIB_MALLOC_HOOKS_ENABLED
     CHECK(reg_int("memalign", NULL,
                   "[64 | 32 | 0] - Enable (64bit or 32bit)/Disable(0) memory"
                   "alignment for all malloc calls if btl openib is used.",
