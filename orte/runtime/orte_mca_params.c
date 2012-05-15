@@ -303,7 +303,7 @@ int orte_register_params(void)
                                    false, false, NULL, &strval);
     if (NULL == strval) {
         /* nothing was given, so define the default */
-        asprintf(&orte_default_hostfile, "%s/etc/openmpi-default-hostfile", opal_install_dirs.prefix);
+        asprintf(&orte_default_hostfile, "%s/openmpi-default-hostfile", opal_install_dirs.sysconfdir);
         /* flag that nothing was given */
         orte_default_hostfile_given = false;
     } else if (0 == strcmp(strval, "none")) {
