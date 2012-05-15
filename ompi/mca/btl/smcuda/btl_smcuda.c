@@ -124,20 +124,21 @@ static void *mpool_calloc(size_t nmemb, size_t size)
     return buf;
 }
 
+
 static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
 {
     size_t size, length, length_payload;
     char *sm_ctl_file;
     sm_fifo_t *my_fifos;
-    int my_mem_node=-1, num_mem_nodes=-1, i;
+    int my_mem_node, num_mem_nodes, i;
     ompi_proc_t **procs;
     size_t num_procs;
     mca_mpool_base_resources_t res;
     mca_btl_smcuda_component_t* m = &mca_btl_smcuda_component;
 
     /* Assume we don't have hwloc support and fill in dummy info */
-    mca_btl_sm_component.mem_node = my_mem_node = 0;
-    mca_btl_sm_component.num_mem_nodes = num_mem_nodes = 1;
+    mca_btl_smcuda_component.mem_node = my_mem_node = 0;
+    mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = 1;
 
 #if OPAL_HAVE_HWLOC
     /* If we have hwloc support, then get accurate information */
@@ -157,7 +158,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
                the previous carto-based implementation), but it really
                should be improved to be how many NUMA nodes are being
                used *in this job*. */
-            mca_btl_sm_component.num_mem_nodes = num_mem_nodes = i;
+            mca_btl_smcuda_component.num_mem_nodes = num_mem_nodes = i;
 
             /* Fill opal_hwloc_my_cpuset and find out to what level
                this process is bound (if at all) */
@@ -170,15 +171,15 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
                    machine), so discover which NUMA node this process
                    is bound */
                 if (OPAL_HWLOC_NUMA_LEVEL == bind_level) {
-                    mca_btl_sm_component.mem_node = my_mem_node = (int) bind_index;
+                    mca_btl_smcuda_component.mem_node = my_mem_node = (int) bind_index;
                 } else {
                     if (OPAL_SUCCESS == 
                         opal_hwloc_base_get_local_index(HWLOC_OBJ_NODE, 0, &bind_index)) {
-                        mca_btl_sm_component.mem_node = my_mem_node = (int) bind_index;
+                        mca_btl_smcuda_component.mem_node = my_mem_node = (int) bind_index;
                     } else {
                         /* Weird.  We can't figure out what NUMA node
                            we're on. :-( */
-                        mca_btl_sm_component.mem_node = my_mem_node = -1;
+                        mca_btl_smcuda_component.mem_node = my_mem_node = -1;
                     }
                 }
             }
@@ -206,9 +207,9 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
      * - eager fragments (2*n of them, allocated in sm_free_list_inc chunks)
      * - max fragments (sm_free_list_num of them)
      *
-     * On top of all that, we sprinkle in some number of "opal_cache_line_size"
-     * additions to account for some padding and edge effects that may lie
-     * in the allocator.
+     * On top of all that, we sprinkle in some number of
+     * "opal_cache_line_size" additions to account for some
+     * padding and edge effects that may lie in the allocator.
      */
     res.size =
         FIFO_MAP_NUM(n) * ( sizeof(sm_fifo_t) + sizeof(void *) * m->fifo_size + 4 * opal_cache_line_size )
@@ -225,7 +226,7 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     res.size *= n;
-
+    
     /* now, create it */
     mca_btl_smcuda_component.sm_mpools[0] =
         mca_mpool_base_module_create(mca_btl_smcuda_component.sm_mpool_name,
@@ -236,20 +237,17 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
     }
 
     mca_btl_smcuda_component.sm_mpool = mca_btl_smcuda_component.sm_mpools[0];
-
 #if OMPI_CUDA_SUPPORT
-        /* Create a local memory pool that sends handles to the remote
-         * side.  Note that the res argument is not really used, but
-         * needed to satisfy function signature. */
-        smcuda_btl->super.btl_mpool = mca_mpool_base_module_create("gpusm",
-                                                                   smcuda_btl,
-                                                                   &res);
-        if (NULL == smcuda_btl->super.btl_mpool) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
-        }
-#endif /* OMPI_CUDA_SUPPORT */
+    /* Create a local memory pool that sends handles to the remote
+     * side.  Note that the res argument is not really used, but
+     * needed to satisfy function signature. */
+    smcuda_btl->super.btl_mpool = mca_mpool_base_module_create("gpusm",
+                                                               smcuda_btl,
+                                                               &res);
+    if (NULL == smcuda_btl->super.btl_mpool) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
+#endif /* OMPI_CUDA_SUPPORT */
 
     mca_btl_smcuda_component.sm_mpool_base =
         mca_btl_smcuda_component.sm_mpools[0]->mpool_base(mca_btl_smcuda_component.sm_mpools[0]);
@@ -257,17 +255,19 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
     /* create a list of peers */
     mca_btl_smcuda_component.sm_peers = (struct mca_btl_base_endpoint_t**)
         calloc(n, sizeof(struct mca_btl_base_endpoint_t*));
-    if(NULL == mca_btl_smcuda_component.sm_peers)
+    if (NULL == mca_btl_smcuda_component.sm_peers) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /* Allocate Shared Memory BTL process coordination
      * data structure.  This will reside in shared memory */
 
     /* set file name */
-    if(asprintf(&sm_ctl_file, "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
-                orte_process_info.job_session_dir,
-                orte_process_info.nodename) < 0)
+    if (asprintf(&sm_ctl_file, "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
+                 orte_process_info.job_session_dir,
+                 orte_process_info.nodename) < 0) {
         return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /* Pass in a data segment alignment of 0 to get no data
        segment (only the shared control structure) */
