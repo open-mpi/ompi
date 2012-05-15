@@ -81,7 +81,7 @@ void ompi_file_get_view_f(MPI_Fint *fh, MPI_Offset *disp,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *disp = (MPI_Fint) c_disp;
+        *disp = (MPI_Offset) c_disp;
         *etype = MPI_Type_c2f(c_etype);
         *filetype = MPI_Type_c2f(c_filetype);
         ompi_fortran_string_c2f(c_datarep, datarep, datarep_len);
