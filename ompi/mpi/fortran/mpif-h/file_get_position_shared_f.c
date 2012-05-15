@@ -75,6 +75,6 @@ void ompi_file_get_position_shared_f(MPI_Fint *fh, MPI_Offset *offset,
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *offset = (MPI_Fint) c_offset;
+        *offset = (MPI_Offset) c_offset;
     }
 }
