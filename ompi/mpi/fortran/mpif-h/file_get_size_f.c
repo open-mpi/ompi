@@ -74,6 +74,6 @@ void ompi_file_get_size_f(MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr)
     if (NULL != ierr) *ierr = OMPI_INT_2_FINT(c_ierr);
 
     if (MPI_SUCCESS == c_ierr) {
-        *size = (MPI_Fint) c_size;
+        *size = (MPI_Offset) c_size;
     }
 }
