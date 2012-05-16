@@ -302,6 +302,9 @@ static void ompi_mpi_errcode_construct(ompi_mpi_errcode_t *errcode)
 
 static void ompi_mpi_errcode_destruct(ompi_mpi_errcode_t *errcode)
 {
-    opal_pointer_array_set_item(&ompi_mpi_errcodes, errcode->code, NULL);
-    return;
+    if (MPI_UNDEFINED != errcode->code) {
+        opal_pointer_array_set_item(&ompi_mpi_errcodes, errcode->code, NULL);
+    } else if (MPI_UNDEFINED != errcode->cls) {
+        opal_pointer_array_set_item(&ompi_mpi_errcodes, errcode->cls, NULL);
+    }
 }
