@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
@@ -62,8 +62,6 @@ typedef struct {
     opal_list_t xterm_ranks;
     /* the xterm cmd to be used */
     char **xtermcmd;
-    /* whether to consider an exit code of 77 fatal to a job or not */
-    bool is_exit_status_77_fatal;
 } orte_odls_globals_t;
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
