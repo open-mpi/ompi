@@ -1,6 +1,6 @@
 # -*- text -*-
 #
-# Copyright (c) 2011      NVIDIA.  All rights reserved.
+# Copyright (c) 2011-2012 NVIDIA.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -135,3 +135,8 @@ cause the program to abort.
   cuEventDestory return value:   %d
 Check the cuda.h file for what the return value means.
 #
+[cuStreamCreate failed]
+The call to cuStreamCreate failed.  This is a unrecoverable error and will
+cause the program to abort.
+  cuStreamCreate return value:   %d
+Check the cuda.h file for what the return vale means.

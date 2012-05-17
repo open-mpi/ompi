@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2011-2012 NVIDIA Corporation.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,6 +47,7 @@ static bool mca_common_cuda_enabled = false;
 static bool mca_common_cuda_register_memory = true;
 static bool mca_common_cuda_warning = true;
 static opal_list_t common_cuda_memory_registrations;
+static CUstream ipcStream;
 
 /* Structure to hold memory registrations that are delayed until first
  * call to send or receive a GPU pointer */
@@ -66,21 +67,21 @@ OBJ_CLASS_INSTANCE( common_cuda_mem_regs_t,
 #if OMPI_CUDA_SUPPORT_41
 static int mca_common_cuda_async = 1;
 
-/* Array of CUDA events to be queried */
-CUevent *cuda_event_status_array;
+/* Array of CUDA events to be queried for IPC stream */
+CUevent *cuda_event_ipc_array;
 
 /* Array of fragments currently being moved by cuda async non-blocking
  * operations */
-struct mca_btl_base_descriptor_t **cuda_event_frag_array;
+struct mca_btl_base_descriptor_t **cuda_event_ipc_frag_array;
 
 /* First free/available location in cuda_event_status_array */
-int cuda_event_status_first_avail;
+int cuda_event_ipc_first_avail;
 
 /* First currently-being used location in the cuda_event_status_array */
-int cuda_event_status_first_used;
+int cuda_event_ipc_first_used;
 
 /* Number of status items currently in use */
-int cuda_event_status_num_used;
+int cuda_event_ipc_num_used;
 
 /* Size of array holding events */
 int cuda_event_max = 200;
@@ -195,14 +196,14 @@ static int mca_common_cuda_init(void)
 #if OMPI_CUDA_SUPPORT_41
     if (true == mca_common_cuda_enabled) {
         /* Set up an array to store outstanding async copy events */
-        cuda_event_status_array = NULL;
-        cuda_event_frag_array = NULL;
-        cuda_event_status_num_used = 0;
-        cuda_event_status_first_avail = 0;
-        cuda_event_status_first_used = 0;
+        cuda_event_ipc_array = NULL;
+        cuda_event_ipc_frag_array = NULL;
+        cuda_event_ipc_num_used = 0;
+        cuda_event_ipc_first_avail = 0;
+        cuda_event_ipc_first_used = 0;
 
-        cuda_event_status_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
-        if (NULL == cuda_event_status_array) {
+        cuda_event_ipc_array = (CUevent *) malloc(sizeof(CUevent) * cuda_event_max);
+        if (NULL == cuda_event_ipc_array) {
             orte_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, errno, strerror(errno));
             return OMPI_ERROR;
@@ -210,7 +211,7 @@ static int mca_common_cuda_init(void)
 
         /* Create the events since they can be reused. */
         for (i = 0; i < cuda_event_max; i++) {
-            res = cuEventCreate(&cuda_event_status_array[i], CU_EVENT_DISABLE_TIMING);
+            res = cuEventCreate(&cuda_event_ipc_array[i], CU_EVENT_DISABLE_TIMING);
             if (CUDA_SUCCESS != res) {
                 orte_show_help("help-mpi-common-cuda.txt", "cuEventCreate failed",
                                true, res);
@@ -220,9 +221,9 @@ static int mca_common_cuda_init(void)
 
         /* The first available status index is 0.  Make an empty frag
            array. */
-        cuda_event_frag_array = (struct mca_btl_base_descriptor_t **)
+        cuda_event_ipc_frag_array = (struct mca_btl_base_descriptor_t **)
             malloc(sizeof(struct mca_btl_base_descriptor_t *) * cuda_event_max);
-        if (NULL == cuda_event_frag_array) {
+        if (NULL == cuda_event_ipc_frag_array) {
             orte_show_help("help-mpi-common-cuda.txt", "No memory",
                            true, errno, strerror(errno));
             return OMPI_ERROR;
@@ -252,6 +253,14 @@ static int mca_common_cuda_init(void)
         }
         free(mem_reg->msg);
         OBJ_RELEASE(mem_reg);
+    }
+
+    /* Create stream for use in ipc asynchronous copies */
+    res = cuStreamCreate(&ipcStream, 0);
+    if (res != CUDA_SUCCESS) {
+        orte_show_help("help-mpi-common-cuda.txt", "cuStreamCreate failed",
+                       true, res);
+        return OMPI_ERROR;
     }
 
     opal_output_verbose(30, mca_common_cuda_output,
@@ -395,11 +404,13 @@ int cuda_getmemhandle(void *base, size_t size, mca_mpool_base_registration_t *ne
     cuda_reg->base.bound = (unsigned char *)pbase + psize - 1;
     memcpy(&cuda_reg->memHandle, &memHandle, sizeof(memHandle));
 
-    /* Need to record the event to ensure that any memcopies
-     * into the device memory have completed.  The event handle
-     * associated with this event is sent to the remote process
-     * so that it will wait on this event prior to copying data
-     * out of the device memory. */
+    /* Need to record the event to ensure that any memcopies into the
+     * device memory have completed.  The event handle associated with
+     * this event is sent to the remote process so that it will wait
+     * on this event prior to copying data out of the device memory.
+     * Note that this needs to be the NULL stream to make since it is
+     * unknown what stream any copies into the device memory were done
+     * with. */
     result = cuEventRecord((CUevent)cuda_reg->event, 0);
     if (CUDA_SUCCESS != result) {
         orte_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
@@ -581,7 +592,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
     /* First make sure there is room to store the event.  If not, then
      * return an error.  The error message will tell the user to try and
      * run again, but with a larger array for storing events. */
-    if (cuda_event_status_num_used == cuda_event_max) {
+    if (cuda_event_ipc_num_used == cuda_event_max) {
         orte_show_help("help-mpi-common-cuda.txt", "Out of cuEvent handles",
                        true, cuda_event_max, cuda_event_max+100, cuda_event_max+100);
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -590,7 +601,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
     /* This is the standard way to run.  Running with synchronous copies is available
      * to measure the advantages of asynchronous copies. */
     if (OPAL_LIKELY(mca_common_cuda_async)) {
-        result = cuMemcpyAsync((CUdeviceptr)dst, (CUdeviceptr)src, amount, 0);
+        result = cuMemcpyAsync((CUdeviceptr)dst, (CUdeviceptr)src, amount, ipcStream);
         if (CUDA_SUCCESS != result) {
             orte_show_help("help-mpi-common-cuda.txt", "cuMemcpyAsync failed",
                            true, dst, src, amount, result);
@@ -600,25 +611,25 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
                                 "CUDA: cuMemcpyAsync passed: dst=%p, src=%p, size=%d",
                                 dst, src, (int)amount);
         }
-        result = cuEventRecord(cuda_event_status_array[cuda_event_status_first_avail], 0);
+        result = cuEventRecord(cuda_event_ipc_array[cuda_event_ipc_first_avail], ipcStream);
         if (CUDA_SUCCESS != result) {
             orte_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                            true, result);
             return OMPI_ERROR;
         }
-        cuda_event_frag_array[cuda_event_status_first_avail] = frag;
+        cuda_event_ipc_frag_array[cuda_event_ipc_first_avail] = frag;
 
         /* Bump up the first available slot and number used by 1 */
-        cuda_event_status_first_avail++;
-        if (cuda_event_status_first_avail >= cuda_event_max) {
-            cuda_event_status_first_avail = 0;
+        cuda_event_ipc_first_avail++;
+        if (cuda_event_ipc_first_avail >= cuda_event_max) {
+            cuda_event_ipc_first_avail = 0;
         }
-        cuda_event_status_num_used++;
+        cuda_event_ipc_num_used++;
 
         *done = 0;
     } else {
         /* Mimic the async function so they use the same memcpy call. */
-        result = cuMemcpyAsync((CUdeviceptr)dst, (CUdeviceptr)src, amount, 0);
+        result = cuMemcpyAsync((CUdeviceptr)dst, (CUdeviceptr)src, amount, ipcStream);
         if (CUDA_SUCCESS != result) {
             orte_show_help("help-mpi-common-cuda.txt", "cuMemcpyAsync failed",
                            true, dst, src, amount, result);
@@ -630,23 +641,23 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
         }
 
         /* Record an event, then wait for it to complete with calls to cuEventQuery */
-        result = cuEventRecord(cuda_event_status_array[cuda_event_status_first_avail], 0);
+        result = cuEventRecord(cuda_event_ipc_array[cuda_event_ipc_first_avail], ipcStream);
         if (CUDA_SUCCESS != result) {
             orte_show_help("help-mpi-common-cuda.txt", "cuEventRecord failed",
                            true, result);
             return OMPI_ERROR;
         }
 
-        cuda_event_frag_array[cuda_event_status_first_avail] = frag;
+        cuda_event_ipc_frag_array[cuda_event_ipc_first_avail] = frag;
 
         /* Bump up the first available slot and number used by 1 */
-        cuda_event_status_first_avail++;
-        if (cuda_event_status_first_avail >= cuda_event_max) {
-            cuda_event_status_first_avail = 0;
+        cuda_event_ipc_first_avail++;
+        if (cuda_event_ipc_first_avail >= cuda_event_max) {
+            cuda_event_ipc_first_avail = 0;
         }
-        cuda_event_status_num_used++;
+        cuda_event_ipc_num_used++;
 
-        result = cuEventQuery(cuda_event_status_array[cuda_event_status_first_used]);
+        result = cuEventQuery(cuda_event_ipc_array[cuda_event_ipc_first_used]);
         if ((CUDA_SUCCESS != result) && (CUDA_ERROR_NOT_READY != result)) {
             orte_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                            true, result);
@@ -658,7 +669,7 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
             if (0 == (iter % 10)) {
                 opal_output(-1, "EVENT NOT DONE (iter=%d)", iter);
             }
-            result = cuEventQuery(cuda_event_status_array[cuda_event_status_first_used]);
+            result = cuEventQuery(cuda_event_ipc_array[cuda_event_ipc_first_used]);
             if ((CUDA_SUCCESS != result) && (CUDA_ERROR_NOT_READY != result)) {
                 orte_show_help("help-mpi-common-cuda.txt", "cuEventQuery failed",
                                true, result);
@@ -667,10 +678,10 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
             iter++;
         }
 
-        --cuda_event_status_num_used;
-        ++cuda_event_status_first_used;
-        if (cuda_event_status_first_used >= cuda_event_max) {
-            cuda_event_status_first_used = 0;
+        --cuda_event_ipc_num_used;
+        ++cuda_event_ipc_first_used;
+        if (cuda_event_ipc_first_used >= cuda_event_max) {
+            cuda_event_ipc_first_used = 0;
         }
         *done = 1;
     }  
@@ -685,12 +696,12 @@ int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
 int progress_one_cuda_event(struct mca_btl_base_descriptor_t **frag) {
     CUresult result;
 
-    if (cuda_event_status_num_used > 0) {
+    if (cuda_event_ipc_num_used > 0) {
         opal_output_verbose(20, mca_common_cuda_output,
                            "CUDA: progress_one_cuda_event, outstanding_events=%d",
-                            cuda_event_status_num_used);
+                            cuda_event_ipc_num_used);
 
-        result = cuEventQuery(cuda_event_status_array[cuda_event_status_first_used]);
+        result = cuEventQuery(cuda_event_ipc_array[cuda_event_ipc_first_used]);
 
         /* We found an event that is not ready, so return. */
         if (CUDA_ERROR_NOT_READY == result) {
@@ -705,15 +716,15 @@ int progress_one_cuda_event(struct mca_btl_base_descriptor_t **frag) {
             return OMPI_ERROR;
         }
 
-        *frag = cuda_event_frag_array[cuda_event_status_first_used];
+        *frag = cuda_event_ipc_frag_array[cuda_event_ipc_first_used];
         opal_output_verbose(10, mca_common_cuda_output,
                             "CUDA: cuEventQuery returned %d", result);
 
         /* Bump counters, loop around the circular buffer if necessary */
-        --cuda_event_status_num_used;
-        ++cuda_event_status_first_used;
-        if (cuda_event_status_first_used >= cuda_event_max) {
-            cuda_event_status_first_used = 0;
+        --cuda_event_ipc_num_used;
+        ++cuda_event_ipc_first_used;
+        if (cuda_event_ipc_first_used >= cuda_event_max) {
+            cuda_event_ipc_first_used = 0;
         }
         /* A return value of 1 indicates an event completed and a frag was returned */
         return 1;
