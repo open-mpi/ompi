@@ -77,47 +77,58 @@ AC_DEFUN([ORTE_SETUP_JAVA],[
     # Some java installations are in obscure places.  So let's
     # hard-code a few of the common ones so that users don't have to
     # specify --with-java-<foo>=LONG_ANNOYING_DIRECTORY.
-    AS_IF([test -z "$with_jdk_dir" -a -z "$with_jdk_dir" -a -z "$with_jdk_bindir"],
+    AS_IF([test -z "$with_jdk_bindir"],
           [ # OS X Snow Leopard and Lion (10.6 and 10.7 -- did not
             # check prior versions)
            found=0
            dir=/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers
-           AS_IF([test -d $dir], [found=1
-                                  with_jdk_headers=$dir 
-                                  with_jdk_bindir=/usr/bin])
+           AC_MSG_CHECKING([OSX locations])
+           AS_IF([test -d $dir],
+                 [AC_MSG_RESULT([found])
+                  found=1
+                  with_jdk_headers=$dir 
+                  with_jdk_bindir=/usr/bin],
+                 [AC_MSG_RESULT([not found])])
 
-            # Various Linux
-            dir='/usr/lib/jvm/java-*-openjdk-*/include/'
-            jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
-            AS_IF([test -r "$jnih"], 
-                  [with_jdk_headers=`dirname $jnih`
-                   OPAL_WHICH([javac], [with_jdk_bindir])
-                   AS_IF([test -n "$with_jdk_bindir"],
-                         [found=1
-                          with_jdk_bindir=`dirname $with_jdk_bindir`],
-                         [with_jdk_headers=])],
-                  [dir='/usr/lib/jvm/default-java/include/'
-                   jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
-                   AS_IF([test -r "$jnih"], 
-                         [with_jdk_headers=`dirname $jnih`
-                          OPAL_WHICH([javac], [with_jdk_bindir])
-                          AS_IF([test -n "$with_jdk_bindir"],
-                                [found=1
-                                 with_jdk_bindir=`dirname $with_jdk_bindir`],
-                                [with_jdk_headers=])])])
+           if test "$found" = "0"; then
+               # Various Linux
+               dir='/usr/lib/jvm/java-*-openjdk-*/include/'
+               jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
+               AC_MSG_CHECKING([Linux locations])
+               AS_IF([test -r "$jnih"], 
+                     [with_jdk_headers=`dirname $jnih`
+                      OPAL_WHICH([javac], [with_jdk_bindir])
+                      AS_IF([test -n "$with_jdk_bindir"],
+                            [AC_MSG_RESULT([found])
+                             found=1
+                             with_jdk_bindir=`dirname $with_jdk_bindir`],
+                            [with_jdk_headers=])],
+                     [dir='/usr/lib/jvm/default-java/include/'
+                      jnih=`ls $dir/jni.h 2>/dev/null | head -n 1`
+                      AS_IF([test -r "$jnih"], 
+                            [with_jdk_headers=`dirname $jnih`
+                             OPAL_WHICH([javac], [with_jdk_bindir])
+                             AS_IF([test -n "$with_jdk_bindir"],
+                                   [AC_MSG_RESULT([found])
+                                    found=1
+                                    with_jdk_bindir=`dirname $with_jdk_bindir`],
+                                   [with_jdk_headers=])],
+                             [AC_MSG_RESULT([not found])])])
+           fi
 
-            # Solaris
-            dir=/usr/java
-            AS_IF([test "$found" -eq 0 -a -d $dir -a -r "$dir/include/jni.h"], 
-                  [with_jdk_headers=$dir/include
-                   with_jdk_bindir=$dir/bin
-                   found=1])
-
-            # If we think we found them, announce
-            AS_IF([test "$found" -eq 1],
-                  [AC_MSG_NOTICE([guessing that JDK headers are in $with_jdk_headers])
-                   AC_MSG_NOTICE([guessing that JDK javac is in $with_jdk_bindir])])
-          ])
+           if test "$found" = "0"; then
+               # Solaris
+               dir=/usr/java
+               AC_MSG_CHECKING([Solaris locations])
+               AS_IF([test -d $dir -a -r "$dir/include/jni.h"], 
+                     [AC_MSG_RESULT([found])
+                      with_jdk_headers=$dir/include
+                      with_jdk_bindir=$dir/bin
+                      found=1],
+                     [AC_MSG_RESULT([not found])])
+           fi
+          ],
+          [found=1])
 
     if test "$found" = "1"; then
         OMPI_CHECK_WITHDIR([jdk-bindir], [$with_jdk_bindir], [javac])
