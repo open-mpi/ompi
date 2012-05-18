@@ -12,6 +12,8 @@ include $(top_srcdir)/Makefile.man-page-rules
 
 man_pages = hdfsalloc.1
 EXTRA_DIST = $(man_pages:.1=.1in)
+# silence a complaint on Mac - won't affect anything else
+AM_CPPFLAGS = -DTARGET_RT_MAC_CFM=0
 
 bin_PROGRAMS = 
 
