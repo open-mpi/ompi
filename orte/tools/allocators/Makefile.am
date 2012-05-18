@@ -15,8 +15,6 @@ EXTRA_DIST = $(man_pages:.1=.1in)
 # silence a complaint on Mac - won't affect anything else
 AM_CPPFLAGS = -DTARGET_RT_MAC_CFM=0
 
-bin_PROGRAMS = 
-
 # Automake doesn't directly know about Java source files, and we compile
 # them via *.java below (ick!).  So we just list them here in EXTRA_DIST
 # so that they get picked up by "make dist".
@@ -45,18 +43,6 @@ orte__v_JAVAC_0 = @echo "  JAVAC " `basename $@`;
 ORTE_V_JAR = $(orte__v_JAR_$(V))
 orte__v_JAR_ = $(orte__v_JAR_$(AM_DEFAULT_VERBOSITY))
 orte__v_JAR_0 = @echo "  JAR  " `basename $@`;
-
-bin_PROGRAMS += HDFSFileFinder.class
-
-# It's a little weird to put in a blank _SOURCES line, but if we don't
-# put in a _SOURCES line at all, Automake will default to
-# "HDFSFileFinter_class_SOURCES = HDFSFileFinder.c", which clearly
-# will cause problems.  But we don't want to put the .java file in
-# _SOURCES, either, because we haven't configured Automake to handle
-# Java (because current versions of Automake only have GCJ, not other
-# Java compilers).  So set _SOURCES to blank and list the .java file
-# in EXTRA_DIST, above.  :-(
-HDFSFileFinder_class_SOURCES =
 
 if ORTE_HAVE_HADOOP_SERIES1
 hadoop_jars = .:$(HADOOP_HOME)/*:$(HADOOP_HOME)/lib/*
