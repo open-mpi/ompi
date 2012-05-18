@@ -275,37 +275,33 @@ int ompi_io_ompio_generate_current_file_view (mca_io_ompio_file_t *fh,
     return OMPI_SUCCESS;
 }
 
-
-
 int ompi_io_ompio_set_explicit_offset (mca_io_ompio_file_t *fh,
                                        OMPI_MPI_OFFSET_TYPE offset)
 {
+    int i = 0;
+    int k = 0;
 
-
-    size_t i = 0;
-    size_t k = 0;
-    
-    fh->f_offset += fh->f_view_extent *
-	(((offset-fh->f_offset)*fh->f_etype_size)/fh->f_view_size);
+    fh->f_offset = fh->f_view_extent * 
+        ((offset*fh->f_etype_size - fh->f_disp) / fh->f_view_size);
 
     fh->f_position_in_file_view = 0;
 
-    fh->f_total_bytes = (offset*fh->f_etype_size) % fh->f_view_size;
-
+    fh->f_total_bytes = (offset*fh->f_etype_size - fh->f_disp) % fh->f_view_size;
 
     fh->f_index_in_file_view = 0;
     i = fh->f_total_bytes;
+
     k = 0;
     while (1) {
         k += fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
-	if (i >= k) {
+        if (i >= k) {
             i = i - fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
             fh->f_position_in_file_view += 
                 fh->f_decoded_iov[fh->f_index_in_file_view].iov_len;
             fh->f_index_in_file_view = fh->f_index_in_file_view+1;
         }
         else {
-	    break;
+            break;
         }
     }
 
