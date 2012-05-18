@@ -930,6 +930,9 @@ int orterun(int argc, char *argv[])
         opal_event_loop(orte_event_base, OPAL_EVLOOP_ONCE);
     }
 
+    /* ensure all local procs are dead */
+    orte_odls.kill_local_procs(NULL);
+
  DONE:
     /* cleanup and leave */
     orte_finalize();
