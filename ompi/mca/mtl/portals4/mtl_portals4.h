@@ -67,9 +67,11 @@ struct mca_mtl_portals4_module_t {
         usage.  Array for PtlEQPoll */
     ptl_handle_eq_t eqs_h[2];
 
-    /** MD for zero-length sends and acks.  Optimization, can be
-        reused anywhere a 0-byte ping is necessary */
+    /** MD handle for sending ACKS */
     ptl_handle_md_t zero_md_h;
+
+    /** MD handle covering all of memory for sending normal messages */
+    ptl_handle_md_t md_h;
 
     /** long message receive overflow ME.  Persistent ME, first in
         overflow list on the recv_idx portal table. */

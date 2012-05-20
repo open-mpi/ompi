@@ -156,6 +156,7 @@ ompi_mtl_portals4_finalize(struct mca_mtl_base_module_t *mtl)
 
     PtlMEUnlink(ompi_mtl_portals4.long_overflow_me_h);
     PtlMDRelease(ompi_mtl_portals4.zero_md_h);
+    PtlMDRelease(ompi_mtl_portals4.md_h);
     PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
     PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.recv_idx);
     PtlEQFree(ompi_mtl_portals4.send_eq_h);
