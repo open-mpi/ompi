@@ -169,6 +169,7 @@ ompi_mtl_portals4_component_open(void)
     ompi_mtl_portals4.send_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_eq_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.zero_md_h = PTL_INVALID_HANDLE;
+    ompi_mtl_portals4.md_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.long_overflow_me_h = PTL_INVALID_HANDLE;
     ompi_mtl_portals4.recv_idx = (ptl_pt_index_t) ~0UL;
     ompi_mtl_portals4.read_idx = (ptl_pt_index_t) ~0UL;
@@ -295,7 +296,24 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
 
     ret = PtlMDBind(ompi_mtl_portals4.ni_h,
                     &md,
-                    &ompi_mtl_portals4.zero_md_h ); 
+                    &ompi_mtl_portals4.zero_md_h); 
+    if (PTL_OK != ret) {
+        opal_output_verbose(1, ompi_mtl_base_output,
+                            "%s:%d: PtlMDBind failed: %d\n",
+                            __FILE__, __LINE__, ret);
+        goto error;
+    }
+
+    /* bind md across all of memory */
+    md.start     = 0;
+    md.length    = SIZE_MAX;
+    md.options   = 0;
+    md.eq_handle = ompi_mtl_portals4.send_eq_h;
+    md.ct_handle = PTL_CT_NONE;
+
+    ret = PtlMDBind(ompi_mtl_portals4.ni_h,
+                    &md,
+                    &ompi_mtl_portals4.md_h); 
     if (PTL_OK != ret) {
         opal_output_verbose(1, ompi_mtl_base_output,
                             "%s:%d: PtlMDBind failed: %d\n",
@@ -373,6 +391,9 @@ ompi_mtl_portals4_component_init(bool enable_progress_threads,
     }
     if (PTL_OK != PtlHandleIsEqual(ompi_mtl_portals4.zero_md_h, PTL_INVALID_HANDLE)) {
         PtlMDRelease(ompi_mtl_portals4.zero_md_h);
+    }
+    if (PTL_OK != PtlHandleIsEqual(ompi_mtl_portals4.md_h, PTL_INVALID_HANDLE)) {
+        PtlMDRelease(ompi_mtl_portals4.md_h);
     }
     if (ompi_mtl_portals4.read_idx != (ptl_pt_index_t) ~0UL) {
         PtlPTFree(ompi_mtl_portals4.ni_h, ompi_mtl_portals4.read_idx);
