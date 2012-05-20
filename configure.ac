@@ -155,10 +155,6 @@ AC_MSG_RESULT([$ltversion])
 #
 # Hardwire all progress threads to be off
 #
-enable_progress_threads="no"
-ORTE_ENABLE_PROGRESS_THREADS=0
-AC_DEFINE_UNQUOTED([ORTE_ENABLE_PROGRESS_THREADS], [$ORTE_ENABLE_PROGRESS_THREADS],
-                   [Hardcode the ORTE progress thread to be off])
 OMPI_ENABLE_PROGRESS_THREADS=0
 AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREADS],
                    [Hardcode the OMPI progress thread to be off])

@@ -188,8 +188,9 @@ bool orte_map_reduce = false;
 bool orte_map_stddiag_to_stderr = false;
 
 /* progress thread */
-#if ORTE_ENABLE_PROGRESS_THREAD
+#if ORTE_ENABLE_PROGRESS_THREADS
 opal_thread_t orte_progress_thread;
+opal_event_t orte_finalize_event;
 #endif
 
 #endif /* !ORTE_DISABLE_FULL_RTE */
