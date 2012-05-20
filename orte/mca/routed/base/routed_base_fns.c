@@ -23,6 +23,13 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
+#if HAVE_TIME_H
+#include <time.h>
+#endif
+#if HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include "opal/dss/dss.h"
 #include "opal/runtime/opal_progress.h"
 
@@ -307,7 +314,17 @@ int orte_routed_base_register_sync(bool setup)
     
     /* it is okay to block here as we are -not- in an event */
     while (!sync_recvd) {
+#if !ORTE_ENABLE_PROGRESS_THREADS
         opal_progress();
+#else
+        {
+            /* provide a very short quiet period so we
+             * don't hammer the cpu while we wait
+             */
+            struct timespec tp = {0, 100};
+            nanosleep(&tp, NULL);
+        }
+#endif
     }
     
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,

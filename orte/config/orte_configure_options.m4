@@ -115,21 +115,23 @@ AC_DEFINE_UNQUOTED([ORTE_ENABLE_HEARTBEAT],
 
 #
 # Do we want a separate orte progress thread?
-AC_MSG_CHECKING([if want orte progress thread])
-AC_ARG_ENABLE([orte-progress-thread],
-              [AC_HELP_STRING([--enable-orte-progress-thread],
+AC_MSG_CHECKING([if want orte progress threads])
+AC_ARG_ENABLE([orte-progress-threads],
+              [AC_HELP_STRING([--enable-orte-progress-threads],
               [Enable orte progress thread - for experiment by developers only! (default: disabled)])])
-if test "$enable_orte_progress_thread" = "yes"; then
+if test "$enable_orte_progress_threads" = "yes"; then
     AC_MSG_RESULT([yes])
-    orte_enable_progress_thread=1
+    orte_enable_progress_threads=1
+    require_event_thread_support=1
     AC_DEFINE_UNQUOTED(OPAL_EVENT_HAVE_THREAD_SUPPORT, 1,
                       [Thread support must be configured into the event library])
 else
     AC_MSG_RESULT([no])
-    orte_enable_progress_thread=0
+    orte_enable_progress_threads=0
+    require_event_thread_support=0
 fi
-AC_DEFINE_UNQUOTED([ORTE_ENABLE_PROGRESS_THREAD],
-                   [$orte_enable_progress_thread],
-                   [Whether we want an orte progress thread enabled])
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_PROGRESS_THREADS],
+                   [$orte_enable_progress_threads],
+                   [Whether we want orte progress threads enabled])
 
 ])dnl

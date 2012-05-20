@@ -59,15 +59,6 @@ int orte_finalize(void)
     /* close the orte_show_help system */
     orte_show_help_finalize();
 
-#if !ORTE_DISABLE_FULL_SUPPORT && ORTE_ENABLE_PROGRESS_THREAD
-    if (ORTE_PROC_IS_APP) {
-        /* stop the progress thread */
-        orte_event_base_active = false;
-        opal_thread_join(&orte_progress_thread, NULL);
-        OBJ_DESTRUCT(&orte_progress_thread);
-    }
-#endif
-
     /* call the finalize function for this environment */
     orte_ess.finalize();
     
@@ -85,6 +76,21 @@ int orte_finalize(void)
     if( NULL != orte_default_hostfile ) {
         free(orte_default_hostfile);
     }
+#if ORTE_ENABLE_PROGRESS_THREADS
+    if (ORTE_PROC_IS_APP) {
+        /* stop the progress thread */
+        orte_event_base_active = false;
+        /* must trigger the "finalize" event to break us
+         * out of the event loop
+         */
+        opal_event_active(&orte_finalize_event, OPAL_EV_WRITE, 1);
+        /* wait for thread to exit */
+        opal_thread_join(&orte_progress_thread, NULL);
+        OBJ_DESTRUCT(&orte_progress_thread);
+        /* release the event base */
+        opal_event_base_free(orte_event_base);
+    }
+#endif
 #endif
 
     /* Close the general debug stream */
