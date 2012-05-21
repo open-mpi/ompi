@@ -41,7 +41,8 @@ nodist_man_MANS = $(man_pages)
 
 install-exec-hook:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
-	(cp mrplus $(DESTDIR)$(bindir)/mr+)
+	(cd $(DESTDIR)$(bindir); rm -f mr+; $(LN_S) mrplus mr+)
+
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/mr+
