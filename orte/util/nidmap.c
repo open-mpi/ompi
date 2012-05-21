@@ -205,6 +205,7 @@ int orte_util_setup_local_nidmap_entries(void)
     return ORTE_SUCCESS;
 }
 
+#if ORTE_ENABLE_STATIC_PORTS
 int orte_util_build_daemon_nidmap(char **nodes)
 {
     orte_nid_t *node;
@@ -292,6 +293,7 @@ int orte_util_build_daemon_nidmap(char **nodes)
 
     return rc;
 }
+#endif
 
 int orte_util_encode_nodemap(opal_byte_object_t *boptr)
 {

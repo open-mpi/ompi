@@ -293,6 +293,7 @@ static int mca_oob_tcp_component_register(void)
     mca_oob_tcp_component.tcp_listen_thread_tv.tv_sec = tmp / (1000);
     mca_oob_tcp_component.tcp_listen_thread_tv.tv_usec = (tmp % 1000) * 1000; 
 
+#if ORTE_ENABLE_STATIC_PORTS
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "static_ports", "Static ports for daemons and procs (IPv4)",
                               false, false,
@@ -311,6 +312,7 @@ static int mca_oob_tcp_component_register(void)
         orte_static_ports = false;
         mca_oob_tcp_component.tcp4_static_ports = NULL;
     }
+#endif
     
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "dynamic_ports", "Range of ports to be dynamically used by daemons and procs (IPv4)",
@@ -340,6 +342,7 @@ static int mca_oob_tcp_component_register(void)
                            0,
                            &mca_oob_tcp_component.disable_family);
 #if OPAL_WANT_IPV6
+#if ORTE_ENABLE_STATIC_PORTS
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "static_ports_v6", "Static ports for daemons and procs (IPv6)",
                               false, false,
@@ -357,6 +360,7 @@ static int mca_oob_tcp_component_register(void)
         orte_static_ports = false;
         mca_oob_tcp_component.tcp6_static_ports = NULL;
     }
+#endif
 
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "dynamic_ports_v6", "Range of ports to be dynamically used by daemons and procs (IPv4)",
@@ -1627,7 +1631,8 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
         mca_oob_tcp_peer_resolved(peer, addr);
         return ORTE_SUCCESS;
     }
-    
+
+#if ORTE_ENABLE_STATIC_PORTS    
     /* if we don't know it, and we are using static ports, try
      * to compute the address and port
      */
@@ -1730,6 +1735,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
             free(uri);
         }
     }
+#endif
     
 unlock:
     return rc;
