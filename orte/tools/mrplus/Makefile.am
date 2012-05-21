@@ -10,22 +10,22 @@
 
 include $(top_srcdir)/Makefile.man-page-rules
 
-man_pages = mapreduce.1
+man_pages = mr+.1
 EXTRA_DIST = $(man_pages:.1=.1in)
 
 bin_PROGRAMS = 
 
-mapreduce_SOURCES = \
-        mapreduce.c
+mrplus_SOURCES = \
+	mrplus.c
 
-mapreduce_LDADD = $(top_builddir)/orte/libopen-rte.la
+mrplus_LDADD = $(top_builddir)/orte/libopen-rte.la
 
 # Ensure that the man pages are rebuilt if the opal_config.h file
 # changes; a "good enough" way to know if configure was run again (and
 # therefore the release date or version may have changed)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
-dist_pkgdata_DATA = help-mapreduce.txt
+dist_pkgdata_DATA = help-mr+.txt
 
 if !ORTE_DISABLE_FULL_SUPPORT
 if OMPI_INSTALL_BINARIES
@@ -33,9 +33,18 @@ if OMPI_INSTALL_BINARIES
 # Only do this stuff if we want Hadoop support
 if ORTE_WANT_HADOOP_SUPPORT
 
-bin_PROGRAMS += mapreduce
+bin_PROGRAMS += mrplus
+
+mr+: mrplus.c
 
 nodist_man_MANS = $(man_pages)
+
+install-exec-hook:
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	(cp mrplus $(DESTDIR)$(bindir)/mr+)
+
+uninstall-local:
+	rm -f $(DESTDIR)$(bindir)/mr+
 
 endif 
 
