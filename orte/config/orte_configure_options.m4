@@ -134,4 +134,19 @@ AC_DEFINE_UNQUOTED([ORTE_ENABLE_PROGRESS_THREADS],
                    [$orte_enable_progress_threads],
                    [Whether we want orte progress threads enabled])
 
+AC_MSG_CHECKING([if want orte static ports])
+AC_ARG_ENABLE([orte-static-ports],
+              [AC_HELP_STRING([--enable-orte-static-ports],
+	        [Enable orte static ports for tcp oob. (default: disabled)])])
+if test "$enable_orte_static_ports" = "yes"; then
+    AC_MSG_RESULT([yes])
+    orte_enable_static_ports=1
+else
+    AC_MSG_RESULT([no])
+    orte_enable_static_ports=0
+fi
+AC_DEFINE_UNQUOTED([ORTE_ENABLE_STATIC_PORTS],
+                   [$orte_enable_static_ports],
+		   [Whether we want static ports enabled])
+
 ])dnl

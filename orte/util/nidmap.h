@@ -58,7 +58,9 @@ ORTE_DECLSPEC int orte_util_encode_pidmap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_pidmap(opal_byte_object_t *boptr);
 ORTE_DECLSPEC int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo);
 
+#if ORTE_ENABLE_STATIC_PORTS
 ORTE_DECLSPEC int orte_util_build_daemon_nidmap(char **nodes);
+#endif
 
 ORTE_DECLSPEC void orte_nidmap_dump(void);
 ORTE_DECLSPEC void orte_jmap_dump(orte_jmap_t *jmap);
