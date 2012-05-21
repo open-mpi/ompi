@@ -29,7 +29,6 @@
 /*
  * This is the OMPI-layered numbering of ALL supported MPI types
  * (derived from the old DT_ names).
- * NOTE: These numbers have to match the d_f_to_c_index.
  */
 #define OMPI_DATATYPE_MPI_EMPTY                   0x00
 #define OMPI_DATATYPE_MPI_INT8_T                  0x01

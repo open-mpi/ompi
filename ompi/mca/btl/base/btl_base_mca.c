@@ -33,7 +33,7 @@
 
 
 int mca_btl_base_param_register(mca_base_component_t *version,
-        mca_btl_base_module_t *module)
+                                mca_btl_base_module_t *module)
 {
     int value, err = 0;
     char *msg;
