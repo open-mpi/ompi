@@ -35,11 +35,12 @@ SUBDIRS += \
 	tools/wrappers \
         tools/orte-top \
         tools/orte-info \
-        tools/orte-migrate \
-	tools/mapreduce
+        tools/orte-migrate
 
 #if ORTE_WANT_HADOOP_SUPPORT
-SUBDIRS += tools/allocators
+SUBDIRS += \
+	tools/allocators \
+	tools/mrplus
 #endif
 
 DIST_SUBDIRS += \
@@ -53,6 +54,6 @@ DIST_SUBDIRS += \
         tools/orte-top \
         tools/orte-info \
         tools/orte-migrate \
-	tools/mapreduce \
+	tools/mrplus \
         tools/allocators
 
