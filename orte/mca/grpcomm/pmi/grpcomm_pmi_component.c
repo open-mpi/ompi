@@ -22,6 +22,7 @@
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/util/proc_info.h"
+#include "orte/mca/common/pmi/common_pmi.h"
 
 #include "grpcomm_pmi.h"
 
