@@ -28,6 +28,8 @@
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/pmi/ess_pmi.h"
 
+#include "orte/mca/common/pmi/common_pmi.h"
+
 extern orte_ess_base_module_t orte_ess_pmi_module;
 
 static int pmi_component_open(void);
