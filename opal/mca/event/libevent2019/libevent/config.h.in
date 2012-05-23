@@ -368,9 +368,6 @@
 /* Numeric representation of the version */
 #undef NUMERIC_VERSION
 
-/* Whether C compiler supports symbol visibility or not */
-#undef OPAL_C_HAVE_VISIBILITY
-
 /* Name of package */
 #undef PACKAGE
 
