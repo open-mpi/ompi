@@ -91,9 +91,13 @@ SUBDIRS = \
         $(OMPI_MPIEXT_USEMPIF08_DIRS) \
         $(OMPI_FORTRAN_USEMPIF08_DIR) \
         mpi/fortran/mpiext \
-        mpi/java \
         $(MCA_ompi_FRAMEWORK_COMPONENT_DSO_SUBDIRS) \
         $(OMPI_CONTRIB_SUBDIRS)
+
+if OMPI_WANT_JAVA_BINDINGS
+SUBDIRS += \
+        mpi/java
+endif
 
 # The ordering of the DIST_SUBDIRS isn't as important, but note that
 # its contents *are* different than SUBDIRS.  In particular, the
