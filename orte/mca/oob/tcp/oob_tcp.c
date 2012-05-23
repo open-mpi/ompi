@@ -1615,11 +1615,6 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
 int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
 {
     mca_oob_tcp_addr_t* addr = NULL;
-    char *host, *haddr=NULL;
-    orte_node_rank_t nrank;
-    struct hostent *h;
-    int port;
-    char *uri;
     int rc=ORTE_ERR_ADDRESSEE_UNKNOWN;
 
     /* if the address is already cached - simply return it */
@@ -1632,22 +1627,29 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
         return ORTE_SUCCESS;
     }
 
-#if ORTE_ENABLE_STATIC_PORTS    
-    /* if we don't know it, and we are using static ports, try
-     * to compute the address and port
-     */
-    if (orte_static_ports) {
-        if (NULL != (host = orte_ess.proc_get_hostname(&peer->peer_name))) {
-            /* lookup the address of this node */
-            if (NULL == (h = gethostbyname(host))) {
-                /* this isn't an error - it just means we don't know
-                 * how to compute a contact info for this proc.
-                 * if we are trying to talk to a process on our own node, try
-                 * looking for the loopback interface before giving up
-                 */
+#if ORTE_ENABLE_STATIC_PORTS
+    {
+        char *host, *haddr=NULL;
+        orte_node_rank_t nrank;
+        struct hostent *h;
+        int port;
+        char *uri;
+
+        /* if we don't know it, and we are using static ports, try
+         * to compute the address and port
+         */
+        if (orte_static_ports) {
+            if (NULL != (host = orte_ess.proc_get_hostname(&peer->peer_name))) {
+                /* lookup the address of this node */
+                if (NULL == (h = gethostbyname(host))) {
+                    /* this isn't an error - it just means we don't know
+                     * how to compute a contact info for this proc.
+                     * if we are trying to talk to a process on our own node, try
+                     * looking for the loopback interface before giving up
+                     */
 #if OPAL_WANT_IPV6
-                goto unlock;
-            }
+                    goto unlock;
+                }
 #else
                 if (0 == strcasecmp(host, orte_process_info.nodename) ||
                     0 == strncasecmp(host, orte_process_info.nodename, strlen(host)) ||
@@ -1735,9 +1737,9 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
             free(uri);
         }
     }
-#endif
-    
+
 unlock:
+#endif
     return rc;
 }
 
