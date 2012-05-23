@@ -32,28 +32,32 @@ bool mca_common_pmi_init (void) {
     }
 
 #if WANT_CRAY_PMI2_EXT
-    int spawned, size, rank, appnum;
+    {
+        int spawned, size, rank, appnum;
 
-    /* if we can't startup PMI, we can't be used */
-    if (PMI2_Initialized ()) {
-        return true;
-    }
+        /* if we can't startup PMI, we can't be used */
+        if (PMI2_Initialized ()) {
+            return true;
+        }
 
-    if (PMI_SUCCESS != PMI2_Init(&spawned, &size, &rank, &appnum)) {
-        mca_common_pmi_init_count--;
-        return false;
+        if (PMI_SUCCESS != PMI2_Init(&spawned, &size, &rank, &appnum)) {
+            mca_common_pmi_init_count--;
+            return false;
+        }
     }
 #else
-    PMI_BOOL initialized;
+    {
+        PMI_BOOL initialized;
 
-    if (PMI_SUCCESS != PMI_Initialized(&initialized)) {
-        mca_common_pmi_init_count--;
-        return false;
-    }
+        if (PMI_SUCCESS != PMI_Initialized(&initialized)) {
+            mca_common_pmi_init_count--;
+            return false;
+        }
 
-    if (PMI_TRUE != initialized && PMI_SUCCESS != PMI_Init(&initialized)) {
-        mca_common_pmi_init_count--;
-        return false;
+        if (PMI_TRUE != initialized && PMI_SUCCESS != PMI_Init(&initialized)) {
+            mca_common_pmi_init_count--;
+            return false;
+        }
     }
 #endif
 
