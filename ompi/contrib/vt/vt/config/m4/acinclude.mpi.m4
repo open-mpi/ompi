@@ -283,7 +283,7 @@ AC_DEFUN([ACVT_MPI],
 		[
 			MPILIB="-lmpi"
 			PMPILIB="$MPILIB"
-			FMPILIB="-lmpi_f77"
+			FMPILIB="-lmpi_mpifh"
 			check_mpi2_thread="no"; have_mpi2_thread="yes"
 			check_mpi2_1sided="no"; have_mpi2_1sided="yes"
 			check_mpi2_extcoll="no"; have_mpi2_extcoll="yes"
