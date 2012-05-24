@@ -49,6 +49,10 @@ AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 
+# Get our platform support file.  This has to be done very, very early
+# because it twiddles random bits of autoconf
+OMPI_LOAD_PLATFORM
+
 #
 # Start it up
 #
@@ -76,10 +80,6 @@ AC_USE_SYSTEM_EXTENSIONS
 # CFLAGS, put nothing back in there.
 AS_IF([test -z "$CFLAGS_save"], [CFLAGS=])
 CFLAGS_save=
-
-# Get our platform support file.  This has to be done very, very early
-# because it twiddles random bits of autoconf
-OMPI_LOAD_PLATFORM
 
 #
 # Init automake
