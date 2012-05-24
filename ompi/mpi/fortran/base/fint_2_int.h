@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -190,7 +191,7 @@
        while (--converted_n >= 0) { \
          in[converted_n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]); \
        } \
-       free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)); \
+       OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in); \
      }  while (0)
 
 #  endif
@@ -230,7 +231,7 @@
        while (--converted_n >= 0) { \
          in[converted_n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[converted_n]); \
        } \
-       free(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)); \
+       OMPI_ARRAY_LOGICAL_2_INT_CLEANUP(in); \
      }  while (0)
 #endif /* OMPI_SIZEOF_FORTRAN_LOGICAL */
 
