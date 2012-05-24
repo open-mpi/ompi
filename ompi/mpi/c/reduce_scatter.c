@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -100,7 +100,7 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
            safe to get the size of the remote group here for both
            intra- and intercommunicators */
 
-        size = ompi_comm_size(comm);
+        size = ompi_comm_remote_size(comm);
         for (i = 0; i < size; ++i) {
           OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, recvcounts[i]);
           OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
@@ -111,7 +111,7 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
        element.  But at least the Pallas benchmarks call MPI_REDUCE
        with a count of 0.  So be sure to handle it.  Grrr... */
 
-    size = ompi_comm_size(comm);
+    size = ompi_comm_remote_size(comm);
     for (count = i = 0; i < size; ++i) {
         if (0 == recvcounts[i]) {
             ++count;
