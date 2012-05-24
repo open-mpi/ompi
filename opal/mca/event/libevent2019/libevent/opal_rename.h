@@ -40,6 +40,7 @@ extern "C" {
 #define evbuffer_add_vprintf                                 opal_libevent2019_evbuffer_add_vprintf
 #define evbuffer_cb_clear_flags                              opal_libevent2019_evbuffer_cb_clear_flags
 #define evbuffer_cb_set_flags                                opal_libevent2019_evbuffer_cb_set_flags
+#define evbuffer_clear_flags                                 opal_libevent2019_evbuffer_clear_flags
 #define evbuffer_commit_space                                opal_libevent2019_evbuffer_commit_space
 #define evbuffer_copyout                                     opal_libevent2019_evbuffer_copyout
 #define evbuffer_defer_callbacks                             opal_libevent2019_evbuffer_defer_callbacks
@@ -51,6 +52,7 @@ extern "C" {
 #define evbuffer_freeze                                      opal_libevent2019_evbuffer_freeze
 #define evbuffer_get_contiguous_space                        opal_libevent2019_evbuffer_get_contiguous_space
 #define evbuffer_get_length                                  opal_libevent2019_evbuffer_get_length
+#define evbuffer_invoke_callbacks                            opal_libevent2019_evbuffer_invoke_callbacks
 #define evbuffer_lock                                        opal_libevent2019_evbuffer_lock
 #define evbuffer_new                                         opal_libevent2019_evbuffer_new
 #define evbuffer_peek                                        opal_libevent2019_evbuffer_peek
@@ -69,6 +71,7 @@ extern "C" {
 #define evbuffer_search                                      opal_libevent2019_evbuffer_search
 #define evbuffer_search_eol                                  opal_libevent2019_evbuffer_search_eol
 #define evbuffer_search_range                                opal_libevent2019_evbuffer_search_range
+#define evbuffer_set_flags                                   opal_libevent2019_evbuffer_set_flags
 #define evbuffer_set_parent                                  opal_libevent2019_evbuffer_set_parent
 #define evbuffer_setcb                                       opal_libevent2019_evbuffer_setcb
 #define evbuffer_unfreeze                                    opal_libevent2019_evbuffer_unfreeze
@@ -86,10 +89,12 @@ extern "C" {
 #define _bufferevent_run_writecb                             opal_libevent2019__bufferevent_run_writecb
 #define bufferevent_decref                                   opal_libevent2019_bufferevent_decref
 #define bufferevent_disable                                  opal_libevent2019_bufferevent_disable
+#define bufferevent_disable_hard                             opal_libevent2019_bufferevent_disable_hard
 #define bufferevent_enable                                   opal_libevent2019_bufferevent_enable
 #define bufferevent_enable_locking                           opal_libevent2019_bufferevent_enable_locking
 #define bufferevent_flush                                    opal_libevent2019_bufferevent_flush
 #define bufferevent_free                                     opal_libevent2019_bufferevent_free
+#define bufferevent_get_base                                 opal_libevent2019_bufferevent_get_base
 #define bufferevent_get_enabled                              opal_libevent2019_bufferevent_get_enabled
 #define bufferevent_get_input                                opal_libevent2019_bufferevent_get_input
 #define bufferevent_get_output                               opal_libevent2019_bufferevent_get_output
@@ -167,7 +172,7 @@ extern "C" {
 #define event_debug_map_HT_GROW                              opal_libevent2019_event_debug_map_HT_GROW
 #define event_debug_unassign                                 opal_libevent2019_event_debug_unassign
 #define _event_debugx                                        opal_libevent2019__event_debugx
-
+#define _event_debug_mode_on                                 opal_libevent2019__event_debug_mode_on
 
 /* event.c */
 #define event_active                                         opal_libevent2019_event_active
@@ -175,6 +180,7 @@ extern "C" {
 #define event_add                                            opal_libevent2019_event_add
 #define event_assign                                         opal_libevent2019_event_assign
 #define event_base_add_virtual                               opal_libevent2019_event_base_add_virtual
+#define event_base_assert_ok                                 opal_libevent2019_event_base_assert_ok
 #define event_base_del_virtual                               opal_libevent2019_event_base_del_virtual
 #define event_base_dispatch                                  opal_libevent2019_event_base_dispatch
 #define event_base_dump_events                               opal_libevent2019_event_base_dump_events
@@ -209,6 +215,7 @@ extern "C" {
 #define event_del                                            opal_libevent2019_event_del
 #define event_dispatch                                       opal_libevent2019_event_dispatch
 #define event_enable_debug_mode                              opal_libevent2019_event_enable_debug_mode
+#define event_enable_debug_output                            opal_libevent2019_event_enable_debug_output
 #define event_free                                           opal_libevent2019_event_free
 #define event_get_assignment                                 opal_libevent2019_event_get_assignment
 #define event_get_base                                       opal_libevent2019_event_get_base
@@ -223,6 +230,7 @@ extern "C" {
 #define event_get_version_number                             opal_libevent2019_event_get_version_number
 #define event_init                                           opal_libevent2019_event_init
 #define _event_initialized                                   opal_libevent2019__event_initialized
+#define event_initialized                                    opal_libevent2019_event_initialized
 #define event_loop                                           opal_libevent2019_event_loop
 #define event_loopbreak                                      opal_libevent2019_event_loopbreak
 #define event_loopexit                                       opal_libevent2019_event_loopexit
@@ -287,8 +295,13 @@ extern "C" {
 #define evutil_make_socket_closeonexec                       opal_libevent2019_evutil_make_socket_closeonexec
 #define evutil_make_socket_nonblocking                       opal_libevent2019_evutil_make_socket_nonblocking
 #define evutil_new_addrinfo                                  opal_libevent2019_evutil_new_addrinfo
+#define evutil_open_closeonexec                              opal_libevent2019_evutil_open_closeonexec
 #define evutil_parse_sockaddr_port                           opal_libevent2019_evutil_parse_sockaddr_port
 #define evutil_read_file                                     opal_libevent2019_evutil_read_file
+#define evutil_secure_rng_add_bytes                          opal_libevent2019_evutil_secure_rng_add_bytes
+#define evutil_secure_rng_get_bytes                          opal_libevent2019_evutil_secure_rng_get_bytes
+#define evutil_secure_rng_global_setup_locks_                opal_libevent2019_evutil_secure_rng_global_setup_locks_
+#define evutil_secure_rng_init                               opal_libevent2019_evutil_secure_rng_init
 #define evutil_set_evdns_getaddrinfo_fn                      opal_libevent2019_evutil_set_evdns_getaddrinfo_fn
 #define evutil_snprintf                                      opal_libevent2019_evutil_snprintf
 #define evutil_sockaddr_cmp                                  opal_libevent2019_evutil_sockaddr_cmp
@@ -299,9 +312,6 @@ extern "C" {
 #define evutil_strtoll                                       opal_libevent2019_evutil_strtoll
 #define evutil_tv_to_msec                                    opal_libevent2019_evutil_tv_to_msec
 #define evutil_vsnprintf                                     opal_libevent2019_evutil_vsnprintf
-#define evutil_secure_rng_add_bytes                          opal_libevent2019_evutil_secure_rng_add_bytes
-#define evutil_secure_rng_get_bytes                          opal_libevent2019_evutil_secure_rng_get_bytes
-#define evutil_secure_rng_init                               opal_libevent2019_evutil_secure_rng_init
 
 
 /* threads */
@@ -342,6 +352,7 @@ extern "C" {
 #define evtag_unmarshal_timeval                              opal_libevent2019_evtag_unmarshal_timeval
 
 /* map */
+#define evmap_check_integrity                                opal_libevent2019_evmap_check_integrity
 #define evmap_io_active                                      opal_libevent2019_evmap_io_active
 #define evmap_io_add                                         opal_libevent2019_evmap_io_add
 #define evmap_io_clear                                       opal_libevent2019_evmap_io_clear
@@ -363,7 +374,8 @@ extern "C" {
 #define evconnlistener_get_fd                                opal_libevent2019_evconnlistener_get_fd
 #define evconnlistener_new                                   opal_libevent2019_evconnlistener_new
 #define evconnlistener_new_bind                              opal_libevent2019_evconnlistener_new_bind
-
+#define evconnlistener_set_cb                                opal_libevent2019_evconnlistener_set_cb
+#define evconnlistener_set_error_cb                          opal_libevent2019_evconnlistener_set_error_cb
 
 /* signal */
 #define _evsig_restore_handler                               opal_libevent2019__evsig_restore_handler
@@ -371,6 +383,7 @@ extern "C" {
 #define evsig_dealloc                                        opal_libevent2019_evsig_dealloc
 #define evsig_init                                           opal_libevent2019_evsig_init
 #define evsig_process                                        opal_libevent2019_evsig_process
+#define evsig_set_base                                       opal_libevent2019_evsig_set_base
 
 /* eventop */
 #define evportops                                            opal_libevent2019_evportops
