@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -49,7 +49,7 @@ int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls,
         ptrdiff_t recv_ext;
         ptrdiff_t send_ext;
 
-        size = ompi_comm_size(comm);
+        size = ompi_comm_remote_size(comm);
 
         memchecker_comm(comm);
         for ( i = 0; i < size; i++ ) {
@@ -70,37 +70,37 @@ int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls,
 
     if (MPI_PARAM_CHECK) {
 
-      /* Unrooted operation -- same checks for all ranks */
+        /* Unrooted operation -- same checks for all ranks */
 
-      err = MPI_SUCCESS;
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (ompi_comm_invalid(comm)) {
-          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                     FUNC_NAME);
-      }
-
-      if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
-          (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
-          MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
-        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-      }
-
-      /* We always define the remote group to be the same as the local
-         group in the case of an intracommunicator, so it's safe to
-         get the size of the remote group here for both intra- and
-         intercommunicators */
-
-      size = ompi_comm_remote_size(comm);
-      for (i = 0; i < size; ++i) {
-        if (recvcounts[i] < 0) {
-          err = MPI_ERR_COUNT;
-        } else if (MPI_DATATYPE_NULL == recvtypes[i] || NULL == recvtypes[i]) {
-          err = MPI_ERR_TYPE;
-        } else {
-          OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
+        err = MPI_SUCCESS;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (ompi_comm_invalid(comm)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+                                          FUNC_NAME);
         }
-        OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-      }
+
+        if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) ||
+            (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes) ||
+            MPI_IN_PLACE == sendbuf || MPI_IN_PLACE == recvbuf) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        }
+
+        /* We always define the remote group to be the same as the local
+           group in the case of an intracommunicator, so it's safe to
+           get the size of the remote group here for both intra- and
+           intercommunicators */
+
+        size = ompi_comm_remote_size(comm);
+        for (i = 0; i < size; ++i) {
+            if (recvcounts[i] < 0) {
+                err = MPI_ERR_COUNT;
+            } else if (MPI_DATATYPE_NULL == recvtypes[i] || NULL == recvtypes[i]) {
+                err = MPI_ERR_TYPE;
+            } else {
+                OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtypes[i], sendcounts[i]);
+            }
+            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+        }
     }
 
     OPAL_CR_ENTER_LIBRARY();
