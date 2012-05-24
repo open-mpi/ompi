@@ -176,7 +176,6 @@ EOF
            # compilers (in the --with-devel-headers case).
            file=$basedir/libevent
            opal_event_libevent2019_ADD_CPPFLAGS="-I$OMPI_TOP_SRCDIR/$file -I$OMPI_TOP_SRCDIR/$file/include"
-           opal_event_libevent2019_ADD_WRAPPER_EXTRA_LDFLAGS="-levent"
            AS_IF([test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"],
                  [opal_event_libevent2019_ADD_CPPFLAGS="$opal_event_libevent2019_ADD_CPPFLAGS -I$OMPI_TOP_BUILDDIR/$file/include"])
            if test "$with_devel_headers" = "yes" ; then
