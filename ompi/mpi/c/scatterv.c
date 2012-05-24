@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
@@ -46,7 +46,7 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
     MEMCHECKER(
         ptrdiff_t ext;
 
-        size = ompi_comm_size(comm);
+        size = ompi_comm_remote_size(comm);
         ompi_datatype_type_extent(recvtype, &ext);
 
         memchecker_comm(comm);
@@ -100,91 +100,86 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
 
         if (OMPI_COMM_IS_INTRA(comm)) {
 
-          /* Errors for all ranks */
+            /* Errors for all ranks */
 
-          if ((root >= ompi_comm_size(comm)) || (root < 0)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
-          }
+            if ((root >= ompi_comm_size(comm)) || (root < 0)) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+            }
 
-          if (MPI_IN_PLACE != recvbuf) {
-              if (recvcount < 0) {
-                  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, 
-                                                FUNC_NAME);
-              }
+            if (MPI_IN_PLACE != recvbuf) {
+                if (recvcount < 0) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, 
+                                                  FUNC_NAME);
+                }
               
-              if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
-                  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, 
-                                                FUNC_NAME); 
-              }
-          }
-
-          /* Errors for the root.  Some of these could have been
-             combined into compound if statements above, but since
-             this whole section can be compiled out (or turned off at
-             run time) for efficiency, it's more clear to separate
-             them out into individual tests. */
-
-          if (ompi_comm_rank(comm) == root) {
-            if (NULL == displs) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+                if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, 
+                                                  FUNC_NAME); 
+                }
             }
 
-            if (NULL == sendcounts) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-            }
+            /* Errors for the root.  Some of these could have been
+               combined into compound if statements above, but since
+               this whole section can be compiled out (or turned off at
+               run time) for efficiency, it's more clear to separate
+               them out into individual tests. */
 
-            /* We always define the remote group to be the same as the
-               local group in the case of an intracommunicator, so
-               it's safe to get the size of the remote group here for
-               both intra- and intercommunicators */
+            if (ompi_comm_rank(comm) == root) {
+                if (NULL == displs) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+                }
 
-            size = ompi_comm_remote_size(comm);
-            for (i = 0; i < size; ++i) {
-              OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
-              OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+                if (NULL == sendcounts) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+                }
+
+                size = ompi_comm_size(comm);
+                for (i = 0; i < size; ++i) {
+                    OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
+                    OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+                }
             }
-          }
         }
 
         /* Errors for intercommunicators */
 
         else {
-          if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
-                 MPI_ROOT == root || MPI_PROC_NULL == root)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
-          }
+            if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
+                   MPI_ROOT == root || MPI_PROC_NULL == root)) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+            }
 
           /* Errors for the receivers */
 
-          if (MPI_ROOT != root && MPI_PROC_NULL != root) {
-            if (recvcount < 0) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+            if (MPI_ROOT != root && MPI_PROC_NULL != root) {
+                if (recvcount < 0) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+                }
+
+                if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+                }
             }
 
-            if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
-              return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-            }
-          }
+            /* Errors for the root.  Ditto on the comment above -- these
+               error checks could have been combined above, but let's
+               make the code easier to read. */
 
-          /* Errors for the root.  Ditto on the comment above -- these
-             error checks could have been combined above, but let's
-             make the code easier to read. */
+            else if (MPI_ROOT == root) {
+                if (NULL == displs) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+                }
 
-          else if (MPI_ROOT == root) {
-            if (NULL == displs) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-            }
+                if (NULL == sendcounts) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+                }
 
-            if (NULL == sendcounts) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+                size = ompi_comm_remote_size(comm);
+                for (i = 0; i < size; ++i) {
+                    OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
+                    OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
+                }
             }
-
-            size = ompi_comm_size(comm);
-            for (i = 0; i < size; ++i) {
-              OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
-              OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-            }
-          }
         }
     }
 
