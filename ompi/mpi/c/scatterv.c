@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -133,7 +133,12 @@ int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,
                 return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
             }
 
-            size = ompi_comm_size(comm);
+            /* We always define the remote group to be the same as the
+               local group in the case of an intracommunicator, so
+               it's safe to get the size of the remote group here for
+               both intra- and intercommunicators */
+
+            size = ompi_comm_remote_size(comm);
             for (i = 0; i < size; ++i) {
               OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcounts[i]);
               OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
