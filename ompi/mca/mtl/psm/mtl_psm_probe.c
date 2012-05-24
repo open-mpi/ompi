@@ -71,7 +71,7 @@ int ompi_mtl_psm_iprobe(struct mca_mtl_base_module_t* mtl,
 
 
 int
-ompi_mtl_mxm_improbe(struct mca_mtl_base_module_t *mtl,
+ompi_mtl_psm_improbe(struct mca_mtl_base_module_t *mtl,
                      struct ompi_communicator_t *comm,
                      int src,
                      int tag,
