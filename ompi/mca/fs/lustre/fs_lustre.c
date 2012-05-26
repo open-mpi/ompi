@@ -105,6 +105,7 @@ mca_fs_lustre_component_file_query (mca_io_ompio_file_t *fh, int *priority)
             }
 #ifndef LL_SUPER_MAGIC
 #define LL_SUPER_MAGIC 0x0BD00BD0
+#endif
             if (fsbuf.f_type == LL_SUPER_MAGIC) {
                 fh->f_fstype = LUSTRE;
             }
