@@ -187,6 +187,9 @@ bool orte_map_reduce = false;
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 bool orte_map_stddiag_to_stderr = false;
 
+/* maximum size of virtual machine - used to subdivide allocation */
+int orte_max_vm_size = -1;
+
 /* progress thread */
 #if ORTE_ENABLE_PROGRESS_THREADS
 opal_thread_t orte_progress_thread;

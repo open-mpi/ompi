@@ -1006,6 +1006,7 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
     opal_list_item_t *item, *next;
     orte_app_context_t *app;
     bool one_filter = false;
+    int num_nodes;
 
     OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                          "%s plm:base:setup_vm",
@@ -1146,17 +1147,34 @@ int orte_plm_base_setup_virtual_machine(orte_job_t *jdata)
 
     /* cycle thru all available nodes and find those that do not already
      * have a daemon on them - no need to include our own as we are
-     * obviously already here!
+     * obviously already here! If a max vm size was given, then limit
+     * the overall number of active nodes to the given number. Only
+     * count the HNP's node if it was included in the allocation
      */
+    if (orte_hnp_is_allocated) {
+        num_nodes = 1;
+    } else {
+        num_nodes = 0;
+    }
     while (NULL != (item = opal_list_remove_first(&nodes))) {
+        /* if a max size was given and we are there, then exit the loop */
+        if (0 < orte_max_vm_size && num_nodes == orte_max_vm_size) {
+            /* maintain accounting */
+            OBJ_RELEASE(item);
+            break;
+        }
         node = (orte_node_t*)item;
         /* if this node is already in the map, skip it */
         if (NULL != node->daemon) {
+            num_nodes++;
+            /* maintain accounting */
+            OBJ_RELEASE(item);
             continue;
         }
         /* add the node to the map */
         opal_pointer_array_add(map->nodes, (void*)node);
         ++(map->num_nodes);
+        num_nodes++;
         /* create a new daemon object for this node */
         proc = OBJ_NEW(orte_proc_t);
         if (NULL == proc) {
