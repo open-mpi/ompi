@@ -543,6 +543,10 @@ int orte_register_params(void)
                                 false, false, (int)false, &value);
     orte_preload_binaries = OPAL_INT_TO_BOOL(value);
 
+    mca_base_param_reg_int_name("orte", "max_vm_size",
+                                "Maximum size of virtual machine - used to subdivide allocation",
+                                false, false, -1, &orte_max_vm_size);
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
     
     return ORTE_SUCCESS;

@@ -714,6 +714,9 @@ ORTE_DECLSPEC extern bool orte_map_reduce;
 /* map stddiag output to stderr so it isn't forwarded to mpirun */
 ORTE_DECLSPEC extern bool orte_map_stddiag_to_stderr;
 
+/* maximum size of virtual machine - used to subdivide allocation */
+ORTE_DECLSPEC extern int orte_max_vm_size;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

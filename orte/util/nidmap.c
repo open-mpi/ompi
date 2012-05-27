@@ -529,7 +529,7 @@ int orte_util_decode_nodemap(opal_byte_object_t *bo)
 int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
 {
     int n;
-    int32_t num_nodes, i, num_daemons;
+    int32_t num_nodes, i;
     orte_vpid_t *vpids;
     orte_node_t *node;
     opal_buffer_t buf;
@@ -604,9 +604,12 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
     /* transfer the data to the nodes, counting the number of
      * daemons in the system
      */
-    num_daemons = 0;
     daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     for (i=0; i < num_nodes; i++) {
+        if (ORTE_VPID_INVALID == vpids[i]) {
+            /* no daemon on this node */
+            continue;
+        }
         if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, i))) {
             /* this is an error */
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -618,6 +621,7 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
             dptr->name.jobid = ORTE_PROC_MY_NAME->jobid;
             dptr->name.vpid = vpids[i];
             opal_pointer_array_set_item(daemons->procs, vpids[i], dptr);
+            daemons->num_procs++;
         }
         if (NULL != node->daemon) {
             OBJ_RELEASE(node->daemon);
@@ -634,21 +638,18 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
         } else {
             node->oversubscribed = true;
         }
-        if (ORTE_VPID_INVALID != vpids[i]) {
-            ++num_daemons;
-        }
     }
     free(vpids);
     free(oversub);
 
-    orte_process_info.num_procs = num_daemons;
+    orte_process_info.num_procs = daemons->num_procs;
     
     if (orte_process_info.max_procs < orte_process_info.num_procs) {
         orte_process_info.max_procs = orte_process_info.num_procs;
     }
 
     /* update num_daemons */
-    orte_process_info.num_daemons = num_daemons;
+    orte_process_info.num_daemons = daemons->num_procs;
     
     if (0 < opal_output_get_verbosity(orte_debug_output)) {
         for (i=0; i < num_nodes; i++) {
@@ -658,7 +659,7 @@ int orte_util_decode_daemon_nodemap(opal_byte_object_t *bo)
             opal_output(5, "%s node[%d].name %s daemon %s",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), i,
                         (NULL == node->name) ? "NULL" : node->name,
-                        ORTE_VPID_PRINT(node->daemon->name.vpid));
+                        (NULL == node->daemon) ? "NONE" : ORTE_VPID_PRINT(node->daemon->name.vpid));
         }
     }
 

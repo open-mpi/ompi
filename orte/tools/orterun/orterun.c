@@ -256,6 +256,11 @@ static opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
     
+    /* maximum size of VM - typically used to subdivide an allocation */
+    { "orte", "max", "vm_size", '\0', "max-vm-size", "max-vm-size", 1,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Number of processes to run" },
+
     /* Set a hostfile */
     { NULL, NULL, NULL, '\0', "hostfile", "hostfile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
