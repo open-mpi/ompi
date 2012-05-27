@@ -837,7 +837,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
     opal_buffer_t buf;
     orte_jmap_t *jmap;
     bool already_present;
-    int j;
+    int j, k;
     int rc;
     orte_proc_state_t *states = NULL;
     orte_app_idx_t *app_idx = NULL;
@@ -900,6 +900,10 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(&buf, nodes, &n, OPAL_INT32))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
+        }
+        if (jobid == ORTE_PROC_MY_NAME->jobid) {
+            /* track my node */
+            orte_process_info.my_node = nodes[ORTE_PROC_MY_NAME->vpid];
         }
 
         /* allocate memory for local ranks */
@@ -1012,10 +1016,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        if (jobid == ORTE_PROC_MY_NAME->jobid) {
-            /* track my node */
-            orte_process_info.my_node = nodes[ORTE_PROC_MY_NAME->vpid];
-        }
               
         /* xfer the data */
         for (i=0; i < num_procs; i++) {
@@ -1023,27 +1023,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             pmap->node = nodes[i];
             pmap->local_rank = local_rank[i];
             pmap->node_rank = node_rank[i];
-            /* record the locality of this proc
-             * relative to me
-             */
-            if (ORTE_PROC_MY_NAME->vpid == i &&
-                jobid == ORTE_PROC_MY_NAME->jobid) {
-                /* this is me */
-                pmap->locality = OPAL_PROC_ALL_LOCAL;
-            } else if (pmap->node == orte_process_info.my_node) {
 #if OPAL_HAVE_HWLOC
-                /* we share a node - see what else we share */
-                pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                       orte_process_info.bind_level,
-                                                                       orte_process_info.bind_idx,
-                                                                       jmap->bind_level,
-                                                                       bind_idx[i]);
-#else
-                pmap->locality = OPAL_PROC_ON_NODE;
+            pmap->bind_idx = bind_idx[i];
 #endif
-            } else {
-                pmap->locality = OPAL_PROC_NON_LOCAL;
-            }
             /* add the pidmap entry at the specific site corresponding
              * to the proc's vpid
              */
@@ -1052,7 +1034,6 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
                 goto cleanup;
             }
         }
-        
         /* release data */
         free(nodes);
         nodes = NULL;
@@ -1067,9 +1048,45 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
         /* setup for next cycle */
         n = 1;
     }
-    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
-        rc = ORTE_SUCCESS;
+    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
+    rc = ORTE_SUCCESS;
+
+    /* now that we have all the data, we are guaranteed
+     * to know our own node, so go back and record the
+     * locality of each proc relative to me
+     */
+    for (j=0; j < orte_jobmap.size; j++) {
+        if (NULL == (jmap = (orte_jmap_t*)opal_pointer_array_get_item(&orte_jobmap, j))) {
+            continue;
+        }
+        for (k=0; k < jmap->pmap.size; k++) {
+            if (NULL == (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, k))) {
+                continue;
+            }
+            if (ORTE_PROC_MY_NAME->vpid == (orte_vpid_t)k &&
+                jmap->job == ORTE_PROC_MY_NAME->jobid) {
+                /* this is me */
+                pmap->locality = OPAL_PROC_ALL_LOCAL;
+            } else if (pmap->node == orte_process_info.my_node) {
+#if OPAL_HAVE_HWLOC
+                /* we share a node - see what else we share */
+                pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                       orte_process_info.bind_level,
+                                                                       orte_process_info.bind_idx,
+                                                                       jmap->bind_level,
+                                                                       pmap->bind_idx);
+#else
+                pmap->locality = OPAL_PROC_ON_NODE;
+#endif
+            } else {
+                pmap->locality = OPAL_PROC_NON_LOCAL;
+            }
+        }
+    }
+        
     
  cleanup:
     if (NULL != nodes) {
