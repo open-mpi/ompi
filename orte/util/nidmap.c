@@ -819,13 +819,13 @@ int orte_util_encode_pidmap(opal_byte_object_t *boptr)
     return rc;
 }
 
-
+/* only APPS call this function - daemons have their own */
 int orte_util_decode_pidmap(opal_byte_object_t *bo)
 {
     orte_jobid_t jobid;
     orte_vpid_t i, num_procs;
     orte_pmap_t *pmap;
-    int32_t *nodes=NULL, my_node = 0;
+    int32_t *nodes=NULL;
     orte_local_rank_t *local_rank=NULL;
     orte_node_rank_t *node_rank=NULL;
 #if OPAL_HAVE_HWLOC
@@ -887,7 +887,9 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             goto cleanup;
         }
         /* set mine */
-        orte_process_info.bind_level = bind_level;
+        if (jobid == ORTE_PROC_MY_NAME->jobid) {
+            orte_process_info.bind_level = bind_level;
+        }
 #endif
 
         /* allocate memory for the node info */
@@ -926,7 +928,7 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        if (ORTE_PROC_IS_APP) {
+        if (jobid == ORTE_PROC_MY_NAME->jobid) {
             /* set mine */
             orte_process_info.bind_idx = bind_idx[ORTE_PROC_MY_NAME->vpid];
         }
@@ -1009,37 +1011,37 @@ int orte_util_decode_pidmap(opal_byte_object_t *bo)
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        if (ORTE_PROC_IS_APP) {
+        if (jobid == ORTE_PROC_MY_NAME->jobid) {
             /* track my node */
-            my_node = nodes[ORTE_PROC_MY_NAME->vpid];
+            orte_process_info.my_node = nodes[ORTE_PROC_MY_NAME->vpid];
         }
+              
         /* xfer the data */
         for (i=0; i < num_procs; i++) {
             pmap = OBJ_NEW(orte_pmap_t);
             pmap->node = nodes[i];
             pmap->local_rank = local_rank[i];
             pmap->node_rank = node_rank[i];
-            /* if I am an app, record the locality of this proc
-             * relative to me - daemons don't need this info
+            /* record the locality of this proc
+             * relative to me
              */
-            if (ORTE_PROC_IS_APP) {
-                if (ORTE_PROC_MY_NAME->vpid == i) {
-                    /* this is me */
-                    pmap->locality = OPAL_PROC_ALL_LOCAL;
-                } else if (pmap->node == my_node) {
+            if (ORTE_PROC_MY_NAME->vpid == i &&
+                jobid == ORTE_PROC_MY_NAME->jobid) {
+                /* this is me */
+                pmap->locality = OPAL_PROC_ALL_LOCAL;
+            } else if (pmap->node == orte_process_info.my_node) {
 #if OPAL_HAVE_HWLOC
-                    /* we share a node - see what else we share */
-                    pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                           orte_process_info.bind_level,
-                                                                           orte_process_info.bind_idx,
-                                                                           jmap->bind_level,
-                                                                           bind_idx[i]);
+                /* we share a node - see what else we share */
+                pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                       orte_process_info.bind_level,
+                                                                       orte_process_info.bind_idx,
+                                                                       jmap->bind_level,
+                                                                       bind_idx[i]);
 #else
-                    pmap->locality = OPAL_PROC_ON_NODE;
+                pmap->locality = OPAL_PROC_ON_NODE;
 #endif
-                } else {
-                    pmap->locality = OPAL_PROC_NON_LOCAL;
-                }
+            } else {
+                pmap->locality = OPAL_PROC_NON_LOCAL;
             }
             /* add the pidmap entry at the specific site corresponding
              * to the proc's vpid

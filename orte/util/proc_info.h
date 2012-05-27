@@ -121,7 +121,8 @@ struct orte_proc_info_t {
     opal_hwloc_level_t bind_level;
     unsigned int bind_idx;
 #endif
-    int32_t app_rank;
+    int32_t my_node;                    /**< index in the node array of the node I am on */
+    int32_t app_rank;                   /**< rank within my app_context */
     orte_grpcomm_coll_id_t peer_modex;   /**< modex collective id */
     orte_grpcomm_coll_id_t peer_init_barrier;   /**< barrier id during init */
     orte_grpcomm_coll_id_t peer_fini_barrier;   /**< barrier id during finalize */
