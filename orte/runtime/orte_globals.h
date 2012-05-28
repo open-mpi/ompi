@@ -555,8 +555,12 @@ typedef struct {
     orte_local_rank_t local_rank;
     /* node rank */
     orte_node_rank_t node_rank;
+#if OPAL_HAVE_HWLOC
+    /* bind index */
+    unsigned int bind_idx;
     /* locality */
     opal_hwloc_locality_t locality;
+#endif
 } orte_pmap_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_pmap_t);
 
