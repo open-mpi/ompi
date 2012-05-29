@@ -376,7 +376,11 @@ hwloc_pci_compare_busids(struct hwloc_obj *a, struct hwloc_obj *b)
   if (a->attr->pcidev.func > b->attr->pcidev.func)
     return HWLOC_PCI_BUSID_HIGHER;
 
+  /* Should never reach here.  Abort on both debug builds and
+     non-debug builds */
   assert(0);
+  fprintf(stderr, "Bad assertion in hwloc %s:%d (aborting)\n", __FILE__, __LINE__);
+  exit(1);
 }
 
 static void
