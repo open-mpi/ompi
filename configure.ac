@@ -48,6 +48,11 @@ AC_PREREQ(2.60)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR(config)
 
+# Get our platform support file.  This has to be done very, very early
+# because it twiddles random bits of autoconf
+OMPI_LOAD_PLATFORM
+
+#
 #
 # Start it up
 #
@@ -55,7 +60,6 @@ AC_CONFIG_MACRO_DIR(config)
 OMPI_CONFIGURE_SETUP
 ompi_show_title "Configuring project_name_long"
 
-#
 # Setup some things that must be done before AM-INIT-AUTOMAKE
 #
 
@@ -69,9 +73,6 @@ AS_IF([test "$host" != "$target"],
        AC_MSG_WARN([Proceed at your own risk!])])
 AC_USE_SYSTEM_EXTENSIONS
 
-# Get our platform support file.  This has to be done very, very early
-# because it twiddles random bits of autoconf
-OMPI_LOAD_PLATFORM
 
 #
 # Init automake
