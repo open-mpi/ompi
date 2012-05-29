@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -65,6 +66,6 @@ void mpi_file_get_size_f(MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr)
     *ierr = OMPI_INT_2_FINT(MPI_File_get_size(c_fh, 
 					      &c_size));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        *size = (MPI_Fint) c_size;
+        *size = (MPI_Offset) c_size;
     }
 }
