@@ -378,9 +378,6 @@ static opal_cmd_line_init_t cmd_line_init[] = {
     { "ras", "base", "display_devel_alloc", '\0', "display-devel-allocation", "display-devel-allocation", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display a detailed list (mostly intended for developers) of the allocation being used by this job"},
-    { "orte", "cpu", "set", '\0', "cpu-set", "cpu-set", 1,
-      NULL, OPAL_CMD_LINE_TYPE_STRING,
-      "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]"},
 
     /* cluster hardware info */
     { "orte", "num", "boards", '\0', "num-boards", "num-boards", 1,

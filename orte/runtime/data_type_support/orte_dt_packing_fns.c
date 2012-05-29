@@ -409,13 +409,6 @@ int orte_dt_pack_node(opal_buffer_t *buffer, const void *src,
         
         /* do not pack the local board, socket, and core info */
         
-        /* pack the cpu set info */
-        if (ORTE_SUCCESS != (rc = opal_dss_pack_buffer(buffer,
-                          (void*)(&(nodes[i]->cpu_set)), 1, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* do not pack the username */
     }
     return ORTE_SUCCESS;

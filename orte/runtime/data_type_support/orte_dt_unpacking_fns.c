@@ -424,14 +424,6 @@ int orte_dt_unpack_node(opal_buffer_t *buffer, void *dest,
         
         /* do not unpack the board, socket, and core info */
         
-        /* unpack the cpu set */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss_unpack_buffer(buffer,
-                        &(nodes[i]->cpu_set), &n, OPAL_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* do not unpack the username */
     }
     return ORTE_SUCCESS;

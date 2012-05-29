@@ -365,13 +365,6 @@ static int hostfile_parse_line(int token, opal_list_t* updates, opal_list_t* exc
             node->cores_per_socket = rc;
             break;
 
-        case ORTE_HOSTFILE_CPU_SET:
-            if (NULL != node->cpu_set) {
-                free(node->cpu_set);
-            }
-            node->cpu_set = hostfile_parse_string();
-            break;
-                
         case ORTE_HOSTFILE_COUNT:
         case ORTE_HOSTFILE_CPU:
         case ORTE_HOSTFILE_SLOTS:

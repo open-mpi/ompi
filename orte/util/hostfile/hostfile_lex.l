@@ -142,12 +142,6 @@ cores_per_socket   { orte_util_hostfile_value.sval = yytext;
 "cores-per-socket" { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_CORES_PER_SOCKET; }
 
-cpu_set            { orte_util_hostfile_value.sval = yytext;
-                     return ORTE_HOSTFILE_CPU_SET; }
-
-"cpu-set"           { orte_util_hostfile_value.sval = yytext;
-                     return ORTE_HOSTFILE_CPU_SET; }
-
 \+n[0-9]+	   { orte_util_hostfile_value.sval = yytext;
                      return ORTE_HOSTFILE_RELATIVE; }
 \+[eE][\:][0-9]+   { orte_util_hostfile_value.sval = yytext;

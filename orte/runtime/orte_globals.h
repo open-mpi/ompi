@@ -266,8 +266,6 @@ typedef struct {
     uint8_t sockets_per_board;
     /* number of cores per socket - defaults to 1 */
     uint8_t cores_per_socket;
-    /* cpus on this node that are assigned for our use */
-    char *cpu_set;
     /** Username on this node, if specified */
     char *username;
     /* list of known system resources for this node */
@@ -629,7 +627,6 @@ ORTE_DECLSPEC extern uint8_t orte_default_num_sockets_per_board;
 ORTE_DECLSPEC extern uint8_t orte_default_num_cores_per_socket;
 
 /* allocation specification */
-ORTE_DECLSPEC extern char *orte_default_cpu_set;
 ORTE_DECLSPEC extern char *orte_default_hostfile;
 ORTE_DECLSPEC extern char *orte_rankfile;
 #ifdef __WINDOWS__

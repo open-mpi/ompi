@@ -153,7 +153,6 @@ uint8_t orte_default_num_sockets_per_board;
 uint8_t orte_default_num_cores_per_socket;
 
 /* allocation specification */
-char *orte_default_cpu_set;
 char *orte_default_hostfile = NULL;
 char *orte_rankfile;
 #ifdef __WINDOWS__
@@ -717,11 +716,6 @@ static void orte_node_construct(orte_node_t* node)
     node->boards = orte_default_num_boards;
     node->sockets_per_board = orte_default_num_sockets_per_board;
     node->cores_per_socket = orte_default_num_cores_per_socket;
-    if (NULL != orte_default_cpu_set) {
-        node->cpu_set = strdup(orte_default_cpu_set);
-    } else {
-        node->cpu_set = NULL;
-    }
     
     node->username = NULL;
     
@@ -758,10 +752,6 @@ static void orte_node_destruct(orte_node_t* node)
     }
     OBJ_RELEASE(node->procs);
     
-    if (NULL != node->cpu_set) {
-        free(node->cpu_set);
-        node->cpu_set = NULL;
-    }
     if (NULL != node->username) {
         free(node->username);
         node->username = NULL;

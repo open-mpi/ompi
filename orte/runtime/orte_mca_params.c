@@ -399,11 +399,6 @@ int orte_register_params(void)
                                 false, false, 0, &value);
     orte_default_num_cores_per_socket = (uint8_t)value;
     
-    /* cpu allocation specification */
-    mca_base_param_reg_string_name("orte", "cpu_set",
-                                   "Comma-separated list of ranges specifying logical cpus allocated to this job [default: none]",
-                                   false, false, NULL, &orte_default_cpu_set);
-    
     /* binding specification - this will be overridden by any cmd line directive, and
      * ignored unless opal_paffinity_alone is set
      */
