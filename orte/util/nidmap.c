@@ -1252,6 +1252,11 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
                 proc->name.vpid = i;
                 opal_pointer_array_set_item(jdata->procs, i, proc);
             }
+            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nodes[i]))) {
+                /* this should never happen, but protect ourselves anyway */
+                node = OBJ_NEW(orte_node_t);
+                opal_pointer_array_set_item(orte_node_pool, nodes[i], node);
+            }
             if (NULL != proc->node) {
                 if (node != proc->node) {
                     /* proc has moved - cleanup the prior node proc array */
@@ -1284,11 +1289,6 @@ int orte_util_decode_daemon_pidmap(opal_byte_object_t *bo)
                     }
                 }
                 OBJ_RELEASE(proc->node);
-            }
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, nodes[i]))) {
-                /* this should never happen, but protect ourselves anyway */
-                node = OBJ_NEW(orte_node_t);
-                opal_pointer_array_set_item(orte_node_pool, nodes[i], node);
             }
             /* see if this node is already in the map */
             found = false;
