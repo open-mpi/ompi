@@ -671,7 +671,6 @@ static int pretty_print_vpids(orte_job_t *job) {
         /*
          * Find my app context
          */
-        len_proc_name = len_proc_name;
         if( 0 >= (int)job->num_apps ) {
             if( 0 == vpid->name.vpid ) {
                 if( (int)strlen("orterun") > len_proc_name)

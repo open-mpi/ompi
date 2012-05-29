@@ -177,7 +177,7 @@ static inline bool opal_set_using_threads(bool have)
 #if OPAL_ENABLE_MULTI_THREADS
     opal_uses_threads = have;
 #else
-    have = have;               /* just shut up the compiler */
+    have = true;               /* just shut up the compiler */
     opal_uses_threads = false;
 #endif
     return opal_uses_threads;

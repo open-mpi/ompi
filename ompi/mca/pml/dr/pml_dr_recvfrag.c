@@ -678,7 +678,7 @@ rematch:
              * update delivered sequence number information, if needed.
              */
             MCA_PML_DR_RECV_REQUEST_MATCHED(match,comm,proc,hdr);
-            if( (match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
+            if( match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE ) {
 
                 /* complete the probe */
                 mca_pml_dr_recv_request_matched_probe(match,btl,segments,num_segments);
@@ -954,7 +954,7 @@ rematch:
                     /*
                      * If this was a probe need to queue fragment on unexpected list
                      */
-                    if( (match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
+                    if( match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE ) {
 
                         /* complete the probe */
                         mca_pml_dr_recv_request_matched_probe(match,frag->btl,frag->segments,frag->num_segments);
