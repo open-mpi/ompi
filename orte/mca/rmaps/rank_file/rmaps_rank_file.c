@@ -53,7 +53,6 @@
 static int orte_rmaps_rank_file_parse(const char *);
 static char *orte_rmaps_rank_file_parse_string_or_int(void);
 static const char *orte_rmaps_rank_file_name_cur = NULL;
-static opal_mutex_t orte_rmaps_rank_file_mutex;
 char *orte_rmaps_rank_file_slot_list;
 
 /*
@@ -360,9 +359,7 @@ static int orte_rmaps_rank_file_parse(const char *rankfile)
     orte_rmaps_rank_file_map_t *rfmap=NULL;
     opal_pointer_array_t *assigned_ranks_array;
     char tmp_rank_assignment[64];
-    
-    OPAL_THREAD_LOCK(&orte_rmaps_rank_file_mutex);
-    
+        
     /* keep track of rank assignments */
     assigned_ranks_array = OBJ_NEW(opal_pointer_array_t);
 
@@ -514,7 +511,6 @@ unlock:
     }
     OBJ_RELEASE(assigned_ranks_array);
     orte_rmaps_rank_file_name_cur = NULL;
-    OPAL_THREAD_UNLOCK(&orte_rmaps_rank_file_mutex);
     return rc;
 }
 
