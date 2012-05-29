@@ -733,7 +733,7 @@ static void update_routing_plan(void)
 static void get_routing_list(orte_grpcomm_coll_t type,
                              orte_grpcomm_collective_t *coll)
 {
-    orte_routed_tree_t *nm;
+    orte_routed_tree_t *nm=NULL;
     opal_list_t my_children;
 
     /* if I am anything other than a daemon or the HNP, this
@@ -756,7 +756,7 @@ static void get_routing_list(orte_grpcomm_coll_t type,
         }
         orte_routed_base_xcast_routing(coll, &my_children);
         if (ORTE_PROC_MY_NAME->vpid < orte_process_info.num_procs-1) {
-            opal_list_remove_first(&my_children);
+            nm = (orte_routed_tree_t*)opal_list_remove_first(&my_children);
             OBJ_RELEASE(nm);
         }
         OBJ_DESTRUCT(&my_children);
