@@ -93,11 +93,29 @@ module mpi_f08_types
   ! Pre-defined communicator bindings
   !
 
-  type(MPI_Comm), protected, bind(C, name="ompi_f08_mpi_comm_world") :: MPI_COMM_WORLD
-  type(MPI_Comm), protected, bind(C, name="ompi_f08_mpi_comm_self")  :: MPI_COMM_SELF
+  type(MPI_Comm),       protected, bind(C, name="ompi_f08_mpi_comm_world")       :: MPI_COMM_WORLD
+  type(MPI_Comm),       protected, bind(C, name="ompi_f08_mpi_comm_self")        :: MPI_COMM_SELF
   type(MPI_Group),      protected, bind(C, name="ompi_f08_mpi_group_empty")      :: MPI_GROUP_EMPTY
   type(MPI_Errhandler), protected, bind(C, name="ompi_f08_mpi_errors_are_fatal") :: MPI_ERRORS_ARE_FATAL
   type(MPI_Errhandler), protected, bind(C, name="ompi_f08_mpi_errors_return")    :: MPI_ERRORS_RETURN
+
+  !
+  ! lookup table indices
+  !
+
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_max"     )  ::  MPI_MAX
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_min"     )  ::  MPI_MIN
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_sum"     )  ::  MPI_SUM
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_prod"    )  ::  MPI_PROD
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_land"    )  ::  MPI_LAND
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_band"    )  ::  MPI_BAND
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_lor"     )  ::  MPI_LOR
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_bor"     )  ::  MPI_BOR
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_lxor"    )  ::  MPI_LXOR
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_bxor"    )  ::  MPI_BXOR
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_maxloc"  )  ::  MPI_MAXLOC
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_minloc"  )  ::  MPI_MINLOC
+  type(MPI_Op), protected, bind(C, name="ompi_f08_mpi_replace" )  ::  MPI_REPLACE
 
   !
   !  NULL "handles" (indices)

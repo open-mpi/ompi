@@ -10,7 +10,7 @@ subroutine PMPI_Topo_test_f08(comm,status,ierror)
    use :: mpi_f08, only : ompi_topo_test_f
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Status), INTENT(OUT) :: status
+   INTEGER, INTENT(OUT) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
    integer :: c_ierror
 

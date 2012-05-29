@@ -381,25 +381,6 @@
       parameter (MPI_COMM_TYPE_SHARED=0)
 
 !
-!     lookup table indices
-!
-!     Now generated; located at bottom of mpif-common.h file
+!     Generated input below, located at bottom of mpif-common.h file
 !
 
-      integer MPI_MAX, MPI_MIN, MPI_SUM, MPI_PROD, MPI_LAND
-      integer MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR, MPI_BXOR
-      integer MPI_MAXLOC, MPI_MINLOC, MPI_REPLACE
-
-      parameter (MPI_MAX=1)
-      parameter (MPI_MIN=2)
-      parameter (MPI_SUM=3)
-      parameter (MPI_PROD=4)
-      parameter (MPI_LAND=5)
-      parameter (MPI_BAND=6)
-      parameter (MPI_LOR=7)
-      parameter (MPI_BOR=8)
-      parameter (MPI_LXOR=9)
-      parameter (MPI_BXOR=10)
-      parameter (MPI_MAXLOC=11)
-      parameter (MPI_MINLOC=12)
-      parameter (MPI_REPLACE=13)
