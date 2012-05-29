@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2010-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -125,7 +125,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
     char tmp[BUFSIZ];
     const int stmp = sizeof(tmp) - 1;
 
-    tmp[stmp] = '\0';
+    str[0] = tmp[stmp] = '\0';
 
     /* Loop over the number of sockets in this machine */
     ret = opal_paffinity_base_get_socket_info(&num_sockets);
