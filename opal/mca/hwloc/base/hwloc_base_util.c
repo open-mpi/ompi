@@ -1047,7 +1047,7 @@ int opal_hwloc_base_slot_list_parse(const char *slot_str,
 
 static opal_hwloc_locality_t get_locality(opal_hwloc_level_t level)
 {
-    opal_hwloc_locality_t lvl;
+    opal_hwloc_locality_t lvl = OPAL_PROC_LOCALITY_UNKNOWN;
 
     switch(level) {
     case OPAL_HWLOC_NODE_LEVEL:

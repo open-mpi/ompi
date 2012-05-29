@@ -824,7 +824,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
                                  (NULL == target) ? -1 : target->ftgrp, nd->name));
             /* if the node isn't in the map, add it */
             if (!nd->mapped) {
-                OBJ_RETAIN(node);
+                OBJ_RETAIN(nd);
                 opal_pointer_array_add(map->nodes, nd);
                 nd->mapped = true;
             }

@@ -666,7 +666,7 @@ static int byobj_span(orte_job_t *jdata,
                  * safely remove this node as we don't need it
                  */
                 if (0 == extra_procs_to_assign) {
-                    opal_pointer_array_set_item(jdata->map->nodes, idx, NULL);
+                    opal_pointer_array_set_item(jdata->map->nodes, node->index, NULL);
                     OBJ_RELEASE(node);
                     --(jdata->map->num_nodes);
                     /* update how many we are lagging behind */

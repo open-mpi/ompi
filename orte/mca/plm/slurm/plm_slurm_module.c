@@ -442,7 +442,7 @@ static void launch_daemons(int fd, short args, void *cbdata)
  */
 static int plm_slurm_terminate_orteds(void)
 {
-    int rc;
+    int rc=ORTE_SUCCESS;
     orte_job_t *jdata;
         
     /* check to see if the primary pid is set. If not, this indicates
