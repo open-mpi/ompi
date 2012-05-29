@@ -2,14 +2,14 @@
  * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2012 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2008 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,7 +47,7 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         int rank;
         ptrdiff_t ext;
 
-        size = ompi_comm_size(comm);
+        size = ompi_comm_remote_size(comm);
         rank = ompi_comm_rank(comm);
         ompi_datatype_type_extent(recvtype, &ext);
 
@@ -110,78 +110,78 @@ int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
         if (OMPI_COMM_IS_INTRA(comm)) {
 
-          /* Errors for all ranks */
+            /* Errors for all ranks */
 
-          if ((root >= ompi_comm_size(comm)) || (root < 0)) {
-            err = MPI_ERR_ROOT;
-          } else if (MPI_IN_PLACE != sendbuf) {
-            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
-          }
-          OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-
-          /* Errors for the root.  Some of these could have been
-             combined into compound if statements above, but since
-             this whole section can be compiled out (or turned off at
-             run time) for efficiency, it's more clear to separate
-             them out into individual tests. */
-
-          if (ompi_comm_rank(comm) == root) {
-            if (NULL == displs) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            if ((root >= ompi_comm_size(comm)) || (root < 0)) {
+                err = MPI_ERR_ROOT;
+            } else if (MPI_IN_PLACE != sendbuf) {
+                OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
             }
+            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
 
-            if (NULL == recvcounts) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-            }
+            /* Errors for the root.  Some of these could have been
+               combined into compound if statements above, but since
+               this whole section can be compiled out (or turned off at
+               run time) for efficiency, it's more clear to separate
+               them out into individual tests. */
 
-            size = ompi_comm_size(comm);
-            for (i = 0; i < size; ++i) {
-              if (recvcounts[i] < 0) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-              } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
-              }
+            if (ompi_comm_rank(comm) == root) {
+                if (NULL == displs) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+                }
+
+                if (NULL == recvcounts) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+                }
+
+                size = ompi_comm_size(comm);
+                for (i = 0; i < size; ++i) {
+                    if (recvcounts[i] < 0) {
+                        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+                    } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
+                        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
+                    }
+                }
             }
-          }
         }
 
         /* Errors for intercommunicators */
 
         else {
-          if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
-                 MPI_ROOT == root || MPI_PROC_NULL == root)) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
-          }
-
-          /* Errors for the senders */
-
-          if (MPI_ROOT != root && MPI_PROC_NULL != root) {
-            OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
-            OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
-          }
-
-          /* Errors for the root.  Ditto on the comment above -- these
-             error checks could have been combined above, but let's
-             make the code easier to read. */
-
-          else if (MPI_ROOT == root) {
-            if (NULL == displs) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+            if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
+                   MPI_ROOT == root || MPI_PROC_NULL == root)) {
+                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
             }
 
-            if (NULL == recvcounts) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+            /* Errors for the senders */
+
+            if (MPI_ROOT != root && MPI_PROC_NULL != root) {
+                OMPI_CHECK_DATATYPE_FOR_SEND(err, sendtype, sendcount);
+                OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
             }
 
-            size = ompi_comm_size(comm);
-            for (i = 0; i < size; ++i) {
-              if (recvcounts[i] < 0) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-              } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
-                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
-              }
+            /* Errors for the root.  Ditto on the comment above -- these
+               error checks could have been combined above, but let's
+               make the code easier to read. */
+
+            else if (MPI_ROOT == root) {
+                if (NULL == displs) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+                }
+
+                if (NULL == recvcounts) {
+                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+                }
+
+                size = ompi_comm_remote_size(comm);
+                for (i = 0; i < size; ++i) {
+                    if (recvcounts[i] < 0) {
+                        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+                    } else if (MPI_DATATYPE_NULL == recvtype || NULL == recvtype) {
+                        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+                    }
+                }
             }
-          }
         }
     }
 
