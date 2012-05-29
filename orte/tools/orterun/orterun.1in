@@ -888,12 +888,19 @@ Consider the following:
     rank 2=cc slot=1-2
     mpirun -H aa,bb,cc,dd -rf myrankfile ./a.out
 .
+.PP
 So that
-
+.
   Rank 0 runs on node aa, bound to socket 1, cores 0-2.
   Rank 1 runs on node bb, bound to socket 0, cores 0 and 1.
   Rank 2 runs on node cc, bound to cores 1 and 2.
-. 
+.
+.PP
+Note that all slot locations are to be specified as
+.I physical
+indexes.  You can use tools such as HWLOC's "lstopo -v" to find the
+physical indexes of socket and cores.
+.
 .
 .SS Application Context or Executable Program?
 .
