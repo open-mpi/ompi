@@ -1515,7 +1515,7 @@ subroutine pompi_topo_test_f(comm,status,ierror) &
    use :: mpi_f08_types, only : MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: comm
-   TYPE(MPI_Status), INTENT(OUT) :: status
+   INTEGER, INTENT(OUT) :: status
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_topo_test_f
 

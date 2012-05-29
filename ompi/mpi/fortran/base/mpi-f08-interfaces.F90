@@ -2059,7 +2059,7 @@ subroutine MPI_Topo_test_f08(comm,status,ierror &
    use :: mpi_f08_types, only : MPI_Comm, MPI_Status
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Status) :: status
+   INTEGER, INTENT(OUT) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine MPI_Topo_test_f08
 end interface  MPI_Topo_test

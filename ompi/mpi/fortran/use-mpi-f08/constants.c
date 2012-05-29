@@ -27,6 +27,23 @@ OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_errors_are_fatal = {OMPI_MPI
 OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_errors_return    = {OMPI_MPI_ERRORS_RETURN};
 
 /*
+ * lookup table indices
+ */
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_max      = {OMPI_MPI_MAX};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_min      = {OMPI_MPI_MIN};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_sum      = {OMPI_MPI_SUM};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_prod     = {OMPI_MPI_PROD};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_land     = {OMPI_MPI_LAND};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_band     = {OMPI_MPI_BAND};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_lor      = {OMPI_MPI_LOR};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_bor      = {OMPI_MPI_BOR};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_lxor     = {OMPI_MPI_LXOR};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_bxor     = {OMPI_MPI_BXOR};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_maxloc   = {OMPI_MPI_MAXLOC};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_minloc   = {OMPI_MPI_MINLOC};
+OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_replace  = {OMPI_MPI_REPLACE};
+
+/*
  * NULL "handles" (indices)
  */
 OMPI_DECLSPEC ompi_fortran_08_handle_t ompi_f08_mpi_comm_null       = {OMPI_MPI_COMM_NULL};

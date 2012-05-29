@@ -91,6 +91,23 @@ my $MPI_ERRORS_ARE_FATAL = 1;
 my $MPI_ERRORS_RETURN    = 2;
 
 #
+#  lookup table indices
+#
+my $MPI_MAX      =  1;
+my $MPI_MIN      =  2;
+my $MPI_SUM      =  3;
+my $MPI_PROD     =  4;
+my $MPI_LAND     =  5;
+my $MPI_BAND     =  6;
+my $MPI_LOR      =  7;
+my $MPI_BOR      =  8;
+my $MPI_LXOR     =  9;
+my $MPI_BXOR     = 10;
+my $MPI_MAXLOC   = 11;
+my $MPI_MINLOC   = 12;
+my $MPI_REPLACE  = 13;
+
+#
 # NULL "handles" (indices)
 #
 my $MPI_COMM_NULL       = 2;
@@ -209,10 +226,6 @@ $input .= "!
       parameter (MPI_WIN_NULL=$MPI_WIN_NULL)
       parameter (MPI_MESSAGE_NULL=$MPI_MESSAGE_NULL)
 
-!
-!     lookup table indices
-!
-
       integer MPI_COMM_WORLD, MPI_COMM_SELF
       integer MPI_GROUP_EMPTY
       integer MPI_ERRORS_ARE_FATAL, MPI_ERRORS_RETURN
@@ -225,6 +238,28 @@ $input .= "!
       parameter (MPI_GROUP_EMPTY=$MPI_GROUP_EMPTY)
       parameter (MPI_ERRORS_ARE_FATAL=$MPI_ERRORS_ARE_FATAL)
       parameter (MPI_ERRORS_RETURN=$MPI_ERRORS_RETURN)
+
+!
+!     lookup table indices
+!
+
+      integer MPI_MAX, MPI_MIN, MPI_SUM, MPI_PROD, MPI_LAND
+      integer MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR, MPI_BXOR
+      integer MPI_MAXLOC, MPI_MINLOC, MPI_REPLACE
+
+      parameter (MPI_MAX=$MPI_MAX)
+      parameter (MPI_MIN=$MPI_MIN)
+      parameter (MPI_SUM=$MPI_SUM)
+      parameter (MPI_PROD=$MPI_PROD)
+      parameter (MPI_LAND=$MPI_LAND)
+      parameter (MPI_BAND=$MPI_BAND)
+      parameter (MPI_LOR=$MPI_LOR)
+      parameter (MPI_BOR=$MPI_BOR)
+      parameter (MPI_LXOR=$MPI_LXOR)
+      parameter (MPI_BXOR=$MPI_BXOR)
+      parameter (MPI_MAXLOC=$MPI_MAXLOC)
+      parameter (MPI_MINLOC=$MPI_MINLOC)
+      parameter (MPI_REPLACE=$MPI_REPLACE)
 
       integer MPI_BYTE, MPI_PACKED, MPI_UB, MPI_LB
       integer MPI_CHARACTER, MPI_LOGICAL
@@ -364,6 +399,24 @@ $input .= "
 #define OMPI_MPI_GROUP_EMPTY      $MPI_GROUP_EMPTY
 #define OMPI_MPI_ERRORS_ARE_FATAL $MPI_ERRORS_ARE_FATAL
 #define OMPI_MPI_ERRORS_RETURN    $MPI_ERRORS_RETURN
+
+/*
+ * lookup table indices
+ */
+
+#define OMPI_MPI_MAX       $MPI_MAX
+#define OMPI_MPI_MIN       $MPI_MIN
+#define OMPI_MPI_SUM       $MPI_SUM
+#define OMPI_MPI_PROD      $MPI_PROD
+#define OMPI_MPI_LAND      $MPI_LAND
+#define OMPI_MPI_BAND      $MPI_BAND
+#define OMPI_MPI_LOR       $MPI_LOR
+#define OMPI_MPI_BOR       $MPI_BOR
+#define OMPI_MPI_LXOR      $MPI_LXOR
+#define OMPI_MPI_BXOR      $MPI_BXOR
+#define OMPI_MPI_MAXLOC    $MPI_MAXLOC
+#define OMPI_MPI_MINLOC    $MPI_MINLOC
+#define OMPI_MPI_REPLACE   $MPI_REPLACE
 
 /*
  * NULL 'handles' (indices)
