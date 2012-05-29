@@ -828,7 +828,7 @@ static int map_to_ftgrps(orte_job_t *jdata)
                 opal_pointer_array_add(map->nodes, nd);
                 nd->mapped = true;
             }
-            proc = orte_rmaps_base_setup_proc(jdata, node, app->idx);
+            proc = orte_rmaps_base_setup_proc(jdata, nd, app->idx);
             if ((nd->slots < (int)nd->num_procs) ||
                 (0 < nd->slots_max && nd->slots_max < (int)nd->num_procs)) {
                 if (ORTE_MAPPING_NO_OVERSUBSCRIBE & ORTE_GET_MAPPING_DIRECTIVE(jdata->map->mapping)) {
