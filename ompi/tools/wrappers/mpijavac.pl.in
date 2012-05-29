@@ -4,6 +4,7 @@
 #          MAKE ALL CHANGES IN mpijava.pl.in
 
 # Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 
 use strict;
 
@@ -136,11 +137,14 @@ if (0 == $cp_found) {
 }
 
 # Construct the command
+my $returnCode = 0;
 if ($showme_arg) {
     print "$my_compiler @arguments\n";
 } else {
     if ($verbose) {
         print "$my_compiler @arguments\n";
     }
-    system $my_compiler, @arguments;
+    $returnCode = system $my_compiler, @arguments;
+    $returnCode = $returnCode > 0 ? 1:0;
 }
+exit $returnCode;
