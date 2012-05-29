@@ -41,7 +41,6 @@ foreach $my_arg (@ARGV) {
     $i++;
 }
 
-print "REPS " . $reps . "\n";
 my $n = 1;
 my $cmd;
 
@@ -52,6 +51,7 @@ my $line;
 my @results;
 my $res;
 my $toggle;
+my $idx;
 print "\n--------------------------------------------------\n";
 foreach $test (@tests) {
     if (-e $test) {
@@ -72,21 +72,26 @@ foreach $test (@tests) {
                             0 <= index($line, "sys") ||
                             0 <= index($line, "real") ||
                             0 <= index($line, "elapsed")) {
-                            @results = split(/\s+/,$line);
+                            $idx = 0;
+                            @results = split(/\s+/,$line, 4);
                             foreach $res (@results) {
-                                print $res;
-                                if (0 == $toggle) {
-                                    print " ";
-                                    $toggle = 1;
-                                } else {
-                                    print "    ";
-                                    $toggle = 0;
+                                if ($idx < 3) {
+                                    print $res;
+                                    if (0 == $toggle) {
+                                        print " ";
+                                        $toggle = 1;
+                                    } else {
+                                        print "    ";
+                                        $toggle = 0;
+                                    }
                                 }
+                                $idx = $idx + 1;
                             }
                             print "\n";
                         }
                     }
                 }
+                print "\n";
             }
             $n = 2 * $n;
         }
