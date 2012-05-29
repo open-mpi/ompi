@@ -78,7 +78,7 @@ ORTE_DECLSPEC extern int orte_state_base_output;
 			     ORTE_JOBID_PRINT(shadow->jobid),		\
 			     orte_job_state_to_str((s)),		\
 			     __FILE__, __LINE__));			\
-        orte_state.activate_job_state((j), (s));                        \
+        orte_state.activate_job_state(shadow, (s));                     \
     } while(0);
 
 #define ORTE_ACTIVATE_PROC_STATE(p, s)                                  \
@@ -91,7 +91,7 @@ ORTE_DECLSPEC extern int orte_state_base_output;
 			     ORTE_NAME_PRINT(shadow),			\
 			     orte_proc_state_to_str((s)),		\
 			     __FILE__, __LINE__));			\
-        orte_state.activate_proc_state((p), (s));                       \
+        orte_state.activate_proc_state(shadow, (s));                    \
     } while(0);
 
 /**
