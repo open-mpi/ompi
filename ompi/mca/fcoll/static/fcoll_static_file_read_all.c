@@ -71,7 +71,7 @@ mca_fcoll_static_file_read_all (mca_io_ompio_file_t *fh,
   int index, *disp_index=NULL, *bytes_per_process=NULL, current_position=0;
   int **blocklen_per_process=NULL, *iovec_count_per_process=NULL;
   int *displs=NULL, *sorted=NULL ,entries_per_aggregator=0;
-  int *sorted_file_offsets, temp_index=0, position=0, *temp_disp_index=NULL;
+  int *sorted_file_offsets=NULL, temp_index=0, position=0, *temp_disp_index=NULL;
 
   
   MPI_Aint **displs_per_process=NULL, global_iov_count=0, global_count=0;
