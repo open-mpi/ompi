@@ -51,23 +51,28 @@ typedef union mca_btl_ugni_frag_hdr_t {
 } mca_btl_ugni_frag_hdr_t;
 
 enum {
-    MCA_BTL_UGNI_FRAG_BUFFERED = 1,
-    MCA_BTL_UGNI_FRAG_COMPLETE = 2,
-    MCA_BTL_UGNI_FRAG_EAGER    = 4
+    MCA_BTL_UGNI_FRAG_BUFFERED = 1, /* frag data is buffered */
+    MCA_BTL_UGNI_FRAG_COMPLETE = 2, /* smsg complete for frag */
+    MCA_BTL_UGNI_FRAG_EAGER    = 4, /* eager get frag */
+    MCA_BTL_UGNI_FRAG_IGNORE   = 8  /* ignore local smsg completion */
 };
 
+struct mca_btl_ugni_base_frag_t;
+
+typedef void (*frag_cb_t) (struct mca_btl_ugni_base_frag_t *, int);
+
 typedef struct mca_btl_ugni_base_frag_t {
-    mca_btl_base_descriptor_t base;
-    mca_btl_base_segment_t segments[2];
-    mca_btl_ugni_frag_hdr_t hdr;
-    size_t hdr_size;
+    mca_btl_base_descriptor_t    base;
+    size_t                       hdr_size;
+    mca_btl_ugni_frag_hdr_t      hdr;
+    mca_btl_base_segment_t       segments[2];
     ompi_common_ugni_post_desc_t post_desc;
-    mca_btl_base_endpoint_t *endpoint;
-    mca_btl_ugni_reg_t *registration;
-    ompi_free_list_t *my_list;
-    uint32_t msg_id;
-    uint32_t flags;
-    void (*cbfunc) (struct mca_btl_ugni_base_frag_t*, int);
+    mca_btl_base_endpoint_t     *endpoint;
+    mca_btl_ugni_reg_t          *registration;
+    ompi_free_list_t            *my_list;
+    uint32_t                     msg_id;
+    uint32_t                     flags;
+    frag_cb_t                    cbfunc;
 } mca_btl_ugni_base_frag_t;
 
 typedef struct mca_btl_ugni_base_frag_t mca_btl_ugni_smsg_frag_t;
@@ -115,9 +120,11 @@ static inline int mca_btl_ugni_frag_return (mca_btl_ugni_base_frag_t *frag)
 }
 
 static inline void mca_btl_ugni_frag_complete (mca_btl_ugni_base_frag_t *frag, int rc) {
-    /* call callback if specified */
     frag->flags |= MCA_BTL_UGNI_FRAG_COMPLETE;
 
+    BTL_VERBOSE(("frag complete. flags = %d", frag->base.des_flags));
+
+    /* call callback if specified */
     if (frag->base.des_flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) {
         frag->base.des_cbfunc(&frag->endpoint->btl->super, frag->endpoint, &frag->base, rc);
     }

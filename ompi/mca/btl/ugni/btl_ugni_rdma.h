@@ -20,14 +20,14 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
                                   mca_btl_ugni_eager_ex_frag_hdr_t hdr,
                                   mca_btl_ugni_base_frag_t *frag);
 
-static inline int init_gni_post_desc(mca_btl_ugni_base_frag_t *frag,
-                                     gni_post_type_t op_type,
-                                     uint64_t lcl_addr, 
-                                     gni_mem_handle_t *lcl_mdh, 
-                                     uint64_t rem_addr,
-                                     gni_mem_handle_t *rem_mdh,
-                                     uint64_t bufsize,
-                                     gni_cq_handle_t cq_hndl) {
+static inline void init_gni_post_desc (mca_btl_ugni_base_frag_t *frag,
+                                      gni_post_type_t op_type,
+                                      uint64_t lcl_addr, 
+                                      gni_mem_handle_t *lcl_mdh, 
+                                      uint64_t rem_addr,
+                                      gni_mem_handle_t *rem_mdh,
+                                      uint64_t bufsize,
+                                      gni_cq_handle_t cq_hndl) {
     frag->post_desc.base.type            = op_type;
     frag->post_desc.base.cq_mode         = GNI_CQMODE_GLOBAL_EVENT;
     frag->post_desc.base.dlvr_mode       = GNI_DLVMODE_PERFORMANCE;
@@ -38,12 +38,7 @@ static inline int init_gni_post_desc(mca_btl_ugni_base_frag_t *frag,
     frag->post_desc.base.length          = bufsize;
     frag->post_desc.base.rdma_mode       = 0;
     frag->post_desc.base.src_cq_hndl     = cq_hndl;
-
-    frag->cbfunc   = mca_btl_ugni_frag_complete;
-    frag->post_desc.endpoint = frag->endpoint->common;
-    frag->post_desc.tries    = 0;
-
-    return 0;
+    frag->post_desc.tries                = 0;
 }
 
 static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_post_type_t op_type,
@@ -84,6 +79,35 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
     }
 
     return OMPI_SUCCESS;
+}
+
+static inline int mca_btl_ugni_post (mca_btl_ugni_base_frag_t *frag, bool get, mca_btl_base_segment_t *lcl_seg,
+                                     mca_btl_base_segment_t *rem_seg) {
+    frag->cbfunc = mca_btl_ugni_frag_complete;
+
+    if (frag->base.des_src->seg_len <= mca_btl_ugni_component.ugni_fma_limit) {
+        return mca_btl_ugni_post_fma (frag, get ? GNI_POST_FMA_GET : GNI_POST_FMA_PUT, lcl_seg, rem_seg);
+    }
+
+    return mca_btl_ugni_post_bte (frag, get ? GNI_POST_RDMA_GET : GNI_POST_RDMA_PUT, lcl_seg, rem_seg);
+}
+
+static inline void mca_btl_ugni_repost (mca_btl_ugni_base_frag_t *frag, int rc) {
+    gni_return_t grc;
+
+    frag->cbfunc = mca_btl_ugni_frag_complete;
+
+    if (GNI_POST_RDMA_PUT == frag->post_desc.base.type ||
+        GNI_POST_RDMA_GET == frag->post_desc.base.type) {
+        grc = GNI_PostRdma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
+    } else {
+        grc = GNI_PostFma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
+    }
+
+    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc)) {
+        frag->cbfunc = mca_btl_ugni_repost;
+        opal_list_append (&frag->endpoint->btl->failed_frags, (opal_list_item_t *) frag);
+    }
 }
 
 #endif /* MCA_BTL_UGNI_RDMA_H */

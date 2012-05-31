@@ -14,6 +14,7 @@
 
 #include "btl_ugni.h"
 #include "btl_ugni_frag.h"
+#include "btl_ugni_smsg.h"
 
 static int
 mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module);
@@ -80,7 +81,7 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
             return ompi_common_rc_ugni_to_ompi (rc);
         }
 
-        rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.cq_size,
+        rc = GNI_CqCreate (ugni_module->device->dev_handle, mca_btl_ugni_component.remote_cq_size,
                            0, GNI_CQ_NOBLOCK, NULL, NULL, &ugni_module->smsg_remote_cq);
         if (GNI_RC_SUCCESS != rc) {
             BTL_ERROR(("error creating remote SMSG CQ"));
@@ -90,6 +91,12 @@ int mca_btl_ugni_add_procs(struct mca_btl_base_module_t* btl,
         rc = mca_btl_ugni_setup_mpools (ugni_module);
         if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
             BTL_ERROR(("btl/ugni error setting up mpools/free lists"));
+            return rc;
+        }
+
+        rc = mca_btl_ugni_smsg_init (ugni_module);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
+            BTL_ERROR(("btl/ugni error initializing SMSG"));
             return rc;
         }
     }
@@ -129,45 +136,41 @@ int mca_btl_ugni_del_procs (struct mca_btl_base_module_t *btl,
     return OMPI_SUCCESS;
 }
 
-static inline int ugni_reg_mem (mca_btl_ugni_module_t *ugni_module, void *base,
-                                size_t size, mca_mpool_base_registration_t *reg,
-                                gni_cq_handle_t cq, uint32_t flags)
-{
-    mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
-    gni_return_t rc;
-
-    rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
-                          size, cq, flags, -1, &(ugni_reg->memory_hdl));
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    ugni_module->reg_count++;
-
-    return OMPI_SUCCESS;
-}
-
 static int ugni_reg_rdma_mem (void *reg_data, void *base, size_t size,
                               mca_mpool_base_registration_t *reg)
 {
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) reg_data;
+    mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
+    gni_return_t rc;
 
     if (ugni_module->reg_count >= ugni_module->reg_max) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    
-    return ugni_reg_mem (ugni_module, base, size, reg, NULL,
-                         GNI_MEM_READWRITE | GNI_MEM_RELAXED_PI_ORDERING);
+ 
+    rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
+                          size, NULL, GNI_MEM_READWRITE | GNI_MEM_RELAXED_PI_ORDERING,
+                          -1, &(ugni_reg->memory_hdl));
+    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc)) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    ugni_module->reg_count++;  
+
+    return OMPI_SUCCESS;
 }
 
 
 static int ugni_reg_smsg_mem (void *reg_data, void *base, size_t size,
                               mca_mpool_base_registration_t *reg)
 {
-    mca_btl_ugni_module_t *btl = (mca_btl_ugni_module_t *) reg_data;
+    mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) reg_data;
+    mca_btl_ugni_reg_t *ugni_reg = (mca_btl_ugni_reg_t *) reg;
+    gni_return_t rc;
 
-    return ugni_reg_mem (btl, base, size, reg, btl->smsg_remote_cq,
-                         GNI_MEM_READWRITE);
+    rc = GNI_MemRegister (ugni_module->device->dev_handle, (uint64_t) base,
+                          size, ugni_module->smsg_remote_cq, GNI_MEM_READWRITE, -1,
+                          &(ugni_reg->memory_hdl));
+    return ompi_common_rc_ugni_to_ompi (rc);
 }
 
 static int
@@ -218,7 +221,7 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     }
 
     rc = ompi_free_list_init_ex_new (&ugni_module->rdma_frags,
-                                     sizeof (mca_btl_ugni_rdma_frag_t), 8,
+                                     sizeof (mca_btl_ugni_rdma_frag_t), 64,
                                      OBJ_CLASS(mca_btl_ugni_rdma_frag_t),
                                      0, opal_cache_line_size,
                                      mca_btl_ugni_component.ugni_free_list_num,
@@ -308,8 +311,8 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     rc = ompi_free_list_init_new (&ugni_module->smsg_mboxes,
                                   sizeof (mca_btl_ugni_smsg_mbox_t), 8,
                                   OBJ_CLASS(mca_btl_ugni_smsg_mbox_t),
-                                  mca_btl_ugni_component.smsg_mbox_size, 64,
-                                  16, nprocs, mbox_increment,
+                                  mca_btl_ugni_component.smsg_mbox_size, 128,
+                                  32, nprocs, mbox_increment,
                                   ugni_module->smsg_mpool);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         BTL_ERROR(("error creating smsg mailbox free list"));

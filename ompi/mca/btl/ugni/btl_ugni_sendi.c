@@ -30,22 +30,22 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
 
     assert (length <= btl->btl_eager_limit && !(flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK));
 
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != mca_btl_ugni_check_endpoint_state (endpoint))) {
+    max_data = payload_size;
+    frag = (mca_btl_ugni_base_frag_t *)
+        mca_btl_ugni_prepare_src_send_buffered (btl, endpoint, convertor,
+                                                order, header_size, &max_data,
+                                                flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
+
+    if (OPAL_UNLIKELY(NULL == frag || OMPI_SUCCESS != mca_btl_ugni_check_endpoint_state (endpoint))) {
         /* can't complete inline send if the endpoint is not already connected */
         /* go ahead and start the connection */
-        *descriptor = mca_btl_ugni_alloc (btl, endpoint, order, length, flags);
+        if (NULL != frag) {
+            mca_btl_ugni_frag_return (frag);
+        }
 
-        return OMPI_ERR_RESOURCE_BUSY;
-    }
-
-    max_data = payload_size;
-    frag = (mca_btl_ugni_base_frag_t *) mca_btl_ugni_prepare_src_send_buffered (btl, endpoint,
-                                                                                convertor,
-                                                                                order, header_size,
-                                                                                &max_data, flags);
-    if (OPAL_UNLIKELY(NULL == frag)) {
         *descriptor = NULL;
-        return OMPI_ERR_OUT_OF_RESOURCE;
+
+        return !frag ? OMPI_ERR_OUT_OF_RESOURCE : OMPI_ERR_RESOURCE_BUSY;
     }
 
     assert (payload_size == max_data);
@@ -53,29 +53,28 @@ int mca_btl_ugni_sendi (struct mca_btl_base_module_t *btl,
     BTL_VERBOSE(("btl/ugni sending inline descriptor %p from %d -> %d. length = %u", (void *) frag,
                  ORTE_PROC_MY_NAME->vpid, endpoint->common->ep_rem_id, (unsigned int) length));
 
-    frag->base.des_flags  = flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
-
     frag->hdr.send.lag = (tag << 24) | length;
 
     /* write match header (with MPI comm/tag/etc. info) */
     memmove (frag->base.des_src[0].seg_addr.pval, header, header_size);
 
     /* send message */
-    if (OPAL_LIKELY(!(frag->flags & MCA_BTL_UGNI_FRAG_EAGER))) {
-        rc = ompi_mca_btl_ugni_smsg_send (frag, false, &frag->hdr.send_ex, frag->hdr_size,
-                                          frag->segments[1].seg_addr.pval, frag->segments[1].seg_len,
-                                          MCA_BTL_UGNI_TAG_SEND);
-    } else {
-        frag->hdr.eager.src_seg = frag->segments[1];
-        frag->hdr.eager.ctx     = (void *) frag;
-
-        rc = ompi_mca_btl_ugni_smsg_send (frag, true, &frag->hdr.eager_ex, frag->hdr_size,
-                                          NULL, 0, MCA_BTL_UGNI_TAG_GET_INIT);
-    }
-
+    rc = mca_btl_ugni_send_frag (endpoint, frag);
     if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-        /* return this frag */
-        mca_btl_ugni_frag_return (frag);
+        if (OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc)) {
+            mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
+
+            /* queue up request */
+            if (0 == opal_list_get_size (&endpoint->frag_wait_list)) {
+                opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
+            }
+            opal_list_append (&endpoint->frag_wait_list, (opal_list_item_t *) frag);
+            rc = OMPI_SUCCESS;
+        } else {
+            /* return this frag */
+            mca_btl_ugni_frag_return (frag);
+            *descriptor = NULL;
+        }
     }
 
     return rc;

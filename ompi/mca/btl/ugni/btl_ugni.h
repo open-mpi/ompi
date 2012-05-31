@@ -24,7 +24,6 @@
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
-#include "ompi/runtime/ompi_module_exchange.h"
 #include "opal/util/output.h"
 #include "opal_stdint.h"
 
@@ -67,7 +66,7 @@ typedef struct mca_btl_ugni_module_t {
     gni_cq_handle_t smsg_remote_cq;
     gni_cq_handle_t smsg_local_cq;
 
-    /* eager (registered) fragment list */
+    /* eager fragment list (registered) */
     ompi_free_list_t eager_frags_send;
     ompi_free_list_t eager_frags_recv;
 
@@ -77,6 +76,9 @@ typedef struct mca_btl_ugni_module_t {
     /* RDMA fragment list */
     ompi_free_list_t rdma_frags;
     ompi_free_list_t rdma_int_frags;
+
+    /* endpoints waiting on credits */
+    opal_list_t      ep_wait_list;
 
     /* fragment id bounce buffer (smsg msg ids are only 32 bits) */
     opal_pointer_array_t pending_smsg_frags_bb;
@@ -92,7 +94,7 @@ typedef struct mca_btl_ugni_component_t {
     /* maximum supported btls. hardcoded to 1 for now */
     uint32_t ugni_max_btls;
     /* Maximum number of entries a completion queue can hold */
-    uint32_t cq_size;
+    uint32_t remote_cq_size;
     uint32_t local_cq_size;
 
     /* number of ugni modules */
@@ -239,6 +241,8 @@ int
 mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
                   struct mca_btl_base_endpoint_t *endpoint,
                   struct mca_btl_base_descriptor_t *des);
+
+int mca_btl_progress_send_wait_list (struct mca_btl_base_endpoint_t *endpoint);
 
 mca_btl_base_descriptor_t *
 mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,

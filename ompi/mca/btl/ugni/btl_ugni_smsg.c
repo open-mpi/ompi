@@ -13,6 +13,38 @@
 #include "btl_ugni_smsg.h"
 #include "btl_ugni_rdma.h"
 
+static void mca_btl_ugni_smsg_mbox_construct (mca_btl_ugni_smsg_mbox_t *mbox) {
+    struct mca_btl_ugni_reg_t *reg =
+        (struct mca_btl_ugni_reg_t *) mbox->super.registration;
+
+    /* initialize mailbox attributes */
+    mbox->smsg_attrib.msg_type       = GNI_SMSG_TYPE_MBOX_AUTO_RETRANSMIT;
+    mbox->smsg_attrib.msg_maxsize    = mca_btl_ugni_component.ugni_smsg_limit;
+    mbox->smsg_attrib.mbox_maxcredit = mca_btl_ugni_component.smsg_max_credits;
+    mbox->smsg_attrib.mbox_offset    = (uintptr_t) mbox->super.ptr - (uintptr_t) reg->base.alloc_base;
+    mbox->smsg_attrib.msg_buffer     = reg->base.alloc_base;
+    mbox->smsg_attrib.buff_size      = mca_btl_ugni_component.smsg_mbox_size;
+    mbox->smsg_attrib.mem_hndl       = reg->memory_hdl;
+}
+
+OBJ_CLASS_INSTANCE(mca_btl_ugni_smsg_mbox_t, ompi_free_list_item_t,
+                   mca_btl_ugni_smsg_mbox_construct, NULL);
+
+
+int mca_btl_ugni_smsg_init (mca_btl_ugni_module_t *ugni_module)
+{
+    gni_return_t rc;
+
+    rc = GNI_SmsgSetMaxRetrans (ugni_module->device->dev_handle,
+                                mca_btl_ugni_component.smsg_max_retries);
+    if (GNI_RC_SUCCESS != rc) {
+        BTL_ERROR(("error setting maximum SMSG retries"));
+        return ompi_common_rc_ugni_to_ompi (rc);
+    }
+
+    return OMPI_SUCCESS;
+}
+
 /* progress */
 int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
 {
@@ -36,6 +68,7 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
         rc = GNI_SmsgGetNextWTag (ep->smsg_ep_handle, (void **) &data_ptr, &tag);
         if (GNI_RC_NOT_DONE == rc) {
             BTL_VERBOSE(("no smsg message waiting. rc = %d", rc));
+
             ep->smsg_progressing = 0;
 
             return count;
@@ -151,17 +184,19 @@ int mca_btl_ugni_progress_remote_smsg (mca_btl_ugni_module_t *btl)
 {
     mca_btl_base_endpoint_t *ep;
     gni_cq_entry_t event_data;
-    gni_return_t rc;
+    gni_return_t grc;
+    uint64_t inst_id;
+    int rc;
 
-    rc = GNI_CqGetEvent (btl->smsg_remote_cq, &event_data);
-    if (GNI_RC_NOT_DONE == rc) {
+    grc = GNI_CqGetEvent (btl->smsg_remote_cq, &event_data);
+    if (GNI_RC_NOT_DONE == grc) {
         return 0;
     }
 
-    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != rc || !GNI_CQ_STATUS_OK(event_data) ||
+    if (OPAL_UNLIKELY(GNI_RC_SUCCESS != grc || !GNI_CQ_STATUS_OK(event_data) ||
                       GNI_CQ_OVERRUN(event_data))) {
-        if (GNI_RC_ERROR_RESOURCE == rc ||
-            (GNI_RC_SUCCESS == rc && GNI_CQ_OVERRUN(event_data))) {
+        if (GNI_RC_ERROR_RESOURCE == grc ||
+            (GNI_RC_SUCCESS == grc && GNI_CQ_OVERRUN(event_data))) {
             /* recover from smsg cq overrun */
             return mca_btl_ugni_handle_remote_smsg_overrun (btl);
         }
@@ -170,7 +205,7 @@ int mca_btl_ugni_progress_remote_smsg (mca_btl_ugni_module_t *btl)
 
         /* unhandled error: crash */
         assert (0);
-        return ompi_common_rc_ugni_to_ompi (rc);
+        return ompi_common_rc_ugni_to_ompi (grc);
     }
 
     BTL_VERBOSE(("REMOTE CQ: Got event 0x%" PRIx64 ". msg id = %" PRIu64
@@ -178,7 +213,9 @@ int mca_btl_ugni_progress_remote_smsg (mca_btl_ugni_module_t *btl)
                  GNI_CQ_GET_MSG_ID(event_data), GNI_CQ_STATUS_OK(event_data),
                  GNI_CQ_GET_TYPE(event_data)));
 
-    ep = btl->endpoints[GNI_CQ_GET_MSG_ID(event_data)];
+    inst_id = GNI_CQ_GET_INST_ID(event_data);
+
+    ep = btl->endpoints[inst_id & 0xffffffff];
     if (OPAL_UNLIKELY(MCA_BTL_UGNI_EP_STATE_CONNECTED != ep->state)) {
         /* due to the nature of datagrams we may get a smsg completion before
            we get mailbox info from the peer */
