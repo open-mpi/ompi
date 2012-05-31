@@ -635,7 +635,7 @@ int ompi_io_ompio_set_aggregator_props (mca_io_ompio_file_t *fh,
 
 
     int j;
-    int root_offset;
+    int root_offset=0;
     int ndims, i=1, n=0, total_groups=0;
     int *dims=NULL, *periods=NULL, *coords=NULL, *coords_tmp=NULL;
     int procs_per_node = 1; /* MSC TODO - Figure out a way to get this info */
