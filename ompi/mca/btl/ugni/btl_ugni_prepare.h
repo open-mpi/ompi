@@ -50,7 +50,7 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
             return NULL;
         }
 
-        frag->flags = MCA_BTL_UGNI_FRAG_EAGER;
+        frag->flags = MCA_BTL_UGNI_FRAG_EAGER | MCA_BTL_UGNI_FRAG_IGNORE;
 
         frag->registration = registration;
         memcpy ((void *) frag->segments[1].seg_key.key64,
@@ -98,7 +98,7 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
             return NULL;
         }
 
-        frag->flags = MCA_BTL_UGNI_FRAG_EAGER;
+        frag->flags = MCA_BTL_UGNI_FRAG_EAGER | MCA_BTL_UGNI_FRAG_IGNORE;
 
         registration = (mca_btl_ugni_reg_t *) frag->base.super.registration;
 
@@ -127,12 +127,6 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
     if (OPAL_UNLIKELY(rc < 0)) {
         mca_btl_ugni_frag_return (frag);
         return NULL;
-    }
-
-    if (max_size != *size) {
-        fprintf (stderr, "**** max_size = %d. iov.iov_len = %d\n", max_size,
-                 iov.iov_len);
-        abort();
     }
 
     frag->segments[0].seg_len       = reserve;

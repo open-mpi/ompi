@@ -26,15 +26,11 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
     mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) des;
     size_t size = des->des_src->seg_len;
     bool check;
-    int rc;
 
     BTL_VERBOSE(("Using RDMA/FMA Get"));
 
-    /* Check if endpoint is connected */
-    rc = mca_btl_ugni_check_endpoint_state(endpoint);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc))
-        /* Ack! we should already be connected by this point (we got a smsg msg) */
-        return rc;
+    /* cause endpoint to bind if it isn't already (bind is sufficient for rdma) */
+    (void) mca_btl_ugni_check_endpoint_state(endpoint);
 
     /* Check if the get is aligned/sized on a multiple of 4 */
     check = !!((des->des_src->seg_addr.lval | des->des_dst->seg_addr.lval | size) & 3);
@@ -44,23 +40,25 @@ int mca_btl_ugni_get (struct mca_btl_base_module_t *btl,
         return OMPI_ERR_NOT_AVAILABLE;
     }
 
-    if (NULL != frag->base.des_cbfunc) {
-        des->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
-    }
+    des->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
-    if (size <= mca_btl_ugni_component.ugni_fma_limit) {
-        return mca_btl_ugni_post_fma (frag, GNI_POST_FMA_GET, des->des_dst, des->des_src);
-    }
+    return mca_btl_ugni_post (frag, true, des->des_dst, des->des_src);
+}
 
-    return mca_btl_ugni_post_bte (frag, GNI_POST_RDMA_GET, des->des_dst, des->des_src);
+static void mca_btl_ugni_frag_set_ownership (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                                             mca_btl_base_descriptor_t *desc, int rc) {
+    desc->des_flags |= MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
 }
 
 static void mca_btl_ugni_callback_rdma_complete (mca_btl_ugni_base_frag_t *frag, int rc)
 {
     BTL_VERBOSE(("rdma operation for rem_ctx %p complete", frag->hdr.rdma.ctx));
 
+    frag->base.des_cbfunc = mca_btl_ugni_frag_set_ownership;
+    frag->base.des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
+
     /* tell peer the put is complete */
-    rc = ompi_mca_btl_ugni_smsg_send (frag, false, &frag->hdr.rdma, sizeof (frag->hdr.rdma),
+    rc = ompi_mca_btl_ugni_smsg_send (frag, &frag->hdr.rdma, sizeof (frag->hdr.rdma),
                                       NULL, 0, MCA_BTL_UGNI_TAG_RDMA_COMPLETE);
     if (OPAL_UNLIKELY(0 > rc)) {
         /* call this callback again later */
@@ -75,8 +73,10 @@ static void mca_btl_ugni_callback_eager_get_retry (mca_btl_ugni_base_frag_t *fra
     (void) mca_btl_ugni_start_eager_get(frag->endpoint, frag->hdr.eager_ex, frag);
 }
 
-static void mca_btl_ugni_callback_eager_get (mca_btl_ugni_base_frag_t *frag, int rc)
+static void mca_btl_ugni_callback_eager_get (mca_btl_base_module_t *btl, mca_btl_base_endpoint_t *endpoint,
+                                             mca_btl_base_descriptor_t *desc, int rc)
 {
+    mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) desc;
     uint32_t len = frag->hdr.eager.send.lag & 0x00ffffff;
     uint8_t tag = frag->hdr.eager.send.lag >> 24;
     size_t payload_len = frag->hdr.eager.src_seg.seg_len;
@@ -114,7 +114,6 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
                                   mca_btl_ugni_eager_ex_frag_hdr_t hdr,
                                   mca_btl_ugni_base_frag_t *frag)
 {
-    mca_btl_ugni_reg_t *registration;
     int rc;
 
     if (OPAL_UNLIKELY(frag && frag->my_list == &ep->btl->rdma_int_frags)) {
@@ -137,8 +136,8 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
 
         frag->hdr.eager_ex = hdr;
 
-        frag->base.des_cbfunc = NULL;
-        frag->base.des_flags  = MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;
+        frag->base.des_cbfunc = mca_btl_ugni_callback_eager_get;
+        frag->base.des_flags  = MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
         frag->base.des_dst = frag->segments;
         frag->base.des_dst_cnt = 1;
@@ -151,19 +150,10 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
         frag->segments[0].seg_len = frag->segments[1].seg_len =
             (hdr.eager.src_seg.seg_len + 3) & ~3;
 
-        if (frag->segments[0].seg_len <= mca_btl_ugni_component.ugni_fma_limit) {
-            rc = mca_btl_ugni_post_fma (frag, GNI_POST_FMA_GET, frag->base.des_dst, frag->base.des_src);
-        } else {
-            rc = mca_btl_ugni_post_bte (frag, GNI_POST_RDMA_GET, frag->base.des_dst, frag->base.des_src);
+        rc = mca_btl_ugni_post (frag, true, frag->base.des_dst, frag->base.des_src);
+        if (OPAL_UNLIKELY(OMPI_SUCCESS == rc)) {
+            return OMPI_SUCCESS;
         }
-
-        if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-            break;
-        }
-
-        frag->cbfunc = mca_btl_ugni_callback_eager_get;
-
-        return OMPI_SUCCESS;
     } while (0);
 
     frag->cbfunc = mca_btl_ugni_callback_eager_get_retry;

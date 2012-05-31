@@ -12,27 +12,10 @@
 
 #include "ompi_config.h"
 
-#include "ompi/constants.h"
-#include "ompi/communicator/communicator.h"
-#include "opal/util/show_help.h"
-#include "opal/align.h"
-#include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/dpm/dpm.h"
-#include "orte/util/proc_info.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/btl/base/btl_base_error.h"
-
 #include "btl_ugni.h"
 #include "btl_ugni_frag.h"
 #include "btl_ugni_endpoint.h"
-#include "btl_ugni_smsg.h"
 #include "btl_ugni_prepare.h"
-
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <errno.h>
 
 static int
 mca_btl_ugni_free (struct mca_btl_base_module_t *btl,
@@ -111,6 +94,7 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
     OBJ_CONSTRUCT(&ugni_module->rdma_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&ugni_module->rdma_int_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&ugni_module->pending_smsg_frags_bb, opal_pointer_array_t);
+    OBJ_CONSTRUCT(&ugni_module->ep_wait_list, opal_list_t);
 
     ugni_module->device = dev;
     ugni_module->endpoints = NULL;
@@ -132,13 +116,6 @@ mca_btl_ugni_module_init (mca_btl_ugni_module_t *ugni_module,
         return rc;
     }
 
-    rc = GNI_SmsgSetMaxRetrans (ugni_module->device->dev_handle,
-                                mca_btl_ugni_component.smsg_max_retries);
-    if (GNI_RC_SUCCESS != rc) {
-        BTL_ERROR(("error setting maximum SMSG retries"));
-        return ompi_common_rc_ugni_to_ompi (rc);
-    }
-
     return OMPI_SUCCESS;
 }
 
@@ -154,6 +131,7 @@ mca_btl_ugni_module_finalize (struct mca_btl_base_module_t *btl)
     OBJ_DESTRUCT(&ugni_module->smsg_frags);
     OBJ_DESTRUCT(&ugni_module->rdma_frags);
     OBJ_DESTRUCT(&ugni_module->rdma_int_frags);
+    OBJ_DESTRUCT(&ugni_module->ep_wait_list);
 
     /* close all open connections and release endpoints */
     if (NULL != ugni_module->endpoints) {
@@ -252,7 +230,7 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
         mca_btl_ugni_reg_t *registration;
 
         frag->hdr_size = sizeof (frag->hdr.eager);
-        frag->flags    |= MCA_BTL_UGNI_FRAG_EAGER;
+        frag->flags    |= MCA_BTL_UGNI_FRAG_EAGER | MCA_BTL_UGNI_FRAG_IGNORE;
 
         registration = (mca_btl_ugni_reg_t *) frag->base.super.registration;
 

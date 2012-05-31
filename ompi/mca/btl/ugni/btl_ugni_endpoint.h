@@ -22,15 +22,10 @@ enum mca_btl_ugni_endpoint_state_t {
 };
 typedef enum mca_btl_ugni_endpoint_state_t mca_btl_ugni_endpoint_state_t;
 
-typedef struct mca_btl_ugni_smsg_mbox_t {
-    ompi_free_list_item_t super;
-    gni_smsg_attr_t  smsg_attrib;
-} mca_btl_ugni_smsg_mbox_t;
-
-OBJ_CLASS_DECLARATION(mca_btl_ugni_smsg_mbox_t);
+struct mca_btl_ugni_smsg_mbox_t;
 
 typedef struct mca_btl_base_endpoint_t {
-    opal_object_t super;
+    opal_list_item_t super;
 
     opal_mutex_t lock;
     mca_btl_ugni_endpoint_state_t state;
@@ -44,10 +39,9 @@ typedef struct mca_btl_base_endpoint_t {
 
     gni_smsg_attr_t remote_smsg_attrib;
 
-    mca_btl_ugni_smsg_mbox_t *mailbox;
+    struct mca_btl_ugni_smsg_mbox_t *mailbox;
 
-    opal_list_t pending_list;
-    opal_list_t pending_smsg_sends;
+    opal_list_t frag_wait_list;
 
     int32_t smsg_progressing;
 } mca_btl_base_endpoint_t;
@@ -86,7 +80,7 @@ static inline void mca_btl_ugni_release_ep (mca_btl_base_endpoint_t *ep) {
     int rc;
 
     rc = mca_btl_ugni_ep_disconnect (ep, false);
-    if (OMPI_SUCCESS == rc) {
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
         BTL_VERBOSE(("btl/ugni error disconnecting endpoint"));
     }
 
@@ -129,16 +123,6 @@ static inline int mca_btl_ugni_wildcard_ep_post (mca_btl_ugni_module_t *ugni_mod
     rc = GNI_EpPostDataWId (ugni_module->wildcard_ep, &ugni_module->wc_local_attr, sizeof (ugni_module->wc_local_attr),
                             &ugni_module->wc_remote_attr, sizeof (ugni_module->wc_remote_attr),
                             MCA_BTL_UGNI_CONNECT_WILDCARD_ID | ORTE_PROC_MY_NAME->vpid);
-
-    return ompi_common_rc_ugni_to_ompi (rc);
-}
-
-static inline int mca_btl_ugni_directed_ep_post (mca_btl_base_endpoint_t *ep) {
-    gni_return_t rc;
-
-    rc = GNI_EpPostDataWId (ep->smsg_ep_handle, &ep->mailbox->smsg_attrib, sizeof (ep->mailbox->smsg_attrib),
-                            &ep->remote_smsg_attrib, sizeof (ep->remote_smsg_attrib),
-                            MCA_BTL_UGNI_CONNECT_DIRECTED_ID | ep->common->ep_rem_id);
 
     return ompi_common_rc_ugni_to_ompi (rc);
 }
