@@ -11,6 +11,7 @@ dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -37,7 +38,7 @@ AC_DEFUN([OMPI_FORTRAN_CHECK_REAL16_C_EQUIV],[
             AC_MSG_CHECKING([if $OMPI_FORTRAN_REAL16_C_TYPE == REAL*16])
             OMPI_FORTRAN_CHECK_REAL16_EQUIV_TYPE([$OMPI_FORTRAN_REAL16_C_TYPE], [L])
             # If that didn't work, see if we have a compiler-specific
-            # time that might work
+            # type that might work
             AS_IF([test "$happy" = "no"],
                   [AC_MSG_RESULT([$happy])
                    # Intel compiler has a special type that should work
@@ -102,9 +103,11 @@ extern "C" {
 #endif
 
 void c_backend($1 *a) {
+    $1 foo = 11;
     FILE *fp = fopen("conftestval", "w");
     if (NULL == fp) exit(1);
-    fprintf(fp, "%s\n", (1.1$2 == *a) ? "yes" : "no");
+    foo = 1 / foo;
+    fprintf(fp, "%s\n", (foo == *a) ? "yes" : "no");
     fclose(fp);
 }
 
@@ -121,8 +124,8 @@ EOF
     # Fortran module
     cat > conftest_f.f <<EOF
         program bogus
-        REAL*16 :: foo
-        foo = 1.1
+        REAL*16 :: foo = 11
+        foo = 1 / foo
         call c(foo)
         end program bogus
 EOF
