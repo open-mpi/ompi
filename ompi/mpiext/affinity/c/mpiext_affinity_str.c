@@ -45,7 +45,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX]);
 static int get_layout_exists(char str[OMPI_AFFINITY_STRING_MAX]);
 
-/*------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
 
 int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
 		      char ompi_bound[OMPI_AFFINITY_STRING_MAX],
@@ -88,257 +88,7 @@ int OMPI_Affinity_str(ompi_affinity_fmt_t fmt_type,
     return MPI_SUCCESS;
 }
 
-/*------------------------------------------------------------------------------*/
-
-/*
- * Turn an int bitmap to a "a-b,c" range kind of string
- */
-static char *bitmap2rangestr(int bitmap)
-{
-    size_t i;
-    int range_start, range_end;
-    bool first, isset;
-    char tmp[BUFSIZ];
-    const int stmp = sizeof(tmp) - 1;
-    static char ret[BUFSIZ];
-
-    memset(ret, 0, sizeof(ret));
-
-    first = true;
-    range_start = -999;
-    for (i = 0; i < sizeof(int) * 8; ++i) {
-        isset = (bitmap & (1 << i));
-
-        /* Do we have a running range? */
-        if (range_start >= 0) {
-            if (isset) {
-                continue;
-            } else {
-                /* A range just ended; output it */
-                if (!first) {
-                    strncat(ret, ",", sizeof(ret) - strlen(ret));
-                    first = false;
-                }
-
-                range_end = i - 1;
-                if (range_start == range_end) {
-                    snprintf(tmp, stmp, "%d", range_start);
-                } else {
-                    snprintf(tmp, stmp, "%d-%d", range_start, range_end);
-                }
-                strncat(ret, tmp, sizeof(ret) - strlen(ret));
-
-                range_start = -999;
-            }
-        }
-
-        /* No running range */
-        else {
-            if (isset) {
-                range_start = i;
-            }
-        }
-    }
-
-    /* If we ended the bitmap with a range open, output it */
-    if (range_start >= 0) {
-        if (!first) {
-            strncat(ret, ",", sizeof(ret) - strlen(ret));
-            first = false;
-        }
-
-        range_end = i - 1;
-        if (range_start == range_end) {
-            snprintf(tmp, stmp, "%d", range_start);
-        } else {
-            snprintf(tmp, stmp, "%d-%d", range_start, range_end);
-        }
-        strncat(ret, tmp, sizeof(ret) - strlen(ret));
-    }
-
-    return ret;
-}
-
-/*
- * Make a map of socket/core/hwthread tuples
- */
-static int build_map(int *num_sockets_arg, int *num_cores_arg, 
-                     hwloc_cpuset_t cpuset, int ***map)
-{
-    static int num_sockets = -1, num_cores = -1;
-    int socket_index, core_index, pu_index;
-    hwloc_obj_t socket, core, pu;
-    int **data;
-
-    /* Find out how many sockets we have (cached so that we don't have
-       to look this up every time) */
-    if (num_sockets < 0) {
-        num_sockets = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE);
-
-        /* Lazy: take the total number of cores that we have in the
-           topology; that'll be less than the max number of cores
-           under any given socket */
-        num_cores = hwloc_get_nbobjs_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE);
-    }
-    *num_sockets_arg = num_sockets;
-    *num_cores_arg = num_cores;
-
-    /* Alloc a 2D array: sockets x cores. */
-    data = malloc(num_sockets * sizeof(int *));
-    if (NULL == data) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    data[0] = calloc(num_sockets * num_cores, sizeof(int));
-    if (NULL == data[0]) {
-        free(data);
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    for (socket_index = 1; socket_index < num_sockets; ++socket_index) {
-        data[socket_index] = data[socket_index - 1] + num_cores;
-    }
-
-    /* Iterate the PUs in this cpuset; fill in the data[][] array with
-       the socket/core/pu triples */
-    for (pu_index = 0,
-             pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                      cpuset, HWLOC_OBJ_PU, 
-                                                      pu_index);
-         NULL != pu;
-         pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                  cpuset, HWLOC_OBJ_PU, 
-                                                  ++pu_index)) {
-        /* Go upward and find the core this PU belongs to */
-        core = pu;
-        while (NULL != core && core->type != HWLOC_OBJ_CORE) {
-            core = core->parent;
-        }
-        core_index = 0;
-        if (NULL != core) {
-            core_index = core->os_index;
-        }
-
-        /* Go upward and find the socket this PU belongs to */
-        socket = pu;
-        while (NULL != socket && socket->type != HWLOC_OBJ_SOCKET) {
-            socket = socket->parent;
-        }
-        socket_index = 0;
-        if (NULL != socket) {
-            socket_index = socket->os_index;
-        }
-
-        /* Save this socket/core/pu combo.  LAZY: Assuming that we
-           won't have more PU's per core than (sizeof(int)*8). */
-        data[socket_index][core_index] |= (1 << pu->sibling_rank);
-    }
-
-    *map = data;
-    return OMPI_SUCCESS;
-}
-
-/*
- * Make a prettyprint string for a hwloc_cpuset_t
- */
-static int cset2str(char *str, int len, hwloc_cpuset_t cpuset)
-{
-    bool first;
-    int num_sockets, num_cores;
-    int ret, socket_index, core_index;
-    char tmp[BUFSIZ];
-    const int stmp = sizeof(tmp) - 1;
-    int **map;
-
-    str[0] = tmp[stmp] = '\0';
-
-    if (OMPI_SUCCESS != (ret = build_map(&num_sockets, &num_cores, cpuset, &map))) {
-        return ret;
-    }
-
-    /* Iterate over the data maxtrix and build up the string */
-    first = true;
-    for (socket_index = 0; socket_index < num_sockets; ++socket_index) {
-        for (core_index = 0; core_index < num_cores; ++core_index) {
-            if (map[socket_index][core_index] > 0) {
-                if (!first) {
-                    strncat(str, ", ", len - strlen(str));
-                }
-                first = false;
-
-                snprintf(tmp, stmp, "socket %d[core %d[hwt %s]]", 
-                         socket_index, core_index,
-                         bitmap2rangestr(map[socket_index][core_index]));
-                strncat(str, tmp, len - strlen(str));
-            }
-        }
-    }
-    free(map[0]);
-    free(map);
-
-    return OMPI_SUCCESS;
-}
-
-/**
- * Make a prettyprint string for a cset in a map format.  
- * Example: [B./..]
- * Key:  [] - signifies socket
- *        / - signifies core 
- *        . - signifies PU a process not bound to
- *        B - signifies PU a process is bound to
- */
-static int cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset)
-{
-    char tmp[BUFSIZ];
-    int core_index, pu_index;
-    const int stmp = sizeof(tmp) - 1;
-    hwloc_obj_t socket, core, pu;
-
-    str[0] = tmp[stmp] = '\0';
-
-    /* Iterate over all existing sockets */
-    for (socket = hwloc_get_obj_by_type(opal_hwloc_topology, 
-                                        HWLOC_OBJ_SOCKET, 0);
-         NULL != socket; 
-         socket = socket->next_cousin) {
-        strncat(str, "[", len - strlen(str));
-
-        /* Iterate over all existing cores in this socket */
-        core_index = 0;
-        for (core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                        socket->cpuset, 
-                                                        HWLOC_OBJ_CORE, core_index);
-             NULL != core; 
-             core = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                        socket->cpuset, 
-                                                        HWLOC_OBJ_CORE, ++core_index)) {
-            if (core_index > 0) {
-                strncat(str, "/", len - strlen(str));
-            }
-
-            /* Iterate over all existing PUs in this core */
-            pu_index = 0;
-            for (pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                          core->cpuset, 
-                                                          HWLOC_OBJ_PU, pu_index);
-                 NULL != pu; 
-                 pu = hwloc_get_obj_inside_cpuset_by_type(opal_hwloc_topology,
-                                                          core->cpuset, 
-                                                          HWLOC_OBJ_PU, ++pu_index)) {
-
-                /* Is this PU in the cpuset? */
-                if (hwloc_bitmap_isset(cpuset, pu->os_index)) {
-                    strncat(str, "B", len - strlen(str));
-                } else {
-                    strncat(str, ".", len - strlen(str));
-                }
-            }
-        }
-        strncat(str, "]", len - strlen(str));
-    }
-
-    return OMPI_SUCCESS;
-}
-
-/*------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
 
 /*
  * Where did OMPI bind this process? (prettyprint)
@@ -354,7 +104,8 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
         return OMPI_SUCCESS;
     }
 
-    ret = cset2str(str, OMPI_AFFINITY_STRING_MAX, orte_proc_applied_binding);
+    ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, 
+                                   orte_proc_applied_binding);
     return ret;
 }
 
@@ -399,7 +150,8 @@ static int get_rsrc_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are bound, print it out */
     else {
-        ret = cset2str(str, OMPI_AFFINITY_STRING_MAX, boundset);
+        ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, 
+                                       boundset);
     }
     hwloc_bitmap_free(boundset);
 
@@ -516,7 +268,7 @@ static int get_rsrc_exists(char str[OMPI_AFFINITY_STRING_MAX])
     return OMPI_SUCCESS;
 }
 
-/*------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
 
 /*
  * Where did OMPI bind this process? (layout string)
@@ -533,7 +285,8 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     }
 
     /* Find out what OMPI bound us to and prettyprint it */
-    ret = cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, orte_proc_applied_binding);
+    ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, 
+                                      orte_proc_applied_binding);
     return ret;
 }
 
@@ -577,7 +330,8 @@ static int get_layout_current_binding(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* If we are bound, print it out */
     else {
-        ret = cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, boundset);
+        ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, 
+                                          boundset);
     }
     hwloc_bitmap_free(boundset);
 
