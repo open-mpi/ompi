@@ -73,6 +73,7 @@ AC_DEFUN([MCA_btl_openib_CONFIG],[
           AC_MSG_RESULT([$cpcs])])
 
     # Enable openib device failover.  It is disabled by default.
+    AC_MSG_CHECKING([whether openib failover is enabled])
     AC_ARG_ENABLE([btl-openib-failover],
        [AC_HELP_STRING([--enable-btl-openib-failover],
            [enable openib BTL failover (default: disabled)])])
@@ -87,6 +88,29 @@ AC_DEFUN([MCA_btl_openib_CONFIG],[
                        [enable openib BTL failover])
     AM_CONDITIONAL([MCA_btl_openib_enable_failover], [test "x$btl_openib_failover_enabled" = "x1"])
 
+
+    # Check for __malloc_hook availability
+    AC_ARG_ENABLE(btl-openib-malloc-alignment,
+    	AC_HELP_STRING([--enable-btl-openib-malloc-alignment], [Enable support for allocated memory alignment. Default: enabled if supported, disabled otherwise.]))
+
+    btl_openib_malloc_hooks_enabled=0
+    AS_IF([test "$enable_btl_openib_malloc_alignment" != "no"],
+        [AC_CHECK_HEADER([malloc.h],
+             [AC_CHECK_FUNC([__malloc_hook],
+                  [AC_CHECK_FUNC([__realloc_hook],
+                       [AC_CHECK_FUNC([__free_hook],
+                            [btl_openib_malloc_hooks_enabled=1])])])])])
+
+    AS_IF([test "$enable_btl_openib_malloc_alignment" = "yes" -a "$btl_openib_malloc_hooks_enabled" = "0"],
+          [AC_MSG_ERROR([openib malloc alignment is requested but __malloc_hook is not available])])
+    AC_MSG_CHECKING([whether the openib BTL will use malloc hooks])
+    AS_IF([test "$btl_openib_malloc_hooks_enabled" = "0"],
+          [AC_MSG_RESULT([no])],
+          [AC_MSG_RESULT([yes])])
+
+    AC_DEFINE_UNQUOTED(BTL_OPENIB_MALLOC_HOOKS_ENABLED, [$btl_openib_malloc_hooks_enabled],
+                       [Whether the openib BTL malloc hooks are enabled]) 
+   
     # substitute in the things needed to build openib
     AC_SUBST([btl_openib_CFLAGS])
     AC_SUBST([btl_openib_CPPFLAGS])

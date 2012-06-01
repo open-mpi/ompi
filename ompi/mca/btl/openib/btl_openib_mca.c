@@ -609,6 +609,36 @@ int btl_openib_register_mca_params(void)
                   0, &mca_btl_openib_component.gid_index,
                   REGINT_GE_ZERO));
 
+#if OPENIB_MALLOC_HOOKS_ENABLED
+    CHECK(reg_int("memalign", NULL,
+                  "[64 | 32 | 0] - Enable (64bit or 32bit)/Disable(0) memory"
+                  "alignment for all malloc calls if btl openib is used.",
+                  32, &mca_btl_openib_component.use_memalign,
+                  REGINT_GE_ZERO));
+    
+    if (mca_btl_openib_component.use_memalign != 32  
+        && mca_btl_openib_component.use_memalign != 64
+        && mca_btl_openib_component.use_memalign != 0){ 
+        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                       true, "Wrong btl_openib_memalign parameter value. Allowed values: 64, 32, 0.",
+                       "btl_openib_memalign is reset to 32");
+        mca_btl_openib_component.use_memalign = 32; 
+    }
+    reg_int("memalign_threshold", NULL,
+            "Allocating memory more than btl_openib_memalign_threshhold"
+            "bytes will automatically be algined to the value of btl_openib_memalign bytes."
+            "memalign_threshhold defaults to the same value as mca_btl_openib_eager_limit.",
+            mca_btl_openib_component.eager_limit,
+            &ival,
+            REGINT_GE_ZERO);
+    if (ival < 0){
+        orte_show_help("help-mpi-btl-openib.txt", "invalid mca param value",
+                       true, "btl_openib_memalign_threshold must be positive",
+                       "btl_openib_memalign_threshold is reset to btl_openib_eager_limit");
+        ival = mca_btl_openib_component.eager_limit;
+    }
+    mca_btl_openib_component.memalign_threshold = (size_t)ival;
+#endif
     /* Register any MCA params for the connect pseudo-components */
     if (OMPI_SUCCESS == ret) {
         ret = ompi_btl_openib_connect_base_register();
