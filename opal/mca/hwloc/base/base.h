@@ -231,6 +231,22 @@ OPAL_DECLSPEC int opal_hwloc_size(size_t *size,
                                   opal_data_type_t type);
 OPAL_DECLSPEC void opal_hwloc_release(opal_dss_value_t *value);
 
+/**
+ * Make a prettyprint string for a hwloc_cpuset_t (e.g., "socket
+ * 2[core 3]").
+ */
+int opal_hwloc_base_cset2str(char *str, int len, hwloc_cpuset_t cpuset);
+
+/**
+ * Make a prettyprint string for a cset in a map format.  
+ * Example: [B./..]
+ * Key:  [] - signifies socket
+ *        / - divider between cores
+ *        . - signifies PU a process not bound to
+ *        B - signifies PU a process is bound to
+ */
+int opal_hwloc_base_cset2mapstr(char *str, int len, hwloc_cpuset_t cpuset);
+
 #endif
 
 END_C_DECLS
