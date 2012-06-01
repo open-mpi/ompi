@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2004-2009 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -40,7 +40,7 @@ AC_DEFUN([OMPI_EXT],[
 
 
     AC_MSG_CHECKING([which extension components should be enabled])
-    if test "$enable_mpi_ext" = "yes"; then
+    if test "$enable_mpi_ext" = "yes" -o "$enable_mpi_ext" = "all"; then
         msg="All Extensions"
         str="`echo ENABLE_EXT_ALL=1`"
         eval $str
