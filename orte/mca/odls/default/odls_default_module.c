@@ -461,11 +461,6 @@ static int do_child(orte_app_context_t* context,
                     }
                 }
                 /* bind as specified */
-                if (opal_hwloc_report_bindings) {
-                    opal_output(0, "%s odls:default binding child %s to cpus %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(&child->name), child->cpu_bitmap);
-                }
                 rc = hwloc_set_cpubind(opal_hwloc_topology, cpuset, 0);
                 if (rc < 0) {
                     char *tmp = NULL;
@@ -499,6 +494,13 @@ static int do_child(orte_app_context_t* context,
                         free(tmp);
                         free(msg);
                     }
+                }
+                if (0 == rc && opal_hwloc_report_bindings) {
+                    char tmp1[1024], tmp2[1024];
+                    opal_hwloc_base_cset2str(tmp1, sizeof(tmp1), cpuset);
+                    opal_hwloc_base_cset2mapstr(tmp2, sizeof(tmp2), cpuset);
+                    opal_output(0, "MCW rank %d bound to %s: %s",
+                                child->name.vpid, tmp1, tmp2);
                 }
                 /* set memory affinity policy */
                 if (ORTE_SUCCESS != opal_hwloc_base_set_process_membind_policy()) {
