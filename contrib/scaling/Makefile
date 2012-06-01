@@ -1,15 +1,10 @@
-PROGS = orte_no_op mpi_no_op mpi_barrier
+PROGS = orte_no_op mpi_no_op
 
 all: $(PROGS)
 
 CC = mpicc
-CFLAGS = -g
+CFLAGS = -O
 CFLAGS_INTERNAL = -I../../.. -I../../../orte/include -I../../../opal/include
-CXX = mpic++
-CXXFLAGS = -g
-F77 = mpif77
-FC = mpif90
-FFLAGS = -g
 
 clean:
 	rm -f $(PROGS) *~
