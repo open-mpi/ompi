@@ -11,7 +11,8 @@ my $num_nodes = 0;
 my $my_arg;
 my $reps = 1;
 
-my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_barrier);
+my @tests = qw(/bin/true ./orte_no_op ./mpi_no_op ./mpi_no_op);
+my @options = ("", "", "", "-mca mpi_preconnect_mpi 1");
 
 # Cannot use the usual GetOpts library as the user might
 # be passing -options to us! So have to
@@ -52,15 +53,17 @@ my @results;
 my $res;
 my $toggle;
 my $idx;
+my $option;
 print "\n--------------------------------------------------\n";
 foreach $test (@tests) {
+    $option = shift(@options);
     if (-e $test) {
         # pre-position the executable
         $cmd = "mpirun -npernode 1 $test 2>&1";
         system($cmd);
         $n = 1;
         while ($n <= $num_nodes) {
-            $cmd = "time mpirun -npernode 1 -max-vm-size " . $n . " $test 2>&1";
+            $cmd = "time mpirun -npernode 1 -max-vm-size $n $option $test 2>&1";
             print $cmd . "\n";
             if (0 == $showme_arg) {
                 for (1..$reps) {
@@ -96,7 +99,7 @@ foreach $test (@tests) {
             $n = 2 * $n;
         }
         if ($n != (2 * $num_nodes)) {
-            $cmd = "time mpirun -npernode 1 $test 2>&1";
+            $cmd = "time mpirun -npernode 1 $option $test 2>&1";
             print $cmd . "\n";
             if (0 == $showme_arg) {
                 for (1..$reps) {
