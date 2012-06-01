@@ -1257,9 +1257,9 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     int rc;
 
     /* accept new connections on the listen socket */
-    if( (mca_oob_tcp_component.tcp_listen_sd == sd)
+    if( mca_oob_tcp_component.tcp_listen_sd == sd
 #if OPAL_WANT_IPV6
-        || (mca_oob_tcp_component.tcp6_listen_sd == sd)
+        || mca_oob_tcp_component.tcp6_listen_sd == sd
 #endif  /* OPAL_WANT_IPV6 */
        ) {
         mca_oob_tcp_accept(sd);
