@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  *
  * Copyright (c) 2008      Voltaire. All rights reserved
  *
@@ -579,6 +579,7 @@ int opal_paffinity_base_cset2str(char *str, int len,
 {
     int ret, i, j, k, num_sockets, num_cores, flag, count, 
         range_first=0, range_last;
+    int phys_socket, phys_core;
     char tmp[BUFSIZ];
     const int stmp = sizeof(tmp) - 1;
 
@@ -595,11 +596,15 @@ int opal_paffinity_base_cset2str(char *str, int len,
         if (OPAL_SUCCESS != ret) {
             return ret;
         }
+
+        phys_socket = opal_paffinity_base_get_physical_socket_id(i);
+
         /* Must initially set range_last to a low number -- smaller
            than -1, so that the comparisons below work out
            properly. */
         for (range_last = -5, count = j = 0; j < num_cores; ++j) {
-            ret = opal_paffinity_base_get_map_to_processor_id(i, j, &k);
+            phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, j);
+            ret = opal_paffinity_base_get_map_to_processor_id(phys_socket, phys_core, &k);
             if (OPAL_SUCCESS != ret) {
                 return ret;
             }
@@ -637,16 +642,16 @@ int opal_paffinity_base_cset2str(char *str, int len,
 
 /**
  * Make a prettyprint string for a cset in a map format.  
- * Example: [B_/__]
- * Key:  [] - signifies socket
- *        / - signifies core 
- *        _ - signifies thread a process not bound to
- *        B - signifies thread a process is bound to
+ * Example: [B . . .]
+ * Key:  [] - signifies socket boundary
+ *        . - signifies core a process not bound to
+ *        B - signifies core a process is bound to
  */
 int opal_paffinity_base_cset2mapstr(char *str, int len, 
 				    opal_paffinity_base_cpu_set_t *cset)
 {
     int ret, i, j, k, num_sockets, num_cores, flag;
+    int phys_socket, phys_core;
     char tmp[BUFSIZ];
     const int stmp = sizeof(tmp) - 1;
 
@@ -664,13 +669,16 @@ int opal_paffinity_base_cset2mapstr(char *str, int len,
         if (OPAL_SUCCESS != ret) {
             return ret;
         }
+
+        phys_socket = opal_paffinity_base_get_physical_socket_id(i);
 	for (j = 0; j < num_cores; j++) {
 	    if (0 < j) {
 		/* add space after first core is printed */
 		strncat(str, " ", len - strlen(str));
 	    }
+            phys_core = opal_paffinity_base_get_physical_core_id(phys_socket, j);
 	    
-            ret = opal_paffinity_base_get_map_to_processor_id(i, j, &k);
+            ret = opal_paffinity_base_get_map_to_processor_id(phys_socket, phys_core, &k);
             if (OPAL_SUCCESS != ret) {
                 return ret;
             }
