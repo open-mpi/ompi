@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Evergrid, Inc. All rights reserved.
- * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  *
  * $COPYRIGHT$
@@ -341,11 +341,6 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                                    "odls-default:multiple-paffinity-schemes", true, child->slot_list);
                     ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                 }
-                if (orte_report_bindings) {
-                    opal_output(0, "%s odls:default:fork binding child %s to slot_list %s",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(child->name), child->slot_list);
-                }
                 if (ORTE_SUCCESS != (rc = opal_paffinity_base_slot_list_set((long)child->name->vpid, child->slot_list))) {
                     if (ORTE_ERR_NOT_SUPPORTED == rc) {
                         /* OS doesn't support providing topology information */
@@ -359,6 +354,20 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                     orte_show_help("help-odls-default.txt",
                                    "odls-default:slot-list-failed", true, child->slot_list, ORTE_ERROR_NAME(rc));
                     ORTE_ODLS_ERROR_OUT(rc);
+                }
+                if (orte_report_bindings) {
+                    char tmp1[1024], tmp2[1024];
+                    rc = opal_paffinity_base_get(&mask);
+                    if (OPAL_SUCCESS == rc) {
+                        opal_paffinity_base_cset2str(tmp1, sizeof(tmp1),
+                                                     &mask);
+                        opal_paffinity_base_cset2mapstr(tmp2, sizeof(tmp2),
+                                                        &mask);
+
+                        opal_output(0, "MCW rank %d bound to %s: %s (slot list %s)",
+                                    child->name->vpid, 
+                                    tmp1, tmp2, child->slot_list);
+                    }
                 }
             } else if (ORTE_BIND_TO_CORE & jobdat->policy) {
                 /* we want to bind this proc to a specific core, or multiple cores
@@ -497,9 +506,13 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         logical_cpu += jobdat->stride;
                     }
                     if (orte_report_bindings) {
-                        opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %04lx",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(child->name), target_socket, mask.bitmask[0]);
+                        char tmp1[1024], tmp2[1024];
+                        opal_paffinity_base_cset2str(tmp1, sizeof(tmp1),
+                                                       &mask);
+                        opal_paffinity_base_cset2mapstr(tmp2, sizeof(tmp2),
+                                                       &mask);
+                        opal_output(0, "MCW rank %d bound to %s: %s",
+                                    child->name->vpid, tmp1, tmp2);
                     }
                 } else {
                     /* my starting core has to be offset by cpus_per_rank */
@@ -552,9 +565,13 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                         logical_cpu += jobdat->stride;
                     }
                     if (orte_report_bindings) {
-                        opal_output(0, "%s odls:default:fork binding child %s to cpus %04lx",
-                                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                    ORTE_NAME_PRINT(child->name), mask.bitmask[0]);
+                        char tmp1[1024], tmp2[1024];
+                        opal_paffinity_base_cset2str(tmp1, sizeof(tmp1),
+                                                     &mask);
+                        opal_paffinity_base_cset2mapstr(tmp2, sizeof(tmp2),
+                                                       &mask);
+                        opal_output(0, "MCW rank %d bound to %s: %s",
+                                    child->name->vpid, tmp1, tmp2);
                     }
                 }
                 if (ORTE_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
@@ -765,9 +782,11 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                     ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
                 }
                 if (orte_report_bindings) {
-                    opal_output(0, "%s odls:default:fork binding child %s to socket %d cpus %04lx",
-                                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                ORTE_NAME_PRINT(child->name), target_socket, mask.bitmask[0]);
+                    char tmp1[1024], tmp2[1024];
+                    opal_paffinity_base_cset2str(tmp1, sizeof(tmp1), &mask);
+                    opal_paffinity_base_cset2mapstr(tmp2, sizeof(tmp2), &mask);
+                    opal_output(0, "MCW rank %d bound to %s: %s",
+                                child->name->vpid, tmp1, tmp2);
                 }
                 if (ORTE_SUCCESS != (rc = opal_paffinity_base_set(mask))) {
                     ORTE_ODLS_IF_BIND_NOT_REQD("bind-to-socket");
