@@ -15,7 +15,7 @@
 
 specfile="openmpi.spec"
 prefix=${prefix:-"/opt/openmpi"}
-rpmbuild_options=${rpmbuild_options:-"--define 'mflags -j4'"}
+rpmbuild_options=${rpmbuild_options:-"--define 'mflags -j4' --define '_source_filedigest_algorithm md5'  --define '_binary_filedigest_algorithm md5'"}
 configure_options=${configure_options:-""}
 
 # Helpful when debugging
