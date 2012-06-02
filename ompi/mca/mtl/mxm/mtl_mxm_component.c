@@ -60,12 +60,21 @@ mca_mtl_mxm_component_t mca_mtl_mxm_component = {
 
 static int ompi_mtl_mxm_component_register(void)
 {
+    mca_base_component_t*c;
 
-    mca_base_param_reg_int(&mca_mtl_mxm_component.super.mtl_version, "verbose",
+    c = &mca_mtl_mxm_component.super.mtl_version;
+
+    mca_base_param_reg_int(c, "verbose",
                            "Verbose level of the MXM component",
                            false, false,
                            0,
                            &ompi_mtl_mxm.verbose);
+
+    mca_base_param_reg_int(c, "np",
+            "[integer] Minimal allowed job's NP to activate MXM",
+            false, false,
+            128,
+            &ompi_mtl_mxm.mxm_np);
 
     return OMPI_SUCCESS;
 }
