@@ -27,6 +27,7 @@ BEGIN_C_DECLS
 typedef struct mca_mtl_mxm_module_t {
     mca_mtl_base_module_t super; /**< base MTL interface */
     int                   verbose;
+    int                   mxm_np;
     mxm_h                 mxm_context;
     mxm_context_opts_t    mxm_opts;
     mxm_ep_h              ep;

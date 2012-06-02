@@ -110,7 +110,6 @@ int ompi_mtl_mxm_module_init(void)
     mxm_error_t err;
     uint32_t jobid;
     uint64_t mxlr;
-    int rc;
     ompi_proc_t *mp, **procs;
     unsigned    ptl_bitmap;
     size_t totps, proc;
@@ -138,6 +137,13 @@ int ompi_mtl_mxm_module_init(void)
         MXM_ERROR("Unable to obtain process list");
         return OMPI_ERROR;
     }
+
+    if (totps < (size_t)ompi_mtl_mxm.mxm_np) {
+        MXM_VERBOSE(1, "MXM support will be disabled because of total number of processes"
+                "(%lu) is less then default (%u)",totps, ompi_mtl_mxm.mxm_np);
+                return OMPI_ERR_NOT_SUPPORTED;
+    }
+    MXM_VERBOSE(1, "MXM support enabled");
 
     for (proc = 0; proc < totps; proc++) {
         if (mp == procs[proc]) {
