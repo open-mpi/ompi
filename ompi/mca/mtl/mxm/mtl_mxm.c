@@ -139,9 +139,10 @@ int ompi_mtl_mxm_module_init(void)
     }
 
     if (totps < (size_t)ompi_mtl_mxm.mxm_np) {
-        MXM_VERBOSE(1, "MXM support will be disabled because of total number of processes"
-                "(%lu) is less then default (%u)",totps, ompi_mtl_mxm.mxm_np);
-                return OMPI_ERR_NOT_SUPPORTED;
+        MXM_VERBOSE(1, "MXM support will be disabled because of total number "
+                    "of processes (%lu) is less than the minimum set by the "
+                    "mtl_mxm_np MCA parameter (%u)", totps, ompi_mtl_mxm.mxm_np);
+        return OMPI_ERR_NOT_SUPPORTED;
     }
     MXM_VERBOSE(1, "MXM support enabled");
 
