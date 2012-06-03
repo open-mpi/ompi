@@ -71,7 +71,8 @@ static int ompi_mtl_mxm_component_register(void)
                            &ompi_mtl_mxm.verbose);
 
     mca_base_param_reg_int(c, "np",
-            "[integer] Minimal allowed job's NP to activate MXM",
+            "[integer] Minimal number of MPI processes in a single job "
+            "required to activate the MXM transport",
             false, false,
             128,
             &ompi_mtl_mxm.mxm_np);
