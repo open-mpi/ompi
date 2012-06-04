@@ -28,9 +28,11 @@ MACRO(OMPI_F77_CHECK_REAL16_C_EQUIV)
           "extern \"C\" {\n"
           "#endif\n"
           "void ${ompi_ac_c_fn}(${ompi_fortran_real16_t} *a) {\n"
+          "    ${ompi_fortran_real16_t} foo = 11; "
           "    FILE *fp = fopen(\"conftestval\", \"w\");\n"
           "    if (NULL == fp) exit(1);\n"
-          "    fprintf(fp, \"%s\n\", (1.1L == *a) ? \"yes\" : \"no\");\n"
+          "    foo = 1 / foo;"
+          "    fprintf(fp, \"%s\n\", (foo == *a) ? \"yes\" : \"no\");\n"
           "    fclose(fp);\n"
           "}\n"
           "#ifdef __cplusplus\n"
@@ -39,8 +41,8 @@ MACRO(OMPI_F77_CHECK_REAL16_C_EQUIV)
 
         FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftest_f.f 
           "\tprogram bogus\n"
-          "\tREAL*16 :: foo\n"
-          "\tfoo = 1.1\n"
+          "\tREAL*16 :: foo = 11\n"
+          "\tfoo = 1 / foo\n"
           "\tcall c(foo)\n"
           "\tend program bogus\n")
 
