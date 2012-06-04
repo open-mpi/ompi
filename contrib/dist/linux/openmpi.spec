@@ -242,7 +242,7 @@
 Summary: A powerful implementaion of MPI
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
-Release: 1
+Release: 2
 License: BSD
 Group: Development/Libraries
 Source: openmpi-%{version}.tar.$EXTENSION
@@ -733,6 +733,12 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Mon Jun 04 2012 Jeff Squyres <jsquyres@cisco.com>
+- Didn't change the specfile, but changed the script that generates
+  the SRPM to force the use of MD5 checksums (vs. SHA1 checksums) so
+  that the SRPM is friendly to older versions of RPM, such as that on
+  RHEL 5.x.
+
 * Mon Dec 14 2009 Jeff Squyres <jsquyres@cisco.com>
 - Add missing executables to specfile (ompi-server, etc.)
 - Fix: pull in VT files when building multiple RPMs (reported by Jim
