@@ -83,7 +83,7 @@ static int* get_libc_errno_ptr(void)
   if( libc_errno == NULL )
   {
     (void)dlerror();
-#ifdef HAVE_DECL___ERRNO_LOCATION
+#if defined(HAVE_DECL___ERRNO_LOCATION) && HAVE_DECL___ERRNO_LOCATION
     *(void**)(&libc_errno) = dlsym(libc_handle, libc_errno_sym);
 #else /* HAVE_DECL___ERRNO_LOCATION */
     libc_errno = (int*)dlsym(libc_handle, libc_errno_sym);
@@ -102,7 +102,7 @@ static int* get_libc_errno_ptr(void)
     }
   }
 
-#ifdef HAVE_DECL___ERRNO_LOCATION
+#if defined(HAVE_DECL___ERRNO_LOCATION) && HAVE_DECL___ERRNO_LOCATION
   return libc_errno();
 #else /* HAVE_DECL___ERRNO_LOCATION */
   return libc_errno;
