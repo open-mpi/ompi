@@ -99,7 +99,6 @@ char **orted_cmd_line=NULL;
 char **orte_fork_agent=NULL;
 
 /* debugger job */
-orte_job_t *orte_debugger_daemon=NULL;
 bool orte_debugger_dump_proctable;
 char *orte_debugger_test_daemon;
 bool orte_debugger_test_attach;

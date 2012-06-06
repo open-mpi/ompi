@@ -117,8 +117,6 @@ int orte_odls_base_open(void)
     OBJ_CONSTRUCT(&orte_odls_globals.xterm_ranks, opal_list_t);
     orte_odls_globals.xtermcmd = NULL;
     orte_odls_globals.dmap = NULL;
-    orte_odls_globals.debugger = NULL;
-    orte_odls_globals.debugger_launched = false;
     
     /* check if the user requested that we display output in xterms */
     if (NULL != orte_xterm) {

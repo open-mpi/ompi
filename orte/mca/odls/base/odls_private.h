@@ -54,10 +54,6 @@ typedef struct {
     int timeout_before_sigkill;
     /* byte object to store daemon map for later xmit to procs */
     opal_byte_object_t *dmap;
-    /* any co-spawned debugger daemon */
-    orte_job_t *debugger;
-    /* debugger launched */
-    bool debugger_launched;
     /* list of ranks to be displayed on separate xterms */
     opal_list_t xterm_ranks;
     /* the xterm cmd to be used */
