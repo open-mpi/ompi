@@ -49,9 +49,6 @@ BEGIN_C_DECLS
  */
 typedef void (*orte_grpcomm_collective_cbfunc_t)(opal_buffer_t *data, void *cbdata);
 
-/* forward define the struct */
-struct orte_grpcomm_collective_t;
-
 typedef int32_t orte_grpcomm_coll_id_t;
 #define ORTE_GRPCOMM_COLL_ID_T   OPAL_INT32
 #define ORTE_GRPCOMM_COLL_ID_REQ  -1
