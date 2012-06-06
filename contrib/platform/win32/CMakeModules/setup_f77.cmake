@@ -8,7 +8,7 @@
 # $HEADER$
 #
 
-# first try to find a f77 compiler, will be checked when f77 support is enabled.
+# first try to find a fortran compiler, will be checked when fortran support is enabled.
 
 # There might be a bug in CMake, the CMAKE_GENERATOR_FC is set to "ifort" by default,
 # which causes CMake can't find the correct Fortran compiler.
@@ -17,30 +17,30 @@ SET(CMAKE_GENERATOR_FC "")
 include(CMakeDetermineFortranCompiler)
 include(CMakeFortranInformation)
 
-IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
+IF(OMPI_WANT_FORTRAN_BINDINGS AND NOT FORTRAN_SETUP_DONE)
 
   SET(OMPI_MPI_INTEGER_KIND 0 CACHE INTERNAL "MPI_INTEGER_KIND")
   SET(OMPI_MPI_ADDRESS_KIND 0 CACHE INTERNAL "MPI_ADDRESS_KIND")
   SET(OMPI_MPI_OFFSET_KIND 0 CACHE INTERNAL "MPI_OFFSET_KIND")
   SET(OMPI_FORTRAN_STATUS_SIZE 0 CACHE INTERNAL "MPI_STATUS_SIZE")
 
-  GET_FILENAME_COMPONENT(F77_NAME ${CMAKE_Fortran_COMPILER} NAME)
-  GET_FILENAME_COMPONENT(F77_PATH ${CMAKE_Fortran_COMPILER} PATH)
+  GET_FILENAME_COMPONENT(FORTRAN_NAME ${CMAKE_Fortran_COMPILER} NAME)
+  GET_FILENAME_COMPONENT(FORTRAN_PATH ${CMAKE_Fortran_COMPILER} PATH)
 
-  SET(F77 ${F77_NAME} CACHE INTERNAL "Name of the fortran compiler.")
+  SET(FORTRAN ${FORTRAN_NAME} CACHE INTERNAL "Name of the fortran compiler.")
 
   # Default compiler settings.
-  IF(${F77} STREQUAL "ifort.exe")
+  IF(${FORTRAN} STREQUAL "ifort.exe")
     #settings for Intel Fortran
-    SET(F77_OPTION_COMPILE "/c" CACHE INTERNAL
+    SET(FORTRAN_OPTION_COMPILE "/c" CACHE INTERNAL
       "Fortran compiler option for compiling without linking.")
-    SET(F77_OUTPUT_OBJ "/Fo" CACHE INTERNAL
+    SET(FORTRAN_OUTPUT_OBJ "/Fo" CACHE INTERNAL
       "Fortran compiler option for setting object file name.")
-    SET(F77_OUTPUT_EXE "/Fe" CACHE INTERNAL
+    SET(FORTRAN_OUTPUT_EXE "/Fe" CACHE INTERNAL
       "Fortran compiler option for setting executable file name.")
-    SET(F77_DYNAMIC_FLAG_DEBUG "/MDd" CACHE INTERNAL
+    SET(FORTRAN_DYNAMIC_FLAG_DEBUG "/MDd" CACHE INTERNAL
       "Compile flag for using dynamically-loaded, multithread C runtime (Debug).")
-    SET(F77_DYNAMIC_FLAG "/MD" CACHE INTERNAL
+    SET(FORTRAN_DYNAMIC_FLAG "/MD" CACHE INTERNAL
       "Compile flag for using dynamically-loaded, multithread C runtime.")
 
     IF(NOT "$ENV{IFORT_COMPILER11}" STREQUAL "")
@@ -50,48 +50,48 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
     ENDIF(NOT "$ENV{IFORT_COMPILER11}" STREQUAL "")
 
     IF(CMAKE_CL_64)
-      SET(F77_LIB_PATH "${IFORT_LIB_PATH}/intel64")
+      SET(FORTRAN_LIB_PATH "${IFORT_LIB_PATH}/intel64")
     ELSE(CMAKE_CL_64)
-      SET(F77_LIB_PATH "${IFORT_LIB_PATH}/ia32")
+      SET(FORTRAN_LIB_PATH "${IFORT_LIB_PATH}/ia32")
     ENDIF(CMAKE_CL_64)
 
-    IF(NOT F77_LIB_PATH)
+    IF(NOT FORTRAN_LIB_PATH)
       IF(CMAKE_CL_64)
-        FIND_LIBRARY(F77_IFCONSOL_LIB ifconsol.lib PATHS ${F77_PATH}/../../intel64)
+        FIND_LIBRARY(FORTRAN_IFCONSOL_LIB ifconsol.lib PATHS ${FORTRAN_PATH}/../../intel64)
       ELSE(CMAKE_CL_64)
-        FIND_LIBRARY(F77_IFCONSOL_LIB ifconsol.lib PATHS ${F77_PATH}/../../ia32)
+        FIND_LIBRARY(FORTRAN_IFCONSOL_LIB ifconsol.lib PATHS ${FORTRAN_PATH}/../../ia32)
       ENDIF(CMAKE_CL_64)
-      GET_FILENAME_COMPONENT(F77_LIB_PATH ${F77_IFCONSOL_LIB} PATH)
-      UNSET(F77_IFCONSOL_LIB CACHE)
-    ELSE(NOT F77_LIB_PATH)
-      STRING(REPLACE "\\" "/" F77_LIB_PATH ${F77_LIB_PATH})
-    ENDIF(NOT F77_LIB_PATH)
-  ELSEIF(${F77} STREQUAL "g95.exe")
+      GET_FILENAME_COMPONENT(FORTRAN_LIB_PATH ${FORTRAN_IFCONSOL_LIB} PATH)
+      UNSET(FORTRAN_IFCONSOL_LIB CACHE)
+    ELSE(NOT FORTRAN_LIB_PATH)
+      STRING(REPLACE "\\" "/" FORTRAN_LIB_PATH ${FORTRAN_LIB_PATH})
+    ENDIF(NOT FORTRAN_LIB_PATH)
+  ELSEIF(${FORTRAN} STREQUAL "g95.exe")
     #settings for G95
-    SET(F77_OPTION_COMPILE "-c" CACHE INTERNAL
+    SET(FORTRAN_OPTION_COMPILE "-c" CACHE INTERNAL
       "Fortran compiler option for compiling without linking.")
-    SET(F77_OUTPUT_OBJ "-o" CACHE INTERNAL
+    SET(FORTRAN_OUTPUT_OBJ "-o" CACHE INTERNAL
       "Fortran compiler option for setting object file name.")
-    SET(F77_OUTPUT_EXE "-o" CACHE INTERNAL
+    SET(FORTRAN_OUTPUT_EXE "-o" CACHE INTERNAL
       "Fortran compiler option for setting executable file name.")
-  ELSE(${F77} STREQUAL "ifort.exe")
+  ELSE(${FORTRAN} STREQUAL "ifort.exe")
     # in other case, let user specify their fortran configrations.
-    SET(F77_OPTION_COMPILE "-c" CACHE STRING
+    SET(FORTRAN_OPTION_COMPILE "-c" CACHE STRING
       "Fortran compiler option for compiling without linking.")
-    SET(F77_OUTPUT_OBJ "-o" CACHE STRING
+    SET(FORTRAN_OUTPUT_OBJ "-o" CACHE STRING
       "Fortran compiler option for setting object file name.")
-    SET(F77_OUTPUT_EXE "-o" CACHE STRING
+    SET(FORTRAN_OUTPUT_EXE "-o" CACHE STRING
       "Fortran compiler option for setting executable file name.")
-    SET(F77_LIB_PATH "" CACHE PATH
+    SET(FORTRAN_LIB_PATH "" CACHE PATH
       "Library path for the fortran compiler")
-    SET(F77_INCLUDE_PATH "" CACHE PATH
+    SET(FORTRAN_INCLUDE_PATH "" CACHE PATH
       "Include path for the fortran compiler")
-  ENDIF(${F77} STREQUAL "ifort.exe")
+  ENDIF(${FORTRAN} STREQUAL "ifort.exe")
 
   # Export env variables for fortran compiler.
-  SET(ENV{PATH} "${C_COMPILER_PATH};${F77_PATH};$ENV{PATH}")
-  SET(ENV{LIB} "${C_COMPILER_LIB};${F77_LIB_PATH};$ENV{LIB}")
-  SET(ENV{INCLUDE} "${C_COMPILER_INCLUDE};${F77_INCLUDE_PATH};$ENV{INCLUDE}")
+  SET(ENV{PATH} "${C_COMPILER_PATH};${FORTRAN_PATH};$ENV{PATH}")
+  SET(ENV{LIB} "${C_COMPILER_LIB};${FORTRAN_LIB_PATH};$ENV{LIB}")
+  SET(ENV{INCLUDE} "${C_COMPILER_INCLUDE};${FORTRAN_INCLUDE_PATH};$ENV{INCLUDE}")
   SET(ENV{LIBPATH} "${C_COMPILER_LIBPATH};$ENV{LIBPATH}")
 
   # make sure the compiler actually works, if not cross-compiling
@@ -102,7 +102,7 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
        "\t END \n")
 
   # lets use execute_process to run the compile test
-  EXECUTE_PROCESS(COMMAND ${F77} testFortranCompiler.f
+  EXECUTE_PROCESS(COMMAND ${FORTRAN} testFortranCompiler.f
                   WORKING_DIRECTORY  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
                   OUTPUT_VARIABLE    OUTPUT
                   RESULT_VARIABLE    RESULT
@@ -110,43 +110,43 @@ IF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
 
 
   IF(RESULT)
-    SET(F77_SETUP_DONE FALSE CACHE INTERNAL "f77 setup done.")
+    SET(FORTRAN_SETUP_DONE FALSE CACHE INTERNAL "fortran setup done.")
     MESSAGE(STATUS "${OUTPUT}\n${ERROR}")
-    MESSAGE(STATUS "Fortran compiler ${F77} can't compile a simple fortran program.")
+    MESSAGE(STATUS "Fortran compiler ${FORTRAN} can't compile a simple fortran program.")
     MESSAGE(FATAL_ERROR "Cannot continue. Please check Fortran compiler installation, or disable Fortran 77 support.")
   ELSE(RESULT)
-    MESSAGE(STATUS "Checking for working Fortran compiler...${F77}")
-    SET(F77_SETUP_DONE TRUE CACHE INTERNAL "f77 setup done.")
+    MESSAGE(STATUS "Checking for working Fortran compiler...${FORTRAN}")
+    SET(FORTRAN_SETUP_DONE TRUE CACHE INTERNAL "fortran setup done.")
   ENDIF(RESULT)
 
-  INCLUDE(F77_find_ext_symbol_convention)
+  INCLUDE(FORTRAN_find_ext_symbol_convention)
   # make sure we know the linking convention
   # this macro will also test linking with C code
-  OMPI_F77_FIND_EXT_SYMBOL_CONVENTION()
+  OMPI_FORTRAN_FIND_EXT_SYMBOL_CONVENTION()
 
-ELSEIF(NOT OMPI_WANT_F77_BINDINGS)
-    SET(OMPI_F77_DOUBLE_UNDERSCORE 0
+ELSEIF(NOT OMPI_WANT_FORTRAN_BINDINGS)
+    SET(OMPI_FORTRAN_DOUBLE_UNDERSCORE 0
       CACHE INTERNAL "external symbol convention - double underscore")
-    SET(OMPI_F77_SINGLE_UNDERSCORE 0
+    SET(OMPI_FORTRAN_SINGLE_UNDERSCORE 0
       CACHE INTERNAL "external symbol convention - single underscore")
-    SET(OMPI_F77_CAPS 0
+    SET(OMPI_FORTRAN_CAPS 0
       CACHE INTERNAL "external symbol convention - captital")
-    SET(OMPI_F77_PLAIN 0
+    SET(OMPI_FORTRAN_PLAIN 0
       CACHE INTERNAL "external symbol convention - plain")
     
     UNSET(SYMBOL_CONVENTION_CHECK_DONE CACHE)
-    UNSET(F77_OPTION_COMPILE CACHE)
-    UNSET(F77_OUTPUT_OBJ CACHE)
-    UNSET(F77_OUTPUT_EXE CACHE)
-    UNSET(F77_LIB_PATH CACHE)
-    UNSET(F77_INCLUDE_PATH CACHE)
-    UNSET(F77_IFCONSOL_LIB CACHE)
-    UNSET(F77_SETUP_DONE CACHE)
-ENDIF(OMPI_WANT_F77_BINDINGS AND NOT F77_SETUP_DONE)
+    UNSET(FORTRAN_OPTION_COMPILE CACHE)
+    UNSET(FORTRAN_OUTPUT_OBJ CACHE)
+    UNSET(FORTRAN_OUTPUT_EXE CACHE)
+    UNSET(FORTRAN_LIB_PATH CACHE)
+    UNSET(FORTRAN_INCLUDE_PATH CACHE)
+    UNSET(FORTRAN_IFCONSOL_LIB CACHE)
+    UNSET(FORTRAN_SETUP_DONE CACHE)
+ENDIF(OMPI_WANT_FORTRAN_BINDINGS AND NOT FORTRAN_SETUP_DONE)
 
-# a few definitions needed by OMPI_F77_FIND_EXT_SYMBOL_CONVENTION check.
-OMPI_DEF_VAR(OMPI_F77_DOUBLE_UNDERSCORE "Whether fortran symbols have a trailing double underscore or not." 0 1)
-OMPI_DEF_VAR(OMPI_F77_SINGLE_UNDERSCORE "Whether fortran symbols have a trailing single underscore or not." 0 1)
-OMPI_DEF_VAR(OMPI_F77_CAPS "Whether fortran symbols are all caps or not." 0 1)
-OMPI_DEF_VAR(OMPI_F77_PLAIN "Whether fortran symbols have no trailing underscore or not." 0 1)
+# a few definitions needed by OMPI_FORTRAN_FIND_EXT_SYMBOL_CONVENTION check.
+OMPI_DEF_VAR(OMPI_FORTRAN_DOUBLE_UNDERSCORE "Whether fortran symbols have a trailing double underscore or not." 0 1)
+OMPI_DEF_VAR(OMPI_FORTRAN_SINGLE_UNDERSCORE "Whether fortran symbols have a trailing single underscore or not." 0 1)
+OMPI_DEF_VAR(OMPI_FORTRAN_CAPS "Whether fortran symbols are all caps or not." 0 1)
+OMPI_DEF_VAR(OMPI_FORTRAN_PLAIN "Whether fortran symbols have no trailing underscore or not." 0 1)
 

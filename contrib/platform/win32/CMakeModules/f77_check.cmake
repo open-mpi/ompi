@@ -9,7 +9,7 @@
 #
 
 
-# OMPI_F77_CHECK(Fortran type, c type required, 
+# OMPI_FORTRAN_CHECK(Fortran type, c type required, 
 #                types to search, expected size)
 #----------------------------------------------------------
 # Check Fortran type, including:
@@ -21,15 +21,15 @@
 #
 # types to search is a list of values
 
-MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
+MACRO(OMPI_FORTRAN_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
 
   STRING(REPLACE "*" "" TYPE_NAME ${FORTRAN_TYPE})
   STRING(REPLACE " " "_" TYPE_NAME ${TYPE_NAME})
   STRING(TOLOWER ${TYPE_NAME} TYPE_NAME_L)
 
-  INCLUDE(F77_check_type)
-  INCLUDE(F77_get_alignment)
-  INCLUDE(F77_get_sizeof)
+  INCLUDE(FORTRAN_check_type)
+  INCLUDE(FORTRAN_get_alignment)
+  INCLUDE(FORTRAN_get_sizeof)
   INCLUDE(ompi_find_type)
 
   SET(ofc_expected_size ${EXPECTED_SIZE})
@@ -38,10 +38,10 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
   SET(ofc_type_alignment ${SIZEOF_INT})
   SET(ofc_c_type ${ompi_fortran_bogus_type_t})
 
-  IF(OMPI_WANT_F77_BINDINGS)
-    IF(NOT DEFINED F77_SETUP_${TYPE_NAME}_DONE)
+  IF(OMPI_WANT_FORTRAN_BINDINGS)
+    IF(NOT DEFINED FORTRAN_SETUP_${TYPE_NAME}_DONE)
 
-    OMPI_F77_CHECK_TYPE(${FORTRAN_TYPE} ofc_have_type)
+    OMPI_FORTRAN_CHECK_TYPE(${FORTRAN_TYPE} ofc_have_type)
 
     IF(ofc_have_type)
       # What is the size of this type?
@@ -57,7 +57,7 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
       # (i.e,. the compiler *might* support that type).  If the size
       # doesn't match the expected size, then the compiler doesn't
       # really support it.
-      OMPI_F77_GET_SIZEOF(${FORTRAN_TYPE} ofc_type_size)
+      OMPI_FORTRAN_GET_SIZEOF(${FORTRAN_TYPE} ofc_type_size)
 
       IF(NOT ${ofc_expected_size} STREQUAL "-1" AND NOT ${ofc_type_size} EQUAL "${ofc_expected_size}")
         MESSAGE(STATUS "*** Fortran 77 ${FORTRAN_TYPE} does not have expected size!")
@@ -71,17 +71,17 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
           OMPI_FIND_TYPE(${FORTRAN_TYPE} "${TYPE_LIST}" ${C_TYPE} ${ofc_type_size} ofc_c_type)
         ENDIF(NOT "${TYPE_LIST}" STREQUAL "")
 
-        OMPI_F77_GET_ALIGNMENT(${FORTRAN_TYPE} ofc_type_alignment)
+        OMPI_FORTRAN_GET_ALIGNMENT(${FORTRAN_TYPE} ofc_type_alignment)
 
       ENDIF(NOT ${ofc_expected_size} STREQUAL "-1" AND NOT ${ofc_type_size} EQUAL "${ofc_expected_size}")
-      SET(F77_SETUP_${TYPE_NAME}_DONE TRUE CACHE INTERNAL "F77 ${TYPE_NAME} check done or not.")
+      SET(FORTRAN_SETUP_${TYPE_NAME}_DONE TRUE CACHE INTERNAL "FORTRAN ${TYPE_NAME} check done or not.")
      ENDIF(ofc_have_type)
 
     SET(OMPI_HAVE_FORTRAN_${TYPE_NAME}_C ${ofc_have_type} CACHE INTERNAL "OMPI_HAVE_FORTRAN_${TYPE_NAME}")
     SET(OMPI_SIZEOF_FORTRAN_${TYPE_NAME}_C ${ofc_type_size} CACHE INTERNAL "OMPI_SIZEOF_FORTRAN_${TYPE_NAME}")
     SET(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}_C ${ofc_type_alignment} CACHE INTERNAL "OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}")
 
-    ENDIF(NOT DEFINED F77_SETUP_${TYPE_NAME}_DONE)
+    ENDIF(NOT DEFINED FORTRAN_SETUP_${TYPE_NAME}_DONE)
 
     SET(OMPI_HAVE_FORTRAN_${TYPE_NAME} ${OMPI_HAVE_FORTRAN_${TYPE_NAME}_C}
         CACHE INTERNAL "OMPI_HAVE_FORTRAN_${TYPE_NAME}")
@@ -90,12 +90,12 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
     SET(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME} ${OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}_C}
         CACHE INTERNAL "OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}")
 
-  ELSEIF(NOT OMPI_WANT_F77_BINDINGS)
-    UNSET(F77_SETUP_${TYPE_NAME}_DONE)
+  ELSEIF(NOT OMPI_WANT_FORTRAN_BINDINGS)
+    UNSET(FORTRAN_SETUP_${TYPE_NAME}_DONE)
     SET(OMPI_HAVE_FORTRAN_${TYPE_NAME} ${ofc_have_type} CACHE INTERNAL "OMPI_HAVE_FORTRAN_${TYPE_NAME}")
     SET(OMPI_SIZEOF_FORTRAN_${TYPE_NAME} ${ofc_type_size} CACHE INTERNAL "OMPI_SIZEOF_FORTRAN_${TYPE_NAME}")
     SET(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME} ${ofc_type_alignment} CACHE INTERNAL "OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME}")
-  ENDIF(OMPI_WANT_F77_BINDINGS)
+  ENDIF(OMPI_WANT_FORTRAN_BINDINGS)
 
   IF(NOT "${TYPE_LIST}" STREQUAL "")
     SET(ompi_fortran_${TYPE_NAME_L}_t ${ofc_c_type} CACHE INTERNAL "ompi_fortran_${TYPE_NAME_L}_t")
@@ -111,4 +111,4 @@ MACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
   OMPI_DEF_VAR(OMPI_ALIGNMENT_FORTRAN_${TYPE_NAME} "Alignment of Fortran 77 `${FORTRAN_TYPE}'." 0 1)
   OMPI_DEF_VAR(ompi_fortran_${TYPE_NAME_L}_t "C type corresponding to Fortran 77 `${FORTRAN_TYPE}'." 0 0)
 
-ENDMACRO(OMPI_F77_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)
+ENDMACRO(OMPI_FORTRAN_CHECK FORTRAN_TYPE C_TYPE TYPE_LIST EXPECTED_SIZE)

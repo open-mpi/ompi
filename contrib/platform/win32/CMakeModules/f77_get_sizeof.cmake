@@ -9,15 +9,15 @@
 #
 
 
-# OMPI_F77_GET_SIZEOF(type, variable to set)
+# OMPI_FORTRAN_GET_SIZEOF(type, variable to set)
 # ------------------------------------------
 
-INCLUDE(F77_find_ext_symbol_convention)
+INCLUDE(FORTRAN_find_ext_symbol_convention)
 
-MACRO(OMPI_F77_GET_SIZEOF TYPE OUTPUT_VARIABLE)
+MACRO(OMPI_FORTRAN_GET_SIZEOF TYPE OUTPUT_VARIABLE)
   MESSAGE(STATUS "Check size of Fortran 77 ${TYPE}...")
   
-  OMPI_F77_MAKE_C_FUNCTION(ompi_ac_size_fn size)
+  OMPI_FORTRAN_MAKE_C_FUNCTION(ompi_ac_size_fn size)
   
   FILE(WRITE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftest.f
     "\t program fsize \n"
@@ -61,14 +61,14 @@ MACRO(OMPI_F77_GET_SIZEOF TYPE OUTPUT_VARIABLE)
 
   # generate the Fortran object file
   # some Fortran compilers don't allow to compile and link in one step. :-(
-  EXECUTE_PROCESS(COMMAND ${F77} ${F77_OPTION_COMPILE} conftest.f ${F77_OUTPUT_OBJ}conftest.obj
+  EXECUTE_PROCESS(COMMAND ${FORTRAN} ${FORTRAN_OPTION_COMPILE} conftest.f ${FORTRAN_OUTPUT_OBJ}conftest.obj
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
     OUTPUT_VARIABLE OUTPUT
     RESULT_VARIABLE RESULT
     ERROR_VARIABLE ERROR)
 
   # link the C and Fortran object files.
-  EXECUTE_PROCESS(COMMAND ${F77} conftest.obj conftest_c.obj ${F77_OUTPUT_EXE}conftest.exe
+  EXECUTE_PROCESS(COMMAND ${FORTRAN} conftest.obj conftest_c.obj ${FORTRAN_OUTPUT_EXE}conftest.exe
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
     OUTPUT_VARIABLE OUTPUT
     RESULT_VARIABLE RESULT
@@ -95,4 +95,4 @@ MACRO(OMPI_F77_GET_SIZEOF TYPE OUTPUT_VARIABLE)
     ENDIF(EXISTS ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/conftestval)
   ENDIF(RESULT)
 
-ENDMACRO(OMPI_F77_GET_SIZEOF TYPE OUTPUT_VARIABLE)
+ENDMACRO(OMPI_FORTRAN_GET_SIZEOF TYPE OUTPUT_VARIABLE)

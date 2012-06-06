@@ -8,12 +8,12 @@
 # $HEADER$
 #
 
-# OMPI_F77_CHECK_TYPE
+# OMPI_FORTRAN_CHECK_TYPE
 #         in: TYPE         - fortran type to check.
 #        out: HAVE_TYPE    - 0/1 whether we have that type.
 # -----------------------------------------------------------------
 
-MACRO(OMPI_F77_CHECK_TYPE TYPE HAVE_TYPE)
+MACRO(OMPI_FORTRAN_CHECK_TYPE TYPE HAVE_TYPE)
 
   IF(NOT DEFINED ${TYPE_NAME}_CHECK_DONE)
 
@@ -24,7 +24,7 @@ MACRO(OMPI_F77_CHECK_TYPE TYPE HAVE_TYPE)
       "\t ${TYPE} bogus_variable \n"
       "\t END \n")
 
-    EXECUTE_PROCESS(COMMAND ${F77} check_fortran_type.f
+    EXECUTE_PROCESS(COMMAND ${FORTRAN} check_fortran_type.f
       WORKING_DIRECTORY  ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
       OUTPUT_VARIABLE    OUTPUT
       RESULT_VARIABLE    RESULT
@@ -42,4 +42,4 @@ MACRO(OMPI_F77_CHECK_TYPE TYPE HAVE_TYPE)
 
   ENDIF(NOT DEFINED ${TYPE_NAME}_CHECK_DONE)
 
-ENDMACRO(OMPI_F77_CHECK_TYPE TYPE HAVE_TYPE)
+ENDMACRO(OMPI_FORTRAN_CHECK_TYPE TYPE HAVE_TYPE)
