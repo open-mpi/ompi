@@ -95,7 +95,7 @@ ELSE(OMPI_ENABLE_MPI_PROFILING)
 ENDIF(OMPI_ENABLE_MPI_PROFILING)
 
 
-IF(OMPI_WANT_MPIFH_BINDINGS)
+IF(OMPI_WANT_FORTRAN_BINDINGS)
   # A handful of files in mpi/fortran/base must be included in libmpi, in order to build the
   # Fortran 77 glue into libmpi
   FILE(GLOB OMPI_FORTRAN_BASE_FILES "mpi/fortran/base/*.c")

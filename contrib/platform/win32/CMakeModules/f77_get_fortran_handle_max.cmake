@@ -9,21 +9,21 @@
 #
 
 
-# OMPI_F77_GET_FORTRAN_HANDLE_MAX()
+# OMPI_FORTRAN_GET_FORTRAN_HANDLE_MAX()
 # -------------------------------------------------------
 # Find the maximum value of fortran integers, then calculate
 # min(INT_MAX, max fortran INTEGER).  This represents the maximum
 # number of fortran MPI handle index.
-MACRO(OMPI_F77_GET_FORTRAN_HANDLE_MAX)
+MACRO(OMPI_FORTRAN_GET_FORTRAN_HANDLE_MAX)
 
     #store previous value for later use.
     IF(DEFINED OMPI_FINT_MAX)
         SET(OMPI_FINT_MAX_OLD ${OMPI_FINT_MAX})
     ENDIF(DEFINED OMPI_FINT_MAX)
 
-    IF(NOT OMPI_WANT_F77_BINDINGS)
+    IF(NOT OMPI_WANT_FORTRAN_BINDINGS)
         SET(OMPI_FINT_MAX 0 CACHE INTERNAL "fortran int max")
-    ELSE(NOT OMPI_WANT_F77_BINDINGS)
+    ELSE(NOT OMPI_WANT_FORTRAN_BINDINGS)
         # Calculate the number of f's that we need to append to the hex
         # value.  Do one less than we really need becaue we assume the
         # top nybble is 0x7 to avoid sign issues.
@@ -34,7 +34,7 @@ MACRO(OMPI_F77_GET_FORTRAN_HANDLE_MAX)
             SET(OMPI_FINT_MAX ${OMPI_FINT_MAX}f CACHE INTERNAL "fortran int max")
             MATH(EXPR OMPI_NUMF ${OMPI_NUMF}-1)
         ENDWHILE(${OMPI_NUMF} GREATER 0)
-    ENDIF(NOT OMPI_WANT_F77_BINDINGS)
+    ENDIF(NOT OMPI_WANT_FORTRAN_BINDINGS)
 
     #OMPI_CINT_MAX doesn't change, check only once and cache the result.
     IF(NOT DEFINED CINT_MAX_CHECK_DONE)
@@ -103,4 +103,4 @@ MACRO(OMPI_F77_GET_FORTRAN_HANDLE_MAX)
 
     OMPI_DEF_VAR(OMPI_FORTRAN_HANDLE_MAX "Max handle value for fortran MPI handles, effectively min(INT_MAX, max fortran INTEGER value)." 0 1)
 
-ENDMACRO(OMPI_F77_GET_FORTRAN_HANDLE_MAX)
+ENDMACRO(OMPI_FORTRAN_GET_FORTRAN_HANDLE_MAX)

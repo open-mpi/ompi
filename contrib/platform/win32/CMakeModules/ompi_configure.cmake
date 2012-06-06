@@ -140,7 +140,7 @@ OMPI_DEF(OMPI_BUILD_CXXFLAGS "${CMAKE_CXX_FLAGS} " "C++ flags" 1 1)
 
 SET(OMPI_BUILD_CXXCPPFLAGS ${OMPI_BUILD_CPPFLAGS})
 
-OMPI_DEF(OMPI_BUILD_FFLAGS " " "F77 flags." 1 1)
+OMPI_DEF(OMPI_BUILD_FFLAGS " " "FORTRAN flags." 1 1)
 
 OMPI_DEF(OMPI_BUILD_FCFLAGS " " "F90 flags." 1 1)
 
@@ -207,7 +207,7 @@ OMPI_DEF_OPT (OMPI_PROVIDE_MPI_FILE_INTERFACE "Whether OMPI should provide MPI F
 
 OMPI_DEF_OPT(OMPI_WANT_CXX_BINDINGS "Whether we want MPI cxx support or not." ON)
 
-OMPI_DEF_OPT(OMPI_WANT_F77_BINDINGS "Whether we want MPI F77 support or not." OFF)
+OMPI_DEF_OPT(OMPI_WANT_FORTRAN_BINDINGS "Whether we want MPI FORTRAN support or not." OFF)
 
 OMPI_DEF_OPT(OMPI_WANT_F90_BINDINGS "Whether we want MPI F90 support or not." OFF)
 
@@ -254,6 +254,8 @@ OMPI_DEF_OPT(OPAL_EVENT_HAVE_THREAD_SUPPORT "Whether we want to enable event lib
 OMPI_DEF_OPT(OMPI_RELEASE_BUILD "Whether it is a build for binary release (this will skip the path settings in mca_installdirs_config)." OFF)
 
 OMPI_DEF_OPT(OMPI_WANT_JAVA_BINDINGS "Whether we want to enable MPI Java support." OFF)
+
+OMPI_DEF_OPT(OPAL_HAVE_HWLOC "Whether we have hwloc support or not" ON)
 
 OMPI_DEF(OMPI_ENABLE_CONTRIB_vt 0 "Whether we want to enable VampirTrace support." 0 1)
 
@@ -626,40 +628,40 @@ OMPI_CHECK_TYPES (uintptr_t UINTPTR_T none c)
 ###################################################################
 #                      Check Fortran 77 types                     #
 ###################################################################
-INCLUDE(setup_F77)
-INCLUDE(f77_check)
-INCLUDE(f77_check_real16_c_equiv)
-INCLUDE(f77_get_value_true)
-INCLUDE(f77_get_fortran_handle_max)
+INCLUDE(setup_FORTRAN)
+INCLUDE(fortran_check)
+INCLUDE(fortran_check_real16_c_equiv)
+INCLUDE(fortran_get_value_true)
+INCLUDE(fortran_get_fortran_handle_max)
 
 IF(WIN32)
   OMPI_DEF(ompi_fortran_bogus_type_t "int" "A bogus type that allows us to have sentinel type values that are still valid." 0 1)
 ENDIF(WIN32)
 
 # We want to set the #define's for all of these, so invoke the macros
-# regardless of whether we have F77 support or not.
-OMPI_F77_CHECK("CHARACTER" "yes" "char;int32_t;int;int64_t;long long;long" "-1")
-OMPI_F77_CHECK("LOGICAL" "yes" "char;int;long long;long" "-1")
-OMPI_F77_CHECK("LOGICAL*1" "yes" "char;short;int;long long;long" "1")
-OMPI_F77_CHECK("LOGICAL*2" "yes" "short;int;long long;long" "2")
-OMPI_F77_CHECK("LOGICAL*4" "yes" "int;long long;long" "4")
-OMPI_F77_CHECK("LOGICAL*8" "yes" "int;long long;long" "8")
-OMPI_F77_CHECK("INTEGER" "yes" "int;long long;long" "-1")
-OMPI_F77_CHECK("INTEGER*1" "no" "char;short;int;long long;long" "1")
-OMPI_F77_CHECK("INTEGER*2" "no" "short;int;long long;long" "2")
-OMPI_F77_CHECK("INTEGER*4" "no" "int;long long;long" "4")
-OMPI_F77_CHECK("INTEGER*8" "no" "int;long long;long" "8")
-OMPI_F77_CHECK("INTEGER*16" "no" "int;long long;long" "16")
+# regardless of whether we have FORTRAN support or not.
+OMPI_FORTRAN_CHECK("CHARACTER" "yes" "char;int32_t;int;int64_t;long long;long" "-1")
+OMPI_FORTRAN_CHECK("LOGICAL" "yes" "char;int;long long;long" "-1")
+OMPI_FORTRAN_CHECK("LOGICAL*1" "yes" "char;short;int;long long;long" "1")
+OMPI_FORTRAN_CHECK("LOGICAL*2" "yes" "short;int;long long;long" "2")
+OMPI_FORTRAN_CHECK("LOGICAL*4" "yes" "int;long long;long" "4")
+OMPI_FORTRAN_CHECK("LOGICAL*8" "yes" "int;long long;long" "8")
+OMPI_FORTRAN_CHECK("INTEGER" "yes" "int;long long;long" "-1")
+OMPI_FORTRAN_CHECK("INTEGER*1" "no" "char;short;int;long long;long" "1")
+OMPI_FORTRAN_CHECK("INTEGER*2" "no" "short;int;long long;long" "2")
+OMPI_FORTRAN_CHECK("INTEGER*4" "no" "int;long long;long" "4")
+OMPI_FORTRAN_CHECK("INTEGER*8" "no" "int;long long;long" "8")
+OMPI_FORTRAN_CHECK("INTEGER*16" "no" "int;long long;long" "16")
 
-OMPI_F77_CHECK("REAL" "yes" "float;double;long double" "-1")
-OMPI_F77_CHECK("REAL*2" "no" "float;double;long double" "2")
-OMPI_F77_CHECK("REAL*4" "no" "float;double;long double" "4")
-OMPI_F77_CHECK("REAL*8" "no" "float;double;long double" "8")
-OMPI_F77_CHECK("REAL*16" "no" "float;double;long double" "16")
-OMPI_F77_CHECK("DOUBLE PRECISION" "yes" "float;double;long double" "-1")
+OMPI_FORTRAN_CHECK("REAL" "yes" "float;double;long double" "-1")
+OMPI_FORTRAN_CHECK("REAL*2" "no" "float;double;long double" "2")
+OMPI_FORTRAN_CHECK("REAL*4" "no" "float;double;long double" "4")
+OMPI_FORTRAN_CHECK("REAL*8" "no" "float;double;long double" "8")
+OMPI_FORTRAN_CHECK("REAL*16" "no" "float;double;long double" "16")
+OMPI_FORTRAN_CHECK("DOUBLE PRECISION" "yes" "float;double;long double" "-1")
 
-OMPI_F77_CHECK("COMPLEX" "yes" "" "-1")
-OMPI_F77_CHECK("DOUBLE COMPLEX" "yes" "" "-1")
+OMPI_FORTRAN_CHECK("COMPLEX" "yes" "" "-1")
+OMPI_FORTRAN_CHECK("DOUBLE COMPLEX" "yes" "" "-1")
 
 # The complex*N tests are a bit different (note: the complex tests are
 # the same as all the rest, because complex is a composite of two
@@ -672,37 +674,37 @@ OMPI_F77_CHECK("DOUBLE COMPLEX" "yes" "" "-1")
 #    have a back-end C type for it)
 # b) compiler supports complex*N
 
-OMPI_F77_CHECK("COMPLEX*8" "no" "" "8")
-OMPI_F77_CHECK("COMPLEX*16" "no" "" "16")
-OMPI_F77_CHECK("COMPLEX*32" "no" "" "32")
+OMPI_FORTRAN_CHECK("COMPLEX*8" "no" "" "8")
+OMPI_FORTRAN_CHECK("COMPLEX*16" "no" "" "16")
+OMPI_FORTRAN_CHECK("COMPLEX*32" "no" "" "32")
 
-OMPI_F77_CHECK_REAL16_C_EQUIV()
+OMPI_FORTRAN_CHECK_REAL16_C_EQUIV()
 
 # Regardless of whether we have fortran bindings, or even a fortran
 # compiler, get the max value for a fortran MPI handle (this macro
 # handles the case where we don't have a fortran compiler).
 
-OMPI_F77_GET_FORTRAN_HANDLE_MAX()
+OMPI_FORTRAN_GET_FORTRAN_HANDLE_MAX()
 
 #
 # Check for Fortran compilers value of TRUE and for the correct assumption
 # on LOGICAL for conversion into what C considers to be a true value
 #
-OMPI_F77_GET_VALUE_TRUE()
-#OMPI_F77_CHECK_LOGICAL_ARRAY
+OMPI_FORTRAN_GET_VALUE_TRUE()
+#OMPI_FORTRAN_CHECK_LOGICAL_ARRAY
 
 #
-# There are 2 layers to the MPI f77 layer. The only extra thing that
-# determine f77 bindings is that fortran can be disabled by user. In
+# There are 2 layers to the MPI fortran layer. The only extra thing that
+# determine fortran bindings is that fortran can be disabled by user. In
 # such cases, we need to not build the target at all.  One layer
-# generates MPI_f77* bindings. The other layer generates PMPI_f77*
+# generates MPI_fortran* bindings. The other layer generates PMPI_fortran*
 # bindings. The following conditions determine whether each (or both)
 # these layers are built.
 #
 # Superceeding clause:
 #   - fortran77 bindings should be enabled, else everything is
 #     disabled
-# 1. MPI_f77* bindings are needed if:
+# 1. MPI_fortran* bindings are needed if:
 #   - Profiling is not required
 #   - Profiling is required but weak symbols are not
 #     supported
@@ -711,17 +713,17 @@ OMPI_F77_GET_VALUE_TRUE()
 # need to be built or NOT
 #
 
-IF(NOT WANT_MPI_PROFILING OR OMPI_PROFILING_COMPILE_SEPARATELY AND  OMPI_WANT_F77_BINDINGS)
-  SET(WANT_MPI_F77_BINDINGS_LAYER 1)
-ELSE(NOT WANT_MPI_PROFILING OR OMPI_PROFILING_COMPILE_SEPARATELY AND  OMPI_WANT_F77_BINDINGS)
-  SET(WANT_MPI_F77_BINDINGS_LAYER 0) 
-ENDIF(NOT WANT_MPI_PROFILING OR OMPI_PROFILING_COMPILE_SEPARATELY AND  OMPI_WANT_F77_BINDINGS)
+IF(NOT WANT_MPI_PROFILING OR OMPI_PROFILING_COMPILE_SEPARATELY AND  OMPI_WANT_FORTRAN_BINDINGS)
+  SET(WANT_MPI_FORTRAN_BINDINGS_LAYER 1)
+ELSE(NOT WANT_MPI_PROFILING OR OMPI_PROFILING_COMPILE_SEPARATELY AND  OMPI_WANT_FORTRAN_BINDINGS)
+  SET(WANT_MPI_FORTRAN_BINDINGS_LAYER 0) 
+ENDIF(NOT WANT_MPI_PROFILING OR OMPI_PROFILING_COMPILE_SEPARATELY AND  OMPI_WANT_FORTRAN_BINDINGS)
 
-IF(WANT_MPI_PROFILING AND OMPI_WANT_F77_BINDINGS)
-  SET(WANT_MPI_F77_BINDINGS_LAYER 1)
-ELSE(WANT_MPI_PROFILING AND OMPI_WANT_F77_BINDINGS)
-  SET(WANT_MPI_F77_BINDINGS_LAYER 0) 
-ENDIF(WANT_MPI_PROFILING AND OMPI_WANT_F77_BINDINGS)
+IF(WANT_MPI_PROFILING AND OMPI_WANT_FORTRAN_BINDINGS)
+  SET(WANT_MPI_FORTRAN_BINDINGS_LAYER 1)
+ELSE(WANT_MPI_PROFILING AND OMPI_WANT_FORTRAN_BINDINGS)
+  SET(WANT_MPI_FORTRAN_BINDINGS_LAYER 0) 
+ENDIF(WANT_MPI_PROFILING AND OMPI_WANT_FORTRAN_BINDINGS)
 
 
 IF(WIN32)
@@ -755,8 +757,6 @@ IF(WIN32)
   OMPI_DEF_CACHE(MCA_pml_DIRECT_CALL_HEADER " " STRING "Header pml includes to be direct called." 1 1)
 
   OMPI_DEF_CACHE(OMPI_MPI_CONTRIBS none STRING "List of contributed package names that will be built." 1 1)
-
-  OMPI_DEF(OPAL_HAVE_HWLOC 0 "Whether we have hwloc support or not" 0 1)
   
   OMPI_DEF(OPAL_HAVE_HWLOC_XML 0 "Enable xml support or not" 0 1)
   
@@ -789,14 +789,14 @@ OMPI_DEF(OMPI_CXX ${CXX_COMPILER_NAME} "OMPI underlying C++ compiler name." 1 1)
 
 OMPI_DEF(OMPI_CXX_ABSOLUTE ${CMAKE_CXX_COMPILER} "OMPI underlying C++ compiler absolute path." 1 1)
 
-IF(OMPI_WANT_F77_BINDINGS)
-  GET_FILENAME_COMPONENT(F77_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME_WE)
-  OMPI_DEF(OMPI_F77 ${F77_COMPILER_NAME} "OMPI underlying Fortran 77 compiler name." 1 1)
-  OMPI_DEF(OMPI_F77_ABSOLUTE ${CMAKE_Fortran_COMPILER} "OMPI underlying Fortran 77 compiler absolute path" 1 1)
-ELSE(OMPI_WANT_F77_BINDINGS)
-  OMPI_DEF(OMPI_F77 "none" "OMPI underlying Fortran 77 compiler name." 1 1)
-  OMPI_DEF(OMPI_F77_ABSOLUTE "none" "OMPI underlying Fortran 77 compiler absolute path" 1 1)
-ENDIF(OMPI_WANT_F77_BINDINGS)
+IF(OMPI_WANT_FORTRAN_BINDINGS)
+  GET_FILENAME_COMPONENT(FORTRAN_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME_WE)
+  OMPI_DEF(OMPI_FORTRAN ${FORTRAN_COMPILER_NAME} "OMPI underlying Fortran 77 compiler name." 1 1)
+  OMPI_DEF(OMPI_FORTRAN_ABSOLUTE ${CMAKE_Fortran_COMPILER} "OMPI underlying Fortran 77 compiler absolute path" 1 1)
+ELSE(OMPI_WANT_FORTRAN_BINDINGS)
+  OMPI_DEF(OMPI_FORTRAN "none" "OMPI underlying Fortran 77 compiler name." 1 1)
+  OMPI_DEF(OMPI_FORTRAN_ABSOLUTE "none" "OMPI underlying Fortran 77 compiler absolute path" 1 1)
+ENDIF(OMPI_WANT_FORTRAN_BINDINGS)
 
 IF(OMPI_WANT_F90_BINDINGS)
   GET_FILENAME_COMPONENT(F90_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME_WE)
