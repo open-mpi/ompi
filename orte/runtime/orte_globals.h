@@ -635,7 +635,6 @@ ORTE_DECLSPEC extern char **orted_cmd_line;
 ORTE_DECLSPEC extern char **orte_fork_agent;
 
 /* debugger job */
-ORTE_DECLSPEC extern orte_job_t *orte_debugger_daemon;
 ORTE_DECLSPEC extern bool orte_debugger_dump_proctable;
 ORTE_DECLSPEC extern char *orte_debugger_test_daemon;
 ORTE_DECLSPEC extern bool orte_debugger_test_attach;

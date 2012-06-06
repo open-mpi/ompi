@@ -105,11 +105,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
     int j;
     orte_app_context_t *app;
 
-    if (NULL != orte_debugger_daemon && ORTE_JOBID_INVALID == job) {
-        /* all we are doing is launching debugger daemons */
-        goto nodemap;
-    }
-    
     /* get the job data pointer */
     if (NULL == (jdata = orte_get_job_data_object(job))) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -123,7 +118,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         return ORTE_SUCCESS;
     }
      
- nodemap:
     /* construct a nodemap */
     if (ORTE_SUCCESS != (rc = orte_util_encode_nodemap(&bo))) {
         ORTE_ERROR_LOG(rc);
@@ -180,44 +174,6 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
         opal_dss.pack(data, &flag, 1, OPAL_INT8);
     }
 
-    /* are we co-locating debugger daemons? */
-    if (NULL != orte_debugger_daemon) {        
-        /* flag that we are */
-        flag = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &flag, 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* pack the jobid for the debugger daemons */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &orte_debugger_daemon->jobid, 1, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }        
-        /* pack the executable name */
-        app = (orte_app_context_t*)opal_pointer_array_get_item(orte_debugger_daemon->apps, 0);
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &app, 1, ORTE_APP_CONTEXT))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        /* pack the control flags */
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &orte_debugger_daemon->controls, 1, ORTE_JOB_CONTROL))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }        
-    } else {
-        /* flag that we are NOT */
-        flag = 0;
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &flag, 1, OPAL_INT8))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-    
-    if (NULL != orte_debugger_daemon && ORTE_JOBID_INVALID == job) {
-        /* all we are doing is launching debugger daemons, so we are done */
-        return ORTE_SUCCESS;
-    }
-    
     /* pack the jobid so it can be extracted later */
     if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
@@ -399,7 +355,6 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
     orte_proc_t *proc;
     opal_byte_object_t *bo;
     int8_t flag;
-    orte_jobid_t debugger;
     int32_t n;
     orte_app_context_t *app;
     orte_proc_t *pptr;
@@ -445,55 +400,9 @@ int orte_odls_base_default_construct_child_list(opal_buffer_t *data,
         free(bo);
     }
 
-    /* unpack the flag - are we co-locating debugger daemons? */
-    cnt=1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &flag, &cnt, OPAL_INT8))) {
-        ORTE_ERROR_LOG(rc);
-        goto REPORT_ERROR;
-    }
-    if (0 != flag) {
-        OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                             "%s odls:construct_child_list unpacking debugger daemon",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-        /* yep - create a jobdat object for it. In this case, we don't have to
-         * worry about race conditions as the debugger daemons do not use
-         * the daemon collective system
-         */
-        orte_odls_globals.debugger = OBJ_NEW(orte_job_t);
-        /* get the debugger daemon jobid */
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &debugger, &cnt, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(rc);
-            goto REPORT_ERROR;
-        }
-        orte_odls_globals.debugger->jobid = debugger;
-        orte_odls_globals.debugger->num_apps = 1;
-        orte_odls_globals.debugger->num_local_procs = 1;
-        opal_pointer_array_set_item(orte_job_data, ORTE_LOCAL_JOBID(debugger), orte_odls_globals.debugger);
-        /* retrieve the info */
-        cnt = 1;
-        app = NULL;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &app, &cnt, ORTE_APP_CONTEXT))) {
-            ORTE_ERROR_LOG(rc);
-            goto REPORT_ERROR;
-        }
-        opal_pointer_array_add(orte_odls_globals.debugger->apps, app);
-        cnt=1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, &(orte_odls_globals.debugger->controls), &cnt, ORTE_JOB_CONTROL))) {
-            ORTE_ERROR_LOG(rc);
-            goto REPORT_ERROR;
-        }
-    }
-    
     /* unpack the jobid we are to launch */
     cnt=1;
     if (ORTE_SUCCESS != (rc = opal_dss.unpack(data, job, &cnt, ORTE_JOBID))) {
-        /* if the buffer was empty, then we know that all we are doing is
-         * launching debugger daemons
-         */
-        if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER == rc) {
-            goto COMPLETE;
-        }
         *job = ORTE_JOBID_INVALID;
         ORTE_ERROR_LOG(rc);
         goto REPORT_ERROR;
@@ -1133,7 +1042,7 @@ static int compute_num_procs_alive(orte_jobid_t job)
 
 void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
 {
-    orte_app_context_t *app, *dbg;
+    orte_app_context_t *app;
     orte_proc_t *child=NULL;
     bool oversubscribed;
     int rc=ORTE_SUCCESS;
@@ -1566,38 +1475,6 @@ void orte_odls_base_default_launch_local(int fd, short sd, void *cbdata)
         chdir(basedir);
     }
 
-    /* check to see if we need to
-     * co-locate any debugger daemons so that they get launched
-     * before we report anything to the HNP. This ensures that
-     * the debugger daemons are ready-to-go before mpirun returns
-     * from the plm.spawn command. Only spawn the debugger, though,
-     * if we have local children - otherwise, the HNP could spawn
-     * a debugger when it doesn't have any local procs
-     */
-    if (NULL != orte_odls_globals.debugger &&
-        !orte_odls_globals.debugger_launched) {
-        child = NULL;
-        for (idx=0; idx < orte_local_children->size; idx++) {
-            if (NULL != (child = (orte_proc_t*)opal_pointer_array_get_item(orte_local_children, idx))) {
-                break;
-            }
-        }
-        if (NULL != child) {
-            dbg = (orte_app_context_t*)opal_pointer_array_get_item(orte_odls_globals.debugger->apps, 0);
-            OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
-                                 "%s odls:launch forking debugger %s with %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), dbg->app,
-                                 (ORTE_JOB_CONTROL_FORWARD_OUTPUT & orte_odls_globals.debugger->controls) ? "output forwarded" : "no output"));
-            
-            odls_base_default_setup_fork(dbg, 1, orte_process_info.num_procs,
-                                         orte_process_info.num_procs,
-                                         orte_process_info.num_procs, false, &dbg->env);
-            fork_local(dbg, NULL, dbg->env, orte_odls_globals.debugger);
-            orte_odls_globals.debugger_launched = true;
-            orte_odls_globals.debugger->state = ORTE_JOB_STATE_RUNNING;
-        }
-    }
-    
     OPAL_OUTPUT_VERBOSE((5, orte_odls_globals.output,
                          "%s odls:launch setting waitpids",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
