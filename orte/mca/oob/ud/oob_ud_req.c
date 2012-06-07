@@ -105,7 +105,7 @@ int mca_oob_ud_msg_get (struct mca_oob_ud_port_t *port, mca_oob_ud_req_t *req,
 
     memset ((*msgp)->hdr, 0, sizeof (*((*msgp)->hdr)));
 
-    mca_oob_ud_fill_sge (&(*msgp)->sge, (*msgp)->hdr, 2048, (*msgp)->mr->lkey);
+    mca_oob_ud_fill_sge (&(*msgp)->sge, (*msgp)->hdr, port->mtu, (*msgp)->mr->lkey);
     mca_oob_ud_fill_send_wr (&(*msgp)->wr, &(*msgp)->sge, 1, peer);
 
     /* set return address */
