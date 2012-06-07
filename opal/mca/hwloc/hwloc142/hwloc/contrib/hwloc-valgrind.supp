@@ -1,0 +1,31 @@
+# Copyright © 2012      inria.  All rights reserved.
+# See COPYING in top-level directory.
+
+# suppressions file to be passed to valgrind with
+#   --suppressions=/path/to/hwloc-valgrind.supp
+
+# zlib (brought by libpci or libxml2) doesn't cleanup its global state
+{
+   inflate_init
+   Memcheck:Cond
+   fun:inflateReset2
+   fun:inflateInit2_
+}
+
+# hwloc cannot free the global parser (with xmlCleanupParser()) because other threads may be using it
+{
+   xml_init_parser
+   Memcheck:Leak
+   ...
+   fun:xmlInitParser
+}
+
+# hwloc cannot free the global xml dict RMutex because it cannot call xmlCleanupParser() as explained above
+{
+   xml_dict_create_new_rmutex
+   Memcheck:Leak
+   fun:malloc
+   fun:xmlNewRMutex
+   ...
+   fun:xmlDictCreate
+}
