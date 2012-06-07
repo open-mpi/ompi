@@ -98,14 +98,6 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/ompi_base_checks.cmake \
         platform/win32/CMakeModules/ompi_define.cmake \
         platform/win32/CMakeModules/ompi_ext_config.cmake \
-        platform/win32/CMakeModules/f77_check.cmake \
-        platform/win32/CMakeModules/f77_check_real16_c_equiv.cmake \
-        platform/win32/CMakeModules/f77_check_type.cmake \
-        platform/win32/CMakeModules/f77_find_ext_symbol_convention.cmake \
-        platform/win32/CMakeModules/f77_get_alignment.cmake \
-        platform/win32/CMakeModules/f77_get_fortran_handle_max.cmake \
-        platform/win32/CMakeModules/f77_get_sizeof.cmake \
-        platform/win32/CMakeModules/f77_get_value_true.cmake \
         platform/win32/CMakeModules/find_ccp.cmake \
         platform/win32/CMakeModules/find_flex.cmake \
         platform/win32/CMakeModules/find_libltdl.cmake \
@@ -121,8 +113,16 @@ EXTRA_DIST = \
         platform/win32/CMakeModules/opal_event_config.cmake \
         platform/win32/CMakeModules/opal_get_version.cmake \
         platform/win32/CMakeModules/opal_functions.cmake \
-        platform/win32/CMakeModules/setup_f77.cmake \
         platform/win32/ConfigFiles/revision.in \
+        platform/win32/CMakeModules/fortran_get_value_true.cmake \
+        platform/win32/CMakeModules/fortran_check.cmake \
+        platform/win32/CMakeModules/fortran_get_alignment.cmake \
+        platform/win32/CMakeModules/fortran_check_type.cmake \
+        platform/win32/CMakeModules/fortran_find_ext_symbol_convention.cmake \
+        platform/win32/CMakeModules/fortran_get_fortran_handle_max.cmake \
+        platform/win32/CMakeModules/fortran_get_sizeof.cmake \
+        platform/win32/CMakeModules/setup_fortran.cmake \
+        platform/win32/CMakeModules/fortran_check_real16_c_equiv.cmake \
 	platform/cisco/macosx-dynamic \
 	platform/cisco/macosx-dynamic.conf \
 	platform/cisco/linux \
