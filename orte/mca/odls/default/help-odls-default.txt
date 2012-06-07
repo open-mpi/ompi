@@ -137,4 +137,9 @@ binding action:
 Please revise the request and try again.
 #
 [odls-default:could-not-bind-to-socket]
-Unable to bind to socket %d on node %s.
+Open MPI unexpectedly failed to bind a process to a socket.
+
+  Local host:   %s
+  Socket index: %d
+
+Your job will now abort.

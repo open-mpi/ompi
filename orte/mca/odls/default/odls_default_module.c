@@ -776,10 +776,17 @@ static int odls_default_fork_local_proc(orte_app_context_t* context,
                 /* if we did not bind it anywhere, then that is an error */
                 OPAL_PAFFINITY_PROCESS_IS_BOUND(mask, &bound);
                 if (!bound) {
-                    orte_show_help("help-odls-default.txt",
-                                   "odls-default:could-not-bind-to-socket", true,
-                                   target_socket, orte_process_info.nodename);
-                    ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                    /* If failed to bind, check to see if the reason was
+                       just because we only have 1 socket.  If so,
+                       that's not an error. */
+                    int num_sockets;
+                    if (OPAL_SUCCESS != opal_paffinity_base_get_socket_info(&num_sockets) ||
+                        num_sockets > 1) {
+                        orte_show_help("help-odls-default.txt",
+                                       "odls-default:could-not-bind-to-socket", true,
+                                       target_socket, orte_process_info.nodename);
+                        ORTE_ODLS_ERROR_OUT(ORTE_ERR_FATAL);
+                    }
                 }
                 if (orte_report_bindings) {
                     char tmp1[1024], tmp2[1024];
