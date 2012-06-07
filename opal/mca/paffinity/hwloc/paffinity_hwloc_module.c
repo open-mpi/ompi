@@ -458,11 +458,11 @@ static int module_map_to_socket_core(int processor_id, int *socket, int *core)
     while (NULL != obj && HWLOC_OBJ_SOCKET != obj->type) {
         obj = obj->parent;
     }
-    if (HWLOC_OBJ_SOCKET == obj->type) {
+    if (NULL == obj) {
+        return OPAL_ERR_NOT_FOUND;
+    } else {
         *socket = obj->logical_index;
         return OPAL_SUCCESS;
-    } else {
-        return OPAL_ERR_NOT_FOUND;
     }
 }
 
