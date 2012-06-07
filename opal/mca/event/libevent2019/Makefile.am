@@ -85,7 +85,4 @@ noinst_LTLIBRARIES = $(component_noinst)
 libmca_event_libevent2019_la_SOURCES =$(sources)
 libmca_event_libevent2019_la_LDFLAGS = -module -avoid-version
 libmca_event_libevent2019_la_LIBADD = $(builddir)/libevent/libevent.la
-if OPAL_EVENT_HAVE_THREAD_SUPPORT
-libmca_event_libevent2019_la_LIBADD += $(builddir)/libevent/libevent_pthreads.la
-endif
 
