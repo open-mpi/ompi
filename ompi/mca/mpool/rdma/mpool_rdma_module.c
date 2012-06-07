@@ -414,7 +414,6 @@ int mca_mpool_rdma_deregister(struct mca_mpool_base_module_t *mpool,
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
     reg->ref_count--;
     if(reg->ref_count > 0) {
-        fprintf (stderr, "reference count: %d\n", reg->ref_count);
         OPAL_THREAD_UNLOCK(&mpool->rcache->lock);
         return OMPI_SUCCESS;
     }
