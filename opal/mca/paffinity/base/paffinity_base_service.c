@@ -637,6 +637,11 @@ int opal_paffinity_base_cset2str(char *str, int len,
         }
     }
 
+    /* If the last character is a space, remove it */
+    if (' ' == str[strlen(str) - 1]) {
+        str[strlen(str) - 1] = '\0';
+    }
+
     return OPAL_SUCCESS;
 }
 
