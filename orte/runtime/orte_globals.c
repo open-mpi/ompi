@@ -195,6 +195,8 @@ opal_thread_t orte_progress_thread;
 opal_event_t orte_finalize_event;
 #endif
 
+char *orte_selected_oob_component = NULL;
+
 #endif /* !ORTE_DISABLE_FULL_RTE */
 
 int orte_debug_output = -1;

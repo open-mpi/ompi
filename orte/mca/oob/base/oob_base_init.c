@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,6 +29,7 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 
+#include "orte/runtime/orte_globals.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
 
@@ -56,7 +59,7 @@ int mca_oob_base_init(void)
 {
     opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
-    mca_oob_base_component_t *component;
+    mca_oob_base_component_t *component, *s_component;
     mca_oob_t *module;
     mca_oob_t *s_module = NULL;
     int  s_priority = -1;
@@ -85,6 +88,7 @@ int mca_oob_base_init(void)
                 if(priority > s_priority) {
                     s_priority = priority;
                     s_module = module;
+                    s_component = component;
                 }
             }
         }
@@ -97,6 +101,10 @@ int mca_oob_base_init(void)
     }
 
    mca_oob = *s_module;
+
+   /* record the name of the selected component */
+   orte_selected_oob_component = strdup(s_component->oob_base.mca_component_name);
+   opal_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: %s module selected\n", orte_selected_oob_component);
    return ORTE_SUCCESS;
 }
 
