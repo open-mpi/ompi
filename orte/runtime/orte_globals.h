@@ -720,6 +720,9 @@ ORTE_DECLSPEC extern bool orte_map_stddiag_to_stderr;
 /* maximum size of virtual machine - used to subdivide allocation */
 ORTE_DECLSPEC extern int orte_max_vm_size;
 
+/* record the selected oob component */
+ORTE_DECLSPEC extern char *orte_selected_oob_component;
+
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
 
 END_C_DECLS

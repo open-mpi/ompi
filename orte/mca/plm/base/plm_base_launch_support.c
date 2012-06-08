@@ -992,6 +992,13 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         }
     }
 
+    if (NULL != orte_selected_oob_component) {
+        /* ensure we all use the same OOB component */
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "oob");
+        opal_argv_append(argc, argv, orte_selected_oob_component);
+    }
+
     return ORTE_SUCCESS;
 }
 

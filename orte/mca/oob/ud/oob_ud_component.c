@@ -212,7 +212,14 @@ static mca_oob_t *mca_oob_ud_component_init(int *priority)
     struct ibv_device **devices;
     int num_devices, i, rc;
 
-    *priority = 0;
+    /* set the priority so that we will select this component
+     * IF devices are available. Note that only the HNP has
+     * the freedom to make this decision as we will use the
+     * mca param on the orted cmd line to dictate that it
+     * match the HNP's choice. The value gets ignored if
+     * the NULL module is returned
+     */
+    *priority = 100;
 
     opal_hash_table_init (&mca_oob_ud_component.ud_peers, 1024);
 
