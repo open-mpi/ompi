@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -235,7 +235,7 @@ int ompi_mpi_register_params(void)
                                         "MPI_INIT (vs. making connections lazily -- "
                                         "upon the first MPI traffic between each "
                                         "process peer pair)",
-                                        false, false, 0, NULL);
+                                        true, false, 0, NULL);
     mca_base_param_reg_syn_name(value, "mpi", "preconnect_all", true);
     
     /* Leave pinned parameter */
