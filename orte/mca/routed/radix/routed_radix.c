@@ -4,7 +4,7 @@
  * Copyright (c) 2004-2011 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -375,6 +375,9 @@ static orte_process_name_t get_route(orte_process_name_t *target)
      
     /* THIS CAME FROM OUR OWN JOB FAMILY... */
 
+    /* if this is going to the HNP, then send it direct if we don't know
+     * how to get there - otherwise, send it via the tree
+     */
     if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target)) {
         if (!hnp_direct || orte_static_ports) {
             OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
@@ -403,6 +406,10 @@ static orte_process_name_t get_route(orte_process_name_t *target)
     /* if the daemon is me, then send direct to the target! */
     if (ORTE_PROC_MY_NAME->vpid == daemon.vpid) {
         ret = target;
+        goto found;
+    } else if (orte_process_info.num_procs < mca_routed_radix_component.max_connections) {
+        /* if the job is small enough, send direct to the target's daemon */
+        ret = &daemon;
         goto found;
     } else {
         /* search routing tree for next step to that daemon */

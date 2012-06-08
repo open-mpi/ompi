@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007      Los Alamos National Security, LLC.
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2004-2008 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -48,7 +48,10 @@ orte_routed_component_t mca_routed_binomial_component = {
 
 static int orte_routed_binomial_component_query(mca_base_module_t **module, int *priority)
 {
-    *priority = 70;
+    /* make this selected ONLY if the user directs as this module scales
+     * poorly compared to our other options
+     */
+    *priority = 0;
     *module = (mca_base_module_t *) &orte_routed_binomial_module;
     return ORTE_SUCCESS;
 }
