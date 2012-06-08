@@ -192,9 +192,6 @@ static int sm_btl_first_time_init(mca_btl_sm_t *sm_btl, int n)
     mca_btl_sm_component.sm_mpools = (mca_mpool_base_module_t **) calloc(num_mem_nodes,
                                             sizeof(mca_mpool_base_module_t*));
 
-    /* Create one mpool.  Per discussion with George and a UTK Euro
-       MPI 2010 paper, it may be beneficial to create multiple mpools.
-       Leaving that for a future optimization, however. */
     /* Disable memory binding, because each MPI process will claim
        pages in the mpool for their local NUMA node */
     res.mem_node = -1;
