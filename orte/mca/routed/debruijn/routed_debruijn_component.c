@@ -49,7 +49,11 @@ orte_routed_component_t mca_routed_debruijn_component = {
 
 static int orte_routed_debruijn_component_query(mca_base_module_t **module, int *priority)
 {
-    *priority = 37; /* 37! */
+    /* Debruijn shall be our default, especially for large systems. For smaller
+     * systems, we will allow other options that have even fewer hops to
+     * support wireup
+     */
+    *priority = 70;
     *module = (mca_base_module_t *) &orte_routed_debruijn_module;
     return ORTE_SUCCESS;
 }
