@@ -1762,7 +1762,7 @@ output_53() {
     cat <<EOF
 
 subroutine ${procedure}(comm, flag, ierr)
-  integer, intent(inout) :: comm
+  integer, intent(in) :: comm
   logical, intent(in) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
