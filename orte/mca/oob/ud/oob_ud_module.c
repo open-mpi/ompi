@@ -24,7 +24,6 @@
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
 
-static int mca_oob_ud_module_init (void);
 static int mca_oob_ud_module_fini (void);
 
 mca_oob_t mca_oob_ud_module = {
@@ -296,10 +295,19 @@ int mca_oob_ud_port_post_one_recv (mca_oob_ud_port_t *port, int msg_num)
     return mca_oob_ud_qp_post_recv (&port->listen_qp, &wr);
 }
 
-static int mca_oob_ud_module_init (void)
+static bool module_has_been_inited = false;
+
+int mca_oob_ud_module_init (void)
 {
     opal_list_item_t *item, *item2;
     int rc;
+    bool found_one = false;
+
+    /* protect against repeat inits */
+    if (module_has_been_inited) {
+        return ORTE_SUCCESS;
+    }
+    module_has_been_inited = true;
 
     OPAL_OUTPUT_VERBOSE((5, mca_oob_base_output, "%s oob:ud:init initializing oob/openib. # of devices = %u",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -350,7 +358,11 @@ static int mca_oob_ud_module_init (void)
         mca_oob_ud_event_start_monitor (device);
     }
 
-    return ORTE_SUCCESS;
+    if (found_one) {
+        return ORTE_SUCCESS;
+    } else {
+        return ORTE_ERR_NOT_FOUND;
+    }
 }
 
 static void mca_oob_ud_cancel_all_in_list (opal_list_t *list)
