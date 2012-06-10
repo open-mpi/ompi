@@ -260,5 +260,10 @@ static mca_oob_t *mca_oob_ud_component_init(int *priority)
         return NULL;
     }
 
+    /* have to call the module init here so we can test for available qpair */
+    if (ORTE_SUCCESS != mca_oob_ud_module_init()) {
+        return NULL;
+    }
+
     return &mca_oob_ud_module;
 }

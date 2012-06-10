@@ -211,6 +211,7 @@ int mca_oob_ud_register_iov (struct iovec *iov, int count, struct ibv_mr **ib_mr
 
 void mca_oob_ud_event_queue_completed (mca_oob_ud_req_t *req);
 
+int mca_oob_ud_module_init(void);
 END_C_DECLS
 
 #endif

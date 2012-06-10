@@ -66,8 +66,9 @@ int mca_oob_ud_qp_init (mca_oob_ud_qp_t *qp, struct mca_oob_ud_port_t *port,
 
     qp->ib_qp = ibv_create_qp (port->device->ib_pd, &init_attr); 
     if (NULL == qp->ib_qp) {
-        opal_output(0, "%s oob:ud:qp_init could not create queue pair. errno = %d",
-                    ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno);
+        OPAL_OUTPUT_VERBOSE((1, mca_oob_base_output,
+                             "%s oob:ud:qp_init could not create queue pair. errno = %d",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), errno));
         return ORTE_ERROR;
     }
     /* end: create the UD queue pair */
