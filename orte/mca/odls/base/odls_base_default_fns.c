@@ -145,27 +145,19 @@ int orte_odls_base_default_get_add_procs_data(opal_buffer_t *data,
             OBJ_RELEASE(wireup);
             return rc;
         }
-        /* if anything was inserted, put it in a byte object for xmission */
-        if (0 < wireup->bytes_used) {
-            opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
-            /* pack the byte object */
-            bo.size = numbytes;
-            boptr = &bo;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &boptr, 1, OPAL_BYTE_OBJECT))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(wireup);
-                return rc;
-            }
-            /* release the data since it has now been copied into our buffer */
+        /* put it in a byte object for xmission */
+        opal_dss.unload(wireup, (void**)&bo.bytes, &numbytes);
+        /* pack the byte object - zero-byte objects are fine */
+        bo.size = numbytes;
+        boptr = &bo;
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &boptr, 1, OPAL_BYTE_OBJECT))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(wireup);
+            return rc;
+        }
+        /* release the data since it has now been copied into our buffer */
+        if (NULL != bo.bytes) {
             free(bo.bytes);
-        } else {
-            /* pack numbytes=0 so the unpack routine remains sync'd to us */
-            numbytes = 0;
-            if (ORTE_SUCCESS != (rc = opal_dss.pack(data, &numbytes, 1, OPAL_INT32))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(wireup);
-                return rc;
-            }
         }
         OBJ_RELEASE(wireup);
     } else {

@@ -384,7 +384,14 @@ static void get_routing_list(orte_grpcomm_coll_t type,
 
 static int get_wireup_info(opal_buffer_t *buf)
 {
+    opal_byte_object_t bo, *boptr;
+
     /* this is a meaningless command for a direct as I am not allowed to route */
+    bo.bytes = NULL;
+    bo.size = 0;
+    boptr = &bo;
+
+    opal_dss.pack(buf, &boptr, 1, OPAL_BYTE_OBJECT);
     return ORTE_SUCCESS;
 }
 
