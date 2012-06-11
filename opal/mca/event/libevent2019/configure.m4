@@ -94,13 +94,13 @@ AC_DEFUN([MCA_opal_event_libevent2019_CONFIG],[
 
     AC_ARG_ENABLE(event-thread-support,
                   AC_HELP_STRING([--enable-event-thread-support], [enable event library internal thread support]))
-    if test "$enable_event_thread_support" = "no"; then
+    if test "$enable_event_thread_support" = "yes"; then
+        AC_DEFINE_UNQUOTED(OPAL_EVENT_HAVE_THREAD_SUPPORT, 1,
+                           [Thread support was configured into the event library])
+    else
         event_args="$event_args --disable-thread-support"
         AC_DEFINE_UNQUOTED(OPAL_EVENT_HAVE_THREAD_SUPPORT, 0,
                            [Thread support was not configured into the event library])
-    else
-        AC_DEFINE_UNQUOTED(OPAL_EVENT_HAVE_THREAD_SUPPORT, 1,
-                           [Thread support was configured into the event library])
     fi
     AM_CONDITIONAL(OPAL_EVENT_HAVE_THREAD_SUPPORT, test "$enable_event_thread_support" = "yes")
 
