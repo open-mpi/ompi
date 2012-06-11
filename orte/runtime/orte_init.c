@@ -86,7 +86,6 @@ static void ignore_callback(int fd, short args, void *cbdata)
     } else {
         opal_event_t *ev = (opal_event_t*)cbdata;
         struct timeval tv = {1, 0};
-        opal_output(0, "TIMER FIRED");
         opal_event_evtimer_add(ev, &tv);
     }
 }
