@@ -71,7 +71,7 @@ static void mca_oob_ud_req_destruct (mca_oob_ud_req_t *req)
 void mca_oob_ud_req_timer_set (mca_oob_ud_req_t *req, const struct timeval *timeout,
                                int max_tries, void (*cb)(evutil_socket_t, short, void *))
 {
-    opal_event_evtimer_set (opal_event_base, &req->timer.event, cb, (void *) req);
+    opal_event_evtimer_set (orte_event_base, &req->timer.event, cb, (void *) req);
     req->timer.value.tv_sec  = timeout->tv_sec;
     req->timer.value.tv_usec = timeout->tv_usec;
     opal_event_evtimer_add (&req->timer.event, &req->timer.value);

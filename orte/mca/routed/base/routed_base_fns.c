@@ -23,21 +23,14 @@
 #include "orte/constants.h"
 #include "orte/types.h"
 
-#if HAVE_TIME_H
-#include <time.h>
-#endif
-#if HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-
 #include "opal/dss/dss.h"
-#include "opal/runtime/opal_progress.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/odls/odls_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/runtime/orte_globals.h"
+#include "orte/runtime/orte_wait.h"
 
 #include "orte/mca/routed/base/base.h"
 
@@ -233,7 +226,7 @@ void orte_routed_base_coll_peers(orte_grpcomm_collective_t *coll,
  }
 
 
-static bool sync_recvd;
+static bool sync_waiting = false;
 
 static void report_sync(int status, orte_process_name_t* sender,
                         opal_buffer_t *buffer,
@@ -242,7 +235,7 @@ static void report_sync(int status, orte_process_name_t* sender,
     /* just copy the payload to the sync_buf */
     opal_dss.copy_payload(orte_process_info.sync_buf, buffer);
     /* flag as complete */
-    sync_recvd = true;
+    sync_waiting = false;
 }
 
 int orte_routed_base_register_sync(bool setup)
@@ -304,7 +297,7 @@ int orte_routed_base_register_sync(bool setup)
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s registering sync waiting for ack",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    sync_recvd = false;
+    sync_waiting = true;
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_SYNC,
                                  ORTE_RML_NON_PERSISTENT, report_sync, NULL);
     if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
@@ -313,19 +306,7 @@ int orte_routed_base_register_sync(bool setup)
     }
     
     /* it is okay to block here as we are -not- in an event */
-    while (!sync_recvd) {
-#if !ORTE_ENABLE_PROGRESS_THREADS
-        opal_progress();
-#else
-        {
-            /* provide a very short quiet period so we
-             * don't hammer the cpu while we wait
-             */
-            struct timespec tp = {0, 100};
-            nanosleep(&tp, NULL);
-        }
-#endif
-    }
+    ORTE_WAIT_FOR_COMPLETION(sync_waiting);
     
     OPAL_OUTPUT_VERBOSE((5, orte_routed_base_output,
                          "%s registering sync ack recvd",

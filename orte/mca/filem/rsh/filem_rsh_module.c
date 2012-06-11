@@ -30,6 +30,12 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
+#if HAVE_TIME_H
+#include <time.h>
+#endif
+#if HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
@@ -279,7 +285,17 @@ int orte_filem_rsh_module_finalize(void)
      */
     if( orte_filem_base_is_active ) {
         while(0 < opal_list_get_size(&work_pool_active) ) {
+#if ORTE_ENABLE_PROGRESS_THREADS
+            {
+                /* provide a very short quiet period so we
+                 * don't hammer the cpu while we wait
+                 */
+                struct timespec tp = {0, 100};
+                nanosleep(&tp, NULL);
+            }
+#else
             opal_progress();
+#endif
         }
     }
 

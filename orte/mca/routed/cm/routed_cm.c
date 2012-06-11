@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2011 Los Alamos National Security, LLC.
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.
  *                         All rights reserved. 
  * Copyright (c) 2009-2010 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -22,7 +22,6 @@
 #include "opal/dss/dss.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/class/opal_bitmap.h"
-#include "opal/runtime/opal_progress.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
 
@@ -85,7 +84,7 @@ orte_routed_module_t orte_routed_cm_module = {
 /* local globals */
 static orte_process_name_t      *lifeline=NULL;
 static orte_process_name_t      local_lifeline;
-static bool                     ack_recvd;
+static bool                     ack_waiting = false;
 
 
 static int init(void)
@@ -411,7 +410,7 @@ static void recv_ack(int status, orte_process_name_t* sender,
                      opal_buffer_t* buffer, orte_rml_tag_t tag,
                      void* cbdata)
 {
-    ack_recvd = true;
+    ack_waiting = false;
 }
 
 
@@ -627,13 +626,11 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 /* wait right here until the HNP acks the update to ensure that
                  * any subsequent messaging can succeed
                  */
-                ack_recvd = false;
+                ack_waiting = true;
                 rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
                                              ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
                 
-                while (!ack_recvd) {
-                    opal_progress();
-                }
+                ORTE_WAIT_FOR_COMPLETION(ack_waiting);
 
                 OPAL_OUTPUT_VERBOSE((1, orte_routed_base_output,
                                      "%s routed_cm_init_routes: ack recvd",

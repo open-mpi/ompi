@@ -33,7 +33,6 @@
 #include <ctype.h>
 
 #include "opal/util/argv.h"
-#include "opal/runtime/opal_progress.h"
 #include "opal/class/opal_pointer_array.h"
 #include "opal/dss/dss.h"
 #include "opal/mca/base/mca_base_param.h"

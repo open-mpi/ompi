@@ -363,7 +363,7 @@ void mca_oob_ud_peer_start_timer (mca_oob_ud_peer_t *peer)
     if (!peer->peer_timer.active && opal_list_get_size (&peer->peer_flying_messages)) {
         peer->peer_timer.active = true;
 
-        opal_event_evtimer_set (opal_event_base, &peer->peer_timer.event,
+        opal_event_evtimer_set (orte_event_base, &peer->peer_timer.event,
                                 mca_oob_ud_peer_msg_timeout, (void *) peer);
         opal_event_evtimer_add (&peer->peer_timer.event, &peer->peer_timer.value);
     }

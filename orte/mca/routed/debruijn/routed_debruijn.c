@@ -83,7 +83,7 @@ orte_routed_module_t orte_routed_debruijn_module = {
 static orte_process_name_t      *lifeline=NULL;
 static orte_process_name_t      local_lifeline;
 static opal_list_t              my_children;
-static bool                     ack_recvd;
+static bool                     ack_waiting = false;
 static bool                     hnp_direct=true;
 static int                      log_nranks;
 static int                      log_npeers;
@@ -433,7 +433,7 @@ static void recv_ack(int status, orte_process_name_t* sender,
                      opal_buffer_t* buffer, orte_rml_tag_t tag,
                      void* cbdata)
 {
-    ack_recvd = true;
+    ack_waiting = false;
 }
 
 
@@ -599,7 +599,7 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 /* wait right here until the HNP acks the update to ensure that
                  * any subsequent messaging can succeed
                  */
-                ack_recvd = false;
+                ack_waiting = true;
                 rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_UPDATE_ROUTE_ACK,
                                              ORTE_RML_NON_PERSISTENT, recv_ack, NULL);
                 
