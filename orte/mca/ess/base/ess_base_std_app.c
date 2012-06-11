@@ -37,7 +37,6 @@
 #include "opal/util/output.h"
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
-#include "opal/runtime/opal_progress.h"
 
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
@@ -272,9 +271,7 @@ int orte_ess_base_app_setup(void)
             error = "orte barrier";
             goto error;
         }
-        while (coll.active) {
-            opal_progress();  /* block in progress pending events */
-        }
+        ORTE_WAIT_FOR_COMPLETION(coll.active);
         OBJ_DESTRUCT(&coll);
     }
     
@@ -339,14 +336,14 @@ int orte_ess_base_app_finalize(void)
  * to prevent the abort file from being created. This allows the
  * session directory tree to cleanly be eliminated.
  */
-static bool sync_recvd;
+static bool sync_waiting = false;
 
 static void report_sync(int status, orte_process_name_t* sender,
                         opal_buffer_t *buffer,
                         orte_rml_tag_t tag, void *cbdata)
 {
     /* flag as complete */
-    sync_recvd = true;
+    sync_waiting = false;
 }
 
 void orte_ess_base_app_abort(int status, bool report)
@@ -379,14 +376,12 @@ void orte_ess_base_app_abort(int status, bool report)
          * gets serviced by the event library on the orted prior to the
          * process exiting
          */
-        sync_recvd = false;
+        sync_waiting = true;
         if (ORTE_SUCCESS != orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_ABORT,
                                                     ORTE_RML_NON_PERSISTENT, report_sync, NULL)) {
             exit(status);
         }
-        while (!sync_recvd) {
-            opal_progress();
-        }
+        ORTE_WAIT_FOR_COMPLETION(sync_waiting);
     }
     
     /* - Clean out the global structures 

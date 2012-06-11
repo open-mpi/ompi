@@ -34,7 +34,10 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_TIME_H
+#if HAVE_TIME_H
+#include <time.h>
+#endif
+#if HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 
@@ -42,6 +45,7 @@
 #include "opal/util/output.h"
 #include "opal/sys/atomic.h"
 #include "opal/mca/event/event.h"
+#include "opal/runtime/opal_progress.h"
 
 #include "orte/types.h"
 #include "orte/mca/rml/rml_types.h"
@@ -106,6 +110,33 @@ typedef struct {
     void *payload;
 } orte_timer_t;
 OBJ_CLASS_DECLARATION(orte_timer_t);
+
+/* In a few places, we need to barrier until something happens
+ * that changes a flag to indicate we can release - e.g., waiting
+ * for a specific message to arrive. If no progress thread is running,
+ * we cycle across opal_progress - however, if a progress thread
+ * is active, then we need to just nanosleep to avoid cross-thread
+ * confusion
+ */
+#if ORTE_ENABLE_PROGRESS_THREADS
+#define ORTE_WAIT_FOR_COMPLETION(flg)                   \
+    do {                                                \
+        while ((flg)) {                                 \
+            /* provide a very short quiet period so we  \
+             * don't hammer the cpu while we wait       \
+             */                                         \
+            struct timespec tp = {0, 100};              \
+            nanosleep(&tp, NULL);                       \
+        }                                               \
+    }while(0);
+#else
+#define ORTE_WAIT_FOR_COMPLETION(flg)           \
+    do {                                        \
+        while ((flg)) {                         \
+            opal_progress();                    \
+        }                                       \
+    }while(0);
+#endif
 
 /**
  * In a number of places within the code, we want to setup a timer

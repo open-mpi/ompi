@@ -636,6 +636,7 @@ static int rte_init(void)
         }
     }
 
+#if !ORTE_ENABLE_PROGRESS_THREADS
     /* We actually do *not* want an HNP to voluntarily yield() the
      processor more than necessary.  Orterun already blocks when
      it is doing nothing, so it doesn't use any more CPU cycles than
@@ -655,6 +656,7 @@ static int rte_init(void)
      problematic in some scenarios (e.g., COMM_SPAWN, BTL's that
      require OOB messages for wireup, etc.). */
     opal_progress_set_yield_when_idle(false);
+#endif
 
     return ORTE_SUCCESS;
 

@@ -63,7 +63,6 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/runtime/opal_progress.h"
 
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
@@ -544,7 +543,7 @@ static int plm_tm_connect(void)
 {
     int ret;
     struct tm_roots tm_root;
-    int count, progress;
+    int count;
 
     /* try a couple times to connect - might get busy signals every
        now and then */
@@ -554,11 +553,26 @@ static int plm_tm_connect(void)
             return ORTE_SUCCESS;
         }
 
-        for (progress = 0 ; progress < 10 ; ++progress) {
-            opal_progress();
+#if ORTE_ENABLE_PROGRESS_THREADS
+        {
+            /* provide a very short quiet period so we
+             * don't hammer the cpu while we wait
+             */
+            struct timespec tp = {0, 100};
+            nanosleep(&tp, NULL);
 #if HAVE_SCHED_YIELD
             sched_yield();
 #endif
+        }
+#else
+        {
+            int progress;
+            for (progress = 0 ; progress < 10 ; ++progress) {
+                opal_progress();
+#if HAVE_SCHED_YIELD
+                sched_yield();
+#endif
+            }
         }
     }
 
