@@ -80,27 +80,29 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
                          "send %lu got event of type %d",
                          ptl_request->opcount, ev->type));
 
-    /* If we received an ack in the priority list, that's worth two
-       messages.  If it hit the overflow list, that's only one.  Since
-       we start eager messages at one count, have to compare >=
-       instead of just == */
-    if (ev->type == PTL_EVENT_ACK) {
-        if (ev->ptl_list == PTL_PRIORITY_LIST) {
-            /* ack on the priority list, so will never see an event on the me */
-            if (PTL_OK != PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
-                ret = PtlMEUnlink(ptl_request->me_h);
-                if (PTL_OK != ret) {
-                    opal_output_verbose(1, ompi_mtl_base_output,
-                                        "%s:%d: send callback PtlMEUnlink returned %d",
-                                        __FILE__, __LINE__, ret);
-                }
-            }
-            add++;
+    if ((PTL_EVENT_ACK == ev->type) &&
+        (PTL_PRIORITY_LIST == ev->ptl_list) &&
+        (eager == ompi_mtl_portals4.protocol) &&
+        (!(PTL_OK != PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)))) {
+        /* long expected messages with the eager protocol won't see a
+           get event to complete the message.  Give them an extra
+           count to cause the message to complete with just the SEND
+           and ACK events and remove the ME. (we wait for the counter
+           to reach 3 events, but short messages start the counter at
+           1, so they don't need to enter this path) */
+        ret = PtlMEUnlink(ptl_request->me_h);
+        if (PTL_OK != ret) {
+            opal_output_verbose(1, ompi_mtl_base_output,
+                                "%s:%d: send callback PtlMEUnlink returned %d",
+                                __FILE__, __LINE__, ret);
         }
+        add++;
     }
     val = OPAL_THREAD_ADD32((int32_t*)&ptl_request->event_count, add);
 
-    if (val >= 3) {
+    assert(val <= 3);
+
+    if (val == 3) {
         if (NULL != ptl_request->buffer_ptr) {
             free(ptl_request->buffer_ptr);
         }
