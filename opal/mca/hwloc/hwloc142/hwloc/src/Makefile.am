@@ -1,7 +1,7 @@
 # Copyright © 2009-2010 inria.  All rights reserved.
 # Copyright © 2009-2010, 2012 Université Bordeaux 1
 # Copyright © 2009-2010 Cisco Systems, Inc.  All rights reserved.
-# Copyright © 2011      Oracle and/or its affiliates.  All rights reserved.
+# Copyright © 2011-2012 Oracle and/or its affiliates.  All rights reserved.
 # See COPYING in top-level directory.
 
 AM_CFLAGS = $(HWLOC_CFLAGS)
@@ -41,7 +41,6 @@ endif HWLOC_HAVE_LIBPCI
 if HWLOC_HAVE_SOLARIS
 sources += topology-solaris.c
 sources += topology-solaris-chiptype.c
-ldflags += -lpicl
 endif HWLOC_HAVE_SOLARIS
 
 if HWLOC_HAVE_LINUX
