@@ -574,6 +574,7 @@ static int plm_tm_connect(void)
 #endif
             }
         }
+#endif
     }
 
     return ORTE_ERR_RESOURCE_BUSY;
