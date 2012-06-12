@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -47,9 +48,9 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
                   CPPFLAGS="$CPPFLAGS -I$3/include"])
            AC_CHECK_HEADER([$2], [$4], [$5])],
           [$4])
-    unset ompi_check_package_header_happy])
+    unset ompi_check_package_header_happy
     
-    dnl AS_VAR_POPDEF([ompi_Header])dnl
+    AS_VAR_POPDEF([ompi_Header])dnl
 ])
 
 
