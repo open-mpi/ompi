@@ -70,8 +70,8 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
                 add_request_to_send_pending(sendreq,
                         MCA_PML_OB1_SEND_PENDING_START, true);
             } else {
-                 MCA_PML_OB1_SEND_REQUEST_RESET(sendreq);
-                 rc = mca_pml_ob1_send_request_start_btl(sendreq, send_dst);
+                MCA_PML_OB1_SEND_REQUEST_RESET(sendreq);
+                rc = mca_pml_ob1_send_request_start_btl(sendreq, send_dst);
                 if (OMPI_ERR_OUT_OF_RESOURCE == rc) {
                     /* No more resources on this btl so prepend to the pending
                      * list to minimize reordering and give up for now. */
@@ -481,6 +481,8 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
             MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
             return OMPI_SUCCESS;
         }
+
+        MCA_PML_OB1_SEND_REQUEST_RESET(sendreq);
     } else { 
         /* allocate descriptor */
         mca_bml_base_alloc( bml_btl, &des,
