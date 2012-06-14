@@ -387,6 +387,7 @@ static int mca_pml_ob1_init_get_fallback (mca_pml_ob1_rdma_frag_t *frag,
     hdr->hdr_req = frag->rdma_hdr.hdr_rget.hdr_rndv.hdr_src_req;
     hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
     hdr->hdr_des.pval = dst;
+    hdr->hdr_recv_req.pval = recvreq;
 
     hdr->hdr_seg_cnt = dst->des_dst_cnt;
 
@@ -904,6 +905,7 @@ int mca_pml_ob1_recv_request_schedule_once( mca_pml_ob1_recv_request_t* recvreq,
             (!recvreq->req_ack_sent) ? MCA_PML_OB1_HDR_TYPE_ACK : 0;
         hdr->hdr_req = recvreq->remote_req_send;
         hdr->hdr_des.pval = dst;
+        hdr->hdr_recv_req.pval = recvreq;
         hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
         hdr->hdr_seg_cnt = dst->des_dst_cnt;
 

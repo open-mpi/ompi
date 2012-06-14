@@ -1242,6 +1242,8 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
         OPAL_THREAD_ADD32(&sendreq->req_state, -1);
     }
 
+    sendreq->req_recv.pval = hdr->hdr_recv_req.pval;
+
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag, rc); 
 
     if( OPAL_UNLIKELY(NULL == frag) ) {
