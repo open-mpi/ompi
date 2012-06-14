@@ -52,11 +52,15 @@ static int orte_grpcomm_portals4_shmem_barrier(orte_grpcomm_collective_t *coll);
 
 static int allgather(orte_grpcomm_collective_t *coll);
 
-static int set_proc_attr(const char *attr_name,
+static int set_proc_attr(const char* project,
+                         const char* framework,
+                         const char *attr_name,
                          const void *data,
                          size_t size);
 
 static int get_proc_attr(const orte_process_name_t proc,
+                         const char* project,
+                         const char* framework,
                          const char * attribute_name, void **val, 
                          size_t *size);
 
@@ -141,7 +145,9 @@ static int allgather(orte_grpcomm_collective_t *coll)
 
 static int purge_proc_attrs(void);
 
-static int set_proc_attr(const char *attr_name,
+static int set_proc_attr(const char* project,
+                         const char* framework,
+                         const char *attr_name,
                          const void *data,
                          size_t size)
 {
@@ -156,6 +162,8 @@ static int set_proc_attr(const char *attr_name,
 }
 
 static int get_proc_attr(const orte_process_name_t proc,
+                         const char* project,
+                         const char* framework,
                          const char * attribute_name, void **val, 
                          size_t *size)
 {
