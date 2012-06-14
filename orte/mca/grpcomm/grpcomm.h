@@ -76,11 +76,15 @@ typedef int (*orte_grpcomm_base_module_barrier_fn_t)(orte_grpcomm_collective_t *
  */
 
 /* send an attribute buffer */
-typedef int (*orte_grpcomm_base_module_modex_set_proc_attr_fn_t)(const char* attr_name, 
+typedef int (*orte_grpcomm_base_module_modex_set_proc_attr_fn_t)(const char* project,
+                                                                 const char* framework,
+                                                                 const char* attr_name, 
                                                                  const void *buffer, size_t size);
 
 /* get an attribute buffer */
 typedef int (*orte_grpcomm_base_module_modex_get_proc_attr_fn_t)(const orte_process_name_t name,
+                                                                 const char* project,
+                                                                 const char* framework,
                                                                  const char* attr_name,
                                                                  void **buffer, size_t *size);
 
