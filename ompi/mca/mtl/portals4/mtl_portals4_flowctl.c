@@ -45,8 +45,6 @@ ompi_mtl_portals4_flowctl_init(void)
     ompi_mtl_portals4.flowctl.max_send_slots = (ompi_mtl_portals4.send_queue_size - 3) / 3;
     ompi_mtl_portals4.flowctl.send_slots = ompi_mtl_portals4.flowctl.max_send_slots;
 
-    opal_output(ompi_mtl_base_output, "num send slots: %d", ompi_mtl_portals4.flowctl.max_send_slots);
-
     ompi_mtl_portals4.flowctl.alert_req.type = portals4_req_flowctl;
     ompi_mtl_portals4.flowctl.alert_req.event_callback = flowctl_alert_callback;
 

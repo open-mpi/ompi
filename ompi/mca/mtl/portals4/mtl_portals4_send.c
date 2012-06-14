@@ -50,7 +50,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
                              "send %lu hit flow control",
                              ptl_request->opcount));
 
-        if (PTL_OK != PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
+        if (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)) {
             ret = PtlMEUnlink(ptl_request->me_h);
             if (PTL_OK != ret) {
                 opal_output_verbose(1, ompi_mtl_base_output,
@@ -83,7 +83,7 @@ ompi_mtl_portals4_callback(ptl_event_t *ev,
     if ((PTL_EVENT_ACK == ev->type) &&
         (PTL_PRIORITY_LIST == ev->ptl_list) &&
         (eager == ompi_mtl_portals4.protocol) &&
-        (!(PTL_OK != PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE)))) {
+        (!PtlHandleIsEqual(ptl_request->me_h, PTL_INVALID_HANDLE))) {
         /* long expected messages with the eager protocol won't see a
            get event to complete the message.  Give them an extra
            count to cause the message to complete with just the SEND
@@ -480,17 +480,17 @@ ompi_mtl_portals4_send(struct mca_mtl_base_module_t* mtl,
 
     ret = ompi_mtl_portals4_send_start(mtl, comm, dest, tag,
                                        convertor, mode, &ptl_request.super);
-    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) goto cleanup;
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
+        if (NULL != ptl_request.super.buffer_ptr) {
+            free(ptl_request.super.buffer_ptr);
+        }
+        return ret;
+    }
 
     while (false == ptl_request.complete) {
         ompi_mtl_portals4_progress();
     }
     ret = ptl_request.retval;
-
- cleanup:
-    if (NULL != ptl_request.super.buffer_ptr) {
-        free(ptl_request.super.buffer_ptr);
-    }
 
     return ret;
 }

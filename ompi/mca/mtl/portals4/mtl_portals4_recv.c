@@ -456,5 +456,7 @@ ompi_mtl_portals4_imrecv(struct mca_mtl_base_module_t* mtl,
                          ptl_request->opcount,
                          (int)length, (unsigned long) ptl_request));
 
+    (*message) = MPI_MESSAGE_NULL;
+
     return ompi_mtl_portals4_recv_progress(&(ptl_message->ev), &ptl_request->super);
 }
