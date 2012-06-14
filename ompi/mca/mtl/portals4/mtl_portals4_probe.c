@@ -207,6 +207,8 @@ ompi_mtl_portals4_improbe(struct mca_mtl_base_module_t *mtl,
             *message = NULL;
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
+    } else {
+        (*message) = MPI_MESSAGE_NULL;
     }
 
     return OMPI_SUCCESS;
