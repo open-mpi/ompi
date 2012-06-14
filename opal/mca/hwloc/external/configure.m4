@@ -111,10 +111,28 @@ AC_DEFUN([MCA_opal_hwloc_external_CONFIG],[
 
            # Must set this variable so that the framework m4 knows
            # what file to include in opal/mca/hwloc/hwloc.h
-           opal_hwloc_external_include="$opal_hwloc_dir/include/hwloc.h"
+           opal_hwloc_external_include="opal/mca/hwloc/external/external.h"
            opal_hwloc_external_ADD_CPPFLAGS=$opal_hwloc_external_CPPFLAGS
            opal_hwloc_external_ADD_LDFLAGS=$opal_hwloc_external_LDFLAGS
            opal_hwloc_external_ADD_LIBS=$opal_hwloc_external_LIBS
+
+           # We have to do some extra indirection to get the
+           # OPAL_HWLOC_WANT_VERBS_HELPER to work.  First, the
+           # opal_hwloc_external_include file (set above), points to a
+           # file here in this component. That file will include the
+           # actual external hwloc.h file (via the
+           # MCA_hwloc_external_header define).  And if
+           # OPAL_HWLOC_WANT_VERBS_HELPER is set, that file will
+           # include the external hwloc/openfabrics-verbs.h file (via
+           # the MCA_hwloc_external_openfabrics_helper define).
+           AC_DEFINE_UNQUOTED(MCA_hwloc_external_header,
+                  ["$opal_hwloc_dir/include/hwloc.h"],
+                  [Location of external hwloc header])
+           AC_DEFINE_UNQUOTED(MCA_hwloc_external_openfabrics_header,
+                  ["$opal_hwloc_dir/include/hwloc/openfabrics-verbs.h"],
+                  [Location of external hwloc header])
+
+           AC_CHECK_HEADERS([infiniband/verbs.h])
 
            # These flags need to get passed to the wrapper compilers
            # (this is unnecessary for the internal/embedded hwloc)
