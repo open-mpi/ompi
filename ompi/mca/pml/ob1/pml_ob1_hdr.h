@@ -291,6 +291,7 @@ struct mca_pml_ob1_rdma_hdr_t {
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
     ompi_ptr_t hdr_req;                       /**< destination request */
     ompi_ptr_t hdr_des;                       /**< source descriptor */
+    ompi_ptr_t hdr_recv_req;                  /**< receive request (NTH: needed for put fallback on send) */
     uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */ 
     mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
