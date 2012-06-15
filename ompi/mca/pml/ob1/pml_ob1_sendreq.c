@@ -482,7 +482,10 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
             return OMPI_SUCCESS;
         }
 
-        MCA_PML_OB1_SEND_REQUEST_RESET(sendreq);
+        /* just in case the btl changed the converter, reset it */
+        if (size > 0 && NULL != des) {
+            MCA_PML_OB1_SEND_REQUEST_RESET(sendreq);
+        }
     } else { 
         /* allocate descriptor */
         mca_bml_base_alloc( bml_btl, &des,
