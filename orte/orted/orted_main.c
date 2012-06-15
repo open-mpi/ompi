@@ -168,6 +168,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "URI for the parent if tree launch is enabled."},
     
+    { "orte", "use", "common_port", '\0', NULL, "use-common-port", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Use the same port as the HNP."},
+    
     { NULL, NULL, NULL, '\0', NULL, "set-sid", 0,
       &orted_globals.set_sid, OPAL_CMD_LINE_TYPE_BOOL,
       "Direct the orted to separate from the current session"},
@@ -685,6 +689,12 @@ int orte_daemon(int argc, char *argv[])
          */
 
         buffer = OBJ_NEW(opal_buffer_t);
+        /* insert our name for rollup purposes */
+        if (ORTE_SUCCESS != (ret = opal_dss.pack(buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME))) {
+            ORTE_ERROR_LOG(ret);
+            OBJ_RELEASE(buffer);
+            goto DONE;
+        }
         /* for now, always include our contact info, even if we are using
          * static ports. Eventually, this will be removed
          */
@@ -708,16 +718,34 @@ int orte_daemon(int argc, char *argv[])
         }
 #endif
 
-        /* send to the HNP's callback - this will flow up the routing
-         * tree if static ports are enabled
-         */
-        if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
-                                               ORTE_RML_TAG_ORTED_CALLBACK, 0,
-                                               rml_cbfunc, NULL))) {
-            ORTE_ERROR_LOG(ret);
-            OBJ_RELEASE(buffer);
-            goto DONE;
-        }            
+        if (orte_static_ports || orte_use_common_port) {
+            /* use the rollup collective to send our data to the HNP
+             * so we minimize the HNP bottleneck
+             */
+            orte_grpcomm_collective_t *coll;
+            coll = OBJ_NEW(orte_grpcomm_collective_t);
+            /* get the list of contributors we need from the routed module */
+            orte_routed.get_routing_list(ORTE_GRPCOMM_COLL_PEERS, coll);
+            /* add the collective to our list */
+            opal_list_append(&orte_grpcomm_base.active_colls, &coll->super);
+            /* send the buffer to ourselves to start the collective */
+            if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_NAME, buffer,
+                                                   ORTE_RML_TAG_ROLLUP, 0,
+                                                   rml_cbfunc, NULL))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }
+        } else {
+            /* send directly to the HNP's callback */
+            if (0 > (ret = orte_rml.send_buffer_nb(ORTE_PROC_MY_HNP, buffer,
+                                                   ORTE_RML_TAG_ORTED_CALLBACK, 0,
+                                                   rml_cbfunc, NULL))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(buffer);
+                goto DONE;
+            }
+        }
     }
 
     if (orte_debug_daemons_flag) {

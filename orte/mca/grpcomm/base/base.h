@@ -74,6 +74,9 @@ ORTE_DECLSPEC orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(void);
 ORTE_DECLSPEC void orte_grpcomm_base_pack_collective(opal_buffer_t *relay,
                                                      orte_grpcomm_collective_t *coll,
                                                      orte_grpcomm_internal_stage_t stg);
+ORTE_DECLSPEC void orte_grpcomm_base_rollup_recv(int status, orte_process_name_t* sender,
+                                                 opal_buffer_t* buffer, orte_rml_tag_t tag,
+                                                 void* cbdata);
 
 /* modex support */
 ORTE_DECLSPEC   int orte_grpcomm_base_set_proc_attr(const char* project,

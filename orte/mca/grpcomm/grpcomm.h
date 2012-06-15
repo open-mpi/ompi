@@ -70,7 +70,6 @@ typedef int (*orte_grpcomm_base_module_allgather_fn_t)(orte_grpcomm_collective_t
 /* barrier function */
 typedef int (*orte_grpcomm_base_module_barrier_fn_t)(orte_grpcomm_collective_t *coll);
 
-    
 /** DATA EXCHANGE FUNCTIONS - SEE ompi/runtime/ompi_module_exchange.h FOR A DESCRIPTION
  *  OF HOW THIS ALL WORKS
  */
