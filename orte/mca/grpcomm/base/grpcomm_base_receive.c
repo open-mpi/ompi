@@ -93,6 +93,16 @@ int orte_grpcomm_base_comm_start(void)
                 recv_issued = false;
                 return rc;
             }
+            if (ORTE_PROC_IS_DAEMON) {
+                if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
+                                                                  ORTE_RML_TAG_ROLLUP,
+                                                                  ORTE_RML_PERSISTENT,
+                                                                  orte_grpcomm_base_rollup_recv, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    recv_issued = false;
+                    return rc;
+                }
+            }
             if (ORTE_PROC_IS_HNP) {
                 if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                                   ORTE_RML_TAG_COLL_ID_REQ,

@@ -518,141 +518,149 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
     char *nodename;
     orte_node_t *node;
     orte_job_t *jdata;
+    orte_process_name_t dname;
 
     /* get the daemon job, if necessary */
     if (NULL == jdatorted) {
         jdatorted = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid);
     }
 
-    /* unpack its contact info */
+    /* multiple daemons could be in this buffer, so unpack until we exhaust the data */
     idx = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        orted_failed_launch = true;
-        goto CLEANUP;
-    }
-
-    /* set the contact info into the hash table */
-    if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
-        ORTE_ERROR_LOG(rc);
-        orted_failed_launch = true;
-        goto CLEANUP;
-    }
-
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:orted_report_launch from daemon %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender)));
-    
-    /* update state and record for this daemon contact info */
-    if (NULL == (daemon = (orte_proc_t*)opal_pointer_array_get_item(jdatorted->procs, sender->vpid))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        orted_failed_launch = true;
-        goto CLEANUP;
-    }
-    daemon->state = ORTE_PROC_STATE_RUNNING;
-    daemon->rml_uri = rml_uri;
-
-    /* unpack the node name */
-    idx = 1;
-    if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nodename, &idx, OPAL_STRING))) {
-        ORTE_ERROR_LOG(rc);
-        orted_failed_launch = true;
-        goto CLEANUP;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:orted_report_launch from daemon %s on node %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(sender), nodename));
-
-    /* look this node up, if necessary */
-    if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
-        if (!orte_have_fqdn_allocation) {
-            /* remove any domain info */
-            if (NULL != (ptr = strchr(nodename, '.'))) {
-                *ptr = '\0';
-                ptr = strdup(nodename);
-                free(nodename);
-                nodename = ptr;
-            }
-        }
-        if (orte_plm_globals.strip_prefix_from_node_names) {
-            /* remove all leading characters and zeroes */
-            ptr = nodename;
-            while (idx < (int)strlen(nodename) &&
-                   (isalpha(nodename[idx]) || '0' == nodename[idx])) {
-                idx++;
-            }
-            if (idx == (int)strlen(nodename)) {
-                ptr = strdup(nodename);
-            } else {
-                ptr = strdup(&nodename[idx]);
-            }
-            free(nodename);
-            nodename = ptr;
-        }
-        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                             "%s plm:base:orted_report_launch attempting to assign daemon %s to node %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(sender), nodename));
-        for (idx=0; idx < orte_node_pool->size; idx++) {
-            if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, idx))) {
-                continue;
-            }
-            if (node->location_verified) {
-                /* already assigned */
-                continue;
-            }
-            if (0 == strcmp(nodename, node->name)) {
-                /* flag that we verified the location */
-                node->location_verified = true;
-                if (node == daemon->node) {
-                    /* it wound up right where it should */
-                    break;
-                }
-                /* remove the prior association */
-                if (NULL != daemon->node) {
-                    OBJ_RELEASE(daemon->node);
-                }
-                if (NULL != node->daemon) {
-                    OBJ_RELEASE(node->daemon);
-                }
-                /* associate this daemon with the node */
-                node->daemon = daemon;
-                OBJ_RETAIN(daemon);
-                /* associate this node with the daemon */
-                daemon->node = node;
-                daemon->nodename = node->name;
-                OBJ_RETAIN(node);
-                OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                                     "%s plm:base:orted_report_launch assigning daemon %s to node %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&daemon->name), node->name));
-                break;
-            }
-        }
-    }
-
-#if OPAL_HAVE_HWLOC
-    /* store the local resources for that node */
-    {
-        hwloc_topology_t topo, t;
-        int i;
-        bool found;
-
-        idx=1;
-        node = daemon->node;
-        if (NULL == node) {
-            /* this shouldn't happen - it indicates an error in the
-             * prior node matching logic, so report it and error out
-             */
-            orte_show_help("help-plm-base.txt", "daemon-no-assigned-node", true,
-                           ORTE_NAME_PRINT(&daemon->name), nodename);
+    while (OPAL_SUCCESS == (rc = opal_dss.unpack(buffer, &dname, &idx, ORTE_NAME))) {
+        /* unpack its contact info */
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &rml_uri, &idx, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
             orted_failed_launch = true;
             goto CLEANUP;
         }
-        if (OPAL_SUCCESS == opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO)) {
+        
+        /* set the contact info into the hash table */
+        if (ORTE_SUCCESS != (rc = orte_rml.set_contact_info(rml_uri))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s plm:base:orted_report_launch from daemon %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&dname)));
+        
+        /* update state and record for this daemon contact info */
+        if (NULL == (daemon = (orte_proc_t*)opal_pointer_array_get_item(jdatorted->procs, dname.vpid))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        daemon->state = ORTE_PROC_STATE_RUNNING;
+        daemon->rml_uri = rml_uri;
+        
+        /* unpack the node name */
+        idx = 1;
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(buffer, &nodename, &idx, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            orted_failed_launch = true;
+            goto CLEANUP;
+        }
+        
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s plm:base:orted_report_launch from daemon %s on node %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             ORTE_NAME_PRINT(&dname), nodename));
+        
+        /* look this node up, if necessary */
+        if (!orte_plm_globals.daemon_nodes_assigned_at_launch) {
+            if (!orte_have_fqdn_allocation) {
+                /* remove any domain info */
+                if (NULL != (ptr = strchr(nodename, '.'))) {
+                    *ptr = '\0';
+                    ptr = strdup(nodename);
+                    free(nodename);
+                    nodename = ptr;
+                }
+            }
+            if (orte_plm_globals.strip_prefix_from_node_names) {
+                /* remove all leading characters and zeroes */
+                ptr = nodename;
+                while (idx < (int)strlen(nodename) &&
+                       (isalpha(nodename[idx]) || '0' == nodename[idx])) {
+                    idx++;
+                }
+                if (idx == (int)strlen(nodename)) {
+                    ptr = strdup(nodename);
+                } else {
+                    ptr = strdup(&nodename[idx]);
+                }
+                free(nodename);
+                nodename = ptr;
+            }
+            OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                 "%s plm:base:orted_report_launch attempting to assign daemon %s to node %s",
+                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                 ORTE_NAME_PRINT(&dname), nodename));
+            for (idx=0; idx < orte_node_pool->size; idx++) {
+                if (NULL == (node = (orte_node_t*)opal_pointer_array_get_item(orte_node_pool, idx))) {
+                    continue;
+                }
+                if (node->location_verified) {
+                    /* already assigned */
+                    continue;
+                }
+                if (0 == strcmp(nodename, node->name)) {
+                    /* flag that we verified the location */
+                    node->location_verified = true;
+                    if (node == daemon->node) {
+                        /* it wound up right where it should */
+                        break;
+                    }
+                    /* remove the prior association */
+                    if (NULL != daemon->node) {
+                        OBJ_RELEASE(daemon->node);
+                    }
+                    if (NULL != node->daemon) {
+                        OBJ_RELEASE(node->daemon);
+                    }
+                    /* associate this daemon with the node */
+                    node->daemon = daemon;
+                    OBJ_RETAIN(daemon);
+                    /* associate this node with the daemon */
+                    daemon->node = node;
+                    daemon->nodename = node->name;
+                    OBJ_RETAIN(node);
+                    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                                         "%s plm:base:orted_report_launch assigning daemon %s to node %s",
+                                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                                         ORTE_NAME_PRINT(&daemon->name), node->name));
+                    break;
+                }
+            }
+        }
+        
+#if OPAL_HAVE_HWLOC
+        /* store the local resources for that node */
+        if (1 == dname.vpid || orte_hetero_nodes) {
+            hwloc_topology_t topo, t;
+            int i;
+            bool found;
+            
+            idx=1;
+            node = daemon->node;
+            if (NULL == node) {
+                /* this shouldn't happen - it indicates an error in the
+                 * prior node matching logic, so report it and error out
+                 */
+                orte_show_help("help-plm-base.txt", "daemon-no-assigned-node", true,
+                               ORTE_NAME_PRINT(&daemon->name), nodename);
+                orted_failed_launch = true;
+                goto CLEANUP;
+            }
+            if (OPAL_SUCCESS != (rc = opal_dss.unpack(buffer, &topo, &idx, OPAL_HWLOC_TOPO))) {
+                ORTE_ERROR_LOG(rc);
+                orted_failed_launch = true;
+                goto CLEANUP;
+            }
             OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                  "%s RECEIVED TOPOLOGY FROM NODE %s",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), nodename));
@@ -681,44 +689,48 @@ void orte_plm_base_daemon_callback(int status, orte_process_name_t* sender,
                 OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
                                      "%s NEW TOPOLOGY - ADDING",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-                
+                    
                 opal_pointer_array_add(orte_node_topologies, topo);
                 node->topology = topo;
             }
         }
-    }
 #endif
-    
- CLEANUP:
-    OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
-                         "%s plm:base:orted_report_launch %s for daemon %s at contact %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         orted_failed_launch ? "failed" : "completed",
-                         ORTE_NAME_PRINT(sender),
-                         (NULL == daemon) ? "UNKNOWN" : daemon->rml_uri));
-
-    if (orted_failed_launch) {
-        ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_FAILED_TO_START);
-    } else {
-        jdatorted->num_reported++;
-        if (jdatorted->num_procs == jdatorted->num_reported) {
-            jdatorted->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
-            /* activate the daemons_reported state for all jobs
-             * whose daemons were launched
-             */
-            for (idx=1; idx < orte_job_data->size; idx++) {
-                if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, idx))) {
-                    continue;
-                }
-                if (ORTE_JOB_STATE_DAEMONS_LAUNCHED == jdata->state) {
-                    ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
+        
+    CLEANUP:
+        OPAL_OUTPUT_VERBOSE((5, orte_plm_globals.output,
+                             "%s plm:base:orted_report_launch %s for daemon %s at contact %s",
+                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                             orted_failed_launch ? "failed" : "completed",
+                             ORTE_NAME_PRINT(&dname),
+                             (NULL == daemon) ? "UNKNOWN" : daemon->rml_uri));
+        
+        if (orted_failed_launch) {
+            ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_FAILED_TO_START);
+            return;
+        } else {
+            jdatorted->num_reported++;
+            if (jdatorted->num_procs == jdatorted->num_reported) {
+                jdatorted->state = ORTE_JOB_STATE_DAEMONS_REPORTED;
+                /* activate the daemons_reported state for all jobs
+                 * whose daemons were launched
+                 */
+                for (idx=1; idx < orte_job_data->size; idx++) {
+                    if (NULL == (jdata = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, idx))) {
+                        continue;
+                    }
+                    if (ORTE_JOB_STATE_DAEMONS_LAUNCHED == jdata->state) {
+                        ORTE_ACTIVATE_JOB_STATE(jdata, ORTE_JOB_STATE_DAEMONS_REPORTED);
+                    }
                 }
             }
         }
+        idx = 1;
     }
-
-    /* if a tree-launch is underway, send the cmd back */
-    if (NULL != orte_tree_launch_cmd) {
+    if (ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER != rc) {
+        ORTE_ERROR_LOG(rc);
+        ORTE_ACTIVATE_JOB_STATE(jdatorted, ORTE_JOB_STATE_FAILED_TO_START);
+    } else if (NULL != orte_tree_launch_cmd) {
+        /* if a tree-launch is underway, send the cmd back */
         OBJ_RETAIN(orte_tree_launch_cmd);
         orte_rml.send_buffer_nb(sender, orte_tree_launch_cmd,
                                 ORTE_RML_TAG_DAEMON, 0,
@@ -770,24 +782,16 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     
     /* check for debug flags */
     if (orte_debug_flag) {
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "orte_debug");
-        opal_argv_append(argc, argv, "1");
+        opal_argv_append(argc, argv, "--debug");
     }
     if (orte_debug_daemons_flag) {
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "orte_debug_daemons");
-        opal_argv_append(argc, argv, "1");
+        opal_argv_append(argc, argv, "--debug-daemons");
     }
     if (orte_debug_daemons_file_flag) {
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "orte_debug_daemons_file");
-        opal_argv_append(argc, argv, "1");
+        opal_argv_append(argc, argv, "--debug-daemons-file");
     }
     if (orted_spin_flag) {
-        opal_argv_append(argc, argv, "-mca");
-        opal_argv_append(argc, argv, "orte_daemon_spin");
-        opal_argv_append(argc, argv, "1");
+        opal_argv_append(argc, argv, "--spin");
     }
 #if OPAL_HAVE_HWLOC
     if (opal_hwloc_report_bindings) {
@@ -880,8 +884,8 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     opal_argv_append(argc, argv, param);
     free(param);
 
-    /* if given and we have static ports, pass the node list */
-    if (orte_static_ports && NULL != nodes) {
+    /* if given and we have static ports or are using a common port, pass the node list */
+    if ((orte_static_ports || orte_use_common_port) && NULL != nodes) {
         /* convert the nodes to a regex */
         if (ORTE_SUCCESS != (rc = orte_regex_create(nodes, &param))) {
             ORTE_ERROR_LOG(rc);
@@ -893,6 +897,11 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         free(param);
     }
     
+    /* if we want to use a common port, tell the daemon to do so */
+    if (orte_use_common_port) {
+        opal_argv_append(argc, argv, "--use-common-port");
+    }
+
     /* pass along any cmd line MCA params provided to mpirun,
      * being sure to "purge" any that would cause problems
      * on backend nodes

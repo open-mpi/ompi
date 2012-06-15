@@ -61,6 +61,7 @@ BEGIN_C_DECLS
 #define ORTE_RML_TAG_WIREUP                  8
 #define ORTE_RML_TAG_RML_INFO_UPDATE         9
 #define ORTE_RML_TAG_ORTED_CALLBACK         10
+#define ORTE_RML_TAG_ROLLUP                 11
 #define ORTE_RML_TAG_REPORT_REMOTE_LAUNCH   12
 
 #define ORTE_RML_TAG_CKPT                   13

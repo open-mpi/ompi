@@ -385,7 +385,7 @@ static orte_process_name_t get_route(orte_process_name_t *target)
         /* THIS CAME FROM OUR OWN JOB FAMILY... */
 
         if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, ORTE_PROC_MY_HNP, target)) {
-            if (!hnp_direct || orte_static_ports) {
+            if (!hnp_direct || orte_static_ports || orte_use_common_port) {
                 OPAL_OUTPUT_VERBOSE((2, orte_routed_base_output,
                                      "%s routing to the HNP through my parent %s",
                                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
@@ -489,8 +489,8 @@ static int init_routes(orte_jobid_t job, opal_buffer_t *ndat)
                 return rc;
             }
 
-            /* if we are using static ports, set my lifeline to point at my parent */
-            if (orte_static_ports) {
+            /* if we are using static ports or a common port, set my lifeline to point at my parent */
+            if (orte_static_ports || orte_use_common_port) {
                 lifeline = ORTE_PROC_MY_PARENT;
             } else {
                 /* set our lifeline to the HNP - we will abort if that connection is lost */

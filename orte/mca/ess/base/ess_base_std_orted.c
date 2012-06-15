@@ -304,13 +304,18 @@ int orte_ess_base_orted_setup(char **hosts)
         goto error;
     }
 #if ORTE_ENABLE_STATIC_PORTS
-    /* if we are using static ports, then we need to setup
+    /* if we are using static ports or a common port, then we need to setup
      * the daemon info so the RML can function properly
      * without requiring a wireup stage. This must be done
      * after we enable_comm as that function determines our
      * own port, which we need in order to construct the nidmap
      */
-    if (orte_static_ports) {
+    if (orte_static_ports || orte_use_common_port) {
+        /* define the routing tree so we know the pattern
+         * if we are trying to setup common or static ports
+         */
+        orte_routed.update_routing_plan();
+
         if (ORTE_SUCCESS != (ret = orte_util_setup_local_nidmap_entries())) {
             ORTE_ERROR_LOG(ret);
             error = "orte_util_nidmap_init";
@@ -364,8 +369,8 @@ int orte_ess_base_orted_setup(char **hosts)
             goto error;
         }
         /* Once the session directory location has been established, set
-         the opal_output env file location to be in the
-         proc-specific session directory. */
+           the opal_output env file location to be in the
+           proc-specific session directory. */
         opal_output_set_output_file_info(orte_process_info.proc_session_dir,
                                          "output-", NULL, NULL);
         
@@ -411,9 +416,9 @@ int orte_ess_base_orted_setup(char **hosts)
     /* setup the global job and node arrays */
     orte_job_data = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_job_data,
-                                                      1,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      1))) {
+                                                       1,
+                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                       1))) {
         ORTE_ERROR_LOG(ret);
         error = "setup job array";
         goto error;
@@ -421,18 +426,18 @@ int orte_ess_base_orted_setup(char **hosts)
     
     orte_node_pool = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_pool,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
         ORTE_ERROR_LOG(ret);
         error = "setup node array";
         goto error;
     }
     orte_node_topologies = OBJ_NEW(opal_pointer_array_t);
     if (ORTE_SUCCESS != (ret = opal_pointer_array_init(orte_node_topologies,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                                                      ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_MAX_SIZE,
+                                                       ORTE_GLOBAL_ARRAY_BLOCK_SIZE))) {
         ORTE_ERROR_LOG(ret);
         error = "setup node topologies array";
         goto error;
@@ -580,7 +585,7 @@ int orte_ess_base_orted_setup(char **hosts)
     
     return ORTE_SUCCESS;
     
-error:
+ error:
     orte_show_help("help-orte-runtime.txt",
                    "orte_init:startup:internal-failure",
                    true, error, ORTE_ERROR_NAME(ret), ret);

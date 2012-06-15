@@ -72,6 +72,7 @@ static int rte_init(void)
 {
     int ret;
     char *error = NULL;
+    char **hosts = NULL;
 
     /* run the prolog */
     if (ORTE_SUCCESS != (ret = orte_ess_base_std_prolog())) {
@@ -86,10 +87,22 @@ static int rte_init(void)
      * default procedure
      */
     if (ORTE_PROC_IS_DAEMON) {
-        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(NULL))) {
+        if (NULL != orte_node_regex) {
+            /* extract the nodes */
+            if (ORTE_SUCCESS != (ret =
+                orte_regex_extract_node_names(orte_node_regex, &hosts)) ||
+                NULL == hosts) {
+                error = "orte_regex_extract_node_names";
+                goto error;
+            }
+        }
+        if (ORTE_SUCCESS != (ret = orte_ess_base_orted_setup(hosts))) {
             ORTE_ERROR_LOG(ret);
             error = "orte_ess_base_orted_setup";
             goto error;
+        }
+        if (NULL != hosts) {
+            opal_argv_free(hosts);
         }
         return ORTE_SUCCESS;
     }
