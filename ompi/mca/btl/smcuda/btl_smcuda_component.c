@@ -541,7 +541,7 @@ int mca_btl_smcuda_component_progress(void)
     /* Check to see if there are any outstanding CUDA events that have
      * completed.  If so, issue the PML callbacks on the fragments.
      */
-    while (1 == progress_one_cuda_event((mca_btl_base_descriptor_t **)&frag)) {
+    while (1 == progress_one_cuda_ipc_event((mca_btl_base_descriptor_t **)&frag)) {
         int btl_ownership;
         btl_ownership = (frag->base.des_flags & MCA_BTL_DES_FLAGS_BTL_OWNERSHIP);
         if (0 != (MCA_BTL_DES_SEND_ALWAYS_CALLBACK & frag->base.des_flags)) {

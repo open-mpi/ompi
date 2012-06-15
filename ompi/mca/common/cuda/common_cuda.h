@@ -31,7 +31,6 @@ struct mca_mpool_common_cuda_reg_t {
 };
 typedef struct mca_mpool_common_cuda_reg_t mca_mpool_common_cuda_reg_t;
 
-
 OMPI_DECLSPEC void mca_common_cuda_register(void *ptr, size_t amount, char *msg);
 
 OMPI_DECLSPEC void mca_common_cuda_unregister(void *ptr, char *msg);
@@ -41,7 +40,19 @@ OMPI_DECLSPEC void mca_common_wait_stream_synchronize(mca_mpool_common_cuda_reg_
 OMPI_DECLSPEC int mca_common_cuda_memcpy(void *dst, void *src, size_t amount, char *msg,
                                          struct mca_btl_base_descriptor_t *, int *done);
 
-OMPI_DECLSPEC int progress_one_cuda_event(struct mca_btl_base_descriptor_t **);
+OMPI_DECLSPEC int mca_common_cuda_record_ipc_event(char *msg,
+                                               struct mca_btl_base_descriptor_t *frag);
+OMPI_DECLSPEC int mca_common_cuda_record_dtoh_event(char *msg,
+                                                    struct mca_btl_base_descriptor_t *frag);
+OMPI_DECLSPEC int mca_common_cuda_record_htod_event(char *msg,
+                                                    struct mca_btl_base_descriptor_t *frag);
+
+OMPI_DECLSPEC void *mca_common_cuda_get_dtoh_stream(void);
+OMPI_DECLSPEC void *mca_common_cuda_get_htod_stream(void);
+
+OMPI_DECLSPEC int progress_one_cuda_ipc_event(struct mca_btl_base_descriptor_t **);
+OMPI_DECLSPEC int progress_one_cuda_dtoh_event(struct mca_btl_base_descriptor_t **);
+OMPI_DECLSPEC int progress_one_cuda_htod_event(struct mca_btl_base_descriptor_t **);
 
 OMPI_DECLSPEC int mca_common_cuda_memhandle_matches(mca_mpool_common_cuda_reg_t *new_reg,
                                                     mca_mpool_common_cuda_reg_t *old_reg);
