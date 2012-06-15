@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2011-2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -14,7 +14,9 @@
 # We only ever build this component statically
 
 noinst_LTLIBRARIES = libmca_hwloc_external.la
-libmca_hwloc_external_la_SOURCES = hwloc_external_component.c
+libmca_hwloc_external_la_SOURCES = \
+        external.h \
+        hwloc_external_component.c
 libmca_hwloc_external_la_LDFLAGS = \
     -module -avoid-version \
     $(opal_hwloc_external_LDFLAGS)
