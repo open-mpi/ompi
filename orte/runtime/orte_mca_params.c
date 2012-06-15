@@ -549,7 +549,7 @@ int orte_register_params(void)
 
     mca_base_param_reg_int_name("orte", "use_common_port",
                                 "Daemons use same port as HNP",
-                                false, false, (int)false, &value);
+                                false, false, (int)true, &value);
     orte_use_common_port = OPAL_INT_TO_BOOL(value);
 
 #endif /* ORTE_DISABLE_FULL_SUPPORT */
