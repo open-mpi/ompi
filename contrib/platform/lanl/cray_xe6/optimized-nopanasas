@@ -7,6 +7,7 @@ enable_heterogeneous=no
 enable_picky=no
 enable_debug=no
 enable_shared=yes
+enable_orte_static_ports=no
 enable_static=yes
 enable_ipv6=no
 enable_mpi_fortran=yes
