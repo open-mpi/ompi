@@ -42,13 +42,9 @@ static int xcast(orte_jobid_t job,
                  orte_rml_tag_t tag);
 static int pmi_allgather(orte_grpcomm_collective_t *coll);
 static int pmi_barrier(orte_grpcomm_collective_t *coll);
-static int pmi_set_proc_attr(const char* project,
-                             const char* framework,
-                             const char* attr_name, 
+static int pmi_set_proc_attr(const char* attr_name, 
                              const void *buffer, size_t size);
 static int pmi_get_proc_attr(const orte_process_name_t name,
-                             const char* project,
-                             const char* framework,
                              const char* attr_name,
                              void **buffer, size_t *size);
 static int modex(orte_grpcomm_collective_t *coll);
@@ -253,9 +249,7 @@ static int pmi_put_last_key (void) {
     return ORTE_SUCCESS;
 }
 
-static int pmi_set_proc_attr(const char* project,
-                             const char* framework,
-                             const char *attr_name, 
+static int pmi_set_proc_attr(const char *attr_name, 
                              const void *buffer, size_t size)
 {
     int rc;
@@ -282,8 +276,6 @@ static int pmi_set_proc_attr(const char* project,
 }
 
 static int pmi_get_proc_attr(const orte_process_name_t name,
-                             const char* project,
-                             const char* framework,
                              const char* attr_name,
                              void **buffer, size_t *size)
 {
@@ -374,7 +366,7 @@ static int modex(orte_grpcomm_collective_t *coll)
     }
 
 
-    rc = pmi_set_proc_attr ("orte", "grpcomm", "HOSTNAME", orte_process_info.nodename, strlen(orte_process_info.nodename));
+    rc = pmi_set_proc_attr ("HOSTNAME", orte_process_info.nodename, strlen(orte_process_info.nodename));
     if (ORTE_SUCCESS != rc) {
 	return rc;
     }
@@ -383,19 +375,19 @@ static int modex(orte_grpcomm_collective_t *coll)
      * can be supported
      */
     rml_uri = orte_rml.get_contact_info();
-    rc = pmi_set_proc_attr ("orte", "grpcomm", "RMLURI", rml_uri, strlen (rml_uri));
+    rc = pmi_set_proc_attr ("RMLURI", rml_uri, strlen (rml_uri));
     if (ORTE_SUCCESS != rc) {
 	return rc;
     }
     free(rml_uri);
 
 #if OPAL_HAVE_HWLOC
-    rc = pmi_set_proc_attr ("orte", "grpcomm", "BIND_LEVEL", &orte_process_info.bind_level, sizeof (orte_process_info.bind_level));
+    rc = pmi_set_proc_attr ("BIND_LEVEL", &orte_process_info.bind_level, sizeof (orte_process_info.bind_level));
     if (ORTE_SUCCESS != rc) {
 	return rc;
     }
 
-    rc = pmi_set_proc_attr ("orte", "grpcomm", "BIND_IDX", &orte_process_info.bind_idx, sizeof (orte_process_info.bind_idx));
+    rc = pmi_set_proc_attr ("BIND_IDX", &orte_process_info.bind_idx, sizeof (orte_process_info.bind_idx));
     if (ORTE_SUCCESS != rc) {
 	return rc;
     }
@@ -406,11 +398,11 @@ static int modex(orte_grpcomm_collective_t *coll)
     /* get my pidmap entry */
     pmap = (orte_pmap_t*)opal_pointer_array_get_item(&jmap->pmap, ORTE_PROC_MY_NAME->vpid);
 
-    rc = pmi_set_proc_attr ("orte", "grpcomm", "LOCALRANK", &pmap->local_rank, sizeof (pmap->local_rank));
+    rc = pmi_set_proc_attr ("LOCALRANK", &pmap->local_rank, sizeof (pmap->local_rank));
     if (ORTE_SUCCESS != rc) {
 	return rc;
     }
-    rc = pmi_set_proc_attr ("orte", "grpcomm", "NODERANK", &pmap->node_rank, sizeof (pmap->node_rank));
+    rc = pmi_set_proc_attr ("NODERANK", &pmap->node_rank, sizeof (pmap->node_rank));
     if (ORTE_SUCCESS != rc) {
 	return rc;
     }
@@ -439,7 +431,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 
         name.vpid = v;
 
-	rc = pmi_get_proc_attr (name, "orte", "grpcomm", "RMLURI", (void **) &rml_uri, &len);
+	rc = pmi_get_proc_attr (name, "RMLURI", (void **) &rml_uri, &len);
 	if (ORTE_SUCCESS != rc) {
 	    return rc;
 	}
@@ -455,7 +447,7 @@ static int modex(orte_grpcomm_collective_t *coll)
         }
         free(rml_uri);
 
-	rc = pmi_get_proc_attr (name, "orte", "grpcomm", "HOSTNAME", &tmp_val, &len);
+	rc = pmi_get_proc_attr (name, "HOSTNAME", &tmp_val, &len);
 	if (ORTE_SUCCESS != rc) {
 	    return rc;
 	}
@@ -504,14 +496,14 @@ static int modex(orte_grpcomm_collective_t *coll)
             unsigned int bind_idx;
 
             /* get the proc's locality info, if available */
-	    pmi_get_proc_attr (name, "orte", "grpcomm", "BIND_LEVEL", &tmp_val, &len);
+	    pmi_get_proc_attr (name, "BIND_LEVEL", &tmp_val, &len);
 	    if (ORTE_SUCCESS == rc && 0 < len) {
 		assert (len == sizeof (bind_level));
 		memmove (&bind_level, tmp_val, len);
 		free (tmp_val);
 	    }
 
-	    rc = pmi_get_proc_attr (name, "orte", "grpcomm", "BIND_IDX", &tmp_val, &len);
+	    rc = pmi_get_proc_attr (name, "BIND_IDX", &tmp_val, &len);
 	    if (ORTE_SUCCESS == rc && 0 < len) {
 		assert (len == sizeof (bind_idx));
 		memmove (&bind_idx, tmp_val, len);
@@ -545,7 +537,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 	}
 #endif
         /* get the proc's local/node rank info */
-	rc = pmi_get_proc_attr (name, "orte", "grpcomm", "LOCALRANK", &tmp_val, &len);
+	rc = pmi_get_proc_attr (name, "LOCALRANK", &tmp_val, &len);
 	if (ORTE_SUCCESS != rc) {
 	    return rc;
 	}
@@ -553,7 +545,7 @@ static int modex(orte_grpcomm_collective_t *coll)
 	memmove (&pmap->local_rank, tmp_val, len);
 	free (tmp_val);
 
-	rc = pmi_get_proc_attr (name, "orte", "grpcomm", "NODERANK", &tmp_val, &len);
+	rc = pmi_get_proc_attr (name, "NODERANK", &tmp_val, &len);
 	if (ORTE_SUCCESS != rc) {
 	    return rc;
 	}
