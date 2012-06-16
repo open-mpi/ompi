@@ -45,7 +45,7 @@ ompi_modex_send(mca_base_component_t * source_component,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
-    rc = orte_grpcomm.set_proc_attr("ompi", "btl", name, data, size);
+    rc = orte_grpcomm.set_proc_attr(name, data, size);
     free(name);
     return rc;
 }
@@ -64,7 +64,7 @@ ompi_modex_recv(mca_base_component_t * component,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
-    rc = orte_grpcomm.get_proc_attr(proc->proc_name, "ompi", "btl", name, buffer, size);
+    rc = orte_grpcomm.get_proc_attr(proc->proc_name, name, buffer, size);
     free(name);
     return rc;
 }
@@ -73,7 +73,7 @@ int
 ompi_modex_send_string(const char* key,
                        const void *buffer, size_t size)
 {
-    return orte_grpcomm.set_proc_attr("ompi", "btl", key, buffer, size);
+    return orte_grpcomm.set_proc_attr(key, buffer, size);
 }
 
 
@@ -82,7 +82,7 @@ ompi_modex_recv_string(const char* key,
                        struct ompi_proc_t *source_proc,
                        void **buffer, size_t *size)
 {
-    return orte_grpcomm.get_proc_attr(source_proc->proc_name, "ompi", "btl", key, buffer, size);
+    return orte_grpcomm.get_proc_attr(source_proc->proc_name, key, buffer, size);
 }
 
 int
@@ -105,7 +105,7 @@ ompi_modex_send_key_value(const char* key,
     }
     OBJ_DESTRUCT(&buf);
     
-    return orte_grpcomm.set_proc_attr("ompi", "btl", key, bo.bytes, bo.size);
+    return orte_grpcomm.set_proc_attr(key, bo.bytes, bo.size);
 }
 
 
@@ -122,7 +122,7 @@ ompi_modex_recv_key_value(const char* key,
     
     bo.bytes = NULL;
     bo.size = 0;
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.get_proc_attr(source_proc->proc_name, "ompi", "btl", key,
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.get_proc_attr(source_proc->proc_name, key,
                                                          (void**)&bo.bytes, &bsize))) {
         return rc;
     }
