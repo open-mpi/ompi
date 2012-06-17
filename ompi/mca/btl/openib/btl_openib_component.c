@@ -885,16 +885,16 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_device_t *device,
                     openib_btl->super.btl_bandwidth = 8000;
                     break;
                 case 8:
-                    /* FDR10: 10 Gbps * 64/66, in megabits */
-                    openib_btl->super.btl_bandwidth = 9700;
+                    /* FDR10: 10.3125 Gbps * 64/66, in megabits */
+                    openib_btl->super.btl_bandwidth = 10000;
                     break;
                 case 16:
-                    /* FDR: 14 Gbps * 64/66, in megabits */
-                    openib_btl->super.btl_bandwidth = 13600;
+                    /* FDR: 14.0625 Gbps * 64/66, in megabits */
+                    openib_btl->super.btl_bandwidth = 13636;
                     break;
                 case 32:
-                    /* EDR: 25 Gbps * 64/66, in megabits */
-                    openib_btl->super.btl_bandwidth = 24200;
+                    /* EDR: 25.78125 Gbps * 64/66, in megabits */
+                    openib_btl->super.btl_bandwidth = 25000;
                     break;
                 default:
                     /* Who knows?  Declare this port unreachable (do
