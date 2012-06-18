@@ -7,6 +7,8 @@
 # $HEADER$
 #
 
+#PROJECT(CHELLO C CXX)
+
 SET(CHELLO_FILES
   chello.c
 )
@@ -14,3 +16,7 @@ SET(CHELLO_FILES
 ADD_EXECUTABLE (chello ${CHELLO_FILES})
 
 TARGET_LINK_LIBRARIES (chello libmpi)
+
+INSTALL(FILES ${OpenMPI_SOURCE_DIR}/test/mpi/environment/chello.c
+  ${OpenMPI_BINARY_DIR}/test/mpi/environment/chello.*
+  DESTINATION share/examples)
