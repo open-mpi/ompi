@@ -214,8 +214,10 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                # installed as part of opensm-devel package and included in
                # ib_types.h, but it doesn't include any other IB-related files.
                AC_CHECK_HEADER([infiniband/complib/cl_types_osd.h],
-                               [$1_have_opensm_devel=1], [], [])
-
+                               [AC_CHECK_LIB([osmcomp], [cl_map_init],
+                                             [$1_have_opensm_devel=1],[])],
+                               [],
+                               [])
                # Abort if dynamic SL support was explicitly requested but opensm-devel
                # package wasn't found. Otherwise, OMPI will be built w/o dynamic SL.
                AC_MSG_CHECKING([if can use dynamic SL support])
@@ -224,7 +226,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                      [AC_MSG_RESULT([no])
                       AS_IF([test "$enable_openib_dynamic_sl" = "yes"],
                             [AC_MSG_WARN([--enable-openib-dynamic-sl was specified but the])
-                             AC_MSG_WARN([appropriate header files could not be found])
+                             AC_MSG_WARN([appropriate header/library files could not be found])
                              AC_MSG_WARN([Please install opensm-devel if you need dynamic SL support])
                              AC_MSG_ERROR([Cannot continue])])])
            fi
@@ -296,6 +298,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         [Enable features required for dynamic SL support])
     if test "1" = "$$1_have_opensm_devel"; then
         AC_MSG_RESULT([yes])
+        $1_LIBS="-losmcomp $$1_LIBS"
     else
         AC_MSG_RESULT([no])
     fi
