@@ -567,6 +567,22 @@ uint64_t  orte_util_hash_name(const orte_process_name_t * name) {
     
     return hash;
 }
+/* hash a vpid based on Robert Jenkin's algorithm - note
+ * that the precise values of the constants in the algo are
+ * irrelevant.
+ */
+uint32_t  orte_util_hash_vpid(orte_vpid_t vpid) {
+    uint32_t hash;
+    
+    hash = vpid;
+    hash = (hash + 0x7ed55d16) + (hash<<12);
+    hash = (hash ^ 0xc761c23c) ^ (hash>>19);
+    hash = (hash + 0x165667b1) + (hash<<5);
+    hash = (hash + 0xd3a2646c) ^ (hash<<9);
+    hash = (hash + 0xfd7046c5) + (hash<<3);
+    hash = (hash ^ 0xb55a4f09) ^ (hash>>16);
+    return hash;
+}
 
 /* sysinfo conversion to and from string */
 int orte_util_convert_string_to_sysinfo(char **cpu_type, char **cpu_model,

@@ -50,6 +50,7 @@
 #include "orte/mca/rml/rml_types.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/routed/routed.h"
+#include "orte/mca/db/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/iof/base/base.h"
@@ -309,6 +310,18 @@ static int rte_init(void)
         goto error;
     }
     
+    /* database */
+    if (ORTE_SUCCESS != (ret = orte_db_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_db_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_db_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_db_base_select";
+        goto error;
+    }
+
     /*
      * Group communications
      */

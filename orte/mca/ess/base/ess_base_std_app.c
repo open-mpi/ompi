@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * $COPYRIGHT$
  * 
@@ -41,6 +41,7 @@
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/routed/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/db/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/odls/odls_types.h"
@@ -140,6 +141,18 @@ int orte_ess_base_app_setup(void)
         goto error;
     }
     
+    /* database */
+    if (ORTE_SUCCESS != (ret = orte_db_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_db_base_open";
+        goto error;
+    }
+    if (ORTE_SUCCESS != (ret = orte_db_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_db_base_select";
+        goto error;
+    }
+
     /*
      * Group communications
      */
@@ -302,6 +315,7 @@ int orte_ess_base_app_finalize(void)
 
     /* now can close the rml and its friendly group comm */
     orte_grpcomm_base_close();
+    orte_db_base_close();
     orte_routed_base_close();
     orte_rml_base_close();
     

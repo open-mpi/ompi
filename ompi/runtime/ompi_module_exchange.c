@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * $COPYRIGHT$
  *
@@ -64,7 +64,7 @@ ompi_modex_recv(mca_base_component_t * component,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
-    rc = orte_grpcomm.get_proc_attr(proc->proc_name, name, buffer, size);
+    rc = orte_grpcomm.get_proc_attr(&proc->proc_name, name, buffer, size);
     free(name);
     return rc;
 }
@@ -82,7 +82,7 @@ ompi_modex_recv_string(const char* key,
                        struct ompi_proc_t *source_proc,
                        void **buffer, size_t *size)
 {
-    return orte_grpcomm.get_proc_attr(source_proc->proc_name, key, buffer, size);
+    return orte_grpcomm.get_proc_attr(&source_proc->proc_name, key, buffer, size);
 }
 
 int
@@ -122,7 +122,7 @@ ompi_modex_recv_key_value(const char* key,
     
     bo.bytes = NULL;
     bo.size = 0;
-    if (ORTE_SUCCESS != (rc = orte_grpcomm.get_proc_attr(source_proc->proc_name, key,
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.get_proc_attr(&source_proc->proc_name, key,
                                                          (void**)&bo.bytes, &bsize))) {
         return rc;
     }
