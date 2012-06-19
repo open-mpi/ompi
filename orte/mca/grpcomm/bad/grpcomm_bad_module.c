@@ -75,11 +75,6 @@ static int init(void)
 {
     int rc;
     
-    if (ORTE_SUCCESS != (rc = orte_grpcomm_base_modex_init())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
     /* setup recvs */
     if (ORTE_SUCCESS != (rc = orte_grpcomm_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
@@ -93,8 +88,6 @@ static int init(void)
  */
 static void finalize(void)
 {
-    orte_grpcomm_base_modex_finalize();
-
     /* cancel recv */
     orte_grpcomm_base_comm_stop();
 }

@@ -99,6 +99,8 @@
 #include "orte/mca/state/base/base.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/grpcomm/base/base.h"
+#include "orte/mca/db/db.h"
+#include "orte/mca/db/base/base.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/ess/base/base.h"
 #include "orte/util/show_help.h"
@@ -390,6 +392,14 @@ void ompi_info_open_components(void)
     map = OBJ_NEW(ompi_info_component_map_t);
     map->type = strdup("grpcomm");
     map->components = &orte_grpcomm_base.components_available;
+    opal_pointer_array_add(&component_map, map);
+    
+    if (ORTE_SUCCESS != orte_db_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("db");
+    map->components = &orte_db_base.available_components;
     opal_pointer_array_add(&component_map, map);
     
     if (ORTE_SUCCESS != orte_ess_base_open()) {
@@ -749,6 +759,7 @@ void ompi_info_close_components()
         (void) ompi_osc_base_close();
 
         (void) orte_grpcomm_base_close();
+        (void) orte_db_base_close();
         (void) orte_ess_base_close();
         (void) orte_show_help_finalize();
 #if !ORTE_DISABLE_FULL_SUPPORT

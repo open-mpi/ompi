@@ -79,7 +79,7 @@ typedef int (*orte_grpcomm_base_module_modex_set_proc_attr_fn_t)(const char* att
                                                                  const void *buffer, size_t size);
 
 /* get an attribute buffer */
-typedef int (*orte_grpcomm_base_module_modex_get_proc_attr_fn_t)(const orte_process_name_t name,
+typedef int (*orte_grpcomm_base_module_modex_get_proc_attr_fn_t)(const orte_process_name_t *name,
                                                                  const char* attr_name,
                                                                  void **buffer, size_t *size);
 
