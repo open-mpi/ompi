@@ -119,14 +119,16 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
     }
 
     frag->flags |= MCA_BTL_UGNI_FRAG_BUFFERED;
- 
-    iov.iov_len  = *size;
-    iov.iov_base = (IOVBASE_TYPE *) frag->base.super.ptr;
 
-    rc = opal_convertor_pack (convertor, &iov, &iov_count, &max_size);
-    if (OPAL_UNLIKELY(rc < 0)) {
-        mca_btl_ugni_frag_return (frag);
-        return NULL;
+    if (*size) {
+        iov.iov_len  = *size;
+        iov.iov_base = (IOVBASE_TYPE *) frag->base.super.ptr;
+
+        rc = opal_convertor_pack (convertor, &iov, &iov_count, &max_size);
+        if (OPAL_UNLIKELY(rc < 0)) {
+            mca_btl_ugni_frag_return (frag);
+            return NULL;
+        }
     }
 
     frag->segments[0].seg_len       = reserve;
