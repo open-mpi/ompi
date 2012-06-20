@@ -150,38 +150,15 @@ grdma_init(struct mca_mpool_base_resources_t *resources)
     }
 
     if (NULL == pool) {
+        /* create new pool */
         pool = OBJ_NEW(mca_mpool_grdma_pool_t);
         if (NULL == pool) {
             return NULL;
         }
 
-        do {
-            if(asprintf(&pool->shm_filename, "/grdma.%s", resources->pool_name) < 0) {
-                break;
-            }
+        pool->pool_name = strdup (resources->pool_name);
 
-            pool->shm_fd = shm_open (pool->shm_filename, O_CREAT | O_RDWR | O_EXCL, 0600);
-            if (0 > pool->shm_fd) {
-                pool->shm_fd = shm_open (pool->shm_filename, O_RDWR, 0600);
-            }
-
-            if (0 > pool->shm_fd) {
-                break;
-            }
-
-            ftruncate (pool->shm_fd, 16);
-
-            pool->flagp = mmap (NULL, 16, PROT_READ | PROT_WRITE, MAP_SHARED, pool->shm_fd, 0);
-            pool->flagp[0] = 0;
-            pool->flagp[1] = 0;
-
-            strcpy (pool->pool_name, resources->pool_name);
-            opal_list_append (&mca_mpool_grdma_component.pools, &pool->super);
-
-            if (1 == opal_list_get_size (&mca_mpool_grdma_component.pools)) {
-                opal_progress_register (mca_mpool_grdma_progress);
-            }
-        } while (0);
+        opal_list_append (&mca_mpool_grdma_component.pools, &pool->super);
     }
 
     mpool_module =

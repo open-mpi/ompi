@@ -39,13 +39,10 @@ BEGIN_C_DECLS
 
 struct mca_mpool_grdma_pool_t {
     opal_list_item_t super;
-    char pool_name[MCA_MPOOL_GRDMA_NAME_MAX];
+    char *pool_name;
     opal_list_t lru_list;
     opal_list_t gc_list;
-    int  shm_fd;
-    char *shm_filename;
-    volatile int64_t *flagp;
-    bool skip;
+    struct mca_rcache_base_module_t *rcache;
 };
 typedef struct mca_mpool_grdma_pool_t mca_mpool_grdma_pool_t;
 
@@ -66,7 +63,7 @@ OMPI_DECLSPEC extern mca_mpool_grdma_component_t mca_mpool_grdma_component;
 struct mca_mpool_grdma_module_t;
 
 struct mca_mpool_base_resources_t {
-    char   pool_name[MCA_MPOOL_GRDMA_NAME_MAX];
+    char  *pool_name;
     void  *reg_data;
     size_t sizeof_reg;
     int (*register_mem)(void *reg_data, void *base, size_t size,
@@ -152,8 +149,6 @@ void mca_mpool_grdma_finalize(struct mca_mpool_base_module_t *mpool);
  * @return OMPI_SUCCESS or failure status
  */
 int mca_mpool_grdma_ft_event(int state);
-
-int mca_mpool_grdma_progress (void);
 
 /**
  * evict one unused registration from the mpool's lru.
