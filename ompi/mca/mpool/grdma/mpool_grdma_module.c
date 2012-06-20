@@ -46,26 +46,16 @@ static void mca_mpool_grdma_pool_contructor (mca_mpool_grdma_pool_t *pool)
 
     OBJ_CONSTRUCT(&pool->lru_list, opal_list_t);
     OBJ_CONSTRUCT(&pool->gc_list, opal_list_t);
+
+    pool->rcache = mca_rcache_base_module_create(mca_mpool_grdma_component.rcache_name);
 }
 
 static void mca_mpool_grdma_pool_destructor (mca_mpool_grdma_pool_t *pool)
 {
-    if (pool->flagp) {
-        opal_progress_unregister (mca_mpool_grdma_progress);
-        munmap ((void *) pool->flagp, 4096);
-    }
-
-    if (0 <= pool->shm_fd) {
-        close (pool->shm_fd);
-        shm_unlink (pool->shm_filename);
-    }
-
-    if (pool->shm_filename) {
-        free (pool->shm_filename);
-    }
-
     OBJ_DESTRUCT(&pool->lru_list);
     OBJ_DESTRUCT(&pool->gc_list);
+
+    free (pool->pool_name);
 }
 
 OBJ_CLASS_INSTANCE(mca_mpool_grdma_pool_t, opal_list_item_t,
@@ -92,8 +82,7 @@ void mca_mpool_grdma_module_init(mca_mpool_grdma_module_t* mpool, mca_mpool_grdm
     mpool->super.mpool_finalize = mca_mpool_grdma_finalize;
     mpool->super.mpool_ft_event = mca_mpool_grdma_ft_event;
     mpool->super.flags = MCA_MPOOL_FLAGS_MPI_ALLOC_MEM;
-    mpool->super.rcache =
-        mca_rcache_base_module_create(mca_mpool_grdma_component.rcache_name);
+    mpool->super.rcache = pool->rcache;
 
     mpool->stat_cache_hit = mpool->stat_cache_miss = mpool->stat_evicted = 0;
     mpool->stat_cache_found = mpool->stat_cache_notfound = 0;
@@ -210,67 +199,7 @@ enum {
 
 bool mca_mpool_grdma_evict (struct mca_mpool_base_module_t *mpool)
 {
-    mca_mpool_grdma_module_t *mpool_grdma = (mca_mpool_grdma_module_t*)mpool;
-    mca_mpool_grdma_pool_t *pool = mpool_grdma->pool;
-    /* give up after awhile */
-    struct timespec timeout = {0, 1000};
-    int tries = 50;
-
-    /* try evicting from the local lru first */
-    if (OPAL_LIKELY(mca_mpool_grdma_evict_lru_local (pool))) {
-        return true;
-    } else if (NULL == pool->flagp) {
-        return false;
-    }
-
-    opal_atomic_rmb ();
-    while (!opal_atomic_cmpset_64 (pool->flagp, MCA_MPOOL_GRDMA_MSG_EMPTY,
-                                   MCA_MPOOL_GRDMA_MSG_NEED_DEREG) && --tries) {
-        nanosleep (&timeout, NULL);
-        opal_atomic_rmb ();
-    } /* line is busy. wait until the flag is set to MCA_MPOOL_GRDMA_MSG_EMPTY */
-
-    if (!tries) {
-        return false;
-    }
-    opal_atomic_wmb ();
-
-    /* wait for a responder to set the flag back to MCA_MPOOL_GRDMA_MSG_COMPLETE or
-       we time out */
-    while (MCA_MPOOL_GRDMA_MSG_COMPLETE != pool->flagp[0] && --tries) {
-        nanosleep (&timeout, NULL);
-        opal_atomic_rmb ();
-    }
-    opal_atomic_wmb ();
-
-    return !!(tries);
-}
-
-int mca_mpool_grdma_progress (void)
-{
-    opal_list_item_t *item;
-
-    for (item = opal_list_get_first (&mca_mpool_grdma_component.pools) ;
-         item != opal_list_get_end (&mca_mpool_grdma_component.pools) ;
-         item = opal_list_get_next (item)) {
-        mca_mpool_grdma_pool_t *pool = (mca_mpool_grdma_pool_t *) item;
-
-        /* nothing to do */
-        if (10 > opal_list_get_size (&pool->lru_list)) {
-            continue;
-        }
-
-        opal_atomic_rmb ();
-        if (opal_atomic_cmpset_64 (pool->flagp, MCA_MPOOL_GRDMA_MSG_NEED_DEREG,
-                                   MCA_MPOOL_GRDMA_MSG_BUSY)) {
-            (void) mca_mpool_grdma_evict_lru_local (pool);
-
-            pool->flagp[0] = MCA_MPOOL_GRDMA_MSG_COMPLETE;
-            opal_atomic_wmb ();
-        }
-    }
-
-    return 0;
+    return mca_mpool_grdma_evict_lru_local (((mca_mpool_grdma_module_t *) mpool)->pool);
 }
 
 /*
@@ -490,7 +419,7 @@ int mca_mpool_grdma_release_memory(struct mca_mpool_base_module_t *mpool,
     OPAL_THREAD_LOCK(&mpool->rcache->lock);
     do {
         reg_cnt = mpool->rcache->rcache_find_all(mpool->rcache, base, size,
-                regs, GRDMA_MPOOL_NREGS);
+                                                 regs, GRDMA_MPOOL_NREGS);
 
         for(i = 0 ; i < reg_cnt ; ++i) {
             regs[i]->flags |= MCA_MPOOL_FLAGS_INVALID;
