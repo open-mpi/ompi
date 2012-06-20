@@ -243,12 +243,13 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
         return rc;
     }
 
+    mpool_resources.pool_name      = "ugni";
     mpool_resources.reg_data       = (void *) ugni_module;
     mpool_resources.sizeof_reg     = sizeof (mca_btl_ugni_reg_t);
     mpool_resources.register_mem   = ugni_reg_rdma_mem;
     mpool_resources.deregister_mem = ugni_dereg_mem;
     ugni_module->super.btl_mpool =
-        mca_mpool_base_module_create("rdma", ugni_module->device,
+        mca_mpool_base_module_create("grdma", ugni_module->device,
                                      &mpool_resources);
     if (NULL == ugni_module->super.btl_mpool) {
         BTL_ERROR(("error creating rdma mpool"));
@@ -258,8 +259,12 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     mpool_resources.register_mem   = ugni_reg_smsg_mem;
 
     ugni_module->smsg_mpool =
-        mca_mpool_base_module_create("rdma", ugni_module->device,
+        mca_mpool_base_module_create("grdma", ugni_module->device,
                                      &mpool_resources);
+    if (NULL == ugni_module->smsg_mpool) {
+        BTL_ERROR(("error creating smsg mpool"));
+        return OMPI_ERROR;
+    }
 
     rc = ompi_free_list_init_ex_new (&ugni_module->eager_frags_send,
                                      sizeof (mca_btl_ugni_eager_frag_t), 8,
@@ -304,9 +309,6 @@ mca_btl_ugni_setup_mpools (mca_btl_ugni_module_t *ugni_module)
     if (nprocs/mbox_increment > ugni_module->reg_max / 8) {
         mbox_increment = nprocs / (ugni_module->reg_max >> 3);
     }
-
-    /* reserve registrations for mailboxes */
-    ugni_module->reg_max -= nprocs/mbox_increment + 1;
 
     rc = ompi_free_list_init_new (&ugni_module->smsg_mboxes,
                                   sizeof (mca_btl_ugni_smsg_mbox_t), 8,
