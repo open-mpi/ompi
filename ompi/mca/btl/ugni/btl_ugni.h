@@ -23,7 +23,7 @@
 
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #include "opal/util/output.h"
 #include "opal_stdint.h"
 
