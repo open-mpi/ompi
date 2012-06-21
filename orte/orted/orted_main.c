@@ -117,6 +117,7 @@ static struct {
     int fail_delay;
     bool abort;
     bool mapreduce;
+    bool tree_spawn;
 } orted_globals;
 
 /*
@@ -171,6 +172,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { "orte", "use", "common_port", '\0', NULL, "use-common-port", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Use the same port as the HNP."},
+    
+    { NULL, NULL, NULL, '\0', NULL, "tree-spawn", 0,
+      &orted_globals.tree_spawn, OPAL_CMD_LINE_TYPE_BOOL,
+      "Tree spawn is underway"},
     
     { NULL, NULL, NULL, '\0', NULL, "set-sid", 0,
       &orted_globals.set_sid, OPAL_CMD_LINE_TYPE_BOOL,
@@ -718,7 +723,7 @@ int orte_daemon(int argc, char *argv[])
         }
 #endif
 
-        if (orte_static_ports || orte_use_common_port) {
+        if ((orte_static_ports || orte_use_common_port) && !orted_globals.tree_spawn) {
             /* use the rollup collective to send our data to the HNP
              * so we minimize the HNP bottleneck
              */

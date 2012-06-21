@@ -897,9 +897,16 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
         free(param);
     }
     
-    /* if we want to use a common port, tell the daemon to do so */
     if (orte_use_common_port) {
+        /* tell the daemon to use the common port */
         opal_argv_append(argc, argv, "--use-common-port");
+    }
+
+    /* warn the daemons if we are using a tree spawn pattern so they
+     * know they shouldn't do a rollup on their callback
+     */
+    if (NULL != orte_tree_launch_cmd) {
+        opal_argv_append(argc, argv, "--tree-spawn");
     }
 
     /* pass along any cmd line MCA params provided to mpirun,
@@ -958,8 +965,8 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     mca_base_param_lookup_string(loc_id, &amca_param_prefix);
     if( NULL != amca_param_prefix ) {
         /* Could also use the short version '-am'
-        * but being verbose has some value
-        */
+         * but being verbose has some value
+         */
         opal_argv_append(argc, argv, "-mca");
         opal_argv_append(argc, argv, "mca_base_param_file_prefix");
         opal_argv_append(argc, argv, amca_param_prefix);
