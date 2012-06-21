@@ -35,7 +35,7 @@
 static int init(void);
 static void finalize(void);
 static int store(const orte_process_name_t *proc,
-                 const char *key, const void *object, size_t size);
+                 const char *key, const void *object, int32_t size);
 static int fetch(const orte_process_name_t *proc,
                  const char *key,
                  opal_list_t *values);
@@ -174,7 +174,7 @@ static proc_data_t* lookup_orte_proc(opal_hash_table_t *jtable, orte_vpid_t vpid
 }
 
 static int store(const orte_process_name_t *proc,
-                 const char *key, const void *object, size_t size)
+                 const char *key, const void *object, int32_t size)
 {
     int i;
     job_data_t *jtable, *jtab;
