@@ -16,6 +16,8 @@
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "ompi/proc/proc.h"
+#include "orte/mca/ess/ess.h"
+#include "orte/runtime/orte_globals.h"
 #include "ompi/communicator/communicator.h"
 
 #include "mtl_mxm.h"
@@ -143,14 +145,13 @@ int ompi_mtl_mxm_module_init(void)
     }
     MXM_VERBOSE(1, "MXM support enabled");
 
-    for (proc = 0; proc < totps; proc++) {
-        if (mp == procs[proc]) {
-            lr = nlps++;
-            mxlr = max(mxlr, procs[proc]->proc_name.vpid);
-            continue;
-        }
+    if ((lr = orte_ess.get_node_rank(ORTE_PROC_MY_NAME)) == ORTE_NODE_RANK_INVALID) {
+        MXM_ERROR("Unable to obtain local node rank");
+        return OMPI_ERROR;
+    }
 
-        if (OPAL_PROC_ON_LOCAL_NODE(procs[proc]->proc_flags)) {
+    for (proc = 0; proc < totps; proc++) {
+        if(OPAL_PROC_ON_LOCAL_NODE(orte_ess.proc_get_locality(&procs[proc]->proc_name))) {
             mxlr = max(mxlr, procs[proc]->proc_name.vpid);
             nlps++;
         }
