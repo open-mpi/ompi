@@ -19,8 +19,6 @@
 # $HEADER$
 #
 
-EXTRA_DIST = .windows
-
 AM_CPPFLAGS = $(mpool_grdma_CPPFLAGS)
 
 sources = \
