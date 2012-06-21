@@ -785,6 +785,11 @@ static int remote_spawn(opal_buffer_t *launch)
         goto cleanup;
     }
     
+    /* ensure the system knows we are not using common ports since we are
+     * doing a tree spawn
+     */
+    orte_use_common_port = false;
+
     /* setup the launch */
     if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, orte_process_info.nodename, &node_name_index1,
                                            &proc_vpid_index, prefix))) {
@@ -792,7 +797,10 @@ static int remote_spawn(opal_buffer_t *launch)
         OBJ_DESTRUCT(&coll);
         goto cleanup;
     }
-    
+
+    /* tell the daemon we are in a tree spawn */
+    opal_argv_append(&argc, &argv, "--tree-spawn");
+
     /* get the daemon job object */
     if (NULL == (daemons = orte_get_job_data_object(ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
@@ -1067,22 +1075,20 @@ static void launch_daemons(int fd, short args, void *cbdata)
             }
         }
     }
-    
-    /* setup the launch */
-    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, node->name, &node_name_index1,
-                                           &proc_vpid_index, prefix_dir))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-        
+            
     /* if we are tree launching, find our children and create the launch cmd */
     if (mca_plm_rsh_component.tree_spawn) {
         orte_daemon_cmd_flag_t command = ORTE_DAEMON_TREE_SPAWN;
         opal_byte_object_t bo, *boptr;
         orte_job_t *jdatorted;
         
-        orte_tree_launch_cmd= OBJ_NEW(opal_buffer_t);
+        /* ensure all systems know we are not using a common port since we
+         * are doing a tree spawn
+         */
+        orte_use_common_port = false;
+
+        /* get the tree spawn buffer */
+        orte_tree_launch_cmd = OBJ_NEW(opal_buffer_t);
         /* insert the tree_spawn cmd */
         if (ORTE_SUCCESS != (rc = opal_dss.pack(orte_tree_launch_cmd, &command, 1, ORTE_DAEMON_CMD))) {
             ORTE_ERROR_LOG(rc);
@@ -1121,6 +1127,13 @@ static void launch_daemons(int fd, short args, void *cbdata)
         /* get the updated routing list */
         OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
         orte_routed.get_routing_list(ORTE_GRPCOMM_XCAST, &coll);
+    }
+    
+    /* setup the launch */
+    if (ORTE_SUCCESS != (rc = setup_launch(&argc, &argv, node->name, &node_name_index1,
+                                           &proc_vpid_index, prefix_dir))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
     
     /*
