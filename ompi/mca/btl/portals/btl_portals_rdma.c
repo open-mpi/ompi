@@ -32,14 +32,14 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
                     struct mca_btl_base_endpoint_t* btl_peer,
                     struct mca_btl_base_descriptor_t* descriptor)
 {
+    mca_btl_portals_segment_t *dst_seg = (mca_btl_portals_segment_t *) descriptor->des_dst;
     mca_btl_portals_frag_t *frag = (mca_btl_portals_frag_t*) descriptor;
     int ret;
     unsigned char hdr_data[8];
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "PtlPut (rdma) fragment %lx, bits %" PRIx64,
-                         (unsigned long) frag,
-                         frag->base.des_dst[0].seg_key.key64[0]));
+                         (unsigned long) frag, dst_seg->key));
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
     assert(frag->md_h != PTL_INVALID_HANDLE);
@@ -55,7 +55,7 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
                  *((mca_btl_base_endpoint_t*) btl_peer),
                  OMPI_BTL_PORTALS_RDMA_TABLE_ID,
                  0, /* ac_index - not used*/
-                 frag->base.des_dst[0].seg_key.key64[0], /* match bits */
+                 dst_seg->key, /* match bits */
                  0, /* remote offset - not used */
                  *((ptl_hdr_data_t*) hdr_data));            /* hdr_data: tag */
     if (ret != PTL_OK) {
@@ -73,13 +73,13 @@ mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
                     struct mca_btl_base_endpoint_t* btl_peer,
                     struct mca_btl_base_descriptor_t* descriptor)
 {
+    mca_btl_portals_segment_t *src_seg = (mca_btl_portals_segment_t *) descriptor->des_src;
     mca_btl_portals_frag_t *frag = (mca_btl_portals_frag_t*) descriptor;
     int ret;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "PtlGet (rdma) fragment %lx, bits %" PRIx64,
-                         (unsigned long) frag,
-                         frag->base.des_src[0].seg_key.key64[0]));
+                         (unsigned long) frag, src_seg->key));
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
     assert(frag->md_h != PTL_INVALID_HANDLE);
@@ -91,7 +91,7 @@ mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
                  *((mca_btl_base_endpoint_t*) btl_peer),
                  OMPI_BTL_PORTALS_RDMA_TABLE_ID,
                  0, /* ac_index - not used*/
-                 frag->base.des_src[0].seg_key.key64[0], /* match bits */
+                 src_seg->key, /* match bits */
                  0); /* remote offset - not used */
     if (ret != PTL_OK) {
         opal_output(mca_btl_portals_component.portals_output,

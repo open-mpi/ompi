@@ -20,10 +20,10 @@
 
 static inline struct mca_btl_base_descriptor_t *
 mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
-				       mca_btl_base_endpoint_t *endpoint,
-				       struct opal_convertor_t *convertor,
-				       uint8_t order, size_t reserve, size_t *size,
-				       uint32_t flags)
+                                       mca_btl_base_endpoint_t *endpoint,
+                                       struct opal_convertor_t *convertor,
+                                       uint8_t order, size_t reserve, size_t *size,
+                                       uint32_t flags)
 {
     bool use_eager_get = (*size + reserve) > mca_btl_ugni_component.smsg_max_data;
     mca_btl_ugni_base_frag_t *frag = NULL;
@@ -53,23 +53,21 @@ mca_btl_ugni_prepare_src_send_inplace (struct mca_btl_base_module_t *btl,
         frag->flags = MCA_BTL_UGNI_FRAG_EAGER | MCA_BTL_UGNI_FRAG_IGNORE;
 
         frag->registration = registration;
-        memcpy ((void *) frag->segments[1].seg_key.key64,
-                (void *)&registration->memory_hdl,
-                sizeof (registration->memory_hdl));        
+        frag->segments[1].memory_handle = registration->memory_hdl;
 
         frag->hdr_size = reserve + sizeof (frag->hdr.eager);
-        frag->segments[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
+        frag->segments[0].base.seg_addr.pval = frag->hdr.eager_ex.pml_header;
     } else {
         frag->hdr_size = reserve + sizeof (frag->hdr.send);
-        frag->segments[0].seg_addr.pval = frag->hdr.send_ex.pml_header;
+        frag->segments[0].base.seg_addr.pval = frag->hdr.send_ex.pml_header;
     }
 
-    frag->segments[0].seg_len       = reserve;
+    frag->segments[0].base.seg_len       = reserve;
 
-    frag->segments[1].seg_addr.pval = data_ptr;
-    frag->segments[1].seg_len       = *size;
+    frag->segments[1].base.seg_addr.pval = data_ptr;
+    frag->segments[1].base.seg_len       = *size;
 
-    frag->base.des_src     = frag->segments;
+    frag->base.des_src     = &frag->segments->base;
     frag->base.des_src_cnt = 2;
     frag->base.order       = order;
     frag->base.des_flags   = flags;
@@ -102,12 +100,10 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
 
         registration = (mca_btl_ugni_reg_t *) frag->base.super.registration;
 
-        memcpy ((void *) frag->segments[1].seg_key.key64,
-                (void *)&registration->memory_hdl,
-                sizeof (registration->memory_hdl));
+        frag->segments[1].memory_handle = registration->memory_hdl;
 
         frag->hdr_size = reserve + sizeof (frag->hdr.eager);
-        frag->segments[0].seg_addr.pval = frag->hdr.eager_ex.pml_header;
+        frag->segments[0].base.seg_addr.pval = frag->hdr.eager_ex.pml_header;
     } else {
         (void) MCA_BTL_UGNI_FRAG_ALLOC_SMSG(endpoint, frag);
         if (OPAL_UNLIKELY(NULL == frag)) {
@@ -115,7 +111,7 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
         }
 
         frag->hdr_size = reserve + sizeof (frag->hdr.send);
-        frag->segments[0].seg_addr.pval = frag->hdr.send_ex.pml_header;
+        frag->segments[0].base.seg_addr.pval = frag->hdr.send_ex.pml_header;
     }
 
     frag->flags |= MCA_BTL_UGNI_FRAG_BUFFERED;
@@ -131,12 +127,12 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
         }
     }
 
-    frag->segments[0].seg_len       = reserve;
+    frag->segments[0].base.seg_len       = reserve;
 
-    frag->segments[1].seg_addr.pval = frag->base.super.ptr;
-    frag->segments[1].seg_len       = *size;
+    frag->segments[1].base.seg_addr.pval = frag->base.super.ptr;
+    frag->segments[1].base.seg_len       = *size;
 
-    frag->base.des_src     = frag->segments;
+    frag->base.des_src     = &frag->segments->base;
     frag->base.des_src_cnt = 2;
     frag->base.order       = order;
     frag->base.des_flags   = flags;
@@ -146,10 +142,10 @@ mca_btl_ugni_prepare_src_send_buffered (struct mca_btl_base_module_t *btl,
 
 static inline struct mca_btl_base_descriptor_t *
 mca_btl_ugni_prepare_src_send (struct mca_btl_base_module_t *btl,
-			       mca_btl_base_endpoint_t *endpoint,
-			       struct opal_convertor_t *convertor,
-			       uint8_t order, size_t reserve, size_t *size,
-			       uint32_t flags)
+                               mca_btl_base_endpoint_t *endpoint,
+                               struct opal_convertor_t *convertor,
+                               uint8_t order, size_t reserve, size_t *size,
+                               uint32_t flags)
 {
     bool use_eager_get = (*size + reserve) > mca_btl_ugni_component.smsg_max_data;
     bool send_in_place;
@@ -171,11 +167,11 @@ mca_btl_ugni_prepare_src_send (struct mca_btl_base_module_t *btl,
 
 static inline struct mca_btl_base_descriptor_t *
 mca_btl_ugni_prepare_src_rdma (struct mca_btl_base_module_t *btl,
-			       mca_btl_base_endpoint_t *endpoint,
+                               mca_btl_base_endpoint_t *endpoint,
                                mca_mpool_base_registration_t *registration,
-			       struct opal_convertor_t *convertor,
-			       uint8_t order, size_t *size,
-			       uint32_t flags)
+                               struct opal_convertor_t *convertor,
+                               uint8_t order, size_t *size,
+                               uint32_t flags)
 {
     mca_btl_ugni_base_frag_t *frag;
     void *data_ptr;
@@ -206,18 +202,24 @@ mca_btl_ugni_prepare_src_rdma (struct mca_btl_base_module_t *btl,
             frag->registration = (mca_btl_ugni_reg_t *) registration;
         }
 
-        memcpy ((void *) frag->segments[0].seg_key.key64,
-                (void *)&((mca_btl_ugni_reg_t *)registration)->memory_hdl,
-                sizeof (((mca_btl_ugni_reg_t *)registration)->memory_hdl));
+        frag->segments[0].memory_handle = ((mca_btl_ugni_reg_t *)registration)->memory_hdl;
     } else {
-        memset ((void *) frag->segments[0].seg_key.key64, 0,
-                sizeof (frag->segments[0].seg_key.key64));
+        memset ((void *) &frag->segments[0].memory_handle, 0,
+                sizeof (frag->segments[0].memory_handle));
     }
 
-    frag->segments[0].seg_addr.pval = data_ptr;
-    frag->segments[0].seg_len       = *size;
+    if ((flags & MCA_BTL_DES_FLAGS_GET) && (*size & 0x3)) {
+        memmove (frag->segments[0].extra_bytes, (char *) data_ptr + (*size & ~0x3),
+                 *size & 0x3);
+        frag->segments[0].extra_byte_count = *size & 0x3;
+    } else {
+        frag->segments[0].extra_byte_count = 0;
+    }
 
-    frag->base.des_src     = frag->segments;
+    frag->segments[0].base.seg_addr.pval = data_ptr;
+    frag->segments[0].base.seg_len       = *size;
+
+    frag->base.des_src     = &frag->segments->base;
     frag->base.des_src_cnt = 1;
     frag->base.order       = order;
     frag->base.des_flags   = flags;

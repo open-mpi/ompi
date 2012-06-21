@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -7,7 +8,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2009-2011 Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
@@ -186,15 +187,15 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
 
             assert(NULL != descriptor);
 
-            descriptor->des_dst = sendreq->remote_segs;
+            descriptor->des_dst = (mca_btl_base_segment_t *) sendreq->remote_segs;
             descriptor->des_dst_cnt = 1;
+            memmove (descriptor->des_dst, rdma_btl->peer_seg, sizeof (rdma_btl->peer_seg));
+
             descriptor->des_dst[0].seg_addr.lval = 
                 module->m_peer_info[target].peer_base + 
                 ((unsigned long)sendreq->req_target_disp * module->m_win->w_disp_unit);
             descriptor->des_dst[0].seg_len = 
                 sendreq->req_origin_bytes_packed;
-            descriptor->des_dst[0].seg_key.key64[0] = 
-                rdma_btl->peer_seg_key;
 #if 0
             opal_output(0, "putting to %d: 0x%lx(%d), %d, %d",
                         target, descriptor->des_dst[0].seg_addr.lval,
@@ -214,15 +215,15 @@ ompi_osc_rdma_sendreq_rdma(ompi_osc_rdma_module_t *module,
 
             assert(NULL != descriptor);
 
-            descriptor->des_src = sendreq->remote_segs;
+            descriptor->des_src = (mca_btl_base_segment_t *) sendreq->remote_segs;
             descriptor->des_src_cnt = 1;
+            memmove (descriptor->des_src, rdma_btl->peer_seg, sizeof (rdma_btl->peer_seg));
+
             descriptor->des_src[0].seg_addr.lval = 
                 module->m_peer_info[target].peer_base + 
                 ((unsigned long)sendreq->req_target_disp * module->m_win->w_disp_unit);
             descriptor->des_src[0].seg_len = 
                 sendreq->req_origin_bytes_packed;
-            descriptor->des_src[0].seg_key.key64[0] = 
-                rdma_btl->peer_seg_key;
 
             descriptor->des_cbdata = sendreq;
             descriptor->des_cbfunc = rdma_cb;

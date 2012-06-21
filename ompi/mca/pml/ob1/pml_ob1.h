@@ -284,15 +284,30 @@ void mca_pml_ob1_process_pending_rdma(void);
 /*
  * Compute the total number of bytes on supplied descriptor
  */
-#define MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH(segments, count, hdrlen, length) \
-do {                                                                        \
-   size_t i;                                                                \
-                                                                            \
-   for( i = 0; i < count; i++ ) {                                           \
-       length += segments[i].seg_len;                                       \
-   }                                                                        \
-   length -= hdrlen;                                                        \
-} while(0)
+static inline int mca_pml_ob1_compute_segment_length (size_t seg_size, void *segments, size_t count,
+                                                      size_t hdrlen) {
+    size_t i, length;
+
+    for (i = 0, length = -hdrlen ; i < count ; ++i) {
+        mca_btl_base_segment_t *segment =
+            (mca_btl_base_segment_t *)((char *) segments + i * seg_size);
+
+        length += segment->seg_len;
+    }
+
+    return length;
+}
+
+static inline int mca_pml_ob1_compute_segment_length_base (mca_btl_base_segment_t *segments,
+                                                           size_t count, size_t hdrlen) {
+    size_t i, length;
+
+    for (i = 0, length = -hdrlen ; i < count ; ++i) {
+        length += segments[i].seg_len;
+    }
+
+    return length;
+}
 
 /* represent BTL chosen for sending request */
 struct mca_pml_ob1_com_btl_t {

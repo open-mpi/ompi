@@ -50,6 +50,7 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
 {
     mca_btl_active_message_callback_t *reg;
     mca_btl_ugni_base_frag_t frag;
+    mca_btl_base_segment_t seg;
     bool disconnect = false;
     uintptr_t data_ptr;
     gni_return_t rc;
@@ -100,11 +101,11 @@ int mca_btl_ugni_smsg_process (mca_btl_base_endpoint_t *ep)
             BTL_VERBOSE(("received smsg fragment. hdr = {len = %u, tag = %d}", len, tag));
 
             reg = mca_btl_base_active_message_trigger + tag;
-            frag.base.des_dst     = frag.segments;
+            frag.base.des_dst     = &seg;
             frag.base.des_dst_cnt = 1;
 
-            frag.segments[0].seg_addr.pval = (void *)((uintptr_t)data_ptr + sizeof (mca_btl_ugni_send_frag_hdr_t));
-            frag.segments[0].seg_len       = len;
+            seg.seg_addr.pval = (void *)((uintptr_t)data_ptr + sizeof (mca_btl_ugni_send_frag_hdr_t));
+            seg.seg_len       = len;
 
             assert (NULL != reg->cbfunc);
 
@@ -186,7 +187,6 @@ int mca_btl_ugni_progress_remote_smsg (mca_btl_ugni_module_t *btl)
     gni_cq_entry_t event_data;
     gni_return_t grc;
     uint64_t inst_id;
-    int rc;
 
     grc = GNI_CqGetEvent (btl->smsg_remote_cq, &event_data);
     if (GNI_RC_NOT_DONE == grc) {

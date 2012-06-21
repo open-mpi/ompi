@@ -112,7 +112,7 @@ btl_ugni_component_register(void)
     mca_btl_ugni_component.ugni_get_limit =
         mca_btl_ugni_param_register_int("get_limit", "Maximum size message that "
                                         "will be sent using a get protocol "
-                                        "(default 4M)", 4 * 1024 * 1024);
+                                        "(default 1M)", 1 * 1024 * 1024);
 
     mca_btl_ugni_component.rdma_max_retries =
         mca_btl_ugni_param_register_int("rdma_max_retries", NULL, 16);
@@ -141,6 +141,8 @@ btl_ugni_component_register(void)
 
     mca_btl_ugni_module.super.btl_flags = MCA_BTL_FLAGS_SEND |
         MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE;
+
+    mca_btl_ugni_module.super.btl_seg_size = sizeof (mca_btl_ugni_segment_t);
 
     mca_btl_ugni_module.super.btl_bandwidth = 40000; /* Mbs */
     mca_btl_ugni_module.super.btl_latency   = 2;     /* Microsecs */
@@ -427,7 +429,7 @@ mca_btl_ugni_progress_rdma (mca_btl_ugni_module_t *ugni_module)
         return 0;
     }
 
-    BTL_VERBOSE(("RDMA/FMA complete for frag %p", frag));
+    BTL_VERBOSE(("RDMA/FMA complete for frag %p", (void *) frag));
 
     frag->cbfunc (frag, ompi_common_rc_ugni_to_ompi (rc));
 
@@ -462,9 +464,12 @@ mca_btl_ugni_progress_wait_list (mca_btl_ugni_module_t *ugni_module)
             (mca_btl_base_endpoint_t *) opal_list_remove_first (&ugni_module->ep_wait_list);
         assert (NULL != endpoint);
 
+        endpoint->wait_listed = false;
+
         rc = mca_btl_progress_send_wait_list (endpoint);
-        if (OMPI_SUCCESS != rc) {
+        if (OMPI_SUCCESS != rc && false == endpoint->wait_listed) {
             opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
+            endpoint->wait_listed = true;
         }
     }
 

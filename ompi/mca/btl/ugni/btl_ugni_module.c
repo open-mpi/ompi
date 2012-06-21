@@ -54,6 +54,7 @@ mca_btl_ugni_module_t mca_btl_ugni_module = {
         /* .btl_latency = */                   0,
         /* .btl_bandwidth = */                 0,
         /* .btl_flags = */                     0,
+        /* .btl_seg_size = */                  0,
 
         /* member functions */
         mca_btl_ugni_add_procs,
@@ -215,15 +216,15 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
 
     frag->base.des_flags = flags;
     frag->base.order = order;
-    frag->base.des_src = frag->segments + 1;
+    frag->base.des_src = &frag->segments[1].base;
     frag->base.des_src_cnt = 1;
-    frag->base.des_dst = frag->segments + 1;
+    frag->base.des_dst = &frag->segments[1].base;
     frag->base.des_dst_cnt = 1;
 
-    frag->segments[0].seg_addr.pval = NULL;
-    frag->segments[0].seg_len       = 0;
-    frag->segments[1].seg_addr.pval = frag->base.super.ptr;
-    frag->segments[1].seg_len       = size;
+    frag->segments[0].base.seg_addr.pval = NULL;
+    frag->segments[0].base.seg_len       = 0;
+    frag->segments[1].base.seg_addr.pval = frag->base.super.ptr;
+    frag->segments[1].base.seg_len       = size;
 
     frag->flags = MCA_BTL_UGNI_FRAG_BUFFERED;
     if (size > mca_btl_ugni_component.smsg_max_data) {
@@ -234,9 +235,7 @@ mca_btl_ugni_alloc(struct mca_btl_base_module_t *btl,
 
         registration = (mca_btl_ugni_reg_t *) frag->base.super.registration;
 
-        memcpy ((void *) frag->segments[1].seg_key.key64,
-                (void *)&registration->memory_hdl,
-                sizeof (registration->memory_hdl));
+        frag->segments[1].memory_handle = registration->memory_hdl;
     } else {
         frag->hdr_size = sizeof (frag->hdr.send);
     }
@@ -299,14 +298,11 @@ mca_btl_ugni_prepare_dst (mca_btl_base_module_t *btl,
         frag->registration = (mca_btl_ugni_reg_t*) registration;
     }
 
-    memcpy ((void *) frag->segments[0].seg_key.key64,
-            (void *)&((mca_btl_ugni_reg_t *)registration)->memory_hdl,
-            sizeof (((mca_btl_ugni_reg_t *)registration)->memory_hdl));
+    frag->segments[0].memory_handle      = ((mca_btl_ugni_reg_t *)registration)->memory_hdl;
+    frag->segments[0].base.seg_len       = *size;
+    frag->segments[0].base.seg_addr.pval = data_ptr;
 
-    frag->segments[0].seg_len = *size;
-    frag->segments[0].seg_addr.pval = data_ptr;
-
-    frag->base.des_dst     = frag->segments;
+    frag->base.des_dst     = &frag->segments->base;
     frag->base.des_dst_cnt = 1;
     frag->base.order       = order;
     frag->base.des_flags   = flags;

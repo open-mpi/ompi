@@ -27,14 +27,14 @@ static inline void mca_btl_smcuda_frag_common_constructor(mca_btl_smcuda_frag_t*
     if(frag->hdr != NULL) {
         frag->hdr->frag = (mca_btl_smcuda_frag_t*)((uintptr_t)frag |
             MCA_BTL_SMCUDA_FRAG_ACK);
-        frag->segment.seg_addr.pval = ((char*)frag->hdr) +
+        frag->segment.base.seg_addr.pval = ((char*)frag->hdr) +
             sizeof(mca_btl_smcuda_hdr_t);
         frag->hdr->my_smp_rank = mca_btl_smcuda_component.my_smp_rank;
     }
-    frag->segment.seg_len = frag->size;
-    frag->base.des_src = &frag->segment;
+    frag->segment.base.seg_len = frag->size;
+    frag->base.des_src = &frag->segment.base;
     frag->base.des_src_cnt = 1;
-    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst = &frag->segment.base;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
 #if OMPI_CUDA_SUPPORT

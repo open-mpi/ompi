@@ -74,6 +74,7 @@ mca_btl_smcuda_t mca_btl_smcuda = {
         0, /* btl_latency */
         0, /* btl_bandwidth */
         0, /* btl flags */
+        0, /* btl segment size */
         mca_btl_smcuda_add_procs,
         mca_btl_smcuda_del_procs,
         NULL,
@@ -654,7 +655,7 @@ extern mca_btl_base_descriptor_t* mca_btl_smcuda_alloc(
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
-        frag->segment.seg_len = size;
+        frag->segment.base.seg_len = size;
         frag->base.des_flags = flags;
     }
     return (mca_btl_base_descriptor_t*)frag;
@@ -714,15 +715,14 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
         }
         iov.iov_len = max_data;
         iov.iov_base =
-            (IOVBASE_TYPE*)(((unsigned char*)(frag->segment.seg_addr.pval)) +
-                            reserve);
+            (IOVBASE_TYPE*)(frag->segment.base.seg_addr.lval + reserve);
 
         rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if( OPAL_UNLIKELY(rc < 0) ) {
             MCA_BTL_SMCUDA_FRAG_RETURN(frag);
             return NULL;
         }
-        frag->segment.seg_len = reserve + max_data;
+        frag->segment.base.seg_len = reserve + max_data;
 #if OMPI_CUDA_SUPPORT
     } else {
         /* Normally, we are here because we have a GPU buffer and we are preparing
@@ -745,9 +745,9 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
            MCA_BTL_SMCUDA_FRAG_RETURN(frag);
             return NULL;
         }
-        frag->segment.seg_addr.pval = iov.iov_base;
-        frag->segment.seg_len = max_data;
-        memcpy(frag->segment.seg_key.cudakey, ((mca_mpool_common_cuda_reg_t *)registration)->memHandle,
+        frag->segment.base.seg_addr.pval = iov.iov_base;
+        frag->segment.base.seg_len = max_data;
+        memcpy(frag->segment.key, ((mca_mpool_common_cuda_reg_t *)registration)->memHandle,
                sizeof(((mca_mpool_common_cuda_reg_t *)registration)->memHandle) + 
                sizeof(((mca_mpool_common_cuda_reg_t *)registration)->evtHandle));
         frag->segment.memh_seg_addr.pval = registration->base;
@@ -755,7 +755,7 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
 
     }
 #endif /* OMPI_CUDA_SUPPORT */
-    frag->base.des_src = &(frag->segment);
+    frag->base.des_src = &(frag->segment.base);
     frag->base.des_src_cnt = 1;
     frag->base.order = MCA_BTL_NO_ORDER;
     frag->base.des_dst = NULL;
@@ -766,10 +766,10 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_src(
 }
 
 #if 0
-#define MCA_BTL_SMCUDA_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(sm_frag)          \
+#define MCA_BTL_SMCUDA_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(sm_frag)      \
     do {                                                                \
-        char* _memory = (char*)(sm_frag)->segment.seg_addr.pval +       \
-            (sm_frag)->segment.seg_len;                                 \
+        char* _memory = (char*)(sm_frag)->segment.base.seg_addr.pval +  \
+            (sm_frag)->segment.base.seg_len;                            \
         int* _intmem;                                                   \
         size_t align = (intptr_t)_memory & 0xFUL;                       \
         switch( align & 0x3 ) {                                         \
@@ -834,7 +834,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         }
 
         /* fill in fragment fields */
-        frag->segment.seg_len = length;
+        frag->segment.base.seg_len = length;
         frag->hdr->len        = length;
         assert( 0 == (flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) );
         frag->base.des_flags = flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;   /* why do any flags matter here other than OWNERSHIP? */
@@ -842,7 +842,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
         frag->endpoint = endpoint;
 
         /* write the match header (with MPI comm/tag/etc. info) */
-        memcpy( frag->segment.seg_addr.pval, header, header_size );
+        memcpy( frag->segment.base.seg_addr.pval, header, header_size );
 
         /* write the message data if there is any */
         /*
@@ -853,7 +853,7 @@ int mca_btl_smcuda_sendi( struct mca_btl_base_module_t* btl,
             struct iovec iov;
             uint32_t iov_count;
             /* pack the data into the supplied buffer */
-            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.seg_addr.pval + header_size);
+            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.base.seg_addr.pval + header_size);
             iov.iov_len  = max_data = payload_size;
             iov_count    = 1;
 
@@ -901,7 +901,7 @@ int mca_btl_smcuda_send( struct mca_btl_base_module_t* btl,
     }
 
     /* available header space */
-    frag->hdr->len = frag->segment.seg_len;
+    frag->hdr->len = frag->segment.base.seg_len;
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
 
@@ -949,12 +949,12 @@ struct mca_btl_base_descriptor_t* mca_btl_smcuda_prepare_dst(
         return NULL;
     }
     
-    frag->segment.seg_len = *size;
-    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    frag->segment.base.seg_len = *size;
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.base.seg_addr.pval) );
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
-    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst = &frag->segment.base;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = flags;
     return &frag->base;
@@ -967,6 +967,8 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
                         struct mca_btl_base_endpoint_t* ep,
                         struct mca_btl_base_descriptor_t* descriptor)
 {
+    mca_btl_smcuda_segment_t *src_seg = (mca_btl_smcuda_segment_t *) descriptor->des_src;
+    mca_btl_smcuda_segment_t *dst_seg = (mca_btl_smcuda_segment_t *) descriptor->des_dst;
     mca_mpool_common_cuda_reg_t rget_reg;
     mca_mpool_common_cuda_reg_t *reg_ptr = &rget_reg;
     int btl_ownership;
@@ -980,8 +982,7 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
      * garbage in the debugger.  */
     
     memset(&rget_reg, 0, sizeof(rget_reg));
-    memcpy(&rget_reg.memHandle, descriptor->des_src->seg_key.cudakey,
-           sizeof(descriptor->des_src->seg_key.cudakey));
+    memcpy(&rget_reg.memHandle, src_seg->key, sizeof(src_seg->key));
 
     /* Open the memory handle to the remote memory.  If it is cached, then
      * we just retrieve it from cache and avoid a call to open the handle.  That
@@ -990,8 +991,8 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
      * remote memory which may lie somewhere in the middle. This is taken care of
      * a few lines down. Note that we hand in the peer rank just for debugging
      * support. */
-    rc = ep->mpool->mpool_register(ep->mpool, descriptor->des_src->memh_seg_addr.pval,
-                                   descriptor->des_src->memh_seg_len, ep->peer_smp_rank,
+    rc = ep->mpool->mpool_register(ep->mpool, src_seg->memh_seg_addr.pval,
+                                   src_seg->memh_seg_len, ep->peer_smp_rank,
                                    (mca_mpool_base_registration_t **)&reg_ptr);
 
     if (OMPI_SUCCESS != rc) {
@@ -1006,7 +1007,7 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
      * not equal the address that was used to retrieve the block.
      * Therefore, compute the offset and add it to the address of the
      * memory handle. */
-    offset = (unsigned char *)descriptor->des_src->seg_addr.pval - reg_ptr->base.base;
+    offset = (unsigned char *)src_seg->base.seg_addr.lval - reg_ptr->base.base;
     remote_memory_address = (unsigned char *)reg_ptr->base.alloc_base + offset;
     if (0 != offset) {
         opal_output(-1, "OFFSET=%d", (int)offset);
@@ -1019,8 +1020,8 @@ int mca_btl_smcuda_get_cuda(struct mca_btl_base_module_t* btl,
      * rget_reg, not reg_ptr, as we do not cache the event. */
     mca_common_wait_stream_synchronize(&rget_reg);
 
-    rc = mca_common_cuda_memcpy(descriptor->des_dst->seg_addr.pval, remote_memory_address,
-                                descriptor->des_dst->seg_len, "mca_btl_smcuda_get",
+    rc = mca_common_cuda_memcpy(dst_seg->base.seg_addr.pval, remote_memory_address,
+                                dst_seg->base.seg_len, "mca_btl_smcuda_get",
                                 (mca_btl_base_descriptor_t *)frag, &done);
     if (OMPI_SUCCESS != rc) {
         /* Out of resources can be handled by upper layers. */

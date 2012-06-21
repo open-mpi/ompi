@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2007 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -8,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006-2008 University of Houston.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
@@ -855,7 +856,8 @@ component_fragment_cb(struct mca_btl_base_module_t *btl,
                 index = module->m_peer_info[origin].peer_num_btls++;
                 rdma_btl = &(module->m_peer_info[origin].peer_btls[index]);
 
-                rdma_btl->peer_seg_key = header->hdr_segkey;
+                memmove (rdma_btl->peer_seg, header + 1, bml_btl->btl->btl_seg_size);
+
                 rdma_btl->bml_btl = bml_btl;
                 rdma_btl->rdma_order = MCA_BTL_NO_ORDER;
                 rdma_btl->num_sent = 0;
@@ -982,7 +984,7 @@ struct peer_rdma_send_info_t{
     ompi_osc_rdma_module_t *module;
     ompi_proc_t *proc;
     mca_bml_base_btl_t *bml_btl;
-    uint64_t seg_key;
+    void *seg;
 };
 typedef struct peer_rdma_send_info_t peer_rdma_send_info_t;
 OBJ_CLASS_INSTANCE(peer_rdma_send_info_t, opal_list_item_t, NULL, NULL);
@@ -1021,10 +1023,13 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
     mca_bml_base_btl_t *bml_btl = NULL;
     mca_btl_base_descriptor_t *descriptor = NULL;
     ompi_osc_rdma_rdma_info_header_t *header = NULL;
+    size_t hdr_size;
         
     bml_btl = peer_send_info->bml_btl;
-    mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER,
-                       sizeof(ompi_osc_rdma_rdma_info_header_t),
+
+    hdr_size = sizeof(ompi_osc_rdma_rdma_info_header_t) + bml_btl->btl->btl_seg_size;
+
+    mca_bml_base_alloc(bml_btl, &descriptor, MCA_BTL_NO_ORDER, hdr_size,
                        MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if (NULL == descriptor) {
         ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -1032,7 +1037,7 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
     }
 
     /* verify at least enough space for header */
-    if (descriptor->des_src[0].seg_len < sizeof(ompi_osc_rdma_rdma_info_header_t)) {
+    if (descriptor->des_src[0].seg_len < hdr_size) {
         ret = OMPI_ERR_OUT_OF_RESOURCE;
         goto cleanup;
     }
@@ -1046,9 +1051,10 @@ rdma_send_info_send(ompi_osc_rdma_module_t *module,
     header = (ompi_osc_rdma_rdma_info_header_t*) descriptor->des_src[0].seg_addr.pval;
     header->hdr_base.hdr_type = OMPI_OSC_RDMA_HDR_RDMA_INFO;
     header->hdr_base.hdr_flags = 0;
-    header->hdr_segkey = peer_send_info->seg_key;
     header->hdr_origin = ompi_comm_rank(module->m_comm);
     header->hdr_windx = ompi_comm_get_cid(module->m_comm);
+
+    memmove (header + 1, peer_send_info->seg, bml_btl->btl->btl_seg_size);
 
 #ifdef WORDS_BIGENDIAN
     header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
@@ -1299,8 +1305,7 @@ setup_rdma(ompi_osc_rdma_module_t *module)
             peer_send_info->module = module;
             peer_send_info->proc = ompi_comm_peer_lookup(module->m_comm, i);
             peer_send_info->bml_btl = peer_info->local_btls[j];
-            peer_send_info->seg_key = 
-                peer_info->local_descriptors[j]->des_dst[0].seg_key.key64[0];
+            peer_send_info->seg = (void *) peer_info->local_descriptors[j]->des_dst;
 
             ret = rdma_send_info_send(module, peer_send_info);
             if (OMPI_SUCCESS != ret) {

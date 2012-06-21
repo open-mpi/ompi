@@ -70,7 +70,7 @@ struct ompi_osc_rdma_sendreq_t {
     /** op index on the target */
     int req_op_id;
 
-    mca_btl_base_segment_t remote_segs[1];
+    uint8_t remote_segs[MCA_BTL_SEG_MAX_SIZE];
 };
 typedef struct ompi_osc_rdma_sendreq_t ompi_osc_rdma_sendreq_t;
 OBJ_CLASS_DECLARATION(ompi_osc_rdma_sendreq_t);

@@ -16,7 +16,7 @@
 static inline void mca_btl_ugni_base_frag_constructor (mca_btl_ugni_base_frag_t *frag)
 {
     memset ((char *) frag + sizeof (frag->base), 0, sizeof (*frag) - sizeof (frag->base));
-    frag->segments[0].seg_addr.pval = frag->base.super.ptr;
+    frag->segments[0].base.seg_addr.pval = frag->base.super.ptr;
 }
 
 static inline void mca_btl_ugni_eager_frag_constructor (mca_btl_ugni_base_frag_t *frag)
@@ -25,8 +25,8 @@ static inline void mca_btl_ugni_eager_frag_constructor (mca_btl_ugni_base_frag_t
         (struct mca_btl_ugni_reg_t *) frag->base.super.registration;
 
     memset ((char *) frag + sizeof (frag->base), 0, sizeof (*frag) - sizeof (frag->base));
-    frag->segments[0].seg_addr.pval = frag->base.super.ptr;
-    memmove (frag->segments[0].seg_key.key64, &reg->memory_hdl, sizeof (reg->memory_hdl));
+    frag->segments[0].base.seg_addr.pval = frag->base.super.ptr;
+    frag->segments[0].memory_handle = reg->memory_hdl;
 }
 
 OBJ_CLASS_INSTANCE(mca_btl_ugni_smsg_frag_t, mca_btl_base_descriptor_t,

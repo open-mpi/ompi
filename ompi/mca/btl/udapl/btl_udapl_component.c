@@ -214,6 +214,8 @@ int mca_btl_udapl_component_open(void)
         sizeof(mca_btl_udapl_frag_eager_rdma_t) +
         mca_btl_udapl_component.udapl_eager_frag_size;
 
+    mca_btl_udapl_module.super.btl_seg_size = sizeof (mca_btl_udapl_segment_t);
+
     return rc;
 }
 
@@ -285,13 +287,13 @@ static void mca_btl_udapl_receive_control(struct mca_btl_base_module_t* btl,
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)descriptor;
     mca_btl_udapl_endpoint_t* endpoint = frag->endpoint;
     mca_btl_udapl_control_header_t* ctl_hdr =
-        frag->segment.seg_addr.pval;
+        frag->segment.base.seg_addr.pval;
     
     switch (ctl_hdr->type) {
     case MCA_BTL_UDAPL_CONTROL_RDMA_CONNECT:
     {        
         mca_btl_udapl_eager_rdma_connect_t* rdma_connect =
-            frag->segment.seg_addr.pval;
+            frag->segment.base.seg_addr.pval;
 
         if (endpoint->endpoint_eager_rdma_remote.base.pval) {
             BTL_ERROR(("ERROR: Received RDMA connect twice!"));
@@ -309,7 +311,7 @@ static void mca_btl_udapl_receive_control(struct mca_btl_base_module_t* btl,
     case MCA_BTL_UDAPL_CONTROL_RDMA_CREDIT:
     {
         mca_btl_udapl_eager_rdma_credit_t* rdma_credit =
-            frag->segment.seg_addr.pval;
+            frag->segment.base.seg_addr.pval;
         
         /* don't return credits used for rdma credit control message */
         OPAL_THREAD_ADD32(
@@ -324,7 +326,7 @@ static void mca_btl_udapl_receive_control(struct mca_btl_base_module_t* btl,
     case MCA_BTL_UDAPL_CONTROL_SR_CREDIT:
     {
         mca_btl_udapl_sr_credit_t* sr_credit =
-            frag->segment.seg_addr.pval;
+            frag->segment.base.seg_addr.pval;
         
         /* don't return credits used for sr credit control message */
         OPAL_THREAD_ADD32(
@@ -717,9 +719,9 @@ static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
                             flags);
     cookie.as_ptr = frag;
 
-    memcpy(frag->segment.seg_addr.pval,
+    memcpy(frag->segment.base.seg_addr.pval,
             &btl->udapl_addr, sizeof(mca_btl_udapl_addr_t));
-    memcpy((char *)frag->segment.seg_addr.pval + sizeof(mca_btl_udapl_addr_t),
+    memcpy((char *)frag->segment.base.seg_addr.pval + sizeof(mca_btl_udapl_addr_t),
             &connection_seq, sizeof(int32_t));
     connection_seq++;
 
@@ -947,12 +949,12 @@ int mca_btl_udapl_component_progress()
                     assert(frag->base.des_src_cnt == 0);
                     assert(frag->type == MCA_BTL_UDAPL_RECV);
                     assert(frag->triplet.virtual_address ==
-                            (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval);
+                            (DAT_VADDR)(uintptr_t)frag->segment.base.seg_addr.pval);
                     assert(frag->triplet.segment_length == frag->size);
                     assert(frag->btl == btl);
 
                     /* setup frag ftr location and do callback */
-                    frag->segment.seg_len = dto->transfered_length -
+                    frag->segment.base.seg_len = dto->transfered_length -
                         sizeof(mca_btl_udapl_footer_t);
                     frag->ftr = (mca_btl_udapl_footer_t *)
                         ((char *)frag->segment.seg_addr.pval + 

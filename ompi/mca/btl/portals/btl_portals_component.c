@@ -148,6 +148,7 @@ mca_btl_portals_component_open(void)
     mca_btl_portals_module.super.btl_flags = 
         MCA_BTL_FLAGS_RDMA |
         MCA_BTL_FLAGS_RDMA_MATCHED;
+    mca_btl_portals_module.super.btl_seg_size = sizeof (mca_btl_portals_segment_t);
     mca_btl_portals_module.super.btl_bandwidth = 1000;
     mca_btl_portals_module.super.btl_latency = 0;
 
@@ -317,6 +318,7 @@ mca_btl_portals_component_progress(void)
     mca_btl_portals_frag_t *frag = NULL;
     mca_btl_portals_recv_block_t *block = NULL;
     mca_btl_base_tag_t tag;
+    mca_btl_base_segment_t seg[2];
 
     if (0 == mca_btl_portals_module.portals_num_procs) {
         return 0;
@@ -421,11 +423,12 @@ mca_btl_portals_component_progress(void)
                                              ));
                         
                         OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,"received %d bytes \n", (int) ev.mlength));
-                        frag->segments[0].seg_addr.pval = &frag->data;
-                        frag->segments[0].seg_len = header_size;
+                        frag->base.des_dst = seg;
+                        seg[0].seg_addr.pval = &frag->data;
+                        seg[0].seg_len = header_size;
                         if(ev.mlength) {
-                            frag->segments[1].seg_addr.pval = ((((char*) ev.md.start) + ev.offset));
-                            frag->segments[1].seg_len = ev.mlength;
+                            seg[1].seg_addr.pval = ((((char*) ev.md.start) + ev.offset));
+                            seg[1].seg_len = ev.mlength;
                             frag->base.des_dst_cnt = 2;
                         } else { 
                             frag->base.des_dst_cnt = 1;
@@ -433,8 +436,8 @@ mca_btl_portals_component_progress(void)
                     } else { 
                         /* if we ever make this thread hot, need to do
                            something with the receive fragments */
-                        frag->segments[0].seg_addr.pval = (((char*) ev.md.start) + ev.offset);
-                        frag->segments[0].seg_len = ev.mlength;
+                        seg[0].seg_addr.pval = (((char*) ev.md.start) + ev.offset);
+                        seg[0].seg_len = ev.mlength;
                         
                         OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                                              "received send fragment 0x%lx (thresh: %d, length %d)", 
@@ -453,6 +456,9 @@ mca_btl_portals_component_progress(void)
                                              (unsigned long) block->start));
                         block->full = true;
                     }
+
+                    /* NTH: is it ok to overwrite this. All callbacks should expect base segments */
+                    frag->base.des_dst = seg;
 
                     mca_btl_base_active_message_trigger[tag].cbfunc(
                                              &mca_btl_portals_module.super,

@@ -20,13 +20,13 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
                        mca_btl_base_tag_t tag)
 {
     mca_btl_ugni_base_frag_t *frag = (mca_btl_ugni_base_frag_t *) descriptor;
-    size_t size = frag->segments[0].seg_len + frag->segments[1].seg_len;
+    size_t size = frag->segments[0].base.seg_len + frag->segments[1].base.seg_len;
     mca_btl_ugni_module_t *ugni_module = (mca_btl_ugni_module_t *) btl;
     int flags_save = frag->base.des_flags;
     int rc;
 
-    BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %d", (void *)descriptor,
-                 ORTE_PROC_MY_NAME->vpid, endpoint->common->ep_rem_id, frag->segments[0].seg_len));
+    BTL_VERBOSE(("btl/ugni sending descriptor %p from %d -> %d. length = %" PRIu64, (void *)descriptor,
+                 ORTE_PROC_MY_NAME->vpid, endpoint->common->ep_rem_id, frag->segments[0].base.seg_len));
 
     /* tag and len are at the same location in eager and smsg frag hdrs */
     frag->hdr.send.lag = (tag << 24) | size;
@@ -70,8 +70,9 @@ int mca_btl_ugni_send (struct mca_btl_base_module_t *btl,
 
     if (OPAL_UNLIKELY(OMPI_ERR_OUT_OF_RESOURCE == rc)) {
         /* queue up request */
-        if (0 == opal_list_get_size (&endpoint->frag_wait_list)) {
+        if (false == endpoint->wait_listed) {
             opal_list_append (&ugni_module->ep_wait_list, &endpoint->super);
+            endpoint->wait_listed = true;
         }
 
         opal_list_append (&endpoint->frag_wait_list, (opal_list_item_t *) frag);

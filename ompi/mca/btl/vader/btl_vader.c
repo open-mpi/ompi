@@ -80,6 +80,7 @@ mca_btl_vader_t mca_btl_vader = {
         0, /* bTl_latency */
         0, /* btl_bandwidth */
         0, /* btl_flags */
+        0, /* btl segment size */
         vader_add_procs,
         vader_del_procs,
         NULL, /* btl_register */
@@ -569,8 +570,8 @@ struct mca_btl_base_descriptor_t *vader_prepare_dst(struct mca_btl_base_module_t
     
     opal_convertor_get_current_pointer (convertor, (void **) &data_ptr);
 
-    frag->segment.seg_key.key64[0] = (uint64_t)(uintptr_t) data_ptr;
-    frag->segment.seg_len     = *size;
+    frag->segment.seg_addr.pval = data_ptr;
+    frag->segment.seg_len       = *size;
     
     frag->base.des_dst     = &frag->segment;
     frag->base.des_dst_cnt = 1;
@@ -664,8 +665,8 @@ static struct mca_btl_base_descriptor_t *vader_prepare_src (struct mca_btl_base_
             return NULL;
         }
 
-        frag->segment.seg_key.key64[0] = (uint64_t)(uintptr_t) data_ptr;
-        frag->segment.seg_len = reserve + *size;
+        frag->segment.seg_addr.pval = data_ptr;
+        frag->segment.seg_len       = reserve + *size;
     }
 
     frag->base.des_src     = &frag->segment;

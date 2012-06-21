@@ -170,7 +170,6 @@ struct mca_pml_bfo_rget_hdr_t {
     uint8_t hdr_padding[4];
 #endif
     ompi_ptr_t hdr_des;                       /**< source descriptor */
-    mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
 typedef struct mca_pml_bfo_rget_hdr_t mca_pml_bfo_rget_hdr_t;
 

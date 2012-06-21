@@ -60,6 +60,7 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         0, /* latency */
         0, /* bandwidth */
         MCA_BTL_FLAGS_SEND,
+        0, /* segment size */
         mca_btl_udapl_add_procs,
         mca_btl_udapl_del_procs,
         NULL, 
@@ -954,7 +955,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
         return NULL;
     }
 
-    frag->segment.seg_len = size;
+    frag->segment.base.seg_len = size;
 
     /* Set up the LMR triplet from the frag segment.
      * Note: The triplet.segment_len is set to what is required for
@@ -963,9 +964,9 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
      * triplet.segment_len will have to change.
      */
     frag->triplet.virtual_address =
-        (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval;
+        (DAT_VADDR)(uintptr_t)frag->segment.base.seg_addr.pval;
     frag->triplet.segment_length =
-        frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t);
+        frag->segment.base.seg_len + sizeof(mca_btl_udapl_footer_t);
     assert(frag->triplet.lmr_context ==
         frag->registration->lmr_triplet.lmr_context);
     
@@ -1067,8 +1068,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
                 frag->registration = (mca_btl_udapl_reg_t*)registration;
             }
 
-            frag->segment.seg_len = max_data;
-            frag->segment.seg_addr.pval = iov.iov_base;
+            frag->segment.base.seg_len = max_data;
+            frag->segment.base.seg_addr.pval = iov.iov_base;
             frag->triplet.segment_length = max_data;
             frag->triplet.virtual_address = (DAT_VADDR)(uintptr_t)iov.iov_base;
             frag->triplet.lmr_context =
@@ -1104,7 +1105,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     }
     
     iov.iov_len = max_data;
-    iov.iov_base = (char *) frag->segment.seg_addr.pval + reserve;
+    iov.iov_base = (char *) frag->segment.base.seg_addr.pval + reserve;
     
     rc = opal_convertor_pack(convertor,
         &iov, &iov_count, &max_data );
@@ -1116,11 +1117,11 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     *size = max_data;
 
     /* setup lengths and addresses to send out data */
-    frag->segment.seg_len = max_data + reserve;
+    frag->segment.base.seg_len = max_data + reserve;
     frag->triplet.segment_length =
         max_data + reserve + sizeof(mca_btl_udapl_footer_t);
     frag->triplet.virtual_address =
-        (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval;
+        (DAT_VADDR)(uintptr_t)frag->segment.base.seg_addr.pval;
 
     /* initialize base descriptor */
     frag->base.des_src = &frag->segment;
@@ -1164,16 +1165,16 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
         return NULL;
     }
 
-    frag->segment.seg_len = *size;
-    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    frag->segment.base.seg_len = *size;
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.base.seg_addr.pval) );
 
     if(NULL == registration) {
         /* didn't get a memory registration passed in, so must
          * register the region now
          */ 
         rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
-                                   frag->segment.seg_addr.pval,
-                                   frag->segment.seg_len,
+                                   frag->segment.base.seg_addr.pval,
+                                   frag->segment.base.seg_len,
                                    0,
                                    &registration);
         if(OMPI_SUCCESS != rc || NULL == registration) {
@@ -1189,8 +1190,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = flags;
 
-    frag->segment.seg_key.key32[0] =
-        ((mca_btl_udapl_reg_t*)registration)->rmr_context;
+    frag->segment.context = ((mca_btl_udapl_reg_t*)registration)->rmr_context;
     
     frag->base.order = MCA_BTL_NO_ORDER;
 
@@ -1217,7 +1217,7 @@ int mca_btl_udapl_send(
 
     frag->endpoint = endpoint;
     frag->ftr = (mca_btl_udapl_footer_t *)
-        ((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
+        ((char *)frag->segment.base.seg_addr.pval + frag->segment.base.seg_len);
     frag->ftr->tag = tag;
     frag->type = MCA_BTL_UDAPL_SEND;
 
@@ -1245,7 +1245,7 @@ int mca_btl_udapl_put(
     int rc = OMPI_SUCCESS;
     
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
-    mca_btl_base_segment_t *dst_segment = des->des_dst;
+    mca_btl_udapl_segment_t *dst_segment = des->des_dst;
 
     frag->btl = (mca_btl_udapl_module_t *)btl;
     frag->endpoint = endpoint;
@@ -1262,43 +1262,42 @@ int mca_btl_udapl_put(
     } else {
         /* work queue tokens available, try to send  */
 
-	if(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], -1) < 0) {
+        if(OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], -1) < 0) {
             OPAL_THREAD_ADD32(&endpoint->endpoint_lwqe_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
-	    OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
-	    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-	    opal_list_append(&endpoint->endpoint_max_frags,
-		(opal_list_item_t*)frag);
-	    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-	    opal_progress();
-	} else {
-	    frag->triplet.segment_length = frag->segment.seg_len;
+            OPAL_THREAD_ADD32(&endpoint->endpoint_sr_tokens[BTL_UDAPL_MAX_CONNECTION], 1);
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            opal_list_append(&endpoint->endpoint_max_frags,
+                (opal_list_item_t*)frag);
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            opal_progress();
+        } else {
+            frag->triplet.segment_length = frag->segment.base.seg_len;
         
-	    remote_buffer.rmr_context =
-		(DAT_RMR_CONTEXT)dst_segment->seg_key.key32[0];
-	    remote_buffer.target_address =
-		(DAT_VADDR)(uintptr_t)dst_segment->seg_addr.lval;
-	    remote_buffer.segment_length = dst_segment->seg_len;
+            remote_buffer.rmr_context = dst_segment->context;
+            remote_buffer.target_address =
+                (DAT_VADDR)(uintptr_t)dst_segment->base.seg_addr.lval;
+            remote_buffer.segment_length = dst_segment->base.seg_len;
 
-	    cookie.as_ptr = frag;
-	    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-	    rc = dat_ep_post_rdma_write(endpoint->endpoint_max,
-		1,
-		&frag->triplet,
-		cookie,
-		&remote_buffer,	
-		DAT_COMPLETION_DEFAULT_FLAG);
-	    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-	    if(DAT_SUCCESS != rc) {
-		char* major;
-		char* minor;
+            cookie.as_ptr = frag;
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            rc = dat_ep_post_rdma_write(endpoint->endpoint_max,
+                1,
+                &frag->triplet,
+                cookie,
+                &remote_buffer,        
+                DAT_COMPLETION_DEFAULT_FLAG);
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            if(DAT_SUCCESS != rc) {
+                char* major;
+                char* minor;
 
-		dat_strerror(rc, (const char**)&major,
-		    (const char**)&minor);
-		BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_rdma_write",
-		    major, minor));
-		rc = OMPI_ERROR;
-	    }
-	}
+                dat_strerror(rc, (const char**)&major,
+                    (const char**)&minor);
+                BTL_ERROR(("ERROR: %s %s %s\n", "dat_ep_post_rdma_write",
+                    major, minor));
+                rc = OMPI_ERROR;
+            }
+        }
     }
     
     return rc;

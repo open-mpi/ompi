@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -219,8 +220,9 @@ static void mca_pml_csum_put_completion( mca_btl_base_module_t* btl,
     size_t bytes_received = 0;
 
     if( OPAL_LIKELY(status == OMPI_SUCCESS) ) {
-        MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( des->des_dst, des->des_dst_cnt,
-                                            0, bytes_received );
+        bytes_received = mca_pml_csum_compute_segment_length (btl->btl_seg_size,
+                                                              (void *) des->des_dst,
+                                                              des->des_dst_cnt, 0);
     }
     OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,-1);
 
@@ -413,7 +415,7 @@ int mca_pml_csum_recv_request_get_frag( mca_pml_csum_rdma_frag_t* frag )
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    descriptor->des_src = frag->rdma_segs;
+    descriptor->des_src = (mca_btl_base_segment_t *) frag->rdma_segs;
     descriptor->des_src_cnt = frag->rdma_hdr.hdr_rdma.hdr_seg_cnt;
     descriptor->des_cbfunc = mca_pml_csum_rget_completion;
     descriptor->des_cbdata = frag;
@@ -454,14 +456,13 @@ void mca_pml_csum_recv_request_progress_frag( mca_pml_csum_recv_request_t* recvr
                                              mca_btl_base_segment_t* segments,
                                              size_t num_segments )
 {
-    size_t bytes_received = 0, data_offset = 0;
+    size_t bytes_received, data_offset = 0;
     size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_CSUM_RECV_REQUEST_UNPACK */
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint32_t csum = OPAL_CSUM_ZERO;
 
-    MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
-                                        0, bytes_received );
-    bytes_received -= sizeof(mca_pml_csum_frag_hdr_t);
+    bytes_received = mca_pml_csum_compute_segment_length_base (segments, num_segments,
+                                                               sizeof(mca_pml_csum_frag_hdr_t));
     data_offset     = hdr->hdr_frag.hdr_frag_offset;
     /*
      *  Make user buffer accessable(defined) before unpacking.
@@ -524,15 +525,12 @@ void mca_pml_csum_recv_request_progress_rget( mca_pml_csum_recv_request_t* recvr
                                              mca_btl_base_segment_t* segments,
                                              size_t num_segments )
 {
-    size_t bytes_received = 0;
     mca_pml_csum_rget_hdr_t* hdr = (mca_pml_csum_rget_hdr_t*)segments->seg_addr.pval;
     mca_bml_base_endpoint_t* bml_endpoint = NULL;
     mca_pml_csum_rdma_frag_t* frag;
     size_t i, size = 0;
     int rc;
 
-    MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
-                                        0, bytes_received );
     recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
 
     MCA_PML_CSUM_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_rndv.hdr_match);
@@ -556,17 +554,22 @@ void mca_pml_csum_recv_request_progress_rget( mca_pml_csum_recv_request_t* recvr
     /* lookup bml datastructures */
     bml_endpoint = (mca_bml_base_endpoint_t*)recvreq->req_recv.req_base.req_proc->proc_bml; 
 
+    assert (btl->btl_seg_size * hdr->hdr_seg_cnt <= sizeof (frag->rdma_segs));
+
     /* allocate/initialize a fragment */
+    memmove (frag->rdma_segs, hdr + 1, btl->btl_seg_size * hdr->hdr_seg_cnt);
+
     for(i = 0; i < hdr->hdr_seg_cnt; i++) {
-        frag->rdma_segs[i] = hdr->hdr_segs[i];
+        mca_btl_base_segment_t *seg = (mca_btl_base_segment_t *)(frag->rdma_segs + i * btl->btl_seg_size);
+
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
         if ((recvreq->req_recv.req_base.req_proc->proc_arch & OPAL_ARCH_ISBIGENDIAN) !=
             (ompi_proc_local()->proc_arch & OPAL_ARCH_ISBIGENDIAN)) {
-            size += opal_swap_bytes4(hdr->hdr_segs[i].seg_len);
+            size += opal_swap_bytes4(seg->seg_len);
         } else 
 #endif
         {
-            size += hdr->hdr_segs[i].seg_len;
+            size += seg->seg_len;
         }
     }
     frag->rdma_bml = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);
@@ -595,16 +598,15 @@ void mca_pml_csum_recv_request_progress_rndv( mca_pml_csum_recv_request_t* recvr
                                              mca_btl_base_segment_t* segments,
                                              size_t num_segments )
 {
-    size_t bytes_received = 0;
+    size_t bytes_received;
     size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_CSUM_RECV_REQUEST_UNPACK */
     size_t data_offset = 0;
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint32_t csum = OPAL_CSUM_ZERO;
 
-    MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
-                                        0, bytes_received );
-    
-    bytes_received -= sizeof(mca_pml_csum_rendezvous_hdr_t);
+    bytes_received = mca_pml_csum_compute_segment_length_base (segments, num_segments,
+                                                               sizeof(mca_pml_csum_rendezvous_hdr_t));
+
     recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
     recvreq->remote_req_send = hdr->hdr_rndv.hdr_src_req;
     recvreq->req_rdma_offset = bytes_received;
@@ -669,14 +671,14 @@ void mca_pml_csum_recv_request_progress_match( mca_pml_csum_recv_request_t* recv
                                               mca_btl_base_segment_t* segments,
                                               size_t num_segments )
 {
-    size_t bytes_received = 0, data_offset = 0;
+    size_t bytes_received, data_offset = 0;
     size_t bytes_delivered __opal_attribute_unused__; /* is being set to zero in MCA_PML_CSUM_RECV_REQUEST_UNPACK */
     mca_pml_csum_hdr_t* hdr = (mca_pml_csum_hdr_t*)segments->seg_addr.pval;
     uint32_t csum = OPAL_CSUM_ZERO;
 
-    MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
-                                        0, bytes_received );
-    bytes_received -= OMPI_PML_CSUM_MATCH_HDR_LEN;
+    bytes_received = mca_pml_csum_compute_segment_length_base (segments, num_segments,
+                                                               OMPI_PML_CSUM_MATCH_HDR_LEN);
+
     recvreq->req_recv.req_bytes_packed = bytes_received;
     
     MCA_PML_CSUM_RECV_REQUEST_MATCHED(recvreq, &hdr->hdr_match);
@@ -746,15 +748,11 @@ void mca_pml_csum_recv_request_matched_probe( mca_pml_csum_recv_request_t* recvr
 
     switch(hdr->hdr_common.hdr_type) {
         case MCA_PML_CSUM_HDR_TYPE_MATCH:
-
-            MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
-                                                OMPI_PML_CSUM_MATCH_HDR_LEN,
-                                                bytes_packed );
+            bytes_packed = mca_pml_csum_compute_segment_length_base (segments, num_segments,
+                                                                     OMPI_PML_CSUM_MATCH_HDR_LEN);
             break;
-
         case MCA_PML_CSUM_HDR_TYPE_RNDV:
         case MCA_PML_CSUM_HDR_TYPE_RGET:
-
             bytes_packed = hdr->hdr_rndv.hdr_msg_length;
             break;
     }
@@ -796,8 +794,7 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
 
     while(bytes_remaining > 0 &&
            recvreq->req_pipeline_depth < mca_pml_csum.recv_pipeline_depth) {
-        size_t hdr_size;
-        size_t size;
+        size_t size, seg_size;
         mca_pml_csum_rdma_hdr_t* hdr;
         mca_btl_base_descriptor_t* dst;
         mca_btl_base_descriptor_t* ctl;
@@ -858,14 +855,10 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
         dst->des_cbfunc = mca_pml_csum_put_completion;
         dst->des_cbdata = recvreq;
 
-        /* prepare a descriptor for rdma control message */
-        hdr_size = sizeof(mca_pml_csum_rdma_hdr_t);
-        if(dst->des_dst_cnt > 1) {
-            hdr_size += (sizeof(mca_btl_base_segment_t) *
-                    (dst->des_dst_cnt-1));
-        }
+        seg_size = btl->btl_seg_size * dst->des_dst_cnt;
 
-        mca_bml_base_alloc(bml_btl, &ctl, MCA_BTL_NO_ORDER, hdr_size,
+        /* prepare a descriptor for rdma control message */
+        mca_bml_base_alloc(bml_btl, &ctl, MCA_BTL_NO_ORDER, sizeof(mca_pml_csum_rdma_hdr_t) + seg_size,
                            MCA_BTL_DES_FLAGS_PRIORITY | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP | MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
 
         if( OPAL_UNLIKELY(NULL == ctl) ) {
@@ -885,12 +878,8 @@ int mca_pml_csum_recv_request_schedule_once( mca_pml_csum_recv_request_t* recvre
         hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
         hdr->hdr_seg_cnt = dst->des_dst_cnt;
 
-        for( i = 0; i < dst->des_dst_cnt; i++ ) {
-            hdr->hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(dst->des_dst[i].seg_addr.pval);
-            hdr->hdr_segs[i].seg_len       = dst->des_dst[i].seg_len;
-            hdr->hdr_segs[i].seg_key.key64[0] = dst->des_dst[i].seg_key.key64[0];
-            hdr->hdr_segs[i].seg_key.key64[1] = dst->des_dst[i].seg_key.key64[1];
-        }
+        /* copy segments */
+        memmove (hdr + 1, dst->des_dst, seg_size);
 
         if(!recvreq->req_ack_sent)
             recvreq->req_ack_sent = true;

@@ -54,6 +54,7 @@ mca_btl_portals_module_t mca_btl_portals_module = {
         0,   /* latency */
         0,   /* bandwidth */
         0,   /* btl flags */
+        0,   /* btl segment size */
 
         mca_btl_portals_add_procs,
         mca_btl_portals_del_procs,
@@ -242,11 +243,11 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     if (size <= mca_btl_portals_module.super.btl_eager_limit) { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, rc); 
         if (OMPI_SUCCESS != rc) return NULL;
-        frag->segments[0].seg_len = size;
+        frag->segments[0].base.seg_len = size;
     } else { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(&mca_btl_portals_module, frag, rc); 
         if (OMPI_SUCCESS != rc) return NULL;
-        frag->segments[0].seg_len = 
+        frag->segments[0].base.seg_len = 
             size <= mca_btl_portals_module.super.btl_max_send_size ? 
             size : mca_btl_portals_module.super.btl_max_send_size ; 
     }
@@ -323,7 +324,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         }
         
         iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segments[0].seg_addr.pval + reserve;
+        iov.iov_base = (unsigned char*) frag->segments[0].base.seg_addr.pval + reserve;
         ret = opal_convertor_pack(convertor, &iov, &iov_count, 
                                   &max_data );
         *size  = max_data;
@@ -331,7 +332,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
             return NULL;
         }
 
-        frag->segments[0].seg_len = max_data + reserve;
+        frag->segments[0].base.seg_len = max_data + reserve;
         frag->base.des_src_cnt = 1;
 
     } else {
@@ -356,10 +357,9 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
 
         opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
 
-        frag->segments[0].seg_len = max_data;
-        frag->segments[0].seg_addr.pval = iov.iov_base;
-        frag->segments[0].seg_key.key64[0] = 
-            OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
+        frag->segments[0].base.seg_len = max_data;
+        frag->segments[0].base.seg_addr.pval = iov.iov_base;
+        frag->segments[0].key = OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
         frag->base.des_src_cnt = 1;
 
         /* either a put or get.  figure out which later */
@@ -367,13 +367,13 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
                              "rdma src posted for frag 0x%lx, callback 0x%lx, bits %"PRIu64", flags say %d" ,
                              (unsigned long) frag, 
                              (unsigned long) frag->base.des_cbfunc,
-                             frag->segments[0].seg_key.key64[0], flags));
+                             frag->segments[0].key, flags));
 
         /* create a match entry */
         ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
                           OMPI_BTL_PORTALS_RDMA_TABLE_ID,
                           *((mca_btl_base_endpoint_t*) peer),
-                          frag->segments[0].seg_key.key64[0], /* match */
+                          frag->segments[0].key, /* match */
                           0, /* ignore */
                           PTL_UNLINK,
                           PTL_INS_AFTER,
@@ -387,8 +387,8 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         }
 
         /* setup the memory descriptor */
-        md.start = frag->segments[0].seg_addr.pval;
-        md.length = frag->segments[0].seg_len;
+        md.start = frag->segments[0].base.seg_addr.pval;
+        md.length = frag->segments[0].base.seg_len;
         md.threshold = PTL_MD_THRESH_INF;
         md.max_size = 0;
         md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
@@ -448,10 +448,9 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
         return NULL;
     }
 
-    frag->segments[0].seg_len = *size;
-    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segments[0].seg_addr.pval) );
-    frag->segments[0].seg_key.key64[0] = 
-        OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
+    frag->segments[0].base.seg_len = *size;
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segments[0].base.seg_addr.pval) );
+    frag->segments[0].key = OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = frag->segments;
@@ -462,14 +461,14 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
                          "rdma dest posted for frag 0x%lx, callback 0x%lx, bits %" PRIu64 " flags %d",
                          (unsigned long) frag,
                          (unsigned long) frag->base.des_cbfunc,
-                         frag->segments[0].seg_key.key64[0],
+                         frag->segments[0].key;
                          flags));
 
     /* create a match entry */
     ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
                       OMPI_BTL_PORTALS_RDMA_TABLE_ID,
                       *((mca_btl_base_endpoint_t*) peer),
-                      frag->segments[0].seg_key.key64[0], /* match */
+                      frag->segments[0].key, /* match */
                       0, /* ignore */
                       PTL_UNLINK,
                       PTL_INS_AFTER,
@@ -483,8 +482,8 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     }
 
     /* setup the memory descriptor. */
-    md.start = frag->segments[0].seg_addr.pval;
-    md.length = frag->segments[0].seg_len;
+    md.start = frag->segments[0].base.seg_addr.pval;
+    md.length = frag->segments[0].base.seg_len;
     md.threshold = PTL_MD_THRESH_INF;
     md.max_size = 0;
     md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;

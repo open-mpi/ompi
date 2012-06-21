@@ -104,11 +104,12 @@ static inline int mca_btl_ugni_send_frag (struct mca_btl_base_endpoint_t *btl_pe
                                           mca_btl_ugni_base_frag_t *frag) {
     if (OPAL_LIKELY(!(frag->flags & MCA_BTL_UGNI_FRAG_EAGER))) {
         return ompi_mca_btl_ugni_smsg_send (frag, &frag->hdr.send, frag->hdr_size,
-                                            frag->segments[1].seg_addr.pval, frag->segments[1].seg_len,
+                                            frag->segments[1].base.seg_addr.pval,
+                                            frag->segments[1].base.seg_len,
                                             MCA_BTL_UGNI_TAG_SEND);
     }
 
-    frag->hdr.eager.src_seg = frag->segments[1];
+    frag->hdr.eager.src_seg = frag->segments[1].base;
     frag->hdr.eager.ctx     = (void *) frag;
 
     return ompi_mca_btl_ugni_smsg_send (frag, &frag->hdr.eager, frag->hdr_size,

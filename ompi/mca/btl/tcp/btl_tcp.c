@@ -46,6 +46,7 @@ mca_btl_tcp_module_t mca_btl_tcp_module = {
         0, /* latency */
         0, /* bandwidth */
         0, /* flags */
+        0, /* segment size */
         mca_btl_tcp_add_procs,
         mca_btl_tcp_del_procs,
         NULL, 
