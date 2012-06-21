@@ -54,7 +54,7 @@ HDFSFileFinder.class: HDFSFileFinder.java
 	$(JAVAC) -d . -classpath $(hadoop_jars) $(top_srcdir)/orte/tools/allocators/HDFSFileFinder.java
 
 install-exec-hook:
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cp hdfsalloc.pl $(DESTDIR)$(bindir))
 	(cd $(DESTDIR)$(bindir); chmod +x hdfsalloc.pl; rm -f hdfsalloc; $(LN_S) hdfsalloc.pl hdfsalloc)
 

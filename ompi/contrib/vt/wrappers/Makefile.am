@@ -26,7 +26,7 @@ dist_pkgdata_DATA = \
 	mpifort-vt-wrapper-data.txt
 
 install-exec-hook-always:
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mpicc-vt$(EXEEXT); $(LN_S) opal_wrapper mpicc-vt)
 	(cd $(DESTDIR)$(bindir); rm -f mpic++-vt$(EXEEXT); $(LN_S) opal_wrapper mpic++-vt)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx-vt$(EXEEXT); $(LN_S) opal_wrapper mpicxx-vt)

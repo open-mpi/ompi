@@ -40,7 +40,7 @@ mr+: mrplus.c
 nodist_man_MANS = $(man_pages)
 
 install-exec-hook:
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mr+; $(LN_S) mrplus mr+)
 
 
