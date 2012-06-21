@@ -29,7 +29,7 @@ EXTRA_DIST = $(orte_config_files)
 # details why the mkdir is in install-data-local.
 
 install-data-local:
-	$(mkdir_p) $(DESTDIR)$(sysconfdir)
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
 	@ p="$(orte_config_files)"; \
 	for file in $$p; do \
 	  if test -f $(DESTDIR)$(sysconfdir)/$$file; then \
