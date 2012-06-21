@@ -33,7 +33,7 @@ dist_pkgdata_DATA = \
 
 if OPAL_WANT_SCRIPT_WRAPPER_COMPILERS
 install-exec-hook-always:
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f ortecc; $(LN_S) orte_wrapper_script ortecc)
 	(cd $(DESTDIR)$(bindir); rm -f ortec++; $(LN_S) orte_wrapper_script ortec++)
 
@@ -60,7 +60,7 @@ pkgconfig_DATA = orte.pc
 #man_MANS = $(man_pages)
 
 install-exec-hook-always:
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f ortecc$(EXEEXT); $(LN_S) opal_wrapper ortecc)
 	(cd $(DESTDIR)$(bindir); rm -f ortec++$(EXEEXT); $(LN_S) opal_wrapper ortec++)
 

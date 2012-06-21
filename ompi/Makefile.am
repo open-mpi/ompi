@@ -174,7 +174,7 @@ dir_stamp = $(top_builddir)/$(subdir)/mpi/man/man3/.dir-stamp
 $(nodist_man_MANS): $(dir_stamp) $(top_builddir)/opal/include/opal_config.h
 
 $(dir_stamp):
-	$(mkdir_p) `dirname $@`
+	$(MKDIR_P) `dirname $@`
 	touch "$@"
 
 # Remove the generated man pages

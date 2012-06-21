@@ -25,7 +25,7 @@ bin_SCRIPTS = ompi_wrapper_script
 CLEANFILES += $(bin_SCRIPTS)
 
 install-exec-hook-always:
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mpicc; $(LN_S) ompi_wrapper_script mpicc)
 	(cd $(DESTDIR)$(bindir); rm -f mpic++; $(LN_S) ompi_wrapper_script mpic++)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx; $(LN_S) ompi_wrapper_script mpicxx)
@@ -63,7 +63,7 @@ dist_pkgdata_DATA = \
 	mpif90-wrapper-data.txt
 
 install-exec-hook-always:
-	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f mpicc$(EXEEXT); $(LN_S) opal_wrapper mpicc)
 	(cd $(DESTDIR)$(bindir); rm -f mpic++$(EXEEXT); $(LN_S) opal_wrapper mpic++)
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper mpicxx)

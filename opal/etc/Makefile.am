@@ -29,7 +29,7 @@ EXTRA_DIST = $(opal_config_files)
 # details why the mkdir is in install-data-local.
 
 install-data-local:
-	$(mkdir_p) $(DESTDIR)$(sysconfdir)
+	$(MKDIR_P) $(DESTDIR)$(sysconfdir)
 	@ p="$(opal_config_files)"; \
         if test "$(opal_file_from_platform)" = "yes"; then \
 	    if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
