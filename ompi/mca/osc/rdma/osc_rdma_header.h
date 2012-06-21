@@ -149,7 +149,6 @@ struct ompi_osc_rdma_rdma_info_header_t {
     ompi_osc_rdma_base_header_t hdr_base;
     int16_t  hdr_windx;
     int32_t  hdr_origin;
-    uint64_t hdr_segkey;
 };
 typedef struct ompi_osc_rdma_rdma_info_header_t ompi_osc_rdma_rdma_info_header_t;
 

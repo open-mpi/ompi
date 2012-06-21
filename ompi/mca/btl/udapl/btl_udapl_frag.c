@@ -38,7 +38,7 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
 #endif
 
     frag->registration = reg; 
-    frag->segment.seg_addr.pval = (unsigned char*)frag->base.super.ptr;
+    frag->segment.base.seg_addr.pval = (unsigned char*)frag->base.super.ptr;
     frag->ftr = NULL;
 
     /* Don't understand why yet, but there are cases where reg is NULL -
@@ -52,14 +52,14 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
 
 static void mca_btl_udapl_frag_eager_constructor(mca_btl_udapl_frag_t* frag) 
 { 
-    frag->segment.seg_len = mca_btl_udapl_module.super.btl_eager_limit;
+    frag->segment.base.seg_len = mca_btl_udapl_module.super.btl_eager_limit;
     frag->size = mca_btl_udapl_component.udapl_eager_frag_size;
     mca_btl_udapl_frag_common_constructor(frag); 
 }
 
 static void mca_btl_udapl_frag_max_constructor(mca_btl_udapl_frag_t* frag) 
 { 
-    frag->segment.seg_len = mca_btl_udapl_module.super.btl_max_send_size;
+    frag->segment.base.seg_len = mca_btl_udapl_module.super.btl_max_send_size;
     frag->size = mca_btl_udapl_component.udapl_max_frag_size;
     mca_btl_udapl_frag_common_constructor(frag); 
 }
@@ -67,8 +67,8 @@ static void mca_btl_udapl_frag_max_constructor(mca_btl_udapl_frag_t* frag)
 static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag) 
 { 
     mca_btl_udapl_frag_common_constructor(frag); 
-    frag->segment.seg_len = 0;
-    frag->segment.seg_addr.pval = NULL;
+    frag->segment.base.seg_len = 0;
+    frag->segment.base.seg_addr.pval = NULL;
     frag->ftr = NULL;
     frag->size = 0;
     frag->registration = NULL;
@@ -77,10 +77,10 @@ static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag)
 static void mca_btl_udapl_frag_eager_rdma_constructor(mca_btl_udapl_frag_t* frag) 
 { 
     mca_btl_udapl_frag_eager_constructor(frag);
-    frag->segment.seg_len = mca_btl_udapl_module.super.btl_eager_limit;
+    frag->segment.base.seg_len = mca_btl_udapl_module.super.btl_eager_limit;
     frag->size = mca_btl_udapl_component.udapl_eager_frag_size;
     frag->rdma_ftr = (mca_btl_udapl_rdma_footer_t *)
-        ((char *)(frag->segment.seg_addr.pval) +
+        ((char *)(frag->segment.base.seg_addr.pval) +
                 frag->size -
                 sizeof(mca_btl_udapl_rdma_footer_t));
     frag->rdma_ftr->active=0;
@@ -92,8 +92,8 @@ static void mca_btl_udapl_frag_common_destructor(mca_btl_udapl_frag_t* frag)
     frag->ftr = NULL;
     frag->size = 0; 
     frag->registration = NULL; 
-    frag->segment.seg_len = 0;
-    frag->segment.seg_addr.pval = NULL; 
+    frag->segment.base.seg_len = 0;
+    frag->segment.base.seg_addr.pval = NULL; 
     
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;

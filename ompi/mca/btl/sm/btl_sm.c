@@ -75,6 +75,7 @@ mca_btl_sm_t mca_btl_sm = {
         0, /* btl_latency */
         0, /* btl_bandwidth */
         0, /* btl flags */
+        0, /* btl segment size */
         mca_btl_sm_add_procs,
         mca_btl_sm_del_procs,
         NULL,
@@ -629,7 +630,7 @@ extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
     }
 
     if (OPAL_LIKELY(frag != NULL)) {
-        frag->segment.seg_len = size;
+        frag->segment.base.seg_len = size;
         frag->base.des_flags = flags;
     }
     return (mca_btl_base_descriptor_t*)frag;
@@ -693,15 +694,14 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
         }
         iov.iov_len = max_data;
         iov.iov_base =
-            (IOVBASE_TYPE*)(((unsigned char*)(frag->segment.seg_addr.pval)) +
-                            reserve);
+            (IOVBASE_TYPE*)(frag->segment.base.seg_addr.lval + reserve);
 
         rc = opal_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if( OPAL_UNLIKELY(rc < 0) ) {
             MCA_BTL_SM_FRAG_RETURN(frag);
             return NULL;
         }
-        frag->segment.seg_len = reserve + max_data;
+        frag->segment.base.seg_len = reserve + max_data;
 #if OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA
     } else {
 #if OMPI_BTL_SM_HAVE_KNEM
@@ -719,8 +719,8 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
             MCA_BTL_SM_FRAG_RETURN(frag);
             return NULL;
         }
-        frag->segment.seg_addr.pval = iov.iov_base;
-        frag->segment.seg_len = max_data;
+        frag->segment.base.seg_addr.pval = iov.iov_base;
+        frag->segment.base.seg_len = max_data;
 
 #if OMPI_BTL_SM_HAVE_KNEM
         if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
@@ -733,20 +733,20 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
             if (OPAL_UNLIKELY(ioctl(sm_btl->knem_fd, KNEM_CMD_CREATE_REGION, &knem_cr) < 0)) {
                 return NULL;
             }
-            frag->segment.seg_key.key64[0] = knem_cr.cookie;
+            frag->segment.key = knem_cr.cookie;
         }
 #endif /* OMPI_BTL_SM_HAVE_KNEM */
 
 #if OMPI_BTL_SM_HAVE_CMA
         if (OPAL_LIKELY(mca_btl_sm_component.use_cma)) {
             /* Encode the pid as the key */
-            frag->segment.seg_key.key64[0] = getpid();
+            frag->segment.key = getpid();
         }
 #endif /* OMPI_BTL_SM_HAVE_CMA */
     }
 #endif /* OMPI_BTL_SM_HAVE_KNEM || OMPI_BTL_SM_HAVE_CMA */
 
-    frag->base.des_src = &(frag->segment);
+    frag->base.des_src = &(frag->segment.base);
     frag->base.des_src_cnt = 1;
     frag->base.order = MCA_BTL_NO_ORDER;
     frag->base.des_dst = NULL;
@@ -759,8 +759,8 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
 #if 0
 #define MCA_BTL_SM_TOUCH_DATA_TILL_CACHELINE_BOUNDARY(sm_frag)          \
     do {                                                                \
-        char* _memory = (char*)(sm_frag)->segment.seg_addr.pval +       \
-            (sm_frag)->segment.seg_len;                                 \
+        char* _memory = (char*)(sm_frag)->segment.base.seg_addr.pval +  \
+            (sm_frag)->segment.base.seg_len;                            \
         int* _intmem;                                                   \
         size_t align = (intptr_t)_memory & 0xFUL;                       \
         switch( align & 0x3 ) {                                         \
@@ -825,7 +825,7 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
         }
 
         /* fill in fragment fields */
-        frag->segment.seg_len = length;
+        frag->segment.base.seg_len = length;
         frag->hdr->len        = length;
         assert( 0 == (flags & MCA_BTL_DES_SEND_ALWAYS_CALLBACK) );
         frag->base.des_flags = flags | MCA_BTL_DES_FLAGS_BTL_OWNERSHIP;   /* why do any flags matter here other than OWNERSHIP? */
@@ -833,7 +833,7 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
         frag->endpoint = endpoint;
 
         /* write the match header (with MPI comm/tag/etc. info) */
-        memcpy( frag->segment.seg_addr.pval, header, header_size );
+        memcpy( frag->segment.base.seg_addr.pval, header, header_size );
 
         /* write the message data if there is any */
         /*
@@ -844,7 +844,7 @@ int mca_btl_sm_sendi( struct mca_btl_base_module_t* btl,
             struct iovec iov;
             uint32_t iov_count;
             /* pack the data into the supplied buffer */
-            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.seg_addr.pval + header_size);
+            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segment.base.seg_addr.pval + header_size);
             iov.iov_len  = max_data = payload_size;
             iov_count    = 1;
 
@@ -892,7 +892,7 @@ int mca_btl_sm_send( struct mca_btl_base_module_t* btl,
     }
 
     /* available header space */
-    frag->hdr->len = frag->segment.seg_len;
+    frag->hdr->len = frag->segment.base.seg_len;
     /* type of message, pt-2-pt, one-sided, etc */
     frag->hdr->tag = tag;
 
@@ -936,8 +936,8 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_dst(
         return NULL;
     }
 
-    frag->segment.seg_len = *size;
-    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.seg_addr.pval) );
+    frag->segment.base.seg_len = *size;
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment.base.seg_addr.pval) );
     
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
@@ -961,8 +961,8 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
     int btl_ownership;
     mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
-    mca_btl_base_segment_t *src = des->des_src;
-    mca_btl_base_segment_t *dst = des->des_dst;
+    mca_btl_sm_segment_t *src = des->des_src;
+    mca_btl_sm_segment_t *dst = des->des_dst;
 #if OMPI_BTL_SM_HAVE_KNEM
     if (OPAL_LIKELY(mca_btl_sm_component.use_knem)) {
         struct knem_cmd_inline_copy icopy;
@@ -970,11 +970,11 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
     
         /* Fill in the ioctl data fields.  There's no async completion, so
            we don't need to worry about getting a slot, etc. */
-        recv_iovec.base = (uintptr_t) dst->seg_addr.pval;
-        recv_iovec.len =  dst->seg_len;
+        recv_iovec.base = (uintptr_t) dst->base.seg_addr.pval;
+        recv_iovec.len =  dst->base.seg_len;
         icopy.local_iovec_array = (uintptr_t)&recv_iovec;
         icopy.local_iovec_nr = 1;
-        icopy.remote_cookie = src->seg_key.key64[0];
+        icopy.remote_cookie = src->key;
         icopy.remote_offset = 0;
         icopy.write = 0;
 
@@ -983,7 +983,7 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
            value is 0 (i.e., the MCA param was set to 0), the segment size
            will never be larger than it, so DMA will never be used. */
         icopy.flags = 0;
-        if (mca_btl_sm_component.knem_dma_min <= dst->seg_len) {
+        if (mca_btl_sm_component.knem_dma_min <= dst->base.seg_len) {
             icopy.flags = mca_btl_sm_component.knem_dma_flag;
         }
         /* synchronous flags only, no need to specify icopy.async_status_index */
@@ -1007,17 +1007,17 @@ int mca_btl_sm_get_sync(struct mca_btl_base_module_t* btl,
         pid_t remote_pid;
         int val;
 
-        remote_address = (char *) src->seg_addr.pval;
-        remote_length = src->seg_len;
+        remote_address = (char *) src->base.seg_addr.pval;
+        remote_length = src->base.seg_len;
 
-        local_address = (char *) dst->seg_addr.pval;
-        local_length = dst->seg_len;
+        local_address = (char *) dst->base,seg_addr.pval;
+        local_length = dst->base.seg_len;
 
-        remote_pid = src->seg_key.key64[0];
-        remote.iov_base = src->seg_addr.pval;
-        remote.iov_len = src->seg_len;
-        local.iov_base = dst->seg_addr.pval;
-        local.iov_len = dst->seg_len;
+        remote_pid = src->key;
+        remote.iov_base = src->base.seg_addr.pval;
+        remote.iov_len = src->base.seg_len;
+        local.iov_base = dst->base.seg_addr.pval;
+        local.iov_len = dst->base.seg_len;
 
         val = process_vm_readv(remote_pid, &local, 1, &remote, 1, 0);
 
@@ -1068,8 +1068,8 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
     int btl_ownership;
     mca_btl_sm_t* sm_btl = (mca_btl_sm_t*) btl;
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
-    mca_btl_base_segment_t *src = des->des_src;
-    mca_btl_base_segment_t *dst = des->des_dst;
+    mca_btl_sm_segment_t *src = des->des_src;
+    mca_btl_sm_segment_t *dst = des->des_dst;
     struct knem_cmd_inline_copy icopy;
     struct knem_cmd_param_iovec recv_iovec;
     
@@ -1082,8 +1082,8 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
 
     /* We have a slot, so fill in the data fields.  Bump the
        first_avail and num_used counters. */
-    recv_iovec.base = (uintptr_t) dst->seg_addr.pval;
-    recv_iovec.len =  dst->seg_len;
+    recv_iovec.base = (uintptr_t) dst->base.seg_addr.pval;
+    recv_iovec.len =  dst->base.seg_len;
     icopy.local_iovec_array = (uintptr_t)&recv_iovec;
     icopy.local_iovec_nr = 1;
     icopy.write = 0;
@@ -1093,13 +1093,13 @@ int mca_btl_sm_get_async(struct mca_btl_base_module_t* btl,
         sm_btl->knem_status_first_avail = 0;
     }
     ++sm_btl->knem_status_num_used;
-    icopy.remote_cookie = src->seg_key.key64[0];
+    icopy.remote_cookie = src->key;
     icopy.remote_offset = 0;
 
     /* Use the DMA flag if knem supports it *and* the segment length
        is greater than the cutoff */
     icopy.flags = KNEM_FLAG_ASYNCDMACOMPLETE;
-    if (mca_btl_sm_component.knem_dma_min <= dst->seg_len) {
+    if (mca_btl_sm_component.knem_dma_min <= dst->base.seg_len) {
         icopy.flags = mca_btl_sm_component.knem_dma_flag;
     }
 

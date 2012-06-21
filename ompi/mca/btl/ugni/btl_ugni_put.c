@@ -33,5 +33,6 @@ int mca_btl_ugni_put (struct mca_btl_base_module_t *btl,
 
     des->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
-    return mca_btl_ugni_post (frag, false, des->des_src, des->des_dst);
+    return mca_btl_ugni_post (frag, false, (mca_btl_ugni_segment_t *) des->des_src,
+                              (mca_btl_ugni_segment_t *) des->des_dst);
 }

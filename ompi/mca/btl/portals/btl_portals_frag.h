@@ -23,12 +23,18 @@
 
 BEGIN_C_DECLS
 
+struct mca_btl_portals_segment_t {
+  mca_btl_base_segment_t base;
+  ptl_match_bits_t key;
+};
+typedef struct mca_btl_portals_segment_t mca_btl_portals_segment_t;
+
 /**
  * Portals send fragment derived type
  */
 struct mca_btl_portals_frag_t {
     mca_btl_base_descriptor_t base; 
-    mca_btl_base_segment_t segments[1]; 
+    mca_btl_portals_segment_t segments[1]; 
     /* needed for retransmit case */
     struct mca_btl_base_endpoint_t *endpoint; 
     /* needed for retransmit case */

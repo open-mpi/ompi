@@ -33,16 +33,15 @@ int mca_btl_vader_get (struct mca_btl_base_module_t *btl,
     mca_mpool_base_registration_t *reg;
     void *rem_ptr;
 
-    reg = vader_get_registation (endpoint->peer_smp_rank,
-                                 (void *)(uintptr_t) src->seg_key.key64[0],
+    reg = vader_get_registation (endpoint->peer_smp_rank, src->seg_addr.pval,
                                  src->seg_len, 0);
     if (OPAL_UNLIKELY(NULL == reg)) {
         return OMPI_ERROR;
     }
 
-    rem_ptr = vader_reg_to_ptr (reg, (void *)(uintptr_t) src->seg_key.key64[0]);
+    rem_ptr = vader_reg_to_ptr (reg, src->seg_addr.pval);
 
-    vader_memmove ((void *)(uintptr_t) dst->seg_key.key64[0], rem_ptr, size);
+    vader_memmove (dst->seg_addr.pval, rem_ptr, size);
 
     vader_return_registration (reg, endpoint->peer_smp_rank);
 

@@ -79,12 +79,18 @@ struct mca_btl_udapl_rdma_footer_t {
 };
 typedef struct mca_btl_udapl_rdma_footer_t mca_btl_udapl_rdma_footer_t;
 
+struct mca_btl_udapl_segment_t {
+    mca_btl_base_segment_t base;
+    DAT_RMR_CONTEXT context;
+};
+typedef struct mca_btl_udapl_segment_t mca_btl_udapl_segment_t;
+
 /**
  * uDAPL fragment derived type.
  */
 struct mca_btl_udapl_frag_t {
     mca_btl_base_descriptor_t base;
-    mca_btl_base_segment_t segment;
+    mca_btl_udapl_segment_t segment;
 
     struct mca_btl_udapl_module_t* btl;
     struct mca_btl_base_endpoint_t* endpoint; 

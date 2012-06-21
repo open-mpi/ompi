@@ -181,10 +181,10 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
-    frag->segment[0].seg_len = 
+    frag->segment[0].base.seg_len = 
         size <= mx_btl->super.btl_eager_limit ? 
         size : mx_btl->super.btl_eager_limit ;
-    frag->segment[0].seg_addr.pval = (void*)(frag+1);
+    frag->segment[0].base.seg_addr.pval = (void*)(frag+1);
     frag->base.des_src = frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_flags = flags;
@@ -264,7 +264,7 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
             return NULL;
         }
         frag->base.des_src_cnt = 1;
-        iov.iov_base = (void*)((unsigned char*)frag->segment[0].seg_addr.pval + reserve);
+        iov.iov_base = (void*)((unsigned char*)frag->segment[0].base.seg_addr.pval + reserve);
     }
 
     iov.iov_len = max_data;
@@ -272,13 +272,13 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
     *size = max_data;
 
     if( 1 == frag->base.des_src_cnt ) {
-        frag->segment[0].seg_len = reserve + max_data;
+        frag->segment[0].base.seg_len = reserve + max_data;
         if( 0 == reserve )
-            frag->segment[0].seg_addr.pval = iov.iov_base;
+            frag->segment[0].base.seg_addr.pval = iov.iov_base;
     } else {
-        frag->segment[0].seg_len       = reserve;
-        frag->segment[1].seg_len       = max_data;
-        frag->segment[1].seg_addr.pval = iov.iov_base;
+        frag->segment[0].base.seg_len       = reserve;
+        frag->segment[1].base.seg_len       = max_data;
+        frag->segment[1].base.seg_addr.pval = iov.iov_base;
     }
     frag->base.des_src   = frag->segment;
     frag->base.des_flags = flags;
@@ -321,16 +321,16 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
         return NULL;
     }
 
-    frag->segment[0].seg_len       = *size;
-    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment[0].seg_addr.pval) );
-    frag->segment[0].seg_key.key64[0] = (uint64_t)(intptr_t)frag;
+    frag->segment[0].base.seg_len       = *size;
+    opal_convertor_get_current_pointer( convertor, (void**)&(frag->segment[0].base.seg_addr.pval) );
+    frag->segment[0].key = (uint64_t)(intptr_t)frag;
 
-    mx_segment.segment_ptr    = frag->segment[0].seg_addr.pval;
-    mx_segment.segment_length = frag->segment[0].seg_len;
+    mx_segment.segment_ptr    = frag->segment[0].base.seg_addr.pval;
+    mx_segment.segment_length = frag->segment[0].base.seg_len;
 
     mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
-                          frag->segment[0].seg_key.key64[0], 
-                          BTL_MX_PUT_MASK, NULL, &(frag->mx_request) );
+			  frag->segment[0].key, BTL_MX_PUT_MASK,
+                          NULL, &(frag->mx_request) );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );
         MCA_BTL_MX_FRAG_RETURN( btl, frag );
@@ -370,6 +370,8 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
                            struct mca_btl_base_endpoint_t* endpoint,
                            struct mca_btl_base_descriptor_t* descriptor )
 {
+    mca_btl_mx_segment_t *src_seg = (mca_btl_mx_segment_t *) descriptor->des_src;
+    mca_btl_mx_segment_t *dst_seg = (mca_btl_mx_segment_t *) descriptor->des_dst;
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
     mx_segment_t mx_segment[2];
@@ -390,13 +392,12 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
     descriptor->des_flags |= MCA_BTL_DES_SEND_ALWAYS_CALLBACK;
 
     do {
-        mx_segment[i].segment_ptr    = descriptor->des_src[i].seg_addr.pval;
-        mx_segment[i].segment_length = descriptor->des_src[i].seg_len;
+	mx_segment[i].segment_ptr    = src_seg[i].base.seg_addr.pval;
+        mx_segment[i].segment_length = src_seg[i].base.seg_len;
     } while (++i < descriptor->des_src_cnt);
 
     mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt,
-                          endpoint->mx_peer_addr,
-                          descriptor->des_dst[0].seg_key.key64[0], frag,
+                          endpoint->mx_peer_addr, dst_seg->key, frag,
                           &frag->mx_request );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
@@ -512,6 +513,8 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
                      mca_btl_base_tag_t tag )
    
 {
+    mca_btl_mx_segment_t *src_seg = (mca_btl_mx_segment_t *) descriptor->des_src;
+    mca_btl_mx_segment_t *dst_seg = (mca_btl_mx_segment_t *) descriptor->des_dst;
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
     mx_segment_t mx_segment[2];
@@ -533,15 +536,14 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     frag->type      = MCA_BTL_MX_SEND;
 
     do {
-        mx_segment[i].segment_ptr    = descriptor->des_src[i].seg_addr.pval;
-        mx_segment[i].segment_length = descriptor->des_src[i].seg_len;
-        total_length += descriptor->des_src[i].seg_len;
+        mx_segment[i].segment_ptr    = src_seg[i].base.seg_addr.pval;
+        mx_segment[i].segment_length = src_seg[i].base.seg_len;
+        total_length += src_seg[i].base.seg_len;
     } while (++i < descriptor->des_src_cnt);
 
     tag64 = 0x01ULL | (((uint64_t)tag) << 8);
     mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt,
-                          endpoint->mx_peer_addr,
-                          tag64, frag, &frag->mx_request );
+                          endpoint->mx_peer_addr, tag64, frag, &frag->mx_request );
     if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
         return OMPI_ERROR;
@@ -681,6 +683,7 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         0, /* exclusivity */
         0, /* latency */
         0, /* bandwidth */
+        0, /* segment size */
         MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT, /* flags */
         mca_btl_mx_add_procs,
         mca_btl_mx_del_procs,

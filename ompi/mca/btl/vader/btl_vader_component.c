@@ -140,6 +140,7 @@ static int mca_btl_vader_component_register (void)
     mca_btl_vader.super.btl_min_rdma_pipeline_size = mca_btl_vader.super.btl_eager_limit;
     mca_btl_vader.super.btl_flags = MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_PUT |
         MCA_BTL_FLAGS_SEND_INPLACE;
+    mca_btl_vader.super.btl_seg_size = sizeof (mca_btl_base_segment_t);
 
     mca_btl_vader.super.btl_bandwidth = 40000; /* Mbs */
     mca_btl_vader.super.btl_latency   = 1;     /* Microsecs */

@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; indent-tabs-mode:nil -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,7 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
- * Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2009-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * $COPYRIGHT$
@@ -283,15 +284,30 @@ void mca_pml_csum_process_pending_rdma(void);
 /*
  * Compute the total number of bytes on supplied descriptor
  */
-#define MCA_PML_CSUM_COMPUTE_SEGMENT_LENGTH(segments, count, hdrlen, length) \
-do {                                                                        \
-   size_t i;                                                                \
-                                                                            \
-   for( i = 0; i < count; i++ ) {                                           \
-       length += segments[i].seg_len;                                       \
-   }                                                                        \
-   length -= hdrlen;                                                        \
-} while(0)
+static inline int mca_pml_csum_compute_segment_length (size_t seg_size, void *segments, size_t count,
+                                                       size_t hdrlen) {
+    size_t i, length;
+
+    for (i = 0, length = -hdrlen ; i < count ; ++i) {
+        mca_btl_base_segment_t *segment =
+            (mca_btl_base_segment_t *)((char *) segments + i * seg_size);
+
+        length += segment->seg_len;
+    }
+
+    return length;
+}
+
+static inline int mca_pml_csum_compute_segment_length_base (mca_btl_base_segment_t *segments,
+                                                            size_t count, size_t hdrlen) {
+    size_t i, length;
+
+    for (i = 0, length = -hdrlen ; i < count ; ++i) {
+        length += segments[i].seg_len;
+    }
+
+    return length;
+}
 
 /* represent BTL chosen for sending request */
 struct mca_pml_csum_com_btl_t {

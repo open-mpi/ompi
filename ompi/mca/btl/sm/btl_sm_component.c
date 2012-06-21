@@ -223,6 +223,7 @@ static int sm_register(void)
     }
 
 #endif
+    mca_btl_sm.super.btl_seg_size = sizeof (mca_btl_sm_segment_t);
     mca_btl_sm.super.btl_bandwidth = 9000;  /* Mbs */
     mca_btl_sm.super.btl_latency   = 1;     /* Microsecs */
 
@@ -608,6 +609,7 @@ void btl_sm_process_pending_sends(struct mca_btl_base_endpoint_t *ep)
 int mca_btl_sm_component_progress(void)
 {
     /* local variables */
+    mca_btl_base_segment_t seg;
     mca_btl_sm_frag_t *frag;
     mca_btl_sm_frag_t Frag;
     sm_fifo_t *fifo = NULL;
@@ -670,11 +672,10 @@ int mca_btl_sm_component_progress(void)
 #endif
                 /* recv upcall */
                 reg = mca_btl_base_active_message_trigger + hdr->tag;
-                Frag.segment.seg_addr.pval = ((char*)hdr) +
-                    sizeof(mca_btl_sm_hdr_t);
-                Frag.segment.seg_len = hdr->len;
+                seg.seg_addr.pval = ((char *)hdr) + sizeof(mca_btl_sm_hdr_t);
+                seg.seg_len = hdr->len;
                 Frag.base.des_dst_cnt = 1;
-                Frag.base.des_dst = &(Frag.segment);
+                Frag.base.des_dst = &seg;
                 reg->cbfunc(&mca_btl_sm.super, hdr->tag, &(Frag.base),
                             reg->cbdata);
                 /* return the fragment */

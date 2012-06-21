@@ -38,7 +38,7 @@ struct mca_pml_csum_rdma_frag_t {
     mca_pml_csum_hdr_t rdma_hdr;
     mca_pml_csum_rdma_state_t rdma_state;
     size_t rdma_length;
-    mca_btl_base_segment_t rdma_segs[MCA_BTL_DES_MAX_SEGMENTS];
+    uint8_t rdma_segs[MCA_BTL_SEG_MAX_SIZE * MCA_BTL_DES_MAX_SEGMENTS];
     void *rdma_req;
     struct mca_bml_base_endpoint_t* rdma_ep;
     opal_convertor_t convertor;

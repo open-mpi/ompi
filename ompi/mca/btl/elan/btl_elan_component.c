@@ -92,6 +92,7 @@ int mca_btl_elan_component_open(void)
     mca_btl_elan_module.super.btl_rdma_pipeline_frag_size = 128 * 1024;
     mca_btl_elan_module.super.btl_min_rdma_pipeline_size = 128 * 1024;
     mca_btl_elan_module.super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND;
+    mca_btl_elan_module.super.btl_seg_size = sizeof (mca_btl_base_segment_t);
     mca_btl_elan_module.super.btl_bandwidth = 1959;
     mca_btl_elan_module.super.btl_latency = 4;
     mca_btl_base_param_register(&mca_btl_elan_component.super.btl_version,

@@ -156,6 +156,7 @@ static int mca_btl_mx_component_register(void)
                                          MCA_BTL_FLAGS_PUT |
                                          MCA_BTL_FLAGS_SEND |
                                          MCA_BTL_FLAGS_RDMA_MATCHED);
+    mca_btl_mx_module.super.btl_seg_size  = sizeof (mca_btl_mx_segment_t);
     mca_btl_mx_module.super.btl_bandwidth = 2000;
     mca_btl_mx_module.super.btl_latency = 5;
     mca_btl_base_param_register(&mca_btl_mx_component.super.btl_version,

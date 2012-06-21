@@ -52,6 +52,7 @@ mca_btl_ud_module_t mca_btl_ofud_module = {
         0, /* latency */
         0, /* bandwidth */
         MCA_BTL_FLAGS_SEND,
+        0, /* segment length */
         mca_btl_ud_add_procs,
         mca_btl_ud_del_procs,
         NULL,

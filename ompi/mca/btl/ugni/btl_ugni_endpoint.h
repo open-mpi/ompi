@@ -42,6 +42,7 @@ typedef struct mca_btl_base_endpoint_t {
     struct mca_btl_ugni_smsg_mbox_t *mailbox;
 
     opal_list_t frag_wait_list;
+    bool wait_listed;
 
     int32_t smsg_progressing;
 } mca_btl_base_endpoint_t;

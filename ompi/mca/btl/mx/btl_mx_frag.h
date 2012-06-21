@@ -28,13 +28,18 @@
 #define MCA_BTL_MX_RECV  0x02
 
 BEGIN_C_DECLS
+
+struct mca_btl_mx_segment_t {
+  mca_btl_base_segment_t base;
+  uint64_t key;
+};
     
 /**
  * MX send framxent derived type.
  */
 struct mca_btl_mx_frag_t {
     mca_btl_base_descriptor_t       base; 
-    mca_btl_base_segment_t          segment[2]; 
+    mca_btl_mx_segment_t            segment[2]; 
     struct mca_btl_base_endpoint_t* endpoint; 
     uint8_t                         type;
     mx_request_t                    mx_request;

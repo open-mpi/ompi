@@ -175,6 +175,8 @@ static int mca_btl_ud_component_register(void)
                              "Approximate maximum bandwidth of interconnect",
                              800, (int*)&mca_btl_ofud_module.super.btl_bandwidth);
 
+    mca_btl_ofud_module.super.btl_seg_size = sizeof (mca_btl_base_segment_t);
+
     mca_btl_ofud_module.super.btl_eager_limit -= sizeof(mca_btl_ud_header_t);
     mca_btl_ofud_module.super.btl_max_send_size -= sizeof(mca_btl_ud_header_t);
 

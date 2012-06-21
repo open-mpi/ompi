@@ -61,11 +61,18 @@ struct mca_btl_ugni_base_frag_t;
 
 typedef void (*frag_cb_t) (struct mca_btl_ugni_base_frag_t *, int);
 
+typedef struct mca_btl_ugni_segment_t {
+    mca_btl_base_segment_t base;
+    gni_mem_handle_t       memory_handle;
+    uint8_t                extra_bytes[3];
+    uint8_t                extra_byte_count;
+} mca_btl_ugni_segment_t;
+
 typedef struct mca_btl_ugni_base_frag_t {
     mca_btl_base_descriptor_t    base;
     size_t                       hdr_size;
     mca_btl_ugni_frag_hdr_t      hdr;
-    mca_btl_base_segment_t       segments[2];
+    mca_btl_ugni_segment_t       segments[2];
     ompi_common_ugni_post_desc_t post_desc;
     mca_btl_base_endpoint_t     *endpoint;
     mca_btl_ugni_reg_t          *registration;

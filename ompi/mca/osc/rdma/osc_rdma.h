@@ -75,7 +75,7 @@ typedef struct ompi_osc_rdma_component_t ompi_osc_rdma_component_t;
 
 
 struct ompi_osc_rdma_btl_t {
-    uint64_t peer_seg_key;
+    uint8_t  peer_seg[MCA_BTL_SEG_MAX_SIZE];
     mca_bml_base_btl_t *bml_btl;
     int      rdma_order;
     int32_t  num_sent;

@@ -641,6 +641,7 @@ mca_btl_elan_module_t mca_btl_elan_module = {
         0, /* latency */
         0, /* bandwidth */
         0, /* flags */
+        0, /* segment size */
         mca_btl_elan_add_procs,
         mca_btl_elan_del_procs,
         NULL,  /* btl_register */

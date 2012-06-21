@@ -230,32 +230,26 @@ typedef void (*mca_btl_base_completion_fn_t)(
 /**
  * Describes a region/segment of memory that is addressable 
  * by an BTL.
+ *
+ * Note: In many cases the alloc and prepare methods of BTLs
+ * do not return a mca_btl_base_segment_t but instead return a
+ * subclass. Extreme care should be used when modifying
+ * BTL segments to prevent overwriting internal BTL data.
+ *
+ * All BTLs MUST use base segments when calling registered
+ * Callbacks.
+ *
+ * BTL MUST use mca_btl_base_segment_t or a subclass and
+ * MUST store their segment length in btl_seg_size. BTLs
+ * MIST specify a segment no larger than MCA_BTL_SEG_MAX_SIZE.
+ *
  */
 
 struct mca_btl_base_segment_t {
     /** Address of the memory */
     ompi_ptr_t seg_addr;        
      /** Length in bytes */
-    uint32_t   seg_len;           
-#if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
-    /** Heterogeneous padding */
-    uint8_t    seg_padding[4];     
-#endif
-    /** Memory segment key required by some RDMA networks */
-    union {
-        uint32_t  key32[4];
-        uint64_t  key64[2];
-        uint8_t   key8[16];
-#if OMPI_CUDA_SUPPORT
-        uint8_t cudakey[128]; /* 64 bytes for CUDA mem handle, 64 bytes for CUDA event handle */
-#endif /* OMPI_CUDA_SUPPORT */
-    } seg_key;
-#if OMPI_CUDA_SUPPORT
-    /** Address of the entire memory handle */
-    ompi_ptr_t memh_seg_addr;        
-     /** Length in bytes of entire memory handle */
-    uint32_t   memh_seg_len;           
-#endif /* OMPI_CUDA_SUPPORT */
+    uint64_t   seg_len;
 };
 typedef struct mca_btl_base_segment_t mca_btl_base_segment_t;
 
@@ -313,6 +307,12 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
  * Maximum number of allowed segments in src/dst fields of a descriptor.
  */
 #define MCA_BTL_DES_MAX_SEGMENTS 16
+
+/**
+ * Maximum size of a BTL segment (NTH: does it really save us anything
+ * to hardcode this?)
+ */
+#define MCA_BTL_SEG_MAX_SIZE 256
 
 /* 
  *  BTL base header, stores the tag at a minimum 
@@ -380,6 +380,8 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
  * completion function, this implies that all data payload in the 
  * mca_btl_base_descriptor_t must be copied out within this callback or 
  * forfeited back to the BTL.
+ * Note also that descriptor segments (des_dst, des_src) must be base
+ * segments for all callbacks.
  * 
  * @param[IN] btl        BTL module
  * @param[IN] tag        The active message receive callback tag value 
@@ -796,6 +798,7 @@ struct mca_btl_base_module_t {
     uint32_t    btl_latency;          /**< relative ranking of latency used to prioritize btls */
     uint32_t    btl_bandwidth;        /**< bandwidth (Mbytes/sec) supported by each endpoint */
     uint32_t    btl_flags;            /**< flags (put/get...) */
+    size_t      btl_seg_size;         /**< size of a btl segment */
 
     /* BTL function table */
     mca_btl_base_module_add_procs_fn_t      btl_add_procs;

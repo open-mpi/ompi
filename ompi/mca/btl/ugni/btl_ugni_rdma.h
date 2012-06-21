@@ -23,18 +23,18 @@ int mca_btl_ugni_start_eager_get (mca_btl_base_endpoint_t *ep,
 static inline void init_gni_post_desc (mca_btl_ugni_base_frag_t *frag,
                                       gni_post_type_t op_type,
                                       uint64_t lcl_addr, 
-                                      gni_mem_handle_t *lcl_mdh, 
+                                      gni_mem_handle_t lcl_mdh, 
                                       uint64_t rem_addr,
-                                      gni_mem_handle_t *rem_mdh,
+                                      gni_mem_handle_t rem_mdh,
                                       uint64_t bufsize,
                                       gni_cq_handle_t cq_hndl) {
     frag->post_desc.base.type            = op_type;
     frag->post_desc.base.cq_mode         = GNI_CQMODE_GLOBAL_EVENT;
     frag->post_desc.base.dlvr_mode       = GNI_DLVMODE_PERFORMANCE;
     frag->post_desc.base.local_addr      = (uint64_t) lcl_addr;
-    frag->post_desc.base.local_mem_hndl  = *lcl_mdh;
+    frag->post_desc.base.local_mem_hndl  = lcl_mdh;
     frag->post_desc.base.remote_addr     = (uint64_t) rem_addr;
-    frag->post_desc.base.remote_mem_hndl = *rem_mdh;
+    frag->post_desc.base.remote_mem_hndl = rem_mdh;
     frag->post_desc.base.length          = bufsize;
     frag->post_desc.base.rdma_mode       = 0;
     frag->post_desc.base.src_cq_hndl     = cq_hndl;
@@ -42,15 +42,13 @@ static inline void init_gni_post_desc (mca_btl_ugni_base_frag_t *frag,
 }
 
 static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_post_type_t op_type,
-                                         mca_btl_base_segment_t *lcl_seg, mca_btl_base_segment_t *rem_seg)
+                                         mca_btl_ugni_segment_t *lcl_seg, mca_btl_ugni_segment_t *rem_seg)
 {
     gni_return_t rc;
 
-    /* Post descriptor */
-    init_gni_post_desc (frag, op_type, lcl_seg->seg_addr.lval,
-                        (gni_mem_handle_t *)&lcl_seg->seg_key.key64,
-                        rem_seg->seg_addr.lval, (gni_mem_handle_t *)&rem_seg->seg_key.key64,
-                        lcl_seg->seg_len, 0); /* CQ is ignored for FMA transactions */
+    /* Post descriptor (CQ is ignored for FMA transactions) */
+    init_gni_post_desc (frag, op_type, lcl_seg->base.seg_addr.lval, lcl_seg->memory_handle,
+                        rem_seg->base.seg_addr.lval, rem_seg->memory_handle, lcl_seg->base.seg_len, 0);
 
     rc = GNI_PostFma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
     if (GNI_RC_SUCCESS != rc) {
@@ -62,15 +60,14 @@ static inline int mca_btl_ugni_post_fma (mca_btl_ugni_base_frag_t *frag, gni_pos
 }
 
 static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_post_type_t op_type,
-                                         mca_btl_base_segment_t *lcl_seg, mca_btl_base_segment_t *rem_seg)
+                                         mca_btl_ugni_segment_t *lcl_seg, mca_btl_ugni_segment_t *rem_seg)
 {
     gni_return_t rc;
 
     /* Post descriptor */
-    init_gni_post_desc (frag, op_type, lcl_seg->seg_addr.lval,
-                        (gni_mem_handle_t *)&lcl_seg->seg_key.key64,
-                        rem_seg->seg_addr.lval, (gni_mem_handle_t *)&rem_seg->seg_key.key64,
-                        lcl_seg->seg_len, frag->endpoint->btl->rdma_local_cq);
+    init_gni_post_desc (frag, op_type, lcl_seg->base.seg_addr.lval, lcl_seg->memory_handle,
+                        rem_seg->base.seg_addr.lval, rem_seg->memory_handle, lcl_seg->base.seg_len,
+                        frag->endpoint->btl->rdma_local_cq);
 
     rc = GNI_PostRdma (frag->endpoint->rdma_ep_handle, &frag->post_desc.base);
     if (GNI_RC_SUCCESS != rc) {
@@ -81,8 +78,8 @@ static inline int mca_btl_ugni_post_bte (mca_btl_ugni_base_frag_t *frag, gni_pos
     return OMPI_SUCCESS;
 }
 
-static inline int mca_btl_ugni_post (mca_btl_ugni_base_frag_t *frag, bool get, mca_btl_base_segment_t *lcl_seg,
-                                     mca_btl_base_segment_t *rem_seg) {
+static inline int mca_btl_ugni_post (mca_btl_ugni_base_frag_t *frag, bool get, mca_btl_ugni_segment_t *lcl_seg,
+                                     mca_btl_ugni_segment_t *rem_seg) {
     frag->cbfunc = mca_btl_ugni_frag_complete;
 
     if (frag->base.des_src->seg_len <= mca_btl_ugni_component.ugni_fma_limit) {

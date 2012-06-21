@@ -63,9 +63,9 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
 
     if (frag->md_h == PTL_INVALID_HANDLE) {
         /* setup the send - always describe entire fragment */
-        mca_btl_portals_module.md_send.start = frag->segments[0].seg_addr.pval;
+        mca_btl_portals_module.md_send.start = frag->segments[0].base.seg_addr.pval;
         mca_btl_portals_module.md_send.length = 
-            0 == frag->size ? frag->segments[0].seg_len : frag->size;
+            0 == frag->size ? frag->segments[0].base.seg_len : frag->size;
 #if OPAL_ENABLE_DEBUG 
         mca_btl_portals_module.md_send.options = 
             PTL_MD_EVENT_START_DISABLE;
@@ -94,19 +94,19 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                          "fragment info:\n"
                          "\tstart: 0x%lx\n"
                          "\tlen: %d",
-                         (unsigned long) frag->segments[0].seg_addr.pval,
-                         frag->segments[0].seg_len)); 
+                         (unsigned long) frag->segments[0].base.seg_addr.pval,
+                         frag->segments[0].base.seg_len)); 
     
-    ret = PtlPutRegion(frag->md_h,                /* memory descriptor */
-                       0,                         /* fragment offset */
-                       frag->segments[0].seg_len, /* fragment length */
+    ret = PtlPutRegion(frag->md_h,                     /* memory descriptor */
+                       0,                              /* fragment offset */
+                       frag->segments[0].base.seg_len, /* fragment length */
                        (mca_btl_portals_component.portals_need_ack ? PTL_ACK_REQ : PTL_NO_ACK_REQ),
                        *((mca_btl_base_endpoint_t*) endpoint),
                        OMPI_BTL_PORTALS_SEND_TABLE_ID,
-                       0,                         /* ac_index - not used */
-                       0,                         /* match bits */
-                       0,                         /* remote offset - not used */
-                       *((ptl_hdr_data_t*) hdr_data));            /* hdr_data: tag */
+                       0,                              /* ac_index - not used */
+                       0,                              /* match bits */
+                       0,                              /* remote offset - not used */
+                       *((ptl_hdr_data_t*) hdr_data)); /* hdr_data: tag */
     if (ret != PTL_OK) {
         opal_output(mca_btl_portals_component.portals_output,
                     "send: PtlPut failed with error %d", ret);
@@ -167,7 +167,7 @@ int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
         OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
         return OMPI_ERR_RESOURCE_BUSY;
     }
-    frag->segments[0].seg_len = payload_size;
+    frag->segments[0].base.seg_len = payload_size;
     frag->base.des_src_cnt = 1;
     frag->base.des_flags = flags; 
     frag->base.order = MCA_BTL_NO_ORDER;
@@ -175,7 +175,7 @@ int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
 
     if(payload_size) { 
         /* pack the data into the supplied buffer */
-        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segments[0].seg_addr.pval);
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)frag->segments[0].base.seg_addr.pval);
         iov.iov_len  = max_data = payload_size;
         iov_count    = 1;
         
@@ -203,9 +203,9 @@ int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
 
     if (frag->md_h == PTL_INVALID_HANDLE) {
         /* setup the send - always describe entire fragment */
-        mca_btl_portals_module.md_send.start = frag->segments[0].seg_addr.pval;
+        mca_btl_portals_module.md_send.start = frag->segments[0].base.seg_addr.pval;
         mca_btl_portals_module.md_send.length = 
-            0 == frag->size ? frag->segments[0].seg_len : frag->size;
+            0 == frag->size ? frag->segments[0].base.seg_len : frag->size;
 #if OPAL_ENABLE_DEBUG 
         mca_btl_portals_module.md_send.options = 
             PTL_MD_EVENT_START_DISABLE;
@@ -234,19 +234,19 @@ int mca_btl_portals_sendi(struct mca_btl_base_module_t* btl_base,
                          "fragment info:\n"
                          "\tstart: 0x%lx\n"
                          "\tlen: %d",
-                         (unsigned long) frag->segments[0].seg_addr.pval,
-                         frag->segments[0].seg_len)); 
+                         (unsigned long) frag->segments[0].base.seg_addr.lval,
+                         frag->segments[0].seg_len));
     
-    ret = PtlPutRegion(frag->md_h,                /* memory descriptor */
-                       0,                         /* fragment offset */
-                       frag->segments[0].seg_len, /* fragment length */
+    ret = PtlPutRegion(frag->md_h,                     /* memory descriptor */
+                       0,                              /* fragment offset */
+                       frag->segments[0].base.seg_len, /* fragment length */
                        (mca_btl_portals_component.portals_need_ack ? PTL_ACK_REQ : PTL_NO_ACK_REQ),
                        *((mca_btl_base_endpoint_t*) endpoint),
                        OMPI_BTL_PORTALS_SEND_TABLE_ID,
-                       0,                         /* ac_index - not used */
+                       0,                              /* ac_index - not used */
                        *((ptl_match_bits_t*) match_bits),                /* match bits */
-                       0,                         /* remote offset - not used */
-                       *((ptl_hdr_data_t*) hdr_data));            /* hdr_data: tag */
+                       0,                              /* remote offset - not used */
+                       *((ptl_hdr_data_t*) hdr_data)); /* hdr_data: tag */
     
     if (ret != PTL_OK) {
         opal_output(mca_btl_portals_component.portals_output,

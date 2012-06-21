@@ -44,6 +44,7 @@ mca_btl_sctp_module_t mca_btl_sctp_module = {
         0, /* latency */
         0, /* bandwidth */
         0, /* flags */
+        0, /* segment size */
         mca_btl_sctp_add_procs,
         mca_btl_sctp_del_procs,
         NULL, 
