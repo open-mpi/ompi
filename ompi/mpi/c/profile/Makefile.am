@@ -12,6 +12,7 @@
 #                         All rights reserved.
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+# Copyright (c)      2012 Oak Rigde National Laboratory. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -47,17 +48,25 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         padd_error_string.c \
         paddress.c \
         pallgather.c \
+        piallgather.c \
         pallgatherv.c \
+        piallgatherv.c \
         palloc_mem.c \
         pallreduce.c \
+        piallreduce.c \
         palltoall.c \
+        pialltoall.c \
         palltoallv.c \
+        pialltoallv.c \
         palltoallw.c \
+        pialltoallw.c \
         pattr_delete.c \
         pattr_get.c \
         pattr_put.c \
         pbarrier.c \
+        pibarrier.c \
         pbcast.c \
+        pibcast.c \
         pbsend.c \
         pbsend_init.c \
         pbuffer_attach.c \
@@ -114,11 +123,14 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         perror_class.c \
         perror_string.c \
         pexscan.c \
+        piexscan.c \
         pfinalize.c \
         pfinalized.c \
         pfree_mem.c \
         pgather.c \
+        pigather.c \
         pgatherv.c \
+        pigatherv.c \
         pget_address.c \
         pget_count.c \
         pget_elements.c \
@@ -196,8 +208,10 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         precv_init.c \
         precv.c \
         preduce.c \
+        pireduce.c \
         preduce_local.c \
         preduce_scatter.c \
+        pireduce_scatter.c \
         prequest_c2f.c \
         prequest_f2c.c \
         prequest_free.c \
@@ -205,8 +219,11 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         prsend_init.c \
         prsend.c \
         pscan.c \
+        piscan.c \
         pscatter.c \
+        piscatter.c \
         pscatterv.c \
+        piscatterv.c \
         psend.c \
         psend_init.c \
         psendrecv.c \

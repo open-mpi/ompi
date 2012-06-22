@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 UT-Battelle, LLC
+ * Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,6 +64,7 @@
 
 #include "opal/mca/crs/crs.h"
 #include "opal/mca/crs/base/base.h"
+#include "ompi/request/request.h"
 
 BEGIN_C_DECLS
 
@@ -218,6 +220,9 @@ typedef int (*mca_coll_base_module_reduce_fn_t)
 typedef int (*mca_coll_base_module_reduce_scatter_fn_t)
   (void *sbuf, void *rbuf, int *rcounts, struct ompi_datatype_t *dtype,
    struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_reduce_scatter_block_fn_t)
+  (void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_2_0_0_t *module);
 typedef int (*mca_coll_base_module_scan_fn_t)
   (void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, 
    struct ompi_op_t *op, struct ompi_communicator_t *comm, struct mca_coll_base_module_2_0_0_t *module);
@@ -230,6 +235,83 @@ typedef int (*mca_coll_base_module_scatterv_fn_t)
    void* rbuf, int rcount, struct ompi_datatype_t *rdtype,
    int root, struct ompi_communicator_t *comm, struct mca_coll_base_module_2_0_0_t *module);
 
+/* nonblocking collectives */
+typedef int (*mca_coll_base_module_iallgather_fn_t)
+  (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
+   void *rbuf, int rcount, struct ompi_datatype_t *rdtype, 
+   struct ompi_communicator_t *comm, ompi_request_t ** request, 
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_iallgatherv_fn_t)
+  (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
+   void * rbuf, int *rcounts, int *disps,  struct ompi_datatype_t *rdtype, 
+   struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_iallreduce_fn_t)
+  (void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, 
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, 
+   ompi_request_t ** request, struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_ialltoall_fn_t)
+  (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
+   void* rbuf, int rcount, struct ompi_datatype_t *rdtype, 
+   struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_ialltoallv_fn_t)
+  (void *sbuf, int *scounts, int *sdisps, struct ompi_datatype_t *sdtype, 
+   void *rbuf, int *rcounts, int *rdisps, struct ompi_datatype_t *rdtype, 
+   struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_ialltoallw_fn_t)
+  (void *sbuf, int *scounts, int *sdisps, struct ompi_datatype_t **sdtypes, 
+   void *rbuf, int *rcounts, int *rdisps, struct ompi_datatype_t **rdtypes, 
+   struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_ibarrier_fn_t)
+  (struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_ibcast_fn_t)
+  (void *buff, int count, struct ompi_datatype_t *datatype, int root,
+   struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_iexscan_fn_t)
+  (void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, 
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_igather_fn_t)
+  (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
+   void *rbuf, int rcount, struct ompi_datatype_t *rdtype, 
+   int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_igatherv_fn_t)
+  (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
+   void *rbuf, int *rcounts, int *disps, struct ompi_datatype_t *rdtype, 
+   int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_ireduce_fn_t)
+  (void *sbuf, void* rbuf, int count, struct ompi_datatype_t *dtype, 
+   struct ompi_op_t *op, int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_ireduce_scatter_fn_t)
+  (void *sbuf, void *rbuf, int *rcounts, struct ompi_datatype_t *dtype,
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_ireduce_scatter_block_fn_t)
+  (void *sbuf, void *rbuf, int rcount, struct ompi_datatype_t *dtype,
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_iscan_fn_t)
+  (void *sbuf, void *rbuf, int count, struct ompi_datatype_t *dtype, 
+   struct ompi_op_t *op, struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_iscatter_fn_t)
+  (void *sbuf, int scount, struct ompi_datatype_t *sdtype, 
+   void *rbuf, int rcount, struct ompi_datatype_t *rdtype, 
+   int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
+typedef int (*mca_coll_base_module_iscatterv_fn_t)
+  (void *sbuf, int *scounts, int *disps, struct ompi_datatype_t *sdtype, 
+   void* rbuf, int rcount, struct ompi_datatype_t *rdtype,
+   int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+   struct mca_coll_base_module_2_0_0_t *module);
 
 /**
  * Fault Tolerance Awareness function.
@@ -298,6 +380,7 @@ struct mca_coll_base_module_2_0_0_t {
     mca_coll_base_module_enable_1_1_0_fn_t coll_module_enable;
 
     /* Collective function pointers */
+    /* blocking functions */
     mca_coll_base_module_allgather_fn_t coll_allgather;
     mca_coll_base_module_allgatherv_fn_t coll_allgatherv;
     mca_coll_base_module_allreduce_fn_t coll_allreduce;
@@ -311,9 +394,28 @@ struct mca_coll_base_module_2_0_0_t {
     mca_coll_base_module_gatherv_fn_t coll_gatherv;
     mca_coll_base_module_reduce_fn_t coll_reduce;
     mca_coll_base_module_reduce_scatter_fn_t coll_reduce_scatter;
+    mca_coll_base_module_reduce_scatter_block_fn_t coll_reduce_scatter_block;
     mca_coll_base_module_scan_fn_t coll_scan;
     mca_coll_base_module_scatter_fn_t coll_scatter;
     mca_coll_base_module_scatterv_fn_t coll_scatterv;
+    /* nonblocking functions */
+    mca_coll_base_module_iallgather_fn_t coll_iallgather;
+    mca_coll_base_module_iallgatherv_fn_t coll_iallgatherv;
+    mca_coll_base_module_iallreduce_fn_t coll_iallreduce;
+    mca_coll_base_module_ialltoall_fn_t coll_ialltoall;
+    mca_coll_base_module_ialltoallv_fn_t coll_ialltoallv;
+    mca_coll_base_module_ialltoallw_fn_t coll_ialltoallw;
+    mca_coll_base_module_ibarrier_fn_t coll_ibarrier;
+    mca_coll_base_module_ibcast_fn_t coll_ibcast;
+    mca_coll_base_module_iexscan_fn_t coll_iexscan;
+    mca_coll_base_module_igather_fn_t coll_igather;
+    mca_coll_base_module_igatherv_fn_t coll_igatherv;
+    mca_coll_base_module_ireduce_fn_t coll_ireduce;
+    mca_coll_base_module_ireduce_scatter_fn_t coll_ireduce_scatter;
+    mca_coll_base_module_ireduce_scatter_block_fn_t coll_ireduce_scatter_block;
+    mca_coll_base_module_iscan_fn_t coll_iscan;
+    mca_coll_base_module_iscatter_fn_t coll_iscatter;
+    mca_coll_base_module_iscatterv_fn_t coll_iscatterv;
 
     /** Fault tolerance event trigger function */
     mca_coll_base_module_ft_event_fn_t ft_event;
@@ -362,12 +464,49 @@ struct mca_coll_base_comm_coll_t {
     mca_coll_base_module_2_0_0_t *coll_reduce_module;
     mca_coll_base_module_reduce_scatter_fn_t coll_reduce_scatter;
     mca_coll_base_module_2_0_0_t *coll_reduce_scatter_module;
+    mca_coll_base_module_reduce_scatter_block_fn_t coll_reduce_scatter_block;
+    mca_coll_base_module_2_0_0_t *coll_reduce_scatter_block_module;
     mca_coll_base_module_scan_fn_t coll_scan;
     mca_coll_base_module_2_0_0_t *coll_scan_module;
     mca_coll_base_module_scatter_fn_t coll_scatter;
     mca_coll_base_module_2_0_0_t *coll_scatter_module;
     mca_coll_base_module_scatterv_fn_t coll_scatterv;
     mca_coll_base_module_2_0_0_t *coll_scatterv_module;
+    /* nonblocking collectives */
+    mca_coll_base_module_iallgather_fn_t coll_iallgather;
+    mca_coll_base_module_2_0_0_t *coll_iallgather_module;
+    mca_coll_base_module_iallgatherv_fn_t coll_iallgatherv;
+    mca_coll_base_module_2_0_0_t *coll_iallgatherv_module;
+    mca_coll_base_module_iallreduce_fn_t coll_iallreduce;
+    mca_coll_base_module_2_0_0_t *coll_iallreduce_module;
+    mca_coll_base_module_ialltoall_fn_t coll_ialltoall;
+    mca_coll_base_module_2_0_0_t *coll_ialltoall_module;
+    mca_coll_base_module_ialltoallv_fn_t coll_ialltoallv;
+    mca_coll_base_module_2_0_0_t *coll_ialltoallv_module;
+    mca_coll_base_module_ialltoallw_fn_t coll_ialltoallw;
+    mca_coll_base_module_2_0_0_t *coll_ialltoallw_module;
+    mca_coll_base_module_ibarrier_fn_t coll_ibarrier;
+    mca_coll_base_module_2_0_0_t *coll_ibarrier_module;
+    mca_coll_base_module_ibcast_fn_t coll_ibcast;
+    mca_coll_base_module_2_0_0_t *coll_ibcast_module;
+    mca_coll_base_module_iexscan_fn_t coll_iexscan;
+    mca_coll_base_module_2_0_0_t *coll_iexscan_module;
+    mca_coll_base_module_igather_fn_t coll_igather;
+    mca_coll_base_module_2_0_0_t *coll_igather_module;
+    mca_coll_base_module_igatherv_fn_t coll_igatherv;
+    mca_coll_base_module_2_0_0_t *coll_igatherv_module;
+    mca_coll_base_module_ireduce_fn_t coll_ireduce;
+    mca_coll_base_module_2_0_0_t *coll_ireduce_module;
+    mca_coll_base_module_ireduce_scatter_fn_t coll_ireduce_scatter;
+    mca_coll_base_module_2_0_0_t *coll_ireduce_scatter_module;
+    mca_coll_base_module_ireduce_scatter_block_fn_t coll_ireduce_scatter_block;
+    mca_coll_base_module_2_0_0_t *coll_ireduce_scatter_block_module;
+    mca_coll_base_module_iscan_fn_t coll_iscan;
+    mca_coll_base_module_2_0_0_t *coll_iscan_module;
+    mca_coll_base_module_iscatter_fn_t coll_iscatter;
+    mca_coll_base_module_2_0_0_t *coll_iscatter_module;
+    mca_coll_base_module_iscatterv_fn_t coll_iscatterv;
+    mca_coll_base_module_2_0_0_t *coll_iscatterv_module;
 };
 typedef struct mca_coll_base_comm_coll_t mca_coll_base_comm_coll_t;
 

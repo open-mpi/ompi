@@ -143,7 +143,18 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pgroup_size_f.c \
         pgroup_translate_ranks_f.c \
         pgroup_union_f.c \
+        piallgather_f.c \
+        piallgatherv_f.c \
+        piallreduce_f.c \
+        pialltoall_f.c \
+        pialltoallv_f.c \
+        pialltoallw_f.c \
+        pibarrier_f.c \
+        pibcast_f.c \
         pibsend_f.c \
+        piexscan_f.c \
+        pigather_f.c \
+        pigatherv_f.c \
         pimprobe_f.c \
         pimrecv_f.c \
         pinfo_create_f.c \
@@ -162,7 +173,12 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pintercomm_merge_f.c \
         piprobe_f.c \
         pirecv_f.c \
+        pireduce_f.c \
+        pireduce_scatter_f.c \
+        pireduce_scatter_block_f.c \
         pirsend_f.c \
+        piscatter_f.c \
+        piscatterv_f.c \
         pisend_f.c \
         pissend_f.c \
         pis_thread_main_f.c \
@@ -188,6 +204,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         preduce_f.c \
         preduce_local_f.c \
         preduce_scatter_f.c \
+        preduce_scatter_block_f.c \
         prequest_free_f.c \
         prequest_get_status_f.c \
         prsend_f.c \

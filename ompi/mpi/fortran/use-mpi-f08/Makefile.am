@@ -123,7 +123,18 @@ mpi_api_files = \
         group_size_f08.F90 \
         group_translate_ranks_f08.F90 \
         group_union_f08.F90 \
+        iallgather_f08.F90 \
+        iallgatherv_f08.F90 \
+        iallreduce_f08.F90 \
+        ialltoall_f08.F90 \
+        ialltoallv_f08.F90 \
+        ialltoallw_f08.F90 \
+        ibarrier_f08.F90 \
+        ibcast_f08.F90 \
         ibsend_f08.F90 \
+        iexscan_f08.F90 \
+        igather_f08.F90 \
+        igatherv_f08.F90 \
         improbe_f08.F90 \
         imrecv_f08.F90 \
         info_create_f08.F90 \
@@ -142,7 +153,13 @@ mpi_api_files = \
         intercomm_merge_f08.F90 \
         iprobe_f08.F90 \
         irecv_f08.F90 \
+        ireduce_f08.F90 \
+        ireduce_scatter_f08.F90 \
+        ireduce_scatter_block_f08.F90 \
         irsend_f08.F90 \
+        iscan_f08.F90 \
+        iscatter_f08.F90 \
+        iscatterv_f08.F90 \
         isend_f08.F90 \
         issend_f08.F90 \
         is_thread_main_f08.F90 \
@@ -167,6 +184,7 @@ mpi_api_files = \
         reduce_f08.F90 \
         reduce_local_f08.F90 \
         reduce_scatter_f08.F90 \
+        reduce_scatter_block_f08.F90 \
         request_free_f08.F90 \
         request_get_status_f08.F90 \
         rsend_f08.F90 \
@@ -329,11 +347,9 @@ pmpi_api_files = \
         profile/padd_error_class_f08.F90 \
         profile/padd_error_code_f08.F90 \
         profile/padd_error_string_f08.F90 \
-        profile/pallgather_f08.F90 \
         profile/pallgatherv_f08.F90 \
         profile/palloc_mem_f08.F90 \
         profile/pallreduce_f08.F90 \
-        profile/palltoall_f08.F90 \
         profile/palltoallv_f08.F90 \
         profile/palltoallw_f08.F90 \
         profile/pbarrier_f08.F90 \
@@ -417,7 +433,18 @@ pmpi_api_files = \
         profile/pgroup_size_f08.F90 \
         profile/pgroup_translate_ranks_f08.F90 \
         profile/pgroup_union_f08.F90 \
+        profile/piallgather_f08.F90 \
+        profile/piallgatherv_f08.F90 \
+        profile/piallreduce_f08.F90 \
+        profile/pialltoall_f08.F90 \
+        profile/pialltoallv_f08.F90 \
+        profile/pialltoallw_f08.F90 \
+        profile/pibarrier_f08.F90 \
+        profile/pibcast_f08.F90 \
         profile/pibsend_f08.F90 \
+        profile/pigather_f08.F90 \
+        profile/pigatherv_f08.F90 \
+        profile/piexscan_f08.F90 \
         profile/pimprobe_f08.F90 \
         profile/pimrecv_f08.F90 \
         profile/pinfo_create_f08.F90 \
@@ -436,7 +463,13 @@ pmpi_api_files = \
         profile/pintercomm_merge_f08.F90 \
         profile/piprobe_f08.F90 \
         profile/pirecv_f08.F90 \
+        profile/pireduce_f08.F90 \
+        profile/pireduce_scatter_f08.F90 \
+        profile/pireduce_scatter_block_f08.F90 \
         profile/pirsend_f08.F90 \
+        profile/piscan_f08.F90 \
+        profile/piscatter_f08.F90 \
+        profile/piscatterv_f08.F90 \
         profile/pisend_f08.F90 \
         profile/pissend_f08.F90 \
         profile/pis_thread_main_f08.F90 \

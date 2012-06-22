@@ -70,10 +70,26 @@ noinst_SCRIPTS = \
      mpi_gather_f90.f90.sh \
      mpi_gatherv_f90.f90.sh \
      mpi_get_f90.f90.sh \
+     mpi_iallgather_f90.f90.sh \
+     mpi_iallgatherv_f90.f90.sh \
+     mpi_iallreduce_f90.f90.sh \
+     mpi_ialltoall_f90.f90.sh \
+     mpi_ialltoallv_f90.f90.sh \
+     mpi_ialltoallw_f90.f90.sh \
+     mpi_ibcast_f90.f90.sh \
      mpi_ibsend_f90.f90.sh \
+     mpi_iexscan_f90.f90.sh \
      mpi_imrecv_f90.f90.sh \
+     mpi_igather_f90.f90.sh \
+     mpi_igatherv_f90.f90.sh \
      mpi_irecv_f90.f90.sh \
+     mpi_ireduce_f90.f90.sh \
+     mpi_ireduce_scatter_f90.f90.sh \
+     mpi_ireduce_scatter_block_f90.f90.sh \
      mpi_irsend_f90.f90.sh \
+     mpi_iscan_f90.f90.sh \
+     mpi_iscatter_f90.f90.sh \
+     mpi_iscatterv_f90.f90.sh \
      mpi_isend_f90.f90.sh \
      mpi_issend_f90.f90.sh \
      mpi_mrecv_f90.f90.sh \
@@ -84,6 +100,7 @@ noinst_SCRIPTS = \
      mpi_recv_init_f90.f90.sh \
      mpi_reduce_f90.f90.sh \
      mpi_reduce_scatter_f90.f90.sh \
+     mpi_reduce_scatter_block_f90.f90.sh \
      mpi_rsend_f90.f90.sh \
      mpi_rsend_init_f90.f90.sh \
      mpi_scan_f90.f90.sh \

@@ -935,6 +935,26 @@ subroutine PMPI_Allgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvt
 end subroutine PMPI_Allgather_f08
 end interface  PMPI_Allgather
 
+interface  PMPI_Iallgather
+subroutine PMPI_Iallgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
+                             comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iallgather_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(IN) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Iallgather_f08
+end interface  PMPI_Iallgather
+
 interface  PMPI_Allgatherv
 subroutine PMPI_Allgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
                               recvtype,comm,ierror &
@@ -955,6 +975,27 @@ subroutine PMPI_Allgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,dis
 end subroutine PMPI_Allgatherv_f08
 end interface  PMPI_Allgatherv
 
+interface  PMPI_Iallgatherv
+subroutine PMPI_Iallgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
+                              recvtype,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iallgatherv_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount
+   INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Iallgatherv_f08
+end interface  PMPI_Iallgatherv
+
 interface  PMPI_Allreduce
 subroutine PMPI_Allreduce_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Allreduce_f08")
@@ -973,6 +1014,26 @@ subroutine PMPI_Allreduce_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Allreduce_f08
 end interface  PMPI_Allreduce
+
+interface  PMPI_Iallreduce
+subroutine PMPI_Iallreduce_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iallreduce_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Iallreduce_f08
+end interface  PMPI_Iallreduce
 
 interface  PMPI_Alltoall
 subroutine PMPI_Alltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
@@ -993,6 +1054,26 @@ subroutine PMPI_Alltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvty
 end subroutine PMPI_Alltoall_f08
 end interface  PMPI_Alltoall
 
+interface  PMPI_Ialltoall
+subroutine PMPI_Ialltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
+                            comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ialltoall_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Ialltoall_f08
+end interface  PMPI_Ialltoall
+
 interface  PMPI_Alltoallv
 subroutine PMPI_Alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
                              rdispls,recvtype,comm,ierror &
@@ -1011,6 +1092,26 @@ subroutine PMPI_Alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvco
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Alltoallv_f08
 end interface  PMPI_Alltoallv
+
+interface  PMPI_Ialltoallv
+subroutine PMPI_Ialltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
+                             rdispls,recvtype,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ialltoallv_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(IN) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Ialltoallv_f08
+end interface  PMPI_Ialltoallv
 
 interface  PMPI_Alltoallw
 subroutine PMPI_Alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
@@ -1031,6 +1132,26 @@ subroutine PMPI_Alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvc
 end subroutine PMPI_Alltoallw_f08
 end interface  PMPI_Alltoallw
 
+interface  PMPI_Ialltoallw
+subroutine PMPI_Ialltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
+                             rdispls,recvtypes,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ialltoallw_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtypes(*), recvtypes(*)
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(IN) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Ialltoallw_f08
+end interface  PMPI_Ialltoallw
+
 interface  PMPI_Barrier
 subroutine PMPI_Barrier_f08(comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Barrier_f08")
@@ -1040,6 +1161,17 @@ subroutine PMPI_Barrier_f08(comm,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Barrier_f08
 end interface  PMPI_Barrier
+
+interface  PMPI_Ibarrier
+subroutine PMPI_Ibarrier_f08(comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ibarrier_f08")
+   use :: mpi_f08_types
+   implicit none
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Ibarrier_f08
+end interface  PMPI_Ibarrier
 
 interface  PMPI_Bcast
 subroutine PMPI_Bcast_f08(buffer,count,datatype,root,comm,ierror &
@@ -1057,6 +1189,24 @@ subroutine PMPI_Bcast_f08(buffer,count,datatype,root,comm,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Bcast_f08
 end interface  PMPI_Bcast
+
+interface  PMPI_Ibcast
+subroutine PMPI_Ibcast_f08(buffer,count,datatype,root,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ibcast_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer
+   !$PRAGMA IGNORE_TKR buffer
+   !DIR$ IGNORE_TKR buffer
+   !IBM* IGNORE_TKR buffer
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: buffer
+   INTEGER, INTENT(IN) :: count, root
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Ibcast_f08
+end interface  PMPI_Ibcast
 
 interface  PMPI_Exscan
 subroutine PMPI_Exscan_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror &
@@ -1077,6 +1227,26 @@ subroutine PMPI_Exscan_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror &
 end subroutine PMPI_Exscan_f08
 end interface  PMPI_Exscan
 
+interface  PMPI_Iexscan
+subroutine PMPI_Iexscan_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iexscan_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Iexscan_f08
+end interface  PMPI_Iexscan
+
 interface  PMPI_Gather
 subroutine PMPI_Gather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                           root,comm,ierror &
@@ -1095,6 +1265,26 @@ subroutine PMPI_Gather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Gather_f08
 end interface  PMPI_Gather
+
+interface  PMPI_Igather
+subroutine PMPI_Igather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
+                          root,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Igather_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount, root
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Igather_f08
+end interface  PMPI_Igather
 
 interface  PMPI_Gatherv
 subroutine PMPI_Gatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
@@ -1115,6 +1305,27 @@ subroutine PMPI_Gatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Gatherv_f08
 end interface  PMPI_Gatherv
+
+interface  PMPI_Igatherv
+subroutine PMPI_Igatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
+                           recvtype,root,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Igatherv_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, root
+   INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Igatherv_f08
+end interface  PMPI_Igatherv
 
 interface  PMPI_Op_commutative
 subroutine PMPI_Op_commutative_f08(op,commute,ierror &
@@ -1169,6 +1380,26 @@ subroutine PMPI_Reduce_f08(sendbuf,recvbuf,count,datatype,op,root,comm,ierror &
 end subroutine PMPI_Reduce_f08
 end interface  PMPI_Reduce
 
+interface  PMPI_Ireduce
+subroutine PMPI_Ireduce_f08(sendbuf,recvbuf,count,datatype,op,root,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ireduce_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: count, root
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Ireduce_f08
+end interface  PMPI_Ireduce
+
 interface  PMPI_Reduce_local
 subroutine PMPI_Reduce_local_f08(inbuf,inoutbuf,count,datatype,op,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Reduce_local_f08")
@@ -1207,6 +1438,27 @@ subroutine PMPI_Reduce_scatter_f08(sendbuf,recvbuf,recvcounts,datatype,op,comm, 
 end subroutine PMPI_Reduce_scatter_f08
 end interface  PMPI_Reduce_scatter
 
+interface  PMPI_Ireduce_scatter
+subroutine PMPI_Ireduce_scatter_f08(sendbuf,recvbuf,recvcounts,datatype,op,comm, &
+                                  request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ireduce_scatter_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: recvcounts(*)
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Ireduce_scatter_f08
+end interface  PMPI_Ireduce_scatter
+
 interface  PMPI_Reduce_scatter_block
 subroutine PMPI_Reduce_scatter_block_f08(sendbuf,recvbuf,recvcount,datatype,op,comm, &
                                         ierror &
@@ -1227,6 +1479,27 @@ subroutine PMPI_Reduce_scatter_block_f08(sendbuf,recvbuf,recvcount,datatype,op,c
 end subroutine PMPI_Reduce_scatter_block_f08
 end interface  PMPI_Reduce_scatter_block
 
+interface  PMPI_Ireduce_scatter_block
+subroutine PMPI_Ireduce_scatter_block_f08(sendbuf,recvbuf,recvcount,datatype,op,comm, &
+                                        request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ireduce_scatter_block_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: recvcount
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Ireduce_scatter_block_f08
+end interface  PMPI_Ireduce_scatter_block
+
 interface  PMPI_Scan
 subroutine PMPI_Scan_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Scan_f08")
@@ -1245,6 +1518,26 @@ subroutine PMPI_Scan_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror &
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Scan_f08
 end interface  PMPI_Scan
+
+interface  PMPI_Iscan
+subroutine PMPI_Iscan_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iscan_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: count
+   TYPE(MPI_Datatype), INTENT(IN) :: datatype
+   TYPE(MPI_Op), INTENT(IN) :: op
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Iscan_f08
+end interface  PMPI_Iscan
 
 interface  PMPI_Scatter
 subroutine PMPI_Scatter_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
@@ -1265,6 +1558,26 @@ subroutine PMPI_Scatter_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtyp
 end subroutine PMPI_Scatter_f08
 end interface  PMPI_Scatter
 
+interface  PMPI_Iscatter
+subroutine PMPI_Iscatter_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
+                           root,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iscatter_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount, root
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Iscatter_f08
+end interface  PMPI_Iscatter
+
 interface  PMPI_Scatterv
 subroutine PMPI_Scatterv_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,recvcount, &
                             recvtype,root,comm,ierror &
@@ -1284,6 +1597,27 @@ subroutine PMPI_Scatterv_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,recvcoun
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Scatterv_f08
 end interface  PMPI_Scatterv
+
+interface  PMPI_Iscatterv
+subroutine PMPI_Iscatterv_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,recvcount, &
+                            recvtype,root,comm,request,ierror &
+           ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iscatterv_f08")
+   use :: mpi_f08_types
+   implicit none
+   !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
+   !$PRAGMA IGNORE_TKR sendbuf, recvbuf
+   !DIR$ IGNORE_TKR sendbuf, recvbuf
+   !IBM* IGNORE_TKR sendbuf, recvbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf
+   OMPI_FORTRAN_IGNORE_TKR_TYPE :: recvbuf
+   INTEGER, INTENT(IN) :: recvcount, root
+   INTEGER, INTENT(IN) :: sendcounts(*), displs(*)
+   TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
+   TYPE(MPI_Comm), INTENT(IN) :: comm
+   TYPE(MPI_Request), INTENT(OUT) :: request
+   INTEGER, OPTIONAL, INTENT(OUT) :: ierror
+end subroutine PMPI_Iscatterv_f08
+end interface  PMPI_Iscatterv
 
 interface  PMPI_Comm_compare
 subroutine PMPI_Comm_compare_f08(comm1,comm2,result,ierror &

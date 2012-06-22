@@ -1349,6 +1349,177 @@ end subroutine MPI_Group_union
 end interface
 
 
+interface MPI_Iallgather
+
+subroutine MPI_Iallgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Iallgather
+
+end interface
+
+
+interface MPI_Iallgatherv
+
+subroutine MPI_Iallgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: displs
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Iallgatherv
+
+end interface
+
+
+interface MPI_Iallreduce
+
+subroutine MPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, &
+        comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Iallreduce
+
+end interface
+
+
+interface MPI_Ialltoall
+
+subroutine MPI_Ialltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Ialltoall
+
+end interface
+
+
+interface MPI_Ialltoallv
+
+subroutine MPI_Ialltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
+        recvcounts, rdispls, recvtype, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: sdispls
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: rdispls
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Ialltoallv
+
+end interface
+
+
+interface MPI_Ialltoallw
+
+subroutine MPI_Ialltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
+        recvcounts, rdispls, recvtypes, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: sdispls
+  integer, dimension(*), intent(in) :: sendtypes
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: rdispls
+  integer, dimension(*), intent(in) :: recvtypes
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Ialltoallw
+
+end interface
+
+
+interface MPI_Ibarrier
+
+subroutine MPI_Ibarrier(comm, request, ierr)
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Ibarrier
+
+end interface
+
+
+interface MPI_Ibcast
+
+subroutine MPI_Ibcast(buffer, count, datatype, root, comm&
+        , request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ buffer
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: buffer
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Ibcast
+
+end interface
+
+
+interface MPI_Iexscan
+
+subroutine MPI_Iexscan(sendbuf, recvbuf, count, datatype, op, &
+        comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Iexscan
+
+end interface
+
+
 interface MPI_Ibsend
 
 subroutine MPI_Ibsend(buf, count, datatype, dest, tag, &
@@ -1363,6 +1534,49 @@ subroutine MPI_Ibsend(buf, count, datatype, dest, tag, &
   integer, intent(out) :: request
   integer, intent(out) :: ierr
 end subroutine MPI_Ibsend
+
+end interface
+
+
+interface MPI_Igather
+
+subroutine MPI_Igather(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, root, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Igather
+
+end interface
+
+
+interface MPI_Igatherv
+
+subroutine MPI_Igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, root, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: displs
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Igatherv
 
 end interface
 
@@ -1595,6 +1809,64 @@ end subroutine MPI_Irecv
 end interface
 
 
+interface MPI_Ireduce
+
+subroutine MPI_Ireduce(sendbuf, recvbuf, count, datatype, op, &
+        root, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Ireduce
+
+end interface
+
+
+interface MPI_Ireduce_scatter
+
+subroutine MPI_Ireduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, &
+        comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Ireduce_scatter
+
+end interface
+
+
+interface MPI_Ireduce_scatter_block
+
+subroutine MPI_Ireduce_scatter_block(sendbuf, recvbuf, recvcount, datatype, op, &
+        comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Ireduce_scatter_block
+
+end interface
+
+
 interface MPI_Irsend
 
 subroutine MPI_Irsend(buf, count, datatype, dest, tag, &
@@ -1619,6 +1891,68 @@ subroutine MPI_Is_thread_main(flag, ierr)
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine MPI_Is_thread_main
+
+end interface
+
+
+interface MPI_Iscan
+
+subroutine MPI_Iscan(sendbuf, recvbuf, count, datatype, op, &
+        comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Iscan
+
+end interface
+
+
+interface MPI_Iscatter
+
+subroutine MPI_Iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, root, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Iscatter
+
+end interface
+
+
+interface MPI_Iscatterv
+
+subroutine MPI_Iscatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, &
+        recvcount, recvtype, root, comm, request, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: displs
+  integer, intent(in) :: sendtype
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine MPI_Iscatterv
 
 end interface
 
@@ -1988,6 +2322,24 @@ subroutine MPI_Reduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, &
   integer, intent(in) :: comm
   integer, intent(out) :: ierr
 end subroutine MPI_Reduce_scatter
+
+end interface
+
+
+interface MPI_Reduce_scatter_block
+
+subroutine MPI_Reduce_scatter_block(sendbuf, recvbuf, recvcount, datatype, op, &
+        comm, ierr)
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@, intent(in) :: sendbuf
+  @OMPI_FORTRAN_IGNORE_TKR_PREDECL@ recvbuf
+  @OMPI_FORTRAN_IGNORE_TKR_TYPE@ :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierr
+end subroutine MPI_Reduce_scatter_block
 
 end interface
 

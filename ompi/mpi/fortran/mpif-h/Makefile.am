@@ -174,7 +174,18 @@ libmpi_mpifh_la_SOURCES += \
         group_size_f.c \
         group_translate_ranks_f.c \
         group_union_f.c \
+        iallgather_f.c \
+        iallgatherv_f.c \
+        iallreduce_f.c \
+        ialltoall_f.c \
+        ialltoallv_f.c \
+        ialltoallw_f.c \
+        ibarrier_f.c \
+        ibcast_f.c \
         ibsend_f.c \
+        iexscan_f.c \
+        igather_f.c \
+        igatherv_f.c \
         improbe_f.c \
         imrecv_f.c \
         info_create_f.c \
@@ -193,8 +204,14 @@ libmpi_mpifh_la_SOURCES += \
         intercomm_merge_f.c \
         iprobe_f.c \
         irecv_f.c \
+        ireduce_f.c \
+        ireduce_scatter_f.c \
+        ireduce_scatter_block_f.c \
         irsend_f.c \
         isend_f.c \
+        iscan_f.c \
+        iscatter_f.c \
+        iscatterv_f.c \
         issend_f.c \
         is_thread_main_f.c \
         keyval_create_f.c \
@@ -219,6 +236,7 @@ libmpi_mpifh_la_SOURCES += \
         reduce_f.c \
         reduce_local_f.c \
         reduce_scatter_f.c \
+        reduce_scatter_block_f.c \
         request_free_f.c \
         request_get_status_f.c \
         rsend_f.c \
