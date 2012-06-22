@@ -49,7 +49,6 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/mca/notifier/notifier.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_globals.h"
 
@@ -121,17 +120,6 @@ int ompi_mpi_finalize(void)
      * of the user buffer used for bsend, before going anywhere further.
      */
     (void)mca_pml_base_bsend_detach(NULL, NULL);
-
-#if !ORTE_DISABLE_FULL_SUPPORT    
-    /* If desired, send a notify message */
-    if (ompi_notify_init_finalize) {
-        orte_notifier.log(ORTE_NOTIFIER_NOTICE,
-                          ORTE_SUCCESS,
-                          "MPI_FINALIZE:Starting on host %s, pid %d",
-                          orte_process_info.nodename,
-                          orte_process_info.pid);
-    }
-#endif
 
     /* Per MPI-2:4.8, we have to free MPI_COMM_SELF before doing
        anything else in MPI_FINALIZE (to include setting up such that
@@ -424,16 +412,6 @@ int ompi_mpi_finalize(void)
         free(ompi_mpi_show_mca_params_file);
     }
 
-#if !ORTE_DISABLE_FULL_SUPPORT    
-    /* If desired, send a notify message */
-    if (ompi_notify_init_finalize) {
-        orte_notifier.log(ORTE_NOTIFIER_NOTICE,
-                          ORTE_SUCCESS,
-                          "MPI_FINALIZE:Finishing on host %s, pid %d",
-                          orte_process_info.nodename,
-                          orte_process_info.pid);
-    }
-#endif
 
     /* Leave the RTE */
 

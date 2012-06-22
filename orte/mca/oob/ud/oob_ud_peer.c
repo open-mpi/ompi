@@ -18,7 +18,6 @@
 #include "orte/util/name_fns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/notifier/notifier.h"
 #include "orte/mca/state/state.h"
 #include "orte/mca/routed/routed.h"
 

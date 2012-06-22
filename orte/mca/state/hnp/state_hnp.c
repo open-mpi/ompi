@@ -26,7 +26,6 @@
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/mca/notifier/notifier.h"
 #include "orte/mca/sensor/sensor.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_quit.h"
@@ -356,7 +355,6 @@ static void check_all_complete(int fd, short args, void *cbdata)
     orte_std_cntr_t index;
     bool one_still_alive;
     orte_vpid_t lowest=0;
-    char *msg;
 
     OPAL_OUTPUT_VERBOSE((2, orte_state_base_output,
                          "%s state:hnp:check_job_complete on job %s",
@@ -559,18 +557,6 @@ static void check_all_complete(int fd, short args, void *cbdata)
      * wasn't already set by an error condition
      */
     ORTE_UPDATE_EXIT_STATUS(0);
-    /* provide a notifier message if that framework is active - ignored otherwise */
-    if (NULL != (job = (orte_job_t*)opal_pointer_array_get_item(orte_job_data, 1))) {
-        if (0 == orte_exit_status) {
-            asprintf(&msg, "Job %s complete", ORTE_JOBID_PRINT(job->jobid));
-            orte_notifier.log(ORTE_NOTIFIER_INFO, 0, msg);
-        } else {
-            asprintf(&msg, "Job %s terminated abnormally", ORTE_JOBID_PRINT(job->jobid));
-            orte_notifier.log(ORTE_NOTIFIER_ALERT, orte_exit_status, msg);
-        }
-        free(msg);
-        /* this job object will be release during finalize */
-    }
 
     /* order daemon termination - this tells us to cleanup
      * our local procs as well as telling remote daemons

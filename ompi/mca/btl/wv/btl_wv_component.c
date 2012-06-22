@@ -48,7 +48,6 @@
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/notifier/notifier.h"
 
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
@@ -2963,13 +2962,6 @@ error:
                        cq_name[cq], btl_wv_component_status_to_string(wc->Status),
                        wc->Status, wc->WrId, 
                        wc->Opcode, wc->VendorCode, qp));
-        orte_notifier.log_peer(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
-                               remote_proc ? &remote_proc->proc_name : NULL,
-                               "\n\tIB polling %s with status %s "
-                               "status number %d for wr_id %llu opcode %d vendor error %d qp_idx %d",
-                               cq_name[cq], btl_wv_component_status_to_string(wc->Status),
-                               wc->Status, wc->WrId, 
-                               wc->Opcode, wc->VendorCode, qp);
     }
 
     if (WvWcRnrRetryError == wc->Status ||
@@ -2988,23 +2980,11 @@ error:
                            "srq rnr retry exceeded", true,
                            orte_process_info.nodename, device_name,
                            peer_hostname);
-            orte_notifier.show_help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
-                                    "help-mpi-btl-wv.txt",
-                                    BTL_WV_QP_TYPE_PP(qp) ? 
-                                    "pp rnr retry exceeded" : 
-                                    "srq rnr retry exceeded",
-                                    orte_process_info.nodename, device_name,
-                                    peer_hostname);
         } else if (-2 == wc->Status) {
             orte_show_help("help-mpi-btl-wv.txt", 
                            "pp retry exceeded", true,
                            orte_process_info.nodename,
                            device_name, peer_hostname);
-            orte_notifier.show_help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
-                                    "help-mpi-btl-wv.txt", 
-                                    "pp retry exceeded",
-                                    orte_process_info.nodename,
-                                    device_name, peer_hostname);
         }
     }
 

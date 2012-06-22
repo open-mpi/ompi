@@ -139,12 +139,6 @@ OMPI_DECLSPEC extern bool ompi_have_sparse_group_storage;
 OMPI_DECLSPEC extern bool ompi_use_sparse_group_storage;
 
 /**
- * Whether we should send notifications during MPI_INIT and
- * MPI_FINALIZE or not.
- */
-OMPI_DECLSPEC extern bool ompi_notify_init_finalize;
-
-/**
  * Register MCA parameters used by the MPI layer.
  *
  * @returns OMPI_SUCCESS

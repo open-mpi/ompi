@@ -11,7 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
  * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -81,7 +81,6 @@
 #include "orte/mca/snapc/base/base.h"
 #include "orte/mca/sstore/sstore.h"
 #include "orte/mca/sstore/base/base.h"
-#include "orte/mca/notifier/notifier.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -300,14 +299,12 @@ void orte_errmgr_base_migrate_state_notify(int state)
     switch(state) {
     case ORTE_ERRMGR_MIGRATE_STATE_ERROR:
     case ORTE_ERRMGR_MIGRATE_STATE_ERR_INPROGRESS:
-        orte_notifier.log(ORTE_NOTIFIER_ERROR, state,
-                          "%d: Migration failed for process %s.",
-                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        opal_output(0, "%d: Migration failed for process %s.",
+                    orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_ERRMGR_MIGRATE_STATE_FINISH:
-        orte_notifier.log(ORTE_NOTIFIER_INFO, state,
-                          "%d: Migration successful for process %s.",
-                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        opal_output(0, "%d: Migration successful for process %s.",
+                    orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
 
     case ORTE_ERRMGR_MIGRATE_STATE_NONE:
@@ -331,26 +328,23 @@ void orte_errmgr_base_proc_state_notify(orte_proc_state_t state, orte_process_na
         case ORTE_PROC_STATE_TERMINATED:
         case ORTE_PROC_STATE_KILLED_BY_CMD:
         case ORTE_PROC_STATE_SENSOR_BOUND_EXCEEDED:
-            orte_notifier.log(ORTE_NOTIFIER_ERROR, state, "%d: Process %s is dead.",
-                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+            opal_output(0,, "%d: Process %s is dead.",
+                        orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
             break;
 
         case ORTE_PROC_STATE_HEARTBEAT_FAILED:
-            orte_notifier.log(ORTE_NOTIFIER_ERROR, state,
-                              "%d: Process %s is unreachable.",
-                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+            opal_output(0, "%d: Process %s is unreachable.",
+                        orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
 
         case ORTE_PROC_STATE_COMM_FAILED:
-            orte_notifier.log(ORTE_NOTIFIER_WARN, state,
-                              "%d: Failed to communicate with process %s.",
-                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+            opal_output(0, "%d: Failed to communicate with process %s.",
+                        orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
             break;
 
         case ORTE_PROC_STATE_CALLED_ABORT:
         case ORTE_PROC_STATE_FAILED_TO_START:
-            orte_notifier.log(ORTE_NOTIFIER_ERROR, state,
-                              "%d: Process %s has called abort.",
-                              orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
+            opal_output(0, "%d: Process %s has called abort.",
+                        orte_process_info.pid, ORTE_JOBID_PRINT(proc->jobid));
             break;
         case ORTE_PROC_STATE_MIGRATING:
         default:

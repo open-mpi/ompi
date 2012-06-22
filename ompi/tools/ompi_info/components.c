@@ -106,8 +106,6 @@
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #if !ORTE_DISABLE_FULL_SUPPORT
-#include "orte/mca/notifier/notifier.h"
-#include "orte/mca/notifier/base/base.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/oob/oob.h"
@@ -411,14 +409,6 @@ void ompi_info_open_components(void)
     opal_pointer_array_add(&component_map, map);
     
 #if !ORTE_DISABLE_FULL_SUPPORT
-    if (ORTE_SUCCESS != orte_notifier_base_open()) {
-        goto error;
-    }
-    map = OBJ_NEW(ompi_info_component_map_t);
-    map->type = strdup("notifier");
-    map->components = &orte_notifier_base_components_available;
-    opal_pointer_array_add(&component_map, map);
-    
     if (ORTE_SUCCESS != mca_oob_base_open()) {
         goto error;
     }
@@ -767,7 +757,6 @@ void ompi_info_close_components()
         (void) orte_snapc_base_close();
         (void) orte_sstore_base_close();
 #endif
-        (void) orte_notifier_base_close();
         (void) orte_filem_base_close();
         (void) orte_iof_base_close();
         (void) orte_plm_base_close();

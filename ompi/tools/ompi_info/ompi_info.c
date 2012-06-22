@@ -270,7 +270,6 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "ess");
     opal_pointer_array_add(&mca_types, "grpcomm");
     opal_pointer_array_add(&mca_types, "db");
-    opal_pointer_array_add(&mca_types, "notifier");
     
     /* Execute the desired action(s) */
     

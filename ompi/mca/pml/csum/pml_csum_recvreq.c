@@ -32,7 +32,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/notifier/notifier.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/bml/bml.h" 
@@ -498,10 +497,6 @@ void mca_pml_csum_recv_request_progress_frag( mca_pml_csum_recv_request_t* recvr
         if(csum != hdr->hdr_frag.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'frag data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_frag.hdr_csum, csum);
-            orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
-                              "Checksum data violation: job %s file %s line %d",
-                              (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
-                              __FILE__, __LINE__);
             dump_csum_error_data(segments, num_segments);
             orte_errmgr.abort(-1,NULL);
         }
@@ -645,10 +640,6 @@ void mca_pml_csum_recv_request_progress_rndv( mca_pml_csum_recv_request_t* recvr
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'rndv data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
-            orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
-                              "Checksum data violation: job %s file %s line %d",
-                              (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
-                              __FILE__, __LINE__);
             dump_csum_error_data(segments, num_segments);
             orte_errmgr.abort(-1,NULL);
         }
@@ -706,10 +697,6 @@ void mca_pml_csum_recv_request_progress_match( mca_pml_csum_recv_request_t* recv
         if (csum != hdr->hdr_match.hdr_csum) {
             opal_output(0, "%s:%s:%d: Invalid \'match data\' - received csum:0x%x  != computed csum:0x%x\n",
                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), __FILE__, __LINE__, hdr->hdr_match.hdr_csum, csum);
-            orte_notifier.log(ORTE_NOTIFIER_CRIT, 1,
-                              "Checksum data violation: job %s file %s line %d",
-                              (NULL == orte_job_ident) ? "UNKNOWN" : orte_job_ident,
-                              __FILE__, __LINE__);
             dump_csum_error_data(segments, num_segments);
             orte_errmgr.abort(-1,NULL);
         }

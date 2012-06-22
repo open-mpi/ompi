@@ -57,7 +57,6 @@
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/name_fns.h"
-#include "orte/mca/notifier/notifier.h"
 
 #include "ompi/constants.h"
 #include "ompi/mpi/fortran/base/constants.h"
@@ -466,17 +465,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "mca_mpi_register_params() failed";
         goto error;
     }
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-    /* If desired, send a notify message */
-    if (ompi_notify_init_finalize) {
-        orte_notifier.log(ORTE_NOTIFIER_NOTICE,
-                          ORTE_SUCCESS,
-                          "MPI_INIT:Starting on host %s, pid %d",
-                          orte_process_info.nodename,
-                          orte_process_info.pid);
-    }
-#endif
 
     /* initialize datatypes. This step should be done early as it will
      * create the local convertor and local arch used in the proc
@@ -965,17 +953,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
     }
-
-#if !ORTE_DISABLE_FULL_SUPPORT
-    /* If desired, send a notifier message that we've finished MPI_INIT */
-    if (ompi_notify_init_finalize) {
-        orte_notifier.log(ORTE_NOTIFIER_NOTICE,
-                          ORTE_SUCCESS,
-                          "MPI_INIT:Finishing on host %s, pid %d",
-                          orte_process_info.nodename,
-                          orte_process_info.pid);
-    }
-#endif
 
     return MPI_SUCCESS;
 }
