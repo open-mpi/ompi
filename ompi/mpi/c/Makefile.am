@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+# Copyright (c) 2012      Oak Rigde National Laboratory. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -65,17 +66,25 @@ libmpi_c_mpi_la_SOURCES = \
         add_error_string.c \
         address.c \
         allgather.c \
+        iallgather.c \
         allgatherv.c \
+        iallgatherv.c \
         alloc_mem.c \
         allreduce.c \
+        iallreduce.c \
         alltoall.c \
+        ialltoall.c \
         alltoallv.c \
+        ialltoallv.c \
         alltoallw.c \
+        ialltoallw.c \
         attr_delete.c \
         attr_get.c \
         attr_put.c \
         barrier.c \
+        ibarrier.c \
         bcast.c \
+        ibcast.c \
         bsend.c \
         bsend_init.c \
         buffer_attach.c \
@@ -132,11 +141,14 @@ libmpi_c_mpi_la_SOURCES = \
         error_class.c \
         error_string.c \
         exscan.c \
+        iexscan.c \
         finalize.c \
         finalized.c \
         free_mem.c \
         gather.c \
+        igather.c \
         gatherv.c \
+        igatherv.c \
         get_address.c \
         get_count.c \
         get_elements.c \
@@ -166,8 +178,8 @@ libmpi_c_mpi_la_SOURCES = \
         group_translate_ranks.c \
         group_union.c \
         ibsend.c \
-	improbe.c \
-	imrecv.c \
+        improbe.c \
+        imrecv.c \
         info_c2f.c \
         info_create.c \
         info_delete.c \
@@ -193,10 +205,10 @@ libmpi_c_mpi_la_SOURCES = \
         keyval_create.c \
         keyval_free.c \
         lookup_name.c \
-	message_f2c.c \
-	message_c2f.c \
-	mprobe.c \
-	mrecv.c \
+        message_f2c.c \
+        message_c2f.c \
+        mprobe.c \
+        mrecv.c \
         op_c2f.c \
         op_commutative.c \
         op_create.c \
@@ -214,8 +226,12 @@ libmpi_c_mpi_la_SOURCES = \
         recv_init.c \
         recv.c \
         reduce.c \
+        ireduce.c \
         reduce_local.c \
         reduce_scatter.c \
+        ireduce_scatter.c \
+        reduce_scatter_block.c \
+        ireduce_scatter_block.c \
         request_c2f.c \
         request_f2c.c \
         request_free.c \
@@ -223,8 +239,11 @@ libmpi_c_mpi_la_SOURCES = \
         rsend_init.c \
         rsend.c \
         scan.c \
+        iscan.c \
         scatter.c \
+        iscatter.c \
         scatterv.c \
+        iscatterv.c \
         send.c \
         send_init.c \
         sendrecv.c \
@@ -287,8 +306,8 @@ libmpi_c_mpi_la_SOURCES = \
         waitall.c \
         waitany.c \
         waitsome.c \
-	wtime.c \
-	wtick.c \
+        wtime.c \
+        wtick.c \
         accumulate.c \
         get.c \
         put.c \

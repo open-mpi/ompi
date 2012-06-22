@@ -679,6 +679,19 @@ subroutine pompi_allgather_f(sendbuf,sendcount,sendtype,recvbuf, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_allgather_f
 
+subroutine pompi_iallgather_f(sendbuf,sendcount,sendtype,recvbuf, &
+                            recvcount,recvtype,comm,request,ierror) &
+   BIND(C, name="pompi_iallgather_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount
+   INTEGER, INTENT(IN) :: sendtype
+   INTEGER, INTENT(IN) :: recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_iallgather_f
+
 subroutine pompi_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
                              recvcounts,displs,recvtype,comm,ierror) &
    BIND(C, name="pompi_allgatherv_f")
@@ -692,6 +705,20 @@ subroutine pompi_allgatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_allgatherv_f
 
+subroutine pompi_iallgatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
+                             recvcounts,displs,recvtype,comm,request,ierror) &
+   BIND(C, name="pompi_iallgatherv_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: sendcount
+   INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN) :: sendtype
+   INTEGER, INTENT(IN) :: recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_iallgatherv_f
+
 subroutine pompi_allreduce_f(sendbuf,recvbuf,count,datatype,op,comm,ierror) &
    BIND(C, name="pompi_allreduce_f")
    implicit none
@@ -702,6 +729,18 @@ subroutine pompi_allreduce_f(sendbuf,recvbuf,count,datatype,op,comm,ierror) &
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_allreduce_f
+
+subroutine pompi_iallreduce_f(sendbuf,recvbuf,count,datatype,op,comm,request,ierror) &
+   BIND(C, name="pompi_iallreduce_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: count
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_iallreduce_f
 
 subroutine pompi_alltoall_f(sendbuf,sendcount,sendtype,recvbuf, &
                            recvcount,recvtype,comm,ierror) &
@@ -715,6 +754,19 @@ subroutine pompi_alltoall_f(sendbuf,sendcount,sendtype,recvbuf, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_alltoall_f
 
+subroutine pompi_ialltoall_f(sendbuf,sendcount,sendtype,recvbuf, &
+                           recvcount,recvtype,comm,request,ierror) &
+   BIND(C, name="pompi_ialltoall_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount
+   INTEGER, INTENT(IN) :: sendtype
+   INTEGER, INTENT(IN) :: recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ialltoall_f
+
 subroutine pompi_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype, &
                             recvbuf,recvcounts,rdispls,recvtype,comm,ierror) &
    BIND(C, name="pompi_alltoallv_f")
@@ -726,6 +778,19 @@ subroutine pompi_alltoallv_f(sendbuf,sendcounts,sdispls,sendtype, &
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_alltoallv_f
+
+subroutine pompi_ialltoallv_f(sendbuf,sendcounts,sdispls,sendtype, &
+                            recvbuf,recvcounts,rdispls,recvtype,comm,request,ierror) &
+   BIND(C, name="pompi_ialltoallv_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   INTEGER, INTENT(IN) :: sendtype
+   INTEGER, INTENT(IN) :: recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ialltoallv_f
 
 subroutine pompi_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes, &
                             recvbuf,recvcounts,rdispls,recvtypes,comm,ierror) &
@@ -739,14 +804,35 @@ subroutine pompi_alltoallw_f(sendbuf,sendcounts,sdispls,sendtypes, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_alltoallw_f
 
-subroutine pompi_Barrier_f(comm,ierror) &
+subroutine pompi_ialltoallw_f(sendbuf,sendcounts,sdispls,sendtypes, &
+                            recvbuf,recvcounts,rdispls,recvtypes,comm,request,ierror) &
+   BIND(C, name="pompi_ialltoallw_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: sendcounts(*), sdispls(*), recvcounts(*), rdispls(*)
+   INTEGER, INTENT(IN) :: sendtypes
+   INTEGER, INTENT(IN) :: recvtypes
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ialltoallw_f
+
+subroutine pompi_barrier_f(comm,ierror) &
    BIND(C, name="pompi_barrier_f")
    implicit none
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_Barrier_f
+end subroutine pompi_barrier_f
 
-subroutine pompi_Bcast_f(buffer,count,datatype,root,comm,ierror) &
+subroutine pompi_ibarrier_f(comm,request,ierror) &
+   BIND(C, name="pompi_ibarrier_f")
+   implicit none
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ibarrier_f
+
+subroutine pompi_bcast_f(buffer,count,datatype,root,comm,ierror) &
    BIND(C, name="pompi_bcast_f")
    implicit none
    OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buffer
@@ -754,7 +840,18 @@ subroutine pompi_Bcast_f(buffer,count,datatype,root,comm,ierror) &
    INTEGER, INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: ierror
-end subroutine pompi_Bcast_f
+end subroutine pompi_bcast_f
+
+subroutine pompi_ibcast_f(buffer,count,datatype,root,comm,request,ierror) &
+   BIND(C, name="pompi_ibcast_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: buffer
+   INTEGER, INTENT(IN) :: count, root
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ibcast_f
 
 subroutine pompi_exscan_f(sendbuf,recvbuf,count,datatype,op,comm,ierror) &
    BIND(C, name="pompi_exscan_f")
@@ -766,6 +863,18 @@ subroutine pompi_exscan_f(sendbuf,recvbuf,count,datatype,op,comm,ierror) &
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_exscan_f
+
+subroutine pompi_iexscan_f(sendbuf,recvbuf,count,datatype,op,comm,request,ierror) &
+   BIND(C, name="pompi_iexscan_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: count
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_iexscan_f
 
 subroutine pompi_gather_f(sendbuf,sendcount,sendtype,recvbuf, &
                          recvcount,recvtype,root,comm,ierror) &
@@ -779,6 +888,19 @@ subroutine pompi_gather_f(sendbuf,sendcount,sendtype,recvbuf, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_gather_f
 
+subroutine pompi_igather_f(sendbuf,sendcount,sendtype,recvbuf, &
+                         recvcount,recvtype,root,comm,request,ierror) &
+   BIND(C, name="pompi_igather_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount, root
+   INTEGER, INTENT(IN) :: sendtype
+   INTEGER, INTENT(IN) :: recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_igather_f
+
 subroutine pompi_gatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
                           recvcounts,displs,recvtype,root,comm,ierror) &
    BIND(C, name="pompi_gatherv_f")
@@ -791,6 +913,20 @@ subroutine pompi_gatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_gatherv_f
+
+subroutine pompi_igatherv_f(sendbuf,sendcount,sendtype,recvbuf, &
+                          recvcounts,displs,recvtype,root,comm,request,ierror) &
+   BIND(C, name="pompi_igatherv_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: sendcount, root
+   INTEGER, INTENT(IN) :: recvcounts(*), displs(*)
+   INTEGER, INTENT(IN) :: sendtype
+   INTEGER, INTENT(IN) :: recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_igatherv_f
 
 subroutine pompi_op_commutative_f(op,commute,ierror) &
    BIND(C, name="pompi_op_commutative_f")
@@ -827,6 +963,18 @@ subroutine pompi_reduce_f(sendbuf,recvbuf,count,datatype,op,root,comm,ierror) &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_reduce_f
 
+subroutine pompi_ireduce_f(sendbuf,recvbuf,count,datatype,op,root,comm,request,ierror) &
+   BIND(C, name="pompi_ireduce_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: count, root
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ireduce_f
+
 subroutine pompi_reduce_local_f(inbuf,inoutbuf,count,datatype,op,ierror) &
    BIND(C, name="pompi_reduce_local_f")
    implicit none
@@ -849,6 +997,19 @@ subroutine pompi_reduce_scatter_f(sendbuf,recvbuf,recvcounts, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_reduce_scatter_f
 
+subroutine pompi_ireduce_scatter_f(sendbuf,recvbuf,recvcounts, &
+                                 datatype,op,comm,request,ierror) &
+   BIND(C, name="pompi_ireduce_scatter_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: recvcounts(*)
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ireduce_scatter_f
+
 subroutine pompi_reduce_scatter_block_f(sendbuf,recvbuf,recvcount, &
                                        datatype,op,comm,ierror) &
    BIND(C, name="pompi_reduce_scatter_block_f")
@@ -861,6 +1022,19 @@ subroutine pompi_reduce_scatter_block_f(sendbuf,recvbuf,recvcount, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_reduce_scatter_block_f
 
+subroutine pompi_ireduce_scatter_block_f(sendbuf,recvbuf,recvcount, &
+                                       datatype,op,comm,request,ierror) &
+   BIND(C, name="pompi_ireduce_scatter_block_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: recvcount
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_ireduce_scatter_block_f
+
 subroutine pompi_scan_f(sendbuf,recvbuf,count,datatype,op,comm,ierror) &
    BIND(C, name="pompi_scan_f")
    implicit none
@@ -871,6 +1045,18 @@ subroutine pompi_scan_f(sendbuf,recvbuf,count,datatype,op,comm,ierror) &
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_scan_f
+
+subroutine pompi_iscan_f(sendbuf,recvbuf,count,datatype,op,comm,request,ierror) &
+   BIND(C, name="pompi_iscan_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: count
+   INTEGER, INTENT(IN) :: datatype
+   INTEGER, INTENT(IN) :: op
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_iscan_f
 
 subroutine pompi_scatter_f(sendbuf,sendcount,sendtype,recvbuf, &
                           recvcount,recvtype,root,comm,ierror) &
@@ -884,6 +1070,19 @@ subroutine pompi_scatter_f(sendbuf,sendcount,sendtype,recvbuf, &
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_scatter_f
 
+subroutine pompi_iscatter_f(sendbuf,sendcount,sendtype,recvbuf, &
+                          recvcount,recvtype,root,comm,request,ierror) &
+   BIND(C, name="pompi_iscatter_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: sendcount, recvcount, root
+   INTEGER, INTENT(IN) :: sendtype
+   INTEGER, INTENT(IN) :: recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_iscatter_f
+
 subroutine pompi_scatterv_f(sendbuf,sendcounts,displs,sendtype, &
                            recvbuf,recvcount,recvtype,root,comm,ierror) &
    BIND(C, name="pompi_scatterv_f")
@@ -896,6 +1095,20 @@ subroutine pompi_scatterv_f(sendbuf,sendcounts,displs,sendtype, &
    INTEGER, INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: ierror
 end subroutine pompi_scatterv_f
+
+subroutine pompi_iscatterv_f(sendbuf,sendcounts,displs,sendtype, &
+                           recvbuf,recvcount,recvtype,root,comm,request,ierror) &
+   BIND(C, name="pompi_iscatterv_f")
+   implicit none
+   OMPI_FORTRAN_IGNORE_TKR_TYPE, INTENT(IN) :: sendbuf, recvbuf
+   INTEGER, INTENT(IN) :: recvcount, root
+   INTEGER, INTENT(IN) :: sendcounts(*), displs(*)
+   INTEGER, INTENT(IN) :: sendtype
+   INTEGER, INTENT(IN) :: recvtype
+   INTEGER, INTENT(IN) :: comm
+   INTEGER, INTENT(OUT) :: request
+   INTEGER, INTENT(OUT) :: ierror
+end subroutine pompi_iscatterv_f
 
 subroutine pompi_comm_compare_f(comm1,comm2,result,ierror) &
    BIND(C, name="pompi_comm_compare_f")

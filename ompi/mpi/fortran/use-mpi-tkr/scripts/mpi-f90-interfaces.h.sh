@@ -345,6 +345,65 @@ end MPI_Allgather
 
 #------------------------------------------------------------------------
 
+output_7_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  ${type} :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Iallgather large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_7_nonblocking MPI_Iallgather ${rank} CH "character${dim}"
+  output_7_nonblocking MPI_Iallgather ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_7_nonblocking MPI_Iallgather ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_7_nonblocking MPI_Iallgather ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_7_nonblocking MPI_Iallgather ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Iallgather
+
+#------------------------------------------------------------------------
+
 output_8() {
     if test "$output" = "0"; then
         return 0
@@ -401,6 +460,66 @@ do
   done
 done
 end MPI_Allgatherv
+
+#------------------------------------------------------------------------
+
+output_8_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  ${type} :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: displs
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Iallgatherv large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_8_nonblocking MPI_Iallgatherv ${rank} CH "character${dim}"
+  output_8_nonblocking MPI_Iallgatherv ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_8_nonblocking MPI_Iallgatherv ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_8_nonblocking MPI_Iallgatherv ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_8_nonblocking MPI_Iallgatherv ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Iallgatherv
 
 #------------------------------------------------------------------------
 
@@ -486,6 +605,64 @@ end MPI_Allreduce
 
 #------------------------------------------------------------------------
 
+output_10_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  ${type} :: recvbuf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Iallreduce large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_10_nonblocking MPI_Iallreduce ${rank} CH "character${dim}"
+  output_10_nonblocking MPI_Iallreduce ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_10_nonblocking MPI_Iallreduce ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_10_nonblocking MPI_Iallreduce ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_10_nonblocking MPI_Iallreduce ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Iallreduce
+
+#------------------------------------------------------------------------
+
 output_11() {
     if test "$output" = "0"; then
         return 0
@@ -541,6 +718,65 @@ do
   done
 done
 end MPI_Alltoall
+
+#------------------------------------------------------------------------
+
+output_11_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  ${type} :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Ialltoall large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_11_nonblocking MPI_Ialltoall ${rank} CH "character${dim}"
+  output_11_nonblocking MPI_Ialltoall ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_11_nonblocking MPI_Ialltoall ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_11_nonblocking MPI_Ialltoall ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_11_nonblocking MPI_Ialltoall ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Ialltoall
 
 #------------------------------------------------------------------------
 
@@ -604,6 +840,67 @@ end MPI_Alltoallv
 
 #------------------------------------------------------------------------
 
+output_12_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
+        recvcounts, rdispls, recvtype, comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: sdispls
+  integer, intent(in) :: sendtype
+  ${type} :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: rdispls
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Ialltoallv large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_12_nonblocking MPI_Ialltoallv ${rank} CH "character${dim}"
+  output_12_nonblocking MPI_Ialltoallv ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_12_nonblocking MPI_Ialltoallv ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_12_nonblocking MPI_Ialltoallv ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_12_nonblocking MPI_Ialltoallv ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Ialltoallv
+
+#------------------------------------------------------------------------
+
 output_13() {
     if test "$output" = "0"; then
         return 0
@@ -661,6 +958,67 @@ do
   done
 done
 end MPI_Alltoallw
+
+#------------------------------------------------------------------------
+
+output_13_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
+        recvcounts, rdispls, recvtypes, comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: sdispls
+  integer, dimension(*), intent(in) :: sendtypes
+  ${type} :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: rdispls
+  integer, dimension(*), intent(in) :: recvtypes
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Ialltoallw large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_13_nonblocking MPI_Ialltoallw ${rank} CH "character${dim}"
+  output_13_nonblocking MPI_Ialltoallw ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_13_nonblocking MPI_Ialltoallw ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_13_nonblocking MPI_Ialltoallw ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_13_nonblocking MPI_Ialltoallw ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Ialltoallw
 
 #------------------------------------------------------------------------
 
@@ -758,6 +1116,29 @@ end MPI_Barrier
 
 #------------------------------------------------------------------------
 
+output_17_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    cat <<EOF
+
+subroutine ${procedure}(comm, request, ierr)
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${procedure}
+
+EOF
+}
+
+start MPI_Ibarrier small
+output_17_nonblocking MPI_Ibarrier
+end MPI_Ibarrier
+
+#------------------------------------------------------------------------
+
 output_18() {
     if test "$output" = "0"; then
         return 0
@@ -811,6 +1192,63 @@ do
   done
 done
 end MPI_Bcast
+
+#------------------------------------------------------------------------
+
+output_18_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(buffer, count, datatype, root, comm&
+        , request, ierr)
+  ${type} :: buffer
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Ibcast medium
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_18_nonblocking MPI_Ibcast ${rank} CH "character${dim}"
+  output_18_nonblocking MPI_Ibcast ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_18_nonblocking MPI_Ibcast ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_18_nonblocking MPI_Ibcast ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_18_nonblocking MPI_Ibcast ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Ibcast
 
 #------------------------------------------------------------------------
 
@@ -1993,6 +2431,64 @@ do
   done
 done
 end MPI_Exscan
+
+#------------------------------------------------------------------------
+
+output_61_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  ${type} :: recvbuf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Iexscan large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_61_nonblocking MPI_Iexscan ${rank} CH "character${dim}"
+  output_61_nonblocking MPI_Iexscan ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_61_nonblocking MPI_Iexscan ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_61_nonblocking MPI_Iexscan ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_61_nonblocking MPI_Iexscan ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Iexscan
 
 #------------------------------------------------------------------------
 
@@ -4432,6 +4928,66 @@ end MPI_Gather
 
 #------------------------------------------------------------------------
 
+output_120_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, root, comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  ${type} :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Igather large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_120_nonblocking MPI_Igather ${rank} CH "character${dim}"
+  output_120_nonblocking MPI_Igather ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_120_nonblocking MPI_Igather ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_120_nonblocking MPI_Igather ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_120_nonblocking MPI_Igather ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Igather
+
+#------------------------------------------------------------------------
+
 output_121() {
     if test "$output" = "0"; then
         return 0
@@ -4489,6 +5045,66 @@ do
   done
 done
 end MPI_Gatherv
+
+#------------------------------------------------------------------------
+
+output_121_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
+        displs, recvtype, root, comm, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  ${type} :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, dimension(*), intent(in) :: displs
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Igatherv large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_121_nonblocking MPI_Igatherv ${rank} CH "character${dim}"
+  output_121_nonblocking MPI_Igatherv ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_121_nonblocking MPI_Igatherv ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_121_nonblocking MPI_Igatherv ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_121_nonblocking MPI_Igatherv ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Igatherv
 
 #------------------------------------------------------------------------
 
@@ -6457,6 +7073,65 @@ end MPI_Reduce
 
 #------------------------------------------------------------------------
 
+output_183_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        root, comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  ${type} :: recvbuf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Ireduce large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_183_nonblocking MPI_Ireduce ${rank} CH "character${dim}"
+  output_183_nonblocking MPI_Ireduce ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_183_nonblocking MPI_Ireduce ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_183_nonblocking MPI_Ireduce ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_183_nonblocking MPI_Ireduce ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Ireduce
+
+#------------------------------------------------------------------------
+
 output_183_local() {
     if test "$output" = "0"; then
         return 0
@@ -6567,6 +7242,178 @@ do
   done
 done
 end MPI_Reduce_scatter
+
+#------------------------------------------------------------------------
+
+output_184_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, recvbuf, recvcounts, datatype, op, &
+        comm, ierr)
+  ${type}, intent(in) :: sendbuf
+  ${type} :: recvbuf
+  integer, dimension(*), intent(in) :: recvcounts
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Ireduce_scatter large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_184_nonblocking MPI_Ireduce_scatter ${rank} CH "character${dim}"
+  output_184_nonblocking MPI_Ireduce_scatter ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_184_nonblocking MPI_Ireduce_scatter ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_184_nonblocking MPI_Ireduce_scatter ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_184_nonblocking MPI_Ireduce_scatter ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Ireduce_scatter
+
+#------------------------------------------------------------------------
+
+output_184_block() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, recvbuf, recvcount, datatype, op, &
+        comm, ierr)
+  ${type}, intent(in) :: sendbuf
+  ${type} :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Reduce_scatter_block large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_184_block MPI_Reduce_scatter_block ${rank} CH "character${dim}"
+  output_184_block MPI_Reduce_scatter_block ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_184_block MPI_Reduce_scatter_block ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_184_block MPI_Reduce_scatter_block ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_184_block MPI_Reduce_scatter_block ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Reduce_scatter_block
+
+#------------------------------------------------------------------------
+
+output_184_block_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, recvbuf, recvcount, datatype, op, &
+        comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  ${type} :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Ireduce_scatter_block large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_184_block_nonblocking MPI_Ireduce_scatter_block ${rank} CH "character${dim}"
+  output_184_block_nonblocking MPI_Ireduce_scatter_block ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_184_block_nonblocking MPI_Ireduce_scatter_block ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_184_block_nonblocking MPI_Ireduce_scatter_block ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_184_block_nonblocking MPI_Ireduce_scatter_block ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Ireduce_scatter_block
 
 #------------------------------------------------------------------------
 
@@ -6817,6 +7664,64 @@ end MPI_Scan
 
 #------------------------------------------------------------------------
 
+output_190_block() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
+        comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  ${type} :: recvbuf
+  integer, intent(in) :: count
+  integer, intent(in) :: datatype
+  integer, intent(in) :: op
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Iscan large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_190_block MPI_Iscan ${rank} CH "character${dim}"
+  output_190_block MPI_Iscan ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_190_block MPI_Iscan ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_190_block MPI_Iscan ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_190_block MPI_Iscan ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Iscan
+
+#------------------------------------------------------------------------
+
 output_191() {
     if test "$output" = "0"; then
         return 0
@@ -6873,6 +7778,66 @@ do
   done
 done
 end MPI_Scatter
+
+#------------------------------------------------------------------------
+
+output_191_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
+        recvtype, root, comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, intent(in) :: sendcount
+  integer, intent(in) :: sendtype
+  ${type} :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Iscatter large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_191_nonblocking MPI_Iscatter ${rank} CH "character${dim}"
+  output_191_nonblocking MPI_Iscatter ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_191_nonblocking MPI_Iscatter ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_191_nonblocking MPI_Iscatter ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_191_nonblocking MPI_Iscatter ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Iscatter
 
 #------------------------------------------------------------------------
 
@@ -6933,6 +7898,67 @@ do
   done
 done
 end MPI_Scatterv
+
+#------------------------------------------------------------------------
+
+output_192_nonblocking() {
+    if test "$output" = "0"; then
+        return 0
+    fi
+
+    procedure=$1
+    rank=$2
+    type=$4
+    proc="$1$2D$3"
+    cat <<EOF
+
+subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
+        recvcount, recvtype, root, comm, request, ierr)
+  ${type}, intent(in) :: sendbuf
+  integer, dimension(*), intent(in) :: sendcounts
+  integer, dimension(*), intent(in) :: displs
+  integer, intent(in) :: sendtype
+  ${type} :: recvbuf
+  integer, intent(in) :: recvcount
+  integer, intent(in) :: recvtype
+  integer, intent(in) :: root
+  integer, intent(in) :: comm
+  integer, intent(out) :: request
+  integer, intent(out) :: ierr
+end subroutine ${proc}
+
+EOF
+}
+
+start MPI_Iscatterv large
+
+for rank in $allranks
+do
+  case "$rank" in  0)  dim=''  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
+
+  output_192_nonblocking MPI_Iscatterv ${rank} CH "character${dim}"
+  output_192_nonblocking MPI_Iscatterv ${rank} L "logical${dim}"
+  for kind in $ikinds
+  do
+    output_192_nonblocking MPI_Iscatterv ${rank} I${kind} "integer*${kind}${dim}"
+  done
+  for kind in $rkinds
+  do
+    output_192_nonblocking MPI_Iscatterv ${rank} R${kind} "real*${kind}${dim}"
+  done
+  for kind in $ckinds
+  do
+    output_192_nonblocking MPI_Iscatterv ${rank} C${kind} "complex*${kind}${dim}"
+  done
+done
+end MPI_Iscatterv
 
 #------------------------------------------------------------------------
 
