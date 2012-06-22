@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2010 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
 # Copyright (c) 2006-2009 Mellanox Technologies. All rights reserved.
@@ -31,25 +31,17 @@
 AC_DEFUN([OMPI_CHECK_OPENIB],[
     OPAL_VAR_SCOPE_PUSH([$1_msg])
 
-    #
-    # Openfabrics support
-    #
-    AC_ARG_WITH([openib],
-        [AC_HELP_STRING([--with-openib(=DIR)],
-             [Build OpenFabrics support, optionally adding DIR/include, DIR/lib, and DIR/lib64 to the search path for headers and libraries])])
-    OMPI_CHECK_WITHDIR([openib], [$with_openib], [include/infiniband/verbs.h])
-    AC_ARG_WITH([openib-libdir],
-       [AC_HELP_STRING([--with-openib-libdir=DIR],
-             [Search for OpenFabrics libraries in DIR])])
-    OMPI_CHECK_WITHDIR([openib-libdir], [$with_openib_libdir], [libibverbs.*])
+    # Setup the --with switches to allow users to specify where
+    # verbs stuff lives.
+    AC_REQUIRE([OPAL_CHECK_VERBS_DIR])
 
     #
     # Add padding to OpenIB header
     #
     AC_ARG_ENABLE([openib-control-hdr-padding],
         [AC_HELP_STRING([--enable-openib-control-hdr-padding],
-            [Add padding bytes to the openib control header (default:disabled)])])
-    AC_MSG_CHECKING([if want to add padding to the openib control header])
+            [Add padding bytes to the openib BTL control header (default:disabled)])])
+    AC_MSG_CHECKING([if want to add padding to the openib BTL control header])
     if test "$enable_openib_control_hdr_padding" = "yes"; then
         AC_MSG_RESULT([yes])
         ompi_openib_pad_hdr=1
@@ -75,14 +67,14 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         esac
     fi
     AC_DEFINE_UNQUOTED([OMPI_OPENIB_PAD_HDR], [$ompi_openib_pad_hdr],
-                       [Add padding bytes to the openib control header])
+                       [Add padding bytes to the openib BTL control header])
 
     #
     # ConnectX XRC support
     #
     AC_ARG_ENABLE([openib-connectx-xrc],
         [AC_HELP_STRING([--enable-openib-connectx-xrc],
-                        [Enable ConnectX XRC support. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])],
+                        [Enable ConnectX XRC support in the openib BTL. If you do not have InfiniBand ConnectX adapters, you may disable the ConnectX XRC support. If you do not know which InfiniBand adapter is installed on your cluster, leave this option enabled (default: enabled)])],
                         [enable_connectx_xrc="$enableval"], [enable_connectx_xrc="yes"])
 
     #
@@ -100,11 +92,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         [AC_HELP_STRING([--enable-openib-rdmacm],
                         [Enable Open Fabrics RDMACM support in openib BTL (default: enabled)])])
 
-    AS_IF([test ! -z "$with_openib" -a "$with_openib" != "yes"],
-          [ompi_check_openib_dir="$with_openib"])
-    AS_IF([test ! -z "$with_openib_libdir" -a "$with_openib_libdir" != "yes"],
-          [ompi_check_openib_libdir="$with_openib_libdir"])
-    AS_IF([test "$with_openib" = "no"],
+    AS_IF([test "$opal_want_verbs" = "no"],
           [ompi_check_openib_happy="no"],
           [ompi_check_openib_happy="yes"])
 
@@ -140,8 +128,8 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                               [ibverbs],
                               [ibv_open_device],
                               [],
-                              [$ompi_check_openib_dir],
-                              [$ompi_check_openib_libdir],
+                              [$opal_verbs_dir],
+                              [$opal_verbs_libdir],
                               [ompi_check_openib_happy="yes"],
                               [ompi_check_openib_happy="no"])])
 
@@ -321,9 +309,9 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
         AC_MSG_RESULT([no])
     fi
 
-    AS_IF([test -z "$ompi_check_openib_dir"],
+    AS_IF([test -z "$opal_verbs_dir"],
           [openib_include_dir="/usr/include"],
-          [openib_include_dir="$ompi_check_openib_dir/include"])
+          [openib_include_dir="$opal_verbs_dir/include"])
 
     CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS -I$openib_include_dir/infiniband"
     LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
@@ -331,12 +319,11 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
 
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [$2],
-          [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
-                 [AC_MSG_WARN([OpenFabrics support requested (via --with-openib) but not found.])
+          [AS_IF([test "$opal_want_verbs" = "yes"],
+                 [AC_MSG_WARN([Verbs support requested (via --with-verbs) but not found.])
                   AC_MSG_WARN([If you are using libibverbs v1.0 (i.e., OFED v1.0 or v1.1), you *MUST* have both the libsysfs headers and libraries installed.  Later versions of libibverbs do not require libsysfs.])
                   AC_MSG_ERROR([Aborting.])])
            $3])
 
      OPAL_VAR_SCOPE_POP
 ])
-
