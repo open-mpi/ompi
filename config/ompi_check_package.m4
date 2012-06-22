@@ -10,6 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012      Cisco Systems,Inc.  All rights reserved.
+# Copyright (c) 2012      Oracle and/or its affiliates.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -17,8 +19,9 @@
 # $HEADER$
 #
 
-# _OMPI_CHECK_PACKAGE_HEADER(prefix, header, dir-prefix,
-#                            [action-if-found], [action-if-not-found])
+# _OMPI_CHECK_PACKAGE_HEADER(prefix, header, dir-prefix, 
+#                            [action-if-found], [action-if-not-found],
+*                            includes)
 # --------------------------------------------------------------------
 AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
     # This is stolen from autoconf to peek under the covers to get the
@@ -45,11 +48,10 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
           [AS_IF([test "$3" != ""],
                  [$1_CPPFLAGS="$$1_CPPFLAGS -I$3/include"
                   CPPFLAGS="$CPPFLAGS -I$3/include"])
-           AC_CHECK_HEADER([$2], [$4], [$5])],
+          AC_CHECK_HEADER([$2], [$4], [$5], [$6])],
           [$4])
-    unset ompi_check_package_header_happy])
-    
-    dnl AS_VAR_POPDEF([ompi_Header])dnl
+    unset ompi_check_package_header_happy
+    AS_VAR_POPDEF([ompi_Header])
 ])
 
 
@@ -136,7 +138,8 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
 #                    extra-libraries, 
 #                    dir-prefix,
 #                    libdir-prefix,
-#                    [action-if-found], [action-if-not-found]
+#                    [action-if-found], [action-if-not-found],
+#                    includes)
 # -----------------------------------------------------------
 # check for package defined by header and libs, and probably
 # located in dir-prefix, possibly with libs in libdir-prefix.
@@ -151,11 +154,12 @@ AC_DEFUN([OMPI_CHECK_PACKAGE],[
     ompi_check_package_$1_orig_LDFLAGS="$$1_LDFLAGS"
     ompi_check_package_$1_orig_LIBS="$$1_LIBS"
 
-    _OMPI_CHECK_PACKAGE_HEADER([$1], [$2], [$6],
+    _OMPI_CHECK_PACKAGE_HEADER([$1], [$2], [$6], 
           [_OMPI_CHECK_PACKAGE_LIB([$1], [$3], [$4], [$5], [$6], [$7],
                 [ompi_check_package_happy="yes"],
                 [ompi_check_package_happy="no"])],
-          [ompi_check_package_happy="no"])
+          [ompi_check_package_happy="no"],
+          [$10])
 
     AS_IF([test "$ompi_check_package_happy" = "yes"],
           [$8],
