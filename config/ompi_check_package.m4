@@ -21,7 +21,7 @@
 
 # _OMPI_CHECK_PACKAGE_HEADER(prefix, header, dir-prefix, 
 #                            [action-if-found], [action-if-not-found],
-*                            includes)
+#                            includes)
 # --------------------------------------------------------------------
 AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
     # This is stolen from autoconf to peek under the covers to get the
