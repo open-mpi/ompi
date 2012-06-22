@@ -116,16 +116,16 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
     MCA_BTL_UDAPL_RDMA_NEXT_INDEX(endpoint->endpoint_eager_rdma_remote.head);
     
     MCA_BTL_UDAPL_FRAG_CALC_ALIGNMENT_PAD(pad,
-        (frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t)));
+        (frag->segment.base.seg_len + sizeof(mca_btl_udapl_footer_t)));
     
     /* set the rdma footer information */
     frag->rdma_ftr = (mca_btl_udapl_rdma_footer_t *)
-        ((char *)frag->segment.seg_addr.pval +
-        frag->segment.seg_len +
+        ((char *)frag->segment.base.seg_addr.pval +
+        frag->segment.base.seg_len +
         sizeof(mca_btl_udapl_footer_t) +
         pad);
     frag->rdma_ftr->active = 1;
-    frag->rdma_ftr->size = frag->segment.seg_len; /* this is size PML wants;
+    frag->rdma_ftr->size = frag->segment.base.seg_len; /* this is size PML wants;
                                                    * will have to calc
                                                    * alignment
                                                    * at the other end
@@ -133,7 +133,7 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
 
     /* prep the fragment to be written out */
     frag->type = MCA_BTL_UDAPL_RDMA_WRITE;
-    frag->triplet.segment_length = frag->segment.seg_len +
+    frag->triplet.segment_length = frag->segment.base.seg_len +
         sizeof(mca_btl_udapl_footer_t) +
         pad +
         sizeof(mca_btl_udapl_rdma_footer_t);
@@ -187,7 +187,7 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
     
     /* Fix up the segment length before we do anything with the frag */
     frag->triplet.segment_length =
-            frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t);
+            frag->segment.base.seg_len + sizeof(mca_btl_udapl_footer_t);
 
     OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
     switch(endpoint->endpoint_state) {
@@ -1182,7 +1182,7 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
         /* Set up the LMR triplet from the frag segment */
         /* Note that this triplet defines a sub-region of a registered LMR */
         frag->triplet.virtual_address =
-            (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval;
+            (DAT_VADDR)(uintptr_t)frag->segment.base.seg_addr.pval;
         frag->triplet.segment_length = frag->size;
     
         frag->btl = endpoint->endpoint_btl;
@@ -1348,13 +1348,13 @@ static mca_btl_base_descriptor_t* mca_btl_udapl_endpoint_initialize_control_mess
     MCA_BTL_UDAPL_FRAG_ALLOC_CONTROL(udapl_btl, frag, rc); 
 
     /* Set up the LMR triplet from the frag segment */
-    frag->segment.seg_len = (uint32_t)size;
+    frag->segment.base.seg_len = (uint32_t)size;
     frag->triplet.virtual_address =
-        (DAT_VADDR)(uintptr_t)frag->segment.seg_addr.pval;
+        (DAT_VADDR)(uintptr_t)frag->segment.base.seg_addr.pval;
 
     /* assume send/recv as default when computing segment_length */
     frag->triplet.segment_length =
-        frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t);
+        frag->segment.base.seg_len + sizeof(mca_btl_udapl_footer_t);
 
     assert(frag->triplet.lmr_context ==
         ((mca_btl_udapl_reg_t*)frag->registration)->lmr_triplet.lmr_context);
@@ -1402,7 +1402,7 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
     /* fill in data */
     segment = des->des_src;
     rdma_connect =
-        (mca_btl_udapl_eager_rdma_connect_t*)segment->seg_addr.pval;    
+        (mca_btl_udapl_eager_rdma_connect_t*)segment->base.seg_addr.pval;    
     rdma_connect->control.type =
         MCA_BTL_UDAPL_CONTROL_RDMA_CONNECT;
     rdma_connect->rkey =
@@ -1414,8 +1414,8 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
     data_frag = (mca_btl_udapl_frag_t*)des;
     data_frag->endpoint = endpoint;
     data_frag->ftr = (mca_btl_udapl_footer_t *)
-        ((char *)data_frag->segment.seg_addr.pval +
-            data_frag->segment.seg_len);
+        ((char *)data_frag->segment.base.seg_addr.pval +
+            data_frag->segment.base.seg_len);
     data_frag->ftr->tag = MCA_BTL_TAG_UDAPL;
     data_frag->type = MCA_BTL_UDAPL_SEND;
 
@@ -1439,7 +1439,7 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
  * pointer to the first fragment structure is held here:
  * endpoint->endpoint_eager_rdma_local.base.pval. Each of these
  * fragment structures will contain a pointer,
- * frag->segment.seg_addr.pval set during a call to OBJ_CONSTRUCT(),
+ * frag->segment.base.seg_addr.pval set during a call to OBJ_CONSTRUCT(),
  * to its associated data region. The data region for all fragments
  * will be contiguous and created by accessing the mpool.
  *
@@ -1584,7 +1584,7 @@ int mca_btl_udapl_endpoint_send_eager_rdma_credits(
 
     /* fill in data */
     segment = des->des_src;
-    rdma_credit = (mca_btl_udapl_eager_rdma_credit_t*)segment->seg_addr.pval;
+    rdma_credit = (mca_btl_udapl_eager_rdma_credit_t*)segment->base.seg_addr.pval;
     rdma_credit->control.type = MCA_BTL_UDAPL_CONTROL_RDMA_CREDIT;
     rdma_credit->credits = endpoint->endpoint_eager_rdma_local.credits;
 
@@ -1599,7 +1599,7 @@ int mca_btl_udapl_endpoint_send_eager_rdma_credits(
     frag = (mca_btl_udapl_frag_t*)des;
     frag->endpoint = endpoint;
     frag->ftr = (mca_btl_udapl_footer_t *)
-        ((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
+        ((char *)frag->segment.base.seg_addr.pval + frag->segment.base.seg_len);
     frag->ftr->tag = MCA_BTL_TAG_UDAPL;
     frag->type = MCA_BTL_UDAPL_SEND;
     cookie.as_ptr = frag;
@@ -1652,7 +1652,7 @@ int mca_btl_udapl_endpoint_send_sr_credits(
 
     /* fill in data */
     segment = des->des_src;
-    sr_credit = (mca_btl_udapl_sr_credit_t*)segment->seg_addr.pval;
+    sr_credit = (mca_btl_udapl_sr_credit_t*)segment->base.seg_addr.pval;
     sr_credit->control.type = MCA_BTL_UDAPL_CONTROL_SR_CREDIT;
     OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
     sr_credit->credits = endpoint->endpoint_sr_credits[connection];
@@ -1668,7 +1668,7 @@ int mca_btl_udapl_endpoint_send_sr_credits(
     frag = (mca_btl_udapl_frag_t*)des;
     frag->endpoint = endpoint;
     frag->ftr = (mca_btl_udapl_footer_t *)
-        ((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
+        ((char *)frag->segment.base.seg_addr.pval + frag->segment.base.seg_len);
     frag->ftr->tag = MCA_BTL_TAG_UDAPL;
     frag->type = MCA_BTL_UDAPL_SEND;
     cookie.as_ptr = frag;
