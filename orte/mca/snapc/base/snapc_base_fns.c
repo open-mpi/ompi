@@ -55,7 +55,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/orte_globals.h"
 #include "orte/util/name_fns.h"
-#include "orte/mca/notifier/notifier.h"
 
 #include "orte/mca/sstore/sstore.h"
 #include "orte/mca/sstore/base/base.h"
@@ -418,34 +417,29 @@ static void snapc_none_global_cmdline_request(int status,
  * Utility functions
  ********************/
 
-/* Report the checkpoint status over the notifier interface */
+/* Report the checkpoint status */
 void orte_snapc_ckpt_state_notify(int state)
 {
     switch(state) {
     case ORTE_SNAPC_CKPT_STATE_ESTABLISHED:
-	    orte_notifier.log(ORTE_NOTIFIER_INFO, ORTE_SNAPC_CKPT_NOTIFY(state),
-                          "%d: Checkpoint established for process %s.",
-			  orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        opal_output(0, "%d: Checkpoint established for process %s.",
+                    orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_SNAPC_CKPT_STATE_NO_CKPT:
-        orte_notifier.log(ORTE_NOTIFIER_WARN, ORTE_SNAPC_CKPT_NOTIFY(state),
-                          "%d: Process %s is not checkpointable.",
-                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        opal_output(0, "%d: Process %s is not checkpointable.",
+                    orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_SNAPC_CKPT_STATE_ERROR:
-        orte_notifier.log(ORTE_NOTIFIER_WARN, ORTE_SNAPC_CKPT_NOTIFY(state),
-                          "%d: Failed to checkpoint process %s.",
-                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        opal_output(0, "%d: Failed to checkpoint process %s.",
+                    orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_SNAPC_CKPT_STATE_RECOVERED:
-        orte_notifier.log(ORTE_NOTIFIER_INFO, ORTE_SNAPC_CKPT_NOTIFY(state),
-                          "%d: Successfully restarted process %s.",
-                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        opal_output(0, "%d: Successfully restarted process %s.",
+                    orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     case ORTE_SNAPC_CKPT_STATE_NO_RESTART:
-        orte_notifier.log(ORTE_NOTIFIER_WARN, ORTE_SNAPC_CKPT_NOTIFY(state),
-                          "%d: Failed to restart process %s.",
-                          orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
+        opal_output(0, "%d: Failed to restart process %s.",
+                    orte_process_info.pid, ORTE_JOBID_PRINT(ORTE_PROC_MY_NAME->jobid));
         break;
     /* ADK: We currently do not notify for these states, but good to
      * have them around anyways. */
@@ -677,7 +671,7 @@ int orte_snapc_base_global_coord_ckpt_update_cmd(orte_process_name_t* peer,
     }
 
     /*
-     * Pass on the checkpoint state over the notifier interface.
+     * Pass on the checkpoint state.
      */
     orte_snapc_ckpt_state_notify(ckpt_status);
 

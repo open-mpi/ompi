@@ -64,7 +64,6 @@
 #include "orte/runtime/orte_globals.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ess/ess.h"
-#include "orte/mca/notifier/notifier.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "oob_tcp.h"
@@ -641,10 +640,6 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&(peer->peer_name)),
                     (NULL == host) ? "NULL" : host);
-        /* provide a notifier message */
-        orte_notifier.log_peer(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE, &(peer->peer_name),
-                               "OOB connection retries exceeded. Cannot communicate with peer %s.",
-                               ORTE_JOBID_PRINT(peer->peer_name.jobid));
         
         /* There are cases during the initial connection setup where
            the peer_send_msg is NULL but there are things in the queue

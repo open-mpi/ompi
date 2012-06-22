@@ -41,7 +41,6 @@
 #include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/sensor/sensor.h"
 #include "orte/mca/routed/routed.h"
-#include "orte/mca/notifier/notifier.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/mca/ess/ess.h"
 #include "orte/mca/state/state.h"

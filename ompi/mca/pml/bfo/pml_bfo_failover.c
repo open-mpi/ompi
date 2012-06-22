@@ -45,7 +45,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/grpcomm/grpcomm.h"
 #include "orte/util/show_help.h"
-#include "orte/mca/notifier/notifier.h"
 
 #include "ompi/runtime/ompi_cr.h"
 
@@ -1413,15 +1412,7 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
     if (true == remove) {
         mca_bml.bml_del_proc_btl(errproc, btl);
 
-        orte_notifier.log(ORTE_NOTIFIER_ERROR, ORTE_ERR_COMM_FAILURE,
-                          "BTL %s error: rank=%d mapping out %s "
-                          "to rank=%d on node=%s",
-                          btl->btl_component->btl_version.mca_component_name,
-                          ORTE_PROC_MY_NAME->vpid,
-                          btlname, errproc->proc_name.vpid,
-                          errproc->proc_hostname);
-
-        opal_output_verbose(10, mca_pml_bfo_output,
+         opal_output_verbose(10, mca_pml_bfo_output,
                             "BTL %s error: rank=%d mapping out %s "
                             "to rank=%d on node=%s \n",
                             btl->btl_component->btl_version.mca_component_name,

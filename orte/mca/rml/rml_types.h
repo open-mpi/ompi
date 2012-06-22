@@ -121,9 +121,6 @@ BEGIN_C_DECLS
 /* tag for receiving heartbeats */
 #define ORTE_RML_TAG_HEARTBEAT              39
 
-/* notifier data */
-#define ORTE_RML_TAG_NOTIFIER_HNP           40
-
 /* Process Migration Tool Tag */
 #define ORTE_RML_TAG_MIGRATE                43
 

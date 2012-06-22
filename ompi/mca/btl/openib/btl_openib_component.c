@@ -74,7 +74,6 @@ const char *ibv_get_sysfs_path(void);
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/orte_globals.h"
-#include "orte/mca/notifier/notifier.h"
 
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
@@ -3567,13 +3566,6 @@ error:
                     cq_name[cq], btl_openib_component_status_to_string(wc->status),
                     wc->status, wc->wr_id,
                     wc->opcode, wc->vendor_err, qp));
-        orte_notifier.log_peer(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
-                               remote_proc ? &remote_proc->proc_name : NULL,
-                               "\n\tIB polling %s with status %s "
-                               "status number %d for wr_id %llu opcode %d vendor error %d qp_idx %d",
-                               cq_name[cq], btl_openib_component_status_to_string(wc->status),
-                               wc->status, wc->wr_id,
-                               wc->opcode, wc->vendor_err, qp);
     }
 
     if (IBV_WC_RNR_RETRY_EXC_ERR == wc->status ||
@@ -3592,23 +3584,11 @@ error:
                            "srq rnr retry exceeded", true,
                            orte_process_info.nodename, device_name,
                            peer_hostname);
-            orte_notifier.show_help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
-                                    "help-mpi-btl-openib.txt",
-                                    BTL_OPENIB_QP_TYPE_PP(qp) ?
-                                    "pp rnr retry exceeded" :
-                                    "srq rnr retry exceeded",
-                                    orte_process_info.nodename, device_name,
-                                    peer_hostname);
         } else if (IBV_WC_RETRY_EXC_ERR == wc->status) {
             orte_show_help("help-mpi-btl-openib.txt",
                            "pp retry exceeded", true,
                            orte_process_info.nodename,
                            device_name, peer_hostname);
-            orte_notifier.show_help(ORTE_NOTIFIER_CRIT, ORTE_ERR_COMM_FAILURE,
-                                    "help-mpi-btl-openib.txt",
-                                    "pp retry exceeded",
-                                    orte_process_info.nodename,
-                                    device_name, peer_hostname);
         }
     }
 

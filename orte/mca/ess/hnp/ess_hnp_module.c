@@ -58,7 +58,6 @@
 #include "orte/mca/plm/base/base.h"
 #include "orte/mca/plm/plm.h"
 #include "orte/mca/odls/base/base.h"
-#include "orte/mca/notifier/base/base.h"
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/sensor/sensor.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -613,18 +612,6 @@ static int rte_init(void)
         goto error;
     }
     
-    /* setup the notifier system */
-    if (ORTE_SUCCESS != (ret = orte_notifier_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_notifer_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_notifier_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_notifer_select";
-        goto error;
-    }
-
     /* setup the SENSOR framework */
     if (ORTE_SUCCESS != (ret = orte_sensor_base_open())) {
         ORTE_ERROR_LOG(ret);

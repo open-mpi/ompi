@@ -62,7 +62,6 @@
 #include "orte/util/regex.h"
 #include "orte/util/show_help.h"
 #include "orte/mca/errmgr/base/base.h"
-#include "orte/mca/notifier/base/base.h"
 #include "orte/mca/sensor/base/base.h"
 #include "orte/mca/sensor/sensor.h"
 #include "orte/mca/state/base/base.h"
@@ -567,18 +566,6 @@ int orte_ess_base_orted_setup(char **hosts)
     if (ORTE_SUCCESS != (ret = orte_cr_init())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_cr_init";
-        goto error;
-    }
-    
-    /* setup the notifier system */
-    if (ORTE_SUCCESS != (ret = orte_notifier_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_notifer_open";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = orte_notifier_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_notifer_select";
         goto error;
     }
     

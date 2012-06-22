@@ -57,7 +57,6 @@
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
 #include "orte/mca/grpcomm/base/base.h"
-#include "orte/mca/notifier/notifier.h"
 #include "orte/mca/rml/base/rml_contact.h"
 #include "orte/mca/sensor/sensor.h"
 #include "orte/runtime/orte_globals.h"
