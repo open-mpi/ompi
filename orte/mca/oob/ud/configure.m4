@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -20,6 +21,9 @@
 # MCA_oob_ud_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_orte_oob_ud_CONFIG],[
+    # We need to know if we have verbs support
+    AC_REQUIRE([OPAL_CHECK_VERBS_DIR])
+
     AC_CONFIG_FILES([orte/mca/oob/ud/Makefile])
 
     # JMS Still have problems with AC_ARG ENABLE not yet having been
@@ -34,8 +38,8 @@ AC_DEFUN([MCA_orte_oob_ud_CONFIG],[
                        [ibverbs],
                        [ibv_open_device],
                        [],
-                       [$ompi_check_openib_dir],
-                       [$ompi_check_openib_libdir],
+                       [$opal_verbs_dir],
+                       [$opal_verbs_libdir],
                        [orte_oob_ud_check_happy=yes],
                        [orte_oob_ud_check_happy=no])
 
@@ -45,7 +49,11 @@ AC_DEFUN([MCA_orte_oob_ud_CONFIG],[
 
     AS_IF([test "$orte_oob_ud_check_happy" = "yes"],
           [$1],
-          [$2])
+          [AS_IF([test "$opal_want_verbs" = "yes"],
+                 [AC_MSG_WARN([--with-verbs specified, but cannot build this component])
+                  AC_MSG_ERROR([Cannot continue])
+                 ])
+           $2])
 
     # substitute in the things needed to build this component
     AC_SUBST([orte_oob_ud_CFLAGS])

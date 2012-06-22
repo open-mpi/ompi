@@ -40,6 +40,9 @@ AC_DEFUN([MCA_opal_hwloc_hwloc142_POST_CONFIG],[
 # MCA_hwloc_hwloc142_CONFIG([action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([MCA_opal_hwloc_hwloc142_CONFIG],[
+    # Hwloc needs to know if we have Verbs support
+    AC_REQUIRE([OPAL_CHECK_VERBS_DIR])
+
     AC_CONFIG_FILES([opal/mca/hwloc/hwloc142/Makefile])
 
     OPAL_VAR_SCOPE_PUSH([HWLOC_VERSION opal_hwloc_hwloc142_save_CPPFLAGS opal_hwloc_hwloc142_save_LDFLAGS opal_hwloc_hwloc142_save_LIBS opal_hwloc_hwloc142_save_cairo opal_hwloc_hwloc142_save_xml opal_hwloc_hwloc142_basedir opal_hwloc_hwloc142_file opal_hwloc_hwloc142_save_cflags])
@@ -110,7 +113,11 @@ AC_DEFUN([MCA_opal_hwloc_hwloc142_CONFIG],[
                               [Version of hwloc])
 
            # Do we have verbs support?
+           CPPFLAGS_save=$CPPFLAGS
+           AS_IF([test "$opal_want_verbs" = "yes"],
+                 [CPPFLAGS="-I$opal_verbs_dir/include $CPPFLAGS"])
            AC_CHECK_HEADERS([infiniband/verbs.h])
+           CPPFLAGS=$CPPFLAGS_save
 
            # Set these variables so that the framework m4 knows
            # what file to include in opal/mca/hwloc/hwloc.h

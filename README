@@ -711,20 +711,26 @@ NETWORKING SUPPORT / OPTIONS
   look in <mxm directory>/lib and <mxm directory>/lib64, which covers
   most cases.  This option is only needed for special configurations.
 
---with-openib=<directory>
-  Specify the directory where the OpenFabrics (previously known as
-  OpenIB) libraries and header files are located.  This option is
-  generally only necessary if the OpenFabrics headers and libraries
-  are not in default compiler/linker search paths.
+--with-verbs=<directory>
+  Specify the directory where the verbs (also know as OpenFabrics, and
+  previously known as OpenIB) libraries and header files are located.
+  This option is generally only necessary if the verbs headers and
+  libraries are not in default compiler/linker search paths.
 
   "OpenFabrics" refers to iWARP-, RoCE- (aka "IBoIP"), and
   InfiniBand-based networks.
 
---with-openib-libdir=<directory>
-  Look in directory for the OpenFabrics libraries.  By default, Open
+--with-verbs-libdir=<directory>
+  Look in directory for the verbs libraries.  By default, Open
   MPI will look in <openib directory>/lib and <openib
   directory>/lib64, which covers most cases.  This option is only
   needed for special configurations.
+
+--with-openib=<directory>
+  DEPRECATED synonym for --with-verbs.
+
+--with-openib-libdir=<directory>
+  DEPRECATED synonym for --with-verbs-libdir.
 
 --with-portals=<directory>
   Specify the directory where the Portals libraries and header files
