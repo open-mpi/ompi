@@ -957,8 +957,8 @@ int mca_btl_udapl_component_progress()
                     frag->segment.base.seg_len = dto->transfered_length -
                         sizeof(mca_btl_udapl_footer_t);
                     frag->ftr = (mca_btl_udapl_footer_t *)
-                        ((char *)frag->segment.seg_addr.pval + 
-                        frag->segment.seg_len);
+                        ((char *)frag->segment.base.seg_addr.pval + 
+                        frag->segment.base.seg_len);
 
                     cntrl_msg = frag->ftr->tag;
 
@@ -970,8 +970,8 @@ int mca_btl_udapl_component_progress()
                     OPAL_THREAD_LOCK(&mca_btl_udapl_component.udapl_lock);
 
                     /* Repost the frag */
-                    frag->ftr = frag->segment.seg_addr.pval;
-                    frag->segment.seg_len =
+                    frag->ftr = frag->segment.base.seg_addr.pval;
+                    frag->segment.base.seg_len =
                         (frag->size - sizeof(mca_btl_udapl_footer_t) -
                             sizeof(mca_btl_udapl_rdma_footer_t)); 
                     frag->base.des_flags = 0;
@@ -1046,13 +1046,13 @@ int mca_btl_udapl_component_progress()
                 }                    
                 case MCA_BTL_UDAPL_CONN_RECV:
                     mca_btl_udapl_endpoint_finish_connect(btl,
-                            frag->segment.seg_addr.pval,
-                            (int32_t *)((char *)frag->segment.seg_addr.pval  +
+                            frag->segment.base.seg_addr.pval,
+                            (int32_t *)((char *)frag->segment.base.seg_addr.pval  +
                                 sizeof(mca_btl_udapl_addr_t)),
                             event.event_data.connect_event_data.ep_handle);
                     /* No break - fall through to free */
                 case MCA_BTL_UDAPL_CONN_SEND:
-                    frag->segment.seg_len =
+                    frag->segment.base.seg_len =
                             mca_btl_udapl_module.super.btl_eager_limit;
                     mca_btl_udapl_free(&btl->super, &frag->base);
                     break;
@@ -1187,11 +1187,11 @@ int mca_btl_udapl_component_progress()
                     ((char *)local_rdma_frag->rdma_ftr -
                         pad -
                         sizeof(mca_btl_udapl_footer_t));
-                local_rdma_frag->segment.seg_len =
+                local_rdma_frag->segment.base.seg_len =
                     local_rdma_frag->rdma_ftr->size;
-                local_rdma_frag->segment.seg_addr.pval = (unsigned char *)
+                local_rdma_frag->segment.base.seg_addr.pval = (unsigned char *)
                     ((char *)local_rdma_frag->ftr -
-                        local_rdma_frag->segment.seg_len);
+                     local_rdma_frag->segment.base.seg_len);
 
                 /* trigger callback */
                 reg = mca_btl_base_active_message_trigger + local_rdma_frag->ftr->tag;
@@ -1200,7 +1200,7 @@ int mca_btl_udapl_component_progress()
 
                 /* repost */
                 local_rdma_frag->rdma_ftr->active = 0; 
-                local_rdma_frag->segment.seg_len =
+                local_rdma_frag->segment.base.seg_len =
                     mca_btl_udapl_module.super.btl_eager_limit;
                 local_rdma_frag->base.des_flags = 0;
 
