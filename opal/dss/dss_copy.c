@@ -146,32 +146,6 @@ int opal_dss_copy_string(char **dest, char *src, opal_data_type_t type)
 /* COPY FUNCTIONS FOR GENERIC OPAL TYPES */
 
 /*
- * OPAL_DATA_VALUE
- */
-int opal_dss_copy_data_value(opal_dss_value_t **dest, opal_dss_value_t *src,
-                             opal_data_type_t type)
-{
-    int rc;
-
-    /* create the new object */
-    *dest = OBJ_NEW(opal_dss_value_t);
-    if (NULL == *dest) {
-        return OPAL_ERR_OUT_OF_RESOURCE;
-    }
-
-    (*dest)->type = src->type;
-
-    /* copy the payload with its associated copy function */
-    if (OPAL_SUCCESS != (rc = opal_dss.copy(&((*dest)->data), src->data, src->type))) {
-        OBJ_RELEASE(*dest);
-        return rc;
-    }
-
-    return OPAL_SUCCESS;
-}
-
-
-/*
  * OPAL_BYTE_OBJECT
  */
 int opal_dss_copy_byte_object(opal_byte_object_t **dest, opal_byte_object_t *src,

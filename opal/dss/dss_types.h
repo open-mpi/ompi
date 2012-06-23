@@ -73,10 +73,9 @@ typedef struct {
 #define    OPAL_BYTE_OBJECT         (opal_data_type_t)   16 /**< byte object structure */
 #define    OPAL_DATA_TYPE           (opal_data_type_t)   17 /**< data type */
 #define    OPAL_NULL                (opal_data_type_t)   18 /**< don't interpret data type */
-#define    OPAL_DATA_VALUE          (opal_data_type_t)   19 /**< data value */
-#define    OPAL_PSTAT               (opal_data_type_t)   20 /**< process statistics */
-#define    OPAL_NODE_STAT           (opal_data_type_t)   21 /**< node statistics */
-#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   22 /**< hwloc topology */
+#define    OPAL_PSTAT               (opal_data_type_t)   19 /**< process statistics */
+#define    OPAL_NODE_STAT           (opal_data_type_t)   20 /**< node statistics */
+#define    OPAL_HWLOC_TOPO          (opal_data_type_t)   21 /**< hwloc topology */
 
 #define    OPAL_DSS_ID_DYNAMIC      (opal_data_type_t)   30
 
@@ -87,13 +86,28 @@ typedef struct {
 
 /* Data value object */
 typedef struct {
-    opal_object_t super;                /* required for this to be an object */
+    opal_list_item_t super;             /* required for this to be on lists */
+    char *key;                          /* key string */
     opal_data_type_t type;              /* the type of value stored */
-    void *data;
-} opal_dss_value_t;
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_dss_value_t);
-
-#define OPAL_DATA_VALUE_EMPTY { OPAL_OBJ_STATIC_INIT(opal_dss_value_t), OPAL_UNDEF, NULL}
+    union {
+        uint8_t byte;
+        char *string;
+        size_t size;
+        pid_t pid;
+        int integer;
+        int8_t int8;
+        int16_t int16;
+        int32_t int32;
+        int64_t int64;
+        unsigned int uint;
+        uint8_t uint8;
+        uint16_t uint16;
+        uint32_t uint32;
+        uint64_t uint64;
+        opal_byte_object_t bo;
+    } data;
+} opal_value_t;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_value_t);
 
 /* Process statistics object */
 #define OPAL_PSTAT_MAX_STRING_LEN   32
@@ -153,36 +167,36 @@ typedef uint8_t opal_dss_buffer_type_t;
 #define OPAL_DSS_BUFFER_TYPE_NTOH(h);
 
 /**
-     * Structure for holding a buffer to be used with the RML or OOB
-     * subsystems.
-     */
-    struct opal_buffer_t {
-        /** First member must be the object's parent */
-        opal_object_t parent;
-        /** type of buffer */
-        opal_dss_buffer_type_t type;
-        /** Start of my memory */
-        char *base_ptr;
-        /** Where the next data will be packed to (within the allocated
-            memory starting at base_ptr) */
-        char *pack_ptr;
-        /** Where the next data will be unpacked from (within the
-            allocated memory starting as base_ptr) */
-        char *unpack_ptr;
+ * Structure for holding a buffer to be used with the RML or OOB
+ * subsystems.
+ */
+struct opal_buffer_t {
+    /** First member must be the object's parent */
+    opal_object_t parent;
+    /** type of buffer */
+    opal_dss_buffer_type_t type;
+    /** Start of my memory */
+    char *base_ptr;
+    /** Where the next data will be packed to (within the allocated
+        memory starting at base_ptr) */
+    char *pack_ptr;
+    /** Where the next data will be unpacked from (within the
+        allocated memory starting as base_ptr) */
+    char *unpack_ptr;
+    
+    /** Number of bytes allocated (starting at base_ptr) */
+    size_t bytes_allocated;
+    /** Number of bytes used by the buffer (i.e., amount of data --
+        including overhead -- packed in the buffer) */
+    size_t bytes_used;
+};
+/**
+ * Convenience typedef
+ */
+typedef struct opal_buffer_t opal_buffer_t;
 
-        /** Number of bytes allocated (starting at base_ptr) */
-        size_t bytes_allocated;
-        /** Number of bytes used by the buffer (i.e., amount of data --
-            including overhead -- packed in the buffer) */
-        size_t bytes_used;
-    };
-    /**
-     * Convenience typedef
-     */
-    typedef struct opal_buffer_t opal_buffer_t;
-
-    /** formalize the declaration */
-    OPAL_DECLSPEC OBJ_CLASS_DECLARATION (opal_buffer_t);
+/** formalize the declaration */
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION (opal_buffer_t);
 
 END_C_DECLS
 

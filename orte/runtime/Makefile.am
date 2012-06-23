@@ -11,6 +11,8 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Los Alamos National Security, LLC.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -39,7 +41,6 @@ libopen_rte_la_SOURCES += \
         runtime/data_type_support/orte_dt_compare_fns.c \
         runtime/data_type_support/orte_dt_copy_fns.c \
         runtime/data_type_support/orte_dt_print_fns.c \
-        runtime/data_type_support/orte_dt_release_fns.c \
         runtime/data_type_support/orte_dt_size_fns.c \
         runtime/data_type_support/orte_dt_packing_fns.c \
         runtime/data_type_support/orte_dt_unpacking_fns.c \

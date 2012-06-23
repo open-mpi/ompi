@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -113,29 +114,6 @@ int opal_dss_size_string(size_t *size, char *src, opal_data_type_t type)
 }
 
 /* SIZE FUNCTIONS FOR GENERIC OPAL TYPES */
-
-/*
- * OPAL_DATA_VALUE
- */
-int opal_dss_size_data_value(size_t *size, opal_dss_value_t *src, opal_data_type_t type)
-{
-    size_t data_size;
-    int rc;
-
-    /* account for size of object itself... */
-    *size = sizeof(opal_dss_value_t);
-
-    if (NULL != src) {
-        /* ...and the number of bytes in the payload, IF an actual object was provided */
-        if (OPAL_SUCCESS != (rc = opal_dss.size(&data_size, src->data, src->type))) {
-            return rc;
-        }
-        *size += data_size;
-    }
-
-    return OPAL_SUCCESS;
-}
-
 
 /*
  * OPAL_BYTE_OBJECT

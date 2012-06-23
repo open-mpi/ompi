@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -388,54 +389,6 @@ int opal_dss_print_data_type(char **output, char *prefix, opal_data_type_t *src,
     }
 
     asprintf(output, "%sData type: OPAL_DATA_TYPE\tValue: %lu", prefx, (unsigned long) *src);
-    return OPAL_SUCCESS;
-}
-
-/*
- * OPAL_DATA_VALUE
- */
-int opal_dss_print_data_value(char **output, char *prefix, opal_dss_value_t *src, opal_data_type_t type)
-{
-    char *pfx, *tmp1, *tmp2;
-    int rc;
-
-   /* if src is NULL, just print data type and return */
-    if (NULL == src) {
-        if (NULL != prefix) {
-            asprintf(output, "%sData type: OPAL_DATA_VALUE\tValue: NULL pointer", prefix);
-        } else {
-            asprintf(output, "Data type: OPAL_DATA_VALUE\tValue: NULL pointer");
-        }
-        return OPAL_SUCCESS;
-    }
-
-    if (NULL != prefix) {
-        asprintf(&pfx, "%s\t", prefix);
-        asprintf(&tmp1, "%sData type: OPAL_DATA_VALUE:\n", prefix);
-    } else {
-        asprintf(&tmp1, "Data type: OPAL_DATA_VALUE:\n");
-        asprintf(&pfx, "\t");
-    }
-
-    /* if data is included, print it */
-    if (OPAL_UNDEF == src->type) { /* undefined data type - just report it */
-        asprintf(&tmp2, "%sData type: OPAL_UNDEF\tValue: N/A", pfx);
-    } else if (NULL != src->data) {
-        if (OPAL_SUCCESS != (rc = opal_dss.print(&tmp2, pfx, src->data, src->type))) {
-            if (NULL != tmp1) free(tmp1);
-            if (NULL != pfx) free(pfx);
-            *output = NULL;
-            return rc;
-        }
-    } else { /* indicate the data field was NULL */
-        asprintf(&tmp2, "%sData field is NULL", pfx);
-    }
-
-    asprintf(output, "%s%s", tmp1, tmp2);
-    free(tmp1);
-    free(tmp2);
-    if (NULL != pfx) free(pfx);
-
     return OPAL_SUCCESS;
 }
 

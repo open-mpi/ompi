@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -208,18 +209,6 @@ int opal_dss_compare_dt(opal_data_type_t *value1, opal_data_type_t *value2, opal
     if (*value2 > *value1) return OPAL_VALUE2_GREATER;
 
     return OPAL_EQUAL;
-}
-
-/* OPAL_DATA_VALUE */
-int opal_dss_compare_data_value(opal_dss_value_t *value1, opal_dss_value_t *value2, opal_data_type_t type)
-{
-    /* can't compare if the two types don't match */
-    if (value1->type != value2->type) {
-        return OPAL_ERR_TYPE_MISMATCH;
-    }
-
-    /* okay, go ahead and compare the values themselves */
-    return opal_dss.compare(value1->data, value2->data, value1->type);
 }
 
 /* OPAL_BYTE_OBJECT */

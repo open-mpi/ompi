@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2011      Los Alamos National Security, LLC.
+ * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -153,10 +153,6 @@ int orte_dt_print_proc(char **output, char *prefix, orte_proc_t *src, opal_data_
 int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *src, opal_data_type_t type);
 int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_data_type_t type);
 #endif
-
-/** Data type release functions */
-void orte_dt_std_obj_release(opal_dss_value_t *value);
-void orte_dt_std_release(opal_dss_value_t *value);
 
 /** Data type size functions */
 int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type);
