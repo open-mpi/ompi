@@ -341,6 +341,3 @@ int opal_hwloc_size(size_t *size, hwloc_topology_t src, opal_data_type_t type)
     return OPAL_ERR_NOT_IMPLEMENTED;
 }
 
-void opal_hwloc_release(opal_dss_value_t *value)
-{
-}

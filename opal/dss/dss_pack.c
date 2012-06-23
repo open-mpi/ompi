@@ -342,57 +342,6 @@ int opal_dss_pack_data_type(opal_buffer_t *buffer, const void *src, int32_t num_
 }
 
 /*
- * OPAL_DATA_VALUE
- */
-int opal_dss_pack_data_value(opal_buffer_t *buffer, const void *src, int32_t num, opal_data_type_t type)
-{
-    opal_dss_type_info_t *info;
-    opal_dss_value_t **sdv;
-    int32_t i;
-    int ret;
-
-    sdv = (opal_dss_value_t **) src;
-
-    for (i = 0; i < num; ++i) {
-        /* if the src data value is NULL, then we will pack it as OPAL_NULL to indicate
-         * that the unpack should leave a NULL data value
-         */
-        if (NULL == sdv[i]) {
-            if (OPAL_SUCCESS != (ret = opal_dss_store_data_type(buffer, OPAL_NULL))) {
-                return ret;
-            }
-            continue;
-        }
-        
-        /* pack the data type - we'll need it on the other end */
-        if (OPAL_SUCCESS != (ret = opal_dss_store_data_type(buffer, sdv[i]->type))) {
-            return ret;
-        }
-
-        /* if the data type is UNDEF, then nothing more to do */
-        if (OPAL_UNDEF == sdv[i]->type) continue;
-        
-        /* Lookup the pack function for this type and call it */
-
-        if (NULL == (info = (opal_dss_type_info_t*)opal_pointer_array_get_item(&opal_dss_types, sdv[i]->type))) {
-            return OPAL_ERR_PACK_FAILURE;
-        }
-
-        if (info->odti_structured) {
-            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, &(sdv[i]->data), 1, sdv[i]->type))) {
-                return ret;
-            }
-        } else {
-            if (OPAL_SUCCESS != (ret = opal_dss_pack_buffer(buffer, sdv[i]->data, 1, sdv[i]->type))) {
-                return ret;
-            }
-        }
-    }
-
-    return OPAL_SUCCESS;
-}
-
-/*
  * OPAL_BYTE_OBJECT
  */
 int opal_dss_pack_byte_object(opal_buffer_t *buffer, const void *src, int32_t num,

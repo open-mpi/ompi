@@ -239,7 +239,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_std_cntr,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_STD_CNTR", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -252,7 +251,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_name,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_print_name,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_NAME", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -266,7 +264,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_vpid,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_VPID", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -280,7 +277,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_jobid,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_JOBID", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -295,7 +291,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_job,
                                                      (opal_dss_size_fn_t)orte_dt_size_job,
                                                      (opal_dss_print_fn_t)orte_dt_print_job,
-                                                     (opal_dss_release_fn_t)orte_dt_std_obj_release,
                                                      OPAL_DSS_STRUCTURED,
                                                      "ORTE_JOB", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -309,7 +304,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_node,
                                                      (opal_dss_size_fn_t)orte_dt_size_node,
                                                      (opal_dss_print_fn_t)orte_dt_print_node,
-                                                     (opal_dss_release_fn_t)orte_dt_std_obj_release,
                                                      OPAL_DSS_STRUCTURED,
                                                      "ORTE_NODE", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -323,7 +317,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_proc,
                                                      (opal_dss_size_fn_t)orte_dt_size_proc,
                                                      (opal_dss_print_fn_t)orte_dt_print_proc,
-                                                     (opal_dss_release_fn_t)orte_dt_std_obj_release,
                                                      OPAL_DSS_STRUCTURED,
                                                      "ORTE_PROC", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -337,7 +330,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_app_context,
                                                      (opal_dss_size_fn_t)orte_dt_size_app_context,
                                                      (opal_dss_print_fn_t)orte_dt_print_app_context,
-                                                     (opal_dss_release_fn_t)orte_dt_std_obj_release,
                                                      OPAL_DSS_STRUCTURED,
                                                      "ORTE_APP_CONTEXT", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -351,7 +343,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_node_state,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_NODE_STATE", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -365,7 +356,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_proc_state,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_PROC_STATE", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -379,7 +369,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_job_state,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_JOB_STATE", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -393,7 +382,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_exit_code,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_EXIT_CODE", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -407,7 +395,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_map,
                                                      (opal_dss_size_fn_t)orte_dt_size_map,
                                                      (opal_dss_print_fn_t)orte_dt_print_map,
-                                                     (opal_dss_release_fn_t)orte_dt_std_obj_release,
                                                      OPAL_DSS_STRUCTURED,
                                                      "ORTE_JOB_MAP", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -421,7 +408,6 @@ int orte_dt_init(void)
                                                       (opal_dss_compare_fn_t)orte_dt_compare_tags,
                                                       (opal_dss_size_fn_t)orte_dt_std_size,
                                                       (opal_dss_print_fn_t)orte_dt_std_print,
-                                                      (opal_dss_release_fn_t)orte_dt_std_release,
                                                       OPAL_DSS_UNSTRUCTURED,
                                                       "ORTE_RML_TAG", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -435,7 +421,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_daemon_cmd,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_DAEMON_CMD", &tmp))) {
         ORTE_ERROR_LOG(rc);
@@ -449,7 +434,6 @@ int orte_dt_init(void)
                                                      (opal_dss_compare_fn_t)orte_dt_compare_iof_tag,
                                                      (opal_dss_size_fn_t)orte_dt_std_size,
                                                      (opal_dss_print_fn_t)orte_dt_std_print,
-                                                     (opal_dss_release_fn_t)orte_dt_std_release,
                                                      OPAL_DSS_UNSTRUCTURED,
                                                      "ORTE_IOF_TAG", &tmp))) {
         ORTE_ERROR_LOG(rc);

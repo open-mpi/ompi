@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, Inc.  All rights reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -405,74 +406,6 @@ int opal_dss_unpack_data_type(opal_buffer_t *buffer, void *dest, int32_t *num_va
      /* turn around and unpack the real type */
     return opal_dss_unpack_buffer(buffer, dest, num_vals, OPAL_DATA_TYPE_T);
 }
-
-/*
- * OPAL_DATA_VALUE
- */
-int opal_dss_unpack_data_value(opal_buffer_t *buffer, void *dest, int32_t *num,
-                             opal_data_type_t type)
-{
-    opal_dss_type_info_t *info;
-    opal_dss_value_t **ddv;
-    int32_t i, n;
-    opal_data_type_t dt;
-    size_t nsize;
-    int ret;
-
-    ddv = (opal_dss_value_t **) dest;
-
-    for (i = 0; i < *num; ++i) {
-        /* see what the data type is */
-        n = 1;
-        if (OPAL_SUCCESS != (ret = opal_dss_get_data_type(buffer, &dt))) {
-            return ret;
-        }
-        
-        /* if it is OPAL_NULL, then do nothing */
-        if (OPAL_NULL == dt) continue;
-        
-        /* otherwise, allocate the new object and set the type */
-        
-        ddv[i] = OBJ_NEW(opal_dss_value_t);
-        if (NULL == ddv[i]) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-        ddv[i]->type = dt;
-
-        /* if it is UNDEF, then nothing more to do */
-        if (OPAL_UNDEF == ddv[i]->type) continue;
-
-        /* get enough memory to hold it */
-        if (OPAL_SUCCESS != (ret = opal_dss.size(&nsize, NULL, ddv[i]->type))) {
-            return ret;
-        }
-        ddv[i]->data = (void*)malloc(nsize);
-        if (NULL == ddv[i]->data) {
-            return OPAL_ERR_OUT_OF_RESOURCE;
-        }
-
-        /* Lookup the unpack function for this type and call it */
-
-        if (NULL == (info = (opal_dss_type_info_t*)opal_pointer_array_get_item(&opal_dss_types, ddv[i]->type))) {
-            return OPAL_ERR_PACK_FAILURE;
-        }
-
-        if (info->odti_structured) {
-            n=1;
-            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, &(ddv[i]->data), &n, ddv[i]->type))) {
-                return ret;
-            }
-        } else {
-            n=1;
-            if (OPAL_SUCCESS != (ret = opal_dss_unpack_buffer(buffer, ddv[i]->data, &n, ddv[i]->type))) {
-                return ret;
-            }
-        }
-    }
-
-    return OPAL_SUCCESS;
-}
-
 
 /*
  * OPAL_BYTE_OBJECT

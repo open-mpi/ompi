@@ -292,7 +292,6 @@ int opal_hwloc_base_open(void)
                                                             (opal_dss_compare_fn_t)opal_hwloc_compare,
                                                             (opal_dss_size_fn_t)opal_hwloc_size,
                                                             (opal_dss_print_fn_t)opal_hwloc_print,
-                                                            (opal_dss_release_fn_t)opal_hwloc_release,
                                                             OPAL_DSS_STRUCTURED,
                                                             "OPAL_HWLOC_TOPO", &tmp))) {
             return value;

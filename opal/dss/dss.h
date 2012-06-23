@@ -33,27 +33,6 @@
 BEGIN_C_DECLS
 
 /**
- * Set the buffer type.
- *
- * The pack/unpack functions can work with two types of buffer - fully
- * described (i.e., every data object is preceeded by an identifier as
- * to the type of the object) and non-described (i.e., no type
- * identifier included). This function allows the caller to set the
- * buffer type to the specified type - the function first checks to
- * ensure the buffer is empty as the type cannot be changed once
- * data has already entered the buffer.
- *
- * @param *buffer A pointer to the buffer
- *
- * @param type The new buffer type
- *
- * @retval OPAL_SUCCESS Operation successfully executed
- *
- * @retval OPAL_ERROR_VALUE An appropriate error code
- */
-typedef int (*opal_dss_set_buffer_type_fn_t)(opal_buffer_t *buffer, opal_dss_buffer_type_t type);
-
-/**
  * Top-level itnerface function to pack one or more values into a
  * buffer.
  *
@@ -450,50 +429,6 @@ typedef int (*opal_dss_print_fn_t)(char **output, char *prefix, void *src, opal_
 typedef int (*opal_dss_dump_fn_t)(int output_stream, void *src, opal_data_type_t type);
 
 /**
- * Set a data value
- *
- * Since the data values are stored in an opaque manner, the system needs
- * a function by which it can set the data value to a specific value. This
- * is the equivalent to a C++ access function.
- *
- * NOTE: this function does NOT allocate any memory. It only sets the value pointer
- * and type to the specified location and type. Use "copy" if you want dynamic allocation
- * of storage.
- *
- * @retval OPAL_SUCCESS The value was successfully stored
- *
- * @retval OPAL_ERROR(s) An appropriate error code.
- */
-typedef int (*opal_dss_set_fn_t)(opal_dss_value_t *value, void *new_value, opal_data_type_t type);
-
-/**
- * Get a data value
- *
- * Since the data values are stored in an opaque manner, the system needs
- * a function by which it can get the data value from within the data_value object. This
- * is the equivalent to a C++ access function.
- *
- * NOTE: this function does NOT allocate any memory. It simply points the "data" location
- * to that of the value, after ensuring that the value's type matches the specified one.
- * Use "copy" if you want dynamic allocation of memory.
- *
- * @retval OPAL_SUCCESS The value was successfully retrieved
- *
- * @retval OPAL_ERROR(s) An appropriate error code - usually caused by the specified type
- * not matching the data type within the stored object.
- */
-typedef int (*opal_dss_get_fn_t)(void **data, opal_dss_value_t *value, opal_data_type_t type);
-
-/**
- * Release the storage used by a data value
- *
- * Since the data values are stored in an opaque manner, the system needs
- * a function by which it can release the storage associated with a value
- * stored in a data value object.
- */
-typedef void (*opal_dss_release_fn_t)(opal_dss_value_t *value);
-
-/**
  * Register a set of data handling functions.
  *
  *  * This function registers a set of data type functions for a specific
@@ -509,7 +444,6 @@ typedef void (*opal_dss_release_fn_t)(opal_dss_value_t *value);
  * deserialize individual members). This is likewise true for the copy
  * and compare functions.
  *
- * @param release_fn [IN] Function pointer to the release routine
  * @param pack_fn [IN] Function pointer to the pack routine
  * @param unpack_fn [IN] Function pointer to the unpack routine
  * @param copy_fn [IN] Function pointer to copy routine
@@ -531,7 +465,6 @@ typedef int (*opal_dss_register_fn_t)(opal_dss_pack_fn_t pack_fn,
                                     opal_dss_compare_fn_t compare_fn,
                                     opal_dss_size_fn_t size_fn,
                                     opal_dss_print_fn_t print_fn,
-                                    opal_dss_release_fn_t release_fn,
                                     bool structured,
                                     const char *name, opal_data_type_t *type);
 /*
@@ -545,6 +478,8 @@ typedef char* (*opal_dss_lookup_data_type_fn_t)(opal_data_type_t type);
  */
 typedef void (*opal_dss_dump_data_types_fn_t)(int output);
 
+/* return true if the data type is structured */
+typedef bool (*opal_dss_structured_fn_t)(opal_data_type_t type);
 
 /**
  * Base structure for the DSS
@@ -553,16 +488,13 @@ typedef void (*opal_dss_dump_data_types_fn_t)(int output);
  * pointers to the calling interface.
  */
 struct opal_dss_t {
-    opal_dss_set_fn_t               set;
-    opal_dss_get_fn_t               get;
-    opal_dss_set_buffer_type_fn_t   set_buffer_type;
     opal_dss_pack_fn_t              pack;
     opal_dss_unpack_fn_t            unpack;
     opal_dss_copy_fn_t              copy;
     opal_dss_compare_fn_t           compare;
     opal_dss_size_fn_t              size;
     opal_dss_print_fn_t             print;
-    opal_dss_release_fn_t           release;
+    opal_dss_structured_fn_t        structured;
     opal_dss_peek_next_item_fn_t    peek;
     opal_dss_unload_fn_t            unload;
     opal_dss_load_fn_t              load;

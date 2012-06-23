@@ -229,7 +229,6 @@ OPAL_DECLSPEC int opal_hwloc_print(char **output, char *prefix,
 OPAL_DECLSPEC int opal_hwloc_size(size_t *size,
                                   hwloc_topology_t src,
                                   opal_data_type_t type);
-OPAL_DECLSPEC void opal_hwloc_release(opal_dss_value_t *value);
 
 /**
  * Make a prettyprint string for a hwloc_cpuset_t (e.g., "socket
