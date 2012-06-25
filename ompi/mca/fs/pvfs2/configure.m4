@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2008-2012 University of Houston. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -43,7 +43,6 @@ AC_DEFUN([MCA_ompi_fs_pvfs2_CONFIG],[
 
 
     # substitute in the things needed to build pvfs2
-    AC_SUBST([fs_pvfs2_CFLAGS])
     AC_SUBST([fs_pvfs2_CPPFLAGS])
     AC_SUBST([fs_pvfs2_LDFLAGS])
     AC_SUBST([fs_pvfs2_LIBS])
