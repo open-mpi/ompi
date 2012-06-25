@@ -17,7 +17,7 @@ module pmpi_f08_interfaces
 interface  PMPI_Bsend
 subroutine PMPI_Bsend_f08(buf,count,datatype,dest,tag,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Bsend_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -34,7 +34,7 @@ end interface  PMPI_Bsend
 interface  PMPI_Bsend_init
 subroutine PMPI_Bsend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Bsend_init_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -52,7 +52,6 @@ end interface  PMPI_Bsend_init
 interface  PMPI_Buffer_attach
 subroutine PMPI_Buffer_attach_f08(buffer,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Buffer_attach_f08")
-   use :: mpi_f08_types
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer
    !$PRAGMA IGNORE_TKR buffer
@@ -67,7 +66,6 @@ end interface  PMPI_Buffer_attach
 interface  PMPI_Buffer_detach
 subroutine PMPI_Buffer_detach_f08(buffer_addr,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Buffer_detach_f08")
-   use :: mpi_f08_types
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer_addr
    !$PRAGMA IGNORE_TKR buffer_addr
@@ -82,7 +80,7 @@ end interface  PMPI_Buffer_detach
 interface  PMPI_Cancel
 subroutine PMPI_Cancel_f08(request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Cancel_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request
    implicit none
    TYPE(MPI_Request), INTENT(IN) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -92,7 +90,7 @@ end interface  PMPI_Cancel
 interface  PMPI_Get_count
 subroutine PMPI_Get_count_f08(status,datatype,count,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Get_count_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype
    implicit none
    TYPE(MPI_Status), INTENT(IN) :: status
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -104,7 +102,7 @@ end interface  PMPI_Get_count
 interface  PMPI_Ibsend
 subroutine PMPI_Ibsend_f08(buf,count,datatype,dest,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ibsend_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -122,7 +120,7 @@ end interface  PMPI_Ibsend
 interface  PMPI_Iprobe
 subroutine PMPI_Iprobe_f08(source,tag,comm,flag,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iprobe_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: source, tag
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -135,7 +133,7 @@ end interface  PMPI_Iprobe
 interface  PMPI_Irecv
 subroutine PMPI_Irecv_f08(buf,count,datatype,source,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Irecv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -153,7 +151,7 @@ end interface  PMPI_Irecv
 interface  PMPI_Irsend
 subroutine PMPI_Irsend_f08(buf,count,datatype,dest,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Irsend_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -171,7 +169,7 @@ end interface  PMPI_Irsend
 interface  PMPI_Isend
 subroutine PMPI_Isend_f08(buf,count,datatype,dest,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Isend_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -189,7 +187,7 @@ end interface  PMPI_Isend
 interface  PMPI_Issend
 subroutine PMPI_Issend_f08(buf,count,datatype,dest,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Issend_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -207,7 +205,7 @@ end interface  PMPI_Issend
 interface  PMPI_Probe
 subroutine PMPI_Probe_f08(source,tag,comm,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Probe_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: source, tag
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -219,7 +217,7 @@ end interface  PMPI_Probe
 interface  PMPI_Recv
 subroutine PMPI_Recv_f08(buf,count,datatype,source,tag,comm,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Recv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Status
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -237,7 +235,7 @@ end interface  PMPI_Recv
 interface  PMPI_Recv_init
 subroutine PMPI_Recv_init_f08(buf,count,datatype,source,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Recv_init_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -255,7 +253,7 @@ end interface  PMPI_Recv_init
 interface  PMPI_Request_free
 subroutine PMPI_Request_free_f08(request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Request_free_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request
    implicit none
    TYPE(MPI_Request), INTENT(INOUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -265,7 +263,7 @@ end interface  PMPI_Request_free
 interface  PMPI_Request_get_status
 subroutine PMPI_Request_get_status_f08(request,flag,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Request_get_status_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request, MPI_Status
    implicit none
    TYPE(MPI_Request), INTENT(IN) :: request
    LOGICAL, INTENT(OUT) :: flag
@@ -277,7 +275,7 @@ end interface  PMPI_Request_get_status
 interface  PMPI_Rsend
 subroutine PMPI_Rsend_f08(buf,count,datatype,dest,tag,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Rsend_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -294,7 +292,7 @@ end interface  PMPI_Rsend
 interface  PMPI_Rsend_init
 subroutine PMPI_Rsend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Rsend_init_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -312,7 +310,7 @@ end interface  PMPI_Rsend_init
 interface  PMPI_Send
 subroutine PMPI_Send_f08(buf,count,datatype,dest,tag,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Send_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -330,7 +328,7 @@ interface  PMPI_Sendrecv
 subroutine PMPI_Sendrecv_f08(sendbuf,sendcount,sendtype,dest,sendtag,recvbuf, &
                             recvcount,recvtype,source,recvtag,comm,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Sendrecv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Status
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -350,7 +348,7 @@ interface  PMPI_Sendrecv_replace
 subroutine PMPI_Sendrecv_replace_f08(buf,count,datatype,dest,sendtag,source,recvtag, &
                                     comm,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Sendrecv_replace_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Status
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -368,7 +366,7 @@ end interface  PMPI_Sendrecv_replace
 interface  PMPI_Send_init
 subroutine PMPI_Send_init_f08(buf,count,datatype,dest,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Send_init_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -386,7 +384,7 @@ end interface  PMPI_Send_init
 interface  PMPI_Ssend
 subroutine PMPI_Ssend_f08(buf,count,datatype,dest,tag,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ssend_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -403,7 +401,7 @@ end interface  PMPI_Ssend
 interface  PMPI_Ssend_init
 subroutine PMPI_Ssend_init_f08(buf,count,datatype,dest,tag,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ssend_init_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -421,7 +419,7 @@ end interface  PMPI_Ssend_init
 interface  PMPI_Start
 subroutine PMPI_Start_f08(request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Start_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request
    implicit none
    TYPE(MPI_Request), INTENT(INOUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -431,7 +429,7 @@ end interface  PMPI_Start
 interface  PMPI_Startall
 subroutine PMPI_Startall_f08(count,array_of_requests,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Startall_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
@@ -442,7 +440,7 @@ end interface  PMPI_Startall
 interface  PMPI_Test
 subroutine PMPI_Test_f08(request,flag,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Test_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request, MPI_Status
    implicit none
    TYPE(MPI_Request), INTENT(INOUT) :: request
    LOGICAL, INTENT(OUT) :: flag
@@ -454,7 +452,7 @@ end interface  PMPI_Test
 interface  PMPI_Testall
 subroutine PMPI_Testall_f08(count,array_of_requests,flag,array_of_statuses,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Testall_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
@@ -467,7 +465,7 @@ end interface  PMPI_Testall
 interface  PMPI_Testany
 subroutine PMPI_Testany_f08(count,array_of_requests,index,flag,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Testany_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
@@ -482,7 +480,7 @@ interface  PMPI_Testsome
 subroutine PMPI_Testsome_f08(incount,array_of_requests,outcount, &
                         array_of_indices,array_of_statuses,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Testsome_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: incount
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(incount)
@@ -495,7 +493,7 @@ end interface  PMPI_Testsome
 interface  PMPI_Test_cancelled
 subroutine PMPI_Test_cancelled_f08(status,flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Test_cancelled_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Status
    implicit none
    TYPE(MPI_Status), INTENT(IN) :: status
    LOGICAL, INTENT(OUT) :: flag
@@ -506,7 +504,7 @@ end interface  PMPI_Test_cancelled
 interface  PMPI_Wait
 subroutine PMPI_Wait_f08(request,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Wait_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request, MPI_Status
    implicit none
    TYPE(MPI_Request), INTENT(INOUT) :: request
    TYPE(MPI_Status) :: status
@@ -517,7 +515,7 @@ end interface  PMPI_Wait
 interface  PMPI_Waitall
 subroutine PMPI_Waitall_f08(count,array_of_requests,array_of_statuses,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Waitall_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
@@ -529,7 +527,7 @@ end interface  PMPI_Waitall
 interface  PMPI_Waitany
 subroutine PMPI_Waitany_f08(count,array_of_requests,index,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Waitany_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(count)
@@ -543,7 +541,7 @@ interface  PMPI_Waitsome
 subroutine PMPI_Waitsome_f08(incount,array_of_requests,outcount, &
                         array_of_indices,array_of_statuses,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Waitsome_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: incount
    TYPE(MPI_Request), INTENT(INOUT) :: array_of_requests(incount)
@@ -556,7 +554,7 @@ end interface  PMPI_Waitsome
 interface  PMPI_Get_address
 subroutine PMPI_Get_address_f08(location,address,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Get_address_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: location
    !$PRAGMA IGNORE_TKR location
@@ -571,7 +569,7 @@ end interface  PMPI_Get_address
 interface  PMPI_Get_elements
 subroutine PMPI_Get_elements_f08(status,datatype,count,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Get_elements_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype
    implicit none
    TYPE(MPI_Status), INTENT(IN) :: status
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -583,7 +581,7 @@ end interface  PMPI_Get_elements
 interface  PMPI_Pack
 subroutine PMPI_Pack_f08(inbuf,incount,datatype,outbuf,outsize,position,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Pack_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
    !$PRAGMA IGNORE_TKR inbuf, outbuf
@@ -602,7 +600,7 @@ end interface  PMPI_Pack
 interface  PMPI_Pack_external
 subroutine PMPI_Pack_external_f08(datarep,inbuf,incount,datatype,outbuf,outsize, &
                                  position,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
@@ -622,7 +620,7 @@ end interface  PMPI_Pack_external
 interface  PMPI_Pack_external_size
 subroutine PMPI_Pack_external_size_f08(datarep,incount,datatype,size,ierror &
            )
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: incount
@@ -635,7 +633,7 @@ end interface  PMPI_Pack_external_size
 interface  PMPI_Pack_size
 subroutine PMPI_Pack_size_f08(incount,datatype,comm,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Pack_size_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    INTEGER, INTENT(IN) :: incount
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -648,7 +646,7 @@ end interface  PMPI_Pack_size
 interface  PMPI_Type_commit
 subroutine PMPI_Type_commit_f08(datatype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_commit_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    TYPE(MPI_Datatype), INTENT(INOUT) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -658,7 +656,7 @@ end interface  PMPI_Type_commit
 interface  PMPI_Type_contiguous
 subroutine PMPI_Type_contiguous_f08(count,oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_contiguous_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: count
    TYPE(MPI_Datatype), INTENT(IN) :: oldtype
@@ -672,7 +670,7 @@ subroutine PMPI_Type_create_darray_f08(size,rank,ndims,array_of_gsizes, &
                     array_of_distribs,array_of_dargs,array_of_psizes,order, &
                     oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_darray_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: size, rank, ndims, order
    INTEGER, INTENT(IN) :: array_of_gsizes(ndims), array_of_distribs(ndims)
@@ -687,7 +685,7 @@ interface  PMPI_Type_create_hindexed
 subroutine PMPI_Type_create_hindexed_f08(count,array_of_blocklengths, &
                                         array_of_displacements,oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_hindexed_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    INTEGER, INTENT(IN) :: count
    INTEGER, INTENT(IN) :: array_of_blocklengths(count)
@@ -701,7 +699,7 @@ end interface  PMPI_Type_create_hindexed
 interface  PMPI_Type_create_hvector
 subroutine PMPI_Type_create_hvector_f08(count,blocklength,stride,oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_hvector_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    INTEGER, INTENT(IN) :: count, blocklength
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: stride
@@ -715,7 +713,7 @@ interface  PMPI_Type_create_indexed_block
 subroutine PMPI_Type_create_indexed_block_f08(count,blocklength, &
                            array_of_displacements,oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_indexed_block_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: count, blocklength
    INTEGER, INTENT(IN) :: array_of_displacements(count)
@@ -728,7 +726,7 @@ end interface  PMPI_Type_create_indexed_block
 interface  PMPI_Type_create_resized
 subroutine PMPI_Type_create_resized_f08(oldtype,lb,extent,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_resized_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: lb, extent
    TYPE(MPI_Datatype), INTENT(IN) :: oldtype
@@ -741,7 +739,7 @@ interface  PMPI_Type_create_struct
 subroutine PMPI_Type_create_struct_f08(count,array_of_blocklengths, &
                            array_of_displacements,array_of_types,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_struct_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    INTEGER, INTENT(IN) :: count
    INTEGER, INTENT(IN) :: array_of_blocklengths(count)
@@ -756,7 +754,7 @@ interface  PMPI_Type_create_subarray
 subroutine PMPI_Type_create_subarray_f08(ndims,array_of_sizes,array_of_subsizes, &
                     array_of_starts,order,oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_subarray_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: ndims, order
    INTEGER, INTENT(IN) :: array_of_sizes(ndims), array_of_subsizes(ndims)
@@ -770,7 +768,7 @@ end interface  PMPI_Type_create_subarray
 interface  PMPI_Type_dup
 subroutine PMPI_Type_dup_f08(oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_dup_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: oldtype
    TYPE(MPI_Datatype), INTENT(OUT) :: newtype
@@ -781,7 +779,7 @@ end interface  PMPI_Type_dup
 interface  PMPI_Type_free
 subroutine PMPI_Type_free_f08(datatype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_free_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    TYPE(MPI_Datatype), INTENT(INOUT) :: datatype
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -793,7 +791,7 @@ subroutine PMPI_Type_get_contents_f08(datatype,max_integers,max_addresses,max_da
                                      array_of_integers,array_of_addresses,array_of_datatypes, &
                                      ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_contents_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: max_integers, max_addresses, max_datatypes
@@ -808,7 +806,7 @@ interface  PMPI_Type_get_envelope
 subroutine PMPI_Type_get_envelope_f08(datatype,num_integers,num_addresses,num_datatypes, &
                                      combiner,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_envelope_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(OUT) :: num_integers, num_addresses, num_datatypes, combiner
@@ -819,7 +817,7 @@ end interface  PMPI_Type_get_envelope
 interface  PMPI_Type_get_extent
 subroutine PMPI_Type_get_extent_f08(datatype,lb,extent,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_extent_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: lb, extent
@@ -830,7 +828,7 @@ end interface  PMPI_Type_get_extent
 interface  PMPI_Type_get_true_extent
 subroutine PMPI_Type_get_true_extent_f08(datatype,true_lb,true_extent,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_true_extent_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER(MPI_ADDRESS_KIND), INTENT(OUT) :: true_lb, true_extent
@@ -842,7 +840,7 @@ interface  PMPI_Type_indexed
 subroutine PMPI_Type_indexed_f08(count,array_of_blocklengths, &
                                 array_of_displacements,oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_indexed_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: count
    INTEGER, INTENT(IN) :: array_of_blocklengths(count), array_of_displacements(count)
@@ -855,7 +853,7 @@ end interface  PMPI_Type_indexed
 interface  PMPI_Type_size
 subroutine PMPI_Type_size_f08(datatype,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_size_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(OUT) :: size
@@ -866,7 +864,7 @@ end interface  PMPI_Type_size
 interface  PMPI_Type_vector
 subroutine PMPI_Type_vector_f08(count,blocklength,stride,oldtype,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_vector_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: count, blocklength, stride
    TYPE(MPI_Datatype), INTENT(IN) :: oldtype
@@ -879,7 +877,7 @@ interface  PMPI_Unpack
 subroutine PMPI_Unpack_f08(inbuf,insize,position,outbuf,outcount,datatype,comm, &
                           ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Unpack_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
    !$PRAGMA IGNORE_TKR inbuf, outbuf
@@ -899,7 +897,7 @@ interface  PMPI_Unpack_external
 subroutine PMPI_Unpack_external_f08(datarep,inbuf,insize,position,outbuf,outcount, &
                                    datatype,ierror &
            )
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, outbuf
@@ -920,7 +918,7 @@ interface  PMPI_Allgather
 subroutine PMPI_Allgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                              comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Allgather_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -939,7 +937,7 @@ interface  PMPI_Iallgather
 subroutine PMPI_Iallgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                              comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iallgather_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -950,7 +948,7 @@ subroutine PMPI_Iallgather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recv
    INTEGER, INTENT(IN) :: sendcount, recvcount
    TYPE(MPI_Datatype), INTENT(IN) :: sendtype, recvtype
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Request), INTENT(IN) :: request
+   TYPE(MPI_Request), INTENT(OUT) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Iallgather_f08
 end interface  PMPI_Iallgather
@@ -959,7 +957,7 @@ interface  PMPI_Allgatherv
 subroutine PMPI_Allgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
                               recvtype,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Allgatherv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -979,7 +977,7 @@ interface  PMPI_Iallgatherv
 subroutine PMPI_Iallgatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
                               recvtype,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iallgatherv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -999,7 +997,7 @@ end interface  PMPI_Iallgatherv
 interface  PMPI_Allreduce
 subroutine PMPI_Allreduce_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Allreduce_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1018,7 +1016,7 @@ end interface  PMPI_Allreduce
 interface  PMPI_Iallreduce
 subroutine PMPI_Iallreduce_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iallreduce_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1039,7 +1037,7 @@ interface  PMPI_Alltoall
 subroutine PMPI_Alltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                             comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Alltoall_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1058,7 +1056,7 @@ interface  PMPI_Ialltoall
 subroutine PMPI_Ialltoall_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                             comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ialltoall_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1078,7 +1076,7 @@ interface  PMPI_Alltoallv
 subroutine PMPI_Alltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
                              rdispls,recvtype,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Alltoallv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1097,7 +1095,7 @@ interface  PMPI_Ialltoallv
 subroutine PMPI_Ialltoallv_f08(sendbuf,sendcounts,sdispls,sendtype,recvbuf,recvcounts, &
                              rdispls,recvtype,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ialltoallv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1117,7 +1115,7 @@ interface  PMPI_Alltoallw
 subroutine PMPI_Alltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
                              rdispls,recvtypes,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Alltoallw_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1136,7 +1134,7 @@ interface  PMPI_Ialltoallw
 subroutine PMPI_Ialltoallw_f08(sendbuf,sendcounts,sdispls,sendtypes,recvbuf,recvcounts, &
                              rdispls,recvtypes,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ialltoallw_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1155,7 +1153,7 @@ end interface  PMPI_Ialltoallw
 interface  PMPI_Barrier
 subroutine PMPI_Barrier_f08(comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Barrier_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -1165,7 +1163,7 @@ end interface  PMPI_Barrier
 interface  PMPI_Ibarrier
 subroutine PMPI_Ibarrier_f08(comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ibarrier_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Request
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Request), INTENT(OUT) :: request
@@ -1176,7 +1174,7 @@ end interface  PMPI_Ibarrier
 interface  PMPI_Bcast
 subroutine PMPI_Bcast_f08(buffer,count,datatype,root,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Bcast_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer
    !$PRAGMA IGNORE_TKR buffer
@@ -1193,7 +1191,7 @@ end interface  PMPI_Bcast
 interface  PMPI_Ibcast
 subroutine PMPI_Ibcast_f08(buffer,count,datatype,root,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ibcast_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buffer
    !$PRAGMA IGNORE_TKR buffer
@@ -1211,7 +1209,7 @@ end interface  PMPI_Ibcast
 interface  PMPI_Exscan
 subroutine PMPI_Exscan_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Exscan_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1230,7 +1228,7 @@ end interface  PMPI_Exscan
 interface  PMPI_Iexscan
 subroutine PMPI_Iexscan_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iexscan_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1251,7 +1249,7 @@ interface  PMPI_Gather
 subroutine PMPI_Gather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                           root,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Gather_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1270,7 +1268,7 @@ interface  PMPI_Igather
 subroutine PMPI_Igather_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                           root,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Igather_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1290,7 +1288,7 @@ interface  PMPI_Gatherv
 subroutine PMPI_Gatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
                            recvtype,root,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Gatherv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1310,7 +1308,7 @@ interface  PMPI_Igatherv
 subroutine PMPI_Igatherv_f08(sendbuf,sendcount,sendtype,recvbuf,recvcounts,displs, &
                            recvtype,root,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Igatherv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1330,7 +1328,7 @@ end interface  PMPI_Igatherv
 interface  PMPI_Op_commutative
 subroutine PMPI_Op_commutative_f08(op,commute,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Op_commutative_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Op
    implicit none
    TYPE(MPI_Op), INTENT(IN) :: op
    LOGICAL, INTENT(OUT) :: commute
@@ -1341,8 +1339,8 @@ end interface  PMPI_Op_commutative
 interface  PMPI_Op_create
 subroutine PMPI_Op_create_f08(user_fn,commute,op,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Op_create_f08")
-   use :: mpi_f08_types
-   use :: mpi_f08_interfaces_callbacks, only:MPI_User_function
+   use :: mpi_f08_types, only : MPI_Op
+   use :: mpi_f08_interfaces_callbacks, only : MPI_User_function
    implicit none
    OMPI_PROCEDURE(MPI_User_function) :: user_fn
    LOGICAL, INTENT(IN) :: commute
@@ -1354,7 +1352,7 @@ end interface  PMPI_Op_create
 interface  PMPI_Op_free
 subroutine PMPI_Op_free_f08(op,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Op_free_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Op
    implicit none
    TYPE(MPI_Op), INTENT(INOUT) :: op
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -1364,7 +1362,7 @@ end interface  PMPI_Op_free
 interface  PMPI_Reduce
 subroutine PMPI_Reduce_f08(sendbuf,recvbuf,count,datatype,op,root,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Reduce_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1383,7 +1381,7 @@ end interface  PMPI_Reduce
 interface  PMPI_Ireduce
 subroutine PMPI_Ireduce_f08(sendbuf,recvbuf,count,datatype,op,root,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ireduce_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1403,7 +1401,7 @@ end interface  PMPI_Ireduce
 interface  PMPI_Reduce_local
 subroutine PMPI_Reduce_local_f08(inbuf,inoutbuf,count,datatype,op,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Reduce_local_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: inbuf, inoutbuf
    !$PRAGMA IGNORE_TKR inbuf, inoutbuf
@@ -1422,7 +1420,7 @@ interface  PMPI_Reduce_scatter
 subroutine PMPI_Reduce_scatter_f08(sendbuf,recvbuf,recvcounts,datatype,op,comm, &
                                   ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Reduce_scatter_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1442,7 +1440,7 @@ interface  PMPI_Ireduce_scatter
 subroutine PMPI_Ireduce_scatter_f08(sendbuf,recvbuf,recvcounts,datatype,op,comm, &
                                   request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ireduce_scatter_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1463,7 +1461,7 @@ interface  PMPI_Reduce_scatter_block
 subroutine PMPI_Reduce_scatter_block_f08(sendbuf,recvbuf,recvcount,datatype,op,comm, &
                                         ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Reduce_scatter_block_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1483,7 +1481,7 @@ interface  PMPI_Ireduce_scatter_block
 subroutine PMPI_Ireduce_scatter_block_f08(sendbuf,recvbuf,recvcount,datatype,op,comm, &
                                         request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Ireduce_scatter_block_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1503,7 +1501,7 @@ end interface  PMPI_Ireduce_scatter_block
 interface  PMPI_Scan
 subroutine PMPI_Scan_f08(sendbuf,recvbuf,count,datatype,op,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Scan_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1522,7 +1520,7 @@ end interface  PMPI_Scan
 interface  PMPI_Iscan
 subroutine PMPI_Iscan_f08(sendbuf,recvbuf,count,datatype,op,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iscan_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1543,7 +1541,7 @@ interface  PMPI_Scatter
 subroutine PMPI_Scatter_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                            root,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Scatter_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1562,7 +1560,7 @@ interface  PMPI_Iscatter
 subroutine PMPI_Iscatter_f08(sendbuf,sendcount,sendtype,recvbuf,recvcount,recvtype, &
                            root,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iscatter_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1582,7 +1580,7 @@ interface  PMPI_Scatterv
 subroutine PMPI_Scatterv_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,recvcount, &
                             recvtype,root,comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Scatterv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1602,7 +1600,7 @@ interface  PMPI_Iscatterv
 subroutine PMPI_Iscatterv_f08(sendbuf,sendcounts,displs,sendtype,recvbuf,recvcount, &
                             recvtype,root,comm,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Iscatterv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Comm, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: sendbuf, recvbuf
    !$PRAGMA IGNORE_TKR sendbuf, recvbuf
@@ -1622,7 +1620,7 @@ end interface  PMPI_Iscatterv
 interface  PMPI_Comm_compare
 subroutine PMPI_Comm_compare_f08(comm1,comm2,result,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_compare_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm1
    TYPE(MPI_Comm), INTENT(IN) :: comm2
@@ -1634,7 +1632,7 @@ end interface  PMPI_Comm_compare
 interface  PMPI_Comm_create
 subroutine PMPI_Comm_create_f08(comm,group,newcomm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_create_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Group
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Group), INTENT(IN) :: group
@@ -1647,8 +1645,9 @@ interface  PMPI_Comm_create_keyval
 subroutine PMPI_Comm_create_keyval_f08(comm_copy_attr_fn,comm_delete_attr_fn,comm_keyval, &
                                       extra_state,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_create_keyval_f08")
-   use :: mpi_f08_types
-   use :: mpi_f08_interfaces_callbacks
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_copy_attr_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_delete_attr_function
    implicit none
    OMPI_PROCEDURE(MPI_Comm_copy_attr_function) :: comm_copy_attr_fn
    OMPI_PROCEDURE(MPI_Comm_delete_attr_function) :: comm_delete_attr_fn
@@ -1661,7 +1660,7 @@ end interface  PMPI_Comm_create_keyval
 interface  PMPI_Comm_delete_attr
 subroutine PMPI_Comm_delete_attr_f08(comm,comm_keyval,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_delete_attr_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: comm_keyval
@@ -1672,7 +1671,7 @@ end interface  PMPI_Comm_delete_attr
 interface  PMPI_Comm_dup
 subroutine PMPI_Comm_dup_f08(comm,newcomm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_dup_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Comm), INTENT(OUT) :: newcomm
@@ -1683,7 +1682,7 @@ end interface  PMPI_Comm_dup
 interface  PMPI_Comm_free
 subroutine PMPI_Comm_free_f08(comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_free_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(INOUT) :: comm
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -1693,7 +1692,6 @@ end interface  PMPI_Comm_free
 interface  PMPI_Comm_free_keyval
 subroutine PMPI_Comm_free_keyval_f08(comm_keyval,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_free_keyval_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(INOUT) :: comm_keyval
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -1703,7 +1701,7 @@ end interface  PMPI_Comm_free_keyval
 interface  PMPI_Comm_get_attr
 subroutine PMPI_Comm_get_attr_f08(comm,comm_keyval,attribute_val,flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_get_attr_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: comm_keyval
@@ -1715,7 +1713,7 @@ end interface  PMPI_Comm_get_attr
 
 interface  PMPI_Comm_get_name
 subroutine PMPI_Comm_get_name_f08(comm,comm_name,resultlen,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_MAX_OBJECT_NAME
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    CHARACTER(LEN=MPI_MAX_OBJECT_NAME), INTENT(OUT) :: comm_name
@@ -1727,7 +1725,7 @@ end interface  PMPI_Comm_get_name
 interface  PMPI_Comm_group
 subroutine PMPI_Comm_group_f08(comm,group,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_group_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Group
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Group), INTENT(OUT) :: group
@@ -1738,7 +1736,7 @@ end interface  PMPI_Comm_group
 interface  PMPI_Comm_rank
 subroutine PMPI_Comm_rank_f08(comm,rank,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_rank_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: rank
@@ -1749,7 +1747,7 @@ end interface  PMPI_Comm_rank
 interface  PMPI_Comm_remote_group
 subroutine PMPI_Comm_remote_group_f08(comm,group,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_remote_group_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Group
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Group), INTENT(OUT) :: group
@@ -1760,7 +1758,7 @@ end interface  PMPI_Comm_remote_group
 interface  PMPI_Comm_remote_size
 subroutine PMPI_Comm_remote_size_f08(comm,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_remote_size_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: size
@@ -1771,7 +1769,7 @@ end interface  PMPI_Comm_remote_size
 interface  PMPI_Comm_set_attr
 subroutine PMPI_Comm_set_attr_f08(comm,comm_keyval,attribute_val,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_set_attr_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: comm_keyval
@@ -1782,7 +1780,7 @@ end interface  PMPI_Comm_set_attr
 
 interface  PMPI_Comm_set_name
 subroutine PMPI_Comm_set_name_f08(comm,comm_name,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    CHARACTER(LEN=*), INTENT(IN) :: comm_name
@@ -1793,7 +1791,7 @@ end interface  PMPI_Comm_set_name
 interface  PMPI_Comm_size
 subroutine PMPI_Comm_size_f08(comm,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_size_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: size
@@ -1804,7 +1802,7 @@ end interface  PMPI_Comm_size
 interface  PMPI_Comm_split
 subroutine PMPI_Comm_split_f08(comm,color,key,newcomm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_split_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: color, key
@@ -1816,7 +1814,7 @@ end interface  PMPI_Comm_split
 interface  PMPI_Comm_test_inter
 subroutine PMPI_Comm_test_inter_f08(comm,flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_test_inter_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    LOGICAL, INTENT(OUT) :: flag
@@ -1827,7 +1825,7 @@ end interface  PMPI_Comm_test_inter
 interface  PMPI_Group_compare
 subroutine PMPI_Group_compare_f08(group1,group2,result,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_compare_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group1, group2
    INTEGER, INTENT(OUT) :: result
@@ -1838,7 +1836,7 @@ end interface  PMPI_Group_compare
 interface  PMPI_Group_difference
 subroutine PMPI_Group_difference_f08(group1,group2,newgroup,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_difference_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group1, group2
    TYPE(MPI_Group), INTENT(OUT) :: newgroup
@@ -1849,7 +1847,7 @@ end interface  PMPI_Group_difference
 interface  PMPI_Group_excl
 subroutine PMPI_Group_excl_f08(group,n,ranks,newgroup,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_excl_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group
    INTEGER, INTENT(IN) :: n, ranks(n)
@@ -1861,7 +1859,7 @@ end interface  PMPI_Group_excl
 interface  PMPI_Group_free
 subroutine PMPI_Group_free_f08(group,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_free_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(INOUT) :: group
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -1871,7 +1869,7 @@ end interface  PMPI_Group_free
 interface  PMPI_Group_incl
 subroutine PMPI_Group_incl_f08(group,n,ranks,newgroup,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_incl_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    INTEGER, INTENT(IN) :: n, ranks(n)
    TYPE(MPI_Group), INTENT(IN) :: group
@@ -1883,7 +1881,7 @@ end interface  PMPI_Group_incl
 interface  PMPI_Group_intersection
 subroutine PMPI_Group_intersection_f08(group1,group2,newgroup,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_intersection_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group1, group2
    TYPE(MPI_Group), INTENT(OUT) :: newgroup
@@ -1894,7 +1892,7 @@ end interface  PMPI_Group_intersection
 interface  PMPI_Group_range_excl
 subroutine PMPI_Group_range_excl_f08(group,n,ranges,newgroup,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_range_excl_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group
    INTEGER, INTENT(IN) :: n, ranges(3,n)
@@ -1906,7 +1904,7 @@ end interface  PMPI_Group_range_excl
 interface  PMPI_Group_range_incl
 subroutine PMPI_Group_range_incl_f08(group,n,ranges,newgroup,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_range_incl_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group
    INTEGER, INTENT(IN) :: n, ranges(3,n)
@@ -1918,7 +1916,7 @@ end interface  PMPI_Group_range_incl
 interface  PMPI_Group_rank
 subroutine PMPI_Group_rank_f08(group,rank,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_rank_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group
    INTEGER, INTENT(OUT) :: rank
@@ -1929,7 +1927,7 @@ end interface  PMPI_Group_rank
 interface  PMPI_Group_size
 subroutine PMPI_Group_size_f08(group,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_size_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group
    INTEGER, INTENT(OUT) :: size
@@ -1940,7 +1938,7 @@ end interface  PMPI_Group_size
 interface  PMPI_Group_translate_ranks
 subroutine PMPI_Group_translate_ranks_f08(group1,n,ranks1,group2,ranks2,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_translate_ranks_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group1, group2
    INTEGER, INTENT(IN) :: n
@@ -1953,7 +1951,7 @@ end interface  PMPI_Group_translate_ranks
 interface  PMPI_Group_union
 subroutine PMPI_Group_union_f08(group1,group2,newgroup,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Group_union_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group1, group2
    TYPE(MPI_Group), INTENT(OUT) :: newgroup
@@ -1965,7 +1963,7 @@ interface  PMPI_Intercomm_create
 subroutine PMPI_Intercomm_create_f08(local_comm,local_leader,peer_comm,remote_leader, &
                                     tag,newintercomm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Intercomm_create_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: local_comm, peer_comm
    INTEGER, INTENT(IN) :: local_leader, remote_leader, tag
@@ -1977,7 +1975,7 @@ end interface  PMPI_Intercomm_create
 interface  PMPI_Intercomm_merge
 subroutine PMPI_Intercomm_merge_f08(intercomm,high,newintracomm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Intercomm_merge_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: intercomm
    LOGICAL, INTENT(IN) :: high
@@ -1990,8 +1988,9 @@ interface  PMPI_Type_create_keyval
 subroutine PMPI_Type_create_keyval_f08(type_copy_attr_fn,type_delete_attr_fn,type_keyval, &
                                       extra_state,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_keyval_f08")
-   use :: mpi_f08_types
-   use :: mpi_f08_interfaces_callbacks
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Type_copy_attr_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Type_delete_attr_function
    implicit none
    OMPI_PROCEDURE(MPI_Type_copy_attr_function) :: type_copy_attr_fn
    OMPI_PROCEDURE(MPI_Type_delete_attr_function) :: type_delete_attr_fn
@@ -2004,7 +2003,7 @@ end interface  PMPI_Type_create_keyval
 interface  PMPI_Type_delete_attr
 subroutine PMPI_Type_delete_attr_f08(datatype,type_keyval,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_delete_attr_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: type_keyval
@@ -2015,7 +2014,6 @@ end interface  PMPI_Type_delete_attr
 interface  PMPI_Type_free_keyval
 subroutine PMPI_Type_free_keyval_f08(type_keyval,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_free_keyval_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(INOUT) :: type_keyval
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2025,7 +2023,7 @@ end interface  PMPI_Type_free_keyval
 interface  PMPI_Type_get_attr
 subroutine PMPI_Type_get_attr_f08(datatype,type_keyval,attribute_val,flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_get_attr_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: type_keyval
@@ -2037,7 +2035,7 @@ end interface  PMPI_Type_get_attr
 
 interface  PMPI_Type_get_name
 subroutine PMPI_Type_get_name_f08(datatype,type_name,resultlen,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_MAX_OBJECT_NAME
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    CHARACTER(LEN=MPI_MAX_OBJECT_NAME), INTENT(OUT) :: type_name
@@ -2049,7 +2047,7 @@ end interface  PMPI_Type_get_name
 interface  PMPI_Type_set_attr
 subroutine PMPI_Type_set_attr_f08(datatype,type_keyval,attribute_val,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_set_attr_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    INTEGER, INTENT(IN) :: type_keyval
@@ -2060,7 +2058,7 @@ end interface  PMPI_Type_set_attr
 
 interface  PMPI_Type_set_name
 subroutine PMPI_Type_set_name_f08(datatype,type_name,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
    CHARACTER(LEN=*), INTENT(IN) :: type_name
@@ -2072,8 +2070,9 @@ interface  PMPI_Win_create_keyval
 subroutine PMPI_Win_create_keyval_f08(win_copy_attr_fn,win_delete_attr_fn,win_keyval, &
                                      extra_state,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_create_keyval_f08")
-   use :: mpi_f08_types
-   use :: mpi_f08_interfaces_callbacks
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Win_copy_attr_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Win_delete_attr_function
    implicit none
    OMPI_PROCEDURE(MPI_Win_copy_attr_function) :: win_copy_attr_fn
    OMPI_PROCEDURE(MPI_Win_delete_attr_function) :: win_delete_attr_fn
@@ -2086,7 +2085,7 @@ end interface  PMPI_Win_create_keyval
 interface  PMPI_Win_delete_attr
 subroutine PMPI_Win_delete_attr_f08(win,win_keyval,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_delete_attr_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, INTENT(IN) :: win_keyval
@@ -2097,7 +2096,6 @@ end interface  PMPI_Win_delete_attr
 interface  PMPI_Win_free_keyval
 subroutine PMPI_Win_free_keyval_f08(win_keyval,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_free_keyval_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(INOUT) :: win_keyval
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2107,7 +2105,7 @@ end interface  PMPI_Win_free_keyval
 interface  PMPI_Win_get_attr
 subroutine PMPI_Win_get_attr_f08(win,win_keyval,attribute_val,flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_get_attr_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, INTENT(IN) :: win_keyval
@@ -2119,7 +2117,7 @@ end interface  PMPI_Win_get_attr
 
 interface  PMPI_Win_get_name
 subroutine PMPI_Win_get_name_f08(win,win_name,resultlen,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win, MPI_MAX_OBJECT_NAME
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    CHARACTER(LEN=MPI_MAX_OBJECT_NAME), INTENT(OUT) :: win_name
@@ -2131,7 +2129,7 @@ end interface  PMPI_Win_get_name
 interface  PMPI_Win_set_attr
 subroutine PMPI_Win_set_attr_f08(win,win_keyval,attribute_val,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_set_attr_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, INTENT(IN) :: win_keyval
@@ -2142,7 +2140,7 @@ end interface  PMPI_Win_set_attr
 
 interface  PMPI_Win_set_name
 subroutine PMPI_Win_set_name_f08(win,win_name,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    CHARACTER(LEN=*), INTENT(IN) :: win_name
@@ -2153,7 +2151,7 @@ end interface  PMPI_Win_set_name
 interface  PMPI_Cartdim_get
 subroutine PMPI_Cartdim_get_f08(comm,ndims,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Cartdim_get_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: ndims
@@ -2164,7 +2162,7 @@ end interface  PMPI_Cartdim_get
 interface  PMPI_Cart_coords
 subroutine PMPI_Cart_coords_f08(comm,rank,maxdims,coords,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Cart_coords_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: rank, maxdims
@@ -2176,7 +2174,7 @@ end interface  PMPI_Cart_coords
 interface  PMPI_Cart_create
 subroutine PMPI_Cart_create_f08(comm_old,ndims,dims,periods,reorder,comm_cart,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Cart_create_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm_old
    INTEGER, INTENT(IN) :: ndims, dims(ndims)
@@ -2189,7 +2187,7 @@ end interface  PMPI_Cart_create
 interface  PMPI_Cart_get
 subroutine PMPI_Cart_get_f08(comm,maxdims,dims,periods,coords,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Cart_get_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: maxdims
@@ -2202,7 +2200,7 @@ end interface  PMPI_Cart_get
 interface  PMPI_Cart_map
 subroutine PMPI_Cart_map_f08(comm,ndims,dims,periods,newrank,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Cart_map_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: ndims, dims(ndims)
@@ -2215,7 +2213,7 @@ end interface  PMPI_Cart_map
 interface  PMPI_Cart_rank
 subroutine PMPI_Cart_rank_f08(comm,coords,rank,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Cart_rank_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: coords(*)
@@ -2227,7 +2225,7 @@ end interface  PMPI_Cart_rank
 interface  PMPI_Cart_shift
 subroutine PMPI_Cart_shift_f08(comm,direction,disp,rank_source,rank_dest,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Cart_shift_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: direction, disp
@@ -2239,7 +2237,7 @@ end interface  PMPI_Cart_shift
 interface  PMPI_Cart_sub
 subroutine PMPI_Cart_sub_f08(comm,remain_dims,newcomm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Cart_sub_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    LOGICAL, INTENT(IN) :: remain_dims(*)
@@ -2251,7 +2249,6 @@ end interface  PMPI_Cart_sub
 interface  PMPI_Dims_create
 subroutine PMPI_Dims_create_f08(nnodes,ndims,dims,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Dims_create_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(IN) :: nnodes, ndims
    INTEGER, INTENT(INOUT) :: dims(ndims)
@@ -2263,7 +2260,7 @@ interface  PMPI_Dist_graph_create
 subroutine PMPI_Dist_graph_create_f08(comm_old,n,sources,degrees,destinations,weights, &
                                      info,reorder,comm_dist_graph,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Dist_graph_create_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Info
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm_old
    INTEGER, INTENT(IN) :: n, sources(n), degrees(n), destinations(*), weights(*)
@@ -2279,7 +2276,7 @@ subroutine PMPI_Dist_graph_create_adjacent_f08(comm_old,indegree,sources,sourcew
                                               outdegree,destinations,destweights,info,reorder, &
                                               comm_dist_graph,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Dist_graph_create_adjacent_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Info
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm_old
    INTEGER, INTENT(IN) :: indegree, sources(indegree), outdegree, destinations(outdegree)
@@ -2295,7 +2292,7 @@ interface  PMPI_Dist_graph_neighbors
 subroutine PMPI_Dist_graph_neighbors_f08(comm,maxindegree,sources,sourceweights, &
                                         maxoutdegree,destinations,destweights,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Dist_graph_neighbors_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: maxindegree, maxoutdegree
@@ -2308,7 +2305,7 @@ end interface  PMPI_Dist_graph_neighbors
 interface  PMPI_Dist_graph_neighbors_count
 subroutine PMPI_Dist_graph_neighbors_count_f08(comm,indegree,outdegree,weighted,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Dist_graph_neighbors_count_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: indegree, outdegree
@@ -2320,7 +2317,7 @@ end interface  PMPI_Dist_graph_neighbors_count
 interface  PMPI_Graphdims_get
 subroutine PMPI_Graphdims_get_f08(comm,nnodes,nedges,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Graphdims_get_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(OUT) :: nnodes, nedges
@@ -2332,7 +2329,7 @@ interface  PMPI_Graph_create
 subroutine PMPI_Graph_create_f08(comm_old,nnodes,index,edges,reorder,comm_graph, &
                                 ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Graph_create_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm_old
    INTEGER, INTENT(IN) :: nnodes, index(nnodes), edges(*)
@@ -2345,7 +2342,7 @@ end interface  PMPI_Graph_create
 interface  PMPI_Graph_get
 subroutine PMPI_Graph_get_f08(comm,maxindex,maxedges,index,edges,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Graph_get_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: maxindex, maxedges
@@ -2357,7 +2354,7 @@ end interface  PMPI_Graph_get
 interface  PMPI_Graph_map
 subroutine PMPI_Graph_map_f08(comm,nnodes,index,edges,newrank,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Graph_map_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: nnodes, index(nnodes), edges(*)
@@ -2369,7 +2366,7 @@ end interface  PMPI_Graph_map
 interface  PMPI_Graph_neighbors
 subroutine PMPI_Graph_neighbors_f08(comm,rank,maxneighbors,neighbors,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Graph_neighbors_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: rank, maxneighbors
@@ -2381,7 +2378,7 @@ end interface  PMPI_Graph_neighbors
 interface  PMPI_Graph_neighbors_count
 subroutine PMPI_Graph_neighbors_count_f08(comm,rank,nneighbors,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Graph_neighbors_count_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: rank
@@ -2393,10 +2390,10 @@ end interface  PMPI_Graph_neighbors_count
 interface  PMPI_Topo_test
 subroutine PMPI_Topo_test_f08(comm,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Topo_test_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Status
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
-   TYPE(MPI_Status) :: status
+   INTEGER, INTENT(OUT) :: status
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Topo_test_f08
 end interface  PMPI_Topo_test
@@ -2404,27 +2401,27 @@ end interface  PMPI_Topo_test
 ! MPI_Wtick is not a wrapper function
 !
 interface PMPI_Wtick
-function  PMPI_Wtick_f08() BIND(C,name="PMPI_Wtick")
+function  PMPI_Wtick_f08( ) BIND(C,name="MPI_Wtick")
    use, intrinsic :: ISO_C_BINDING
    implicit none
-   DOUBLE PRECISION :: PMPI_Wtick_f08
+   DOUBLE PRECISION :: MPI_Wtick_f08
 end function  PMPI_Wtick_f08
 end interface PMPI_Wtick
 
 ! MPI_Wtime is not a wrapper function
 !
 interface PMPI_Wtime
-function PMPI_Wtime_f08() BIND(C,name="PMPI_Wtime")
+function  PMPI_Wtime_f08( ) BIND(C,name="MPI_Wtime")
    use, intrinsic :: ISO_C_BINDING
    implicit none
-   DOUBLE PRECISION :: PMPI_Wtime_f08
-end function PMPI_Wtime_f08
+   DOUBLE PRECISION :: MPI_Wtime_f08
+end function  PMPI_Wtime_f08
 end interface PMPI_Wtime
 
 interface  PMPI_Abort
 subroutine PMPI_Abort_f08(comm,errorcode,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Abort_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: errorcode
@@ -2435,7 +2432,6 @@ end interface  PMPI_Abort
 interface  PMPI_Add_error_class
 subroutine PMPI_Add_error_class_f08(errorclass,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Add_error_class_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(OUT) :: errorclass
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2445,7 +2441,6 @@ end interface  PMPI_Add_error_class
 interface  PMPI_Add_error_code
 subroutine PMPI_Add_error_code_f08(errorclass,errorcode,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Add_error_code_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(IN) :: errorclass
    INTEGER, INTENT(OUT) :: errorcode
@@ -2455,7 +2450,6 @@ end interface  PMPI_Add_error_code
 
 interface  PMPI_Add_error_string
 subroutine PMPI_Add_error_string_f08(errorcode,string,ierror)
-   use :: mpi_f08_types
    implicit none
    integer, intent(in) :: errorcode
    character(len=*), intent(in) :: string
@@ -2466,7 +2460,8 @@ end interface  PMPI_Add_error_string
 interface  PMPI_Alloc_mem
 subroutine PMPI_Alloc_mem_f08(size,info,baseptr,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Alloc_mem_f08")
-   use :: mpi_f08_types
+   use, intrinsic :: ISO_C_BINDING, only : C_PTR
+   use :: mpi_f08_types, only : MPI_Info, MPI_ADDRESS_KIND
    implicit none
    INTEGER(MPI_ADDRESS_KIND), INTENT(IN) :: size
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -2478,7 +2473,7 @@ end interface  PMPI_Alloc_mem
 interface  PMPI_Comm_call_errhandler
 subroutine PMPI_Comm_call_errhandler_f08(comm,errorcode,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_call_errhandler_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: errorcode
@@ -2489,8 +2484,8 @@ end interface  PMPI_Comm_call_errhandler
 interface  PMPI_Comm_create_errhandler
 subroutine PMPI_Comm_create_errhandler_f08(comm_errhandler_fn,errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_create_errhandler_f08")
-   use :: mpi_f08_types
-   use :: mpi_f08_interfaces_callbacks, only:MPI_Comm_errhandler_function
+   use :: mpi_f08_types, only : MPI_Errhandler
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Comm_errhandler_function
    implicit none
    OMPI_PROCEDURE(MPI_Comm_errhandler_function) :: comm_errhandler_fn
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
@@ -2501,7 +2496,7 @@ end interface  PMPI_Comm_create_errhandler
 interface  PMPI_Comm_get_errhandler
 subroutine PMPI_Comm_get_errhandler_f08(comm,errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_get_errhandler_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Errhandler
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
@@ -2512,7 +2507,7 @@ end interface  PMPI_Comm_get_errhandler
 interface  PMPI_Comm_set_errhandler
 subroutine PMPI_Comm_set_errhandler_f08(comm,errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_set_errhandler_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Errhandler
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
@@ -2523,7 +2518,7 @@ end interface  PMPI_Comm_set_errhandler
 interface  PMPI_Errhandler_free
 subroutine PMPI_Errhandler_free_f08(errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Errhandler_free_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Errhandler
    implicit none
    TYPE(MPI_Errhandler), INTENT(INOUT) :: errhandler
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2533,7 +2528,6 @@ end interface  PMPI_Errhandler_free
 interface  PMPI_Error_class
 subroutine PMPI_Error_class_f08(errorcode,errorclass,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Error_class_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(IN) :: errorcode
    INTEGER, INTENT(OUT) :: errorclass
@@ -2543,7 +2537,7 @@ end interface  PMPI_Error_class
 
 interface  PMPI_Error_string
 subroutine PMPI_Error_string_f08(errorcode,string,resultlen,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_MAX_ERROR_STRING
    implicit none
    integer, intent(in) :: errorcode
    character(len=MPI_MAX_ERROR_STRING), intent(out) :: string
@@ -2552,10 +2546,12 @@ subroutine PMPI_Error_string_f08(errorcode,string,resultlen,ierror)
 end subroutine PMPI_Error_string_f08
 end interface  PMPI_Error_string
 
+#if OMPI_PROFILE_FILE_INTERFACE
+
 interface  PMPI_File_call_errhandler
 subroutine PMPI_File_call_errhandler_f08(fh,errorcode,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_call_errhandler_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER, INTENT(IN) :: errorcode
@@ -2566,8 +2562,8 @@ end interface  PMPI_File_call_errhandler
 interface  PMPI_File_create_errhandler
 subroutine PMPI_File_create_errhandler_f08(file_errhandler_fn,errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_create_errhandler_f08")
-   use :: mpi_f08_types
-   use :: mpi_f08_interfaces_callbacks, only:MPI_File_errhandler_function
+   use :: mpi_f08_types, only : MPI_Errhandler
+   use :: mpi_f08_interfaces_callbacks, only : MPI_File_errhandler_function
    implicit none
    OMPI_PROCEDURE(MPI_File_errhandler_function) :: file_errhandler_fn
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
@@ -2578,7 +2574,7 @@ end interface  PMPI_File_create_errhandler
 interface  PMPI_File_get_errhandler
 subroutine PMPI_File_get_errhandler_f08(file,errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_errhandler_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Errhandler
    implicit none
    TYPE(MPI_File), INTENT(IN) :: file
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
@@ -2589,7 +2585,7 @@ end interface  PMPI_File_get_errhandler
 interface  PMPI_File_set_errhandler
 subroutine PMPI_File_set_errhandler_f08(file,errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_set_errhandler_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Errhandler
    implicit none
    TYPE(MPI_File), INTENT(IN) :: file
    TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
@@ -2597,10 +2593,11 @@ subroutine PMPI_File_set_errhandler_f08(file,errhandler,ierror &
 end subroutine PMPI_File_set_errhandler_f08
 end interface  PMPI_File_set_errhandler
 
+#endif ! OMPI_PROFILE_FILE_INTERFACE
+
 interface  PMPI_Finalize
 subroutine PMPI_Finalize_f08(ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Finalize_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Finalize_f08
@@ -2609,7 +2606,6 @@ end interface  PMPI_Finalize
 interface  PMPI_Finalized
 subroutine PMPI_Finalized_f08(flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Finalized_f08")
-   use :: mpi_f08_types
    implicit none
    LOGICAL, INTENT(OUT) :: flag
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2623,7 +2619,7 @@ end interface  PMPI_Finalized
 interface  PMPI_Free_mem
 subroutine PMPI_Free_mem_f08(base,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Free_mem_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
    !$PRAGMA IGNORE_TKR base
@@ -2637,7 +2633,7 @@ end interface  PMPI_Free_mem
 
 interface  PMPI_Get_processor_name
 subroutine PMPI_Get_processor_name_f08(name,resultlen,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_MAX_PROCESSOR_NAME
    implicit none
    character(len=MPI_MAX_PROCESSOR_NAME), intent(out) :: name
    integer, intent(out) :: resultlen
@@ -2648,7 +2644,6 @@ end interface  PMPI_Get_processor_name
 interface  PMPI_Get_version
 subroutine PMPI_Get_version_f08(version,subversion,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Get_version_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(OUT) :: version, subversion
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2658,7 +2653,6 @@ end interface  PMPI_Get_version
 interface  PMPI_Init
 subroutine PMPI_Init_f08(ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Init_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Init_f08
@@ -2667,7 +2661,6 @@ end interface  PMPI_Init
 interface  PMPI_Initialized
 subroutine PMPI_Initialized_f08(flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Initialized_f08")
-   use :: mpi_f08_types
    implicit none
    LOGICAL, INTENT(OUT) :: flag
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2677,7 +2670,7 @@ end interface  PMPI_Initialized
 interface  PMPI_Win_call_errhandler
 subroutine PMPI_Win_call_errhandler_f08(win,errorcode,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_call_errhandler_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, INTENT(IN) :: errorcode
@@ -2688,8 +2681,8 @@ end interface  PMPI_Win_call_errhandler
 interface  PMPI_Win_create_errhandler
 subroutine PMPI_Win_create_errhandler_f08(win_errhandler_fn,errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_create_errhandler_f08")
-   use :: mpi_f08_types
-   use :: mpi_f08_interfaces_callbacks, only:MPI_Win_errhandler_function
+   use :: mpi_f08_types, only : MPI_Errhandler
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Win_errhandler_function
    implicit none
    OMPI_PROCEDURE(MPI_Win_errhandler_function) :: win_errhandler_fn
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
@@ -2700,7 +2693,7 @@ end interface  PMPI_Win_create_errhandler
 interface  PMPI_Win_get_errhandler
 subroutine PMPI_Win_get_errhandler_f08(win,errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_get_errhandler_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win, MPI_Errhandler
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    TYPE(MPI_Errhandler), INTENT(OUT) :: errhandler
@@ -2711,7 +2704,7 @@ end interface  PMPI_Win_get_errhandler
 interface  PMPI_Win_set_errhandler
 subroutine PMPI_Win_set_errhandler_f08(win,errhandler,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_set_errhandler_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win, MPI_Errhandler
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    TYPE(MPI_Errhandler), INTENT(IN) :: errhandler
@@ -2722,7 +2715,7 @@ end interface  PMPI_Win_set_errhandler
 interface  PMPI_Info_create
 subroutine PMPI_Info_create_f08(info,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Info_create_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(OUT) :: info
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2731,7 +2724,7 @@ end interface  PMPI_Info_create
 
 interface  PMPI_Info_delete
 subroutine PMPI_Info_delete_f08(info,key,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    CHARACTER(LEN=*), INTENT(IN) :: key
@@ -2742,7 +2735,7 @@ end interface  PMPI_Info_delete
 interface  PMPI_Info_dup
 subroutine PMPI_Info_dup_f08(info,newinfo,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Info_dup_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Info), INTENT(OUT) :: newinfo
@@ -2753,7 +2746,7 @@ end interface  PMPI_Info_dup
 interface  PMPI_Info_free
 subroutine PMPI_Info_free_f08(info,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Info_free_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(INOUT) :: info
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2762,7 +2755,7 @@ end interface  PMPI_Info_free
 
 interface  PMPI_Info_get
 subroutine PMPI_Info_get_f08(info,key,valuelen,value,flag,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    CHARACTER(LEN=*), INTENT(IN) :: key
@@ -2776,7 +2769,7 @@ end interface  PMPI_Info_get
 interface  PMPI_Info_get_nkeys
 subroutine PMPI_Info_get_nkeys_f08(info,nkeys,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Info_get_nkeys_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    INTEGER, INTENT(OUT) :: nkeys
@@ -2786,7 +2779,7 @@ end interface  PMPI_Info_get_nkeys
 
 interface  PMPI_Info_get_nthkey
 subroutine PMPI_Info_get_nthkey_f08(info,n,key,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    INTEGER, INTENT(IN) :: n
@@ -2797,7 +2790,7 @@ end interface  PMPI_Info_get_nthkey
 
 interface  PMPI_Info_get_valuelen
 subroutine PMPI_Info_get_valuelen_f08(info,key,valuelen,flag,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    CHARACTER(LEN=*), INTENT(IN) :: key
@@ -2809,7 +2802,7 @@ end interface  PMPI_Info_get_valuelen
 
 interface  PMPI_Info_set
 subroutine PMPI_Info_set_f08(info,key,value,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    CHARACTER(LEN=*), INTENT(IN) :: key, value
@@ -2819,7 +2812,6 @@ end interface  PMPI_Info_set
 
 interface  PMPI_Close_port
 subroutine PMPI_Close_port_f08(port_name,ierror)
-   use :: mpi_f08_types
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: port_name
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2828,7 +2820,7 @@ end interface  PMPI_Close_port
 
 interface  PMPI_Comm_accept
 subroutine PMPI_Comm_accept_f08(port_name,info,root,comm,newcomm,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info, MPI_Comm
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: port_name
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -2841,7 +2833,7 @@ end interface  PMPI_Comm_accept
 
 interface  PMPI_Comm_connect
 subroutine PMPI_Comm_connect_f08(port_name,info,root,comm,newcomm,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info, MPI_Comm
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: port_name
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -2855,7 +2847,7 @@ end interface  PMPI_Comm_connect
 interface  PMPI_Comm_disconnect
 subroutine PMPI_Comm_disconnect_f08(comm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_disconnect_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(INOUT) :: comm
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2865,7 +2857,7 @@ end interface  PMPI_Comm_disconnect
 interface  PMPI_Comm_get_parent
 subroutine PMPI_Comm_get_parent_f08(parent,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_get_parent_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    TYPE(MPI_Comm), INTENT(OUT) :: parent
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -2875,7 +2867,7 @@ end interface  PMPI_Comm_get_parent
 interface  PMPI_Comm_join
 subroutine PMPI_Comm_join_f08(fd,intercomm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_join_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm
    implicit none
    INTEGER, INTENT(IN) :: fd
    TYPE(MPI_Comm), INTENT(OUT) :: intercomm
@@ -2886,14 +2878,14 @@ end interface  PMPI_Comm_join
 interface  PMPI_Comm_spawn
 subroutine PMPI_Comm_spawn_f08(command,argv,maxprocs,info,root,comm,intercomm, &
                               array_of_errcodes,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info, MPI_Comm
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: command, argv(*)
    INTEGER, INTENT(IN) :: maxprocs, root
    TYPE(MPI_Info), INTENT(IN) :: info
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Comm), INTENT(OUT) :: intercomm
-   INTEGER :: array_of_errcodes(*)
+   INTEGER, INTENT(OUT) :: array_of_errcodes(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Comm_spawn_f08
 end interface  PMPI_Comm_spawn
@@ -2902,21 +2894,21 @@ interface  PMPI_Comm_spawn_multiple
 subroutine PMPI_Comm_spawn_multiple_f08(count,array_of_commands,array_of_argv,array_of_maxprocs, &
                                        array_of_info,root,comm,intercomm, &
                                        array_of_errcodes,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info, MPI_Comm
    implicit none
    INTEGER, INTENT(IN) :: count, array_of_maxprocs(*), root
    CHARACTER(LEN=*), INTENT(IN) :: array_of_commands(*), array_of_argv(count,*)
    TYPE(MPI_Info), INTENT(IN) :: array_of_info(*)
    TYPE(MPI_Comm), INTENT(IN) :: comm
    TYPE(MPI_Comm), INTENT(OUT) :: intercomm
-   INTEGER :: array_of_errcodes(*)
+   INTEGER, INTENT(OUT) :: array_of_errcodes(*)
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
 end subroutine PMPI_Comm_spawn_multiple_f08
 end interface  PMPI_Comm_spawn_multiple
 
 interface  PMPI_Lookup_name
 subroutine PMPI_Lookup_name_f08(service_name,info,port_name,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info, MPI_MAX_PORT_NAME
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: service_name
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -2927,7 +2919,7 @@ end interface  PMPI_Lookup_name
 
 interface  PMPI_Open_port
 subroutine PMPI_Open_port_f08(info,port_name,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info, MPI_MAX_PORT_NAME
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    CHARACTER(LEN=MPI_MAX_PORT_NAME), INTENT(OUT) :: port_name
@@ -2937,7 +2929,7 @@ end interface  PMPI_Open_port
 
 interface  PMPI_Publish_name
 subroutine PMPI_Publish_name_f08(service_name,info,port_name,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    TYPE(MPI_Info), INTENT(IN) :: info
    CHARACTER(LEN=*), INTENT(IN) :: service_name, port_name
@@ -2947,7 +2939,7 @@ end interface  PMPI_Publish_name
 
 interface  PMPI_Unpublish_name
 subroutine PMPI_Unpublish_name_f08(service_name,info,port_name,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: service_name, port_name
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -2959,7 +2951,7 @@ interface  PMPI_Accumulate
 subroutine PMPI_Accumulate_f08(origin_addr,origin_count,origin_datatype,target_rank, &
                               target_disp,target_count,target_datatype,op,win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Accumulate_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Op, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
    !$PRAGMA IGNORE_TKR origin_addr
@@ -2980,7 +2972,7 @@ interface  PMPI_Get
 subroutine PMPI_Get_f08(origin_addr,origin_count,origin_datatype,target_rank, &
                                target_disp,target_count,target_datatype,win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Get_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
    !$PRAGMA IGNORE_TKR origin_addr
@@ -3000,7 +2992,7 @@ interface  PMPI_Put
 subroutine PMPI_Put_f08(origin_addr,origin_count,origin_datatype,target_rank, &
                                target_disp,target_count,target_datatype,win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Put_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: origin_addr
    !$PRAGMA IGNORE_TKR origin_addr
@@ -3019,7 +3011,7 @@ end interface  PMPI_Put
 interface  PMPI_Win_complete
 subroutine PMPI_Win_complete_f08(win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_complete_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3029,7 +3021,7 @@ end interface  PMPI_Win_complete
 interface  PMPI_Win_create
 subroutine PMPI_Win_create_f08(base,size,disp_unit,info,comm,win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_create_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info, MPI_Comm, MPI_Win, MPI_ADDRESS_KIND
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: base
    !$PRAGMA IGNORE_TKR base
@@ -3048,7 +3040,7 @@ end interface  PMPI_Win_create
 interface  PMPI_Win_fence
 subroutine PMPI_Win_fence_f08(assert,win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_fence_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    INTEGER, INTENT(IN) :: assert
    TYPE(MPI_Win), INTENT(IN) :: win
@@ -3059,7 +3051,7 @@ end interface  PMPI_Win_fence
 interface  PMPI_Win_free
 subroutine PMPI_Win_free_f08(win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_free_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    TYPE(MPI_Win), INTENT(INOUT) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3069,7 +3061,7 @@ end interface  PMPI_Win_free
 interface  PMPI_Win_get_group
 subroutine PMPI_Win_get_group_f08(win,group,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_get_group_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win, MPI_Group
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    TYPE(MPI_Group), INTENT(OUT) :: group
@@ -3080,7 +3072,7 @@ end interface  PMPI_Win_get_group
 interface  PMPI_Win_lock
 subroutine PMPI_Win_lock_f08(lock_type,rank,assert,win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_lock_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    INTEGER, INTENT(IN) :: lock_type, rank, assert
    TYPE(MPI_Win), INTENT(IN) :: win
@@ -3091,7 +3083,7 @@ end interface  PMPI_Win_lock
 interface  PMPI_Win_post
 subroutine PMPI_Win_post_f08(group,assert,win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_post_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group, MPI_Win
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group
    INTEGER, INTENT(IN) :: assert
@@ -3103,7 +3095,7 @@ end interface  PMPI_Win_post
 interface  PMPI_Win_start
 subroutine PMPI_Win_start_f08(group,assert,win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_start_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Group, MPI_Win
    implicit none
    TYPE(MPI_Group), INTENT(IN) :: group
    INTEGER, INTENT(IN) :: assert
@@ -3115,7 +3107,7 @@ end interface  PMPI_Win_start
 interface  PMPI_Win_test
 subroutine PMPI_Win_test_f08(win,flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_test_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    LOGICAL, INTENT(OUT) :: flag
    TYPE(MPI_Win), INTENT(IN) :: win
@@ -3126,7 +3118,7 @@ end interface  PMPI_Win_test
 interface  PMPI_Win_unlock
 subroutine PMPI_Win_unlock_f08(rank,win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_unlock_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    INTEGER, INTENT(IN) :: rank
    TYPE(MPI_Win), INTENT(IN) :: win
@@ -3137,7 +3129,7 @@ end interface  PMPI_Win_unlock
 interface  PMPI_Win_wait
 subroutine PMPI_Win_wait_f08(win,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Win_wait_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Win
    implicit none
    TYPE(MPI_Win), INTENT(IN) :: win
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3147,7 +3139,7 @@ end interface  PMPI_Win_wait
 interface  PMPI_Grequest_complete
 subroutine PMPI_Grequest_complete_f08(request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Grequest_complete_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Request
    implicit none
    TYPE(MPI_Request), INTENT(IN) :: request
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3158,8 +3150,10 @@ interface  PMPI_Grequest_start
 subroutine PMPI_Grequest_start_f08(query_fn,free_fn,cancel_fn,extra_state,request, &
                                   ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Grequest_start_f08")
-   use :: mpi_f08_types
-   use :: mpi_f08_interfaces_callbacks
+   use :: mpi_f08_types, only : MPI_Request, MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_query_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_free_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Grequest_cancel_function
    implicit none
    OMPI_PROCEDURE(MPI_Grequest_query_function) :: query_fn
    OMPI_PROCEDURE(MPI_Grequest_free_function) :: free_fn
@@ -3173,7 +3167,6 @@ end interface  PMPI_Grequest_start
 interface  PMPI_Init_thread
 subroutine PMPI_Init_thread_f08(required,provided,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Init_thread_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(IN) :: required
    INTEGER, INTENT(OUT) :: provided
@@ -3184,7 +3177,6 @@ end interface  PMPI_Init_thread
 interface  PMPI_Is_thread_main
 subroutine PMPI_Is_thread_main_f08(flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Is_thread_main_f08")
-   use :: mpi_f08_types
    implicit none
    LOGICAL, INTENT(OUT) :: flag
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3194,7 +3186,6 @@ end interface  PMPI_Is_thread_main
 interface  PMPI_Query_thread
 subroutine PMPI_Query_thread_f08(provided,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Query_thread_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(OUT) :: provided
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3204,7 +3195,7 @@ end interface  PMPI_Query_thread
 interface  PMPI_Status_set_cancelled
 subroutine PMPI_Status_set_cancelled_f08(status,flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Status_set_cancelled_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Status
    implicit none
    TYPE(MPI_Status), INTENT(INOUT) :: status
    LOGICAL, INTENT(OUT) :: flag
@@ -3215,7 +3206,7 @@ end interface  PMPI_Status_set_cancelled
 interface  PMPI_Status_set_elements
 subroutine PMPI_Status_set_elements_f08(status,datatype,count,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Status_set_elements_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Status, MPI_Datatype
    implicit none
    TYPE(MPI_Status), INTENT(INOUT) :: status
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -3224,10 +3215,12 @@ subroutine PMPI_Status_set_elements_f08(status,datatype,count,ierror &
 end subroutine PMPI_Status_set_elements_f08
 end interface  PMPI_Status_set_elements
 
+#if OMPI_PROFILE_FILE_INTERFACE
+
 interface  PMPI_File_close
 subroutine PMPI_File_close_f08(fh,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_close_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File
    implicit none
    TYPE(MPI_File), INTENT(INOUT) :: fh
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3236,7 +3229,7 @@ end interface  PMPI_File_close
 
 interface  PMPI_File_delete
 subroutine PMPI_File_delete_f08(filename,info,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Info
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: filename
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -3247,7 +3240,7 @@ end interface  PMPI_File_delete
 interface  PMPI_File_get_amode
 subroutine PMPI_File_get_amode_f08(fh,amode,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_amode_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER, INTENT(OUT) :: amode
@@ -3258,7 +3251,7 @@ end interface  PMPI_File_get_amode
 interface  PMPI_File_get_atomicity
 subroutine PMPI_File_get_atomicity_f08(fh,flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_atomicity_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    LOGICAL, INTENT(OUT) :: flag
@@ -3269,7 +3262,7 @@ end interface  PMPI_File_get_atomicity
 interface  PMPI_File_get_byte_offset
 subroutine PMPI_File_get_byte_offset_f08(fh,offset,disp,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_byte_offset_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3281,7 +3274,7 @@ end interface  PMPI_File_get_byte_offset
 interface  PMPI_File_get_group
 subroutine PMPI_File_get_group_f08(fh,group,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_group_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Group
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    TYPE(MPI_Group), INTENT(OUT) :: group
@@ -3292,7 +3285,7 @@ end interface  PMPI_File_get_group
 interface  PMPI_File_get_info
 subroutine PMPI_File_get_info_f08(fh,info_used,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_info_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Info
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    TYPE(MPI_Info), INTENT(OUT) :: info_used
@@ -3303,7 +3296,7 @@ end interface  PMPI_File_get_info
 interface  PMPI_File_get_position
 subroutine PMPI_File_get_position_f08(fh,offset,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_position_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(OUT) :: offset
@@ -3314,7 +3307,7 @@ end interface  PMPI_File_get_position
 interface  PMPI_File_get_position_shared
 subroutine PMPI_File_get_position_shared_f08(fh,offset,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_position_shared_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(OUT) :: offset
@@ -3325,7 +3318,7 @@ end interface  PMPI_File_get_position_shared
 interface  PMPI_File_get_size
 subroutine PMPI_File_get_size_f08(fh,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_size_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(OUT) :: size
@@ -3336,7 +3329,7 @@ end interface  PMPI_File_get_size
 interface  PMPI_File_get_type_extent
 subroutine PMPI_File_get_type_extent_f08(fh,datatype,extent,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_get_type_extent_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_ADDRESS_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    TYPE(MPI_Datatype), INTENT(IN) :: datatype
@@ -3347,7 +3340,7 @@ end interface  PMPI_File_get_type_extent
 
 interface  PMPI_File_get_view
 subroutine PMPI_File_get_view_f08(fh,disp,etype,filetype,datarep,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(OUT) :: disp
@@ -3361,7 +3354,7 @@ end interface  PMPI_File_get_view
 interface  PMPI_File_iread
 subroutine PMPI_File_iread_f08(fh,buf,count,datatype,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_iread_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3379,7 +3372,7 @@ end interface  PMPI_File_iread
 interface  PMPI_File_iread_at
 subroutine PMPI_File_iread_at_f08(fh,offset,buf,count,datatype,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_iread_at_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3398,7 +3391,7 @@ end interface  PMPI_File_iread_at
 interface  PMPI_File_iread_shared
 subroutine PMPI_File_iread_shared_f08(fh,buf,count,datatype,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_iread_shared_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3416,7 +3409,7 @@ end interface  PMPI_File_iread_shared
 interface  PMPI_File_iwrite
 subroutine PMPI_File_iwrite_f08(fh,buf,count,datatype,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_iwrite_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3434,7 +3427,7 @@ end interface  PMPI_File_iwrite
 interface  PMPI_File_iwrite_at
 subroutine PMPI_File_iwrite_at_f08(fh,offset,buf,count,datatype,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_iwrite_at_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3453,7 +3446,7 @@ end interface  PMPI_File_iwrite_at
 interface  PMPI_File_iwrite_shared
 subroutine PMPI_File_iwrite_shared_f08(fh,buf,count,datatype,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_iwrite_shared_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -3470,7 +3463,7 @@ end interface  PMPI_File_iwrite_shared
 
 interface  PMPI_File_open
 subroutine PMPI_File_open_f08(comm,filename,amode,info,fh,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Info, MPI_File
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    CHARACTER(LEN=*), INTENT(IN) :: filename
@@ -3484,7 +3477,7 @@ end interface  PMPI_File_open
 interface  PMPI_File_preallocate
 subroutine PMPI_File_preallocate_f08(fh,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_preallocate_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: size
@@ -3495,7 +3488,7 @@ end interface  PMPI_File_preallocate
 interface  PMPI_File_read
 subroutine PMPI_File_read_f08(fh,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3513,7 +3506,7 @@ end interface  PMPI_File_read
 interface  PMPI_File_read_all
 subroutine PMPI_File_read_all_f08(fh,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_all_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3531,7 +3524,7 @@ end interface  PMPI_File_read_all
 interface  PMPI_File_read_all_begin
 subroutine PMPI_File_read_all_begin_f08(fh,buf,count,datatype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_all_begin_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3548,7 +3541,7 @@ end interface  PMPI_File_read_all_begin
 interface  PMPI_File_read_all_end
 subroutine PMPI_File_read_all_end_f08(fh,buf,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_all_end_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3564,7 +3557,7 @@ end interface  PMPI_File_read_all_end
 interface  PMPI_File_read_at
 subroutine PMPI_File_read_at_f08(fh,offset,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_at_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3583,7 +3576,7 @@ end interface  PMPI_File_read_at
 interface  PMPI_File_read_at_all
 subroutine PMPI_File_read_at_all_f08(fh,offset,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_at_all_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3602,7 +3595,7 @@ end interface  PMPI_File_read_at_all
 interface  PMPI_File_read_at_all_begin
 subroutine PMPI_File_read_at_all_begin_f08(fh,offset,buf,count,datatype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_at_all_begin_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3620,7 +3613,7 @@ end interface  PMPI_File_read_at_all_begin
 interface  PMPI_File_read_at_all_end
 subroutine PMPI_File_read_at_all_end_f08(fh,buf,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_at_all_end_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3636,7 +3629,7 @@ end interface  PMPI_File_read_at_all_end
 interface  PMPI_File_read_ordered
 subroutine PMPI_File_read_ordered_f08(fh,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_ordered_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3654,7 +3647,7 @@ end interface  PMPI_File_read_ordered
 interface  PMPI_File_read_ordered_begin
 subroutine PMPI_File_read_ordered_begin_f08(fh,buf,count,datatype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_ordered_begin_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3671,7 +3664,7 @@ end interface  PMPI_File_read_ordered_begin
 interface  PMPI_File_read_ordered_end
 subroutine PMPI_File_read_ordered_end_f08(fh,buf,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_ordered_end_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3687,7 +3680,7 @@ end interface  PMPI_File_read_ordered_end
 interface  PMPI_File_read_shared
 subroutine PMPI_File_read_shared_f08(fh,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_read_shared_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3705,7 +3698,7 @@ end interface  PMPI_File_read_shared
 interface  PMPI_File_seek
 subroutine PMPI_File_seek_f08(fh,offset,whence,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_seek_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3717,7 +3710,7 @@ end interface  PMPI_File_seek
 interface  PMPI_File_seek_shared
 subroutine PMPI_File_seek_shared_f08(fh,offset,whence,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_seek_shared_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3729,7 +3722,7 @@ end interface  PMPI_File_seek_shared
 interface  PMPI_File_set_atomicity
 subroutine PMPI_File_set_atomicity_f08(fh,flag,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_set_atomicity_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    LOGICAL, INTENT(IN) :: flag
@@ -3740,7 +3733,7 @@ end interface  PMPI_File_set_atomicity
 interface  PMPI_File_set_info
 subroutine PMPI_File_set_info_f08(fh,info,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_set_info_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Info
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    TYPE(MPI_Info), INTENT(IN) :: info
@@ -3751,7 +3744,7 @@ end interface  PMPI_File_set_info
 interface  PMPI_File_set_size
 subroutine PMPI_File_set_size_f08(fh,size,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_set_size_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: size
@@ -3761,7 +3754,7 @@ end interface  PMPI_File_set_size
 
 interface  PMPI_File_set_view
 subroutine PMPI_File_set_view_f08(fh,disp,etype,filetype,datarep,info,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Info, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: disp
@@ -3776,7 +3769,7 @@ end interface  PMPI_File_set_view
 interface  PMPI_File_sync
 subroutine PMPI_File_sync_f08(fh,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_sync_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER, OPTIONAL, INTENT(OUT) :: ierror
@@ -3786,7 +3779,7 @@ end interface  PMPI_File_sync
 interface  PMPI_File_write
 subroutine PMPI_File_write_f08(fh,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3804,7 +3797,7 @@ end interface  PMPI_File_write
 interface  PMPI_File_write_all
 subroutine PMPI_File_write_all_f08(fh,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_all_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3822,7 +3815,7 @@ end interface  PMPI_File_write_all
 interface  PMPI_File_write_all_begin
 subroutine PMPI_File_write_all_begin_f08(fh,buf,count,datatype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_all_begin_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3839,7 +3832,7 @@ end interface  PMPI_File_write_all_begin
 interface  PMPI_File_write_all_end
 subroutine PMPI_File_write_all_end_f08(fh,buf,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_all_end_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3855,7 +3848,7 @@ end interface  PMPI_File_write_all_end
 interface  PMPI_File_write_at
 subroutine PMPI_File_write_at_f08(fh,offset,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_at_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3874,7 +3867,7 @@ end interface  PMPI_File_write_at
 interface  PMPI_File_write_at_all
 subroutine PMPI_File_write_at_all_f08(fh,offset,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_at_all_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3893,7 +3886,7 @@ end interface  PMPI_File_write_at_all
 interface  PMPI_File_write_at_all_begin
 subroutine PMPI_File_write_at_all_begin_f08(fh,offset,buf,count,datatype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_at_all_begin_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_OFFSET_KIND
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: offset
@@ -3911,7 +3904,7 @@ end interface  PMPI_File_write_at_all_begin
 interface  PMPI_File_write_at_all_end
 subroutine PMPI_File_write_at_all_end_f08(fh,buf,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_at_all_end_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3927,7 +3920,7 @@ end interface  PMPI_File_write_at_all_end
 interface  PMPI_File_write_ordered
 subroutine PMPI_File_write_ordered_f08(fh,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_ordered_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3945,7 +3938,7 @@ end interface  PMPI_File_write_ordered
 interface  PMPI_File_write_ordered_begin
 subroutine PMPI_File_write_ordered_begin_f08(fh,buf,count,datatype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_ordered_begin_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3962,7 +3955,7 @@ end interface  PMPI_File_write_ordered_begin
 interface  PMPI_File_write_ordered_end
 subroutine PMPI_File_write_ordered_end_f08(fh,buf,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_ordered_end_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3978,7 +3971,7 @@ end interface  PMPI_File_write_ordered_end
 interface  PMPI_File_write_shared
 subroutine PMPI_File_write_shared_f08(fh,buf,count,datatype,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_File_write_shared_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_File, MPI_Datatype, MPI_Status
    implicit none
    TYPE(MPI_File), INTENT(IN) :: fh
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
@@ -3993,11 +3986,14 @@ subroutine PMPI_File_write_shared_f08(fh,buf,count,datatype,status,ierror &
 end subroutine PMPI_File_write_shared_f08
 end interface  PMPI_File_write_shared
 
+#endif ! OMPI_PROFILE_FILE_INTERFACE
+
 interface  PMPI_Register_datarep
 subroutine PMPI_Register_datarep_f08(datarep,read_conversion_fn,write_conversion_fn, &
                                             dtype_file_extent_fn,extra_state,ierror)
-   use :: mpi_f08_types
-   use :: mpi_f08_interfaces_callbacks
+   use :: mpi_f08_types, only : MPI_ADDRESS_KIND
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Datarep_conversion_function
+   use :: mpi_f08_interfaces_callbacks, only : MPI_Datarep_extent_function
    implicit none
    CHARACTER(LEN=*), INTENT(IN) :: datarep
    OMPI_PROCEDURE(MPI_Datarep_conversion_function) :: read_conversion_fn
@@ -4028,7 +4024,7 @@ end interface  PMPI_Register_datarep
 interface  PMPI_Type_create_f90_complex
 subroutine PMPI_Type_create_f90_complex_f08(p,r,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_f90_complex_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: p, r
    TYPE(MPI_Datatype), INTENT(OUT) :: newtype
@@ -4039,7 +4035,7 @@ end interface  PMPI_Type_create_f90_complex
 interface  PMPI_Type_create_f90_integer
 subroutine PMPI_Type_create_f90_integer_f08(r,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_f90_integer_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: r
    TYPE(MPI_Datatype), INTENT(OUT) :: newtype
@@ -4050,7 +4046,7 @@ end interface  PMPI_Type_create_f90_integer
 interface  PMPI_Type_create_f90_real
 subroutine PMPI_Type_create_f90_real_f08(p,r,newtype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_create_f90_real_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: p, r
    TYPE(MPI_Datatype), INTENT(OUT) :: newtype
@@ -4061,7 +4057,7 @@ end interface  PMPI_Type_create_f90_real
 interface  PMPI_Type_match_size
 subroutine PMPI_Type_match_size_f08(typeclass,size,datatype,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Type_match_size_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype
    implicit none
    INTEGER, INTENT(IN) :: typeclass, size
    TYPE(MPI_Datatype), INTENT(OUT) :: datatype
@@ -4072,7 +4068,6 @@ end interface  PMPI_Type_match_size
 interface  PMPI_Pcontrol
 subroutine PMPI_Pcontrol_f08(level &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Pcontrol_f08")
-   use :: mpi_f08_types
    implicit none
    INTEGER, INTENT(IN) :: level
 end subroutine PMPI_Pcontrol_f08
@@ -4086,7 +4081,7 @@ end interface  PMPI_Pcontrol
 interface  PMPI_Comm_split_type
 subroutine PMPI_Comm_split_type_f08(comm,split_type,key,info,newcomm,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Comm_split_type_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Info
    implicit none
    TYPE(MPI_Comm), INTENT(IN) :: comm
    INTEGER, INTENT(IN) :: split_type
@@ -4099,7 +4094,7 @@ end interface  PMPI_Comm_split_type
 
 interface  PMPI_Get_library_version
 subroutine PMPI_Get_library_version_f08(name,resultlen,ierror)
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_MAX_PROCESSOR_NAME
    implicit none
    character(len=MPI_MAX_PROCESSOR_NAME), intent(out) :: name
    integer, intent(out) :: resultlen
@@ -4110,7 +4105,7 @@ end interface  PMPI_Get_library_version
 interface  PMPI_Mprobe
 subroutine PMPI_Mprobe_f08(source,tag,comm,message,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Mprobe_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Message, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: source, tag
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -4123,7 +4118,7 @@ end interface  PMPI_Mprobe
 interface  PMPI_Improbe
 subroutine PMPI_Improbe_f08(source,tag,comm,flag,message,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Improbe_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Comm, MPI_Message, MPI_Status
    implicit none
    INTEGER, INTENT(IN) :: source, tag
    TYPE(MPI_Comm), INTENT(IN) :: comm
@@ -4137,7 +4132,7 @@ end interface  PMPI_Improbe
 interface  PMPI_Imrecv
 subroutine PMPI_Imrecv_f08(buf,count,datatype,message,request,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Imrecv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Message, MPI_Request
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
@@ -4155,7 +4150,7 @@ end interface  PMPI_Imrecv
 interface  PMPI_Mrecv
 subroutine PMPI_Mrecv_f08(buf,count,datatype,message,status,ierror &
            ) OMPI_F08_INTERFACE_BIND_C("PMPI_Mrecv_f08")
-   use :: mpi_f08_types
+   use :: mpi_f08_types, only : MPI_Datatype, MPI_Message, MPI_Status
    implicit none
    !DEC$ ATTRIBUTES NO_ARG_CHECK :: buf
    !$PRAGMA IGNORE_TKR buf
