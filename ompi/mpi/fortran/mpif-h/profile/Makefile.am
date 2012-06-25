@@ -177,6 +177,7 @@ nodist_libmpi_mpifh_pmpi_la_SOURCES = \
         pireduce_scatter_f.c \
         pireduce_scatter_block_f.c \
         pirsend_f.c \
+        piscan_f.c \
         piscatter_f.c \
         piscatterv_f.c \
         pisend_f.c \
