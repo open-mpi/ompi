@@ -212,6 +212,8 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         preduce_local.c \
         preduce_scatter.c \
         pireduce_scatter.c \
+        preduce_scatter_block.c \
+        pireduce_scatter_block.c \
         prequest_c2f.c \
         prequest_f2c.c \
         prequest_free.c \

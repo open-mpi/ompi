@@ -2005,7 +2005,11 @@ OMPI_DECLSPEC  int PMPI_Reduce_local(void *inbuf, void *inoutbuf, int count,
 OMPI_DECLSPEC  int PMPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
                                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
 OMPI_DECLSPEC  int PMPI_Ireduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
-                                       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+                                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+OMPI_DECLSPEC  int PMPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
+                                       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm);
+OMPI_DECLSPEC  int PMPI_Ireduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
+                                        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
 OMPI_DECLSPEC  int PMPI_Register_datarep(char *datarep,
                                          MPI_Datarep_conversion_function *read_conversion_fn,
                                          MPI_Datarep_conversion_function *write_conversion_fn,
