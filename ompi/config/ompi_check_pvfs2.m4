@@ -32,7 +32,6 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
 
     check_pvfs2_save_LIBS="$LIBS" 
     check_pvfs2_save_LDFLAGS="$LDFLAGS"
-    check_pvfs2_save_CFLAGS="$CFLAGS"
     check_pvfs2_save_CPPFLAGS="$CPPFLAGS"
 
     check_pvfs2_configuration="none"
@@ -60,9 +59,7 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
     # Add correct -I and -L flags
     AS_IF([test -d "$with_pvfs2/include"],
         [check_pvfs2_CPPFLAGS="-I$with_pvfs2/include"
-            $1_CFLAGS="$check_pvfs2_CPPFLAGS"
             $1_CPPFLAGS="$check_pvfs2_CPPFLAGS"
-            CFLAGS="$CFLAGS $check_pvfs2_CPPFLAGS"	    
             CPPFLAGS="$CPPFLAGS $check_pvfs2_CPPFLAGS"],
 	[ompi_check_pvfs2_happy="no"])
     
@@ -101,7 +98,6 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
 
 
     LDFLAGS="$check_pvfs2_save_LDFLAGS"
-    CFLAGS="$check_pvfs2_save_CFLAGS"
     CPPFLAGS="$check_pvfs2_save_CPPFLAGS"
     LIBS="$check_pvfs2_save_LIBS"
     AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],

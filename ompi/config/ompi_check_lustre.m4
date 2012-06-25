@@ -32,7 +32,6 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
 
     check_lustre_save_LIBS="$LIBS" 
     check_lustre_save_LDFLAGS="$LDFLAGS"
-    check_lustre_save_CFLAGS="$CFLAGS"
     check_lustre_save_CPPFLAGS="$CPPFLAGS"
 
     check_lustre_configuration="none"
@@ -60,9 +59,7 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     # Add correct -I and -L flags
     AS_IF([test -d "$with_lustre/include/lustre/"],
         [check_lustre_CPPFLAGS="-I$with_lustre/include/lustre/"
-            $1_CFLAGS="$check_lustre_CPPFLAGS"
             $1_CPPFLAGS="$check_lustre_CPPFLAGS"
-            CFLAGS="$CFLAGS $check_lustre_CPPFLAGS"	    
             CPPFLAGS="$CPPFLAGS $check_lustre_CPPFLAGS"], 
 	[ompi_check_lustre_happy="no"])
     
@@ -99,7 +96,6 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     ])
 
     LDFLAGS="$check_lustre_save_LDFLAGS"
-    CFLAGS="$check_lustre_save_CFLAGS"
     CPPFLAGS="$check_lustre_save_CPPFLAGS"
     LIBS="$check_lustre_save_LIBS"
 
