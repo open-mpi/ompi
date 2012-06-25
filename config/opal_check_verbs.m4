@@ -48,13 +48,15 @@ AC_DEFUN([_OPAL_CHECK_VERBS_DIR],[
 #
 # At the end of this macro:
 #
-# 1. $opal_want_verbs will be set to "yes" and both of
-# $opal_verbs_dir and $opal_verbs_libdir will be set
+# 1. $opal_want_verbs will be set to:
+#    "yes" if --with-verbs or --with-verbs=DIR was specified
+#    "no" if --without-verbs was specified)
+#    "optional" if neither --with-verbs* nor --without-verbs was specified
 #
-# or
+# NOTE: --with-openib* are deprecated synonyms for --with-verbs*.
 #
-# 2. $opal_want_verbs will be set to "no" and both of
-# $opal_verbs_dir and $opal_verbs_libdir will be empty
+# 2. $opal_verbs_dir and $opal_verbs_libdir with either both be set or
+# both be empty.
 #
 AC_DEFUN([OPAL_CHECK_VERBS_DIR],[
 
@@ -125,17 +127,20 @@ AC_DEFUN([OPAL_CHECK_VERBS_DIR],[
     # use.  Either both of $opal_verbs_dir and
     # $verbs_libdir will be set, or neither will be set.
     opal_want_verbs=no
+    AS_IF([test -z "$with_verbs"],
+          [opal_want_verbs=optional],
+          [AS_IF([test "$with_verbs" = "no"],
+                 [opal_want_verbs=no],
+                 [opal_want_verbs=yes])
+          ])
+
     opal_verbs_dir=
     AS_IF([test -n "$with_verbs" -a "$with_verbs" != "yes" -a "$with_verbs" != "no"],
-          [opal_want_verbs=yes
-           opal_verbs_dir=$with_verbs
-          ])
+          [opal_verbs_dir=$with_verbs])
 
     opal_verbs_libdir=
     AS_IF([test -n "$with_verbs_libdir" -a "$with_verbs_libdir" != "yes" -a "$with_verbs_libdir" != "no"],
-          [opal_want_verbs=yes
-           opal_verbs_libdir=$with_verbs_libdir
-          ])
+          [opal_verbs_libdir=$with_verbs_libdir])
 
     # If the top dir was specified but the libdir was not, look for
     # it.  Note that if the user needs a specific libdir (i.e., if our
