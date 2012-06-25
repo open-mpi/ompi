@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2008-2011 University of Houston. All rights reserved.
+# Copyright (c) 2008-2012 University of Houston. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,10 +30,6 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
     check_pvfs2_LDFLAGS=
     check_pvfs2_LIBS=
 
-    check_pvfs2_save_wrapper_extra_libs="$WRAPPER_EXTRA_LIBS"
-    check_pvfs2_save_wrapper_extra_ldflags="$WRAPPER_EXTRA_LDFLAGS"
-    check_pvfs2_save_wrapper_extra_cflags="$WRAPPER_EXTRA_CFLAGS"
-    check_pvfs2_save_wrapper_extra_cppflags="$WRAPPER_EXTRA_CPPFLAGS"
     check_pvfs2_save_LIBS="$LIBS" 
     check_pvfs2_save_LDFLAGS="$LDFLAGS"
     check_pvfs2_save_CFLAGS="$CFLAGS"
@@ -64,20 +60,17 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
     # Add correct -I and -L flags
     AS_IF([test -d "$with_pvfs2/include"],
         [check_pvfs2_CPPFLAGS="-I$with_pvfs2/include"
-            $1_CPPFLAGS="$check_pvfs2_CPPFLAGS"
+            $1_CFLAGS="$check_pvfs2_CPPFLAGS"
             $1_CPPFLAGS="$check_pvfs2_CPPFLAGS"
             CFLAGS="$CFLAGS $check_pvfs2_CPPFLAGS"	    
-            CPPFLAGS="$CPPFLAGS $check_pvfs2_CPPFLAGS"	    
-            WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS $check_pvfs2_CPPFLAGS"
-            WRAPPER_EXTRA_CFLAGS="$WRAPPER_EXTRA_CFLAGS $check_pvfs2_CPPFLAGS"], 
+            CPPFLAGS="$CPPFLAGS $check_pvfs2_CPPFLAGS"],
 	[ompi_check_pvfs2_happy="no"])
     
     AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],
 	[AS_IF([test -d "$with_pvfs2/lib"],
 		[check_pvfs2_LDFLAGS="-L$with_pvfs2/lib"
 		    $1_LDFLAGS="$check_pvfs2_LDFLAGS"
-		    LDFLAGS="$LDFLAGS $check_pvfs2_LDFLAGS"
-		    WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $check_pvfs2_LDFLAGS"],
+		    LDFLAGS="$LDFLAGS $check_pvfs2_LDFLAGS"],
 		[ompi_check_pvfs2_happy="no"]) 
     ],[])
 	    
@@ -90,7 +83,6 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
 		
 	    $1_LIBS="$check_pvfs2_LIBS"
 	    LIBS="$LIBS $check_pvfs2_LIBS"
-	    WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $check_pvfs2_LIBS"
 
             # check for pvfs2
 	    AC_CHECK_HEADERS([pvfs2.h],
@@ -107,18 +99,11 @@ AC_DEFUN([OMPI_CHECK_PVFS2],[
 		[ompi_check_pvfs2_happy="no"])
     ])
 
-    AS_IF([test "$ompi_check_pvfs2_happy" = "no"],
-     [WRAPPER_EXTRA_LIBS="$check_pvfs2_save_wrapper_extra_libs"
-	 WRAPPER_EXTRA_LDFLAGS="$check_pvfs2_save_wrapper_extra_ldflags"
-	 WRAPPER_EXTRA_CFLAGS="$check_pvfs2_save_wrapper_extra_cflags"
-	 WRAPPER_EXTRA_CPPFLAGS="$check_pvfs2_save_wrapper_extra_cppflags"
-     ])
 
     LDFLAGS="$check_pvfs2_save_LDFLAGS"
     CFLAGS="$check_pvfs2_save_CFLAGS"
     CPPFLAGS="$check_pvfs2_save_CPPFLAGS"
     LIBS="$check_pvfs2_save_LIBS"
-
     AS_IF([test "$ompi_check_pvfs2_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_pvfs2" -a "$with_pvfs2" != "no"],
