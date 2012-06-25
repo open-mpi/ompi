@@ -154,16 +154,6 @@ int orte_dt_print_app_context(char **output, char *prefix, orte_app_context_t *s
 int orte_dt_print_map(char **output, char *prefix, orte_job_map_t *src, opal_data_type_t type);
 #endif
 
-/** Data type size functions */
-int orte_dt_std_size(size_t *size, void *src, opal_data_type_t type);
-#if !ORTE_DISABLE_FULL_SUPPORT
-int orte_dt_size_job(size_t *size, orte_job_t *src, opal_data_type_t type);
-int orte_dt_size_node(size_t *size, orte_node_t *src, opal_data_type_t type);
-int orte_dt_size_proc(size_t *size, orte_proc_t *src, opal_data_type_t type);
-int orte_dt_size_app_context(size_t *size, orte_app_context_t *src, opal_data_type_t type);
-int orte_dt_size_map(size_t *size, orte_job_map_t *src, opal_data_type_t type);
-#endif
-
 /** Data type unpack functions */
 int orte_dt_unpack_std_cntr(opal_buffer_t *buffer, void *dest,
                         int32_t *num_vals, opal_data_type_t type);

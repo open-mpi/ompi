@@ -42,7 +42,6 @@ opal_dss_t opal_dss = {
     opal_dss_unpack,
     opal_dss_copy,
     opal_dss_compare,
-    opal_dss_size,
     opal_dss_print,
     opal_dss_structured,
     opal_dss_peek,
@@ -107,7 +106,6 @@ static void opal_dss_type_info_construct(opal_dss_type_info_t *obj)
     obj->odti_unpack_fn = NULL;
     obj->odti_copy_fn = NULL;
     obj->odti_compare_fn = NULL;
-    obj->odti_size_fn = NULL;
     obj->odti_print_fn = NULL;
     obj->odti_structured = false;
 }
@@ -229,7 +227,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_null,
                                           (opal_dss_copy_fn_t)opal_dss_copy_null,
                                           (opal_dss_compare_fn_t)opal_dss_compare_null,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_null,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_NULL", &tmp))) {
@@ -240,7 +237,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_byte,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_byte,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_byte,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_BYTE", &tmp))) {
@@ -251,7 +247,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_bool,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_bool,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_bool,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_BOOL", &tmp))) {
@@ -262,7 +257,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_int,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_int,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_int,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_INT", &tmp))) {
@@ -273,7 +267,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_int,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_uint,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_uint,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_UINT", &tmp))) {
@@ -284,7 +277,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_byte,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_int8,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_int8,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_INT8", &tmp))) {
@@ -295,7 +287,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_byte,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_uint8,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_uint8,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_UINT8", &tmp))) {
@@ -306,7 +297,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_int16,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_int16,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_int16,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_INT16", &tmp))) {
@@ -317,7 +307,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_int16,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_uint16,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_uint16,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_UINT16", &tmp))) {
@@ -328,7 +317,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_int32,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_int32,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_int32,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_INT32", &tmp))) {
@@ -339,7 +327,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_int32,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_uint32,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_uint32,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_UINT32", &tmp))) {
@@ -350,7 +337,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_int64,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_int64,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_int64,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_INT64", &tmp))) {
@@ -361,7 +347,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_int64,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_uint64,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_uint64,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_UINT64", &tmp))) {
@@ -372,7 +357,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_sizet,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_size,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_size,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_SIZE", &tmp))) {
@@ -383,7 +367,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_pid,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_pid,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_pid,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_PID", &tmp))) {
@@ -394,7 +377,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_string,
                                           (opal_dss_copy_fn_t)opal_dss_copy_string,
                                           (opal_dss_compare_fn_t)opal_dss_compare_string,
-                                          (opal_dss_size_fn_t)opal_dss_size_string,
                                           (opal_dss_print_fn_t)opal_dss_print_string,
                                           OPAL_DSS_STRUCTURED,
                                           "OPAL_STRING", &tmp))) {
@@ -405,7 +387,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_data_type,
                                           (opal_dss_copy_fn_t)opal_dss_std_copy,
                                           (opal_dss_compare_fn_t)opal_dss_compare_dt,
-                                          (opal_dss_size_fn_t)opal_dss_std_size,
                                           (opal_dss_print_fn_t)opal_dss_print_data_type,
                                           OPAL_DSS_UNSTRUCTURED,
                                           "OPAL_DATA_TYPE", &tmp))) {
@@ -417,7 +398,6 @@ int opal_dss_open(void)
                                           opal_dss_unpack_byte_object,
                                           (opal_dss_copy_fn_t)opal_dss_copy_byte_object,
                                           (opal_dss_compare_fn_t)opal_dss_compare_byte_object,
-                                          (opal_dss_size_fn_t)opal_dss_size_byte_object,
                                           (opal_dss_print_fn_t)opal_dss_print_byte_object,
                                           OPAL_DSS_STRUCTURED,
                                           "OPAL_BYTE_OBJECT", &tmp))) {
@@ -429,7 +409,6 @@ int opal_dss_open(void)
                                                      opal_dss_unpack_pstat,
                                                      (opal_dss_copy_fn_t)opal_dss_copy_pstat,
                                                      (opal_dss_compare_fn_t)opal_dss_compare_pstat,
-                                                     (opal_dss_size_fn_t)opal_dss_size_pstat,
                                                      (opal_dss_print_fn_t)opal_dss_print_pstat,
                                                      OPAL_DSS_STRUCTURED,
                                                      "OPAL_PSTAT", &tmp))) {
@@ -441,7 +420,6 @@ int opal_dss_open(void)
                                                      opal_dss_unpack_node_stat,
                                                      (opal_dss_copy_fn_t)opal_dss_copy_node_stat,
                                                      (opal_dss_compare_fn_t)opal_dss_compare_node_stat,
-                                                     (opal_dss_size_fn_t)opal_dss_size_node_stat,
                                                      (opal_dss_print_fn_t)opal_dss_print_node_stat,
                                                      OPAL_DSS_STRUCTURED,
                                                      "OPAL_NODE_STAT", &tmp))) {
