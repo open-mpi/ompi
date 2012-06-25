@@ -30,10 +30,6 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     check_lustre_LDFLAGS=
     check_lustre_LIBS=
 
-    check_lustre_save_wrapper_extra_libs="$WRAPPER_EXTRA_LIBS"
-    check_lustre_save_wrapper_extra_ldflags="$WRAPPER_EXTRA_LDFLAGS"
-    check_lustre_save_wrapper_extra_cflags="$WRAPPER_EXTRA_CFLAGS"
-    check_lustre_save_wrapper_extra_cppflags="$WRAPPER_EXTRA_CPPFLAGS"
     check_lustre_save_LIBS="$LIBS" 
     check_lustre_save_LDFLAGS="$LDFLAGS"
     check_lustre_save_CFLAGS="$CFLAGS"
@@ -64,20 +60,17 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
     # Add correct -I and -L flags
     AS_IF([test -d "$with_lustre/include/lustre/"],
         [check_lustre_CPPFLAGS="-I$with_lustre/include/lustre/"
-            $1_CPPFLAGS="$check_lustre_CPPFLAGS"
+            $1_CFLAGS="$check_lustre_CPPFLAGS"
             $1_CPPFLAGS="$check_lustre_CPPFLAGS"
             CFLAGS="$CFLAGS $check_lustre_CPPFLAGS"	    
-            CPPFLAGS="$CPPFLAGS $check_lustre_CPPFLAGS"	    
-            WRAPPER_EXTRA_CPPFLAGS="$WRAPPER_EXTRA_CPPFLAGS $check_lustre_CPPFLAGS"
-            WRAPPER_EXTRA_CFLAGS="$WRAPPER_EXTRA_CFLAGS $check_lustre_CPPFLAGS"], 
+            CPPFLAGS="$CPPFLAGS $check_lustre_CPPFLAGS"], 
 	[ompi_check_lustre_happy="no"])
     
     AS_IF([test "$ompi_check_lustre_happy" = "yes"],
 	[AS_IF([test -d "$with_lustre/lib64"],
 		[check_lustre_LDFLAGS="-L$with_lustre/lib64"
 		    $1_LDFLAGS="$check_lustre_LDFLAGS"
-		    LDFLAGS="$LDFLAGS $check_lustre_LDFLAGS"
-		    WRAPPER_EXTRA_LDFLAGS="$WRAPPER_EXTRA_LDFLAGS $check_lustre_LDFLAGS"],
+		    LDFLAGS="$LDFLAGS $check_lustre_LDFLAGS"],
 		[ompi_check_lustre_happy="no"]) 
     ],[])
 	    
@@ -90,7 +83,6 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
 		
 	    $1_LIBS="$check_lustre_LIBS"
 	    LIBS="$LIBS $check_lustre_LIBS"
-	    WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $check_lustre_LIBS"
 
             # check for lustre
 	    AC_CHECK_HEADERS([liblustreapi.h],
@@ -105,13 +97,6 @@ AC_DEFUN([OMPI_CHECK_LUSTRE],[
 			    ompi_check_lustre_happy="no"])],
 		[ompi_check_lustre_happy="no"])
     ])
-
-    AS_IF([test "$ompi_check_lustre_happy" = "no"],
-     [WRAPPER_EXTRA_LIBS="$check_lustre_save_wrapper_extra_libs"
-	 WRAPPER_EXTRA_LDFLAGS="$check_lustre_save_wrapper_extra_ldflags"
-	 WRAPPER_EXTRA_CFLAGS="$check_lustre_save_wrapper_extra_cflags"
-	 WRAPPER_EXTRA_CPPFLAGS="$check_lustre_save_wrapper_extra_cppflags"
-     ])
 
     LDFLAGS="$check_lustre_save_LDFLAGS"
     CFLAGS="$check_lustre_save_CFLAGS"
