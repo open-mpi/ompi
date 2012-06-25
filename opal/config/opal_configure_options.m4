@@ -489,7 +489,16 @@ AC_ARG_WITH([ident-string],
 if test "$with_ident_string" = "" -o "$with_ident_string" = "no"; then
     with_ident_string="%VERSION%"
 fi
-with_ident_string="`echo $with_ident_string | sed -e 's/%VERSION%/'$OMPI_VERSION/`"
+# This is complicated, because $OMPI_VERSION may have spaces in it.
+# So put the whole sed expr in single quotes -- i.e., directly
+# substitute %VERSION% for (not expanded) $OMPI_VERSION.
+with_ident_string="`echo $with_ident_string | sed -e 's/%VERSION%/$OMPI_VERSION/'`"
+
+# Now eval an echo of that so that the "$OMPI_VERSION" token is
+# replaced with its value.  Enclose the whole thing in "" so that it
+# ends up as 1 token.
+with_ident_string="`eval echo $with_ident_string`"
+
 AC_DEFINE_UNQUOTED([OPAL_IDENT_STRING], ["$with_ident_string"],
      [ident string for Open MPI])
 AC_MSG_RESULT([$with_ident_string])
