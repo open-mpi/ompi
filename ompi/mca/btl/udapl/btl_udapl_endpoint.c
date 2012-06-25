@@ -1187,7 +1187,7 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
     
         frag->btl = endpoint->endpoint_btl;
         frag->endpoint = endpoint;
-        frag->base.des_dst = &frag->segment;
+        frag->base.des_dst = &frag->segment.base;
         frag->base.des_dst_cnt = 1;
         frag->base.des_src = NULL;
         frag->base.des_src_cnt = 0;
@@ -1360,7 +1360,7 @@ static mca_btl_base_descriptor_t* mca_btl_udapl_endpoint_initialize_control_mess
         ((mca_btl_udapl_reg_t*)frag->registration)->lmr_triplet.lmr_context);
     
     frag->btl = udapl_btl;
-    frag->base.des_src = &frag->segment;
+    frag->base.des_src = &frag->segment.base;
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
@@ -1385,7 +1385,7 @@ static int mca_btl_udapl_endpoint_send_eager_rdma(
 {
     mca_btl_udapl_eager_rdma_connect_t* rdma_connect;
     mca_btl_base_descriptor_t* des;    
-    mca_btl_base_segment_t* segment;
+    mca_btl_udapl_segment_t* segment;
     mca_btl_udapl_frag_t* data_frag;
     mca_btl_udapl_frag_t* local_frag = (mca_btl_udapl_frag_t*)endpoint->endpoint_eager_rdma_local.base.pval;
     mca_btl_udapl_module_t* udapl_btl = endpoint->endpoint_btl;
@@ -1508,7 +1508,7 @@ void mca_btl_udapl_endpoint_connect_eager_rdma(
 
          local_rdma_frag = ((mca_btl_udapl_frag_eager_rdma_t*)item);
 
-         local_rdma_frag->base.des_dst = &local_rdma_frag->segment;
+         local_rdma_frag->base.des_dst = &local_rdma_frag->segment.base;
          local_rdma_frag->base.des_dst_cnt = 1;
          local_rdma_frag->base.des_src = NULL;
          local_rdma_frag->base.des_src_cnt = 0;
@@ -1572,7 +1572,7 @@ int mca_btl_udapl_endpoint_send_eager_rdma_credits(
 {
     mca_btl_udapl_eager_rdma_credit_t *rdma_credit;
     mca_btl_base_descriptor_t* des;
-    mca_btl_base_segment_t* segment;
+    mca_btl_udapl_segment_t* segment;
     DAT_DTO_COOKIE cookie;
     mca_btl_udapl_frag_t* frag;
     mca_btl_udapl_module_t* udapl_btl = endpoint->endpoint_btl;
@@ -1640,7 +1640,7 @@ int mca_btl_udapl_endpoint_send_sr_credits(
 {
     mca_btl_udapl_sr_credit_t *sr_credit;
     mca_btl_base_descriptor_t* des;
-    mca_btl_base_segment_t* segment;
+    mca_btl_udapl_segment_t* segment;
     DAT_DTO_COOKIE cookie;
     mca_btl_udapl_frag_t* frag;
     mca_btl_udapl_module_t* udapl_btl = endpoint->endpoint_btl;
