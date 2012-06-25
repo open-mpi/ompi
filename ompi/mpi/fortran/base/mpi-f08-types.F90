@@ -15,12 +15,7 @@ module mpi_f08_types
 
    use, intrinsic :: ISO_C_BINDING
 
-   include "mpif-config.h"
-
-   !
-   ! constants (these must agree with those in mpif-common.h, mpif-config.h)
-   !
-   integer, parameter :: MPI_SUCCESS = 0
+   include "mpif-all-common.h"
 
    !
    ! kind parameters
