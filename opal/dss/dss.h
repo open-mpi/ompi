@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Los Alamos National Security, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -378,31 +379,6 @@ typedef int (*opal_dss_compare_fn_t)(const void *value1, const void *value2,
 
 
 /**
- * Compute size of data value.
- *
- * Since registered data types can be complex structures, the system
- * needs some way to compute its size. Some of these types, however, involve
- * variable amounts of storage (e.g., a string!). Hence, a pointer to the
- * actual object being "sized" needs to be passed as well.
- *
- * @param size Address of a size_t value where the size of the data value
- * (in bytes) will be stored - set to zero in event of error.
- *
- * @param *src A pointer to the memory location of the data object. It is okay
- * for this to be NULL - if NULL, the function must return the size of the object
- * itself, not including any data contained in its fields.
- *
- * @param type The type of the data value - must be one of
- * the DSS defined data types or an error will be returned.
- *
- * @retval OPAL_SUCCESS The value was successfully copied.
- *
- * @retval OPAL_ERROR(s) An appropriate error code.
- */
-typedef int (*opal_dss_size_fn_t)(size_t *size, void *src, opal_data_type_t type);
-
-
-/**
  * Print a data value.
  *
  * Since registered data types can be complex structures, the system
@@ -448,7 +424,6 @@ typedef int (*opal_dss_dump_fn_t)(int output_stream, void *src, opal_data_type_t
  * @param unpack_fn [IN] Function pointer to the unpack routine
  * @param copy_fn [IN] Function pointer to copy routine
  * @param compare_fn [IN] Function pointer to compare routine
- * @param size_fn [IN] Function pointer to size routine
  * @param print_fn [IN] Function pointer to print routine
  * @param structured [IN] Boolean indicator as to whether or not the data is structured. A true
  * value indicates that this data type is always passed via reference (i.e., a pointer to the
@@ -463,7 +438,6 @@ typedef int (*opal_dss_register_fn_t)(opal_dss_pack_fn_t pack_fn,
                                     opal_dss_unpack_fn_t unpack_fn,
                                     opal_dss_copy_fn_t copy_fn,
                                     opal_dss_compare_fn_t compare_fn,
-                                    opal_dss_size_fn_t size_fn,
                                     opal_dss_print_fn_t print_fn,
                                     bool structured,
                                     const char *name, opal_data_type_t *type);
@@ -492,7 +466,6 @@ struct opal_dss_t {
     opal_dss_unpack_fn_t            unpack;
     opal_dss_copy_fn_t              copy;
     opal_dss_compare_fn_t           compare;
-    opal_dss_size_fn_t              size;
     opal_dss_print_fn_t             print;
     opal_dss_structured_fn_t        structured;
     opal_dss_peek_next_item_fn_t    peek;

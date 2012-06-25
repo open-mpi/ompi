@@ -36,6 +36,5 @@ libopen_pal_la_SOURCES += \
         dss/dss_peek.c \
         dss/dss_print.c \
         dss/dss_register.c \
-        dss/dss_size.c \
         dss/dss_unpack.c \
         dss/dss_open_close.c

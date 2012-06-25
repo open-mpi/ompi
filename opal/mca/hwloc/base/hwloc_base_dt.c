@@ -336,8 +336,3 @@ int opal_hwloc_print(char **output, char *prefix, hwloc_topology_t src, opal_dat
     return OPAL_SUCCESS;
 }
 
-int opal_hwloc_size(size_t *size, hwloc_topology_t src, opal_data_type_t type)
-{
-    return OPAL_ERR_NOT_IMPLEMENTED;
-}
-

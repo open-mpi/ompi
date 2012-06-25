@@ -180,8 +180,6 @@ struct opal_dss_type_info_t {
     opal_dss_copy_fn_t odti_copy_fn;
     /** compare function */
     opal_dss_compare_fn_t odti_compare_fn;
-    /** size function */
-    opal_dss_size_fn_t odti_size_fn;
     /** print function */
     opal_dss_print_fn_t odti_print_fn;
     /** flag to indicate structured data */
@@ -224,8 +222,6 @@ int opal_dss_print(char **output, char *prefix, void *src, opal_data_type_t type
 
 int opal_dss_dump(int output_stream, void *src, opal_data_type_t type);
 
-int opal_dss_size(size_t *size, void *src, opal_data_type_t type);
-
 int opal_dss_peek(opal_buffer_t *buffer, opal_data_type_t *type,
                   int32_t *number);
 
@@ -241,7 +237,6 @@ int opal_dss_register(opal_dss_pack_fn_t pack_fn,
                       opal_dss_unpack_fn_t unpack_fn,
                       opal_dss_copy_fn_t copy_fn,
                       opal_dss_compare_fn_t compare_fn,
-                      opal_dss_size_fn_t size_fn,
                       opal_dss_print_fn_t print_fn,
                       bool structured,
                       const char *name, opal_data_type_t *type);
@@ -402,19 +397,6 @@ int opal_dss_compare_byte_object(opal_byte_object_t *value1, opal_byte_object_t 
 int opal_dss_compare_pstat(opal_pstats_t *value1, opal_pstats_t *value2, opal_data_type_t type);
 
 int opal_dss_compare_node_stat(opal_node_stats_t *value1, opal_node_stats_t *value2, opal_data_type_t type);
-
-/*
- * Internal size functions
- */
-int opal_dss_std_size(size_t *size, void *src, opal_data_type_t type);
-
-int opal_dss_size_string(size_t *size, char *src, opal_data_type_t type);
-
-int opal_dss_size_byte_object(size_t *size, opal_byte_object_t *src, opal_data_type_t type);
-
-int opal_dss_size_pstat(size_t *size, opal_pstats_t *src, opal_data_type_t type);
-
-int opal_dss_size_node_stat(size_t *size, opal_node_stats_t *src, opal_data_type_t type);
 
 /*
  * Internal print functions

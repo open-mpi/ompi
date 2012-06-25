@@ -226,9 +226,6 @@ OPAL_DECLSPEC int opal_hwloc_compare(const hwloc_topology_t topo1,
 OPAL_DECLSPEC int opal_hwloc_print(char **output, char *prefix,
                                    hwloc_topology_t src,
                                    opal_data_type_t type);
-OPAL_DECLSPEC int opal_hwloc_size(size_t *size,
-                                  hwloc_topology_t src,
-                                  opal_data_type_t type);
 
 /**
  * Make a prettyprint string for a hwloc_cpuset_t (e.g., "socket

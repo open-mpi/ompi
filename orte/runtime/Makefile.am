@@ -41,7 +41,6 @@ libopen_rte_la_SOURCES += \
         runtime/data_type_support/orte_dt_compare_fns.c \
         runtime/data_type_support/orte_dt_copy_fns.c \
         runtime/data_type_support/orte_dt_print_fns.c \
-        runtime/data_type_support/orte_dt_size_fns.c \
         runtime/data_type_support/orte_dt_packing_fns.c \
         runtime/data_type_support/orte_dt_unpacking_fns.c \
         runtime/orte_mca_params.c
