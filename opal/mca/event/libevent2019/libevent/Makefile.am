@@ -175,11 +175,10 @@ endif
 #	mv -f $@T $@
 
 # Open MPI: -- eliminate extra libevent libraries. We compile
-# everything that is enabled into the core.
-CORE_SRC = event.c evthread.c buffer.c \
-	bufferevent.c bufferevent_sock.c bufferevent_filter.c \
-	bufferevent_pair.c listener.c bufferevent_ratelim.c \
-	evmap.c	log.c evutil.c evutil_rand.c strlcpy.c event_tagging.c $(SYS_SRC)
+# everything that is enabled into the core. Do not include any
+# code not currently in use (buffer, tagging, and listener code).
+CORE_SRC = event.c evthread.c evmap.c log.c evutil.c evutil_rand.c \
+           strlcpy.c $(SYS_SRC)
 CORE_LIBS =
 
 if HTTP
