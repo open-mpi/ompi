@@ -148,6 +148,9 @@ static int plm_slurm_init(void)
         return rc;
     }
 
+    /* lock OFF the common port for now */
+    orte_use_common_port = false;
+
     return rc;
 }
 
