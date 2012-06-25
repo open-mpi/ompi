@@ -29,7 +29,7 @@
 #include "ompi/memchecker.h"
 
 #if OPAL_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_Reduce_scatter_block = PMPI_Reduce_scatter_block
+#pragma weak MPI_Ireduce_scatter_block = PMPI_Ireduce_scatter_block
 #endif
 
 #if OMPI_PROFILING_DEFINES
@@ -40,7 +40,8 @@ static const char FUNC_NAME[] = "MPI_Reduce_scatter_block";
 
 
 int MPI_Ireduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount,
-        MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
+                              MPI_Datatype datatype, MPI_Op op, 
+                              MPI_Comm comm, MPI_Request *request)
 {
     int err;
 
@@ -99,9 +100,9 @@ int MPI_Ireduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount,
 
     OBJ_RETAIN(op);
     err = comm->c_coll.coll_ireduce_scatter_block(sendbuf, recvbuf, recvcount,
-                                           datatype, op, comm,
-                                           request,
-                                           comm->c_coll.coll_reduce_scatter_block_module);
+                                                  datatype, op, comm,
+                                                  request,
+                                                  comm->c_coll.coll_reduce_scatter_block_module);
     OBJ_RELEASE(op);
     OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
