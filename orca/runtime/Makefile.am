@@ -16,7 +16,7 @@ headers += \
 		runtime/runtime.h \
 		runtime/orca_dt.h
 
-libopen-rca_la_SOURCES += \
+libopen_rca_la_SOURCES += \
         runtime/orca_init.c \
         runtime/orca_params.c \
         runtime/orca_finalize.c \
