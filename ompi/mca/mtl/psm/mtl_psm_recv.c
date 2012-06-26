@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      QLogic Corporation. All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -23,7 +24,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 
 #include "mtl_psm.h"
 #include "mtl_psm_types.h"
@@ -70,7 +71,7 @@ ompi_mtl_psm_irecv(struct mca_mtl_base_module_t* mtl,
 		       &mtl_psm_request->psm_request);
     
     if (err) {
-      orte_show_help("help-mtl-psm.txt",
+      orca_show_help("help-mtl-psm.txt",
 		     "error posting receive", true,
 		     psm_error_get_string(err),
 		     mtl_psm_request->buf, length);

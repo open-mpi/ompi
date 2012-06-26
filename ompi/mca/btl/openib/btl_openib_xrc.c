@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,7 +45,7 @@ int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device)
     dev_name = ibv_get_device_name(device->ib_dev);
     len = asprintf(&xrc_file_name,
             "%s"OPAL_PATH_SEP"openib_xrc_domain_%s",
-            orte_process_info.job_session_dir, dev_name);
+                   orca_process_info_get_job_session_dir(), dev_name);
     if (0 > len) {
         BTL_ERROR(("Failed to allocate memomry for XRC file name: %s\n",
                    strerror(errno)));
@@ -111,7 +112,7 @@ static void ib_address_destructor(ib_address_t *ib_addr)
     OBJ_DESTRUCT(&ib_addr->pending_ep);
 }
 
-static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, orte_jobid_t ep_jobid)
+static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, orca_jobid_t ep_jobid)
 {
     ib_addr->key = malloc(SIZE_OF3(s_id, lid, ep_jobid));
     if (NULL == ib_addr->key) {
@@ -136,7 +137,7 @@ static int ib_address_init(ib_address_t *ib_addr, uint16_t lid, uint64_t s_id, o
  * Before call to this function you need to protect with
  */
 int mca_btl_openib_ib_address_add_new (uint16_t lid, uint64_t s_id,
-        orte_jobid_t ep_jobid, mca_btl_openib_endpoint_t *ep)
+        orca_jobid_t ep_jobid, mca_btl_openib_endpoint_t *ep)
 {
     void *tmp;
     int ret = OMPI_SUCCESS;

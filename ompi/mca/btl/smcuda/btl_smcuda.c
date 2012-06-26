@@ -14,6 +14,7 @@
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -38,7 +39,9 @@
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/mca/hwloc/base/base.h"
-#include "orte/util/proc_info.h"
+
+#include "orca/include/rte_orca.h"
+
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/btl/btl.h"
@@ -265,8 +268,8 @@ static int smcuda_btl_first_time_init(mca_btl_smcuda_t *smcuda_btl, int n)
 
     /* set file name */
     if (asprintf(&sm_ctl_file, "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",
-                 orte_process_info.job_session_dir,
-                 orte_process_info.nodename) < 0) {
+                 orca_process_info_get_job_session_dir(),
+                 orca_process_info_get_nodename()) < 0) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -400,7 +403,7 @@ create_sm_endpoint(int local_proc, struct ompi_proc_t *proc)
     OBJ_CONSTRUCT(&ep->endpoint_lock, opal_mutex_t);
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu",
-            orte_process_info.job_session_dir,
+            orca_process_info_get_job_session_dir(),
             (unsigned long)proc->proc_name.vpid);
     ep->fifo_fd = open(path, O_WRONLY);
     if(ep->fifo_fd < 0) {
@@ -1075,7 +1078,7 @@ int mca_btl_smcuda_ft_event(int state) {
         }
     }
     else if(OPAL_CRS_CONTINUE == state) {
-        if( orte_cr_continue_like_restart ) {
+        if( orca_info_cr_continue_like_restart() ) {
             if( NULL != mca_btl_smcuda_component.sm_seg ) {
                 /* Add shared memory file */
                 opal_crs_base_cleanup_append(mca_btl_smcuda_component.sm_seg->shmem_ds.seg_name, false);

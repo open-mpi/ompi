@@ -1,6 +1,7 @@
 # -*- shell-script -*-
 #
 # Copyright (c) 2011      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -11,7 +12,7 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_ompi_pubsub_pmi_CONFIG], [
     AC_CONFIG_FILES([ompi/mca/pubsub/pmi/Makefile])
-         
+
     ORTE_CHECK_PMI([pubsub_pmi], [pubsub_pmi_good=1], [pubsub_pmi_good=0])
          
     # Evaluate succeed / fail
@@ -23,5 +24,4 @@ AC_DEFUN([MCA_ompi_pubsub_pmi_CONFIG], [
     AC_SUBST([pubsub_pmi_CPPFLAGS])
     AC_SUBST([pubsub_pmi_LDFLAGS])
     AC_SUBST([pubsub_pmi_LIBS])
-
 ])

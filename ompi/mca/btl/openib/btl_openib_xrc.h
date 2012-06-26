@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007-2008 Mellanox Technologies. All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -44,6 +45,6 @@ typedef struct ib_address_t ib_address_t;
 int mca_btl_openib_open_xrc_domain(struct mca_btl_openib_device_t *device);
 int mca_btl_openib_close_xrc_domain(struct mca_btl_openib_device_t *device);
 int mca_btl_openib_ib_address_add_new (uint16_t lid, uint64_t s_id,
-        orte_jobid_t ep_jobid, mca_btl_openib_endpoint_t *ep);
+        orca_jobid_t ep_jobid, mca_btl_openib_endpoint_t *ep);
 
 #endif

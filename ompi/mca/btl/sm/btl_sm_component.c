@@ -15,6 +15,7 @@
  *                         All rights reserved.
  * Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2010-2012 IBM Corporation.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,9 +47,7 @@
 #include "opal/mca/event/event.h"
 #include "opal/util/bit_ops.h"
 #include "opal/util/output.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
+#include "orca/include/rte_orca.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -152,9 +151,9 @@ static int sm_register(void)
         mca_btl_sm_component.use_knem = i;
     } else {
         if (i > 0) {
-            orte_show_help("help-mpi-btl-sm.txt",
-                           "knem requested but not supported", true,
-                           orte_process_info.nodename);
+            orca_show_help("help-mpi-btl-sm.txt",
+                                "knem requested but not supported", true,
+                                orca_process_info_get_nodename());
             return OMPI_ERROR;
         }
         mca_btl_sm_component.use_knem = 0;
@@ -367,7 +366,7 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
     *num_btls = 0;
 
     /* if no session directory was created, then we cannot be used */
-    if (!orte_create_session_dirs) {
+    if (!orca_process_info_create_session_dirs()) {
         return NULL;
     }
     
@@ -378,8 +377,8 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
     sprintf( mca_btl_sm_component.sm_fifo_path,
-             "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir,
-             (unsigned long)ORTE_PROC_MY_NAME->vpid );
+             "%s"OPAL_PATH_SEP"sm_fifo.%lu", orca_process_info_get_job_session_dir(),
+             (unsigned long)orca_process_info_get_vpid(ORCA_PROC_MY_NAME) );
     if(mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
         opal_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
@@ -442,11 +441,11 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
                     if (0 != stat("/dev/knem", &sbuf)) {
                         sbuf.st_mode = 0;
                     }
-                    orte_show_help("help-mpi-btl-sm.txt", "knem permission denied",
-                                   true, orte_process_info.nodename, sbuf.st_mode);
+                    orca_show_help("help-mpi-btl-sm.txt", "knem permission denied",
+                                   true, orca_process_info_get_nodename(), sbuf.st_mode);
                 } else {
-                    orte_show_help("help-mpi-btl-sm.txt", "knem fail open",
-                                   true, orte_process_info.nodename, errno,
+                    orca_show_help("help-mpi-btl-sm.txt", "knem fail open",
+                                   true, orca_process_info_get_nodename(), errno,
                                    strerror(errno));
                 }
                 goto no_knem;
@@ -457,14 +456,14 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
             rc = ioctl(mca_btl_sm.knem_fd, KNEM_CMD_GET_INFO,
                        &mca_btl_sm_component.knem_info);
             if (rc < 0) {
-                orte_show_help("help-mpi-btl-sm.txt", "knem get ABI fail",
-                               true, orte_process_info.nodename, errno,
+                orca_show_help("help-mpi-btl-sm.txt", "knem get ABI fail",
+                               true, orca_process_info_get_nodename(), errno,
                                strerror(errno));
                 goto no_knem;
             }
             if (KNEM_ABI_VERSION != mca_btl_sm_component.knem_info.abi) {
-                orte_show_help("help-mpi-btl-sm.txt", "knem ABI mismatch",
-                               true, orte_process_info.nodename, KNEM_ABI_VERSION,
+                orca_show_help("help-mpi-btl-sm.txt", "knem ABI mismatch",
+                               true, orca_process_info_get_nodename(), KNEM_ABI_VERSION,
                                mca_btl_sm_component.knem_info.abi);
                 goto no_knem;
             }
@@ -485,8 +484,8 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
                                                     MAP_SHARED, mca_btl_sm.knem_fd,
                                                     KNEM_STATUS_ARRAY_FILE_OFFSET);
                 if (MAP_FAILED == mca_btl_sm.knem_status_array) {
-                    orte_show_help("help-mpi-btl-sm.txt", "knem mmap fail",
-                                   true, orte_process_info.nodename, errno,
+                    orca_show_help("help-mpi-btl-sm.txt", "knem mmap fail",
+                                   true, orca_process_info_get_nodename(), errno,
                                    strerror(errno));
                     goto no_knem;
                 }
@@ -497,8 +496,8 @@ static mca_btl_base_module_t** mca_btl_sm_component_init(
                     malloc(sizeof(mca_btl_sm_frag_t *) *
                            mca_btl_sm_component.knem_max_simultaneous);
                 if (NULL == mca_btl_sm.knem_frag_array) {
-                    orte_show_help("help-mpi-btl-sm.txt", "knem init fail",
-                                   true, orte_process_info.nodename, "malloc",
+                    orca_show_help("help-mpi-btl-sm.txt", "knem init fail",
+                                   true, orca_process_info_get_nodename(), "malloc",
                                    errno, strerror(errno));
                     goto no_knem;
                 }

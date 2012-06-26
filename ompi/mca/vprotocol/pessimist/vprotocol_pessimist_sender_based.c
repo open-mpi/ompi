@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2004-2007 The Trustees of the University of Tennessee.
  *                         All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -22,7 +23,7 @@
 #include "opal/datatype/opal_datatype_memcpy.h"
 #include <fcntl.h>
 
-#include "orte/util/proc_info.h"
+#include "orca/include/rte_orca.h"
 
 #define sb mca_vprotocol_pessimist.sender_based
 
@@ -141,7 +142,7 @@ int vprotocol_pessimist_sender_based_init(const char *mmapfile, size_t size)
     OBJ_CONSTRUCT(&sb.sb_sendreq, opal_list_t);
 #endif
     
-    asprintf(&path, "%s"OPAL_PATH_SEP"%s", orte_process_info.proc_session_dir, 
+    asprintf(&path, "%s"OPAL_PATH_SEP"%s", orca_process_info_get_process_session_dir(),
                 mmapfile);
     if(OPAL_SUCCESS != sb_mmap_file_open(path))
         return OPAL_ERR_FILE_OPEN_FAILURE; 

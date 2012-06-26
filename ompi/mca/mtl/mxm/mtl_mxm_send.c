@@ -1,4 +1,6 @@
-/* * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+/*
+ * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,7 +11,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/datatype/opal_convertor.h"
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 
 #include "mtl_mxm.h"
 #include "mtl_mxm_types.h"
@@ -74,7 +76,7 @@ int ompi_mtl_mxm_send(struct mca_mtl_base_module_t* mtl,
     /* post-send */
     err = mxm_req_send(&mxm_send_req);
     if (MXM_OK != err) {
-        orte_show_help("help-mtl-mxm.txt", "error posting send", true, 0, mxm_error_string(err));
+        orca_show_help("help-mtl-mxm.txt", "error posting send", true, 0, mxm_error_string(err));
         return OMPI_ERROR;
     }
 
@@ -134,7 +136,7 @@ int ompi_mtl_mxm_isend(struct mca_mtl_base_module_t* mtl,
     /* post-send */
     err = mxm_req_send(mxm_send_req);
     if (MXM_OK != err) {
-        orte_show_help("help-mtl-mxm.txt", "error posting send", true, 1, mxm_error_string(err));
+        orca_show_help("help-mtl-mxm.txt", "error posting send", true, 1, mxm_error_string(err));
         return OMPI_ERROR;
     }
 

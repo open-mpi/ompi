@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2009-2010 Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -25,7 +26,7 @@ man_pages += ompi-checkpoint.1 ompi-restart.1
 endif
 
 if OMPI_INSTALL_BINARIES
-if !ORTE_DISABLE_FULL_SUPPORT
+if ORCA_WITH_FULL_ORTE_SUPPORT
 
 nodist_man_MANS = $(man_pages)
 
@@ -53,7 +54,7 @@ if WANT_FT
 		$(DESTDIR)$(bindir)/ompi-migrate$(EXEEXT)
 endif
 
-endif # !ORTE_DISABLE_FULL_SUPPORT
+endif # ORCA_WITH_FULL_ORTE_SUPPORT
 endif # OMPI_INSTALL_BINARIES
 
 $(top_builddir)/orte/tools/orterun/orterun.1:

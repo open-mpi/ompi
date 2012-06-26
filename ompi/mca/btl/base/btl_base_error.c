@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,11 +26,7 @@
 #include "base.h"
 #include "btl_base_error.h"
 
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
-#include "orte/types.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
+#include "orca/include/rte_orca.h"
 
 int mca_btl_base_verbose = -1;
 
@@ -63,11 +60,11 @@ void mca_btl_base_error_no_nics(const char* transport,
     char *procid;
     if (mca_btl_base_warn_component_unused) {
         /* print out no-nic warning if user told us to */
-        asprintf(&procid, "%s", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
+        asprintf(&procid, "%s", ORCA_NAME_PRINT(ORCA_PROC_MY_NAME));
 
-        orte_show_help("help-mpi-btl-base.txt", "btl:no-nics",
-                       true, procid, transport, orte_process_info.nodename,
-                       nic_name);
+        orca_show_help("help-mpi-btl-base.txt", "btl:no-nics",
+                            true, procid, transport, orca_process_info_get_nodename(),
+                            nic_name);
         free(procid);
     }
 }

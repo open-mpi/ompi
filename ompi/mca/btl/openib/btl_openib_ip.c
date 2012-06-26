@@ -2,6 +2,8 @@
  * Copyright (c) 2008      Chelsio, Inc. All rights reserved.
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ * $COPYRIGHT$
  *
  * Additional copyrights may follow
  *
@@ -22,7 +24,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/if.h"
 
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 
 #include "connect/connect.h"
 #endif
@@ -197,9 +199,9 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
 
             if (NULL == temp || NULL == temp[0] || NULL == temp[1] ||
                 NULL != temp[2]) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                orca_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "include",
-                               orte_process_info.nodename, list[i],
+                               orca_process_info_get_nodename(), list[i],
                                "Invalid specification (missing \"/\")");
                 if (NULL != temp) {
                     opal_argv_free(temp);
@@ -208,9 +210,9 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             }
 
             if (1 != inet_pton(ipaddr->sin_family, temp[0], &ipae)) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                orca_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "include",
-                               orte_process_info.nodename, list[i],
+                               orca_process_info_get_nodename(), list[i],
                                "Invalid specification (inet_pton() failed)");
                 opal_argv_free(temp);
                 continue;
@@ -239,9 +241,9 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
 
             if (NULL == temp || NULL == temp[0] || NULL == temp[1] ||
                 NULL != temp[2]) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                orca_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "exclude",
-                               orte_process_info.nodename, list[i],
+                               orca_process_info_get_nodename(), list[i],
                                "Invalid specification (missing \"/\")");
                 if (NULL != temp) {
                     opal_argv_free(temp);
@@ -250,9 +252,9 @@ static int ipaddr_specified(struct sockaddr_in *ipaddr, uint32_t netmask)
             }
 
             if (1 != inet_pton(ipaddr->sin_family, temp[0], &ipae)) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                orca_show_help("help-mpi-btl-openib.txt",
                                "invalid ipaddr_inexclude", true, "exclude",
-                               orte_process_info.nodename, list[i],
+                               orca_process_info_get_nodename(), list[i],
                                "Invalid specification (inet_pton() failed)");
                 opal_argv_free(temp);
                 continue;

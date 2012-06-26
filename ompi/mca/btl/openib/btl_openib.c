@@ -17,6 +17,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -29,8 +30,8 @@
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
+#include "orca/include/rte_orca.h"
+
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
@@ -54,7 +55,7 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
-#include "orte/util/proc_info.h"
+
 #include <errno.h>
 #include <string.h>
 #include <math.h>
@@ -142,14 +143,14 @@ void mca_btl_openib_show_init_error(const char *file, int line,
         }
 #endif
 
-        orte_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
-                       true, orte_process_info.nodename,
+        orca_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
+                       true, orca_process_info_get_nodename(),
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
-        orte_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
-                       true, orte_process_info.nodename,
+        orca_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
+                       true, orca_process_info_get_nodename(),
                        file, line, func, strerror(errno), errno, dev);
     }
 }
@@ -474,9 +475,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
     ompi_btl_openib_ini_values_t values;
 
     if(mca_btl_openib_get_transport_type(openib_btl) != endpoint->rem_info.rem_transport_type) {
-        orte_show_help("help-mpi-btl-openib.txt",
+        orca_show_help("help-mpi-btl-openib.txt",
                 "conflicting transport types", true,
-                orte_process_info.nodename,
+                orca_process_info_get_nodename(),
                         ibv_get_device_name(openib_btl->device->ib_dev),
                         (openib_btl->device->ib_dev_attr).vendor_id,
                         (openib_btl->device->ib_dev_attr).vendor_part_id,
@@ -495,9 +496,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
 
     if (OMPI_SUCCESS != ret &&
         OMPI_ERR_NOT_FOUND != ret) {
-        orte_show_help("help-mpi-btl-openib.txt",
+        orca_show_help("help-mpi-btl-openib.txt",
                        "error in device init", true,
-                       orte_process_info.nodename,
+                       orca_process_info_get_nodename(),
                        ibv_get_device_name(openib_btl->device->ib_dev));
         return ret;
     }
@@ -536,9 +537,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
 
             if(0 != strcmp(mca_btl_openib_component.receive_queues,
                                                          recv_qps)) {
-                orte_show_help("help-mpi-btl-openib.txt",
+                orca_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
-                               orte_process_info.nodename,
+                               orca_process_info_get_nodename(),
                                ibv_get_device_name(openib_btl->device->ib_dev),
                                (openib_btl->device->ib_dev_attr).vendor_id,
                                (openib_btl->device->ib_dev_attr).vendor_part_id,
@@ -558,9 +559,9 @@ static int mca_btl_openib_tune_endpoint(mca_btl_openib_module_t* openib_btl,
             if(NULL != values.receive_queues) {
                 if(0 != strcmp(mca_btl_openib_component.receive_queues,
                                                 values.receive_queues)) {
-                     orte_show_help("help-mpi-btl-openib.txt",
+                     orca_show_help("help-mpi-btl-openib.txt",
                                "unsupported queues configuration", true,
-                               orte_process_info.nodename,
+                               orca_process_info_get_nodename(),
                                ibv_get_device_name(openib_btl->device->ib_dev),
                                (openib_btl->device->ib_dev_attr).vendor_id,
                                (openib_btl->device->ib_dev_attr).vendor_part_id,
@@ -630,8 +631,8 @@ int mca_btl_openib_add_procs(
 
         /* OOB, XOOB, and RDMACM do not support SELF comunication, so
          * mark the prco as unreachable by openib btl  */
-        if (OPAL_EQUAL == orte_util_compare_name_fields
-                (ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &ompi_proc->proc_name)) {
+        if (OPAL_EQUAL == orca_process_name_compare
+                (ORCA_NAME_CMP_ALL, ORCA_PROC_MY_NAME, &ompi_proc->proc_name)) {
             continue;
         }
 #if defined(HAVE_STRUCT_IBV_DEVICE_TRANSPORT_TYPE)
@@ -1757,7 +1758,7 @@ int mca_btl_openib_ft_event(int state) {
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Continue must reconstruct the routes (including modex), since we
          * have to tear down the devices completely. */
-        orte_cr_continue_like_restart = true;
+        orca_info_cr_continue_like_restart() = true;
 
         /*
          * To keep the node from crashing we need to call ibv_close_device

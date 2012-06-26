@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,6 +38,7 @@ extern opal_cmd_line_t *ompi_info_cmd_line;
 
 extern const char *ompi_info_type_all;
 extern const char *ompi_info_type_ompi;
+extern const char *ompi_info_type_orca;
 extern const char *ompi_info_type_orte;
 extern const char *ompi_info_type_opal;
 extern const char *ompi_info_type_base;

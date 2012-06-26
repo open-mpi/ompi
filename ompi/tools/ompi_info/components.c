@@ -13,6 +13,7 @@
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,7 +27,10 @@
 #include <string.h>
 
 #include "ompi/runtime/params.h"
+#if ORCA_WITH_ORTE_SUPPORT
 #include "orte/runtime/runtime.h"
+#endif /* ORCA_WITH_ORTE_SUPPORT */
+#include "orca/include/rte_orca.h"
 
 #include "opal/util/argv.h"
 
@@ -91,6 +95,7 @@
 #include "ompi/mca/crcp/base/base.h"
 #endif
 
+#if ORCA_WITH_ORTE_SUPPORT
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/state/state.h"
@@ -103,7 +108,7 @@
 #include "orte/mca/ess/base/base.h"
 #include "orte/util/show_help.h"
 #include "orte/util/proc_info.h"
-#if !ORTE_DISABLE_FULL_SUPPORT
+#if ORCA_WITH_FULL_ORTE_SUPPORT
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/oob/oob.h"
@@ -132,7 +137,11 @@
 #endif
 #include "orte/mca/filem/filem.h"
 #include "orte/mca/filem/base/base.h"
-#endif
+#endif /* ORCA_WITH_FULL_ORTE_SUPPORT */
+#endif /* ORCA_WITH_ORTE_SUPPORT */
+
+#include "orca/mca/stems/stems.h"
+#include "orca/mca/stems/base/base.h"
 
 #include "ompi/tools/ompi_info/ompi_info.h"
 /*
@@ -240,10 +249,19 @@ void ompi_info_open_components(void)
         goto error;
     }
     
+#if ORCA_WITH_ORTE_SUPPORT
     /* Register the ORTE layer's MCA parameters */
     
     if (ORTE_SUCCESS != orte_register_params()) {
         str = "orte_register_params failed";
+        goto error;
+    }
+#endif /* ORCA_WITH_ORTE_SUPPORT */
+
+    /* Register the ORCA layer's MCA parameters */
+    
+    if (ORCA_SUCCESS != orca_register_params()) {
+        str = "orca_register_params failed";
         goto error;
     }
     
@@ -360,6 +378,7 @@ void ompi_info_open_components(void)
     map->components = &opal_installdirs_components;
     opal_pointer_array_add(&component_map, map);
     
+#if ORCA_WITH_ORTE_SUPPORT
     /* ORTE frameworks
      * Set orte_process_info.proc_type to HNP to force all frameworks to
      * open components
@@ -406,7 +425,7 @@ void ompi_info_open_components(void)
     map->components = &orte_ess_base_components_available;
     opal_pointer_array_add(&component_map, map);
     
-#if !ORTE_DISABLE_FULL_SUPPORT
+#if ORCA_WITH_FULL_ORTE_SUPPORT
     if (ORTE_SUCCESS != mca_oob_base_open()) {
         goto error;
     }
@@ -508,6 +527,17 @@ void ompi_info_open_components(void)
     opal_pointer_array_add(&component_map, map);
 #endif
     
+#endif /* ORCA_WITH_ORTE_SUPPORT */
+
+    /* ORCA framework(s) */
+    if (ORTE_SUCCESS != orca_stems_base_open()) {
+        goto error;
+    }
+    map = OBJ_NEW(ompi_info_component_map_t);
+    map->type = strdup("stems");
+    map->components = &orca_stems_base_components_available;
+    opal_pointer_array_add(&component_map, map);
+
     /* MPI frameworks */
     
     if (OMPI_SUCCESS != mca_allocator_base_open()) {
@@ -737,11 +767,12 @@ void ompi_info_close_components()
         (void) mca_allocator_base_close();
         (void) ompi_osc_base_close();
 
+#if ORCA_WITH_ORTE_SUPPORT
         (void) orte_grpcomm_base_close();
         (void) orte_db_base_close();
         (void) orte_ess_base_close();
         (void) orte_show_help_finalize();
-#if !ORTE_DISABLE_FULL_SUPPORT
+#if ORCA_WITH_FULL_ORTE_SUPPORT
 #if OPAL_ENABLE_FT_CR == 1
         (void) orte_snapc_base_close();
         (void) orte_sstore_base_close();
@@ -755,10 +786,10 @@ void ompi_info_close_components()
         (void) orte_rml_base_close();
         (void) orte_routed_base_close();
         (void) mca_oob_base_close();
-
-#endif
+#endif /* ORCA_WITH_FULL_ORTE_SUPPORT */
         (void) orte_errmgr_base_close();
         (void) orte_state_base_close();
+#endif /* ORCA_WITH_ORTE_SUPPORT */
 
         (void) opal_backtrace_base_close();
         (void) opal_memory_base_close();

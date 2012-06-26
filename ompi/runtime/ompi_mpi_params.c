@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,7 +33,9 @@
 #include "ompi/datatype/ompi_datatype.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
-#include "orte/util/show_help.h"
+
+#include "orca/include/rte_orca.h"
+
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -83,9 +86,9 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            orte_show_help("help-mpi-runtime.txt", 
-                           "mpi-param-check-enabled-but-compiled-out",
-                           true);
+            orca_show_help("help-mpi-runtime.txt", 
+                                "mpi-param-check-enabled-but-compiled-out",
+                                true);
             ompi_mpi_param_check = false;
         }
     }
@@ -253,9 +256,9 @@ int ompi_mpi_register_params(void)
     
     if (ompi_mpi_leave_pinned && ompi_mpi_leave_pinned_pipeline) {
         ompi_mpi_leave_pinned_pipeline = 0;
-        orte_show_help("help-mpi-runtime.txt", 
-                       "mpi-params:leave-pinned-and-pipeline-selected",
-                       true);
+        orca_show_help("help-mpi-runtime.txt", 
+                            "mpi-params:leave-pinned-and-pipeline-selected",
+                            true);
     }
 
     mca_base_param_reg_int_name("mpi", "warn_on_fork",
@@ -279,9 +282,9 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            orte_show_help("help-mpi-runtime.txt", 
-                           "sparse groups enabled but compiled out",
-                           true);
+            orca_show_help("help-mpi-runtime.txt", 
+                                "sparse groups enabled but compiled out",
+                                true);
             ompi_use_sparse_group_storage = false;
         }
     }

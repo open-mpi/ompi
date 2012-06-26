@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2009-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
-#
+# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -41,6 +41,7 @@ my @subdirs;
 # Command line parameters
 my $no_ompi_arg = 0;
 my $no_orte_arg = 0;
+my $no_orca_arg = 0;
 my $quiet_arg = 0;
 my $debug_arg = 0;
 my $help_arg = 0;
@@ -925,6 +926,7 @@ sub patch_autotools_output {
 
 my $ok = Getopt::Long::GetOptions("no-ompi" => \$no_ompi_arg,
                                   "no-orte" => \$no_orte_arg,
+                                  "no-orca" => \$no_orca_arg,
                                   "quiet|q" => \$quiet_arg,
                                   "debug|d" => \$debug_arg,
                                   "help|h" => \$help_arg,
@@ -939,6 +941,7 @@ if (!$ok || $help_arg) {
     print "Options:
   --no-ompi | -no-ompi          Do not build the Open MPI layer
   --no-orte | -no-orte          Do not build the ORTE layer
+  --no-orca | -no-orca          Do not build the ORCA and Open MPI layers
   --quiet | -q                  Do not display normal verbose output
   --debug | -d                  Output lots of debug information
   --help | -h                   This help list
@@ -967,12 +970,26 @@ if (! -e "orte") {
     $no_orte_arg = 1;
     debug "No orte subdirectory found - will not build ORTE\n";
 }
+if (! -e "orca") {
+    $no_orca_arg = 1;
+    $no_ompi_arg = 1;
+    debug "No orca subdirectory found - will not build Pinapple and MPI layers\n";
+}
+
+# --no-orca implies --no-ompi
+if ($no_orca_arg) {
+    $no_ompi_arg = 1;
+}
 
 if ($no_ompi_arg) {
+    $project_name_long = "Open MPI Runtime Collaborative Abstraction";
+    $project_name_short = "open-rca";
+}
+if ($no_ompi_arg && $no_orca_arg) {
     $project_name_long = "Open MPI Run Time Environment";
     $project_name_short = "open-rte";
-} 
-if ($no_orte_arg) {
+}
+if ($no_ompi_arg && $no_orca_arg && $no_orte_arg ) {
     $project_name_long = "Open Portability Access Layer";
     $project_name_short = "open-pal";
 }
@@ -1126,9 +1143,11 @@ if (! (-f "VERSION" && -f "configure.ac" && -f $topdir_file)) {
 my $projects;
 push(@{$projects}, { name => "opal", dir => "opal", need_base => 1 });
 push(@{$projects}, { name => "orte", dir => "orte", need_base => 1 })
-    if (!$no_ompi_arg || !$no_orte_arg);
+    if (!$no_orte_arg);
+push(@{$projects}, { name => "orca", dir => "orca", need_base => 1 })
+    if (!$no_orca_arg);
 push(@{$projects}, { name => "ompi", dir => "ompi", need_base => 1 })
-    if (!$no_ompi_arg);
+    if (!$no_ompi_arg && !$no_orca_arg);
 
 # Save the list of projects in the m4 file
 my $str;

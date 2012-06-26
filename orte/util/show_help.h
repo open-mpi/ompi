@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -78,6 +79,8 @@ ORTE_DECLSPEC void orte_show_help_finalize(void);
  */
 ORTE_DECLSPEC int orte_show_help(const char *filename, const char *topic, 
                                  bool want_error_header, ...);
+ORTE_DECLSPEC int orte_show_helpv(const char *filename, const char *topic, 
+                                  bool want_error_header, va_list arglist);
 
 /**
  * Exactly the same as orte_show_help, but pass in a rendered string,

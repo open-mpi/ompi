@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011-2012 University of Houston. All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,7 +48,7 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/base/base.h"
 
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
@@ -61,6 +62,7 @@ opal_cmd_line_t *ompi_info_cmd_line = NULL;
 
 const char *ompi_info_type_all = "all";
 const char *ompi_info_type_ompi = "ompi";
+const char *ompi_info_type_orca = "orca";
 const char *ompi_info_type_orte = "orte";
 const char *ompi_info_type_opal = "opal";
 const char *ompi_info_type_base = "base";
@@ -80,7 +82,7 @@ int main(int argc, char *argv[])
     
     /* Initialize the argv parsing handle */
     if (OMPI_SUCCESS != opal_init_util(&argc, &argv)) {
-        orte_show_help("help-ompi_info.txt", "lib-call-fail", true, 
+        orca_show_help("help-ompi_info.txt", "lib-call-fail", true, 
                        "opal_init_util", __FILE__, __LINE__, NULL);
         exit(ret);
     }
@@ -88,7 +90,7 @@ int main(int argc, char *argv[])
     ompi_info_cmd_line = OBJ_NEW(opal_cmd_line_t);
     if (NULL == ompi_info_cmd_line) {
         ret = errno;
-        orte_show_help("help-ompi_info.txt", "lib-call-fail", true, 
+        orca_show_help("help-ompi_info.txt", "lib-call-fail", true, 
                        "opal_cmd_line_create", __FILE__, __LINE__, NULL);
         opal_finalize_util();
         exit(ret);
@@ -138,7 +140,7 @@ int main(int argc, char *argv[])
     /* Get MCA parameters, if any */
     
     if( OMPI_SUCCESS != mca_base_open() ) {
-        orte_show_help("help-ompi_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__, __LINE__ );
+        orca_show_help("help-ompi_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__, __LINE__ );
         OBJ_RELEASE(ompi_info_cmd_line);
         opal_finalize_util();
         exit(1);
@@ -203,6 +205,7 @@ int main(int argc, char *argv[])
     
     opal_pointer_array_add(&mca_types, "mca");
     opal_pointer_array_add(&mca_types, "mpi");
+    opal_pointer_array_add(&mca_types, "orca");
     opal_pointer_array_add(&mca_types, "orte");
     opal_pointer_array_add(&mca_types, "opal");
     
@@ -245,7 +248,7 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "crcp");
 #endif
     
-#if !ORTE_DISABLE_FULL_SUPPORT
+#if ORCA_WITH_FULL_ORTE_SUPPORT
     opal_pointer_array_add(&mca_types, "iof");
     opal_pointer_array_add(&mca_types, "oob");
     opal_pointer_array_add(&mca_types, "odls");
@@ -262,14 +265,19 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "sensor");
 #endif
     opal_pointer_array_add(&mca_types, "filem");
-#endif
+#endif /* ORCA_WITH_FULL_ORTE_SUPPORT */
+
     /* these are always included */
     opal_pointer_array_add(&mca_types, "state");
     opal_pointer_array_add(&mca_types, "errmgr");
     opal_pointer_array_add(&mca_types, "ess");
     opal_pointer_array_add(&mca_types, "grpcomm");
     opal_pointer_array_add(&mca_types, "db");
-    
+
+    /* ORCA framework(s) */
+    opal_pointer_array_add(&mca_types, "stems");
+
+
     /* Execute the desired action(s) */
     
     if (opal_cmd_line_is_taken(ompi_info_cmd_line, "ompi_info_pretty")) {

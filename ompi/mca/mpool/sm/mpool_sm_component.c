@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010      Los Alamos National Security, LLC.  
  *                         All rights reserved. 
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -31,7 +32,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 
-#include "orte/util/proc_info.h"
+#include "orca/include/rte_orca.h"
 
 #include "ompi/mca/allocator/base/base.h"
 #include "mpool_sm.h"
@@ -199,8 +200,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
 
     /* create initial shared memory mapping */
     len = asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
-                    orte_process_info.job_session_dir,
-                    orte_process_info.nodename );
+                    orca_process_info_get_job_session_dir(),
+                    orca_process_info_get_nodename() );
     if ( 0 > len ) {
         free(mpool_module);
         free(procs);

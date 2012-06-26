@@ -13,6 +13,7 @@
  * Copyright (c) 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,11 +47,7 @@
 #include "opal/runtime/opal_cr.h"
 #endif
 
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/mca/errmgr/errmgr.h"
+#include "orca/include/rte_orca.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/dpm/dpm.h"
@@ -91,7 +88,7 @@ attach_and_init(size_t size_ctl_structure,
 
     /* set up the map object */
     if (NULL == (map = OBJ_NEW(mca_common_sm_module_t))) {
-        ORTE_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        ORCA_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
 
@@ -114,8 +111,8 @@ attach_and_init(size_t size_ctl_structure,
         addr = OPAL_ALIGN_PTR(addr, data_seg_alignment, unsigned char *);
         /* is addr past end of the shared memory segment? */
         if ((unsigned char *)seg + shmem_ds.seg_size < addr) {
-            orte_show_help("help-mpi-common-sm.txt", "mmap too small", 1,
-                           orte_process_info.nodename,
+            orca_show_help("help-mpi-common-sm.txt", "mmap too small", 1,
+                                orca_process_info_get_nodename(),
                            (unsigned long)shmem_ds.seg_size,
                            (unsigned long)size_ctl_structure,
                            (unsigned long)data_seg_alignment);
@@ -176,8 +173,8 @@ mca_common_sm_init(ompi_proc_t **procs,
                 /* if we have a new lowest, swap it with position 0
                  * so that procs[0] is always the lowest named proc
                  */
-                if (OPAL_VALUE2_GREATER == orte_util_compare_name_fields(
-                                               ORTE_NS_CMP_ALL,
+                if (OPAL_VALUE2_GREATER == orca_process_name_compare(
+                                               ORCA_NAME_CMP_ALL,
                                                &(procs[p]->proc_name),
                                                &(procs[0]->proc_name))) {
                     temp_proc = procs[0];
@@ -198,9 +195,9 @@ mca_common_sm_init(ompi_proc_t **procs,
     }
 
     /* determine whether or not i am the lowest local process */
-    lowest_local_proc = (0 == orte_util_compare_name_fields(
-                                  ORTE_NS_CMP_ALL,
-                                  ORTE_PROC_MY_NAME,
+    lowest_local_proc = (0 == orca_process_name_compare(
+                                  ORCA_NAME_CMP_ALL,
+                                  ORCA_PROC_MY_NAME,
                                   &(procs[0]->proc_name)));
 
     /* figure out if i am the lowest rank in the group.
@@ -289,7 +286,7 @@ mca_common_sm_init_group(ompi_group_t *group,
     }
     else if (NULL == (procs = (ompi_proc_t **)
                               malloc(sizeof(ompi_proc_t *) * group_size))) {
-        ORTE_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
+        ORCA_ERROR_LOG(OMPI_ERR_OUT_OF_RESOURCE);
         goto out;
     }
     /* make sure that all the procs in the group are local */

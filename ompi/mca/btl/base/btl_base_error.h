@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -26,9 +27,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include "orte/util/proc_info.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
+#include "orca/include/rte_orca.h"
 
 OMPI_DECLSPEC extern int mca_btl_base_verbose;
 
@@ -38,8 +37,8 @@ OMPI_DECLSPEC extern int mca_btl_base_out(const char*, ...) __opal_attribute_for
 #define BTL_OUTPUT(args)                                  \
 do {                                                      \
     mca_btl_base_out("[%s]%s[%s:%d:%s] ",                 \
-            orte_process_info.nodename,                   \
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),           \
+            orca_process_info_get_nodename(),        \
+            ORCA_NAME_PRINT(ORCA_PROC_MY_NAME), \
             __FILE__, __LINE__, __func__);                \
     mca_btl_base_out args;                                \
     mca_btl_base_out("\n");                               \
@@ -49,8 +48,8 @@ do {                                                      \
 #define BTL_ERROR(args)                                   \
 do {                                                      \
     mca_btl_base_err("[%s]%s[%s:%d:%s] ",                 \
-            orte_process_info.nodename,                   \
-            ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),           \
+            orca_process_info_get_nodename(),                   \
+            ORCA_NAME_PRINT(ORCA_PROC_MY_NAME),           \
             __FILE__, __LINE__, __func__);                \
     mca_btl_base_err args;                                \
     mca_btl_base_err("\n");                               \
@@ -59,9 +58,9 @@ do {                                                      \
 #define BTL_PEER_ERROR(proc, args)                        \
 do {                                                      \
     mca_btl_base_err("%s[%s:%d:%s] from %s ",             \
-                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),  \
+                     ORCA_NAME_PRINT(ORCA_PROC_MY_NAME),  \
                      __FILE__, __LINE__, __func__,        \
-                     orte_process_info.nodename);         \
+                     orca_process_info_get_nodename());         \
     if(proc && proc->proc_hostname) {                     \
         mca_btl_base_err("to: %s ", proc->proc_hostname); \
     }                                                     \
@@ -75,8 +74,8 @@ do {                                                      \
 do {                                                      \
    if(mca_btl_base_verbose > 0) {                         \
         mca_btl_base_err("[%s]%s[%s:%d:%s] ",             \
-                orte_process_info.nodename,               \
-                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),       \
+                orca_process_info_get_nodename(),               \
+                ORCA_NAME_PRINT(ORCA_PROC_MY_NAME),       \
                 __FILE__, __LINE__, __func__);            \
         mca_btl_base_err args;                            \
         mca_btl_base_err("\n");                           \

@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -125,14 +126,14 @@ mca_btl_ud_proc_t* mca_btl_ud_proc_create(ompi_proc_t* ompi_proc)
     if(OMPI_SUCCESS != rc) {
         opal_output(0,
                 "[%s:%d] ompi_modex_recv failed for peer %s",
-                __FILE__,__LINE__,ORTE_NAME_PRINT(&ompi_proc->proc_name));
+                __FILE__,__LINE__,ORCA_NAME_PRINT(&ompi_proc->proc_name));
         OBJ_RELEASE(module_proc);
         return NULL;
     }
 
     if((size % sizeof(mca_btl_ud_addr_t)) != 0) {
         opal_output(0, "[%s:%d] invalid module address for peer %s",
-                __FILE__,__LINE__,ORTE_NAME_PRINT(&ompi_proc->proc_name));
+                __FILE__,__LINE__,ORCA_NAME_PRINT(&ompi_proc->proc_name));
         OBJ_RELEASE(module_proc);
         return NULL;
     }

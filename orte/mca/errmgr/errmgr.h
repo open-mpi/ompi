@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -196,6 +196,7 @@ typedef void (*orte_errmgr_base_module_log_fn_t)(int error_code, char *filename,
  */
 typedef void (*orte_errmgr_base_module_abort_fn_t)(int error_code, char *fmt, ...)
 __opal_attribute_format_funcptr__(__printf__, 2, 3);
+typedef void (*orte_errmgr_base_module_vabort_fn_t)(int error_code, char *fmt, va_list arglist);
 
 /**
  * Alert - abort peers
@@ -288,6 +289,8 @@ struct orte_errmgr_base_module_2_3_0_t {
 
     /* Set the callback function */
     orte_errmgr_base_module_set_fault_callback_t        set_fault_callback;
+
+    orte_errmgr_base_module_vabort_fn_t                 vabort;
 };
 typedef struct orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_2_3_0_t;
 typedef orte_errmgr_base_module_2_3_0_t orte_errmgr_base_module_t;

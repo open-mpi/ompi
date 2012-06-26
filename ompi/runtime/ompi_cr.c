@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,9 +46,6 @@
 #include "opal/mca/crs/base/base.h"
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/runtime/opal_cr.h"
-
-#include "orte/mca/snapc/snapc.h"
-#include "orte/mca/snapc/base/base.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -278,7 +276,7 @@ int ompi_cr_coord(int state)
     }
 
     /*
-     * Call the previous callback, which should be ORTE [which will handle OPAL]
+     * Call the previous callback, which should be Open RTE [which will handle OPAL]
      */
     if(OMPI_SUCCESS != (ret = prev_coord_callback(state)) ) {
         exit_status = ret;
@@ -380,7 +378,7 @@ static int ompi_cr_coord_pre_restart(void) {
      * Notify PML
      *  - Will notify BML and BTL's
      *  - The intention here is to have the PML shutdown all the old components
-     *    and handles. On the second pass (once ORTE is restarted) we can
+     *    and handles. On the second pass (once Open RTE is restarted) we can
      *    reconnect processes.
      */
     if( OMPI_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_RESTART_PRE))) {
@@ -393,17 +391,20 @@ static int ompi_cr_coord_pre_restart(void) {
 }
     
 static int ompi_cr_coord_pre_continue(void) {
-#if !ORTE_DISABLE_FULL_SUPPORT
+#if OPAL_ENABLE_FT_CR    == 0
+    return OMPI_SUCCESS;
+#else
+#if ORCA_WITH_FULL_ORTE_SUPPORT
     int ret, exit_status = OMPI_SUCCESS;
 
     /*
-     * Can not really do much until ORTE is up and running,
+     * Can not really do much until Open RTE is up and running,
      * so defer action until the post_continue function.
      */
     opal_output_verbose(10, ompi_cr_output,
                         "ompi_cr: coord_pre_continue: ompi_cr_coord_pre_continue()");
 
-    if( orte_cr_continue_like_restart ) {
+    if( orca_info_cr_continue_like_restart() ) {
         /* Mimic ompi_cr_coord_pre_restart(); */
         if( OMPI_SUCCESS != (ret = mca_pml.pml_ft_event(OPAL_CRS_CONTINUE))) {
             exit_status = ret;
@@ -426,6 +427,7 @@ static int ompi_cr_coord_pre_continue(void) {
 #else
     return OMPI_SUCCESS;
 #endif
+#endif
 }
 
 /*************
@@ -433,7 +435,7 @@ static int ompi_cr_coord_pre_continue(void) {
  *************/
 static int ompi_cr_coord_post_ckpt(void) {
     /*
-     * Now that ORTE/OPAL are shutdown, we really can't do much
+     * Now that Open RTE/OPAL are shutdown, we really can't do much
      * so assume pre_ckpt took care of everything.
      */
     opal_output_verbose(10, ompi_cr_output,

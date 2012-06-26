@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,13 +22,13 @@
 
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
+
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
 #include "opal/runtime/opal.h"
 
 OBJ_CLASS_INSTANCE( mca_btl_base_selected_module_t,
@@ -152,9 +153,9 @@ int mca_btl_base_select(bool enable_progress_threads,
     /* Finished querying all components.  Check for the bozo case. */
 
     if (0 == opal_list_get_size(&mca_btl_base_modules_initialized)) {
-        orte_show_help("help-mca-base.txt", "find-available:none-found", true,
+        orca_show_help("help-mca-base.txt", "find-available:none-found", true,
                        "btl");
-        orte_errmgr.abort(1, NULL);
+        orca_error_mgr_abort(1, NULL);
     }
     return OMPI_SUCCESS;
 }

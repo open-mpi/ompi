@@ -12,6 +12,7 @@
  * Copyright (c) 2008      UT-Battelle, LLC. All rights reserved.
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,7 +26,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
-#include "orte/mca/errmgr/errmgr.h"
+#include "orca/include/rte_orca.h"
 #include "ompi/mca/mpool/mpool.h" 
 #include "pml_bfo.h"
 #include "pml_bfo_hdr.h"

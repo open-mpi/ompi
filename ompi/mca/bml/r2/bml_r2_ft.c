@@ -12,6 +12,7 @@
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,8 +28,7 @@
 
 #include "opal/runtime/opal_progress.h"
 
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/util/proc_info.h"
+#include "orca/include/rte_orca.h"
 
 #include "ompi/runtime/ompi_cr.h"
 #include "ompi/mca/bml/base/base.h"
@@ -42,7 +42,7 @@
 
 int mca_bml_r2_ft_event(int state)
 {
-#if !ORTE_DISABLE_FULL_SUPPORT
+#if ORCA_WITH_FULL_ORTE_SUPPORT
     static bool first_continue_pass = false;
     ompi_proc_t** procs = NULL;
     size_t num_procs;
@@ -51,7 +51,6 @@ int mca_bml_r2_ft_event(int state)
     int loc_state;
     int param_type = -1;
     char *param_list = NULL;
-    orte_grpcomm_collective_t coll;
 
     if(OPAL_CRS_CHECKPOINT == state) {
         /* Do nothing for now */
@@ -60,7 +59,7 @@ int mca_bml_r2_ft_event(int state)
         first_continue_pass = !first_continue_pass;
 
         /* Since nothing in Checkpoint, we are fine here (unless required by BTL) */
-        if( orte_cr_continue_like_restart && !first_continue_pass) {
+        if( orca_info_cr_continue_like_restart() && !first_continue_pass) {
             procs = ompi_proc_all(&num_procs);
             if(NULL == procs) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
@@ -142,7 +141,7 @@ int mca_bml_r2_ft_event(int state)
     }
     else if(OPAL_CRS_CONTINUE == state) {
         /* Matches OPAL_CRS_RESTART_PRE */
-        if( orte_cr_continue_like_restart && first_continue_pass) {
+        if( orca_info_cr_continue_like_restart() && first_continue_pass) {
             if( OMPI_SUCCESS != (ret = mca_bml_r2_finalize()) ) {
                 opal_output(0, "bml:r2: ft_event(Restart): Failed to finalize BML framework\n");
                 return ret;
@@ -153,19 +152,14 @@ int mca_bml_r2_ft_event(int state)
             }
         }
         /* Matches OPAL_CRS_RESTART */
-        else if( orte_cr_continue_like_restart && !first_continue_pass ) {
+        else if( orca_info_cr_continue_like_restart() && !first_continue_pass ) {
             /*
              * Barrier to make all processes have been successfully restarted before
              * we try to remove some restart only files.
              */
-            OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-            coll.id = orte_process_info.peer_init_barrier;
-            if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
-                opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+            if (ORCA_SUCCESS != (ret = orca_coll_barrier(ORCA_COLL_TYPE_BARRIER_INIT) ) ) {
+                opal_output(0, "bml:r2: ft_event(Restart): Failed in orca_coll_barrier (%d)", ret);
                 return ret;
-            }
-            while (coll.active) {
-                opal_progress();
             }
 
             /*
@@ -236,14 +230,9 @@ int mca_bml_r2_ft_event(int state)
          * Barrier to make all processes have been successfully restarted before
          * we try to remove some restart only files.
          */
-        OBJ_CONSTRUCT(&coll, orte_grpcomm_collective_t);
-        coll.id = orte_process_info.peer_init_barrier;
-        if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier(&coll))) {
-            opal_output(0, "bml:r2: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
+        if (ORCA_SUCCESS != (ret = orca_coll_barrier(ORCA_COLL_TYPE_BARRIER_INIT) ) ) {
+            opal_output(0, "bml:r2: ft_event(Restart): Failed in orca_coll_barrier (%d)", ret);
             return ret;
-        }
-        while (coll.active) {
-            opal_progress();
         }
 
         /*

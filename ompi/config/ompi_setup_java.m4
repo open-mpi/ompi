@@ -14,6 +14,7 @@ dnl Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
 dnl Copyright (c) 2007-2012 Oracle and/or its affiliates.  All rights reserved.
 dnl Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
+dnl Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -26,11 +27,29 @@ AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS_BANNER],[
     ompi_show_subtitle "Java MPI bindings" 
 ])
 
+#
+# OMPI_SETUP_NO_JAVA_BINDINGS()
+# -----------------------------
+# Force configure to not build bindings.
+# For the case: ./autogen.pl --no-orte
+#
+AC_DEFUN([OMPI_SETUP_NO_JAVA_BINDINGS],[
+    AC_MSG_CHECKING([if want Java bindings])
+    AC_MSG_RESULT([no (Needs ORTE support)])
+
+    WANT_MPI_JAVA_SUPPORT=0
+
+    AC_DEFINE_UNQUOTED([OMPI_WANT_JAVA_BINDINGS], [$WANT_MPI_JAVA_SUPPORT],
+                       [do we want java mpi bindings])
+    AM_CONDITIONAL(OMPI_WANT_JAVA_BINDINGS, test "$WANT_MPI_JAVA_SUPPORT" = "1")
+])
+
 # OMPI_SETUP_JAVA_BINDINGS()
 # ----------------
 # Do everything required to setup the Java MPI bindings.  Safe to AC_REQUIRE
 # this macro.
 AC_DEFUN([OMPI_SETUP_JAVA_BINDINGS],[
+
     # must have Java setup
     AC_REQUIRE([ORTE_SETUP_JAVA])
 

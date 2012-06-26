@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,7 +23,7 @@
 
 #include <stdlib.h>
 
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
@@ -50,7 +51,7 @@ int MPI_Init(int *argc, char ***argv)
 
     if (ompi_mpi_finalized) {
         if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-            orte_show_help("help-mpi-api.txt",
+            orca_show_help("help-mpi-api.txt",
                            "mpi-function-after-finalize", true, FUNC_NAME);
         }
         return ompi_errhandler_invoke(NULL, NULL,
@@ -58,7 +59,7 @@ int MPI_Init(int *argc, char ***argv)
                                       MPI_ERR_OTHER, FUNC_NAME);
     } else if (ompi_mpi_initialized) {
         if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-            orte_show_help("help-mpi-api.txt", "mpi-initialize-twice",
+            orca_show_help("help-mpi-api.txt", "mpi-initialize-twice",
                            true, FUNC_NAME);
         }
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER,

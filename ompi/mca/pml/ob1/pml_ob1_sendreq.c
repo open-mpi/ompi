@@ -15,6 +15,7 @@
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +29,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
-#include "orte/mca/errmgr/errmgr.h"
+#include "orca/include/rte_orca.h"
 #include "ompi/mca/mpool/mpool.h" 
 #include "pml_ob1.h"
 #include "pml_ob1_hdr.h"
@@ -187,7 +188,7 @@ mca_pml_ob1_match_completion_free( struct mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
     mca_pml_ob1_match_completion_free_request( bml_btl, sendreq );
 }
@@ -231,7 +232,7 @@ mca_pml_ob1_rndv_completion( mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     /* count bytes of user data actually delivered. As the rndv completion only
@@ -312,7 +313,7 @@ mca_pml_ob1_frag_completion( mca_btl_base_module_t* btl,
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     /* count bytes of user data actually delivered */
@@ -1069,8 +1070,8 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
-        ORTE_ERROR_LOG(status);
-        orte_errmgr.abort(-1, NULL);
+        ORCA_ERROR_LOG(status);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc, 
@@ -1162,8 +1163,8 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t *frag )
             return OMPI_ERR_OUT_OF_RESOURCE;
         } else {
             /* TSW - FIX */
-            ORTE_ERROR_LOG(rc);
-            orte_errmgr.abort(-1, NULL);
+            ORCA_ERROR_LOG(rc);
+            orca_error_mgr_abort(-1, NULL);
         }
     }
 
@@ -1196,8 +1197,8 @@ void mca_pml_ob1_send_request_put( mca_pml_ob1_send_request_t* sendreq,
 
     if( OPAL_UNLIKELY(NULL == frag) ) {
         /* TSW - FIX */
-        ORTE_ERROR_LOG(rc);
-        orte_errmgr.abort(-1, NULL);
+        ORCA_ERROR_LOG(rc);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     assert (btl->btl_seg_size * hdr->hdr_seg_cnt <= sizeof (frag->rdma_segs));

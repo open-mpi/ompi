@@ -2,6 +2,7 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -42,9 +43,8 @@
 #include "pml_bfo_rdmafrag.h"
 #include "pml_bfo_failover.h"
 #include "ompi/mca/bml/base/base.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/grpcomm/grpcomm.h"
-#include "orte/util/show_help.h"
+
+#include "orca/include/rte_orca.h"
 
 #include "ompi/runtime/ompi_cr.h"
 
@@ -288,7 +288,7 @@ void mca_pml_bfo_repost_fin(struct mca_btl_base_descriptor_t* des) {
 
     opal_output_verbose(20, mca_pml_bfo_output,
                         "REPOST: BFO_HDR_TYPE_FIN: seq=%d,myrank=%d,peer=%d,hdr->hdr_fail=%d,src=%d",
-                        hdr->hdr_match.hdr_seq, ORTE_PROC_MY_NAME->vpid, proc->proc_name.vpid,
+                        hdr->hdr_match.hdr_seq, orca_process_info_get_vpid(ORCA_PROC_MY_NAME), proc->proc_name.vpid,
                         hdr->hdr_fail, hdr->hdr_match.hdr_src);
 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
@@ -380,7 +380,7 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
     mca_pml_bfo_hdr_t* hdr = (mca_pml_bfo_hdr_t*)segments->seg_addr.pval;
     mca_pml_bfo_recv_request_t* recvreq;
     ompi_proc_t* ompi_proc;
-    orte_process_name_t orte_proc;
+    orca_process_name_t orca_proc;
 
     bfo_hdr_ntoh(hdr, MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNOTIFY);
     recvreq = (mca_pml_bfo_recv_request_t*)hdr->hdr_restart.hdr_dst_req.pval;
@@ -394,10 +394,10 @@ void mca_pml_bfo_recv_frag_callback_rndvrestartnotify(mca_btl_base_module_t* btl
     if ((hdr->hdr_match.hdr_ctx != recvreq->req_recv.req_base.req_comm->c_contextid) ||
         (hdr->hdr_match.hdr_src != recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE) ||
         (hdr->hdr_match.hdr_seq != (uint16_t)recvreq->req_msgseq)) {
-        orte_proc.jobid = hdr->hdr_restart.hdr_jobid;
-        orte_proc.vpid = hdr->hdr_restart.hdr_vpid;
+        orca_proc.jobid = hdr->hdr_restart.hdr_jobid;
+        orca_proc.vpid = hdr->hdr_restart.hdr_vpid;
 
-        ompi_proc = ompi_proc_find(&orte_proc);
+        ompi_proc = ompi_proc_find(&orca_proc);
         opal_output_verbose(20, mca_pml_bfo_output,
                             "RNDVRESTARTNOTIFY: received: does not match request, sending NACK back "
                             "PML:req=%d,hdr=%d CTX:req=%d,hdr=%d SRC:req=%d,hdr=%d "
@@ -697,7 +697,7 @@ void mca_pml_bfo_send_request_rndvrestartnotify(mca_pml_bfo_send_request_t* send
                        MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if( OPAL_UNLIKELY(NULL == des) ) {
         opal_output(0, "%s:%d Our of resources, cannot proceed", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     /* fill out header */
@@ -711,8 +711,8 @@ void mca_pml_bfo_send_request_rndvrestartnotify(mca_pml_bfo_send_request_t* send
     restart->hdr_src_req.pval = sendreq;
     restart->hdr_dst_req = sendreq->req_recv;
     restart->hdr_dst_rank = sendreq->req_send.req_base.req_peer; /* Needed for NACKs */
-    restart->hdr_jobid = ORTE_PROC_MY_NAME->jobid;
-    restart->hdr_vpid = ORTE_PROC_MY_NAME->vpid;
+    restart->hdr_jobid = orca_process_info_get_jobid(ORCA_PROC_MY_NAME);
+    restart->hdr_vpid = orca_process_info_get_vpid(ORCA_PROC_MY_NAME);
 
     bfo_hdr_hton(restart, MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNOTIFY, proc);
 
@@ -730,7 +730,7 @@ void mca_pml_bfo_send_request_rndvrestartnotify(mca_pml_bfo_send_request_t* send
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNOTIFY);
     if( OPAL_UNLIKELY( rc < 0 ) ) {
         opal_output(0, "[%s:%d] Cannot send rndvrestartnotify message", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 
 }
@@ -907,7 +907,7 @@ void mca_pml_bfo_repost_match_fragment(struct mca_btl_base_descriptor_t* des)
         } else {
             opal_output(0, "%s:%d FATAL ERROR, cannot repost BFO_HDR_TYPE_MATCH",
                         __FILE__, __LINE__);
-            orte_errmgr.abort(-1, NULL);
+            orca_error_mgr_abort(-1, NULL);
         }
     } else {
         /* No send request available so alloc and repost explicitly */
@@ -926,7 +926,7 @@ void mca_pml_bfo_repost_match_fragment(struct mca_btl_base_descriptor_t* des)
         if (OPAL_UNLIKELY(NULL == newdes)) {
             opal_output(0, "%s:%d FATAL ERROR, cannot repost BFO_HDR_TYPE_MATCH",
                         __FILE__, __LINE__);
-            orte_errmgr.abort(-1, NULL);
+            orca_error_mgr_abort(-1, NULL);
         }
         newseg = newdes->des_src;
         /* Copy over all the data that is actually sent over the wire */
@@ -950,7 +950,7 @@ void mca_pml_bfo_repost_match_fragment(struct mca_btl_base_descriptor_t* des)
         } else {
             opal_output(0, "%s:%d FATAL ERROR, cannot repost BFO_HDR_TYPE_MATCH",
                         __FILE__, __LINE__);
-            orte_errmgr.abort(-1, NULL);
+            orca_error_mgr_abort(-1, NULL);
         }
    }
     /* No need to free any descriptors.  The BTLs take care of it since
@@ -1057,7 +1057,7 @@ void mca_pml_bfo_recv_request_recverrnotify(mca_pml_bfo_recv_request_t* recvreq,
                        MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if( OPAL_UNLIKELY(NULL == des) ) {
         opal_output(0, "%s:%d Out of resources, cannot proceed", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     /* fill out header */
@@ -1088,7 +1088,7 @@ void mca_pml_bfo_recv_request_recverrnotify(mca_pml_bfo_recv_request_t* recvreq,
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_BFO_HDR_TYPE_RECVERRNOTIFY);
     if( OPAL_UNLIKELY( rc < 0 ) ) {
         opal_output(0, "[%s:%d] Cannot send recverrnotify message", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
     /* Prevent future error messages on this request */
     recvreq->req_errstate |= RECVREQ_RECVERRSENT;
@@ -1141,7 +1141,7 @@ void mca_pml_bfo_recv_request_rndvrestartack(mca_pml_bfo_recv_request_t* recvreq
                        MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if( OPAL_UNLIKELY(NULL == des) ) {
         opal_output(0, "%s:%d Out of resources, cannot proceed", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     /* fill out header */
@@ -1173,7 +1173,7 @@ void mca_pml_bfo_recv_request_rndvrestartack(mca_pml_bfo_recv_request_t* recvreq
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_BFO_HDR_TYPE_RNDVRESTARTACK);
     if( OPAL_UNLIKELY( rc < 0 ) ) {
         opal_output(0, "[%s:%d] Cannot send rndvrestartack message", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
     /* Move to the next state so we do not send anymore ACKs */
     recvreq->req_errstate &= ~RECVREQ_RNDVRESTART_RECVED;
@@ -1223,7 +1223,7 @@ void mca_pml_bfo_recv_request_rndvrestartnack(mca_btl_base_descriptor_t* olddes,
                        MCA_BTL_DES_SEND_ALWAYS_CALLBACK);
     if( OPAL_UNLIKELY(NULL == des) ) {
         opal_output(0, "%s:%d Out of resources, cannot proceed", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     /* fill out header */
@@ -1254,7 +1254,7 @@ void mca_pml_bfo_recv_request_rndvrestartnack(mca_btl_base_descriptor_t* olddes,
     rc = mca_bml_base_send(bml_btl, des, MCA_PML_BFO_HDR_TYPE_RNDVRESTARTNACK);
     if( OPAL_UNLIKELY( rc < 0 ) ) {
         opal_output(0, "[%s:%d] Cannot send rndvrestartnack message", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 }
 
@@ -1370,7 +1370,7 @@ void mca_pml_bfo_recv_restart_completion( mca_btl_base_module_t* btl,
             break;
         default:
             opal_output(0, "[%s:%d] Unknown callback error", __FILE__, __LINE__);
-            orte_errmgr.abort(-1, NULL);
+            orca_error_mgr_abort(-1, NULL);
         }
     }
 }
@@ -1412,11 +1412,11 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
     if (true == remove) {
         mca_bml.bml_del_proc_btl(errproc, btl);
 
-         opal_output_verbose(10, mca_pml_bfo_output,
+        opal_output_verbose(10, mca_pml_bfo_output,
                             "BTL %s error: rank=%d mapping out %s "
                             "to rank=%d on node=%s \n",
                             btl->btl_component->btl_version.mca_component_name,
-                            ORTE_PROC_MY_NAME->vpid,
+                            orca_process_info_get_vpid(ORCA_PROC_MY_NAME),
                             btlname, errproc->proc_name.vpid,
                             errproc->proc_hostname);
 
@@ -1431,7 +1431,7 @@ void mca_pml_bfo_map_out_btl(struct mca_btl_base_module_t* btl,
             (ep->btl_rdma.arr_size == 0)) {
             opal_output(0, "%s:%d: No more interfaces, aborting",
                         __FILE__, __LINE__);
-            orte_errmgr.abort(-1, NULL);
+            orca_error_mgr_abort(-1, NULL);
         }
     }
 }
@@ -1452,7 +1452,7 @@ void mca_pml_bfo_failover_error_handler(struct mca_btl_base_module_t* btl,
     if(NULL == procs) {
         opal_output(0, "%s:%d: Out of memory, giving up.",
                     __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     if (NULL == btlname) {
@@ -1512,7 +1512,7 @@ static void mca_pml_bfo_error_pending_packets(mca_btl_base_module_t* btl,
         opal_output_verbose(0, mca_pml_bfo_output,
                             "%s:%d: Support not implemented, aborting",
                     __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
 #endif
         OPAL_THREAD_LOCK(&mca_pml_bfo.lock);
         pckt = (mca_pml_bfo_pckt_pending_t*)
@@ -1571,7 +1571,7 @@ static void mca_pml_bfo_error_pending_packets(mca_btl_base_module_t* btl,
         opal_output_verbose(0, mca_pml_bfo_output,
                             "%s:%d: Support not implemented, aborting",
                     __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
 #endif
         OPAL_THREAD_LOCK(&mca_pml_bfo.lock);
         frag = (mca_pml_bfo_rdma_frag_t*)
@@ -1655,7 +1655,7 @@ static void mca_pml_bfo_error_pending_packets(mca_btl_base_module_t* btl,
         opal_output_verbose(0, mca_pml_bfo_output,
                             "%s:%d: Support not implemented, aborting",
                     __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
 #endif
         OPAL_THREAD_LOCK(&mca_pml_bfo.lock);
         sendreq = (mca_pml_bfo_send_request_t*)
@@ -1722,7 +1722,7 @@ static void mca_pml_bfo_error_pending_packets(mca_btl_base_module_t* btl,
         opal_output_verbose(0, mca_pml_bfo_output,
                             "%s:%d: Support not implemented, aborting",
                     __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
 #endif
         OPAL_THREAD_LOCK(&mca_pml_bfo.lock);
         recvreq = (mca_pml_bfo_recv_request_t*)
@@ -1834,7 +1834,7 @@ void mca_pml_bfo_check_recv_ctl_completion_status(mca_btl_base_module_t* btl,
             }
             break;
         default:
-            orte_errmgr.abort(-1, NULL);
+            orca_error_mgr_abort(-1, NULL);
         }
     }
 
@@ -1967,7 +1967,7 @@ void mca_pml_bfo_update_eager_bml_btl_recv_ctl(mca_bml_base_btl_t** bml_btl,
             /* In theory, this can never happen. */
             opal_output(0, "%s:%d FATAL ERROR, unknown header (hdr=%d)",
                         __FILE__, __LINE__, common->hdr_type);
-            orte_errmgr.abort(-1, NULL);
+            orca_error_mgr_abort(-1, NULL);
         }
 
         mca_pml_bfo_find_recvreq_eager_bml_btl(bml_btl, btl, recvreq, type);
@@ -2183,6 +2183,6 @@ void mca_pml_bfo_send_ctl_completion_status_error(struct mca_btl_base_descriptor
     default:
         opal_output(0, "%s:%d FATAL ERROR, unknown header (hdr=%d)",
                     __FILE__, __LINE__, hdr->hdr_common.hdr_type);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 }

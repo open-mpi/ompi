@@ -12,6 +12,7 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +38,7 @@
 #include "opal/dss/dss_types.h"
 #include "opal/mca/hwloc/hwloc.h"
 
-#include "orte/types.h"
+#include "orca/include/rte_orca.h"
 
 
 BEGIN_C_DECLS
@@ -55,7 +56,7 @@ struct ompi_proc_t {
     /** allow proc to be placed on a list */
     opal_list_item_t                super;
     /** this process' name */
-    orte_process_name_t             proc_name;
+    orca_process_name_t             proc_name;
     /** PML specific proc data */
     struct mca_pml_endpoint_t*      proc_pml;
     /** BML specific proc data */
@@ -221,14 +222,14 @@ static inline ompi_proc_t* ompi_proc_local(void)
  *
  * @return Pointer to the process instance for \c name
 */
-OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const orte_process_name_t* name );
+OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const orca_process_name_t* name );
 
 /**
  * Pack proc list into portable buffer
  *
  * This function takes a list of ompi_proc_t pointers (e.g. as given
- * in groups) and returns a orte buffer containing all information
- * needed to add the proc to a remote list.  This includes the ORTE
+ * in groups) and returns a opal buffer containing all information
+ * needed to add the proc to a remote list.  This includes the RTE
  * process name, the architecture, and the hostname.  Ordering is
  * maintained.  The buffer is packed to be sent to a remote node with
  * different architecture (endian or word size).  The buffer can be
@@ -236,7 +237,7 @@ OMPI_DECLSPEC ompi_proc_t * ompi_proc_find ( const orte_process_name_t* name );
  * 
  * @param[in] proclist     List of process pointers
  * @param[in] proclistsize Length of the proclist array
- * @param[in,out] buf      An orte_buffer containing the packed names.  
+ * @param[in,out] buf      An opal_buffer containing the packed names.  
  *                         The buffer must be constructed but empty when
  *                         passed to this function
  * @retval OMPI_SUCCESS    Success
@@ -271,7 +272,7 @@ OMPI_DECLSPEC int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
  * provided for newproclist.  The user is responsible for freeing the
  * newproclist array.
  *
- * @param[in] buf          orte_buffer containing the packed names
+ * @param[in] buf          opal_buffer containing the packed names
  * @param[in] proclistsize number of expected proc-pointres
  * @param[out] proclist    list of process pointers
  * @param[out] newproclistsize Number of new procs added as a result

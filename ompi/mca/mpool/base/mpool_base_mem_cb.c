@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,8 +28,7 @@
 #endif
 
 
-#include "orte/util/show_help.h"
-#include "orte/util/proc_info.h"
+#include "orca/include/rte_orca.h"
 
 #include "ompi/mca/mpool/base/mpool_base_mem_cb.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -72,17 +72,17 @@ void mca_mpool_base_mem_cb(void* base, size_t size, void* cbdata,
                 if (from_alloc) {
                     int len;
                     len = snprintf(msg, sizeof(msg), "[%s:%d] Attempt to free memory that is still in use by an ongoing MPI communication (buffer %p, size %lu).  MPI job will now abort.\n",
-                             orte_process_info.nodename,
-                             getpid(),
-                             base, (unsigned long) size);
+                                   orca_process_info_get_nodename(),
+                                   getpid(),
+                                   base, (unsigned long) size);
                     msg[sizeof(msg) - 1] = '\0';
                     write(2, msg, len);
                 } else {
-                    orte_show_help("help-mpool-base.txt", 
-                                   "cannot deregister in-use memory", true,
-                                   current->mpool_component->mpool_version.mca_component_name,
-                                   orte_process_info.nodename,
-                                   base, (unsigned long) size);
+                    orca_show_help("help-mpool-base.txt", 
+                                        "cannot deregister in-use memory", true,
+                                        current->mpool_component->mpool_version.mca_component_name,
+                                        orca_process_info_get_nodename(),
+                                        base, (unsigned long) size);
                 }
 
                 /* We're in a callback from somewhere; we can't do
