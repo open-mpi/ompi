@@ -20,8 +20,7 @@
  */
 
 #include "btl_udapl.h"
-#include "btl_udapl_frag.h" 
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "btl_udapl_frag.h"
 
 
 static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag) 

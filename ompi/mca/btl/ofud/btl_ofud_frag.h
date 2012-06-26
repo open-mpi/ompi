@@ -25,8 +25,6 @@
 
 #include <infiniband/verbs.h>
 
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
-
 #include "btl_ofud.h"
 
 

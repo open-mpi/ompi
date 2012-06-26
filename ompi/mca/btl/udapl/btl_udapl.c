@@ -35,7 +35,7 @@
 #include "btl_udapl_proc.h"
 #include "opal/datatype/opal_convertor.h" 
 #include "ompi/mca/mpool/base/base.h" 
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/proc/proc.h"
 
@@ -352,6 +352,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     ((struct sockaddr_in*)&btl->udapl_addr.addr)->sin_port = htons(port);
 
     /* initialize the memory pool */
+    res.pool_name = "udapl";
     res.reg_data = btl;
     res.sizeof_reg = sizeof(mca_btl_udapl_reg_t);
     res.register_mem = udapl_reg_mr;

@@ -31,7 +31,6 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/mpool/base/base.h" 
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "btl_udapl.h"
 #include "btl_udapl_frag.h"
 #include "btl_udapl_endpoint.h" 

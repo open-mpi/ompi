@@ -53,9 +53,8 @@
 #include "ompi/proc/proc.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/mpiruntime.h"
 
@@ -1417,6 +1416,7 @@ static int init_one_device(opal_list_t *btl_list, struct wv_device* ib_dev)
         device->use_eager_rdma = values.use_eager_rdma;
     }
 
+    mpool_resources.pool_name = "$Sverbs";
     mpool_resources.reg_data = (void*)device;
     mpool_resources.sizeof_reg = sizeof(mca_btl_wv_reg_t);
     mpool_resources.register_mem = wv_reg_mr;

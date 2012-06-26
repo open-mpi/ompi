@@ -39,7 +39,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/runtime/ompi_module_exchange.h"
 #include "ompi/runtime/mpiruntime.h"
 
@@ -131,7 +130,7 @@ static int mca_btl_ud_component_register(void)
                                 NULL, &mca_btl_ofud_component.if_exclude);
 
     mca_btl_ud_param_reg_string("mpool", "Name of the memory pool to be used",
-                                "rdma", &mca_btl_ofud_component.ud_mpool_name);
+                                "grdma", &mca_btl_ofud_component.ud_mpool_name);
 
     mca_btl_ud_param_reg_int("ib_pkey_index", "IB pkey index",
                              0, (int*)&mca_btl_ofud_component.ib_pkey_ix);

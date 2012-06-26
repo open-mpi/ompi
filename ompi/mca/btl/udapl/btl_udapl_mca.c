@@ -137,7 +137,7 @@ int mca_btl_udapl_register_mca_params(void)
 
     CHECK_PARAM_REGISTER_RETURN_VALUE(mca_btl_udapl_reg_string("mpool",
         "Name of the memory pool to be used.",
-        "rdma",
+        "grdma",
         &mca_btl_udapl_component.udapl_mpool_name,
         REGSTR_EMPTY_NOT_OK), tmp_rc, rc);
 
