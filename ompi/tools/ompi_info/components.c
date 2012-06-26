@@ -12,7 +12,7 @@
  * Copyright (c) 2006-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2011      University of Houston. All rights reserved.
+ * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -80,8 +80,6 @@
 #include "ompi/mca/fbtl/base/base.h"
 #include "ompi/mca/fs/fs.h"
 #include "ompi/mca/fs/base/base.h"
-#include "ompi/mca/fcache/fcache.h"
-#include "ompi/mca/fcache/base/base.h"
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fcoll/base/base.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
@@ -560,14 +558,6 @@ void ompi_info_open_components(void)
     map->components = &mca_fbtl_base_components_opened;
     opal_pointer_array_add(&component_map, map);
 
-    if (OMPI_SUCCESS != mca_fcache_base_open()) {
-        goto error;
-    }
-    map = OBJ_NEW(ompi_info_component_map_t);
-    map->type = strdup("fcache");
-    map->components = &mca_fcache_base_components_opened;
-    opal_pointer_array_add(&component_map, map);
-
     if (OMPI_SUCCESS != mca_sharedfp_base_open()) {
         goto error;
     }
@@ -741,7 +731,6 @@ void ompi_info_close_components()
         (void) mca_io_base_close();
         (void) mca_fbtl_base_close();
         (void) mca_fcoll_base_close();
-        (void) mca_fcache_base_close();
         (void) mca_fs_base_close();
         (void) mca_sharedfp_base_close();
         (void) mca_coll_base_close();

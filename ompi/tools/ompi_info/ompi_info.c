@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2011      University of Houston. All rights reserved.
+ * Copyright (c) 2011-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -240,7 +240,6 @@ int main(int argc, char *argv[])
     opal_pointer_array_add(&mca_types, "fbtl");
     opal_pointer_array_add(&mca_types, "fs");
     opal_pointer_array_add(&mca_types, "fcoll");
-    opal_pointer_array_add(&mca_types, "fcache");
     opal_pointer_array_add(&mca_types, "sharedfp");
 #if OPAL_ENABLE_FT_CR == 1
     opal_pointer_array_add(&mca_types, "crcp");
