@@ -899,6 +899,10 @@ int orte_plm_base_orted_append_basic_args(int *argc, char ***argv,
     if (orte_use_common_port) {
         /* tell the daemon to use the common port */
         opal_argv_append(argc, argv, "--use-common-port");
+    } else {
+        opal_argv_append(argc, argv, "-mca");
+        opal_argv_append(argc, argv, "orte_use_common_port");
+        opal_argv_append(argc, argv, "0");
     }
 
     /* warn the daemons if we are using a tree spawn pattern so they
