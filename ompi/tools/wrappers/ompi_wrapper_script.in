@@ -56,7 +56,7 @@ my $preproc_flags = $include_flag . $includedir;
 my $comp_flags = "";
 my $comp_flags_prefix = "";
 my $linker_flags = $libdir_flag . $libdir . " " . $extra_ldflags;
-my $libs = "-lmpi -lorca -lopen-rte -lopen-pal " . $extra_libs;
+my $libs = "-lmpi -lopen-rca -lopen-rte -lopen-pal " . $extra_libs;
 
 
 sub check_env {
