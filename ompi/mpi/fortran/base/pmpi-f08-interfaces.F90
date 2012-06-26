@@ -2404,7 +2404,7 @@ interface PMPI_Wtick
 function  PMPI_Wtick_f08( ) BIND(C,name="MPI_Wtick")
    use, intrinsic :: ISO_C_BINDING
    implicit none
-   DOUBLE PRECISION :: MPI_Wtick_f08
+   DOUBLE PRECISION :: PMPI_Wtick_f08
 end function  PMPI_Wtick_f08
 end interface PMPI_Wtick
 
@@ -2414,7 +2414,7 @@ interface PMPI_Wtime
 function  PMPI_Wtime_f08( ) BIND(C,name="MPI_Wtime")
    use, intrinsic :: ISO_C_BINDING
    implicit none
-   DOUBLE PRECISION :: MPI_Wtime_f08
+   DOUBLE PRECISION :: PMPI_Wtime_f08
 end function  PMPI_Wtime_f08
 end interface PMPI_Wtime
 
