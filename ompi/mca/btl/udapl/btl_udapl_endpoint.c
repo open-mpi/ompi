@@ -34,7 +34,7 @@
 #include "opal/class/opal_pointer_array.h"
 
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #include "ompi/mca/dpm/dpm.h"
 
 #include "ompi/mca/btl/base/btl_base_error.h"

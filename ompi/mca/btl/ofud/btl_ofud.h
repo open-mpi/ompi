@@ -39,7 +39,7 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/mca/btl/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
+#include "ompi/mca/mpool/grdma/mpool_grdma.h"
 
 /* TODO - If I want this to go away, addr_t has to come over here */
 #include "btl_ofud_endpoint.h"

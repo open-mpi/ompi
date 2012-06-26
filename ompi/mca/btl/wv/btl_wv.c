@@ -44,8 +44,7 @@
 #include "btl_wv_endpoint.h"
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "ompi/mca/mpool/mpool.h"
-#include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "ompi/mca/mpool/grdma/mpool_grdma.h"
 #include "orte/util/proc_info.h"
 #include <errno.h>
 #include <string.h>

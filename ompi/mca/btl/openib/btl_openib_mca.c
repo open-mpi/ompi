@@ -239,7 +239,7 @@ int btl_openib_register_mca_params(void)
                   REGINT_GE_ONE));
     CHECK(reg_string("mpool", NULL,
                      "Name of the memory pool to be used (it is unlikely that you will ever want to change this)",
-                     "rdma", &mca_btl_openib_component.ib_mpool_name,
+                     "grdma", &mca_btl_openib_component.ib_mpool_name,
                      0));
     CHECK(reg_int("reg_mru_len", NULL,
                   "Length of the registration cache most recently used list "
