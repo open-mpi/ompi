@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,7 +33,6 @@
 #include "ompi/mca/fcoll/fcoll.h"
 #include "ompi/mca/fbtl/fbtl.h"
 #include "ompi/mca/sharedfp/sharedfp.h"
-#include "ompi/mca/fcache/fcache.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/info/info.h"
 #include "opal/datatype/opal_convertor.h"
@@ -165,14 +164,12 @@ struct mca_io_ompio_file_t {
     /* Hooks for modules to hang things */
     mca_base_component_t *f_fs_component;
     mca_base_component_t *f_fcoll_component;
-    mca_base_component_t *f_fcache_component;
     mca_base_component_t *f_fbtl_component;
     mca_base_component_t *f_sharedfp_component;
 
     /* structure of function pointers */
     mca_fs_base_module_t       *f_fs;
     mca_fcoll_base_module_t    *f_fcoll;
-    mca_fcache_base_module_t   *f_fcache;
     mca_fbtl_base_module_t     *f_fbtl;
     mca_sharedfp_base_module_t *f_sharedfp;
 

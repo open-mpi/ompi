@@ -9,7 +9,7 @@
  *                          University of Stuttgart.  All rights reserved.
  *  Copyright (c) 2004-2005 The Regents of the University of California.
  *                          All rights reserved.
- *  Copyright (c) 2008-2011 University of Houston. All rights reserved.
+ *  Copyright (c) 2008-2012 University of Houston. All rights reserved.
  *  $COPYRIGHT$
  *  
  *  Additional copyrights may follow
@@ -153,7 +153,6 @@ mca_io_ompio_file_close (ompi_file_t *fh)
 
     mca_fs_base_file_unselect (&data->ompio_fh);
     mca_fbtl_base_file_unselect (&data->ompio_fh);
-    /*mca_fcache_base_file_unselect (&data->ompio_fh);*/
     mca_fcoll_base_file_unselect (&data->ompio_fh);
 
     if (NULL != data->ompio_fh.f_io_array) {
