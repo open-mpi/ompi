@@ -11,6 +11,7 @@
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -24,7 +25,7 @@ man_pages = ompi-server.1
 EXTRA_DIST = $(man_pages:.1=.1in) CMakeLists.txt
 
 if OMPI_INSTALL_BINARIES
-if !ORTE_DISABLE_FULL_SUPPORT
+if ORCA_WITH_FULL_ORTE_SUPPORT
 
 bin_PROGRAMS = ompi-server
 
@@ -37,11 +38,17 @@ nodist_man_MANS = $(man_pages)
 # therefore the release date or version may have changed)
 $(nodist_man_MANS): $(top_builddir)/opal/include/opal_config.h
 
-endif # !ORTE_DISABLE_FULL_SUPPORT
+endif # ORCA_WITH_FULL_ORTE_SUPPORT
 endif # OMPI_INSTALL_BINARIES
 
 ompi_server_SOURCES = ompi-server.c 
-ompi_server_LDADD = $(top_builddir)/ompi/libmpi.la
+
+# We need the ORTE symbols, but not the OMPI symbols for this tool
+# so link directly to orte.
+#ompi_server_LDADD = $(top_builddir)/ompi/libmpi.la
+ompi_server_LDADD = \
+	$(top_builddir)/ompi/libmpi.la \
+	$(orca_direct_orte_LDFLAGS) $(orca_direct_orte_LIBS)
 
 distclean-local:
 	rm -f $(man_pages)

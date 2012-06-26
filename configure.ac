@@ -14,7 +14,7 @@
 # Copyright (c) 2006-2008 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006-2011 Los Alamos National Security, LLC.  All rights
 #                         reserved.
-# Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+# Copyright (c) 2009-2012 Oak Ridge National Labs.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -98,6 +98,7 @@ AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
 # Set up project specific AM_CONDITIONALs
 AM_CONDITIONAL([PROJECT_OMPI], m4_ifdef([project_ompi], [true], [false]))
 AM_CONDITIONAL([PROJECT_ORTE], m4_ifdef([project_orte], [true], [false]))
+AM_CONDITIONAL([PROJECT_ORCA], m4_ifdef([project_orca], [true], [false]))
 
 ompi_show_subtitle "Checking versions"
 
@@ -111,6 +112,11 @@ m4_ifdef([project_orte],
          [OPAL_SAVE_VERSION([ORTE], [Open MPI Run-Time Environment], 
                             [$srcdir/VERSION],
                             [orte/include/orte/version.h])])
+
+m4_ifdef([project_orca],
+         [OPAL_SAVE_VERSION([ORCA], [Open MPI Runtime Collaborative Abstraction], 
+                            [$srcdir/VERSION],
+                            [orca/include/orca/version.h])])
 
 OPAL_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
                   [opal/include/opal/version.h])
@@ -136,6 +142,8 @@ m4_ifdef([project_ompi],
           AC_SUBST(libmca_common_portals_so_version)])
 m4_ifdef([project_orte],
          [AC_SUBST(libopen_rte_so_version)])
+m4_ifdef([project_orca],
+         [AC_SUBST(libopen_rca_so_version)])
 AC_SUBST(libmca_opal_common_hwloc_so_version)
 AC_SUBST(libopen_pal_so_version)
 
@@ -163,6 +171,8 @@ AC_DEFINE_UNQUOTED([OMPI_ENABLE_PROGRESS_THREADS], [$OMPI_ENABLE_PROGRESS_THREAD
 # List header files to generate
 
 AM_CONFIG_HEADER([opal/include/opal_config.h])
+m4_ifdef([project_orca],
+         [AM_CONFIG_HEADER([orca/include/orca_config.h])])
 m4_ifdef([project_orte],
          [AM_CONFIG_HEADER([orte/include/orte_config.h])])
 m4_ifdef([project_ompi],
@@ -245,6 +255,7 @@ AC_SUBST(top_ompi_builddir)
 
 OPAL_CONFIGURE_OPTIONS
 m4_ifdef([project_orte], [ORTE_CONFIGURE_OPTIONS])
+m4_ifdef([project_orca], [ORCA_CONFIGURE_OPTIONS])
 m4_ifdef([project_ompi], [OMPI_CONFIGURE_OPTIONS])
 
 if test "$enable_binaries" = "no" -a "$enable_dist" = "yes"; then
@@ -566,7 +577,7 @@ m4_ifdef([project_orte], [ORTE_SETUP_JAVA])
 # Java MPI Binding request
 ##################################
 # Only needed for OMPI
-m4_ifdef([project_ompi], [OMPI_SETUP_JAVA_BINDINGS])
+m4_ifdef([project_ompi], [m4_ifdef([project_orte], [OMPI_SETUP_JAVA_BINDINGS], [OMPI_SETUP_NO_JAVA_BINDINGS])])
 
 ##################################
 # Hadoop support
@@ -1123,9 +1134,9 @@ if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     # rather than have successive assignments to these shell
     # variables, lest the $(foo) names try to get evaluated here.
     # Yuck!
-    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include]) m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include])'" $CPPFLAGS"
+    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include m4_ifdef([project_orca], [-I$(top_srcdir)/orca/include]) m4_ifdef([project_orte], [-I$(top_srcdir)/orte/include]) m4_ifdef([project_ompi], [-I$(top_srcdir)/ompi/include])'" $CPPFLAGS"
     # C++ is only relevant if we're building OMPI
-    m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"])
+    m4_ifdef([project_ompi], [CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orca/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"])
 else
     CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
     # C++ is only relevant if we're building OMPI
@@ -1136,7 +1147,7 @@ fi
 # versions without optimization for debugger modules).
 
 m4_ifdef([project_orte], [ORTE_SETUP_DEBUGGER_FLAGS],
-         [m4_ifdef([project_ompi], [ORTE_SETUP_DEBUGGER_FLAGS])])
+         [m4_ifdef([project_ompi], [m4_ifdef([project_orte], [ORTE_SETUP_DEBUGGER_FLAGS])] )] )
 
 #
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
@@ -1169,6 +1180,7 @@ AC_PATH_PROG(PERL, perl, perl)
 
 OPAL_SETUP_WRAPPER_FINAL
 m4_ifdef([project_orte], [ORTE_SETUP_WRAPPER_FINAL])
+m4_ifdef([project_orca], [ORCA_SETUP_WRAPPER_FINAL])
 m4_ifdef([project_ompi], [OMPI_SETUP_WRAPPER_FINAL])
 
 # Recreate some defines prefixed with OMPI_ so that there are no bare
@@ -1215,6 +1227,7 @@ fi
 
 m4_ifdef([opal_CONFIG_LOCAL], [opal_CONFIG_LOCAL])
 m4_ifdef([orte_CONFIG_LOCAL], [orte_CONFIG_LOCAL])
+m4_ifdef([orca_CONFIG_LOCAL], [orca_CONFIG_LOCAL])
 m4_ifdef([ompi_CONFIG_LOCAL], [ompi_CONFIG_LOCAL])
 
 ############################################################################
@@ -1242,6 +1255,7 @@ AC_CONFIG_FILES([
 
 OPAL_CONFIG_FILES
 m4_ifdef([project_orte], [ORTE_CONFIG_FILES])
+m4_ifdef([project_orca], [ORCA_CONFIG_FILES])
 m4_ifdef([project_ompi], [OMPI_CONFIG_FILES])
 
 AC_OUTPUT

@@ -1,6 +1,7 @@
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2011      NVIDIA Corporation.  All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 
 # This is the VERSION file for Open MPI, describing the precise
 # version of Open MPI in this distribution.  The various components of
@@ -94,6 +95,7 @@ libmpi_mpifh_so_version=0:0:0
 libmpi_usempi_tkr_so_version=0:0:0
 libmpi_usempi_ignore_tkr_so_version=0:0:0
 libopen_rte_so_version=0:0:0
+libopen_rca_so_version=0:0:0
 libopen_pal_so_version=0:0:0
 libmpi_java_so_version=0:0:0
 

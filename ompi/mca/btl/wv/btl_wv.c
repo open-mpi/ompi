@@ -17,6 +17,7 @@
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008-2010 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2009      IBM Corporation.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,8 +28,8 @@
 #include "ompi_config.h"
 #include <string.h>
 
-#include "orte/util/show_help.h"
-#include "orte/runtime/orte_globals.h"
+#include "orca/include/rte_orca.h"
+
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 #include "opal/util/arch.h"
@@ -45,7 +46,7 @@
 #include "opal/datatype/opal_convertor.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/mpool/grdma/mpool_grdma.h"
-#include "orte/util/proc_info.h"
+
 #include <errno.h>
 #include <string.h>
 #include <math.h>
@@ -114,14 +115,14 @@ void mca_btl_wv_show_init_error(const char *file, int line,
 {
     if (ENOMEM == errno) {char *str_limit = NULL;
 
-        orte_show_help("help-mpi-btl-wv.txt", "init-fail-no-mem",
-                       true, orte_process_info.nodename,
+        orca_show_help("help-mpi-btl-wv.txt", "init-fail-no-mem",
+                       true, orca_process_info_get_nodename(),
                        file, line, func, dev, str_limit);
 
         if (NULL != str_limit) free(str_limit);
     } else {
-        orte_show_help("help-mpi-btl-wv.txt", "init-fail-create-q",
-                       true, orte_process_info.nodename,
+        orca_show_help("help-mpi-btl-wv.txt", "init-fail-create-q",
+                       true, orca_process_info_get_nodename(),
                        file, line, func, strerror(errno), errno, dev);
     }
 }
@@ -287,9 +288,9 @@ static int mca_btl_wv_tune_endpoint(mca_btl_wv_module_t* wv_btl,
     ompi_btl_wv_ini_values_t values;
 
     if(mca_btl_wv_get_transport_type(wv_btl) != endpoint->rem_info.rem_transport_type) {
-        orte_show_help("help-mpi-btl-wv.txt",
+        orca_show_help("help-mpi-btl-wv.txt",
                 "conflicting transport types", true,
-                orte_process_info.nodename,
+                orca_process_info_get_nodename(),
                         wv_btl->device->ib_dev->name,
                         (wv_btl->device->ib_dev_attr).VendorId,
                         (wv_btl->device->ib_dev_attr).VendorPartId,
@@ -308,9 +309,9 @@ static int mca_btl_wv_tune_endpoint(mca_btl_wv_module_t* wv_btl,
 
     if (OMPI_SUCCESS != ret &&
         OMPI_ERR_NOT_FOUND != ret) {
-        orte_show_help("help-mpi-btl-wv.txt",
+        orca_show_help("help-mpi-btl-wv.txt",
                        "error in device init", true,
-                       orte_process_info.nodename,
+                       orca_process_info_get_nodename(),
                        wv_btl->device->ib_dev->name);
         return ret;
     }
@@ -349,9 +350,9 @@ static int mca_btl_wv_tune_endpoint(mca_btl_wv_module_t* wv_btl,
 
             if(0 != strcmp(mca_btl_wv_component.receive_queues,
                                                          recv_qps)) {
-                orte_show_help("help-mpi-btl-wv.txt",
+                orca_show_help("help-mpi-btl-wv.txt",
                                "unsupported queues configuration", true,
-                               orte_process_info.nodename,
+                               orca_process_info_get_nodename(),
                                wv_btl->device->ib_dev->name,
                                (wv_btl->device->ib_dev_attr).VendorId,
                                (wv_btl->device->ib_dev_attr).VendorPartId,
@@ -371,9 +372,9 @@ static int mca_btl_wv_tune_endpoint(mca_btl_wv_module_t* wv_btl,
             if(NULL != values.receive_queues) {
                 if(0 != strcmp(mca_btl_wv_component.receive_queues,
                                                 values.receive_queues)) {
-                     orte_show_help("help-mpi-btl-wv.txt",
+                     orca_show_help("help-mpi-btl-wv.txt",
                                "unsupported queues configuration", true,
-                               orte_process_info.nodename,
+                               orca_process_info_get_nodename(),
                                wv_btl->device->ib_dev->name,
                                (wv_btl->device->ib_dev_attr).VendorId,
                                (wv_btl->device->ib_dev_attr).VendorPartId,
@@ -430,8 +431,8 @@ int mca_btl_wv_add_procs(struct mca_btl_base_module_t* btl,
 
         /* OOB, XOOB, RDMACM, IBCM does not support SELF comunication, so 
          * mark the prco as unreachable by wv btl  */
-        if (OPAL_EQUAL == orte_util_compare_name_fields
-                (ORTE_NS_CMP_ALL, ORTE_PROC_MY_NAME, &ompi_proc->proc_name)) {
+        if (OPAL_EQUAL == orca_process_name_compare
+                (ORCA_NAME_CMP_ALL, ORCA_PROC_MY_NAME, &ompi_proc->proc_name)) {
             continue;
         }
 

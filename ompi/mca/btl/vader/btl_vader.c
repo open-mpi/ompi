@@ -14,6 +14,7 @@
  * Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2010-2012 Los Alamos National Security, LLC.  
  *                         All rights reserved. 
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -172,8 +173,8 @@ static int vader_btl_first_time_init(mca_btl_vader_t *vader_btl, int n)
 
     /* set file name */
     if(asprintf(&vader_ctl_file, "%s"OPAL_PATH_SEP"vader_btl_module.%s",
-                orte_process_info.job_session_dir,
-                orte_process_info.nodename) < 0)
+                orca_process_info_get_job_session_dir(),
+                orca_process_info_get_nodename()) < 0)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* Pass in a data segment alignment of 0 to get no data

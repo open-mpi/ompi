@@ -10,6 +10,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009-2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -94,7 +95,7 @@ include dss/Makefile.am
 # project is being built (i.e., if there is an upper layer that needs
 # to slurp in OPAL as a convenience library).
 
-if PROJECT_ORTE
+if PROJECT_ORCA
 noinst_LTLIBRARIES += libopen-pal-lt.la
 endif
 libopen_pal_lt_la_SOURCES = $(libopen_pal_la_SOURCES)

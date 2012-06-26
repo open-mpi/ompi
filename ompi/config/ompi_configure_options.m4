@@ -15,7 +15,7 @@ dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl Copyright (c) 2009      IBM Corporation.  All rights reserved.
 dnl Copyright (c) 2009      Los Alamos National Security, LLC.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2009      Oak Ridge National Labs.  All rights reserved.
+dnl Copyright (c) 2009-2012 Oak Ridge National Labs.  All rights reserved.
 dnl
 dnl $COPYRIGHT$
 dnl
@@ -251,6 +251,31 @@ if test ! -z "$with_f90_max_array_dim" -a "$with_f90_max_array_dim" != "no"; the
 fi
 AC_MSG_RESULT([$OMPI_FORTRAN_MAX_ARRAY_RANK])
 AC_SUBST(OMPI_FORTRAN_MAX_ARRAY_RANK)
+
+
+#
+# A global check for ORTE to amke it easier to support the tools
+# See note in orca_configure_options.m4
+#
+AC_MSG_CHECKING([if want ORTE supported OMPI tools])
+if test "$ORCA_WITH_ORTE_SUPPORT" = "0"; then
+    list_of_frameworks="pubsub-pmi,dpm-orte,pubsub-orte"
+    if test -z $enable_mca_no_build ; then
+        enable_mca_no_build="$list_of_frameworks"
+    else
+        enable_mca_no_build="$enable_mca_no_build,$list_of_frameworks"
+    fi
+    OMPI_WITH_ORTE_SUPPORTED_TOOLS=0
+    AC_MSG_RESULT([no])
+else
+    OMPI_WITH_ORTE_SUPPORTED_TOOLS=1
+    AC_MSG_RESULT([yes])
+fi
+
+AC_DEFINE_UNQUOTED([OMPI_WITH_ORTE_SUPPORTED_TOOLS],
+    [$OMPI_WITH_ORTE_SUPPORTED_TOOLS],
+    [Whether we want ORTE supported OMPI tools])
+AM_CONDITIONAL(OMPI_WITH_ORTE_SUPPORTED_TOOLS, test "$OMPI_WITH_ORTE_SUPPORTED_TOOLS" = "1")
 
 ])dnl
 

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010      Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/params.h"
 #include "ompi/communicator/communicator.h"
@@ -63,14 +63,14 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
 
     if (ompi_mpi_finalized) {
         if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-            orte_show_help("help-mpi-api.txt", "mpi-function-after-finalize",
+            orca_show_help("help-mpi-api.txt", "mpi-function-after-finalize",
                            true, FUNC_NAME);
         }
         return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM, 
                                       MPI_ERR_OTHER, FUNC_NAME);
     } else if (ompi_mpi_initialized) {
         if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
-            orte_show_help("help-mpi-api.txt", "mpi-initialize-twice",
+            orca_show_help("help-mpi-api.txt", "mpi-initialize-twice",
                            true, FUNC_NAME);
         }
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);

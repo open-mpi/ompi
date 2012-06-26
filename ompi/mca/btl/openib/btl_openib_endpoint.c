@@ -17,7 +17,7 @@
  * Copyright (c) 2006-2009 Mellanox Technologies, Inc.  All rights reserved.
  * Copyright (c) 2010-2011 IBM Corporation.  All rights reserved.
  * Copyright (c) 2010-2011 Oracle and/or its affiliates.  All rights reserved
- *
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -37,7 +37,7 @@
 #include "opal_stdint.h"
 #include "opal/util/output.h"
 
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 
 #include "ompi/types.h"
 #include "ompi/class/ompi_free_list.h"
@@ -1042,9 +1042,9 @@ void *mca_btl_openib_endpoint_invoke_error(void *context)
 
     /* If we didn't find a BTL, then just bail :-( */
     if (NULL == btl || NULL == btl->error_cb) {
-        orte_show_help("help-mpi-btl-openib.txt",
+        orca_show_help("help-mpi-btl-openib.txt",
                        "cannot raise btl error", true,
-                       orte_process_info.nodename,
+                       orca_process_info_get_nodename(),
                        __FILE__, __LINE__);
         exit(1);
     }

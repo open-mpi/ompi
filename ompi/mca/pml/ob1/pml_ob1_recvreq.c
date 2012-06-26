@@ -15,6 +15,7 @@
  * Copyright (c) 2012      NVIDIA Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,7 +35,7 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h" 
-#include "orte/mca/errmgr/errmgr.h"
+#include "orca/include/rte_orca.h"
 #include "opal/util/arch.h"
 #include "ompi/memchecker.h"
 
@@ -335,8 +336,8 @@ static void mca_pml_ob1_rget_completion( mca_btl_base_module_t* btl,
     /* check completion status */
     if( OPAL_UNLIKELY(OMPI_SUCCESS != status) ) {
         /* TSW - FIX */
-        ORTE_ERROR_LOG(status);
-        orte_errmgr.abort(-1, NULL);
+        ORCA_ERROR_LOG(status);
+        orca_error_mgr_abort(-1, NULL);
     }
 
     mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
@@ -471,8 +472,8 @@ int mca_pml_ob1_recv_request_get_frag( mca_pml_ob1_rdma_frag_t* frag )
             OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         } else if (OPAL_UNLIKELY(OMPI_SUCCESS != rc)) {
-            ORTE_ERROR_LOG(rc);
-            orte_errmgr.abort(-1, NULL);
+            ORCA_ERROR_LOG(rc);
+            orca_error_mgr_abort(-1, NULL);
         }
     }
 
@@ -573,8 +574,8 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc);
     if( OPAL_UNLIKELY(NULL == frag) ) {
         /* GLB - FIX */
-         ORTE_ERROR_LOG(rc);
-         orte_errmgr.abort(-1, NULL);
+         ORCA_ERROR_LOG(rc);
+         orca_error_mgr_abort(-1, NULL);
     }
 
     /* lookup bml datastructures */
@@ -608,7 +609,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
             }
             if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
                 opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
-                orte_errmgr.abort(-1, NULL);
+                orca_error_mgr_abort(-1, NULL);
             }
         } else {
             /* Just default back to send and receive.  Must be mix of GPU and HOST memory. */
@@ -619,7 +620,7 @@ void mca_pml_ob1_recv_request_progress_rget( mca_pml_ob1_recv_request_t* recvreq
 #else /* OMPI_CUDA_SUPPORT */
     if( OPAL_UNLIKELY(NULL == frag->rdma_bml) ) {
         opal_output(0, "[%s:%d] invalid bml for rdma get", __FILE__, __LINE__);
-        orte_errmgr.abort(-1, NULL);
+        orca_error_mgr_abort(-1, NULL);
     }
 #endif /* OMPI_CUDA_SUPPORT */
 

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,7 +60,8 @@
 
 #include "opal/mca/event/event.h"
 
-#include "orte/util/name_fns.h"
+#include "orca/include/rte_orca.h"
+
 #include "btl_sctp.h"
 #include "btl_sctp_endpoint.h" 
 #include "btl_sctp_proc.h"
@@ -368,7 +370,7 @@ int mca_btl_sctp_endpoint_send(mca_btl_base_endpoint_t* btl_endpoint, mca_btl_sc
         int rc = OMPI_SUCCESS;
         
         /* What if there are multiple procs on this endpoint? Possible? */
-        orte_vpid_t vpid = btl_endpoint->endpoint_proc->proc_ompi->proc_name.vpid;
+        orca_vpid_t vpid = btl_endpoint->endpoint_proc->proc_ompi->proc_name.vpid;
         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);
 
         if((mca_btl_sctp_proc_check_vpid(vpid, sender_proc_table)) == INVALID_ENTRY) {
@@ -545,9 +547,9 @@ static int mca_btl_sctp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_e
 {
     /* send process identifier to remote endpoint */
     mca_btl_sctp_proc_t* btl_proc = mca_btl_sctp_proc_local();
-    orte_process_name_t guid = btl_proc->proc_ompi->proc_name;
+    orca_process_name_t guid = btl_proc->proc_ompi->proc_name;
 
-    ORTE_PROCESS_NAME_HTON(guid);
+    ORCA_PROCESS_NAME_HTON(guid);
     if(mca_btl_sctp_endpoint_send_blocking(btl_endpoint, &guid, sizeof(guid)) != 
           sizeof(guid)) {
         return OMPI_ERR_UNREACH;
@@ -578,7 +580,7 @@ bool mca_btl_sctp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct 
            btl_addr->addr_inet.s_addr == addr->sin_addr.s_addr)
         {
             mca_btl_sctp_proc_t *endpoint_proc = btl_endpoint->endpoint_proc;
-            cmpval = orte_util_compare_name_fields(ORTE_NS_CMP_ALL, 
+            cmpval = orca_process_name_compare(ORCA_NAME_CMP_ALL, 
                     &endpoint_proc->proc_ompi->proc_name,
                     &this_proc->proc_ompi->proc_name);
             if((btl_endpoint->endpoint_sd < 0) ||
@@ -828,19 +830,19 @@ static int mca_btl_sctp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endp
 
 static int mca_btl_sctp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_endpoint)
 {
-    orte_process_name_t guid;
+    orca_process_name_t guid;
     mca_btl_sctp_proc_t* btl_proc = btl_endpoint->endpoint_proc;
 
     if((mca_btl_sctp_endpoint_recv_blocking(btl_endpoint, &guid,
-                                            sizeof(orte_process_name_t))) != sizeof(orte_process_name_t)) {
+                                            sizeof(orca_process_name_t))) != sizeof(orca_process_name_t)) {
         return OMPI_ERR_UNREACH;
     }
-    ORTE_PROCESS_NAME_NTOH(guid);
+    ORCA_PROCESS_NAME_NTOH(guid);
 
     /* compare this to the expected values */
-    if(memcmp(&btl_proc->proc_ompi->proc_name, &guid, sizeof(orte_process_name_t)) != 0) {
+    if(memcmp(&btl_proc->proc_ompi->proc_name, &guid, sizeof(orca_process_name_t)) != 0) {
         BTL_ERROR(("received unexpected process identifier %s", 
-                   ORTE_NAME_PRINT(&guid)));
+                   ORCA_NAME_PRINT(&guid)));
         mca_btl_sctp_endpoint_close(btl_endpoint);
         return OMPI_ERR_UNREACH;
     }
@@ -1198,7 +1200,7 @@ static void mca_btl_sctp_endpoint_send_handler(int sd, short flags, void* user)
         /* 1 to many */
         mca_btl_sctp_endpoint_t* btl_endpoint = (mca_btl_sctp_endpoint_t *)user;
         our_sctp_endpoint *current_our_endpoint = NULL;
-        orte_vpid_t vpid;
+        orca_vpid_t vpid;
     send_handler_1_to_many_different_endpoint: 
         vpid = btl_endpoint->endpoint_proc->proc_ompi->proc_name.vpid;
         OPAL_THREAD_LOCK(&btl_endpoint->endpoint_send_lock);

@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,7 +28,7 @@
 #include "ompi/constants.h"
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_component_repository.h"
@@ -130,7 +131,7 @@ int mca_coll_base_find_available(bool enable_progress_threads,
         mca_coll_base_components_available_valid = false;
         opal_output_verbose(10, mca_coll_base_output,
                             "coll:find_available: no coll components available!");
-        orte_show_help("help-mca-base", "find-available:none-found", true,
+        orca_show_help("help-mca-base", "find-available:none-found", true,
                        "coll");
         return OMPI_ERROR;
     }

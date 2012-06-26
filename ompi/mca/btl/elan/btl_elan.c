@@ -2,6 +2,7 @@
  * Copyright (c) 2004-2008 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,7 +26,9 @@
 #include "elan/elan.h"
 #include "opal/util/os_path.h"
 #include "opal/util/opal_environ.h"
-#include "orte/util/proc_info.h"
+
+#include "orca/include/rte_orca.h"
+
 
 /**
  *
@@ -68,7 +71,7 @@ static int mca_btl_elan_add_procs( struct mca_btl_base_module_t* btl,
     FILE* file;
     ELAN_BASE* base;
     
-    filename = opal_os_path( false, orte_process_info.proc_session_dir, "ELAN_ID", NULL );
+    filename = opal_os_path( false, orca_process_info_get_process_session_dir(), "ELAN_ID", NULL );
     file = fopen( filename, "w" );
     fprintf( file, "%s %d\n", ompi_proc_local_proc->proc_hostname, elan_btl->elan_position );
 

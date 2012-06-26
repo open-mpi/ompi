@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010-2012 Sandia National Laboratories.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +22,7 @@
 
 #include <portals4.h>
 
-#include "orte/util/name_fns.h"
+#include "orca/include/rte_orca.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/mtl/mtl.h"
 #include "opal/class/opal_list.h"
@@ -81,7 +82,7 @@ ompi_mtl_portals4_add_procs(struct mca_mtl_base_module_t *mtl,
                                 "Portals 4 MTL does not support heterogeneous operations.");
             opal_output_verbose(1, ompi_mtl_base_output,
                                 "Proc %s architecture %x, mine %x.",
-                                ORTE_NAME_PRINT(&procs[i]->proc_name), 
+                                ORCA_NAME_PRINT(&procs[i]->proc_name), 
                                 procs[i]->proc_arch, ompi_proc_local()->proc_arch);
             return OMPI_ERR_NOT_SUPPORTED;
         }

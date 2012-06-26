@@ -15,6 +15,7 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +31,9 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/show_help.h"
+
+#include "orca/include/rte_orca.h"
+
 #include "btl_wv.h"
 #include "btl_wv_mca.h"
 #include "btl_wv_ini.h"
@@ -166,9 +169,9 @@ int btl_wv_register_mca_params(void)
                   "(negative = try to enable fork support, but continue even if it is not available, 0 = do not enable fork support, positive = try to enable fork support and fail if it is not available)",
                   ival2, &ival, 0));
     if (0 != ival) {
-        orte_show_help("help-mpi-btl-wv.txt",
+        orca_show_help("help-mpi-btl-wv.txt",
                        "ib_fork requested but not supported", true,
-                       orte_process_info.nodename);
+                       orca_process_info_get_nodename());
         return OMPI_ERROR;
     }
 
@@ -196,9 +199,9 @@ int btl_wv_register_mca_params(void)
     } else if (0 == strcasecmp(str, "all")) {
         mca_btl_wv_component.device_type = BTL_WV_DT_ALL;
     } else {
-        orte_show_help("help-mpi-btl-wv.txt",
+        orca_show_help("help-mpi-btl-wv.txt",
                        "ib_fork requested but not supported", true,
-                       orte_process_info.nodename);
+                       orca_process_info_get_nodename());
         return OMPI_ERROR;
     }
     free(str);
@@ -282,7 +285,7 @@ int btl_wv_register_mca_params(void)
     CHECK(reg_int("mtu", "ib_mtu", msg, WV_MTU_1024, &ival, 0));
     free(msg);
     if (ival < WV_MTU_1024 || ival > WV_MTU_4096) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                        true, "invalid value for btl_wv_ib_mtu",
                        "btl_wv_ib_mtu reset to 1024");
         mca_btl_wv_component.ib_mtu = WV_MTU_1024;
@@ -295,12 +298,12 @@ int btl_wv_register_mca_params(void)
                   "(must be >= 0 and <= 31)",
                   25, &ival, 0));
     if (ival > 31) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                        true, "btl_wv_ib_min_rnr_timer > 31",
                        "btl_wv_ib_min_rnr_timer reset to 31");
         ival = 31;
     } else if (ival < 0){
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                    true, "btl_wv_ib_min_rnr_timer < 0",
                    "btl_wv_ib_min_rnr_timer reset to 0");
         ival = 0;
@@ -312,12 +315,12 @@ int btl_wv_register_mca_params(void)
                   "(must be >= 0 and <= 31)",
                   20, &ival, 0));
     if (ival > 31) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                        true, "btl_wv_ib_timeout > 31",
                        "btl_wv_ib_timeout reset to 31");
         ival = 31;
     } else if (ival < 0) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                    true, "btl_wv_ib_timeout < 0",
                    "btl_wv_ib_timeout reset to 0");
         ival = 0;
@@ -329,12 +332,12 @@ int btl_wv_register_mca_params(void)
                   "(must be >= 0 and <= 7)",
                   7, &ival, 0));
     if (ival > 7) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                        true, "btl_wv_ib_retry_count > 7",
                        "btl_wv_ib_retry_count reset to 7");
         ival = 7;
     } else if (ival < 0) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                    true, "btl_wv_ib_retry_count < 0",
                    "btl_wv_ib_retry_count reset to 0");
         ival = 0;
@@ -349,12 +352,12 @@ int btl_wv_register_mca_params(void)
                   "(must be >= 0 and <= 7; 7 = \"infinite\")",
                   7, &ival, 0));
     if (ival > 7) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                        true, "btl_wv_ib_rnr_retry > 7",
                        "btl_wv_ib_rnr_retry reset to 7");
         ival = 7;
     } else if (ival < 0) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                    true, "btl_wv_ib_rnr_retry < 0",
                    "btl_wv_ib_rnr_retry reset to 0");
         ival = 0;
@@ -365,12 +368,12 @@ int btl_wv_register_mca_params(void)
                   "(must be >= 0 and <= 15)",
                   0, &ival, 0));
     if (ival > 15) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                        true, "btl_wv_ib_service_level > 15",
                        "btl_wv_ib_service_level reset to 15");
         ival = 15;
     } else if (ival < 0) {
-        orte_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
+        orca_show_help("help-mpi-btl-wv.txt", "invalid mca param value",
                    true, "btl_wv_ib_service_level < 0",
                    "btl_wv_ib_service_level reset to 0");
         ival = 0;
@@ -427,8 +430,8 @@ int btl_wv_register_mca_params(void)
                   "(must be > 0 and power of two)",
                   64, &ival, REGINT_GE_ZERO));
     if(ival <= 1 || (ival & (ival - 1))) {
-        orte_show_help("help-mpi-btl-wv.txt", "wrong buffer alignment",
-                true, ival, orte_process_info.nodename, 64);
+        orca_show_help("help-mpi-btl-wv.txt", "wrong buffer alignment",
+                true, ival, orca_process_info_get_nodename(), 64);
         mca_btl_wv_component.buffer_alignment = 64;
     } else {
         mca_btl_wv_component.buffer_alignment = (uint32_t) ival;

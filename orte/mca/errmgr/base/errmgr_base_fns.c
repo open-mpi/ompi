@@ -10,7 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
- * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -246,6 +246,47 @@ void orte_errmgr_base_abort(int error_code, char *fmt, ...)
         free( buffer );
     }
     va_end(arglist);
+    
+#if !ORTE_DISABLE_FULL_SUPPORT
+    /* if I am a daemon or the HNP... */
+    if (ORTE_PROC_IS_HNP || ORTE_PROC_IS_DAEMON) {
+        /* whack my local procs */
+        orte_odls.kill_local_procs(NULL);
+        /* whack any session directories */
+        orte_session_dir_cleanup(ORTE_JOBID_WILDCARD);
+    } else {
+        /* cleanup my session directory */
+        orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+    }
+#else
+    orte_session_dir_finalize(ORTE_PROC_MY_NAME);
+#endif
+
+    /* if a critical connection failed, or a sensor limit was exceeded, exit without dropping a core */
+    if (ORTE_ERR_CONNECTION_FAILED == error_code ||
+        ORTE_ERR_SENSOR_LIMIT_EXCEEDED == error_code) {
+        orte_ess.abort(error_code, false);
+    } else {
+        orte_ess.abort(error_code, true);
+    }
+
+    /*
+     * We must exit in orte_ess.abort; all implementations of orte_ess.abort
+     * contain __opal_attribute_noreturn__
+     */
+    /* No way to reach here */
+}
+
+void orte_errmgr_base_vabort(int error_code, char *fmt, va_list arglist)
+{
+    /* JJH: We can combine this with the non-va_list version in the future */
+    /* If there was a message, output it */
+    if( NULL != fmt ) {
+        char* buffer = NULL;
+        vasprintf( &buffer, fmt, arglist );
+        opal_output( 0, "%s", buffer );
+        free( buffer );
+    }
     
 #if !ORTE_DISABLE_FULL_SUPPORT
     /* if I am a daemon or the HNP... */

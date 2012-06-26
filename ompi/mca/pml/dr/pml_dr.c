@@ -12,6 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -36,10 +37,7 @@
 #include "pml_dr_sendreq.h"
 #include "pml_dr_recvreq.h"
 #include "ompi/mca/bml/base/base.h"
-#include "orte/util/name_fns.h"
-#include "orte/runtime/orte_globals.h"
-#include "orte/mca/errmgr/errmgr.h"
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 #include "ompi/mca/pml/base/base.h"
 
 mca_pml_dr_t mca_pml_dr = {
@@ -220,10 +218,10 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         mca_btl_base_selected_module_t *sm = 
             (mca_btl_base_selected_module_t*) item;
         if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_dr_hdr_t)) {
-	    orte_show_help("help-mpi-pml-dr.txt", "eager_limit_too_small",
+	    orca_show_help("help-mpi-pml-dr.txt", "eager_limit_too_small",
 			   true, 
 			   sm->btl_component->btl_version.mca_component_name,
-			   orte_process_info.nodename,
+                            orca_process_info_get_nodename(),
 			   sm->btl_component->btl_version.mca_component_name,
 			   sm->btl_module->btl_eager_limit,
 			   sm->btl_component->btl_version.mca_component_name,
@@ -274,8 +272,8 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         /* this won't work for comm spawn and other dynamic
            processes, but will work for initial job start */
         idx = opal_pointer_array_add(&mca_pml_dr.endpoints, (void*) endpoint);
-        if(OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL,
-                           ORTE_PROC_MY_NAME,
+        if(OPAL_EQUAL == orca_process_name_compare(ORCA_NAME_CMP_ALL,
+                           ORCA_PROC_MY_NAME,
                            &(endpoint->proc_ompi->proc_name))) {
             mca_pml_dr.my_rank = idx;
         }
@@ -330,7 +328,7 @@ void mca_pml_dr_error_handler(
                    btl->btl_component->btl_version.mca_component_name);
     mca_pml_dr_sendreq_cleanup_active(btl);
     mca_bml.bml_del_btl(btl);
-    /* orte_errmgr.abort(); */
+    /* orca_error_mgr_abort(); */
 }
 
 

@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -27,6 +28,10 @@ AM_CPPFLAGS = \
         -I$(top_ompi_builddir)/orte/include \
         -I$(top_ompi_srcdir)/orte \
         -I$(top_ompi_srcdir)/orte/include \
+        -I$(top_ompi_builddir)/orca \
+        -I$(top_ompi_builddir)/orca/include \
+        -I$(top_ompi_srcdir)/orca \
+        -I$(top_ompi_srcdir)/orca/include \
         -I$(top_ompi_builddir)/ompi \
         -I$(top_ompi_builddir)/ompi/include \
         -I$(top_ompi_srcdir)/ompi \

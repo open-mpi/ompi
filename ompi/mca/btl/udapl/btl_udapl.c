@@ -13,7 +13,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
- *
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -812,7 +812,7 @@ static int mca_btl_udapl_assign_netmask(mca_btl_udapl_module_t* udapl_btl)
 
                 BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
                     ("help-mpi-btl-udapl.txt", "interface not found",
-                        true, orte_process_info.nodename, btl_addr_string));
+                        true, orca_process_info_get_nodename(), btl_addr_string));
 
                 return OMPI_ERROR;
             }
@@ -826,7 +826,7 @@ static int mca_btl_udapl_assign_netmask(mca_btl_udapl_module_t* udapl_btl)
 
                 BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
                     ("help-mpi-btl-udapl.txt", "netmask not found",
-                        true, orte_process_info.nodename, btl_addr_string));
+                        true, orca_process_info_get_nodename(), btl_addr_string));
 
                 return OMPI_ERROR;
             }
@@ -840,7 +840,7 @@ static int mca_btl_udapl_assign_netmask(mca_btl_udapl_module_t* udapl_btl)
             /* current uDAPL BTL does not support IPv6 */
             BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
                 ("help-mpi-btl-udapl.txt", "IPv4 only",
-                    true, orte_process_info.nodename));
+                    true, orca_process_info_get_nodename()));
 
             return OMPI_ERROR;
         }

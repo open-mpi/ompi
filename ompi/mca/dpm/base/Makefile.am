@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -27,7 +28,7 @@ libmca_dpm_la_SOURCES += \
         base/dpm_base_select.c \
         base/dpm_base_null_fns.c
 
-if !ORTE_DISABLE_FULL_SUPPORT
+if ORCA_WITH_FULL_ORTE_SUPPORT
 libmca_dpm_la_SOURCES += \
         base/dpm_base_common_fns.c
 endif

@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
  * $COPYRIGHT$
@@ -69,7 +69,9 @@ orte_errmgr_base_module_t orte_errmgr_default_fns = {
     NULL, /* predicted_fault     */
     NULL, /* suggest_map_targets */
     NULL, /* ft_event            */
-    orte_errmgr_base_register_migration_warning
+    orte_errmgr_base_register_migration_warning,
+    NULL, /* set_fault_callback */
+    orte_errmgr_base_vabort
 };
 /* NOTE: ABSOLUTELY MUST initialize this
  * struct to include the log function as it
@@ -80,6 +82,7 @@ orte_errmgr_base_module_t orte_errmgr = {
     NULL,
     NULL,
     orte_errmgr_base_log,
+    NULL,
     NULL,
     NULL,
     NULL,

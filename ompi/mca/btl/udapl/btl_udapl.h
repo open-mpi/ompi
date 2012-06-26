@@ -12,7 +12,7 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2009 Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- *
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,7 +37,9 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
-#include "orte/util/show_help.h"
+
+#include "orca/include/rte_orca.h"
+
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/mca/btl/btl.h"
 #include "btl_udapl_endpoint.h"
@@ -232,7 +234,7 @@ do {                                                                \
 #define BTL_UDAPL_VERBOSE_HELP(verbose_level, args)                 \
 do {                                                                \
     if (verbose_level <= mca_btl_udapl_component.udapl_verbosity) { \
-        orte_show_help args;                                        \
+        orca_show_help args;                                   \
     }                                                               \
 } while(0);
 

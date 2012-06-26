@@ -1,5 +1,6 @@
 /*
  * Copyright (C) Mellanox Technologies Ltd. 2001-2011.  ALL RIGHTS RESERVED.
+ * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -9,7 +10,7 @@
 
 #include "ompi_config.h"
 
-#include "orte/util/show_help.h"
+#include "orca/include/rte_orca.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/proc/proc.h"
@@ -93,7 +94,7 @@ static int ompi_mtl_mxm_component_open(void)
         if (MXM_ERR_NO_DEVICE == err) {
             MXM_VERBOSE(1, "No supported device found, disqualifying mxm");
         } else {
-            orte_show_help("help-mtl-mxm.txt", "mxm init", true,
+            orca_show_help("help-mtl-mxm.txt", "mxm init", true,
                     mxm_error_string(err));
         }
         return OPAL_ERR_NOT_AVAILABLE;
