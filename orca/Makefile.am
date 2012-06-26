@@ -33,21 +33,21 @@ DIST_SUBDIRS = \
 # Build the main ORCA library
 
 lib_LTLIBRARIES = libopen-rca.la
-libopen-rca_la_SOURCES =
-libopen-rca_la_LIBADD = \
+libopen_rca_la_SOURCES =
+libopen_rca_la_LIBADD = \
 	$(MCA_orca_FRAMEWORK_LIBS) \
 	$(top_ompi_builddir)/opal/libopen-pal-lt.la
 #	$(top_ompi_builddir)/orte/libopen-rte-lt.la
 
 
-libopen-rca_la_DEPENDENCIES = $(libopen-rca_la_LIBADD)
-libopen-rca_la_LDFLAGS = -version-info $(libopen-rca_so_version)
+libopen_rca_la_DEPENDENCIES = $(libopen_rca_la_LIBADD)
+libopen_rca_la_LDFLAGS = -version-info $(libopen_rca_so_version)
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
 dist_pkgdata_DATA =
-libopen-rca_la_SOURCES += $(headers)
+libopen_rca_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 
@@ -72,6 +72,6 @@ include util/Makefile.am
 if PROJECT_ORCA
 noinst_LTLIBRARIES += libopen-rca-lt.la
 endif
-libopen-rca_lt_la_SOURCES = $(libopen-rca_la_SOURCES)
-libopen-rca_lt_la_LIBADD = $(libopen-rca_la_LIBADD)
-libopen-rca_lt_la_DEPENDENCIES = $(libopen-rca_la_DEPENDENCIES)
+libopen_rca_lt_la_SOURCES = $(libopen_rca_la_SOURCES)
+libopen_rca_lt_la_LIBADD = $(libopen_rca_la_LIBADD)
+libopen_rca_lt_la_DEPENDENCIES = $(libopen_rca_la_DEPENDENCIES)

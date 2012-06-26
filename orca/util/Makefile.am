@@ -12,5 +12,5 @@
 headers += \
 	util/error_strings.h
 
-libopen-rca_la_SOURCES += \
+libopen_rca_la_SOURCES += \
 	util/error_strings.c
