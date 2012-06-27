@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -93,8 +92,7 @@
 #include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/pml/pml.h"
-
-#include "orca/include/rte_orca.h"
+#include "orte/util/proc_info.h"
 
 /*
  * Private functions
@@ -176,7 +174,7 @@ int ompi_attr_create_predefined(void)
         return ret;
     }
 
-    ret = set_f(MPI_APPNUM, orca_process_info_get_app_num() );
+    ret = set_f(MPI_APPNUM, orte_process_info.app_num);
 
     return ret;
 }

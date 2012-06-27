@@ -11,7 +11,6 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2009      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -92,9 +91,6 @@ set dirs=opal
 if (-d orte) then
     set dirs="$dirs orte"
 endif
-if (-d orca) then
-    set dirs="$dirs orca"
-endif
 if (-d ompi) then
     set dirs="$dirs ompi"
 endif
@@ -173,7 +169,7 @@ cd ..
 echo "*** Now in: `pwd`"
 echo "*** Replacing config.sub/config.guess with latest from ftp.gnu.org..."
 foreach file (config.guess config.sub)
-    foreach dir (opal orte orca ompi)
+    foreach dir (opal orte ompi)
         if (-d $dir) then
             find $dir -name $file \
                 -exec chmod +w {} \; \

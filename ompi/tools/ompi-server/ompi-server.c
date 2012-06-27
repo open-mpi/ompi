@@ -12,7 +12,6 @@
  * Copyright (c) 2007-2012 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2007-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -52,6 +51,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/runtime/opal_cr.h"
 #include "opal/mca/base/mca_base_param.h"
+
 
 #include "orte/util/name_fns.h"
 #include "orte/util/proc_info.h"
@@ -296,14 +296,13 @@ int main(int argc, char *argv[])
     if (ORTE_SUCCESS != (ret = orte_finalize())) {
         ORTE_ERROR_LOG(ret);
     }
-
     return ret;
 }
 
 static void shutdown_callback(int fd, short flags, void *arg)
 {
     int ret;
-
+    
     if (debug) {
         opal_output(0, "%s ompi-server: finalizing", ORTE_NAME_PRINT(ORTE_PROC_MY_NAME));
     }

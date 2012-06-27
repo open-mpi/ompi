@@ -13,7 +13,6 @@
  *                         All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +29,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/class/ompi_seq_tracker.h"
-#include "orca/include/rte_orca.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "pml_dr.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_sendreq.h"
@@ -120,7 +119,7 @@ static void mca_pml_dr_error_completion(
             mca_bml.bml_del_btl(btl);
             break;
         default:
-            orca_error_mgr_abort(-1, NULL);
+            orte_errmgr.abort(-1, NULL);
             break;
     }
 

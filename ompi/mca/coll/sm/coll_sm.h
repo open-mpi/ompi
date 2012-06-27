@@ -10,7 +10,6 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,7 +26,7 @@
 #include "mpi.h"
 #include "opal/mca/mca.h"
 #include "opal/datatype/opal_convertor.h"
-#include "orca/include/rte_orca.h"
+#include "orte/types.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/common/sm/common_sm.h"
 

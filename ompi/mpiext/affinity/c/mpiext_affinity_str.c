@@ -6,7 +6,6 @@
  * Copyright (c) 2010      Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +29,7 @@
 #include "opal/mca/hwloc/base/base.h"
 #include "opal/runtime/opal.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/communicator/communicator.h"
 #include "ompi/errhandler/errhandler.h"
@@ -99,14 +98,14 @@ static int get_rsrc_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     int ret;
 
     /* If OMPI did not bind, indicate that */
-    if (!orca_process_info_is_bound()) {
+    if (!orte_proc_is_bound) {
         const char tmp[] = "This process is not bound";
         strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
         return OMPI_SUCCESS;
     }
 
     ret = opal_hwloc_base_cset2str(str, OMPI_AFFINITY_STRING_MAX, 
-                                   orca_process_info_get_applied_binding());
+                                   orte_proc_applied_binding);
     return ret;
 }
 
@@ -279,7 +278,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
     int ret;
 
     /* If OMPI did not bind, indicate that */
-    if (!orca_process_info_is_bound()) {
+    if (!orte_proc_is_bound) {
         const char tmp[] = "This process is not bound";
         strncpy(str, tmp, OMPI_AFFINITY_STRING_MAX - 1);
         return OMPI_SUCCESS;
@@ -287,7 +286,7 @@ static int get_layout_ompi_bound(char str[OMPI_AFFINITY_STRING_MAX])
 
     /* Find out what OMPI bound us to and prettyprint it */
     ret = opal_hwloc_base_cset2mapstr(str, OMPI_AFFINITY_STRING_MAX, 
-                                      orca_process_info_get_applied_binding());
+                                      orte_proc_applied_binding);
     return ret;
 }
 

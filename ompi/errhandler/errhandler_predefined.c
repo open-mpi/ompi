@@ -12,7 +12,7 @@
  * Copyright (c) 2006      University of Houston. All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2009      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2010-2012 Oak Ridge National Labs.  All rights reserved.
+ * Copyright (c) 2010-2011 Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,8 +30,9 @@
 #include <sys/param.h>
 #endif
 
-#include "orca/include/rte_orca.h"
-
+#include "orte/util/show_help.h"
+#include "orte/runtime/orte_globals.h"
+#include "orte/util/name_fns.h"
 #include "ompi/errhandler/errhandler_predefined.h"
 #include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
@@ -162,7 +163,7 @@ static void out(char *str, char *arg)
 }
 
 /*
- * Use orca_show_help() to aggregate the error messages (i.e., show it
+ * Use orte_show_help() to aggregate the error messages (i.e., show it
  * once rather than N times).  
  *
  * Note that this function will only be invoked for errors during the
@@ -181,9 +182,8 @@ static void backend_fatal_aggregate(char *type,
     arg = va_arg(arglist, char*);
     va_end(arglist);
 
-    asprintf(&prefix, "[%s:%d]",
-             orca_process_info_get_nodename(),
-             (int) orca_process_info_get_pid() );
+    asprintf(&prefix, "[%s:%d]", orte_process_info.nodename,
+             (int) orte_process_info.pid);
 
     if (NULL != error_code) {
         err_msg = ompi_mpi_errnum_get_string(*error_code);
@@ -195,22 +195,18 @@ static void backend_fatal_aggregate(char *type,
     }
 
     if (NULL != name && ompi_mpi_initialized && !ompi_mpi_finalized) {
-        orca_show_help("help-mpi-errors.txt", 
+        orte_show_help("help-mpi-errors.txt", 
                        "mpi_errors_are_fatal", false,
                        prefix, (NULL == arg) ? "" : "in",
                        (NULL == arg) ? "" : arg,
-                       prefix,
-                       orca_process_info_get_jobid(ORCA_PROC_MY_NAME),
-                       orca_process_info_get_vpid(ORCA_PROC_MY_NAME),
+                       prefix, ORTE_PROC_MY_NAME->jobid, ORTE_PROC_MY_NAME->vpid,
                        prefix, type, name, prefix, err_msg, prefix, type, prefix);
     } else if (NULL == name) {
-        orca_show_help("help-mpi-errors.txt", 
+        orte_show_help("help-mpi-errors.txt", 
                        "mpi_errors_are_fatal unknown handle", false,
                        prefix, (NULL == arg) ? "" : "in",
                        (NULL == arg) ? "" : arg,
-                       prefix,
-                       orca_process_info_get_jobid(ORCA_PROC_MY_NAME),
-                       orca_process_info_get_vpid(ORCA_PROC_MY_NAME),
+                       prefix, ORTE_PROC_MY_NAME->jobid, ORTE_PROC_MY_NAME->vpid,
                        prefix, type, prefix, err_msg, prefix, type, prefix);
     }
 
@@ -329,7 +325,7 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
        meaning that there is a better chance that the error message
        will actually get printed).  Note that we can only do
        aggregation after MPI_INIT and before MPI_FINALIZE. */
-    if (orca_show_help_want_aggregate() && orca_show_help_is_available()) {
+    if (orte_help_want_aggregate && orte_show_help_is_available()) {
         backend_fatal_aggregate(type, comm, name, error_code, arglist);
     } else {
         backend_fatal_no_aggregate(type, comm, name, error_code, arglist);

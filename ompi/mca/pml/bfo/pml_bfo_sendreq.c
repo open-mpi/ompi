@@ -14,7 +14,6 @@
  * Copyright (c) 2010-2012 Oracle and/or its affiliates.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +27,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
-#include "orca/include/rte_orca.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/mpool.h" 
 #include "pml_bfo.h"
 #include "pml_bfo_hdr.h"
@@ -193,7 +192,7 @@ mca_pml_bfo_match_completion_free( struct mca_btl_base_module_t* btl,
 #else /* PML_BFO */
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orca_error_mgr_abort(-1, NULL);
+        orte_errmgr.abort(-1, NULL);
 #endif /* PML_BFO */
     }
 #if PML_BFO
@@ -245,7 +244,7 @@ mca_pml_bfo_rndv_completion( mca_btl_base_module_t* btl,
 #else /* PML_BFO */
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orca_error_mgr_abort(-1, NULL);
+        orte_errmgr.abort(-1, NULL);
 #endif /* PML_BFO */
     }
 #if PML_BFO
@@ -353,7 +352,7 @@ mca_pml_bfo_frag_completion( mca_btl_base_module_t* btl,
 #else /* PML_BFO */
         /* TSW - FIX */
         opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orca_error_mgr_abort(-1, NULL);
+        orte_errmgr.abort(-1, NULL);
 #endif /* PML_BFO */
     }
 
@@ -1209,8 +1208,8 @@ static void mca_pml_bfo_put_completion( mca_btl_base_module_t* btl,
         sendreq->req_error++;
 #else /* PML_BFO */
         /* TSW - FIX */
-        ORCA_ERROR_LOG(status);
-        orca_error_mgr_abort(-1, NULL);
+        ORTE_ERROR_LOG(status);
+        orte_errmgr.abort(-1, NULL);
 #endif /* PML_BFO */
     }
 #if PML_BFO
@@ -1312,8 +1311,8 @@ int mca_pml_bfo_send_request_put_frag( mca_pml_bfo_rdma_frag_t* frag )
             return OMPI_ERR_OUT_OF_RESOURCE;
         } else {
             /* TSW - FIX */
-            ORCA_ERROR_LOG(rc);
-            orca_error_mgr_abort(-1, NULL);
+            ORTE_ERROR_LOG(rc);
+            orte_errmgr.abort(-1, NULL);
         }
     }
 #if PML_BFO
@@ -1352,8 +1351,8 @@ void mca_pml_bfo_send_request_put( mca_pml_bfo_send_request_t* sendreq,
 
     if( OPAL_UNLIKELY(NULL == frag) ) {
         /* TSW - FIX */
-        ORCA_ERROR_LOG(rc);
-        orca_error_mgr_abort(-1, NULL);
+        ORTE_ERROR_LOG(rc);
+        orte_errmgr.abort(-1, NULL);
     }
 
     assert (btl->btl_seg_size * hdr->hdr_seg_cnt <= sizeof (frag->rdma_segs));

@@ -9,7 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -20,9 +19,9 @@
 #ifndef OMPI_CONSTANTS_H
 #define OMPI_CONSTANTS_H
 
-#include "orca/constants.h"
+#include "orte/constants.h"
 
-#define OMPI_ERR_BASE   ORCA_ERR_MAX
+#define OMPI_ERR_BASE   ORTE_ERR_MAX
 
 /* error codes */
 enum {

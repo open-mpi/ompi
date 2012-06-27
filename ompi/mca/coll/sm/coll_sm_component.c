@@ -12,7 +12,6 @@
  * Copyright (c) 2008-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +29,7 @@
 
 #include "ompi/constants.h"
 #include "ompi/mca/coll/coll.h"
-#include "orca/include/rte_orca.h"
+#include "orte/util/show_help.h"
 #include "coll_sm.h"
 
 
@@ -192,13 +191,13 @@ static int sm_register(void)
                            cs->sm_tree_degree,
                            &cs->sm_tree_degree);
     if (cs->sm_tree_degree > cs->sm_control_size) {
-        orca_show_help("help-mpi-coll-sm.txt", 
+        orte_show_help("help-mpi-coll-sm.txt", 
                        "tree-degree-larger-than-control", true,
                        cs->sm_tree_degree, cs->sm_control_size);
         cs->sm_tree_degree = cs->sm_control_size;
     }
     if (cs->sm_tree_degree > 255) {
-        orca_show_help("help-mpi-coll-sm.txt", 
+        orte_show_help("help-mpi-coll-sm.txt", 
                        "tree-degree-larger-than-255", true,
                        cs->sm_tree_degree);
         cs->sm_tree_degree = 255;

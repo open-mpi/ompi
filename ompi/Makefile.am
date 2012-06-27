@@ -12,7 +12,6 @@
 # Copyright (c) 2008-2012 Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2010-2011 Sandia National Laboratories. All rights reserved.
-# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -139,7 +138,7 @@ libmpi_la_LIBADD = \
         $(MCA_ompi_FRAMEWORK_LIBS) \
         $(OMPI_MPIEXT_C_LIBS) \
         $(OMPI_LIBMPI_EXTRA_LIBS) \
-        $(top_ompi_builddir)/orca/libopen-rca-lt.la
+        $(top_ompi_builddir)/orte/libopen-rte-lt.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
 libmpi_la_LDFLAGS = \
        -version-info $(libmpi_so_version) \

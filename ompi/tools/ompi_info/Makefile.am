@@ -11,7 +11,6 @@
 #                         All rights reserved.
 # Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
-# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -65,13 +64,7 @@ ompi_info_SOURCES = \
         components.c \
         version.c
 
-#
-# JJH: A temporary work around for ORTE support in this tool
-#
-#ompi_info_LDADD = $(top_builddir)/ompi/libmpi.la
-ompi_info_LDADD = \
-	$(top_builddir)/ompi/libmpi.la \
-	$(orca_direct_orte_LDFLAGS) $(orca_direct_orte_LIBS)
+ompi_info_LDADD = $(top_builddir)/ompi/libmpi.la
 
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || rm -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)

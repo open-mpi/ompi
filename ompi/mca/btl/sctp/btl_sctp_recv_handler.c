@@ -9,7 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -98,7 +97,7 @@ void mca_btl_sctp_recv_handler(int sd, short flags, void *user) {
     /* allocated this elsewhere only once per BTL to avoid repeatedly calling malloc */
     char *buf = sctp_recv_buf;
 
-    orca_process_name_t guid;
+    orte_process_name_t guid;
     struct sockaddr_in their_addr;
     int retval;
     mca_btl_sctp_proc_t *btl_proc;
@@ -215,7 +214,7 @@ data_still_pending_on_endpoint:
 
         /* Setup guid. */
         memcpy(&guid, buf, retval);
-        ORCA_PROCESS_NAME_NTOH(guid);
+        ORTE_PROCESS_NAME_NTOH(guid);
       
         /* lookup the corresponding process */
         btl_proc = mca_btl_sctp_proc_lookup(&guid);

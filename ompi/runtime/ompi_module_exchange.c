@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -26,7 +25,10 @@
 #include "opal/mca/base/base.h"
 #include "opal/dss/dss.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/mca/grpcomm/grpcomm.h"
+
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/ompi_module_exchange.h"
@@ -43,7 +45,7 @@ ompi_modex_send(mca_base_component_t * source_component,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
-    rc = orca_coll_set_process_attribute(name, data, size);
+    rc = orte_grpcomm.set_proc_attr(name, data, size);
     free(name);
     return rc;
 }
@@ -62,7 +64,7 @@ ompi_modex_recv(mca_base_component_t * component,
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
-    rc = orca_coll_get_process_attribute(&proc->proc_name, name, buffer, size);
+    rc = orte_grpcomm.get_proc_attr(&proc->proc_name, name, buffer, size);
     free(name);
     return rc;
 }
@@ -71,7 +73,7 @@ int
 ompi_modex_send_string(const char* key,
                        const void *buffer, size_t size)
 {
-    return orca_coll_set_process_attribute(key, buffer, size);
+    return orte_grpcomm.set_proc_attr(key, buffer, size);
 }
 
 
@@ -80,7 +82,7 @@ ompi_modex_recv_string(const char* key,
                        struct ompi_proc_t *source_proc,
                        void **buffer, size_t *size)
 {
-    return orca_coll_get_process_attribute(&source_proc->proc_name, key, buffer, size);
+    return orte_grpcomm.get_proc_attr(&source_proc->proc_name, key, buffer, size);
 }
 
 int
@@ -103,7 +105,7 @@ ompi_modex_send_key_value(const char* key,
     }
     OBJ_DESTRUCT(&buf);
     
-    return orca_coll_set_process_attribute(key, bo.bytes, bo.size);
+    return orte_grpcomm.set_proc_attr(key, bo.bytes, bo.size);
 }
 
 
@@ -120,8 +122,7 @@ ompi_modex_recv_key_value(const char* key,
     
     bo.bytes = NULL;
     bo.size = 0;
-
-    if (ORCA_SUCCESS != (rc = orca_coll_get_process_attribute(&source_proc->proc_name, key,
+    if (ORTE_SUCCESS != (rc = orte_grpcomm.get_proc_attr(&source_proc->proc_name, key,
                                                          (void**)&bo.bytes, &bsize))) {
         return rc;
     }

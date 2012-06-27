@@ -16,7 +16,7 @@
  * Copyright (c) 2010      IBM Corporation.  All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
+ *
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,7 +27,8 @@
 #define OPAL_DISABLE_ENABLE_MEM_DEBUG 1
 #include "ompi_config.h"
 #include "opal/align.h"
-#include "orca/include/rte_orca.h"
+#include "orte/util/name_fns.h"
+#include "orte/runtime/orte_globals.h"
 #include "mpool_grdma.h"
 #include <errno.h>
 #include <string.h>
@@ -451,7 +452,7 @@ void mca_mpool_grdma_finalize(struct mca_mpool_base_module_t *mpool)
     if (true == mca_mpool_grdma_component.print_stats) {
         opal_output(0, "%s grdma: stats "
                 "(hit/miss/found/not found/evicted): %d/%d/%d/%d/%d\n",
-                ORCA_NAME_PRINT(ORCA_PROC_MY_NAME),
+                ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                 mpool_grdma->stat_cache_hit, mpool_grdma->stat_cache_miss,
                 mpool_grdma->stat_cache_found, mpool_grdma->stat_cache_notfound,
                 mpool_grdma->stat_evicted);

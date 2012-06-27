@@ -12,7 +12,6 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2008      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -132,7 +131,7 @@ mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
     if(OMPI_SUCCESS != rc) {
         BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
             ("ompi_modex_recv failed for peer %s",
-            ORCA_NAME_PRINT(&ompi_proc->proc_name)));
+            ORTE_NAME_PRINT(&ompi_proc->proc_name)));
         OBJ_RELEASE(udapl_proc);
         return NULL;
     }
@@ -140,7 +139,7 @@ mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
     if((size % sizeof(mca_btl_udapl_addr_t)) != 0) {
         BTL_UDAPL_VERBOSE_OUTPUT(VERBOSE_CRITICAL,
             ("invalid udapl address for peer %s",
-            ORCA_NAME_PRINT(&ompi_proc->proc_name)));
+            ORTE_NAME_PRINT(&ompi_proc->proc_name)));
         OBJ_RELEASE(udapl_proc);
         return NULL;
     }
@@ -252,14 +251,14 @@ static int mca_btl_udapl_proc_address_match(
         /* current uDAPL BTL only supports IPv4 */
         BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
             ("help-mpi-btl-udapl.txt", "IPv4 only",
-            true, orca_process_info_get_nodename()));
+            true, orte_process_info.nodename));
         return OMPI_ERROR;
     }
 
     if (MCA_BTL_UDAPL_INVALID_PEER_ADDR_IDX == *peer_addr_idx) {
         BTL_UDAPL_VERBOSE_HELP(VERBOSE_SHOW_HELP,
             ("help-mpi-btl-udapl.txt", "no network match",
-            true, btl_addr_string, orca_process_info_get_nodename(),
+            true, btl_addr_string, orte_process_info.nodename,
             peer_proc->proc_ompi->proc_hostname));
         return OMPI_ERR_OUT_OF_RESOURCE;
     }    

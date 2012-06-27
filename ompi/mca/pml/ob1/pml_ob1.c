@@ -16,7 +16,6 @@
  * Copyright (c) 2011      Sandia National Laboratories. All rights reserved.
  * Copyright (c) 2011-2012 Los Alamos National Security, LLC. All rights
  *                         reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +31,9 @@
 #include "opal/class/opal_bitmap.h"
 #include "opal/util/output.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/grpcomm/grpcomm.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
@@ -356,10 +357,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         mca_btl_base_selected_module_t *sm = 
             (mca_btl_base_selected_module_t*) item;
         if (sm->btl_module->btl_eager_limit < sizeof(mca_pml_ob1_hdr_t)) {
-            orca_show_help("help-mpi-pml-ob1.txt", "eager_limit_too_small",
+            orte_show_help("help-mpi-pml-ob1.txt", "eager_limit_too_small",
                            true, 
                            sm->btl_component->btl_version.mca_component_name,
-                                orca_process_info_get_nodename(),
+                           orte_process_info.nodename,
                            sm->btl_component->btl_version.mca_component_name,
                            sm->btl_module->btl_eager_limit,
                            sm->btl_component->btl_version.mca_component_name,
@@ -616,7 +617,7 @@ void mca_pml_ob1_process_pending_rdma(void)
 void mca_pml_ob1_error_handler(
         struct mca_btl_base_module_t* btl, int32_t flags,
         ompi_proc_t* errproc, char* btlinfo ) { 
-    orca_error_mgr_abort(-1, NULL);
+    orte_errmgr.abort(-1, NULL);
 }
 
 #if OPAL_ENABLE_FT_CR    == 0
@@ -634,8 +635,7 @@ int mca_pml_ob1_ft_event( int state )
     if(OPAL_CRS_CHECKPOINT == state) {
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCPBR1);
-            /* TODO: Find a proper argument for this function */
-            orca_coll_barrier(ORCA_COLL_TYPE_BARRIER_CR);
+            orte_grpcomm.barrier();
         }
 
         OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P0);
@@ -646,13 +646,12 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) { 
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_COREBR0);
-                /* TODO: Find a proper argument for this function */
-                orca_coll_barrier(ORCA_COLL_TYPE_BARRIER_CR);
+                orte_grpcomm.barrier();
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P2);
         }
 
-        if( orca_info_cr_continue_like_restart() && !first_continue_pass ) {
+        if( orte_cr_continue_like_restart && !first_continue_pass ) {
             /*
              * Get a list of processes
              */
@@ -694,8 +693,8 @@ int mca_pml_ob1_ft_event( int state )
 
         /*
          * Clean out the modex information since it is invalid now.
-         *    o rte_grpcomm.purge_proc_attrs();
-         * This happens at the Open RTE level, so doing it again here will cause
+         *    orte_grpcomm.purge_proc_attrs();
+         * This happens at the ORTE level, so doing it again here will cause
          * some issues with socket caching.
          */
 
@@ -740,27 +739,26 @@ int mca_pml_ob1_ft_event( int state )
 
         if( opal_cr_timing_barrier_enabled ) {
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR0);
-            /* JJH Cannot barrier here due to progress engine -- orca_coll_barrier();*/
+            /* JJH Cannot barrier here due to progress engine -- orte_grpcomm.barrier();*/
         }
     }
     else if(OPAL_CRS_CONTINUE == state) {
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR1);
-                /* TODO: Find a proper argument for this function */
-                orca_coll_barrier(ORCA_COLL_TYPE_BARRIER_CR);
+                orte_grpcomm.barrier();
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2P3);
         }
 
-        if( orca_info_cr_continue_like_restart() && !first_continue_pass ) {
+        if( orte_cr_continue_like_restart && !first_continue_pass ) {
             /*
              * Exchange the modex information once again.
              * BTLs will have republished their modex information.
              */
-            if (OMPI_SUCCESS != (ret = orca_coll_modex()) ) {
+            if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
                 opal_output(0,
-                            "pml:ob1: ft_event(Restart): Failed orca_coll_modex() = %d",
+                            "pml:ob1: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
                             ret);
                 return ret;
             }
@@ -775,9 +773,8 @@ int mca_pml_ob1_ft_event( int state )
             }
 
             /* Is this barrier necessary ? JJH */
-            /* TODO: Find a proper argument for this function */
-            if (OMPI_SUCCESS != (ret = orca_coll_barrier(ORCA_COLL_TYPE_BARRIER_CR)) ) {
-                opal_output(0, "pml:ob1: ft_event(Restart): Failed in orca_coll_barrier (%d)", ret);
+            if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+                opal_output(0, "pml:ob1: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
                 return ret;
             }
 
@@ -792,8 +789,7 @@ int mca_pml_ob1_ft_event( int state )
         if( !first_continue_pass ) {
             if( opal_cr_timing_barrier_enabled ) {
                 OPAL_CR_SET_TIMER(OPAL_CR_TIMER_P2PBR2);
-                /* TODO: Find a proper argument for this function */
-                orca_coll_barrier(ORCA_COLL_TYPE_BARRIER_CR);
+                orte_grpcomm.barrier();
             }
             OPAL_CR_SET_TIMER(OPAL_CR_TIMER_CRCP1);
         }
@@ -806,9 +802,9 @@ int mca_pml_ob1_ft_event( int state )
          * Exchange the modex information once again.
          * BTLs will have republished their modex information.
          */
-        if (OMPI_SUCCESS != (ret = orca_coll_modex())) {
+        if (OMPI_SUCCESS != (ret = orte_grpcomm.modex(NULL))) {
             opal_output(0,
-                        "pml:ob1: ft_event(Restart): Failed orca_coll_modex() = %d",
+                        "pml:ob1: ft_event(Restart): Failed orte_grpcomm.modex() = %d",
                         ret);
             return ret;
         }
@@ -823,9 +819,8 @@ int mca_pml_ob1_ft_event( int state )
         }
 
         /* Is this barrier necessary ? JJH */
-        /* TODO: Find a proper argument for this function */
-        if (OMPI_SUCCESS != (ret = orca_coll_barrier(ORCA_COLL_TYPE_BARRIER_CR)) ) {
-            opal_output(0, "pml:ob1: ft_event(Restart): Failed in orca_coll_barrier (%d)", ret);
+        if (OMPI_SUCCESS != (ret = orte_grpcomm.barrier())) {
+            opal_output(0, "pml:ob1: ft_event(Restart): Failed in orte_grpcomm.barrier (%d)", ret);
             return ret;
         }
 

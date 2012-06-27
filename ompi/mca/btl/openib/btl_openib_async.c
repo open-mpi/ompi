@@ -3,7 +3,6 @@
  * Copyright (c) 2007-2009 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +20,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "orca/include/rte_orca.h"
+#include "orte/util/show_help.h"
 
 #include "ompi/mca/btl/base/base.h"
 #include "btl_openib.h"
@@ -349,15 +348,15 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
             case IBV_EVENT_QP_ACCESS_ERR:
             case IBV_EVENT_PATH_MIG_ERR:
             case IBV_EVENT_SRQ_ERR:
-                orca_show_help("help-mpi-btl-openib.txt", "of error event",
-                    true,orca_process_info_get_nodename(), orca_process_info_get_pid(),
+                orte_show_help("help-mpi-btl-openib.txt", "of error event",
+                    true,orte_process_info.nodename, orte_process_info.pid,
                     event_type,
                     openib_event_to_str((enum ibv_event_type)event_type),
                     xrc_event ? "true" : "false");
                 break;
             case IBV_EVENT_PORT_ERR:
-                orca_show_help("help-mpi-btl-openib.txt", "of error event",
-                    true,orca_process_info_get_nodename(), orca_process_info_get_pid(),
+                orte_show_help("help-mpi-btl-openib.txt", "of error event",
+                    true,orte_process_info.nodename, orte_process_info.pid,
                     event_type,
                     openib_event_to_str((enum ibv_event_type)event_type),
                     xrc_event ? "true" : "false");
@@ -386,8 +385,8 @@ static int btl_openib_async_deviceh(struct mca_btl_openib_async_poll *devices_po
 
                 break;
             default:
-                orca_show_help("help-mpi-btl-openib.txt", "of unknown event",
-                        true,orca_process_info_get_nodename(), orca_process_info_get_pid(),
+                orte_show_help("help-mpi-btl-openib.txt", "of unknown event",
+                        true,orte_process_info.nodename, orte_process_info.pid,
                         event_type, xrc_event ? "true" : "false");
         }
         ibv_ack_async_event(&event);

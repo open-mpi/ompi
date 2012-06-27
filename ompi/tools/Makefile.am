@@ -10,7 +10,6 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -22,13 +21,11 @@
 
 EXTRA_DIST += tools/win_makefile tools/CMakeLists.txt
 
-if OMPI_WITH_ORTE_SUPPORTED_TOOLS
 SUBDIRS += \
 	tools/ompi_info \
 	tools/wrappers \
 	tools/ortetools \
-	tools/ompi-server
-endif # OMPI_WITH_ORTE_SUPPORTED_TOOLS
+        tools/ompi-server
 
 DIST_SUBDIRS += \
 	tools/ompi_info \

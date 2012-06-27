@@ -1,13 +1,14 @@
 /*
  * Copyright (c) 2009-2011 The Trustees of Indiana University.
  *                         All rights reserved.
+ *
  * Copyright (c) 2010      Cisco Systems, Inc.  All rights reserved. 
+ *
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2011      Los Alamos National Security, LLC.
  *                         All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,8 +63,7 @@ orte_errmgr_base_module_t orte_errmgr_default_app_module = {
     NULL,
     NULL,
     orte_errmgr_base_register_migration_warning,
-    NULL,
-    orte_errmgr_base_vabort
+    NULL
 };
 
 static void proc_errors(int fd, short args, void *cbdata);

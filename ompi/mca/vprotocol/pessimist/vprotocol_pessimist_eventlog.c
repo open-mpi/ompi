@@ -3,7 +3,6 @@
  *                         All rights reserved.
  * Copyright (c) 2012      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -14,8 +13,9 @@
 #include "ompi_config.h"
 #include "vprotocol_pessimist_eventlog.h"
 
-#include "orca/include/rte_orca.h"
-
+#include "orte/mca/rml/rml.h"
+#include "orte/mca/rml/base/rml_contact.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/dpm/dpm.h"
 #include "ompi/mca/pubsub/pubsub.h"
 
@@ -24,9 +24,9 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     int rc;
     opal_buffer_t buffer;
     char *port;
-    orca_process_name_t el_proc;
+    orte_process_name_t el_proc;
     char *hnp_uri, *rml_uri;
-    orca_oob_tag_t el_tag;
+    orte_rml_tag_t el_tag;
     char name[MPI_MAX_PORT_NAME];
     int rank;
     vprotocol_pessimist_clock_t connect_info[2];
@@ -41,18 +41,18 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     
     /* separate the string into the HNP and RML URI and tag */
     if (OMPI_SUCCESS != (rc = ompi_dpm.parse_port(port, &hnp_uri, &rml_uri, &el_tag))) {
-        ORCA_ERROR_LOG(rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
     /* extract the originating proc's name */
-    if (ORCA_SUCCESS != (rc = orca_oob_parse_uris(rml_uri, &el_proc, NULL))) {
-        ORCA_ERROR_LOG(rc);
+    if (ORTE_SUCCESS != (rc = orte_rml_base_parse_uris(rml_uri, &el_proc, NULL))) {
+        ORTE_ERROR_LOG(rc);
         free(rml_uri); free(hnp_uri);
         return rc;
     }
     /* make sure we can route rml messages to the destination */
     if (OMPI_SUCCESS != (rc = ompi_dpm.route_to_port(hnp_uri, &el_proc))) {
-        ORCA_ERROR_LOG(rc);
+        ORTE_ERROR_LOG(rc);
         free(rml_uri); free(hnp_uri);
         return rc;
     }
@@ -61,9 +61,9 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
     /* Send an rml message to tell the remote end to wake up and jump into 
      * connect/accept */
     OBJ_CONSTRUCT(&buffer, opal_buffer_t);
-    rc = orca_oob_send_buffer(&el_proc, &buffer, el_tag+1, 0);
-    if(ORCA_SUCCESS > rc) {
-        ORCA_ERROR_LOG(rc);
+    rc = orte_rml.send_buffer(&el_proc, &buffer, el_tag+1, 0);
+    if(ORTE_SUCCESS > rc) {
+        ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);        
         return rc;
     }
@@ -71,7 +71,7 @@ int vprotocol_pessimist_event_logger_connect(int el_rank, ompi_communicator_t **
 
     rc = ompi_dpm.connect_accept(MPI_COMM_SELF, 0, port, true, el_comm);
     if(OMPI_SUCCESS != rc) {
-        ORCA_ERROR_LOG(rc);
+        ORTE_ERROR_LOG(rc);
     }
     
     /* Send Rank, receive max buffer size and max_clock back */

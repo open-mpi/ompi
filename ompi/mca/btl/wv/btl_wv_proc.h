@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -67,7 +66,7 @@ struct mca_btl_wv_proc_t {
     ompi_proc_t *proc_ompi;
 
     /** globally unique identifier for the process */
-    orca_process_name_t proc_guid;
+    orte_process_name_t proc_guid;
 
     /** modex messages from this proc; one for each port in the peer */
     mca_btl_wv_proc_modex_t *proc_ports;

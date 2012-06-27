@@ -16,7 +16,6 @@
  *                         reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
  * Copyright (c) 2009-2010 Oracle and/or its affiliates.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -46,7 +45,9 @@
 #include "opal/mca/installdirs/installdirs.h"
 #include "opal_stdint.h"
 
-#include "orca/include/rte_orca.h"
+#include "orte/util/show_help.h"
+#include "orte/util/proc_info.h"
+#include "orte/runtime/orte_globals.h"
 
 #include "ompi/constants.h"
 #include "ompi/proc/proc.h"
@@ -515,8 +516,8 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_wv_device_t *device,
     if(mca_btl_wv_component.ib_num_btls > 0 &&
             IB_DEFAULT_GID_PREFIX == subnet_id &&
             mca_btl_wv_component.warn_default_gid_prefix) {
-        orca_show_help("help-mpi-btl-wv.txt", "default subnet prefix",
-                true, orca_process_info_get_nodename());
+        orte_show_help("help-mpi-btl-wv.txt", "default subnet prefix",
+                true, orte_process_info.nodename);
     }
 
     lmc = (1 << ib_port_attr->Lmc);
@@ -1037,9 +1038,9 @@ static int setup_qps(void)
 
     queues = opal_argv_split(mca_btl_wv_component.receive_queues, ':');
     if (0 == opal_argv_count(queues)) {
-        orca_show_help("help-mpi-btl-wv.txt",
+        orte_show_help("help-mpi-btl-wv.txt",
                        "no qps in receive_queues", true,
-                       orca_process_info_get_nodename(), 
+                       orte_process_info.nodename, 
                        mca_btl_wv_component.receive_queues);
         ret = OMPI_ERROR;
         goto error;
@@ -1054,9 +1055,9 @@ static int setup_qps(void)
         } else if (0 == strncmp("S,", queues[qp], 2)) {
             num_srq_qps++;
         }else {
-            orca_show_help("help-mpi-btl-wv.txt",
+            orte_show_help("help-mpi-btl-wv.txt",
                            "invalid qp type in receive_queues", true,
-                           orca_process_info_get_nodename(), 
+                           orte_process_info.nodename, 
                            mca_btl_wv_component.receive_queues,
                            queues[qp]);
             ret = OMPI_ERR_BAD_PARAM;
@@ -1083,9 +1084,9 @@ static int setup_qps(void)
         if ('P' == params[0][0]) {
             int32_t rd_win, rd_rsv;
             if (count < 3 || count > 6) {
-                orca_show_help("help-mpi-btl-wv.txt",
+                orte_show_help("help-mpi-btl-wv.txt",
                                "invalid pp qp specification", true,
-                               orca_process_info_get_nodename(), queues[qp]);
+                               orte_process_info.nodename, queues[qp]);
                 ret = OMPI_ERR_BAD_PARAM;
                 goto error;
             }
@@ -1108,15 +1109,15 @@ static int setup_qps(void)
             mca_btl_wv_component.qp_infos[qp].u.pp_qp.rd_win = rd_win;
             mca_btl_wv_component.qp_infos[qp].u.pp_qp.rd_rsv = rd_rsv;
             if ((rd_num - rd_low) > rd_win) {
-                orca_show_help("help-mpi-btl-wv.txt", "non optimal rd_win",
+                orte_show_help("help-mpi-btl-wv.txt", "non optimal rd_win",
                         true, rd_win, rd_num - rd_low);
             }
         } else {
             int32_t sd_max, rd_init, srq_limit;
             if (count < 3 || count > 7) {
-                orca_show_help("help-mpi-btl-wv.txt",
+                orte_show_help("help-mpi-btl-wv.txt",
                                "invalid srq specification", true,
-                               orca_process_info_get_nodename(), queues[qp]);
+                               orte_process_info.nodename, queues[qp]);
                 ret = OMPI_ERR_BAD_PARAM;
                 goto error;
             }
@@ -1145,15 +1146,15 @@ static int setup_qps(void)
             }
 
             if (rd_num < rd_init) {
-                orca_show_help("help-mpi-btl-wv.txt", "rd_num must be >= rd_init",
-                        true, orca_process_info_get_nodename(), queues[qp]);
+                orte_show_help("help-mpi-btl-wv.txt", "rd_num must be >= rd_init",
+                        true, orte_process_info.nodename, queues[qp]);
                 ret = OMPI_ERR_BAD_PARAM;
                 goto error;
             }
 
             if (rd_num < srq_limit) {
-                orca_show_help("help-mpi-btl-wv.txt", "srq_limit must be > rd_num",
-                        true, orca_process_info_get_nodename(), queues[qp]);
+                orte_show_help("help-mpi-btl-wv.txt", "srq_limit must be > rd_num",
+                        true, orte_process_info.nodename, queues[qp]);
                 ret = OMPI_ERR_BAD_PARAM;
                 goto error;
             }
@@ -1164,8 +1165,8 @@ static int setup_qps(void)
         }
 
         if (rd_num <= rd_low) {
-            orca_show_help("help-mpi-btl-wv.txt", "rd_num must be > rd_low",
-                    true, orca_process_info_get_nodename(), queues[qp]);
+            orte_show_help("help-mpi-btl-wv.txt", "rd_num must be > rd_low",
+                    true, orte_process_info.nodename, queues[qp]);
             ret = OMPI_ERR_BAD_PARAM;
             goto error;
         }
@@ -1184,23 +1185,23 @@ static int setup_qps(void)
         mca_btl_wv_module.super.btl_eager_limit :
         mca_btl_wv_module.super.btl_max_send_size;
     if (max_qp_size < max_size_needed) {
-        orca_show_help("help-mpi-btl-wv.txt",
+        orte_show_help("help-mpi-btl-wv.txt",
                        "biggest qp size is too small", true,
-                       orca_process_info_get_nodename(), max_qp_size,
+                       orte_process_info.nodename, max_qp_size,
                        max_size_needed);
         ret = OMPI_ERR_BAD_PARAM;
         goto error;
     } else if (max_qp_size > max_size_needed) {
-        orca_show_help("help-mpi-btl-wv.txt",
+        orte_show_help("help-mpi-btl-wv.txt",
                        "biggest qp size is too big", true,
-                       orca_process_info_get_nodename(), max_qp_size,
+                       orte_process_info.nodename, max_qp_size,
                        max_size_needed);
     }
 
     if (mca_btl_wv_component.ib_free_list_max > 0 &&
         min_freelist_size > mca_btl_wv_component.ib_free_list_max) {
-        orca_show_help("help-mpi-btl-wv.txt", "freelist too small", true,
-                       orca_process_info_get_nodename(),
+        orte_show_help("help-mpi-btl-wv.txt", "freelist too small", true,
+                       orte_process_info.nodename,
                        mca_btl_wv_component.ib_free_list_max,
                        min_freelist_size);
         ret = OMPI_ERR_BAD_PARAM;
@@ -1316,9 +1317,9 @@ static int init_one_device(opal_list_t *btl_list, struct wv_device* ib_dev)
            warning that we're using default values (unless overridden
            that we don't want to see these warnings) */
         if (mca_btl_wv_component.warn_no_device_params_found) {
-            orca_show_help("help-mpi-btl-wv.txt",
+            orte_show_help("help-mpi-btl-wv.txt",
                            "no device params found", true,
-                           orca_process_info_get_nodename(),
+                           orte_process_info.nodename,
                            device->ib_dev->name,
                            device->ib_dev_attr.VendorId,
                            device->ib_dev_attr.VendorPartId);
@@ -1491,7 +1492,7 @@ static int init_one_device(opal_list_t *btl_list, struct wv_device* ib_dev)
     if (device->btls > 0) {
         /* if apm was enabled it should be > 1 */
         if (1 == mca_btl_wv_component.apm_ports) {
-            orca_show_help("help-mpi-btl-wv.txt",
+            orte_show_help("help-mpi-btl-wv.txt",
                            "apm not enough ports", true);
             mca_btl_wv_component.apm_ports = 0;
         }
@@ -1750,10 +1751,10 @@ static int init_one_device(opal_list_t *btl_list, struct wv_device* ib_dev)
             if (NULL != values.receive_queues) {
                 if (0 != strcmp(values.receive_queues, 
                                 mca_btl_wv_component.receive_queues)) {
-                    orca_show_help("help-mpi-btl-wv.txt",
+                    orte_show_help("help-mpi-btl-wv.txt",
                                    "locally conflicting receive_queues", true,
                                    opal_install_dirs.pkgdatadir,
-                                   orca_process_info_get_nodename(),
+                                   orte_process_info.nodename,
                                    receive_queues_device->ib_dev->name,
                                    receive_queues_device->ib_dev_attr.VendorId,
                                    receive_queues_device->ib_dev_attr.VendorPartId,
@@ -1774,10 +1775,10 @@ static int init_one_device(opal_list_t *btl_list, struct wv_device* ib_dev)
                device's INI file, we must error. */
             else if (BTL_WV_RQ_SOURCE_DEVICE_INI ==
                 mca_btl_wv_component.receive_queues_source) {
-                orca_show_help("help-mpi-btl-wv.txt",
+                orte_show_help("help-mpi-btl-wv.txt",
                                "locally conflicting receive_queues", true,
                                opal_install_dirs.pkgdatadir,
-                               orca_process_info_get_nodename(),
+                               orte_process_info.nodename,
                                receive_queues_device->ib_dev->name,
                                receive_queues_device->ib_dev_attr.VendorId,
                                receive_queues_device->ib_dev_attr.VendorPartId,
@@ -1808,9 +1809,9 @@ error:
     }
 
     if (OMPI_SUCCESS != ret) {
-        orca_show_help("help-mpi-btl-wv.txt",
+        orte_show_help("help-mpi-btl-wv.txt",
                        "error in device init", true, 
-                       orca_process_info_get_nodename(),
+                       orte_process_info.nodename,
                        device->ib_dev->name);
     }
     device->ib_dev_context->device_if->Release();
@@ -2092,7 +2093,7 @@ sort_devs_by_distance(struct wv_device **ib_devs, int count)
 
     for (i = 0; i < count; i++) {
         devs[i].ib_dev = ib_devs[i];
-        if (orca_process_info_is_bound()) {
+        if (orte_proc_is_bound) {
             /* If this process is bound to one or more PUs, we can get
                an accurate distance. */
             devs[i].distance = get_ib_dev_distance(ib_devs[i]);
@@ -2281,7 +2282,7 @@ btl_wv_component_init(int *num_btl_modules,
       list_count++;
 
     if (list_count > 1) {
-        orca_show_help("help-mpi-btl-wv.txt",
+        orte_show_help("help-mpi-btl-wv.txt",
                        "specified include and exclude", true,
                        NULL == mca_btl_wv_component.if_include ?
                         "<not specified>" : mca_btl_wv_component.if_include,
@@ -2334,8 +2335,8 @@ btl_wv_component_init(int *num_btl_modules,
     }
     free(dev_sorted);
     if (!found) {
-        orca_show_help("help-mpi-btl-wv.txt", "no devices right type",
-                       true, orca_process_info_get_nodename(),
+        orte_show_help("help-mpi-btl-wv.txt", "no devices right type",
+                       true, orte_process_info.nodename,
                        ((BTL_WV_DT_IB == mca_btl_wv_component.device_type) ?
                         "InfiniBand" :
                         (BTL_WV_DT_IWARP == mca_btl_wv_component.device_type) ?
@@ -2351,16 +2352,16 @@ btl_wv_component_init(int *num_btl_modules,
     if (0 != opal_argv_count(mca_btl_wv_component.if_list) &&
         mca_btl_wv_component.warn_nonexistent_if) {
         char *str = opal_argv_join(mca_btl_wv_component.if_list, ',');
-        orca_show_help("help-mpi-btl-wv.txt", "nonexistent port",
-                       true, orca_process_info_get_nodename(),
+        orte_show_help("help-mpi-btl-wv.txt", "nonexistent port",
+                       true, orte_process_info.nodename,
                        ((NULL != mca_btl_wv_component.if_include) ?
                         "in" : "ex"), str);
         free(str);
     }
 
     if(0 == mca_btl_wv_component.ib_num_btls) {
-        orca_show_help("help-mpi-btl-wv.txt",
-                "no active ports found", true, orca_process_info_get_nodename());
+        orte_show_help("help-mpi-btl-wv.txt",
+                "no active ports found", true, orte_process_info.nodename);
         goto no_btls;
     }
 
@@ -2449,9 +2450,9 @@ btl_wv_component_init(int *num_btl_modules,
             /* Do finial init on device */
             ret = prepare_device_for_use(device);
             if (OMPI_SUCCESS != ret) {
-                orca_show_help("help-mpi-btl-wv.txt",
+                orte_show_help("help-mpi-btl-wv.txt",
                                "error in device init", true, 
-                               orca_process_info_get_nodename(),
+                               orte_process_info.nodename,
                                device->ib_dev->name);
                 goto no_btls;
             }
@@ -2973,16 +2974,16 @@ error:
             (endpoint->qps[qp].qp->lcl_qp->context->device->name); 
 
         if (WvWcRnrRetryError == wc->Status) {
-            orca_show_help("help-mpi-btl-wv.txt",
+            orte_show_help("help-mpi-btl-wv.txt",
                            BTL_WV_QP_TYPE_PP(qp) ? 
                            "pp rnr retry exceeded" : 
                            "srq rnr retry exceeded", true,
-                           orca_process_info_get_nodename(), device_name,
+                           orte_process_info.nodename, device_name,
                            peer_hostname);
         } else if (-2 == wc->Status) {
-            orca_show_help("help-mpi-btl-wv.txt", 
+            orte_show_help("help-mpi-btl-wv.txt", 
                            "pp retry exceeded", true,
-                           orca_process_info_get_nodename(),
+                           orte_process_info.nodename,
                            device_name, peer_hostname);
         }
     }

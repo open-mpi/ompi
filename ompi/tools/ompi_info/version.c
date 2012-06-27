@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * Copyright (c) 2008-2011 Cisco Systems, Inc.  All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,10 +26,7 @@
 #include "mpi.h"
 
 #include "opal/version.h"
-#if ORCA_WITH_ORTE_SUPPORT
 #include "orte/version.h"
-#endif /* ORCA_WITH_ORTE_SUPPORT */
-#include "orca/version.h"
 #include "ompi/version.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/printf.h"
@@ -153,8 +149,7 @@ void ompi_info_show_ompi_version(const char *scope)
     asprintf(&tmp, "%s:version:release_date", ompi_info_type_ompi);
     ompi_info_out("Open MPI release date", tmp, OMPI_RELEASE_DATE);
     free(tmp);
-
-#if ORCA_WITH_ORTE_SUPPORT
+    
     asprintf(&tmp, "%s:version:full", ompi_info_type_orte);
     tmp2 = make_version_str(scope, 
                             ORTE_MAJOR_VERSION, ORTE_MINOR_VERSION, 
@@ -170,24 +165,6 @@ void ompi_info_show_ompi_version(const char *scope)
     asprintf(&tmp, "%s:version:release_date", ompi_info_type_orte);
     ompi_info_out("Open RTE release date", tmp, ORTE_RELEASE_DATE);
     free(tmp);
-#endif /* ORCA_WITH_ORTE_SUPPORT */
-
-    asprintf(&tmp, "%s:version:full", ompi_info_type_orca);
-    tmp2 = make_version_str(scope, 
-                            ORCA_MAJOR_VERSION, ORCA_MINOR_VERSION, 
-                            ORCA_RELEASE_VERSION, 
-                            ORCA_GREEK_VERSION,
-                            ORCA_WANT_REPO_REV, ORCA_REPO_REV);
-    ompi_info_out("ORCA", tmp, tmp2);
-    free(tmp);
-    free(tmp2);
-    asprintf(&tmp, "%s:version:repo", ompi_info_type_orca);
-    ompi_info_out("ORCA repo revision", tmp, ORCA_REPO_REV);
-    free(tmp);
-    asprintf(&tmp, "%s:version:release_date", ompi_info_type_orca);
-    ompi_info_out("ORCA release date", tmp, ORCA_RELEASE_DATE);
-    free(tmp);
-
     
     asprintf(&tmp, "%s:version:full", ompi_info_type_opal);
     tmp2 = make_version_str(scope, 

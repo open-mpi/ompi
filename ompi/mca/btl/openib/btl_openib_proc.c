@@ -11,7 +11,6 @@
  *                         All rights reserved.
  * Copyright (c) 2007-2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006-2007 Voltaire All rights reserved.
- * Copyright (c) 2012      Oak Ridge National Labs.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -155,7 +154,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
     if (OMPI_SUCCESS != rc) {
         BTL_ERROR(("[%s:%d] ompi_modex_recv failed for peer %s",
                    __FILE__, __LINE__,
-                   ORCA_NAME_PRINT(&ompi_proc->proc_name)));
+                   ORTE_NAME_PRINT(&ompi_proc->proc_name)));
         OBJ_RELEASE(module_proc);
         return NULL;
     }
