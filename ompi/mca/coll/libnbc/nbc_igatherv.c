@@ -14,19 +14,22 @@
  * ot the recvcounts array may change, so a comparison of the address
  * would not be sufficient ... we simply do not cache it */
 
-#ifdef HAVE_SYS_WEAK_ALIAS_PRAGMA
-#pragma weak NBC_Igatherv=PNBC_Igatherv
-#define NBC_Igatherv PNBC_Igatherv
-#endif
-int NBC_Igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+
+int ompi_coll_libnbc_igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, 
+                              void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype, 
+                              int root, struct ompi_communicator_t *comm, ompi_request_t ** request,
+                              struct mca_coll_base_module_2_0_0_t *module) {
   int rank, p, res, i;
   MPI_Aint rcvext;
   NBC_Schedule *schedule;
   char *rbuf, inplace;
-  
+  NBC_Handle *handle;
+  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
+  ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
+
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
   
-  res = NBC_Init_handle(handle, comm);
+  res = NBC_Init_handle(comm, coll_req, libnbc_module);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
@@ -73,46 +76,3 @@ int NBC_Igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recv
  
   return NBC_OK;
 }
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-/* Fortran bindings */
-#ifdef HAVE_SYS_WEAK_ALIAS_PRAGMA
-NBC_F77_ALLFUNC_(nbc_igatherv,NBC_IGATHERV,(void *sendbuf, int *sendcount, int *sendtype, void *recvbuf, int *recvcounts, int *displs, int *recvtype, int *root, int *fcomm,
-    int *fhandle, int *ierr));
-#pragma weak NBC_IGATHERV = nbc_igatherv_f
-#pragma weak nbc_igatherv = nbc_igatherv_f
-#pragma weak nbc_igatherv_ = nbc_igatherv_f
-#pragma weak nbc_igatherv__ = nbc_igatherv_f
-#pragma weak PNBC_IGATHERV = nbc_igatherv_f
-#pragma weak pnbc_igatherv = nbc_igatherv_f
-#pragma weak pnbc_igatherv_ = nbc_igatherv_f
-#pragma weak pnbc_igatherv__ = nbc_igatherv_f
-void nbc_igatherv_f(void *sendbuf, int *sendcount, int *sendtype, void *recvbuf, int *recvcounts, int *displs, int *recvtype, int *root, int *fcomm,
-    int *fhandle, int *ierr) {
-#else
-void NBC_F77_FUNC_(nbc_igatherv,NBC_IGATHERV)(void *sendbuf, int *sendcount, int *sendtype, void *recvbuf, int *recvcounts, int *displs, int *recvtype, int *root, int *fcomm,
-    int *fhandle, int *ierr);
-void NBC_F77_FUNC_(nbc_igatherv,NBC_IGATHERV)(void *sendbuf, int *sendcount, int *sendtype, void *recvbuf, int *recvcounts, int *displs, int *recvtype, int *root, int *fcomm,
-    int *fhandle, int *ierr)  {
-#endif
-  MPI_Datatype rtype, stype;
-  MPI_Comm comm;
-  NBC_Handle *handle;
-
-  /* this is the only MPI-2 we need :-( */
-  rtype = MPI_Type_f2c(*recvtype);
-  stype = MPI_Type_f2c(*sendtype);
-  comm = MPI_Comm_f2c(*fcomm);
-
-  /* create a new handle in handle table */
-  NBC_Create_fortran_handle(fhandle, &handle);
-
-  /* call NBC function */
-  *ierr = NBC_Igatherv(sendbuf, *sendcount, stype, recvbuf, recvcounts, displs, rtype, *root, comm, handle);
-}
-#ifdef __cplusplus
-}
-#endif
