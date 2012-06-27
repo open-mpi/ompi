@@ -28,7 +28,7 @@
  * still in the cache and second, the tmpbuf used by the schedule must
  * be attached to the handle that uses this schedule !!!! 
  * I.E., THIS IS EXPERIMENTAL AND MIGHT NOT WORK */
-#define NBC_CACHE_SCHEDULE 
+/* #define NBC_CACHE_SCHEDULE  */
 #define NBC_SCHED_DICT_UPPER 1024 /* max. number of dict entries */
 #define NBC_SCHED_DICT_LOWER 512  /* nuber of dict entries after wipe, if SCHED_DICT_UPPER is reached */
 
@@ -288,12 +288,10 @@ void NBC_SchedCache_args_delete_key_dummy(void *k);
 #endif
 
 
-int NBC_Progress(NBC_Handle *handle);
 int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule);
 int NBC_Init_handle(struct ompi_communicator_t *comm, ompi_coll_libnbc_request_t **request, ompi_coll_libnbc_module_t *module);
 static inline int NBC_Type_intrinsic(MPI_Datatype type);
 static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm);
-NBC_Comminfo* NBC_Init_comm(MPI_Comm comm);
 int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
 
 /* some macros */
