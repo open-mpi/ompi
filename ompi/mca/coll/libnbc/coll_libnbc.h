@@ -25,20 +25,6 @@
 
 BEGIN_C_DECLS
 
-/* Globally exported variables */
-OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_2_0_0_t mca_coll_libnbc_component;
-
-int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
-                              struct mca_coll_base_module_2_0_0_t *module);
-
-
-struct ompi_coll_libnbc_module_t {
-    mca_coll_base_module_t super;
-};
-typedef struct ompi_coll_libnbc_module_t ompi_coll_libnbc_module_t;
-OBJ_CLASS_DECLARATION(ompi_coll_libnbc_module_t);
-
-
 /* Function return codes  */
 #define NBC_OK 0 /* everything went fine */
 #define NBC_SUCCESS 0 /* everything went fine (MPI compliant :) */
@@ -54,14 +40,20 @@ OBJ_CLASS_DECLARATION(ompi_coll_libnbc_module_t);
 /* number of implemented collective functions */
 #define NBC_NUM_COLL 19
 
-/* a schedule is basically a pointer to some memory location where the
- * schedule array resides */ 
-typedef void* NBC_Schedule;
+struct ompi_coll_libnbc_component_t {
+    mca_coll_base_component_2_0_0_t super;
+    ompi_free_list_t requests;
+    opal_list_t active_requests;
+    uint32_t active_comms;
+};
+typedef struct ompi_coll_libnbc_component_t ompi_coll_libnbc_component_t;
 
-/* used to hang off a communicator */
-typedef struct {
-  MPI_Comm mycomm; /* save the shadow communicator here */
-  int tag;
+/* Globally exported variables */
+OMPI_MODULE_DECLSPEC extern ompi_coll_libnbc_component_t mca_coll_libnbc_component;
+
+struct ompi_coll_libnbc_module_t {
+    mca_coll_base_module_t super;
+    int tag;
 #ifdef NBC_CACHE_SCHEDULE
   void *NBC_Dict[NBC_NUM_COLL]; /* this should point to a struct
                                       hb_tree, but since this is a
@@ -70,12 +62,19 @@ typedef struct {
                                       it ...*/
   int NBC_Dict_size[NBC_NUM_COLL];
 #endif
-} NBC_Comminfo;
+};
+typedef struct ompi_coll_libnbc_module_t ompi_coll_libnbc_module_t;
+OBJ_CLASS_DECLARATION(ompi_coll_libnbc_module_t);
+
+typedef ompi_coll_libnbc_module_t NBC_Comminfo;
+
+/* a schedule is basically a pointer to some memory location where the
+ * schedule array resides */ 
+typedef void* NBC_Schedule;
 
 struct ompi_coll_libnbc_request_t {
     ompi_request_t super;
     MPI_Comm comm;
-    MPI_Comm mycomm;
     long row_offset;
     int tag;
     volatile int req_count;
@@ -91,6 +90,31 @@ typedef struct ompi_coll_libnbc_request_t ompi_coll_libnbc_request_t;
 OBJ_CLASS_DECLARATION(ompi_coll_libnbc_request_t);
 
 typedef ompi_coll_libnbc_request_t NBC_Handle;
+
+
+#define OMPI_COLL_LIBNBC_REQUEST_ALLOC(comm, req, rc)                   \
+    do {                                                                \
+        ompi_free_list_item_t *item;                                    \
+        OMPI_FREE_LIST_WAIT(&mca_coll_libnbc_component.requests,        \
+                            item, rc);                                  \
+        req = (ompi_coll_libnbc_request_t*) item;                       \
+        OMPI_REQUEST_INIT(&req->super, false);                          \
+        req->super.req_mpi_object.comm = comm;                          \
+        req->super.req_complete = false;                                \
+        req->super.req_state = OMPI_REQUEST_ACTIVE;                     \
+    } while (0)
+
+#define OMPI_COLL_LIBNBC_REQUEST_RETURN(req)                            \
+    do {                                                                \
+        OMPI_REQUEST_FINI(&request->super);                             \
+        OMPI_FREE_LIST_RETURN(&mca_coll_libnbc_component.requests,      \
+                              (ompi_free_list_item_t*) req);            \
+    } while (0)
+
+int NBC_Init_comm(MPI_Comm comm, ompi_coll_libnbc_module_t *module);
+int NBC_Progress(NBC_Handle *handle);
+int ompi_coll_libnbc_ibarrier(struct ompi_communicator_t *comm, ompi_request_t ** request,
+                              struct mca_coll_base_module_2_0_0_t *module);
 
 END_C_DECLS
 

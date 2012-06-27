@@ -35,47 +35,78 @@ const char *mca_coll_libnbc_component_version_string =
 static int libnbc_priority = 10;
 
 
+static int libnbc_open(void);
+static int libnbc_close(void);
 static int libnbc_register(void);
 static int libnbc_init_query(bool, bool);
 static mca_coll_base_module_t *libnbc_comm_query(struct ompi_communicator_t *, int *);
 static int libnbc_module_enable(mca_coll_base_module_t *, struct ompi_communicator_t *);
-
+static int libnbc_progress(void);
 
 /*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
 
-const mca_coll_base_component_2_0_0_t mca_coll_libnbc_component = {
-
-    /* First, the mca_component_t struct containing meta information
-     * about the component itself */
-
+ompi_coll_libnbc_component_t mca_coll_libnbc_component = {
     {
-     MCA_COLL_BASE_VERSION_2_0_0,
+        /* First, the mca_component_t struct containing meta information
+         * about the component itself */
+        {
+            MCA_COLL_BASE_VERSION_2_0_0,
 
-     /* Component name and version */
-     "libnbc",
-     OMPI_MAJOR_VERSION,
-     OMPI_MINOR_VERSION,
-     OMPI_RELEASE_VERSION,
+            /* Component name and version */
+            "libnbc",
+            OMPI_MAJOR_VERSION,
+            OMPI_MINOR_VERSION,
+            OMPI_RELEASE_VERSION,
 
-     /* Component open and close functions */
-     NULL,
-     NULL,
-     NULL,
-     libnbc_register
-    },
-    {
-        /* The component is checkpoint ready */
-        MCA_BASE_METADATA_PARAM_CHECKPOINT
-    },
+            /* Component open and close functions */
+            libnbc_open,
+            libnbc_close,
+            NULL,
+            libnbc_register
+        },
+        {
+            /* The component is checkpoint ready */
+            MCA_BASE_METADATA_PARAM_CHECKPOINT
+        },
 
-    /* Initialization / querying functions */
-
-    libnbc_init_query,
-    libnbc_comm_query
+        /* Initialization / querying functions */
+        libnbc_init_query,
+        libnbc_comm_query
+    }
 };
+
+
+static int
+libnbc_open(void)
+{
+    int ret;
+
+    OBJ_CONSTRUCT(&mca_coll_libnbc_component.requests, ompi_free_list_t);
+    ret = ompi_free_list_init(&mca_coll_libnbc_component.requests,
+                              sizeof(ompi_coll_libnbc_request_t),
+                              OBJ_CLASS(ompi_coll_libnbc_request_t),
+                              0,
+                              -1,
+                              8,
+                              NULL);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    OBJ_CONSTRUCT(&mca_coll_libnbc_component.active_requests, opal_list_t);
+    mca_coll_libnbc_component.active_comms = 0;
+
+    return OMPI_SUCCESS;
+}
+
+static int
+libnbc_close(void)
+{
+    OBJ_DESTRUCT(&mca_coll_libnbc_component.requests);
+
+    return OMPI_SUCCESS;
+}
 
 
 static int
@@ -83,7 +114,7 @@ libnbc_register(void)
 {
     /* Use a low priority, but allow other components to be lower */
 
-    mca_base_param_reg_int(&mca_coll_libnbc_component.collm_version,
+    mca_base_param_reg_int(&mca_coll_libnbc_component.super.collm_version,
                            "priority",
                            "Priority of the libnbc coll component",
                            false, false, libnbc_priority,
@@ -130,6 +161,11 @@ libnbc_comm_query(struct ompi_communicator_t *comm,
 
     module->super.ft_event = NULL;
 
+    if (OMPI_SUCCESS != NBC_Init_comm(comm, module)) {
+        OBJ_RELEASE(module);
+        return NULL;
+    }
+
     return &(module->super);
 }
 
@@ -142,7 +178,32 @@ libnbc_module_enable(mca_coll_base_module_t *module,
                      struct ompi_communicator_t *comm)
 {
     /* All done */
+    if (0 == mca_coll_libnbc_component.active_comms++) {
+        opal_progress_register(libnbc_progress);
+    }
     return OMPI_SUCCESS;
+}
+
+
+static int
+libnbc_progress(void)
+{
+    opal_list_item_t *item;
+
+    for (item = opal_list_get_first(&mca_coll_libnbc_component.active_requests) ;
+         item != opal_list_get_end(&mca_coll_libnbc_component.active_requests) ;
+         item = opal_list_get_next(item)) {
+        ompi_coll_libnbc_request_t* request = (ompi_coll_libnbc_request_t*) item;
+        if (NBC_OK == NBC_Progress(request)) {
+            request->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+            /* done, remove */
+            item = opal_list_remove_item(&mca_coll_libnbc_component.active_requests,
+                                         &request->super.super.super);
+        }
+        item = opal_list_get_next(item);
+    }
+
+    return 0;
 }
 
 
@@ -151,9 +212,13 @@ libnbc_module_construct(ompi_coll_libnbc_module_t *module)
 {
 }
 
+
 static void
 libnbc_module_destruct(ompi_coll_libnbc_module_t *module)
 {
+    if (0 == --mca_coll_libnbc_component.active_comms) {
+        opal_progress_unregister(libnbc_progress);
+    }
 }
 
 
@@ -161,3 +226,44 @@ OBJ_CLASS_INSTANCE(ompi_coll_libnbc_module_t,
                    mca_coll_base_module_t,
                    libnbc_module_construct,
                    libnbc_module_destruct);
+
+
+static int
+request_cancel(struct ompi_request_t *request, int complete)
+{
+    return MPI_ERR_REQUEST;
+}
+
+
+static int
+request_free(struct ompi_request_t **ompi_req)
+{
+    ompi_coll_libnbc_request_t *request = 
+        (ompi_coll_libnbc_request_t*) *ompi_req;
+
+    if (true != request->super.req_complete) {
+        return MPI_ERR_REQUEST;
+    }
+
+    OMPI_COLL_LIBNBC_REQUEST_RETURN(request);
+
+    *ompi_req = MPI_REQUEST_NULL;
+
+    return OMPI_SUCCESS;
+}
+
+
+static void
+request_construct(ompi_coll_libnbc_request_t *request)
+{
+    request->super.req_type = OMPI_REQUEST_COLL;
+    request->super.req_status._cancelled = 0;
+    request->super.req_free = request_free;
+    request->super.req_cancel = request_cancel;
+}
+
+
+OBJ_CLASS_INSTANCE(ompi_coll_libnbc_request_t, 
+                   ompi_request_t,
+                   request_construct,
+                   NULL);
