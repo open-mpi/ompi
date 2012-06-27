@@ -33,11 +33,13 @@ int NBC_Alltoall_args_compare(NBC_Alltoall_args *a, NBC_Alltoall_args *b, void *
 }
 #endif
 
+#ifdef HAVE_SYS_WEAK_ALIAS_PRAGMA
+#pragma weak NBC_Ialltoall=PNBC_Ialltoall
+#define NBC_Ialltoall PNBC_Ialltoall
+#endif
+
 /* simple linear MPI_Ialltoall the (simple) algorithm just sends to all nodes */
-int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, 
-                               MPI_Datatype recvtype, struct ompi_communicator_t *comm, ompi_request_t ** request,
-                               struct mca_coll_base_module_2_0_0_t *module)
-{
+int NBC_Ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle)  {
   int rank, p, res, a2asize, sndsize, datasize;
   NBC_Schedule *schedule;
   MPI_Aint rcvext, sndext;
@@ -46,13 +48,10 @@ int ompi_coll_libnbc_ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendty
 #endif
   char *rbuf, *sbuf, inplace;
   enum {NBC_A2A_LINEAR, NBC_A2A_PAIRWISE, NBC_A2A_DISS} alg;
-  NBC_Handle *handle;
-  ompi_coll_libnbc_request_t **coll_req = (ompi_coll_libnbc_request_t**) request;
-  ompi_coll_libnbc_module_t *libnbc_module = (ompi_coll_libnbc_module_t*) module;
 
   NBC_IN_PLACE(sendbuf, recvbuf, inplace);
   
-  res = NBC_Init_handle(comm, coll_req, libnbc_module);
+  res = NBC_Init_handle(handle, comm);
   if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
   res = MPI_Comm_rank(comm, &rank);
   if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
@@ -315,3 +314,45 @@ static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcve
   return NBC_OK;
 }
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+/* Fortran bindings */
+#ifdef HAVE_SYS_WEAK_ALIAS_PRAGMA
+NBC_F77_ALLFUNC_(nbc_ialltoall,NBC_IALLTOALL,(void *sendbuf, int *sendcount, int *sendtype,
+    void *recvbuf, int *recvcount, int *recvtype, int *fcomm, int *fhandle, int *ierr));
+#pragma weak NBC_IALLTOALL = nbc_ialltoall_f
+#pragma weak nbc_ialltoall = nbc_ialltoall_f
+#pragma weak nbc_ialltoall_ = nbc_ialltoall_f
+#pragma weak nbc_ialltoall__ = nbc_ialltoall_f
+#pragma weak PNBC_IALLTOALL = nbc_ialltoall_f
+#pragma weak pnbc_ialltoall = nbc_ialltoall_f
+#pragma weak pnbc_ialltoall_ = nbc_ialltoall_f
+#pragma weak pnbc_ialltoall__ = nbc_ialltoall_f
+void nbc_ialltoall_f(void *sendbuf, int *sendcount, int *sendtype,
+    void *recvbuf, int *recvcount, int *recvtype, int *fcomm, int *fhandle, int *ierr) {
+#else
+void NBC_F77_FUNC_(nbc_ialltoall,NBC_IALLTOALL)(void *sendbuf, int *sendcount, int *sendtype,
+    void *recvbuf, int *recvcount, int *recvtype, int *fcomm, int *fhandle, int *ierr);
+void NBC_F77_FUNC_(nbc_ialltoall,NBC_IALLTOALL)(void *sendbuf, int *sendcount, int *sendtype,
+    void *recvbuf, int *recvcount, int *recvtype, int *fcomm, int *fhandle, int *ierr)  {
+#endif
+  MPI_Datatype rtype, stype;
+  MPI_Comm comm;
+  NBC_Handle *handle;
+
+  /* this is the only MPI-2 we need :-( */
+  rtype = MPI_Type_f2c(*recvtype);
+  stype = MPI_Type_f2c(*sendtype);
+  comm = MPI_Comm_f2c(*fcomm);
+
+  /* create a new handle in handle table */
+  NBC_Create_fortran_handle(fhandle, &handle);
+
+  /* call NBC function */
+  *ierr = NBC_Ialltoall(sendbuf, *sendcount, stype, recvbuf, *recvcount, rtype, comm, handle);
+}
+#ifdef __cplusplus
+}
+#endif

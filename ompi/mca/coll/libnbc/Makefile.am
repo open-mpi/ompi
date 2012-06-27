@@ -21,29 +21,8 @@ EXTRA_DIST =
 
 sources = \
 	coll_libnbc_component.c \
-	coll_libnbc_not_implemented.c \
 	nbc.c \
-	nbc_internal.h \
-	libdict/dict.h \
-	libdict/dict_private.h \
-	libdict/dict.c \
-	libdict/hb_tree.h \
-	libdict/hb_tree.c \
-	nbc_iallgather.c \
-	nbc_iallgatherv.c \
-	nbc_iallreduce.c \
-	nbc_ialltoall.c \
-	nbc_ialltoallv.c \
-	nbc_ibarrier.c \
-	nbc_ibcast.c \
-	nbc_ibcast_inter.c \
-	nbc_igather.c \
-	nbc_igatherv.c \
-	nbc_ireduce.c \
-	nbc_ireduce_scatter.c \
-	nbc_iscan.c \
-	nbc_iscatter.c \
-	nbc_iscatterv.c
+	nbc_ibarrier.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
