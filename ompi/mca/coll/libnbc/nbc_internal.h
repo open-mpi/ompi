@@ -12,28 +12,6 @@
 #define __NBC_INTERNAL_H__
 #include "ompi_config.h"
 
-/*********************** LibNBC tuning parameters ************************/
-
-/* the debug level */
-#define NBC_DLEVEL 0
-
-/* use PMPI calls to MPI backend - this is needed because otherwise th
- * output will be screwed up in the profiler ... but this can be disabled
- * if the profiler does not profile NBC_ calls :) */
-#define USE_PMPI 1
-
-/* enable schedule caching - undef NBC_CACHE_SCHEDULE to deactivate it */
-/* TODO: this whole schedule cache stuff does not work with the tmbuf
- * :-( - first, the tmpbuf must not be freed if a schedule using it is
- * still in the cache and second, the tmpbuf used by the schedule must
- * be attached to the handle that uses this schedule !!!! 
- * I.E., THIS IS EXPERIMENTAL AND MIGHT NOT WORK */
-/* #define NBC_CACHE_SCHEDULE  */
-#define NBC_SCHED_DICT_UPPER 1024 /* max. number of dict entries */
-#define NBC_SCHED_DICT_LOWER 512  /* nuber of dict entries after wipe, if SCHED_DICT_UPPER is reached */
-
-/********************* end of LibNBC tuning parameters ************************/
-
 /* correct fortran bindings */
 #define NBC_F77_FUNC_ F77_FUNC_
 
@@ -42,8 +20,6 @@
 #include "coll_libnbc.h"
 #include "ompi/include/ompi/constants.h"
 #include "ompi/request/request.h"
-
-#include "nbc.h"
 
 #include <stdlib.h>
 #include <stdio.h>

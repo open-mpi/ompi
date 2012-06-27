@@ -553,7 +553,6 @@ int  NBC_Init_comm(MPI_Comm comm, NBC_Comminfo *comminfo) {
   comminfo->tag=1;
 
 #ifdef NBC_CACHE_SCHEDULE
-#if 0
   /* initialize the NBC_ALLTOALL SchedCache tree */
   comminfo->NBC_Dict[NBC_ALLTOALL] = hb_tree_new((dict_cmp_func)NBC_Alltoall_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
   if(comminfo->NBC_Dict[NBC_ALLTOALL] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
@@ -569,11 +568,9 @@ int  NBC_Init_comm(MPI_Comm comm, NBC_Comminfo *comminfo) {
   if(comminfo->NBC_Dict[NBC_ALLREDUCE] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_ALLREDUCE]);
   comminfo->NBC_Dict_size[NBC_ALLREDUCE] = 0;
-#endif
   /* initialize the NBC_BARRIER SchedCache tree - is not needed -
    * schedule is hung off directly */
   comminfo->NBC_Dict_size[NBC_BARRIER] = 0;
-#if 0
   /* initialize the NBC_BCAST SchedCache tree */
   comminfo->NBC_Dict[NBC_BCAST] = hb_tree_new((dict_cmp_func)NBC_Bcast_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
   if(comminfo->NBC_Dict[NBC_BCAST] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
@@ -599,17 +596,6 @@ int  NBC_Init_comm(MPI_Comm comm, NBC_Comminfo *comminfo) {
   if(comminfo->NBC_Dict[NBC_SCATTER] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
   NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_SCATTER]);
   comminfo->NBC_Dict_size[NBC_SCATTER] = 0;
-  /* initialize the NBC_ICART_SHIFT_XCHG SchedCache tree */
-  comminfo->NBC_Dict[NBC_CART_SHIFT_XCHG] = hb_tree_new((dict_cmp_func)NBC_Icart_shift_xchg_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_CART_SHIFT_XCHG] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_CART_SHIFT_XCHG]);
-  comminfo->NBC_Dict_size[NBC_CART_SHIFT_XCHG] = 0;
-  /* initialize the NBC_INEIGHBOR_XCHG SchedCache tree */
-  comminfo->NBC_Dict[NBC_NEIGHBOR_XCHG] = hb_tree_new((dict_cmp_func)NBC_Ineighbor_xchg_args_compare, NBC_SchedCache_args_delete_key_dummy, NBC_SchedCache_args_delete);
-  if(comminfo->NBC_Dict[NBC_NEIGHBOR_XCHG] == NULL) { printf("Error in hb_tree_new()\n"); return OMPI_ERROR;; }
-  NBC_DEBUG(1, "added tree at address %lu\n", (unsigned long)comminfo->NBC_Dict[NBC_NEIGHBOR_XCHG]);
-  comminfo->NBC_Dict_size[NBC_NEIGHBOR_XCHG] = 0;
-#endif
 #endif
 
   return OMPI_SUCCESS;
