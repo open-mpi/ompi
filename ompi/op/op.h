@@ -423,21 +423,21 @@ static inline bool ompi_op_is_valid(ompi_op_t * op, ompi_datatype_t * ddt,
             /* Intrinsic ddt on intrinsic op */
             if (-1 == ompi_op_ddt_map[ddt->id] ||
                 NULL == op->o_func.intrinsic.fns[ompi_op_ddt_map[ddt->id]]) {
-                asprintf(msg,
-                         "%s: the reduction operation %s is not defined on the %s datatype",
-                         func, op->o_name, ddt->name);
+                (void) asprintf(msg,
+                                "%s: the reduction operation %s is not defined on the %s datatype",
+                                func, op->o_name, ddt->name);
                 return false;
             }
         } else {
             /* Non-intrinsic ddt on intrinsic op */
             if ('\0' != ddt->name[0]) {
-                asprintf(msg,
-                         "%s: the reduction operation %s is not defined for non-intrinsic datatypes (attempted with datatype named \"%s\")",
-                         func, op->o_name, ddt->name);
+                (void) asprintf(msg,
+                                "%s: the reduction operation %s is not defined for non-intrinsic datatypes (attempted with datatype named \"%s\")",
+                                func, op->o_name, ddt->name);
             } else {
-                asprintf(msg,
-                         "%s: the reduction operation %s is not defined for non-intrinsic datatypes",
-                         func, op->o_name);
+                (void) asprintf(msg,
+                                "%s: the reduction operation %s is not defined for non-intrinsic datatypes",
+                                func, op->o_name);
             }
             return false;
         }
