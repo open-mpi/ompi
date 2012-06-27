@@ -35,17 +35,27 @@
 static int init(void);
 static void finalize(void);
 static int store(const orte_process_name_t *proc,
-                 const char *key, const void *object, int32_t size);
+                 const char *key, const void *object, opal_data_type_t type);
+static int store_pointer(const orte_process_name_t *proc,
+                         opal_value_t *kv);
 static int fetch(const orte_process_name_t *proc,
-                 const char *key,
-                 opal_list_t *values);
+                 const char *key, void **data, opal_data_type_t type);
+static int fetch_pointer(const orte_process_name_t *proc,
+                         const char *key,
+                         void **data, opal_data_type_t type);
+static int fetch_multiple(const orte_process_name_t *proc,
+                          const char *key,
+                          opal_list_t *kvs);
 static int remove_data(const orte_process_name_t *proc, const char *key);
 
 orte_db_base_module_t orte_db_hash_module = {
     init,
     finalize,
     store,
+    store_pointer,
     fetch,
+    fetch_pointer,
+    fetch_multiple,
     remove_data
 };
 
@@ -135,13 +145,13 @@ static void finalize(void)
  * Find data for a given key in a given proc_data_t
  * container.
  */
-static orte_db_keyval_t* lookup_keyval(proc_data_t *proc_data,
+static opal_value_t* lookup_keyval(proc_data_t *proc_data,
                                        const char *key)
 {
-    orte_db_keyval_t *kv = NULL;
-    for (kv = (orte_db_keyval_t *) opal_list_get_first(&proc_data->data);
-         kv != (orte_db_keyval_t *) opal_list_get_end(&proc_data->data);
-         kv = (orte_db_keyval_t *) opal_list_get_next(kv)) {
+    opal_value_t *kv = NULL;
+    for (kv = (opal_value_t *) opal_list_get_first(&proc_data->data);
+         kv != (opal_value_t *) opal_list_get_end(&proc_data->data);
+         kv = (opal_value_t *) opal_list_get_next(kv)) {
         if (0 == strcmp(key, kv->key)) {
             return kv;
         }
@@ -174,17 +184,18 @@ static proc_data_t* lookup_orte_proc(opal_hash_table_t *jtable, orte_vpid_t vpid
 }
 
 static int store(const orte_process_name_t *proc,
-                 const char *key, const void *object, int32_t size)
+                 const char *key, const void *data, opal_data_type_t type)
 {
     int i;
     job_data_t *jtable, *jtab;
     proc_data_t *proc_data;
-    orte_db_keyval_t *kv;
+    opal_value_t *kv;
+    opal_byte_object_t *boptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
-                         "%s db:hash:store: storing key %s data size %lu for proc %s",
+                         "%s db:hash:store: storing key %s data type %d for proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         key, (unsigned long)size, ORTE_NAME_PRINT(proc)));
+                         key, (int)type, ORTE_NAME_PRINT(proc)));
 
     /* get the job data object for this proc */
     jtable = NULL;
@@ -214,33 +225,318 @@ static int store(const orte_process_name_t *proc,
      * a pre-existing value
      */
     if (NULL != (kv = lookup_keyval(proc_data, key))) {
-        /* release the old data */
-        if (NULL != kv->value.bytes) {
-            free(kv->value.bytes);
-        }
-    } else {
-        kv = OBJ_NEW(orte_db_keyval_t);
-        kv->key = strdup(key);
-        opal_list_append(&proc_data->data, &kv->super);
+        opal_list_remove_item(&proc_data->data, &kv->super);
+        OBJ_RELEASE(kv);
     }
-    kv->value.bytes = (uint8_t*)malloc(size);
-    memcpy(kv->value.bytes, object, size);
-    kv->value.size = size;
+    kv = OBJ_NEW(opal_value_t);
+    kv->key = strdup(key);
+    opal_list_append(&proc_data->data, &kv->super);
+
+    /* the type could come in as an ORTE one (e.g., ORTE_VPID). Since
+     * the value is an OPAL definition, it cannot cover ORTE data
+     * types, so convert to the underlying OPAL type
+     */
+    switch (type) {
+    case OPAL_STRING:
+        kv->type = OPAL_STRING;
+        kv->data.string = strdup(data);
+        break;
+    case ORTE_VPID:
+    case OPAL_UINT32:
+        kv->type = OPAL_UINT32;
+        kv->data.uint32 = *(uint32_t*)data;
+        break;
+    case OPAL_UINT16:
+        kv->type = OPAL_UINT16;
+        kv->data.uint16 = *(uint16_t*)(data);
+        break;
+    case OPAL_INT:
+        kv->type = OPAL_INT;
+        kv->data.integer = *(int*)(data);
+        break;
+    case OPAL_UINT:
+        kv->type = OPAL_UINT;
+        kv->data.uint = *(unsigned int*)(data);
+        break;
+    case OPAL_BYTE_OBJECT:
+        kv->type = OPAL_BYTE_OBJECT;
+        boptr = (opal_byte_object_t*)data;
+        kv->data.bo.bytes = malloc(boptr->size);
+        memcpy(kv->data.bo.bytes, boptr->bytes, boptr->size);
+        kv->data.bo.size = boptr->size;
+        break;
+    default:
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
 
     return ORTE_SUCCESS;
 }
 
-static int fetch(const orte_process_name_t *proc,
-                 const char *key,
-                 opal_list_t *values)
+static int store_pointer(const orte_process_name_t *proc,
+                         opal_value_t *kv)
 {
     int i;
     job_data_t *jtable, *jtab;
     proc_data_t *proc_data;
-    orte_db_keyval_t *kv, *ans;
+    opal_value_t *k2;
+
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+                         "%s db:hash:store: storing pointer of key %s for proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         kv->key, ORTE_NAME_PRINT(proc)));
+
+    /* get the job data object for this proc */
+    jtable = NULL;
+    for (i=0; i < job_data.size; i++) {
+        if (NULL == (jtab = (job_data_t*)opal_pointer_array_get_item(&job_data, i))) {
+            continue;
+        }
+        if (jtab->jobid == proc->jobid) {
+            jtable = jtab;
+            break;
+        }
+    }
+    if (NULL == jtable) {
+        /* need to add an entry for this job */
+        jtable = OBJ_NEW(job_data_t);
+        jtable->jobid = proc->jobid;
+        opal_pointer_array_add(&job_data, jtable);
+    }
+
+    /* lookup the proc data object for this proc */
+    if (NULL == (proc_data = lookup_orte_proc(jtable->data, proc->vpid))) {
+        /* unrecoverable error */
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* see if we already have this key in the data - means we are updating
+     * a pre-existing value
+     */
+    if (NULL != (k2 = lookup_keyval(proc_data, kv->key))) {
+        opal_list_remove_item(&proc_data->data, &k2->super);
+        OBJ_RELEASE(k2);
+    }
+    opal_list_append(&proc_data->data, &kv->super);
+    return ORTE_SUCCESS;
+}
+
+static int fetch(const orte_process_name_t *proc,
+                 const char *key, void **data, opal_data_type_t type)
+{
+    int i;
+    job_data_t *jtable, *jtab;
+    proc_data_t *proc_data;
+    opal_value_t *kv;
+    opal_byte_object_t *boptr;
 
     OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
                          "%s db:hash:fetch: searching for key %s on proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == key) ? "NULL" : key, ORTE_NAME_PRINT(proc)));
+
+    /* if the key is NULL, that is an error */
+    if (NULL == key) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+
+    /* get the job data object for this proc */
+    jtable = NULL;
+    for (i=0; i < job_data.size; i++) {
+        if (NULL == (jtab = (job_data_t*)opal_pointer_array_get_item(&job_data, i))) {
+            continue;
+        }
+        if (jtab->jobid == proc->jobid) {
+            jtable = jtab;
+            break;
+        }
+    }
+    if (NULL == jtable) {
+        /* eventually, we will fetch this data - but for now, this
+         * is simply an error
+         */
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    /* lookup the proc data object for this proc */
+    if (NULL == (proc_data = lookup_orte_proc(jtable->data, proc->vpid))) {
+        /* unrecoverable error */
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* find the value */
+    if (NULL == (kv = lookup_keyval(proc_data, key))) {
+        /* again, we eventually will attempt to fetch the data - for
+         * now, just report it as an error */
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    /* do the copy and check the type */
+    switch (type) {
+    case OPAL_STRING:
+        if (OPAL_STRING != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        *data = strdup(kv->data.string);
+        break;
+    case ORTE_VPID:
+    case OPAL_UINT32:
+        if (OPAL_UINT32 != kv->type &&
+            ORTE_VPID != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.uint32, 4);
+        break;
+    case OPAL_UINT16:
+        if (OPAL_UINT16 != kv->type &&
+            ORTE_NODE_RANK != kv->type &&
+            ORTE_LOCAL_RANK != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.uint16, 2);
+        break;
+    case OPAL_INT:
+        if (OPAL_INT != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.integer, sizeof(int));
+        break;
+    case OPAL_UINT:
+        if (OPAL_UINT != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        memcpy(*data, &kv->data.uint, sizeof(unsigned int));
+        break;
+    case OPAL_BYTE_OBJECT:
+        if (OPAL_BYTE_OBJECT != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        boptr = (opal_byte_object_t*)malloc(sizeof(opal_byte_object_t));
+        boptr->bytes = malloc(kv->data.bo.size);
+        memcpy(boptr->bytes, kv->data.bo.bytes, kv->data.bo.size);
+        boptr->size = kv->data.bo.size;
+        *data = boptr;
+        break;
+    default:
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+
+    return ORTE_SUCCESS;
+}
+
+static int fetch_pointer(const orte_process_name_t *proc,
+                         const char *key,
+                         void **data, opal_data_type_t type)
+{
+    int i;
+    job_data_t *jtable, *jtab;
+    proc_data_t *proc_data;
+    opal_value_t *kv;
+
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+                         "%s db:hash:fetch_pointer: searching for key %s on proc %s",
+                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
+                         (NULL == key) ? "NULL" : key, ORTE_NAME_PRINT(proc)));
+
+    /* if the key is NULL, that is an error */
+    if (NULL == key) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+
+    /* get the job data object for this proc */
+    jtable = NULL;
+    for (i=0; i < job_data.size; i++) {
+        if (NULL == (jtab = (job_data_t*)opal_pointer_array_get_item(&job_data, i))) {
+            continue;
+        }
+        if (jtab->jobid == proc->jobid) {
+            jtable = jtab;
+            break;
+        }
+    }
+    if (NULL == jtable) {
+        /* eventually, we will fetch this data - but for now, this
+         * is simply an error
+         */
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+    /* lookup the proc data object for this proc */
+    if (NULL == (proc_data = lookup_orte_proc(jtable->data, proc->vpid))) {
+        /* unrecoverable error */
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* find the value */
+    if (NULL == (kv = lookup_keyval(proc_data, key))) {
+        /* again, we eventually will attempt to fetch the data - for
+         * now, just report it as an error */
+        return ORTE_ERR_NOT_FOUND;
+    }
+
+   switch (type) {
+    case OPAL_STRING:
+        if (OPAL_STRING != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        *data = kv->data.string;
+        break;
+    case ORTE_VPID:
+    case OPAL_UINT32:
+        if (OPAL_UINT32 != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        *data = &kv->data.uint32;
+        break;
+    case OPAL_UINT16:
+        if (OPAL_UINT16 != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        *data = &kv->data.uint16;
+        break;
+    case OPAL_INT:
+        if (OPAL_INT != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        *data = &kv->data.integer;
+        break;
+    case OPAL_UINT:
+        if (OPAL_UINT != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        *data = &kv->data.uint;
+        break;
+    case OPAL_BYTE_OBJECT:
+        if (OPAL_BYTE_OBJECT != kv->type) {
+            return ORTE_ERR_TYPE_MISMATCH;
+        }
+        *data = &kv->data.bo;
+        break;
+    default:
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_SUPPORTED);
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+
+    return ORTE_SUCCESS;
+}
+
+static int fetch_multiple(const orte_process_name_t *proc,
+                          const char *key,
+                          opal_list_t *kvs)
+{
+    int i;
+    job_data_t *jtable, *jtab;
+    proc_data_t *proc_data;
+    opal_value_t *kv, *kvnew;
+    int rc;
+    char *srchkey, *ptr;
+    size_t len = 0;
+
+    OPAL_OUTPUT_VERBOSE((5, orte_db_base.output,
+                         "%s db:hash:fetch_multiple: searching for key %s on proc %s",
                          ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                          (NULL == key) ? "NULL" : key, ORTE_NAME_PRINT(proc)));
 
@@ -268,35 +564,41 @@ static int fetch(const orte_process_name_t *proc,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    /* if the key is NULL, then return all data for this proc */
+    /* if the key is NULL, then return all the values */
     if (NULL == key) {
-        for (kv = (orte_db_keyval_t *) opal_list_get_first(&proc_data->data);
-             kv != (orte_db_keyval_t *) opal_list_get_end(&proc_data->data);
-             kv = (orte_db_keyval_t *) opal_list_get_next(kv)) {
-            ans = OBJ_NEW(orte_db_keyval_t);
-            ans->key = strdup(kv->key);
-            ans->value.bytes = malloc(kv->value.size);
-            memcpy(ans->value.bytes, kv->value.bytes, kv->value.size);
-            ans->value.size = kv->value.size;
-            opal_list_append(values, &ans->super);
+        for (kv = (opal_value_t*) opal_list_get_first(&proc_data->data);
+             kv != (opal_value_t*) opal_list_get_end(&proc_data->data);
+             kv = (opal_value_t*) opal_list_get_next(kv)) {
+            if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&kvnew, kv, OPAL_VALUE))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            opal_list_append(kvs, &kvnew->super);
         }
         return ORTE_SUCCESS;
     }
 
-    /* find the value */
-    if (NULL == (kv = lookup_keyval(proc_data, key))) {
-        /* again, we eventually will attempt to fetch the data - for
-         * now, just report it as an error */
-        return ORTE_ERR_NOT_FOUND;
+    /* see if the key includes a wildcard */
+    srchkey = strdup(key);
+    if (NULL != (ptr = strchr(srchkey, '*'))) {
+        *ptr = '\0';
+        len = strlen(srchkey);
     }
 
-    /* copy the data across */
-    ans = OBJ_NEW(orte_db_keyval_t);
-    ans->value.bytes = (uint8_t*)malloc(kv->value.size);
-    memcpy(ans->value.bytes, kv->value.bytes, kv->value.size);
-    ans->value.size = kv->value.size;
-    opal_list_append(values, &ans->super);
-
+    /* otherwise, find all matching keys and return them */
+    for (kv = (opal_value_t*) opal_list_get_first(&proc_data->data);
+         kv != (opal_value_t*) opal_list_get_end(&proc_data->data);
+         kv = (opal_value_t*) opal_list_get_next(kv)) {
+        if ((0 < len && 0 == strncmp(srchkey, kv->key, len)) ||
+            (0 == len && 0 == strcmp(key, kv->key))) {
+            if (OPAL_SUCCESS != (rc = opal_dss.copy((void**)&kvnew, kv, OPAL_VALUE))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            opal_list_append(kvs, &kvnew->super);
+        }
+    }
+    free(srchkey);
     return ORTE_SUCCESS;
 }
 
@@ -305,7 +607,7 @@ static int remove_data(const orte_process_name_t *proc, const char *key)
     int i, save_loc;
     job_data_t *jtable, *jtab;
     proc_data_t *proc_data;
-    orte_db_keyval_t *kv;
+    opal_value_t *kv;
 
     /* if proc is NULL, remove all data from the database */
     if (NULL == proc) {
@@ -351,7 +653,7 @@ static int remove_data(const orte_process_name_t *proc, const char *key)
 
     /* if key is NULL, remove all data for this proc */
     if (NULL == key) {
-        while (NULL != (kv = (orte_db_keyval_t *) opal_list_remove_first(&proc_data->data))) {
+        while (NULL != (kv = (opal_value_t *) opal_list_remove_first(&proc_data->data))) {
             OBJ_RELEASE(kv);
         }
         /* remove the proc_data object itself from the jtable */
@@ -362,9 +664,9 @@ static int remove_data(const orte_process_name_t *proc, const char *key)
     }
 
     /* remove this item */
-    for (kv = (orte_db_keyval_t*) opal_list_get_first(&proc_data->data);
-         kv != (orte_db_keyval_t*) opal_list_get_end(&proc_data->data);
-         kv = (orte_db_keyval_t*) opal_list_get_next(kv)) {
+    for (kv = (opal_value_t*) opal_list_get_first(&proc_data->data);
+         kv != (opal_value_t*) opal_list_get_end(&proc_data->data);
+         kv = (opal_value_t*) opal_list_get_next(kv)) {
         if (0 == strcmp(key, kv->key)) {
             OBJ_RELEASE(kv);
             break;

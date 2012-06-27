@@ -59,7 +59,7 @@
 
 #include "orte/types.h"
 #include "orte/util/show_help.h"
-#include "orte/mca/ess/ess.h"
+#include "orte/util/proc_info.h"
 
 #include "ompi/constants.h"
 #include "ompi/mca/btl/btl.h"
@@ -284,7 +284,7 @@ static int mca_btl_tcp_component_register(void)
             orte_node_rank_t node_rank;
             char name[256];
 
-            node_rank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME);
+            node_rank = orte_process_info.my_node_rank;
 
             /* Now that we've got that local rank, take the
                corresponding entry from the tcp_if_seq list (wrapping

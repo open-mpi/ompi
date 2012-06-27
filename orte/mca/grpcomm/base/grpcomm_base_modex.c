@@ -65,8 +65,6 @@ orte_grpcomm_coll_id_t orte_grpcomm_base_get_coll_id(void)
 int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
 {
     int rc;
-    orte_local_rank_t local_rank;
-    orte_node_rank_t node_rank;
     orte_namelist_t *nm;
 
     OPAL_OUTPUT_VERBOSE((1, orte_grpcomm_base.output,
@@ -113,15 +111,13 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
         }
     
         /* pack our node rank */
-        node_rank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME);
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &node_rank, 1, ORTE_NODE_RANK))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &orte_process_info.my_node_rank, 1, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
     
         /* pack our local rank */
-        local_rank = orte_ess.get_local_rank(ORTE_PROC_MY_NAME);
-        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &local_rank, 1, ORTE_LOCAL_RANK))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.pack(&modex->buffer, &orte_process_info.my_local_rank, 1, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
@@ -167,16 +163,14 @@ int orte_grpcomm_base_modex(orte_grpcomm_collective_t *modex)
 
 void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
 {
-    int rc, n, cnt;
+    int rc, cnt;
     orte_process_name_t proc_name;
     char *hostname;
     orte_vpid_t daemon;
     orte_node_rank_t node_rank;
     orte_local_rank_t local_rank;
-    orte_nid_t *nid;
-    orte_jmap_t *jmap;
-    orte_pmap_t *pmap;
     orte_grpcomm_collective_t *modex = (orte_grpcomm_collective_t*)cbdata;
+    opal_hwloc_locality_t locality;
 
     OPAL_OUTPUT_VERBOSE((2, orte_grpcomm_base.output,
                          "%s STORING PEER MODEX DATA",
@@ -185,114 +179,72 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
     /* unpack the process name */
     cnt=1;
     while (ORTE_SUCCESS == (rc = opal_dss.unpack(rbuf, &proc_name, &cnt, ORTE_NAME))) {
-        /* unpack the hostname */
+        /* unpack and store the hostname */
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &hostname, &cnt, OPAL_STRING))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
+        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_HOSTNAME, hostname, OPAL_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
         
-        /* unpack the daemon vpid */
+        /* unpack and store the daemon vpid */
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &daemon, &cnt, ORTE_VPID))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
+        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_DAEMON_VPID, &daemon, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
         
-        /* unpack the node rank */
+        /* unpack and store the node rank */
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &node_rank, &cnt, ORTE_NODE_RANK))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        
+        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_NODERANK, &node_rank, ORTE_NODE_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
         /* unpack the local rank */
         cnt = 1;
         if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &local_rank, &cnt, ORTE_LOCAL_RANK))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        
-        /* UPDATE THE NIDMAP/PIDMAP TO SUPPORT DYNAMIC OPERATIONS */
-        
-        /* find this proc's node in the nidmap */
-        nid = NULL;
-        for (n=0; NULL != (nid = (orte_nid_t *) opal_pointer_array_get_item(&orte_nidmap, n)); n++) {
-            if (0 == strcmp(hostname, nid->name)) {
-                break;
-            }
-        }
-        if (NULL == nid) {
-            /* node wasn't found - let's add it */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:full:modex no nidmap entry for node %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 (NULL == hostname) ? "NULL" : hostname));
-            nid = OBJ_NEW(orte_nid_t);
-            nid->name = strdup(hostname);
-            nid->daemon = daemon;
-            nid->index = opal_pointer_array_add(&orte_nidmap, nid);
+        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_LOCALRANK, &local_rank, ORTE_LOCAL_RANK))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
         
-        /* see if we have this job in a jobmap */
-        if (NULL == (jmap = orte_util_lookup_jmap(proc_name.jobid))) {
-            /* proc wasn't found - let's add it */
-            OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                 "%s grpcomm:base:full:modex no jobmap entry for job %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_JOBID_PRINT(proc_name.jobid)));
-            jmap = OBJ_NEW(orte_jmap_t);
-            jmap->job = proc_name.jobid;
-            /* unfortunately, job objects cannot be stored
-             * by index number as the jobid is a constructed
-             * value. So we have to just add it to the end
-             * of the array
-             */
-            opal_pointer_array_add(&orte_jobmap, jmap);
-            jmap->num_procs = 1;
-            /* have to add the pidmap entry too, but this
-             * can be done at the specific site corresponding
-             * to the proc's vpid
-             */
-            pmap = OBJ_NEW(orte_pmap_t);
-            pmap->node = nid->index;
-            pmap->local_rank = local_rank;
-            pmap->node_rank = node_rank;
-            opal_pointer_array_set_item(&jmap->pmap, proc_name.vpid, pmap);
-        } else {
-            /* see if we have this proc in a pidmap */
-            if (NULL == (pmap = orte_util_lookup_pmap(&proc_name))) {
-                /* proc wasn't found - let's add it */
-                OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                                     "%s grpcomm:base:full:modex no pidmap entry for proc %s",
-                                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                     ORTE_NAME_PRINT(&proc_name)));
-                pmap = OBJ_NEW(orte_pmap_t);
-                pmap->node = nid->index;
-                pmap->local_rank = local_rank;
-                pmap->node_rank = node_rank;
-                /* this can be done at the specific site corresponding
-                 * to the proc's vpid
-                 */
-                opal_pointer_array_set_item(&jmap->pmap, proc_name.vpid, pmap);
-                /* account for the proc entry in the jmap */
-                jmap->num_procs++;
-            }
-        }
-
+        /* compute the locality and store in the database */
 #if OPAL_HAVE_HWLOC
         {
             opal_hwloc_level_t bind_level;
             unsigned int bind_idx;
 
-            /* unpack the locality info */
+            /* unpack and store the locality info */
             cnt = 1;
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &bind_level, &cnt, OPAL_HWLOC_LEVEL_T))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
+            if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_BIND_LEVEL, &bind_level, OPAL_HWLOC_LEVEL_T))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
             cnt = 1;
             if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &bind_idx, &cnt, OPAL_UINT))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_BIND_INDEX, &bind_idx, OPAL_UINT))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -302,38 +254,37 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                                  ORTE_NAME_PRINT(&proc_name),
                                  opal_hwloc_base_print_level(bind_level), bind_idx));
 
-            /* store on the pmap */
             if (OPAL_EQUAL == orte_util_compare_name_fields(ORTE_NS_CMP_ALL, &proc_name, ORTE_PROC_MY_NAME)) {
                 /* if this data is from myself, then set locality to all */
                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                      "%s grpcomm:base:modex setting proc %s locale ALL",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name)));
-                pmap->locality = OPAL_PROC_ALL_LOCAL;
+                locality = OPAL_PROC_ALL_LOCAL;
             } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
                 /* this is on a different node, then mark as non-local */
                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                      "%s grpcomm:base:modex setting proc %s locale NONLOCAL",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name)));
-                pmap->locality = OPAL_PROC_NON_LOCAL;
+                locality = OPAL_PROC_NON_LOCAL;
             } else if (OPAL_HWLOC_NODE_LEVEL == orte_process_info.bind_level ||
                        OPAL_HWLOC_NODE_LEVEL == bind_level) {
                 /* one or both of us is not bound, so all we can say is we are on the
                  * same node
                  */
-                pmap->locality = OPAL_PROC_ON_NODE;
+                locality = OPAL_PROC_ON_NODE;
             } else {
                 /* determine relative location on our node */
-                pmap->locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
-                                                                       orte_process_info.bind_level,
-                                                                       orte_process_info.bind_idx,
-                                                                       bind_level, bind_idx);
+                locality = opal_hwloc_base_get_relative_locality(opal_hwloc_topology,
+                                                                 orte_process_info.bind_level,
+                                                                 orte_process_info.bind_idx,
+                                                                 bind_level, bind_idx);
                 OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                      "%s grpcomm:base:modex setting proc %s locale %s",
                                      ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                      ORTE_NAME_PRINT(&proc_name),
-                                     opal_hwloc_base_print_locality(pmap->locality)));
+                                     opal_hwloc_base_print_locality(locality)));
             }
         }
 #else
@@ -343,19 +294,23 @@ void orte_grpcomm_base_store_peer_modex(opal_buffer_t *rbuf, void *cbdata)
                                  "%s grpcomm:base:modex setting proc %s locale ALL",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name)));
-            pmap->locality = OPAL_PROC_ALL_LOCAL;
+            locality = OPAL_PROC_ALL_LOCAL;
         } else if (daemon != ORTE_PROC_MY_DAEMON->vpid) {
             /* this is on a different node, then mark as non-local */
             OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                                  "%s grpcomm:base:modex setting proc %s locale NONLOCAL",
                                  ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                                  ORTE_NAME_PRINT(&proc_name)));
-            pmap->locality = OPAL_PROC_NON_LOCAL;
+            locality = OPAL_PROC_NON_LOCAL;
         } else {
             /* must be on our node */
-            pmap->locality = OPAL_PROC_ON_NODE;
+            locality = OPAL_PROC_ON_NODE;
         }
 #endif
+        if (ORTE_SUCCESS != (rc = orte_db.store(&proc_name, ORTE_DB_LOCALITY, &locality, OPAL_HWLOC_LOCALITY_T))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
 
         OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                              "%s grpcomm:base:full:modex: adding modex entry for proc %s",
@@ -455,121 +410,64 @@ int orte_grpcomm_base_update_modex_entries(orte_process_name_t *proc_name,
      * Extract the attribute names and values
      */
     for (j = 0; j < num_recvd_entries; j++) {
-        int32_t num_bytes;
-        void *bytes = NULL;
-        char *attr_name;
-        
+        opal_value_t *kv;
         cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &attr_name, &cnt, OPAL_STRING))) {
+        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &kv, &cnt, OPAL_VALUE))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-        
-        cnt = 1;
-        if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, &num_bytes, &cnt, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-        if (0 < num_bytes) {
-            if (NULL == (bytes = malloc(num_bytes))) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                rc = ORTE_ERR_OUT_OF_RESOURCE;
-                goto cleanup;
-            }
-            cnt = (orte_std_cntr_t)num_bytes;
-            if (ORTE_SUCCESS != (rc = opal_dss.unpack(rbuf, bytes, &cnt, OPAL_BYTE))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            num_bytes = cnt;
+        /* if this is me, dump the data - we already have it in the db */
+        if (ORTE_PROC_MY_NAME->jobid == proc_name->jobid &&
+            ORTE_PROC_MY_NAME->vpid == proc_name->vpid) {
+            OBJ_RELEASE(kv);
+        } else {
             /* store it in the database */
-            if (ORTE_SUCCESS != (rc = orte_db.store(proc_name, attr_name, (void*)bytes, num_bytes))) {
+            if (ORTE_SUCCESS != (rc = orte_db.store_pointer(proc_name, kv))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
+            /* do not release the kv - the db holds that pointer */
         }
     }
     
  cleanup:
     return rc;
-}
-
-int orte_grpcomm_base_set_proc_attr(const char *attr_name,
-                                    const void *data,
-                                    size_t size)
-{
-    int rc;
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:set_proc_attr: setting attribute %s data size %lu",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         attr_name, (unsigned long)size));
-
-    rc = orte_db.store(ORTE_PROC_MY_NAME, attr_name, data, size);
-    
-    return rc;
-}
-
-int orte_grpcomm_base_get_proc_attr(const orte_process_name_t *proc,
-                                    const char *attribute_name, void **val, 
-                                    size_t *size)
-{
-    orte_db_keyval_t *kv;
-    opal_list_t data;
-    int rc;
-
-    OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
-                         "%s grpcomm:get_proc_attr: searching for attr %s on proc %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME), attribute_name,
-                         ORTE_NAME_PRINT(proc)));
-
-    /* set defaults */
-    *val = NULL;
-    *size = 0;
-
-    /* fetch the data */
-    OBJ_CONSTRUCT(&data, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_db.fetch(proc, attribute_name, &data))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-    
-    /* this interface to the MPI layer only supports returning one value */
-    if (1 < opal_list_get_size(&data)) {
-        return ORTE_ERROR;
-    }
-    kv = (orte_db_keyval_t*)opal_list_remove_first(&data);
-    /* transfer the data */
-    *val = kv->value.bytes;
-    *size = kv->value.size;
-    kv->value.bytes = NULL;
-    /* cleanup */
-    OBJ_RELEASE(kv);
-
- cleanup:
-    OBJ_DESTRUCT(&data);
-    return rc;
-} 
-
-int orte_grpcomm_base_purge_proc_attrs(void)
-{
-    return orte_db.remove(NULL, NULL);
 }
 
 int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf)
 {
     int rc;
     int32_t num_entries;
-    orte_db_keyval_t *kv;
+    opal_value_t *kv;
     opal_list_t data;
+    opal_list_item_t *item, *next;
 
     /* fetch our data */
     OBJ_CONSTRUCT(&data, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_db.fetch(ORTE_PROC_MY_NAME, NULL, &data))) {
+    if (ORTE_SUCCESS != (rc = orte_db.fetch_multiple(ORTE_PROC_MY_NAME, NULL, &data))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    num_entries = opal_list_get_size(&data);
+
+    /* count the number of entries we will send, purging the rest */
+    num_entries = 0;
+    item = opal_list_get_first(&data);
+    while (item != opal_list_get_end(&data)) {
+        kv = (opal_value_t*)item;
+        next = opal_list_get_next(item);
+        /* if this is an entry we get from the nidmap, then don't include it here */
+        if (0 == strcmp(kv->key, ORTE_DB_HOSTNAME) ||
+            0 == strcmp(kv->key, ORTE_DB_DAEMON_VPID) ||
+            0 == strcmp(kv->key, ORTE_DB_NODERANK) ||
+            0 == strcmp(kv->key, ORTE_DB_LOCALRANK) ||
+            0 == strcmp(kv->key, ORTE_DB_BIND_LEVEL) ||
+            0 == strcmp(kv->key, ORTE_DB_BIND_INDEX)) {
+            opal_list_remove_item(&data, item);
+        } else {
+            num_entries++;
+        }
+        item = next;
+    }
 
     OPAL_OUTPUT_VERBOSE((5, orte_grpcomm_base.output,
                          "%s grpcomm:base:pack_modex: reporting %d entries",
@@ -582,26 +480,16 @@ int orte_grpcomm_base_pack_modex_entries(opal_buffer_t *buf)
     }
     
     /* if there are entries, store them */
-    while (NULL != (kv = (orte_db_keyval_t*)opal_list_remove_first(&data))) {
-        if (ORTE_SUCCESS != (opal_dss.pack(buf, &kv->key, 1, OPAL_STRING))) {
+    while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&data))) {
+        if (ORTE_SUCCESS != (opal_dss.pack(buf, &kv, 1, OPAL_VALUE))) {
             ORTE_ERROR_LOG(rc);
             break;
-        }
-        if (ORTE_SUCCESS != (opal_dss.pack(buf, &(kv->value.size), 1, OPAL_INT32))) {
-            ORTE_ERROR_LOG(rc);
-            break;
-        }
-        if (0 < kv->value.size) {
-            if (ORTE_SUCCESS != (opal_dss.pack(buf, kv->value.bytes, kv->value.size, OPAL_BYTE))) {
-                ORTE_ERROR_LOG(rc);
-                break;
-            }
         }
         OBJ_RELEASE(kv);
     }
 
  cleanup:
-    while (NULL != (kv = (orte_db_keyval_t*)opal_list_remove_first(&data))) {
+    while (NULL != (kv = (opal_value_t*)opal_list_remove_first(&data))) {
         OBJ_RELEASE(kv);
     }
     OBJ_DESTRUCT(&data);

@@ -99,6 +99,10 @@ ORTE_DECLSPEC char *orte_pretty_print_timing(int64_t secs, int64_t usecs);
 #define ORTE_JOBID_IS_DAEMON(n)  \
     !((n) & 0x0000ffff)
 
+/* a macro for obtaining the daemon jobid */
+#define ORTE_DAEMON_JOBID(n) \
+    ((n) & 0xffff0000)
+
 /* List of names for general use */
 struct orte_namelist_t {
     opal_list_item_t super;      /**< Allows this item to be placed on a list */

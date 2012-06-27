@@ -635,7 +635,7 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
         mca_oob_tcp_msg_t *msg;
         char *host;
 
-        host = orte_ess.proc_get_hostname(&(peer->peer_name));
+        host = orte_get_proc_hostname(&(peer->peer_name));
         opal_output(0, "%s -> %s (node: %s) oob-tcp: Number of attempts to create TCP connection has been exceeded.  Can not communicate with peer",
                     ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
                     ORTE_NAME_PRINT(&(peer->peer_name)),

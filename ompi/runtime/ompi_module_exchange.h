@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006-2007 Los Alamos National Security, LLC.  All rights
+ * Copyright (c) 2006-2012 Los Alamos National Security, LLC.  All rights
  *                         reserved.
  * Copyright (c) 2008      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
@@ -58,7 +58,7 @@
 #include "opal/mca/mca.h"
 
 
-struct ompi_proc_t;
+#include "ompi/proc/proc.h"
 
 BEGIN_C_DECLS
 
@@ -106,7 +106,7 @@ BEGIN_C_DECLS
  * @retval OMPI_SUCCESS On success
  * @retval OMPI_ERROR   An unspecified error occurred
  */
-OMPI_DECLSPEC int ompi_modex_send(mca_base_component_t *source_component, 
+OMPI_DECLSPEC int ompi_modex_send(const mca_base_component_t *source_component, 
                                   const void *buffer, size_t size);
 
 
@@ -187,10 +187,14 @@ OMPI_DECLSPEC int ompi_modex_send_key_value(const char* key,
  * @retval OMPI_ERR_OUT_OF_RESOURCE No memory could be allocated for the
  *                       buffer.
  */
-OMPI_DECLSPEC int ompi_modex_recv(mca_base_component_t *dest_component,
-                                  struct ompi_proc_t *source_proc,
+OMPI_DECLSPEC int ompi_modex_recv(const mca_base_component_t *dest_component,
+                                  const ompi_proc_t *source_proc,
                                   void **buffer, size_t *size);
 
+
+OMPI_DECLSPEC int ompi_modex_recv_pointer(const mca_base_component_t *component,
+                                          const ompi_proc_t *proc,
+                                          void **buffer, opal_data_type_t type);
 
 /**
  * Receive a buffer from a given peer
@@ -221,8 +225,12 @@ OMPI_DECLSPEC int ompi_modex_recv(mca_base_component_t *dest_component,
  *                       buffer.
  */
 OMPI_DECLSPEC int ompi_modex_recv_string(const char* key,
-                                         struct ompi_proc_t *source_proc,
+                                         const ompi_proc_t *source_proc,
                                          void **buffer, size_t *size);
+
+OMPI_DECLSPEC int ompi_modex_recv_string_pointer(const char* key,
+                                                 const ompi_proc_t *source_proc,
+                                                 void **buffer, opal_data_type_t type);
 
 /**
  * Recv a value from a given peer
@@ -243,10 +251,9 @@ OMPI_DECLSPEC int ompi_modex_recv_string(const char* key,
  *                      this build of Open MPI (systems like the Cray XT)
  */
 OMPI_DECLSPEC int ompi_modex_recv_key_value(const char* key,
-                                            struct ompi_proc_t *source_proc,
-                                            void *value,
+                                            const ompi_proc_t *source_proc,
+                                            void **value,
                                             opal_data_type_t dtype);
-
 
 END_C_DECLS
 

@@ -62,10 +62,7 @@ orte_grpcomm_base_module_t orte_grpcomm_bad_module = {
     xcast,
     bad_allgather,
     bad_barrier,
-    orte_grpcomm_base_set_proc_attr,
-    orte_grpcomm_base_get_proc_attr,
-    orte_grpcomm_base_modex,
-    orte_grpcomm_base_purge_proc_attrs
+    orte_grpcomm_base_modex
 };
 
 /**

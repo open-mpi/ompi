@@ -33,11 +33,11 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/error_strings.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ess/ess.h"
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/routed/routed.h"
 #include "orte/util/name_fns.h"
+#include "orte/util/nidmap.h"
 #include "orte/runtime/orte_globals.h"
 
 #include "orte/mca/grpcomm/grpcomm_types.h"
@@ -89,7 +89,7 @@ void orte_grpcomm_base_xcast_recv(int status, orte_process_name_t* sender,
                              "%s grpcomm:base:xcast updating daemon nidmap",
                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
     
-        if (ORTE_SUCCESS != (ret = orte_ess.update_nidmap(bo))) {
+        if (ORTE_SUCCESS != (ret = orte_util_decode_daemon_nodemap(bo))) {
             ORTE_ERROR_LOG(ret);
             goto relay;
         }

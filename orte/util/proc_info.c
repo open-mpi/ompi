@@ -58,6 +58,7 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_port =              */   0,
     /*  .num_restarts =         */   0,
     /*  .my_node_rank =         */   ORTE_NODE_RANK_INVALID,
+    /*  .my_local_rank =        */   ORTE_LOCAL_RANK_INVALID,
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,
     /*  .job_session_dir =      */   NULL,
@@ -69,7 +70,6 @@ ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .bind_level =           */   OPAL_HWLOC_NODE_LEVEL,
     /*  .bind_idx =             */   0,
 #endif
-    /*  .my_node =              */   -1,
     /*  .app_rank =             */   -1,
     /*  .peer_modex =           */   -1,
     /*  .peer_init_barrier =    */   -1,

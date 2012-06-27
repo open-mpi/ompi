@@ -18,7 +18,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
-#include "opal/mca/event/event.h"
+#include "opal/dss/dss.h"
 
 #include "orte/mca/db/db.h"
 
@@ -42,19 +42,16 @@ ORTE_DECLSPEC int orte_db_base_close(void);
 typedef struct {
     int output;
     opal_list_t available_components;
-    struct timeval timeout;
 } orte_db_base_t;
 ORTE_DECLSPEC extern orte_db_base_t orte_db_base;
 
-typedef struct {
-    opal_list_item_t *super;
-    orte_process_name_t name;
-    char *key;
-    opal_event_t *ev;
-    orte_db_fetch_callback_fn_t cbfunc;
-    void *cbdata;
-} orte_db_fetch_req_t;
-OBJ_CLASS_DECLARATION(orte_db_fetch_req_t);
+ORTE_DECLSPEC int orte_db_base_send_modex_string(const char* key,
+                                                 const void *buffer,
+                                                 size_t size);
+
+ORTE_DECLSPEC int orte_db_base_send_modex_key_value(const char* key,
+                                                    const void *value,
+                                                    opal_data_type_t dtype);
 
 END_C_DECLS
 

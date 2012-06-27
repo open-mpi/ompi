@@ -37,6 +37,7 @@
 #include "opal/dss/dss.h"
 #include "opal/threads/threads.h"
 
+#include "orte/mca/db/db.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/util/proc_info.h"
@@ -125,10 +126,6 @@ opal_pointer_array_t *orte_node_pool;
 opal_pointer_array_t *orte_node_topologies;
 opal_pointer_array_t *orte_local_children;
 uint16_t orte_num_jobs = 0;
-
-/* Nidmap and job maps */
-opal_pointer_array_t orte_nidmap;
-opal_pointer_array_t orte_jobmap;
 
 /* IOF controls */
 bool orte_tag_output;
@@ -448,6 +445,88 @@ orte_job_t* orte_get_job_data_object(orte_jobid_t job)
      */
     ljob = ORTE_LOCAL_JOBID(job);
     return (orte_job_t*)opal_pointer_array_get_item(orte_job_data, ljob);
+}
+
+orte_proc_t* orte_get_proc_object(orte_process_name_t *proc)
+{
+    orte_job_t *jdata;
+    orte_proc_t *proct;
+
+    if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
+        return NULL;
+    }
+    proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
+    return proct;
+}
+
+orte_vpid_t orte_get_proc_daemon_vpid(orte_process_name_t *proc)
+{
+    orte_job_t *jdata;
+    orte_proc_t *proct;
+
+    if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
+        return ORTE_VPID_INVALID;
+    }
+    if (NULL == (proct = (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid))) {
+        return ORTE_VPID_INVALID;
+    }
+    if (NULL == proct->node || NULL == proct->node->daemon) {
+        return ORTE_VPID_INVALID;
+    }
+    return proct->node->daemon->name.vpid;
+}
+
+char* orte_get_proc_hostname(orte_process_name_t *proc)
+{
+    orte_proc_t *proct;
+    char *hostname;
+    int rc;
+
+    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
+        /* look it up on our arrays */
+        if (NULL == (proct = orte_get_proc_object(proc))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return NULL;
+        }
+        if (NULL == proct->node || NULL == proct->node->name) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return NULL;
+        }
+        return proct->node->name;
+    }
+
+    /* if we are an app, get the pointer from the modex db */
+    if (ORTE_SUCCESS != (rc = orte_db.fetch_pointer(proc, ORTE_DB_HOSTNAME,
+                                                    (void**)&hostname, OPAL_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        return NULL;
+    }
+    return hostname;
+}
+
+orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc)
+{
+    orte_proc_t *proct;
+    orte_node_rank_t noderank, *nr;
+    int rc;
+
+    if (ORTE_PROC_IS_DAEMON || ORTE_PROC_IS_HNP) {
+        /* look it up on our arrays */
+        if (NULL == (proct = orte_get_proc_object(proc))) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_NODE_RANK_INVALID;
+        }
+        return proct->node_rank;
+    }
+
+    /* if we are an app, get the value from the modex db */
+    nr = &noderank;
+    if (ORTE_SUCCESS != (rc = orte_db.fetch_pointer(proc, ORTE_DB_NODERANK,
+                                                    (void**)&nr, ORTE_NODE_RANK))) {
+        ORTE_ERROR_LOG(rc);
+        return ORTE_NODE_RANK_INVALID;
+    }
+    return noderank;
 }
 
 orte_vpid_t orte_get_lowest_vpid_alive(orte_jobid_t job)
@@ -904,75 +983,6 @@ OBJ_CLASS_INSTANCE(orte_proc_t,
                    opal_list_item_t,
                    orte_proc_construct,
                    orte_proc_destruct);
-
-static void orte_nid_construct(orte_nid_t *ptr)
-{
-    ptr->name = NULL;
-    ptr->daemon = ORTE_VPID_INVALID;
-    ptr->oversubscribed = false;
-}
-
-static void orte_nid_destruct(orte_nid_t *ptr)
-{
-    if (NULL != ptr->name) {
-        free(ptr->name);
-        ptr->name = NULL;
-    }
-}
-
-OBJ_CLASS_INSTANCE(orte_nid_t,
-                   opal_object_t,
-                   orte_nid_construct,
-                   orte_nid_destruct);
-
-static void orte_pmap_construct(orte_pmap_t *ptr)
-{
-    ptr->node = -1;
-    ptr->local_rank = ORTE_LOCAL_RANK_INVALID;
-    ptr->node_rank = ORTE_NODE_RANK_INVALID;
-#if OPAL_HAVE_HWLOC
-    ptr->bind_idx = 0;
-    ptr->locality = OPAL_PROC_LOCALITY_UNKNOWN;
-#endif
-}
-OBJ_CLASS_INSTANCE(orte_pmap_t,
-                   opal_object_t,
-                   orte_pmap_construct,
-                   NULL);
-
-
-static void orte_jmap_construct(orte_jmap_t *ptr)
-{
-    ptr->job = ORTE_JOBID_INVALID;
-    ptr->num_procs = 0;
-#if OPAL_HAVE_HWLOC
-    ptr->bind_level = OPAL_HWLOC_NODE_LEVEL;
-#endif
-    OBJ_CONSTRUCT(&ptr->pmap, opal_pointer_array_t);
-    opal_pointer_array_init(&ptr->pmap,
-                            ORTE_GLOBAL_ARRAY_BLOCK_SIZE,
-                            ORTE_GLOBAL_ARRAY_MAX_SIZE,
-                            ORTE_GLOBAL_ARRAY_BLOCK_SIZE);
-}
-
-static void orte_jmap_destruct(orte_jmap_t *ptr)
-{
-    orte_pmap_t *pmap;
-    int i;
-    
-    for (i=0; i < ptr->pmap.size; i++) {
-        if (NULL != (pmap = (orte_pmap_t*)opal_pointer_array_get_item(&ptr->pmap, i))) {
-            OBJ_RELEASE(pmap);
-        }
-    }
-    OBJ_DESTRUCT(&ptr->pmap);
-}
-
-OBJ_CLASS_INSTANCE(orte_jmap_t,
-                   opal_object_t,
-                   orte_jmap_construct,
-                   orte_jmap_destruct);
-
 
 static void orte_job_map_construct(orte_job_map_t* map)
 {

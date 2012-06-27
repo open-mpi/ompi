@@ -532,56 +532,8 @@ struct orte_proc_t {
 typedef struct orte_proc_t orte_proc_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_proc_t);
 
-typedef struct {
-    /* base object */
-    opal_object_t super;
-    /* index in the array */
-    int index;
-    /* nodename */
-    char *name;
-    /* vpid of this job family's daemon on this node */
-    orte_vpid_t daemon;
-    /* whether or not this node is oversubscribed */
-    bool oversubscribed;
-} orte_nid_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_nid_t);
-
-typedef struct {
-    /* base object */
-    opal_object_t super;
-    /* index to node */
-    int32_t node;
-    /* local rank */
-    orte_local_rank_t local_rank;
-    /* node rank */
-    orte_node_rank_t node_rank;
-#if OPAL_HAVE_HWLOC
-    /* bind index */
-    unsigned int bind_idx;
-    /* locality */
-    opal_hwloc_locality_t locality;
-#endif
-} orte_pmap_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_pmap_t);
-
-typedef struct {
-    /* base object */
-    opal_object_t super;
-    /* jobid */
-    orte_jobid_t job;
-    /* number of procs in this job */
-    orte_vpid_t num_procs;
-#if OPAL_HAVE_HWLOC
-    /* binding level of the job */
-    opal_hwloc_level_t bind_level;
-#endif
-    /* array of data for procs */
-    opal_pointer_array_t pmap;
-} orte_jmap_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_jmap_t);
-
 /**
-* Get a job data object
+ * Get a job data object
  * We cannot just reference a job data object with its jobid as
  * the jobid is no longer an index into the array. This change
  * was necessitated by modification of the jobid to include
@@ -589,6 +541,22 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_jmap_t);
  * service
  */
 ORTE_DECLSPEC   orte_job_t* orte_get_job_data_object(orte_jobid_t job);
+
+/**
+ * Get a proc data object
+ */
+ORTE_DECLSPEC orte_proc_t* orte_get_proc_object(orte_process_name_t *proc);
+
+/**
+ * Get the daemon vpid hosting a given proc
+ */
+ORTE_DECLSPEC orte_vpid_t orte_get_proc_daemon_vpid(orte_process_name_t *proc);
+
+/* Get the hostname of a proc */
+ORTE_DECLSPEC char* orte_get_proc_hostname(orte_process_name_t *proc);
+
+/* get the node rank of a proc */
+ORTE_DECLSPEC orte_node_rank_t orte_get_proc_node_rank(orte_process_name_t *proc);
 
 /* Find the lowest vpid alive in a given job */
 ORTE_DECLSPEC orte_vpid_t orte_get_lowest_vpid_alive(orte_jobid_t job);
@@ -660,10 +628,6 @@ ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_pool;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_node_topologies;
 ORTE_DECLSPEC extern opal_pointer_array_t *orte_local_children;
 ORTE_DECLSPEC extern uint16_t orte_num_jobs;
-
-/* Nidmap and job maps */
-ORTE_DECLSPEC extern opal_pointer_array_t orte_nidmap;
-ORTE_DECLSPEC extern opal_pointer_array_t orte_jobmap;
 
 /* whether or not to forward SIGTSTP and SIGCONT signals */
 ORTE_DECLSPEC extern bool orte_forward_job_control;

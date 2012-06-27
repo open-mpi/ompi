@@ -226,3 +226,80 @@ int opal_dss_copy_node_stat(opal_node_stats_t **dest, opal_node_stats_t *src,
     p->sample_time.tv_usec = src->sample_time.tv_usec;    
     return OPAL_SUCCESS;
 }
+
+/* OPAL_VALUE */
+int opal_dss_copy_value(opal_value_t **dest, opal_value_t *src,
+                        opal_data_type_t type)
+{
+    opal_value_t *p;
+    
+    /* create the new object */
+    *dest = OBJ_NEW(opal_value_t);
+    if (NULL == *dest) {
+        return OPAL_ERR_OUT_OF_RESOURCE;
+    }
+    p = *dest;
+    
+    /* copy the type and key */
+    if (NULL != src->key) {
+        p->key = strdup(src->key);
+    }
+    p->type = src->type;
+
+    /* copy the right field */
+    switch (src->type) {
+    case OPAL_BYTE:
+        p->data.byte = src->data.byte;
+        break;
+    case OPAL_STRING:
+        if (NULL != src->data.string) {
+            p->data.string = strdup(src->data.string);
+        } else {
+            p->data.string = NULL;
+        }
+        break;
+    case OPAL_PID:
+        p->data.pid = src->data.pid;
+        break;
+    case OPAL_INT:
+        p->data.integer = src->data.integer;
+        break;
+    case OPAL_INT8:
+        p->data.int8 = src->data.int8;
+        break;
+    case OPAL_INT16:
+        p->data.int16 = src->data.int16;
+        break;
+    case OPAL_INT32:
+        p->data.int32 = src->data.int32;
+        break;
+    case OPAL_INT64:
+        p->data.int64 = src->data.int64;
+        break;
+    case OPAL_UINT:
+        p->data.uint = src->data.uint;
+        break;
+    case OPAL_UINT8:
+        p->data.uint8 = src->data.uint8;
+        break;
+    case OPAL_UINT16:
+        p->data.uint16 = src->data.uint16;
+        break;
+    case OPAL_UINT32:
+        p->data.uint32 = src->data.uint32;
+        break;
+    case OPAL_UINT64:
+        p->data.uint64 = src->data.uint64;
+        break;
+    case OPAL_BYTE_OBJECT:
+        p->data.bo.bytes = malloc(src->data.bo.size);
+        memcpy(p->data.bo.bytes, src->data.bo.bytes, src->data.bo.size);
+        p->data.bo.size = src->data.bo.size;
+        break;
+    default:
+        opal_output(0, "COPY-OPAL-VALUE: UNSUPPORTED TYPE %d", (int)src->type);
+        return OPAL_ERROR;
+    }
+
+    return OPAL_SUCCESS;
+}

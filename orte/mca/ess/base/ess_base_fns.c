@@ -40,235 +40,11 @@
 
 #include "orte/mca/ess/base/base.h"
 
-static orte_proc_t* find_proc(orte_process_name_t *proc)  /* used by daemons */
-{
-    orte_job_t *jdata;
-    
-    if (NULL == (jdata = orte_get_job_data_object(proc->jobid))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return NULL;
-    }
-
-    return (orte_proc_t*)opal_pointer_array_get_item(jdata->procs, proc->vpid);
-}
-
-opal_hwloc_locality_t orte_ess_base_proc_get_locality(orte_process_name_t *proc)
-{
-    orte_pmap_t *pmap;
-
-    if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
-                             "%s LOOKING FOR PROC %s",
-                             ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                             ORTE_NAME_PRINT(proc)));
-        return OPAL_PROC_NON_LOCAL;
-    }
-    
-    return pmap->locality;   
-}
-
-orte_vpid_t orte_ess_base_proc_get_daemon(orte_process_name_t *proc)
-{
-    orte_nid_t *nid;
-    orte_proc_t *pdata;
-    orte_vpid_t vpid;
-
-    if (NULL == proc) {
-        return ORTE_VPID_INVALID;
-    }
-
-    if (ORTE_JOBID_IS_DAEMON(proc->jobid)) {
-        return proc->vpid;
-    }
-
-    if (ORTE_PROC_IS_APP) {
-        if (NULL == (nid = orte_util_lookup_nid(proc))) {
-            return ORTE_VPID_INVALID;
-        }
-        vpid = nid->daemon;
-    } else {
-        /* get the job data */
-        if (NULL == (pdata = find_proc(proc))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_VPID_INVALID;
-        }
-        
-        if (NULL == pdata->node || NULL == pdata->node->daemon) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_VPID_INVALID;
-        }
-        vpid = pdata->node->daemon->name.vpid;
-    }
-
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
-                         "%s ess:base: proc %s is hosted by daemon %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         ORTE_VPID_PRINT(vpid)));
-    
-    return vpid;
-}
-
-char* orte_ess_base_proc_get_hostname(orte_process_name_t *proc)
-{
-    orte_nid_t *nid;
-    orte_proc_t *pdata;
-    char *hostname;
-
-    if (NULL == proc) {
-        return NULL;
-    }
-
-    if (ORTE_PROC_IS_APP) {
-        if (NULL == (nid = orte_util_lookup_nid(proc))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
-                                 "%s LOOKING FOR PROC %s",
-                                 ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                                 ORTE_NAME_PRINT(proc)));
-            return NULL;
-        }
-        hostname = nid->name;
-    } else {
-        if (NULL == (pdata = find_proc(proc))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return NULL;
-        }
-        hostname = pdata->node->name;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
-                         "%s ess:base: proc %s is on host %s",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         hostname));
-    
-    return hostname;
-}
-
-orte_local_rank_t orte_ess_base_proc_get_local_rank(orte_process_name_t *proc)
-{
-    orte_pmap_t *pmap;
-    orte_proc_t *pdata;
-    orte_local_rank_t lrank;
-
-    if (NULL == proc) {
-        return ORTE_LOCAL_RANK_INVALID;
-    }
-
-    if (ORTE_PROC_IS_APP) {
-        if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_LOCAL_RANK_INVALID;
-        }
-        lrank = pmap->local_rank;
-    } else {
-        if (NULL == (pdata = find_proc(proc))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_LOCAL_RANK_INVALID;
-        }
-        lrank = pdata->local_rank;
-    }
-
-    OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
-                         "%s ess:base: proc %s has local rank %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         (int)lrank));
-    
-    return lrank;
-}
-
-orte_node_rank_t orte_ess_base_proc_get_node_rank(orte_process_name_t *proc)
-{
-    orte_pmap_t *pmap;
-    orte_proc_t *pdata;
-    orte_node_rank_t nrank;
-
-    if (NULL == proc) {
-        return ORTE_NODE_RANK_INVALID;
-    }
-
-    if (ORTE_PROC_IS_APP) {
-        /* is this me? */
-        if (proc->jobid == ORTE_PROC_MY_NAME->jobid &&
-            proc->vpid == ORTE_PROC_MY_NAME->vpid) {
-            /* yes it is - reply with my rank. This is necessary
-             * because the pidmap will not have arrived when I
-             * am starting up, and if we use static ports, then
-             * I need to know my node rank during init
-             */
-            return orte_process_info.my_node_rank;
-        }
-        if (NULL == (pmap = orte_util_lookup_pmap(proc))) {
-            return ORTE_NODE_RANK_INVALID;
-        }
-        nrank = pmap->node_rank;
-    } else {
-        if (NULL == (pdata = find_proc(proc))) {
-            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-            return ORTE_NODE_RANK_INVALID;
-        }
-        nrank = pdata->node_rank;
-    }
-    
-    OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
-                         "%s ess:base: proc %s has node rank %d",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME),
-                         ORTE_NAME_PRINT(proc),
-                         (int)nrank));
-    
-    return nrank;
-}
-
-int orte_ess_base_update_pidmap(opal_byte_object_t *bo)
-{
-    int ret;
-    
-    OPAL_OUTPUT_VERBOSE((2, orte_ess_base_output,
-                         "%s ess:base: updating pidmap",
-                         ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
-    
-    /* build the pmap */
-    if (ORTE_PROC_IS_APP) {
-        if (ORTE_SUCCESS != (ret = orte_util_decode_pidmap(bo))) {
-            ORTE_ERROR_LOG(ret);
-        }
-    } else {
-        if (ORTE_SUCCESS != (ret = orte_util_decode_daemon_pidmap(bo))) {
-            ORTE_ERROR_LOG(ret);
-        }
-    }
-    
-    return ret;
-}
-
-int orte_ess_base_update_nidmap(opal_byte_object_t *bo)
-{
-    int rc;
-
-    /* decode the nidmap - the util will know what to do */
-    if (ORTE_PROC_IS_APP) {
-        if (ORTE_SUCCESS != (rc = orte_util_decode_nodemap(bo))) {
-            ORTE_ERROR_LOG(rc);
-        }
-    } else {
-        if (ORTE_SUCCESS != (rc = orte_util_decode_daemon_nodemap(bo))) {
-            ORTE_ERROR_LOG(rc);
-        }
-    }
-
-    return rc;
-}
-
 int orte_ess_base_proc_binding(void)
 {
 #if OPAL_HAVE_HWLOC
     hwloc_obj_t node, obj;
     hwloc_cpuset_t cpus, nodeset;
-    orte_node_rank_t nrank;
     hwloc_obj_type_t target;
     unsigned int cache_level = 0;
     struct hwloc_topology_support *support;
@@ -356,7 +132,7 @@ int orte_ess_base_proc_binding(void)
                     /* cleanup */
                     hwloc_bitmap_free(cpus);
                     /* get the node rank */
-                    if (ORTE_NODE_RANK_INVALID == (nrank = orte_ess.get_node_rank(ORTE_PROC_MY_NAME))) {
+                    if (ORTE_NODE_RANK_INVALID == orte_process_info.my_node_rank) {
                         /* this is not an error - could be due to being
                          * direct launched - so just ignore and leave
                          * us unbound
@@ -371,7 +147,7 @@ int orte_ess_base_proc_binding(void)
                      */
                     if (OPAL_BIND_TO_HWTHREAD == OPAL_GET_BINDING_POLICY(opal_hwloc_binding_policy)) {
                         if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_PU,
-                                                                           0, nrank, OPAL_HWLOC_LOGICAL))) {
+                                                                           0, orte_process_info.my_node_rank, OPAL_HWLOC_LOGICAL))) {
                             ret = ORTE_ERR_NOT_FOUND;
                             error = "Getting hwthread object";
                             goto error;
@@ -383,7 +159,7 @@ int orte_ess_base_proc_binding(void)
                             goto error;
                         }
                         orte_process_info.bind_level = OPAL_HWLOC_HWTHREAD_LEVEL;
-                        orte_process_info.bind_idx = nrank;
+                        orte_process_info.bind_idx = orte_process_info.my_node_rank;
                         OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
                                              "%s Process bound to hwthread",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -392,7 +168,7 @@ int orte_ess_base_proc_binding(void)
                          * core on this node
                          */
                         if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE,
-                                                                           0, nrank, OPAL_HWLOC_LOGICAL))) {
+                                                                           0, orte_process_info.my_node_rank, OPAL_HWLOC_LOGICAL))) {
                             ret = ORTE_ERR_NOT_FOUND;
                             error = "Getting core object";
                             goto error;
@@ -404,7 +180,7 @@ int orte_ess_base_proc_binding(void)
                             goto error;
                         }
                         orte_process_info.bind_level = OPAL_HWLOC_CORE_LEVEL;
-                        orte_process_info.bind_idx = nrank;
+                        orte_process_info.bind_idx = orte_process_info.my_node_rank;
                         OPAL_OUTPUT_VERBOSE((5, orte_ess_base_output,
                                              "%s Process bound to core",
                                              ORTE_NAME_PRINT(ORTE_PROC_MY_NAME)));
@@ -413,7 +189,7 @@ int orte_ess_base_proc_binding(void)
                          * object that the nrank-th core belongs to
                          */
                         if (NULL == (obj = opal_hwloc_base_get_obj_by_type(opal_hwloc_topology, HWLOC_OBJ_CORE,
-                                                                           0, nrank, OPAL_HWLOC_LOGICAL))) {
+                                                                           0, orte_process_info.my_node_rank, OPAL_HWLOC_LOGICAL))) {
                             ret = ORTE_ERR_NOT_FOUND;
                             error = "Getting core object";
                             goto error;

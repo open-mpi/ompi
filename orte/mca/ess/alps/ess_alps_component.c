@@ -42,7 +42,7 @@ orte_ess_base_component_t mca_ess_alps_component = {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
     {
-        ORTE_ESS_BASE_VERSION_2_0_0,
+        ORTE_ESS_BASE_VERSION_3_0_0,
 
         /* Component name and version */
         "alps",

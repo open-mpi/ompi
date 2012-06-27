@@ -254,3 +254,9 @@ int opal_dss_compare_node_stat(opal_node_stats_t *value1, opal_node_stats_t *val
 {
     return OPAL_EQUAL;  /* eventually compare field to field */
 }
+
+/* OPAL_VALUE */
+int opal_dss_compare_value(opal_value_t *value1, opal_value_t *value2, opal_data_type_t type)
+{
+    return OPAL_EQUAL;  /* eventually compare field to field */
+}

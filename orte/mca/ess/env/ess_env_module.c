@@ -87,13 +87,6 @@ orte_ess_base_module_t orte_ess_env_module = {
     rte_init,
     rte_finalize,
     orte_ess_base_app_abort,
-    orte_ess_base_proc_get_locality,
-    orte_ess_base_proc_get_daemon,
-    orte_ess_base_proc_get_hostname,
-    orte_ess_base_proc_get_local_rank,
-    orte_ess_base_proc_get_node_rank,
-    orte_ess_base_update_pidmap,
-    orte_ess_base_update_nidmap,
 #if OPAL_ENABLE_FT_CR == 1
     rte_ft_event
 #else
@@ -157,7 +150,7 @@ static int rte_init(void)
         goto error;
     }
     
-    /* if one was provided, build my nidmap */
+    /* if data was provided, update the database */
     if (ORTE_SUCCESS != (ret = orte_util_nidmap_init(orte_process_info.sync_buf))) {
         ORTE_ERROR_LOG(ret);
         error = "orte_util_nidmap_init";

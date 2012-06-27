@@ -29,8 +29,8 @@
 #include "opal/dss/dss.h"
 #include "opal/util/arch.h"
 
+#include "orte/mca/db/db_types.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ess/ess.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/name_fns.h"
 #include "orte/util/show_help.h"
@@ -140,9 +140,11 @@ int ompi_proc_complete_init(void)
     ompi_proc_t *proc = NULL;
     opal_list_item_t *item = NULL;
     int ret, errcode = OMPI_SUCCESS;
-    
+    opal_hwloc_locality_t *hwlocale;
+    uint32_t *ui32ptr;
+
     OPAL_THREAD_LOCK(&ompi_proc_lock);
-    
+
     for( item  = opal_list_get_first(&ompi_proc_list);
          item != opal_list_get_end(&ompi_proc_list);
          item  = opal_list_get_next(item)) {
@@ -150,11 +152,21 @@ int ompi_proc_complete_init(void)
         
         if (proc->proc_name.vpid != ORTE_PROC_MY_NAME->vpid) {
             /* get the locality information */
-            proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
-            /* get the name of the node it is on */
-            proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
-
-            ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void*)&(proc->proc_arch), OPAL_UINT32);
+            hwlocale = &(proc->proc_flags);
+            ret = ompi_modex_recv_key_value(ORTE_DB_LOCALITY, proc, (void**)&hwlocale, OPAL_HWLOC_LOCALITY_T);
+            if (OMPI_SUCCESS != ret) {
+                errcode = ret;
+                break;
+            }
+            /* get a pointer to the name of the node it is on */
+            ret = ompi_modex_recv_string_pointer(ORTE_DB_HOSTNAME, proc, (void**)&(proc->proc_hostname), OPAL_STRING);
+            if (OMPI_SUCCESS != ret) {
+                errcode = ret;
+                break;
+            }
+            /* get the remote architecture */
+            ui32ptr = &(proc->proc_arch);
+            ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&ui32ptr, OPAL_UINT32);
             if (OMPI_SUCCESS == ret) {
                 /* if arch is different than mine, create a new convertor for this proc */
                 if (proc->proc_arch != opal_local_arch) {
@@ -352,6 +364,9 @@ int ompi_proc_refresh(void) {
     ompi_proc_t *proc = NULL;
     opal_list_item_t *item = NULL;
     orte_vpid_t i = 0;
+    int ret=OMPI_SUCCESS;
+    opal_hwloc_locality_t *hwlocale;
+    uint32_t *uiptr;
 
     OPAL_THREAD_LOCK(&ompi_proc_lock);
 
@@ -372,8 +387,19 @@ int ompi_proc_refresh(void) {
             proc->proc_hostname = orte_process_info.nodename;
             proc->proc_arch = opal_local_arch;
         } else {
-            proc->proc_flags = orte_ess.proc_get_locality(&proc->proc_name);
-            proc->proc_hostname = orte_ess.proc_get_hostname(&proc->proc_name);
+            hwlocale = &(proc->proc_flags);
+            ret = ompi_modex_recv_key_value(ORTE_DB_LOCALITY, proc, (void**)&hwlocale, OPAL_HWLOC_LOCALITY_T);
+            if (OMPI_SUCCESS != ret) {
+                break;
+            }
+            /* get the name of the node it is on */
+            ret = ompi_modex_recv_string_pointer(ORTE_DB_HOSTNAME, proc, (void*)&(proc->proc_hostname), OPAL_STRING);
+            if (OMPI_SUCCESS != ret) {
+                break;
+            }
+            /* get the remote architecture */
+            uiptr = &(proc->proc_arch);
+            ret = ompi_modex_recv_key_value("OMPI_ARCH", proc, (void**)&uiptr, OPAL_UINT32);
             /* if arch is different than mine, create a new convertor for this proc */
             if (proc->proc_arch != opal_local_arch) {
 #if OPAL_ENABLE_HETEROGENEOUS_SUPPORT
@@ -394,7 +420,7 @@ int ompi_proc_refresh(void) {
 
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
 
-    return OMPI_SUCCESS;   
+    return ret;   
 }
 
 int
