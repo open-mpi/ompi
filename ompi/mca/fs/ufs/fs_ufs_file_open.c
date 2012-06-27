@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2008-2010 University of Houston. All rights reserved.
+ * Copyright (c) 2008-2012 University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,17 +44,14 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
                      mca_io_ompio_file_t *fh)
 {
     int amode;
-    /*    int *fp = NULL;*/
     int old_mask, perm;
 
-    if (fh->f_perm == OMPIO_PERM_NULL) 
-    {
+    if (fh->f_perm == OMPIO_PERM_NULL)  {
         old_mask = umask(022);
         umask(old_mask);
         perm = old_mask ^ 0666;
     }
-    else 
-    {
+    else {
         perm = fh->f_perm;
     }
 
@@ -70,24 +67,8 @@ mca_fs_ufs_file_open (struct ompi_communicator_t *comm,
     if (fh->f_amode & MPI_MODE_EXCL)
         amode = amode | O_EXCL;
 
-    /*
-    fp = (int*)malloc(sizeof(int));
-    if (NULL == fp)
-    {
-        return OMPI_ERROR;
-    }
-
-    *fp = open (filename, amode, perm);
-    if (-1 == *fp)
-    {
-        return OMPI_ERROR;
-    }
-    fh->fd = (void*)fp;
-    */
-
     fh->fd = open (filename, amode, perm);
-    if (-1 == fh->fd)
-    {
+    if (-1 == fh->fd) {
         return OMPI_ERROR;
     }
 
