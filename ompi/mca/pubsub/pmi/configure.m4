@@ -13,8 +13,10 @@
 AC_DEFUN([MCA_ompi_pubsub_pmi_CONFIG], [
     AC_CONFIG_FILES([ompi/mca/pubsub/pmi/Makefile])
 
-    ORTE_CHECK_PMI([pubsub_pmi], [pubsub_pmi_good=1], [pubsub_pmi_good=0])
-         
+    m4_ifdef([project_orte],
+        [ORTE_CHECK_PMI([pubsub_pmi], [pubsub_pmi_good=1], [pubsub_pmi_good=0])],
+        [$pubsub_pmi_good=0])
+
     # Evaluate succeed / fail
     AS_IF([test "$pubsub_pmi_good" = 1],
           [$1],
